@@ -1531,6 +1531,19 @@ func TelnetListenOnPort(hostname string, portNum int, wg *sync.WaitGroup, maxCon
 		util.SetServerAddress(server.Addr().String())
 	}
 
+	// Log the listener like SSH/HTTP do, so operators get boot-time confirmation
+	// a telnet port (including the AI port) is up.
+	//
+	// Compares cType, NOT connType: this signature takes connType as a VARIADIC
+	// and resolves it into cType just above. The original June commit was
+	// written against a non-variadic signature and compared connType directly,
+	// which does not compile here.
+	connLabel := "human"
+	if cType == connections.ConnAI {
+		connLabel = "AI"
+	}
+	mudlog.Info("Telnet", "status", "listening", "port", portNum, "type", connLabel)
+
 	// Start a goroutine to accept incoming connections, so that we can use a signal to stop the server
 	go func() {
 
