@@ -11,6 +11,14 @@ permissions:
 jobs:
   notify-discord:
     runs-on: ubuntu-latest
+    # The `secrets` context is NOT available in a step-level `if:`, so the
+    # webhook is promoted to a job-level env var and the step gates on that.
+    # An earlier attempt used `if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}`
+    # directly, which is not a valid context there. Without this gate the
+    # action receives an empty url and fails every PR with "Invalid URL",
+    # which trains everyone to ignore red checks.
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v7
       - name: Get PR Metadata
@@ -34,9 +42,10 @@ jobs:
             core.setOutput('url', context.payload.release.html_url || '')
 
       - name: Send Discord Message
+        if: env.DISCORD_WEBHOOK_URL != ''
         uses: ./.github/actions/discord-webhook
         with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          webhook-url: ${{ env.DISCORD_WEBHOOK_URL }}
           pr-title: ${{ steps.pr_meta.outputs.title }}${{ steps.release_meta.outputs.title }}
           pr-body: ${{ steps.pr_meta.outputs.body }}${{ steps.release_meta.outputs.body }}
           pr-url: ${{ steps.pr_meta.outputs.url }}${{ steps.release_meta.outputs.url }}

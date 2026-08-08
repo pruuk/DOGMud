@@ -46,24 +46,90 @@ Follow the branch strategy in `docs/guides/github_guide.md`:
 - `master` is the main integration branch + production. `origin` = pruuk/DOGMud
 - NEVER push to upstream (GoMudEngine/GoMud); cherry-pick from upstream only
 - `development` is legacy from when the project still pulled from upstream — no longer used as the integration branch
-- Feature branches: `feature/stage-X.Y-description`
-- Merge features into master with `--no-ff`
+- Feature branches: `feature/stage-X.Y-description`, fixes: `fix/description`
 - Use conventional commit messages (feat:, fix:, refactor:, docs:, chore:)
 
+### `gh` is installed — always pin `--repo pruuk/DOGMud`
+
+**⚠️ THIS REPO IS A FORK OF `GoMudEngine/GoMud`. `gh` DEFAULTS TO THE PARENT.**
+A bare `gh pr create` opened a PR against **upstream** on 2026-08-08 and had to
+be closed immediately. Every `gh` command that can target a repo MUST carry
+`--repo pruuk/DOGMud` explicitly. Do not rely on the default, ever.
+
+```bash
+gh pr create --repo pruuk/DOGMud --base master --head <branch> ...
+gh pr checks <n> --repo pruuk/DOGMud
+gh run view <id> --repo pruuk/DOGMud --log-failed
+```
+
+### Ship via PR, not direct-to-master
+
+`.github/workflows/run-tests.yml` (PR) runs **lint + a coverage gate**.
+`build-and-release.yml` (master/tag) runs **neither** (review Finding 10). So a
+direct push to master gets strictly weaker validation than a PR does. Until
+roadmap Chunk 1.1 unifies them, ship through a PR and merge from the terminal.
+No browser needed:
+
+```bash
+git push -u origin <branch>
+gh pr create --repo pruuk/DOGMud --base master --head <branch> --fill
+gh pr checks <n> --repo pruuk/DOGMud --watch
+gh pr merge  <n> --repo pruuk/DOGMud --merge --delete-branch
+```
+
+Use `--merge` (a `--no-ff` merge commit), **not** `--squash`. The project
+convention is `--no-ff`, and per-commit messages carry the finding evidence and
+verification notes that a squash would flatten into one blob.
+
+**A green check is not a merge signal on its own.** `notify-discord` only
+triggers on `pull_request: opened`, so a fix pushed to an existing PR is never
+re-executed by that workflow. Check *which* runs actually re-ran before
+concluding a workflow fix works.
+
+Once Chunk 1.1 lands and both pipelines enforce the same contract, direct
+merges to master become equivalent and this preference can relax.
+
 ## Pre-Push SOP
-Before pushing to prod (origin/master):
-1. Update `docs/PATCH_NOTES.md` with dated entries describing the work.
-2. Set `Logging.LogToFile: false` in `_datafiles/config.yaml` (prod
-   droplet has limited disk space).
-3. **Boot the server locally and confirm it starts cleanly past
-   data-file loading.** `go build` only checks compilation; YAML
-   data files (mobs, items, quests, dialogues, rooms) panic at
-   server startup if there's a filename/name-field mismatch, an
-   invalid trigger event, an ID collision, or any other load-time
-   issue that the build can't see. Spinning the server up locally
-   and watching for `mobs.LoadDataFiles() loadedCount=...`,
-   `quests.LoadDataFiles() loadedCount=...`, etc. without panics
-   is the only reliable check before promoting to prod.
+
+Local gates first, then let CI do the rest. The point of the local list is to
+catch what CI cannot see or what wastes a CI round-trip.
+
+1. **`gofmt -l internal/ modules/`** — must print nothing. This has its own CI
+   gate and has broken a push before. Cheapest possible check; run it first.
+2. **`go build ./...`** and the tests for every package you touched.
+3. **Update `docs/PATCH_NOTES.md`** with a dated entry. Player-facing framing,
+   no raw numbers, no em dashes.
+4. **`Logging.LogToFile: false`** in `_datafiles/config.yaml` (the droplet has
+   limited disk). Note this file has `skip-worktree` set.
+5. **Boot the server and confirm `Server Ready`.** `go build` only checks
+   compilation. YAML data files (mobs, items, quests, dialogues, rooms, schedules,
+   patrols) panic at *startup* on a filename/name-field mismatch, an invalid
+   trigger event, an ID collision, or an unresolved reference. Nothing but a
+   real boot catches these.
+
+   Use an **isolated detached worktree** so you never disturb the user's running
+   server, and copy the skip-worktree config in by hand:
+
+   ```bash
+   git worktree add --detach C:/tmp/dogmud-boot-check HEAD
+   cp _datafiles/config.yaml C:/tmp/dogmud-boot-check/_datafiles/config.yaml
+   cd C:/tmp/dogmud-boot-check && timeout 180 go run . > boot.log 2>&1
+   grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log  # want 0
+   grep -c "Server Ready" boot.log                                          # want 1
+   ```
+
+   **Exit code 124 is the success case** — it means the timeout fired because
+   the server stayed up. Do not grep for the bare word `panic`: the config key
+   `GamePlay.MapConsistencyEnforce` legitimately has the *value* `panic` and
+   will produce false hits. Clean up with `git worktree remove --force`, and if
+   Windows holds a lock, `rm -rf` then `git worktree prune`.
+
+6. **Push, open the PR, watch the checks.** A green check is **not** proof: a
+   run can pass while emitting annotations, and the lint gate is configured
+   `only-new-issues`. Confirm with `gh run view <id> --repo pruuk/DOGMud
+   --log-failed` rather than trusting the summary.
+
+7. After merge, delete the stray `refs/tags/master` if it re-seeds on origin.
 
 ## Instance Saves & Smoke-Test SOP (Important!)
 
@@ -841,7 +907,10 @@ live under `tools/playtest/.run/<run_id>/bridge/`.
 
 Overlay (DOGMud-specific): `tools/playtest/`
 - `engine-profile.yaml` — DOGMud commands/world/mechanics
-- `targets.yaml` — **prod** (and legacy) creds only; not used for local endpoint
+- `targets.yaml` — **prod** (and legacy) creds only; not used for local
+  endpoint. **Gitignored since 2026-08-08** — an audit found live prod
+  credentials committed to the public repo. Copy `targets.example.yaml` to
+  `targets.yaml` locally; never commit it, never paste its contents anywhere
 - `personalities/` (bug-finder, feature-tester, feel-tester)
 - `goals/` (session objectives; local needs `ephemeral:`), `profiles/`,
   `report-templates/`, `reports/` (gitignored)
