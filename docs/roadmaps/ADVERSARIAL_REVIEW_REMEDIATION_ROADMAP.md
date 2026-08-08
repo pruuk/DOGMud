@@ -176,7 +176,7 @@ further decomposition
 | 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | Not started |
 | 3.1 | Make global counters race-free | S | — | 4 | Not started |
 | 3.2 | Make LLM request admission atomic | S | — | 21 | Not started |
-| 3.3 | Synchronize the room path cache | M | — | 8 | Not started |
+| 3.3 | Synchronize the room path cache | M | — | 8 | **Done 2026-08-08** |
 | 3.4 | Release listener locks before callbacks | S | — | 22 | Not started |
 | 3.5 | Bound admin world-lock scope | M | — | 34 | Not started |
 | 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | Not started |
@@ -1019,7 +1019,7 @@ only when all of its subchunks close.
 | 5 | 2.2 | Open | — | Non-atomic and corruption-prone mob instance persistence |
 | 6 | 2.4 | Open | — | Corrupt shop treated as new |
 | 7 | 2.3 | Open | — | Guild/moderation memory-disk divergence |
-| 8 | 3.3 | Open | — | Unsynchronized room path cache |
+| 8 | 3.3 | **Done** | `8dd24e4c8`; RWMutex + 7 accessors, 8 sites (review named 1) + 6 concurrency tests | Unsynchronized room path cache |
 | 9 | 1.2 | Open | — | Phantom position tests |
 | 10 | 1.1 | Open | — | Release CI omits lint/coverage |
 | 11 | 5.3 | **Done** | `e23df1071`; `pickWanderExit` + 5 tests | Wander filter ignored |

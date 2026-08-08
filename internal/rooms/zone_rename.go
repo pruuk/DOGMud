@@ -253,13 +253,15 @@ func RenameZone(oldName, newName string) error {
 		if r, ok := roomManager.rooms[id]; ok && r != nil {
 			r.Zone = newName
 		}
-		// roomIdToFileCache stores "<zoneFolder>/<id>.yaml"; a stale entry
-		// points at the pre-move path. GetFilePath would self-heal by walking
-		// the whole rooms tree, but rewriting the prefix is cheap and exact.
-		if p, ok := roomManager.roomIdToFileCache[id]; ok {
-			roomManager.roomIdToFileCache[id] = strings.Replace(p, oldFolder, newFolder, 1)
-		}
 	}
+
+	// roomIdToFileCache stores "<zoneFolder>/<id>.yaml"; a stale entry points
+	// at the pre-move path. GetFilePath would self-heal by walking the whole
+	// rooms tree, but rewriting the prefix is cheap and exact. One locked pass
+	// so a concurrent reader never sees the zone half-renamed.
+	roomManager.rewriteCachedFilePaths(roomIds, func(p string) string {
+		return strings.Replace(p, oldFolder, newFolder, 1)
+	})
 
 	return SaveZoneConfig(cfg)
 }
