@@ -74,8 +74,17 @@ No browser needed:
 git push -u origin <branch>
 gh pr create --repo pruuk/DOGMud --base master --head <branch> --fill
 gh pr checks <n> --repo pruuk/DOGMud --watch
-gh pr merge <n> --repo pruuk/DOGMud --squash --delete-branch
+gh pr merge  <n> --repo pruuk/DOGMud --merge --delete-branch
 ```
+
+Use `--merge` (a `--no-ff` merge commit), **not** `--squash`. The project
+convention is `--no-ff`, and per-commit messages carry the finding evidence and
+verification notes that a squash would flatten into one blob.
+
+**A green check is not a merge signal on its own.** `notify-discord` only
+triggers on `pull_request: opened`, so a fix pushed to an existing PR is never
+re-executed by that workflow. Check *which* runs actually re-ran before
+concluding a workflow fix works.
 
 Once Chunk 1.1 lands and both pipelines enforce the same contract, direct
 merges to master become equivalent and this preference can relax.
