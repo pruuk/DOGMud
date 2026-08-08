@@ -506,7 +506,7 @@ func loadAllRoomZones() error {
 		}
 
 		// Cache the file path for every roomId
-		roomManager.roomIdToFileCache[loadedRoom.RoomId] = loadedRoom.Filepath()
+		roomManager.setCachedFilePath(loadedRoom.RoomId, loadedRoom.Filepath())
 
 		// Update the zone info cache
 		if _, ok := roomManager.zones[loadedRoom.Zone]; !ok {

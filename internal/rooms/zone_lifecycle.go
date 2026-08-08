@@ -188,7 +188,7 @@ func DeleteZone(zone string) error {
 	// errors when the room was never cached in memory, which is fine here.
 	for _, id := range doomed {
 		_ = ClearRoomCache(id)
-		delete(roomManager.roomIdToFileCache, id)
+		roomManager.deleteCachedFilePath(id)
 	}
 	delete(roomManager.zones, zone)
 	return nil

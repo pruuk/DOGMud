@@ -11,7 +11,8 @@ func GetMemoryUsage() map[string]util.MemoryResult {
 	ret["rooms"] = util.MemoryResult{Memory: util.MemoryUsage(roomManager.rooms), Count: len(roomManager.rooms)}
 	ret["zones"] = util.MemoryResult{Memory: util.MemoryUsage(roomManager.zones), Count: len(roomManager.zones)}
 	ret["roomsWithUsers"] = util.MemoryResult{Memory: util.MemoryUsage(roomManager.roomsWithUsers), Count: len(roomManager.roomsWithUsers)}
-	ret["roomIdToFileCache"] = util.MemoryResult{Memory: util.MemoryUsage(roomManager.roomIdToFileCache), Count: len(roomManager.roomIdToFileCache)}
+	fileCache, fileCacheCt := roomManager.cachedFilePathStats()
+	ret["roomIdToFileCache"] = util.MemoryResult{Memory: util.MemoryUsage(fileCache), Count: fileCacheCt}
 
 	return ret
 }

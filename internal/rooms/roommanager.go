@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -48,11 +49,94 @@ const (
 )
 
 type RoomManager struct {
-	rooms             map[int]*Room
-	zones             map[string]*ZoneConfig // a map of zone name to room id
-	roomsWithUsers    map[int]int            // key is roomId to # players
-	roomsWithMobs     map[int]int            // key is roomId to # mobs
-	roomIdToFileCache map[int]string         // key is room id, value is the file path
+	rooms          map[int]*Room
+	zones          map[string]*ZoneConfig // a map of zone name to room id
+	roomsWithUsers map[int]int            // key is roomId to # players
+	roomsWithMobs  map[int]int            // key is roomId to # mobs
+
+	// fileCacheMu guards roomIdToFileCache ONLY.
+	//
+	// Review finding 8. The global MUD lock does not serialize these writes:
+	// GetAutoComplete (world.go) holds only util.RLockMud() and calls
+	// rooms.LoadRoom three times, so several connection goroutines can be in
+	// an uncached room load at once. Two of them writing this map produces
+	// `fatal error: concurrent map writes`, which Go does NOT allow a
+	// recover() to catch — it takes the whole server down for every player.
+	//
+	// Every read, write, delete, and range over roomIdToFileCache must go
+	// through the accessors below. Do not touch the map directly.
+	fileCacheMu       sync.RWMutex
+	roomIdToFileCache map[int]string // key is room id, value is the file path
+}
+
+// cachedFilePath returns the cached path for roomId, if present.
+func (r *RoomManager) cachedFilePath(roomId int) (string, bool) {
+	r.fileCacheMu.RLock()
+	defer r.fileCacheMu.RUnlock()
+	path, ok := r.roomIdToFileCache[roomId]
+	return path, ok
+}
+
+// setCachedFilePath stores the path for roomId unconditionally.
+func (r *RoomManager) setCachedFilePath(roomId int, path string) {
+	r.fileCacheMu.Lock()
+	defer r.fileCacheMu.Unlock()
+	r.roomIdToFileCache[roomId] = path
+}
+
+// setCachedFilePathIfAbsent stores path only when roomId has no entry yet.
+// The check and the store happen under one lock, so two goroutines racing on
+// a first load cannot both decide the entry is missing.
+func (r *RoomManager) setCachedFilePathIfAbsent(roomId int, path string) {
+	r.fileCacheMu.Lock()
+	defer r.fileCacheMu.Unlock()
+	if _, ok := r.roomIdToFileCache[roomId]; !ok {
+		r.roomIdToFileCache[roomId] = path
+	}
+}
+
+// deleteCachedFilePath removes roomId's entry if present.
+func (r *RoomManager) deleteCachedFilePath(roomId int) {
+	r.fileCacheMu.Lock()
+	defer r.fileCacheMu.Unlock()
+	delete(r.roomIdToFileCache, roomId)
+}
+
+// cachedFilePathIds snapshots the cached room ids. Returning a copy keeps
+// callers from ranging over the live map without the lock.
+func (r *RoomManager) cachedFilePathIds() []int {
+	r.fileCacheMu.RLock()
+	defer r.fileCacheMu.RUnlock()
+	ids := make([]int, 0, len(r.roomIdToFileCache))
+	for roomId := range r.roomIdToFileCache {
+		ids = append(ids, roomId)
+	}
+	return ids
+}
+
+// rewriteCachedFilePaths applies fn to every cached path, keeping the whole
+// pass atomic. Used by zone rename, where a stale folder segment would
+// otherwise point at the old location.
+func (r *RoomManager) rewriteCachedFilePaths(roomIds []int, fn func(string) string) {
+	r.fileCacheMu.Lock()
+	defer r.fileCacheMu.Unlock()
+	for _, id := range roomIds {
+		if p, ok := r.roomIdToFileCache[id]; ok {
+			r.roomIdToFileCache[id] = fn(p)
+		}
+	}
+}
+
+// cachedFilePathStats returns the map and its length for memory reporting.
+// The caller must not retain or mutate the returned map.
+func (r *RoomManager) cachedFilePathStats() (map[int]string, int) {
+	r.fileCacheMu.RLock()
+	defer r.fileCacheMu.RUnlock()
+	snapshot := make(map[int]string, len(r.roomIdToFileCache))
+	for k, v := range r.roomIdToFileCache {
+		snapshot[k] = v
+	}
+	return snapshot, len(snapshot)
 }
 
 // Deletes any knowledge of a room in memory.
@@ -72,24 +156,30 @@ func ClearRoomCache(roomId int) error {
 	delete(roomManager.rooms, roomId)
 	delete(roomManager.roomsWithUsers, roomId)
 	delete(roomManager.roomsWithMobs, roomId)
-	delete(roomManager.roomIdToFileCache, roomId)
+	roomManager.deleteCachedFilePath(roomId)
 
 	return nil
 }
 
 func (r *RoomManager) GetFilePath(roomId int) string {
 
-	if cachedPath, ok := roomManager.roomIdToFileCache[roomId]; ok {
+	// Use the receiver, not the package global. This method had a
+	// *RoomManager receiver but ignored it, so it was impossible to exercise
+	// against an isolated manager in a test.
+	if cachedPath, ok := r.cachedFilePath(roomId); ok {
 		return cachedPath
 	}
 
+	// searchForRoomFile walks the filesystem, so it runs OUTSIDE the lock.
+	// Two goroutines racing here both do the search and then agree on the
+	// same result, which is wasteful once but never wrong.
 	filename := searchForRoomFile(roomId)
 
 	if filename == `` {
 		return filename
 	}
 
-	roomManager.roomIdToFileCache[roomId] = filename
+	r.setCachedFilePath(roomId, filename)
 
 	return filename
 }
@@ -136,14 +226,7 @@ func SetNextRoomId(nextRoomId int) {
 
 func GetAllRoomIds() []int {
 
-	var roomIds []int = make([]int, len(roomManager.roomIdToFileCache))
-	i := 0
-	for roomId, _ := range roomManager.roomIdToFileCache {
-		roomIds[i] = roomId
-		i++
-	}
-
-	return roomIds
+	return roomManager.cachedFilePathIds()
 }
 
 func GetZonesWithMutators() ([]string, []int) {
@@ -563,9 +646,7 @@ func addRoomToMemory(room *Room, forceOverWrite ...bool) error {
 	roomManager.rooms[room.RoomId] = room
 
 	// Save filepath to cache
-	if _, ok := roomManager.roomIdToFileCache[room.RoomId]; !ok {
-		roomManager.roomIdToFileCache[room.RoomId] = room.Filepath()
-	}
+	roomManager.setCachedFilePathIfAbsent(room.RoomId, room.Filepath())
 
 	// Track whatever the last room id created is so we know what to number the next one.
 	if room.RoomId < ephemeralRoomIdMinimum && room.RoomId >= GetNextRoomId() {

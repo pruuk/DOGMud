@@ -44,7 +44,14 @@ task, default up (sonnet), not down.
 ## Git Workflow
 Follow the branch strategy in `docs/guides/github_guide.md`:
 - `master` is the main integration branch + production. `origin` = pruuk/DOGMud
-- NEVER push to upstream (GoMudEngine/GoMud); cherry-pick from upstream only
+- **HARD RULE: do not touch `GoMudEngine/GoMud` at all.** No pushes, no
+  branches, no PRs, no issues, no comments. Cherry-pick *from* upstream only.
+  The single exception is work that **builds or modifies a module**
+  (`modules/`), which is legitimately upstream-facing. Even then: propose it,
+  get explicit approval first, and never open anything on upstream as a side
+  effect of ordinary DOGMud work.
+  Note `gh` defaults to the fork **parent**, so always pass
+  `--repo pruuk/DOGMud` (see the gh section below).
 - `development` is legacy from when the project still pulled from upstream — no longer used as the integration branch
 - Feature branches: `feature/stage-X.Y-description`, fixes: `fix/description`
 - Use conventional commit messages (feat:, fix:, refactor:, docs:, chore:)
