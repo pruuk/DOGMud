@@ -174,10 +174,10 @@ further decomposition
 | 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | Not started |
 | 2.6 | Make builder operations transactional | M | 2.1 | 13 | Not started |
 | 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | Not started |
-| 3.1 | Make global counters race-free | S | — | 4 | Not started |
-| 3.2 | Make LLM request admission atomic | S | — | 21 | Not started |
+| 3.1 | Make global counters race-free | S | — | 4 | **Done 2026-08-08** |
+| 3.2 | Make LLM request admission atomic | S | — | 21 | **Done 2026-08-08** |
 | 3.3 | Synchronize the room path cache | M | — | 8 | **Done 2026-08-08** |
-| 3.4 | Release listener locks before callbacks | S | — | 22 | Not started |
+| 3.4 | Release listener locks before callbacks | S | — | 22 | **Done 2026-08-08** |
 | 3.5 | Bound admin world-lock scope | M | — | 34 | Not started |
 | 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | Not started |
 | 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | Not started |
@@ -1015,7 +1015,7 @@ only when all of its subchunks close.
 | 1 | 0.1 | Invalidated | Git blob `fbe149c`; tracked in `HEAD` and `origin/master` | Missing xterm runtime |
 | 2 | 5.1 | Open | — | Combat/activity state divergence |
 | 3 | 5.2 | Open | — | Harmful spells bypass attack immunity |
-| 4 | 3.1 | Open | — | Unsynchronized round counter |
+| 4 | 3.1 | **Done** | `atomic.Uint64`; exactness + monotonicity tests | Unsynchronized round counter |
 | 5 | 2.2 | Open | — | Non-atomic and corruption-prone mob instance persistence |
 | 6 | 2.4 | Open | — | Corrupt shop treated as new |
 | 7 | 2.3 | Open | — | Guild/moderation memory-disk divergence |
@@ -1032,8 +1032,8 @@ only when all of its subchunks close.
 | 18 | 4.3 | Open | — | Global keyboard capture |
 | 19 | 4.4 | Open | — | Hot GMCP DOM rebuilds |
 | 20 | 4.2 | Open | — | HTTP timeout and Host redirect weaknesses |
-| 21 | 3.2 | Open | — | LLM check-then-set race |
-| 22 | 3.4 | Open | — | Listener lock held across callbacks |
+| 21 | 3.2 | **Done** | `tryMarkPending` single critical section + 4 tests | LLM check-then-set race |
+| 22 | 3.4 | **Done** | snapshot under RLock, invoke unlocked; deadlock reproduced pre-fix | Listener lock held across callbacks |
 | 23 | 6.1a–6.1d | Open | — | Production and test implementation duplication |
 | 24 | 1.2 | Open | — | Probabilistic tests skip assertions |
 | 25 | 1.1 | Open | — | Missing generated/JavaScript CI gates |

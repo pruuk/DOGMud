@@ -192,43 +192,80 @@ func invokeListenerSafely(lw ListenerWrapper, e Event) (ret ListenerReturn) {
 	return lw.listener(e)
 }
 
-func DoListeners(e Event) ListenerReturn {
+// snapshotListeners copies the listeners that should run for this event,
+// wildcard first, under a READ lock. Returning a copy is what lets DoListeners
+// invoke callbacks with no lock held.
+func snapshotListeners(eventType string) (toRun []ListenerWrapper, found bool) {
+
+	listenerLock.RLock()
+	defer listenerLock.RUnlock()
+
+	if len(eventListeners) == 0 {
+		return nil, false
+	}
+
+	// wildcard listener is really for debugging purpose
+	if hasWildcardListener {
+		if vals, ok := eventListeners[`*`]; ok {
+			found = true
+			toRun = append(toRun, vals...)
+		}
+	}
+
+	if vals, ok := eventListeners[eventType]; ok {
+		found = true
+		toRun = append(toRun, vals...)
+	}
+
+	return toRun, found
+}
+
+// noteMissingListener counts events nobody handled, sampling the log.
+// eventsWithoutListeners used to be guarded incidentally by the dispatch
+// write lock; now that dispatch only takes a read lock it needs the write
+// lock explicitly, since read locks do not exclude each other.
+func noteMissingListener(eventType string) {
 
 	listenerLock.Lock()
 	defer listenerLock.Unlock()
 
-	if len(eventListeners) == 0 {
+	eventsWithoutListeners[eventType] = eventsWithoutListeners[eventType] + 1
+	if eventsWithoutListeners[eventType]%NoListenerSampleSize == 0 {
+		mudlog.Error(`DoListeners`, "Event", eventType, "error", "no listener for event", "sample-size", NoListenerSampleSize)
+	}
+}
+
+// DoListeners dispatches an event to every registered listener.
+//
+// Review finding 22. This used to hold the EXCLUSIVE listenerLock across every
+// callback, which had two consequences:
+//
+//  1. Any listener that registered or removed a listener deadlocked the
+//     server outright. sync.RWMutex is not reentrant, so AddListener's
+//     Lock() could never be acquired from inside a dispatch that already
+//     held it.
+//  2. A single slow handler blocked ALL registration and removal for its
+//     entire duration.
+//
+// The listener set is now snapshotted under a read lock and the callbacks run
+// with no lock held.
+//
+// Tradeoff, deliberate: a listener removed after the snapshot but before its
+// turn still runs for this one event. That is the standard behaviour for an
+// event bus and is strictly preferable to a deadlock. Registration during
+// dispatch takes effect on the NEXT event, not this one.
+func DoListeners(e Event) ListenerReturn {
+
+	toRun, listenerFound := snapshotListeners(e.Type())
+
+	if !listenerFound {
+		noteMissingListener(e.Type())
 		return Continue
 	}
 
-	listenerFound := false
-	// wildcard listener is really for debugging purpose
-	if hasWildcardListener {
-		if vals, ok := eventListeners[`*`]; ok {
-			listenerFound = true
-			for _, lw := range vals {
-				if result := invokeListenerSafely(lw, e); result != Continue {
-					return result
-				}
-			}
-		}
-
-	}
-
-	if vals, ok := eventListeners[e.Type()]; ok {
-		listenerFound = true
-		for _, lw := range vals {
-			if result := invokeListenerSafely(lw, e); result != Continue {
-				return result
-			}
-		}
-	}
-
-	if !listenerFound {
-		t := e.Type()
-		eventsWithoutListeners[t] = eventsWithoutListeners[t] + 1
-		if eventsWithoutListeners[t]%NoListenerSampleSize == 0 {
-			mudlog.Error(`DoListeners`, "Event", t, "error", "no listener for event", "sample-size", NoListenerSampleSize)
+	for _, lw := range toRun {
+		if result := invokeListenerSafely(lw, e); result != Continue {
+			return result
 		}
 	}
 
