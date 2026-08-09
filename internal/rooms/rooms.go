@@ -747,6 +747,26 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 		}
 	}
 
+	// Drop any mob ids whose instance no longer exists before doing anything
+	// else. Stale ids rendered as phantom NPCs in "Also here:" that could not
+	// be looked at, attacked, or talked to, and they made the spawn
+	// bookkeeping below reason about mobs that are not there. GetMobs()
+	// filters them for display; the list itself needs pruning or it grows
+	// every time an instance is destroyed without its room entry cleaned up.
+	if len(r.mobs) > 0 {
+		liveMobs := make([]int, 0, len(r.mobs))
+		for _, mobInstanceId := range r.mobs {
+			if mobs.GetInstance(mobInstanceId) != nil {
+				liveMobs = append(liveMobs, mobInstanceId)
+			}
+		}
+		if len(liveMobs) != len(r.mobs) {
+			mudlog.Debug("Room.Prepare", "roomId", r.RoomId,
+				"msg", "pruned stale mob ids", "before", len(r.mobs), "after", len(liveMobs))
+			r.mobs = liveMobs
+		}
+	}
+
 	// First ensure any mobs that should be here are spawned
 	for idx, spawnInfo := range r.SpawnInfo {
 
@@ -1455,9 +1475,21 @@ func (r *Room) GetMobs(findTypes ...FindFlag) []int {
 		}
 	}
 
-	// If no filtering, just copy all mobs in the room and return it
+	// If no filtering, return every mob that still has a live instance.
+	//
+	// This used to return r.mobs verbatim. A stale id (an instance that was
+	// destroyed while its id stayed in the list) therefore rendered as a
+	// phantom in "Also here:" that could not be looked at, attacked, or
+	// talked to. Filtering here means a stale id is invisible immediately,
+	// even before Prepare() prunes it.
 	if typeFlag == FindAll {
-		return append([]int{}, r.mobs...)
+		liveMobs := make([]int, 0, len(r.mobs))
+		for _, mobId := range r.mobs {
+			if mobs.GetInstance(mobId) != nil {
+				liveMobs = append(liveMobs, mobId)
+			}
+		}
+		return liveMobs
 	}
 
 	var isCharmed bool = false
@@ -1870,6 +1902,16 @@ func (r *Room) findMobByName(searchName string, findTypes ...FindFlag) (int, err
 	for _, mId := range r.GetMobs(findTypes...) {
 
 		m := mobs.GetInstance(mId)
+
+		// A stale id in r.mobs makes GetInstance return nil. Without this
+		// guard the deref below panicked, the recovery upstream swallowed it,
+		// and the player saw "Look at what???" — for EVERY mob in the room,
+		// not just the stale one, because the loop never completed. Every
+		// other GetInstance call in this file already guards; this one did
+		// not. See the prune in Prepare() that stops the ids going stale.
+		if m == nil {
+			continue
+		}
 
 		if m.Character.IsCharmed() {
 			friendlyMobs[mId] = m // Put friendly mobs at the end of the list.

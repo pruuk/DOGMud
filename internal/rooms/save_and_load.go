@@ -89,12 +89,35 @@ func LoadRoom(roomId int) *Room {
 		return room
 	}
 
-	if room := LoadRoomInstance(roomId); room != nil {
-		addRoomToMemory(room)
-		return room
+	room := LoadRoomInstance(roomId)
+	if room == nil {
+		return nil
 	}
 
-	return nil
+	// Finding 8, second half. The cache check above and this store are not
+	// one atomic step, and LoadRoomInstance does disk I/O in between, so the
+	// window is wide. Two goroutines can both miss the cache and both build a
+	// separate *Room for the same roomId.
+	//
+	// addRoomToMemory rejects the loser, but its error used to be DISCARDED
+	// and the loser kept its own orphan copy. An orphan room is not in
+	// roomManager.rooms, so it is invisible to maintenance and unload, and
+	// anything that calls Prepare() on it spawns a SECOND copy of every mob
+	// in its SpawnInfo. That is a live duplicate-NPC source.
+	//
+	// On collision, throw our copy away and return the one that actually got
+	// cached, so every caller shares a single room object.
+	if err := addRoomToMemory(room); err != nil {
+		if cached := getRoomFromMemory(roomId); cached != nil {
+			return cached
+		}
+		// Store failed for some other reason and nothing is cached. Returning
+		// the uncached room would hand back an orphan, so report the miss.
+		mudlog.Error("LoadRoom", "roomId", roomId, "error", err, "msg", "room not cached and no existing entry")
+		return nil
+	}
+
+	return room
 }
 
 // See: B. LOADING ROOMS FROM FILES

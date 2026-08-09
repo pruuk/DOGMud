@@ -1,5 +1,21 @@
 # DOGMud Patch Notes
 
+## 2026-08-08: Phantom townsfolk no longer haunt their own rooms
+
+Some rooms listed people who were not really there. The same townsperson could
+appear twice in the "Also here" line, and neither copy could be looked at,
+spoken to, or fought. Looking a second time made them vanish.
+
+Worse, one of these phantoms broke targeting for **everyone else in that room**.
+If a room held a phantom, `look` at any real person there also failed. That is
+now fixed at the source: a room no longer lists anyone whose presence has
+ended, so the phantoms cannot appear and cannot block anything.
+
+Rooms could also, rarely, be built twice at the same moment when several
+players arrived together. Each copy then populated its own townsfolk, which is
+one way duplicates appeared in the first place. Rooms are now shared properly
+instead.
+
 ## 2026-08-08: Giving gold, wandering monsters, and vanished messages
 
 Giving gold now hands over the amount you actually typed. Written without a
