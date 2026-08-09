@@ -166,9 +166,7 @@ help:
   skill:
     all:
       - cast
-      - inspect
       - map
-      - pickpocket
       - search
       - sneak
       - track
