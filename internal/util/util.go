@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"crypto/md5"
@@ -25,8 +26,19 @@ import (
 )
 
 var (
-	turnCount    uint64 = 0
-	roundCount   uint64 = RoundCountMinimum
+	// turnCount and roundCount are atomic because they cross goroutine
+	// boundaries. Review finding 4: the world loop increments them while
+	// asynchronous consumers read them with no synchronization at all, most
+	// visibly internal/llm/cache.go, which drives cache expiry off
+	// GetRoundCount from its own goroutines. That is a data race, so under
+	// the Go memory model a reader could see a stale or torn value and expire
+	// a cache entry early, late, or never.
+	//
+	// Every one of the ~213 call sites goes through the accessors below, so
+	// the atomics are an internal detail. Do NOT reintroduce a plain uint64
+	// here; the race is not theoretical and -race will fail on it in CI.
+	turnCount    atomic.Uint64
+	roundCount   atomic.Uint64
 	timeTrackers        = map[string]*Accumulator{}
 	serverAddr   string = `Unknown`
 
@@ -105,36 +117,40 @@ func GetServerAddress() string {
 	return serverAddr
 }
 
+// init seeds roundCount, because atomic.Uint64's zero value is 0 and the
+// round counter must never start below RoundCountMinimum.
+func init() {
+	roundCount.Store(RoundCountMinimum)
+}
+
 func SetRoundCount(newRoundCount uint64) {
-	roundCount = newRoundCount
+	roundCount.Store(newRoundCount)
 }
 
 func IncrementTurnCount() uint64 {
-	turnCount++
-	return turnCount
+	return turnCount.Add(1)
 }
 
 func GetTurnCount() uint64 {
-	return turnCount
+	return turnCount.Load()
 }
 
 func IncrementRoundCount() uint64 {
-	roundCount++
-	return roundCount
+	return roundCount.Add(1)
 }
 
 func GetRoundCount() uint64 {
-	return roundCount
+	return roundCount.Load()
 }
 
 // SetRoundCountForTest overrides the round count for test use.
 func SetRoundCountForTest(r uint64) {
-	roundCount = r
+	roundCount.Store(r)
 }
 
 // ResetRoundCountForTest resets the round count to RoundCountMinimum.
 func ResetRoundCountForTest() {
-	roundCount = RoundCountMinimum
+	roundCount.Store(RoundCountMinimum)
 }
 
 func TrackTime(name string, timePassed float64) {
@@ -878,7 +894,7 @@ func BoolYN(b bool) string {
 
 func SaveRoundCount(fpath string) {
 
-	err := os.WriteFile(fpath, []byte(strconv.FormatUint(roundCount, 10)), 0644)
+	err := os.WriteFile(fpath, []byte(strconv.FormatUint(roundCount.Load(), 10)), 0644)
 	if err != nil {
 		mudlog.Error("SaveRoundCount()", "error", err)
 	}
@@ -889,24 +905,24 @@ func LoadRoundCount(fpath string) uint64 {
 
 	roundCountData, err := os.ReadFile(fpath)
 	if err != nil {
-		roundCount = RoundCountMinimum
+		roundCount.Store(RoundCountMinimum)
 		mudlog.Warn("LoadRoundCount()", "error", err, "message", "Trying to create... (First time running?)")
 		SaveRoundCount(fpath)
-		roundCountData = []byte(strconv.FormatUint(roundCount, 10))
+		roundCountData = []byte(strconv.FormatUint(roundCount.Load(), 10))
 	}
 
 	roundCountUint64, err := strconv.ParseUint(string(roundCountData), 10, 64)
 	if err != nil {
 		mudlog.Warn("LoadRoundCount()", "error", err, "file-contents", string(roundCountData))
 	} else {
-		roundCount = roundCountUint64
+		roundCount.Store(roundCountUint64)
 	}
 
-	if roundCount < RoundCountMinimum {
-		roundCount = RoundCountMinimum
+	if roundCount.Load() < RoundCountMinimum {
+		roundCount.Store(RoundCountMinimum)
 	}
 
-	return roundCount
+	return roundCount.Load()
 }
 
 func StripANSI(str string) string {

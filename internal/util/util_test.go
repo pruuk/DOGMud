@@ -79,7 +79,7 @@ func TestRoundCount(t *testing.T) {
 func TestTurnCount(t *testing.T) {
 	// turnCount is also a global variable.
 	// For test isolation, zero it out or set to a known value.
-	turnCount = 0
+	turnCount.Store(0)
 
 	if GetTurnCount() != 0 {
 		t.Fatalf("Expected turnCount to be 0, got %d", GetTurnCount())

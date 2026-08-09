@@ -15,8 +15,8 @@ func (u *utilCopyoverContributor) CopyoverName() string {
 
 func (u *utilCopyoverContributor) CopyoverSave(enc *copyover.Encoder) error {
 	return enc.WriteSection(u.CopyoverName(), countsState{
-		RoundCount: roundCount,
-		TurnCount:  turnCount,
+		RoundCount: roundCount.Load(),
+		TurnCount:  turnCount.Load(),
 	})
 }
 
@@ -25,8 +25,8 @@ func (u *utilCopyoverContributor) CopyoverRestore(dec *copyover.Decoder) error {
 	if err := dec.ReadSection(u.CopyoverName(), &state); err != nil {
 		return err
 	}
-	roundCount = state.RoundCount
-	turnCount = state.TurnCount
+	roundCount.Store(state.RoundCount)
+	turnCount.Store(state.TurnCount)
 	return nil
 }
 
