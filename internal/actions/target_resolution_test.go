@@ -221,16 +221,31 @@ func TestResolveTargetActor_StalePlayerId(t *testing.T) {
 		"helper must convert nil GetByUserId result to ErrTargetVanished")
 }
 
-// TestResolveTargetActor_StaleMobId: FindByName returns a mob ID but the
-// instance is gone from the registry. → ErrTargetVanished.
+// TestResolveTargetActor_StaleMobId: the instance is destroyed but its id is
+// still in the room's mob list. → ErrTargetNotFound.
 //
-// We use the #instanceId syntax intentionally because the name-based path
-// dereferences the mob record without nil-checking inside findMobByName
-// itself (mob.Character.IsCharmed()), which would crash before reaching
-// the helper. The race we model here is the genuine "registry mutated
-// between FindByName and helper's GetInstance call" case — #id flows the
-// id through the mob list without a name-table dereference, exposing the
-// helper's nil guard.
+// BEHAVIOUR CHANGED 2026-08-08. This test used to assert ErrTargetVanished,
+// and its comment noted that the name-based path "dereferences the mob record
+// without nil-checking inside findMobByName itself (mob.Character.IsCharmed()),
+// which would crash before reaching the helper". That crash was a real bug,
+// found in a user playtest as phantom "Sala the Mender #1 / #2" NPCs that
+// could not be looked at and that broke targeting for every other mob in the
+// room. It is now fixed two ways:
+//
+//   - Room.GetMobs no longer surfaces ids whose instance is gone, so a stale
+//     id is not offered to any caller.
+//   - findMobByName nil-checks before the deref.
+//
+// Because GetMobs filters first, a destroyed instance is no longer part of the
+// room at all, so "not found" is the accurate answer rather than "vanished".
+// The assertion was updated to match the fix, not the fix bent to match the
+// assertion.
+//
+// The helper's ErrTargetVanished guard is still load-bearing: it covers the
+// genuine race where the registry is mutated BETWEEN FindByName and the
+// helper's own GetInstance call. That window cannot be simulated
+// deterministically here, which is why this test now pins the pre-destroyed
+// case instead.
 func TestResolveTargetActor_StaleMobId(t *testing.T) {
 	cleanup := seedTargetResolutionRegistries(t)
 	defer cleanup()
@@ -244,15 +259,22 @@ func TestResolveTargetActor_StaleMobId(t *testing.T) {
 	require.NotNil(t, target)
 	require.Equal(t, 100, target.GetMobInstanceId())
 
-	// Destroy the instance while leaving the room's mob list (containing
-	// instance id 100) intact — the registry mutation race the helper
-	// guards against.
+	// Destroy the instance while leaving the room's mob list (still
+	// containing instance id 100) intact.
 	mobs.DestroyInstance(100)
 
 	target2, err2 := ResolveTargetActor(room, "#100")
 	assert.Nil(t, target2)
-	assert.ErrorIs(t, err2, ErrTargetVanished,
-		"helper must convert nil GetInstance result to ErrTargetVanished")
+	assert.ErrorIs(t, err2, ErrTargetNotFound,
+		"a destroyed instance must not be resolvable, and is no longer part of the room")
+
+	// And the name-based path, which used to panic outright on a stale id,
+	// must now simply fail to find anything.
+	assert.NotPanics(t, func() {
+		if _, nameErr := ResolveTargetActor(room, "testmob"); nameErr == nil {
+			t.Error("name lookup resolved a destroyed instance")
+		}
+	}, "name-based resolution must not panic on a stale mob id")
 }
 
 // TestResolveTargetActor_ExcludeSelf: a user matches but is excluded via
