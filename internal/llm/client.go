@@ -45,16 +45,21 @@ func AskAsync(
 			}
 		}()
 
-		// 1. If another request is already in-flight for this mob, fall back immediately.
-		if isPending(mobInstanceId) {
+		// 1. Claim the in-flight slot for this mob. The check and the claim
+		// happen in one critical section, so two concurrent requests for the
+		// same mob cannot both proceed. Losing the race falls back
+		// immediately, exactly as before.
+		if !tryMarkPending(mobInstanceId) {
 			mudlog.Info(`llm`, `status`, fmt.Sprintf("mob %d already pending, falling back to YAML", mobInstanceId))
 			util.LockMud()
 			onUnavailable()
 			util.UnlockMud()
 			return
 		}
+		defer clearPending(mobInstanceId)
 
-		// 2. Check response cache.
+		// 2. Check response cache. This stays AFTER the admission check so the
+		// pending-before-cache decision order is unchanged from before.
 		if cached, ok := checkCache(mobInstanceId, topic); ok {
 			mudlog.Info(`llm`, `status`, fmt.Sprintf("mob %d cache hit for topic %q", mobInstanceId, topic))
 			util.LockMud()
@@ -62,10 +67,6 @@ func AskAsync(
 			util.UnlockMud()
 			return
 		}
-
-		// 3. Mark as in-flight.
-		setPending(mobInstanceId, true)
-		defer setPending(mobInstanceId, false)
 
 		// 4. Build system prompt.
 		maxWords := profile.MaxWords

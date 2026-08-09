@@ -59,20 +59,32 @@ func storeCache(mobInstanceId int, topic, response string, ttl string) {
 	}
 }
 
-// isPending returns true if there is already an in-flight request for this mob.
-func isPending(mobInstanceId int) bool {
+// tryMarkPending atomically claims the in-flight slot for a mob. It returns
+// true if the caller now owns the slot and must release it with clearPending,
+// and false if another request already holds it.
+//
+// Review finding 21. This replaces a separately-locked isPending() check
+// followed later by setPending(true). Each call was individually locked, but
+// the gap between them was not, so two goroutines could both observe "not
+// pending" and both proceed. That produced duplicate model requests and, worse,
+// duplicate callbacks that each mutated dialogue state for the same mob.
+//
+// The check and the claim must stay inside ONE critical section. Do not split
+// this back into a query plus a setter.
+func tryMarkPending(mobInstanceId int) bool {
 	pendingMu.Lock()
 	defer pendingMu.Unlock()
-	return pending[mobInstanceId]
+	if pending[mobInstanceId] {
+		return false
+	}
+	pending[mobInstanceId] = true
+	return true
 }
 
-// setPending marks or clears the in-flight flag for a mob.
-func setPending(mobInstanceId int, val bool) {
+// clearPending releases the in-flight slot for a mob. Safe to call for a mob
+// that does not hold the slot.
+func clearPending(mobInstanceId int) {
 	pendingMu.Lock()
 	defer pendingMu.Unlock()
-	if val {
-		pending[mobInstanceId] = true
-	} else {
-		delete(pending, mobInstanceId)
-	}
+	delete(pending, mobInstanceId)
 }
