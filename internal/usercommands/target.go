@@ -94,9 +94,17 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			return true, nil
 		}
 
-		// Can't target any companion
-		if m.Character.IsCharmed() {
+		// Same authorization policy as attack, melee special moves, shoot and
+		// harmful spells. Before finding 3 this checked companions only, so a
+		// player already in combat could swing at a protected quest NPC by
+		// switching targets onto it.
+		switch mobs.CheckPlayerHarm(m) {
+		case mobs.HarmBlockedCompanion:
 			user.SendText(messaging.CategorySystem, fmt.Sprintf("<ansi fg=\"mobname\">%s</ansi> is someone's companion!", m.Character.Name))
+			return true, nil
+		case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
+			user.SendText(messaging.CategorySystem, fmt.Sprintf("You can't attack <ansi fg=\"mobname\">%s</ansi>.", m.Character.Name))
+			mobs.FireAttackRejected(m, user.UserId)
 			return true, nil
 		}
 	}

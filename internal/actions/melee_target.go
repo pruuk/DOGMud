@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -122,17 +123,17 @@ func AcquireMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, o
 
 	if !target.IsPlayer() {
 		mob := target.(*MobActor).Mob
-		if mob.IsNonCombatant() || mob.PlayerAttackImmune {
-			user.SendText(messaging.CategorySystem,
-				fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, mob.Character.Name))
-			return true
-		}
 		// Player companions are off-limits to every melee special move, the
 		// same way `attack` already refuses them. Before this was centralised,
 		// only taunt enforced it, so a companion could be bashed/kicked/
 		// grappled/tripped with no message at all.
-		if mob.Character.IsCharmed() {
+		switch mobs.CheckPlayerHarm(mob) {
+		case mobs.HarmBlockedCompanion:
 			user.SendText(messaging.CategorySystem, opts.charmedMsg())
+			return true
+		case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
+			user.SendText(messaging.CategorySystem,
+				fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, mob.Character.Name))
 			return true
 		}
 		user.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)

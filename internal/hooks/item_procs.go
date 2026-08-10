@@ -250,15 +250,12 @@ func procAoeStun(owner *characters.Character, room *rooms.Room, params map[strin
 		if m == nil {
 			continue
 		}
-		if m.IsNonCombatant() || m.PlayerAttackImmune {
-			continue
-		}
-		// Spare ALL charmed companions, whoever their master is — the
-		// player-cast HarmArea precedent (spell_resolution.go, resolveSpell)
-		// uses bare IsCharmed() for exactly this: a non-party bystander's
+		// Spare non-combatants, attack-immune mobs, and ALL charmed
+		// companions whoever their master is — a non-party bystander's
 		// companion caught in the shockwave would be a prod incident just as
-		// surely as a party member's.
-		if m.Character.IsCharmed() {
+		// surely as a party member's. mobs.CheckPlayerHarm is the same policy
+		// the player-cast HarmArea path applies in resolveSpell.
+		if mobs.CheckPlayerHarm(m).Blocked() {
 			continue
 		}
 		_ = m.Character.AddBuff(84, false)

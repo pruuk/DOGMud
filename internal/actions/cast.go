@@ -90,19 +90,10 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		if targetName != `` {
 			pId, mId := room.FindByName(targetName)
 			if mId > 0 {
-				// Don't let players target a companion or non-combatant with harm spells
-				if actor.IsPlayer() {
-					if m := mobs.GetInstance(mId); m != nil {
-						if m.Character.IsCharmed() {
-							actor.SendText(messaging.CategorySystem, "You can't target a companion with a harmful spell.")
-							return CastResult{SpellInfo: spellInfo, NoTarget: true}
-						}
-						if m.IsNonCombatant() {
-							actor.SendText(messaging.CategorySystem, fmt.Sprintf("You can't target %s with a harmful spell.", m.Character.Name))
-							mobs.FireAttackRejected(m, actor.GetUserId())
-							return CastResult{SpellInfo: spellInfo, NoTarget: true}
-						}
-					}
+				// Companions, non-combatants and player_attack_immune mobs are
+				// off-limits to harmful spells, exactly as they are to melee.
+				if rejectHarmTarget(actor, mId) {
+					return CastResult{SpellInfo: spellInfo, NoTarget: true}
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
@@ -128,8 +119,14 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 			}
 		} else if actor.IsPlayer() {
 			// Player fallback: current aggro → party leader's aggro.
+			// A player_attack_immune mob can still fight, so it can put itself
+			// in the player's aggro slot. That must not become a licence to
+			// spell it — the same policy applies to the implicit target.
 			pId, mId := resolvePlayerAggroTarget(actor, room)
 			if mId > 0 {
+				if rejectHarmTarget(actor, mId) {
+					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
 				targetUserIds = append(targetUserIds, pId)
@@ -148,9 +145,15 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		}
 
 	case spells.HarmMulti:
+		// HarmMulti enforced no target policy at all before finding 3, so a
+		// chain-lightning style spell could open on a protected NPC that melee
+		// and HarmSingle both refused.
 		if targetName != `` {
 			pId, mId := room.FindByName(targetName)
 			if mId > 0 {
+				if rejectHarmTarget(actor, mId) {
+					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
 				targetUserIds = append(targetUserIds, pId)
@@ -158,6 +161,9 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		} else if actor.IsPlayer() {
 			pId, mId := resolvePlayerAggroTarget(actor, room)
 			if mId > 0 {
+				if rejectHarmTarget(actor, mId) {
+					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
 				targetUserIds = append(targetUserIds, pId)
@@ -228,11 +234,11 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		}
 		for _, mId := range room.GetMobs() {
 			if mId != actor.GetMobInstanceId() {
-				// Don't target the caster's own companions
-				if actor.IsPlayer() {
-					if m := mobs.GetInstance(mId); m != nil && m.Character.IsCharmed(actor.GetUserId()) {
-						continue
-					}
+				// Spare companions, non-combatants and attack-immune mobs.
+				// Area harm previously spared only the caster's own companion,
+				// so a fireball hit protected NPCs standing in the room.
+				if actor.IsPlayer() && mobs.CheckPlayerHarm(mobs.GetInstance(mId)).Blocked() {
+					continue
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			}
@@ -306,6 +312,38 @@ func GetSpellStatAndSkill(char *characters.Character, spellData *spells.SpellDat
 // ---------------------------------------------------------------------------
 // Internal target resolution helpers
 // ---------------------------------------------------------------------------
+
+// rejectHarmTarget applies the shared player-harm authorization policy
+// (mobs.CheckPlayerHarm) to a prospective mob target of a harmful spell.
+//
+// It returns true when the cast must be refused, having already sent the
+// caster the reason. Mob casters are never gated: these protections describe
+// what *players* may do, and a hostile mob is free to fight another mob.
+func rejectHarmTarget(actor Actor, mobInstanceId int) bool {
+	if !actor.IsPlayer() {
+		return false
+	}
+
+	m := mobs.GetInstance(mobInstanceId)
+	if m == nil {
+		return false
+	}
+
+	switch mobs.CheckPlayerHarm(m) {
+	case mobs.HarmBlockedCompanion:
+		actor.SendText(messaging.CategorySystem, "You can't target a companion with a harmful spell.")
+		return true
+	case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
+		actor.SendText(messaging.CategorySystem,
+			fmt.Sprintf("You can't target %s with a harmful spell.", m.Character.Name))
+		// Let the mob's behavior tree react to the refused aggression, the
+		// same way a refused melee attack does.
+		mobs.FireAttackRejected(m, actor.GetUserId())
+		return true
+	}
+
+	return false
+}
 
 // resolvePlayerAggroTarget returns the player's current aggro target, falling
 // back to the party leader's aggro target if the player has no aggro of their

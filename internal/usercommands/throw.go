@@ -142,13 +142,8 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			continue
 		}
 
-		// Skip all companions
-		if mob.Character.IsCharmed() {
-			continue
-		}
-
-		// Skip non-combatants and player-attack-immune mobs
-		if mob.IsNonCombatant() || mob.PlayerAttackImmune {
+		// Skip companions, non-combatants and player-attack-immune mobs.
+		if mobs.CheckPlayerHarm(mob).Blocked() {
 			continue
 		}
 
