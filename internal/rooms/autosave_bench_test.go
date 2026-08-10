@@ -91,7 +91,14 @@ func benchSaveAllRooms(b *testing.B, n int, dirty bool) {
 	defer restore()
 
 	cleanup := seedBenchRooms(b, tempDir, n, dirty)
+
+	// StopTimer before cleanup (defers run LIFO). removeRoomFromMemory calls
+	// SaveRoomInstance, so tearing down 1000 dirty rooms performs 1000 real
+	// durable writes, and Go stops the clock at function return rather than at
+	// the end of the b.N loop. Fixed 2026-08-10 alongside the 3.6b-1 prepare
+	// benchmarks, where the same flaw inflated a number by 6x.
 	defer cleanup()
+	defer b.StopTimer()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
