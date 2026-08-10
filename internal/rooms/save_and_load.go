@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/casing"
@@ -14,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/savequeue"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
@@ -378,6 +378,13 @@ func DeleteRoomTemplate(roomId int) error {
 		return errors.New(`ephemeral rooms have no template to delete`)
 	}
 
+	// Guard G2 (chunk 3.6b-1). This path deletes room data WITHOUT going through
+	// SaveRoomInstance, so nothing else cancels a pending write for it. Left
+	// queued, the commit would try to write an instance overlay for a room whose
+	// template no longer exists. Cancel BEFORE the removal, while the room is
+	// still resolvable.
+	cancelPendingInstanceWriteById(roomId)
+
 	if filename := roomManager.GetFilePath(roomId); filename != `` {
 		roomFilePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/rooms/`, filename)
 		if err := os.Remove(roomFilePath); err != nil && !os.IsNotExist(err) {
@@ -392,81 +399,28 @@ func DeleteRoomTemplate(roomId int) error {
 }
 
 // See: D. SAVING ROOMS INSTANCES
+//
+// The body of this function moved to PrepareInstanceWrite + savequeue.Commit in
+// chunk 3.6b-1. This remains the synchronous composition of the two, because
+// unload, the builder, shutdown and copyover all legitimately want "save this
+// room now, and tell me if it failed". Behaviour is unchanged: same diff, same
+// bytes, same delete-when-empty, same CarefulSaveFiles handling.
+//
+// It also CANCELS any queued write for this room. A pending entry holds an
+// older snapshot by definition, so letting it commit afterwards would clobber
+// the newer state this call just wrote (guard G2).
 func SaveRoomInstance(r Room) error {
 
-	if r.IsEphemeral() {
-		return errors.New(`ephemeral rooms are not saved`)
-	}
-
-	rTpl := LoadRoomTemplate(r.RoomId) // This is also a Room{}
-	if rTpl == nil {
-		return fmt.Errorf(`could not load template for room %d`, r.RoomId)
-	}
-
-	rVal := reflect.ValueOf(r)
-	tplVal := reflect.ValueOf(*rTpl)
-	t := reflect.TypeOf(r)
-
-	instanceSaveData := make(map[string]interface{})
-
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		if field.PkgPath != "" {
-			continue
-		}
-
-		yamlTag := field.Tag.Get("yaml")
-		if yamlTag == `-` {
-			continue
-		}
-
-		if field.Tag.Get("instance") == "skip" {
-			continue
-		}
-
-		rVal2 := rVal.Field(i)
-		tplVal2 := tplVal.Field(i)
-
-		if reflect.DeepEqual(rVal2.Interface(), tplVal2.Interface()) {
-			continue
-		}
-
-		tagParts := strings.Split(yamlTag, ",")
-		fieldName := tagParts[0]
-		if fieldName == `` || fieldName == `omitempty` || fieldName == `flow` {
-			fieldName = field.Name
-		}
-
-		instanceSaveData[fieldName] = rVal2.Interface()
-
-	}
-
-	zone := ZoneToFolder(r.Zone)
-	folderPath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/rooms.instances/`, zone)
-	instanceFilePath := fmt.Sprintf("%s%d.yaml", folderPath, r.RoomId)
-
-	if len(instanceSaveData) == 0 {
-		// The room has nothing instance-specific left, so its overlay should go
-		// away. A failed delete is NOT harmless: the stale file is re-applied on
-		// the next room load, resurrecting state this room no longer has. The
-		// error used to be discarded entirely.
-		if err := os.Remove(instanceFilePath); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("SaveRoomInstance: remove stale overlay %s: %w", instanceFilePath, err)
-		}
-		return nil
-	}
-
-	data, err := yaml.Marshal(instanceSaveData)
+	p, err := PrepareInstanceWrite(r)
 	if err != nil {
 		return err
 	}
 
-	// Honour CarefulSaveFiles — see SaveRoomTemplate. Instance files are
-	// re-read on every room load, so a torn one is just as fatal.
-	if err = util.Save(instanceFilePath, data, bool(configs.GetFilePathsConfig().CarefulSaveFiles)); err != nil {
-		return err
-	}
+	CancelPendingInstanceWrite(r)
 
+	if err := savequeue.Commit(p); err != nil {
+		return fmt.Errorf("SaveRoomInstance: room %d: %w", r.RoomId, err)
+	}
 	return nil
 }
 

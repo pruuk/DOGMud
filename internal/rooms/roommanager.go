@@ -148,6 +148,12 @@ func ClearRoomCache(roomId int) error {
 		return fmt.Errorf(`room %d not found in cache`, roomId)
 	}
 
+	// Guard G2 (chunk 3.6b-1). Autosave may hold a prepared write for this room
+	// that has not committed yet. Once the room leaves the cache nothing owns
+	// that state any more, and the pending bytes are a snapshot of a room the
+	// game has forgotten. Dropping it here is the only chance to stop it.
+	CancelPendingInstanceWrite(*room)
+
 	if zoneData, ok := roomManager.zones[room.Zone]; ok {
 		delete(zoneData.RoomIds, roomId)
 		roomManager.zones[room.Zone] = zoneData
