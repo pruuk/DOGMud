@@ -101,39 +101,6 @@ func TestLI_007_CascadeFires(t *testing.T) {
 	require.Contains(t, transitionedTo, Dead)
 }
 
-func TestLI_008_AwarenessCascade(t *testing.T) {
-	t.Skip("Awareness cascade verified by integration in Task 5")
-}
-func TestLI_009_ActivityCascade(t *testing.T) {
-	t.Skip("Activity cascade verified by integration in Task 5")
-}
-func TestLI_010_PositionCascade(t *testing.T) {
-	t.Skip("Position cascade verified by integration in Task 5")
-}
-func TestLI_011_BuffsCancel(t *testing.T) {
-	t.Skip("Buff cancel verified by integration in Task 5")
-}
-func TestLI_012_ConditionsClear(t *testing.T) {
-	t.Skip("Conditions clear verified by integration in Task 5")
-}
-
-// LI-013 through LI-015: Dead → Respawning cascade verified in
-// Task 5/8.
-func TestLI_013_ResourceReset(t *testing.T) {
-	t.Skip("Resource reset verified by integration in Task 5")
-}
-func TestLI_014_GraceBuff(t *testing.T) {
-	t.Skip("Grace buff verified by integration in Task 5")
-}
-func TestLI_015_Teleport(t *testing.T) {
-	t.Skip("Teleport verified by integration in Task 8 observer")
-}
-
-// LI-016: Auto-look verified by integration in Task 8 observer.
-func TestLI_016_AutoLook(t *testing.T) {
-	t.Skip("Auto-look verified by integration in Task 8 observer")
-}
-
 // LI-017: DeadData.Killer populated from transition reason.
 func TestLI_017_KillerCaptured(t *testing.T) {
 	A, _, _ := makeTriad()
@@ -177,28 +144,6 @@ func TestLI_019_DeadDataObservable(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, actor(2), observed.Killer)
 	require.Equal(t, dmg, observed.DamageMap)
-}
-
-// LI-020 through LI-022: Mob-specific observers (Task 7).
-func TestLI_020_LootDropFires(t *testing.T) {
-	t.Skip("Loot drop verified by integration in Task 7 observer")
-}
-func TestLI_021_MobDeathEventFires(t *testing.T) {
-	t.Skip("MobDeath event verified by integration in Task 7 observer")
-}
-func TestLI_022_InstanceCleanupScheduled(t *testing.T) {
-	t.Skip("Instance cleanup verified by integration in Task 7 observer")
-}
-
-// LI-023 through LI-025: Player-specific observers (Task 6).
-func TestLI_023_StatDecay(t *testing.T) {
-	t.Skip("Stat decay verified by integration in Task 6 observer")
-}
-func TestLI_024_KDTracking(t *testing.T) {
-	t.Skip("KD tracking verified by integration in Task 6 observer")
-}
-func TestLI_025_PartyNotifications(t *testing.T) {
-	t.Skip("Party notifications verified by integration in Task 6 observer")
 }
 
 // LI-026: Fresh Machine is Alive.

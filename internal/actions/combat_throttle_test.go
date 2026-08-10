@@ -143,7 +143,10 @@ func TestThrottle_Executed_BleedAndBuff(t *testing.T) {
 	}
 
 	if !hitSeen {
-		t.Skip("no hit observed in 100 attempts — probabilistic test; re-run if flaky")
+		// Not a flake to shrug off. The per-attempt hit rate here is high
+		// enough that 100 consecutive misses is effectively impossible;
+		// skipping meant the assertions below never ran (review finding 24).
+		t.Fatal("no hit in 100 attempts — throttle hit path is broken")
 	}
 
 	// ConditionBleeding should be applied.
@@ -240,7 +243,10 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 	}
 
 	if !hitSeen {
-		t.Skip("no hit observed in 100 attempts — probabilistic test; re-run if flaky")
+		// Not a flake to shrug off. The per-attempt hit rate here is high
+		// enough that 100 consecutive misses is effectively impossible;
+		// skipping meant the assertions below never ran (review finding 24).
+		t.Fatal("no hit in 100 attempts — throttle hit path is broken")
 	}
 
 	// Cast should have been interrupted.

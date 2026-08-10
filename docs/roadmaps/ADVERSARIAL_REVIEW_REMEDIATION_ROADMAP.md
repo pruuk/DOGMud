@@ -112,9 +112,17 @@ All small, all independently shippable. Nothing here blocks anything else.
 | 7 | **20a** | 4.2 | Server timeouts only. Split from the Host-redirect half |
 | 8 | **29, 31** | 6.2, 6.4 | Trivial deletions. **Both invented dependencies dropped** |
 
-**Track B, in parallel:** chunks 1.1 (CI lint/coverage parity, generated-file
-and JS gates, Makefile toolchain and world paths — findings 10, 25, 26) and 1.2
-(findings 9, 24). Disjoint file set from Wave 1, so run them concurrently.
+**Track B — COMPLETE 2026-08-10.** Chunks 1.1 (findings 10, 25, 26) and 1.2
+(findings 9, 24). Ran parallel to Wave 1 on a disjoint file set, as planned.
+
+Two notes for whoever picks up the next chunk:
+
+- **Style-lint backlogs are now the blocker in two languages.** Go has 97
+  golangci-lint findings and JavaScript has 1637 jshint findings, so both
+  gates ship as new-issues-only (Go) or syntax-only (JS). Chunk 6.5 owns
+  clearing them; until then neither can be made fully enforcing.
+- **`make test` currently fails**, because it depends on `js-lint`, which runs
+  the full jshint backlog. Fold that into 6.5 as well.
 
 ### Wave 2 — Stop silent state loss
 
@@ -176,8 +184,8 @@ further decomposition
 | 0.3b | Materialize synthetic player profiles | L | 0.3a | Supporting | Done |
 | 0.3c | Integrate single-agent ephemeral playtests | M | 0.3a, 0.3b | Supporting | Done |
 | 0.3d | Integrate multi-agent ephemeral scenarios | L | 0.3c | Supporting | Done |
-| 1.1 | Unify validation across PR, master, and release | M | — | 10, 25, 26 | Not started |
-| 1.2 | Replace phantom and probabilistic tests | M | — | 9, 24 | Not started |
+| 1.1 | Unify validation across PR, master, and release | M | — | 10, 25, 26 | **Done 2026-08-10** |
+| 1.2 | Replace phantom and probabilistic tests | M | — | 9, 24 | **Done 2026-08-10** |
 | 1.3 | Eliminate immediate static-analysis crash risks | S | — | 28 | **Done 2026-08-08** |
 | 1.4 | Decide and enforce the YAML compatibility boundary | M | — | 33 | Not started |
 | 1.5 | Remove tracked playtest credentials | S | — | Security follow-up | **In progress — tree clean, ROTATION OUTSTANDING** |
@@ -1034,8 +1042,8 @@ only when all of its subchunks close.
 | 6 | 2.4 | Open | — | Corrupt shop treated as new |
 | 7 | 2.3 | Open | — | Guild/moderation memory-disk divergence |
 | 8 | 3.3 | **Done** | `8dd24e4c8`; RWMutex + 7 accessors, 8 sites (review named 1) + 6 concurrency tests | Unsynchronized room path cache |
-| 9 | 1.2 | Open | — | Phantom position tests |
-| 10 | 1.1 | Open | — | Release CI omits lint/coverage |
+| 9 | 1.2 | **Done** | 164 skip-only placeholders deleted (review named 87 in one file; pattern spanned 18) + 4 emptied files removed + go/ast recurrence guard | Phantom position tests |
+| 10 | 1.1 | **Done** | Reusable validate.yml consumed by PR, master and tags; only-new-issues verified to work on push | Release CI omits lint/coverage |
 | 11 | 5.3 | **Done** | `e23df1071`; `pickWanderExit` + 5 tests | Wander filter ignored |
 | 12 | 5.4 | **Done** | `e23df1071`; `parseGoldPhrase` shared by both paths + 2 tests | Gold-give parse mismatch |
 | 13 | 2.6 | Open | — | Builder ignores save failures |
@@ -1049,9 +1057,9 @@ only when all of its subchunks close.
 | 21 | 3.2 | **Done** | `tryMarkPending` single critical section + 4 tests | LLM check-then-set race |
 | 22 | 3.4 | **Done** | snapshot under RLock, invoke unlocked; deadlock reproduced pre-fix | Listener lock held across callbacks |
 | 23 | 6.1a–6.1d | Open | — | Production and test implementation duplication |
-| 24 | 1.2 | Open | — | Probabilistic tests skip assertions |
-| 25 | 1.1 | Open | — | Missing generated/JavaScript CI gates |
-| 26 | 1.1 | Open | — | Stale Makefile toolchain and world paths |
+| 24 | 1.2 | **Done** | 6 sites now Fatal instead of Skip; P(false fire) ~1e-84; verified -count=5 | Probabilistic tests skip assertions |
+| 25 | 1.1 | **Done** | git diff --exit-code after go generate; node --check over 20 tracked JS files + safe-dom tests. Style lint deferred: jshint backlog is 1637 | Missing generated/JavaScript CI gates |
+| 26 | 1.1 | **Done** | GO_VERSION derived from go.mod; clean-instances targets world/dogmud rooms+mobs instances | Stale Makefile toolchain and world paths |
 | 27 | 5.6 | Open | — | Partial parser adoption |
 | 28 | 1.3 | **Done** | `e23df1071`; 4 sites fixed (2 named, 2 found by the test) + 3 tests | Plausible nil dereferences |
 | 29 | 6.2 | **Done** | `OnLowResource` deleted; the two doc mentions are correct as-is (context.md describes it as replaced, DEVELOPMENT_PLAN entry is a completed-stage record) | Dead progression hook |

@@ -48,7 +48,3 @@ func TestEquipBestFloorItem_InCombatSkips(t *testing.T) {
 		t.Errorf("expected false for in-combat mob")
 	}
 }
-
-func TestEquipBestFloorItem_RealSwap_FixtureLimited(t *testing.T) {
-	t.Skip("requires loaded item specs to score IsUpgrade meaningfully; covered by Task 6 smoke")
-}

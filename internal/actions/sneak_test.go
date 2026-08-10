@@ -86,22 +86,6 @@ func TestCalcSneakScore_AW025_LitRoom(t *testing.T) {
 		"lit-room modifier should be exactly 0.9× of dark-room baseline")
 }
 
-// AW-026: Lit sneaker (emits light), dark room — 0.5×.
-// AW-027: Lit sneaker (emits light), lit room — 0.85×.
-// SKIPPED: requires a character with EmitsLight=true, which needs a buff or
-// equipment carrying the lightsource flag. This is an integration concern;
-// the four-way switch in CalcSneakScore is covered by unit inspection and
-// the AW-024/025 cases confirm the conditional machinery works.
-func TestCalcSneakScore_AW026_BeaconInDarkness(t *testing.T) {
-	t.Skip("AW-026/027: EmitsLight=true requires buff/equipment setup beyond" +
-		" unit-test scope. Covered by in-game smoke.")
-}
-
-func TestCalcSneakScore_AW027_LitSneakerLitRoom(t *testing.T) {
-	t.Skip("AW-026/027: EmitsLight=true requires buff/equipment setup beyond" +
-		" unit-test scope. Covered by in-game smoke.")
-}
-
 // ---------------------------------------------------------------------------
 // CalcSearchScore Tests
 // ---------------------------------------------------------------------------
@@ -176,3 +160,13 @@ func TestSneak_InCombat(t *testing.T) {
 	assert.False(t, result.AlreadyHidden, "should not be already hidden")
 	assert.False(t, result.RollHappened, "no roll should happen when in combat")
 }
+
+// Known gap: the EmitsLight branches of CalcSneakScore (AW-026 / AW-027) have
+// no unit coverage.
+//
+// Two skip-only placeholders for these were deleted with the rest of the
+// permanently skipped tests (review finding 9). The blocker they described is
+// real and is kept here: EmitsLight=true needs buff/equipment setup beyond
+// what these table tests construct. The behaviour is currently exercised only
+// by in-game smoke testing. The AW-024/025 cases above do cover the
+// surrounding conditional machinery.

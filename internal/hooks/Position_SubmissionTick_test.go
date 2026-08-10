@@ -185,34 +185,6 @@ func TestPickSubmissionRoundRobin_Cycles(t *testing.T) {
 	}
 }
 
-// TestSubmissionTickReadsPostAdvancePosition is an integration scaffold
-// for the ordering guarantee introduced by chunk 4b-fixup T20.
-//
-// Intended scenario:
-//   - Controller in Mount, drift z = 2.5 → ResolveOutcome (T15) advances
-//     position to BackGround before SubmissionTick fires.
-//   - SubmissionTick should offer a sub from the BackGround pool
-//     (RNC family), not from the Mount pool (americana family).
-//
-// This ordering is guaranteed because both processGrappleTick and
-// processSubmissionTick are NewRound listeners registered in filename-
-// alphabetical order: GrappleTick runs first (calls ResolveOutcome +
-// TransitionPair), then SubmissionTick reads the mutated position.
-//
-// T26 manual AI smoke covers this end-to-end. The test is left as a
-// Skip scaffold so a future test author has clear context for what to
-// build when full integration harness support is available.
-func TestSubmissionTickReadsPostAdvancePosition(t *testing.T) {
-	// Setup: controller in Mount, z = 2.5 → ResolveOutcome advances
-	// to BackGround. SubmissionTick should fire sub from BackGround
-	// (RNC family), not from Mount (americana family).
-	//
-	// This test asserts ordering: T15 wired processGrapplePair to call
-	// ResolveOutcome → TransitionPair → then SubmissionTick reads the
-	// new position.
-	t.Skip("Integration scaffolding TBD by implementer; manual smoke covers in T26.")
-}
-
 // TestSubInterrupt_ForcesBadTier is an integration scaffold for the
 // chunk 4e §8 sub-interrupt override. When a sub fires AND
 // attempter.SubInterruptDamageThisRound > 0, the resolved tier must be
@@ -233,18 +205,4 @@ func TestSubInterrupt_ForcesBadTier(t *testing.T) {
 	// roll may have returned SubTierSuccess or SubTierCrit — the
 	// override must supersede it.
 	_ = combat.SubTierBad // reference the constant so the import is valid when unskipped
-}
-
-// TestSubInterrupt_ResetAfterRound is an integration scaffold for the
-// chunk 4e §8 accumulator reset. After processSubmissionTickForChar
-// runs (whether or not a sub fires), SubInterruptDamageThisRound for
-// both controller and controlled must be 0.
-func TestSubInterrupt_ResetAfterRound(t *testing.T) {
-	t.Skip("Integration scaffold — T12 AI smoke validates")
-	// Setup: controller + controlled in Mount, SubInterruptDamageThisRound
-	// set to 30 on the controller.
-	// Run processSubmissionTickForChar(controller).
-	// Verify: controller.SubInterruptDamageThisRound == 0 afterward.
-	// Also verify partner.SubInterruptDamageThisRound == 0 (defensive
-	// reset for the controlled side, which has no own tick entry point).
 }

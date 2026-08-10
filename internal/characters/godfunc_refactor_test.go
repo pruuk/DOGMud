@@ -283,42 +283,6 @@ func TestRecalculateStats_IdempotencyAcrossRepeatedCalls(t *testing.T) {
 //   (b) extracting the Wear slot-selection logic into a helper that accepts an
 //       ItemSpec value directly (removing the data-file dependency).
 
-// TestWear_EmptySlotHappyPath — wearing a Body-slot item into an empty slot
-// succeeds and returns no displaced items.
-func TestWear_EmptySlotHappyPath(t *testing.T) {
-	t.Skip("BLOCKED: requires items.LoadDataFiles() which needs configs init; " +
-		"unblock by adding TestMain with full bootstrap or by refactoring Wear to " +
-		"accept ItemSpec directly. Fixture: items.New(20008) = cotton shirt (body armor).")
-}
-
-// TestWear_SlotOccupiedSwap — wearing an item into an already-occupied slot
-// returns the displaced item.
-func TestWear_SlotOccupiedSwap(t *testing.T) {
-	t.Skip("BLOCKED: same items.LoadDataFiles() dependency as TestWear_EmptySlotHappyPath. " +
-		"Expected: equip shirtA, then Wear(shirtB); returnItems==[shirtA], newItemWorn==true.")
-}
-
-// TestWear_TwoHandedWeaponDisplacesOffhand — equipping a 2H weapon returns BOTH
-// the existing 1H weapon and the offhand item.
-func TestWear_TwoHandedWeaponDisplacesOffhand(t *testing.T) {
-	t.Skip("BLOCKED: same items.LoadDataFiles() dependency. " +
-		"Fixture: items.New(10007)=heavy greatsword (2H), items.New(10001)=sharp stick (1H).")
-}
-
-// TestWear_WrongItemTypeFails — trying to wear a non-equipment item (e.g. a
-// potion) fails with a non-empty failureReason and no state change.
-func TestWear_WrongItemTypeFails(t *testing.T) {
-	t.Skip("BLOCKED: same items.LoadDataFiles() dependency. " +
-		"Expected: returnItems empty, newItemWorn==false, failureReason non-empty.")
-}
-
-// TestWear_MultiArmRouting — with Extra Arms mutation active, additional weapons
-// route to extra arm slots before displacing the main hand.
-func TestWear_MultiArmRouting(t *testing.T) {
-	t.Skip("BLOCKED: same items.LoadDataFiles() dependency. " +
-		"Requires 1H weapon fixture + character with c.ExtraArms >= 1 via Mutations.")
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Validate tests (7)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -519,3 +483,21 @@ func TestValidate_ReturnsNilForValidCharacter(t *testing.T) {
 	assert.Equal(t, snapStaminaMax, c.StaminaMax.Value,
 		"StaminaMax must be stable across repeated Validate calls")
 }
+
+// Known gap: Wear() has no unit coverage here.
+//
+// Five placeholder tests used to sit at the bottom of this file, each a bare
+// t.Skip. They were deleted with the rest of the skip-only placeholders
+// (review finding 9) because a permanently skipped test inflates the apparent
+// matrix without testing anything. The reason they were blocked is real,
+// though, so it is recorded here rather than lost:
+//
+//	Wear() reaches items.LoadDataFiles(), which needs configs initialised, so
+//	a plain unit test cannot construct an item. Unblock by adding a TestMain
+//	that does the full bootstrap, or by refactoring Wear to accept an ItemSpec
+//	directly. Fixture to use once unblocked: items.New(20008), a cotton shirt
+//	(body armor).
+//
+// Cases worth writing when that is done: empty-slot happy path, occupied-slot
+// swap returning the displaced item, two-handed weapon displacing the offhand,
+// wrong item type rejected, and multi-arm routing.

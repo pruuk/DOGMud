@@ -215,26 +215,3 @@ func TestAuditCommandParity_CatchesUnlistedMobCmd(t *testing.T) {
 		AuditCommandParity(userCmds, mobCmds)
 	}, "AuditCommandParity should not panic on an unlisted mob command")
 }
-
-// TestAuditCommandParity_RealRegistries would call GetAllUserCommands() and
-// GetAllMobCommands() from the live registries and pass them to AuditCommandParity,
-// giving a full integration check at server-startup fidelity.
-//
-// This test CANNOT be implemented inside package actions because both
-// usercommands and mobcommands import "internal/actions", creating a circular
-// dependency:
-//
-//	actions → (test imports) → usercommands → actions  [cycle]
-//
-// The test would need to live in a separate package (e.g. a top-level
-// integration test binary) that imports all three packages without cycles.
-// No such package exists in this repo yet. If one is added in the future,
-// move this test there and remove this placeholder.
-//
-// The existing TestAuditCommandParity_NoWarnings test covers the logic path
-// with hand-crafted slices; the real-registry gap is documented here for
-// future implementors.
-func TestAuditCommandParity_RealRegistries_Skipped(t *testing.T) {
-	t.Skip("import cycle: usercommands and mobcommands both import actions; " +
-		"move this test to a top-level integration package when one exists")
-}

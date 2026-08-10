@@ -139,7 +139,11 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	}
 
 	if !hitSeen {
-		t.Skip("no hit observed in 100 attempts — probabilistic test; re-run if flaky")
+		// Not a flake to shrug off. With str=500 against dex=1 the per-attempt
+		// hit rate is ~85%, so 100 consecutive misses has probability ~1e-84.
+		// Skipping here meant every assertion below silently never ran
+		// (review finding 24). If this fires, drain is broken.
+		t.Fatal("no hit in 100 attempts; expected ~85% per attempt — drain hit path is broken")
 	}
 
 	// On a hit: attacker health should have increased.
@@ -255,7 +259,11 @@ func TestDrainArea_SinglePlayer(t *testing.T) {
 	}
 
 	if !hitSeen {
-		t.Skip("no hit observed in 100 attempts — probabilistic test; re-run if flaky")
+		// Not a flake to shrug off. With str=500 against dex=1 the per-attempt
+		// hit rate is ~85%, so 100 consecutive misses has probability ~1e-84.
+		// Skipping here meant every assertion below silently never ran
+		// (review finding 24). If this fires, drain is broken.
+		t.Fatal("no hit in 100 attempts; expected ~85% per attempt — drain hit path is broken")
 	}
 
 	require := assert.New(t)
@@ -322,7 +330,9 @@ func TestDrainArea_MultiPlayer(t *testing.T) {
 	}
 
 	if !allHit {
-		t.Skip("did not observe all 3 players hit within 200 attempts — probabilistic test; re-run if flaky")
+		// See the note above: failing, not skipping, is the point. Skipping
+		// let the assertions below be silently discarded (review finding 24).
+		t.Fatal("did not hit all 3 players in 200 attempts — area drain targeting is broken")
 	}
 
 	require := assert.New(t)

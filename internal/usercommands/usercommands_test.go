@@ -6459,14 +6459,6 @@ func TestBuildQuestContext(t *testing.T) {
 // (hooks → usercommands dependency already exists; reverse import
 // would be circular). Logic coverage lives in hooks_test.go.
 
-func TestApplyStatDecay(t *testing.T) {
-	t.Skip("moved to hooks.applyPlayerStatDecay (Death_PlayerCleanup.go); tested there")
-}
-
-func TestApplySkillRust(t *testing.T) {
-	t.Skip("moved to hooks.applyPlayerSkillRust (Death_PlayerCleanup.go); tested there")
-}
-
 // ─── GetLockRender ──────────────────────────────────────────────────────────
 
 func TestGetLockRender(t *testing.T) {

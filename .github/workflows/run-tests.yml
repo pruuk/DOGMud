@@ -10,48 +10,9 @@ permissions:
   contents: read
   pull-requests: read
 
+# Delegates to the shared validation contract so pull requests, master pushes
+# and tag builds all run the identical gates (review finding 10). Add checks in
+# validate.yml, not here.
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: go.mod
-      # Bug-finding linters (see .golangci.yml). only-new-issues grandfathers the
-      # ~107 pre-existing findings and gates only what a change introduces, so
-      # this can be enforcing without first clearing the backlog. Runs on PRs;
-      # `make lint` is the local equivalent for the direct-to-master workflow.
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.12.2
-          only-new-issues: true
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ./.github/actions/setup-go
-      - uses: ./.github/actions/codegen-and-test
-      - name: Check coverage gate
-        shell: bash
-        run: |
-          if [ ! -f coverage.out ]; then
-            echo "No coverage.out found, skipping coverage gate"
-            exit 0
-          fi
-          TOTAL=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
-          echo "Total coverage: ${TOTAL}%"
-          # Fail if coverage drops below 28%
-          if (( $(echo "$TOTAL < 28.0" | bc -l) )); then
-            echo "::error::Coverage ${TOTAL}% is below the 28% minimum threshold"
-            exit 1
-          fi
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-report
-          path: coverage.out
-          retention-days: 14
+  validate:
+    uses: ./.github/workflows/validate.yml

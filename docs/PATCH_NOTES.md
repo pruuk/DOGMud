@@ -1,5 +1,20 @@
 # DOGMud Patch Notes
 
+## 2026-08-10: Housekeeping on the safety net
+
+No change to play in this one. It tightens the checks that run before anything
+reaches the live game.
+
+Releases and direct updates now go through exactly the same checks that a
+proposed change does. Previously the two paths that actually ship were checked
+less thoroughly than the ones under review, which is backwards.
+
+A large number of tests turned out to be placeholders that never ran. They
+reported themselves as covering behaviour while doing nothing, and several
+pointed at files that do not exist. Those are gone, and a new check refuses to
+let them come back. Real coverage is unchanged. A handful of combat tests that
+quietly gave up when a random roll did not cooperate now fail properly instead.
+
 ## 2026-08-10: Web connections can no longer be held open forever
 
 The web server now puts a limit on how long a single visitor may take to send a

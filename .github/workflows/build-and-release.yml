@@ -19,16 +19,16 @@ env:
   RELEASE_VERSION: ${{ github.ref_name }}
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ./.github/actions/setup-go
-      - uses: ./.github/actions/codegen-and-test
+  # The same validation contract pull requests run. This job previously ran
+  # only the shared codegen/test action, with no lint and no coverage gate, so
+  # a direct push to master or a tagged release was validated more weakly than
+  # any PR (review finding 10). Both callers now share validate.yml.
+  validate:
+    uses: ./.github/workflows/validate.yml
 
   build:
     runs-on: ubuntu-latest
-    needs: test
+    needs: validate
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-go

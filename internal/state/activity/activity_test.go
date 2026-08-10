@@ -169,54 +169,6 @@ func TestAC_012_DataClearedOnReturnToFree(t *testing.T) {
 
 // --- AC-013 through AC-024: Per-activity interrupt policy ---
 
-func TestAC_013_CastingConcentrationBreakOnDamage(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_014_CraftingHardCancelOnDamage(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_015_SalvagingHardCancelOnDamage(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_016_CraftingCancelOnCombatEntry(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_017_SalvagingCancelOnCombatEntry(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_018_CastingNotInterruptedByCombatEntry(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_019_CraftingCancelOnMovement(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_020_SalvagingCancelOnMovement(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_021_CastingNotCanceledByMovement(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_022_ConvictionRefundOnCastCancel(t *testing.T) {
-	t.Skip("integration test — verified in Task 9 cancel command tests")
-}
-
-func TestAC_023_NoRefundOnCraftCancel(t *testing.T) {
-	t.Skip("integration test — verified in Task 9 cancel command tests")
-}
-
-func TestAC_024_NoRefundOnSalvageCancel(t *testing.T) {
-	t.Skip("integration test — verified in Task 9 cancel command tests")
-}
-
 // --- AC-025 through AC-028: Cross-activity start veto ---
 
 func TestAC_025_CastingToCastingFails(t *testing.T) {
@@ -268,44 +220,4 @@ func TestAC_028_SalvagingToCraftingFails(t *testing.T) {
 
 // --- AC-029 through AC-034: Mob/player parity ---
 
-func TestAC_029_MobCraftCancelsOnCombatEntry(t *testing.T) {
-	t.Skip("integration test — verified in Task 5/7 cascade + migration tests")
-}
-
-func TestAC_030_PlayerCraftCancelsOnDamage(t *testing.T) {
-	t.Skip("integration test — verified in Task 5/7 cascade + migration tests")
-}
-
-func TestAC_031_MobCraftCancelsOnDamage(t *testing.T) {
-	t.Skip("integration test — verified in Task 5/7 cascade + migration tests")
-}
-
-func TestAC_032_PlayerCastConcentrationBreakSurvivable(t *testing.T) {
-	t.Skip("integration test — verified in Task 5/6 cascade + migration tests")
-}
-
-func TestAC_033_MobCastConcentrationBreakSurvivable(t *testing.T) {
-	t.Skip("integration test — verified in Task 5/6 cascade + migration tests")
-}
-
-func TestAC_034_BtreeCancelActivityTriggersFree(t *testing.T) {
-	t.Skip("integration test — verified in Task 9 btree primitive tests")
-}
-
 // --- AC-035 through AC-038: Cascade verification ---
-
-func TestAC_035_LifeDeadCascadesActivityFree(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_036_MovementCascadesCraftingFree(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_037_MovementCascadesSalvagingFree(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}
-
-func TestAC_038_CombatPhaseEngagingCascadesCraftingFree(t *testing.T) {
-	t.Skip("integration test — verified in Task 5 cascade tests")
-}

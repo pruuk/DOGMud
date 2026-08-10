@@ -221,17 +221,6 @@ func TestItemValueDelta_TiebreakerPrefersWeapon(t *testing.T) {
 	_ = ItemValueDelta(char, PhysicalBruiser, candidate)
 }
 
-func TestItemValueDelta_RingsPickWeakerOccupant(t *testing.T) {
-	// Without test fixtures, we can't construct an items.Item
-	// with a known spec. Document the expected behavior here
-	// so the smoke test in Task 10 covers it.
-	t.Skip("fixture-dependent integration; covered by smoke test")
-	// Expected: char with weaker ring in Ring (e.g. +2 str)
-	// and stronger ring in Ring2 (+10 str) considering a
-	// +5 str ring should pick SlotRing as the target (displaces
-	// the +2) producing positive net score.
-}
-
 func TestEncumbranceTier_Thresholds(t *testing.T) {
 	cases := []struct {
 		ratio float64
@@ -265,11 +254,6 @@ func TestEncumbranceTierPenalty_NoCrossing(t *testing.T) {
 	if candidate.GetSpec().ItemId == 0 {
 		t.Skip("fixture required for items.New")
 	}
-}
-
-func TestEncumbranceTierPenalty_TierCrossingPenalizes(t *testing.T) {
-	// Skip with similar reasoning; covered by smoke test.
-	t.Skip("requires balance config + item fixtures")
 }
 
 func TestItemValueDelta_NoIncorporeal_Unchanged(t *testing.T) {
