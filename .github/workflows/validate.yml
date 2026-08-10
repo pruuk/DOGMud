@@ -43,7 +43,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      # v7 to match every other action in this repo and to stay off the
+      # deprecated Node 20 action runtime. node-version stays at 20 because
+      # that is what `make js-lint` uses (node:20 image), so local and CI
+      # parse the same JavaScript.
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
 
