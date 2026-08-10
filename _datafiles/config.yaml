@@ -225,9 +225,28 @@ FilePaths:
   #   The folder where all web ADMIN files/templates reside.
   AdminHtml: _datafiles/html/admin
   # - CarefulSaveFiles -
-  #   If true, save files will be written to a temporary file and then saved over
-  #   the actual file. This takes longer, but helps prevent file corruption if
-  #   the server crashes during a save.
+  #   If true, save files are written to a temporary file, flushed to the disk,
+  #   and then renamed over the real file. A reader then sees either the whole
+  #   old file or the whole new one, never a half-written mixture.
+  #
+  #   LEAVE THIS ON. Turning it off does not just risk "some file corruption".
+  #   It removes the durability guarantee from the game's living state, which is
+  #   the data that CANNOT be rebuilt from this repository:
+  #
+  #     - mob instance progression (stats, skills, mutations, gold, gear)
+  #     - shop economies (stock levels, merchant gold, restock timers)
+  #     - room instance state (dropped items, gold, signs, container contents)
+  #     - player and alt saves
+  #
+  #   A crash or power loss mid-write with this off truncates the file, and the
+  #   next load starts that mob, shop or room over from its template. Since
+  #   2026-08-10 a truncated file is at least quarantined and logged at ERROR
+  #   rather than silently reseeding, but the lost data is still lost.
+  #
+  #   If you are turning this off because saving feels slow, that is very
+  #   probably not the real cause: autosave currently writes EVERY loaded room
+  #   whether or not it changed. Fixing that is tracked as roadmap chunk 3.6a
+  #   and will help far more than disabling this ever could.
   CarefulSaveFiles: true
   # - HttpsCertFile/HttpsKeyFile -
   #   Used to negotiate TLS/https requests
