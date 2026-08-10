@@ -362,18 +362,6 @@ func (c *Character) OnCritReceived(damageChannel string, userId int) {
 	c.CheckRegenProgression(statName, userId, 0.25)
 }
 
-// OnLowResource is called when a resource (health, stamina, conviction)
-// drops below 25% of its maximum. Triggers a stat progression check
-// for the related stat (e.g. low health → vitality progression).
-// Deprecated: replaced by OnRegenTick smooth curve, kept for potential reuse.
-func (c *Character) OnLowResource(resourceName string, relatedStat string, userId int) {
-	mudlog.Debug("Progression", "event", "low_resource", "resource", resourceName, "stat", relatedStat, "character", c.Name)
-
-	if configs.GetGamePlayConfig().UseSkillProgression {
-		c.CheckStatProgression(relatedStat, userId, 1.5)
-	}
-}
-
 // CheckRegenProgression rolls against a given chance for stat progression,
 // applying mob gating, per-stat multipliers, and mutation bonuses.
 // Used by OnRegenTick for regen-based stat progression.

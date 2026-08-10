@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-08-10: Web connections can no longer be held open forever
+
+The web server now puts a limit on how long a single visitor may take to send a
+request, to finish it, and to sit idle between requests. Before this, someone
+could open connections and simply hold them, slowly, for as long as they liked,
+at almost no cost to themselves. Enough of those and the server has nothing left
+for real players.
+
+Playing through the web client is unaffected. That connection works differently
+once it is established, and it was checked against the new limits rather than
+assumed safe. The limits can be tuned by whoever runs the server.
+
+Also in this bundle: two pieces of dead code removed, with no change to play.
+
 ## 2026-08-10: Protected people are protected from spells too
 
 Some people in the world cannot be attacked. Quest givers, tutorial guides and

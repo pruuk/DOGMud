@@ -462,6 +462,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 						Addr:      fmt.Sprintf(`:%d`, networkConfig.HttpsPort),
 						TLSConfig: tlsConfig,
 					}
+					applyServerTimeouts(httpsServer, networkConfig)
 
 					mudlog.Info("HTTPS", "stage", "Starting https server", "port", networkConfig.HttpsPort)
 					go func() {
@@ -493,6 +494,7 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 		httpServer = &http.Server{
 			Addr: fmt.Sprintf(`:%d`, networkConfig.HttpPort),
 		}
+		applyServerTimeouts(httpServer, networkConfig)
 
 		if networkConfig.HttpsRedirect {
 
