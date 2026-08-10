@@ -7,7 +7,8 @@ description: >
   bones of one. The air in the cut sits strange and heavy, folded somehow,
   as though the distance had been pinched shorter than the eye allows.
   Loose stone has been cleared from the path lately, the way still raw
-  where hands have widened it.
+  where hands have widened it. Low in the west wall a narrow opening
+  breaks the rock, easy to walk past unless you happen to look for it.
 biome: cliffs
 coord:
   x: 44
@@ -32,6 +33,9 @@ nouns:
     far and too weathered to read -- a ruin, leaning walls and a fallen
     arch, the bones of something old. The fold in the air seems to gather
     around it, as though the place bent the distance to itself.
+  opening: A gap in the west wall of the cut, narrow and low, its edges
+    worn round rather than freshly cut. Cool air comes out of it, and
+    on the air something faintly warm that does not match the stone.
 idlemessages:
 - For a breath the air in the <ansi fg="itemname">cut</ansi> seems to pull taut, then eases.
 x: 43
