@@ -710,7 +710,9 @@ func SafeSave(path string, data []byte) error {
 	safePath := path + `.new`
 
 	if err := writeAndSync(safePath, data); err != nil {
-		os.Remove(safePath)
+		// Best effort: the save already failed, and a cleanup failure must not
+		// mask the real error being returned.
+		_ = os.Remove(safePath)
 		return err
 	}
 
@@ -718,7 +720,7 @@ func SafeSave(path string, data []byte) error {
 	// Once the file is written, rename it to remove the .new suffix and overwrite the old file
 	//
 	if err := os.Rename(safePath, path); err != nil {
-		os.Remove(safePath)
+		_ = os.Remove(safePath)
 		return err
 	}
 
@@ -736,11 +738,13 @@ func writeAndSync(path string, data []byte) error {
 		return err
 	}
 	if _, err := f.Write(data); err != nil {
-		f.Close()
+		// The write error is the one worth reporting; a close failure on an
+		// already-doomed file adds nothing.
+		_ = f.Close()
 		return err
 	}
 	if err := f.Sync(); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	return f.Close()
@@ -759,7 +763,7 @@ func syncDir(dir string) {
 		return
 	}
 	_ = d.Sync()
-	d.Close()
+	_ = d.Close()
 }
 
 // Save writes data to path.
