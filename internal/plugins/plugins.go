@@ -490,18 +490,30 @@ func Load(dataFilesPath string) {
 	}
 }
 
-func Save() {
+// Save runs every plugin's persistence hook and returns an aggregate error if
+// any of them failed. Callers must not report a successful save without
+// checking it (review finding 35).
+func Save() error {
 
 	pluginCt := 0
+	failed := []string{}
 	for _, p := range registry {
 
 		if p.Callbacks.onSave != nil {
-			p.Callbacks.onSave()
+			if err := p.Callbacks.onSave(); err != nil {
+				mudlog.Error("plugins.Save", "plugin", p.name, "error", err)
+				failed = append(failed, p.name)
+				continue
+			}
 			pluginCt++
 		}
 
 	}
-	mudlog.Info("plugins", "saveCount", pluginCt)
+	mudlog.Info("plugins", "saveCount", pluginCt, "failedCount", len(failed))
+	if len(failed) > 0 {
+		return fmt.Errorf("plugins.Save: %d plugin(s) failed to save: %s", len(failed), strings.Join(failed, ", "))
+	}
+	return nil
 }
 
 func GetPluginRegistry() pluginRegistry {

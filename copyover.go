@@ -54,7 +54,9 @@ func triggerCopyover() error {
 	if err := rooms.SaveAllRooms(); err != nil {
 		mudlog.Error("copyover", "action", "SaveAllRooms", "error", err)
 	}
-	users.SaveAllUsers()
+	if err := users.SaveAllUsers(); err != nil {
+		mudlog.Error("copyover", "action", "SaveAllUsers", "error", err)
+	}
 	// Living-economy dirty-state persists only on graceful shutdown, so flush it
 	// here too — otherwise a copyover silently rewinds it. Keeps the reboot seamless.
 	shops.SaveAllShops()
@@ -62,7 +64,9 @@ func triggerCopyover() error {
 	forager.SaveAllThroughputs()
 	caravan.SaveAllThroughputs()
 	opinions.SaveAllOpinions()
-	plugins.Save()
+	if err := plugins.Save(); err != nil {
+		mudlog.Error("copyover", "action", "plugins.Save", "error", err)
+	}
 
 	return copyover.Execute(binaryPath, os.Args[1:])
 }

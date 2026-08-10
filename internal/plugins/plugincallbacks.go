@@ -13,7 +13,7 @@ type PluginCallbacks struct {
 
 	iacHandler   func(uint64, []byte) bool
 	onLoad       func()
-	onSave       func()
+	onSave       func() error
 	onNetConnect func(NetConnection)
 }
 
@@ -42,7 +42,11 @@ func (c *PluginCallbacks) SetOnLoad(f func()) {
 	c.onLoad = f
 }
 
-func (c *PluginCallbacks) SetOnSave(f func()) {
+// SetOnSave registers the plugin's persistence hook. It returns an error so a
+// failed save can be reported: previously the signature was func(), so a plugin
+// physically could not tell the autosave that its state did not reach disk, and
+// the autosave announced success anyway (review finding 35).
+func (c *PluginCallbacks) SetOnSave(f func() error) {
 	c.onSave = f
 }
 

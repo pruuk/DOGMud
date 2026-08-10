@@ -167,25 +167,31 @@ func (m *weatherModule) tick(round uint64) {
 
 // persistState writes the current state to plugin storage (cheap: a few KB
 // once per game hour). Also invoked from the engine's save callback.
-func (m *weatherModule) persistState() {
+// Returns an error so the autosave can tell whether the state actually
+// reached disk. It still logs, because persistState has callers that are not
+// the save hook.
+func (m *weatherModule) persistState() error {
 	if !m.cfg.Persist {
-		return
+		return nil
 	}
 	b, err := engine.EncodeState(m.state)
 	if err != nil {
 		mudlog.Error("Weather: state encode failed", "error", err)
-		return
+		return err
 	}
 	if err := m.plug.WriteBytes(engine.StateIdentifier, b); err != nil {
 		mudlog.Error("Weather: state save failed", "error", err)
+		return err
 	}
+	return nil
 }
 
 // onSave is the plugins.Save() hook (autosave, shutdown, copyover).
-func (m *weatherModule) onSave() {
+func (m *weatherModule) onSave() error {
 	if m.simReady {
-		m.persistState()
+		return m.persistState()
 	}
+	return nil
 }
 
 // scheduleEmote picks the next ambient-emote round: the configured cadence

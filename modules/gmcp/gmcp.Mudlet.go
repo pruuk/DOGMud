@@ -133,8 +133,8 @@ func (g *GMCPMudletModule) load() {
 }
 
 // save handles saving configuration to the plugin's storage
-func (g *GMCPMudletModule) save() {
-	g.plug.WriteStruct(`mudlet_config`, g.config)
+func (g *GMCPMudletModule) save() error {
+	return g.plug.WriteStruct(`mudlet_config`, g.config)
 }
 
 // Helper function to check if a user is using a Mudlet client

@@ -111,8 +111,8 @@ func (l *LeaderboardModule) loadLBs() {
 	l.LB_Achievements = leaderboardData{Name: `Achievements`, ValueColor: `green-bold`}
 }
 
-func (l *LeaderboardModule) saveLBs() {
-	l.plug.WriteStruct(`latest-leaderboards`, l)
+func (l *LeaderboardModule) saveLBs() error {
+	return l.plug.WriteStruct(`latest-leaderboards`, l)
 }
 
 func (l *LeaderboardModule) leaderboardCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {

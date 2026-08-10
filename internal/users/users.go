@@ -352,7 +352,13 @@ func SetZombieUser(userId int) {
 	}
 }
 
-func SaveAllUsers(isAutoSave ...bool) {
+// SaveAllUsers persists every loaded user and returns an aggregate error if any
+// of them failed.
+//
+// It used to return nothing at all, so the autosave logged each failure and
+// then announced success regardless (review finding 35). A user save carries
+// inventory, gold, progression and quest state.
+func SaveAllUsers(isAutoSave ...bool) error {
 	userManager.mu.RLock()
 	snapshot := make([]*UserRecord, 0, len(userManager.Users))
 	for _, u := range userManager.Users {
@@ -360,11 +366,22 @@ func SaveAllUsers(isAutoSave ...bool) {
 	}
 	userManager.mu.RUnlock()
 
+	errCt := 0
+	var firstErr error
 	for _, u := range snapshot {
 		if err := SaveUser(u, isAutoSave...); err != nil {
 			mudlog.Error("SaveAllUsers()", "error", err.Error())
+			errCt++
+			if firstErr == nil {
+				firstErr = err
+			}
 		}
 	}
+
+	if errCt > 0 {
+		return fmt.Errorf("SaveAllUsers: %d of %d user(s) failed to save; first error: %w", errCt, len(snapshot), firstErr)
+	}
+	return nil
 }
 
 func LogOutUserByConnectionId(connectionId connections.ConnectionId) error {

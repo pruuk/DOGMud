@@ -446,7 +446,13 @@ func SaveRoomInstance(r Room) error {
 	instanceFilePath := fmt.Sprintf("%s%d.yaml", folderPath, r.RoomId)
 
 	if len(instanceSaveData) == 0 {
-		os.Remove(instanceFilePath)
+		// The room has nothing instance-specific left, so its overlay should go
+		// away. A failed delete is NOT harmless: the stale file is re-applied on
+		// the next room load, resurrecting state this room no longer has. The
+		// error used to be discarded entirely.
+		if err := os.Remove(instanceFilePath); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("SaveRoomInstance: remove stale overlay %s: %w", instanceFilePath, err)
+		}
 		return nil
 	}
 
@@ -476,19 +482,32 @@ func loadRoomFromFile(roomFilePath string) (*Room, error) {
 	return roomPtr, err
 }
 
+// SaveAllRooms persists every loaded non-ephemeral room and returns an
+// aggregate error if any of them failed.
+//
+// It used to count failures into a log line and then `return nil`
+// unconditionally, so the autosave could not tell a clean save from one where
+// every room failed — and told players "Done." either way (review finding 35).
+//
+// The first failing room's error is included so the log is actionable; the
+// count tells you whether it was one room or all of them.
 func SaveAllRooms() error {
 
 	start := time.Now()
 	saveCt := 0
 	errCt := 0
+	var firstErr error
 	for _, r := range roomManager.rooms {
 
 		if r.IsEphemeral() {
 			continue
 		}
 
-		if SaveRoomInstance(*r) != nil {
+		if err := SaveRoomInstance(*r); err != nil {
 			errCt++
+			if firstErr == nil {
+				firstErr = err
+			}
 			continue
 		}
 		saveCt++
@@ -496,6 +515,10 @@ func SaveAllRooms() error {
 	}
 
 	mudlog.Info("SaveAllRooms()", "savedCount", saveCt, "expectedCt", len(roomManager.rooms), "errorCount", errCt, "Time Taken", time.Since(start))
+
+	if errCt > 0 {
+		return fmt.Errorf("SaveAllRooms: %d of %d room(s) failed to save; first error: %w", errCt, saveCt+errCt, firstErr)
+	}
 
 	return nil
 }

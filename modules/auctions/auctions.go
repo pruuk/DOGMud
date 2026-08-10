@@ -188,7 +188,7 @@ func (mod *AuctionsModule) load() {
 	}
 }
 
-func (mod *AuctionsModule) save() {
+func (mod *AuctionsModule) save() error {
 	// Snapshot live NPC wallet balances for persistence.
 	mod.auctionMgr.WalletBalances = map[string]int{}
 	for _, b := range npcBuyers {
@@ -196,7 +196,7 @@ func (mod *AuctionsModule) save() {
 			mod.auctionMgr.WalletBalances[b.Name()] = w.Balance
 		}
 	}
-	mod.plug.WriteStruct(`auctionhistory`, mod.auctionMgr)
+	return mod.plug.WriteStruct(`auctionhistory`, mod.auctionMgr)
 }
 
 // Module functions

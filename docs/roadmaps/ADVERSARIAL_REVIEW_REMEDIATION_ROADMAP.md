@@ -235,7 +235,7 @@ further decomposition
 | 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | **Done 2026-08-10** |
 | 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | Not started |
 | 2.6 | Make builder operations transactional | M | 2.1 | 13 | Not started |
-| 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | Not started |
+| 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | **Done 2026-08-10** |
 | 3.1 | Make global counters race-free | S | — | 4 | **Done 2026-08-08** |
 | 3.2 | Make LLM request admission atomic | S | — | 21 | **Done 2026-08-08** |
 | 3.3 | Synchronize the room path cache | M | — | 8 | **Done 2026-08-08** |
@@ -766,6 +766,30 @@ shutdown/copyover callers can enforce the same persistence contract.
 not move persistence to background goroutines or preselect an autosave
 performance architecture.
 
+**Delivered 2026-08-10.** The failure was end to end, so the fix had to be:
+
+- `SaveAllRooms` counted failures into a log line then `return nil`
+  unconditionally. Now returns an aggregate naming the count and the first
+  error.
+- `SaveAllUsers` returned nothing at all. Now returns an aggregate. A user save
+  carries inventory, gold, progression and quest state.
+- `SaveRoomInstance` discarded the `os.Remove` error when clearing an empty
+  overlay. That is not harmless: the stale file is re-applied on the next room
+  load, resurrecting state the room no longer has.
+- `plugins.Save` returned nothing, and the `onSave` callback was `func()`, so a
+  plugin *physically could not* report a failed save. The signature is now
+  `func() error` and all four in-repo modules (auctions, gmcp/mudlet,
+  leaderboards, weather) propagate. They were each discarding a real error:
+  `WriteStruct`/`WriteBytes` have always returned one.
+- The autosave hook broadcast `Done.` to every connected player after each
+  stage regardless of outcome. It now reports `Saved with errors.` and logs at
+  ERROR when a stage fails. Shutdown (`main.go`, `world.go`) and copyover
+  (`copyover.go`) honour the same outcomes — those are the last chance to
+  persist before the process exits, so a silent failure there is permanent.
+
+**Not done here, by boundary:** no background goroutines, no autosave
+performance work. The dirty-check question raised in 2.1 stays with 3.6a.
+
 **Finding:** 35
 
 **Phase 2 exit:** A failed save cannot be reported as success; corruption cannot
@@ -1232,7 +1256,7 @@ only when all of its subchunks close.
 | 32 | 5.5 | **Done** | `e23df1071`; named result + explicit recover assign | Broken ANSI panic fallback |
 | 33 | 1.4 | Open | — | Dual YAML major versions |
 | 34 | 3.5 | Open | `RunWithMUDLocked` wraps auth, render, and response writes | Admin routes retain global world lock |
-| 35 | 2.7 | Open | `SaveAllRooms` suppresses errors; autosave ignores outcomes | Autosave failures reported as success |
+| 35 | 2.7 | **Done** | `SaveAllRooms`/`SaveAllUsers`/`plugins.Save` return aggregates; `onSave` callback signature now returns error (4 modules); autosave, shutdown and copyover all honour them + 2 tests | Autosave failures reported as success |
 | 36 | 3.6a–3.6b | Open | Autosave executes synchronously inside locked `EventLoop` | Unmeasured autosave world-lock pauses |
 | 37 | 6.6a–6.6c | Open | Startup callback setters remain mutable after worker launch | Implicit mutable boot dependency wiring |
 

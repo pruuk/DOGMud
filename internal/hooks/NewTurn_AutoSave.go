@@ -15,7 +15,13 @@ import (
 )
 
 //
-// Autosaves users/rooms every so often
+// Autosaves users/rooms every so often.
+//
+// Every stage below reports honestly. This hook used to broadcast "Done." to
+// every connected player after each stage regardless of outcome, while the
+// save functions themselves either returned nil unconditionally or returned
+// nothing at all — so a total autosave failure was indistinguishable from a
+// clean one, to players AND to the operator (review finding 35).
 //
 
 func AutoSave(e events.Event) events.ListenerReturn {
@@ -38,36 +44,54 @@ func AutoSave(e events.Event) events.ListenerReturn {
 		//////////////////////////////////////////
 		events.AddToQueue(events.Broadcast{Text: `Saving users...`})
 
-		users.SaveAllUsers(true)
-
-		events.AddToQueue(events.Broadcast{
-			Text:            `Done.` + term.CRLFStr,
-			SkipLineRefresh: true,
-		})
+		if err := users.SaveAllUsers(true); err != nil {
+			mudlog.Error("AutoSave", "stage", "users", "error", err)
+			events.AddToQueue(events.Broadcast{
+				Text:            `Saved with errors.` + term.CRLFStr,
+				SkipLineRefresh: true,
+			})
+		} else {
+			events.AddToQueue(events.Broadcast{
+				Text:            `Done.` + term.CRLFStr,
+				SkipLineRefresh: true,
+			})
+		}
 
 		//////////////////////////////////////////
 		// SAVE ALL ROOMS
 		//////////////////////////////////////////
 		events.AddToQueue(events.Broadcast{Text: `Saving rooms...`})
 
-		rooms.SaveAllRooms()
-
-		events.AddToQueue(events.Broadcast{
-			Text:            `Done.` + term.CRLFStr,
-			SkipLineRefresh: true,
-		})
+		if err := rooms.SaveAllRooms(); err != nil {
+			mudlog.Error("AutoSave", "stage", "rooms", "error", err)
+			events.AddToQueue(events.Broadcast{
+				Text:            `Saved with errors.` + term.CRLFStr,
+				SkipLineRefresh: true,
+			})
+		} else {
+			events.AddToQueue(events.Broadcast{
+				Text:            `Done.` + term.CRLFStr,
+				SkipLineRefresh: true,
+			})
+		}
 
 		//////////////////////////////////////////
 		// SAVE ALL PLUGINS
 		//////////////////////////////////////////
 		events.AddToQueue(events.Broadcast{Text: `Saving other...`})
 		// Save plugin states if applicable
-		plugins.Save()
-
-		events.AddToQueue(events.Broadcast{
-			Text:            `Done.` + term.CRLFStr,
-			SkipLineRefresh: true,
-		})
+		if err := plugins.Save(); err != nil {
+			mudlog.Error("AutoSave", "stage", "plugins", "error", err)
+			events.AddToQueue(events.Broadcast{
+				Text:            `Saved with errors.` + term.CRLFStr,
+				SkipLineRefresh: true,
+			})
+		} else {
+			events.AddToQueue(events.Broadcast{
+				Text:            `Done.` + term.CRLFStr,
+				SkipLineRefresh: true,
+			})
+		}
 
 	}
 

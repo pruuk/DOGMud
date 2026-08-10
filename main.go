@@ -598,7 +598,9 @@ func main() {
 	web.Shutdown()
 
 	// Final plugin save before shutting down
-	plugins.Save()
+	if err := plugins.Save(); err != nil {
+		mudlog.Error("shutdown", "action", "plugins.Save", "error", err)
+	}
 
 	// Final throughput saves before shutting down
 	forager.SaveAllThroughputs()
