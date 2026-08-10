@@ -61,29 +61,17 @@ func SaveAlts(userId int, alts []Character) bool {
 
 	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/users/`, strconv.Itoa(userId)+`.alts.yaml`)
 
-	saveFilePath := path
-	if carefulSave { // careful save first saves a {filename}.new file
-		saveFilePath += `.new`
-	}
-
-	err = os.WriteFile(saveFilePath, data, 0777)
-	if err != nil {
+	// Routed through util.Save (chunk 2.8): same hand-rolled careful save as
+	// SaveUser had — atomic but not durable — and alt characters are player
+	// data too. Also drops mode 0777; a character file has no business being
+	// executable.
+	if err := util.Save(path, data, bool(carefulSave)); err != nil {
 		mudlog.Error("SaveAlts", "error", err.Error())
 		return false
 	}
 	fileWritten = true
 	if carefulSave {
 		tmpSaved = true
-	}
-
-	if carefulSave {
-		//
-		// Once the file is written, rename it to remove the .new suffix and overwrite the old file
-		//
-		if err := os.Rename(saveFilePath, path); err != nil {
-			mudlog.Error("SaveAlts", "error", err.Error())
-			return false
-		}
 		tmpCopied = true
 	}
 

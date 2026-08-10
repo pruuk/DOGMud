@@ -81,3 +81,49 @@ func BenchmarkWriteAndRenameNoSync(b *testing.B) {
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// User-save cost at realistic size, for roadmap chunk 3.6b.
+//
+// Real user files are ~48KB for an established character (2KB for a brand-new
+// one). SaveUser used to hand-roll its own write-.new-then-rename with no
+// fsync, which is atomic but NOT durable; chunk 2.8 routed it through
+// util.Save. These benchmarks keep both shapes side by side so the price of
+// that durability stays visible to 3.6b, which has to budget a user save
+// inside the world lock.
+//
+//   go test ./internal/util/ -bench 'UserSave' -benchtime 200x -run '^$'
+// ---------------------------------------------------------------------------
+
+var userPayload48K = make([]byte, 48*1024)
+
+// The OLD SaveUser shape, kept as the baseline: write a .new file, rename over
+// the target, no flush. Atomic against a torn read, but a power loss can leave
+// the renamed file empty or partial. No longer what SaveUser does.
+func BenchmarkUserSave_CurrentNoFsync(b *testing.B) {
+	dir := b.TempDir()
+	path := filepath.Join(dir, "user.yaml")
+	tmp := path + ".new"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := os.WriteFile(tmp, userPayload48K, 0o600); err != nil {
+			b.Fatal(err)
+		}
+		if err := os.Rename(tmp, path); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// What SaveUser costs now: routed through util.Save, with the fsync every other
+// living-state store got in chunk 2.1.
+func BenchmarkUserSave_DurableViaUtilSave(b *testing.B) {
+	dir := b.TempDir()
+	path := filepath.Join(dir, "user.yaml")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := Save(path, userPayload48K); err != nil {
+			b.Fatal(err)
+		}
+	}
+}

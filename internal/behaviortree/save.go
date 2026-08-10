@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -64,7 +65,10 @@ func writeTreeFile(path string, out []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(path, out, 0o644)
+	// Durable atomic write (chunk 2.8). Authored content is recoverable from
+	// git, but a TORN file panics the next boot on an unresolved reference or a
+	// name/filename mismatch, so atomicity still matters here.
+	return util.Save(path, out)
 }
 
 // SaveArchetype validates, writes, and hot-reloads an archetype.

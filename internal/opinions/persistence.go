@@ -23,7 +23,7 @@ var (
 	nameByMobId = map[int]string{}
 	// saveMu serializes file I/O so concurrent Set/Bump on the same
 	// mob don't trigger Windows ERROR_SHARING_VIOLATION on overlapping
-	// os.WriteFile calls. Held only during marshal + write — never
+	// writes. Held only during marshal + write — never
 	// held across cache mutations.
 	saveMu sync.Mutex
 )
@@ -71,7 +71,7 @@ func loadFromDisk(mobId int, namesimple string) *MobOpinions {
 //
 // File I/O is serialized through saveMu so concurrent callers
 // (e.g., parallel Bumps on the same mob) don't race on
-// os.WriteFile, which Windows treats as a sharing violation.
+// the same file, which Windows treats as a sharing violation.
 func saveToDisk(mobId int, namesimple string) error {
 	saveMu.Lock()
 	defer saveMu.Unlock()
@@ -95,7 +95,8 @@ func saveToDisk(mobId int, namesimple string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return fmt.Errorf("opinions.saveToDisk: mkdir %s: %w", filepath.Dir(path), err)
 	}
-	if err := os.WriteFile(path, bytes, 0644); err != nil {
+	// Durable atomic write (chunk 2.8): NPC opinions accumulate over play.
+	if err := util.Save(path, bytes); err != nil {
 		return fmt.Errorf("opinions.saveToDisk: write %s: %w", path, err)
 	}
 	return nil

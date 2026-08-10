@@ -36,7 +36,10 @@ func SaveDialogueFile(df DialogueFile) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	// Durable atomic write (chunk 2.8). Authored content is recoverable from
+	// git, but a TORN file panics the next boot on an unresolved reference or a
+	// name/filename mismatch, so atomicity still matters here.
+	if err := util.Save(path, data); err != nil {
 		return err
 	}
 	key := fmt.Sprintf("%d:%s", df.MobId, df.Zone)

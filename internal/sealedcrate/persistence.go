@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,7 +31,8 @@ func SaveTo(path string, c *Crate) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("sealedcrate.SaveTo: mkdir: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	// Durable atomic write (chunk 2.8).
+	if err := util.Save(path, data); err != nil {
 		return fmt.Errorf("sealedcrate.SaveTo: write: %w", err)
 	}
 	return nil

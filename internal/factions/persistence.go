@@ -18,7 +18,7 @@ var (
 
 	// saveMu serializes file I/O so concurrent BumpRep on the same
 	// faction don't trigger Windows ERROR_SHARING_VIOLATION on
-	// overlapping os.WriteFile calls. Mirrors internal/opinions.
+	// overlapping writes. Mirrors internal/opinions.
 	saveMu sync.Mutex
 )
 
@@ -78,7 +78,8 @@ func saveRepToDisk(factionId string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return fmt.Errorf("factions.saveRepToDisk: mkdir %s: %w", filepath.Dir(path), err)
 	}
-	if err := os.WriteFile(path, bytes, 0644); err != nil {
+	// Durable atomic write (chunk 2.8): faction reputation is accumulated per player.
+	if err := util.Save(path, bytes); err != nil {
 		return fmt.Errorf("factions.saveRepToDisk: write %s: %w", path, err)
 	}
 	return nil

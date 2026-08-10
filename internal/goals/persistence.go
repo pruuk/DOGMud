@@ -77,12 +77,11 @@ func saveToDisk(mobId int, namesimple string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("goals.saveToDisk: mkdir %s: %w", filepath.Dir(path), err)
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return fmt.Errorf("goals.saveToDisk: write tmp %s: %w", tmp, err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("goals.saveToDisk: rename %s: %w", path, err)
+	// Durable atomic write (chunk 2.8). This hand-rolled its own
+	// tmp+rename, which is atomic but NOT durable: with no fsync a power
+	// loss can leave an atomically-renamed empty file.
+	if err := util.Save(path, out); err != nil {
+		return fmt.Errorf("goals.saveToDisk: write %s: %w", path, err)
 	}
 	return nil
 }

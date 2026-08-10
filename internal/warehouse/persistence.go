@@ -68,7 +68,8 @@ func saveOne(zone string) error {
 		markDirty(zone)
 		return fmt.Errorf("warehouse.saveOne: marshal: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	// Durable atomic write (chunk 2.8): warehouse stock is living economy state.
+	if err := util.Save(path, data); err != nil {
 		markDirty(zone)
 		return fmt.Errorf("warehouse.saveOne: write %s: %w", path, err)
 	}

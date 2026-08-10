@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -262,25 +263,12 @@ func SaveFlatFile[T LoadableSimple](basePath string, dataUnit T, saveOptions ...
 		return errors.New(fmt.Sprint(`SaveFlatFile`, `basePath`, basePath, `type`, fmt.Sprintf(`%T`, *new(T)), `path`, path, `err`, err))
 	}
 
-	saveFilePath := path
-	if carefulSave { // careful save first saves a {filename}.new file
-		saveFilePath += `.new`
-	}
-
-	//
-	// write to .new suffix in case of power loss etc.
-	//
-	if err := os.WriteFile(saveFilePath, bytes, 0777); err != nil {
+	// Durable atomic write (chunk 2.8). This used to hand-roll the same
+	// .new-then-rename dance as util.Save, minus the fsync — so the careful path
+	// was atomic but not durable, and the two copies could drift. There is now
+	// one hardened implementation and this defers to it.
+	if err := util.Save(path, bytes, carefulSave); err != nil {
 		return errors.New(fmt.Sprint(`SaveAllFlatFiles`, `basePath`, basePath, `type`, fmt.Sprintf(`%T`, *new(T)), `path`, path, `err`, err))
-	}
-
-	if carefulSave {
-		//
-		// Once the file is written, rename it to remove the .new suffix and overwrite the old file
-		//
-		if err := os.Rename(saveFilePath, path); err != nil {
-			return errors.New(fmt.Sprint(`SaveAllFlatFiles`, `basePath`, basePath, `type`, fmt.Sprintf(`%T`, *new(T)), `path`, path, `err`, err))
-		}
 	}
 
 	return nil
@@ -338,27 +326,10 @@ func SaveAllFlatFiles[K comparable, T Loadable[K]](basePath string, data map[K]T
 					continue
 				}
 
-				saveFilePath := path
-				if carefulSave { // careful save first saves a {filename}.new file
-					saveFilePath += `.new`
-				}
-
-				//
-				// write to .new suffix in case of power loss etc.
-				//
-				if err := os.WriteFile(saveFilePath, bytes, 0777); err != nil {
+				// Durable atomic write (chunk 2.8) — see SaveFlatFile above.
+				if err := util.Save(path, bytes, carefulSave); err != nil {
 					mudlog.Error(`SaveAllFlatFiles`, `basePath`, basePath, `type`, fmt.Sprintf(`%T`, *new(T)), `path`, path, `err`, err)
 					continue
-				}
-
-				if carefulSave {
-					//
-					// Once the file is written, rename it to remove the .new suffix and overwrite the old file
-					//
-					if err := os.Rename(saveFilePath, path); err != nil {
-						mudlog.Error(`SaveAllFlatFiles`, `basePath`, basePath, `type`, fmt.Sprintf(`%T`, *new(T)), `path`, path, `err`, err)
-						continue
-					}
 				}
 
 				// count saves

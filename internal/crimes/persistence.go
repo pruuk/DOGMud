@@ -92,7 +92,8 @@ func saveCrimesToDisk(factionId string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return fmt.Errorf("crimes.saveCrimesToDisk: mkdir %s: %w", filepath.Dir(path), err)
 	}
-	if err := os.WriteFile(path, bytes, 0644); err != nil {
+	// Durable atomic write (chunk 2.8): crime records drive justice and bounties.
+	if err := util.Save(path, bytes); err != nil {
 		return fmt.Errorf("crimes.saveCrimesToDisk: write %s: %w", path, err)
 	}
 	return nil
