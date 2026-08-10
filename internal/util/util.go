@@ -687,16 +687,30 @@ func FormatDiceRoll(attacks int, dCount int, dSides int, bonus int, buffOnCrit [
 	return dRoll
 }
 
-// SafeSave first saves to a temp file, then renames it to save over the target destination
-// This is to lessen the risk of a partial write being interrupted and corrupting the file
-// due to power loss etc.
+// SafeSave writes to a sibling temp file, flushes it to disk, then renames it
+// over the target. A rename within a directory is atomic, so a reader sees
+// either the whole old file or the whole new one, never a mixture.
+//
+// The fsync is the part that makes this durable rather than merely atomic.
+// Without it the rename can be recorded while the file's data is still sitting
+// in the page cache, and a power loss leaves an atomically-renamed EMPTY or
+// partial file — the exact corruption the temp-and-rename dance is meant to
+// prevent. Added 2026-08-10 with the living-state persistence contract
+// (roadmap chunk 2.1); before that this function promised more than it
+// delivered.
+//
+// The temp file is removed if anything fails, so a failed save cannot leave
+// `.new` litter behind for the next reader to trip over.
+//
+// See internal/util/livingstate.go for the read half of the contract.
 func SafeSave(path string, data []byte) error {
 
 	path = filepath.FromSlash(path)
 
 	safePath := path + `.new`
 
-	if err := os.WriteFile(safePath, data, 0777); err != nil {
+	if err := writeAndSync(safePath, data); err != nil {
+		os.Remove(safePath)
 		return err
 	}
 
@@ -704,10 +718,48 @@ func SafeSave(path string, data []byte) error {
 	// Once the file is written, rename it to remove the .new suffix and overwrite the old file
 	//
 	if err := os.Rename(safePath, path); err != nil {
+		os.Remove(safePath)
 		return err
 	}
 
+	syncDir(filepath.Dir(path))
+
 	return nil
+}
+
+// writeAndSync writes data to path and flushes it to the storage device before
+// returning. 0644 rather than the historical 0777: a data file has no business
+// being executable.
+func writeAndSync(path string, data []byte) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Write(data); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	return f.Close()
+}
+
+// syncDir flushes a directory entry so a completed rename survives power loss.
+//
+// Best effort on purpose. It is meaningful on Linux (the droplet), where the
+// rename itself is only durable once the directory is synced. Windows cannot
+// open a directory for syncing this way and returns an error, which is not a
+// failure of the save — the file data is already flushed by that point — so the
+// error is deliberately ignored rather than failing a save that succeeded.
+func syncDir(dir string) {
+	d, err := os.Open(dir)
+	if err != nil {
+		return
+	}
+	_ = d.Sync()
+	d.Close()
 }
 
 // Save writes data to path.

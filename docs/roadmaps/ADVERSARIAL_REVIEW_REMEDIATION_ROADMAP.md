@@ -140,6 +140,24 @@ account.
 autosave pauses). 3.6b only if 3.6a's evidence demands it. Do not pre-commit to
 a persistence rearchitecture.
 
+**Input for 3.6a, measured 2026-08-10 during chunk 2.1.** `SafeSave` now
+fsyncs, which costs a measured **+1.45 ms per file** on a local SSD
+(0.60 ms → 2.05 ms; `go test ./internal/util/ -bench Save -run '^$'`). Re-measure
+on the droplet, where a throttled cloud volume will be worse.
+
+That interacts badly with how autosave works today: `SaveAllRooms`
+(`internal/rooms/save_and_load.go:427`) iterates `roomManager.rooms` and writes
+**every loaded non-ephemeral room, with no dirty check**. At 1383 world rooms
+that is up to ~2 s of added world-lock pause.
+
+**The likely fix is not to drop the fsync.** Skipping unchanged rooms would cut
+the write count by orders of magnitude and pays for durability many times over.
+Measure first, but treat "autosave writes everything unconditionally" as the
+prime suspect rather than the flush.
+
+While in there: that same function always returns `nil` and counts errors into
+a log line, which is finding 35 (chunk 2.7).
+
 ### Wave 4 — Remaining UX and web surface
 
 4.3 (finding 18), 4.4 (finding 19), and the Host-redirect half of finding 20.
@@ -211,7 +229,7 @@ further decomposition
 | 1.3 | Eliminate immediate static-analysis crash risks | S | — | 28 | **Done 2026-08-08** |
 | 1.4 | Decide and enforce the YAML compatibility boundary | M | — | 33 | Not started |
 | 1.5 | Remove tracked playtest credentials | S | — | Security follow-up | **In progress — tree clean, ROTATION OUTSTANDING** |
-| 2.1 | Establish the living-state persistence contract | M | 1.4 | Supporting | Not started |
+| 2.1 | Establish the living-state persistence contract | M | 1.4 | Supporting | **Contract Done 2026-08-10; store migrations are 2.2–2.5** |
 | 2.2 | Migrate mob instance persistence | M | 2.1 | 5 | Not started |
 | 2.3 | Migrate guild and moderation persistence | M | 2.1 | 7 | Not started |
 | 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | Not started |
@@ -547,6 +565,39 @@ canonical pattern.
 
 **Boundary:** This enabling chunk establishes and proves the shared contract. It
 does not claim Findings 5 or 7 complete until their store-specific chunks land.
+
+**Delivered 2026-08-10.** The canonical pattern already existed — `util.Save` /
+`util.SafeSave`, safe-by-default since 2026-07-31 — so this was hardening and
+completing it rather than inventing one.
+
+The contract is four rules, documented in `internal/util/livingstate.go`:
+
+1. **Write atomically AND durably** — `SafeSave` now fsyncs the temp file
+   before the rename and syncs the directory after it. It previously did
+   neither, so the rename could be recorded while the data sat in the page
+   cache: a power loss produced an atomically-renamed *empty* file, the exact
+   corruption temp-and-rename exists to prevent. It also cleans up the `.new`
+   file on failure and writes 0644 rather than 0777.
+2. **Never conflate absent with corrupt** — `ReadLivingState` returns
+   `ErrStateAbsent` vs `ErrStateCorrupt`. This is the rule every store broke.
+3. **On corruption, quarantine then continue** — `QuarantineCorrupt` moves the
+   file aside with a nanosecond-stamped name (repeated corruption cannot
+   overwrite earlier evidence), never deletes, and leaves the path reading as
+   absent so the caller's normal seed-defaults path takes over. Policy chosen
+   by the user 2026-08-10 over refusing to boot, because one bad byte should
+   not take the game offline.
+4. **Persist before publishing** — an ordering discipline, no helper. Build the
+   new state as a value, write it, and mutate the in-memory registry only after
+   the write returns nil. This is finding 7's actual defect.
+
+11 tests plus 4 benchmarks. **Adoption is deliberately NOT in this chunk**: six
+living-state sites still call `os.WriteFile` directly — `mobs/instance_save.go:161`,
+`mobs/mobs.go:1244`, `guilds/persistence.go:45`, `moderation/bans.go:112`,
+`moderation/petitions.go:122`, `rooms/zone_rename.go:118`. The review named
+four of those; the last two are new. They migrate in 2.2–2.5.
+
+See the Wave 3 note for the measured fsync cost and why it points at autosave's
+missing dirty check rather than at the flush.
 
 ### Chunk 2.2 — Migrate mob instance persistence
 
