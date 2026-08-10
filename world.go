@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -796,6 +797,16 @@ loop:
 			mudlog.Warn(`MainWorker`, `action`, `shutdown received`)
 
 			util.LockMud()
+			// Guard G4 (chunk 3.6b-1). Autosave spreads its writes across ticks,
+			// so a cycle may be mid-flight; those pending writes exist only in
+			// memory and the process is about to exit.
+			//
+			// Unlike copyover this LOGS AND PROCEEDS. The operator asked the
+			// process to stop and refusing is not useful, but the failure has to
+			// be loud enough to find in the log afterwards.
+			if err := hooks.AutosaveQueue().FlushAll(); err != nil {
+				mudlog.Error("shutdown", "action", "FlushPendingWrites", "error", err.Error())
+			}
 			if err := rooms.SaveAllRooms(); err != nil {
 				mudlog.Error("rooms.SaveAllRooms()", "error", err.Error())
 			}

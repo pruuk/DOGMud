@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/GoMudEngine/GoMud/internal/caravan"
 	"github.com/GoMudEngine/GoMud/internal/copyover"
 	"github.com/GoMudEngine/GoMud/internal/forager"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -48,6 +50,22 @@ func triggerCopyover() error {
 	}
 
 	serverAlive.Store(false)
+
+	// Guard G4 (chunk 3.6b-1). Autosave now spreads its writes across ticks, so
+	// a cycle may be mid-flight. Those pending writes exist ONLY in memory, and
+	// copyover re-execs the process, so anything left in the queue is gone for
+	// good.
+	//
+	// Unlike shutdown, this ABORTS. Copyover is an optional convenience and a
+	// refused one is recoverable and obvious; a completed one that silently ate
+	// a cycle of saves is neither. This is the only place in the codebase where
+	// a save failure stops an operation rather than being logged past.
+	if err := hooks.AutosaveQueue().FlushAll(); err != nil {
+		mudlog.Error("copyover", "action", "FlushPendingWrites", "error", err,
+			"message", "aborting copyover rather than discarding unwritten saves")
+		serverAlive.Store(true)
+		return fmt.Errorf("copyover aborted: pending saves could not be flushed: %w", err)
+	}
 
 	// Logged rather than discarded: this is the last chance to persist room
 	// state before the process re-execs, so a failure here silently loses it.

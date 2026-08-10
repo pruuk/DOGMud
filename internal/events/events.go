@@ -283,6 +283,31 @@ func DrainQueuedInputsForTest(instanceId int) []string {
 	return found
 }
 
+// DrainQueuedBroadcastsForTest removes all Broadcast events from the global
+// queue and returns their Text values.
+//
+// Added for chunk 3.6b-1: autosave now spreads its writes across ticks, so the
+// completion broadcast must NOT be emitted at snapshot time. Asserting that
+// requires seeing what the hook queued and when, which is otherwise invisible.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedBroadcastsForTest() []string {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []string
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if b, ok := pe.event.(Broadcast); ok {
+			found = append(found, b.Text)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // DrainQueuedMessagesForTest removes all Message events from the global queue
 // for the given userId and returns their Text values.
 //
