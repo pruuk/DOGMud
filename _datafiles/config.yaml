@@ -1241,6 +1241,21 @@ Network:
   #   If true, will send all http traffic to https with a redirect
   #   Requires both Http and Https to be working.
   HttpsRedirect: false
+  # - Http timeouts (seconds) -
+  #   Bound how long a single client may occupy a web connection. Without
+  #   these, a slow client holds a connection open indefinitely at almost no
+  #   cost to itself. Applied to both the http and https servers.
+  #   These do NOT affect websocket (/ws) players: the websocket library
+  #   clears these deadlines as soon as it takes over the connection.
+  #   A value below 1 falls back to the default shown, so a timeout cannot be
+  #   switched off by accident. To effectively disable one, set it very high.
+  #   HttpReadHeaderTimeoutSeconds is the tightest; it is the main brake on
+  #   slow-header attacks. HttpWriteTimeoutSeconds is the loosest because it
+  #   has to cover a whole response.
+  HttpReadHeaderTimeoutSeconds: 10
+  HttpReadTimeoutSeconds: 30
+  HttpWriteTimeoutSeconds: 60
+  HttpIdleTimeoutSeconds: 120
   # - TrustedProxies -
   #   IPs or CIDRs that are allowed to tell the server who the real client is
   #   via the X-Forwarded-For header. Everything else has that header ignored.

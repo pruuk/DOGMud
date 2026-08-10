@@ -17,11 +17,28 @@ type Network struct {
 	// are always allowed, so this is only needed when the client is served
 	// from a different domain than the MUD.
 	AllowedWebSocketOrigins ConfigSliceString `yaml:"AllowedWebSocketOrigins"`
-	AfkSeconds              ConfigInt         `yaml:"AfkSeconds"`     // How long until a player is marked as afk?
-	MaxIdleSeconds          ConfigInt         `yaml:"MaxIdleSeconds"` // How many seconds a player can go without a command in game before being kicked.
-	TimeoutMods             ConfigBool        `yaml:"TimeoutMods"`    // Whether to kick admin/mods when idle too long.
-	ZombieSeconds           ConfigInt         `yaml:"ZombieSeconds"`  // How many seconds a player will be a zombie allowing them to reconnect.
-	LogoutRounds            ConfigInt         `yaml:"LogoutRounds"`   // How many rounds of uninterrupted meditation must be completed to log out.
+	// HTTP(S) server timeouts, in seconds. Without these a slow client can
+	// hold a connection open indefinitely at almost no cost to itself
+	// (Slowloris). Applied to both the http and https servers.
+	//
+	// These do NOT affect websocket (/ws) connections: gorilla/websocket
+	// clears the HTTP server's deadlines immediately after hijacking the
+	// connection (server.go, "Clear deadlines set by HTTP server"). Verify
+	// that still holds before upgrading gorilla.
+	//
+	// Each falls back to its default when absent or below 1, so a timeout
+	// cannot be silently switched off; to effectively disable one, set a
+	// very large value.
+	HttpReadHeaderTimeoutSeconds ConfigInt `yaml:"HttpReadHeaderTimeoutSeconds"` // Time allowed to send request headers
+	HttpReadTimeoutSeconds       ConfigInt `yaml:"HttpReadTimeoutSeconds"`       // Time allowed to read the whole request
+	HttpWriteTimeoutSeconds      ConfigInt `yaml:"HttpWriteTimeoutSeconds"`      // Time allowed to write the response
+	HttpIdleTimeoutSeconds       ConfigInt `yaml:"HttpIdleTimeoutSeconds"`       // Keep-alive idle time between requests
+
+	AfkSeconds     ConfigInt  `yaml:"AfkSeconds"`     // How long until a player is marked as afk?
+	MaxIdleSeconds ConfigInt  `yaml:"MaxIdleSeconds"` // How many seconds a player can go without a command in game before being kicked.
+	TimeoutMods    ConfigBool `yaml:"TimeoutMods"`    // Whether to kick admin/mods when idle too long.
+	ZombieSeconds  ConfigInt  `yaml:"ZombieSeconds"`  // How many seconds a player will be a zombie allowing them to reconnect.
+	LogoutRounds   ConfigInt  `yaml:"LogoutRounds"`   // How many rounds of uninterrupted meditation must be completed to log out.
 }
 
 func (n *Network) Validate() {
@@ -56,6 +73,24 @@ func (n *Network) Validate() {
 
 	if n.HttpsPort < 0 {
 		n.HttpsPort = 0 // default
+	}
+
+	// Timeout defaults. ReadHeader is the Slowloris brake and is deliberately
+	// the tightest; Write is the loosest because it bounds a whole response.
+	if n.HttpReadHeaderTimeoutSeconds < 1 {
+		n.HttpReadHeaderTimeoutSeconds = 10
+	}
+
+	if n.HttpReadTimeoutSeconds < 1 {
+		n.HttpReadTimeoutSeconds = 30
+	}
+
+	if n.HttpWriteTimeoutSeconds < 1 {
+		n.HttpWriteTimeoutSeconds = 60
+	}
+
+	if n.HttpIdleTimeoutSeconds < 1 {
+		n.HttpIdleTimeoutSeconds = 120
 	}
 
 	// TrustedProxies gates whether X-Forwarded-For is believed at all. The
