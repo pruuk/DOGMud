@@ -240,7 +240,7 @@ further decomposition
 | 3.2 | Make LLM request admission atomic | S | — | 21 | **Done 2026-08-08** |
 | 3.3 | Synchronize the room path cache | M | — | 8 | **Done 2026-08-08** |
 | 3.4 | Release listener locks before callbacks | S | — | 22 | **Done 2026-08-08** |
-| 3.5 | Bound admin world-lock scope | M | — | 34 | Not started |
+| 3.5 | Bound admin world-lock scope | M | — | 34 | **Done 2026-08-10** |
 | 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | Not started |
 | 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | Not started |
 | 4.1 | Remove admin stored-XSS surfaces | S | — | 17 | **Done 2026-08-10** |
@@ -915,6 +915,41 @@ separate lock-budget problem. Immutable snapshots, MainWorker request/response,
 and subsystem-local synchronization are design options, not predetermined
 solutions.
 
+**Delivered 2026-08-10.** Three changes, in descending order of severity:
+
+1. **Authentication ran under the world lock.** `RunWithMUDLocked` was the OUTER
+   wrapper on all 22 admin routes, so `doBasicAuth` — including **bcrypt**,
+   which is expensive by design — executed while holding the lock that stops
+   every player and every round. Anyone who could reach an admin URL could
+   freeze the game for a bcrypt round *per request, without credentials*. The
+   nesting is now inverted on every route, so only authenticated requests reach
+   the lock at all. Safe because `users.LoadUser` builds a standalone record
+   from disk and never touches the live registry, and those reads are torn-free
+   now that user saves are atomic (chunk 2.1).
+
+2. **The response write held the lock.** Handlers wrote straight to the network,
+   so a slow or stalled admin client held the world lock for as long as it took
+   to accept the bytes. `RunWithMUDLocked` now buffers the handler's output and
+   flushes it after unlocking. None of these routes stream and the payloads are
+   small, so buffering costs nothing. Note this was partly masked by chunk 4.2's
+   `WriteTimeout`, which bounded the freeze at 60s rather than removing it.
+
+3. **Five routes needed no lock at all.** Verified per handler:
+   `/admin/static/` (a file server — freezing the game to deliver a stylesheet),
+   plus the pure-template pages `adminIndex`, `combatStatsIndex`,
+   `progressionIndex` and `economyIndex`, none of which touch world state.
+
+**Route audit.** All 22 were classified by what they actually read. Two nearly
+got unlocked by mistake: `economyAPI` and `economySnapshotAPI` look
+state-free until you notice `health.CaptureSnapshot` reads live shop, caravan
+and forager state. Final state: **16 locked (all with auth outside), 5
+unlocked**, zero routes taking the lock before authenticating.
+
+**Not done, deliberately:** per-handler narrowing so the lock covers only the
+data-gathering step rather than the whole handler body. The buffering change
+removes the unbounded-client risk, which was the availability problem; further
+narrowing is a per-route refactor of 16 handlers with much smaller returns.
+
 **Finding:** 34
 
 ### Autosave pause arc 3.6 — Measure first, remediate conditionally
@@ -1316,7 +1351,7 @@ only when all of its subchunks close.
 | 31 | 6.4 | **Done** | Whole loop removed, not just the 2 slices the review named: both backing maps were dead too, since they only deduped into the unread slices | Dead corpse lookup arrays |
 | 32 | 5.5 | **Done** | `e23df1071`; named result + explicit recover assign | Broken ANSI panic fallback |
 | 33 | 1.4 | Open | — | Dual YAML major versions |
-| 34 | 3.5 | Open | `RunWithMUDLocked` wraps auth, render, and response writes | Admin routes retain global world lock |
+| 34 | 3.5 | **Done** | auth moved outside the lock on all 16 remaining routes (bcrypt no longer runs under it); response buffered and flushed after unlock; 5 no-world-state routes unlocked entirely + 4 tests | Admin routes retain global world lock |
 | 35 | 2.7 | **Done** | `SaveAllRooms`/`SaveAllUsers`/`plugins.Save` return aggregates; `onSave` callback signature now returns error (4 modules); autosave, shutdown and copyover all honour them + 2 tests | Autosave failures reported as success |
 | 36 | 3.6a–3.6b | Open | Autosave executes synchronously inside locked `EventLoop` | Unmeasured autosave world-lock pauses |
 | 37 | 6.6a–6.6c | Open | Startup callback setters remain mutable after worker launch | Implicit mutable boot dependency wiring |

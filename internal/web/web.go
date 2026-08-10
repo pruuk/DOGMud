@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -326,90 +327,84 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 		webSocketHandler(conn, clientIP)
 	})
 
-	http.Handle("GET /admin/static/", RunWithMUDLocked(
+	// No world lock: serving a CSS or JS file has nothing to do with game
+	// state, and freezing every player to deliver a stylesheet is indefensible.
+	http.Handle("GET /admin/static/",
 		doBasicAuth(
 			handlerToHandlerFunc(
 				http.StripPrefix("/admin/static/", http.FileServer(http.Dir(configs.GetFilePathsConfig().AdminHtml.String()+"/static"))),
 			),
 		),
-	))
+	)
 
 	// Admin tools
-	http.HandleFunc("GET /admin/", RunWithMUDLocked(
-		doBasicAuth(adminIndex),
-	))
+	http.HandleFunc("GET /admin/", doBasicAuth(adminIndex))
 
 	// Item Admin
-	http.HandleFunc("GET /admin/items/", RunWithMUDLocked(
-		doBasicAuth(itemsIndex),
+	http.HandleFunc("GET /admin/items/", doBasicAuth(
+		RunWithMUDLocked(itemsIndex),
 	))
-	http.HandleFunc("GET /admin/items/itemdata/", RunWithMUDLocked(
-		doBasicAuth(itemData),
+	http.HandleFunc("GET /admin/items/itemdata/", doBasicAuth(
+		RunWithMUDLocked(itemData),
 	))
 
 	// Species Admin
-	http.HandleFunc("GET /admin/species/", RunWithMUDLocked(
-		doBasicAuth(speciesIndex)),
+	http.HandleFunc("GET /admin/species/", doBasicAuth(
+		RunWithMUDLocked(speciesIndex)),
 	)
-	http.HandleFunc("GET /admin/species/speciesdata/", RunWithMUDLocked(
-		doBasicAuth(speciesData)),
+	http.HandleFunc("GET /admin/species/speciesdata/", doBasicAuth(
+		RunWithMUDLocked(speciesData)),
 	)
 
 	// Mob Admin
-	http.HandleFunc("GET /admin/mobs/", RunWithMUDLocked(
-		doBasicAuth(mobsIndex),
+	http.HandleFunc("GET /admin/mobs/", doBasicAuth(
+		RunWithMUDLocked(mobsIndex),
 	))
-	http.HandleFunc("GET /admin/mobs/mobdata/", RunWithMUDLocked(
-		doBasicAuth(mobData),
+	http.HandleFunc("GET /admin/mobs/mobdata/", doBasicAuth(
+		RunWithMUDLocked(mobData),
 	))
 
 	// Mutator Admin
-	http.HandleFunc("GET /admin/mutators/", RunWithMUDLocked(
-		doBasicAuth(mutatorsIndex),
+	http.HandleFunc("GET /admin/mutators/", doBasicAuth(
+		RunWithMUDLocked(mutatorsIndex),
 	))
-	http.HandleFunc("GET /admin/mutators/mutatordata/", RunWithMUDLocked(
-		doBasicAuth(mutatorData),
+	http.HandleFunc("GET /admin/mutators/mutatordata/", doBasicAuth(
+		RunWithMUDLocked(mutatorData),
 	))
 
 	// Combat Stats Admin
-	http.HandleFunc("GET /admin/combat-stats/", RunWithMUDLocked(
-		doBasicAuth(combatStatsIndex),
+	http.HandleFunc("GET /admin/combat-stats/", doBasicAuth(combatStatsIndex))
+	http.HandleFunc("GET /admin/api/combat-stats/", doBasicAuth(
+		RunWithMUDLocked(combatStatsAPI),
 	))
-	http.HandleFunc("GET /admin/api/combat-stats/", RunWithMUDLocked(
-		doBasicAuth(combatStatsAPI),
+	http.HandleFunc("POST /admin/api/combat-stats/reset", doBasicAuth(
+		RunWithMUDLocked(combatStatsResetAPI),
 	))
-	http.HandleFunc("POST /admin/api/combat-stats/reset", RunWithMUDLocked(
-		doBasicAuth(combatStatsResetAPI),
-	))
-	http.HandleFunc("POST /admin/api/combat-stats/export", RunWithMUDLocked(
-		doBasicAuth(combatStatsExportAPI),
+	http.HandleFunc("POST /admin/api/combat-stats/export", doBasicAuth(
+		RunWithMUDLocked(combatStatsExportAPI),
 	))
 
 	// Progression Admin
-	http.HandleFunc("GET /admin/progression/", RunWithMUDLocked(
-		doBasicAuth(progressionIndex),
-	))
-	http.HandleFunc("GET /admin/api/progression/", RunWithMUDLocked(
-		doBasicAuth(progressionAPI),
+	http.HandleFunc("GET /admin/progression/", doBasicAuth(progressionIndex))
+	http.HandleFunc("GET /admin/api/progression/", doBasicAuth(
+		RunWithMUDLocked(progressionAPI),
 	))
 
 	// Economy Health Admin
-	http.HandleFunc("GET /admin/economy/", RunWithMUDLocked(
-		doBasicAuth(economyIndex),
+	http.HandleFunc("GET /admin/economy/", doBasicAuth(economyIndex))
+	http.HandleFunc("GET /admin/api/economy/", doBasicAuth(
+		RunWithMUDLocked(economyAPI),
 	))
-	http.HandleFunc("GET /admin/api/economy/", RunWithMUDLocked(
-		doBasicAuth(economyAPI),
-	))
-	http.HandleFunc("POST /admin/api/economy/snapshot", RunWithMUDLocked(
-		doBasicAuth(economySnapshotAPI),
+	http.HandleFunc("POST /admin/api/economy/snapshot", doBasicAuth(
+		RunWithMUDLocked(economySnapshotAPI),
 	))
 
 	// Room Admin
-	http.HandleFunc("GET /admin/rooms/", RunWithMUDLocked(
-		doBasicAuth(roomsIndex),
+	http.HandleFunc("GET /admin/rooms/", doBasicAuth(
+		RunWithMUDLocked(roomsIndex),
 	))
-	http.HandleFunc("GET /admin/rooms/roomdata/", RunWithMUDLocked(
-		doBasicAuth(roomData),
+	http.HandleFunc("GET /admin/rooms/roomdata/", doBasicAuth(
+		RunWithMUDLocked(roomData),
 	))
 
 	// Admin room-builder page (admin web-building 1b). Admin-gated by
@@ -550,13 +545,85 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 
 // This wraps the handler functiojn with a game lock (mutex) to keep the mud from
 // Concurrently accessing the same memory
+// bufferedResponse collects a handler's output in memory instead of writing it
+// to the network. See RunWithMUDLocked for why that matters.
+type bufferedResponse struct {
+	header http.Header
+	code   int
+	buf    bytes.Buffer
+}
+
+func (b *bufferedResponse) Header() http.Header { return b.header }
+
+func (b *bufferedResponse) WriteHeader(code int) {
+	if b.code == 0 {
+		b.code = code
+	}
+}
+
+func (b *bufferedResponse) Write(p []byte) (int, error) {
+	if b.code == 0 {
+		b.code = http.StatusOK
+	}
+	return b.buf.Write(p)
+}
+
+// flushTo replays the buffered response onto the real ResponseWriter.
+func (b *bufferedResponse) flushTo(w http.ResponseWriter) {
+	dst := w.Header()
+	for k, v := range b.header {
+		dst[k] = v
+	}
+	if b.code == 0 {
+		b.code = http.StatusOK
+	}
+	w.WriteHeader(b.code)
+	if b.buf.Len() > 0 {
+		if _, err := w.Write(b.buf.Bytes()); err != nil {
+			mudlog.Error("admin response write", "error", err)
+		}
+	}
+}
+
+// RunWithMUDLocked runs an admin handler with the global world lock held, and
+// releases it before the response reaches the network.
+//
+// The lock is the whole game: while it is held, no player acts and no round
+// advances. Two things used to happen inside it that had no business being
+// there (review finding 34):
+//
+//  1. AUTHENTICATION. The wrapper was the OUTER layer, so doBasicAuth ran under
+//     the lock — including bcrypt, which is deliberately expensive. Anyone who
+//     could reach an admin URL could freeze the game for a bcrypt round per
+//     request, without credentials. Route registration now nests the other way
+//     (doBasicAuth outside), so only authenticated requests reach this at all.
+//     Auth is safe outside the lock: it builds its own UserRecord from disk via
+//     users.LoadUser and never touches the live registry, and reads are torn-free
+//     because user saves are atomic.
+//
+//  2. THE RESPONSE WRITE. The handler wrote straight to the network, so a slow
+//     or stalled admin client held the world lock for as long as it took to
+//     accept the bytes. The handler now writes into a buffer; the lock is
+//     released; then the buffer goes to the client. Admin pages and JSON
+//     payloads are small, and none of these routes stream, so buffering costs
+//     nothing.
+//
+// Routes that touch no world state at all should not use this wrapper. The
+// pure-template pages (admin index, combat-stats, progression, economy) and the
+// static file server are registered without it.
 func RunWithMUDLocked(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		util.LockMud()
-		defer util.UnlockMud()
+		buffered := &bufferedResponse{header: http.Header{}}
 
-		next.ServeHTTP(w, r)
+		func() {
+			util.LockMud()
+			defer util.UnlockMud()
+
+			next.ServeHTTP(buffered, r)
+		}()
+
+		buffered.flushTo(w)
 	})
 }
 
