@@ -129,6 +129,7 @@ func AddMember(tag string, userId int, charName string) error {
 		return fmt.Errorf("that player is already in a guild")
 	}
 	registryMu.Lock()
+	prevMembers := append([]GuildMember(nil), g.Members...)
 	g.Members = append(g.Members, GuildMember{UserId: userId, CharacterName: charName, Rank: RankMember, Joined: time.Now()})
 	byUser[userId] = strings.ToUpper(g.Tag)
 	registryMu.Unlock()
@@ -136,7 +137,19 @@ func AddMember(tag string, userId int, charName string) error {
 	// stale cross-guild invitation can't linger and let them later join a second
 	// guild off it without a fresh invitation.
 	clearInvitesEverywhere(userId)
-	return Save(g)
+	if err := Save(g); err != nil {
+		// Roll back BOTH the member list and the byUser index. Leaving the
+		// index behind would be worse than the failure itself: the player
+		// would be treated as already in a guild and unable to join any
+		// (review finding 7). Create() has always rolled back this way; the
+		// other mutators did not.
+		registryMu.Lock()
+		g.Members = prevMembers
+		delete(byUser, userId)
+		registryMu.Unlock()
+		return err
+	}
+	return nil
 }
 
 // clearInvitesEverywhere removes userId's pending invite from all guilds and
@@ -166,6 +179,8 @@ func RemoveMember(tag string, userId int) error {
 		return fmt.Errorf("no such guild")
 	}
 	registryMu.Lock()
+	prevMembers := append([]GuildMember(nil), g.Members...)
+	prevIndex, hadIndex := byUser[userId]
 	for i, m := range g.Members {
 		if m.UserId == userId {
 			g.Members = append(g.Members[:i], g.Members[i+1:]...)
@@ -174,7 +189,18 @@ func RemoveMember(tag string, userId int) error {
 	}
 	delete(byUser, userId)
 	registryMu.Unlock()
-	return Save(g)
+	if err := Save(g); err != nil {
+		// A removal that did not persist must not appear applied: the player
+		// returns to the guild on the next restart.
+		registryMu.Lock()
+		g.Members = prevMembers
+		if hadIndex {
+			byUser[userId] = prevIndex
+		}
+		registryMu.Unlock()
+		return err
+	}
+	return nil
 }
 
 func SetRank(tag string, userId int, rank GuildRank) error {
@@ -183,13 +209,20 @@ func SetRank(tag string, userId int, rank GuildRank) error {
 		return fmt.Errorf("no such guild")
 	}
 	registryMu.Lock()
+	prevMembers := append([]GuildMember(nil), g.Members...)
 	for i := range g.Members {
 		if g.Members[i].UserId == userId {
 			g.Members[i].Rank = rank
 		}
 	}
 	registryMu.Unlock()
-	return Save(g)
+	if err := Save(g); err != nil {
+		registryMu.Lock()
+		g.Members = prevMembers
+		registryMu.Unlock()
+		return err
+	}
+	return nil
 }
 
 // TransferLeader makes newLeader the leader and demotes the old leader to officer.

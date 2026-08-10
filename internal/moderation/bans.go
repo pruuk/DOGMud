@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -44,19 +45,37 @@ func normAccountKey(username string) string {
 	return strings.ToLower(strings.TrimSpace(username))
 }
 
+// BanAccount records an account ban. The in-memory map is rolled back if the
+// save fails, so memory can never claim a ban that is not on disk: such a ban
+// would silently disappear on the next restart while staff believed it applied
+// (review finding 7).
 func BanAccount(username, reason, by string) error {
 	mu.Lock()
 	defer mu.Unlock()
 	trimmed := strings.TrimSpace(username)
-	accountBans[normAccountKey(trimmed)] = AccountBan{Username: trimmed, Reason: reason, BannedBy: by, Timestamp: now()}
-	return saveBansLocked()
+	key := normAccountKey(trimmed)
+	prev, had := accountBans[key]
+	accountBans[key] = AccountBan{Username: trimmed, Reason: reason, BannedBy: by, Timestamp: now()}
+	if err := saveBansLocked(); err != nil {
+		restoreAccountBan(key, prev, had)
+		return err
+	}
+	return nil
 }
 
+// Unban lifts an account ban, rolling back if the save fails. An unban that
+// did not reach disk must not look applied: the ban would return on restart.
 func Unban(username string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	delete(accountBans, normAccountKey(username))
-	return saveBansLocked()
+	key := normAccountKey(username)
+	prev, had := accountBans[key]
+	delete(accountBans, key)
+	if err := saveBansLocked(); err != nil {
+		restoreAccountBan(key, prev, had)
+		return err
+	}
+	return nil
 }
 
 func IsAccountBanned(username string) (reason string, banned bool) {
@@ -68,19 +87,52 @@ func IsAccountBanned(username string) (reason string, banned bool) {
 	return "", false
 }
 
+// BanIP records an IP ban, rolling back if the save fails. See BanAccount.
 func BanIP(ip, reason, by string) error {
 	mu.Lock()
 	defer mu.Unlock()
 	ip = strings.TrimSpace(ip)
+	prev, had := ipBans[ip]
 	ipBans[ip] = IPBan{IP: ip, Reason: reason, BannedBy: by, Timestamp: now()}
-	return saveBansLocked()
+	if err := saveBansLocked(); err != nil {
+		restoreIPBan(ip, prev, had)
+		return err
+	}
+	return nil
 }
 
+// UnbanIP lifts an IP ban, rolling back if the save fails. See Unban.
 func UnbanIP(ip string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	delete(ipBans, strings.TrimSpace(ip))
-	return saveBansLocked()
+	key := strings.TrimSpace(ip)
+	prev, had := ipBans[key]
+	delete(ipBans, key)
+	if err := saveBansLocked(); err != nil {
+		restoreIPBan(key, prev, had)
+		return err
+	}
+	return nil
+}
+
+// restoreAccountBan / restoreIPBan put a map entry back exactly as it was.
+// "had" distinguishes "there was no entry" from "there was a zero-valued
+// entry", so a rollback cannot invent a ban that never existed.
+// Callers must already hold mu.
+func restoreAccountBan(key string, prev AccountBan, had bool) {
+	if had {
+		accountBans[key] = prev
+		return
+	}
+	delete(accountBans, key)
+}
+
+func restoreIPBan(key string, prev IPBan, had bool) {
+	if had {
+		ipBans[key] = prev
+		return
+	}
+	delete(ipBans, key)
 }
 
 func IsIPBanned(host string) (reason string, banned bool) {
@@ -109,7 +161,10 @@ func saveBansLocked() error {
 		mudlog.Error("moderation.saveBans", "error", err.Error())
 		return err
 	}
-	if err := os.WriteFile(bansPath(), out, 0644); err != nil {
+	// Durable atomic write: bans are living state, and a torn bans.yaml would
+	// resurrect unbanned accounts or drop active bans (living-state contract,
+	// internal/util/livingstate.go).
+	if err := util.Save(bansPath(), out); err != nil {
 		mudlog.Error("moderation.saveBans", "error", err.Error())
 		return err
 	}

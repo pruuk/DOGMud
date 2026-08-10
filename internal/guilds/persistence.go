@@ -42,7 +42,10 @@ func Save(g *Guild) error {
 	if err != nil {
 		return fmt.Errorf("guilds.Save: marshal: %w", err)
 	}
-	return os.WriteFile(guildPath(g.Tag), b, 0644)
+	// Durable atomic write: a guild file is living state — membership, ranks
+	// and history that cannot be rebuilt from the repo (living-state contract,
+	// internal/util/livingstate.go).
+	return util.Save(guildPath(g.Tag), b)
 }
 
 // Delete removes a guild from the registry and disk.

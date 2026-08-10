@@ -231,7 +231,7 @@ further decomposition
 | 1.5 | Remove tracked playtest credentials | S | — | Security follow-up | **In progress — tree clean, ROTATION OUTSTANDING** |
 | 2.1 | Establish the living-state persistence contract | M | 1.4 | Supporting | **Contract Done 2026-08-10; store migrations are 2.2–2.5** |
 | 2.2 | Migrate mob instance persistence | M | 2.1 | 5 | **Done 2026-08-10** |
-| 2.3 | Migrate guild and moderation persistence | M | 2.1 | 7 | Not started |
+| 2.3 | Migrate guild and moderation persistence | M | 2.1 | 7 | **Done 2026-08-10** |
 | 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | Not started |
 | 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | Not started |
 | 2.6 | Make builder operations transactional | M | 2.1 | 13 | Not started |
@@ -647,6 +647,34 @@ administrative success is reported only after durable success.
 discovered store defect becomes a separately tracked finding.
 
 **Finding:** 7
+
+**Delivered 2026-08-10.** Three defects, not one:
+
+1. **Non-durable writes.** `guilds/persistence.go`, `moderation/bans.go` and
+   `moderation/petitions.go` all used bare `os.WriteFile`. Now `util.Save`.
+2. **No rollback, so memory diverged from disk.** Every mutator published to
+   the in-memory registry and saved afterwards, returning the save error but
+   keeping the change. `BanAccount`, `Unban`, `BanIP`, `UnbanIP`,
+   `AddMember`, `RemoveMember` and `SetRank` now restore the exact prior state
+   when the save fails. `Create()` had always rolled back this way — the
+   pattern existed, it just was not applied to the others.
+   `AddMember` restores the `byUser` index as well as the member list: leaving
+   a stale index behind is worse than the original failure, because the player
+   is then treated as already in a guild and cannot join any.
+3. **Commands reported success regardless.** `ban` and `unban` discarded the
+   error with `_ =` and printed success. Four sites; all now report the failure
+   and say plainly that the ban is NOT in effect (or the player is STILL
+   banned). The account-ban path also no longer kicks the player when the ban
+   did not persist.
+
+11 tests, driven by pointing the data dir at a path whose parent is a regular
+file — which makes `MkdirAll` fail on Windows too, unlike chmod tricks.
+
+**Obstacle worth recording:** these error paths were not merely untested, they
+were untestable. `mudlog.Error` dereferences a nil logger and panics when the
+package has no `TestMain`, so any test that drove a save failure crashed the
+binary instead of failing an assertion. `internal/moderation/test_main_test.go`
+now initialises it, matching `internal/bounties`.
 
 ### Chunk 2.4 — Separate corrupt shop and room state from absence
 
@@ -1141,7 +1169,7 @@ only when all of its subchunks close.
 | 4 | 3.1 | **Done** | `atomic.Uint64`; exactness + monotonicity tests | Unsynchronized round counter |
 | 5 | 2.2 | **Done** | `util.Save` on both the instance AND template writers; load quarantines corrupt files instead of silently reseeding + 5 tests | Non-atomic and corruption-prone mob instance persistence |
 | 6 | 2.4 | Open | — | Corrupt shop treated as new |
-| 7 | 2.3 | Open | — | Guild/moderation memory-disk divergence |
+| 7 | 2.3 | **Done** | `util.Save` on guilds/bans/petitions; rollback on save failure in 7 mutators; 4 admin commands no longer report success on failure + 11 tests | Guild/moderation memory-disk divergence |
 | 8 | 3.3 | **Done** | `8dd24e4c8`; RWMutex + 7 accessors, 8 sites (review named 1) + 6 concurrency tests | Unsynchronized room path cache |
 | 9 | 1.2 | **Done** | 164 skip-only placeholders deleted (review named 87 in one file; pattern spanned 18) + 4 emptied files removed + go/ast recurrence guard | Phantom position tests |
 | 10 | 1.1 | **Done** | Reusable validate.yml consumed by PR, master and tags; only-new-issues verified to work on push | Release CI omits lint/coverage |

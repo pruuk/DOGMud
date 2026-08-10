@@ -52,7 +52,13 @@ func Ban(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			ip = host
 			connections.Kick(target.ConnectionId(), "Banned by staff: "+reason)
 		}
-		_ = moderation.BanIP(ip, reason, user.Username)
+		// Report success only after the ban is durably stored. Discarding this
+		// error told staff the IP was banned while the ban existed only in
+		// memory, so it vanished at the next restart (review finding 7).
+		if err := moderation.BanIP(ip, reason, user.Username); err != nil {
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">IP ban FAILED to save:</ansi> %s. The ban is NOT in effect. %s`, ip, err))
+			return true, nil
+		}
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">IP banned:</ansi> %s`, ip))
 		return true, nil
 	}
@@ -72,7 +78,12 @@ func Ban(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if target != nil {
 		banName = target.Username
 	}
-	_ = moderation.BanAccount(banName, reason, user.Username)
+	// Same contract as the IP branch: no success message, and no kick, unless
+	// the ban actually persisted.
+	if err := moderation.BanAccount(banName, reason, user.Username); err != nil {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">Ban FAILED to save:</ansi> <ansi fg="username">%s</ansi> is NOT banned. %s`, banName, err))
+		return true, nil
+	}
 
 	if target != nil {
 		// Boot the online session.

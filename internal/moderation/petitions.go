@@ -119,7 +119,9 @@ func savePetitionsLocked() error {
 		mudlog.Error("moderation.savePetitions", "error", err.Error())
 		return err
 	}
-	if err := os.WriteFile(petitionsPath(), b, 0644); err != nil {
+	// Durable atomic write: the petition queue is player-submitted staff work
+	// that cannot be reconstructed if the file is torn.
+	if err := util.Save(petitionsPath(), b); err != nil {
 		mudlog.Error("moderation.savePetitions", "error", err.Error())
 		return err
 	}
