@@ -101,6 +101,15 @@ func MaterializeFromConfig() ([]PlayerCreds, error) {
 	})
 }
 
+// writeCredsFile writes the run's plaintext credentials with mode 0600.
+//
+// Do NOT convert this to an atomic write-temp-then-rename. Under the
+// containerized playtest supervisor this file lives in a bind mount and is
+// written by root, while the host user that started the run has to read it
+// back. internal/playtestenv pre-creates the file host-side and relies on this
+// call truncating it IN PLACE so the inode keeps its host owner. A rename
+// replaces the inode, ownership reverts to root, and every profile-based run
+// fails on Linux with "permission denied" — see precreateCredsFile.
 func writeCredsFile(path, runID string, players []PlayerCreds) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("playtestprofiles: create creds dir: %w", err)
