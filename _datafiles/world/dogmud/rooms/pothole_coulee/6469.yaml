@@ -1,0 +1,14 @@
+roomid: 6469
+zone: Pothole Coulee
+title: Ancestral Chamber
+description: As you entered the cave the space expands. You notices the gleaming stalactites
+  and stalagmites. in the middle of the room there is s small wading pool with a flat,  elevated,
+  circular stone. Suddenly, you start to feel like you need to sit down on that spot
+  and just listen to the droplets of water. They seem to create a soothing tink that
+  melts all your worries away.
+biome: cave
+x: 41
+"y": 17
+exits:
+  east:
+    roomid: 6468

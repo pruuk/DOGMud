@@ -20,6 +20,8 @@ exits:
     roomid: 5218
   up:
     roomid: 5302
+  west:
+    roomid: 6468
 nouns:
   cut: The cut is a narrow cleft worked up through the cliff toward the
     rim, its walls close enough to touch on either hand. The stone here
