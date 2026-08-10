@@ -50,13 +50,22 @@ type dialogueEntry struct {
 }
 
 // loadAllDialogueFiles walks the dialogue directory and parses every YAML file.
-func loadAllDialogueFiles(basePath string) []dialogueEntry {
-	var entries []dialogueEntry
+//
+// It returns the files it could NOT read alongside the ones it could. Skipping
+// them silently is what made the flag validator dishonest: it could report
+// success without having inspected files that may contain undeclared or
+// misspelled flag keys, which is precisely what it exists to catch (review
+// finding 16). A validator that quietly narrows its own input is worse than no
+// validator, because it produces confidence rather than a warning.
+//
+// A missing dialogue directory is still fine and yields no failures — that is
+// absence, not corruption.
+func loadAllDialogueFiles(basePath string) (entries []dialogueEntry, failures []string) {
 
 	zoneDirs, err := os.ReadDir(basePath)
 	if err != nil {
 		// No dialogue directory is fine (e.g., tests).
-		return entries
+		return entries, failures
 	}
 
 	for _, zoneDir := range zoneDirs {
@@ -66,6 +75,7 @@ func loadAllDialogueFiles(basePath string) []dialogueEntry {
 		zonePath := basePath + "/" + zoneDir.Name()
 		files, err := os.ReadDir(zonePath)
 		if err != nil {
+			failures = append(failures, fmt.Sprintf("%s: cannot list zone directory: %s", zonePath, err))
 			continue
 		}
 		for _, f := range files {
@@ -75,17 +85,19 @@ func loadAllDialogueFiles(basePath string) []dialogueEntry {
 			fullPath := zonePath + "/" + f.Name()
 			data, err := os.ReadFile(fullPath)
 			if err != nil {
+				failures = append(failures, fmt.Sprintf("%s: cannot read: %s", fullPath, err))
 				continue
 			}
 			var df dialogue.DialogueFile
 			if err := yaml.Unmarshal(data, &df); err != nil {
+				failures = append(failures, fmt.Sprintf("%s: cannot parse: %s", fullPath, err))
 				continue
 			}
 			entries = append(entries, dialogueEntry{mobId: df.MobId, df: &df})
 		}
 	}
 
-	return entries
+	return entries, failures
 }
 
 // ValidateAllFlags scans all quest engine triggers and dialogue files for quest
@@ -119,7 +131,13 @@ func ValidateAllFlags() {
 
 	// Scan dialogue files for flag references.
 	dialoguePath := configs.GetFilePathsConfig().DataFiles.String() + `/dialogue`
-	dialogueFiles := loadAllDialogueFiles(dialoguePath)
+	dialogueFiles, dialogueFailures := loadAllDialogueFiles(dialoguePath)
+	// A file we could not inspect is a validation failure, not a file to skip.
+	// Undeclared flag references are a startup panic by design, so letting an
+	// unreadable file through would hollow out that guarantee.
+	for _, f := range dialogueFailures {
+		errors = append(errors, fmt.Sprintf("dialogue file could not be validated: %s", f))
+	}
 	for _, entry := range dialogueFiles {
 		refs, sets := dialogue.CollectFlagReferences(entry.df)
 		for _, ref := range refs {

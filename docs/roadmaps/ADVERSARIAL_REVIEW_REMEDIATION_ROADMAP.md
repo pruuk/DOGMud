@@ -233,7 +233,7 @@ further decomposition
 | 2.2 | Migrate mob instance persistence | M | 2.1 | 5 | **Done 2026-08-10** |
 | 2.3 | Migrate guild and moderation persistence | M | 2.1 | 7 | **Done 2026-08-10** |
 | 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | **Done 2026-08-10** |
-| 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | Not started |
+| 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | **Done 2026-08-10** |
 | 2.6 | Make builder operations transactional | M | 2.1 | 13 | **Done 2026-08-10** |
 | 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | **Done 2026-08-10** |
 | 3.1 | Make global counters race-free | S | — | 4 | **Done 2026-08-08** |
@@ -727,7 +727,41 @@ switch off exactly the guarantee this wave is building. Worth a decision in
 validation skips files it cannot read or parse.
 
 **Outcome:** Validation reports every file it could not inspect. Runtime caches
-do not convert transient parse errors into process-lifetime absence. CI and
+do not convert transient parse errors into process-lifetime absence.
+
+**Delivered 2026-08-10** (the two findings; see the boundary note below for
+what is explicitly NOT claimed).
+
+**Finding 14 (dialogue).** `Load` stored the nil sentinel for three different
+situations: file absent, file unreadable, file unparseable. Only the first is
+permanent. Caching the other two meant an author who fixed a YAML typo had a
+mute NPC until the whole server restarted — and the builder workflow is exactly
+where those typos happen.
+
+The sentinel now records **confirmed absence only**, keeping the optimisation it
+exists for (most mobs never talk and should not stat the disk every
+interaction). Read and parse failures return nil without caching, so the next
+interaction retries. The error log is throttled per mob/zone by message text, so
+a broken file does not repeat on every `ask`, while a *changed* error still logs
+and a successful load clears the throttle.
+
+**Finding 16 (questengine).** `loadAllDialogueFiles` `continue`d past every read
+and parse error, so `ValidateAllFlags` could report success without having
+inspected files that may contain undeclared flag keys. Undeclared flags are a
+startup panic by design, so a validator that quietly narrows its own input made
+that guarantee hollow while still producing confidence. It now returns failures
+alongside entries and each becomes a validation error. A missing dialogue
+directory is still fine — absence, not corruption.
+
+9 tests. `internal/dialogue` also gained a `TestMain`: like `internal/moderation`
+in 2.3, its failure paths were untestable because `mudlog.Error` panics on a nil
+logger, and one existing test worked around it by calling `SetupLogger` inside a
+helper.
+
+**Still open in this chunk's stated outcome:** wiring the whole-world dialogue
+and quest semantic validators into CI and boot smoke, rather than only the
+editor-save paths. The two findings are closed; that broader validator-coverage
+goal is not, and should be re-scoped as its own chunk. CI and
 boot smoke apply the existing dialogue and quest semantic validators across
 every authored file rather than limiting those checks to editor-save paths.
 
@@ -1262,9 +1296,9 @@ only when all of its subchunks close.
 | 11 | 5.3 | **Done** | `e23df1071`; `pickWanderExit` + 5 tests | Wander filter ignored |
 | 12 | 5.4 | **Done** | `e23df1071`; `parseGoldPhrase` shared by both paths + 2 tests | Gold-give parse mismatch |
 | 13 | 2.6 | **Done** | `buildZoneCreate` persists-then-publishes and rolls the zone back on any failure; 4 silent paths closed, not the 2 the review named + 7 tests | Builder ignores save failures |
-| 14 | 2.5 | Open | — | Dialogue parse error cached as absence |
+| 14 | 2.5 | **Done** | nil sentinel now records CONFIRMED absence only; read/parse failures are retryable in-process, with a throttled log + 5 tests | Dialogue parse error cached as absence |
 | 15 | 2.4 | **Done** | Overlay applied to a scratch template copy and adopted only on a full parse; corrupt overlays quarantined + 4 tests | Partial room overlay after YAML failure |
-| 16 | 2.5 | Open | — | Quest validation skips unreadable dialogue |
+| 16 | 2.5 | **Done** | `loadAllDialogueFiles` returns failures alongside entries; unreadable/unparseable files now fail validation instead of being skipped + 4 tests | Quest validation skips unreadable dialogue |
 | 17 | 4.1 | **Done** | `admin/static/js/safe-dom.js` default-safe helpers; economy AND progression converted (review named economy only; progression renders player-chosen names) + 12 JS checks | Admin economy stored-XSS surface |
 | 18 | 4.3 | Open | — | Global keyboard capture |
 | 19 | 4.4 | Open | — | Hot GMCP DOM rebuilds |

@@ -13,8 +13,33 @@ import (
 
 var (
 	dialogueCache = map[string]*DialogueFile{}
-	nilSentinel   = map[string]bool{}
+	// nilSentinel records mob/zone pairs that have NO dialogue file, so the
+	// common "this mob never talks" case does not stat the disk on every
+	// interaction.
+	//
+	// It records CONFIRMED absence only. A read or parse failure must never
+	// land here: those are transient or fixable, and caching them meant a
+	// corrected dialogue file could not load until the process restarted
+	// (review finding 14). Fix a typo in an NPC's YAML and the NPC stayed mute
+	// until a reboot.
+	nilSentinel = map[string]bool{}
+	// loadFailureLogged throttles the error log for a broken file. Without
+	// caching the failure, every ask/talk re-reads it, and a busy room would
+	// otherwise repeat the same parse error on every interaction. Keyed by
+	// mob/zone, valued by the last error text, so a CHANGED error still logs
+	// (the builder saved a different mistake) and a successful load clears it.
+	loadFailureLogged = map[string]string{}
 )
+
+// logLoadFailureOnce reports a dialogue load failure at most once per distinct
+// error per mob/zone. Returns nothing: the caller always returns nil.
+func logLoadFailureOnce(key, msg string) {
+	if prev, ok := loadFailureLogged[key]; ok && prev == msg {
+		return
+	}
+	loadFailureLogged[key] = msg
+	mudlog.Error("dialogue.Load()", "error", msg)
+}
 
 // Load lazily reads and caches a mob's dialogue file.
 // Returns nil if no file exists for this mob/zone combination.
@@ -40,20 +65,24 @@ func Load(mobId int, zone string) *DialogueFile {
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		mudlog.Error("dialogue.Load()", "error", "Problem reading dialogue file "+path+": "+err.Error())
-		nilSentinel[key] = true
+		// NOT cached: the file exists, it just could not be read this time.
+		// Caching would make the failure permanent for the process lifetime.
+		logLoadFailureOnce(key, "Problem reading dialogue file "+path+": "+err.Error())
 		return nil
 	}
 
 	var df DialogueFile
 	if err := yaml.Unmarshal(bytes, &df); err != nil {
-		mudlog.Error("dialogue.Load()", "error", "Problem unmarshalling dialogue file "+path+": "+err.Error())
-		nilSentinel[key] = true
+		// NOT cached, for the same reason: this is the case an author hits
+		// while editing, and they must be able to fix the file and retry
+		// without restarting the server.
+		logLoadFailureOnce(key, "Problem unmarshalling dialogue file "+path+": "+err.Error())
 		return nil
 	}
 
 	validateQuestExclusions(&df, path)
 
+	delete(loadFailureLogged, key) // a good load clears the throttle
 	dialogueCache[key] = &df
 	return &df
 }
