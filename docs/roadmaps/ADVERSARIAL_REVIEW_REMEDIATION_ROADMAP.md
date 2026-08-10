@@ -181,12 +181,12 @@ further decomposition
 | 3.5 | Bound admin world-lock scope | M | — | 34 | Not started |
 | 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | Not started |
 | 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | Not started |
-| 4.1 | Remove admin stored-XSS surfaces | S | — | 17 | Not started |
+| 4.1 | Remove admin stored-XSS surfaces | S | — | 17 | **Done 2026-08-10** |
 | 4.2 | Harden HTTP server boundaries | M | — | 20 | Not started |
 | 4.3 | Restore keyboard accessibility | M | — | 18 | Not started |
 | 4.4 | Remove hot-path GMCP DOM rebuilds | L | — | 19 | Not started |
 | 5.1 | Make combat entry transactional | M | 1.2 | 2 | Not started |
-| 5.2 | Unify harmful-target authorization | M | — | 3 | Not started |
+| 5.2 | Unify harmful-target authorization | M | — | 3 | **Done 2026-08-10** |
 | 5.3 | Fix filtered wandering | S | — | 11 | **Done 2026-08-08** |
 | 5.4 | Fix gold-give parsing | S | — | 12 | **Done 2026-08-08** |
 | 5.5 | Repair the ANSI wrapper fallback contract | S | — | 32 | **Done 2026-08-08** |
@@ -1014,7 +1014,7 @@ only when all of its subchunks close.
 |---:|---|---|---|---|
 | 1 | 0.1 | Invalidated | Git blob `fbe149c`; tracked in `HEAD` and `origin/master` | Missing xterm runtime |
 | 2 | 5.1 | Open | — | Combat/activity state divergence |
-| 3 | 5.2 | Open | — | Harmful spells bypass attack immunity |
+| 3 | 5.2 | **Done** | `mobs.CheckPlayerHarm` policy + 7 sites; review named 1 (HarmSingle), actual scope was 5 cast-time paths, resolution-time re-check, and `target` + 21 tests | Harmful spells bypass attack immunity |
 | 4 | 3.1 | **Done** | `atomic.Uint64`; exactness + monotonicity tests | Unsynchronized round counter |
 | 5 | 2.2 | Open | — | Non-atomic and corruption-prone mob instance persistence |
 | 6 | 2.4 | Open | — | Corrupt shop treated as new |
@@ -1028,7 +1028,7 @@ only when all of its subchunks close.
 | 14 | 2.5 | Open | — | Dialogue parse error cached as absence |
 | 15 | 2.4 | Open | — | Partial room overlay after YAML failure |
 | 16 | 2.5 | Open | — | Quest validation skips unreadable dialogue |
-| 17 | 4.1 | Open | — | Admin economy stored-XSS surface |
+| 17 | 4.1 | **Done** | `admin/static/js/safe-dom.js` default-safe helpers; economy AND progression converted (review named economy only; progression renders player-chosen names) + 12 JS checks | Admin economy stored-XSS surface |
 | 18 | 4.3 | Open | — | Global keyboard capture |
 | 19 | 4.4 | Open | — | Hot GMCP DOM rebuilds |
 | 20 | 4.2 | Open | — | HTTP timeout and Host redirect weaknesses |

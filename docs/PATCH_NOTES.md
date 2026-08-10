@@ -1,5 +1,33 @@
 # DOGMud Patch Notes
 
+## 2026-08-10: Protected people are protected from spells too
+
+Some people in the world cannot be attacked. Quest givers, tutorial guides and
+guards on duty are meant to stay standing no matter what you try. That
+protection covered swords and fists, but it did not cover magic.
+
+Harmful spells now respect it. Aiming one at a protected person is refused with
+a message, the same way an attack is. This applies whether you name your
+target, let the spell pick up whoever you are already fighting, or fill a whole
+room with a spell that hits everyone in it. Chain and area spells enforced
+nothing at all before, so a spell that spread from one target to the next could
+reach someone a sword could not.
+
+The check is also repeated at the moment the spell lands, not only when you aim
+it. Spells take time to gather, and someone can become protected while you are
+still casting.
+
+Switching targets in the middle of a fight had the same hole. You could not
+start a fight with a protected person, but once you were fighting something
+else you could turn your swings onto them. Not any more.
+
+None of this changes who your companions are willing to fight, and monsters
+fighting each other are unaffected.
+
+Behind the scenes, the staff dashboards no longer treat names as page markup.
+A name written to look like web code was being run by the browser of any staff
+member who opened those pages.
+
 ## 2026-08-08: Phantom townsfolk no longer haunt their own rooms
 
 Some rooms listed people who were not really there. The same townsperson could
