@@ -155,6 +155,11 @@
 
 <script>
 (function() {
+  // Default-safe HTML construction (see /admin/static/js/safe-dom.js). Player
+  // names reach these tables, and a player picks their own name, so nothing
+  // here may be concatenated into markup unescaped.
+  var esc = SafeDom.esc, raw = SafeDom.raw, tr = SafeDom.tr, ths = SafeDom.ths;
+
   var data = null;
   var skillDistChart = null;
   var statDistChart = null;
@@ -171,14 +176,15 @@
   }
 
   function tierBadge(tier) {
+    // color is a lookup in the fixed tierColors map, never raw input.
     var color = tierColors[tier] || '#6c757d';
-    return '<span class="badge" style="background:'+color+';color:#fff">'+tier+'</span>';
+    return '<span class="badge" style="background:'+color+';color:#fff">'+esc(tier)+'</span>';
   }
 
   function flagBadge(flag) {
     if (!flag) return '';
     var cls = flag === 'too_hidden' ? 'warning' : 'info';
-    return '<span class="badge badge-' + cls + '">' + flag.replace('_',' ') + '</span>';
+    return '<span class="badge badge-' + cls + '">' + esc(String(flag).replace('_',' ')) + '</span>';
   }
 
   function showTab(name, el) {
@@ -197,15 +203,20 @@
     var entries = Object.entries(d.skills).sort(function(a,b) {
       return a[1].health_score - b[1].health_score;
     });
+    var html = '';
     entries.forEach(function(e) {
       var sk = e[0], s = e[1];
-      var row = '<tr><td>'+sk+'</td><td>'+healthBadge(s.health_score)+'</td>';
-      row += '<td>'+s.avg_deviation.toFixed(1)+'</td>';
-      row += '<td>'+s.worst_player+' ('+s.worst_deviation.toFixed(1)+')</td>';
-      row += '<td>'+s.stall_count+'</td><td>'+s.total_with_uses+'</td>';
-      row += '<td>'+s.clustering_score.toFixed(2)+'</td></tr>';
-      tbody.innerHTML += row;
+      html += tr([
+        sk,
+        raw(healthBadge(s.health_score)),
+        s.avg_deviation.toFixed(1),
+        s.worst_player + ' (' + s.worst_deviation.toFixed(1) + ')',
+        s.stall_count,
+        s.total_with_uses,
+        s.clustering_score.toFixed(2)
+      ]);
     });
+    tbody.innerHTML = html;
   }
 
   function updateStallTable(d) {
@@ -239,14 +250,19 @@
     }
     document.getElementById('noStalls').style.display = 'none';
     document.getElementById('stallTable').style.display = '';
+    var html = '';
     stalls.forEach(function(s) {
       var cls = s.staleness > 2.0 ? 'danger' : s.staleness > 1.5 ? 'warning' : 'success';
-      var row = '<tr><td>'+s.player+'</td><td>'+s.skill+'</td>';
-      row += '<td>'+tierBadge(s.tier)+'</td>';
-      row += '<td>'+s.usesSince+'</td><td>'+s.expected+'</td>';
-      row += '<td><span class="badge badge-'+cls+'">'+s.staleness.toFixed(1)+'x</span></td></tr>';
-      tbody.innerHTML += row;
+      html += tr([
+        s.player,
+        s.skill,
+        raw(tierBadge(s.tier)),
+        s.usesSince,
+        s.expected,
+        raw('<span class="badge badge-'+cls+'">'+s.staleness.toFixed(1)+'x</span>')
+      ]);
     });
+    tbody.innerHTML = html;
   }
 
   function updateDistChart() {
@@ -293,85 +309,97 @@
   }
 
   function updateDiscoveryTables(d) {
-    var spellBody = document.querySelector('#spellTable tbody');
-    spellBody.innerHTML = '';
+    var spellHtml = '';
     Object.entries(d.spells).sort(function(a,b) {
       return a[1].name.localeCompare(b[1].name);
     }).forEach(function(e) {
       var s = e[1];
-      spellBody.innerHTML += '<tr><td>'+s.name+'</td><td>'+s.school+'</td>'
-        +'<td>'+s.known_count+'</td><td>'+s.total_players+'</td>'
-        +'<td>'+Math.round(s.avg_activity_at_discovery)+'</td>'
-        +'<td>'+flagBadge(s.flag)+'</td></tr>';
+      spellHtml += tr([
+        s.name,
+        s.school,
+        s.known_count,
+        s.total_players,
+        Math.round(s.avg_activity_at_discovery),
+        raw(flagBadge(s.flag))
+      ]);
     });
+    document.querySelector('#spellTable tbody').innerHTML = spellHtml;
 
-    var recipeBody = document.querySelector('#recipeTable tbody');
-    recipeBody.innerHTML = '';
+    var recipeHtml = '';
     Object.entries(d.recipes).sort(function(a,b) {
       return a[1].name.localeCompare(b[1].name);
     }).forEach(function(e) {
       var s = e[1];
-      recipeBody.innerHTML += '<tr><td>'+s.name+'</td><td>'+s.skill+'</td>'
-        +'<td>'+s.known_count+'</td><td>'+s.total_players+'</td>'
-        +'<td>'+Math.round(s.avg_activity_at_discovery)+'</td>'
-        +'<td>'+flagBadge(s.flag)+'</td></tr>';
+      recipeHtml += tr([
+        s.name,
+        s.skill,
+        s.known_count,
+        s.total_players,
+        Math.round(s.avg_activity_at_discovery),
+        raw(flagBadge(s.flag))
+      ]);
     });
+    document.querySelector('#recipeTable tbody').innerHTML = recipeHtml;
   }
 
   function updatePlayerTable(d) {
     var allSkills = Object.keys(d.skills).sort();
 
     // Rebuild header row
-    var thead = document.querySelector('#playerTable thead tr');
-    thead.innerHTML = '<th>Player</th><th>Activity</th>';
+    var headers = ['Player', 'Activity'];
     allSkills.forEach(function(sk) {
-      thead.innerHTML += '<th>'+sk.replace(/-combat$/,'')+'</th>';
+      headers.push(String(sk).replace(/-combat$/,''));
     });
+    document.querySelector('#playerTable thead tr').innerHTML = ths(headers);
 
-    var tbody = document.querySelector('#playerTable tbody');
-    tbody.innerHTML = '';
+    var html = '';
     d.players.forEach(function(p) {
-      var row = '<tr><td>'+p.name+'</td><td>'+p.total_activity+'</td>';
+      var cells = [p.name, p.total_activity];
       allSkills.forEach(function(sk) {
         var s = p.skills[sk];
         if (s) {
-          row += '<td title="uses='+s.use_count+' | next='+s.progression_chance.toFixed(3)+'">'+
-            s.rank+' '+tierBadge(s.tier)+'</td>';
+          cells.push({
+            v: raw(esc(s.rank) + ' ' + tierBadge(s.tier)),
+            title: 'uses=' + s.use_count + ' | next=' + s.progression_chance.toFixed(3)
+          });
         } else {
-          row += '<td>-</td>';
+          cells.push('-');
         }
       });
-      row += '</tr>';
-      tbody.innerHTML += row;
+      html += tr(cells);
     });
+    document.querySelector('#playerTable tbody').innerHTML = html;
   }
 
   function updatePlayerStatTable(d) {
     var statOrder = ['strength','dexterity','perception','vitality','willpower','charisma'];
 
-    var thead = document.querySelector('#playerStatTable thead tr');
-    thead.innerHTML = '<th>Player</th>';
+    var headers = ['Player'];
     statOrder.forEach(function(st) {
-      thead.innerHTML += '<th>'+st.charAt(0).toUpperCase()+st.slice(1)+'</th>';
+      headers.push(st.charAt(0).toUpperCase()+st.slice(1));
     });
+    document.querySelector('#playerStatTable thead tr').innerHTML = ths(headers);
 
-    var tbody = document.querySelector('#playerStatTable tbody');
-    tbody.innerHTML = '';
+    var html = '';
     d.players.forEach(function(p) {
-      var row = '<tr><td>'+p.name+'</td>';
+      var cells = [p.name];
       statOrder.forEach(function(st) {
         var s = p.stats[st];
         if (s) {
           var v = s.value;
           var clr = v < 90 ? '#e74c3c' : v < 100 ? '#e67e22' : v < 120 ? '#3498db' : v < 150 ? '#2ecc71' : '#f1c40f';
-          row += '<td title="training='+s.training+' | uses='+s.use_count+'" style="color:'+clr+'">'+v+'</td>';
+          cells.push({
+            v: v,
+            title: 'training=' + s.training + ' | uses=' + s.use_count,
+            style: 'color:' + clr
+          });
         } else {
-          row += '<td>-</td>';
+          cells.push('-');
         }
       });
-      row += '</tr>';
-      tbody.innerHTML += row;
+      html += tr(cells);
     });
+    document.querySelector('#playerStatTable tbody').innerHTML = html;
   }
 
   function populateSkillDropdown(d) {
