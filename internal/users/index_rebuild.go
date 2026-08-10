@@ -149,11 +149,25 @@ func (idx *UserIndex) writeCompleteIndexAtomic(records []IndexUserRecord) error 
 		writeErr = closeErr
 	}
 	if writeErr != nil {
-		os.Remove(tmpName)
+		// Best effort: the write already failed, and a cleanup failure must not
+		// mask the real error being returned.
+		_ = os.Remove(tmpName)
 		return writeErr
 	}
 
-	return os.Rename(tmpName, idx.Filename)
+	if err := os.Rename(tmpName, idx.Filename); err != nil {
+		_ = os.Remove(tmpName)
+		return err
+	}
+
+	// The f.Sync above flushes the index CONTENT, but on Linux the rename that
+	// publishes it is itself only durable once the directory entry is flushed.
+	// Without this, a power loss can lose the rename and leave the old index in
+	// place while the .tmp survives (chunk 2.8). Best effort by design: Windows
+	// cannot sync a directory handle this way, and the data is already flushed.
+	util.SyncDir(filepath.Dir(idx.Filename))
+
+	return nil
 }
 
 // Rebuild re-indexes all user files from the configured users directory.

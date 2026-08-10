@@ -49,12 +49,11 @@ func saveRegistry(r *Registry) error {
 	}
 
 	path := registryFilePath()
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return fmt.Errorf("write tmp: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("rename: %w", err)
+	// Durable atomic write (chunk 2.8). This hand-rolled its own
+	// tmp+rename, which is atomic but NOT durable: with no fsync a power
+	// loss can leave an atomically-renamed empty file.
+	if err := util.Save(path, out); err != nil {
+		return fmt.Errorf("write %q: %w", path, err)
 	}
 	return nil
 }
@@ -87,12 +86,11 @@ func saveAwareness(a *Awareness) error {
 	}
 
 	path := awarenessFilePath(a.ObserverMobId, a.ObserverName)
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return fmt.Errorf("write tmp: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("rename: %w", err)
+	// Durable atomic write (chunk 2.8). This hand-rolled its own
+	// tmp+rename, which is atomic but NOT durable: with no fsync a power
+	// loss can leave an atomically-renamed empty file.
+	if err := util.Save(path, out); err != nil {
+		return fmt.Errorf("write %q: %w", path, err)
 	}
 	return nil
 }

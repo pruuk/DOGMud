@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -50,7 +51,9 @@ func WriteSnapshotTo(dir string, s Snapshot) error {
 		return fmt.Errorf("marshal: %w", err)
 	}
 	path := filepath.Join(dir, SnapshotFilename(s.UnixTs))
-	return os.WriteFile(path, data, 0o644)
+	// Durable atomic write (chunk 2.8): economy snapshots are a historical
+	// series; a torn one is a permanent gap.
+	return util.Save(path, data)
 }
 
 // LoadSnapshotFrom reads "{unix_ts}.yaml" from dir.

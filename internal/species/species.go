@@ -3,7 +3,6 @@ package species
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -182,7 +181,10 @@ func (s *Species) Save() error {
 
 	saveFilePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/`, `species`, `/`, s.Filename())
 
-	err = os.WriteFile(saveFilePath, bytes, 0644)
+	// Durable atomic write (chunk 2.8). Authored content is recoverable from
+	// git, but a TORN file panics the next boot on an unresolved reference or a
+	// name/filename mismatch, so atomicity still matters here.
+	err = util.Save(saveFilePath, bytes)
 	if err != nil {
 		return err
 	}

@@ -724,7 +724,7 @@ func SafeSave(path string, data []byte) error {
 		return err
 	}
 
-	syncDir(filepath.Dir(path))
+	SyncDir(filepath.Dir(path))
 
 	return nil
 }
@@ -750,14 +750,14 @@ func writeAndSync(path string, data []byte) error {
 	return f.Close()
 }
 
-// syncDir flushes a directory entry so a completed rename survives power loss.
+// SyncDir flushes a directory entry so a completed rename survives power loss.
 //
 // Best effort on purpose. It is meaningful on Linux (the droplet), where the
 // rename itself is only durable once the directory is synced. Windows cannot
 // open a directory for syncing this way and returns an error, which is not a
 // failure of the save — the file data is already flushed by that point — so the
 // error is deliberately ignored rather than failing a save that succeeded.
-func syncDir(dir string) {
+func SyncDir(dir string) {
 	d, err := os.Open(dir)
 	if err != nil {
 		return
@@ -948,6 +948,13 @@ func BoolYN(b bool) string {
 	return `no`
 }
 
+// SaveRoundCount deliberately does NOT route through Save (chunk 2.8).
+//
+// It is called every 10 seconds from world.go WITH THE WORLD LOCK HELD, and an
+// fsync measured at ~3.5ms in chunk 3.6a — so the hardened path would add a
+// recurring lock-held cost for a payload of about ten bytes, which fits in a
+// single sector and cannot realistically tear. LoadRoundCount already degrades
+// safely on an unreadable file. A future sweep should leave this one alone.
 func SaveRoundCount(fpath string) {
 
 	err := os.WriteFile(fpath, []byte(strconv.FormatUint(roundCount.Load(), 10)), 0644)

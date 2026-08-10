@@ -236,6 +236,7 @@ further decomposition
 | 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | **Done 2026-08-10** |
 | 2.6 | Make builder operations transactional | M | 2.1 | 13 | **Done 2026-08-10** |
 | 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | **Done 2026-08-10** |
+| 2.8 | Adopt the persistence contract everywhere it was missed | M | 2.1 | New (Wave 2 scope miss) | **DONE** |
 | 3.1 | Make global counters race-free | S | — | 4 | **Done 2026-08-08** |
 | 3.2 | Make LLM request admission atomic | S | — | 21 | **Done 2026-08-08** |
 | 3.3 | Synchronize the room path cache | M | — | 8 | **Done 2026-08-08** |
@@ -812,6 +813,123 @@ The function was also given the injectable-deps treatment already used by
 `buildZoneCreateWith`), because none of these failure paths were reachable in a
 test otherwise. 7 tests, including one asserting the plane is NOT published when
 persistence fails.
+
+### Chunk 2.8 — Adopt the persistence contract everywhere it was missed
+
+**Problem:** Wave 2 established the living-state persistence contract (2.1) and
+migrated six write sites across chunks 2.2–2.4. A later sweep found **~20 more**
+still writing directly, including the most valuable file in the game.
+
+The miss was a scoping error: the Wave 2 audit grepped `internal/mobs`,
+`internal/guilds`, `internal/moderation`, `internal/shops` and `internal/rooms`
+only. `internal/users` was never checked.
+
+**Outcome:** Every living-state and authored-content writer routes through
+`util.Save`, so atomicity AND durability are uniform. No subsystem hand-rolls
+its own careful-save.
+
+**Triage by value:**
+
+*Tier A — irreplaceable player data. Highest value; fix first.*
+
+| Site | Current behaviour |
+|---|---|
+| `internal/users/users.go:729` | hand-rolled `.new`+rename, **no fsync** |
+| `internal/characters/alts.go:69` | direct write, mode **0777** |
+| `internal/pets/pets.go:148` | direct write |
+
+*Tier B — accumulated world and economy state, unreproducible.*
+
+| Site | Current behaviour |
+|---|---|
+| `internal/plugins/plugins.go:364` | **bare write, no atomicity at all** — auction history, leaderboards, weather |
+| `internal/warehouse/persistence.go:71` | direct write |
+| `internal/caravan/throughput.go:132` | direct write |
+| `internal/forager/throughput.go:132` | direct write |
+| `internal/sealedcrate/persistence.go:33` | direct write |
+| `internal/crimes/persistence.go:95` | direct write |
+| `internal/factions/persistence.go:81` | direct write |
+| `internal/opinions/persistence.go:98` | direct write |
+| `internal/economy/health/persistence.go:53` | direct write |
+| `internal/bounties/persistence.go:44` | tmp+rename, no fsync |
+| `internal/facts/persistence.go:53,91` | tmp+rename, no fsync |
+| `internal/goals/persistence.go:81` | tmp+rename, no fsync |
+| `internal/knowledge/persistence.go:51` | tmp+rename, no fsync |
+
+*Tier C — authored content. Recoverable from git, but a torn file PANICS the
+next boot, so atomicity still matters.*
+
+| Site | Current behaviour |
+|---|---|
+| `internal/fileloader/fileloader.go:273,349` | hand-rolled careful save, mode 0777 |
+| `internal/behaviortree/save.go:67` | direct write |
+| `internal/dialogue/save.go:39` | direct write |
+| `internal/quests/save.go:50` | direct write |
+| `internal/mutators/mutators.go:307` | direct write |
+| `internal/species/species.go:185` | direct write |
+| `internal/rooms/zone_rename.go:118` | direct write |
+
+*Tier D — deliberately unchanged.*
+
+- `internal/migration/*` — one-time, at boot, before any player connects; a
+  failure is immediately visible and the migration can be re-run.
+- `internal/devtools/gridgen.go` — developer tool, not production data.
+- `internal/playtestenv/*`, `internal/playtestrun/*` — ephemeral test infra.
+- **`internal/playtestprofiles/materialize.go:122` MUST STAY a plain
+  `os.WriteFile`.** Chunk 2.3's fix depends on it truncating the pre-created
+  file IN PLACE so the inode keeps its host owner. Converting it to an atomic
+  rename replaces the inode and silently reintroduces the Linux CI failure.
+  This is documented at both ends; do not "fix" it.
+
+**Measured stake (3.6b prep):** a 48KB user file costs 0.696 ms written the
+current way and 3.873 ms durably. Users are cheap today *because they are not
+durable*.
+
+**Sequencing note:** fixing Tier A roughly doubles the autosave pause at 100
+players (70 ms → 387 ms for users). The user accepted this on 2026-08-10 on the
+basis that master is not production — the droplet is a manual pull — so the
+durability fix can land first and be deployed together with 3.6b-1, which
+absorbs the cost by amortising the commit.
+
+**Findings:** New (Wave 2 scope miss).
+
+**Status: DONE (2026-08-10).** All of Tiers A, B and C migrated to `util.Save`.
+
+Two things worth carrying forward:
+
+1. **A 16th site existed that the grep sweep did not find.**
+   `internal/users/index_rebuild.go` hand-rolls a temp-and-rename, but it
+   streams fixed-size binary records rather than holding one `[]byte`, so it
+   never matched the `os.WriteFile` grep the triage table was built from. It
+   turned out to be the *best* of the hand-rolled copies — it already did
+   `f.Sync()` before close and removed the temp on failure — but it was missing
+   the directory sync that makes the rename itself durable on Linux. Without
+   that, a power loss can lose the rename and leave the old index in place with
+   the `.tmp` surviving beside it. `util.syncDir` was exported as
+   `util.SyncDir` and called there.
+
+   The lesson matches this chunk's own premise: this is the *second* time a
+   grep-shaped audit of write sites came back short. That is why the guard
+   below exists rather than a third audit.
+
+2. **The contract is now enforced by test, not by audit.**
+   `durable_write_guard_test.go` (repo root) walks the AST of every non-test
+   `.go` file and fails on `os.WriteFile` outside an explicitly-reasoned
+   exemption list, and separately fails on any file that builds a `.tmp`/`.new`
+   sibling and renames it. Exemptions are per-directory, with a per-file map for
+   the streaming case above. Adding a write now requires either using
+   `util.Save` or writing down why the data is not living state.
+
+   `SaveRoundCount` is the one deliberate opt-out and is documented at the call
+   site: it runs every 10 seconds **with the world lock held**, and an fsync
+   measured at ~3.5 ms in 3.6a would be a recurring lock-held cost for a
+   ten-byte payload that cannot realistically tear.
+
+Behavioural coverage for the migration landed in
+`internal/fileloader/fileloader_save_test.go` (authored-content save path: no
+temp litter, complete overwrite, uncareful mode still works, concurrent
+fan-out). The `util.SafeSave` semantics themselves were already covered by
+chunk 2.1's `internal/util/livingstate_test.go` and are not duplicated.
 
 ### Chunk 2.7 — Make autosave outcomes observable
 

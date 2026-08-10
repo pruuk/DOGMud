@@ -115,7 +115,8 @@ func rewriteZoneField(path, newZone string) error {
 		// Column zero only — no leading whitespace.
 		if strings.HasPrefix(line, "zone:") {
 			lines[i] = "zone: " + newZone
-			return os.WriteFile(path, []byte(strings.Join(lines, eol)), 0644)
+			// Durable atomic write (chunk 2.8).
+			return util.Save(path, []byte(strings.Join(lines, eol)))
 		}
 	}
 	return nil // folder-only tree; nothing to rewrite

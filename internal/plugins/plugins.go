@@ -361,7 +361,10 @@ func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 		}
 	}
 
-	if err := os.WriteFile(fullPath, bytes, 0777); err != nil {
+	// Durable atomic write (chunk 2.8). This was a BARE write with no
+	// atomicity at all, over plugin state that includes auction history,
+	// leaderboards and weather simulation state.
+	if err := util.Save(fullPath, bytes); err != nil {
 		mudlog.Error(`plugin.WriteBytes`, `name`, p.name, `path`, fullPath, `error`, err)
 		return err
 	}

@@ -2,7 +2,6 @@ package pets
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -145,7 +144,9 @@ func (p *Pet) Save() error {
 
 	saveFilePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/`, `pets`, `/`, fmt.Sprintf("%s.yaml", fileName))
 
-	err = os.WriteFile(saveFilePath, bytes, 0644)
+	// Durable atomic write (chunk 2.8): a pet carries its own progression and
+	// is player-owned living state.
+	err = util.Save(saveFilePath, bytes)
 	if err != nil {
 		return err
 	}

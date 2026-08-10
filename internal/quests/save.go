@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -47,7 +48,10 @@ func SaveQuest(q Quest) error {
 	}
 	newPath := filepath.Join(dir, q.Filename())
 
-	if err := os.WriteFile(newPath, out, 0644); err != nil {
+	// Durable atomic write (chunk 2.8). Authored content is recoverable from
+	// git, but a TORN file panics the next boot on an unresolved reference or a
+	// name/filename mismatch, so atomicity still matters here.
+	if err := util.Save(newPath, out); err != nil {
 		return err
 	}
 	if oldPath != "" && oldPath != newPath {

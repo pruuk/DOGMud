@@ -129,7 +129,8 @@ func SaveThroughput(zone string, mobId int) error {
 	if err != nil {
 		return fmt.Errorf("caravan.SaveThroughput: marshal: %w", err)
 	}
-	if err := os.WriteFile(p, data, 0644); err != nil {
+	// Durable atomic write (chunk 2.8): accumulated economy throughput.
+	if err := util.Save(p, data); err != nil {
 		return fmt.Errorf("caravan.SaveThroughput: write: %w", err)
 	}
 	return nil

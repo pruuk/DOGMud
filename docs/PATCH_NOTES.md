@@ -1,5 +1,22 @@
 # DOGMud Patch Notes
 
+## 2026-08-10: Your character file is now written the safe way
+
+Earlier work made the game write its saved files carefully, so that a crash or
+a power cut in the middle of a save can never leave a half-written file behind.
+That work covered a number of the game's records, but it missed several others,
+including the single most important file of all: your character.
+
+Everything is now covered by the same careful method. Characters, alts, pets,
+warehouses, shops and caravans, factions, bounties, and the authored world
+content all go through one hardened path instead of each doing its own version
+of the job. A check now runs with every build to make sure a new one cannot
+quietly go back to the old way.
+
+Nothing about this is visible while you play. It only matters on the day the
+server loses power mid-save, and on that day it is the difference between
+picking up where you left off and losing a file.
+
 ## 2026-08-10: Housekeeping on the safety net
 
 No change to play in this one. It tightens the checks that run before anything

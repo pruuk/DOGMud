@@ -721,27 +721,22 @@ func SaveUser(u *UserRecord, isAutoSave ...bool) error {
 
 	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, `users`, `/`, strconv.Itoa(u.UserId)+`.yaml`)
 
-	saveFilePath := path
-	if carefulSave { // careful save first saves a {filename}.new file
-		saveFilePath += `.new`
-	}
-
-	err = os.WriteFile(saveFilePath, data, 0600)
-	if err != nil {
+	// Routed through util.Save (chunk 2.8). This function used to hand-roll its
+	// own careful save — write `<path>.new`, then rename — which is atomic but
+	// NOT durable: with no fsync, a power loss can leave an atomically-renamed
+	// EMPTY file. That is a player's entire character: inventory, gold,
+	// progression, quests.
+	//
+	// Wave 2 hardened util.SafeSave with an fsync and migrated six stores onto
+	// it, but its audit grepped mobs/guilds/moderation/shops/rooms and never
+	// checked users — so the single most valuable file in the game kept the
+	// unhardened path through a whole wave about durable writes.
+	if err := util.Save(path, data, bool(carefulSave)); err != nil {
 		return err
 	}
 	fileWritten = true
 	if carefulSave {
 		tmpSaved = true
-	}
-
-	if carefulSave {
-		//
-		// Once the file is written, rename it to remove the .new suffix and overwrite the old file
-		//
-		if err := os.Rename(saveFilePath, path); err != nil {
-			return err
-		}
 		tmpCopied = true
 	}
 
