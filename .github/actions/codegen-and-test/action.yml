@@ -6,6 +6,19 @@ runs:
     - run: go generate ./...
       shell: bash
 
+    # Generated artifacts must already be committed. `go generate` ran above
+    # but nothing checked whether it CHANGED anything, so a stale committed
+    # generator output would pass CI and only diverge for whoever regenerated
+    # next (review finding 25).
+    - name: Check generated files are committed
+      shell: bash
+      run: |
+        if ! git diff --exit-code; then
+          echo "::error::go generate produced changes. Run 'go generate ./...' and commit the result."
+          exit 1
+        fi
+        echo "Generated files are up to date."
+
     # The format and vet gates run before the test suite on purpose: they fail
     # in seconds, while `go test -race ./...` takes minutes. Both were
     # previously Makefile-only (`make validate`) and no workflow invoked them,

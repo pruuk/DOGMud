@@ -6,6 +6,17 @@ VERSION ?= $(shell git rev-parse HEAD)
 BIN ?= go-mud-server
 DOCKER_COMPOSE := docker-compose -f compose.yml
 
+# Single source of truth for the toolchain: go.mod. This was pinned at 1.21.3
+# while go.mod required 1.25, so `make console` and every docker-% target ran a
+# Go the project could not build with (review finding 26). CI already derives
+# its version from go.mod via setup-go's go-version-file.
+GO_VERSION := $(shell awk '/^go [0-9]/{print $$2; exit}' go.mod)
+
+# Single source of truth for the world name. The instance-clean target used to
+# name world/default and world/empty, neither of which is the live world, so
+# `make run-new` silently cleaned nothing.
+WORLD ?= dogmud
+
 export GOFLAGS := -mod=mod
 
 ## Build Targets
@@ -21,7 +32,7 @@ console:
 	@docker run --rm -it --init \
 			-v "$(PWD)":/src \
 			-w /src \
-			golang:1.21.3-alpine3.18 \
+			golang:$(GO_VERSION)-alpine \
 			$(DOCKER_CMD)
 
 docker-%:
@@ -64,10 +75,15 @@ clean:
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
 	docker system prune -a
 
+# Mirrors the instance-save wipe in CLAUDE.md's smoke-test SOP: BOTH room and
+# mob instance saves for the live world, and nothing else. Deliberately does
+# NOT touch shops/, guilds/ or moderation/ — those are persistent living state,
+# not instance overrides, and deleting them resets the economy, dissolves
+# guilds, and resurrects unbanned accounts.
 .PHONY: clean-instances
-clean-instances: ### Deletes all room instance data. Starts the world fresh.
-	rm -Rf _datafiles/world/default/rooms.instances
-	rm -Rf _datafiles/world/empty/rooms.instances
+clean-instances: ### Deletes room and mob instance data for the live world. Starts it fresh.
+	rm -Rf _datafiles/world/$(WORLD)/rooms.instances
+	rm -Rf _datafiles/world/$(WORLD)/mobs.instances
 
 ## Run Targets
 

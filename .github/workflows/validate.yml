@@ -1,0 +1,106 @@
+name: Validate
+
+# The single validation contract, called by every trigger that ships code.
+#
+# Before this existed, pull requests ran lint plus a coverage gate while pushes
+# to master and tag builds ran neither, so a direct push or a release got
+# strictly weaker validation than a PR did (review finding 10). Both callers now
+# invoke this one workflow, so the gates cannot drift apart again: adding a
+# check here adds it everywhere.
+#
+# Callers:
+#   run-tests.yml        pull_request
+#   build-and-release.yml  push to master, and v* tags
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      # only-new-issues grandfathers the pre-existing findings (97 as of
+      # 2026-08-10) so this gates what a change introduces without first
+      # clearing the backlog. It works on push as well as pull_request: the
+      # action asks the GitHub API for the diff of the push (before..after) and
+      # feeds it to --new-from-patch. That is why master can run the identical
+      # job rather than a weaker one. fetch-depth: 0 is only needed for
+      # merge_group events, which this repo does not use.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
+          only-new-issues: true
+
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # A syntax gate, deliberately not a style gate. `make js-lint` runs
+      # jshint, which currently reports 1637 findings, so wiring that in as a
+      # blocking check would fail on day one for the same reason the Go lint
+      # backlog is grandfathered. Syntax is the part that is both enforceable
+      # today and the part that actually breaks the web client at runtime.
+      # Clearing the jshint backlog belongs with the lint-backlog chunk.
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          failed=0
+          while IFS= read -r f; do
+            case "$f" in *.min.js) continue ;; esac
+            if [ -f .jshintignore ] && grep -Fxq "$f" .jshintignore; then
+              continue
+            fi
+            if ! node --check "$f"; then
+              echo "::error file=$f::JavaScript syntax error"
+              failed=1
+            fi
+          done < <(git ls-files '*.js')
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+          echo "All non-vendored JavaScript parses."
+
+      # Guards the admin dashboards' HTML escaping (review finding 17). Plain
+      # node, no test runner, exits non-zero on failure.
+      - name: Run JavaScript tests
+        shell: bash
+        run: node tools/jstest/safe-dom.test.js
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/setup-go
+      - uses: ./.github/actions/codegen-and-test
+      - name: Check coverage gate
+        shell: bash
+        run: |
+          if [ ! -f coverage.out ]; then
+            echo "::error::No coverage.out produced; the coverage gate cannot be evaluated."
+            exit 1
+          fi
+          TOTAL=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: ${TOTAL}%"
+          # Fail if coverage drops below 28%
+          if (( $(echo "$TOTAL < 28.0" | bc -l) )); then
+            echo "::error::Coverage ${TOTAL}% is below the 28% minimum threshold"
+            exit 1
+          fi
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage.out
+          retention-days: 14
