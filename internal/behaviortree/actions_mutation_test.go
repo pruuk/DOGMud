@@ -230,19 +230,6 @@ func TestTryAnyActiveMutation_NilMob(t *testing.T) {
 	}
 }
 
-// TestTryAnyActiveMutation_RarityOrdering_UnitSkipped verifies that the
-// rarity-descending sort logic is exercised by the smoke test rather than
-// at unit-test level. The trigger functions require a loaded room and running
-// server state (special-move cooldown registry, etc.) that are not available
-// in unit-test context; calling them would panic or always return Failure due
-// to the missing mutation in mob.Character.Mutations. Rarity-ordering is a
-// pure sort concern covered structurally by reading the candidates slice in
-// actTryAnyActiveMutation — verified at integration/smoke level.
-func TestTryAnyActiveMutation_RarityOrdering_UnitSkipped(t *testing.T) {
-	t.Skip("Rarity-ordering verified at smoke-test level; " +
-		"trigger functions require live server state not available in unit tests")
-}
-
 // ─── TestMutationTriggers_SelfAoEPresent (original) ──────────────────────────
 
 // TestMutationTriggers_SelfAoEPresent verifies that all four SELF/AoE

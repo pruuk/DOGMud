@@ -395,16 +395,3 @@ func TestPB_323_SurrenderNeverTap_AttackerSubdue_Fires(t *testing.T) {
 // package) where the buff registry can be seeded without the YAML loader.
 // See TestPB_330_BrokenLimbBuff_StatModApplied and
 // TestPB_332_BrokenLimbBuff_ExpiresNaturally in that file.
-
-// PB-331: Broken-arm debuff prevents 2H weapon wield.
-// SKIP — the 2H wield restriction is a spec note in the chunk-4d design doc
-// ("can't wield two-handed weapons") but is NOT yet wired as a buff flag or
-// equip-path guard in 4d code. The buff YAML (83-broken_limb.yaml) only
-// applies statmods (str/dex/vit). The 2H restriction is 4f flavor work.
-// When implemented, the test should go in internal/usercommands/equip_test.go
-// and verify that equip.go rejects a 2H weapon when buff 83 is active.
-func TestPB_331_BrokenLimbBuff_NoTwoHandedWield(t *testing.T) {
-	t.Skip("PB-331: 2H wield restriction from broken-limb buff is 4f flavor work; " +
-		"buff 83 YAML only applies statmods in 4d. Test should live in " +
-		"internal/usercommands/equip_test.go when the wield guard is wired.")
-}

@@ -66,11 +66,6 @@ func TestValidatePatrol_SingleWaypoint_WarnsButValidates(t *testing.T) {
 	}
 }
 
-// World-aware tests require a rooms registry; integration via T13 boot smoke.
-func TestValidatePatrolAgainstWorld_Stub(t *testing.T) {
-	t.Skip("requires rooms + mapper fixtures — covered by boot smoke in T13")
-}
-
 func TestPatrolWaypoint_ArrivalEventFieldRoundTrip(t *testing.T) {
 	p := &Patrol{
 		Id: "test_arrival_event",

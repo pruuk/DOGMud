@@ -31,15 +31,6 @@ func TestForagerArrivalListener_IgnoresMissingMob(t *testing.T) {
 	}
 }
 
-func TestForagerArrivalListener_IgnoresNonForagerMob(t *testing.T) {
-	// Skip this test if the package's existing test helpers don't
-	// expose a way to seed a non-forager mob instance.
-	// Otherwise: seed a mob whose template id is NOT in profiles,
-	// fire the event, verify ForagerArrivalListener returns Continue
-	// and SellToVendor is not invoked.
-	t.Skip("optional — requires mob instance seeding helper")
-}
-
 func TestForagerArrivalListener_IgnoresNonPatrolWaypointArrivalEvent(t *testing.T) {
 	// The listener is registered on PatrolWaypointArrival; if some
 	// other event somehow gets routed here, it should no-op cleanly.

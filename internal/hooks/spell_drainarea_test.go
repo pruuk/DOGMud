@@ -150,7 +150,10 @@ func TestResolveMobSpell_DrainArea_DispatchesToDrainArea(t *testing.T) {
 	}
 
 	if !allHit {
-		t.Skip("did not observe every player hit within 200 attempts — probabilistic test; re-run if flaky")
+		// Failing, not skipping: a skip here silently discarded every
+		// assertion below, so CI passed without executing the behaviour
+		// under test (review finding 24).
+		t.Fatal("did not hit every player in 200 attempts — area drain targeting is broken")
 	}
 
 	for _, uid := range playerIds {

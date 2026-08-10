@@ -98,10 +98,3 @@ func TestValidatePairOverride_SelfPairRejected(t *testing.T) {
 		t.Errorf("expected self-pair error, got: %v", err)
 	}
 }
-
-// World-aware checks (mob existence, relationship edge presence) are
-// covered by the boot smoke in T13; the integration setup is too heavy
-// for unit tests.
-func TestValidatePairOverrideAgainstWorld_Stub(t *testing.T) {
-	t.Skip("requires loaded mobs registry + relationships graph — covered by T13 boot smoke")
-}

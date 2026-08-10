@@ -91,12 +91,6 @@ func TestValidateSchedule_MissingTargetRoom_Panics(t *testing.T) {
 	}
 }
 
-// World-aware tests (room existence, pathfinding sanity) require a real
-// rooms registry; integration is exercised by the boot smoke in T13.
-func TestValidateScheduleAgainstWorld_RoomDoesNotExist(t *testing.T) {
-	t.Skip("requires rooms fixture — covered by boot smoke in T13")
-}
-
 // TestValidateScheduleAgainstWorld_PatrolSegmentSkipped is a regression test
 // for the boot-panic bug (chunk 3.4): validateScheduleAgainstWorld must not
 // call roomExists(0) or hasPath(0, X) for patrol segments. A patrol+sleep
@@ -155,13 +149,6 @@ func TestValidateSchedule_AcceptsSleepingActivity(t *testing.T) {
 	if err := validateScheduleStandalone(s); err != nil {
 		t.Errorf("expected sleeping activity to validate, got %v", err)
 	}
-}
-
-func TestMobScheduleIdCrossCheck_Stub(t *testing.T) {
-	// Cross-check is wired in LoadDataFiles and is exercised by the boot
-	// smoke at T13. Stub here as a documentation hook — if we add a
-	// LoadDataFiles unit-test fixture later this is where it slots in.
-	t.Skip("covered by boot smoke in T13")
 }
 
 func TestValidateSchedule_PatrolSegmentWithoutTargetRoom_OK(t *testing.T) {
