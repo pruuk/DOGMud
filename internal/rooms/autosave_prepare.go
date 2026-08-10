@@ -127,6 +127,32 @@ func PrepareInstanceWrite(r Room) (savequeue.PendingWrite, error) {
 	return p, nil
 }
 
+// PrepareAllInstanceWrites prepares every loaded non-ephemeral room.
+//
+// Must be called under the world lock, as part of the SAME lock hold that
+// prepares users. See hooks.PrepareAutosaveSet for why that is not merely tidy.
+func PrepareAllInstanceWrites() ([]savequeue.PendingWrite, error) {
+	writes := make([]savequeue.PendingWrite, 0, len(roomManager.rooms))
+	var firstErr error
+
+	for _, r := range roomManager.rooms {
+		if r.IsEphemeral() {
+			continue
+		}
+		p, err := PrepareInstanceWrite(*r)
+		if err != nil {
+			// One unpreparable room must not cost every other room its save.
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		writes = append(writes, p)
+	}
+
+	return writes, firstErr
+}
+
 // CancelPendingInstanceWrite drops any queued write for this room.
 //
 // Guard G2. This must be called by everything that takes ownership of the

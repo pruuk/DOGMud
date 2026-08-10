@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/savequeue"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -712,26 +713,31 @@ func SaveUser(u *UserRecord, isAutoSave ...bool) error {
 		mudlog.Info("SaveUser()", "username", u.Username, "wrote-file", fileWritten, "tmp-file", tmpSaved, "tmp-copied", tmpCopied, "completed", completed)
 	}()
 
-	data, err := yaml.Marshal(u)
+	// Prepare/commit split (chunk 3.6b-1). The marshal reads live character
+	// state and must stay here; the durable write touches only the resulting
+	// bytes and is what autosave defers. This function remains the synchronous
+	// composition of the two, so logout, character creation and load-time
+	// rewrites keep their existing "save now, tell me if it failed" contract.
+	//
+	// The write itself routes through util.Save (chunk 2.8). This used to
+	// hand-roll its own careful save — write `<path>.new`, then rename — which
+	// is atomic but NOT durable: with no fsync, a power loss can leave an
+	// atomically-renamed EMPTY file. That is a player's entire character:
+	// inventory, gold, progression, quests.
+	p, err := PrepareUserWrite(u)
 	if err != nil {
 		return err
 	}
 
+	// Guard G2. Any write autosave has queued for this user holds an older
+	// snapshot than the one being written right now, so committing it afterwards
+	// would roll the character back to whenever autosave last looked. For a user
+	// that can resurrect spent gold or a consumed item.
+	CancelPendingUserWrite(u)
+
 	carefulSave := configs.GetFilePathsConfig().CarefulSaveFiles
 
-	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, `users`, `/`, strconv.Itoa(u.UserId)+`.yaml`)
-
-	// Routed through util.Save (chunk 2.8). This function used to hand-roll its
-	// own careful save — write `<path>.new`, then rename — which is atomic but
-	// NOT durable: with no fsync, a power loss can leave an atomically-renamed
-	// EMPTY file. That is a player's entire character: inventory, gold,
-	// progression, quests.
-	//
-	// Wave 2 hardened util.SafeSave with an fsync and migrated six stores onto
-	// it, but its audit grepped mobs/guilds/moderation/shops/rooms and never
-	// checked users — so the single most valuable file in the game kept the
-	// unhardened path through a whole wave about durable writes.
-	if err := util.Save(path, data, bool(carefulSave)); err != nil {
+	if err := savequeue.Commit(p); err != nil {
 		return err
 	}
 	fileWritten = true
