@@ -232,7 +232,7 @@ further decomposition
 | 2.1 | Establish the living-state persistence contract | M | 1.4 | Supporting | **Contract Done 2026-08-10; store migrations are 2.2–2.5** |
 | 2.2 | Migrate mob instance persistence | M | 2.1 | 5 | **Done 2026-08-10** |
 | 2.3 | Migrate guild and moderation persistence | M | 2.1 | 7 | **Done 2026-08-10** |
-| 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | Not started |
+| 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | **Done 2026-08-10** |
 | 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | Not started |
 | 2.6 | Make builder operations transactional | M | 2.1 | 13 | Not started |
 | 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | Not started |
@@ -683,6 +683,41 @@ overlays can be partially applied.
 
 **Outcome:** Loaders distinguish absence from corruption. Corrupt living state
 is preserved or quarantined, never silently reseeded or partially merged.
+
+**Delivered 2026-08-10.**
+
+**Finding 6 (shops).** `loadFromDisk` returned nil for both "no file" and
+"unparseable", and `RegisterShop` treats nil as "seed from template at the
+abundance level". One malformed byte therefore reset a merchant's stock,
+merchant gold and restock timers to opening-day defaults, and the reset was
+indistinguishable from normal initialisation. It now quarantines and logs at
+ERROR before reseeding.
+
+*Documented deviation:* the review suggested refusing to reseed on corruption.
+We still reseed, because a merchant with no inventory is a broken shop, and the
+operator policy chosen 2026-08-10 is quarantine + defaults + loud log. Nothing
+is destroyed — the original bytes survive in the quarantine file, and
+quarantining is also what frees the path so the reseeded shop can save at all.
+
+**Finding 15 (rooms).** `LoadRoomInstance` unmarshalled the overlay directly
+ONTO the loaded template. yaml.Unmarshal applies fields as it walks, so a file
+that is valid for a while and then breaks left the room already mutated when the
+error returned — and the old code logged a Warn and carried on with exactly that
+object. The overlay is now applied to a scratch template copy (safe because
+`LoadRoomTemplate` re-reads from disk, so it shares no maps or slices with the
+returned room) and adopted only if the whole document parsed. Otherwise it is
+quarantined and pure template state stands.
+
+8 tests, each with control legs proving valid overlays and absent files still
+behave correctly.
+
+**Noted, not changed:** shop and room saves route through
+`util.Save(..., CarefulSaveFiles)`, so durability is operator-switchable for
+living state. It ships `true` and is a documented, long-standing escape hatch
+with 8 consumers, so it was left alone — but the fsync added in 2.1 made the
+careful path slower, which gives an operator chasing autosave pauses a reason to
+switch off exactly the guarantee this wave is building. Worth a decision in
+3.6a.
 
 **Findings:** 6, 15
 
@@ -1168,7 +1203,7 @@ only when all of its subchunks close.
 | 3 | 5.2 | **Done** | `mobs.CheckPlayerHarm` policy + 7 sites; review named 1 (HarmSingle), actual scope was 5 cast-time paths, resolution-time re-check, and `target` + 21 tests | Harmful spells bypass attack immunity |
 | 4 | 3.1 | **Done** | `atomic.Uint64`; exactness + monotonicity tests | Unsynchronized round counter |
 | 5 | 2.2 | **Done** | `util.Save` on both the instance AND template writers; load quarantines corrupt files instead of silently reseeding + 5 tests | Non-atomic and corruption-prone mob instance persistence |
-| 6 | 2.4 | Open | — | Corrupt shop treated as new |
+| 6 | 2.4 | **Done** | `loadFromDisk` distinguishes absent from corrupt and quarantines; reseeding no longer destroys the damaged economy + 4 tests | Corrupt shop treated as new |
 | 7 | 2.3 | **Done** | `util.Save` on guilds/bans/petitions; rollback on save failure in 7 mutators; 4 admin commands no longer report success on failure + 11 tests | Guild/moderation memory-disk divergence |
 | 8 | 3.3 | **Done** | `8dd24e4c8`; RWMutex + 7 accessors, 8 sites (review named 1) + 6 concurrency tests | Unsynchronized room path cache |
 | 9 | 1.2 | **Done** | 164 skip-only placeholders deleted (review named 87 in one file; pattern spanned 18) + 4 emptied files removed + go/ast recurrence guard | Phantom position tests |
@@ -1177,7 +1212,7 @@ only when all of its subchunks close.
 | 12 | 5.4 | **Done** | `e23df1071`; `parseGoldPhrase` shared by both paths + 2 tests | Gold-give parse mismatch |
 | 13 | 2.6 | Open | — | Builder ignores save failures |
 | 14 | 2.5 | Open | — | Dialogue parse error cached as absence |
-| 15 | 2.4 | Open | — | Partial room overlay after YAML failure |
+| 15 | 2.4 | **Done** | Overlay applied to a scratch template copy and adopted only on a full parse; corrupt overlays quarantined + 4 tests | Partial room overlay after YAML failure |
 | 16 | 2.5 | Open | — | Quest validation skips unreadable dialogue |
 | 17 | 4.1 | **Done** | `admin/static/js/safe-dom.js` default-safe helpers; economy AND progression converted (review named economy only; progression renders player-chosen names) + 12 JS checks | Admin economy stored-XSS surface |
 | 18 | 4.3 | Open | — | Global keyboard capture |

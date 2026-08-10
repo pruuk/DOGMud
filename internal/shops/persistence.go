@@ -1,6 +1,7 @@
 package shops
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -331,20 +332,69 @@ func PrewarmFromPersistedFiles(mobZoneLookup func(mobId int) (string, bool)) (in
 }
 
 // loadFromDisk reads a shop's YAML save file and returns the parsed
-// ShopInventory. Returns nil if the file does not exist or cannot be parsed.
+// ShopInventory, or nil when the caller should seed from template.
+//
+// nil covers two very different situations. The caller (RegisterShop) acts the
+// same way for both — a merchant with no inventory is broken, so it must open
+// with something — but the handling here is not the same:
+//
+//   - No file. A genuinely new shop. Silent.
+//   - A file that cannot be read or parsed. The shop's accumulated economy —
+//     stock levels, merchant gold, restock timers — is damaged. The file is
+//     quarantined (moved aside, never deleted) and logged at ERROR before the
+//     caller reseeds.
+//
+// Quarantining is the point. Before this, a corrupt file returned nil exactly
+// like a missing one, the merchant reopened at template defaults, and the next
+// SaveShop overwrote the damaged file — so a reset economy was indistinguishable
+// from normal initialisation and the evidence was gone (review finding 6).
+// shops/ is explicitly persistent living state: the instance-save wipe SOP
+// leaves it alone precisely because it cannot be regenerated.
+//
+// Note this deliberately still reseeds rather than refusing to open the shop,
+// which is a documented deviation from the review's suggested "refuse
+// reseeding": the operator policy chosen 2026-08-10 is quarantine, log loudly,
+// and keep the game running. Nothing is destroyed, because the original bytes
+// survive in the quarantine file.
 func loadFromDisk(zone string, mobId int, roomId int) *ShopInventory {
 	savePath := shopPath(zone, mobId, roomId)
 
-	bytes, err := os.ReadFile(savePath)
+	raw, err := util.ReadLivingState(savePath)
 	if err != nil {
-		return nil // File doesn't exist = fresh shop
+		if errors.Is(err, util.ErrStateAbsent) {
+			return nil // File doesn't exist = fresh shop
+		}
+		quarantineShopFile(savePath, err)
+		return nil
 	}
 
 	var inv ShopInventory
-	if err := yaml.Unmarshal(bytes, &inv); err != nil {
-		mudlog.Error("shops.loadFromDisk", "path", savePath, "error", err)
+	if err := yaml.Unmarshal(raw, &inv); err != nil {
+		quarantineShopFile(savePath, err)
 		return nil
 	}
 
 	return &inv
+}
+
+// quarantineShopFile moves a damaged shop save aside and reports it at ERROR.
+// The log has to be loud: by the time anyone reads it the merchant is already
+// trading at opening-day stock and prices, and the only record of the real
+// economy is the quarantined file.
+func quarantineShopFile(savePath string, cause error) {
+	dest, qErr := util.QuarantineCorrupt(savePath)
+	if qErr != nil {
+		mudlog.Error("shops.loadFromDisk",
+			"path", savePath,
+			"error", cause,
+			"quarantine", "FAILED",
+			"quarantineError", qErr,
+			"impact", "shop reseeds from template; corrupt file left in place and will be overwritten")
+		return
+	}
+	mudlog.Error("shops.loadFromDisk",
+		"path", savePath,
+		"error", cause,
+		"quarantinedTo", dest,
+		"impact", "shop reseeds from template; its stock levels, merchant gold and restock timers were not recovered")
 }

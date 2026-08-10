@@ -137,29 +137,81 @@ func LoadRoomInstance(roomId int) *Room {
 	// Look for specially saved instance data
 	filepath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/rooms.instances/`, filename)
 
-	if bytes, err := os.ReadFile(filepath); err == nil {
-		// Unmarshal onto the default template data, overwriting any set fields in the instance save file
-		if err := yaml.Unmarshal(bytes, room); err != nil {
-			mudlog.Warn("LoadRoom", "roomId", roomId, "filepath", filepath, "error", err)
+	raw, readErr := util.ReadLivingState(filepath)
+	if readErr != nil {
+		// Absent is the ordinary case: a room nobody has changed has no
+		// instance file. Anything else means the overlay exists but is
+		// unusable, so quarantine it and return pure template state.
+		if !errors.Is(readErr, util.ErrStateAbsent) {
+			quarantineRoomOverlay(filepath, roomId, readErr)
 		}
-		// yaml.Unmarshal only honors `yaml:` tags; the `instance:"skip"`
-		// annotation is invisible to it. Reload a fresh template copy and
-		// restore every skip-tagged field so template-owned state
-		// (title/description/exits/nouns/zone/etc.) cannot be corrupted
-		// by stale data in pre-fix instance files. See
-		// docs/superpowers/specs/2026-04-21-room-instance-load-respects-skip-tag-design.md.
-		if freshTemplate := LoadRoomTemplate(roomId); freshTemplate != nil {
-			restoreSkipTaggedFields(room, freshTemplate)
-		}
-		// Exits were just restored wholesale from the template, which
-		// resurrects any lock trap a player disarmed. DefusedExits is NOT
-		// skip-tagged, so it survived the overlay; re-apply it now. See
-		// Room.MarkExitTrapDefused for why the disarm is persisted as a name
-		// list rather than by un-skipping Exits.
-		room.applyDefusedExits()
+		return room
 	}
 
+	// Apply the overlay to a SCRATCH copy, not to the room we are about to
+	// return. yaml.Unmarshal applies fields as it walks the document, so a
+	// file that is valid for a while and then breaks leaves its target already
+	// mutated when the error comes back. The old code unmarshalled straight
+	// onto `room`, logged a Warn, and carried on with that half-applied
+	// object — handing players a template/runtime hybrid with some fields from
+	// the template and some from a damaged save (review finding 15).
+	//
+	// LoadRoomTemplate re-reads from disk on every call, so this is a genuinely
+	// independent object and cannot share maps or slices with `room`.
+	scratch := LoadRoomTemplate(roomId)
+	if scratch == nil {
+		return room
+	}
+	if err := yaml.Unmarshal(raw, scratch); err != nil {
+		quarantineRoomOverlay(filepath, roomId, err)
+		return room // Reject the overlay whole; template state stands.
+	}
+
+	// The whole document parsed, so the overlay is safe to adopt.
+	room = scratch
+
+	// yaml.Unmarshal only honors `yaml:` tags; the `instance:"skip"`
+	// annotation is invisible to it. Reload a fresh template copy and
+	// restore every skip-tagged field so template-owned state
+	// (title/description/exits/nouns/zone/etc.) cannot be corrupted
+	// by stale data in pre-fix instance files. See
+	// docs/superpowers/specs/2026-04-21-room-instance-load-respects-skip-tag-design.md.
+	if freshTemplate := LoadRoomTemplate(roomId); freshTemplate != nil {
+		restoreSkipTaggedFields(room, freshTemplate)
+	}
+	// Exits were just restored wholesale from the template, which
+	// resurrects any lock trap a player disarmed. DefusedExits is NOT
+	// skip-tagged, so it survived the overlay; re-apply it now. See
+	// Room.MarkExitTrapDefused for why the disarm is persisted as a name
+	// list rather than by un-skipping Exits.
+	room.applyDefusedExits()
+
 	return room
+}
+
+// quarantineRoomOverlay moves an unusable instance overlay aside and reports it
+// at ERROR. A Warn was not enough: the room silently reverts to template state,
+// so anything a builder or player had changed about it is gone from play, and
+// without the quarantine the next SaveRoomInstance would overwrite the only
+// copy of what was lost.
+func quarantineRoomOverlay(overlayPath string, roomId int, cause error) {
+	dest, qErr := util.QuarantineCorrupt(overlayPath)
+	if qErr != nil {
+		mudlog.Error("LoadRoomInstance",
+			"roomId", roomId,
+			"filepath", overlayPath,
+			"error", cause,
+			"quarantine", "FAILED",
+			"quarantineError", qErr,
+			"impact", "room loads from template; corrupt overlay left in place and will be overwritten")
+		return
+	}
+	mudlog.Error("LoadRoomInstance",
+		"roomId", roomId,
+		"filepath", overlayPath,
+		"error", cause,
+		"quarantinedTo", dest,
+		"impact", "room loads from pure template state; its saved items, gold, signs and container contents were not recovered")
 }
 
 // restoreSkipTaggedFields copies every exported Room field tagged
