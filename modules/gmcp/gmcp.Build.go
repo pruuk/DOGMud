@@ -763,7 +763,55 @@ func buildRoomUpdate(d buildDeps, req roomUpdateReq) BuildResult {
 // not collide with the overworld or another zone), then applies the requested
 // zone-config options. Returns the entrance room id so the builder can jump to
 // it. Runs on MainWorker (via handleBuildOp).
+// zoneCreateDeps isolates the persistence and registry calls buildZoneCreate
+// makes, so its failure paths are testable. Same pattern as buildDeps above.
+type zoneCreateDeps struct {
+	createZone     func(name string) (int, error)
+	nextFreePlane  func() int
+	loadTemplate   func(id int) *rooms.Room
+	saveTemplate   func(r rooms.Room) error
+	getZoneConfig  func(name string) *rooms.ZoneConfig
+	saveZoneConfig func(cfg *rooms.ZoneConfig) error
+	markPlane      func(plane int, nonEuclidean bool, label string)
+	deleteZone     func(name string) error
+}
+
+func realZoneCreateDeps() zoneCreateDeps {
+	return zoneCreateDeps{
+		createZone:     rooms.CreateZone,
+		nextFreePlane:  rooms.NextFreeAuthoredPlane,
+		loadTemplate:   rooms.LoadRoomTemplate,
+		saveTemplate:   rooms.SaveRoomTemplate,
+		getZoneConfig:  rooms.GetZoneConfig,
+		saveZoneConfig: rooms.SaveZoneConfig,
+		markPlane: func(plane int, nonEuclidean bool, label string) {
+			rooms.GetPlaneRegistry().Mark(plane, nonEuclidean, label)
+		},
+		deleteZone: rooms.DeleteZone,
+	}
+}
+
 func buildZoneCreate(req zoneCreateReq) BuildResult {
+	return buildZoneCreateWith(realZoneCreateDeps(), req)
+}
+
+// buildZoneCreateWith is transactional: it either persists everything and then
+// publishes, or it rolls the whole zone back and reports the failure.
+//
+// It used to ignore the errors from both saves, skip its work silently when
+// either lookup returned nil, publish the new plane to the in-memory registry
+// regardless, and return Ok: true. The browser builder therefore reported a
+// created zone that could be half-written on disk and would change or vanish at
+// the next restart (review finding 13).
+//
+// Two ordering rules from the living-state contract apply here:
+//   - persist before publishing, so markPlane happens only after both saves
+//     succeed;
+//   - on failure, roll back what was already created rather than leaving a
+//     partial artifact. DeleteZone is safe for this because a freshly created
+//     zone has no blockers (its only room is the zone root, which
+//     ZoneDeletionBlockers skips).
+func buildZoneCreateWith(d zoneCreateDeps, req zoneCreateReq) BuildResult {
 	name := strings.TrimSpace(req.Name)
 	if len(name) < 2 {
 		return buildErr("zone name must be at least 2 characters")
@@ -771,39 +819,60 @@ func buildZoneCreate(req zoneCreateReq) BuildResult {
 
 	// CreateZone makes the zone folder, a zone-config, and a first valid room
 	// (non-empty title/description), returning its id. Rejects a duplicate name.
-	roomId, err := rooms.CreateZone(name)
+	roomId, err := d.createZone(name)
 	if err != nil {
 		return buildErr("%s", err.Error())
+	}
+
+	// rollback undoes CreateZone so a failed creation leaves nothing behind.
+	// A rollback that itself fails is reported in the message, because the
+	// operator then has a partial zone on disk to clean up by hand.
+	rollback := func(format string, args ...any) BuildResult {
+		msg := fmt.Sprintf(format, args...)
+		if derr := d.deleteZone(name); derr != nil {
+			return buildErr("%s; rollback ALSO failed, zone %q may be partially created on disk: %s", msg, name, derr.Error())
+		}
+		return buildErr("%s", msg)
 	}
 
 	// Put the new zone on its own plane so its (0,0,0) origin can't collide with
 	// plane 0's origin at cartcheck. A non-Euclidean zone is exempt from the
 	// collision check but still gets a distinct plane for clean rendering.
-	plane := rooms.NextFreeAuthoredPlane()
-	if r := rooms.LoadRoomTemplate(roomId); r != nil {
-		r.Plane = plane
-		r.X, r.Y, r.Z = 0, 0, 0
-		r.Title = name + " — Entrance"
-		r.Description = placeholderRoomDescription
-		if req.Biome != "" {
-			r.Biome = req.Biome
-		}
-		rooms.SaveRoomTemplate(*r)
+	plane := d.nextFreePlane()
+	r := d.loadTemplate(roomId)
+	if r == nil {
+		return rollback("zone %q was created but its entrance room %d could not be loaded", name, roomId)
+	}
+	r.Plane = plane
+	r.X, r.Y, r.Z = 0, 0, 0
+	r.Title = name + " — Entrance"
+	r.Description = placeholderRoomDescription
+	if req.Biome != "" {
+		r.Biome = req.Biome
+	}
+	if err := d.saveTemplate(*r); err != nil {
+		return rollback("could not save entrance room for zone %q: %s", name, err.Error())
 	}
 
-	if cfg := rooms.GetZoneConfig(name); cfg != nil {
-		// CreateZone leaves the zone-config root RoomId unset, so GetZoneRoot
-		// (used by the map refresh) would return 0 and render an empty zone.
-		// Point it at the entrance room.
-		cfg.RoomId = roomId
-		cfg.DefaultBiome = req.Biome
-		cfg.Region = req.Region
-		cfg.NonCartesian = req.NonCartesian
-		cfg.DefaultPlane = plane
-		rooms.SaveZoneConfig(cfg)
+	cfg := d.getZoneConfig(name)
+	if cfg == nil {
+		return rollback("zone %q was created but its zone-config could not be loaded", name)
 	}
-	// Register the new plane's Euclidean-ness for ValidatePlacement / mapper.
-	rooms.GetPlaneRegistry().Mark(plane, req.NonCartesian, name)
+	// CreateZone leaves the zone-config root RoomId unset, so GetZoneRoot
+	// (used by the map refresh) would return 0 and render an empty zone.
+	// Point it at the entrance room.
+	cfg.RoomId = roomId
+	cfg.DefaultBiome = req.Biome
+	cfg.Region = req.Region
+	cfg.NonCartesian = req.NonCartesian
+	cfg.DefaultPlane = plane
+	if err := d.saveZoneConfig(cfg); err != nil {
+		return rollback("could not save zone-config for zone %q: %s", name, err.Error())
+	}
+
+	// Everything is durable. Only now publish the new plane's Euclidean-ness
+	// for ValidatePlacement / mapper.
+	d.markPlane(plane, req.NonCartesian, name)
 
 	return BuildResult{Ok: true, RoomId: roomId}
 }

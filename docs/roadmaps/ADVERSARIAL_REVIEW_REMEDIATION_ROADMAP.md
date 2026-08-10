@@ -234,7 +234,7 @@ further decomposition
 | 2.3 | Migrate guild and moderation persistence | M | 2.1 | 7 | **Done 2026-08-10** |
 | 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | **Done 2026-08-10** |
 | 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | Not started |
-| 2.6 | Make builder operations transactional | M | 2.1 | 13 | Not started |
+| 2.6 | Make builder operations transactional | M | 2.1 | 13 | **Done 2026-08-10** |
 | 2.7 | Make autosave outcomes observable | M | 2.1 | 35 | **Done 2026-08-10** |
 | 3.1 | Make global counters race-free | S | — | 4 | **Done 2026-08-08** |
 | 3.2 | Make LLM request admission atomic | S | — | 21 | **Done 2026-08-08** |
@@ -752,6 +752,33 @@ return a failure without leaving a half-created zone.
 write, memory-publication, and rollback semantics rather than inventing a
 builder-only durability model.
 
+**Delivered 2026-08-10.** The review named two ignored save errors. There were
+**four** silent paths to `Ok: true`:
+
+1. `SaveRoomTemplate` error ignored.
+2. `SaveZoneConfig` error ignored.
+3. `LoadRoomTemplate` returning nil silently skipped the entire entrance-room
+   setup — no plane, no title, no description — and still returned success.
+4. `GetZoneConfig` returning nil silently skipped the config entirely, leaving
+   `RoomId` unset so `GetZoneRoot` returns 0 and the zone renders empty.
+
+Plus an ordering bug: `GetPlaneRegistry().Mark` published the new plane to
+memory *before* either save, so a zone that failed to persist still changed
+runtime placement rules until restart.
+
+`buildZoneCreate` now applies both contract rules — persist before publishing,
+and roll back on failure. `rooms.DeleteZone` is the rollback, which is safe here
+because a freshly created zone has no blockers (`ZoneDeletionBlockers` skips the
+zone root). A rollback that itself fails is reported in the error message rather
+than swallowed, since the operator then has a partial zone on disk to clean up
+by hand.
+
+The function was also given the injectable-deps treatment already used by
+`buildDeps` in the same file (`zoneCreateDeps` / `realZoneCreateDeps` /
+`buildZoneCreateWith`), because none of these failure paths were reachable in a
+test otherwise. 7 tests, including one asserting the plane is NOT published when
+persistence fails.
+
 ### Chunk 2.7 — Make autosave outcomes observable
 
 **Problem:** Room autosave counts failures but returns `nil`; autosave ignores
@@ -1234,7 +1261,7 @@ only when all of its subchunks close.
 | 10 | 1.1 | **Done** | Reusable validate.yml consumed by PR, master and tags; only-new-issues verified to work on push | Release CI omits lint/coverage |
 | 11 | 5.3 | **Done** | `e23df1071`; `pickWanderExit` + 5 tests | Wander filter ignored |
 | 12 | 5.4 | **Done** | `e23df1071`; `parseGoldPhrase` shared by both paths + 2 tests | Gold-give parse mismatch |
-| 13 | 2.6 | Open | — | Builder ignores save failures |
+| 13 | 2.6 | **Done** | `buildZoneCreate` persists-then-publishes and rolls the zone back on any failure; 4 silent paths closed, not the 2 the review named + 7 tests | Builder ignores save failures |
 | 14 | 2.5 | Open | — | Dialogue parse error cached as absence |
 | 15 | 2.4 | **Done** | Overlay applied to a scratch template copy and adopted only on a full parse; corrupt overlays quarantined + 4 tests | Partial room overlay after YAML failure |
 | 16 | 2.5 | Open | — | Quest validation skips unreadable dialogue |
