@@ -1,5 +1,28 @@
 # DOGMud Patch Notes
 
+## 2026-08-10: The game no longer pauses while it saves
+
+Every so often the server writes everything down: your character, the rooms,
+the state of the world. Until now it did all of that in one go, and while it
+worked the whole game stopped. Nobody could move, fight, or type. On a busy
+server with a large world that pause was long enough to notice, and it got
+worse as the world grew.
+
+The save now happens in two parts. First the server takes a single quick picture
+of everything worth keeping, which is the only part that has to stop the world
+and is now many times faster. Then it writes that picture to disk a little at a
+time over the following seconds, while the game carries on around it.
+
+Taking one picture of everything at once matters more than it sounds. If the
+server recorded a room and a character at slightly different moments, an item
+being picked up at that instant could end up saved twice or not at all. One
+picture cannot disagree with itself.
+
+Two smaller things came with it. The server no longer says a save finished
+until it actually has. And if a save cannot be completed, a reboot will now
+refuse to go ahead rather than quietly throwing away what had not been written
+yet.
+
 ## 2026-08-10: Your character file is now written the safe way
 
 Earlier work made the game write its saved files carefully, so that a crash or

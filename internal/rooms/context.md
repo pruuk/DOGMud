@@ -222,6 +222,45 @@ template after the overlay is applied.
 on the next room load with no wipe needed. Check the struct tag before assuming
 a field is shadowed.
 
+### Instance saves are two-phase (chunk 3.6b-1)
+
+`SaveRoomInstance` no longer writes the file itself. It is now the synchronous
+composition of two halves, and the split is what lets autosave stop freezing the
+world:
+
+- **`PrepareInstanceWrite(r Room) (savequeue.PendingWrite, error)`** does
+  everything that reads live state: load the template, run the reflection diff,
+  marshal. Returns immutable BYTES. Caller must hold the world lock.
+- **`savequeue.Commit(p)`** does the durable write, or the delete when
+  `p.Data == nil`. Touches nothing but the bytes and the path, so it can happen
+  later, on a different tick.
+
+3.6a measured the write as 95.3% of a dirty room's save cost, which is why the
+split is worth having: only prepare stays under the lock. Measured after:
+1000 fully-dirty rooms went from 5980 ms to 120 ms of lock-held cost.
+
+`SaveRoomInstance` still exists and still means "save this room NOW and tell me
+if it failed", because unload, the builder, shutdown and copyover all need that.
+
+**A prepared write must be CANCELLED by anything that takes ownership of the
+file** (guard G2), and that set is larger than "everything that calls
+`SaveRoomInstance`". These three delete room data directly and each cancels:
+
+| Path | Why it bypasses the save function |
+|---|---|
+| `ClearRoomCache` | drops the room from memory with no save at all |
+| `DeleteRoomTemplate` | `os.Remove`s the template |
+| `DeleteZone` | `os.RemoveAll`s `rooms.instances/<zone>/` wholesale |
+
+`DeleteZone` cancels from its `doomed` list BEFORE the removal, for the same
+reason that list exists: once the directories are gone, `LoadRoomTemplate` reads
+from disk and returns nil for every one of those rooms.
+
+**`LoadRoomTemplate` is uncached** — a disk read and YAML parse per call, and
+`PrepareInstanceWrite` calls it per room per autosave cycle. That is roughly
+64% of what prepare costs. Template caching is a known separate slice; until it
+lands, prepare cost tracks file I/O rather than CPU.
+
 ### `Room.DefusedExits` — persisting a disarm without shadowing
 
 `Room.Exits` is skip-tagged, which meant a player disarming an exit lock trap

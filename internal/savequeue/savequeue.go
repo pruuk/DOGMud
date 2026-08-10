@@ -204,12 +204,28 @@ func (q *Queue) Drain(n int) DrainResult {
 	}
 
 	res := DrainResult{}
-	for q.cursor < len(q.entries) && res.Committed+res.Failed < n {
+	writes := 0
+	for q.cursor < len(q.entries) && writes < n {
 		e := q.entries[q.cursor]
 		q.cursor++
 
 		if e.cancelled {
 			continue
+		}
+
+		// Only real WRITES count against the budget. The budget exists to bound
+		// fsync cost, and a delete has no fsync -- it is one syscall that
+		// usually returns ENOENT because the overlay was never created.
+		//
+		// This matters more than it looks. In a healthy world almost every room
+		// matches its template, so almost every prepared entry is a delete: an
+		// idle server with 1386 rooms queues ~1386 of them per cycle. Counting
+		// those against a budget of 3 would make an IDLE world take ~23 seconds
+		// to drain a cycle in which nothing was written at all, and would keep
+		// the queue permanently non-empty. Uncounted, the same cycle drains in
+		// about one tick.
+		if !e.w.IsDelete() {
+			writes++
 		}
 
 		err := Commit(e.w)

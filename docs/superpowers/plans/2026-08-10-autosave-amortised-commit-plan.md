@@ -5,6 +5,8 @@
 **Branch:** `fix/chunk-3.6b1-amortised-autosave-commit`
 **Revised:** 2026-08-10 after an adversarial review of this plan (10 findings,
 3 material). See "What the adversarial review changed" below.
+**Status: COMPLETE 2026-08-10.** All 9 tasks. Results and the two benchmark bugs
+found along the way are recorded in the roadmap's 3.6b-1 section.
 **Depends on merged work:** 2.1 (persistence contract), 2.7 (autosave outcome
 reporting), 2.8 (contract adopted repo-wide), 3.5 (admin lock scope), 3.6a
 (measurement)

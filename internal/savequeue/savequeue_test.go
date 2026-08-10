@@ -456,3 +456,66 @@ func TestPendingWrite_HoldsBytesNotLiveState(t *testing.T) {
 		t.Errorf("payload changed after prepare: got %q", got)
 	}
 }
+
+func TestDrain_DeletesDoNotConsumeTheWriteBudget(t *testing.T) {
+	dir := t.TempDir()
+	q := New()
+
+	// The shape of a healthy world: almost every room matches its template, so
+	// almost every prepared entry is a delete of an overlay that was never
+	// created. If those counted against the budget, an IDLE server would take
+	// ~23 seconds to drain a cycle in which nothing was written.
+	writes := make([]PendingWrite, 0, 51)
+	for i := 0; i < 50; i++ {
+		writes = append(writes, del(t, dir, "clean"+itoa(i)+".yaml"))
+	}
+	writes = append(writes, write(t, dir, "dirty.yaml", []byte("payload")))
+	q.Supersede(writes)
+
+	res := q.Drain(3)
+
+	if q.Pending() != 0 {
+		t.Errorf("pending %d after one drain, want 0: deletes are consuming the write budget", q.Pending())
+	}
+	if res.Committed != 51 {
+		t.Errorf("committed %d, want 51", res.Committed)
+	}
+	if res.Cycle == nil {
+		t.Error("cycle did not complete")
+	}
+}
+
+func TestDrain_WriteBudgetIsStillEnforced(t *testing.T) {
+	// The flip side: real writes must still be bounded, or the budget knob is
+	// meaningless and the pause comes back.
+	dir := t.TempDir()
+	q := New()
+
+	writes := make([]PendingWrite, 0, 10)
+	for i := 0; i < 10; i++ {
+		writes = append(writes, write(t, dir, "w"+itoa(i)+".yaml", []byte("payload")))
+	}
+	q.Supersede(writes)
+
+	if res := q.Drain(3); res.Committed != 3 {
+		t.Errorf("committed %d, want exactly 3", res.Committed)
+	}
+	if q.Pending() != 7 {
+		t.Errorf("pending %d, want 7", q.Pending())
+	}
+}
+
+// itoa avoids importing strconv for two test call sites.
+func itoa(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	var b [20]byte
+	i := len(b)
+	for n > 0 {
+		i--
+		b[i] = byte('0' + n%10)
+		n /= 10
+	}
+	return string(b[i:])
+}

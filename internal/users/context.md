@@ -762,9 +762,40 @@ Only `AFK` surfaces to players via the `(afk)` tag.
 | `inbox.go` | Player mudmail |
 | `onlineinfo.go` | Who-list / online presence data |
 | `userlog.go` | Per-user log |
+| `autosave_prepare.go` | Two-phase save for autosave (`PrepareUserWrite`, `PrepareAllUserWrites`, `CancelPendingUserWrite`, `SetAutosaveQueue`) |
 | `copyover.go` | Copyover contributor |
 | `memory.go` | Memory reporting |
 
 Saves live at `_datafiles/world/dogmud/users/<id>.yaml`. That directory has its
 contents gitignored but ships a tracked `.gitkeep`. Without it a fresh clone
 fails `ValidateWorldFiles` and the server dies before loading a room.
+
+### Saving is two-phase (chunk 3.6b-1)
+
+`SaveUser` is now the synchronous composition of `PrepareUserWrite` (marshals
+live character state; must hold the world lock) and `savequeue.Commit` (the
+durable write). Autosave prepares and commits at different times; every other
+caller still gets "save now, tell me if it failed" and is unchanged.
+
+Two things follow, and the second one bites:
+
+**A user file is expensive to write, and only became so recently.** Chunk 2.8
+routed `SaveUser` through `util.Save`, which fsyncs. A realistic 48KB character
+went from 0.696 ms to 3.873 ms. At 100 players that is 387 ms of world lock,
+which made users the LARGER half of the autosave pause and is why they were
+pulled into 3.6b-1's scope after originally being out of it. User saves were
+cheap because they were not durable.
+
+**Every synchronous save must cancel a pending one** (guard G2), which
+`SaveUser` does. A queued write holds an older snapshot by definition, so
+letting it commit after a synchronous save rolls the character back to whenever
+autosave last looked at them. For a user that can resurrect spent gold or a
+consumed item, which is worse than the stale-room case.
+
+There is no delete phase for users: removing a user file is account deletion,
+not an autosave concern.
+
+`users` does not own the queue. `SetAutosaveQueue` points it at the one shared
+with `rooms`, and that sharing is load bearing: rooms and users must land in one
+pending set prepared in one lock hold, or the two halves of an item transfer can
+tear.

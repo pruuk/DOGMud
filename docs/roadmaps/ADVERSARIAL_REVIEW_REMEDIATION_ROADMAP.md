@@ -243,7 +243,7 @@ further decomposition
 | 3.4 | Release listener locks before callbacks | S | — | 22 | **Done 2026-08-08** |
 | 3.5 | Bound admin world-lock scope | M | — | 34 | **Done 2026-08-10** |
 | 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | **Done 2026-08-10 — remediation REQUIRED** |
-| 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | **ACTIVATED by 3.6a evidence** |
+| 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | **3.6b-1 DONE; 3.6b-2 / 3.6b-3 open** |
 | 4.1 | Remove admin stored-XSS surfaces | S | — | 17 | **Done 2026-08-10** |
 | 4.2 | Harden HTTP server boundaries | M | — | 20 | **20a Done 2026-08-10; Host-redirect half open (Wave 4)** |
 | 4.3 | Restore keyboard accessibility | M | — | 18 | Not started |
@@ -1167,6 +1167,69 @@ unsafe shallow snapshots.
 **Boundary:** Dirty tracking, template caching, precomputed projections, and
 immutable snapshots plus background writes are options to evaluate, not
 predetermined fixes. Decompose this XL chunk before implementation.
+
+**Decomposed 2026-08-10** into 3.6b-1 (amortised commit), 3.6b-2 (dirty-set
+write-behind) and 3.6b-3 (transactional value transfers, conditional). Design:
+`docs/superpowers/specs/2026-08-10-autosave-async-writes-design.md`. Plan:
+`docs/superpowers/plans/2026-08-10-autosave-amortised-commit-plan.md`.
+
+##### 3.6b-1 — Amortised commit: **DONE 2026-08-10**
+
+Prepare (diff + marshal, everything that reads live state) runs in ONE atomic
+pass under the world lock and produces immutable bytes. Commit (the durable
+write, 95% of the cost) is spread across later ticks at a bounded rate via the
+new `internal/savequeue`.
+
+Measured, 1000 rooms:
+
+| | Fully clean | Fully dirty |
+|---|---:|---:|
+| Before (`SaveAllRooms`) | 157 ms | **5980 ms** |
+| After (prepare only) | 115 ms | **120 ms** |
+
+Dirtiness dependence falls from 38x to 1.05x, and a fully dirty world now costs
+less under the lock than a fully clean one did before.
+
+Users, measured headlessly at ~0.145 ms/user (linear across 10/100/1000): 100
+users prepare in **15.7 ms**, against **387 ms** previously held in one block.
+
+**Scope changed mid-design, and the reason is worth keeping.** Users were
+originally out of 3.6b-1 on the strength of 3.6a's `usersMs=0` — which was
+measured with ZERO players connected. Chunk 2.8 then made user saves durable
+(0.696 ms → 3.873 ms), making users the LARGER half of the pause at 100
+players. Deferring them would have shipped the sub-chunk that bounds the pause
+while the bigger half of it grew.
+
+**Two corrections to the design target stated above.** (a) "Marshal under the
+lock, move `util.Save` outside" understated what has to stay: the template READ
+and the reflection diff also read live state, and the template read is uncached,
+making it ~64% of prepare. Template caching is therefore the named prerequisite
+for the projected figure holding on the droplet, not a further optimisation.
+(b) The projection of ~0.24 s was for rooms alone; the delivered figure is
+better than that for rooms but the full pause also carries users.
+
+**Finding 35 did not regress, and this was the main risk.** With commits spread
+over ticks, nothing has been written when the prepare tick returns, so the
+completion broadcast moved to the drain that empties the queue. A test asserts
+partial drains stay silent and exactly one outcome is reported at completion.
+
+**Guards delivered:** G1 one atomic pass (regression test), G2 cancellation
+across seven save sites **plus three deletion paths that bypass the save
+function entirely** (`ClearRoomCache`, `DeleteRoomTemplate`, `DeleteZone` —
+found in adversarial review of the plan, not in the original design), G3
+supersede-with-WARN, G4 flush on exit with **different policies per caller**
+(copyover ABORTS, shutdown logs and proceeds), G5 report-once-at-completion.
+
+**Known and accepted:** amortised is not free. Three writes per 50 ms turn is a
+sustained ~20% MainWorker occupancy while a cycle drains (~23 s at 1386 rooms,
+~2.8 min at 10,000). Cost still scales with world size rather than activity.
+Removing that is 3.6b-2's job and is the reason it should not be treated as
+optional.
+
+**Still owed before the 100-player target is claimed met:** a whole-server load
+run with real connected players. The per-file costs are benchmarked and the
+arithmetic is direct, but a load run would catch anything else that scales with
+player count.
 
 **Phase 3 exit:** The race detector covers each repaired ownership boundary,
 callback execution cannot deadlock listener registration, admin response
