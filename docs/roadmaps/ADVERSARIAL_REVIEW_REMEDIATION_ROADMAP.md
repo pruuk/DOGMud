@@ -155,6 +155,28 @@ time someone wants a design session rather than an implementation session.
 6.3 (finding 30), 6.6a–6.6c (finding 37), then 6.5 (lint backlog) last so
 earlier waves delete part of it first.
 
+### Wave 7 — Admin builder: trust, then discoverability
+
+**New work, not from the 2026-08-07 review.** Added 2026-08-10 at the user's
+request, and deliberately sequenced LAST: everything above is correctness or
+data-loss risk in the live game, while this is tooling.
+
+7.1 (focused adversarial review) then 7.2 (cross-reference index and search).
+7.2 depends on 7.1 because the review may change what the payloads should carry.
+
+**Why 7.1 runs after the earlier waves rather than now.** Two open findings are
+already in exactly its problem space, and reviewing before they land would just
+re-discover them:
+
+- **Finding 13 / chunk 2.6** — builder operations report success after ignored
+  save failures. That is the "bad save path" concern, already tracked.
+- **Finding 34 / chunk 3.5** — the global admin write lock. That is the
+  "mechanism locks up the MUD" concern, already tracked.
+
+Chunks 4.3 (keyboard accessibility) and 4.4 (hot-path GMCP DOM rebuilds) also
+touch these pages. 7.1 should treat all four as known and hunt for what they
+do not cover.
+
 ### Dependency corrections applied
 
 - Dropped `0.2` from every remaining chunk. It is Done; keeping it implied a gate.
@@ -226,6 +248,8 @@ further decomposition
 | 6.6a | Inventory and define boot dependency seams | M | — | 37 (contract) | Not started |
 | 6.6b | Freeze production boot registration | M | 6.6a | 37 (production) | Not started |
 | 6.6c | Isolate callback overrides in tests | M | 6.6a | 37 (tests) | Not started |
+| 7.1 | Adversarial review of the admin builder pages | L | 2.6, 3.5 | New (not from the review) | Not started |
+| 7.2 | Cross-reference index and search for authored content | M | 7.1 | New (not from the review) | Not started |
 
 ---
 
@@ -1085,3 +1109,101 @@ This roadmap is complete when:
   bug-finding lint pass under the unified validation workflow.
 - The original adversarial review can be rerun without reproducing any open
   finding.
+
+---
+
+## Phase 7 — Admin builder (new work, added 2026-08-10)
+
+Not from the 2026-08-07 review. Raised by the user after trying to edit the
+Path #1 newcomer tutorial through the admin pages and being unable to find what
+drove it. Sequenced last: everything above is correctness or data-loss risk in
+the live game; this is tooling.
+
+### Chunk 7.1 — Adversarial review of the admin builder pages
+
+**Problem:** The builder writes authored world content directly into the live
+server, and has never had a focused adversarial review. Its failure modes are
+the expensive kind: a save that reports success but does not land, or an
+operation that holds a lock and stalls the game for every connected player.
+
+**Scope:** `/build` and `/build-help`, `modules/gmcp/gmcp.Build*.go`, the
+`Build.*` GMCP verb surface, `internal/behaviortree` save paths, and the
+editor JS under `_datafiles/html/public/static/js/`
+(`builder`, `mobs`, `zones`, `dialogue`, `behaviors`, `quests`, `items`).
+
+**Hunt for, at minimum:**
+
+- **Save paths that can silently lose work.** Partial writes, writes that
+  report success on failure, saves racing the autosave, and saves that clobber
+  a file another editor session changed.
+- **Anything that can stall or deadlock the world.** Long operations under the
+  global lock, unbounded loops over rooms/mobs, and GMCP handlers doing
+  filesystem work on the event loop.
+- **Authorization on every `Build.*` verb**, not just the page. The page is
+  admin-gated; confirm each verb re-checks rather than trusting that.
+- **Destructive verbs without confirmation or undo** (`Delete` on zones,
+  rooms, mobs, behaviors) and what they leave dangling.
+- **Validation parity with the YAML loaders.** The builder must not be able to
+  write content that panics the next boot. The loaders panic on unresolved
+  references, filename/name mismatches and ID collisions; the builder should
+  refuse those at save time.
+
+**Known and already tracked — treat as background, hunt for what they miss:**
+findings **13** (chunk 2.6, builder reports success after ignored save
+failures), **34** (chunk 3.5, global admin write lock), **18** (4.3, keyboard
+accessibility), **19** (4.4, hot-path GMCP DOM rebuilds).
+
+**One confirmed defect to fold in.** The behavior-tree editor drops all
+hand-written `#` comments on first save, warns about it in the UI, and offers
+`note`/`notes` fields as the migration path. Every room-behavior file in the
+newcomer tutorial carries its design rationale in exactly those comments. Decide
+whether "warn and destroy" is the contract we want, or whether the writer should
+round-trip comments.
+
+**Outcome:** A written findings list with evidence, triaged the same way the
+2026-08-07 review was, feeding new chunks.
+
+**Findings:** New.
+
+### Chunk 7.2 — Cross-reference index and search for authored content
+
+**Problem:** Authored content cross-links heavily — quests drive rooms and
+mobs, room behavior trees gate exits, dialogue hangs off mobs, room nouns are
+the targets quest triggers match on — and the editor exposes none of those
+links. You can only find a quest if you already know its id or name.
+
+Evidence gathered 2026-08-10 while tracing the Path #1 tutorial:
+
+- Quest search is `"search id or name"`, filtered client-side over the list.
+  Searching `dewey`, `6258`, `tutorial` or `effigy` returns nothing.
+- `Build.Quest.*` exposes only `Create`, `Delete`, `Get`, `List`, `Update`.
+  There is no query verb, so no better search is reachable from the client.
+- Nothing computes back-references. The mob inspector's only quest-shaped field
+  is `questFlags`, which is the mob's own flags, not "quests that reference this
+  mob". `builder.js` and `zones.js` mention quests zero times.
+- Room behavior trees ARE editable, but only under Behaviors → kind `room` →
+  roomId. The room's own inspector does not link to them, so the thing gating a
+  room's exits is invisible from that room.
+- The pattern already exists elsewhere: the behavior editor shows archetypes as
+  "used by N mobs" and blocks deletion with a `BehaviorRefs` list. Quests, rooms
+  and dialogue never got the same treatment.
+
+Worked example of the cost: quest 28 "Waking to Gaius" drives the entire
+newcomer tutorial through `room_enter` and `command_issued` triggers, speaking
+every one of Dewey's lines via `npc_say`. Standing in room 6258 looking at
+Dewey, nothing in the editor names quest 28. The only in-product route is
+`questdebug <player>`, walking the tutorial, and reading tokens as they fire.
+
+**Outcome:** Opening a room, mob, item or dialogue shows what references it,
+and search finds authored content by what it *does*, not only by its name.
+
+**Sketch, to be confirmed by 7.1:** build the reverse index at load from data
+already present in the quest triggers (`room:`, `mob:`, `command:`, `noun:`);
+surface it as a `references` field on the existing `Build.*.Get` payloads
+rather than a new verb; widen quest search to match trigger contents; link a
+room to its room-behavior tree from the room inspector.
+
+**Check first:** whether the dialogue and item editors have the same blind spot
+before fixing the payload shape, so the field is designed once.
+
+**Findings:** New.
