@@ -1,14 +1,30 @@
 roomid: 6468
 zone: Pothole Coulee
 title: Ancestral Cave
-description: A narrow cliff opening is visible of the left  of the Stargazer Cut.
-  The smell of fresh air and the smell of your childhood’s home kitchen permeates
-  towards the inner opening of  a narrow cave.
+description: >
+  A narrow opening breaks the cliff wall here, low enough and plain
+  enough to walk straight past. Cool air moves steadily out of it,
+  clean and washed. Carried on that air is something that has no
+  business being in a cave at all -- the warm smell of a kitchen at the
+  end of the day, and not any kitchen, but the one you grew up in. It
+  comes from further in, where the passage narrows and turns out of the
+  light.
 biome: cave
-x: 42
-"y": 17
 exits:
   east:
     roomid: 5224
   west:
     roomid: 6469
+nouns:
+  opening: The gap in the rock is barely wider than your shoulders. Its
+    edges are worn round and smooth rather than cut, the way stone goes
+    when a great many people have squeezed past it over a great many
+    years.
+  smell: Fresh cave air, and underneath it, impossibly, cooking. Bread,
+    or something close to bread. The longer you stand in it, the more
+    certain you become that you have smelled it before.
+idlemessages:
+- The <ansi fg="itemname">smell</ansi> from deeper in strengthens for a moment, then thins.
+- Cool air slides out of the <ansi fg="itemname">opening</ansi> and moves past you.
+x: 42
+y: 17

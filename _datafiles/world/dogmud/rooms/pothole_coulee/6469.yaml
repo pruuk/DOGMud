@@ -1,14 +1,32 @@
 roomid: 6469
 zone: Pothole Coulee
 title: Ancestral Chamber
-description: As you entered the cave the space expands. You notices the gleaming stalactites
-  and stalagmites. in the middle of the room there is s small wading pool with a flat,  elevated,
-  circular stone. Suddenly, you start to feel like you need to sit down on that spot
-  and just listen to the droplets of water. They seem to create a soothing tink that
-  melts all your worries away.
+description: >
+  The passage opens without warning and the cave becomes a room. Water
+  has been at work here far longer than there have been people to watch
+  it -- stone hangs from the roof in wet points, and rises from the
+  floor to meet it, all of it faintly shining. A shallow pool lies in
+  the middle of the space, and set in the pool is a flat round stone,
+  raised just high enough to sit on and stay dry. Drops fall from the
+  roof into the water, one and then another, never quite in time.
+  Standing here, you find that you would very much like to sit down on
+  that stone and listen to them for a while.
 biome: cave
-x: 41
-"y": 17
 exits:
   east:
     roomid: 6468
+nouns:
+  pool: Barely deeper than your ankles, and so clear that the rock on
+    the bottom looks near enough to touch. The surface shivers each
+    time a drop lands, then settles again.
+  stone: Flat, round, and worn smooth as glass on top, standing about a
+    hand's height above the water. Nothing about it looks carved.
+    Everything about it looks used.
+  stalactites: The wet points come down from the roof in ranks, some
+    thin as a finger, some thick as a leg, every one of them beaded
+    along its length with water waiting to fall.
+idlemessages:
+- A drop lands in the <ansi fg="itemname">pool</ansi> and the sound hangs longer than it should.
+- The <ansi fg="itemname">stone</ansi> sits quiet in the water, dry and waiting.
+x: 41
+y: 17
