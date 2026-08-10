@@ -126,6 +126,10 @@ func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
 		return StealResult{Reason: "target not found"}
 	}
 
+	// Deliberately NOT mobs.CheckPlayerHarm: that policy also blocks charmed
+	// companions, and stealing from a companion is currently allowed. Widening
+	// it here would be a gameplay change, not a finding-3 fix. Keep the two
+	// protections that do apply.
 	if m.IsNonCombatant() || m.PlayerAttackImmune {
 		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`You can't steal from <ansi fg="mobname">%s</ansi>.`,

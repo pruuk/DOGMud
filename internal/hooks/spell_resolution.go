@@ -62,6 +62,23 @@ func calcSpellDuration(baseFolds int, spellcastingSkill int, willpower int) int 
 // Extracting the 6-line loop skeleton into a shared wrapper would require
 // function-parameter callbacks or an interface, adding abstraction without
 // meaningful savings. Keep them separate and well-documented instead.
+// playerHarmTargetPermitted reports whether a player-cast spell of this type
+// may land on mob right now.
+//
+// Spells fold over several rounds, so the target set chosen by InitiateCast is
+// stale by the time the spell resolves: a mob can be charmed into a companion,
+// or a builder can flag it protected, in between. Harmful spells therefore
+// re-run the same authorization policy at resolution (review finding 3).
+//
+// Help spells are exempt — they legitimately target companions.
+func playerHarmTargetPermitted(spellType spells.SpellType, mob *mobs.Mob) bool {
+	switch spellType {
+	case spells.HarmSingle, spells.HarmMulti, spells.HarmArea:
+		return !mobs.CheckPlayerHarm(mob).Blocked()
+	}
+	return true
+}
+
 func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) {
 
 	skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)
@@ -79,8 +96,8 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		allMobs := room.GetMobs(rooms.FindAll)
 		filtered := make([]int, 0, len(allMobs))
 		for _, mId := range allMobs {
-			// Don't damage any player-owned companions or non-combatants
-			if m := mobs.GetInstance(mId); m != nil && (m.Character.IsCharmed() || m.IsNonCombatant()) {
+			// Spare companions, non-combatants and attack-immune mobs.
+			if !playerHarmTargetPermitted(spellData.Type, mobs.GetInstance(mId)) {
 				continue
 			}
 			filtered = append(filtered, mId)
@@ -118,6 +135,9 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		}
 		if mob.Character.RoomId != room.RoomId {
 			continue // target left the room before spell resolved
+		}
+		if !playerHarmTargetPermitted(spellData.Type, mob) {
+			continue // gained protection while the spell was folding
 		}
 		if resolveAgainstMob(user, mob, room, spellData, spellAttack, magnitude) {
 			castFumbled = true

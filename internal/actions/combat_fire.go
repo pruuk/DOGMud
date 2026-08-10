@@ -146,6 +146,11 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 			return FireResult{WeaponName: weapon.DisplayName(), NoTarget: true}
 		}
 
+		// Deliberately NOT mobs.CheckPlayerHarm: this path spares only the
+		// SHOOTER'S OWN companion (charmerKey), where the shared policy spares
+		// anyone's, and it reports the two rejection reasons through separate
+		// result flags. Narrowing or merging it would change behavior.
+		//
 		// Charmed-mob friendly-fire prevention. Player actors charm by userId;
 		// mob actors charm by instanceId.
 		charmerKey := actor.GetUserId()

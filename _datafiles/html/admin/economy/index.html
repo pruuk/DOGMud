@@ -150,6 +150,11 @@
 
 <script>
 (function() {
+    // Default-safe HTML construction (see /admin/static/js/safe-dom.js).
+    // Every table cell below is escaped unless wrapped in raw(), which is
+    // reserved for fragments this page builds itself from numbers.
+    var esc = SafeDom.esc, raw = SafeDom.raw, tr = SafeDom.tr;
+
     var autoTimer = null;
     var autoOn = false;
 
@@ -318,9 +323,12 @@
             var shops = byDisc[disc];
             var score = d.scores.PerCraftSupport[disc] || 0;
             var gold = totalGold(shops);
-            discHtml += '<tr><td>' + disc + '</td><td>' + shops.length + '</td>' +
-                        '<td>' + fmtScore(score, score > 0) + '</td>' +
-                        '<td>' + gold + '</td></tr>';
+            discHtml += tr([
+                disc,
+                shops.length,
+                raw(fmtScore(score, score > 0)),
+                gold
+            ]);
         }
         document.getElementById('tbl-discipline').innerHTML = discHtml;
 
@@ -338,12 +346,14 @@
         for (var i = 0; i < shopPairs.length; i++) {
             var row = shopPairs[i].row;
             var snap = shopPairs[i].snap;
-            shopHtml += '<tr><td>' + (row.Name || '#'+row.MobId) + '</td>' +
-                        '<td>' + (row.CraftSupport || '—') + '</td>' +
-                        '<td>' + fmtScore(row.StockScore, row.HasScore) + '</td>' +
-                        '<td>' + fmtScore(row.GoldScore, true) + '</td>' +
-                        '<td>' + snap.gold + '</td>' +
-                        '<td>' + tierBar(snap.stock, totalCap(snap.stock)) + '</td></tr>';
+            shopHtml += tr([
+                row.Name || ('#' + row.MobId),
+                row.CraftSupport || '—',
+                raw(fmtScore(row.StockScore, row.HasScore)),
+                raw(fmtScore(row.GoldScore, true)),
+                snap.gold,
+                raw(tierBar(snap.stock, totalCap(snap.stock)))
+            ]);
         }
         document.getElementById('tbl-shops').innerHTML = shopHtml;
 
@@ -355,18 +365,20 @@
             var key = shopKey(snap);
             var depCnt = snap.currently_depleted_count || 0;
             var depCell = depCnt > 0
-                ? '<span class="text-danger">' + depCnt + '</span>'
+                ? raw('<span class="text-danger">' + esc(depCnt) + '</span>')
                 : '0';
-            thruHtml += '<tr><td>' + (row.Name || '#'+row.MobId) + '</td>' +
-                        '<td>' + fmtScore(row.ThroughputScore, true) + '</td>' +
-                        '<td>' + fmtTtR(snap.median_ttr_commons) + '</td>' +
-                        '<td>' + fmtTtR(snap.median_ttr_rares) + '</td>' +
-                        '<td>' + depCell + '</td>';
+            var thruCells = [
+                row.Name || ('#' + row.MobId),
+                raw(fmtScore(row.ThroughputScore, true)),
+                fmtTtR(snap.median_ttr_commons),
+                fmtTtR(snap.median_ttr_rares),
+                depCell
+            ];
             ['1h','6h','1d','3d','1w'].forEach(function(label) {
                 var sd = d.deltas[label] && d.deltas[label].shops[key];
-                thruHtml += '<td>' + fmtTtR(sd ? sd.MedianTtR : 0) + '</td>';
+                thruCells.push(fmtTtR(sd ? sd.MedianTtR : 0));
             });
-            thruHtml += '</tr>';
+            thruHtml += tr(thruCells);
         }
         document.getElementById('tbl-throughput').innerHTML =
             thruHtml || '<tr><td colspan="10" class="text-muted">No shops.</td></tr>';
@@ -391,14 +403,14 @@
                 }
                 tierMixStr = parts.join(' ');
             }
-            inputHtml += '<tr>' +
-                '<td>' + zone + '</td>' +
-                '<td>' + fmtScore(zr.score, true) + '</td>' +
-                '<td>' + (zr.items_per_day || 0).toFixed(1) + '</td>' +
-                '<td>' + (zr.from_foragers || 0).toFixed(0) + '</td>' +
-                '<td>' + (zr.from_restock || 0).toFixed(0) + '</td>' +
-                '<td><small>' + (tierMixStr || '—') + '</small></td>' +
-                '</tr>';
+            inputHtml += tr([
+                zone,
+                raw(fmtScore(zr.score, true)),
+                (zr.items_per_day || 0).toFixed(1),
+                (zr.from_foragers || 0).toFixed(0),
+                (zr.from_restock || 0).toFixed(0),
+                raw('<small>' + esc(tierMixStr || '—') + '</small>')
+            ]);
         }
         document.getElementById('tbl-input').innerHTML =
             inputHtml || '<tr><td colspan="6" class="text-muted">No zone data.</td></tr>';
@@ -419,15 +431,17 @@
                 c.cargo_capacity || 1
             );
             var cd = d.deltas['1d'] && d.deltas['1d'].caravans && d.deltas['1d'].caravans[c.inst_id];
-            caravanHtml += '<tr><td>' + c.name + '</td>' +
-                           '<td>' + fmtScore(sc.Score, sc.HasScore) + '</td>' +
-                           '<td>' + c.state + '</td>' +
-                           '<td>round +' + (d.snapshot.round - c.state_entered_round) + '</td>' +
-                           '<td>' + c.room_id + '</td>' +
-                           '<td>' + bar + ' ' + c.cargo_weight + '/' + c.cargo_capacity + ' lbs' + '</td>' +
-                           '<td>' + multText(c) + '</td>' +
-                           '<td>' + (c.lbs_delivered || 0) + '</td>' +
-                           '<td colspan="5">' + tierBarFromDelta(cd ? cd.DeliveriesByTierDelta : null) + '</td></tr>';
+            caravanHtml += tr([
+                c.name,
+                raw(fmtScore(sc.Score, sc.HasScore)),
+                c.state,
+                'round +' + (d.snapshot.round - c.state_entered_round),
+                c.room_id,
+                raw(bar + ' ' + esc(c.cargo_weight) + '/' + esc(c.cargo_capacity) + ' lbs'),
+                raw(multText(c)),
+                c.lbs_delivered || 0,
+                { v: raw(tierBarFromDelta(cd ? cd.DeliveriesByTierDelta : null)), colspan: 5 }
+            ]);
         }
         document.getElementById('tbl-caravans').innerHTML = caravanHtml || '<tr><td colspan="13" class="text-muted">No caravans active.</td></tr>';
 
@@ -454,10 +468,11 @@
                 for (var j = 0; j < sortedStock.length; j++) {
                     var s = sortedStock[j];
                     var name = s.item_name || ('item ' + s.item_id);
-                    rows += '<tr><td>' + name + '</td>' +
-                            '<td>' + (s.bucket || '&mdash;') + '</td>' +
-                            '<td>' + warehouseFillBar(s.current, scaleMax, s.bucket) +
-                            ' ' + s.current + '</td></tr>';
+                    rows += tr([
+                        name,
+                        s.bucket ? s.bucket : raw('&mdash;'),
+                        raw(warehouseFillBar(s.current, scaleMax, s.bucket) + ' ' + esc(s.current))
+                    ]);
                 }
                 bodyHtml = '<table class="table table-sm table-striped mb-0">' +
                     '<thead><tr><th>Item</th><th>Bucket</th><th>Stock</th></tr></thead>' +
@@ -467,7 +482,7 @@
                 ? ' <span class="text-muted small">cap ' + fmtCap(stockRows[0].cap) + '/item</span>'
                 : '';
             whHtml += '<div class="col-md-6 mb-3"><div class="card">' +
-                '<div class="card-header"><strong>' + wh.zone + '</strong>' + capNote + '</div>' +
+                '<div class="card-header"><strong>' + esc(wh.zone) + '</strong>' + capNote + '</div>' +
                 '<div class="card-body p-2">' +
                 '<div class="row text-center mb-2">' +
                     '<div class="col-4"><div class="text-muted small">captured surplus</div><div>' + (wh.captured_count || 0) + '</div></div>' +
@@ -497,16 +512,18 @@
             );
             var fd = d.deltas['1d'] && d.deltas['1d'].foragers && d.deltas['1d'].foragers[f.mob_id];
             var isDespawned = f.state === '(despawned)' || f.state === '(not active)';
-            foragerHtml += '<tr><td>' + f.name + '</td>' +
-                           '<td>' + fmtScore(sc.Score, sc.HasScore) + '</td>' +
-                           '<td>' + (f.territory || '—') + '</td>' +
-                           '<td>' + f.state + '</td>' +
-                           '<td>' + (isDespawned ? '&mdash;' : 'round +' + (d.snapshot.round - f.state_entered_round)) + '</td>' +
-                           '<td>' + f.room_id + '</td>' +
-                           '<td>' + bar + ' ' + f.cargo_weight + '/' + f.cargo_capacity + ' lbs' + '</td>' +
-                           '<td>' + multText(f) + '</td>' +
-                           '<td>' + (f.lbs_delivered || 0) + '</td>' +
-                           '<td colspan="5">' + tierBarFromDelta(fd ? fd.DeliveriesByTierDelta : null) + '</td></tr>';
+            foragerHtml += tr([
+                f.name,
+                raw(fmtScore(sc.Score, sc.HasScore)),
+                f.territory || '—',
+                f.state,
+                isDespawned ? raw('&mdash;') : 'round +' + (d.snapshot.round - f.state_entered_round),
+                f.room_id,
+                raw(bar + ' ' + esc(f.cargo_weight) + '/' + esc(f.cargo_capacity) + ' lbs'),
+                raw(multText(f)),
+                f.lbs_delivered || 0,
+                { v: raw(tierBarFromDelta(fd ? fd.DeliveriesByTierDelta : null)), colspan: 5 }
+            ]);
         }
         document.getElementById('tbl-foragers').innerHTML = foragerHtml || '<tr><td colspan="14" class="text-muted">No foragers active.</td></tr>';
     }
