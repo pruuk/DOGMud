@@ -1,14 +1,30 @@
 name: Build and release
 
 on:
+  # Manually runnable so this path can be exercised without waiting for a merge
+  # to master. Two changes in a row (the reusable-workflow split and its
+  # permissions) could only be verified AFTER landing, because a push-triggered
+  # workflow cannot be dry-run. The `release` job stays gated on a real version
+  # tag, so a manual run on master builds and uploads an artifact and publishes
+  # nothing.
+  workflow_dispatch:
   push:
     branches:
       - master
     tags:
       - 'v*'
 
+# A reusable workflow may never request MORE permission than its caller grants,
+# and declaring this block explicitly sets every scope NOT listed to `none`.
+# validate.yml asks for `pull-requests: read` (golangci-lint's only-new-issues
+# reads the PR diff from the API), so omitting it here meant `none` and the
+# whole run refused to start with a startup_failure — no job, no log, just
+# "this run likely failed because of a workflow file issue".
+#
+# Keep this in step with the permissions block in validate.yml.
 permissions:
   contents: write
+  pull-requests: read
 
 env:
   RELEASE_FILENAME: go-mud-release
