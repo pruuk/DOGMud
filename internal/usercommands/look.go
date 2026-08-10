@@ -420,33 +420,10 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if len(room.Corpses) > 0 {
 
-		mobCorpseLookup := map[string]int{}
-		mobCorpses := []string{}
-
-		playerCorpseLookup := map[string]int{}
-		playerCorpses := []string{}
-		for idx, c := range room.Corpses {
-			if c.Prunable {
-				continue
-			}
-
-			if c.MobId > 0 {
-				name := c.DisplayName()
-				if _, ok := mobCorpseLookup[name]; !ok {
-					mobCorpseLookup[name] = idx
-					mobCorpses = append(mobCorpses, name)
-				}
-			}
-
-			if c.UserId > 0 {
-				name := c.Character.Name + ` corpse`
-				if _, ok := playerCorpseLookup[name]; !ok {
-					playerCorpseLookup[name] = idx
-					playerCorpses = append(playerCorpses, name)
-				}
-			}
-		}
-
+		// Corpse name resolution lives in room.FindCorpse below. An earlier
+		// deduplicating index was built here (two maps and two slices) whose
+		// only consumers were each other, so it computed a lookup table and
+		// then threw it away on every look. Removed; see review finding 31.
 		if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
 
 			corpseColor := `mob-corpse`
