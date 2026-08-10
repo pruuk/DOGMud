@@ -195,7 +195,13 @@ func (s *Supervisor) Start(ctx context.Context, opts StartOptions) (Result, erro
 	m.Artifacts.Config = configPath
 	if len(opts.Profiles) > 0 {
 		// Host path the container will write after successful materialization.
-		m.Artifacts.Creds = filepath.Join(controlDir, credsFileName)
+		// Pre-created here so the container's root-owned write lands in a file
+		// the host user still owns and can read back — see precreateCredsFile.
+		credsPath, err := precreateCredsFile(controlDir)
+		if err != nil {
+			return s.failStart(ctx, &res, m, runDir, "", dc, composeRunVars{}, "", StateValidating, FailureManifest, err, true)
+		}
+		m.Artifacts.Creds = credsPath
 	}
 	if err := writeManifest(m.Artifacts.Manifest, m); err != nil {
 		return s.failStart(ctx, &res, m, runDir, "", dc, composeRunVars{}, "", StateValidating, FailureManifest, err, true)
