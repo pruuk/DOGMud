@@ -241,8 +241,8 @@ further decomposition
 | 3.3 | Synchronize the room path cache | M | — | 8 | **Done 2026-08-08** |
 | 3.4 | Release listener locks before callbacks | S | — | 22 | **Done 2026-08-08** |
 | 3.5 | Bound admin world-lock scope | M | — | 34 | **Done 2026-08-10** |
-| 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | Not started |
-| 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | Not started |
+| 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | **Done 2026-08-10 — remediation REQUIRED** |
+| 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | **ACTIVATED by 3.6a evidence** |
 | 4.1 | Remove admin stored-XSS surfaces | S | — | 17 | **Done 2026-08-10** |
 | 4.2 | Harden HTTP server boundaries | M | — | 20 | **20a Done 2026-08-10; Host-redirect half open (Wave 4)** |
 | 4.3 | Restore keyboard accessibility | M | — | 18 | Not started |
@@ -975,6 +975,68 @@ required.
 **Boundary:** This chunk produces evidence and a decision only. It does not
 change persistence architecture.
 
+**Disposition 2026-08-10: REMEDIATION REQUIRED. 3.6b is activated.**
+
+Instrumentation added to the autosave hook (per-stage durations, loaded-set
+sizes, and `turnsDelayed`), plus benchmarks in `internal/rooms/`
+(`autosave_bench_test.go`, `autosave_phase_bench_test.go`).
+
+**Live measurement** — full world, autosave forced to every 8 rounds, ~15
+consistent cycles, **0 players connected**, local SSD:
+
+    totalMs=295-300  turnsDelayed=5-6  loadedRooms=1386  activeUsers=0
+    usersMs=0        roomsMs=293-299   pluginsMs=0-1
+
+**Whole-set benchmarks** — cost is linear in loaded-set size:
+
+| Scenario | Total | Per room |
+|---|---:|---:|
+| 1000 clean | 264 ms | 0.26 ms |
+| 1000 dirty | 3,564 ms | 3.56 ms |
+| 100 clean | 17.6 ms | 0.18 ms |
+| 100 dirty | 360 ms | 3.60 ms |
+
+**Per-phase split of one dirty room** (this is the number 3.6b is designed
+against):
+
+| Phase | Per room | Share | Can leave the lock? |
+|---|---:|---:|---|
+| `LoadRoomTemplate` (disk read) | 0.110 ms | 3.0% | Yes — immutable authored data, cacheable |
+| Reflection diff | ~0.055 ms | 1.5% | No — reads live state |
+| `yaml.Marshal` | 0.007 ms | 0.2% | No, but effectively free |
+| `util.Save` (temp + fsync + rename) | **3.459 ms** | **95.3%** | **Yes — input is already immutable bytes** |
+| whole dirty save (control) | 3.631 ms | 100% | |
+
+**Why remediation is required rather than a budget.** The pause is not request
+latency, it is a full-simulation stop: every player, mid-round, at once. It is
+linear in loaded rooms, the world is 49 zones and growing, and it therefore gets
+worse with every content addition. A budget would be a number we watch degrade.
+
+**Two corrections to earlier assumptions, recorded so they are not repeated:**
+
+1. "Autosave writes every loaded room" is FALSE. `SaveRoomInstance` computes the
+   diff and writes nothing when a room matches its template, so an effective
+   dirty check already exists at the write level.
+2. "Dirty tracking is the fix" is FALSE, and it was the obvious-looking answer.
+   Dirty tracking would only avoid the 1.5% diff. The cost is the fsync.
+
+**Design target for 3.6b, from the evidence:** marshal under the lock (0.007 ms,
+free) and move `util.Save` outside it. Bytes are immutable by construction, so
+this sidesteps the unsafe-shallow-snapshot hazard the 3.6b boundary warns about
+— no deep copy of `Room` is needed at all. Projected worst case (all 1386 rooms
+dirty) falls from ~5.0 s to ~0.24 s, and the lock cost becomes independent of
+how many rooms are dirty. Template caching would take it to ~0.085 s.
+
+**3.6b must still solve failure reporting** (finding 35 must not regress): never
+claim success at dispatch, collect terminal write outcomes and report them at
+ERROR within one cycle, and prevent overlapping cycles from queueing stale or
+reordered writes.
+
+**Gaps in this evidence:** measured with 0 players, so `SaveAllUsers` is
+untested under load; measured on a local Windows SSD, so the droplet's volume is
+likely slower. Both matter for 3.6b's acceptance criteria, not for the decision
+to do it.
+
 #### Chunk 3.6b — Remediate autosave pauses if required
 
 **Activation:** Execute only if Chunk 3.6a shows the approved budget is
@@ -1353,7 +1415,7 @@ only when all of its subchunks close.
 | 33 | 1.4 | Open | — | Dual YAML major versions |
 | 34 | 3.5 | **Done** | auth moved outside the lock on all 16 remaining routes (bcrypt no longer runs under it); response buffered and flushed after unlock; 5 no-world-state routes unlocked entirely + 4 tests | Admin routes retain global world lock |
 | 35 | 2.7 | **Done** | `SaveAllRooms`/`SaveAllUsers`/`plugins.Save` return aggregates; `onSave` callback signature now returns error (4 modules); autosave, shutdown and copyover all honour them + 2 tests | Autosave failures reported as success |
-| 36 | 3.6a–3.6b | Open | Autosave executes synchronously inside locked `EventLoop` | Unmeasured autosave world-lock pauses |
+| 36 | 3.6a–3.6b | **3.6a Done / 3.6b Open** | Measured: 295ms idle at 1386 rooms; dirty room = 3.63ms of which **95% is fsync**; pathological ~5s. Remediation required; design target recorded | Unmeasured autosave world-lock pauses |
 | 37 | 6.6a–6.6c | Open | Startup callback setters remain mutable after worker launch | Implicit mutable boot dependency wiring |
 
 ## Roadmap completion criteria

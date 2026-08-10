@@ -39,12 +39,25 @@ func AutoSave(e events.Event) events.ListenerReturn {
 			util.TrackTime(`AutoSave`, time.Since(totalTimeStart).Seconds())
 		}()
 
+		// Chunk 3.6a instrumentation (finding 36). Autosave runs inside the
+		// NewTurn event with the world lock held, so every millisecond here is
+		// a millisecond no player acts. Capture the loaded-set sizes and the
+		// per-stage cost so the pause can be budgeted against evidence rather
+		// than argued about.
+		loadedRooms := rooms.LoadedRoomCount()
+		activeUsers := len(users.GetAllActiveUsers())
+		var usersDur, roomsDur, pluginsDur time.Duration
+
 		//////////////////////////////////////////
 		// SAVE ALL USERS
 		//////////////////////////////////////////
 		events.AddToQueue(events.Broadcast{Text: `Saving users...`})
 
-		if err := users.SaveAllUsers(true); err != nil {
+		usersStart := time.Now()
+		userErr := users.SaveAllUsers(true)
+		usersDur = time.Since(usersStart)
+		util.TrackTime(`AutoSave.Users`, usersDur.Seconds())
+		if err := userErr; err != nil {
 			mudlog.Error("AutoSave", "stage", "users", "error", err)
 			events.AddToQueue(events.Broadcast{
 				Text:            `Saved with errors.` + term.CRLFStr,
@@ -62,7 +75,11 @@ func AutoSave(e events.Event) events.ListenerReturn {
 		//////////////////////////////////////////
 		events.AddToQueue(events.Broadcast{Text: `Saving rooms...`})
 
-		if err := rooms.SaveAllRooms(); err != nil {
+		roomsStart := time.Now()
+		roomErr := rooms.SaveAllRooms()
+		roomsDur = time.Since(roomsStart)
+		util.TrackTime(`AutoSave.Rooms`, roomsDur.Seconds())
+		if err := roomErr; err != nil {
 			mudlog.Error("AutoSave", "stage", "rooms", "error", err)
 			events.AddToQueue(events.Broadcast{
 				Text:            `Saved with errors.` + term.CRLFStr,
@@ -80,7 +97,11 @@ func AutoSave(e events.Event) events.ListenerReturn {
 		//////////////////////////////////////////
 		events.AddToQueue(events.Broadcast{Text: `Saving other...`})
 		// Save plugin states if applicable
-		if err := plugins.Save(); err != nil {
+		pluginsStart := time.Now()
+		pluginErr := plugins.Save()
+		pluginsDur = time.Since(pluginsStart)
+		util.TrackTime(`AutoSave.Plugins`, pluginsDur.Seconds())
+		if err := pluginErr; err != nil {
 			mudlog.Error("AutoSave", "stage", "plugins", "error", err)
 			events.AddToQueue(events.Broadcast{
 				Text:            `Saved with errors.` + term.CRLFStr,
@@ -93,6 +114,25 @@ func AutoSave(e events.Event) events.ListenerReturn {
 			})
 		}
 
+		// One structured line per autosave. turnsDelayed is the player-visible
+		// cost: the world lock is held for the whole pause, so this many turns
+		// could not be processed. TurnMs is 50 by default, so 20 turns is one
+		// second of frozen game.
+		total := time.Since(totalTimeStart)
+		turnMs := int64(configs.GetTimingConfig().TurnMs)
+		turnsDelayed := int64(0)
+		if turnMs > 0 {
+			turnsDelayed = total.Milliseconds() / turnMs
+		}
+		mudlog.Info("AutoSave",
+			"totalMs", total.Milliseconds(),
+			"turnsDelayed", turnsDelayed,
+			"loadedRooms", loadedRooms,
+			"activeUsers", activeUsers,
+			"usersMs", usersDur.Milliseconds(),
+			"roomsMs", roomsDur.Milliseconds(),
+			"pluginsMs", pluginsDur.Milliseconds(),
+		)
 	}
 
 	return events.Continue

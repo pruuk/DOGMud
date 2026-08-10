@@ -684,6 +684,15 @@ func GetZoneConfig(zone string) *ZoneConfig {
 	return roomManager.zones[zone]
 }
 
+// LoadedRoomCount reports how many rooms are currently held in memory.
+//
+// This is the input to autosave cost: SaveAllRooms iterates this set, so the
+// loaded-set size IS the write count. Exported for the autosave instrumentation
+// added in roadmap chunk 3.6a (finding 36).
+func LoadedRoomCount() int {
+	return len(roomManager.rooms)
+}
+
 func IsRoomLoaded(roomId int) bool {
 	_, ok := roomManager.rooms[roomId]
 	return ok
