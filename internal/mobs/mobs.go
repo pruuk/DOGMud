@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"maps"
 	"math"
-	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -1241,7 +1240,13 @@ func (r *Mob) Save() error {
 
 	saveFilePath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/`, `mobs`, `/`, fmt.Sprintf("%s.yaml", fileName))
 
-	err = os.WriteFile(saveFilePath, bytes, 0644)
+	// Atomic temp-and-rename rather than a bare write. This is the path the
+	// admin mob builder saves through, and a mob template is authored content:
+	// a truncated file does not degrade quietly, it panics the next boot when
+	// the loader hits a name/filename mismatch or an unresolved reference.
+	// Beyond finding 5's letter (which named only instance saves) but the same
+	// defect and the same one-line fix.
+	err = util.Save(saveFilePath, bytes)
 	if err != nil {
 		return err
 	}

@@ -230,7 +230,7 @@ further decomposition
 | 1.4 | Decide and enforce the YAML compatibility boundary | M | — | 33 | Not started |
 | 1.5 | Remove tracked playtest credentials | S | — | Security follow-up | **In progress — tree clean, ROTATION OUTSTANDING** |
 | 2.1 | Establish the living-state persistence contract | M | 1.4 | Supporting | **Contract Done 2026-08-10; store migrations are 2.2–2.5** |
-| 2.2 | Migrate mob instance persistence | M | 2.1 | 5 | Not started |
+| 2.2 | Migrate mob instance persistence | M | 2.1 | 5 | **Done 2026-08-10** |
 | 2.3 | Migrate guild and moderation persistence | M | 2.1 | 7 | Not started |
 | 2.4 | Separate corrupt shop and room state from absence | M | 2.1 | 6, 15 | Not started |
 | 2.5 | Make authored-content validation fail honestly | M | 1.1, 1.4 | 14, 16 | Not started |
@@ -608,6 +608,32 @@ files are treated as if no saved progression exists.
 and malformed instance files produce distinct, non-destructive outcomes.
 
 **Finding:** 5
+
+**Delivered 2026-08-10.** Both halves of finding 5:
+
+- **Write.** `os.WriteFile` -> `util.Save`, so an interrupted write can no
+  longer truncate the file. A mob instance file is the only record of what that
+  mob became — stats, skills, mutations, gold, gear, planner state — and cannot
+  be rebuilt from the repo.
+- **Read.** `LoadMobInstance` returned nil for BOTH "no file" and "corrupt
+  file", and nil means "spawn from template". So a torn file silently discarded
+  everything the mob had accumulated, and the next save then overwrote the
+  damaged file, destroying the only evidence any loss had occurred. It now
+  quarantines (never deletes), logs at ERROR naming what was lost and where the
+  bytes went, and then spawns from template. Quarantining also frees the path,
+  so the next save succeeds rather than failing forever.
+
+Absent stays silent — a mob that has never persisted anything is the ordinary
+case and must not generate noise.
+
+**Beyond the finding's letter:** `Mob.Save()` (`internal/mobs/mobs.go`), the
+template writer the admin mob builder saves through, had the same bare
+`os.WriteFile`. A mob template is authored content, so a truncated file does not
+degrade quietly — it panics the next boot on a name/filename mismatch or an
+unresolved reference. Same one-line fix, applied.
+
+5 tests including the full corrupt -> quarantine -> reseed -> save -> load
+recovery path, plus a control leg proving the round trip still works.
 
 ### Chunk 2.3 — Migrate guild and moderation persistence
 
@@ -1113,7 +1139,7 @@ only when all of its subchunks close.
 | 2 | 5.1 | Open | — | Combat/activity state divergence |
 | 3 | 5.2 | **Done** | `mobs.CheckPlayerHarm` policy + 7 sites; review named 1 (HarmSingle), actual scope was 5 cast-time paths, resolution-time re-check, and `target` + 21 tests | Harmful spells bypass attack immunity |
 | 4 | 3.1 | **Done** | `atomic.Uint64`; exactness + monotonicity tests | Unsynchronized round counter |
-| 5 | 2.2 | Open | — | Non-atomic and corruption-prone mob instance persistence |
+| 5 | 2.2 | **Done** | `util.Save` on both the instance AND template writers; load quarantines corrupt files instead of silently reseeding + 5 tests | Non-atomic and corruption-prone mob instance persistence |
 | 6 | 2.4 | Open | — | Corrupt shop treated as new |
 | 7 | 2.3 | Open | — | Guild/moderation memory-disk divergence |
 | 8 | 3.3 | **Done** | `8dd24e4c8`; RWMutex + 7 accessors, 8 sites (review named 1) + 6 concurrency tests | Unsynchronized room path cache |

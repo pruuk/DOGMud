@@ -2,6 +2,7 @@ package mobs
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -158,26 +159,50 @@ func SaveMobInstance(mob *Mob) error {
 		return fmt.Errorf("mobs.SaveMobInstance: marshal: %w", err)
 	}
 
-	if err := os.WriteFile(savePath, bytes, 0644); err != nil {
+	// util.Save is atomic and durable (temp file, fsync, rename). A mob
+	// instance file is the ONLY record of what that mob became — stats,
+	// skills, mutations, gold, gear, planner state — and cannot be rebuilt
+	// from the repo, so a torn write here is unrecoverable data loss. See the
+	// living-state contract in internal/util/livingstate.go.
+	if err := util.Save(savePath, bytes); err != nil {
 		return fmt.Errorf("mobs.SaveMobInstance: write %s: %w", savePath, err)
 	}
 
 	return nil
 }
 
-// LoadMobInstance reads a saved mob instance from disk. Returns nil if no
-// saved instance exists (indicating a fresh spawn from template).
+// LoadMobInstance reads a saved mob instance from disk. Returns nil when the
+// mob should spawn fresh from its template.
+//
+// nil covers two very different situations, and the difference is handled here
+// rather than pushed onto the caller, whose action is identical either way:
+//
+//   - No file. Normal. The mob has never persisted anything. Silent.
+//   - A file that cannot be read or parsed. NOT normal. The file is
+//     quarantined (moved aside, never deleted) and logged at ERROR, then the
+//     mob spawns from template.
+//
+// Quarantining is the part that matters. Before this, a corrupt file returned
+// nil exactly like a missing one, the mob respawned from template, and the very
+// next SaveMobInstance overwrote the damaged file — destroying the only
+// evidence that anything had been lost. Moving it aside preserves the bytes for
+// inspection AND frees the path so the fresh save succeeds (review finding 5;
+// contract in internal/util/livingstate.go).
 func LoadMobInstance(mobId MobId, zone string, mobName string, homeRoomId int) *MobInstanceData {
 	savePath := instancePath(mobId, zone, mobName, homeRoomId)
 
-	bytes, err := os.ReadFile(savePath)
+	raw, err := util.ReadLivingState(savePath)
 	if err != nil {
-		return nil // File doesn't exist = fresh spawn
+		if errors.Is(err, util.ErrStateAbsent) {
+			return nil // No file = fresh spawn, the ordinary case.
+		}
+		quarantineInstance(savePath, err)
+		return nil
 	}
 
 	var data MobInstanceData
-	if err := yaml.Unmarshal(bytes, &data); err != nil {
-		mudlog.Error("mobs.LoadMobInstance", "path", savePath, "error", err)
+	if err := yaml.Unmarshal(raw, &data); err != nil {
+		quarantineInstance(savePath, err)
 		return nil
 	}
 
@@ -190,6 +215,32 @@ func LoadMobInstance(mobId MobId, zone string, mobName string, homeRoomId int) *
 	}
 
 	return &data
+}
+
+// quarantineInstance moves a corrupt instance file aside and reports it at
+// ERROR so it is visible in production rather than only in a stack trace.
+//
+// The log names what was lost and where the evidence went, because by the time
+// anyone reads it the mob is already walking around with template stats and the
+// only way to know what it used to be is the quarantined file.
+func quarantineInstance(savePath string, cause error) {
+	dest, qErr := util.QuarantineCorrupt(savePath)
+	if qErr != nil {
+		// Quarantine itself failed, so the bad file is still in place. Say so
+		// plainly: the next save will overwrite it and the evidence is gone.
+		mudlog.Error("mobs.LoadMobInstance",
+			"path", savePath,
+			"error", cause,
+			"quarantine", "FAILED",
+			"quarantineError", qErr,
+			"impact", "mob spawns from template; corrupt file left in place and will be overwritten")
+		return
+	}
+	mudlog.Error("mobs.LoadMobInstance",
+		"path", savePath,
+		"error", cause,
+		"quarantinedTo", dest,
+		"impact", "mob spawns from template; its saved progression, gold, gear and plan state were not recovered")
 }
 
 // DeleteMobInstance removes a mob's saved instance file from disk.
