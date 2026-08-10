@@ -173,6 +173,19 @@ func DeleteZone(zone string) error {
 		}
 	}
 
+	// Guard G2 (chunk 3.6b-1). This is the worst case for a pending write: the
+	// loop below RemoveAll's rooms.instances/<zone>/ wholesale, and none of these
+	// rooms went through SaveRoomInstance, so nothing else cancels their queued
+	// writes. A commit afterwards targets a directory that no longer exists,
+	// which surfaces as a save-system ERROR for something the builder did.
+	//
+	// Cancel while the rooms are still resolvable -- after RemoveAll,
+	// LoadRoomTemplate reads from disk and returns nil for every one of them,
+	// which is the same trap the `doomed` list above exists to avoid.
+	for _, id := range doomed {
+		cancelPendingInstanceWriteById(id)
+	}
+
 	base := configs.GetFilePathsConfig().DataFiles.String()
 	folder := ZoneNameSanitize(zone)
 	for _, d := range zoneAllDirs() {

@@ -188,6 +188,18 @@ Timing:
   #   backup feature in case the server crashes. The game state is also saved
   #   whenever the server is shut down.
   RoundsPerAutoSave: 225
+  # - AutosaveWritesPerTick -
+  #   How many prepared files autosave writes per turn.
+  #   Autosave works in two steps. First it takes one consistent snapshot of
+  #   everything that changed, which is fast and happens in a single pass so a
+  #   player and a room can never disagree about who is holding an item. Then it
+  #   writes those snapshots to disk a few at a time, spread over the following
+  #   turns, because the write itself is by far the slow part.
+  #   Raise this to finish a save sooner, at the cost of a bigger slice of each
+  #   turn. Lower it for the reverse. If a save cannot finish before the next one
+  #   starts, the server logs a warning naming this setting.
+  #   Values below 1 are ignored and treated as the default.
+  AutosaveWritesPerTick: 3
   # - RoundsPerDay -
   #   How many rounds are in a day? This is used to calculate the time of day.
   #   The lower this number, the faster the day/night cycle will be.
