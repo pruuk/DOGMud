@@ -81,6 +81,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # Required before any `uses: ./...` step. The local composite actions
+      # cannot be RESOLVED until the repo is on disk, and setup-go doing its
+      # own checkout internally is too late to help.
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-go
       - uses: ./.github/actions/codegen-and-test
       - name: Check coverage gate
