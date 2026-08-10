@@ -6,8 +6,19 @@ type Timing struct {
 	TurnMs            ConfigInt `yaml:"TurnMs"`
 	RoundSeconds      ConfigInt `yaml:"RoundSeconds"`
 	RoundsPerAutoSave ConfigInt `yaml:"RoundsPerAutoSave"`
-	RoundsPerDay      ConfigInt `yaml:"RoundsPerDay"` // How many rounds are in a day
-	NightHours        ConfigInt `yaml:"NightHours"`   // How many hours of night
+
+	// AutosaveWritesPerTick bounds how many prepared writes autosave commits per
+	// turn (roadmap chunk 3.6b-1). Autosave prepares every dirty room and user
+	// in one atomic pass, then spreads the durable writes across later turns so
+	// no single turn stalls the world.
+	//
+	// A durable write measured 3.46ms in 3.6a, so 3 per turn is about 10ms of a
+	// 50ms turn. Raising it drains a cycle sooner at the cost of a larger slice
+	// of each turn; lowering it does the reverse and eventually logs a WARN that
+	// a cycle did not finish before the next one began.
+	AutosaveWritesPerTick ConfigInt `yaml:"AutosaveWritesPerTick"`
+	RoundsPerDay          ConfigInt `yaml:"RoundsPerDay"` // How many rounds are in a day
+	NightHours            ConfigInt `yaml:"NightHours"`   // How many hours of night
 
 	// Protected values
 	turnsPerRound   int     // calculated and cached when data is validated.
@@ -28,6 +39,15 @@ func (e *Timing) Validate() {
 
 	if e.RoundsPerAutoSave < 1 {
 		e.RoundsPerAutoSave = 900 // default of 15 minutes worth of rounds
+	}
+
+	// Clamped, not defaulted, and the distinction matters. At zero the queue
+	// never drains: the pending set grows without bound and NOTHING is ever
+	// persisted, while every other signal says the game is healthy. That is a
+	// worse failure than any pause this knob exists to smooth out, and it is one
+	// typo away, so the floor is enforced here as well as in savequeue.Drain.
+	if e.AutosaveWritesPerTick < 1 {
+		e.AutosaveWritesPerTick = 3 // default: ~10ms of a 50ms turn
 	}
 
 	if e.RoundsPerDay < 10 {
