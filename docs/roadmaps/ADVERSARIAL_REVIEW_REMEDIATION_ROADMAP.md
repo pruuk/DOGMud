@@ -83,7 +83,21 @@ still resolves.
 Findings 11, 12, 28, 32 (chunks 5.3, 5.4, 5.5, 1.3) plus the repository half of
 1.5. Finding 28 turned out to be four sites, not the two the review named.
 
-### Wave 1 — Stop the crashes and the unauthorized actions
+### Wave 1 — Stop the crashes and the unauthorized actions — COMPLETE 2026-08-10
+
+All eight rows below are closed. Findings 8, 22, 4, 21 (concurrency) shipped
+2026-08-08; findings 3 and 17 on 2026-08-10 in PR #7; findings 20a, 29 and 31
+on 2026-08-10.
+
+The retriage was worth it: the old dependency ordering had spent 61 commits
+without closing a single finding, and reordering by risk closed this whole wave
+in three days. The recurring lesson, now seen on findings 8, 28, 3, 17 and 31
+alike, is that **a finding's written scope is a lower bound**. Every one of
+them turned out to touch more sites than the review named, so verify scope
+against the code before estimating.
+
+Track B (chunks 1.1 and 1.2) is still open and was always parallel to this
+wave, not gated by it.
 
 All small, all independently shippable. Nothing here blocks anything else.
 
@@ -182,7 +196,7 @@ further decomposition
 | 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | Not started |
 | 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | Not started |
 | 4.1 | Remove admin stored-XSS surfaces | S | — | 17 | **Done 2026-08-10** |
-| 4.2 | Harden HTTP server boundaries | M | — | 20 | Not started |
+| 4.2 | Harden HTTP server boundaries | M | — | 20 | **20a Done 2026-08-10; Host-redirect half open (Wave 4)** |
 | 4.3 | Restore keyboard accessibility | M | — | 18 | Not started |
 | 4.4 | Remove hot-path GMCP DOM rebuilds | L | — | 19 | Not started |
 | 5.1 | Make combat entry transactional | M | 1.2 | 2 | Not started |
@@ -197,9 +211,9 @@ further decomposition
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
 | 6.1d | Consolidate duplicated test fixtures | S | 1.2, 6.1a–6.1c | 23 (tests) | Not started |
-| 6.2 | Remove the dead progression hook | S | — | 29 | Not started |
+| 6.2 | Remove the dead progression hook | S | — | 29 | **Done 2026-08-10** |
 | 6.3 | Retire stale cadence config and documentation | S | 1.4 | 30 | Not started |
-| 6.4 | Remove dead corpse lookup structures | S | — | 31 | Not started |
+| 6.4 | Remove dead corpse lookup structures | S | — | 31 | **Done 2026-08-10** |
 | 6.5 | Retire the remaining lint backlog | L | 6.1a–6.4, 6.6a–6.6c | Cross-cutting | Not started |
 | 6.6a | Inventory and define boot dependency seams | M | — | 37 (contract) | Not started |
 | 6.6b | Freeze production boot registration | M | 6.6a | 37 (production) | Not started |
@@ -1031,7 +1045,7 @@ only when all of its subchunks close.
 | 17 | 4.1 | **Done** | `admin/static/js/safe-dom.js` default-safe helpers; economy AND progression converted (review named economy only; progression renders player-chosen names) + 12 JS checks | Admin economy stored-XSS surface |
 | 18 | 4.3 | Open | — | Global keyboard capture |
 | 19 | 4.4 | Open | — | Hot GMCP DOM rebuilds |
-| 20 | 4.2 | Open | — | HTTP timeout and Host redirect weaknesses |
+| 20 | 4.2 | **20a Done / 20b Open** | 20a: 4 Network timeout knobs, non-zero defaults, applied to both servers; websocket safety proven live (survived 15s vs a 3s WriteTimeout) and slow-header request cut at 3.0s + 6 tests. 20b (Host redirect) remains | HTTP timeout and Host redirect weaknesses |
 | 21 | 3.2 | **Done** | `tryMarkPending` single critical section + 4 tests | LLM check-then-set race |
 | 22 | 3.4 | **Done** | snapshot under RLock, invoke unlocked; deadlock reproduced pre-fix | Listener lock held across callbacks |
 | 23 | 6.1a–6.1d | Open | — | Production and test implementation duplication |
@@ -1040,9 +1054,9 @@ only when all of its subchunks close.
 | 26 | 1.1 | Open | — | Stale Makefile toolchain and world paths |
 | 27 | 5.6 | Open | — | Partial parser adoption |
 | 28 | 1.3 | **Done** | `e23df1071`; 4 sites fixed (2 named, 2 found by the test) + 3 tests | Plausible nil dereferences |
-| 29 | 6.2 | Open | — | Dead progression hook |
+| 29 | 6.2 | **Done** | `OnLowResource` deleted; the two doc mentions are correct as-is (context.md describes it as replaced, DEVELOPMENT_PLAN entry is a completed-stage record) | Dead progression hook |
 | 30 | 6.3 | Open | — | Deprecated live config and stale docs |
-| 31 | 6.4 | Open | — | Dead corpse lookup arrays |
+| 31 | 6.4 | **Done** | Whole loop removed, not just the 2 slices the review named: both backing maps were dead too, since they only deduped into the unread slices | Dead corpse lookup arrays |
 | 32 | 5.5 | **Done** | `e23df1071`; named result + explicit recover assign | Broken ANSI panic fallback |
 | 33 | 1.4 | Open | — | Dual YAML major versions |
 | 34 | 3.5 | Open | `RunWithMUDLocked` wraps auth, render, and response writes | Admin routes retain global world lock |
