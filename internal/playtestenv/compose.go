@@ -206,6 +206,42 @@ func writeProfilesManifest(controlDir string, profiles []ProfileRequest) (string
 	return path, nil
 }
 
+// precreateCredsFile creates an empty, owner-only creds.json in controlDir
+// before the container is started, and returns its path.
+//
+// The container runs as root (provisioning/Dockerfile's runner stage declares
+// no USER) and the server writes creds.json into this bind mount with mode
+// 0600. The 0600 is correct and must stay: the file holds plaintext passwords.
+// The problem is ownership. On Linux the file is then owned by root, and the
+// unprivileged host user that started the run cannot read its own artifact,
+// so every profile-based run fails at the point it reads creds.json.
+//
+// This never reproduced on Docker Desktop, which synthesizes host ownership
+// for bind mounts, which is why the gated Docker suite only failed once it ran
+// on Linux CI.
+//
+// Pre-creating the file fixes it without weakening the mode or changing the
+// container user: writing to an EXISTING file truncates it in place and leaves
+// the inode's owner and mode alone, and root may write to a file it does not
+// own. So the server's write lands in a file the host user still owns.
+//
+// This depends on the server writing creds.json with a plain os.WriteFile
+// (internal/playtestprofiles/materialize.go, writeCredsFile). If that is ever
+// changed to an atomic write-temp-then-rename, the rename replaces the inode,
+// ownership reverts to root, and this fix silently stops working. Keep the two
+// in step.
+func precreateCredsFile(controlDir string) (string, error) {
+	path := filepath.Join(controlDir, credsFileName)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	if err != nil {
+		return "", fmt.Errorf("playtestenv: pre-create creds file: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		return "", fmt.Errorf("playtestenv: pre-create creds file: %w", err)
+	}
+	return path, nil
+}
+
 // materializeRunFiles requires controlDir to already exist and be writable,
 // then writes the resolved Compose policy to <runDir>/compose.resolved.yml
 // and the nested config overrides to <controlDir>/config-overrides.yaml.

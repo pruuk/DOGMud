@@ -217,7 +217,9 @@ When `StartOptions.Profiles` is non-empty, `Start` writes
 `control/profiles-manifest.yaml`, sets `Playtest.ProfilesDir` /
 `Playtest.ProfilesManifest` in `config-overrides.yaml`, and after ready
 surfaces `Artifacts.Creds` as the host path to `control/creds.json`
-(written by `internal/playtestprofiles`). Empty/omitted `Profiles` is
+(written by `internal/playtestprofiles`). `Start` **pre-creates** that file
+empty with mode 0600 before the container runs — see the creds-ownership
+gotcha below. Empty/omitted `Profiles` is
 creation-flow (no manifest override). Failure reports may list the Creds
 **path** only — never embed `creds.json` bodies. Runner image must
 `COPY tools/playtest/profiles` → `/app/playtest/profiles`. CLI:
@@ -254,6 +256,17 @@ func (e *ExitError) Unwrap() error
   overrides so the ephemeral image boots current-data for that version.
 - **Writable control dir.** Run control overrides must be writable
   (`ErrControlDirNotWritable`); they are not source mounts.
+- **creds.json ownership.** The container runs as root and writes
+  `control/creds.json` with mode 0600 — correct, it holds plaintext passwords.
+  On Linux that would leave the artifact root-owned and unreadable by the host
+  user who started the run. `precreateCredsFile` (compose.go) creates it
+  host-side first so the container's write truncates the file **in place** and
+  the inode keeps its host owner. This depends on `writeCredsFile`
+  (`internal/playtestprofiles/materialize.go`) using a plain `os.WriteFile`;
+  converting it to a write-temp-then-rename replaces the inode and silently
+  reintroduces the failure. Docker Desktop synthesizes bind-mount ownership, so
+  this reproduces **only** on Linux — it broke the gated Docker suite while
+  every local run passed.
 - **Lock then reread.** Operations acquire the run advisory lock
   (`ErrLockBusy` / `lock_busy` when contended) and re-read the final lease and
   identity under that lock before mutating or deleting.
