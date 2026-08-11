@@ -10,6 +10,14 @@ import (
 // Writes are kept in call order and tagged with the plugin that produced them,
 // so a callback that fails partway can have its own (possibly half-gathered)
 // writes dropped without disturbing anyone else's.
+//
+// NOT SAFE FOR CONCURRENT USE, AND DELIBERATELY SO. Every caller runs on
+// World.MainWorker: PrepareAll drives the callbacks, and the callbacks write
+// through the same goroutine. That is the same precondition
+// internal/savequeue documents, and for the same reason -- adding a mutex here
+// would make the code look safe to call from anywhere while the real hazard is
+// two prepares interleaving, which a mutex does not fix. Post the work to
+// MainWorker instead.
 type pendingCollector struct {
 	entries []collectedWrite
 }

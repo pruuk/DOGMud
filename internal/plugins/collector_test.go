@@ -68,3 +68,53 @@ func TestCollector_DiscardOfAnUnknownPluginIsSafe(t *testing.T) {
 		t.Errorf("discarding an unknown plugin changed the collected set")
 	}
 }
+
+// writes() returns a snapshot, not a view. The collector is mutated between a
+// prepare and its drain, so a caller holding an earlier result must not see it
+// change underneath them. Returning c.entries directly would be an easy and
+// silent regression.
+func TestCollector_WritesSnapshotSurvivesLaterMutation(t *testing.T) {
+	c := newPendingCollector()
+	p := &Plugin{name: "p", version: "1.0"}
+	other := &Plugin{name: "other", version: "1.0"}
+
+	c.add(p, savequeue.PendingWrite{Path: "/tmp/first.dat", Data: []byte("1")})
+	snapshot := c.writes()
+
+	c.add(other, savequeue.PendingWrite{Path: "/tmp/second.dat", Data: []byte("2")})
+	c.discard(p)
+
+	if len(snapshot) != 1 {
+		t.Fatalf("snapshot length changed to %d after mutating the collector", len(snapshot))
+	}
+	if snapshot[0].Path != "/tmp/first.dat" {
+		t.Errorf("snapshot content changed to %q", snapshot[0].Path)
+	}
+}
+
+// Interleaved owners are what exercise the in-place filter: the write index
+// trails the read index across multiple gaps. A contiguous block does not.
+func TestCollector_DiscardWithInterleavedOwners(t *testing.T) {
+	c := newPendingCollector()
+	good := &Plugin{name: "good", version: "1.0"}
+	bad := &Plugin{name: "bad", version: "1.0"}
+
+	c.add(good, savequeue.PendingWrite{Path: "/tmp/g1.dat"})
+	c.add(bad, savequeue.PendingWrite{Path: "/tmp/b1.dat"})
+	c.add(good, savequeue.PendingWrite{Path: "/tmp/g2.dat"})
+	c.add(bad, savequeue.PendingWrite{Path: "/tmp/b2.dat"})
+	c.add(good, savequeue.PendingWrite{Path: "/tmp/g3.dat"})
+
+	c.discard(bad)
+
+	got := c.writes()
+	want := []string{"/tmp/g1.dat", "/tmp/g2.dat", "/tmp/g3.dat"}
+	if len(got) != len(want) {
+		t.Fatalf("got %d writes, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i].Path != want[i] {
+			t.Errorf("write %d = %q, want %q", i, got[i].Path, want[i])
+		}
+	}
+}
