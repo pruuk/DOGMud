@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/savequeue"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -53,10 +54,12 @@ func AutosaveQueue() *savequeue.Queue { return autosaveQueue }
 func PrepareAutosaveSet() ([]savequeue.PendingWrite, error) {
 	roomWrites, roomErr := rooms.PrepareAllInstanceWrites()
 	userWrites, userErr := users.PrepareAllUserWrites()
+	pluginWrites, pluginErr := plugins.PrepareAll()
 
-	writes := make([]savequeue.PendingWrite, 0, len(roomWrites)+len(userWrites))
+	writes := make([]savequeue.PendingWrite, 0, len(roomWrites)+len(userWrites)+len(pluginWrites))
 	writes = append(writes, roomWrites...)
 	writes = append(writes, userWrites...)
+	writes = append(writes, pluginWrites...)
 
 	// A prepare failure for one entity must not discard the rest of the
 	// snapshot: the other players' progress is still worth persisting. Report
@@ -64,5 +67,8 @@ func PrepareAutosaveSet() ([]savequeue.PendingWrite, error) {
 	if roomErr != nil {
 		return writes, roomErr
 	}
-	return writes, userErr
+	if userErr != nil {
+		return writes, userErr
+	}
+	return writes, pluginErr
 }

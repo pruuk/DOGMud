@@ -7,7 +7,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -29,7 +28,7 @@ import (
 // Autosave used to be three synchronous stages, so each one could announce its
 // own outcome the moment it finished. It is now:
 //
-//	prepare tick:   one atomic snapshot of every room and user  ->  pending set
+//	prepare tick:   one atomic snapshot of every room, user, AND plugin  ->  pending set
 //	every tick:     commit AutosaveWritesPerTick entries from that set
 //
 // The writes are NOT finished when this hook returns on the prepare tick, so
@@ -41,8 +40,12 @@ import (
 // One consequence, accepted deliberately: a cycle drains over roughly 23
 // seconds at 1386 rooms and the shipped budget. So players see one "Saving..."
 // line and one completion line well after it, rather than the old per-stage
-// chatter. Plugins keep their own synchronous line because they genuinely do
-// finish immediately.
+// chatter. Plugins (chunk 4.7) were folded into the same atomic pass and lost
+// their own synchronous line for the same reason rooms and users did: they can
+// share a logical transaction with the other two (a bid deducts gold AND
+// writes auction history), so preparing them separately reintroduces the tear
+// window G1 exists to close. plugins.Save() still exists and still writes
+// synchronously -- shutdown and copyover call it directly, outside this hook.
 //
 
 // preparedAt records when the current cycle's snapshot was taken, so the
@@ -148,7 +151,7 @@ func prepareAutosaveCycle() {
 	events.AddToQueue(events.Broadcast{Text: `Saving...`})
 
 	//////////////////////////////////////////
-	// SNAPSHOT ROOMS AND USERS — ONE PASS
+	// SNAPSHOT ROOMS, USERS, AND PLUGINS — ONE PASS
 	//////////////////////////////////////////
 	prepStart := time.Now()
 	writes, prepErr := PrepareAutosaveSet()
@@ -167,21 +170,11 @@ func prepareAutosaveCycle() {
 	cycleWaiting = true
 	AutosaveQueue().Supersede(writes)
 
-	//////////////////////////////////////////
-	// SAVE ALL PLUGINS
-	//////////////////////////////////////////
-	// Still synchronous: plugin saves measured 0-1ms in 3.6a, so amortising
-	// them would add machinery for nothing.
-	pluginsStart := time.Now()
-	pluginErr := plugins.Save()
-	pluginsDur := time.Since(pluginsStart)
-	util.TrackTime(`AutoSave.Plugins`, pluginsDur.Seconds())
-	if pluginErr != nil {
-		mudlog.Error("AutoSave", "stage", "plugins", "error", pluginErr)
-		events.AddToQueue(events.Broadcast{
-			Text:            `Saved with errors.` + term.CRLFStr,
-			SkipLineRefresh: true,
-		})
+	pluginWrites := 0
+	for _, w := range writes {
+		if w.Kind == "plugin" {
+			pluginWrites++
+		}
 	}
 
 	mudlog.Info("AutoSave",
@@ -190,6 +183,6 @@ func prepareAutosaveCycle() {
 		"pendingWrites", len(writes),
 		"loadedRooms", loadedRooms,
 		"activeUsers", activeUsers,
-		"pluginsMs", pluginsDur.Milliseconds(),
+		"pluginWrites", pluginWrites,
 	)
 }
