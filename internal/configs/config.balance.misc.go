@@ -152,6 +152,16 @@ func (b *Balance) validateMisc() {
 		b.MinContestResistChance = 0.05
 	}
 
+	// 0.05, matching the non-combat contests rather than combat's 0.15, and for
+	// the same reason turned up one notch: a fizzled spell costs the caster a
+	// whole round or several, so a floor that fires often is a heavy tax.
+	if b.MinSpellHitChance < 0 || b.MinSpellHitChance > 0.50 {
+		b.MinSpellHitChance = 0.05
+	}
+	if b.MinSpellResistChance < 0 || b.MinSpellResistChance > 0.50 {
+		b.MinSpellResistChance = 0.05
+	}
+
 	// ── MOVEMENT ─────────────────────────────────────────────────────────────
 	// (MovementBaseStaminaCost and MovementMaxStaminaCost handled in STAMINA & CONVICTION above)
 

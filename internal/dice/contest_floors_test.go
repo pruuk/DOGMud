@@ -124,3 +124,43 @@ func TestSetContestFloors_ClampsOutOfRangeValues(t *testing.T) {
 		t.Errorf("floor above range = %v, want 0.5 (a floor must stay a last resort)", r)
 	}
 }
+
+// Spells supply their own floors per call, because a fizzle costs the caster the
+// whole round while a missed melee swing costs a fraction of one.
+func TestOpposedRollStatFlooredWith_UsesTheSuppliedFloors(t *testing.T) {
+	// Package floors set high; the per-call values must win.
+	withFloors(t, 0.5, 0.5)
+
+	const n = 40000
+	wins := 0
+	for i := 0; i < n; i++ {
+		if ok, _, _, _ := OpposedRollStatFlooredWith(100, 150, 0, 0); ok {
+			wins++
+		}
+	}
+	got := float64(wins) / float64(n)
+	if got > 0.03 {
+		t.Errorf("won %.2f%% with per-call floors of zero; the package floors leaked in", got*100)
+	}
+}
+
+func TestOpposedRollStatFlooredWith_ClampsPerCall(t *testing.T) {
+	withFloors(t, 0, 0)
+
+	// A floor above 0.5 must clamp, not dominate. At a 3x gap the raw chance is
+	// ~0, so the observed rate is the effective floor.
+	const n = 40000
+	wins := 0
+	for i := 0; i < n; i++ {
+		if ok, _, _, _ := OpposedRollStatFlooredWith(100, 300, 99, 0); ok {
+			wins++
+		}
+	}
+	got := float64(wins) / float64(n)
+	if got > 0.55 {
+		t.Errorf("an out-of-range floor produced a %.2f%% success rate; it should clamp to 50%%", got*100)
+	}
+	if got < 0.45 {
+		t.Errorf("clamped floor produced %.2f%%, want ~50%%", got*100)
+	}
+}

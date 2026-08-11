@@ -27,6 +27,12 @@ type Balance struct {
 	// large cost, so the same number means something very different.
 	MinContestSuccessChance ConfigFloat `yaml:"MinContestSuccessChance"` // Floor: initiator succeeds anyway (default 0.05)
 	MinContestResistChance  ConfigFloat `yaml:"MinContestResistChance"`  // Floor: resister holds anyway (default 0.05)
+	// Spells get their own pair. A fizzle costs the caster the whole round, and
+	// more than one round for a long cast, where a missed melee swing costs a
+	// fraction of a round -- so the same floor value means something much more
+	// expensive here than it does in combat.
+	MinSpellHitChance    ConfigFloat `yaml:"MinSpellHitChance"`    // Floor: spell lands anyway (default 0.05)
+	MinSpellResistChance ConfigFloat `yaml:"MinSpellResistChance"` // Floor: target resists anyway (default 0.05)
 
 	// ── COMBAT: PRONE & GRAPPLE ──────────────────────────────────────────────
 	ProneAttackMultiplier        ConfigFloat `yaml:"ProneAttackMultiplier"`        // Multiplier on attack score while prone (default 0.80)
