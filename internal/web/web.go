@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"path"
@@ -499,21 +498,9 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 
 			} else {
 
-				var redirectHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-
-					host := r.Host
-					// If the host header includes a port (e.g. "example.com:80"), strip it out.
-					if strings.Contains(host, ":") {
-						host, _, _ = net.SplitHostPort(host)
-					}
-
-					// Build the target URL with your known HTTPS port (443 in this case).
-					target := fmt.Sprintf("https://%s:%d%s", host, networkConfig.HttpsPort, r.RequestURI)
-
-					http.Redirect(w, r, target, http.StatusMovedPermanently)
-				}
-
-				httpServer.Handler = redirectHandler
+				// The destination host is NOT derived from the request. See
+				// internal/web/https_redirect.go (review finding 20b).
+				httpServer.Handler = newHttpsRedirectHandler(int(networkConfig.HttpsPort))
 
 			}
 
