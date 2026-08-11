@@ -1,6 +1,11 @@
 package plugins
 
 import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/savequeue"
 )
 
@@ -65,3 +70,62 @@ func (c *pendingCollector) writes() []savequeue.PendingWrite {
 // precondition internal/savequeue documents. If you are reaching for a lock
 // here, post the work to MainWorker instead.
 var collecting *pendingCollector
+
+// slowPrepareThreshold is the point at which a single plugin's prepare is
+// reported.
+//
+// 5ms is what one fsync cost before this work, so crossing it means the
+// plugin's prepare now costs as much as the write it replaced -- the point at
+// which amortising it stopped helping. A diagnostic tied to a measured physical
+// cost, not a balance value, so it is fixed here rather than made a config knob.
+const slowPrepareThreshold = 5 * time.Millisecond
+
+// PrepareAll runs every plugin's onSave with writes COLLECTED rather than
+// committed, and returns them for the caller to enqueue.
+//
+// Caller must hold the world lock: the callbacks read live game state.
+//
+// A callback that returns an error has its own writes discarded (it may have
+// gathered only part of its state) and is named in the returned error; the
+// other plugins still prepare.
+func PrepareAll() ([]savequeue.PendingWrite, error) {
+
+	collecting = newPendingCollector()
+	defer func() { collecting = nil }()
+
+	failed := []string{}
+
+	for _, p := range registry {
+		if p.Callbacks.onSave == nil {
+			continue
+		}
+
+		start := time.Now()
+		err := p.Callbacks.onSave()
+		took := time.Since(start)
+
+		if took > slowPrepareThreshold {
+			// Named, because pluginsMs is an aggregate: without this one slow
+			// plugin is indistinguishable from several ordinary ones.
+			mudlog.Warn("plugins.PrepareAll",
+				"plugin", p.name,
+				"prepareMs", took.Milliseconds(),
+				"message", "plugin prepare is slow and runs under the world lock",
+				"hint", "onSave must do work proportional to the plugin's own state, never to the size of the world")
+		}
+
+		if err != nil {
+			mudlog.Error("plugins.PrepareAll", "plugin", p.name, "error", err)
+			collecting.discard(p)
+			failed = append(failed, p.name)
+		}
+	}
+
+	writes := collecting.writes()
+
+	if len(failed) > 0 {
+		return writes, fmt.Errorf("plugins.PrepareAll: %d plugin(s) failed to prepare: %s",
+			len(failed), strings.Join(failed, ", "))
+	}
+	return writes, nil
+}

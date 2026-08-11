@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -237,4 +238,132 @@ func TestWriteBytes_CollectedBytesAreCopied(t *testing.T) {
 	if string(got[0].Data) != "original" {
 		t.Errorf("collected data = %q; the caller's buffer was aliased", got[0].Data)
 	}
+}
+
+// registerTestPlugin puts a plugin in the registry with an onSave, and removes
+// it afterwards. The registry is package-level state shared by all tests.
+func registerTestPlugin(t *testing.T, name string, onSave func() error) *Plugin {
+	t.Helper()
+	p := &Plugin{name: name, version: "1.0"}
+	p.Callbacks.SetOnSave(onSave)
+	registry = append(registry, p)
+	t.Cleanup(func() {
+		kept := registry[:0]
+		for _, rp := range registry {
+			if rp != p {
+				kept = append(kept, rp)
+			}
+		}
+		registry = kept
+	})
+	return p
+}
+
+func TestPrepareAll_CollectsFromEveryPlugin(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	var a, b *Plugin
+	a = registerTestPlugin(t, "alpha", func() error { return a.WriteBytes("state", []byte("A")) })
+	b = registerTestPlugin(t, "beta", func() error { return b.WriteBytes("state", []byte("B")) })
+
+	writes, err := PrepareAll()
+	if err != nil {
+		t.Fatalf("PrepareAll: %v", err)
+	}
+	if len(writes) != 2 {
+		t.Fatalf("got %d writes, want 2", len(writes))
+	}
+	if collecting != nil {
+		t.Error("collector left active after PrepareAll returned")
+	}
+}
+
+// One plugin may write several identifiers, so the result is one PendingWrite
+// per identifier written, not per plugin.
+func TestPrepareAll_OnePluginCanProduceSeveralWrites(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	var p *Plugin
+	p = registerTestPlugin(t, "multi", func() error {
+		if err := p.WriteBytes("state", []byte("S")); err != nil {
+			return err
+		}
+		return p.WriteBytes("cache", []byte("C"))
+	})
+
+	writes, err := PrepareAll()
+	if err != nil {
+		t.Fatalf("PrepareAll: %v", err)
+	}
+	if len(writes) != 2 {
+		t.Fatalf("got %d writes, want 2 (one per identifier)", len(writes))
+	}
+}
+
+func TestPrepareAll_FailingPluginDiscardsOnlyItsOwnWrites(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	var good, bad *Plugin
+	good = registerTestPlugin(t, "good", func() error { return good.WriteBytes("state", []byte("G")) })
+	bad = registerTestPlugin(t, "bad", func() error {
+		_ = bad.WriteBytes("partial", []byte("P")) // collected, then the callback fails
+		return errors.New("gather failed halfway")
+	})
+
+	writes, err := PrepareAll()
+	if err == nil {
+		t.Fatal("expected an error naming the failed plugin")
+	}
+	if len(writes) != 1 {
+		t.Fatalf("got %d writes, want 1: a failed plugin's partial snapshot must be dropped", len(writes))
+	}
+	if string(writes[0].Data) != "G" {
+		t.Errorf("kept the wrong write: %q", writes[0].Data)
+	}
+}
+
+// The spec's regression requirement: shutdown and copyover still call
+// plugins.Save(), and it must still put bytes on disk. WriteBytes now has two
+// modes, so a collector left set would make Save() silently write NOTHING while
+// reporting success -- and shutdown is the one moment that cannot be retried.
+func TestSave_StillWritesSynchronously(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	collecting = nil
+	var p *Plugin
+	p = registerTestPlugin(t, "shutdownprobe", func() error { return p.WriteBytes("state", []byte("PERSISTED")) })
+
+	if err := Save(); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	got, err := p.ReadBytes("state")
+	if err != nil {
+		t.Fatalf("ReadBytes: %v", err)
+	}
+	if string(got) != "PERSISTED" {
+		t.Errorf("Save() left %q on disk, want PERSISTED", got)
+	}
+}
+
+// A panicking callback must not leave the registry stuck in collecting mode,
+// which would make every later synchronous write silently vanish.
+func TestPrepareAll_ClearsTheCollectorOnPanic(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	registerTestPlugin(t, "panicker", func() error { panic("boom") })
+
+	defer func() {
+		_ = recover()
+		if collecting != nil {
+			t.Error("collector left active after a panicking callback")
+		}
+	}()
+
+	_, _ = PrepareAll()
 }
