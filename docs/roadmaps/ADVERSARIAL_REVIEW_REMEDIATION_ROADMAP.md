@@ -260,12 +260,17 @@ further decomposition
 | 5.4 | Fix gold-give parsing | S | — | 12 | **Done 2026-08-08** |
 | 5.5 | Repair the ANSI wrapper fallback contract | S | — | 32 | **Done 2026-08-08** |
 | 5.6 | Converge composition-heavy commands on the parser | M | 1.2 | 27 | Not started |
-| 5.7 | Decide post-soft-cap skill effectiveness | M | — | Design decision | Not started |
+| 5.7 | Decide post-soft-cap skill effectiveness | M | — | Design decision | **DECIDED 2026-08-11: skill changes what it governs → 5.11** |
 | 5.8 | Decide opposed-roll variance ownership | L | — | Design decision | **DECIDED 2026-08-11: preserve** |
 | 5.9a | Contest floors: stealth, theft, traps, detection | M | 5.8 | 5.8 follow-on | **Done 2026-08-11** |
 | 5.9b | Contest floors: spells | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | Not started |
+| 5.11a | Model current vs candidate skill tuning | M | 5.7 | 5.7 follow-on | Not started |
+| 5.11b | Add a skill-scaled crit damage term | M | 5.11a | 5.7 follow-on | Not started |
+| 5.11c | Widen the crit-rate lever | S | 5.11a | 5.7 follow-on | Not started |
+| 5.11d | Reduce skill's direct damage share | M | 5.11a | 5.7 follow-on | Not started |
+| 5.11e | Above-cap curve for `SkillMultiplier` | S | 5.11b-d | 5.7 follow-on | Not started |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
@@ -1530,6 +1535,124 @@ result is either:
 balance-design decision and analytical evidence only. If behavior changes, add
 a separately decomposed implementation arc to this roadmap before code
 planning.
+
+### Chunk 5.7 — DECIDED 2026-08-11: neither option; skill changes what it governs
+
+Neither offered outcome was taken. The investigation established that the
+ceiling is the wrong question: skill should not be a primary damage-magnitude
+term at all, so where its damage multiplier stops matters far less than the
+fact that it exists at that size.
+
+**What rank 51+ actually buys today.** The dead zone is real but narrower than
+the finding implies:
+
+| Path | Above rank 50 |
+|---|---|
+| Damage / healing / spell scaling | `SkillMultiplier` clamped at 3.0 — flat |
+| Search, stealth, steal, plant | same clamp (`+ SkillMultiplier*25`) — flat |
+| Attack count (`GetModifiedAttackCount`) | +10% per 50 ranks, erased by `math.Round` — flat in practice |
+| Offhand dual-wield | `0.5 + wc/50*0.7` — genuinely scales |
+| Opposed-roll contests | raw skill via `SkillWeight: 2.0` — genuinely scales |
+
+Two corrections made during the investigation, both recorded because they were
+load-bearing and wrong on first pass:
+
+1. The stealth/search/steal consumers were assumed to bypass `SkillMultiplier`.
+   They do not — `CalcSearchScore` is `Perception + SkillMultiplier(search)*25`.
+   The clamp reaches them too.
+2. The "skill buys more swings" claim came from `PowerScore`
+   (`internal/combat/calculations.go:19`), which is the **`consider` estimator**,
+   not live combat. Live combat uses `GetModifiedAttackCount`, where the skill
+   term is 10% per 50 ranks and rounds away.
+
+**Approved philosophy (user, 2026-08-11):** priority is Skill > Gear (close) >
+Stats, with mutations affecting all. The split is by *axis*, not by amount:
+
+- **Skill governs whether you connect** — hit and deflect — and **how often you
+  crit**, plus **how hard those crits land**.
+- **Damage magnitude is mostly stats, gear, and spell choice.** Skill keeps a
+  small direct damage contribution.
+
+**Why the crit clause is structurally required, not flavor.** Hit and deflect
+are bounded to [0,1] (and now floored at both ends by 5.9). Damage is unbounded.
+A philosophy of "skill governs hit, gear governs damage" therefore saturates
+skill while gear compounds, inverting the stated priority over a long
+progression. Crits resolve it because expected damage factors as:
+
+```
+E[dmg] = P(hit) x D x [1 + P(crit) x (critMult - 1)]
+```
+
+`D` is the unbounded gear/stat term; skill owns the bracketed multipliers, so
+skill scales *with* gear instead of being outrun by it. Scaling `critMult` with
+skill as well returns an unbounded handle to skill, which is what puts Skill
+above Gear rather than merely alongside it.
+
+**The engine already implements the rate half — tuned backwards.**
+`calcCritThreshold` (`internal/combat/combat_helpers.go:450`) already shifts the
+crit threshold by skill difference, but at `0.05`/point against `0.5` of
+headroom it **saturates at a skill advantage of 10** (2.3% -> 6.7% crit).
+Meanwhile `SkillMultiplier` hands skill a 1.0x -> 3.0x damage swing. Measured
+against the approved philosophy the shipped tuning is inverted on both axes.
+
+**Crit magnitude does not exist as a knob.** `calcHitDamage`
+(`internal/combat/combat_helpers.go:998`) implements a crit purely as *bypass
+mitigation*. There is no crit multiplier and no `Crit*Damage` field in
+`config.balance.go`. Crit magnitude is therefore set entirely by the
+**defender's** armor, not the attacker's skill:
+
+| Target mitigation | Crit worth |
+|---|---|
+| 0% (unarmored) | **1.0x — the crit does nothing** |
+| 40% | 1.7x |
+| 75% (cap) | 4.0x |
+
+A maximally skilled attacker critting an unarmored target lands a normal hit.
+The arc must therefore **add** a crit-damage term, not retune one.
+
+**Decision recorded; implementation decomposed as chunk 5.11 below.**
+
+### Chunk 5.11 — Rebalance what skill governs
+
+**Arc opened by the 5.7 decision.** Implements the approved philosophy. Every
+lever below is a config knob except the crit-damage term and the above-cap
+curve, so this is predominantly tuning plus two small formula changes.
+
+**Sequencing caution — the levers multiply.** Skill would drive crit rate *and*
+crit magnitude, which compound inside `P(crit) x (critMult - 1)`, making skill's
+damage contribution grow roughly quadratically. That runaway is what the
+original `SkillMultiplier` clamp was crudely guarding against. Each lever must
+be sub-linear (sqrt-shaped, matching the existing curves) so the product lands
+near-linear.
+
+**Coupling that will break things if missed.** Lowering `SkillMultiplierMax`
+also lowers `CalcSearchScore`, `CalcSneakScore`, `steal` and `plant`, which
+read `SkillMultiplier(...)*25`. Dropping 3.0 -> 1.3 would cut those scores by
+42 points against stats near 100 — gutting thief and scout play as a side
+effect of a melee-damage retune. These consumers need their own rate or a
+compensating rescale in the same change.
+
+- **5.11a — Model current vs candidate tuning.** Analysis only, no code.
+  Expected-DPS and contest-win tables for several archetypes across skill
+  0/25/50/75/100, under shipped tuning and candidates. Acceptance: the ordering
+  Skill > Gear > Stats falls out of the math rather than out of intent, and the
+  quadratic crit interaction stays near-linear.
+- **5.11b — Add a skill-scaled crit damage term.** New balance knob plus
+  sub-linear skill scaling in `calcHitDamage`. Must keep the existing
+  mitigation-bypass behavior coherent rather than stacking naively on it.
+- **5.11c — Widen the crit-rate lever.** Raise the `calcCritThreshold` skill
+  slope and lower its 1.5 floor so skill advantage keeps buying crit rate well
+  past +10.
+- **5.11d — Reduce skill's direct damage share.** Lower `SkillMultiplierMax`,
+  and rescale the `*25` contest consumers in the same change per the coupling
+  note above.
+- **5.11e — Replace the above-cap clamp with a diminishing curve.** The original
+  5.7 fix, deliberately sequenced last: once 5.11b-d move skill's contribution
+  into crit and contests, the damage clamp is low-stakes and its curve can be
+  chosen against the 5.11a model.
+
+**Boundary:** 5.11a gates the rest. Do not tune from intuition — the numbers
+come from the model.
 
 ### Chunk 5.8 — Decide opposed-roll variance ownership
 
