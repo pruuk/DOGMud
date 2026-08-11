@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/savequeue"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -203,6 +204,44 @@ func TestPrepareAutosaveSet_ItemAppearsInExactlyOneSideOfATransfer(t *testing.T)
 	}
 	if !strings.Contains(string(userPayload.Data), fmt.Sprintf("itemid: %d", itemId)) {
 		t.Error("the item is in neither the room nor the character: a transfer destroyed it")
+	}
+}
+
+// Plugins must land in the SAME set as rooms and users. A bid deducts player
+// gold AND writes auction history, so preparing them in separate passes carries
+// the tear risk G1 exists to prevent.
+func TestPrepareAutosaveSet_IncludesPluginWrites(t *testing.T) {
+	dir := withAutosaveTestEnv(t)
+	seedG1Room(t, dir, 920003)
+
+	// internal/hooks has no access to the (unexported) plugin registry, so this
+	// registers a real plugin the same way a module would, through the exported
+	// plugins.New + Callbacks.SetOnSave surface. There is no exported way to
+	// remove a plugin from the registry afterward, so instead of leaking a
+	// permanent phantom "plugin" write into every later PrepareAutosaveSet call
+	// in this test binary, the cleanup disarms it: SetOnSave(nil) is what both
+	// plugins.PrepareAll and plugins.Save check to skip a plugin, so the probe
+	// goes inert rather than gone.
+	p := plugins.New("g1_autosave_probe", "1.0")
+	p.Callbacks.SetOnSave(func() error {
+		return p.WriteBytes("state", []byte("probe"))
+	})
+	t.Cleanup(func() { p.Callbacks.SetOnSave(nil) })
+
+	writes, err := PrepareAutosaveSet()
+	if err != nil {
+		t.Fatalf("PrepareAutosaveSet: %v", err)
+	}
+
+	kinds := map[string]int{}
+	for _, w := range writes {
+		kinds[w.Kind]++
+	}
+	if kinds["room"] == 0 {
+		t.Error("no room writes in the set")
+	}
+	if kinds["plugin"] == 0 {
+		t.Error("no plugin writes in the set; plugins are preparing in a separate pass")
 	}
 }
 

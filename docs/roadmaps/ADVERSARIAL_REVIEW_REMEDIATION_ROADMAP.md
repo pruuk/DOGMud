@@ -252,6 +252,7 @@ further decomposition
 | 4.4 | Remove hot-path GMCP DOM rebuilds | L | — | 19 | **Done 2026-08-10** |
 | 4.5 | Skip unchanged map room-token rebuilds | M | 4.4 | 19 (follow-on) | Not started |
 | 4.6 | Cache room templates for the autosave compare | S | 3.6b-1 | 36 (follow-on) | **Done 2026-08-10** |
+| 4.7 | Amortise plugin saves | M | 3.6b-1, 2.8 | 36 (follow-on) | **Done 2026-08-11** |
 | 5.1 | Make combat entry transactional | M | 1.2 | 2 | Not started |
 | 5.2 | Unify harmful-target authorization | M | — | 3 | **Done 2026-08-10** |
 | 5.3 | Fix filtered wandering | S | — | 11 | **Done 2026-08-08** |
@@ -1348,6 +1349,59 @@ lifetime, which is not obviously worth it.
 nothing at our scale and still carries the ~80-site correctness surface. It
 stays open for forks with far larger worlds, but it is no longer the obvious
 next step.
+
+**Finding:** 36 (follow-on)
+
+### Chunk 4.7 — Amortise plugin saves
+
+**A regression introduced by chunk 2.8.** 3.6a measured `pluginsMs=0-1`; 2.8
+routed plugin writes through `util.Save` and its fsync, and four plugins at ~5ms
+each made plugin saves **20-22ms per cycle** against 3-5ms for the entire
+room-and-user prepare. Roughly 6.5KB of data: the cost was fsync count, not
+volume. The durability was correct and stayed; only its scheduling was wrong.
+
+**Design:** `plugins.PrepareAll()` activates a registry-wide collector, runs each
+plugin's existing `onSave`, and captures the marshalled bytes as
+`savequeue.PendingWrite`s that join the SAME atomic set as rooms and users.
+`WriteStruct`/`WriteBytes` keep their exact signatures, because that is upstream
+GoMud's plugin API and changing it would break third-party modules.
+
+**Measured, live boot with autosave forced to fire every 60s:**
+
+| | Before | After |
+|---|---:|---:|
+| `prepareMs` (warm) | 7 | 6-8 |
+| `pluginsMs` (separate lock-held stage) | 22 | **gone** |
+| Total lock-held | ~29 ms | **~7 ms** |
+
+`pluginWrites=4`, `pendingWrites=1390` (1386 rooms + 4 plugins), `failed=0`,
+`turnsDelayed=0`, no `.new`/`.tmp` litter, plugin files confirmed rewritten each
+cycle.
+
+**Guard G2 was missing from the original design and was added by adversarial
+review of the spec.** A plugin can write outside an autosave on its own cadence
+(`weather.persistState` does), so a queued entry could commit *after* a newer
+synchronous write and roll the state backwards. A synchronous `WriteBytes` now
+cancels any pending write for that path. Proven by mutation: removing the cancel
+makes the regression test fail.
+
+**Also folded in:** plugins now prepare in the same lock hold as rooms and users,
+which closes a real tear window — a bid deducts player gold AND writes auction
+history, two files in one logical transaction.
+
+**Guard rail against the new ceiling.** The cost per future plugin moves from
+"5ms of fsync" to "whatever its `onSave` computes", which would be invisible in
+an aggregate timing. A plugin whose prepare exceeds 5ms is now logged at WARN by
+name, and `internal/plugins/context.md` documents the contract as a bound:
+`onSave` may gather, but only work proportional to the plugin's own state, never
+to the size of the world.
+
+**Found while implementing, NOT fixed here (out of scope):**
+`Plugin.ReadIntoStruct` can never report an unmarshal failure --
+`if err = yaml.Unmarshal(b, out); err == nil { return err }` returns nil on
+success and falls through to `return nil` on failure. A corrupt plugin data file
+loads as zero values silently. Both callers ignore the return value, so a proper
+fix touches them too. Same "absent vs corrupt" class as Wave 2.
 
 **Finding:** 36 (follow-on)
 
