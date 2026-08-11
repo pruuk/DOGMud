@@ -186,6 +186,11 @@ func DeleteZone(zone string) error {
 		cancelPendingInstanceWriteById(id)
 	}
 
+	// Every template in the zone is about to be removed. Purging wholesale
+	// rather than enumerating ids: a bulk file operation is exactly where an
+	// id-by-id list goes stale (chunk 4.6).
+	PurgeTemplateCache()
+
 	base := configs.GetFilePathsConfig().DataFiles.String()
 	folder := ZoneNameSanitize(zone)
 	for _, d := range zoneAllDirs() {

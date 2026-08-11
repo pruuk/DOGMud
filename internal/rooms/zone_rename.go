@@ -204,6 +204,11 @@ func RenameZone(oldName, newName string) error {
 		return fmt.Errorf("zone %q cannot be renamed right now (%d blockers)", oldName, len(b))
 	}
 
+	// Every template in the zone is about to be rewritten (its `zone:` line) and
+	// moved to a new directory, so every cached copy is stale in two ways at
+	// once. Purge rather than enumerate (chunk 4.6).
+	PurgeTemplateCache()
+
 	// Collect the zone's rooms BEFORE the move — LoadRoomTemplate reads from
 	// disk, so afterwards the old paths are gone.
 	roomIds := []int{}

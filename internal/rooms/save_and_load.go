@@ -294,6 +294,13 @@ func SaveRoomTemplate(roomTpl Room) error {
 		return err
 	}
 
+	// The template on disk just changed, so the autosave compare cache holds a
+	// stale copy. Left alone, every field the builder just edited would look
+	// like INSTANCE state to the diff and be written into the room's overlay --
+	// baking a template edit into the instance file, where it then shadows
+	// future template edits (chunk 4.6).
+	InvalidateTemplateCache(roomTpl.RoomId)
+
 	// Get zone root
 	cfg := GetZoneConfig(roomTpl.Zone)
 
@@ -377,6 +384,9 @@ func DeleteRoomTemplate(roomId int) error {
 	if roomId >= ephemeralRoomIdMinimum {
 		return errors.New(`ephemeral rooms have no template to delete`)
 	}
+
+	// The template file is about to go away; drop its cached copy (chunk 4.6).
+	InvalidateTemplateCache(roomId)
 
 	// Guard G2 (chunk 3.6b-1). This path deletes room data WITHOUT going through
 	// SaveRoomInstance, so nothing else cancels a pending write for it. Left

@@ -161,6 +161,8 @@ a log line, which is finding 35 (chunk 2.7).
 ### Wave 4 — Remaining UX and web surface
 
 4.3 (finding 18), 4.4 (finding 19), and the Host-redirect half of finding 20.
+**COMPLETE 2026-08-10 (PR #16).** Spawned one follow-on slice, **4.5**, which is
+not urgent and can be picked up whenever the web surface is next open.
 
 ### Wave 5 — Balance decisions (analysis only, no code)
 
@@ -248,6 +250,8 @@ further decomposition
 | 4.2 | Harden HTTP server boundaries | M | — | 20 | **Done 2026-08-10 (20a + 20b)** |
 | 4.3 | Restore keyboard accessibility | M | — | 18 | **Done 2026-08-10** |
 | 4.4 | Remove hot-path GMCP DOM rebuilds | L | — | 19 | **Done 2026-08-10** |
+| 4.5 | Skip unchanged map room-token rebuilds | M | 4.4 | 19 (follow-on) | Not started |
+| 4.6 | Cache room templates for the autosave compare | S | 3.6b-1 | 36 (follow-on) | **Done 2026-08-10** |
 | 5.1 | Make combat entry transactional | M | 1.2 | 2 | Not started |
 | 5.2 | Unify harmful-target authorization | M | — | 3 | **Done 2026-08-10** |
 | 5.3 | Fix filtered wandering | S | — | 11 | **Done 2026-08-08** |
@@ -1299,6 +1303,53 @@ less DOM work without changing displayed state or interaction behavior.
 **Still open on this surface:** the map's per-room token rebuild. Skipping it
 needs a signature covering the quest-marker pin, which depends on the centre
 room's position -- cross-room state a per-room signature does not capture.
+
+### Chunk 4.6 — Cache room templates for the autosave compare
+
+**Deferred out of 3.6b-1 as "a further optimisation", then promoted on
+evidence.** Measured 2026-08-10: `PrepareInstanceWrite` costs 0.1215ms/room, of
+which `LoadRoomTemplate` alone is 0.0983ms — **81%**, not the ~64% first
+estimated. The template is immutable authored content and was re-read and
+re-parsed from disk for every room, every cycle.
+
+**This was taken INSTEAD of 3.6b-2**, on a risk comparison rather than a
+preference:
+
+| | 3.6b-2 dirty set | 4.6 template cache |
+|---|---|---|
+| Correctness surface | **~80 mutation sites** across 10+ packages (50 field writes + 33 in-place slice/map element writes) | **4 template writers**, all in `internal/rooms` |
+| Cost of missing one | **Silent non-persistence — permanent data loss** | A stale title until restart; recoverable |
+
+**Results.** Per room 0.1215ms → 0.0115ms. 1000 dirty rooms 120ms → 8.7ms;
+1000 clean 115ms → 5.1ms. Live boot, 1386 rooms:
+
+    cycle 1 (cache cold)   prepareMs=207   turnsDelayed=4
+    cycle 2 (warm)         prepareMs=7     turnsDelayed=0
+
+**turnsDelayed=0 is the headline**: after the first cycle the autosave pause is
+not merely smaller, it is below one turn, so no player can perceive it. Combined
+with 100 users at 15.7ms, the whole lock-held pause is well inside a 50ms turn.
+
+**Why the cache is a separate accessor and NOT inside `LoadRoomTemplate`.**
+`LoadRoomInstance` calls `LoadRoomTemplate` TWICE and requires two INDEPENDENT
+objects: one becomes the live room, the other is a scratch copy the instance
+overlay is unmarshalled onto. Sharing a pointer between them would let a
+partially applied overlay write into the live room — review finding 15 arriving
+by a new route. `templateForCompare` is used by exactly one caller, the diff,
+which only ever reads. A test pins that `LoadRoomTemplate` still hands out
+independent objects.
+
+**Known and accepted:** the first autosave after boot still pays ~207ms while
+the cache is cold, and the cache holds ~1386 parsed templates (single-digit MB).
+Pre-warming at boot would trade startup time for one 4-turn hitch per server
+lifetime, which is not obviously worth it.
+
+**Consequence for 3.6b-2:** with the sweep at 7ms, a dirty set buys almost
+nothing at our scale and still carries the ~80-site correctness surface. It
+stays open for forks with far larger worlds, but it is no longer the obvious
+next step.
+
+**Finding:** 36 (follow-on)
 
 **Phase 4 exit:** The web surface has explicit security, accessibility, and
 performance baselines rather than relying on visual spot checks.
