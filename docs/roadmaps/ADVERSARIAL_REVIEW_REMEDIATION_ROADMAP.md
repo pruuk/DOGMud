@@ -265,7 +265,7 @@ further decomposition
 | 5.9a | Contest floors: stealth, theft, traps, detection | M | 5.8 | 5.8 follow-on | **Done 2026-08-11** |
 | 5.9b | Contest floors: spells | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
-| 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | Not started |
+| 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | **Done 2026-08-11** |
 | 5.11a | Model current vs candidate skill tuning | M | 5.7 | 5.7 follow-on | Not started |
 | 5.11b | Add a skill-scaled crit damage term | M | 5.11a | 5.7 follow-on | Not started |
 | 5.11c | Widen the crit-rate lever | S | 5.11a | 5.7 follow-on | Not started |
@@ -1875,6 +1875,47 @@ accidentally opt out. Options to evaluate, not predetermined:
 a settled policy rather than a redesign mid-flight. Needs a spec.
 
 **Finding:** New (found while measuring 5.9a's real scope).
+
+**DONE 2026-08-11.** Chose the default-flip plus a guard, not a policy argument.
+
+`OpposedRollStatFloored` became `OpposedRollStat`, `OpposedRollStatFlooredWith`
+became `OpposedRollStatWithFloors`, and the old unfloored `OpposedRollStat`
+became `OpposedRollStatRaw`. The old names were deleted rather than aliased. The
+33 contest call sites got shorter and the unsafe path now has to be typed on
+purpose.
+
+**The measurement that reframed the chunk.** The roadmap described ~32 sites
+choosing between two functions. By the time 5.9a-c finished, `OpposedRollStat`
+had **zero** non-test callers — every contest was already floored. So this was
+never a divergence to reconcile; it was a naming trap waiting for the next
+contest. That is what made the rename cheap and safe: no production caller
+changed semantics, and the compiler saw every site.
+
+**The guidance itself pointed at the trap.** `CLAUDE.md:380` told developers to
+use `dice.OpposedRollStat`, which was the unfloored function, and the function's
+own docstring recommended itself "for every attack-vs-defense, spell-vs-resist,
+grapple, bash, kick, and trip check." Two of the three places a developer would
+look pointed the wrong way. The rename made the CLAUDE.md sentence correct
+without editing it.
+
+**Two silent hazards, both avoided by ordering alone.** The functions share a
+signature, so the swap is *not* compiler-verified: renaming `Floored` onto the
+old name while it still existed would have left five combat tests compiling
+while exercising the floored function against raw-distribution assertions. And
+`OpposedRollStatFloored` is a prefix of `OpposedRollStatFlooredWith`, so a naive
+replace-all mangles the longer name. Done as two ordered commits, each proving
+the old identifier was gone before the next began. Both hazards are recorded in
+`internal/dice/context.md` for whoever renames here next.
+
+**Guard:** `contest_floor_guard_test.go` (repo root), mirroring
+`durable_write_guard_test.go`. Fails on any `dice.OpposedRollStatRaw` or
+`dice.OpposedRoll` call outside `internal/dice`. Test files are not scanned —
+they probe the raw distribution deliberately. Mutation-verified: reports
+`internal/actions/steal.go: dice.OpposedRollStatRaw at line 172` when a
+violation is planted.
+
+No behavior change, and no test assertion was edited — the check that the
+ordering held.
 
 **Phase 5 exit:** Combat state, target protection, command parsing, and command
 results are consistent across equivalent player actions, and soft-cap and
