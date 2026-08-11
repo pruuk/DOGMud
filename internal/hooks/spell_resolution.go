@@ -262,6 +262,22 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	}
 }
 
+// spellHitFloor and spellResistFloor read the spell-specific contest floors.
+//
+// Spells carry their own pair rather than reusing the non-combat contest floors
+// because the cost of a failure is different in kind: a fizzle burns the
+// caster's round, and more than one round for a long cast. The hit floor keeps
+// an outmatched caster from being guaranteed to waste rounds; the resist floor
+// keeps an outmatched TARGET from being auto-hit with no agency, which matters
+// because mobs cast at players too (see resolveMobSpellAgainstPlayer).
+func spellHitFloor() float64 {
+	return float64(configs.GetBalanceConfig().MinSpellHitChance)
+}
+
+func spellResistFloor() float64 {
+	return float64(configs.GetBalanceConfig().MinSpellResistChance)
+}
+
 // resolveAgainstMob performs the opposed roll and applies the effect to a mob.
 // Returns true if the cast fumbled (ZScore <= -2.0). A fumble aborts any
 // post-target spell effects (summon, charm, Go hooks) in the caller's main
@@ -270,7 +286,7 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &mob.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStat(spellAttack, defVal)
+	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 
 	round := util.GetRoundCount()
 
@@ -700,7 +716,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStat(spellAttack, defVal)
+	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 
 	// Backfire on fumble
 	if atkRoll.ZScore <= -2.0 {
@@ -1262,7 +1278,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStat(spellAttack, defVal)
+	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
 		if dmg < 1 {
@@ -1281,7 +1297,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, spellAttack float64, magnitude int) {
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStat(spellAttack, defVal)
+	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 	round := util.GetRoundCount()
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4

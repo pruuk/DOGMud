@@ -472,6 +472,19 @@ Balance:
   #   number would be far more generous here than it is in combat.
   MinContestSuccessChance: 0.05
   MinContestResistChance: 0.05
+  #
+  # MinSpellHitChance / MinSpellResistChance: the same bounds for spell contests,
+  #   with their own knobs because the cost of failure is different in kind.
+  #   A missed melee swing costs a fraction of a round. A fizzled spell costs the
+  #   caster the WHOLE round, and more than one for a long cast, so a floor that
+  #   fires often is a heavy tax on casting.
+  #
+  #   MinSpellHitChance stops an outmatched caster being guaranteed to waste
+  #   rounds. MinSpellResistChance stops an outmatched TARGET being auto-hit with
+  #   no agency, which matters because mobs cast at players too.
+  #   Range: 0.0-0.50 each. Set to 0 to disable that end.
+  MinSpellHitChance: 0.05
+  MinSpellResistChance: 0.05
 
   # ── COMBAT: PRONE & GRAPPLE ───────────────────────────────────────────────
   # When a character is knocked prone, these multipliers modify combat scores.

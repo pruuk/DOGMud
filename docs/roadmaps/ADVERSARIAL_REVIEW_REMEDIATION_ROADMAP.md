@@ -263,7 +263,9 @@ further decomposition
 | 5.7 | Decide post-soft-cap skill effectiveness | M | — | Design decision | Not started |
 | 5.8 | Decide opposed-roll variance ownership | L | — | Design decision | **DECIDED 2026-08-11: preserve** |
 | 5.9a | Contest floors: stealth, theft, traps, detection | M | 5.8 | 5.8 follow-on | **Done 2026-08-11** |
-| 5.9b | Contest floors: combat maneuvers and spells | M | 5.9a | 5.8 follow-on | Not started |
+| 5.9b | Contest floors: spells | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
+| 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | Not started |
+| 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | Not started |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
@@ -1651,7 +1653,32 @@ callers that scale an effect by margin must not read it as a rout.
 **Verified by mutation:** forcing the floors to zero makes 3 of the 6 new tests
 fail. Boot test confirms both knobs load.
 
-**5.9b (not started)** — the remaining 15 sites: `spell_resolution` (4),
+**5.9b DONE 2026-08-11** — the 4 spell sites in `spell_resolution.go` (player
+to mob, player to player, and both mob-caster directions), taken ahead of the
+maneuvers because melee hit/avoid was floored while spells were not: a spell
+that could never land against a strong target sat beside a melee swing that
+always could.
+
+Spells get their OWN pair, `Balance.MinSpellHitChance` /
+`MinSpellResistChance`, both **0.05**, applied via the new
+`dice.OpposedRollStatFlooredWith` which takes the floors per call.
+
+**Why a separate pair rather than reusing the contest floors:** the cost of a
+failure differs in kind. A missed melee swing costs a fraction of a round; a
+fizzled spell costs the caster the WHOLE round, and more than one for a long
+cast. The user raised this, and it is the reason the number is 0.05 rather than
+combat's 0.15.
+
+**The tension that argument creates, and its resolution.** "A fizzle is
+expensive" argues for the caster floor and AGAINST a resist floor, since a resist
+floor is precisely "your spell fizzles when the maths says it should not" -- a
+tax on the caster who was winning. It is kept anyway, at the same low value,
+because mobs cast at players (`resolveMobSpellAgainstPlayer`): without it a
+strong mob caster lands ~99% on a weak player, who then has no agency at all.
+That is the same reason `MinDefenseChance` exists for melee. Both ends, both
+0.05, and tunable independently if play says otherwise.
+
+**5.9c (not started)** — the remaining 11 sites: `spell_resolution` (4),
 `flee` (2), `grapple`, `submission`, `skill_moves`, `combat_taunt`, `throw`,
 `charm_spell`, and two mob-tick sites. Held back deliberately: these change
 FIGHT math, not just out-of-combat contests, and landing a probability shift
@@ -1663,6 +1690,38 @@ can never land against a strong target sits next to a melee swing that always
 can. That inconsistency is arguably worse than the one 5.9a fixed.
 
 **Finding:** 5.8 (follow-on).
+
+### Chunk 5.10 — Consolidate the opposed-roll floor seam
+
+**Problem:** whether a contest is floored is currently decided at ~32 individual
+call sites by which of two near-identical functions the author happened to
+call -- `dice.OpposedRollStat` or `dice.OpposedRollStatFloored` -- with combat
+doing it a third way entirely, inline in `resolveAttack`. Nothing enforces the
+choice, nothing makes the default obvious, and a new contest added tomorrow gets
+whichever the author copied from.
+
+That is how the original gap happened: the floors were written for combat, lived
+in `combat_helpers.go`, and every contest added afterwards silently got the
+unfloored path. Closing it site-by-site in 5.9a-c fixes today's instances
+without fixing the shape that produced them.
+
+**Outcome:** one seam where the floor policy lives, so adding a contest cannot
+accidentally opt out. Options to evaluate, not predetermined:
+
+- make flooring the DEFAULT (`OpposedRollStat` floors; an explicitly named
+  `OpposedRollStatRaw` for the few callers that apply their own, i.e. combat),
+  so the unsafe choice is the one you have to ask for;
+- pass a policy value rather than choosing a function, so the call site states
+  its intent;
+- a guard test that fails when a new `OpposedRollStat` call appears outside an
+  allow-list, in the style of `durable_write_guard_test.go` (repo root), which
+  already does exactly this for durable writes after two grep-audits came back
+  short.
+
+**Boundary:** do this AFTER 5.9b and 5.9c, so the consolidation is a refactor of
+a settled policy rather than a redesign mid-flight. Needs a spec.
+
+**Finding:** New (found while measuring 5.9a's real scope).
 
 **Phase 5 exit:** Combat state, target protection, command parsing, and command
 results are consistent across equivalent player actions, and soft-cap and
