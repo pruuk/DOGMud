@@ -78,7 +78,11 @@ var collecting *pendingCollector
 // plugin's prepare now costs as much as the write it replaced -- the point at
 // which amortising it stopped helping. A diagnostic tied to a measured physical
 // cost, not a balance value, so it is fixed here rather than made a config knob.
-const slowPrepareThreshold = 5 * time.Millisecond
+//
+// A var rather than a const ONLY so tests can lower it. Nothing in production
+// assigns to it. As a const the warning branch could not be exercised without a
+// real sleep in a test, which would be both slow and flaky.
+var slowPrepareThreshold = 5 * time.Millisecond
 
 // PrepareAll runs every plugin's onSave with writes COLLECTED rather than
 // committed, and returns them for the caller to enqueue.
@@ -109,7 +113,7 @@ func PrepareAll() ([]savequeue.PendingWrite, error) {
 			// plugin is indistinguishable from several ordinary ones.
 			mudlog.Warn("plugins.PrepareAll",
 				"plugin", p.name,
-				"prepareMs", took.Milliseconds(),
+				"prepareTook", took.String(),
 				"message", "plugin prepare is slow and runs under the world lock",
 				"hint", "onSave must do work proportional to the plugin's own state, never to the size of the world")
 		}

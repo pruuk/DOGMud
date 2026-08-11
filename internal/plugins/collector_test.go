@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/savequeue"
@@ -366,4 +367,53 @@ func TestPrepareAll_ClearsTheCollectorOnPanic(t *testing.T) {
 	}()
 
 	_, _ = PrepareAll()
+}
+
+// The slow-prepare warning is the guard rail that makes the cost ceiling
+// self-reporting: without it one slow plugin is indistinguishable from several
+// ordinary ones in the aggregate timing. Pinned with a negative threshold so any
+// real duration trips it -- no sleeping, no flakiness.
+func TestPrepareAll_SlowPluginStillPreparesNormally(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	prevThreshold := slowPrepareThreshold
+	slowPrepareThreshold = -1
+	defer func() { slowPrepareThreshold = prevThreshold }()
+
+	var p *Plugin
+	p = registerTestPlugin(t, "slowprobe", func() error { return p.WriteBytes("state", []byte("S")) })
+
+	writes, err := PrepareAll()
+	if err != nil {
+		t.Fatalf("a slow prepare must still succeed: %v", err)
+	}
+	if len(writes) != 1 {
+		t.Fatalf("got %d writes, want 1: the warning path must not drop the write", len(writes))
+	}
+	if collecting != nil {
+		t.Error("collector left active")
+	}
+}
+
+// And the inverse: a fast plugin must not trip it. Guards against someone
+// inverting the comparison.
+func TestPrepareAll_FastPluginIsNotReportedSlow(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	prevThreshold := slowPrepareThreshold
+	slowPrepareThreshold = time.Hour
+	defer func() { slowPrepareThreshold = prevThreshold }()
+
+	var p *Plugin
+	p = registerTestPlugin(t, "fastprobe", func() error { return p.WriteBytes("state", []byte("F")) })
+
+	writes, err := PrepareAll()
+	if err != nil {
+		t.Fatalf("PrepareAll: %v", err)
+	}
+	if len(writes) != 1 {
+		t.Fatalf("got %d writes, want 1", len(writes))
+	}
 }
