@@ -21,6 +21,12 @@ type Balance struct {
 	BlockEffectiveness ConfigFloat `yaml:"BlockEffectiveness"` // Multiplier on block score before opposed roll (default 1.0)
 	MinDefenseChance   ConfigFloat `yaml:"MinDefenseChance"`   // Floor probability any defense succeeds (default 0.15)
 	MinAttackHitChance ConfigFloat `yaml:"MinAttackHitChance"` // Floor probability any attack hits (default 0.15)
+	// Non-combat opposed contests (stealth, theft, traps, detection). Separate
+	// from the combat pair on purpose: a combat floor fires PER SWING and a
+	// fight has many swings, while a steal or a defuse is one attempt with a
+	// large cost, so the same number means something very different.
+	MinContestSuccessChance ConfigFloat `yaml:"MinContestSuccessChance"` // Floor: initiator succeeds anyway (default 0.05)
+	MinContestResistChance  ConfigFloat `yaml:"MinContestResistChance"`  // Floor: resister holds anyway (default 0.05)
 
 	// ── COMBAT: PRONE & GRAPPLE ──────────────────────────────────────────────
 	ProneAttackMultiplier        ConfigFloat `yaml:"ProneAttackMultiplier"`        // Multiplier on attack score while prone (default 0.80)

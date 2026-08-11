@@ -142,7 +142,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 		float64(kitBonus)
 	trapDifficulty := float64(tgt.lockDifficulty) * 10.0
 
-	success, _, _, _ := dice.OpposedRollStat(defuseScore, trapDifficulty)
+	success, _, _, _ := dice.OpposedRollStatFloored(defuseScore, trapDifficulty)
 
 	displayName := trapTargetDisplayName(tgt)
 

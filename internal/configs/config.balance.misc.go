@@ -142,6 +142,16 @@ func (b *Balance) validateMisc() {
 		b.MinAttackHitChance = 0.15
 	}
 
+	// 0.05, not combat's 0.15. These fire once per attempt on actions that
+	// already punish failure (a caught thief, a sprung trap, a revealed sneak),
+	// whereas the combat floors fire on every swing of a many-swing fight.
+	if b.MinContestSuccessChance < 0 || b.MinContestSuccessChance > 0.50 {
+		b.MinContestSuccessChance = 0.05
+	}
+	if b.MinContestResistChance < 0 || b.MinContestResistChance > 0.50 {
+		b.MinContestResistChance = 0.05
+	}
+
 	// ── MOVEMENT ─────────────────────────────────────────────────────────────
 	// (MovementBaseStaminaCost and MovementMaxStaminaCost handled in STAMINA & CONVICTION above)
 

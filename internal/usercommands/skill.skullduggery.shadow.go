@@ -136,6 +136,6 @@ func shadowDetectionRoll(shadower *users.UserRecord, target *users.UserRecord, r
 
 	// OpposedRollStat(atk, def) returns true when atk (first arg) wins.
 	// Target detects when targetScore beats sneakScore.
-	detected, _, _, _ := dice.OpposedRollStat(targetScore, sneakScore)
+	detected, _, _, _ := dice.OpposedRollStatFloored(targetScore, sneakScore)
 	return detected
 }
