@@ -1,5 +1,32 @@
 # DOGMud Patch Notes
 
+## 2026-08-10: The web client works without a mouse, and runs lighter
+
+Three things for anyone playing in a browser.
+
+**Keyboard.** The client used to grab your typing and put it in the command bar
+no matter what you were doing. That sounds helpful, and it was, right up until
+you tried to use anything else: Tab could not move between controls, and Space
+and Enter never reached the button you had selected. If you play without a
+mouse, most of the interface was simply out of reach. Typing still jumps to the
+command bar as before, but only actual typing, and never when you have
+deliberately selected something else. The sound toggle and the mutation popup
+can now be reached and used from the keyboard too, and the map buttons finally
+say what they do out loud for anyone using a screen reader.
+
+**Speed.** The status, quest and inventory panels used to be thrown away and
+rebuilt from scratch every time the server sent an update, which for the status
+panel meant every round, whether anything had changed or not. They now only
+redraw when something actually changed. A side effect worth having: a tooltip
+you are reading, or a spot you have selected in a panel, no longer vanishes out
+from under you.
+
+**The map** was also redoing far more work than it needed to on every step you
+took, especially in large zones. It now does that work once per move instead of
+once per room on the map.
+
+Nothing looks different. It should just feel steadier.
+
 ## 2026-08-10: The game no longer pauses while it saves
 
 Every so often the server writes everything down: your character, the rooms,
