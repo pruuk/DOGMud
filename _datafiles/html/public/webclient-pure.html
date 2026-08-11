@@ -236,6 +236,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js"></script>
@@ -880,8 +881,13 @@
             if (!host) { return; }
             var data = (GMCPStructs.Char && GMCPStructs.Char.Quests) ? GMCPStructs.Char.Quests : null;
             var quests = Array.isArray(data) ? data.slice() : []; // copy: don't sort shared GMCP state in place
+            // Every write to this host goes through writeQuestsHTML. A direct
+            // innerHTML assignment on ANY path would leave the guard's recorded
+            // signature stale, and the next render whose markup matched that
+            // stale value would be skipped -- leaving the panel showing
+            // something the player no longer has (finding 19).
             if (!quests.length) {
-                host.innerHTML = '<div class="quests-empty">No active quests.</div>';
+                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>');
                 return;
             }
             quests.sort(function (a, b) {
@@ -919,19 +925,51 @@
                     html += '<div class="qhint">' + escapeHTML(q.hint) + mark + '</div>';
                 }
             });
-            host.innerHTML = html;
-            Array.prototype.forEach.call(host.querySelectorAll(".qrow"), function (row) {
-                row.addEventListener("click", function () {
-                    var id = parseInt(row.getAttribute("data-quest-id"), 10);
-                    if (!isNaN(id)) { SendGMCP("Char.Quests.Focus", { id: id }); }
+            // Attach handlers ONLY when the markup was actually rewritten. The
+            // rows are recreated by that write, so binding without it would add
+            // a second listener to rows that already have one, and a single
+            // click would send two focus requests.
+            if (writeQuestsHTML(host, html)) {
+                Array.prototype.forEach.call(host.querySelectorAll(".qrow"), function (row) {
+                    row.addEventListener("click", function () {
+                        var id = parseInt(row.getAttribute("data-quest-id"), 10);
+                        if (!isNaN(id)) { SendGMCP("Char.Quests.Focus", { id: id }); }
+                    });
                 });
-            });
+            }
+        }
+
+        // writeQuestsHTML returns true when it wrote, i.e. when the DOM was
+        // replaced and anything bound to it must be bound again.
+        function writeQuestsHTML(host, html) {
+            if (window.RenderGuard) { return RenderGuard.setHTML(host, html); }
+            host.innerHTML = html;
+            return true;
         }
 
         function renderInventory() {
             var inv = (GMCPStructs["Char"] || {}).Inventory;
             var grid = document.getElementById("inv-grid");
             if (!grid) return;
+
+            // Inventory is the largest subtree in the client and the one that
+            // changes least often, yet every Char.Inventory push tore down and
+            // rebuilt every tile, icon and label (finding 19). Skip the whole
+            // build when nothing that feeds it has changed.
+            //
+            // The signature must cover EVERY input, not just the payload:
+            // invActiveTab decides which of worn/backpack/bandolier/component
+            // is shown, so leaving it out would freeze the panel on whichever
+            // tab was rendered first. These two are the only inputs.
+            if (window.RenderGuard) {
+                var invSig;
+                try {
+                    invSig = invActiveTab + '|' + JSON.stringify(inv || null);
+                } catch (e) {
+                    invSig = null;   // circular or unserialisable: always render
+                }
+                if (invSig !== null && !RenderGuard.changed(grid, invSig)) { return; }
+            }
 
             // Clear previous content safely
             while (grid.firstChild) { grid.removeChild(grid.firstChild); }
@@ -2071,7 +2109,14 @@
                 html += '<div class="status-empty">No active effects.</div>';
             }
 
-            container.innerHTML = html;
+            // Char.Conditions ships with Char.Vitals, so this ran every round
+            // even though conditions almost never change between rounds
+            // (finding 19). Identical markup is not rewritten.
+            if (window.RenderGuard) {
+                RenderGuard.setHTML(container, html);
+            } else {
+                container.innerHTML = html;
+            }
         }
 
         // Vague, no-hard-numbers duration label for an active buff, given its

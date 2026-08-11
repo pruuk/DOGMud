@@ -328,9 +328,19 @@ class RoomGridSVG {
           while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
           this._buildRoomTokenInGroup(entry.group, room, isCurrent, svc);
 
-          if (!deferEdges) this._drawEdgesForRoom(id);
-          this._updateBounds();
-          this._applyZoom();
+          // deferEdges exists so a whole-snapshot pass can batch its per-room
+          // work. _updateBounds and _applyZoom were not covered by it, which
+          // made a Zone.Map push O(n^2) (review finding 19): _updateBounds
+          // builds TWO arrays over every known room and spreads them into
+          // Math.min/Math.max, and it ran once PER ROOM. In a 200-room zone
+          // that is ~160k operations plus 200 viewBox writes on every single
+          // step the player takes. setZoneSnapshot now does both once, at the
+          // end.
+          if (!deferEdges) {
+              this._drawEdgesForRoom(id);
+              this._updateBounds();
+              this._applyZoom();
+          }
           return;
       }
 
@@ -357,9 +367,12 @@ class RoomGridSVG {
       this.roomsGroup.appendChild(g);
       this.rooms.set(id, { room, group: g });
 
-      if (!deferEdges) this._drawEdgesForRoom(id);
-      this._updateBounds();
-      this._applyZoom();
+      // Batched by the caller when deferEdges is set — see the note above.
+      if (!deferEdges) {
+          this._drawEdgesForRoom(id);
+          this._updateBounds();
+          this._applyZoom();
+      }
   }
 
   /**
@@ -499,6 +512,10 @@ class RoomGridSVG {
       // skips ones already drawn), then the quest next-step arrow on top.
       // Tokens were already (re)built in Pass 1 — don't rebuild them again.
       floor.forEach(r => this._drawEdgesForRoom(r.num));
+
+      // The per-room work Pass 1 deferred, done once for the whole snapshot.
+      // Must run before centring, which reads this.bounds/this.center.
+      this._updateBounds();
 
       // Re-establish the centre, which reset() may have cleared. Two sources,
       // covering both orders the server can deliver in:
