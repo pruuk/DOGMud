@@ -165,11 +165,47 @@ crit purely as *bypass mitigation*, so crit worth is set by the defender's
 armour: 1.0x against an unarmoured target, 4.0x at the 75% mitigation cap. A
 maximally skilled attacker critting an unarmoured target lands a normal hit.
 
-Add a skill-scaled multiplier on top of the bypass, sub-linear in rank
-(sqrt-shaped, matching the existing curves). Crit rate and crit magnitude now
-both rise with skill and compound; the 5.11a model showed growth *decelerates*
-rather than running away, so sub-linear on each is sufficient without extra
-damping.
+**Keep the bypass, and add a multiplier on top.** The bypass is retained
+deliberately: defence is best-of-all, so a skill difference already bites harder
+on the defensive side for players, and the bypass is what lets a crit answer
+heavy armour.
+
+**Formula — linear in skill:**
+
+```
+critDamageMultiplier = CritDamageBase + CritDamagePerSkill * skillRank
+```
+
+with **`CritDamageBase` 2.0** and **`CritDamagePerSkill` 0.05**. Applied on top
+of the mitigation bypass, so the damage a crit deals relative to a normal hit is
+`critDamageMultiplier / (1 - mitigation)`.
+
+| Skill | Multiplier |
+|---:|---:|
+| 1 | 2.05x |
+| 25 | 3.25x |
+| 50 | 4.50x |
+| 69 (Meirok) | 5.45x |
+| 100 | 7.00x |
+
+**Linear, not sqrt, and that is the point.** A sqrt curve puts a skill-25 player
+at 4.12x — 75% of Meirok's value for 36% of the skill — which reintroduces the
+exact complaint chunk 5.7 opened with: investment past the middle stops paying.
+Linear makes every skill point worth the same and keeps climbing past 69, which
+is what "skill past the soft cap must do something" requires. It is also the
+easiest shape to explain to a player.
+
+**No runaway risk despite rate and magnitude both rising with skill.** Crit rate
+is bounded by 1.0, so the damage-per-hit multiplier converges to
+`critDamageMultiplier` itself. The worst case is bounded and predictable rather
+than compounding.
+
+**Correction to an earlier reading in this analysis:** instance mobs are *not*
+unarmoured. `rooms.go:879` generates an **affix-scaled** item from each
+`loot_pool` entry and calls `Wear` on it whenever `gold_paid > 0`. The Elemental
+King therefore equips a Volcanic Plate (base `physical_mitigation: 12`, scaled
+by an `sqrt(goldPaid) * LootBudgetScalar` budget at +1% per affix point), giving
+roughly 15% at a 325g buy-in. The Arena Champion likewise equips its pool.
 
 ## Decomposition
 
@@ -210,6 +246,30 @@ the fix. Specifically required:
 in-game adversarial pass before handoff: a harness sweep plus the user's own
 manual play in parallel. The model can show the math is coherent; it cannot show
 whether crits *feel* like the skill payoff. Run it after 5.11f.
+
+**Watch item — the endgame swing is large.** Decomposed for Meirok vs the
+Elemental King:
+
+| | today | after | change |
+|---|---:|---:|---:|
+| P(hit) | 15.0% | 59.5% | **3.95x** |
+| crit rate (of hits) | 6.7% | 4.9% | — |
+| a crit is worth | 1.18x | **6.41x** | — |
+| damage per landed hit | 1.012 | 1.265 | 1.25x |
+| **total damage output** | 0.152 | 0.752 | **4.94x** |
+
+The two effects multiply to roughly **5x** total output. Two mitigating facts:
+the baseline is 15.0%, which is *exactly* `MinAttackHitChance` — the fight is
+currently impossible, not merely hard, so this converts impossible to hard. And
+Meirok's crit *rate* actually falls (6.7% -> 4.9%), because the current skill-diff
+threshold saturates at a skill advantage of 10 and hands him the full bonus
+regardless of how badly he is losing the contest; margin-derivation prices it
+honestly. The damage gain comes from crits being *worth* something, not from
+critting more often.
+
+Even so, 5x is large enough that it must be seen in play rather than trusted
+from a table. **This is the reason 5.11b ships alone first** — fight the King
+with only `SkillWeight` changed, before any crit code exists.
 
 ## Non-goals
 
