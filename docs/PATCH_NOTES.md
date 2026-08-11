@@ -1,17 +1,44 @@
 # DOGMud Patch Notes
 
-## 2026-08-10: Saving is now too fast to notice
+## 2026-08-10: Saving no longer interrupts the game, and is safer
 
-A follow-up to the save work earlier today. The server was re-reading every
-room's description from disk each time it saved, to work out what had changed.
-Room descriptions do not change while the game runs, so it now reads them once
-and remembers them.
+Three pieces of work on how the game saves, which together change it from
+something you could feel into something you cannot.
 
-The effect is larger than it sounds. The brief moment where the world holds
-still while a save is prepared has gone from a few tenths of a second to less
-than the length of a single game round. In practice that means there is no
-longer any moment to notice. The very first save after the server starts is
-still the old speed, because nothing has been remembered yet.
+**The pause is gone.** Every so often the server writes everything down: your
+character, the rooms, the state of the world. It used to do all of that in one
+go, and while it worked the whole game stopped. Nobody could move, fight, or
+type. On a large world that pause was long enough to notice, and it grew as the
+world grew.
+
+Saving now happens in two parts. First the server takes a single quick picture
+of everything worth keeping, which is the only part that has to hold the world
+still. Then it writes that picture to disk a little at a time over the
+following seconds, while the game carries on around it. A second change removed
+most of the remaining cost: the server was re-reading every room's description
+from disk each time, to work out what had changed, and since those do not change
+while the game runs it now reads them once and remembers them.
+
+The pause is now shorter than a single game round, which means there is no
+moment left to notice. The very first save after the server starts is still the
+old speed, because nothing has been remembered yet.
+
+**One picture, not many.** This matters more than it sounds. If the server
+recorded a room and a character at slightly different moments, an item being
+picked up at that instant could end up saved twice, or not at all. One picture
+cannot disagree with itself.
+
+**Your character file is written the safe way.** Earlier work made the game
+write its files carefully, so a crash or a power cut mid-save can never leave a
+half-written file behind. That work missed several records, including the most
+important one of all: your character. Characters, alts, pets, warehouses, shops
+and caravans, factions, bounties and the authored world all now go through the
+same hardened path, and a check runs with every build to stop a new one quietly
+going back to the old way.
+
+Two smaller things came with it. The server no longer says a save finished until
+it actually has. And if a save cannot be completed, a reboot will refuse to go
+ahead rather than quietly discarding what had not been written yet.
 
 ## 2026-08-10: The web client works without a mouse, and runs lighter
 
@@ -39,46 +66,6 @@ took, especially in large zones. It now does that work once per move instead of
 once per room on the map.
 
 Nothing looks different. It should just feel steadier.
-
-## 2026-08-10: The game no longer pauses while it saves
-
-Every so often the server writes everything down: your character, the rooms,
-the state of the world. Until now it did all of that in one go, and while it
-worked the whole game stopped. Nobody could move, fight, or type. On a busy
-server with a large world that pause was long enough to notice, and it got
-worse as the world grew.
-
-The save now happens in two parts. First the server takes a single quick picture
-of everything worth keeping, which is the only part that has to stop the world
-and is now many times faster. Then it writes that picture to disk a little at a
-time over the following seconds, while the game carries on around it.
-
-Taking one picture of everything at once matters more than it sounds. If the
-server recorded a room and a character at slightly different moments, an item
-being picked up at that instant could end up saved twice or not at all. One
-picture cannot disagree with itself.
-
-Two smaller things came with it. The server no longer says a save finished
-until it actually has. And if a save cannot be completed, a reboot will now
-refuse to go ahead rather than quietly throwing away what had not been written
-yet.
-
-## 2026-08-10: Your character file is now written the safe way
-
-Earlier work made the game write its saved files carefully, so that a crash or
-a power cut in the middle of a save can never leave a half-written file behind.
-That work covered a number of the game's records, but it missed several others,
-including the single most important file of all: your character.
-
-Everything is now covered by the same careful method. Characters, alts, pets,
-warehouses, shops and caravans, factions, bounties, and the authored world
-content all go through one hardened path instead of each doing its own version
-of the job. A check now runs with every build to make sure a new one cannot
-quietly go back to the old way.
-
-Nothing about this is visible while you play. It only matters on the day the
-server loses power mid-save, and on that day it is the difference between
-picking up where you left off and losing a file.
 
 ## 2026-08-10: Housekeeping on the safety net
 
