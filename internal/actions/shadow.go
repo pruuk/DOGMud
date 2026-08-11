@@ -172,7 +172,7 @@ func shadowPlayer(actor Actor, targetUserId int, cfg configs.Balance) ShadowResu
 	// go.go (Per+Search vs Dex+Skullduggery; OpposedRollStat: first arg wins).
 	sneakScore := CalcSneakScoreVsObserver(char, targetUser.Character, actor.GetRoom())
 	searchScore := CalcSearchScore(targetUser.Character)
-	detected, _, _, _ := dice.OpposedRollStatFloored(searchScore, sneakScore)
+	detected, _, _, _ := dice.OpposedRollStat(searchScore, sneakScore)
 	if detected {
 		targetUser.SendText(messaging.CategorySystem, "You sense someone following close behind you.")
 	}

@@ -21,7 +21,7 @@ func withFloors(t *testing.T, success, resist float64) {
 func rate(atk, def float64, n int) float64 {
 	wins := 0
 	for i := 0; i < n; i++ {
-		if ok, _, _, _ := OpposedRollStatFloored(atk, def); ok {
+		if ok, _, _, _ := OpposedRollStat(atk, def); ok {
 			wins++
 		}
 	}
@@ -30,7 +30,7 @@ func rate(atk, def float64, n int) float64 {
 
 // THE gap. Unfloored, a stat-100 initiator against a stat-150 resister wins
 // about 0.9% of the time. The floor must lift that to roughly the floor value.
-func TestOpposedRollStatFloored_OutmatchedInitiatorKeepsAChance(t *testing.T) {
+func TestOpposedRollStat_OutmatchedInitiatorKeepsAChance(t *testing.T) {
 	withFloors(t, 0.05, 0.05)
 
 	const n = 40000
@@ -47,7 +47,7 @@ func TestOpposedRollStatFloored_OutmatchedInitiatorKeepsAChance(t *testing.T) {
 }
 
 // The other end: an overwhelming initiator must not be a certainty.
-func TestOpposedRollStatFloored_OverwhelmingInitiatorIsNotCertain(t *testing.T) {
+func TestOpposedRollStat_OverwhelmingInitiatorIsNotCertain(t *testing.T) {
 	withFloors(t, 0.05, 0.05)
 
 	const n = 40000
@@ -62,7 +62,7 @@ func TestOpposedRollStatFloored_OverwhelmingInitiatorIsNotCertain(t *testing.T) 
 }
 
 // At parity the floors cancel and the contest stays even.
-func TestOpposedRollStatFloored_ParityStaysEven(t *testing.T) {
+func TestOpposedRollStat_ParityStaysEven(t *testing.T) {
 	withFloors(t, 0.05, 0.05)
 
 	got := rate(100, 100, 40000)
@@ -72,7 +72,7 @@ func TestOpposedRollStatFloored_ParityStaysEven(t *testing.T) {
 }
 
 // Zero disables an end, which must reproduce the raw behaviour exactly.
-func TestOpposedRollStatFloored_ZeroDisablesTheFloor(t *testing.T) {
+func TestOpposedRollStat_ZeroDisablesTheFloor(t *testing.T) {
 	withFloors(t, 0, 0)
 
 	got := rate(100, 150, 40000)
@@ -83,7 +83,7 @@ func TestOpposedRollStatFloored_ZeroDisablesTheFloor(t *testing.T) {
 
 // A floor save is a BARE success. Callers that scale an effect by margin must
 // not read a last-resort save as a decisive one.
-func TestOpposedRollStatFloored_FlippedOutcomeHasMinimalMargin(t *testing.T) {
+func TestOpposedRollStat_FlippedOutcomeHasMinimalMargin(t *testing.T) {
 	// 0.5 is the maximum the setter accepts -- above that a "floor" would be the
 	// dominant term rather than a last resort. At a 3x stat gap the raw success
 	// chance is effectively zero, so any success here IS a floor save.
@@ -91,7 +91,7 @@ func TestOpposedRollStatFloored_FlippedOutcomeHasMinimalMargin(t *testing.T) {
 
 	flips := 0
 	for i := 0; i < 400; i++ {
-		success, margin, atkRoll, defRoll := OpposedRollStatFloored(100, 300)
+		success, margin, atkRoll, defRoll := OpposedRollStat(100, 300)
 		if !success {
 			continue
 		}
@@ -127,14 +127,14 @@ func TestSetContestFloors_ClampsOutOfRangeValues(t *testing.T) {
 
 // Spells supply their own floors per call, because a fizzle costs the caster the
 // whole round while a missed melee swing costs a fraction of one.
-func TestOpposedRollStatFlooredWith_UsesTheSuppliedFloors(t *testing.T) {
+func TestOpposedRollStatWithFloors_UsesTheSuppliedFloors(t *testing.T) {
 	// Package floors set high; the per-call values must win.
 	withFloors(t, 0.5, 0.5)
 
 	const n = 40000
 	wins := 0
 	for i := 0; i < n; i++ {
-		if ok, _, _, _ := OpposedRollStatFlooredWith(100, 150, 0, 0); ok {
+		if ok, _, _, _ := OpposedRollStatWithFloors(100, 150, 0, 0); ok {
 			wins++
 		}
 	}
@@ -144,7 +144,7 @@ func TestOpposedRollStatFlooredWith_UsesTheSuppliedFloors(t *testing.T) {
 	}
 }
 
-func TestOpposedRollStatFlooredWith_ClampsPerCall(t *testing.T) {
+func TestOpposedRollStatWithFloors_ClampsPerCall(t *testing.T) {
 	withFloors(t, 0, 0)
 
 	// A floor above 0.5 must clamp, not dominate. At a 3x gap the raw chance is
@@ -152,7 +152,7 @@ func TestOpposedRollStatFlooredWith_ClampsPerCall(t *testing.T) {
 	const n = 40000
 	wins := 0
 	for i := 0; i < n; i++ {
-		if ok, _, _, _ := OpposedRollStatFlooredWith(100, 300, 99, 0); ok {
+		if ok, _, _, _ := OpposedRollStatWithFloors(100, 300, 99, 0); ok {
 			wins++
 		}
 	}
@@ -179,7 +179,7 @@ func TestContestFloor_EffectiveRatesAtEachTier(t *testing.T) {
 	measure := func(atk, def, fh, fr float64) float64 {
 		wins := 0
 		for i := 0; i < n; i++ {
-			if ok, _, _, _ := OpposedRollStatFlooredWith(atk, def, fh, fr); ok {
+			if ok, _, _, _ := OpposedRollStatWithFloors(atk, def, fh, fr); ok {
 				wins++
 			}
 		}

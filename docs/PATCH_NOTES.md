@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-08-11: A long shot stays a long shot, everywhere
+
+When you try something against a much stronger opponent, you keep a small chance
+of pulling it off. When you try something against someone far weaker, they keep
+a small chance of stopping you. That was already true in a straight fight, and
+recent work extended it to sneaking, stealing, traps, spells and grapples.
+
+This change is housekeeping on top of that. The safe behaviour is now the one
+the game reaches for on its own, so a contest added later cannot quietly go back
+to being a foregone conclusion.
+
+Nothing plays differently than it did yesterday.
+
+
 ## 2026-08-11: The last piece of the save pause is gone
 
 Earlier work moved the slow part of saving out of the way, so the game no longer

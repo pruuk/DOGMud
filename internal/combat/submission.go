@@ -77,7 +77,7 @@ func RollSubmissionAttempt(
 		float64(recipient.GetSkillLevel(skills.UnarmedCombat))*skillWeight
 
 	floorHit, floorResist := ManeuverFloors()
-	success, margin, atkRoll, defRoll := dice.OpposedRollStatFlooredWith(atkScore, defScore, floorHit, floorResist)
+	success, margin, atkRoll, defRoll := dice.OpposedRollStatWithFloors(atkScore, defScore, floorHit, floorResist)
 
 	return SubmissionAttemptResult{
 		SubType:        subType,

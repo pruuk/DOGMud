@@ -297,7 +297,7 @@ func spellResistFloor() float64 {
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &mob.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 
 	round := util.GetRoundCount()
 
@@ -727,7 +727,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 
 	// Backfire on fumble
 	if atkRoll.ZScore <= -2.0 {
@@ -1289,7 +1289,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
 		if dmg < 1 {
@@ -1308,7 +1308,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, spellAttack float64, magnitude int) {
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 	round := util.GetRoundCount()
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4

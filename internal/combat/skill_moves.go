@@ -59,7 +59,7 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 	attackerScore := float64(p.AttackSkill) + float64(p.AttackStat)
 	defenderScore := float64(p.DefenseSkill) + float64(p.DefenseStat)
 	floorHit, floorResist := ManeuverFloors()
-	attackSuccess, _, _, _ := dice.OpposedRollStatFlooredWith(attackerScore, defenderScore, floorHit, floorResist)
+	attackSuccess, _, _, _ := dice.OpposedRollStatWithFloors(attackerScore, defenderScore, floorHit, floorResist)
 
 	// Damage pipeline: CalcRawDamage → ApplyMitigation → dice.RollStat
 	rawDmg := CalcRawDamage(p.DamageStat, p.SkillRank, p.DamagePercent, ChannelPhysical)

@@ -12,7 +12,7 @@ import (
 
 // ─── Integration: Combat Lifecycle (Pipeline) ────────────────────────────────
 // Exercises: CalcRawDamage(), ApplyMitigation(), SkillMultiplier(),
-// ResourceMultiplier(), dice.OpposedRollStat(), dice.RollStat()
+// ResourceMultiplier(), dice.OpposedRollStatRaw(), dice.RollStat()
 //
 // Note: calculateCombat() has deep dependencies (Aggro, rooms, etc.) that
 // make it unsuitable for isolated tests. Instead, we exercise the full
@@ -35,7 +35,7 @@ func TestIntegration_CombatLifecycle(t *testing.T) {
 		rounds++
 
 		// Attack roll: opposed stat check
-		atkWins, _, _, _ := dice.OpposedRollStat(float64(atkStr), float64(defDex))
+		atkWins, _, _, _ := dice.OpposedRollStatRaw(float64(atkStr), float64(defDex))
 		if !atkWins {
 			continue // miss
 		}
@@ -264,7 +264,7 @@ func TestIntegration_OpposedCombatRolls(t *testing.T) {
 	wins := 0
 	iterations := 1000
 	for i := 0; i < iterations; i++ {
-		atkWins, _, _, _ := dice.OpposedRollStat(strongAtk, weakDef)
+		atkWins, _, _, _ := dice.OpposedRollStatRaw(strongAtk, weakDef)
 		if atkWins {
 			wins++
 		}
@@ -277,7 +277,7 @@ func TestIntegration_OpposedCombatRolls(t *testing.T) {
 	// Equal stats should produce roughly 50/50
 	equalWins := 0
 	for i := 0; i < iterations; i++ {
-		atkWins, _, _, _ := dice.OpposedRollStat(100.0, 100.0)
+		atkWins, _, _, _ := dice.OpposedRollStatRaw(100.0, 100.0)
 		if atkWins {
 			equalWins++
 		}

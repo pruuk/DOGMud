@@ -395,7 +395,7 @@ func tickMobCharmState(mob *mobs.Mob) {
 						attackScore *= effectiveness
 
 						floorHit, floorResist := maneuverHitFloor(), maneuverResistFloor()
-						success, _, _, _ := dice.OpposedRollStatFlooredWith(attackScore, defenseScore, floorHit, floorResist)
+						success, _, _, _ := dice.OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)
 
 						if success {
 							newDuration := 50 + owner.Character.Stats.Charisma.ValueAdj/2 +

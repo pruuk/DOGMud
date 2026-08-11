@@ -476,7 +476,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					}
 					sneakScore := actions.CalcSneakScoreVsObserver(user.Character, p.Character, destRoom)
 					observerScore := actions.CalcSearchScore(p.Character)
-					success, _, _, _ := dice.OpposedRollStatFloored(sneakScore, observerScore)
+					success, _, _, _ := dice.OpposedRollStat(sneakScore, observerScore)
 					if !success {
 						p.SendText(messaging.CategorySystem, fmt.Sprintf(
 							`<ansi fg="username">%s</ansi> slips into the room but you notice them.`,
@@ -495,7 +495,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						}
 						sneakScore := actions.CalcSneakScoreVsObserver(user.Character, &mob.Character, destRoom)
 						observerScore := actions.CalcSearchScore(&mob.Character)
-						success, _, _, _ := dice.OpposedRollStatFloored(sneakScore, observerScore)
+						success, _, _, _ := dice.OpposedRollStat(sneakScore, observerScore)
 						if !success {
 							spotted = true
 							break
@@ -537,7 +537,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						continue
 					}
 					hiddenScore := actions.CalcSneakScoreVsObserver(hiddenP.Character, user.Character, destRoom)
-					success, _, _, _ := dice.OpposedRollStatFloored(observerScore, hiddenScore)
+					success, _, _, _ := dice.OpposedRollStat(observerScore, hiddenScore)
 					if success {
 						_ = hiddenP.Character.Awareness.TransitionToRevealing(
 							state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
@@ -557,7 +557,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						continue
 					}
 					hiddenScore := actions.CalcSneakScoreVsObserver(&mob.Character, user.Character, destRoom)
-					success, _, _, _ := dice.OpposedRollStatFloored(observerScore, hiddenScore)
+					success, _, _, _ := dice.OpposedRollStat(observerScore, hiddenScore)
 					if success {
 						_ = mob.Character.Awareness.TransitionToRevealing(
 							state.TransitionReason{Trigger: awareness.TriggerObserverSearch})

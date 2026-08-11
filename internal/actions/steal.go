@@ -169,7 +169,7 @@ func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
 	}
 
 	defenderScore := float64(m.Character.Stats.Perception.ValueAdj)
-	success, _, _, _ := dice.OpposedRollStatFloored(attackerScore, defenderScore)
+	success, _, _, _ := dice.OpposedRollStat(attackerScore, defenderScore)
 
 	room := actor.GetRoom()
 
@@ -347,7 +347,7 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 	actor.OnSkillUse(string(skills.Skullduggery))
 
 	defenderScore := float64(targetUser.Character.Stats.Perception.ValueAdj)
-	success, _, _, _ := dice.OpposedRollStatFloored(attackerScore, defenderScore)
+	success, _, _, _ := dice.OpposedRollStat(attackerScore, defenderScore)
 
 	if !success {
 		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
@@ -401,7 +401,7 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 	if !actor.IsPlayer() {
 		searchScore := CalcSearchScore(targetUser.Character)
 		sneakScore := CalcSneakScoreVsObserver(actor.GetCharacter(), targetUser.Character, actor.GetRoom())
-		detected, _, _, _ := dice.OpposedRollStatFloored(searchScore, sneakScore)
+		detected, _, _, _ := dice.OpposedRollStat(searchScore, sneakScore)
 		if detected {
 			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> lifts `+
@@ -506,7 +506,7 @@ func stealFromContainer(actor Actor, containerName string,
 
 	success := true
 	if hasObserver {
-		success, _, _, _ = dice.OpposedRollStatFloored(attackerScore, highestPerception)
+		success, _, _, _ = dice.OpposedRollStat(attackerScore, highestPerception)
 	}
 
 	if !success {
