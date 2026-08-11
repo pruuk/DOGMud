@@ -339,6 +339,16 @@ func (p *Plugin) AttachFileSystem(f embed.FS) error {
 	return nil
 }
 
+// WriteBytes persists a plugin's data under identifier.
+//
+// TWO MODES. Normally the bytes are written immediately and durably. While an
+// autosave prepare is collecting (see PrepareAll), they are instead captured
+// for a write on a later tick, and a nil return means "accepted for a deferred
+// write", NOT "already on disk". The eventual failure, if any, is reported by
+// the autosave cycle rather than returned here.
+//
+// The signature is frozen: this is the plugin API third-party modules call.
+// That is why the mode is implicit rather than a parameter.
 func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 
 	if !writeFolderReady {
@@ -366,10 +376,16 @@ func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 	// instead of writing them. The durable write still happens, just on a later
 	// tick, through the same queue rooms and users use.
 	if collecting != nil {
+		// Copy. savequeue's contract is that a PendingWrite holds bytes nothing
+		// else can mutate; for rooms and users that is guaranteed because their
+		// bytes come straight from a marshal. WriteBytes takes a caller-supplied
+		// slice, so the guarantee has to be made here instead. Payloads are a
+		// few KB and this runs a handful of times per cycle.
+		data := append([]byte(nil), bytes...)
 		collecting.add(p, savequeue.PendingWrite{
 			Kind:    "plugin",
 			Path:    fullPath,
-			Data:    bytes,
+			Data:    data,
 			Careful: true,
 		})
 		return nil
@@ -405,6 +421,8 @@ func (p *Plugin) ReadBytes(identifier string) ([]byte, error) {
 	return bytes, err
 }
 
+// WriteStruct marshals in to YAML and forwards to WriteBytes, so it inherits
+// WriteBytes' deferred-during-collection behaviour.
 func (p *Plugin) WriteStruct(identifier string, in any) error {
 
 	b, err := yaml.Marshal(in)

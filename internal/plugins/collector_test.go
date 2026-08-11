@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -72,24 +73,52 @@ func TestCollector_DiscardOfAnUnknownPluginIsSafe(t *testing.T) {
 
 // writes() returns a snapshot, not a view. The collector is mutated between a
 // prepare and its drain, so a caller holding an earlier result must not see it
-// change underneath them. Returning c.entries directly would be an easy and
-// silent regression.
+// change underneath them.
+//
+// This test is shaped deliberately. An earlier version added two entries to a
+// fresh collector and called writes() once; it PASSED against an
+// implementation that returned collector-owned state, because append happened
+// to reallocate between the snapshot and the mutation. Two properties are
+// needed to actually pin this:
+//
+//   - enough entries that incidental reallocation cannot rescue a bad
+//     implementation
+//   - writes() called TWICE, so a version reusing its own scratch buffer
+//     across calls is caught too
 func TestCollector_WritesSnapshotSurvivesLaterMutation(t *testing.T) {
 	c := newPendingCollector()
 	p := &Plugin{name: "p", version: "1.0"}
 	other := &Plugin{name: "other", version: "1.0"}
 
-	c.add(p, savequeue.PendingWrite{Path: "/tmp/first.dat", Data: []byte("1")})
-	snapshot := c.writes()
+	// Several entries, so the backing array is not a 1-element special case.
+	for i := 0; i < 8; i++ {
+		c.add(p, savequeue.PendingWrite{Path: fmt.Sprintf("/tmp/p%d.dat", i), Data: []byte("p")})
+	}
 
-	c.add(other, savequeue.PendingWrite{Path: "/tmp/second.dat", Data: []byte("2")})
+	first := c.writes()
+	if len(first) != 8 {
+		t.Fatalf("first snapshot has %d writes, want 8", len(first))
+	}
+
+	// Mutate the collector every way it can be mutated.
+	c.add(other, savequeue.PendingWrite{Path: "/tmp/other.dat", Data: []byte("o")})
 	c.discard(p)
 
-	if len(snapshot) != 1 {
-		t.Fatalf("snapshot length changed to %d after mutating the collector", len(snapshot))
+	// A second call: catches an implementation that reuses one scratch buffer.
+	second := c.writes()
+	if len(second) != 1 || second[0].Path != "/tmp/other.dat" {
+		t.Fatalf("second snapshot = %+v, want just /tmp/other.dat", second)
 	}
-	if snapshot[0].Path != "/tmp/first.dat" {
-		t.Errorf("snapshot content changed to %q", snapshot[0].Path)
+
+	// The FIRST snapshot must be untouched by any of that.
+	if len(first) != 8 {
+		t.Fatalf("first snapshot length changed to %d", len(first))
+	}
+	for i := 0; i < 8; i++ {
+		want := fmt.Sprintf("/tmp/p%d.dat", i)
+		if first[i].Path != want {
+			t.Errorf("first snapshot entry %d = %q, want %q", i, first[i].Path, want)
+		}
 	}
 }
 
@@ -182,4 +211,30 @@ func useTempWriteFolder(t *testing.T, dir string) func() {
 	prevPath, prevReady := writeFolderPath, writeFolderReady
 	writeFolderPath, writeFolderReady = dir, true
 	return func() { writeFolderPath, writeFolderReady = prevPath, prevReady }
+}
+
+// The collected payload must not change if the caller reuses its buffer. The
+// deferred write can land many seconds after WriteBytes returned.
+func TestWriteBytes_CollectedBytesAreCopied(t *testing.T) {
+	restore := useTempWriteFolder(t, t.TempDir())
+	defer restore()
+
+	collecting = newPendingCollector()
+	defer func() { collecting = nil }()
+
+	p := &Plugin{name: "probe", version: "1.0"}
+	buf := []byte("original")
+	if err := p.WriteBytes("state", buf); err != nil {
+		t.Fatal(err)
+	}
+
+	copy(buf, "MUTATED!")
+
+	got := collecting.writes()
+	if len(got) != 1 {
+		t.Fatalf("collected %d writes, want 1", len(got))
+	}
+	if string(got[0].Data) != "original" {
+		t.Errorf("collected data = %q; the caller's buffer was aliased", got[0].Data)
+	}
 }
