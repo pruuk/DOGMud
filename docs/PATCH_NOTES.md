@@ -1,5 +1,22 @@
 # DOGMud Patch Notes
 
+## 2026-08-11: The last piece of the save pause is gone
+
+Earlier work moved the slow part of saving out of the way, so the game no longer
+holds still while it writes. One piece was left behind: the add-on systems that
+keep their own records, such as the auction house, the leaderboards and the
+weather. Those were still written the old way, and they had quietly become the
+largest remaining part of the pause.
+
+They now go through the same path as everything else. Their records are gathered
+in the same instant as everyone's character and every room, which also means an
+auction and the gold it moves can never be recorded a moment apart, and the
+writing itself happens in the background afterwards.
+
+Nothing about this is visible while you play, which is the point. There is no
+longer any part of a save that waits on the disk while the world stands still.
+
+
 ## 2026-08-10: Saving no longer interrupts the game, and is safer
 
 Three pieces of work on how the game saves, which together change it from
