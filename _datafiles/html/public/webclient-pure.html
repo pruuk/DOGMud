@@ -60,7 +60,15 @@
         }
 
         /* Sound icon — small brass button living inside the session strip */
+        /* Was a <div onclick>, which no keyboard could reach (finding 18). Now a
+           real button, so it needs the UA button defaults neutralised to keep
+           the same look. */
         #menu-icon {
+            padding: 0;
+            margin: 0;
+            font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
             flex: 0 0 auto;
             width: 26px;
             height: 26px;
@@ -79,6 +87,14 @@
             transition: filter .08s ease, transform .08s ease;
         }
         #menu-icon:hover { filter: brightness(1.08); }
+        /* A focus ring is the whole point of making these reachable: without a
+           visible one, a keyboard user can tab to a control and have no idea
+           where they are. */
+        #menu-icon:focus-visible,
+        #mut-toast:focus-visible {
+            outline: 2px solid #f4dd92;
+            outline-offset: 2px;
+        }
         #menu-icon:active {
             transform: translateY(1px);
             box-shadow: 0 1px 1px rgba(0,0,0,0.4),
@@ -219,6 +235,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm-addon-fit.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js"></script>
@@ -252,7 +269,7 @@
         <span class="sess-name" id="sess-name">—</span>
         <span class="sess-conn" id="sess-conn">● Connected</span>
         <span class="sess-spacer"></span>
-        <div id="menu-icon" onclick="toggleMenu()" title="Toggle sound">🔊</div>
+        <button type="button" id="menu-icon" onclick="toggleMenu()" title="Toggle sound" aria-label="Toggle sound">🔊</button>
         <button class="brass" id="btn-reset-layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()">Reset layout</button>
       </div>
 
@@ -2090,30 +2107,27 @@
         const textOutput = document.getElementById('terminal');
         const textInput = document.getElementById('command-input');
 
-        // Keep the command bar "hot": if the user starts typing while focus has
+        // Keep the command bar "hot": if the user starts TYPING while focus has
         // drifted to a non-field element (they clicked the map / inventory) or to
         // the xterm feed's hidden textarea, pull focus back to the command input
-        // so a quick movement key isn't swallowed. Real editable fields (comms
-        // chat, modal inputs) and shortcut combos (Ctrl/Meta/Alt) are left alone.
+        // so a quick movement key isn't swallowed.
+        //
+        // The decision lives in static/js/hotinput.js so it can be tested --
+        // this used to fire for EVERY key, which made the interface impossible
+        // to operate without a mouse (review finding 18). See that file for what
+        // broke and why the rule is shaped the way it is.
         document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey || e.metaKey || e.altKey) return;
-            if (e.key === 'Control' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Meta') return;
-            if (!textInput) return;
+            if (!textInput || !window.HotInput) return;
 
-            // Don't fight an open modal for focus.
             var modal = document.getElementById('auto-modal');
-            if (modal && modal.style.display !== 'none') return;
 
-            var ae = document.activeElement;
-            var isRealField = ae && (
-                ae.tagName === 'INPUT' ||
-                (ae.tagName === 'TEXTAREA' && !(ae.classList && ae.classList.contains('xterm-helper-textarea'))) ||
-                ae.tagName === 'SELECT' ||
-                ae.isContentEditable
-            );
-            if (isRealField) return;
-
-            textInput.focus();
+            if (window.HotInput.shouldFocusCommandBar(e, {
+                modalOpen: !!(modal && modal.style.display !== 'none'),
+                activeElement: document.activeElement,
+                document: document
+            })) {
+                textInput.focus();
+            }
         });
 
         const codeShortcuts = {
@@ -3034,14 +3048,17 @@
     </div>
 
     <!-- Mutation reveal: FIFO toast + ceremonial card overlay — hidden; JS drives visibility -->
-    <div id="mut-toast" onclick="mutationRevealExpand()">
+    <div id="mut-toast" onclick="mutationRevealExpand()" role="button" tabindex="0"
+         aria-label="Show mutation details" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();mutationRevealExpand();}">
         <img id="mut-toast-art" src="" alt="" onerror="this.onerror=null;this.src='/static/images/mutations/_generic.png'">
         <div>
             <div class="mt-name" id="mut-toast-name"></div>
             <div class="mt-sub" id="mut-toast-sub"></div>
         </div>
     </div>
-    <div id="mut-card-overlay" onclick="mutationRevealDismiss()">
+    <div id="mut-card-overlay" onclick="mutationRevealDismiss()" role="dialog" aria-modal="true"
+         aria-label="Mutation revealed" tabindex="-1"
+         onkeydown="if(event.key==='Escape'||event.key==='Enter'||event.key===' '){event.preventDefault();mutationRevealDismiss();}">
         <div id="mut-card">
             <img id="mut-card-art" src="" alt="" onerror="this.onerror=null;this.src='/static/images/mutations/_generic.png'">
             <div class="mc-kicker">The Chrysalis acts</div>

@@ -195,6 +195,11 @@ function drawArchGate(g, a, b, emboss) {
 // Global instance counter for unique defs IDs when multiple map windows exist.
 var _RGSVG_instanceCounter = 0;
 
+// Sentinel for "no room-click handler was supplied". Identity-compared rather
+// than checked for truthiness, because the default used to be an anonymous
+// no-op, which is indistinguishable from a real handler at the call site.
+var NO_ROOM_CLICK = function () {};
+
 class RoomGridSVG {
   constructor(selector, options = {}) {
       // ── Configurable options & defaults ───────────────────────────────
@@ -205,7 +210,7 @@ class RoomGridSVG {
       this.viewCells = options.viewCells || 6;
       this.zoomStep = options.zoomStep || 1.2;
       this.zoomLevel = options.initialZoom || 1;
-      this.onRoomClick = options.onRoomClick || (() => {});
+      this.onRoomClick = options.onRoomClick || NO_ROOM_CLICK;
       this.zoomButtonSize = options.zoomButtonSize || 25;
       this.controlsMargin = options.controlsMargin || 10;
       this.biomeTints = options.biomeTints || RoomGridSVG.DEFAULT_BIOME_TINTS;
@@ -332,8 +337,20 @@ class RoomGridSVG {
       // 3) NEW room
       const g = document.createElementNS(LEATHER_NS, 'g');
       g.setAttribute('data-room-id', id);
-      g.style.cursor = 'pointer';
-      g.addEventListener('click', () => this.onRoomClick(room));
+
+      // Only advertise a room as clickable when something is actually listening.
+      // onRoomClick defaults to a no-op and the shipped client does not set it,
+      // so the pointer cursor was promising an interaction that does not exist,
+      // and a keyboard user could see no way to reach it because there was
+      // nothing to reach (review finding 18).
+      //
+      // If a caller ever does supply onRoomClick, the room needs a real
+      // keyboard path too, not just a cursor change -- see the note in
+      // context.md before wiring one up.
+      if (this.onRoomClick !== NO_ROOM_CLICK) {
+          g.style.cursor = 'pointer';
+          g.addEventListener('click', () => this.onRoomClick(room));
+      }
 
       this._buildRoomTokenInGroup(g, room, isCurrent, svc);
 
@@ -1179,19 +1196,33 @@ class RoomGridSVG {
       div.style.cssText =
           `position:absolute;bottom:${this.controlsMargin}px;left:${this.controlsMargin}px;` +
           `display:flex;gap:5px;z-index:5;`;
-      const mk = (lbl, cb) => {
+      // The visible glyphs are deliberately tiny ("+", "ctr") because the
+      // overlay sits on top of the map, so each control also carries a real
+      // name. Without it a screen reader announces "minus button" and a
+      // pointer user gets no tooltip (review finding 18: controls must be
+      // focusable AND named -- these were already focusable, being real
+      // buttons, but they were effectively anonymous).
+      const mk = (lbl, name, cb) => {
           const b = document.createElement('button');
           b.textContent = lbl;
           b.className = 'rgsvg-brass';
+          b.type = 'button';           // never submit a surrounding form
+          b.setAttribute('aria-label', name);
+          b.title = name;
           b.addEventListener('click', cb);
           return b;
       };
       div.append(
-          mk('fit',  () => this.fit()),
-          mk('ctr',  () => this.centerOnRoom(this.currentCenterId)),
-          mk('−', () => this.zoomOut()),
-          mk('+',    () => this.zoomIn())
+          mk('fit', 'Fit map to view',        () => this.fit()),
+          mk('ctr', 'Centre on your room',    () => this.centerOnRoom(this.currentCenterId)),
+          mk('−',   'Zoom out',               () => this.zoomOut()),
+          mk('+',   'Zoom in',                () => this.zoomIn())
       );
+
+      // Name the overlay itself so it is announced as a group rather than as
+      // four loose buttons floating in the page.
+      div.setAttribute('role', 'group');
+      div.setAttribute('aria-label', 'Map controls');
       this.container.appendChild(div);
 
       // Keep the overlay from covering the map when the panel is small:
