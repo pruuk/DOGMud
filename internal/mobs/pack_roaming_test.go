@@ -345,3 +345,80 @@ func TestMovePackFollowers_MaxWanderBreaksOff(t *testing.T) {
 
 	assert.Equal(t, 0, follower.PackAlphaId, "should break off due to MaxWander")
 }
+
+// A MaxWander:0 mob means "never wanders" -- wander.go enforces that with an
+// explicit `if mob.MaxWander == 0` guard. MovePackFollowers had no such guard,
+// only `WanderCount > MaxWander`, and 0 > 0 is FALSE. So a mob authored to stay
+// put was dragged along by its pack alpha anyway.
+//
+// The symptom is an oscillation, not a one-off displacement: the follower gets
+// dragged out (WanderCount 0 -> 1), the idle handler then sees it away from home
+// with 1 > 0 and issues `pathto home`, arriving home resets WanderCount to 0,
+// and it is immediately eligible to be dragged out again.
+//
+// Found while investigating a "Tunnel Shaman moves A LOT" report. It is NOT the
+// cause of that report -- the shaman's statpool (15) outranks every
+// wander-capable mob in its zone, so it is always the pack alpha and alphas move
+// through wander.go, which guards correctly. The shaman's cause is still
+// unknown. This is a separate, real defect found on the way: 422 authored mobs
+// carry maxwander: 0 AND a group tag, including named shopkeepers and quest
+// NPCs, and pack formation has no hostility gate -- any two same-group mobs
+// sharing a room can form a pack.
+//
+// WanderCount is asserted rather than the emitted command because
+// `mob.WanderCount++` is the line immediately preceding `mob.Command("go ...")`
+// -- reaching one means reaching the other -- and Command() pushes to the global
+// event queue, which a unit test cannot observe cleanly.
+func TestMovePackFollowers_MaxWanderZeroNeverFollows(t *testing.T) {
+	cleanup := seedRegistry()
+	defer cleanup()
+
+	alpha := &Mob{
+		MobId: 1, InstanceId: 200, IsPackAlpha: true,
+		Groups:    []string{"warren"},
+		Character: characters.Character{Name: "Warren Scout", RoomId: 10},
+	}
+	// The authored shape of the Tunnel Shaman: never leaves, fresh count.
+	follower := &Mob{
+		MobId: 74, InstanceId: 201, PackAlphaId: 200,
+		MaxWander: 0, WanderCount: 0,
+		Groups:    []string{"warren"},
+		Character: characters.Character{Name: "Tunnel Shaman", RoomId: 10},
+	}
+	mobInstances[200] = alpha
+	mobInstances[201] = follower
+
+	MovePackFollowers(alpha, "north", []int{200, 201})
+
+	assert.Equal(t, 0, follower.WanderCount,
+		"MaxWander:0 follower must not be dragged along by its alpha")
+	assert.Equal(t, 0, follower.PackAlphaId,
+		"MaxWander:0 follower should break off the pack rather than stay bound to it")
+}
+
+// Guard the ordinary case still works: a follower with wander budget remaining
+// DOES follow. Without this, the fix above could be satisfied by breaking pack
+// movement entirely.
+func TestMovePackFollowers_WithBudgetStillFollows(t *testing.T) {
+	cleanup := seedRegistry()
+	defer cleanup()
+
+	alpha := &Mob{
+		MobId: 1, InstanceId: 200, IsPackAlpha: true,
+		Groups:    []string{"canine"},
+		Character: characters.Character{Name: "Alpha Wolf", RoomId: 10},
+	}
+	follower := &Mob{
+		MobId: 1, InstanceId: 201, PackAlphaId: 200,
+		MaxWander: 3, WanderCount: 0,
+		Groups:    []string{"canine"},
+		Character: characters.Character{Name: "Follower Wolf", RoomId: 10},
+	}
+	mobInstances[200] = alpha
+	mobInstances[201] = follower
+
+	MovePackFollowers(alpha, "north", []int{200, 201})
+
+	assert.Equal(t, 1, follower.WanderCount, "follower with budget should have moved")
+	assert.Equal(t, 200, follower.PackAlphaId, "and should still be in the pack")
+}

@@ -266,11 +266,15 @@ further decomposition
 | 5.9b | Contest floors: spells | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | **Done 2026-08-11** |
-| 5.11a | Model current vs candidate skill tuning | M | 5.7 | 5.7 follow-on | Not started |
-| 5.11b | Add a skill-scaled crit damage term | M | 5.11a | 5.7 follow-on | Not started |
-| 5.11c | Widen the crit-rate lever | S | 5.11a | 5.7 follow-on | Not started |
-| 5.11d | Reduce skill's direct damage share | M | 5.11a | 5.7 follow-on | Not started |
-| 5.11e | Above-cap curve for `SkillMultiplier` | S | 5.11b-d | 5.7 follow-on | Not started |
+| 5.11a | Model current vs candidate skill tuning | M | 5.7 | 5.7 follow-on | **Done 2026-08-11** |
+| 5.11b | `SkillWeight` 2.0 -> 5.0 | S | 5.11a | 5.7 follow-on | Not started |
+| 5.11c | Move positional modifiers into attack/defence scores | M | 5.11b | 5.7 follow-on | Not started |
+| 5.11d | Margin-derived crit (+ defensive mirror, `forceCrit` rework) | L | 5.11c | 5.7 follow-on | Not started |
+| 5.11e | Crit floors, 1% of hits, both directions | M | 5.11d | 5.7 follow-on | Not started |
+| 5.11f | Skill-scaled crit damage multiplier | M | 5.11d | 5.7 follow-on | Not started |
+| 5.11g | Docs + adversarial playtest gate | M | 5.11f | 5.7 follow-on | Not started |
+| ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
+| 5.12 | `context.md` accuracy pass (61 phantom symbols, 22 pkgs) | L | — | New (found 2026-08-11) | Not started |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
@@ -1637,6 +1641,81 @@ compensating rescale in the same change.
   0/25/50/75/100, under shipped tuning and candidates. Acceptance: the ordering
   Skill > Gear > Stats falls out of the math rather than out of intent, and the
   quadratic crit interaction stays near-linear.
+
+  **DONE 2026-08-11.** Model built from source formulas (`calcAttackScore:405`,
+  `characters/combat.go:317`, `damage_pipeline.go:23`, `calcCritThreshold:450`,
+  `calcHitDamage:998`) against shipped `config.yaml`. Five results, two of which
+  change the plan.
+
+  **1. Shipped tuning ALREADY passes the acceptance test.** Moving each axis
+  across its realistic range multiplies expected damage per swing by:
+
+  | Axis | Range | Shipped leverage |
+  |---|---|---|
+  | Skill | 0 -> 100 | **16.89x** |
+  | Gear | weapon mult 0.40 -> 1.60 | 4.00x |
+  | Stats | 100 -> 200 | 3.32x |
+
+  Skill > Gear > Stats already holds. The priority ordering was never broken —
+  what is wrong is the *mechanism* delivering it.
+
+  **2. Skill's leverage is already mostly hit-driven.** Decomposed across skill
+  0 -> 100 (log-share of total):
+
+  | Source | Shipped | Candidate |
+  |---|---|---|
+  | P(hit) | **60%** | 68% |
+  | Damage multiplier | 39% | 20% |
+  | Crit | **2%** | 11% |
+
+  So the approved philosophy is roughly 60% implemented already. The real gap is
+  crit contributing almost nothing: 2% of skill's total leverage. Crit is the
+  lever to move, and it is nearly free of the risks attached to the others.
+
+  **3. The quadratic runaway did not materialize.** Driving crit rate and
+  magnitude from the same stat compounds, but growth *decelerates* per 25 ranks
+  (5.2x, 3.3x, 2.6x, 1.07x) because the crit-threshold floor caps the rate. The
+  floor is the brake, so sub-linear curves on each lever are sufficient and no
+  extra damping is needed.
+
+  **4. NEW CONFLICT — the crit floor collides with grapple.**
+  `calcCritThreshold` has two floors: 1.5 after the skill term and 1.0 absolute
+  after position modifiers. A candidate that lets skill alone reach 1.0 makes
+  the grapple-controller bonus worth **nothing** at skill advantage +50, because
+  skill already sat on the absolute floor:
+
+  | Skill advantage | Threshold -> crit | With ground grapple |
+  |---|---|---|
+  | +25 | 1.50 -> 6.7% | 1.10 -> 13.6% |
+  | +50 | 1.00 -> 15.9% | 1.00 -> **15.9% (grapple buys nothing)** |
+
+  5.11c must keep the skill-only floor **above** the absolute floor (1.2, giving
+  11.5%, preserves grapple headroom) or move position modifiers off the
+  threshold entirely.
+
+  **5. The `*25` coupling is worse than feared.** Lowering `SkillMultiplierMax`
+  3.0 -> 1.5 without rescaling the contest consumers does this to a thief facing
+  an equal-rank observer:
+
+  | Skullduggery rank | Shipped P(sneak) | Candidate P(sneak) |
+  |---|---|---|
+  | 25 | 50.0% | 27.3% |
+  | 50 | 50.0% | **21.9%** |
+
+  A rank-50 thief loses more than half their success rate as a side effect of a
+  melee-damage retune. Non-negotiable: 5.11d rescales these in the same change.
+
+  **Also rejected:** compensating the `SkillMultiplierMax` cut with a global
+  `MeleeDamageScale` raise (0.52 -> 0.98 holds skill-50 damage constant) inflates
+  low-skill damage by **89%** and high-skill by 32%. Global compensation
+  over-corrects because it lifts the whole curve including its floor.
+
+  **Revised sequencing recommendation:** do **5.11b (crit damage) and 5.11c
+  (crit rate) first** — together they move crit from 2% to ~11% of skill's
+  leverage, need no rescaling of any other consumer, and carry no thief risk.
+  Treat **5.11d as optional and last**, gated on whether play actually shows
+  skill contributing too much flat damage after b and c land. The model does not
+  currently justify its risk.
 - **5.11b — Add a skill-scaled crit damage term.** New balance knob plus
   sub-linear skill scaling in `calcHitDamage`. Must keep the existing
   mitigation-bypass behavior coherent rather than stacking naively on it.
@@ -1653,6 +1732,138 @@ compensating rescale in the same change.
 
 **Boundary:** 5.11a gates the rest. Do not tune from intuition — the numbers
 come from the model.
+
+### Chunk 5.11 — DESIGN SETTLED 2026-08-11 (supersedes the 5.11b-e sketch above)
+
+Modelling against **real** live data reframed the arc again. Three matchups were
+built from source: a newbie, a skill-25 player against a 100g Arena Champion,
+and prod Meirok (`_archive/prod-users/users/24.yaml`, weapon-combat **69**)
+against a 325g Elemental King. Mob pools come from `ScaleSpawnStatPools`
+(`pool = goldPaid * spawnInfo.StatPool`, both mobs at multiplier 4).
+
+**Finding 1 — the player gets MORE outclassed as the game progresses.**
+
+| Matchup | Player atk | Mob def | Ratio | P(hit) |
+|---|---:|---:|---:|---:|
+| newbie vs newbie mob | 110 | 106 | 1.04x | 54.8% |
+| skill 25 vs champion (100g) | 160 | 213 | 0.75x | 19.2% |
+| Meirok (wc 69) vs king (325g) | 248 | 419 | **0.59x** | **15.0%** |
+
+Meirok holds the most-invested combat skill on the server and lands **exactly
+`MinAttackHitChance`**. The 5.9 floor is the only thing keeping him in that
+fight; without it he would sit at 0.4%.
+
+**Cause:** skill contributes `skill * SkillWeight` = **+138**. The King's
+Dexterity alone is **417** (Str/Vit 537). Stats do not merely beat skill at
+endgame, they dwarf it.
+
+**This corrects the 5.11a leverage result.** That model swept stats over
+100-200 and concluded Skill > Gear > Stats already held. Real endgame mobs sit
+at 417-537, outside the tested range. Against actual content the ordering
+**fails**. The 5.11a conclusion is valid only at player-scale stats.
+
+**Finding 2 — every mob has combat skill 1.** Neither mob declares a `skills`
+block, and `GetCombatSkillLevel()` floors at 1. So `SkillWeight` is symmetric in
+the formula but **asymmetric in effect**: raising it lifts the player on offence
+*and* defence (defence is also `stat + skill*SkillWeight`) while handing mobs +3
+points. It is a global player buff delivered through the skill channel.
+
+**DECISION: raise `SkillWeight` 2.0 -> 5.0. Do NOT nerf mob stat pools.**
+Tested four tunings on a full player x enemy matrix (`tools/balance/matrix.py`):
+
+| Tuning | newbie -> own tier | mid -> champion | Meirok -> king |
+|---|---:|---:|---:|
+| shipped (SW 2, pool x4) | 54.8% | 19.2% | **15.0%** (floor) |
+| **SW 5, pool x4 (CHOSEN)** | 65.9% | 60.6% | **59.5%** |
+| SW 2, pool x2 | 54.8% | 50.5% | 51.4% |
+| both | 65.9% | 79.9% | **83.9%** (stomp) |
+
+SW 5 gives a clean diagonal — each tier handles its own content around 60-66%
+and stays correctly hopeless above it (newbie vs king remains 15%/85% in every
+variant). Doing **both** overcorrects into a stomp. The pool nerf alone works but
+flattens everything toward 50/50, and would mean re-tuning every instance mob
+already balanced, against one config value.
+
+**Accepted consequences, explicitly:**
+- Early game gets easier (newbie vs newbie mob 54.8% -> 65.9%). Judged a
+  **good** outcome — early game currently plays tough.
+- PvP amplifies skill gaps. **Not a concern: DOGMud has no PvP.** Flagged here
+  only for any fork that adds it.
+- Blast radius is 20 call sites and wider than melee: taunt/conviction
+  (`combat_taunt.go`), spell casting (`cast_helpers.go` x3), spell deflection
+  (`avoidance.go`), dodge/parry/block, and the `consider` estimator. Uniform
+  `stat + skill*weight` everywhere, so unlike `SkillMultiplier` there is no
+  `*25` coupling to break.
+
+**BONUS — a second difficulty axis.** With skill actually mattering, a mob can
+be made dangerous by being *skilled* rather than stat-bloated. Every mob today
+is skill 1, so this design space has never been usable. Authors get
+stat-heavy vs skill-heavy as distinct threat profiles.
+
+**DECISION: crit is derived from the normalized margin of the opposed roll**,
+`margin / (sigma * sqrt(2))`, replacing the self-relative z-score. Threshold 2.0
+reproduces today's 2.3% at parity by construction, so even fights need no
+retune. Position modifiers move **into the attack/defence scores**, which ends
+the two-disjoint-systems split (prone as a score multiplier, grapple as a crit-
+threshold subtraction) and makes them feed crit automatically.
+
+**DECISION: no crit rate cap.** A player skilled enough to dogwalk trash should
+crit it nearly every hit, and hard.
+
+**DECISION: crit floors at 1% of HITS, both directions.** Not 1% of swings — a
+scrub hits ~15% of the time, so 1% of swings would need ~6.7% of their hits to
+crit, a higher per-hit rate than an even match gets at 2.3%, which is
+incoherent. **Ordering is load-bearing:** the crit floor applies *after* the hit
+is final and must never flip a miss into a hit. An attack crit currently forces
+a hit, so a crit floor evaluated earlier silently becomes a hit-floor bypass and
+leaks through `MinDefenseChance`. Do not floor the margin itself — a floor save
+already carries margin +-1 by the 5.9 convention, and flooring the margin would
+corrupt every effect that scales by it.
+
+**SPEC WRITTEN 2026-08-11:**
+`docs/superpowers/specs/2026-08-11-skill-and-crit-rebalance-design.md`.
+Re-decomposed into 5.11b-g above; the `SkillMultiplier`/`*25` work from the
+original sketch is now an explicit **non-goal**.
+
+The spec documents six silent traps found while reading the resolution path.
+Two are severe enough to name here: `best.margin` is **defence-positive**
+(`defenseRoll.Value - attackRoll.Value`), so the attacker's margin is its
+negation and an inverted sign still compiles; and `best.margin` is
+`math.Inf(-1)` when no defence was attempted, which under margin-derivation
+reads as an infinitely decisive attack and would crit **every** swing. Detect
+that via `best.defenseType == ""`, never by testing the margin.
+
+**Playtest gate:** 5.11 is a combat-feel change. Per the CLAUDE.md content gate,
+it needs a harness sweep plus a manual pass by the user in parallel — the model
+can show the math is coherent but not whether crits *feel* like the payoff.
+
+### Chunk 5.12 — `context.md` accuracy pass
+
+**Problem:** CLAUDE.md requires a `context.md` per package and requires it
+updated when the package's API changes. **Coverage is 100%** — all 124 packages
+have one. **Accuracy is what rotted.** A context.md describing an invented API
+is worse than none, because an agent codes against it and the mistake surfaces
+at compile time or at runtime.
+
+**Measured 2026-08-11** with `tools/context_md_audit.py`: **61 phantom symbols
+across 22 packages** — documented `func`/`type` declarations that no longer
+exist. Worst offenders `internal/events` (11 of 35 documented) and
+`internal/mobs` (10 of 43). `events.LevelUp` is representative: levels are being
+removed from the game, and the event type went with them while the docs did not.
+
+**Outcome:** every symbol in a `context.md` go block resolves, or the block says
+where the symbol actually lives.
+
+**Boundary:** triage, do not bulk-delete. The audit tool has known false
+positives (illustrative blocks, symbols legitimately owned elsewhere and shown
+for context) documented in its docstring. A phantom symbol may mean the doc is
+stale OR that a real function was deleted and its replacement never documented —
+those are different fixes.
+
+**Note:** this is a natural companion to 5.11, which will reshape
+`internal/combat` and `internal/dice` documentation anyway.
+
+**Finding:** New (found 2026-08-11 while scoping the 5.11 documentation work).
 
 ### Chunk 5.8 — Decide opposed-roll variance ownership
 
