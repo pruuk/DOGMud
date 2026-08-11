@@ -378,6 +378,7 @@ party markers are web-only — the ASCII `map` command is unaffected.
 
 ## Dice & Rolling System
 - **For all stat-based rolls use `dice.RollStat(mean)` or `dice.OpposedRollStat(atk, def)`** — no stdDev argument needed
+- **`OpposedRollStat` floors both ends by default** (chunk 5.10). Before that rename this same sentence named the *unfloored* function, which is how the 5.9 gap spread. `dice.OpposedRollStatWithFloors` takes per-contest values; `dice.OpposedRollStatRaw` is the unfloored escape hatch and is guarded by `contest_floor_guard_test.go`
 - These wrappers automatically apply the global `RollSpread` factor: `stdDev = mean × RollSpread`
 - `dice.Roll(mean, stdDev)` / `dice.OpposedRoll(atk, def, stdDev)` are low-level; only use them when variance is NOT stat-proportional (e.g., weapon damage variance from item specs)
 - **`RollSpread`** is the single master randomness knob — set in `_datafiles/config.yaml` under `GamePlay.RollSpread` (default **0.15**). Changing it rescales every dice roll in the engine. See `internal/dice/README.md` for win-probability tables.

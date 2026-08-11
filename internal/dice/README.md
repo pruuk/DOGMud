@@ -71,12 +71,35 @@ Contested check between two stat-based scores. Both sides roll with the
 attacker's standard deviation (`StdDevFor(atk)`). Use this for every
 attack-vs-defense, spell-vs-resist, and grapple check.
 
+**Both ends are floored** (chunk 5.9a/5.10): an outmatched initiator keeps a
+last-resort chance of success, and an overwhelming favourite is never certain.
+Without this, a stat-100 thief against a stat-150 mark succeeded 0.9% of the
+time and a stat-200 thief against a stat-100 mark succeeded 99.1%.
+
 ```go
 success, margin, atkRoll, defRoll := dice.OpposedRollStat(attackScore, defenseScore)
 if !success { /* fizzle / miss */ }
 if atkRoll.ZScore >= 2.0 { /* critical hit */ }
 if atkRoll.ZScore <= -2.0 { /* fumble / backfire */ }
 ```
+
+### `OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist float64) (...)`
+
+Same, with the floors supplied per call, for contests whose failure cost differs
+enough to want their own values. A fizzled spell costs the caster the whole
+round, and more for a long cast, where a missed melee swing costs a fraction of
+one — so spells floor lower than combat despite protecting the same thing.
+
+### `OpposedRollStatRaw(atk, def float64) (...)`
+
+The same contest with **no floor applied**. You almost certainly want
+`OpposedRollStat`. Use this only where the caller applies its own floors, as
+combat's `resolveAttack` does — it floors a computed hit *chance* rather than a
+roll outcome, so it cannot route through the dice-level floor.
+
+Guarded: `contest_floor_guard_test.go` at the repo root fails the build if this
+or `OpposedRoll` is called outside `internal/dice` without an exemption entry
+carrying a written reason.
 
 ---
 

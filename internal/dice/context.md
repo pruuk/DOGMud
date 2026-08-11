@@ -28,6 +28,21 @@ damage variance taken from an item spec, for example.
 
 `util.Rand` and `util.LogRoll` are **not** used for hit or attack checks.
 
+**`OpposedRollStat` floors both ends by default** (chunk 5.10). Neither a
+hopeless underdog nor an overwhelming favourite ever faces a foregone
+conclusion. Three variants exist and the default is the one you want:
+
+| Function | Floors | When |
+|---|---|---|
+| `OpposedRollStat` | configured defaults | every contest — this is the default |
+| `OpposedRollStatWithFloors` | supplied per call | a contest whose failure cost differs (spells) |
+| `OpposedRollStatRaw` | **none** | only if you apply your own; guarded |
+
+`OpposedRollStatRaw` and `OpposedRoll` are guarded by
+`contest_floor_guard_test.go` at the repo root: calling either outside
+`internal/dice` fails the build unless you add the package to its exemption list
+with a written reason.
+
 ## `RollSpread`
 
 The single master randomness knob, `GamePlay.RollSpread` in `config.yaml`
@@ -55,7 +70,16 @@ func RollStatArray(count int, mean, stdDev, min, max float64) []int
 Contests:
 
 ```go
+// Floored (chunk 5.9a/5.10) -- use these.
+func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult)
+func OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist float64) (bool, float64, RollResult, RollResult)
+func SetContestFloors(minSuccess, minResist float64)
+func ContestFloors() (minSuccess, minResist float64)
+
+// Unfloored -- guarded by contest_floor_guard_test.go.
+func OpposedRollStatRaw(atk, def float64) (bool, float64, RollResult, RollResult)
 func OpposedRoll(attackerStat, defenderStat, stdDev float64) (bool, float64, RollResult, RollResult)
+
 func DifficultyCheck(stat, difficulty, stdDev float64) RollResult
 func CompareRolls(roll1, roll2 RollResult) int
 func Percentile(chance float64) (bool, float64)
@@ -103,6 +127,16 @@ detection uniform across every subsystem. `String()` renders it for debug logs.
 - **Analysis functions are deterministic; rolling functions are not.** Do not
   use `SuccessChance` where you meant `Roll` — it will silently always succeed
   or always fail depending on how you compare it.
+- **`OpposedRollStat` and `OpposedRollStatRaw` share a signature.** Any future
+  rename in this area is therefore **not** compiler-verified: swapping the names
+  in one pass leaves callers compiling fine against the other function's
+  semantics. Chunk 5.10 did the swap in two ordered steps, each proving the old
+  identifier was gone before the next began. Do the same, and note that
+  `OpposedRollStat` is also a prefix of `OpposedRollStatWithFloors`, so a naive
+  replace-all mangles the longer name.
+- **A floor save is a BARE success.** When a floor flips an outcome, the margin
+  is reduced to the smallest value carrying the new sign. Anything scaling an
+  effect by margin must not read a floor save as a rout.
 - **`RollTable` takes weights, not probabilities.** They need not sum to
   anything in particular.
 - **Clamping changes the distribution.** `RollClamped` piles probability mass
