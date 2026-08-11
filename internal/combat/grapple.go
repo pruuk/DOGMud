@@ -76,7 +76,8 @@ func AttemptGrapple(attacker *characters.Character, defender *characters.Charact
 	}
 
 	// Opposed roll
-	success, margin, attackRoll, defenseRoll := dice.OpposedRollStat(result.AttackScore, result.DefenseScore)
+	floorHit, floorResist := ManeuverFloors()
+	success, margin, attackRoll, defenseRoll := dice.OpposedRollStatFlooredWith(result.AttackScore, result.DefenseScore, floorHit, floorResist)
 
 	result.Success = success
 	result.Margin = margin

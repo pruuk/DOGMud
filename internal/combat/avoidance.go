@@ -26,7 +26,8 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 	defSpellcasting := float64(defender.GetSkillLevel(skills.Spellcasting)) * skillWeight
 	defenseScore := float64(defender.GetEffectivePerception()) + defSpellcasting
 
-	success, _, _, defRoll := dice.OpposedRollStat(attackScore, defenseScore)
+	floorHit, floorResist := SpellFloors()
+	success, _, _, defRoll := dice.OpposedRollStatFlooredWith(attackScore, defenseScore, floorHit, floorResist)
 
 	defender.OnSkillUse(string(skills.Spellcasting), defenderUserId)
 	defender.OnStatUse("perception", defenderUserId)
@@ -60,7 +61,8 @@ func TryStoicResolve(attacker *characters.Character, defender *characters.Charac
 	defRhetoric := float64(defender.GetSkillLevel(skills.Rhetoric)) * skillWeight
 	defenseScore := float64(defender.Stats.Willpower.ValueAdj) + defRhetoric
 
-	success, _, _, defRoll := dice.OpposedRollStat(attackScore, defenseScore)
+	floorHit, floorResist := ManeuverFloors()
+	success, _, _, defRoll := dice.OpposedRollStatFlooredWith(attackScore, defenseScore, floorHit, floorResist)
 
 	defender.OnSkillUse(string(skills.Rhetoric), defenderUserId)
 	defender.OnStatUse("willpower", defenderUserId)

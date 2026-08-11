@@ -270,6 +270,17 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 // an outmatched caster from being guaranteed to waste rounds; the resist floor
 // keeps an outmatched TARGET from being auto-hit with no agency, which matters
 // because mobs cast at players too (see resolveMobSpellAgainstPlayer).
+// maneuverHitFloor and maneuverResistFloor mirror the spell pair for combat
+// maneuvers resolved from hooks. Read from config here rather than calling
+// internal/combat, which hooks does not import.
+func maneuverHitFloor() float64 {
+	return float64(configs.GetBalanceConfig().MinManeuverHitChance)
+}
+
+func maneuverResistFloor() float64 {
+	return float64(configs.GetBalanceConfig().MinManeuverResistChance)
+}
+
 func spellHitFloor() float64 {
 	return float64(configs.GetBalanceConfig().MinSpellHitChance)
 }

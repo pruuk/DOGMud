@@ -266,7 +266,8 @@ func processGrapplePair(controller, controlled *characters.Character) {
 	ctrlScore := grappleScore(controller, isAggressorSide(controller), cfg)
 	cdScore := grappleScore(controlled, isAggressorSide(controlled), cfg)
 
-	_, margin, atkRoll, defRoll := dice.OpposedRollStat(ctrlScore, cdScore)
+	floorHit, floorResist := maneuverHitFloor(), maneuverResistFloor()
+	_, margin, atkRoll, defRoll := dice.OpposedRollStatFlooredWith(ctrlScore, cdScore, floorHit, floorResist)
 
 	// LastDriftRoll snapshot for chunk-4d Position_SubmissionTick.
 	currentRound := util.GetRoundCount()

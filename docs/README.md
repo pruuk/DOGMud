@@ -49,6 +49,7 @@ verify against the code before acting on one.
 |------|--------------|
 | [`roadmaps/`](roadmaps/) | Long-form roadmaps: development plan, combat-state, mob-aliveness |
 | [`roadmaps/ADVERSARIAL_REVIEW_REMEDIATION_ROADMAP.md`](roadmaps/ADVERSARIAL_REVIEW_REMEDIATION_ROADMAP.md) | 37-finding remediation roadmap from the 2026-08-07 adversarial reviews. Note: its source doc `ADVERSARIAL_CODE_REVIEW_2026-08-07.md` is currently untracked in the repo root |
+| [`perf/droplet-screenshots/`](perf/droplet-screenshots/) | DigitalOcean Insights captures per prod deploy, with an index explaining what each shows |
 | [`superpowers/`](superpowers/) | Per-feature specs and implementation plans, live and completed |
 | [`archive/`](archive/) | Retired documents and old bug screenshots |
 | [`upstream/`](upstream/) | Upstream-facing material in both directions: artifacts inherited from the GoMud engine, and briefs for changes we want to send out to third-party tools |

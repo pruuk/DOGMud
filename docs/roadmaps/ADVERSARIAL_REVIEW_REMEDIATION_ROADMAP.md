@@ -264,7 +264,7 @@ further decomposition
 | 5.8 | Decide opposed-roll variance ownership | L | — | Design decision | **DECIDED 2026-08-11: preserve** |
 | 5.9a | Contest floors: stealth, theft, traps, detection | M | 5.8 | 5.8 follow-on | **Done 2026-08-11** |
 | 5.9b | Contest floors: spells | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
-| 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | Not started |
+| 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | Not started |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
@@ -1678,7 +1678,37 @@ strong mob caster lands ~99% on a weak player, who then has no agency at all.
 That is the same reason `MinDefenseChance` exists for melee. Both ends, both
 0.05, and tunable independently if play says otherwise.
 
-**5.9c (not started)** — the remaining 11 sites: `spell_resolution` (4),
+**5.9c DONE 2026-08-11** — the remaining 12 sites: grapple, submission, skill
+moves, flee (2), stoic resolve, taunt, throw, two mob ticks, plus charm and
+spell deflection which take the SPELL pair rather than the maneuver pair.
+
+New `Balance.MinManeuverHitChance` / `MinManeuverResistChance`, both **0.05**.
+
+**The rule the whole 5.9 arc settled on, now stated in config.yaml:** the floor
+tracks the COST OF A SINGLE FAILURE.
+
+| Contest | Cost of one failure | Floor |
+|---|---|---:|
+| melee swing | a fraction of a round, many per fight | 0.15 |
+| maneuver, spell | the WHOLE round, more for a long cast | 0.05 |
+| out-of-combat attempt | a round plus a consequence | 0.05 |
+
+So maneuvers sit with spells, not with the swing they superficially resemble.
+
+**Two corrections found while doing it,** both to claims made earlier in this
+arc:
+
+1. `avoidance.go`'s two calls are `TrySpellDeflection` and `TryStoicResolve`,
+   not the melee hit/avoid path. The melee path uses `dice.Roll` directly and is
+   floored in `resolveAttack`. **NOTHING among the 32 `OpposedRollStat` sites
+   fed `resolveAttack`**, so there was never a double-flooring risk and
+   `avoidance.go` was genuinely unfloored like the rest.
+2. `TrySpellDeflection` resolves against a SPELL, so it takes the spell pair.
+   Giving it the maneuver pair would have been a coincidence of value rather
+   than a shared rule -- they are both 0.05 today, and would silently diverge the
+   moment either is retuned.
+
+**Original 12 sites (superseded)** — the remaining 11 sites: `spell_resolution` (4),
 `flee` (2), `grapple`, `submission`, `skill_moves`, `combat_taunt`, `throw`,
 `charm_spell`, and two mob-tick sites. Held back deliberately: these change
 FIGHT math, not just out-of-combat contests, and landing a probability shift

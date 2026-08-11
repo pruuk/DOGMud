@@ -164,3 +164,41 @@ func TestOpposedRollStatFlooredWith_ClampsPerCall(t *testing.T) {
 		t.Errorf("clamped floor produced %.2f%%, want ~50%%", got*100)
 	}
 }
+
+// The 5.9 arc settled on one rule: the floor tracks the COST OF A SINGLE
+// FAILURE. A melee swing is a fraction of a round and a fight has many, so it
+// floors at 0.15. Anything that consumes a WHOLE round -- a spell, a maneuver --
+// floors at 0.05. Out-of-combat one-shots likewise.
+//
+// This pins the arithmetic that rule depends on, so a future retune can see what
+// each value actually buys rather than guessing.
+func TestContestFloor_EffectiveRatesAtEachTier(t *testing.T) {
+	withFloors(t, 0, 0)
+
+	const n = 40000
+	measure := func(atk, def, fh, fr float64) float64 {
+		wins := 0
+		for i := 0; i < n; i++ {
+			if ok, _, _, _ := OpposedRollStatFlooredWith(atk, def, fh, fr); ok {
+				wins++
+			}
+		}
+		return float64(wins) / float64(n)
+	}
+
+	// Outmatched initiator (raw ~0.9%): the floor is what they actually get.
+	if got := measure(100, 150, 0.05, 0.05); got < 0.03 || got > 0.09 {
+		t.Errorf("0.05 tier, outmatched: %.2f%%, want roughly the 5%% floor", got*100)
+	}
+	if got := measure(100, 150, 0.15, 0.15); got < 0.12 || got > 0.20 {
+		t.Errorf("0.15 tier, outmatched: %.2f%%, want roughly the 15%% floor", got*100)
+	}
+
+	// Overwhelming initiator (raw ~99.1%): the resist floor is the tax.
+	if got := measure(200, 100, 0.05, 0.05); got < 0.90 || got > 0.97 {
+		t.Errorf("0.05 tier, overwhelming: %.2f%%, want ~95%%", got*100)
+	}
+	if got := measure(200, 100, 0.15, 0.15); got < 0.80 || got > 0.90 {
+		t.Errorf("0.15 tier, overwhelming: %.2f%%, want ~85%%", got*100)
+	}
+}

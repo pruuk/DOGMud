@@ -162,6 +162,15 @@ func (b *Balance) validateMisc() {
 		b.MinSpellResistChance = 0.05
 	}
 
+	// 0.05 like spells: a maneuver costs the whole round. The melee swing keeps
+	// 0.15 because it is a fraction of a round and a fight has many of them.
+	if b.MinManeuverHitChance < 0 || b.MinManeuverHitChance > 0.50 {
+		b.MinManeuverHitChance = 0.05
+	}
+	if b.MinManeuverResistChance < 0 || b.MinManeuverResistChance > 0.50 {
+		b.MinManeuverResistChance = 0.05
+	}
+
 	// ── MOVEMENT ─────────────────────────────────────────────────────────────
 	// (MovementBaseStaminaCost and MovementMaxStaminaCost handled in STAMINA & CONVICTION above)
 
