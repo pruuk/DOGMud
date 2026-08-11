@@ -275,6 +275,8 @@ further decomposition
 | 5.11g | Docs + adversarial playtest gate | M | 5.11f | 5.7 follow-on | Not started |
 | ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
 | 5.12 | `context.md` accuracy pass (61 phantom symbols, 22 pkgs) | L | — | New (found 2026-08-11) | Not started |
+| 5.13 | Tunnel Shaman moves constantly (cause unknown) | S | — | Play report 2026-08-11 | **Parked** — suspects narrowed |
+| 5.14 | Attacking a mob does not pin it in place | M | — | Play report 2026-08-11 | Not started — cause identified |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
@@ -1864,6 +1866,62 @@ those are different fixes.
 `internal/combat` and `internal/dice` documentation anyway.
 
 **Finding:** New (found 2026-08-11 while scoping the 5.11 documentation work).
+
+### Chunk 5.13 — Tunnel Shaman moves constantly (root cause UNKNOWN)
+
+**Reported from play 2026-08-11:** the Tunnel Shaman (mob 74,
+`labyrinth_of_low_tunnels`) "moves A LOT" despite being authored
+`maxwander: 0`, which means never wanders.
+
+**Ruled out, with reasoning — do not re-check these:**
+
+- **Idle commands.** Its pool is pure emotes; no movement command. Same for the
+  Goblin Shaman.
+- **`wander` from a goal planner.** `mobcommands/wander.go:60` guards
+  `if mob.MaxWander == 0 { return }`, so the command is a no-op for it.
+- **Pack drag.** A real defect was found here and fixed (PR #24) — but it cannot
+  explain this mob. Pack alpha is the **highest statpool**, and the shaman's 15
+  outranks every wander-capable mob in its zone (scout 8, warrior 12, rat 3,
+  grub 1, crawler 6). The only higher mob, the chieftain at 25, is itself
+  `maxwander: 0`. So the shaman is always the alpha, and alphas move via
+  `wander.go`, which guards correctly.
+- **Flee.** `defensive_caster` only flees on `mob_hurt` below 30% health; the
+  report was of movement with no damage landed.
+- **Schedule / patrol.** It declares neither `schedule_id` nor `patrol_id`.
+
+**Remaining suspects, untested:** goal planners issuing movement other than
+`wander` (e.g. `pathto`); the `gossiper` group and conversation-seeking; and
+combat-chase displacement via the exit-walk in `handleAggroAndAssist`
+(`defMob.Command("go " + exitName)` when the attacker is in another room).
+
+**Parked 2026-08-11** by user decision after the pack-drag fix was taken as the
+cheap win. Re-open if it still reproduces in play.
+
+### Chunk 5.14 — Attacking a mob does not pin it in place
+
+**Reported from play 2026-08-11:** ten minutes chasing a shaman, attacking
+repeatedly, with no hits landing.
+
+**Root cause identified.** `attack` sets only the **player's** aggro
+(`usercommands/attack.go:212`). The mob learns it is engaged only when combat
+resolves on the *next* round, in Phase 7 `handleAggroAndAssist`
+(`NewRound_DoCombat_unified.go:185`). But `IdleMobs` gates on
+`mob.Character.IsInCombat()` (`NewRound_IdleMobs.go:63`) — the mob's *own* state.
+In that one-round window the mob is still "idle", a goal planner can move it, and
+the queued attack then finds no target. No aggro is ever established and the loop
+repeats indefinitely. The "slight delay before the fight starts" is the same
+window seen from the other side.
+
+**Aggravating factor:** once engaged, `NewRound_IdleMobs.go:65-68` ends the
+mob's aggro if the target is in a different room. Sensible against endless
+pursuit, but it frees the mob again on any room desync mid-chase.
+
+**Proposed fix:** have `IdleMobs` skip any mob targeted by a player in the same
+room, rather than only checking the mob's own combat state. One predicate, and it
+covers every engagement path — melee, spells, ranged — not just the `attack`
+command. Marking the mob at attack time also works but fixes only that path.
+
+**Finding:** New (reported in play 2026-08-11). Not yet scheduled.
 
 ### Chunk 5.8 — Decide opposed-roll variance ownership
 
