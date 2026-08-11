@@ -262,7 +262,8 @@ further decomposition
 | 5.6 | Converge composition-heavy commands on the parser | M | 1.2 | 27 | Not started |
 | 5.7 | Decide post-soft-cap skill effectiveness | M | — | Design decision | Not started |
 | 5.8 | Decide opposed-roll variance ownership | L | — | Design decision | **DECIDED 2026-08-11: preserve** |
-| 5.9 | Extend contest floors to non-combat opposed rolls | M | 5.8 | 5.8 follow-on | Not started |
+| 5.9a | Contest floors: stealth, theft, traps, detection | M | 5.8 | 5.8 follow-on | **Done 2026-08-11** |
+| 5.9b | Contest floors: combat maneuvers and spells | M | 5.9a | 5.8 follow-on | Not started |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
@@ -1625,7 +1626,41 @@ not certain), with the value(s) in config per the balance-lives-in-config rule.
    same 15% is far more generous in effect. Same number, very different meaning.
 
 **Boundary:** decomposed from 5.8 per that chunk's own rule that a retune becomes
-a separate arc. Needs a spec before code.
+a separate arc.
+
+**Split into 5.9a and 5.9b once the real scope was measured.** The floors were
+believed to be missing from ~12 stealth/theft sites. They are missing from
+**~32**: `resolveAttack` in `combat_helpers.go` is the ONLY place either floor is
+applied, and only `avoidance.go` feeds it. Combat MANEUVERS (flee, grapple,
+submission, skill moves, taunt) and SPELLS are unfloored too.
+
+**5.9a DONE 2026-08-11** — 17 sites: `steal` (4), `plant` (4), `go` (4, sneak on
+move and spotting hidden creatures), `sneak` (2), `shadow` (1+1), `defuse` (1).
+New `dice.OpposedRollStatFloored` bounds both ends;
+`Balance.MinContestSuccessChance` / `MinContestResistChance` default **0.05**,
+set at startup via `dice.SetContestFloors`, mirroring `SetRollSpread`.
+
+0.05 rather than combat's 0.15 on purpose: a combat floor fires on EVERY swing of
+a many-swing fight, while these fire ONCE per attempt on actions that already
+punish failure (a caught thief, a trap sprung on the fumbler, a revealed sneak).
+The same number would be far more generous here.
+
+A floor save returns margin ±1, because a last-resort save is a bare success and
+callers that scale an effect by margin must not read it as a rout.
+
+**Verified by mutation:** forcing the floors to zero makes 3 of the 6 new tests
+fail. Boot test confirms both knobs load.
+
+**5.9b (not started)** — the remaining 15 sites: `spell_resolution` (4),
+`flee` (2), `grapple`, `submission`, `skill_moves`, `combat_taunt`, `throw`,
+`charm_spell`, and two mob-tick sites. Held back deliberately: these change
+FIGHT math, not just out-of-combat contests, and landing a probability shift
+across spells and maneuvers at the same time as the stealth change would make a
+regression impossible to attribute. Wants its own playtest.
+
+⚠️ Note for 5.9b: melee hit/avoid IS floored but spells are NOT, so a spell that
+can never land against a strong target sits next to a melee swing that always
+can. That inconsistency is arguably worse than the one 5.9a fixed.
 
 **Finding:** 5.8 (follow-on).
 
