@@ -670,7 +670,18 @@ Balance:
   SkillMultiplierMax: 3.0
   # SkillWeight: Global multiplier on skill contributions in additive formulas
   # (hit rolls, defense scores, spell attack, etc.). Higher = skills matter more.
-  SkillWeight: 2.0
+  #
+  # Raised 2.0 -> 5.0 by roadmap chunk 5.11b. Measured: prod Meirok
+  # (weapon-combat 69, the highest on the server) landed exactly
+  # MinAttackHitChance against a 325g Elemental King. The 5.9 floor was the only
+  # thing keeping him in that fight, because skill contributed +138 against the
+  # King's Dexterity of 417.
+  #
+  # NOTE this is asymmetric in practice: defense score is ALSO
+  # stat + skill*SkillWeight, and every mob has combat skill 1 (no skills block;
+  # GetCombatSkillLevel floors at 1). So it lifts players on offense AND defense
+  # while handing mobs +3 points. Deliberate. See tools/balance/matrix.py.
+  SkillWeight: 5.0
   #
   # Mitigation caps: maximum % damage reduction from armor for each channel.
   # 0.75 = armor can block at most 75% of incoming damage in that channel.
@@ -1304,7 +1315,11 @@ Network:
   # - HttpPort -
   #   The port the server listens on for web requests
   #   0 (zero) means none.
-  HttpPort: 80
+  #   LOCAL: 8090, not 80 — Docker Desktop publishes the critbench-frontend
+  #   container on 0.0.0.0:80 (up since 2026-07-30), so a DOGMud server set
+  #   to 80 loses the bind and boots with NO web listener. The droplet's own
+  #   config (not this file — skip-worktree) owns the prod value.
+  HttpPort: 8090
   # - HttpsPort -
   #   The port the server listens on for web requests
   #   Note: Must have a cert/key file (See FilePaths)
@@ -1417,9 +1432,9 @@ Network:
 #
 ################################################################################
 Logging:
-  LogToFile: false                             # Write logs to file + terminal (DISABLED for prod push per CLAUDE.md pre-push SOP — droplet has limited disk)
+  LogToFile: true                              # LOCAL OVERNIGHT SOAK 08-10. Set back to false before any prod push (droplet has limited disk). This file is skip-worktree so it is never committed.
   LogFilePath: "_datafiles/logs/server.log"    # Log file path (rotated at 100MB)
-  LogLevel: "debug"                            # debug, info, warn, error
+  LogLevel: "info"                             # LOCAL SOAK: info, not debug. The log rotates at 100MB, and 12h of debug would roll the early autosave cycles away before morning. AutoSave lines are Info; savequeue problems are Warn/Error.
 
 ################################################################################
 #
@@ -1561,6 +1576,15 @@ Roles:
 #   Modules
 #   Empty here. Modules provide data for this.
 #
+################################################################################
+# Playtest — synthetic profile materialization (Chunk 0.3b). Empty
+# ProfilesManifest is the production default (materializer no-op). Ephemeral
+# playtestenv runs override these via CONFIG_PATH.
+################################################################################
+Playtest:
+  ProfilesDir: tools/playtest/profiles
+  ProfilesManifest: ""
+
 ################################################################################
 Modules:
   playtest:

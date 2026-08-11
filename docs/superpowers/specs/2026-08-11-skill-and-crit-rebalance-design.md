@@ -207,6 +207,59 @@ King therefore equips a Volcanic Plate (base `physical_mitigation: 12`, scaled
 by an `sqrt(goldPaid) * LootBudgetScalar` budget at +1% per affix point), giving
 roughly 15% at a 325g buy-in. The Arena Champion likewise equips its pool.
 
+## F. Return damage — channel-matched mitigation
+
+**Found in the 5.11b playtest, 2026-08-11.** With `SkillWeight` 5.0 the user
+reported combat "faster all around", reflected damage hurting far more, and the
+overall challenge roughly unchanged. All three follow from the code:
+
+```go
+returnPct := defChar.StatMod("return_damage") + species + mutation
+returnDmg := int(float64(res.DamageToTarget) * float64(returnPct) / 100.0)
+atkChar.Health -= returnDmg          // NO mitigation applied
+```
+
+Return damage is **proportional to damage dealt**, so a hit rate going
+15% -> 59.5% multiplies reflected damage by the same ~4x. Against a reflecting
+enemy `SkillWeight` raised the player's output and the enemy's retaliation
+equally — which is exactly why the fight got faster without getting easier. And
+`atkChar.Health -= returnDmg` bypasses mitigation entirely, so armour and
+Ironhide Brew do nothing against it.
+
+**This blocks 5.11g.** The crit damage multiplier compounds with reflect: a crit
+against the Elemental King lands at ~6.41x a normal hit, and 25% of that returns
+**unmitigated** — roughly 1.6x a full normal hit straight to the attacker's
+health. Against weaker reflecting enemies, where a skilled player crits ~94% of
+swings, nearly every hit would reflect a 5.45x-scaled blow. Plausibly lethal and
+certainly unintended. **5.11f must land before 5.11g.**
+
+**The whole reflect surface (verified 2026-08-11):**
+
+| Source | Value | Channel |
+|---|---|---|
+| fire / magma elemental (species) | 25% | magical |
+| smoke elemental (species) | 20% | magical |
+| storm elemental (species) | 15% | magical |
+| `thornguard` enchantment, 5 tiers | 5-25% | physical |
+| Ironhide Reflect Skin (mutation) | varies | physical |
+
+No items or buffs set `return_damage` directly.
+
+**Design:** add a channel to each source, **defaulting to physical** so
+`thornguard` and Ironhide are correct with no data change, and tag the four
+elemental species `magical`. Then apply the **attacker's** matching mitigation
+via the existing `ApplyMitigation` pipeline.
+
+**Consequence worth noting:** once elemental reflect routes through magical
+mitigation, every existing source of magical mitigation already counters it. The
+bespoke spell/enchantment/potion originally proposed becomes **optional** rather
+than necessary. Build the channel-matching first; add a dedicated
+`return_damage_resist` stat only if play still calls for one.
+
+**Open number:** mitigation caps are 75%. Allowing reflect to be reduced that
+far is a large swing for something currently unmitigable, and it may want its own
+lower cap. Decide from play, not theory.
+
 ## Decomposition
 
 Ordered so each slice is independently shippable and testable.
@@ -219,8 +272,11 @@ Ordered so each slice is independently shippable and testable.
 - **5.11d — Margin-derived crit**, including T2's no-defence case, the defensive
   mirror, and T4's `forceCrit` rework.
 - **5.11e — Crit floors**, 1% of hits both directions, after hit resolution.
-- **5.11f — Skill-scaled crit damage multiplier.**
-- **5.11g — Docs.** `internal/combat/context.md`, `internal/dice/context.md`,
+- **5.11f — Return damage: channel-matched mitigation.** See section F. **Must
+  land before 5.11g** — the crit multiplier compounds with unmitigated reflect.
+- **5.11g — Skill-scaled crit damage multiplier.** (Was 5.11f before the
+  playtest inserted return damage ahead of it.)
+- **5.11h — Docs.** `internal/combat/context.md`, `internal/dice/context.md`,
   CLAUDE.md's combat sections, `docs/PATCH_NOTES.md`. Overlaps chunk 5.12.
 
 ## Testing

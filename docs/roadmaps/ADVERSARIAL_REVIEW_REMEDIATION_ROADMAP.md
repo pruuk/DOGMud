@@ -267,12 +267,13 @@ further decomposition
 | 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | **Done 2026-08-11** |
 | 5.11a | Model current vs candidate skill tuning | M | 5.7 | 5.7 follow-on | **Done 2026-08-11** |
-| 5.11b | `SkillWeight` 2.0 -> 5.0 | S | 5.11a | 5.7 follow-on | Not started |
+| 5.11b | `SkillWeight` 2.0 -> 5.0 | S | 5.11a | 5.7 follow-on | **Done 2026-08-11** (played) |
 | 5.11c | Move positional modifiers into attack/defence scores | M | 5.11b | 5.7 follow-on | Not started |
 | 5.11d | Margin-derived crit (+ defensive mirror, `forceCrit` rework) | L | 5.11c | 5.7 follow-on | Not started |
 | 5.11e | Crit floors, 1% of hits, both directions | M | 5.11d | 5.7 follow-on | Not started |
-| 5.11f | Skill-scaled crit damage multiplier | M | 5.11d | 5.7 follow-on | Not started |
-| 5.11g | Docs + adversarial playtest gate | M | 5.11f | 5.7 follow-on | Not started |
+| 5.11f | Return damage: channel-matched mitigation | M | 5.11b | Found in 5.11b playtest | Not started |
+| 5.11g | Skill-scaled crit damage multiplier | M | 5.11d, **5.11f** | 5.7 follow-on | Not started |
+| 5.11h | Docs + adversarial playtest gate | M | 5.11g | 5.7 follow-on | Not started |
 | ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
 | 5.12 | `context.md` accuracy pass (61 phantom symbols, 22 pkgs) | L | — | New (found 2026-08-11) | Not started |
 | 5.13 | Tunnel Shaman moves constantly (cause unknown) | S | — | Play report 2026-08-11 | **Parked** — suspects narrowed |
