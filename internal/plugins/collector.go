@@ -63,6 +63,29 @@ func (c *pendingCollector) writes() []savequeue.PendingWrite {
 	return out
 }
 
+// autosaveQueue is the shared pending set, injected at startup by the autosave
+// hook. Nil until then, and in unit tests.
+var autosaveQueue *savequeue.Queue
+
+// SetAutosaveQueue points this package at the pending set shared with rooms and
+// users. Called once at startup.
+func SetAutosaveQueue(q *savequeue.Queue) {
+	autosaveQueue = q
+}
+
+// cancelPending drops any queued write for path.
+//
+// Guard G2. A queued entry holds an OLDER snapshot by definition, so letting it
+// commit after a synchronous write would roll the plugin's state backwards.
+// Plugins write outside autosave on their own cadence (weather.persistState
+// does, every ~20 minutes), which is exactly when this happens.
+func cancelPending(path string) {
+	if autosaveQueue == nil {
+		return
+	}
+	autosaveQueue.Cancel(path)
+}
+
 // collecting is the one active collector for the whole registry, or nil.
 //
 // Set by PrepareAll and cleared before it returns. NOT protected by a mutex,

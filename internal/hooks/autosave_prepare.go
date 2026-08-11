@@ -21,6 +21,7 @@ var autosaveQueue = rooms.AutosaveQueue()
 
 func init() {
 	users.SetAutosaveQueue(autosaveQueue)
+	plugins.SetAutosaveQueue(autosaveQueue)
 }
 
 // AutosaveQueue exposes the pending set for shutdown and copyover flushes.

@@ -391,6 +391,9 @@ func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 		return nil
 	}
 
+	// Guard G2 (chunk 4.7). See cancelPending.
+	cancelPending(fullPath)
+
 	// Durable atomic write (chunk 2.8). This was a BARE write with no
 	// atomicity at all, over plugin state that includes auction history,
 	// leaderboards and weather simulation state.

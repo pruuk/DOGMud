@@ -417,3 +417,64 @@ func TestPrepareAll_FastPluginIsNotReportedSlow(t *testing.T) {
 		t.Fatalf("got %d writes, want 1", len(writes))
 	}
 }
+
+// The stale-write sequence this guard exists for:
+//
+//	prepare       -> pending write, bytes A
+//	plugin tick   -> synchronous write, bytes B
+//	drain         -> commits A over B
+//
+// weather.persistState() writes on its own cadence, so this is a real sequence,
+// not a hypothetical one.
+func TestWriteBytes_SynchronousWriteCancelsAPendingOne(t *testing.T) {
+	dir := t.TempDir()
+	restore := useTempWriteFolder(t, dir)
+	defer restore()
+
+	q := savequeue.New()
+	SetAutosaveQueue(q)
+	defer SetAutosaveQueue(nil)
+
+	p := &Plugin{name: "probe", version: "1.0"}
+
+	// A prepare collected the OLD bytes.
+	collecting = newPendingCollector()
+	if err := p.WriteBytes("state", []byte("OLD")); err != nil {
+		t.Fatal(err)
+	}
+	stale := collecting.writes()
+	collecting = nil
+	q.Supersede(stale)
+
+	// The plugin then writes NEW bytes on its own cadence.
+	if err := p.WriteBytes("state", []byte("NEW")); err != nil {
+		t.Fatal(err)
+	}
+	if q.Pending() != 0 {
+		t.Fatalf("pending %d after a synchronous write, want 0", q.Pending())
+	}
+
+	q.Drain(10)
+
+	got, err := p.ReadBytes("state")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "NEW" {
+		t.Errorf("file holds %q; a stale queued write overwrote a newer one", got)
+	}
+}
+
+func TestSetAutosaveQueue_NilIsSafe(t *testing.T) {
+	dir := t.TempDir()
+	restore := useTempWriteFolder(t, dir)
+	defer restore()
+
+	SetAutosaveQueue(nil)
+	p := &Plugin{name: "probe", version: "1.0"}
+
+	// Must not panic when no queue has been wired in (unit tests, early boot).
+	if err := p.WriteBytes("state", []byte("x")); err != nil {
+		t.Fatalf("WriteBytes with no queue: %v", err)
+	}
+}
