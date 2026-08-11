@@ -452,13 +452,19 @@ func RollStat(mean float64) RollResult {
 	return Roll(mean, StdDevFor(mean))
 }
 
-// OpposedRollStat performs a contested check between two stat-based scores.
-// Both sides are rolled with the attacker's standard deviation (StdDevFor(atk))
-// so the spread scales proportionally to the attacker's power.  Returns the
-// same values as OpposedRoll: (success, margin, attackRoll, defenseRoll).
+// OpposedRollStatRaw performs a contested check between two stat-based scores
+// with NO contest floor applied.
 //
-// Use this for every attack-vs-defense, spell-vs-resist, grapple, bash, kick,
-// and trip check.  Never pass a raw stdDev literal to OpposedRoll for these.
-func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult) {
+// Both sides are rolled with the attacker's standard deviation (StdDevFor(atk))
+// so the spread scales proportionally to the attacker's power. Returns the same
+// values as OpposedRoll: (success, margin, attackRoll, defenseRoll).
+//
+// You almost certainly want OpposedRollStat instead, which floors both ends.
+// Use this ONLY where the caller applies its own floors -- combat's
+// resolveAttack does, because it floors a computed hit CHANCE rather than a
+// roll outcome. Calling this without applying a floor recreates the gap that
+// roadmap chunk 5.9 was opened to close: a stat-100 thief against a stat-150
+// mark succeeded 0.9% of the time.
+func OpposedRollStatRaw(atk, def float64) (bool, float64, RollResult, RollResult) {
 	return OpposedRoll(atk, def, StdDevFor(atk))
 }

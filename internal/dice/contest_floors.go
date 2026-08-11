@@ -86,7 +86,7 @@ func OpposedRollStatFloored(atk, def float64) (bool, float64, RollResult, RollRe
 // Both floors are clamped to [0, 0.5] per call. Above that a floor stops being a
 // last resort and becomes the dominant term.
 func OpposedRollStatFlooredWith(atk, def, floorSuccess, floorResist float64) (bool, float64, RollResult, RollResult) {
-	success, margin, attackRoll, defenseRoll := OpposedRollStat(atk, def)
+	success, margin, attackRoll, defenseRoll := OpposedRollStatRaw(atk, def)
 
 	floorSuccess = clampFloor(floorSuccess)
 	floorResist = clampFloor(floorResist)

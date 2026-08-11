@@ -635,7 +635,7 @@ func TestRollStat(t *testing.T) {
 	}
 }
 
-func TestOpposedRollStat(t *testing.T) {
+func TestOpposedRollStatRaw(t *testing.T) {
 	iterations := 10000
 
 	// Higher attacker should win more often
@@ -643,7 +643,7 @@ func TestOpposedRollStat(t *testing.T) {
 	defLow := 80.0
 	wins := 0
 	for i := 0; i < iterations; i++ {
-		success, _, _, _ := OpposedRollStat(atkHigh, defLow)
+		success, _, _, _ := OpposedRollStatRaw(atkHigh, defLow)
 		if success {
 			wins++
 		}
@@ -656,7 +656,7 @@ func TestOpposedRollStat(t *testing.T) {
 	// Equal stats should be ~50/50
 	wins = 0
 	for i := 0; i < iterations; i++ {
-		success, _, _, _ := OpposedRollStat(100.0, 100.0)
+		success, _, _, _ := OpposedRollStatRaw(100.0, 100.0)
 		if success {
 			wins++
 		}
@@ -669,7 +669,7 @@ func TestOpposedRollStat(t *testing.T) {
 	// Lower attacker should win less often
 	wins = 0
 	for i := 0; i < iterations; i++ {
-		success, _, _, _ := OpposedRollStat(80.0, 120.0)
+		success, _, _, _ := OpposedRollStatRaw(80.0, 120.0)
 		if success {
 			wins++
 		}
