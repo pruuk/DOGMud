@@ -261,7 +261,8 @@ further decomposition
 | 5.5 | Repair the ANSI wrapper fallback contract | S | — | 32 | **Done 2026-08-08** |
 | 5.6 | Converge composition-heavy commands on the parser | M | 1.2 | 27 | Not started |
 | 5.7 | Decide post-soft-cap skill effectiveness | M | — | Design decision | Not started |
-| 5.8 | Decide opposed-roll variance ownership | L | — | Design decision | Not started |
+| 5.8 | Decide opposed-roll variance ownership | L | — | Design decision | **DECIDED 2026-08-11: preserve** |
+| 5.9 | Extend contest floors to non-combat opposed rolls | M | 5.8 | 5.8 follow-on | Not started |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
@@ -1543,6 +1544,90 @@ retunes the shared dice contract and all affected systems coherently.
 grapples, stealth, stealing, and detection share the contract, so no code
 changes occur in this decision-only chunk. If retuning is selected, add a
 separately decomposed implementation arc before code planning.
+
+### Chunk 5.8 — DECIDED 2026-08-11: preserve variance ownership, close the floor gap
+
+**Analysis.** `OpposedRollStat(atk, def)` rolls BOTH participants with
+`StdDevFor(atk)`, so variance is owned by the initiator. Analytically, with
+A ~ N(atk, s) and B ~ N(def, s), P(win) = Phi((atk-def)/(s*sqrt(2))).
+
+Raw, that produces a real role asymmetry — the same pair, different initiator:
+
+| Pair | A wins attacking | A wins defending | Ratio |
+|---|---:|---:|---:|
+| A=100 B=120 | 17.3% | 21.6% | 1.2x |
+| A=100 B=150 | 0.9% | 5.8% | 6.3x |
+
+The underdog is better off being attacked than attacking, because a strong
+initiator's high stat gives BOTH rolls large absolute variance and creates
+upsets, while a weak initiator's small sigma makes the contest deterministic.
+
+**Two corrections to the finding as written.**
+
+1. It implies variance ownership causes scale-invariance. It does not. All three
+   candidate models (initiator-owned, participant-owned, neutral-shared) are
+   ratio-only, because sigma is proportional to the stat in every one. 100v150,
+   200v300 and 400v600 are identical under all three. That is a property of
+   `RollSpread` being a multiplier and belongs to a different question.
+
+2. **It analyses the dice function without the combat layer that bounds it.**
+   `MinAttackHitChance` and `MinDefenseChance` (both shipped 0.15,
+   `combat_helpers.go`) already floor BOTH ends. Effective hit chance is
+   `P(atk wins)*0.85 + P(def wins)*0.15`, which compresses the asymmetry to
+   ~1.2x at EVERY gap:
+
+   | Gap | Raw asymmetry | With floors |
+   |---:|---:|---:|
+   | 1.3 | 1.8x | 1.20x |
+   | 1.5 | 6.3x | 1.22x |
+   | 2.0 | 7586x | 1.04x |
+
+   At the 1.5 gap, A attacking goes 0.9% -> 15.6% and A avoiding 5.8% -> 19.1%.
+   The floors also cap the top: a 200-vs-100 attacker lands 84.4%, not 99.1%.
+
+**Decision: preserve initiator-owned variance.** The floors already deliver what
+changing the ownership model would buy, and retuning would touch 34 call sites
+across six subsystems for ~2 percentage points where fights are actually
+contested (ratio 1.0-1.2).
+
+**But the analysis exposed a real gap, and closing it is chunk 5.9.** The floors
+live in `combat_helpers.go`, so they cover combat only. `sneak`, `shadow`,
+`steal`, `plant` and `defuse` call `OpposedRollStat` directly with no floor at
+either end. Combat says an outmatched actor always keeps a puncher's chance;
+stealth and theft say the opposite. That difference was never decided, it was
+just never noticed. **User confirmed 2026-08-11 that this was an unintended
+miss.**
+
+### Chunk 5.9 — Extend contest floors to non-combat opposed rolls
+
+**Problem:** `MinAttackHitChance` / `MinDefenseChance` bound combat at both ends;
+the non-combat consumers of `OpposedRollStat` are unbounded. A stat-100 thief
+against a stat-150 mark succeeds 0.9% of the time; a stat-200 thief against a
+stat-100 mark succeeds 99.1%. Both ends degenerate.
+
+**Safe to floor:** every affected action has a real failure cost, so a floor
+cannot become "guaranteed with patience" — `steal` gets the actor caught and
+wakes a sleeping victim, `defuse` SPRINGS THE TRAP on the actor, `sneak` reveals
+them. This was checked before selecting the approach.
+
+**Outcome:** one shared, floored contest helper used by the non-combat consumers,
+bounded at BOTH ends (an outmatched actor keeps a chance; an overwhelming one is
+not certain), with the value(s) in config per the balance-lives-in-config rule.
+
+**Open judgment calls for the implementation spec:**
+
+1. **Both ends, or only the bottom?** Recommended BOTH. Fixing "the weak can
+   never succeed" while leaving "the strong always succeeds" repairs one
+   degenerate end and not the other, and combat already bounds both.
+2. **Reuse 0.15, or a separate knob?** Recommended SEPARATE. A combat floor
+   applies per swing and a fight has many swings, so 15% per swing is a small
+   cumulative nudge. A steal or defuse is ONE attempt with a large cost, so the
+   same 15% is far more generous in effect. Same number, very different meaning.
+
+**Boundary:** decomposed from 5.8 per that chunk's own rule that a retune becomes
+a separate arc. Needs a spec before code.
+
+**Finding:** 5.8 (follow-on).
 
 **Phase 5 exit:** Combat state, target protection, command parsing, and command
 results are consistent across equivalent player actions, and soft-cap and
