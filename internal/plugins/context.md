@@ -201,6 +201,19 @@ func (c *PluginCallbacks) SetOnNetConnect(f func(NetConnection))
 
 ## Gotchas
 
+**`ReadIntoStruct` distinguishes ABSENT from CORRUPT, and callers must too.**
+It returns `util.ErrStateAbsent` when the plugin has never written that
+identifier (the ordinary first-run case, seed defaults) and
+`util.ErrStateCorrupt` when the file exists but does not parse. On corruption it
+quarantines the file, resets `out` to its zero value, and logs at ERROR, so the
+caller gets clean defaults rather than a half-applied hybrid and the next read
+sees ABSENT.
+
+Until 2026-08-11 it did the opposite: it returned an error for a merely-absent
+file and `nil` for a corrupt one, so a damaged data file loaded silently as zero
+values. Both callers ignored the return, which is why nobody noticed.
+
+
 **`New` returns `nil` after registration closes.** Registration is only open
 during startup — call it from `init()` or a module's early setup, never
 lazily. A `nil` return will panic at the first method call on it, which is

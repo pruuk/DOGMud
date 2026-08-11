@@ -253,6 +253,7 @@ further decomposition
 | 4.5 | Skip unchanged map room-token rebuilds | M | 4.4 | 19 (follow-on) | Not started |
 | 4.6 | Cache room templates for the autosave compare | S | 3.6b-1 | 36 (follow-on) | **Done 2026-08-10** |
 | 4.7 | Amortise plugin saves | M | 3.6b-1, 2.8 | 36 (follow-on) | **Done 2026-08-11** |
+| 4.8 | Plugin reads distinguish absent from corrupt | S | 2.1 | New (found in 4.7) | **Done 2026-08-11** |
 | 5.1 | Make combat entry transactional | M | 1.2 | 2 | Not started |
 | 5.2 | Unify harmful-target authorization | M | — | 3 | **Done 2026-08-10** |
 | 5.3 | Fix filtered wandering | S | — | 11 | **Done 2026-08-08** |
@@ -1396,14 +1397,46 @@ name, and `internal/plugins/context.md` documents the contract as a bound:
 `onSave` may gather, but only work proportional to the plugin's own state, never
 to the size of the world.
 
-**Found while implementing, NOT fixed here (out of scope):**
-`Plugin.ReadIntoStruct` can never report an unmarshal failure --
-`if err = yaml.Unmarshal(b, out); err == nil { return err }` returns nil on
-success and falls through to `return nil` on failure. A corrupt plugin data file
-loads as zero values silently. Both callers ignore the return value, so a proper
-fix touches them too. Same "absent vs corrupt" class as Wave 2.
+**Found while implementing 4.7, FIXED 2026-08-11 in chunk 4.8** (see below).
 
 **Finding:** 36 (follow-on)
+
+### Chunk 4.8 — Plugin reads distinguish absent from corrupt
+
+**Found while writing 4.7's `context.md`.** `Plugin.ReadIntoStruct` was:
+
+```go
+if err = yaml.Unmarshal(b, out); err == nil {
+    return err          // nil on success
+}
+return nil              // ALSO nil on failure
+```
+
+It could never report a parse failure. Worse, it got the two cases exactly
+backwards: a merely-ABSENT file returned an error (from `ReadBytes`), while a
+CORRUPT one returned nil. It reported the harmless case and hid the dangerous
+one, and a corrupt data file loaded silently as zero values -- or as a
+half-applied hybrid, since `yaml.Unmarshal` populates fields as it walks and
+keeps whatever it managed before the fault. That is review finding 15's
+template/runtime hybrid, in a different package.
+
+Both callers ignored the return value, which is why it went unnoticed.
+
+**Fixed to the chunk 2.1 living-state contract:** ABSENT returns
+`util.ErrStateAbsent` (seed defaults), CORRUPT returns `util.ErrStateCorrupt`
+after quarantining the file and resetting `out` to its zero value, so the caller
+gets clean defaults rather than a hybrid and the next read sees ABSENT.
+`modules/auctions` and `modules/leaderboards` now report corruption at ERROR
+instead of discarding the result.
+
+Also extracted `Plugin.dataPath`, since `ReadBytes`, `WriteBytes` and the new
+quarantine each derived the same path independently.
+
+**Verified by mutation:** restoring the original implementation makes 4 of the 5
+new tests fail. Boot test confirms real plugin data still loads without tripping
+the corruption path.
+
+**Finding:** New (found during 4.7).
 
 **Phase 4 exit:** The web surface has explicit security, accessibility, and
 performance baselines rather than relying on visual spot checks.

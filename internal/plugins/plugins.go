@@ -356,14 +356,7 @@ func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 			`error`, `write before plugins.Load(); persisting to the OS temp dir, where it will not be read back`)
 	}
 
-	// Fix up identifier
-	fileName := strings.ToLower(txtCleanRegex.ReplaceAllString(identifier, "-")) + `.plugin.dat`
-
-	// Fix up folderpath
-	folderPath := util.FilePath(writeFolderPath, `/`, strings.ToLower(txtCleanRegex.ReplaceAllString(fmt.Sprintf(`%s-v%s`, p.name, p.version), "-")))
-
-	// Create full path
-	fullPath := util.FilePath(folderPath, `/`, fileName)
+	folderPath, fullPath := p.dataPath(identifier)
 
 	if _, err := os.Stat(fullPath); err != nil {
 		if err = os.MkdirAll(folderPath, 0777); err != nil {
@@ -405,16 +398,21 @@ func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 	return nil
 }
 
+// dataPath returns the folder and full path a plugin's data file lives at.
+//
+// Extracted because ReadBytes and WriteBytes each computed it identically, and
+// a third caller (the corruption quarantine in ReadIntoStruct) now needs it
+// too. Three copies of a path derivation is three chances for them to drift.
+func (p *Plugin) dataPath(identifier string) (folderPath string, fullPath string) {
+	fileName := strings.ToLower(txtCleanRegex.ReplaceAllString(identifier, "-")) + `.plugin.dat`
+	folderPath = util.FilePath(writeFolderPath, `/`, strings.ToLower(txtCleanRegex.ReplaceAllString(fmt.Sprintf(`%s-v%s`, p.name, p.version), "-")))
+	fullPath = util.FilePath(folderPath, `/`, fileName)
+	return folderPath, fullPath
+}
+
 func (p *Plugin) ReadBytes(identifier string) ([]byte, error) {
 
-	// Fix up identifier
-	fileName := strings.ToLower(txtCleanRegex.ReplaceAllString(identifier, "-")) + `.plugin.dat`
-
-	// Fix up folderpath
-	folderPath := util.FilePath(writeFolderPath, `/`, strings.ToLower(txtCleanRegex.ReplaceAllString(fmt.Sprintf(`%s-v%s`, p.name, p.version), "-")))
-
-	// Create full path
-	fullPath := util.FilePath(folderPath, `/`, fileName)
+	_, fullPath := p.dataPath(identifier)
 
 	bytes, err := os.ReadFile(fullPath)
 	if err != nil && !os.IsNotExist(err) {
@@ -440,17 +438,80 @@ func (p *Plugin) WriteStruct(identifier string, in any) error {
 	return nil
 }
 
+// ReadIntoStruct loads a plugin's stored data into out.
+//
+// Returns util.ErrStateAbsent when the plugin has never written this identifier
+// (the ordinary first-run case) and util.ErrStateCorrupt when the file exists
+// but does not parse. Callers should treat ABSENT as "seed defaults" and CORRUPT
+// as something to report, because the two mean very different things.
+//
+// This function used to get that exactly backwards. It was:
+//
+//	if err = yaml.Unmarshal(b, out); err == nil {
+//	    return err          // nil on success
+//	}
+//	return nil              // ALSO nil on failure
+//
+// so it could never report a parse failure, while it DID return an error for a
+// merely-absent file. It reported the harmless case and hid the dangerous one:
+// a corrupt data file loaded silently as zero values, or worse as a half-applied
+// hybrid, because yaml.Unmarshal populates fields as it walks and leaves what it
+// managed before the error.
+//
+// On corruption the file is quarantined (moved aside, never deleted) and out is
+// reset to its zero value, so the caller gets clean defaults rather than a
+// hybrid, and the next read sees ABSENT and takes the seed path. This is the
+// living-state contract from chunk 2.1; see internal/util/livingstate.go.
 func (p *Plugin) ReadIntoStruct(identifier string, out any) error {
+
+	_, fullPath := p.dataPath(identifier)
+
 	b, err := p.ReadBytes(identifier)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%w: %s", util.ErrStateAbsent, fullPath)
+		}
 		return err
 	}
 
-	if err = yaml.Unmarshal(b, out); err == nil {
-		return err
+	if err := yaml.Unmarshal(b, out); err != nil {
+		// Reset out FIRST. A partially applied unmarshal is worse than no data
+		// at all: the caller cannot tell which fields are real.
+		zeroOut(out)
+
+		quarantinePath, qErr := util.QuarantineCorrupt(fullPath)
+		if qErr != nil {
+			mudlog.Error(`plugin.ReadIntoStruct`, `name`, p.name, `path`, fullPath,
+				`error`, `could not quarantine corrupt file`, `cause`, qErr)
+		} else {
+			mudlog.Error(`plugin.ReadIntoStruct`, `name`, p.name, `path`, fullPath,
+				`error`, err, `quarantined`, quarantinePath,
+				`message`, `corrupt plugin data moved aside; continuing with defaults`)
+		}
+
+		return fmt.Errorf("%w: %s: %v", util.ErrStateCorrupt, fullPath, err)
 	}
 
 	return nil
+}
+
+// zeroOut resets a pointed-to value to its zero value.
+//
+// Used when an unmarshal fails partway: yaml.v2 applies fields as it walks the
+// document, so out can hold a mixture of real and default data by the time the
+// error surfaces. Handing that back is how a template/runtime hybrid gets into
+// live state (review finding 15, for rooms). A no-op for anything that is not a
+// non-nil pointer, since there is nothing safe to reset.
+func zeroOut(out any) {
+	v := reflect.ValueOf(out)
+	if v.Kind() != reflect.Pointer || v.IsNil() {
+		return
+	}
+	elem := v.Elem()
+	if !elem.CanSet() {
+		return
+	}
+	elem.Set(reflect.Zero(elem.Type()))
 }
 
 func Load(dataFilesPath string) {

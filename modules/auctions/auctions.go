@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"strconv"
 	"strings"
 	"time"
@@ -126,7 +127,16 @@ func restoreNpcBinding(a *AuctionItem) {
 }
 
 func (mod *AuctionsModule) load() {
-	mod.plug.ReadIntoStruct(`auctionhistory`, &mod.auctionMgr)
+	// ABSENT is the ordinary first-run case and needs no comment. CORRUPT means
+	// auction history and NPC wallet balances were just lost; the file has been
+	// quarantined and we continue with defaults, but say so, because a silently
+	// reset economy is exactly the kind of thing nobody reports.
+	if err := mod.plug.ReadIntoStruct(`auctionhistory`, &mod.auctionMgr); err != nil {
+		if errors.Is(err, util.ErrStateCorrupt) {
+			mudlog.Error(`auctions.load`, `error`, err,
+				`message`, `auction history was unreadable and has been quarantined; starting from defaults`)
+		}
+	}
 	restoreNpcBinding(mod.auctionMgr.ActiveAuction)
 
 	// Restore persisted NPC wallet balances onto the live buyers, keyed by the
