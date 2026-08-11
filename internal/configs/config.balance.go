@@ -33,6 +33,12 @@ type Balance struct {
 	// expensive here than it does in combat.
 	MinSpellHitChance    ConfigFloat `yaml:"MinSpellHitChance"`    // Floor: spell lands anyway (default 0.05)
 	MinSpellResistChance ConfigFloat `yaml:"MinSpellResistChance"` // Floor: target resists anyway (default 0.05)
+	// Combat maneuvers -- grapple, submission, skill moves, taunt, throw, flee.
+	// Grouped with spells rather than with the melee swing because a maneuver
+	// consumes the WHOLE round, so a failure costs what a fizzle costs, not what
+	// a missed swing costs.
+	MinManeuverHitChance    ConfigFloat `yaml:"MinManeuverHitChance"`    // Floor: maneuver lands anyway (default 0.05)
+	MinManeuverResistChance ConfigFloat `yaml:"MinManeuverResistChance"` // Floor: target resists anyway (default 0.05)
 
 	// ── COMBAT: PRONE & GRAPPLE ──────────────────────────────────────────────
 	ProneAttackMultiplier        ConfigFloat `yaml:"ProneAttackMultiplier"`        // Multiplier on attack score while prone (default 0.80)

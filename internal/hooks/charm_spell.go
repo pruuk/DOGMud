@@ -71,8 +71,11 @@ func resolveCharmSpell(user *users.UserRecord, targetMob *mobs.Mob, room *rooms.
 	}
 
 	// ── 6. Opposed roll ────────────────────────────────────────────────
-	success, _, _, _ := dice.OpposedRollStat(
-		float64(attackScore), float64(defenseScore))
+	// Charm is a spell, so it takes the spell floors, not the maneuver pair.
+	success, _, _, _ := dice.OpposedRollStatFlooredWith(
+		float64(attackScore), float64(defenseScore),
+		spellHitFloor(), spellResistFloor(),
+	)
 
 	targetName := targetMob.Character.Name
 

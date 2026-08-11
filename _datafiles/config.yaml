@@ -485,6 +485,19 @@ Balance:
   #   Range: 0.0-0.50 each. Set to 0 to disable that end.
   MinSpellHitChance: 0.05
   MinSpellResistChance: 0.05
+  #
+  # MinManeuverHitChance / MinManeuverResistChance: grapple, submission, skill
+  #   moves, taunt, throw, flee, stoic resolve.
+  #
+  #   The rule these values follow: THE FLOOR TRACKS THE COST OF A SINGLE
+  #   FAILURE. A melee swing is a fraction of a round and a fight has many, so it
+  #   floors at 0.15. A maneuver or a spell consumes the WHOLE round, so it
+  #   floors at 0.05. An out-of-combat attempt costs a round plus a consequence,
+  #   so it floors at 0.05 too. Maneuvers therefore sit with spells, not with the
+  #   swing they superficially resemble.
+  #   Range: 0.0-0.50 each. Set to 0 to disable that end.
+  MinManeuverHitChance: 0.05
+  MinManeuverResistChance: 0.05
 
   # ── COMBAT: PRONE & GRAPPLE ───────────────────────────────────────────────
   # When a character is knocked prone, these multipliers modify combat scores.

@@ -124,7 +124,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	attackScore *= convMult
 
 	// Opposed roll for hit/miss/fumble/crit classification.
-	attackSuccess, _, atkRoll, _ := dice.OpposedRollStat(attackScore, defenseScore)
+	floorHit, floorResist := combat.ManeuverFloors()
+	attackSuccess, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(attackScore, defenseScore, floorHit, floorResist)
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User
