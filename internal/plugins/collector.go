@@ -57,3 +57,11 @@ func (c *pendingCollector) writes() []savequeue.PendingWrite {
 	}
 	return out
 }
+
+// collecting is the one active collector for the whole registry, or nil.
+//
+// Set by PrepareAll and cleared before it returns. NOT protected by a mutex,
+// and deliberately so: every caller runs on World.MainWorker, the same
+// precondition internal/savequeue documents. If you are reaching for a lock
+// here, post the work to MainWorker instead.
+var collecting *pendingCollector

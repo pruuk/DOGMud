@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/savequeue"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
@@ -359,6 +360,19 @@ func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 			mudlog.Error(`plugin.WriteBytes`, `name`, p.name, `path`, folderPath, `error`, err)
 			return err
 		}
+	}
+
+	// Chunk 4.7: while an autosave prepare is collecting, hand over the bytes
+	// instead of writing them. The durable write still happens, just on a later
+	// tick, through the same queue rooms and users use.
+	if collecting != nil {
+		collecting.add(p, savequeue.PendingWrite{
+			Kind:    "plugin",
+			Path:    fullPath,
+			Data:    bytes,
+			Careful: true,
+		})
+		return nil
 	}
 
 	// Durable atomic write (chunk 2.8). This was a BARE write with no

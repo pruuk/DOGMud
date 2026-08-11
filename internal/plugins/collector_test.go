@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -117,4 +118,68 @@ func TestCollector_DiscardWithInterleavedOwners(t *testing.T) {
 			t.Errorf("write %d = %q, want %q", i, got[i].Path, want[i])
 		}
 	}
+}
+
+// While a collector is active, WriteBytes must NOT touch the disk.
+func TestWriteBytes_CollectsInsteadOfWritingWhileCollecting(t *testing.T) {
+	dir := t.TempDir()
+	restore := useTempWriteFolder(t, dir)
+	defer restore()
+
+	p := &Plugin{name: "probe", version: "1.0"}
+
+	collecting = newPendingCollector()
+	defer func() { collecting = nil }()
+
+	if err := p.WriteBytes("state", []byte("payload")); err != nil {
+		t.Fatalf("WriteBytes: %v", err)
+	}
+
+	got := collecting.writes()
+	if len(got) != 1 {
+		t.Fatalf("collected %d writes, want 1", len(got))
+	}
+	if string(got[0].Data) != "payload" {
+		t.Errorf("collected data = %q, want %q", got[0].Data, "payload")
+	}
+	if got[0].Kind != "plugin" {
+		t.Errorf("Kind = %q, want plugin", got[0].Kind)
+	}
+
+	// Nothing may exist on disk yet.
+	if entries, _ := os.ReadDir(filepath.Join(dir, "probe-v1-0")); len(entries) != 0 {
+		t.Errorf("WriteBytes wrote to disk while collecting: %d file(s)", len(entries))
+	}
+}
+
+// With no collector, the existing synchronous behaviour is unchanged.
+func TestWriteBytes_WritesSynchronouslyWithNoCollector(t *testing.T) {
+	dir := t.TempDir()
+	restore := useTempWriteFolder(t, dir)
+	defer restore()
+
+	collecting = nil
+	p := &Plugin{name: "probe", version: "1.0"}
+
+	if err := p.WriteBytes("state", []byte("payload")); err != nil {
+		t.Fatalf("WriteBytes: %v", err)
+	}
+
+	got, err := p.ReadBytes("state")
+	if err != nil {
+		t.Fatalf("ReadBytes: %v", err)
+	}
+	if string(got) != "payload" {
+		t.Errorf("read back %q, want %q", got, "payload")
+	}
+}
+
+// useTempWriteFolder points plugin storage at a temp dir for the duration of a
+// test. writeFolderPath and writeFolderReady are package-level state set by
+// plugins.Load(), which a unit test does not run.
+func useTempWriteFolder(t *testing.T, dir string) func() {
+	t.Helper()
+	prevPath, prevReady := writeFolderPath, writeFolderReady
+	writeFolderPath, writeFolderReady = dir, true
+	return func() { writeFolderPath, writeFolderReady = prevPath, prevReady }
 }
