@@ -43,6 +43,14 @@ verify against the code before acting on one.
 | [`audits/ADVERSARIAL_REVIEW.md`](audits/ADVERSARIAL_REVIEW.md) | Jules' architectural teardown: global lock, autosave I/O, boot wiring, progression math |
 | [`perf/`](perf/) | Performance baselines and profiling notes |
 
+Two of these are **live scripts**, not point-in-time reports — run them rather
+than reading an old result:
+
+| Path | What it does |
+|------|--------------|
+| [`../tools/context_md_audit.py`](../tools/context_md_audit.py) | Finds `context.md` files documenting symbols the package no longer defines. Coverage is 100%; accuracy is what rots. Triage the output, it has known false positives |
+| [`../tools/balance/`](../tools/balance/) | Combat balance models behind roadmap 5.11 — skill leverage, real player-vs-mob matchups, and the `SkillWeight`/statpool tuning matrix |
+
 ## History
 
 | Path | What's in it |
