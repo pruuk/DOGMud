@@ -71,6 +71,14 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 			continue
 		}
 
+		// Chunk 5.14: a mob someone is swinging at must not wander off before
+		// the swing resolves. The check above is not enough on its own because
+		// it reads the mob's OWN combat state, and the mob does not have one
+		// yet -- see mobIsTargetedInRoom for the full sequence.
+		if mobIsTargetedInRoom(mob.InstanceId, mob.Character.RoomId, roomPlayerIds, userCombatTarget) {
+			continue
+		}
+
 		// Chunk 3.2: schedule executor. Runs before the path-walker so it can
 		// clear stale paths on segment transitions and queue new pathtos before
 		// the walker consumes them.
