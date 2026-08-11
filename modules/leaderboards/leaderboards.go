@@ -2,6 +2,7 @@ package leaderboards
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -103,7 +104,15 @@ func (l *LeaderboardModule) webLeaderboardData(r *http.Request) map[string]any {
 
 func (l *LeaderboardModule) loadLBs() {
 
-	l.plug.ReadIntoStruct(`latest-leaderboards`, &l)
+	// ABSENT is the ordinary first-run case. CORRUPT means the stored
+	// leaderboards were unreadable; the file has been quarantined and the
+	// rankings below rebuild from defaults, but the loss should be visible.
+	if err := l.plug.ReadIntoStruct(`latest-leaderboards`, &l); err != nil {
+		if errors.Is(err, util.ErrStateCorrupt) {
+			mudlog.Error(`leaderboards.loadLBs`, `error`, err,
+				`message`, `stored leaderboards were unreadable and have been quarantined; rebuilding from defaults`)
+		}
+	}
 
 	l.PowerEnabled = true
 	l.LB_Power = leaderboardData{Name: `Power`, ValueColor: `yellow-bold`}
