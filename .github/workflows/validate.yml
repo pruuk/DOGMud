@@ -80,11 +80,18 @@ jobs:
           fi
           echo "All non-vendored JavaScript parses."
 
-      # Guards the admin dashboards' HTML escaping (review finding 17). Plain
-      # node, no test runner, exits non-zero on failure.
+      # Plain node, no test runner, each exits non-zero on failure.
+      #   safe-dom  - the admin dashboards' HTML escaping (finding 17)
+      #   hotinput  - the web client's keyboard focus rule (finding 18)
       - name: Run JavaScript tests
         shell: bash
-        run: node tools/jstest/safe-dom.test.js
+        run: |
+          failed=0
+          for t in tools/jstest/*.test.js; do
+            echo "--- $t"
+            node "$t" || failed=1
+          done
+          exit "$failed"
 
   test:
     runs-on: ubuntu-latest

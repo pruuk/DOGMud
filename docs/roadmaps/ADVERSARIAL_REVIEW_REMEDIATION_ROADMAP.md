@@ -245,9 +245,9 @@ further decomposition
 | 3.6a | Measure autosave pauses and set a budget | M | 2.7 | 36 (measure) | **Done 2026-08-10 — remediation REQUIRED** |
 | 3.6b | Remediate autosave pauses if required | XL | 3.6a | 36 (conditional) | **3.6b-1 DONE; 3.6b-2 / 3.6b-3 open** |
 | 4.1 | Remove admin stored-XSS surfaces | S | — | 17 | **Done 2026-08-10** |
-| 4.2 | Harden HTTP server boundaries | M | — | 20 | **20a Done 2026-08-10; Host-redirect half open (Wave 4)** |
-| 4.3 | Restore keyboard accessibility | M | — | 18 | Not started |
-| 4.4 | Remove hot-path GMCP DOM rebuilds | L | — | 19 | Not started |
+| 4.2 | Harden HTTP server boundaries | M | — | 20 | **Done 2026-08-10 (20a + 20b)** |
+| 4.3 | Restore keyboard accessibility | M | — | 18 | **Done 2026-08-10** |
+| 4.4 | Remove hot-path GMCP DOM rebuilds | L | — | 19 | **Done 2026-08-10** |
 | 5.1 | Make combat entry transactional | M | 1.2 | 2 | Not started |
 | 5.2 | Unify harmful-target authorization | M | — | 3 | **Done 2026-08-10** |
 | 5.3 | Fix filtered wandering | S | — | 11 | **Done 2026-08-08** |
@@ -1279,6 +1279,27 @@ less DOM work without changing displayed state or interaction behavior.
 
 **Finding:** 19
 
+**Wave 4 complete 2026-08-10** (findings 18, 19, 20b).
+
+- **20b** the https redirect built its destination from `r.Host`, so anyone
+  could hand out a link to this server and bounce visitors elsewhere under our
+  domain name, cached as a 301. Fixed with NO new knob by reusing
+  `allowedWSOriginHosts` -- the operator has already declared which hostnames
+  this server answers to, and that is the same question.
+- **18** the client redirected focus to the command bar on every keydown, so Tab
+  could not traverse and Space/Enter could not activate a focused control. Only
+  printable characters pull focus now, and never from a control the user tabbed
+  to. Verified the movement shortcuts were already scoped to the input.
+- **19** status/quests/inventory rebuilt on every GMCP push (conditions ship
+  with vitals, so the status panel was recreated every round). Renders that
+  would change nothing are now skipped. Separately, the map's `deferEdges`
+  batching had a hole: `_updateBounds`/`_applyZoom` ran once per room, making a
+  Zone.Map push O(n^2).
+
+**Still open on this surface:** the map's per-room token rebuild. Skipping it
+needs a signature covering the quest-marker pin, which depends on the centre
+room's position -- cross-room state a per-room signature does not capture.
+
 **Phase 4 exit:** The web surface has explicit security, accessibility, and
 performance baselines rather than relying on visual spot checks.
 
@@ -1578,9 +1599,9 @@ only when all of its subchunks close.
 | 15 | 2.4 | **Done** | Overlay applied to a scratch template copy and adopted only on a full parse; corrupt overlays quarantined + 4 tests | Partial room overlay after YAML failure |
 | 16 | 2.5 | **Done** | `loadAllDialogueFiles` returns failures alongside entries; unreadable/unparseable files now fail validation instead of being skipped + 4 tests | Quest validation skips unreadable dialogue |
 | 17 | 4.1 | **Done** | `admin/static/js/safe-dom.js` default-safe helpers; economy AND progression converted (review named economy only; progression renders player-chosen names) + 12 JS checks | Admin economy stored-XSS surface |
-| 18 | 4.3 | Open | — | Global keyboard capture |
+| 18 | 4.3 | **Done** | Focus stealer scoped to printable chars + non-controls; menu-icon div -> button; mut-toast/overlay given roles, keyboard activation and Escape; map buttons named; room cursor no longer advertises a no-op handler. 39 jstest checks | Global keyboard capture |
 | 19 | 4.4 | Open | — | Hot GMCP DOM rebuilds |
-| 20 | 4.2 | **20a Done / 20b Open** | 20a: 4 Network timeout knobs, non-zero defaults, applied to both servers; websocket safety proven live (survived 15s vs a 3s WriteTimeout) and slow-header request cut at 3.0s + 6 tests. 20b (Host redirect) remains | HTTP timeout and Host redirect weaknesses |
+| 20 | 4.2 | **Done** | 20a: 4 Network timeout knobs, non-zero defaults, applied to both servers; websocket safety proven live (survived 15s vs a 3s WriteTimeout) and slow-header request cut at 3.0s + 6 tests. 20b (Host redirect) remains | HTTP timeout and Host redirect weaknesses |
 | 21 | 3.2 | **Done** | `tryMarkPending` single critical section + 4 tests | LLM check-then-set race |
 | 22 | 3.4 | **Done** | snapshot under RLock, invoke unlocked; deadlock reproduced pre-fix | Listener lock held across callbacks |
 | 23 | 6.1a–6.1d | Open | — | Production and test implementation duplication |
