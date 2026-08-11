@@ -268,6 +268,21 @@ func MovePackFollowers(alphaMob *Mob, exitName string, oldRoomMobIds []int) {
 			continue
 		}
 
+		// MaxWander 0 means "never wanders". This mirrors the explicit guard in
+		// mobcommands/wander.go ("If MaxWander is zero, they don't wander").
+		// The budget check below CANNOT express it: that tests
+		// WanderCount > MaxWander, and 0 > 0 is false, so a mob authored to
+		// stay put was dragged along by its alpha anyway.
+		//
+		// The symptom was an oscillation rather than a single displacement --
+		// dragged out, `pathto home` from the idle handler once WanderCount
+		// exceeded the budget, WanderCount reset to 0 on arriving home, then
+		// eligible to be dragged out again.
+		if mob.MaxWander == 0 {
+			mob.PackAlphaId = 0
+			continue
+		}
+
 		// Check MaxWander limit
 		if mob.MaxWander > -1 && mob.WanderCount > mob.MaxWander {
 			mob.PackAlphaId = 0
