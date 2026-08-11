@@ -100,7 +100,7 @@ func Sneak(actor Actor) SneakResult {
 		sneakScore := CalcSneakScoreVsObserver(char, observer.Character, room)
 		observerScore := CalcSearchScore(observer.Character)
 		rollHappened = true
-		success, _, _, _ := dice.OpposedRollStatFloored(sneakScore, observerScore)
+		success, _, _, _ := dice.OpposedRollStat(sneakScore, observerScore)
 		if !success {
 			// Notify the observing player.
 			observer.SendText(messaging.CategorySystem,
@@ -125,7 +125,7 @@ func Sneak(actor Actor) SneakResult {
 		sneakScore := CalcSneakScoreVsObserver(char, &m.Character, room)
 		observerScore := CalcSearchScore(&m.Character)
 		rollHappened = true
-		success, _, _, _ := dice.OpposedRollStatFloored(sneakScore, observerScore)
+		success, _, _, _ := dice.OpposedRollStat(sneakScore, observerScore)
 		if !success {
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,

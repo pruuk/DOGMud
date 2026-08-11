@@ -82,7 +82,7 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlo
 		blockScore := float64(m.Character.GetEffectiveDexterity() +
 			m.Character.GetSkillLevel(skills.UnarmedCombat)*25)
 		floorHit, floorResist := ManeuverFloors()
-		success, _, _, _ := dice.OpposedRollStatFlooredWith(fleeScore, blockScore, floorHit, floorResist)
+		success, _, _, _ := dice.OpposedRollStatWithFloors(fleeScore, blockScore, floorHit, floorResist)
 		if !success {
 			return &FleeBlocker{
 				Name:          m.Character.Name,
@@ -105,7 +105,7 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlo
 		blockScore := float64(u.Character.GetEffectiveDexterity() +
 			u.Character.GetSkillLevel(skills.UnarmedCombat)*25)
 		floorHit, floorResist := ManeuverFloors()
-		success, _, _, _ := dice.OpposedRollStatFlooredWith(fleeScore, blockScore, floorHit, floorResist)
+		success, _, _, _ := dice.OpposedRollStatWithFloors(fleeScore, blockScore, floorHit, floorResist)
 		if !success {
 			return &FleeBlocker{
 				Name:   u.Character.Name,

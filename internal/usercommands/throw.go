@@ -151,7 +151,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			float64(mob.Character.GetEffectivePerception())*skillWeight*0.5
 
 		floorHit, floorResist := combat.ManeuverFloors()
-		attackSuccess, _, atkRoll, _ := dice.OpposedRollStatFlooredWith(attackerScore, defenderScore, floorHit, floorResist)
+		attackSuccess, _, atkRoll, _ := dice.OpposedRollStatWithFloors(attackerScore, defenderScore, floorHit, floorResist)
 
 		// Fumble check: effect hits thrower instead
 		if atkRoll.ZScore <= -2.0 {

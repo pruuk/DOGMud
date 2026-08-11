@@ -10,12 +10,14 @@ import (
 // Combat has bounded both ends of its hit/avoid contest since the balance work
 // that added MinAttackHitChance and MinDefenseChance: an outmatched attacker
 // always keeps a puncher's chance, and an overwhelming one is never certain.
-// Every OTHER consumer of OpposedRollStat -- stealth, theft, traps, detection --
-// was unbounded, so a stat-100 thief against a stat-150 mark succeeded 0.9% of
-// the time and a stat-200 thief against a stat-100 mark succeeded 99.1%.
+// Every OTHER consumer -- stealth, theft, traps, detection -- used what is now
+// OpposedRollStatRaw and was unbounded, so a stat-100 thief against a stat-150
+// mark succeeded 0.9% of the time and a stat-200 thief against a stat-100 mark
+// succeeded 99.1%.
 //
 // That difference was never decided. The floors simply lived in
-// combat_helpers.go and nothing outside combat reached them.
+// combat_helpers.go and nothing outside combat reached them. Chunk 5.10 then
+// gave the floored roll the natural name so the safe path is the default one.
 //
 // Set at startup from config via SetContestFloors, mirroring SetRollSpread.
 // dice deliberately does not import configs.
@@ -57,25 +59,29 @@ func ContestFloors() (minSuccess, minResist float64) {
 	return minContestSuccess, minContestResist
 }
 
-// OpposedRollStatFloored is OpposedRollStat with both ends bounded.
+// OpposedRollStat performs a contested check between two stat-based scores with
+// both ends floored. This is the DEFAULT opposed roll: use it for every
+// attack-vs-defense, spell-vs-resist, stealth, theft, trap, grapple, bash, kick
+// and trip check.
 //
-// Use this for any contest where one side can be hopelessly outmatched and the
-// result would otherwise be a foregone conclusion. Use plain OpposedRollStat
-// only where the caller applies its own floors -- combat's resolveAttack does.
+// Flooring both ends means neither a hopeless underdog nor an overwhelming
+// favourite ever faces a foregone conclusion. If you believe you want the
+// unfloored roll, see OpposedRollStatRaw -- and expect to justify it in
+// contest_floor_guard_test.go.
 //
 // When a floor flips the outcome, the margin is reduced to the smallest value
 // carrying the new sign. A floor save is a BARE success, not a decisive one, and
 // callers that scale an effect by margin must not read it as a rout.
-func OpposedRollStatFloored(atk, def float64) (bool, float64, RollResult, RollResult) {
+func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult) {
 	contestFloorLock.RLock()
 	floorSuccess, floorResist := minContestSuccess, minContestResist
 	contestFloorLock.RUnlock()
 
-	return OpposedRollStatFlooredWith(atk, def, floorSuccess, floorResist)
+	return OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist)
 }
 
-// OpposedRollStatFlooredWith is OpposedRollStatFloored with the floors supplied
-// per call, for contests whose failure cost differs enough to want their own
+// OpposedRollStatWithFloors is OpposedRollStat with the floors supplied per
+// call, for contests whose failure cost differs enough to want their own
 // values.
 //
 // Spells are the motivating case: a fizzle costs the caster the round, and more
@@ -85,7 +91,7 @@ func OpposedRollStatFloored(atk, def float64) (bool, float64, RollResult, RollRe
 //
 // Both floors are clamped to [0, 0.5] per call. Above that a floor stops being a
 // last resort and becomes the dominant term.
-func OpposedRollStatFlooredWith(atk, def, floorSuccess, floorResist float64) (bool, float64, RollResult, RollResult) {
+func OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist float64) (bool, float64, RollResult, RollResult) {
 	success, margin, attackRoll, defenseRoll := OpposedRollStatRaw(atk, def)
 
 	floorSuccess = clampFloor(floorSuccess)
