@@ -129,12 +129,22 @@ func (mod *AuctionsModule) load() {
 	mod.plug.ReadIntoStruct(`auctionhistory`, &mod.auctionMgr)
 	restoreNpcBinding(mod.auctionMgr.ActiveAuction)
 
-	// Restore persisted NPC wallet balances onto the live buyers.
+	// Restore persisted NPC wallet balances onto the live buyers, keyed by the
+	// stable Id rather than the display name.
 	for _, b := range npcBuyers {
-		if w := b.Wallet(); w != nil {
-			if bal, ok := mod.auctionMgr.WalletBalances[b.Name()]; ok {
-				w.Balance = bal
-			}
+		w := b.Wallet()
+		if w == nil {
+			continue
+		}
+		if bal, ok := mod.auctionMgr.WalletBalances[b.Id()]; ok {
+			w.Balance = bal
+			continue
+		}
+		// Saves written before the id-keyed format used the display name.
+		// Accept those once; the next save rewrites the file keyed by id, so
+		// this fallback ages out on its own without a migration.
+		if bal, ok := mod.auctionMgr.WalletBalances[b.Name()]; ok {
+			w.Balance = bal
 		}
 	}
 
@@ -189,11 +199,13 @@ func (mod *AuctionsModule) load() {
 }
 
 func (mod *AuctionsModule) save() error {
-	// Snapshot live NPC wallet balances for persistence.
+	// Snapshot live NPC wallet balances for persistence, keyed by the stable Id.
+	// Keying by display name meant renaming a buyer silently reset its balance
+	// to the compile-time default on the next load -- the lookup just missed.
 	mod.auctionMgr.WalletBalances = map[string]int{}
 	for _, b := range npcBuyers {
 		if w := b.Wallet(); w != nil {
-			mod.auctionMgr.WalletBalances[b.Name()] = w.Balance
+			mod.auctionMgr.WalletBalances[b.Id()] = w.Balance
 		}
 	}
 	return mod.plug.WriteStruct(`auctionhistory`, mod.auctionMgr)

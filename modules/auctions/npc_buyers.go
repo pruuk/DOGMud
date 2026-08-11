@@ -10,6 +10,13 @@ import (
 
 // NpcBuyer is one living-world auction buyer archetype.
 type NpcBuyer interface {
+	// Id is the STABLE persistence key, deliberately separate from Name.
+	//
+	// Wallet balances used to be saved under the display name, so renaming a
+	// buyer silently reset its balance to the compile-time default on the next
+	// load: the lookup simply missed, with no error and no warning. Ids are
+	// never shown to players, so they can stay fixed while names change freely.
+	Id() string
 	Name() string
 	Interested(item items.Item) bool
 	MaxBid(item items.Item) int
@@ -73,10 +80,12 @@ func isEquipment(t items.ItemType) bool {
 
 // ── Collector archetype ──
 type collector struct {
+	id     string
 	name   string
 	wallet *NpcWallet
 }
 
+func (c *collector) Id() string   { return c.id }
 func (c *collector) Name() string { return c.name }
 func (c *collector) Interested(item items.Item) bool {
 	spec := item.GetSpec()
@@ -93,10 +102,12 @@ func (c *collector) Flavor() string       { return "for their collection" }
 
 // ── Craftsperson archetype: buys valuable crafting materials ──
 type craftsperson struct {
+	id     string
 	name   string
 	wallet *NpcWallet
 }
 
+func (c *craftsperson) Id() string   { return c.id }
 func (c *craftsperson) Name() string { return c.name }
 func (c *craftsperson) Interested(item items.Item) bool {
 	spec := item.GetSpec()
@@ -113,10 +124,12 @@ func (c *craftsperson) Flavor() string       { return "for their workshop" }
 
 // ── Adventurer archetype: buys usable gear upgrades (stat-bearing equipment) ──
 type adventurer struct {
+	id     string
 	name   string
 	wallet *NpcWallet
 }
 
+func (a *adventurer) Id() string   { return a.id }
 func (a *adventurer) Name() string { return a.name }
 func (a *adventurer) Interested(item items.Item) bool {
 	spec := item.GetSpec()
@@ -135,10 +148,12 @@ func (a *adventurer) Flavor() string       { return "to gear up" }
 // "The Crown Assessor" — a state authority that buys contraband off the block
 // at a premium from a deep purse and takes it out of circulation.
 type official struct {
+	id     string
 	name   string
 	wallet *NpcWallet
 }
 
+func (o *official) Id() string   { return o.id }
 func (o *official) Name() string { return o.name }
 func (o *official) Interested(item items.Item) bool {
 	if !officialEnabled {
@@ -182,11 +197,13 @@ type shopSel struct {
 }
 
 type shopkeeper struct {
+	id    string
 	name  string
 	sel   shopSel              // memoized selection for the current decision
 	bound *shops.ShopInventory // shop escrowed against while high bidder
 }
 
+func (s *shopkeeper) Id() string         { return s.id }
 func (s *shopkeeper) Name() string       { return s.name }
 func (s *shopkeeper) Flavor() string     { return "for the shelves" }
 func (s *shopkeeper) Wallet() *NpcWallet { return nil } // real-gold buyer
@@ -284,13 +301,16 @@ func (s *shopkeeper) Receive(item items.Item) {
 }
 
 // ── Registry of active NPC buyers (#2.1: two collectors) ──
+// Ids are the persistence keys and MUST NOT change once shipped -- changing one
+// orphans that buyer's saved balance. Names are display text and may change
+// freely.
 var npcBuyers = []NpcBuyer{
-	&collector{name: "Collector Veyd", wallet: &NpcWallet{Balance: 10000, Cap: 10000}},
-	&collector{name: "Lady Ashcombe", wallet: &NpcWallet{Balance: 10000, Cap: 10000}},
-	&craftsperson{name: "Master Ordwin", wallet: &NpcWallet{Balance: 6000, Cap: 6000}},
-	&adventurer{name: "Sellsword Kest", wallet: &NpcWallet{Balance: 6000, Cap: 6000}},
-	&shopkeeper{name: "The Merchants' Guild"},
-	&official{name: "The Crown Assessor", wallet: &NpcWallet{Balance: 25000, Cap: 25000}},
+	&collector{id: "veyd", name: "Collector Veyd", wallet: &NpcWallet{Balance: 10000, Cap: 10000}},
+	&collector{id: "ashcombe", name: "Lady Ashcombe", wallet: &NpcWallet{Balance: 10000, Cap: 10000}},
+	&craftsperson{id: "ordwin", name: "Master Ordwin", wallet: &NpcWallet{Balance: 6000, Cap: 6000}},
+	&adventurer{id: "kest", name: "Sellsword Kest", wallet: &NpcWallet{Balance: 6000, Cap: 6000}},
+	&shopkeeper{id: "merchants-guild", name: "The Merchants' Guild"},
+	&official{id: "crown-assessor", name: "The Crown Assessor", wallet: &NpcWallet{Balance: 25000, Cap: 25000}},
 }
 
 func buyerByName(name string) NpcBuyer {
