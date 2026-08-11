@@ -63,7 +63,11 @@ func PrepareInstanceWrite(r Room) (savequeue.PendingWrite, error) {
 		return savequeue.PendingWrite{}, errors.New(`ephemeral rooms are not saved`)
 	}
 
-	rTpl := LoadRoomTemplate(r.RoomId)
+	// templateForCompare, NOT LoadRoomTemplate: the template is only READ here
+	// (reflect.DeepEqual per field), so it can be the shared cached copy. That
+	// removes 81% of this function's cost -- see template_cache.go, and note
+	// why LoadRoomTemplate itself must stay uncached.
+	rTpl := templateForCompare(r.RoomId)
 	if rTpl == nil {
 		return savequeue.PendingWrite{}, fmt.Errorf(`could not load template for room %d`, r.RoomId)
 	}

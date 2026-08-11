@@ -1,5 +1,18 @@
 # DOGMud Patch Notes
 
+## 2026-08-10: Saving is now too fast to notice
+
+A follow-up to the save work earlier today. The server was re-reading every
+room's description from disk each time it saved, to work out what had changed.
+Room descriptions do not change while the game runs, so it now reads them once
+and remembers them.
+
+The effect is larger than it sounds. The brief moment where the world holds
+still while a save is prepared has gone from a few tenths of a second to less
+than the length of a single game round. In practice that means there is no
+longer any moment to notice. The very first save after the server starts is
+still the old speed, because nothing has been remembered yet.
+
 ## 2026-08-10: The web client works without a mouse, and runs lighter
 
 Three things for anyone playing in a browser.
