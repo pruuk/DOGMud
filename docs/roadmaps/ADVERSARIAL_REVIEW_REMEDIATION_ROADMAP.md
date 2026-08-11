@@ -266,11 +266,14 @@ further decomposition
 | 5.9b | Contest floors: spells | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.9c | Contest floors: combat maneuvers | M | 5.9a | 5.8 follow-on | **Done 2026-08-11** |
 | 5.10 | Consolidate the opposed-roll floor seam | M | 5.9a-c | New (found in 5.9a) | **Done 2026-08-11** |
-| 5.11a | Model current vs candidate skill tuning | M | 5.7 | 5.7 follow-on | Not started |
-| 5.11b | Add a skill-scaled crit damage term | M | 5.11a | 5.7 follow-on | Not started |
-| 5.11c | Widen the crit-rate lever | S | 5.11a | 5.7 follow-on | Not started |
-| 5.11d | Reduce skill's direct damage share | M | 5.11a | 5.7 follow-on | Not started |
-| 5.11e | Above-cap curve for `SkillMultiplier` | S | 5.11b-d | 5.7 follow-on | Optional/last — model does not justify |
+| 5.11a | Model current vs candidate skill tuning | M | 5.7 | 5.7 follow-on | **Done 2026-08-11** |
+| 5.11b | `SkillWeight` 2.0 -> 5.0 | S | 5.11a | 5.7 follow-on | Not started |
+| 5.11c | Move positional modifiers into attack/defence scores | M | 5.11b | 5.7 follow-on | Not started |
+| 5.11d | Margin-derived crit (+ defensive mirror, `forceCrit` rework) | L | 5.11c | 5.7 follow-on | Not started |
+| 5.11e | Crit floors, 1% of hits, both directions | M | 5.11d | 5.7 follow-on | Not started |
+| 5.11f | Skill-scaled crit damage multiplier | M | 5.11d | 5.7 follow-on | Not started |
+| 5.11g | Docs + adversarial playtest gate | M | 5.11f | 5.7 follow-on | Not started |
+| ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
 | 5.12 | `context.md` accuracy pass (61 phantom symbols, 22 pkgs) | L | — | New (found 2026-08-11) | Not started |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
@@ -1817,9 +1820,18 @@ leaks through `MinDefenseChance`. Do not floor the margin itself — a floor sav
 already carries margin +-1 by the 5.9 convention, and flooring the margin would
 corrupt every effect that scales by it.
 
-**Still to do:** re-decompose 5.11b-e against these decisions and write the
-spec. The `SkillMultiplier`/`*25` work (old 5.11d) remains unjustified by the
-model and stays optional and last.
+**SPEC WRITTEN 2026-08-11:**
+`docs/superpowers/specs/2026-08-11-skill-and-crit-rebalance-design.md`.
+Re-decomposed into 5.11b-g above; the `SkillMultiplier`/`*25` work from the
+original sketch is now an explicit **non-goal**.
+
+The spec documents six silent traps found while reading the resolution path.
+Two are severe enough to name here: `best.margin` is **defence-positive**
+(`defenseRoll.Value - attackRoll.Value`), so the attacker's margin is its
+negation and an inverted sign still compiles; and `best.margin` is
+`math.Inf(-1)` when no defence was attempted, which under margin-derivation
+reads as an infinitely decisive attack and would crit **every** swing. Detect
+that via `best.defenseType == ""`, never by testing the margin.
 
 **Playtest gate:** 5.11 is a combat-feel change. Per the CLAUDE.md content gate,
 it needs a harness sweep plus a manual pass by the user in parallel — the model
