@@ -1637,6 +1637,81 @@ compensating rescale in the same change.
   0/25/50/75/100, under shipped tuning and candidates. Acceptance: the ordering
   Skill > Gear > Stats falls out of the math rather than out of intent, and the
   quadratic crit interaction stays near-linear.
+
+  **DONE 2026-08-11.** Model built from source formulas (`calcAttackScore:405`,
+  `characters/combat.go:317`, `damage_pipeline.go:23`, `calcCritThreshold:450`,
+  `calcHitDamage:998`) against shipped `config.yaml`. Five results, two of which
+  change the plan.
+
+  **1. Shipped tuning ALREADY passes the acceptance test.** Moving each axis
+  across its realistic range multiplies expected damage per swing by:
+
+  | Axis | Range | Shipped leverage |
+  |---|---|---|
+  | Skill | 0 -> 100 | **16.89x** |
+  | Gear | weapon mult 0.40 -> 1.60 | 4.00x |
+  | Stats | 100 -> 200 | 3.32x |
+
+  Skill > Gear > Stats already holds. The priority ordering was never broken —
+  what is wrong is the *mechanism* delivering it.
+
+  **2. Skill's leverage is already mostly hit-driven.** Decomposed across skill
+  0 -> 100 (log-share of total):
+
+  | Source | Shipped | Candidate |
+  |---|---|---|
+  | P(hit) | **60%** | 68% |
+  | Damage multiplier | 39% | 20% |
+  | Crit | **2%** | 11% |
+
+  So the approved philosophy is roughly 60% implemented already. The real gap is
+  crit contributing almost nothing: 2% of skill's total leverage. Crit is the
+  lever to move, and it is nearly free of the risks attached to the others.
+
+  **3. The quadratic runaway did not materialize.** Driving crit rate and
+  magnitude from the same stat compounds, but growth *decelerates* per 25 ranks
+  (5.2x, 3.3x, 2.6x, 1.07x) because the crit-threshold floor caps the rate. The
+  floor is the brake, so sub-linear curves on each lever are sufficient and no
+  extra damping is needed.
+
+  **4. NEW CONFLICT — the crit floor collides with grapple.**
+  `calcCritThreshold` has two floors: 1.5 after the skill term and 1.0 absolute
+  after position modifiers. A candidate that lets skill alone reach 1.0 makes
+  the grapple-controller bonus worth **nothing** at skill advantage +50, because
+  skill already sat on the absolute floor:
+
+  | Skill advantage | Threshold -> crit | With ground grapple |
+  |---|---|---|
+  | +25 | 1.50 -> 6.7% | 1.10 -> 13.6% |
+  | +50 | 1.00 -> 15.9% | 1.00 -> **15.9% (grapple buys nothing)** |
+
+  5.11c must keep the skill-only floor **above** the absolute floor (1.2, giving
+  11.5%, preserves grapple headroom) or move position modifiers off the
+  threshold entirely.
+
+  **5. The `*25` coupling is worse than feared.** Lowering `SkillMultiplierMax`
+  3.0 -> 1.5 without rescaling the contest consumers does this to a thief facing
+  an equal-rank observer:
+
+  | Skullduggery rank | Shipped P(sneak) | Candidate P(sneak) |
+  |---|---|---|
+  | 25 | 50.0% | 27.3% |
+  | 50 | 50.0% | **21.9%** |
+
+  A rank-50 thief loses more than half their success rate as a side effect of a
+  melee-damage retune. Non-negotiable: 5.11d rescales these in the same change.
+
+  **Also rejected:** compensating the `SkillMultiplierMax` cut with a global
+  `MeleeDamageScale` raise (0.52 -> 0.98 holds skill-50 damage constant) inflates
+  low-skill damage by **89%** and high-skill by 32%. Global compensation
+  over-corrects because it lifts the whole curve including its floor.
+
+  **Revised sequencing recommendation:** do **5.11b (crit damage) and 5.11c
+  (crit rate) first** — together they move crit from 2% to ~11% of skill's
+  leverage, need no rescaling of any other consumer, and carry no thief risk.
+  Treat **5.11d as optional and last**, gated on whether play actually shows
+  skill contributing too much flat damage after b and c land. The model does not
+  currently justify its risk.
 - **5.11b — Add a skill-scaled crit damage term.** New balance knob plus
   sub-linear skill scaling in `calcHitDamage`. Must keep the existing
   mitigation-bypass behavior coherent rather than stacking naively on it.
