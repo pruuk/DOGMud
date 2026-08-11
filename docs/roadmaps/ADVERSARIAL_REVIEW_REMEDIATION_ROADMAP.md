@@ -277,7 +277,7 @@ further decomposition
 | ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
 | 5.12 | `context.md` accuracy pass (61 phantom symbols, 22 pkgs) | L | — | New (found 2026-08-11) | Not started |
 | 5.13 | Tunnel Shaman moves constantly (cause unknown) | S | — | Play report 2026-08-11 | **Parked** — suspects narrowed |
-| 5.14 | Attacking a mob does not pin it in place | M | — | Play report 2026-08-11 | Not started — cause identified |
+| 5.14 | Attacking a mob does not pin it in place | M | — | Play report 2026-08-11 | **Done 2026-08-11** (PR #26) |
 | 6.1a | Consolidate action-layer duplication | M | 5.1, 5.2, 5.6 | 23 (actions) | Not started |
 | 6.1b | Consolidate position duplication | M | 1.2, 5.1 | 23 (position) | Not started |
 | 6.1c | Consolidate mob-command duplication | M | 5.1, 5.2 | 23 (mob commands) | Not started |
@@ -1922,7 +1922,21 @@ room, rather than only checking the mob's own combat state. One predicate, and i
 covers every engagement path — melee, spells, ranged — not just the `attack`
 command. Marking the mob at attack time also works but fixes only that path.
 
-**Finding:** New (reported in play 2026-08-11). Not yet scheduled.
+**DONE 2026-08-11 (PR #26).** `IdleMobs` now also skips any mob that a player
+in the same room is currently targeting. Checking who is *targeting the mob*,
+rather than marking the mob inside the `attack` command, covers every engagement
+path -- melee, spells, ranged -- instead of only that one command.
+
+The two registry lookups are injected so the predicate is unit-testable without
+the room and user registries (`users.userManager` is package-private), following
+the callback-injection pattern already used for `rooms.SetCompanionTransport`.
+
+Six tests, mutation-verified on the non-obvious part: a player with no target
+yields a zero-value `ActorRef` whose `MobInstanceId` is 0, so without the
+`mobInstanceId < 1` guard a mob with a zero instance id would match every idle
+player and pin itself forever.
+
+**Finding:** New (reported in play 2026-08-11).
 
 ### Chunk 5.8 — Decide opposed-roll variance ownership
 
