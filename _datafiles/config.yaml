@@ -522,6 +522,16 @@ Balance:
   #   Example: attacker score 110 × 1.05 = 115.5 vs prone target.
   ProneVulnerabilityMultiplier: 1.05  # Tuned 39.2: lowered from 1.15; defense penalties already stack
   #
+  # Grapple position (chunk 5.11c). Moved off the crit threshold and onto the
+  #   attack score so grapple and prone use the same mechanism. As threshold
+  #   shifts the ground pair self-cancelled to net zero -- BOTH participants
+  #   satisfy IsGroundGrapple(), so the controller's -0.4 and the victim's +0.4
+  #   erased each other, making ground control worth LESS than standing. As
+  #   multipliers they compound, which was always the intent.
+  GrappleGroundControlAttackMultiplier: 1.15    # controller, on the ground
+  GrappleStandingControlAttackMultiplier: 1.08  # controller, standing clinch
+  GrappleGroundedVulnerabilityMultiplier: 1.15  # vs a grounded, non-controlling target
+  #
   # StandStaminaCost: fraction of StaminaMax required to stand up from prone.
   #   Example: StaminaMax 400, cost 0.15 → must spend 60 SP to stand.
   StandStaminaCost: 0.15

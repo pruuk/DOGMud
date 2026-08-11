@@ -47,6 +47,16 @@ func (b *Balance) validateCombat() {
 	if b.ProneDamagePenalty <= 0 || b.ProneDamagePenalty > 1.0 {
 		b.ProneDamagePenalty = 0.80
 	}
+	// Chunk 5.11c: grapple positional multipliers on the attack score.
+	if b.GrappleGroundControlAttackMultiplier <= 0 {
+		b.GrappleGroundControlAttackMultiplier = 1.15
+	}
+	if b.GrappleStandingControlAttackMultiplier <= 0 {
+		b.GrappleStandingControlAttackMultiplier = 1.08
+	}
+	if b.GrappleGroundedVulnerabilityMultiplier <= 0 {
+		b.GrappleGroundedVulnerabilityMultiplier = 1.15
+	}
 	if b.ProneVulnerabilityMultiplier <= 0 {
 		b.ProneVulnerabilityMultiplier = 1.15
 	}

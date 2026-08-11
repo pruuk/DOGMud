@@ -420,6 +420,26 @@ func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Ch
 		attackScore *= float64(bal.ProneVulnerabilityMultiplier)
 	}
 
+	// Chunk 5.11c: grapple position, moved here from calcCritThreshold so that
+	// prone and grapple -- the same category of effect -- use the same
+	// mechanism. Under margin-derived crit (5.11d) these also feed crit
+	// automatically, because they move the margin.
+	//
+	// As threshold shifts these self-cancelled on the ground: BOTH participants
+	// satisfy IsGroundGrapple() (a position state) while IsController() is a
+	// separate control fsm, so the controller's -0.4 and the victim's +0.4 net
+	// to zero. As multipliers they compound, which is the intent.
+	if sourceChar.IsController() {
+		if sourceChar.IsGroundGrapple() {
+			attackScore *= float64(bal.GrappleGroundControlAttackMultiplier)
+		} else if sourceChar.IsStandingGrapple() {
+			attackScore *= float64(bal.GrappleStandingControlAttackMultiplier)
+		}
+	}
+	if targetChar.IsGroundGrapple() && !targetChar.IsController() {
+		attackScore *= float64(bal.GrappleGroundedVulnerabilityMultiplier)
+	}
+
 	// Darkness penalty: attacker can't see
 	if !ctx.sourceCanSee {
 		attackScore *= float64(bal.DarknessCombatPenalty)
@@ -455,22 +475,23 @@ func calcCritThreshold(sourceChar *characters.Character, targetChar *characters.
 		critThreshold = 1.5
 	}
 
-	// Stage 8.3: Position-based crit modifiers. Chunk 4b R1: FSM-driven —
-	// IsController replaces the legacy ConditionGrappleController gate
-	// (S4 sunset), and IsGroundGrapple / IsStandingGrapple replace the
-	// legacy PositionGrounded / PositionClinched enum reads.
-	if sourceChar.IsController() {
-		if sourceChar.IsGroundGrapple() {
-			critThreshold -= 0.4
-		} else if sourceChar.IsStandingGrapple() {
-			critThreshold -= 0.2
-		}
-	}
-	if targetChar.IsGroundGrapple() && !targetChar.IsController() {
-		critThreshold += 0.4
-	}
+	// Chunk 5.11c: position-based crit modifiers MOVED OUT to calcAttackScore,
+	// alongside the prone multipliers that already lived there. Do not
+	// reintroduce them here.
+	//
+	// Two reasons. First, prone and grapple are the same category of effect and
+	// were using two different mechanisms in two different files. Second, the
+	// ground-grapple pair silently cancelled: both participants satisfy
+	// IsGroundGrapple() (a position state) while IsController() is a separate
+	// control fsm, so the controller's -0.4 and the victim's +0.4 netted to
+	// ZERO -- ground control, the stronger position, was worth strictly less
+	// than the standing -0.2.
+	//
+	// Buff modifiers (Accuracy, Blink) stay on the threshold. They are not
+	// positional; "this character crits more readily" is exactly what a
+	// threshold expresses.
 
-	// Absolute floor after all modifiers: ~15.9% max crit (skilled + grapple controller)
+	// Absolute floor. Retained for the buff modifiers above.
 	if critThreshold < 1.0 {
 		critThreshold = 1.0
 	}

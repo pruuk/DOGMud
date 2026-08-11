@@ -47,15 +47,25 @@ type Balance struct {
 	ProneBlockPenalty            ConfigFloat `yaml:"ProneBlockPenalty"`            // Multiplier on block score while prone (default 0.90)
 	ProneDamagePenalty           ConfigFloat `yaml:"ProneDamagePenalty"`           // Damage multiplier while prone (default 0.80)
 	ProneVulnerabilityMultiplier ConfigFloat `yaml:"ProneVulnerabilityMultiplier"` // Multiplier on attack score vs prone target (default 1.15)
-	StandStaminaCost             ConfigFloat `yaml:"StandStaminaCost"`             // Fraction of max stamina to stand up (default 0.15)
-	StandMinStamina              ConfigFloat `yaml:"StandMinStamina"`              // Minimum fraction of max SP to stand (default 0.15)
-	ThirdPartyGrapplePenalty     ConfigFloat `yaml:"ThirdPartyGrapplePenalty"`     // Defense multiplier when grappled vs third party (default 0.70)
-	ClinchDodgePenalty           ConfigFloat `yaml:"ClinchDodgePenalty"`           // Dodge score multiplier while clinched (default 0.80)
-	ClinchParryPenalty           ConfigFloat `yaml:"ClinchParryPenalty"`           // Parry score multiplier while clinched (default 0.83)
-	ClinchBlockPenalty           ConfigFloat `yaml:"ClinchBlockPenalty"`           // Block score multiplier while clinched (default 0.85)
-	GroundedDodgePenalty         ConfigFloat `yaml:"GroundedDodgePenalty"`         // Dodge score multiplier while grounded (default 0.75)
-	GroundedParryPenalty         ConfigFloat `yaml:"GroundedParryPenalty"`         // Parry score multiplier while grounded (default 0.77)
-	GroundedBlockPenalty         ConfigFloat `yaml:"GroundedBlockPenalty"`         // Block score multiplier while grounded (default 0.80)
+
+	// Chunk 5.11c: grapple position moved off the crit threshold and onto the
+	// attack score, mirroring how prone already worked. As threshold shifts the
+	// ground-grapple pair self-cancelled to net zero, because BOTH participants
+	// satisfy IsGroundGrapple() -- it is a position state, while IsController()
+	// is a separate control fsm. As multipliers they compound, which was the
+	// intent.
+	GrappleGroundControlAttackMultiplier   ConfigFloat `yaml:"GrappleGroundControlAttackMultiplier"`   // Attack score multiplier for a ground-grapple controller (default 1.15)
+	GrappleStandingControlAttackMultiplier ConfigFloat `yaml:"GrappleStandingControlAttackMultiplier"` // Attack score multiplier for a standing-grapple controller (default 1.08)
+	GrappleGroundedVulnerabilityMultiplier ConfigFloat `yaml:"GrappleGroundedVulnerabilityMultiplier"` // Attack score multiplier vs a grounded, non-controlling target (default 1.15)
+	StandStaminaCost                       ConfigFloat `yaml:"StandStaminaCost"`                       // Fraction of max stamina to stand up (default 0.15)
+	StandMinStamina                        ConfigFloat `yaml:"StandMinStamina"`                        // Minimum fraction of max SP to stand (default 0.15)
+	ThirdPartyGrapplePenalty               ConfigFloat `yaml:"ThirdPartyGrapplePenalty"`               // Defense multiplier when grappled vs third party (default 0.70)
+	ClinchDodgePenalty                     ConfigFloat `yaml:"ClinchDodgePenalty"`                     // Dodge score multiplier while clinched (default 0.80)
+	ClinchParryPenalty                     ConfigFloat `yaml:"ClinchParryPenalty"`                     // Parry score multiplier while clinched (default 0.83)
+	ClinchBlockPenalty                     ConfigFloat `yaml:"ClinchBlockPenalty"`                     // Block score multiplier while clinched (default 0.85)
+	GroundedDodgePenalty                   ConfigFloat `yaml:"GroundedDodgePenalty"`                   // Dodge score multiplier while grounded (default 0.75)
+	GroundedParryPenalty                   ConfigFloat `yaml:"GroundedParryPenalty"`                   // Parry score multiplier while grounded (default 0.77)
+	GroundedBlockPenalty                   ConfigFloat `yaml:"GroundedBlockPenalty"`                   // Block score multiplier while grounded (default 0.80)
 	// GrappleStaminaLowThreshold is the stamina fraction (0.0–1.0) below
 	// which a character is considered "low stamina" for grapple purposes.
 	// Used by IsLowGrappleStamina() and the mob_low_grapple_stamina btree
