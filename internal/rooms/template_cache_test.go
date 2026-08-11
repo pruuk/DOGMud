@@ -51,7 +51,15 @@ func setupCacheRoom(t *testing.T, roomId int, title string) (dir string, restore
 
 func writeCacheTemplate(t *testing.T, dir string, roomId int, title string) {
 	t.Helper()
-	tpl := &Room{RoomId: roomId, Zone: "cachezone", Title: title, Description: "Template cache test room."}
+	writeCacheTemplateWithGold(t, dir, roomId, title, 0)
+}
+
+// writeCacheTemplateWithGold sets Gold, which unlike Title is NOT
+// instance:"skip" and therefore actually participates in the instance diff.
+// Any test of template-cache invalidation must use a diffed field.
+func writeCacheTemplateWithGold(t *testing.T, dir string, roomId int, title string, gold int) {
+	t.Helper()
+	tpl := &Room{RoomId: roomId, Zone: "cachezone", Title: title, Description: "Template cache test room.", Gold: gold}
 	data, err := yaml.Marshal(tpl)
 	if err != nil {
 		t.Fatal(err)
@@ -170,8 +178,13 @@ func TestPrepareInstanceWrite_UsesTheCacheAndStillDiffsCorrectly(t *testing.T) {
 
 // If a stale template survived a builder edit, every field the builder changed
 // would look like INSTANCE state to the diff and get baked into the room's
-// overlay -- where it then shadows future template edits. That is the failure
-// this invalidation exists to prevent, so it is tested end to end.
+// overlay -- where it then shadows future template edits.
+//
+// THIS TEST MUST USE A DIFFED FIELD. An earlier version asserted on Title,
+// which is instance:"skip": PrepareInstanceWrite skips those fields before
+// comparing, so it returned a delete whether the cache was fresh or stale and
+// proved nothing. Gold is not skip-tagged, so it genuinely exercises the
+// comparison against the cached template.
 func TestPrepareInstanceWrite_SeesATemplateEditAfterInvalidation(t *testing.T) {
 	const roomId = 940005
 	dir, restore := setupCacheRoom(t, roomId, "Before Edit")
@@ -182,25 +195,62 @@ func TestPrepareInstanceWrite_SeesATemplateEditAfterInvalidation(t *testing.T) {
 		t.Fatal("room load returned nil")
 	}
 
-	// Warm the cache.
-	if _, err := PrepareInstanceWrite(*r); err != nil {
+	// The room carries gold the template does not, so it is genuinely dirty and
+	// this warms the cache with a template whose Gold is 0.
+	r.Gold = 500
+	p, err := PrepareInstanceWrite(*r)
+	if err != nil {
 		t.Fatal(err)
 	}
+	if p.IsDelete() {
+		t.Fatal("fixture wrong: a room with gold its template lacks should be dirty")
+	}
 
-	// A builder edits the template on disk, and the room now matches the NEW
-	// title. Without invalidation the diff compares against the old title and
-	// writes `title: After Edit` into the instance overlay.
-	writeCacheTemplate(t, dir, roomId, "After Edit")
-	r.Title = "After Edit"
-
+	// A builder now sets that same gold ON THE TEMPLATE. The room matches it, so
+	// the room has no instance state any more and its overlay should be removed.
+	writeCacheTemplateWithGold(t, dir, roomId, "Before Edit", 500)
 	InvalidateTemplateCache(roomId)
 
-	p, err := PrepareInstanceWrite(*r)
+	p, err = PrepareInstanceWrite(*r)
 	if err != nil {
 		t.Fatalf("PrepareInstanceWrite: %v", err)
 	}
 	if !p.IsDelete() {
-		t.Errorf("a template edit leaked into the instance overlay: %q", p.Data)
+		t.Errorf("a template edit was baked into the instance overlay: %q", p.Data)
+	}
+}
+
+// The negative case: WITHOUT invalidation the stale cache must produce the
+// wrong answer. Without this, the test above could pass for the wrong reason
+// and nobody would know.
+func TestPrepareInstanceWrite_StaleTemplateWouldLeakWithoutInvalidation(t *testing.T) {
+	const roomId = 940008
+	dir, restore := setupCacheRoom(t, roomId, "Stale Probe")
+	defer restore()
+
+	r := LoadRoomInstance(roomId)
+	if r == nil {
+		t.Fatal("room load returned nil")
+	}
+	r.Gold = 500
+
+	// Warm the cache with the OLD template (gold 0).
+	if _, err := PrepareInstanceWrite(*r); err != nil {
+		t.Fatal(err)
+	}
+
+	// Builder sets gold on the template, but nothing invalidates.
+	writeCacheTemplateWithGold(t, dir, roomId, "Stale Probe", 500)
+
+	p, err := PrepareInstanceWrite(*r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.IsDelete() {
+		t.Fatal("the cache was invalidated by something; this test can no longer detect a stale one")
+	}
+	if want := "gold: 500\n"; string(p.Data) != want {
+		t.Errorf("stale-cache payload = %q, want %q", p.Data, want)
 	}
 }
 
