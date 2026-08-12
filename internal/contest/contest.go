@@ -98,3 +98,18 @@ func Run(atkScore float64, entries []Entry) Result {
 
 	return res
 }
+
+// AgainstDifficulty contests a score against a fixed number rather than against
+// an opponent — searching a room, following a trail, foraging, recovering from
+// prone with nobody holding you down.
+//
+// It is deliberately the same code path as Run, so a difficulty check produces
+// the same crit, fumble and margin semantics as any other contest. The
+// alternative — a separate threshold helper — is how the codebase ended up with
+// several unrelated ways to decide the same kind of question.
+//
+// The result has no Winner name. Ask Contested, not Winner, to find out whether
+// a contest happened.
+func AgainstDifficulty(score, difficulty float64) Result {
+	return Run(score, []Entry{{Score: difficulty}})
+}

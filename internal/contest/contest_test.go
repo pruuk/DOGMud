@@ -92,3 +92,26 @@ func TestRun_ZeroScoreAttackerDoesNotPanic(t *testing.T) {
 	assert.True(t, res.Contested)
 	assert.False(t, math.IsNaN(res.Margin), "margin must not be NaN")
 }
+
+// TestAgainstDifficulty covers the 12 sites that contest a fixed number rather
+// than an opponent: search, track, forage, knockdown, prone recovery. Without
+// this they cannot use the core and stay on a parallel path.
+func TestAgainstDifficulty(t *testing.T) {
+	// A hopeless attempt against a very high bar.
+	res := AgainstDifficulty(10, 10000)
+	assert.True(t, res.Contested, "a difficulty check is still a contest")
+	assert.Less(t, res.Margin, 0.0, "failing badly means a negative attack-positive margin")
+
+	// A trivial attempt against a very low bar.
+	res = AgainstDifficulty(10000, 10)
+	assert.Greater(t, res.Margin, 0.0)
+}
+
+// TestAgainstDifficulty_HasNoWinnerName documents that a difficulty contest has
+// no named defender, which is why callers must test Contested rather than
+// Winner to ask whether a contest occurred.
+func TestAgainstDifficulty_HasNoWinnerName(t *testing.T) {
+	res := AgainstDifficulty(100, 100)
+	assert.True(t, res.Contested)
+	assert.Equal(t, "", res.Winner, "a static difficulty has no name")
+}
