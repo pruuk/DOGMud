@@ -334,9 +334,24 @@ func TestForceCrit_BypassesZScoreCheck(t *testing.T) {
 	assert.True(t, res2.hit, "forceCrit should still hit")
 	assert.True(t, res2.crit, "forceCrit=true should produce a crit regardless of Z-score")
 
-	// Confirm the stored Z-score was bumped past the threshold.
-	assert.GreaterOrEqual(t, res2.hitRoll.ZScore, critThreshold,
-		"forceCrit should bump hitRoll.ZScore to at least critThreshold")
+	// Chunk 5.11d: this used to assert that hitRoll.ZScore had been bumped to
+	// critThreshold+0.5. That bump was the IMPLEMENTATION of forceCrit, and it
+	// was removed — crit no longer reads ZScore, so the mutation would have
+	// become a silent no-op. The reported z-score is now the roll that actually
+	// happened, which is the honest value.
+	//
+	// The behaviour that matters is asserted above (res2.crit). Here we pin the
+	// deliberate change so a future reader does not "restore" the bump.
+	assert.Equal(t, subThresholdZ, res2.hitRoll.ZScore,
+		"forceCrit must no longer mutate the reported z-score")
+
+	// forceCrit must also suppress the fumble branch: it runs first and returns,
+	// so without this a forced crit on a terrible roll would resolve as a fumble.
+	result3 := &AttackResult{}
+	best3 := mockBestDefense(-3.0, 0.5, 80, 50, characters.DefenseDodge)
+	res3 := resolveDefenseOutcome(result3, best3, src, tgt, critThreshold, false, true)
+	assert.True(t, res3.crit, "forceCrit must win over a fumble-range attack roll")
+	assert.False(t, res3.fumble, "forceCrit must suppress the fumble branch")
 }
 
 // ─── calcHitDamage ──────────────────────────────────────────────────────────
