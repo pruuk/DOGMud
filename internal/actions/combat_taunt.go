@@ -6,7 +6,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -125,8 +124,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	attackScore *= convMult
 
 	// Opposed roll for hit/miss/fumble/crit classification.
-	floorHit, floorResist := combat.ManeuverFloors()
-	attackSuccess, atkMargin, atkRoll, _ := dice.OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)
+	res := combat.RunWithManeuverFloors(attackScore, defenseScore)
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User
@@ -139,7 +137,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	}
 
 	// Fumble: self-conviction damage and early return.
-	if atkRoll.ZScore <= -2.0 {
+	if res.AttackRoll.ZScore <= -2.0 {
 		selfDmg := char.Stats.Charisma.ValueAdj / 10
 		if selfDmg < 1 {
 			selfDmg = 1
@@ -166,7 +164,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 	}
 
-	if attackSuccess {
+	if res.Success {
 		// Calculate conviction damage via the unified pipeline.
 		rawDmg := combat.CalcRawDamage(
 			char.Stats.Charisma.ValueAdj,
@@ -181,7 +179,14 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		// Crit derives from the normalized opposed-roll margin, so beating the
 		// target decisively is what lands a telling taunt. Fumbles deliberately
 		// stay on the self-relative z-score, matching the melee path (5.11d).
-		isCrit := combat.AttackContestCrit(atkMargin, atkRoll)
+		//
+		// SIGN: contest.Result.Margin is ATTACK-positive and this is the ATTACKER's
+		// crit check, so it is passed unnegated. The defensive mirror
+		// (TryStoicResolve) negates. Note this reads Result.Margin and NOT
+		// AttackRoll.Margin: the core rolls via dice.Roll, which never populates a
+		// roll's Margin field, so the latter would silently be zero and no taunt
+		// would ever crit.
+		isCrit := combat.AttackContestCrit(res.Margin, res.AttackRoll)
 
 		// Chunk 5.11g: a crit bypasses the target's conviction mitigation AND
 		// scales by the taunter's rhetoric rank. Before this, a crit against an
