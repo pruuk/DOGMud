@@ -755,6 +755,21 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // result.AttackZScore now reports the roll that actually happened instead of the
 // bumped value.
 func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
+	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+
+	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
+	// res.hit, and nowhere earlier. The core resolver treats an attack crit as
+	// forcing a hit, so a floor evaluated inside it would become an undeclared
+	// second hit floor leaking through MinDefenseChance. See applyCritFloors.
+	applyCritFloors(&res, result, best, AttackCritFloor(), DefenseCritFloor())
+
+	return res
+}
+
+// resolveDefenseOutcomeCore is resolveDefenseOutcome without the crit floors.
+// Split out so the floors have exactly one application point despite the many
+// early returns below.
+func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
 	bal := configs.GetBalanceConfig()
 	fumbleThreshold := -2.0
 	defCritThreshold := 2.0

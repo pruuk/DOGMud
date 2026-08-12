@@ -457,6 +457,26 @@ Balance:
   #   Range: 0.0–0.50. Set to 0 to disable.
   MinAttackHitChance: 0.15
   #
+  # MinAttackCritChance / MinDefenseCritChance (roadmap chunk 5.11e): the same
+  #   last-resort idea applied to CRITS, once 5.11d/g made crit derive from the
+  #   opposed-roll margin. A badly outclassed attacker's crit rate went to
+  #   literally zero under that derivation, because the margin can never reach
+  #   two sigma no matter how the dice fall.
+  #
+  #   Denominated in HITS, not swings, and that distinction is the whole design.
+  #   An outclassed attacker hits about 15% of the time, so "1% of swings" would
+  #   demand roughly 6.7% of their hits be crits, a HIGHER per-hit rate than an
+  #   even match gets at 2.3%. Incoherent. 1% of hits instead composes with the
+  #   two floors above as independent last resorts.
+  #
+  #   Applied only AFTER the hit outcome is final. A crit forces a hit, so a
+  #   floor evaluated any earlier becomes an undeclared second hit floor
+  #   stacked on MinAttackHitChance.
+  #
+  #   Range: 0.0-1.0. Set to 0 to disable either direction entirely.
+  MinAttackCritChance: 0.01
+  MinDefenseCritChance: 0.01
+  #
   # MinContestSuccessChance / MinContestResistChance: the same idea for opposed
   #   contests OUTSIDE combat -- sneaking, stealing, planting, spotting a hidden
   #   creature, defusing a trap. Until 2026-08-11 those had no floor at either

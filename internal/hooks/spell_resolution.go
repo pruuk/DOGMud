@@ -338,7 +338,7 @@ func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, 
 		return false
 	}
 
-	isCrit := combat.ContestCrit(atkMargin, atkRoll)
+	isCrit := combat.AttackContestCrit(atkMargin, atkRoll)
 	dmgDealt := applyMobEffect(user, user.Character, mob, room, spellData, magnitude, isCrit)
 	// Stage 30.1: Record spell hit with actual damage
 	combat.RecordSpell(combat.User, combat.Mob, true, isCrit, false, false, dmgDealt, atkRoll.ZScore, user.Character, &mob.Character, round)
@@ -749,7 +749,7 @@ func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room
 		return false
 	}
 
-	isCrit := combat.ContestCrit(atkMargin, atkRoll)
+	isCrit := combat.AttackContestCrit(atkMargin, atkRoll)
 	applyPlayerEffect(user, target, room, spellData, magnitude, isCrit)
 
 	// Crit received → stat progression for the defender
@@ -1302,7 +1302,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 	if !success {
 		return
 	}
-	applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, combat.ContestCrit(atkMargin, atkRoll))
+	applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, combat.AttackContestCrit(atkMargin, atkRoll))
 }
 
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
@@ -1328,7 +1328,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		combat.RecordSpell(combat.Mob, combat.User, false, false, false, true, 0, atkRoll.ZScore, &caster.Character, target.Character, round)
 		return
 	}
-	isCrit := combat.ContestCrit(atkMargin, atkRoll)
+	isCrit := combat.AttackContestCrit(atkMargin, atkRoll)
 	mobSpellDmg := 0
 	critTag := ""
 	if isCrit {

@@ -181,7 +181,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		// Crit derives from the normalized opposed-roll margin, so beating the
 		// target decisively is what lands a telling taunt. Fumbles deliberately
 		// stay on the self-relative z-score, matching the melee path (5.11d).
-		isCrit := combat.ContestCrit(atkMargin, atkRoll)
+		isCrit := combat.AttackContestCrit(atkMargin, atkRoll)
 
 		// Chunk 5.11g: a crit bypasses the target's conviction mitigation AND
 		// scales by the taunter's rhetoric rank. Before this, a crit against an

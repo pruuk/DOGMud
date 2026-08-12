@@ -37,7 +37,7 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 		// the same normalized margin. defRoll.Margin is ALREADY defence-positive
 		// (dice.OpposedRoll negates it for the defender), so it must not be
 		// negated again here.
-		if ContestCrit(defRoll.Margin, defRoll) {
+		if DefenseContestCrit(defRoll.Margin, defRoll) {
 			return 0.0
 		}
 		return float64(cfg.SpellAvoidanceDamageMultiplier)
@@ -74,7 +74,7 @@ func TryStoicResolve(attacker *characters.Character, defender *characters.Charac
 	if !success {
 		// Defensive mirror of a crit; see TrySpellDeflection for why
 		// defRoll.Margin is used unnegated.
-		if ContestCrit(defRoll.Margin, defRoll) {
+		if DefenseContestCrit(defRoll.Margin, defRoll) {
 			return 0.0
 		}
 		return float64(cfg.RhetoricAvoidanceDamageMultiplier)

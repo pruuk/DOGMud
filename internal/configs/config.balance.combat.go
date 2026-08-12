@@ -236,6 +236,18 @@ func (b *Balance) validateCombat() {
 		b.CritDamagePerSkill = 0.05
 	}
 
+	// Crit floors (chunk 5.11e). Unlike the knobs above, 0 IS meaningful here
+	// and must survive: it is the off switch if the mechanic plays badly. So
+	// only a negative value is corrected, and an absent key legitimately reads
+	// as 0 rather than as the 0.01 default. Both are written explicitly in
+	// _datafiles/config.yaml so absence never arises in practice.
+	if b.MinAttackCritChance < 0 || b.MinAttackCritChance > 1.0 {
+		b.MinAttackCritChance = 0.01
+	}
+	if b.MinDefenseCritChance < 0 || b.MinDefenseCritChance > 1.0 {
+		b.MinDefenseCritChance = 0.01
+	}
+
 	// ── TOXICITY ────────────────────────────────────────────────────────────
 	if b.ToxicityDecayPerTick <= 0 {
 		b.ToxicityDecayPerTick = 1.0

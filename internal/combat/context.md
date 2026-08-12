@@ -957,6 +957,7 @@ values directly.
 | `combat/damage_pipeline.go` | `CalcRawDamage`, `ApplyMitigation`, `SkillMultiplier`, `ResourceMultiplier`, `MitigationCap`, `DamageScale` |
 | `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage` |
 | `combat/margin_crit.go` | `ContestCrit`, `ContestCritThreshold` |
+| `combat/crit_floor.go` | `ApplyCritFloor`, `AttackContestCrit`, `DefenseContestCrit`, `AttackCritFloor`, `DefenseCritFloor` |
 | `combat/attackresult.go` | `AttackResult` struct (includes `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`) and message helpers |
 | `combat/ai.go` | `ChooseSpecialMove`, `ChooseCastAction`, `GetAIProfile`, AI profiles, viability checks (`CanUseBash`, `CanUseKick`, etc.), scoring functions |
 | `combat/criteffects.go` | `AttemptCritDisarm`, `SetGrappleOpportunity`, `HasGrappleOpportunity`, `GetGrappleOpportunityBonus`, `ClearGrappleOpportunity` |
@@ -1229,6 +1230,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | `combat_helpers.go` | Shared helpers (encumbrance, swing counts) |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
+| `crit_floor.go` | Crit floors, 1% of HITS both directions (5.11e). **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes a second hit floor leaking through `MinDefenseChance`. |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
 | `avoidance.go` | Best-of-all defence resolution (dodge / parry / block) |

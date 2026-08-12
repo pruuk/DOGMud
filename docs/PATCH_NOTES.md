@@ -25,6 +25,13 @@ notice this immediately.
 The same is true when you shrug one off. Turning a spell or an insult aside
 completely now takes beating the sender soundly, not merely a good moment.
 
+One thing softens all of that. However far out of your depth you are, every blow
+you do manage to land keeps a small chance of being a telling one, and every
+attack you do manage to turn aside keeps a small chance of being turned aside
+completely. Being outmatched no longer means those moments are impossible, only
+rare. This works in both directions, so the thing hunting you keeps its small
+chance against you as well.
+
 ## 2026-08-11: Skill counts for much more, and a good position shows it
 
 Practice now matters a great deal more than it did. A character who has put real

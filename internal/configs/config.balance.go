@@ -21,6 +21,11 @@ type Balance struct {
 	BlockEffectiveness ConfigFloat `yaml:"BlockEffectiveness"` // Multiplier on block score before opposed roll (default 1.0)
 	MinDefenseChance   ConfigFloat `yaml:"MinDefenseChance"`   // Floor probability any defense succeeds (default 0.15)
 	MinAttackHitChance ConfigFloat `yaml:"MinAttackHitChance"` // Floor probability any attack hits (default 0.15)
+
+	// Crit floors (chunk 5.11e). Denominated in HITS, not swings, and applied
+	// only after the hit outcome is final. Set either to 0 to disable it.
+	MinAttackCritChance  ConfigFloat `yaml:"MinAttackCritChance"`  // Floor probability a landed hit is a crit (default 0.01)
+	MinDefenseCritChance ConfigFloat `yaml:"MinDefenseCritChance"` // Floor probability a successful defense is a defensive crit (default 0.01)
 	// Non-combat opposed contests (stealth, theft, traps, detection). Separate
 	// from the combat pair on purpose: a combat floor fires PER SWING and a
 	// fight has many swings, while a steal or a defuse is one attempt with a
