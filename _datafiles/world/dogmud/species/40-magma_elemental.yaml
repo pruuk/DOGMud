@@ -16,6 +16,7 @@ selectable: false
 tameable: false
 naturalbash: true
 return_damage: 25
+return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation
 angrycommands:
   - emote rumbles deep within its core, magma sloshing between plates
     of cooling crust.
