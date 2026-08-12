@@ -62,6 +62,41 @@ against an incomplete picture.
 | **C** — flat `util.Rand(100)` percentage | crafting, salvage, spell initiation, concentration break, AI decisions | **Out of the contest core** — a craft is a probability against a recipe, not a contest against an opponent. Must still reach the **progression layer** |
 | **D** — not a roll at all | **picklock** — a sequence-matching minigame (`sequenceMatches`, `GetLockRender`); skill sets puzzle difficulty, the player supplies the outcome | **Permanently out of scope.** Document as a deliberate exclusion or someone will "unify" a puzzle into a dice roll |
 
+### Ownership gaps found by review — assign before writing U3/U4
+
+The U2 plan originally missed `resolveCharmSpell` because its verification
+grepped one file. Adversarial review caught it, and a second sweep then found
+more sites owned by **no chunk's stated scope**. Recording them here so they are
+assigned deliberately rather than rediscovered at U10's audit.
+
+The maneuver-floor family. `combat.ManeuverFloors()` has eight callers; the
+hooks package reaches the same config pair through its own
+`maneuverHitFloor()`/`maneuverResistFloor()` accessors, so those count too:
+
+| Site | Claimed by |
+|---|---|
+| `actions/combat_taunt.go:128` | U3 (taunt) |
+| `usercommands/throw.go:153` | U3 (ranged) |
+| `combat/avoidance.go:80` (`TryStoicResolve`) | U3 (conviction defence) |
+| `combat/flee.go:84`, `:107` | U4 (flee) |
+| **`combat/grapple.go:79`** | **UNOWNED** |
+| **`combat/submission.go:79`** | **UNOWNED** |
+| **`combat/skill_moves.go:61`** (bash / kick / trip) | **UNOWNED** |
+| **`hooks/Position_GrappleTick.go:270`** (via `maneuverHitFloor()`) | **UNOWNED** |
+| `hooks/NewRound_MobRoundTick.go:398` (charm-duration reroll, same accessors) | unclaimed; belongs with U3's maneuver work |
+
+Five of those are claimed, four are not.
+
+**`skill_moves.go` is the awkward one.** `ExecuteSkillMove` is shared between
+ranged (`combat_fire.go` folds its defence into a scalar and calls it) and
+melee's bash/kick/trip. So U3 "migrating ranged" either touches a function that
+also drives melee special moves, or forks ranged out of it. Decide that when
+writing U3 rather than discovering it mid-implementation.
+
+Also only implicitly covered: `actions/shadow.go`,
+`usercommands/skill.skullduggery.shadow.go`, and the hidden-detection checks in
+`usercommands/go.go` — plausibly part of U4's "sneak", but not named. Name them.
+
 **Moved out of B by decision:** knockdown and prone recovery become opposed rolls
 against the opponent's stat + unarmed-combat (both currently roll against a flat
 `dice.RollStat(50)`). Prone recovery opposes the current aggro target when there
@@ -74,8 +109,8 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 |---|---|---|---|---|
 | **U0** | **Delete the spell-initiation gate.** Ships independently, before or beside U1. | S | — | **Yes** (pure win) |
 | **U1** | Contest core, bug-compatible. Generalise `runBestOfAllDefense`; **support contest-vs-static-difficulty, not only actor-vs-actor**; normalise the margin sign at the seam; melee migrated onto it. | L | — | **No** |
-| **U2** | Spell channel onto the core (4 sites), preserving ×15 attack / ×0 defence as parameters. | M | U1 | **No** |
-| **U3** | Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. | M | U1 | **No** |
+| **U2** | Spell channel onto the core (**6** sites — review found `resolveCharmSpell` too), preserving ×15 attack / ×0 defence as parameters. | M | U1 | **No** |
+| **U3** | Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. **Must also claim the unowned `ManeuverFloors()` sites — see Ownership gaps.** | M | U1 | **No** |
 | **U4** | Non-harm contests onto the core: sneak, steal, plant, defuse, flee (contest + progression layers only, no harm layer). | M | U1 | **No** |
 | **U5** | Cost + harm helpers. One cost helper, one harm helper. Config-ify the hardcoded 2/4/5 defence costs. No pool may go negative. | M | U1 | **No** (costs unchanged, only routed) |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |

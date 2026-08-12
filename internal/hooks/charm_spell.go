@@ -6,7 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -72,10 +72,10 @@ func resolveCharmSpell(user *users.UserRecord, targetMob *mobs.Mob, room *rooms.
 
 	// ── 6. Opposed roll ────────────────────────────────────────────────
 	// Charm is a spell, so it takes the spell floors, not the maneuver pair.
-	success, _, _, _ := dice.OpposedRollStatWithFloors(
-		float64(attackScore), float64(defenseScore),
+	success := contest.RunWithFloors(
+		float64(attackScore), []contest.Entry{{Score: float64(defenseScore)}},
 		spellHitFloor(), spellResistFloor(),
-	)
+	).Success
 
 	targetName := targetMob.Character.Name
 
