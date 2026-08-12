@@ -107,17 +107,20 @@ the attack type:
 |---|---|---|
 | Melee | dodge, parry, block | 3 |
 | Ranged | dodge, block | 2 |
-| Spell, physical damage | dodge, block **(block unconfirmed — see below)** | 2 |
+| Spell, physical damage | dodge, block | 2 |
 | Spell, mental | resist (`Wil + spellcasting×5`) | 1 |
 | Taunt | resist (`Wil + rhetoric×5`) | 1 |
 
 Parry is excluded from ranged deliberately — you cannot parry a bolt. This
 preserves today's documented intent in `rangedDefenseScore`.
 
-**Assumption flagged, not settled:** a physical-damage spell was specified as a
-two-part best-of with dodge as one part. The second part is recorded here as
-block (interposing a shield against a hurled stone reads correctly), but that
-was inferred, not stated. Confirm before implementing.
+**Parry against ranged and physical spells is deliberately excluded.** It is
+defensible in fiction — an exceptional swordsman could conceivably bat a hurled
+stone aside — but it would need a multiplier low enough to make it vanishingly
+rare, which buys flavour at the cost of a permanent special case in the defence
+set. Left out for simplicity. If it is ever wanted, it arrives as one more entry
+in the applicable-defence table and nothing else changes, which is the point of
+the design.
 
 ### 3.3 Outcome classification
 
@@ -186,6 +189,40 @@ answers crit attacks.
 Both sides progress, from **doing** and from **observing**. Observing is worth
 strictly less than doing.
 
+**Every progression event carries BOTH a skill and a stat.** This is explicit
+because it is the part most likely to be half-implemented: it is easy to wire the
+skill and forget the stat, and the result compiles, plays, and quietly denies
+players half the progression the design promises.
+
+### 5.0 The event matrix
+
+Every cell fires both a skill roll and a stat roll for the named party.
+
+| Outcome | Attacker gets | Defender gets |
+|---|---|---|
+| **Attack crit** | attack skill + attack stat, **bonus multiplier** (doing) | defence skill + channel stat via `OnCritReceived` (vitality / willpower / charisma), **observing rate** |
+| **Attack fumble** | attack skill + attack stat, **bonus multiplier** — failure teaches (doing) | defence skill + defence stat, **observing rate** |
+| **Defence crit** | attack skill + attack stat, **observing rate** | defence skill + defence stat, **bonus multiplier** (doing) |
+| **Defence fumble** | attack skill + attack stat, **observing rate** | defence skill + defence stat, **bonus multiplier** — failure teaches (doing) |
+| Ordinary hit or miss | attack skill + attack stat, ordinary `OnSkillUse` / `OnStatUse` | defence skill + defence stat, ordinary rate |
+
+The stat named is the one that fed that side's score in the contest, except on a
+crit *received*, where it is the channel's toughening stat per `OnCritReceived`
+— you learn to take a hit, not to swing better.
+
+Two knobs govern the two rates, both new:
+
+| Knob | Meaning | Proposed |
+|---|---|---|
+| `CritProgressionBonus` | multiplier on the progression roll for the party who *did* the crit or fumble | 2.0 |
+| `ObservedCritProgressionBonus` | multiplier for the party who *received* or witnessed it | 0.5 |
+
+Anti-exploit note: crit rates exceed 90% in lopsided fights, so a bonus
+multiplier applied per crit is effectively a per-swing bonus when farming trash.
+The existing curve already damps this — progression chance decays with virtual
+rank — but the interaction should be modelled before the numbers are fixed, not
+assumed safe.
+
 ### 5.1 Use the existing channel — most of this is already built
 
 - `CheckSkillProgression` already takes a `bonusMultiplier`, documented "e.g. 2.0
@@ -217,8 +254,54 @@ with plain values.
 
 ## 6. Tuning package
 
-- **Damage ×0.65** (a 35% cut).
-- **Item mitigation cap 0.75 → 0.85.**
+> **MANDATORY: every number in this section is a `_datafiles/config.yaml` edit,
+> not a code edit.** This has been lost before — combat literals were edited
+> directly when a knob already existed. Per CLAUDE.md: "Before hardcoding any
+> balance number, check whether a knob already exists... If you find yourself
+> editing a literal in `internal/` to change how something feels, stop and look
+> for the knob. If there genuinely is not one, adding a knob is usually the
+> better change than editing the literal."
+>
+> A pull request in this arc that changes a balance number inside `internal/`
+> should be rejected on sight.
+
+### 6.0 The exact knobs
+
+**Existing, to be re-valued in `config.yaml`:**
+
+| Knob | Current | Target | Purpose |
+|---|---|---|---|
+| `GlobalDamageMultiplier` | 0.5 | **0.325** | the ×0.65 damage cut, in one edit |
+| `PhysicalMitigationCap` | 0.75 | **0.85** | item mitigation ceiling |
+| `MagicalMitigationCap` | 0.75 | **0.85** | " |
+| `ConvictionMitigationCap` | 0.75 | **0.85** | " |
+| `SkillWeight` | 5.0 | 5.0 (unchanged) | now applied uniformly by code |
+| `SpellAttackSkillFactor` | 3 | **removed from the attack path** | the ×15 accident |
+
+`GlobalDamageMultiplier` is preferred over editing `MeleeDamageScale`,
+`SpellDamageScale` and `RhetoricDamageScale` separately: it is one value, it
+applies to all three channels by construction, and it cannot drift out of step
+the way three edits can. The per-channel scales stay available for deliberate
+per-channel asymmetry later.
+
+**New knobs this design requires:**
+
+| Knob | Purpose | Proposed |
+|---|---|---|
+| `DefenseMitigationFloor` | mitigation at a bare defensive win | 0.50 |
+| `DefenseMitigationCeiling` | mitigation just below the crit threshold | 1.00 |
+| `CritProgressionBonus` | progression multiplier for doing a crit/fumble | 2.0 |
+| `ObservedCritProgressionBonus` | progression multiplier for receiving one | 0.5 |
+
+Per the CLAUDE.md defaulting rule, note which of these may legitimately be `0`
+(the two progression bonuses, as off switches) and validate those on `< 0`
+rather than `<= 0`, mirroring the 5.9 floors. `DefenseMitigationFloor` and
+`DefenseMitigationCeiling` have non-zero defaults and validate on `<= 0`.
+
+### 6.1 Summary of the change
+
+- **Damage ×0.65** (a 35% cut), via `GlobalDamageMultiplier`.
+- **Item mitigation cap 0.75 → 0.85**, all three channels.
 
 Modelled in `tools/balance/unified_resolution_model.py` against live behaviour,
 including the 5.11g crit magnitude:
@@ -236,7 +319,7 @@ Parity lands within a few points of today at every armour level, and best-in-slo
 defence gets meaningfully stronger, which is the intent: high-end gear and
 defensive buffs become a real investment.
 
-### 6.1 The residual is intended, and verified against real content
+### 6.2 The residual is intended, and verified against real content
 
 The lopsided rows stay high because **a crit bypasses item mitigation entirely**,
 so both tuning levers act on the non-crit path while the growth is on the crit
@@ -346,4 +429,16 @@ rationale needs rewriting.
 4. Adding a new contest requires declaring scores, an applicable defence set and
    a channel — no new resolution code.
 5. Parity damage-per-swing within ±10% of today at light, mid and BIS armour.
-6. The adversarial playtest gate passes, per the CLAUDE.md content SOP.
+6. **No balance number was changed inside `internal/`.** Every tuning value in
+   section 6 moved in `_datafiles/config.yaml`. Verify by diffing: a numeric
+   literal changed under `internal/` in this arc is a defect.
+7. **Documentation moves with the code.** Every package touched has its
+   `context.md` updated in the same PR — not a follow-up — covering at minimum
+   its new public API, its file list, and any trap from section 7 that now lives
+   in that package. Packages expected to need it: `internal/combat`,
+   `internal/actions`, `internal/hooks`, `internal/characters`, `internal/dice`.
+   Stale comments in touched files are corrected rather than left, particularly
+   any that describe the per-channel resolution this design removes. Chunk 5.12
+   found 61 phantom symbols across 22 packages precisely because this was
+   treated as optional.
+8. The adversarial playtest gate passes, per the CLAUDE.md content SOP.
