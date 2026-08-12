@@ -271,7 +271,8 @@ further decomposition
 | 5.11c | Move positional modifiers into attack/defence scores | M | 5.11b | 5.7 follow-on | **Done 2026-08-11** (PR #28) |
 | 5.11d | Margin-derived crit (+ defensive mirror, `forceCrit` rework) | L | 5.11c | 5.7 follow-on | **Done 2026-08-11** (PR #28) |
 | 5.11e | Crit floors, 1% of hits, both directions | M | 5.11d | 5.7 follow-on | Not started |
-| 5.11f | Return damage: channel-matched mitigation | M | 5.11b | Found in 5.11b playtest | **Done 2026-08-11** (PR #29) |
+| 5.11f | Return damage: channel-matched mitigation | M | 5.11b | Found in 5.11b playtest | **Done 2026-08-11** (PR #29) — baseline only |
+| 5.11f-2 | Reflect counterplay: dedicated resist + cap | M | 5.11f | Design gap found 2026-08-11 | Not started |
 | 5.11g | Skill-scaled crit damage multiplier | M | 5.11d, **5.11f** | 5.7 follow-on | Not started |
 | 5.11h | Docs + adversarial playtest gate | M | 5.11g | 5.7 follow-on | Not started |
 | ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
@@ -1839,6 +1840,49 @@ that via `best.defenseType == ""`, never by testing the margin.
 **Playtest gate:** 5.11 is a combat-feel change. Per the CLAUDE.md content gate,
 it needs a harness sweep plus a manual pass by the user in parallel — the model
 can show the math is coherent but not whether crits *feel* like the payoff.
+
+### Chunk 5.11f-2 — Reflect counterplay needs designing, not inheriting
+
+**5.11f shipped the baseline and stopped short.** It routed return damage through
+the existing physical/magical mitigation channels, and the commit claimed that
+"may obviate the bespoke anti-reflect spell/potion". **That claim was wrong** and
+is retracted here.
+
+`magical_mitigation` is the long-standing SPELL-damage channel. Those items and
+buffs were built and balanced against spells; 5.11f pointed reflect at a pool
+that already existed for another purpose. Measured against the Elemental King's
+25% reflect on a 200-damage hit:
+
+| Source | Mitigation | Damage returned |
+|---|---:|---:|
+| bare | 0% | 50 |
+| typical gear | ~20% | 40 |
+| Mindshield Elixir (potion) | 15% | 42 |
+| **Cocoon (buff 104)** | **75%, at the cap** | **12** |
+
+Cocoon declares `physical_mitigation: 75`, `magical_mitigation: 75` AND
+`conviction_mitigation: 75` — it caps every channel at once. So the counterplay
+is either negligible (gear and the potion shave 10-20%, barely felt) or
+trivializing (Cocoon removes three quarters of it). Nothing in between, and
+nothing purpose-built. That is not a counterplay economy; it is an accident of
+reuse.
+
+**Two decisions, in this order:**
+
+1. **A reflect-specific cap.** The shared 75% channel cap is what lets Cocoon
+   erase reflect. Something nearer 40% keeps reflect threatening regardless of
+   what is stacked, and leaves room for real counterplay to matter.
+2. **A dedicated `return_damage_resist` stat with its own content** — spell,
+   enchantment, potion. Tuned deliberately, does not inherit spell-gear balance,
+   and makes anti-reflect prep a real decision rather than a side effect of
+   wearing anti-mage gear. 5.11f's channel matching stays as the sensible
+   BASELINE; it just should not be the whole answer.
+
+**Not urgent.** The shipped state is strictly better than before (previously
+nothing at all reduced reflect) and Cocoon is a short 3-trigger buff, not a
+permanent. This is under-designed, not broken.
+
+**Finding:** New (design gap in shipped 5.11f, found in review 2026-08-11).
 
 ### Chunk 5.12 — `context.md` accuracy pass
 
