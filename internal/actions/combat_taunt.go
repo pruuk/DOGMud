@@ -179,22 +179,16 @@ func ExecuteTaunt(actor Actor) TauntResult {
 
 		isCrit := atkRoll.ZScore >= 2.0
 
-		var dmg int
-		if isCrit {
-			// Crit: bypass mitigation entirely.
-			dmgRoll := dice.RollStat(rawDmg)
-			dmg = int(math.Round(dmgRoll.Value))
-		} else {
-			// Normal hit: apply target conviction mitigation.
-			mitigPct := target.Char.GetConvictionMitigation()
-			cap := combat.MitigationCap(combat.ChannelConviction)
-			dmgMean := combat.ApplyMitigation(rawDmg, mitigPct, cap)
-			dmgRoll := dice.RollStat(dmgMean)
-			dmg = int(math.Round(dmgRoll.Value))
-		}
-		if dmg < 1 {
-			dmg = 1
-		}
+		// Chunk 5.11g: a crit bypasses the target's conviction mitigation AND
+		// scales by the taunter's rhetoric rank. Before this, a crit against an
+		// unmitigated target dealt exactly a normal hit's damage.
+		dmg := combat.CritOrMitigatedDamage(
+			rawDmg,
+			int(attackerRhetoric),
+			isCrit,
+			target.Char.GetConvictionMitigation(),
+			combat.MitigationCap(combat.ChannelConviction),
+		)
 
 		// Stoic Resolve: defender attempts to partially resist
 		deflected := false

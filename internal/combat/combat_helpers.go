@@ -69,6 +69,7 @@ type weaponSetup struct {
 type swingDamageParams struct {
 	dmgMean       float64
 	rawDmgForCrit float64
+	critDmgMult   float64 // chunk 5.11g: skill-scaled crit worth, applied to rawDmgForCrit only
 	critBuffs     []int
 	msgSeed       int
 }
@@ -395,6 +396,7 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 	return swingDamageParams{
 		dmgMean:       dmgMean,
 		rawDmgForCrit: rawDmgForCrit,
+		critDmgMult:   CritDamageMultiplier(combatSkillLevel),
 		msgSeed:       msgSeed,
 	}
 }
@@ -1065,9 +1067,15 @@ func calcHitDamage(result *AttackResult, isCrit bool, backstab bool, sdp swingDa
 		// and therefore must take their spread from that same mean. RollStat
 		// derives stdDev = mean * RollSpread internally, which is the only way
 		// to keep the two in step.
-		damageResult := dice.RollStat(sdp.rawDmgForCrit)
+		//
+		// Chunk 5.11g: the skill-scaled crit multiplier is applied to the MEAN,
+		// before the roll, for that same reason — scaling the rolled result
+		// instead would stretch the spread by the multiplier and leave crits
+		// wildly swingier at high skill.
+		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+		damageResult := dice.RollStat(critMean)
 		dmg := int(math.Round(math.Max(0, damageResult.Value)))
-		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
+		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "critMult", fmt.Sprintf("%.2f", sdp.critDmgMult), "critMean", fmt.Sprintf("%.1f", critMean), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
 		return dmg, false // consume backstab
 	}
 	// Normal hit: use mitigated damage

@@ -223,6 +223,19 @@ func (b *Balance) validateCombat() {
 		b.ConvictionMitigationCap = 0.75
 	}
 
+	// ── CRIT DAMAGE (chunk 5.11g) ───────────────────────────────────────────
+	// Both defaults are non-zero, so both must default on <= 0: an absent key
+	// unmarshals to the zero value, and the only way absence can fall back to
+	// the Go default is to treat 0 as unset. The cost is that "0" is not
+	// expressible in YAML for either knob — to disable skill scaling, set
+	// CritDamagePerSkill to a negligible value rather than to 0.
+	if b.CritDamageBase <= 0 {
+		b.CritDamageBase = 2.0
+	}
+	if b.CritDamagePerSkill <= 0 {
+		b.CritDamagePerSkill = 0.05
+	}
+
 	// ── TOXICITY ────────────────────────────────────────────────────────────
 	if b.ToxicityDecayPerTick <= 0 {
 		b.ToxicityDecayPerTick = 1.0

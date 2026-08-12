@@ -196,6 +196,8 @@ type Balance struct {
 	SkillMultiplierBase               ConfigFloat `yaml:"SkillMultiplierBase"`               // Skill multiplier at rank 0 (default 1.0)
 	SkillMultiplierMax                ConfigFloat `yaml:"SkillMultiplierMax"`                // Skill multiplier at soft cap (default 3.0)
 	SkillWeight                       ConfigFloat `yaml:"SkillWeight"`                       // Global multiplier on skill contributions in additive formulas (default 2.0)
+	CritDamageBase                    ConfigFloat `yaml:"CritDamageBase"`                    // Crit damage multiplier at skill rank 0, applied on top of the mitigation bypass (default 2.0)
+	CritDamagePerSkill                ConfigFloat `yaml:"CritDamagePerSkill"`                // Added to the crit damage multiplier per rank of the attacking channel's skill (default 0.05)
 	MeleeDamageScale                  ConfigFloat `yaml:"MeleeDamageScale"`                  // Physical damage scale. Stats ~100, so 0.30 yields ~30 raw per swing (default 0.30)
 	SpellDamageScale                  ConfigFloat `yaml:"SpellDamageScale"`                  // Flat multiplier on spell damage output (default 1.0 = no change)
 	RhetoricDamageScale               ConfigFloat `yaml:"RhetoricDamageScale"`               // Flat multiplier on conviction/taunt damage output (default 1.0 = no change)

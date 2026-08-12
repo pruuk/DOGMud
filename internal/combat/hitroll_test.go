@@ -361,6 +361,7 @@ func TestCalcHitDamage_CritUsesRawDamage(t *testing.T) {
 	sdp := swingDamageParams{
 		dmgMean:       10.0,
 		rawDmgForCrit: 50.0,
+		critDmgMult:   1.0, // 5.11g: neutral, so this stays a raw-vs-mitigated test
 		critBuffs:     []int{1},
 	}
 
@@ -381,6 +382,7 @@ func TestCalcHitDamage_BackstabConsumed(t *testing.T) {
 	sdp := swingDamageParams{
 		dmgMean:       10.0,
 		rawDmgForCrit: 50.0,
+		critDmgMult:   1.0,
 	}
 
 	_, backstab := calcHitDamage(result, false, true, sdp)
@@ -425,6 +427,7 @@ func TestCalcHitDamage_CritSpreadTracksCritMean(t *testing.T) {
 	sdp := swingDamageParams{
 		dmgMean:       normalMean,
 		rawDmgForCrit: critMean,
+		critDmgMult:   1.0, // 5.11g: neutral so the 2:1 spread ratio stays the subject
 	}
 
 	critRolls := make([]float64, samples)

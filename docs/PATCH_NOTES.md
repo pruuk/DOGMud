@@ -1,5 +1,20 @@
 # DOGMud Patch Notes
 
+## 2026-08-12: A telling blow is worth what your practice makes it
+
+Landing a telling blow used to be worth very little against a lightly protected
+foe. All it did was ignore armour, so against something wearing none it was no
+better than an ordinary hit. Skill decided how often you landed one, but never
+what it was worth when you did.
+
+Now it is worth far more, and the difference comes from practice. A veteran who
+has drilled a skill for years hits several times harder on a telling blow than a
+novice does, and that gap keeps widening for as long as they keep training. It
+never stops paying.
+
+This applies the same way to fighting, to spellcraft, and to a cutting word.
+Whichever you have made your life's work is the one that rewards you.
+
 ## 2026-08-11: Skill counts for much more, and a good position shows it
 
 Practice now matters a great deal more than it did. A character who has put real

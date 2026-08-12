@@ -273,7 +273,7 @@ further decomposition
 | 5.11e | Crit floors, 1% of hits, both directions | M | 5.11d | 5.7 follow-on | Not started |
 | 5.11f | Return damage: channel-matched mitigation | M | 5.11b | Found in 5.11b playtest | **Done 2026-08-11** (PR #29) — baseline only |
 | 5.11f-2 | Reflect counterplay: dedicated resist + cap | M | 5.11f | Design gap found 2026-08-11 | Not started |
-| 5.11g | Skill-scaled crit damage multiplier | M | 5.11d, **5.11f** | 5.7 follow-on | Not started |
+| 5.11g | Skill-scaled crit damage multiplier | M | 5.11d, **5.11f** | 5.7 follow-on | **Done 2026-08-12** — all three channels |
 | 5.11h | Docs + adversarial playtest gate | M | 5.11g | 5.7 follow-on | Not started |
 | ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
 | 5.12 | `context.md` accuracy pass (61 phantom symbols, 22 pkgs) | L | — | New (found 2026-08-11) | Not started |
@@ -1840,6 +1840,41 @@ that via `best.defenseType == ""`, never by testing the margin.
 **Playtest gate:** 5.11 is a combat-feel change. Per the CLAUDE.md content gate,
 it needs a harness sweep plus a manual pass by the user in parallel — the model
 can show the math is coherent but not whether crits *feel* like the payoff.
+
+### Chunk 5.11g — DONE 2026-08-12, widened to all three channels
+
+Shipped as spec'd: `critMult = CritDamageBase + CritDamagePerSkill * skillRank`,
+2.0 and 0.05, linear, no clamp at the skill soft cap. Applied to the crit's
+pre-mitigation mean **on top of** the retained mitigation bypass.
+
+**Scope decision — all three channels, not melee only.** Section E of the spec
+is written entirely in melee terms and names only `calcHitDamage`, but the
+approved philosophy ("skill governs crit rate AND crit magnitude") is
+channel-agnostic, and the identical defect existed in all three:
+
+| Channel | Site | Governing skill |
+|---|---|---|
+| Physical | `combat/combat_helpers.go` `calcHitDamage` | `GetCombatSkillLevel()` |
+| Magical | `hooks/combat_shared_helpers.go` `calcSpellDamageForCharacter` | `spellcasting` |
+| Conviction | `actions/combat_taunt.go` `ExecuteTaunt` | `rhetoric` |
+
+The spell and taunt sites were byte-identical in shape, so both now call one
+tested `combat.CritOrMitigatedDamage`. Melee deliberately stays separate — it
+carries backstab consumption and crit-buff bookkeeping and floors at 0 rather
+than 1.
+
+**Measured, not assumed:** the pre-change spell tests recorded `crit/normal =
+1.00` against an unmitigated target, confirming the spec's claim that a crit on
+an unarmoured foe landed exactly a normal hit. Both new call-site tests were
+mutation-verified (production change reverted, tests observed to fail).
+
+**Known asymmetry left open.** 5.11d's margin-derived crit *rate* still applies
+to melee only; spells and taunts continue to crit on the old self-relative
+`atkRoll.ZScore >= 2.0`. So those channels gained magnitude scaling without rate
+scaling. Coherent, but it means a caster's crit *frequency* is still independent
+of the opponent. Porting margin-crit to spell/taunt is deliberately NOT in
+5.11g — it is a rate change with its own playtest surface. Track it as a
+candidate follow-on to 5.11h.
 
 ### Chunk 5.11f-2 — Reflect counterplay needs designing, not inheriting
 

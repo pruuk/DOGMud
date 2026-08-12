@@ -693,6 +693,27 @@ Balance:
   # while handing mobs +3 points. Deliberate. See tools/balance/matrix.py.
   SkillWeight: 5.0
   #
+  # Crit damage (roadmap chunk 5.11g). critMult = base + perSkill * skillRank,
+  # applied to a crit's pre-mitigation damage ON TOP of the mitigation bypass.
+  # Skill 1 = 2.05x, 25 = 3.25x, 50 = 4.50x, 69 = 5.45x, 100 = 7.00x.
+  #
+  # Before 5.11g a crit was ONLY a mitigation bypass, so its worth was set
+  # entirely by the defender's armor: 4x at the 75% cap, but exactly 1x (a
+  # normal hit) against an unarmored target. Skill governed how often you crit
+  # but not what a crit was worth.
+  #
+  # The curve is LINEAR, not the sqrt used by SkillMultiplier, and it does not
+  # clamp at the skill soft cap. Both are deliberate: a sqrt curve puts rank 25
+  # at ~75% of rank 69's value for 36% of the skill, which is the exact
+  # complaint chunk 5.7 opened with. Applies to all three channels (melee,
+  # spell, taunt), each using its own governing skill.
+  #
+  # NOTE: 0 is not expressible for either knob — both defaults are non-zero, so
+  # the loader treats 0 as absent and falls back. To disable skill scaling, set
+  # CritDamagePerSkill to a negligible value instead.
+  CritDamageBase: 2.0
+  CritDamagePerSkill: 0.05
+  #
   # Mitigation caps: maximum % damage reduction from armor for each channel.
   # 0.75 = armor can block at most 75% of incoming damage in that channel.
   PhysicalMitigationCap: 0.75
