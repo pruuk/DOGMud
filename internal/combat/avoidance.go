@@ -3,8 +3,6 @@ package combat
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/contest"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
@@ -27,8 +25,7 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 	defSpellcasting := float64(defender.GetSkillLevel(skills.Spellcasting)) * skillWeight
 	defenseScore := float64(defender.GetEffectivePerception()) + defSpellcasting
 
-	floorHit, floorResist := SpellFloors()
-	res := contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, floorHit, floorResist)
+	res := RunWithSpellFloors(attackScore, defenseScore)
 
 	defender.OnSkillUse(string(skills.Spellcasting), defenderUserId)
 	defender.OnStatUse("perception", defenderUserId)
@@ -52,11 +49,9 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 	return 1.0
 }
 
-// TODO(U3): still on dice.OpposedRollStatWithFloors while its sibling
-// TrySpellDeflection above has moved to internal/contest. Deliberate, not an
-// oversight: this is the conviction channel and roadmap U3 owns it. Note that
-// U6 removes BOTH as parallel mechanisms, folding them into the defence
-// multiplier, so do not invest in unifying them here.
+// Note that U6 removes BOTH TryStoicResolve and TrySpellDeflection as parallel
+// mechanisms, folding them into the defence multiplier, so do not invest in
+// unifying the two here.
 //
 // TryStoicResolve rolls a defensive avoidance check for the target of a
 // hostile rhetoric attack. Returns a damage multiplier: 1.0 (no resolve),
@@ -77,16 +72,19 @@ func TryStoicResolve(attacker *characters.Character, defender *characters.Charac
 	defRhetoric := float64(defender.GetSkillLevel(skills.Rhetoric)) * skillWeight
 	defenseScore := float64(defender.Stats.Willpower.ValueAdj) + defRhetoric
 
-	floorHit, floorResist := ManeuverFloors()
-	success, _, _, defRoll := dice.OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)
+	res := RunWithManeuverFloors(attackScore, defenseScore)
 
 	defender.OnSkillUse(string(skills.Rhetoric), defenderUserId)
 	defender.OnStatUse("willpower", defenderUserId)
 
-	if !success {
-		// Defensive mirror of a crit; see TrySpellDeflection for why
-		// defRoll.Margin is used unnegated.
-		if DefenseContestCrit(defRoll.Margin, defRoll) {
+	if !res.Success {
+		// SIGN: contest.Result.Margin is ATTACK-positive and this is the
+		// DEFENDER's crit check, so it is negated exactly here -- the mirror of
+		// TrySpellDeflection above. And it is Result.Margin, not
+		// DefenseRoll.Margin: the core rolls via dice.Roll, which does not
+		// populate that field, so reading it would pass zero and stoic resolve
+		// would never fully negate again.
+		if DefenseContestCrit(-res.Margin, res.DefenseRoll) {
 			return 0.0
 		}
 		return float64(cfg.RhetoricAvoidanceDamageMultiplier)
