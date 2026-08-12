@@ -1329,7 +1329,7 @@ Network:
   #   container on 0.0.0.0:80 (up since 2026-07-30), so a DOGMud server set
   #   to 80 loses the bind and boots with NO web listener. The droplet's own
   #   config (not this file — skip-worktree) owns the prod value.
-  HttpPort: 8090
+  HttpPort: 80
   # - HttpsPort -
   #   The port the server listens on for web requests
   #   Note: Must have a cert/key file (See FilePaths)
@@ -1442,9 +1442,9 @@ Network:
 #
 ################################################################################
 Logging:
-  LogToFile: true                              # LOCAL OVERNIGHT SOAK 08-10. Set back to false before any prod push (droplet has limited disk). This file is skip-worktree so it is never committed.
+  LogToFile: false                             # Write logs to file + terminal (DISABLED for prod push per CLAUDE.md pre-push SOP — droplet has limited disk)
   LogFilePath: "_datafiles/logs/server.log"    # Log file path (rotated at 100MB)
-  LogLevel: "info"                             # LOCAL SOAK: info, not debug. The log rotates at 100MB, and 12h of debug would roll the early autosave cycles away before morning. AutoSave lines are Info; savequeue problems are Warn/Error.
+  LogLevel: "debug"                            # debug, info, warn, error
 
 ################################################################################
 #
@@ -1591,9 +1591,6 @@ Roles:
 # ProfilesManifest is the production default (materializer no-op). Ephemeral
 # playtestenv runs override these via CONFIG_PATH.
 ################################################################################
-Playtest:
-  ProfilesDir: tools/playtest/profiles
-  ProfilesManifest: ""
 
 ################################################################################
 Modules:
