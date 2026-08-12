@@ -115,3 +115,121 @@ func TestAgainstDifficulty_HasNoWinnerName(t *testing.T) {
 	assert.True(t, res.Contested)
 	assert.Equal(t, "", res.Winner, "a static difficulty has no name")
 }
+
+// TestRun_SuccessTracksMargin — Success is simply "the attacker won", which is
+// margin > 0. It exists so floored contests can report an outcome that no
+// longer matches their margin.
+func TestRun_SuccessTracksMargin(t *testing.T) {
+	win := Run(10000, []Entry{{Name: "d", Score: 1}})
+	assert.True(t, win.Success, "a decisive attacker win must report Success")
+	assert.Greater(t, win.Margin, 0.0)
+
+	lose := Run(1, []Entry{{Name: "d", Score: 10000}})
+	assert.False(t, lose.Success, "a decisive attacker loss must not report Success")
+	assert.Less(t, lose.Margin, 0.0)
+}
+
+// TestRunWithFloors_ZeroFloorsMatchRun — with both floors off, the floored
+// variant must behave exactly like Run. This is the property that makes the
+// migration safe for any caller passing 0.
+func TestRunWithFloors_ZeroFloorsMatchRun(t *testing.T) {
+	for i := 0; i < 500; i++ {
+		res := RunWithFloors(10000, []Entry{{Name: "d", Score: 1}}, 0, 0)
+		assert.True(t, res.Success, "attacker should win on merit with no floors")
+		assert.Greater(t, res.Margin, 0.0, "margin must be the real one, not a sentinel")
+		assert.False(t, res.Floored, "no floor was configured, so nothing was floored")
+	}
+}
+
+// TestRunWithFloors_SuccessFloorRescuesAHopelessAttack pins the 5.9 guarantee:
+// a hopelessly outclassed attacker still lands roughly floorSuccess of the time.
+func TestRunWithFloors_SuccessFloorRescuesAHopelessAttack(t *testing.T) {
+	const samples = 20000
+	wins := 0
+	for i := 0; i < samples; i++ {
+		// Attacker cannot win on merit at these scores.
+		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.15, 0).Success {
+			wins++
+		}
+	}
+	rate := float64(wins) / samples
+	assert.InDelta(t, 0.15, rate, 0.02, "success floor should rescue ~15% of hopeless attacks")
+}
+
+// TestRunWithFloors_ResistFloorSavesADoomedDefender is the mirror.
+func TestRunWithFloors_ResistFloorSavesADoomedDefender(t *testing.T) {
+	const samples = 20000
+	saves := 0
+	for i := 0; i < samples; i++ {
+		if !RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0, 0.15).Success {
+			saves++
+		}
+	}
+	rate := float64(saves) / samples
+	assert.InDelta(t, 0.15, rate, 0.02, "resist floor should save ~15% of doomed defences")
+}
+
+// TestRunWithFloors_StampsTheSentinelMargin is load-bearing. A floored outcome
+// carries margin +-1, NOT its real margin. Downstream, ContestCrit normalises
+// that sentinel to a near-zero z, which is the only reason a floor-granted hit
+// cannot also be a critical hit.
+func TestRunWithFloors_StampsTheSentinelMargin(t *testing.T) {
+	// 0.5 is the clamp CEILING, not a certainty, so each call is a coin flip on
+	// whether the floor fires at all. This must therefore loop AND prove it
+	// actually observed both branches. A single draw per branch would execute
+	// no assertions at all on roughly a quarter of runs and still report PASS —
+	// measured at 502/2000 — which is precisely how a "load-bearing" test
+	// silently stops guarding anything while staying green.
+	sawSuccess, sawResist := false, false
+
+	for i := 0; i < 200; i++ {
+		granted := RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.5, 0)
+		if granted.Success {
+			sawSuccess = true
+			assert.Equal(t, 1.0, granted.Margin, "a floor-granted success carries the +1 sentinel")
+			assert.True(t, granted.Floored, "a flipped outcome must report Floored")
+		}
+
+		resisted := RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0, 0.5)
+		if !resisted.Success {
+			sawResist = true
+			assert.Equal(t, -1.0, resisted.Margin, "a floor-granted resist carries the -1 sentinel")
+			assert.True(t, resisted.Floored, "a flipped outcome must report Floored")
+		}
+	}
+
+	assert.True(t, sawSuccess, "success floor never fired in 200 draws — the test asserted nothing")
+	assert.True(t, sawResist, "resist floor never fired in 200 draws — the test asserted nothing")
+}
+
+// TestRunWithFloors_ClampsFloors — above 0.5 a floor stops being a last resort
+// and becomes the dominant term, so dice.OpposedRollStatWithFloors clamps to
+// [0, 0.5]. The core must clamp identically or migrated callers change
+// behaviour.
+func TestRunWithFloors_ClampsFloors(t *testing.T) {
+	const samples = 20000
+	wins := 0
+	for i := 0; i < samples; i++ {
+		// 5.0 must be clamped to 0.5, not treated as "always".
+		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 5.0, 0).Success {
+			wins++
+		}
+	}
+	rate := float64(wins) / samples
+	assert.InDelta(t, 0.5, rate, 0.03, "a floor above 0.5 must clamp to 0.5")
+
+	// A negative floor must clamp to 0, never rescue anything.
+	for i := 0; i < 500; i++ {
+		assert.False(t, RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, -1.0, 0).Success,
+			"a negative floor must clamp to 0")
+	}
+}
+
+// TestRunWithFloors_UncontestedIsUntouched — no entries means no contest, so
+// there is nothing for a floor to flip.
+func TestRunWithFloors_UncontestedIsUntouched(t *testing.T) {
+	res := RunWithFloors(100, nil, 0.5, 0.5)
+	assert.False(t, res.Contested)
+	assert.Equal(t, 0.0, res.Margin, "an uncontested result must not be stamped with a sentinel")
+	assert.False(t, res.Floored)
+}
