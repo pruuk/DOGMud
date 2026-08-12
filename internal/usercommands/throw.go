@@ -150,11 +150,10 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		defenderScore := float64(mob.Character.GetEffectiveDexterity()) +
 			float64(mob.Character.GetEffectivePerception())*skillWeight*0.5
 
-		floorHit, floorResist := combat.ManeuverFloors()
-		attackSuccess, _, atkRoll, _ := dice.OpposedRollStatWithFloors(attackerScore, defenderScore, floorHit, floorResist)
+		res := combat.RunWithManeuverFloors(attackerScore, defenderScore)
 
 		// Fumble check: effect hits thrower instead
-		if atkRoll.ZScore <= -2.0 {
+		if res.AttackRoll.ZScore <= -2.0 {
 			fumbled = true
 			user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your throw goes horribly wrong — the projectile detonates in your hand!</ansi>`)
 			room.SendTextVisual(messaging.CategoryHitRanged, fmt.Sprintf(
@@ -198,7 +197,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				mob.Character.Name), user.UserId)
 		}
 
-		if !attackSuccess {
+		if !res.Success {
 			continue
 		}
 
