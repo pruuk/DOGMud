@@ -391,14 +391,31 @@ Discovered during 5.11g/5.11e implementation on 2026-08-12.
   attempt each defence, and what taking damage costs in hp/sp/cp. Ranged
   currently costs nothing on either side, which is itself part of the drift.
   **Its own spec, to be written next.**
-- **The 5.9 contest floors need reinterpreting.** `MinAttackHitChance` is a floor
-  on *landing a hit* in a world where nearly everything lands, so it largely
-  stops meaning anything. `MinDefenseChance` survives with a changed payload: a
-  floor save now grants 50–100% mitigation rather than a clean miss, and because
-  a floor save carries the ±1 margin sentinel it lands at the *bottom* of that
-  band. Decide during decomposition whether these become floors on **margin**
-  instead of on outcome. Do not delete them silently — 5.9 exists because a
-  much weaker actor could otherwise not succeed at all.
+- **The 5.9 contest floors become MORE load-bearing, and the crit floor's
+  denominator breaks.** Measured outcome distribution under this design:
+
+  | Matchup | Atk fumble | Atk wins | Defence crit | Graze |
+  |---|---|---|---|---|
+  | parity | 2.3% | 50.0% | 1.5% | 46.3% |
+  | Meirok v Elemental King | 2.3% | 63.3% | 0.5% | 33.8% |
+  | badly outclassed | 2.3% | 0.0% | **97.7%** | 0.0% |
+
+  In the middle of the distribution a defensive win no longer zeroes damage, it
+  scales it, so swings dealing nonzero damage rise from ~50% to ~96% at parity.
+  But at the outclassed end the defender **crits 97.7% of swings**, and a
+  defence crit is a true zero — so without `MinAttackHitChance` that attacker
+  deals literally nothing, which is *worse* than today's 15%. The floor stops
+  being a rounding correction and becomes the sole source of damage in hopeless
+  fights, which is precisely what 5.9 designed it for.
+
+  The genuine problem is the **crit floor's denominator**. 5.11e is 1% of
+  *hits*, which assumed "hit" was binary. It is now a continuum from full damage
+  through a 90%-mitigated graze. Decide during decomposition which denominator
+  is meant: swings the attacker won outright (~50% at parity), swings dealing
+  any nonzero damage (~96%), or all swings. These differ by 2x at parity and far
+  more at the extremes. Do not delete the floors — 5.9 exists because a much
+  weaker actor could otherwise not succeed at all, and this design makes that
+  more true rather than less.
 
 - **Sequencing.** 34 sites cannot move in one change. Decomposition into a series
   of small plans follows both specs.
@@ -411,9 +428,10 @@ not a conflict**: `ContestCrit`, `CritDamageMultiplier` and
 
 One item needs revisiting during decomposition: 5.11e's crit floors are
 denominated in *hits*, chosen because an outclassed attacker hits only ~15% of
-the time. Under this design nearly every swing lands, so "1% of hits" and "1% of
-swings" converge and the floor's justification changes. The knob still works; its
-rationale needs rewriting.
+the time. That reasoning assumed "hit" was binary. Under this design it is a
+continuum from full damage through a heavily-mitigated graze, so the denominator
+has to be redefined before the knob means anything. See section 8. The knob and
+its ordering guarantees are unaffected; only its justification needs rewriting.
 
 ---
 
