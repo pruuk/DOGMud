@@ -69,7 +69,9 @@ grepped one file. Adversarial review caught it, and a second sweep then found
 more sites owned by **no chunk's stated scope**. Recording them here so they are
 assigned deliberately rather than rediscovered at U10's audit.
 
-The `ManeuverFloors()` family — eight callers, of which only two are claimed:
+The maneuver-floor family. `combat.ManeuverFloors()` has eight callers; the
+hooks package reaches the same config pair through its own
+`maneuverHitFloor()`/`maneuverResistFloor()` accessors, so those count too:
 
 | Site | Claimed by |
 |---|---|
@@ -80,8 +82,10 @@ The `ManeuverFloors()` family — eight callers, of which only two are claimed:
 | **`combat/grapple.go:79`** | **UNOWNED** |
 | **`combat/submission.go:79`** | **UNOWNED** |
 | **`combat/skill_moves.go:61`** (bash / kick / trip) | **UNOWNED** |
-| **`hooks/Position_GrappleTick.go:270`** | **UNOWNED** |
-| `hooks/NewRound_MobRoundTick.go:398` (charm-duration reroll) | unclaimed; belongs with U3's maneuver work |
+| **`hooks/Position_GrappleTick.go:270`** (via `maneuverHitFloor()`) | **UNOWNED** |
+| `hooks/NewRound_MobRoundTick.go:398` (charm-duration reroll, same accessors) | unclaimed; belongs with U3's maneuver work |
+
+Five of those are claimed, four are not.
 
 **`skill_moves.go` is the awkward one.** `ExecuteSkillMove` is shared between
 ranged (`combat_fire.go` folds its defence into a scalar and calls it) and
