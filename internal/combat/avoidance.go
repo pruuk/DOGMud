@@ -3,6 +3,7 @@ package combat
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
@@ -27,17 +28,22 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 	defenseScore := float64(defender.GetEffectivePerception()) + defSpellcasting
 
 	floorHit, floorResist := SpellFloors()
-	success, _, _, defRoll := dice.OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)
+	res := contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, floorHit, floorResist)
 
 	defender.OnSkillUse(string(skills.Spellcasting), defenderUserId)
 	defender.OnStatUse("perception", defenderUserId)
 
-	if !success {
+	if !res.Success {
 		// A full negation is the defensive mirror of a crit, so it derives from
-		// the same normalized margin. defRoll.Margin is ALREADY defence-positive
-		// (dice.OpposedRoll negates it for the defender), so it must not be
-		// negated again here.
-		if DefenseContestCrit(defRoll.Margin, defRoll) {
+		// the same normalized margin.
+		//
+		// SIGN: contest.Result.Margin is ATTACK-positive and this is the
+		// DEFENDER's crit check, so it is negated exactly here. This previously
+		// read defRoll.Margin, which dice.OpposedRoll had already negated for
+		// the defender; contest.Run uses dice.Roll, which does NOT populate
+		// RollResult.Margin at all, so reading that field now would silently
+		// pass zero and no deflection would ever crit again.
+		if DefenseContestCrit(-res.Margin, res.DefenseRoll) {
 			return 0.0
 		}
 		return float64(cfg.SpellAvoidanceDamageMultiplier)
@@ -46,6 +52,12 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 	return 1.0
 }
 
+// TODO(U3): still on dice.OpposedRollStatWithFloors while its sibling
+// TrySpellDeflection above has moved to internal/contest. Deliberate, not an
+// oversight: this is the conviction channel and roadmap U3 owns it. Note that
+// U6 removes BOTH as parallel mechanisms, folding them into the defence
+// multiplier, so do not invest in unifying them here.
+//
 // TryStoicResolve rolls a defensive avoidance check for the target of a
 // hostile rhetoric attack. Returns a damage multiplier: 1.0 (no resolve),
 // the configured avoidance multiplier (partial), or 0.0 (crit = full
