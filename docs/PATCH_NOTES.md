@@ -1,5 +1,25 @@
 # DOGMud Patch Notes
 
+## 2026-08-11: Skill counts for much more, and a good position shows it
+
+Practice now matters a great deal more than it did. A character who has put real
+work into a fighting skill lands blows far more often, and holds their own
+against things that used to shrug them off entirely. The most seasoned fighters
+will notice this most, against the hardest opponents.
+
+Landing a telling blow has also changed. It used to depend only on how well you
+swung, with no regard for the opponent in front of you. Now it depends on how
+decisively you beat them. Outclass something badly and you will cut it to pieces;
+face an equal and a telling blow becomes the rare, welcome thing it should be.
+
+Holding someone down or keeping a grip on them now helps the way you would
+expect. It used to help less on the ground than standing, which was backwards.
+
+Finally, foes that burn or shock the people striking them are no longer answered
+by nothing at all. The protection you carry against heat and storm now blunts
+that backlash, and armour blunts the thorned kind. Bring the right protection to
+the right enemy.
+
 ## 2026-08-11: A long shot stays a long shot, everywhere
 
 When you try something against a much stronger opponent, you keep a small chance
