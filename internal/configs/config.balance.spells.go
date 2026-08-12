@@ -18,14 +18,8 @@ func (b *Balance) validateSpells() {
 	if b.SpellConcentrationBase <= 0 {
 		b.SpellConcentrationBase = 50
 	}
-	if b.SpellInitiationBase <= 0 {
-		b.SpellInitiationBase = 60
-	}
 	if b.SpellInitiationWillpowerDivisor < 1 {
 		b.SpellInitiationWillpowerDivisor = 4
-	}
-	if b.SpellInitiationSkillFactor < 1 {
-		b.SpellInitiationSkillFactor = 5
 	}
 	if b.SpellFoldsSkillFactor < 1 {
 		b.SpellFoldsSkillFactor = 25

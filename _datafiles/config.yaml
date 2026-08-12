@@ -1060,15 +1060,21 @@ Balance:
   DiscoverySkillScale: 100.0
   DiscoveryMaxDecayOffset: 0.8
   #
-  # Initiation: chance to successfully begin casting.
-  # Formula: chance = Base + Willpower/WillpowerDivisor + SpellcastingLevel × SkillFactor
-  # Example: base 60, Wil 100, skill 3:
-  #   chance = 60 + 100/4 + 3×5 = 60 + 25 + 15 = 100% (clamped)
-  SpellInitiationBase: 60
-  SpellInitiationWillpowerDivisor: 4   # Wil / this = initiation bonus
-  SpellInitiationSkillFactor: 5        # SpellcastingLevel × this = initiation bonus
+  # The spell-initiation gate was DELETED (roadmap U0, 2026-08-12), along with
+  # SpellInitiationBase and SpellInitiationSkillFactor. It clamped at 95 while a
+  # maxed caster's computed chance was 1372, so no amount of skill could beat it
+  # and every caster failed one cast in twenty forever, each failure carrying a
+  # 2-round cooldown. Concentration break already covers the intent and, unlike
+  # initiation, responds to skill. Do not reintroduce a flat initiation gate.
+  #
+  # SpellInitiationWillpowerDivisor SURVIVES despite its name: CalcConcentrationChance
+  # reads it too. Roadmap U9 removes it when concentration becomes a real contest.
+  SpellInitiationWillpowerDivisor: 4   # Wil / this = concentration bonus
   #
   # Concentration: % chance to maintain casting when struck mid-cast.
+  # NOTE: this formula has NO spellcasting term, so a master's skill contributes
+  # nothing to holding a spell together. Roadmap U9 rebuilds it as a contest of
+  # Wil + spellcasting*5 against a difficulty set by what disrupted you.
   SpellConcentrationBase: 50
   #
   # Folds per round: how fast a spell charges each combat round.
