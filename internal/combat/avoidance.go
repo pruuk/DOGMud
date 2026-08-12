@@ -33,7 +33,11 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 	defender.OnStatUse("perception", defenderUserId)
 
 	if !success {
-		if defRoll.ZScore >= 2.0 {
+		// A full negation is the defensive mirror of a crit, so it derives from
+		// the same normalized margin. defRoll.Margin is ALREADY defence-positive
+		// (dice.OpposedRoll negates it for the defender), so it must not be
+		// negated again here.
+		if ContestCrit(defRoll.Margin, defRoll) {
 			return 0.0
 		}
 		return float64(cfg.SpellAvoidanceDamageMultiplier)
@@ -68,7 +72,9 @@ func TryStoicResolve(attacker *characters.Character, defender *characters.Charac
 	defender.OnStatUse("willpower", defenderUserId)
 
 	if !success {
-		if defRoll.ZScore >= 2.0 {
+		// Defensive mirror of a crit; see TrySpellDeflection for why
+		// defRoll.Margin is used unnegated.
+		if ContestCrit(defRoll.Margin, defRoll) {
 			return 0.0
 		}
 		return float64(cfg.RhetoricAvoidanceDamageMultiplier)

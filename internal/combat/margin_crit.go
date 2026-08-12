@@ -1,6 +1,10 @@
 package combat
 
-import "math"
+import (
+	"math"
+
+	"github.com/GoMudEngine/GoMud/internal/dice"
+)
 
 // Chunk 5.11d — crit derives from the normalized margin of the opposed roll.
 //
@@ -74,4 +78,43 @@ func normalizedDefenseMargin(best bestDefenseResult) (float64, bool) {
 	}
 
 	return best.margin / (stdDev * math.Sqrt2), true
+}
+
+// ContestCritThreshold is the margin, in standard deviations, at or above which
+// an opposed roll counts as a critical success. 2.0 reproduces the legacy
+// self-relative z >= 2.0 rate (~2.3%) at parity by construction, so evenly
+// matched contests are unchanged by the switch to margin derivation.
+const ContestCritThreshold = 2.0
+
+// ContestCrit reports whether one side of a dice.OpposedRoll* contest won
+// decisively enough to crit. It is the spell/conviction-channel counterpart to
+// the melee path in resolveDefenseOutcome, and exists so those channels stop
+// deriving crit from a self-relative z-score that knows nothing about the
+// opponent.
+//
+// `margin` MUST already be signed from the perspective of the side being
+// tested. For an attacker that is the second return of dice.OpposedRoll* (which
+// is attack-positive: attackRoll.Value - defenseRoll.Value). For a defender it
+// is defRoll.Margin, which dice.OpposedRoll has already negated.
+//
+// Do NOT copy the negation in normalizedAttackMargin. That path reads
+// bestDefenseResult.margin, which runBestOfAllDefense builds DEFENCE-positive;
+// these two conventions are opposites and mixing them compiles cleanly while
+// putting crit on the losing side.
+//
+// `roll` supplies the normaliser and the legacy fallback. Both sides of an
+// opposed roll are made with the attacker's stdDev, so their difference has
+// standard deviation stdDev*sqrt(2) — dividing by stdDev alone inflates the
+// result by about 41% and would roughly triple crit rates.
+//
+// Note on contest floors: dice.OpposedRollStatWithFloors overwrites margin with
+// +-1 when a floor fires. That sentinel normalises to a near-zero z, so a hit
+// handed out by the floor cannot also be a crit. This is intended.
+func ContestCrit(margin float64, roll dice.RollResult) bool {
+	if roll.StdDev > 0 {
+		return margin/(roll.StdDev*math.Sqrt2) >= ContestCritThreshold
+	}
+	// No usable scale to normalise against; fall back to the legacy
+	// self-relative check rather than dividing by zero.
+	return roll.ZScore >= ContestCritThreshold
 }

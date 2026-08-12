@@ -1868,13 +1868,61 @@ than 1.
 an unarmoured foe landed exactly a normal hit. Both new call-site tests were
 mutation-verified (production change reverted, tests observed to fail).
 
-**Known asymmetry left open.** 5.11d's margin-derived crit *rate* still applies
-to melee only; spells and taunts continue to crit on the old self-relative
-`atkRoll.ZScore >= 2.0`. So those channels gained magnitude scaling without rate
-scaling. Coherent, but it means a caster's crit *frequency* is still independent
-of the opponent. Porting margin-crit to spell/taunt is deliberately NOT in
-5.11g — it is a rate change with its own playtest surface. Track it as a
-candidate follow-on to 5.11h.
+**Crit RATE brought to parity in the same chunk.** An initial pass shipped crit
+*magnitude* to all three channels while leaving 5.11d's margin-derived crit
+*rate* melee-only, which left spells and taunts half-converted. Corrected on
+review: `combat.ContestCrit` now drives crit for every channel.
+
+Seven sites moved off the self-relative z-score:
+
+| Site | Role |
+|---|---|
+| `spell_resolution.go` `resolveAgainstMob` | attack |
+| `spell_resolution.go` `resolveAgainstPlayer` | attack |
+| `spell_resolution.go` `resolveMobSpellAgainstMob` | attack |
+| `spell_resolution.go` `resolveMobSpellAgainstPlayer` | attack |
+| `actions/combat_taunt.go` `ExecuteTaunt` | attack |
+| `combat/avoidance.go` `TrySpellDeflection` | defence (full negation) |
+| `combat/avoidance.go` `TryStoicResolve` | defence (full negation) |
+
+Measured crit rate after the change, identical to the melee curve because it is
+the same math:
+
+| Matchup (atk vs def) | Crit rate |
+|---|---|
+| 60 vs 140 | 0.00% |
+| 80 vs 120 | 0.00% |
+| 100 vs 100 | **2.31%** (legacy was 2.3%) |
+| 120 vs 80 | 33.5% |
+| 140 vs 60 | 75.6% |
+
+**Sign hazard, documented because it compiles either way.** `dice.OpposedRoll`
+returns an **attack-positive** margin (`attackRoll.Value - defenseRoll.Value`),
+which is the OPPOSITE of `bestDefenseResult.margin` — that one is
+defence-positive, which is exactly why `normalizedAttackMargin` negates it.
+`ContestCrit` therefore takes a margin already signed from the tested side's
+perspective and never negates. Defenders pass `defRoll.Margin`, which
+`dice.OpposedRoll` has already negated for them.
+
+**Contest floors compose correctly by accident of the 5.9 convention.**
+`OpposedRollStatWithFloors` overwrites the margin with the sentinel `±1` when a
+floor fires. That normalises to a near-zero z, so a hit handed out by the floor
+can never also be a crit. Pinned by a test so a future refactor cannot lose it.
+
+**Fumbles deliberately NOT converted**, matching the explicit 5.11d decision:
+they share the architectural quirk but moving them would change failure rates
+nobody asked to change.
+
+**Out of scope, flagged not fixed:** grapple submissions
+(`combat/submission.go` `ClassifySubmissionTier`, `hooks/Position_SubmissionTick.go`)
+still classify their crit tier from a self-relative z-score. That is a separate
+designed subsystem with its own tier table and its own knobs
+(`SubCritZThreshold`, `SubmissionAttemptCritZ`), not one of the three damage
+channels, so it was left alone rather than swept in. Decide separately whether
+it should follow.
+
+**Note for 5.11e:** the 0.00% at the outclassed end is precisely what the crit
+floors are for. The two chunks interlock.
 
 ### Chunk 5.11f-2 — Reflect counterplay needs designing, not inheriting
 

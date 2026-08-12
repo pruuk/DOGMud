@@ -15,6 +15,16 @@ never stops paying.
 This applies the same way to fighting, to spellcraft, and to a cutting word.
 Whichever you have made your life's work is the one that rewards you.
 
+Spellcraft and sharp words have also caught up with the change made to fighting
+yesterday. How often you land a telling blow with them now depends on how
+decisively you beat the one in front of you, rather than on your own form alone.
+Overmatch something and you will land them constantly. Face an equal and they
+stay the rare thing they should be. A caster who crushes a weaker foe will
+notice this immediately.
+
+The same is true when you shrug one off. Turning a spell or an insult aside
+completely now takes beating the sender soundly, not merely a good moment.
+
 ## 2026-08-11: Skill counts for much more, and a good position shows it
 
 Practice now matters a great deal more than it did. A character who has put real

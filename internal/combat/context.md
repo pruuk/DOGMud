@@ -956,6 +956,7 @@ values directly.
 | `combat/combat_helpers.go` | Extracted helpers: `calcAttackCount`, `collectAttackWeapons`, `buildWeaponSetup`, `buildDamageParams`, `calcAttackScore`, `calcCritThreshold`, `calcDualWieldPenalty`, `filterDefensesForThirdParty`, `runBestOfAllDefense`, `resolveDefenseOutcome`, `calcHitDamage`, `buildAttackMessages`, `applyPetDamage` |
 | `combat/damage_pipeline.go` | `CalcRawDamage`, `ApplyMitigation`, `SkillMultiplier`, `ResourceMultiplier`, `MitigationCap`, `DamageScale` |
 | `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage` |
+| `combat/margin_crit.go` | `ContestCrit`, `ContestCritThreshold` |
 | `combat/attackresult.go` | `AttackResult` struct (includes `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`) and message helpers |
 | `combat/ai.go` | `ChooseSpecialMove`, `ChooseCastAction`, `GetAIProfile`, AI profiles, viability checks (`CanUseBash`, `CanUseKick`, etc.), scoring functions |
 | `combat/criteffects.go` | `AttemptCritDisarm`, `SetGrappleOpportunity`, `HasGrappleOpportunity`, `GetGrappleOpportunityBonus`, `ClearGrappleOpportunity` |
@@ -1227,7 +1228,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | `combat.go` | Round resolution entry points |
 | `combat_helpers.go` | Shared helpers (encumbrance, swing counts) |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
-| `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag (5.11d) |
+| `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
 | `avoidance.go` | Best-of-all defence resolution (dodge / parry / block) |

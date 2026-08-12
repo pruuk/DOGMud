@@ -297,7 +297,7 @@ func spellResistFloor() float64 {
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &mob.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, atkMargin, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 
 	round := util.GetRoundCount()
 
@@ -338,7 +338,7 @@ func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, 
 		return false
 	}
 
-	isCrit := atkRoll.ZScore >= 2.0
+	isCrit := combat.ContestCrit(atkMargin, atkRoll)
 	dmgDealt := applyMobEffect(user, user.Character, mob, room, spellData, magnitude, isCrit)
 	// Stage 30.1: Record spell hit with actual damage
 	combat.RecordSpell(combat.User, combat.Mob, true, isCrit, false, false, dmgDealt, atkRoll.ZScore, user.Character, &mob.Character, round)
@@ -727,7 +727,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, atkMargin, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 
 	// Backfire on fumble
 	if atkRoll.ZScore <= -2.0 {
@@ -749,7 +749,7 @@ func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room
 		return false
 	}
 
-	isCrit := atkRoll.ZScore >= 2.0
+	isCrit := combat.ContestCrit(atkMargin, atkRoll)
 	applyPlayerEffect(user, target, room, spellData, magnitude, isCrit)
 
 	// Crit received → stat progression for the defender
@@ -1289,7 +1289,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, atkMargin, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
 		if dmg < 1 {
@@ -1302,13 +1302,13 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 	if !success {
 		return
 	}
-	applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, atkRoll.ZScore >= 2.0)
+	applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, combat.ContestCrit(atkMargin, atkRoll))
 }
 
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, spellAttack float64, magnitude int) {
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	success, _, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
+	success, atkMargin, atkRoll, _ := dice.OpposedRollStatWithFloors(spellAttack, defVal, spellHitFloor(), spellResistFloor())
 	round := util.GetRoundCount()
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
@@ -1328,7 +1328,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		combat.RecordSpell(combat.Mob, combat.User, false, false, false, true, 0, atkRoll.ZScore, &caster.Character, target.Character, round)
 		return
 	}
-	isCrit := atkRoll.ZScore >= 2.0
+	isCrit := combat.ContestCrit(atkMargin, atkRoll)
 	mobSpellDmg := 0
 	critTag := ""
 	if isCrit {
