@@ -31,23 +31,16 @@ func CalcFoldsPerRound(primaryStat, skillLevel int) int {
 	return result
 }
 
-// CalcInitiationChance returns clamp(base + willpower/divisor + level*factor, 10, 95).
-// Beginners ~65%, skilled casters ~90%+.
-func CalcInitiationChance(willpower, spellcastingLevel int) int {
-	b := configs.GetBalanceConfig()
-	base := int(b.SpellInitiationBase)
-	divisor := int(b.SpellInitiationWillpowerDivisor)
-	factor := int(b.SpellInitiationSkillFactor)
-	weightedSkill := int(math.Round(float64(spellcastingLevel) * float64(b.SkillWeight)))
-	chance := base + willpower/divisor + weightedSkill*factor
-	if chance < 10 {
-		return 10
-	}
-	if chance > 95 {
-		return 95
-	}
-	return chance
-}
+// CalcInitiationChance was deleted in roadmap U0. It returned
+// clamp(base + willpower/divisor + level*factor, 10, 95), and the clamp was the
+// problem: a maxed caster's computed value was 1372 against a ceiling of 95, so
+// no amount of skill could beat it and every caster failed one cast in twenty
+// forever. Concentration break already covers the intent and does respond to
+// skill. Do not reintroduce a flat initiation gate.
+//
+// NOTE: SpellInitiationWillpowerDivisor survives despite its name because
+// CalcConcentrationChance below also reads it. Roadmap U9 removes it when
+// concentration is rebuilt as a proper contest.
 
 // CalcConcentrationChance returns the % chance to maintain concentration
 // when struck for damagePct percent of max health.

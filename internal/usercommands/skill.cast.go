@@ -21,7 +21,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Cast initiates fold-based spellcasting (Stage 11.2).
@@ -131,13 +130,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	// 6. Check initiation cooldown (blocks if a prior attempt failed)
-	if user.Character.GetCooldown(`cast-init`) > 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Your mind is still recovering from the effort.</ansi>`)
-		return true, nil
-	}
-
-	// 6.5. Component check — must have the required item in inventory.
+	// 6. Component check — must have the required item in inventory.
 	// Two separate mechanisms: ComponentTag (generic tag-based, consumed at
 	// resolution) and SummonComponentId (specific item id, used by summon
 	// spells and consumed in companion_summon.go). Both pre-validated here
@@ -179,20 +172,12 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 	}
 
-	// 7. Initiation roll — player-only gate.
-	initiationChance := characters.CalcInitiationChance(user.Character.Stats.Willpower.ValueAdj, skillLevel)
-	roll := util.Rand(100)
-	util.LogRoll(`Spell Initiation`, roll, initiationChance)
-
-	if roll >= initiationChance {
-		// Failed — apply 2-round cooldown and inform user
-		user.Character.TryCooldown(`cast-init`, `2 rounds`)
-		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">`+spells.GetCastMessage("concentration_slipped", spellInfo.Name)+`</ansi>`)
-		room.SendTextVisual(messaging.CategorySpellDisruption, fmt.Sprintf(
-			`<ansi fg="username">%s</ansi> <ansi fg="red">loses their concentration.</ansi>`,
-			user.Character.Name), user.UserId)
-		return true, nil
-	}
+	// The player-only spell-initiation roll was deleted here (roadmap U0).
+	// CalcInitiationChance clamped at 95 while a maxed caster's computed value
+	// was 1372, so mastery could never touch it: every caster failed one cast in
+	// twenty forever, each failure costing a 2-round cooldown. Concentration
+	// break (see checkConcentrationBreak) already covers the design intent, and
+	// unlike the initiation gate it responds to skill.
 
 	// 8. Stage 17.2: The Eye modulates Perception → folds-per-round for mutated
 	// traditional casters. Manifestation spells use Charisma instead and are

@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-08-12: Your spell starts when you tell it to
+
+Beginning a spell used to fail sometimes for no reason you could see, and no
+amount of study ever stopped it happening. Even the most accomplished caster in
+the world lost roughly one casting in twenty this way, and each time cost them
+the moment as well as the effort.
+
+That check is gone. When you begin a spell, it begins.
+
+Nothing protects a caster from being interrupted once they have started, and
+that has not changed. Take a hard enough blow while you are working and the
+spell still comes apart in your hands. The difference is that the failure now
+happens for a reason that occurred in front of you.
+
 ## 2026-08-12: A telling blow is worth what your practice makes it
 
 Landing a telling blow used to be worth very little against a lightly protected

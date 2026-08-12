@@ -197,12 +197,19 @@ differently for players vs mobs. These are NOT bugs.
 - **Mobs**: skill gate and failure cooldown are skipped entirely. Mob
   sneak decisions come from AI scripts, not player-style skill checks.
 
-### Spell Initiation
-- **Players**: roll `CalcInitiationChance` on cast attempt; failure
-  triggers a cooldown. Rewards investment in Willpower and spellcasting.
-- **Mobs**: initiation roll and cooldown are skipped. Mob casting
-  decisions come from AI scripts; the randomness is in target selection
-  and AI frequency, not initiation failure.
+### ~~Spell Initiation~~ — RESOLVED 2026-08-12 (roadmap U0)
+This divergence no longer exists. The player-only initiation roll was
+**deleted**, so players and mobs now begin casting on the same terms.
+
+It was documented as "rewards investment in Willpower and spellcasting",
+which was the opposite of what it did. `CalcInitiationChance` clamped at
+95 while a maxed caster's computed value was 1372, so investment could
+never move it: every caster failed one cast in twenty forever, each
+failure carrying a 2-round cooldown. Concentration break covers the
+design intent and does respond to skill.
+
+Do not reintroduce a flat initiation gate. See roadmap U9 for the
+concentration rework that supersedes it.
 
 ### Progression Events
 - **Players**: fire `events.SkillUsed` (carries `UserId`); the event

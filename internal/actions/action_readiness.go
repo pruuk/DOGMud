@@ -128,9 +128,9 @@ func castReadiness(actor Actor, rest string) ReadinessResult {
 	}
 
 	// Gate 7: Cast-init cooldown (transient — set when a prior initiation failed).
-	if char.GetCooldown("cast-init") > 0 {
-		return ReadinessResult{ActionDeferred, "cast-init cooldown"}
-	}
+	// The cast-init cooldown gate was deleted in roadmap U0 along with the
+	// spell-initiation roll that set it. A stale cooldown on an existing save is
+	// now inert rather than blocking.
 
 	// Gate 8: Shared special-move cooldown (transient).
 	if char.GetCooldown("special-move") > 0 {

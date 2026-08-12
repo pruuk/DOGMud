@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -539,20 +540,15 @@ func filterDefensesForThirdParty(result *AttackResult, sourceChar *characters.Ch
 
 // runBestOfAllDefense rolls every available defense and picks the one that won
 // by the widest margin. Returns the best result.
+//
+// Chunk U1: the rolling and selecting now live in internal/contest. Everything
+// this function still does is melee-specific and deliberately stayed here —
+// building each defence's score, tracking attempts for stance, checking
+// affordability, and spending stamina on the winner.
 func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character, defSeq []string, atkScore float64, isThirdParty bool, ctx combatContext) bestDefenseResult {
 	bal := configs.GetBalanceConfig()
 
-	best := bestDefenseResult{
-		margin: math.Inf(-1),
-	}
-
-	// Roll the attack ONCE — all defense types contest the same swing.
-	atkStdDev := dice.StdDevFor(atkScore)
-	attackRoll := dice.Roll(atkScore, atkStdDev)
-
-	// Always record the attack roll so crit/fumble z-scores are available
-	// even when no defense is attempted (empty sequence or all skipped).
-	best.hitRoll = attackRoll
+	entries := make([]contest.Entry, 0, len(defSeq))
 
 	for _, defenseType := range defSeq {
 		// Track defense attempt
@@ -640,17 +636,28 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		// swings — spells use a different resolution path).
 		defenseScore += mutations.GetPhysicalDefenseBonus(targetChar.Mutations)
 
-		// Roll this defense against the single attack roll
-		defenseRoll := dice.Roll(defenseScore, atkStdDev)
+		entries = append(entries, contest.Entry{Name: defenseType, Score: defenseScore})
+	}
 
-		// margin > 0 means defense won
-		margin := defenseRoll.Value - attackRoll.Value
-		if margin > best.margin {
-			best.margin = margin
-			best.defenseType = defenseType
-			best.hitRoll = attackRoll
-			best.defRoll = defenseRoll
-		}
+	res := contest.Run(atkScore, entries)
+
+	best := bestDefenseResult{
+		hitRoll: res.AttackRoll,
+	}
+	if res.Contested {
+		best.defenseType = res.Winner
+		best.defRoll = res.DefenseRoll
+		// SIGN CONVERSION, and the only one in melee. contest.Result.Margin is
+		// ATTACK-positive; bestDefenseResult.margin is DEFENCE-positive. Negate
+		// exactly here and nowhere else. U6 deletes bestDefenseResult and this
+		// conversion with it.
+		best.margin = -res.Margin
+	} else {
+		// Preserve the legacy sentinel exactly. normalizedAttackMargin detects
+		// "no defence attempted" via defenseType == "" and never reads this
+		// value, but resolveDefenseOutcomeCore's `best.margin > 0` check does,
+		// and -Inf is what makes an uncontested swing fall through to a hit.
+		best.margin = math.Inf(-1)
 	}
 
 	// Deduct stamina only for the winning defense

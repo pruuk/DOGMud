@@ -140,7 +140,9 @@ outclassed defenders have a 15% chance to avoid any swing.
 - Defense costs configured in `config.gameplay.yaml`
 
 **Implementation:**
-- `runBestOfAllDefense()` in `combat_helpers.go` rolls every defense
+- `runBestOfAllDefense()` in `combat_helpers.go` builds each defense's score and
+  delegates the rolling and selection to `internal/contest.Run` (U1). It no
+  longer rolls anything itself.
 - `resolveDefenseOutcome()` processes the best result and floor saves
 - Two floors: `MinDefenseChance` (defender saves when attack wins) AND
   `MinAttackHitChance` (attacker hits when defense wins)
@@ -950,6 +952,10 @@ values directly.
 
 ### 8. File Map After Refactor (Stage 37.1a+)
 
+> **Historical.** This table records the Stage 37.1a refactor and is not
+> maintained. The canonical file list is the `## Files` table further down; when
+> the two disagree, that one is right.
+
 | File | Contents |
 |------|----------|
 | `combat/combat.go` | `calculateCombat()` orchestrator (~80 lines), `AttackPlayerVsMob`, `AttackPlayerVsPlayer`, `AttackMobVsPlayer`, `AttackMobVsMob`, `GetWaitMessages` |
@@ -1227,7 +1233,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | File | Purpose |
 |------|---------|
 | `combat.go` | Round resolution entry points |
-| `combat_helpers.go` | Shared helpers (encumbrance, swing counts) |
+| `combat_helpers.go` | Extracted helpers. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
 | `crit_floor.go` | Crit floors, 1% of HITS both directions (5.11e). **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes a second hit floor leaking through `MinDefenseChance`. |

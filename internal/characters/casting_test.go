@@ -47,29 +47,6 @@ func TestCalcFoldsPerRound(t *testing.T) {
 	}
 }
 
-func TestCalcInitiationChance(t *testing.T) {
-	tests := []struct {
-		willpower       int
-		spellcastingLvl int
-		expected        int
-	}{
-		// clamp(60 + willpower/4 + weightedSkill*5, 10, 95), SkillWeight=2.0
-		{0, 0, 60},    // 60 + 0 + 0 = 60
-		{40, 1, 80},   // 60 + 10 + 2*5 = 80
-		{100, 7, 95},  // 60 + 25 + 14*5 = 155 → clamped to 95
-		{0, 7, 95},    // 60 + 0 + 14*5 = 130 → clamped to 95
-		{-200, 0, 10}, // negative willpower → clamped to 10
-	}
-
-	for _, tt := range tests {
-		got := CalcInitiationChance(tt.willpower, tt.spellcastingLvl)
-		if got != tt.expected {
-			t.Errorf("CalcInitiationChance(%d, %d) = %d, want %d",
-				tt.willpower, tt.spellcastingLvl, got, tt.expected)
-		}
-	}
-}
-
 func TestCalcConcentrationChance(t *testing.T) {
 	tests := []struct {
 		willpower int

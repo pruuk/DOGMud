@@ -127,6 +127,30 @@ func TestCastReadiness_Affordable_Ready(t *testing.T) {
 	assert.Equal(t, ActionReady, result.Status)
 }
 
+// TestCastInitGateIsGone pins the U0 deletion of the spell-initiation gate.
+//
+// The gate could never be beaten: CalcInitiationChance clamped at 95 while a
+// maxed caster's computed value was 1372 (Meirok, Willpower 148, spellcasting
+// 51). So mastery could not touch it and every caster failed one cast in twenty
+// forever, each failure carrying a 2-round cast-init cooldown. Concentration
+// break already covers the design intent.
+//
+// A leftover cast-init cooldown on an existing save must therefore be inert
+// rather than blocking, which is what this asserts.
+func TestCastInitGateIsGone(t *testing.T) {
+	sd, cleanup := seedTestSpell("test-ar-noinit", spells.HelpSingle, 4)
+	defer cleanup()
+
+	actor, char, _ := newCastActor()
+	char.SpellBook[sd.SpellId] = 1
+	char.Conviction = 1000
+	char.Cooldowns = characters.Cooldowns{"cast-init": 3}
+
+	result := ActionReadiness(actor, "cast test-ar-noinit")
+	assert.Equal(t, ActionReady, result.Status,
+		"a stale cast-init cooldown must not defer casting; the gate was deleted")
+}
+
 // TestCastReadinessDrift guards castReadiness against drifting out of sync with
 // the player cast pre-checks in skill.cast.go (which it deliberately mirrors,
 // read-only). Each case builds a fully-castable caster, then trips exactly one
@@ -140,9 +164,8 @@ func TestCastReadinessDrift(t *testing.T) {
 		expected ReadyStatus
 		reason   string
 	}{
-		{"cast-init-cooldown", func(c *characters.Character, sd *spells.SpellData) {
-			c.Cooldowns = characters.Cooldowns{"cast-init": 3}
-		}, ActionDeferred, "cast-init cooldown"},
+		// The cast-init gate was deleted in U0. See
+		// TestCastInitGateIsGone below for the regression that pins it.
 		{"special-move-cooldown", func(c *characters.Character, sd *spells.SpellData) {
 			c.Cooldowns = characters.Cooldowns{"special-move": 3}
 		}, ActionDeferred, "special-move cooldown"},

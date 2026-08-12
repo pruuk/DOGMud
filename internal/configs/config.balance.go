@@ -319,13 +319,10 @@ type Balance struct {
 	SpellDiscoveryDecayRate  ConfigFloat `yaml:"SpellDiscoveryDecayRate"`  // Decay per known spell: chance = base / (1 + known*this) (default 0.1)
 
 	// ── DISCOVERY OFFSET (shared: spells + recipes) ──────────────────────────
-	DiscoveryPerceptionScale ConfigFloat `yaml:"DiscoveryPerceptionScale"` // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
-	DiscoverySkillScale      ConfigFloat `yaml:"DiscoverySkillScale"`      // Raw skill contribution reaches 1.0 at rank / this (default 100)
-	DiscoveryMaxDecayOffset  ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`  // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
-
-	SpellInitiationBase             ConfigInt   `yaml:"SpellInitiationBase"`             // Base % chance to initiate a spell (default 60)
+	DiscoveryPerceptionScale        ConfigFloat `yaml:"DiscoveryPerceptionScale"`        // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
+	DiscoverySkillScale             ConfigFloat `yaml:"DiscoverySkillScale"`             // Raw skill contribution reaches 1.0 at rank / this (default 100)
+	DiscoveryMaxDecayOffset         ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`         // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
 	SpellInitiationWillpowerDivisor ConfigInt   `yaml:"SpellInitiationWillpowerDivisor"` // Willpower / this = initiation bonus (default 4)
-	SpellInitiationSkillFactor      ConfigInt   `yaml:"SpellInitiationSkillFactor"`      // Spellcasting level * this = initiation bonus (default 5)
 	SpellConcentrationBase          ConfigInt   `yaml:"SpellConcentrationBase"`          // Base % concentration chance when struck (default 50)
 	SpellFoldsSkillFactor           ConfigInt   `yaml:"SpellFoldsSkillFactor"`           // Skill * this in folds-per-round calc (default 25)
 	SpellAttackSkillFactor          ConfigInt   `yaml:"SpellAttackSkillFactor"`          // Skill * this in spell attack mean (default 3)
