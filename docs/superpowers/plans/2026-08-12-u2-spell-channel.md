@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move the spell channel's five resolution sites onto `internal/contest`, changing no behaviour.
+**Goal:** Move the spell channel's six resolution sites onto `internal/contest`, changing no behaviour.
 
-**Architecture:** The core gains contest-floor support (`RunWithFloors`) reproducing `dice.OpposedRollStatWithFloors` exactly, plus a `Success` field. The four spell attack sites and `TrySpellDeflection` then call the core instead of `dice` directly.
+**Architecture:** The core gains contest-floor support (`RunWithFloors`) reproducing `dice.OpposedRollStatWithFloors` exactly, plus a `Success` field. The four spell attack sites, `resolveCharmSpell`, and `TrySpellDeflection` then call the core instead of `dice` directly.
 
 **Tech Stack:** Go, `internal/contest`, `internal/dice`, `testify/assert`.
 
@@ -14,7 +14,7 @@
 
 U1 shipped `internal/contest` with `Entry`, `Result{AttackRoll, DefenseRoll, Margin, Winner, Contested}`, `Run` and `AgainstDifficulty`. `Margin` is **attack-positive**.
 
-The five sites this plan migrates:
+The six sites this plan migrates:
 
 | Site | File | Call |
 |---|---|---|
@@ -22,19 +22,39 @@ The five sites this plan migrates:
 | `resolveAgainstPlayer` | `internal/hooks/spell_resolution.go:730` | same |
 | `resolveMobSpellAgainstMob` | `internal/hooks/spell_resolution.go:1292` | same |
 | `resolveMobSpellAgainstPlayer` | `internal/hooks/spell_resolution.go:1311` | same |
+| `resolveCharmSpell` | `internal/hooks/charm_spell.go:75` | `OpposedRollStatWithFloors(attackScore, defenseScore, spellHitFloor(), spellResistFloor())` |
 | `TrySpellDeflection` | `internal/combat/avoidance.go` | `OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)` |
 
-`TryStoicResolve` in the same file is the **conviction** channel and belongs to U3. Do not touch it here.
+**Six sites, not five.** `resolveCharmSpell` was missed by the first draft of this
+plan because its verification grepped only `spell_resolution.go` — true, but
+misleading, since charm lives in a sibling file and its own comment says *"Charm
+is a spell, so it takes the spell floors, not the maneuver pair."* It is called
+from the live cast dispatch (`spell_resolution.go:231`) and uses the same
+`spellHitFloor()`/`spellResistFloor()` accessors. Leaving it would have stranded a
+spell-channel site owned by no plan at all, to be discovered at U10's audit.
+
+Verified complete: `grep -rn "spellHitFloor()\|spellResistFloor()"` across
+`internal/` returns exactly these five call sites plus the two accessor
+definitions.
+
+`TryStoicResolve` in `avoidance.go` is the **conviction** channel and belongs to
+U3. Do not touch it here beyond the breadcrumb comment in Task 3.
+
+**Also not U2's, flagged so it is not lost:**
+`internal/hooks/NewRound_MobRoundTick.go:398` (the periodic charm-duration
+reroll) uses the **maneuver** floors, not the spell pair, so it belongs with U3's
+taunt/maneuver work. U3's stated scope does not currently claim it. Whoever
+writes the U3 plan must add it.
 
 ## Why the core needs floors
 
-All five sites use `dice.OpposedRollStatWithFloors`, which does three things `contest.Run` does not:
+All six sites use `dice.OpposedRollStatWithFloors`, which does three things `contest.Run` does not:
 
 1. **Flips the outcome** with probability `floorSuccess` (when the attack lost) or `floorResist` (when it won) — the 5.9 last-resort guarantee.
 2. **Stamps a ±1 sentinel margin** on a flipped outcome, so a floor-granted hit carries margin `1` rather than its real (losing) margin. That sentinel is load-bearing: `ContestCrit` normalises it to a near-zero z, which is why a floor-granted hit can never also be a crit.
 3. **Clamps each floor to [0, 0.5]**, above which a floor stops being a last resort and becomes the dominant term.
 
-Leaving floors at the call sites would mean five copies of that logic, which is the fragmentation this arc exists to remove.
+Leaving floors at the call sites would mean six copies of that logic, which is the fragmentation this arc exists to remove.
 
 **Note for U6:** melee applies its floors *after* the contest, in `resolveDefenseOutcomeCore`, while spell applies them *inside* the roll. Two floor styles. U6 must unify them; U2 deliberately preserves both.
 
@@ -53,8 +73,9 @@ Leaving floors at the call sites would mean five copies of that logic, which is 
 | `internal/contest/contest.go` (modify) | add `Success` to `Result`; add `RunWithFloors` |
 | `internal/contest/contest_test.go` (modify) | tests for both |
 | `internal/hooks/spell_resolution.go` (modify) | four attack sites call the core |
+| `internal/hooks/charm_spell.go` (modify) | `resolveCharmSpell` calls the core |
 | `internal/combat/avoidance.go` (modify) | `TrySpellDeflection` calls the core |
-| `internal/contest/context.md` (modify) | document floors and the `Success` field |
+| `internal/contest/context.md` (modify) | document floors, `Success`, `Floored`, and the transitional status |
 
 ## Success criteria
 
@@ -134,17 +155,30 @@ func TestRunWithFloors_ResistFloorSavesADoomedDefender(t *testing.T) {
 // cannot also be a critical hit. If the real margin leaked through here, a
 // hopeless attacker rescued by the floor would crit.
 func TestRunWithFloors_StampsTheSentinelMargin(t *testing.T) {
-	// Force the success floor to fire every time.
-	res := RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.5, 0)
-	if res.Success {
-		assert.Equal(t, 1.0, res.Margin, "a floor-granted success carries the +1 sentinel")
+	// 0.5 is the clamp CEILING, not a certainty, so each call is a coin flip on
+	// whether the floor fires at all. This must therefore loop AND prove it
+	// actually observed both branches. A single draw per branch would execute
+	// no assertions at all on roughly a quarter of runs and still report PASS —
+	// measured at 502/2000 — which is precisely how a "load-bearing" test
+	// silently stops guarding anything while staying green.
+	sawSuccess, sawResist := false, false
+
+	for i := 0; i < 200; i++ {
+		granted := RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.5, 0)
+		if granted.Success {
+			sawSuccess = true
+			assert.Equal(t, 1.0, granted.Margin, "a floor-granted success carries the +1 sentinel")
+		}
+
+		resisted := RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0, 0.5)
+		if !resisted.Success {
+			sawResist = true
+			assert.Equal(t, -1.0, resisted.Margin, "a floor-granted resist carries the -1 sentinel")
+		}
 	}
 
-	// Force the resist floor to fire every time.
-	res = RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0, 0.5)
-	if !res.Success {
-		assert.Equal(t, -1.0, res.Margin, "a floor-granted resist carries the -1 sentinel")
-	}
+	assert.True(t, sawSuccess, "success floor never fired in 200 draws — the test asserted nothing")
+	assert.True(t, sawResist, "resist floor never fired in 200 draws — the test asserted nothing")
 }
 
 // TestRunWithFloors_ClampsFloors — above 0.5 a floor stops being a last resort
@@ -194,6 +228,16 @@ In `internal/contest/contest.go`, add a `Success` field to `Result`, immediately
 	// the sentinel margin it stamps, so callers that care about the outcome
 	// must read this rather than re-deriving it from Margin.
 	Success bool
+
+	// Floored reports whether a contest floor CHANGED this outcome.
+	//
+	// Without it, the only way to ask is comparing Margin against the +-1
+	// sentinel: that means knowing an internal constant, is ambiguous against a
+	// genuine roll landing exactly there, and breaks silently if the sentinel is
+	// ever retuned. Roadmap section 8 names floor-reliance rate as something
+	// that must be MODELLED before U6 flips the defence model, so it has to be
+	// answerable cheaply.
+	Floored bool
 ```
 
 At the end of `Run`, immediately before `return res`, set it:
@@ -208,6 +252,15 @@ Then append this function:
 // RunWithFloors is Run plus the 5.9 contest floors: a last-resort probability
 // that an outcome is flipped, so a hopelessly outclassed actor is never simply
 // incapable and an overwhelming one is never simply guaranteed.
+//
+// TRANSITIONAL. This exists so U2-U5 can be provable no-ops. The codebase has
+// TWO floor styles and this reproduces only one: melee applies its floors AFTER
+// the contest, in resolveDefenseOutcomeCore, flipping a hit with no margin
+// involved; spell and maneuver apply theirs INSIDE the roll and need the
+// sentinel margin to stop a floored hit from also critting. Roadmap section 8
+// lists reconciling the two as an OPEN question for U6, which may delete or
+// reshape this function entirely. Do not build new permanent behaviour on it
+// without checking where that landed.
 //
 // It reproduces dice.OpposedRollStatWithFloors exactly, because callers are
 // being migrated onto it and must not change behaviour:
@@ -235,9 +288,9 @@ func RunWithFloors(atkScore float64, entries []Entry, floorSuccess, floorResist 
 
 	switch {
 	case !res.Success && floorSuccess > 0 && rand.Float64() < floorSuccess:
-		res.Success, res.Margin = true, 1
+		res.Success, res.Margin, res.Floored = true, 1, true
 	case res.Success && floorResist > 0 && rand.Float64() < floorResist:
-		res.Success, res.Margin = false, -1
+		res.Success, res.Margin, res.Floored = false, -1, true
 	}
 
 	return res
@@ -278,7 +331,7 @@ git add internal/contest/contest.go internal/contest/contest_test.go
 git commit -m "feat(contest): contest floors and an explicit Success outcome (U2)
 
 RunWithFloors reproduces dice.OpposedRollStatWithFloors exactly, because
-five sites are about to be migrated onto it and must not change
+six sites are about to be migrated onto it and must not change
 behaviour: at most one floor rolled per call, a flipped outcome stamped
 with the +-1 sentinel margin rather than its real one, and both floors
 clamped to [0, 0.5].
@@ -295,7 +348,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 2: Migrate the four spell attack sites
+### Task 2: Migrate the five spell attack sites
 
 **Files:**
 - Modify: `internal/hooks/spell_resolution.go` (lines 300, 730, 1292, 1311)
@@ -334,21 +387,50 @@ matches, then delete `"github.com/GoMudEngine/GoMud/internal/dice"` from the
 import block. If the grep unexpectedly returns matches, leave the import and say
 so in your report.
 
-- [ ] **Step 4: Verify no behaviour changed**
+- [ ] **Step 4: Migrate the fifth site, `resolveCharmSpell`**
+
+In `internal/hooks/charm_spell.go` around line 75, replace:
+
+```go
+	success, _, _, _ := dice.OpposedRollStatWithFloors(
+		float64(attackScore), float64(defenseScore),
+		spellHitFloor(), spellResistFloor(),
+	)
+```
+
+with:
+
+```go
+	success := contest.RunWithFloors(
+		float64(attackScore), []contest.Entry{{Score: float64(defenseScore)}},
+		spellHitFloor(), spellResistFloor(),
+	).Success
+```
+
+Charm reads **only** the success boolean — it discards all three other returns
+today — so this is the simplest of the five migrations. Keep the comment above it
+(`// Charm is a spell, so it takes the spell floors, not the maneuver pair.`);
+it is still true and it is the reason this site belongs to U2 rather than U3.
+
+Add the `contest` import, and check whether `dice` is still used in that file:
+run `grep -n "dice\." internal/hooks/charm_spell.go` and remove the import only
+if there are zero matches.
+
+- [ ] **Step 5: Verify no behaviour changed**
 
 ```bash
 go build ./...
 go test ./internal/hooks/ ./internal/contest/ -count=1
-grep -c "OpposedRollStatWithFloors" internal/hooks/spell_resolution.go
+grep -rc "OpposedRollStatWithFloors" internal/hooks/spell_resolution.go internal/hooks/charm_spell.go
 ```
-Expected: build clean, tests PASS with no test file edited, and the grep returns `0`.
+Expected: build clean, tests PASS with no test file edited, and BOTH greps return `0`.
 
-- [ ] **Step 5: Run the full suite**
+- [ ] **Step 6: Run the full suite**
 
 Run: `go test ./... 2>&1 | grep -E "^(FAIL|---)"`
 Expected: only `internal/relationships` (a known Windows Defender quarantine of the test binary, unrelated). Any other failure is a real regression — report it, do not edit the test.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 gofmt -l internal/
@@ -404,7 +486,7 @@ The current code is:
 
 ```go
 	floorHit, floorResist := SpellFloors()
-	res := contest.RunWithFloors(attackScore, []Entry{{Score: defenseScore}}, floorHit, floorResist)
+	res := contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, floorHit, floorResist)
 
 	defender.OnSkillUse(string(skills.Spellcasting), defenderUserId)
 	defender.OnStatUse("perception", defenderUserId)
@@ -428,24 +510,41 @@ The current code is:
 	return 1.0
 ```
 
-Note the entry type is written `[]Entry{...}` **not** `[]contest.Entry{...}` only if this file is inside package `contest` — it is not. Use `[]contest.Entry{{Score: defenseScore}}`.
+Note the entry type is `[]contest.Entry`, qualified — `avoidance.go` is in package
+`combat`, not package `contest`.
 
-- [ ] **Step 2: Fix the entry type and add the import**
+- [ ] **Step 2: Add the import**
 
-Ensure the line reads:
+Add `"github.com/GoMudEngine/GoMud/internal/contest"` to the import block of
+`internal/combat/avoidance.go`, in alphabetical position.
+
+`internal/combat` already imports `internal/contest` (U1 did it in
+`combat_helpers.go`), so there is no cycle to worry about.
+
+- [ ] **Step 3: Leave a breadcrumb above `TryStoicResolve`**
+
+After this task, `avoidance.go` contains two adjacent near-identical functions
+resolved by different mechanisms — `TrySpellDeflection` on the contest core,
+`TryStoicResolve` still on `dice`. That is exactly the drift this arc removes,
+reproduced in miniature, and a reader editing this file in isolation has no way
+to know it is deliberate and temporary. Add directly above `TryStoicResolve`:
 
 ```go
-	res := contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, floorHit, floorResist)
+// TODO(U3): still on dice.OpposedRollStatWithFloors while its sibling
+// TrySpellDeflection above has moved to internal/contest. Deliberate, not an
+// oversight: this is the conviction channel and roadmap U3 owns it. Note that
+// U6 removes BOTH as parallel mechanisms, folding them into the defence
+// multiplier, so do not invest in unifying them here.
 ```
 
-Add `"github.com/GoMudEngine/GoMud/internal/contest"` to the import block of `internal/combat/avoidance.go`.
+This is a comment only. Do not change `TryStoicResolve`'s code.
 
-- [ ] **Step 3: Confirm `TryStoicResolve` is untouched**
+- [ ] **Step 4: Confirm `TryStoicResolve`'s CODE is untouched**
 
 Run: `git diff internal/combat/avoidance.go`
-The diff must NOT include any change inside `TryStoicResolve`. That function is the conviction channel and belongs to U3. If it appears in the diff, revert that part.
+The diff must show only the added TODO comment above `TryStoicResolve` — no change to its body. That function is the conviction channel and belongs to U3.
 
-- [ ] **Step 4: Verify**
+- [ ] **Step 5: Verify**
 
 ```bash
 go build ./...
@@ -454,12 +553,12 @@ grep -n "dice\." internal/combat/avoidance.go
 ```
 Expected: build clean, tests PASS with no test file edited. The `dice` import must remain — `TryStoicResolve` still uses it.
 
-- [ ] **Step 5: Run the full suite**
+- [ ] **Step 6: Run the full suite**
 
 Run: `go test ./... 2>&1 | grep -E "^(FAIL|---)"`
 Expected: only `internal/relationships`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 gofmt -l internal/
@@ -505,15 +604,16 @@ Replace the Public API list with:
   fixed number instead of an opponent.
 ```
 
-- [ ] **Step 2: Add `Success` to the Core types block**
+- [ ] **Step 2: Add `Success` and `Floored` to the Core types block**
 
 In the `Result` struct in the Core types section, add:
 
 ```go
 	Success     bool            // the ATTACKER won; read this, not Margin's sign, after floors
+	Floored     bool            // a contest floor CHANGED this outcome
 ```
 
-- [ ] **Step 3: Add three gotchas**
+- [ ] **Step 3: Add four gotchas**
 
 Append to the Gotchas section:
 
