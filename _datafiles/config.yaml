@@ -522,6 +522,16 @@ Balance:
   #   Example: attacker score 110 × 1.05 = 115.5 vs prone target.
   ProneVulnerabilityMultiplier: 1.05  # Tuned 39.2: lowered from 1.15; defense penalties already stack
   #
+  # Grapple position (chunk 5.11c). Moved off the crit threshold and onto the
+  #   attack score so grapple and prone use the same mechanism. As threshold
+  #   shifts the ground pair self-cancelled to net zero -- BOTH participants
+  #   satisfy IsGroundGrapple(), so the controller's -0.4 and the victim's +0.4
+  #   erased each other, making ground control worth LESS than standing. As
+  #   multipliers they compound, which was always the intent.
+  GrappleGroundControlAttackMultiplier: 1.15    # controller, on the ground
+  GrappleStandingControlAttackMultiplier: 1.08  # controller, standing clinch
+  GrappleGroundedVulnerabilityMultiplier: 1.15  # vs a grounded, non-controlling target
+  #
   # StandStaminaCost: fraction of StaminaMax required to stand up from prone.
   #   Example: StaminaMax 400, cost 0.15 → must spend 60 SP to stand.
   StandStaminaCost: 0.15
@@ -1319,7 +1329,7 @@ Network:
   #   container on 0.0.0.0:80 (up since 2026-07-30), so a DOGMud server set
   #   to 80 loses the bind and boots with NO web listener. The droplet's own
   #   config (not this file — skip-worktree) owns the prod value.
-  HttpPort: 8090
+  HttpPort: 80
   # - HttpsPort -
   #   The port the server listens on for web requests
   #   Note: Must have a cert/key file (See FilePaths)
@@ -1432,9 +1442,9 @@ Network:
 #
 ################################################################################
 Logging:
-  LogToFile: true                              # LOCAL OVERNIGHT SOAK 08-10. Set back to false before any prod push (droplet has limited disk). This file is skip-worktree so it is never committed.
+  LogToFile: false                             # Write logs to file + terminal (DISABLED for prod push per CLAUDE.md pre-push SOP — droplet has limited disk)
   LogFilePath: "_datafiles/logs/server.log"    # Log file path (rotated at 100MB)
-  LogLevel: "info"                             # LOCAL SOAK: info, not debug. The log rotates at 100MB, and 12h of debug would roll the early autosave cycles away before morning. AutoSave lines are Info; savequeue problems are Warn/Error.
+  LogLevel: "debug"                            # debug, info, warn, error
 
 ################################################################################
 #
@@ -1581,9 +1591,6 @@ Roles:
 # ProfilesManifest is the production default (materializer no-op). Ephemeral
 # playtestenv runs override these via CONFIG_PATH.
 ################################################################################
-Playtest:
-  ProfilesDir: tools/playtest/profiles
-  ProfilesManifest: ""
 
 ################################################################################
 Modules:

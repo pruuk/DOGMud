@@ -420,6 +420,26 @@ func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Ch
 		attackScore *= float64(bal.ProneVulnerabilityMultiplier)
 	}
 
+	// Chunk 5.11c: grapple position, moved here from calcCritThreshold so that
+	// prone and grapple -- the same category of effect -- use the same
+	// mechanism. Under margin-derived crit (5.11d) these also feed crit
+	// automatically, because they move the margin.
+	//
+	// As threshold shifts these self-cancelled on the ground: BOTH participants
+	// satisfy IsGroundGrapple() (a position state) while IsController() is a
+	// separate control fsm, so the controller's -0.4 and the victim's +0.4 net
+	// to zero. As multipliers they compound, which is the intent.
+	if sourceChar.IsController() {
+		if sourceChar.IsGroundGrapple() {
+			attackScore *= float64(bal.GrappleGroundControlAttackMultiplier)
+		} else if sourceChar.IsStandingGrapple() {
+			attackScore *= float64(bal.GrappleStandingControlAttackMultiplier)
+		}
+	}
+	if targetChar.IsGroundGrapple() && !targetChar.IsController() {
+		attackScore *= float64(bal.GrappleGroundedVulnerabilityMultiplier)
+	}
+
 	// Darkness penalty: attacker can't see
 	if !ctx.sourceCanSee {
 		attackScore *= float64(bal.DarknessCombatPenalty)
@@ -455,22 +475,23 @@ func calcCritThreshold(sourceChar *characters.Character, targetChar *characters.
 		critThreshold = 1.5
 	}
 
-	// Stage 8.3: Position-based crit modifiers. Chunk 4b R1: FSM-driven —
-	// IsController replaces the legacy ConditionGrappleController gate
-	// (S4 sunset), and IsGroundGrapple / IsStandingGrapple replace the
-	// legacy PositionGrounded / PositionClinched enum reads.
-	if sourceChar.IsController() {
-		if sourceChar.IsGroundGrapple() {
-			critThreshold -= 0.4
-		} else if sourceChar.IsStandingGrapple() {
-			critThreshold -= 0.2
-		}
-	}
-	if targetChar.IsGroundGrapple() && !targetChar.IsController() {
-		critThreshold += 0.4
-	}
+	// Chunk 5.11c: position-based crit modifiers MOVED OUT to calcAttackScore,
+	// alongside the prone multipliers that already lived there. Do not
+	// reintroduce them here.
+	//
+	// Two reasons. First, prone and grapple are the same category of effect and
+	// were using two different mechanisms in two different files. Second, the
+	// ground-grapple pair silently cancelled: both participants satisfy
+	// IsGroundGrapple() (a position state) while IsController() is a separate
+	// control fsm, so the controller's -0.4 and the victim's +0.4 netted to
+	// ZERO -- ground control, the stronger position, was worth strictly less
+	// than the standing -0.2.
+	//
+	// Buff modifiers (Accuracy, Blink) stay on the threshold. They are not
+	// positional; "this character crits more readily" is exactly what a
+	// threshold expresses.
 
-	// Absolute floor after all modifiers: ~15.9% max crit (skilled + grapple controller)
+	// Absolute floor. Retained for the buff modifiers above.
 	if critThreshold < 1.0 {
 		critThreshold = 1.0
 	}
@@ -721,22 +742,20 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // crit/fumble priority: fumbles → crits → normal → floors.
 // Returns the full hitResolution including crit/fumble flags.
 //
-// forceCrit bypasses the Z-score threshold check and treats the attack as a
-// confirmed crit regardless of the roll result. The stored ZScore is bumped to
-// critThreshold+0.5 so downstream crit-magnitude logic sees a confident crit.
-// Pass false for all normal combat rounds; T14 passes true for sleeping-victim
-// first-hit-crit.
+// forceCrit bypasses the crit check entirely and treats the attack as a
+// confirmed crit regardless of the roll, additionally suppressing the fumble
+// branch so a forced crit cannot resolve as a fumble. Pass false for all normal
+// combat rounds; T14 passes true for sleeping-victim first-hit-crit.
+//
+// Chunk 5.11d: this used to work by writing critThreshold+0.5 into
+// best.hitRoll.ZScore. Crit no longer reads that field, so the mutation was
+// removed rather than left as a silent no-op. One visible consequence:
+// result.AttackZScore now reports the roll that actually happened instead of the
+// bumped value.
 func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
 	bal := configs.GetBalanceConfig()
 	fumbleThreshold := -2.0
 	defCritThreshold := 2.0
-
-	// forceCrit: override the attack roll's Z-score before any threshold check
-	// so every downstream branch (fumble guards, crit vs crit comparisons, etc.)
-	// sees a clearly-crit roll.
-	if forceCrit && best.hitRoll.ZScore < critThreshold+0.5 {
-		best.hitRoll.ZScore = critThreshold + 0.5
-	}
 
 	res := hitResolution{
 		hitRoll: best.hitRoll,
@@ -748,10 +767,53 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 		result.DefenseZScore = best.defRoll.ZScore
 	}
 
+	// Fumbles deliberately REMAIN on the self-relative z-score. They share the
+	// architectural quirk crits had, but moving them would change failure rates
+	// nobody asked to change. Explicitly out of scope for chunk 5.11d — do not
+	// "fix" them in passing.
 	attackFumble := best.hitRoll.ZScore <= fumbleThreshold
 	defenseFumble := best.defenseType != "" && best.defRoll.ZScore <= fumbleThreshold
-	attackCrit := best.hitRoll.ZScore >= critThreshold
-	defenseCrit := best.defenseType != "" && best.defRoll.ZScore >= defCritThreshold
+
+	// Chunk 5.11d: crit derives from the normalized opposed-roll margin, so
+	// winning decisively is what makes you crit. See margin_crit.go for the
+	// sign, infinity and normaliser traps.
+	var attackCrit bool
+	if z, ok := normalizedAttackMargin(best); ok {
+		attackCrit = z >= critThreshold
+	} else {
+		// T2: no defence was attempted, so there is no contest and no margin to
+		// derive from. Fall back to the legacy self-relative check, which
+		// preserves prior behaviour exactly on that path. Do NOT synthesise a
+		// margin from math.Inf(-1).
+		attackCrit = best.hitRoll.ZScore >= critThreshold
+	}
+
+	// Mirror of the attack side, and it must mirror it: an earlier draft left
+	// the defence with no fallback, so whenever the margin was unusable defence
+	// crit silently became impossible rather than falling back. "No defence
+	// attempted" is the only case that legitimately yields false.
+	var defenseCrit bool
+	if best.defenseType != "" {
+		if z, ok := normalizedDefenseMargin(best); ok {
+			defenseCrit = z >= defCritThreshold
+		} else {
+			defenseCrit = best.defRoll.ZScore >= defCritThreshold
+		}
+	}
+
+	// T4: forceCrit (the sleeping-victim first hit) is now an explicit flag.
+	// It previously worked by writing critThreshold+0.5 into
+	// best.hitRoll.ZScore — a field crit no longer reads, so that form would
+	// have become a silent no-op.
+	//
+	// That bump also lifted the roll clear of the fumble threshold, and the
+	// fumble branch runs FIRST and returns. Clearing attackFumble here preserves
+	// that behaviour; without it a forced crit on a terrible roll would resolve
+	// as a fumble instead.
+	if forceCrit {
+		attackCrit = true
+		attackFumble = false
+	}
 
 	// ── Step 1: Fumble resolution (absolute) ────────────────────────────────
 
