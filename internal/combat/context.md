@@ -1227,7 +1227,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | File | Purpose |
 |------|---------|
 | `combat.go` | Round resolution entry points |
-| `combat_helpers.go` | Shared helpers (encumbrance, swing counts) |
+| `combat_helpers.go` | Extracted helpers. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
 | `crit_floor.go` | Crit floors, 1% of HITS both directions (5.11e). **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes a second hit floor leaking through `MinDefenseChance`. |

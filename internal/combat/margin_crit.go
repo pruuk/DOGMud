@@ -30,11 +30,14 @@ import (
 //
 // Three traps are handled here, all of them silent if got wrong:
 //
-// T1 — SIGN. runBestOfAllDefense computes
-// `margin := defenseRoll.Value - attackRoll.Value` and keeps the LARGEST, so
-// best.margin is DEFENCE-positive: a positive value means the defence won. The
-// attacker's margin is therefore its negation. Getting this backwards puts crit
-// on the losing side and compiles cleanly.
+// T1 — SIGN. Since U1, the margin itself is computed inside contest.Run, not
+// here: it rolls the attack once, contests every defence against it, and keeps
+// the SMALLEST `attackRoll.Value - defenseRoll.Value` — an ATTACK-positive
+// convention, the opposite of this package's. runBestOfAllDefense negates that
+// result at the boundary (`best.margin = -res.Margin`) to preserve
+// bestDefenseResult's DEFENCE-positive convention: a positive best.margin means
+// the defence won. The attacker's margin here is therefore its negation.
+// Getting this backwards puts crit on the losing side and compiles cleanly.
 //
 // T2 — INFINITY. best.margin is initialised to math.Inf(-1) and only overwritten
 // inside the defence loop. A defender with no stamina, or an empty defence
