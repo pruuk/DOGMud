@@ -1,5 +1,37 @@
 # DOGMud Patch Notes
 
+## 2026-08-12: A telling blow is worth what your practice makes it
+
+Landing a telling blow used to be worth very little against a lightly protected
+foe. All it did was ignore armour, so against something wearing none it was no
+better than an ordinary hit. Skill decided how often you landed one, but never
+what it was worth when you did.
+
+Now it is worth far more, and the difference comes from practice. A veteran who
+has drilled a skill for years hits several times harder on a telling blow than a
+novice does, and that gap keeps widening for as long as they keep training. It
+never stops paying.
+
+This applies the same way to fighting, to spellcraft, and to a cutting word.
+Whichever you have made your life's work is the one that rewards you.
+
+Spellcraft and sharp words have also caught up with the change made to fighting
+yesterday. How often you land a telling blow with them now depends on how
+decisively you beat the one in front of you, rather than on your own form alone.
+Overmatch something and you will land them constantly. Face an equal and they
+stay the rare thing they should be. A caster who crushes a weaker foe will
+notice this immediately.
+
+The same is true when you shrug one off. Turning a spell or an insult aside
+completely now takes beating the sender soundly, not merely a good moment.
+
+One thing softens all of that. However far out of your depth you are, every blow
+you do manage to land keeps a small chance of being a telling one, and every
+attack you do manage to turn aside keeps a small chance of being turned aside
+completely. Being outmatched no longer means those moments are impossible, only
+rare. This works in both directions, so the thing hunting you keeps its small
+chance against you as well.
+
 ## 2026-08-11: Skill counts for much more, and a good position shows it
 
 Practice now matters a great deal more than it did. A character who has put real

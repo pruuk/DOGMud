@@ -81,23 +81,11 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 			cap = 0.75
 		}
 
-		if isCrit {
-			// Crit: bypass mitigation entirely — use raw damage
-			dmgRoll := dice.RollStat(rawDmg)
-			dmg := int(math.Round(dmgRoll.Value))
-			if dmg < 1 {
-				dmg = 1
-			}
-			return dmg
-		}
-
-		dmgMean := combat.ApplyMitigation(rawDmg, mitigPct, cap)
-		dmgRoll := dice.RollStat(dmgMean)
-		dmg := int(math.Round(dmgRoll.Value))
-		if dmg < 1 {
-			dmg = 1
-		}
-		return dmg
+		// Chunk 5.11g: a crit bypasses mitigation AND scales by the caster's
+		// spellcasting rank. Before this, a crit against an unmitigated target
+		// dealt exactly a normal hit's damage, so crit worth was set purely by
+		// the defender's armour.
+		return combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, cap)
 	}
 
 	// Legacy fallback: magnitude-based damage (no mitigation, no stat scaling)

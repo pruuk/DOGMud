@@ -778,8 +778,10 @@ hits/misses affect stance display text.
 
 **vi. If HIT** — `calcHitDamage()`
 ```
-Crit check: hitRoll.ZScore >= critThreshold (default 2.0)?
-  CRIT: damage = dice.RollStat(rawDmgForCrit)  // PRE-mitigation!
+The crit flag is decided during hitroll resolution (see margin_crit.go) and
+passed in. calcHitDamage does NOT re-derive it.
+
+  CRIT: damage = dice.RollStat(rawDmgForCrit * critDmgMult)  // PRE-mitigation!
         Apply crit buffs to target.
 
 Normal hit:
@@ -790,6 +792,10 @@ RollStat derives stdDev from the mean it is given, so each branch gets a
 spread proportional to its own mean. Do not reintroduce a shared,
 pre-computed variance — the crit branch then inherits the mitigated mean's
 (narrower) spread.
+
+For the same reason, chunk 5.11g's critDmgMult multiplies the MEAN, before
+the roll. Scaling the rolled result instead would stretch the spread by the
+multiplier and make high-skill crits wildly swingier.
 ```
 
 **vii. Build Messages** — `buildAttackMessages()`
@@ -949,6 +955,9 @@ values directly.
 | `combat/combat.go` | `calculateCombat()` orchestrator (~80 lines), `AttackPlayerVsMob`, `AttackPlayerVsPlayer`, `AttackMobVsPlayer`, `AttackMobVsMob`, `GetWaitMessages` |
 | `combat/combat_helpers.go` | Extracted helpers: `calcAttackCount`, `collectAttackWeapons`, `buildWeaponSetup`, `buildDamageParams`, `calcAttackScore`, `calcCritThreshold`, `calcDualWieldPenalty`, `filterDefensesForThirdParty`, `runBestOfAllDefense`, `resolveDefenseOutcome`, `calcHitDamage`, `buildAttackMessages`, `applyPetDamage` |
 | `combat/damage_pipeline.go` | `CalcRawDamage`, `ApplyMitigation`, `SkillMultiplier`, `ResourceMultiplier`, `MitigationCap`, `DamageScale` |
+| `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage` |
+| `combat/margin_crit.go` | `ContestCrit`, `ContestCritThreshold` |
+| `combat/crit_floor.go` | `ApplyCritFloor`, `AttackContestCrit`, `DefenseContestCrit`, `AttackCritFloor`, `DefenseCritFloor` |
 | `combat/attackresult.go` | `AttackResult` struct (includes `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`) and message helpers |
 | `combat/ai.go` | `ChooseSpecialMove`, `ChooseCastAction`, `GetAIProfile`, AI profiles, viability checks (`CanUseBash`, `CanUseKick`, etc.), scoring functions |
 | `combat/criteffects.go` | `AttemptCritDisarm`, `SetGrappleOpportunity`, `HasGrappleOpportunity`, `GetGrappleOpportunityBonus`, `ClearGrappleOpportunity` |
@@ -1220,6 +1229,9 @@ can add parallel snapshot checks at the same start-of-round site.
 | `combat.go` | Round resolution entry points |
 | `combat_helpers.go` | Shared helpers (encumbrance, swing counts) |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
+| `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
+| `crit_floor.go` | Crit floors, 1% of HITS both directions (5.11e). **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes a second hit floor leaking through `MinDefenseChance`. |
+| `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
 | `avoidance.go` | Best-of-all defence resolution (dodge / parry / block) |
 | `attackresult.go` | The result value passed back to callers |

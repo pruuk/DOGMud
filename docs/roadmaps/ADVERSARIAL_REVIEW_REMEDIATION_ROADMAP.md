@@ -270,10 +270,10 @@ further decomposition
 | 5.11b | `SkillWeight` 2.0 -> 5.0 | S | 5.11a | 5.7 follow-on | **Done 2026-08-11** (played) |
 | 5.11c | Move positional modifiers into attack/defence scores | M | 5.11b | 5.7 follow-on | **Done 2026-08-11** (PR #28) |
 | 5.11d | Margin-derived crit (+ defensive mirror, `forceCrit` rework) | L | 5.11c | 5.7 follow-on | **Done 2026-08-11** (PR #28) |
-| 5.11e | Crit floors, 1% of hits, both directions | M | 5.11d | 5.7 follow-on | Not started |
+| 5.11e | Crit floors, 1% of hits, both directions | M | 5.11d | 5.7 follow-on | **Done 2026-08-12** — all three channels |
 | 5.11f | Return damage: channel-matched mitigation | M | 5.11b | Found in 5.11b playtest | **Done 2026-08-11** (PR #29) — baseline only |
 | 5.11f-2 | Reflect counterplay: dedicated resist + cap | M | 5.11f | Design gap found 2026-08-11 | Not started |
-| 5.11g | Skill-scaled crit damage multiplier | M | 5.11d, **5.11f** | 5.7 follow-on | Not started |
+| 5.11g | Skill-scaled crit damage multiplier | M | 5.11d, **5.11f** | 5.7 follow-on | **Done 2026-08-12** — all three channels |
 | 5.11h | Docs + adversarial playtest gate | M | 5.11g | 5.7 follow-on | Not started |
 | ~~5.11x~~ | ~~Reduce skill's direct damage share / above-cap curve~~ | — | — | 5.7 follow-on | **Non-goal** — thief coupling; see spec |
 | 5.12 | `context.md` accuracy pass (61 phantom symbols, 22 pkgs) | L | — | New (found 2026-08-11) | Not started |
@@ -1840,6 +1840,130 @@ that via `best.defenseType == ""`, never by testing the margin.
 **Playtest gate:** 5.11 is a combat-feel change. Per the CLAUDE.md content gate,
 it needs a harness sweep plus a manual pass by the user in parallel — the model
 can show the math is coherent but not whether crits *feel* like the payoff.
+
+### Chunk 5.11g — DONE 2026-08-12, widened to all three channels
+
+Shipped as spec'd: `critMult = CritDamageBase + CritDamagePerSkill * skillRank`,
+2.0 and 0.05, linear, no clamp at the skill soft cap. Applied to the crit's
+pre-mitigation mean **on top of** the retained mitigation bypass.
+
+**Scope decision — all three channels, not melee only.** Section E of the spec
+is written entirely in melee terms and names only `calcHitDamage`, but the
+approved philosophy ("skill governs crit rate AND crit magnitude") is
+channel-agnostic, and the identical defect existed in all three:
+
+| Channel | Site | Governing skill |
+|---|---|---|
+| Physical | `combat/combat_helpers.go` `calcHitDamage` | `GetCombatSkillLevel()` |
+| Magical | `hooks/combat_shared_helpers.go` `calcSpellDamageForCharacter` | `spellcasting` |
+| Conviction | `actions/combat_taunt.go` `ExecuteTaunt` | `rhetoric` |
+
+The spell and taunt sites were byte-identical in shape, so both now call one
+tested `combat.CritOrMitigatedDamage`. Melee deliberately stays separate — it
+carries backstab consumption and crit-buff bookkeeping and floors at 0 rather
+than 1.
+
+**Measured, not assumed:** the pre-change spell tests recorded `crit/normal =
+1.00` against an unmitigated target, confirming the spec's claim that a crit on
+an unarmoured foe landed exactly a normal hit. Both new call-site tests were
+mutation-verified (production change reverted, tests observed to fail).
+
+**Crit RATE brought to parity in the same chunk.** An initial pass shipped crit
+*magnitude* to all three channels while leaving 5.11d's margin-derived crit
+*rate* melee-only, which left spells and taunts half-converted. Corrected on
+review: `combat.ContestCrit` now drives crit for every channel.
+
+Seven sites moved off the self-relative z-score:
+
+| Site | Role |
+|---|---|
+| `spell_resolution.go` `resolveAgainstMob` | attack |
+| `spell_resolution.go` `resolveAgainstPlayer` | attack |
+| `spell_resolution.go` `resolveMobSpellAgainstMob` | attack |
+| `spell_resolution.go` `resolveMobSpellAgainstPlayer` | attack |
+| `actions/combat_taunt.go` `ExecuteTaunt` | attack |
+| `combat/avoidance.go` `TrySpellDeflection` | defence (full negation) |
+| `combat/avoidance.go` `TryStoicResolve` | defence (full negation) |
+
+Measured crit rate after the change, identical to the melee curve because it is
+the same math:
+
+| Matchup (atk vs def) | Crit rate |
+|---|---|
+| 60 vs 140 | 0.00% |
+| 80 vs 120 | 0.00% |
+| 100 vs 100 | **2.31%** (legacy was 2.3%) |
+| 120 vs 80 | 33.5% |
+| 140 vs 60 | 75.6% |
+
+**Sign hazard, documented because it compiles either way.** `dice.OpposedRoll`
+returns an **attack-positive** margin (`attackRoll.Value - defenseRoll.Value`),
+which is the OPPOSITE of `bestDefenseResult.margin` — that one is
+defence-positive, which is exactly why `normalizedAttackMargin` negates it.
+`ContestCrit` therefore takes a margin already signed from the tested side's
+perspective and never negates. Defenders pass `defRoll.Margin`, which
+`dice.OpposedRoll` has already negated for them.
+
+**Contest floors compose correctly by accident of the 5.9 convention.**
+`OpposedRollStatWithFloors` overwrites the margin with the sentinel `±1` when a
+floor fires. That normalises to a near-zero z, so a hit handed out by the floor
+can never also be a crit. Pinned by a test so a future refactor cannot lose it.
+
+**Fumbles deliberately NOT converted**, matching the explicit 5.11d decision:
+they share the architectural quirk but moving them would change failure rates
+nobody asked to change.
+
+**Out of scope, flagged not fixed:** grapple submissions
+(`combat/submission.go` `ClassifySubmissionTier`, `hooks/Position_SubmissionTick.go`)
+still classify their crit tier from a self-relative z-score. That is a separate
+designed subsystem with its own tier table and its own knobs
+(`SubCritZThreshold`, `SubmissionAttemptCritZ`), not one of the three damage
+channels, so it was left alone rather than swept in. Decide separately whether
+it should follow.
+
+**Note for 5.11e:** the 0.00% at the outclassed end is precisely what the crit
+floors are for. The two chunks interlock, and 5.11e was done in the same branch.
+
+### Chunk 5.11e — DONE 2026-08-12
+
+Two knobs, `MinAttackCritChance` and `MinDefenseCritChance`, both shipped at
+**0.01**, mirroring how 5.9 split `MinAttackHitChance` / `MinDefenseChance`.
+Like those, they validate on `< 0 || > 1.0`, so **0 is expressible and is the
+off switch** (unlike the 5.11g damage knobs, which default on `<= 0`).
+
+**Denominated in HITS, not swings.** An outclassed attacker hits ~15% of the
+time, so "1% of swings" would demand ~6.7% of their hits be crits, a *higher*
+per-hit rate than an even match gets at 2.3%. 1% of hits composes with the 5.9
+floors as independent last resorts, each sized to the failure it protects.
+
+**Ordering is the whole implementation.** `resolveDefenseOutcome` was split into
+a `resolveDefenseOutcomeCore` (unchanged logic, many early returns) plus a
+single trailing `applyCritFloors` call. That split exists because the core
+resolver treats an attack crit as *forcing a hit* — step 2 returns
+`res.hit = true` on `attackCrit` — so a floor evaluated anywhere inside it
+becomes an undeclared second hit floor stacked on `MinAttackHitChance`, leaking
+through `MinDefenseChance`. The margin itself is never floored: a 5.9 floor save
+already carries the `±1` sentinel and flooring it would corrupt every effect
+that scales by margin.
+
+**Applied to all three channels**, not melee only — the same lesson as 5.11g.
+Spell and taunt call `combat.AttackContestCrit`; the two defensive negation
+sites call `combat.DefenseContestCrit`. Both wrap `ContestCrit` with the
+matching floor, and every call site already sits after its `!success` branch has
+returned, which is what makes the floor safe there.
+
+**Guards, each pinned by a deterministic test at floor 1.0 rather than by
+sampling:** a miss is never promoted (and never becomes a hit); a fumble is
+never promoted in either direction (it is the attacker's blunder, not a
+defensive success); a promotion with no defence attempted (`defenseType == ""`)
+is refused, since that miss came from the 5.9 defence floor and there is no flag
+for `setDefenseCritFlags` to set; and a real crit is never demoted. Promotion
+sets the per-defence flags so downstream riposte / auto-trip / auto-bash wiring
+actually fires.
+
+`applyCritFloors` takes its floors as **parameters** rather than reading config,
+because a Go test binary never loads `_datafiles/config.yaml` — config-driven
+floors read 0 under test and every assertion would be vacuously true.
 
 ### Chunk 5.11f-2 — Reflect counterplay needs designing, not inheriting
 

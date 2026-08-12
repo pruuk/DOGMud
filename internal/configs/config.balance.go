@@ -21,6 +21,11 @@ type Balance struct {
 	BlockEffectiveness ConfigFloat `yaml:"BlockEffectiveness"` // Multiplier on block score before opposed roll (default 1.0)
 	MinDefenseChance   ConfigFloat `yaml:"MinDefenseChance"`   // Floor probability any defense succeeds (default 0.15)
 	MinAttackHitChance ConfigFloat `yaml:"MinAttackHitChance"` // Floor probability any attack hits (default 0.15)
+
+	// Crit floors (chunk 5.11e). Denominated in HITS, not swings, and applied
+	// only after the hit outcome is final. Set either to 0 to disable it.
+	MinAttackCritChance  ConfigFloat `yaml:"MinAttackCritChance"`  // Floor probability a landed hit is a crit (default 0.01)
+	MinDefenseCritChance ConfigFloat `yaml:"MinDefenseCritChance"` // Floor probability a successful defense is a defensive crit (default 0.01)
 	// Non-combat opposed contests (stealth, theft, traps, detection). Separate
 	// from the combat pair on purpose: a combat floor fires PER SWING and a
 	// fight has many swings, while a steal or a defuse is one attempt with a
@@ -196,6 +201,8 @@ type Balance struct {
 	SkillMultiplierBase               ConfigFloat `yaml:"SkillMultiplierBase"`               // Skill multiplier at rank 0 (default 1.0)
 	SkillMultiplierMax                ConfigFloat `yaml:"SkillMultiplierMax"`                // Skill multiplier at soft cap (default 3.0)
 	SkillWeight                       ConfigFloat `yaml:"SkillWeight"`                       // Global multiplier on skill contributions in additive formulas (default 2.0)
+	CritDamageBase                    ConfigFloat `yaml:"CritDamageBase"`                    // Crit damage multiplier at skill rank 0, applied on top of the mitigation bypass (default 2.0)
+	CritDamagePerSkill                ConfigFloat `yaml:"CritDamagePerSkill"`                // Added to the crit damage multiplier per rank of the attacking channel's skill (default 0.05)
 	MeleeDamageScale                  ConfigFloat `yaml:"MeleeDamageScale"`                  // Physical damage scale. Stats ~100, so 0.30 yields ~30 raw per swing (default 0.30)
 	SpellDamageScale                  ConfigFloat `yaml:"SpellDamageScale"`                  // Flat multiplier on spell damage output (default 1.0 = no change)
 	RhetoricDamageScale               ConfigFloat `yaml:"RhetoricDamageScale"`               // Flat multiplier on conviction/taunt damage output (default 1.0 = no change)

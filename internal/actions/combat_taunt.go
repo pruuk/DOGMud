@@ -33,7 +33,8 @@ type TauntResult struct {
 	// Hit reports whether the conviction attack landed.
 	Hit bool
 
-	// Crit reports whether the attack was a critical success (ZScore >= 2.0).
+	// Crit reports whether the attack was a critical success (normalized
+	// opposed-roll margin >= combat.ContestCritThreshold).
 	Crit bool
 
 	// Fumble reports whether the attack was a critical failure (ZScore <= -2.0).
@@ -125,7 +126,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 
 	// Opposed roll for hit/miss/fumble/crit classification.
 	floorHit, floorResist := combat.ManeuverFloors()
-	attackSuccess, _, atkRoll, _ := dice.OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)
+	attackSuccess, atkMargin, atkRoll, _ := dice.OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User
@@ -177,24 +178,21 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		// Apply smooth conviction-depletion damage penalty.
 		rawDmg *= convMult
 
-		isCrit := atkRoll.ZScore >= 2.0
+		// Crit derives from the normalized opposed-roll margin, so beating the
+		// target decisively is what lands a telling taunt. Fumbles deliberately
+		// stay on the self-relative z-score, matching the melee path (5.11d).
+		isCrit := combat.AttackContestCrit(atkMargin, atkRoll)
 
-		var dmg int
-		if isCrit {
-			// Crit: bypass mitigation entirely.
-			dmgRoll := dice.RollStat(rawDmg)
-			dmg = int(math.Round(dmgRoll.Value))
-		} else {
-			// Normal hit: apply target conviction mitigation.
-			mitigPct := target.Char.GetConvictionMitigation()
-			cap := combat.MitigationCap(combat.ChannelConviction)
-			dmgMean := combat.ApplyMitigation(rawDmg, mitigPct, cap)
-			dmgRoll := dice.RollStat(dmgMean)
-			dmg = int(math.Round(dmgRoll.Value))
-		}
-		if dmg < 1 {
-			dmg = 1
-		}
+		// Chunk 5.11g: a crit bypasses the target's conviction mitigation AND
+		// scales by the taunter's rhetoric rank. Before this, a crit against an
+		// unmitigated target dealt exactly a normal hit's damage.
+		dmg := combat.CritOrMitigatedDamage(
+			rawDmg,
+			int(attackerRhetoric),
+			isCrit,
+			target.Char.GetConvictionMitigation(),
+			combat.MitigationCap(combat.ChannelConviction),
+		)
 
 		// Stoic Resolve: defender attempts to partially resist
 		deflected := false

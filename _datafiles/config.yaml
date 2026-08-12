@@ -457,6 +457,26 @@ Balance:
   #   Range: 0.0–0.50. Set to 0 to disable.
   MinAttackHitChance: 0.15
   #
+  # MinAttackCritChance / MinDefenseCritChance (roadmap chunk 5.11e): the same
+  #   last-resort idea applied to CRITS, once 5.11d/g made crit derive from the
+  #   opposed-roll margin. A badly outclassed attacker's crit rate went to
+  #   literally zero under that derivation, because the margin can never reach
+  #   two sigma no matter how the dice fall.
+  #
+  #   Denominated in HITS, not swings, and that distinction is the whole design.
+  #   An outclassed attacker hits about 15% of the time, so "1% of swings" would
+  #   demand roughly 6.7% of their hits be crits, a HIGHER per-hit rate than an
+  #   even match gets at 2.3%. Incoherent. 1% of hits instead composes with the
+  #   two floors above as independent last resorts.
+  #
+  #   Applied only AFTER the hit outcome is final. A crit forces a hit, so a
+  #   floor evaluated any earlier becomes an undeclared second hit floor
+  #   stacked on MinAttackHitChance.
+  #
+  #   Range: 0.0-1.0. Set to 0 to disable either direction entirely.
+  MinAttackCritChance: 0.01
+  MinDefenseCritChance: 0.01
+  #
   # MinContestSuccessChance / MinContestResistChance: the same idea for opposed
   #   contests OUTSIDE combat -- sneaking, stealing, planting, spotting a hidden
   #   creature, defusing a trap. Until 2026-08-11 those had no floor at either
@@ -692,6 +712,27 @@ Balance:
   # GetCombatSkillLevel floors at 1). So it lifts players on offense AND defense
   # while handing mobs +3 points. Deliberate. See tools/balance/matrix.py.
   SkillWeight: 5.0
+  #
+  # Crit damage (roadmap chunk 5.11g). critMult = base + perSkill * skillRank,
+  # applied to a crit's pre-mitigation damage ON TOP of the mitigation bypass.
+  # Skill 1 = 2.05x, 25 = 3.25x, 50 = 4.50x, 69 = 5.45x, 100 = 7.00x.
+  #
+  # Before 5.11g a crit was ONLY a mitigation bypass, so its worth was set
+  # entirely by the defender's armor: 4x at the 75% cap, but exactly 1x (a
+  # normal hit) against an unarmored target. Skill governed how often you crit
+  # but not what a crit was worth.
+  #
+  # The curve is LINEAR, not the sqrt used by SkillMultiplier, and it does not
+  # clamp at the skill soft cap. Both are deliberate: a sqrt curve puts rank 25
+  # at ~75% of rank 69's value for 36% of the skill, which is the exact
+  # complaint chunk 5.7 opened with. Applies to all three channels (melee,
+  # spell, taunt), each using its own governing skill.
+  #
+  # NOTE: 0 is not expressible for either knob — both defaults are non-zero, so
+  # the loader treats 0 as absent and falls back. To disable skill scaling, set
+  # CritDamagePerSkill to a negligible value instead.
+  CritDamageBase: 2.0
+  CritDamagePerSkill: 0.05
   #
   # Mitigation caps: maximum % damage reduction from armor for each channel.
   # 0.75 = armor can block at most 75% of incoming damage in that channel.

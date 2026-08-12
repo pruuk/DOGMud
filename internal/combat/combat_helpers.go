@@ -69,6 +69,7 @@ type weaponSetup struct {
 type swingDamageParams struct {
 	dmgMean       float64
 	rawDmgForCrit float64
+	critDmgMult   float64 // chunk 5.11g: skill-scaled crit worth, applied to rawDmgForCrit only
 	critBuffs     []int
 	msgSeed       int
 }
@@ -395,6 +396,7 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 	return swingDamageParams{
 		dmgMean:       dmgMean,
 		rawDmgForCrit: rawDmgForCrit,
+		critDmgMult:   CritDamageMultiplier(combatSkillLevel),
 		msgSeed:       msgSeed,
 	}
 }
@@ -753,6 +755,21 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // result.AttackZScore now reports the roll that actually happened instead of the
 // bumped value.
 func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
+	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+
+	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
+	// res.hit, and nowhere earlier. The core resolver treats an attack crit as
+	// forcing a hit, so a floor evaluated inside it would become an undeclared
+	// second hit floor leaking through MinDefenseChance. See applyCritFloors.
+	applyCritFloors(&res, result, best, AttackCritFloor(), DefenseCritFloor())
+
+	return res
+}
+
+// resolveDefenseOutcomeCore is resolveDefenseOutcome without the crit floors.
+// Split out so the floors have exactly one application point despite the many
+// early returns below.
+func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
 	bal := configs.GetBalanceConfig()
 	fumbleThreshold := -2.0
 	defCritThreshold := 2.0
@@ -1065,9 +1082,15 @@ func calcHitDamage(result *AttackResult, isCrit bool, backstab bool, sdp swingDa
 		// and therefore must take their spread from that same mean. RollStat
 		// derives stdDev = mean * RollSpread internally, which is the only way
 		// to keep the two in step.
-		damageResult := dice.RollStat(sdp.rawDmgForCrit)
+		//
+		// Chunk 5.11g: the skill-scaled crit multiplier is applied to the MEAN,
+		// before the roll, for that same reason — scaling the rolled result
+		// instead would stretch the spread by the multiplier and leave crits
+		// wildly swingier at high skill.
+		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+		damageResult := dice.RollStat(critMean)
 		dmg := int(math.Round(math.Max(0, damageResult.Value)))
-		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
+		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "critMult", fmt.Sprintf("%.2f", sdp.critDmgMult), "critMean", fmt.Sprintf("%.1f", critMean), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
 		return dmg, false // consume backstab
 	}
 	// Normal hit: use mitigated damage
