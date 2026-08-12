@@ -70,7 +70,7 @@ Leaving floors at the call sites would mean six copies of that logic, which is t
 
 | File | Responsibility |
 |---|---|
-| `internal/contest/contest.go` (modify) | add `Success` to `Result`; add `RunWithFloors` |
+| `internal/contest/contest.go` (modify) | add `Success` and `Floored` to `Result`; add `RunWithFloors` |
 | `internal/contest/contest_test.go` (modify) | tests for both |
 | `internal/hooks/spell_resolution.go` (modify) | four attack sites call the core |
 | `internal/hooks/charm_spell.go` (modify) | `resolveCharmSpell` calls the core |
@@ -81,12 +81,16 @@ Leaving floors at the call sites would mean six copies of that logic, which is t
 
 1. `go test ./...` passes with **no existing test file modified**.
 2. `internal/contest` still imports only stdlib and `internal/dice`.
-3. `grep -c "OpposedRollStatWithFloors" internal/hooks/spell_resolution.go` returns `0`.
-4. `TryStoicResolve` is untouched (it is U3's).
+3. `grep -c "OpposedRollStatWithFloors"` returns `0` for BOTH
+   `internal/hooks/spell_resolution.go` and `internal/hooks/charm_spell.go`.
+4. `TryStoicResolve`'s **code** is untouched (it is U3's) — the only change to it
+   is a `TODO(U3)` comment added directly above it.
+5. `grep -rn "spellHitFloor()\|spellResistFloor()" internal/` shows those
+   accessors reaching no `dice.OpposedRoll*` caller.
 
 ---
 
-### Task 1: Add `Success` and `RunWithFloors` to the core
+### Task 1: Add `Success`, `Floored` and `RunWithFloors` to the core
 
 **Files:**
 - Modify: `internal/contest/contest.go`
@@ -133,7 +137,7 @@ func TestRunWithFloors_SuccessFloorRescuesAHopelessAttack(t *testing.T) {
 		}
 	}
 	rate := float64(wins) / samples
-	assert.InDelta(t, 0.15, rate, 0.02, "success floor should rescue ~15%% of hopeless attacks")
+	assert.InDelta(t, 0.15, rate, 0.02, "success floor should rescue ~15% of hopeless attacks")
 }
 
 // TestRunWithFloors_ResistFloorSavesADoomedDefender is the mirror.
@@ -146,7 +150,7 @@ func TestRunWithFloors_ResistFloorSavesADoomedDefender(t *testing.T) {
 		}
 	}
 	rate := float64(saves) / samples
-	assert.InDelta(t, 0.15, rate, 0.02, "resist floor should save ~15%% of doomed defences")
+	assert.InDelta(t, 0.15, rate, 0.02, "resist floor should save ~15% of doomed defences")
 }
 
 // TestRunWithFloors_StampsTheSentinelMargin is load-bearing. A floored outcome
