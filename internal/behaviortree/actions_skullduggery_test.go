@@ -131,7 +131,7 @@ func TestActTrySteal_SuccessWithAggroTarget(t *testing.T) {
 	succeeded := false
 	for i := 0; i < 30; i++ {
 		// Clear cooldown between attempts.
-		delete(mob.Character.Cooldowns, "skullduggery.steal")
+		delete(mob.Character.Cooldowns, "skullduggery:steal")
 		if r := actTrySteal(map[string]any{}, ctx); r == Success {
 			succeeded = true
 			break
