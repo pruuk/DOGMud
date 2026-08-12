@@ -42,9 +42,9 @@ Three problems:
    (`characters/resources.go`, `GetDefenseStaminaCost`). Only the multipliers are
    config. This is a live instance of the anti-pattern the resolution spec
    forbids, sitting in the code being rewritten.
-2. **Costs are derived from the wrong things.** Attack stamina comes from the
-   weapon spec as an authored number, so it does not track the weapon's actual
-   physical properties and every new weapon must remember to set it.
+2. **Attack stamina is authored per weapon.** It comes from the weapon spec, so
+   every new weapon must remember to set it and a forgotten field silently means
+   a free attack.
 3. **Whole channels are free.** Ranged costs nothing on either side; taunt and
    spell resistance cost nothing at all.
 
@@ -59,7 +59,9 @@ Three problems:
   *fyttyn vitality exploit, 2026-04-16*, which is why reserve exclusion is there.
   Mappings: Health → vitality, willpower. Stamina → strength, vitality.
   Conviction → willpower, charisma.
-- **`ItemSpec.Weight`**, `CarryCapacity()`, `GetCarriedWeight()` all exist.
+- **`CarryCapacity()` and `GetCarriedWeight()`** exist, so the encumbrance
+  modifier has everything it needs. (`ItemSpec.Weight` also exists but this
+  design deliberately does not read it — see 3.2.)
 - **`grappleEncumbranceMultiplier`** is a working precedent for the encumbrance
   scaling this design generalises.
 
@@ -70,29 +72,46 @@ Three problems:
 ### 3.1 Shape
 
 ```
-cost = baseCost(action)              # derived from physical properties
-     × encumbranceMultiplier(actor)  # heavier load costs more
-     × skillMultiplier(actor, skill) # small band, inverse to skill
+cost = baseCost(action)              # a flat config value per action
+     × encumbranceMultiplier(actor)  # physical actions only; heavier load costs more
+     × skillMultiplier(actor, skill) # narrow band, inverse to skill
      × configMultiplier(action)      # per-action tuning knob
 ```
 
-Costs are **derived, not authored**. A weapon's parry cost follows from its
-weight; nobody has to remember to set a number on each new item.
+Costs come from **config, not from item data**. Nobody has to remember to set a
+stamina number on each new weapon, and no authored item field silently becomes a
+balance lever.
 
-### 3.2 Base cost derivation
+### 3.2 Base costs
 
-| Action | Derived from |
-|---|---|
-| Melee attack | weapon weight |
-| Parry | **weapon weight** — a heavier blade is harder to interpose |
-| Block | **shield weight** |
-| Dodge | **encumbrance alone** — no item interposed, so what matters is what you carry |
-| Ranged attack | **weapon damage multiplier** — a heavier bow takes more effort to draw, a crossbow more to crank |
-| Grapple | already per-round, keep, route through this model |
-| Spell cast | existing authored CP cost, unchanged |
-| Spell resist (mental) | **CP, derived from the incoming spell's cost** — resisting a big working costs more than shrugging off a cantrip |
-| Taunt / rally / warcry | flat config base, then the standard multipliers |
-| Flee, sneak, and other non-harm contests | small base, encumbrance-scaled |
+**Per-item weight derivation was considered and rejected.** Deriving parry cost
+from weapon weight and block cost from shield weight is more realistic, but it
+turns every `ItemSpec.Weight` ever authored as flavour into a live balance
+number — a weapon someone typed `weight: 40` on becomes unusable — and it means
+auditing the whole weight distribution before shipping. The simplification is
+slightly unrealistic and not horribly so.
+
+**Base costs are flat config values.** Everything else is carried by the two
+modifiers.
+
+| Action | Base | Encumbrance | Inverse skill |
+|---|---|---|---|
+| Melee attack | config | yes | combat skill |
+| Parry | config | yes | weapon-combat |
+| Block | config | yes | weapon-combat |
+| Dodge | config | yes | unarmed-combat |
+| Ranged attack | config | yes | ranged-combat |
+| Grapple | existing per-round | yes (already) | unarmed-combat |
+| Spell cast | existing authored CP cost | no | spellcasting |
+| Spell resist (mental) | fraction of the incoming spell's cost | no | spellcasting |
+| Taunt / rally / warcry | config, CP | no | rhetoric |
+| Flee, sneak, other non-harm | config, small | yes | relevant skill |
+| **Movement** | existing terrain-scaled cost | yes (already) | **search** |
+
+Movement is included deliberately: it already scales by terrain and encumbrance,
+and adding the inverse-skill modifier keyed on **search** makes a practised
+traveller move more efficiently. Physical actions take the encumbrance modifier;
+purely mental ones (casting, resisting, taunting) do not.
 
 ### 3.3 The universal skill multiplier
 
@@ -100,45 +119,70 @@ weight; nobody has to remember to set a number on each new item.
 skill.** A practised fighter spends less stamina on the same parry.
 
 **The band must stay small.** A wide band means a new player is drained by their
-first exchange, which is exactly the failure mode to avoid. Proposed:
+first exchange, which is exactly the failure mode to avoid.
 
-| Skill rank | Cost multiplier |
+**Neutral is centred at rank 35, not at the soft cap.** A rank-35 character pays
+the base cost; below that they pay a penalty, above it they earn a discount.
+Rank 100 reaches 0.75 — deliberately generous, because reaching 100 in any skill
+takes an extremely long time and should feel like it bought something.
+
+Two `sqrt` segments joined at the centre, matching the curve idiom
+`SkillMultiplier` already uses:
+
+```
+r <= centre :  1.0 + (max - 1.0) * (1 - sqrt(r / centre))
+r >  centre :  1.0 - (1.0 - min) * sqrt((r - centre) / (top - centre))
+r >= top    :  min
+```
+
+| Rank | Multiplier |
 |---:|---:|
-| 0 | 1.25 |
-| 25 | 1.10 |
-| 50 (soft cap) | 1.00 |
-| 69 | 0.94 |
-| 100 | 0.85 |
+| 0 | 1.250 |
+| 10 | 1.116 |
+| 25 | 1.039 |
+| **35** | **1.000** |
+| 50 | 0.880 |
+| 69 (Meirok) | 0.819 |
+| 100 | 0.750 |
 
-Knobs `CostSkillMultiplierMax` (1.25) and `CostSkillMultiplierMin` (0.85),
-interpolated on the same `sqrt(rank/softCap)` curve `SkillMultiplier` already
-uses, so cost and damage share a curve shape.
+Knobs: `CostSkillMultiplierMax` 1.25, `CostSkillMultiplierMin` 0.75,
+`CostSkillNeutralRank` 35, `CostSkillFloorRank` 100. Clamped at `min` beyond
+`top`, so a hypothetical rank-150 character gains nothing further.
 
-**Confirm before implementing:** the exact band. It is deliberately narrow and
-the numbers above are a proposal, not a decision.
+### 3.4 Insufficient resource: the roll still happens, with no skill
 
-### 3.4 Insufficient resource means autofail
+**If the actor cannot pay, the action still resolves — but contributes NO skill
+to its roll.** Score becomes bare `stat × modifiers`, dropping the `skill × 5`
+term entirely.
 
-**If the actor cannot pay, the action automatically fails.** Not a reduced
-effect, not a partial roll — a failure.
+This was reconsidered during design. Outright autofail was the first proposal
+and is worse, because it removes the actor from the contest completely and so
+also removes them from the reach of the 5.9 contest floors. Under a skill-less
+roll an exhausted defender is punished hard — losing `skill × 5` is a swing of
+345 points for a rank-69 character — while the floors still guarantee they are
+never simply a free target. Punishing, not hopeless.
 
-This is load-bearing, not incidental. It makes resource reservation a genuine
-strategic cost: a player who reserves nearly all their CP for companions and
-enchantments has little left to resist a mental spell, and will simply fail to
-resist. That tension is the point.
+It stays load-bearing for resource strategy: a player who reserves nearly all
+their CP for companions and enchantments resists mental spells at raw Willpower
+with no spellcasting behind it, which against a real caster is close to hopeless
+without literally being so.
 
-Two consequences to implement deliberately:
+Rules:
 
 - **Availability is measured with reserve excluded**, consistently with
-  `OnRegenTick`. Use `GetPoolReservation` everywhere; do not read the raw pool.
-- **An autofailed defence still consumes the attempt.** It cannot be free, or
-  running dry becomes a way to dodge the cost of defending. It contributes no
-  defence roll to the best-of-N set.
-
-**Open:** whether an autofailed defence should still be *offered* to the
-best-of-N set as an automatic loss, or excluded from the set entirely. Excluding
-it means a defender out of stamina falls back to their remaining affordable
-defences, which reads better. Recorded as the intended behaviour; confirm.
+  `OnRegenTick`. Use `GetPoolReservation`; never read the raw pool.
+- **Charge only for the defence actually used** — the one that won the best-of-N.
+  Today's `runBestOfAllDefense` already does this
+  (`combat_helpers.go:657`, "Deduct stamina only for the winning defense"). It is
+  a preserve-don't-break requirement, not new work.
+- **An unaffordable defence is NOT skipped.** Today it is `continue`d out of the
+  loop entirely (`combat_helpers.go:567`). It must instead roll without its skill
+  term, so it stays in the best-of-N set.
+- **Never drive a pool negative.** Every deduction clamps at zero, in the one
+  shared helper, so this cannot be got wrong per-site. Several current sites do
+  `x.Pool -= n` with their own clamping, or none.
+- **Messaging must name the resource.** A player who fails because they were
+  exhausted needs to know that was why, not just see a failure.
 
 ---
 
@@ -209,14 +253,15 @@ Remaining work is small and specific:
 | `DodgeBaseStaminaCost` | replaces the hardcoded 2 |
 | `ParryBaseStaminaCost` | replaces the hardcoded 4 |
 | `BlockBaseStaminaCost` | replaces the hardcoded 5 |
-| `AttackCostPerWeaponWeight` | weight → stamina conversion for attack and parry |
-| `BlockCostPerShieldWeight` | weight → stamina for block |
-| `RangedCostPerDamageMultiplier` | draw effort scaling |
+| `AttackBaseStaminaCost` | replaces the per-weapon authored cost |
+| `RangedBaseStaminaCost` | ranged currently costs nothing |
 | `SpellResistCostFraction` | fraction of the incoming spell's cost paid to resist |
 | `TauntBaseConvictionCost` | flat base for taunt / rally / warcry |
 | `NonHarmContestBaseCost` | flee, sneak and similar |
-| `CostSkillMultiplierMax` / `CostSkillMultiplierMin` | the narrow inverse-skill band |
+| `CostSkillMultiplierMax` / `CostSkillMultiplierMin` | 1.25 / 0.75 |
+| `CostSkillNeutralRank` / `CostSkillFloorRank` | 35 / 100 |
 | `CostEncumbranceMultiplierMax` | ceiling on the encumbrance penalty |
+| `CostTotalMultiplierMax` | clamp on the PRODUCT of all modifiers |
 
 **Existing, reused:** `DodgeMultiplier`, `ParryMultiplier`, `BlockMultiplier`,
 `SpellConvictionCostMultiplier`, `SpellHealthCostMultiplier`,
@@ -241,9 +286,14 @@ Remaining work is small and specific:
 5. **Cost multipliers compound.** Encumbrance × skill × per-action config can
    stack into an unaffordable cost for a heavily-laden novice, which silently
    becomes autofail-everything. Clamp the product, not just each factor.
-6. **`ItemSpec.Weight` is authored per item** and has never fed combat. Sanity
-   check the existing distribution before making costs proportional to it — a
-   weapon authored at weight 40 as flavour would become unusable.
+6. **A skill-less roll is not a small penalty.** Dropping the skill term costs a
+   rank-69 character 345 points of score. Verify against the 5.9 floors that an
+   exhausted defender still lands within the floor band rather than falling so
+   far behind that the floor is the only thing they ever get.
+
+7. **Movement cost now depends on `search`.** A skill nobody trains for movement
+   suddenly affects travel cost. Check the live distribution of `search` ranks
+   before shipping so this does not silently tax every low-search character.
 
 ---
 
@@ -252,9 +302,9 @@ Remaining work is small and specific:
 - **Spell cast costs may need rebalancing** given how much CP is reserved for
   companions and enchantments. Explicitly out of scope here; likely its own chunk
   once the cost model is in and measurable.
-- The exact inverse-skill band (section 3.3).
-- Whether an unaffordable defence is excluded from the best-of-N set or included
-  as an automatic loss (section 3.4).
+Both previously-open items are now decided: the inverse-skill band is centred at
+rank 35 running 1.25 to 0.75 (section 3.3), and an unaffordable action rolls
+without its skill term rather than autofailing (section 3.4).
 
 ---
 
@@ -264,11 +314,12 @@ Remaining work is small and specific:
    `x.Pool -= n` directly.
 2. No balance number hardcoded in `internal/` — including the 2 / 4 / 5 that
    exist there today.
-3. Costs are derived from physical properties, so a new weapon needs no authored
-   stamina cost.
+3. No new weapon needs an authored stamina cost; base costs are config values
+   modified by encumbrance and skill.
 4. Ranged, taunt, and defending against spells and taunts all cost something.
-5. Insufficient resource autofails, measured with reserve excluded, with
-   player-legible messaging saying why.
+5. Insufficient resource drops the skill term from the roll rather than
+   autofailing, measured with reserve excluded, with player-legible messaging
+   saying why. No pool can be driven negative from any path.
 6. Depletion progression still fires, still excludes reserve, and now covers mobs.
 7. `context.md` updated in the same PR for every package touched, per the
    resolution spec's criterion 7.
