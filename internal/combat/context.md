@@ -140,7 +140,9 @@ outclassed defenders have a 15% chance to avoid any swing.
 - Defense costs configured in `config.gameplay.yaml`
 
 **Implementation:**
-- `runBestOfAllDefense()` in `combat_helpers.go` rolls every defense
+- `runBestOfAllDefense()` in `combat_helpers.go` builds each defense's score and
+  delegates the rolling and selection to `internal/contest.Run` (U1). It no
+  longer rolls anything itself.
 - `resolveDefenseOutcome()` processes the best result and floor saves
 - Two floors: `MinDefenseChance` (defender saves when attack wins) AND
   `MinAttackHitChance` (attacker hits when defense wins)
@@ -949,6 +951,10 @@ Used in spell UX to communicate challenge without exposing numeric difficulty
 values directly.
 
 ### 8. File Map After Refactor (Stage 37.1a+)
+
+> **Historical.** This table records the Stage 37.1a refactor and is not
+> maintained. The canonical file list is the `## Files` table further down; when
+> the two disagree, that one is right.
 
 | File | Contents |
 |------|----------|
