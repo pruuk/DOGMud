@@ -24,6 +24,10 @@ import (
 
 // pinFloors installs a config with all four contest-floor knobs set to the
 // given values, for the duration of the calling test.
+//
+// Callers must NOT use t.Parallel(): this replaces the package-global config,
+// so two parallel tests would fight over it and each would see the other's
+// floors.
 func pinFloors(t *testing.T, maneuverHit, maneuverResist, spellHit, spellResist float64) {
 	t.Helper()
 	c := configs.GetConfig()
@@ -36,18 +40,30 @@ func pinFloors(t *testing.T, maneuverHit, maneuverResist, spellHit, spellResist 
 
 func TestRunWithManeuverFloors_DelegatesToCore(t *testing.T) {
 	// Both maneuver floors pinned to 0 on purpose. config.yaml ships
-	// MinManeuverResistChance: 0.05, so if anyone later adds a config-loading
-	// TestMain to this package, an unpinned version of this test would flip to
-	// Success=false carrying the -1 sentinel margin about one run in twenty.
+	// MinManeuverResistChance: 0.05. This package's TestMain (hitroll_test.go)
+	// does not load config today, so the knob happens to be 0 anyway -- but if
+	// it ever starts loading config, an unpinned version of this test would flip
+	// to Success=false carrying the -1 sentinel margin about one run in twenty.
+	// Pinning makes the test independent of that decision.
 	pinFloors(t, 0, 0, 0, 0)
 
-	res := RunWithManeuverFloors(10000, 1)
+	// Attacker 0.5 against defender -10000. The attack score is deliberately
+	// BELOW dice.StdDevFor's `mean < 1.0` floor, so stdDev pins to 1.0 instead
+	// of scaling with the score: the margin is Normal(10000.5, 1.41), thousands
+	// of sigma clear of zero.
+	//
+	// Merely raising the attack score would NOT achieve that. contest.Run rolls
+	// BOTH sides at StdDevFor(atkScore), so the spread grows with the score and
+	// the margin's z converges to 1/(0.15*sqrt(2)) = 4.71 however large it gets
+	// -- a ~1.2e-6 flake, not a certainty. Dropping under the floor is what
+	// decouples spread from score.
+	res := RunWithManeuverFloors(0.5, -10000)
 
 	if !res.Contested {
 		t.Errorf("Contested = false, want true (one entry was supplied)")
 	}
 	if !res.Success {
-		t.Errorf("Success = false, want true (attacker score 10000 vs 1, floors pinned to 0)")
+		t.Errorf("Success = false, want true (attacker 0.5 vs -10000, floors pinned to 0)")
 	}
 	if res.Margin <= 0 {
 		t.Errorf("Margin = %v, want > 0 -- the core is ATTACK-POSITIVE", res.Margin)
@@ -63,16 +79,18 @@ func TestRunWithManeuverFloors_DelegatesToCore(t *testing.T) {
 
 func TestRunWithSpellFloors_DelegatesToCore(t *testing.T) {
 	// Mirror of the maneuver case; the spell pair is pinned to 0 for the same
-	// reason (config.yaml ships MinSpellResistChance: 0.05).
+	// reason (config.yaml ships MinSpellResistChance: 0.05), and the scores are
+	// chosen the same way -- see the comment there for why the attack score is
+	// below dice.StdDevFor's `mean < 1.0` floor rather than merely large.
 	pinFloors(t, 0, 0, 0, 0)
 
-	res := RunWithSpellFloors(10000, 1)
+	res := RunWithSpellFloors(0.5, -10000)
 
 	if !res.Contested {
 		t.Errorf("Contested = false, want true (one entry was supplied)")
 	}
 	if !res.Success {
-		t.Errorf("Success = false, want true (attacker score 10000 vs 1, floors pinned to 0)")
+		t.Errorf("Success = false, want true (attacker 0.5 vs -10000, floors pinned to 0)")
 	}
 	if res.Margin <= 0 {
 		t.Errorf("Margin = %v, want > 0 -- the core is ATTACK-POSITIVE", res.Margin)

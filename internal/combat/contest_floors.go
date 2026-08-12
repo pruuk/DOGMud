@@ -32,11 +32,25 @@ func SpellFloors() (hit, resist float64) {
 // RunWithManeuverFloors contests attackScore against a single defenseScore using
 // the MANEUVER floor pair.
 //
-// It exists so the floor pair is fetched in exactly ONE place. Before it, nine
-// call sites each wrote the same two lines, and two of those reached the same
-// config keys through a private duplicate accessor inside internal/hooks -- which
-// is precisely how an earlier sweep missed Position_GrappleTick entirely. One
-// accessor, one grep, no site can drift.
+// It exists so that once U3's migration lands, the maneuver pair is fetched in
+// one obvious place rather than at each reader. At this SHA it is read at TEN
+// places: eight call combat.ManeuverFloors() directly (avoidance.go's
+// TryStoicResolve, flee.go twice, grapple.go, skill_moves.go, submission.go,
+// usercommands/throw.go, actions/combat_taunt.go), and two more --
+// Position_GrappleTick.go and NewRound_MobRoundTick.go -- reach the SAME config
+// keys through a private duplicate accessor, maneuverHitFloor/maneuverResistFloor,
+// declared in internal/hooks/spell_resolution.go.
+//
+// Those last two are exactly the sites a grep for ManeuverFloors does NOT
+// return, which is how an earlier sweep missed Position_GrappleTick entirely.
+// Note they are not a subset of the eight; they are additional to them.
+//
+// This wrapper migrates nothing by itself -- every one of those ten readers
+// still fetches inline at this SHA. The collapse it enables is also partial by
+// design: ManeuverFloors stays exported, and a caller needing a best-of-N
+// defence must still hand-roll contest.RunWithFloors because this takes a
+// single defenseScore. The goal is one obvious path for the common case, not a
+// guarantee that no site can drift.
 //
 // NAMED FOR THE FLOOR PAIR, NOT A CHANNEL, DELIBERATELY. The callers do not
 // share a damage channel: TryStoicResolve is the CONVICTION channel and still
@@ -61,9 +75,17 @@ func RunWithManeuverFloors(attackScore, defenseScore float64) contest.Result {
 // RunWithSpellFloors contests attackScore against a single defenseScore using the
 // SPELL floor pair.
 //
-// It exists for the same reason as RunWithManeuverFloors: the floor pair is
-// fetched in exactly ONE place, rather than at nine sites, two of which read the
-// same config keys through a private duplicate accessor in internal/hooks.
+// It exists for the same reason as RunWithManeuverFloors, but on the spell
+// pair's OWN numbers -- do not carry the maneuver figures or the
+// Position_GrappleTick cautionary tale across, as those describe maneuver
+// sites. At this SHA the spell floors are read at SIX places: one through
+// combat.SpellFloors (avoidance.go's TrySpellDeflection) and five more through
+// the private spellHitFloor/spellResistFloor duplicate in internal/hooks
+// (charm_spell.go, plus four sites in spell_resolution.go).
+//
+// As with its sibling, nothing is migrated here and the collapse is partial:
+// SpellFloors stays exported, and best-of-N callers still hand-roll
+// contest.RunWithFloors because this takes a single defenseScore.
 //
 // NAMED FOR THE FLOOR PAIR, NOT A CHANNEL, DELIBERATELY. Its callers are the
 // ones that resolve against a SPELL rather than against a maneuver -- and the
