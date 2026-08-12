@@ -27,8 +27,8 @@ import (
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -266,24 +266,28 @@ func processGrapplePair(controller, controlled *characters.Character) {
 	ctrlScore := grappleScore(controller, isAggressorSide(controller), cfg)
 	cdScore := grappleScore(controlled, isAggressorSide(controlled), cfg)
 
-	floorHit, floorResist := maneuverHitFloor(), maneuverResistFloor()
-	_, margin, atkRoll, defRoll := dice.OpposedRollStatWithFloors(ctrlScore, cdScore, floorHit, floorResist)
+	res := combat.RunWithManeuverFloors(ctrlScore, cdScore)
 
 	// LastDriftRoll snapshot for chunk-4d Position_SubmissionTick.
 	currentRound := util.GetRoundCount()
 	snap := characters.DriftRollSnapshot{
 		Round:          currentRound,
-		MarginAttacker: margin,
-		AttackerZScore: atkRoll.ZScore,
-		DefenderZScore: defRoll.ZScore,
+		MarginAttacker: res.Margin,
+		AttackerZScore: res.AttackRoll.ZScore,
+		DefenderZScore: res.DefenseRoll.ZScore,
 	}
 	controller.LastDriftRoll = snap
 	controlled.LastDriftRoll = snap
 
 	// Compute signed z used by ResolveOutcome.
+	//
+	// NOTE(U6): normalised by stdDev alone, without the sqrt(2) that
+	// ContestCrit applies. Both sides roll with the attacker's stdDev, so their
+	// difference has stdDev*sqrt(2). Preserved as-is here because U3 is a
+	// provable no-op; U6 owns the correction.
 	z := 0.0
-	if atkRoll.StdDev > 0 {
-		z = margin / atkRoll.StdDev
+	if res.AttackRoll.StdDev > 0 {
+		z = res.Margin / res.AttackRoll.StdDev
 	}
 
 	source := controller.Position.State()

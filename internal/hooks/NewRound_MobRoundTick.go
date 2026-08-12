@@ -10,9 +10,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/bountyhunter"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -394,10 +394,9 @@ func tickMobCharmState(mob *mobs.Mob) {
 						}
 						attackScore *= effectiveness
 
-						floorHit, floorResist := maneuverHitFloor(), maneuverResistFloor()
-						success, _, _, _ := dice.OpposedRollStatWithFloors(attackScore, defenseScore, floorHit, floorResist)
+						res := combat.RunWithManeuverFloors(attackScore, defenseScore)
 
-						if success {
+						if res.Success {
 							newDuration := 50 + owner.Character.Stats.Charisma.ValueAdj/2 +
 								manifestSkill*3
 							comp.CharmDuration = newDuration
