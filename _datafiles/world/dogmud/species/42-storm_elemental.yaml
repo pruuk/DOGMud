@@ -12,6 +12,7 @@ selectable: false
 tameable: false
 grapple_immune: true
 return_damage: 15
+return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation
 angrycommands:
   - emote spins faster, lightning crackling along its outer edge.
   - emote unleashes a deafening peal of thunder from its core.

@@ -14,6 +14,7 @@ natural_attack: slam
 selectable: false
 tameable: false
 return_damage: 25
+return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation
 angrycommands:
   - emote flares suddenly brighter, crackling with furious heat.
   - emote streams toward you like a wave of burning wind.

@@ -359,14 +359,32 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 		res.DamageToTarget += bonusDmg
 	}
 
-	// Return damage (species + equipment).
-	returnPct := defChar.StatMod("return_damage")
+	// Return damage (species + equipment + mutation).
+	//
+	// Chunk 5.11f: this used to be a single unmitigated percentage subtracted
+	// straight from the attacker's health. It is now split by channel and run
+	// through the ATTACKER's matching mitigation, because they are the one
+	// taking it. Elemental species reflect heat and storm, which magical
+	// mitigation answers; thorns enchantments and the Ironhide carapace are
+	// physical, which is also the default so existing content needs no change.
+	//
+	// Why it mattered: reflect is proportional to damage DEALT, so raising hit
+	// rates multiplied it one-for-one, and nothing the attacker wore reduced it.
+	speciesPct, speciesChannel := 0, combat.ReflectPhysical
 	if sp := species.GetSpecies(defChar.SpeciesId); sp != nil {
-		returnPct += sp.ReturnDamage
+		speciesPct = sp.ReturnDamage
+		speciesChannel = combat.ParseReflectChannel(sp.ReturnDamageChannel)
 	}
-	returnPct += int(mutations.GetReflectDamage(defChar.Mutations)) // Ironhide Reflect Skin
-	if returnPct > 0 {
-		returnDmg := int(float64(res.DamageToTarget) * float64(returnPct) / 100.0)
+	physReturnPct, magReturnPct := combat.SplitReflectPercents(
+		defChar.StatMod("return_damage"),
+		int(mutations.GetReflectDamage(defChar.Mutations)), // Ironhide Reflect Skin
+		speciesPct, speciesChannel)
+	if physReturnPct > 0 || magReturnPct > 0 {
+		dealt := float64(res.DamageToTarget)
+		returnDmg := combat.ReflectDamage(dealt, physReturnPct,
+			atkChar.GetPhysicalMitigation(), combat.MitigationCap(combat.ChannelPhysical))
+		returnDmg += combat.ReflectDamage(dealt, magReturnPct,
+			atkChar.GetMagicalMitigation(), combat.MitigationCap(combat.ChannelMagical))
 		if returnDmg > 0 {
 			atkChar.Health -= returnDmg
 			emitReturnDamageText(atk, def, returnDmg)

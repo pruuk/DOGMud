@@ -12,6 +12,7 @@ selectable: false
 tameable: false
 grapple_immune: true
 return_damage: 20
+return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation
 angrycommands:
   - emote dissolves into a thicker plume, embers wheeling in
     aggressive spirals.
