@@ -193,22 +193,35 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 		for _, buff := range triggeredBuffs {
 			if buff.TickAmount != 0 {
 				if mobBuffSpec := buffs.GetBuffSpec(buff.BuffId); mobBuffSpec != nil {
+					// buff.TickAmount is SIGNED: buffs.ComputeTickAmount returns a
+					// negative value for TickPercent < 0, so this is a
+					// damage-over-time delivery path as well as a regen one.
+					// Routing it to ApplyRestore alone would silently delete every
+					// DoT buff, because ApplyRestore no-ops on non-positive input.
+					// Hence the sign split; ApplyHarm takes a POSITIVE amount, so
+					// negate.
+					//
+					// DoT buffs carry no applier, so the harm source is anonymous
+					// (state.ActorRef{}). See ApplyHarm's docstring.
+					tickAmt := buff.TickAmount
 					switch mobBuffSpec.TickPool {
 					case "health":
-						mob.Character.Heal(buff.TickAmount)
+						if tickAmt > 0 {
+							mob.Character.ApplyRestore(characters.PoolHealth, tickAmt)
+						} else if tickAmt < 0 {
+							mob.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+						}
 					case "stamina":
-						mob.Character.Stamina += buff.TickAmount
-						if mob.Character.Stamina > mob.Character.StaminaMax.Value {
-							mob.Character.Stamina = mob.Character.StaminaMax.Value
-						} else if mob.Character.Stamina < 0 {
-							mob.Character.Stamina = 0
+						if tickAmt > 0 {
+							mob.Character.ApplyRestore(characters.PoolStamina, tickAmt)
+						} else if tickAmt < 0 {
+							mob.Character.ApplyHarm(characters.PoolStamina, -tickAmt, state.ActorRef{})
 						}
 					case "conviction":
-						mob.Character.Conviction += buff.TickAmount
-						if mob.Character.Conviction > mob.Character.ConvictionMax.Value {
-							mob.Character.Conviction = mob.Character.ConvictionMax.Value
-						} else if mob.Character.Conviction < 0 {
-							mob.Character.Conviction = 0
+						if tickAmt > 0 {
+							mob.Character.ApplyRestore(characters.PoolConviction, tickAmt)
+						} else if tickAmt < 0 {
+							mob.Character.ApplyHarm(characters.PoolConviction, -tickAmt, state.ActorRef{})
 						}
 					}
 				}

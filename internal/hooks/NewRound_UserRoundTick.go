@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
@@ -204,22 +205,34 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								tickAmt = buffs.ComputeTickAmount(maxPool, trigBuffSpec.TickPercent, trigBuffSpec.TickVariance, trigBuffSpec.TickMin, 1.0)
 								user.Character.Buffs.SetTickAmount(buff.BuffId, tickAmt)
 							}
+							// tickAmt is SIGNED: buffs.ComputeTickAmount returns a
+							// negative value for TickPercent < 0, so this is a
+							// damage-over-time delivery path as well as a regen one.
+							// Routing it to ApplyRestore alone would silently delete
+							// every DoT buff, because ApplyRestore no-ops on
+							// non-positive input. Hence the sign split; ApplyHarm
+							// takes a POSITIVE amount, so negate.
+							//
+							// DoT buffs carry no applier, so the harm source is
+							// anonymous (state.ActorRef{}). See ApplyHarm's docstring.
 							switch trigBuffSpec.TickPool {
 							case "health":
-								user.Character.Heal(tickAmt)
+								if tickAmt > 0 {
+									user.Character.ApplyRestore(characters.PoolHealth, tickAmt)
+								} else if tickAmt < 0 {
+									user.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+								}
 							case "stamina":
-								user.Character.Stamina += tickAmt
-								if user.Character.Stamina > user.Character.StaminaMax.Value {
-									user.Character.Stamina = user.Character.StaminaMax.Value
-								} else if user.Character.Stamina < 0 {
-									user.Character.Stamina = 0
+								if tickAmt > 0 {
+									user.Character.ApplyRestore(characters.PoolStamina, tickAmt)
+								} else if tickAmt < 0 {
+									user.Character.ApplyHarm(characters.PoolStamina, -tickAmt, state.ActorRef{})
 								}
 							case "conviction":
-								user.Character.Conviction += tickAmt
-								if user.Character.Conviction > user.Character.ConvictionMax.Value {
-									user.Character.Conviction = user.Character.ConvictionMax.Value
-								} else if user.Character.Conviction < 0 {
-									user.Character.Conviction = 0
+								if tickAmt > 0 {
+									user.Character.ApplyRestore(characters.PoolConviction, tickAmt)
+								} else if tickAmt < 0 {
+									user.Character.ApplyHarm(characters.PoolConviction, -tickAmt, state.ActorRef{})
 								}
 							}
 						}
