@@ -78,9 +78,10 @@ var poolWriteExemptions = map[string]string{
 	// resources.go holds the two deprecated helpers U5b-1 could NOT route,
 	// documented in the plan's prose but missing from its exemption map:
 	//
-	//   - DeductDefenseStamina is full-or-refuse and becomes ApplyCostPartial in
-	//     U5b-2. That flips defence from "cannot afford, so no defence" to "pay
-	//     what you have", which is a live combat change.
+	//   - DeductDefenseStamina was full-or-refuse; U5b-2 replaced its call site
+	//     with ApplyCostPartial and deleted the function. That flips defence
+	//     from "cannot afford, so no defence" to "pay what you have", which is
+	//     a live combat change.
 	//   - Heal is a HARM path: buffs.ComputeTickAmount returns a negative value
 	//     for TickPercent < 0, and ApplyRestore no-ops on non-positive input, so
 	//     wrapping Heal over it would silently delete every health
@@ -89,7 +90,7 @@ var poolWriteExemptions = map[string]string{
 	//
 	// This is a FILE exemption on the file where both follow-ups land. Delete it
 	// once both functions are gone rather than letting it outlive them.
-	"internal/characters/resources.go": "U5b-2 routes DeductDefenseStamina; U5c retires Heal",
+	"internal/characters/resources.go": "U5c retires Heal; its two writes are all that remain here",
 	// The seven retained health floors. U5b-1 routed the writes themselves onto
 	// ApplyHarm but kept the floor at each site, marked NOTE(U5b-2). Removing
 	// them is observable -- GMCP ships Character.Health raw and the prompt

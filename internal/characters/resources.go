@@ -132,19 +132,6 @@ func (c *Character) GetDefenseStaminaCost(defenseType string) int {
 	return cost
 }
 
-// DeductDefenseStamina deducts stamina for a defense and returns true if successful (Stage 7.1)
-//
-// Deprecated: use ApplyCostPartial -- defence charges what it can. U5b routes
-// the remaining callers.
-func (c *Character) DeductDefenseStamina(defenseType string) bool {
-	cost := c.GetDefenseStaminaCost(defenseType)
-	if c.Stamina >= cost {
-		c.Stamina -= cost
-		return true
-	}
-	return false
-}
-
 // ApplyHealthChange applies a SIGNED health delta and returns the applied
 // delta. It is not a legacy path: it survives U5b because it owns a side effect
 // the primitives deliberately do not have.

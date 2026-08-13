@@ -660,9 +660,16 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		best.margin = math.Inf(-1)
 	}
 
-	// Deduct stamina only for the winning defense
+	// Charge stamina only for the winning defence.
+	//
+	// U5b-2: partial, not full-or-refuse. With the affordability gate above
+	// removed, an exhausted defender can now win the contest, so this call must
+	// be able to charge what little is there rather than declining and leaving
+	// the defence free. U8 reads CostResult.Short to strip the skill term from
+	// the defence score; this chunk discards it.
 	if best.defenseType != "" {
-		targetChar.DeductDefenseStamina(best.defenseType)
+		_ = targetChar.ApplyCostPartial(characters.PoolStamina,
+			targetChar.GetDefenseStaminaCost(best.defenseType))
 	}
 
 	return best
