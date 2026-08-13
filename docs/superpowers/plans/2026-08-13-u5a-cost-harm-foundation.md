@@ -57,35 +57,84 @@ Verified in `internal/characters/resources.go`:
 | `DeductDefenseStamina(type) bool` | **Refuses.** Returns false, mutates nothing. |
 | `DeductAttackStamina() int` | **Pays what it can.** Zeroes the pool, returns the amount taken. |
 
-**User decision, 2026-08-13, in two parts. The second part is the important one.**
+**User decision, 2026-08-13, arrived at over three messages. The final shape
+inverts the default, so read this rather than the intermediate versions.**
 
-**Volitional costs REFUSE.** Attacking, casting, moving, standing, mutation
-moves: you chose to act, so if you cannot pay, the action does not happen and no
-resource is taken. `DeductAttackStamina`'s partial-spend is therefore not a
-semantic to preserve; it is a defect in the same family as the unguarded mob cast
-CP debit and the discarded `DeductDefenseStamina` bool.
+**THE RULE: an exhausted actor still acts. It just loses the skill term.**
+Combat actions -- auto-attacks, defensive avoidance (dodge / parry / block /
+spell-resist) and grapple -- **always fire**, charge **the maximum the actor can
+pay**, and take their punishment as the **loss of the skill contribution to that
+action's side of the calculation**.
 
-**Involuntary defensive avoidance is the deliberate exception.** Dodge, parry,
-block and spell-resist **always fire**, charge **the maximum the actor can pay**,
-and take their punishment as the **loss of the skill term** from the roll.
+The reasoning is a design constraint learned the hard way, not a preference:
 
-This is not an inconsistency, it is the whole point. You do not choose to be
-attacked. A defence that simply "does not happen" makes an exhausted character a
-free target and, worse, removes them from the contest entirely, which also
-removes them from the reach of the 5.9 contest floors. Charging what they have
-and stripping the skill bonus is punishing without being hopeless. The spec
-reached the same conclusion independently in §3.4, which is about defence.
+> **Death from exhaustion was tried in this game and players hated it.** An
+> actor at 0 stamina who cannot attack "may as well just be dead". Lying there
+> only defending is realistic and actively anti-fun.
+
+An exhausted fighter still swings. They will rarely hit -- losing `skill x 5` is
+a swing of hundreds of points -- but they are still in the fight, and the 5.9/5.10
+contest floors still guarantee a puncher's chance. **Refusal removes them from
+the contest entirely, which also removes them from the reach of those floors.**
+That is the mechanical reason the rule is what it is, and it applies just as much
+to attacking as to defending. Spec section 3.4 reached the same conclusion for
+defence; the user extended it to attacks and grapple.
+
+**Refusal survives only as the narrow exception**, for discrete opt-in abilities
+where declining is not disabling: the player still has their auto-attack, so
+nothing is taken away from them by a refusal.
 
 So there are two cost primitives, and **which one a site uses is determined by
 the kind of action, never by caller convenience**:
 
-| Primitive | For | On insufficient resource |
-|---|---|---|
-| `ApplyCost(pool, amount) bool` | every volitional action | **refuses**, takes nothing, returns false |
-| `ApplyCostPartial(pool, amount) int` | defensive avoidance ONLY | charges what is there, returns the actual amount |
+| Primitive | On insufficient resource |
+|---|---|
+| `ApplyCostPartial(pool, amount) int` | charges what is there, returns the actual amount, action **fires with no skill term** |
+| `ApplyCost(pool, amount) bool` | **refuses**, takes nothing, returns false |
 
-Floor rule 1 splits to match: a volitional cost either pays in full or takes
-nothing; a defensive cost may drain a pool to exactly 0 but never below.
+**The assignment, decided by the user 2026-08-13. This table is the authority;
+route U5b sites from it, do not re-derive it from the principle.**
+
+| Action | Primitive | Why |
+|---|---|---|
+| Auto-attack | **Partial** | Refusing is the exhaustion-death failure |
+| Dodge / parry / block / spell-resist | **Partial** | You do not choose to be attacked |
+| Grapple **upkeep** (per round, once engaged) | **Partial** | Involuntary once you are in it |
+| **Flee** | **Partial** | Movement, but being unable to escape is the free-target problem again |
+| Movement (`go`) | **Refuse** | Stamina regenerates; a brief wait, not a lock |
+| Stand up from prone | **Refuse** | As above |
+| Taunt / rally / warcry | **Refuse** | Cooldown channel |
+| Special moves (bash / kick / trip / gore / ...) | **Refuse** | Cooldown channel |
+| Grapple actions the player **inputs** | **Refuse** | Cooldown channel |
+| Spellcasting | **Refuse** | Cooldown channel |
+
+**The organising rule is the cooldown channel, not volition.** Anything that
+consumes a cooldown refuses, because firing it with no skill term *and* burning
+the cooldown is a trap: the actor loses the ability for several rounds and got
+nothing for it. Refusal there costs them nothing they cannot retry shortly, and
+their auto-attack is still available. Everything continuous or involuntary --
+being swung at, already being in a grapple, trying to get away -- fires with the
+penalty instead.
+
+Note this **resolves the grapple-upkeep question** the earlier draft left open:
+inputted grapple actions refuse; the per-round upkeep charges partially. So an
+exhausted grappler keeps holding on at no skill rather than the grapple silently
+becoming free.
+
+> **Flag for U5b, worth one look before it ships.** Refusing `stand` interacts
+> with prone: a prone character takes `ProneVulnerabilityMultiplier` and the
+> prone dodge/parry/block penalties, so an exhausted prone character in combat
+> cannot get up *and* is being hit harder while their stamina regenerates. That
+> may be an acceptable pressure, or it may be a death spiral. It is a real
+> interaction rather than a hypothetical, so measure it rather than assuming.
+
+Floor rule 1 splits to match: a refusing cost pays in full or takes nothing; a
+partial cost may drain a pool to exactly 0 but never below.
+
+`DeductAttackStamina`'s existing pay-what-you-can behaviour turns out to be
+**right for the wrong reason** -- it charges what it can, but nothing downstream
+strips the skill term, so an exhausted attacker currently swings at full skill
+for free. U5b routes it; U8 adds the penalty.
 
 **What happens to the ACTION is a separate question that U5a does not answer.**
 Dropping the skill term is chunk U8 (spec §3.4). U5a supplies the primitives;
