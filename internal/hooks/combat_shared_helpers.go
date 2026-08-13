@@ -564,7 +564,18 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 	foldDelta := simulateFoldRound(cs)
 	roundCost := calcFoldConvictionCost(cs, foldDelta)
 
-	if roundCost > 0 && char.Conviction < roundCost {
+	// Upkeep REFUSES when unaffordable: the cast collapses. ApplyCost pays in
+	// full or takes nothing, so a broken concentration never also drains the
+	// pool. The roundCost > 0 guard is now redundant -- ApplyCost treats a
+	// non-positive amount as free and succeeds -- but it is kept so a zero-cost
+	// fold cannot be read as a refusal path.
+	//
+	// Categorisation note: the refuse column's usual rationale ("the actor keeps
+	// every other action") does NOT hold here. handlePlayerFoldCasting returns
+	// true on every branch, so a caster who cannot pay loses the conviction
+	// already sunk into prior folds, the spell, AND their round. That shape is
+	// inherited, not introduced here; filed for U7/U8.
+	if roundCost > 0 && !char.ApplyCost(characters.PoolConviction, roundCost) {
 		clearCastingActivity(char, activity.TriggerConcentrationBreak)
 		return FoldRoundResult{
 			InsufficientConviction: true,
@@ -575,8 +586,8 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 		}
 	}
 
-	// Deduct conviction and advance folds via the Activity machine.
-	char.Conviction -= roundCost
+	// Conviction was charged by the ApplyCost above. Advance folds via the
+	// Activity machine.
 	updatedCs, complete := char.Activity.AdvanceCastingFolds(foldDelta, roundCost)
 	if complete {
 		clearCastingActivity(char, activity.TriggerCastComplete)
