@@ -59,9 +59,11 @@ func CalcConcentrationChance(willpower, damagePct int) int {
 	return chance
 }
 
-// CalcSpellAttack returns the float64 mean used as the spell attack roll's mean
-// in dice.OpposedRoll. Higher willpower and spellcasting level increase spell offense.
-// Formula: float64(willpower + spellcastingLevel * SpellAttackSkillFactor)
+// CalcSpellAttack returns the attacker score for a spell contest: the mean the
+// contest core rolls the caster's side against. Since U2 that core is reached
+// through combat.RunWithSpellFloors, not through dice.OpposedRoll* directly.
+// Higher willpower and spellcasting level increase spell offense.
+// Formula: willpower + round(spellcastingLevel * SkillWeight) * SpellAttackSkillFactor
 func CalcSpellAttack(willpower, spellcastingLevel int) float64 {
 	b := configs.GetBalanceConfig()
 	factor := int(b.SpellAttackSkillFactor)

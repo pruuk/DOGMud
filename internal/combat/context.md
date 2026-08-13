@@ -467,9 +467,95 @@ behavior tree conditions `target_power_ratio_above` and
 `target_power_ratio_below`, behavior tree action
 `target_weakest_mob_in_room`.
 
+## Contest core (chunks U1 to U3)
+
+Every floored opposed roll in this package, in `internal/actions`, in
+`internal/hooks` and in `internal/usercommands` now resolves through
+`internal/contest`. Callers do not reach that package directly: they go
+through the two thin wrappers in `contest_floors.go`, which fetch the
+right floor pair and hand it to `contest.RunWithFloors`.
+
+### Public API
+
+```go
+// contest_floors.go: the floor pairs themselves.
+func ManeuverFloors() (hit, resist float64)
+func SpellFloors()    (hit, resist float64)
+
+// contest_floors.go: the wrappers callers should use. Each contests one
+// attack score against one defence score and returns a contest.Result.
+func RunWithManeuverFloors(attackScore, defenseScore float64) contest.Result
+func RunWithSpellFloors(attackScore, defenseScore float64) contest.Result
+
+// margin_crit.go / crit_floor.go: crit derived from the contest margin.
+const ContestCritThreshold = 2.0
+func ContestCrit(margin float64, roll dice.RollResult) bool
+func AttackContestCrit(margin float64, roll dice.RollResult) bool
+func DefenseContestCrit(margin float64, roll dice.RollResult) bool
+```
+
+Which pair to use is a statement about **the cost of a single failure**,
+not about a damage channel. `RunWithSpellFloors` serves everything that
+resolves against a spell (including `TrySpellDeflection`);
+`RunWithManeuverFloors` serves everything else, including
+`TryStoicResolve`, which is the conviction channel. Both wrappers pass a
+single unnamed entry, so `Result.Winner` is always `""`. Ask
+`Result.Contested`, never `Result.Winner`, to find out whether a contest
+happened.
+
+Melee is the exception by design: `runBestOfAllDefense` calls
+`contest.Run` (unfloored, best-of-N) and applies `MinDefenseChance` /
+`MinAttackHitChance` afterwards in `resolveDefenseOutcomeCore`. The two
+floor styles are reconciled in U6.
+
+Callers today: `ExecuteSkillMove`, `AttemptGrapple`,
+`RollSubmissionAttempt`, `TryStoicResolve`, `TrySpellDeflection`,
+`actions.ExecuteTaunt`, `usercommands.Throw`,
+`hooks.processGrapplePair` (grapple drift), `hooks.tickMobCharmState`
+(charm reroll), and the spell sites in `hooks/spell_resolution.go` +
+`hooks/charm_spell.go`. The only `dice.OpposedRollStatWithFloors`
+callers left in the codebase are the two in `flee.go`, which U4 owns.
+
+### Gotchas
+
+- **Read `contest.Result.Margin`. Never a `dice.RollResult`'s
+  `.Margin`.** The core rolls each side with `dice.Roll`, which does not
+  populate `RollResult.Margin`, so `res.AttackRoll.Margin` and
+  `res.DefenseRoll.Margin` are always zero. Reading one compiles, passes
+  every test, and silently disables crits on that path. This nearly
+  shipped in U2 on spell deflection.
+- **`Result.Margin` is ATTACK-positive.** Pass it **unnegated** for an
+  attacker's crit check (`actions/combat_taunt.go`, the spell sites in
+  `internal/hooks`); pass **`-res.Margin`** for a defender's
+  (`TryStoicResolve`, `TrySpellDeflection`). Mixing the conventions
+  compiles cleanly and puts the crit on the losing side. Note that
+  `bestDefenseResult.margin` uses the OPPOSITE convention
+  (defence-positive) because `runBestOfAllDefense` flips it once at the
+  seam, which is why `normalizedAttackMargin` negates and `ContestCrit`
+  must not.
+- **A floored outcome carries a sentinel margin of `+1` / `-1`**, not the
+  real one, and `Result.Floored` records it. The sentinel normalises to a
+  near-zero z, which is the only reason a hit handed out by the floor
+  cannot also crit. Do not "restore" the real margin.
+- **`SkillMoveParams.AttackSkill` and `.DefenseSkill` are RAW skill
+  levels with NO `SkillWeight` applied.** `ExecuteSkillMove` adds them
+  straight to the stats (`AttackSkill + AttackStat` vs `DefenseSkill +
+  DefenseStat`), so every one of its callers runs at an effective
+  weight of ×1 on both sides. That is deliberate today and is NOT what
+  the arc's flip table assumes, which is why U6's "uniform ×5" needs a
+  modelling gate before it lands (see the roadmap).
+- **`DefenseStat: 0` is a real pattern, not an oversight.**
+  `actions/combat_fire.go` (ranged) folds the defender's whole defence
+  (Dexterity, combat skill, and a flat shield bonus when an offhand with
+  a block rating is worn) into a single scalar via `rangedDefenseScore`
+  and passes it as `DefenseSkill`, leaving `DefenseStat` zero. Anything
+  that reweights `DefenseSkill` reweights the defender's Dexterity and
+  the shield bonus along with it.
+
 ## Dependencies
 
 - `internal/characters` - Character stats, equipment, and abilities
+- `internal/contest` - The shared contest core (rolling + best-of-N selection)
 - `internal/items` - Weapon specifications and combat messaging
 - `internal/users` - Player character management and state
 - `internal/mobs` - NPC character management and AI integration
@@ -749,8 +835,11 @@ For each defense in [dodge, parry, block]:
   3. Multiply by effectiveness (DodgeEffectiveness, ParryEffectiveness,
      BlockEffectiveness from config).
   4. Multiply by prone penalties if applicable.
-  5. Opposed roll: dice.OpposedRollStat(attackScore, defenseScore)
-  6. margin = defenseRoll.Value - hitRoll.Value
+  5. Hand the scores to internal/contest.Run: ONE attack roll contested by
+     every defence entry. runBestOfAllDefense no longer rolls anything (U1).
+  6. The core returns an ATTACK-positive margin; runBestOfAllDefense flips it
+     once at the seam so bestDefenseResult.margin stays DEFENCE-positive
+     (margin = defenseRoll.Value - hitRoll.Value).
   7. Keep the defense with the HIGHEST margin.
 ```
 
@@ -1110,8 +1199,14 @@ defenderScore = recipient.Strength
               + recipient.UnarmedCombatSkill × SubSkillWeight
 ```
 
-Both sides roll via `dice.OpposedRollStat`. The attacker's z-score
+Both sides are rolled by the shared contest core: `RollSubmissionAttempt`
+calls `RunWithManeuverFloors(atkScore, defScore)` (U3), so the maneuver
+floor pair applies here like everywhere else. The attacker's z-score
 determines the tier (see below).
+
+Note the skill weight: the sub roll multiplies unarmed combat by
+`SubSkillWeight` (1.5) on **both** sides. That is its own regime, shared
+with nothing else. See "Contest core (chunks U1 to U3)" above.
 
 ### Tier classification
 
@@ -1239,7 +1334,8 @@ can add parallel snapshot checks at the same start-of-round site.
 | `crit_floor.go` | Crit floors, 1% of HITS both directions (5.11e). **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes a second hit floor leaking through `MinDefenseChance`. |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
-| `avoidance.go` | Best-of-all defence resolution (dodge / parry / block) |
+| `contest_floors.go` | The two floor pairs (`ManeuverFloors` / `SpellFloors`) and the `RunWithManeuverFloors` / `RunWithSpellFloors` wrappers over `internal/contest`. **Fetch a floor pair here, not at the call site.** |
+| `avoidance.go` | `TrySpellDeflection` and `TryStoicResolve`, the two defender-side avoidance rolls for the magical and conviction channels. Best-of-all melee defence lives in `combat_helpers.go`, not here. U6 absorbs both of these into the defence multiplier. |
 | `attackresult.go` | The result value passed back to callers |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |

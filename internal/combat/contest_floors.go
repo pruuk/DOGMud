@@ -42,16 +42,19 @@ func SpellFloors() (hit, resist float64) {
 // the MANEUVER floor pair.
 //
 // It exists so that the maneuver pair is fetched in one obvious place rather
-// than at each reader. U3 migrated every maneuver site onto it except the two
-// in flee.go, which a later chunk owns; those still call ManeuverFloors()
-// directly.
+// than at each reader, and after U3 that is the standing claim: the maneuver
+// floors are read HERE and nowhere else, with flee.go the single remaining
+// exception that a later chunk owns. Deliberately stated as a rule and not as a
+// site count, because a count that is right today is the next stale comment.
 //
 // Two of the migrated sites -- Position_GrappleTick.go and
 // NewRound_MobRoundTick.go -- used to reach the SAME config keys through a
 // private duplicate accessor, maneuverHitFloor/maneuverResistFloor, declared in
 // internal/hooks/spell_resolution.go. They were therefore invisible to a grep
 // for ManeuverFloors, which is how an earlier sweep missed Position_GrappleTick
-// entirely. U3 deleted that duplicate pair; do not reintroduce one.
+// entirely. U3 deleted that duplicate pair, and internal/hooks now has no floor
+// accessors of its own and does not import internal/contest at all; it reaches
+// the core only through this package. Do not reintroduce a duplicate.
 //
 // The collapse is partial by design: ManeuverFloors stays exported, and a
 // caller needing a best-of-N defence must still hand-roll contest.RunWithFloors
@@ -83,10 +86,15 @@ func RunWithManeuverFloors(attackScore, defenseScore float64) contest.Result {
 //
 // It exists for the same reason as RunWithManeuverFloors, but on the spell
 // pair's OWN numbers -- do not carry the maneuver figures across, as those
-// describe maneuver sites. U3 migrated all six spell-floor readers onto it:
-// avoidance.go's TrySpellDeflection, plus the five in internal/hooks
-// (charm_spell.go and four sites in spell_resolution.go) that previously went
-// through a private spellHitFloor/spellResistFloor duplicate, now deleted.
+// describe maneuver sites. The standing claim is the same shape: after U3 the
+// spell floors are read HERE and nowhere else. Again a rule rather than a site
+// count, so it stays true as sites come and go.
+//
+// The readers are avoidance.go's TrySpellDeflection plus internal/hooks
+// (charm_spell.go and spell_resolution.go), which previously reached the SAME
+// config keys through a private spellHitFloor/spellResistFloor duplicate. U3
+// deleted that duplicate, and internal/hooks now has no floor accessors of its
+// own and does not import internal/contest at all. Do not reintroduce one.
 //
 // As with its sibling the collapse is partial: SpellFloors stays exported, and
 // best-of-N callers still hand-roll contest.RunWithFloors because this takes a

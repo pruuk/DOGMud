@@ -30,7 +30,7 @@ Measured from source on 2026-08-12. Nobody decided this; it accreted.
 | Channel | Attacker score | Defender score | Skill weight on defence | Resource cost |
 |---|---|---|---|---|
 | Melee | `Dex + skill×5` | best-of-3 dodge/parry/block, each `stat + skill×5` | **×5** | stamina, both sides |
-| Ranged | `Perception + skill×5` | `Dex + skill×1` + flat shield bonus | **×1** | **none, either side** |
+| Ranged | `Perception + skill×1` | `Dex + skill×1` + flat shield bonus | **×1** | **none, either side** |
 | Spell | `Wil + skill×5×3` | **raw stat, no skill term** | **×0** | CP, attacker only |
 | Taunt | `Cha + rhetoric×5` | `Wil + rhetoric×5` | **×5** | none |
 
@@ -43,6 +43,19 @@ Two compounding accidents:
   taking caster skill to **×15**. 5.11b's modelling was melee-focused.
 - Ranged folds its whole defence into one scalar and passes `DefenseStat: 0`,
   so the shield contribution is a flat number rather than a modifier.
+
+> **Correction, 2026-08-12 (U3).** The ranged ATTACK row read `Perception +
+> skill×5` when this spec was written. It is **×1**: `actions/combat_fire.go`
+> passes `AttackSkill: rangedRank` raw into `combat.ExecuteSkillMove`, which
+> adds skill to stat with no weight applied. Ranged is ×1 on both sides.
+>
+> More generally, this four-row table is not the whole picture. The special-move
+> family (`ExecuteSkillMove`'s 14 callers, `AttemptGrapple`,
+> `RollSubmissionAttempt`, grapple drift) carries **five** further weight
+> regimes, from ×1 up to ×2.2. Section 3.1's "uniform 5.0" therefore moves far
+> more than four channels. See the new pre-U6 modelling gate, "the special-move
+> family's skill weight", in
+> [`UNIFIED_RESOLUTION_ROADMAP.md`](../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md).
 
 Consequence, measured: a spellcasting-30 caster crits a stat-matched defender
 **96.7%** of the time, because caster skill is tripled and defender skill is
@@ -89,6 +102,12 @@ Both sides: `stat + skill×SkillWeight`, then multiplied by situational
 modifiers. **`SkillWeight` is uniform at 5.0 for every channel.** This removes
 `SpellAttackSkillFactor` from the attack path and adds a skill term to spell
 defence.
+
+> **Gated, 2026-08-12 (U3).** "Uniform 5.0" is a bigger move than the §1.1 table
+> shows: the special-move family runs at ×1, ×1.5 and ×2.2 today, so U6 lifts 14
+> maneuver sites from ×1 to ×5 on both sides at once. That is unmodelled. See
+> the pre-U6 gate in
+> [`UNIFIED_RESOLUTION_ROADMAP.md`](../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md).
 
 Modifiers are **multipliers near 1.0**, not flat addends. This follows the
 existing combat convention (`ProneAttackMultiplier`,

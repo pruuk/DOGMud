@@ -33,7 +33,7 @@ paths. Existing tests must pass unchanged at every step.
 
 | Parameter | During migration | At the flip (U6) |
 |---|---|---|
-| `skillWeight` | per-channel 5 / 1 / 0 / 15 | uniform 5.0, **parameter deleted** |
+| `skillWeight` | per-channel 5 / 1 / 0 / 15 (**incomplete: the special-move family adds five more regimes, see the pre-U6 gate**) | uniform 5.0, **parameter deleted** |
 | `defenceOutcome` | `boolean` — a win is a clean miss | `multiplier` — margin-scaled 50–100% |
 | `defenceSet` | per-channel as today | designed sets 3 / 2 / 2 / 1 / 1 |
 
@@ -69,33 +69,64 @@ grepped one file. Adversarial review caught it, and a second sweep then found
 more sites owned by **no chunk's stated scope**. Recording them here so they are
 assigned deliberately rather than rediscovered at U10's audit.
 
-The maneuver-floor family. `combat.ManeuverFloors()` has eight callers; the
-hooks package reaches the same config pair through its own
-`maneuverHitFloor()`/`maneuverResistFloor()` accessors, so those count too:
+The maneuver-floor family. When this table was written `combat.ManeuverFloors()`
+had eight callers, and the hooks package reached the same config pair through
+its own `maneuverHitFloor()`/`maneuverResistFloor()` accessors, so those counted
+too. **U3 claimed and shipped every unowned row below**, and deleted the hooks
+accessors; `internal/hooks` no longer reads the floors and no longer imports
+`internal/contest`.
 
-| Site | Claimed by |
-|---|---|
-| `actions/combat_taunt.go:128` | U3 (taunt) |
-| `usercommands/throw.go:153` | U3 (ranged) |
-| `combat/avoidance.go:80` (`TryStoicResolve`) | U3 (conviction defence) |
-| `combat/flee.go:84`, `:107` | U4 (flee) |
-| **`combat/grapple.go:79`** | **UNOWNED** |
-| **`combat/submission.go:79`** | **UNOWNED** |
-| **`combat/skill_moves.go:61`** (bash / kick / trip) | **UNOWNED** |
-| **`hooks/Position_GrappleTick.go:270`** (via `maneuverHitFloor()`) | **UNOWNED** |
-| `hooks/NewRound_MobRoundTick.go:398` (charm-duration reroll, same accessors) | unclaimed; belongs with U3's maneuver work |
+| Site | Claimed by | State |
+|---|---|---|
+| `actions/combat_taunt.go` (`ExecuteTaunt`) | U3 (taunt) | **shipped in U3** |
+| `usercommands/throw.go` (`Throw`) | U3 (ranged) | **shipped in U3** |
+| `combat/avoidance.go` (`TryStoicResolve`) | U3 (conviction defence) | **shipped in U3** |
+| `combat/avoidance.go` (`TrySpellDeflection`) | U3, on the SPELL pair | **shipped in U3** |
+| `combat/flee.go:85`, `:108` | U4 (flee) | still on `dice.OpposedRollStatWithFloors` |
+| `combat/grapple.go` (`AttemptGrapple`) | was UNOWNED, **claimed by U3** | **shipped in U3** |
+| `combat/submission.go` (`RollSubmissionAttempt`) | was UNOWNED, **claimed by U3** | **shipped in U3** |
+| `combat/skill_moves.go` (`ExecuteSkillMove`, 14 callers) | was UNOWNED, **claimed by U3** | **shipped in U3** |
+| `hooks/Position_GrappleTick.go` (`processGrapplePair`) | was UNOWNED, **claimed by U3** | **shipped in U3** |
+| `hooks/NewRound_MobRoundTick.go` (`tickMobCharmState`, charm-duration reroll) | was unclaimed, **claimed by U3** | **shipped in U3** |
 
-Five of those are claimed, four are not.
+After U3 the only `dice.OpposedRollStatWithFloors` callers left anywhere are the
+two in `combat/flee.go`, which U4 owns. Line numbers are deliberately gone from
+this table: they drifted within one chunk of being written.
 
-**`skill_moves.go` is the awkward one.** `ExecuteSkillMove` is shared between
-ranged (`combat_fire.go` folds its defence into a scalar and calls it) and
-melee's bash/kick/trip. So U3 "migrating ranged" either touches a function that
-also drives melee special moves, or forks ranged out of it. Decide that when
-writing U3 rather than discovering it mid-implementation.
+**`skill_moves.go` was the awkward one.** `ExecuteSkillMove` is shared between
+ranged (`actions/combat_fire.go` folds its defence into a scalar and calls it)
+and melee's bash/kick/trip. **Resolved in U3 by migrating the shared function
+rather than forking ranged out of it**: one call site, all 14 callers, no
+duplicate resolution path. The cost of that choice is that the ranged/melee
+skill-weight question is now a property of one function; see the new pre-U6
+modelling gate below.
 
 Also only implicitly covered: `actions/shadow.go`,
 `usercommands/skill.skullduggery.shadow.go`, and the hidden-detection checks in
-`usercommands/go.go` — plausibly part of U4's "sneak", but not named. Name them.
+`usercommands/go.go`, plausibly part of U4's "sneak", but not named. **Now
+named: they are listed explicitly in U4's row in the Plans table.**
+
+### Newly-found unowned uncertain outcomes (2026-08-12, U3 task 6)
+
+The sweep above searched for the floor accessors, so it saw only sites that
+already knew they were contests. Searching for the *concepts* instead found
+three more that no chunk claims:
+
+| Site | What | Assigned to |
+|---|---|---|
+| `actions/combat_throttle.go:126` | Cast interrupt is a flat `util.Rand(100) < ThrottleInterruptChance` hanging off a maneuver. It bypasses concentration entirely, so U9's "concentration becomes a contest" does **not** reach it, so a master caster's spellcasting still counts for nothing here after U9 unless this is claimed. | **U9** |
+| `actions/surprise_attack.go:222-225` | Hand-rolled per-weapon hit resolution: `util.Rand(100) < penaltyPct` per swing, which never contests the defender at all. Fits none of the sweep's categories A to D (it is opposed in intent, flat-percentage in implementation, and has no defender term). | **U4** |
+| `hooks/Position_GrappleTick.go` z-normalisation | `z = res.Margin / res.AttackRoll.StdDev`, missing the `sqrt(2)` that `combat.ContestCrit` applies. Both sides roll with the attacker's stdDev, so the difference has `stdDev*sqrt(2)`; dividing by `stdDev` alone inflates every drift z by about 41%. Left as-is by U3 so the chunk stays a provable no-op, with a `NOTE(U6)` at the site. | **U6** |
+
+**Also for U4: the floor guard does not see the new core.** The recurrence guard
+`contest_floor_guard_test.go` (repo root, `package main`) walks the AST for
+calls to `dice.OpposedRollStatRaw` and `dice.OpposedRoll` only. `contest.Run`
+and `contest.AgainstDifficulty` are exported, unfloored, and completely
+invisible to it, so a new caller can opt out of the floors through the very
+package this arc built. U4 is the chunk that migrates the remaining unfloored
+sites, so extending the guard's function list (and its exemption for
+`internal/combat`, which floors melee afterwards in `resolveDefenseOutcomeCore`)
+belongs there.
 
 **Moved out of B by decision:** knockdown and prone recovery become opposed rolls
 against the opponent's stat + unarmed-combat (both currently roll against a flat
@@ -110,8 +141,8 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U0** | **Delete the spell-initiation gate.** Ships independently, before or beside U1. | S | — | **Yes** (pure win) |
 | **U1** | Contest core, bug-compatible. Generalise `runBestOfAllDefense`; **support contest-vs-static-difficulty, not only actor-vs-actor**; normalise the margin sign at the seam; melee migrated onto it. | L | — | **No** |
 | **U2** | Spell channel onto the core (**6** sites — review found `resolveCharmSpell` too), preserving ×15 attack / ×0 defence as parameters. | M | U1 | **No** |
-| **U3** | Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. **Must also claim the unowned `ManeuverFloors()` sites — see Ownership gaps.** | M | U1 | **No** |
-| **U4** | Non-harm contests onto the core: sneak, steal, plant, defuse, flee (contest + progression layers only, no harm layer). | M | U1 | **No** |
+| **U3** | ✅ **DONE.** Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. Also claimed and shipped every unowned `ManeuverFloors()` site, plus `TrySpellDeflection` on the spell pair, and deleted the four private floor accessors in `internal/hooks`. | M | U1 | **No** |
+| **U4** | Non-harm contests onto the core: sneak, steal, plant, defuse, flee (contest + progression layers only, no harm layer). **Named explicitly:** `combat/flee.go:85`, `:108` (the last `dice.OpposedRollStatWithFloors` callers left); `actions/shadow.go`; `usercommands/skill.skullduggery.shadow.go`; the hidden-detection checks in `usercommands/go.go`; `actions/surprise_attack.go:222-225`. **Also extend `contest_floor_guard_test.go` to see `contest.Run` / `contest.AgainstDifficulty`.** | M | U1 | **No** |
 | **U5** | Cost + harm helpers. One cost helper, one harm helper. Config-ify the hardcoded 2/4/5 defence costs. No pool may go negative. | M | U1 | **No** (costs unchanged, only routed) |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource; inverse-skill cost band. | M | U5, U6 | **Yes** |
@@ -192,6 +223,32 @@ to opposed rolls against the opponent's stat + unarmed-combat. Removes
 `SpellInitiationWillpowerDivisor`.
 
 ### Modelling gates, before the plan they guard
+
+- **Before U6: the special-move family's skill weight. NEW, added by U3.**
+  The flip table above says `skillWeight` goes from "per-channel 5 / 1 / 0 / 15"
+  to "uniform 5.0". That table describes melee, ranged, spell and taunt. It does
+  not describe most of what U3 migrated. `grep -rn "SkillWeight"
+  internal/actions/ internal/combat/` returns **zero** hits in any of
+  `ExecuteSkillMove`'s 14 callers: the function adds `AttackSkill` and
+  `DefenseSkill` to the stats raw. Measured from source, 2026-08-12:
+
+  | Site | Attack weight | Defence weight |
+  |---|---|---|
+  | `ExecuteSkillMove` (bash / kick / trip / gore / hamstring / maul / pounce / rake / throttle / drain ×2, riposte-trip, auto-bash) | ×1 | ×1 |
+  | `ExecuteFire` (ranged) | ×1 | ×1 + flat shield bonus, folded into one scalar with `DefenseStat: 0` |
+  | `AttemptGrapple` | ×1 | ×1 |
+  | `RollSubmissionAttempt` | ×`SubSkillWeight` (1.5) | ×1.5 |
+  | `processGrapplePair` (grapple drift) | ×2.2 aggressor / ×2.0 defender | same |
+  | `usercommands.Throw` (AoE grenade) | ×`SkillWeight` (5) on skullduggery | ×2.5 on perception (`SkillWeight × 0.5`) |
+  | taunt / `TryStoicResolve` | ×5 | ×5 |
+
+  **Six distinct regimes among the sites U3 alone migrated, not one.** U6's
+  stated action is "uniform ×5, parameter deleted". Applied naively that moves
+  14 sites from ×1 to ×5 on both sides at once. Against mobs, which all carry
+  combat skill 1, a weapon-combat-30 player's bash goes from `130 vs 101` to
+  `250 vs 105`. Nobody has modelled that, because it is not in the table the
+  modelling was done against. **Model it before U6. Do not fix it in U3:** U3 is
+  a provable no-op by contract, and a weight change is a behaviour change.
 
 - **Before U6** — counterattack frequency. A defensive crit both negates damage
   *and* fires riposte / auto-trip / auto-bash, and its rate is now margin-driven:

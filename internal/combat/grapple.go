@@ -15,6 +15,10 @@ type GrappleResult struct {
 	IsGroundGrapple bool // true when the new grapple position is a ground grapple (SideControl)
 	AttackScore     float64
 	DefenseScore    float64
+	// AttackRoll / DefenseRoll are the rolled VALUES, not the rolls
+	// themselves. The contest core hands back whole dice.RollResults, so a
+	// writer stores res.AttackRoll.Value here, and the z-scores it also needs
+	// are carried separately in the two fields below.
 	AttackRoll      float64
 	DefenseRoll     float64
 	PositionPenalty float64 // For defender if prone
@@ -77,8 +81,6 @@ func AttemptGrapple(attacker *characters.Character, defender *characters.Charact
 	// Opposed roll
 	res := RunWithManeuverFloors(result.AttackScore, result.DefenseScore)
 
-	// NOTE: GrappleResult.AttackRoll / .DefenseRoll are float64 VALUES, while
-	// contest.Result carries whole dice.RollResults -- take .Value, not the roll.
 	result.Success = res.Success
 	result.Margin = res.Margin
 	result.AttackRoll = res.AttackRoll.Value
