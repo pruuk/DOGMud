@@ -93,13 +93,14 @@ var poolWriteExemptions = map[string]string{
 	"internal/characters/resources.go": "U5c retires Heal; its two writes are all that remain here",
 
 	// DELIBERATELY ABSENT, though the U5b-1 plan listed both as U5b-2 exemptions:
-	// internal/combat/combat_helpers.go and internal/usercommands/flee.go. Both
-	// are U5b-2 sites, but neither WRITES a pool -- combat_helpers.go:562 is the
-	// read `targetChar.Stamina < cost` and flee.go:41 calls DeductStamina. An
-	// exemption neither of them needs would blind this guard on two files for
-	// nothing, and combat_helpers.go is the single file in the hottest package
-	// this guard most needs to watch. Do not add them back when U5b-2 lands:
-	// routing them means calling a primitive, which needs no exemption at all.
+	// internal/combat/combat_helpers.go and internal/usercommands/flee.go.
+	// Neither ever WROTE a pool: combat_helpers.go held the read
+	// `targetChar.Stamina < cost` (U5b-2 deleted that gate outright) and flee.go
+	// called DeductStamina (U5b-2 deleted that helper and routed the site onto
+	// ApplyCostPartial). An exemption neither of them needs would blind this
+	// guard on two files for nothing, and combat_helpers.go is the single file
+	// in the hottest package this guard most needs to watch. Both now call
+	// primitives, which need no exemption at all -- do not add them back.
 }
 
 // poolWriteRoots are the trees this guard walks. modules/ never mutated a pool

@@ -543,8 +543,13 @@ func filterDefensesForThirdParty(result *AttackResult, sourceChar *characters.Ch
 //
 // Chunk U1: the rolling and selecting now live in internal/contest. Everything
 // this function still does is melee-specific and deliberately stayed here —
-// building each defence's score, tracking attempts for stance, checking
-// affordability, and spending stamina on the winner.
+// building each defence's score, tracking attempts for stance, and charging
+// the winner.
+//
+// Chunk U5b-2 removed the affordability check that used to sit alongside those.
+// Every defence in defSeq now enters the contest regardless of the defender's
+// stamina, and only the winner is charged, partially. See the comment at the
+// top of the entry loop for why.
 func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character, defSeq []string, atkScore float64, isThirdParty bool, ctx combatContext) bestDefenseResult {
 	bal := configs.GetBalanceConfig()
 
