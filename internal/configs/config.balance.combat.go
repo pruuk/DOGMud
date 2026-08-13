@@ -88,6 +88,9 @@ func (b *Balance) validateCombat() {
 	if b.FlightFleeStaminaMult <= 0 {
 		b.FlightFleeStaminaMult = 0.5
 	}
+	if b.FleeStaminaCost <= 0 {
+		b.FleeStaminaCost = 10
+	}
 
 	// ── RANGED ───────────────────────────────────────────────────────────────
 	if b.RangedShotScale <= 0 {
