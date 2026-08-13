@@ -1,0 +1,55 @@
+# U5b-2 targeted adversarial playtest: exhaustion, unfloored health, and the
+# mob cast guard. Local runs require `ephemeral:`.
+#
+# READ THIS FIRST, TESTER: exhaustion currently costs a DEFENDER nothing. The
+# skill-term penalty lands in U8. If an out-of-breath character defends just as
+# well as a rested one, that is the expected temporary state, not a bug. Report
+# how it FEELS, but do not treat it as a defect and do not tune against it.
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    Fresh character required: the exhaustion and prone paths must be exercised
+    on a real progression-appropriate character rather than a seeded veteran,
+    whose larger pools would hide the low-stamina band entirely.
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Fight to exhaustion. Take a real fight long enough that your stamina
+    reaches zero and keep fighting. Defences must still fire. Read every
+    combat line: does the defence text name the right thing (block, parry,
+    dodge) rather than always saying dodge? Does anything read as though
+    you defended for free in a way that feels wrong?
+  - >-
+    Prone recovery and flee. Get knocked down at low stamina. You should
+    stand back up on your own within a few rounds without spending
+    anything. Confirm that. Then at zero stamina confirm flee ALWAYS
+    works and never refuses. Note whether the fleeing character arrives
+    in the next room still prone, and whether that reads as a bug.
+  - >-
+    Grenade self-fumble. Throw an explosive repeatedly at low health until
+    one backfires onto you. The moment it does, read the prompt, the status
+    sheet, and any client health bar. None of them may show a negative
+    number or a missing or wrong health colour.
+  - >-
+    Kill mobs with poison, with bleed, and with a thrown explosive. Watch
+    the enemy health readout in the web client for the round in which each
+    dies. It must never show a negative number.
+  - >-
+    Drain a spellcasting creature's conviction over a long fight. It must
+    stop casting cleanly, must never narrate a spell it cannot cast, and
+    must not lock itself out of its other special moves afterwards. Note
+    whether caster mobs seem to cast MORE often than you remember.
+  - >-
+    Player caster runs dry mid-spell. Begin a multi-fold spell with barely
+    enough conviction and let it run out. Read what happens to the spell,
+    to the conviction already spent, and to your round.
+  - >-
+    Mutation special move at low stamina. Attempt one you cannot afford.
+    It must refuse with a clear message AND must not consume the shared
+    special-move cooldown. Immediately try a different special move to
+    confirm the slot is still free.
+  - >-
+    General adversarial pass: anything that reads wrong, renders oddly, or
+    contradicts its own help text is a finding.
