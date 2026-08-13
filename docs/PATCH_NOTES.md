@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-08-13: More quiet work behind the curtain
+
+The game now has one shared way of spending your effort and your resolve, and
+one shared way of taking a wound or recovering from one. Nothing yet uses it,
+and nothing you can see has changed.
+
+The cost of dodging, parrying and blocking also moved out of the code and into
+the settings file, at exactly the values it already had. Defending costs what it
+has always cost. This only makes it easier to tune later.
+
 ## 2026-08-13: Quiet work behind the curtain
 
 Sneaking, stealing, planting something on someone, disarming a trap, shadowing
