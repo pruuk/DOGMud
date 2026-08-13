@@ -36,6 +36,7 @@ var guardedRollFuncs = map[string]map[string]bool{
 	"contest": {
 		"Run":               true,
 		"AgainstDifficulty": true,
+		"RunWithFloors":     true,
 	},
 }
 
@@ -61,6 +62,9 @@ var guardedRollExemptions = map[string]map[string]string{
 		// CHANCE, not a roll outcome. Reconciling the two styles is an open U6
 		// question; until then this single call is correct.
 		"internal/combat/combat_helpers.go": "floors after the contest in resolveDefenseOutcomeCore",
+		// Defines the three floor-pair wrappers, so it is the one place that
+		// legitimately hands contest.RunWithFloors an explicit pair.
+		"internal/combat/contest_floors.go": "defines the RunWith*Floors wrappers",
 	},
 }
 

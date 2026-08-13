@@ -78,8 +78,16 @@ var floorPairOwners = map[string]siteExpectation{
 	// avoidance.go holds both defensive avoidance rolls: TrySpellDeflection is a
 	// spell contest and TryStoicResolve is the rhetoric-channel mirror, which
 	// rides the maneuver pair. A single `pair` cannot express that, so `pairs`
-	// pins the multiset instead. This is not an exemption: both calls are still
-	// checked, and adding a third or flipping either one fails the test.
+	// pins the multiset instead. Both calls are still checked: adding a third,
+	// removing one, or flipping ONE of them to a different wrapper all fail.
+	//
+	// KNOWN HOLE, stated rather than papered over: swapping BOTH wrappers at
+	// once leaves the multiset identical and passes. Both calls also pass
+	// `attackScore` as the first argument, so the direction check has no power
+	// here either. Two adjacent avoidance functions are exactly where a
+	// copy-paste swap would happen. If U6 touches either, verify by hand that
+	// TrySpellDeflection is on the SPELL pair and TryStoicResolve on the
+	// MANEUVER pair; keying this map by enclosing function name would close it.
 	"internal/combat/avoidance.go": {pairs: []string{"maneuver", "spell"}, calls: 2,
 		attackArgs: []string{"attackScore", "attackScore"}},
 }

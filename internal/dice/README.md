@@ -65,41 +65,48 @@ result := dice.RollStat(attackerStat)
 // result.ZScore   — >= 2.0 crit, <= -2.0 fumble
 ```
 
-### `OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult)`
+### Opposed contests moved out of this package (chunk U4)
 
-Contested check between two stat-based scores. Both sides roll with the
-attacker's standard deviation (`StdDevFor(atk)`). Use this for every
-attack-vs-defense, spell-vs-resist, and grapple check.
+**Do not call an opposed roll from `internal/dice`.** Every contest in the game
+now resolves through `internal/contest`, reached by one of three wrappers in
+`internal/combat/contest_floors.go`, chosen by the **cost of a single failure**:
 
-**Both ends are floored** (chunk 5.9a/5.10): an outmatched initiator keeps a
-last-resort chance of success, and an overwhelming favourite is never certain.
-Without this, a stat-100 thief against a stat-150 mark succeeded 0.9% of the
-time and a stat-200 thief against a stat-100 mark succeeded 99.1%.
+| Wrapper | Floor pair | For |
+|---|---|---|
+| `combat.RunWithGlobalFloors` | global | out of combat: stealth, theft, traps, detection |
+| `combat.RunWithManeuverFloors` | maneuver | maneuvers, flee -- burns the whole round |
+| `combat.RunWithSpellFloors` | spell | spells |
 
 ```go
-success, margin, atkRoll, defRoll := dice.OpposedRollStat(attackScore, defenseScore)
-if !success { /* fizzle / miss */ }
-if atkRoll.ZScore >= 2.0 { /* critical hit */ }
-if atkRoll.ZScore <= -2.0 { /* fumble / backfire */ }
+if combat.RunWithGlobalFloors(attackScore, defenseScore).Success {
+    // succeeded
+}
 ```
 
-### `OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist float64) (...)`
+The floors themselves are unchanged (chunk 5.9a/5.10): an outmatched initiator
+keeps a last-resort chance of success, and an overwhelming favourite is never
+certain. Without them a stat-100 thief against a stat-150 mark succeeded 0.9% of
+the time and a stat-200 thief against a stat-100 mark succeeded 99.1%.
 
-Same, with the floors supplied per call, for contests whose failure cost differs
-enough to want their own values. A fizzled spell costs the caster the whole
-round, and more for a long cast, where a missed melee swing costs a fraction of
-one — so spells floor lower than combat despite protecting the same thing.
+### The four legacy opposed functions, all guarded
 
-### `OpposedRollStatRaw(atk, def float64) (...)`
+`OpposedRollStat`, `OpposedRollStatWithFloors`, `OpposedRollStatRaw` and
+`OpposedRoll` still exist, and `contest_floor_guard_test.go` at the repo root
+fails if any is called outside `internal/dice` without an exemption entry
+carrying a written reason. Two different reasons:
 
-The same contest with **no floor applied**. You almost certainly want
-`OpposedRollStat`. Use this only where the caller applies its own floors, as
-combat's `resolveAttack` does — it floors a computed hit *chance* rather than a
-roll outcome, so it cannot route through the dice-level floor.
+- `OpposedRollStatRaw` / `OpposedRoll` apply **no floor**. That is the original
+  chunk 5.9 hazard.
+- `OpposedRollStat` / `OpposedRollStatWithFloors` are floored but
+  **`Deprecated:`** with zero production callers as of U4. The risk guarded here
+  is drift back onto the legacy path. U6 deletes them.
 
-Guarded: `contest_floor_guard_test.go` at the repo root fails the build if this
-or `OpposedRoll` is called outside `internal/dice` without an exemption entry
-carrying a written reason.
+`contest.Run` and `contest.AgainstDifficulty` are guarded too, and are genuinely
+unfloored: migrating a floored caller onto either silently deletes its floor.
+
+One caller legitimately floors on its own -- combat's `resolveAttack` floors a
+computed hit *chance* rather than a roll outcome, so it cannot route through a
+roll-level floor. It is exempted by file, not by directory.
 
 ---
 
@@ -112,8 +119,9 @@ as weapon damage variance derived from dice-notation item specs.
 ### `OpposedRoll(atk, def, stdDev float64) (bool, float64, RollResult, RollResult)`
 ### `StdDevFor(mean float64) float64`
 
-Returns `mean × RollSpread` (floor 1.0).  Prefer calling `RollStat` /
-`OpposedRollStat` directly rather than computing this yourself.
+Returns `mean × RollSpread` (floor 1.0).  Prefer calling `RollStat` directly, or
+a `combat.RunWith*Floors` wrapper for a contest, rather than computing this
+yourself.
 
 ---
 

@@ -43,10 +43,11 @@ func SpellFloors() (hit, resist float64) {
 // the MANEUVER floor pair.
 //
 // It exists so that the maneuver pair is fetched in one obvious place rather
-// than at each reader, and after U3 that is the standing claim: the maneuver
-// floors are read HERE and nowhere else, with flee.go the single remaining
-// exception that a later chunk owns. Deliberately stated as a rule and not as a
-// site count, because a count that is right today is the next stale comment.
+// than at each reader, and since U4 that claim is unconditional: the maneuver
+// floors are read HERE and nowhere else. U3 left flee.go as the last exception
+// and U4 migrated it, so there is no exception any more. Deliberately stated as
+// a rule and not as a site count, because a count that is right today is the
+// next stale comment.
 //
 // Two of the migrated sites -- Position_GrappleTick.go and
 // NewRound_MobRoundTick.go -- used to reach the SAME config keys through a
@@ -145,9 +146,16 @@ func ContestFloors() (hit, resist float64) {
 // RunWithGlobalFloors contests attackScore against a single defenseScore using
 // the GLOBAL contest floor pair.
 //
-// It is the exact mirror of dice.OpposedRollStat, and exists so the 17
-// out-of-combat contests migrated in U4 keep reading the pair they have always
-// read.
+// It is the exact mirror of dice.OpposedRollStat FOR THE RETURNED BOOLEAN, and
+// exists so the 17 out-of-combat contests migrated in U4 keep reading the pair
+// they have always read.
+//
+// "For the boolean" is not hedging. contest.Run builds its rolls with dice.Roll,
+// not dice.OpposedRoll, so Result.AttackRoll and Result.DefenseRoll carry
+// .Success = false and .Margin = 0 ALWAYS -- where the dice path populated both
+// on every call and re-stamped them on a floor flip. Read Result.Margin and
+// Result.Success; never read a margin off either RollResult. Misreading this
+// nearly shipped broken spell-deflection crits in U2.
 //
 // WHY THIS IS NOT RunWithManeuverFloors OR RunWithSpellFloors. config.yaml ships
 // all three pairs at 0.05, so calling the wrong one is invisible in production:
