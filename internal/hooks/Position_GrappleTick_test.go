@@ -63,8 +63,8 @@ func TestProcessGrapplePair_StashesDriftSnapshot(t *testing.T) {
 		t.Errorf("round mismatch: a=%d b=%d", a.LastDriftRoll.Round, b.LastDriftRoll.Round)
 	}
 
-	// Z-scores should be non-zero — dice.OpposedRollStat with stat=100
-	// produces rolls far enough from zero that both z-scores will be set.
+	// Z-scores should be non-zero: the contest core rolls both sides at
+	// stat=100, far enough from zero that both z-scores will be set.
 	if a.LastDriftRoll.AttackerZScore == 0 && a.LastDriftRoll.DefenderZScore == 0 {
 		t.Error("both z-scores are zero — snapshot was not populated")
 	}

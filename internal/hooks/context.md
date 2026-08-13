@@ -988,6 +988,23 @@ For each pair inside `processGrapplePair`:
    multiplier already baked in. Produces a signed ZScore representing the
    controller's margin.
 
+   The roll itself is not made here. Since U3 this package makes no
+   contest of its own: it calls `combat.RunWithManeuverFloors` (grapple
+   drift, charm reroll, riposte-trip and auto-bash via
+   `combat.ExecuteSkillMove`) or `combat.RunWithSpellFloors` (the spell
+   sites), and it does not import `internal/contest` at all. The private
+   floor accessors this package used to keep, `maneuverHitFloor` /
+   `maneuverResistFloor` / `spellHitFloor` / `spellResistFloor`, were
+   deleted in U3 because they were a second copy of the same config keys
+   and were invisible to a grep for `combat.ManeuverFloors`. Do not
+   reintroduce them; the pair belongs in
+   `internal/combat/contest_floors.go`.
+
+   The signed z here is `res.Margin / res.AttackRoll.StdDev`, which is
+   missing the `sqrt(2)` that `combat.ContestCrit` applies. That is
+   preserved deliberately so U3 stays a provable no-op; there is a
+   `NOTE(U6)` at the site and U6 owns the correction.
+
 2. **Outcome resolution via `position.ResolveOutcome`** — Passes the
    controller, signed ZScore, and defender's posture to the resolver,
    which returns an `Outcome` struct describing the kind

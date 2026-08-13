@@ -52,13 +52,30 @@ func ApplyCritFloor(isCrit bool, floor float64) bool {
 // and conviction channels. Every call site invokes it only after `success` has
 // already been decided and the miss branch has returned, which is what makes
 // the floor safe there.
+//
+// MARGIN CONTRACT, same as ContestCrit's: pass an ATTACK-signed margin, which
+// since U3 means `contest.Result.Margin` UNNEGATED, because that field is
+// already attack-positive. Never pass a dice.RollResult's `.Margin`
+// (`res.AttackRoll.Margin`, `res.DefenseRoll.Margin`): internal/contest rolls
+// via dice.Roll, which does not populate that field, so it is a silent constant
+// zero and nothing crits again. Never pass `-Result.Margin` here either; that is
+// the defensive sign and puts the crit on the losing side. All three mistakes
+// compile and break no test but the sign guards.
 func AttackContestCrit(margin float64, roll dice.RollResult) bool {
 	return ApplyCritFloor(ContestCrit(margin, roll), AttackCritFloor())
 }
 
 // DefenseContestCrit is the defensive mirror, used where a defender fully
-// negates an incoming spell or taunt. Pass a defence-signed margin
-// (defRoll.Margin), never the attack-positive one.
+// negates an incoming spell or taunt.
+//
+// MARGIN CONTRACT: pass a DEFENCE-signed margin, which since U3 means
+// `-contest.Result.Margin`, negated because that field is attack-positive.
+// Never pass a dice.RollResult's `.Margin` (`res.DefenseRoll.Margin` is the
+// tempting one): internal/contest rolls via dice.Roll, which does not populate
+// that field, so it is a silent constant zero. Never pass the attack-positive
+// `Result.Margin` unnegated either. Both callers, TryStoicResolve and
+// TrySpellDeflection, do it correctly today; internal/combat/contest_sign_test.go
+// is what keeps them that way.
 func DefenseContestCrit(margin float64, roll dice.RollResult) bool {
 	return ApplyCritFloor(ContestCrit(margin, roll), DefenseCritFloor())
 }

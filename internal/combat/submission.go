@@ -3,7 +3,6 @@ package combat
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
@@ -76,17 +75,16 @@ func RollSubmissionAttempt(
 		float64(recipient.Stats.Vitality.ValueAdj) +
 		float64(recipient.GetSkillLevel(skills.UnarmedCombat))*skillWeight
 
-	floorHit, floorResist := ManeuverFloors()
-	success, margin, atkRoll, defRoll := dice.OpposedRollStatWithFloors(atkScore, defScore, floorHit, floorResist)
+	res := RunWithManeuverFloors(atkScore, defScore)
 
 	return SubmissionAttemptResult{
 		SubType:        subType,
-		Tier:           ClassifySubmissionTier(success, atkRoll.ZScore),
+		Tier:           ClassifySubmissionTier(res.Success, res.AttackRoll.ZScore),
 		AttackerScore:  atkScore,
 		DefenderScore:  defScore,
-		AttackerZScore: atkRoll.ZScore,
-		DefenderZScore: defRoll.ZScore,
-		Margin:         margin,
+		AttackerZScore: res.AttackRoll.ZScore,
+		DefenderZScore: res.DefenseRoll.ZScore,
+		Margin:         res.Margin,
 	}
 }
 

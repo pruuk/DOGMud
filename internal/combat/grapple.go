@@ -2,7 +2,6 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -16,6 +15,10 @@ type GrappleResult struct {
 	IsGroundGrapple bool // true when the new grapple position is a ground grapple (SideControl)
 	AttackScore     float64
 	DefenseScore    float64
+	// AttackRoll / DefenseRoll are the rolled VALUES, not the rolls
+	// themselves. The contest core hands back whole dice.RollResults, so a
+	// writer stores res.AttackRoll.Value here, and the z-scores it also needs
+	// are carried separately in the two fields below.
 	AttackRoll      float64
 	DefenseRoll     float64
 	PositionPenalty float64 // For defender if prone
@@ -76,18 +79,17 @@ func AttemptGrapple(attacker *characters.Character, defender *characters.Charact
 	}
 
 	// Opposed roll
-	floorHit, floorResist := ManeuverFloors()
-	success, margin, attackRoll, defenseRoll := dice.OpposedRollStatWithFloors(result.AttackScore, result.DefenseScore, floorHit, floorResist)
+	res := RunWithManeuverFloors(result.AttackScore, result.DefenseScore)
 
-	result.Success = success
-	result.Margin = margin
-	result.AttackRoll = attackRoll.Value
-	result.DefenseRoll = defenseRoll.Value
-	result.AttackZScore = attackRoll.ZScore   // Stage 8.4: For crit detection
-	result.DefenseZScore = defenseRoll.ZScore // Stage 8.4: For reference
+	result.Success = res.Success
+	result.Margin = res.Margin
+	result.AttackRoll = res.AttackRoll.Value
+	result.DefenseRoll = res.DefenseRoll.Value
+	result.AttackZScore = res.AttackRoll.ZScore   // Stage 8.4: For crit detection
+	result.DefenseZScore = res.DefenseRoll.ZScore // Stage 8.4: For reference
 
 	// Determine whether the new grapple position is a ground grapple.
-	if success {
+	if res.Success {
 		result.IsGroundGrapple = defender.IsProne() || defender.IsSupine()
 	}
 

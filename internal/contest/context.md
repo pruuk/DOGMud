@@ -104,9 +104,28 @@ type Result struct {
 
 ## Consumers
 
-- `internal/combat` — `runBestOfAllDefense` (melee, U1) and `TrySpellDeflection`
-  (U2).
-- `internal/hooks` — four spell attack sites in `spell_resolution.go` and
-  `resolveCharmSpell` in `charm_spell.go` (U2).
+**`internal/combat`, and nothing else.** Verified with `grep -rn
+"internal/contest" internal/` after U3: the only non-comment import lines are
+`internal/combat/combat_helpers.go` and `internal/combat/contest_floors.go`.
 
-Roadmap U3–U4 add ranged, taunt, and the non-harm contests.
+- `runBestOfAllDefense` (melee, U1) calls `Run` directly, and is the one place
+  that converts this package's attack-positive margin into `internal/combat`'s
+  defence-positive one.
+- Everything else goes through the two wrappers in
+  `internal/combat/contest_floors.go`, `RunWithManeuverFloors` and
+  `RunWithSpellFloors`, which are where the maneuver and spell floor pairs are
+  read.
+
+`internal/hooks`, `internal/actions` and `internal/usercommands` all resolve
+contests, but they reach this core **through `internal/combat`** and must NOT
+import this package directly. U3 removed the last direct `internal/hooks`
+import, along with the private `spellHitFloor` / `spellResistFloor` /
+`maneuverHitFloor` / `maneuverResistFloor` duplicates that made those sites
+invisible to a grep for the exported accessors. Keeping the funnel narrow is
+what makes "the floors are read in one place" a checkable claim rather than a
+hope.
+
+Sites migrated so far: melee (U1), the spell attack sites and `resolveCharmSpell`
+(U2), and ranged, taunt, the special-move family, grapple and the submission roll
+(U3). Roadmap U4 adds the non-harm contests; `internal/combat/flee.go` is the one
+floor site still off the core and a later chunk owns it.

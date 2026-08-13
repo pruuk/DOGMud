@@ -10,7 +10,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -262,33 +261,6 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	}
 }
 
-// spellHitFloor and spellResistFloor read the spell-specific contest floors.
-//
-// Spells carry their own pair rather than reusing the non-combat contest floors
-// because the cost of a failure is different in kind: a fizzle burns the
-// caster's round, and more than one round for a long cast. The hit floor keeps
-// an outmatched caster from being guaranteed to waste rounds; the resist floor
-// keeps an outmatched TARGET from being auto-hit with no agency, which matters
-// because mobs cast at players too (see resolveMobSpellAgainstPlayer).
-// maneuverHitFloor and maneuverResistFloor mirror the spell pair for combat
-// maneuvers resolved from hooks. Read from config here rather than calling
-// internal/combat, which hooks does not import.
-func maneuverHitFloor() float64 {
-	return float64(configs.GetBalanceConfig().MinManeuverHitChance)
-}
-
-func maneuverResistFloor() float64 {
-	return float64(configs.GetBalanceConfig().MinManeuverResistChance)
-}
-
-func spellHitFloor() float64 {
-	return float64(configs.GetBalanceConfig().MinSpellHitChance)
-}
-
-func spellResistFloor() float64 {
-	return float64(configs.GetBalanceConfig().MinSpellResistChance)
-}
-
 // resolveAgainstMob performs the opposed roll and applies the effect to a mob.
 // Returns true if the cast fumbled (ZScore <= -2.0). A fumble aborts any
 // post-target spell effects (summon, charm, Go hooks) in the caller's main
@@ -297,7 +269,7 @@ func spellResistFloor() float64 {
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &mob.Character)
-	spellContest := contest.RunWithFloors(spellAttack, []contest.Entry{{Score: defVal}}, spellHitFloor(), spellResistFloor())
+	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	round := util.GetRoundCount()
@@ -728,7 +700,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := contest.RunWithFloors(spellAttack, []contest.Entry{{Score: defVal}}, spellHitFloor(), spellResistFloor())
+	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	// Backfire on fumble
@@ -1291,7 +1263,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &target.Character)
-	spellContest := contest.RunWithFloors(spellAttack, []contest.Entry{{Score: defVal}}, spellHitFloor(), spellResistFloor())
+	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
@@ -1311,7 +1283,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, spellAttack float64, magnitude int) {
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := contest.RunWithFloors(spellAttack, []contest.Entry{{Score: defVal}}, spellHitFloor(), spellResistFloor())
+	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	round := util.GetRoundCount()
 	if atkRoll.ZScore <= -2.0 {

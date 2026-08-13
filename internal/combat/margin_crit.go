@@ -89,16 +89,25 @@ func normalizedDefenseMargin(best bestDefenseResult) (float64, bool) {
 // matched contests are unchanged by the switch to margin derivation.
 const ContestCritThreshold = 2.0
 
-// ContestCrit reports whether one side of a dice.OpposedRoll* contest won
-// decisively enough to crit. It is the spell/conviction-channel counterpart to
-// the melee path in resolveDefenseOutcome, and exists so those channels stop
-// deriving crit from a self-relative z-score that knows nothing about the
-// opponent.
+// ContestCrit reports whether one side of a contest won decisively enough to
+// crit. It is the spell/conviction-channel counterpart to the melee path in
+// resolveDefenseOutcome, and exists so those channels stop deriving crit from a
+// self-relative z-score that knows nothing about the opponent.
 //
-// `margin` MUST already be signed from the perspective of the side being
-// tested. For an attacker that is the second return of dice.OpposedRoll* (which
-// is attack-positive: attackRoll.Value - defenseRoll.Value). For a defender it
-// is defRoll.Margin, which dice.OpposedRoll has already negated.
+// `margin` MUST be a contest.Result.Margin, and MUST already be signed from the
+// perspective of the side being tested. Result.Margin is ATTACK-positive
+// (attack roll minus winning defence roll), so:
+//
+//	attacker's crit check  -> pass it unnegated  (combat_taunt.go, the spell
+//	                          sites in internal/hooks)
+//	defender's crit check  -> negate it          (TryStoicResolve,
+//	                          TrySpellDeflection)
+//
+// NEVER pass a dice.RollResult's .Margin field. Since U1-U3 every caller
+// resolves through internal/contest, which rolls each side with dice.Roll, and
+// dice.Roll does NOT populate RollResult.Margin. Reading res.AttackRoll.Margin
+// or res.DefenseRoll.Margin therefore hands this function a silent zero, and
+// nothing crits again -- no compile error, no test failure, no log line.
 //
 // Do NOT copy the negation in normalizedAttackMargin. That path reads
 // bestDefenseResult.margin, which runBestOfAllDefense builds DEFENCE-positive;
@@ -110,9 +119,9 @@ const ContestCritThreshold = 2.0
 // standard deviation stdDev*sqrt(2) — dividing by stdDev alone inflates the
 // result by about 41% and would roughly triple crit rates.
 //
-// Note on contest floors: dice.OpposedRollStatWithFloors overwrites margin with
-// +-1 when a floor fires. That sentinel normalises to a near-zero z, so a hit
-// handed out by the floor cannot also be a crit. This is intended.
+// Note on contest floors: contest.RunWithFloors overwrites the margin with +-1
+// when a floor fires. That sentinel normalises to a near-zero z, so a hit handed
+// out by the floor cannot also be a crit. This is intended.
 func ContestCrit(margin float64, roll dice.RollResult) bool {
 	if roll.StdDev > 0 {
 		return margin/(roll.StdDev*math.Sqrt2) >= ContestCritThreshold
