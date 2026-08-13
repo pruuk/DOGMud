@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 )
 
@@ -26,14 +27,7 @@ func (c *Character) DeductActionPoints(amount int) bool {
 //
 // Deprecated: use ApplyCost. U5b routes the remaining callers.
 func (c *Character) DeductStamina(amount int) bool {
-	if c.Stamina < amount {
-		return false
-	}
-	c.Stamina -= amount
-	if c.Stamina < 0 {
-		c.Stamina = 0
-	}
-	return true
+	return c.ApplyCost(PoolStamina, amount)
 }
 
 // GetMovementStaminaCost calculates the stamina cost for movement based on
@@ -115,16 +109,7 @@ func (c *Character) GetAttackStaminaCost() int {
 // but nothing downstream strips the skill term yet; U8 adds that.
 func (c *Character) DeductAttackStamina() int {
 	cost := c.GetAttackStaminaCost()
-
-	if c.Stamina >= cost {
-		c.Stamina -= cost
-		return cost
-	}
-
-	// Insufficient stamina - deduct what we have
-	actualCost := c.Stamina
-	c.Stamina = 0
-	return actualCost
+	return c.ApplyCostPartial(PoolStamina, cost).Charged
 }
 
 // GetDefenseStaminaCost returns stamina cost for a defense type (Stage 7.1)
@@ -168,21 +153,40 @@ func (c *Character) DeductDefenseStamina(defenseType string) bool {
 	return false
 }
 
+// ApplyHealthChange applies a SIGNED health delta and returns the applied
+// delta. It is not a legacy path: it survives U5b because it owns a side effect
+// the primitives deliberately do not have.
+//
+// The eight melee call sites in internal/combat/combat.go depend on the
+// CancelCombatBuffs below, which reaches CancelBuffsWithFlag -> Validate(true)
+// -> a full stat recalculation. Routing them straight at ApplyHarm would drop
+// the on-death combat-buff cancel for every melee kill in the game.
+//
+// Ordering note (verified, U5b-1): the pre-U5b implementation called
+// CancelCombatBuffs BEFORE writing c.Health, then overwrote c.Health
+// unconditionally. Validate does read and write c.Health -- the reservation
+// clamp, the enchant-withdrawal shrink and validatePoolClamps all do -- but
+// every one of those writes is guarded by `c.Health > <positive>`, so none can
+// fire once health is negative, and in the old order any that did fire was
+// discarded by the unconditional write that followed. After-write is therefore
+// exactly equivalent for both c.Health and the return, and it lets the
+// arithmetic live in the primitives.
 func (c *Character) ApplyHealthChange(healthChange int) int {
-	oldHealth := c.Health
-	newHealth := c.Health + healthChange
-	if newHealth < 0 {
-		// Any drop below 0 means dead; cancel combat-scoped buffs. Death
-		// itself is processed by the per-round hooks (NewRound_DoCombat +
-		// NewRound_AutoHeal); this function only applies the raw change.
-		c.CancelCombatBuffs()
-	} else if newHealth > c.HealthMax.Value {
-		newHealth = c.HealthMax.Value
+	var applied int
+	if healthChange < 0 {
+		applied = -c.ApplyHarm(PoolHealth, -healthChange, state.ActorRef{})
+	} else {
+		applied = c.ApplyRestore(PoolHealth, healthChange)
 	}
 
-	c.Health = newHealth
+	// Any drop below 0 means dead; cancel combat-scoped buffs. Death itself is
+	// processed by the per-round hooks (NewRound_DoCombat + NewRound_AutoHeal);
+	// this function only applies the raw change.
+	if c.Health < 0 {
+		c.CancelCombatBuffs()
+	}
 
-	return newHealth - oldHealth
+	return applied
 }
 
 func (c *Character) Heal(hp int) int {
