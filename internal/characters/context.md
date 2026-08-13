@@ -86,6 +86,94 @@ Mob progression uses `MobProgressionRate` as a multiplier.
 - **Conviction**: Mental/magical resource, based on Willpower + Charisma (used for spells)
 - Mana has been removed entirely
 
+#### Pool mutation API
+
+`internal/characters/pools.go` (chunk U5a) holds the primitives every pool
+mutation is meant to route through. U5a only adds them; call sites are routed in
+U5b, so most of the codebase still mutates `c.Health` / `c.Stamina` /
+`c.Conviction` directly today.
+
+```go
+// Pool identifies one of the three resource pools. Deliberately a string,
+// matching the vocabulary already used by GetPoolReservation and
+// BuffSpec.TickPool.
+type Pool string
+
+const (
+	PoolHealth     Pool = "health"
+	PoolStamina    Pool = "stamina"
+	PoolConviction Pool = "conviction"
+)
+
+// CostResult reports what a partial cost charge actually did.
+type CostResult struct {
+	Charged int  // amount actually taken from the pool
+	Short   bool // the actor could not pay in full
+}
+
+func (c *Character) PoolValue(p Pool) int
+func (c *Character) CanAfford(pool Pool, amount int) bool
+
+func (c *Character) ApplyCost(pool Pool, amount int) bool
+func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
+
+func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
+func (c *Character) ApplyRestore(pool Pool, amount int) int
+```
+
+`source` is `internal/state.ActorRef`. Unexported support: `poolMax`, `setPool`,
+and `applyVitalChange` (the single signed pipeline behind harm and restore).
+`setPool` is unexported on purpose so no caller can bypass the floor rules.
+
+#### Gotchas
+
+- **Three floor rules, and they are not symmetric.** A cost never drives a pool
+  below 0. Harm floors stamina and conviction at 0. Harm does **not** floor
+  health. The health rule exists to preserve overkill magnitude for margin-scaled
+  work and because `validatePoolClamps` carries an explicit "No lower Health
+  clamp" comment -- **not** because death detection reads the negative value,
+  which it does not (every gate tests `< 1` or `<= 0`).
+- **`ApplyCost` refuses; `ApplyCostPartial` charges what it can.** The split is
+  whether the actor retains a meaningful alternative action, NOT volition and NOT
+  whether a cooldown is involved -- both framings were tried and both are wrong.
+  Refuse: movement, stand, spellcasting, mutation moves. Partial: auto-attack,
+  dodge/parry/block, grapple upkeep, flee. Death from exhaustion was tried in
+  this game and players hated it.
+- **`CostResult.Short` is what a later chunk reads to strip the skill term.**
+  The penalty for being short is a worse roll, not a lost action.
+- **`CanAfford` reads the RAW pool, not reserve-excluded.** No affordability
+  check in the codebase consults `GetPoolReservation` today. Note
+  `validate.go:146` already clamps current pools to the reserve-excluded ceiling,
+  so a raw-reading cost helper and a reserve-enforcing validator are in mild
+  tension. Do not resolve that here.
+- **Harm and restore are one signed pipeline** (`applyVitalChange`) behind two
+  positive-only wrappers. Sign inversion is this codebase's signature failure
+  mode; the wrappers exist so no call site can get the direction wrong.
+- **Both return the APPLIED delta**, which differs from the requested amount when
+  a floor or ceiling bites. A caller keeping a result struct in sync must add the
+  return value.
+- **`ApplyHarm`'s source is not universally available.** Direct combat, spell and
+  maneuver sites have an actor; damage-over-time, toxicity and attrition sites do
+  not, because `buffs.Buff` has no applier field. Those pass the zero value.
+- **Do not build on `ApplyHealthChange`.** It cancels combat buffs and triggers a
+  full stat recalculation via `Validate(true)` when health crosses zero, reaching
+  8 call sites today.
+- **No direct pool mutation emits an event**, and neither primitive does. The two
+  indirect emitters (`ApplyHealthChange` via `Validate`, and `Life_Cascades`'
+  respawn set) are deliberate.
+- **ActionPoints is a fourth pool and is NOT in `Pool`.** It is an inherited
+  GoMud movement throttle, redundant with stamina movement costs, and a deletion
+  candidate. Movement is a two-pool transaction with a hand-rolled refund.
+- **The three `Deduct*` helpers in `resources.go` are `Deprecated:`.**
+  `DeductStamina` maps to `ApplyCost`; `DeductDefenseStamina` and
+  `DeductAttackStamina` map to `ApplyCostPartial`. They still work and still have
+  callers until U5b routes them.
+- **Defence base stamina costs are config, not Go.** `DodgeBaseStaminaCost`,
+  `ParryBaseStaminaCost` and `BlockBaseStaminaCost` feed
+  `GetDefenseStaminaCost`, which computes `int(base * multiplier)` TRUNCATED and
+  then floors at 1. Rounding instead of truncating would change dodge's live
+  cost.
+
 ### Combat and Interaction Systems
 - **Kill/Death statistics** (`kdstats.go`): PvP and PvE combat tracking
 - **Charm system** (`charminfo.go`): Mind control and pet mechanics

@@ -434,22 +434,6 @@ func RollCharacterStats() stats.Statistics {
 	}
 }
 
-// returns description unless description is a hash
-
-// DeductStamina attempts to deduct the specified amount of stamina.
-// Returns false if the character doesn't have enough stamina.
-
-// GetMovementStaminaCost calculates the stamina cost for movement based on
-// terrain difficulty and encumbrance.
-// terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc.
-// Returns stamina cost (2-20 stamina range).
-
-// GetAttackStaminaCost calculates the stamina cost for making an attack.
-// Cost is based on weapon type (or unarmed if no weapon).
-
-// DeductAttackStamina deducts stamina for an attack and returns the actual cost deducted.
-// If character doesn't have enough stamina, deducts what they have and returns that amount.
-
 // Sometimes it's useful for a character to know what user it belongs to.
 func (c *Character) SetUserId(userId int) {
 	c.userId = userId
@@ -653,8 +637,7 @@ func (c *Character) GetAllVisitedRooms() []int {
 	return out
 }
 
-// AttemptRecovery tries to recover from a condition using a stat-based chance
-// Formula: min(90, 25 + 20 * ln(statValue/25))
+// SetSetting stores a named character setting, or deletes it when the value is empty.
 func (c *Character) SetSetting(settingName string, settingValue string) {
 	if c.Settings == nil {
 		c.Settings = make(map[string]string)
@@ -687,20 +670,6 @@ const (
 	DefenseParry string = "parry"
 	DefenseBlock string = "block"
 )
-
-// GetDefenseStaminaCost returns stamina cost for a defense type (Stage 7.1)
-
-// DeductDefenseStamina deducts stamina for a defense and returns true if successful (Stage 7.1)
-
-// GetToxicityMax returns the maximum toxicity this character can handle.
-// Formula: BaseMax + Vitality / VitalityScale
-
-// AddToxicity attempts to add toxicity. Returns false if it would exceed max.
-
-// GetToxicityPenalties returns stat multipliers based on toxicity threshold.
-// Returns (regenMult, perceptionMult, dexterityMult) where 1.0 = no penalty.
-
-// Where 1000 = a full round
 
 // StatMod aggregates stat-mod contributions from gear, buffs,
 // and pets. Equipment contributions are scaled by the gear-

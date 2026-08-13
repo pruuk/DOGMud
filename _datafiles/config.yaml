@@ -422,14 +422,26 @@ Balance:
   # ── COMBAT: DEFENSE COSTS ──────────────────────────────────────────────────
   # These ONLY affect how much stamina each defense costs. They do NOT
   # change how effective the defense is at avoiding hits.
-  # Formula: cost = floor(baseCost × multiplier)
-  # Base costs: dodge = 2 SP, parry = 4 SP, block = 5 SP
-  # Examples:
-  #   DodgeMultiplier 0.9 → floor(2 × 0.9) = 1 stamina per dodge
-  #   BlockMultiplier 1.5 → floor(5 × 1.5) = 7 stamina per block
-  DodgeMultiplier: 0.9           # Stamina cost multiplier for dodge (base: 2 SP)
-  ParryMultiplier: 0.9           # Stamina cost multiplier for parry (base: 4 SP)
-  BlockMultiplier: 0.9           # Stamina cost multiplier for block (base: 5 SP)
+  #
+  # Defence stamina costs. Final cost is int(base * multiplier), TRUNCATED, then
+  # floored at 1. With the multipliers at 0.9 the live costs are dodge 1,
+  # parry 3, block 4. Rounding instead of truncating would take dodge to 2, a
+  # 100% rise on the most-used defence in the game.
+  #
+  # The base costs were hardcoded in Go until U5a moved them here; only the
+  # multipliers were ever configurable, which is the anti-pattern the resolution
+  # arc exists to remove.
+  #
+  # U7 replaces this shape entirely: base cost becomes one term in a unified
+  # formula with an encumbrance multiplier and an inverse-skill multiplier, and
+  # these values become modifiers rather than bases. Do not retune them here in
+  # the meantime, that retune is a modelled change, not a nudge.
+  DodgeBaseStaminaCost: 2
+  ParryBaseStaminaCost: 4
+  BlockBaseStaminaCost: 5
+  DodgeMultiplier: 0.9
+  ParryMultiplier: 0.9
+  BlockMultiplier: 0.9
 
   # ── COMBAT: DEFENSE EFFECTIVENESS ─────────────────────────────────────────
   # MULTIPLIER on the defense score BEFORE the opposed roll. Applied in

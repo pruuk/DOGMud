@@ -23,6 +23,8 @@ func (c *Character) DeductActionPoints(amount int) bool {
 
 // DeductStamina attempts to deduct the specified amount of stamina.
 // Returns false if the character doesn't have enough stamina.
+//
+// Deprecated: use ApplyCost. U5b routes the remaining callers.
 func (c *Character) DeductStamina(amount int) bool {
 	if c.Stamina < amount {
 		return false
@@ -108,6 +110,9 @@ func (c *Character) GetAttackStaminaCost() int {
 
 // DeductAttackStamina deducts stamina for an attack and returns the actual cost deducted.
 // If character doesn't have enough stamina, deducts what they have and returns that amount.
+//
+// Deprecated: use ApplyCostPartial. Its pay-what-you-can behaviour is correct
+// but nothing downstream strips the skill term yet; U8 adds that.
 func (c *Character) DeductAttackStamina() int {
 	cost := c.GetAttackStaminaCost()
 
@@ -131,13 +136,13 @@ func (c *Character) GetDefenseStaminaCost(defenseType string) int {
 
 	switch defenseType {
 	case DefenseDodge:
-		baseCost = 2
+		baseCost = int(bal.DodgeBaseStaminaCost)
 		multiplier = float64(bal.DodgeMultiplier)
 	case DefenseParry:
-		baseCost = 4
+		baseCost = int(bal.ParryBaseStaminaCost)
 		multiplier = float64(bal.ParryMultiplier)
 	case DefenseBlock:
-		baseCost = 5
+		baseCost = int(bal.BlockBaseStaminaCost)
 		multiplier = float64(bal.BlockMultiplier)
 	default:
 		return 0
@@ -151,6 +156,9 @@ func (c *Character) GetDefenseStaminaCost(defenseType string) int {
 }
 
 // DeductDefenseStamina deducts stamina for a defense and returns true if successful (Stage 7.1)
+//
+// Deprecated: use ApplyCostPartial -- defence charges what it can. U5b routes
+// the remaining callers.
 func (c *Character) DeductDefenseStamina(defenseType string) bool {
 	cost := c.GetDefenseStaminaCost(defenseType)
 	if c.Stamina >= cost {

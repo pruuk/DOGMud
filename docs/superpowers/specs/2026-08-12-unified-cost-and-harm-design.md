@@ -103,7 +103,8 @@ modifiers.
 | Ranged attack | config | yes | ranged-combat |
 | Grapple | existing per-round | yes (already) | unarmed-combat |
 | Spell cast | existing authored CP cost | no | spellcasting |
-| Spell resist (mental) | fraction of the incoming spell's cost | no | spellcasting |
+| **Quell** (mental spell defence) | fraction of the incoming spell's cost | no | spellcasting |
+| **Defy** (social / taunt defence) | fraction of the incoming taunt's cost | no | rhetoric |
 | Taunt / rally / warcry | config, CP | no | rhetoric |
 | Flee, sneak, other non-harm | config, small | yes | relevant skill |
 | **Movement** | existing terrain-scaled cost | yes (already) | **search** |
@@ -255,7 +256,8 @@ Remaining work is small and specific:
 | `BlockBaseStaminaCost` | replaces the hardcoded 5 |
 | `AttackBaseStaminaCost` | replaces the per-weapon authored cost |
 | `RangedBaseStaminaCost` | ranged currently costs nothing |
-| `SpellResistCostFraction` | fraction of the incoming spell's cost paid to resist |
+| `QuellCostFraction` | fraction of the incoming spell's cost paid to quell it |
+| `DefyCostFraction` | fraction of the incoming taunt's cost paid to defy it |
 | `TauntBaseConvictionCost` | flat base for taunt / rally / warcry |
 | `NonHarmContestBaseCost` | flee, sneak and similar |
 | `CostSkillMultiplierMax` / `CostSkillMultiplierMin` | 1.25 / 0.75 |
@@ -319,8 +321,20 @@ without its skill term rather than autofailing (section 3.4).
 4. Ranged, taunt, and defending against spells and taunts all cost something.
 5. Insufficient resource drops the skill term from the roll rather than
    autofailing, measured with reserve excluded, with player-legible messaging
-   saying why. No pool can be driven negative from any path.
-6. Depletion progression still fires, still excludes reserve, and now covers mobs.
-7. `context.md` updated in the same PR for every package touched, per the
+   saying why.
+6. **The three floor rules hold.** CORRECTED 2026-08-13; this criterion
+   previously read "No pool can be driven negative from any path", which is
+   wrong and would cause a real defect if implemented literally. There are three
+   rules, and the helper must know whether it is applying a COST or HARM to pick
+   the right one:
+   - A **cost** may never drive any pool below 0.
+   - **Harm** floors stamina and conviction at 0.
+   - **Harm may drive health below 0, and MUST be allowed to. That is how death
+     works.** `ApplyHealthChange` deliberately permits it, `validatePoolClamps`
+     carries an explicit "No lower Health clamp" comment, and the per-round death
+     checks read it. Clamping health at 0 destroys overkill magnitude and breaks
+     anything measuring how far past zero a blow landed.
+7. Depletion progression still fires, still excludes reserve, and now covers mobs.
+8. `context.md` updated in the same PR for every package touched, per the
    resolution spec's criterion 7.
-8. The adversarial playtest gate passes.
+9. The adversarial playtest gate passes.
