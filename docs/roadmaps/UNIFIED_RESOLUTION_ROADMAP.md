@@ -407,6 +407,43 @@ This is a documentation and ergonomics pass. **No value changes.** Any retune
 found along the way is filed, not applied — a config edit inside a docs chunk is
 how an unreviewed balance change ships.
 
+### U6 — the defence sets, inlined because the reference was too thin
+
+The flip table above says `defenceSet` goes to "designed sets 3 / 2 / 2 / 1 / 1"
+and the U6 row says "designed defence sets". **That was too thin a pointer.** On
+2026-08-13 it caused a real error: an agent grepped for a spell-resist *stamina*
+cost, found none, and reported spell resist as a phantom mechanic that did not
+exist -- when it is fully designed in the contest spec and costs **CP, not SP**,
+which is exactly why the grep was blind. Inlining the table so the roadmap is
+readable on its own.
+
+**Source of truth: `2026-08-12-unified-contest-resolution-design.md` section 3.2.**
+The applicable defence set is a property of the ATTACK TYPE:
+
+| Attack type | Applicable defences | N |
+|---|---|---|
+| Melee | dodge, parry, block | 3 |
+| Ranged | dodge, block | 2 |
+| Spell, physical damage | dodge, block | 2 |
+| Spell, mental | resist (`Wil + spellcasting x5`) | 1 |
+| Taunt / social | resist (`Wil + rhetoric x5`) | 1 |
+
+Notes that matter for anyone routing costs:
+
+- **Dodge is REUSED for physical spells.** There is no separate physical-spell
+  defence.
+- **Parry is deliberately excluded from ranged and physical spells.** You cannot
+  parry a bolt. Adding it later is one row in this table and nothing else, which
+  is the point of the design.
+- **The two resist defences cost CONVICTION, not stamina.** Grepping for a
+  stamina cost will find nothing and prove nothing.
+- Both already exist in code as `TrySpellDeflection` and `TryStoicResolve`
+  (`internal/combat/avoidance.go`), which U6 absorbs. Their player-facing text
+  already says "deflect" and "resolve".
+- **Both are currently called "resist", which is a naming problem.** The mental
+  defence and the social defence share one word. Needs resolving before either
+  reaches a knob name or player copy.
+
 ### Modelling gates, before the plan they guard
 
 - **Before U6: the special-move family's skill weight. NEW, added by U3.**
