@@ -69,7 +69,25 @@ Every one is a real gameplay change. If you find yourself editing these, stop.
    unaffordable defences out of the best-of-N candidate set.
 2. `DeductDefenseStamina` full-or-refuse → partial.
 3. `mobcommands/cast.go:116` — gains a refusal it has never had.
-4. `NewRound_AutoHeal.go:396-398` and `:410-412` — the mob DoT floors.
+4. **All SEVEN health floors.** `NewRound_AutoHeal.go` mob DoT (2), plus
+   `surprise_attack.go`, `skill_moves.go`, `combat_shared_helpers.go` riposte,
+   and both `throw.go` sites (5).
+
+   > **CORRECTED MID-EXECUTION 2026-08-13.** Revision 1 of this plan held back
+   > only the two mob DoT floors and told Task 2 to delete the other five. That
+   > was inconsistent: all seven are structurally identical, and deleting any of
+   > them is **not** behaviour-neutral. Health then stores overkill instead of 0,
+   > and that is observable -- GMCP ships `Character.Health` raw
+   > (`gmcp.Char.go:536`) and the prompt prints it raw
+   > (`userrecord.prompt.go:337,340`), so a player who fumbles a grenade onto
+   > themselves can briefly see a negative number in their own prompt before the
+   > next round tick kills them. Death itself is unaffected; every gate tests
+   > `< 1` or `<= 0`.
+   >
+   > The five sites are **routed** to `ApplyHarm` in U5b-1 but **keep their
+   > floor**, each carrying a `NOTE(U5b-2)`. U5b-2 removes all seven together as
+   > one named, playtested change.
+
 5. `usercommands/flee.go` and `usercommands/stand.go` cost semantics.
 
 ---
@@ -485,11 +503,30 @@ Anything reported that is NOT in the list above is a site this plan missed. **Do
 not add it to the exemption list to make the test quiet.** Report it -- it is
 either a routing this plan forgot or a U5b-2 site that should not be here yet.
 
-The five U5b-2 sites WILL be reported (`combat_helpers.go`, `flee.go`,
-`stand.go`, `mobcommands/cast.go`, `mutation_helpers.go`, plus the two mob DoT
-clamps in `NewRound_AutoHeal.go`). Add them with the reason
+**The U5b-2 sites WILL be reported.** Add each with the reason
 `"U5b-2 routes this; it is a deliberate behaviour change"` so the guard is green
-here and U5b-2 removes the exemptions as it routes them.
+here and U5b-2 removes the exemptions as it routes them:
+
+```go
+	// --- Temporary. U5b-2 routes each of these and removes the entry. ---
+	"internal/combat/combat_helpers.go":     "U5b-2: defence affordability gate",
+	"internal/usercommands/flee.go":         "U5b-2: flee cost semantics",
+	"internal/usercommands/stand.go":        "U5b-2: stand's two-knob gate",
+	"internal/mobcommands/cast.go":          "U5b-2: mob cast gains a guard",
+	"internal/actions/mutation_helpers.go":  "U5b-2: cooldown-rollback ordering",
+	// The seven retained health floors. Routed to ApplyHarm in U5b-1 but still
+	// flooring, each with a NOTE(U5b-2) at the site. Removing them is
+	// observable via GMCP and the prompt, so it is a playtested change.
+	"internal/hooks/NewRound_AutoHeal.go":        "U5b-2: mob DoT health floors",
+	"internal/actions/surprise_attack.go":        "U5b-2: retained health floor",
+	"internal/combat/skill_moves.go":             "U5b-2: retained health floor",
+	"internal/hooks/combat_shared_helpers.go":    "U5b-2: retained health floor + fold-upkeep cost",
+	"internal/usercommands/throw.go":             "U5b-2: retained health floors",
+```
+
+Also note `combat_shared_helpers.go:558` (`char.Conviction -= roundCost`, the
+fold-cast upkeep) is a **cost** site guarded at `:546`, so it belongs to U5b-2's
+cost work, not here. Its exemption above covers it.
 
 - [ ] **Step 3: Prove it bites**
 
