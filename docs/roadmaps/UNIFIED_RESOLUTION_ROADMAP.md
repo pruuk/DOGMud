@@ -171,13 +171,60 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U2** | Spell channel onto the core (**6** sites — review found `resolveCharmSpell` too), preserving ×15 attack / ×0 defence as parameters. | M | U1 | **No** |
 | **U3** | ✅ **DONE.** Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. Also claimed and shipped every unowned `ManeuverFloors()` site, plus `TrySpellDeflection` on the spell pair, and deleted the four private floor accessors in `internal/hooks`. | M | U1 | **No** |
 | **U4** | ✅ **DONE.** Non-harm contests onto the core: **19 sites, 17 on the global floor pair and 2 on the maneuver pair.** Global: `actions/sneak.go` (x2), `actions/shadow.go`, `actions/steal.go` (x4), `actions/plant.go` (x4), `actions/defuse.go`, `usercommands/go.go` (x4), `usercommands/skill.skullduggery.shadow.go`. Maneuver: both `combat/flee.go` rolls, the last `dice.OpposedRollStatWithFloors` callers, which are maneuvers because they are contested in combat and cost the round. Added `combat.RunWithGlobalFloors` + `combat.ContestFloors`, extended `contest_floor_guard_test.go` to see `contest.Run` / `contest.AgainstDifficulty`, and added `floor_pair_guard_test.go` to pin the pair, call count and attacker direction of every migrated site. **Declined:** `actions/surprise_attack.go`, reassigned to U10 (see below). | M | U1 | **No** |
-| **U5** | Cost + harm helpers. One cost helper, one harm helper. Move the hardcoded 2/4/5 defence costs into config **at their current effective values**. Enforce the three floor rules (see below). | M | U1 | **No** (costs unchanged, only routed) |
+| **U5a** | Foundation. Build `ApplyCost` + `ApplyHarm` (harm carries a **source actor** from the start). Move the hardcoded 2/4/5 defence costs into config **at their current effective values**. Tests for the three floor rules. Orphaned-docstring cleanup in `characters/character.go`. **No call sites moved.** | M | U1 | **No** |
+| **U5b** | Route every pool mutation: ~78 logical sites, ~68 clamp lines deleted. Unfloor health harm. AST guard that no production code mutates a pool directly. **Named behaviour fixes:** the user/mob DoT floor asymmetry, the unguarded mob cast CP debit, the discarded `DeductDefenseStamina` bool. | L | U5a | **Yes, deliberately** (named sites only) |
+| **U5c** | **Credit detection.** Immediate, *attributed* death when health drops below 1 at the harm site, replacing the deferred `Die(state.ActorRef{})` round-tick sweep. Sweep stays as a backstop for non-harm paths. | M | U5b | **Yes** |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | **The unified cost model.** NEW SLICE, added 2026-08-13; everything below it shifted by one. Applies the spec's single cost formula to every action: flat config base, encumbrance multiplier (physical only), inverse-skill multiplier, per-action modifier. Takes defence cost off the hardcoded 2/4/5 for real. **Must map the companion / reserved-CP interaction before building.** | L | U5, U6 | **Yes** |
 | **U8** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource. (Was U7. The inverse-skill cost band moved into the new U7, where the whole formula now lives.) | M | U7 | **Yes** |
 | **U9** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. | M | U6 | **Yes** |
 | **U10** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
 | **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, and the adversarial playtest gate. | M | U8–U10 | — |
+
+### U5 — why it is three slices, and why it is NOT a no-op
+
+**Split into U5a / U5b / U5c on 2026-08-13**, and the no-op contract was
+deliberately released for it by the user: *"Rule 1 is a discipline rule, not a
+rule you follow when we're finding obviously broken, scattered, and inconsistent
+crap."* U5b and U5c change behaviour **at named sites only**, each called out
+individually in its PR rather than absorbed silently.
+
+What the inventory actually found, at 137 raw pool-mutation statements across
+~78 logical sites (`internal/` only; `modules/` never mutates a pool):
+
+- **Health harm is unfloored at 19 sites and clamped to 0 at 7.** One helper must
+  change one group or the other. Unfloored wins: every downstream consumer tests
+  `< 1` or `<= 0`, never `== 0`.
+- **The user/mob DoT floors are opposite.** `NewRound_AutoHeal.go:217/229`
+  (poison and bleed on a **user**) do not clamp; `:393/407` (the same DoTs on a
+  **mob**) clamp to 0. Same tick, same buff, different floor.
+- **`mobcommands/cast.go:116` has no affordability guard and no clamp.**
+  `actions.InitiateCast` never reads Conviction, so a mob can begin a cast at 0
+  CP and go negative.
+- **`DeductDefenseStamina` returns a bool that `combat_helpers.go:665`
+  discards.** A defence the character cannot pay for still wins the best-of-N.
+
+**A CORRECTION, because a subagent got this wrong and it nearly shaped the plan:**
+the 7 clamped sites do **not** prevent kills. `NewRound_MobRoundTick.go:124`
+carries an always-runs death check testing `Health <= 0`, so a mob clamped to
+exactly 0 dies on the next tick. What the clamp actually costs is worse in a
+subtler way, and is what U5c exists to fix:
+
+1. **A one-round zombie window** -- the mob sits at 0 HP, targetable and acting,
+   until the next tick.
+2. **Kill attribution is lost.** That sweep calls `Die(state.ActorRef{}, ...)`
+   with an **empty** actor ref, so whoever landed the killing blow through any of
+   these paths is anonymous to the death system. Grenades, DoTs and `pathto`
+   attrition all kill without credit.
+3. **Overkill magnitude is destroyed**, which U6's margin-scaled work wants.
+
+So the fix is not "delete the clamps". It is: unfloor the harm, AND route death
+at the damage site with a real killer reference. Those are separate changes,
+which is why U5c is its own slice.
+
+`ApplyHarm` therefore takes a **source actor in its signature from U5a onward**,
+before any call site moves. Otherwise U5b routes ~78 sites and U5c has to touch
+every one of them again.
 
 ### U5 — the three floor rules, and what they are NOT
 
