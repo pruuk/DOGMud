@@ -78,7 +78,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			// Lethal toxicity is caught by the Health<1 non-combat death check above
 			// on the next tick.
 			if dmg := user.Character.ToxicitySicknessDamage(); dmg > 0 {
-				user.Character.Health -= dmg
+				user.Character.ApplyHarm(characters.PoolHealth, dmg, state.ActorRef{})
 			}
 		}
 
@@ -214,7 +214,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				if poisonDmg < 1 {
 					poisonDmg = 1
 				}
-				user.Character.Health -= poisonDmg
+				// Anonymous source: buffs.Buff carries no applier, so every
+				// damage-over-time site stays unattributed until it does.
+				user.Character.ApplyHarm(characters.PoolHealth, poisonDmg, state.ActorRef{})
 				cancelCraftOrSalvageOnDamage(user.Character)
 				cancelDamageBuffs(user.Character)
 				user.SendText(messaging.CategoryToxin, `<ansi fg="green">The poison burns through your veins!</ansi>`)
@@ -226,7 +228,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				if bleedDmg < 1 {
 					bleedDmg = 1
 				}
-				user.Character.Health -= bleedDmg
+				user.Character.ApplyHarm(characters.PoolHealth, bleedDmg, state.ActorRef{})
 				cancelCraftOrSalvageOnDamage(user.Character)
 				cancelDamageBuffs(user.Character)
 				user.SendText(messaging.CategoryToxin, `<ansi fg="red">Blood seeps from your wounds!</ansi>`)
@@ -246,17 +248,11 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			staminaRegen = user.Character.StaminaPerRound()
 		}
 		staminaRegen = int(float64(staminaRegen) * toxRegenMult * regenMultiplier)
-		user.Character.Stamina += staminaRegen
-		if user.Character.Stamina > user.Character.StaminaMax.Value {
-			user.Character.Stamina = user.Character.StaminaMax.Value
-		}
+		user.Character.ApplyRestore(characters.PoolStamina, staminaRegen)
 
 		// Regenerate Conviction (not affected by combat state)
 		convictionRegen := int(float64(user.Character.ConvictionPerRound()) * toxRegenMult * regenMultiplier)
-		user.Character.Conviction += convictionRegen
-		if user.Character.Conviction > user.Character.ConvictionMax.Value {
-			user.Character.Conviction = user.Character.ConvictionMax.Value
-		}
+		user.Character.ApplyRestore(characters.PoolConviction, convictionRegen)
 
 		// Regen-based stat progression: smooth chance based on pool depletion.
 		// Subtract Chrysalis-enchant pool reservation from the max — a player
@@ -324,10 +320,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			if hpAmt < 1 {
 				hpAmt = 1
 			}
-			mob.Character.Health += hpAmt
-			if mob.Character.Health > mob.Character.HealthMax.Value {
-				mob.Character.Health = mob.Character.HealthMax.Value
-			}
+			mob.Character.ApplyRestore(characters.PoolHealth, hpAmt)
 		} else {
 			// In combat: only ConditionRegen applies
 			if mob.Character.HasCondition(characters.ConditionRegen) {
@@ -336,10 +329,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				if hpAmt < 1 {
 					hpAmt = 1
 				}
-				mob.Character.Health += hpAmt
-				if mob.Character.Health > mob.Character.HealthMax.Value {
-					mob.Character.Health = mob.Character.HealthMax.Value
-				}
+				mob.Character.ApplyRestore(characters.PoolHealth, hpAmt)
 			}
 		}
 
@@ -353,20 +343,14 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		if spAmt < 1 {
 			spAmt = 1
 		}
-		mob.Character.Stamina += spAmt
-		if mob.Character.Stamina > mob.Character.StaminaMax.Value {
-			mob.Character.Stamina = mob.Character.StaminaMax.Value
-		}
+		mob.Character.ApplyRestore(characters.PoolStamina, spAmt)
 
 		// Conviction regen
 		cpAmt := int(math.Floor(float64(mob.Character.ConvictionPerRound()) * mobRegenMult))
 		if cpAmt < 1 {
 			cpAmt = 1
 		}
-		mob.Character.Conviction += cpAmt
-		if mob.Character.Conviction > mob.Character.ConvictionMax.Value {
-			mob.Character.Conviction = mob.Character.ConvictionMax.Value
-		}
+		mob.Character.ApplyRestore(characters.PoolConviction, cpAmt)
 
 		// Regen-based stat progression for mobs (gated inside OnRegenTick).
 		// Subtract equipment pool reservation (companions can inherit
@@ -390,9 +374,13 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			if poisonDmg < 1 {
 				poisonDmg = 1
 			}
-			mob.Character.Health -= poisonDmg
+			mob.Character.ApplyHarm(characters.PoolHealth, poisonDmg, state.ActorRef{})
 			cancelCraftOrSalvageOnDamage(&mob.Character)
 			cancelDamageBuffs(&mob.Character)
+			// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
+			// health-damage sites, which let health store overkill. U5b-1 kept it so
+			// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
+			// floors together as one named, playtested change.
 			if mob.Character.Health < 1 {
 				mob.Character.Health = 0
 			}
@@ -404,9 +392,13 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			if bleedDmg < 1 {
 				bleedDmg = 1
 			}
-			mob.Character.Health -= bleedDmg
+			mob.Character.ApplyHarm(characters.PoolHealth, bleedDmg, state.ActorRef{})
 			cancelCraftOrSalvageOnDamage(&mob.Character)
 			cancelDamageBuffs(&mob.Character)
+			// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
+			// health-damage sites, which let health store overkill. U5b-1 kept it so
+			// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
+			// floors together as one named, playtested change.
 			if mob.Character.Health < 1 {
 				mob.Character.Health = 0
 			}

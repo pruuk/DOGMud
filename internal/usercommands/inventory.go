@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -11,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -61,7 +63,8 @@ func checkSpoiledGrenades(user *users.UserRecord, room *rooms.Room) {
 				if dmg < 1 {
 					dmg = 1
 				}
-				user.Character.Health -= dmg
+				user.Character.ApplyHarm(characters.PoolHealth, dmg,
+					state.ActorRef{UserId: user.UserId})
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(
 					`<ansi fg="red-bold">A <ansi fg="itemname">%s</ansi> in your pack detonates! (%s)</ansi>`,
 					item.DisplayName(),

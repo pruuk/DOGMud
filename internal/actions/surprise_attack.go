@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -293,7 +294,12 @@ func SurpriseAttack(actor Actor, opts SurpriseAttackOpts) SurpriseAttackResult {
 		strikeCount++
 
 		// Apply damage to target
-		targetChar.Health -= dmg
+		targetChar.ApplyHarm(characters.PoolHealth, dmg,
+			state.ActorRef{UserId: attackerChar.GetUserId(), MobInstanceId: attackerChar.MobInstanceId})
+		// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
+		// health-damage sites, which let health store overkill. U5b-1 kept it so
+		// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
+		// floors together as one named, playtested change.
 		if targetChar.Health < 0 {
 			targetChar.Health = 0
 		}

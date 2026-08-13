@@ -249,10 +249,7 @@ func actionCancelActivity(params map[string]any, ctx *EvalContext) Result {
 		unspent := d.TotalConvictionCost - d.ConvictionSpent
 		if unspent > 0 {
 			refund := unspent / 2
-			mob.Character.Conviction += refund
-			if mob.Character.Conviction > mob.Character.ConvictionMax.Value {
-				mob.Character.Conviction = mob.Character.ConvictionMax.Value
-			}
+			mob.Character.ApplyRestore(characters.PoolConviction, refund)
 		}
 		_ = a.TransitionToFree(state.TransitionReason{
 			Trigger: activity.TriggerCastCancel,

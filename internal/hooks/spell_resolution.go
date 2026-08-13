@@ -280,7 +280,7 @@ func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, 
 		if backfireDmg < 1 {
 			backfireDmg = 1
 		}
-		user.Character.Health -= backfireDmg
+		user.Character.ApplyHarm(characters.PoolHealth, backfireDmg, charActorRef(user.Character))
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your spell backfires violently, wounding you!</ansi>`)
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 			`<ansi fg="red"><ansi fg="username">%s</ansi>'s spell backfires!</ansi>`, user.Character.Name), user.UserId)
@@ -409,7 +409,7 @@ func applyMobEffect_damage(
 			}
 		}
 	}
-	mob.Character.Health -= dmg
+	mob.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(casterChar))
 	cancelDamageBuffs(&mob.Character)
 	// on_spell_hit item procs (e.g. Staff of the Hollow Choir CP-steal) fire
 	// only on a landing harm hit that dealt damage. This applier is shared by
@@ -508,7 +508,7 @@ func applyMobEffect_knockdown(
 			}
 		}
 	}
-	mob.Character.Health -= dmg
+	mob.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(casterChar))
 	cancelDamageBuffs(&mob.Character)
 	if dmg > 0 {
 		dispatchItemProcs("on_spell_hit", casterChar, &mob.Character, nil, dmg)
@@ -709,7 +709,7 @@ func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room
 		if backfireDmg < 1 {
 			backfireDmg = 1
 		}
-		user.Character.Health -= backfireDmg
+		user.Character.ApplyHarm(characters.PoolHealth, backfireDmg, charActorRef(user.Character))
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your spell backfires violently, wounding you!</ansi>`)
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 			`<ansi fg="red"><ansi fg="username">%s</ansi>'s spell backfires!</ansi>`, user.Character.Name), user.UserId)
@@ -789,7 +789,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 				target.Character.Name, user.Character.Name), user.UserId, target.UserId)
 			return
 		}
-		target.Character.Health -= dmg
+		target.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(user.Character))
 		cancelDamageBuffs(target.Character)
 		if dmg > 0 {
 			dispatchItemProcs("on_spell_hit", user.Character, target.Character, nil, dmg)
@@ -1270,7 +1270,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		if dmg < 1 {
 			dmg = 1
 		}
-		caster.Character.Health -= dmg
+		caster.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(&caster.Character))
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell backfires!`, caster.Character.Name))
 		return
 	}
@@ -1291,7 +1291,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		if dmg < 1 {
 			dmg = 1
 		}
-		caster.Character.Health -= dmg
+		caster.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(&caster.Character))
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell backfires!`, caster.Character.Name))
 		// Stage 30.1: Record backfire
 		combat.RecordSpell(combat.Mob, combat.User, false, false, true, false, 0, atkRoll.ZScore, &caster.Character, target.Character, round)
@@ -1342,7 +1342,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			break
 		}
 		mobSpellDmg = dmg
-		target.Character.Health -= dmg
+		target.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(&caster.Character))
 		cancelDamageBuffs(target.Character)
 		if dmg > 0 {
 			dispatchItemProcs("on_spell_hit", &caster.Character, target.Character, nil, dmg)
@@ -1407,7 +1407,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			}
 		}
 		mobSpellDmg = dmg
-		target.Character.Health -= dmg
+		target.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(&caster.Character))
 		if dmg > 0 {
 			dispatchItemProcs("on_spell_hit", &caster.Character, target.Character, nil, dmg)
 		}

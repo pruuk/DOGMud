@@ -89,9 +89,10 @@ Mob progression uses `MobProgressionRate` as a multiplier.
 #### Pool mutation API
 
 `internal/characters/pools.go` (chunk U5a) holds the primitives every pool
-mutation is meant to route through. U5a only adds them; call sites are routed in
-U5b, so most of the codebase still mutates `c.Health` / `c.Stamina` /
-`c.Conviction` directly today.
+mutation routes through. U5a added them; U5b-1 routed the call sites and deleted
+the hand-rolled clamp that used to sit beside each one. Direct writes to
+`c.Health` / `c.Stamina` / `c.Conviction` are now the exception and are guarded
+(see Gotchas).
 
 ```go
 // Pool identifies one of the three resource pools. Deliberately a string,
@@ -155,9 +156,23 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **`ApplyHarm`'s source is not universally available.** Direct combat, spell and
   maneuver sites have an actor; damage-over-time, toxicity and attrition sites do
   not, because `buffs.Buff` has no applier field. Those pass the zero value.
-- **Do not build on `ApplyHealthChange`.** It cancels combat buffs and triggers a
-  full stat recalculation via `Validate(true)` when health crosses zero, reaching
-  8 call sites today.
+- **`Heal()` is a HARM path at two call sites.** `buffs.ComputeTickAmount`
+  returns a negative value for `TickPercent < 0`. Do NOT make `Heal` a thin
+  wrapper over `ApplyRestore` -- `ApplyRestore` no-ops on non-positive input, so
+  that would silently delete every health damage-over-time buff. U5b-1 split the
+  two signed call sites; U5c retires `Heal`.
+- **`ApplyHealthChange` is a wrapper, not a legacy path.** It owns the
+  `CancelCombatBuffs` on crossing below zero, which reaches `Validate(true)` and
+  a full stat recalculation, and 8 melee call sites depend on it. `ApplyHarm`
+  deliberately does not do this. Do not add new callers, and do not "simplify" it
+  into `ApplyHarm`.
+- **Direct pool writes are guarded.** `pool_mutation_guard_test.go` at the repo
+  root fails any production assignment to `.Health`/`.Stamina`/`.Conviction`
+  outside five declared exemption classes: the primitives themselves, the clamp
+  layer, construction/spawn, admin commands, and a test fixture that compiles
+  into the binary. A temporary sixth block holds the sites U5b-2 and U5c still
+  owe. Add a file there only with a written reason; if you cannot write one, you
+  want a primitive.
 - **No direct pool mutation emits an event**, and neither primitive does. The two
   indirect emitters (`ApplyHealthChange` via `Validate`, and `Life_Cascades`'
   respawn set) are deliberate.
@@ -166,8 +181,11 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   candidate. Movement is a two-pool transaction with a hand-rolled refund.
 - **The three `Deduct*` helpers in `resources.go` are `Deprecated:`.**
   `DeductStamina` maps to `ApplyCost`; `DeductDefenseStamina` and
-  `DeductAttackStamina` map to `ApplyCostPartial`. They still work and still have
-  callers until U5b routes them.
+  `DeductAttackStamina` map to `ApplyCostPartial`. U5b-1 swapped the BODIES of
+  `DeductStamina` and `DeductAttackStamina` onto the primitives, keeping their
+  callers -- both were exactly equivalent. `DeductDefenseStamina` was NOT routed:
+  it is full-or-refuse today and moving it to `ApplyCostPartial` flips defence to
+  pay-what-you-can, which is a live combat change U5b-2 owns.
 - **Defence base stamina costs are config, not Go.** `DodgeBaseStaminaCost`,
   `ParryBaseStaminaCost` and `BlockBaseStaminaCost` feed
   `GetDefenseStaminaCost`, which computes `int(base * multiplier)` TRUNCATED and

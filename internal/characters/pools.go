@@ -198,8 +198,27 @@ func (c *Character) applyVitalChange(pool Pool, delta int) int {
 // system carries one. That is not U5 work.
 //
 // Deliberately does not call Die, cancel buffs, validate, or emit. In particular
-// this is NOT built on ApplyHealthChange, whose buff-cancel and full stat
-// recalculation reach 8 call sites today and must not spread silently.
+// this is NOT built on ApplyHealthChange, and the reason is worth stating because
+// the chain is not obvious:
+//
+//	ApplyHealthChange, on crossing below zero
+//	  -> CancelCombatBuffs
+//	  -> CancelBuffsWithFlag(CancelIfCombat)
+//	  -> Buffs.HasFlag(flag, true)   // the `true` EXPIRES the matching buffs;
+//	                                 // despite its name this is a mutator
+//	  -> Validate(true)
+//
+// The recalculation is NOT a death behaviour. Buffs carry stat modifiers, so once
+// buffs are removed the character's stats are stale until something reconciles
+// them, and Validate is what does that -- along with skill migrations, FSM
+// initialisation and the pool clamps, which this path does not need but gets
+// anyway.
+//
+// So routing the other damage sites through ApplyHealthChange would run a full
+// character validation on every spell fumble and every damage-over-time tick,
+// and routing combat.go's 8 sites away from it would stop melee kills cancelling
+// combat buffs. Hence the split: those 8 keep the wrapper, everything else uses
+// this primitive.
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int {
 	if amount <= 0 {
 		return 0

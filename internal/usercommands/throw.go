@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
@@ -167,7 +168,12 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				if dmg < 1 {
 					dmg = 1
 				}
-				user.Character.Health -= dmg
+				user.Character.ApplyHarm(characters.PoolHealth, dmg,
+					state.ActorRef{UserId: user.UserId})
+				// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
+				// health-damage sites, which let health store overkill. U5b-1 kept it so
+				// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
+				// floors together as one named, playtested change.
 				if user.Character.Health < 0 {
 					user.Character.Health = 0
 				}
@@ -214,7 +220,12 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			if dmg < 1 {
 				dmg = 1
 			}
-			mob.Character.Health -= dmg
+			mob.Character.ApplyHarm(characters.PoolHealth, dmg,
+				state.ActorRef{UserId: user.UserId})
+			// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
+			// health-damage sites, which let health store overkill. U5b-1 kept it so
+			// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
+			// floors together as one named, playtested change.
 			if mob.Character.Health < 0 {
 				mob.Character.Health = 0
 			}

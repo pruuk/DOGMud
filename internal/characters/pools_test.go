@@ -183,3 +183,27 @@ func TestHarmAndRestoreIgnoreNonPositive(t *testing.T) {
 		t.Errorf("a non-positive amount changed the pool: got %d want 10", c.Health)
 	}
 }
+
+// TestSignedTickSplit_NegativeStillHarms guards the U5b-1 trap: a signed tick
+// amount routed only through ApplyRestore would silently delete every
+// damage-over-time buff, because ApplyRestore no-ops on non-positive input.
+//
+// The body mirrors the sign split now live in NewRound_UserRoundTick.go and
+// NewRound_MobRoundTick.go. buffs.ComputeTickAmount returns -amount for
+// TickPercent < 0, so both directions arrive at the same switch.
+func TestSignedTickSplit_NegativeStillHarms(t *testing.T) {
+	c := poolChar(10, 10, 10)
+	tick := -4
+	if tick > 0 {
+		c.ApplyRestore(PoolStamina, tick)
+	} else if tick < 0 {
+		c.ApplyHarm(PoolStamina, -tick, state.ActorRef{})
+	}
+	if c.Stamina != 6 {
+		t.Errorf("negative tick: stamina %d, want 6 -- the DoT path is broken", c.Stamina)
+	}
+	if got := c.ApplyRestore(PoolStamina, -4); got != 0 {
+		t.Errorf("ApplyRestore must no-op on negative input, got %d -- if this "+
+			"changes, the sign split above is no longer load-bearing", got)
+	}
+}

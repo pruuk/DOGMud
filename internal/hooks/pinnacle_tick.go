@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -172,7 +173,9 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	// Deliberate design decision: the drain is non-combat attrition applied
 	// directly to Health, bypassing the damage hooks entirely (no sleep-wake,
 	// no aggro, no mitigation) — the blade's toll, not an attack.
-	c.Health -= drain
+	// Anonymous source: the toll comes from the item, and buffs/items carry no
+	// applier the pool primitives can attribute to.
+	c.ApplyHarm(characters.PoolHealth, drain, state.ActorRef{})
 	// The drain repeats every overdue round, but the feeding LINE is paced by
 	// its own cooldown (reusing the chatter knob) so an ignored hunger debt
 	// doesn't spam the player every round.

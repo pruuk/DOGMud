@@ -91,7 +91,14 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 		}
 
 		// Apply damage
-		p.Defender.Health -= baseDamage
+		// result.Damage was set above from baseDamage and is deliberately left
+		// alone: it is pre-set, not kept in sync with the pool.
+		p.Defender.ApplyHarm(characters.PoolHealth, baseDamage,
+			state.ActorRef{UserId: p.Attacker.GetUserId(), MobInstanceId: p.Attacker.MobInstanceId})
+		// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
+		// health-damage sites, which let health store overkill. U5b-1 kept it so
+		// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
+		// floors together as one named, playtested change.
 		if p.Defender.Health < 0 {
 			p.Defender.Health = 0
 		}
