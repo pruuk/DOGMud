@@ -235,6 +235,13 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 		// damage description below cannot drift from what the pool actually
 		// took.
 		dmg = attacker.ApplyHarm(characters.PoolHealth, dmg, charActorRef(defender))
+		// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
+		// health-damage sites, which let health store overkill. U5b-1 kept it so
+		// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
+		// floors together as one named, playtested change.
+		if attacker.Health < 0 {
+			attacker.Health = 0
+		}
 		result.Riposte = true
 		result.RiposteDamage = dmg
 		result.RiposteMaxHP = attacker.HealthMax.Value
