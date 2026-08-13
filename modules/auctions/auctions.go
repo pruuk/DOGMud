@@ -322,22 +322,21 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 			return true, nil
 		}
 
-		if amt > user.Character.Gold {
-			user.SendText(messaging.CategorySystem, `You don't have that much gold.`)
-			return true, nil
-		}
-
+		// Bid owns the whole money path: it checks the bank, escrows the gold,
+		// refunds the previous high bidder and emits the BankChange event.
+		//
+		// Do NOT add a balance pre-check or a debit here. This block used to do
+		// both, against Character.Gold, and both were wrong. Auctions are
+		// bank-only by design -- Bid debits the bank, refundUser refunds to the
+		// bank, and the seller payout lands in the bank -- so a carried-gold
+		// check locked out anyone whose money was banked, and the extra
+		// `Character.Gold -= amt` charged a winning bidder TWICE, from two
+		// different pools. Because refunds only ever return to the bank, the
+		// carried-gold half was destroyed outright. See TestAuctionsAreBankOnly.
 		if err := mod.auctionMgr.Bid(user.UserId, amt); err != nil {
 			user.SendText(messaging.CategorySystem, err.Error())
 			return true, nil
 		}
-
-		user.Character.Gold -= amt
-
-		events.AddToQueue(events.EquipmentChange{
-			UserId:     user.UserId,
-			GoldChange: -amt,
-		})
 
 		// Broadcast the bid
 		auctionTxt, _ := templates.Process("auctions/auction-bid", currentAuction, user.UserId)
