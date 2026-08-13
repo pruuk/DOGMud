@@ -16,7 +16,7 @@ it without a cycle.
 
 | File | Purpose |
 |------|---------|
-| `contest.go` | `Entry`, `Result`, `Run`, `AgainstDifficulty` — the whole package |
+| `contest.go` | `Entry`, `Result`, `Run`, `RunWithFloors`, `AgainstDifficulty`, and the unexported `clampFloor`. The whole package. |
 
 ## Core types
 
@@ -49,6 +49,18 @@ type Result struct {
 
 ## Gotchas
 
+- **`Run` and `AgainstDifficulty` are UNFLOORED.** Migrating a floored caller
+  onto either silently deletes its floor. `contest_floor_guard_test.go` fails any
+  new production caller outside `internal/combat/combat_helpers.go`.
+- **`AgainstDifficulty` has zero production callers** as of U4. The static-check
+  sites it was built for (`actions/search.go` x6, `actions/track.go`,
+  `forager/forage_core.go`) are still off the core and unassigned; see the
+  roadmap's Category B. It is therefore guarded-and-unused: Task 9 added it to
+  the floor guard's watch list, so it is protected against misuse but nothing
+  calls it yet.
+- **`Run` leaves both `RollResult`s' `.Success` and `.Margin` at zero.** It uses
+  `dice.Roll`, not `dice.OpposedRoll`. Read `Result.Margin`, never
+  `Result.DefenseRoll.Margin`.
 - **`Margin` is ATTACK-POSITIVE.** Positive means the attacker won. This is the
   opposite of `internal/combat`'s `bestDefenseResult.margin`, which is
   defence-positive. Mixing the two compiles cleanly and silently puts crit on the
@@ -111,10 +123,10 @@ type Result struct {
 - `runBestOfAllDefense` (melee, U1) calls `Run` directly, and is the one place
   that converts this package's attack-positive margin into `internal/combat`'s
   defence-positive one.
-- Everything else goes through the two wrappers in
-  `internal/combat/contest_floors.go`, `RunWithManeuverFloors` and
-  `RunWithSpellFloors`, which are where the maneuver and spell floor pairs are
-  read.
+- Everything else goes through the three wrappers in
+  `internal/combat/contest_floors.go`, `RunWithManeuverFloors`,
+  `RunWithSpellFloors` and `RunWithGlobalFloors`, which are where the maneuver,
+  spell and global floor pairs are read.
 
 `internal/hooks`, `internal/actions` and `internal/usercommands` all resolve
 contests, but they reach this core **through `internal/combat`** and must NOT
@@ -126,6 +138,16 @@ what makes "the floors are read in one place" a checkable claim rather than a
 hope.
 
 Sites migrated so far: melee (U1), the spell attack sites and `resolveCharmSpell`
-(U2), and ranged, taunt, the special-move family, grapple and the submission roll
-(U3). Roadmap U4 adds the non-harm contests; `internal/combat/flee.go` is the one
-floor site still off the core and a later chunk owns it.
+(U2), ranged, taunt, the special-move family, grapple and the submission roll
+(U3), and the 19 non-harm contests of U4 (17 on the global pair, plus both
+`internal/combat/flee.go` rolls on the maneuver pair). No floored opposed roll is
+left off the core.
+
+Still off the core, and unassigned: the static-difficulty checks in
+`actions/search.go` (x6), `actions/track.go` and `forager/forage_core.go`. They
+use a flat `dice.RollStat` threshold rather than a contest, so converting them is
+a behaviour change that U4, contracted as a no-op, could not make. Each site is
+breadcrumbed in code. Two of `search.go`'s answer the SAME question as
+`usercommands/go.go`'s opposed hidden-detection contest but ignore the hider's
+score entirely; whichever chunk claims them must reconcile the two
+implementations, not just move one.

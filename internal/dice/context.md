@@ -12,36 +12,58 @@ There is a companion write-up with win-probability tables in
 
 ## The rule that matters
 
-**For anything stat-based, call `RollStat` / `OpposedRollStat`.** They take only
-a mean and derive the standard deviation from the global spread factor:
+**For a single non-contested stat roll, call `RollStat`.** It takes only a mean
+and derives the standard deviation from the global spread factor:
 
 ```go
 func RollStat(mean float64) RollResult
-func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult)
 func StdDevFor(mean float64) float64        // mean × RollSpread
 func SetRollSpread(factor float64)
 ```
 
-`Roll` and `OpposedRoll` take an explicit `stdDev` and are **low-level**. Use
-them only where variance is genuinely not proportional to the stat — weapon
-damage variance taken from an item spec, for example.
+`Roll` takes an explicit `stdDev` and is **low-level**. Use it only where
+variance is genuinely not proportional to the stat -- weapon damage variance
+taken from an item spec, for example.
 
 `util.Rand` and `util.LogRoll` are **not** used for hit or attack checks.
 
-**`OpposedRollStat` floors both ends by default** (chunk 5.10). Neither a
-hopeless underdog nor an overwhelming favourite ever faces a foregone
-conclusion. Three variants exist and the default is the one you want:
+### Opposed contests do NOT live here any more
 
-| Function | Floors | When |
+**Do not reach for an opposed roll in this package.** As of roadmap chunk U4,
+every opposed contest in the game resolves through `internal/contest`, and
+callers reach it through one of three wrappers in
+`internal/combat/contest_floors.go`, chosen by the **cost of a single failure**:
+
+| Wrapper | Floor pair | For |
 |---|---|---|
-| `OpposedRollStat` | configured defaults | every contest — this is the default |
-| `OpposedRollStatWithFloors` | supplied per call | a contest whose failure cost differs (spells) |
-| `OpposedRollStatRaw` | **none** | only if you apply your own; guarded |
+| `combat.RunWithGlobalFloors` | global | out of combat: stealth, theft, traps, detection |
+| `combat.RunWithManeuverFloors` | maneuver | maneuvers, flee -- burns the whole round |
+| `combat.RunWithSpellFloors` | spell | spells |
 
-`OpposedRollStatRaw` and `OpposedRoll` are guarded by
-`contest_floor_guard_test.go` at the repo root: calling either outside
-`internal/dice` fails the build unless you add the package to its exemption list
-with a written reason.
+All three return a `contest.Result`; read `.Success`.
+
+`OpposedRollStat` and `OpposedRollStatWithFloors` still exist and are still
+floored, but they are **`Deprecated:`** and have **zero production callers**.
+U6 deletes them. They survive for two reasons only: `internal/dice` delegates
+between them internally, and `internal/combat/global_floors_test.go` uses
+`OpposedRollStat` as the oracle proving U4 was a no-op.
+
+**Four functions here are now guarded** by `contest_floor_guard_test.go` at the
+repo root, for two different reasons:
+
+| Function | Guarded because |
+|---|---|
+| `OpposedRollStatRaw`, `OpposedRoll` | **unfloored** -- the original chunk 5.9 hazard |
+| `OpposedRollStat`, `OpposedRollStatWithFloors` | **deprecated** -- the risk is drift back onto the legacy path |
+
+Calling any of them outside `internal/dice` fails that test. `contest.Run` and
+`contest.AgainstDifficulty` are guarded too, and are genuinely unfloored --
+migrating a floored caller onto either silently deletes its floor.
+
+A second guard, `floor_pair_guard_test.go`, pins which floor pair each migrated
+site uses. All three pairs ship at `0.05`, so wiring a contest to the wrong one
+is invisible to every behavioural test and becomes a live balance bug the moment
+one pair is retuned.
 
 ## `RollSpread`
 

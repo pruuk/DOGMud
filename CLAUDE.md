@@ -377,9 +377,18 @@ party markers are web-only — the ASCII `map` command is unaffected.
   function, both gated on `c.IsMob`. Players have none.
 
 ## Dice & Rolling System
-- **For all stat-based rolls use `dice.RollStat(mean)` or `dice.OpposedRollStat(atk, def)`** — no stdDev argument needed
-- **`OpposedRollStat` floors both ends by default** (chunk 5.10). Before that rename this same sentence named the *unfloored* function, which is how the 5.9 gap spread. `dice.OpposedRollStatWithFloors` takes per-contest values; `dice.OpposedRollStatRaw` is the unfloored escape hatch and is guarded by `contest_floor_guard_test.go`
-- These wrappers automatically apply the global `RollSpread` factor: `stdDev = mean × RollSpread`
+- **For an opposed contest, call the wrapper for your floor pair** in
+  `internal/combat/contest_floors.go`: `RunWithGlobalFloors` (out-of-combat:
+  stealth, theft, traps, detection), `RunWithManeuverFloors` (maneuvers, flee),
+  `RunWithSpellFloors` (spells). All three return a `contest.Result`; read
+  `.Success`. Pick by the COST OF A SINGLE FAILURE, not by resemblance.
+- `dice.OpposedRollStat` / `OpposedRollStatWithFloors` are **deprecated**. U4
+  moved every production caller onto the wrappers and U6 deletes them.
+  `contest.Run` and `contest.AgainstDifficulty` are **unfloored**; both root
+  guard tests fail a new production caller.
+- `dice.RollStat(mean)` is still correct for a single non-contested roll, with
+  no stdDev argument needed.
+- These `dice` wrappers automatically apply the global `RollSpread` factor: `stdDev = mean × RollSpread`
 - `dice.Roll(mean, stdDev)` / `dice.OpposedRoll(atk, def, stdDev)` are low-level; only use them when variance is NOT stat-proportional (e.g., weapon damage variance from item specs)
 - **`RollSpread`** is the single master randomness knob — set in `_datafiles/config.yaml` under `GamePlay.RollSpread` (default **0.15**). Changing it rescales every dice roll in the engine. See `internal/dice/README.md` for win-probability tables.
 - Z-score thresholds: `ZScore >= 2.0` = crit; `ZScore <= -2.0` = fumble/backfire (~2.3% each, unaffected by `RollSpread`)

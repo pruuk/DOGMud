@@ -123,6 +123,9 @@ func ForageCore(a ForageAttempt) ForageResult {
 	if difficulty == 0 {
 		difficulty = 130
 	}
+	// NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP "Category B"): a static
+	// difficulty check still off the contest core. contest.AgainstDifficulty was
+	// built for exactly this and currently has zero production callers.
 	roll := dice.RollStat(a.SearchScore)
 	if roll.Value < difficulty {
 		return ForageResult{}

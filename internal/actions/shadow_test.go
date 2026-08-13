@@ -242,7 +242,7 @@ func TestShadow_SkillProgressionFires(t *testing.T) {
 //
 //	Shadow uses: CalcSneakScore (Dex + SkillMult(skulld)*25) for actor
 //	             CalcSearchScore (Per + SkillMult(search)*25) for target
-//	Detection:   OpposedRollStat(searchScore, sneakScore);
+//	Detection:   combat.RunWithGlobalFloors(searchScore, sneakScore);
 //	             target wins = detected.
 //
 //	Actor:    Dex=110, skullduggery rank=2

@@ -3,6 +3,7 @@ package combat
 import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/dice"
 )
 
 // Contest floors for combat maneuvers (roadmap chunk 5.9c).
@@ -42,10 +43,11 @@ func SpellFloors() (hit, resist float64) {
 // the MANEUVER floor pair.
 //
 // It exists so that the maneuver pair is fetched in one obvious place rather
-// than at each reader, and after U3 that is the standing claim: the maneuver
-// floors are read HERE and nowhere else, with flee.go the single remaining
-// exception that a later chunk owns. Deliberately stated as a rule and not as a
-// site count, because a count that is right today is the next stale comment.
+// than at each reader, and since U4 that claim is unconditional: the maneuver
+// floors are read HERE and nowhere else. U3 left flee.go as the last exception
+// and U4 migrated it, so there is no exception any more. Deliberately stated as
+// a rule and not as a site count, because a count that is right today is the
+// next stale comment.
 //
 // Two of the migrated sites -- Position_GrappleTick.go and
 // NewRound_MobRoundTick.go -- used to reach the SAME config keys through a
@@ -114,5 +116,61 @@ func RunWithManeuverFloors(attackScore, defenseScore float64) contest.Result {
 // TRANSITIONAL, mirroring contest.RunWithFloors: U6 may delete or reshape both.
 func RunWithSpellFloors(attackScore, defenseScore float64) contest.Result {
 	hit, resist := SpellFloors()
+	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit, resist)
+}
+
+// ContestFloors is the GLOBAL contest floor pair, for uncertain outcomes that
+// are not maneuvers and not spells: sneaking, stealing, planting, defusing,
+// shadowing, noticing someone hidden.
+//
+// It reads dice.ContestFloors() rather than configs.GetBalanceConfig() -- unlike
+// ManeuverFloors and SpellFloors, which read config directly. That asymmetry is
+// deliberate and load-bearing:
+//
+//   - main.go seeds the dice globals from Balance.MinContestSuccessChance and
+//     Balance.MinContestResistChance, so in production the two routes are the
+//     same two config keys and the same values.
+//   - internal/behaviortree/actions_skullduggery_test.go pins the floors with
+//     dice.SetContestFloors. Reading config here would disconnect that pin.
+//   - A Go test binary never loads config.yaml. The global pair therefore
+//     measures 0.05 in a test (a real package var), while the maneuver and spell
+//     pairs measure 0 -- the 0.05 in config.balance.misc.go is a validation
+//     fallback whose condition (< 0 || > 0.50) lets the zero value through.
+//     Routing this pair through config would silently change it to 0 under test.
+//
+// U6 owns collapsing the two routes; do not "tidy" this into a config read.
+func ContestFloors() (hit, resist float64) {
+	return dice.ContestFloors()
+}
+
+// RunWithGlobalFloors contests attackScore against a single defenseScore using
+// the GLOBAL contest floor pair.
+//
+// It is the exact mirror of dice.OpposedRollStat FOR THE RETURNED BOOLEAN, and
+// exists so the 17 out-of-combat contests migrated in U4 keep reading the pair
+// they have always read.
+//
+// "For the boolean" is not hedging. contest.Run builds its rolls with dice.Roll,
+// not dice.OpposedRoll, so Result.AttackRoll and Result.DefenseRoll carry
+// .Success = false and .Margin = 0 ALWAYS -- where the dice path populated both
+// on every call and re-stamped them on a floor flip. Read Result.Margin and
+// Result.Success; never read a margin off either RollResult. Misreading this
+// nearly shipped broken spell-deflection crits in U2.
+//
+// WHY THIS IS NOT RunWithManeuverFloors OR RunWithSpellFloors. config.yaml ships
+// all three pairs at 0.05, so calling the wrong one is invisible in production:
+// it passes every test and every playtest, and becomes a live balance bug the
+// moment U6 retunes one pair. The pairs say different things about the COST OF A
+// SINGLE FAILURE -- a maneuver burns the whole round, an out-of-combat attempt is
+// one shot plus a consequence -- and that distinction is what is being preserved,
+// not the number. floor_pair_guard_test.go at the repo root is the guard.
+//
+// The single entry is deliberately unnamed, so the returned Result.Winner is
+// always "". Read Result.Contested, never Result.Winner, to ask whether a
+// contest happened.
+//
+// TRANSITIONAL, like its two siblings: U6 may delete or reshape all three.
+func RunWithGlobalFloors(attackScore, defenseScore float64) contest.Result {
+	hit, resist := ContestFloors()
 	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit, resist)
 }

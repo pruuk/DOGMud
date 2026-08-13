@@ -6,7 +6,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crimes"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -154,7 +153,7 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item,
 	}
 
 	defenderScore := float64(m.Character.Stats.Perception.ValueAdj)
-	success, _, _, _ := dice.OpposedRollStat(attackerScore, defenderScore)
+	success := combat.RunWithGlobalFloors(attackerScore, defenderScore).Success
 
 	room := actor.GetRoom()
 
@@ -273,7 +272,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
 	actor.OnSkillUse(string(skills.Skullduggery))
 
 	defenderScore := float64(targetUser.Character.Stats.Perception.ValueAdj)
-	success, _, _, _ := dice.OpposedRollStat(attackerScore, defenderScore)
+	success := combat.RunWithGlobalFloors(attackerScore, defenderScore).Success
 
 	if !success {
 		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
@@ -322,7 +321,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
 	if !actor.IsPlayer() {
 		searchScore := CalcSearchScore(targetUser.Character)
 		sneakScore := CalcSneakScoreVsObserver(actor.GetCharacter(), targetUser.Character, actor.GetRoom())
-		detected, _, _, _ := dice.OpposedRollStat(searchScore, sneakScore)
+		detected := combat.RunWithGlobalFloors(searchScore, sneakScore).Success
 		if detected {
 			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> slips something into your `+
@@ -411,7 +410,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 
 	success := true
 	if hasObserver {
-		success, _, _, _ = dice.OpposedRollStat(attackerScore, highestPerception)
+		success = combat.RunWithGlobalFloors(attackerScore, highestPerception).Success
 	}
 
 	if !success {

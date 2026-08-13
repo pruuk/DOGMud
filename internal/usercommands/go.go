@@ -6,11 +6,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/conversationadapter"
 	"github.com/GoMudEngine/GoMud/internal/conversations"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -476,7 +476,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					}
 					sneakScore := actions.CalcSneakScoreVsObserver(user.Character, p.Character, destRoom)
 					observerScore := actions.CalcSearchScore(p.Character)
-					success, _, _, _ := dice.OpposedRollStat(sneakScore, observerScore)
+					success := combat.RunWithGlobalFloors(sneakScore, observerScore).Success
 					if !success {
 						p.SendText(messaging.CategorySystem, fmt.Sprintf(
 							`<ansi fg="username">%s</ansi> slips into the room but you notice them.`,
@@ -495,7 +495,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						}
 						sneakScore := actions.CalcSneakScoreVsObserver(user.Character, &mob.Character, destRoom)
 						observerScore := actions.CalcSearchScore(&mob.Character)
-						success, _, _, _ := dice.OpposedRollStat(sneakScore, observerScore)
+						success := combat.RunWithGlobalFloors(sneakScore, observerScore).Success
 						if !success {
 							spotted = true
 							break
@@ -537,7 +537,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						continue
 					}
 					hiddenScore := actions.CalcSneakScoreVsObserver(hiddenP.Character, user.Character, destRoom)
-					success, _, _, _ := dice.OpposedRollStat(observerScore, hiddenScore)
+					success := combat.RunWithGlobalFloors(observerScore, hiddenScore).Success
 					if success {
 						_ = hiddenP.Character.Awareness.TransitionToRevealing(
 							state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
@@ -557,7 +557,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						continue
 					}
 					hiddenScore := actions.CalcSneakScoreVsObserver(&mob.Character, user.Character, destRoom)
-					success, _, _, _ := dice.OpposedRollStat(observerScore, hiddenScore)
+					success := combat.RunWithGlobalFloors(observerScore, hiddenScore).Success
 					if success {
 						_ = mob.Character.Awareness.TransitionToRevealing(
 							state.TransitionReason{Trigger: awareness.TriggerObserverSearch})

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -135,14 +135,17 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 		})
 	}
 
-	// ── Opposed roll: (Per + skillLevel*25 + kitBonus) vs (difficulty*10) ──
-
+	// ── Contest: (Per + skillLevel*25 + kitBonus) vs (difficulty*10) ──
+	//
+	// The trap is a static difficulty. Deliberately NOT
+	// contest.AgainstDifficulty: that helper is unfloored, and this contest has
+	// been floored by the global pair since chunk 5.10.
 	defuseScore := float64(char.Stats.Perception.ValueAdj) +
 		float64(skillLevel)*25.0 +
 		float64(kitBonus)
 	trapDifficulty := float64(tgt.lockDifficulty) * 10.0
 
-	success, _, _, _ := dice.OpposedRollStat(defuseScore, trapDifficulty)
+	success := combat.RunWithGlobalFloors(defuseScore, trapDifficulty).Success
 
 	displayName := trapTargetDisplayName(tgt)
 

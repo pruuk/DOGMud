@@ -2,7 +2,6 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -81,8 +80,7 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlo
 		}
 		blockScore := float64(m.Character.GetEffectiveDexterity() +
 			m.Character.GetSkillLevel(skills.UnarmedCombat)*25)
-		floorHit, floorResist := ManeuverFloors()
-		success, _, _, _ := dice.OpposedRollStatWithFloors(fleeScore, blockScore, floorHit, floorResist)
+		success := RunWithManeuverFloors(fleeScore, blockScore).Success
 		if !success {
 			return &FleeBlocker{
 				Name:          m.Character.Name,
@@ -104,8 +102,7 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlo
 		}
 		blockScore := float64(u.Character.GetEffectiveDexterity() +
 			u.Character.GetSkillLevel(skills.UnarmedCombat)*25)
-		floorHit, floorResist := ManeuverFloors()
-		success, _, _, _ := dice.OpposedRollStatWithFloors(fleeScore, blockScore, floorHit, floorResist)
+		success := RunWithManeuverFloors(fleeScore, blockScore).Success
 		if !success {
 			return &FleeBlocker{
 				Name:   u.Character.Name,
