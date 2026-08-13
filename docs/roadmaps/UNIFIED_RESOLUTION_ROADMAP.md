@@ -67,7 +67,7 @@ against an incomplete picture.
 The U2 plan originally missed `resolveCharmSpell` because its verification
 grepped one file. Adversarial review caught it, and a second sweep then found
 more sites owned by **no chunk's stated scope**. Recording them here so they are
-assigned deliberately rather than rediscovered at U10's audit.
+assigned deliberately rather than rediscovered at U11's audit.
 
 The maneuver-floor family. When this table was written `combat.ManeuverFloors()`
 had eight callers, and the hooks package reached the same config pair through
@@ -117,8 +117,8 @@ three more that no chunk claims:
 
 | Site | What | Assigned to |
 |---|---|---|
-| `actions/combat_throttle.go:126` | Cast interrupt is a flat `util.Rand(100) < ThrottleInterruptChance` hanging off a maneuver. It bypasses concentration entirely, so U9's "concentration becomes a contest" does **not** reach it, so a master caster's spellcasting still counts for nothing here after U9 unless this is claimed. | **U9** |
-| `actions/surprise_attack.go`, the swing loop | **Corrected in U4: this is not "hand-rolled per-weapon hit resolution". Surprise attack has NO hit resolution at all.** The primary weapon is appended with `hitPenalty: 0.0`, so `penaltyPct` is 0 and `util.Rand(100) < penaltyPct` never fires for it: every primary surprise swing is an unconditional auto-hit. The roll applies only to offhand and extra-arm swings, and it is a SELF-penalty, not a contest. There is no defender term anywhere, so a surprise attack against a novice and against the Elemental King resolve identically. Fits none of the sweep's categories A to D. **The user intends to REDESIGN this skill/effect rather than only give it a defender term, so U9 should treat it as a design slice (brainstorm, then spec, then plan), not a mechanical migration. Decided 2026-08-13.** | **U9** (was U4; U4 declined it because giving it a defender is a behaviour change and U1 to U5 are contracted as provable no-ops) |
+| `actions/combat_throttle.go:126` | Cast interrupt is a flat `util.Rand(100) < ThrottleInterruptChance` hanging off a maneuver. It bypasses concentration entirely, so U10's "concentration becomes a contest" does **not** reach it, so a master caster's spellcasting still counts for nothing here after U10 unless this is claimed. | **U10** |
+| `actions/surprise_attack.go`, the swing loop | **Corrected in U4: this is not "hand-rolled per-weapon hit resolution". Surprise attack has NO hit resolution at all.** The primary weapon is appended with `hitPenalty: 0.0`, so `penaltyPct` is 0 and `util.Rand(100) < penaltyPct` never fires for it: every primary surprise swing is an unconditional auto-hit. The roll applies only to offhand and extra-arm swings, and it is a SELF-penalty, not a contest. There is no defender term anywhere, so a surprise attack against a novice and against the Elemental King resolve identically. Fits none of the sweep's categories A to D. **The user intends to REDESIGN this skill/effect rather than only give it a defender term, so U10 should treat it as a design slice (brainstorm, then spec, then plan), not a mechanical migration. Decided 2026-08-13.** | **U10** (was U4; U4 declined it because giving it a defender is a behaviour change and U1 to U5 are contracted as provable no-ops) |
 | `hooks/Position_GrappleTick.go` z-normalisation | `z = res.Margin / res.AttackRoll.StdDev`, missing the `sqrt(2)` that `combat.ContestCrit` applies. Both sides roll with the attacker's stdDev, so the difference has `stdDev*sqrt(2)`; dividing by `stdDev` alone inflates every drift z by about 41%. Left as-is by U3 so the chunk stays a provable no-op, with a `NOTE(U6)` at the site. | **U6** |
 | `actions/search.go` x6, `actions/track.go`, `forager/forage_core.go` | Static-difficulty checks still off the core. Two of `search.go`'s (hidden players, hidden mobs) answer the SAME question as `usercommands/go.go`'s opposed hidden-detection contest, but with a flat 135 threshold that ignores the hider's score entirely, so a hider's skill decides the outcome in one path and is ignored in the other. Mobs reach the search path too, via `behaviortree/actions_scout.go`'s `actTrySearch`, gated by `conditions_scout.go`'s `condRoomHasHiddenEntity`. `contest.AgainstDifficulty` was built for these and has zero production callers. | **UNASSIGNED.** U4 found them and breadcrumbed each site. Converting them is a behaviour change, so U4 could not claim them. Whichever chunk does must reconcile the two implementations, not just move one. |
 
@@ -170,13 +170,86 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U1** | Contest core, bug-compatible. Generalise `runBestOfAllDefense`; **support contest-vs-static-difficulty, not only actor-vs-actor**; normalise the margin sign at the seam; melee migrated onto it. | L | — | **No** |
 | **U2** | Spell channel onto the core (**6** sites — review found `resolveCharmSpell` too), preserving ×15 attack / ×0 defence as parameters. | M | U1 | **No** |
 | **U3** | ✅ **DONE.** Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. Also claimed and shipped every unowned `ManeuverFloors()` site, plus `TrySpellDeflection` on the spell pair, and deleted the four private floor accessors in `internal/hooks`. | M | U1 | **No** |
-| **U4** | ✅ **DONE.** Non-harm contests onto the core: **19 sites, 17 on the global floor pair and 2 on the maneuver pair.** Global: `actions/sneak.go` (x2), `actions/shadow.go`, `actions/steal.go` (x4), `actions/plant.go` (x4), `actions/defuse.go`, `usercommands/go.go` (x4), `usercommands/skill.skullduggery.shadow.go`. Maneuver: both `combat/flee.go` rolls, the last `dice.OpposedRollStatWithFloors` callers, which are maneuvers because they are contested in combat and cost the round. Added `combat.RunWithGlobalFloors` + `combat.ContestFloors`, extended `contest_floor_guard_test.go` to see `contest.Run` / `contest.AgainstDifficulty`, and added `floor_pair_guard_test.go` to pin the pair, call count and attacker direction of every migrated site. **Declined:** `actions/surprise_attack.go`, reassigned to U9 (see below). | M | U1 | **No** |
-| **U5** | Cost + harm helpers. One cost helper, one harm helper. Config-ify the hardcoded 2/4/5 defence costs. No pool may go negative. | M | U1 | **No** (costs unchanged, only routed) |
+| **U4** | ✅ **DONE.** Non-harm contests onto the core: **19 sites, 17 on the global floor pair and 2 on the maneuver pair.** Global: `actions/sneak.go` (x2), `actions/shadow.go`, `actions/steal.go` (x4), `actions/plant.go` (x4), `actions/defuse.go`, `usercommands/go.go` (x4), `usercommands/skill.skullduggery.shadow.go`. Maneuver: both `combat/flee.go` rolls, the last `dice.OpposedRollStatWithFloors` callers, which are maneuvers because they are contested in combat and cost the round. Added `combat.RunWithGlobalFloors` + `combat.ContestFloors`, extended `contest_floor_guard_test.go` to see `contest.Run` / `contest.AgainstDifficulty`, and added `floor_pair_guard_test.go` to pin the pair, call count and attacker direction of every migrated site. **Declined:** `actions/surprise_attack.go`, reassigned to U10 (see below). | M | U1 | **No** |
+| **U5** | Cost + harm helpers. One cost helper, one harm helper. Move the hardcoded 2/4/5 defence costs into config **at their current effective values**. Enforce the three floor rules (see below). | M | U1 | **No** (costs unchanged, only routed) |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
-| **U7** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource; inverse-skill cost band. | M | U5, U6 | **Yes** |
-| **U8** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. | M | U6 | **Yes** |
-| **U9** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
-| **U10** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, and the adversarial playtest gate. | M | U7–U9 | — |
+| **U7** | **The unified cost model.** NEW SLICE, added 2026-08-13; everything below it shifted by one. Applies the spec's single cost formula to every action: flat config base, encumbrance multiplier (physical only), inverse-skill multiplier, per-action modifier. Takes defence cost off the hardcoded 2/4/5 for real. **Must map the companion / reserved-CP interaction before building.** | L | U5, U6 | **Yes** |
+| **U8** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource. (Was U7. The inverse-skill cost band moved into the new U7, where the whole formula now lives.) | M | U7 | **Yes** |
+| **U9** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. | M | U6 | **Yes** |
+| **U10** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
+| **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, and the adversarial playtest gate. | M | U8–U10 | — |
+
+### U5 — the three floor rules, and what they are NOT
+
+The original line here read "no pool may go negative". That was poorly worded and
+would have caused a real defect. Corrected by the user 2026-08-13. There are
+**three** rules, not one, and the helper must know whether it is applying a COST
+or HARM to pick the right one:
+
+1. **A cost may never drive any pool below 0.** Spell costs, stamina for actions,
+   all of it. If the actor cannot pay, that is a separate decision (U8 owns
+   "the roll still happens with no skill"), not an overdraw.
+2. **Harm floors stamina and conviction at 0.** They stop at empty.
+3. **Harm may drive health below 0, and MUST be allowed to. That is how death
+   works.** `ApplyHealthChange` (`internal/characters/resources.go`) deliberately
+   permits it and the per-round hooks read it. Clamping health at 0 silently
+   breaks death processing. Do not "fix" this.
+
+### U7 — the unified cost model
+
+**Added as its own slice 2026-08-13.** It began as "config-ify the defence costs"
+inside U5, then as an encumbrance-driven defence cost. Both were rejected as
+scope for U5, for two different reasons, and the second rejection is the
+interesting one.
+
+**Why it is not part of U5:** it is a behaviour change, and U1 to U5 are
+contracted as provable no-ops. Dodge costs `int(2 x 0.9) = 1` stamina today;
+under any encumbrance model a light-load dodge is about 2 and a burdened one far
+more, so dodge cost rises by roughly 2x to 12x depending on load. That drains
+defenders faster, which feeds the resource-depletion penalty curve and U6's
+defence model. It needs modelling, not just implementing.
+
+**Why it is not merely "encumbrance-based defence costs":** that design would
+have **split the way costs work** -- defence derived from encumbrance while spell
+costs stayed authored values. The user caught this. Fixing it properly means
+spell cost becomes base x inverse-spellcasting x per-spell modifier, which
+cascades into rhetoric costs too, which is a whole model rather than a tweak.
+
+**The model already exists and does not need redesigning.** Spec section 3.1:
+
+```
+cost = baseCost(action)              # flat config value
+     x encumbranceMultiplier(actor)  # PHYSICAL actions only
+     x skillMultiplier(actor, skill) # inverse to skill, narrow band
+     x configMultiplier(action)      # per-action tuning knob
+```
+
+The apparent split dissolves because **encumbrance is conditional on the action
+being physical**, not because defence and spells use different formulas. Spec
+3.2 already assigns a skill to every action (dodge to unarmed-combat, parry and
+block to weapon-combat, cast to spellcasting, taunt/rally/warcry to rhetoric,
+movement to search). Spec 3.3 already specifies the inverse-skill curve: centred
+at **rank 35**, band **1.25 down to 0.75**, two joined `sqrt` segments matching
+the `SkillMultiplier` idiom.
+
+**User's tuning intent (2026-08-13), which reconciles with that formula:**
+config values are **modifiers, not base costs** -- dodge **1.25** (you move your
+whole body), parry **1.1**, block **1.15** -- with the bulk carried by
+encumbrance, floor about **2** stamina and ceiling about **10** fully burdened.
+Mapped onto the formula: base 2 is the floor, an encumbrance multiplier of 1 to 5
+produces the 2 to 10 range, and 1.25/1.1/1.15 are the per-action modifier.
+
+**RESOLVED: the 2-to-10 range applies BEFORE the per-defence modifier**, so a
+fully burdened dodge reaches `2 x 5 x 1.25 = 12.5`. The ceiling is not a hard
+post-modifier clamp, which would have made dodge, parry and block converge at
+heavy load and erased the distinction exactly where it matters most.
+
+**Blocking prerequisite:** map the interaction with **companions and reserved
+CP** before building. `GetPoolReservation(pool, max)` is already general rather
+than companion-specific, and reserve is already excluded from the low-resource
+progression path (see the *fyttyn vitality exploit, 2026-04-16* comment). What is
+unmapped is how a cost model should treat a reserved pool: does a cost see the
+reserve, and does an actor holding a companion pay more or simply have less?
 
 ### U0 — delete the spell-initiation gate
 
@@ -197,12 +270,12 @@ Delete: `CalcInitiationChance`, the `cast-init` cooldown (`skill.cast.go:135`,
 (`skill.cast.go:183-195`), and knobs `SpellInitiationBase`,
 `SpellInitiationSkillFactor`.
 
-> **KEEP `SpellInitiationWillpowerDivisor` until U9.** Despite its name,
+> **KEEP `SpellInitiationWillpowerDivisor` until U10.** Despite its name,
 > `CalcConcentrationChance` also reads it (`cast_helpers.go:58`). Deleting it in
-> U0 silently breaks concentration. U9 removes it when concentration stops using
+> U0 silently breaks concentration. U10 removes it when concentration stops using
 > it.
 
-### U9 — disruption model
+### U10 — disruption model
 
 **Concentration is a contest, not a flat percentage.** Today
 `CalcConcentrationChance` is `base(50) + willpower/4 − damagePct`, clamped 5–95,
@@ -246,15 +319,15 @@ Resulting hold rates:
   but hard-counters casting outright — modelled, Meirok holds **0%** when the
   Elemental King grapples him, so endgame bosses would simply switch casting off.
 
-Also in U9: **knockdown** and **prone recovery** move from `dice.RollStat(50)`
+Also in U10: **knockdown** and **prone recovery** move from `dice.RollStat(50)`
 to opposed rolls against the opponent's stat + unarmed-combat. Removes
 `SpellInitiationWillpowerDivisor`.
 
-### U10 — `config.yaml` organisation audit
+### U11 — `config.yaml` organisation audit
 
 By the time this arc lands, `_datafiles/config.yaml` will have absorbed a great
 many contest, floor and channel knobs, added chunk by chunk with no pass over the
-file as a whole. U10 owns a sanity check on the file itself, not just on the
+file as a whole. U11 owns a sanity check on the file itself, not just on the
 knobs this arc touched:
 
 - **Grouping.** Are related knobs adjacent? The floor pairs are the obvious test
@@ -270,7 +343,7 @@ knobs this arc touched:
   the removed model is worse than no comment.
 - **Stale and orphaned keys.** Knobs whose readers this arc deleted must go.
   `SpellAttackSkillFactor` and the legacy per-channel skill weights are the
-  known ones; U10 should sweep for others rather than trust that list.
+  known ones; U11 should sweep for others rather than trust that list.
 - **Drift check.** Flag any knob whose shipped value differs sharply from its Go
   default without a comment explaining why (`SpellDamageScale` ships at 3.12
   against a default of 1.0). Absence is meaningful too: a knob left out of the
@@ -336,7 +409,7 @@ how an unreviewed balance change ships.
   assumed hit was binary. It becomes a continuum. Candidates: swings won outright
   (~50% at parity), swings dealing any damage (~96%), or all swings. They differ
   by 2× at parity and far more at the extremes.
-- **Before U7** — ranged and taunt are free today on both sides. Giving them
+- **Before U8** — ranged and taunt are free today on both sides. Giving them
   costs is a real nerf to two playstyles that have never paid.
 
 ---
@@ -403,6 +476,6 @@ Full list in spec section 7. The two that compile cleanly and silently:
    - Every new config knob is documented **in `config.yaml` itself**, next to its
      value, with what it does and what changing it costs.
 
-   U10 is where the sweep happens, but the gate is on the arc, not on U10: no plan
-   in U0–U9 may merge with its own package docs stale, per standing rule 2.
+   U11 is where the sweep happens, but the gate is on the arc, not on U11: no plan
+   in U0–U10 may merge with its own package docs stale, per standing rule 2.
 7. The adversarial playtest gate passes.
