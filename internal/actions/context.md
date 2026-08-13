@@ -639,9 +639,9 @@ type ShadowOptions struct {
 	// Only one should be set; TargetUserId checked first
 }
 
-type SneakOptions struct {
-	// No options — Sneak targets self against all observers in room
-}
+// Sneak has NO options struct. Its entry point is Sneak(actor Actor)
+// SneakResult: it targets self against every observer in the room, so there is
+// nothing to configure.
 
 type StealOptions struct {
 	TargetMobId       int    // mob to pickpocket
@@ -687,7 +687,15 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
 ## Dependencies
 
 - `internal/characters` — Character stats, buffs, inventory, cooldowns
-- `internal/combat` — Power calculations (Consider)
+- `internal/combat`: power calculations (Consider), and the contest wrappers.
+  Since U4 the stealth, theft, trap and detection contests in `sneak.go`,
+  `shadow.go`, `steal.go`, `plant.go` and `defuse.go` resolve through
+  `combat.RunWithGlobalFloors(attackScore, defenseScore) contest.Result`, the
+  global floor pair. Do not reach `internal/contest` directly; this package
+  goes through `internal/combat`. The flat `dice.RollStat` threshold checks in
+  `search.go` and `track.go` are NOT contests yet and are unassigned;
+  `surprise_attack.go` has no hit resolution at all. All three are breadcrumbed
+  in place.
 - `internal/users` — Player character management
 - `internal/mobs` — NPC management
 - `internal/rooms` — Room context, containers, exits

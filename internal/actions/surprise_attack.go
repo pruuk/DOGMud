@@ -219,7 +219,26 @@ func SurpriseAttack(actor Actor, opts SurpriseAttackOpts) SurpriseAttackResult {
 	anyHit := false
 
 	for _, w := range weapons {
-		// Hit check: roll 0-99; if result < penaltyPct → miss this weapon
+		// Per-weapon SELF-penalty: roll 0-99; if result < penaltyPct, this
+		// weapon's swing is dropped.
+		//
+		// NOTE(U9): surprise attack has NO HIT RESOLUTION. The primary weapon is
+		// appended above with hitPenalty 0.0, so penaltyPct is 0 and this roll
+		// never fires for it -- every primary surprise swing is an automatic hit
+		// regardless of the target. The roll only applies to offhand and
+		// extra-arm swings, and there is no defender term anywhere: the target's
+		// stats, skills and defences never enter. A surprise attack against a
+		// novice and against the Elemental King resolve identically.
+		//
+		// U4 declined it. Giving it a defender is a behaviour change and U1-U5
+		// are contracted as provable no-ops (standing rule 3); U3 made the same
+		// call for the Position_GrappleTick z-normalisation. U9 owns it, as the
+		// chunk that converts non-contests into contests (concentration,
+		// knockdown, prone recovery). The user intends to REDESIGN this
+		// skill/effect rather than only bolt a defender term onto it, so U9
+		// should treat it as a design slice (brainstorm, spec, plan), not a
+		// mechanical migration. Model the shift first -- every surprise attack
+		// in the game moves.
 		penaltyPct := int(w.hitPenalty * 100)
 		roll := util.Rand(100)
 		if roll < penaltyPct {

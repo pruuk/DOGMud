@@ -120,9 +120,13 @@ func ParseDiceRoll(dRoll string) (attacks, dCount, dSides, bonus int, buffOnCrit
 func FormatDiceRoll(attacks, dCount, dSides, bonus int, buffOnCrit []int) string
 ```
 
-**`Rand` and `LogRoll` are NOT used for hit or attack checks.** All stat-based
-resolution goes through `internal/dice` (`RollStat`, `OpposedRollStat`). What
-remains here is authored `2d6+3` notation parsing and non-combat randomness.
+**`Rand` and `LogRoll` are NOT used for hit or attack checks.** A single
+uncontested stat roll goes through `dice.RollStat`; an opposed contest goes
+through `internal/contest`, reached via the floor-pair wrappers in
+`internal/combat/contest_floors.go` (`RunWithGlobalFloors`,
+`RunWithManeuverFloors`, `RunWithSpellFloors`). `dice.OpposedRollStat` is
+deprecated and has no production callers as of U4. What remains here is
+authored `2d6+3` notation parsing and non-combat randomness.
 
 ## Files, hashing, encoding
 

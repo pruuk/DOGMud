@@ -467,13 +467,14 @@ behavior tree conditions `target_power_ratio_above` and
 `target_power_ratio_below`, behavior tree action
 `target_weakest_mob_in_room`.
 
-## Contest core (chunks U1 to U3)
+## Contest core (chunks U1 to U4)
 
 Every floored opposed roll in this package, in `internal/actions`, in
-`internal/hooks` and in `internal/usercommands` now resolves through
-`internal/contest`. Callers do not reach that package directly: they go
-through the two thin wrappers in `contest_floors.go`, which fetch the
-right floor pair and hand it to `contest.RunWithFloors`.
+`internal/forager`, in `internal/hooks` and in `internal/usercommands`
+now resolves through `internal/contest`. Callers do not reach that
+package directly: they go through the three thin wrappers in
+`contest_floors.go`, which fetch the right floor pair and hand it to
+`contest.RunWithFloors`.
 
 ### Public API
 
@@ -481,11 +482,13 @@ right floor pair and hand it to `contest.RunWithFloors`.
 // contest_floors.go: the floor pairs themselves.
 func ManeuverFloors() (hit, resist float64)
 func SpellFloors()    (hit, resist float64)
+func ContestFloors()  (hit, resist float64)
 
 // contest_floors.go: the wrappers callers should use. Each contests one
 // attack score against one defence score and returns a contest.Result.
 func RunWithManeuverFloors(attackScore, defenseScore float64) contest.Result
 func RunWithSpellFloors(attackScore, defenseScore float64) contest.Result
+func RunWithGlobalFloors(attackScore, defenseScore float64) contest.Result
 
 // margin_crit.go / crit_floor.go: crit derived from the contest margin.
 const ContestCritThreshold = 2.0
@@ -497,11 +500,13 @@ func DefenseContestCrit(margin float64, roll dice.RollResult) bool
 Which pair to use is a statement about **the cost of a single failure**,
 not about a damage channel. `RunWithSpellFloors` serves everything that
 resolves against a spell (including `TrySpellDeflection`);
-`RunWithManeuverFloors` serves everything else, including
-`TryStoicResolve`, which is the conviction channel. Both wrappers pass a
-single unnamed entry, so `Result.Winner` is always `""`. Ask
-`Result.Contested`, never `Result.Winner`, to find out whether a contest
-happened.
+`RunWithGlobalFloors` serves the out-of-combat contests, where an attempt
+is one shot plus a consequence (stealth, theft, planting, defusing,
+shadowing, noticing someone hidden); `RunWithManeuverFloors` serves
+everything else, including `TryStoicResolve`, which is the conviction
+channel, and both flee rolls. All three wrappers pass a single unnamed
+entry, so `Result.Winner` is always `""`. Ask `Result.Contested`, never
+`Result.Winner`, to find out whether a contest happened.
 
 Melee is the exception by design: `runBestOfAllDefense` calls
 `contest.Run` (unfloored, best-of-N) and applies `MinDefenseChance` /
@@ -512,9 +517,14 @@ Callers today: `ExecuteSkillMove`, `AttemptGrapple`,
 `RollSubmissionAttempt`, `TryStoicResolve`, `TrySpellDeflection`,
 `actions.ExecuteTaunt`, `usercommands.Throw`,
 `hooks.processGrapplePair` (grapple drift), `hooks.tickMobCharmState`
-(charm reroll), and the spell sites in `hooks/spell_resolution.go` +
-`hooks/charm_spell.go`. The only `dice.OpposedRollStatWithFloors`
-callers left in the codebase are the two in `flee.go`, which U4 owns.
+(charm reroll), the spell sites in `hooks/spell_resolution.go` +
+`hooks/charm_spell.go`, both flee rolls in `flee.go`, and the U4
+out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
+`actions/steal.go`, `actions/plant.go`, `actions/defuse.go`,
+`usercommands/go.go` and
+`usercommands/skill.skullduggery.shadow.go`. `dice.OpposedRollStat` and
+`dice.OpposedRollStatWithFloors` now have zero production callers and
+carry `Deprecated:` markers; U6 deletes them.
 
 ### Gotchas
 
@@ -537,6 +547,20 @@ callers left in the codebase are the two in `flee.go`, which U4 owns.
   real one, and `Result.Floored` records it. The sentinel normalises to a
   near-zero z, which is the only reason a hit handed out by the floor
   cannot also crit. Do not "restore" the real margin.
+- **Three floor pairs, all shipping at 0.05.** `RunWithGlobalFloors`,
+  `RunWithManeuverFloors` and `RunWithSpellFloors` are NOT interchangeable, but
+  in production the wrong one is numerically invisible and becomes a balance bug
+  when U6 retunes a pair. `floor_pair_guard_test.go` at the repo root guards the
+  pair, the call count and the attacker direction of every migrated site.
+- **The three pairs are NOT equal in a test binary.** The global pair reads
+  `dice.ContestFloors()`, a package var defaulting to 0.05. The maneuver and
+  spell pairs read `configs.GetBalanceConfig()`, which is never loaded in a test
+  binary, so they measure **0**. The 0.05 in `config.balance.misc.go` is a
+  validation fallback (`< 0 || > 0.50`) that the zero value passes untouched.
+- **`Result.Floored` is available and currently unread.** These wrappers are the
+  single choke point for every out-of-combat contest, so they are the cheapest
+  place to instrument the floor-reliance rate the roadmap wants modelled before
+  U6.
 - **`SkillMoveParams.AttackSkill` and `.DefenseSkill` are RAW skill
   levels with NO `SkillWeight` applied.** `ExecuteSkillMove` adds them
   straight to the stats (`AttackSkill + AttackStat` vs `DefenseSkill +

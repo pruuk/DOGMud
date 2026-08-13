@@ -118,6 +118,9 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 
 	// Roll the Perception+Search score.
 	searchScore := CalcSearchScore(char)
+	// NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP "Category B"): a static
+	// difficulty check still off the contest core. contest.AgainstDifficulty was
+	// built for exactly this and currently has zero production callers.
 	roll := dice.RollStat(searchScore)
 	result.RollValue = roll.Value
 

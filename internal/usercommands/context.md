@@ -173,6 +173,14 @@ The `internal/usercommands` package implements the complete command system for p
 - `internal/spells`: Magic system integration
 - `internal/buffs`: Status effect checking and application
 - `internal/scripting`: JavaScript runtime integration
+- `internal/combat`: contest resolution. Since U4 the four movement contests in
+  `go.go` (a sneaking mover against each occupant, and the mover spotting hidden
+  players and mobs on arrival) and the one in `skill.skullduggery.shadow.go`
+  resolve through
+  `combat.RunWithGlobalFloors(attackScore, defenseScore) contest.Result`, the
+  global floor pair; `throw.go` uses `combat.RunWithManeuverFloors`. Do not
+  reach `internal/contest` directly; this package goes through
+  `internal/combat`.
 
 ## Usage Patterns
 - Commands follow consistent signature and return conventions

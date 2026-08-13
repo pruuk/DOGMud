@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-08-13: Quiet work behind the curtain
+
+Sneaking, stealing, planting something on someone, disarming a trap, shadowing
+a traveller and slipping away from a fight now all resolve through the same
+shared system the rest of the game already uses.
+
+Nothing about how often any of these succeed has changed, and you should not be
+able to tell the difference. This is groundwork for the wider combat rebalance
+still to come.
+
 ## 2026-08-12: Your spell starts when you tell it to
 
 Beginning a spell used to fail sometimes for no reason you could see, and no

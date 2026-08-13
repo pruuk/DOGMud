@@ -137,6 +137,22 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.SendText(messaging.CategorySystem, text)
 	}
 
+	// NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP "Category B"): the six
+	// dice.RollStat threshold checks in this file are the LAST uncertain
+	// outcomes off the contest core. The two below are the sharpest problem:
+	// they answer "does the observer spot the hider?" with a flat 135 threshold
+	// that never reads the hider's sneak score, while
+	// usercommands/go.go resolves the SAME question as an opposed contest
+	// (observerScore vs hiddenScore). A hider's skill decides the outcome in one
+	// path and is ignored in the other. Mobs reach this path too, via
+	// behaviortree/actions_scout.go's actTrySearch, gated by the cheap
+	// condRoomHasHiddenEntity pre-check in conditions_scout.go.
+	//
+	// U4 migrated go.go's opposed version and deliberately did NOT touch these:
+	// converting a flat threshold into a contest is a behaviour change, and
+	// U1-U5 are provable no-ops. Whichever chunk claims them must reconcile the
+	// two implementations, not just move one.
+
 	// ── Tier 2 (target 135): Hidden players ─────────────────────
 	hiddenPlayerNames := []string{}
 	for _, pId := range room.GetPlayers() {

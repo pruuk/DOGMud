@@ -82,16 +82,19 @@ accessors; `internal/hooks` no longer reads the floors and no longer imports
 | `usercommands/throw.go` (`Throw`) | U3 (ranged) | **shipped in U3** |
 | `combat/avoidance.go` (`TryStoicResolve`) | U3 (conviction defence) | **shipped in U3** |
 | `combat/avoidance.go` (`TrySpellDeflection`) | U3, on the SPELL pair | **shipped in U3** |
-| `combat/flee.go:85`, `:108` | U4 (flee) | still on `dice.OpposedRollStatWithFloors` |
+| `combat/flee.go:85`, `:108` | U4 (flee) | **shipped in U4**, on the maneuver pair |
 | `combat/grapple.go` (`AttemptGrapple`) | was UNOWNED, **claimed by U3** | **shipped in U3** |
 | `combat/submission.go` (`RollSubmissionAttempt`) | was UNOWNED, **claimed by U3** | **shipped in U3** |
 | `combat/skill_moves.go` (`ExecuteSkillMove`, 14 callers) | was UNOWNED, **claimed by U3** | **shipped in U3** |
 | `hooks/Position_GrappleTick.go` (`processGrapplePair`) | was UNOWNED, **claimed by U3** | **shipped in U3** |
 | `hooks/NewRound_MobRoundTick.go` (`tickMobCharmState`, charm-duration reroll) | was unclaimed, **claimed by U3** | **shipped in U3** |
 
-After U3 the only `dice.OpposedRollStatWithFloors` callers left anywhere are the
-two in `combat/flee.go`, which U4 owns. Line numbers are deliberately gone from
-this table: they drifted within one chunk of being written.
+After U3 the only `dice.OpposedRollStatWithFloors` callers left anywhere were the
+two in `combat/flee.go`, which U4 owned and shipped. Line numbers are
+deliberately gone from this table: they drifted within one chunk of being
+written. **As of U4 both `dice.OpposedRollStat` and
+`dice.OpposedRollStatWithFloors` have zero production callers and carry
+`Deprecated:` markers; U6 deletes them.**
 
 **`skill_moves.go` was the awkward one.** `ExecuteSkillMove` is shared between
 ranged (`actions/combat_fire.go` folds its defence into a scalar and calls it)
@@ -115,24 +118,49 @@ three more that no chunk claims:
 | Site | What | Assigned to |
 |---|---|---|
 | `actions/combat_throttle.go:126` | Cast interrupt is a flat `util.Rand(100) < ThrottleInterruptChance` hanging off a maneuver. It bypasses concentration entirely, so U9's "concentration becomes a contest" does **not** reach it, so a master caster's spellcasting still counts for nothing here after U9 unless this is claimed. | **U9** |
-| `actions/surprise_attack.go:222-225` | Hand-rolled per-weapon hit resolution: `util.Rand(100) < penaltyPct` per swing, which never contests the defender at all. Fits none of the sweep's categories A to D (it is opposed in intent, flat-percentage in implementation, and has no defender term). | **U4** |
+| `actions/surprise_attack.go`, the swing loop | **Corrected in U4: this is not "hand-rolled per-weapon hit resolution". Surprise attack has NO hit resolution at all.** The primary weapon is appended with `hitPenalty: 0.0`, so `penaltyPct` is 0 and `util.Rand(100) < penaltyPct` never fires for it: every primary surprise swing is an unconditional auto-hit. The roll applies only to offhand and extra-arm swings, and it is a SELF-penalty, not a contest. There is no defender term anywhere, so a surprise attack against a novice and against the Elemental King resolve identically. Fits none of the sweep's categories A to D. **The user intends to REDESIGN this skill/effect rather than only give it a defender term, so U9 should treat it as a design slice (brainstorm, then spec, then plan), not a mechanical migration. Decided 2026-08-13.** | **U9** (was U4; U4 declined it because giving it a defender is a behaviour change and U1 to U5 are contracted as provable no-ops) |
 | `hooks/Position_GrappleTick.go` z-normalisation | `z = res.Margin / res.AttackRoll.StdDev`, missing the `sqrt(2)` that `combat.ContestCrit` applies. Both sides roll with the attacker's stdDev, so the difference has `stdDev*sqrt(2)`; dividing by `stdDev` alone inflates every drift z by about 41%. Left as-is by U3 so the chunk stays a provable no-op, with a `NOTE(U6)` at the site. | **U6** |
+| `actions/search.go` x6, `actions/track.go`, `forager/forage_core.go` | Static-difficulty checks still off the core. Two of `search.go`'s (hidden players, hidden mobs) answer the SAME question as `usercommands/go.go`'s opposed hidden-detection contest, but with a flat 135 threshold that ignores the hider's score entirely, so a hider's skill decides the outcome in one path and is ignored in the other. Mobs reach the search path too, via `behaviortree/actions_scout.go`'s `actTrySearch`, gated by `conditions_scout.go`'s `condRoomHasHiddenEntity`. `contest.AgainstDifficulty` was built for these and has zero production callers. | **UNASSIGNED.** U4 found them and breadcrumbed each site. Converting them is a behaviour change, so U4 could not claim them. Whichever chunk does must reconcile the two implementations, not just move one. |
 
 **Also for U4: the floor guard does not see the new core.** The recurrence guard
 `contest_floor_guard_test.go` (repo root, `package main`) walks the AST for
 calls to `dice.OpposedRollStatRaw` and `dice.OpposedRoll` only. `contest.Run`
 and `contest.AgainstDifficulty` are exported, unfloored, and completely
 invisible to it, so a new caller can opt out of the floors through the very
-package this arc built. U4 is the chunk that migrates the remaining unfloored
+package this arc built. U4 is the chunk that migrates the last of the remaining
 sites, so extending the guard's function list (and its exemption for
 `internal/combat`, which floors melee afterwards in `resolveDefenseOutcomeCore`)
-belongs there.
+belongs there. **Done in U4**, with a `internal/dice` exemption for the
+deprecated pair, plus a second guard, `floor_pair_guard_test.go`.
+
+> **Correction (U4).** Earlier notes in this file describe U4's sites as
+> "unfloored". They were not. Every one of them called `dice.OpposedRollStat`,
+> which chunk 5.10 renamed so the FLOORED roll carries the default name;
+> `dice.OpposedRollStatRaw` is the unfloored escape hatch. The notes predate that
+> rename. U4 was therefore a floored-to-floored migration on the global contest
+> pair, which is exactly why it could be a provable no-op. What is genuinely
+> unfloored is `contest.Run` and `contest.AgainstDifficulty`, which is why the
+> guard now watches them.
 
 **Moved out of B by decision:** knockdown and prone recovery become opposed rolls
 against the opponent's stat + unarmed-combat (both currently roll against a flat
 `dice.RollStat(50)`). Prone recovery opposes the current aggro target when there
 is one and falls back to a static difficulty when there is not. Search, track and
 forage stay static — there is genuinely no opponent and inventing one is worse.
+
+> **Clarified 2026-08-13 (U4).** "Search, track and forage stay static" is a
+> statement about their **shape**, not about their **ownership**. U4's first draft
+> read it as ownership and nearly skipped them entirely. Staying static means
+> they resolve against a difficulty rather than against an opponent, which is
+> what `contest.AgainstDifficulty` exists for. It does **not** mean they are done,
+> and it does not mean they stay off the contest core: they are still
+> **UNASSIGNED** and still on flat `dice.RollStat` thresholds. See the row for
+> them in the unowned table above.
+>
+> The two hidden-detection checks in `actions/search.go` are a partial exception
+> to "no opponent": there IS an opponent, the hider, and `usercommands/go.go`
+> already contests against them. Whichever chunk claims these must decide whether
+> those two move to category A rather than staying static.
 
 ## Plans
 
@@ -142,7 +170,7 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U1** | Contest core, bug-compatible. Generalise `runBestOfAllDefense`; **support contest-vs-static-difficulty, not only actor-vs-actor**; normalise the margin sign at the seam; melee migrated onto it. | L | — | **No** |
 | **U2** | Spell channel onto the core (**6** sites — review found `resolveCharmSpell` too), preserving ×15 attack / ×0 defence as parameters. | M | U1 | **No** |
 | **U3** | ✅ **DONE.** Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. Also claimed and shipped every unowned `ManeuverFloors()` site, plus `TrySpellDeflection` on the spell pair, and deleted the four private floor accessors in `internal/hooks`. | M | U1 | **No** |
-| **U4** | Non-harm contests onto the core: sneak, steal, plant, defuse, flee (contest + progression layers only, no harm layer). **Named explicitly:** `combat/flee.go:85`, `:108` (the last `dice.OpposedRollStatWithFloors` callers left); `actions/shadow.go`; `usercommands/skill.skullduggery.shadow.go`; the hidden-detection checks in `usercommands/go.go`; `actions/surprise_attack.go:222-225`. **Also extend `contest_floor_guard_test.go` to see `contest.Run` / `contest.AgainstDifficulty`.** | M | U1 | **No** |
+| **U4** | ✅ **DONE.** Non-harm contests onto the core: **19 sites, 17 on the global floor pair and 2 on the maneuver pair.** Global: `actions/sneak.go` (x2), `actions/shadow.go`, `actions/steal.go` (x4), `actions/plant.go` (x4), `actions/defuse.go`, `usercommands/go.go` (x4), `usercommands/skill.skullduggery.shadow.go`. Maneuver: both `combat/flee.go` rolls, the last `dice.OpposedRollStatWithFloors` callers, which are maneuvers because they are contested in combat and cost the round. Added `combat.RunWithGlobalFloors` + `combat.ContestFloors`, extended `contest_floor_guard_test.go` to see `contest.Run` / `contest.AgainstDifficulty`, and added `floor_pair_guard_test.go` to pin the pair, call count and attacker direction of every migrated site. **Declined:** `actions/surprise_attack.go`, reassigned to U9 (see below). | M | U1 | **No** |
 | **U5** | Cost + harm helpers. One cost helper, one harm helper. Config-ify the hardcoded 2/4/5 defence costs. No pool may go negative. | M | U1 | **No** (costs unchanged, only routed) |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource; inverse-skill cost band. | M | U5, U6 | **Yes** |
@@ -340,6 +368,13 @@ Full list in spec section 7. The two that compile cleanly and silently:
 - **An attack crit forces a hit.** Any crit adjustment evaluated before the hit
   outcome is final becomes an undeclared second hit floor leaking through
   `MinDefenseChance`.
+- **All three floor pairs ship at 0.05.** Wiring a contest to the wrong pair
+  changes nothing observable in production and becomes a balance bug the moment
+  U6 retunes one. Behavioural tests cannot see it; `floor_pair_guard_test.go`
+  reads the source instead.
+- **The three pairs differ in a TEST binary**, and not the way you would guess:
+  global reads a `dice` package var (0.05), maneuver and spell read config
+  (never loaded under test, so **0**). Never quote a Go default as a live value.
 
 ---
 
