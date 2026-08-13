@@ -72,6 +72,13 @@ func TestRunWithGlobalFloorsMatchesDiceOpposedRollStat(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			oldWins := 0
 			for i := 0; i < n; i++ {
+				// Calling the deprecated function is the entire point: it is the
+				// ORACLE this test measures the new wrapper against. U4 deprecated
+				// it precisely because every production caller moved to
+				// RunWithGlobalFloors, and the evidence that the move was a no-op
+				// is this comparison. When U6 deletes the function, delete this
+				// test with it -- do not "fix" it by dropping the oracle.
+				//nolint:staticcheck // SA1019: deliberate use of the deprecated oracle.
 				if ok, _, _, _ := dice.OpposedRollStat(c.atk, c.def); ok {
 					oldWins++
 				}
