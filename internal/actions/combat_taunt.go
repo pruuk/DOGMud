@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -142,10 +143,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		if selfDmg < 1 {
 			selfDmg = 1
 		}
-		char.Conviction -= selfDmg
-		if char.Conviction < 0 {
-			char.Conviction = 0
-		}
+		char.ApplyHarm(characters.PoolConviction, selfDmg,
+			state.ActorRef{UserId: char.GetUserId(), MobInstanceId: char.MobInstanceId})
 
 		actor.OnSkillUse(string(skills.Rhetoric))
 
@@ -221,10 +220,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 
 		// Apply conviction damage to target.
-		target.Char.Conviction -= dmg
-		if target.Char.Conviction < 0 {
-			target.Char.Conviction = 0
-		}
+		target.Char.ApplyHarm(characters.PoolConviction, dmg,
+			state.ActorRef{UserId: char.GetUserId(), MobInstanceId: char.MobInstanceId})
 
 		// Build player-facing damage description.
 		convMaxRef := target.Char.ConvictionMax.Value

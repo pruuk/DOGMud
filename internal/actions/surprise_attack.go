@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -293,10 +294,8 @@ func SurpriseAttack(actor Actor, opts SurpriseAttackOpts) SurpriseAttackResult {
 		strikeCount++
 
 		// Apply damage to target
-		targetChar.Health -= dmg
-		if targetChar.Health < 0 {
-			targetChar.Health = 0
-		}
+		targetChar.ApplyHarm(characters.PoolHealth, dmg,
+			state.ActorRef{UserId: attackerChar.GetUserId(), MobInstanceId: attackerChar.MobInstanceId})
 
 		// Per-weapon hit messages
 		dmgDesc := combat.GetDamageDescription(dmg, defenderMaxHP)

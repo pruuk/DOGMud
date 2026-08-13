@@ -194,6 +194,20 @@ type CritEffectResult struct {
 	RoomMsg     string
 }
 
+// charActorRef builds the ActorRef identifying a character as the SOURCE of
+// harm, for characters.ApplyHarm.
+//
+// Nil-safe on purpose: several harm sites in this package hold a caster
+// pointer that is legitimately nil (mob-cast paths with no originating
+// character), and the pool primitives read the zero value as "anonymous",
+// which is exactly the right answer there.
+func charActorRef(c *characters.Character) state.ActorRef {
+	if c == nil {
+		return state.ActorRef{}
+	}
+	return state.ActorRef{UserId: c.GetUserId(), MobInstanceId: c.MobInstanceId}
+}
+
 // applyCritEffects processes parry/dodge/block crit effects for any combat
 // pairing. The attacker is the one who swung. The defender is the one who
 // rolled the defense crit and gains the benefit.
@@ -217,10 +231,10 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			dmg = 1
 		}
 
-		attacker.Health -= dmg
-		if attacker.Health < 0 {
-			attacker.Health = 0
-		}
+		// Reassigned from the APPLIED return so result.RiposteDamage and the
+		// damage description below cannot drift from what the pool actually
+		// took.
+		dmg = attacker.ApplyHarm(characters.PoolHealth, dmg, charActorRef(defender))
 		result.Riposte = true
 		result.RiposteDamage = dmg
 		result.RiposteMaxHP = attacker.HealthMax.Value

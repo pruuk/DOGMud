@@ -91,10 +91,10 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 		}
 
 		// Apply damage
-		p.Defender.Health -= baseDamage
-		if p.Defender.Health < 0 {
-			p.Defender.Health = 0
-		}
+		// result.Damage was set above from baseDamage and is deliberately left
+		// alone: it is pre-set, not kept in sync with the pool.
+		p.Defender.ApplyHarm(characters.PoolHealth, baseDamage,
+			state.ActorRef{UserId: p.Attacker.GetUserId(), MobInstanceId: p.Attacker.MobInstanceId})
 
 		// Apply knockdown if rolled. Chunk 4b W4 cutover: fire the
 		// FSM transition (Prone or Supine per KnockdownToSupine)

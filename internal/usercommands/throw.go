@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
@@ -167,10 +168,8 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				if dmg < 1 {
 					dmg = 1
 				}
-				user.Character.Health -= dmg
-				if user.Character.Health < 0 {
-					user.Character.Health = 0
-				}
+				user.Character.ApplyHarm(characters.PoolHealth, dmg,
+					state.ActorRef{UserId: user.UserId})
 				dmgDesc := combat.GetDamageDescription(dmg, user.Character.HealthMax.Value)
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(
 					`<ansi fg="red">The explosion sears you! (%s)</ansi>`, dmgDesc))
@@ -214,10 +213,8 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			if dmg < 1 {
 				dmg = 1
 			}
-			mob.Character.Health -= dmg
-			if mob.Character.Health < 0 {
-				mob.Character.Health = 0
-			}
+			mob.Character.ApplyHarm(characters.PoolHealth, dmg,
+				state.ActorRef{UserId: user.UserId})
 			dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`The explosion catches <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`,

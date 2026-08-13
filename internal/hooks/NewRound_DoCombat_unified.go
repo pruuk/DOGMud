@@ -355,8 +355,9 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 		if bonusDmg < 1 {
 			bonusDmg = 1
 		}
-		defChar.Health -= bonusDmg
-		res.DamageToTarget += bonusDmg
+		// res.DamageToTarget feeds TrackPlayerDamage, aggro and analytics, so it
+		// must track what the pool ACTUALLY took, not what was requested.
+		res.DamageToTarget += defChar.ApplyHarm(characters.PoolHealth, bonusDmg, charActorRef(atkChar))
 	}
 
 	// Return damage (species + equipment + mutation).
@@ -386,7 +387,7 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 		returnDmg += combat.ReflectDamage(dealt, magReturnPct,
 			atkChar.GetMagicalMitigation(), combat.MitigationCap(combat.ChannelMagical))
 		if returnDmg > 0 {
-			atkChar.Health -= returnDmg
+			atkChar.ApplyHarm(characters.PoolHealth, returnDmg, charActorRef(defChar))
 			emitReturnDamageText(atk, def, returnDmg)
 			// Reflect-Skin flavor riders: the backlash also afflicts the
 			// attacker (Molten burn DoT, Frostbite chill, Voltaic shock).

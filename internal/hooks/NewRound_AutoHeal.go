@@ -78,7 +78,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			// Lethal toxicity is caught by the Health<1 non-combat death check above
 			// on the next tick.
 			if dmg := user.Character.ToxicitySicknessDamage(); dmg > 0 {
-				user.Character.Health -= dmg
+				user.Character.ApplyHarm(characters.PoolHealth, dmg, state.ActorRef{})
 			}
 		}
 
@@ -214,7 +214,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				if poisonDmg < 1 {
 					poisonDmg = 1
 				}
-				user.Character.Health -= poisonDmg
+				// Anonymous source: buffs.Buff carries no applier, so every
+				// damage-over-time site stays unattributed until it does.
+				user.Character.ApplyHarm(characters.PoolHealth, poisonDmg, state.ActorRef{})
 				cancelCraftOrSalvageOnDamage(user.Character)
 				cancelDamageBuffs(user.Character)
 				user.SendText(messaging.CategoryToxin, `<ansi fg="green">The poison burns through your veins!</ansi>`)
@@ -226,7 +228,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				if bleedDmg < 1 {
 					bleedDmg = 1
 				}
-				user.Character.Health -= bleedDmg
+				user.Character.ApplyHarm(characters.PoolHealth, bleedDmg, state.ActorRef{})
 				cancelCraftOrSalvageOnDamage(user.Character)
 				cancelDamageBuffs(user.Character)
 				user.SendText(messaging.CategoryToxin, `<ansi fg="red">Blood seeps from your wounds!</ansi>`)
