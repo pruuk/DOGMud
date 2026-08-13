@@ -557,11 +557,18 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		// Stage 9.4: Track defense for stance calculation
 		targetChar.IncrementDefenseCount()
 
-		// Check if defender can afford this defense (don't deduct yet)
-		cost := targetChar.GetDefenseStaminaCost(defenseType)
-		if targetChar.Stamina < cost {
-			continue
-		}
+		// U5b-2: there is deliberately NO affordability gate here.
+		//
+		// This used to `continue` an unaffordable defence out of the candidate
+		// set. With every defence unaffordable the entry list came out empty,
+		// contest.Run reported uncontested, and the swing fell through to the
+		// MinDefenseChance last resort -- a flat 15% save, always narrated as a
+		// dodge, and never able to defence-crit. An exhausted actor still acts;
+		// the winning defence is charged partially below.
+		//
+		// The defender's exhaustion currently costs their defence NOTHING:
+		// GetDefenseScore has no resource term, and stripping the skill term is
+		// U8. That gap is deliberate and disclosed, not an oversight.
 
 		// Calculate defense score for this defense type
 		defenseScore := targetChar.GetDefenseScore(defenseType)
