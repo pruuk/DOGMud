@@ -179,7 +179,7 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U8** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource. (Was U7. The inverse-skill cost band moved into the new U7, where the whole formula now lives.) | M | U7 | **Yes** |
 | **U9** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. | M | U6 | **Yes** |
 | **U10** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
-| **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, and the adversarial playtest gate. | M | U8–U10 | — |
+| **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, **player helpfiles for `quell` and `defy` plus the help-registry and category cleanup**, and the adversarial playtest gate. | M | U8–U10 | — |
 
 ### U5 — why it is three slices, and why it is NOT a no-op
 
@@ -370,6 +370,51 @@ Also in U10: **knockdown** and **prone recovery** move from `dice.RollStat(50)`
 to opposed rolls against the opponent's stat + unarmed-combat. Removes
 `SpellInitiationWillpowerDivisor`.
 
+### U11 — player-facing help for the new defences, and a help-registry cleanup
+
+**`quell` and `defy` are new player-facing vocabulary.** Nothing in the game
+teaches them today, and a defence the player cannot look up is a defence they
+will not understand losing to. This is not optional polish; it is the same gate
+every other content change carries.
+
+Required:
+
+1. **New helpfiles** at `_datafiles/world/dogmud/templates/help/quell.template`
+   and `defy.template` -- the **dogmud** layer, not the upstream `default` one.
+   Each should say what it defends against, that it costs **Conviction**, and
+   which skill drives it (`spellcasting` for quell, `rhetoric` for defy).
+2. **Cross-links, both directions.** `help combat` and `help defense` must
+   mention quell and defy alongside dodge/parry/block, and the new files must
+   link back. Also consider: `help spellcasting`, `help rhetoric`, `help taunt`,
+   `help conviction`. A trigger word that appears in no other helpfile is
+   undiscoverable -- that is exactly how `stow` became invisible.
+3. **Register them in `_datafiles/world/dogmud/keywords.yaml`.** The `help` index
+   is hand-maintained and there is **no fallback to the command registry**, so a
+   helpfile that is not in that YAML never appears in the topic list. `stow`,
+   `tutorial` and `trade` are already missing for this reason.
+4. **Update the existing player text.** `TrySpellDeflection` and
+   `TryStoicResolve` ship strings saying "deflect" and "resolve"
+   (`internal/hooks/spell_resolution.go`,
+   `internal/hooks/NewRound_DoCombat_helpers.go`,
+   `internal/hooks/charm_spell.go`). U6 renames the mechanics; U11 must not leave
+   the old words in player copy.
+
+**Also in this slice, unrelated to the arc: the help category list needs a
+cleanup.** `help` groups topics by category, and the categories have drifted into
+duplicates and near-duplicates. Two confirmed by audit on 2026-08-13, both caused
+by module overlays merging last-write-wins onto a flat map:
+
+- `modules/auctions/files/data-overlays/keywords.yaml` files `auction` under
+  **`shop`** (singular) while the main file uses **`shops`** (plural), so the
+  rendered index shows two separate headings and the second contains one entry.
+- `modules/cleanup/.../keywords.yaml` re-files `bury` and `trash` under
+  **`information`**, overriding the main file's `character` and `items`
+  placements and leaving those main-file entries dead.
+
+Sweep the full category set for others rather than fixing only these two. See
+the broader command/help audit recorded separately, which also covers ~13 dead
+upstream helpfiles and the commands missing from the index.
+
 ### U11 — `config.yaml` organisation audit
 
 By the time this arc lands, `_datafiles/config.yaml` will have absorbed a great
@@ -425,24 +470,34 @@ The applicable defence set is a property of the ATTACK TYPE:
 | Melee | dodge, parry, block | 3 |
 | Ranged | dodge, block | 2 |
 | Spell, physical damage | dodge, block | 2 |
-| Spell, mental | resist (`Wil + spellcasting x5`) | 1 |
-| Taunt / social | resist (`Wil + rhetoric x5`) | 1 |
+| Spell, mental | **quell** (`Wil + spellcasting x5`) | 1 |
+| Taunt / social | **defy** (`Wil + rhetoric x5`) | 1 |
+
+**The five defences are `dodge`, `parry`, `block`, `quell`, `defy`.** All five
+are short verbs, deliberately -- they read as one set in a combat log.
 
 Notes that matter for anyone routing costs:
 
+- **`quell` and `defy` are NEW NAMES, chosen 2026-08-13.** Both defences were
+  previously called "resist", which collided: the mental defence and the social
+  defence shared one word, which would have been ambiguous the moment either
+  reached a knob name or player copy. **Quell** is the mental-spell defence
+  (you put the working down); **defy** is the social defence (you refuse to rise
+  to it).
 - **Dodge is REUSED for physical spells.** There is no separate physical-spell
   defence.
 - **Parry is deliberately excluded from ranged and physical spells.** You cannot
   parry a bolt. Adding it later is one row in this table and nothing else, which
   is the point of the design.
-- **The two resist defences cost CONVICTION, not stamina.** Grepping for a
-  stamina cost will find nothing and prove nothing.
-- Both already exist in code as `TrySpellDeflection` and `TryStoicResolve`
-  (`internal/combat/avoidance.go`), which U6 absorbs. Their player-facing text
-  already says "deflect" and "resolve".
-- **Both are currently called "resist", which is a naming problem.** The mental
-  defence and the social defence share one word. Needs resolving before either
-  reaches a knob name or player copy.
+- **Quell and defy cost CONVICTION, not stamina.** Grepping for a stamina cost
+  will find nothing and prove nothing. This is exactly the error that made an
+  agent report spell resist as a phantom mechanic on 2026-08-13.
+- They exist in code today as `TrySpellDeflection` (→ **quell**) and
+  `TryStoicResolve` (→ **defy**), in `internal/combat/avoidance.go`, which U6
+  absorbs. **Their shipped player text currently says "deflect" and "resolve"
+  and must be rewritten to the new names when U6 lands them** -- see
+  `internal/hooks/spell_resolution.go` and
+  `internal/hooks/NewRound_DoCombat_helpers.go` for the existing strings.
 
 ### Modelling gates, before the plan they guard
 

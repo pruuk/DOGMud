@@ -103,8 +103,8 @@ modifiers.
 | Ranged attack | config | yes | ranged-combat |
 | Grapple | existing per-round | yes (already) | unarmed-combat |
 | Spell cast | existing authored CP cost | no | spellcasting |
-| Spell resist (mental) | fraction of the incoming spell's cost | no | spellcasting |
-| Taunt / social resist | fraction of the incoming taunt's cost | no | rhetoric |
+| **Quell** (mental spell defence) | fraction of the incoming spell's cost | no | spellcasting |
+| **Defy** (social / taunt defence) | fraction of the incoming taunt's cost | no | rhetoric |
 | Taunt / rally / warcry | config, CP | no | rhetoric |
 | Flee, sneak, other non-harm | config, small | yes | relevant skill |
 | **Movement** | existing terrain-scaled cost | yes (already) | **search** |
@@ -256,8 +256,8 @@ Remaining work is small and specific:
 | `BlockBaseStaminaCost` | replaces the hardcoded 5 |
 | `AttackBaseStaminaCost` | replaces the per-weapon authored cost |
 | `RangedBaseStaminaCost` | ranged currently costs nothing |
-| `SpellResistCostFraction` | fraction of the incoming spell's cost paid to resist |
-| `TauntResistCostFraction` | fraction of the incoming taunt's cost paid to resist |
+| `QuellCostFraction` | fraction of the incoming spell's cost paid to quell it |
+| `DefyCostFraction` | fraction of the incoming taunt's cost paid to defy it |
 | `TauntBaseConvictionCost` | flat base for taunt / rally / warcry |
 | `NonHarmContestBaseCost` | flee, sneak and similar |
 | `CostSkillMultiplierMax` / `CostSkillMultiplierMin` | 1.25 / 0.75 |
