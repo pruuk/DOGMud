@@ -726,18 +726,17 @@ func grappleEncumbranceMultiplier(c *characters.Character, cfg configs.Balance) 
 // both sides. Cost can drive stamina to 0; the character keeps
 // grappling (the penalty curve maxes out, which is the intended
 // "smother" feedback loop).
+//
+// That sentence is ApplyCostPartial's contract verbatim: charge what is there,
+// never refuse, never go below empty. Hence the primitive owns the floor and
+// the explicit clamps are gone. The CostResult is discarded on purpose --
+// nothing here reads Short until U8 gives being short a consequence.
 func applyGrappleStaminaCost(controller, controlled *characters.Character, cfg configs.Balance) {
 	base := float64(cfg.GrappleStaminaCostPerRound)
 	ctrlCost := int(math.Round(base * float64(cfg.GrappleControllerCostMultiplier)))
 	cdCost := int(math.Round(base * float64(cfg.GrappleControlledCostMultiplier)))
-	controller.Stamina -= ctrlCost
-	if controller.Stamina < 0 {
-		controller.Stamina = 0
-	}
-	controlled.Stamina -= cdCost
-	if controlled.Stamina < 0 {
-		controlled.Stamina = 0
-	}
+	controller.ApplyCostPartial(characters.PoolStamina, ctrlCost)
+	controlled.ApplyCostPartial(characters.PoolStamina, cdCost)
 }
 
 // applyControlShift updates both sides' ControlLevel state based on
