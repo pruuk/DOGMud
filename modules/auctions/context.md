@@ -53,6 +53,16 @@ that has been spending cannot keep bidding, and outbid gold is refunded.
 
 ## Gotchas
 
+- **Player money is BANK-ONLY, never carried gold.** `Bid` checks and debits
+  `Character.Bank`, `refundUser` refunds to `Character.Bank`, and the seller
+  payout settles to `Character.Bank`. `Bid` owns the entire money path
+  (check, escrow, refund the previous bidder, emit `BankChange`), so a caller
+  must not add its own balance check or debit around it. The `auction bid`
+  command handler used to do both against `Character.Gold`: it locked out anyone
+  whose money was banked, and on success charged the winner twice out of two
+  different pools. Since refunds only return to the bank, the carried-gold half
+  was destroyed. `bank_only_test.go` now fails any production file in this
+  module that touches `Character.Gold`.
 - **Wallets regenerate; they are not infinite.** A test that lists many lots
   quickly will see NPC interest dry up. That is the design, not a bug.
 - **`Refund` must be called on every outbid path.** A missed refund silently
