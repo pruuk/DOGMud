@@ -246,17 +246,11 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			staminaRegen = user.Character.StaminaPerRound()
 		}
 		staminaRegen = int(float64(staminaRegen) * toxRegenMult * regenMultiplier)
-		user.Character.Stamina += staminaRegen
-		if user.Character.Stamina > user.Character.StaminaMax.Value {
-			user.Character.Stamina = user.Character.StaminaMax.Value
-		}
+		user.Character.ApplyRestore(characters.PoolStamina, staminaRegen)
 
 		// Regenerate Conviction (not affected by combat state)
 		convictionRegen := int(float64(user.Character.ConvictionPerRound()) * toxRegenMult * regenMultiplier)
-		user.Character.Conviction += convictionRegen
-		if user.Character.Conviction > user.Character.ConvictionMax.Value {
-			user.Character.Conviction = user.Character.ConvictionMax.Value
-		}
+		user.Character.ApplyRestore(characters.PoolConviction, convictionRegen)
 
 		// Regen-based stat progression: smooth chance based on pool depletion.
 		// Subtract Chrysalis-enchant pool reservation from the max — a player
@@ -324,10 +318,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			if hpAmt < 1 {
 				hpAmt = 1
 			}
-			mob.Character.Health += hpAmt
-			if mob.Character.Health > mob.Character.HealthMax.Value {
-				mob.Character.Health = mob.Character.HealthMax.Value
-			}
+			mob.Character.ApplyRestore(characters.PoolHealth, hpAmt)
 		} else {
 			// In combat: only ConditionRegen applies
 			if mob.Character.HasCondition(characters.ConditionRegen) {
@@ -336,10 +327,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				if hpAmt < 1 {
 					hpAmt = 1
 				}
-				mob.Character.Health += hpAmt
-				if mob.Character.Health > mob.Character.HealthMax.Value {
-					mob.Character.Health = mob.Character.HealthMax.Value
-				}
+				mob.Character.ApplyRestore(characters.PoolHealth, hpAmt)
 			}
 		}
 
@@ -353,20 +341,14 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		if spAmt < 1 {
 			spAmt = 1
 		}
-		mob.Character.Stamina += spAmt
-		if mob.Character.Stamina > mob.Character.StaminaMax.Value {
-			mob.Character.Stamina = mob.Character.StaminaMax.Value
-		}
+		mob.Character.ApplyRestore(characters.PoolStamina, spAmt)
 
 		// Conviction regen
 		cpAmt := int(math.Floor(float64(mob.Character.ConvictionPerRound()) * mobRegenMult))
 		if cpAmt < 1 {
 			cpAmt = 1
 		}
-		mob.Character.Conviction += cpAmt
-		if mob.Character.Conviction > mob.Character.ConvictionMax.Value {
-			mob.Character.Conviction = mob.Character.ConvictionMax.Value
-		}
+		mob.Character.ApplyRestore(characters.PoolConviction, cpAmt)
 
 		// Regen-based stat progression for mobs (gated inside OnRegenTick).
 		// Subtract equipment pool reservation (companions can inherit

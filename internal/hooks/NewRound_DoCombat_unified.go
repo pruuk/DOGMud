@@ -401,14 +401,14 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 	if lifestealPct := atkChar.StatMod("lifesteal_pct"); lifestealPct > 0 {
 		healAmt := int(float64(res.DamageToTarget) * float64(lifestealPct) / 100.0)
 		if healAmt > 0 {
-			atkChar.Health += healAmt
-			if atkChar.Health > atkChar.HealthMax.Value {
-				atkChar.Health = atkChar.HealthMax.Value
-			}
+			// Describe what was APPLIED, not what was requested: an attacker
+			// near full health absorbs less than the roll asked for, and the
+			// old message overstated the heal in exactly that case.
+			healed := atkChar.ApplyRestore(characters.PoolHealth, healAmt)
 			// Divergence: only player attackers get a private "your weapon
 			// feeds" message — mobs have no connection.
 			if atk.IsPlayer() {
-				healDesc := combat.GetHealDescription(healAmt, atkChar.HealthMax.Value)
+				healDesc := combat.GetHealDescription(healed, atkChar.HealthMax.Value)
 				atk.SendText(messaging.CategoryHitMelee, fmt.Sprintf(
 					`<ansi fg="green">Your weapon feeds on the blow! (%s)</ansi>`,
 					healDesc))

@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -27,10 +28,7 @@ func Cancel(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		unspent := d.TotalConvictionCost - d.ConvictionSpent
 		if unspent > 0 {
 			refund := unspent / 2
-			user.Character.Conviction += refund
-			if user.Character.Conviction > user.Character.ConvictionMax.Value {
-				user.Character.Conviction = user.Character.ConvictionMax.Value
-			}
+			user.Character.ApplyRestore(characters.PoolConviction, refund)
 		}
 		_ = a.TransitionToFree(state.TransitionReason{
 			Trigger: activity.TriggerCastCancel,

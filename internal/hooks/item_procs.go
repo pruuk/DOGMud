@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -177,11 +178,13 @@ func procStealPool(owner, other *characters.Character, params map[string]float64
 		if amt <= 0 {
 			return false
 		}
-		other.Conviction -= amt
-		owner.Conviction += amt
-		if owner.Conviction > owner.ConvictionMax.Value {
-			owner.Conviction = owner.ConvictionMax.Value
-		}
+		// A TRANSFER, not a restore: the owner may only absorb what was
+		// actually drained, or conviction would be created or destroyed. amt
+		// is still pre-clamped to the target's pool above so the drain and the
+		// gain stay equal today.
+		ownerRef := state.ActorRef{UserId: owner.GetUserId(), MobInstanceId: owner.MobInstanceId}
+		drained := other.ApplyHarm(characters.PoolConviction, amt, ownerRef)
+		owner.ApplyRestore(characters.PoolConviction, drained)
 		return true
 	}
 	return false

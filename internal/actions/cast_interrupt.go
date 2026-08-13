@@ -21,10 +21,7 @@ func InterruptTargetCast(target *characters.Character, by state.ActorRef) bool {
 		spellId = d.SpellId
 		unspent := d.TotalConvictionCost - d.ConvictionSpent
 		if unspent > 0 {
-			target.Conviction += unspent / 2
-			if target.Conviction > target.ConvictionMax.Value {
-				target.Conviction = target.ConvictionMax.Value
-			}
+			target.ApplyRestore(characters.PoolConviction, unspent/2)
 		}
 	}
 	_ = a.TransitionToFree(state.TransitionReason{
