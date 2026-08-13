@@ -90,7 +90,6 @@ var poolWriteExemptions = map[string]string{
 	// This is a FILE exemption on the file where both follow-ups land. Delete it
 	// once both functions are gone rather than letting it outlive them.
 	"internal/characters/resources.go": "U5b-2 routes DeductDefenseStamina; U5c retires Heal",
-	"internal/usercommands/stand.go":   "U5b-2: stand's two-knob gate",
 	// The seven retained health floors. U5b-1 routed the writes themselves onto
 	// ApplyHarm but kept the floor at each site, marked NOTE(U5b-2). Removing
 	// them is observable -- GMCP ships Character.Health raw and the prompt

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -47,8 +48,13 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	staminaCost := int(float64(user.Character.StaminaMax.Value) * float64(cfg.StandStaminaCost))
 	minStamina := int(float64(user.Character.StaminaMax.Value) * float64(cfg.StandMinStamina))
 
-	// Check if player has enough stamina
-	if user.Character.Stamina < minStamina {
+	// Check if player has enough stamina.
+	//
+	// U5b-2: stand REFUSES, and it is deliberately not a single ApplyCost.
+	// StandMinStamina gates and StandStaminaCost charges; they are independent
+	// knobs that merely happen to ship at the same fraction today. Collapsing
+	// them into one call would weld a tuning coincidence into code.
+	if !user.Character.CanAfford(characters.PoolStamina, minStamina) {
 		needed := minStamina - user.Character.Stamina
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You're too exhausted to stand! (need %d more stamina)", needed))
 		return true, nil
@@ -62,11 +68,12 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	// Deduct stamina
-	user.Character.Stamina -= staminaCost
-	if user.Character.Stamina < 0 {
-		user.Character.Stamina = 0
-	}
+	// Charge stamina. Partial, not full-or-refuse: the FSM transition above has
+	// already fired, so a refusal here would let the player stand for FREE. That
+	// is unreachable at shipped values (both knobs are 0.15, so the amounts are
+	// identical), but it is the correct shape if they are ever tuned apart.
+	// ApplyCostPartial also makes the old manual sub-zero clamp redundant.
+	_ = user.Character.ApplyCostPartial(characters.PoolStamina, staminaCost)
 
 	// Send messages
 	user.SendText(messaging.CategorySystem, "You struggle to your feet!")
