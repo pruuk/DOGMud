@@ -1,5 +1,22 @@
 # DOGMud Patch Notes
 
+## 2026-08-13: The shared way of spending and healing is now the only way
+
+The shared system for spending your effort and your resolve, and for taking a
+wound or recovering from one, went in a few days ago with nothing using it. Now
+almost everything does. Regeneration, poison, bleeding, spell damage, thrown
+weapons, lifesteal, grappling upkeep and the rest all go through the one path.
+
+Before this, every one of those places did its own arithmetic and kept its own
+idea of the limits, and they did not all agree. Folding them together means a
+change to how any of it feels can be made once, in one place, instead of being
+missed in a dozen corners.
+
+None of this changes what happens to you. Every number was matched to what it
+already was, on purpose, so that the few places we do want to feel different can
+be changed on their own later and actually be noticed. The handful of spots that
+would have shifted were deliberately left alone for now.
+
 ## 2026-08-13: More quiet work behind the curtain
 
 The game now has one shared way of spending your effort and your resolve, and
