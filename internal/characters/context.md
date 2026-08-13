@@ -120,7 +120,19 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
 func (c *Character) ApplyRestore(pool Pool, amount int) int
+
+// DisplayHealth returns Health clamped at 0 for player-facing output (U5b-2).
+// The model stores overkill; the wire must not show it.
+func (c *Character) DisplayHealth() int
 ```
+
+`DisplayHealth()` is the only sanctioned clamp. U5b-2 routed every display
+surface through it: the nine reads in `internal/users/userrecord.prompt.go`,
+`modules/gmcp/gmcp.Char.go` (own vitals and the enemy list),
+`modules/playtest/beacons.go`, and the `healthStr` helper in
+`internal/templates/templatesfunctions.go`. `renderVitalBar`,
+`targetHealthDesc` and `modules/gmcp/gmcp.Party.go` already clamp internally and
+were deliberately left alone.
 
 `source` is `internal/state.ActorRef`. Unexported support: `poolMax`, `setPool`,
 and `applyVitalChange` (the single signed pipeline behind harm and restore).
@@ -134,12 +146,24 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   work and because `validatePoolClamps` carries an explicit "No lower Health
   clamp" comment -- **not** because death detection reads the negative value,
   which it does not (every gate tests `< 1` or `<= 0`).
-- **`ApplyCost` refuses; `ApplyCostPartial` charges what it can.** The split is
-  whether the actor retains a meaningful alternative action, NOT volition and NOT
-  whether a cooldown is involved -- both framings were tried and both are wrong.
-  Refuse: movement, stand, spellcasting, mutation moves. Partial: auto-attack,
-  dodge/parry/block, grapple upkeep, flee. Death from exhaustion was tried in
-  this game and players hated it.
+- **Health stores overkill; stamina and conviction do not.** `ApplyHarm` floors
+  stamina and conviction at 0 and deliberately does NOT floor health, so a
+  killing blow leaves a negative value that U6 reads for magnitude.
+  `validate.go` carries a matching explicit "No lower Health clamp". Clamping
+  belongs at the display layer: call `Character.DisplayHealth()`, never re-add a
+  floor here. As of U5b-2 all seven remaining per-site floors are gone, so this
+  is uniform.
+- **`ApplyCost` vs `ApplyCostPartial` is not a style choice.** Refuse where a
+  meaningful alternative action remains (movement, stand, spellcasting, mutation
+  special moves); charge partially where refusal would leave the actor helpless
+  (auto-attack, dodge/parry/block, grapple upkeep, flee). The split is NOT
+  volitional-vs-involuntary and NOT "uses a cooldown"; both framings were tried
+  and both are provably false. Death from exhaustion was tried in this game and
+  players hated it.
+- **A green pool-mutation guard does not mean every pool write is routed.**
+  `resources.go` is exempt as a FILE, so `Heal()`'s writes are invisible and so
+  are its three production callers (`actions/combat_drain.go:126`, `:281`,
+  `hooks/item_procs.go:99`). They retire with `Heal` in U5c.
 - **`CostResult.Short` is what a later chunk reads to strip the skill term.**
   The penalty for being short is a worse roll, not a lost action.
 - **`CanAfford` reads the RAW pool, not reserve-excluded.** No affordability
@@ -179,13 +203,13 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **ActionPoints is a fourth pool and is NOT in `Pool`.** It is an inherited
   GoMud movement throttle, redundant with stamina movement costs, and a deletion
   candidate. Movement is a two-pool transaction with a hand-rolled refund.
-- **The three `Deduct*` helpers in `resources.go` are `Deprecated:`.**
-  `DeductStamina` maps to `ApplyCost`; `DeductDefenseStamina` and
-  `DeductAttackStamina` map to `ApplyCostPartial`. U5b-1 swapped the BODIES of
-  `DeductStamina` and `DeductAttackStamina` onto the primitives, keeping their
-  callers -- both were exactly equivalent. `DeductDefenseStamina` was NOT routed:
-  it is full-or-refuse today and moving it to `ApplyCostPartial` flips defence to
-  pay-what-you-can, which is a live combat change U5b-2 owns.
+- **`DeductStamina` and `DeductDefenseStamina` no longer exist.** U5b-2 deleted
+  both. `flee` and the defence charge now call `ApplyCostPartial` directly, and
+  movement (`usercommands/go.go`) calls `ApplyCost`. The one survivor in
+  `resources.go` is `DeductAttackStamina`, which is `Deprecated:` and is already
+  a thin wrapper over `ApplyCostPartial`; it stays only because nothing
+  downstream strips the skill term until U8. `DeductActionPoints` is a different
+  pool entirely (see the ActionPoints note above).
 - **Defence base stamina costs are config, not Go.** `DodgeBaseStaminaCost`,
   `ParryBaseStaminaCost` and `BlockBaseStaminaCost` feed
   `GetDefenseStaminaCost`, which computes `int(base * multiplier)` TRUNCATED and
@@ -1019,13 +1043,13 @@ implementation-detail rationale.
 
 ## Files
 
-44 non-test files. Grouped by what they own:
+45 non-test files. Grouped by what they own:
 
 | Group | Files |
 |-------|-------|
 | Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go` |
 | Stats & progression | `progression.go`, `skills.go`, `effective_stats.go`, `statmods`-adjacent helpers, `mobmastery.go`, `kdstats.go` |
-| Resources & conditions | `resources.go`, `conditions.go`, `cooldowns.go`, `buffs.go`, `sight.go` |
+| Resources & conditions | `pools.go`, `resources.go`, `conditions.go`, `cooldowns.go`, `buffs.go`, `sight.go` |
 | Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go` |
 | Combat | `combat.go`, `combat_state_compat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go` |
 | Casting | `cast_helpers.go`, `spells.go` |

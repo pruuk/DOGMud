@@ -136,8 +136,13 @@ outclassed defenders have a 15% chance to avoid any swing.
 
 **Stamina Costs:**
 - Only the winning defense (best margin) costs stamina — losing defenses are free
-- Low stamina drains smooth penalty via `ResourceMultiplier`
-- Defense costs configured in `config.gameplay.yaml`
+- The winner is charged with `ApplyCostPartial`, so a defender who cannot pay in
+  full still defends and simply pays what is left (U5b-2)
+- Defense costs are config, not Go: `DodgeBaseStaminaCost` / `ParryBaseStaminaCost`
+  / `BlockBaseStaminaCost` × the matching multiplier, truncated, floored at 1.
+  The 2 / 4 / 5 above are the *base* values; shipped effective costs are 1 / 3 / 4.
+- `ResourceMultiplier` is attack-side only. It does NOT penalise defence today —
+  see the exhaustion gotcha under "Contest core" below.
 
 **Implementation:**
 - `runBestOfAllDefense()` in `combat_helpers.go` builds each defense's score and
@@ -528,6 +533,18 @@ carry `Deprecated:` markers; U6 deletes them.
 
 ### Gotchas
 
+- **`runBestOfAllDefense` has no affordability gate, on purpose.** Every defence
+  in the sequence enters the contest regardless of the defender's stamina, and
+  only the winner is charged, partially. Re-adding a gate would drop an
+  exhausted defender out of the contest and back onto the `MinDefenseChance`
+  last resort: a flat 15% save, always narrated as a dodge, never able to
+  defence-crit. Defence attempts and stance counting happen above where the gate
+  used to be, so they are unaffected either way.
+- **Exhaustion currently costs a defender nothing.** `GetDefenseScore` has no
+  resource term and every `ResourceMultiplier` caller is attack-side, so between
+  U5b-2 and U8 a 0-stamina defender defends exactly as well as a rested one.
+  That is a known, temporary, deliberate gap; U8 strips the skill term. Do not
+  "fix" it by re-adding a gate.
 - **Read `contest.Result.Margin`. Never a `dice.RollResult`'s
   `.Margin`.** The core rolls each side with `dice.Roll`, which does not
   populate `RollResult.Margin`, so `res.AttackRoll.Margin` and
@@ -851,7 +868,9 @@ shield). All three are rolled simultaneously:
 
 ```
 For each defense in [dodge, parry, block]:
-  1. Deduct defense stamina cost.
+  1. Track the attempt and bump the stance counter. NOTHING is charged here,
+     and there is no affordability gate (U5b-2) — every defence enters the
+     contest and only the winner pays, partially, further down.
   2. defenseScore = mob.GetDefenseScore(defenseType)
        dodge: DEX-based
        parry: weapon parry rating
