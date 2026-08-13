@@ -33,7 +33,7 @@ paths. Existing tests must pass unchanged at every step.
 
 | Parameter | During migration | At the flip (U6) |
 |---|---|---|
-| `skillWeight` | per-channel 5 / 1 / 0 / 15 (**incomplete: the special-move family adds five more regimes, see the pre-U6 gate**) | uniform 5.0, **parameter deleted** |
+| `skillWeight` | per-channel 5 / 1 / 0 / 15 (**incomplete: this covers four channels only. The special-move family shares no skill-weight convention at all, so there is no fifth number to add here. See the pre-U6 gate for the measured, per-site table.**) | uniform 5.0, **parameter deleted** |
 | `defenceOutcome` | `boolean` — a win is a clean miss | `multiplier` — margin-scaled 50–100% |
 | `defenceSet` | per-channel as today | designed sets 3 / 2 / 2 / 1 / 1 |
 
@@ -239,10 +239,21 @@ to opposed rolls against the opponent's stat + unarmed-combat. Removes
   | `AttemptGrapple` | ×1 | ×1 |
   | `RollSubmissionAttempt` | ×`SubSkillWeight` (1.5) | ×1.5 |
   | `processGrapplePair` (grapple drift) | ×2.2 aggressor / ×2.0 defender | same |
-  | `usercommands.Throw` (AoE grenade) | ×`SkillWeight` (5) on skullduggery | ×2.5 on perception (`SkillWeight × 0.5`) |
+  | `usercommands.Throw` (AoE grenade) | ×`SkillWeight` (5) on skullduggery | ×2.5 on **perception, a stat** (`SkillWeight × 0.5`); no defence skill term at all |
   | taunt / `TryStoicResolve` | ×5 | ×5 |
 
-  **Six distinct regimes among the sites U3 alone migrated, not one.** U6's
+  **The rule, not the count: these sites share no skill-weight convention, and
+  the table above is the authority.** Read down the two weight columns and no two
+  consecutive rows have to agree. Deliberately stated as a rule, because a count
+  that is right today is the next stale comment: this line said "six" while the
+  table it summarised showed five distinct weight pairs (×1/×1, ×1.5/×1.5,
+  ×2.2/×2.0, ×5/×2.5, ×5/×5), with ranged differing structurally rather than
+  numerically. Add the other channels already on the core, spell at ×15/×0 and
+  melee at ×5/×5, and the pairing changes again. Count from the table when a
+  number is actually needed, and say what you counted.
+
+  What matters for the gate is not the total but that it is greater than one.
+  U6's
   stated action is "uniform ×5, parameter deleted". Applied naively that moves
   14 sites from ×1 to ×5 on both sides at once. Against mobs, which all carry
   combat skill 1, a weapon-combat-30 player's bash goes from `130 vs 101` to

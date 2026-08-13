@@ -9,10 +9,23 @@ import (
 )
 
 // Regression coverage for the two SILENT traps in the defensive-avoidance pair
-// (roadmap U3 task 1b). Written against the PRE-migration code deliberately:
-// TrySpellDeflection is already on internal/contest, TryStoicResolve is still on
-// dice.OpposedRollStatWithFloors, and this file must pass for BOTH shapes so it
-// can prove the later migration of TryStoicResolve was a no-op.
+// (roadmap U3 task 1b). It was written against the PRE-migration code
+// deliberately: at that point TrySpellDeflection had already moved onto the
+// contest core while TryStoicResolve was still on
+// dice.OpposedRollStatWithFloors, and the file had to pass for BOTH shapes so it
+// could prove the later migration of TryStoicResolve was a no-op.
+//
+// U3 then made that move, and the file passed unchanged. Both functions now
+// resolve through the core: TrySpellDeflection via combat.RunWithSpellFloors,
+// TryStoicResolve via combat.RunWithManeuverFloors (both live in
+// contest_floors.go in this package, wrapping contest.RunWithFloors). Everything
+// below still describes live code; only these comments were retold in the past
+// tense.
+//
+// Both tests here are DEFENDER-side. The attacker-side mirror is
+// internal/actions/contest_sign_taunt_test.go, added when a U3 review found that
+// mutating combat_taunt.go's res.Margin to res.AttackRoll.Margin killed taunt
+// criticals with every package still green.
 //
 // TRAP 1 -- THE MARGIN GOES TO ZERO. contest.Run rolls via dice.Roll, which
 // populates Value/Mean/StdDev/ZScore/Percentile but NOT .Success or .Margin. The
@@ -104,10 +117,13 @@ func setStatBase(t *testing.T, si *stats.StatInfo, base int) {
 
 // Scores, and the arithmetic that picks the iteration count.
 //
-// Both code paths roll BOTH sides with the ATTACKER's standard deviation --
-// contest.Run does `stdDev := dice.StdDevFor(atkScore)` and rolls each entry
-// with it, and dice.OpposedRollStatRaw does `OpposedRoll(atk, def,
-// StdDevFor(atk))`. RollSpread is 0.15 in a test binary (dice's package-level
+// Both functions roll BOTH sides with the ATTACKER's standard deviation. Since
+// U3 both reach that through contest.Run, which does `stdDev :=
+// dice.StdDevFor(atkScore)` and rolls each entry with it; the
+// dice.OpposedRollStatRaw path this file also had to cover when it was written
+// did the same thing as `OpposedRoll(atk, def, StdDevFor(atk))`, which is why
+// one set of numbers served both. RollSpread is 0.15 in a test binary (dice's
+// package-level
 // default; nothing calls SetRollSpread here), which was confirmed by observing
 // StdDevFor(100) == 15.
 //
@@ -187,12 +203,15 @@ func TestTrySpellDeflection_FullNegationStillReachable(t *testing.T) {
 	}
 }
 
-// TestTryStoicResolve_FullNegationStillReachable guards the NOT-YET-migrated
-// conviction path. It currently passes `defRoll.Margin` from
-// dice.OpposedRollStatWithFloors, which is already defence-positive and so is
-// correctly UNNEGATED. When U3 moves it onto contest.RunWithManeuverFloors that
-// field stops being populated at all, and the call must become `-res.Margin`.
-// This test is the thing that notices if it does not.
+// TestTryStoicResolve_FullNegationStillReachable guards the conviction path.
+//
+// It was written while that path still passed `defRoll.Margin` from
+// dice.OpposedRollStatWithFloors, which is already defence-positive and so was
+// correctly UNNEGATED. U3 moved the function onto combat.RunWithManeuverFloors,
+// at which point that field stopped being populated at all and the call became
+// `-res.Margin`: negated, because contest.Result.Margin is ATTACK-positive and
+// this is the DEFENDER's crit check. This test is the thing that would have
+// noticed had either half of that been got wrong.
 func TestTryStoicResolve_FullNegationStillReachable(t *testing.T) {
 	pinAvoidanceContestKnobs(t)
 

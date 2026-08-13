@@ -49,13 +49,20 @@ Two compounding accidents:
 > passes `AttackSkill: rangedRank` raw into `combat.ExecuteSkillMove`, which
 > adds skill to stat with no weight applied. Ranged is ×1 on both sides.
 >
-> More generally, this four-row table is not the whole picture. The special-move
-> family (`ExecuteSkillMove`'s 14 callers, `AttemptGrapple`,
-> `RollSubmissionAttempt`, grapple drift) carries **five** further weight
-> regimes, from ×1 up to ×2.2. Section 3.1's "uniform 5.0" therefore moves far
-> more than four channels. See the new pre-U6 modelling gate, "the special-move
-> family's skill weight", in
+> More generally, this four-row table is not the whole picture, and the point is
+> a rule rather than a number: **the special-move family shares no skill-weight
+> convention.** `ExecuteSkillMove`'s 14 callers and `AttemptGrapple` add skill to
+> stat raw (×1), `RollSubmissionAttempt` uses `SubSkillWeight` (×1.5), grapple
+> drift uses ×2.2 aggressor against ×2.0 defender, `usercommands.Throw` uses ×5
+> on skullduggery against ×2.5 on a **stat** with no defence skill term, and
+> taunt / `TryStoicResolve` use ×5 on both sides. Section 3.1's "uniform 5.0"
+> therefore moves far more than four channels. This paragraph previously claimed
+> "five further regimes, from ×1 up to ×2.2", which double-counted against the
+> four-row table above and understated the top of the range; the authoritative,
+> per-site, measured table is the pre-U6 modelling gate "the special-move family's
+> skill weight" in
 > [`UNIFIED_RESOLUTION_ROADMAP.md`](../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md).
+> Count from that table if a number is needed, and say what was counted.
 
 Consequence, measured: a spellcasting-30 caster crits a stat-matched defender
 **96.7%** of the time, because caster skill is tripled and defender skill is
