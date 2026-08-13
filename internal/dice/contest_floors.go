@@ -72,6 +72,10 @@ func ContestFloors() (minSuccess, minResist float64) {
 // When a floor flips the outcome, the margin is reduced to the smallest value
 // carrying the new sign. A floor save is a BARE success, not a decisive one, and
 // callers that scale an effect by margin must not read it as a rout.
+//
+// Deprecated: use combat.RunWithGlobalFloors. Zero production callers as of U4;
+// retained as the U4 equivalence oracle and for internal delegation. U6 deletes
+// it.
 func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult) {
 	contestFloorLock.RLock()
 	floorSuccess, floorResist := minContestSuccess, minContestResist
@@ -91,6 +95,9 @@ func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult) {
 //
 // Both floors are clamped to [0, 0.5] per call. Above that a floor stops being a
 // last resort and becomes the dominant term.
+//
+// Deprecated: use combat.RunWithGlobalFloors, combat.RunWithManeuverFloors or
+// combat.RunWithSpellFloors. Zero production callers as of U4. U6 deletes it.
 func OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist float64) (bool, float64, RollResult, RollResult) {
 	success, margin, attackRoll, defenseRoll := OpposedRollStatRaw(atk, def)
 

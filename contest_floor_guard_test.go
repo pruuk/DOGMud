@@ -12,41 +12,95 @@ import (
 	"testing"
 )
 
-// unflooredRollExemptions lists the packages allowed to call the UNFLOORED
-// opposed rolls directly, with the reason each one genuinely needs them.
+// guardedRollFuncs are the roll entry points a production caller must not reach
+// for, keyed by the package they live in.
 //
-// Keys are repo-relative directories. A file is exempt if its directory matches
-// a key or sits underneath one.
-var unflooredRollExemptions = map[string]string{
-	// Owns both primitives and delegates between them: OpposedRollStat is
-	// implemented in terms of OpposedRollStatRaw, which is implemented in terms
-	// of OpposedRoll.
-	"internal/dice": "owns the roll primitives and delegates between them",
+// Two different reasons appear here:
+//
+//   - dice.OpposedRollStatRaw / dice.OpposedRoll and contest.Run /
+//     contest.AgainstDifficulty apply NO floor. That is the original chunk 5.9
+//     hazard. internal/contest joined the list in U4: Run and AgainstDifficulty
+//     are exported and unfloored, so before U4 a new contest could opt out of
+//     the floors through the very package this arc built to prevent that -- and
+//     the guard, which hardcoded the callee package to "dice", said nothing.
+//   - dice.OpposedRollStat / dice.OpposedRollStatWithFloors ARE floored, and are
+//     guarded for a different reason: U4 emptied them of production callers and
+//     U6 deletes them. The risk is drift BACK onto the legacy path.
+var guardedRollFuncs = map[string]map[string]bool{
+	"dice": {
+		"OpposedRollStatRaw":        true,
+		"OpposedRoll":               true,
+		"OpposedRollStat":           true,
+		"OpposedRollStatWithFloors": true,
+	},
+	"contest": {
+		"Run":               true,
+		"AgainstDifficulty": true,
+	},
 }
 
-// unflooredRollFuncs are the roll functions that apply no contest floor.
-var unflooredRollFuncs = map[string]bool{
-	"OpposedRollStatRaw": true,
-	"OpposedRoll":        true,
+// guardedRollExemptions lists the callers allowed to reach each guarded entry
+// point, with the reason each one genuinely needs it.
+//
+// Keyed by callee package, then by a repo-relative FILE or DIRECTORY. A caller
+// matches if its path equals a key or sits underneath one.
+//
+// Prefer a FILE key. internal/combat is 30+ files and is the single most likely
+// place a new unfloored contest gets written; a directory exemption there would
+// blind the guard in the package it most needs to watch. Exactly one call needs
+// it, so exactly one file is named.
+var guardedRollExemptions = map[string]map[string]string{
+	"dice": {
+		// Owns the primitives and delegates between them: OpposedRollStat ->
+		// OpposedRollStatWithFloors -> OpposedRollStatRaw -> OpposedRoll.
+		"internal/dice": "owns the roll primitives and delegates between them",
+	},
+	"contest": {
+		// Melee is the one floor style that floors AFTER the contest rather than
+		// inside the roll: resolveDefenseOutcomeCore floors a computed hit
+		// CHANCE, not a roll outcome. Reconciling the two styles is an open U6
+		// question; until then this single call is correct.
+		"internal/combat/combat_helpers.go": "floors after the contest in resolveDefenseOutcomeCore",
+	},
 }
 
-// TestOpposedContestsAreFloored fails when a package outside the exemption list
-// calls an unfloored opposed roll.
+// isExempt reports whether a caller is covered by an exemption set. It matches a
+// FILE key exactly, or a DIRECTORY key against the file's directory or any
+// directory beneath it.
 //
-// This is the recurrence guard for roadmap chunk 5.10. The floors were written
-// for combat, lived in internal/combat/combat_helpers.go, and every contest
-// added afterwards silently got the unfloored path -- stealth, theft, traps,
-// detection, spells and maneuvers. A stat-100 thief against a stat-150 mark
-// succeeded 0.9% of the time. Nobody chose that; it was inherited by whichever
-// function the author copied from.
+// A nil or missing map yields false, which is the safe default: an unlisted
+// callee package exempts nobody.
+func isExempt(rel, dir string, exemptions map[string]string) bool {
+	for exempt := range exemptions {
+		if rel == exempt || dir == exempt || strings.HasPrefix(dir, exempt+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// TestOpposedContestsAreFloored fails when production code reaches for a
+// guarded roll entry point without an exemption.
+//
+// This is the recurrence guard for roadmap chunk 5.10, extended by U4. The
+// floors were written for combat, lived in internal/combat/combat_helpers.go,
+// and every contest added afterwards silently got the unfloored path --
+// stealth, theft, traps, detection, spells and maneuvers. A stat-100 thief
+// against a stat-150 mark succeeded 0.9% of the time. Nobody chose that.
 //
 // The guidance pointed the wrong way too: CLAUDE.md told developers to use
-// dice.OpposedRollStat, and before 5.10 that was the UNFLOORED function. So did
-// its own docstring. Chunk 5.10 made the floored roll the default by giving it
-// the natural name, which removes the trap for anyone writing ordinary code.
+// dice.OpposedRollStat, and before 5.10 that was the UNFLOORED function. Chunk
+// 5.10 made the floored roll the default by giving it the natural name; U4 then
+// moved every production caller onto the internal/combat wrapper family and
+// deprecated the dice pair, so CLAUDE.md was updated again. If you are reading
+// this because the guard failed, read the wrapper docs in
+// internal/combat/contest_floors.go before adding an exemption.
 //
-// This test covers what the rename cannot: OpposedRollStatRaw and OpposedRoll
-// still exist and still work, and a future contest can still reach for one.
+// KNOWN BLIND SPOT: the visitor matches only package-qualified calls
+// (pkg.Func). A same-package call inside internal/dice or internal/contest is a
+// bare identifier and is invisible here. Those two packages own the primitives
+// and compose them internally, which is why that is acceptable rather than a
+// gap to close.
 //
 // Test files are deliberately NOT scanned. Tests probe the raw distribution on
 // purpose (see internal/combat/regression_test.go, which asserts on z-scores);
@@ -54,8 +108,8 @@ var unflooredRollFuncs = map[string]bool{
 //
 // If you are adding a caller that genuinely applies its own floors -- as
 // combat's resolveAttack does, flooring a computed hit CHANCE rather than a roll
-// outcome -- add its directory here with a reason. If you cannot write the
-// reason, you want OpposedRollStat.
+// outcome -- add its FILE to the matching guardedRollExemptions entry with a
+// reason. If you cannot write the reason, you want a floored wrapper.
 func TestOpposedContestsAreFloored(t *testing.T) {
 	root, err := filepath.Abs(".")
 	if err != nil {
@@ -87,11 +141,6 @@ func TestOpposedContestsAreFloored(t *testing.T) {
 		rel = filepath.ToSlash(rel)
 
 		dir := filepath.ToSlash(filepath.Dir(rel))
-		for exempt := range unflooredRollExemptions {
-			if dir == exempt || strings.HasPrefix(dir, exempt+"/") {
-				return nil
-			}
-		}
 
 		file, perr := parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if perr != nil {
@@ -106,15 +155,21 @@ func TestOpposedContestsAreFloored(t *testing.T) {
 				return true
 			}
 			sel, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok || !unflooredRollFuncs[sel.Sel.Name] {
+			if !ok {
 				return true
 			}
 			pkg, ok := sel.X.(*ast.Ident)
-			if !ok || pkg.Name != "dice" {
+			if !ok {
+				return true
+			}
+			if !guardedRollFuncs[pkg.Name][sel.Sel.Name] {
+				return true
+			}
+			if isExempt(rel, dir, guardedRollExemptions[pkg.Name]) {
 				return true
 			}
 			offenders = append(offenders,
-				rel+": dice."+sel.Sel.Name+" at line "+
+				rel+": "+pkg.Name+"."+sel.Sel.Name+" at line "+
 					strconv.Itoa(fset.Position(call.Pos()).Line))
 			return true
 		})
@@ -127,9 +182,13 @@ func TestOpposedContestsAreFloored(t *testing.T) {
 
 	if len(offenders) > 0 {
 		sort.Strings(offenders)
-		t.Errorf("unfloored opposed rolls outside the exemption list:\n  %s\n\n"+
-			"Use dice.OpposedRollStat (floored by default), or add the package to "+
-			"unflooredRollExemptions with a reason.",
+		t.Errorf("guarded opposed rolls outside the exemption list:\n  %s\n\n"+
+			"Use combat.RunWithGlobalFloors, combat.RunWithManeuverFloors or "+
+			"combat.RunWithSpellFloors -- whichever floor pair matches the cost of "+
+			"a single failure at this site. If this caller genuinely applies its "+
+			"own floors, add its file to the matching guardedRollExemptions entry "+
+			"with a reason. If you cannot write the reason, you want a floored "+
+			"wrapper.",
 			strings.Join(offenders, "\n  "))
 	}
 }
