@@ -148,7 +148,7 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U7** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource; inverse-skill cost band. | M | U5, U6 | **Yes** |
 | **U8** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. | M | U6 | **Yes** |
 | **U9** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
-| **U10** | Docs, `context.md` sweep, and the adversarial playtest gate. | M | U7–U9 | — |
+| **U10** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, and the adversarial playtest gate. | M | U7–U9 | — |
 
 ### U0 — delete the spell-initiation gate
 
@@ -221,6 +221,43 @@ Resulting hold rates:
 Also in U9: **knockdown** and **prone recovery** move from `dice.RollStat(50)`
 to opposed rolls against the opponent's stat + unarmed-combat. Removes
 `SpellInitiationWillpowerDivisor`.
+
+### U10 — `config.yaml` organisation audit
+
+By the time this arc lands, `_datafiles/config.yaml` will have absorbed a great
+many contest, floor and channel knobs, added chunk by chunk with no pass over the
+file as a whole. U10 owns a sanity check on the file itself, not just on the
+knobs this arc touched:
+
+- **Grouping.** Are related knobs adjacent? The floor pairs are the obvious test
+  case: `MinContestSuccessChance`, `MinSpellHitChance` and `MinManeuverHitChance`
+  are one family expressing one principle (the cost of a single failure) and
+  should read as one block, with that principle stated once above them.
+- **Ordering.** Sections should follow the shape of the systems they configure,
+  and knobs within a section should be ordered deliberately rather than by the
+  order chunks happened to land.
+- **Comments.** Every knob needs what it does, what changing it costs, and its
+  live value's rationale where the value is non-obvious. Several existing
+  comments describe the pre-arc model and are now wrong — a comment describing
+  the removed model is worse than no comment.
+- **Stale and orphaned keys.** Knobs whose readers this arc deleted must go.
+  `SpellAttackSkillFactor` and the legacy per-channel skill weights are the
+  known ones; U10 should sweep for others rather than trust that list.
+- **Drift check.** Flag any knob whose shipped value differs sharply from its Go
+  default without a comment explaining why (`SpellDamageScale` ships at 3.12
+  against a default of 1.0). Absence is meaningful too: a knob left out of the
+  file falls back to its Go default, and `0` is a legal shipped value.
+
+Two traps worth stating here because they have already caused defects.
+**The three floor pairs all ship at 0.05**, which makes a wrong-pair wiring
+invisible in production — do not "simplify" them into one knob during a tidy-up;
+they are one value by coincidence, not by rule. And **a Go test binary never
+loads this file**, so config-read knobs measure their struct zero value under
+test, not the shipped value and not necessarily the documented default.
+
+This is a documentation and ergonomics pass. **No value changes.** Any retune
+found along the way is filed, not applied — a config edit inside a docs chunk is
+how an unreviewed balance change ships.
 
 ### Modelling gates, before the plan they guard
 
