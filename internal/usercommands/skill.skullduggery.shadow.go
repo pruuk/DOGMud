@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -134,8 +134,8 @@ func shadowDetectionRoll(shadower *users.UserRecord, target *users.UserRecord, r
 	sneakScore := actions.CalcSneakScoreVsObserver(shadower.Character, target.Character, room)
 	targetScore := actions.CalcSearchScore(target.Character)
 
-	// OpposedRollStat(atk, def) returns true when atk (first arg) wins.
+	// The target is the attacker in this contest: Success means they noticed.
 	// Target detects when targetScore beats sneakScore.
-	detected, _, _, _ := dice.OpposedRollStat(targetScore, sneakScore)
+	detected := combat.RunWithGlobalFloors(targetScore, sneakScore).Success
 	return detected
 }

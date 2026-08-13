@@ -3,8 +3,8 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -167,12 +167,13 @@ func shadowPlayer(actor Actor, targetUserId int, cfg configs.Balance) ShadowResu
 		}
 	}
 
-	// Initial detection roll: target wins if their search score beats the
-	// actor's sneak score. Uses the same formula as shadowDetectionRoll in
-	// go.go (Per+Search vs Dex+Skullduggery; OpposedRollStat: first arg wins).
+	// Initial detection roll: the TARGET is the attacker here -- they are the
+	// one trying to notice -- so the shadowing actor's sneak score is the
+	// defending entry. Same formula as shadowDetectionRoll in
+	// usercommands/skill.skullduggery.shadow.go (Per+Search vs Dex+Skullduggery).
 	sneakScore := CalcSneakScoreVsObserver(char, targetUser.Character, actor.GetRoom())
 	searchScore := CalcSearchScore(targetUser.Character)
-	detected, _, _, _ := dice.OpposedRollStat(searchScore, sneakScore)
+	detected := combat.RunWithGlobalFloors(searchScore, sneakScore).Success
 	if detected {
 		targetUser.SendText(messaging.CategorySystem, "You sense someone following close behind you.")
 	}
