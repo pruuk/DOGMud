@@ -80,6 +80,40 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	spellInfo := result.SpellInfo
 
+	// First-round conviction slice -- the mob pays a portion up front.
+	//
+	// U5b-2: this path had NO affordability check of any kind, so a mob could
+	// begin a cast at zero conviction and drive the pool negative. Spellcasting
+	// is in the refuse column, so ApplyCost is correct.
+	//
+	// Placement is load-bearing on both sides. It is ABOVE the YAML cast-text
+	// block so a mob that cannot afford the spell never narrates it to the room,
+	// and it is ABOVE TransitionToCasting so the ledger cannot lead the FSM.
+	//
+	// InitiateCast has already consumed the shared special-move cooldown (see
+	// actions/cast.go, gated on !IgnoreMoveCooldown), so a refusal here must roll
+	// it back or a broke mob silently blocks bash/kick/trip.
+	//
+	// Note the asymmetry with the player path, which is NOT unified here:
+	// usercommands/skill.cast.go:126 gates on the FULL cost and then pays zero
+	// up front. Reconciling the two is a U7 cost-model decision. This chunk
+	// moves the mob from "no floor at all" to "must hold at least one slice",
+	// which narrows the gap rather than widening it.
+	firstRoundCost := spellInfo.Cost / result.FoldsNeeded
+	if firstRoundCost < 1 {
+		firstRoundCost = 1
+	}
+	if !mob.Character.ApplyCost(characters.PoolConviction, firstRoundCost) {
+		if !spellInfo.IgnoreMoveCooldown {
+			delete(mob.Character.Cooldowns, "special-move")
+		}
+		mudlog.Debug("mob.Cast",
+			"mob", mob.Character.Name,
+			"requested_spell", spellName,
+			"reason", "insufficient conviction")
+		return true, nil
+	}
+
 	// Send YAML cast text (if defined).
 	if spellInfo.CastUserText != "" || spellInfo.CastRoomText != "" {
 		castRoom := rooms.LoadRoom(mob.Character.RoomId)
@@ -108,13 +142,6 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		textutil.SendPhaseText("", spellInfo.CastRoomText, tCtx, "pink", cfg)
 	}
 
-	// First-round conviction slice — mob pays a portion up-front.
-	firstRoundCost := spellInfo.Cost / result.FoldsNeeded
-	if firstRoundCost < 1 {
-		firstRoundCost = 1
-	}
-	mob.Character.Conviction -= firstRoundCost
-
 	// Commit CastingState to Activity machine (sole truth).
 	castData := activity.CastingData{
 		SpellId:              result.SpellInfo.SpellId,
@@ -136,6 +163,11 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	); err != nil {
 		// Mob can't start cast — likely busy. Silent failure;
 		// btree will pick another action next tick.
+		//
+		// U5b-2: the first-round slice was charged above (it has to be, so the
+		// ledger cannot lead the FSM). A failed transition means no cast
+		// happened, so give it back.
+		mob.Character.ApplyRestore(characters.PoolConviction, firstRoundCost)
 		return true, nil
 	}
 
