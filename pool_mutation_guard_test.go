@@ -91,15 +91,6 @@ var poolWriteExemptions = map[string]string{
 	// This is a FILE exemption on the file where both follow-ups land. Delete it
 	// once both functions are gone rather than letting it outlive them.
 	"internal/characters/resources.go": "U5c retires Heal; its two writes are all that remain here",
-	// The seven retained health floors. U5b-1 routed the writes themselves onto
-	// ApplyHarm but kept the floor at each site, marked NOTE(U5b-2). Removing
-	// them is observable -- GMCP ships Character.Health raw and the prompt
-	// prints it raw -- so it is a playtested change, not a refactor.
-	"internal/hooks/NewRound_AutoHeal.go":     "U5b-2: mob DoT health floors",
-	"internal/actions/surprise_attack.go":     "U5b-2: retained health floor",
-	"internal/combat/skill_moves.go":          "U5b-2: retained health floor",
-	"internal/hooks/combat_shared_helpers.go": "U5b-2: retained health floor + fold-upkeep cost",
-	"internal/usercommands/throw.go":          "U5b-2: retained health floors",
 
 	// DELIBERATELY ABSENT, though the U5b-1 plan listed both as U5b-2 exemptions:
 	// internal/combat/combat_helpers.go and internal/usercommands/flee.go. Both

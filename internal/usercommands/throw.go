@@ -170,13 +170,6 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				}
 				user.Character.ApplyHarm(characters.PoolHealth, dmg,
 					state.ActorRef{UserId: user.UserId})
-				// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
-				// health-damage sites, which let health store overkill. U5b-1 kept it so
-				// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
-				// floors together as one named, playtested change.
-				if user.Character.Health < 0 {
-					user.Character.Health = 0
-				}
 				dmgDesc := combat.GetDamageDescription(dmg, user.Character.HealthMax.Value)
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(
 					`<ansi fg="red">The explosion sears you! (%s)</ansi>`, dmgDesc))
@@ -222,13 +215,6 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 			mob.Character.ApplyHarm(characters.PoolHealth, dmg,
 				state.ActorRef{UserId: user.UserId})
-			// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
-			// health-damage sites, which let health store overkill. U5b-1 kept it so
-			// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
-			// floors together as one named, playtested change.
-			if mob.Character.Health < 0 {
-				mob.Character.Health = 0
-			}
 			dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`The explosion catches <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`,

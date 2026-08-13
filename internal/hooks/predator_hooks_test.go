@@ -80,7 +80,13 @@ func TestAutoHeal_BleedDamagesMob(t *testing.T) {
 	mob.Character.Health = 50
 }
 
-func TestAutoHeal_BleedFloorsMobHealthAtZero(t *testing.T) {
+// U5b-2 removed this site's health floor. A bleed that overkills a mob now
+// stores the overkill instead of clamping to zero, which is what U6 reads to
+// size a killing blow. This test previously asserted the floor; it now asserts
+// the replacement contract, which is the stronger of the two: the magnitude is
+// preserved AND the value still reads as dead to every death gate in the game
+// (all of which test `< 1` or `<= 0`, never `== 0`).
+func TestAutoHeal_BleedOverkillsMobHealthBelowZero(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 
@@ -94,8 +100,10 @@ func TestAutoHeal_BleedFloorsMobHealthAtZero(t *testing.T) {
 	evt := events.NewRound{RoundNumber: 3}
 	AutoHeal(evt)
 
-	// Mob health should be floored at 0, not negative
-	assert.GreaterOrEqual(t, mob.Character.Health, 0)
+	assert.Less(t, mob.Character.Health, 0,
+		"a 50-magnitude bleed on a 2-health mob should store overkill, not clamp to 0; health=%d", mob.Character.Health)
+	assert.Less(t, mob.Character.Health, 1,
+		"overkilled health must still satisfy the `< 1` death gate; health=%d", mob.Character.Health)
 
 	mob.Character.RemoveCondition(characters.ConditionBleeding)
 	mob.Character.Health = 50

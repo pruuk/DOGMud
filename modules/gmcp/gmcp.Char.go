@@ -451,7 +451,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				e := GMCPCharModule_Enemy{
 					Id:      mob.ShorthandId(),
 					Name:    mob.Character.Name,
-					Hp:      mob.Character.Health,
+					Hp:      mob.Character.DisplayHealth(),
 					MaxHp:   mob.Character.HealthMax.Value,
 					Engaged: mob.InstanceId == aggroMobInstanceId,
 				}
@@ -533,7 +533,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 	if all || g.wantsGMCPPayload(`Char.Vitals`, gmcpModule) {
 
 		payload.Vitals = &GMCPCharModule_Payload_Vitals{
-			Hp:            user.Character.Health,
+			Hp:            user.Character.DisplayHealth(),
 			HpMax:         user.Character.HealthMax.Value,
 			Stamina:       user.Character.Stamina,
 			StaminaMax:    user.Character.StaminaMax.Value,

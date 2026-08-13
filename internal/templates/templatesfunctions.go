@@ -169,6 +169,12 @@ var (
 			return totalLen
 		},
 		"healthStr": func(h int, hMax int, padTo ...int) string {
+			// U5b-2: pools store overkill; displays never show it. QuantizeTens
+			// has no negative guard, so an unclamped h also yields a malformed
+			// ANSI class.
+			if h < 0 {
+				h = 0
+			}
 			padding := ``
 			if len(padTo) > 0 {
 				padding = strings.Repeat(" ", padTo[0]-(len(strconv.Itoa(h))+len(strconv.Itoa(hMax))+1))

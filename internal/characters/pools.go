@@ -241,3 +241,19 @@ func (c *Character) ApplyRestore(pool Pool, amount int) int {
 	}
 	return c.applyVitalChange(pool, amount)
 }
+
+// DisplayHealth returns health clamped for player-facing output.
+//
+// The pools deliberately store overkill -- U6 reads the magnitude of a killing
+// blow, and ApplyHarm floors stamina and conviction at 0 but never health -- so
+// a negative value is correct in the model and wrong on the wire.
+//
+// Every display surface must call this: the prompt, the status template, GMCP
+// vitals, GMCP enemies, and the playtest beacon. renderVitalBar and
+// targetHealthDesc already clamp internally and do not need it.
+func (c *Character) DisplayHealth() int {
+	if c.Health < 0 {
+		return 0
+	}
+	return c.Health
+}
