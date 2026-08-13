@@ -22,14 +22,6 @@ func (c *Character) DeductActionPoints(amount int) bool {
 	return true
 }
 
-// DeductStamina attempts to deduct the specified amount of stamina.
-// Returns false if the character doesn't have enough stamina.
-//
-// Deprecated: use ApplyCost. U5b routes the remaining callers.
-func (c *Character) DeductStamina(amount int) bool {
-	return c.ApplyCost(PoolStamina, amount)
-}
-
 // GetMovementStaminaCost calculates the stamina cost for movement based on
 // terrain difficulty and encumbrance.
 // terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc.
