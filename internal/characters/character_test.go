@@ -2575,6 +2575,18 @@ func TestGetDefenseScore(t *testing.T) {
 
 func TestGetDefenseStaminaCost(t *testing.T) {
 	// Default multipliers are 0.9 for all three
+	//
+	// Also pins U5a's move of the base costs 2/4/5 out of Go and into config.
+	// A test binary never loads config.yaml, but GetBalanceConfig runs
+	// ensureConfigValidated, so these are the VALIDATION defaults -- which is
+	// exactly the point: it proves the defaults match the literals that were
+	// deleted. Truncation, not rounding: int(2*0.9)=1, int(4*0.9)=3,
+	// int(5*0.9)=4.
+	//
+	// Note the dodge row is the weakest of the three: int(0*0.9)=0 also floors
+	// to 1, so dodge=1 is produced both by a correct move and by the knob being
+	// entirely unwired. Parry and block are the rows that actually detect a
+	// botched move.
 	tests := []struct {
 		name string
 		def  string

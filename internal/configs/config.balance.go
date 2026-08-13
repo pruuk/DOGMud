@@ -11,9 +11,12 @@ type Balance struct {
 	RollSpread ConfigFloat `yaml:"RollSpread"`
 
 	// ── COMBAT: DEFENSE COSTS ────────────────────────────────────────────────
-	DodgeMultiplier ConfigFloat `yaml:"DodgeMultiplier"` // Stamina cost multiplier for dodge (default 0.9)
-	ParryMultiplier ConfigFloat `yaml:"ParryMultiplier"` // Stamina cost multiplier for parry (default 0.9)
-	BlockMultiplier ConfigFloat `yaml:"BlockMultiplier"` // Stamina cost multiplier for block (default 0.9)
+	DodgeBaseStaminaCost ConfigInt   `yaml:"DodgeBaseStaminaCost"` // Base stamina cost for dodge, before multiplier (default 2)
+	ParryBaseStaminaCost ConfigInt   `yaml:"ParryBaseStaminaCost"` // Base stamina cost for parry, before multiplier (default 4)
+	BlockBaseStaminaCost ConfigInt   `yaml:"BlockBaseStaminaCost"` // Base stamina cost for block, before multiplier (default 5)
+	DodgeMultiplier      ConfigFloat `yaml:"DodgeMultiplier"`      // Stamina cost multiplier for dodge (default 0.9)
+	ParryMultiplier      ConfigFloat `yaml:"ParryMultiplier"`      // Stamina cost multiplier for parry (default 0.9)
+	BlockMultiplier      ConfigFloat `yaml:"BlockMultiplier"`      // Stamina cost multiplier for block (default 0.9)
 
 	// ── COMBAT: DEFENSE EFFECTIVENESS ────────────────────────────────────────
 	DodgeEffectiveness ConfigFloat `yaml:"DodgeEffectiveness"` // Multiplier on dodge score before opposed roll (default 1.0)

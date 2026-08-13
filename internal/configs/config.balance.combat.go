@@ -19,6 +19,15 @@ func (b *Balance) validateCombat() {
 	if b.BlockMultiplier <= 0 {
 		b.BlockMultiplier = 0.9
 	}
+	if b.DodgeBaseStaminaCost < 1 {
+		b.DodgeBaseStaminaCost = 2
+	}
+	if b.ParryBaseStaminaCost < 1 {
+		b.ParryBaseStaminaCost = 4
+	}
+	if b.BlockBaseStaminaCost < 1 {
+		b.BlockBaseStaminaCost = 5
+	}
 
 	// ── COMBAT: DEFENSE EFFECTIVENESS ────────────────────────────────────────
 	if b.DodgeEffectiveness <= 0 {

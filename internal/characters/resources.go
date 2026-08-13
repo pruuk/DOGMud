@@ -131,13 +131,13 @@ func (c *Character) GetDefenseStaminaCost(defenseType string) int {
 
 	switch defenseType {
 	case DefenseDodge:
-		baseCost = 2
+		baseCost = int(bal.DodgeBaseStaminaCost)
 		multiplier = float64(bal.DodgeMultiplier)
 	case DefenseParry:
-		baseCost = 4
+		baseCost = int(bal.ParryBaseStaminaCost)
 		multiplier = float64(bal.ParryMultiplier)
 	case DefenseBlock:
-		baseCost = 5
+		baseCost = int(bal.BlockBaseStaminaCost)
 		multiplier = float64(bal.BlockMultiplier)
 	default:
 		return 0
