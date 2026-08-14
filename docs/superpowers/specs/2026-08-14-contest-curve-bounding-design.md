@@ -173,6 +173,62 @@ and it is the intended "you should flee" signal rather than a defect.
 
 ---
 
+## Scope by channel
+
+The two changes have different reach, and the difference is not arbitrary.
+
+**Change 1 reaches everything.** Applied inside `contest.Run` and
+`RunWithFloors`, which every channel has routed through since U1-U4: melee,
+ranged, spells and quell, taunt and defy, maneuvers, flee, grapple, and the 17
+out-of-combat contests. There is nothing per-channel to write.
+
+**Change 2 is melee-only, because only melee has the defect.**
+`contest.RunWithFloors` already applies the floor to the organic result and
+stamps `Margin` as plus or minus 1, and `ContestCrit` / `DefenseContestCrit`
+normalise that sentinel to a near-zero z, so a floored outcome cannot crit.
+That is exactly the ordering Change 2 introduces. Change 2 therefore does not
+add a rule; it makes `resolveDefenseOutcomeCore` agree with the path quell and
+defy already use.
+
+**The bounds differ per channel, deliberately.** The floor value tracks the COST
+OF A SINGLE FAILURE, so the cheap-to-repeat action gets the generous floor:
+
+| Channel | Floor pair | Resulting bound |
+|---|---|---|
+| Melee swing | 0.15 / 0.15 | [15%, 85%] |
+| Spell, and quell | 0.05 / 0.05 | [5%, 95%] |
+| Maneuver: taunt/defy, grapple, submission, skill moves, flee | 0.05 / 0.05 | [5%, 95%] |
+| Out-of-combat contests | 0.05 / 0.05 | [5%, 95%] |
+
+After the knee, melee becomes the **tightest**-bounded channel in the game and
+every other channel the loosest, which inverts the situation that prompted this
+design. Two things make that acceptable and it is being left alone:
+
+- **Spells and taunts already carry partial magnitude that melee lacks.**
+  `TrySpellDeflection` and `TryStoicResolve` return 1.0, then
+  `SpellAvoidanceDamageMultiplier` / `RhetoricAvoidanceDamageMultiplier` (both
+  0.50), then 0.0 on a defensive crit. A successful defence only halves damage;
+  only a crit fully negates. That channel already degrades gracefully at the
+  extremes.
+- **No caster boss exists to expose the mirror problem.** The largest `casting`
+  archetype pool in shipped content is 200 (The Unfolded); all six high-pool
+  mobs are `fighting`. A four-digit casting boss would create a mental wall that
+  melee walks through, and the knee would cover it automatically if one is ever
+  authored.
+
+Raising the spell and maneuver pairs toward 0.15 so all channels bound alike was
+considered and declined: the cost-of-failure reasoning is sound and the partial
+magnitude tiers already cushion those channels.
+
+**Stale instruction this invalidates.** `internal/combat/avoidance.go:52` reads
+"U6 removes BOTH TryStoicResolve and TrySpellDeflection as parallel mechanisms,
+folding them into the defence multiplier". The defence multiplier is dropped, so
+that instruction is void. U6 must either keep both functions as they stand or
+unify them by some other route, and **this comment has to be rewritten in the
+same PR** or it will misdirect the next reader.
+
+---
+
 ## Settled, explicitly not open
 
 **Spells outperform melee against fighting bosses.** A `fighting` archetype puts
