@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-08-14: Speedwalks, aliases and pasted commands work now
+
+If your client sends more than one command at a time, the game was quietly
+gluing them together into a single line of nonsense and telling you it did not
+recognize the command. A speedwalk that should have walked you three rooms east
+did nothing at all, and so did any alias or trigger set up to fire a short
+series of commands.
+
+The cause was on our side, not your client's. Several commands arriving together
+were treated as one, and the line breaks between them were thrown away before
+anything looked at them. They are now read one at a time, exactly as if you had
+typed each one and pressed enter.
+
+Typing by hand was never fast enough to trigger this, which is why it went
+unnoticed for so long. It affected the older and more scriptable clients most,
+so if you use one and had given up on speedwalking, try it again. Pasting a
+block of commands works now too.
+
 ## 2026-08-13: The shared way of spending and healing is now the only way
 
 The shared system for spending your effort and your resolve, and for taking a

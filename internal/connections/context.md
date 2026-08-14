@@ -208,6 +208,25 @@ func Stats() (connections uint64, disconnections uint64) {
 
 ## Input Handling System
 
+### `Read` returns at most one input line
+
+`ConnectionDetails.Read` is not a plain passthrough to the socket. When one read
+carries several complete lines, everything after the first is queued and handed
+back on later calls, so the caller's one-read-is-one-command loop stays correct.
+
+This matters because `CleanserInputHandler` strips every non-printing rune from
+the buffer, interior CR and LF included, and infers "enter was pressed" from the
+last byte alone. Without the split, a client that batched commands into one TCP
+segment had them merged into a single nonsense command: `east`, `west`, `east`
+arrived as `eastwesteast`. Hand-typing cannot produce that, but speedwalks,
+aliases, triggers and pasted blocks do, so it hit TinTin++, MUSHclient and the
+zMUD family hardest.
+
+Chunks carrying a telnet IAC byte are deliberately **never** split, because
+negotiation payloads are binary and may contain a literal `0x0A` or `0x0D` (NAWS
+encodes window dimensions as raw bytes). Those pass through whole. See
+`input_lines.go`.
+
 ### Input Handler Chain
 ```go
 type InputHandler func(ci *ClientInput, handlerState map[string]any) (doNextHandler bool)
@@ -715,6 +734,7 @@ This comprehensive connections system provides robust network connection managem
 |------|---------|
 | `connections.go` | The connection registry and lifecycle |
 | `connectiondetails.go` | Per-connection state |
+| `input_lines.go` | Splits one socket read into individual input lines |
 | `clientsettings.go` | Negotiated client capabilities |
 | `heartbeat.go` | Keepalive / zombie detection |
 | `copyover.go` | Handing sockets across a hot restart |
