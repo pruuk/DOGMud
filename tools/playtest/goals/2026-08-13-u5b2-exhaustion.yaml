@@ -10,13 +10,17 @@
 #   * EVERY profile has a big stamina pool (fresh 405, early 425, mid 480,
 #     admin 800), and picking "3) Veteran" in the creation flow gives ~429. So
 #     there is no shortcut profile. Exhaustion has to be earned in a LONG fight.
-#   * Auto-attack drains stamina EVERY ROUND without you sending anything. So
-#     pick an opponent weak enough that you survive many rounds, then mostly
+#   * THE LEVER IS ENCUMBRANCE. This profile is seeded overloaded (see
+#     overlays below): movement stamina cost is multiplied up to 5x and combat
+#     swings are halved. Walk around and fight while loaded and stamina falls
+#     fast. Unloaded, out-of-combat regen outruns movement cost and you GAIN
+#     stamina by walking, which is the trap the first version of this file fell
+#     into.
+#   * Auto-attack also drains stamina EVERY ROUND without you sending anything.
+#     Pick an opponent weak enough that you survive many rounds, then mostly
 #     WAIT and read. Do not spam commands: the AI port allows only 3 per round
 #     and silently drops the rest ("Command dropped -- AI rate limit").
-#   * Do NOT try to drain by walking. Movement costs a couple of stamina while
-#     out-of-combat regen refills faster, so you gain ground instead of losing
-#     it. This is even worse in a healing room.
+#   * Recovery/temple rooms carry a regen bonus, so leave them before draining.
 #   * Recovery/temple rooms carry a regen bonus ("Wounds close more easily").
 #     Leave them before trying to reach the low band.
 #   * The low band is narrow and that is the point: shipped defence costs are
@@ -25,6 +29,14 @@
 #
 ephemeral:
   profile: early
+  overlays:
+    # Twelve Heavy Weighted Stones (item 12, 15.0 each) = 180 weight against a
+    # carry capacity of about 68 (strength 105 x CarryCapacityMultiplier 0.65,
+    # which is ABSENT from config.yaml and so runs on its Go default). At ~2.6x
+    # capacity the movement stamina multiplier is pinned at its 5x ceiling and
+    # combat swings are cut by half, which is what makes the 0-3 stamina band
+    # reachable inside one session. Drop stones to climb back out.
+    grant_items: [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
   budgets:
     wall_clock: 60m
 
