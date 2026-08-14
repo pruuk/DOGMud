@@ -1,0 +1,82 @@
+# Harness sanity check — leader (creation flow).
+# This grades the HARNESS, not the content. Content complaints are secondary
+# notes; harness failures are the headline.
+name: harness-sanity-duo-leader
+summary: >
+  Create a brand-new character through the in-game new-play flow taking the
+  second offered path, party up with the other new character, walk a short
+  loop, and hold a two-way in-game conversation.
+personality_notes: feature-tester — methodical, reports exactly what it saw.
+
+goals:
+  - id: create-character-path-2
+    do: >-
+      Complete the new-character flow as a first-time player. When the game
+      offers a numbered choice of starting paths, pick the SECOND option as
+      it is presented on screen. Do not assume what option 2 is called; read
+      the prompt and choose the one labelled 2. Record the exact prompt text
+      and the exact label of the option you chose, verbatim, because the
+      driver could not determine this from source. If NO numbered path choice
+      is ever offered, say so plainly and record everything the flow did ask.
+    verify: >-
+      Character exists and is in the world. The chosen option's exact wording
+      is captured in the report.
+
+  - id: announce-self
+    do: >-
+      Run 'look' and 'who'. Write blackboard signal 'leader-ready' with your
+      CHARACTER name in data.character_name. Character name comes from
+      who/look, never the pt_* login username.
+    verify: >-
+      Own character name observed in who/look output and written to the
+      blackboard.
+
+  - id: invite-follower
+    do: >-
+      Wait for blackboard 'follower-ready'. Invite that character by name:
+      'party invite <character-name>'. Then 'party list'. Signal
+      'leader-invited'.
+    verify: >-
+      Invite confirmation observed. After the follower accepts, party list
+      shows two members.
+
+  - id: converse-in-game
+    do: >-
+      Hold a real two-way exchange on in-game channels, not the blackboard.
+      Open with 'party say Ready when you are — following the coulee round.'
+      Then use 'say' in the room at least once. Wait for and read the
+      follower's replies, and reply again to at least one of them, so the
+      exchange is genuinely two-way rather than two monologues.
+    verify: >-
+      Follower's lines appear in this actor's own event stream on the (party)
+      channel and/or as room say, and this actor responded to them.
+
+  - id: walk-the-leader
+    do: >-
+      Walk a short loop of four to six rooms from the start area, one move at
+      a time, running 'look' after each move. Party-say each move as you make
+      it so the follower can track you. Stay out of fights; if something
+      hostile engages, disengage or flee — combat is not what this run is
+      testing.
+    verify: >-
+      Several successful room changes with different room titles. No
+      disconnect. Party still intact at the end.
+
+  - id: harness-observations
+    do: >-
+      Throughout, note anything that looks like a HARNESS defect rather than
+      a content defect: prompts that render twice, input that is dropped or
+      echoed oddly, commands that silently do nothing, rate-limit stalls,
+      bridge or connection hiccups, party state disagreeing between the two
+      actors.
+    verify: >-
+      Report separates harness observations from content observations.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    The whole point of this run is to exercise the harness's creation-flow
+    path end to end with two concurrent brand-new characters (RoleUser only),
+    including the numbered starting-path choice.
+  budgets:
+    wall_clock: 20m

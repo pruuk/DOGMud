@@ -1,54 +1,64 @@
 roomid: 473
 zone: Thornwall City
 title: Guard Barracks
-description: The city guard barracks is a solid stone building near the western gate,
-  built for function without the slightest concern for aesthetics. The ground floor
-  is a combination of duty room, armoury, and holding cells -- a long wooden table
-  dominates the center, covered with duty rosters, incident reports, and the remains
-  of someone's lunch. Weapon racks line the walls, holding spears, short swords, and
-  a few crossbows. Iron-barred cells occupy the far end, currently empty. A
-  weathered bounty board stands beside the wall, papered with wanted notices. The
-  air smells of metal polish and stale bread.
+description: >-
+  The city guard barracks is a solid stone building near the western gate,
+  built for function without the slightest concern for aesthetics. The ground
+  floor is a combination of duty room, armoury, and holding cells -- a long
+  wooden table dominates the center, covered with duty rosters, incident
+  reports, and the remains of someone's lunch. Weapon racks line the walls,
+  holding spears, short swords, and a few crossbows. Iron-barred cells occupy
+  the far end, currently empty. A weathered bounty board stands beside the
+  wall, papered with wanted notices. The air smells of metal polish and stale
+  bread.
 biome: city
-coord:
-  x: 0
-  y: 1
-  z: 0
+x: 10
+"y": 4
 exits:
-  south:
-    roomid: 460
-  up:
-    roomid: 5104
   down:
     roomid: 5105
     # The holding cell door is locked; only the guards carry the key.
     # The arrest system places prisoners via a direct room move
     # (rooms.MoveToRoom), which bypasses exit locks, so this only blocks
-    # ORGANIC entry — wandering NPCs (e.g. a hostile-flagged townsperson
+    # ORGANIC entry - wandering NPCs (e.g. a hostile-flagged townsperson
     # pursuing a wanted player) and random players. difficulty 255 =
     # effectively unpickable / key-only (no key item targets this lock).
+    #
+    # NOTE: the admin web builder strips YAML comments on save. If this
+    # block disappears again, that is why - restore it from git history.
     lock:
       difficulty: 255
+  south:
+    roomid: 460
+  up:
+    roomid: 5104
 nouns:
-  table: A heavy oak table scarred by knife marks and ink stains. Duty rosters are
-    pinned under a mug, incident reports are stacked in rough piles, and a half-eaten
-    loaf of bread sits next to an inkwell. This is where the daily business of
-    keeping the peace is organized.
-  racks: Wooden weapon racks holding city guard equipment -- spears, short swords,
-    truncheons, and a few crossbows with quarrel pouches. Everything is maintained
-    but well-used. A chalk board above lists equipment checked out and by whom.
-  cells: Three iron-barred cells at the back of the room, each barely large enough
-    for a cot and a bucket. They are empty now, their doors standing open. Scratches
-    and stains on the walls suggest they see regular use.
-  bounty board: A weather-worn corkboard stands beside the wall, papered with wanted
-    notices and contract slips, recent ones still clean, older ones curling at the
-    edges. Anyone with the will to read them can run "bounty list" anywhere in town
-    to see what's open.
+  bounty board: >-
+    A weather-worn corkboard stands beside the wall, papered with wanted
+    notices and contract slips, recent ones still clean, older ones curling at
+    the edges. Anyone with the will to read them can run "bounty list"
+    anywhere in town to see what's open.
+  cells: >-
+    Three iron-barred cells at the back of the room, each barely large enough
+    for a cot and a bucket. They are empty now, their doors standing open.
+    Scratches and stains on the walls suggest they see regular use.
+  racks: >-
+    Wooden weapon racks holding city guard equipment -- spears, short swords,
+    truncheons, and a few crossbows with quarrel pouches. Everything is
+    maintained but well-used. A chalk board above lists equipment checked out
+    and by whom.
+  table: >-
+    A heavy oak table scarred by knife marks and ink stains. Duty rosters are
+    pinned under a mug, incident reports are stacked in rough piles, and a
+    half-eaten loaf of bread sits next to an inkwell. This is where the daily
+    business of keeping the peace is organized.
 spawninfo:
 - mobid: 94
+  respawnrate: 15 real minutes
 idlemessages:
 - A guard sits at the table, laboriously writing an incident report.
 - Keys jingle on a ring at someone's belt.
-- The duty roster on the wall shows names crossed out and reassigned in different ink.
-x: 10
-y: 4
+- >-
+  The duty roster on the wall shows names crossed out and reassigned in
+  different ink.
+- The smell of oiled steel and leather pervades the room.

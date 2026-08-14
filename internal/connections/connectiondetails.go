@@ -157,6 +157,12 @@ type ConnectionDetails struct {
 	aiCommandCount    int
 	aiCommandRound    int64
 
+	// readQueue holds complete input lines split off from an earlier socket
+	// read, so a client that sends several commands in one TCP segment gets
+	// them delivered one at a time instead of merged. See input_lines.go.
+	readQueue   [][]byte
+	readQueueMu sync.Mutex
+
 	// clientIP is the *real* source address when the socket peer is not the
 	// player — i.e. a websocket arriving through a reverse proxy. Empty for
 	// telnet, which has no proxy in front of it, and empty for a websocket
@@ -341,7 +347,19 @@ func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
 	return cd.conn.Write(p)
 }
 
+// Read returns at most one input line per call.
+//
+// When a single socket read carries several complete lines, everything after
+// the first is queued and handed back on subsequent calls. That keeps the
+// caller's one-read-is-one-command loop correct for clients that batch
+// commands into one TCP segment; without it the lines were silently merged
+// into a single nonsense command. See input_lines.go for the full story and
+// for why chunks carrying telnet IAC are never split.
 func (cd *ConnectionDetails) Read(p []byte) (n int, err error) {
+
+	if n, ok := cd.nextQueuedInput(p); ok {
+		return n, nil
+	}
 
 	if cd.wsConn != nil {
 		// read the bytes and then copy them into p
@@ -349,11 +367,24 @@ func (cd *ConnectionDetails) Read(p []byte) (n int, err error) {
 		if err != nil {
 			return 0, err
 		}
-		copy(p, message)
-		return len(message), nil
+		// Report what actually landed in p, not the message length: a message
+		// longer than the read buffer would otherwise return a count past the
+		// end of the buffer and panic the caller's p[:n].
+		n = copy(p, message)
+		if first := cd.queueSplitInput(p[:n]); first > 0 {
+			n = first
+		}
+		return n, nil
 	}
 
-	return cd.conn.Read(p)
+	n, err = cd.conn.Read(p)
+	if err != nil {
+		return n, err
+	}
+	if first := cd.queueSplitInput(p[:n]); first > 0 {
+		n = first
+	}
+	return n, nil
 }
 
 func (cd *ConnectionDetails) Close() {
