@@ -1,0 +1,77 @@
+# Harness sanity check — follower (creation flow).
+# Second concurrent brand-new character. Grades the HARNESS first.
+name: harness-sanity-duo-follower
+summary: >
+  Create a second brand-new character through the in-game new-play flow taking
+  the second offered path, accept a party invite, converse in-game with the
+  leader, and follow the leader's walk.
+personality_notes: bug-finder — blunt, reports every usability problem it hits.
+
+goals:
+  - id: create-character-path-2
+    do: >-
+      Complete the new-character flow as a first-time player. When the game
+      offers a numbered choice of starting paths, pick the SECOND option as
+      presented on screen. Do not assume what option 2 is; read the prompt and
+      choose the one labelled 2. Record the exact prompt and the exact label
+      you chose, verbatim. If NO numbered path choice is offered, say so
+      plainly. Independently of the leader, note whether the flow is
+      understandable to someone who has never played here.
+    verify: >-
+      Character exists and is in the world. Chosen option's exact wording
+      captured.
+
+  - id: announce-self
+    do: >-
+      Run 'look' and 'who'. Write blackboard signal 'follower-ready' with your
+      CHARACTER name in data.character_name. Character name comes from
+      who/look, never the pt_* login username.
+    verify: >-
+      Own character name observed and written to the blackboard.
+
+  - id: accept-invite
+    do: >-
+      Wait for the leader's party invite to arrive IN GAME. Accept it with
+      'accept'. Then 'party list'. Signal 'follower-accepted'.
+    verify: >-
+      Invite seen in this actor's own event stream. Party list shows two
+      members.
+
+  - id: converse-in-game
+    do: >-
+      Reply to the leader on in-game channels, not the blackboard. Answer the
+      leader's opening party say in your own words, then ask the leader a
+      direct question on the party channel and wait for the answer. Also use
+      'say' in the room at least once. The goal is a genuine back-and-forth.
+    verify: >-
+      Leader's lines appear in this actor's event stream, this actor replied,
+      and the leader answered the question asked.
+
+  - id: follow-the-leader
+    do: >-
+      Track the leader's party-say movement callouts and move to stay with
+      them, running 'look' after each move. Avoid combat; disengage if
+      engaged. If you lose the leader, say so on the party channel rather
+      than wandering silently.
+    verify: >-
+      Room changes tracked. Party intact at the end, or the loss is reported
+      in-game.
+
+  - id: harness-observations
+    do: >-
+      Note anything that looks like a HARNESS defect rather than a content
+      defect: double-rendered prompts, dropped or echoed input, commands that
+      silently no-op, rate-limit stalls, bridge or connection hiccups, the two
+      actors disagreeing about party state, or one actor's messages never
+      reaching the other.
+    verify: >-
+      Report separates harness observations from content observations.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    Second concurrent brand-new character is the point of the run: it proves
+    the harness can drive two independent creation flows against one shared
+    ephemeral server without colliding on accounts or bridges (RoleUser only).
+  budgets:
+    wall_clock: 20m

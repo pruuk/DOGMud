@@ -1,0 +1,76 @@
+# Harness sanity check (0.3d) — two concurrent creation-flow characters.
+#
+# This scenario grades the HARNESS, not the content. It is the smallest run
+# that exercises every 0.3d moving part at once: two independent creation
+# flows on one shared ephemeral server, per-actor bridges and credentials,
+# the file blackboard, in-game party formation, and two-way in-game comms.
+#
+# No combat on purpose — a fight would add failure modes that have nothing to
+# do with whether the harness works.
+
+name: harness-sanity-duo
+mode: party
+summary: >-
+  Two brand-new characters are created through the in-game new-play flow
+  (second offered starting path for both), party up, hold a two-way in-game
+  conversation, and walk a short loop together.
+on_actor_stop: continue
+budgets:
+  wall_clock: 20m
+requires:
+  max_connections: 20
+roster:
+  - id: leader
+    personality: feature-tester
+    goals: goals/scenarios/harness-sanity-duo/leader.yaml
+  - id: follower
+    personality: bug-finder
+    goals: goals/scenarios/harness-sanity-duo/follower.yaml
+
+group_goals:
+  - id: two-creation-flows
+    do: >-
+      Both actors independently complete the new-character flow and each
+      selects the SECOND offered starting path, recording the exact prompt
+      wording. Neither actor may reuse the other's name or account.
+    verify: >-
+      Two distinct characters exist in the world at once. Both report the
+      verbatim path prompt and the option they chose, or state plainly that
+      no numbered choice was offered.
+
+  - id: party-formed
+    do: >-
+      Leader invites by CHARACTER name (from who/look, never the pt_* login
+      username); follower accepts in game. Readiness is coordinated via the
+      file blackboard, but the invite and accept happen in game.
+    verify: >-
+      Both actors see a two-member party in 'party list'. Invite and accept
+      lines appear on both bridges.
+
+  - id: two-way-conversation
+    do: >-
+      Hold a real conversation on in-game channels: party say plus at least
+      one room say each. The follower asks the leader a direct question and
+      the leader answers it.
+    verify: >-
+      Each actor's own event stream contains the other's lines, and at least
+      one exchange is a genuine question-and-answer rather than two parallel
+      monologues.
+
+  - id: leader-walk-followed
+    do: >-
+      Leader walks a short loop of four to six rooms, calling each move on the
+      party channel; follower tracks and keeps up. No combat.
+    verify: >-
+      Multiple distinct room titles observed by both. Party intact at the end,
+      or any separation is reported in game.
+
+  - id: harness-health
+    do: >-
+      Both actors record anything that looks like a harness defect rather than
+      a content defect: double-rendered prompts, dropped or echoed input,
+      silent no-op commands, rate-limit stalls, bridge or connection hiccups,
+      or the two actors disagreeing about shared state.
+    verify: >-
+      The combined report separates harness findings from content findings and
+      states clearly whether the harness itself behaved correctly.
