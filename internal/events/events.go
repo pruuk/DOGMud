@@ -261,6 +261,29 @@ func InspectQueuedInputForTest(instanceId int, prefix string) string {
 	return ""
 }
 
+// DrainQueuedCharacterDiedForTest removes all CharacterDied events from the
+// global queue and returns them.
+//
+// FOR TEST USE ONLY. Mutates the queue. Call it once to discard leftovers from
+// an earlier test, then again to assert on what the code under test queued.
+func DrainQueuedCharacterDiedForTest() []CharacterDied {
+	qLock.Lock()
+	defer qLock.Unlock()
+
+	var found []CharacterDied
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if d, ok := pe.event.(CharacterDied); ok {
+			found = append(found, d)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // DrainQueuedInputsForTest removes all Input events from the global queue for
 // the given mob instance id and returns their InputText values.
 //
