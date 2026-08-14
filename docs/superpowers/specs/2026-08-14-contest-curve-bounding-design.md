@@ -1,7 +1,8 @@
 # Contest curve bounding
 
-**Date:** 2026-08-14 (rev 2, after adversarial review)
-**Status:** design approved; implementation questions in section 7 still open
+**Date:** 2026-08-14 (rev 3)
+**Status:** design approved. Section 7 records the resolutions; four small items
+remain genuinely open at the end of it.
 **Arc:** unified contest resolution, `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`
 
 This is the U6 design. Two content changes are already landed; two code changes
@@ -253,74 +254,105 @@ Reading:
 
 ---
 
-## 7. Open implementation questions
+## 7. Resolved 2026-08-14 -- most of these were already settled in the arc
 
-These came out of adversarial review and need decisions before the plan is
-written. None is a coding detail.
+Rev 2 raised nine "open questions". Owner review found that six of them either
+had answers already recorded in the roadmap or were me re-fragmenting a design
+whose stated purpose is unification. Recorded here so they are not re-opened a
+third time.
 
-**7a. `res.Hit` semantics.** Under the multiplier most swings deal damage.
-`hooks/NewRound_DoCombat_unified.go:338` gates reflect, lifesteal, Adrenaline and
-mutation on-hit procs on `!res.Hit || res.DamageToTarget <= 0`.
-`internal/combat/reflect_damage.go:6-15` records a prior incident verbatim:
-*"raising the player's hit rate from 15% to 59.5% multiplied reflected damage by
-the same ~4x."* Broad (`Hit` = dealt damage) multiplies thorns and lifesteal by
-2-6x; narrow (`Hit` = won the contest) makes them stop tracking a damage model
-where most damage flows through the defended path. Related: `unified.go:160-170`
-dispatches `on_block` procs with a literal `0` damage because "a successful block
-is a defended swing", which the multiplier falsifies.
+**7.1 One resolver, all channels. NOT a per-channel design.** The roadmap's
+defence-set table already specifies this:
 
-**7b. Per-contest or per-action floor.** Sneak rolls once **per observer**
-(`actions/sneak.go:92-112`), flee once **per blocker** (`combat/flee.go:70-115`),
-grapple once **per round**. Against four observers the 87.5% ceiling compounds to
-58.6% and the 12.5% floor to 0.02%. A master fleeing a four-mob pack is capped at
-58.6% where today he is at 81.5%. One symmetric number cannot express both a
-conjunction and a repetition.
+| Attack type | Applicable defences | N |
+|---|---|---|
+| Melee | dodge, parry, block | 3 |
+| Ranged | dodge, block | 2 |
+| Spell, physical | dodge, block | 2 |
+| Spell, mental | **quell** (`Wil + spellcasting x5`) | 1 |
+| Taunt / social | **defy** (`Wil + rhetoric x5`) | 1 |
 
-**7c. `crit_floor.go` cannot stay unchanged.** `applyCritFloors:97-126` branches
-on `res.hit`. Under the multiplier the `res.hit` branch swallows partially
-deflected defensive wins and promotes 1% of them into **attack** crits, while the
-defence branch becomes unreachable and `MinDefenseCritChance` becomes dead code.
-It also has no `Floored` guard, so it contradicts the "a floored outcome cannot
-crit" property test.
+Same opposed roll, same resolution order, same floor, same partial-damage
+mapping. N=1 is a defence set of size one, not a different mechanism.
+`resolveDefenseOutcomeCore` therefore stops being melee-specific and takes the
+defence set as a parameter; every channel calls it.
 
-**7d. Concentration wants its own floor.** `UNIFIED_RESOLUTION_ROADMAP.md` U10
-already records: *"Concentration needs its own floor knob at ~0.02, or none. The
-standard contest floor of 0.15 would break a master's concentration 15% of the
-time."* A single global floor forecloses that. Either U10's requirement changes
-or `ContestFloor` needs one documented exception.
+`TrySpellDeflection`'s second roll on the defender's Perception **is** the
+legacy fragmentation U6 deletes. Losing Perception as a spell-defence stat is
+the intended outcome, not a cost -- quell replaces it. An earlier draft argued
+for preserving it and was wrong.
 
-**7e. Uncontested outcomes bypass the floor.** `contest.RunWithFloors:164-169`
-returns early on `!res.Contested`. Today a defenceless third-party target still
-gets a fabricated 15% dodge via `resolveDefenseOutcomeCore:991-1003`. Moving the
-floor inside `contest.Run` deletes that save and makes the one genuinely
-helpless case strictly more lethal.
+**7.2 Maneuvers join the partial mechanism.** Bash, trip, kick and the other
+`skill_moves.go` sites use the same floor and the same partial tier. **A partial
+trip deals damage without the knockdown.** The status effect is the part that
+stays binary; the damage is not.
 
-**7f. No disable knob for Change 2.** The reorder and the multiplier ship
-together with no way to turn them off, so there is no staged rollout. A
-`DefenseBareMitigation` shipping at 1.0 (= full negation) would disable the
-multiplier exactly, the way `ContestKneeSlope: 1.0` was going to disable the knee.
+**7.3 Concentration is already specified in U10 and needs no exception.**
+Roadmap U10 records a **trigger threshold of ~10% of a pool -- below that, no
+roll at all**, with disruption difficulties of prone 250, grappled 300, and
+damage `damagePct x 10`. So the `damage > 0` gate at
+`combat_shared_helpers.go:108` becomes a 10%-of-pool gate and the "casters roll
+on 96% of incoming swings" problem never arises.
 
-**7g. Config-under-test asymmetry.** A Go test binary never loads `config.yaml`,
-so validation defaults apply. `ContestFloor = 0` passes a `[0, 0.5)` check and
-stays 0, which switches the floor **off in every Go test** and makes the floor
-property test fail rather than pass vacuously. Validation must reject 0, or the
-tests must set it explicitly.
+On the floor: concentration is `Wil + spellcasting x5` against a **static
+difficulty**. That is category B in the arc's own taxonomy
+(`UNIFIED_RESOLUTION_ROADMAP.md:61`), not an opposed contest. **`ContestFloor`
+governs opposed contests only.** Static-difficulty rolls are a separate category
+the arc drew before U1, so no exception is needed and none is added.
 
-**7h. Spell and taunt have no implementation site for 5b.**
-`resolveDefenseOutcomeCore` is the physical path only. Spells resolve in
-`hooks/spell_resolution.go:272`, taunt in `actions/combat_taunt.go:128`, and the
-fourteen maneuver sites plus ranged in `combat/skill_moves.go:52-139`, where
-`result.Hit = attackSuccess` is a strict boolean with no partial tier. Worse,
-`TrySpellDeflection` is a **second, independent contest on different stats**
-(defender Perception + Spellcasting, `avoidance.go:26`) layered on top of the
-primary spell contest. Deriving the multiplier from the primary margin deletes
-Perception as a spell-defence stat. This needs a design answer, not a file edit.
+**7.4 Crafters interrupted by any damage: accepted as intended.**
 
-**7i. Maneuvers have no partial tier at all.** For a binary status effect,
-12.5%/87.5% means "did nothing" versus "fully landed". A maxed player's bash on a
-rat fails outright 12.5% of the time, up from 5%.
+**7.5 The "helpless target loses its save" case is a grapple artifact, not a
+floor problem.** `filterDefensesForThirdParty` hardcodes "attacking a grappled
+third party, only block applies", and zero defences remain only when the target
+has no shield. That is a defence-set rule written as a filter function instead
+of data -- exactly what 7.1's table replaces. Making the set data-driven
+dissolves it.
 
----
+**7.6 No disable knob for Change 2, and none is added.** The arc has a hard
+no-deploy-until-playtested gate, so this cannot reach production untested. A
+`DefenseBareMitigation` shipping at 1.0 would have disabled the multiplier
+exactly; it is unnecessary given the gate.
+
+**7.7 `res.Hit` goes broad.** Reflect, lifesteal and on-hit procs all compute
+from `res.DamageToTarget`, the damage ACTUALLY DEALT after mitigation
+(`NewRound_DoCombat_unified.go:384`, `:403`, `:157`). A partially deflected
+swing therefore returns proportionally less. The `reflect_damage.go:6-15`
+incident does not recur: there, hit rate rose 4x while every hit still dealt
+full damage. Verified, not assumed.
+
+**7.8 The floor stays PER CONTEST, not per action.** Sneak rolls once per
+observer and flee once per blocker, so the ceiling compounds against the actor.
+That is correct by design: fleeing a pack should be harder than fleeing one mob,
+and sneaking past eight observers harder than past one.
+
+**7.9 Crit floor denominators.** Attack floor applies to **swings that won the
+contest**. Defence floor triggers on **the defence winning the contest**, not on
+"the attack missed". Floor-driven ripostes disappearing is accepted and is
+arguably more realistic: fighting for your life against a superior opponent, you
+are unlikely to counterattack.
+
+### Still genuinely open
+
+- **The two hidden-detection sites in `actions/search.go`** answer the same
+  question as `usercommands/go.go`'s opposed contest but with a flat 135
+  threshold that ignores the hider's score entirely, so skill decides the
+  outcome on one path and is ignored on the other. Marked **UNASSIGNED** at
+  `UNIFIED_RESOLUTION_ROADMAP.md:123`; still needs a chunk. The rest of
+  `search.go`, plus `track.go` and `forager`, **stay static by decision**
+  (roadmap:145-160, clarified 2026-08-13): there is genuinely no opponent and
+  inventing one is worse.
+- **Integer damage floors diverge**: melee floors at 0
+  (`calcHitDamage:1150,1156`), spells and taunt at 1
+  (`CritOrMitigatedDamage:77-79`, "a hit that lands must do something; 0 reads
+  to the player as a bug"). Under partial deflection a heavily mitigated melee
+  swing can round to 0. Melee should match spells.
+- **`on_block` procs receive a literal `0` damage argument**
+  (`NewRound_DoCombat_unified.go:160-170`) on the reasoning that a block deals
+  none. The multiplier falsifies that premise.
+- **`ContestFloor: 0` must fail validation.** A Go test binary never loads
+  `config.yaml`, so a `[0, 0.5)` check would leave the floor at 0 and silently
+  switch it off in every test.
 
 ## 8. Corrections to rev 1
 
