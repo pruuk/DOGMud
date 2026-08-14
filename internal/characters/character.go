@@ -283,6 +283,7 @@ type Character struct {
 	PlayerDamage            map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage        uint64                         `yaml:"-"` // last round a player damaged this character
 	LastSuicideRound        uint64                         `yaml:"-"` // runtime only — round of last Suicide execution, for double-fire dedupe
+	DeathQueued             bool                           `yaml:"-"` // runtime only — a CharacterDied event is in flight. NOT the same as "dying" (Health < 1 && IsAlive()); the backstop sweeps skip on THIS, never on health, or they skip the very population they exist to reap. See the U5c spec.
 	LastAttackRejectedRound uint64                         `yaml:"-"` // runtime only — round of last player_attack_rejected event fire, for dedupe
 	permaBuffIds            []int                          // Buff Id's that are always present for this character
 	userId                  int                            // User ID of the character if any
