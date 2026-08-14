@@ -136,7 +136,25 @@ func AcquireMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, o
 				fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, mob.Character.Name))
 			return true
 		}
+		// Judge fresh aggression BEFORE SetAggro overwrites it: either no prior
+		// aggro at all, or aggro pointed at a different target. Same test as
+		// attack.go, and it has to happen on this side of the assignment.
+		freshAggro := user.Character.Aggro == nil ||
+			user.Character.Aggro.MobInstanceId != mob.InstanceId
+
 		user.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+
+		// Every melee special move engages through here: kick, bash, trip,
+		// grapple, taunt, and the mutation attacks (gore, maul, pounce, rake,
+		// throttle, drain). Until 2026-08-14 none of them seeded anything, so
+		// all eleven were invisible to the revenge, opinion and justice
+		// systems while `attack` and `shoot` were not. Seeding at this shared
+		// seam rather than in each command is what stops them diverging again.
+		//
+		// taunt is included on purpose. It deals conviction damage, so it is an
+		// attack in this world, and treating it as one is simpler than carving
+		// out an exception nobody would remember.
+		SeedAggression(user, mob, room, freshAggro)
 		return false
 	}
 
