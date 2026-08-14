@@ -120,16 +120,34 @@ catch what CI cannot see or what wastes a CI round-trip.
    ```bash
    git worktree add --detach C:/tmp/dogmud-boot-check HEAD
    cp _datafiles/config.yaml C:/tmp/dogmud-boot-check/_datafiles/config.yaml
-   cd C:/tmp/dogmud-boot-check && timeout 180 go run . > boot.log 2>&1
+   cd C:/tmp/dogmud-boot-check && go build -o boot-check.exe .
+   timeout 180 ./boot-check.exe > boot.log 2>&1
    grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log  # want 0
    grep -c "Server Ready" boot.log                                          # want 1
    ```
+
+   **Build to `boot-check.exe`, do not `go run .`.** `go run` links the binary
+   into a randomly-named temp directory on every invocation, and Windows
+   Firewall keys its rules on the executable *path* — so every boot test looked
+   like a brand-new unknown app and popped a "Windows Security Alert" dialog at
+   whoever was at the keyboard, forever, because the approval could never
+   apply to the next run. Building to a fixed path inside the (fixed) worktree
+   means one `New-NetFirewallRule` for
+   `C:\tmp\dogmud-boot-check\boot-check.exe` silences it permanently, and a
+   rebuild to the same path keeps the rule, since rules match path and not
+   hash. It also keeps compile time out of the 180s budget, which used to eat
+   into the window the server had to actually come up in.
 
    **Exit code 124 is the success case** — it means the timeout fired because
    the server stayed up. Do not grep for the bare word `panic`: the config key
    `GamePlay.MapConsistencyEnforce` legitimately has the *value* `panic` and
    will produce false hits. Clean up with `git worktree remove --force`, and if
    Windows holds a lock, `rm -rf` then `git worktree prune`.
+
+   The same reasoning applies to running the game locally: prefer
+   `go build -o dogmud.exe . && ./dogmud.exe` over `go run .` (both `/dogmud.exe`
+   and `/*.exe` are already gitignored). One firewall rule for that path and the
+   prompt stops for good.
 
 6. **Push, open the PR, watch the checks.** A green check is **not** proof: a
    run can pass while emitting annotations, and the lint gate is configured
