@@ -190,6 +190,11 @@ const (
 	Heavy    Intensity = "heavy"
 	Critical Intensity = "critical"
 	Fumble   Intensity = "fumble"
+	// CoupDeGrace is selected when the target is already dying: it has taken
+	// its lethal blow and the attributed death is queued but not yet resolved.
+	// Later hits that round still land and still count, but they read as
+	// finishing an opponent rather than as ordinary swings. See U5c.
+	CoupDeGrace Intensity = "coupdegrace"
 
 	// Tokens
 	TokenItemName     TokenName = "{itemname}"

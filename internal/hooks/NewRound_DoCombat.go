@@ -433,10 +433,13 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 		if user := users.GetByUserId(userId); user != nil {
 			// U5c: BACKSTOP only. Damage routed through ApplyHarm has already
 			// queued an ATTRIBUTED death naming the killer, and shouldSweepReap
-			// skips those. Reaping them here would fire first with an empty
-			// ActorRef, and Die's idempotence would then make the attributed
-			// event a silent no-op — attribution lost, everything still
-			// looking correct.
+			// skips those.
+			//
+			// Reaping a queued PLAYER here would be worse than losing the
+			// killer: Die cascades Dead -> Respawning -> Alive, so it returns
+			// with the player alive and its !IsAlive() guard cannot stop the
+			// queued event from running the whole cascade a second time. See
+			// shouldSweepReap.
 			//
 			// This stays rather than being deleted because it is the only death
 			// check covering PLAYERS hit in combat; the other two sweeps

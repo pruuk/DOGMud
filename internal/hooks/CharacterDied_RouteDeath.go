@@ -107,6 +107,19 @@ func reviveInsteadOfDeath(char *characters.Character) {
 // sweep is dying but NOT queued: it reached zero outside ApplyHarm. Skipping on
 // health would skip the entire population the sweep exists for, and nothing
 // would ever die on the non-harm paths.
+//
+// The !DeathQueued half is not merely about preserving attribution, and the
+// difference matters more for players than for mobs:
+//
+//   - A MOB stays at Dead once Die runs, so a second Die returns early on the
+//     !IsAlive() guard. Reaping it first only loses the killer.
+//   - A PLAYER does not. Die cascades Dead -> Respawning -> Alive (die.go), so
+//     it RETURNS WITH THE PLAYER ALIVE and the early guard cannot catch a
+//     second call. Reaping a player whose attributed death is already queued
+//     therefore runs the entire death cascade TWICE -- corpse, announcement,
+//     bounty resolution, jail cleanup, every AfterTransition observer on Dead.
+//
+// So this gate is load-bearing for correctness, not just for credit.
 func shouldSweepReap(char *characters.Character) bool {
 
 	if char == nil {

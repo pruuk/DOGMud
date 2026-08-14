@@ -16,8 +16,11 @@ func TestSweepReapsDyingButUnqueuedCharacter(t *testing.T) {
 }
 
 // The sweep must not reap a victim whose attributed death is already in flight.
-// Die is idempotent, so the attributed event would then be a silent no-op and
-// the killer would be lost while everything still looked correct.
+//
+// For a mob that costs the killer: it stays Dead, so the queued event no-ops.
+// For a PLAYER it is a correctness bug and not merely a credit one, because Die
+// cascades back to Alive and the queued event then runs the entire death
+// cascade a second time. See shouldSweepReap.
 func TestSweepSkipsQueuedCharacter(t *testing.T) {
 	mob := newRouteDeathTestMob(t, -5)
 	mob.Character.DeathQueued = true
