@@ -89,7 +89,13 @@ func resolveDyingCharacter(evt events.CharacterDied) *characters.Character {
 // would revive nothing and lose the attribution as well.
 func reviveInsteadOfDeath(char *characters.Character) {
 
-	char.Health = char.HealthMax.Value
+	// Restore through the primitive, not a direct write. The U5b pool-mutation
+	// guard forbids assigning to a pool, and ApplyRestore owns the bounds, so
+	// the hand-rolled clamp that would otherwise sit here is unnecessary.
+	// Health is negative at this point, so the shortfall is max minus current.
+	if missing := char.HealthMax.Value - char.Health; missing > 0 {
+		char.ApplyRestore(characters.PoolHealth, missing)
+	}
 
 	if room := rooms.LoadRoom(char.RoomId); room != nil {
 		room.SendTextVisual(messaging.CategoryBuffApply,
