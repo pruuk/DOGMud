@@ -41,6 +41,7 @@ verify against the code before acting on one.
 | [`audits/`](audits/) | Tech-debt and test-coverage audits, the code-smell review queue, upstream cherry-pick triage, playtest findings |
 | [`audits/META_REVIEW_AGENT_WORK_2026-08-08.md`](audits/META_REVIEW_AGENT_WORK_2026-08-08.md) | Adversarial meta-review grading the Cursor and Jules agent work after 2026-08-04 |
 | [`audits/ADVERSARIAL_REVIEW.md`](audits/ADVERSARIAL_REVIEW.md) | Jules' architectural teardown: global lock, autosave I/O, boot wiring, progression math |
+| [`audits/ADVERSARIAL_CODE_REVIEW_2026-08-07.md`](audits/ADVERSARIAL_CODE_REVIEW_2026-08-07.md) | Fresh-eyes review of server, commands, persistence, loaders, CI and client: 9 high, 18 medium, 5 low findings |
 | [`perf/`](perf/) | Performance baselines and profiling notes |
 
 Two of these are **live scripts**, not point-in-time reports — run them rather
