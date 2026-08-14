@@ -70,6 +70,26 @@ func TestApplyHarm_SecondLethalBlowDoesNotRequeue(t *testing.T) {
 	}
 }
 
+// ApplyHealthChange wraps ApplyHarm, and every one of combat.go's eight damage
+// sites goes through it. It used to pass state.ActorRef{} unconditionally,
+// which made melee death — the commonest death in the game — anonymous no
+// matter what U5c did at the harm site.
+func TestApplyHealthChange_CarriesTheKillerThrough(t *testing.T) {
+	events.DrainQueuedCharacterDiedForTest()
+	c := newHarmTestChar(5)
+
+	c.ApplyHealthChange(-25, state.ActorRef{MobInstanceId: 77})
+
+	got := events.DrainQueuedCharacterDiedForTest()
+	if len(got) != 1 {
+		t.Fatalf("queued %d events, want 1", len(got))
+	}
+	if got[0].KillerMobInstanceId != 77 {
+		t.Errorf("KillerMobInstanceId = %d, want 77 — the wrapper swallowed the killer",
+			got[0].KillerMobInstanceId)
+	}
+}
+
 // Stamina and conviction floor at 0 and are never lethal, at any magnitude.
 func TestApplyHarm_NonHealthPoolsNeverQueue(t *testing.T) {
 	for _, pool := range []Pool{PoolStamina, PoolConviction} {
