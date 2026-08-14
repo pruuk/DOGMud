@@ -45,9 +45,11 @@
 | `internal/hooks/NewRound_AutoHeal.go` | **Modify.** Delete the redundant anonymous `Die`. |
 | `internal/hooks/Buff_ApplyBuffs.go` | **Modify.** Delete the redundant anonymous `Die`. |
 | `internal/hooks/sweep_backstop_test.go` | **Create.** The dying-vs-queued distinction. |
-| `_datafiles/world/dogmud/coup-de-grace-messages.yaml` | **Create.** Weapon-agnostic message pool. |
-| `internal/combat/coup_de_grace.go` | **Create.** Pool loader + selection. |
-| `internal/combat/coup_de_grace_test.go` | **Create.** Loading, substitution, dying gate. |
+| `internal/items/itemspec.go` | **Modify.** Add the `coupdegrace` intensity. |
+| `internal/items/attack_messages.go` | **Modify.** Guard the generic fallback against infinite recursion. |
+| `_datafiles/world/dogmud/combat-messages/generic.yaml` | **Modify.** Fallback coup de grace block; any weapon file may override. |
+| `internal/combat/coup_de_grace.go` | **Create.** `IsDying` only. |
+| `internal/combat/coup_de_grace_test.go` | **Create.** Dying gate, generic pool present, recursion guard. |
 | `internal/characters/die.go` | **Modify.** Delete the phantom Shadow Realm precondition. |
 | `internal/characters/context.md`, `internal/hooks/context.md` | **Modify.** Document the new path. |
 | `docs/PATCH_NOTES.md` | **Modify.** Player-facing entry. |
@@ -682,33 +684,40 @@ git commit -m "fix(hooks): sweeps skip queued deaths and log when they fire (U5c
 ### Task 6: Coup de grace
 
 **Files:**
-- Create: `_datafiles/world/dogmud/coup-de-grace-messages.yaml`
+- Modify: `internal/items/itemspec.go:192` (new `Intensity`)
+- Modify: `internal/items/attack_messages.go:135-146` (recursion guard)
+- Modify: `_datafiles/world/dogmud/combat-messages/generic.yaml`
 - Create: `internal/combat/coup_de_grace.go`
 - Test: `internal/combat/coup_de_grace_test.go`
+- Modify: `internal/combat/combat_helpers.go` (`buildAttackMessages`)
 
-**Scope note.** The existing `combat-messages/` pools are keyed per weapon subtype with a deep `options.<phase>.<together|apart>.<toattacker|todefender>.<tier>` structure, across a dozen files. Adding a coup de grace phase to every one of them is a content project, not this slice. This uses a single weapon-agnostic pool modelled on `casting-messages.yaml`, which is the same shape `internal/spells/casting_messages.go` already loads. If the text later feels flat, per-weapon variants are a follow-up.
+**This needs no new loader and no new data file.** `items.GetPreAttackMessage(subType, intensity)` already tries the weapon subtype first and falls back to `Generic` when that subtype has no entry — exactly the per-weapon-then-generic behaviour wanted. Adding a `coupdegrace` intensity therefore gets per-weapon override, skill tiers, together/separate and token substitution for free, and any weapon file may define its own block later without touching code.
 
-- [ ] **Step 1: Write the message pool**
+- [ ] **Step 1: Add the intensity**
 
-Create `_datafiles/world/dogmud/coup-de-grace-messages.yaml`:
+In `internal/items/itemspec.go`, after `Fumble` (line 192):
 
-```yaml
-# Sent when an attack lands on a target that is already dying: health has been
-# driven below 1 but the death has not been resolved yet. See the U5c spec.
-#
-# These fire INSTEAD of ordinary hit text, and never alongside a second kill
-# message: the killing blow is announced exactly once, by whoever landed it.
-#
-# Tokens: {attacker} {target} {itemname}
-coup_de_grace:
-  - "You drive your {itemname} down into {target} again."
-  - "{target} is already falling. You strike anyway."
-  - "You hammer {target} once more, past any need for it."
-  - "Your {itemname} finds {target} again, and again after that."
-  - "You bear {target} to the ground under a final flurry."
+```go
+	CoupDeGrace Intensity = "coupdegrace"
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [ ] **Step 2: Guard the fallback against infinite recursion**
+
+`GetPreAttackMessage` ends with `return GetPreAttackMessage(Generic, messageType)`. If `Generic` itself lacks the key it calls itself forever and overflows the stack, taking the server down. That is survivable today only because `generic.yaml` happens to define every intensity in use; adding a new one widens the exposure, so guard it now.
+
+In `internal/items/attack_messages.go`, replace the final line of `GetPreAttackMessage`:
+
+```go
+	// Fall back to generic, but never recurse into ourselves: a missing generic
+	// entry would otherwise loop until the stack overflows and take the server
+	// down. Returning the zero value degrades to no message instead.
+	if subType == Generic {
+		return AttackOptions{}
+	}
+	return GetPreAttackMessage(Generic, messageType)
+```
+
+- [ ] **Step 3: Write the failing test**
 
 Create `internal/combat/coup_de_grace_test.go`:
 
@@ -716,11 +725,11 @@ Create `internal/combat/coup_de_grace_test.go`:
 package combat
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
 func newDyingTestChar(health int) *characters.Character {
@@ -747,42 +756,40 @@ func TestIsDying(t *testing.T) {
 	}
 }
 
-func TestCoupDeGraceMessage_SubstitutesTokens(t *testing.T) {
-	msg := CoupDeGraceMessage("Meirok", "Crop Pest", "Practice Sword")
+// Generic MUST carry a coupdegrace block: it is the fallback every weapon
+// without its own block lands on, and an empty result renders nothing.
+func TestCoupDeGraceGenericPoolExists(t *testing.T) {
+	opts := items.GetPreAttackMessage(items.Generic, items.CoupDeGrace)
 
-	if msg == "" {
-		t.Fatal("empty coup de grace message")
+	if len(opts.Together.ToAttacker) == 0 {
+		t.Fatal("generic.yaml has no coupdegrace toattacker messages; every weapon falls back to silence")
 	}
-	for _, tok := range []string{"{attacker}", "{target}", "{itemname}"} {
-		if strings.Contains(msg, tok) {
-			t.Errorf("token %s left unsubstituted: %q", tok, msg)
-		}
+}
+
+// The recursion guard: asking Generic for an intensity it does not define must
+// return empty rather than looping until the stack overflows.
+func TestUnknownIntensityOnGenericDoesNotRecurse(t *testing.T) {
+	opts := items.GetPreAttackMessage(items.Generic, items.Intensity("no-such-intensity"))
+
+	if len(opts.Together.ToAttacker) != 0 {
+		t.Error("expected an empty result for an undefined intensity")
 	}
 }
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [ ] **Step 4: Run to verify it fails**
 
-Run: `go test ./internal/combat/ -run 'TestIsDying|TestCoupDeGrace' -v`
-Expected: FAIL to build — `IsDying` and `CoupDeGraceMessage` undefined.
+Run: `go test ./internal/combat/ -run 'TestIsDying|TestCoupDeGrace|TestUnknownIntensity' -v`
+Expected: FAIL to build (`IsDying` undefined), then FAIL on the generic pool until Step 6 adds the YAML.
 
-- [ ] **Step 4: Implement**
+- [ ] **Step 5: Implement `IsDying`**
 
 Create `internal/combat/coup_de_grace.go`:
 
 ```go
 package combat
 
-import (
-	"math/rand"
-	"os"
-	"strings"
-	"sync"
-
-	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/configs"
-	"gopkg.in/yaml.v2"
-)
+import "github.com/GoMudEngine/GoMud/internal/characters"
 
 // IsDying reports whether a character has taken a lethal blow whose death has
 // not resolved yet.
@@ -797,88 +804,99 @@ func IsDying(char *characters.Character) bool {
 	}
 	return char.Health < 1 && char.IsAlive()
 }
-
-type coupDeGraceMessages struct {
-	CoupDeGrace []string `yaml:"coup_de_grace"`
-}
-
-var (
-	cdgOnce     sync.Once
-	cdgMessages *coupDeGraceMessages
-)
-
-func loadCoupDeGraceMessages() *coupDeGraceMessages {
-	cdgOnce.Do(func() {
-		path := string(configs.GetFilePathsConfig().DataFiles) + `/coup-de-grace-messages.yaml`
-		data, err := os.ReadFile(path)
-		if err != nil {
-			cdgMessages = defaultCoupDeGraceMessages()
-			return
-		}
-		var m coupDeGraceMessages
-		if err := yaml.Unmarshal(data, &m); err != nil || len(m.CoupDeGrace) == 0 {
-			cdgMessages = defaultCoupDeGraceMessages()
-			return
-		}
-		cdgMessages = &m
-	})
-	return cdgMessages
-}
-
-func defaultCoupDeGraceMessages() *coupDeGraceMessages {
-	return &coupDeGraceMessages{
-		CoupDeGrace: []string{"You strike {target} again, past any need for it."},
-	}
-}
-
-// CoupDeGraceMessage renders one line for a hit landing on an already-dying
-// target. Substitutes {attacker}, {target} and {itemname}.
-func CoupDeGraceMessage(attacker, target, itemName string) string {
-	pool := loadCoupDeGraceMessages().CoupDeGrace
-	msg := pool[rand.Intn(len(pool))]
-
-	msg = strings.ReplaceAll(msg, "{attacker}", attacker)
-	msg = strings.ReplaceAll(msg, "{target}", target)
-	msg = strings.ReplaceAll(msg, "{itemname}", itemName)
-	return msg
-}
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+- [ ] **Step 6: Author the generic message block**
 
-Run: `go test ./internal/combat/ -run 'TestIsDying|TestCoupDeGrace' -v`
-Expected: PASS.
+In `_datafiles/world/dogmud/combat-messages/generic.yaml`, add a `coupdegrace:` entry under `options:`, matching the structure the other intensities use. Skill tiers are `beginner`, `expert`, `master`; the available tokens are listed at the top of that file.
 
-- [ ] **Step 6: Wire it into attack rendering**
+Read the neighbouring `fumble:` block first and mirror its exact indentation and key set. If it carries keys this block omits, add them rather than leaving them absent.
 
-One touch point, and no new `AttackResult` field. In `internal/combat/combat_helpers.go`, inside `buildAttackMessages`, the attacker-facing line is selected at the `if sourceChar.RoomId == targetChar.RoomId` branch (around line 1254) as `toAttackerMsg`. Override it immediately after that whole if/else block closes, before the token substitution runs:
+```yaml
+  coupdegrace:
+    together:
+      toattacker:
+        beginner:
+        - 'You strike <ansi fg="{targettype}">{target}</ansi> again, past any need for it.'
+        - 'You drive your <ansi fg="item">{itemname}</ansi> down into <ansi fg="{targettype}">{target}</ansi> once more.'
+        expert:
+        - '<ansi fg="{targettype}">{target}</ansi> is already falling. You strike anyway.'
+        - 'You hammer <ansi fg="{targettype}">{target}</ansi> down with your <ansi fg="item">{itemname}</ansi>.'
+        master:
+        - 'You bear <ansi fg="{targettype}">{target}</ansi> to the ground under a final flurry.'
+        - 'Your <ansi fg="item">{itemname}</ansi> finds <ansi fg="{targettype}">{target}</ansi> again, and again after that.'
+      todefender:
+        beginner:
+        - '<ansi fg="{sourcetype}">{source}</ansi> strikes you as you fall.'
+        expert:
+        - '<ansi fg="{sourcetype}">{source}</ansi> strikes you as you fall.'
+        master:
+        - '<ansi fg="{sourcetype}">{source}</ansi> bears you down under a final flurry.'
+      toroom:
+        beginner:
+        - '<ansi fg="{sourcetype}">{source}</ansi> keeps striking <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        expert:
+        - '<ansi fg="{sourcetype}">{source}</ansi> keeps striking <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        master:
+        - '<ansi fg="{sourcetype}">{source}</ansi> batters <ansi fg="{targettype}">{target}</ansi> to the ground.'
+    separate:
+      toattacker:
+        beginner:
+        - 'Your shot finds <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        expert:
+        - 'Your shot finds <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        master:
+        - 'Your shot punches into <ansi fg="{targettype}">{target}</ansi> as they go down.'
+      todefender:
+        beginner:
+        - 'A shot from the {entrancename} finds you as you fall.'
+        expert:
+        - 'A shot from the {entrancename} finds you as you fall.'
+        master:
+        - 'A shot from the {entrancename} punches into you as you go down.'
+```
+
+- [ ] **Step 7: Wire it into attack rendering**
+
+In `internal/combat/combat_helpers.go`, inside `buildAttackMessages`, extend the branch that already selects the fumble pool:
 
 ```go
-	// U5c: the target is already dying — the killing blow has landed and its
-	// death is queued. Later hits this round still connect and still count
-	// toward the damage map, but they read as a coup de grace rather than as
-	// ordinary hit text, and never as a second kill announcement.
-	//
-	// Attacker-facing only. The room and defender lines are left alone: this is
-	// flavour for the person doing it, and duplicating it outward is spam.
-	if IsDying(targetChar) {
-		toAttackerMsg = items.ItemMessage(CoupDeGraceMessage(
-			sourceChar.Name, targetChar.Name, ws.weaponName))
-	}
+	var msgs items.AttackOptions
+	isFeint := false
+	if result.Fumble {
+		msgs = items.GetPreAttackMessage(displaySubtype, items.Fumble)
+	} else if IsDying(targetChar) {
+		// U5c: the target has already taken its lethal blow and the death is
+		// queued. Later hits this round still connect and still count toward
+		// the damage map, but they read as a coup de grace rather than ordinary
+		// hit text, and never as a second kill announcement.
+		//
+		// After the fumble branch on purpose: flubbing a swing at a falling
+		// target is still a fumble.
+		msgs = items.GetPreAttackMessage(displaySubtype, items.CoupDeGrace)
+	} else {
+		msgs = items.GetAttackMessage(displaySubtype, int(pctDamage))
+		// Feint check: skilled attackers can turn misses into deliberate-looking feints
+		if int(pctDamage) == 0 && !result.Fumble {
+			isFeint = checkFeint(sourceChar.GetCombatSkillLevel())
+		}
 ```
 
-`ws.weaponName` is the same value already fed to `items.TokenItemName` in `tokenReplacements`, so the weapon reads identically to every other line. `items.ItemMessage` is a string type, so the conversion is direct.
+Everything downstream (skill-tier selection, token substitution, room delivery) is unchanged.
 
-- [ ] **Step 7: Build and test**
+- [ ] **Step 8: Run to verify it passes**
 
-Run: `go build ./... && go test ./internal/combat/`
-Expected: `ok`.
+Run: `go test ./internal/combat/ -run 'TestIsDying|TestCoupDeGrace|TestUnknownIntensity' -v`
+Expected: PASS, three tests.
 
-- [ ] **Step 8: Commit**
+Then: `go build ./... && go test ./internal/combat/ ./internal/items/`
+Expected: `ok` for both.
+
+- [ ] **Step 9: Commit**
 
 ```bash
-git add _datafiles/world/dogmud/coup-de-grace-messages.yaml internal/combat/coup_de_grace.go internal/combat/coup_de_grace_test.go internal/combat/combat_helpers.go
-git commit -m "feat(combat): coup de grace text for hits on an already-dying target (U5c)"
+git add internal/items/itemspec.go internal/items/attack_messages.go _datafiles/world/dogmud/combat-messages/generic.yaml internal/combat/coup_de_grace.go internal/combat/coup_de_grace_test.go internal/combat/combat_helpers.go
+git commit -m "feat(combat): coup de grace text, per-weapon with a generic fallback (U5c)"
 ```
 
 ---
