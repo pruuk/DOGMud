@@ -14,6 +14,10 @@ func RegisterListeners() {
 	// Buffs
 	events.RegisterListener(events.Buff{}, ApplyBuffs)
 
+	// U5c: attributed death, queued by ApplyHarm at the harm site and resolved
+	// here rather than inline, so no instance despawns mid-loop.
+	events.RegisterListener(events.CharacterDied{}, RouteAttributedDeath)
+
 	// Splash scenes (terminal + screen-reader delivery; web goes via gmcp module)
 	events.RegisterListener(splash.Splash{}, Splash_Deliver)
 

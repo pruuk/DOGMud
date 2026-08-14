@@ -121,8 +121,20 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 
 		// Death check always runs — a DoT tick in an idle zone should
 		// still kill the mob. Skip the rest of the loop when the mob dies.
+		//
+		// U5c: BACKSTOP only, and skipping on DeathQueued rather than on health
+		// is the whole point. A mob reaped here is dying but NOT queued, i.e. it
+		// reached zero without going through ApplyHarm. Skipping on health would
+		// skip exactly the population this exists to reap.
+		//
+		// The `continue` still fires for any dying mob, queued or not: a mob at
+		// zero must not act while its death is in flight.
 		if mob.Character.Health <= 0 && mob.Character.IsAlive() {
-			mob.Character.Die(state.ActorRef{}, life.TriggerHealthZero)
+			if shouldSweepReap(&mob.Character) {
+				mudlog.Debug("U5c sweep", "reason", "unattributed death",
+					"mob", mob.Character.Name, "instanceId", mobInstanceId)
+				mob.Character.Die(state.ActorRef{}, life.TriggerHealthZero)
+			}
 			continue
 		}
 
