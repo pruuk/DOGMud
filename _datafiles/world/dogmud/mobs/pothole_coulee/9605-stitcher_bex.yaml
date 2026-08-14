@@ -51,7 +51,7 @@ character:
   level: 1
   gold: 1000
   skills:
-    tailoring: 12
+    tailoring: 1
   stats:
     dexterity:
       training: 12

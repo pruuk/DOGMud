@@ -34,7 +34,7 @@ character:
     charisma:
       training: 8
   skills:
-    spellcasting: 5
+    spellcasting: 1
 itemdropchance: 75
 loot_pool:
   - 10029

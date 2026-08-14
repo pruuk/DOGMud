@@ -40,7 +40,7 @@ character:
     strength:
       training: 2
   skills:
-    skullduggery: 5
+    skullduggery: 1
   items:
     - itemid: 10021
       dropchance: 15

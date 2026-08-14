@@ -47,7 +47,7 @@ character:
     charisma:
       training: 8
   skills:
-    spellcasting: 15
+    spellcasting: 1
   spellbook:
     nerve-disruption: 50
     mind-fog: 50

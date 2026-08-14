@@ -58,5 +58,5 @@ character:
       action: cast fold-recall
       priority: 13
   skills:
-    weapon-combat: 22
-    unarmed-combat: 18
+    weapon-combat: 1
+    unarmed-combat: 1

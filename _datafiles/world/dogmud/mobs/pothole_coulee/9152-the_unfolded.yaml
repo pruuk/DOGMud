@@ -62,7 +62,7 @@ character:
     strength:
       training: 8
   skills:
-    spellcasting: 14
+    spellcasting: 1
   spellbook:
     mind-spike: 50
     nerve-disruption: 50

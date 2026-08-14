@@ -27,8 +27,8 @@ character:
     charisma:
       training: 5
   skills:
-    ranged-combat: 40
-    unarmed-combat: 10
+    ranged-combat: 1
+    unarmed-combat: 1
   equipment:
     weapon:
       itemid: 10004

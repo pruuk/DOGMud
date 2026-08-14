@@ -55,6 +55,6 @@ character:
     strength:
       training: 3
   skills:
-    spellcasting: 8
+    spellcasting: 1
   spellbook:
     mind-spike: 40

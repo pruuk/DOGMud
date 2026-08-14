@@ -69,9 +69,9 @@ character:
     heal: 10
     mind-spike: 15
   skills:
-    spellcasting: 30
-    manifestation: 30
-    search: 10
+    spellcasting: 1
+    manifestation: 1
+    search: 1
   equipment:
     weapon:
       itemid: 10025

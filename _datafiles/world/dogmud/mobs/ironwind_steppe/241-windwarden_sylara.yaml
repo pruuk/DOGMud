@@ -50,7 +50,7 @@ character:
     hemorrhagic-burst: 5
     heal: 10
   skills:
-    spellcasting: 16
+    spellcasting: 1
   stats:
     willpower:
       training: 20

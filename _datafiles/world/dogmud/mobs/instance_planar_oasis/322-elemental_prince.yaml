@@ -32,7 +32,7 @@ character:
     perception:
       training: 8
   skills:
-    skullduggery: 3
+    skullduggery: 1
 itemdropchance: 75
 loot_pool:
   - 10030

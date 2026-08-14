@@ -33,7 +33,7 @@ character:
     perception:
       training: 8
   skills:
-    unarmed-combat: 5
+    unarmed-combat: 1
 itemdropchance: 75
 loot_pool:
   - 10036

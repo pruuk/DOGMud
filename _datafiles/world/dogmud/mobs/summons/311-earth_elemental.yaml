@@ -33,7 +33,7 @@ character:
   speciesid: 37
   level: 1
   skills:
-    rhetoric: 10
+    rhetoric: 1
   stats:
     strength:
       training: 20

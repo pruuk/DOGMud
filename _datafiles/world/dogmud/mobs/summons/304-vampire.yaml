@@ -40,7 +40,7 @@ character:
     iron-will: 4
     conviction-surge: 3
   skills:
-    spellcasting: 8
+    spellcasting: 1
   stats:
     strength:
       training: 10

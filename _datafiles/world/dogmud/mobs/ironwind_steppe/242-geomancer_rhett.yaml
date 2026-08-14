@@ -50,7 +50,7 @@ character:
     mind-spike: 12
     sparks: 6
   skills:
-    spellcasting: 18
+    spellcasting: 1
   stats:
     willpower:
       training: 10

@@ -53,7 +53,7 @@ character:
   speciesid: 1
   gold: 1000
   skills:
-    jewelcrafting: 13
+    jewelcrafting: 1
   stats:
     dexterity:
       training: 14

@@ -52,10 +52,10 @@ character:
       action: cast fold-recall
       priority: 13
   skills:
-    weapon-combat: 15
-    search:        25
-    salvage:       20
-    spellcasting:  15
+    weapon-combat: 1
+    search: 1
+    salvage: 1
+    spellcasting: 1
   equipment:
     weapon:
       itemid: 10033

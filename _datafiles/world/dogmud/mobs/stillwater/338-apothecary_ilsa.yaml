@@ -58,7 +58,7 @@ character:
   speciesid: 1
   gold: 1000
   skills:
-    alchemy: 12
+    alchemy: 1
   stats:
     perception:
       training: 12

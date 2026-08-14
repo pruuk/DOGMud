@@ -50,8 +50,8 @@ character:
     willpower:
       training: 12
   skills:
-    weapon-combat: 30
-    unarmed-combat: 25
+    weapon-combat: 1
+    unarmed-combat: 1
   items:
     - itemid: 40054
     - itemid: 40053

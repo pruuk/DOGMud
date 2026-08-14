@@ -47,5 +47,5 @@ character:
     strength:
       training: -3
   skills:
-    skullduggery: 6
+    skullduggery: 1
     search: 1

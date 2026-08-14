@@ -41,7 +41,7 @@ character:
   level: 1
   gold: 1000
   skills:
-    cooking: 24
+    cooking: 1
   stats:
     vitality:
       training: 5

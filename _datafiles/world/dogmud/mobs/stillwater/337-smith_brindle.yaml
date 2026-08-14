@@ -59,7 +59,7 @@ character:
   speciesid: 1
   gold: 1000
   skills:
-    blacksmithing: 14
+    blacksmithing: 1
   stats:
     strength:
       training: 14

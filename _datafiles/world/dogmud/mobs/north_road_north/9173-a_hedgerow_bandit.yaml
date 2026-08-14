@@ -56,5 +56,5 @@ character:
     perception:
       training: 6
   skills:
-    weapon-combat: 8
-    skullduggery: 5
+    weapon-combat: 1
+    skullduggery: 1
