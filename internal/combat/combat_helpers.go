@@ -469,29 +469,39 @@ func calcCritThreshold(sourceChar *characters.Character, targetChar *characters.
 	if targetChar.HasBuffFlag(buffs.Blink) {
 		critThreshold = 2.5
 	}
-	// Skill advantage shifts crit threshold.
+	// Skill advantage shifts the crit threshold.
 	//
-	// This SATURATES almost immediately in live play, and that is INTENDED.
-	// Confirmed by playtest 2026-08-14 and kept deliberately: do not "fix" it.
+	// READ THIS BEFORE REASONING ABOUT CRIT RATES. What this function returns
+	// is only the BAR. Since chunk 5.11d the thing measured against that bar is
+	// the normalized opposed-roll MARGIN, not a self-relative z-score, so the
+	// opponent's stats, gear and position dominate the actual crit rate. See
+	// margin_crit.go. A high-stat boss rolls high defences, the margin collapses
+	// or goes negative, and crits become rare no matter what this returns; a
+	// trash mob leaves an enormous margin and crits land constantly. Do NOT
+	// conclude from the threshold alone that crit rate is matchup-independent —
+	// that was the pre-5.11d behaviour and it is exactly what 5.11d removed.
 	//
-	// GetCombatSkillLevel returns 1 when unset (characters/skills.go), and no
-	// mob YAML defines a skills block, so every mob in the world is combat
-	// skill 1. skillDiff is therefore just the player's combat skill minus one,
-	// and at 0.05 per point the floor below is reached at combat skill 11.
-	// Every established character consequently sits on the floor against every
-	// target in the game, boss and trash alike:
+	// The skill term below DOES saturate, and that part is INTENDED. Confirmed
+	// by playtest 2026-08-14 and kept deliberately: do not "fix" it.
+	// GetCombatSkillLevel returns 1 when unset (characters/skills.go) and no mob
+	// YAML defines a skills block, so every mob in the world is combat skill 1.
+	// skillDiff is therefore the player's combat skill minus one, and at 0.05
+	// per point the 1.5 floor is reached at combat skill 11. For nearly every
+	// established character the bar is thus pinned at 1.5 rather than 2.0
+	// against every target.
 	//
-	//   z >= 2.0  ->  2.3% crit   (a brand-new character)
-	//   z >= 1.5  ->  6.7% crit   (combat skill 11+, i.e. nearly everyone)
+	// At PARITY that is the difference between a 2.3% and a 6.7% crit rate
+	// (ContestCritThreshold is 2.0 precisely to reproduce the legacy rate at
+	// parity). Away from parity the margin, not the bar, is what decides.
 	//
-	// So this is a step, not a gradient, and roughly 2.9x the base crit rate
-	// for anyone past the first stretch of progression. That is the desired
-	// feel: it is what makes fighting trash satisfying rather than a chore.
-	// Rebalancing it means changing the FEEL, not repairing a defect, so it is
-	// a design decision and not a bug fix.
+	// Note the double count, deliberate but worth knowing: combat skill already
+	// raises the margin through the attack score (SkillWeight), and it lowers
+	// this bar as well. Skill therefore reaches crit rate twice. The playtest
+	// says this feels good, so it stays; rebalancing it changes FEEL, not a
+	// defect.
 	//
-	// If mobs ever gain real combat skills, revisit this: the slope was written
-	// for two-sided skill values and would start behaving very differently.
+	// If mobs ever gain real combat skills, revisit: the slope was written for
+	// two-sided values and would behave very differently.
 	skillDiff := sourceChar.GetCombatSkillLevel() - targetChar.GetCombatSkillLevel()
 	critThreshold -= float64(skillDiff) * 0.05
 
