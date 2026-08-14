@@ -44,14 +44,15 @@ type GameplayDeath struct {
 	CorpseDecayTime      ConfigString `yaml:"CorpseDecayTime"`      // How long until corpses decay to dust (go away)
 	CorpseLootTimeout    ConfigString `yaml:"CorpseLootTimeout"`    // Real-time duration a mob corpse's loot stays owner-locked (killer/party) before opening to free-for-all
 	// DOGMud death penalties (Stage 20.1)
-	StatDecayMin          ConfigInt   `yaml:"StatDecayMin"`          // Min Training loss on death (default 1)
-	StatDecayMax          ConfigInt   `yaml:"StatDecayMax"`          // Max Training loss on death (default 2)
-	SkillRustCount        ConfigInt   `yaml:"SkillRustCount"`        // Number of skills to decay on death (default 1)
-	SkillRustAmount       ConfigInt   `yaml:"SkillRustAmount"`       // Skill ranks lost per decayed skill (default 1)
-	SkillRecencyThreshold ConfigInt   `yaml:"SkillRecencyThreshold"` // Use count above which skills are protected (default 50)
-	DeathsShadowBuffId    ConfigInt   `yaml:"DeathsShadowBuffId"`    // Buff ID for Death's Shadow debuff (default 25)
-	RespawnPoolFraction   ConfigFloat `yaml:"RespawnPoolFraction"`   // Fraction of max pools (Health/Stamina/Conviction) restored on respawn (default 0.05). Keeps "death run" strategies honest — players respawn weakened and have to recover before their next attempt.
-	RespawnGraceRounds    ConfigInt   `yaml:"RespawnGraceRounds"`    // Rounds of no-aggro-target protection after respawn (default 3). Set to 0 to disable grace period.
+	StatDecayMin        ConfigInt   `yaml:"StatDecayMin"`        // Min Training loss on death (default 1)
+	StatDecayMax        ConfigInt   `yaml:"StatDecayMax"`        // Max Training loss on death (default 2)
+	SkillRustCount      ConfigInt   `yaml:"SkillRustCount"`      // Number of skills to decay on death (default 1)
+	SkillRustAmount     ConfigInt   `yaml:"SkillRustAmount"`     // Skill ranks lost per decayed skill (default 1)
+	StatDecayFloor      ConfigInt   `yaml:"StatDecayFloor"`      // A stat's Value may never be degraded below this on death (default 80). At or below it, nothing happens at all.
+	SkillRustFloor      ConfigInt   `yaml:"SkillRustFloor"`      // A skill's rank may never be rusted below this on death (default 1). At or below it, nothing happens at all.
+	DeathsShadowBuffId  ConfigInt   `yaml:"DeathsShadowBuffId"`  // Buff ID for Death's Shadow debuff (default 25)
+	RespawnPoolFraction ConfigFloat `yaml:"RespawnPoolFraction"` // Fraction of max pools (Health/Stamina/Conviction) restored on respawn (default 0.05). Keeps "death run" strategies honest — players respawn weakened and have to recover before their next attempt.
+	RespawnGraceRounds  ConfigInt   `yaml:"RespawnGraceRounds"`  // Rounds of no-aggro-target protection after respawn (default 3). Set to 0 to disable grace period.
 }
 
 func (g *GamePlay) Validate() {
@@ -110,8 +111,11 @@ func (g *GamePlay) Validate() {
 	if g.Death.SkillRustAmount < 1 {
 		g.Death.SkillRustAmount = 1
 	}
-	if g.Death.SkillRecencyThreshold < 1 {
-		g.Death.SkillRecencyThreshold = 50
+	if g.Death.StatDecayFloor < 1 {
+		g.Death.StatDecayFloor = 80
+	}
+	if g.Death.SkillRustFloor < 1 {
+		g.Death.SkillRustFloor = 1
 	}
 	if g.Death.DeathsShadowBuffId < 1 {
 		g.Death.DeathsShadowBuffId = 25
