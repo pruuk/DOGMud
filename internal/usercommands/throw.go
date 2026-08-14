@@ -41,6 +41,43 @@ func maybeInterruptOnThrow(mob *mobs.Mob, thrownItemId int, by state.ActorRef) b
 	return actions.InterruptTargetCast(&mob.Character, by)
 }
 
+// engageAfterThrow puts the thrower and everything the throw actually hit into
+// combat with each other.
+//
+// Throwing used to be refused outright unless melee was already joined, so a
+// thrown explosive could never open a fight -- which is the one thing a
+// firebomb is for. Allowing the opener means the throw has to start the fight
+// itself: ApplyHarm is a pure pool change and sets no aggro, so without this a
+// player could bomb a room from outside combat and neither side would engage.
+//
+// Existing aggro on either side is left alone. Re-pointing the thrower would
+// yank them off their chosen target mid-fight, and re-pointing a mob would pull
+// it off whoever it was already fighting.
+func engageAfterThrow(userId int, thrower *characters.Character, hitMobs []*mobs.Mob) {
+	if len(hitMobs) == 0 {
+		return
+	}
+
+	for _, mob := range hitMobs {
+		if mob == nil {
+			continue
+		}
+		if mob.Character.Aggro == nil {
+			mob.Character.SetAggro(userId, 0, characters.DefaultAttack)
+		}
+	}
+
+	if thrower == nil || thrower.Aggro != nil {
+		return
+	}
+	for _, mob := range hitMobs {
+		if mob != nil {
+			thrower.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+			return
+		}
+	}
+}
+
 func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if refuseWhileBusy(user, `throw anything`) {
 		return true, nil
@@ -51,11 +88,10 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	// Must be in combat
-	if !user.Character.IsInCombat() {
-		user.SendText(messaging.CategorySystem, "You must be in combat to throw something!")
-		return true, nil
-	}
+	// Deliberately NOT gated on being in combat. A thrown explosive is a ranged
+	// opener; requiring melee first made the whole throwable category unusable
+	// for the thing it is for. engageAfterThrow starts the fight for a throw
+	// that connects.
 
 	// Special-move cooldown
 	cfg := configs.GetBalanceConfig()
@@ -136,6 +172,9 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	hasBuffs := len(spec.BuffIds) > 0
 	hitCount := 0
 	fumbled := false
+	// Everything the throw connected with, so an out-of-combat opener can
+	// engage both sides once the blast is resolved. See engageAfterThrow.
+	hitMobs := []*mobs.Mob{}
 
 	for _, mobInstId := range room.GetMobs(rooms.FindAll) {
 		mob := mobs.GetInstance(mobInstId)
@@ -201,6 +240,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 
 		hitCount++
+		hitMobs = append(hitMobs, mob)
 
 		// Apply effects to mob
 		if hasDamage {
@@ -248,6 +288,12 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	// Progress skullduggery skill (also advances dexterity as primary stat)
 	user.Character.OnSkillUse(string(skills.Skullduggery), user.UserId)
+
+	// A throw that connected starts the fight if one was not already running.
+	// A fumble hurts only the thrower, so it engages nobody.
+	if !fumbled {
+		engageAfterThrow(user.UserId, user.Character, hitMobs)
+	}
 
 	if user.Character.Aggro != nil {
 		user.Character.Aggro.RoundsWaiting = 1

@@ -1,5 +1,18 @@
 # DOGMud Patch Notes
 
+## 2026-08-14: Open a fight with a grenade, and a clearer casting voice
+
+Thrown weapons refused to leave your hand unless you were already trading
+blows, which made no sense for the one thing a firebomb is good for. You can
+now open with a throw. Anything caught in the blast turns on you, so leading
+with a grenade commits you to the fight, as it should.
+
+Casting also reads better while you work. Holding a spell across several folds
+used to tell you the spell was beginning again on every single round, and one
+of those lines called the spell by its internal name rather than its real one.
+The folding now describes itself as the work in progress it is, and calls every
+spell by its proper name.
+
 ## 2026-08-14: Speedwalks, aliases and pasted commands work now
 
 If your client sends more than one command at a time, the game was quietly
