@@ -124,8 +124,11 @@ anonymity by accident.
 
 ### 3. The observer
 
-`internal/hooks/Death_RouteAttributed.go`, registered in
-`hooks.RegisterListeners` alongside the existing `Death_*` family:
+`internal/hooks/CharacterDied_RouteDeath.go`, registered in
+`hooks.RegisterListeners`. Note it is a **listener**, not a Life-machine
+observer: the `Death_*.go` family wires through
+`c.Life.Inner().AfterTransition(...)`, so this one follows the
+`<Event>_<Action>.go` naming used by `Buff_ApplyBuffs.go` instead.
 
 1. Re-resolve the victim. It may already be gone; no-op on nil.
 2. Re-check `IsAlive()`. A second queued event for the same victim is inert.

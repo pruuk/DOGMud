@@ -15,13 +15,27 @@ import (
 // instance-cleanup observer (Death_MobInstanceCleanup.go) handles
 // despawn, and mobs never enter the Respawning state.
 //
-// Callers MUST pre-check:
-//   - ReviveOnDeath buff (already handled at each call site)
-//   - LastSuicideRound dedupe (if the call site can double-fire)
-//   - Shadow Realm zone guard (player sites only)
+// Prechecks live in hooks.RouteAttributedDeath, NOT at call sites.
 //
-// Die is idempotent: if the Life machine is already Dead or
-// Respawning it returns immediately without firing observers.
+// This comment used to tell callers to pre-check three things. Two of those
+// claims were false and are removed rather than carried forward:
+//
+//   - "ReviveOnDeath buff (already handled at each call site)" — it was not.
+//     Only the two suicide commands checked it, so the buff was inert on every
+//     combat and damage-over-time death until U5c centralised the check.
+//   - "Shadow Realm zone guard (player sites only)" — no such guard exists
+//     anywhere in this repository. The only occurrence was this line.
+//
+// LastSuicideRound remains a real dedupe, and remains the suicide commands' own
+// concern: it guards a command double-firing, not harm-driven death, which is
+// deduped by Character.DeathQueued instead.
+//
+// IDEMPOTENCE IS MOB-ONLY, and the difference bites. The !IsAlive() guard below
+// stops a second call for a MOB, which stays at Dead. It does NOT for a player:
+// this function cascades Dead -> Respawning -> Alive and RETURNS WITH THE PLAYER
+// ALIVE, so a second call re-runs the whole cascade — corpse, announcement,
+// bounty resolution, jail cleanup, every AfterTransition observer on Dead.
+// That is why the backstop sweeps gate on DeathQueued rather than on health.
 func (c *Character) Die(killer state.ActorRef, trigger string) {
 	if !c.IsAlive() {
 		return
