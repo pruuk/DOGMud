@@ -6,26 +6,40 @@
 # well as a rested one, that is the expected temporary state, not a bug. Report
 # how it FEELS, but do not treat it as a defect and do not tune against it.
 #
-# HOW TO ACTUALLY REACH ZERO STAMINA (learned the hard way, 2026-08-13 run):
+# HOW TO ACTUALLY REACH ZERO STAMINA (learned the hard way, 2026-08-13/14):
 #   * EVERY profile has a big stamina pool (fresh 405, early 425, mid 480,
 #     admin 800), and picking "3) Veteran" in the creation flow gives ~429. So
-#     there is no shortcut profile. Exhaustion has to be earned in a LONG fight.
+#     there is no shortcut profile. Exhaustion has to be earned.
 #   * THE LEVER IS ENCUMBRANCE. This profile is seeded overloaded (see
 #     overlays below): movement stamina cost is multiplied up to 5x and combat
-#     swings are halved. Walk around and fight while loaded and stamina falls
-#     fast. Unloaded, out-of-combat regen outruns movement cost and you GAIN
-#     stamina by walking, which is the trap the first version of this file fell
-#     into.
+#     swings are halved. MEASURED 08-14: about 6 to 7 SP per move at `crushed`,
+#     which took 429 to 0 in roughly 60 moves. Unloaded, out-of-combat regen
+#     outruns movement cost and you GAIN stamina by walking, which is the trap
+#     the first version of this file fell into.
+#   * OUT-OF-COMBAT REGEN IS ABOUT 8 SP PER ROUND. Measured 08-14: stamina went
+#     1 -> 8 -> 16 -> 24 -> 32 while standing still. You cannot drain and then
+#     go looking for a fight. Drain first, then engage IMMEDIATELY, or drain
+#     while already in combat.
 #   * Auto-attack also drains stamina EVERY ROUND without you sending anything.
 #     Pick an opponent weak enough that you survive many rounds, then mostly
-#     WAIT and read. Do not spam commands: the AI port allows only 3 per round
-#     and silently drops the rest ("Command dropped -- AI rate limit").
-#   * Recovery/temple rooms carry a regen bonus, so leave them before draining.
+#     WAIT and read.
 #   * Recovery/temple rooms carry a regen bonus ("Wounds close more easily").
 #     Leave them before trying to reach the low band.
 #   * The low band is narrow and that is the point: shipped defence costs are
 #     dodge 1, parry 3, block 4, so the behaviour under test only appears
 #     between roughly 0 and 3 stamina.
+#
+# OPPONENT CHOICE (learned 08-14): the Thornwall Highwayman is a BAD sparring
+# partner. It hides, pickpockets, flees after a round or two, and wanders
+# between rooms, so several minutes go to chasing it. Find something that
+# stands and fights. `consider <target>` before committing.
+#
+# RATE LIMIT: the AI port allows 3 commands per round and drops the rest with a
+# visible "Command dropped -- AI rate limit" line. That is a real limit and is
+# NOT the same thing as the input-concatenation bug fixed on 2026-08-14 (which
+# silently merged batched commands into one nonsense command, with no notice).
+# If you ever see a command echoed as several commands run together, that bug
+# has regressed: report it immediately.
 #
 ephemeral:
   profile: early
@@ -43,25 +57,46 @@ ephemeral:
   # overlays.set_quest_tokens.
   start_room: 462
   overlays:
-    # EIGHT Heavy Weighted Stones (item 12, 15.0 each) = 120 weight.
+    # EIGHT Heavy Weighted Stones (item 12, 15.0 each) = 120 weight, plus the
+    # thrown consumables the goals below need.
     #
-    # Eight is the arithmetic ceiling, not a taste call. StoreItem REFUSES any
-    # store that would push carried weight past 2x carry capacity
-    # (characters/inventory.go), and a refusal here does not degrade -- it fails
-    # profile materialization and the container dies at boot with the bare
-    # message "could not store item 12".
+    # The count is arithmetic, not taste. StoreItem REFUSES any store that would
+    # push carried weight past 2x carry capacity (characters/inventory.go), and
+    # a refusal here does not degrade -- it fails profile materialization and
+    # the container dies at boot with the bare message "could not store item N".
     #
     #   capacity        = strength 105 x CarryCapacityMultiplier 0.65 = 68.2
     #                     (that knob is ABSENT from config.yaml, so Go default)
     #   ceiling         = 68.2 x 2                                    = 136.4
     #   already carried = weapon 10002 (6.0) + potion 30036 (0.3)     =   6.3
-    #   room for stones = 130.1  ->  8 stones (120.0) fits, 9 (135.0) does not
+    #   8 stones        = 120.0                                 -> total 126.3
+    #   3 firebombs     = 0.9 (30058, 0.3 each)                 -> total 127.2
+    #   3 toxic flasks  = 0.6 (30059, 0.2 each)                 -> total 127.8
+    #   headroom left   = 8.6
     #
-    # At 126.3 carried against 68.2 capacity the encumbrance multiplier is ~4.4
-    # of its 5.0 ceiling and combat swings are halved, which is what makes the
+    # At 127.8 carried against 68.2 capacity the encumbrance multiplier is near
+    # its 5.0 ceiling and combat swings are halved, which is what makes the
     # 0-3 stamina band reachable inside one session. Drop stones to climb back
     # out. Recount this if the early profile's kit ever changes.
-    grant_items: [12, 12, 12, 12, 12, 12, 12, 12]
+    grant_items:
+      - 12
+      - 12
+      - 12
+      - 12
+      - 12
+      - 12
+      - 12
+      - 12
+      - 30058 # Firebomb, throwable, for the self-fumble and explosive-kill goals
+      - 30058
+      - 30058
+      - 30059 # Toxic Flask, throwable poison, for the poison-kill goal
+      - 30059
+      - 30059
+    # Conviction Spike: cost 50 CP, base_folds 4, so a caster with a nearly
+    # empty pool runs dry partway through the fold. That is goal 6.
+    grant_spells:
+      conviction-spike: 1
   budgets:
     wall_clock: 60m
 
@@ -71,36 +106,49 @@ goals:
     reaches zero and keep fighting. Defences must still fire. Read every
     combat line: does the defence text name the right thing (block, parry,
     dodge) rather than always saying dodge? Does anything read as though
-    you defended for free in a way that feels wrong?
+    you defended for free in a way that feels wrong? Note in particular
+    whether you RIPOSTE at zero stamina, and say how that reads.
   - >-
     Prone recovery and flee. Get knocked down at low stamina. You should
     stand back up on your own within a few rounds without spending
     anything. Confirm that. Then at zero stamina confirm flee ALWAYS
-    works and never refuses. Note whether the fleeing character arrives
-    in the next room still prone, and whether that reads as a bug.
+    attempts and never refuses for lack of stamina. Separately, report how
+    often the attempt is BLOCKED by the enemy, and whether an exhausted
+    character can realistically escape at all. Note whether the fleeing
+    character arrives in the next room still prone.
   - >-
-    Grenade self-fumble. Throw an explosive repeatedly at low health until
+    Grenade self-fumble. Throw a firebomb repeatedly at low health until
     one backfires onto you. The moment it does, read the prompt, the status
     sheet, and any client health bar. None of them may show a negative
     number or a missing or wrong health colour.
   - >-
-    Kill mobs with poison, with bleed, and with a thrown explosive. Watch
-    the enemy health readout in the web client for the round in which each
-    dies. It must never show a negative number.
+    Kill mobs with poison (toxic flask) and with a thrown explosive
+    (firebomb). Watch the enemy health readout for the round in which each
+    dies. It must never show a negative number. Bleed has no grantable
+    source in this profile (buff 115 comes from the rending-claws
+    mutation), so skip the bleed case and say so rather than faking it.
   - >-
     Drain a spellcasting creature's conviction over a long fight. It must
     stop casting cleanly, must never narrate a spell it cannot cast, and
     must not lock itself out of its other special moves afterwards. Note
-    whether caster mobs seem to cast MORE often than you remember.
+    whether caster mobs seem to cast MORE often than you remember. If you
+    cannot find a caster mob, say so plainly rather than guessing.
   - >-
-    Player caster runs dry mid-spell. Begin a multi-fold spell with barely
-    enough conviction and let it run out. Read what happens to the spell,
-    to the conviction already spent, and to your round.
+    Player caster runs dry mid-spell. You know Conviction Spike (50 CP, 4
+    folds). Cast it repeatedly to burn your conviction down, then begin a
+    cast with barely enough left and let it run out. Read what happens to
+    the spell, to the conviction already spent, and to your round.
   - >-
-    Mutation special move at low stamina. Attempt one you cannot afford.
-    It must refuse with a clear message AND must not consume the shared
-    special-move cooldown. Immediately try a different special move to
-    confirm the slot is still free.
+    Special move at low stamina. At zero stamina attempt a special move you
+    cannot afford (kick, bash and taunt all need an explicit target, e.g.
+    `kick <mob>`; a bare `kick` only answers "Kick whom?"). It must refuse
+    with a clear message AND must not consume the shared special-move
+    cooldown. Immediately try a different special move to confirm the slot
+    is still free. Mutation special moves are not grantable through
+    overlays, so the shared cooldown is what is under test here.
   - >-
     General adversarial pass: anything that reads wrong, renders oddly, or
-    contradicts its own help text is a finding.
+    contradicts its own help text is a finding. Two known-open items you do
+    NOT need to re-report: `help prompt` documents conviction as {mp} and
+    omits {st}/{ST} entirely, and attacking an absent target answers "You
+    attack the darkness!".
