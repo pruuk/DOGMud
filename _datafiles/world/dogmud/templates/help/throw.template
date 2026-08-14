@@ -17,7 +17,9 @@ Throwable items include grenades crafted through alchemy:
 
   <ansi fg="command">throw flashbang</ansi>
 
-Requires being in combat. Shares a cooldown with other
+You can throw to open a fight as well as during one. A
+throw that connects draws the creatures it hit onto you.
+Shares a cooldown with other
 special moves (bash, trip, kick). Uses the
 <ansi fg="skill">Skullduggery</ansi> skill and progresses
 <ansi fg="stat">Dexterity</ansi>.

@@ -8,6 +8,16 @@ cast_started:
   - "You feel the threads of reality bend as you reach for {spell}..."
   - "Your consciousness splinters as the folds of {spell} begin to take shape..."
 
+# Sent once per round while the folds are still being laid down. Keep these
+# reading as WORK IN PROGRESS, never as the cast starting: the round loop used
+# to reuse cast_started, so a four-fold spell announced its own beginning four
+# times over.
+cast_continuing:
+  - "You hold the shape of {spell} steady while the next fold settles..."
+  - "The folds of {spell} turn slowly behind your eyes, not yet complete..."
+  - "{spell} hangs half-made in your thoughts, waiting on the fold to come..."
+  - "You keep your grip on {spell} as another fold folds into place..."
+
 concentration_slipped:
   - "You reach for the folds of {spell} but the image shatters before you can grasp it."
   - "The mental pattern of {spell} dissolves — your focus fractures at the critical moment."

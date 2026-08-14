@@ -384,7 +384,18 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 			}
 			textutil.SendPhaseText(waitSpellInfo.WaitUserText, waitSpellInfo.WaitRoomText, tCtx, "pink", cfg)
 		}
-		user.SendText(messaging.CategorySpellFold, spells.GetCastMessage("cast_started", cs.SpellId))
+		// "cast_continuing", not "cast_started": this fires once per round while
+		// the folds are still being laid down, so the start pool announced the
+		// cast as beginning again every round, and duplicated the real start
+		// line (sent by the cast command) on the round right after initiation.
+		//
+		// The name must be the DISPLAY name. Passing cs.SpellId here showed the
+		// player the raw identifier, e.g. "the folds of conviction-spike".
+		foldName := cs.SpellId
+		if waitSpellInfo != nil && waitSpellInfo.Name != "" {
+			foldName = waitSpellInfo.Name
+		}
+		user.SendText(messaging.CategorySpellFold, spells.GetCastMessage("cast_continuing", foldName))
 	}
 
 	return true
