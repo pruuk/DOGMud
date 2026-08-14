@@ -68,6 +68,21 @@ func rangedDefenseScore(defender *characters.Character) float64 {
 // Callers are responsible for: messaging, OnSkillUse/OnStatUse progression,
 // retaliation aggro on the target, crime recording, and combat-initiation
 // aggro for same-room shots.
+//
+// DESIGN DECISION (2026-08-14): aimed thrown weapons -- darts, javelins,
+// throwing knives -- belong HERE, under ranged-combat, not under the `throw`
+// command. `throw` is the grenade verb: it is untargeted and resolves as a room
+// AoE against every hostile present, which is the right shape for an explosive
+// and the wrong shape for a javelin. This path already has what an aimed throw
+// needs: single-target resolution, cross-room shots, Perception-based aiming
+// (deliberate-move semantics rather than auto-attack swings), the reload
+// machinery, and correct crime and revenge seeding.
+//
+// The open problem, if that is ever built: a thrown weapon is its own
+// ammunition, while this path requires a wielded ranged weapon via
+// findRangedWeaponSlot. Either such a weapon equips and consumes itself on use,
+// or a `thrown` weapon subtype gets taught to this resolver. That is a feature,
+// not a refactor. See the matching note on Throw in internal/usercommands.
 func ExecuteFire(actor Actor, rest string) FireResult {
 	char := actor.GetCharacter()
 

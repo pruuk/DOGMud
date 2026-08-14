@@ -33,7 +33,7 @@ func bumpOpinionOnTargetSwitch(user *users.UserRecord, room *rooms.Room, newMobI
 	opinions.Bump(int(mob.MobId), user.UserId,
 		int(configs.GetBalanceConfig().OpinionAttackBump))
 	// chunk 1.3: assault crime + faction rep
-	recordAssaultCrime(user, mob, room)
+	actions.RecordAssaultCrime(user, mob, room)
 }
 
 func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {

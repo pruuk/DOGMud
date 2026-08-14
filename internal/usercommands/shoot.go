@@ -193,7 +193,7 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				MobInstanceId: m.InstanceId,
 			})
 			opinions.Bump(int(m.MobId), user.UserId, int(configs.GetBalanceConfig().OpinionAttackBump))
-			recordAssaultCrime(user, m, rooms.LoadRoom(result.TargetRoomId))
+			actions.RecordAssaultCrime(user, m, rooms.LoadRoom(result.TargetRoomId))
 		}
 	}
 
