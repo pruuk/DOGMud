@@ -6,7 +6,7 @@ archetype: fighting
 submission_policy: lethal
 surrender_policy: never
 hostile: true
-statpool: 2400
+statpool: 2000
 maxwander: 0
 groups:
   - construct
