@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
+	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -89,21 +90,23 @@ func recordKDDeath(u *users.UserRecord, d life.DeadData) {
 func applyPlayerStatDecay(u *users.UserRecord, config configs.GamePlay) {
 
 	type statEntry struct {
-		name     string
-		desc     string
-		training *int
+		name string
+		desc string
+		info *stats.StatInfo
 	}
 
-	stats := []statEntry{
-		{`Strength`, `physical might`, &u.Character.Stats.Strength.Training},
-		{`Dexterity`, `nimbleness`, &u.Character.Stats.Dexterity.Training},
-		{`Perception`, `keen senses`, &u.Character.Stats.Perception.Training},
-		{`Vitality`, `endurance`, &u.Character.Stats.Vitality.Training},
-		{`Willpower`, `mental fortitude`, &u.Character.Stats.Willpower.Training},
-		{`Charisma`, `force of personality`, &u.Character.Stats.Charisma.Training},
+	statList := []statEntry{
+		{`Strength`, `physical might`, &u.Character.Stats.Strength},
+		{`Dexterity`, `nimbleness`, &u.Character.Stats.Dexterity},
+		{`Perception`, `keen senses`, &u.Character.Stats.Perception},
+		{`Vitality`, `endurance`, &u.Character.Stats.Vitality},
+		{`Willpower`, `mental fortitude`, &u.Character.Stats.Willpower},
+		{`Charisma`, `force of personality`, &u.Character.Stats.Charisma},
 	}
 
-	pick := stats[util.Rand(len(stats))]
+	// Uniform over ALL stats. No eligibility filter: the skill side used to
+	// carry one and it made the penalty deterministic rather than random.
+	pick := statList[util.Rand(len(statList))]
 
 	decayMin := int(config.Death.StatDecayMin)
 	decayMax := int(config.Death.StatDecayMax)
@@ -112,10 +115,37 @@ func applyPlayerStatDecay(u *users.UserRecord, config configs.GamePlay) {
 		amount = decayMin + util.Rand(decayMax-decayMin+1)
 	}
 
-	*pick.training -= amount
-	if *pick.training < 0 {
-		*pick.training = 0
+	// Floors. A stat already at or below the floor is not degraded at all, and
+	// says nothing — no message, no event. Training additionally cannot go
+	// negative.
+	//
+	// The floor measures the PERMANENT part of the stat, Racial + Training, and
+	// deliberately excludes Mods. Mods come from equipment and buffs, so
+	// including them would let a permanent penalty hinge on what someone
+	// happened to be wearing when they died — take the ring off and the floor
+	// stops protecting you.
+	//
+	// Racial is a gaussian roll made at character creation, NOT a fixed 100, so
+	// a character can legitimately start below the floor. That is the intent: a
+	// new or unlucky character who is dying repeatedly is not ground down
+	// further.
+	floor := int(config.Death.StatDecayFloor)
+	permanent := pick.info.Racial + pick.info.Training
+	headroom := permanent - floor
+	if headroom <= 0 || pick.info.Training <= 0 {
+		return
 	}
+	if amount > headroom {
+		amount = headroom
+	}
+	if amount > pick.info.Training {
+		amount = pick.info.Training
+	}
+	if amount <= 0 {
+		return
+	}
+
+	pick.info.Training -= amount
 
 	u.Character.Validate()
 
@@ -123,24 +153,32 @@ func applyPlayerStatDecay(u *users.UserRecord, config configs.GamePlay) {
 	u.EventLog.Add(`death`, fmt.Sprintf(`Lost some <ansi fg="yellow">%s</ansi> training on death`, pick.name))
 }
 
-// applyPlayerSkillRust decays ranks on up to SkillRustCount skills
-// that haven't been used recently. Ported from suicide.go
-// applySkillRust().
+// applyPlayerSkillRust decays ranks on up to SkillRustCount skills chosen
+// UNIFORMLY AT RANDOM from every skill above SkillRustFloor.
+//
+// It used to filter by "recency" and did not, which made the penalty
+// deterministic. See the comment on the eligibility loop below.
 func applyPlayerSkillRust(u *users.UserRecord, config configs.GamePlay) {
 
-	recencyThreshold := int(config.Death.SkillRecencyThreshold)
 	rustCount := int(config.Death.SkillRustCount)
 	rustAmount := int(config.Death.SkillRustAmount)
+	floor := int(config.Death.SkillRustFloor)
 
-	// Build list of eligible (unprotected) skills.
+	// Uniform over ALL skills above the floor.
+	//
+	// This used to skip any skill whose use count was at or above
+	// SkillRecencyThreshold, described as "recently used, protected". That
+	// count is a LIFETIME cumulative total that is never reset, so with a
+	// threshold of 50 any skill ever used more than fifty times was protected
+	// FOREVER. For an established character that is everything they actually
+	// use, leaving only their neglected skills eligible — which were then
+	// rusted on every single death until they bottomed out. The penalty was
+	// deterministic, not random, and it fell entirely on the skills its victim
+	// cared least about. Reported from prod as "it is always skullduggery".
 	eligible := []string{}
 	for skillName, rank := range u.Character.Skills {
-		if rank <= 1 {
-			continue // never reduce below 1
-		}
-		useCount := u.Character.GetSkillUseCount(skillName)
-		if useCount >= recencyThreshold {
-			continue // recently used — protected
+		if rank <= floor {
+			continue // already at the floor — not degraded, and says nothing
 		}
 		eligible = append(eligible, skillName)
 	}
@@ -162,8 +200,11 @@ func applyPlayerSkillRust(u *users.UserRecord, config configs.GamePlay) {
 	for _, skillName := range eligible[:rustCount] {
 		oldRank := u.Character.Skills[skillName]
 		newRank := oldRank - rustAmount
-		if newRank < 1 {
-			newRank = 1
+		if newRank < floor {
+			newRank = floor
+		}
+		if newRank == oldRank {
+			continue
 		}
 		u.Character.Skills[skillName] = newRank
 

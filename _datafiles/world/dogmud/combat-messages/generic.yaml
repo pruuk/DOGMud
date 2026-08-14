@@ -582,3 +582,63 @@ options:
         master:
         - 'A masterful strike <ansi fg="red-bold">FUMBLES</ansi>!'
         - 'A masterful ranged strike <ansi fg="red-bold">FUMBLES</ansi>!'
+  # U5c: sent when a hit lands on a target that is ALREADY DYING — it has taken
+  # its lethal blow and the attributed death is queued but not yet resolved.
+  # These fire instead of ordinary hit text, and never alongside a second kill
+  # announcement: the killing blow is announced exactly once, by whoever landed
+  # it. Any weapon file may define its own coupdegrace block to override this.
+  coupdegrace:
+    together:
+      toattacker:
+        beginner:
+        - 'You strike <ansi fg="{targettype}">{target}</ansi> again, past any need for it.'
+        - 'You drive your <ansi fg="item">{itemname}</ansi> down into <ansi fg="{targettype}">{target}</ansi> once more.'
+        expert:
+        - '<ansi fg="{targettype}">{target}</ansi> is already falling. You strike anyway.'
+        - 'You hammer <ansi fg="{targettype}">{target}</ansi> down with your <ansi fg="item">{itemname}</ansi>.'
+        master:
+        - 'You bear <ansi fg="{targettype}">{target}</ansi> to the ground under a final flurry.'
+        - 'Your <ansi fg="item">{itemname}</ansi> finds <ansi fg="{targettype}">{target}</ansi> again, and again after that.'
+      todefender:
+        beginner:
+        - '<ansi fg="{sourcetype}">{source}</ansi> strikes you as you fall.'
+        expert:
+        - '<ansi fg="{sourcetype}">{source}</ansi> strikes you again as you fall.'
+        master:
+        - '<ansi fg="{sourcetype}">{source}</ansi> bears you down under a final flurry.'
+      toroom:
+        beginner:
+        - '<ansi fg="{sourcetype}">{source}</ansi> keeps striking <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        expert:
+        - '<ansi fg="{sourcetype}">{source}</ansi> keeps striking <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        master:
+        - '<ansi fg="{sourcetype}">{source}</ansi> batters <ansi fg="{targettype}">{target}</ansi> to the ground.'
+    separate:
+      toattacker:
+        beginner:
+        - 'Your shot finds <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        expert:
+        - 'Your shot finds <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        master:
+        - 'Your shot punches into <ansi fg="{targettype}">{target}</ansi> as they go down.'
+      todefender:
+        beginner:
+        - 'A shot from the {entrancename} finds you as you fall.'
+        expert:
+        - 'A shot from the {entrancename} finds you as you fall.'
+        master:
+        - 'A shot from the {entrancename} punches into you as you go down.'
+      toattackerroom:
+        beginner:
+        - '<ansi fg="{sourcetype}">{source}</ansi> fires on <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        expert:
+        - '<ansi fg="{sourcetype}">{source}</ansi> fires on <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        master:
+        - '<ansi fg="{sourcetype}">{source}</ansi> puts another shot into <ansi fg="{targettype}">{target}</ansi> as they go down.'
+      todefenderroom:
+        beginner:
+        - 'A shot from the {entrancename} strikes <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        expert:
+        - 'A shot from the {entrancename} strikes <ansi fg="{targettype}">{target}</ansi> as they fall.'
+        master:
+        - 'A shot from the {entrancename} puts <ansi fg="{targettype}">{target}</ansi> down for good.'

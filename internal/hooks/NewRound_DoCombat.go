@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
@@ -217,10 +218,15 @@ func handleMobCombat(evt events.NewRound, sleepingUserIds map[int]bool, sleeping
 	// Sweep runs for every mob regardless of zone activity — dead mobs
 	// should not linger even in idle zones.
 	for _, mobId := range mobs.GetAllMobInstanceIds() {
-		if mob := mobs.GetInstance(mobId); mob != nil && mob.Character.Health <= 0 && mob.Character.IsAlive() {
-			// No killer attribution available in the sweep pass — the
-			// mob died from a prior-round effect and the attacker is
-			// no longer recoverable from context here.
+		// U5c: skips on DeathQueued, NEVER on health. A mob reaped here is
+		// dying but NOT queued, i.e. it reached zero without going through
+		// ApplyHarm. Skipping on health would skip the entire population this
+		// sweep exists for. The log is how we learn which paths still bypass
+		// the harm helper; it going quiet is the evidence the migration is
+		// complete.
+		if mob := mobs.GetInstance(mobId); mob != nil && shouldSweepReap(&mob.Character) {
+			mudlog.Debug("U5c sweep", "reason", "unattributed death",
+				"mob", mob.Character.Name, "instanceId", mobId)
 			mob.Character.Die(state.ActorRef{}, life.TriggerHealthZero)
 		}
 	}
@@ -425,11 +431,22 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 		playersHandled[userId] = struct{}{}
 
 		if user := users.GetByUserId(userId); user != nil {
-			if user.Character.Health < 1 && user.Character.IsAlive() {
-				// Death on zero: route through Life cascade for same-tick
-				// observer firing (teleport, stat decay, loot, etc.).
-				// Killer attribution: the attacker is tracked via
-				// PlayerDamage (snapshotted inside Die).
+			// U5c: BACKSTOP only. Damage routed through ApplyHarm has already
+			// queued an ATTRIBUTED death naming the killer, and shouldSweepReap
+			// skips those.
+			//
+			// Reaping a queued PLAYER here would be worse than losing the
+			// killer: Die cascades Dead -> Respawning -> Alive, so it returns
+			// with the player alive and its !IsAlive() guard cannot stop the
+			// queued event from running the whole cascade a second time. See
+			// shouldSweepReap.
+			//
+			// This stays rather than being deleted because it is the only death
+			// check covering PLAYERS hit in combat; the other two sweeps
+			// iterate mob instances only.
+			if shouldSweepReap(user.Character) {
+				mudlog.Debug("U5c backstop", "reason", "unattributed player death",
+					"user", user.Character.Name, "userId", userId)
 				user.Character.Die(state.ActorRef{}, life.TriggerHealthZero)
 			}
 		}
@@ -443,7 +460,10 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 		mobsHandled[mobId] = struct{}{}
 
 		if mob := mobs.GetInstance(mobId); mob != nil {
-			if mob.Character.Health < 1 && mob.Character.IsAlive() {
+			// U5c backstop, same reasoning as the player loop above.
+			if shouldSweepReap(&mob.Character) {
+				mudlog.Debug("U5c backstop", "reason", "unattributed mob death",
+					"mob", mob.Character.Name, "instanceId", mobId)
 				mob.Character.Die(state.ActorRef{}, life.TriggerHealthZero)
 			}
 		}

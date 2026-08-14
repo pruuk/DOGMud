@@ -757,6 +757,47 @@ Registers an `OnPlayerDespawn` listener that calls `character.Awareness.ForceVis
 to ensure the awareness machine is reset on logout. Prevents stale awareness
 state or leaks if a character is reused or respawned.
 
+## Attributed death routing (U5c)
+
+`CharacterDied_RouteDeath.go` is the **single place a harm-driven death is
+resolved**. `ApplyHarm` queues an `events.CharacterDied` at the harm site;
+`RouteAttributedDeath` (registered in `hooks.go`) resolves it, outside the
+damaging call stack so no mob instance despawns mid-loop.
+
+It owns the prechecks `Die`'s doc used to delegate to callers:
+
+- **`ReviveOnDeath`** — heal above zero, cancel the buff, no death, clear
+  `DeathQueued`. Before U5c only the two suicide commands checked this, so the
+  buff was inert on every combat and DoT death.
+- **Already resolved** — clear `DeathQueued` and return, so a character is never
+  left permanently unkillable.
+
+Note this file is a **listener**, not a Life-machine observer. The `Death_*.go`
+family wires through `characters.OnCharacterCreated` +
+`c.Life.Inner().AfterTransition(...)`; this one is an ordinary event listener and
+follows the `<Event>_<Action>.go` naming used by `Buff_ApplyBuffs.go`.
+
+### The five backstops, and the rule they all follow
+
+Five inline death checks remain — `handleAffected` (players and mobs, the only
+check covering players hit in combat), the mob sweep at the top of
+`NewRound_DoCombat`, `NewRound_MobRoundTick`, `NewRound_AutoHeal`, and
+`Buff_ApplyBuffs`. All are **backstops** for paths that never call `ApplyHarm`,
+and all gate on `shouldSweepReap`.
+
+**They skip on `DeathQueued`, never on health.** A character reaped by a backstop
+is dying but not queued. Skipping on health would skip the entire population
+they exist for. Reaping a queued victim instead would, for a mob, lose the
+killer; for a **player** it would run the whole death cascade twice, because
+`Die` cascades back to `Alive` and its own guard cannot catch the second call.
+
+Each logs when it fires. That log going quiet is the evidence every harm path
+now routes through `ApplyHarm`; if it is noisy, it names the path that does not.
+
+`NewRound_AutoHeal`'s early `continue` matters as much as its death call: a dying
+player must skip regen either way, or they heal back above zero before the queued
+death resolves and the kill is silently cancelled.
+
 ## Life Machine Cascade + Death/Respawn Observers (chunk 2)
 
 Fourteen files in the hooks package wire the Life machine into the

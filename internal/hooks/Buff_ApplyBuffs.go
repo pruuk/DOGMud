@@ -125,10 +125,13 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	//
 	if buffInfo.TriggerNow {
 
-		if evt.MobInstanceId > 0 && targetChar.Health <= 0 && targetChar.IsAlive() {
-			// Buff-tick death (e.g. a DoT buff that fires TriggerNow):
-			// route through the Life machine for same-tick observer firing
-			// rather than queuing a suicide command for next tick.
+		// U5c: BACKSTOP only. A DoT tick that routed through ApplyHarm has
+		// already queued an ATTRIBUTED death, and shouldSweepReap skips those.
+		// What still lands here is a buff that dropped health by some other
+		// route, which has no killer to name.
+		if evt.MobInstanceId > 0 && shouldSweepReap(targetChar) {
+			mudlog.Debug("U5c backstop", "reason", "unattributed buff-tick death",
+				"mob", targetChar.Name, "instanceId", evt.MobInstanceId)
 			targetChar.Die(state.ActorRef{}, life.TriggerHealthZero)
 		}
 

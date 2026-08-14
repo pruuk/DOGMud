@@ -1,6 +1,10 @@
 package characters
 
-import "github.com/GoMudEngine/GoMud/internal/state"
+import (
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/life"
+)
 
 // Pool identifies one of the three resource pools.
 //
@@ -223,7 +227,40 @@ func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int 
 	if amount <= 0 {
 		return 0
 	}
-	return -c.applyVitalChange(pool, -amount)
+
+	applied := -c.applyVitalChange(pool, -amount)
+
+	// U5c: lethal health harm queues an ATTRIBUTED death rather than killing
+	// inline. Inline would despawn a mob synchronously (Die fires its observers
+	// in-band, and Death_MobInstanceCleanup removes the instance) and pull it
+	// out from under any loop damaging several targets -- the AoE loop in
+	// usercommands.Throw is a live example.
+	//
+	// The DeathQueued guard is what makes the killing blow fire exactly once.
+	// Later hits that round still land and still count toward the damage map,
+	// but they neither re-queue nor re-attribute; they render as a coup de
+	// grace instead. Note this is deliberately NOT the "dying" predicate
+	// (Health < 1 && IsAlive()), which is health-based and is what the sweeps
+	// must NOT skip on.
+	if pool == PoolHealth && !c.DeathQueued && c.Health < 1 && c.IsAlive() {
+		c.DeathQueued = true
+
+		overkill := 0
+		if c.Health < 0 {
+			overkill = -c.Health
+		}
+
+		events.AddToQueue(events.CharacterDied{
+			UserId:              c.GetUserId(),
+			MobInstanceId:       c.MobInstanceId,
+			KillerUserId:        source.UserId,
+			KillerMobInstanceId: source.MobInstanceId,
+			Overkill:            overkill,
+			Trigger:             life.TriggerHealthZero,
+		})
+	}
+
+	return applied
 }
 
 // ApplyRestore restores amount to pool and returns the amount ACTUALLY restored,

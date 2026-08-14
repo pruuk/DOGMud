@@ -1222,6 +1222,16 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	isFeint := false
 	if result.Fumble {
 		msgs = items.GetPreAttackMessage(displaySubtype, items.Fumble)
+	} else if IsDying(targetChar) {
+		// U5c: the target has already taken its lethal blow and the attributed
+		// death is queued. Later hits this round still connect and still count
+		// toward the damage map, but they read as finishing an opponent rather
+		// than as ordinary swings, and never as a second kill announcement --
+		// the killing blow is announced exactly once, by whoever landed it.
+		//
+		// After the fumble branch on purpose: flubbing a swing at a falling
+		// target is still a fumble.
+		msgs = items.GetPreAttackMessage(displaySubtype, items.CoupDeGrace)
 	} else {
 		msgs = items.GetAttackMessage(displaySubtype, int(pctDamage))
 		// Feint check: skilled attackers can turn misses into deliberate-looking feints

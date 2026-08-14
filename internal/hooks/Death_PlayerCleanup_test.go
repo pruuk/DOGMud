@@ -97,13 +97,15 @@ func TestDeathCleanup_DeprogressionAllowedNormally(t *testing.T) {
 		"weapon-combat":  6,
 		"unarmed-combat": 6,
 	}
-	// Set non-zero training on all stats so there is something to decay.
-	u.Character.Stats.Strength.Training = 30
-	u.Character.Stats.Dexterity.Training = 30
-	u.Character.Stats.Perception.Training = 30
-	u.Character.Stats.Vitality.Training = 30
-	u.Character.Stats.Willpower.Training = 30
-	u.Character.Stats.Charisma.Training = 30
+	// Non-zero training so there is something to decay, AND a racial baseline
+	// so each stat's Value sits above Death.StatDecayFloor.
+	//
+	// The fixture previously set Training alone, leaving Value at 30. Real
+	// characters carry a racial base around 100, so that was never a state the
+	// game produces — it only passed because no floor existed. Stat decay now
+	// refuses to take a stat below the floor, so without the baseline this
+	// death correctly decays nothing and logs nothing.
+	seedRacialStats(u, 30)
 
 	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{502: u})
 	defer cleanupUsers()

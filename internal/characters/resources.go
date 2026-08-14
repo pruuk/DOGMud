@@ -150,10 +150,22 @@ func (c *Character) GetDefenseStaminaCost(defenseType string) int {
 // discarded by the unconditional write that followed. After-write is therefore
 // exactly equivalent for both c.Health and the return, and it lets the
 // arithmetic live in the primitives.
-func (c *Character) ApplyHealthChange(healthChange int) int {
+// source is who dealt the harm, and it is REQUIRED rather than optional.
+//
+// U5c: ApplyHarm queues an attributed death when health crosses below 1, so a
+// wrapper that swallowed the source would make every death routed through it
+// anonymous. This function used to pass state.ActorRef{} unconditionally, which
+// covered all eight combat damage sites -- melee, the commonest death in the
+// game. Pass the OTHER participant: the character taking the damage is not the
+// one who caused it.
+//
+// A zero ActorRef is still legitimate for genuinely sourceless harm
+// (environmental damage, attrition). It must be a deliberate choice at the call
+// site, not a default this function imposes.
+func (c *Character) ApplyHealthChange(healthChange int, source state.ActorRef) int {
 	var applied int
 	if healthChange < 0 {
-		applied = -c.ApplyHarm(PoolHealth, -healthChange, state.ActorRef{})
+		applied = -c.ApplyHarm(PoolHealth, -healthChange, source)
 	} else {
 		applied = c.ApplyRestore(PoolHealth, healthChange)
 	}

@@ -56,11 +56,11 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 	user.Character.DeductAttackStamina()
 
 	if attackResult.DamageToSource != 0 {
-		user.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
+		user.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mob.InstanceId})
 		user.WimpyCheck()
 	}
 
-	mob.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+	mob.Character.ApplyHealthChange(attackResult.DamageToTarget*-1, state.ActorRef{UserId: user.UserId})
 
 	// Chunk 4e §5: third-party hit on grapple controller drifts their
 	// ControlLevel toward Neutral.
@@ -134,12 +134,12 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 	userAtk.Character.DeductAttackStamina()
 
 	if attackResult.DamageToSource != 0 {
-		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
+		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: userDef.UserId})
 		userAtk.WimpyCheck()
 	}
 
 	if attackResult.DamageToTarget != 0 {
-		userDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+		userDef.Character.ApplyHealthChange(attackResult.DamageToTarget*-1, state.ActorRef{UserId: userAtk.UserId})
 		userDef.WimpyCheck()
 		// Chunk 4e §5: third-party hit on grapple controller drifts their
 		// ControlLevel toward Neutral.
@@ -212,10 +212,10 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) At
 	// Deduct stamina for the attack
 	mob.Character.DeductAttackStamina()
 
-	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
+	mob.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: user.UserId})
 
 	if attackResult.DamageToTarget != 0 {
-		user.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+		user.Character.ApplyHealthChange(attackResult.DamageToTarget*-1, state.ActorRef{MobInstanceId: mob.InstanceId})
 		user.WimpyCheck()
 		// Chunk 4e §5: third-party hit on grapple controller drifts their
 		// ControlLevel toward Neutral.
@@ -261,8 +261,8 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob, forceCrit bool) AttackRe
 	// Deduct stamina for the attack
 	mobAtk.Character.DeductAttackStamina()
 
-	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
-	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mobDef.InstanceId})
+	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget*-1, state.ActorRef{MobInstanceId: mobAtk.InstanceId})
 
 	// Chunk 4e §5: third-party hit on grapple controller drifts their
 	// ControlLevel toward Neutral.

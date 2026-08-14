@@ -141,7 +141,16 @@ func GetPreAttackMessage(subType ItemSubType, messageType Intensity) AttackOptio
 			return attackMsgOptions
 		}
 	}
-	// default to generic.
+
+	// Fall back to generic, but NEVER recurse into ourselves. If Generic itself
+	// lacks the key this would call itself forever and overflow the stack,
+	// taking the server down. That was survivable only because generic.yaml
+	// happened to define every intensity in use, which is a property of the data
+	// rather than of the code. Returning the zero value degrades to no message.
+	if subType == Generic {
+		return AttackOptions{}
+	}
+
 	return GetPreAttackMessage(Generic, messageType)
 }
 

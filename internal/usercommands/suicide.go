@@ -35,6 +35,13 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// This path must NEVER reach the Life machine — it keeps the
 	// character Alive.
 	if user.Character.HasBuffFlag(buffs.ReviveOnDeath) {
+		// U5c: this resolves the character's life state without going through
+		// Die, so clear the queued-death token here too. Otherwise a
+		// CharacterDied still in flight from the blow that brought them here
+		// would flush afterwards, find them alive with the revive buff already
+		// consumed, and kill them anyway — defeating the buff outright.
+		user.Character.DeathQueued = false
+
 		user.Character.Health = user.Character.HealthMax.Value
 		user.SendText(messaging.CategoryBuffApply, `You are revived in a shower of magical sparks!`)
 		room.SendTextVisual(messaging.CategoryBuffApply,

@@ -3,6 +3,7 @@ package characters
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -98,14 +99,14 @@ func TestIntegration_DeathAndRecovery(t *testing.T) {
 	c.Health = 200
 
 	// Drain HP gradually
-	c.ApplyHealthChange(-150)
+	c.ApplyHealthChange(-150, state.ActorRef{})
 	assert.Equal(t, 50, c.Health, "HP should decrease by 150")
 
-	c.ApplyHealthChange(-50)
+	c.ApplyHealthChange(-50, state.ActorRef{})
 	assert.Equal(t, 0, c.Health, "HP should reach 0")
 
 	// Further damage should go negative (downed state)
-	c.ApplyHealthChange(-3)
+	c.ApplyHealthChange(-3, state.ActorRef{})
 	assert.Less(t, c.Health, 0, "HP should go negative when downed")
 
 	// Simulate revival: restore HP to max

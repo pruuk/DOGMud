@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -49,13 +50,19 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		inCombat := user.Character.IsInCombat()
 		healthStart := user.Character.Health
 
-		// Death on zero — any path that dropped Health below 1 (damage,
-		// DoT, grenade, etc.) gets caught here on the next round tick.
-		// DoCombat handles in-combat deaths same-tick; AutoHeal is the
-		// catch-all for non-combat deaths (poison, DoT, grenade, etc.).
-		// Environmental death has no player killer — empty ActorRef.
+		// U5c: BACKSTOP only, and the `continue` matters as much as the death.
+		//
+		// Damage routed through ApplyHarm has already queued an ATTRIBUTED
+		// death, and shouldSweepReap skips those. But a dying player must still
+		// skip the rest of this loop either way: regenerating them would heal
+		// them back above zero before the queued death resolves, silently
+		// cancelling a kill that already happened.
 		if user.Character.Health < 1 && user.Character.IsAlive() {
-			user.Character.Die(state.ActorRef{}, life.TriggerHealthZero)
+			if shouldSweepReap(user.Character) {
+				mudlog.Debug("U5c backstop", "reason", "unattributed player death",
+					"user", user.Character.Name)
+				user.Character.Die(state.ActorRef{}, life.TriggerHealthZero)
+			}
 			continue
 		}
 

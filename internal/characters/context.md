@@ -602,6 +602,45 @@ The `Logout_AwarenessCleanup.go` hook calls `ForceVisible()` on logout,
 ensuring the awareness machine doesn't leak state or block future character
 reuses (edge case safety).
 
+## Attributed death (U5c)
+
+`ApplyHarm` does not just move a pool. When `pool == PoolHealth` and the change
+drives health below 1 on a live character, it sets `DeathQueued` and queues an
+`events.CharacterDied` carrying the killer and the overkill magnitude. The death
+itself is resolved by `hooks.RouteAttributedDeath`, never here.
+
+**Why queued rather than killed inline:** `Die` fires its observers
+synchronously, and `Death_MobInstanceCleanup` despawns the mob inside that call.
+Killing at the harm site would remove instances from under any loop damaging
+several targets — `usercommands.Throw`'s AoE loop is a live example.
+
+**`DeathQueued` is NOT "dying".** Two states, and conflating them breaks the
+engine's death backstops:
+
+| State | Test | Used by |
+|---|---|---|
+| dying | `Health < 1 && IsAlive()` | combat targeting, coup de grace rendering |
+| death queued | `DeathQueued` | the backstop sweeps, which skip on THIS and never on health |
+
+A character reaped by a sweep is dying but **not** queued: it reached zero
+without going through `ApplyHarm`. A sweep skipping on "dying" would skip
+exactly the population it exists to reap.
+
+`DeathQueued` also makes the killing blow fire exactly once. A second lethal blow
+the same round still lands and still counts toward the damage map, but it does
+not re-queue and does not re-attribute.
+
+**`ApplyHealthChange` takes a source and it is required.** It wraps `ApplyHarm`,
+and all eight of `combat.go`'s damage sites go through it, so a wrapper that
+supplied an empty ref would make every melee death anonymous. A zero ref is
+still correct for genuinely sourceless harm; it just cannot be imposed by the
+wrapper.
+
+**`Die`'s idempotence is mob-only.** Mobs stay at `Dead`, so the `!IsAlive()`
+guard stops a second call. Players cascade `Dead → Respawning → Alive` and are
+alive again when `Die` returns, so a second call re-runs the entire death
+cascade. See `die.go`.
+
 ## Life Machine Integration (chunk 2)
 
 ### New field: Life

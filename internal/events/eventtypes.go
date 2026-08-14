@@ -324,6 +324,32 @@ type MobDeath struct {
 
 func (l MobDeath) Type() string { return `MobDeath` }
 
+// CharacterDied fires when harm drives a character's health below 1. The death
+// itself is resolved by the CharacterDied listener, NOT at the harm site,
+// because Die despawns mobs synchronously (Death_MobInstanceCleanup) and would
+// remove instances from under any loop damaging several targets — the AoE loop
+// in usercommands.Throw is a live example.
+//
+// Killer is carried as plain ids rather than a state.ActorRef to match every
+// other event in this file and to keep the events package free of a state
+// import. The listener rebuilds the ActorRef.
+//
+// A zero killer is meaningful: environmental harm with no source is anonymous
+// by truth, which is a different thing from the anonymity-by-accident U5c
+// removes.
+type CharacterDied struct {
+	UserId        int // victim, if a player
+	MobInstanceId int // victim, if a mob
+
+	KillerUserId        int
+	KillerMobInstanceId int
+
+	Overkill int    // how far below zero the LETHAL blow drove health
+	Trigger  string // life.TriggerHealthZero
+}
+
+func (c CharacterDied) Type() string { return `CharacterDied` }
+
 type DayNightCycle struct {
 	IsSunrise bool
 	Day       int

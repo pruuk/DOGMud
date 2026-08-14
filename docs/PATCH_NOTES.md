@@ -1,5 +1,51 @@
 # DOGMud Patch Notes
 
+## 2026-08-14: Enchanting no longer undoes what you paid for
+
+Putting an enchantment on a weapon quietly stripped the extra power it had
+earned as instance loot, including the part you bought with the gold you spent
+getting in there. The enchantment was then added on top of the bare, unmodified
+weapon, so a well earned piece could come out of the process weaker than it went
+in, with nothing said about it.
+
+Enchanting now builds on the weapon you actually have. Removing an enchantment
+gives you back the weapon you had before it, rather than a plain one.
+
+Anything enchanted before today cannot have its lost power restored, because it
+was overwritten rather than set aside. Those pieces will run slightly ahead on
+their next tier instead, which is the closest thing to making it right.
+
+## 2026-08-14: Dying costs you something you will actually miss
+
+The skills worn down by death were never chosen at random. Anything you used
+regularly was shielded permanently, so the loss fell every single time on the
+handful of things you had barely touched, grinding them down to nothing while
+the rest of you was untouched. For an experienced character, death had almost
+no bite at all.
+
+Now any skill can rust and any attribute can be sapped, chosen fairly. Nothing
+is worn below a floor, and anything already resting on that floor is left alone
+entirely.
+
+## 2026-08-14: Death lands when the blow lands
+
+Something killed no longer lingers a moment before it falls. The blow that
+finishes a fight ends it there and then, instead of waiting for the world to
+come around and notice.
+
+The game also knows who did it. Before, anything that died to poison, to a
+thrown flask, or to the last exchange of a long fight died to nobody in
+particular, and everything downstream of that had to guess. A bounty on a
+wanted character is settled correctly now, and so is what the victor walks away
+with.
+
+Credit for a kill also goes to whoever actually landed the killing blow. It
+used to drift to whoever swung next, which on a busy fight was rarely the same
+person.
+
+If you keep swinging at something already falling, your blows still land, they
+still count, and they now read as what they are.
+
 ## 2026-08-14: Every attack counts as one now
 
 Picking a fight with a kick, a bash, a trip, a grapple, a taunt, a claw or a

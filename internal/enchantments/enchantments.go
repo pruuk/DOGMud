@@ -12,7 +12,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/GoMudEngine/GoMud/internal/statmods"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/pkg/errors"
 )
@@ -137,37 +136,39 @@ func ApplyTier(item *items.Item, def *EnchantmentDef, tier int) {
 		newSpec = *baseSpec
 	}
 
-	// Reset numeric fields to base spec to avoid stacking from previous tiers.
-	// For StatMods: start from base, then merge in any affix bonuses from the
-	// item's override spec (instanced zone random affixes, etc.) that aren't
-	// in the base. This preserves affix bonuses while preventing enchant stacking.
-	if baseSpec != nil {
-		newSpec.Damage = baseSpec.Damage
-		newSpec.DamageMultiplier = baseSpec.DamageMultiplier
-		newSpec.PhysicalMitigation = baseSpec.PhysicalMitigation
-		newSpec.MagicalMitigation = baseSpec.MagicalMitigation
-		newSpec.ConvictionMitigation = baseSpec.ConvictionMitigation
-
-		// Preserve affix stat bonuses: start from base, add any extra mods
-		// that the item's override had beyond the base spec.
-		baseMods := copyStatMods(baseSpec.StatMods)
-		if baseMods == nil {
-			baseMods = make(statmods.StatMods)
+	// Reset to the PRE-ENCHANT baseline so tiers cannot stack, capturing that
+	// baseline the first time this item is enchanted.
+	//
+	// This used to reset to the bare item TEMPLATE, which silently destroyed
+	// everything the instance had earned above it: affix scaling from instanced
+	// loot, whose budget is bought with the gold paid to enter the instance
+	// (items.CalcLootBudget spends that budget on DamageMultiplier and
+	// mitigation ranks), plus anything an admin set on the instance. A player
+	// who enchanted good instance loot lost the scaling they had paid for, with
+	// no message and no refund. Observed on prod as roughly a 16% damage drop.
+	//
+	// The old code recognised the problem for StatMods and preserved those as a
+	// delta above base, but left the numeric damage and mitigation fields to be
+	// wiped. The baseline covers both, and removes the delta arithmetic (which
+	// had the mirror flaw: a previous tier's stat mods counted as "affix" and
+	// stacked on re-enchant).
+	// ITEMS ENCHANTED BEFORE THIS FIX: their affix scaling is already gone and
+	// cannot be recovered, because the values were overwritten rather than
+	// shadowed. The baseline captured for them therefore includes their current
+	// tier's bonus, so their NEXT tier-up counts that bonus twice and leaves
+	// them slightly ahead. That is a deliberate accept: the over-count is small,
+	// it only ever applies to items that were robbed by the old behaviour, and
+	// the alternative (subtracting the current tier at capture time) cannot
+	// distinguish a first enchant from a re-apply, because callers set
+	// EnchantType before calling in both cases.
+	if item.EnchantBaseline == nil {
+		src := newSpec
+		if item.Spec == nil && baseSpec != nil {
+			src = *baseSpec
 		}
-		if item.Spec != nil && len(item.Spec.StatMods) > 0 {
-			for k, v := range item.Spec.StatMods {
-				baseVal := 0
-				if baseSpec.StatMods != nil {
-					baseVal = baseSpec.StatMods.Get(k)
-				}
-				extra := v - baseVal
-				if extra != 0 {
-					baseMods.Add(k, extra)
-				}
-			}
-		}
-		newSpec.StatMods = baseMods
+		item.EnchantBaseline = items.CaptureSpecBaseline(src)
 	}
+	item.EnchantBaseline.RestoreInto(&newSpec)
 
 	// Apply tier effects (doubled for 2H weapons)
 	for effectKey, effectVal := range tierDef.Effects {
@@ -224,25 +225,30 @@ func isEnchantAdjective(adj string, def *EnchantmentDef) bool {
 	return false
 }
 
-// copyStatMods creates a shallow copy of a StatMods map.
-func copyStatMods(src statmods.StatMods) statmods.StatMods {
-	if src == nil {
-		return nil
-	}
-	dst := make(statmods.StatMods, len(src))
-	for k, v := range src {
-		dst[k] = v
-	}
-	return dst
-}
-
 // StripEnchantment removes all enchantment data from an item, restoring it to base state.
 func StripEnchantment(item *items.Item) {
 	item.EnchantType = ""
 	item.EnchantTier = 0
 	item.EnchantUses = 0
 	item.ReservePool = ""
-	item.Spec = nil
+
+	// Restore the pre-enchant baseline rather than dropping the override
+	// outright. Nil-ing Spec reverts to the bare TEMPLATE, which throws away
+	// affix and gold-bought scaling — the same loss ApplyTier used to inflict.
+	// Only fall back to nil when there is no baseline to restore.
+	if item.EnchantBaseline != nil {
+		if base := items.GetItemSpec(item.ItemId); base != nil {
+			restored := *base
+			item.EnchantBaseline.RestoreInto(&restored)
+			restored.AutoCalculateValue()
+			item.Spec = &restored
+		} else {
+			item.Spec = nil
+		}
+		item.EnchantBaseline = nil
+	} else {
+		item.Spec = nil
+	}
 
 	// Remove enchant adjectives — since we lost the def, just clear all adjectives
 	// that aren't the base item adjectives. Simplest: clear them all since base items
