@@ -12,8 +12,14 @@ import (
 
 // CastingMessages holds the varied atmospheric messages for the casting system.
 type CastingMessages struct {
-	AlreadyCasting       []string `yaml:"already_casting"`
-	CastStarted          []string `yaml:"cast_started"`
+	AlreadyCasting []string `yaml:"already_casting"`
+	CastStarted    []string `yaml:"cast_started"`
+	// CastContinuing is the per-round line while folds are still being laid
+	// down. It exists because the round loop used to reuse CastStarted, which
+	// told the player the cast was *beginning* again on every round of a
+	// multi-fold spell, and duplicated the real start line on the round right
+	// after the cast was initiated.
+	CastContinuing       []string `yaml:"cast_continuing"`
 	ConcentrationSlipped []string `yaml:"concentration_slipped"`
 }
 
@@ -50,14 +56,24 @@ func defaultCastingMessages() *CastingMessages {
 		CastStarted: []string{
 			"You gather your will and begin forming the image of {spell}...",
 		},
+		CastContinuing: []string{
+			"You hold the shape of {spell} steady while the next fold settles...",
+		},
 		ConcentrationSlipped: []string{
 			"You reach for the folds of {spell} but your concentration slips.",
 		},
 	}
 }
 
-// GetCastMessage picks a random message from the named category, substituting {spell} with spellName.
-// category must be one of: "already_casting", "cast_started", "concentration_slipped".
+// GetCastMessage picks a random message from the named category, substituting
+// {spell} with spellName.
+//
+// category must be one of: "already_casting", "cast_started",
+// "cast_continuing", "concentration_slipped".
+//
+// spellName is the player-facing DISPLAY name (spellInfo.Name), never the
+// spellid. Passing the id leaks an internal identifier into player output,
+// which is exactly what the round loop used to do.
 func GetCastMessage(category, spellName string) string {
 	cm := loadCastingMessages()
 
@@ -67,6 +83,8 @@ func GetCastMessage(category, spellName string) string {
 		pool = cm.AlreadyCasting
 	case "cast_started":
 		pool = cm.CastStarted
+	case "cast_continuing":
+		pool = cm.CastContinuing
 	case "concentration_slipped":
 		pool = cm.ConcentrationSlipped
 	}
