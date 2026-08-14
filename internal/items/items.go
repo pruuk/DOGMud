@@ -51,15 +51,16 @@ type Item struct {
 	BottleMultiplier float64        `yaml:"bottle_multiplier,omitempty"` // Aging speed from the bottle used during crafting
 	MakerName        string         `yaml:"maker_name,omitempty"`        // Cosmetic crafter attribution (skill 30+)
 	Spec             *ItemSpec      `yaml:"overrides,omitempty"`
-	Affixed          bool           `yaml:"affixed,omitempty"`      // Instance-loot affix-scaled item (sellable + value-scaled; distinct from enchanted)
-	Uncursed         bool           `yaml:"uncursed,omitempty"`     // Is this item uncursed?
-	Enchantments     uint8          `yaml:"enchantments,omitempty"` // Is this item enchanted?
-	Adjectives       []string       `yaml:"adjectives,omitempty"`   // Decorative text for the name of the item (e.g. "exploding")
-	EnchantTier      int            `yaml:"enchanttier,omitempty"`  // Current enchantment power tier (0+)
-	EnchantUses      int            `yaml:"enchantuses,omitempty"`  // Accumulated uses toward next tier
-	EnchantType      string         `yaml:"enchanttype,omitempty"`  // Enchantment type ID (links to enchantment def)
-	ReservePool      string         `yaml:"reservepool,omitempty"`  // "health", "stamina", or "conviction"
-	StashedBy        int            `yaml:"stashedby,omitempty"`    // userid of whoever stashed this item
+	Affixed          bool           `yaml:"affixed,omitempty"`         // Instance-loot affix-scaled item (sellable + value-scaled; distinct from enchanted)
+	Uncursed         bool           `yaml:"uncursed,omitempty"`        // Is this item uncursed?
+	Enchantments     uint8          `yaml:"enchantments,omitempty"`    // Is this item enchanted?
+	Adjectives       []string       `yaml:"adjectives,omitempty"`      // Decorative text for the name of the item (e.g. "exploding")
+	EnchantTier      int            `yaml:"enchanttier,omitempty"`     // Current enchantment power tier (0+)
+	EnchantUses      int            `yaml:"enchantuses,omitempty"`     // Accumulated uses toward next tier
+	EnchantType      string         `yaml:"enchanttype,omitempty"`     // Enchantment type ID (links to enchantment def)
+	EnchantBaseline  *SpecBaseline  `yaml:"enchantbaseline,omitempty"` // Numeric spec BEFORE any enchantment; see SpecBaseline
+	ReservePool      string         `yaml:"reservepool,omitempty"`     // "health", "stamina", or "conviction"
+	StashedBy        int            `yaml:"stashedby,omitempty"`       // userid of whoever stashed this item
 	tempDataStore    map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
