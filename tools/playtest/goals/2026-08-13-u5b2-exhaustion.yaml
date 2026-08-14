@@ -34,6 +34,15 @@
 # between rooms, so several minutes go to chasing it. Find something that
 # stands and fights. `consider <target>` before committing.
 #
+# THROW TAKES NO TARGET. It is a room AoE: `throw firebomb`, not
+# `throw firebomb <mob>`. The argument is the ITEM, so a target word makes the
+# item lookup fail with `You don't have a "firebomb pest" to throw.` As of
+# 2026-08-14 a throw also works OUT of combat and starts the fight with
+# whatever it hits, so it can be used as the opener.
+#
+# CASTING TAKES A TARGET. `cast spike` alone answers "You need a target to cast
+# that spell." and consumes nothing, so an untargeted batch is 100% no-ops.
+#
 # RATE LIMIT: the AI port allows 3 commands per round and drops the rest with a
 # visible "Command dropped -- AI rate limit" line. That is a real limit and is
 # NOT the same thing as the input-concatenation bug fixed on 2026-08-14 (which
