@@ -29,14 +29,39 @@
 #
 ephemeral:
   profile: early
+  # Required whenever profile is set.
+  #
+  # NOT 5200 (the early profile's own roomid). 5200 is The Awakening Pool, which
+  # sits BEHIND the Awakening Rite gate: until the rite is done, every movement
+  # is refused with "The pool's stillness holds you where you stand ... The rite
+  # comes first." A run started there cannot walk, so it cannot burn stamina,
+  # and the symptom is silent -- stamina simply pins at max while the moves look
+  # like they were sent. 462 (Thornwall City) is past the gate.
+  #
+  # If you ever do want to start at the pool, complete the rite first with
+  # `ask hadwen begin`, or grant the rite's completion token via
+  # overlays.set_quest_tokens.
+  start_room: 462
   overlays:
-    # Twelve Heavy Weighted Stones (item 12, 15.0 each) = 180 weight against a
-    # carry capacity of about 68 (strength 105 x CarryCapacityMultiplier 0.65,
-    # which is ABSENT from config.yaml and so runs on its Go default). At ~2.6x
-    # capacity the movement stamina multiplier is pinned at its 5x ceiling and
-    # combat swings are cut by half, which is what makes the 0-3 stamina band
-    # reachable inside one session. Drop stones to climb back out.
-    grant_items: [12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+    # EIGHT Heavy Weighted Stones (item 12, 15.0 each) = 120 weight.
+    #
+    # Eight is the arithmetic ceiling, not a taste call. StoreItem REFUSES any
+    # store that would push carried weight past 2x carry capacity
+    # (characters/inventory.go), and a refusal here does not degrade -- it fails
+    # profile materialization and the container dies at boot with the bare
+    # message "could not store item 12".
+    #
+    #   capacity        = strength 105 x CarryCapacityMultiplier 0.65 = 68.2
+    #                     (that knob is ABSENT from config.yaml, so Go default)
+    #   ceiling         = 68.2 x 2                                    = 136.4
+    #   already carried = weapon 10002 (6.0) + potion 30036 (0.3)     =   6.3
+    #   room for stones = 130.1  ->  8 stones (120.0) fits, 9 (135.0) does not
+    #
+    # At 126.3 carried against 68.2 capacity the encumbrance multiplier is ~4.4
+    # of its 5.0 ceiling and combat swings are halved, which is what makes the
+    # 0-3 stamina band reachable inside one session. Drop stones to climb back
+    # out. Recount this if the early profile's kit ever changes.
+    grant_items: [12, 12, 12, 12, 12, 12, 12, 12]
   budgets:
     wall_clock: 60m
 
