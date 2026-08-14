@@ -18,26 +18,16 @@ func degradationConfig() configs.GamePlay {
 	cfg.Death.StatDecayMax = configs.ConfigInt(2)
 	cfg.Death.SkillRustCount = configs.ConfigInt(1)
 	cfg.Death.SkillRustAmount = configs.ConfigInt(1)
-	cfg.Death.StatDecayFloor = configs.ConfigInt(80)
+	cfg.Death.StatDecayFloor = configs.ConfigInt(100)
 	cfg.Death.SkillRustFloor = configs.ConfigInt(1)
 	return cfg
 }
 
-// seedRacialStats gives the character a human-baseline racial value so its
-// stat Value sits above StatDecayFloor to begin with.
+// seedRacialStats gives the character a racial roll plus training so the
+// PERMANENT part of each stat (Racial + Training) sits above StatDecayFloor.
+// Racial is a gaussian roll in the real game, not a constant.
 func seedRacialStats(u *users.UserRecord, training int) {
-	for _, si := range []*stats.StatInfo{
-		&u.Character.Stats.Strength,
-		&u.Character.Stats.Dexterity,
-		&u.Character.Stats.Perception,
-		&u.Character.Stats.Vitality,
-		&u.Character.Stats.Willpower,
-		&u.Character.Stats.Charisma,
-	} {
-		si.Base = 100
-		si.Training = training
-		si.Recalculate()
-	}
+	seedRacialStatsAt(u, 100, training)
 }
 
 // A heavily used skill must be rustable.
@@ -94,8 +84,8 @@ func TestSkillRust_NeverGoesBelowFloor(t *testing.T) {
 	}
 }
 
-// Stat decay never drives Training negative, and never drops a stat's Value
-// below StatDecayFloor.
+// Stat decay never drives Training negative, and never drops a stat's PERMANENT
+// part (Racial + Training) below StatDecayFloor.
 func TestStatDecay_RespectsBothFloors(t *testing.T) {
 	config := degradationConfig()
 	floor := int(config.Death.StatDecayFloor)
@@ -112,19 +102,19 @@ func TestStatDecay_RespectsBothFloors(t *testing.T) {
 		train int
 		value int
 	}{
-		{"strength", u.Character.Stats.Strength.Training, u.Character.Stats.Strength.Value},
-		{"dexterity", u.Character.Stats.Dexterity.Training, u.Character.Stats.Dexterity.Value},
-		{"perception", u.Character.Stats.Perception.Training, u.Character.Stats.Perception.Value},
-		{"vitality", u.Character.Stats.Vitality.Training, u.Character.Stats.Vitality.Value},
-		{"willpower", u.Character.Stats.Willpower.Training, u.Character.Stats.Willpower.Value},
-		{"charisma", u.Character.Stats.Charisma.Training, u.Character.Stats.Charisma.Value},
+		{"strength", u.Character.Stats.Strength.Training, u.Character.Stats.Strength.Racial + u.Character.Stats.Strength.Training},
+		{"dexterity", u.Character.Stats.Dexterity.Training, u.Character.Stats.Dexterity.Racial + u.Character.Stats.Dexterity.Training},
+		{"perception", u.Character.Stats.Perception.Training, u.Character.Stats.Perception.Racial + u.Character.Stats.Perception.Training},
+		{"vitality", u.Character.Stats.Vitality.Training, u.Character.Stats.Vitality.Racial + u.Character.Stats.Vitality.Training},
+		{"willpower", u.Character.Stats.Willpower.Training, u.Character.Stats.Willpower.Racial + u.Character.Stats.Willpower.Training},
+		{"charisma", u.Character.Stats.Charisma.Training, u.Character.Stats.Charisma.Racial + u.Character.Stats.Charisma.Training},
 	}
 	for _, s := range all {
 		if s.train < 0 {
 			t.Errorf("%s training = %d, want >= 0", s.name, s.train)
 		}
 		if s.value < floor {
-			t.Errorf("%s value = %d, want >= %d (StatDecayFloor)", s.name, s.value, floor)
+			t.Errorf("%s permanent value = %d, want >= %d (StatDecayFloor)", s.name, s.value, floor)
 		}
 	}
 }
@@ -156,5 +146,74 @@ func TestStatDecay_SpreadsAcrossAllSixStats(t *testing.T) {
 		if s.train >= start {
 			t.Errorf("%s was never picked in 300 deaths — the pick is not uniform", s.name)
 		}
+	}
+}
+
+// A character whose PERMANENT stat sits at or below the floor is left entirely
+// alone, however many times they die. Racial is a gaussian roll, so a new or
+// unlucky character legitimately starts here and must not be ground down.
+func TestStatDecay_AtOrBelowFloorIsUntouched(t *testing.T) {
+	config := degradationConfig()
+	floor := int(config.Death.StatDecayFloor)
+
+	u := users.NewTestUser(706, "newplayer", "Newplayer", 5001)
+	// Rolled slightly under the floor with nothing trained yet.
+	seedRacialStatsAt(u, floor-8, 0)
+
+	for range 100 {
+		applyPlayerStatDecay(u, config)
+	}
+
+	if got := u.Character.Stats.Strength.Training; got != 0 {
+		t.Errorf("strength training = %d, want 0 — a below-floor character was degraded", got)
+	}
+	if got := u.Character.Stats.Strength.Racial; got != floor-8 {
+		t.Errorf("strength racial = %d, want %d — racial must never be touched", got, floor-8)
+	}
+}
+
+// Mods come from equipment and buffs. They must NOT count toward the floor, or
+// a permanent penalty would hinge on what someone happened to be wearing when
+// they died: put a +20 ring on and the floor silently stops protecting you.
+func TestStatDecay_ModsDoNotCountTowardTheFloor(t *testing.T) {
+	config := degradationConfig()
+	floor := int(config.Death.StatDecayFloor)
+
+	u := users.NewTestUser(707, "geared", "Geared", 5001)
+	// Permanent part sits ON the floor, but a big item bonus lifts Value well
+	// above it. The floor must still refuse to decay.
+	seedRacialStatsAt(u, floor, 0)
+	for _, si := range allStatInfos(u) {
+		si.Mods = 40
+		si.Recalculate()
+	}
+
+	for range 100 {
+		applyPlayerStatDecay(u, config)
+	}
+
+	for _, si := range allStatInfos(u) {
+		if si.Training != 0 {
+			t.Fatalf("training = %d, want 0 — equipment Mods lifted a stat past its floor", si.Training)
+		}
+	}
+}
+
+func allStatInfos(u *users.UserRecord) []*stats.StatInfo {
+	return []*stats.StatInfo{
+		&u.Character.Stats.Strength,
+		&u.Character.Stats.Dexterity,
+		&u.Character.Stats.Perception,
+		&u.Character.Stats.Vitality,
+		&u.Character.Stats.Willpower,
+		&u.Character.Stats.Charisma,
+	}
+}
+
+func seedRacialStatsAt(u *users.UserRecord, racial, training int) {
+	for _, si := range allStatInfos(u) {
+		si.Base = racial
+		si.Training = training
+		si.Recalculate()
 	}
 }

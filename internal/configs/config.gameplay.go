@@ -48,7 +48,7 @@ type GameplayDeath struct {
 	StatDecayMax        ConfigInt   `yaml:"StatDecayMax"`        // Max Training loss on death (default 2)
 	SkillRustCount      ConfigInt   `yaml:"SkillRustCount"`      // Number of skills to decay on death (default 1)
 	SkillRustAmount     ConfigInt   `yaml:"SkillRustAmount"`     // Skill ranks lost per decayed skill (default 1)
-	StatDecayFloor      ConfigInt   `yaml:"StatDecayFloor"`      // A stat's Value may never be degraded below this on death (default 80). At or below it, nothing happens at all.
+	StatDecayFloor      ConfigInt   `yaml:"StatDecayFloor"`      // Death may never degrade a stat's PERMANENT part (Racial + Training, excluding equipment/buff Mods) below this (default 100). At or below it, nothing happens at all — Racial is a gaussian roll, so an unlucky or new character can start below it and is simply left alone.
 	SkillRustFloor      ConfigInt   `yaml:"SkillRustFloor"`      // A skill's rank may never be rusted below this on death (default 1). At or below it, nothing happens at all.
 	DeathsShadowBuffId  ConfigInt   `yaml:"DeathsShadowBuffId"`  // Buff ID for Death's Shadow debuff (default 25)
 	RespawnPoolFraction ConfigFloat `yaml:"RespawnPoolFraction"` // Fraction of max pools (Health/Stamina/Conviction) restored on respawn (default 0.05). Keeps "death run" strategies honest — players respawn weakened and have to recover before their next attempt.
@@ -112,7 +112,7 @@ func (g *GamePlay) Validate() {
 		g.Death.SkillRustAmount = 1
 	}
 	if g.Death.StatDecayFloor < 1 {
-		g.Death.StatDecayFloor = 80
+		g.Death.StatDecayFloor = 100
 	}
 	if g.Death.SkillRustFloor < 1 {
 		g.Death.SkillRustFloor = 1

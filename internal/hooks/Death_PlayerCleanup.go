@@ -117,10 +117,21 @@ func applyPlayerStatDecay(u *users.UserRecord, config configs.GamePlay) {
 
 	// Floors. A stat already at or below the floor is not degraded at all, and
 	// says nothing — no message, no event. Training additionally cannot go
-	// negative, which for a full-racial character is the floor that actually
-	// binds; StatDecayFloor is the safety net for low-racial species.
+	// negative.
+	//
+	// The floor measures the PERMANENT part of the stat, Racial + Training, and
+	// deliberately excludes Mods. Mods come from equipment and buffs, so
+	// including them would let a permanent penalty hinge on what someone
+	// happened to be wearing when they died — take the ring off and the floor
+	// stops protecting you.
+	//
+	// Racial is a gaussian roll made at character creation, NOT a fixed 100, so
+	// a character can legitimately start below the floor. That is the intent: a
+	// new or unlucky character who is dying repeatedly is not ground down
+	// further.
 	floor := int(config.Death.StatDecayFloor)
-	headroom := pick.info.Value - floor
+	permanent := pick.info.Racial + pick.info.Training
+	headroom := permanent - floor
 	if headroom <= 0 || pick.info.Training <= 0 {
 		return
 	}
