@@ -25,6 +25,20 @@ type Balance struct {
 	MinDefenseChance   ConfigFloat `yaml:"MinDefenseChance"`   // Floor probability any defense succeeds (default 0.15)
 	MinAttackHitChance ConfigFloat `yaml:"MinAttackHitChance"` // Floor probability any attack hits (default 0.15)
 
+	// ContestFloor is the single symmetric last-resort probability for EVERY
+	// opposed contest in the game. A symmetric floor F yields the bound
+	// [F, 1-F], so 0.125 means: hopelessly overmatched you still succeed one
+	// attempt in eight, hopelessly overmatching you are still stopped one in
+	// eight.
+	//
+	// It replaces eight per-channel knobs whose values encoded the cost of a
+	// single failure. That distinction is deliberately discarded in favour of
+	// one rule (U6).
+	//
+	// Governs OPPOSED contests only. Static-difficulty rolls (search, track,
+	// forage, concentration) are roadmap category B/C and are not floored.
+	ContestFloor ConfigFloat `yaml:"ContestFloor"`
+
 	// Crit floors (chunk 5.11e). Denominated in HITS, not swings, and applied
 	// only after the hit outcome is final. Set either to 0 to disable it.
 	MinAttackCritChance  ConfigFloat `yaml:"MinAttackCritChance"`  // Floor probability a landed hit is a crit (default 0.01)

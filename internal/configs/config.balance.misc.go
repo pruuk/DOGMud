@@ -142,6 +142,13 @@ func (b *Balance) validateMisc() {
 		b.MinAttackHitChance = 0.15
 	}
 
+	// Zero is REJECTED, not accepted. A Go test binary never loads config.yaml,
+	// so a permissive [0, 0.5) check would leave this at zero and silently
+	// disable the floor in every Go test.
+	if b.ContestFloor <= 0 || b.ContestFloor > 0.5 {
+		b.ContestFloor = 0.125
+	}
+
 	// 0.05, not combat's 0.15. These fire once per attempt on actions that
 	// already punish failure (a caught thief, a sprung trap, a revealed sneak),
 	// whereas the combat floors fire on every swing of a many-swing fight.
