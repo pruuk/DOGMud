@@ -453,7 +453,7 @@ grep -rn "RunWithManeuverFloors\|RunWithSpellFloors\|RunWithGlobalFloors\|Maneuv
 ```
 
 Expected: the definitions in `internal/combat/contest_floors.go`, plus these
-production sites — `combat/skill_moves.go:61`, `combat/grapple.go:82`,
+production sites: `combat/skill_moves.go:61`, `combat/grapple.go:82`,
 `combat/submission.go:78`, `combat/flee.go:83,105`,
 `combat/avoidance.go:28,75`, `hooks/Position_GrappleTick.go:269`,
 `hooks/NewRound_MobRoundTick.go:422`, `actions/combat_taunt.go:128`,
@@ -543,7 +543,7 @@ Remove these three lines (around `main.go:197`):
 
 In `internal/dice/contest_floors.go` delete `minContestSuccess`,
 `minContestResist`, `ContestFloors()` and `SetContestFloors()`. Leave
-`OpposedRollStat` and `OpposedRollStatWithFloors` alone — the roadmap assigns
+`OpposedRollStat` and `OpposedRollStatWithFloors` alone. The roadmap assigns
 their deletion to U6 as well, but that belongs with the U4 equivalence test that
 uses them as an oracle, and is out of scope here. If they reference the deleted
 vars, inline the value `0.05` with a comment naming them as deprecated.
@@ -612,7 +612,7 @@ From `internal/configs/config.balance.go` remove `MinAttackHitChance`,
 `MinDefenseChance`, `MinSpellHitChance`, `MinSpellResistChance`,
 `MinManeuverHitChance`, `MinManeuverResistChance`, `MinContestSuccessChance`,
 `MinContestResistChance`. Keep `MinAttackCritChance` and `MinDefenseCritChance`
-— those are the 1% CRIT floors and survive.
+(those are the 1% CRIT floors and survive).
 
 - [ ] **Step 2: Delete their validations**
 
@@ -1034,7 +1034,7 @@ func TestApplyCritFloors_FlooredOutcomeIsNeverPromoted(t *testing.T) {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `go test ./internal/combat/ -run TestApplyCritFloors_ -v`
-Expected: FAIL — the current implementation branches on `res.hit`, so the
+Expected: FAIL, because the current implementation branches on `res.hit`, so the
 partially-deflected case takes the attack branch.
 
 - [ ] **Step 3: Rewrite `applyCritFloors`**
@@ -1561,7 +1561,7 @@ func TestSkillMove_DefendedManeuverDealsDamageButNoStatus(t *testing.T) {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `go test ./internal/combat/ -run TestSkillMove_Defended -v`
-Expected: FAIL — `result.Hit = attackSuccess` is a strict boolean and damage
+Expected: FAIL, because `result.Hit = attackSuccess` is a strict boolean and damage
 only fires inside `if attackSuccess`.
 
 - [ ] **Step 3: Restructure `ExecuteSkillMove`**
