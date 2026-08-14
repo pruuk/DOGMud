@@ -1712,7 +1712,235 @@ git commit -m "fix(hooks): downstream gates no longer assume a defence deals zer
 
 ---
 
-### Task 15: Full verification and the Phase B PR
+### Task 15: Player documentation for what U6 changes
+
+U6 makes `quell` and `defy` live player-facing defences and changes what a
+successful dodge, parry or block *does*. Both must be documented in this PR.
+U11 keeps the broader help sweep and category cleanup; it does not get to be
+the reason a shipped mechanic has no helpfile.
+
+**Files:**
+- Create: `_datafiles/world/dogmud/templates/help/quell.template`
+- Create: `_datafiles/world/dogmud/templates/help/defy.template`
+- Modify: `_datafiles/world/dogmud/templates/help/defense.template`
+- Modify: `_datafiles/world/dogmud/templates/help/combat.template`
+- Modify: `_datafiles/world/dogmud/keywords.yaml`
+
+- [ ] **Step 1: Register the two new topics**
+
+In `_datafiles/world/dogmud/keywords.yaml`, under `help:` -> `command:` ->
+`combat:` (the list containing `defense` at line 77), add in alphabetical
+position:
+
+```yaml
+      - defy
+      - quell
+```
+
+Then in the `helpAliases:` block near line 229, add:
+
+```yaml
+  quell:            [spell-defense, spell defense, magic defense]
+  defy:             [social-defense, taunt defense, resist taunt]
+```
+
+A helpfile with no registry entry is unreachable. `stow` shipped that way and
+is still listed as a discoverability defect.
+
+- [ ] **Step 2: Write `quell.template`**
+
+```
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">quell</ansi>
+
+Quell is your defence against workings that attack the mind. You
+put the spell down before it takes hold, the way you would smother
+a flame rather than dodge it.
+
+You do not type quell. Like dodge, parry and block, it happens on
+its own when something reaches for you.
+
+<ansi fg="yellow">━━━ How It Works ━━━</ansi>
+
+  <ansi fg="stat">Uses:</ansi> Willpower and your Spellcasting skill
+  <ansi fg="stat">Costs:</ansi> Conviction, not stamina
+  <ansi fg="stat">Answers:</ansi> Spells that attack the mind
+
+A spell that attacks the body is answered by dodge or block
+instead. Which defence applies is decided by the spell, not by you.
+
+<ansi fg="yellow">━━━ Degrees of Success ━━━</ansi>
+
+Quelling is not all or nothing. Put a working down decisively and
+it does nothing at all. Only just manage it and the spell still
+reaches you, weakened. A barely successful quell is better than
+none, and a masterful one is better still.
+
+<ansi fg="yellow">━━━ Improving It ━━━</ansi>
+
+  <ansi fg="stat">Spellcasting:</ansi> the skill that carries most of the weight
+  <ansi fg="stat">Willpower:</ansi> improves through use, and raises every mental defence
+
+Casters defend against casters. Studying the art teaches you to
+recognise it coming.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help defy</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help spellcasting</ansi>
+  <ansi fg="command">help conviction</ansi>, <ansi fg="command">help combat</ansi>
+```
+
+- [ ] **Step 3: Write `defy.template`**
+
+```
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">defy</ansi>
+
+Defy is your defence against words meant to wound. You refuse to
+rise to it. The taunt lands on someone who will not be moved.
+
+You do not type defy. Like dodge, parry and block, it happens on
+its own when someone comes at you with words.
+
+<ansi fg="yellow">━━━ How It Works ━━━</ansi>
+
+  <ansi fg="stat">Uses:</ansi> Willpower and your Rhetoric skill
+  <ansi fg="stat">Costs:</ansi> Conviction, not stamina
+  <ansi fg="stat">Answers:</ansi> Taunts and other attacks on your composure
+
+Run your conviction dry and your composure goes with it. A fighter
+who has been goaded all fight has nothing left to refuse with.
+
+<ansi fg="yellow">━━━ Degrees of Success ━━━</ansi>
+
+Defying is not all or nothing. Refuse a barb outright and it costs
+you nothing. Only just hold your temper and it still stings, less
+than it would have. Even a poor defiance is worth something.
+
+<ansi fg="yellow">━━━ Improving It ━━━</ansi>
+
+  <ansi fg="stat">Rhetoric:</ansi> the skill that carries most of the weight
+  <ansi fg="stat">Willpower:</ansi> improves through use, and raises every mental defence
+
+Knowing how a barb is built is most of knowing how to shrug it off.
+The same skill that lets you taunt lets you weather one.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help quell</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help rhetoric</ansi>
+  <ansi fg="command">help taunt</ansi>, <ansi fg="command">help conviction</ansi>
+```
+
+- [ ] **Step 4: Correct `defense.template`**
+
+Three things in it are now false or incomplete.
+
+**(a)** The "Defense Order" list names three defences and uses em dashes, which
+the project forbids in player copy. Replace that block with:
+
+```
+  <ansi fg="stat">Dodge</ansi>  low stamina cost, always available
+  <ansi fg="stat">Parry</ansi>  moderate stamina cost, requires a weapon
+  <ansi fg="stat">Block</ansi>  highest stamina cost, requires a shield
+  <ansi fg="stat">Quell</ansi>  costs conviction, answers spells that attack the mind
+  <ansi fg="stat">Defy</ansi>   costs conviction, answers taunts
+```
+
+**(b)** "Each defense costs stamina even if it fails" is now wrong for two of
+the five. Change that sentence to:
+
+```
+Dodge, parry and block cost stamina even when they fail. Quell and defy cost
+conviction instead. Run either pool dry and the defences it pays for collapse,
+which is what makes a long fight a war of attrition.
+```
+
+**(c)** "Even heavily armored fighters rely on dodge as their first chance to
+avoid damage" describes the old all-or-nothing model. Add a new section after
+"Defense Order":
+
+```
+<ansi fg="yellow">━━━ Degrees of Success ━━━</ansi>
+
+A defence is not all or nothing. Turn a blow aside decisively and it does
+nothing at all. Only just manage it and the blow still lands, robbed of most
+of its force. The better your defence reads the attack, the less of it reaches
+you.
+
+An exceptional defence does more than stop the blow. See Defense Crits under
+<ansi fg="command">help combat</ansi>.
+```
+
+and change the dodge paragraph's closing words from "as their first chance to
+avoid damage" to "as their first chance to take the force out of a blow".
+
+- [ ] **Step 5: Correct `combat.template`**
+
+**(a)** The "Layered Defense System" list at lines 41 to 45 names three
+defences. Add:
+
+```
+  4. <ansi fg="stat">Quell:</ansi> Willpower + Spellcasting, against spells that
+     attack the mind. Costs conviction.
+  5. <ansi fg="stat">Defy:</ansi> Willpower + Rhetoric, against taunts. Costs
+     conviction.
+```
+
+**(b)** Line 28 reads "Can only dodge — no weapon to deflect with". Replace the
+em dash with a comma.
+
+**(c)** Add two lines under "Defense Crits", after the riposte/sweep/shield-slam
+list, so the crit tier reads as the top of a range rather than the only outcome:
+
+```
+A defence that succeeds without being exceptional still helps: it takes the
+force out of the blow rather than stopping it outright. The crits below are
+what happens when you read the attack almost before it lands.
+```
+
+- [ ] **Step 6: Verify every claim in the new copy**
+
+Check each against the code, not against this plan:
+
+```bash
+grep -n "DefenseQuell\|DefenseDefy" internal/characters/combat.go   # scores exist
+grep -n "PoolConviction" internal/characters/resources.go            # quell/defy cost CP
+```
+
+The helpfiles must not state raw numbers. Project rule: player-facing text
+describes the feel, never the value.
+
+- [ ] **Step 7: Check the 80-column rule and the dash rule**
+
+```bash
+cd _datafiles/world/dogmud/templates/help
+awk 'length > 80 {print FILENAME": "FNR": "length}' quell.template defy.template defense.template combat.template
+grep -n "—\|–\|&mdash;" quell.template defy.template defense.template combat.template
+```
+
+Both must print nothing. ANSI tags do not count toward the visible width, so
+judge by rendered text; the awk check is a first pass, not the last word.
+
+- [ ] **Step 8: Verify the topics actually resolve in game**
+
+Boot the server (Task 16 covers the isolated worktree procedure) and run
+`help quell`, `help defy`, `help defense` and `help combat`. A helpfile that
+exists but is not registered returns "no help found" and looks identical to a
+missing file from the player's side.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add _datafiles/world/dogmud/templates/help/ _datafiles/world/dogmud/keywords.yaml
+git commit -m "docs(help): quell and defy helpfiles, and correct the defence copy
+
+U6 makes quell and defy live and changes what a successful defence does, so
+help defense and help combat both described behaviour the game no longer has.
+Registered in keywords.yaml, because an unregistered helpfile is unreachable
+and reads to the player as a missing one."
+```
+
+---
+
+### Task 16: Full verification and the Phase B PR
 
 - [ ] **Step 1: Formatting and build**
 
@@ -1799,3 +2027,6 @@ A green check is not proof: confirm with
   together and is not in this plan.
 - **`AttemptRecovery` and the knockdown roll.** Roadmap U10 moves them to
   opposed rolls.
+- **The broader help sweep and category cleanup.** U11 keeps it. Task 15 covers
+  only what U6 itself makes live or makes wrong: the `quell` and `defy`
+  helpfiles, and the defence copy that U6 falsifies.
