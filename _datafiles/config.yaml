@@ -294,7 +294,14 @@ GamePlay:
     StatDecayMax: 2            # Max Training loss on 1 random stat
     SkillRustCount: 1          # Number of skills to decay
     SkillRustAmount: 1         # Skill ranks lost per decayed skill
-    SkillRecencyThreshold: 50  # Use count above which skills are protected
+    # Floors. Anything already at or below its floor is left completely alone:
+    # no loss, no message, no event. Skills and stats are BOTH picked uniformly
+    # at random; there is no "protected" set. SkillRecencyThreshold used to sit
+    # here and was removed 2026-08-14 — it compared against a LIFETIME use
+    # count, so every skill a character actually used was protected forever and
+    # the loss fell every time on the few they had barely touched.
+    StatDecayFloor: 100        # Never degrade a stat's PERMANENT part (racial roll + training) below this. Equipment and buff mods are excluded on purpose, so a permanent loss cannot hinge on what you were wearing.
+    SkillRustFloor: 1          # Never rust a skill below this rank
     DeathsShadowBuffId: 25     # Buff ID for Death's Shadow debuff
     # - ProtectionSkillRanks -
     #   Players with total skill ranks at or below this value are protected
