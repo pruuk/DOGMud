@@ -171,8 +171,8 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U2** | Spell channel onto the core (**6** sites — review found `resolveCharmSpell` too), preserving ×15 attack / ×0 defence as parameters. | M | U1 | **No** |
 | **U3** | ✅ **DONE.** Ranged + taunt onto the core, preserving ×1 and the flat shield bonus. Also claimed and shipped every unowned `ManeuverFloors()` site, plus `TrySpellDeflection` on the spell pair, and deleted the four private floor accessors in `internal/hooks`. | M | U1 | **No** |
 | **U4** | ✅ **DONE.** Non-harm contests onto the core: **19 sites, 17 on the global floor pair and 2 on the maneuver pair.** Global: `actions/sneak.go` (x2), `actions/shadow.go`, `actions/steal.go` (x4), `actions/plant.go` (x4), `actions/defuse.go`, `usercommands/go.go` (x4), `usercommands/skill.skullduggery.shadow.go`. Maneuver: both `combat/flee.go` rolls, the last `dice.OpposedRollStatWithFloors` callers, which are maneuvers because they are contested in combat and cost the round. Added `combat.RunWithGlobalFloors` + `combat.ContestFloors`, extended `contest_floor_guard_test.go` to see `contest.Run` / `contest.AgainstDifficulty`, and added `floor_pair_guard_test.go` to pin the pair, call count and attacker direction of every migrated site. **Declined:** `actions/surprise_attack.go`, reassigned to U10 (see below). | M | U1 | **No** |
-| **U5a** | Foundation. Build `ApplyCost` + `ApplyHarm` (harm carries a **source actor** from the start). Move the hardcoded 2/4/5 defence costs into config **at their current effective values**. Tests for the three floor rules. Orphaned-docstring cleanup in `characters/character.go`. **No call sites moved.** | M | U1 | **No** |
-| **U5b** | Route every pool mutation: ~78 logical sites, ~68 clamp lines deleted. Unfloor health harm. AST guard that no production code mutates a pool directly. **Named behaviour fixes:** the user/mob DoT floor asymmetry, the unguarded mob cast CP debit, the discarded `DeductDefenseStamina` bool. | L | U5a | **Yes, deliberately** (named sites only) |
+| **U5a** | ✅ **DONE** (PR #36). Foundation. Build `ApplyCost` + `ApplyHarm` (harm carries a **source actor** from the start). Move the hardcoded 2/4/5 defence costs into config **at their current effective values**. Tests for the three floor rules. Orphaned-docstring cleanup in `characters/character.go`. **No call sites moved.** | M | U1 | **No** |
+| **U5b** | ✅ **DONE** (U5b-1 PR #37, U5b-2). Routed every pool mutation: ~78 logical sites, ~68 clamp lines deleted. Health harm unfloored everywhere, with `Character.DisplayHealth()` added as the single display-layer clamp. AST guard that no production code mutates a pool directly. `DeductStamina` and `DeductDefenseStamina` deleted. **Named behaviour fixes:** the user/mob DoT floor asymmetry, the unguarded mob cast CP debit, and the defence affordability gate that dropped exhausted defenders onto the `MinDefenseChance` last resort. **Disclosed gap:** `GetDefenseScore` has no resource term, so until U8 an exhausted defender defends as well as a rested one. | L | U5a | **Yes, deliberately** (named sites only) |
 | **U5c** | **Credit detection.** Immediate, *attributed* death when health drops below 1 at the harm site, replacing the deferred `Die(state.ActorRef{})` round-tick sweep. Sweep stays as a backstop for non-harm paths. | M | U5b | **Yes** |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | **The unified cost model.** NEW SLICE, added 2026-08-13; everything below it shifted by one. Applies the spec's single cost formula to every action: flat config base, encumbrance multiplier (physical only), inverse-skill multiplier, per-action modifier. Takes defence cost off the hardcoded 2/4/5 for real. **Must map the companion / reserved-CP interaction before building.** | L | U5, U6 | **Yes** |
@@ -201,8 +201,19 @@ What the inventory actually found, at 137 raw pool-mutation statements across
 - **`mobcommands/cast.go:116` has no affordability guard and no clamp.**
   `actions.InitiateCast` never reads Conviction, so a mob can begin a cast at 0
   CP and go negative.
-- **`DeductDefenseStamina` returns a bool that `combat_helpers.go:665`
-  discards.** A defence the character cannot pay for still wins the best-of-N.
+- **The defence affordability gate drops an exhausted defender out of the
+  contest entirely.** `combat_helpers.go` `continue`d any defence the character
+  could not pay for out of the best-of-N candidate set. With every defence
+  unaffordable the entry list came out empty, `contest.Run` reported
+  uncontested, and the swing fell through to the `MinDefenseChance` last resort:
+  a flat 15% save, always narrated as a **dodge**, and never able to
+  defence-crit (`crit_floor.go` returns early when `defenseType == ""`).
+  **CORRECTED 2026-08-13:** an earlier draft of this bullet claimed
+  `DeductDefenseStamina` returned a bool that the call site discarded, so "a
+  defence the character cannot pay for still wins the best-of-N". That was never
+  a live bug. Candidates were gated *before* the contest, so the winner was
+  affordable by construction and that return value was unreachable-false.
+  U5b-2 removed the gate and charges the winner with `ApplyCostPartial`.
 
 **A CORRECTION, because a subagent got this wrong and it nearly shaped the plan:**
 the 7 clamped sites do **not** prevent kills. `NewRound_MobRoundTick.go:124`

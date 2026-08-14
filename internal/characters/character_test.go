@@ -2126,62 +2126,6 @@ func TestCharacter_GetSkillLevel(t *testing.T) {
 	}
 }
 
-func TestCharacter_DeductStamina(t *testing.T) {
-	tests := []struct {
-		name            string
-		initialStamina  int
-		deductAmount    int
-		expectedSuccess bool
-		expectedStamina int
-	}{
-		{
-			name:            "Sufficient stamina",
-			initialStamina:  100,
-			deductAmount:    20,
-			expectedSuccess: true,
-			expectedStamina: 80,
-		},
-		{
-			name:            "Exactly enough stamina",
-			initialStamina:  50,
-			deductAmount:    50,
-			expectedSuccess: true,
-			expectedStamina: 0,
-		},
-		{
-			name:            "Insufficient stamina",
-			initialStamina:  10,
-			deductAmount:    20,
-			expectedSuccess: false,
-			expectedStamina: 10,
-		},
-		{
-			name:            "Zero stamina deduction",
-			initialStamina:  50,
-			deductAmount:    0,
-			expectedSuccess: true,
-			expectedStamina: 50,
-		},
-		{
-			name:            "Deduct from zero stamina",
-			initialStamina:  0,
-			deductAmount:    10,
-			expectedSuccess: false,
-			expectedStamina: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := New()
-			c.Stamina = tt.initialStamina
-			success := c.DeductStamina(tt.deductAmount)
-			assert.Equal(t, tt.expectedSuccess, success, "DeductStamina return value")
-			assert.Equal(t, tt.expectedStamina, c.Stamina, "Final stamina value")
-		})
-	}
-}
-
 func TestCharacter_GetMovementStaminaCost(t *testing.T) {
 	// These tests use characters with no items (zero carried weight),
 	// so only terrain multiplier affects cost. Encumbrance tests require

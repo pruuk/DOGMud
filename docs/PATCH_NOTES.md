@@ -49,6 +49,22 @@ unnoticed for so long. It affected the older and more scriptable clients most,
 so if you use one and had given up on speedwalking, try it again. Pasting a
 block of commands works now too.
 
+## 2026-08-13: Fighting while worn out
+
+Being out of breath no longer takes you out of the fight. If you are too tired
+to pay for a dodge, a parry or a block, you now still get to try it, and you pay
+whatever you have left. Before this, an exhausted fighter was dropped out of the
+exchange entirely and left with only a small last chance to avoid the blow, and
+that chance was always described as a dodge no matter what you were actually
+good at. Now the right defence is named, and it can turn into a telling one.
+
+Running away works the same way. You can always break off and flee, no matter
+how tired you are. While you are in a fight you cannot simply walk out, so this
+is the one way to leave, and it should never be closed to you.
+
+Spellcasting creatures now check that they can pay for a spell before they start
+weaving it. One could previously begin a spell it had no hope of finishing.
+
 ## 2026-08-13: The shared way of spending and healing is now the only way
 
 The shared system for spending your effort and your resolve, and for taking a

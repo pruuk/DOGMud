@@ -79,13 +79,16 @@ func TestRegression_FumbleRateSymmetric(t *testing.T) {
 // where defense floor was bypassed when defender had 0 stamina.
 // The defense floor (MinDefenseChance) should provide a chance to avoid
 // hits even when the defender cannot afford any defense roll.
+//
+// U5b-2 changed the MECHANISM that delivers that guarantee. The affordability
+// gate that dropped an unaffordable defence out of the candidate set is gone,
+// so a 0-stamina defender now enters a real contest instead of falling through
+// to the MinDefenseChance last-resort branch. The assertions below were
+// inverted accordingly; the Stage 37.4 guarantee itself still holds.
 func TestRegression_DefenseFloorAlwaysApplies(t *testing.T) {
-	// Test the defense floor mechanism: even with 0 stamina, when
-	// runBestOfAllDefense finds no affordable defense, resolveDefenseOutcome
-	// should still give a MinDefenseChance probability of avoiding the hit.
-	// We test this by creating a defender with 0 stamina and verifying that
-	// the best-of-all defense function produces no valid defense (margin = -Inf),
-	// but the floor save concept is preserved in the code path.
+	// A defender with 0 stamina still gets to defend. Before U5b-2 this
+	// asserted the opposite (margin = -Inf, no defence type) because the
+	// unaffordable defences were filtered out before the contest ran.
 	defender := characters.New()
 	defender.Stamina = 0
 	defender.Health = 100
@@ -99,16 +102,18 @@ func TestRegression_DefenseFloorAlwaysApplies(t *testing.T) {
 	ctx := combatContext{sourceCanSee: true, targetCanSee: true}
 	best := runBestOfAllDefense(result, attacker, defender, defSeq, 150.0, false, ctx)
 
-	// With 0 stamina, no defense should be affordable — margin stays -Inf
-	assert.True(t, math.IsInf(best.margin, -1),
-		"With 0 stamina, no defense should succeed on the roll")
-	assert.Empty(t, best.defenseType,
-		"No defense type should be selected with 0 stamina")
-
-	// The defense floor is applied in resolveDefenseOutcome (not in
-	// runBestOfAllDefense), so even a totally broke defender still has
-	// a chance. We verify the code path handles the empty-defense case
-	// gracefully by checking it doesn't panic and margin is -Inf.
+	// U5b-2: a 0-stamina defender is no longer dropped from the candidate set.
+	// The Stage 37.4 guarantee this test exists for -- "even a totally broke
+	// defender still has a chance" -- is now delivered by the contest itself
+	// rather than by MinDefenseChance catching an empty result. That is a
+	// strictly stronger guarantee: the defender can win on merit and can
+	// defence-crit, neither of which the floor path allowed.
+	assert.False(t, math.IsInf(best.margin, -1),
+		"a 0-stamina defender must now enter the contest, not fall through to the floor")
+	assert.NotEmpty(t, best.defenseType,
+		"a defence must be selected even at 0 stamina")
+	assert.Contains(t, []string{characters.DefenseDodge, characters.DefenseParry}, best.defenseType,
+		"the selected defence must come from the requested sequence")
 }
 
 // TestRegression_MitigationCapEnforced guards against bug where mitigation

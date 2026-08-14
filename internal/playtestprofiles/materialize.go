@@ -47,6 +47,14 @@ func Materialize(m *Manifest, opts MaterializeOptions) ([]PlayerCreds, error) {
 		if err != nil {
 			return nil, err
 		}
+		// Derive stats BEFORE the overlays run. The profile YAML sets
+		// Stats.<name>.Base, but ValueAdj is derived and stays 0 until a
+		// recalculation, and Validate(true) below is too late: grant_items goes
+		// through StoreItem, which refuses anything exceeding
+		// CarryCapacity() * 2, and CarryCapacity reads Strength.ValueAdj. With
+		// ValueAdj still 0 the capacity is 0, so EVERY item with non-zero weight
+		// was rejected and materialization died with "could not store item N".
+		u.Character.RecalculateStats()
 		if err := ApplyOverlays(u, entry.StartRoom, entry.Overlays, world); err != nil {
 			return nil, fmt.Errorf("playtestprofiles: entries[%d]: %w", i, err)
 		}

@@ -571,6 +571,11 @@ Balance:
   #   Example: StaminaMax 400, min 0.15 → need at least 60 SP.
   StandMinStamina: 0.15
   #
+  # FleeStaminaCost: base stamina charged for breaking off to flee. Charged
+  #   partially, never refused: fleeing is the only player-initiated disengage
+  #   while in combat, so refusing it at low stamina would leave no alternative.
+  FleeStaminaCost: 10
+  #
   # ThirdPartyGrapplePenalty: defense score multiplier when attacked by a third
   #   party while grappling. Only block is available; dodge/parry stripped.
   #   Example: block score 80 × 0.70 = 56 vs third-party attacker.

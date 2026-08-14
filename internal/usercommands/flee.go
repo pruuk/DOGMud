@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -31,17 +32,24 @@ func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if !user.Character.IsDisengaging() {
 		// Fleeing costs stamina — a flyer breaks away far more easily (Winged Flight).
-		fleeStaminaCost := 10
+		bal := configs.GetBalanceConfig()
+		fleeStaminaCost := int(bal.FleeStaminaCost)
 		if mutations.IsFlying(user.Character.Mutations) {
-			fleeStaminaCost = int(float64(fleeStaminaCost) * float64(configs.GetBalanceConfig().FlightFleeStaminaMult))
+			fleeStaminaCost = int(float64(fleeStaminaCost) * float64(bal.FlightFleeStaminaMult))
 			if fleeStaminaCost < 1 {
 				fleeStaminaCost = 1
 			}
 		}
-		if !user.Character.DeductStamina(fleeStaminaCost) {
-			user.SendText(messaging.CategorySystem, `You're too exhausted to flee! You need to stand and fight.`)
-			return true, nil
-		}
+		// U5b-2: flee charges what it can and NEVER refuses. go.go refuses all
+		// movement while in combat, so fleeing is the only player-initiated
+		// disengage; refusing it at zero stamina would leave no alternative
+		// action that changes the character's situation.
+		//
+		// The old "You're too exhausted to flee!" message is deleted rather than
+		// left unreachable (standing rule 4). U8 reads CostResult.Short to strip
+		// the skill term from fleeScore's skullduggery contribution; this chunk
+		// discards it.
+		_ = user.Character.ApplyCostPartial(characters.PoolStamina, fleeStaminaCost)
 
 		user.SendText(messaging.CategorySystem, `You attempt to flee...`)
 

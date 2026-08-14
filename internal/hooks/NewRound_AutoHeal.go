@@ -377,13 +377,6 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			mob.Character.ApplyHarm(characters.PoolHealth, poisonDmg, state.ActorRef{})
 			cancelCraftOrSalvageOnDamage(&mob.Character)
 			cancelDamageBuffs(&mob.Character)
-			// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
-			// health-damage sites, which let health store overkill. U5b-1 kept it so
-			// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
-			// floors together as one named, playtested change.
-			if mob.Character.Health < 1 {
-				mob.Character.Health = 0
-			}
 		}
 
 		// Stage 42.7: Apply bleed DoT damage to mobs
@@ -395,13 +388,6 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			mob.Character.ApplyHarm(characters.PoolHealth, bleedDmg, state.ActorRef{})
 			cancelCraftOrSalvageOnDamage(&mob.Character)
 			cancelDamageBuffs(&mob.Character)
-			// NOTE(U5b-2): this health floor is inconsistent with the ~19 other
-			// health-damage sites, which let health store overkill. U5b-1 kept it so
-			// that PR stays provably behaviour-neutral; U5b-2 removes all seven such
-			// floors together as one named, playtested change.
-			if mob.Character.Health < 1 {
-				mob.Character.Health = 0
-			}
 		}
 	}
 

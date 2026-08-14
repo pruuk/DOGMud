@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/conversationadapter"
@@ -179,7 +180,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				staminaCost = 1
 			}
 		}
-		if !user.Character.DeductStamina(staminaCost) {
+		// U5b-2: movement REFUSES when unaffordable -- the character keeps every
+		// other action, and this is the gate that makes flee the only
+		// player-initiated disengage while in combat.
+		if !user.Character.ApplyCost(characters.PoolStamina, staminaCost) {
 			user.SendText(messaging.CategorySystem, "You're too exhausted to move! Rest and recover your stamina.")
 			// Refund the action points since movement failed
 			user.Character.ActionPoints += actionCost

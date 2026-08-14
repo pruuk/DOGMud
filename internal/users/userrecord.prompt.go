@@ -332,31 +332,31 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 
 			case `{hp}`:
 				if len(hpClass) == 0 {
-					hpClass = fmt.Sprintf(`health-%d`, util.QuantizeTens(u.Character.Health, u.Character.HealthMax.Value))
+					hpClass = fmt.Sprintf(`health-%d`, util.QuantizeTens(u.Character.DisplayHealth(), u.Character.HealthMax.Value))
 				}
-				promptOut.WriteString(fmt.Sprintf(`<ansi fg="%s">%d</ansi>`, hpClass, u.Character.Health))
+				promptOut.WriteString(fmt.Sprintf(`<ansi fg="%s">%d</ansi>`, hpClass, u.Character.DisplayHealth()))
 
 			case `{hp:-}`:
-				promptOut.WriteString(strconv.Itoa(u.Character.Health))
+				promptOut.WriteString(strconv.Itoa(u.Character.DisplayHealth()))
 			case `{HP}`:
 				if len(hpClass) == 0 {
-					hpClass = fmt.Sprintf(`health-%d`, util.QuantizeTens(u.Character.Health, u.Character.HealthMax.Value))
+					hpClass = fmt.Sprintf(`health-%d`, util.QuantizeTens(u.Character.DisplayHealth(), u.Character.HealthMax.Value))
 				}
 				promptOut.WriteString(fmt.Sprintf(`<ansi fg="%s">%d</ansi>`, hpClass, u.Character.HealthMax.Value))
 			case `{HP:-}`:
 				promptOut.WriteString(strconv.Itoa(u.Character.HealthMax.Value))
 			case `{hp%}`:
 				if hpPct == -1 {
-					hpPct = int(math.Floor(float64(u.Character.Health) / float64(u.Character.HealthMax.Value) * 100))
+					hpPct = int(math.Floor(float64(u.Character.DisplayHealth()) / float64(u.Character.HealthMax.Value) * 100))
 				}
 				if len(hpClass) == 0 {
-					hpClass = fmt.Sprintf(`health-%d`, util.QuantizeTens(u.Character.Health, u.Character.HealthMax.Value))
+					hpClass = fmt.Sprintf(`health-%d`, util.QuantizeTens(u.Character.DisplayHealth(), u.Character.HealthMax.Value))
 				}
 				promptOut.WriteString(fmt.Sprintf(`<ansi fg="%s">%d%%</ansi>`, hpClass, hpPct))
 
 			case `{hp%:-}`:
 				if hpPct == -1 {
-					hpPct = int(math.Floor(float64(u.Character.Health) / float64(u.Character.HealthMax.Value) * 100))
+					hpPct = int(math.Floor(float64(u.Character.DisplayHealth()) / float64(u.Character.HealthMax.Value) * 100))
 				}
 				promptOut.WriteString(strconv.Itoa(hpPct))
 				promptOut.WriteString(`%`)
@@ -438,8 +438,8 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 			case `{pet_hp}`:
 				if len(u.Character.Companions) > 0 && u.Character.Companions[0].InstanceId > 0 {
 					if pet := mobs.GetInstance(u.Character.Companions[0].InstanceId); pet != nil && pet.Character.HealthMax.Value > 0 {
-						petClass := fmt.Sprintf(`health-%d`, util.QuantizeTens(pet.Character.Health, pet.Character.HealthMax.Value))
-						pct := int(math.Floor(float64(pet.Character.Health) / float64(pet.Character.HealthMax.Value) * 100))
+						petClass := fmt.Sprintf(`health-%d`, util.QuantizeTens(pet.Character.DisplayHealth(), pet.Character.HealthMax.Value))
+						pct := int(math.Floor(float64(pet.Character.DisplayHealth()) / float64(pet.Character.HealthMax.Value) * 100))
 						promptOut.WriteString(fmt.Sprintf(`<ansi fg="%s">%d%%</ansi>`, petClass, pct))
 					}
 				}

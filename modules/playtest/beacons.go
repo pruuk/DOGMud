@@ -56,7 +56,7 @@ func (m *PlaytestModule) onNewRound(e events.Event) events.ListenerReturn {
 		}
 		m.sendGMCP(u.UserId, "Playtest.Round", beaconPayload{
 			Round:  evt.RoundNumber,
-			HP:     u.Character.Health,
+			HP:     u.Character.DisplayHealth(),
 			HPMax:  u.Character.HealthMax.Value,
 			SP:     u.Character.Stamina,
 			SPMax:  u.Character.StaminaMax.Value,
