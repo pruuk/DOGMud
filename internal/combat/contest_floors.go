@@ -79,8 +79,8 @@ func SpellFloors() (hit, resist float64) {
 // U6 may delete or reshape both when it reconciles the two floor styles. Do not
 // build new permanent behaviour on this without checking where that landed.
 func RunWithManeuverFloors(attackScore, defenseScore float64) contest.Result {
-	hit, resist := ManeuverFloors()
-	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit, resist)
+	hit, _ := ManeuverFloors()
+	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit)
 }
 
 // RunWithSpellFloors contests attackScore against a single defenseScore using the
@@ -115,8 +115,8 @@ func RunWithManeuverFloors(attackScore, defenseScore float64) contest.Result {
 //
 // TRANSITIONAL, mirroring contest.RunWithFloors: U6 may delete or reshape both.
 func RunWithSpellFloors(attackScore, defenseScore float64) contest.Result {
-	hit, resist := SpellFloors()
-	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit, resist)
+	hit, _ := SpellFloors()
+	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit)
 }
 
 // ContestFloors is the GLOBAL contest floor pair, for uncertain outcomes that
@@ -171,6 +171,6 @@ func ContestFloors() (hit, resist float64) {
 //
 // TRANSITIONAL, like its two siblings: U6 may delete or reshape all three.
 func RunWithGlobalFloors(attackScore, defenseScore float64) contest.Result {
-	hit, resist := ContestFloors()
-	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit, resist)
+	hit, _ := ContestFloors()
+	return contest.RunWithFloors(attackScore, []contest.Entry{{Score: defenseScore}}, hit)
 }

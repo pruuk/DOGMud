@@ -134,7 +134,7 @@ func TestRun_SuccessTracksMargin(t *testing.T) {
 // migration safe for any caller passing 0.
 func TestRunWithFloors_ZeroFloorsMatchRun(t *testing.T) {
 	for i := 0; i < 500; i++ {
-		res := RunWithFloors(10000, []Entry{{Name: "d", Score: 1}}, 0, 0)
+		res := RunWithFloors(10000, []Entry{{Name: "d", Score: 1}}, 0)
 		assert.True(t, res.Success, "attacker should win on merit with no floors")
 		assert.Greater(t, res.Margin, 0.0, "margin must be the real one, not a sentinel")
 		assert.False(t, res.Floored, "no floor was configured, so nothing was floored")
@@ -148,7 +148,7 @@ func TestRunWithFloors_SuccessFloorRescuesAHopelessAttack(t *testing.T) {
 	wins := 0
 	for i := 0; i < samples; i++ {
 		// Attacker cannot win on merit at these scores.
-		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.15, 0).Success {
+		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.15).Success {
 			wins++
 		}
 	}
@@ -161,7 +161,7 @@ func TestRunWithFloors_ResistFloorSavesADoomedDefender(t *testing.T) {
 	const samples = 20000
 	saves := 0
 	for i := 0; i < samples; i++ {
-		if !RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0, 0.15).Success {
+		if !RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0.15).Success {
 			saves++
 		}
 	}
@@ -183,14 +183,14 @@ func TestRunWithFloors_StampsTheSentinelMargin(t *testing.T) {
 	sawSuccess, sawResist := false, false
 
 	for i := 0; i < 200; i++ {
-		granted := RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.5, 0)
+		granted := RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 0.5)
 		if granted.Success {
 			sawSuccess = true
 			assert.Equal(t, 1.0, granted.Margin, "a floor-granted success carries the +1 sentinel")
 			assert.True(t, granted.Floored, "a flipped outcome must report Floored")
 		}
 
-		resisted := RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0, 0.5)
+		resisted := RunWithFloors(100000, []Entry{{Name: "d", Score: 1}}, 0.5)
 		if !resisted.Success {
 			sawResist = true
 			assert.Equal(t, -1.0, resisted.Margin, "a floor-granted resist carries the -1 sentinel")
@@ -211,7 +211,7 @@ func TestRunWithFloors_ClampsFloors(t *testing.T) {
 	wins := 0
 	for i := 0; i < samples; i++ {
 		// 5.0 must be clamped to 0.5, not treated as "always".
-		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 5.0, 0).Success {
+		if RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, 5.0).Success {
 			wins++
 		}
 	}
@@ -220,7 +220,7 @@ func TestRunWithFloors_ClampsFloors(t *testing.T) {
 
 	// A negative floor must clamp to 0, never rescue anything.
 	for i := 0; i < 500; i++ {
-		assert.False(t, RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, -1.0, 0).Success,
+		assert.False(t, RunWithFloors(1, []Entry{{Name: "d", Score: 100000}}, -1.0).Success,
 			"a negative floor must clamp to 0")
 	}
 }
@@ -228,8 +228,53 @@ func TestRunWithFloors_ClampsFloors(t *testing.T) {
 // TestRunWithFloors_UncontestedIsUntouched — no entries means no contest, so
 // there is nothing for a floor to flip.
 func TestRunWithFloors_UncontestedIsUntouched(t *testing.T) {
-	res := RunWithFloors(100, nil, 0.5, 0.5)
+	res := RunWithFloors(100, nil, 0.5)
 	assert.False(t, res.Contested)
 	assert.Equal(t, 0.0, res.Margin, "an uncontested result must not be stamped with a sentinel")
 	assert.False(t, res.Floored)
+}
+
+// A symmetric floor bounds the outcome to [F, 1-F] from BOTH directions. The
+// hopeless attacker is rescued at rate F; the overwhelming attacker is stopped
+// at rate F. One parameter expresses both.
+func TestRunWithFloors_SymmetricBoundsBothDirections(t *testing.T) {
+	const iterations = 20000
+	const floor = 0.125
+
+	hopeless := 0
+	for i := 0; i < iterations; i++ {
+		if RunWithFloors(10, []Entry{{Score: 10000}}, floor).Success {
+			hopeless++
+		}
+	}
+	rate := float64(hopeless) / iterations
+	if rate < 0.10 || rate > 0.15 {
+		t.Fatalf("hopeless attacker should win about %v of the time, got %v", floor, rate)
+	}
+
+	overwhelming := 0
+	for i := 0; i < iterations; i++ {
+		if !RunWithFloors(10000, []Entry{{Score: 10}}, floor).Success {
+			overwhelming++
+		}
+	}
+	rate = float64(overwhelming) / iterations
+	if rate < 0.10 || rate > 0.15 {
+		t.Fatalf("overwhelming attacker should be stopped about %v of the time, got %v", floor, rate)
+	}
+}
+
+// A floored outcome must carry the sentinel margin, which is the only reason a
+// floor-granted hit cannot also crit.
+func TestRunWithFloors_FlippedOutcomeCarriesSentinel(t *testing.T) {
+	for i := 0; i < 5000; i++ {
+		res := RunWithFloors(10, []Entry{{Score: 10000}}, 0.5)
+		if res.Floored {
+			if res.Margin != 1 && res.Margin != -1 {
+				t.Fatalf("a floored outcome must carry the +-1 sentinel, got %v", res.Margin)
+			}
+			return
+		}
+	}
+	t.Fatal("no floored outcome observed in 5000 attempts at floor 0.5")
 }

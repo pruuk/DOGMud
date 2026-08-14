@@ -41,9 +41,10 @@ type Result struct {
 
 - `Run(atkScore float64, entries []Entry) Result` — one attack roll contested by
   every entry, keeping the widest defensive margin.
-- `RunWithFloors(atkScore float64, entries []Entry, floorSuccess, floorResist float64) Result`
-  — `Run` plus the 5.9 last-resort floors. Reproduces
-  `dice.OpposedRollStatWithFloors` exactly. **Transitional — see Gotchas.**
+- `RunWithFloors(atkScore float64, entries []Entry, floor float64) Result`
+  — `Run` plus a single SYMMETRIC last-resort floor: the hopeless attacker is
+  rescued at rate `floor`, the overwhelming attacker is stopped at rate
+  `floor`. At most one flip per call. **See Gotchas.**
 - `AgainstDifficulty(score, difficulty float64) Result` — the same path against a
   fixed number instead of an opponent.
 
@@ -102,13 +103,12 @@ type Result struct {
   `TrySpellDeflection` read `defRoll.Margin` before U2 — translated naively it
   would have silently passed zero and no spell deflection would ever have
   critted again, with nothing failing and no test breaking.
-- **`RunWithFloors` is TRANSITIONAL scaffolding, not durable API.** The codebase
-  has two floor styles: melee applies floors *after* the contest with no margin
-  involved, spell and maneuver apply them *inside* the roll and need the
-  sentinel. This reproduces only the second, so U2–U5 can be provable no-ops.
-  Roadmap section 8 lists reconciling them as an open question for U6, which may
-  delete or reshape this entirely. Ask `Floored` rather than comparing `Margin`
-  against the sentinel, so analytics survive that change.
+- **`RunWithFloors` takes ONE symmetric floor, not a success/resist pair.**
+  U6 collapsed the two-floor style into a single `ContestFloor` knob (Balance
+  config); this function still takes the floor as a plain parameter and never
+  reads config itself — `internal/combat.RunContest` is the one place that
+  reads `ContestFloor`. Ask `Floored` rather than comparing `Margin` against the
+  sentinel, so analytics survive future changes.
 
 ## Dependencies
 
