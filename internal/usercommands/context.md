@@ -277,3 +277,18 @@ What matters is the shape, not the list:
 Enumerate every step; a partially-wired admin command is the classic failure:
 handler file, registration entry, help file, mob twin (or allowlist entry),
 and — if it is player-facing — an entry in the relevant help category.
+
+**If the command attacks a mob, it must seed aggression.** Route it through
+`actions.AcquireMeleeTarget` and you get it for free; that is how all eleven
+melee specials (kick, bash, trip, grapple, taunt, gore, maul, pounce, rake,
+throttle, drain) are covered. Anything with its own targeting — `attack`,
+`shoot`, `throw` — calls `actions.SeedAggression` itself. Skip it and the
+attack is invisible to the revenge, opinion and justice systems: no assault
+crime, no rep hit, no bounty, no witness memory. That was the real state of all
+twelve special-move paths until 2026-08-14. See `internal/actions/context.md`
+for the fresh-aggro contract, which is easy to get backwards.
+
+**`throw` is the grenade verb and is untargeted by design** — it takes an item,
+never a target, and resolves as a room AoE. Aimed thrown weapons (darts,
+javelins) belong under `ranged-combat` and `ExecuteFire` instead. Settled
+2026-08-14; the reasoning is in `internal/actions/context.md`.

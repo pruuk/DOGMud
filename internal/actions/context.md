@@ -48,6 +48,62 @@ type Actor interface {
 
 ## Combat Actions
 
+### Every player attack path MUST seed aggression
+
+`SeedAggression(user, mob, room, freshAggro)` in `aggression.go` is what makes
+an attack visible to the revenge, opinion and justice systems. An attack path
+that does not call it is invisible to all three: no assault crime, no faction
+rep hit, no bounty check, no witness knowledge, no revenge-mob seeding.
+
+That was not hypothetical. Until 2026-08-14 only `attack`, `shoot` and (half of)
+`taunt` seeded anything, so the ten melee specials and `throw` let a player open
+on a faction NPC for free. Killing it was still caught by the death hook's
+murder record, but assaulting and walking away cost nothing.
+
+**You almost certainly do not need to call it directly.** `AcquireMeleeTarget`
+(`melee_target.go`) now seeds for every command that routes through it, which is
+all eleven melee specials: kick, bash, trip, grapple, taunt, gore, maul, pounce,
+rake, throttle, drain. Add a new melee special the same way and it inherits the
+behaviour. `throw` seeds from its own `engageAfterThrow` because it is an AoE.
+
+The two halves fire on **deliberately different** conditions, and getting this
+backwards spams crimes and bounties off a single engagement:
+
+| Signal | Fires when | Why |
+|---|---|---|
+| `PlayerAttackedMob` event | **every** commitment | Seeder rules 6 and 9 want repeated aggression, not just the opener |
+| Opinion bump + assault crime | **fresh aggro only** | Otherwise every kick of a long fight re-logs a crime and re-bumps rep |
+
+"Fresh" is the caller's judgement because it differs by shape. Single-target
+moves compare the *attacker's* prior aggro against this mob. An AoE like `throw`
+judges it *per mob*, from that mob's own prior aggro, because the attacker's
+aggro can only point at one target and attacker-side gating would record the
+first mob hit and silently miss the rest.
+
+`RecordAssaultCrime` lives here rather than in `internal/usercommands` for this
+reason: the specials engage through this package, and `usercommands` already
+depends on it.
+
+### Thrown weapons: `throw` is the grenade verb, aimed throws are ranged
+
+Settled 2026-08-14, recorded here so it is not re-argued:
+
+- **`throw`** (in `internal/usercommands`) is untargeted **by design**. It takes
+  an item, never a target, and resolves as a room AoE rolled independently
+  against every hostile present. Same shape as an AoE spell. Do not add a target
+  argument to it.
+- **Aimed thrown weapons** (darts, javelins, throwing knives) belong under
+  `ranged-combat` and `ExecuteFire`, which already has single-target resolution,
+  cross-room shots, Perception-based aiming, reload machinery, and correct crime
+  and revenge seeding. Skullduggery suits an improvised explosive; it does not
+  suit a javelin.
+
+Not yet built. The one open problem is that a thrown weapon is its own
+ammunition, while `ExecuteFire` requires a wielded ranged weapon via
+`findRangedWeaponSlot`. Either such a weapon equips and consumes itself on use,
+or a `thrown` weapon subtype gets taught to that resolver. A feature, not a
+refactor.
+
 ### Basic Attack
 
 **Function:** `combat.AttackPlayerVsMob(user, mob)`, `combat.AttackMobVsPlayer(mob, user)`, etc.
@@ -717,7 +773,7 @@ the rest are ordinary verbs.
 | Actor abstraction | `actor.go`, `actor_user.go`, `actor_mob.go` |
 | Readiness gates | `action_readiness.go`, `command_readiness.go` |
 | Targeting | `target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go` |
-| Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go` |
+| Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go`, `aggression.go` |
 | Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
 | Casting | `cast.go`, `cast_interrupt.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |

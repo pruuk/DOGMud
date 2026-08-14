@@ -42,7 +42,7 @@ func maybeInterruptOnThrow(mob *mobs.Mob, thrownItemId int, by state.ActorRef) b
 }
 
 // engageAfterThrow puts the thrower and everything the throw actually hit into
-// combat with each other.
+// combat with each other, and records the aggression against each mob hit.
 //
 // Throwing used to be refused outright unless melee was already joined, so a
 // thrown explosive could never open a fight -- which is the one thing a
@@ -53,18 +53,28 @@ func maybeInterruptOnThrow(mob *mobs.Mob, thrownItemId int, by state.ActorRef) b
 // Existing aggro on either side is left alone. Re-pointing the thrower would
 // yank them off their chosen target mid-fight, and re-pointing a mob would pull
 // it off whoever it was already fighting.
-func engageAfterThrow(userId int, thrower *characters.Character, hitMobs []*mobs.Mob) {
-	if len(hitMobs) == 0 {
+//
+// Freshness is judged PER MOB, from the mob's own prior aggro, which is where
+// this departs from the single-target moves. Those compare the attacker's aggro
+// against the one target they hit; a throw hits several at once and the
+// attacker's aggro can only point at one of them, so attacker-side gating would
+// record the assault on the first mob and quietly miss the rest. A mob that was
+// already fighting you is not freshly assaulted by the next grenade.
+func engageAfterThrow(user *users.UserRecord, room *rooms.Room, hitMobs []*mobs.Mob) {
+	if user == nil || len(hitMobs) == 0 {
 		return
 	}
+	thrower := user.Character
 
 	for _, mob := range hitMobs {
 		if mob == nil {
 			continue
 		}
-		if mob.Character.Aggro == nil {
-			mob.Character.SetAggro(userId, 0, characters.DefaultAttack)
+		freshAggro := mob.Character.Aggro == nil
+		if freshAggro {
+			mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
 		}
+		actions.SeedAggression(user, mob, room, freshAggro)
 	}
 
 	if thrower == nil || thrower.Aggro != nil {
@@ -92,6 +102,18 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// opener; requiring melee first made the whole throwable category unusable
 	// for the thing it is for. engageAfterThrow starts the fight for a throw
 	// that connects.
+	//
+	// DESIGN DECISION (2026-08-14): `throw` is the GRENADE verb and stays
+	// untargeted on purpose. It takes an item, never a target, and resolves as
+	// a room AoE rolled independently against every hostile present -- the same
+	// shape as an AoE spell. Do not add a target argument here.
+	//
+	// Aimed thrown weapons (darts, javelins, throwing knives) belong under
+	// ranged-combat and ExecuteFire in internal/actions, which already has
+	// single-target resolution, Perception-based aiming and the reload
+	// machinery. Skullduggery suits an improvised explosive; it does not suit a
+	// javelin. See the matching note on ExecuteFire for the one open problem
+	// (a thrown weapon is its own ammunition).
 
 	// Special-move cooldown
 	cfg := configs.GetBalanceConfig()
@@ -292,7 +314,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// A throw that connected starts the fight if one was not already running.
 	// A fumble hurts only the thrower, so it engages nobody.
 	if !fumbled {
-		engageAfterThrow(user.UserId, user.Character, hitMobs)
+		engageAfterThrow(user, room, hitMobs)
 	}
 
 	if user.Character.Aggro != nil {

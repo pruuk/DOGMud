@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-08-14: Every attack counts as one now
+
+Picking a fight with a kick, a bash, a trip, a grapple, a taunt, a claw or a
+grenade went unnoticed by the people who should have noticed. Only a plain
+attack or a bow shot was ever recorded as an assault, so anyone who opened with
+anything else walked away with no loss of standing, no witnesses who remembered
+it, and no bounty, even in front of a whole barracks. Killing was always
+counted. Only the attack itself slipped through.
+
+All of it counts now. Every way you can start a fight is treated the same way,
+so the same act carries the same consequences whichever move you throw first,
+and the creature you attacked remembers who did it.
+
+This does not make you a criminal for fighting. Attacking something that
+belongs to no one is no more a crime than it ever was. What changed is that
+attacking something with friends is no longer free just because you led with
+your boot.
+
 ## 2026-08-14: Open a fight with a grenade, and a clearer casting voice
 
 Thrown weapons refused to leave your hand unless you were already trading
