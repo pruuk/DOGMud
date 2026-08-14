@@ -46,6 +46,22 @@ func RouteAttributedDeath(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
+	// DeathQueued is the token that says "this queued death is still valid".
+	// Anything that resolves a character's life state out of band clears it,
+	// which makes a stale event inert.
+	//
+	// !IsAlive() above cannot cover this on its own, because the out-of-band
+	// resolution can leave the character ALIVE. The case that matters: a player
+	// takes a lethal hit, then runs `suicide` before the flush. With
+	// ReviveOnDeath they are healed and the buff is CONSUMED, so this listener
+	// would find them alive, with no buff left to save them, and kill them
+	// anyway — real corpse, real bounty, gold to the original killer, for a
+	// player who was healthy a moment earlier, defeating the one buff that
+	// exists to prevent exactly that.
+	if !char.DeathQueued {
+		return events.Continue
+	}
+
 	if char.HasBuffFlag(buffs.ReviveOnDeath) {
 		reviveInsteadOfDeath(char)
 		char.DeathQueued = false

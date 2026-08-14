@@ -41,6 +41,16 @@ func (c *Character) Die(killer state.ActorRef, trigger string) {
 		return
 	}
 
+	// U5c: this character's life state is being resolved HERE, so any
+	// CharacterDied event still in flight for them is now stale. Clearing the
+	// token invalidates it — hooks.RouteAttributedDeath refuses to act without
+	// it. Every Die caller therefore invalidates a pending event for free.
+	//
+	// This must be done for players in particular. Die cascades them back to
+	// Alive, so the !IsAlive() guard above cannot catch a second call, and a
+	// stale event would otherwise run the whole death cascade again.
+	c.DeathQueued = false
+
 	damageSnapshot := snapshotDamageMap(c.PlayerDamage)
 
 	_ = c.Life.TransitionToDead(

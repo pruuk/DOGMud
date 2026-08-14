@@ -7,6 +7,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/life"
 )
 
 // deathProtectionBuffId is the buff carrying the ReviveOnDeath flag,
@@ -53,6 +55,48 @@ func seedReviveBuff(t *testing.T) {
 		},
 	})
 	t.Cleanup(cleanup)
+}
+
+// A queued death is only valid while DeathQueued is still set. Anything that
+// resolves a character's life state out of band clears it, which makes the
+// stale event inert.
+//
+// The race this closes: a player takes a lethal hit (DeathQueued set, event
+// queued, still IsAlive until the flush), then runs `suicide` in that window.
+// With ReviveOnDeath they are healed and the buff is CONSUMED. The stale event
+// then flushed, found them alive with no buff left, and killed them anyway —
+// real corpse, real bounty, gold to the original killer, for a player who was
+// healthy a moment earlier. The buff exists precisely to prevent that.
+//
+// !IsAlive() cannot catch this: the out-of-band resolution leaves them ALIVE.
+func TestRouteAttributedDeath_StaleEventIsInertOnceDeathQueuedIsCleared(t *testing.T) {
+	mob := newRouteDeathTestMob(t, 100) // healed back up out of band
+	mob.Character.Life = life.NewMachine()
+	mob.Character.DeathQueued = false // whatever resolved them cleared it
+
+	RouteAttributedDeath(events.CharacterDied{
+		MobInstanceId:       mob.InstanceId,
+		KillerMobInstanceId: 4242,
+		Trigger:             life.TriggerHealthZero,
+	})
+
+	if !mob.Character.IsAlive() {
+		t.Fatal("a stale queued death killed a character who was already resolved")
+	}
+}
+
+// Die clears the token itself, so every Die caller — the backstops, the suicide
+// commands, the listener — invalidates any event still in flight.
+func TestDie_ClearsDeathQueued(t *testing.T) {
+	mob := newRouteDeathTestMob(t, -5)
+	mob.Character.Life = life.NewMachine()
+	mob.Character.DeathQueued = true
+
+	mob.Character.Die(state.ActorRef{MobInstanceId: 1}, life.TriggerHealthZero)
+
+	if mob.Character.DeathQueued {
+		t.Error("Die did not clear DeathQueued; a stale event could still fire")
+	}
 }
 
 func TestRouteAttributedDeath_WrongEventTypeIsRejected(t *testing.T) {
