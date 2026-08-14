@@ -5,14 +5,28 @@
 # skill-term penalty lands in U8. If an out-of-breath character defends just as
 # well as a rested one, that is the expected temporary state, not a bug. Report
 # how it FEELS, but do not treat it as a defect and do not tune against it.
+#
+# HOW TO ACTUALLY REACH ZERO STAMINA (learned the hard way, 2026-08-13 run):
+#   * EVERY profile has a big stamina pool (fresh 405, early 425, mid 480,
+#     admin 800), and picking "3) Veteran" in the creation flow gives ~429. So
+#     there is no shortcut profile. Exhaustion has to be earned in a LONG fight.
+#   * Auto-attack drains stamina EVERY ROUND without you sending anything. So
+#     pick an opponent weak enough that you survive many rounds, then mostly
+#     WAIT and read. Do not spam commands: the AI port allows only 3 per round
+#     and silently drops the rest ("Command dropped -- AI rate limit").
+#   * Do NOT try to drain by walking. Movement costs a couple of stamina while
+#     out-of-combat regen refills faster, so you gain ground instead of losing
+#     it. This is even worse in a healing room.
+#   * Recovery/temple rooms carry a regen bonus ("Wounds close more easily").
+#     Leave them before trying to reach the low band.
+#   * The low band is narrow and that is the point: shipped defence costs are
+#     dodge 1, parry 3, block 4, so the behaviour under test only appears
+#     between roughly 0 and 3 stamina.
+#
 ephemeral:
-  creation_flow: true
-  creation_rationale: >
-    Fresh character required: the exhaustion and prone paths must be exercised
-    on a real progression-appropriate character rather than a seeded veteran,
-    whose larger pools would hide the low-stamina band entirely.
+  profile: early
   budgets:
-    wall_clock: 40m
+    wall_clock: 60m
 
 goals:
   - >-
