@@ -1625,6 +1625,22 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 ---
 
+> 🔴 **HARD GATE: Task 12 must land before Task 13's boot test or playtest.**
+> `_datafiles/config.yaml` still ships `MovementBaseStaminaCost: 2.0`, and a
+> shipped value **overrides** the Go default, so a server booted before Task 12
+> prices movement at four times the intended base: ordinary travel costs about 3
+> per room (dearer than today's 2, when the design makes it cheaper at 1) and
+> travel at carry capacity costs about 11. Every other U7 knob is absent from
+> `config.yaml` and correctly falls through to its Go default; this one is the
+> exception because it predates U7. Boot-testing or playtesting before Task 12
+> measures a game nobody designed.
+>
+> Task 12 must also delete the seven now-orphaned keys U7 retired
+> (`DodgeBaseStaminaCost`, `ParryBaseStaminaCost`, `BlockBaseStaminaCost`,
+> `DodgeMultiplier`, `ParryMultiplier`, `BlockMultiplier`,
+> `UnarmedAttackStaminaCost`). They are harmless — the loader is non-strict —
+> but they read as live tuning knobs and are not.
+
 ### Task 13: Verify, boot, playtest
 
 - [ ] **Step 1: Formatting, build, full tests**
