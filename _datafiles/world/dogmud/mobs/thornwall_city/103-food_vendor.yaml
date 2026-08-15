@@ -44,7 +44,7 @@ character:
   level: 1
   gold: 1000
   skills:
-    cooking: 12
+    cooking: 1
   shop:
     # Stillwater unique (caravan-fed from Tov Brann / Sigrid)
     - itemid: 40058    # freshwater clam

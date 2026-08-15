@@ -140,27 +140,35 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	sendShootMessages(user, room, result)
 
 	hit := result.MoveResult.Hit
+	// Dealt is true on a clean hit AND on a defended shot that still drew
+	// blood. A partial draws evidence just like a hit does (the victim's own
+	// message names the shooter), so it reveals and is attributed the same
+	// way. Only a true zero-damage miss leaves no trace.
+	dealt := hit || result.MoveResult.Damage > 0
 
 	// Issue 5 (cross-room hidden reveal): same-room shots reveal the shooter
 	// through the normal aggro→combat path (CancelCombatBuffs in the combat
 	// round handler, set up by the pre-fire aggro above). A cross-room shooter
 	// never enters that loop, so a hidden sniper would stay hidden forever.
-	// Mirror melee's reveal-on-engage: a cross-room shot that LANDS drops
-	// stealth. A clean cross-room miss stays hidden — one free hit, then you're
-	// exposed. (Same-room shooter aggro is set pre-fire; see Issue 2 above.)
-	if result.CrossRoom && hit {
+	// Mirror melee's reveal-on-engage: a cross-room shot that deals ANY
+	// damage (a clean hit or a defended partial) drops stealth. Only a
+	// zero-damage cross-room miss stays hidden — the sniper gets exactly one
+	// free clean miss, not one free hit. (Same-room shooter aggro is set
+	// pre-fire; see Issue 2 above.)
+	if result.CrossRoom && dealt {
 		user.Character.CancelCombatBuffs()
 	}
 
 	// --- Retaliation + crime (mob targets only) ---
 	if result.IsTargetMob {
-		// The mob (and its faction) only react if the shot was noticed: a
-		// hit always reveals the shooter; a clean miss from stealth does
-		// not. A visible shooter is always noticed.
-		noticed := hit || !result.IsSneaking
+		// The mob (and its faction) only react if the shot was noticed: any
+		// damage dealt (hit or partial) always reveals the shooter; a
+		// zero-damage miss from stealth does not. A visible shooter is
+		// always noticed.
+		noticed := dealt || !result.IsSneaking
 		if m := mobs.GetInstance(result.TargetMobInstanceId); m != nil && noticed {
 
-			if hit {
+			if dealt {
 				m.Character.TrackPlayerDamage(user.UserId, result.MoveResult.Damage)
 				// mob_hurt behavior tree — same trigger the unified combat
 				// handler fires (fireDefenderBehaviorTrigger).
@@ -224,6 +232,7 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.FireResult) {
 
 	hit := result.MoveResult.Hit
+	partial := !hit && result.MoveResult.Damage > 0
 	tier := combat.GetDamageDescription(result.MoveResult.Damage, result.MoveResult.TargetMaxHP)
 
 	// Color the target name by type.
@@ -233,9 +242,12 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	}
 
 	// Shooter's own feedback.
-	if hit {
+	switch {
+	case hit:
 		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot takes %s (<ansi fg="damage">%s</ansi>)!`, targetColored, tier))
-	} else {
+	case partial:
+		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot goes wide of %s, but the edge of it still clips them! (<ansi fg="damage">%s</ansi>)`, targetColored, tier))
+	default:
 		user.SendText(messaging.CategoryDodge, fmt.Sprintf(`Your shot goes wide of %s!`, targetColored))
 	}
 
@@ -246,9 +258,12 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 			if result.IsSneaking {
 				shooter = `Someone`
 			}
-			if hit {
+			switch {
+			case hit:
 				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you (<ansi fg="damage">%s</ansi>)!`, shooter, tier))
-			} else {
+			case partial:
+				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you! (<ansi fg="damage">%s</ansi>)`, shooter, tier))
+			default:
 				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
 			}
 		}
@@ -283,11 +298,16 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		if fromDir != "" {
 			origin = fmt.Sprintf(`from beyond the <ansi fg="exit">%s</ansi>`, fromDir)
 		}
-		if hit {
+		switch {
+		case hit:
 			tr.SendTextVisual(messaging.CategoryHitRanged,
 				fmt.Sprintf(`A shot streaks in %s and strikes %s!`, origin, targetColored),
 				result.TargetUserId)
-		} else {
+		case partial:
+			tr.SendTextVisual(messaging.CategoryHitRanged,
+				fmt.Sprintf(`A shot streaks in %s and clips %s!`, origin, targetColored),
+				result.TargetUserId)
+		default:
 			tr.SendTextVisual(messaging.CategoryHitRanged,
 				fmt.Sprintf(`A shot streaks in %s and narrowly misses %s!`, origin, targetColored),
 				result.TargetUserId)

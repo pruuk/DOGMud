@@ -1,6 +1,10 @@
 mobid: 228
 zone: Ironwind Steppe
-behavior_archetype: leader
+# behavior_archetype removed 2026-08-15: the per-mob tree has no mob_idle
+# branch, so leader's fallback scan/track/chase chain (and its latent
+# flee-below-25% branch) would go live on this stationary maternal tank
+# boss. submission_policy/surrender_policy below are already pinned
+# explicitly, so they are unaffected by this removal.
 aiprofile: skirmisher
 submission_policy: lethal
 surrender_policy: never

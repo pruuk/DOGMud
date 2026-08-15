@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -212,7 +213,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		defenderScore := float64(mob.Character.GetEffectiveDexterity()) +
 			float64(mob.Character.GetEffectivePerception())*skillWeight*0.5
 
-		res := combat.RunWithManeuverFloors(attackerScore, defenderScore)
+		res := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}})
 
 		// Fumble check: effect hits thrower instead
 		if res.AttackRoll.ZScore <= -2.0 {

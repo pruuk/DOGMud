@@ -1,6 +1,8 @@
 mobid: 229
 zone: Ironwind Steppe
-behavior_archetype: generic_fighter
+# behavior_archetype removed 2026-08-15: the per-mob tree is the complete
+# brain; the generic_fighter fallback (flee below 25% HP, idle scan) would
+# corrupt this tuned boss fight. See internal/behaviortree/context.md.
 routine: cave_pack_ironwind
 statpool: 250
 itemdropchance: 5

@@ -58,16 +58,16 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns from its prey and snarls at <ansi fg="mobname">%s</ansi>!`, targetName, mob.Character.Name))
 		}
 
-		// Stoic resolve messaging
-		if result.CritDeflected {
+		// Defy messaging.
+		if result.FullyDefied {
 			if targetPlayer != nil {
 				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">The howl washes over you harmlessly — you are unmoved.</ansi>`)
+					`<ansi fg="green">You defy the howl outright, and it washes over you harmlessly.</ansi>`)
 			}
-		} else if result.Deflected {
+		} else if result.Defied {
 			if targetPlayer != nil {
 				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You steel yourself against the howl's fury.</ansi>`)
+					`<ansi fg="green">You defy the howl's fury, and most of it loses its bite.</ansi>`)
 			}
 		}
 

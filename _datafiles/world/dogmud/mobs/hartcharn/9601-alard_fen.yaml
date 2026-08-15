@@ -66,7 +66,7 @@ character:
   level: 1
   gold: 1000
   skills:
-    alchemy: 8
+    alchemy: 1
   stats:
     perception:
       training: 15

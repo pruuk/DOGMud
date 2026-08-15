@@ -670,6 +670,16 @@ const (
 	DefenseDodge string = "dodge"
 	DefenseParry string = "parry"
 	DefenseBlock string = "block"
+
+	// U6: the two non-physical defences. Both were called "resist" in earlier
+	// drafts, which collided; quell answers a mental spell (you put the working
+	// down), defy answers a social attack (you refuse to rise to it).
+	//
+	// Both cost CONVICTION, not stamina. Charge them through the
+	// DefensePool / GetDefenseCost pair; GetDefenseStaminaCost deliberately
+	// returns 0 for them, so charging through it makes them free.
+	DefenseQuell string = "quell"
+	DefenseDefy  string = "defy"
 )
 
 // StatMod aggregates stat-mod contributions from gear, buffs,

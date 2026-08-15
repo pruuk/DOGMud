@@ -53,7 +53,7 @@ character:
     willpower:
       training: 5
   skills:
-    skullduggery: 12
+    skullduggery: 1
   items:
     - itemid: 10023
     - itemid: 40034

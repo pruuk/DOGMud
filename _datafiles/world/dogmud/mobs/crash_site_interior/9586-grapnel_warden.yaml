@@ -1,7 +1,9 @@
 mobid: 9586
 zone: Crash Site Interior
-behavior_archetype: generic_fighter
 aiprofile: brute
+# behavior_archetype removed 2026-08-15: the per-mob tree is the complete
+# brain; the generic_fighter fallback (flee below 25% HP, idle scan) would
+# corrupt this tuned grapple add. See internal/behaviortree/context.md.
 # crashsite-boss-mechanics Part B: kept on "fighting" (not switched to
 # "casting" like its sibling adds) because AttemptGrapple
 # (internal/combat/grapple.go) rolls Dexterity + combat skill, NOT

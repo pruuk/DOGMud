@@ -21,3 +21,13 @@ tree:
           do: say
           text: Crossing does not take long. Mind the rail and you
             will be fine.
+
+    # Silent player_enter no-op: claims the event so composition never
+    # falls through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: deckhand_player_enter_suppressed
+          value: "true"

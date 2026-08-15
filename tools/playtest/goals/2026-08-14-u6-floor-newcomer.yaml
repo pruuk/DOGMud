@@ -1,0 +1,84 @@
+# U6 Phase A adversarial playtest, actor 1 of 3: THE NEWCOMER.
+#
+# WHAT CHANGED AND WHY YOU ARE HERE
+#
+# Until today the game had EIGHT separate "last resort" luck knobs, one pair
+# each for melee, spells, maneuvers, and everything outside combat. They are now
+# ONE knob at 12.5%. Every opposed contest in the game is bounded to
+# [12.5%, 87.5%]: hopelessly outmatched you still succeed about one attempt in
+# eight, and hopelessly overmatching you are still stopped about one in eight.
+#
+# Out-of-combat contests moved from 5% to 12.5%, so YOUR side of it got more
+# than twice as generous. Melee is unchanged for now.
+#
+# YOUR JOB IS COVERAGE, NOT STATISTICS. Roughly thirty call sites were rewired
+# to a new shared function. A short session cannot measure a 12.5% rate, and you
+# should not try. What you CAN do is exercise every rewired surface and prove
+# none of them broke, then say how the new floor FEELS.
+#
+# You are deliberately the weakest of the three testers: this profile has no
+# skills at all. Almost everything you attempt is a hopeless attempt, which is
+# exactly the side of the bound under test.
+#
+# THINGS LEARNED THE HARD WAY, DO NOT REDISCOVER THEM
+#
+#   * RATE LIMIT: the AI port accepts 3 commands per round and drops the rest
+#     with a visible "Command dropped -- AI rate limit". That is a real limit
+#     and is expected. It is NOT the input-concatenation bug fixed 2026-08-14.
+#     If you ever see several commands run together as one nonsense command,
+#     that bug has regressed: report it immediately and loudly.
+#   * `steal` and `plant` need a target. `sneak` and `hide` do not.
+#   * `consider <target>` before you commit to anything, so you know whether an
+#     attempt was hopeless or even.
+#   * Failure outside combat is supposed to punish you: a caught thief, a
+#     sprung trap, a revealed sneak. Getting caught is DATA, not a bug.
+#
+ephemeral:
+  profile: fresh
+  # NOT 5200, the fresh profile's own roomid. 5200 is The Awakening Pool, which
+  # sits behind the Awakening Rite gate: until the rite is done every movement
+  # is refused with "The pool's stillness holds you where you stand". A run
+  # started there cannot walk, and the symptom is silent. 462 is Thornwall City,
+  # past the gate, and has people worth stealing from.
+  start_room: 462
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Steal, repeatedly, from people far above you. You have no skullduggery at
+    all, so every attempt should be close to hopeless. Try at least fifteen
+    times across several targets. Report how many succeeded. The point is NOT
+    the exact rate: the point is whether a total novice succeeding at all reads
+    as a lucky break or as the game being broken. Say which, in those words.
+    Report the exact wording on both success and failure, and whether a
+    fluke success is narrated any differently from an earned one.
+  - >-
+    Sneak and hide. Enter and leave rooms with people in them while sneaking.
+    Try to hide while observed. Then walk into rooms repeatedly to see whether
+    you ever spot a hidden creature. All three of these are contests that were
+    rewired today. Confirm each still works at all, and report anything that
+    errors, says nothing, or contradicts its own help text.
+  - >-
+    Plant an item on someone, and find and defuse a trap if you can locate one.
+    Both were rewired. If you cannot find a trap anywhere, say so plainly
+    rather than inventing a result. Report the exact command you used and what
+    came back.
+  - >-
+    Pick a fight you cannot win and try to run. Flee repeatedly from something
+    far stronger. Fleeing is a contest against each blocker separately, so
+    against several enemies it should be markedly harder than against one.
+    Test both. Report whether escaping a single enemy feels possible and
+    whether escaping a group feels hopeless, and whether the messages tell you
+    which situation you are in.
+  - >-
+    Melee a much stronger enemy for several rounds. Melee did NOT change today.
+    If your hit rate against something far above you feels different from what
+    the rest of the session leads you to expect, that is worth reporting, but
+    do not assume it changed.
+  - >-
+    General adversarial pass. Anything that reads wrong, renders oddly,
+    contradicts its help text, or produces a Go error string in player output
+    is a finding. Two known-open items you do NOT need to report: `help prompt`
+    documents conviction as {mp} and omits {st}/{ST}, and attacking an absent
+    target answers "You attack the darkness!".

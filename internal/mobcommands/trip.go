@@ -91,6 +91,30 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					targetPlayerId)
 			}
 		}
+	} else if result.Damage > 0 {
+		if hasTail {
+			if targetChar != nil {
+				if canSee {
+					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swings their tail and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				} else {
+					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps at you and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				}
+			}
+			room.SendTextVisual(messaging.CategoryTrip,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
+				targetPlayerId)
+		} else {
+			if targetChar != nil {
+				if canSee {
+					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				} else {
+					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				}
+			}
+			room.SendTextVisual(messaging.CategoryTrip,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
+				targetPlayerId)
+		}
 	} else {
 		if hasTail {
 			if targetChar != nil {

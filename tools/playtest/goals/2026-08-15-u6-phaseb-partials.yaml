@@ -1,0 +1,90 @@
+# U6 Phase B adversarial playtest: PARTIAL DEFLECTION AND THE TWO NEW DEFENCES.
+#
+# WHAT CHANGED AND WHY YOU ARE HERE
+#
+# Until today a successful dodge, parry or block erased the swing completely.
+# Now a defensive win DEFLECTS: the blow still lands, mitigated somewhere
+# between half and all of its force depending on how decisively the defence
+# won. Only a defensive CRIT fully negates. This applies to melee swings,
+# spells, taunts, and maneuvers (bash/trip/kick and the beast moves): a
+# defended trip deals partial damage but never the knockdown.
+#
+# Two defences are newly player-visible: QUELL (Willpower + Spellcasting,
+# answers spells that attack the mind, costs conviction) and DEFY (Willpower +
+# Rhetoric, answers taunts, costs conviction). Spells that hurl something
+# physical are now answered by dodge and block instead.
+#
+# Roughly forty narration sites were rewritten so that a defended attack that
+# still hurts SAYS SO instead of narrating a clean miss while health drops
+# silently. YOUR JOB is to read every combat line like a suspicious human and
+# catch the places where the words and the numbers disagree.
+#
+# THINGS LEARNED THE HARD WAY, DO NOT REDISCOVER THEM
+#
+#   * RATE LIMIT: the AI port accepts 3 commands per round and drops the rest
+#     with a visible "Command dropped -- AI rate limit". Expected.
+#   * `bash`, `kick`, `trip` and `taunt` all need an explicit target.
+#   * `consider <target>` before committing, so you know whether a fight is
+#     hopeless, even, or a walkover. NEAR-EVEN fights are where deflections
+#     happen constantly; walkovers barely show them. Prefer even fights.
+#   * The Thornwall Highwayman is a BAD sparring partner: it hides, steals,
+#     and flees. Find something that stands and fights.
+#   * Damage is described in words (light wounds, serious wounds), never
+#     numbers. That is correct and not a finding.
+#
+ephemeral:
+  profile: mid
+  start_room: 462
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    THE CORE CHECK, run it constantly while doing everything else: whenever a
+    line says your attack was dodged, parried, blocked, or that you avoided an
+    enemy's attack, check whether health moved anyway. The new rule is that a
+    deflected blow may still land partial damage AND THE TEXT MUST SAY SO
+    (e.g. "turned aside, but still lands" with a damage description). A line
+    that reads as a clean miss while health drops is a bug: quote it verbatim
+    with the health change. A line that narrates BOTH a dodge and a full hit
+    for the same swing is the old double-narration bug: quote that too.
+  - >-
+    Melee both directions in a NEAR-EVEN fight. Pick an opponent `consider`
+    calls roughly even and slug it out for many rounds. Report how the mix of
+    clean hits, glancing blows and clean stops reads: does a blocked blow that
+    still hurts look intentional or broken? Does the damage wording scale
+    sensibly between a graze and a clean hit?
+  - >-
+    Maneuvers: bash, trip and kick, several times each, against an even and a
+    stronger opponent. A DEFENDED maneuver may now deal damage without the
+    knockdown, and its message must make that clear ("fails to take them
+    down, but still catches them"). Report any maneuver that knocks a target
+    down while claiming it failed, deals damage while narrating a clean miss,
+    or narrates damage while health does not move.
+  - >-
+    Taunt and DEFY. Taunt enemies repeatedly and get taunted if you can find
+    a mob that taunts back. Report what a resisted taunt looks like from both
+    sides, whether defy is ever named or visible, and whether your conviction
+    pool drains from defending. Then read `help defy` and say whether it
+    matches what you experienced.
+  - >-
+    Spells and QUELL. Find something that casts at you and let it. Report what
+    a resisted hostile spell looks like: is quell (or your defence) ever
+    named, does partial spell damage read sensibly, does your conviction drain
+    when defending mental spells and your stamina when dodging physical ones?
+    Then read `help quell` and compare it with what actually happened.
+  - >-
+    Help topics: read `help quell`, `help defy`, `help defense` and
+    `help combat` end to end. Report anything that contradicts what you
+    observed in actual fights, any line that renders wider than your screen,
+    and whether a newcomer could learn from them what a glancing blow is.
+    Also confirm `help spell-defense` and `help taunt defense` reach the
+    quell and defy files (they are registered aliases).
+  - >-
+    Sleep-crit sanity: if you can safely reach a sleeping target, the entire
+    first round of attacks against a sleeper must still auto-crit. One check
+    is enough; report the exact lines.
+  - >-
+    General adversarial pass. Anything that reads wrong, renders oddly,
+    contradicts its help text, or produces a Go error string in player output
+    is a finding. Report every finding bluntly and verbatim; do not soften.

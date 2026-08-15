@@ -82,3 +82,13 @@ tree:
         - type: action
           do: say
           text: Not without the key. The woken disc, or nothing. Bring it, and we will talk of how deep.
+
+    # Silent player_enter no-op: claims the event so composition never
+    # falls through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: threshold_keeper_player_enter_suppressed
+          value: "true"

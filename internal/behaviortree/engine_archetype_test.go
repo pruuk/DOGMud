@@ -72,9 +72,13 @@ func TestGetArchetypePath(t *testing.T) {
 	}
 }
 
-func TestTryMobBehavior_PerMobWinsOverArchetype(t *testing.T) {
+func TestTryMobBehavior_PerMobSuccessWinsOverArchetype(t *testing.T) {
 	// Install both a per-mob tree and an archetype with the same name.
-	// Verify the per-mob tree runs.
+	// Both caches must hold their entries independently. Composition
+	// semantics (2026-08-15): the per-mob tree is evaluated first and a
+	// SUCCESS (or Running) result owns the event; on Failure the
+	// archetype fires. End-to-end coverage lives in
+	// permob_archetype_composition_test.go.
 	e := GetEngine()
 	mobId := 987654
 	archetypeName := "test_arch_perMob"

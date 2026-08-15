@@ -55,7 +55,7 @@ character:
   level: 1
   gold: 1000
   skills:
-    jewelcrafting: 10
+    jewelcrafting: 1
   stats:
     dexterity:
       training: 15

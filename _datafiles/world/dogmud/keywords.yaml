@@ -75,6 +75,7 @@ help:
       - consider
       - cooldowns
       - defense
+      - defy
       - drain
       - flee
       - gore
@@ -84,6 +85,7 @@ help:
       - pvp
       - maul
       - pounce
+      - quell
       - rake
       - rally
       - reload
@@ -229,6 +231,8 @@ help-aliases:
   combat:           [fighting, battle, dual-wield, dual wield]
   cooldowns:        [cooldown]
   defense:          [dodge, parry, block, defenses]
+  quell:            [spell-defense, spell defense, magic defense]
+  defy:             [social-defense, taunt defense, resist taunt]
   prone:            [knockdown, knocked-down, knocked down]
   trip:             [tailsweep]
   companion:        [companions]

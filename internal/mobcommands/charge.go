@@ -67,6 +67,17 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, but they keep their footing!`, mobName, targetName),
 				targetPlayerId)
 		}
+	} else if result.Damage > 0 {
+		if targetChar != nil {
+			if canSee {
+				targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+			} else {
+				targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+			}
+		}
+		room.SendTextVisual(messaging.CategoryTrip,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, who mostly dodges but still gets clipped!`, mobName, targetName),
+			targetPlayerId)
 	} else {
 		if targetChar != nil {
 			if canSee {

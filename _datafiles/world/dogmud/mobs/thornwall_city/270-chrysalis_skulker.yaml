@@ -51,9 +51,9 @@ character:
     strength:
       training: 15
   skills:
-    skullduggery: 12
-    weapon-combat: 8
-    unarmed-combat: 6
+    skullduggery: 1
+    weapon-combat: 1
+    unarmed-combat: 1
   items:
     - itemid: 10023
       dropchance: 10

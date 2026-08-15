@@ -2,6 +2,7 @@ package actions
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -100,7 +101,7 @@ func Sneak(actor Actor) SneakResult {
 		sneakScore := CalcSneakScoreVsObserver(char, observer.Character, room)
 		observerScore := CalcSearchScore(observer.Character)
 		rollHappened = true
-		success := combat.RunWithGlobalFloors(sneakScore, observerScore).Success
+		success := combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success
 		if !success {
 			// Notify the observing player.
 			observer.SendText(messaging.CategorySystem,
@@ -125,7 +126,7 @@ func Sneak(actor Actor) SneakResult {
 		sneakScore := CalcSneakScoreVsObserver(char, &m.Character, room)
 		observerScore := CalcSearchScore(&m.Character)
 		rollHappened = true
-		success := combat.RunWithGlobalFloors(sneakScore, observerScore).Success
+		success := combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success
 		if !success {
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,

@@ -52,3 +52,7 @@ character:
       training: -15
     vitality:
       training: -5
+  spellbook:
+    chrysalis-cocoon: 50
+    conviction-spike: 50
+    conviction-barrage: 50

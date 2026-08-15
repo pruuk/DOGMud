@@ -3,19 +3,32 @@
 DOGMud uses a best-of-all defense system. When attacked, all
 your available defenses are rolled simultaneously and the best
 result wins. Each defense type uses different skills, costs
-different stamina, and has different requirements.
+different resources, and has different requirements.
 
 <ansi fg="yellow">━━━ Defense Order ━━━</ansi>
 
 When attacked, all available defenses are rolled and the best
-result wins. Each defense uses different skills and stamina:
+result wins. Each defense uses different skills and resources:
 
-  <ansi fg="stat">Dodge</ansi>  — low stamina cost, always available
-  <ansi fg="stat">Parry</ansi>  — moderate stamina cost, requires a weapon
-  <ansi fg="stat">Block</ansi>  — highest stamina cost, requires a shield
+  <ansi fg="stat">Dodge</ansi>  low stamina cost, always available
+  <ansi fg="stat">Parry</ansi>  moderate stamina cost, requires a weapon
+  <ansi fg="stat">Block</ansi>  highest stamina cost, requires a shield
+  <ansi fg="stat">Quell</ansi>  costs conviction, answers spells that attack the mind
+  <ansi fg="stat">Defy</ansi>   costs conviction, answers taunts
 
-Each defense costs stamina even if it fails. Run out of stamina and your defenses
-collapse! This makes combat a war of attrition in long fights.
+<ansi fg="yellow">━━━ Degrees of Success ━━━</ansi>
+
+A defence is not all or nothing. Turn a blow aside decisively and it does
+nothing at all. Only just manage it and the blow still lands, robbed of most
+of its force. The better your defence reads the attack, the less of it reaches
+you.
+
+An exceptional defence does more than stop the blow. See Defense Crits under
+<ansi fg="command">help combat</ansi>.
+
+Dodge, parry and block cost stamina even when they fail. Quell and defy cost
+conviction instead. Run either pool dry and the defences it pays for collapse,
+which is what makes a long fight a war of attrition.
 
 <ansi fg="yellow">━━━ Dodge Defense ━━━</ansi>
 
@@ -31,7 +44,7 @@ Your first line of defense, available to everyone.
   - Being prone (severely reduced)
 
 Dodge is your bread-and-butter defense. Even heavily armored fighters rely on dodge
-as their first chance to avoid damage.
+as their first chance to take the force out of a blow.
 
 <ansi fg="yellow">━━━ Parry Defense ━━━</ansi>
 
@@ -73,9 +86,9 @@ protection when your other defenses fail.
 <ansi fg="yellow">━━━ Defense Strategy ━━━</ansi>
 
   <ansi fg="stat">Stamina Management:</ansi>
-  Long fights drain stamina quickly. Each defense attempt costs
-  stamina, so manage your pool carefully. Low stamina imposes
-  severe combat penalties.
+  Long fights drain stamina quickly. Each dodge, parry, or block
+  attempt costs stamina, so manage your pool carefully. Low stamina
+  imposes severe combat penalties.
 
   <ansi fg="stat">Equipment Choices:</ansi>
   - Dual wield: More attacks, only dodge and parry

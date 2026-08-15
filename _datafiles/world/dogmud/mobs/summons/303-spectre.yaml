@@ -39,7 +39,7 @@ character:
     heal: 3
     conviction-barrage: 3
   skills:
-    spellcasting: 10
+    spellcasting: 1
   stats:
     charisma:
       training: 15

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -145,7 +146,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 		float64(kitBonus)
 	trapDifficulty := float64(tgt.lockDifficulty) * 10.0
 
-	success := combat.RunWithGlobalFloors(defuseScore, trapDifficulty).Success
+	success := combat.RunContest(defuseScore, []contest.Entry{{Score: trapDifficulty}}).Success
 
 	displayName := trapTargetDisplayName(tgt)
 

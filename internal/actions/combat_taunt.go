@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -52,11 +53,15 @@ type TauntResult struct {
 	// SelfDamage is the self-conviction damage taken on a fumble.
 	SelfDamage int
 
-	// Deflected reports whether the target partially resisted the conviction damage.
-	Deflected bool
+	// Defied reports that the target's defy PARTIALLY blunted the conviction
+	// damage. The taunt still landed and still dealt damage, for less. U6 Task 12
+	// renamed this from Deflected: "deflected" belonged to the deleted flat
+	// avoidance pair and read as a clean miss, which a partial outcome is not.
+	Defied bool
 
-	// CritDeflected reports whether the target fully negated the conviction damage.
-	CritDeflected bool
+	// FullyDefied reports that the target's defy CRITICALLY won and negated the
+	// conviction damage entirely. Renamed from CritDeflected.
+	FullyDefied bool
 
 	// AggroPulled is true when the taunt forced the target to switch aggro
 	// to the taunter (target was fighting someone else).
@@ -125,7 +130,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	attackScore *= convMult
 
 	// Opposed roll for hit/miss/fumble/crit classification.
-	res := combat.RunWithManeuverFloors(attackScore, defenseScore)
+	res := combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User
@@ -181,8 +186,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		//
 		// SIGN: contest.Result.Margin is ATTACK-positive and this is the ATTACKER's
 		// crit check, so it is passed unnegated. The defensive mirror
-		// (TryStoicResolve) negates. Note this reads Result.Margin and NOT
-		// AttackRoll.Margin: the core rolls via dice.Roll, which never populates a
+		// (combat.ResolveChannelDefence) negates. Note this reads Result.Margin and
+		// NOT AttackRoll.Margin: the core rolls via dice.Roll, which never populates a
 		// roll's Margin field, so the latter would silently be zero and no taunt
 		// would ever crit.
 		isCrit := combat.AttackContestCrit(res.Margin, res.AttackRoll)
@@ -198,22 +203,23 @@ func ExecuteTaunt(actor Actor) TauntResult {
 			combat.MitigationCap(combat.ChannelConviction),
 		)
 
-		// Stoic Resolve: defender attempts to partially resist
-		deflected := false
-		critDeflect := false
+		// U6 Task 12: the target mounts defy, on the shared resolver. This used to
+		// be TryStoicResolve, a SECOND independent contest run on top of the
+		// primary taunt roll above, returning a flat configured multiplier.
+		// ResolveChannelDefence charges and progresses the defence itself, so the
+		// defenderUserId this call site used to thread through is now read off the
+		// defender.
+		defied := false
+		fullyDefied := false
 		if !isCrit {
-			defenderUserId := 0
-			if target.UserId > 0 {
-				defenderUserId = target.UserId
-			}
-			resolveMult := combat.TryStoicResolve(char, target.Char, defenderUserId)
-			if resolveMult < 1.0 {
-				deflected = true
-				if resolveMult == 0.0 {
-					critDeflect = true
+			mult := combat.ResolveChannelDefence(combat.ChannelSocial, char, target.Char)
+			if mult < 1.0 {
+				defied = true
+				if mult == 0.0 {
+					fullyDefied = true
 				}
-				dmg = int(math.Round(float64(dmg) * resolveMult))
-				if dmg < 1 && resolveMult > 0 {
+				dmg = int(math.Round(float64(dmg) * mult))
+				if dmg < 1 && mult > 0 {
 					dmg = 1
 				}
 			}
@@ -277,15 +283,15 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 
 		return TauntResult{
-			Target:        target,
-			Executed:      true,
-			Hit:           true,
-			Crit:          isCrit,
-			Damage:        dmg,
-			DmgDesc:       dmgDesc,
-			Deflected:     deflected,
-			CritDeflected: critDeflect,
-			AggroPulled:   agroPulled,
+			Target:      target,
+			Executed:    true,
+			Hit:         true,
+			Crit:        isCrit,
+			Damage:      dmg,
+			DmgDesc:     dmgDesc,
+			Defied:      defied,
+			FullyDefied: fullyDefied,
+			AggroPulled: agroPulled,
 		}
 	}
 

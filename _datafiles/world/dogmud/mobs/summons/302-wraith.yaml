@@ -39,7 +39,7 @@ character:
     heal: 3
     sparks: 3
   skills:
-    spellcasting: 10
+    spellcasting: 1
   stats:
     willpower:
       training: 15

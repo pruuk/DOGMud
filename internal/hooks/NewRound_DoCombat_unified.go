@@ -136,12 +136,17 @@ func handleCombatRound(
 
 	// 6e drift signals: Ironhide/Trickster/Weaver have no skill map, so they
 	// drift from combat BEHAVIOR (once per cluster per round, spam-guarded).
+	//
+	// U6 Task 14: a defended swing now has Hit == true, so these key on which
+	// defence won rather than on the absence of a hit. Ironhide requires an
+	// empty DefenseUsed — mitigation-tanking a swing the attacker won cleanly,
+	// not a deflection. Trickster keys on any dodge/parry win, crit or partial.
 	driftRound := util.GetRoundCount()
 	if defCh := def.GetCharacter(); defCh != nil {
-		if res.Hit && res.DamageToTargetReduction > 0 {
+		if res.Hit && res.DamageToTargetReduction > 0 && res.DefenseUsed == "" {
 			defCh.DriftFromCombat("ironhide", driftRound) // tanked/mitigated a blow
 		}
-		if !res.Hit && (res.DefenseUsed == combat.DefenseDodge || res.DefenseUsed == combat.DefenseParry) {
+		if res.DefenseUsed == combat.DefenseDodge || res.DefenseUsed == combat.DefenseParry {
 			defCh.DriftFromCombat("trickster", driftRound) // evaded a blow
 		}
 	}
@@ -153,20 +158,24 @@ func handleCombatRound(
 	// quadrants (player and mob attackers) — the point of hooking the unified
 	// orchestrator. Gated internally by ItemProcsEnabled + the per-proc
 	// chance/cooldown; a no-op when the attacker carries no proc weapon.
+	// Decision (U6 Task 14): res.Hit, not CleanHit, on purpose — on-hit procs
+	// read the damage actually dealt, and a deflected swing deals real damage.
 	if res.Hit {
 		dispatchItemProcs("on_hit", atk.GetCharacter(), def.GetCharacter(), atk.GetRoom(), res.DamageToTarget)
 	}
 
 	// Pinnacle item procs: defender's shield on_block. A "successful block" in
-	// this engine is a defended swing (res.Hit == false) whose widest-margin
-	// winning defense was block (res.DefenseUsed == combat.DefenseBlock). Both
-	// the normal-defense path (sendDefenseMessages) and the last-resort floor
-	// path (sendFloorDefenseMessages) set DefenseUsed on success; the attack
-	// floor-override leaves DefenseUsed empty when it forces a Hit — so gating
-	// on !Hit && block is exact. rollCombatAttack has already resolved defense
-	// into res by this point, so DefenseUsed is populated.
-	if !res.Hit && res.DefenseUsed == combat.DefenseBlock {
-		dispatchItemProcs("on_block", def.GetCharacter(), atk.GetCharacter(), atk.GetRoom(), 0)
+	// this engine is any swing whose widest-margin winning defense was block
+	// (res.DefenseUsed == combat.DefenseBlock). U6 Task 8 made
+	// sendDefenseMessages the only thing that sets DefenseUsed, and Task 10
+	// made a defended swing deal partial damage with res.Hit == true — so a
+	// partial block deflection has Hit true, a block crit has Hit false, and a
+	// clean attack win leaves DefenseUsed empty. Gating on DefenseUsed alone is
+	// therefore exact; the old `!res.Hit &&` clause had narrowed it to block
+	// CRITS only. rollCombatAttack has already resolved defense into res by
+	// this point, so DefenseUsed is populated.
+	if res.DefenseUsed == combat.DefenseBlock {
+		dispatchItemProcs("on_block", def.GetCharacter(), atk.GetCharacter(), atk.GetRoom(), onBlockProcDamage(res))
 	}
 
 	// Combat analytics (shared across all four quadrants).
@@ -472,6 +481,19 @@ func emitReturnDamageText(atk, def actions.Actor, returnDmg int) {
 	}
 }
 
+// onBlockProcDamage returns the damage an on_block proc should scale against.
+// It used to be a literal 0, reasoned from "a successful block is a defended
+// swing, so no damage was dealt". U6's defence multiplier falsifies that: a
+// blocked swing is mitigated 50-100%, not negated, so a lifesteal-on-block
+// proc would have healed ratio * 0 forever. It now returns the damage the
+// round actually dealt to the blocking defender (zero on a block crit, which
+// fully negates). In a multi-swing round DamageToTarget also includes damage
+// from clean-hit swings, not just the blocked swing's — round level is the
+// dispatch granularity here, an accepted trade-off.
+func onBlockProcDamage(res combat.AttackResult) int {
+	return res.DamageToTarget
+}
+
 // recordCombatAnalytics wraps combat.RecordAttack once for all four
 // quadrants.
 func recordCombatAnalytics(atk, def actions.Actor, res combat.AttackResult, roundNumber uint64) {
@@ -632,8 +654,12 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	emitAttackerStatGain(atk, "dexterity", atkUid)
 
 	// Attacker per-weapon skill + crit callbacks.
+	// U6 Task 14: CleanHit, not Hit — a deflected swing deals partial damage
+	// but the defence won the contest, so the attacker earns no skill
+	// progression from it (the defender's D/P/B progression below is the side
+	// that earned something).
 	for _, wh := range res.WeaponHits {
-		if wh.Hit {
+		if wh.CleanHit {
 			atkChar.OnSkillUse(wh.SkillTag, atkUid)
 			if wh.Crit {
 				atkChar.OnCriticalSuccess(wh.SkillTag, atkUid)
@@ -642,7 +668,7 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 			atkChar.OnCriticalFailure(wh.SkillTag, atkUid)
 		}
 	}
-	if len(res.WeaponHits) == 0 && res.Hit {
+	if len(res.WeaponHits) == 0 && res.CleanHit {
 		atkChar.OnSkillUse(string(skills.UnarmedCombat), atkUid)
 	}
 

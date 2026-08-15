@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/crimes"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
@@ -153,7 +154,7 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item,
 	}
 
 	defenderScore := float64(m.Character.Stats.Perception.ValueAdj)
-	success := combat.RunWithGlobalFloors(attackerScore, defenderScore).Success
+	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
 
 	room := actor.GetRoom()
 
@@ -272,7 +273,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
 	actor.OnSkillUse(string(skills.Skullduggery))
 
 	defenderScore := float64(targetUser.Character.Stats.Perception.ValueAdj)
-	success := combat.RunWithGlobalFloors(attackerScore, defenderScore).Success
+	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
 
 	if !success {
 		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
@@ -321,7 +322,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
 	if !actor.IsPlayer() {
 		searchScore := CalcSearchScore(targetUser.Character)
 		sneakScore := CalcSneakScoreVsObserver(actor.GetCharacter(), targetUser.Character, actor.GetRoom())
-		detected := combat.RunWithGlobalFloors(searchScore, sneakScore).Success
+		detected := combat.RunContest(searchScore, []contest.Entry{{Score: sneakScore}}).Success
 		if detected {
 			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> slips something into your `+
@@ -410,7 +411,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 
 	success := true
 	if hasObserver {
-		success = combat.RunWithGlobalFloors(attackerScore, highestPerception).Success
+		success = combat.RunContest(attackerScore, []contest.Entry{{Score: highestPerception}}).Success
 	}
 
 	if !success {

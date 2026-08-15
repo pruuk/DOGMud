@@ -1,7 +1,9 @@
 mobid: 9585
 zone: Crash Site Interior
-behavior_archetype: generic_fighter
 aiprofile: brute
+# behavior_archetype removed 2026-08-15: the per-mob tree is the complete
+# brain; the generic_fighter fallback (flee below 25% HP, idle scan) would
+# corrupt this tuned support add. See internal/behaviortree/context.md.
 # crashsite-boss-mechanics Part B: support/caster identity, not a melee
 # add. "fighting" put 80% of its stat pool into Str/Dex/Vit, which is
 # exactly what turned it into a melee killer once its summon base_pool

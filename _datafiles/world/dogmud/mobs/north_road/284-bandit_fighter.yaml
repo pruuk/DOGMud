@@ -56,4 +56,4 @@ character:
     dexterity:
       training: 10
   skills:
-    weapon-combat: 15
+    weapon-combat: 1

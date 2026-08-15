@@ -21,6 +21,12 @@ func seedFleeFixture(t *testing.T, fleer *characters.Character,
 	blockerMobs map[int]*mobs.Mob, blockerUsers map[int]*users.UserRecord) func() {
 	t.Helper()
 
+	// These tests stack a lopsided blocker against a weak fleer and assert the
+	// blocker wins. Since U6 the flee rolls go through combat.RunContest, whose
+	// floor is live in a test binary, so without this pin the fleer saves on
+	// about one run in eight. See pinContestFloorOff.
+	pinContestFloorOff(t)
+
 	room := &rooms.Room{
 		RoomId: 1,
 		Zone:   "TestZone",

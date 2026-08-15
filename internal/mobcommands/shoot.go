@@ -25,14 +25,21 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	hit := result.MoveResult.Hit
+	partial := !hit && result.MoveResult.Damage > 0
+	// Dealt is true on a clean hit AND on a defended shot that still drew
+	// blood. A partial draws evidence just like a hit does (the victim's own
+	// message names the shooter), so it reveals the same way. Only a true
+	// zero-damage miss leaves no trace.
+	dealt := hit || result.MoveResult.Damage > 0
 
-	// Cross-room reveal-on-hit (mirror melee's reveal-on-engage and the player
-	// shoot path): a hidden mob that LANDS a cross-room shot drops stealth.
-	// Same-room shots reveal through the combat round handler's
-	// CancelCombatBuffs once the target is aggroed; a cross-room shooter never
-	// enters that loop, so without this it would stay hidden forever. A clean
-	// cross-room miss stays hidden — the sniper gets exactly one free hit.
-	if result.CrossRoom && hit {
+	// Cross-room reveal (mirror melee's reveal-on-engage and the player shoot
+	// path): a hidden mob whose cross-room shot deals ANY damage (a clean hit
+	// or a defended partial) drops stealth. Same-room shots reveal through the
+	// combat round handler's CancelCombatBuffs once the target is aggroed; a
+	// cross-room shooter never enters that loop, so without this it would
+	// stay hidden forever. Only a zero-damage cross-room miss stays hidden —
+	// the sniper gets exactly one free clean miss, not one free hit.
+	if result.CrossRoom && dealt {
 		mob.Character.CancelCombatBuffs()
 	}
 
@@ -51,9 +58,12 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			if result.IsSneaking || !canSeeInDark(u, room) {
 				shooter = `Someone`
 			}
-			if hit {
+			switch {
+			case hit:
 				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you!`, shooter))
-			} else {
+			case partial:
+				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you!`, shooter))
+			default:
 				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
 			}
 		}
@@ -75,8 +85,13 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				if fromDir != "" {
 					origin = fmt.Sprintf(`from beyond the <ansi fg="exit">%s</ansi>`, fromDir)
 				}
-				verb := `and strikes`
-				if !hit {
+				var verb string
+				switch {
+				case hit:
+					verb = `and strikes`
+				case partial:
+					verb = `and clips`
+				default:
 					verb = `and narrowly misses`
 				}
 				tr.SendTextVisual(messaging.CategoryHitRanged,
@@ -87,8 +102,10 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	// Retaliation: the target aggros back onto the shooter (same-room only —
-	// cross-room aggro on a defender is dropped by the combat handler).
-	if !result.CrossRoom && (hit || !result.IsSneaking) {
+	// cross-room aggro on a defender is dropped by the combat handler). Any
+	// damage dealt (hit or partial) provokes retaliation the same way a clean
+	// hit does; only a zero-damage miss from stealth does not.
+	if !result.CrossRoom && (dealt || !result.IsSneaking) {
 		if result.IsTargetMob {
 			if target := mobs.GetInstance(result.TargetMobInstanceId); target != nil && target.Character.Aggro == nil {
 				target.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)

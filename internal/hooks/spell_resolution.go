@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -269,7 +270,7 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &mob.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	round := util.GetRoundCount()
@@ -393,18 +394,20 @@ func applyMobEffect_damage(
 	mName string,
 ) int {
 	dmg := calcSpellDamageForCharacter(spellData, casterChar, &mob.Character, magnitude, isCrit)
-	// Spell Deflection: defender attempts to partially deflect
-	deflected := false
-	critDeflect := false
+	// U6 Task 12: the defender mounts the channel's defence. quelled is a
+	// PARTIAL outcome (the spell still lands, for less), fullyQuelled is the
+	// defensive crit.
+	quelled := false
+	fullyQuelled := false
 	if !isCrit && casterChar != nil {
-		deflectMult := combat.TrySpellDeflection(casterChar, &mob.Character, 0)
-		if deflectMult < 1.0 {
-			deflected = true
-			if deflectMult == 0.0 {
-				critDeflect = true
+		mult := combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
+		if mult < 1.0 {
+			quelled = true
+			if mult == 0.0 {
+				fullyQuelled = true
 			}
-			dmg = int(math.Round(float64(dmg) * deflectMult))
-			if dmg < 1 && deflectMult > 0 {
+			dmg = int(math.Round(float64(dmg) * mult))
+			if dmg < 1 && mult > 0 {
 				dmg = 1
 			}
 		}
@@ -422,19 +425,19 @@ func applyMobEffect_damage(
 	}
 	setMobSpellAggro(user, mob)
 	if user != nil {
-		if critDeflect {
+		if fullyQuelled {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="yellow">%s completely unravels your %s!</ansi>`,
+				`<ansi fg="yellow">%s quells your %s outright, and nothing is left of it.</ansi>`,
 				mName, spellData.Name))
 			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`%s unravels <ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> completely!`,
+				`%s quells <ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> outright.`,
 				mName, user.Character.Name, spellData.Name), user.UserId)
-		} else if deflected {
+		} else if quelled {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="yellow">%s partially deflects your %s! (<ansi fg="damage">%s</ansi>)</ansi>`,
+				`<ansi fg="yellow">%s quells your %s, blunting it. (<ansi fg="damage">%s</ansi>)</ansi>`,
 				mName, spellData.Name, combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)))
 			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`%s partially deflects <ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi>!`,
+				`%s quells the worst of <ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi>.`,
 				mName, user.Character.Name, spellData.Name), user.UserId)
 		} else {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
@@ -496,14 +499,16 @@ func applyMobEffect_knockdown(
 	mName string,
 ) int {
 	dmg := calcSpellDamageForCharacter(spellData, casterChar, &mob.Character, magnitude, isCrit)
-	// Spell Deflection: defender attempts to partially deflect (damage only, knockdown still applies)
-	kdDeflected := false
+	// U6 Task 12: the defence scales the DAMAGE only. The knockdown is a status
+	// effect and stays binary -- there is no partially knocked down -- which is
+	// the same split Task 13 applies to maneuvers.
+	kdQuelled := false
 	if !isCrit && casterChar != nil {
-		deflectMult := combat.TrySpellDeflection(casterChar, &mob.Character, 0)
-		if deflectMult < 1.0 {
-			kdDeflected = true
-			dmg = int(math.Round(float64(dmg) * deflectMult))
-			if dmg < 1 && deflectMult > 0 {
+		mult := combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
+		if mult < 1.0 {
+			kdQuelled = true
+			dmg = int(math.Round(float64(dmg) * mult))
+			if dmg < 1 && mult > 0 {
 				dmg = 1
 			}
 		}
@@ -533,9 +538,9 @@ func applyMobEffect_knockdown(
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 				`Your %s strikes %s, but %s is already down. (<ansi fg="damage">%s</ansi>)%s`,
 				spellData.Name, mName, mName, combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value), critTag))
-		} else if kdDeflected {
+		} else if kdQuelled {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="yellow">%s partially deflects your %s, but is knocked down! (<ansi fg="damage">%s</ansi>)</ansi>`,
+				`<ansi fg="yellow">%s quells your %s, but still goes down! (<ansi fg="damage">%s</ansi>)</ansi>`,
 				mName, spellData.Name, combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)))
 		} else {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
@@ -700,7 +705,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	// Backfire on fumble
@@ -758,34 +763,35 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 	switch spellData.EffectType {
 	case "damage":
 		dmg := calcSpellDamageForCharacter(spellData, user.Character, target.Character, magnitude, isCrit)
-		deflected := false
-		critDeflect := false
+		// U6 Task 12: one contest, on the channel's own defence set.
+		quelled := false
+		fullyQuelled := false
 		if !isCrit {
-			deflectMult := combat.TrySpellDeflection(
-				user.Character, target.Character, target.UserId)
-			if deflectMult < 1.0 {
-				deflected = true
-				if deflectMult == 0.0 {
-					critDeflect = true
+			mult := combat.ResolveChannelDefence(
+				spellAttackChannel(spellData), user.Character, target.Character)
+			if mult < 1.0 {
+				quelled = true
+				if mult == 0.0 {
+					fullyQuelled = true
 				}
-				dmg = int(math.Round(float64(dmg) * deflectMult))
-				if dmg < 1 && deflectMult > 0 {
+				dmg = int(math.Round(float64(dmg) * mult))
+				if dmg < 1 && mult > 0 {
 					dmg = 1
 				}
 			}
 		}
-		if critDeflect {
+		if fullyQuelled {
 			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="green">You read <ansi fg="username">%s</ansi>'s spell perfectly `+
-					`and unravel it before it reaches you!</ansi>`,
+				`<ansi fg="green">You read <ansi fg="username">%s</ansi>'s working exactly `+
+					`and quell it before it reaches you.</ansi>`,
 				user.Character.Name))
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="yellow"><ansi fg="username">%s</ansi> completely unravels `+
-					`your spell!</ansi>`,
+				`<ansi fg="yellow"><ansi fg="username">%s</ansi> quells your working `+
+					`outright.</ansi>`,
 				target.Character.Name))
 			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi> unravels <ansi fg="username">%s</ansi>'s `+
-					`spell completely!`,
+				`<ansi fg="username">%s</ansi> quells <ansi fg="username">%s</ansi>'s `+
+					`working outright.`,
 				target.Character.Name, user.Character.Name), user.UserId, target.UserId)
 			return
 		}
@@ -795,22 +801,22 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			dispatchItemProcs("on_spell_hit", user.Character, target.Character, nil, dmg)
 		}
 		dmgDesc := combat.GetDamageDescription(dmg, target.Character.HealthMax.Value)
-		if deflected {
+		if quelled {
 			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="green">You partially deflect `+
+				`<ansi fg="green">You quell `+
 					`<ansi fg="username">%s</ansi>'s `+
-					`%s! `+
+					`%s, blunting it. `+
 					`(<ansi fg="damage">%s</ansi>)</ansi>`,
 				user.Character.Name, spellData.Name, dmgDesc))
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="yellow"><ansi fg="username">%s</ansi> partially deflects `+
-					`your %s! `+
+				`<ansi fg="yellow"><ansi fg="username">%s</ansi> quells `+
+					`your %s, blunting it. `+
 					`(<ansi fg="damage">%s</ansi>)</ansi>`,
 				target.Character.Name, spellData.Name, dmgDesc))
 			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi> partially deflects `+
+				`<ansi fg="username">%s</ansi> quells the worst of `+
 					`<ansi fg="username">%s</ansi>'s `+
-					`<ansi fg="cyan">%s</ansi>!`,
+					`<ansi fg="cyan">%s</ansi>.`,
 				target.Character.Name, user.Character.Name, spellData.Name),
 				user.UserId, target.UserId)
 		} else {
@@ -1005,6 +1011,26 @@ func spellDefenseValue(defenseType string, target *characters.Character) float64
 	}
 }
 
+// spellAttackChannel maps a spell's target_defense_type onto the U6 attack
+// channel whose defence set answers it.
+//
+// It keys on the SAME field spellDefenseValue above keys on, deliberately: a
+// spell the primary roll contests against dexterity is one the damage contest
+// answers with dodge and block, and a spell contested against willpower is one
+// quell answers. Splitting the two on different fields would let a spell be
+// aimed at one defence and stopped by another.
+//
+// Everything that is not explicitly "physical" -- including "mental", "none" and
+// the empty default -- answers as mental. That is the conservative direction:
+// quell is a single-defence set, so an unclassified spell faces one defence
+// rather than two.
+func spellAttackChannel(spellData *spells.SpellData) combat.AttackChannel {
+	if spellData != nil && spellData.TargetDefenseType == "physical" {
+		return combat.ChannelSpellPhysical
+	}
+	return combat.ChannelSpellMental
+}
+
 // calcSpellDamage and calcMobSpellDamage have been unified into
 // calcSpellDamageForCharacter() in combat_shared_helpers.go (Stage 38.1).
 
@@ -1171,19 +1197,31 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	chargeState.Set("core_charge", chargeState.GetInt("core_charge")+1)
 
 	for _, pr := range result.PlayerResults {
-		if !pr.MoveResult.Hit {
+		if !pr.MoveResult.Hit && pr.MoveResult.Damage == 0 {
+			// Defended with zero damage (a defensive crit): matches this
+			// path's existing silent-miss behavior.
 			continue
 		}
 		target := users.GetByUserId(pr.UserId)
 		if target == nil {
 			continue
 		}
-		target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> saps your strength! (<ansi fg="damage">%s</ansi>)`,
-			mob.Character.Name, spellData.Name,
-			combat.GetDamageDescription(pr.MoveResult.Damage, target.Character.HealthMax.Value)))
-		if !target.Character.IsInCombat() {
-			target.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+		if pr.MoveResult.Hit {
+			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> saps your strength! (<ansi fg="damage">%s</ansi>)`,
+				mob.Character.Name, spellData.Name,
+				combat.GetDamageDescription(pr.MoveResult.Damage, target.Character.HealthMax.Value)))
+			if !target.Character.IsInCombat() {
+				target.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+			}
+		} else {
+			// Defended, but the drain still landed a partial pull. Since
+			// Task 13 a defended maneuver can deal partial damage; say so
+			// instead of letting the player's HP drop with no message at all.
+			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> fails to take full hold of you, but still saps a little of your strength! (<ansi fg="damage">%s</ansi>)`,
+				mob.Character.Name, spellData.Name,
+				combat.GetDamageDescription(pr.MoveResult.Damage, target.Character.HealthMax.Value)))
 		}
 	}
 
@@ -1263,7 +1301,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &target.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
@@ -1283,7 +1321,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, spellAttack float64, magnitude int) {
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	round := util.GetRoundCount()
 	if atkRoll.ZScore <= -2.0 {
@@ -1313,31 +1351,32 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 	switch spellData.EffectType {
 	case "damage":
 		dmg := calcSpellDamageForCharacter(spellData, &caster.Character, target.Character, magnitude, isCrit)
-		deflected := false
-		critDeflect := false
+		// U6 Task 12: one contest, on the channel's own defence set.
+		quelled := false
+		fullyQuelled := false
 		if !isCrit {
-			deflectMult := combat.TrySpellDeflection(
-				&caster.Character, target.Character, target.UserId)
-			if deflectMult < 1.0 {
-				deflected = true
-				if deflectMult == 0.0 {
-					critDeflect = true
+			mult := combat.ResolveChannelDefence(
+				spellAttackChannel(spellData), &caster.Character, target.Character)
+			if mult < 1.0 {
+				quelled = true
+				if mult == 0.0 {
+					fullyQuelled = true
 				}
-				dmg = int(math.Round(float64(dmg) * deflectMult))
-				if dmg < 1 && deflectMult > 0 {
+				dmg = int(math.Round(float64(dmg) * mult))
+				if dmg < 1 && mult > 0 {
 					dmg = 1
 				}
 			}
 		}
-		if critDeflect {
+		if fullyQuelled {
 			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 				`<ansi fg="green">You read `+
-					`<ansi fg="mobname">%s</ansi>'s spell perfectly `+
-					`and unravel it before it reaches you!</ansi>`,
+					`<ansi fg="mobname">%s</ansi>'s working exactly `+
+					`and quell it before it reaches you.</ansi>`,
 				caster.Character.Name))
 			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi> unravels `+
-					`<ansi fg="mobname">%s</ansi>'s spell completely!`,
+				`<ansi fg="username">%s</ansi> quells `+
+					`<ansi fg="mobname">%s</ansi>'s working outright.`,
 				target.Character.Name, caster.Character.Name), target.UserId)
 			break
 		}
@@ -1347,18 +1386,18 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		if dmg > 0 {
 			dispatchItemProcs("on_spell_hit", &caster.Character, target.Character, nil, dmg)
 		}
-		if deflected {
+		if quelled {
 			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="green">You partially deflect `+
+				`<ansi fg="green">You quell `+
 					`<ansi fg="mobname">%s</ansi>'s `+
-					`<ansi fg="cyan">%s</ansi>! `+
+					`<ansi fg="cyan">%s</ansi>, blunting it. `+
 					`(<ansi fg="damage">%s</ansi>)</ansi>`,
 				caster.Character.Name, spellData.Name,
 				combat.GetDamageDescription(dmg, target.Character.HealthMax.Value)))
 			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi> partially deflects `+
+				`<ansi fg="username">%s</ansi> quells the worst of `+
 					`<ansi fg="mobname">%s</ansi>'s `+
-					`<ansi fg="cyan">%s</ansi>!`,
+					`<ansi fg="cyan">%s</ansi>.`,
 				target.Character.Name, caster.Character.Name, spellData.Name),
 				target.UserId)
 		} else {
@@ -1396,12 +1435,14 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		}
 	case "knockdown":
 		dmg := calcSpellDamageForCharacter(spellData, &caster.Character, target.Character, magnitude, isCrit)
+		// U6 Task 12: damage only. The knockdown is a status effect and stays
+		// binary, matching the player-cast knockdown branch above.
 		if !isCrit {
-			deflectMult := combat.TrySpellDeflection(
-				&caster.Character, target.Character, target.UserId)
-			if deflectMult < 1.0 {
-				dmg = int(math.Round(float64(dmg) * deflectMult))
-				if dmg < 1 && deflectMult > 0 {
+			mult := combat.ResolveChannelDefence(
+				spellAttackChannel(spellData), &caster.Character, target.Character)
+			if mult < 1.0 {
+				dmg = int(math.Round(float64(dmg) * mult))
+				if dmg < 1 && mult > 0 {
 					dmg = 1
 				}
 			}

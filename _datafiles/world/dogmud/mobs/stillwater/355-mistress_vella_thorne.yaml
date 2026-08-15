@@ -48,8 +48,8 @@ character:
   speciesid: 1
   gold: 60
   skills:
-    alchemy: 18
-    spellcasting: 8
+    alchemy: 1
+    spellcasting: 1
   spellbook:
     mend-wounds: 8
     heal: 4

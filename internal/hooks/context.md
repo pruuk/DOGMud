@@ -1030,16 +1030,18 @@ For each pair inside `processGrapplePair`:
    controller's margin.
 
    The roll itself is not made here. Since U3 this package makes no
-   contest of its own: it calls `combat.RunWithManeuverFloors` (grapple
-   drift, charm reroll, riposte-trip and auto-bash via
-   `combat.ExecuteSkillMove`) or `combat.RunWithSpellFloors` (the spell
-   sites), and it does not import `internal/contest` at all. The private
+   contest of its own: it calls `combat.RunContest` for the grapple
+   drift, the charm reroll, the charm spell, the spell sites, and
+   riposte-trip and auto-bash via `combat.ExecuteSkillMove`. It imports
+   `internal/contest` for the `Entry` type only and must never call that
+   package's `Run`, `AgainstDifficulty` or `RunWithFloors`. The private
    floor accessors this package used to keep, `maneuverHitFloor` /
    `maneuverResistFloor` / `spellHitFloor` / `spellResistFloor`, were
    deleted in U3 because they were a second copy of the same config keys
-   and were invisible to a grep for `combat.ManeuverFloors`. Do not
-   reintroduce them; the pair belongs in
-   `internal/combat/contest_floors.go`.
+   and were invisible to a grep for the exported accessors. Do not
+   reintroduce them; U6 reduced all eight of those knobs to a single
+   `Balance.ContestFloor`, read only in
+   `internal/combat/run_contest.go`.
 
    The signed z here is `res.Margin / res.AttackRoll.StdDev`, which is
    missing the `sqrt(2)` that `combat.ContestCrit` applies. That is

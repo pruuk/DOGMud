@@ -55,5 +55,5 @@ character:
     strength:
       training: 5
   skills:
-    skullduggery: 10
-    weapon-combat: 8
+    skullduggery: 1
+    weapon-combat: 1

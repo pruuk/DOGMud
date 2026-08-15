@@ -72,5 +72,5 @@ character:
       action: cast fold-recall
       priority: 13
   skills:
-    weapon-combat: 25
-    block: 15
+    weapon-combat: 1
+    block: 1

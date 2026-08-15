@@ -113,11 +113,10 @@ func ExecuteBash(actor Actor) BashResult {
 		targetType = combat.Mob
 	}
 
-	// Record analytics and consume the combat round.
-	dmgRecorded := 0
-	if result.Hit {
-		dmgRecorded = result.Damage
-	}
+	// Record analytics and consume the combat round. result.Damage is always
+	// the amount actually applied (hit, partial-on-defended, or 0 on a
+	// defensive crit), so it is truthful whether or not the move landed.
+	dmgRecorded := result.Damage
 	RecordAndWait(char, "bash", sourceType, target.Char, targetType, result.Hit, dmgRecorded, util.GetRoundCount())
 
 	// Progression: weapon-combat on hit (moved from user/mob wrappers)

@@ -7,13 +7,16 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 )
 
-// Chunk 5.11e — crit floors, 1% of HITS, both directions.
+// Chunk 5.11e — crit floors, 1% of CONTEST WINS, both directions.
 //
-// Deliberately 1% of hits and NOT 1% of swings. A badly outclassed attacker
-// hits about 15% of the time, so 1% of swings would demand roughly 6.7% of
-// their hits be crits — a higher per-hit rate than an even match gets at 2.3%,
-// which is incoherent. 1% of hits composes with the 5.9 hit floor as two
+// Deliberately 1% of wins and NOT 1% of swings. A badly outclassed attacker
+// wins about 15% of contests, so 1% of swings would demand roughly 6.7% of
+// their wins be crits — a higher per-win rate than an even match gets at 2.3%,
+// which is incoherent. 1% of wins composes with the contest floor as two
 // independent last resorts, each sized to the failure it protects.
+//
+// U6 Task 9 moved that denominator off res.hit and onto the contest winner. The
+// two agreed until Task 10 made a defensive win deal partial damage.
 
 func TestApplyCritFloor_AlreadyCritIsUntouched(t *testing.T) {
 	// The floor only ever promotes. It must never demote a real crit, even
@@ -69,24 +72,57 @@ func TestApplyCritFloor_RateMatchesTheFloor(t *testing.T) {
 
 // dodgeBest is a minimal bestDefenseResult naming a real defence type, which is
 // what the defensive floor keys on.
+//
+// U6 Task 9: the floors now key on WHO WON THE CONTEST, so the margin is no
+// longer incidental to these fixtures. bestDefenseResult.margin is
+// DEFENCE-POSITIVE, so a NEGATIVE margin is an attack win and a POSITIVE one is
+// a defence win. dodgeBest() defaults to an attack win; use dodgeBestWon() to
+// name the winner explicitly.
 func dodgeBest() bestDefenseResult {
-	return bestDefenseResult{defenseType: characters.DefenseDodge}
+	return dodgeBestWon(attackWinMargin)
 }
 
-// TestApplyCritFloors_NeverPromotesAMiss is the whole reason the floor runs
-// last.
-//
-// An attack crit FORCES a hit in resolveDefenseOutcome (step 2 returns
-// res.hit = true). A crit floor evaluated before the hit outcome was final
-// would therefore become a second, undeclared hit floor stacked on
-// MinAttackHitChance, letting hopeless attackers connect more often than 5.9
-// intends. Its observable form is a crit on a swing that missed.
-func TestApplyCritFloors_NeverPromotesAMiss(t *testing.T) {
-	res := hitResolution{hit: false}
-	applyCritFloors(&res, &AttackResult{}, dodgeBest(), 1.0, 0.0)
+// Sign-named margin constants, because a bare -5.0 in a fixture reads as "some
+// number" and the sign is the entire point.
+const (
+	attackWinMargin  = -5.0 // defence-positive convention: negative = attack won
+	defenceWinMargin = 5.0  // positive = the defence won
+)
 
+func dodgeBestWon(margin float64) bestDefenseResult {
+	return bestDefenseResult{defenseType: characters.DefenseDodge, margin: margin}
+}
+
+// TestApplyCritFloors_NeverPromotesAContestLoss is the whole reason the floor
+// runs last.
+//
+// An attack crit FORCES a hit in resolveDefenseOutcome (the crit step returns
+// res.hit = true). A crit floor evaluated before the outcome was final would
+// therefore become a second, undeclared hit floor stacked on ContestFloor,
+// letting hopeless attackers connect more often than the floor intends. Its
+// observable form is an attack crit on a swing the attacker did not win.
+//
+// U6 Task 9 restated this from "a swing that MISSED" to "a swing the attacker
+// did not WIN", and it is not a rename: Task 10 makes a defensive win deal
+// partial damage, so the miss framing stops describing the same set of swings.
+// The fixture below is the strict form — the defence won AND the swing still
+// landed damage — which the old res.hit split would have handed to the
+// attacker's floor.
+func TestApplyCritFloors_NeverPromotesAContestLoss(t *testing.T) {
+	for i := 0; i < 200; i++ {
+		res := hitResolution{hit: true}
+		applyCritFloors(&res, &AttackResult{}, dodgeBestWon(defenceWinMargin), 1.0, 0.0)
+
+		if res.crit {
+			t.Fatal("a swing the attacker did not win must never be promoted to an attack crit")
+		}
+	}
+
+	// And the zero-damage form, which is what this test asserted before Task 9.
+	res := hitResolution{hit: false}
+	applyCritFloors(&res, &AttackResult{}, dodgeBestWon(defenceWinMargin), 1.0, 0.0)
 	if res.crit {
-		t.Error("a missed swing must never be promoted to a crit")
+		t.Error("a defended swing must never be promoted to an attack crit")
 	}
 	if res.hit {
 		t.Error("the crit floor must never flip a miss into a hit")
@@ -94,6 +130,8 @@ func TestApplyCritFloors_NeverPromotesAMiss(t *testing.T) {
 }
 
 func TestApplyCritFloors_PromotesALandedHit(t *testing.T) {
+	// dodgeBest() carries an attack-win margin, which since Task 9 is what the
+	// attack floor keys on rather than res.hit.
 	res := hitResolution{hit: true}
 	applyCritFloors(&res, &AttackResult{}, dodgeBest(), 1.0, 0.0)
 
@@ -122,9 +160,11 @@ func TestApplyCritFloors_NeverPromotesAFumble(t *testing.T) {
 }
 
 func TestApplyCritFloors_PromotesASuccessfulDefense(t *testing.T) {
+	// "Successful defence" means the defence WON THE CONTEST since Task 9, not
+	// merely that res.hit came out false, so the margin has to say so.
 	result := &AttackResult{}
 	res := hitResolution{hit: false}
-	applyCritFloors(&res, result, dodgeBest(), 0.0, 1.0)
+	applyCritFloors(&res, result, dodgeBestWon(defenceWinMargin), 0.0, 1.0)
 
 	if !res.defenseCrit {
 		t.Error("a successful defence must be promotable by the defence floor")
@@ -140,15 +180,181 @@ func TestApplyCritFloors_PromotesASuccessfulDefense(t *testing.T) {
 }
 
 func TestApplyCritFloors_NoDefenseAttemptedIsNotADefensiveCrit(t *testing.T) {
-	// defenseType "" means the defender never mounted a defence (no stamina,
-	// or an empty defence sequence) and the miss came from the 5.9 defence
-	// floor instead. Granting a riposte to someone who did not defend would be
-	// nonsense, and setDefenseCritFlags has no flag to set anyway.
+	// defenseType "" means the defender never mounted a defence (an empty
+	// defence sequence), so the contest never happened. Granting a riposte to
+	// someone who did not defend would be nonsense, and setDefenseCritFlags has
+	// no flag to set anyway.
 	res := hitResolution{hit: false}
 	applyCritFloors(&res, &AttackResult{}, bestDefenseResult{defenseType: ""}, 0.0, 1.0)
 
 	if res.defenseCrit {
 		t.Error("no defence was attempted; there is nothing to promote")
+	}
+}
+
+// TestApplyCritFloors_UncontestedSwingTakesTheAttackFloor pins the handling of
+// the uncontested swing, which is the one case where the two guards interact.
+//
+// runBestOfAllDefense leaves margin at math.Inf(-1) on exactly the path where it
+// also leaves defenseType empty, and -Inf satisfies `margin <= 0`. That reads as
+// a decisive attack win, which is precisely what an uncontested swing is: no
+// defence was mounted, so the attacker cannot have lost.
+//
+// It therefore takes the ATTACK floor, and must never take the defence floor or
+// set a per-defence crit flag.
+//
+// This preserves pre-U6 behaviour. Before Task 9 the split was res.hit, which
+// was true on this path, so the attack floor already applied here. An earlier
+// draft hoisted the defenceType guard above the margin test, which silently
+// dropped that 1% promotion — a behaviour change U6 does not intend and did not
+// declare. The guard belongs on the defence branch only.
+func TestApplyCritFloors_UncontestedSwingTakesTheAttackFloor(t *testing.T) {
+	promoted := 0
+	for i := 0; i < 200; i++ {
+		result := &AttackResult{}
+		res := hitResolution{hit: true}
+		applyCritFloors(&res, result, bestDefenseResult{margin: math.Inf(-1)}, 1.0, 1.0)
+
+		if res.crit {
+			promoted++
+		}
+		if res.defenseCrit {
+			t.Fatal("an uncontested swing has no defender to promote")
+		}
+		if result.DodgeCritDetected || result.ParryCritDetected || result.BlockCritDetected {
+			t.Fatal("an uncontested swing must not set a per-defence crit flag")
+		}
+	}
+
+	if promoted != 200 {
+		t.Fatalf("an attack floor of 1.0 must promote every uncontested swing, got %d of 200", promoted)
+	}
+}
+
+// ─── U6 Task 9: the denominators are WHO WON, not whether it hit ────────────
+//
+// The floors used to split on res.hit: a landed swing went to the attack floor,
+// anything else to the defence floor. That question stops being answerable in
+// Task 10, where a defensive win deals PARTIAL damage rather than zero — every
+// deflected swing then carries res.hit == true while the defence is the side
+// that actually won the contest, and the old split would have handed all of them
+// to the attacker's floor.
+//
+// best.margin is DEFENCE-POSITIVE, so `margin <= 0` is an attack win.
+
+func TestApplyCritFloors_AttackFloorAppliesOnlyToContestWins(t *testing.T) {
+	// Certain attack floor, dead defence floor. Every swing the ATTACK won must
+	// be promoted, and nothing may leak to the defensive side.
+	for i := 0; i < 200; i++ {
+		result := &AttackResult{}
+		res := hitResolution{hit: true}
+		applyCritFloors(&res, result, dodgeBestWon(attackWinMargin), 1.0, 0.0)
+
+		if !res.crit {
+			t.Fatal("a swing that won the contest must be promotable by the attack floor")
+		}
+		if res.defenseCrit {
+			t.Fatal("an attack win must never be promoted on the defensive side")
+		}
+		if result.DodgeCritDetected {
+			t.Fatal("an attack win must not set a per-defence crit flag")
+		}
+	}
+}
+
+func TestApplyCritFloors_DefenceFloorAppliesOnlyToDefenceWins(t *testing.T) {
+	// res.hit is deliberately TRUE here. That is the Task 10 shape: a defended
+	// swing that still deals partial damage. Under the old res.hit split this
+	// case went down the ATTACKER's branch and the defender's floor never ran.
+	for i := 0; i < 200; i++ {
+		result := &AttackResult{}
+		res := hitResolution{hit: true}
+		applyCritFloors(&res, result, dodgeBestWon(defenceWinMargin), 0.0, 1.0)
+
+		if !res.defenseCrit {
+			t.Fatal("a swing the defence won must be promotable by the defence floor, even when it dealt damage")
+		}
+		if res.crit {
+			t.Fatal("a defence win must never be promoted on the attacking side")
+		}
+		// Downstream riposte / auto-trip / auto-bash wiring reads the
+		// per-defence flags, so a promotion that skipped them is a crit nothing
+		// acts on.
+		if !result.DodgeCritDetected {
+			t.Fatal("defensive promotion must set the per-defence crit flag")
+		}
+		// U6 Task 10 CHANGED this assertion, deliberately.
+		//
+		// Task 9 wrote it as "the crit floor must not disturb the hit outcome",
+		// which was correct then: a defensive win already carried res.hit ==
+		// false, so a promotion had nothing to disturb. Task 10 makes an ordinary
+		// defensive win land with res.hit == true and a partial damageMult, and a
+		// defence CRIT fully negates. Leaving hit/damageMult untouched would give
+		// a floor-promoted defence crit 50-100% damage where a ROLLED one deals
+		// none -- two spellings of the same outcome disagreeing.
+		//
+		// Restoring full negation here reproduces the pre-U6 result for this
+		// path exactly. It is the untouched version that would be the behaviour
+		// change.
+		if res.hit {
+			t.Fatal("a promotion to defence crit must fully negate, as a rolled defence crit does")
+		}
+		if res.damageMult != 0 {
+			t.Fatalf("a promoted defence crit must deal no damage, got damageMult %v", res.damageMult)
+		}
+	}
+}
+
+// The negation above is scoped to the PROMOTION. A floor call that promotes
+// nothing must still leave a partially deflected swing landing, or the mere act
+// of consulting a dead floor would erase the damage Task 10 exists to deal.
+func TestApplyCritFloors_NonPromotingDefenceFloorLeavesDeflectedDamage(t *testing.T) {
+	for i := 0; i < 200; i++ {
+		res := hitResolution{hit: true, damageMult: 0.5}
+		applyCritFloors(&res, &AttackResult{}, dodgeBestWon(defenceWinMargin), 0.0, 0.0)
+
+		if !res.hit {
+			t.Fatal("a dead defence floor must leave a deflected swing landing")
+		}
+		if res.damageMult != 0.5 {
+			t.Fatalf("a dead defence floor must not alter damageMult, got %v", res.damageMult)
+		}
+	}
+}
+
+func TestApplyCritFloors_FlooredOutcomeIsNeverPromoted(t *testing.T) {
+	// A floored outcome carries the +-1 sentinel margin: it represents an
+	// outcome the contest did not actually produce. Promoting it would hand a
+	// decisive result to the side that lost the roll. Both floors are certain,
+	// so this proves the guard rather than the odds.
+	for _, tc := range []struct {
+		name   string
+		margin float64
+		hit    bool
+	}{
+		{"floored attack win", attackWinMargin, true},
+		{"floored defence win", defenceWinMargin, true},
+		{"floored defence win, zero damage", defenceWinMargin, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for i := 0; i < 200; i++ {
+				result := &AttackResult{}
+				best := dodgeBestWon(tc.margin)
+				best.floored = true
+				res := hitResolution{hit: tc.hit}
+				applyCritFloors(&res, result, best, 1.0, 1.0)
+
+				if res.crit {
+					t.Fatal("a floored outcome must never be promoted to an attack crit")
+				}
+				if res.defenseCrit {
+					t.Fatal("a floored outcome must never be promoted to a defensive crit")
+				}
+				if result.DodgeCritDetected {
+					t.Fatal("a floored outcome must not set a per-defence crit flag")
+				}
+			}
+		})
 	}
 }
 
@@ -159,8 +365,10 @@ func TestApplyCritFloors_NeverDemotesARealCrit(t *testing.T) {
 		t.Error("a real crit must survive a zero floor")
 	}
 
+	// The defensive half must be a DEFENCE win, or it returns on the attack
+	// branch and never reaches the code this asserts about.
 	defRes := hitResolution{hit: false, defenseCrit: true}
-	applyCritFloors(&defRes, &AttackResult{}, dodgeBest(), 0.0, 0.0)
+	applyCritFloors(&defRes, &AttackResult{}, dodgeBestWon(defenceWinMargin), 0.0, 0.0)
 	if !defRes.defenseCrit {
 		t.Error("a real defensive crit must survive a zero floor")
 	}

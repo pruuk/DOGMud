@@ -132,8 +132,8 @@ tree:
 		newMob(3, "gated passive", false, "gated"),  // ok: not auto-aggro
 		newMob(4, "no archetype", true, ""),         // ok: no tree at all
 		newMob(5, "missing file", true, "ghost"),    // ok here: missing archetype warned elsewhere
-		newMob(77, "shadowed gated", true, "plain"), // WARN: per-mob tree has player_enter (shadows plain archetype)
-		newMob(78, "shadowed plain", true, "gated"), // ok: per-mob tree without player_enter shadows gated archetype
+		newMob(77, "shadowed gated", true, "plain"), // WARN: per-mob tree has player_enter (owns the event)
+		newMob(78, "shadowed plain", true, "gated"), // WARN: per-mob tree lacks player_enter, so the gated archetype's branch is live (composition)
 	}
 
 	behaviorPathFn := func(m *mobs.Mob) string {
@@ -151,16 +151,16 @@ tree:
 
 	warnings := validateAutoAggroBehaviorGates(templates, behaviorPathFn, archetypePathFn)
 
-	if len(warnings) != 2 {
-		t.Fatalf("expected 2 warnings, got %d: %v", len(warnings), warnings)
+	if len(warnings) != 3 {
+		t.Fatalf("expected 3 warnings, got %d: %v", len(warnings), warnings)
 	}
 	joined := strings.Join(warnings, "\n")
-	for _, wantSub := range []string{"gated aggro", "shadowed gated"} {
+	for _, wantSub := range []string{"gated aggro", "shadowed gated", "shadowed plain"} {
 		if !strings.Contains(joined, wantSub) {
 			t.Errorf("warnings missing mob %q: %v", wantSub, warnings)
 		}
 	}
-	for _, badSub := range []string{"plain aggro", "gated passive", "no archetype", "missing file", "shadowed plain"} {
+	for _, badSub := range []string{"plain aggro", "gated passive", "no archetype", "missing file"} {
 		if strings.Contains(joined, badSub) {
 			t.Errorf("warnings should not include mob %q: %v", badSub, warnings)
 		}

@@ -75,6 +75,17 @@ func Pounce(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> springs at <ansi fg="username">%s</ansi> and crashes into them!`, mobName, target.Name),
 				target.UserId)
 		}
+	} else if result.Damage > 0 {
+		if targetUser != nil {
+			if canSee {
+				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaps at you and you sidestep most of it, but it still clips you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+			} else {
+				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something leaps at you and you sidestep most of it, but it still clips you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+			}
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaps at <ansi fg="username">%s</ansi>, who mostly dodges but still gets clipped!`, mobName, target.Name),
+			target.UserId)
 	} else {
 		if targetUser != nil {
 			if canSee {

@@ -260,6 +260,12 @@ func (e *Engine) GetArchetype(name string) Node {
 }
 
 // EvaluateEvent triggers immediate tree evaluation for a mob instance.
+//
+// NOTE: this evaluates ONLY the cached per-mob tree — it deliberately
+// does NOT compose with the mob's declared archetype the way
+// TryMobBehavior does (no archetype fallback on Failure, no lazy file
+// loading either). Do not assume it matches TryMobBehavior's dispatch
+// semantics; use TryMobBehavior for event dispatch.
 func (e *Engine) EvaluateEvent(mobId int, instanceId int, event EventContext, state *BehaviorState) {
 	tree := e.GetTree(mobId)
 	if tree == nil {

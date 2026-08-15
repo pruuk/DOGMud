@@ -1,5 +1,69 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: The casters remember their spells
+
+Some enemies were written as spellcasters and never once cast. A mob that
+carried both a personal routine and a combat instinct silently lost the
+instinct, and the caster pattern itself could stall on a shield it never
+managed to finish weaving. Both are fixed: an enemy's personal routine now
+handles its own moments and steps aside for its instincts the rest of the
+time, and casters choose from the spells they actually know.
+
+You will feel it most around the North Road bandit camp. The lookout still
+whistles for help and the camp still fights together, but their caster now
+reaches into your mind, shields herself, and mends her own wounds. Your
+quell defence finally has real work to do; see help quell. The shamans of
+the steppe and the low tunnels, and the queen of the planar oasis, have
+likewise found their voices.
+
+A few set-piece guardians had picked up instincts they were never meant to
+have, such as an urge to flee a fight they are built to hold. Those keep
+fighting exactly as designed. One long-broken enrage also works again: the
+windscour wyrm's fury was wired to nothing and now lands.
+
+## 2026-08-15: A good defence turns a blow, a great one stops it
+
+Combat now recognises the glancing blow. A dodge, parry or block that only
+just succeeds turns a strike aside rather than erasing it: the blow still
+lands, robbed of most of its force. A decisive defence still stops a strike
+dead, and an exceptional one still answers back. The same holds when you are
+the one swinging, so the attacks you fail to fully stop will sting rather
+than crush.
+
+That one rule now covers everything. Spells and taunts are turned aside by
+the same kind of contest as a sword swing, and a trip or bash that is
+defended can still clip its target without taking them down. The text you
+see now tells the truth about it: if it says a blow grazed you, it did, and
+your health agrees.
+
+Two defences step into the open. Quell smothers a working aimed at your
+mind, and defy is the refusal that robs a taunt of its sting. Both draw on
+willpower, and both spend conviction rather than stamina; see help quell and
+help defy. Spells that hurl something physical at you are now answered by
+dodge and block instead, so a fighter's reflexes finally count for something
+against a caster.
+
+One more honest consequence: a hidden shooter stays hidden only while
+nothing lands. An arrow that is turned aside but still draws blood gives
+the shooter away.
+
+## 2026-08-14: No attempt is ever completely hopeless, or completely certain
+
+Every contested action in the game now shares one rule about luck. Whether you
+are casting at something far beyond you, wrestling an opponent who outclasses
+you, fleeing, or picking a pocket you have no business picking, you will find an
+opening now and then. The reverse holds too: however far you outmatch someone,
+they will occasionally slip your grasp.
+
+Outside of straightforward weapon swings, that occasional opening used to be
+rarer than it should have been, and rarer for spells and grapples than for
+anything else. All of it is on the same footing now, and the odds of the
+long shot have improved noticeably.
+
+Two things deliberately keep no such safety net: searching a room, following a
+trail and foraging, where there is no opponent to get lucky against, and
+concentration, which is being reworked separately.
+
 ## 2026-08-14: Enchanting no longer undoes what you paid for
 
 Putting an enchantment on a weapon quietly stripped the extra power it had

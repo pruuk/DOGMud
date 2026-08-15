@@ -446,6 +446,15 @@ Balance:
   DodgeBaseStaminaCost: 2
   ParryBaseStaminaCost: 4
   BlockBaseStaminaCost: 5
+  #
+  # QuellBaseConvictionCost / DefyBaseConvictionCost: quell (mental spells) and
+  #   defy (taunts) are paid in CONVICTION, not stamina, because they are acts
+  #   of will rather than of body. Seeded at 2, matching dodge, the cheapest
+  #   physical defence: neither has been played against yet, and the conviction
+  #   pool is smaller than stamina for most builds, so starting cheap is the
+  #   conservative direction. First retune is a config edit.
+  QuellBaseConvictionCost: 2
+  DefyBaseConvictionCost: 2
   DodgeMultiplier: 0.9
   ParryMultiplier: 0.9
   BlockMultiplier: 0.9
@@ -464,17 +473,19 @@ Balance:
   ParryEffectiveness: 0.97      # Slight nerf: parry is middle ground
   BlockEffectiveness: 1.05      # Buffed: requires shield investment, should reward it
   #
-  # MinDefenseChance: even when the attacker's score vastly outclasses the
-  #   defender's, this floor ensures fights never feel like guaranteed hits.
-  #   Range: 0.0–0.50. Set to 0 to disable the floor entirely.
-  #   Example: 0.15 = even a stat-50 defender vs stat-200 attacker has a 15%
-  #   chance to dodge/parry/block any given swing.
-  MinDefenseChance: 0.15
+  # U6 added quell (mental spells, Willpower + spellcasting) and defy (taunts,
+  #   Willpower + rhetoric) as real defence types, so all five defences now have
+  #   the same per-defence dial. Both ship NEUTRAL at 1.0 rather than tuned:
+  #   nothing has been played against them yet, and they exist so the first
+  #   retune is a config edit instead of a code change.
+  QuellEffectiveness: 1.0
+  DefyEffectiveness: 1.0
   #
-  # MinAttackHitChance: symmetric counterpart — even a massively outclassed
-  #   attacker has this minimum chance to land a hit.
-  #   Range: 0.0–0.50. Set to 0 to disable.
-  MinAttackHitChance: 0.15
+  # MinDefenseChance and MinAttackHitChance were deleted in U6. They were the
+  #   last two of the eight per-channel floor knobs; ContestFloor below replaces
+  #   all of them. They were also applied AFTER crit resolution, which returned
+  #   early on five branches, so against a defender who reliably defence-crit
+  #   they were evaluated on almost nothing.
   #
   # MinAttackCritChance / MinDefenseCritChance (roadmap chunk 5.11e): the same
   #   last-resort idea applied to CRITS, once 5.11d/g made crit derive from the
@@ -496,47 +507,31 @@ Balance:
   MinAttackCritChance: 0.01
   MinDefenseCritChance: 0.01
   #
-  # MinContestSuccessChance / MinContestResistChance: the same idea for opposed
-  #   contests OUTSIDE combat -- sneaking, stealing, planting, spotting a hidden
-  #   creature, defusing a trap. Until 2026-08-11 those had no floor at either
-  #   end, so a much weaker thief essentially could not succeed and a much
-  #   stronger one essentially could not fail. Combat had bounded both ends for
-  #   a long time; nothing outside combat reached that code.
-  #   Range: 0.0-0.50 each. Set to 0 to disable that end.
+  # ContestFloor: the single last-resort probability for EVERY opposed contest
+  #   in the game. A symmetric floor F bounds the outcome to [F, 1-F], so 0.125
+  #   means a hopelessly outclassed actor still succeeds one attempt in eight,
+  #   and an overwhelming one is still stopped one attempt in eight.
   #
-  #   0.05 rather than combat's 0.15 on purpose. A combat floor fires on EVERY
-  #   swing and a fight has many swings, so it is a small nudge that accumulates.
-  #   These fire ONCE per attempt, on actions that already punish failure: a
-  #   caught thief, a trap sprung on the fumbler, a revealed sneak. The same
-  #   number would be far more generous here than it is in combat.
-  MinContestSuccessChance: 0.05
-  MinContestResistChance: 0.05
+  #   It replaces six knobs deleted in U6: MinContestSuccessChance and
+  #   MinContestResistChance (out-of-combat), MinSpellHitChance and
+  #   MinSpellResistChance, MinManeuverHitChance and MinManeuverResistChance.
+  #   MinAttackHitChance and MinDefenseChance above are the last two of the old
+  #   set and go when the melee path is reordered.
   #
-  # MinSpellHitChance / MinSpellResistChance: the same bounds for spell contests,
-  #   with their own knobs because the cost of failure is different in kind.
-  #   A missed melee swing costs a fraction of a round. A fizzled spell costs the
-  #   caster the WHOLE round, and more than one for a long cast, so a floor that
-  #   fires often is a heavy tax on casting.
+  #   Those per-channel values encoded THE COST OF A SINGLE FAILURE: a melee
+  #   swing is a fraction of a round so it floored at 0.15, while a maneuver, a
+  #   spell or an out-of-combat attempt consumes the whole round and floored at
+  #   0.05. That distinction is deliberately discarded in favour of one rule.
+  #   Picking the wrong pair used to be numerically invisible in production and
+  #   would have become a live balance bug on the first retune.
   #
-  #   MinSpellHitChance stops an outmatched caster being guaranteed to waste
-  #   rounds. MinSpellResistChance stops an outmatched TARGET being auto-hit with
-  #   no agency, which matters because mobs cast at players too.
-  #   Range: 0.0-0.50 each. Set to 0 to disable that end.
-  MinSpellHitChance: 0.05
-  MinSpellResistChance: 0.05
+  #   Applies to OPPOSED contests only. Static-difficulty rolls -- search,
+  #   track, forage, concentration -- are not floored.
   #
-  # MinManeuverHitChance / MinManeuverResistChance: grapple, submission, skill
-  #   moves, taunt, throw, flee, stoic resolve.
-  #
-  #   The rule these values follow: THE FLOOR TRACKS THE COST OF A SINGLE
-  #   FAILURE. A melee swing is a fraction of a round and a fight has many, so it
-  #   floors at 0.15. A maneuver or a spell consumes the WHOLE round, so it
-  #   floors at 0.05. An out-of-combat attempt costs a round plus a consequence,
-  #   so it floors at 0.05 too. Maneuvers therefore sit with spells, not with the
-  #   swing they superficially resemble.
-  #   Range: 0.0-0.50 each. Set to 0 to disable that end.
-  MinManeuverHitChance: 0.05
-  MinManeuverResistChance: 0.05
+  #   Range: above 0.0 and at most 0.50. Zero is NOT legal: it fails validation
+  #   and reverts to 0.125, because a zero here would silently disable the
+  #   mechanism everywhere including in every Go test.
+  ContestFloor: 0.125
 
   # ── COMBAT: PRONE & GRAPPLE ───────────────────────────────────────────────
   # When a character is knocked prone, these multipliers modify combat scores.

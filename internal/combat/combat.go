@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -76,7 +77,12 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 	// Track progression stats for the attacking player
 	user.Character.OnStatUse("strength", user.UserId)
 	user.Character.OnStatUse("dexterity", user.UserId)
-	if attackResult.Hit {
+	// U6 Task 14: CleanHit, not Hit. A deflected swing deals partial damage
+	// (Hit is true) but the defence won the contest — the attacker earns no
+	// progression from it and hears the miss sound; the dodge/parry/block
+	// narration dominates what the player reads. The defender already earns
+	// progression through their defence.
+	if attackResult.CleanHit {
 		user.PlaySound(`hit-other`, `combat`)
 		combatSkill := string(user.Character.GetCombatSkillTag())
 		user.Character.OnSkillUse(combatSkill, user.UserId)
@@ -151,7 +157,9 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 	// Track progression stats for the attacking player
 	userAtk.Character.OnStatUse("strength", userAtk.UserId)
 	userAtk.Character.OnStatUse("dexterity", userAtk.UserId)
-	if attackResult.Hit {
+	// U6 Task 14: CleanHit, not Hit — a deflected swing awards the attacker
+	// nothing and plays the miss sound (see AttackPlayerVsMob).
+	if attackResult.CleanHit {
 		userAtk.PlaySound(`hit-other`, `combat`)
 		userDef.PlaySound(`hit-self`, `combat`)
 		combatSkill := string(userAtk.Character.GetCombatSkillTag())
@@ -181,8 +189,10 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 func trackMobAttackProgression(mob *mobs.Mob, result AttackResult) {
 	mob.Character.OnStatUse("strength", 0)
 	mob.Character.OnStatUse("dexterity", 0)
+	// U6 Task 14: CleanHit, not Hit — a deflected swing (partial damage, but
+	// the defence won the contest) earns the attacking mob no skill progression.
 	for _, wh := range result.WeaponHits {
-		if wh.Hit {
+		if wh.CleanHit {
 			mob.Character.OnSkillUse(wh.SkillTag, 0)
 			if wh.Crit {
 				mob.Character.OnCriticalSuccess(wh.SkillTag, 0)
@@ -191,7 +201,7 @@ func trackMobAttackProgression(mob *mobs.Mob, result AttackResult) {
 			mob.Character.OnCriticalFailure(wh.SkillTag, 0)
 		}
 	}
-	if len(result.WeaponHits) == 0 && result.Hit {
+	if len(result.WeaponHits) == 0 && result.CleanHit {
 		mob.Character.OnSkillUse(string(skills.UnarmedCombat), 0)
 	}
 }
@@ -230,7 +240,9 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) At
 	// Track progression for the attacking mob (mirrors player attacker logic)
 	trackMobAttackProgression(mob, attackResult)
 
-	if attackResult.Hit {
+	// U6 Task 14: CleanHit, not Hit — a deflected swing plays no hit-self
+	// sound; the defence narration carries the player's perception of it.
+	if attackResult.CleanHit {
 		user.PlaySound(`hit-self`, `combat`)
 	}
 
@@ -488,15 +500,44 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 			// as Sleeping at round start; every swing against them this round crits.
 			res := resolveDefenseOutcome(&attackResult, best, &sourceChar, &targetChar, critThreshold, isThirdParty, ctx.forceCrit)
 
-			sourceChar.UpdateMomentum(res.hit)
+			// Momentum builds only on clean wins and resets on deflections,
+			// matching pre-U6 behavior where a deflected swing was a miss.
+			sourceChar.UpdateMomentum(res.hit && !res.defended)
 
 			if res.hit {
 				attackResult.Hit = true
 				weaponHit.Hit = true
+				// CleanHit aggregates across the round like Hit does: once any
+				// swing wins the contest outright, the round counts as a clean
+				// hit even if later swings are deflected.
+				attackResult.CleanHit = attackResult.CleanHit || !res.defended
+				weaponHit.CleanHit = weaponHit.CleanHit || !res.defended
 				if res.crit {
 					weaponHit.Crit = true
 				}
 				attackTargetDamage, backstabCrit = calcHitDamage(&attackResult, res.crit, backstabCrit, sdp)
+
+				// U6 Task 10: a defensive win is no longer a clean miss, it is
+				// a partially deflected hit. res.damageMult is 1.0 on every
+				// other landing path, so this is a no-op outside that case.
+				//
+				// Applied AFTER calcHitDamage rather than folded into sdp.dmgMean
+				// on purpose: dice.RollStat derives its spread from the mean it
+				// is handed, so scaling the mean would also shrink the variance
+				// and make deflected hits artificially consistent. Scaling the
+				// rolled result keeps the deflection a flat reduction of whatever
+				// the swing happened to roll.
+				if res.damageMult < 1.0 && attackTargetDamage > 0 {
+					attackTargetDamage = int(math.Round(float64(attackTargetDamage) * res.damageMult))
+					if res.damageMult > 0 && attackTargetDamage < 1 {
+						// Matches CritOrMitigatedDamage's rule -- "a hit that
+						// lands must do something; 0 reads to the player as a
+						// bug." calcHitDamage floors at 0, not 1, so melee used
+						// to be able to land for nothing; the two agree now on
+						// this path.
+						attackTargetDamage = 1
+					}
+				}
 			}
 
 			if res.fumble {
@@ -529,7 +570,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 			if !res.doubleFumble {
 				buildAttackMessages(&attackResult, &sourceChar, &targetChar, ws, sdp,
 					attackTargetDamage, attackTargetReduction, attackSourceDamage, attackSourceReduction,
-					sourceType, targetType, attackMessagePrefix)
+					sourceType, targetType, attackMessagePrefix, res.defended)
 			}
 
 			attackResult.DamageToTarget += attackTargetDamage

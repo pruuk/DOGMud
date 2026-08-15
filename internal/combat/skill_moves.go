@@ -2,6 +2,7 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -12,10 +13,16 @@ import (
 // SkillMoveResult holds the outcome of a bash/kick/trip execution.
 // Callers use these fields to dispatch messaging and analytics.
 type SkillMoveResult struct {
-	Hit         bool
-	Damage      int
-	KnockedDown bool
-	TargetMaxHP int
+	Hit    bool
+	Damage int
+	// StatusApplied reports whether the maneuver's status effect landed.
+	// This stays binary -- unlike Damage, there is no "partially tripped":
+	// a defended attempt can deal partial damage via the shared
+	// defenceDamageMultiplier curve, but StatusApplied (and KnockedDown)
+	// can only be true when Hit is also true.
+	StatusApplied bool
+	KnockedDown   bool
+	TargetMaxHP   int
 }
 
 // SkillMoveParams configures a skill move (bash/kick/trip) execution.
@@ -58,7 +65,7 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 	// Opposed roll: attacker skill+stat vs defender dex+combat skill
 	attackerScore := float64(p.AttackSkill) + float64(p.AttackStat)
 	defenderScore := float64(p.DefenseSkill) + float64(p.DefenseStat)
-	res := RunWithManeuverFloors(attackerScore, defenderScore)
+	res := RunContest(attackerScore, []contest.Entry{{Score: defenderScore}})
 	attackSuccess := res.Success
 
 	// Damage pipeline: CalcRawDamage → ApplyMitigation → dice.RollStat
@@ -76,9 +83,28 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 	}
 
 	result.Hit = attackSuccess
-	result.Damage = baseDamage
+
+	// Defence resolution: a defence win DEFLECTS rather than erases.
+	// defenceDamageMultiplier (also used by spells and social via
+	// ResolveChannelDefence, and the same DefenceMitigation curve melee
+	// applies via normalizedDefenseMargin) scales baseDamage down: 1.0 on an
+	// attack win, 0.0 on a defensive crit, 0.0-0.5 on a rolled defensive win,
+	// exactly 0.5 on a floored save. The status effect (below) stays binary
+	// regardless.
+	damageMult := defenceDamageMultiplier(res)
+	result.Damage = int(float64(baseDamage) * damageMult)
+	if damageMult > 0 && result.Damage < 1 {
+		result.Damage = 1
+	}
+
+	if result.Damage > 0 {
+		p.Defender.ApplyHarm(characters.PoolHealth, result.Damage,
+			state.ActorRef{UserId: p.Attacker.GetUserId(), MobInstanceId: p.Attacker.MobInstanceId})
+	}
 
 	if attackSuccess {
+		result.StatusApplied = true
+
 		// Knockdown roll — standardized to dice.RollStat(50). Control-immune
 		// defenders (Ironhide's Living Carapace, Colossus's Ossified Frame) are
 		// immovable and cannot be knocked down — the blow still lands and deals
@@ -89,12 +115,6 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 				result.KnockedDown = true
 			}
 		}
-
-		// Apply damage
-		// result.Damage was set above from baseDamage and is deliberately left
-		// alone: it is pre-set, not kept in sync with the pool.
-		p.Defender.ApplyHarm(characters.PoolHealth, baseDamage,
-			state.ActorRef{UserId: p.Attacker.GetUserId(), MobInstanceId: p.Attacker.MobInstanceId})
 
 		// Apply knockdown if rolled. Chunk 4b W4 cutover: fire the
 		// FSM transition (Prone or Supine per KnockdownToSupine)

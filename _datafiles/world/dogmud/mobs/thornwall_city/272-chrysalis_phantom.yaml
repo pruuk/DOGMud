@@ -68,10 +68,10 @@ character:
     vitality:
       training: 25
   skills:
-    skullduggery: 20
-    unarmed-combat: 15
-    weapon-combat: 10
-    search: 22
+    skullduggery: 1
+    unarmed-combat: 1
+    weapon-combat: 1
+    search: 1
   equipment:
     weapon:
       itemid: 10024

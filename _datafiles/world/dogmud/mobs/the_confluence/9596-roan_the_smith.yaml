@@ -60,7 +60,7 @@ character:
     feet:
       itemid: 20052
   skills:
-    blacksmithing: 10
+    blacksmithing: 1
   stats:
     strength:
       training: 15

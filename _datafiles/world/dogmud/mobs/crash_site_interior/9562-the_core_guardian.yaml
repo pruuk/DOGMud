@@ -1,12 +1,15 @@
 mobid: 9562
 zone: Crash Site Interior
-behavior_archetype: leader
+# behavior_archetype removed 2026-08-15: the per-mob tree is the complete
+# brain; the leader fallback's unconditional flee below 25% HP would
+# corrupt this tuned boss fight. submission_policy/surrender_policy below
+# are already pinned explicitly, so they are unaffected by this removal.
 aiprofile: aggressive
 archetype: fighting
 submission_policy: lethal
 surrender_policy: never
 hostile: true
-statpool: 5000
+statpool: 2800
 maxwander: 0
 groups:
   - construct

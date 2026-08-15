@@ -26,33 +26,36 @@ import (
 
 // processDefenderProgression fires skill and stat progression for a defender
 // based on which defense types were used across all swings in the round.
-// Dodge → unarmed-combat + dexterity, Parry → weapon-combat + dexterity + strength,
-// Block → weapon-combat + strength.
+//
+// It awards ONCE PER DEFENCE TYPE per round, not once per swing: a defender who
+// dodges four times gets one dodge award. That de-duplication is the only thing
+// this function does that combat.AwardDefenceProgression does not, and it is why
+// the per-type rows themselves live over there rather than in a switch here.
+//
+// U6 Task 12 moved those rows. Before it, this switch covered dodge / parry /
+// block with no default arm while avoidance.go awarded the two non-physical
+// rows itself. Deleting avoidance.go without a single shared mapping would have
+// silently deleted defender progression on both non-physical channels.
+//
+// Quell and defy cannot reach this function today -- SwingEvent.DefenseUsed is
+// populated only by the melee path, which never emits either. They are covered
+// by AwardDefenceProgression regardless, so wiring either into melee later is a
+// row in DefenceSetFor and nothing else.
 func processDefenderProgression(c *characters.Character, userId int, result combat.AttackResult) {
-	dodged, parried, blocked := false, false, false
+	used := make(map[combat.DefenseType]bool, 3)
 	for _, se := range result.SwingEvents {
-		switch se.DefenseUsed {
-		case combat.DefenseDodge:
-			dodged = true
-		case combat.DefenseParry:
-			parried = true
-		case combat.DefenseBlock:
-			blocked = true
+		if se.DefenseUsed != combat.DefenseNone {
+			used[se.DefenseUsed] = true
 		}
 	}
 
-	if dodged {
-		c.OnSkillUse(string(skills.UnarmedCombat), userId)
-		c.OnStatUse("dexterity", userId)
-	}
-	if parried {
-		c.OnSkillUse(string(skills.WeaponCombat), userId)
-		c.OnStatUse("dexterity", userId)
-		c.OnStatUse("strength", userId)
-	}
-	if blocked {
-		c.OnSkillUse(string(skills.WeaponCombat), userId)
-		c.OnStatUse("strength", userId)
+	// Fixed order, so a round that used several defences always progresses them
+	// in the same sequence. Ranging a map here would randomise which skill
+	// levelup banner the player sees first.
+	for _, d := range []combat.DefenseType{combat.DefenseDodge, combat.DefenseParry, combat.DefenseBlock} {
+		if used[d] {
+			combat.AwardDefenceProgression(c, userId, string(d))
+		}
 	}
 }
 
@@ -112,8 +115,11 @@ func replaceDarknessMessages(result *combat.AttackResult, sourceCanSee bool, tar
 
 	// Build replacement messages based on swing events. Dark-room
 	// substitutes carry the same per-line outcome category as the
-	// equivalent sighted line — defense crit / dodge → CategoryDodge,
-	// hits → CategoryHitMelee, miss/fumble → CategoryHitMelee.
+	// equivalent sighted line — zero-damage defense crit / dodge →
+	// CategoryDodge, hits → CategoryHitMelee, miss/fumble →
+	// CategoryHitMelee. A DEFLECTED swing (defence won, partial damage
+	// through — U6 Task 14) is a hit-band line for both viewers, so the
+	// damage-to-viewer verbosity floor still applies to the defender.
 	if !sourceCanSee {
 		newMsgs := make([]combat.TaggedMessage, 0, len(result.SwingEvents))
 		for _, se := range result.SwingEvents {
@@ -125,8 +131,12 @@ func replaceDarknessMessages(result *combat.AttackResult, sourceCanSee bool, tar
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">You stumble badly in the darkness!</ansi> <ansi fg="fumble-text">!!!</ansi>`})
 			case se.Crit:
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="crit-text">***</ansi> <ansi fg="attack-good">You land a devastating blow in the dark!</ansi> <ansi fg="crit-text">***</ansi>`})
+			case se.DefenseUsed != "" && !se.DefenseCrit && se.Damage > 0:
+				// Deflected: the "turned aside" line below implies zero
+				// damage, which is no longer true for a partial deflection.
+				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="attack-bad">Something turns your blow aside, but you feel it land!</ansi>`})
 			case se.DefenseCrit || se.DefenseUsed != "":
-				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryDodge, Text: `<ansi fg="attack-bad">Your attack is deflected by something!</ansi>`})
+				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryDodge, Text: `<ansi fg="attack-bad">Your attack is turned aside by something!</ansi>`})
 			case se.Hit:
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="attack-good">You strike blindly and connect!</ansi>`})
 			default:
@@ -149,6 +159,11 @@ func replaceDarknessMessages(result *combat.AttackResult, sourceCanSee bool, tar
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="yellow">You hear your attacker stumble!</ansi>`})
 			case se.Crit:
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="crit-text">***</ansi> <ansi fg="red">Something hits you hard in the dark!</ansi> <ansi fg="crit-text">***</ansi>`})
+			case se.DefenseUsed != "" && !se.DefenseCrit && se.Damage > 0:
+				// Deflected: real damage reached the viewer, so this is a
+				// hit-band line (the verbosity floor must not suppress it),
+				// not a CategoryDodge line like the clean fend-off below.
+				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="defense-good">You fend off something in the dark, but it still catches you!</ansi>`})
 			case se.DefenseCrit || se.DefenseUsed != "":
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryDodge, Text: `<ansi fg="defense-good">You fend off something in the dark!</ansi>`})
 			case se.Hit:

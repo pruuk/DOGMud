@@ -215,6 +215,30 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `GetDefenseStaminaCost`, which computes `int(base * multiplier)` TRUNCATED and
   then floors at 1. Rounding instead of truncating would change dodge's live
   cost.
+- **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCost`.**
+  There are FIVE defence constants and `GetDefenseStaminaCost` prices only
+  three. `DefenseDodge` / `DefenseParry` / `DefenseBlock` cost stamina; U6 added
+  `DefenseQuell` (mental-spell defence, `Willpower + spellcasting × SkillWeight`)
+  and `DefenseDefy` (social defence, `Willpower + rhetoric × SkillWeight`), and
+  both cost **conviction**. Grepping for a stamina cost on either finds nothing
+  and proves nothing.
+
+  ```go
+  func DefensePool(defenseType string) Pool              // quell/defy -> PoolConviction
+  func (c *Character) GetDefenseCost(defenseType string) int
+  ```
+
+  `GetDefenseStaminaCost` still returns **0** for quell and defy via its default
+  arm. That is correct for what it measures and a trap for its callers: the old
+  `ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...))` shape charges zero
+  and the defence is **free** — silently, with no compile error, since melee
+  never emits either name. U6 Task 12 added the pair and moved
+  `runBestOfAllDefense` and `combat.ResolveChannelDefence` onto it. An
+  unrecognised name maps to `PoolStamina` at cost 0, so the pair charges nothing
+  rather than draining an arbitrary pool.
+- **`GetDefenseSequence` is melee-only and does not know about quell or defy.**
+  It derives dodge/parry/block from equipment. The per-channel defence set lives
+  in `combat.DefenceSetFor` instead.
 
 ### Combat and Interaction Systems
 - **Kill/Death statistics** (`kdstats.go`): PvP and PvE combat tracking

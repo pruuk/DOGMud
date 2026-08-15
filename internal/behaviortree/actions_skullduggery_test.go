@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -91,18 +91,21 @@ func TestActTrySneak_AlreadyHiddenReturnsSuccess(t *testing.T) {
 // high-Dex, skill-5 thief mob and a nearly-blind player with gold, alone in a
 // room, targeted via Event.UserId.
 //
-// The contest floors are pinned to zero for the duration. They default to 0.05
-// in dice (a Go package var, NOT config — dice deliberately does not import
-// configs, so configs.SetConfigForTest does not reach them), and that 5%
-// resist floor is precisely what made the previous version of this test flaky:
-// it is a last-resort save that fires regardless of how outclassed the
-// defender is.
+// The contest floor is pinned to zero for the duration. Balance.ContestFloor
+// ships at 0.125, and that last-resort save is precisely what made the previous
+// version of this test flaky: it fires regardless of how outclassed the
+// defender is. Note the floor moved: before U6 it was a dice package var
+// (dice.SetContestFloors) that configs.SetConfigForTest could not reach; U6
+// routed every contest through combat.RunContest, which reads the config knob,
+// so the config is now the only place to pin it. SetConfigForTest assigns
+// without validating, so a zero survives here even though Balance.Validate
+// would replace it.
 func seedStealScenario(t *testing.T) (*mobs.Mob, *users.UserRecord, *EvalContext) {
 	t.Helper()
 
-	origSuccess, origResist := dice.ContestFloors()
-	dice.SetContestFloors(0, 0)
-	t.Cleanup(func() { dice.SetContestFloors(origSuccess, origResist) })
+	c := configs.GetConfig()
+	c.Balance.ContestFloor = 0
+	configs.SetConfigForTest(t, c)
 
 	t.Cleanup(seedTestRoom(t, 1, "TestZone"))
 	t.Cleanup(seedTestMob(t, 5, 105, 1, "Thief"))

@@ -122,10 +122,10 @@ func FormatDiceRoll(attacks, dCount, dSides, bonus int, buffOnCrit []int) string
 
 **`Rand` and `LogRoll` are NOT used for hit or attack checks.** A single
 uncontested stat roll goes through `dice.RollStat`; an opposed contest goes
-through `internal/contest`, reached via the floor-pair wrappers in
-`internal/combat/contest_floors.go` (`RunWithGlobalFloors`,
-`RunWithManeuverFloors`, `RunWithSpellFloors`). `dice.OpposedRollStat` is
-deprecated and has no production callers as of U4. What remains here is
+through `internal/contest`, reached via `combat.RunContest` in
+`internal/combat/run_contest.go` (U6 collapsed the three per-channel floor-pair
+wrappers into that one entry point). `dice.OpposedRollStat` is deprecated and
+has no production callers as of U4. What remains here is
 authored `2d6+3` notation parsing and non-combat randomness.
 
 ## Files, hashing, encoding

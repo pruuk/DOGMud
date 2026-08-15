@@ -29,8 +29,8 @@ character:
     charisma:
       training: 30
   skills:
-    weapon-combat: 100
-    unarmed-combat: 100
+    weapon-combat: 1
+    unarmed-combat: 1
   equipment:
     weapon:
       itemid: 10003

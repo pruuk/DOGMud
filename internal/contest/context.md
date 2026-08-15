@@ -41,9 +41,10 @@ type Result struct {
 
 - `Run(atkScore float64, entries []Entry) Result` — one attack roll contested by
   every entry, keeping the widest defensive margin.
-- `RunWithFloors(atkScore float64, entries []Entry, floorSuccess, floorResist float64) Result`
-  — `Run` plus the 5.9 last-resort floors. Reproduces
-  `dice.OpposedRollStatWithFloors` exactly. **Transitional — see Gotchas.**
+- `RunWithFloors(atkScore float64, entries []Entry, floor float64) Result`
+  — `Run` plus a single SYMMETRIC last-resort floor: the hopeless attacker is
+  rescued at rate `floor`, the overwhelming attacker is stopped at rate
+  `floor`. At most one flip per call. **See Gotchas.**
 - `AgainstDifficulty(score, difficulty float64) Result` — the same path against a
   fixed number instead of an opponent.
 
@@ -99,16 +100,16 @@ type Result struct {
 - **`RollResult.Margin` and `.Success` are NOT populated on the rolls this
   package returns.** `dice.OpposedRoll` sets them; `dice.Roll`, which this
   package uses, does not. Read `Result.Margin` and `Result.Success` instead.
-  `TrySpellDeflection` read `defRoll.Margin` before U2 — translated naively it
-  would have silently passed zero and no spell deflection would ever have
-  critted again, with nothing failing and no test breaking.
-- **`RunWithFloors` is TRANSITIONAL scaffolding, not durable API.** The codebase
-  has two floor styles: melee applies floors *after* the contest with no margin
-  involved, spell and maneuver apply them *inside* the roll and need the
-  sentinel. This reproduces only the second, so U2–U5 can be provable no-ops.
-  Roadmap section 8 lists reconciling them as an open question for U6, which may
-  delete or reshape this entirely. Ask `Floored` rather than comparing `Margin`
-  against the sentinel, so analytics survive that change.
+  The since-deleted `TrySpellDeflection` read `defRoll.Margin` before U2 —
+  translated naively it would have silently passed zero and no spell deflection
+  would ever have critted again, with nothing failing and no test breaking. Its
+  successor is `combat.ResolveChannelDefence`, and the trap is unchanged.
+- **`RunWithFloors` takes ONE symmetric floor, not a success/resist pair.**
+  U6 collapsed the two-floor style into a single `ContestFloor` knob (Balance
+  config); this function still takes the floor as a plain parameter and never
+  reads config itself — `internal/combat.RunContest` is the one place that
+  reads `ContestFloor`. Ask `Floored` rather than comparing `Margin` against the
+  sentinel, so analytics survive future changes.
 
 ## Dependencies
 
@@ -116,17 +117,20 @@ type Result struct {
 
 ## Consumers
 
-**`internal/combat`, and nothing else.** Verified with `grep -rn
-"internal/contest" internal/` after U3: the only non-comment import lines are
-`internal/combat/combat_helpers.go` and `internal/combat/contest_floors.go`.
+**`internal/combat` calls `RunWithFloors` / `Run`; everything else names the
+`Entry` type only.** The two files that reach the primitives are
+`internal/combat/combat_helpers.go` and `internal/combat/run_contest.go`, and
+`contest_floor_guard_test.go` at the repo root is what keeps that true.
 
 - `runBestOfAllDefense` (melee, U1) calls `Run` directly, and is the one place
   that converts this package's attack-positive margin into `internal/combat`'s
   defence-positive one.
-- Everything else goes through the three wrappers in
-  `internal/combat/contest_floors.go`, `RunWithManeuverFloors`,
-  `RunWithSpellFloors` and `RunWithGlobalFloors`, which are where the maneuver,
-  spell and global floor pairs are read.
+- Everything else goes through `combat.RunContest`
+  (`internal/combat/run_contest.go`), which is where `Balance.ContestFloor` is
+  read. U6 deleted the three per-channel wrappers that preceded it. Callers
+  outside `internal/combat` still import this package for the `Entry` type they
+  hand to `RunContest`; they must not call `Run`, `AgainstDifficulty` or
+  `RunWithFloors`.
 
 `internal/hooks`, `internal/actions` and `internal/usercommands` all resolve
 contests, but they reach this core **through `internal/combat`** and must NOT

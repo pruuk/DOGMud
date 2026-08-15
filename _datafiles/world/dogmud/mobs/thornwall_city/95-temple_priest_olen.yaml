@@ -56,7 +56,7 @@ character:
     mend-wounds: 10
     cleansing-wave: 5
   skills:
-    spellcasting: 15
+    spellcasting: 1
   stats:
     willpower:
       training: 15

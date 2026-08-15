@@ -11,6 +11,10 @@ import (
 // makeGrappleTestParams builds SkillMoveParams that reliably HIT (huge attacker
 // advantage) and roll a knockdown (KnockdownChance 100), so the only variable
 // under test is whether the FSM knockdown transition succeeds.
+//
+// "Reliably" needs pinContestFloorOff since U6: the huge advantage no longer
+// gets there on its own, because the live ContestFloor saves the defender on
+// about one run in eight. Both tests below call it.
 func makeGrappleTestParams(defender *characters.Character) SkillMoveParams {
 	atk := characters.New()
 	return SkillMoveParams{
@@ -23,6 +27,8 @@ func makeGrappleTestParams(defender *characters.Character) SkillMoveParams {
 
 // A standing target: the knockdown transition succeeds → KnockedDown true.
 func TestExecuteSkillMove_KnockdownStanding(t *testing.T) {
+	pinContestFloorOff(t)
+
 	d := characters.New()
 	d.HealthMax.Value = 1000
 	d.Health = 1000
@@ -30,6 +36,7 @@ func TestExecuteSkillMove_KnockdownStanding(t *testing.T) {
 
 	res := ExecuteSkillMove(makeGrappleTestParams(d))
 	assert.True(t, res.Hit, "huge attacker advantage should hit")
+	assert.True(t, res.StatusApplied, "a landed maneuver must set StatusApplied")
 	assert.True(t, res.KnockedDown, "standing target should be knocked down")
 }
 
@@ -37,6 +44,8 @@ func TestExecuteSkillMove_KnockdownStanding(t *testing.T) {
 // can't be knocked down (TransitionToProne fails), so KnockedDown must be false
 // — no misleading "you knock them down!" narration. Damage still applies.
 func TestExecuteSkillMove_KnockdownGrappledIsSuppressed(t *testing.T) {
+	pinContestFloorOff(t)
+
 	d := characters.New()
 	d.HealthMax.Value = 1000
 	d.Health = 1000

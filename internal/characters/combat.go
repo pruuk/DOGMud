@@ -335,6 +335,16 @@ func (c *Character) GetDefenseScore(defenseType string) float64 {
 		blockRating := c.BestBlockRating()
 		return (str+dex)/2 + weaponSkill + float64(blockRating)
 
+	case DefenseQuell:
+		// Mental-spell defence. Costs CONVICTION, not stamina.
+		spellcasting := float64(c.GetSkillLevel(skills.Spellcasting)) * skillWeight
+		return float64(c.Stats.Willpower.ValueAdj) + spellcasting
+
+	case DefenseDefy:
+		// Social defence. Costs CONVICTION, not stamina.
+		rhetoric := float64(c.GetSkillLevel(skills.Rhetoric)) * skillWeight
+		return float64(c.Stats.Willpower.ValueAdj) + rhetoric
+
 	default:
 		return 0
 	}

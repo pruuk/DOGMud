@@ -227,10 +227,10 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	if result.IsTargetMob {
 		targetType = combat.Mob
 	}
-	dmg := 0
-	if result.MoveResult.Hit {
-		dmg = result.MoveResult.Damage
-	}
+	// result.MoveResult.Damage is always the amount actually applied (hit,
+	// partial-on-defended, or 0 on a defensive crit), so it is truthful
+	// whether or not the shot landed.
+	dmg := result.MoveResult.Damage
 	RecordAndWait(char, "shoot", sourceType, defChar, targetType, result.MoveResult.Hit, dmg, util.GetRoundCount())
 
 	return result

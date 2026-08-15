@@ -100,8 +100,7 @@ const ContestCritThreshold = 2.0
 //
 //	attacker's crit check  -> pass it unnegated  (combat_taunt.go, the spell
 //	                          sites in internal/hooks)
-//	defender's crit check  -> negate it          (TryStoicResolve,
-//	                          TrySpellDeflection)
+//	defender's crit check  -> negate it          (ResolveChannelDefence)
 //
 // NEVER pass a dice.RollResult's .Margin field. Since U1-U3 every caller
 // resolves through internal/contest, which rolls each side with dice.Roll, and

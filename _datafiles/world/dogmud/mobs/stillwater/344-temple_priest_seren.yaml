@@ -59,7 +59,7 @@ character:
     heal: 10
     mend-wounds: 8
   skills:
-    spellcasting: 12
+    spellcasting: 1
   stats:
     willpower:
       training: 14

@@ -19,6 +19,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// pinContestFloorOff removes Balance.ContestFloor for the duration of the
+// calling test, so a shot from an overwhelming shooter actually lands.
+//
+// Needed since U6. ExecuteFire resolves through combat.ExecuteSkillMove, which
+// used to take the maneuver floor pair; those knobs read
+// configs.GetBalanceConfig(), which a Go test binary never loads from
+// _datafiles/config.yaml, so they measured 0 and a lopsided shot was a
+// certainty for free. U6 routed the move through combat.RunContest, and
+// Balance.Validate replaces a zero ContestFloor with 0.125, so the floor is
+// live in every test binary and the target now saves on about one run in
+// eight. configs.SetConfigForTest assigns without validating, which is why the
+// zero survives, and it self-registers the restore.
+func pinContestFloorOff(t *testing.T) {
+	t.Helper()
+	c := configs.GetConfig()
+	c.Balance.ContestFloor = 0
+	configs.SetConfigForTest(t, c)
+}
+
 // equipBow puts a (optionally loaded) longbow in the user's weapon slot. The
 // inline Spec mirrors the actions package's fire test fixture.
 func equipBow(c *characters.Character, loaded bool) {
@@ -72,6 +91,8 @@ func TestShoot_UnloadedWeapon_NoDamage(t *testing.T) {
 // mob's HP, unloads the weapon, sets shooter aggro on the mob, and sets the
 // mob's aggro back on the shooter.
 func TestShoot_SameRoomLoaded_DamageAndAggro(t *testing.T) {
+	pinContestFloorOff(t)
+
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	isolateOpinions(t)
@@ -106,6 +127,8 @@ func TestShoot_SameRoomLoaded_DamageAndAggro(t *testing.T) {
 // damages the adjacent-room mob, leaves the shooter WITHOUT aggro (one-shot
 // model), and writes the CombatMemory breadcrumb that drives revenge pursuit.
 func TestShoot_CrossRoomLoaded_NoShooterAggro_MobPursues(t *testing.T) {
+	pinContestFloorOff(t)
+
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	isolateOpinions(t)
@@ -155,6 +178,8 @@ func TestShoot_CrossRoomLoaded_NoShooterAggro_MobPursues(t *testing.T) {
 // records an assault crime attributing the shooter as the perpetrator —
 // mirroring melee's recordAssaultCrime semantics.
 func TestShoot_RecordsAssaultCrimeOnFactionMob(t *testing.T) {
+	pinContestFloorOff(t)
+
 	cleanup := seedAllRegistries()
 	defer cleanup()
 
@@ -255,6 +280,8 @@ func TestShoot_PvpDisabled_PreFireGate(t *testing.T) {
 // round (RoundsWaiting == 1). (Issue 2 — old ordering gave a free opening
 // shot + a full melee swing next round.)
 func TestShoot_OpeningShot_ChargesCombatRound(t *testing.T) {
+	pinContestFloorOff(t)
+
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	isolateOpinions(t)

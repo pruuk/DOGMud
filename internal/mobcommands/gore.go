@@ -71,6 +71,17 @@ func Gore(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drives its horns into <ansi fg="username">%s</ansi>!`, mobName, target.Name),
 				target.UserId)
 		}
+	} else if result.Damage > 0 {
+		if targetUser != nil {
+			if canSee {
+				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges you and you sidestep most of it, but the horns still catch you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+			} else {
+				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something charges you and you sidestep most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+			}
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who mostly dodges but still gets grazed by the horns!`, mobName, target.Name),
+			target.UserId)
 	} else {
 		if targetUser != nil {
 			if canSee {

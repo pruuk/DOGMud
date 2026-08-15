@@ -21,4 +21,4 @@ tree:
           percent: 50
         - type: action
           do: command_best_of
-          commands: ["trip", "bash"]
+          cmds: ["trip", "bash"]

@@ -46,7 +46,7 @@ character:
   speciesid: 1
   gold: 1000
   skills:
-    cooking: 10
+    cooking: 1
   stats:
     dexterity:
       training: 10

@@ -68,22 +68,20 @@ result := dice.RollStat(attackerStat)
 ### Opposed contests moved out of this package (chunk U4)
 
 **Do not call an opposed roll from `internal/dice`.** Every contest in the game
-now resolves through `internal/contest`, reached by one of three wrappers in
-`internal/combat/contest_floors.go`, chosen by the **cost of a single failure**:
-
-| Wrapper | Floor pair | For |
-|---|---|---|
-| `combat.RunWithGlobalFloors` | global | out of combat: stealth, theft, traps, detection |
-| `combat.RunWithManeuverFloors` | maneuver | maneuvers, flee -- burns the whole round |
-| `combat.RunWithSpellFloors` | spell | spells |
+now resolves through `internal/contest`, reached by `combat.RunContest`
+(`internal/combat/run_contest.go`):
 
 ```go
-if combat.RunWithGlobalFloors(attackScore, defenseScore).Success {
+if combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}}).Success {
     // succeeded
 }
 ```
 
-The floors themselves are unchanged (chunk 5.9a/5.10): an outmatched initiator
+U4 routed callers through three wrappers over per-channel floor pairs, picked by
+the cost of a single failure. U6 deleted all three in favour of one symmetric
+`Balance.ContestFloor`.
+
+The reason for having a floor at all is unchanged (chunk 5.9a/5.10): an outmatched initiator
 keeps a last-resort chance of success, and an overwhelming favourite is never
 certain. Without them a stat-100 thief against a stat-150 mark succeeded 0.9% of
 the time and a stat-200 thief against a stat-100 mark succeeded 99.1%.

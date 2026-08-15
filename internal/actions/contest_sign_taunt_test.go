@@ -15,8 +15,9 @@ import (
 
 // ATTACKER-SIDE mirror of internal/combat/contest_sign_test.go (roadmap U3).
 //
-// That file guards the two DEFENDER-side crit reads, TryStoicResolve and
-// TrySpellDeflection. It guards nothing attacker-side, and a final U3 review
+// That file guards the DEFENDER-side crit read, which since U6 Task 12 lives in
+// combat.ResolveChannelDefence (it was TryStoicResolve and TrySpellDeflection
+// when this was written). It guards nothing attacker-side, and a final U3 review
 // proved the hole with a one-token mutation in combat_taunt.go:
 //
 //	res.Margin  ->  res.AttackRoll.Margin
@@ -34,8 +35,9 @@ import (
 //
 // TRAP 2 -- THE MARGIN IS SIGNED THE WRONG WAY. contest.Result.Margin is
 // ATTACK-positive. ExecuteTaunt performs the ATTACKER's crit check, so it must
-// pass the margin UNNEGATED; the defensive mirror in TryStoicResolve negates.
-// Getting that backwards also compiles, and puts the crit on the losing side.
+// pass the margin UNNEGATED; the defensive mirror in ResolveChannelDefence
+// negates. Getting that backwards also compiles, and puts the crit on the losing
+// side.
 //
 // THE ONLY OBSERVABLE EITHER TRAP DISTURBS IS TauntResult.Crit. A zeroed margin
 // normalises to z = 0 and a flipped margin to a large negative z; both sit below
@@ -62,17 +64,17 @@ import (
 //     pass has already bitten this arc once. Pinned to 0 so a margin-derived
 //     crit is the only possible route to Crit == true.
 //
-//   - The maneuver floor pair. Taunt resolves through
-//     combat.RunWithManeuverFloors. A hit floor flips a hopeless attacker to
-//     Success carrying the +-1 sentinel margin, which cannot crit and simply
-//     steals iterations; a resist floor steals them the other way. Pinned to 0
-//     so every iteration is a genuine contest. (They measure 0 in a test binary
-//     today, but config.yaml ships both at 0.05, so a future config-loading
-//     TestMain would start eating iterations.)
+//   - ContestFloor. Taunt resolves through combat.RunContest, and that floor is
+//     symmetric: it flips a hopeless attacker to Success carrying the +-1
+//     sentinel margin, which cannot crit and simply steals iterations, and it
+//     steals them the other way for the defender. Pinned to 0 so every
+//     iteration is a genuine contest. Before U6 this pinned the maneuver floor
+//     pair, which RunContest no longer reads; a validated ContestFloor is never
+//     zero, so the pin now matters even in a test binary.
 //
 //   - MinDefenseCritChance, for the same reason on the other side. A promoted
-//     defensive crit inside TryStoicResolve does not touch Crit, but pinning it
-//     keeps the non-crit branch deterministic.
+//     defensive crit inside ResolveChannelDefence does not touch Crit, but
+//     pinning it keeps the non-crit branch deterministic.
 //
 //   - SkillWeight, pinned NON-zero at 5. It is the multiplier on both sides'
 //     rhetoric, so it sets the score gap the iteration-count arithmetic below is
@@ -85,8 +87,7 @@ func pinTauntContestKnobs(t *testing.T) {
 	c.Balance.MinAttackCritChance = 0
 	c.Balance.MinDefenseCritChance = 0
 
-	c.Balance.MinManeuverHitChance = 0
-	c.Balance.MinManeuverResistChance = 0
+	c.Balance.ContestFloor = 0
 
 	c.Balance.SkillWeight = tauntSkillWeight
 

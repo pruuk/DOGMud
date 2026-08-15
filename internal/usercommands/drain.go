@@ -80,6 +80,36 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc))
 		}
+	} else if res.MoveResult.Damage > 0 {
+		partialMsgs := []string{
+			`Your reach for <ansi fg="mobname">%s</ansi> mostly fails, but your <ansi fg="item">claws</ansi> still catch a sliver of vitality! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="mobname">%s</ansi> slips most of your grip, but you still sap a trace of their life-force! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs := []string{
+			`<ansi fg="username">%s</ansi> reaches for you with hungry <ansi fg="item">claws</ansi>, and you slip most of it, but they still catch a sliver of you! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="username">%s</ansi> lunges to drain you; you slip most of it away, but not all! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs := []string{
+			`<ansi fg="username">%s</ansi> lunges to drain <ansi fg="mobname">%s</ansi>, who slips mostly free but still gets caught!`,
+		}
+
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
+		if targetChar != nil {
+			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+
+		// Lifesteal scales on damage actually applied, so a partial drain can
+		// still heal the attacker a little. Describe it the same way a full
+		// hit does, no raw numbers.
+		if res.Healed > 0 {
+			healDesc := combat.GetHealDescription(res.Healed, user.Character.HealthMax.Value)
+			healMsgs := []string{
+				`<ansi fg="green">A trickle of stolen vitality flows into you. You feel %s.</ansi>`,
+				`<ansi fg="green">You feel %s as a sliver of their warmth becomes yours.</ansi>`,
+			}
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc))
+		}
 	} else {
 		missMsgs := []string{
 			`Your drain misses <ansi fg="mobname">%s</ansi>!`,

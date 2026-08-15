@@ -62,5 +62,5 @@ character:
       action: cast fold-recall
       priority: 13
   skills:
-    weapon-combat: 18
-    ranged-combat: 24
+    weapon-combat: 1
+    ranged-combat: 1

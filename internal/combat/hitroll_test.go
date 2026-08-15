@@ -223,8 +223,17 @@ func TestResolveDefenseOutcome_AttackCritAlwaysHits(t *testing.T) {
 	src := &characters.Character{Name: "Attacker"}
 	tgt := &characters.Character{Name: "Defender"}
 
-	// Attack crit (z >= 2.0), normal defense wins on margin
-	best := mockBestDefense(2.5, 1.0, 80, 90, characters.DefenseParry)
+	// Attack crit (z >= 2.0) against a normal defence the attack also outrolled.
+	//
+	// U6 Task 8: this used to hand the ATTACK the crit while giving the DEFENCE
+	// the margin (80 vs 90), and assert the crit overrode the lost contest. That
+	// combination cannot occur in production and has not since chunk 5.11d --
+	// attackCrit is DERIVED from the normalized attack margin, so critting means
+	// having won. Only the mock could build it, by leaving hitRoll.StdDev at zero
+	// and falling back to the legacy self-relative z-score. Crit is now gated on
+	// the winning side, so the values are flipped to 90 vs 80 and the test says
+	// what it always meant: an attack crit beats an ordinary defence.
+	best := mockBestDefense(2.5, 1.0, 90, 80, characters.DefenseParry)
 	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
 
 	assert.True(t, res.hit, "attack crit should always hit vs normal defense")
@@ -236,8 +245,13 @@ func TestResolveDefenseOutcome_DefenseCritAlwaysAvoids(t *testing.T) {
 	src := &characters.Character{Name: "Attacker"}
 	tgt := &characters.Character{Name: "Defender"}
 
-	// Normal attack wins on margin, but defense crits
-	best := mockBestDefense(1.0, 2.5, 100, 80, characters.DefenseParry)
+	// Normal attack roll against a defence that crit and also took the margin.
+	//
+	// U6 Task 8: the mirror of the change above. This used to give the ATTACK the
+	// margin (100 vs 80) and the DEFENCE the crit, which defenseCrit's derivation
+	// from the margin makes impossible in production. Flipped to 80 vs 100 so the
+	// critting side is the side that won.
+	best := mockBestDefense(1.0, 2.5, 80, 100, characters.DefenseParry)
 	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
 
 	assert.False(t, res.hit, "defense crit should always avoid vs normal attack")
@@ -245,6 +259,12 @@ func TestResolveDefenseOutcome_DefenseCritAlwaysAvoids(t *testing.T) {
 	assert.True(t, result.ParryCritDetected, "parry crit should be flagged")
 }
 
+// U6 Task 8 note: both sides critting is no longer reachable in production, so
+// what this test now pins is the rule that REPLACED the old raw-value tiebreak --
+// the side that won the margin is the side whose crit stands. In the mock the
+// margin IS defValue - atkValue, so "higher raw value wins" and "the contest
+// winner's crit stands" are the same statement and both assertions still hold
+// unchanged. Do not restore a separate value comparison in the resolver.
 func TestResolveDefenseOutcome_CritVsCrit_HigherValueWins(t *testing.T) {
 	result := &AttackResult{}
 	src := &characters.Character{Name: "Attacker"}

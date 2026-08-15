@@ -122,7 +122,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	char.Health = 150 // 50 HP below max — heal is observable
 
 	// Retry until we observe a hit (probability with str=500 vs dex=1 is very
-	// high per round; the MinDefenseChance floor means ~85% hit rate).
+	// high per round; ContestFloor caps it at roughly a 1-in-8 save).
 	var res DrainResult
 	hitSeen := false
 	for i := 0; i < 100; i++ {
@@ -161,6 +161,73 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	// BleedDmg should be at least the minimum.
 	assert.GreaterOrEqual(t, res.BleedDmg, 2,
 		"BleedDmg should be at least 2 (min floor)")
+}
+
+// TestDrain_PartialDamageHealsWithoutBleed pins the one real behavior change
+// from Task 13b: lifesteal now reads the damage actually dealt, including a
+// DEFENDED attempt that still lands partial damage, while the bleed
+// condition stays hit-only (Task 13's binary-status contract untouched).
+// Uses a MODERATE defender advantage (attacker Strength ~100 vs defender
+// Dexterity ~130, mirroring the calibration in
+// internal/combat/skill_moves_partial_test.go) so defended partials are
+// common. The extreme gap used by TestDrain_HealAndBleed above (Strength=500
+// vs Dexterity=1) would make every defended attempt a defensive crit
+// (Damage == 0 by definition), so "sometimes deals partial damage" could
+// never be observed at that calibration.
+func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
+	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
+		6004: {SpeciesId: 6004, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+	})
+	defer cleanup()
+
+	// Register a target mob with a moderate Dexterity edge over the
+	// attacker's Strength — enough to produce frequent defended (non-Hit)
+	// outcomes without making every one of them a zero-damage defensive crit.
+	targetMob := &mobs.Mob{InstanceId: 6299}
+	targetMob.Character.Name = "Target"
+	targetMob.Character.HealthMax.Value = 100000
+	targetMob.Character.Health = 100000
+	targetMob.Character.Stats.Dexterity.ValueAdj = 130
+	setCombatPositionParallel(&targetMob.Character, position.Standing)
+	mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+	defer mobs.SetInstanceForTest(targetMob.InstanceId, nil)
+
+	char := characters.New()
+	char.SpeciesId = 6004 // vampire
+	char.Stats.Strength.ValueAdj = 100
+	char.HealthMax.Value = 100000
+
+	var res DrainResult
+	foundPartial := false
+	for i := 0; i < 500; i++ {
+		// Reset state for each attempt: re-arm aggro + cooldowns, and reset
+		// health/bleed on both sides so a stale condition from a prior
+		// iteration can't taint the assertions below.
+		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.Cooldowns = characters.Cooldowns{}
+		char.Health = char.HealthMax.Value - 1000 // below max so the heal is observable
+		targetMob.Character.Health = targetMob.Character.HealthMax.Value
+		targetMob.Character.RemoveCondition(characters.ConditionBleeding)
+
+		res = ExecuteDrain(newStubActor(char, newTestRoom()))
+
+		if res.Executed && !res.MoveResult.Hit && res.MoveResult.Damage > 0 {
+			foundPartial = true
+			break
+		}
+	}
+
+	if !foundPartial {
+		// Failing, not skipping: a skip here would silently discard the
+		// assertions below (review finding 24 pattern). If this fires, either
+		// the calibration drifted or the partial mechanism regressed.
+		t.Fatal("no defended-with-partial-damage attempt in 500 tries — moderate-advantage calibration is broken or the partial mechanism regressed")
+	}
+
+	assert.Greater(t, res.Healed, 0,
+		"lifesteal should heal the attacker on a defended partial: it reads damage actually dealt, not the Hit flag")
+	assert.False(t, targetMob.Character.HasCondition(characters.ConditionBleeding),
+		"bleed stays hit-only; a defended partial must not apply the bleed condition")
 }
 
 // TestDrain_TargetGone verifies that when aggro is set to an invalid mob

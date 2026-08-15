@@ -56,4 +56,4 @@ character:
     charisma:
       training: 10
   skills:
-    weapon-combat: 25
+    weapon-combat: 1

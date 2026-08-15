@@ -1,0 +1,110 @@
+# U6 Phase A adversarial playtest, actor 3 of 3: THE VETERAN.
+#
+# WHAT CHANGED AND WHY YOU ARE HERE
+#
+# Until today the game had EIGHT separate "last resort" luck knobs, one pair
+# each for melee, spells, maneuvers, and everything outside combat. They are now
+# ONE knob at 12.5%. Every opposed contest is bounded to [12.5%, 87.5%]:
+# hopelessly outmatched you still succeed about one attempt in eight, and
+# hopelessly overmatching you are still stopped about one in eight.
+#
+# YOU ARE THE CEILING TEST. This profile is the strongest of the three, with
+# spellcasting 51, skullduggery 50, rhetoric 55 and weapon-combat 69. Against
+# ordinary content you are the overwhelming side, so you are the one who will
+# feel the 87.5% CAP. Spells moved from a 5% floor to 12.5%, which means the
+# thing you are casting at now shrugs you off more than twice as often as it
+# used to. THAT IS THE MOST LIKELY PLACE FOR THIS CHANGE TO FEEL BAD, and
+# saying so plainly is the single most valuable thing you can do here.
+#
+# YOUR JOB IS COVERAGE AND FEEL, NOT STATISTICS. A short session cannot measure
+# a 12.5% rate and you should not try. Exercise every rewired surface, prove
+# none broke, and be blunt about how the cap reads.
+#
+# THINGS LEARNED THE HARD WAY, DO NOT REDISCOVER THEM
+#
+#   * RATE LIMIT: the AI port accepts 3 commands per round and drops the rest
+#     with a visible "Command dropped -- AI rate limit". Expected. It is NOT the
+#     input-concatenation bug fixed 2026-08-14. If several commands ever run
+#     together as one nonsense command, that bug has regressed: report it loudly.
+#   * CASTING TAKES A TARGET. `cast spike` alone answers "You need a target to
+#     cast that spell." and consumes nothing, so an untargeted batch is entirely
+#     wasted sends.
+#   * `consider <target>` before committing, so you know how lopsided a matchup
+#     was before you judge the outcome.
+#   * You have the Extra Arms mutation, which carries a charisma penalty and an
+#     aggro multiplier. That is the profile, not a bug.
+#   * FLEE IS TWO-PHASE. "You attempt to flee..." lands on one round and the
+#     OUTCOME lands on a LATER round tick. Actor 1 reported a third of flees
+#     producing no outcome; every outcome path in the code does send a message,
+#     so that was probably impatience. WAIT a round or two and read.
+#   * PICKLOCK IS NOT IN SCOPE. It is a sequence-matching MINIGAME, roadmap
+#     category D, "not a roll at all": skill sets the puzzle difficulty and the
+#     player supplies the outcome. It was never part of this rewire. Do not
+#     spend time on it and do not report it as uncovered.
+#   * DEFUSE IS ACCEPTED AS UNCOVERED. Do not go looking for it. Actors 1 and 2
+#     both failed to reach it. The practice traps are in a zone under the
+#     Thornwall tavern whose entrance is hidden AND gated behind a prerequisite
+#     quest, so reaching it inside a 40 minute session is not realistic. It is
+#     recorded as a known gap in the U6 sign-off. Spend your time on the
+#     spell ceiling instead, which is what this session is really for.
+#   * ACTORS 1 AND 2 DID COVER steal, plant and shadow, all working. You do not
+#     need to re-prove those; one confirming pass each is plenty.
+#   * IF YOU GET ARRESTED: actor 2 was seized at full health while winning and
+#     dumped in an unlit room where `look` says "You can't see anything!".
+#     Players have a LIGHT SPELL. Check your spell list and try casting it.
+#     Then report the thing that matters: could a player plausibly work that
+#     out from in-game information alone, or is that room a dead end unless you
+#     already know the answer?
+#
+ephemeral:
+  profile: veteran
+  # The veteran profile's own roomid is 5455 (Kilnreach Works). 462 is
+  # Thornwall City, which has a wider spread of weak and strong targets within
+  # walking distance and other people to steal from.
+  start_room: 462
+  overlays:
+    grant_spells:
+      conviction-spike: 1
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Cast at things far below you, many times. This is the headline test. With
+    spellcasting 51 against ordinary enemies you are the overwhelming side, so
+    the new cap should stop you about one cast in eight. Cast at least twenty
+    times at weak targets and report how often a spell failed to land. Then
+    answer the question that matters: when a spell fizzles against something
+    you vastly outclass, does it read as the target resisting, or does it read
+    as the game arbitrarily taking your round away? Be blunt. A spell costs the
+    WHOLE round, so a wasted one hurts far more than a missed sword swing, and
+    if this feels bad it needs to be known before it ships.
+  - >-
+    Cast at something far above you. The floor should let you land about one in
+    eight where before it was one in twenty. Report whether landing a spell on
+    something hopeless reads as a lucky break or as nonsense.
+  - >-
+    Steal and sneak with skullduggery 50, against ordinary townspeople. You are
+    the overwhelming side again, so the cap applies: expect to be caught
+    occasionally when you plainly should not be. Report how being caught as an
+    expert thief reads, and the exact wording.
+  - >-
+    Melee a weak enemy at length. Melee did NOT change today and is still on
+    its old floor. Compare how melee feels against how your spells feel in goal
+    one. If melee reads as reliable while casting reads as flaky, say so
+    directly: that gap is the thing this session exists to find.
+  - >-
+    Maneuvers at high skill: grapple, bash, trip, kick, taunt, flee. All were
+    rewired. Confirm each still works and report anything that errors, does
+    nothing, or narrates an outcome that does not match what happened.
+  - >-
+    Spell deflection. Find a caster mob and let it cast at you repeatedly, or
+    fight something that resists. Report how a resisted spell is narrated from
+    the receiving end, and whether the wording is the same one you see when
+    YOUR spells are resisted.
+  - >-
+    General adversarial pass. Anything that reads wrong, renders oddly,
+    contradicts its help text, or produces a Go error string in player output
+    is a finding. Two known-open items you do NOT need to report: `help prompt`
+    documents conviction as {mp} and omits {st}/{ST}, and attacking an absent
+    target answers "You attack the darkness!".

@@ -99,6 +99,24 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(pounceRoomMsgs[util.Rand(len(pounceRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 		}
+	} else if res.MoveResult.Damage > 0 {
+		partialMsgs := []string{
+			`Your leap at <ansi fg="mobname">%s</ansi> mostly misses, but you still clip them on the way past! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="mobname">%s</ansi> dodges the worst of your pounce, but you still catch them! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs := []string{
+			`<ansi fg="username">%s</ansi> leaps at you and you sidestep most of it, but they still clip you! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="username">%s</ansi> springs at you; you dodge most of the pounce, but not all! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs := []string{
+			`<ansi fg="username">%s</ansi> leaps at <ansi fg="mobname">%s</ansi>, who mostly dodges but still gets clipped!`,
+		}
+
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
+		if targetChar != nil {
+			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	} else {
 		missMsgs := []string{
 			`Your leap at <ansi fg="mobname">%s</ansi> misses as they sidestep!`,

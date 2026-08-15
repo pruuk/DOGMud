@@ -1,7 +1,9 @@
 mobid: 9587
 zone: Crash Site Interior
-behavior_archetype: generic_fighter
 aiprofile: brute
+# behavior_archetype removed 2026-08-15: the per-mob tree is the complete
+# brain; the generic_fighter fallback (flee below 25% HP, idle scan) would
+# corrupt this tuned sweep add. See internal/behaviortree/context.md.
 # crashsite-boss-mechanics Part B: sweep_companions (internal/behaviortree/
 # actions_mob.go actSweepCompanions) is a guaranteed action with NO stat
 # roll at all, so this has no combat ability that benefits from Strength

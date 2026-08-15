@@ -1,0 +1,66 @@
+# Bandit camp caster fix verification + the quell lane U6 still owes.
+#
+# WHAT CHANGED AND WHY YOU ARE HERE
+#
+# Until today, mobs with both a per-mob behavior file and a declared
+# behavior archetype silently lost the archetype: the whole North Road
+# bandit camp (lookout 283, fighter 284, caster 285, Soren 286) ran on
+# party coordination plus basic melee only. The engine now composes the
+# two, and the defensive_caster archetype was rewritten to cast from the
+# mob's own spellbook. The Bandit Caster should now actually CAST:
+# mind-spike / mind-fog / nerve-disruption (mental attacks answered by
+# your QUELL defence, costing you conviction) and mend-wounds on herself
+# when hurt. The camp should also coordinate: the lookout calls for
+# help, members assist the leader's target, Soren fights like a boss.
+#
+# QUELL has never been observed live. It is U6's last unverified lane:
+# a mental spell resisted by Willpower + Spellcasting, charged against
+# YOUR conviction pool, with partial mitigation on a bare win. Watching
+# your CP drain while resisting her casts is a primary goal.
+#
+# PRACTICAL NOTES
+#   * 3 commands per round on the AI port; pace yourself.
+#   * The camp is room 4052 and nearby; you start a few rooms away so
+#     you can pick your engagement. `consider` before committing.
+#   * Fighting the whole camp at once may kill you. That is acceptable
+#     data (report how the coordination felt), but try to also get a
+#     LONG fight with the caster: engage her with the others already
+#     dead or pulled away if you can manage it.
+#   * A mob casting looks like: "Bandit Caster begins weaving a spell."
+#     followed rounds later by the spell landing or being resisted.
+#     While casting she should NOT melee.
+#   * Damage is words, never numbers. That is correct.
+#
+ephemeral:
+  profile: mid
+  start_room: 4050
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    THE HEADLINE: does the Bandit Caster cast now? Fight her (and survive
+    long enough to watch). Report verbatim every casting-related line you
+    see: the weaving line, the spell resolving, your defence resisting it.
+    If she never casts across two separate fights of five or more rounds
+    each, that is a FAILED verification; say so bluntly. Also report
+    whether she stops meleeing while weaving, whether she heals herself
+    when hurt, and whether she flees when nearly dead.
+  - >-
+    QUELL, observed at last. When her mental spells come at you, read
+    every line: is your resistance narrated, does a resisted spell still
+    sting (partial damage with a damage phrase), and does your conviction
+    pool drop when you defend? Track CP between rounds via your prompt or
+    status. Compare what you see with help quell and report any mismatch.
+  - >-
+    Camp coordination. Approach the camp openly: does the lookout call
+    for help or whistle, do campmates come to the fight, do they assist
+    one target? Kill order and messages, verbatim where surprising. Note
+    whether Soren feels like a leader (rallying, coordinating) or just
+    another melee body.
+  - >-
+    General adversarial pass on everything in the fights: any line whose
+    words contradict health changes, any double narration, any Go error
+    text, anything that reads wrong. Known and filed, skip: crit lines
+    lacking damage wording and repeating; charset UTF-8 leakage; consider
+    calling walkovers even. Report bluntly.

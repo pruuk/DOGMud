@@ -135,10 +135,15 @@ func TestResolveMobSpell_DrainArea_DispatchesToDrainArea(t *testing.T) {
 
 		resolveMobSpell(boss, cs, spellData, room)
 
+		// Count a real hit via the bleed condition, not a health drop: since
+		// Task 13, a DEFENDED drain can still land partial damage (health
+		// drops with no bleed applied), so a health-drop proxy would let a
+		// pair of partial misses satisfy the loop without either player ever
+		// being cleanly hit, and the bleed assertion below would then flake.
 		hitCount := 0
 		for _, uid := range playerIds {
 			u := users.GetByUserId(uid)
-			if u.Character.Health < 500 {
+			if u.Character.HasCondition(characters.ConditionBleeding) {
 				hitCount++
 			}
 		}

@@ -194,10 +194,6 @@ func main() {
 	// This is the single knob that scales stdDev for every stat-based roll.
 	// See _datafiles/config.yaml Balance.RollSpread for the full explanation.
 	dice.SetRollSpread(float64(configs.GetBalanceConfig().RollSpread))
-	dice.SetContestFloors(
-		float64(configs.GetBalanceConfig().MinContestSuccessChance),
-		float64(configs.GetBalanceConfig().MinContestResistChance),
-	)
 
 	lastKnownVersion, err := version.Parse(string(configs.GetServerConfig().CurrentVersion))
 	if err != nil {

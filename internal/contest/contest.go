@@ -138,44 +138,36 @@ func AgainstDifficulty(score, difficulty float64) Result {
 // that an outcome is flipped, so a hopelessly outclassed actor is never simply
 // incapable and an overwhelming one is never simply guaranteed.
 //
-// TRANSITIONAL. This exists so U2-U5 can be provable no-ops. The codebase has
-// TWO floor styles and this reproduces only one: melee applies its floors AFTER
-// the contest, in resolveDefenseOutcomeCore, flipping a hit with no margin
-// involved; spell and maneuver apply theirs INSIDE the roll and need the
-// sentinel margin to stop a floored hit from also critting. Roadmap section 8
-// lists reconciling the two as an OPEN question for U6, which may delete or
-// reshape this function entirely. Do not build new permanent behaviour on it
-// without checking where that landed.
+// The floor is a PARAMETER, never read from config here. This package is a
+// config-free leaf on purpose (see the package docstring): a core that read
+// balance config would be tested against Go defaults. internal/combat.RunContest
+// is the one place that reads ContestFloor.
 //
-// It reproduces dice.OpposedRollStatWithFloors exactly, because callers are
-// being migrated onto it and must not change behaviour:
-//
-//   - At most ONE floor is rolled per call. If the attack lost, only
-//     floorSuccess is considered; if it won, only floorResist. Drawing both
-//     would change the outcome distribution.
-//   - A flipped outcome carries a SENTINEL margin of +1 or -1, not its real
-//     margin. This is load-bearing: ContestCrit normalises that sentinel to a
-//     near-zero z, which is the only reason a floor-granted hit cannot also be
-//     a critical hit. Leak the real margin here and a hopeless attacker rescued
-//     by the floor would crit.
-//   - Both floors clamp to [0, 0.5]. Above that a floor stops being a last
-//     resort and becomes the dominant term.
+// A flipped outcome carries a SENTINEL margin of +1 or -1, not its real margin.
+// This is load-bearing: ContestCrit normalises that sentinel to a near-zero z,
+// which is the only reason a floor-granted hit cannot also be a critical hit.
 //
 // An uncontested result is returned untouched — there is no outcome to flip.
-func RunWithFloors(atkScore float64, entries []Entry, floorSuccess, floorResist float64) Result {
+func RunWithFloors(atkScore float64, entries []Entry, floor float64) Result {
 	res := Run(atkScore, entries)
 	if !res.Contested {
 		return res
 	}
 
-	floorSuccess = clampFloor(floorSuccess)
-	floorResist = clampFloor(floorResist)
+	floor = clampFloor(floor)
+	if floor <= 0 {
+		return res
+	}
 
-	switch {
-	case !res.Success && floorSuccess > 0 && rand.Float64() < floorSuccess:
-		res.Success, res.Margin, res.Floored = true, 1, true
-	case res.Success && floorResist > 0 && rand.Float64() < floorResist:
-		res.Success, res.Margin, res.Floored = false, -1, true
+	// At most ONE flip per call. The attacker either lost and is rescued, or
+	// won and is stopped -- never both, because drawing twice would change the
+	// outcome distribution.
+	if rand.Float64() < floor {
+		if res.Success {
+			res.Success, res.Margin, res.Floored = false, -1, true
+		} else {
+			res.Success, res.Margin, res.Floored = true, 1, true
+		}
 	}
 
 	return res

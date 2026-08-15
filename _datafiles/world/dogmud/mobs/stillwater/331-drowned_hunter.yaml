@@ -49,7 +49,7 @@ character:
     vitality:
       training: 10
   skills:
-    skullduggery: 14
-    weapon-combat: 10
+    skullduggery: 1
+    weapon-combat: 1
   items:
     - itemid: 40052

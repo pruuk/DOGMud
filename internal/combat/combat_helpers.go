@@ -82,6 +82,7 @@ type bestDefenseResult struct {
 	hitRoll      dice.RollResult
 	defRoll      dice.RollResult
 	defenseFloor bool // true if defense succeeded via floor save
+	floored      bool // the contest floor CHANGED this outcome; it must never crit
 }
 
 // calcSwingCount computes the number of swings for a single weapon per round.
@@ -598,10 +599,12 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		//
 		// This used to `continue` an unaffordable defence out of the candidate
 		// set. With every defence unaffordable the entry list came out empty,
-		// contest.Run reported uncontested, and the swing fell through to the
-		// MinDefenseChance last resort -- a flat 15% save, always narrated as a
-		// dodge, and never able to defence-crit. An exhausted actor still acts;
-		// the winning defence is charged partially below.
+		// the contest reported uncontested, and the swing fell through to the
+		// old MinDefenseChance last resort -- a flat 15% save, always narrated
+		// as a dodge, and never able to defence-crit. U6 deleted that knob and
+		// its narrator; an uncontested swing is now simply an attack win, and
+		// the floor lives inside RunContest. An exhausted actor still acts; the
+		// winning defence is charged partially below.
 		//
 		// The defender's exhaustion currently costs their defence NOTHING:
 		// GetDefenseScore has no resource term, and stripping the skill term is
@@ -610,47 +613,56 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		// Calculate defense score for this defense type
 		defenseScore := targetChar.GetDefenseScore(defenseType)
 
-		// Apply base effectiveness multipliers
-		switch defenseType {
-		case characters.DefenseDodge:
-			defenseScore *= float64(bal.DodgeEffectiveness)
-		case characters.DefenseParry:
-			defenseScore *= float64(bal.ParryEffectiveness)
-		case characters.DefenseBlock:
-			defenseScore *= float64(bal.BlockEffectiveness)
-		}
+		// Apply base effectiveness multipliers. Shared with the non-physical
+		// channels rather than switched inline here: U6 Task 12 left two copies
+		// of this table, and a per-defence dial that disagrees between the melee
+		// path and the spell path is exactly the kind of drift that is invisible
+		// until someone retunes one of them.
+		defenseScore *= defenceEffectiveness(defenseType)
 
 		// Stage 7.5: Apply position-based defense penalties. Chunk 4b R1:
 		// FSM-driven — Prone/Supine collapse to the legacy "prone"
 		// penalty bucket, IsStandingGrapple matches the legacy
 		// "clinched" bucket, IsGroundGrapple matches the legacy
 		// "grounded" bucket.
+		// U6 Task 12 replaced the bare "dodge"/"parry"/"block" string literals
+		// these three switches used to carry with the characters.Defense*
+		// constants they were meant to match. The literals were the same values,
+		// so this is not a behaviour change -- it removes the drift risk, since a
+		// literal that stops matching its constant silently drops the penalty
+		// rather than failing to compile.
+		//
+		// There are still no quell or defy arms, and that gap is DISCLOSED, not
+		// an oversight: quell and defy do not run through this function (they
+		// resolve in ResolveChannelDefence), and giving them positional penalties
+		// would need ProneQuellPenalty and four more knobs that do not exist.
+		// Whoever wires either defence into melee owns adding them.
 		switch {
 		case targetChar.IsProne() || targetChar.IsSupine():
 			switch defenseType {
-			case "dodge":
+			case characters.DefenseDodge:
 				defenseScore *= float64(bal.ProneDodgePenalty)
-			case "parry":
+			case characters.DefenseParry:
 				defenseScore *= float64(bal.ProneParryPenalty)
-			case "block":
+			case characters.DefenseBlock:
 				defenseScore *= float64(bal.ProneBlockPenalty)
 			}
 		case targetChar.IsStandingGrapple():
 			switch defenseType {
-			case "dodge":
+			case characters.DefenseDodge:
 				defenseScore *= float64(bal.ClinchDodgePenalty)
-			case "parry":
+			case characters.DefenseParry:
 				defenseScore *= float64(bal.ClinchParryPenalty)
-			case "block":
+			case characters.DefenseBlock:
 				defenseScore *= float64(bal.ClinchBlockPenalty)
 			}
 		case targetChar.IsGroundGrapple():
 			switch defenseType {
-			case "dodge":
+			case characters.DefenseDodge:
 				defenseScore *= float64(bal.GroundedDodgePenalty)
-			case "parry":
+			case characters.DefenseParry:
 				defenseScore *= float64(bal.GroundedParryPenalty)
-			case "block":
+			case characters.DefenseBlock:
 				defenseScore *= float64(bal.GroundedBlockPenalty)
 			}
 		}
@@ -683,7 +695,7 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		entries = append(entries, contest.Entry{Name: defenseType, Score: defenseScore})
 	}
 
-	res := contest.Run(atkScore, entries)
+	res := RunContest(atkScore, entries)
 
 	best := bestDefenseResult{
 		hitRoll: res.AttackRoll,
@@ -691,6 +703,7 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 	if res.Contested {
 		best.defenseType = res.Winner
 		best.defRoll = res.DefenseRoll
+		best.floored = res.Floored
 		// SIGN CONVERSION, and the only one in melee. contest.Result.Margin is
 		// ATTACK-positive; bestDefenseResult.margin is DEFENCE-positive. Negate
 		// exactly here and nowhere else. U6 deletes bestDefenseResult and this
@@ -711,9 +724,15 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 	// be able to charge what little is there rather than declining and leaving
 	// the defence free. U8 reads CostResult.Short to strip the skill term from
 	// the defence score; this chunk discards it.
+	// U6 Task 12: charged through the DefensePool / GetDefenseCost pair rather
+	// than PoolStamina + GetDefenseStaminaCost. Melee only ever emits the three
+	// physical defences, for which the pair returns exactly what the old call
+	// did, so this is not a behaviour change. It removes the trap: the old shape
+	// charges quell and defy ZERO, silently, if either is ever added here.
 	if best.defenseType != "" {
-		_ = targetChar.ApplyCostPartial(characters.PoolStamina,
-			targetChar.GetDefenseStaminaCost(best.defenseType))
+		_ = targetChar.ApplyCostPartial(
+			characters.DefensePool(best.defenseType),
+			targetChar.GetDefenseCost(best.defenseType))
 	}
 
 	return best
@@ -727,6 +746,18 @@ type hitResolution struct {
 	doubleFumble bool
 	defenseCrit  bool
 	hitRoll      dice.RollResult
+	// damageMult scales the swing's damage: 0.0 fully negated, 1.0 full damage,
+	// in between = partially deflected. U6 Task 10 — a defensive win is no
+	// longer a clean miss, so a hit that lands is not automatically a full-value
+	// hit. EVERY return path in resolveDefenseOutcomeCore sets this explicitly;
+	// the zero value is 0.0, so a path that forgets silently deals nothing.
+	damageMult float64
+	// defended is true when the DEFENCE won the contest but the swing still
+	// deals partial damage (the Task 10 deflection: hit == true with
+	// damageMult < 1.0). It is false on every clean-win, fumble, and
+	// defensive-crit path. U6 Task 14 — consumers that mean "the attack won
+	// the contest" key on hit && !defended rather than on hit alone.
+	defended bool
 }
 
 // doubleFumbleMessages are comedy flavor text for when both combatants fumble.
@@ -798,9 +829,17 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 		` <ansi fg="fumble-text">!!!</ansi>`, sourceChar.Name, targetChar.Name))
 }
 
-// resolveDefenseOutcome processes the best defense result with the new
-// crit/fumble priority: fumbles → crits → normal → floors.
+// resolveDefenseOutcome processes the best defense result. Priority is
+// fumbles → winner (already floored by RunContest) → crit → normal outcome.
 // Returns the full hitResolution including crit/fumble flags.
+//
+// U6 Task 8 moved the floor AHEAD of crit. It used to be the last step, after
+// five crit branches that all returned, so against a defender who reliably
+// defence-crit the attack floor was evaluated on almost nothing. The contest
+// floor now decides the winner inside RunContest and crit is derived from that
+// settled winner, which is why MinAttackHitChance and MinDefenseChance are gone
+// rather than merely relocated: keeping them would have been a second floor
+// layered on the first, each partly undoing the other.
 //
 // forceCrit bypasses the crit check entirely and treats the attack as a
 // confirmed crit regardless of the roll, additionally suppressing the fumble
@@ -818,7 +857,9 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
 	// res.hit, and nowhere earlier. The core resolver treats an attack crit as
 	// forcing a hit, so a floor evaluated inside it would become an undeclared
-	// second hit floor leaking through MinDefenseChance. See applyCritFloors.
+	// second hit floor. That used to leak through MinDefenseChance; U6 deleted
+	// that knob, and the contest floor now lives inside RunContest, but the
+	// one-application-point rule still holds. See applyCritFloors.
 	applyCritFloors(&res, result, best, AttackCritFloor(), DefenseCritFloor())
 
 	return res
@@ -828,7 +869,6 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 // Split out so the floors have exactly one application point despite the many
 // early returns below.
 func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
-	bal := configs.GetBalanceConfig()
 	fumbleThreshold := -2.0
 	defCritThreshold := 2.0
 
@@ -897,6 +937,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		res.fumble = true
 		res.doubleFumble = true
 		res.hit = false
+		res.damageMult = 0.0
 		result.Fumble = true
 		result.DoubleFumble = true
 		handleDoubleFumble(result, sourceChar, targetChar)
@@ -910,6 +951,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		// Attack fumble: always miss, no exceptions
 		res.fumble = true
 		res.hit = false
+		res.damageMult = 0.0
 		result.Fumble = true
 		mudlog.Debug("AttackFumble", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
 			"source", sourceChar.Name, "target", targetChar.Name)
@@ -919,6 +961,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 	if defenseFumble {
 		// Defense fumble: guarantees a hit (but NOT auto-crit)
 		res.hit = true
+		res.damageMult = 1.0
 		mudlog.Debug("DefenseFumble", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
 			"source", sourceChar.Name, "target", targetChar.Name)
 		// Still check if the attack roll was also a crit
@@ -928,82 +971,101 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		return res
 	}
 
-	// ── Step 2: Crit resolution (trumps normal rolls) ───────────────────────
+	// ── Step 2: the floor already gated the winner, inside RunContest ───────
+	//
+	// This used to sit AFTER crit resolution, which returned on five branches,
+	// so against a defender who reliably defence-crit the attack floor was
+	// evaluated on almost nothing. The Core Guardian defence-crit 96.8% of
+	// swings and the floor saw the other 3.2%.
+	//
+	// RunContest has ALREADY flipped the winner and stamped the +-1 sentinel by
+	// the time we get here, so best.margin is post-flip and this one expression
+	// covers both the floored and unfloored cases. A floored hit carries
+	// res.Margin +1, which the sign conversion turns into best.margin -1, so it
+	// reads as an attack win; a floored save is the mirror. Do not special-case
+	// best.floored here -- it matters only for the crit gate below.
+	//
+	// An UNCONTESTED swing leaves best.margin at math.Inf(-1) and is likewise an
+	// attack win, which is the legacy behaviour of the `best.margin > 0` test
+	// this replaces.
+	attackWon := best.margin <= 0
 
-	if attackCrit && defenseCrit {
-		// Both crit: compare raw values, higher wins
-		if best.hitRoll.Value >= best.defRoll.Value {
+	// forceCrit is a decision taken BEFORE the roll (the sleeping-victim first
+	// hit), not a crit derived from winning. Now that crit is gated on the
+	// winning side it has to force the win too: without this, a sleeper whose
+	// defence happened to take the margin would quietly resolve as an ordinary
+	// miss and the documented "first round against a sleeper auto-crits"
+	// contract would break on roughly half of swings, silently.
+	if forceCrit {
+		attackWon = true
+	}
+
+	// ── Step 3: crit, only on the side that WON, and never when floored ─────
+	//
+	// A floored outcome carries the sentinel margin rather than a real one.
+	// Promoting it would hand a decisive result to the side that lost the roll.
+	// The sentinel normalises to a near-zero z, so this gate is belt-and-braces
+	// today -- but it is the DECLARED rule, and it stops a future retune of the
+	// sentinel from silently reintroducing floored crits.
+	//
+	// forceCrit is exempt for the same reason it forces the win: it is not
+	// derived from the margin at all, so the sentinel says nothing about it.
+	if forceCrit || !best.floored {
+		if attackWon && attackCrit {
 			res.hit = true
 			res.crit = true
-			mudlog.Debug("CritVsCrit-AtkWins", "atkVal", fmt.Sprintf("%.1f", best.hitRoll.Value),
-				"defVal", fmt.Sprintf("%.1f", best.defRoll.Value),
+			res.damageMult = 1.0
+			mudlog.Debug("AttackCrit", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
+				"threshold", fmt.Sprintf("%.2f", critThreshold),
 				"source", sourceChar.Name, "target", targetChar.Name)
-		} else {
+			return res
+		}
+		if !attackWon && defenseCrit {
 			res.hit = false
 			res.defenseCrit = true
+			res.damageMult = 0.0
 			setDefenseCritFlags(result, best)
-			sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
-			mudlog.Debug("CritVsCrit-DefWins", "atkVal", fmt.Sprintf("%.1f", best.hitRoll.Value),
-				"defVal", fmt.Sprintf("%.1f", best.defRoll.Value),
+			sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, false)
+			mudlog.Debug("DefenseCrit", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
 				"source", sourceChar.Name, "target", targetChar.Name)
+			return res
 		}
-		return res
 	}
 
-	if attackCrit {
-		// Attack crit vs normal defense: always hits
+	// ── Step 4: normal outcome ──────────────────────────────────────────────
+
+	if attackWon {
 		res.hit = true
-		res.crit = true
-		mudlog.Debug("AttackCrit", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
-			"threshold", fmt.Sprintf("%.2f", critThreshold),
-			"source", sourceChar.Name, "target", targetChar.Name)
+		res.damageMult = 1.0
 		return res
 	}
 
-	if defenseCrit {
-		// Defense crit vs normal attack: always avoids
-		res.hit = false
-		res.defenseCrit = true
-		setDefenseCritFlags(result, best)
-		sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
-		mudlog.Debug("DefenseCrit", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
-			"source", sourceChar.Name, "target", targetChar.Name)
-		return res
-	}
-
-	// ── Step 3: Normal resolution ───────────────────────────────────────────
-
-	if best.margin > 0 {
-		// Defense won the roll normally — check attack floor (last resort)
-		attackFloor := float64(bal.MinAttackHitChance)
-		if attackFloor > 0 && util.Rand(100) < int(attackFloor*100) {
-			res.hit = true
-			return res
-		}
-
-		// Defense succeeded
-		res.hit = false
-		sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
-		return res
-	}
-
-	// Attack won the roll normally — check defense floor (last resort)
-	{
-		floor := float64(bal.MinDefenseChance)
-		if floor > 0 && util.Rand(100) < int(floor*100) {
-			res.hit = false
-			// Floor save — defense succeeds via last resort
-			defType := best.defenseType
-			if defType == "" {
-				defType = characters.DefenseDodge
-			}
-			sendFloorDefenseMessages(result, defType, sourceChar, targetChar)
-			return res
+	// The defence won. It no longer produces a clean miss: damage is mitigated
+	// 50-100% by the margin. res.hit stays TRUE because damage IS dealt, and
+	// everything downstream that scales on res.DamageToTarget therefore scales
+	// down with it -- reflect, lifesteal and on-hit procs all read the damage
+	// actually dealt, not a flat rate.
+	//
+	// A FLOORED save takes the bare 50% and never the curve. Sentinel margins
+	// are +-1 in raw score units, not standard deviations, so normalising one
+	// yields 1/(stdDev*sqrt2) -- about 0.05 z at typical scores (mitigation
+	// 0.512), but 0.71 z when StdDevFor clamps at its 1.0 floor for a very weak
+	// defender (mitigation 0.677). That is a margin-derived value read off a
+	// number that was never a margin, and it rewards the WEAKER defender more.
+	// This mirrors the floored-crit gate above, which excludes the sentinel for
+	// exactly the same reason.
+	defMargin := 0.0
+	if !best.floored {
+		if z, ok := normalizedDefenseMargin(best); ok {
+			defMargin = z
 		}
 	}
-
-	// Normal hit
 	res.hit = true
+	res.defended = true
+	res.damageMult = 1.0 - DefenceMitigation(defMargin)
+	// partial == true: the swing deals partial damage, so buildAttackMessages
+	// owns the two personal lines; only the room narration is sent here.
+	sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, true)
 	return res
 }
 
@@ -1020,7 +1082,19 @@ func setDefenseCritFlags(result *AttackResult, best bestDefenseResult) {
 }
 
 // sendDefenseMessages sends narrative messages for a successful defense.
-func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, isThirdParty bool) {
+//
+// partial (U6 Task 16b) marks the non-crit defensive win, where the swing
+// still deals partial damage. On that path the pool's personal lines imply
+// TOTAL avoidance ("coming up out of reach!") and buildAttackMessages then
+// narrates the same swing's damage, so the two viewers each got two lines
+// that contradicted each other. When partial is true this function keeps
+// every side effect (DefenseUsed, defender skill progression, third-party
+// context) and still sends the ROOM lines — room lines never carry damage,
+// so they stay coherent — but suppresses the to-source and to-target
+// personal lines; buildAttackMessages sends the single composite line each
+// participant sees instead. A defensive crit (partial == false) fully
+// negates the swing and keeps its personal lines unchanged.
+func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, isThirdParty bool, partial bool) {
 	result.DefenseUsed = DefenseType(best.defenseType)
 
 	var defenseVerb string
@@ -1041,9 +1115,25 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		skillToProgress = string(skills.WeaponCombat)
 	}
 
-	// Trigger skill progression for successful defense
-	targetChar.TrackSkillUse(skillToProgress)
-	targetChar.CheckSkillProgression(skillToProgress, targetChar.GetUserId(), 1.0)
+	// The generic fallback text below formats as "%s %ss your attack!", so an
+	// empty verb reads "Grimwald s your attack!". Same unreachable-today arm as
+	// the skill guard; same fix.
+	if defenseVerb == "" {
+		defenseVerb = "counter"
+	}
+
+	// Trigger skill progression for successful defense.
+	//
+	// U6 Task 12 added the guard. An unmatched defence leaves skillToProgress
+	// empty, and an empty skill name is NOT inert: TrackSkillUse("") and
+	// CheckSkillProgression("", ...) take the roll like any other name, and a
+	// success sends the player a levelup banner naming no skill at all. Melee
+	// cannot reach that arm today; this makes it unreachable by construction
+	// rather than by argument.
+	if skillToProgress != "" {
+		targetChar.TrackSkillUse(skillToProgress)
+		targetChar.CheckSkillProgression(skillToProgress, targetChar.GetUserId(), 1.0)
+	}
 
 	// Get narrative defense messages based on defense z-score
 	defenseMsgs := items.GetDefenseMessage(itemsDefenseType, best.defRoll.ZScore)
@@ -1082,16 +1172,20 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		}
 
 		defCat := CategoryForDefenseVerb(defenseVerb)
-		result.SendToTarget(defCat, string(toDefenderMsg))
-		result.SendToSource(defCat, string(toAttackerMsg))
+		if !partial {
+			result.SendToTarget(defCat, string(toDefenderMsg))
+			result.SendToSource(defCat, string(toAttackerMsg))
+		}
 		result.SendToSourceRoom(defCat, string(toRoomMsg))
 		if sourceChar.RoomId != targetChar.RoomId {
 			result.SendToTargetRoom(defCat, string(toRoomMsg))
 		}
 	} else {
 		defCat := CategoryForDefenseVerb(defenseVerb)
-		result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
-		result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
+		if !partial {
+			result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
+			result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
+		}
 		result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
 		if sourceChar.RoomId != targetChar.RoomId {
 			result.SendToTargetRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss an attack.</ansi>`, targetChar.Name, defenseVerb))
@@ -1105,30 +1199,11 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 	}
 }
 
-// sendFloorDefenseMessages sends messages for a defense floor save.
-func sendFloorDefenseMessages(result *AttackResult, defType string, sourceChar *characters.Character, targetChar *characters.Character) {
-	result.DefenseUsed = DefenseType(defType)
-
-	var defenseVerb string
-	switch defType {
-	case characters.DefenseDodge:
-		defenseVerb = "dodge"
-	case characters.DefenseParry:
-		defenseVerb = "parry"
-	case characters.DefenseBlock:
-		defenseVerb = "block"
-	default:
-		defenseVerb = "avoid"
-	}
-
-	defCat := CategoryForDefenseVerb(defenseVerb)
-	result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
-	result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
-	result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
-	if sourceChar.RoomId != targetChar.RoomId {
-		result.SendToTargetRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss an attack.</ansi>`, targetChar.Name, defenseVerb))
-	}
-}
+// U6 Task 8 deleted sendFloorDefenseMessages. It narrated the MinDefenseChance
+// last-resort save, which always claimed a dodge because that path had no real
+// winning defence to name. A floored save now comes out of the contest with a
+// genuine best.defenseType and is narrated by sendDefenseMessages like any other
+// successful defence, so the player is told what actually stopped the swing.
 
 // calcHitDamage computes the damage for a successful hit, handling crits.
 // The isCrit flag is determined during hitroll resolution, not re-derived here.
@@ -1187,17 +1262,64 @@ func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius
 	return weaponSubType
 }
 
+// deflectedSwingLines builds the single composite line each participant sees
+// for a deflected swing (U6 Task 16b): the defence won the contest but partial
+// damage still got through. The line names the defence that deflected the
+// swing AND the damage it let through, so neither viewer is told the swing
+// missed while their health bar says otherwise.
+//
+// defense should be the DefenseUsed stamped by sendDefenseMessages for this
+// same swing. If it is somehow empty (no path produces that today), the
+// neutral "turn aside" phrasing keeps the line coherent rather than printing
+// an empty verb.
+func deflectedSwingLines(defense DefenseType, sourceName, targetName, dmgDesc string) (toAttacker, toDefender items.ItemMessage) {
+	dmg := `(<ansi fg="damage">` + dmgDesc + `</ansi>)`
+
+	var verbYou, verbThey string
+	switch defense {
+	case DefenseDodge:
+		verbYou, verbThey = "dodge", "dodges"
+	case DefenseParry:
+		verbYou, verbThey = "parry", "parries"
+	case DefenseBlock:
+		verbYou, verbThey = "block", "blocks"
+	default:
+		toAttacker = items.ItemMessage(fmt.Sprintf(
+			`%s turns your swing aside, but you still connect! %s`, targetName, dmg))
+		toDefender = items.ItemMessage(fmt.Sprintf(
+			`You turn %s's swing aside, but it still catches you! %s`, sourceName, dmg))
+		return toAttacker, toDefender
+	}
+
+	toAttacker = items.ItemMessage(fmt.Sprintf(
+		`%s %s your swing, but you still connect! %s`, targetName, verbThey, dmg))
+	toDefender = items.ItemMessage(fmt.Sprintf(
+		`You %s %s's swing, but it still catches you! %s`, verbYou, sourceName, dmg))
+	return toAttacker, toDefender
+}
+
 // buildAttackMessages constructs and sends all combat messages for a swing.
+//
+// defended is hitResolution.defended: the defence won the contest but the
+// swing still dealt partial damage (U6 Task 10). Task 16b uses it to give a
+// deflected swing exactly one personal line per viewer (deflectedSwingLines),
+// replacing the miss-band-plus-glancing-suffix composite the Phase B playtest
+// flagged as self-contradicting; sendDefenseMessages keeps the room line.
 func buildAttackMessages(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character,
 	ws weaponSetup, sdp swingDamageParams, attackTargetDamage int, attackTargetReduction int,
 	attackSourceDamage int, attackSourceReduction int,
-	srcType, tgtType SourceTarget, prefix string) {
+	srcType, tgtType SourceTarget, prefix string, defended bool) {
 
 	// Calculate actual damage vs. expected damage pct
 	pctDamage := 0.0
 	if sdp.dmgMean > 0 {
 		pctDamage = math.Ceil(float64(attackTargetDamage) / sdp.dmgMean * 100)
 	}
+
+	// A DEFLECTED swing: the defence won but partial damage got through. Only
+	// treated specially when damage actually landed; a defended swing that
+	// rolled zero damage narrates like any other zero-damage outcome.
+	deflected := defended && attackTargetDamage > 0
 
 	// T4 (chunk 4c): compute the display subtype for attack-message selection.
 	// See meleeDisplaySubtype for the swap rules.
@@ -1232,9 +1354,23 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// After the fumble branch on purpose: flubbing a swing at a falling
 		// target is still a fumble.
 		msgs = items.GetPreAttackMessage(displaySubtype, items.CoupDeGrace)
+	} else if deflected {
+		// Deflected swing (U6 Task 16b): no pool messages at all. The Phase B
+		// playtest caught the previous approach — a miss-band line plus a
+		// glancing suffix — reading as a self-contradiction ("misses you
+		// completely! The blow still catches you."). Each participant instead
+		// gets ONE composite line built below, naming the defence and the
+		// damage it let through; the room keeps the defence narration that
+		// sendDefenseMessages already sent, so no room lines are sent here.
+		// The feint check is deliberately skipped: this swing dealt real
+		// damage, so reading it as a deliberate feint would be wrong.
 	} else {
 		msgs = items.GetAttackMessage(displaySubtype, int(pctDamage))
-		// Feint check: skilled attackers can turn misses into deliberate-looking feints
+		// Feint check: skilled attackers can turn misses into deliberate-looking
+		// feints. Decision (U6 Task 14): this gate stays on true zero-damage
+		// outcomes (defensive crits, uncontested misses). Pre-U6 it also fired
+		// on defended swings, but a deflected swing now deals real damage and
+		// takes the branch above instead — do not "fix" this back.
 		if int(pctDamage) == 0 && !result.Fumble {
 			isFeint = checkFeint(sourceChar.GetCombatSkillLevel())
 		}
@@ -1261,7 +1397,25 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// Get source character's weapon skill level for message selection
 	skillLevel := sourceChar.GetCombatSkillLevel()
 
-	if sourceChar.RoomId == targetChar.RoomId {
+	if srcType == Mob {
+		tokenReplacements[items.TokenSource] = sourceChar.GetMobName(0).String()
+	}
+
+	if tgtType == Mob {
+		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
+	}
+
+	if deflected {
+		// result.DefenseUsed was set by sendDefenseMessages during THIS
+		// swing's resolution: the swing loop in combat.go calls
+		// resolveDefenseOutcome (which narrates the defence and stamps
+		// DefenseUsed) before it calls buildAttackMessages, so on a deflected
+		// swing the field always names the defence that just deflected it.
+		toAttackerMsg, toDefenderMsg = deflectedSwingLines(result.DefenseUsed,
+			tokenReplacements[items.TokenSource],
+			tokenReplacements[items.TokenTarget],
+			tokenReplacements[items.TokenDamage])
+	} else if sourceChar.RoomId == targetChar.RoomId {
 		toAttackerMsg = msgs.Together.ToAttacker.GetForSkillLevel(skillLevel, sdp.msgSeed)
 		toDefenderMsg = msgs.Together.ToDefender.GetForSkillLevel(skillLevel, sdp.msgSeed)
 		toAttackerRoomMsg = msgs.Together.ToRoom.GetForSkillLevel(skillLevel, sdp.msgSeed)
@@ -1290,14 +1444,6 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 				}
 			}
 		}
-	}
-
-	if srcType == Mob {
-		tokenReplacements[items.TokenSource] = sourceChar.GetMobName(0).String()
-	}
-
-	if tgtType == Mob {
-		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
 	}
 
 	for tokenName, tokenValue := range tokenReplacements {
@@ -1372,11 +1518,14 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 
 	result.SendToTarget(hitCat, string(defenderMsg))
 
-	// Send to room
-	result.SendToSourceRoom(hitCat,
-		string(toAttackerRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).
-			SetTokenValue(items.TokenTargetType, string(tgtType))),
-	)
+	// Send to room. A deflected swing sends none: the defence room line from
+	// sendDefenseMessages already narrated it, and room lines carry no damage.
+	if !deflected {
+		result.SendToSourceRoom(hitCat,
+			string(toAttackerRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).
+				SetTokenValue(items.TokenTargetType, string(tgtType))),
+		)
+	}
 
 	// Send to defender room if separate
 	if len(string(toDefenderRoomMsg)) > 0 {

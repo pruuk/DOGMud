@@ -39,7 +39,7 @@ character:
     dexterity:
       training: 5
   skills:
-    skullduggery: 8
+    skullduggery: 1
   items:
     - itemid: 10021
       dropchance: 10
