@@ -597,7 +597,24 @@ other two read config, and assigned collapsing the two routes to U6."
 
 ---
 
-### Task 6: Delete the eight knobs and ship the config
+### Task 6: Delete SIX of the eight knobs and ship the config
+
+> **ORDERING CORRECTION, found during execution.** The original plan deleted all
+> eight knobs here. It cannot: `MinAttackHitChance` and `MinDefenseChance` are
+> still read at `internal/combat/combat_helpers.go:978` and `:992`, inside
+> `resolveDefenseOutcomeCore`, which is the live per-swing melee path.
+> **Task 8 is the task that deletes those two readers**, when the floor becomes
+> the outer gate via `RunContest`. Deleting the knobs here would not compile.
+>
+> So: **six knobs die here, two die in Task 8**, which is what standing rule 4
+> ("delete each old path in the task that migrates it") asks for anyway. The
+> six with zero remaining readers are `MinSpellHitChance`,
+> `MinSpellResistChance`, `MinManeuverHitChance`, `MinManeuverResistChance`,
+> `MinContestSuccessChance`, `MinContestResistChance`.
+>
+> The YAML loader was checked and is NOT strict (`internal/configs/configs.go`
+> uses plain `yaml.Unmarshal`), so a key left in `config.yaml` without a Go
+> field is ignored rather than fatal. That means the Go-first ordering is safe.
 
 **Files:**
 - Modify: `internal/configs/config.balance.go`
@@ -931,6 +948,20 @@ the function with:
 Delete the `bal := configs.GetBalanceConfig()` line at the top of the function
 if nothing else in it still reads `bal`, and delete the now-unreachable
 `MinAttackHitChance` / `MinDefenseChance` branches.
+
+**This task also finishes what Task 6 could not.** Those two branches at `:978`
+and `:992` are the last production readers of `MinAttackHitChance` and
+`MinDefenseChance`. Once they are gone, in the SAME commit:
+
+1. Delete both field declarations from `internal/configs/config.balance.go`.
+2. Delete both validation blocks from `internal/configs/config.balance.misc.go`.
+3. Replace the four assertions on them in `internal/configs/smoke_test.go:36-43`
+   with the `ContestFloor` bounds assertion.
+4. Remove both keys from `_datafiles/config.yaml` using the skip-worktree
+   procedure in Task 6 step 4.
+
+Standing rule 4 is why this belongs here rather than earlier: delete each old
+path in the task that migrates it.
 
 - [ ] **Step 4: Add `damageMult` to `hitResolution`**
 
