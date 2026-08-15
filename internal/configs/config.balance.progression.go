@@ -56,11 +56,25 @@ func (b *Balance) validateProgression() {
 	if b.CostEncumbranceKnee <= 0 || b.CostEncumbranceKnee >= 1.0 {
 		b.CostEncumbranceKnee = 0.75
 	}
-	if b.CostEncumbranceKneeMult <= 0 {
+	// Below 1.0 is not "a gentle curve", it is an INVERSION: the first segment
+	// runs from 1.0 at empty down to the knee multiplier, so loading up would
+	// make every physical action CHEAPER. Corrected to the default rather than
+	// clamped to 1.0, because a knee of exactly 1.0 flattens the whole first
+	// segment and is almost certainly not what the author meant either.
+	if b.CostEncumbranceKneeMult < 1.0 {
 		b.CostEncumbranceKneeMult = 1.5
 	}
 	if b.CostEncumbranceMax <= 0 {
 		b.CostEncumbranceMax = 5.0
+	}
+	// Cross-field invariant: the maximum must sit strictly above the knee
+	// multiplier, or costs.EncumbranceMultiplier's second segment runs
+	// BACKWARDS -- a character past the knee would get cheaper as they loaded
+	// further toward capacity. Enforced here, once, at load, where a bad
+	// config.yaml edit is visible, and paired with the knee guard above so both
+	// halves of the curve's monotonicity are settled before any caller reads it.
+	if b.CostEncumbranceMax <= b.CostEncumbranceKneeMult {
+		b.CostEncumbranceMax = b.CostEncumbranceKneeMult * 2
 	}
 
 	// ── COSTS: COMPOSED-TOTAL CEILING (U7) ──────────────────────────────────
