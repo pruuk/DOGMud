@@ -279,6 +279,18 @@ therefore roughly **0.67 stamina per round**, not 2.
 Every drain figure produced before this correction is optimistic. The corrected
 tables are what the tuning decision must rest on.
 
+### 3.4.2 The product clamp erases the defence ordering near capacity — ACCEPTED
+
+With `CostTotalMultiplierMax` at 6.0 and a rank-1 character, the clamp binds
+above about **95.6%** of carry capacity for dodge, 98.3% for block and 99.8% for
+parry, so all three converge on an identical cost at the very top of the load
+range and the deliberate dodge premium disappears there.
+
+**Owner ruling 2026-08-15: this is fine and is not to be "fixed".** A character
+above 95% of capacity is in trouble whatever they do, and the clamp exists
+precisely to stop a laden novice being priced out of acting at all. Recorded so
+a later reader finds a decision rather than an oversight.
+
 ### 3.5 Coverage
 
 Everything must cost something by the end of the arc, but **not necessarily in
