@@ -68,8 +68,16 @@ type AttackResult struct {
 	// dealt" (lifesteal, on-hit procs, wimpy) key on Hit. Momentum is
 	// per-swing, not per-round: it keys on hitResolution's hit && !defended
 	// inside the swing loop, never on this aggregate.
-	Hit                     bool            // defaults false
-	CleanHit                bool            // defaults false
+	Hit      bool // defaults false
+	CleanHit bool // defaults false
+	// SwingsThrown counts every swing resolved this round, ACROSS ALL WEAPONS,
+	// landed or not. Like Hit and CleanHit it accumulates for the whole round and
+	// is never reset by the per-swing flag reset (which clears Crit, Fumble and
+	// DoubleFumble only). U7 Task 7 charges the attacker
+	// SwingsThrown x per-swing cost, so a reset here would make a multi-weapon
+	// round cost the same as its last weapon's swings and quietly restore the
+	// free-offence bug this field exists to fix.
+	SwingsThrown            int             // defaults 0
 	Crit                    bool            // defaults false
 	Fumble                  bool            // defaults false
 	DoubleFumble            bool            // defaults false

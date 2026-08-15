@@ -76,34 +76,18 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
 	return int(math.Ceil(cost))
 }
 
-// GetAttackStaminaCost calculates the stamina cost for making an attack.
-// Cost is based on weapon type (or unarmed if no weapon).
-func (c *Character) GetAttackStaminaCost() int {
-	// Check main hand weapon
-	if c.Equipment.Weapon.ItemId > 0 {
-		weaponSpec := c.Equipment.Weapon.GetSpec()
-		return weaponSpec.GetAttackStaminaCost()
-	}
-
-	// Check offhand weapon (dual wielding)
-	if c.Equipment.Offhand.ItemId > 0 {
-		offhandSpec := c.Equipment.Offhand.GetSpec()
-		return offhandSpec.GetAttackStaminaCost()
-	}
-
-	// Unarmed combat costs less stamina
-	return int(configs.GetBalanceConfig().UnarmedAttackStaminaCost)
-}
-
-// DeductAttackStamina deducts stamina for an attack and returns the actual cost deducted.
-// If character doesn't have enough stamina, deducts what they have and returns that amount.
+// U7 Task 7 deleted GetAttackStaminaCost and DeductAttackStamina. Between them
+// they were the entire attacker-side cost model, and it was charged ONCE PER
+// ROUND by the four combat wrappers however many weapons and swings the round
+// actually contained -- while the defender paid on every incoming swing. Use
+// combat.ChargeAttackCost, which prices one swing through costs.Calc (base x
+// encumbrance x inverse skill x modifier, the same composition the five defences
+// use) and charges it per swing thrown.
 //
-// Deprecated: use ApplyCostPartial. Its pay-what-you-can behaviour is correct
-// but nothing downstream strips the skill term yet; U8 adds that.
-func (c *Character) DeductAttackStamina() int {
-	cost := c.GetAttackStaminaCost()
-	return c.ApplyCostPartial(PoolStamina, cost).Charged
-}
+// The per-weapon arm is gone for a second reason beyond the round/swing one:
+// weapon weight already prices a heavy weapon through the encumbrance
+// multiplier, so reading a weapon's authored staminacost as well would charge
+// for the same heaviness twice.
 
 // DefensePool names the resource pool a defence is paid out of.
 //

@@ -205,11 +205,13 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   candidate. Movement is a two-pool transaction with a hand-rolled refund.
 - **`DeductStamina` and `DeductDefenseStamina` no longer exist.** U5b-2 deleted
   both. `flee` and the defence charge now call `ApplyCostPartial` directly, and
-  movement (`usercommands/go.go`) calls `ApplyCost`. The one survivor in
-  `resources.go` is `DeductAttackStamina`, which is `Deprecated:` and is already
-  a thin wrapper over `ApplyCostPartial`; it stays only because nothing
-  downstream strips the skill term until U8. `DeductActionPoints` is a different
-  pool entirely (see the ActionPoints note above).
+  movement (`usercommands/go.go`) calls `ApplyCost`. U7 Task 7 then deleted the
+  last two, `GetAttackStaminaCost` and `DeductAttackStamina`: the attacker's
+  cost was charged ONCE PER ROUND by the four combat wrappers however many
+  swings the round contained, while the defender paid on every incoming swing.
+  Attacks are priced per swing now by `combat.ChargeAttackCost`, through the
+  same `costs.Calc` composition the defences use. `DeductActionPoints` is a
+  different pool entirely (see the ActionPoints note above).
 - **Defence costs are one config formula, not per-defence Go arithmetic.** U7
   Task 6 deleted `GetDefenseStaminaCost` and with it the three per-defence base
   knobs (`DodgeBaseStaminaCost`, `ParryBaseStaminaCost`,

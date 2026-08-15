@@ -24,9 +24,9 @@ func (b *Balance) validateMisc() {
 	if b.MovementMaxStaminaCost <= 0 {
 		b.MovementMaxStaminaCost = 20.0
 	}
-	if b.UnarmedAttackStaminaCost < 1 {
-		b.UnarmedAttackStaminaCost = 4
-	}
+	// U7 Task 7 deleted UnarmedAttackStaminaCost's default with the field. The
+	// attack charge is per swing now and lives in validateCombat with the rest of
+	// the U7 cost knobs.
 
 	// ── RESOURCE MAXIMUMS ─────────────────────────────────────────────────────
 	if b.HealthBase < 0 {

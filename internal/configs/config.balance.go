@@ -10,6 +10,27 @@ type Balance struct {
 	// stat-based roll. Default 0.15 (15%). Valid range 0.05–0.50.
 	RollSpread ConfigFloat `yaml:"RollSpread"`
 
+	// ── COMBAT: ATTACK COSTS ─────────────────────────────────────────────────
+	// U7 Task 7: an attack is charged PER SWING, through the same costs.Calc
+	// formula the defences use -- base x encumbrance x inverse skill x modifier.
+	// Before this, the attacker paid ONCE PER ROUND no matter how many weapons
+	// and swings resolved, while the defender paid on every incoming swing. A
+	// twelve-swing build therefore attacked twelve times for the price of one,
+	// which is what made offence effectively free next to defence. Both sides of
+	// an exchange are now priced on the same basis.
+	//
+	// The base is deliberately the same 1.0 as DefenceBaseStaminaCost, and the
+	// modifier a neutral 1.0: attacking is the reference action the three defence
+	// modifiers (1.25 / 1.15 / 1.10) are tuned against, so it starts at parity
+	// and moves only when play says it should.
+	//
+	// This replaced UnarmedAttackStaminaCost and the per-weapon staminacost item
+	// field. Weapon weight already prices a heavy weapon through the encumbrance
+	// multiplier, so reading a per-weapon cost here as well would charge for the
+	// same heaviness twice.
+	AttackBaseStaminaCost ConfigFloat `yaml:"AttackBaseStaminaCost"` // Base stamina cost for ONE swing, before multipliers (default 1.0)
+	AttackCostModifier    ConfigFloat `yaml:"AttackCostModifier"`    // Per-action cost modifier for attacking (default 1.0 — the neutral reference the defence modifiers are tuned against)
+
 	// ── COMBAT: DEFENSE COSTS ────────────────────────────────────────────────
 	// U7 Task 6 replaced the six per-defence knobs (DodgeBaseStaminaCost,
 	// ParryBaseStaminaCost, BlockBaseStaminaCost and the three cost multipliers)
@@ -266,9 +287,13 @@ type Balance struct {
 	MobConvictionRegenPct    ConfigFloat `yaml:"MobConvictionRegenPct"`    // Fraction of ConvictionMax regen'd per tick — NPCs (default 0.02)
 
 	// ── STAMINA & CONVICTION ──────────────────────────────────────────────────
-	MovementBaseStaminaCost  ConfigFloat `yaml:"MovementBaseStaminaCost"`  // Flat cost to move on normal terrain (default 2.0)
-	MovementMaxStaminaCost   ConfigFloat `yaml:"MovementMaxStaminaCost"`   // Ceiling for any single move action (default 20.0)
-	UnarmedAttackStaminaCost ConfigInt   `yaml:"UnarmedAttackStaminaCost"` // Stamina per unarmed attack (default 4)
+	MovementBaseStaminaCost ConfigFloat `yaml:"MovementBaseStaminaCost"` // Flat cost to move on normal terrain (default 2.0)
+	MovementMaxStaminaCost  ConfigFloat `yaml:"MovementMaxStaminaCost"`  // Ceiling for any single move action (default 20.0)
+	// U7 Task 7 deleted UnarmedAttackStaminaCost. It was the fallback arm of a
+	// per-round, per-weapon attack charge that no longer exists; attacking is
+	// priced per swing by AttackBaseStaminaCost above, armed or not. The key may
+	// still be present in config.yaml -- yaml.Unmarshal is non-strict, so an
+	// orphaned key is ignored rather than fatal.
 
 	// ── RESOURCE MAXIMUMS ─────────────────────────────────────────────────────
 	HealthBase             ConfigInt `yaml:"HealthBase"`             // Flat HP before stat contribution (default 5)

@@ -9,6 +9,18 @@ func (b *Balance) validateCombat() {
 		b.RollSpread = 0.15
 	}
 
+	// ── COMBAT: ATTACK COSTS ─────────────────────────────────────────────────
+	// U7 Task 7: one swing, priced by costs.Calc. Seeded at parity with
+	// DefenceBaseStaminaCost and a neutral modifier -- attacking is the reference
+	// the three defence modifiers are tuned against, so it starts at 1.0 x 1.0
+	// and moves only when play says it should.
+	if b.AttackBaseStaminaCost <= 0 {
+		b.AttackBaseStaminaCost = 1.0
+	}
+	if b.AttackCostModifier <= 0 {
+		b.AttackCostModifier = 1.0
+	}
+
 	// ── COMBAT: DEFENSE COSTS ────────────────────────────────────────────────
 	// U7 Task 6: one shared base plus three per-action modifiers, composed by
 	// costs.Calc. The base is 1.0 rather than the old 2/4/5 because the formula

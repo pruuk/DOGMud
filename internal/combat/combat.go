@@ -53,8 +53,8 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 	}
 	attackResult := calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
 
-	// Deduct stamina for the attack
-	user.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. See ChargeAttackCost.
+	ChargeAttackCost(user.Character, attackResult.SwingsThrown)
 
 	if attackResult.DamageToSource != 0 {
 		user.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mob.InstanceId})
@@ -136,8 +136,8 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 	}
 	attackResult := calculateCombat(userAtk.Character, userDef.Character, User, User, ctx)
 
-	// Deduct stamina for the attack
-	userAtk.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. See ChargeAttackCost.
+	ChargeAttackCost(userAtk.Character, attackResult.SwingsThrown)
 
 	if attackResult.DamageToSource != 0 {
 		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: userDef.UserId})
@@ -219,8 +219,10 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) At
 	}
 	attackResult := calculateCombat(&mob.Character, user.Character, Mob, User, ctx)
 
-	// Deduct stamina for the attack
-	mob.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. The & is load-bearing --
+	// Mob.Character is a VALUE field, so a bare mob.Character here would charge a
+	// copy and the mob would attack for free.
+	ChargeAttackCost(&mob.Character, attackResult.SwingsThrown)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: user.UserId})
 
@@ -270,8 +272,9 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob, forceCrit bool) AttackRe
 	}
 	attackResult := calculateCombat(&mobAtk.Character, &mobDef.Character, Mob, Mob, ctx)
 
-	// Deduct stamina for the attack
-	mobAtk.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. The & is load-bearing --
+	// see AttackMobVsPlayer.
+	ChargeAttackCost(&mobAtk.Character, attackResult.SwingsThrown)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mobDef.InstanceId})
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget*-1, state.ActorRef{MobInstanceId: mobAtk.InstanceId})
@@ -496,6 +499,13 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			attackResult.Crit = false
 			attackResult.Fumble = false
 			attackResult.DoubleFumble = false
+
+			// Counted here, BEFORE resolution and outside the reset above, so it
+			// counts swings THROWN rather than swings that landed: a missed swing
+			// is effort spent and must be paid for. It accumulates across every
+			// weapon in the round because attackResult outlives the weapon loop.
+			// U7 Task 7 charges the attacker per swing off this number.
+			attackResult.SwingsThrown++
 
 			attackTargetDamage := 0
 			attackTargetReduction := 0

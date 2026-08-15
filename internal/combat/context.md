@@ -989,8 +989,8 @@ attempts escape. On success, player leaves combat.
 side effects:
 
 ```
-attackResult = calculateCombat(*user.Character, mob.Character, User, Mob)
-user.Character.DeductAttackStamina()
+attackResult = calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
+ChargeAttackCost(user.Character, attackResult.SwingsThrown)  // U7: PER SWING
 mob.Character.ApplyHealthChange(-totalDmg)
 mob.Character.TrackPlayerDamage(userId, dmg)  // loot attribution
 user.Character.OnStatUse("strength")          // progression
@@ -1617,7 +1617,8 @@ can add parallel snapshot checks at the same start-of-round site.
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
 | `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). Consumed by `ResolveChannelDefence` for the three non-melee channels; melee still builds its own `defSeq`. See "Defence sets are a property of the channel" below. |
-| `attackresult.go` | The result value passed back to callers |
+| `attack_cost.go` | `ChargeAttackCost(attacker, swings)` — the attacker-side price, U7 Task 7. One swing costs `AttackBaseStaminaCost` × encumbrance × inverse-skill × `AttackCostModifier` through `costs.Calc`, the same composition the five defences use, charged `× swings` through `ApplyCostFloat`. **This replaced a once-per-round `DeductAttackStamina` call in each of the four wrappers**: a twelve-swing build attacked twelve times for the price of one while the defender paid on every incoming swing, which is what made offence effectively free next to defence. Skill rank comes from `GetCombatSkillLevel` (weapon-appropriate, minimum 1), not the registry's nominal `skills.WeaponCombat`. A nil attacker or non-positive swing count charges nothing and is not `Short`. |
+| `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only) — `ChargeAttackCost` prices the round off it. |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |
 | `skill_moves.go` | Skill-driven combat moves (bash/trip/kick/...). **U6 Task 13:** `ExecuteSkillMove` scales damage through `defenceDamageMultiplier` instead of gating it on `attackSuccess` alone, so `SkillMoveResult.Hit == false` with `Damage > 0` is a legal pair (a defended attempt still lands partial damage), and `Damage` is the contest-scaled amount actually applied to the defender's health pool, not the unscaled base. `SkillMoveResult` gained `StatusApplied bool`, which stays binary — true only when `Hit == true`. |
