@@ -131,8 +131,12 @@ always better (wider net).
    - Most stamina-intensive but highly effective
    - -20% effectiveness when prone (shield still works from ground)
 
-**Defense Floor:** `MinDefenseChance` (default 0.15) ensures even massively
-outclassed defenders have a 15% chance to avoid any swing.
+**Defense Floor:** `ContestFloor` (0.125) is symmetric and lives inside
+`RunContest`, so a massively outclassed defender still saves at the floor rate
+and a massively outclassing attacker is still stopped at the same rate. U6 Task
+8 deleted the old melee-only `MinDefenseChance` / `MinAttackHitChance` pair;
+they were applied after crit resolution had already returned, so the attack
+floor was only ever evaluated on the swings a defence crit did not consume.
 
 **Stamina Costs:**
 - Only the winning defense (best margin) costs stamina — losing defenses are free
@@ -146,11 +150,14 @@ outclassed defenders have a 15% chance to avoid any swing.
 
 **Implementation:**
 - `runBestOfAllDefense()` in `combat_helpers.go` builds each defense's score and
-  delegates the rolling and selection to `internal/contest.Run` (U1). It no
+  delegates the rolling and selection to `RunContest` (U1, floored in U6). It no
   longer rolls anything itself.
-- `resolveDefenseOutcome()` processes the best result and floor saves
-- Two floors: `MinDefenseChance` (defender saves when attack wins) AND
-  `MinAttackHitChance` (attacker hits when defense wins)
+- `resolveDefenseOutcome()` processes the best result. Order is fumbles →
+  winner (already decided, and already floored, by `RunContest`) → crit →
+  normal outcome. Crit fires only for the side that WON, and never on a floored
+  outcome, whose margin is the ±1 sentinel rather than a real one.
+- One floor, `ContestFloor`, applied once inside `RunContest`. There is no
+  second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity
 
 ### Prone / Supine Knockdown System (Position FSM, chunks 4a + 4b)
@@ -507,10 +514,10 @@ Single-defender sites pass one unnamed entry, so `Result.Winner` is
 `""` for them. Ask `Result.Contested`, never `Result.Winner`, to find
 out whether a contest happened.
 
-Melee is the exception by design: `runBestOfAllDefense` calls
-`contest.Run` (unfloored, best-of-N) and applies `MinDefenseChance` /
-`MinAttackHitChance` afterwards in `resolveDefenseOutcomeCore`. The two
-floor styles are reconciled in U6.
+Melee is no longer an exception. U6 pointed `runBestOfAllDefense` at
+`RunContest` and deleted the post-crit `MinDefenseChance` /
+`MinAttackHitChance` pair from `resolveDefenseOutcomeCore`, so melee is
+floored once, in the same place as everything else.
 
 Callers today: `ExecuteSkillMove`, `AttemptGrapple`,
 `RollSubmissionAttempt`, `TryStoicResolve`, `TrySpellDeflection`,
@@ -530,9 +537,10 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 - **`runBestOfAllDefense` has no affordability gate, on purpose.** Every defence
   in the sequence enters the contest regardless of the defender's stamina, and
   only the winner is charged, partially. Re-adding a gate would drop an
-  exhausted defender out of the contest and back onto the `MinDefenseChance`
-  last resort: a flat 15% save, always narrated as a dodge, never able to
-  defence-crit. Defence attempts and stance counting happen above where the gate
+  exhausted defender out of the contest entirely, leaving them nothing but the
+  uncontested fall-through, which since U6 Task 8 is an unconditional hit --
+  the old flat save that used to catch that case is gone. Defence attempts and
+  stance counting happen above where the gate
   used to be, so they are unaffected either way.
 - **Exhaustion currently costs a defender nothing.** `GetDefenseScore` has no
   resource term and every `ResourceMultiplier` caller is attack-side, so between
@@ -871,8 +879,9 @@ For each defense in [dodge, parry, block]:
   3. Multiply by effectiveness (DodgeEffectiveness, ParryEffectiveness,
      BlockEffectiveness from config).
   4. Multiply by prone penalties if applicable.
-  5. Hand the scores to internal/contest.Run: ONE attack roll contested by
-     every defence entry. runBestOfAllDefense no longer rolls anything (U1).
+  5. Hand the scores to RunContest: ONE attack roll contested by every defence
+     entry, with ContestFloor applied to the outcome. runBestOfAllDefense no
+     longer rolls anything (U1) and no longer floors anything itself (U6).
   6. The core returns an ATTACK-positive margin; runBestOfAllDefense flips it
      once at the seam so bestDefenseResult.margin stays DEFENCE-positive
      (margin = defenseRoll.Value - hitRoll.Value).
@@ -881,23 +890,26 @@ For each defense in [dodge, parry, block]:
 
 **iv. Resolve Defense** — `resolveDefenseOutcome()`
 ```
-if best.margin > 0:
-  Defense succeeded — but check attack floor first:
-    MinAttackHitChance: attacker still has a small chance to hit anyway.
-    If attack floor triggers: HIT despite defense winning.
-  Otherwise: Attack avoided.
-  Send defense message ("The goblin blocks your attack!")
-  Check for defense crits (defRoll.ZScore > 2.0):
-    Parry crit -> disarm opportunity
-    Dodge crit -> grapple opportunity
-  Trigger skill progression for the defense type.
-  return hit=false
+Fumbles first (unchanged, self-relative z <= -2.0), then:
 
-if best.margin <= 0:
-  Check defense floor: MinDefenseChance (15%).
-  Random roll: 15% chance to save anyway ("narrowly blocks").
-  If floor save: hit=false.
-  Otherwise: HIT. return hit=true.
+attackWon := best.margin <= 0
+  ContestFloor has ALREADY flipped the winner and stamped the +-1 sentinel
+  inside RunContest, so this one expression covers floored and unfloored alike.
+  There is no second floor here. Do not add one.
+
+if not floored:
+  attackWon and attackCrit -> CRIT HIT
+  defence won and defenseCrit -> defence crit (disarm / grapple opportunity)
+  Crit only ever fires for the side that WON. A floored outcome carries the
+  sentinel, not a real margin, so promoting it would hand a decisive result to
+  the side that lost the roll. forceCrit (sleeping victim) is exempt from both
+  gates: it is decided before the roll, so it forces the win too.
+
+attackWon -> HIT
+otherwise -> defence succeeded. Send the defence message, progress the defence
+             skill. A floored save names its REAL winning defence, because the
+             contest picked one -- the deleted last-resort path always claimed
+             a dodge.
 ```
 
 **v. Momentum** — `sourceChar.UpdateMomentum(hit)` — consecutive
@@ -1367,7 +1379,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | `combat_helpers.go` | Extracted helpers. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
-| `crit_floor.go` | Crit floors, 1% of HITS both directions (5.11e). **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes a second hit floor leaking through `MinDefenseChance`. |
+| `crit_floor.go` | Crit floors, 1% of HITS both directions (5.11e). **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |

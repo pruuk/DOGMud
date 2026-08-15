@@ -38,7 +38,7 @@ func DefenseCritFloor() float64 {
 //
 // CALL ONLY ONCE THE HIT OUTCOME IS FINAL. In every channel a crit implies a
 // hit, so promoting before the hit is settled turns this into an undeclared
-// second hit floor stacked on MinAttackHitChance.
+// second hit floor stacked on ContestFloor.
 func ApplyCritFloor(isCrit bool, floor float64) bool {
 	if isCrit || floor <= 0 {
 		return isCrit
@@ -84,11 +84,11 @@ func DefenseContestCrit(margin float64, roll dice.RollResult) bool {
 //
 // It runs at the very END of resolveDefenseOutcome, after every branch has
 // settled res.hit, and it is the only correct place for it. The melee resolver
-// treats an attack crit as forcing a hit — step 2 returns res.hit = true on
-// attackCrit — so a floor evaluated any earlier would silently become a hit
-// floor and leak straight through MinDefenseChance.
+// treats an attack crit as forcing a hit — the crit step returns res.hit = true
+// on attackCrit — so a floor evaluated any earlier would silently become a
+// second hit floor stacked on ContestFloor.
 //
-// Note it deliberately does NOT floor the margin. A 5.9 floor save already
+// Note it deliberately does NOT floor the margin. A floored contest already
 // carries the +-1 margin sentinel, and flooring the margin would corrupt every
 // downstream effect that scales by it.
 //

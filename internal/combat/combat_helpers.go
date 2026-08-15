@@ -800,9 +800,17 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 		` <ansi fg="fumble-text">!!!</ansi>`, sourceChar.Name, targetChar.Name))
 }
 
-// resolveDefenseOutcome processes the best defense result with the new
-// crit/fumble priority: fumbles → crits → normal → floors.
+// resolveDefenseOutcome processes the best defense result. Priority is
+// fumbles → winner (already floored by RunContest) → crit → normal outcome.
 // Returns the full hitResolution including crit/fumble flags.
+//
+// U6 Task 8 moved the floor AHEAD of crit. It used to be the last step, after
+// five crit branches that all returned, so against a defender who reliably
+// defence-crit the attack floor was evaluated on almost nothing. The contest
+// floor now decides the winner inside RunContest and crit is derived from that
+// settled winner, which is why MinAttackHitChance and MinDefenseChance are gone
+// rather than merely relocated: keeping them would have been a second floor
+// layered on the first, each partly undoing the other.
 //
 // forceCrit bypasses the crit check entirely and treats the attack as a
 // confirmed crit regardless of the roll, additionally suppressing the fumble
@@ -830,7 +838,6 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 // Split out so the floors have exactly one application point despite the many
 // early returns below.
 func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
-	bal := configs.GetBalanceConfig()
 	fumbleThreshold := -2.0
 	defCritThreshold := 2.0
 
@@ -930,82 +937,74 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		return res
 	}
 
-	// ── Step 2: Crit resolution (trumps normal rolls) ───────────────────────
+	// ── Step 2: the floor already gated the winner, inside RunContest ───────
+	//
+	// This used to sit AFTER crit resolution, which returned on five branches,
+	// so against a defender who reliably defence-crit the attack floor was
+	// evaluated on almost nothing. The Core Guardian defence-crit 96.8% of
+	// swings and the floor saw the other 3.2%.
+	//
+	// RunContest has ALREADY flipped the winner and stamped the +-1 sentinel by
+	// the time we get here, so best.margin is post-flip and this one expression
+	// covers both the floored and unfloored cases. A floored hit carries
+	// res.Margin +1, which the sign conversion turns into best.margin -1, so it
+	// reads as an attack win; a floored save is the mirror. Do not special-case
+	// best.floored here -- it matters only for the crit gate below.
+	//
+	// An UNCONTESTED swing leaves best.margin at math.Inf(-1) and is likewise an
+	// attack win, which is the legacy behaviour of the `best.margin > 0` test
+	// this replaces.
+	attackWon := best.margin <= 0
 
-	if attackCrit && defenseCrit {
-		// Both crit: compare raw values, higher wins
-		if best.hitRoll.Value >= best.defRoll.Value {
+	// forceCrit is a decision taken BEFORE the roll (the sleeping-victim first
+	// hit), not a crit derived from winning. Now that crit is gated on the
+	// winning side it has to force the win too: without this, a sleeper whose
+	// defence happened to take the margin would quietly resolve as an ordinary
+	// miss and the documented "first round against a sleeper auto-crits"
+	// contract would break on roughly half of swings, silently.
+	if forceCrit {
+		attackWon = true
+	}
+
+	// ── Step 3: crit, only on the side that WON, and never when floored ─────
+	//
+	// A floored outcome carries the sentinel margin rather than a real one.
+	// Promoting it would hand a decisive result to the side that lost the roll.
+	// The sentinel normalises to a near-zero z, so this gate is belt-and-braces
+	// today -- but it is the DECLARED rule, and it stops a future retune of the
+	// sentinel from silently reintroducing floored crits.
+	//
+	// forceCrit is exempt for the same reason it forces the win: it is not
+	// derived from the margin at all, so the sentinel says nothing about it.
+	if forceCrit || !best.floored {
+		if attackWon && attackCrit {
 			res.hit = true
 			res.crit = true
-			mudlog.Debug("CritVsCrit-AtkWins", "atkVal", fmt.Sprintf("%.1f", best.hitRoll.Value),
-				"defVal", fmt.Sprintf("%.1f", best.defRoll.Value),
+			mudlog.Debug("AttackCrit", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
+				"threshold", fmt.Sprintf("%.2f", critThreshold),
 				"source", sourceChar.Name, "target", targetChar.Name)
-		} else {
+			return res
+		}
+		if !attackWon && defenseCrit {
 			res.hit = false
 			res.defenseCrit = true
 			setDefenseCritFlags(result, best)
 			sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
-			mudlog.Debug("CritVsCrit-DefWins", "atkVal", fmt.Sprintf("%.1f", best.hitRoll.Value),
-				"defVal", fmt.Sprintf("%.1f", best.defRoll.Value),
+			mudlog.Debug("DefenseCrit", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
 				"source", sourceChar.Name, "target", targetChar.Name)
+			return res
 		}
-		return res
 	}
 
-	if attackCrit {
-		// Attack crit vs normal defense: always hits
+	// ── Step 4: normal outcome ──────────────────────────────────────────────
+
+	if attackWon {
 		res.hit = true
-		res.crit = true
-		mudlog.Debug("AttackCrit", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
-			"threshold", fmt.Sprintf("%.2f", critThreshold),
-			"source", sourceChar.Name, "target", targetChar.Name)
 		return res
 	}
 
-	if defenseCrit {
-		// Defense crit vs normal attack: always avoids
-		res.hit = false
-		res.defenseCrit = true
-		setDefenseCritFlags(result, best)
-		sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
-		mudlog.Debug("DefenseCrit", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
-			"source", sourceChar.Name, "target", targetChar.Name)
-		return res
-	}
-
-	// ── Step 3: Normal resolution ───────────────────────────────────────────
-
-	if best.margin > 0 {
-		// Defense won the roll normally — check attack floor (last resort)
-		attackFloor := float64(bal.MinAttackHitChance)
-		if attackFloor > 0 && util.Rand(100) < int(attackFloor*100) {
-			res.hit = true
-			return res
-		}
-
-		// Defense succeeded
-		res.hit = false
-		sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
-		return res
-	}
-
-	// Attack won the roll normally — check defense floor (last resort)
-	{
-		floor := float64(bal.MinDefenseChance)
-		if floor > 0 && util.Rand(100) < int(floor*100) {
-			res.hit = false
-			// Floor save — defense succeeds via last resort
-			defType := best.defenseType
-			if defType == "" {
-				defType = characters.DefenseDodge
-			}
-			sendFloorDefenseMessages(result, defType, sourceChar, targetChar)
-			return res
-		}
-	}
-
-	// Normal hit
-	res.hit = true
+	res.hit = false
+	sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
 	return res
 }
 
@@ -1107,30 +1106,11 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 	}
 }
 
-// sendFloorDefenseMessages sends messages for a defense floor save.
-func sendFloorDefenseMessages(result *AttackResult, defType string, sourceChar *characters.Character, targetChar *characters.Character) {
-	result.DefenseUsed = DefenseType(defType)
-
-	var defenseVerb string
-	switch defType {
-	case characters.DefenseDodge:
-		defenseVerb = "dodge"
-	case characters.DefenseParry:
-		defenseVerb = "parry"
-	case characters.DefenseBlock:
-		defenseVerb = "block"
-	default:
-		defenseVerb = "avoid"
-	}
-
-	defCat := CategoryForDefenseVerb(defenseVerb)
-	result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
-	result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
-	result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
-	if sourceChar.RoomId != targetChar.RoomId {
-		result.SendToTargetRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss an attack.</ansi>`, targetChar.Name, defenseVerb))
-	}
-}
+// U6 Task 8 deleted sendFloorDefenseMessages. It narrated the MinDefenseChance
+// last-resort save, which always claimed a dodge because that path had no real
+// winning defence to name. A floored save now comes out of the contest with a
+// genuine best.defenseType and is narrated by sendDefenseMessages like any other
+// successful defence, so the player is told what actually stopped the swing.
 
 // calcHitDamage computes the damage for a successful hit, handling crits.
 // The isCrit flag is determined during hitroll resolution, not re-derived here.

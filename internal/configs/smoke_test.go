@@ -32,15 +32,13 @@ func TestSmoke_BalanceConfigValid(t *testing.T) {
 	assert.LessOrEqual(t, float64(bal.RollSpread), 0.50,
 		"RollSpread must be <= 0.50")
 
-	// Defense floor / attack floor
-	assert.GreaterOrEqual(t, float64(bal.MinDefenseChance), 0.0,
-		"MinDefenseChance must be non-negative")
-	assert.LessOrEqual(t, float64(bal.MinDefenseChance), 0.50,
-		"MinDefenseChance must be <= 0.50")
-	assert.GreaterOrEqual(t, float64(bal.MinAttackHitChance), 0.0,
-		"MinAttackHitChance must be non-negative")
-	assert.LessOrEqual(t, float64(bal.MinAttackHitChance), 0.50,
-		"MinAttackHitChance must be <= 0.50")
+	// Contest floor. U6 replaced the MinDefenseChance / MinAttackHitChance pair
+	// with this single symmetric knob, so there is one bound to check instead of
+	// two. Zero is a failure, not a pass: a zero floor disables the mechanism
+	// outright.
+	if bal.ContestFloor <= 0 || bal.ContestFloor > 0.5 {
+		t.Errorf("ContestFloor out of bounds: %v", bal.ContestFloor)
+	}
 
 	// Skill multiplier curve
 	assert.Greater(t, float64(bal.SkillMultiplierBase), 0.0,

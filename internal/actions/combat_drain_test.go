@@ -122,7 +122,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	char.Health = 150 // 50 HP below max — heal is observable
 
 	// Retry until we observe a hit (probability with str=500 vs dex=1 is very
-	// high per round; the MinDefenseChance floor means ~85% hit rate).
+	// high per round; ContestFloor caps it at roughly a 1-in-8 save).
 	var res DrainResult
 	hitSeen := false
 	for i := 0; i < 100; i++ {

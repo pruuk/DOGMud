@@ -22,8 +22,12 @@ type Balance struct {
 	DodgeEffectiveness ConfigFloat `yaml:"DodgeEffectiveness"` // Multiplier on dodge score before opposed roll (default 1.0)
 	ParryEffectiveness ConfigFloat `yaml:"ParryEffectiveness"` // Multiplier on parry score before opposed roll (default 1.0)
 	BlockEffectiveness ConfigFloat `yaml:"BlockEffectiveness"` // Multiplier on block score before opposed roll (default 1.0)
-	MinDefenseChance   ConfigFloat `yaml:"MinDefenseChance"`   // Floor probability any defense succeeds (default 0.15)
-	MinAttackHitChance ConfigFloat `yaml:"MinAttackHitChance"` // Floor probability any attack hits (default 0.15)
+	// U6 deleted MinDefenseChance and MinAttackHitChance from here. They were the
+	// melee-only floor pair, applied in resolveDefenseOutcomeCore AFTER crit
+	// resolution had already returned on five branches, so the attack floor was
+	// only ever evaluated on the swings a defence crit did not consume. Against a
+	// defender who crits nearly every swing that made the floor dead code in
+	// exactly the matchup it was written for. ContestFloor below replaces both.
 
 	// ContestFloor is the single symmetric last-resort probability for EVERY
 	// opposed contest in the game. A symmetric floor F yields the bound

@@ -76,10 +76,10 @@ func dodgeBest() bestDefenseResult {
 // TestApplyCritFloors_NeverPromotesAMiss is the whole reason the floor runs
 // last.
 //
-// An attack crit FORCES a hit in resolveDefenseOutcome (step 2 returns
+// An attack crit FORCES a hit in resolveDefenseOutcome (the crit step returns
 // res.hit = true). A crit floor evaluated before the hit outcome was final
 // would therefore become a second, undeclared hit floor stacked on
-// MinAttackHitChance, letting hopeless attackers connect more often than 5.9
+// ContestFloor, letting hopeless attackers connect more often than the floor
 // intends. Its observable form is a crit on a swing that missed.
 func TestApplyCritFloors_NeverPromotesAMiss(t *testing.T) {
 	res := hitResolution{hit: false}

@@ -159,12 +159,14 @@ func handleCombatRound(
 
 	// Pinnacle item procs: defender's shield on_block. A "successful block" in
 	// this engine is a defended swing (res.Hit == false) whose widest-margin
-	// winning defense was block (res.DefenseUsed == combat.DefenseBlock). Both
-	// the normal-defense path (sendDefenseMessages) and the last-resort floor
-	// path (sendFloorDefenseMessages) set DefenseUsed on success; the attack
-	// floor-override leaves DefenseUsed empty when it forces a Hit — so gating
-	// on !Hit && block is exact. rollCombatAttack has already resolved defense
-	// into res by this point, so DefenseUsed is populated.
+	// winning defense was block (res.DefenseUsed == combat.DefenseBlock).
+	// U6 Task 8 collapsed the two ways that used to happen into one:
+	// sendDefenseMessages is now the only thing that sets DefenseUsed, because a
+	// floored save comes out of the contest with a real winning defence to name
+	// instead of the hardcoded dodge the deleted last-resort path used. A forced
+	// Hit still leaves DefenseUsed empty, so gating on !Hit && block is exact.
+	// rollCombatAttack has already resolved defense into res by this point, so
+	// DefenseUsed is populated.
 	if !res.Hit && res.DefenseUsed == combat.DefenseBlock {
 		dispatchItemProcs("on_block", def.GetCharacter(), atk.GetCharacter(), atk.GetRoom(), 0)
 	}

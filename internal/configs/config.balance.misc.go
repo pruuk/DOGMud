@@ -134,14 +134,13 @@ func (b *Balance) validateMisc() {
 		b.CarryCapacityMultiplier = 0.65
 	}
 
-	// ── MIN DEFENSE/ATTACK CHANCE ────────────────────────────────────────────
-	if b.MinDefenseChance < 0 || b.MinDefenseChance > 0.50 {
-		b.MinDefenseChance = 0.15
-	}
-	if b.MinAttackHitChance < 0 || b.MinAttackHitChance > 0.50 {
-		b.MinAttackHitChance = 0.15
-	}
-
+	// ── CONTEST FLOOR ────────────────────────────────────────────────────────
+	// U6 replaced the MinDefenseChance / MinAttackHitChance pair with this one
+	// symmetric knob. The pair was applied AFTER crit resolution in
+	// resolveDefenseOutcomeCore, where every crit branch returned first, so
+	// against a reliably-critting defender the attack floor was evaluated on
+	// almost nothing.
+	//
 	// Zero is REJECTED, not accepted. A Go test binary never loads config.yaml,
 	// so a permissive [0, 0.5) check would leave this at zero and silently
 	// disable the floor in every Go test.
