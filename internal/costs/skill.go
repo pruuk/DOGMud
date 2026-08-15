@@ -11,16 +11,22 @@ package costs
 
 import "github.com/GoMudEngine/GoMud/internal/configs"
 
-// SkillMultiplier returns the cost multiplier for a given skill rank. It runs
-// INVERSE to skill: a practised fighter spends less stamina (or conviction,
-// or any other resource priced through this package) on the same action than
-// an untrained one.
+// SkillCostMultiplier returns the cost multiplier for a given skill rank. It
+// runs INVERSE to skill: a practised fighter spends less stamina (or
+// conviction, or any other resource priced through this package) on the same
+// action than an untrained one.
 //
-// This is NOT combat.SkillMultiplier. That function is a sqrt curve scaling
-// DAMAGE UPWARD with skill rank. This one is two straight-line segments
-// scaling COST DOWNWARD with skill rank. Same name, opposite direction,
-// different job — do not merge them and do not reuse one in place of the
-// other.
+// Named SkillCostMultiplier, not SkillMultiplier, on purpose:
+// combat.SkillMultiplier already exists with an IDENTICAL signature
+// (func(rank int) float64) and scales DAMAGE UPWARD via a sqrt curve — the
+// opposite direction from this one. Several U7 call sites live inside
+// package combat, where an unqualified SkillMultiplier(...) call resolves to
+// that function, not this one. At rank 100 the two return 3.0 and 0.40
+// respectively, so a mix-up compiles clean, passes vet, and lands as a 7.5x
+// cost error in the wrong direction. Do not rename this back to match, and
+// do not merge the two functions — they are two straight-line segments
+// scaling COST DOWNWARD versus a sqrt curve scaling DAMAGE UPWARD, different
+// jobs entirely.
 //
 // The curve is two linear segments joined at the neutral rank
 // (CostSkillMidRank, default 25, multiplier 1.00):
@@ -34,7 +40,7 @@ import "github.com/GoMudEngine/GoMud/internal/configs"
 // The band is deliberately asymmetric: a wide penalty at rank 0 would drain a
 // new player's resources in their first exchange, while a deep discount at
 // the cap is what makes grinding a skill toward mastery worth it.
-func SkillMultiplier(rank int) float64 {
+func SkillCostMultiplier(rank int) float64 {
 	bal := configs.GetBalanceConfig()
 
 	atZero := float64(bal.CostSkillMultAtZero)
@@ -43,8 +49,12 @@ func SkillMultiplier(rank int) float64 {
 	midRank := int(bal.CostSkillMidRank)
 	capRank := int(bal.CostSkillCapRank)
 
-	// Guard against a misconfigured knob (zero, negative, or inverted ranks)
-	// dividing by zero below.
+	// Belt-and-braces, not a defence against a zero-value Balance:
+	// GetBalanceConfig() calls ensureConfigValidated(), so a Balance reaching
+	// this function has already been through validateProgression(), which
+	// (after fix #3 below) rejects capRank <= midRank at load time. This
+	// guard exists only in case a future caller constructs a Balance by hand
+	// and skips validation — cheap insurance against a divide-by-zero.
 	if midRank <= 0 {
 		midRank = 25
 	}

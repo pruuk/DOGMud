@@ -287,16 +287,23 @@ type Balance struct {
 	RegenProgressionCurve    ConfigFloat `yaml:"RegenProgressionCurve"`    // Exponent shaping the depletion→chance curve (default 3.0)
 
 	// ── COSTS: INVERSE-SKILL MULTIPLIER (U7) ─────────────────────────────────
-	// costs.SkillMultiplier runs INVERSE to skill: a practised fighter spends
-	// less stamina/conviction on the same action than an untrained one. Two
-	// linear segments joined at CostSkillMidRank, clamped flat below rank 0
-	// and at/above CostSkillCapRank. NOT combat.SkillMultiplier (a sqrt curve
-	// scaling damage UPWARD) — same name, opposite direction, different job.
+	// costs.SkillCostMultiplier runs INVERSE to skill: a practised fighter
+	// spends less stamina/conviction on the same action than an untrained
+	// one. Two linear segments joined at CostSkillMidRank, clamped flat below
+	// rank 0 and at/above CostSkillCapRank. NOT combat.SkillMultiplier (a
+	// sqrt curve scaling damage UPWARD) — same-shaped signature, opposite
+	// direction, different job; named SkillCostMultiplier specifically so an
+	// unqualified in-package call inside combat can never resolve to it.
+	//
+	// Unlike some knobs elsewhere in this file (e.g. StaminaPerStrength: 0),
+	// 0 is NOT a usable value for any of the five fields below — each is
+	// replaced by its default at load if left at or below 0 (the two rank
+	// fields if left below 1).
 	CostSkillMultAtZero ConfigFloat `yaml:"CostSkillMultAtZero"` // Cost multiplier at rank 0 (default 1.10)
 	CostSkillMultAtMid  ConfigFloat `yaml:"CostSkillMultAtMid"`  // Cost multiplier at CostSkillMidRank, neutral (default 1.00)
 	CostSkillMultAtCap  ConfigFloat `yaml:"CostSkillMultAtCap"`  // Cost multiplier at/above CostSkillCapRank (default 0.40)
 	CostSkillMidRank    ConfigInt   `yaml:"CostSkillMidRank"`    // Virtual rank where the multiplier is neutral (default 25)
-	CostSkillCapRank    ConfigInt   `yaml:"CostSkillCapRank"`    // Virtual rank where the discount maxes out (default 100)
+	CostSkillCapRank    ConfigInt   `yaml:"CostSkillCapRank"`    // Virtual rank where the discount maxes out (default 100); must exceed CostSkillMidRank, enforced in validateProgression
 
 	// ── COSTS: ENCUMBRANCE MULTIPLIER (U7) ───────────────────────────────────
 	// costs.EncumbranceMultiplier prices carried weight into PHYSICAL actions

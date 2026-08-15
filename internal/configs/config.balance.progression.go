@@ -42,6 +42,15 @@ func (b *Balance) validateProgression() {
 	if b.CostSkillCapRank < 1 {
 		b.CostSkillCapRank = 100
 	}
+	// Cross-field invariant: the cap rank must sit strictly above the mid
+	// rank, or costs.SkillCostMultiplier's two segments invert (the "above
+	// mid" segment would run backwards). Enforced here, once, at load, where
+	// a bad config.yaml edit is visible; costs.SkillCostMultiplier also
+	// carries a belt-and-braces guard against this same case in case a
+	// caller ever constructs a Balance by hand and skips validation.
+	if b.CostSkillCapRank <= b.CostSkillMidRank {
+		b.CostSkillCapRank = b.CostSkillMidRank + 1
+	}
 
 	// ── COSTS: ENCUMBRANCE MULTIPLIER (U7) ──────────────────────────────────
 	if b.CostEncumbranceKnee <= 0 || b.CostEncumbranceKnee >= 1.0 {
