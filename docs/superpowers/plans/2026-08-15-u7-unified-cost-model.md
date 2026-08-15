@@ -273,6 +273,35 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 ---
 
+#### Task 1 postscript: two claims in its commit message are WRONG
+
+`48a12ad99`'s message says the `SurpriseAttack` demotion it reactivates "is a
+suspected live crit-lock and is worth its own look". **It is not. Refuted at
+review, definitively, from the code.**
+
+`calculateCombat` was never the only demoter. `resolveCombatRound`
+(`internal/hooks/NewRound_DoCombat_unified.go`, Phase 8) already called
+`SetAggro(..., DefaultAttack)` on the **real** character at the end of every
+round, and that call cannot be skipped: every early return in the round handler
+sits before the attack roll, so once a swing resolves, Phase 8 runs. If the
+defender died instead, the death branch routes through `RetargetOrEnd`, which
+either re-targets with `DefaultAttack` or nils `Aggro` outright. Production
+behaviour was already exactly one round of surprise crit, and the fix does not
+change even that round: `backstabCrit` is captured into a local before the
+demotion. The `calculateCombat` demotion is **redundant, not newly live**.
+
+The second wrong claim: mob defender skill tracking did not "switch on".
+`IncreaseSkill` writes a map, which was already shared with the copy, so mob
+skill *gains* always persisted. What was discarded was the `SkillUseCount`
+increment, so a mob defender sat permanently at virtual rank 0 — **maximum**
+progression odds on every defence. Post-fix the count accumulates and the odds
+decay normally, so mob defenders now reach the cap **more slowly**, bounded
+either way by `MobSkillCap` 3.
+
+Recorded here because this arc has already had two false claims propagate from a
+plan into memory before anyone checked them. A commit message cannot be edited
+after the fact; this note is the correction of record.
+
 ### Task 2: The inverse-skill cost multiplier
 
 **Files:**
