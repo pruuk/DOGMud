@@ -95,11 +95,11 @@ func RollStatArray(count int, mean, stdDev, min, max float64) []int
 Contests:
 
 ```go
-// Floored (chunk 5.9a/5.10) -- use these.
+// Floored (chunk 5.9a/5.10), deprecated (see above) -- the floor is now the
+// literal 0.05, not a settable package var. combat.RunContest is the real
+// entry point.
 func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult)
 func OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist float64) (bool, float64, RollResult, RollResult)
-func SetContestFloors(minSuccess, minResist float64)
-func ContestFloors() (minSuccess, minResist float64)
 
 // Unfloored -- guarded by contest_floor_guard_test.go.
 func OpposedRollStatRaw(atk, def float64) (bool, float64, RollResult, RollResult)

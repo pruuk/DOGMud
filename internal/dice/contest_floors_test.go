@@ -9,13 +9,10 @@ import (
 // consumer of OpposedRollStat was unbounded, so a much weaker initiator
 // essentially could not succeed and a much stronger one essentially could not
 // fail. These pin the floors that close that gap.
-
-func withFloors(t *testing.T, success, resist float64) {
-	t.Helper()
-	prevS, prevR := ContestFloors()
-	SetContestFloors(success, resist)
-	t.Cleanup(func() { SetContestFloors(prevS, prevR) })
-}
+//
+// OpposedRollStat's floor is now the fixed literal 0.05 (see
+// contest_floors.go); it is no longer a settable package var, so these tests
+// exercise the hardcoded value directly instead of configuring it per test.
 
 // rate runs the contest many times and returns the observed success rate.
 func rate(atk, def float64, n int) float64 {
@@ -31,8 +28,6 @@ func rate(atk, def float64, n int) float64 {
 // THE gap. Unfloored, a stat-100 initiator against a stat-150 resister wins
 // about 0.9% of the time. The floor must lift that to roughly the floor value.
 func TestOpposedRollStat_OutmatchedInitiatorKeepsAChance(t *testing.T) {
-	withFloors(t, 0.05, 0.05)
-
 	const n = 40000
 	got := rate(100, 150, n)
 
@@ -48,8 +43,6 @@ func TestOpposedRollStat_OutmatchedInitiatorKeepsAChance(t *testing.T) {
 
 // The other end: an overwhelming initiator must not be a certainty.
 func TestOpposedRollStat_OverwhelmingInitiatorIsNotCertain(t *testing.T) {
-	withFloors(t, 0.05, 0.05)
-
 	const n = 40000
 	got := rate(200, 100, n)
 
@@ -63,32 +56,18 @@ func TestOpposedRollStat_OverwhelmingInitiatorIsNotCertain(t *testing.T) {
 
 // At parity the floors cancel and the contest stays even.
 func TestOpposedRollStat_ParityStaysEven(t *testing.T) {
-	withFloors(t, 0.05, 0.05)
-
 	got := rate(100, 100, 40000)
 	if math.Abs(got-0.5) > 0.03 {
 		t.Errorf("parity contest won %.2f%%, want ~50%%", got*100)
 	}
 }
 
-// Zero disables an end, which must reproduce the raw behaviour exactly.
-func TestOpposedRollStat_ZeroDisablesTheFloor(t *testing.T) {
-	withFloors(t, 0, 0)
-
-	got := rate(100, 150, 40000)
-	if got > 0.03 {
-		t.Errorf("with floors disabled the outmatched initiator won %.2f%%; want the raw ~0.9%%", got*100)
-	}
-}
-
 // A floor save is a BARE success. Callers that scale an effect by margin must
 // not read a last-resort save as a decisive one.
 func TestOpposedRollStat_FlippedOutcomeHasMinimalMargin(t *testing.T) {
-	// 0.5 is the maximum the setter accepts -- above that a "floor" would be the
-	// dominant term rather than a last resort. At a 3x stat gap the raw success
-	// chance is effectively zero, so any success here IS a floor save.
-	withFloors(t, 0.5, 0)
-
+	// At a 3x stat gap the raw success chance is effectively zero, so any
+	// success here IS a floor save (the fixed 0.05 literal). n=400 keeps the
+	// expected flip count comfortably above zero without flaking.
 	flips := 0
 	for i := 0; i < 400; i++ {
 		success, margin, atkRoll, defRoll := OpposedRollStat(100, 300)
@@ -108,29 +87,16 @@ func TestOpposedRollStat_FlippedOutcomeHasMinimalMargin(t *testing.T) {
 	}
 
 	if flips == 0 {
-		t.Fatal("no contest was rescued at a 0.5 floor; the test proves nothing")
-	}
-}
-
-func TestSetContestFloors_ClampsOutOfRangeValues(t *testing.T) {
-	withFloors(t, 0.05, 0.05)
-
-	SetContestFloors(-1, 99)
-	s, r := ContestFloors()
-	if s != 0 {
-		t.Errorf("negative floor = %v, want 0", s)
-	}
-	if r != 0.5 {
-		t.Errorf("floor above range = %v, want 0.5 (a floor must stay a last resort)", r)
+		t.Fatal("no contest was rescued at the 0.05 floor; the test proves nothing")
 	}
 }
 
 // Spells supply their own floors per call, because a fizzle costs the caster the
 // whole round while a missed melee swing costs a fraction of one.
 func TestOpposedRollStatWithFloors_UsesTheSuppliedFloors(t *testing.T) {
-	// Package floors set high; the per-call values must win.
-	withFloors(t, 0.5, 0.5)
-
+	// Per-call floors of zero must reproduce the raw, unfloored behaviour --
+	// OpposedRollStatWithFloors takes its floors as arguments, not from any
+	// package state.
 	const n = 40000
 	wins := 0
 	for i := 0; i < n; i++ {
@@ -140,13 +106,11 @@ func TestOpposedRollStatWithFloors_UsesTheSuppliedFloors(t *testing.T) {
 	}
 	got := float64(wins) / float64(n)
 	if got > 0.03 {
-		t.Errorf("won %.2f%% with per-call floors of zero; the package floors leaked in", got*100)
+		t.Errorf("won %.2f%% with per-call floors of zero; want the raw ~0.9%%", got*100)
 	}
 }
 
 func TestOpposedRollStatWithFloors_ClampsPerCall(t *testing.T) {
-	withFloors(t, 0, 0)
-
 	// A floor above 0.5 must clamp, not dominate. At a 3x gap the raw chance is
 	// ~0, so the observed rate is the effective floor.
 	const n = 40000
@@ -173,8 +137,6 @@ func TestOpposedRollStatWithFloors_ClampsPerCall(t *testing.T) {
 // This pins the arithmetic that rule depends on, so a future retune can see what
 // each value actually buys rather than guessing.
 func TestContestFloor_EffectiveRatesAtEachTier(t *testing.T) {
-	withFloors(t, 0, 0)
-
 	const n = 40000
 	measure := func(atk, def, fh, fr float64) float64 {
 		wins := 0

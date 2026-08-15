@@ -2,7 +2,6 @@ package dice
 
 import (
 	"math/rand"
-	"sync"
 )
 
 // Last-resort floors for opposed contests (roadmap chunk 5.9a).
@@ -19,27 +18,12 @@ import (
 // combat_helpers.go and nothing outside combat reached them. Chunk 5.10 then
 // gave the floored roll the natural name so the safe path is the default one.
 //
-// Set at startup from config via SetContestFloors, mirroring SetRollSpread.
-// dice deliberately does not import configs.
-var (
-	minContestSuccess float64 = 0.05
-	minContestResist  float64 = 0.05
-	contestFloorLock  sync.RWMutex
-)
-
-// SetContestFloors configures the last-resort floors for floored opposed rolls.
-//
-// minSuccess: chance the initiator succeeds even after losing the roll.
-// minResist:  chance the resister holds even after losing the roll.
-//
-// Both are clamped to [0, 0.5]. A value of 0 disables that end. Values at or
-// above 0.5 would make the floor the dominant term rather than a last resort.
-func SetContestFloors(minSuccess, minResist float64) {
-	contestFloorLock.Lock()
-	minContestSuccess = clampFloor(minSuccess)
-	minContestResist = clampFloor(minResist)
-	contestFloorLock.Unlock()
-}
+// U6 collapsed the config-driven route (combat.RunContest / Balance.ContestFloor)
+// and this package-var route into the one config route; OpposedRollStat and
+// OpposedRollStatWithFloors are deprecated, unreachable from production, and
+// awaiting deletion alongside contest_floors_test.go's TestOpposedRollStat_*
+// equivalence oracle (out of scope for this task). The floor below is now a
+// fixed literal, not a settable package var.
 
 // clampFloor keeps a floor a last resort rather than the dominant term.
 func clampFloor(v float64) float64 {
@@ -50,13 +34,6 @@ func clampFloor(v float64) float64 {
 		return 0.5
 	}
 	return v
-}
-
-// ContestFloors reports the configured floors. For tests and diagnostics.
-func ContestFloors() (minSuccess, minResist float64) {
-	contestFloorLock.RLock()
-	defer contestFloorLock.RUnlock()
-	return minContestSuccess, minContestResist
 }
 
 // OpposedRollStat performs a contested check between two stat-based scores with
@@ -74,12 +51,14 @@ func ContestFloors() (minSuccess, minResist float64) {
 // callers that scale an effect by margin must not read it as a rout.
 //
 // Deprecated: use combat.RunWithGlobalFloors. Zero production callers as of U4;
-// retained as the U4 equivalence oracle and for internal delegation. U6 deletes
-// it.
+// retained as the U4 equivalence oracle and for internal delegation, unreachable
+// from production, and awaiting deletion alongside that oracle test. The 0.05
+// literal below used to be the settable package-var pair (minContestSuccess,
+// minContestResist); U6 collapsed that route into Balance.ContestFloor, read
+// only by combat.RunContest, so this deprecated path no longer needs to be
+// configurable.
 func OpposedRollStat(atk, def float64) (bool, float64, RollResult, RollResult) {
-	contestFloorLock.RLock()
-	floorSuccess, floorResist := minContestSuccess, minContestResist
-	contestFloorLock.RUnlock()
+	const floorSuccess, floorResist = 0.05, 0.05
 
 	return OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist)
 }
