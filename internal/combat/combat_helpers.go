@@ -1025,7 +1025,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 			res.defenseCrit = true
 			res.damageMult = 0.0
 			setDefenseCritFlags(result, best)
-			sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
+			sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, false)
 			mudlog.Debug("DefenseCrit", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
 				"source", sourceChar.Name, "target", targetChar.Name)
 			return res
@@ -1063,7 +1063,9 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 	res.hit = true
 	res.defended = true
 	res.damageMult = 1.0 - DefenceMitigation(defMargin)
-	sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
+	// partial == true: the swing deals partial damage, so buildAttackMessages
+	// owns the two personal lines; only the room narration is sent here.
+	sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, true)
 	return res
 }
 
@@ -1080,7 +1082,19 @@ func setDefenseCritFlags(result *AttackResult, best bestDefenseResult) {
 }
 
 // sendDefenseMessages sends narrative messages for a successful defense.
-func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, isThirdParty bool) {
+//
+// partial (U6 Task 16b) marks the non-crit defensive win, where the swing
+// still deals partial damage. On that path the pool's personal lines imply
+// TOTAL avoidance ("coming up out of reach!") and buildAttackMessages then
+// narrates the same swing's damage, so the two viewers each got two lines
+// that contradicted each other. When partial is true this function keeps
+// every side effect (DefenseUsed, defender skill progression, third-party
+// context) and still sends the ROOM lines — room lines never carry damage,
+// so they stay coherent — but suppresses the to-source and to-target
+// personal lines; buildAttackMessages sends the single composite line each
+// participant sees instead. A defensive crit (partial == false) fully
+// negates the swing and keeps its personal lines unchanged.
+func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, isThirdParty bool, partial bool) {
 	result.DefenseUsed = DefenseType(best.defenseType)
 
 	var defenseVerb string
@@ -1158,16 +1172,20 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		}
 
 		defCat := CategoryForDefenseVerb(defenseVerb)
-		result.SendToTarget(defCat, string(toDefenderMsg))
-		result.SendToSource(defCat, string(toAttackerMsg))
+		if !partial {
+			result.SendToTarget(defCat, string(toDefenderMsg))
+			result.SendToSource(defCat, string(toAttackerMsg))
+		}
 		result.SendToSourceRoom(defCat, string(toRoomMsg))
 		if sourceChar.RoomId != targetChar.RoomId {
 			result.SendToTargetRoom(defCat, string(toRoomMsg))
 		}
 	} else {
 		defCat := CategoryForDefenseVerb(defenseVerb)
-		result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
-		result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
+		if !partial {
+			result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
+			result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
+		}
 		result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
 		if sourceChar.RoomId != targetChar.RoomId {
 			result.SendToTargetRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss an attack.</ansi>`, targetChar.Name, defenseVerb))
@@ -1244,12 +1262,49 @@ func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius
 	return weaponSubType
 }
 
+// deflectedSwingLines builds the single composite line each participant sees
+// for a deflected swing (U6 Task 16b): the defence won the contest but partial
+// damage still got through. The line names the defence that deflected the
+// swing AND the damage it let through, so neither viewer is told the swing
+// missed while their health bar says otherwise.
+//
+// defense should be the DefenseUsed stamped by sendDefenseMessages for this
+// same swing. If it is somehow empty (no path produces that today), the
+// neutral "turn aside" phrasing keeps the line coherent rather than printing
+// an empty verb.
+func deflectedSwingLines(defense DefenseType, sourceName, targetName, dmgDesc string) (toAttacker, toDefender items.ItemMessage) {
+	dmg := `(<ansi fg="damage">` + dmgDesc + `</ansi>)`
+
+	var verbYou, verbThey string
+	switch defense {
+	case DefenseDodge:
+		verbYou, verbThey = "dodge", "dodges"
+	case DefenseParry:
+		verbYou, verbThey = "parry", "parries"
+	case DefenseBlock:
+		verbYou, verbThey = "block", "blocks"
+	default:
+		toAttacker = items.ItemMessage(fmt.Sprintf(
+			`%s turns your swing aside, but you still connect! %s`, targetName, dmg))
+		toDefender = items.ItemMessage(fmt.Sprintf(
+			`You turn %s's swing aside, but it still catches you! %s`, sourceName, dmg))
+		return toAttacker, toDefender
+	}
+
+	toAttacker = items.ItemMessage(fmt.Sprintf(
+		`%s %s your swing, but you still connect! %s`, targetName, verbThey, dmg))
+	toDefender = items.ItemMessage(fmt.Sprintf(
+		`You %s %s's swing, but it still catches you! %s`, verbYou, sourceName, dmg))
+	return toAttacker, toDefender
+}
+
 // buildAttackMessages constructs and sends all combat messages for a swing.
 //
 // defended is hitResolution.defended: the defence won the contest but the
-// swing still dealt partial damage (U6 Task 10). Task 14 uses it to stop the
-// double narration where sendDefenseMessages already said "you dodge/parry/
-// block" and the nonzero damage then ALSO selected a damage-band attack line.
+// swing still dealt partial damage (U6 Task 10). Task 16b uses it to give a
+// deflected swing exactly one personal line per viewer (deflectedSwingLines),
+// replacing the miss-band-plus-glancing-suffix composite the Phase B playtest
+// flagged as self-contradicting; sendDefenseMessages keeps the room line.
 func buildAttackMessages(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character,
 	ws weaponSetup, sdp swingDamageParams, attackTargetDamage int, attackTargetReduction int,
 	attackSourceDamage int, attackSourceReduction int,
@@ -1300,13 +1355,15 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// target is still a fumble.
 		msgs = items.GetPreAttackMessage(displaySubtype, items.CoupDeGrace)
 	} else if deflected {
-		// Deflected swing: sendDefenseMessages already narrated the dodge/
-		// parry/block, so a damage-band line here would narrate the same
-		// swing twice. Use the miss band; a short glancing note carrying the
-		// damage description is appended below. The feint check is
-		// deliberately skipped: this swing dealt real damage, so reading it
-		// as a deliberate feint would be wrong.
-		msgs = items.GetAttackMessage(displaySubtype, 0)
+		// Deflected swing (U6 Task 16b): no pool messages at all. The Phase B
+		// playtest caught the previous approach — a miss-band line plus a
+		// glancing suffix — reading as a self-contradiction ("misses you
+		// completely! The blow still catches you."). Each participant instead
+		// gets ONE composite line built below, naming the defence and the
+		// damage it let through; the room keeps the defence narration that
+		// sendDefenseMessages already sent, so no room lines are sent here.
+		// The feint check is deliberately skipped: this swing dealt real
+		// damage, so reading it as a deliberate feint would be wrong.
 	} else {
 		msgs = items.GetAttackMessage(displaySubtype, int(pctDamage))
 		// Feint check: skilled attackers can turn misses into deliberate-looking
@@ -1340,7 +1397,25 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// Get source character's weapon skill level for message selection
 	skillLevel := sourceChar.GetCombatSkillLevel()
 
-	if sourceChar.RoomId == targetChar.RoomId {
+	if srcType == Mob {
+		tokenReplacements[items.TokenSource] = sourceChar.GetMobName(0).String()
+	}
+
+	if tgtType == Mob {
+		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
+	}
+
+	if deflected {
+		// result.DefenseUsed was set by sendDefenseMessages during THIS
+		// swing's resolution: the swing loop in combat.go calls
+		// resolveDefenseOutcome (which narrates the defence and stamps
+		// DefenseUsed) before it calls buildAttackMessages, so on a deflected
+		// swing the field always names the defence that just deflected it.
+		toAttackerMsg, toDefenderMsg = deflectedSwingLines(result.DefenseUsed,
+			tokenReplacements[items.TokenSource],
+			tokenReplacements[items.TokenTarget],
+			tokenReplacements[items.TokenDamage])
+	} else if sourceChar.RoomId == targetChar.RoomId {
 		toAttackerMsg = msgs.Together.ToAttacker.GetForSkillLevel(skillLevel, sdp.msgSeed)
 		toDefenderMsg = msgs.Together.ToDefender.GetForSkillLevel(skillLevel, sdp.msgSeed)
 		toAttackerRoomMsg = msgs.Together.ToRoom.GetForSkillLevel(skillLevel, sdp.msgSeed)
@@ -1371,14 +1446,6 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		}
 	}
 
-	if srcType == Mob {
-		tokenReplacements[items.TokenSource] = sourceChar.GetMobName(0).String()
-	}
-
-	if tgtType == Mob {
-		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
-	}
-
 	for tokenName, tokenValue := range tokenReplacements {
 		toAttackerMsg = toAttackerMsg.SetTokenValue(tokenName, tokenValue)
 		toDefenderMsg = toDefenderMsg.SetTokenValue(tokenName, tokenValue)
@@ -1386,17 +1453,6 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		if len(string(toDefenderRoomMsg)) > 0 {
 			toDefenderRoomMsg = toDefenderRoomMsg.SetTokenValue(tokenName, tokenValue)
 		}
-	}
-
-	// Deflected swing: append the glancing note to the two participants. Room
-	// viewers keep the plain miss-band line; the defence narration tells them
-	// the rest.
-	if deflected {
-		dmgDesc := tokenReplacements[items.TokenDamage]
-		toAttackerMsg = items.ItemMessage(string(toAttackerMsg) +
-			` Your blow is turned aside, but still lands. (<ansi fg="damage">` + dmgDesc + `</ansi>)`)
-		toDefenderMsg = items.ItemMessage(string(toDefenderMsg) +
-			` The blow still catches you. (<ansi fg="damage">` + dmgDesc + `</ansi>)`)
 	}
 
 	// Feint: replace miss messages with feint-flavored text for skilled attackers
@@ -1462,11 +1518,14 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 
 	result.SendToTarget(hitCat, string(defenderMsg))
 
-	// Send to room
-	result.SendToSourceRoom(hitCat,
-		string(toAttackerRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).
-			SetTokenValue(items.TokenTargetType, string(tgtType))),
-	)
+	// Send to room. A deflected swing sends none: the defence room line from
+	// sendDefenseMessages already narrated it, and room lines carry no damage.
+	if !deflected {
+		result.SendToSourceRoom(hitCat,
+			string(toAttackerRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).
+				SetTokenValue(items.TokenTargetType, string(tgtType))),
+		)
+	}
 
 	// Send to defender room if separate
 	if len(string(toDefenderRoomMsg)) > 0 {
