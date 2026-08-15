@@ -1,5 +1,31 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: A good defence turns a blow, a great one stops it
+
+Combat now recognises the glancing blow. A dodge, parry or block that only
+just succeeds turns a strike aside rather than erasing it: the blow still
+lands, robbed of most of its force. A decisive defence still stops a strike
+dead, and an exceptional one still answers back. The same holds when you are
+the one swinging, so the attacks you fail to fully stop will sting rather
+than crush.
+
+That one rule now covers everything. Spells and taunts are turned aside by
+the same kind of contest as a sword swing, and a trip or bash that is
+defended can still clip its target without taking them down. The text you
+see now tells the truth about it: if it says a blow grazed you, it did, and
+your health agrees.
+
+Two defences step into the open. Quell smothers a working aimed at your
+mind, and defy is the refusal that robs a taunt of its sting. Both draw on
+willpower, and both spend conviction rather than stamina; see help quell and
+help defy. Spells that hurl something physical at you are now answered by
+dodge and block instead, so a fighter's reflexes finally count for something
+against a caster.
+
+One more honest consequence: a hidden shooter stays hidden only while
+nothing lands. An arrow that is turned aside but still draws blood gives
+the shooter away.
+
 ## 2026-08-14: No attempt is ever completely hopeless, or completely certain
 
 Every contested action in the game now shares one rule about luck. Whether you
