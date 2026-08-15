@@ -77,9 +77,9 @@ func Bash(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	} else if result.Damage > 0 {
 		if targetUser != nil {
 			if canSee {
-				targetUser.SendText(messaging.CategoryBash, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s %s fails to floor you, but still slams into you! (<ansi fg="damage">%s</ansi>)`, mobName, bashLabel, dmgDesc))
+				targetUser.SendText(messaging.CategoryBash, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s <ansi fg="yellow-bold">%s</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">%s</ansi>)`, mobName, bashLabel, dmgDesc))
 			} else {
-				targetUser.SendText(messaging.CategoryBash, fmt.Sprintf(`Something's %s fails to floor you, but still slams into you! (<ansi fg="damage">%s</ansi>)`, bashLabel, dmgDesc))
+				targetUser.SendText(messaging.CategoryBash, fmt.Sprintf(`Something's <ansi fg="yellow-bold">%s</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">%s</ansi>)`, bashLabel, dmgDesc))
 			}
 		}
 		room.SendTextVisual(messaging.CategoryBash,

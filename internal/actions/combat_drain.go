@@ -57,7 +57,10 @@ type DrainResult struct {
 //     attack stat, Dexterity defense stat, TripDamagePercent, Strength damage
 //     stat, no knockdown)
 //   - On hit: apply ConditionBleeding (duration 4, magnitude = Strength/12
-//     min 2) sourced as "drain"; heal the attacker for DrainHealRatio * damage
+//     min 2) sourced as "drain". Lifesteal heals the attacker for
+//     DrainHealRatio * damage actually dealt, including a defended attempt
+//     that still lands partial damage (bleed stays hit-only; lifesteal does
+//     not)
 //   - combat.RecordSpecialMove for analytics + RoundsWaiting = 1
 //   - OnSkillUse(UnarmedCombat) on hit for progression
 //
@@ -211,13 +214,14 @@ type DrainAreaResult struct {
 // ExecuteDrainArea performs an area version of ExecuteDrain: every living
 // player in the actor's room is swept for drain damage (mirroring
 // ExecuteDrain's per-target math exactly — ExecuteSkillMove with
-// TripDamagePercent, a bleed condition on hit, DrainHealRatio lifesteal), and
-// the actor is healed once by the aggregate of every hit's lifesteal
-// fraction. Summing per-hit heal fractions and healing once at the end is
-// mathematically identical to computing the aggregate fraction of the total
-// damage up front (both reduce to DrainHealRatio * sum(damage_i)) — the
-// per-hit accumulation is what lets this loop also report per-player damage
-// for messaging.
+// TripDamagePercent, a bleed condition on hit, DrainHealRatio lifesteal on
+// damage actually dealt), and the actor is healed once by the aggregate of
+// every damaging result's lifesteal fraction (hit or defended partial;
+// bleed stays hit-only). Summing per-result heal fractions and healing once
+// at the end is mathematically identical to computing the aggregate fraction
+// of the total damage up front (both reduce to DrainHealRatio *
+// sum(damage_i)) — the per-result accumulation is what lets this loop also
+// report per-player damage for messaging.
 //
 // Unlike ExecuteDrain, this is NOT gated by SpeciesHasLifeDrain / aggro / the
 // special-move cooldown — those are defense-in-depth for the single-target

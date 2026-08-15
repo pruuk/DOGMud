@@ -80,10 +80,10 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	} else if res.MoveResult.Damage > 0 {
 		partialMsgs := []string{
 			`Your throttle lunge mostly misses <ansi fg="mobname">%s</ansi>'s throat, but your fangs still graze it! (<ansi fg="damage">%s</ansi>)`,
-			`<ansi fg="mobname">%s</ansi> pulls free of your grip, but your fangs still catch their throat! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="mobname">%s</ansi> pulls mostly free of your grip, but your fangs still catch their throat! (<ansi fg="damage">%s</ansi>)`,
 		}
 		partialTargetMsgs := []string{
-			`<ansi fg="username">%s</ansi> lunges for your throat and you pull free, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="username">%s</ansi> lunges for your throat and you pull mostly free, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`,
 			`You twist mostly away as <ansi fg="username">%s</ansi> snaps at your throat, but not all the way! (<ansi fg="damage">%s</ansi>)`,
 		}
 		partialRoomMsgs := []string{

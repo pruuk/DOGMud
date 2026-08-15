@@ -105,7 +105,7 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if res.Healed > 0 {
 			healDesc := combat.GetHealDescription(res.Healed, user.Character.HealthMax.Value)
 			healMsgs := []string{
-				`<ansi fg="green">A trickle of stolen vitality flows into you, %s.</ansi>`,
+				`<ansi fg="green">A trickle of stolen vitality flows into you. You feel %s.</ansi>`,
 				`<ansi fg="green">You feel %s as a sliver of their warmth becomes yours.</ansi>`,
 			}
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc))

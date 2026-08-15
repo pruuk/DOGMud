@@ -189,7 +189,7 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			`<ansi fg="username">%s</ansi> swings a kick at <ansi fg="mobname">%s</ansi> but misses!`,
 		}
 		partialMsgs = []string{
-			`Your <ansi fg="yellow-bold">kick</ansi> misses <ansi fg="mobname">%s</ansi>'s guard, but your boot still clips them! (<ansi fg="damage">%s</ansi>)`,
+			`Your <ansi fg="yellow-bold">kick</ansi> fails to beat <ansi fg="mobname">%s</ansi>'s guard, but your boot still clips them! (<ansi fg="damage">%s</ansi>)`,
 			`You swing a kick at <ansi fg="mobname">%s</ansi>; they slip most of it, but not all! (<ansi fg="damage">%s</ansi>)`,
 		}
 		partialTargetMsgs = []string{

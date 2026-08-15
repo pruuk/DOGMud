@@ -285,11 +285,11 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 		} else if tripResult.Damage > 0 {
 			dmgDesc := combat.GetDamageDescription(tripResult.Damage, tripResult.TargetMaxHP)
 			result.DefenderMsg = fmt.Sprintf(
-				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> You dodge and lash at their legs, they stay up, but you still catch them! (<ansi fg="damage">%s</ansi>)`, dmgDesc)
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> You dodge and lash at their legs. They stay up, but you still catch them! (<ansi fg="damage">%s</ansi>)`, dmgDesc)
 			result.AttackerMsg = fmt.Sprintf(
-				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and lashes at your legs, you stay up, but it still catches you! (<ansi fg="damage">%s</ansi>)`, defender.Name, dmgDesc)
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and lashes at your legs. You stay up, but it still catches you! (<ansi fg="damage">%s</ansi>)`, defender.Name, dmgDesc)
 			result.RoomMsg = fmt.Sprintf(
-				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and lashes at %s's legs, who stays up but still gets caught!`, defender.Name, attacker.Name)
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and lashes at %s, who stays up but takes the blow!`, defender.Name, attacker.Name)
 		} else {
 			result.DefenderMsg = `<ansi fg="cyan-bold">⚡ SWEEP!</ansi> You dodge and try to sweep their legs, but they keep their footing!`
 			result.AttackerMsg = fmt.Sprintf(
@@ -337,9 +337,9 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 		} else if bashResult.Damage > 0 {
 			dmgDesc := combat.GetDamageDescription(bashResult.Damage, bashResult.TargetMaxHP)
 			result.DefenderMsg = fmt.Sprintf(
-				`<ansi fg="cyan-bold">🛡 SHIELD SLAM!</ansi> You catch the blow and try to slam them, they brace against it, but your shield still connects! (<ansi fg="damage">%s</ansi>)`, dmgDesc)
+				`<ansi fg="cyan-bold">🛡 SHIELD SLAM!</ansi> You catch the blow and try to slam them. They brace against it, but your shield still connects! (<ansi fg="damage">%s</ansi>)`, dmgDesc)
 			result.AttackerMsg = fmt.Sprintf(
-				`<ansi fg="cyan-bold">🛡 SHIELD SLAM!</ansi> %s catches your blow and tries to slam you, you brace against it, but the shield still connects! (<ansi fg="damage">%s</ansi>)`, defender.Name, dmgDesc)
+				`<ansi fg="cyan-bold">🛡 SHIELD SLAM!</ansi> %s catches your blow and tries to slam you. You brace against it, but the shield still connects! (<ansi fg="damage">%s</ansi>)`, defender.Name, dmgDesc)
 			result.RoomMsg = fmt.Sprintf(
 				`<ansi fg="cyan-bold">🛡 SHIELD SLAM!</ansi> %s blocks and tries to slam %s, who braces but still takes the hit!`, defender.Name, attacker.Name)
 		} else {
