@@ -9,6 +9,7 @@ setting, or [`schemas/`](schemas/) if you want to author content.
 |------|--------------|
 | [`world.md`](world.md) | The world-design document — lore, factions, zones, species |
 | [`PATCH_NOTES.md`](PATCH_NOTES.md) | Dated shipping log of every change |
+| [`PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`](PRE_DEPLOY_PLAYTEST_CRIBSHEET.md) | The owner's manual checklist before deploying the unified-resolution arc; the Elemental Queen fight is mandatory |
 | [`PATH_TO_1.0.md`](PATH_TO_1.0.md) | Remaining work before the 1.0 tag |
 
 ## Reference

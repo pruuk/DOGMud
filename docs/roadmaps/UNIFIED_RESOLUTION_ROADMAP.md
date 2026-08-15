@@ -630,3 +630,27 @@ Full list in spec section 7. The two that compile cleanly and silently:
    U11 is where the sweep happens, but the gate is on the arc, not on U11: no plan
    in U0–U10 may merge with its own package docs stale, per standing rule 2.
 7. The adversarial playtest gate passes.
+
+## Pre-deploy manual playtest (owner, blocking deploy)
+
+The AI-harness gate above is necessary but not sufficient: the owner runs a
+manual pass with Meirok on the local server before anything deploys. The full
+checklist lives in `docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md` and grows as
+U7-U12 land. Two items are called out here because they are MANDATORY, not
+optional feel checks:
+
+1. **The Elemental Queen (planar oasis instance, ~300g).** The 2026-08-15
+   caster-brain fix made her actually cast for the first time: she now opens
+   with chrysalis-cocoon, throws conviction-spike and conviction-barrage, and
+   flees below 30% health. That is a real difficulty change to a PAID fight,
+   and it was never playtested at authoring because the archetype was dead.
+   Fight her with Meirok before deploy. The same fight is the designated
+   live-verification instrument for QUELL (her conviction spells are mental,
+   she has the pool to survive long enough to cast repeatedly, and unlike the
+   bandit caster's Mind Fog her spells deal real damage, so quell costs and
+   partial mitigation are observable).
+2. **The arc's floor and ceiling at veteran power.** No previous session could
+   observe the 12.5% bounds because trash dies in one round. The queen's
+   gold-scaled pool is the instrument here too: in a ten-plus-round fight,
+   Meirok should occasionally be stopped even while dominating, and she
+   should occasionally get through even while losing.
