@@ -1656,6 +1656,35 @@ binary; the damage joins the shared partial mechanism."
 
 ### Task 14: Fix the downstream gates that assumed a defence deals zero
 
+> **SCOPE EXPANDED BY TASK 10's FINDINGS.** `res.hit` / `AttackResult.Hit` is now
+> TRUE on a deflected swing, and Task 10 enumerated every consequence in the
+> auto-attack path. All of these are in scope here; none were fixed there.
+>
+> **The player-visible one, fix first:** `buildAttackMessages` now double-narrates.
+> `sendDefenseMessages` says "you dodge", then `buildAttackMessages` picks a
+> damage-band line off a nonzero `pctDamage`, so a deflected swing reads as both
+> a dodge and a hit. Related: `checkFeint` gates on `pctDamage == 0` and so no
+> longer fires on deflected swings.
+>
+> Also now firing on deflections, each needing a decision rather than a blanket
+> fix:
+> - `UpdateMomentum(res.hit)` builds momentum on a deflection.
+> - `combat.go:80/:155/:234` play `hit-other`/`hit-self` instead of `miss`, award
+>   `OnSkillUse(combatSkill)` and the dual-wield `weapon-combat` call, and skip
+>   the else branch that ran `OnCriticalFailure`.
+> - `ApplyHealthChange` with nonzero damage now triggers aggro, `WimpyCheck` and
+>   `TrackPlayerDamage`.
+> - `chunk4eApplyOutsideHitDisruption` and `chunk4eAccumulateSubInterruptDamage`,
+>   both gated on `DamageToTarget > 0`.
+> - `SwingEvent.Hit` analytics.
+> - `tryWeaponBreak` (`hooks/combat_shared_helpers.go:146`) now tests offhand
+>   breakage on deflected swings.
+>
+> **NOT affected, verified:** special moves (bash/kick/gore) and `ExecuteFire`
+> carry their own `MoveResult` and never route through `resolveDefenseOutcome`.
+
+
+
 **Files:**
 - Modify: `internal/hooks/NewRound_DoCombat_unified.go:141,144,160-170`
 - Modify: `internal/hooks/NewRound_DoCombat_helpers.go:128,152`
