@@ -1,0 +1,35 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">defy</ansi>
+
+Defy is your defence against words meant to wound. You refuse to
+rise to it. The taunt lands on someone who will not be moved.
+
+You do not type defy. Like dodge, parry and block, it happens on
+its own when someone comes at you with words.
+
+<ansi fg="yellow">━━━ How It Works ━━━</ansi>
+
+  <ansi fg="stat">Uses:</ansi> Willpower and your Rhetoric skill
+  <ansi fg="stat">Costs:</ansi> Conviction, not stamina
+  <ansi fg="stat">Answers:</ansi> Taunts and other attacks on your composure
+
+Run your conviction dry and your composure goes with it. A fighter
+who has been goaded all fight has nothing left to refuse with.
+
+<ansi fg="yellow">━━━ Degrees of Success ━━━</ansi>
+
+Defying is not all or nothing. Refuse a barb outright and it costs
+you nothing. Only just hold your temper and it still stings, less
+than it would have. Even a poor defiance is worth something.
+
+<ansi fg="yellow">━━━ Improving It ━━━</ansi>
+
+  <ansi fg="stat">Rhetoric:</ansi> the skill that carries most of the weight
+  <ansi fg="stat">Willpower:</ansi> improves through use, and raises every mental defence
+
+Knowing how a barb is built is most of knowing how to shrug it off.
+The same skill that lets you taunt lets you weather one.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help quell</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help rhetoric</ansi>
+  <ansi fg="command">help taunt</ansi>, <ansi fg="command">help conviction</ansi>

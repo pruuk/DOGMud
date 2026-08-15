@@ -1,0 +1,37 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">quell</ansi>
+
+Quell is your defence against workings that attack the mind. You
+put the spell down before it takes hold, the way you would smother
+a flame rather than dodge it.
+
+You do not type quell. Like dodge, parry and block, it happens on
+its own when something reaches for you.
+
+<ansi fg="yellow">━━━ How It Works ━━━</ansi>
+
+  <ansi fg="stat">Uses:</ansi> Willpower and your Spellcasting skill
+  <ansi fg="stat">Costs:</ansi> Conviction, not stamina
+  <ansi fg="stat">Answers:</ansi> Spells that attack the mind
+
+A spell that attacks the body is answered by dodge or block
+instead. Which defence applies is decided by the spell, not by you.
+
+<ansi fg="yellow">━━━ Degrees of Success ━━━</ansi>
+
+Quelling is not all or nothing. Put a working down decisively and
+it does nothing at all. Only just manage it and the spell still
+reaches you, weakened. A barely successful quell is better than
+none, and a masterful one is better still.
+
+<ansi fg="yellow">━━━ Improving It ━━━</ansi>
+
+  <ansi fg="stat">Spellcasting:</ansi> the skill that carries most of the weight
+  <ansi fg="stat">Willpower:</ansi> improves through use, and raises every mental defence
+
+Casters defend against casters. Studying the art teaches you to
+recognise it coming.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help defy</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help spellcasting</ansi>
+  <ansi fg="command">help conviction</ansi>, <ansi fg="command">help combat</ansi>
