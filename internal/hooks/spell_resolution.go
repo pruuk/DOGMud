@@ -1197,19 +1197,31 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	chargeState.Set("core_charge", chargeState.GetInt("core_charge")+1)
 
 	for _, pr := range result.PlayerResults {
-		if !pr.MoveResult.Hit {
+		if !pr.MoveResult.Hit && pr.MoveResult.Damage == 0 {
+			// Defended with zero damage (a defensive crit): matches this
+			// path's existing silent-miss behavior.
 			continue
 		}
 		target := users.GetByUserId(pr.UserId)
 		if target == nil {
 			continue
 		}
-		target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> saps your strength! (<ansi fg="damage">%s</ansi>)`,
-			mob.Character.Name, spellData.Name,
-			combat.GetDamageDescription(pr.MoveResult.Damage, target.Character.HealthMax.Value)))
-		if !target.Character.IsInCombat() {
-			target.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+		if pr.MoveResult.Hit {
+			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> saps your strength! (<ansi fg="damage">%s</ansi>)`,
+				mob.Character.Name, spellData.Name,
+				combat.GetDamageDescription(pr.MoveResult.Damage, target.Character.HealthMax.Value)))
+			if !target.Character.IsInCombat() {
+				target.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+			}
+		} else {
+			// Defended, but the drain still landed a partial pull. Since
+			// Task 13 a defended maneuver can deal partial damage; say so
+			// instead of letting the player's HP drop with no message at all.
+			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> fails to take full hold of you, but still saps a little of your strength! (<ansi fg="damage">%s</ansi>)`,
+				mob.Character.Name, spellData.Name,
+				combat.GetDamageDescription(pr.MoveResult.Damage, target.Character.HealthMax.Value)))
 		}
 	}
 
