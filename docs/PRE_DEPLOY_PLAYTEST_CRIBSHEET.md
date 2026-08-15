@@ -132,3 +132,59 @@ All filed. Anything NOT on this list that reads wrong is a fresh finding.
 Append checks here as each chunk lands (defence costs and encumbrance in
 U7, exhaustion consequences in U8, concentration and knockdown reworks in
 U10, the help sweep in U11, targeting simplification in U12).
+
+### 10a. U7: the unified cost model
+
+Every action is now priced by one formula, and two of the inputs (defending
+at all, and carried weight on anything physical) have NEVER been charged
+before. This section is about FEEL, not arithmetic: no number in the game
+should be visible to you, so judge it on whether stamina moves when it
+should and whether the choices it forces are interesting.
+
+Setup note: to arrive laden, carry Heavy Weighted Stones (item 12). Walking
+unloaded GAINS stamina, so drain first and engage immediately.
+
+- [ ] Long fight, stamina watched: pick something that survives many rounds
+      and watch your stamina across the whole fight. It should drain
+      steadily rather than in one cliff, and it should drain whether you
+      are swinging or being swung at. If you can stand in a fight
+      indefinitely without your stamina moving, that is a finding.
+- [ ] Four-mob room: `3078 Wolf Den Approach` in Ironwind Steppe is the
+      harshest spawn in the world (four wolves). Fight it and watch what
+      four incoming attackers do to a defender's stamina. Defending is now
+      charged on every swing you answer, so this is the worst case in the
+      game by design. Verify it is punishing without being unwinnable for
+      Meirok, and note where the line sits for a weaker character.
+- [ ] Laden vs unladen defence, same character: fight the same opponent
+      twice, once carrying almost nothing and once close to your carrying
+      limit. The laden run should cost noticeably more stamina per round.
+      The curve is gentle with room to spare and steep near the limit, so
+      a moderate pack should barely register and a near-full one should
+      hurt. If moderate and heavy feel the same, that is a finding.
+- [ ] Skilled vs novice discount: compare a well-practised action against
+      a barely-trained one. Meirok's weapon-combat swings should feel
+      markedly cheaper than a fresh character's, and a defence you rarely
+      use should cost more than one you lean on. Spawn a fresh character
+      if you need the contrast; the difference should be obvious over a
+      fight, not a rounding artefact.
+- [ ] Travel at ordinary load vs travel near capacity: walk a long route
+      with a light pack, then walk it again near your carrying limit. The
+      ordinary walk should be slightly cheaper than you remember. The
+      laden walk should be markedly dearer, to the point of changing
+      whether you make the trip in one go. Also confirm no move ever costs
+      nothing, and that no single move drains an absurd share of the pool.
+- [ ] Reserved-pool stand-up: take a character carrying heavy pool
+      reservation (fielded companions, or Chrysalis / pinnacle gear with
+      reserve percentages), get knocked prone, and stand. This was a
+      permanent lockout: the gate asked for a share of a pool the
+      character could never fill, refused, and blamed exhaustion, which
+      resting could not fix. Confirm standing works, and that if it does
+      refuse, the refusal names the reservation descriptively rather than
+      just calling you tired.
+- [ ] Walking rarely trains search: this is deliberately very rare, so
+      DO NOT treat its absence over a session as a finding. Note it only
+      if you see it fire suspiciously often.
+- [ ] Quell and defy ignore weight: mount a quell or a defy while heavily
+      laden. It should cost conviction and the pack should make no
+      difference at all. If a heavy load makes holding your nerve dearer,
+      that is a finding.

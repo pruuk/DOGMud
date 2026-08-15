@@ -46,8 +46,8 @@ func (c *Character) DeductActionPoints(amount int) bool {
 // move, so leaving it at 2.0 would have made ordinary travel dearer as a side
 // effect of fixing the load term. At 0.5 ordinary travel gets slightly CHEAPER
 // than the old flat two and travel near capacity gets markedly dearer, which is
-// the intended shape. NOTE: config.yaml still ships MovementBaseStaminaCost: 2.0
-// and that shipped value overrides the Go default until the Task 12 config pass.
+// the intended shape. config.yaml ships 0.5 to match; it predates U7 and was the
+// one U7 knob whose stale shipped value would have overridden the Go default.
 //
 // The governing skill is SEARCH, from the costs registry rather than named here
 // -- picking your footing well is the same faculty as noticing what is underfoot.

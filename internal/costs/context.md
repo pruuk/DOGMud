@@ -128,10 +128,14 @@ value gets a neutral 1.0 rather than a free action.
   authored price of the action, and capping it would flatten cheap actions
   against expensive ones.
 
-- **`characters.GetDefenseCostFloat` is currently the ONLY production caller of
-  `Calc`.** Everything else in the U7 arc is still ahead of its call sites, so
-  `CostTotalMultiplierMax` binds nowhere else in the game today. Retuning it
-  today moves defence prices and nothing at all besides.
+- **Three production callers of `Calc` as of U7 Task 10** (this was "one" through
+  Task 6 and is no longer): `characters.GetDefenseCostFloat` (all five
+  defences), `characters.GetMovementStaminaCost` (movement) and
+  `combat.attackCostPerSwing` (one attack swing). Retuning
+  `CostTotalMultiplierMax` therefore moves defence, movement and attack prices
+  together. In practice it still binds only on defence: movement's worst case is
+  `5.0 x 1.10 = 5.5` against the 6.0 ceiling and attack's is the same, because
+  neither carries a per-action premium above 1.0.
 
 - **The clamp is rank-dependent, and only bites novices.** It caps the composed
   multiplier, so the rank the actor holds decides the load at which it starts
@@ -199,13 +203,26 @@ Declared in `internal/configs/config.balance.go`, defaulted and validated in
 
 ## Consumers
 
-One, as of U7 Task 6: `characters.GetDefenseCostFloat` prices all five defences
-through `Calc`, and `internal/combat` charges the result via
-`Character.ApplyCostFloat` at both defence sites (`runBestOfAllDefense` for
-melee, `ResolveChannelDefence` for the ranged, spell and social channels).
+Three, as of U7 Task 10.
 
-Everything else is still ahead of its call sites. The U7 arc wires in per-swing
-attack and movement next. The registry is the seam: ranged, taunt, rally,
-warcry, the thirteen currently-free special moves, grapple initiation and sneak
-each become a registry entry plus a config base, with no change at their call
-sites.
+- **Defence** (Task 6): `characters.GetDefenseCostFloat` prices all five
+  defences through `Calc`, and `internal/combat` charges the result via
+  `Character.ApplyCostFloat` at both defence sites (`runBestOfAllDefense` for
+  melee, `ResolveChannelDefence` for the ranged, spell and social channels).
+- **Attack** (Task 7): `combat.attackCostPerSwing` prices ONE swing; the
+  exported `combat.ChargeAttackCost(attacker, swings)` multiplies by the swings
+  actually thrown and charges through `ApplyCostFloat`. The four wrappers in
+  `combat/combat.go` call it after `calculateCombat` returns. Note it reads the
+  rank off `GetCombatSkillLevel` (weapon-appropriate) rather than the registry's
+  nominal `skills.WeaponCombat`.
+- **Movement** (Task 8): `characters.GetMovementStaminaCost` folds the terrain
+  multiplier into `Base` (terrain is a property of the move, not the actor, and
+  `Base` is deliberately outside the clamp), then applies the mutation speed
+  modifier, the hidden multiplier, `MovementMaxStaminaCost` and
+  `MovementCostFloor` after `Calc` returns. Movement does NOT use
+  `ApplyCostFloat` and cannot bank a remainder: `go.go` spends whole stamina, so
+  the result is ceilinged to an int, which is what the floor exists to protect.
+
+The registry remains the seam for the rest: ranged, taunt, rally, warcry, the
+thirteen currently-free special moves, grapple initiation and sneak each become
+a registry entry plus a config base, with no change at their call sites.

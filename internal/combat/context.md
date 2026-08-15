@@ -172,6 +172,50 @@ floor was only ever evaluated on the swings a defence crit did not consume.
   second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity
 
+### Attack cost is charged PER SWING (U7 Task 7)
+
+`ChargeAttackCost(attacker *characters.Character, swings int) characters.CostResult`
+in `attack_cost.go` is the attacker-side price. **Where it is charged:** in each
+of the four wrappers in `combat.go` (`AttackPlayerVsMob`, `AttackPlayerVsPlayer`,
+`AttackMobVsPlayer`, `AttackMobVsMob`), immediately after `calculateCombat`
+returns, off `attackResult.SwingsThrown`. It is NOT charged inside
+`calculateCombat` and not inside the weapon or swing loops.
+
+```go
+attackResult := calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
+ChargeAttackCost(user.Character, attackResult.SwingsThrown)
+```
+
+One swing is priced by the unexported `attackCostPerSwing`, which is the same
+`costs.Calc` composition the five defences use:
+`AttackBaseStaminaCost` × encumbrance × inverse-skill × `AttackCostModifier`.
+The whole round is then charged as `perSwing × swings` through
+`Character.ApplyCostFloat`, never `ApplyCostPartial`. The per-swing figure is a
+product of four config floats and is rarely a whole number, so an integer charge
+per round would erase the encumbrance and skill terms this task exists to
+introduce.
+
+Points that bite:
+
+- **`SwingsThrown` counts swings THROWN, not swings that landed.** It is
+  incremented in `calculateCombat` before resolution and outside the per-swing
+  flag reset, and it accumulates across every weapon in the round because
+  `attackResult` outlives the weapon loop. A missed swing is effort spent.
+- **The skill rank comes from `GetCombatSkillLevel`**, which picks the skill
+  matching the EQUIPPED weapon (weapon / unarmed / ranged combat), not the
+  registry's nominal `skills.WeaponCombat`. An unarmed brawler's practice
+  discounts their swings. It returns a minimum of 1, so a fresh character lands
+  on the rank-1 multiplier rather than the rank-0 one.
+- **A nil attacker or a non-positive swing count charges nothing** and returns
+  the zero `CostResult`. Zero swings is a real state (no weapons to swing, target
+  already gone) and is deliberately not `Short`: nothing was demanded.
+- **This replaced a once-per-round `DeductAttackStamina` call** in each of the
+  four wrappers. A twelve-swing build attacked twelve times for the price of one
+  while the defender paid on every incoming swing, which is the single largest
+  reason offence was effectively free next to defence.
+- The returned `CostResult` is what U8 reads to strip the skill term from an
+  attacker who could not pay in full. Discarding it is safe today, not later.
+
 ### Defence sets are a property of the channel (U6 Task 11)
 
 `defence_sets.go` holds the whole table. `DefenceSetFor(channel) []string`
@@ -764,6 +808,24 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 
 ### Gotchas
 
+- **`calculateCombat` takes BOTH combatants as `*characters.Character`, and they
+  must stay pointers.** The signature is
+  `calculateCombat(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, ctx combatContext) AttackResult`,
+  changed from value parameters in U7 Task 1. It took its combatants BY VALUE
+  from the day it was written, so every wrapper handed it a copy and every
+  in-place mutation a callee made was written to that copy and discarded on
+  return. The costly one was the defence charge: `runBestOfAllDefense` charges
+  the defender in-place, which means melee dodge, parry and block cost nothing
+  in production for the entire life of the code. The attacker's cost only ever
+  survived because the wrappers charge it themselves, OUTSIDE this function, and
+  damage only survived because it travels home in `AttackResult` and the wrapper
+  applies it to the real character. Reverting also re-disables three writes that
+  only work through the pointer: cross-round momentum (`UpdateMomentum`), the
+  `SurpriseAttack`-to-`DefaultAttack` demotion in `SetAggro`, and defender
+  skill-use tracking on mobs. **Nothing about that failure is visible.** The
+  compiler is happy either way, and a test asserting that a charge was
+  *requested* (`ApplyCostPartial` reports `Charged: 4`) still passes while the
+  real character's stamina never moves. Do not "simplify" the parameters back.
 - **`runBestOfAllDefense` has no affordability gate, on purpose.** Every defence
   in the sequence enters the contest regardless of the defender's stamina, and
   only the winner is charged, partially. Re-adding a gate would drop an
@@ -1607,7 +1669,7 @@ can add parallel snapshot checks at the same start-of-round site.
 
 | File | Purpose |
 |------|---------|
-| `combat.go` | Round resolution entry points |
+| `combat.go` | Round resolution entry points. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** The four wrappers charge the attacker after it returns, via `ChargeAttackCost(char, attackResult.SwingsThrown)`. |
 | `combat_helpers.go` | Extracted helpers. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |

@@ -1,5 +1,55 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: Effort has a price, and skill is the discount
+
+Every action you take is now priced by the same rule. What it costs depends
+on three things: the action itself, how much you are carrying, and how
+practised you are at it. Nothing is free simply because nobody had got
+around to charging for it.
+
+Defending costs stamina. It never did, on any melee defence, for the whole
+life of the game, which is why a long fight used to leave the person
+swinging tired and the person defending fresh. Throwing your whole body out
+of the way is the dearest of the three, getting a shield in the way costs
+less, and turning a blade with your own weapon is the cheapest of all. Pick
+your defence with that in mind.
+
+Attacking is charged for every blow you throw, not once per round. A fighter
+with several weapons, or several arms, used to swing a dozen times for the
+price of one while the person in front of them paid for every one of those
+dozen. Both sides pay for what they actually do now, so a flurry is a real
+commitment and a miss still costs you the swing.
+
+What you carry matters. A light pack barely registers, and the price climbs
+slowly while you have room to spare, but it rises sharply once you are near
+your limit and is punishing at the top. Fighting while hauling a full load
+of ore is now a decision, not a free ride. Drop your heavy loot or sell it
+before the fight.
+
+Practice pays for itself. A complete beginner pays a little over the going
+rate for anything, and a master pays well under half. This applies to
+everything with a skill behind it, including defending, so the way to fight
+longer is to get better rather than to eat more.
+
+Travelling has changed shape. An ordinary walk with an ordinary pack is a
+touch cheaper than it was, but travelling with your carrying limit in sight
+is much dearer, and the difference between the two is now something you can
+feel over a long road. Walking also very rarely teaches you something about
+reading the ground. It is far slower than searching or foraging on purpose,
+but a life on the road eventually sharpens your eye, and a sharper eye is
+harder to sneak up on.
+
+Turning aside a spell aimed at your mind, or refusing a taunt, draws on
+your conviction as before. Neither cares what is in your pack: the weight on
+your back has no say in whether you can hold your nerve.
+
+One old cruelty is gone. If your gear or your companions hold back part of
+your strength, the game now measures you against the strength you can
+actually reach. Before, a character who had given up enough of a pool could
+be knocked down and told they were too tired to stand, forever, and no
+amount of rest would fix it, because the bar was set above anything they
+could ever hold.
+
 ## 2026-08-15: The casters remember their spells
 
 Some enemies were written as spellcasters and never once cast. A mob that

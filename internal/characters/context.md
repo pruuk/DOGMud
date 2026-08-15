@@ -122,6 +122,12 @@ func (c *Character) EffectivePoolMax(p Pool) int
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
+// ApplyCostFloat charges a FRACTIONAL cost, banking the sub-integer remainder
+// in the per-character, per-pool carry so the average converges (U7 Task 3).
+// Delegates the deduction to ApplyCostPartial. THE ENTRY POINT FOR EVERY U7
+// COST; the integer pair erases the per-action modifiers. See Gotchas.
+func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
+
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
 func (c *Character) ApplyRestore(pool Pool, amount int) int
 
@@ -170,6 +176,58 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `hooks/item_procs.go:99`). They retire with `Heal` in U5c.
 - **`CostResult.Short` is what a later chunk reads to strip the skill term.**
   The penalty for being short is a worse roll, not a lost action.
+- **`ApplyCostFloat` banks a fractional remainder, and the bank is the reason
+  U7's tuning is visible at all.** Every U7 cost is
+  `base x encumbrance x inverse-skill x per-action modifier`, so it is almost
+  never a whole number, and the pools are ints. Round each action and the small
+  factors vanish: dodge, parry and block collapse onto the SAME integer for a
+  low-skill character at every base this game would ship, which makes the
+  modifiers decoration. The bank is `costCarry map[Pool]float64`, an UNEXPORTED
+  field on `Character` (`character.go`), per pool and per character. Each call
+  adds the amount to the carry, charges `floor` of the total through
+  `ApplyCostPartial`, and leaves the fraction behind. Cumulative charged is
+  therefore `floor(cumulative amount)`: it under-charges by strictly less than
+  one over any run of actions, and that bound does not grow.
+
+  **What resets it:** nothing in the game does, deliberately, and nothing needs
+  to. It is **NOT persisted** (an in-flight fraction is worth less than the byte
+  it would cost in a save file, and a stale one after a reload would be
+  indistinguishable from a rounding bug), so it starts empty on every load,
+  spawn and relog. There is no `yaml:"-"` tag on purpose: an unexported field is
+  already invisible to the marshaller, and a yaml tag on one is a silent no-op
+  that misleads the next reader.
+
+  **Two contracts that look wrong and are not:**
+
+  - A charge that floors to zero is **not `Short`**, even on an empty pool.
+    `Short` means "the actor could not pay what this action demanded", and a
+    floored charge of zero demanded nothing; the whole amount went into the
+    bank. Returning true would penalise a free action, and would then penalise
+    the SAME fraction again on the later action that floors it to one or more.
+  - Once the carry hands a whole number to the pool, the full floored amount is
+    removed from the carry **even when the pool was too empty to cover it**, and
+    the unpaid part is written off rather than re-banked. Otherwise an exhausted
+    actor accumulates unbounded debt and is slammed with the backlog on the
+    first tick their pool refills. Being short already costs the skill term; it
+    must not also become a loan.
+
+  **A non-finite amount is free and banks nothing.** NaN and infinity are
+  reachable here because a cost is a product of four config-sourced floats, and
+  letting one through poisons that pool's carry PERMANENTLY: NaN survives the
+  floor, every later charge floors to NaN, `int(NaN)` converts to the minimum
+  int64, and `ApplyCostPartial` reads that as non-positive and charges nothing.
+  One bad value makes the pool cost-free for the rest of the session with no
+  log, no panic and no failing test. Note `amount <= 0` alone does NOT catch NaN
+  (NaN fails every comparison), which is why the guard tests it explicitly.
+
+  **Template invariant.** `mobs.newMobByIdInternal` shallow-copies the mob
+  template (`mob := *m`) and re-makes `PlayerDamage` on the next line precisely
+  because a shallow copy shares maps. `costCarry` is NOT re-made there, and is
+  safe only because it is lazily allocated by `ApplyCostFloat` and a template's
+  `Character` is never charged. Anything that charges a template (a balance
+  preview tool, an offline simulator) would allocate the map ON THE TEMPLATE and
+  hand every instance spawned afterwards the same shared carry. Re-make it
+  alongside `PlayerDamage` before doing that.
 - **`CanAfford` reads the RAW pool, not reserve-excluded, and that is correct.**
   `RecalculateStats` already clamps the CURRENT pool to `max - reserve` every
   round, so a cost that subtracted the reservation a second time would charge the
