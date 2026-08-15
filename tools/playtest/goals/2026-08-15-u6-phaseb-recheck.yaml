@@ -1,0 +1,61 @@
+# U6 Phase B FOCUSED RE-RUN after the deflection narration fix (Task 16b),
+# covering what the first Phase B session could not reach.
+#
+# The first session confirmed the purpose-written partial lines read well and
+# caught the composite defect ("misses you completely! The blow still catches
+# you.") which is now fixed: a deflected swing should produce exactly ONE
+# personal line per viewer, naming the defence and the damage it let through
+# (e.g. "Bandit dodges your swing, but you still connect! (light wounds)"),
+# plus a plain defence line for the room. Your first job is to confirm that
+# fix; your second is the coverage the first session missed.
+#
+# PRACTICAL NOTES
+#   * 3 commands per round on the AI port; pace yourself.
+#   * `consider <target>` first; near-even fights show deflections constantly.
+#   * You start on the North Road near a hostile BANDIT CASTER (mob "bandit
+#     caster", room 4052) who casts mind-spike / mind-fog / nerve-disruption.
+#     Those are MENTAL spells: your defence against them is QUELL (Willpower +
+#     Spellcasting, costs conviction). Let her cast at you and read every line.
+#   * You carry an iron buckler. WEAR IT so block enters your defence set.
+#
+ephemeral:
+  profile: mid
+  start_room: 4052
+  overlays:
+    grant_items:
+      - 20010 # Iron Buckler: equip it so block partials can appear
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Confirm the narration fix in ordinary melee. Fight several near-even
+    opponents for many rounds with the buckler equipped. Every deflected
+    swing (yours or theirs) must read as ONE coherent line per viewer: the
+    defence named, then the partial damage ("...dodges your swing, but you
+    still connect! (light wounds)"). Report VERBATIM any line that still
+    claims a complete miss while health moves, any swing narrated twice to
+    the same viewer, and any line whose damage claim disagrees with the
+    health bar. Also report whether block partials appear now that you have
+    a shield, and whether bash works with the buckler equipped.
+  - >-
+    QUELL, the top coverage gap. Stand against the bandit caster and let her
+    cast mental spells at you across many rounds. Report verbatim what a
+    resisted spell looks like: is quell (or any defence) named, does a
+    partially resisted spell show scaled damage wording, does your
+    conviction pool drain while defending, and does anything contradict
+    `help quell`? Survive it: retreat and recover if needed, then return.
+  - >-
+    The defended-maneuver partial, never yet seen live. Trip and kick an
+    agile, roughly-even opponent repeatedly until at least one attempt is
+    DEFENDED but still deals damage: the message must say the takedown
+    failed while the impact still landed ("fails to take them down, but
+    still catches them"), the target must NOT fall, and health must move.
+    Quote it. If twenty attempts all land or all miss cleanly, say so.
+  - >-
+    General adversarial pass on everything you see. Anything that reads
+    wrong, contradicts help text, double-prints, or shows a Go error string
+    is a finding. Known and already filed, do NOT spend time on: crit lines
+    lacking damage wording and repeating; surprise/ranged double prints;
+    `consider` calling walkovers even; charset UTF-8 leakage; em dashes in
+    old copy. Report bluntly.
