@@ -31,22 +31,23 @@ taken from an item spec, for example.
 
 **Do not reach for an opposed roll in this package.** As of roadmap chunk U4,
 every opposed contest in the game resolves through `internal/contest`, and
-callers reach it through one of three wrappers in
-`internal/combat/contest_floors.go`, chosen by the **cost of a single failure**:
+callers reach it through `combat.RunContest`
+(`internal/combat/run_contest.go`):
 
-| Wrapper | Floor pair | For |
-|---|---|---|
-| `combat.RunWithGlobalFloors` | global | out of combat: stealth, theft, traps, detection |
-| `combat.RunWithManeuverFloors` | maneuver | maneuvers, flee -- burns the whole round |
-| `combat.RunWithSpellFloors` | spell | spells |
+```go
+if combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}}).Success {
+    // succeeded
+}
+```
 
-All three return a `contest.Result`; read `.Success`.
+U4 shipped three wrappers over per-channel floor pairs, picked by the cost of a
+single failure. U6 deleted all three: one symmetric `Balance.ContestFloor`
+replaces the eight knobs, read in `RunContest` and nowhere else.
 
 `OpposedRollStat` and `OpposedRollStatWithFloors` still exist and are still
 floored, but they are **`Deprecated:`** and have **zero production callers**.
-U6 deletes them. They survive for two reasons only: `internal/dice` delegates
-between them internally, and `internal/combat/global_floors_test.go` uses
-`OpposedRollStat` as the oracle proving U4 was a no-op.
+U6 deletes them; `internal/dice` delegating between them internally is the only
+thing keeping them alive.
 
 **Four functions here are now guarded** by `contest_floor_guard_test.go` at the
 repo root, for two different reasons:
@@ -60,10 +61,12 @@ Calling any of them outside `internal/dice` fails that test. `contest.Run` and
 `contest.AgainstDifficulty` are guarded too, and are genuinely unfloored --
 migrating a floored caller onto either silently deletes its floor.
 
-A second guard, `floor_pair_guard_test.go`, pins which floor pair each migrated
-site uses. All three pairs ship at `0.05`, so wiring a contest to the wrong one
-is invisible to every behavioural test and becomes a live balance bug the moment
-one pair is retuned.
+There used to be a second guard, `floor_pair_guard_test.go`, pinning which of
+three floor pairs each migrated site used, because the pairs all shipped at
+`0.05` and the wrong wiring was invisible to every behavioural test. U6 deleted
+both the pairs and the guard: every opposed contest now goes through
+`combat.RunContest` and reads the one `Balance.ContestFloor`, so there is no
+pair left to get wrong.
 
 ## `RollSpread`
 

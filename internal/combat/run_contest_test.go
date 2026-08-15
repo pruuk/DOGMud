@@ -3,8 +3,31 @@ package combat
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 )
+
+// pinContestFloorOff removes Balance.ContestFloor for the duration of the
+// calling test.
+//
+// U6 made this necessary, and it is the single most likely reason a
+// previously-solid contest test starts flaking. Before U6 the maneuver and
+// spell floors read configs.GetBalanceConfig(), which a Go test binary never
+// loads from _datafiles/config.yaml, so they measured 0 and a test asserting
+// that an overwhelming attacker WINS was deterministic for free.
+// Balance.Validate replaces a zero or out-of-range ContestFloor with 0.125, so
+// the floor is live in every test binary now and hands the hopeless side a
+// 12.5% save. Any test that asserts a single lopsided contest resolves the
+// obvious way must pin it or it fails about one run in eight.
+//
+// configs.SetConfigForTest assigns without validating, which is why a zero
+// survives here, and it self-registers the restore.
+func pinContestFloorOff(t *testing.T) {
+	t.Helper()
+	c := configs.GetConfig()
+	c.Balance.ContestFloor = 0
+	configs.SetConfigForTest(t, c)
+}
 
 // RunContest is the ONLY place ContestFloor is read. Everything else in the
 // game reaches the floor through it.

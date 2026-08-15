@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -173,7 +174,7 @@ func shadowPlayer(actor Actor, targetUserId int, cfg configs.Balance) ShadowResu
 	// usercommands/skill.skullduggery.shadow.go (Per+Search vs Dex+Skullduggery).
 	sneakScore := CalcSneakScoreVsObserver(char, targetUser.Character, actor.GetRoom())
 	searchScore := CalcSearchScore(targetUser.Character)
-	detected := combat.RunWithGlobalFloors(searchScore, sneakScore).Success
+	detected := combat.RunContest(searchScore, []contest.Entry{{Score: sneakScore}}).Success
 	if detected {
 		targetUser.SendText(messaging.CategorySystem, "You sense someone following close behind you.")
 	}

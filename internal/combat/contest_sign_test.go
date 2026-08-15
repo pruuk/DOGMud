@@ -15,12 +15,11 @@ import (
 // dice.OpposedRollStatWithFloors, and the file had to pass for BOTH shapes so it
 // could prove the later migration of TryStoicResolve was a no-op.
 //
-// U3 then made that move, and the file passed unchanged. Both functions now
-// resolve through the core: TrySpellDeflection via combat.RunWithSpellFloors,
-// TryStoicResolve via combat.RunWithManeuverFloors (both live in
-// contest_floors.go in this package, wrapping contest.RunWithFloors). Everything
-// below still describes live code; only these comments were retold in the past
-// tense.
+// U3 then made that move, and the file passed unchanged. U6 collapsed the three
+// floor-pair wrappers into one entry point, so both functions now resolve
+// through combat.RunContest (run_contest.go in this package, wrapping
+// contest.RunWithFloors). Everything below still describes live code; only these
+// comments were retold in the past tense.
 //
 // Both tests here are DEFENDER-side. The attacker-side mirror is
 // internal/actions/contest_sign_taunt_test.go, added when a U3 review found that
@@ -81,10 +80,9 @@ func pinAvoidanceContestKnobs(t *testing.T) {
 	t.Helper()
 	c := configs.GetConfig()
 
-	c.Balance.MinManeuverHitChance = 0
-	c.Balance.MinManeuverResistChance = 0
-	c.Balance.MinSpellHitChance = 0
-	c.Balance.MinSpellResistChance = 0
+	// U6: both paths resolve through RunContest, which reads ContestFloor and
+	// no longer looks at the per-channel Min*Chance knobs this used to pin.
+	c.Balance.ContestFloor = 0
 
 	c.Balance.MinAttackCritChance = 0
 	c.Balance.MinDefenseCritChance = 0
@@ -207,8 +205,9 @@ func TestTrySpellDeflection_FullNegationStillReachable(t *testing.T) {
 //
 // It was written while that path still passed `defRoll.Margin` from
 // dice.OpposedRollStatWithFloors, which is already defence-positive and so was
-// correctly UNNEGATED. U3 moved the function onto combat.RunWithManeuverFloors,
-// at which point that field stopped being populated at all and the call became
+// correctly UNNEGATED. U3 moved the function onto the maneuver-floor wrapper
+// (U6 has since folded that into combat.RunContest), at which point that field
+// stopped being populated at all and the call became
 // `-res.Margin`: negated, because contest.Result.Margin is ATTACK-positive and
 // this is the DEFENDER's crit check. This test is the thing that would have
 // noticed had either half of that been got wrong.

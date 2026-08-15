@@ -3,6 +3,7 @@ package combat
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
@@ -75,7 +76,7 @@ func RollSubmissionAttempt(
 		float64(recipient.Stats.Vitality.ValueAdj) +
 		float64(recipient.GetSkillLevel(skills.UnarmedCombat))*skillWeight
 
-	res := RunWithManeuverFloors(atkScore, defScore)
+	res := RunContest(atkScore, []contest.Entry{{Score: defScore}})
 
 	return SubmissionAttemptResult{
 		SubType:        subType,

@@ -116,17 +116,20 @@ type Result struct {
 
 ## Consumers
 
-**`internal/combat`, and nothing else.** Verified with `grep -rn
-"internal/contest" internal/` after U3: the only non-comment import lines are
-`internal/combat/combat_helpers.go` and `internal/combat/contest_floors.go`.
+**`internal/combat` calls `RunWithFloors` / `Run`; everything else names the
+`Entry` type only.** The two files that reach the primitives are
+`internal/combat/combat_helpers.go` and `internal/combat/run_contest.go`, and
+`contest_floor_guard_test.go` at the repo root is what keeps that true.
 
 - `runBestOfAllDefense` (melee, U1) calls `Run` directly, and is the one place
   that converts this package's attack-positive margin into `internal/combat`'s
   defence-positive one.
-- Everything else goes through the three wrappers in
-  `internal/combat/contest_floors.go`, `RunWithManeuverFloors`,
-  `RunWithSpellFloors` and `RunWithGlobalFloors`, which are where the maneuver,
-  spell and global floor pairs are read.
+- Everything else goes through `combat.RunContest`
+  (`internal/combat/run_contest.go`), which is where `Balance.ContestFloor` is
+  read. U6 deleted the three per-channel wrappers that preceded it. Callers
+  outside `internal/combat` still import this package for the `Entry` type they
+  hand to `RunContest`; they must not call `Run`, `AgainstDifficulty` or
+  `RunWithFloors`.
 
 `internal/hooks`, `internal/actions` and `internal/usercommands` all resolve
 contests, but they reach this core **through `internal/combat`** and must NOT

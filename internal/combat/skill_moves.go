@@ -2,6 +2,7 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -58,7 +59,7 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 	// Opposed roll: attacker skill+stat vs defender dex+combat skill
 	attackerScore := float64(p.AttackSkill) + float64(p.AttackStat)
 	defenderScore := float64(p.DefenseSkill) + float64(p.DefenseStat)
-	res := RunWithManeuverFloors(attackerScore, defenderScore)
+	res := RunContest(attackerScore, []contest.Entry{{Score: defenderScore}})
 	attackSuccess := res.Success
 
 	// Damage pipeline: CalcRawDamage → ApplyMitigation → dice.RollStat

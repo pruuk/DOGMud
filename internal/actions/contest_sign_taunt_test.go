@@ -62,13 +62,13 @@ import (
 //     pass has already bitten this arc once. Pinned to 0 so a margin-derived
 //     crit is the only possible route to Crit == true.
 //
-//   - The maneuver floor pair. Taunt resolves through
-//     combat.RunWithManeuverFloors. A hit floor flips a hopeless attacker to
-//     Success carrying the +-1 sentinel margin, which cannot crit and simply
-//     steals iterations; a resist floor steals them the other way. Pinned to 0
-//     so every iteration is a genuine contest. (They measure 0 in a test binary
-//     today, but config.yaml ships both at 0.05, so a future config-loading
-//     TestMain would start eating iterations.)
+//   - ContestFloor. Taunt resolves through combat.RunContest, and that floor is
+//     symmetric: it flips a hopeless attacker to Success carrying the +-1
+//     sentinel margin, which cannot crit and simply steals iterations, and it
+//     steals them the other way for the defender. Pinned to 0 so every
+//     iteration is a genuine contest. Before U6 this pinned the maneuver floor
+//     pair, which RunContest no longer reads; a validated ContestFloor is never
+//     zero, so the pin now matters even in a test binary.
 //
 //   - MinDefenseCritChance, for the same reason on the other side. A promoted
 //     defensive crit inside TryStoicResolve does not touch Crit, but pinning it
@@ -85,8 +85,7 @@ func pinTauntContestKnobs(t *testing.T) {
 	c.Balance.MinAttackCritChance = 0
 	c.Balance.MinDefenseCritChance = 0
 
-	c.Balance.MinManeuverHitChance = 0
-	c.Balance.MinManeuverResistChance = 0
+	c.Balance.ContestFloor = 0
 
 	c.Balance.SkillWeight = tauntSkillWeight
 

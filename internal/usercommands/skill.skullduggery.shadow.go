@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -136,6 +137,6 @@ func shadowDetectionRoll(shadower *users.UserRecord, target *users.UserRecord, r
 
 	// The target is the attacker in this contest: Success means they noticed.
 	// Target detects when targetScore beats sneakScore.
-	detected := combat.RunWithGlobalFloors(targetScore, sneakScore).Success
+	detected := combat.RunContest(targetScore, []contest.Entry{{Score: sneakScore}}).Success
 	return detected
 }

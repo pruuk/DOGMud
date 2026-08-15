@@ -2,6 +2,7 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -79,7 +80,7 @@ func AttemptGrapple(attacker *characters.Character, defender *characters.Charact
 	}
 
 	// Opposed roll
-	res := RunWithManeuverFloors(result.AttackScore, result.DefenseScore)
+	res := RunContest(result.AttackScore, []contest.Entry{{Score: result.DefenseScore}})
 
 	result.Success = res.Success
 	result.Margin = res.Margin

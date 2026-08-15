@@ -395,13 +395,18 @@ party markers are web-only — the ASCII `map` command is unaffected.
   function, both gated on `c.IsMob`. Players have none.
 
 ## Dice & Rolling System
-- **For an opposed contest, call the wrapper for your floor pair** in
-  `internal/combat/contest_floors.go`: `RunWithGlobalFloors` (out-of-combat:
-  stealth, theft, traps, detection), `RunWithManeuverFloors` (maneuvers, flee),
-  `RunWithSpellFloors` (spells). All three return a `contest.Result`; read
-  `.Success`. Pick by the COST OF A SINGLE FAILURE, not by resemblance.
+- **For an opposed contest, call `combat.RunContest`** in
+  `internal/combat/run_contest.go`. It is the single entry point for every
+  opposed contest in the game and the only place `Balance.ContestFloor` is
+  read. Signature:
+  `RunContest(atkScore float64, entries []contest.Entry) contest.Result`; for
+  one defender pass `[]contest.Entry{{Score: defScore}}` and read `.Success`.
+  There is no floor pair to pick any more: U6 deleted the three per-channel
+  wrappers (`RunWithGlobalFloors`, `RunWithManeuverFloors`,
+  `RunWithSpellFloors`) because the wrong pick was numerically invisible in
+  production and would have become a live balance bug on the first retune.
 - `dice.OpposedRollStat` / `OpposedRollStatWithFloors` are **deprecated**. U4
-  moved every production caller onto the wrappers and U6 deletes them.
+  moved every production caller off them and U6 deletes them.
   `contest.Run` and `contest.AgainstDifficulty` are **unfloored**; both root
   guard tests fail a new production caller.
 - `dice.RollStat(mean)` is still correct for a single non-contested roll, with

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -269,7 +270,7 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &mob.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	round := util.GetRoundCount()
@@ -700,7 +701,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	// Backfire on fumble
@@ -1263,7 +1264,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &target.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
@@ -1283,7 +1284,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, spellAttack float64, magnitude int) {
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := combat.RunWithSpellFloors(spellAttack, defVal)
+	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	round := util.GetRoundCount()
 	if atkRoll.ZScore <= -2.0 {

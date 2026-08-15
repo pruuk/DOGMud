@@ -3,6 +3,7 @@ package combat
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
@@ -25,7 +26,7 @@ func TrySpellDeflection(attacker *characters.Character, defender *characters.Cha
 	defSpellcasting := float64(defender.GetSkillLevel(skills.Spellcasting)) * skillWeight
 	defenseScore := float64(defender.GetEffectivePerception()) + defSpellcasting
 
-	res := RunWithSpellFloors(attackScore, defenseScore)
+	res := RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
 
 	defender.OnSkillUse(string(skills.Spellcasting), defenderUserId)
 	defender.OnStatUse("perception", defenderUserId)
@@ -72,7 +73,7 @@ func TryStoicResolve(attacker *characters.Character, defender *characters.Charac
 	defRhetoric := float64(defender.GetSkillLevel(skills.Rhetoric)) * skillWeight
 	defenseScore := float64(defender.Stats.Willpower.ValueAdj) + defRhetoric
 
-	res := RunWithManeuverFloors(attackScore, defenseScore)
+	res := RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
 
 	defender.OnSkillUse(string(skills.Rhetoric), defenderUserId)
 	defender.OnStatUse("willpower", defenderUserId)

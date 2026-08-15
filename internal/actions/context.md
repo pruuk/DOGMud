@@ -743,11 +743,12 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
 ## Dependencies
 
 - `internal/characters` — Character stats, buffs, inventory, cooldowns
-- `internal/combat`: power calculations (Consider), and the contest wrappers.
-  Since U4 the stealth, theft, trap and detection contests in `sneak.go`,
-  `shadow.go`, `steal.go`, `plant.go` and `defuse.go` resolve through
-  `combat.RunWithGlobalFloors(attackScore, defenseScore) contest.Result`, the
-  global floor pair. Do not reach `internal/contest` directly; this package
+- `internal/combat`: power calculations (Consider), and contest resolution.
+  The stealth, theft, trap and detection contests in `sneak.go`, `shadow.go`,
+  `steal.go`, `plant.go` and `defuse.go` resolve through
+  `combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})`
+  (U4 routed them to a wrapper, U6 collapsed every wrapper into this one entry
+  point). Do not reach `internal/contest` directly; this package
   goes through `internal/combat`. The flat `dice.RollStat` threshold checks in
   `search.go` and `track.go` are NOT contests yet and are unassigned;
   `surprise_attack.go` has no hit resolution at all. All three are breadcrumbed

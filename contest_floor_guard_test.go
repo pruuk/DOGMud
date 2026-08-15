@@ -62,9 +62,9 @@ var guardedRollExemptions = map[string]map[string]string{
 		// CHANCE, not a roll outcome. Reconciling the two styles is an open U6
 		// question; until then this single call is correct.
 		"internal/combat/combat_helpers.go": "floors after the contest in resolveDefenseOutcomeCore",
-		// Defines the three floor-pair wrappers, so it is the one place that
-		// legitimately hands contest.RunWithFloors an explicit pair.
-		"internal/combat/contest_floors.go": "defines the RunWith*Floors wrappers",
+		// Defines combat.RunContest, so it is the one place that legitimately
+		// hands contest.RunWithFloors an explicit floor.
+		"internal/combat/run_contest.go": "defines combat.RunContest",
 	},
 }
 
@@ -96,9 +96,10 @@ func isExempt(rel, dir string, exemptions map[string]string) bool {
 // dice.OpposedRollStat, and before 5.10 that was the UNFLOORED function. Chunk
 // 5.10 made the floored roll the default by giving it the natural name; U4 then
 // moved every production caller onto the internal/combat wrapper family and
-// deprecated the dice pair, so CLAUDE.md was updated again. If you are reading
-// this because the guard failed, read the wrapper docs in
-// internal/combat/contest_floors.go before adding an exemption.
+// deprecated the dice pair, so CLAUDE.md was updated again. U6 then collapsed
+// that wrapper family to a single entry point. If you are reading this because
+// the guard failed, read the docs on combat.RunContest in
+// internal/combat/run_contest.go before adding an exemption.
 //
 // KNOWN BLIND SPOT: the visitor matches only package-qualified calls
 // (pkg.Func). A same-package call inside internal/dice or internal/contest is a
@@ -187,12 +188,11 @@ func TestOpposedContestsAreFloored(t *testing.T) {
 	if len(offenders) > 0 {
 		sort.Strings(offenders)
 		t.Errorf("guarded opposed rolls outside the exemption list:\n  %s\n\n"+
-			"Use combat.RunWithGlobalFloors, combat.RunWithManeuverFloors or "+
-			"combat.RunWithSpellFloors -- whichever floor pair matches the cost of "+
-			"a single failure at this site. If this caller genuinely applies its "+
-			"own floors, add its file to the matching guardedRollExemptions entry "+
-			"with a reason. If you cannot write the reason, you want a floored "+
-			"wrapper.",
+			"Use combat.RunContest -- it is the single entry point for every "+
+			"opposed contest and the one place Balance.ContestFloor is read. If "+
+			"this caller genuinely applies its own floors, add its file to the "+
+			"matching guardedRollExemptions entry with a reason. If you cannot "+
+			"write the reason, you want combat.RunContest.",
 			strings.Join(offenders, "\n  "))
 	}
 }

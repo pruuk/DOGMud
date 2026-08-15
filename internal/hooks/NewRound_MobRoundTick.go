@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/goals"
@@ -419,7 +420,7 @@ func tickMobCharmState(mob *mobs.Mob) {
 						}
 						attackScore *= effectiveness
 
-						res := combat.RunWithManeuverFloors(attackScore, defenseScore)
+						res := combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
 
 						if res.Success {
 							newDuration := 50 + owner.Character.Stats.Charisma.ValueAdj/2 +

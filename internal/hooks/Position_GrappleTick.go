@@ -29,6 +29,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -266,7 +267,7 @@ func processGrapplePair(controller, controlled *characters.Character) {
 	ctrlScore := grappleScore(controller, isAggressorSide(controller), cfg)
 	cdScore := grappleScore(controlled, isAggressorSide(controlled), cfg)
 
-	res := combat.RunWithManeuverFloors(ctrlScore, cdScore)
+	res := combat.RunContest(ctrlScore, []contest.Entry{{Score: cdScore}})
 
 	// LastDriftRoll snapshot for chunk-4d Position_SubmissionTick.
 	currentRound := util.GetRoundCount()

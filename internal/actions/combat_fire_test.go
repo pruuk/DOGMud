@@ -19,6 +19,27 @@ import (
 // Fixtures
 // ---------------------------------------------------------------------------
 
+// pinContestFloorOff removes Balance.ContestFloor for the duration of the
+// calling test, so a lopsided contest resolves the obvious way every time.
+//
+// Needed since U6. Before it, the maneuver and spell floors read
+// configs.GetBalanceConfig(), which a Go test binary never loads from
+// _datafiles/config.yaml, so they measured 0 and "an overwhelming attacker
+// always hits" was true for free. U6 routed every contest through
+// combat.RunContest, and Balance.Validate replaces a zero ContestFloor with
+// 0.125, so the floor is live in every test binary and the hopeless side saves
+// on about one attempt in eight. Over an 8-iteration loop that is a two-in-three
+// failure, not a rare flake.
+//
+// configs.SetConfigForTest assigns without validating, which is why the zero
+// survives, and it self-registers the restore.
+func pinContestFloorOff(t *testing.T) {
+	t.Helper()
+	c := configs.GetConfig()
+	c.Balance.ContestFloor = 0
+	configs.SetConfigForTest(t, c)
+}
+
 // fireRangedWeapon builds a loaded-by-default shooting weapon with a known
 // damage multiplier so damage-band assertions are deterministic.
 func fireRangedWeapon(id int, mult float64, loaded bool) items.Item {
@@ -133,6 +154,8 @@ func TestFire_Unloaded(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestFire_SameRoomMob_PerceptionGoverns(t *testing.T) {
+	pinContestFloorOff(t)
+
 	const runs = 8
 	for i := 0; i < runs; i++ {
 		// Fresh defender each run — ExecuteSkillMove mutates HP.
