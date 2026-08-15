@@ -487,7 +487,9 @@ func emitReturnDamageText(atk, def actions.Actor, returnDmg int) {
 // blocked swing is mitigated 50-100%, not negated, so a lifesteal-on-block
 // proc would have healed ratio * 0 forever. It now returns the damage the
 // round actually dealt to the blocking defender (zero on a block crit, which
-// fully negates).
+// fully negates). In a multi-swing round DamageToTarget also includes damage
+// from clean-hit swings, not just the blocked swing's — round level is the
+// dispatch granularity here, an accepted trade-off.
 func onBlockProcDamage(res combat.AttackResult) int {
 	return res.DamageToTarget
 }

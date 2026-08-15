@@ -329,9 +329,10 @@ that answer it: `hitResolution.defended` is true exactly on the deflection path
 (defence won, partial damage through; false on every clean-win, fumble, and
 defensive-crit path), and `AttackResult.CleanHit` / `WeaponHitInfo.CleanHit`
 aggregate "at least one swing actually won the contest" across the round the
-way `Hit` aggregates "damage was dealt". Progression, sounds, momentum and
-weapon break key on `CleanHit`; damage-scaled consumers (lifesteal, on-hit
-procs, wimpy) stay on `Hit`.
+way `Hit` aggregates "damage was dealt". Progression, sounds and weapon break
+key on `CleanHit`; damage-scaled consumers (lifesteal, on-hit procs, wimpy)
+stay on `Hit`; momentum is per-swing and keys on `res.hit && !res.defended`
+inside the swing loop, not on the round aggregate.
 
 `DefenceMitigation(normalizedDefenceMargin)` in `defence_multiplier.go` is the
 curve: a bare win removes **50%**, rising linearly to **100%** at

@@ -130,7 +130,7 @@ func TestMvM_DefenderReceivesOnCritReceived(t *testing.T) {
 
 // TestMvM_AttackerCritCallbacksFire locks the per-weapon-hit crit callbacks
 // added to handleMobVsMob (Gap 2). The PvP/MvP versions invoke both
-// OnCriticalSuccess (when wh.Hit && wh.Crit) and OnCriticalFailure (when
+// OnCriticalSuccess (when wh.CleanHit && wh.Crit) and OnCriticalFailure (when
 // wh.Fumble) on the attacker.
 //
 // Both methods unconditionally call TrackSkillUse(...) at their head before

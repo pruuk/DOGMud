@@ -64,8 +64,10 @@ type AttackResult struct {
 	// contest (crit, normal win, defence fumble, forced crit). Both
 	// accumulate across the whole round and are never reset per swing.
 	// Consumers that mean "the attack got through the defence" (progression,
-	// sounds, momentum, weapon break) key on CleanHit; consumers that mean
-	// "damage was dealt" (lifesteal, on-hit procs, wimpy) key on Hit.
+	// sounds, weapon break) key on CleanHit; consumers that mean "damage was
+	// dealt" (lifesteal, on-hit procs, wimpy) key on Hit. Momentum is
+	// per-swing, not per-round: it keys on hitResolution's hit && !defended
+	// inside the swing loop, never on this aggregate.
 	Hit                     bool            // defaults false
 	CleanHit                bool            // defaults false
 	Crit                    bool            // defaults false
