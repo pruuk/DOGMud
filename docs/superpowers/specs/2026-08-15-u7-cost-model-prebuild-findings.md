@@ -98,7 +98,7 @@ reserve-clamped, so a companion or enchantment holder is silently taxed:
    re-applied when gear is equipped afterwards, so a reserved conviction pool of
    zero is reachable. Harmless today (defences are ungated); under U8's
    skill-strip it becomes a permanent triple-digit defence penalty. The owner's
-   reservation ceiling (§3.5) is the fix, and it must land before U8.
+   reservation ceiling (§2.1) is the fix, and it must land before U8.
 
 ### 2.1 The reservation ceiling (owner, 2026-08-15) — arc-scoped, slice TBD
 
@@ -176,7 +176,46 @@ defence cost to 0.56x today's, delivering none of the intended pressure.
 - **Every** action with an associated skill takes the inverse-skill multiplier,
   mental and social included.
 
-### 3.4 Coverage
+### 3.4 Decisions taken on the modelling, 2026-08-15 (second pass)
+
+- **No per-round defence brake.** A defender pays per incoming swing with no
+  governor. Being swarmed by many small enemies *should* overwhelm even a
+  powerful character; that is the intended incentive against overreach. The
+  requirement is that the drain be **tuned**, not capped: if a realistic gang
+  empties a defender in about seven rounds, the numbers move, the mechanism does
+  not gain a brake.
+- **Spell lockouts from the cost penalty are INTENDED.** A caster whose pool sits
+  between a spell's cost and 1.25x that cost loses access until they train. This
+  already happens in production through reserved pools: Meirok cannot cast
+  several spells he knows. Full inverse-skill band on spells; no discount-only
+  exception.
+- **Dodge is deliberately the most expensive defence.** Moving your whole body is
+  tiring. Keep dodge 1.25 / parry 1.10 / block 1.15 on a shared base, and accept
+  that this inverts today's 1/3/4 ordering.
+- **Movement adopts the shared curve**, with `MovementBaseStaminaCost` dropping
+  from 2.0 to **0.5** and a **floor of 1** on the final cost. Terrain stays its
+  own separate multiplier (`BiomeInfo.MovementCost`, 1.0 normal / 2.0 rough,
+  applied in `GetMovementStaminaCost` from `usercommands/go.go`), unchanged. The
+  low base plus the floor is what keeps ordinary travel affordable while leaving
+  a real penalty near capacity.
+- **Summoning, conjuring and raising take the inverse-skill multiplier like
+  everything else**, which makes companions cheaper for skilled summoners and
+  partially offsets the §2.1 reservation ceiling. The two must be modelled
+  together before either ships: the cost side and the reserve side both scale
+  with manifestation, so a skilled summoner gains twice.
+
+### 3.4.1 Correction: in-combat regen is 3x slower than first modelled
+
+The first modelling pass reported in-combat stamina regen as **2 per round**. It
+is not. `AutoHeal` (`internal/hooks/NewRound_AutoHeal.go`) returns early unless
+`RoundNumber%3 == 0`, so the regen tick fires **once every three rounds**, and
+the in-combat branch then takes a quarter of it. Effective in-combat regen is
+therefore roughly **0.67 stamina per round**, not 2.
+
+Every drain figure produced before this correction is optimistic. The corrected
+tables are what the tuning decision must rest on.
+
+### 3.5 Coverage
 
 Everything must cost something by the end of the arc, but **not necessarily in
 this slice**, provided U7 lands a mechanism generic enough to wire the rest to.
@@ -189,7 +228,7 @@ whether it is physical. Not a code change at each call site.
 
 ---
 
-## 4. Scope, restated for the plan
+## 5. Scope, restated for the plan
 
 **U7 builds:**
 
@@ -227,7 +266,7 @@ whether it is physical. Not a code change at each call site.
 
 ---
 
-## 5. Risks carried into the build
+## 6. Risks carried into the build
 
 1. **This is the second consecutive nerf to defending.** U6 made a successful
    defence deflect rather than erase, so a defender already takes damage on every
