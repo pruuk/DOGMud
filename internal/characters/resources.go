@@ -104,7 +104,21 @@ func (c *Character) DeductAttackStamina() int {
 	return c.ApplyCostPartial(PoolStamina, cost).Charged
 }
 
-// GetDefenseStaminaCost returns stamina cost for a defense type (Stage 7.1)
+// GetDefenseStaminaCost returns stamina cost for a defense type (Stage 7.1).
+//
+// STAMINA ONLY, AND IT DOES NOT COVER EVERY DEFENCE. DefenseQuell and
+// DefenseDefy cost CONVICTION, so they fall to the default arm and return 0.
+// That is correct for what this function measures and a trap for its callers:
+// runBestOfAllDefense charges the winner with
+// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)), so routing quell or
+// defy through that call site charges them ZERO and the defence is FREE --
+// silently, with no compile error and no test failure, since melee never emits
+// either name today.
+//
+// U6 Task 12 owns the fix when it folds spells and social onto the shared
+// contest: the winning defence must be charged against the pool its type names
+// (a defence-type -> pool mapping, or a sibling GetDefenseConvictionCost), not
+// against PoolStamina unconditionally.
 func (c *Character) GetDefenseStaminaCost(defenseType string) int {
 	bal := configs.GetBalanceConfig()
 

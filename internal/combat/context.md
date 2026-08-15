@@ -160,6 +160,109 @@ floor was only ever evaluated on the swings a defence crit did not consume.
   second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity
 
+### Defence sets are a property of the channel (U6 Task 11)
+
+`defence_sets.go` holds the whole table. `DefenceSetFor(channel) []string`
+returns the defence names that apply to an `AttackChannel`:
+
+| `AttackChannel` | Defences | N |
+|---|---|---|
+| `ChannelMelee` | dodge, parry, block | 3 |
+| `ChannelRanged` | dodge, block | 2 |
+| `ChannelSpellPhysical` | dodge, block | 2 |
+| `ChannelSpellMental` | **quell** | 1 |
+| `ChannelSocial` | **defy** | 1 |
+
+Adding a defence to a channel is one row here and nothing else. Parry is
+deliberately excluded from ranged and physical spells — you cannot parry a bolt.
+Dodge is REUSED for physical spells; there is no separate physical-spell
+defence. An unknown channel returns nil, not the melee set.
+
+**quell and defy are NEW player-facing verbs** (chosen 2026-08-13; both were
+previously called "resist", which collided). `characters.DefenseQuell` scores
+`Willpower + spellcasting × SkillWeight` and answers a mental spell;
+`characters.DefenseDefy` scores `Willpower + rhetoric × SkillWeight` and answers
+a social attack. **Both cost CONVICTION, not stamina** — grepping for a stamina
+cost finds nothing and proves nothing.
+
+A set of size one is still a contest, not a different mechanism. That
+unification is what lets `avoidance.go` be deleted in Task 12.
+
+**Not wired yet.** Melee still passes `runBestOfAllDefense` its own
+equipment-derived `defSeq` from `characters.GetDefenseSequence`, and the
+non-physical channels still run `TrySpellDeflection` / `TryStoicResolve`. Task 12
+does the wiring.
+
+**Every consumer downstream of a defence name was written against a CLOSED
+three-way set.** All of them are `switch`/map/`==` over a string-family type, so
+a `"quell"` or `"defy"` value falls through silently — **not one of these is a
+compile error**. Audited 2026-08-15; this is the Task 12 checklist, worst first.
+
+1. **Defender progression stops firing.** `processDefenderProgression`
+   (`internal/hooks/NewRound_DoCombat_helpers.go`) switches on
+   `SwingEvent.DefenseUsed` over dodge/parry/block with no default, so a
+   quell/defy win awards **nothing**. `avoidance.go` currently awards the
+   non-physical channels' progression itself (`TrySpellDeflection` →
+   spellcasting + perception; `TryStoicResolve` → rhetoric + willpower),
+   **unconditionally, win or lose**. Deleting `avoidance.go` without adding the
+   rows here silently deletes that progression.
+2. **`sendDefenseMessages` progresses the WRONG skill and prints broken
+   grammar.** Its switch (`combat_helpers.go`) leaves `defenseVerb`,
+   `skillToProgress` and `itemsDefenseType` all `""`. Then it calls
+   `TrackSkillUse("")` / `CheckSkillProgression("", ...)` — an empty skill name
+   takes the use-counter and the progression roll, and a successful roll sends
+   the player a levelup banner naming no skill. The generic fallback text formats
+   as `"%s %ss your attack!"` with an empty verb (`"Grimwald s your attack!"`).
+   This is a SECOND, independent instance of finding 1 — fixing one does not fix
+   the other.
+3. **The cost path is stamina-only.** `runBestOfAllDefense` charges the winner
+   `ApplyCostPartial(PoolStamina, targetChar.GetDefenseStaminaCost(...))`, and
+   `GetDefenseStaminaCost` returns **0** for quell and defy (conviction
+   defences, default arm). Wiring them as-is makes both **free**.
+4. **Analytics and the admin dashboard lose the swing entirely.**
+   `analytics.go`'s breakdown switch has only `DodgeSuccesses` /
+   `ParrySuccesses` / `BlockSuccesses`, and `AnalyticsSummary` has no field to
+   add a case to. Carries through `internal/web/admin.combatstats.go`'s
+   `defenseJSON` and the `combatstats` pie chart, which will simply never show a
+   slice.
+5. **No effectiveness or positional knobs exist.** The effectiveness switch in
+   `runBestOfAllDefense` has no `QuellEffectiveness` / `DefyEffectiveness` to
+   read (the config fields do not exist), and the prone / clinch / grounded
+   penalty switches below it use **bare string literals** with no default — so a
+   prone or grappled defender takes **no positional penalty at all** on quell or
+   defy. That is a silent, undocumented advantage over the physical three in
+   every disadvantaged position.
+6. **A quell/defy defensive crit has nowhere to record itself.**
+   `setDefenseCritFlags` needs a case, but `AttackResult` only declares
+   `ParryCritDetected` / `DodgeCritDetected` / `BlockCritDetected` — a field must
+   be added first. The crit still negates damage correctly (that is
+   unconditional in `resolveDefenseOutcomeCore`); what silently never fires is
+   the follow-up in `applyCritEffects` (riposte / sweep / shield slam).
+7. **The two parallel `DefenseType` enums are still three-valued.**
+   `combat.DefenseType` (`attackresult.go`) and `items.DefenseType`
+   (`internal/items/defensive_messages.go`) both mirror only dodge/parry/block.
+   The cast at `result.DefenseUsed = DefenseType(best.defenseType)` carries the
+   raw string through fine — it is the switches above that drop it. Left
+   deliberately un-extended in Task 11: `case combat.DefenseQuell:` failing to
+   compile is a LOUD failure, and loud beats silent until Task 12 supplies the
+   message data behind it.
+8. **`PowerScore` averages three defences.** `calculations.go` computes
+   `(dodge + parry + block) / 3.0`, under-weighting a character built on mental
+   or social defence (feeds `modules/leaderboards`).
+9. **`CategoryForDefenseVerb` falls back to `CategoryDodge`**, so quell/defy
+   lines take dodge's colouring. Not a one-line fix: `internal/messaging` has no
+   `CategoryQuell` / `CategoryDefy`, and `ansi-aliases.yaml` has no colour keys
+   for them.
+10. **`DriftFromCombat("trickster", ...)`** (`NewRound_DoCombat_unified.go`)
+    tests `DefenseUsed == DefenseDodge || == DefenseParry` by literal, so quell
+    and defy never signal "evaded a blow". Flavour only.
+
+Content gaps, owned by U11 rather than Task 12: no `quell.yaml` / `defy.yaml`
+under `_datafiles/world/dogmud/defense-messages/` (`GetDefenseMessage` already
+returns empty for an unknown key, so this degrades rather than breaks); no
+help-alias in `keywords.yaml`; `help combat` still enumerates only the physical
+three.
+
 ### A defensive win is a PARTIAL DEFLECTION, not a clean miss (U6 Task 10)
 
 **`res.hit == true` no longer means "the defence failed."** A defensive win now
@@ -1427,7 +1530,8 @@ can add parallel snapshot checks at the same start-of-round site.
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
-| `avoidance.go` | `TrySpellDeflection` and `TryStoicResolve`, the two defender-side avoidance rolls for the magical and conviction channels. Best-of-all melee defence lives in `combat_helpers.go`, not here. U6 absorbs both of these into the defence multiplier. |
+| `avoidance.go` | `TrySpellDeflection` and `TryStoicResolve`, the two defender-side avoidance rolls for the magical and conviction channels. Best-of-all melee defence lives in `combat_helpers.go`, not here. **U6 Task 12 DELETES this file**, folding both onto the shared contest via `defence_sets.go`. Do not invest in unifying the two here. |
+| `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). **NOT WIRED YET**; Task 12 consumes it. See "Defence sets are a property of the channel" below. |
 | `attackresult.go` | The result value passed back to callers |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |

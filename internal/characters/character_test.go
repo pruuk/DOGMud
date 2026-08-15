@@ -2511,6 +2511,35 @@ func TestGetDefenseScore(t *testing.T) {
 		assert.InDelta(t, 135.0, score, 1.0) // (120+80)/2 + 10*2 + 15 (SkillWeight=2.0)
 	})
 
+	// U6: the two non-physical defences. Neither reads Dexterity or any
+	// equipment -- gear does not help you refuse a compulsion or a taunt.
+	t.Run("quell — wil + spellcasting skill", func(t *testing.T) {
+		c := New()
+		c.Stats.Willpower.ValueAdj = 100
+		c.Stats.Dexterity.ValueAdj = 999 // must not contribute
+		c.Skills[string(skills.Spellcasting)] = 20
+		score := c.GetDefenseScore(DefenseQuell)
+		assert.InDelta(t, 140.0, score, 1.0) // 100 + 20*2 (SkillWeight=2.0)
+	})
+
+	t.Run("defy — wil + rhetoric skill", func(t *testing.T) {
+		c := New()
+		c.Stats.Willpower.ValueAdj = 90
+		c.Stats.Dexterity.ValueAdj = 999 // must not contribute
+		c.Skills[string(skills.Rhetoric)] = 10
+		score := c.GetDefenseScore(DefenseDefy)
+		assert.InDelta(t, 110.0, score, 1.0) // 90 + 10*2 (SkillWeight=2.0)
+	})
+
+	t.Run("quell and defy are distinct skills, not one resist", func(t *testing.T) {
+		// They were both called "resist" before 2026-08-13 and the names
+		// collided. A spellcaster with no rhetoric must be weak to taunts.
+		c := New()
+		c.Stats.Willpower.ValueAdj = 100
+		c.Skills[string(skills.Spellcasting)] = 40
+		assert.Greater(t, c.GetDefenseScore(DefenseQuell), c.GetDefenseScore(DefenseDefy))
+	})
+
 	t.Run("unknown defense type → 0", func(t *testing.T) {
 		c := New()
 		assert.Equal(t, 0.0, c.GetDefenseScore("unknown"))
@@ -2540,6 +2569,16 @@ func TestGetDefenseStaminaCost(t *testing.T) {
 		{"parry: 4 * 0.9 = 3", DefenseParry, 3},
 		{"block: 5 * 0.9 = 4", DefenseBlock, 4},
 		{"unknown → 0", "unknown", 0},
+
+		// U6: quell and defy cost CONVICTION, so they have no stamina cost and
+		// fall to the default arm. Pinned deliberately -- if a future change
+		// makes either return non-zero here, that is a defence being charged
+		// against the wrong pool, and this row is the alarm. Conversely these
+		// zeros mean routing quell/defy through
+		// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)) makes them
+		// FREE. See the doc comment on GetDefenseStaminaCost; U6 Task 12 owns it.
+		{"quell → 0 (conviction, not stamina)", DefenseQuell, 0},
+		{"defy → 0 (conviction, not stamina)", DefenseDefy, 0},
 	}
 
 	for _, tt := range tests {
