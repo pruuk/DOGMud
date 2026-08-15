@@ -188,6 +188,19 @@ func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters
 		AwardDefenceProgression(defender, defender.GetUserId(), res.Winner)
 	}
 
+	return defenceDamageMultiplier(res)
+}
+
+// defenceDamageMultiplier converts a finished opposed contest into the
+// attacker's damage multiplier: 1.0 when the attack won, 0.0 on a defensive
+// crit, exactly 0.5 on a floored save, and 0.0-0.5 along the DefenceMitigation
+// curve for a rolled defensive win.
+//
+// This is the exact tail of ResolveChannelDefence's derivation, extracted so
+// skill_moves.go's maneuvers (bash/trip/kick) can share it rather than
+// hand-copy the sign negation, the floored sentinel, and the sqrt(2)
+// normaliser below -- each of those has caused a real bug when duplicated.
+func defenceDamageMultiplier(res contest.Result) float64 {
 	if res.Success {
 		return 1.0
 	}
