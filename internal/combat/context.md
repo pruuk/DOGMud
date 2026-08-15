@@ -324,8 +324,14 @@ Things that bite:
 **`res.hit == true` no longer means "the defence failed."** A defensive win now
 lands as a partially deflected hit and carries a `damageMult` between 0.0 and
 0.5. Anything that reads `res.hit` (or `AttackResult.Hit`) as a proxy for "the
-attack got through" is asking the wrong question — ask `damageMult == 1.0`, or
-`best.margin <= 0` for who won the contest.
+attack got through" is asking the wrong question — U6 Task 14 added the signals
+that answer it: `hitResolution.defended` is true exactly on the deflection path
+(defence won, partial damage through; false on every clean-win, fumble, and
+defensive-crit path), and `AttackResult.CleanHit` / `WeaponHitInfo.CleanHit`
+aggregate "at least one swing actually won the contest" across the round the
+way `Hit` aggregates "damage was dealt". Progression, sounds, momentum and
+weapon break key on `CleanHit`; damage-scaled consumers (lifesteal, on-hit
+procs, wimpy) stay on `Hit`.
 
 `DefenceMitigation(normalizedDefenceMargin)` in `defence_multiplier.go` is the
 curve: a bare win removes **50%**, rising linearly to **100%** at
@@ -1314,7 +1320,7 @@ values directly.
 | `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage` |
 | `combat/margin_crit.go` | `ContestCrit`, `ContestCritThreshold` |
 | `combat/crit_floor.go` | `ApplyCritFloor`, `AttackContestCrit`, `DefenseContestCrit`, `AttackCritFloor`, `DefenseCritFloor` |
-| `combat/attackresult.go` | `AttackResult` struct (includes `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`) and message helpers |
+| `combat/attackresult.go` | `AttackResult` struct (includes `Hit`/`CleanHit` — dealt damage vs. won the contest, see the Task 10/14 section — `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`) and message helpers |
 | `combat/ai.go` | `ChooseSpecialMove`, `ChooseCastAction`, `GetAIProfile`, AI profiles, viability checks (`CanUseBash`, `CanUseKick`, etc.), scoring functions |
 | `combat/criteffects.go` | `AttemptCritDisarm`, `SetGrappleOpportunity`, `HasGrappleOpportunity`, `GetGrappleOpportunityBonus`, `ClearGrappleOpportunity` |
 | `combat/grapple.go` | `AttemptGrapple`, `ApplyGrappleResult`, `CheckClinchProgression`, `CheckGroundedEscape`, `ApplyPositionProgression`, `IsThirdPartyAttack` |

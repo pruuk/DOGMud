@@ -170,7 +170,12 @@ func applyCritFloors(res *hitResolution, result *AttackResult, best bestDefenseR
 		// floor-promoted defence crit would deal 0-50% damage while a rolled one
 		// deals none. This restores the pre-U6 outcome for this path rather than
 		// changing it.
+		//
+		// Task 14: defended is declared false on every defensive-crit path, and
+		// this promotion turns a deflection INTO a defensive crit, so it clears
+		// the flag along with the damage.
 		res.hit = false
+		res.defended = false
 		res.damageMult = 0.0
 	}
 }

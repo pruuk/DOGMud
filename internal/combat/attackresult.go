@@ -17,9 +17,15 @@ const (
 
 // WeaponHitInfo tracks whether a specific weapon landed at least one hit
 // during a combat round, for per-weapon skill progression.
+//
+// U6 Task 14: Hit means the weapon dealt damage on at least one swing, a
+// deflected swing included. CleanHit means at least one swing actually WON
+// the contest (a deflected swing has Hit true but the defence won it, so
+// attacker-side progression keys on CleanHit).
 type WeaponHitInfo struct {
 	SkillTag string // e.g., "weapon-combat", "unarmed-combat", "ranged-combat"
 	Hit      bool
+	CleanHit bool
 	Crit     bool
 	Fumble   bool
 }
@@ -52,7 +58,16 @@ type TaggedMessage struct {
 }
 
 type AttackResult struct {
+	// Hit means damage was dealt by at least one swing this round — a
+	// DEFLECTED swing included, since U6 Task 10 made a defensive win deal
+	// partial damage. CleanHit means at least one swing actually won the
+	// contest (crit, normal win, defence fumble, forced crit). Both
+	// accumulate across the whole round and are never reset per swing.
+	// Consumers that mean "the attack got through the defence" (progression,
+	// sounds, momentum, weapon break) key on CleanHit; consumers that mean
+	// "damage was dealt" (lifesteal, on-hit procs, wimpy) key on Hit.
 	Hit                     bool            // defaults false
+	CleanHit                bool            // defaults false
 	Crit                    bool            // defaults false
 	Fumble                  bool            // defaults false
 	DoubleFumble            bool            // defaults false

@@ -143,7 +143,12 @@ type WeaponBreakResult struct {
 func tryWeaponBreak(defender *characters.Character, roundResult combat.AttackResult, room *rooms.Room) WeaponBreakResult {
 	result := WeaponBreakResult{}
 
-	if !roundResult.Hit {
+	// U6 Task 14: break-testing the defender's offhand keys on the attack
+	// actually landing cleanly. A deflected swing (Hit true, defence won)
+	// does not test breakage — preserving pre-U6 behavior, where a defended
+	// swing was a miss. Crit implies CleanHit, so the crit modifier below is
+	// unaffected.
+	if !roundResult.CleanHit {
 		return result
 	}
 	if defender.Equipment.Offhand.ItemId <= 0 {

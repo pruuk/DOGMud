@@ -752,6 +752,12 @@ type hitResolution struct {
 	// hit. EVERY return path in resolveDefenseOutcomeCore sets this explicitly;
 	// the zero value is 0.0, so a path that forgets silently deals nothing.
 	damageMult float64
+	// defended is true when the DEFENCE won the contest but the swing still
+	// deals partial damage (the Task 10 deflection: hit == true with
+	// damageMult < 1.0). It is false on every clean-win, fumble, and
+	// defensive-crit path. U6 Task 14 — consumers that mean "the attack won
+	// the contest" key on hit && !defended rather than on hit alone.
+	defended bool
 }
 
 // doubleFumbleMessages are comedy flavor text for when both combatants fumble.
@@ -1055,6 +1061,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		}
 	}
 	res.hit = true
+	res.defended = true
 	res.damageMult = 1.0 - DefenceMitigation(defMargin)
 	sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
 	return res
@@ -1238,16 +1245,26 @@ func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius
 }
 
 // buildAttackMessages constructs and sends all combat messages for a swing.
+//
+// defended is hitResolution.defended: the defence won the contest but the
+// swing still dealt partial damage (U6 Task 10). Task 14 uses it to stop the
+// double narration where sendDefenseMessages already said "you dodge/parry/
+// block" and the nonzero damage then ALSO selected a damage-band attack line.
 func buildAttackMessages(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character,
 	ws weaponSetup, sdp swingDamageParams, attackTargetDamage int, attackTargetReduction int,
 	attackSourceDamage int, attackSourceReduction int,
-	srcType, tgtType SourceTarget, prefix string) {
+	srcType, tgtType SourceTarget, prefix string, defended bool) {
 
 	// Calculate actual damage vs. expected damage pct
 	pctDamage := 0.0
 	if sdp.dmgMean > 0 {
 		pctDamage = math.Ceil(float64(attackTargetDamage) / sdp.dmgMean * 100)
 	}
+
+	// A DEFLECTED swing: the defence won but partial damage got through. Only
+	// treated specially when damage actually landed; a defended swing that
+	// rolled zero damage narrates like any other zero-damage outcome.
+	deflected := defended && attackTargetDamage > 0
 
 	// T4 (chunk 4c): compute the display subtype for attack-message selection.
 	// See meleeDisplaySubtype for the swap rules.
@@ -1282,9 +1299,21 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// After the fumble branch on purpose: flubbing a swing at a falling
 		// target is still a fumble.
 		msgs = items.GetPreAttackMessage(displaySubtype, items.CoupDeGrace)
+	} else if deflected {
+		// Deflected swing: sendDefenseMessages already narrated the dodge/
+		// parry/block, so a damage-band line here would narrate the same
+		// swing twice. Use the miss band; a short glancing note carrying the
+		// damage description is appended below. The feint check is
+		// deliberately skipped: this swing dealt real damage, so reading it
+		// as a deliberate feint would be wrong.
+		msgs = items.GetAttackMessage(displaySubtype, 0)
 	} else {
 		msgs = items.GetAttackMessage(displaySubtype, int(pctDamage))
-		// Feint check: skilled attackers can turn misses into deliberate-looking feints
+		// Feint check: skilled attackers can turn misses into deliberate-looking
+		// feints. Decision (U6 Task 14): this gate stays on true zero-damage
+		// outcomes (defensive crits, uncontested misses). Pre-U6 it also fired
+		// on defended swings, but a deflected swing now deals real damage and
+		// takes the branch above instead — do not "fix" this back.
 		if int(pctDamage) == 0 && !result.Fumble {
 			isFeint = checkFeint(sourceChar.GetCombatSkillLevel())
 		}
@@ -1357,6 +1386,17 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		if len(string(toDefenderRoomMsg)) > 0 {
 			toDefenderRoomMsg = toDefenderRoomMsg.SetTokenValue(tokenName, tokenValue)
 		}
+	}
+
+	// Deflected swing: append the glancing note to the two participants. Room
+	// viewers keep the plain miss-band line; the defence narration tells them
+	// the rest.
+	if deflected {
+		dmgDesc := tokenReplacements[items.TokenDamage]
+		toAttackerMsg = items.ItemMessage(string(toAttackerMsg) +
+			` Your blow is turned aside, but still lands. (<ansi fg="damage">` + dmgDesc + `</ansi>)`)
+		toDefenderMsg = items.ItemMessage(string(toDefenderMsg) +
+			` The blow still catches you. (<ansi fg="damage">` + dmgDesc + `</ansi>)`)
 	}
 
 	// Feint: replace miss messages with feint-flavored text for skilled attackers

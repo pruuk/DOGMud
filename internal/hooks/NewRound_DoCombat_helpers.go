@@ -115,8 +115,11 @@ func replaceDarknessMessages(result *combat.AttackResult, sourceCanSee bool, tar
 
 	// Build replacement messages based on swing events. Dark-room
 	// substitutes carry the same per-line outcome category as the
-	// equivalent sighted line — defense crit / dodge → CategoryDodge,
-	// hits → CategoryHitMelee, miss/fumble → CategoryHitMelee.
+	// equivalent sighted line — zero-damage defense crit / dodge →
+	// CategoryDodge, hits → CategoryHitMelee, miss/fumble →
+	// CategoryHitMelee. A DEFLECTED swing (defence won, partial damage
+	// through — U6 Task 14) is a hit-band line for both viewers, so the
+	// damage-to-viewer verbosity floor still applies to the defender.
 	if !sourceCanSee {
 		newMsgs := make([]combat.TaggedMessage, 0, len(result.SwingEvents))
 		for _, se := range result.SwingEvents {
@@ -128,6 +131,10 @@ func replaceDarknessMessages(result *combat.AttackResult, sourceCanSee bool, tar
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">You stumble badly in the darkness!</ansi> <ansi fg="fumble-text">!!!</ansi>`})
 			case se.Crit:
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="crit-text">***</ansi> <ansi fg="attack-good">You land a devastating blow in the dark!</ansi> <ansi fg="crit-text">***</ansi>`})
+			case se.DefenseUsed != "" && !se.DefenseCrit && se.Damage > 0:
+				// Deflected: the "turned aside" line below implies zero
+				// damage, which is no longer true for a partial deflection.
+				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="attack-bad">Something turns your blow aside, but you feel it land!</ansi>`})
 			case se.DefenseCrit || se.DefenseUsed != "":
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryDodge, Text: `<ansi fg="attack-bad">Your attack is turned aside by something!</ansi>`})
 			case se.Hit:
@@ -152,6 +159,11 @@ func replaceDarknessMessages(result *combat.AttackResult, sourceCanSee bool, tar
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="yellow">You hear your attacker stumble!</ansi>`})
 			case se.Crit:
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="crit-text">***</ansi> <ansi fg="red">Something hits you hard in the dark!</ansi> <ansi fg="crit-text">***</ansi>`})
+			case se.DefenseUsed != "" && !se.DefenseCrit && se.Damage > 0:
+				// Deflected: real damage reached the viewer, so this is a
+				// hit-band line (the verbosity floor must not suppress it),
+				// not a CategoryDodge line like the clean fend-off below.
+				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryHitMelee, Text: `<ansi fg="defense-good">You fend off something in the dark, but it still catches you!</ansi>`})
 			case se.DefenseCrit || se.DefenseUsed != "":
 				newMsgs = append(newMsgs, combat.TaggedMessage{Category: messaging.CategoryDodge, Text: `<ansi fg="defense-good">You fend off something in the dark!</ansi>`})
 			case se.Hit:

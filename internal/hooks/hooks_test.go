@@ -2844,8 +2844,12 @@ func TestPlaySound_WrongEvent(t *testing.T) {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 func dummyAttackResult(hit, crit bool) combat.AttackResult {
+	// A dummy hit is a CLEAN hit (the attack won the contest); tests that
+	// need the Task 10 deflection shape (Hit true, CleanHit false) build the
+	// struct by hand.
 	return combat.AttackResult{
-		Hit:  hit,
-		Crit: crit,
+		Hit:      hit,
+		CleanHit: hit,
+		Crit:     crit,
 	}
 }
