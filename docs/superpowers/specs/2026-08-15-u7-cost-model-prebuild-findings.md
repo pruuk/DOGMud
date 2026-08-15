@@ -286,6 +286,81 @@ whether it is physical. Not a code change at each call site.
 
 ---
 
+## 5.1 🔴 Melee defence has never actually been charged
+
+**Confirmed by test, 2026-08-15.** `calculateCombat` takes its two characters
+**by value** (`internal/combat/combat.go:430`), and all four production entry
+points pass copies:
+
+```
+combat.go:54   calculateCombat(*user.Character,  mob.Character,     User, Mob)
+combat.go:137  calculateCombat(*userAtk.Character, *userDef.Character, User, User)
+combat.go:220  calculateCombat(mob.Character,    *user.Character,   Mob,  User)
+combat.go:271  calculateCombat(mobAtk.Character, mobDef.Character,  Mob,  Mob)
+```
+
+`runBestOfAllDefense` receives `&targetChar` — the address of that local copy —
+so its charge (`combat_helpers.go:732-736`) debits the copy and is discarded on
+return. A direct test confirms it: `ApplyCostPartial` reports `Charged: 4` while
+the real character's stamina is unchanged.
+
+Damage is unaffected: it travels back in `AttackResult` and the caller applies it
+to the real character. The attacker's cost is unaffected: `DeductAttackStamina`
+is called by the wrappers on the real character, outside `calculateCombat`.
+
+**So in melee today, the attacker pays once per round and the defender pays
+nothing at all, no matter how many swings come in.** The careful U5b-2 and U6
+comments describing per-defence charging describe intent that never took effect.
+
+**Quell and defy are NOT affected.** `ResolveChannelDefence` takes real pointers
+(`&mob.Character`, `target.Char`) at all seven call sites, so the U6 conviction
+charging works correctly.
+
+### What this does to every number quoted before now
+
+Every "today" baseline in both modelling passes included a defence cost that is
+not charged, so **today is far more forgiving than any model has said**, and
+U7's delta is correspondingly larger. U7 does not make defence more expensive:
+**it makes defence cost something for the first time**, from a true zero, while
+also moving the attacker from one charge per round to one per swing.
+
+The practical consequence is concentrated in swarms, because defence cost scales
+with incoming swings while attack cost does not. A fight that today has no
+stamina dimension at all becomes one that can empty a defender's pool.
+
+## 5.2 Other corrected facts
+
+- **Fractional carry is mandatory, not an optimisation.** At every base from 0.5
+  to 3.0, a low-skill character's dodge, parry and block all round to the SAME
+  integer, so the 1.25 / 1.10 / 1.15 dials are invisible to exactly the
+  characters they matter most to. `math.Ceil` does not fix this and overcharges
+  by about 10% on top. Carry a float remainder per pool and deduct
+  `math.Floor(debt)`.
+- **Terrain multipliers do not exist in DOGMud.** Zero of the 17 biome files
+  under `_datafiles/world/dogmud/biomes/` set `movementcost`, so every biome
+  loads at the 1.0 default. The 17 files under `_datafiles/world/default/biomes/`
+  do carry values (road 0.5, city 0.7, mountains/swamp 2.0, cliffs 2.5) but that
+  directory is not loaded. The movement design assumes a normal/rough split that
+  is not in the data; authoring it is a prerequisite.
+- **The search modifier on movement is inert as specified.** At base 0.5 with a
+  floor of 1, cost only clears the floor when `encumbrance x terrain > 1.609`,
+  i.e. above 46% load at terrain 1.0. With terrain pinned at 1.0 world-wide, no
+  live character ever reaches it. It must be paired with the biome data edit or
+  it is a knob that provably does nothing.
+- **Recovery is the real punishment for running dry.** Out of combat, regen is
+  2.7 to 3.7 stamina per round (once every three rounds), so refilling an empty
+  pool takes roughly 160 rounds, about 11 minutes of real time.
+- **The naive movement-trains-search implementation is worse than slow, it is
+  poisonous.** Tracking a use every move never reaches rank 10 at all, and 2,000
+  room moves would cut forage-based search training to about 1.5% of its normal
+  rate. Gate whether the use is recorded (1-in-200 recommended), never scale the
+  odds on a use that is still counted.
+- **Stealth drift is real and needs a decision.** Detection saturates at search
+  rank 50. At a 1-in-50 gate, 2,000 room moves roughly doubles a player's chance
+  to spot a hidden mob or player; at 1-in-200 the same milestone takes 8,000
+  moves. Accepted as win-win by the owner, but the rate controls how fast
+  world-wide stealth degrades.
+
 ## 6. Risks carried into the build
 
 1. **This is the second consecutive nerf to defending.** U6 made a successful
