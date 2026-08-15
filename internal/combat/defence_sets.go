@@ -24,15 +24,20 @@ const (
 //
 // quell (Wil + spellcasting x SkillWeight) answers mental spells; defy
 // (Wil + rhetoric x SkillWeight) answers social attacks. A set of size one is
-// still a contest, not a different mechanism -- that unification is what lets
+// still a contest, not a different mechanism -- that unification is what let
 // avoidance.go be deleted in Task 12.
 //
-// NOT WIRED YET. Melee still hands runBestOfAllDefense its own equipment-derived
-// defSeq (characters.GetDefenseSequence), and the non-physical channels still go
-// through TrySpellDeflection / TryStoicResolve in avoidance.go. Task 12 does the
-// wiring; this is the data it will consume. Before wiring quell or defy, read the
-// resource-cost note on characters.GetDefenseStaminaCost -- charging them through
-// the stamina path would make them FREE.
+// WIRED, but not everywhere. ResolveChannelDefence consumes this table for the
+// three non-melee channels: the five spell sites in internal/hooks and the taunt
+// site in internal/actions. MELEE DOES NOT. runBestOfAllDefense still builds its
+// own equipment-derived defSeq from characters.GetDefenseSequence, so adding a
+// defence to the ChannelMelee row here changes nothing on its own.
+//
+// Two things a new row must carry with it. It needs an arm in
+// characters.GetDefenseScore, or it enters every contest at 0 and always loses
+// (TestDefenceSetForReturnsKnownDefenceNames is the guard). And it needs a row
+// in characters.DefensePool if it is not paid in stamina, or the pair charges
+// the wrong pool.
 func DefenceSetFor(channel AttackChannel) []string {
 	switch channel {
 	case ChannelMelee:

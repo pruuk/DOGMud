@@ -100,9 +100,10 @@ type Result struct {
 - **`RollResult.Margin` and `.Success` are NOT populated on the rolls this
   package returns.** `dice.OpposedRoll` sets them; `dice.Roll`, which this
   package uses, does not. Read `Result.Margin` and `Result.Success` instead.
-  `TrySpellDeflection` read `defRoll.Margin` before U2 — translated naively it
-  would have silently passed zero and no spell deflection would ever have
-  critted again, with nothing failing and no test breaking.
+  The since-deleted `TrySpellDeflection` read `defRoll.Margin` before U2 —
+  translated naively it would have silently passed zero and no spell deflection
+  would ever have critted again, with nothing failing and no test breaking. Its
+  successor is `combat.ResolveChannelDefence`, and the trap is unchanged.
 - **`RunWithFloors` takes ONE symmetric floor, not a success/resist pair.**
   U6 collapsed the two-floor style into a single `ContestFloor` knob (Balance
   config); this function still takes the floor as a plain parameter and never

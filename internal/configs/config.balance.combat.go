@@ -28,6 +28,16 @@ func (b *Balance) validateCombat() {
 	if b.BlockBaseStaminaCost < 1 {
 		b.BlockBaseStaminaCost = 5
 	}
+	// U6 Task 12: paid in conviction, not stamina. Seeded at 2, matching dodge --
+	// the cheapest physical defence -- because neither has been played against
+	// yet and the conviction pool is smaller than stamina for most builds. First
+	// retune is a config edit.
+	if b.QuellBaseConvictionCost < 1 {
+		b.QuellBaseConvictionCost = 2
+	}
+	if b.DefyBaseConvictionCost < 1 {
+		b.DefyBaseConvictionCost = 2
+	}
 
 	// ── COMBAT: DEFENSE EFFECTIVENESS ────────────────────────────────────────
 	if b.DodgeEffectiveness <= 0 {
@@ -232,9 +242,6 @@ func (b *Balance) validateCombat() {
 	}
 	if b.RhetoricDamageScale <= 0 {
 		b.RhetoricDamageScale = 1.0
-	}
-	if b.RhetoricAvoidanceDamageMultiplier <= 0 || b.RhetoricAvoidanceDamageMultiplier > 1.0 {
-		b.RhetoricAvoidanceDamageMultiplier = 0.50
 	}
 	if b.PhysicalMitigationCap <= 0 || b.PhysicalMitigationCap > 1.0 {
 		b.PhysicalMitigationCap = 0.75

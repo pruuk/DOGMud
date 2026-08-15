@@ -18,6 +18,17 @@ type Balance struct {
 	ParryMultiplier      ConfigFloat `yaml:"ParryMultiplier"`      // Stamina cost multiplier for parry (default 0.9)
 	BlockMultiplier      ConfigFloat `yaml:"BlockMultiplier"`      // Stamina cost multiplier for block (default 0.9)
 
+	// U6 Task 12: quell and defy are paid in CONVICTION, not stamina, so they
+	// get their own base costs rather than a fourth and fifth stamina knob. The
+	// pairing lives in characters.DefensePool / Character.GetDefenseCost; charging
+	// either through GetDefenseStaminaCost returns 0 and makes the defence free.
+	//
+	// No cost MULTIPLIER to match the physical three. Those exist because the
+	// three were retuned together against a shared stamina pool; there is nothing
+	// to retune against yet here, and a base cost alone is already tunable.
+	QuellBaseConvictionCost ConfigInt `yaml:"QuellBaseConvictionCost"` // Base conviction cost for quell (default 2)
+	DefyBaseConvictionCost  ConfigInt `yaml:"DefyBaseConvictionCost"`  // Base conviction cost for defy (default 2)
+
 	// ── COMBAT: DEFENSE EFFECTIVENESS ────────────────────────────────────────
 	DodgeEffectiveness ConfigFloat `yaml:"DodgeEffectiveness"` // Multiplier on dodge score before opposed roll (default 1.0)
 	ParryEffectiveness ConfigFloat `yaml:"ParryEffectiveness"` // Multiplier on parry score before opposed roll (default 1.0)
@@ -197,32 +208,41 @@ type Balance struct {
 	// Legacy unarmed knobs — still used by GetDefaultDistributionDamage() for
 	// attack count and crit buff calculation. Damage values are overridden by
 	// the unified pipeline (UnarmedDamageMultiplier + CalcRawDamage).
-	UnarmedBaseDamage                 ConfigFloat `yaml:"UnarmedBaseDamage"`                 // Base damage before stat bonuses (default 2.0)
-	UnarmedStrengthDivisor            ConfigFloat `yaml:"UnarmedStrengthDivisor"`            // Str / this = damage bonus (default 25.0)
-	UnarmedSkillDivisor               ConfigFloat `yaml:"UnarmedSkillDivisor"`               // Skill / this = damage bonus (default 10.0)
-	UnarmedBaseVariance               ConfigFloat `yaml:"UnarmedBaseVariance"`               // Base randomness of unarmed hits (default 3.0)
-	UnarmedDamageMultiplier           ConfigFloat `yaml:"UnarmedDamageMultiplier"`           // Fist damage multiplier for new pipeline (default 0.30)
-	UnarmedSpeedMultiplier            ConfigFloat `yaml:"UnarmedSpeedMultiplier"`            // Unarmed attack speed — slightly faster than light weapons (default 1.4)
-	HasteSwingMultiplier              ConfigFloat `yaml:"HasteSwingMultiplier"`              // Swing count multiplier when haste buff is active (default 1.50)
-	SkillMultiplierBase               ConfigFloat `yaml:"SkillMultiplierBase"`               // Skill multiplier at rank 0 (default 1.0)
-	SkillMultiplierMax                ConfigFloat `yaml:"SkillMultiplierMax"`                // Skill multiplier at soft cap (default 3.0)
-	SkillWeight                       ConfigFloat `yaml:"SkillWeight"`                       // Global multiplier on skill contributions in additive formulas (default 2.0)
-	CritDamageBase                    ConfigFloat `yaml:"CritDamageBase"`                    // Crit damage multiplier at skill rank 0, applied on top of the mitigation bypass (default 2.0)
-	CritDamagePerSkill                ConfigFloat `yaml:"CritDamagePerSkill"`                // Added to the crit damage multiplier per rank of the attacking channel's skill (default 0.05)
-	MeleeDamageScale                  ConfigFloat `yaml:"MeleeDamageScale"`                  // Physical damage scale. Stats ~100, so 0.30 yields ~30 raw per swing (default 0.30)
-	SpellDamageScale                  ConfigFloat `yaml:"SpellDamageScale"`                  // Flat multiplier on spell damage output (default 1.0 = no change)
-	RhetoricDamageScale               ConfigFloat `yaml:"RhetoricDamageScale"`               // Flat multiplier on conviction/taunt damage output (default 1.0 = no change)
-	MobDamageMultiplier               ConfigFloat `yaml:"MobDamageMultiplier"`               // Extra multiplier applied to NPC melee damage only (default 1.0 = same as players)
-	GlobalDamageMultiplier            ConfigFloat `yaml:"GlobalDamageMultiplier"`            // Master multiplier applied to ALL damage channels (default 1.0)
-	PhysicalMitigationCap             ConfigFloat `yaml:"PhysicalMitigationCap"`             // Max physical mitigation % (default 0.75)
-	MagicalMitigationCap              ConfigFloat `yaml:"MagicalMitigationCap"`              // Max magical mitigation % (default 0.75)
-	ConvictionMitigationCap           ConfigFloat `yaml:"ConvictionMitigationCap"`           // Max conviction mitigation % (default 0.75)
-	SpellAvoidanceDamageMultiplier    ConfigFloat `yaml:"SpellAvoidanceDamageMultiplier"`    // Damage multiplier on successful spell deflection (default 0.50)
-	RhetoricAvoidanceDamageMultiplier ConfigFloat `yaml:"RhetoricAvoidanceDamageMultiplier"` // Damage multiplier on successful stoic resolve (default 0.50)
-	ResourcePenaltyCurve              ConfigFloat `yaml:"ResourcePenaltyCurve"`              // Exponent for resource depletion penalty curve (default 2.0)
-	HealthPenaltyMax                  ConfigFloat `yaml:"HealthPenaltyMax"`                  // Max melee damage penalty at 0% HP (default 0.28)
-	StaminaPenaltyMax                 ConfigFloat `yaml:"StaminaPenaltyMax"`                 // Max attack count + hit rate penalty at 0% SP (default 0.28)
-	ConvictionPenaltyMax              ConfigFloat `yaml:"ConvictionPenaltyMax"`              // Max taunt/spell penalty at 0% CP (default 0.28)
+	UnarmedBaseDamage       ConfigFloat `yaml:"UnarmedBaseDamage"`       // Base damage before stat bonuses (default 2.0)
+	UnarmedStrengthDivisor  ConfigFloat `yaml:"UnarmedStrengthDivisor"`  // Str / this = damage bonus (default 25.0)
+	UnarmedSkillDivisor     ConfigFloat `yaml:"UnarmedSkillDivisor"`     // Skill / this = damage bonus (default 10.0)
+	UnarmedBaseVariance     ConfigFloat `yaml:"UnarmedBaseVariance"`     // Base randomness of unarmed hits (default 3.0)
+	UnarmedDamageMultiplier ConfigFloat `yaml:"UnarmedDamageMultiplier"` // Fist damage multiplier for new pipeline (default 0.30)
+	UnarmedSpeedMultiplier  ConfigFloat `yaml:"UnarmedSpeedMultiplier"`  // Unarmed attack speed — slightly faster than light weapons (default 1.4)
+	HasteSwingMultiplier    ConfigFloat `yaml:"HasteSwingMultiplier"`    // Swing count multiplier when haste buff is active (default 1.50)
+	SkillMultiplierBase     ConfigFloat `yaml:"SkillMultiplierBase"`     // Skill multiplier at rank 0 (default 1.0)
+	SkillMultiplierMax      ConfigFloat `yaml:"SkillMultiplierMax"`      // Skill multiplier at soft cap (default 3.0)
+	SkillWeight             ConfigFloat `yaml:"SkillWeight"`             // Global multiplier on skill contributions in additive formulas (default 2.0)
+	CritDamageBase          ConfigFloat `yaml:"CritDamageBase"`          // Crit damage multiplier at skill rank 0, applied on top of the mitigation bypass (default 2.0)
+	CritDamagePerSkill      ConfigFloat `yaml:"CritDamagePerSkill"`      // Added to the crit damage multiplier per rank of the attacking channel's skill (default 0.05)
+	MeleeDamageScale        ConfigFloat `yaml:"MeleeDamageScale"`        // Physical damage scale. Stats ~100, so 0.30 yields ~30 raw per swing (default 0.30)
+	SpellDamageScale        ConfigFloat `yaml:"SpellDamageScale"`        // Flat multiplier on spell damage output (default 1.0 = no change)
+	RhetoricDamageScale     ConfigFloat `yaml:"RhetoricDamageScale"`     // Flat multiplier on conviction/taunt damage output (default 1.0 = no change)
+	MobDamageMultiplier     ConfigFloat `yaml:"MobDamageMultiplier"`     // Extra multiplier applied to NPC melee damage only (default 1.0 = same as players)
+	GlobalDamageMultiplier  ConfigFloat `yaml:"GlobalDamageMultiplier"`  // Master multiplier applied to ALL damage channels (default 1.0)
+	PhysicalMitigationCap   ConfigFloat `yaml:"PhysicalMitigationCap"`   // Max physical mitigation % (default 0.75)
+	MagicalMitigationCap    ConfigFloat `yaml:"MagicalMitigationCap"`    // Max magical mitigation % (default 0.75)
+	ConvictionMitigationCap ConfigFloat `yaml:"ConvictionMitigationCap"` // Max conviction mitigation % (default 0.75)
+	// U6 Task 12 deleted SpellAvoidanceDamageMultiplier and
+	// RhetoricAvoidanceDamageMultiplier from here. They were the flat partial
+	// multipliers returned by TrySpellDeflection and TryStoicResolve, the second
+	// independent contest U6 removed. A defensive win on any channel is now
+	// scaled by DefenceMitigation, whose 0.5 floor and crit-threshold ceiling are
+	// STRUCTURAL rather than tunable -- see the comment on DefenceMitigation for
+	// why moving either reintroduces the discontinuity it replaces.
+	//
+	// Both keys may still be present in config.yaml. yaml.Unmarshal is
+	// non-strict, so an orphaned key is ignored rather than fatal; the lines can
+	// be dropped from config.yaml whenever it is next edited.
+	ResourcePenaltyCurve ConfigFloat `yaml:"ResourcePenaltyCurve"` // Exponent for resource depletion penalty curve (default 2.0)
+	HealthPenaltyMax     ConfigFloat `yaml:"HealthPenaltyMax"`     // Max melee damage penalty at 0% HP (default 0.28)
+	StaminaPenaltyMax    ConfigFloat `yaml:"StaminaPenaltyMax"`    // Max attack count + hit rate penalty at 0% SP (default 0.28)
+	ConvictionPenaltyMax ConfigFloat `yaml:"ConvictionPenaltyMax"` // Max taunt/spell penalty at 0% CP (default 0.28)
 
 	// ── REGEN RATES ──────────────────────────────────────────────────────────
 	PlayerHealthRegenPct     ConfigFloat `yaml:"PlayerHealthRegenPct"`     // Fraction of HealthMax regen'd per tick — players (default 0.01)

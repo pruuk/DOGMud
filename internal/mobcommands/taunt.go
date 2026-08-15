@@ -60,16 +60,16 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> wheels around and locks onto <ansi fg="mobname">%s</ansi>!`, targetName, mob.Character.Name))
 		}
 
-		// Stoic resolve messaging
-		if result.CritDeflected {
+		// Defy messaging.
+		if result.FullyDefied {
 			if targetPlayer != nil {
 				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">The challenge rolls off you like rain from stone — you are unmoved.</ansi>`)
+					`<ansi fg="green">You defy the challenge outright, and it rolls off you like rain from stone.</ansi>`)
 			}
-		} else if result.Deflected {
+		} else if result.Defied {
 			if targetPlayer != nil {
 				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You set your jaw and weather the challenge.</ansi>`)
+					`<ansi fg="green">You set your jaw and defy the challenge, and most of its bite is gone.</ansi>`)
 			}
 		}
 

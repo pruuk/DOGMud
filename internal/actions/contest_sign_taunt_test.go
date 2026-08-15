@@ -15,8 +15,9 @@ import (
 
 // ATTACKER-SIDE mirror of internal/combat/contest_sign_test.go (roadmap U3).
 //
-// That file guards the two DEFENDER-side crit reads, TryStoicResolve and
-// TrySpellDeflection. It guards nothing attacker-side, and a final U3 review
+// That file guards the DEFENDER-side crit read, which since U6 Task 12 lives in
+// combat.ResolveChannelDefence (it was TryStoicResolve and TrySpellDeflection
+// when this was written). It guards nothing attacker-side, and a final U3 review
 // proved the hole with a one-token mutation in combat_taunt.go:
 //
 //	res.Margin  ->  res.AttackRoll.Margin
@@ -34,8 +35,9 @@ import (
 //
 // TRAP 2 -- THE MARGIN IS SIGNED THE WRONG WAY. contest.Result.Margin is
 // ATTACK-positive. ExecuteTaunt performs the ATTACKER's crit check, so it must
-// pass the margin UNNEGATED; the defensive mirror in TryStoicResolve negates.
-// Getting that backwards also compiles, and puts the crit on the losing side.
+// pass the margin UNNEGATED; the defensive mirror in ResolveChannelDefence
+// negates. Getting that backwards also compiles, and puts the crit on the losing
+// side.
 //
 // THE ONLY OBSERVABLE EITHER TRAP DISTURBS IS TauntResult.Crit. A zeroed margin
 // normalises to z = 0 and a flipped margin to a large negative z; both sit below
@@ -71,8 +73,8 @@ import (
 //     zero, so the pin now matters even in a test binary.
 //
 //   - MinDefenseCritChance, for the same reason on the other side. A promoted
-//     defensive crit inside TryStoicResolve does not touch Crit, but pinning it
-//     keeps the non-crit branch deterministic.
+//     defensive crit inside ResolveChannelDefence does not touch Crit, but
+//     pinning it keeps the non-crit branch deterministic.
 //
 //   - SkillWeight, pinned NON-zero at 5. It is the multiplier on both sides'
 //     rhetoric, so it sets the score gap the iteration-count arithmetic below is

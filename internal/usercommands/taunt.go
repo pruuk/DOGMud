@@ -83,21 +83,22 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			sendAggroPullMessages(user, room, sourceName, targetName)
 		}
 
-		// Stoic resolve messaging
-		if result.CritDeflected {
+		// Defy messaging. A partial outcome must not claim the taunt did
+		// nothing: the words still landed, they simply lost their edge.
+		if result.FullyDefied {
 			if targetPlayer != nil {
 				targetPlayer.SendText(messaging.CategorySystem,
-					`<ansi fg="green">The words wash over you harmlessly — you are unmoved.</ansi>`)
+					`<ansi fg="green">You defy the words outright, and they leave you unmoved.</ansi>`)
 			}
 			user.SendText(messaging.CategorySystem,
-				`<ansi fg="yellow">Your words have no effect — your target is completely unmoved!</ansi>`)
-		} else if result.Deflected {
+				`<ansi fg="yellow">Your target defies you, and the words find no purchase at all.</ansi>`)
+		} else if result.Defied {
 			if targetPlayer != nil {
 				targetPlayer.SendText(messaging.CategorySystem,
-					`<ansi fg="green">You steel yourself against the barrage of words.</ansi>`)
+					`<ansi fg="green">You defy the barrage of words, and most of it loses its edge.</ansi>`)
 			}
 			user.SendText(messaging.CategorySystem,
-				`<ansi fg="yellow">Your words fail to fully penetrate your target's resolve!</ansi>`)
+				`<ansi fg="yellow">Your target defies you, and the barb loses its edge.</ansi>`)
 		}
 
 	default:

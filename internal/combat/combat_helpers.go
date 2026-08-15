@@ -628,32 +628,44 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		// penalty bucket, IsStandingGrapple matches the legacy
 		// "clinched" bucket, IsGroundGrapple matches the legacy
 		// "grounded" bucket.
+		// U6 Task 12 replaced the bare "dodge"/"parry"/"block" string literals
+		// these three switches used to carry with the characters.Defense*
+		// constants they were meant to match. The literals were the same values,
+		// so this is not a behaviour change -- it removes the drift risk, since a
+		// literal that stops matching its constant silently drops the penalty
+		// rather than failing to compile.
+		//
+		// There are still no quell or defy arms, and that gap is DISCLOSED, not
+		// an oversight: quell and defy do not run through this function (they
+		// resolve in ResolveChannelDefence), and giving them positional penalties
+		// would need ProneQuellPenalty and four more knobs that do not exist.
+		// Whoever wires either defence into melee owns adding them.
 		switch {
 		case targetChar.IsProne() || targetChar.IsSupine():
 			switch defenseType {
-			case "dodge":
+			case characters.DefenseDodge:
 				defenseScore *= float64(bal.ProneDodgePenalty)
-			case "parry":
+			case characters.DefenseParry:
 				defenseScore *= float64(bal.ProneParryPenalty)
-			case "block":
+			case characters.DefenseBlock:
 				defenseScore *= float64(bal.ProneBlockPenalty)
 			}
 		case targetChar.IsStandingGrapple():
 			switch defenseType {
-			case "dodge":
+			case characters.DefenseDodge:
 				defenseScore *= float64(bal.ClinchDodgePenalty)
-			case "parry":
+			case characters.DefenseParry:
 				defenseScore *= float64(bal.ClinchParryPenalty)
-			case "block":
+			case characters.DefenseBlock:
 				defenseScore *= float64(bal.ClinchBlockPenalty)
 			}
 		case targetChar.IsGroundGrapple():
 			switch defenseType {
-			case "dodge":
+			case characters.DefenseDodge:
 				defenseScore *= float64(bal.GroundedDodgePenalty)
-			case "parry":
+			case characters.DefenseParry:
 				defenseScore *= float64(bal.GroundedParryPenalty)
-			case "block":
+			case characters.DefenseBlock:
 				defenseScore *= float64(bal.GroundedBlockPenalty)
 			}
 		}
@@ -715,9 +727,15 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 	// be able to charge what little is there rather than declining and leaving
 	// the defence free. U8 reads CostResult.Short to strip the skill term from
 	// the defence score; this chunk discards it.
+	// U6 Task 12: charged through the DefensePool / GetDefenseCost pair rather
+	// than PoolStamina + GetDefenseStaminaCost. Melee only ever emits the three
+	// physical defences, for which the pair returns exactly what the old call
+	// did, so this is not a behaviour change. It removes the trap: the old shape
+	// charges quell and defy ZERO, silently, if either is ever added here.
 	if best.defenseType != "" {
-		_ = targetChar.ApplyCostPartial(characters.PoolStamina,
-			targetChar.GetDefenseStaminaCost(best.defenseType))
+		_ = targetChar.ApplyCostPartial(
+			characters.DefensePool(best.defenseType),
+			targetChar.GetDefenseCost(best.defenseType))
 	}
 
 	return best
@@ -1079,9 +1097,25 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		skillToProgress = string(skills.WeaponCombat)
 	}
 
-	// Trigger skill progression for successful defense
-	targetChar.TrackSkillUse(skillToProgress)
-	targetChar.CheckSkillProgression(skillToProgress, targetChar.GetUserId(), 1.0)
+	// The generic fallback text below formats as "%s %ss your attack!", so an
+	// empty verb reads "Grimwald s your attack!". Same unreachable-today arm as
+	// the skill guard; same fix.
+	if defenseVerb == "" {
+		defenseVerb = "counter"
+	}
+
+	// Trigger skill progression for successful defense.
+	//
+	// U6 Task 12 added the guard. An unmatched defence leaves skillToProgress
+	// empty, and an empty skill name is NOT inert: TrackSkillUse("") and
+	// CheckSkillProgression("", ...) take the roll like any other name, and a
+	// success sends the player a levelup banner naming no skill at all. Melee
+	// cannot reach that arm today; this makes it unreachable by construction
+	// rather than by argument.
+	if skillToProgress != "" {
+		targetChar.TrackSkillUse(skillToProgress)
+		targetChar.CheckSkillProgression(skillToProgress, targetChar.GetUserId(), 1.0)
+	}
 
 	// Get narrative defense messages based on defense z-score
 	defenseMsgs := items.GetDefenseMessage(itemsDefenseType, best.defRoll.ZScore)

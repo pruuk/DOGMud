@@ -77,9 +77,9 @@ func AttackContestCrit(margin float64, roll dice.RollResult) bool {
 // Never pass a dice.RollResult's `.Margin` (`res.DefenseRoll.Margin` is the
 // tempting one): internal/contest rolls via dice.Roll, which does not populate
 // that field, so it is a silent constant zero. Never pass the attack-positive
-// `Result.Margin` unnegated either. Both callers, TryStoicResolve and
-// TrySpellDeflection, do it correctly today; internal/combat/contest_sign_test.go
-// is what keeps them that way.
+// `Result.Margin` unnegated either. Since U6 Task 12 there is ONE caller,
+// ResolveChannelDefence, which does it correctly;
+// internal/combat/contest_sign_test.go is what keeps it that way.
 func DefenseContestCrit(margin float64, roll dice.RollResult) bool {
 	return ApplyCritFloor(ContestCrit(margin, roll), DefenseCritFloor())
 }
