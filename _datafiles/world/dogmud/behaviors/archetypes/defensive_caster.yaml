@@ -1,8 +1,23 @@
 # defensive_caster archetype
 #
-# Caster pattern with self-preservation: panic-buff (chrysalis-
-# cocoon) when buff 52 is missing, AoE on multiple targets,
-# single-target spike otherwise, flee at low HP.
+# Caster pattern with self-preservation: emergency self-heal below
+# 40% HP, maintain defensive shields/buffs, AoE when outnumbered,
+# single-target harm otherwise, flee at low HP.
+#
+# Rewritten 2026-08-15: the old tree hardcoded three spells
+# (chrysalis-cocoon / conviction-barrage / conviction-spike) through
+# the bare `cast` action, which returns Success unconditionally.
+# While buff 52 was missing that meant the tree issued ONLY
+# `cast chrysalis-cocoon` every round — an 8-fold, ~8-round cast
+# these mobs could rarely complete — and Success made the combat
+# dispatcher skip melee for the round, so a mob stuck mid-cocoon did
+# nothing at all. Worse, the mobs' authored spellbooks (three of the
+# four consumers had none) were never consulted. This now mirrors
+# the pure_caster archetype's cast_best_in_category cascade: every
+# cast self-gates on cooldown / already-casting / spellbook
+# candidates / effect-already-active and returns Failure properly,
+# so a round with nothing castable falls through to try_special_move
+# and then to legacy melee instead of wedging.
 #
 # Used by: goblin_shaman (219), tunnel_shaman (74),
 # bandit_caster (285), elemental_queen (321). Absorbs the
@@ -14,7 +29,7 @@
 tree:
   type: selector
   children:
-    # Panic-flee at low HP — wins over any cast
+    # Panic-flee at low HP — wins over any cast (preserved from the old tree)
     - type: sequence
       event: mob_hurt
       children:
@@ -24,36 +39,48 @@ tree:
         - type: action
           do: flee
 
-    # Per-round combat cascade
+    # Per-round combat cascade — every cast self-gates via
+    # cast_best_in_category (cooldown / already-casting / spellbook
+    # candidates), so a round with nothing castable falls through to
+    # try_special_move and then to legacy melee instead of wedging.
     - type: selector
       event: mob_combat_round
       children:
-        # Panic-buff: cast cocoon when buff 52 is missing
+        # 1. Emergency self-heal below 40% (new with the rewrite: casters
+        #    that know a self_heal spell use it; others fail through)
         - type: sequence
           children:
-            - type: decorator
-              mod: invert
-              child:
-                type: condition
-                check: mob_has_buff
-                buff_id: 52
+            - type: condition
+              check: mob_health_below
+              percent: 40
             - type: action
-              do: cast
-              spell: chrysalis-cocoon
+              do: cast_best_in_category
+              category: self_heal
+              target: self
 
-        # Multi-target AoE
+        # 2. Maintain defensive buffs (chrysalis-cocoon lives here now)
+        - type: action
+          do: cast_best_in_category
+          category: self_defense
+          target: self
+
+        # 3. AoE when outnumbered
         - type: sequence
           children:
             - type: condition
               check: multiple_enemies
             - type: action
-              do: cast
-              spell: conviction-barrage
+              do: cast_best_in_category
+              category: harm_multi
 
-        # Single-target fallback
+        # 4. Single-target harm
         - type: action
-          do: cast
-          spell: conviction-spike
+          do: cast_best_in_category
+          category: harm_single
+
+        # 5. Beast/special fallback, else legacy melee
+        - type: action
+          do: try_special_move
 
     # chunk 4.4: strategic goal pursuit (after reflex/combat, before idle end)
     - type: action

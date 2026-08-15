@@ -35,6 +35,10 @@ character:
       training: 8
   skills:
     spellcasting: 1
+  spellbook:
+    chrysalis-cocoon: 50
+    conviction-spike: 50
+    conviction-barrage: 50
 itemdropchance: 75
 loot_pool:
   - 10029
