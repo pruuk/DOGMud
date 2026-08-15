@@ -13,11 +13,15 @@ import (
 // reach two sigma, so no amount of luck produces a telling blow. The floors are
 // the same last-resort idea as 5.9's hit floors, applied to crit.
 //
-// Denominated in HITS, not swings, and this matters. A badly outclassed
-// attacker hits roughly 15% of the time, so "1% of swings" would demand about
-// 6.7% of their hits be crits — a HIGHER per-hit rate than an even match gets
-// at 2.3%, which is incoherent. 1% of hits composes with the 5.9 hit floor as
+// Denominated in WINS, not swings, and this matters. A badly outclassed
+// attacker wins roughly 15% of contests, so "1% of swings" would demand about
+// 6.7% of their wins be crits — a HIGHER per-win rate than an even match gets
+// at 2.3%, which is incoherent. 1% of wins composes with the contest floor as
 // two independent last resorts, each sized to the failure it protects.
+//
+// U6 Task 9 restated that denominator from HITS to CONTEST WINS. They were the
+// same set of swings until Task 10 made a defensive win deal partial damage; see
+// applyCritFloors for why the hit framing stops being answerable there.
 //
 // ORDERING IS LOAD-BEARING. See applyCritFloors.
 
@@ -83,10 +87,13 @@ func DefenseContestCrit(margin float64, roll dice.RollResult) bool {
 // applyCritFloors applies both floors to a resolved melee swing.
 //
 // It runs at the very END of resolveDefenseOutcome, after every branch has
-// settled res.hit, and it is the only correct place for it. The melee resolver
-// treats an attack crit as forcing a hit — the crit step returns res.hit = true
-// on attackCrit — so a floor evaluated any earlier would silently become a
-// second hit floor stacked on ContestFloor.
+// settled the outcome, and it is the only correct place for it. The melee
+// resolver treats an attack crit as forcing a hit — the crit step returns
+// res.hit = true on attackCrit — so a floor evaluated any earlier would silently
+// become a second hit floor stacked on ContestFloor.
+//
+// U6 Task 9: the two floors are denominated by WHO WON THE CONTEST, not by
+// whether the swing hit. See the comment on the margin test below.
 //
 // Note it deliberately does NOT floor the margin. A floored contest already
 // carries the +-1 margin sentinel, and flooring the margin would corrupt every
@@ -101,17 +108,37 @@ func applyCritFloors(res *hitResolution, result *AttackResult, best bestDefenseR
 		return
 	}
 
-	if res.hit {
-		res.crit = ApplyCritFloor(res.crit, attackFloor)
+	// A floored outcome carries the +-1 sentinel margin and represents an
+	// outcome the contest did not actually produce. Promoting it would hand a
+	// decisive result to the side that lost the roll. This mirrors the gate in
+	// resolveDefenseOutcomeCore, and like it, it is belt-and-braces today (the
+	// sentinel normalises to a near-zero z) but it is the DECLARED rule, so a
+	// future retune of the sentinel cannot silently reintroduce floored crits.
+	if best.floored {
 		return
 	}
 
-	// The swing missed, so this is the defender's side. Require that a defence
-	// was actually mounted: defenseType "" means the defender never acted and
-	// the miss came from the 5.9 defence floor, which is not something to
-	// reward with a riposte. setDefenseCritFlags would also have no flag to
-	// set.
+	// Require that a defence was actually mounted. defenseType "" means the
+	// defender never acted, so there is no contest to have won and
+	// setDefenseCritFlags would have no flag to set. It also disposes of the
+	// uncontested swing, whose margin sits at math.Inf(-1): runBestOfAllDefense
+	// leaves defenseType empty on exactly that path, so the margin test below
+	// never sees the sentinel infinity.
 	if best.defenseType == "" {
+		return
+	}
+
+	// DENOMINATORS, decided in U6. The attack floor applies to swings that WON
+	// THE CONTEST; the defence floor to swings the DEFENCE won. Before U6 the
+	// split was `res.hit` versus a miss, which stops being answerable once a
+	// defensive win deals partial damage: every partially deflected swing has
+	// res.hit == true while the defence is the side that won.
+	//
+	// best.margin is DEFENCE-positive, so `<= 0` means the ATTACK won. Same
+	// expression, same sign convention, as resolveDefenseOutcomeCore's
+	// attackWon.
+	if best.margin <= 0 {
+		res.crit = ApplyCritFloor(res.crit, attackFloor)
 		return
 	}
 
