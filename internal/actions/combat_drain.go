@@ -38,7 +38,9 @@ type DrainResult struct {
 	NotLifeDrainer bool
 
 	// Healed is the amount of HP the attacker actually recovered from the
-	// lifesteal on a hit (after clamping to HealthMax). Zero on a miss.
+	// lifesteal (after clamping to HealthMax). Scales on damage actually
+	// dealt, so it is nonzero on a partial-damage defended attempt too. Zero
+	// only when no damage was dealt (defensive crit or a fully-avoided move).
 	Healed int
 
 	// BleedDmg is the per-tick bleed damage applied to the target on a hit
@@ -105,9 +107,9 @@ func ExecuteDrain(actor Actor) DrainResult {
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 
-	// On hit: bleed the victim and steal their life-force.
+	// On hit: bleed the victim. Bleed is a status effect (binary), so it stays
+	// gated on a clean hit.
 	bleedDmg := 0
-	healed := 0
 	if result.Hit {
 		// Bleed condition (duration 4, magnitude = Strength/12, min 2) —
 		// lighter than maul's bleed but still meaningful.
@@ -117,8 +119,15 @@ func ExecuteDrain(actor Actor) DrainResult {
 		}
 		target.Char.AddCondition(characters.ConditionBleeding, 4, float64(mag), "drain")
 		bleedDmg = mag
+	}
 
-		// Lifesteal: heal the attacker for a fraction of damage dealt.
+	// Lifesteal: heal the attacker for a fraction of damage dealt. Gated on
+	// damage actually applied rather than on Hit, per U6's shared partial
+	// rule: anything that scales on damage (reflect, lifesteal, on-hit procs)
+	// reads the damage actually dealt, so a defended drain that still clips
+	// the target for partial damage still feeds the attacker.
+	healed := 0
+	if result.Damage > 0 {
 		healAmt := int(float64(result.Damage) * float64(cfg.DrainHealRatio))
 		if healAmt < 1 {
 			healAmt = 1
@@ -136,11 +145,10 @@ func ExecuteDrain(actor Actor) DrainResult {
 		targetType = combat.Mob
 	}
 
-	// Record combat analytics.
-	dmgRecorded := 0
-	if result.Hit {
-		dmgRecorded = result.Damage
-	}
+	// Record combat analytics. result.Damage is always the amount actually
+	// applied (hit, partial-on-defended, or 0 on a defensive crit), so it is
+	// truthful whether or not the move landed.
+	dmgRecorded := result.Damage
 	combat.RecordSpecialMove(sourceType, targetType, "drain", result.Hit, dmgRecorded, char, target.Char, util.GetRoundCount())
 
 	// Consume the combat round.
@@ -190,12 +198,13 @@ type DrainAreaResult struct {
 	// swept by the drain (hit or miss).
 	PlayerResults []DrainAreaPlayerResult
 
-	// TotalDamage is the sum of damage dealt across all hit players.
+	// TotalDamage is the sum of damage actually applied across all swept
+	// players, including partial damage from players who defended the move.
 	TotalDamage int
 
 	// Healed is the amount of HP the actor actually recovered (after
-	// clamping to HealthMax) from the aggregate lifesteal across every hit
-	// player. Zero if no player was hit.
+	// clamping to HealthMax) from the aggregate lifesteal across every player
+	// who took damage (hit or partial). Zero if no player took any damage.
 	Healed int
 }
 
@@ -253,6 +262,7 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 
 		pr := DrainAreaPlayerResult{UserId: uid, MoveResult: moveResult}
 
+		// Bleed is a status effect (binary), so it stays gated on a clean hit.
 		if moveResult.Hit {
 			mag := char.Stats.Strength.ValueAdj / 12
 			if mag < 2 {
@@ -260,7 +270,12 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 			}
 			target.Character.AddCondition(characters.ConditionBleeding, 4, float64(mag), "drain")
 			pr.BleedDmg = mag
+		}
 
+		// Lifesteal reads the damage actually applied, per U6's shared partial
+		// rule, so a defended drain that still clips a player still feeds the
+		// aggregate heal.
+		if moveResult.Damage > 0 {
 			healAmt := int(float64(moveResult.Damage) * float64(cfg.DrainHealRatio))
 			if healAmt < 1 {
 				healAmt = 1

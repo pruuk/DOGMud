@@ -77,6 +77,26 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
 			fmt.Sprintf(hitRoomMsgs[util.Rand(len(hitRoomMsgs))], user.Character.Name, targetName),
 			user.UserId, res.Target.UserId)
+	} else if res.MoveResult.Damage > 0 {
+		partialMsgs := []string{
+			`Your throttle lunge mostly misses <ansi fg="mobname">%s</ansi>'s throat, but your fangs still graze it! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="mobname">%s</ansi> pulls free of your grip, but your fangs still catch their throat! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs := []string{
+			`<ansi fg="username">%s</ansi> lunges for your throat and you pull free, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`,
+			`You twist mostly away as <ansi fg="username">%s</ansi> snaps at your throat, but not all the way! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs := []string{
+			`<ansi fg="username">%s</ansi> lunges for <ansi fg="mobname">%s</ansi>'s throat, who pulls mostly free but still gets grazed!`,
+		}
+
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
+		if targetChar != nil {
+			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName),
+			user.UserId, res.Target.UserId)
 	} else {
 		missMsgs := []string{
 			`Your throttle lunge misses <ansi fg="mobname">%s</ansi>'s throat!`,

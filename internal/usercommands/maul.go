@@ -70,6 +70,24 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(maulTargetMsgs[util.Rand(len(maulTargetMsgs))], user.Character.Name, dmgDesc))
 		}
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(maulRoomMsgs[util.Rand(len(maulRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+	} else if res.MoveResult.Damage > 0 {
+		partialMsgs := []string{
+			`Your fangs mostly miss <ansi fg="mobname">%s</ansi>, but still tear a shallow gash! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="mobname">%s</ansi> twists free of your bite, but your fangs still rake them! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs := []string{
+			`<ansi fg="username">%s</ansi> snaps at you, and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="username">%s</ansi> lunges to maul you; you twist free of most of it, but not all! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs := []string{
+			`<ansi fg="username">%s</ansi> lunges to maul <ansi fg="mobname">%s</ansi>, who twists mostly free but still gets torn!`,
+		}
+
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
+		if targetChar != nil {
+			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	} else {
 		missMsgs := []string{
 			`Your savage bite misses <ansi fg="mobname">%s</ansi>!`,

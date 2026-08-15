@@ -117,11 +117,10 @@ func ExecutePounce(actor Actor) PounceResult {
 		targetType = combat.Mob
 	}
 
-	// Record combat analytics.
-	dmgRecorded := 0
-	if result.Hit {
-		dmgRecorded = result.Damage
-	}
+	// Record combat analytics. result.Damage is always the amount actually
+	// applied (hit, partial-on-defended, or 0 on a defensive crit), so it is
+	// truthful whether or not the move landed.
+	dmgRecorded := result.Damage
 	combat.RecordSpecialMove(sourceType, targetType, "pounce", result.Hit, dmgRecorded, char, target.Char, util.GetRoundCount())
 
 	// Consume the combat round.

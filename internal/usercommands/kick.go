@@ -42,6 +42,7 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	var kickMsgs, kickTargetMsgs, kickRoomMsgs []string
 	var knockdownMsgs, knockdownTargetMsgs, knockdownRoomMsgs []string
 	var missMsgs, missTargetMsgs, missRoomMsgs []string
+	var partialMsgs, partialTargetMsgs, partialRoomMsgs []string
 
 	targetName := res.Target.Name
 
@@ -83,6 +84,15 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		missRoomMsgs = []string{
 			`<ansi fg="username">%s</ansi> tries to stomp <ansi fg="mobname">%s</ansi>, but misses!`,
 		}
+		partialMsgs = []string{
+			`You try to stomp <ansi fg="mobname">%s</ansi>; they roll aside, but your heel still catches them! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs = []string{
+			`<ansi fg="username">%s</ansi> tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs = []string{
+			`<ansi fg="username">%s</ansi> tries to stomp <ansi fg="mobname">%s</ansi>, who rolls mostly clear but still gets caught!`,
+		}
 
 	case actions.KickKnee:
 		kickMsgs = []string{
@@ -119,6 +129,15 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 		missRoomMsgs = []string{
 			`<ansi fg="username">%s</ansi> tries to knee <ansi fg="mobname">%s</ansi> in the grapple, but misses!`,
+		}
+		partialMsgs = []string{
+			`You try to knee <ansi fg="mobname">%s</ansi>; they block most of it, but the strike still lands! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs = []string{
+			`<ansi fg="username">%s</ansi> tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs = []string{
+			`<ansi fg="username">%s</ansi> tries to knee <ansi fg="mobname">%s</ansi> in the grapple, who blocks most of it but still takes the hit!`,
 		}
 
 	default: // KickStandard
@@ -169,6 +188,17 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			`<ansi fg="username">%s</ansi> attempts to kick <ansi fg="mobname">%s</ansi>, but misses!`,
 			`<ansi fg="username">%s</ansi> swings a kick at <ansi fg="mobname">%s</ansi> but misses!`,
 		}
+		partialMsgs = []string{
+			`Your <ansi fg="yellow-bold">kick</ansi> misses <ansi fg="mobname">%s</ansi>'s guard, but your boot still clips them! (<ansi fg="damage">%s</ansi>)`,
+			`You swing a kick at <ansi fg="mobname">%s</ansi>; they slip most of it, but not all! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs = []string{
+			`<ansi fg="username">%s</ansi> attempts to kick you, and you slip most of it, but the boot still clips you! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="username">%s</ansi> swings a kick at you, and you dodge most of it, but not all! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs = []string{
+			`<ansi fg="username">%s</ansi> swings a kick at <ansi fg="mobname">%s</ansi>, who mostly dodges but still gets clipped!`,
+		}
 	}
 
 	// Resolve player target for direct messaging.
@@ -194,6 +224,12 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 			room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(kickRoomMsgs[util.Rand(len(kickRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 		}
+	} else if res.MoveResult.Damage > 0 {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
+		if targetChar != nil {
+			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	} else {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName))
 		if targetChar != nil {

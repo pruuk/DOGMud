@@ -91,6 +91,44 @@ func Kick(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					target.UserId)
 			}
 		}
+	} else if result.Damage > 0 {
+		switch res.Variant {
+		case actions.KickStomp:
+			if targetUser != nil {
+				if canSee {
+					targetUser.SendText(messaging.CategoryKick, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				} else {
+					targetUser.SendText(messaging.CategoryKick, fmt.Sprintf(`Something tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				}
+			}
+			room.SendTextVisual(messaging.CategoryKick,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to stomp <ansi fg="username">%s</ansi>, who rolls mostly clear but still gets caught!`, mobName, target.Name),
+				target.UserId)
+
+		case actions.KickKnee:
+			if targetUser != nil {
+				if canSee {
+					targetUser.SendText(messaging.CategoryKick, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				} else {
+					targetUser.SendText(messaging.CategoryKick, fmt.Sprintf(`Something tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				}
+			}
+			room.SendTextVisual(messaging.CategoryKick,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to knee <ansi fg="username">%s</ansi> in the grapple, who blocks most of it but still takes the hit!`, mobName, target.Name),
+				target.UserId)
+
+		default: // KickStandard
+			if targetUser != nil {
+				if canSee {
+					targetUser.SendText(messaging.CategoryKick, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to kick you, and you slip most of it, but the boot still clips you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				} else {
+					targetUser.SendText(messaging.CategoryKick, fmt.Sprintf(`Something attempts to kick you, and you slip most of it, but it still clips you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				}
+			}
+			room.SendTextVisual(messaging.CategoryKick,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swings a kick at <ansi fg="username">%s</ansi>, who mostly dodges but still gets clipped!`, mobName, target.Name),
+				target.UserId)
+		}
 	} else {
 		switch res.Variant {
 		case actions.KickStomp:

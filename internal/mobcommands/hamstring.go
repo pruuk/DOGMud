@@ -38,8 +38,9 @@ func Hamstring(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	canSee := targetChar == nil || canSeeInDark(targetChar, room)
 
+	dmgDesc := combat.GetDamageDescription(result.Damage, result.TargetMaxHP)
+
 	if result.Hit {
-		dmgDesc := combat.GetDamageDescription(result.Damage, result.TargetMaxHP)
 		if targetChar != nil {
 			if canSee {
 				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> rakes its fangs across your legs, opening deep wounds! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
@@ -49,6 +50,17 @@ func Hamstring(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges low and rakes its fangs across <ansi fg="username">%s</ansi>'s legs!`, mobName, target.Name),
+			targetPlayerId)
+	} else if result.Damage > 0 {
+		if targetChar != nil {
+			if canSee {
+				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at your legs and you dodge most of it, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+			} else {
+				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something lunges at your legs and you dodge most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+			}
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, who mostly dodges but still gets caught!`, mobName, target.Name),
 			targetPlayerId)
 	} else {
 		if targetChar != nil {

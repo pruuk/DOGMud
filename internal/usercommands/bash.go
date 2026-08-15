@@ -70,6 +70,15 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				user.UserId, target.UserId,
 			)
 		}
+	} else if result.Damage > 0 {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> fails to floor <ansi fg="mobname">%s</ansi>, but still slams into them! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc))
+		if targetUser != nil {
+			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> fails to floor you, but still slams into you! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryBash,
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield, who staggers but stays up!`, user.Character.Name, target.Name),
+			user.UserId, target.UserId,
+		)
 	} else {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> misses <ansi fg="mobname">%s</ansi>!`, target.Name))
 		if targetUser != nil {

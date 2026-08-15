@@ -25,6 +25,7 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	hit := result.MoveResult.Hit
+	partial := !hit && result.MoveResult.Damage > 0
 
 	// Cross-room reveal-on-hit (mirror melee's reveal-on-engage and the player
 	// shoot path): a hidden mob that LANDS a cross-room shot drops stealth.
@@ -51,9 +52,12 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			if result.IsSneaking || !canSeeInDark(u, room) {
 				shooter = `Someone`
 			}
-			if hit {
+			switch {
+			case hit:
 				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you!`, shooter))
-			} else {
+			case partial:
+				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you!`, shooter))
+			default:
 				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
 			}
 		}
@@ -75,8 +79,13 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				if fromDir != "" {
 					origin = fmt.Sprintf(`from beyond the <ansi fg="exit">%s</ansi>`, fromDir)
 				}
-				verb := `and strikes`
-				if !hit {
+				var verb string
+				switch {
+				case hit:
+					verb = `and strikes`
+				case partial:
+					verb = `and clips`
+				default:
 					verb = `and narrowly misses`
 				}
 				tr.SendTextVisual(messaging.CategoryHitRanged,

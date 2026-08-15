@@ -92,6 +92,24 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(goreRoomMsgs[util.Rand(len(goreRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 		}
+	} else if res.MoveResult.Damage > 0 {
+		partialMsgs := []string{
+			`Your charge at <ansi fg="mobname">%s</ansi> mostly misses, but your horns still graze them! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="mobname">%s</ansi> dodges the worst of your charge, but your horns still catch them! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs := []string{
+			`<ansi fg="username">%s</ansi> charges you and you sidestep most of it, but the horns still catch you! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="username">%s</ansi> thunders toward you; you dodge most of the gore, but not all! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs := []string{
+			`<ansi fg="username">%s</ansi> charges <ansi fg="mobname">%s</ansi>, who mostly dodges but still gets grazed by the horns!`,
+		}
+
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
+		if targetChar != nil {
+			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	} else {
 		missMsgs := []string{
 			`Your charge at <ansi fg="mobname">%s</ansi> misses as they sidestep your horns!`,

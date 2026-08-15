@@ -68,6 +68,19 @@ func Throttle(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> clamps crushing fangs around <ansi fg="username">%s</ansi>'s throat!`, mobName, target.Name),
 			target.UserId)
+	} else if result.Damage > 0 {
+		if targetUser != nil {
+			if canSee {
+				targetUser.SendText(messaging.CategoryHitNaturalSharp,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges for your throat and you pull free, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+			} else {
+				targetUser.SendText(messaging.CategoryHitNaturalSharp,
+					fmt.Sprintf(`Something lunges for your throat and you pull free, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+			}
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges for <ansi fg="username">%s</ansi>'s throat, who pulls mostly free but still gets grazed!`, mobName, target.Name),
+			target.UserId)
 	} else {
 		if targetUser != nil {
 			if canSee {

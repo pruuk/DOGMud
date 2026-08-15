@@ -70,6 +70,24 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(rakeTargetMsgs[util.Rand(len(rakeTargetMsgs))], user.Character.Name, dmgDesc))
 		}
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(rakeRoomMsgs[util.Rand(len(rakeRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+	} else if res.MoveResult.Damage > 0 {
+		partialMsgs := []string{
+			`Your raking claws mostly miss <ansi fg="mobname">%s</ansi>, but still leave a shallow scratch! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="mobname">%s</ansi> dodges most of your swipe, but your claws still catch them! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialTargetMsgs := []string{
+			`<ansi fg="username">%s</ansi> rakes their claws at you, and you dodge most of it, but they still scratch you! (<ansi fg="damage">%s</ansi>)`,
+			`<ansi fg="username">%s</ansi> swipes at you; you dodge most of it, but not all! (<ansi fg="damage">%s</ansi>)`,
+		}
+		partialRoomMsgs := []string{
+			`<ansi fg="username">%s</ansi> rakes their claws at <ansi fg="mobname">%s</ansi>, who mostly dodges but still gets scratched!`,
+		}
+
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
+		if targetChar != nil {
+			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		}
+		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	} else {
 		missMsgs := []string{
 			`Your raking claws miss <ansi fg="mobname">%s</ansi>!`,

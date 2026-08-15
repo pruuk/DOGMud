@@ -224,6 +224,7 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.FireResult) {
 
 	hit := result.MoveResult.Hit
+	partial := !hit && result.MoveResult.Damage > 0
 	tier := combat.GetDamageDescription(result.MoveResult.Damage, result.MoveResult.TargetMaxHP)
 
 	// Color the target name by type.
@@ -233,9 +234,12 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	}
 
 	// Shooter's own feedback.
-	if hit {
+	switch {
+	case hit:
 		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot takes %s (<ansi fg="damage">%s</ansi>)!`, targetColored, tier))
-	} else {
+	case partial:
+		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot goes wide of %s, but the edge of it still clips them! (<ansi fg="damage">%s</ansi>)`, targetColored, tier))
+	default:
 		user.SendText(messaging.CategoryDodge, fmt.Sprintf(`Your shot goes wide of %s!`, targetColored))
 	}
 
@@ -246,9 +250,12 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 			if result.IsSneaking {
 				shooter = `Someone`
 			}
-			if hit {
+			switch {
+			case hit:
 				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you (<ansi fg="damage">%s</ansi>)!`, shooter, tier))
-			} else {
+			case partial:
+				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you! (<ansi fg="damage">%s</ansi>)`, shooter, tier))
+			default:
 				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
 			}
 		}
@@ -283,11 +290,16 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		if fromDir != "" {
 			origin = fmt.Sprintf(`from beyond the <ansi fg="exit">%s</ansi>`, fromDir)
 		}
-		if hit {
+		switch {
+		case hit:
 			tr.SendTextVisual(messaging.CategoryHitRanged,
 				fmt.Sprintf(`A shot streaks in %s and strikes %s!`, origin, targetColored),
 				result.TargetUserId)
-		} else {
+		case partial:
+			tr.SendTextVisual(messaging.CategoryHitRanged,
+				fmt.Sprintf(`A shot streaks in %s and clips %s!`, origin, targetColored),
+				result.TargetUserId)
+		default:
 			tr.SendTextVisual(messaging.CategoryHitRanged,
 				fmt.Sprintf(`A shot streaks in %s and narrowly misses %s!`, origin, targetColored),
 				result.TargetUserId)
