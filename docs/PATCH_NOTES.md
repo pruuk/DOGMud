@@ -1,5 +1,26 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: The casters remember their spells
+
+Some enemies were written as spellcasters and never once cast. A mob that
+carried both a personal routine and a combat instinct silently lost the
+instinct, and the caster pattern itself could stall on a shield it never
+managed to finish weaving. Both are fixed: an enemy's personal routine now
+handles its own moments and steps aside for its instincts the rest of the
+time, and casters choose from the spells they actually know.
+
+You will feel it most around the North Road bandit camp. The lookout still
+whistles for help and the camp still fights together, but their caster now
+reaches into your mind, shields herself, and mends her own wounds. Your
+quell defence finally has real work to do; see help quell. The shamans of
+the steppe and the low tunnels, and the queen of the planar oasis, have
+likewise found their voices.
+
+A few set-piece guardians had picked up instincts they were never meant to
+have, such as an urge to flee a fight they are built to hold. Those keep
+fighting exactly as designed. One long-broken enrage also works again: the
+windscour wyrm's fury was wired to nothing and now lands.
+
 ## 2026-08-15: A good defence turns a blow, a great one stops it
 
 Combat now recognises the glancing blow. A dodge, parry or block that only
