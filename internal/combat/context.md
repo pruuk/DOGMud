@@ -484,6 +484,10 @@ package directly: they go through the three thin wrappers in
 ### Public API
 
 ```go
+// run_contest.go: the single flooring entry point (U6). Reads
+// Balance.ContestFloor -- the only place in the game that does.
+func RunContest(atkScore float64, entries []contest.Entry) contest.Result
+
 // contest_floors.go: the floor pairs themselves.
 func ManeuverFloors() (hit, resist float64)
 func SpellFloors()    (hit, resist float64)
