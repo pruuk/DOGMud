@@ -23,6 +23,13 @@ const (
 	ActionParry  Action = `parry`
 	ActionBlock  Action = `block`
 	ActionMove   Action = `move`
+
+	// The two non-physical defences. Both are paid in CONVICTION rather than
+	// stamina, and both are registered Physical: false so they never take the
+	// encumbrance multiplier -- a heavy pack does not make it harder to put down
+	// a working or to refuse an insult.
+	ActionQuell Action = `quell`
+	ActionDefy  Action = `defy`
 )
 
 // Spec is what the registry knows about an action: which skill discounts it,
@@ -41,6 +48,12 @@ var registry = map[Action]Spec{
 	ActionParry:  {Skill: skills.WeaponCombat, HasSkill: true, Physical: true},
 	ActionBlock:  {Skill: skills.WeaponCombat, HasSkill: true, Physical: true},
 	ActionMove:   {Skill: skills.Search, HasSkill: true, Physical: true},
+
+	// Physical: false is load-bearing, not an oversight. Quell answers a mental
+	// spell and defy answers a social attack; charging either an encumbrance
+	// premium would price a caster's saving throw off their backpack.
+	ActionQuell: {Skill: skills.Spellcasting, HasSkill: true, Physical: false},
+	ActionDefy:  {Skill: skills.Rhetoric, HasSkill: true, Physical: false},
 }
 
 // SpecFor returns the registry entry for an action.

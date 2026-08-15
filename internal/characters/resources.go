@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
@@ -108,14 +109,16 @@ func (c *Character) DeductAttackStamina() int {
 //
 // The physical three cost STAMINA; quell and defy cost CONVICTION. Before U6
 // there was no mapping at all and every call site simply assumed PoolStamina,
-// which is why GetDefenseStaminaCost returning 0 for quell and defy would have
-// made both defences free with no compile error and no failing test.
+// which is why the old stamina-only cost function returning 0 for quell and
+// defy would have made both defences free with no compile error and no failing
+// test.
 //
-// Charge through the PAIR -- DefensePool for the pool, GetDefenseCost for the
-// amount. Either alone can charge the wrong thing; together they cannot.
+// Charge through the PAIR -- DefensePool for the pool, GetDefenseCostFloat for
+// the amount. Either alone can charge the wrong thing; together they cannot.
 //
-// An unrecognised defence name maps to PoolStamina, where GetDefenseCost also
-// returns 0, so the pair charges nothing rather than draining an arbitrary pool.
+// An unrecognised defence name maps to PoolStamina, where GetDefenseCostFloat
+// also returns 0, so the pair charges nothing rather than draining an arbitrary
+// pool.
 func DefensePool(defenseType string) Pool {
 	switch defenseType {
 	case DefenseQuell, DefenseDefy:
@@ -125,22 +128,83 @@ func DefensePool(defenseType string) Pool {
 	}
 }
 
-// GetDefenseCost returns what a defence costs in the pool DefensePool names for
-// it, and is the entry point every caller should use.
+// GetDefenseCostFloat prices one defence, and is the entry point every caller
+// that can spend a fractional cost should use.
 //
-// U6 Task 12 added it because GetDefenseStaminaCost cannot answer the question
-// on its own: it is stamina-only and returns 0 for the two conviction defences.
-func (c *Character) GetDefenseCost(defenseType string) int {
+// The three PHYSICAL defences run through costs.Calc:
+//
+//	DefenceBaseStaminaCost x encumbrance x inverse-skill x per-action modifier
+//
+// The modifiers (dodge 1.25, block 1.15, parry 1.10) are the whole reason this
+// returns a float. They differ by as little as five percent, and the old
+// integer formula truncated every one of them onto the same handful of whole
+// numbers; charge the result through Character.ApplyCostFloat, which banks the
+// remainder, and the difference survives as an average instead of vanishing.
+//
+// QUELL AND DEFY DELIBERATELY KEEP THEIR FLAT U6 CONVICTION COSTS. The
+// principled price for a mounted defence is a fraction of the incoming action's
+// cost -- a save should scale with what it is answering -- but that needs the
+// attacker's cost threaded through seven call sites and a signature change on
+// the defence path, and neither defence has been observed in live play yet.
+// Deferred on purpose: the flat cost is tunable today and wrong only in a way
+// no player has met.
+//
+// An unrecognised defence costs 0 rather than being priced as something else,
+// which pairs with DefensePool mapping it to PoolStamina: together they charge
+// nothing instead of draining an arbitrary pool.
+func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
 	bal := configs.GetBalanceConfig()
 
+	var action costs.Action
+	var modifier float64
+
 	switch defenseType {
+	case DefenseDodge:
+		action, modifier = costs.ActionDodge, float64(bal.DodgeCostModifier)
+	case DefenseParry:
+		action, modifier = costs.ActionParry, float64(bal.ParryCostModifier)
+	case DefenseBlock:
+		action, modifier = costs.ActionBlock, float64(bal.BlockCostModifier)
 	case DefenseQuell:
-		return atLeastOneCost(int(bal.QuellBaseConvictionCost))
+		return float64(atLeastOneCost(int(bal.QuellBaseConvictionCost)))
 	case DefenseDefy:
-		return atLeastOneCost(int(bal.DefyBaseConvictionCost))
+		return float64(atLeastOneCost(int(bal.DefyBaseConvictionCost)))
 	default:
-		return c.GetDefenseStaminaCost(defenseType)
+		return 0
 	}
+
+	spec := costs.SpecFor(action)
+	return costs.Calc(costs.Input{
+		Base:      float64(bal.DefenceBaseStaminaCost),
+		Carried:   c.GetCarriedWeight(),
+		Capacity:  c.CarryCapacity(),
+		Physical:  spec.Physical,
+		SkillRank: c.GetSkillLevel(spec.Skill),
+		HasSkill:  spec.HasSkill,
+		Modifier:  modifier,
+	})
+}
+
+// GetDefenseCost returns what a defence costs in the pool DefensePool names for
+// it, as a whole number.
+//
+// PREFER GetDefenseCostFloat. This exists for callers that have not migrated to
+// the fractional carry: today that is ResolveChannelDefence in
+// internal/combat/defence_multiplier.go (the spell and social channels) and the
+// defence-cost tests in this package. Rounding a U7 cost to an integer is
+// lossy in exactly the way the float version exists to avoid -- at the shipped
+// base and modifiers all three physical defences floor to 1 here, so a caller
+// using this cannot see the difference between dodging and parrying.
+//
+// Floored, not rounded, with a floor of 1: a defence that costs nothing is not
+// a defence, and rounding up would overcharge every defence in the game by up
+// to a whole point.
+func (c *Character) GetDefenseCost(defenseType string) int {
+	cost := c.GetDefenseCostFloat(defenseType)
+	if cost <= 0 {
+		return 0
+	}
+	return atLeastOneCost(int(cost))
 }
 
 // atLeastOneCost floors a mounted defence's cost at 1, matching the clamp the
@@ -153,45 +217,9 @@ func atLeastOneCost(cost int) int {
 	return cost
 }
 
-// GetDefenseStaminaCost returns stamina cost for a defense type (Stage 7.1).
-//
-// STAMINA ONLY, AND IT DOES NOT COVER EVERY DEFENCE. DefenseQuell and
-// DefenseDefy cost CONVICTION, so they fall to the default arm and return 0.
-// That is correct for what this function measures and a trap for its callers:
-// charging a defence with
-// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)) charges quell or
-// defy ZERO and the defence is FREE -- silently, with no compile error and no
-// test failure, since melee never emits either name today.
-//
-// Prefer the DefensePool / GetDefenseCost pair above, which cannot make that
-// mistake. This stays exported because runBestOfAllDefense's melee-only path and
-// its affordability tests still read it directly.
-func (c *Character) GetDefenseStaminaCost(defenseType string) int {
-	bal := configs.GetBalanceConfig()
-
-	baseCost := 0
-	multiplier := 1.0
-
-	switch defenseType {
-	case DefenseDodge:
-		baseCost = int(bal.DodgeBaseStaminaCost)
-		multiplier = float64(bal.DodgeMultiplier)
-	case DefenseParry:
-		baseCost = int(bal.ParryBaseStaminaCost)
-		multiplier = float64(bal.ParryMultiplier)
-	case DefenseBlock:
-		baseCost = int(bal.BlockBaseStaminaCost)
-		multiplier = float64(bal.BlockMultiplier)
-	default:
-		return 0
-	}
-
-	cost := int(float64(baseCost) * multiplier)
-	if cost < 1 {
-		cost = 1 // minimum 1 stamina
-	}
-	return cost
-}
+// U7 Task 6 deleted GetDefenseStaminaCost. It was stamina-only, returned 0 for
+// the two conviction defences, and its base x multiplier arithmetic is now the
+// per-action modifier arm of costs.Calc. Use GetDefenseCostFloat.
 
 // ApplyHealthChange applies a SIGNED health delta and returns the applied
 // delta. It is not a legacy path: it survives U5b because it owns a side effect

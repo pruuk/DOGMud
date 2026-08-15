@@ -725,14 +725,20 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 	// the defence free. U8 reads CostResult.Short to strip the skill term from
 	// the defence score; this chunk discards it.
 	// U6 Task 12: charged through the DefensePool / GetDefenseCost pair rather
-	// than PoolStamina + GetDefenseStaminaCost. Melee only ever emits the three
-	// physical defences, for which the pair returns exactly what the old call
-	// did, so this is not a behaviour change. It removes the trap: the old shape
-	// charges quell and defy ZERO, silently, if either is ever added here.
+	// than PoolStamina + a stamina-only cost. Melee only ever emits the three
+	// physical defences, but the pair removes the trap: the old shape charges
+	// quell and defy ZERO, silently, if either is ever added here.
+	//
+	// U7 Task 6: the amount is now a float from costs.Calc and is charged through
+	// ApplyCostFloat, which banks the sub-integer remainder. Both halves matter.
+	// The three defence modifiers differ by five to fourteen percent; charged as
+	// integers they all truncate to the same number and the tuning does nothing.
+	// This is also the first time these numbers reach a real character -- until
+	// Task 1 this site charged a discarded copy of the defender.
 	if best.defenseType != "" {
-		_ = targetChar.ApplyCostPartial(
+		_ = targetChar.ApplyCostFloat(
 			characters.DefensePool(best.defenseType),
-			targetChar.GetDefenseCost(best.defenseType))
+			targetChar.GetDefenseCostFloat(best.defenseType))
 	}
 
 	return best

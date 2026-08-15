@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
 // defenceFixture builds an attacker and a defender with known stats and a
@@ -58,15 +59,30 @@ func TestRunBestOfAllDefense_ExhaustedDefenderStillEntersTheContest(t *testing.T
 // The winner is charged whatever is actually there. A defence must never come
 // out free just because the defender could not pay in full.
 //
-// Uses BLOCK deliberately. Shipped and default dodge cost is int(2 * 0.9) = 1,
-// so a 1-stamina fixture could afford it in full and the assertion would be
-// vacuous. Block is int(5 * 0.9) = 4.
+// U7 Task 6 rewrote the setup. Under the old base x multiplier formula block
+// cost a flat int(5 * 0.9) = 4, so a 1-stamina fixture was short by
+// construction. It is now DefenceBaseStaminaCost x encumbrance x inverse skill
+// x BlockCostModifier, which for an unladen rank-0 defender is about 1.27 --
+// and ApplyCostFloat floors that to a charge of 1, which the fixture can pay in
+// full, leaving the assertion vacuous. Loading the defender to capacity puts
+// the encumbrance multiplier on it and prices block well past what they hold.
+// Capacity is overridden rather than derived from Strength so the ratio does
+// not move when the stat defaults do.
 func TestRunBestOfAllDefense_PartiallyChargesAnExhaustedWinner(t *testing.T) {
 	attacker, defender := defenceFixture(1)
 
-	cost := defender.GetDefenseStaminaCost(characters.DefenseBlock)
+	const heavyItemId = 99801
+	items.RegisterTestItemSpec(&items.ItemSpec{
+		ItemId: heavyItemId,
+		Name:   "test lead pig",
+		Weight: 40.0,
+	})
+	characters.ApplyMobOverrides(defender, 0, 0, 40.0)
+	defender.Items = append(defender.Items, items.Item{ItemId: heavyItemId})
+
+	cost := defender.GetDefenseCostFloat(characters.DefenseBlock)
 	if cost <= 1 {
-		t.Fatalf("block costs %d; this test needs a cost above the 1 stamina on hand", cost)
+		t.Fatalf("block costs %.3f; this test needs a cost above the 1 stamina on hand", cost)
 	}
 
 	result := &AttackResult{}

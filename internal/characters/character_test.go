@@ -2546,54 +2546,16 @@ func TestGetDefenseScore(t *testing.T) {
 	})
 }
 
-func TestGetDefenseStaminaCost(t *testing.T) {
-	// Default multipliers are 0.9 for all three
-	//
-	// Also pins U5a's move of the base costs 2/4/5 out of Go and into config.
-	// A test binary never loads config.yaml, but GetBalanceConfig runs
-	// ensureConfigValidated, so these are the VALIDATION defaults -- which is
-	// exactly the point: it proves the defaults match the literals that were
-	// deleted. Truncation, not rounding: int(2*0.9)=1, int(4*0.9)=3,
-	// int(5*0.9)=4.
-	//
-	// Note the dodge row is the weakest of the three: int(0*0.9)=0 also floors
-	// to 1, so dodge=1 is produced both by a correct move and by the knob being
-	// entirely unwired. Parry and block are the rows that actually detect a
-	// botched move.
-	tests := []struct {
-		name string
-		def  string
-		want int // base * 0.9 truncated to int
-	}{
-		{"dodge: 2 * 0.9 = 1", DefenseDodge, 1},
-		{"parry: 4 * 0.9 = 3", DefenseParry, 3},
-		{"block: 5 * 0.9 = 4", DefenseBlock, 4},
-		{"unknown → 0", "unknown", 0},
-
-		// U6: quell and defy cost CONVICTION, so they have no stamina cost and
-		// fall to the default arm. Pinned deliberately -- if a future change
-		// makes either return non-zero here, that is a defence being charged
-		// against the wrong pool, and this row is the alarm. Conversely these
-		// zeros mean routing quell/defy through
-		// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)) makes them
-		// FREE. U6 Task 12 fixed that by adding the DefensePool / GetDefenseCost
-		// pair, which TestDefensePoolAndCost below covers; this row stays as the
-		// alarm on the underlying trap.
-		{"quell → 0 (conviction, not stamina)", DefenseQuell, 0},
-		{"defy → 0 (conviction, not stamina)", DefenseDefy, 0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := New()
-			got := c.GetDefenseStaminaCost(tt.def)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
+// U7 Task 6 deleted TestGetDefenseStaminaCost along with the function it
+// covered. Its rows pinned the old base x multiplier arithmetic (dodge
+// int(2*0.9)=1, parry int(4*0.9)=3, block int(5*0.9)=4) and the two
+// conviction defences returning 0 stamina. The arithmetic is now the per-action
+// modifier arm of costs.Calc, covered by defence_cost_test.go; the
+// wrong-pool alarm survives as the PoolConviction rows in
+// TestDefensePoolAndCost below.
 
 // TestDefensePoolAndCost covers the pair that replaced the bare
-// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)) call shape.
+// ApplyCostPartial(PoolStamina, <stamina-only cost>) call shape.
 //
 // The pairing is the whole point: the pool and the amount must be read off the
 // SAME defence name. The two conviction rows are what the old shape got wrong,
@@ -2605,13 +2567,19 @@ func TestDefensePoolAndCost(t *testing.T) {
 		wantPool Pool
 		wantCost int
 	}{
+		// U7 Task 6: all three physical defences floor to 1 on the INTEGER entry
+		// point (unladen costs measure 1.370 / 1.206 / 1.260), where they used
+		// to be 1 / 3 / 4. That flattening is not a regression, it is the reason
+		// GetDefenseCostFloat exists and the reason the melee charge site was
+		// moved onto ApplyCostFloat: the ordering these rows can no longer see is
+		// pinned in defence_cost_test.go.
 		{"dodge is stamina", DefenseDodge, PoolStamina, 1},
-		{"parry is stamina", DefenseParry, PoolStamina, 3},
-		{"block is stamina", DefenseBlock, PoolStamina, 4},
+		{"parry is stamina", DefenseParry, PoolStamina, 1},
+		{"block is stamina", DefenseBlock, PoolStamina, 1},
 
-		// Validation defaults, matching the TestGetDefenseStaminaCost pattern
-		// above: a test binary never loads config.yaml, so these prove the
-		// defaults exist and are non-zero rather than pinning a shipped value.
+		// Validation defaults: a test binary never loads config.yaml, so these
+		// prove the defaults exist and are non-zero rather than pinning a
+		// shipped value.
 		{"quell is conviction", DefenseQuell, PoolConviction, 2},
 		{"defy is conviction", DefenseDefy, PoolConviction, 2},
 

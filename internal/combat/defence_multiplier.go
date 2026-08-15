@@ -152,8 +152,14 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 // both the melee path (runBestOfAllDefense charges the best defence every swing)
 // and the two deleted functions (which awarded progression unconditionally).
 // It is charged against the pool its type names, via the DefensePool /
-// GetDefenseCost pair -- charging it through GetDefenseStaminaCost instead
-// returns 0 for quell and defy and makes both defences free.
+// GetDefenseCost pair, which read the pool and the amount off the same defence
+// name and so cannot charge one defence's price against another's pool.
+//
+// Still on the INTEGER entry point, deliberately: U7 Task 6 migrated the melee
+// site to GetDefenseCostFloat + ApplyCostFloat, and this one is next. The two
+// defences this path exists for -- quell and defy -- are priced flat, so the
+// integer rounding costs nothing here today; it will matter as soon as the
+// physical three start arriving on a spell channel.
 func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) float64 {
 	if attacker == nil || defender == nil {
 		return 1.0

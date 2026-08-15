@@ -11,21 +11,34 @@ type Balance struct {
 	RollSpread ConfigFloat `yaml:"RollSpread"`
 
 	// ── COMBAT: DEFENSE COSTS ────────────────────────────────────────────────
-	DodgeBaseStaminaCost ConfigInt   `yaml:"DodgeBaseStaminaCost"` // Base stamina cost for dodge, before multiplier (default 2)
-	ParryBaseStaminaCost ConfigInt   `yaml:"ParryBaseStaminaCost"` // Base stamina cost for parry, before multiplier (default 4)
-	BlockBaseStaminaCost ConfigInt   `yaml:"BlockBaseStaminaCost"` // Base stamina cost for block, before multiplier (default 5)
-	DodgeMultiplier      ConfigFloat `yaml:"DodgeMultiplier"`      // Stamina cost multiplier for dodge (default 0.9)
-	ParryMultiplier      ConfigFloat `yaml:"ParryMultiplier"`      // Stamina cost multiplier for parry (default 0.9)
-	BlockMultiplier      ConfigFloat `yaml:"BlockMultiplier"`      // Stamina cost multiplier for block (default 0.9)
+	// U7 Task 6 replaced the six per-defence knobs (DodgeBaseStaminaCost,
+	// ParryBaseStaminaCost, BlockBaseStaminaCost and the three cost multipliers)
+	// with ONE shared base and three per-action modifiers. The old pair-per-
+	// defence shape let base and multiplier drift against each other, and the
+	// integer truncation at the end of the old formula ate the difference anyway:
+	// 2x0.9, 4x0.9 and 5x0.9 landed on 1, 3 and 4 with no way to express
+	// anything between them. The three physical defences are now priced by
+	// costs.Calc -- base x encumbrance x inverse skill x modifier -- and charged
+	// through the fractional carry, so a fourteen percent gap between two
+	// modifiers survives instead of rounding to nothing.
+	//
+	// Those six keys may still be present in config.yaml. yaml.Unmarshal is
+	// non-strict, so an orphaned key is ignored rather than fatal.
+	DefenceBaseStaminaCost ConfigFloat `yaml:"DefenceBaseStaminaCost"` // Shared base stamina cost for dodge/parry/block, before multipliers (default 1.0)
+	DodgeCostModifier      ConfigFloat `yaml:"DodgeCostModifier"`      // Per-action cost modifier for dodge (default 1.25 — dearest; the whole body moves)
+	ParryCostModifier      ConfigFloat `yaml:"ParryCostModifier"`      // Per-action cost modifier for parry (default 1.10 — cheapest; a weapon interposes)
+	BlockCostModifier      ConfigFloat `yaml:"BlockCostModifier"`      // Per-action cost modifier for block (default 1.15)
 
 	// U6 Task 12: quell and defy are paid in CONVICTION, not stamina, so they
 	// get their own base costs rather than a fourth and fifth stamina knob. The
-	// pairing lives in characters.DefensePool / Character.GetDefenseCost; charging
-	// either through GetDefenseStaminaCost returns 0 and makes the defence free.
+	// pairing lives in characters.DefensePool / Character.GetDefenseCostFloat,
+	// which read the pool and the amount off the same defence name.
 	//
-	// No cost MULTIPLIER to match the physical three. Those exist because the
-	// three were retuned together against a shared stamina pool; there is nothing
-	// to retune against yet here, and a base cost alone is already tunable.
+	// U7 Task 6 left these FLAT while routing the physical three through
+	// costs.Calc. The principled price for a mounted defence is a fraction of the
+	// incoming action's cost, which needs the attacker's cost threaded through the
+	// defence path; neither defence has been seen in live play yet, so that is
+	// deferred rather than guessed at. A base cost alone is already tunable.
 	QuellBaseConvictionCost ConfigInt `yaml:"QuellBaseConvictionCost"` // Base conviction cost for quell (default 2)
 	DefyBaseConvictionCost  ConfigInt `yaml:"DefyBaseConvictionCost"`  // Base conviction cost for defy (default 2)
 
