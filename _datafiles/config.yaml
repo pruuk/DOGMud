@@ -875,6 +875,13 @@ Balance:
   #   of them, where the old code charged once per round no matter how many
   #   times you struck.
   AttackBaseStaminaCost: 1.0
+  # AttackCostModifier: attacking's per-action modifier, the counterpart of the
+  #   three defence modifiers above. It ships NEUTRAL at 1.0 on purpose: it is
+  #   the reference the defence modifiers were tuned against, so dodge costing
+  #   a quarter more than a swing is a statement about dodge, not about
+  #   attacking. Raise it to make trading blows dearer than turning them
+  #   aside, which would push the game toward defensive play.
+  AttackCostModifier: 1.0
 
   # ── RESOURCE MAXIMUMS ───────────────────────────────────────────────────────
   # Formulas:
