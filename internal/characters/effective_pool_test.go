@@ -85,18 +85,29 @@ func TestEffectivePoolMax_ExcludesReservation(t *testing.T) {
 	}
 }
 
-// Reservation meeting or exceeding the max floors the result at 0 rather than
-// going negative. A negative denominator would flow straight into
-// ResourceMultiplier and the stand thresholds and produce nonsense (a negative
-// threshold is trivially "affordable", which is the opposite of the bug being
-// fixed but just as wrong).
-func TestEffectivePoolMax_FloorsAtZero(t *testing.T) {
+// Reservation meeting or exceeding the max floors the result at ONE, never at
+// zero and never negative.
+//
+// The floor value is not cosmetic. Every consumer of this helper reads a
+// non-positive max as "no penalty at all" and returns the NEUTRAL answer:
+// combat.ResourceMultiplier returns 1.0, IsLowGrappleStamina returns false,
+// grappleStaminaMultiplier returns 1.0. So a floor of 0 handed a character with
+// a permanently EMPTY pool full swing count, full hit chance and full melee
+// damage -- the exact inversion of the pre-U7 behaviour this helper exists to
+// restore. A floor of 1 makes the same character compute ratio 0/1 = 0 and take
+// the MAXIMUM depletion penalty. The combat half of this claim is pinned in
+// internal/combat/effective_pool_penalty_test.go (this package cannot import
+// combat: combat imports characters).
+//
+// Total reservation is reachable in shipped content, not a theoretical corner:
+// Chrysalis enchantments stack, and a two-handed item doubles its reserve share.
+func TestEffectivePoolMax_FloorsAtOne(t *testing.T) {
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
 		999921: {ItemId: 999921, Name: "greedy collar", Type: items.Neck, ReserveStaminaPct: 0.60},
 		999922: {ItemId: 999922, Name: "greedy belt", Type: items.Belt, ReserveStaminaPct: 0.60},
 	})()
 
-	t.Run("reservation_equals_max", func(t *testing.T) {
+	t.Run("reservation_exceeds_max", func(t *testing.T) {
 		c := New()
 		c.StaminaMax.Base = 100
 		c.Equipment.Neck = items.New(999921)
@@ -107,8 +118,18 @@ func TestEffectivePoolMax_FloorsAtZero(t *testing.T) {
 		if res := c.GetPoolReservation("stamina", c.StaminaMax.Value); res <= c.StaminaMax.Value {
 			t.Fatalf("test setup invariant broken: reservation %d must exceed max %d", res, c.StaminaMax.Value)
 		}
-		if got := c.EffectivePoolMax(PoolStamina); got != 0 {
-			t.Errorf("EffectivePoolMax(stamina) = %d with over-full reservation, want 0 (floored, never negative)", got)
+		if got := c.EffectivePoolMax(PoolStamina); got != 1 {
+			t.Errorf("EffectivePoolMax(stamina) = %d with over-full reservation, want 1. "+
+				"A floor of 0 reads downstream as 'no penalty' and gives a permanently "+
+				"empty pool FULL combat effectiveness", got)
+		}
+
+		// The pool this character can actually fill is empty, so the ratio the
+		// depletion curves see must be 0 and not the undefined 0/0.
+		c.Stamina = 999999
+		c.Validate()
+		if c.Stamina != 0 {
+			t.Errorf("reserve-clamped current stamina = %d, want 0 (the whole pool is reserved)", c.Stamina)
 		}
 	})
 
@@ -118,8 +139,23 @@ func TestEffectivePoolMax_FloorsAtZero(t *testing.T) {
 	t.Run("no_pool_at_all", func(t *testing.T) {
 		c := New()
 		c.StaminaMax.Value = 0
-		if got := c.EffectivePoolMax(PoolStamina); got != 0 {
-			t.Errorf("EffectivePoolMax(stamina) = %d on a zero pool, want 0", got)
+		if got := c.EffectivePoolMax(PoolStamina); got != 1 {
+			t.Errorf("EffectivePoolMax(stamina) = %d on a zero pool, want 1", got)
+		}
+	})
+
+	// Never returns 0 for any pool, whatever the reservation. Stated as its own
+	// assertion because the `if eff <= 0` guards still standing at several call
+	// sites are dead code that relies on exactly this.
+	t.Run("never_zero_for_any_pool", func(t *testing.T) {
+		c := New()
+		c.StaminaMax.Value = 0
+		c.HealthMax.Value = 0
+		c.ConvictionMax.Value = 0
+		for _, p := range []Pool{PoolStamina, PoolHealth, PoolConviction} {
+			if got := c.EffectivePoolMax(p); got < 1 {
+				t.Errorf("EffectivePoolMax(%s) = %d, want at least 1", p, got)
+			}
 		}
 	})
 }

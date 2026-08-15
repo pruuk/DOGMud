@@ -65,7 +65,31 @@ func (c *Character) poolMax(p Pool) int {
 
 // EffectivePoolMax returns the ceiling the character can ACTUALLY reach: the raw
 // maximum with pool reservation (Chrysalis enchantments, pinnacle-item
-// reserve_*_pct, fielded companions) taken out. Floored at 0, never negative.
+// reserve_*_pct, fielded companions) taken out.
+//
+// FLOORED AT 1, NOT AT 0, AND THE DIFFERENCE IS A BALANCE INVERSION. Total
+// reservation is reachable: stacked Chrysalis enchantments, and a two-handed
+// item doubling its reserve share (see GetTierReservePct in
+// internal/enchantments), can hold 100% or more of a pool. Every consumer of
+// this value reads a non-positive max as "no penalty at all" and bails to the
+// neutral answer -- combat.ResourceMultiplier returns 1.0, IsLowGrappleStamina
+// returns false, grappleStaminaMultiplier returns 1.0 -- so a floor of 0 handed
+// a character with a permanently EMPTY pool full swing count, full hit chance
+// and full melee damage. That is the exact opposite of the pre-U7 behaviour and
+// of the intent. With a floor of 1 the same character computes ratio 0/1 = 0 and
+// takes the MAXIMUM depletion penalty, which is what a permanently empty pool
+// should mean. The floor matches the pool-max clamp validatePoolClamps already
+// applies at validate.go:135-137 (HealthMax, StaminaMax and ConvictionMax are
+// each raised to at least 1).
+//
+// Consequence worth stating: this function NEVER returns 0, so `if eff <= 0`
+// guards at its call sites are dead code kept only as belt and braces.
+//
+// One consumer does not get its old behaviour back and must not be "fixed":
+// `stand` computes int(1 * StandMinStamina) = 0 for a fully reserved character,
+// so they stand for free. That is correct. There is no stamina left to charge
+// them, and refusing them would recreate the permanent floor-lockout U7 Task 11
+// exists to remove.
 //
 // USE IT FOR EVERY PERCENTAGE-OF-MAX THRESHOLD. A threshold measured against the
 // raw max is compared to a current value that RecalculateStats has already
@@ -87,10 +111,10 @@ func (c *Character) poolMax(p Pool) int {
 // HealthPerRound/StaminaPerRound/ConvictionPerRound in resources.go.
 func (c *Character) EffectivePoolMax(p Pool) int {
 	max := c.poolMax(p)
-	if eff := max - c.GetPoolReservation(string(p), max); eff > 0 {
+	if eff := max - c.GetPoolReservation(string(p), max); eff > 1 {
 		return eff
 	}
-	return 0
+	return 1
 }
 
 // setPool writes a pool. Unexported so every caller goes through a primitive

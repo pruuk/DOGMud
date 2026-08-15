@@ -115,8 +115,9 @@ type CostResult struct {
 func (c *Character) PoolValue(p Pool) int
 func (c *Character) CanAfford(pool Pool, amount int) bool
 
-// EffectivePoolMax is poolMax - GetPoolReservation, floored at 0 (U7 Task 11).
+// EffectivePoolMax is poolMax - GetPoolReservation, floored at 1 (U7 Task 11).
 // The denominator for every percentage-OF-MAX threshold. NEVER for affordability.
+// It never returns 0, deliberately: see the Gotchas note on the floor.
 func (c *Character) EffectivePoolMax(p Pool) int
 
 func (c *Character) ApplyCost(pool Pool, amount int) bool
@@ -245,6 +246,22 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `combat.ResourceMultiplier` denominator through it. The refusal message now
   discloses reservation in a descriptive band (`reserveShareBand` in
   `internal/usercommands/assess.go`), never a raw number.
+- **`EffectivePoolMax` is floored at 1, NOT at 0, and it never returns 0.**
+  Total reservation is reachable (stacked Chrysalis enchantments; a two-handed
+  item doubles its reserve share). Every consumer treats a non-positive max as
+  "no penalty at all" and bails to the neutral answer -- `ResourceMultiplier`
+  returns `1.0`, `IsLowGrappleStamina` returns `false`,
+  `grappleStaminaMultiplier` returns `1.0` -- so a floor of 0 gave a character
+  with a permanently EMPTY pool full swing count, full hit chance and full melee
+  damage, the exact inversion of the pre-U7 behaviour. A floor of 1 makes that
+  character compute ratio `0/1 = 0` and take the MAXIMUM depletion penalty. It
+  matches the pool-max clamp `validatePoolClamps` already applies
+  (`validate.go:135-137`). The `if eff <= 0` guards at the call sites are
+  therefore dead code, kept as belt and braces.
+  One consequence is intended and must not be "fixed": `stand` computes
+  `int(1 * StandMinStamina) = 0`, so a fully reserved character stands for free.
+  There is no stamina left to charge, and refusing would recreate the permanent
+  floor-lockout Task 11 removed.
 - **Regen deliberately still reads the RAW max.** `HealthPerRound`,
   `StaminaPerRound` and `ConvictionPerRound` in `resources.go` are the named
   exception: making them reserve-aware is a NERF to reserved characters, and the

@@ -53,6 +53,12 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// 0.15 knobs the gate demanded 21.4% of a 30%-reserved character's reachable
 	// pool, and past 85% reservation it demanded more stamina than the pool could
 	// ever hold, permanently locking that character on the floor.
+	//
+	// EffectivePoolMax floors at 1, so a character who reserves their WHOLE
+	// stamina pool gets int(1 * 0.15) = 0 for both knobs and stands for free.
+	// That is intended, not an oversight: they have no stamina left to charge,
+	// and demanding any from them would rebuild the same permanent lockout. Do
+	// not add a minimum here.
 	effMax := user.Character.EffectivePoolMax(characters.PoolStamina)
 	staminaCost := int(float64(effMax) * float64(cfg.StandStaminaCost))
 	minStamina := int(float64(effMax) * float64(cfg.StandMinStamina))
