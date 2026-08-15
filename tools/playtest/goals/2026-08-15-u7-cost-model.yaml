@@ -1,0 +1,137 @@
+# U7 targeted adversarial playtest: the unified cost model.
+#
+# WHAT CHANGED, TESTER, so you know what is new and what is old:
+#   * DEFENDING NOW COSTS STAMINA. It never did before, on any melee defence,
+#     for the entire life of the game. Dodge is meant to be dearest, block
+#     next, parry cheapest.
+#   * ATTACKING IS CHARGED PER SWING, not once per round. Someone throwing
+#     four blows pays four times.
+#   * CARRIED WEIGHT multiplies the cost of physical actions. The curve is
+#     meant to be gentle up to about three quarters of capacity and to climb
+#     steeply after that.
+#   * SKILL DISCOUNTS COST. A novice pays a little over the base rate, a
+#     master well under half.
+#   * MOVEMENT got a lower base price, so an ordinary walk should be slightly
+#     cheaper than you remember while travel near your limit is much dearer.
+#   * QUELL and DEFY (mental and social defences) cost CONVICTION, not
+#     stamina, and are deliberately NOT affected by carried weight.
+#
+# I HAVE NOT MEASURED ANY OF THIS IN GAME. Every number above is a design
+# intent, not an observation. Your job is to measure what actually happens and
+# report it, even where it contradicts the intent. Do not reproduce the
+# expectations back to me. If the difference between an empty pack and a full
+# one turns out to be one point of stamina, that is exactly the kind of finding
+# this run exists to surface, and it is more useful than a confirmation.
+#
+# HOW TO SEE COSTS AT ALL. There is no cost readout. Watch the stamina number
+# in your prompt or in `status` immediately before and immediately after a
+# single action, and subtract. Take several samples: rolls vary. Encumbrance is
+# shown to players as a word (light, moderate, heavy, overburdened, crushed),
+# never as a number, so use `status` to read the tier and `inventory` to see
+# what you are carrying.
+#
+# THE LOADOUT LADDER. You start with SIX Heavy Weighted Stones (item 12, 15.0
+# each). This is the experiment: `drop stone` moves you DOWN the curve, `get
+# stone` moves you back UP. Sample the same fixed action at several rungs.
+# Suggested rungs, by stones carried: 6 (over capacity), 4 (just under
+# capacity), 3 (around the knee), 0 (near empty). Walk the SAME route each
+# time so terrain is held constant.
+#
+# CARRIED-WEIGHT ARITHMETIC, so you can recount if the profile changes:
+#   capacity = strength 105 x CarryCapacityMultiplier 0.65 = 68.25
+#     (that knob is ABSENT from config.yaml, so it takes the Go default)
+#   StoreItem REFUSES any store that would push you past 2x capacity, and the
+#   refusal is NOT graceful: it fails profile materialization and the container
+#   dies at boot with "could not store item N". Six stones is 90.0, which
+#   leaves plenty of headroom under the 136.5 ceiling. If you add items, recount.
+#
+# CARRIED FORWARD FROM THE 2026-08-13 EXHAUSTION RUN, still true:
+#   * OUT-OF-COMBAT REGEN IS ABOUT 8 SP PER ROUND. You cannot drain stamina and
+#     then go looking for a fight. Drain first and engage IMMEDIATELY, or drain
+#     while already in combat.
+#   * Unloaded, regen outruns movement cost and you GAIN stamina by walking.
+#     That is the trap an earlier version of this file fell into.
+#   * Recovery and temple rooms carry a regen bonus. Leave them before trying
+#     to reach a low band.
+#   * Auto-attack drains stamina every round without you sending anything. Pick
+#     an opponent weak enough that you survive many rounds, then mostly WAIT
+#     and read.
+#   * The Thornwall Highwayman is a BAD sparring partner: it hides, pickpockets,
+#     flees, and wanders. Find something that stands and fights. `consider
+#     <target>` before committing.
+#   * RATE LIMIT: the AI port allows 3 commands per round and drops the rest
+#     with a visible "Command dropped -- AI rate limit". That is a real limit,
+#     not a bug. But if you ever see several commands echoed run together into
+#     one nonsense command with NO notice, a fixed bug has regressed and you
+#     should report it immediately.
+#
+# START ROOM 462 (Thornwall City), NOT the early profile's own 5200. 5200 is
+# The Awakening Pool, behind the Awakening Rite gate, where every movement is
+# refused until the rite is done. A run started there cannot walk, cannot burn
+# stamina, and the symptom is silent: stamina simply pins at max while the
+# moves look like they were sent.
+#
+ephemeral:
+  profile: early
+  start_room: 462
+  overlays:
+    grant_items:
+      - 12 # Heavy Weighted Stone, 15.0 each. Six of them = 90.0.
+      - 12
+      - 12
+      - 12
+      - 12
+      - 12
+  budgets:
+    wall_clock: 60m
+
+goals:
+  - >-
+    Measure the movement cost curve. Walk a fixed route and record stamina
+    spent per room at four loads: six stones, four stones, three stones and
+    none. Report the actual numbers you observed at each rung, and say plainly
+    whether the difference between an ordinary load and a near-capacity load
+    is something a player would ever notice. If two adjacent rungs cost the
+    same, say so. Then repeat on rough terrain if you can find some, and say
+    whether terrain widens the gap.
+  - >-
+    Measure what defending costs. Get into a long fight and watch stamina
+    across rounds where you are clearly defending rather than attacking. Does
+    defending visibly cost stamina at all? Check whether the combat text names
+    the right defence (block, parry, dodge) rather than always saying dodge,
+    and say whether dodge appears dearer than parry as intended. This is brand
+    new behaviour, so anything surprising here is worth reporting.
+  - >-
+    Fight while heavily laden, then fight unladen, and compare. Same opponent
+    type, same tactics. Report how much faster you tire under load and whether
+    the fight becomes unwinnable rather than merely harder. A load that makes
+    combat impossible rather than costly is a finding.
+  - >-
+    Attack cost per swing. Find out whether throwing more blows in a round
+    costs more stamina than throwing fewer. If you can get a second weapon or
+    otherwise raise your swing count, compare. Say whether a fast attacker
+    drains noticeably faster than a slow one.
+  - >-
+    Exhaust yourself completely while carrying a heavy load, then try to keep
+    playing. Can you still move? Still fight? Still flee? Report anything that
+    refuses you with a message that does not match the real reason, and
+    anything that leaves you stuck with no way out. Being stuck with no
+    recovery path is the single most important thing this run can find.
+  - >-
+    Get knocked down and stand back up, repeatedly, including at very low
+    stamina. Standing must never become impossible. If you are ever refused a
+    stand, read the message carefully and report its exact wording and whether
+    resting actually fixed it.
+  - >-
+    Read the help text. Check `help` for anything describing stamina, defence
+    or carrying, and report any text that now contradicts what you measured.
+    Documentation that still describes the old behaviour is a real finding.
+  - >-
+    General adversarial pass. Anything that reads wrong, renders oddly, shows a
+    raw number where it should describe an effect, or contradicts its own help
+    text is a finding. Report bluntly and do not soften. Two known-open items
+    you do NOT need to re-report: `help prompt` documents conviction as {mp}
+    and omits {st}/{ST}, and attacking an absent target answers "You attack the
+    darkness!". Also do NOT report the absence of walking teaching you the
+    search skill: it is deliberately about a one in two hundred chance per
+    room, so not seeing it in a single session is expected.
