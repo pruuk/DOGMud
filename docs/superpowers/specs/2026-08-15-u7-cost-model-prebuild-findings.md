@@ -118,7 +118,47 @@ Not necessarily in U7, but **must be in the arc, and must precede U8's
 skill-strip**, which is what turns an over-reserved pool from cosmetic into
 crippling.
 
-Open work before it can be built:
+### 2.2 Inverse skill on reservation costs (owner, 2026-08-15)
+
+**Companion reservation already has a skill term; item reservation does not.**
+
+`CalcCompanionReserve` reduces a companion's conviction reservation by the
+summoner's own manifestation rank (`min(cap, manif x pctPerRank)`, plus a
+mutation term, total capped). `GetTierReservePct` has no skill term at all: the
+reserved fraction is the tier's authored value, doubled for a two-handed item,
+and nothing the wearer knows changes it.
+
+**Decision: item reservation takes the inverse-skill multiplier keyed on
+`enchanting`.** This restores the symmetry (the actor's own skill lightens the
+load they carry), needs no new item field, and gives enchanting a personal
+benefit rather than one that only serves customers.
+
+**Wearer's skill, not the crafter's.** Companions already work this way, the
+wearer's rank is available at the moment reservation is computed, and a
+crafter-side version would need a skill snapshot baked onto every item instance
+plus a migration for existing ones. It also fails the owner's stated goal: a
+player could simply buy a master's work instead of training.
+
+Magnitudes, on a tier-4 conviction enchantment reserving 8% of the pool:
+
+| Enchanting rank | Multiplier | Reserved |
+|---|---|---|
+| 0 | 1.10 | 8.8% |
+| 25 (neutral) | 1.00 | 8.0% |
+| 54 (Meirok) | 0.77 | 6.1% |
+| 100 | 0.40 | 3.2% |
+
+**One question to settle:** whether the rank-0 penalty half applies. Under the
+shared band an untrained wearer reserves 10% MORE than today, which is
+consistent with every other action but does make an existing item slightly worse
+for a character who has never touched enchanting. Discount-only
+(`min(1.0, mult)`) avoids that at the cost of consistency.
+
+This composes with the §2.1 ceiling deliberately: a skilled enchanter fits more
+enchanted gear under the cap, which is the same offset the owner noted for
+summoners under the manifestation term.
+
+Open work before the ceiling can be built:
 
 - **Where the cap falls (50% vs 75%) needs the live distribution**, not a guess.
   A single tier-4 conviction enchant is 8% (doubled to 16% on a two-hander), a

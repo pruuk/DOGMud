@@ -50,18 +50,32 @@ race, a four-mob room bites, and the worst room in the game bites hard without
 being a death sentence. Meirok's mastery shows: his swing costs 0.81 where a
 newcomer's costs 1.35.
 
+### Regen consolidation (owner, 2026-08-15)
+
+**The player and mob regen knobs collapse into one set.** Mobs and players fight
+the same combat under the same cost model, so `MobHealthRegenPct`,
+`MobStaminaRegenPct` and `MobConvictionRegenPct` are deleted and the three
+`Player*` knobs are renamed to drop the prefix. `StaminaPerRound` and its two
+siblings stop branching on `c.IsMob`.
+
+Two things to keep straight while doing it:
+
+- The **combat divisor is stamina-only**. `AutoHeal` quarters stamina in combat
+  but applies conviction and health at the full tick, with an explicit
+  "not affected by combat state" comment on conviction. Consolidating the
+  percentages must not accidentally quarter conviction, or every caster loses
+  four fifths of their in-combat recovery.
+- Mob regen currently reaches the mob branch of `AutoHeal` on the same
+  three-round cadence, so the cadence needs no change; only the knob it reads.
+
 ### Open questions this tuning raises, to settle before Task 12
 
-1. **Mob regen parity.** `MobStaminaRegenPct` is a separate knob, still 0.02. If
-   only the player knob is raised, players recover two and a half times faster
-   than mobs, on top of mobs already having the smaller pools. The divisor is
-   shared between both branches, so halving it helps both. Decide whether mobs
-   move to 0.05 as well: modelling showed low-tier mobs exhausted by round 3
-   even today, so raising theirs makes fights longer rather than easier.
-2. **Health and conviction stay at 0.02.** Only stamina rises. That is defensible
-   because stamina is the pool U7 puts under pressure, but it is now the odd one
-   out among three knobs that were deliberately matched.
-3. **Faster regen slightly slows stat progression.** Regen-based progression
+1. **Health and conviction stay at 0.02 while stamina rises to 0.05.** That is
+   defensible because stamina is the pool U7 puts under pressure, but it is now
+   the odd one out among three knobs that were deliberately matched. Note the
+   interaction with the point above: conviction is already effectively four
+   times stronger than stamina in combat because it is never quartered.
+2. **Faster regen slightly slows stat progression.** Regen-based progression
    fires per tick with a chance of `RegenProgressionBase x (1 - currentPct)^3`,
    so a fuller pool progresses more slowly. Faster stamina regen therefore damps
    Vitality and Willpower gain a little. The new defence costs push the other
