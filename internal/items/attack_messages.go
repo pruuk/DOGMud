@@ -176,6 +176,14 @@ func GetAttackMessage(subType ItemSubType, pctDamage int) AttackOptions {
 			return attackMsgOptions
 		}
 	}
-	// default to generic.
+	// Fall back to generic, but NEVER recurse into ourselves -- the same guard
+	// GetPreAttackMessage carries above, and for the same reason. If Generic
+	// itself lacks the intensity (or attackMessages was never loaded at all)
+	// this calls itself forever and overflows the stack, taking the process
+	// down. Returning the zero value degrades to no message instead.
+	if subType == Generic {
+		return AttackOptions{}
+	}
+
 	return GetAttackMessage(Generic, pctDamage)
 }
