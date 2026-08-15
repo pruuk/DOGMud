@@ -1,9 +1,11 @@
 package usercommands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/stretchr/testify/assert"
@@ -73,6 +75,14 @@ func TestStand_HeavyStaminaReservationIsNotALockout(t *testing.T) {
 // reservation, not just about exhaustion: rest cannot return stamina their gear
 // is holding out of the pool, and nothing else in the game tells them so.
 // Descriptive band, no raw numbers.
+//
+// This asserts on the TEXT Stand actually sent. The first version of this test
+// called reserveShareBand directly and checked the character was still prone,
+// which meant deleting the disclosure branch from stand.go left it green: it
+// tested the helper and the refusal, never the thing it was named for. Messages
+// are captured through the events queue, the same way
+// assess_disclosure_test.go does it; SendText renders and enqueues an
+// events.Message keyed on the user id.
 func TestStand_RefusalDisclosesReservation(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -93,15 +103,63 @@ func TestStand_RefusalDisclosesReservation(t *testing.T) {
 	user.Character.Stamina = 0
 	setCombatPositionParallel(user.Character, position.Prone)
 
+	// 40 of 100 reserved -> "a significant portion". Stated here so the
+	// expectation below reads as the band and not as a magic string.
+	const wantBand = "a significant portion"
+	require.Equal(t, wantBand, reserveShareBand(40, 100),
+		"test setup: the band for a 40%% reservation moved; update the expectation")
+
+	events.DrainQueuedMessagesForTest(user.UserId)
 	handled, err := Stand("", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 	assert.True(t, user.Character.IsProne(), "an empty pool must still refuse")
 
-	// 40 of 100 reserved -> "a significant portion".
-	assert.Equal(t, "a significant portion", reserveShareBand(40, 100))
+	// SendText hard-wraps at the user's line width, so newlines land mid-phrase.
+	// Collapse all whitespace before matching or the assertion is a coin flip on
+	// where the wrap fell.
+	sent := strings.Join(strings.Fields(
+		strings.Join(events.DrainQueuedMessagesForTest(user.UserId), " ")), " ")
+
+	require.NotEmpty(t, sent, "Stand sent the player nothing at all")
+	assert.Contains(t, sent, "Your gear is holding "+wantBand+" of your stamina in reserve",
+		"the refusal must NAME the reservation. Blaming exhaustion alone is a lie: "+
+			"resting cannot return stamina the character's gear is holding out of the pool")
+	assert.NotContains(t, sent, "40",
+		"raw reservation number leaked to the player; disclosure is banded, never numeric")
 
 	user.Character.Equipment.Body = items.Item{}
+	user.Character.Stamina = 100
+	setCombatPositionParallel(user.Character, position.Standing)
+}
+
+// The other half of the same contract: an UNRESERVED character who is simply
+// out of stamina must NOT be told about gear. Without this, appending the
+// disclosure unconditionally would still pass the test above.
+func TestStand_RefusalWithoutReservationMentionsNoGear(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+
+	user, room := getTestUserAndRoom(t)
+	user.Character.Equipment.Body = items.Item{}
+	user.Character.StaminaMax.Value = 100
+	user.Character.Stamina = 0
+	setCombatPositionParallel(user.Character, position.Prone)
+
+	events.DrainQueuedMessagesForTest(user.UserId)
+	handled, err := Stand("", user, room, 0)
+	assert.True(t, handled)
+	assert.NoError(t, err)
+	assert.True(t, user.Character.IsProne(), "an empty pool must still refuse")
+
+	sent := strings.Join(strings.Fields(
+		strings.Join(events.DrainQueuedMessagesForTest(user.UserId), " ")), " ")
+
+	require.NotEmpty(t, sent, "Stand sent the player nothing at all")
+	assert.Contains(t, sent, "too winded to get up")
+	assert.NotContains(t, sent, "Your gear is holding",
+		"a character with no reservation must not be told their gear is holding stamina")
+
 	user.Character.Stamina = 100
 	setCombatPositionParallel(user.Character, position.Standing)
 }
