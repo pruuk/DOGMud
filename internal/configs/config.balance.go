@@ -22,6 +22,8 @@ type Balance struct {
 	DodgeEffectiveness ConfigFloat `yaml:"DodgeEffectiveness"` // Multiplier on dodge score before opposed roll (default 1.0)
 	ParryEffectiveness ConfigFloat `yaml:"ParryEffectiveness"` // Multiplier on parry score before opposed roll (default 1.0)
 	BlockEffectiveness ConfigFloat `yaml:"BlockEffectiveness"` // Multiplier on block score before opposed roll (default 1.0)
+	QuellEffectiveness ConfigFloat `yaml:"QuellEffectiveness"` // Multiplier on quell score before opposed roll (default 1.0)
+	DefyEffectiveness  ConfigFloat `yaml:"DefyEffectiveness"`  // Multiplier on defy score before opposed roll (default 1.0)
 	// U6 deleted MinDefenseChance and MinAttackHitChance from here. They were the
 	// melee-only floor pair, applied in resolveDefenseOutcomeCore AFTER crit
 	// resolution had already returned on five branches, so the attack floor was

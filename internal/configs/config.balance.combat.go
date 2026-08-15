@@ -39,6 +39,17 @@ func (b *Balance) validateCombat() {
 	if b.BlockEffectiveness <= 0 {
 		b.BlockEffectiveness = 1.0
 	}
+	// U6: the two non-physical defences get the same per-defence dial as the
+	// physical three, so all five are tunable the same way. Shipped at 1.0
+	// (neutral) rather than tuned, because nothing has been played against them
+	// yet -- they exist so the first retune is a config edit and not a code
+	// change.
+	if b.QuellEffectiveness <= 0 {
+		b.QuellEffectiveness = 1.0
+	}
+	if b.DefyEffectiveness <= 0 {
+		b.DefyEffectiveness = 1.0
+	}
 
 	// ── COMBAT: PRONE & GRAPPLE ──────────────────────────────────────────────
 	if b.ProneAttackMultiplier <= 0 {

@@ -464,6 +464,14 @@ Balance:
   ParryEffectiveness: 0.97      # Slight nerf: parry is middle ground
   BlockEffectiveness: 1.05      # Buffed: requires shield investment, should reward it
   #
+  # U6 added quell (mental spells, Willpower + spellcasting) and defy (taunts,
+  #   Willpower + rhetoric) as real defence types, so all five defences now have
+  #   the same per-defence dial. Both ship NEUTRAL at 1.0 rather than tuned:
+  #   nothing has been played against them yet, and they exist so the first
+  #   retune is a config edit instead of a code change.
+  QuellEffectiveness: 1.0
+  DefyEffectiveness: 1.0
+  #
   # MinDefenseChance and MinAttackHitChance were deleted in U6. They were the
   #   last two of the eight per-channel floor knobs; ContestFloor below replaces
   #   all of them. They were also applied AFTER crit resolution, which returned
