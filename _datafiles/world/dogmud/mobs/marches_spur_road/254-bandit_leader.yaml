@@ -6,7 +6,13 @@ hostile: false
 charm_immune: true
 maxwander: 0
 archetype: fighting
-behavior_archetype: leader
+# behavior_archetype removed 2026-08-15: the per-mob tree is the complete
+# brain; the leader fallback's unconditional flee below 25% HP would
+# corrupt this tuned set-piece fight. submission_policy/surrender_policy
+# pinned explicitly below to preserve what the leader archetype default
+# gave this mob (cripple / never).
+submission_policy: cripple
+surrender_policy: never
 groups:
   - humanoid
   - bandit

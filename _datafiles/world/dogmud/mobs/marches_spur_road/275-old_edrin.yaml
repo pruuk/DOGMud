@@ -1,7 +1,9 @@
 mobid: 275
 zone: Marches Spur Road
 buffids: [52, 61]
-behavior_archetype: boss_edrin
+# behavior_archetype removed 2026-08-15: the per-mob tree + legacy AI is
+# the complete fight; the boss_edrin fallback's flee/recall would skip
+# Edrin's mob_die exit-unlock phase. See internal/behaviortree/context.md.
 submission_policy: lethal
 surrender_policy: never
 statpool: 500

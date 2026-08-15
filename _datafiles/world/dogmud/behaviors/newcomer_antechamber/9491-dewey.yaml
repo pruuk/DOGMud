@@ -3,10 +3,16 @@
 # This exists ONLY to override the noncombat_passive archetype's player_enter
 # reaction. That archetype emotes "pays you little mind." on every player entry,
 # which flatly contradicts Dewey's warm-mentor persona and fires right on top of
-# his room-tree greeting (2026-07-17 playtest finding). We keep the strategic
-# idle goal planner and simply drop the dismissive greeting emote -- Dewey's
-# actual teaching + arrival lines all live in the room behavior trees
+# his room-tree greeting (2026-07-17 playtest finding). Dewey's actual teaching
+# + arrival lines all live in the room behavior trees
 # (behaviors/rooms/newcomer_antechamber/), spoken by name via mob_say.
+#
+# Composition (2026-08-15): a per-mob tree only owns an event it explicitly
+# handles a matching branch for -- the file's mere existence no longer
+# shadows the whole archetype. So this file must claim player_enter itself
+# with a silent always-Success branch (set_state is the established no-op
+# action, see bandit_leader's negotiating flag) rather than simply omitting
+# the event, or the archetype's dismissive emote falls straight through.
 #
 # The mob_idle flee re-nag: quest 28's flee prompt is one delayed line that
 # can scroll away under combat spam (Malia, 2026-08-02) -- a player who
@@ -46,3 +52,13 @@ tree:
     - type: action
       event: mob_idle
       do: try_goal_planner
+
+    # Silent player_enter no-op: claims the event so composition never
+    # falls through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: dewey_player_enter_suppressed
+          value: "true"
