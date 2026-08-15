@@ -203,6 +203,26 @@ defence cost to 0.56x today's, delivering none of the intended pressure.
   partially offsets the §2.1 reservation ceiling. The two must be modelled
   together before either ships: the cost side and the reserve side both scale
   with manifestation, so a skilled summoner gains twice.
+- **Movement trains `search`, at a deliberately rare rate.** Today `go.go` trains
+  nothing, so a search-keyed cost modifier would be a permanent penalty for the
+  99 of 108 live characters at rank 1, with no way to earn the discount by
+  travelling. Movement therefore grants search progression, but **rarely**:
+  search is already easy to raise through forage, search and track, and walking
+  must not become the dominant path or every character ends up a grandmaster
+  tracker with everything else lagging.
+
+  ⚠️ **Implementation trap.** `CheckSkillProgression` derives its decay from the
+  skill's USE COUNT (`virtualRank = useCount / UsesPerRank`), and `TrackSkillUse`
+  is what increments it. Calling `OnSkillUse(search)` on every room move would
+  pile up tens of thousands of uses and **exhaust the decay curve, poisoning
+  forage-based training**. The rare rate must come from gating whether a use is
+  recorded at all (or from checking progression without tracking), not from
+  scaling the odds on a use that is still counted every step.
+
+  Second-order effect, accepted deliberately: `search` also feeds hidden-creature
+  detection on room entry (Perception + Search vs Dex + Skullduggery in `go.go`)
+  and foraging yields, so travel-trained search slowly raises everyone's
+  detection and makes sneaking harder against well-travelled characters.
 
 ### 3.4.1 Correction: in-combat regen is 3x slower than first modelled
 
