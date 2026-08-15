@@ -199,7 +199,9 @@ func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters
 // This is the exact tail of ResolveChannelDefence's derivation, extracted so
 // skill_moves.go's maneuvers (bash/trip/kick) can share it rather than
 // hand-copy the sign negation, the floored sentinel, and the sqrt(2)
-// normaliser below -- each of those has caused a real bug when duplicated.
+// normaliser below -- context.md records the sign and .Margin traps as
+// having NEARLY shipped once already, caught only in review, which is
+// reason enough to keep them in exactly one place.
 func defenceDamageMultiplier(res contest.Result) float64 {
 	if res.Success {
 		return 1.0

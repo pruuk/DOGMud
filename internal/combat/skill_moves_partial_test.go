@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // makePartialTestParams builds SkillMoveParams with a MODERATE defender
@@ -42,6 +43,10 @@ func TestExecuteSkillMove_DefendedAttemptDealsPartialDamageWithoutStatus(t *test
 	for i := 0; i < iterations; i++ {
 		attacker := characters.New()
 		defender := characters.New()
+		// Direct .Value/.Health writes are deliberate here, not the usual
+		// "set .Base then Recalculate()" convention: nothing in this test
+		// path recalculates stats mid-run, so there is no derived value to
+		// go stale.
 		defender.HealthMax.Value = 100000
 		defender.Health = 100000
 
@@ -55,8 +60,10 @@ func TestExecuteSkillMove_DefendedAttemptDealsPartialDamageWithoutStatus(t *test
 
 		// The status effect stays binary: a defended attempt must never
 		// apply status or knock the defender down, regardless of damage.
-		assert.False(t, res.StatusApplied, "a defended attempt must never set StatusApplied")
-		assert.False(t, res.KnockedDown, "a defended attempt must never set KnockedDown")
+		// require, not assert: a leak should fail the loop once, not once
+		// per remaining iteration (up to ~2000 duplicate failures).
+		require.False(t, res.StatusApplied, "a defended attempt must never set StatusApplied")
+		require.False(t, res.KnockedDown, "a defended attempt must never set KnockedDown")
 
 		if res.Damage > 0 {
 			foundPartial = true

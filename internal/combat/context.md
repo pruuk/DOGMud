@@ -338,7 +338,7 @@ Before this, a defensive win was zero damage while `TrySpellDeflection` and
 mechanisms answering one question. Task 12 folded those channels onto this curve
 via `ResolveChannelDefence` and deleted both functions.
 
-Three things that bite:
+Four things that bite:
 
 - **`hitResolution.damageMult` has no safe zero value.** Its zero is 0.0, which
   deletes the swing's damage. Every return path in `resolveDefenseOutcomeCore`
@@ -354,6 +354,14 @@ Three things that bite:
   the multiplier is set, so promoting a defensive win to a defence crit also
   resets `res.hit`/`damageMult`. Without that, a floor-promoted crit would deal
   partial damage where a rolled one deals none.
+- **U6 Task 13 extended this to skill moves.** `ExecuteSkillMove`
+  (`skill_moves.go`) now runs its damage through `defenceDamageMultiplier` too,
+  so `SkillMoveResult.Hit == false` with `Damage > 0` is a legal pair — a
+  defended bash/trip/kick still lands partial damage, and `Damage` is the
+  contest-scaled amount actually applied to the defender's pool, never the
+  unscaled base. The maneuver's STATUS EFFECT stays binary, though:
+  `StatusApplied` and `KnockedDown` can only be true when `Hit == true` — there
+  is no "partially tripped."
 
 The multiplier is applied in `calculateCombat` (`combat.go`), **after**
 `calcHitDamage` rather than folded into `sdp.dmgMean`: `dice.RollStat` derives
@@ -778,10 +786,12 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
   `c := configs.GetConfig(); c.Balance.ContestFloor = 0; configs.SetConfigForTest(t, c)`
   (`SetConfigForTest` assigns without validating, so the zero survives). Pinning
   `dice.SetContestFloors` no longer reaches this path at all.
-- **`Result.Floored` is available and currently unread.** `RunContest` is the
-  single choke point for every opposed contest in the game, so it is the
-  cheapest place to instrument the floor-reliance rate the roadmap wants
-  modelled.
+- **`Result.Floored` is read by `defenceDamageMultiplier`** (`defence_multiplier.go`,
+  reached via `ResolveChannelDefence` and `ExecuteSkillMove`), which takes the
+  bare 0.5 multiplier on a floored save rather than feeding the ±1 sentinel
+  margin into the curve. `RunContest` is still the single choke point for every
+  opposed contest in the game, so it remains the cheapest place to instrument
+  the floor-reliance rate the roadmap wants modelled.
 - **`SkillMoveParams.AttackSkill` and `.DefenseSkill` are RAW skill
   levels with NO `SkillWeight` applied.** `ExecuteSkillMove` adds them
   straight to the stats (`AttackSkill + AttackStat` vs `DefenseSkill +
@@ -1583,7 +1593,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
 | `crit_floor.go` | Crit floors, 1% both directions (5.11e). **U6 Task 9 changed the DENOMINATORS: the attack floor applies to swings that WON THE CONTEST and the defence floor to swings the DEFENCE won, keyed on `best.margin` (defence-positive, so `<= 0` is an attack win), not on `res.hit`.** The old hit/miss split stops being answerable once a defensive win deals partial damage, because a deflected swing then has `res.hit == true` while the defence won. A floored outcome and an uncontested swing (`defenseType == ""`) are promoted by neither floor. **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. **U6 Task 10:** a promotion to a defence crit now also clears `res.hit` and `res.damageMult`, because an ordinary defensive win arrives here already landing partial damage. |
-| `defence_multiplier.go` | `DefenceMitigation` — the margin-scaled damage reduction a defensive win now earns (U6 Task 10). 50% at a bare win, 100% at `ContestCritThreshold`. Its 0.5 and its threshold are STRUCTURAL, not config knobs: the threshold is the point the curve has to meet so that full negation by a defensive crit is continuous with it rather than a cliff. Also `ResolveChannelDefence` / `ChannelAttackScore` / `AwardDefenceProgression` (U6 Task 12) — the resolver the spell and social channels use in place of the deleted `avoidance.go`. |
+| `defence_multiplier.go` | `DefenceMitigation` — the margin-scaled damage reduction a defensive win now earns (U6 Task 10). 50% at a bare win, 100% at `ContestCritThreshold`. Its 0.5 and its threshold are STRUCTURAL, not config knobs: the threshold is the point the curve has to meet so that full negation by a defensive crit is continuous with it rather than a cliff. Also `ResolveChannelDefence` / `ChannelAttackScore` / `AwardDefenceProgression` (U6 Task 12) — the resolver the spell and social channels use in place of the deleted `avoidance.go`. **U6 Task 13** extracted `defenceDamageMultiplier(res contest.Result) float64` from `ResolveChannelDefence`'s tail — it converts a finished opposed contest into the attacker's damage multiplier (1.0 attack win, 0.0 defensive crit, exactly 0.5 on a floored save, 0.0-0.5 off the curve otherwise) and is now the ONE place the sign negation, the floored sentinel, and the sqrt(2) normaliser live; both `ResolveChannelDefence` and `skill_moves.go`'s `ExecuteSkillMove` call it. |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
@@ -1591,7 +1601,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | `attackresult.go` | The result value passed back to callers |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |
-| `skill_moves.go` | Skill-driven combat moves |
+| `skill_moves.go` | Skill-driven combat moves (bash/trip/kick/...). **U6 Task 13:** `ExecuteSkillMove` scales damage through `defenceDamageMultiplier` instead of gating it on `attackSuccess` alone, so `SkillMoveResult.Hit == false` with `Damage > 0` is a legal pair (a defended attempt still lands partial damage), and `Damage` is the contest-scaled amount actually applied to the defender's health pool, not the unscaled base. `SkillMoveResult` gained `StatusApplied bool`, which stays binary — true only when `Hit == true`. |
 | `grapple.go` / `grapple_move.go` | The grappling state machine and transitions |
 | `submission.go` / `submission_outcome.go` | Submissions and their resolution |
 | `reach.go` | Weapon reach and its interaction with clinch |

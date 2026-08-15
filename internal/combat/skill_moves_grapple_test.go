@@ -36,6 +36,7 @@ func TestExecuteSkillMove_KnockdownStanding(t *testing.T) {
 
 	res := ExecuteSkillMove(makeGrappleTestParams(d))
 	assert.True(t, res.Hit, "huge attacker advantage should hit")
+	assert.True(t, res.StatusApplied, "a landed maneuver must set StatusApplied")
 	assert.True(t, res.KnockedDown, "standing target should be knocked down")
 }
 

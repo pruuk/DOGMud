@@ -84,11 +84,13 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 
 	result.Hit = attackSuccess
 
-	// Defence resolution: a defence win DEFLECTS rather than erases. The
-	// shared defenceDamageMultiplier curve (also driving melee, spells and
-	// social) scales baseDamage down: 1.0 on an attack win, 0.0 on a
-	// defensive crit, 0.0-0.5 on a rolled defensive win, exactly 0.5 on a
-	// floored save. The status effect (below) stays binary regardless.
+	// Defence resolution: a defence win DEFLECTS rather than erases.
+	// defenceDamageMultiplier (also used by spells and social via
+	// ResolveChannelDefence, and the same DefenceMitigation curve melee
+	// applies via normalizedDefenseMargin) scales baseDamage down: 1.0 on an
+	// attack win, 0.0 on a defensive crit, 0.0-0.5 on a rolled defensive win,
+	// exactly 0.5 on a floored save. The status effect (below) stays binary
+	// regardless.
 	damageMult := defenceDamageMultiplier(res)
 	result.Damage = int(float64(baseDamage) * damageMult)
 	if damageMult > 0 && result.Damage < 1 {
