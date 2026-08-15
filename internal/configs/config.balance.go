@@ -287,8 +287,9 @@ type Balance struct {
 	MobConvictionRegenPct    ConfigFloat `yaml:"MobConvictionRegenPct"`    // Fraction of ConvictionMax regen'd per tick — NPCs (default 0.02)
 
 	// ── STAMINA & CONVICTION ──────────────────────────────────────────────────
-	MovementBaseStaminaCost ConfigFloat `yaml:"MovementBaseStaminaCost"` // Flat cost to move on normal terrain (default 2.0)
+	MovementBaseStaminaCost ConfigFloat `yaml:"MovementBaseStaminaCost"` // Flat cost to move on normal terrain, BEFORE encumbrance and skill (default 0.5)
 	MovementMaxStaminaCost  ConfigFloat `yaml:"MovementMaxStaminaCost"`  // Ceiling for any single move action (default 20.0)
+	MovementCostFloor       ConfigInt   `yaml:"MovementCostFloor"`       // Minimum stamina any single move can cost (default 1)
 	// U7 Task 7 deleted UnarmedAttackStaminaCost. It was the fallback arm of a
 	// per-round, per-weapon attack charge that no longer exists; attacking is
 	// priced per swing by AttackBaseStaminaCost above, armed or not. The key may

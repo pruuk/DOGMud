@@ -226,6 +226,20 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 
   Every action with a governing skill takes the inverse-skill discount, mental
   and social included: quell is governed by spellcasting and defy by rhetoric.
+- **Movement is priced by the same formula.** U7 Task 8 put
+  `GetMovementStaminaCost` on `costs.Calc`: `MovementBaseStaminaCost` × terrain ×
+  encumbrance × inverse-skill (governing skill `search`, from the
+  `costs.ActionMove` registry row), then the mutation speed modifier, the hidden
+  multiplier, the `MovementMaxStaminaCost` cap and a `MovementCostFloor` floor,
+  in that order. The encumbrance term it replaced was written inline here and
+  was flat 1.0 until the actor **exceeded** carry capacity, so it priced nothing
+  for anyone not deliberately overloaded. The base drops to **0.5** to pay for
+  the curve now charging from the first pound: ordinary travel gets slightly
+  cheaper, travel at capacity markedly dearer. Terrain rides inside `Base`
+  because `Calc` clamps the product of the actor-derived multipliers and terrain
+  is a property of the move, not the actor; the clamp is inert for movement
+  either way (5.0 × 1.10 = 5.5 against a 6.0 ceiling) and
+  `MovementMaxStaminaCost` is the real cap.
 - **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCostFloat`.**
   There are FIVE defence constants. `DefenseDodge` / `DefenseParry` /
   `DefenseBlock` cost stamina; U6 added `DefenseQuell` (mental-spell defence,
@@ -623,9 +637,9 @@ while keeping the Awareness machine as the canonical state source.
 ### Hidden movement stamina scaling
 
 When a character is `Hidden`, movement stamina cost is multiplied by
-`HiddenMoveStaminaMultiplier` (config default 1.0, tunable at runtime).
-This is read in `GetMovementStaminaCost()` and applied before returning
-the movement cost to the caller.
+`HiddenMoveStaminaMultiplier` (default and shipped value both 3.0). This
+is read in `GetMovementStaminaCost()` and applied after the shared cost
+composition and before the cap and floor.
 
 ### Integration with Combat Phase
 

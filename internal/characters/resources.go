@@ -23,33 +23,62 @@ func (c *Character) DeductActionPoints(amount int) bool {
 	return true
 }
 
-// GetMovementStaminaCost calculates the stamina cost for movement based on
-// terrain difficulty and encumbrance.
-// terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc.
-// Returns stamina cost (2-20 stamina range).
+// GetMovementStaminaCost prices one room move in stamina.
+//
+// terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc. The result
+// is floored at MovementCostFloor and capped at MovementMaxStaminaCost.
+//
+// U7 Task 8: movement is a PHYSICAL ACTION and is priced by the same formula as
+// every other one --
+//
+//	base x terrain x encumbrance(actor) x inverse-skill(actor)
+//
+// -- replacing an encumbrance term written inline here that was flat 1.0 until
+// the actor EXCEEDED carry capacity and only ramped toward 5.0 at DOUBLE
+// capacity. That shape priced nothing for anybody who was not deliberately
+// overloaded: every realistically laden character in the game sat at exactly
+// 1.0, so the term may as well not have existed. The shared curve
+// (costs.EncumbranceMultiplier) starts charging from the first pound and reaches
+// its maximum AT capacity, so a full pack is felt on the road as well as in a
+// fight.
+//
+// The base drops to 0.5 to pay for it. It is no longer the whole price of a
+// move, so leaving it at 2.0 would have made ordinary travel dearer as a side
+// effect of fixing the load term. At 0.5 ordinary travel gets slightly CHEAPER
+// than the old flat two and travel near capacity gets markedly dearer, which is
+// the intended shape. NOTE: config.yaml still ships MovementBaseStaminaCost: 2.0
+// and that shipped value overrides the Go default until the Task 12 config pass.
+//
+// The governing skill is SEARCH, from the costs registry rather than named here
+// -- picking your footing well is the same faculty as noticing what is underfoot.
+// At the universal rank-1 floor the discount is a near-neutral 1.096; it only
+// becomes visible once load or terrain has pushed the cost clear of the floor.
+//
+// TERRAIN IS FOLDED INTO Base, NOT APPLIED AFTER Calc. Calc clamps the PRODUCT
+// of its multipliers (CostTotalMultiplierMax, 6.0) and terrain is not one of its
+// inputs, so multiplying it in afterwards would put terrain outside a clamp that
+// is documented as covering the whole composed multiplier. Base is explicitly
+// outside that clamp by design -- it is the authored price of the action -- and
+// terrain is a property of the move being priced rather than of the actor, so it
+// belongs there. This is also numerically identical to the pre-U7 arithmetic,
+// which began `baseCost * terrainMultiplier` too. The practical effect of the
+// clamp on movement is nil either way: encumbrance tops out at 5.0 and the
+// inverse-skill curve at 1.10, a product of 5.5 that cannot reach 6.0. The real
+// ceiling on a move is MovementMaxStaminaCost, which unlike Calc's clamp bounds
+// terrain and the hidden-movement multiplier as well.
 func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
 	b := configs.GetBalanceConfig()
-	baseCost := float64(b.MovementBaseStaminaCost)
 	maxCost := float64(b.MovementMaxStaminaCost)
 
-	// Apply terrain multiplier
-	cost := baseCost * terrainMultiplier
-
-	// Calculate encumbrance multiplier based on weight
-	encumbranceMultiplier := 1.0
-	carriedWeight := c.GetCarriedWeight()
-	capacity := c.CarryCapacity()
-
-	if carriedWeight > capacity {
-		// Overencumbered: scale from 1.0 to 5.0 based on how much over capacity
-		overAmount := carriedWeight - capacity
-		overRatio := overAmount / capacity
-		// Cap at 5x multiplier when carrying 2x capacity
-		encumbranceMultiplier = 1.0 + math.Min(overRatio*4.0, 4.0)
-	}
-
-	// Apply encumbrance multiplier
-	cost *= encumbranceMultiplier
+	spec := costs.SpecFor(costs.ActionMove)
+	cost := costs.Calc(costs.Input{
+		Base:      float64(b.MovementBaseStaminaCost) * terrainMultiplier,
+		Carried:   c.GetCarriedWeight(),
+		Capacity:  c.CarryCapacity(),
+		Physical:  spec.Physical,
+		SkillRank: c.GetSkillLevel(spec.Skill),
+		HasSkill:  spec.HasSkill,
+	})
 
 	// Phase 24.2: Apply mutation movement speed modifier (Hasted, Extra Legs, etc.)
 	if moveMod := mutations.GetMovementSpeedModifier(c.Mutations); moveMod != 0 {
@@ -58,7 +87,7 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
 
 	// Sneaking costs extra stamina — moving carefully is harder.
 	// HiddenMoveStaminaMultiplier (default 3.0) stacks multiplicatively
-	// with encumbrance: over-encumbered hidden movement is brutal (5×3 = 15× cost).
+	// with encumbrance: hidden movement at capacity is brutal (5×3 = 15× cost).
 	if c.IsHidden() {
 		cost *= float64(b.HiddenMoveStaminaMultiplier)
 	}
@@ -68,12 +97,14 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
 		cost = maxCost
 	}
 
-	// Minimum 1 stamina
-	if cost < 1.0 {
-		cost = 1.0
+	// A move never costs less than the floor. Unlike a defence, movement cannot
+	// bank a fractional remainder -- go.go spends whole stamina -- so an
+	// unfloored sub-1.0 cost would round to a genuinely free move.
+	total := int(math.Ceil(cost))
+	if floor := int(b.MovementCostFloor); total < floor {
+		total = floor
 	}
-
-	return int(math.Ceil(cost))
+	return total
 }
 
 // U7 Task 7 deleted GetAttackStaminaCost and DeductAttackStamina. Between them

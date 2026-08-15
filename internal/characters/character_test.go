@@ -2127,9 +2127,17 @@ func TestCharacter_GetSkillLevel(t *testing.T) {
 }
 
 func TestCharacter_GetMovementStaminaCost(t *testing.T) {
-	// These tests use characters with no items (zero carried weight),
-	// so only terrain multiplier affects cost. Encumbrance tests require
-	// real item specs and are covered by integration tests.
+	// These characters carry no items, so the encumbrance multiplier is a
+	// neutral 1.0 and only terrain and the rank-1 inverse-skill term (1.096)
+	// move the price. Encumbrance is covered by movement_cost_test.go, which
+	// registers real item specs.
+	//
+	// U7 Task 8 rewrote every row here. The base dropped from 2.0 to 0.5 and the
+	// cost now runs through the shared encumbrance and inverse-skill curves, so
+	// an UNLADEN traveller — the only kind this table describes — pays much less
+	// than the old flat base x terrain. That is the intended half of the trade;
+	// the other half, a laden traveller paying markedly more, is in
+	// movement_cost_test.go.
 	tests := []struct {
 		name              string
 		terrainMultiplier float64
@@ -2138,22 +2146,22 @@ func TestCharacter_GetMovementStaminaCost(t *testing.T) {
 		{
 			name:              "Normal terrain, no items",
 			terrainMultiplier: 1.0,
-			expectedCost:      2, // baseCost 2.0 * 1.0 = 2
+			expectedCost:      1, // 0.5 * 1.0 * 1.0 * 1.096 = 0.548 -> floor 1 (was 2)
 		},
 		{
 			name:              "Easy terrain (road), no items",
 			terrainMultiplier: 0.5,
-			expectedCost:      1, // baseCost 2.0 * 0.5 = 1
+			expectedCost:      1, // 0.5 * 0.5 * 1.0 * 1.096 = 0.274 -> floor 1 (was 1)
 		},
 		{
 			name:              "Rough terrain (mountains), no items",
 			terrainMultiplier: 2.0,
-			expectedCost:      4, // baseCost 2.0 * 2.0 = 4
+			expectedCost:      2, // 0.5 * 2.0 * 1.0 * 1.096 = 1.096 -> 2 (was 4)
 		},
 		{
 			name:              "Very rough terrain, no items",
 			terrainMultiplier: 3.0,
-			expectedCost:      6, // baseCost 2.0 * 3.0 = 6
+			expectedCost:      2, // 0.5 * 3.0 * 1.0 * 1.096 = 1.644 -> 2 (was 6)
 		},
 	}
 
