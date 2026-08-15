@@ -1,5 +1,22 @@
 # DOGMud Patch Notes
 
+## 2026-08-14: No attempt is ever completely hopeless, or completely certain
+
+Every contested action in the game now shares one rule about luck. Whether you
+are casting at something far beyond you, wrestling an opponent who outclasses
+you, fleeing, or picking a pocket you have no business picking, you will find an
+opening now and then. The reverse holds too: however far you outmatch someone,
+they will occasionally slip your grasp.
+
+Outside of straightforward weapon swings, that occasional opening used to be
+rarer than it should have been, and rarer for spells and grapples than for
+anything else. All of it is on the same footing now, and the odds of the
+long shot have improved noticeably.
+
+Two things deliberately keep no such safety net: searching a room, following a
+trail and foraging, where there is no opponent to get lucky against, and
+concentration, which is being reworked separately.
+
 ## 2026-08-14: Enchanting no longer undoes what you paid for
 
 Putting an enchantment on a weapon quietly stripped the extra power it had
