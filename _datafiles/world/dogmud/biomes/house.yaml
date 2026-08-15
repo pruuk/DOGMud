@@ -7,4 +7,5 @@ litarea: true
 requireditemid: 0
 usesitem: false
 burns: true
+movementcost: 0.7
 indoor: true

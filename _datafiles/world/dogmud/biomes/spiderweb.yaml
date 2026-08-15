@@ -8,4 +8,5 @@ litarea: false
 requireditemid: 0
 usesitem: false
 burns: false
+movementcost: 1.8 # Tearing through sticky strands with every step
 indoor: true
