@@ -1,0 +1,92 @@
+# U6 Phase A adversarial playtest, actor 2 of 3: THE JOURNEYMAN.
+#
+# WHAT CHANGED AND WHY YOU ARE HERE
+#
+# Until today the game had EIGHT separate "last resort" luck knobs, one pair
+# each for melee, spells, maneuvers, and everything outside combat. They are now
+# ONE knob at 12.5%. Every opposed contest is bounded to [12.5%, 87.5%]:
+# hopelessly outmatched you still succeed about one attempt in eight, and
+# hopelessly overmatching you are still stopped about one in eight.
+#
+# MANEUVERS ARE YOUR BEAT. Grapple, submission, bash, trip, kick, throw, taunt
+# and flee all used to share a 5% floor and now sit at 12.5%. You are the
+# middle tester: strong enough to overmatch trash, weak enough to be outmatched
+# by anything serious, so you can test BOTH ends of the bound in one session.
+#
+# YOUR JOB IS COVERAGE, NOT STATISTICS. Roughly thirty call sites were rewired
+# to a new shared function. A short session cannot measure a 12.5% rate, and you
+# should not try. Exercise every rewired surface, prove none broke, and say how
+# the new floor FEELS.
+#
+# THINGS LEARNED THE HARD WAY, DO NOT REDISCOVER THEM
+#
+#   * RATE LIMIT: the AI port accepts 3 commands per round and drops the rest
+#     with a visible "Command dropped -- AI rate limit". Expected. It is NOT the
+#     input-concatenation bug fixed 2026-08-14. If several commands ever run
+#     together as one nonsense command, that bug has regressed: report it loudly.
+#   * `bash`, `kick`, `trip` and `taunt` all need an explicit target. A bare
+#     `kick` only answers "Kick whom?" and wastes the send.
+#   * THROW TAKES NO TARGET. It is a room effect: `throw firebomb`, not
+#     `throw firebomb <mob>`. The argument is the ITEM. A target word makes the
+#     item lookup fail. A throw also works out of combat and opens the fight.
+#   * `consider <target>` before committing, so you know whether an attempt was
+#     hopeless, even, or a walkover.
+#   * The Thornwall Highwayman is a BAD sparring partner: it hides, pickpockets,
+#     flees after a round or two, and wanders. Find something that stands and
+#     fights.
+#
+ephemeral:
+  profile: mid
+  start_room: 462
+  overlays:
+    grant_items:
+      - 30058 # Firebomb, throwable
+      - 30058
+      - 30058
+      - 30059 # Toxic Flask, throwable
+      - 30059
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Grapple both directions. Grapple something clearly weaker than you until it
+    is locked down, and try to grapple something clearly stronger. Both are
+    contests that were rewired today. Against the weaker one, report whether it
+    ever escapes or reverses when it plainly should not have: the new ceiling
+    means an overwhelming grappler is stopped about one attempt in eight, and I
+    want to know whether that reads as the enemy fighting back or as the game
+    cheating you. Note that grapple runs a fresh contest EVERY round, so the
+    one-in-eight applies per round and compounds over a long lock.
+  - >-
+    Submissions, bash, trip and kick. Use each at least several times, against
+    both a weaker and a stronger target. Every one of these was rewired. Report
+    any that error, do nothing, or narrate an outcome that contradicts what
+    actually happened to the target.
+  - >-
+    Taunt. Taunt a much stronger enemy repeatedly, then a much weaker one.
+    Report whether taunting something far above you ever lands, and how that
+    reads. Taunt deals conviction damage in this game, so watch the target's
+    reaction rather than expecting a health change.
+  - >-
+    Throw a firebomb and a toxic flask, both in and out of combat. Confirm the
+    out-of-combat throw still opens a fight with whatever it hits. Read the
+    damage and death lines carefully: no number shown to you may ever be
+    negative.
+  - >-
+    Flee, against one enemy and against several. Fleeing runs a separate
+    contest against EACH blocker, so a pack should be markedly harder than a
+    single enemy. Test both and report whether the difference is noticeable and
+    whether the messages make it clear which situation you are in.
+  - >-
+    Cast at something far stronger and something far weaker. You know Heal,
+    Identify and Conviction Ward, so this is a light pass: confirm casting
+    still resolves, still costs what it should, and never narrates a spell it
+    could not cast. `cast <spell> <target>` needs the target; a bare
+    `cast <spell>` answers "You need a target to cast that spell."
+  - >-
+    General adversarial pass. Anything that reads wrong, renders oddly,
+    contradicts its help text, or produces a Go error string in player output
+    is a finding. Two known-open items you do NOT need to report: `help prompt`
+    documents conviction as {mp} and omits {st}/{ST}, and attacking an absent
+    target answers "You attack the darkness!".
