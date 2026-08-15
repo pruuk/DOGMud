@@ -82,6 +82,7 @@ type bestDefenseResult struct {
 	hitRoll      dice.RollResult
 	defRoll      dice.RollResult
 	defenseFloor bool // true if defense succeeded via floor save
+	floored      bool // the contest floor CHANGED this outcome; it must never crit
 }
 
 // calcSwingCount computes the number of swings for a single weapon per round.
@@ -683,7 +684,7 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		entries = append(entries, contest.Entry{Name: defenseType, Score: defenseScore})
 	}
 
-	res := contest.Run(atkScore, entries)
+	res := RunContest(atkScore, entries)
 
 	best := bestDefenseResult{
 		hitRoll: res.AttackRoll,
@@ -691,6 +692,7 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 	if res.Contested {
 		best.defenseType = res.Winner
 		best.defRoll = res.DefenseRoll
+		best.floored = res.Floored
 		// SIGN CONVERSION, and the only one in melee. contest.Result.Margin is
 		// ATTACK-positive; bestDefenseResult.margin is DEFENCE-positive. Negate
 		// exactly here and nowhere else. U6 deletes bestDefenseResult and this
