@@ -63,6 +63,14 @@ func (b *Balance) validateProgression() {
 		b.CostEncumbranceMax = 5.0
 	}
 
+	// ── COSTS: COMPOSED-TOTAL CEILING (U7) ──────────────────────────────────
+	// The ceiling costs.Calc puts on the PRODUCT of its multipliers. 0 is not a
+	// usable value here (it would price every action free), so it falls back to
+	// the default rather than being honoured.
+	if b.CostTotalMultiplierMax <= 0 {
+		b.CostTotalMultiplierMax = 6.0
+	}
+
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	if b.StatProgressionMultipliers == nil {
 		b.StatProgressionMultipliers = map[string]float64{}

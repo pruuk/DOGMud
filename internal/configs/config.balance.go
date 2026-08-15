@@ -313,6 +313,15 @@ type Balance struct {
 	CostEncumbranceKneeMult ConfigFloat `yaml:"CostEncumbranceKneeMult"` // Multiplier at the knee (default 1.5)
 	CostEncumbranceMax      ConfigFloat `yaml:"CostEncumbranceMax"`      // Multiplier at/above capacity (default 5.0)
 
+	// ── COSTS: COMPOSED-TOTAL CEILING (U7) ───────────────────────────────────
+	// costs.Calc clamps the PRODUCT of its multipliers (encumbrance x inverse
+	// skill x per-action modifier) to this, NOT each factor in turn. Clamping
+	// factors individually still lets encumbrance 5.0, a rank-0 penalty 1.10
+	// and a defence premium 1.25 stack to 6.875x, which a laden novice cannot
+	// pay — and "cannot pay" reads to the player as autofail-everything, not as
+	// expensive. The action's Base price sits OUTSIDE this clamp.
+	CostTotalMultiplierMax ConfigFloat `yaml:"CostTotalMultiplierMax"` // Ceiling on the composed cost multiplier (default 6.0)
+
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	// Per-stat and per-skill multipliers on progression chance.
 	// Use plain float64 maps (not ConfigFloat) for native YAML unmarshaling.
