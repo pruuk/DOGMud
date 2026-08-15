@@ -291,6 +291,32 @@ above 95% of capacity is in trouble whatever they do, and the clamp exists
 precisely to stop a laden novice being priced out of acting at all. Recorded so
 a later reader finds a decision rather than an oversight.
 
+### 3.4.3 Terrain resolves coarsely at the chosen movement base — measured
+
+With `MovementBaseStaminaCost` at 0.5, a floor of 1, and the newly authored biome
+costs (road 0.5 through cliffs 2.5), integer rounding compresses terrain into a
+small number of tiers. Measured per room, at search rank 1:
+
+| Load | road / city / land | cave / snow | water / swamp | cliffs |
+|---|---|---|---|---|
+| carrying nothing | 1 | 1 | 1 / 2 | 2 |
+| realistic (35-45%) | 1 | 1 | 2 | 2 |
+| at the 0.75 knee | 1 | 2 | 2 | 3 |
+
+So terrain is a **two-tier distinction at ordinary loads** — easy ground versus
+hard ground — becoming three tiers only when heavily laden. It is not the no-op
+a zero-load reading suggests, but it is much coarser than the 0.5-to-2.5 spread
+in the data implies.
+
+**This is a direct consequence of the owner's chosen base**, and it has a
+property worth keeping: terrain matters *more* the more you carry, which is the
+right way round. Raising the base to 1.0 would give four distinct tiers at
+ordinary load, but would also return ordinary travel to roughly today's cost,
+undoing the point of the low base.
+
+Left as tuned. Revisit at the playtest with the question "does the world feel
+like it has terrain", not from the table.
+
 ### 3.5 Coverage
 
 Everything must cost something by the end of the arc, but **not necessarily in
