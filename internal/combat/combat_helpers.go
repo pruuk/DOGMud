@@ -117,9 +117,12 @@ func calcSwingCount(sourceChar *characters.Character, weaponSpeed float64, extra
 		swings *= dualWieldMod
 	}
 
-	// Apply smooth stamina-based swing count penalty
+	// Apply smooth stamina-based swing count penalty. EffectivePoolMax, not the
+	// raw max (U7 Task 11): current stamina is already reserve-clamped, so a raw
+	// denominator would park every reserved actor partway down this curve and
+	// deny them ratio 1.0 even at a full pool.
 	spPenalty := float64(bal.StaminaPenaltyMax)
-	swings *= ResourceMultiplier(sourceChar.Stamina, sourceChar.StaminaMax.Value, spPenalty)
+	swings *= ResourceMultiplier(sourceChar.Stamina, sourceChar.EffectivePoolMax(characters.PoolStamina), spPenalty)
 
 	// Apply encumbrance penalty (weight-based)
 	carriedWeight := sourceChar.GetCarriedWeight()
@@ -355,9 +358,10 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 	dmgMean += float64(statModBonus)
 	rawDmgForCrit += float64(statModBonus)
 
-	// Apply smooth health-based melee damage penalty
+	// Apply smooth health-based melee damage penalty. EffectivePoolMax, not the
+	// raw max -- see calcSwings.
 	hpPenalty := float64(configs.GetBalanceConfig().HealthPenaltyMax)
-	dmgMult := ResourceMultiplier(sourceChar.Health, sourceChar.HealthMax.Value, hpPenalty)
+	dmgMult := ResourceMultiplier(sourceChar.Health, sourceChar.EffectivePoolMax(characters.PoolHealth), hpPenalty)
 	dmgMean *= dmgMult
 	rawDmgForCrit *= dmgMult
 
@@ -409,9 +413,10 @@ func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Ch
 	attackScore := float64(sourceChar.GetEffectiveDexterity()) + float64(sourceChar.GetCombatSkillLevel())*float64(bal.SkillWeight)
 	attackScore -= float64(penalty)
 
-	// Apply smooth stamina-based hit chance penalty
+	// Apply smooth stamina-based hit chance penalty. EffectivePoolMax, not the
+	// raw max -- see calcSwings.
 	spPenalty := float64(bal.StaminaPenaltyMax)
-	staminaMult := ResourceMultiplier(sourceChar.Stamina, sourceChar.StaminaMax.Value, spPenalty)
+	staminaMult := ResourceMultiplier(sourceChar.Stamina, sourceChar.EffectivePoolMax(characters.PoolStamina), spPenalty)
 	attackScore *= staminaMult
 
 	// Stage 7.5: Apply prone attack multipliers. Chunk 4b R1: FSM-driven —

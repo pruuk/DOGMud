@@ -44,9 +44,18 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	cfg := configs.GetBalanceConfig()
 
-	// Calculate stamina cost and requirement
-	staminaCost := int(float64(user.Character.StaminaMax.Value) * float64(cfg.StandStaminaCost))
-	minStamina := int(float64(user.Character.StaminaMax.Value) * float64(cfg.StandMinStamina))
+	// Calculate stamina cost and requirement.
+	//
+	// U7 Task 11: BOTH fractions are taken off the pool the character can
+	// actually reach, not the raw StaminaMax. RecalculateStats clamps current
+	// stamina to max - reservation every round, so measuring a percentage-of-max
+	// threshold against the raw max charged the reserve twice: at the shipped
+	// 0.15 knobs the gate demanded 21.4% of a 30%-reserved character's reachable
+	// pool, and past 85% reservation it demanded more stamina than the pool could
+	// ever hold, permanently locking that character on the floor.
+	effMax := user.Character.EffectivePoolMax(characters.PoolStamina)
+	staminaCost := int(float64(effMax) * float64(cfg.StandStaminaCost))
+	minStamina := int(float64(effMax) * float64(cfg.StandMinStamina))
 
 	// Check if player has enough stamina.
 	//
@@ -55,8 +64,16 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// knobs that merely happen to ship at the same fraction today. Collapsing
 	// them into one call would weld a tuning coincidence into code.
 	if !user.Character.CanAfford(characters.PoolStamina, minStamina) {
-		needed := minStamina - user.Character.Stamina
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You're too exhausted to stand! (need %d more stamina)", needed))
+		// Name the reservation when there is one. Blaming exhaustion alone was
+		// misleading: rest cannot return stamina the character's gear is holding
+		// out of the pool, and the player has no other way to learn that. Bands,
+		// never raw numbers -- same disclosure style as assess.
+		msg := `You're too winded to get up. Catch your breath first.`
+		if reserved := user.Character.StaminaMax.Value - effMax; reserved > 0 {
+			msg += ` Your gear is holding ` + reserveShareBand(reserved, user.Character.StaminaMax.Value) +
+				` of your stamina in reserve, so you have less to draw on than you might expect.`
+		}
+		user.SendText(messaging.CategorySystem, msg)
 		return true, nil
 	}
 

@@ -227,8 +227,12 @@ func (c *Character) IsLowGrappleStamina() bool {
 	if threshold <= 0 {
 		threshold = 0.25 // fallback if config not loaded
 	}
-	if c.StaminaMax.Value <= 0 {
+	// EffectivePoolMax, not the raw max (U7 Task 11): current stamina is already
+	// reserve-clamped, so a raw denominator would report a reserved character as
+	// low on stamina at what is, for them, a full pool.
+	staminaMax := c.EffectivePoolMax(PoolStamina)
+	if staminaMax <= 0 {
 		return false
 	}
-	return float64(c.Stamina)/float64(c.StaminaMax.Value) < threshold
+	return float64(c.Stamina)/float64(staminaMax) < threshold
 }

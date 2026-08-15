@@ -124,9 +124,11 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	defenderRhetoric := float64(target.Char.GetSkillLevel(skills.Rhetoric)) * skillWeight
 	defenseScore := float64(target.Char.Stats.Willpower.ValueAdj) + defenderRhetoric
 
-	// Apply smooth conviction-depletion penalty to hit chance.
+	// Apply smooth conviction-depletion penalty to hit chance. EffectivePoolMax,
+	// not the raw max (U7 Task 11): current Conviction is already reserve-clamped,
+	// so a raw denominator taxes a companion holder twice.
 	cpPenalty := float64(cfg.ConvictionPenaltyMax)
-	convMult := combat.ResourceMultiplier(char.Conviction, char.ConvictionMax.Value, cpPenalty)
+	convMult := combat.ResourceMultiplier(char.Conviction, char.EffectivePoolMax(characters.PoolConviction), cpPenalty)
 	attackScore *= convMult
 
 	// Opposed roll for hit/miss/fumble/crit classification.

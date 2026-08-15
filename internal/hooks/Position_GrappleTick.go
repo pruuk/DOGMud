@@ -683,10 +683,14 @@ func isAggressorSide(c *characters.Character) bool {
 // Steeper than the combat ResourcePenalty curve: grappling cardio-
 // stresses faster than stand-up fighting (default 0.60 max vs 0.28).
 func grappleStaminaMultiplier(c *characters.Character, cfg configs.Balance) float64 {
-	if c.StaminaMax.Value <= 0 {
+	// EffectivePoolMax, not the raw max (U7 Task 11): current stamina is already
+	// reserve-clamped, so a raw denominator would hold a reserved grappler
+	// permanently partway down this curve.
+	staminaMax := c.EffectivePoolMax(characters.PoolStamina)
+	if staminaMax <= 0 {
 		return 1.0
 	}
-	s := float64(c.Stamina) / float64(c.StaminaMax.Value)
+	s := float64(c.Stamina) / float64(staminaMax)
 	if s < 0 {
 		s = 0
 	}

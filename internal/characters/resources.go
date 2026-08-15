@@ -339,6 +339,9 @@ func (c *Character) HealthPerRound() int {
 	}
 	// StatMod reinterpreted as percentage bonus (e.g. 5 → +5%)
 	pct += float64(c.StatMod(string(statmods.HealthRecovery))) / 100.0
+	// RAW max on purpose, not EffectivePoolMax: reserve-aware regen would be a
+	// NERF to reserved characters, and the faster refill relative to the usable
+	// pool is what offsets the depletion penalty they already carry.
 	base := int(pct * float64(c.HealthMax.Value))
 	if base < 1 {
 		base = 1
@@ -359,6 +362,7 @@ func (c *Character) StaminaPerRound() int {
 		pct = float64(b.MobStaminaRegenPct)
 	}
 	pct += float64(c.StatMod(string(statmods.StaminaRecovery))) / 100.0
+	// RAW max on purpose, not EffectivePoolMax -- see HealthPerRound.
 	base := int(pct * float64(c.StaminaMax.Value))
 	if base < 1 {
 		base = 1
@@ -386,6 +390,7 @@ func (c *Character) ConvictionPerRound() int {
 		pct = float64(b.MobConvictionRegenPct)
 	}
 	pct += float64(c.StatMod(string(statmods.ConvictionRecovery))) / 100.0
+	// RAW max on purpose, not EffectivePoolMax -- see HealthPerRound.
 	base := int(pct * float64(c.ConvictionMax.Value))
 	if base < 1 {
 		base = 1

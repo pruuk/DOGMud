@@ -115,6 +115,10 @@ type CostResult struct {
 func (c *Character) PoolValue(p Pool) int
 func (c *Character) CanAfford(pool Pool, amount int) bool
 
+// EffectivePoolMax is poolMax - GetPoolReservation, floored at 0 (U7 Task 11).
+// The denominator for every percentage-OF-MAX threshold. NEVER for affordability.
+func (c *Character) EffectivePoolMax(p Pool) int
+
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
@@ -166,11 +170,28 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `hooks/item_procs.go:99`). They retire with `Heal` in U5c.
 - **`CostResult.Short` is what a later chunk reads to strip the skill term.**
   The penalty for being short is a worse roll, not a lost action.
-- **`CanAfford` reads the RAW pool, not reserve-excluded.** No affordability
-  check in the codebase consults `GetPoolReservation` today. Note
-  `validate.go:146` already clamps current pools to the reserve-excluded ceiling,
-  so a raw-reading cost helper and a reserve-enforcing validator are in mild
-  tension. Do not resolve that here.
+- **`CanAfford` reads the RAW pool, not reserve-excluded, and that is correct.**
+  `RecalculateStats` already clamps the CURRENT pool to `max - reserve` every
+  round, so a cost that subtracted the reservation a second time would charge the
+  reserve twice. A companion or enchantment holder should **have less, not pay
+  more**. The original 2026-08-12 U7 spec contained exactly that double
+  subtraction and it was deleted for this reason; do not re-add it.
+- **`EffectivePoolMax` is the denominator for percentage-OF-MAX thresholds, and
+  ONLY for those.** A threshold taken off the raw max is compared against a
+  reserve-clamped current value, which is the same double charge from the other
+  direction. That was a live bug: `stand` demanded `StandMinStamina` (0.15) of
+  the RAW max, so a 30%-reserved character was asked for 21.4% of the pool they
+  could actually fill, and past **85% reservation** the gate demanded more
+  stamina than the pool could ever hold -- a permanent lockout reported as
+  exhaustion, which resting cannot fix. U7 Task 11 routed `stand` and every
+  `combat.ResourceMultiplier` denominator through it. The refusal message now
+  discloses reservation in a descriptive band (`reserveShareBand` in
+  `internal/usercommands/assess.go`), never a raw number.
+- **Regen deliberately still reads the RAW max.** `HealthPerRound`,
+  `StaminaPerRound` and `ConvictionPerRound` in `resources.go` are the named
+  exception: making them reserve-aware is a NERF to reserved characters, and the
+  faster refill relative to the usable pool is what offsets the depletion penalty
+  they carry. Each carries a comment saying so. It is not drift.
 - **Harm and restore are one signed pipeline** (`applyVitalChange`) behind two
   positive-only wrappers. Sign inversion is this codebase's signature failure
   mode; the wrappers exist so no call site can get the direction wrong.

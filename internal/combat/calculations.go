@@ -186,7 +186,14 @@ func ChanceToTame(s *users.UserRecord, t *mobs.Mob) int {
 	}
 	scaledSkillDiff := skillDiff * SKILL_SCALE
 
-	healthModifier := MOD_HEALTHPERCENT_MAX - math.Ceil(float64(s.Character.Health)/float64(s.Character.HealthMax.Value)*MOD_HEALTHPERCENT_MAX)
+	// Percentage-of-max read, so it measures the pool the tamer can actually
+	// reach (U7 Task 11). Against the raw max a reserved tamer never reaches the
+	// full-health end of this scale even at a full pool.
+	healthPoolMax := s.Character.EffectivePoolMax(characters.PoolHealth)
+	healthModifier := 0.0
+	if healthPoolMax > 0 {
+		healthModifier = MOD_HEALTHPERCENT_MAX - math.Ceil(float64(s.Character.Health)/float64(healthPoolMax)*MOD_HEALTHPERCENT_MAX)
+	}
 
 	var aggroModifier float64 = 1
 	if t.Character.IsAggro(s.UserId, 0) {

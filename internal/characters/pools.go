@@ -63,6 +63,36 @@ func (c *Character) poolMax(p Pool) int {
 	return 0
 }
 
+// EffectivePoolMax returns the ceiling the character can ACTUALLY reach: the raw
+// maximum with pool reservation (Chrysalis enchantments, pinnacle-item
+// reserve_*_pct, fielded companions) taken out. Floored at 0, never negative.
+//
+// USE IT FOR EVERY PERCENTAGE-OF-MAX THRESHOLD. A threshold measured against the
+// raw max is compared to a current value that RecalculateStats has already
+// clamped to max - reserve, so the reserved fraction is charged to the actor
+// twice: `stand` demanded 15% of the raw max from a pool that could only ever
+// hold max - reserve, which is unsatisfiable past 85% reservation and a graded
+// tax below it, and every ResourceMultiplier call reading the raw max left a
+// reserved actor permanently partway down the depletion penalty curve, unable to
+// reach 1.0 at full pools.
+//
+// NEVER USE IT FOR AFFORDABILITY. Costs read the CURRENT pool, and the current
+// pool is already reserve-clamped every round, so subtracting the reservation
+// again at cost time charges the reserve a second time. The original
+// 2026-08-12 spec had exactly that double-subtraction in it and it was deleted
+// for this reason; do not re-add it. A companion or enchantment holder should
+// simply HAVE LESS, not PAY MORE.
+//
+// Regeneration is a deliberate exception and still reads the raw max -- see
+// HealthPerRound/StaminaPerRound/ConvictionPerRound in resources.go.
+func (c *Character) EffectivePoolMax(p Pool) int {
+	max := c.poolMax(p)
+	if eff := max - c.GetPoolReservation(string(p), max); eff > 0 {
+		return eff
+	}
+	return 0
+}
+
 // setPool writes a pool. Unexported so every caller goes through a primitive
 // and cannot bypass the floor rules.
 func (c *Character) setPool(p Pool, v int) {
