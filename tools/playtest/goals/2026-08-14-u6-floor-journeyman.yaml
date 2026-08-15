@@ -34,6 +34,23 @@
 #   * The Thornwall Highwayman is a BAD sparring partner: it hides, pickpockets,
 #     flees after a round or two, and wanders. Find something that stands and
 #     fights.
+#   * FLEE IS TWO-PHASE. "You attempt to flee..." lands on one round and the
+#     OUTCOME ("You flee to the <dir> exit!" or "<Name> blocks you from
+#     fleeing!") lands on a LATER round tick. Actor 1 reported roughly a third
+#     of flees producing no outcome at all; every outcome path in the code does
+#     send a message, so that was probably impatience. WAIT a full round or two
+#     after each flee and read before concluding anything. If you wait properly
+#     and an outcome really is missing, THAT is a genuine finding worth the
+#     verbatim log.
+#
+# WHAT ACTOR 1 COULD NOT REACH, SO YOU MUST
+#
+#   `steal`, `defuse`, `shadow` and `picklock` all refuse a character below
+#   skullduggery rank 2 BEFORE any contest is rolled ("You aren't advanced
+#   enough at skullduggery for that.", steal.go:147). Actor 1 had rank 0, so
+#   five of the six rewired out-of-combat surfaces got zero coverage. You have
+#   skullduggery 8 and clear that gate, so the out-of-combat goals below are
+#   YOURS now as well as the maneuver ones. Do not skip them.
 #
 ephemeral:
   profile: mid
@@ -84,6 +101,22 @@ goals:
     still resolves, still costs what it should, and never narrates a spell it
     could not cast. `cast <spell> <target>` needs the target; a bare
     `cast <spell>` answers "You need a target to cast that spell."
+  - >-
+    OUT-OF-COMBAT CONTESTS, inherited from actor 1 who was blocked by the rank
+    gate. With skullduggery 8 you clear it. Exercise every one of these at
+    least several times and report what came back verbatim: steal from
+    townspeople, plant an item on someone, shadow someone, defuse a trap if you
+    can find one, and pick a lock. All were rewired today. Any that errors,
+    does nothing, or contradicts its help text is a finding. If you genuinely
+    cannot find a trap or a lock, say so plainly rather than inventing a
+    result.
+  - >-
+    Sneak and hidden detection. Sneak into occupied rooms repeatedly. Actor 1
+    reported losing hidden status with NO message at all, the only cue being
+    the prompt character changing. Confirm or refute that: when you are
+    detected, does the game tell you? `help sneak` promises "If anyone spots
+    you, the attempt fails." Also walk into rooms repeatedly to see whether you
+    ever spot a hidden creature, which is the other rewired detection contest.
   - >-
     General adversarial pass. Anything that reads wrong, renders oddly,
     contradicts its help text, or produces a Go error string in player output

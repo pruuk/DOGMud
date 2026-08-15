@@ -33,6 +33,14 @@
 #     was before you judge the outcome.
 #   * You have the Extra Arms mutation, which carries a charisma penalty and an
 #     aggro multiplier. That is the profile, not a bug.
+#   * FLEE IS TWO-PHASE. "You attempt to flee..." lands on one round and the
+#     OUTCOME lands on a LATER round tick. Actor 1 reported a third of flees
+#     producing no outcome; every outcome path in the code does send a message,
+#     so that was probably impatience. WAIT a round or two and read.
+#   * ACTOR 1 WAS BLOCKED BY A RANK GATE on steal, defuse, shadow and picklock
+#     (below skullduggery rank 2 they refuse BEFORE any contest is rolled). You
+#     have skullduggery 50, so nothing gates you. If actor 2 also fails to cover
+#     one of those, it falls to you.
 #
 ephemeral:
   profile: veteran
