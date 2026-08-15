@@ -34,3 +34,13 @@ tree:
         - type: action
           do: send_user_text
           text: '<ansi fg="181">  [Try: ask agent passage plymouth]</ansi>'
+
+    # Silent player_enter no-op: claims the event so composition never
+    # falls through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: ferry_agent_player_enter_suppressed
+          value: "true"
