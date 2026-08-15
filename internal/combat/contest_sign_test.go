@@ -57,11 +57,12 @@ import (
 // validation leaves behind -- and pinning them is not paranoia, it is what keeps
 // the test from going vacuous:
 //
-//   - The four contest floors. A hit floor can flip a hopeless attacker to
-//     Success with the +-1 sentinel margin, which returns 1.0 and simply steals
-//     iterations. Measured 0/0 for both pairs in a test binary today, but
-//     config.yaml ships MinManeuverResistChance / MinSpellResistChance at 0.05,
-//     so a future config-loading TestMain would start eating ~5% of runs.
+//   - ContestFloor. A hit floor can flip a hopeless attacker to Success with
+//     the +-1 sentinel margin, which returns 1.0 and simply steals iterations.
+//     Measured 0 in a test binary today, but config.yaml ships ContestFloor at
+//     0.125, so a future config-loading TestMain would start eating a chunk of
+//     runs. (Pre-U6 this pinned four per-channel knobs; U6 collapsed them into
+//     this one symmetric floor -- see the pinning code below.)
 //
 //   - MinDefenseCritChance. DefenseContestCrit wraps ContestCrit in
 //     ApplyCritFloor(_, DefenseCritFloor()), which PROMOTES a non-crit to a crit

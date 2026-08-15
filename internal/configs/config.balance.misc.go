@@ -149,35 +149,6 @@ func (b *Balance) validateMisc() {
 		b.ContestFloor = 0.125
 	}
 
-	// 0.05, not combat's 0.15. These fire once per attempt on actions that
-	// already punish failure (a caught thief, a sprung trap, a revealed sneak),
-	// whereas the combat floors fire on every swing of a many-swing fight.
-	if b.MinContestSuccessChance < 0 || b.MinContestSuccessChance > 0.50 {
-		b.MinContestSuccessChance = 0.05
-	}
-	if b.MinContestResistChance < 0 || b.MinContestResistChance > 0.50 {
-		b.MinContestResistChance = 0.05
-	}
-
-	// 0.05, matching the non-combat contests rather than combat's 0.15, and for
-	// the same reason turned up one notch: a fizzled spell costs the caster a
-	// whole round or several, so a floor that fires often is a heavy tax.
-	if b.MinSpellHitChance < 0 || b.MinSpellHitChance > 0.50 {
-		b.MinSpellHitChance = 0.05
-	}
-	if b.MinSpellResistChance < 0 || b.MinSpellResistChance > 0.50 {
-		b.MinSpellResistChance = 0.05
-	}
-
-	// 0.05 like spells: a maneuver costs the whole round. The melee swing keeps
-	// 0.15 because it is a fraction of a round and a fight has many of them.
-	if b.MinManeuverHitChance < 0 || b.MinManeuverHitChance > 0.50 {
-		b.MinManeuverHitChance = 0.05
-	}
-	if b.MinManeuverResistChance < 0 || b.MinManeuverResistChance > 0.50 {
-		b.MinManeuverResistChance = 0.05
-	}
-
 	// ── MOVEMENT ─────────────────────────────────────────────────────────────
 	// (MovementBaseStaminaCost and MovementMaxStaminaCost handled in STAMINA & CONVICTION above)
 
