@@ -43,6 +43,17 @@ func (b *Balance) validateProgression() {
 		b.CostSkillCapRank = 100
 	}
 
+	// ── COSTS: ENCUMBRANCE MULTIPLIER (U7) ──────────────────────────────────
+	if b.CostEncumbranceKnee <= 0 || b.CostEncumbranceKnee >= 1.0 {
+		b.CostEncumbranceKnee = 0.75
+	}
+	if b.CostEncumbranceKneeMult <= 0 {
+		b.CostEncumbranceKneeMult = 1.5
+	}
+	if b.CostEncumbranceMax <= 0 {
+		b.CostEncumbranceMax = 5.0
+	}
+
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	if b.StatProgressionMultipliers == nil {
 		b.StatProgressionMultipliers = map[string]float64{}

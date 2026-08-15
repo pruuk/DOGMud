@@ -298,6 +298,14 @@ type Balance struct {
 	CostSkillMidRank    ConfigInt   `yaml:"CostSkillMidRank"`    // Virtual rank where the multiplier is neutral (default 25)
 	CostSkillCapRank    ConfigInt   `yaml:"CostSkillCapRank"`    // Virtual rank where the discount maxes out (default 100)
 
+	// ── COSTS: ENCUMBRANCE MULTIPLIER (U7) ───────────────────────────────────
+	// costs.EncumbranceMultiplier prices carried weight into PHYSICAL actions
+	// only. Two linear segments joined at CostEncumbranceKnee: gentle from
+	// empty to the knee, steep from the knee to capacity, flat at/above it.
+	CostEncumbranceKnee     ConfigFloat `yaml:"CostEncumbranceKnee"`     // Fraction of capacity where the curve steepens (default 0.75)
+	CostEncumbranceKneeMult ConfigFloat `yaml:"CostEncumbranceKneeMult"` // Multiplier at the knee (default 1.5)
+	CostEncumbranceMax      ConfigFloat `yaml:"CostEncumbranceMax"`      // Multiplier at/above capacity (default 5.0)
+
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	// Per-stat and per-skill multipliers on progression chance.
 	// Use plain float64 maps (not ConfigFloat) for native YAML unmarshaling.
