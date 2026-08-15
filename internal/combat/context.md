@@ -160,6 +160,49 @@ floor was only ever evaluated on the swings a defence crit did not consume.
   second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity
 
+### A defensive win is a PARTIAL DEFLECTION, not a clean miss (U6 Task 10)
+
+**`res.hit == true` no longer means "the defence failed."** A defensive win now
+lands as a partially deflected hit and carries a `damageMult` between 0.0 and
+0.5. Anything that reads `res.hit` (or `AttackResult.Hit`) as a proxy for "the
+attack got through" is asking the wrong question — ask `damageMult == 1.0`, or
+`best.margin <= 0` for who won the contest.
+
+`DefenceMitigation(normalizedDefenceMargin)` in `defence_multiplier.go` is the
+curve: a bare win removes **50%**, rising linearly to **100%** at
+`ContestCritThreshold`. Skill raises the margin, so skill raises mitigation
+continuously instead of in a step. A defensive **crit** is not on this curve —
+it fully negates and fires the counterattack.
+
+Before this, a defensive win was zero damage while `TrySpellDeflection` and
+`TryStoicResolve` produced a flat 0.5 or 0.0 for spells and taunts: two
+mechanisms answering one question. (Task 12 folds those channels onto this one.)
+
+Three things that bite:
+
+- **`hitResolution.damageMult` has no safe zero value.** Its zero is 0.0, which
+  deletes the swing's damage. Every return path in `resolveDefenseOutcomeCore`
+  sets it explicitly; a new path that forgets fails silently.
+- **A FLOORED save takes the bare 0.5 and never the curve.** The ±1 sentinel is
+  in raw score units, not standard deviations, so normalising it yields
+  `1/(stdDev*√2)` — about 0.05 z at typical scores, but **0.71 z** when
+  `StdDevFor` clamps at its 1.0 floor for a very weak defender, which would hand
+  the weakest defender the biggest floored save. `resolveDefenseOutcomeCore`
+  special-cases `best.floored`; `TestFlooredSentinelDoesNotNormaliseToZero`
+  records the actual numbers.
+- **A floor-promoted defence crit must re-negate.** `applyCritFloors` runs after
+  the multiplier is set, so promoting a defensive win to a defence crit also
+  resets `res.hit`/`damageMult`. Without that, a floor-promoted crit would deal
+  partial damage where a rolled one deals none.
+
+The multiplier is applied in `calculateCombat` (`combat.go`), **after**
+`calcHitDamage` rather than folded into `sdp.dmgMean`: `dice.RollStat` derives
+its spread from the mean it is handed, so scaling the mean would shrink the
+variance too and make deflected hits artificially consistent. A non-zero
+multiplier floors the result at 1 damage, matching `CritOrMitigatedDamage`'s
+rule that a hit which lands must do something (`calcHitDamage` itself floors at
+0, not 1).
+
 ### Prone / Supine Knockdown System (Position FSM, chunks 4a + 4b)
 
 Characters can be knocked to the ground by special combat moves
@@ -1379,7 +1422,8 @@ can add parallel snapshot checks at the same start-of-round site.
 | `combat_helpers.go` | Extracted helpers. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
-| `crit_floor.go` | Crit floors, 1% both directions (5.11e). **U6 Task 9 changed the DENOMINATORS: the attack floor applies to swings that WON THE CONTEST and the defence floor to swings the DEFENCE won, keyed on `best.margin` (defence-positive, so `<= 0` is an attack win), not on `res.hit`.** The old hit/miss split stops being answerable once a defensive win deals partial damage, because a deflected swing then has `res.hit == true` while the defence won. A floored outcome and an uncontested swing (`defenseType == ""`) are promoted by neither floor. **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. |
+| `crit_floor.go` | Crit floors, 1% both directions (5.11e). **U6 Task 9 changed the DENOMINATORS: the attack floor applies to swings that WON THE CONTEST and the defence floor to swings the DEFENCE won, keyed on `best.margin` (defence-positive, so `<= 0` is an attack win), not on `res.hit`.** The old hit/miss split stops being answerable once a defensive win deals partial damage, because a deflected swing then has `res.hit == true` while the defence won. A floored outcome and an uncontested swing (`defenseType == ""`) are promoted by neither floor. **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. **U6 Task 10:** a promotion to a defence crit now also clears `res.hit` and `res.damageMult`, because an ordinary defensive win arrives here already landing partial damage. |
+| `defence_multiplier.go` | `DefenceMitigation` — the margin-scaled damage reduction a defensive win now earns (U6 Task 10). 50% at a bare win, 100% at `ContestCritThreshold`. Its 0.5 and its threshold are STRUCTURAL, not config knobs: the threshold is the point the curve has to meet so that full negation by a defensive crit is continuous with it rather than a cliff. |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |

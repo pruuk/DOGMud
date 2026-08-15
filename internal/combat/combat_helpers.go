@@ -731,6 +731,12 @@ type hitResolution struct {
 	doubleFumble bool
 	defenseCrit  bool
 	hitRoll      dice.RollResult
+	// damageMult scales the swing's damage: 0.0 fully negated, 1.0 full damage,
+	// in between = partially deflected. U6 Task 10 — a defensive win is no
+	// longer a clean miss, so a hit that lands is not automatically a full-value
+	// hit. EVERY return path in resolveDefenseOutcomeCore sets this explicitly;
+	// the zero value is 0.0, so a path that forgets silently deals nothing.
+	damageMult float64
 }
 
 // doubleFumbleMessages are comedy flavor text for when both combatants fumble.
@@ -910,6 +916,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		res.fumble = true
 		res.doubleFumble = true
 		res.hit = false
+		res.damageMult = 0.0
 		result.Fumble = true
 		result.DoubleFumble = true
 		handleDoubleFumble(result, sourceChar, targetChar)
@@ -923,6 +930,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		// Attack fumble: always miss, no exceptions
 		res.fumble = true
 		res.hit = false
+		res.damageMult = 0.0
 		result.Fumble = true
 		mudlog.Debug("AttackFumble", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
 			"source", sourceChar.Name, "target", targetChar.Name)
@@ -932,6 +940,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 	if defenseFumble {
 		// Defense fumble: guarantees a hit (but NOT auto-crit)
 		res.hit = true
+		res.damageMult = 1.0
 		mudlog.Debug("DefenseFumble", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
 			"source", sourceChar.Name, "target", targetChar.Name)
 		// Still check if the attack roll was also a crit
@@ -984,6 +993,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		if attackWon && attackCrit {
 			res.hit = true
 			res.crit = true
+			res.damageMult = 1.0
 			mudlog.Debug("AttackCrit", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
 				"threshold", fmt.Sprintf("%.2f", critThreshold),
 				"source", sourceChar.Name, "target", targetChar.Name)
@@ -992,6 +1002,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 		if !attackWon && defenseCrit {
 			res.hit = false
 			res.defenseCrit = true
+			res.damageMult = 0.0
 			setDefenseCritFlags(result, best)
 			sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
 			mudlog.Debug("DefenseCrit", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
@@ -1004,10 +1015,32 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 
 	if attackWon {
 		res.hit = true
+		res.damageMult = 1.0
 		return res
 	}
 
-	res.hit = false
+	// The defence won. It no longer produces a clean miss: damage is mitigated
+	// 50-100% by the margin. res.hit stays TRUE because damage IS dealt, and
+	// everything downstream that scales on res.DamageToTarget therefore scales
+	// down with it -- reflect, lifesteal and on-hit procs all read the damage
+	// actually dealt, not a flat rate.
+	//
+	// A FLOORED save takes the bare 50% and never the curve. Sentinel margins
+	// are +-1 in raw score units, not standard deviations, so normalising one
+	// yields 1/(stdDev*sqrt2) -- about 0.05 z at typical scores (mitigation
+	// 0.512), but 0.71 z when StdDevFor clamps at its 1.0 floor for a very weak
+	// defender (mitigation 0.677). That is a margin-derived value read off a
+	// number that was never a margin, and it rewards the WEAKER defender more.
+	// This mirrors the floored-crit gate above, which excludes the sentinel for
+	// exactly the same reason.
+	defMargin := 0.0
+	if !best.floored {
+		if z, ok := normalizedDefenseMargin(best); ok {
+			defMargin = z
+		}
+	}
+	res.hit = true
+	res.damageMult = 1.0 - DefenceMitigation(defMargin)
 	sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty)
 	return res
 }

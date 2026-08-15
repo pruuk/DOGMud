@@ -49,6 +49,15 @@ func hopelessMatchup() (*characters.Character, *characters.Character) {
 // ordering -- crit resolution returning before the floor was ever consulted --
 // the only hits available were the ~2.3% of swings on which the defence
 // fumbled.
+//
+// U6 Task 10 CHANGED THE MEASURE, and had to. This counted res.hit, which meant
+// "the attack got through" right up until a defensive win started dealing
+// partial damage and carrying res.hit == true. Left alone, the test would have
+// gone vacuous: the ~90% of swings the defence wins now all count as hits and
+// the bar clears without the floor doing anything at all. damageMult == 1.0 is
+// the same set of swings res.hit used to name -- every other path (both fumble
+// branches, defence crit, deflection) leaves it below 1.0 -- so the assertion
+// still measures the floor and not the deflection.
 func TestResolveDefenseOutcome_FloorReachesACrittingDefender(t *testing.T) {
 	const (
 		iterations = 20000
@@ -66,7 +75,7 @@ func TestResolveDefenseOutcome_FloorReachesACrittingDefender(t *testing.T) {
 			[]string{characters.DefenseDodge}, hopelessAttackScore, false, ctx)
 		res := resolveDefenseOutcome(result, best, attacker, defender,
 			critThreshold, false, false)
-		if res.hit {
+		if res.hit && res.damageMult == 1.0 {
 			hits++
 		}
 	}

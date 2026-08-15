@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -497,6 +498,28 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					weaponHit.Crit = true
 				}
 				attackTargetDamage, backstabCrit = calcHitDamage(&attackResult, res.crit, backstabCrit, sdp)
+
+				// U6 Task 10: a defensive win is no longer a clean miss, it is
+				// a partially deflected hit. res.damageMult is 1.0 on every
+				// other landing path, so this is a no-op outside that case.
+				//
+				// Applied AFTER calcHitDamage rather than folded into sdp.dmgMean
+				// on purpose: dice.RollStat derives its spread from the mean it
+				// is handed, so scaling the mean would also shrink the variance
+				// and make deflected hits artificially consistent. Scaling the
+				// rolled result keeps the deflection a flat reduction of whatever
+				// the swing happened to roll.
+				if res.damageMult < 1.0 && attackTargetDamage > 0 {
+					attackTargetDamage = int(math.Round(float64(attackTargetDamage) * res.damageMult))
+					if res.damageMult > 0 && attackTargetDamage < 1 {
+						// Matches CritOrMitigatedDamage's rule -- "a hit that
+						// lands must do something; 0 reads to the player as a
+						// bug." calcHitDamage floors at 0, not 1, so melee used
+						// to be able to land for nothing; the two agree now on
+						// this path.
+						attackTargetDamage = 1
+					}
+				}
 			}
 
 			if res.fumble {

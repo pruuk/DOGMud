@@ -283,8 +283,41 @@ func TestApplyCritFloors_DefenceFloorAppliesOnlyToDefenceWins(t *testing.T) {
 		if !result.DodgeCritDetected {
 			t.Fatal("defensive promotion must set the per-defence crit flag")
 		}
+		// U6 Task 10 CHANGED this assertion, deliberately.
+		//
+		// Task 9 wrote it as "the crit floor must not disturb the hit outcome",
+		// which was correct then: a defensive win already carried res.hit ==
+		// false, so a promotion had nothing to disturb. Task 10 makes an ordinary
+		// defensive win land with res.hit == true and a partial damageMult, and a
+		// defence CRIT fully negates. Leaving hit/damageMult untouched would give
+		// a floor-promoted defence crit 50-100% damage where a ROLLED one deals
+		// none -- two spellings of the same outcome disagreeing.
+		//
+		// Restoring full negation here reproduces the pre-U6 result for this
+		// path exactly. It is the untouched version that would be the behaviour
+		// change.
+		if res.hit {
+			t.Fatal("a promotion to defence crit must fully negate, as a rolled defence crit does")
+		}
+		if res.damageMult != 0 {
+			t.Fatalf("a promoted defence crit must deal no damage, got damageMult %v", res.damageMult)
+		}
+	}
+}
+
+// The negation above is scoped to the PROMOTION. A floor call that promotes
+// nothing must still leave a partially deflected swing landing, or the mere act
+// of consulting a dead floor would erase the damage Task 10 exists to deal.
+func TestApplyCritFloors_NonPromotingDefenceFloorLeavesDeflectedDamage(t *testing.T) {
+	for i := 0; i < 200; i++ {
+		res := hitResolution{hit: true, damageMult: 0.5}
+		applyCritFloors(&res, &AttackResult{}, dodgeBestWon(defenceWinMargin), 0.0, 0.0)
+
 		if !res.hit {
-			t.Fatal("the crit floor must not disturb the hit outcome")
+			t.Fatal("a dead defence floor must leave a deflected swing landing")
+		}
+		if res.damageMult != 0.5 {
+			t.Fatalf("a dead defence floor must not alter damageMult, got %v", res.damageMult)
 		}
 	}
 }

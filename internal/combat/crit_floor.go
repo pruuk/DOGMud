@@ -160,5 +160,15 @@ func applyCritFloors(res *hitResolution, result *AttackResult, best bestDefenseR
 		// per-defence flags, so a promotion that skipped these would produce a
 		// crit that nothing acts on.
 		setDefenseCritFlags(result, best)
+
+		// U6 Task 10: a defence crit fully negates. Before Task 10 a defensive
+		// win already carried res.hit == false, so a promotion here needed to
+		// say nothing about damage. Now an ordinary defensive win lands with
+		// res.hit == true and a partial damageMult, so WITHOUT these two lines a
+		// floor-promoted defence crit would deal 0-50% damage while a rolled one
+		// deals none. This restores the pre-U6 outcome for this path rather than
+		// changing it.
+		res.hit = false
+		res.damageMult = 0.0
 	}
 }
