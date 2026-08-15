@@ -290,6 +290,13 @@ type Balance struct {
 	MovementBaseStaminaCost ConfigFloat `yaml:"MovementBaseStaminaCost"` // Flat cost to move on normal terrain, BEFORE encumbrance and skill (default 0.5)
 	MovementMaxStaminaCost  ConfigFloat `yaml:"MovementMaxStaminaCost"`  // Ceiling for any single move action (default 20.0)
 	MovementCostFloor       ConfigInt   `yaml:"MovementCostFloor"`       // Minimum stamina any single move can cost (default 1)
+	// U7 Task 10: movement is priced partly on the actor's search rank, so
+	// travelling has to be able to EARN that discount -- but only barely.
+	// This is the probability that a successful move RECORDS a search use;
+	// it is deliberately not a multiplier on the odds of a use that is
+	// counted every step (see movementTrainsSearch in usercommands/go.go).
+	// Zero or negative switches travel-training off entirely.
+	MovementSearchTrainChance ConfigFloat `yaml:"MovementSearchTrainChance"` // Chance a successful move records a search use (default 0.005, i.e. 1 in 200)
 	// U7 Task 7 deleted UnarmedAttackStaminaCost. It was the fallback arm of a
 	// per-round, per-weapon attack charge that no longer exists; attacking is
 	// priced per swing by AttackBaseStaminaCost above, armed or not. The key may

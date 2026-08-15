@@ -37,6 +37,16 @@ func (b *Balance) validateMisc() {
 	if b.MovementCostFloor <= 0 {
 		b.MovementCostFloor = 1
 	}
+	// U7 Task 10. Note the `== 0` rather than the `<= 0` used above: absence
+	// means "take the default", but a NEGATIVE value is an explicit "switch
+	// travel-training off" and is left alone so movementTrainsSearch can read it
+	// as off. Clamped at 1.0 because it is a probability, not a rate.
+	if b.MovementSearchTrainChance == 0 {
+		b.MovementSearchTrainChance = 0.005
+	}
+	if b.MovementSearchTrainChance > 1.0 {
+		b.MovementSearchTrainChance = 1.0
+	}
 	// U7 Task 7 deleted UnarmedAttackStaminaCost's default with the field. The
 	// attack charge is per swing now and lives in validateCombat with the rest of
 	// the U7 cost knobs.

@@ -24,12 +24,54 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// movementTrainsSearch reports whether this move should record a search use.
+//
+// U7 prices movement partly on the actor's search rank, so travelling has to be
+// able to earn that discount -- today movement trains nothing at all, which
+// leaves nearly every live character at rank one with no way to improve it by
+// walking. But walking must stay the SLOW road: search is already easy to raise
+// through forage, search and track, and it should never be the case that the
+// best way to become a tracker is to pace back and forth.
+//
+// The rarity is in whether the use is RECORDED, not in the odds attached to it.
+// CheckSkillProgression derives its decay from the skill's use count
+// (virtualRank = useCount / UsesPerRank), so recording a use on every step would
+// bury the counter under tens of thousands of walked rooms and leave forage,
+// search and track training almost worthless -- and scaling the odds down
+// instead does not help, because the counter still climbs once per step and
+// outruns the progression it is paying for.
+//
+// At the shipped 1-in-200 gate it takes on the order of 7,700 room moves to see
+// search rank 10 and something like 33,000 to reach rank 35: "you picked up an
+// eye for the road over a very long time", not a training strategy. A 1-in-50
+// gate would get to rank 35 in roughly 8,300 moves and would make walking the
+// dominant route, which is exactly what this is tuned to avoid.
+//
+// Second-order effect, and deliberate: search also feeds hidden-creature
+// detection on room entry (Perception + Search against Dex + Skullduggery, later
+// in this same file) and foraging yields. So a well-travelled character slowly
+// grows harder to sneak up on and slightly better at living off the land. That
+// is the intended flavour of the change -- please do not "fix" it.
+//
+// A zero or negative MovementSearchTrainChance switches the feature off.
+func movementTrainsSearch() bool {
+	chance := float64(configs.GetBalanceConfig().MovementSearchTrainChance)
+	if chance <= 0 {
+		return false
+	}
+	// util.Rand is the randomness idiom in this file. Resolving against 100,000
+	// keeps a knob as small as 0.00001 meaningful.
+	const resolution = 100000
+	return util.Rand(resolution) < int(chance*resolution)
+}
 
 // unlockExit performs the shared tail of a successful exit unlock: it tells the
 // actor, narrates to the room, plays the unlock sound, and clears the lock on
@@ -323,6 +365,15 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			// snapshot. OriginalRoomId returns the room's own id for
 			// non-ephemeral rooms, so this is a no-op there.
 			user.Character.MarkRoomVisited(destRoom.Zone, matchRoom)
+
+			// U7 Task 10: a completed move rarely trains search. This sits
+			// inside the MoveToRoom success branch on purpose -- a refused
+			// move (no action points, unaffordable stamina), a locked exit the
+			// actor could not open, and a MoveToRoom error all return or
+			// message out above and never reach here.
+			if movementTrainsSearch() {
+				user.Character.OnSkillUse(string(skills.Search), user.UserId)
+			}
 
 			// Tell the player they are moving
 			if isSneaking {
