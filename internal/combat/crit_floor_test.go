@@ -192,31 +192,42 @@ func TestApplyCritFloors_NoDefenseAttemptedIsNotADefensiveCrit(t *testing.T) {
 	}
 }
 
-// TestApplyCritFloors_UncontestedSwingNeverReachesTheMarginTest pins the reason
-// the defenceType guard sits ABOVE the margin test in Task 9's ordering.
+// TestApplyCritFloors_UncontestedSwingTakesTheAttackFloor pins the handling of
+// the uncontested swing, which is the one case where the two guards interact.
 //
 // runBestOfAllDefense leaves margin at math.Inf(-1) on exactly the path where it
-// also leaves defenseType empty, and -Inf satisfies `margin <= 0`. If the guard
-// were moved below the margin test, the sentinel infinity would be read as a
-// decisive attack win. It is unreachable today because the guard returns first,
-// and this test is what keeps that ordering.
+// also leaves defenseType empty, and -Inf satisfies `margin <= 0`. That reads as
+// a decisive attack win, which is precisely what an uncontested swing is: no
+// defence was mounted, so the attacker cannot have lost.
 //
-// BEHAVIOUR NOTE: this means an uncontested swing gets NEITHER floor. Before
-// Task 9 it took the attack floor, because res.hit was true on that path. The
-// win is not in doubt on an uncontested swing, so the lost 1% promotion is a
-// crit-rate change on a rare path, not a hit-rate change.
-func TestApplyCritFloors_UncontestedSwingNeverReachesTheMarginTest(t *testing.T) {
+// It therefore takes the ATTACK floor, and must never take the defence floor or
+// set a per-defence crit flag.
+//
+// This preserves pre-U6 behaviour. Before Task 9 the split was res.hit, which
+// was true on this path, so the attack floor already applied here. An earlier
+// draft hoisted the defenceType guard above the margin test, which silently
+// dropped that 1% promotion — a behaviour change U6 does not intend and did not
+// declare. The guard belongs on the defence branch only.
+func TestApplyCritFloors_UncontestedSwingTakesTheAttackFloor(t *testing.T) {
+	promoted := 0
 	for i := 0; i < 200; i++ {
 		result := &AttackResult{}
 		res := hitResolution{hit: true}
 		applyCritFloors(&res, result, bestDefenseResult{margin: math.Inf(-1)}, 1.0, 1.0)
 
-		if res.crit || res.defenseCrit {
-			t.Fatal("an uncontested swing must not be promoted by either floor")
+		if res.crit {
+			promoted++
+		}
+		if res.defenseCrit {
+			t.Fatal("an uncontested swing has no defender to promote")
 		}
 		if result.DodgeCritDetected || result.ParryCritDetected || result.BlockCritDetected {
 			t.Fatal("an uncontested swing must not set a per-defence crit flag")
 		}
+	}
+
+	if promoted != 200 {
+		t.Fatalf("an attack floor of 1.0 must promote every uncontested swing, got %d of 200", promoted)
 	}
 }
 

@@ -118,16 +118,6 @@ func applyCritFloors(res *hitResolution, result *AttackResult, best bestDefenseR
 		return
 	}
 
-	// Require that a defence was actually mounted. defenseType "" means the
-	// defender never acted, so there is no contest to have won and
-	// setDefenseCritFlags would have no flag to set. It also disposes of the
-	// uncontested swing, whose margin sits at math.Inf(-1): runBestOfAllDefense
-	// leaves defenseType empty on exactly that path, so the margin test below
-	// never sees the sentinel infinity.
-	if best.defenseType == "" {
-		return
-	}
-
 	// DENOMINATORS, decided in U6. The attack floor applies to swings that WON
 	// THE CONTEST; the defence floor to swings the DEFENCE won. Before U6 the
 	// split was `res.hit` versus a miss, which stops being answerable once a
@@ -137,8 +127,29 @@ func applyCritFloors(res *hitResolution, result *AttackResult, best bestDefenseR
 	// best.margin is DEFENCE-positive, so `<= 0` means the ATTACK won. Same
 	// expression, same sign convention, as resolveDefenseOutcomeCore's
 	// attackWon.
+	//
+	// An UNCONTESTED swing lands here too, and deliberately so: its margin sits
+	// at math.Inf(-1), which reads as a decisive attack win, which is exactly
+	// what it is -- no defence was mounted. Pre-U6 that swing had res.hit ==
+	// true and took this same branch, so routing it here preserves the old
+	// behaviour rather than quietly dropping a 1% promotion.
 	if best.margin <= 0 {
 		res.crit = ApplyCritFloor(res.crit, attackFloor)
+		return
+	}
+
+	// The DEFENCE won. Require that a defence was actually mounted: an empty
+	// defenseType leaves setDefenseCritFlags with no flag to set, so a
+	// promotion here would produce a crit that nothing downstream acts on.
+	//
+	// This guard belongs on this branch and not above it. Hoisting it would
+	// also block the attack floor on uncontested swings, which is a behaviour
+	// change and not one U6 intends. It is believed unreachable in melee today
+	// (runBestOfAllDefense only leaves defenseType empty on the uncontested
+	// path, which the margin test above has already claimed) and is kept as the
+	// declared contract rather than on the strength of that reachability
+	// argument.
+	if best.defenseType == "" {
 		return
 	}
 
