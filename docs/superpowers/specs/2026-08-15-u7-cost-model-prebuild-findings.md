@@ -148,11 +148,15 @@ Magnitudes, on a tier-4 conviction enchantment reserving 8% of the pool:
 | 54 (Meirok) | 0.77 | 6.1% |
 | 100 | 0.40 | 3.2% |
 
-**One question to settle:** whether the rank-0 penalty half applies. Under the
-shared band an untrained wearer reserves 10% MORE than today, which is
-consistent with every other action but does make an existing item slightly worse
-for a character who has never touched enchanting. Discount-only
-(`min(1.0, mult)`) avoids that at the cost of consistency.
+**SETTLED: the penalty half applies.** An untrained wearer reserves about 10%
+more than today. Enchanted gear was bought or gifted, so it is coherent that
+someone who does not understand the weave commits more of themselves to hold it,
+and enchanting rank rises through ordinary play anyway. No discount-only
+exception.
+
+**Follow-up, separate pass:** the base companion reservation values may want
+retuning once this lands, since the two reservation sources will then scale on
+different skills at different rates. Not part of U7.
 
 This composes with the §2.1 ceiling deliberately: a skilled enchanter fits more
 enchanted gear under the cap, which is the same offset the owner noted for

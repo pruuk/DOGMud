@@ -75,7 +75,13 @@ Two things to keep straight while doing it:
    the odd one out among three knobs that were deliberately matched. Note the
    interaction with the point above: conviction is already effectively four
    times stronger than stamina in combat because it is never quartered.
-2. **Faster regen slightly slows stat progression.** Regen-based progression
+2. **The steep caster power curve is ACCEPTED, not a problem to solve.** Skill
+   pays a caster three times over (damage, crit margin, and now a 60% cost
+   discount at mastery), but casting competes for the shared special-move
+   cooldown against special moves, mutation actives, rally, taunt and warcry, and
+   spellcasting is harder to raise than a combat skill. The ceiling on throughput
+   is the cooldown, not the pool.
+3. **Faster regen slightly slows stat progression.** Regen-based progression
    fires per tick with a chance of `RegenProgressionBase x (1 - currentPct)^3`,
    so a fuller pool progresses more slowly. Faster stamina regen therefore damps
    Vitality and Willpower gain a little. The new defence costs push the other
