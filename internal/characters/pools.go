@@ -1,6 +1,8 @@
 package characters
 
 import (
+	"math"
+
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
@@ -151,6 +153,57 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult {
 	}
 	c.setPool(pool, current-charged)
 	return CostResult{Charged: charged, Short: charged < amount}
+}
+
+// ApplyCostFloat charges a fractional cost, banking the remainder so the average
+// charged converges exactly on the amount asked for.
+//
+// Every U7 cost is a float: base x encumbrance x inverse skill x per-action
+// modifier. Rounding each action to an integer destroys the small factors --
+// verified: dodge, parry and block all collapse to the same number for a
+// low-skill character at every base this game would ship. The carry is per pool
+// and per character, and is not persisted.
+//
+// The deduction itself is delegated to ApplyCostPartial so the floor rules and
+// the Short flag stay in exactly one place. That delegation is also what keeps
+// the AST pool-mutation guard satisfied -- this helper must never write a pool
+// itself.
+//
+// SHORT WHEN THE FLOORED CHARGE IS ZERO: it is false, even on an empty pool.
+// Short means "the actor could not pay what this action demanded", and a floored
+// charge of zero demanded nothing -- the whole amount went into the bank. U8
+// reads Short to strip the skill term from the action's roll, so returning true
+// here would penalise an action that cost nothing, and would then penalise the
+// SAME fraction again on the later action that floors it to one or more and
+// legitimately reports Short against the empty pool. The debt is not forgiven,
+// only deferred, so it is charged and reported exactly once. This also matches
+// the sibling contract: ApplyCostPartial treats a non-positive amount as free
+// and not Short.
+//
+// The full floored amount is always removed from the carry, even when the pool
+// was too empty to cover it. The unpaid part is written off rather than banked:
+// an exhausted actor would otherwise accumulate an unbounded debt and be
+// slammed with the whole backlog on the first tick their pool refilled. Being
+// short is already punished by the lost skill term; it must not also become a
+// loan.
+func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult {
+	if amount <= 0 {
+		return CostResult{}
+	}
+
+	if c.costCarry == nil {
+		c.costCarry = make(map[Pool]float64, 3)
+	}
+
+	debt := c.costCarry[pool] + amount
+	whole := math.Floor(debt)
+	c.costCarry[pool] = debt - whole
+
+	if whole <= 0 {
+		return CostResult{}
+	}
+
+	return c.ApplyCostPartial(pool, int(whole))
 }
 
 // applyVitalChange is the single signed pipeline behind ApplyHarm and

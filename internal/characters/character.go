@@ -154,6 +154,18 @@ type Character struct {
 	tauntHoldUntilRound    uint64 `yaml:"-"`
 	tauntHoldUserId        int    `yaml:"-"`
 	tauntHoldMobInstanceId int    `yaml:"-"`
+	// costCarry banks the sub-integer remainder of every cost so that small
+	// per-action modifiers survive. Pools are ints, and dodge, parry and block
+	// differ by only 14%; rounding each action to a whole number collapses all
+	// three onto the same integer for a low-skill character, which makes the
+	// modifiers decoration. Deliberately NOT persisted: an in-flight fraction is
+	// worth less than the byte it would take in a save file, and a stale one
+	// after a reload would be indistinguishable from a rounding bug.
+	//
+	// No yaml:"-" tag on purpose. An unexported field is already invisible to the
+	// marshaller, and a yaml tag on one is a silent no-op that misleads the next
+	// reader into thinking it is load-bearing.
+	costCarry map[Pool]float64
 	// CombatPhase is the canonical state machine for "am I in combat?" and
 	// "who am I targeting?". It runs alongside the Aggro field; both are
 	// kept in sync by SetAggro/EndAggro. Direct .Aggro reads remain valid.
