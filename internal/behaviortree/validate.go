@@ -44,8 +44,10 @@ func treeFileHasEvent(path string, event string) bool {
 
 // validateAutoAggroBehaviorGates is the testable core of
 // ValidateAutoAggroBehaviorGates. Path resolution is injected so tests
-// can point at fixture files. Mirrors TryMobBehavior's resolution
-// order: a per-mob tree, when present, shadows the archetype tree.
+// can point at fixture files. Mirrors TryMobBehavior's composition
+// order: a per-mob tree that declares the gate event owns it, but a
+// per-mob tree WITHOUT the event falls through to the declared
+// archetype, so the archetype must be checked in that case too.
 func validateAutoAggroBehaviorGates(templates []*mobs.Mob, behaviorPathFn func(m *mobs.Mob) string, archetypePathFn func(name string) string) []string {
 	warnings := []string{}
 	archetypeGated := map[string]bool{}
@@ -55,15 +57,18 @@ func validateAutoAggroBehaviorGates(templates []*mobs.Mob, behaviorPathFn func(m
 			continue
 		}
 
-		// Per-mob tree shadows the archetype entirely (TryMobBehavior order).
+		// A per-mob tree that declares player_enter owns the event
+		// (TryMobBehavior composition order). One that does NOT declare it
+		// falls through to the declared archetype, so the archetype check
+		// below must still run for that mob.
 		perMobPath := behaviorPathFn(m)
 		if _, err := os.Stat(perMobPath); err == nil {
 			if treeFileHasEvent(perMobPath, "player_enter") {
 				warnings = append(warnings, fmt.Sprintf(
 					"mob %d (%s): hostile/auto_aggro auto-attack on player entry preempts the player_enter branch in its behavior tree %s — either flip to hostile: false (btree owns engagement) or drop the branch",
 					int(m.MobId), m.Character.Name, perMobPath))
+				continue
 			}
-			continue
 		}
 
 		if m.BehaviorArchetype == "" {

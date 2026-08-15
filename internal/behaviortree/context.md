@@ -15,7 +15,10 @@ tick, etc.), `TryMobBehavior`:
    entry via `SetNoTree` to skip future file-system checks).
 2. If a per-mob tree exists, creates an `EvalContext` and evaluates it. If
    it returns `Success`, the per-mob tree owns the event — done, `true`.
-3. If the per-mob tree is absent or returned non-Success AND the mob
+   If it returns `Running`, it also owns the event (the tree claimed it
+   and is mid-progress — a delay countdown, an in-flight goal plan that
+   already queued a command) — done, `false`, legacy path, no archetype.
+3. Only if the per-mob tree is absent or returned `Failure` AND the mob
    declares a `behavior_archetype`, resolves the archetype tree (same lazy
    load + `SetNoArchetype` negative cache, warn-once on a missing file)
    and evaluates it with a **fresh** `EvalContext` (same shared
@@ -23,13 +26,20 @@ tick, etc.), `TryMobBehavior`:
 4. Otherwise returns `false` and the caller runs the legacy path.
 
 **Composition rule (2026-08-15): a per-mob tree SPECIALIZES its declared
-archetype, it does not replace it.** A per-mob tree that succeeds owns the
-event; one that fails falls through to the declared archetype, then to the
-caller's legacy path. Before this rule, the archetype was consulted only
-when no per-mob file existed at all, so the file's mere presence silently
-disabled the mob's declared brain — 34 production mobs (including the
-entire bandit camp, whose per-mob party overlays handle only `mob_idle`)
-had dead combat archetypes with no diagnostic.
+archetype, it does not replace it.** A per-mob tree that returns `Success`
+or `Running` owns the event; one that returns `Failure` falls through to
+the declared archetype, then to the caller's legacy path. Before this
+rule, the archetype was consulted only when no per-mob file existed at
+all, so the file's mere presence silently disabled the mob's declared
+brain — 34 production mobs (including the entire bandit camp, whose
+per-mob party overlays handle only `mob_idle`) had dead combat archetypes
+with no diagnostic.
+
+Because both trees of a composed mob share one per-instance
+`BehaviorState`, archetype trees compile under the root label `arch`
+(per-mob and room trees use `root`) so positional cooldown/delay decorator
+state keys (`<path>_cooldown` / `<path>_delay`) cannot collide across the
+two trees.
 
 ---
 
@@ -672,9 +682,10 @@ current event type does not match, short-circuiting the entire subtree.
 ## Entry Points
 
 - `TryMobBehavior(instanceId int, event EventContext) bool` — main entry
-  point. Evaluates the per-mob tree first; on non-Success falls through to
-  the declared archetype (see Composition rule in the Overview). Returns
-  true when either evaluation returned Success.
+  point. Evaluates the per-mob tree first; on Failure only, falls through
+  to the declared archetype (see Composition rule in the Overview; Running
+  owns the event and returns false without consulting the archetype).
+  Returns true when either evaluation returned Success.
 - `TryRoomBehavior(roomId int, event EventContext) bool` — room entry point.
   For `room_command` events returns `ctx.Intercepted`; for all others returns
   `true` on Success.

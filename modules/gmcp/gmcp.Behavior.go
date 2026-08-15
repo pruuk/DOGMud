@@ -274,7 +274,7 @@ func buildBehaviorCreate(d behaviorDeps, req behaviorCreateReq) BuildResult {
 		if _, err := d.saveMob(req.MobId, m.Zone, m.Character.Name, seed); err != nil {
 			return buildErr("%s", err.Error())
 		}
-		return BuildResult{Ok: true, MobId: req.MobId, Message: fmt.Sprintf("per-mob tree created for %s — it now OVERRIDES the archetype", m.Character.Name)}
+		return BuildResult{Ok: true, MobId: req.MobId, Message: fmt.Sprintf("per-mob tree created for %s — it specializes the archetype (the archetype still fires when this tree returns Failure)", m.Character.Name)}
 	case "room":
 		if req.RoomId == 0 {
 			return buildErr("room kind needs a roomId")

@@ -41,7 +41,16 @@ func LoadArchetypeYAMLFromFile(path string) (Node, map[string]float64, []GoalDef
 	if err := yaml.Unmarshal(data, &def); err != nil {
 		return nil, nil, nil, fmt.Errorf("parse error: %w", err)
 	}
-	tree, err := compileNode(def.Tree, "root")
+	// Archetype trees compile under the root label "arch" (per-mob and
+	// room trees use "root"). Cooldown/delay decorator state keys are
+	// positional (path + "_cooldown" / "_delay"), and a composed mob
+	// evaluates BOTH its per-mob tree and its archetype against the same
+	// per-instance BehaviorState — with a shared root label, a decorator
+	// at position N in one tree would silently share state with position
+	// N in the other. Distinct labels disjoint the keyspaces. Note: this
+	// one-time key rename resets any in-flight archetype decorator state,
+	// which is harmless (cooldowns simply re-arm).
+	tree, err := compileNode(def.Tree, "arch")
 	if err != nil {
 		return nil, nil, nil, err
 	}

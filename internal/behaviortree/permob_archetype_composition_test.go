@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // File: permob_archetype_composition_test.go
@@ -221,5 +222,151 @@ func TestComposition_MissingArchetypeFile_WarnOnceNoPanic(t *testing.T) {
 	// Second call must hit the negative cache (no re-stat, no panic).
 	if ok := TryMobBehavior(mob.InstanceId, EventContext{EventType: "mob_combat_round"}); ok {
 		t.Fatalf("TryMobBehavior: expected false on cached-miss repeat call, got true")
+	}
+}
+
+// perMobRunningYAML returns Running on mob_combat_round: the delay
+// decorator claims the event on its first evaluation and counts down.
+// Running must own the event exactly as Success does — the archetype
+// must NOT be consulted, and TryMobBehavior must return false (legacy
+// path), matching pre-composition behavior.
+const perMobRunningYAML = `
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: mob_combat_round
+      children:
+        - type: decorator
+          mod: delay
+          rounds: 5
+          child:
+            type: action
+            do: command
+            cmd: say overlay after delay
+`
+
+// TestComposition_RunningOwnsTheEvent verifies the Failure-only fallback:
+// a per-mob tree that returns Running (mid-countdown delay decorator) has
+// claimed the event, so the archetype's same-event action must not run
+// and TryMobBehavior must return false. Production case: mob 254's
+// negotiation countdown returns Running; sweeping to the archetype on
+// any non-Success would let the leader archetype's idle scan/track walk
+// him out of his own scene (and a goal plan reporting StatusRunning has
+// already queued a command, so a second dispatch would double-act).
+func TestComposition_RunningOwnsTheEvent(t *testing.T) {
+	loadOverlayTestArchetype(t, "c1_running_archetype")
+
+	mob, cleanup := seedOverlayMob(t, 92005, "c1_running_archetype")
+	defer cleanup()
+	defer events.DrainQueuedInputsForTest(mob.InstanceId)
+
+	node, err := LoadTreeFromBytes([]byte(perMobRunningYAML))
+	if err != nil {
+		t.Fatalf("LoadTreeFromBytes(perMobRunningYAML): %v", err)
+	}
+	t.Cleanup(GetEngine().SetMobTreeForTest(int(mob.MobId), node))
+
+	ok := TryMobBehavior(mob.InstanceId, EventContext{EventType: "mob_combat_round"})
+	if ok {
+		t.Fatalf("TryMobBehavior: Running per-mob tree owns the event; expected false, got true")
+	}
+	DrainAllDelayedActionsForTest(t)
+	if inputs := events.DrainQueuedInputsForTest(mob.InstanceId); len(inputs) != 0 {
+		t.Fatalf("Running per-mob tree must suppress the archetype; got queued %v", inputs)
+	}
+}
+
+// Cooldown-collision fixtures: both trees place a cooldown decorator at
+// the SAME tree position (selector[0].sequence[0]), on different events.
+// Decorator state keys are positional (path + "_cooldown"), and both
+// trees of a composed mob share one per-instance BehaviorState — so with
+// a shared root label the archetype's cooldown would silently arm the
+// per-mob tree's. Archetype trees now compile under the root label
+// "arch" (per-mob trees keep "root") to disjoint the keyspaces.
+const perMobCooldownYAML = `
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: decorator
+          mod: cooldown
+          rounds: 1
+          child:
+            type: action
+            do: command
+            cmd: say overlay cooldown
+`
+
+const archetypeCooldownYAML = `
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: mob_combat_round
+      children:
+        - type: decorator
+          mod: cooldown
+          rounds: 1
+          child:
+            type: action
+            do: command
+            cmd: say archetype cooldown
+`
+
+// TestComposition_DecoratorStateKeysDisjoint fires the archetype's
+// cooldown-gated branch, then the per-mob tree's cooldown-gated branch in
+// the same round. If the two decorators shared a state key, the archetype
+// run would arm the per-mob cooldown and the second call would fail.
+func TestComposition_DecoratorStateKeysDisjoint(t *testing.T) {
+	prevRound := util.GetRoundCount()
+	util.SetRoundCountForTest(1000)
+	t.Cleanup(func() { util.SetRoundCountForTest(prevRound) })
+
+	const archName = "c1_cooldown_archetype"
+	archPath := filepath.Join(t.TempDir(), archName+".yaml")
+	if err := os.WriteFile(archPath, []byte(archetypeCooldownYAML), 0644); err != nil {
+		t.Fatalf("writing archetype fixture: %v", err)
+	}
+	LoadArchetypeForTest(t, archName, archPath)
+
+	mob, cleanup := seedOverlayMob(t, 92006, archName)
+	defer cleanup()
+	defer events.DrainQueuedInputsForTest(mob.InstanceId)
+
+	node, err := LoadTreeFromBytes([]byte(perMobCooldownYAML))
+	if err != nil {
+		t.Fatalf("LoadTreeFromBytes(perMobCooldownYAML): %v", err)
+	}
+	t.Cleanup(GetEngine().SetMobTreeForTest(int(mob.MobId), node))
+
+	// 1. mob_combat_round: per-mob tree fails (idle-only), archetype's
+	// cooldown branch runs and arms the ARCHETYPE's state key.
+	if ok := TryMobBehavior(mob.InstanceId, EventContext{EventType: "mob_combat_round"}); !ok {
+		t.Fatalf("TryMobBehavior(mob_combat_round): expected archetype Success, got false")
+	}
+	DrainAllDelayedActionsForTest(t)
+	if inputs := events.DrainQueuedInputsForTest(mob.InstanceId); len(inputs) != 1 || inputs[0] != "say archetype cooldown" {
+		t.Fatalf("expected the archetype's cooldown action, got %v", inputs)
+	}
+
+	state := EnsureBTreeState(mob)
+	if state.GetInt("arch.selector[0].sequence[0]_cooldown") == 0 {
+		t.Fatalf("archetype cooldown should have armed under the 'arch' root label; state keys are wrong")
+	}
+	if state.GetInt("root.selector[0].sequence[0]_cooldown") != 0 {
+		t.Fatalf("archetype cooldown leaked into the per-mob tree's 'root' keyspace")
+	}
+
+	// 2. Same round, mob_idle: the per-mob tree's cooldown at the same
+	// tree position must still be unarmed and fire.
+	if ok := TryMobBehavior(mob.InstanceId, EventContext{EventType: "mob_idle"}); !ok {
+		t.Fatalf("TryMobBehavior(mob_idle): per-mob cooldown was armed by the archetype's run — state keys collide")
+	}
+	DrainAllDelayedActionsForTest(t)
+	if inputs := events.DrainQueuedInputsForTest(mob.InstanceId); len(inputs) != 1 || inputs[0] != "say overlay cooldown" {
+		t.Fatalf("expected the per-mob tree's cooldown action, got %v", inputs)
 	}
 }

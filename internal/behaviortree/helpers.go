@@ -201,11 +201,17 @@ func resolveArchetypeTree(name string) Node {
 //  1. The per-mob btree (behaviors/<zone>/<mobId>-<name>.yaml), when
 //     present, is evaluated first. If it returns Success it owns the
 //     event and the archetype is NOT evaluated — no double actions.
-//  2. If the per-mob tree is absent or returned non-Success (Failure, or
-//     every event-tagged branch mismatched the event), the mob's declared
-//     archetype (mob.BehaviorArchetype) is resolved and evaluated with a
-//     fresh EvalContext. The BehaviorState is per mob instance and
-//     intentionally shared between the two evaluations.
+//     Running owns the event too: the tree claimed it and is mid-progress
+//     (a delay decorator counting down, a goal plan whose step already
+//     queued a command), and a second brain acting now would violate the
+//     same no-double-actions rule Success carries. Running returns false
+//     — legacy path, no archetype — exactly as it did before the
+//     composition change.
+//  2. Only if the per-mob tree is absent or returned Failure (which
+//     includes every event-tagged branch mismatching the event) is the
+//     mob's declared archetype (mob.BehaviorArchetype) resolved and
+//     evaluated, with a fresh EvalContext. The BehaviorState is per mob
+//     instance and intentionally shared between the two evaluations.
 //  3. If neither succeeded, returns false and the caller runs the legacy
 //     path (combatcommands / default attack / idle handlers).
 //
@@ -250,14 +256,24 @@ func TryMobBehavior(mobInstanceId int, event EventContext) bool {
 		}
 	}
 
-	// 1. Per-mob tree first. Success owns the event outright.
+	// 1. Per-mob tree first. Success owns the event outright, and so does
+	// Running: the tree claimed the event and is mid-progress (e.g. mob
+	// 254's negotiation delay countdown, or a goal plan that already
+	// queued a command before reporting StatusRunning). Letting a second
+	// brain act on the same round would break the no-double-actions rule,
+	// so Running returns false — legacy path, no archetype — which is
+	// byte-for-byte the pre-composition behavior. Only Failure falls
+	// through to the archetype.
 	if perMobTree != nil {
-		if perMobTree.Evaluate(newCtx()) == Success {
+		switch perMobTree.Evaluate(newCtx()) {
+		case Success:
 			return true
+		case Running:
+			return false
 		}
 	}
 
-	// 2. Fall through to the declared archetype.
+	// 2. Fall through to the declared archetype on Failure only.
 	if mob.BehaviorArchetype == "" {
 		return false
 	}
