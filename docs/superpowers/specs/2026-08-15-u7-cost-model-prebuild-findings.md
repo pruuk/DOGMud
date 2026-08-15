@@ -97,8 +97,42 @@ reserve-clamped, so a companion or enchantment holder is silently taxed:
    absent from `config.yaml`, and the summon-time budget check is never
    re-applied when gear is equipped afterwards, so a reserved conviction pool of
    zero is reachable. Harmless today (defences are ungated); under U8's
-   skill-strip it becomes a permanent triple-digit defence penalty. Gate it
-   before U8 ships.
+   skill-strip it becomes a permanent triple-digit defence penalty. The owner's
+   reservation ceiling (§3.5) is the fix, and it must land before U8.
+
+### 2.1 The reservation ceiling (owner, 2026-08-15) — arc-scoped, slice TBD
+
+**Total reservation on a pool is capped at somewhere between 50% and 75% of that
+pool's max, and any action that would push it past the cap is REFUSED** rather
+than allowed to succeed and clamp. Refusal applies at the breaching action:
+wielding or equipping a reserving item, enchanting, summoning, conjuring,
+raising, and anything else that adds a reservation. Applies to players and NPCs
+alike.
+
+This supersedes the piecemeal gate described above: `CanAffordCompanion` checks a
+budget only at summon time, so gear equipped afterwards is unchecked, and the
+three reservation sources (Chrysalis enchantments, pinnacle-item `reserve_*_pct`,
+companions) are summed with no cap at all today.
+
+Not necessarily in U7, but **must be in the arc, and must precede U8's
+skill-strip**, which is what turns an over-reserved pool from cosmetic into
+crippling.
+
+Open work before it can be built:
+
+- **Where the cap falls (50% vs 75%) needs the live distribution**, not a guess.
+  A single tier-4 conviction enchant is 8% (doubled to 16% on a two-hander), a
+  pinnacle item can take 15% of all three pools at once, and one companion of a
+  280-base spell at manifestation 48 is about 31% of a 470 pool. Two companions
+  plus one enchant already approaches 75%.
+- **Characters already over the cap.** Reservation can exceed the max today, so
+  live saves may breach on load. Decide: grandfather them, force-release the
+  newest reservation, or clamp and warn.
+- **Passive breach.** A character can cross the cap without acting, by losing max
+  pool (stat drain, removing a stat-boosting item). The cap cannot only be
+  enforced on the adding action.
+- **Per pool, not per character.** Some items reserve two or three pools at once.
+- **Messaging** must name reservation as the reason, per §2 decision 3.
 
 ---
 
