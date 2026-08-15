@@ -388,8 +388,18 @@ func ScoreBash(mob *mobs.Mob, target *characters.Character) int {
 		return 0
 	}
 
-	// Bonus for high target health (bash is good for damage early)
-	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.HealthMax.Value)
+	// Bonus for high target health (bash is good for damage early).
+	//
+	// EffectivePoolMax, not the raw HealthMax (U7 Task 11). Every scorer in this
+	// file that reads a TARGET's health percentage is routinely scoring a PLAYER,
+	// and a player's current health is already clamped to max - reservation every
+	// round. Against the raw max a player wearing the Blackrazor (40183,
+	// reserve_health_pct 0.25) and the Seething Prism (40187, 0.15) reads as 60%
+	// health at a completely full pool, so every mob in the game treats them as
+	// wounded prey for their entire career. Mobs cannot carry a reservation, so
+	// the SELF-side reads further down this file (ScoreGrapple's mob penalty,
+	// ScoreDrain, preferredSpell) deliberately keep the raw max.
+	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.EffectivePoolMax(characters.PoolHealth))
 	if targetHealthPercent > 60 {
 		score += 20
 	}
@@ -458,7 +468,8 @@ func ScoreKick(mob *mobs.Mob, target *characters.Character) int {
 	}
 
 	// Small bonus if target is low health (finish them)
-	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.HealthMax.Value)
+	// EffectivePoolMax, not the raw max -- see ScoreBash.
+	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.EffectivePoolMax(characters.PoolHealth))
 	if targetHealthPercent < 30 {
 		score += 10
 	}
@@ -478,7 +489,8 @@ func ScoreHamstring(mob *mobs.Mob, target *characters.Character) int {
 	}
 
 	// Bonus when the target is healthy and mobile — hamstring to slow them.
-	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.HealthMax.Value)
+	// EffectivePoolMax, not the raw max -- see ScoreBash.
+	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.EffectivePoolMax(characters.PoolHealth))
 	if targetHealthPercent > 50 {
 		score += 15
 	}
@@ -577,7 +589,8 @@ func ScoreMaul(mob *mobs.Mob, target *characters.Character) int {
 	}
 
 	// Finisher bonus: target is below 50% health — savage the weakened prey.
-	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.HealthMax.Value)
+	// EffectivePoolMax, not the raw max -- see ScoreBash.
+	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.EffectivePoolMax(characters.PoolHealth))
 	if targetHealthPercent < 50 {
 		score += 10
 	}
@@ -602,7 +615,8 @@ func ScoreGrapple(mob *mobs.Mob, target *characters.Character) int {
 	}
 
 	// Bonus if target is low health (finish them with grapple)
-	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.HealthMax.Value)
+	// EffectivePoolMax, not the raw max -- see ScoreBash.
+	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.EffectivePoolMax(characters.PoolHealth))
 	if targetHealthPercent < 30 {
 		score += 15
 	}
@@ -612,7 +626,9 @@ func ScoreGrapple(mob *mobs.Mob, target *characters.Character) int {
 		return 0
 	}
 
-	// Penalty if mob is low health (risky)
+	// SELF-side: the raw max is correct here. Reservation comes from equipped
+	// reserve_*_pct items, Chrysalis enchantments and fielded companions, none of
+	// which mobs carry, so EffectivePoolMax would be a no-op that implies mobs do.
 	mobHealthPercent := float64(mob.Character.Health) * 100.0 / float64(mob.Character.HealthMax.Value)
 	if mobHealthPercent < 20 {
 		score -= 50
@@ -667,6 +683,7 @@ func ScoreDrain(mob *mobs.Mob, target *characters.Character) int {
 
 	// Bonus when the vampire is hurt — drain recovers HP, so prioritize it
 	// when the attacker needs healing.
+	// SELF-side: raw max on purpose -- see ScoreGrapple.
 	hpPct := float64(mob.Character.Health) * 100 / float64(mob.Character.HealthMax.Value)
 	if hpPct < 60 {
 		score += 25
@@ -701,6 +718,7 @@ func preferredSpell(mob *mobs.Mob) string {
 		}
 	}
 	// Heal when critically low
+	// SELF-side: raw max on purpose -- see ScoreGrapple.
 	selfPct := float64(mob.Character.Health) * 100 / float64(mob.Character.HealthMax.Value)
 	if selfPct < 30 {
 		if _, has := mob.Character.SpellBook["heal"]; has {
@@ -754,7 +772,8 @@ func ScoreSubmit(mob *mobs.Mob, target *characters.Character) int {
 	}
 
 	// Bonus if target is low health
-	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.HealthMax.Value)
+	// EffectivePoolMax, not the raw max -- see ScoreBash.
+	targetHealthPercent := float64(target.Health) * 100.0 / float64(target.EffectivePoolMax(characters.PoolHealth))
 	if targetHealthPercent < 40 {
 		score += 15
 	}

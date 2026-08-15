@@ -9,6 +9,7 @@ package behaviortree
 // to other branches gracefully.
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 )
 
@@ -41,17 +42,23 @@ func condPartyMemberBelowPct(params map[string]any, ctx *EvalContext) Result {
 		if c == nil {
 			continue
 		}
+		// EffectivePoolMax, not the raw max (U7 Task 11). A Party's Members are
+		// partyActors and are routinely PLAYERS, whose current pool is already
+		// clamped to max - reservation every round by RecalculateStats. Against
+		// the raw max a player carrying a reserving item or a fielded companion
+		// reads as permanently below this threshold at a completely full pool, so
+		// an NPC party healer would burn conviction topping them up forever.
 		var current, max int
 		switch pool {
 		case "hp":
 			current = c.Health
-			max = c.HealthMax.Value
+			max = c.EffectivePoolMax(characters.PoolHealth)
 		case "sp":
 			current = c.Stamina
-			max = c.StaminaMax.Value
+			max = c.EffectivePoolMax(characters.PoolStamina)
 		case "cp":
 			current = c.Conviction
-			max = c.ConvictionMax.Value
+			max = c.EffectivePoolMax(characters.PoolConviction)
 		default:
 			return Failure
 		}

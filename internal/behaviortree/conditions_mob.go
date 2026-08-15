@@ -129,6 +129,11 @@ func condPackmateBelowHpRatio(params map[string]any, ctx *EvalContext) Result {
 	}
 	threshold := getFloatParam(params, "threshold", 0.40)
 	for _, pm := range mobs.FindPackmatesInRoom(self) {
+		// Raw max on purpose, NOT EffectivePoolMax. FindPackmatesInRoom returns
+		// *mobs.Mob only, and pool reservation comes from equipped reserve_*_pct
+		// items, Chrysalis enchantments and fielded companions, none of which a
+		// mob carries. Player party members are a different code path
+		// (condPartyMemberBelowPct), and that one IS reserve-aware.
 		maxHp := pm.Character.HealthMax.Value
 		if maxHp <= 0 {
 			continue

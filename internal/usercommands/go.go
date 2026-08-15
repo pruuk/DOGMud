@@ -233,8 +233,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			return true, nil
 		}
 
-		// Warn if stamina is getting low (< 25% of max)
-		if user.Character.Stamina < user.Character.StaminaMax.Value/4 {
+		// Warn if stamina is getting low (< 25% of the pool they can reach).
+		// EffectivePoolMax, not the raw max (U7 Task 11): current stamina is
+		// already reserve-clamped, so a raw denominator nags a 40%-reserved
+		// character about being winded at what is, for them, a full pool. No
+		// mechanical effect, but the message is still wrong.
+		if user.Character.Stamina < user.Character.EffectivePoolMax(characters.PoolStamina)/4 {
 			user.SendText(messaging.CategorySystem, "<ansi fg=\"yellow\">You're feeling winded. Consider resting to recover your stamina.</ansi>")
 		}
 
