@@ -141,13 +141,26 @@ func DefensePool(defenseType string) Pool {
 // numbers; charge the result through Character.ApplyCostFloat, which banks the
 // remainder, and the difference survives as an average instead of vanishing.
 //
-// QUELL AND DEFY DELIBERATELY KEEP THEIR FLAT U6 CONVICTION COSTS. The
-// principled price for a mounted defence is a fraction of the incoming action's
-// cost -- a save should scale with what it is answering -- but that needs the
-// attacker's cost threaded through seven call sites and a signature change on
-// the defence path, and neither defence has been observed in live play yet.
-// Deferred on purpose: the flat cost is tunable today and wrong only in a way
-// no player has met.
+// ALL FIVE defences price through the one formula, quell and defy included.
+// Every action with a governing skill takes the inverse-skill discount, mental
+// and social no exception: quell is governed by spellcasting and defy by
+// rhetoric, so a practised caster spends less conviction turning a working aside
+// than a novice does, exactly as a practised fighter spends less stamina
+// blocking. Their bases are the two conviction knobs rather than the shared
+// stamina one, and their per-action modifier is a neutral 1.0 -- there is no
+// third conviction-defence to tune them against.
+//
+// What keeps encumbrance off them is the costs registry, not this function:
+// ActionQuell and ActionDefy are registered Physical: false, so costs.Calc
+// never applies the encumbrance multiplier to either. That row is the single
+// point of truth for it, and flipping it would move the price of quell under
+// load -- which is what TestQuellAndDefyAreFlatAndUnencumbered asserts against.
+//
+// The principled price for a mounted defence is still a FRACTION OF THE
+// INCOMING ACTION's cost -- a save should scale with what it is answering --
+// but that needs the attacker's cost threaded through seven call sites and a
+// signature change on the defence path. Deferred on purpose; the flat base is
+// tunable today.
 //
 // An unrecognised defence costs 0 rather than being priced as something else,
 // which pairs with DefensePool mapping it to PoolStamina: together they charge
@@ -156,26 +169,31 @@ func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
 	bal := configs.GetBalanceConfig()
 
 	var action costs.Action
-	var modifier float64
+	var base, modifier float64
 
 	switch defenseType {
 	case DefenseDodge:
-		action, modifier = costs.ActionDodge, float64(bal.DodgeCostModifier)
+		action = costs.ActionDodge
+		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.DodgeCostModifier)
 	case DefenseParry:
-		action, modifier = costs.ActionParry, float64(bal.ParryCostModifier)
+		action = costs.ActionParry
+		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.ParryCostModifier)
 	case DefenseBlock:
-		action, modifier = costs.ActionBlock, float64(bal.BlockCostModifier)
+		action = costs.ActionBlock
+		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.BlockCostModifier)
 	case DefenseQuell:
-		return float64(atLeastOneCost(int(bal.QuellBaseConvictionCost)))
+		action = costs.ActionQuell
+		base, modifier = float64(bal.QuellBaseConvictionCost), 1.0
 	case DefenseDefy:
-		return float64(atLeastOneCost(int(bal.DefyBaseConvictionCost)))
+		action = costs.ActionDefy
+		base, modifier = float64(bal.DefyBaseConvictionCost), 1.0
 	default:
 		return 0
 	}
 
 	spec := costs.SpecFor(action)
-	return costs.Calc(costs.Input{
-		Base:      float64(bal.DefenceBaseStaminaCost),
+	cost := costs.Calc(costs.Input{
+		Base:      base,
 		Carried:   c.GetCarriedWeight(),
 		Capacity:  c.CarryCapacity(),
 		Physical:  spec.Physical,
@@ -183,18 +201,36 @@ func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
 		HasSkill:  spec.HasSkill,
 		Modifier:  modifier,
 	})
+
+	// A mounted defence must never come out FREE. This is the float sibling of
+	// atLeastOneCost, and it deliberately does not floor at 1: ApplyCostFloat
+	// banks the sub-integer remainder, so a mastered caster's 0.8 conviction is
+	// really paid over five saves, and clamping it up to a whole point would
+	// delete the mastery discount the paragraph above grants. Zero is the only
+	// value that is genuinely free forever, so zero is what this catches.
+	//
+	// It is unreachable under any validated Balance -- validateCombat forces
+	// every base positive and both multiplier curves are positive by
+	// construction -- and exists so a hand-built Balance cannot silently make a
+	// defence cost nothing.
+	if cost <= 0 {
+		return float64(atLeastOneCost(int(base)))
+	}
+	return cost
 }
 
 // GetDefenseCost returns what a defence costs in the pool DefensePool names for
 // it, as a whole number.
 //
-// PREFER GetDefenseCostFloat. This exists for callers that have not migrated to
-// the fractional carry: today that is ResolveChannelDefence in
-// internal/combat/defence_multiplier.go (the spell and social channels) and the
-// defence-cost tests in this package. Rounding a U7 cost to an integer is
-// lossy in exactly the way the float version exists to avoid -- at the shipped
-// base and modifiers all three physical defences floor to 1 here, so a caller
-// using this cannot see the difference between dodging and parrying.
+// USE GetDefenseCostFloat. NO production caller uses this one any more: the
+// melee site migrated in U7 Task 6 and ResolveChannelDefence (the ranged, spell
+// and social channels) followed, which is what fixed block against a physical
+// spell falling from four stamina to one. The only remaining callers are the
+// defence-cost tests in this package, which use it to pin exactly how lossy it
+// is. Rounding a U7 cost to an integer destroys the tuning the float version
+// exists to carry -- at the shipped base and modifiers all three physical
+// defences floor to 1 here, so a caller using this cannot see the difference
+// between dodging, parrying and blocking.
 //
 // Floored, not rounded, with a floor of 1: a defence that costs nothing is not
 // a defence, and rounding up would overcharge every defence in the game by up

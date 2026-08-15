@@ -120,15 +120,15 @@ fair representation in combat text, and having multiple defense types is
 always better (wider net).
 
 **Defense Types:**
-1. **Dodge** - Unarmed Combat + Dexterity, costs 2 stamina, always available
+1. **Dodge** - Unarmed Combat + Dexterity, dearest to mount, always available
    - Reduced by heavy armor and encumbrance
    - -50% effectiveness when prone
-2. **Parry** - Weapon Combat + weapon parry rating, costs 4 stamina, requires weapon
+2. **Parry** - Weapon Combat + weapon parry rating, cheapest, requires weapon
    - Two-handed weapons get bonus to parry
    - Can parry with either hand when dual wielding
    - -30% effectiveness when prone
-3. **Block** - Weapon Combat + shield block rating, costs 5 stamina, requires shield
-   - Most stamina-intensive but highly effective
+3. **Block** - Weapon Combat + shield block rating, requires shield
+   - Highly effective; priced between parry and dodge
    - -20% effectiveness when prone (shield still works from ground)
 
 **Defense Floor:** `ContestFloor` (0.125) is symmetric and lives inside
@@ -138,13 +138,25 @@ and a massively outclassing attacker is still stopped at the same rate. U6 Task
 they were applied after crit resolution had already returned, so the attack
 floor was only ever evaluated on the swings a defence crit did not consume.
 
-**Stamina Costs:**
-- Only the winning defense (best margin) costs stamina — losing defenses are free
-- The winner is charged with `ApplyCostPartial`, so a defender who cannot pay in
-  full still defends and simply pays what is left (U5b-2)
-- Defense costs are config, not Go: `DodgeBaseStaminaCost` / `ParryBaseStaminaCost`
-  / `BlockBaseStaminaCost` × the matching multiplier, truncated, floored at 1.
-  The 2 / 4 / 5 above are the *base* values; shipped effective costs are 1 / 3 / 4.
+**Defence Costs:**
+- Only the winning defense (best margin) costs anything — losing defenses are free
+- The winner is charged with `ApplyCostFloat` (which delegates to
+  `ApplyCostPartial`), so a defender who cannot pay in full still defends and
+  simply pays what is left (U5b-2)
+- Defence costs are one config formula, not per-defence Go arithmetic. U7 Task 6
+  deleted `GetDefenseStaminaCost` and the three per-defence base knobs
+  (`DodgeBaseStaminaCost` / `ParryBaseStaminaCost` / `BlockBaseStaminaCost`)
+  with it. The price is now `costs.Calc`: `DefenceBaseStaminaCost` (1.0) ×
+  encumbrance × inverse-skill × `{Dodge,Parry,Block}CostModifier` (1.25 / 1.10 /
+  1.15). For an unladen rank-1 defender that is dodge **1.370**, block
+  **1.2604**, parry **1.2056**.
+- **Charge through `GetDefenseCostFloat` + `ApplyCostFloat`, never the integer
+  pair.** All three of those numbers truncate to `1`, so an integer charge erases
+  the modifiers entirely. That was live: `ResolveChannelDefence` used the integer
+  entry point until U7, and `DefenceSetFor` routes dodge and block there for
+  `ChannelRanged` and `ChannelSpellPhysical` (eleven shipped spells declare
+  `target_defense_type: physical`), so block against a physical spell was charged
+  1 rather than 1.2604.
 - `ResourceMultiplier` is attack-side only. It does NOT penalise defence today —
   see the exhaustion gotcha under "Contest core" below.
 
@@ -224,13 +236,13 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    falls through to the zero value, which `items.GetDefenseMessage` already
    handles by returning an empty set.
 3. **The cost path is stamina-only.** **FIXED.** `characters.DefensePool` +
-   `Character.GetDefenseCost` are the pair to charge through; `DefensePool` maps
-   quell and defy to `PoolConviction` and everything else to `PoolStamina`, and
-   `GetDefenseCost` reads `QuellBaseConvictionCost` / `DefyBaseConvictionCost`
-   for the two. `runBestOfAllDefense` was moved onto the pair as well (a no-op
-   for the physical three) so the old shape survives nowhere.
-   `GetDefenseStaminaCost` still exists and still returns 0 for quell and defy;
-   that is the trap the pair replaces.
+   `Character.GetDefenseCostFloat` are the pair to charge through; `DefensePool`
+   maps quell and defy to `PoolConviction` and everything else to `PoolStamina`,
+   and `GetDefenseCostFloat` prices the two off `QuellBaseConvictionCost` /
+   `DefyBaseConvictionCost`. `runBestOfAllDefense` and `ResolveChannelDefence`
+   are both on the pair, so the old shape survives nowhere.
+   `GetDefenseStaminaCost` — the stamina-only function that returned 0 for quell
+   and defy, which is the trap the pair replaces — was DELETED in U7 Task 6.
 4. **Analytics and the admin dashboard lose the swing entirely.** **DEFERRED,
    and not currently reachable.** `analytics.go` is fed from
    `AttackResult.SwingEvents`, which only the melee pipeline populates;

@@ -62,9 +62,12 @@ func TestRunBestOfAllDefense_ExhaustedDefenderStillEntersTheContest(t *testing.T
 // U7 Task 6 rewrote the setup. Under the old base x multiplier formula block
 // cost a flat int(5 * 0.9) = 4, so a 1-stamina fixture was short by
 // construction. It is now DefenceBaseStaminaCost x encumbrance x inverse skill
-// x BlockCostModifier, which for an unladen rank-0 defender is about 1.27 --
-// and ApplyCostFloat floors that to a charge of 1, which the fixture can pay in
-// full, leaving the assertion vacuous. Loading the defender to capacity puts
+// x BlockCostModifier, which for an unladen rank-1 defender is 1.2604 -- and
+// ApplyCostFloat floors that to a charge of 1, which the fixture can pay in
+// full, leaving the assertion vacuous. RANK 1, not rank 0: characters.New()
+// seeds every skill at rank 1 through initAllSkills, so rank 0 is unreachable
+// for a fixture built this way and quoting the rank-0 multiplier here would be
+// quoting a number the test never sees. Loading the defender to capacity puts
 // the encumbrance multiplier on it and prices block well past what they hold.
 // Capacity is overridden rather than derived from Strength so the ratio does
 // not move when the stat defaults do.

@@ -152,14 +152,19 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 // both the melee path (runBestOfAllDefense charges the best defence every swing)
 // and the two deleted functions (which awarded progression unconditionally).
 // It is charged against the pool its type names, via the DefensePool /
-// GetDefenseCost pair, which read the pool and the amount off the same defence
-// name and so cannot charge one defence's price against another's pool.
+// GetDefenseCostFloat pair, which read the pool and the amount off the same
+// defence name and so cannot charge one defence's price against another's pool.
 //
-// Still on the INTEGER entry point, deliberately: U7 Task 6 migrated the melee
-// site to GetDefenseCostFloat + ApplyCostFloat, and this one is next. The two
-// defences this path exists for -- quell and defy -- are priced flat, so the
-// integer rounding costs nothing here today; it will matter as soon as the
-// physical three start arriving on a spell channel.
+// THE PHYSICAL DEFENCES DO ARRIVE HERE, so the FLOAT entry point is mandatory.
+// DefenceSetFor sends dodge and block to this function for ChannelRanged and
+// ChannelSpellPhysical, and eleven shipped spells declare
+// target_defense_type: physical. Charging them through the integer entry point
+// floors every physical defence onto the same whole number -- block prices at
+// 1.2604 and would be charged 1, exactly what dodge is charged -- which deletes
+// the per-defence modifiers this path is supposed to price. ApplyCostFloat banks
+// the remainder instead, so the distinction survives as an average. An earlier
+// comment here asserted the physical three never reached this site; that was
+// never true.
 func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) float64 {
 	if attacker == nil || defender == nil {
 		return 1.0
@@ -188,9 +193,9 @@ func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters
 	// contested -- win or lose. Test it rather than res.Contested only because it
 	// is also what names the pool and the skill.
 	if res.Winner != "" {
-		_ = defender.ApplyCostPartial(
+		_ = defender.ApplyCostFloat(
 			characters.DefensePool(res.Winner),
-			defender.GetDefenseCost(res.Winner))
+			defender.GetDefenseCostFloat(res.Winner))
 		AwardDefenceProgression(defender, defender.GetUserId(), res.Winner)
 	}
 

@@ -47,6 +47,10 @@ const (
 	ActionParry  Action = `parry`
 	ActionBlock  Action = `block`
 	ActionMove   Action = `move`
+
+	// Paid in CONVICTION, and both registered Physical: false.
+	ActionQuell Action = `quell`
+	ActionDefy  Action = `defy`
 )
 
 type Spec struct {
@@ -83,15 +87,22 @@ registry, and hands the result to the pool:
 ```go
 spec := costs.SpecFor(costs.ActionDodge)
 raw := costs.Calc(costs.Input{
-	Base:      float64(bal.DodgeBaseStaminaCost),
+	Base:      float64(bal.DefenceBaseStaminaCost), // ONE shared base for all three physical defences
 	Carried:   carried,
 	Capacity:  capacity,
 	Physical:  spec.Physical,
-	SkillRank: rank,          // actor's rank in spec.Skill
+	SkillRank: rank, // actor's rank in spec.Skill
 	HasSkill:  spec.HasSkill,
-	Modifier:  1.25, // per-action knob; Task 6 adds the config field for it
+	Modifier:  float64(bal.DodgeCostModifier), // 1.25; parry 1.10, block 1.15
 })
 ```
+
+There are no per-defence base knobs. `DodgeBaseStaminaCost`,
+`ParryBaseStaminaCost` and `BlockBaseStaminaCost` were deleted in U7 Task 6
+along with `characters.GetDefenseStaminaCost`; the three defences share
+`DefenceBaseStaminaCost` and differ only by their `*CostModifier`. Quell and
+defy use their own bases (`QuellBaseConvictionCost` / `DefyBaseConvictionCost`)
+with a neutral `Modifier: 1.0`.
 
 `Modifier` is skipped when it is `<= 0`, so a caller that leaves it at the zero
 value gets a neutral 1.0 rather than a free action.
@@ -117,6 +128,24 @@ value gets a neutral 1.0 rather than a free action.
   authored price of the action, and capping it would flatten cheap actions
   against expensive ones.
 
+- **`characters.GetDefenseCostFloat` is currently the ONLY production caller of
+  `Calc`.** Everything else in the U7 arc is still ahead of its call sites, so
+  `CostTotalMultiplierMax` binds nowhere else in the game today. Retuning it
+  today moves defence prices and nothing at all besides.
+
+- **The clamp is rank-dependent, and only bites novices.** It caps the composed
+  multiplier, so the rank the actor holds decides the load at which it starts
+  applying. At rank 1 (which is what `characters.New()` seeds every skill to)
+  dodge reaches 6.0 above roughly **95.6%** of carry capacity, block above
+  **98.3%** and parry above **99.8%** — so at capacity all three converge on the
+  same 6.0 and the per-defence modifiers stop being visible. At a realistic
+  ~40% load none of them are close (1.735 / 1.597 / 1.527). At the skill cap the
+  question does not arise at all: dodge's worst case is
+  `5.0 x 0.40 x 1.25 = 2.5`, so **a mastered defender never reaches the clamp at
+  any load.** The convergence at capacity is ACCEPTED — a defender hauling their
+  own weight in ore paying a flat ceiling for any defence is the intended
+  behaviour, not a defect to fix.
+
 - **Leaf rule: never import `internal/characters`.** `characters` reaches this
   package (or will), so the reverse edge is a cycle. That is why `Input` carries
   plain `float64`s instead of an actor: callers extract carried weight, capacity
@@ -131,6 +160,21 @@ value gets a neutral 1.0 rather than a free action.
   A zero here would price actions free or divide by zero, so it is treated as
   "absent". To make an action free, leave it out of the registry or give it a
   `Base` of 0 — not a zeroed multiplier knob.
+
+- **`Physical: false` is the ONLY thing keeping encumbrance off quell and defy,
+  and it is load-bearing.** Both are read for real now:
+  `characters.GetDefenseCostFloat` passes `spec.Physical` straight into `Input`,
+  so flipping either row multiplies a backpack into the price of a caster's
+  saving throw. `TestQuellAndDefyPriceThroughTheirRegistryRows` in
+  `internal/characters` fails on the flip. Note this was NOT true before U7:
+  the rows existed but `GetDefenseCostFloat` returned early for both, so nothing
+  read them and flipping one changed nothing.
+
+- **A skill discount is not a physical-only privilege.** `HasSkill: true` on the
+  mental and social rows is deliberate: every action with a governing skill takes
+  the inverse-skill multiplier, so a practised caster spends less conviction on
+  quell and a practised orator less on defy. `Physical` governs encumbrance and
+  `HasSkill` governs the skill discount; they are independent.
 
 - **An unregistered `Action` returns the zero `Spec`, it does not panic.** The
   result is a flat base cost with no skill discount and no encumbrance. That is
@@ -155,9 +199,13 @@ Declared in `internal/configs/config.balance.go`, defaulted and validated in
 
 ## Consumers
 
-None yet as of this task — the package is built ahead of its call sites. The
-U7 arc wires it in from `internal/combat` (per-swing attack, the five defence
-costs) and from movement. The registry is the seam: ranged, taunt, rally,
+One, as of U7 Task 6: `characters.GetDefenseCostFloat` prices all five defences
+through `Calc`, and `internal/combat` charges the result via
+`Character.ApplyCostFloat` at both defence sites (`runBestOfAllDefense` for
+melee, `ResolveChannelDefence` for the ranged, spell and social channels).
+
+Everything else is still ahead of its call sites. The U7 arc wires in per-swing
+attack and movement next. The registry is the seam: ranged, taunt, rally,
 warcry, the thirteen currently-free special moves, grapple initiation and sneak
 each become a registry entry plus a config base, with no change at their call
 sites.

@@ -210,32 +210,46 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   a thin wrapper over `ApplyCostPartial`; it stays only because nothing
   downstream strips the skill term until U8. `DeductActionPoints` is a different
   pool entirely (see the ActionPoints note above).
-- **Defence base stamina costs are config, not Go.** `DodgeBaseStaminaCost`,
-  `ParryBaseStaminaCost` and `BlockBaseStaminaCost` feed
-  `GetDefenseStaminaCost`, which computes `int(base * multiplier)` TRUNCATED and
-  then floors at 1. Rounding instead of truncating would change dodge's live
-  cost.
-- **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCost`.**
-  There are FIVE defence constants and `GetDefenseStaminaCost` prices only
-  three. `DefenseDodge` / `DefenseParry` / `DefenseBlock` cost stamina; U6 added
-  `DefenseQuell` (mental-spell defence, `Willpower + spellcasting × SkillWeight`)
-  and `DefenseDefy` (social defence, `Willpower + rhetoric × SkillWeight`), and
-  both cost **conviction**. Grepping for a stamina cost on either finds nothing
-  and proves nothing.
+- **Defence costs are one config formula, not per-defence Go arithmetic.** U7
+  Task 6 deleted `GetDefenseStaminaCost` and with it the three per-defence base
+  knobs (`DodgeBaseStaminaCost`, `ParryBaseStaminaCost`,
+  `BlockBaseStaminaCost`). All five defences now price through `costs.Calc`:
+
+  - dodge / parry / block: `DefenceBaseStaminaCost` × encumbrance ×
+    inverse-skill × `{Dodge,Parry,Block}CostModifier` (1.25 / 1.10 / 1.15).
+  - quell / defy: `QuellBaseConvictionCost` / `DefyBaseConvictionCost` ×
+    inverse-skill, modifier a neutral 1.0. **No encumbrance term** — their
+    `costs.ActionQuell` / `ActionDefy` registry rows are `Physical: false`, and
+    that row is the only thing keeping it off them.
+
+  Every action with a governing skill takes the inverse-skill discount, mental
+  and social included: quell is governed by spellcasting and defy by rhetoric.
+- **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCostFloat`.**
+  There are FIVE defence constants. `DefenseDodge` / `DefenseParry` /
+  `DefenseBlock` cost stamina; U6 added `DefenseQuell` (mental-spell defence,
+  `Willpower + spellcasting × SkillWeight`) and `DefenseDefy` (social defence,
+  `Willpower + rhetoric × SkillWeight`), and both cost **conviction**. Grepping
+  for a stamina cost on either finds nothing and proves nothing.
 
   ```go
-  func DefensePool(defenseType string) Pool              // quell/defy -> PoolConviction
-  func (c *Character) GetDefenseCost(defenseType string) int
+  func DefensePool(defenseType string) Pool                      // quell/defy -> PoolConviction
+  func (c *Character) GetDefenseCostFloat(defenseType string) float64
+  func (c *Character) GetDefenseCost(defenseType string) int     // tests only; see below
+  func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
   ```
 
-  `GetDefenseStaminaCost` still returns **0** for quell and defy via its default
-  arm. That is correct for what it measures and a trap for its callers: the old
-  `ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...))` shape charges zero
-  and the defence is **free** — silently, with no compile error, since melee
-  never emits either name. U6 Task 12 added the pair and moved
-  `runBestOfAllDefense` and `combat.ResolveChannelDefence` onto it. An
-  unrecognised name maps to `PoolStamina` at cost 0, so the pair charges nothing
-  rather than draining an arbitrary pool.
+  **Use the FLOAT pair.** `GetDefenseCost` truncates, and at the shipped base and
+  modifiers all three physical defences floor to the same `1` — the per-defence
+  tuning simply vanishes. That was a live bug: `combat.ResolveChannelDefence`
+  charged through the integer entry point until U7, so blocking a
+  `target_defense_type: physical` spell (eleven shipped spells set it) cost 1
+  instead of 1.2604 and was indistinguishable from dodging. `ApplyCostFloat`
+  banks the sub-integer remainder, so the difference survives as an average. No
+  production caller of `GetDefenseCost` remains.
+
+  The pairing matters independently: pool and amount must be read off the SAME
+  defence name. An unrecognised name maps to `PoolStamina` at cost 0, so the pair
+  charges nothing rather than draining an arbitrary pool.
 - **`GetDefenseSequence` is melee-only and does not know about quell or defy.**
   It derives dodge/parry/block from equipment. The per-channel defence set lives
   in `combat.DefenceSetFor` instead.
