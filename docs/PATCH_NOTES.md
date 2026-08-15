@@ -50,6 +50,12 @@ be knocked down and told they were too tired to stand, forever, and no
 amount of rest would fix it, because the bar was set above anything they
 could ever hold.
 
+That measure runs both ways. Rested is rested: enemies no longer read a
+character whose gear holds back part of their health as wounded prey, and
+allies no longer fuss over someone who is already as whole as they can be.
+Nor does giving up a whole pool make you untouchable. A pool your gear keeps
+permanently empty now weighs on you exactly as an empty pool should.
+
 ## 2026-08-15: The casters remember their spells
 
 Some enemies were written as spellcasters and never once cast. A mob that
