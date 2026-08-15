@@ -599,10 +599,12 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		//
 		// This used to `continue` an unaffordable defence out of the candidate
 		// set. With every defence unaffordable the entry list came out empty,
-		// contest.Run reported uncontested, and the swing fell through to the
-		// MinDefenseChance last resort -- a flat 15% save, always narrated as a
-		// dodge, and never able to defence-crit. An exhausted actor still acts;
-		// the winning defence is charged partially below.
+		// the contest reported uncontested, and the swing fell through to the
+		// old MinDefenseChance last resort -- a flat 15% save, always narrated
+		// as a dodge, and never able to defence-crit. U6 deleted that knob and
+		// its narrator; an uncontested swing is now simply an attack win, and
+		// the floor lives inside RunContest. An exhausted actor still acts; the
+		// winning defence is charged partially below.
 		//
 		// The defender's exhaustion currently costs their defence NOTHING:
 		// GetDefenseScore has no resource term, and stripping the skill term is
@@ -828,7 +830,9 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
 	// res.hit, and nowhere earlier. The core resolver treats an attack crit as
 	// forcing a hit, so a floor evaluated inside it would become an undeclared
-	// second hit floor leaking through MinDefenseChance. See applyCritFloors.
+	// second hit floor. That used to leak through MinDefenseChance; U6 deleted
+	// that knob, and the contest floor now lives inside RunContest, but the
+	// one-application-point rule still holds. See applyCritFloors.
 	applyCritFloors(&res, result, best, AttackCritFloor(), DefenseCritFloor())
 
 	return res
