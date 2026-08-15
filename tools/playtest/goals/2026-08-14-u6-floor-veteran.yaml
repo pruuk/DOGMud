@@ -37,10 +37,24 @@
 #     OUTCOME lands on a LATER round tick. Actor 1 reported a third of flees
 #     producing no outcome; every outcome path in the code does send a message,
 #     so that was probably impatience. WAIT a round or two and read.
-#   * ACTOR 1 WAS BLOCKED BY A RANK GATE on steal, defuse, shadow and picklock
-#     (below skullduggery rank 2 they refuse BEFORE any contest is rolled). You
-#     have skullduggery 50, so nothing gates you. If actor 2 also fails to cover
-#     one of those, it falls to you.
+#   * PICKLOCK IS NOT IN SCOPE. It is a sequence-matching MINIGAME, roadmap
+#     category D, "not a roll at all": skill sets the puzzle difficulty and the
+#     player supplies the outcome. It was never part of this rewire. Do not
+#     spend time on it and do not report it as uncovered.
+#   * DEFUSE IS ACCEPTED AS UNCOVERED. Do not go looking for it. Actors 1 and 2
+#     both failed to reach it. The practice traps are in a zone under the
+#     Thornwall tavern whose entrance is hidden AND gated behind a prerequisite
+#     quest, so reaching it inside a 40 minute session is not realistic. It is
+#     recorded as a known gap in the U6 sign-off. Spend your time on the
+#     spell ceiling instead, which is what this session is really for.
+#   * ACTORS 1 AND 2 DID COVER steal, plant and shadow, all working. You do not
+#     need to re-prove those; one confirming pass each is plenty.
+#   * IF YOU GET ARRESTED: actor 2 was seized at full health while winning and
+#     dumped in an unlit room where `look` says "You can't see anything!".
+#     Players have a LIGHT SPELL. Check your spell list and try casting it.
+#     Then report the thing that matters: could a player plausibly work that
+#     out from in-game information alone, or is that room a dead end unless you
+#     already know the answer?
 #
 ephemeral:
   profile: veteran
