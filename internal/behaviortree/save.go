@@ -55,6 +55,9 @@ func validateTreeDef(d TreeDef) ([]byte, []string, error) {
 		}
 		return nil
 	}
+	// "root" here is an error-message path label only — runtime state keys
+	// use "root" for per-mob/room trees but "arch" for archetypes (see
+	// LoadArchetypeYAMLFromFile). Editor errors keep the generic label.
 	if err := walk(d.Tree, "root"); err != nil {
 		return nil, nil, err
 	}

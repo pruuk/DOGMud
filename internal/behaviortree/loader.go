@@ -48,8 +48,9 @@ func LoadArchetypeYAMLFromFile(path string) (Node, map[string]float64, []GoalDef
 	// per-instance BehaviorState — with a shared root label, a decorator
 	// at position N in one tree would silently share state with position
 	// N in the other. Distinct labels disjoint the keyspaces. Note: this
-	// one-time key rename resets any in-flight archetype decorator state,
-	// which is harmless (cooldowns simply re-arm).
+	// one-time key rename CLEARS any in-flight archetype decorator state,
+	// so a renamed cooldown can fire once immediately before re-arming —
+	// a one-time, harmless hiccup, not a permanent behavior change.
 	tree, err := compileNode(def.Tree, "arch")
 	if err != nil {
 		return nil, nil, nil, err
