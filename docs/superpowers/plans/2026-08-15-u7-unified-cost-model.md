@@ -10,6 +10,20 @@
 
 **Design authority:** `docs/superpowers/specs/2026-08-12-unified-cost-and-harm-design.md` as corrected by `docs/superpowers/specs/2026-08-15-u7-cost-model-prebuild-findings.md`. **Where the two disagree, the 2026-08-15 document wins.**
 
+> ⚠️ **The numbers table below is authoritative, not the inline code blocks.** The
+> owner retuned every curve at the bench after this plan's task bodies were
+> drafted. The inline Go in the task steps has been corrected to match, but if
+> you ever find a literal in a task body that disagrees with the table, **the
+> table wins** and the literal is stale. Task 2's implementer hit exactly this
+> and read past the code block to the table, which was the right call.
+>
+> One naming rule that came out of Task 2's review: the cost-side skill function
+> is `costs.SkillCostMultiplier`, **not** `SkillMultiplier`. `combat` already has
+> a `SkillMultiplier(rank int) float64` with an identical signature that scales
+> damage UPWARD, and several U7 call sites live inside `package combat`, where
+> the unqualified name resolves to that one. At rank 100 the two return 3.0 and
+> 0.40 respectively, so a mistake compiles silently into a large cost error.
+
 ---
 
 ## Numbers this plan ships
@@ -327,10 +341,10 @@ func TestSkillMultiplierBand(t *testing.T) {
 		rank int
 		want float64
 	}{
-		{0, 1.250},
-		{35, 1.000},
-		{100, 0.750},
-		{150, 0.750}, // clamped beyond the cap rank
+		{0, 1.100},
+		{25, 1.000},
+		{100, 0.400},
+		{150, 0.400}, // clamped beyond the cap rank
 	}
 	for _, c := range cases {
 		got := SkillMultiplier(c.rank)
@@ -437,16 +451,16 @@ In `internal/configs/config.balance.progression.go` (the sibling that defaults p
 
 ```go
 	if b.CostSkillMultAtZero == 0 {
-		b.CostSkillMultAtZero = 1.25
+		b.CostSkillMultAtZero = 1.10
 	}
 	if b.CostSkillMultAtMid == 0 {
 		b.CostSkillMultAtMid = 1.0
 	}
 	if b.CostSkillMultAtCap == 0 {
-		b.CostSkillMultAtCap = 0.75
+		b.CostSkillMultAtCap = 0.40
 	}
 	if b.CostSkillMidRank == 0 {
-		b.CostSkillMidRank = 35
+		b.CostSkillMidRank = 25
 	}
 	if b.CostSkillCapRank == 0 {
 		b.CostSkillCapRank = 100
