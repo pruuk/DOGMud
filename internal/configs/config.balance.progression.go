@@ -26,6 +26,23 @@ func (b *Balance) validateProgression() {
 		b.SkillWeight = 2.0
 	}
 
+	// ── COSTS: INVERSE-SKILL MULTIPLIER (U7) ────────────────────────────────
+	if b.CostSkillMultAtZero <= 0 {
+		b.CostSkillMultAtZero = 1.10
+	}
+	if b.CostSkillMultAtMid <= 0 {
+		b.CostSkillMultAtMid = 1.00
+	}
+	if b.CostSkillMultAtCap <= 0 {
+		b.CostSkillMultAtCap = 0.40
+	}
+	if b.CostSkillMidRank < 1 {
+		b.CostSkillMidRank = 25
+	}
+	if b.CostSkillCapRank < 1 {
+		b.CostSkillCapRank = 100
+	}
+
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	if b.StatProgressionMultipliers == nil {
 		b.StatProgressionMultipliers = map[string]float64{}

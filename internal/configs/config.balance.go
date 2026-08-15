@@ -286,6 +286,18 @@ type Balance struct {
 	RegenProgressionBase     ConfigFloat `yaml:"RegenProgressionBase"`     // Max chance at 0% resource per stat per tick (default 0.005)
 	RegenProgressionCurve    ConfigFloat `yaml:"RegenProgressionCurve"`    // Exponent shaping the depletion→chance curve (default 3.0)
 
+	// ── COSTS: INVERSE-SKILL MULTIPLIER (U7) ─────────────────────────────────
+	// costs.SkillMultiplier runs INVERSE to skill: a practised fighter spends
+	// less stamina/conviction on the same action than an untrained one. Two
+	// linear segments joined at CostSkillMidRank, clamped flat below rank 0
+	// and at/above CostSkillCapRank. NOT combat.SkillMultiplier (a sqrt curve
+	// scaling damage UPWARD) — same name, opposite direction, different job.
+	CostSkillMultAtZero ConfigFloat `yaml:"CostSkillMultAtZero"` // Cost multiplier at rank 0 (default 1.10)
+	CostSkillMultAtMid  ConfigFloat `yaml:"CostSkillMultAtMid"`  // Cost multiplier at CostSkillMidRank, neutral (default 1.00)
+	CostSkillMultAtCap  ConfigFloat `yaml:"CostSkillMultAtCap"`  // Cost multiplier at/above CostSkillCapRank (default 0.40)
+	CostSkillMidRank    ConfigInt   `yaml:"CostSkillMidRank"`    // Virtual rank where the multiplier is neutral (default 25)
+	CostSkillCapRank    ConfigInt   `yaml:"CostSkillCapRank"`    // Virtual rank where the discount maxes out (default 100)
+
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	// Per-stat and per-skill multipliers on progression chance.
 	// Use plain float64 maps (not ConfigFloat) for native YAML unmarshaling.
