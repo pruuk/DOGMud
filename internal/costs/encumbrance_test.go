@@ -38,6 +38,39 @@ func TestEncumbranceMultiplierZeroCapacity(t *testing.T) {
 	}
 }
 
+// A non-finite input must come out neutral, not propagate.
+//
+// NaN fails EVERY comparison, so it slips past the `capacity <= 0` guard and
+// both range clamps and would leave the function as a NaN multiplier. That
+// multiplier reaches characters.ApplyCostFloat, poisons the pool's cost carry
+// permanently (int(NaN) is the minimum int64, which reads as non-positive and
+// therefore free), and makes the pool cost-free for the rest of the session with
+// no log and no panic. Failing neutral at the source is deliberate.
+func TestEncumbranceMultiplierNonFiniteIsNeutral(t *testing.T) {
+	nan := math.NaN()
+	inf := math.Inf(1)
+	negInf := math.Inf(-1)
+
+	cases := []struct {
+		name              string
+		carried, capacity float64
+	}{
+		{"NaN carried", nan, 100},
+		{"NaN capacity", 40, nan},
+		{"both NaN", nan, nan},
+		{"+Inf carried", inf, 100},
+		{"-Inf carried", negInf, 100},
+		{"+Inf capacity", 40, inf},
+		{"-Inf capacity", 40, negInf},
+	}
+	for _, c := range cases {
+		got := EncumbranceMultiplier(c.carried, c.capacity)
+		if got != 1.0 {
+			t.Errorf("%s: got %v, want exactly 1.0", c.name, got)
+		}
+	}
+}
+
 // Monotonically increasing: carrying more must never cost less.
 func TestEncumbranceMultiplierIsMonotonic(t *testing.T) {
 	prev := EncumbranceMultiplier(0, 100)

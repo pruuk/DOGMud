@@ -165,6 +165,15 @@ type Character struct {
 	// No yaml:"-" tag on purpose. An unexported field is already invisible to the
 	// marshaller, and a yaml tag on one is a silent no-op that misleads the next
 	// reader into thinking it is load-bearing.
+	//
+	// TEMPLATE INVARIANT: mobs.newMobByIdInternal shallow-copies the mob template
+	// (`mob := *m`) and re-makes PlayerDamage on the very next line precisely
+	// because a shallow copy shares maps. costCarry is NOT re-made there, and is
+	// safe only because it is lazily allocated by ApplyCostFloat and a template's
+	// Character is never charged. Anything that charges a template -- a balance
+	// preview tool, an offline simulator -- would allocate the map on the
+	// template and hand every instance spawned afterwards the SAME shared carry.
+	// Re-make it alongside PlayerDamage before doing that.
 	costCarry map[Pool]float64
 	// CombatPhase is the canonical state machine for "am I in combat?" and
 	// "who am I targeting?". It runs alongside the Aggro field; both are
@@ -688,8 +697,8 @@ const (
 	// down), defy answers a social attack (you refuse to rise to it).
 	//
 	// Both cost CONVICTION, not stamina. Charge them through the
-	// DefensePool / GetDefenseCost pair; GetDefenseStaminaCost deliberately
-	// returns 0 for them, so charging through it makes them free.
+	// DefensePool / GetDefenseCostFloat pair, which reads the pool and the
+	// amount off the same defence name and so cannot charge the wrong one.
 	DefenseQuell string = "quell"
 	DefenseDefy  string = "defy"
 )

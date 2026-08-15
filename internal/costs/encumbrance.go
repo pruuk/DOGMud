@@ -1,6 +1,10 @@
 package costs
 
-import "github.com/GoMudEngine/GoMud/internal/configs"
+import (
+	"math"
+
+	"github.com/GoMudEngine/GoMud/internal/configs"
+)
 
 // EncumbranceMultiplier returns the cost multiplier for how much weight the
 // actor is carrying, as a fraction of carry capacity. It applies to PHYSICAL
@@ -22,7 +26,17 @@ import "github.com/GoMudEngine/GoMud/internal/configs"
 // capacity and only ramped to 5.0 at double capacity — a shape that priced
 // nothing for anyone not deliberately overloaded. That call site is migrated
 // to this function separately; this package does not touch it.
+//
+// A non-finite carried weight or capacity returns the neutral 1.0, matching how
+// a non-positive capacity is handled. NaN fails every comparison, so it would
+// otherwise sail through the clamps below and come out as a NaN multiplier,
+// which characters.ApplyCostFloat would then bank into a pool's cost carry and
+// make that pool free for the rest of the session. Fail at the source.
 func EncumbranceMultiplier(carried, capacity float64) float64 {
+	if math.IsNaN(carried) || math.IsInf(carried, 0) ||
+		math.IsNaN(capacity) || math.IsInf(capacity, 0) {
+		return 1.0
+	}
 	if capacity <= 0 {
 		return 1.0
 	}
@@ -31,10 +45,15 @@ func EncumbranceMultiplier(carried, capacity float64) float64 {
 
 	knee := float64(bal.CostEncumbranceKnee)
 	kneeMult := float64(bal.CostEncumbranceKneeMult)
-	max := float64(bal.CostEncumbranceMax)
+	maxMult := float64(bal.CostEncumbranceMax)
 
-	// Guard against a misconfigured knob (zero, negative, or a knee at/above
-	// 1.0) producing a divide-by-zero or a degenerate curve.
+	// Belt-and-braces, not a defence against a zero-value Balance:
+	// GetBalanceConfig() calls ensureConfigValidated(), so a Balance reaching
+	// this function has already been validated at load time and cannot carry a
+	// knee of zero, a negative knee, or a knee at/above 1.0. This guard exists
+	// only in case a future caller constructs a Balance by hand and skips
+	// validation -- cheap insurance against a divide-by-zero or a degenerate
+	// curve. It is not the primary defence and is not expected to fire.
 	if knee <= 0 || knee >= 1.0 {
 		knee = 0.75
 	}
@@ -50,5 +69,5 @@ func EncumbranceMultiplier(carried, capacity float64) float64 {
 	if r <= knee {
 		return 1.0 + (kneeMult-1.0)*(r/knee)
 	}
-	return kneeMult + (max-kneeMult)*((r-knee)/(1-knee))
+	return kneeMult + (maxMult-kneeMult)*((r-knee)/(1-knee))
 }

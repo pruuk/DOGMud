@@ -156,7 +156,10 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult {
 }
 
 // ApplyCostFloat charges a fractional cost, banking the remainder so the average
-// charged converges exactly on the amount asked for.
+// charged converges on the amount asked for. Not exactly: cumulative charged is
+// floor(cumulative amount), so it under-charges by strictly less than 1 over any
+// run of actions -- 100 charges of 2.3 total 229, not 230. The bound does not
+// grow, which is the point.
 //
 // Every U7 cost is a float: base x encumbrance x inverse skill x per-action
 // modifier. Rounding each action to an integer destroys the small factors --
@@ -165,9 +168,16 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult {
 // and per character, and is not persisted.
 //
 // The deduction itself is delegated to ApplyCostPartial so the floor rules and
-// the Short flag stay in exactly one place. That delegation is also what keeps
-// the AST pool-mutation guard satisfied -- this helper must never write a pool
-// itself.
+// the Short flag stay in exactly one place.
+//
+// A non-finite amount is treated as free and banks nothing. NaN and infinity are
+// reachable here -- a cost is a product of four config-sourced floats -- and
+// letting one through poisons the pool's carry PERMANENTLY: NaN survives the
+// floor, every later charge floors to NaN, int(NaN) converts to the minimum
+// int64, and ApplyCostPartial reads that as non-positive and charges nothing.
+// One bad value would make that pool cost-free for the rest of the session,
+// with no log, no panic and no failing test. costs.EncumbranceMultiplier guards
+// the same way at the other end.
 //
 // SHORT WHEN THE FLOORED CHARGE IS ZERO: it is false, even on an empty pool.
 // Short means "the actor could not pay what this action demanded", and a floored
@@ -175,19 +185,23 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult {
 // reads Short to strip the skill term from the action's roll, so returning true
 // here would penalise an action that cost nothing, and would then penalise the
 // SAME fraction again on the later action that floors it to one or more and
-// legitimately reports Short against the empty pool. The debt is not forgiven,
-// only deferred, so it is charged and reported exactly once. This also matches
-// the sibling contract: ApplyCostPartial treats a non-positive amount as free
-// and not Short.
+// legitimately reports Short against the empty pool. Within the carry the debt
+// is not forgiven, only deferred, so it is charged and reported exactly once.
+// This also matches the sibling contract: ApplyCostPartial treats a non-positive
+// amount as free and not Short.
 //
-// The full floored amount is always removed from the carry, even when the pool
-// was too empty to cover it. The unpaid part is written off rather than banked:
-// an exhausted actor would otherwise accumulate an unbounded debt and be
-// slammed with the whole backlog on the first tick their pool refilled. Being
-// short is already punished by the lost skill term; it must not also become a
-// loan.
+// Once the carry hands a whole number to the pool, though, the subject changes:
+// the full floored amount is always removed from the carry, even when the pool
+// was too empty to cover it, and that unpaid remainder is written off rather
+// than re-banked. (No contradiction with the paragraph above -- the carry defers
+// a FRACTION until it is worth charging; a charge the POOL could not cover is
+// simply not reclaimed.) An exhausted actor would otherwise accumulate an
+// unbounded debt and be slammed with the whole backlog on the first tick their
+// pool refilled. Being short is already punished by the lost skill term; it must
+// not also become a loan.
 func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult {
-	if amount <= 0 {
+	// NaN fails every comparison, so `amount <= 0` alone does NOT stop it.
+	if amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) {
 		return CostResult{}
 	}
 
