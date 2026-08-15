@@ -446,6 +446,15 @@ Balance:
   DodgeBaseStaminaCost: 2
   ParryBaseStaminaCost: 4
   BlockBaseStaminaCost: 5
+  #
+  # QuellBaseConvictionCost / DefyBaseConvictionCost: quell (mental spells) and
+  #   defy (taunts) are paid in CONVICTION, not stamina, because they are acts
+  #   of will rather than of body. Seeded at 2, matching dodge, the cheapest
+  #   physical defence: neither has been played against yet, and the conviction
+  #   pool is smaller than stamina for most builds, so starting cheap is the
+  #   conservative direction. First retune is a config edit.
+  QuellBaseConvictionCost: 2
+  DefyBaseConvictionCost: 2
   DodgeMultiplier: 0.9
   ParryMultiplier: 0.9
   BlockMultiplier: 0.9

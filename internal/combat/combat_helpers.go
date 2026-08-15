@@ -613,15 +613,12 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		// Calculate defense score for this defense type
 		defenseScore := targetChar.GetDefenseScore(defenseType)
 
-		// Apply base effectiveness multipliers
-		switch defenseType {
-		case characters.DefenseDodge:
-			defenseScore *= float64(bal.DodgeEffectiveness)
-		case characters.DefenseParry:
-			defenseScore *= float64(bal.ParryEffectiveness)
-		case characters.DefenseBlock:
-			defenseScore *= float64(bal.BlockEffectiveness)
-		}
+		// Apply base effectiveness multipliers. Shared with the non-physical
+		// channels rather than switched inline here: U6 Task 12 left two copies
+		// of this table, and a per-defence dial that disagrees between the melee
+		// path and the spell path is exactly the kind of drift that is invisible
+		// until someone retunes one of them.
+		defenseScore *= defenceEffectiveness(defenseType)
 
 		// Stage 7.5: Apply position-based defense penalties. Chunk 4b R1:
 		// FSM-driven — Prone/Supine collapse to the legacy "prone"
