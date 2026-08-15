@@ -8,14 +8,28 @@ responds to game events. They are evaluated before JS scripts and dialogue,
 giving them first-priority on all handled events.
 
 When an event fires for a mob (player asks a question, gives an item, idle
-tick, etc.), the engine:
+tick, etc.), `TryMobBehavior`:
 
-1. Looks up the mob's compiled tree by template mob ID.
-2. If no tree is cached, resolves the file path and loads it on demand.
-3. If the file does not exist, records a **negative cache** entry to skip
-   future file-system checks for that mob ID.
-4. Creates an `EvalContext` and calls `tree.Evaluate(ctx)`.
-5. Returns `true` if the tree returned `Success`.
+1. Resolves the mob's per-mob tree by template mob ID (lazy file load on
+   first request; a missing or unloadable file records a **negative cache**
+   entry via `SetNoTree` to skip future file-system checks).
+2. If a per-mob tree exists, creates an `EvalContext` and evaluates it. If
+   it returns `Success`, the per-mob tree owns the event — done, `true`.
+3. If the per-mob tree is absent or returned non-Success AND the mob
+   declares a `behavior_archetype`, resolves the archetype tree (same lazy
+   load + `SetNoArchetype` negative cache, warn-once on a missing file)
+   and evaluates it with a **fresh** `EvalContext` (same shared
+   per-instance `BehaviorState`). Returns `true` on `Success`.
+4. Otherwise returns `false` and the caller runs the legacy path.
+
+**Composition rule (2026-08-15): a per-mob tree SPECIALIZES its declared
+archetype, it does not replace it.** A per-mob tree that succeeds owns the
+event; one that fails falls through to the declared archetype, then to the
+caller's legacy path. Before this rule, the archetype was consulted only
+when no per-mob file existed at all, so the file's mere presence silently
+disabled the mob's declared brain — 34 production mobs (including the
+entire bandit camp, whose per-mob party overlays handle only `mob_idle`)
+had dead combat archetypes with no diagnostic.
 
 ---
 
@@ -658,7 +672,9 @@ current event type does not match, short-circuiting the entire subtree.
 ## Entry Points
 
 - `TryMobBehavior(instanceId int, event EventContext) bool` — main entry
-  point. Resolves tree, builds context, evaluates, returns true on Success.
+  point. Evaluates the per-mob tree first; on non-Success falls through to
+  the declared archetype (see Composition rule in the Overview). Returns
+  true when either evaluation returned Success.
 - `TryRoomBehavior(roomId int, event EventContext) bool` — room entry point.
   For `room_command` events returns `ctx.Intercepted`; for all others returns
   `true` on Success.

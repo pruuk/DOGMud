@@ -144,23 +144,15 @@ func TryRoomBehavior(roomId int, event EventContext) bool {
 	return result == Success
 }
 
-// TryMobBehavior is the main entry point for event dispatch.
-// Returns true if the behavior tree handled the event (Success).
-//
-// Resolution order:
-//  1. Per-mob btree file (behaviors/<zone>/<mobId>-<name>.yaml)
-//  2. Archetype tree (if mob.BehaviorArchetype is set)
-//  3. No tree — returns false
-func TryMobBehavior(mobInstanceId int, event EventContext) bool {
-	mob := mobs.GetInstance(mobInstanceId)
-	if mob == nil {
-		return false
-	}
-
+// resolvePerMobTree returns the mob's per-mob behavior tree, lazily
+// loading it from behaviors/<zone>/<mobId>-<name>.yaml on first request.
+// A missing or unloadable file is negative-cached via SetNoTree so the
+// filesystem is not re-probed on every event. Returns nil when the mob
+// has no per-mob tree.
+func resolvePerMobTree(mob *mobs.Mob) Node {
 	mobId := int(mob.MobId)
 	engine := GetEngine()
 
-	// 1. Try the per-mob btree (by mobId).
 	tree := engine.GetTree(mobId)
 	if tree == nil && !engine.HasNoTree(mobId) {
 		path := GetBehaviorPath(mobId, mob.Zone, mob.Character.Name)
@@ -173,41 +165,105 @@ func TryMobBehavior(mobInstanceId int, event EventContext) bool {
 			tree = engine.GetTree(mobId)
 		}
 	}
+	return tree
+}
 
-	// 2. Fall through to archetype if per-mob tree absent AND mob declares an archetype.
-	if tree == nil && mob.BehaviorArchetype != "" {
-		name := mob.BehaviorArchetype
-		tree = engine.GetArchetype(name)
-		if tree == nil && !engine.HasNoArchetype(name) {
-			path := GetArchetypePath(name)
-			if _, err := os.Stat(path); err != nil {
-				engine.SetNoArchetype(name)
-				mudlog.Warn("TryMobBehavior", "archetype", name, "warning", fmt.Sprintf("archetype file not found: %s", path))
-			} else if err := engine.LoadArchetype(name, path); err != nil {
-				mudlog.Error("TryMobBehavior", "error", fmt.Sprintf("failed to load archetype %s (%s): %v", name, path, err))
-				engine.SetNoArchetype(name)
-			} else {
-				tree = engine.GetArchetype(name)
-			}
+// resolveArchetypeTree returns the named archetype's tree, lazily loading
+// it from behaviors/archetypes/<name>.yaml on first request. A missing
+// file warns once and is negative-cached via SetNoArchetype; a file that
+// fails to parse logs an error and is negative-cached the same way.
+// Returns nil when the archetype cannot be resolved.
+func resolveArchetypeTree(name string) Node {
+	engine := GetEngine()
+
+	tree := engine.GetArchetype(name)
+	if tree == nil && !engine.HasNoArchetype(name) {
+		path := GetArchetypePath(name)
+		if _, err := os.Stat(path); err != nil {
+			engine.SetNoArchetype(name)
+			mudlog.Warn("TryMobBehavior", "archetype", name, "warning", fmt.Sprintf("archetype file not found: %s", path))
+		} else if err := engine.LoadArchetype(name, path); err != nil {
+			mudlog.Error("TryMobBehavior", "error", fmt.Sprintf("failed to load archetype %s (%s): %v", name, path, err))
+			engine.SetNoArchetype(name)
+		} else {
+			tree = engine.GetArchetype(name)
 		}
 	}
+	return tree
+}
 
-	// 3. No tree — caller runs legacy path.
-	if tree == nil {
+// TryMobBehavior is the main entry point for event dispatch.
+// Returns true if a behavior tree handled the event (Success).
+//
+// Composition rule: a per-mob tree SPECIALIZES its declared archetype, it
+// does not replace it.
+//
+//  1. The per-mob btree (behaviors/<zone>/<mobId>-<name>.yaml), when
+//     present, is evaluated first. If it returns Success it owns the
+//     event and the archetype is NOT evaluated — no double actions.
+//  2. If the per-mob tree is absent or returned non-Success (Failure, or
+//     every event-tagged branch mismatched the event), the mob's declared
+//     archetype (mob.BehaviorArchetype) is resolved and evaluated with a
+//     fresh EvalContext. The BehaviorState is per mob instance and
+//     intentionally shared between the two evaluations.
+//  3. If neither succeeded, returns false and the caller runs the legacy
+//     path (combatcommands / default attack / idle handlers).
+//
+// Why composition and not the old either/or: until 2026-08-15 step 2 ran
+// ONLY when no per-mob file existed at all, so the mere presence of a
+// per-mob file silently disabled the mob's declared archetype. 34
+// production mobs had both. The entire bandit camp (mobs 283-286) carried
+// per-mob party-coordination overlays that handle only mob_idle, which
+// left every declared combat archetype (defensive_caster, generic_fighter,
+// lookout, boss_soren) dead — a caster that never cast, a boss whose boss
+// brain never ran — and no diagnostic fired anywhere. Per-mob files are
+// overlays that specialize a brain; when they decline an event, the event
+// must fall through to the archetype they specialize.
+func TryMobBehavior(mobInstanceId int, event EventContext) bool {
+	mob := mobs.GetInstance(mobInstanceId)
+	if mob == nil {
 		return false
 	}
 
-	state := EnsureBTreeState(mob)
+	mobId := int(mob.MobId)
+
+	perMobTree := resolvePerMobTree(mob)
+	if perMobTree == nil && mob.BehaviorArchetype == "" {
+		// No tree at all — caller runs legacy path.
+		return false
+	}
+
 	event.RoomId = mob.Character.RoomId
 
-	ctx := &EvalContext{
-		Event:      event,
-		MobState:   state,
-		MobId:      mobId,
-		InstanceId: mobInstanceId,
-		RoomId:     mob.Character.RoomId,
-		MobName:    mob.Character.Name,
+	// newCtx builds a fresh EvalContext per evaluation. EnsureBTreeState is
+	// idempotent, so both evaluations share the same per-instance
+	// BehaviorState; deferring it here also preserves the old behavior of
+	// not allocating state for mobs whose trees never resolve.
+	newCtx := func() *EvalContext {
+		return &EvalContext{
+			Event:      event,
+			MobState:   EnsureBTreeState(mob),
+			MobId:      mobId,
+			InstanceId: mobInstanceId,
+			RoomId:     mob.Character.RoomId,
+			MobName:    mob.Character.Name,
+		}
 	}
-	result := tree.Evaluate(ctx)
-	return result == Success
+
+	// 1. Per-mob tree first. Success owns the event outright.
+	if perMobTree != nil {
+		if perMobTree.Evaluate(newCtx()) == Success {
+			return true
+		}
+	}
+
+	// 2. Fall through to the declared archetype.
+	if mob.BehaviorArchetype == "" {
+		return false
+	}
+	archetypeTree := resolveArchetypeTree(mob.BehaviorArchetype)
+	if archetypeTree == nil {
+		return false
+	}
+	return archetypeTree.Evaluate(newCtx()) == Success
 }

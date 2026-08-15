@@ -69,7 +69,8 @@ func TestReevaluateArchetypeShift_PerMobTreeBlocks(t *testing.T) {
 	mob.BehaviorArchetype = "generic_fighter"
 	mob.Character.Mutations = map[string]int{"fangs": 1}
 
-	// Install a per-mob tree — it shadows archetypes, so no shift.
+	// Install a per-mob tree — it marks a curated brain (the overlay
+	// composes with its declared archetype), so no shift.
 	node, err := LoadTreeFromBytes([]byte("tree:\n  type: selector\n  children:\n    - type: action\n      event: mob_idle\n      do: attack\n"))
 	if err != nil {
 		t.Fatalf("LoadTreeFromBytes: %v", err)

@@ -94,9 +94,12 @@ var archetypeShiftFlavor = map[string]string{
 	"ambusher":         "melts toward the shadows, patient and watching",
 }
 
-// mobHasPerMobTree reports whether the mob has a per-mob behavior tree —
-// per-mob trees shadow archetypes entirely (TryMobBehavior resolution
-// order), so such mobs never shift. Checks the engine caches before
+// mobHasPerMobTree reports whether the mob has a per-mob behavior tree.
+// A per-mob file marks a hand-curated brain, so such mobs never shift:
+// since 2026-08-15 the per-mob tree COMPOSES with the declared archetype
+// (falls through on non-Success rather than shadowing it), which makes the
+// archetype a live half of the curated pairing — mutation drift must not
+// swap it out from under the overlay. Checks the engine caches before
 // falling back to an os.Stat, mirroring TryMobBehavior.
 func mobHasPerMobTree(mobId int, zone string, name string) bool {
 	e := GetEngine()
