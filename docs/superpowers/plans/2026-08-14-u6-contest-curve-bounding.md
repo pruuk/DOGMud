@@ -1415,6 +1415,42 @@ to a channel is now one row."
 
 ### Task 12: Move spells and social onto the resolver, delete `avoidance.go`
 
+> **TEN SILENT-FAILURE SITES, found and verified by Task 11. None is a compile
+> error. Work this list.**
+>
+> 1. **Deleting `avoidance.go` silently deletes defender progression for both
+>    non-physical channels.** `avoidance.go:31-32` awards spellcasting +
+>    perception and `:78-79` awards rhetoric + willpower, unconditionally, itself.
+>    `processDefenderProgression` (`hooks/NewRound_DoCombat_helpers.go:34`)
+>    switches over dodge/parry/block with **no default arm**, so quell and defy
+>    award nothing. Add the rows in the same commit that deletes the file.
+> 2. **`GetDefenseStaminaCost` returns 0 for quell and defy**, and
+>    `runBestOfAllDefense` charges the winner
+>    `ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...))`. Wiring either
+>    through that call site charges NOTHING and the defence is free. They cost
+>    **CONVICTION**. Needs charging by pool, not `PoolStamina` unconditionally.
+> 3. **`sendDefenseMessages` progresses the WRONG skill.** Its switch leaves
+>    `skillToProgress` empty, so it calls `TrackSkillUse("")` and
+>    `CheckSkillProgression("", ...)`: an empty skill name takes the roll and a
+>    success sends a levelup banner naming no skill. The generic fallback text
+>    also formats as `"Grimwald s your attack!"`.
+> 4. **No positional penalty applies.** The prone/clinch/grounded switches at
+>    `runBestOfAllDefense:631-659` use bare `"dodge"`/`"parry"`/`"block"`
+>    literals, so a prone or grappled defender takes no penalty on quell or defy
+>    — a silent advantage over the physical three.
+> 5. No `QuellEffectiveness` / `DefyEffectiveness` config fields exist.
+> 6. `AttackResult` has no crit-flag field for a quell/defy defensive crit.
+> 7. `analytics.go` and the `combatstats` dashboard drop the swing entirely.
+> 8. `PowerScore` averages three defences.
+> 9. `CategoryForDefenseVerb` silently colours them as dodge.
+> 10. The parallel `combat.DefenseType` / `items.DefenseType` const blocks were
+>     deliberately left three-valued by Task 11, so `case combat.DefenseQuell:`
+>     **fails to compile** until this task supplies the message data behind it.
+>     That loud failure is intentional; do not "fix" it by adding the constants
+>     without the data.
+
+
+
 **Files:**
 - Delete: `internal/combat/avoidance.go`, `internal/combat/avoidance_test.go`
 - Modify: `internal/hooks/spell_resolution.go` (5 call sites + text)
