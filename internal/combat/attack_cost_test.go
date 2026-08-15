@@ -88,9 +88,13 @@ func TestChargeAttackCostScalesWithSwings(t *testing.T) {
 	}
 }
 
-// Zero swings is a real state -- a round where the attacker had no weapon to
-// swing, or the defender left before resolution -- and must not be charged as if
-// it were one. A negative count is a caller bug and must not credit stamina back.
+// Zero swings is NOT reachable in production today: collectAttackWeapons has an
+// unconditional fist fallback, calcSwingCount floors at 1, and calculateCombat's
+// swing loop never breaks early, so every wrapper passes at least 1. This covers
+// the defensive guard rather than a live path -- see ChargeAttackCost for the
+// four edits that would make it live -- and pins that a zero or negative count
+// charges nothing and, in particular, that a negative count does not credit
+// stamina back.
 func TestChargeAttackCostZeroOrNegativeSwingsChargeNothing(t *testing.T) {
 	for _, swings := range []int{0, -1, -12} {
 		c := attackerFixture(t)

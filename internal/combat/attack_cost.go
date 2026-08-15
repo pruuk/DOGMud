@@ -59,9 +59,24 @@ func attackCostPerSwing(attacker *characters.Character) float64 {
 // swings multiplies whatever costs.Calc returns.
 //
 // A nil attacker or a non-positive swing count charges NOTHING and reports the
-// zero CostResult. Zero swings is a real state -- a round where the attacker had
-// no weapons to swing, or the defender was already gone -- and must not be
-// charged as if it were one. It is also not Short: nothing was demanded.
+// zero CostResult. It is also not Short: nothing was demanded.
+//
+// THE ZERO-SWING GUARD IS DEFENSIVE AGAINST A STATE NOTHING CURRENTLY REACHES.
+// An earlier version of this comment claimed zero swings was "a real state --
+// the attacker had no weapons, or the defender was already gone"; neither is
+// true today. collectAttackWeapons ends in an unconditional
+// `if len(attackWeapons) == 0 { append(fist) }` fallback, so it never returns an
+// empty list; calcSwingCount floors its result at 1; and the swing loop in
+// calculateCombat contains no break or early return, so it cannot stop short on
+// a defender who died mid-round. All four wrappers pass
+// attackResult.SwingsThrown straight out of calculateCombat, so the argument
+// here is always at least 1.
+//
+// Keep the guard. Four separate edits would make it live again: removing that
+// weapons fallback, removing calcSwingCount's floor, adding the death break the
+// swing loop does not yet have, or a future caller computing its own count (an
+// AoE splitting a round's swings across targets is the obvious one). A negative
+// count is a caller bug either way and must never credit stamina back.
 //
 // The returned CostResult is what U8 reads to strip the skill term from an
 // attacker who could not pay in full. Discarding it is safe today and will not
