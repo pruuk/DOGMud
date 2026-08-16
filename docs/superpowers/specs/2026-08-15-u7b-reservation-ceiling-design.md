@@ -345,6 +345,27 @@ that would otherwise be rediscovered mid-build.
    `kinetic-backlash` intrinsically, worth 12% physical plus a rider buff.
 9. **Read `config.yaml`, never the Go defaults.** Several shipped values differ
    sharply. Absence is meaningful, and `0` is a legal shipped value.
+10. **Gear-granted manifestation feeds the companion rider, and gold-scaled
+    instance loot can grant it.** `skill_manifestation` IS in the affix pool
+    (`internal/items/affixgen.go`, cost 12, rare weight, and the snowball
+    mechanic focuses items), so a high-gold instance can produce a
+    `+manifestation` item. `GetSkillLevel` adds equipment stat mods, so that
+    rank feeds `CalcCompanionReserve` directly. This is not hypothetical:
+    Meirok's manifestation is 48 from skill plus 11 from equipment.
+
+    **The interaction to watch, with D11's login recompute.** Companion
+    `conviction_reserve` is a snapshot. Equipping or removing a
+    `+manifestation` item does not move it during the session, but the login
+    recompute does. So a character who takes off such an item and logs in finds
+    their companions reserving MORE than when they logged out, possibly past
+    the cap. D4 grandfathering means nothing is force-dismissed, but they will
+    be refused additions until they re-equip or release something. That is
+    correct behaviour and it will read as a bug to the player unless the
+    disclosure names reservation as the cause. **Exercise this in the Task 15
+    playtest.**
+
+    `skill_enchanting` is deliberately NOT in the affix pool, so the item-side
+    rider (4.2) has no equivalent self-cheapening path. Verified 2026-08-15.
 
 ### Expected outcomes to verify in playtest
 
