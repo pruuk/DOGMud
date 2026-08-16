@@ -65,8 +65,17 @@ conjured (no corpse):   pool = B x petMultiplier
 raised   (corpse):      pool = ((B + corpsePool) / 2) x petMultiplier
 ```
 
-This **replaces** `CalcCompanionStatPool`, which multiplied a per-spell base
-pool by `1 + cha/ManifestStatScaleChaFactor + manifestSkill x ManifestStatScaleSkillFactor`.
+This replaces the formula used for **companions**, which multiplied a per-spell
+base pool by
+`1 + cha/ManifestStatScaleChaFactor + manifestSkill x ManifestStatScaleSkillFactor`.
+
+**`CalcCompanionStatPool` must be RENAMED AND KEPT, not deleted.** It has a
+second production caller, `internal/behaviortree/actions_mob.go:78`
+(`actSummonCompanion`), which spawns **authored boss adds**: the Sentinel at
+`base_pool: 300`, the Core Guardian and Warden Prime at 50, Old Edrin at 60.
+Routing those through the companion formula would nerf the Sentinel's adds by
+roughly five times. The old function keeps its behaviour under a name that says
+what it is now for, and the `ManifestStatScale*` knobs stay alive to serve it.
 
 **Why the change.** Under the old shape the pet's base pool multiplied the
 caster's power, and the corpse was averaged in afterwards. That made the
@@ -132,8 +141,13 @@ had already reduced usable conviction below the cast price.
 ### 3.4 Reservation
 
 ```
-baseReserve = CompanionReserveBase (280) x petMultiplier
+baseReserve = CompanionReserveDefault (280) x petMultiplier
 ```
+
+**Correction, 2026-08-15:** an earlier draft of this line called the knob
+`CompanionReserveBase`. No such knob exists. The real field is
+`CompanionReserveDefault`, Go default 280, **absent from `config.yaml`** and so
+running on that default.
 
 Replacing the current two flat tiers (280 and 352) shared across both families.
 The ongoing budget now tracks pet power, which is what makes the cap a real
@@ -315,10 +329,16 @@ that would otherwise be rediscovered mid-build.
 
 | Corpse | golem | skeleton | Notes |
 |---|---|---|---|
-| trash @100g (100) | 253 | 126 | conjure magma (508) wins outright |
+| trash @100g (100) | 253 | 127 | conjure magma (508) wins outright |
 | boss @100g (400) | 403 | 202 | magma still wins |
 | boss @250g (1000) | 703 | 352 | raises pull ahead |
 | Core Guardian (2800) | 1603 | 802 | raises scale without limit |
+
+**Rounding is `math.Round`, which is half away from zero.** The 100-corpse
+skeleton row is `126.5`, so it rounds to **127**, not 126. An earlier draft of
+this table said 126 because it was computed in Python, whose `round()` uses
+banker's rounding and breaks ties to even. Any check of these figures must use
+Go semantics.
 
 Crossover: a golem needs a **609-pool corpse** to beat a magma elemental, which
 is roughly a boss instance at 200g or a tough at 300g. Below that, conjures are
