@@ -9,7 +9,7 @@ description: Weaves multiple corpses together through brutal necromantic
 type: neutral
 schools:
   - manifestation
-cost: 100
+cost: 50
 waitrounds: 16
 difficulty: 50
 primarystat: willpower
@@ -30,8 +30,6 @@ wait_user_text: >-
   assembling into something vast and purposeful. The air reeks
   of raw meat and ozone...
 summon_mob_id: 305
-summon_base_pool: 120
-summon_conviction_reserve: 352
-summon_scaling_divisor: 500
+summon_pet_multiplier: 1.00
 summon_requires_corpse: true
 summon_min_corpse_pool: 500

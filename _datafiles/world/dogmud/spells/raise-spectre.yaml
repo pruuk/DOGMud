@@ -8,7 +8,7 @@ description: Draws the deepest shadow of a powerful soul from its
 type: neutral
 schools:
   - manifestation
-cost: 60
+cost: 40
 waitrounds: 10
 difficulty: 35
 primarystat: willpower
@@ -28,8 +28,6 @@ wait_user_text: >-
   shadow is compressed and shaped. The air tastes of iron and
   old grief...
 summon_mob_id: 303
-summon_base_pool: 90
-summon_conviction_reserve: 352
-summon_scaling_divisor: 500
+summon_pet_multiplier: 0.75
 summon_requires_corpse: true
 summon_min_corpse_pool: 200

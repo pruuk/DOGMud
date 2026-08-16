@@ -9,7 +9,7 @@ description: Infuses a corpse with foul necrotic energy, reanimating it
 type: neutral
 schools:
   - manifestation
-cost: 30
+cost: 35
 waitrounds: 6
 difficulty: 20
 primarystat: willpower
@@ -27,8 +27,6 @@ wait_user_text: >-
   Foul energy seeps into the decaying flesh, swelling it with
   borrowed animation. A low, wet groan rises from the remains...
 summon_mob_id: 301
-summon_base_pool: 80
-summon_conviction_reserve: 280
-summon_scaling_divisor: 500
+summon_pet_multiplier: 0.67
 summon_requires_corpse: true
 summon_min_corpse_pool: 60

@@ -25,7 +25,5 @@ wait_user_text: >-
   The fetish thrums in your hand. Ghostly howling builds from
   nowhere and everywhere at once...
 summon_mob_id: 243
-summon_base_pool: 120
-summon_conviction_reserve: 280
-summon_scaling_divisor: 200
+summon_pet_multiplier: 0.75
 summon_component_id: 40031

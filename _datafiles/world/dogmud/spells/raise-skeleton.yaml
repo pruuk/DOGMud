@@ -8,7 +8,7 @@ description: Animates the bones of a nearby corpse, stripping flesh and
 type: neutral
 schools:
   - manifestation
-cost: 20
+cost: 30
 waitrounds: 4
 difficulty: 10
 primarystat: willpower
@@ -27,8 +27,6 @@ wait_user_text: >-
   of their flesh. Something dry and purposeful stirs beneath your
   will...
 summon_mob_id: 300
-summon_base_pool: 60
-summon_conviction_reserve: 280
-summon_scaling_divisor: 500
+summon_pet_multiplier: 0.50
 summon_requires_corpse: true
 summon_min_corpse_pool: 30

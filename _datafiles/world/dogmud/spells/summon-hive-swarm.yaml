@@ -5,7 +5,7 @@ description: Shatters a Hive Fragment into a permanent swarm servant.
 type: helpsingle
 schools:
   - manifestation
-cost: 50
+cost: 30
 waitrounds: 3
 difficulty: 45
 primarystat: willpower
@@ -23,7 +23,5 @@ wait_user_text: >-
   The buzzing intensifies as countless tiny organisms pour from
   the shattered fragment...
 summon_mob_id: 111
-summon_base_pool: 18
-summon_conviction_reserve: 280
-summon_scaling_divisor: 200
+summon_pet_multiplier: 0.30
 summon_component_id: 40011
