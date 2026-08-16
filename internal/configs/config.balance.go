@@ -449,6 +449,9 @@ type Balance struct {
 	CraftDifficultyProgressionScale ConfigFloat `yaml:"CraftDifficultyProgressionScale"` // Per-point recipe skill_minimum bonus to skill progression (default 0.02)
 	SelfCastProgressionMultiplier   ConfigFloat `yaml:"SelfCastProgressionMultiplier"`   // Progression multiplier when spell only targets self (default 0.5)
 
+	// ── POOL RESERVATION ─────────────────────────────────────────────────────
+	PoolReservationCapPct ConfigFloat `yaml:"PoolReservationCapPct"` // Ceiling on TOTAL reservation per pool, as a fraction of that pool's max (default 0.66)
+
 	// ── ENCHANTMENTS ─────────────────────────────────────────────────────────
 	EnchantTierUpBaseChance     ConfigFloat `yaml:"EnchantTierUpBaseChance"`     // Chance per use (once threshold met) to advance tier (default 0.02)
 	EnchantTierUsesBase         ConfigInt   `yaml:"EnchantTierUsesBase"`         // Uses needed for tier 0→1 (default 25)
