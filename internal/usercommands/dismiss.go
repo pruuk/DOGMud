@@ -21,6 +21,25 @@ import (
 //     these are mage-crafted beings, not independent creatures. Dismiss
 //     dissolves them peacefully — no aggro, immediate despawn.
 //
+// publishReleasedReservation republishes the player's vitals after a companion
+// record has been removed.
+//
+// A fielded companion holds a slice of its owner's Conviction, and
+// Char.Vitals carries that figure to the web client as conviction_reserved.
+// Nothing else on the dismiss path emits an event, and Char.Vitals is a
+// push-only snapshot, so without this the client kept showing a phantom
+// reservation for a companion that no longer exists. The prompt bar and
+// `status` never had the bug because both read GetPoolReservation live.
+//
+// It could not be left to the regen tick to correct, either.
+// NewRound_AutoHeal only republishes when health actually moved OR when the
+// player still has at least one companion, so dismissing the LAST one at full
+// health is exactly the case that never self-corrects, and the phantom
+// survives until something else happens to the character.
+func publishReleasedReservation(user *users.UserRecord) {
+	events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
+}
+
 // Syntax: dismiss <name>
 func Dismiss(rest string, user *users.UserRecord,
 	room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -53,6 +72,7 @@ func Dismiss(rest string, user *users.UserRecord,
 	if mob == nil {
 		// Companion is offline / already gone — just clean up the record.
 		user.Character.RemoveCompanion(instanceId)
+		publishReleasedReservation(user)
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`Your bond with <ansi fg="mobname">%s</ansi> fades away.`,
 			compName,
@@ -71,6 +91,7 @@ func Dismiss(rest string, user *users.UserRecord,
 	// Remove the companion record before doing anything that might trigger
 	// room-wide combat logic.
 	user.Character.RemoveCompanion(instanceId)
+	publishReleasedReservation(user)
 
 	isPlayerCrafted := sourceType == characters.CompanionSummoned ||
 		sourceType == characters.CompanionConjured ||

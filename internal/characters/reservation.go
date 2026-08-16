@@ -2,6 +2,7 @@ package characters
 
 import (
 	"math"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
@@ -219,24 +220,156 @@ func (c *Character) ReservationBandName(pool string) string {
 	return reservationBand(c.GetPoolReservation(pool, max), max, c.ReservationCap(p))
 }
 
+// reservationBand keys EVERY rung of its ladder to the CAP, not to the pool.
+//
+// It used to key only the top rung that way and measure the rest as a fraction
+// of the full pool, which made the row useless for the one job it has. The cap
+// sits at roughly two thirds of the pool, so `heavy` needed half the POOL,
+// which is three quarters of the ceiling, and there was no rung at all between
+// that and having literally reached the cap. A 2026-08-15 playtest watched the
+// row read `notable` through three consecutive refusals: the character was two
+// thirds of the way to their ceiling and the sheet was still describing them as
+// comfortable, because two thirds of the ceiling is under half the pool.
+//
+// Measured against the cap, the ladder answers the question a player is
+// actually asking, which is "how much room have I got left", and `near limit`
+// gives them a rung of warning before the answer becomes none. `at limit` still
+// means what it always meant: nothing further can be added.
+//
+// The cap is floor(maxPool * ~0.66), so with a positive pool it can only reach
+// 0 on a pool of 1, where any reservation at all really has consumed the whole
+// ceiling. `at limit` is the honest reading there, and it keeps the function
+// total without a second fraction ladder to drift out of step with this one.
 func reservationBand(reserve, maxPool, cap int) string {
 	if maxPool <= 0 || reserve <= 0 {
 		return `none`
 	}
-	if cap > 0 && reserve >= cap {
+	if cap <= 0 {
 		return `at limit`
 	}
-	frac := float64(reserve) / float64(maxPool)
+	frac := float64(reserve) / float64(cap)
 	switch {
-	case frac < 0.15:
-		return `slight`
-	case frac < 0.30:
-		return `modest`
-	case frac < 0.50:
-		return `notable`
-	default:
+	case frac >= 1.0:
+		return `at limit`
+	case frac >= 0.75:
+		return `near limit`
+	case frac >= 0.55:
 		return `heavy`
+	case frac >= 0.35:
+		return `notable`
+	case frac >= 0.15:
+		return `modest`
+	default:
+		return `slight`
 	}
+}
+
+// ── The equip disclosure ─────────────────────────────────────────────────────
+
+// ReservationTotals is a snapshot of the RESERVATION and the POOL MAX together,
+// on all three pools.
+//
+// The pool max has to travel with the reserve figure, because equipping can
+// move BOTH. A +Vitality item raises HealthMax, and every reserve_*_pct already
+// worn is a percentage of that max, so the reserved POINTS climb even though
+// the wearer has set no larger share of themselves aside. Comparing points
+// alone would announce a reservation increase for a piece of gear that reserves
+// nothing at all, which is precisely the "fires on every equip" failure the
+// disclosure has to avoid.
+//
+// Distinct from ReservationSnapshot, which records overage PAST the cap and
+// answers "did this get worse". This one records the raw position and answers
+// "did more of me get set aside".
+type ReservationTotals struct {
+	Health        int
+	Stamina       int
+	Conviction    int
+	HealthMax     int
+	StaminaMax    int
+	ConvictionMax int
+}
+
+// ReservationTotals snapshots the current reservation and pool max on all three
+// pools. Take one BEFORE an equip attempt and hand it to
+// ReservationIncreaseNotice afterwards.
+func (c *Character) ReservationTotals() ReservationTotals {
+	hMax := c.poolMax(PoolHealth)
+	sMax := c.poolMax(PoolStamina)
+	cMax := c.poolMax(PoolConviction)
+	return ReservationTotals{
+		Health:        c.GetPoolReservation(string(PoolHealth), hMax),
+		Stamina:       c.GetPoolReservation(string(PoolStamina), sMax),
+		Conviction:    c.GetPoolReservation(string(PoolConviction), cMax),
+		HealthMax:     hMax,
+		StaminaMax:    sMax,
+		ConvictionMax: cMax,
+	}
+}
+
+// shareGrew reports whether the reserved SHARE of a pool went up, comparing
+// before/after as a cross-multiplication so there is no float epsilon to tune.
+// An unchanged max reduces it to a plain point comparison.
+func shareGrew(beforeRes, beforeMax, afterRes, afterMax int) bool {
+	if afterRes <= 0 {
+		return false
+	}
+	if beforeMax <= 0 || afterMax <= 0 {
+		return beforeRes <= 0
+	}
+	return afterRes*beforeMax > beforeRes*afterMax
+}
+
+// ReservationIncreaseNotice returns the line to show a player who has just put
+// on something that sets more of them aside, or the EMPTY STRING when nothing
+// did. Callers must treat empty as "say nothing".
+//
+// It fires on a larger SHARE, not on more points -- see ReservationTotals for
+// why those differ. It also stays silent on a swap that trades one reserving
+// item for a heavier-on-one-pool, lighter-on-another set only where the share
+// genuinely fell; any pool whose share rose is reported.
+//
+// Bands only, never a number, matching ReservationRefusal and the status
+// sheet's Reserved row. The band quoted is the pool's NEW total share, not the
+// item's own contribution: the player's question after equipping is "where does
+// this leave me", and the answer that lets them predict the next refusal is the
+// total.
+func (c *Character) ReservationIncreaseNotice(before ReservationTotals) string {
+	after := c.ReservationTotals()
+
+	var parts []string
+	for _, p := range []struct {
+		pool                                 Pool
+		beforeRes, beforeMax, afterRes, aMax int
+	}{
+		{PoolHealth, before.Health, before.HealthMax, after.Health, after.HealthMax},
+		{PoolStamina, before.Stamina, before.StaminaMax, after.Stamina, after.StaminaMax},
+		{PoolConviction, before.Conviction, before.ConvictionMax, after.Conviction, after.ConvictionMax},
+	} {
+		if !shareGrew(p.beforeRes, p.beforeMax, p.afterRes, p.aMax) {
+			continue
+		}
+		parts = append(parts, ReserveShareBand(p.afterRes, p.aMax)+` of your `+poolDisplayName(p.pool))
+	}
+
+	if len(parts) == 0 {
+		return ``
+	}
+
+	return `Putting that on sets part of you aside. Your gear and bonds now hold ` +
+		joinWithAnd(parts) + ` in reserve.`
+}
+
+// joinWithAnd renders a list as plain English: "a", "a and b", "a, b and c".
+func joinWithAnd(parts []string) string {
+	switch len(parts) {
+	case 0:
+		return ``
+	case 1:
+		return parts[0]
+	case 2:
+		return parts[0] + ` and ` + parts[1]
+	}
+	return strings.Join(parts[:len(parts)-1], `, `) + ` and ` + parts[len(parts)-1]
 }
 
 // ReservationRefusal is the message every refusing path sends. It names

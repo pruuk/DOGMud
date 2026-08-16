@@ -1,5 +1,33 @@
 # DOGMud Patch Notes
 
+## 2026-08-16: Reading your own bars, honestly
+
+Your health, stamina and conviction bars now measure what you can actually
+reach. Anything your gear or your companions hold in reserve is out of the
+pool for as long as they hold it, so it is no longer drawn as part of the
+bar. A full bar means you are as recovered as you can be, and a bar at a
+third means you have a third of what you can hold. Before this, the reserved
+part of the bar was drawn in a shade that many clients cannot show apart from
+the filled part, so a badly wounded character could show a bar that looked
+completely full. That was the most dangerous kind of wrong, and it is gone.
+
+The status sheet now reads from the same pool the bar does, so the two can no
+longer describe the same wound in two different ways.
+
+The Reserved row on your status sheet now measures against the limit rather
+than against the whole pool, which is what it was always meant to tell you.
+It will warn you as you approach the ceiling instead of only once you have
+already reached it.
+
+Putting on something that draws on you now says so, in plain words, at the
+moment you put it on. You will hear which of your pools it takes from and how
+much of each is now spoken for, so a refusal later on will never come out of
+nowhere.
+
+Releasing a companion now updates the web client straight away. It used to
+keep showing the will that companion had been holding, long after the bond
+was broken.
+
 ## 2026-08-15: What you promise away, and what you keep
 
 Some of what you carry does not simply help you. A Chrysalis enchantment

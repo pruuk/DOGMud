@@ -120,6 +120,11 @@ func (c *Character) CanAfford(pool Pool, amount int) bool
 // It never returns 0, deliberately: see the Gotchas note on the floor.
 func (c *Character) EffectivePoolMax(p Pool) int
 
+// Same value, keyed by the pool's plain name, FOR TEMPLATES ONLY. text/template
+// cannot convert an untyped string constant to Pool, so the typed form above is
+// unreachable from status.template.
+func (c *Character) EffectivePoolMaxNamed(pool string) int
+
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
@@ -428,10 +433,22 @@ func (before ReservationSnapshot) Worsened(after ReservationSnapshot) (Pool, boo
 func (c *Character) ItemReserveOnPool(itm items.Item, p Pool) int
 func (c *Character) EnchantReserveAt(enchantType string, tier int, hands int, p Pool) int
 
+// Raw reservation + pool max together, for the equip disclosure. Distinct from
+// ReservationSnapshot, which records overage past the cap.
+type ReservationTotals struct {
+	Health, Stamina, Conviction          int
+	HealthMax, StaminaMax, ConvictionMax int
+}
+func (c *Character) ReservationTotals() ReservationTotals
+
+// The equip line, or "" when no pool's reserved SHARE grew. Callers must treat
+// empty as "say nothing".
+func (c *Character) ReservationIncreaseNotice(before ReservationTotals) string
+
 // Player-facing words. Never a raw number.
 func ReserveShareBand(reserve, maxPool int) string
 func (c *Character) ReservationBandName(pool string) string
-func (c *Character) ReservationRefusal(p Pool) string
+func (c *Character) ReservationRefusal(p Pool, added int) string
 ```
 
 ### Companions (`companions.go`)
@@ -490,14 +507,30 @@ now supersedes on all three pools.
    past rank 25, which is deliberate.
 7. **Two band vocabularies on purpose.** `ReserveShareBand` is a prose fragment
    that has to read inside a sentence; `ReservationBandName` is a short word for
-   the status sheet's narrow column and its top label keys off the **cap** so a
-   player can see when they have no room left. Merging them breaks the status
-   box.
+   the status sheet's narrow column and **every** rung of its ladder keys off
+   the **cap**, not the pool, so the row reports remaining headroom. Merging
+   them breaks the status box. The ladder was cap-keyed on its top rung only
+   until 2026-08-16, which made the row read `notable` through three
+   consecutive refusals: the cap sits near two thirds of the pool, so two
+   thirds of the ceiling was still under half the pool. `near limit` is the
+   rung of warning before `at limit`.
 8. **`EnchantReserveAt` scales the enchantment share by the wearer's enchanting
    rank, and the item's own `reserve_*_pct` not at all.** The rider is applied
    to the percentage before the floor, so it cannot be rounded away on a small
    pool. Calling `enchantments.GetTierReservePct` directly gives an unridden
    figure and will disagree with the character's real total.
+9. **`ReservationIncreaseNotice` compares SHARES, not points.** `reserve_*_pct`
+   is a percentage of the pool max, so any item that raises a pool raises the
+   reserved points on gear already worn. A points comparison would announce a
+   reservation increase for a plain +Vitality helmet, which is why
+   `ReservationTotals` carries the maxima alongside the reserves.
+10. **Bars measure `EffectivePoolMax`, everywhere.** The prompt gauge
+    (`users.renderVitalBar`), the `status` vitals row and the web client's
+    `availablePct()` all divide by the reachable pool. Drawing the reserved
+    share as a distinct band inside a ten-block ASCII gauge does not work:
+    `internal/util`'s downgrade table maps both the filled block and the
+    crosshatch to `#`, so the reserved band read as filled and a bleeding
+    character saw a full bar.
 
 ## Stage 7.5: Prone Condition System
 

@@ -39,6 +39,7 @@ func TestReservationQuality_RendersTheWordAndPadsLikeItsSiblings(t *testing.T) {
 		{"modest", `fg="green"`},
 		{"notable", `fg="yellow"`},
 		{"heavy", `fg="red"`},
+		{"near limit", `fg="red-bold"`},
 		{"at limit", `fg="red-bold"`},
 	}
 
@@ -76,7 +77,8 @@ func TestReservationQuality_RendersTheWordAndPadsLikeItsSiblings(t *testing.T) {
 // (a pool name string) is the one the method really takes.
 //
 // Conviction is used because a companion's reserve is settable without building
-// an equipment set, and the cap is floor(max x PoolReservationCapPct).
+// an equipment set, and the cap is floor(max x PoolReservationCapPct) = 660 on
+// the 1000 pool below. Every band edge is a fraction of THAT, not of the pool.
 func TestReservationQuality_RendersWhatTheCharacterPackageActuallyReturns(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -84,10 +86,11 @@ func TestReservationQuality_RendersWhatTheCharacterPackageActuallyReturns(t *tes
 		want    string
 	}{
 		{"nothing bound", 0, "none"},
-		{"one small bond", 100, "slight"},
-		{"a real cost", 200, "modest"},
-		{"giving something up", 400, "notable"},
-		{"close to the ceiling", 600, "heavy"},
+		{"one small bond", 50, "slight"},
+		{"a real cost", 150, "modest"},
+		{"giving something up", 300, "notable"},
+		{"close to the ceiling", 400, "heavy"},
+		{"almost out of room", 550, "near limit"},
 		{"ceiling reached", 660, "at limit"},
 	}
 

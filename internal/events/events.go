@@ -430,6 +430,33 @@ func DrainQueuedItemOwnershipForTest(userId int) []ItemOwnership {
 	return found
 }
 
+// DrainQueuedVitalsChangedForTest removes all CharacterVitalsChanged events
+// from the global queue for the given userId and returns them. Pass 0 to drain
+// every CharacterVitalsChanged event regardless of user.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedVitalsChangedForTest(userId int) []CharacterVitalsChanged {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []CharacterVitalsChanged
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		vc, ok := pe.event.(CharacterVitalsChanged)
+		if !ok {
+			remaining = append(remaining, pe)
+			continue
+		}
+		if userId == 0 || vc.UserId == userId {
+			found = append(found, vc)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // Initialize the priority queue.
 func init() {
 	heap.Init(&globalQueue)

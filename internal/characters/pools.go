@@ -117,6 +117,24 @@ func (c *Character) EffectivePoolMax(p Pool) int {
 	return 1
 }
 
+// EffectivePoolMaxNamed is EffectivePoolMax keyed by the pool's plain string
+// name.
+//
+// It exists for text/template and nothing else. A template argument is an
+// untyped string constant, and text/template's validateType only auto-converts
+// between int-like kinds, so `.Character.EffectivePoolMax "health"` fails to
+// execute against the typed Pool parameter. ReservationBandName takes a string
+// for the same reason.
+//
+// The status sheet needs this so its vitals row is measured against the pool
+// the character can actually reach, which is what the prompt bar measures. When
+// the two used different denominators they disagreed on the same pool in the
+// same breath: `status` called a reserved character "low" while the bar next to
+// it looked comfortable.
+func (c *Character) EffectivePoolMaxNamed(pool string) int {
+	return c.EffectivePoolMax(Pool(pool))
+}
+
 // setPool writes a pool. Unexported so every caller goes through a primitive
 // and cannot bypass the floor rules.
 func (c *Character) setPool(p Pool, v int) {

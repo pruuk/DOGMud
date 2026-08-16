@@ -111,9 +111,9 @@ func TestReservationOverages_WorsenedOnlyOnGrowth(t *testing.T) {
 }
 
 // The short band vocabulary used by the status sheet. Every label must fit the
-// 13-character column the template reserves for it, and the top band must key
-// off the CAP rather than a fixed fraction, so a player can see when they have
-// no room left to add.
+// 13-character column the template reserves for it, and EVERY rung keys off the
+// CAP rather than the pool, so the row reports the headroom a player has left
+// rather than a share of a ceiling they can never use.
 func TestReservationBandName_ShortVocabulary(t *testing.T) {
 	c := New()
 	c.StaminaMax.Base = 100
@@ -128,12 +128,13 @@ func TestReservationBandName_ShortVocabulary(t *testing.T) {
 		want    string
 	}{
 		{0, "none"},
-		{10, "slight"},
-		{20, "modest"},
-		{40, "notable"},
-		{60, "heavy"},
-		{66, "at limit"},
-		{90, "at limit"},
+		{5, "slight"},      // 8% of the cap
+		{15, "modest"},     // 23%
+		{30, "notable"},    // 45%
+		{40, "heavy"},      // 61%
+		{55, "near limit"}, // 83%
+		{66, "at limit"},   // the cap itself
+		{90, "at limit"},   // grandfathered, well past it
 	} {
 		if got := reservationBand(tc.reserve, 100, 66); got != tc.want {
 			t.Errorf("reservationBand(%d, 100, 66) = %q, want %q", tc.reserve, got, tc.want)
@@ -141,5 +142,74 @@ func TestReservationBandName_ShortVocabulary(t *testing.T) {
 		if len(tc.want) > 13 {
 			t.Errorf("band %q is %d chars and will break the status box", tc.want, len(tc.want))
 		}
+	}
+}
+
+// The defect this exists to prevent. A 2026-08-15 playtest watched the Reserved
+// row read `notable` through THREE consecutive refusals.
+//
+// The row's entire job is telling a player how much room they have left, so a
+// character close enough to the ceiling that the next ordinary addition is
+// refused must not be described in the comfortable middle of the ladder. The
+// old ladder measured the middle rungs against the full POOL while the ceiling
+// sat at two thirds of it, so two thirds of the way to the ceiling still read
+// as under half of the pool.
+func TestReservationBandName_WarnsBeforeTheCeiling(t *testing.T) {
+	const (
+		pool = 500
+		cap  = 330 // ReservationCap: floor(500 * 0.66)
+	)
+
+	// A companion of the kind U7b prices at roughly a quarter of a 500 pool.
+	const nextAddition = 126
+
+	// The band cannot know what the player is about to add, so it is not asked
+	// to predict a specific refusal. What it must never do is describe someone
+	// out of room as comfortable. Walk the whole pool: every reservation big
+	// enough to be refused its next companion has to sit in the crowded end of
+	// the ladder, and no reservation with room to spare may claim the ceiling.
+	crowded := map[string]bool{"heavy": true, "near limit": true, "at limit": true}
+
+	for reserve := 0; reserve <= cap; reserve++ {
+		band := reservationBand(reserve, pool, cap)
+		refused := reserve+nextAddition > cap
+
+		if refused && !crowded[band] {
+			t.Fatalf("reserve %d of pool %d (cap %d) is refused its next companion "+
+				"but the status row says %q. The row has to warn before the ceiling, "+
+				"not after it.", reserve, pool, cap, band)
+		}
+		if !refused && band == "at limit" {
+			t.Fatalf("reserve %d of pool %d (cap %d) still has room for its next "+
+				"companion but the status row says %q", reserve, pool, cap, band)
+		}
+	}
+
+	// And the ceiling itself must say so, which is the case the playtest never
+	// once saw.
+	if got := reservationBand(cap, pool, cap); got != "at limit" {
+		t.Errorf("reservationBand at exactly the cap = %q, want \"at limit\"", got)
+	}
+}
+
+// End to end through the real character, not just the helper: a pool two thirds
+// reserved is at its ceiling and the sheet must say so. Before U7b's display
+// fix this read "heavy", one rung short of the top, because 66 of 100 is only
+// two thirds of the POOL.
+func TestReservationBandName_AtTheCapThroughTheCharacter(t *testing.T) {
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999931: {ItemId: 999931, Name: "heavy collar", Type: items.Neck, ReserveStaminaPct: 0.66},
+	})()
+
+	c := New()
+	c.StaminaMax.Base = 100
+	c.Equipment.Neck = items.New(999931)
+	c.Validate()
+
+	if res := c.GetPoolReservation("stamina", 100); res != 66 {
+		t.Fatalf("fixture: reservation = %d, want 66", res)
+	}
+	if got := c.ReservationBandName("stamina"); got != "at limit" {
+		t.Errorf("ReservationBandName(stamina) at the cap = %q, want \"at limit\"", got)
 	}
 }

@@ -30,13 +30,19 @@ a deeper pool to draw on, or a lesser thing to bind.
 
 <ansi fg="yellow">━━━ Reading It ━━━</ansi>
 
+Your health, stamina and conviction bars show the pool you can still
+reach, not your listed one. A full bar means you are as recovered as
+you can be while you are carrying what you carry.
+
 Type <ansi fg="command">status</ansi> and look at the Reserved line under your pools. Each pool
-gets a word of its own:
+gets a word of its own, and each word measures how close you are to the
+limit rather than to your whole pool:
 
   <ansi fg="green">none</ansi> or <ansi fg="green">slight</ansi>    Nothing worth worrying about.
   <ansi fg="green">modest</ansi>            A real cost, comfortably borne.
   <ansi fg="yellow">notable</ansi>           You are giving up something to keep this.
-  <ansi fg="red">heavy</ansi>             Close to the limit. Choose the next one with care.
+  <ansi fg="red">heavy</ansi>             Well along. Choose the next one with care.
+  <ansi fg="red-bold">near limit</ansi>        Almost no room left. The next thing may be refused.
   <ansi fg="red-bold">at limit</ansi>          You cannot add anything more to this pool.
 
 <ansi fg="yellow">━━━ Making Room ━━━</ansi>

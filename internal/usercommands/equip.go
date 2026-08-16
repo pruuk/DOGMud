@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -14,6 +15,25 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// sendReservationDisclosure tells the player, in bands, when the thing they
+// just equipped set more of them aside. Silent otherwise.
+//
+// Equipping a reserving item used to say nothing at all: the pool maxima moved,
+// the reachable pool shrank, and the first the player heard of it was a refusal
+// several actions later with nothing to connect it to. The equip is the only
+// moment where cause and effect are adjacent, so it is the only place the line
+// is worth anything.
+//
+// The empty-string contract is what keeps it off ordinary equips. Every gate
+// lives in Character.ReservationIncreaseNotice, which reports a larger SHARE
+// rather than more points, so a plain +Vitality item that grows the pool (and
+// with it the point cost of reserves already worn) stays quiet.
+func sendReservationDisclosure(user *users.UserRecord, before characters.ReservationTotals) {
+	if notice := user.Character.ReservationIncreaseNotice(before); notice != `` {
+		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">`+notice+`</ansi>`)
+	}
+}
 
 func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if refuseWhileBusy(user, `change equipment`) {
@@ -76,6 +96,14 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			)
 			return true, nil
 		}
+
+		// Snapshot reservation BEFORE anything touches the equipment set, so the
+		// disclosure below can tell the player when the thing they just put on
+		// set more of them aside. Taken here rather than inside either placement
+		// branch because both mutate, and the arm-slot branch additionally runs
+		// Validate(true), which re-derives the pool maxima the shares are
+		// measured against.
+		beforeReservation := user.Character.ReservationTotals()
 
 		// Handle direct arm slot equip (arms 1-6)
 		if targetArmSlot > 0 {
@@ -196,6 +224,7 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			)
 
 			user.Character.Validate(true)
+			sendReservationDisclosure(user, beforeReservation)
 			events.AddToQueue(events.EquipmentChange{
 				UserId:       user.UserId,
 				ItemsWorn:    []items.Item{matchItem},
@@ -257,6 +286,8 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 					user.UserId,
 				)
 			}
+
+			sendReservationDisclosure(user, beforeReservation)
 
 			// Trigger any outstanding buff onStart events
 			if len(result.Item.GetSpec().WornBuffIds) > 0 {

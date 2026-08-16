@@ -321,9 +321,11 @@ var (
 		// characters, following the vitalQuality / toxicityQuality /
 		// encumbranceQuality convention used in the status template.
 		//
-		// Words only, never a number. "at limit" is not a fraction: it means the
-		// reservation ceiling has been reached and nothing further can be added,
-		// which is the one thing a player actually needs to act on.
+		// Words only, never a number. The band ladder is keyed to the reservation
+		// CAP, not to the pool, so every rung reports remaining headroom.
+		// "near limit" is the last warning before "at limit", which means the
+		// ceiling has been reached and nothing further can be added -- the one
+		// thing a player actually needs to act on.
 		"reservationQuality": func(bandName string, padTo ...int) string {
 			var color string
 			switch bandName {
@@ -331,7 +333,7 @@ var (
 				color = "yellow"
 			case "heavy":
 				color = "red"
-			case "at limit":
+			case "near limit", "at limit":
 				color = "red-bold"
 			default: // "none", "slight", "modest"
 				color = "green"

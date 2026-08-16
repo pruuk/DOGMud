@@ -1098,9 +1098,14 @@ func TestRenderVitalBar(t *testing.T) {
 		assert.Contains(t, bar, "░") // empty blocks
 	})
 
-	t.Run("with reservation", func(t *testing.T) {
+	t.Run("with reservation the gauge spans the reachable pool", func(t *testing.T) {
+		// 50 of a pool whose reachable ceiling is 80 is five eighths full, so
+		// six filled blocks and four empty. The reserved fifth is NOT drawn:
+		// it is the denominator, not a band. See renderVitalBar's comment.
 		bar := renderVitalBar(50, 100, 20)
-		assert.Contains(t, bar, "▓") // reserved blocks
+		assert.Equal(t, 6, strings.Count(bar, "█"))
+		assert.Equal(t, 4, strings.Count(bar, "░"))
+		assert.NotContains(t, bar, "▓")
 	})
 
 	t.Run("zero max defaults to 1", func(t *testing.T) {
@@ -1116,6 +1121,68 @@ func TestRenderVitalBar(t *testing.T) {
 	t.Run("negative reserved clamped to 0", func(t *testing.T) {
 		bar := renderVitalBar(50, 100, -5)
 		assert.NotEmpty(t, bar)
+	})
+}
+
+// asciiBar collapses a rendered bar the way a player on an ASCII-only client
+// sees it. internal/util's downgrade table maps '█' and '▓' BOTH to '#', and
+// '░' to '.', which is why a reserved band drawn as a third shade was invisible
+// as a distinct thing and read as filled.
+func asciiBar(bar string) string {
+	r := strings.NewReplacer("█", "#", "▓", "#", "▒", ":", "░", ".")
+	out := strings.Builder{}
+	for _, ch := range r.Replace(bar) {
+		if ch == '#' || ch == '.' || ch == ':' {
+			out.WriteRune(ch)
+		}
+	}
+	return out.String()
+}
+
+// The defect this exists to prevent, in the numbers a 2026-08-15 playtest
+// measured on a live character.
+//
+// A player must never be able to bleed out reading a healthy-looking bar. The
+// gauge is the fastest-read thing on the screen, so its one hard obligation is
+// that a fraction of a pool never renders as a whole one.
+func TestRenderVitalBar_NeverReadsFullBelowTheReachableCeiling(t *testing.T) {
+	// Measured case one: 272 of 440 health with 176 reserved. The old renderer
+	// drew six filled plus four reserved, and the ASCII downgrade turned that
+	// into ten '#' -- a completely full bar on a character carrying real damage.
+	t.Run("at the reachable ceiling the bar is full, and honestly so", func(t *testing.T) {
+		// 272 clamps to the 264 reachable ceiling, which IS full. What must not
+		// happen is that the same ten '#' also appear below the ceiling.
+		assert.Equal(t, "##########", asciiBar(renderVitalBar(272, 440, 176)))
+	})
+
+	// Measured case two: 101 of 440 with 176 reserved, which `status` correctly
+	// called low. The old renderer put two filled and four reserved blocks in
+	// the same bar, so seven of ten segments read as '#' at 23% health.
+	t.Run("a fraction of the reachable pool never reads full", func(t *testing.T) {
+		ascii := asciiBar(renderVitalBar(101, 440, 176))
+		assert.NotEqual(t, "##########", ascii)
+		// 101 of a 264 reachable ceiling is 38%, so three filled blocks.
+		assert.Equal(t, "###.......", ascii)
+	})
+
+	// The general rule, swept. Anything short of the reachable ceiling must
+	// leave at least one empty block behind, at every reservation level.
+	t.Run("swept across reservations", func(t *testing.T) {
+		for _, reserved := range []int{0, 40, 100, 176, 260, 400, 440, 500} {
+			reachable := 440 - reserved
+			if reachable < 1 {
+				reachable = 1
+			}
+			for _, cur := range []int{1, reachable / 4, reachable / 2, reachable - 1} {
+				if cur < 1 || cur >= reachable {
+					continue
+				}
+				ascii := asciiBar(renderVitalBar(cur, 440, reserved))
+				assert.NotEqual(t, "##########", ascii,
+					"current=%d max=440 reserved=%d rendered a FULL bar below the reachable ceiling %d",
+					cur, reserved, reachable)
+			}
+		}
 	})
 }
 

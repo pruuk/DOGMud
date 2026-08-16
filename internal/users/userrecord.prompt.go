@@ -71,12 +71,44 @@ func RenderVitalBar(current, max, reserved int) string {
 // renderVitalBar returns a 10-block ANSI progress bar for a vital stat.
 // Color breakpoints match the web client vitals window gradient:
 //
-//	>60% → green (ANSI 82), >30% → yellow (ANSI 226), ≤30% → red (ANSI 196)
+//	>60% → green, >30% → gold, ≤30% → red
 //
-// The reserved parameter adds neutral-grey blocks (fenced off at the right,
-// after the drained portion) representing pool reservation from Chrysalis
-// enchantments — mirroring the crosshatched reserved region in the web vitals
-// bar. When reserved=0 the bar renders identically to the original two-arg version.
+// THE TEN BLOCKS SPAN THE REACHABLE POOL, NOT THE RAW MAXIMUM. `reserved` is a
+// DENOMINATOR here, not a band to draw: the gauge measures max - reserved,
+// which is the only ceiling the character can ever get back to. A full gauge
+// therefore means "as recovered as you can be", and a gauge at a third means
+// "a third of what you can hold".
+//
+// It used to draw the reserved share as its own ▓ band inside the same ten
+// blocks, with the usable portion scaled against the RAW max. That is what a
+// 2026-08-15 playtest caught lying: 272 of 440 health with 176 reserved drew
+// six ██ plus four ▓▓, and internal/util's ASCII downgrade table maps BOTH
+// '█' and '▓' to '#' (util.go, asciiReplacements), so the player saw ##########
+// and read a full bar while sitting on a bleeding character. Any design that
+// leans on a third shade to carry safety-critical meaning is one charset away
+// from that same lie, and the charset is the player's choice, not ours.
+//
+// Three further reasons this is the right base, not merely the safe one:
+//
+//   - characters.EffectivePoolMax's own contract says to use it for EVERY
+//     percentage-of-max threshold, and a vitals bar is the most literal one in
+//     the game. Against the raw max a reserved character can never fill the
+//     gauge no matter how completely they recover.
+//   - The color was ALREADY computed against the reachable max while the blocks
+//     were counted against the raw max, so the bar contradicted itself: gold
+//     text over a bar that looked six-tenths green.
+//   - The web client does exactly this. webclient-pure.html fills its bars from
+//     availablePct() = current / max(1, max - reserved) and renders reservation
+//     as a separate crosshatch, which it can afford because it has real colors.
+//
+// Reservation has not stopped being visible; it moved to the surfaces built to
+// carry it: the `status` sheet's Reserved row, the equip disclosure, and the
+// refusal message. A slow-changing property belongs on a sheet you read, not
+// inside a fast-moving safety gauge you glance at.
+//
+// The filled count FLOORS rather than rounds, so ten blocks means exactly full
+// and nothing else. Rounding would have shown a full bar from 95% of the
+// reachable pool upward, which is a smaller version of the bug being fixed.
 func renderVitalBar(current, max, reserved int) string {
 	if max <= 0 {
 		max = 1
@@ -96,21 +128,14 @@ func renderVitalBar(current, max, reserved int) string {
 		current = effectiveMax
 	}
 
-	// Calculate block counts out of 10
-	reservedBlocks := int(math.Round(float64(reserved) / float64(max) * 10.0))
-	if reservedBlocks > 10 {
-		reservedBlocks = 10
+	filledBlocks := int(math.Floor(float64(current) / float64(effectiveMax) * 10.0))
+	if filledBlocks > 10 {
+		filledBlocks = 10
 	}
-
-	usableBlocks := int(math.Round(float64(current) / float64(max) * 10.0))
-	if usableBlocks+reservedBlocks > 10 {
-		usableBlocks = 10 - reservedBlocks
+	if filledBlocks < 0 {
+		filledBlocks = 0
 	}
-
-	emptyBlocks := 10 - usableBlocks - reservedBlocks
-	if emptyBlocks < 0 {
-		emptyBlocks = 0
-	}
+	emptyBlocks := 10 - filledBlocks
 
 	// Color based on current vs effective max. 256-color indices chosen to match
 	// the web vitals gradient (Material colors) as closely as the cube allows —
@@ -126,21 +151,16 @@ func renderVitalBar(current, max, reserved int) string {
 		barColor = "203" // red ≈ vitals #f44336
 	}
 
-	// Order matches the web vitals bar left-to-right: filled usable (level-
-	// colored), then drained usable (dark), then the reserved block fenced off
-	// at the right in neutral grey (mirrors the crosshatched reserved region).
-	result := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`,
-		barColor,
-		strings.Repeat("█", usableBlocks))
+	result := ``
+	if filledBlocks > 0 {
+		result += fmt.Sprintf(`<ansi fg="%s">%s</ansi>`,
+			barColor,
+			strings.Repeat("█", filledBlocks))
+	}
 
 	if emptyBlocks > 0 {
 		result += fmt.Sprintf(`<ansi fg="238">%s</ansi>`,
 			strings.Repeat("░", emptyBlocks))
-	}
-
-	if reservedBlocks > 0 {
-		result += fmt.Sprintf(`<ansi fg="244">%s</ansi>`,
-			strings.Repeat("▓", reservedBlocks))
 	}
 
 	return result
