@@ -1,5 +1,37 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: Say what you mean, and be told the truth
+
+"Drop all stone" now drops your stones. It used to drop everything you had,
+quest items and all, because the game read the word "all" and stopped
+reading. "Get all stone" had the matching fault and swept up the whole
+floor. Both spellings, with a dot or with a space, now act on the one thing
+you named. Asking to drop all your gold when you have none also says so,
+instead of quietly emptying your pack.
+
+The stamina helpfile was telling you the opposite of the truth about
+defending. It said dodging was the cheapest defence and blocking the
+dearest. It is the other way around, and a player who read it and built
+around dodging was optimising into the most expensive defence in the game.
+It also suggested one incoming blow could charge you for several defences at
+once. It cannot: you meet the blow with whichever defence serves you best
+and pay for that one alone. Both are corrected, and the file now covers what
+attacking costs and how weight and skill move every price.
+
+The encumbrance helpfile described a burden counted in objects. It is
+weight, and always was. A pack of feathers and a pack holding an anvil are
+not the same load. The file now says so, and explains that weight raises the
+price of attacking and defending as well as walking.
+
+Your burden now appears on your status sheet next to your toxicity, so you
+no longer have to open your pack or edit your prompt to find out how heavily
+you are loaded before a fight.
+
+For those using a client that reads the game's data feed: a resource pool at
+rock bottom now reports itself as empty rather than saying nothing at all.
+Bars that used to freeze at their last reading when you ran dry will now
+show you the truth at the moment it matters most.
+
 ## 2026-08-15: Effort has a price, and skill is the discount
 
 Every action you take is now priced by the same rule. What it costs depends
