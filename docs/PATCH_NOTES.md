@@ -1,5 +1,53 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: What you promise away, and what you keep
+
+Some of what you carry does not simply help you. A Chrysalis enchantment
+feeds on its wearer, and a companion draws on your will for as long as it
+walks beside you. Until now there was no limit at all on how much of
+yourself you could promise away, and it was entirely possible to give away
+so much that almost nothing was left to fight with. There is a limit now,
+and the game refuses cleanly at it: the item is not worn, the enchantment is
+not begun, the creature is not called, and you have lost nothing by asking.
+
+Nothing will ever be taken from you. If you are already past the limit,
+everything you have stays exactly where it is, and you will only be told no
+when you try to add. You can still trade one burden for another of the same
+weight, even while you are at the limit, so nothing forces you to strip.
+Type status to see what each of your pools has set aside, in plain words.
+
+An enchantment on your gear can also deepen on its own while you fight. If
+deepening would carry you past the limit, it waits instead, and says so. The
+work it has already done is not lost, and it will grow the moment you make
+room for it.
+
+Summoned and raised creatures have been rebuilt from the ground up. Calling
+one is far cheaper than it was, and keeping one costs more, which is the
+trade that makes a servant a real choice rather than a formality. The gap
+between a weak servant and a strong one is now honest at every level of
+remains: a flesh golem is properly the stronger of the two whether you raise
+it over a rat or over a warlord, where before the difference all but vanished
+once the remains were rich enough. What you pay to keep a creature now
+follows how powerful that creature is, so a stable of feeble servants and one
+towering one are priced for what they actually are.
+
+Four summoned creatures had been quietly wasting a large share of their turns
+and now fight properly. The water elemental, the skeleton and the hive swarm
+were standing idle through whole rounds. The fire elemental warded itself
+once at the start of a fight and then did nothing at all for the rest of it.
+The air and fire elementals were also casting with no training behind them,
+unlike every other summon that casts, and now begin trained like their kin.
+
+Skill pays twice, on both halves of this. A practised enchanter binds magic
+that asks less of whoever wears it, so the same enchantment sits lighter on
+a master's gear than on a novice's. A practised summoner holds more on the
+same will, so experience buys room for another bond rather than only a
+stronger one. Both are gentle at first and generous later, and a complete
+novice pays a small premium on each until they have some craft behind them.
+
+The homunculus is also markedly less demanding to keep than it was, so the
+crafters it was built for can actually field it.
+
 ## 2026-08-15: A light pack is finally worth carrying
 
 Travelling used to cost the same whether you set out empty-handed or with

@@ -46,8 +46,7 @@ _datafiles/world/dogmud/spells/{spellid}.js   (optional — only if spell has lo
 | `effect_magnitude` | int | no | Base damage or heal amount for simple effects. |
 | `buff_ids` | list | no | Buff IDs applied to target on success (for `effect_type: buff`). |
 | `summon_mob_id` | int | no | Mob ID to summon. Non-zero = this is a summon spell. |
-| `summon_base_pool` | int | no | Base stat pool before charisma/skill scaling. |
-| `summon_scaling_divisor` | int | no | Charisma divisor for scaling (default 500, lower = more scaling). |
+| `summon_pet_multiplier` | float | **yes for summons** | The pet's tier dial. Scales the caster's own power into the companion's stat pool, and scales `CompanionReserveDefault` into the ongoing Conviction the companion reserves. See "Summon pet multipliers" below. |
 | `summon_component_id` | int | no | Item ID consumed on cast. 0 = no component needed. |
 | `summon_requires_corpse` | bool | no | If true, requires and consumes a room corpse. |
 | `summon_min_corpse_pool` | int | no | Minimum corpse stat pool required for raise spells. |
@@ -107,11 +106,10 @@ name: Raise Skeleton
 type: neutral
 schools:
   - manifestation
-cost: 40
-waitrounds: 2
+cost: 30
+waitrounds: 4
 summon_mob_id: 300
-summon_base_pool: 60
-summon_scaling_divisor: 500
+summon_pet_multiplier: 0.50
 summon_requires_corpse: true
 summon_min_corpse_pool: 30
 cast_user_text: "You reach toward the remains, dark energy gathering."
@@ -125,14 +123,41 @@ name: Conjure Earth Elemental
 type: neutral
 schools:
   - manifestation
-cost: 55
-waitrounds: 2
+cost: 45
+waitrounds: 3
 summon_mob_id: 311
-summon_base_pool: 90
-summon_scaling_divisor: 500
+summon_pet_multiplier: 1.05
 cast_user_text: "You slam your fist into the ground, willing stone to rise."
 cast_room_text: "{source} slams a fist into the ground with a thunderous crack."
 ```
+
+### Summon pet multipliers
+
+`summon_pet_multiplier` is the **only** dial that separates one pet tier from
+another. It is a float, and it does three jobs at once:
+
+1. **Stat pool.** `characters.CalcCompanionPool` builds a power base from the
+   caster (`charisma + manifestation x 5`), averages the corpse's pool into
+   that base for corpse-consuming raises, and applies the multiplier **after**
+   the average. Applying it after is what keeps a golem visibly stronger than
+   a skeleton at every corpse size instead of only at small ones.
+2. **Ongoing reservation.** `characters.CompanionReserveBase` returns
+   `round(CompanionReserveDefault x summon_pet_multiplier)`. Reservation is
+   **derived, never authored**: there is no per-spell reservation field, and
+   adding one back would give the value two sources of truth.
+3. **Validation.** A spell with `summon_mob_id` set and no positive
+   `summon_pet_multiplier` logs a warning at load and will field a
+   pool-of-one companion.
+
+Cast `cost` is a separate, one-time toll and is authored per spell. It is
+deliberately not derived from the multiplier: a companion persists across
+logout and reboot, so the ongoing reservation is where tier differences
+belong.
+
+**Retired fields.** `summon_base_pool`, `summon_scaling_divisor` and
+`summon_conviction_reserve` were removed in U7b (2026-08-15). The loader no
+longer reads any of them, and leaving one in a spell file has no effect at
+all. Do not copy them from an old file.
 
 ### Valid SpellType Values
 

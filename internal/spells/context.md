@@ -50,7 +50,7 @@ type SpellData struct {
     HealthCost        int       // Optional Health cost for vital school
     WaitRounds        int       // Casting delay in rounds
     Difficulty        int       // Success modifier (0-100%)
-    PrimaryStat       string    // Stat used for spell power scaling
+    PrimaryStat       string    // INERT. Parsed, never read. See the note below.
     BaseFolds         int       // Number of folds required to cast
     TargetDefenseType string    // "physical", "mental", or "none"
     EffectType        string    // "damage", "heal", "shield", "dot", "knockdown", "purge", "none"
@@ -58,6 +58,13 @@ type SpellData struct {
     EffectDuration    int       // For DoT: number of tick cycles
 }
 ```
+
+**`PrimaryStat` is inert.** Every spell YAML authors a `primarystat:` and the
+loader parses it into the struct, but as of 2026-08-15 nothing in `internal/`
+or `modules/` ever reads `SpellData.PrimaryStat`. Spell power and progression
+are driven by the resolution path's own stat choice, not by this field, so
+changing it in a YAML has no effect. Do not cite it as evidence of which stat a
+spell runs on, and do not "fix" a spell by editing it.
 
 ### Spell Difficulty and Target Types
 
@@ -151,6 +158,37 @@ Several buff flags affect spell and combat systems:
 | `mutation-rate` | 2x mutation progress gain | UserRoundTick.go |
 
 ---
+
+## Summon Fields (U7b, 2026-08-15)
+
+`SpellData` carries the summon contract in five fields:
+
+```go
+SummonMobId          int     `yaml:"summon_mob_id,omitempty"`
+SummonPetMultiplier  float64 `yaml:"summon_pet_multiplier,omitempty"`
+SummonComponentId    int     `yaml:"summon_component_id,omitempty"`
+SummonRequiresCorpse bool    `yaml:"summon_requires_corpse,omitempty"`
+SummonMinCorpsePool  int     `yaml:"summon_min_corpse_pool,omitempty"`
+```
+
+`SummonPetMultiplier` is the **single dial for a pet's tier**. It scales the
+caster's own power into the companion's stat pool via
+`characters.CalcCompanionPool`, and it scales `CompanionReserveDefault` into the
+ongoing Conviction the companion reserves via
+`characters.CompanionReserveBase`.
+
+**Reservation is derived, never authored.** There is no per-spell reservation
+field. `SummonConvictionReserve` used to be one and was deleted precisely
+because a second authorable source of truth beside the multiplier drifts on the
+first retune.
+
+**Three fields were removed and must not be re-added casually.**
+`SummonBasePool` and `SummonScalingDivisor` went with the old formula, in which
+the pet's base pool multiplied the caster's power and the corpse was averaged in
+afterwards, so the corpse's share grew until it swamped the pet choice.
+`SummonConvictionReserve` went for the reason above. `Validate` now warns when
+`SummonMobId > 0` and `SummonPetMultiplier <= 0`; it used to warn on a zero
+`summon_base_pool`.
 
 ## Summon Spells (Phase 25.4)
 

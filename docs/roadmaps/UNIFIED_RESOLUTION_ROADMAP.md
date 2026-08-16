@@ -176,7 +176,7 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U5c** | **Credit detection.** Immediate, *attributed* death when health drops below 1 at the harm site, replacing the deferred `Die(state.ActorRef{})` round-tick sweep. Sweep stays as a backstop for non-harm paths. | M | U5b | **Yes** |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | **The unified cost model.** NEW SLICE, added 2026-08-13; everything below it shifted by one. Applies the spec's single cost formula to every action: flat config base, encumbrance multiplier (physical only), inverse-skill multiplier, per-action modifier. Takes defence cost off the hardcoded 2/4/5 for real. **Must map the companion / reserved-CP interaction before building.** | L | U5, U6 | **Yes** |
-| **U7b** | **The reservation ceiling.** NEW SLICE, added 2026-08-15 at the owner's request; runs immediately after U7. Cap total reservation on a pool at 50-75% of its max and **refuse the breaching action** rather than letting it succeed and clamp: wielding or equipping a reserving item, enchanting, summoning, conjuring, raising. **Companions are in scope** and are the reason this cannot wait: they reserve on prod today. Also re-examines five raw-max reads whose U7-review rejection rested on the false premise that mobs cannot reserve. **Must precede U8**, which is what turns an over-reserved pool from cosmetic into crippling. | M | U7 | **Yes** |
+| **U7b** | ✅ **DONE.** **The reservation ceiling.** NEW SLICE, added 2026-08-15 at the owner's request; runs immediately after U7. Cap total reservation on a pool at 50-75% of its max and **refuse the breaching action** rather than letting it succeed and clamp: wielding or equipping a reserving item, enchanting, summoning, conjuring, raising. **Companions are in scope** and are the reason this cannot wait: they reserve on prod today. Also re-examines five raw-max reads whose U7-review rejection rested on the false premise that mobs cannot reserve. **Must precede U8**, which is what turns an over-reserved pool from cosmetic into crippling. | M | U7 | **Yes** |
 | **U8** | New cost surface: ranged, taunt and spell/taunt resistance start costing; **the special moves (bash, trip, kick and the rest), plus rally, warcry, grapple initiation and sneak, wired onto the U7 cost model** (they are free today, and `help stamina` wrongly claimed otherwise until 2026-08-15); skill-less roll on insufficient resource. (Was U7. The inverse-skill cost band moved into the new U7, where the whole formula now lives.) | M | **U7b** | **Yes** |
 | **U9** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. | M | U6 | **Yes** |
 | **U10** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
@@ -402,6 +402,61 @@ penalty.
 than 0, because every consumer reads a zero max as "no penalty at all", which
 made total reservation the *strongest* state in the game on five separate
 curves. That floor is belt and braces; this ceiling is the real fix.
+
+#### Outcome (shipped 2026-08-15)
+
+The cap landed at **66%** (`PoolReservationCapPct`, absent from `config.yaml`
+and falling through to its Go default), per pool, on all three pools, for
+players and companions alike. `internal/characters/reservation.go` owns the
+whole surface: `ReservationCap`, `WouldBreachReservationCap`,
+`ReservationOverages` / `ReservationSnapshot.Worsened`, `ItemReserveOnPool`,
+`EnchantReserveAt`, `ReserveShareBand`, `ReservationBandName` and
+`ReservationRefusal`. Eight enforcement sites consult it: equip
+(`characters.Wear`), the enchanting pre-flight in `craft.go`, the enchanting
+craft completion, the combat tier-up roll, `resolveCompanionSummon` (summon,
+conjure and raise alike), `resolveCharmSpell`, and the brood-mother and
+homunculus auto-spawns. `CanAffordCompanion` is deleted; with
+`CompanionCastingFloorPct` at 0 it had reduced to a 100% cap on conviction
+alone. Grandfathering is delivered by an overage snapshot rather than a cap
+test, so a character already over the ceiling can still swap one reserving item
+for another of the same weight.
+
+Companion power was rebuilt alongside it. `CalcCompanionPool` is
+`(charisma + manifestation x 5)`, averaged with the corpse pool for raises, with
+the pet multiplier applied **after** the average so the tiers stay
+proportionally separated at every corpse size. `summon_pet_multiplier` replaced
+`summon_base_pool`, and `summon_scaling_divisor` and
+`summon_conviction_reserve` are gone: reservation is now derived as
+`round(CompanionReserveDefault x petMultiplier)` and is never authored. Thirteen
+summon spells were re-costed and five summon mobs had behaviour defects fixed.
+`refreshCompanionReserves` replaced the zero-only login backfill with a full
+recompute, and discloses it when the result leaves the owner further over.
+
+**Three places this extended the spec, all deliberate.**
+
+1. **`summon_conviction_reserve` was deleted rather than kept as an override.**
+   D12 named only the other two, but with reservation derived from the pet
+   multiplier an authorable value beside it is a second source of truth that
+   drifts on the first retune. If per-spell overrides are wanted later, that is
+   a field to add back with a documented precedence rule.
+2. **`CalcCompanionStatPool` was renamed and kept, not deleted.** Its other
+   caller is `behaviortree.actSummonCompanion`, which spawns authored boss adds
+   tuned against its exact curve. It is now `CalcSpawnPoolFromBase`, and
+   `ManifestStatScaleChaFactor` / `ManifestStatScaleSkillFactor` stay alive to
+   serve it.
+3. **`CompanionReserveDefault` kept its name.** The spec called the knob
+   `CompanionReserveBase`; no such field ever existed. The new *function* is
+   named `CompanionReserveBase`, which is where the spec's word landed.
+
+**Two carried concerns.** `HomunculusConvictionReserve` dropped from 1000 to
+**300**, because at 1000 the ceiling made a crafting apex unfieldable by exactly
+the crafter it was built for. 300 still needs roughly 455 conviction max to fit
+under a 66% cap, and nearer 500 once the rank-0 rider penalty applies, so the
+refusal is **spoken** rather than silent and crib-sheet check 10b targets it.
+Separately, the inverse-skill rider is a penalty at low rank on **both** the
+item and the companion side, so a character who is a novice at enchanting and
+manifestation both pays it twice on two different pools. Each half is settled;
+the compounding is not, and is a playtest question rather than a code change.
 
 ### U0 — delete the spell-initiation gate
 

@@ -31,7 +31,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if corpse.Character.IsCharmed() {
-		user.SendText(messaging.CategorySystem, `These remains were bound to a master. The essence is spent — there is nothing left to raise.`)
+		user.SendText(messaging.CategorySystem, `These remains were bound to a master. The essence is spent. There is nothing left to raise.`)
 		return true, nil
 	}
 
@@ -51,27 +51,29 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		stats.Willpower.Training +
 		stats.Charisma.Training
 
-	// Describe the power level without exposing raw numbers.
+	// Describe the power level without exposing raw numbers. Each phrase
+	// completes the sentence "You sense ..." on its own, so it needs no
+	// dash and no second clause bolted on afterwards.
 	var essenceDesc string
 	switch {
 	case totalTraining >= 500:
-		essenceDesc = `overwhelming essence — death barely contains it`
+		essenceDesc = `overwhelming essence in these remains, more than death can hold`
 	case totalTraining >= 300:
-		essenceDesc = `immense essence — a truly mighty creature`
+		essenceDesc = `immense essence in these remains, a truly mighty creature in life`
 	case totalTraining >= 200:
-		essenceDesc = `powerful essence — formidable in life`
+		essenceDesc = `powerful essence in these remains, formidable in life`
 	case totalTraining >= 120:
-		essenceDesc = `substantial essence — a strong life force`
+		essenceDesc = `substantial essence in these remains, a strong life force`
 	case totalTraining >= 60:
-		essenceDesc = `moderate essence`
+		essenceDesc = `moderate essence in these remains`
 	case totalTraining >= 30:
-		essenceDesc = `faint residual essence`
+		essenceDesc = `faint residual essence in these remains`
 	default:
-		essenceDesc = `barely a trace of essence`
+		essenceDesc = `barely a trace of essence in these remains`
 	}
 
 	user.SendText(messaging.CategorySystem, `You study the remains of <ansi fg="mob-corpse">`+corpse.Character.Name+`</ansi>.`)
-	user.SendText(messaging.CategorySystem, `You sense `+essenceDesc+` within.`)
+	user.SendText(messaging.CategorySystem, `You sense `+essenceDesc+`.`)
 
 	// List which undead types this corpse could support, driven by the raise
 	// spells' own summon_min_corpse_pool gates so assess and the spells can
