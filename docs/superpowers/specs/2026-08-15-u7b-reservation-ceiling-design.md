@@ -306,6 +306,23 @@ simply cannot make things worse once over.
   project's multiplier-over-flat convention. Separate.
 - **Retuning `CompanionSoftCap`.** The conviction budget, not the count, is the
   real limit; the count backstop can be revisited once the cap is live.
+- **A FIFTH raw-max read: `condMobHealthBelow`**
+  (`internal/behaviortree/conditions_mob.go:26`). Found during Task 11, outside
+  its four-plus-two scope. It is the same defect class as the four that were
+  fixed: `ctx.InstanceId` is the acting mob, self-side, with no packmate filter
+  in front of it, so a charmed companion reaches it and reads as permanently
+  wounded against every `percent:` threshold authored in the archetype YAMLs.
+
+  **Attempted and reverted 2026-08-15, with a reason worth keeping.** Swapping
+  in `EffectivePoolMax` breaks `TestLeader_MobHurt_RallyOrWarcryThenEngage` and
+  `TestLookout_MobHurt_CallsForHelpAndEngages`. Not a fixture nit: those mobs
+  are seeded with **zero health**, so `HealthMax.Value` is 0 and the old code
+  returned Failure on its `<= 0` guard. `EffectivePoolMax` floors at 1, so the
+  same mob now computes 0 percent and returns **Success**, and the tree takes a
+  different branch. Production mobs always have a computed max so only
+  degenerate fixtures move, but it does change condition outcomes, and the
+  right fix is to give those fixtures real health under the plan's TDD
+  discipline rather than patching two archetype tests mid-slice.
 
 ---
 
