@@ -11,7 +11,6 @@ out halfway through one.
     fighter who strikes several times in a round pays for each blow. A
     flurry costs more than a single strike.
   - <ansi fg="stat">Defending</ansi>: dodging, parrying, and blocking all cost stamina.
-  - <ansi fg="stat">Special moves</ansi>: bash, trip, kick, and the like.
   - <ansi fg="stat">Getting back up</ansi>: standing from prone takes a real effort.
   - <ansi fg="stat">Movement</ansi>: travelling costs stamina, and what you are carrying
     raises that price from the very first pound.
