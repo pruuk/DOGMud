@@ -196,8 +196,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if len(args) >= 2 {
 			// "get all gold" still means the gold, not an item called gold.
 			if len(args) == 2 && args[1] == "gold" {
-				Get(`gold`, user, room, flags)
-				return true, nil
+				// Propagate the delegate's result rather than discarding it: a
+				// swallowed error here would report success on a failed get.
+				return Get(`gold`, user, room, flags)
 			}
 			getAllMatchingFromFloor(user, room, strings.Join(args[1:], " "))
 			return true, nil

@@ -35,10 +35,11 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// entire pack instead.
 		if len(args) >= 2 && args[1] == "gold" {
 			if user.Character.Gold > 0 {
-				Drop(fmt.Sprintf("%d gold", user.Character.Gold), user, room, flags)
-			} else {
-				user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
+				// Propagate the delegate's result rather than discarding it: a
+				// swallowed error here would report success on a failed drop.
+				return Drop(fmt.Sprintf("%d gold", user.Character.Gold), user, room, flags)
 			}
+			user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
 			return true, nil
 		}
 
