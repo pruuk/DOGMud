@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -92,11 +92,8 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 		supported = append(supported, form)
 
-		base := sp.SummonConvictionReserve
-		if base <= 0 {
-			base = int(configs.GetBalanceConfig().CompanionReserveDefault)
-		}
-		reserve := user.Character.CalcCompanionReserve(base)
+		reserve := user.Character.CalcCompanionReserve(
+			characters.CompanionReserveBase(sp.SummonPetMultiplier))
 		band := convictionReserveBand(reserve, user.Character.ConvictionMax.Value)
 		var grp *raiseGroup
 		for _, g := range groups {
@@ -124,7 +121,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		for _, g := range groups {
 			line := fmt.Sprintf(`Raising %s would set aside %s of your conviction while it serves.`,
 				joinRaiseForms(g.forms), g.band)
-			if !user.Character.CanAffordCompanion(g.maxReserve) {
+			if user.Character.WouldBreachReservationCap(characters.PoolConviction, g.maxReserve) {
 				line += ` You could not spare that right now.`
 			}
 			user.SendText(messaging.CategorySystem, line)

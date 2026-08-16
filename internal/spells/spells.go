@@ -41,16 +41,23 @@ type SpellData struct {
 	NoDamageInterrupt  bool      `yaml:"no_damage_interrupt,omitempty"`  // Telegraphed casts: skip damage/position concentration-break (still interrupted by the disruptor system)
 	IgnoreMoveCooldown bool      `yaml:"ignore_move_cooldown,omitempty"` // Scripted boss abilities: bypass the shared special-move cast cooldown (btree controls cadence)
 
-	// Companion summoning fields — replaces JS onMagic for summon spells
-	SummonMobId          int  `yaml:"summon_mob_id,omitempty"`
-	SummonBasePool       int  `yaml:"summon_base_pool,omitempty"`
-	SummonScalingDivisor int  `yaml:"summon_scaling_divisor,omitempty"`
-	SummonComponentId    int  `yaml:"summon_component_id,omitempty"`
-	SummonRequiresCorpse bool `yaml:"summon_requires_corpse,omitempty"`
-	SummonMinCorpsePool  int  `yaml:"summon_min_corpse_pool,omitempty"`
-	// Ongoing Conviction reserved to maintain this companion (per summon type).
-	// 0 = fall back to CompanionReserveDefault at summon time.
-	SummonConvictionReserve int `yaml:"summon_conviction_reserve,omitempty"`
+	// Companion summoning fields: replaces JS onMagic for summon spells
+	SummonMobId int `yaml:"summon_mob_id,omitempty"`
+	// SummonPetMultiplier is the single dial for this pet's tier. It scales the
+	// caster's own power into the companion's stat pool (see
+	// characters.CalcCompanionPool), and multiplies CompanionReserveDefault to
+	// give the ongoing Conviction the companion reserves.
+	//
+	// It replaced summon_base_pool in U7b. Under the old shape the pet's base
+	// pool MULTIPLIED the caster's power and the corpse was averaged in
+	// afterwards, so the corpse's share grew until it swamped the pet choice: at
+	// a 1000-pool corpse a skeleton fielded 587 and a golem 675, meaning five
+	// times the price bought 15% more pet. Applying the multiplier AFTER the
+	// average keeps every tier proportionally separated at every corpse size.
+	SummonPetMultiplier  float64 `yaml:"summon_pet_multiplier,omitempty"`
+	SummonComponentId    int     `yaml:"summon_component_id,omitempty"`
+	SummonRequiresCorpse bool    `yaml:"summon_requires_corpse,omitempty"`
+	SummonMinCorpsePool  int     `yaml:"summon_min_corpse_pool,omitempty"`
 
 	// YAML text fields — flavor text sent by the engine (replaces JS messaging)
 	CastUserText  string `yaml:"cast_user_text,omitempty"`
@@ -250,8 +257,8 @@ func (s *SpellData) Validate() error {
 	}
 
 	// Validate summon fields
-	if s.SummonMobId > 0 && s.SummonBasePool == 0 {
-		mudlog.Warn("Spell.Validate", "spellId", s.SpellId, "warning", "summon_mob_id set but summon_base_pool is 0")
+	if s.SummonMobId > 0 && s.SummonPetMultiplier <= 0 {
+		mudlog.Warn("Spell.Validate", "spellId", s.SpellId, "warning", "summon_mob_id set but summon_pet_multiplier is 0 or missing")
 	}
 	if s.SummonRequiresCorpse && s.SummonMinCorpsePool == 0 {
 		mudlog.Warn("Spell.Validate", "spellId", s.SpellId, "warning", "summon_requires_corpse set but summon_min_corpse_pool is 0")

@@ -28,7 +28,4 @@ func TestCompanionReserveDefaults(t *testing.T) {
 	if int(b.CompanionReserveDefault) != 280 {
 		t.Fatalf("CompanionReserveDefault = %v, want 280", int(b.CompanionReserveDefault))
 	}
-	if float64(b.CompanionCastingFloorPct) != 0.0 {
-		t.Fatalf("CompanionCastingFloorPct = %v, want 0.0", float64(b.CompanionCastingFloorPct))
-	}
 }

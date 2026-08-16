@@ -7,9 +7,9 @@ import (
 )
 
 // legacyCompanionBaseReserve resolves the base (pre-reduction) Conviction cost
-// a companion of this mob id would be charged if created today: the summon
-// spell's summon_conviction_reserve when one targets the mob, the dedicated
-// bases for the homunculus and brood-floor spawns, else
+// a companion of this mob id would be charged if created today: the reserve
+// derived from the summon spell's pet multiplier when one targets the mob, the
+// dedicated bases for the homunculus and brood-floor spawns, else
 // CompanionReserveDefault.
 func legacyCompanionBaseReserve(mobId int) int {
 	switch mobId {
@@ -19,8 +19,8 @@ func legacyCompanionBaseReserve(mobId int) int {
 		return broodFloorReserve
 	}
 	for _, sp := range spells.GetAllSpells() {
-		if sp.SummonMobId == mobId && sp.SummonConvictionReserve > 0 {
-			return sp.SummonConvictionReserve
+		if sp.SummonMobId == mobId && sp.SummonPetMultiplier > 0 {
+			return characters.CompanionReserveBase(sp.SummonPetMultiplier)
 		}
 	}
 	return int(configs.GetBalanceConfig().CompanionReserveDefault)

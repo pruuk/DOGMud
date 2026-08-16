@@ -6,7 +6,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -34,13 +33,17 @@ func resolveCharmSpell(user *users.UserRecord, targetMob *mobs.Mob, room *rooms.
 	}
 
 	// ── 2. Reservation + budget gate ───────────────────────────────────
-	// A charmed creature isn't an authored summon type, so it reserves the
-	// configured default (reduced by the caster's manifestation/mutation). The
-	// Conviction budget is the real limit; the soft count backstop lives in
-	// CanAffordCompanion.
-	reserve := ch.CalcCompanionReserve(int(configs.GetBalanceConfig().CompanionReserveDefault))
-	if !ch.CanAffordCompanion(reserve) {
-		user.SendText(messaging.CategorySystem, `You cannot spare the conviction to bind another creature to your will.`)
+	// A charmed creature isn't an authored summon type, so it has no pet
+	// multiplier and reserves the unscaled default (reduced by the caster's
+	// manifestation and mutation). Its price therefore does not move in U7b.
+	reserve := ch.CalcCompanionReserve(characters.CompanionReserveBase(0))
+	if len(ch.Companions) >= ch.GetMaxCompanions() {
+		user.SendText(messaging.CategorySystem,
+			`You are already sustaining as many companions as your will can hold.`)
+		return false
+	}
+	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
+		user.SendText(messaging.CategorySystem, ch.ReservationRefusal(characters.PoolConviction))
 		return false
 	}
 

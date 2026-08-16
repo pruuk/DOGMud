@@ -13,14 +13,15 @@ import (
 
 // seedGolemSpell registers a raise-golem-shaped summon spell so the backfill
 // can resolve a base reserve from SummonMobId. Mirrors the live
-// raise-golem.yaml numbers (mob 305, base reserve 440).
+// raise-golem.yaml numbers (mob 305, pet multiplier 1.00). The reserve is no
+// longer authored: 1.00 x CompanionReserveDefault 280 derives it.
 func seedGolemSpell() func() {
 	return spells.SeedSpellsForTest(map[string]*spells.SpellData{
 		"raise-golem": {
-			SpellId:                 "raise-golem",
-			Name:                    "Raise Flesh Golem",
-			SummonMobId:             305,
-			SummonConvictionReserve: 440,
+			SpellId:             "raise-golem",
+			Name:                "Raise Flesh Golem",
+			SummonMobId:         305,
+			SummonPetMultiplier: 1.00,
 		},
 	})
 }
@@ -46,9 +47,10 @@ func TestBackfillCompanionReserves_LegacyGolem(t *testing.T) {
 	changed := backfillCompanionReserves(ch)
 
 	assert.True(t, changed, "legacy companions present -> backfill must report a change")
-	// Meirok calibration: 440 * (1 - 48*0.01) = 228.8 -> 229 each.
-	assert.Equal(t, 229, ch.Companions[0].ConvictionReserve)
-	assert.Equal(t, 229, ch.Companions[1].ConvictionReserve)
+	// Meirok calibration: base 280 * (1 - 48*0.01) * SkillCostMultiplier(48)
+	// = 280 * 0.52 * 0.816 = 118.81 -> 119 each.
+	assert.Equal(t, 119, ch.Companions[0].ConvictionReserve)
+	assert.Equal(t, 119, ch.Companions[1].ConvictionReserve)
 }
 
 func TestBackfillCompanionReserves_ExistingReserveUntouched(t *testing.T) {
@@ -80,7 +82,7 @@ func TestBackfillCompanionReserves_UnknownMobUsesDefault(t *testing.T) {
 	changed := backfillCompanionReserves(ch)
 
 	assert.True(t, changed)
-	// No summon spell matches -> CompanionReserveDefault (350), no skill reduction.
+	// No summon spell matches -> the unscaled CompanionReserveDefault (280).
 	want := ch.CalcCompanionReserve(int(configs.GetBalanceConfig().CompanionReserveDefault))
 	assert.Equal(t, want, ch.Companions[0].ConvictionReserve)
 	assert.Greater(t, ch.Companions[0].ConvictionReserve, 0)
@@ -91,7 +93,8 @@ func TestLegacyCompanionBaseReserve_SpecialMobs(t *testing.T) {
 	defer cleanup()
 
 	cfg := configs.GetBalanceConfig()
-	assert.Equal(t, 440, legacyCompanionBaseReserve(305), "spell-summoned mob uses the spell's reserve")
+	assert.Equal(t, 280, legacyCompanionBaseReserve(305),
+		"spell-summoned mob derives its base from the spell's pet multiplier")
 	assert.Equal(t, int(cfg.HomunculusConvictionReserve), legacyCompanionBaseReserve(homunculusMobId))
 	assert.Equal(t, broodFloorReserve, legacyCompanionBaseReserve(broodSpawnMobId))
 	assert.Equal(t, int(cfg.CompanionReserveDefault), legacyCompanionBaseReserve(424242))

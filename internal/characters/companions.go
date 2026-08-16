@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -127,9 +128,9 @@ func (c *Character) RemoveCompanion(instanceId int) *CompanionInfo {
 }
 
 // GetMaxCompanions returns the SOFT count backstop on simultaneous companions.
-// It is a safety limit only — the real constraint is the Conviction budget
-// (see CanAffordCompanion). The Manifester apex ("companion-cap-raise" flag)
-// raises the backstop.
+// It is a safety limit only — the real constraint is the Conviction reservation
+// ceiling (see WouldBreachReservationCap). The Manifester apex
+// ("companion-cap-raise" flag) raises the backstop.
 func (c *Character) GetMaxCompanions() int {
 	cfg := configs.GetBalanceConfig()
 	cap := int(cfg.CompanionSoftCap)
@@ -144,29 +145,125 @@ func (c *Character) GetMaxCompanions() int {
 	return cap
 }
 
-// CalcCompanionStatPool computes the stat pool for a summoned companion,
-// scaling the mob's base stat pool by the caster's Charisma and
-// manifestation skill level.
+// CalcCompanionPool computes the stat pool for a player-summoned companion.
 //
-//	scale = 1.0 + charisma/chaFactor + manifestationSkill*skillFactor
+//	B    = charisma + manifestationSkill * ManifestationPoolCoefficient
+//	pool = round(B * petMultiplier)                      (conjured, no corpse)
+//	pool = round(((B + corpsePool) / 2) * petMultiplier) (raised, from a corpse)
+//
+// The multiplier is applied AFTER the corpse average, and that ordering is the
+// whole point. Under the old shape the pet's base pool multiplied the caster's
+// power and the corpse was averaged in afterwards, so the corpse's share grew
+// until it swamped the pet choice: at a 1000-pool corpse a skeleton fielded 587
+// and a golem 675, meaning five times the price bought 15% more pet. Applying
+// the multiplier last keeps every tier proportionally separated at every corpse
+// size, which is pinned by
+// TestCalcCompanionPool_TiersStaySeparatedAtEveryCorpseSize. Do not "simplify"
+// this by folding the multiplier into B.
+//
+// Known consequence, accepted: mid-level summoners lose roughly 20%, because
+// manifestation x 5 is flat where the old term multiplied a base pool.
+// High-skill summoners gain slightly. If newer summoners feel too weak in
+// playtest, the lever is ManifestationPoolCoefficient or a flat constant added
+// to B, NOT the per-pet multipliers -- moving those would flatten the tiers this
+// function exists to separate.
+//
+// This is NOT CalcSpawnPoolFromBase, which is the behaviour-tree add scaler and
+// keeps the old curve for authored boss encounters.
+func CalcCompanionPool(charisma int, manifestationSkill int, petMultiplier float64, corpsePool int) int {
+	base := float64(charisma + manifestationSkill*ManifestationPoolCoefficient)
+	if corpsePool > 0 {
+		base = (base + float64(corpsePool)) / 2.0
+	}
+	pool := int(math.Round(base * petMultiplier))
+	if pool < 1 {
+		// Never field a pool-zero companion: NewMobByIdFresh divides by the pool
+		// when distributing stats, and every downstream ratio reads a zero pool
+		// as "no penalty at all".
+		return 1
+	}
+	return pool
+}
+
+// ManifestationPoolCoefficient is how much one rank of manifestation adds to a
+// companion's power base. Deliberately a constant and not a config knob: it is
+// the shape of the formula rather than a tuning dial, and the spec names it as
+// the FIRST lever to reach for if the playtest says newer summoners are weak, at
+// which point it earns a knob.
+const ManifestationPoolCoefficient = 5
+
+// CalcSpawnPoolFromBase scales an AUTHORED base pool by the spawner's Charisma
+// and manifestation skill.
+//
+//	scale  = 1.0 + charisma/chaFactor + manifestationSkill*skillFactor
 //	result = round(baseStatPool * scale)
 //
-// Config knobs: ManifestStatScaleChaFactor (default 200),
-// ManifestStatScaleSkillFactor (default 0.02).
-func CalcCompanionStatPool(baseStatPool int, charisma int, manifestationSkill int) int {
+// This is the BEHAVIOUR-TREE add scaler and its only caller is
+// behaviortree.actSummonCompanion. It is NOT the player companion formula --
+// that is CalcCompanionPool, which U7b reshaped.
+//
+// It deliberately keeps the old curve. Its callers are authored boss encounters
+// whose base_pool values were tuned against exactly this shape: the Core
+// Guardian and Warden Prime summon repair frames at base_pool 50, Old Edrin at
+// 60, and the Sentinel at 300. Putting them on the companion formula would nerf
+// the Sentinel's adds roughly fivefold and buff the Core Guardian's by about a
+// fifth, neither of which U7b intends.
+//
+// Config knobs: ManifestStatScaleChaFactor (default 150, NOT 200 -- the pre-U7b
+// doc comment said 200, which was wrong; the config defaulter already floors the
+// knob at 150, so the fallback below is unreachable in practice and matches it
+// only so the two can never disagree), ManifestStatScaleSkillFactor
+// (default 0.02).
+func CalcSpawnPoolFromBase(baseStatPool int, charisma int, manifestationSkill int) int {
 	cfg := configs.GetBalanceConfig()
 	chaFactor := float64(cfg.ManifestStatScaleChaFactor)
 	skillFactor := float64(cfg.ManifestStatScaleSkillFactor)
 	if chaFactor <= 0 {
-		chaFactor = 200
+		chaFactor = 150
 	}
 	scale := 1.0 + float64(charisma)/chaFactor + float64(manifestationSkill)*skillFactor
 	return int(math.Round(float64(baseStatPool) * scale))
 }
 
-// CalcCompanionReserve returns the Conviction a companion of the given base
-// cost reserves for THIS summoner, after manifestation-skill and Manifester-
-// mutation reductions. reservation = round(base * (1 - reduction)).
+// CompanionReserveBase returns the PRE-reduction Conviction a companion of the
+// given pet multiplier reserves: CompanionReserveDefault scaled by the
+// multiplier (D9).
+//
+// This replaced two flat tiers (280 and 352) shared across both families. The
+// ongoing budget now tracks pet POWER, which is what makes the reservation
+// ceiling a real choice rather than a disguised companion count. Cast cost is a
+// one-time toll on a companion that persists across logout and reboot with full
+// state, so it is the wrong place to carry differentiation; reservation is.
+//
+// A multiplier of 0 (charm, the brood floor, the homunculus -- none of which is
+// an authored summon with a pet tier) means "unscaled", so those paths keep
+// their own bases untouched.
+func CompanionReserveBase(petMultiplier float64) int {
+	base := int(configs.GetBalanceConfig().CompanionReserveDefault)
+	if petMultiplier <= 0 {
+		return base
+	}
+	if r := int(math.Round(float64(base) * petMultiplier)); r > 0 {
+		return r
+	}
+	return 1
+}
+
+// CalcCompanionReserve returns the Conviction a companion of the given base cost
+// reserves for THIS summoner, after the manifestation-skill and Manifester-
+// mutation reductions and the U7 inverse-skill rider.
+//
+//	reservation = round(base * (1 - reduction) * costs.SkillCostMultiplier(manif))
+//
+// The rider COMPOSES onto the existing reduction; it does not replace it
+// (D10 §4.1). Replacing would be strictly worse at every rank: the U7 curve
+// bottoms at 0.40 while the existing reduction already reaches 0.45 at
+// manifestation 55 and 0.21 with the Manifester mutation, so a replacement would
+// make companions dearer for everyone, the opposite of intent.
+//
+// Known consequence, accepted: composed, the curve double-counts manifestation
+// below rank 55 and is a 10% PENALTY at rank 0, only becoming a discount past
+// rank 25. That matches the settled decision on the item side and is deliberate.
 func (c *Character) CalcCompanionReserve(baseCost int) int {
 	cfg := configs.GetBalanceConfig()
 	manif := c.GetSkillLevel(skills.Manifestation)
@@ -174,19 +271,12 @@ func (c *Character) CalcCompanionReserve(baseCost int) int {
 	mutRank := mutations.GetCompanionReserveRank(c.Mutations)
 	mutRed := math.Min(float64(cfg.CompanionReserveMutCap), float64(mutRank)*float64(cfg.CompanionReserveMutPctPerRank))
 	reduction := math.Min(float64(cfg.CompanionReserveTotalCap), manifRed+mutRed)
-	return int(math.Round(float64(baseCost) * (1.0 - reduction)))
-}
 
-// CanAffordCompanion reports whether the character can field one more companion
-// reserving `reserveCost` Conviction: the new total reservation (plus any
-// casting floor) must fit within ConvictionMax, and the soft count backstop
-// must not be exceeded.
-func (c *Character) CanAffordCompanion(reserveCost int) bool {
-	if len(c.Companions) >= c.GetMaxCompanions() {
-		return false
+	reserve := float64(baseCost) * (1.0 - reduction) * costs.SkillCostMultiplier(manif)
+	if r := int(math.Round(reserve)); r > 0 {
+		return r
 	}
-	cfg := configs.GetBalanceConfig()
-	current := c.GetPoolReservation("conviction", c.ConvictionMax.Value)
-	floor := int(math.Round(float64(c.ConvictionMax.Value) * float64(cfg.CompanionCastingFloorPct)))
-	return current+reserveCost+floor <= c.ConvictionMax.Value
+	// A companion that reserves nothing is an unbounded one, and the login
+	// backfill uses 0 as its "legacy record" marker besides.
+	return 1
 }

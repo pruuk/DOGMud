@@ -75,7 +75,10 @@ func actSummonCompanion(params map[string]any, ctx *EvalContext) Result {
 		basePool = 50
 	}
 	hostile := getBoolParam(params, "hostile")
-	pool := characters.CalcCompanionStatPool(basePool, charisma, manifestSkill)
+	// CalcSpawnPoolFromBase, not CalcCompanionPool: this path spawns authored
+	// boss adds whose base_pool values were tuned against the old curve, and it
+	// is not a player companion (it reserves nothing and has no pet multiplier).
+	pool := characters.CalcSpawnPoolFromBase(basePool, charisma, manifestSkill)
 	for i := 0; i < count; i++ {
 		companion := mobs.NewMobByIdFresh(mobs.MobId(mobId), room.RoomId, pool)
 		if companion == nil {
