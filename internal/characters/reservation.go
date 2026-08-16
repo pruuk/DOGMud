@@ -38,11 +38,18 @@ import (
 // ceiling everywhere, including in every test that thinks it is exercising it.
 // A mechanism that quietly turns itself off is worse than a red build.
 func (c *Character) ReservationCap(p Pool) int {
+	return reservationCapFor(c.poolMax(p))
+}
+
+// reservationCapFor is ReservationCap keyed on a pool max rather than on a
+// character. ReserveShareBand needs the ceiling and is a package function with
+// no character to ask, and the two must never compute it differently.
+func reservationCapFor(maxPool int) int {
 	pct := float64(configs.GetBalanceConfig().PoolReservationCapPct)
 	if pct <= 0 || pct > 1 {
 		pct = 0.66
 	}
-	return int(math.Floor(float64(c.poolMax(p)) * pct))
+	return int(math.Floor(float64(maxPool) * pct))
 }
 
 // WouldBreachReservationCap reports whether adding `added` points of reservation
@@ -182,34 +189,248 @@ func (c *Character) enchantReserveAtWithMax(enchantType string, tier int, hands 
 	return int(math.Floor(float64(poolMax) * pct))
 }
 
+// ── Who is actually holding it ───────────────────────────────────────────────
+//
+// Every reservation message used to open with the fixed phrase "Your gear and
+// bonds", whatever the player actually had. A 2026-08-16 playtest held exactly
+// ONE COMPANION and wore nothing, and was told its gear was holding a share of
+// its conviction. It had no gear. Naming a source the player does not have
+// sends them hunting for it, which is the same defect as the refusal that
+// claimed a holding when there was none.
+//
+// The two sources are separable at the point of truth: item reservation comes
+// from the equipment walk in GetPoolReservation, companion reservation is the
+// c.Companions sum in the same function. So the message can name what is really
+// there, and offer only the remedies that could really help.
+
+// reserveSources records which kinds of thing hold part of a given pool. Each
+// one maps to a different remedy, which is why the two gear kinds are kept
+// apart: disenchanting cannot help a pinnacle item whose own spec sets part of
+// you aside, and taking off gear cannot help someone whose whole reservation is
+// a companion.
+type reserveSources struct {
+	drainingItem bool // an item whose own spec reserves (reserve_*_pct)
+	enchantment  bool // a Chrysalis enchantment on something worn
+	companion    bool // a fielded companion, conviction only
+}
+
+func (s reserveSources) gear() bool { return s.drainingItem || s.enchantment }
+
+func (s reserveSources) any() bool { return s.gear() || s.companion }
+
+// reserveSourcesOn walks the same two places GetPoolReservation totals, so the
+// subject of a sentence can never name a source that contributed nothing to the
+// number in it.
+func (c *Character) reserveSourcesOn(p Pool) reserveSources {
+	poolMax := c.poolMax(p)
+	pool := string(p)
+
+	var s reserveSources
+	for _, itm := range c.Equipment.GetAllItems() {
+		if itm.HasChrysalisEnchantment() && itm.ReservePool == pool &&
+			c.enchantReserveAtWithMax(itm.EnchantType, itm.EnchantTier, itm.GetSpec().Hands, poolMax) > 0 {
+			s.enchantment = true
+		}
+
+		spec := itm.GetSpec()
+		var itemPct float64
+		switch p {
+		case PoolHealth:
+			itemPct = spec.ReserveHealthPct
+		case PoolStamina:
+			itemPct = spec.ReserveStaminaPct
+		case PoolConviction:
+			itemPct = spec.ReserveConvictionPct
+		}
+		if itemPct > 0 && int(math.Floor(float64(poolMax)*itemPct)) > 0 {
+			s.drainingItem = true
+		}
+	}
+
+	if p == PoolConviction {
+		for i := range c.Companions {
+			if c.Companions[i].ConvictionReserve > 0 {
+				s.companion = true
+				break
+			}
+		}
+	}
+	return s
+}
+
+// merge unions two source sets, for a message that names more than one pool.
+func (s reserveSources) merge(o reserveSources) reserveSources {
+	return reserveSources{
+		drainingItem: s.drainingItem || o.drainingItem,
+		enchantment:  s.enchantment || o.enchantment,
+		companion:    s.companion || o.companion,
+	}
+}
+
+// subject is the noun phrase that opens a reservation sentence, naming only
+// what is really holding something.
+//
+// The fallback is deliberately vague rather than "Your gear and bonds": a
+// sentence built from a set with nothing in it has no business asserting either
+// source. In practice every caller has already established that the reservation
+// is positive, so the fallback is unreachable; it exists so that a future caller
+// that has not cannot reintroduce the falsehood.
+func (s reserveSources) subject() string {
+	switch {
+	case s.gear() && s.companion:
+		return `Your gear and bonds`
+	case s.gear():
+		return `Your gear`
+	case s.companion:
+		return `Your bonds`
+	}
+	return `What you carry`
+}
+
+// verb is the present-tense form of "hold" that agrees with subject(). Kept
+// beside it because a variable subject with a fixed verb is how "Your gear now
+// hold a heavy share" gets shipped.
+func (s reserveSources) verb() string {
+	if s.subject() == `Your gear` || s.subject() == `What you carry` {
+		return `holds`
+	}
+	return `hold`
+}
+
+// remedies lists the ways this particular player could make room, in the same
+// words help reservation's "Making Room" section uses.
+//
+// Telling someone to remove a draining item when they wear none is the mirror
+// of naming gear they do not have. The full list is the fallback for the same
+// unreachable case subject() guards.
+func (s reserveSources) remedies() string {
+	var parts []string
+	if s.drainingItem || !s.any() {
+		parts = append(parts, `remove a draining item`)
+	}
+	if s.enchantment || !s.any() {
+		parts = append(parts, `disenchant something you wear`)
+	}
+	if s.companion || !s.any() {
+		parts = append(parts, `dismiss a companion`)
+	}
+	return joinWithOr(parts)
+}
+
+// ReservationHolders returns the sentence subject naming what is really holding
+// part of pool p ("Your gear", "Your bonds", "Your gear and bonds"), and the
+// present-tense "hold"/"holds" that agrees with it.
+//
+// Exported for the login rebase notice in internal/hooks, which had the same
+// fixed-phrase problem from the other direction: it credited the whole
+// reservation to companions even when half of it was gear.
+func (c *Character) ReservationHolders(p Pool) (subject, verb string) {
+	s := c.reserveSourcesOn(p)
+	return s.subject(), s.verb()
+}
+
 // ── Player-facing bands ──────────────────────────────────────────────────────
 //
-// TWO vocabularies, deliberately. ReserveShareBand is a PROSE fragment that has
-// to read inside a sentence ("your gear is holding a heavy share of your
-// stamina"). ReservationBandName is a single SHORT word for the status sheet's
-// 13-character column, and its top band keys off the CAP so a player can see
-// when they have no room left to add. Do not merge them: the prose phrases do
-// not fit the column, and the column words do not read as prose.
+// ONE ladder, TWO vocabularies. Every rung below has a short word for the
+// status sheet's 13-character column AND a prose fragment that has to read
+// inside a sentence ("your gear is holding a heavy share of your stamina").
+// They are two spellings of the SAME rung and MUST be changed together: if you
+// edit a row, edit both halves of it, and if you add or move an edge, move it
+// once in reserveRungOf where every caller sees it.
+//
+// They were keyed differently until 2026-08-16 and the result was three
+// vocabularies contradicting each other at the same instant. With health at
+// roughly two fifths of the pool and conviction at roughly two thirds, the
+// equip line said "a significant portion" of health and "a heavy share" of
+// conviction while the status sheet, one line away, said `heavy` and
+// `near limit`. So `heavy` named two different fill levels at once, conviction
+// was simultaneously heavy and near its limit, and the same prose phrase
+// covered two states the sheet called different things. The cause was that the
+// prose measured the POOL and the sheet measured the CEILING.
+//
+// Everything is measured against the CEILING now, because that is the question
+// a player is actually asking: not "how much of me is spoken for" but "how much
+// room have I got left". The row used to key only its top rung that way, which
+// made it useless for its one job. The cap sits at roughly two thirds of the
+// pool, so `heavy` needed half the POOL, which is three quarters of the
+// ceiling, and there was no rung at all between that and having literally
+// reached the cap. A 2026-08-15 playtest watched the row read `notable` through
+// three consecutive refusals: the character was two thirds of the way to their
+// ceiling and the sheet was still describing them as comfortable.
 
-// ReserveShareBand names what SHARE of a pool a reservation holds. Player-facing
-// text never shows the raw number.
-func ReserveShareBand(reserve, maxPool int) string {
-	if maxPool <= 0 || reserve >= maxPool {
-		return `all`
+// reserveRung is a position on the shared severity ladder. Ordered, so a
+// greater rung always means less room left.
+type reserveRung int
+
+const (
+	rungNone reserveRung = iota
+	rungSlight
+	rungModest
+	rungNotable
+	rungHeavy
+	rungNearLimit
+	rungAtLimit
+)
+
+// reserveLadder holds both spellings of every rung side by side, so the two
+// vocabularies physically cannot drift apart the way they did before: there is
+// one row per rung and you cannot edit one half without seeing the other.
+//
+// The `short` column feeds the status sheet and help reservation's legend, and
+// must stay inside 13 visible characters. The `prose` fragment completes the
+// sentence "... hold <prose> of your <pool> in reserve", so it has to be a noun
+// phrase that reads after "hold" and before "of your".
+var reserveLadder = [...]struct {
+	short string
+	prose string
+}{
+	rungNone:      {`none`, `no part`},
+	rungSlight:    {`slight`, `a slight part`},
+	rungModest:    {`modest`, `a modest share`},
+	rungNotable:   {`notable`, `a notable share`},
+	rungHeavy:     {`heavy`, `a heavy share`},
+	rungNearLimit: {`near limit`, `nearly all you can set aside`},
+	rungAtLimit:   {`at limit`, `all you can set aside`},
+}
+
+// reserveRungOf is the ONLY place the edges live. Both vocabularies read it, so
+// there is no second fraction ladder to fall out of step with this one.
+//
+// The cap is floor(maxPool * ~0.66), so with a positive pool it can only reach
+// 0 on a pool of 1, where any reservation at all really has consumed the whole
+// ceiling. `at limit` is the honest reading there, and it keeps the function
+// total.
+func reserveRungOf(reserve, maxPool, cap int) reserveRung {
+	if maxPool <= 0 || reserve <= 0 {
+		return rungNone
 	}
-	frac := float64(reserve) / float64(maxPool)
+	if cap <= 0 {
+		return rungAtLimit
+	}
+	frac := float64(reserve) / float64(cap)
 	switch {
-	case frac < 0.15:
-		return `a small part`
-	case frac < 0.30:
-		return `a modest share`
-	case frac < 0.50:
-		return `a significant portion`
-	case frac < 0.75:
-		return `a heavy share`
+	case frac >= 1.0:
+		return rungAtLimit
+	case frac >= 0.75:
+		return rungNearLimit
+	case frac >= 0.55:
+		return rungHeavy
+	case frac >= 0.35:
+		return rungNotable
+	case frac >= 0.15:
+		return rungModest
 	default:
-		return `nearly all`
+		return rungSlight
 	}
+}
+
+// ReserveShareBand names what SHARE of the reservable ceiling a reservation
+// holds, as a prose fragment. Player-facing text never shows the raw number.
+//
+// It takes the pool max rather than the cap because every caller has the pool
+// max to hand and none of them should be computing the ceiling themselves.
+func ReserveShareBand(reserve, maxPool int) string {
+	return reserveLadder[reserveRungOf(reserve, maxPool, reservationCapFor(maxPool))].prose
 }
 
 // ReservationBandName returns the short status-sheet word for a pool's current
@@ -220,48 +441,10 @@ func (c *Character) ReservationBandName(pool string) string {
 	return reservationBand(c.GetPoolReservation(pool, max), max, c.ReservationCap(p))
 }
 
-// reservationBand keys EVERY rung of its ladder to the CAP, not to the pool.
-//
-// It used to key only the top rung that way and measure the rest as a fraction
-// of the full pool, which made the row useless for the one job it has. The cap
-// sits at roughly two thirds of the pool, so `heavy` needed half the POOL,
-// which is three quarters of the ceiling, and there was no rung at all between
-// that and having literally reached the cap. A 2026-08-15 playtest watched the
-// row read `notable` through three consecutive refusals: the character was two
-// thirds of the way to their ceiling and the sheet was still describing them as
-// comfortable, because two thirds of the ceiling is under half the pool.
-//
-// Measured against the cap, the ladder answers the question a player is
-// actually asking, which is "how much room have I got left", and `near limit`
-// gives them a rung of warning before the answer becomes none. `at limit` still
-// means what it always meant: nothing further can be added.
-//
-// The cap is floor(maxPool * ~0.66), so with a positive pool it can only reach
-// 0 on a pool of 1, where any reservation at all really has consumed the whole
-// ceiling. `at limit` is the honest reading there, and it keeps the function
-// total without a second fraction ladder to drift out of step with this one.
+// reservationBand is the short half of the ladder, taking the cap explicitly so
+// tests can pin an edge without reaching through the config.
 func reservationBand(reserve, maxPool, cap int) string {
-	if maxPool <= 0 || reserve <= 0 {
-		return `none`
-	}
-	if cap <= 0 {
-		return `at limit`
-	}
-	frac := float64(reserve) / float64(cap)
-	switch {
-	case frac >= 1.0:
-		return `at limit`
-	case frac >= 0.75:
-		return `near limit`
-	case frac >= 0.55:
-		return `heavy`
-	case frac >= 0.35:
-		return `notable`
-	case frac >= 0.15:
-		return `modest`
-	default:
-		return `slight`
-	}
+	return reserveLadder[reserveRungOf(reserve, maxPool, cap)].short
 }
 
 // ── The equip disclosure ─────────────────────────────────────────────────────
@@ -319,6 +502,20 @@ func shareGrew(beforeRes, beforeMax, afterRes, afterMax int) bool {
 	return afterRes*beforeMax > beforeRes*afterMax
 }
 
+// shareShrank is shareGrew with the comparison and both zero guards mirrored.
+// Written out rather than expressed as !shareGrew because "did not grow" is not
+// "shrank": an unchanged share is neither, and negating would make the remove
+// line fire on every ordinary remove.
+func shareShrank(beforeRes, beforeMax, afterRes, afterMax int) bool {
+	if beforeRes <= 0 {
+		return false
+	}
+	if beforeMax <= 0 || afterMax <= 0 {
+		return afterRes <= 0
+	}
+	return afterRes*beforeMax < beforeRes*afterMax
+}
+
 // ReservationIncreaseNotice returns the line to show a player who has just put
 // on something that sets more of them aside, or the EMPTY STRING when nothing
 // did. Callers must treat empty as "say nothing".
@@ -334,9 +531,70 @@ func shareGrew(beforeRes, beforeMax, afterRes, afterMax int) bool {
 // this leave me", and the answer that lets them predict the next refusal is the
 // total.
 func (c *Character) ReservationIncreaseNotice(before ReservationTotals) string {
+	parts, sources := c.movedPoolShares(before, shareGrew)
+	if len(parts) == 0 {
+		return ``
+	}
+	return `Putting that on sets part of you aside. ` + sources.subject() + ` now ` +
+		sources.verb() + ` ` + joinWithAnd(parts) + ` in reserve.`
+}
+
+// ReservationDecreaseNotice is the mirror image, for a player who has just taken
+// something off. Same empty-string contract: callers must treat empty as "say
+// nothing".
+//
+// Without it the feature was half built. The player was told when capacity was
+// taken and never when it came back, so `remove` looked like it did nothing to
+// the ceiling and the one lesson the disclosure exists to teach never landed.
+//
+// It shares movedPoolShares with the equip line ON PURPOSE, so the two cannot
+// answer the same question differently: same SHARE test (a plain +Vitality item
+// coming off shrinks the pool and the reserved points together, at an unchanged
+// share, and stays silent), same band vocabulary, same joining. Only the
+// direction of the comparison and the opening clause differ.
+func (c *Character) ReservationDecreaseNotice(before ReservationTotals) string {
+	parts, sources := c.movedPoolShares(before, shareShrank)
+	if len(parts) == 0 {
+		return ``
+	}
+
+	// Fully clear is the commonest shape of this line, and reciting "no part of
+	// your health, no part of your stamina and no part of your conviction" is a
+	// mouthful that buries the one thing the player wants to hear.
+	if !c.holdsAnyReservation() {
+		return `Taking that off gives part of you back. Nothing you carry holds ` +
+			`any part of you in reserve now.`
+	}
+
+	return `Taking that off gives part of you back. ` + sources.subject() + ` now ` +
+		sources.verb() + ` ` + joinWithAnd(parts) + ` in reserve.`
+}
+
+// holdsAnyReservation reports whether ANY pool is still spoken for. Asked of
+// all three pools rather than only the ones that moved, so a release on one
+// pool cannot announce that nothing is held while another pool still is.
+func (c *Character) holdsAnyReservation() bool {
+	for _, p := range []Pool{PoolHealth, PoolStamina, PoolConviction} {
+		if c.GetPoolReservation(string(p), c.poolMax(p)) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// movedPoolShares names every pool whose reserved share moved in the direction
+// `moved` tests for, as "<band> of your <pool>", in a fixed pool order. It also
+// returns the union of what is holding those pools NOW, so the sentence's
+// subject names only sources the player really has.
+//
+// The band quoted is the pool's NEW total share, not the item's own
+// contribution: the player's question either way is "where does this leave me",
+// and the answer that lets them predict the next refusal is the total.
+func (c *Character) movedPoolShares(before ReservationTotals, moved func(beforeRes, beforeMax, afterRes, afterMax int) bool) ([]string, reserveSources) {
 	after := c.ReservationTotals()
 
 	var parts []string
+	var sources reserveSources
 	for _, p := range []struct {
 		pool                                 Pool
 		beforeRes, beforeMax, afterRes, aMax int
@@ -345,31 +603,36 @@ func (c *Character) ReservationIncreaseNotice(before ReservationTotals) string {
 		{PoolStamina, before.Stamina, before.StaminaMax, after.Stamina, after.StaminaMax},
 		{PoolConviction, before.Conviction, before.ConvictionMax, after.Conviction, after.ConvictionMax},
 	} {
-		if !shareGrew(p.beforeRes, p.beforeMax, p.afterRes, p.aMax) {
+		if !moved(p.beforeRes, p.beforeMax, p.afterRes, p.aMax) {
 			continue
 		}
 		parts = append(parts, ReserveShareBand(p.afterRes, p.aMax)+` of your `+poolDisplayName(p.pool))
+		sources = sources.merge(c.reserveSourcesOn(p.pool))
 	}
-
-	if len(parts) == 0 {
-		return ``
-	}
-
-	return `Putting that on sets part of you aside. Your gear and bonds now hold ` +
-		joinWithAnd(parts) + ` in reserve.`
+	return parts, sources
 }
 
 // joinWithAnd renders a list as plain English: "a", "a and b", "a, b and c".
 func joinWithAnd(parts []string) string {
+	return joinWith(parts, ` and `)
+}
+
+// joinWithOr is joinWithAnd for a list of alternatives, which is what a remedy
+// list is: the player needs to do ONE of them, not all of them.
+func joinWithOr(parts []string) string {
+	return joinWith(parts, ` or `)
+}
+
+func joinWith(parts []string, conjunction string) string {
 	switch len(parts) {
 	case 0:
 		return ``
 	case 1:
 		return parts[0]
 	case 2:
-		return parts[0] + ` and ` + parts[1]
+		return parts[0] + conjunction + parts[1]
 	}
-	return strings.Join(parts[:len(parts)-1], `, `) + ` and ` + parts[len(parts)-1]
+	return strings.Join(parts[:len(parts)-1], `, `) + conjunction + parts[len(parts)-1]
 }
 
 // ReservationRefusal is the message every refusing path sends. It names
@@ -393,11 +656,14 @@ func joinWithAnd(parts []string) string {
 //	              the arithmetic guarantees the character really is holding
 //	              something (current + added > cap >= added implies current > 0).
 //
-// The holding case says "gear and bonds", not "gear". This branch is shared by
-// equip, enchant, tier-up, charm, summon, raise and the homunculus. On the
-// companion paths the reservation actually blocking the player is very often
-// another companion, so blaming gear alone would send them stripping armour
-// when what they need to do is release a pet.
+// The holding case names its SOURCES rather than reciting a fixed phrase. This
+// branch is shared by equip, enchant, tier-up, charm, summon, raise and the
+// homunculus. On the companion paths the reservation actually blocking the
+// player is very often another companion, so blaming gear alone would send them
+// stripping armour when what they need to do is release a pet -- and the
+// reverse is just as bad: a 2026-08-16 playtest held one companion, wore
+// nothing, and was told its gear was holding a share of its conviction. See
+// reserveSources.subject and .remedies.
 //
 // The remedy wording is lifted from help reservation's "Making Room" section on
 // purpose. The pre-fix text said "set something else aside", which that helpfile
@@ -415,9 +681,10 @@ func (c *Character) ReservationRefusal(p Pool, added int) string {
 
 	max := c.poolMax(p)
 	share := ReserveShareBand(c.GetPoolReservation(string(p), max), max)
-	return `Your gear and bonds already hold ` + share + ` of your ` + pool +
-		` in reserve. You cannot take on more until you make room: remove a ` +
-		`draining item, disenchant one, or dismiss a companion.`
+	sources := c.reserveSourcesOn(p)
+	return sources.subject() + ` already ` + sources.verb() + ` ` + share +
+		` of your ` + pool + ` in reserve. You cannot take on more until you ` +
+		`make room: ` + sources.remedies() + `.`
 }
 
 func poolDisplayName(p Pool) string {

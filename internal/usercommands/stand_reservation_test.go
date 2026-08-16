@@ -103,9 +103,10 @@ func TestStand_RefusalDisclosesReservation(t *testing.T) {
 	user.Character.Stamina = 0
 	setCombatPositionParallel(user.Character, position.Prone)
 
-	// 40 of 100 reserved -> "a significant portion". Stated here so the
-	// expectation below reads as the band and not as a magic string.
-	const wantBand = "a significant portion"
+	// 40 of 100 reserved is 40 of a ceiling of 66 -> "a heavy share", the same
+	// rung the status sheet spells `heavy`. Stated here so the expectation below
+	// reads as the band and not as a magic string.
+	const wantBand = "a heavy share"
 	require.Equal(t, wantBand, reserveShareBand(40, 100),
 		"test setup: the band for a 40%% reservation moved; update the expectation")
 

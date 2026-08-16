@@ -60,8 +60,8 @@ func seedAssessFixture(t *testing.T, convictionMax int) (*users.UserRecord, *roo
 
 func TestAssess_DisclosesReservationBand(t *testing.T) {
 	// Big pool: the skeleton's base 140 at manifestation 0 costs 140 * 1.10 =
-	// 154, which is under 4% of a 4000 max → "a small part", and well inside
-	// the two-thirds ceiling.
+	// 154. The band is measured against the ceiling (2640 on a 4000 pool), and
+	// 154 is under a sixteenth of that → "a slight part".
 	u, room, cleanup := seedAssessFixture(t, 4000)
 	defer cleanup()
 
@@ -74,7 +74,7 @@ func TestAssess_DisclosesReservationBand(t *testing.T) {
 	if !strings.Contains(msgs, "It could sustain: skeleton.") {
 		t.Errorf("supported list wrong (want skeleton only from the spell gates):\n%s", msgs)
 	}
-	if !strings.Contains(msgs, "Raising a skeleton would set aside a small part of your conviction") {
+	if !strings.Contains(msgs, "Raising a skeleton would set aside a slight part of your conviction") {
 		t.Errorf("missing/incorrect reservation disclosure:\n%s", msgs)
 	}
 	if strings.Contains(msgs, "could not spare") {

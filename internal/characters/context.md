@@ -441,9 +441,10 @@ type ReservationTotals struct {
 }
 func (c *Character) ReservationTotals() ReservationTotals
 
-// The equip line, or "" when no pool's reserved SHARE grew. Callers must treat
-// empty as "say nothing".
+// The equip line and its mirror on remove, or "" when no pool's reserved SHARE
+// moved in that direction. Callers must treat empty as "say nothing".
 func (c *Character) ReservationIncreaseNotice(before ReservationTotals) string
+func (c *Character) ReservationDecreaseNotice(before ReservationTotals) string
 
 // Player-facing words. Never a raw number.
 func ReserveShareBand(reserve, maxPool int) string
@@ -505,25 +506,31 @@ now supersedes on all three pools.
    curve bottoms at 0.40 while the existing reduction already reaches 0.45 at
    manifestation 55. Composed, it is a 10% penalty at rank 0 and a discount
    past rank 25, which is deliberate.
-7. **Two band vocabularies on purpose.** `ReserveShareBand` is a prose fragment
-   that has to read inside a sentence; `ReservationBandName` is a short word for
-   the status sheet's narrow column and **every** rung of its ladder keys off
-   the **cap**, not the pool, so the row reports remaining headroom. Merging
-   them breaks the status box. The ladder was cap-keyed on its top rung only
-   until 2026-08-16, which made the row read `notable` through three
-   consecutive refusals: the cap sits near two thirds of the pool, so two
-   thirds of the ceiling was still under half the pool. `near limit` is the
-   rung of warning before `at limit`.
+7. **ONE ladder, two vocabularies.** `reserveLadder` in `reservation.go` holds
+   both spellings of every rung side by side, `reserveRungOf` holds the only
+   copy of the edges, and both are keyed to the **cap**, not the pool, so the
+   words report remaining headroom. `ReserveShareBand` returns the prose half
+   (it has to read inside a sentence), `ReservationBandName` the short half (the
+   status sheet's column is 13 wide). Change a rung and you change both halves
+   of it, in one place. They were keyed differently until 2026-08-16 and the
+   result was three vocabularies contradicting each other at the same instant:
+   the equip line said "a significant portion" of health and "a heavy share" of
+   conviction while the sheet, one line away, said `heavy` and `near limit`.
+   Separately, the sheet was cap-keyed on its top rung only, which made the row
+   read `notable` through three consecutive refusals. `near limit` is the rung
+   of warning before `at limit`.
 8. **`EnchantReserveAt` scales the enchantment share by the wearer's enchanting
    rank, and the item's own `reserve_*_pct` not at all.** The rider is applied
    to the percentage before the floor, so it cannot be rounded away on a small
    pool. Calling `enchantments.GetTierReservePct` directly gives an unridden
    figure and will disagree with the character's real total.
-9. **`ReservationIncreaseNotice` compares SHARES, not points.** `reserve_*_pct`
-   is a percentage of the pool max, so any item that raises a pool raises the
+9. **The two notices compare SHARES, not points.** `reserve_*_pct` is a
+   percentage of the pool max, so any item that raises a pool raises the
    reserved points on gear already worn. A points comparison would announce a
    reservation increase for a plain +Vitality helmet, which is why
-   `ReservationTotals` carries the maxima alongside the reserves.
+   `ReservationTotals` carries the maxima alongside the reserves. `shareShrank`
+   is written out rather than expressed as `!shareGrew`: an unchanged share is
+   neither, and the negation would make the remove line fire on every remove.
 10. **Bars measure `EffectivePoolMax`, everywhere.** The prompt gauge
     (`users.renderVitalBar`), the `status` vitals row and the web client's
     `availablePct()` all divide by the reachable pool. Drawing the reserved
@@ -531,6 +538,15 @@ now supersedes on all three pools.
     `internal/util`'s downgrade table maps both the filled block and the
     crosshatch to `#`, so the reserved band read as filled and a bleeding
     character saw a full bar.
+11. **Reservation messages name only the sources actually loaded.**
+    `reserveSourcesOn` walks the same two places `GetPoolReservation` totals,
+    and `subject()` / `verb()` / `remedies()` build the sentence from what it
+    finds; `ReservationHolders` exports the subject and verb for
+    `internal/hooks`. A fixed "Your gear and bonds" told a 2026-08-16 playtest
+    character holding one companion and wearing nothing that its gear was the
+    problem, and the fixed remedy list told it to take off gear it did not
+    have. Note the two gear kinds are tracked apart, because disenchanting
+    cannot help a pinnacle item whose own spec reserves.
 
 ## Stage 7.5: Prone Condition System
 

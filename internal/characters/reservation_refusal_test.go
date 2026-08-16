@@ -31,8 +31,13 @@ func TestReservationRefusal_SingleDemandExceedsCeiling_ClaimsNoHolding(t *testin
 
 	msg := c.ReservationRefusal(PoolConviction, added)
 
-	for _, lie := range []string{"already hold", "already holds", "a small part",
-		"a modest share", "a significant portion", "a heavy share", "nearly all"} {
+	// Every prose rung of the shared ladder, so adding a rung and forgetting
+	// this list cannot quietly reintroduce the falsehood.
+	lies := []string{"already hold", "already holds"}
+	for _, rung := range reserveLadder {
+		lies = append(lies, rung.prose)
+	}
+	for _, lie := range lies {
 		if strings.Contains(msg, lie) {
 			t.Errorf("refusal at ZERO reservation claims a holding (%q):\n%s", lie, msg)
 		}
@@ -75,7 +80,12 @@ func TestReservationRefusal_AlreadyHolding_KeepsTheHoldingWording(t *testing.T) 
 
 	msg := c.ReservationRefusal(PoolConviction, added)
 
-	if !strings.Contains(msg, "already hold a heavy share of your conviction in reserve") {
+	// 60 of a ceiling of 66 is the `near limit` rung, which the refusal spells
+	// out in prose. Same rung the status sheet would be showing at that instant.
+	//
+	// This character wears a draining item and has NO companion, so the subject
+	// is "Your gear" alone and the verb agrees with it.
+	if !strings.Contains(msg, "Your gear already holds nearly all you can set aside of your conviction in reserve") {
 		t.Errorf("the holding wording must survive for a genuinely full pool:\n%s", msg)
 	}
 	// The remedy must agree with help reservation's "Making Room" section
@@ -83,9 +93,15 @@ func TestReservationRefusal_AlreadyHolding_KeepsTheHoldingWording(t *testing.T) 
 	if strings.Contains(msg, "set something else aside") {
 		t.Errorf("the remedy still says \"set aside\", which the helpfile defines as RESERVING:\n%s", msg)
 	}
-	for _, remedy := range []string{"remove a draining item", "disenchant", "dismiss a companion"} {
-		if !strings.Contains(msg, remedy) {
-			t.Errorf("the remedy must name %q, matching help reservation:\n%s", remedy, msg)
+	if !strings.Contains(msg, "remove a draining item") {
+		t.Errorf("the remedy must name the one action that would help:\n%s", msg)
+	}
+	// And ONLY that action. This character has no companion to dismiss and no
+	// enchantment to strip, so offering either sends it hunting for something
+	// it does not have.
+	for _, useless := range []string{"dismiss a companion", "disenchant"} {
+		if strings.Contains(msg, useless) {
+			t.Errorf("the remedy offers %q to a character that cannot do it:\n%s", useless, msg)
 		}
 	}
 	assertPlayerCopyClean(t, msg)

@@ -34,6 +34,16 @@ func seedReservingGear(t *testing.T) func() {
 			Name:   "plain collar",
 			Type:   items.Neck,
 		},
+		// A second, lighter reserving item on a different slot, so a test can
+		// take ONE thing off and still be holding something.
+		999953: {
+			ItemId:               999953,
+			Name:                 "clinging ring",
+			Type:                 items.Ring,
+			ReserveHealthPct:     0.05,
+			ReserveStaminaPct:    0.05,
+			ReserveConvictionPct: 0.05,
+		},
 	})
 }
 

@@ -19,6 +19,13 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	actor := &actions.UserActor{User: user, Room: room}
 
+	// Snapshot reservation BEFORE anything leaves the body, so the disclosure
+	// below can tell the player when taking that off gave capacity back. The
+	// equip side has said "putting that on sets part of you aside" since U7b and
+	// remove said nothing, which taught the player that reservation is a one-way
+	// door. Taken up here so the `all` branch is covered by the same snapshot.
+	beforeReservation := user.Character.ReservationTotals()
+
 	if rest == "all" {
 		removedItems := []items.Item{}
 		for _, item := range user.Character.Equipment.GetAllItems() {
@@ -32,6 +39,8 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			UserId:       user.UserId,
 			ItemsRemoved: removedItems,
 		})
+
+		sendReservationReturnDisclosure(user, beforeReservation)
 
 		return true, nil
 	}
@@ -69,6 +78,7 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, user.Character.Name, result.Item.DisplayName()),
 				user.UserId,
 			)
+			sendReservationReturnDisclosure(user, beforeReservation)
 		} else if result.Found {
 			user.SendText(messaging.CategorySystem,
 				fmt.Sprintf(`You can't seem to remove your <ansi fg="item">%s</ansi>.`, matchItem.DisplayName()),

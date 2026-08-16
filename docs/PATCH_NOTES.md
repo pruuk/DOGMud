@@ -24,6 +24,27 @@ moment you put it on. You will hear which of your pools it takes from and how
 much of each is now spoken for, so a refusal later on will never come out of
 nowhere.
 
+Taking it off says so too. Before, the game told you when capacity was taken
+and never once told you it had come back, which made reservation look like a
+door that only opened one way. Now removing something that was holding part
+of you says what your gear and bonds are left holding, in the same plain
+words. Gear that was never holding anything stays as quiet on the way off as
+it does on the way on.
+
+Those plain words are now one set of words. The line you get when you put
+something on, the line you get when the game refuses you, and the Reserved
+row on your status sheet all describe the same state the same way, and each
+one is measured against the limit rather than against your whole pool. Until
+now they used three different scales, so the same character could be called
+one thing by the sheet and another thing by the line above it. Type
+help reservation to see the short words and the longer ones side by side.
+
+The game also names only what is really holding you. If your reservation is
+all companions, it talks about your bonds and does not mention gear, and it
+offers you the one thing that would actually help rather than a list you
+cannot act on. A player wearing nothing at all used to be told that their
+gear was the problem.
+
 Releasing a companion now updates the web client straight away. It used to
 keep showing the will that companion had been holding, long after the bond
 was broken.

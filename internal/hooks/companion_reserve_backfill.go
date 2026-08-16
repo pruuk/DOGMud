@@ -88,9 +88,14 @@ func refreshCompanionReservesOnLogin(user *users.UserRecord) {
 func companionRebaseNotice(ch *characters.Character) string {
 	max := ch.ConvictionMax.Value
 	share := characters.ReserveShareBand(ch.GetPoolReservation("conviction", max), max)
+	// The subject names what is REALLY holding the pool. It used to credit the
+	// whole figure to companions, which overstated them for anyone also wearing
+	// reserving gear -- the mirror of the fixed "Your gear and bonds" phrase the
+	// refusal shed on 2026-08-16.
+	subject, verb := ch.ReservationHolders(characters.PoolConviction)
 	return `Your bonds were re-priced while you were away. What they cost you ` +
 		`follows your skill at manifestation and the gear you carry, so it ` +
-		`moves when those move. Your companions now hold ` + share + ` of your ` +
-		`conviction in reserve. Nothing has been taken from you, but you cannot ` +
-		`take on more until you set something aside.`
+		`moves when those move. ` + subject + ` now ` + verb + ` ` + share +
+		` of your conviction in reserve. Nothing has been taken from you, but ` +
+		`you cannot take on more until you make room.`
 }

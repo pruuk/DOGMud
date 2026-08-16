@@ -35,6 +35,18 @@ func sendReservationDisclosure(user *users.UserRecord, before characters.Reserva
 	}
 }
 
+// sendReservationReturnDisclosure is the `remove` half, kept next to its twin so
+// neither can be changed without the other being read.
+//
+// U7b shipped the equip line alone, which told the player capacity could be
+// taken and never that it came back. Same empty-string contract, same share
+// test, so an ordinary remove is as silent as an ordinary equip.
+func sendReservationReturnDisclosure(user *users.UserRecord, before characters.ReservationTotals) {
+	if notice := user.Character.ReservationDecreaseNotice(before); notice != `` {
+		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">`+notice+`</ansi>`)
+	}
+}
+
 func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if refuseWhileBusy(user, `change equipment`) {
 		return true, nil

@@ -45,10 +45,22 @@ limit rather than to your whole pool:
   <ansi fg="red-bold">near limit</ansi>        Almost no room left. The next thing may be refused.
   <ansi fg="red-bold">at limit</ansi>          You cannot add anything more to this pool.
 
+When the game speaks to you in a sentence it uses the same rungs in
+longer words, so you can match one to the other without doing any sums:
+
+  <ansi fg="green">slight</ansi>            a slight part
+  <ansi fg="green">modest</ansi>            a modest share
+  <ansi fg="yellow">notable</ansi>           a notable share
+  <ansi fg="red">heavy</ansi>             a heavy share
+  <ansi fg="red-bold">near limit</ansi>        nearly all you can set aside
+  <ansi fg="red-bold">at limit</ansi>          all you can set aside
+
 <ansi fg="yellow">━━━ Making Room ━━━</ansi>
 
-Remove a draining item, disenchant one, or dismiss a companion, and the
-share comes straight back.
+Remove a draining item, disenchant something you wear, or dismiss a
+companion, and the share comes straight back. When the game refuses you
+it names only the ones you could actually do, so if it does not mention
+your gear, your gear is not what is holding you.
 
 Skill also buys room. A practised enchanter binds magic that takes less
 from its wearer, and a practised summoner holds a companion on less of
