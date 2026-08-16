@@ -1,5 +1,28 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: A light pack is finally worth carrying
+
+Travelling used to cost the same whether you set out empty-handed or with
+your pack two thirds full. The game was rounding every step up to a whole
+measure of stamina, so the difference between a light load and a heavy one
+had nowhere to show itself, and only a genuinely crushing burden ever
+changed the number. Steps are now counted as they really are, and the cost
+of a room is carried forward until it adds up. A light traveller now covers
+noticeably more ground on the same reserves than a laden one, and an easy
+road is genuinely easier than a rough one instead of merely being called so.
+Walking while overloaded is correspondingly harder. Refusing a step you
+cannot afford still refuses cleanly and costs you nothing.
+
+Breaking off to flee is now priced the way every other physical effort is.
+It used to cost a flat amount no matter what you were hauling, so running
+for your life with everything you owned on your back was as cheap as running
+with nothing. It is not cheap any more. Fleeing is still something you can
+always attempt, however spent you are, and it will never be refused for want
+of stamina.
+
+Typing flee a second time while the first attempt is still resolving now
+tells you so, instead of answering with silence.
+
 ## 2026-08-15: Say what you mean, and be told the truth
 
 "Drop all stone" now drops your stones. It used to drop everything you had,

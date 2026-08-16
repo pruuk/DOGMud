@@ -23,6 +23,7 @@ const (
 	ActionParry  Action = `parry`
 	ActionBlock  Action = `block`
 	ActionMove   Action = `move`
+	ActionFlee   Action = `flee`
 
 	// The two non-physical defences. Both are paid in CONVICTION rather than
 	// stamina, and both are registered Physical: false so they never take the
@@ -48,6 +49,16 @@ var registry = map[Action]Spec{
 	ActionParry:  {Skill: skills.WeaponCombat, HasSkill: true, Physical: true},
 	ActionBlock:  {Skill: skills.WeaponCombat, HasSkill: true, Physical: true},
 	ActionMove:   {Skill: skills.Search, HasSkill: true, Physical: true},
+
+	// Flee is physical, and SKULLDUGGERY governs it. That is not an invented
+	// pairing to fill the field: combat.ResolveFleeBlockers already rolls the
+	// fleer's Dex + Skullduggery x 25 against each blocker, so skullduggery is
+	// the skill the game itself says breaking off is made of, and the registry
+	// only makes the cost agree with the roll. Encumbrance applies for the
+	// obvious reason: a full pack is exactly what you cannot sprint away in,
+	// and before this entry escaping with a third more than your capacity on
+	// your back cost precisely what escaping empty-handed cost.
+	ActionFlee: {Skill: skills.Skullduggery, HasSkill: true, Physical: true},
 
 	// Physical: false is load-bearing, not an oversight. Quell answers a mental
 	// spell and defy answers a social attack; charging either an encumbrance
