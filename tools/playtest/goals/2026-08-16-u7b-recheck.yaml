@@ -1,0 +1,103 @@
+# U7b RE-CHECK. The first run (2026-08-15) found the ceiling arithmetic correct
+# and the communication around it broken. Everything below was then changed, so
+# this run exists to confirm the fixes and to reach two goals the first run
+# never got to.
+#
+# WHAT WAS FIXED, so you know what you are checking:
+#   * The refusal used to claim "your gear and bonds already hold a small part"
+#     to a player holding NOTHING, and told them to "set something else aside"
+#     when the helpfile defines "set aside" as RESERVING. There are now TWO
+#     messages: one when the single thing you are adding is too heavy on its
+#     own, one when you are genuinely already holding a lot.
+#   * A refused cast used to CHARGE you conviction anyway. The gate moved to
+#     before the casting starts.
+#   * The prompt bar used to count reserved capacity as FILLED. It drew a
+#     completely full bar at well under two thirds health.
+#   * The `Reserved:` row never reached its top bands. It has new rungs.
+#   * Equipping a reserving item used to say nothing at all.
+#
+# DO NOT take any of that on trust. Confirm each one, and say plainly if a fix
+# did not land. A fix that reads as fixed but is not is worse than the original
+# bug.
+#
+# START ROOM 5227 IS "THE DRILL YARD", and it contains a TRAINING DUMMY that
+# does not wander, does not hide and does not flee. That is deliberate. The
+# first run lost its entire combat goal to a Thornwall Highwayman that HIDES:
+# five attacks issued right after a `look` that listed it all answered "You
+# attack the darkness!", which is what that message says when a target cannot
+# be seen. Fight the dummy instead. If 5227 will not hold you, 462 (Thornwall
+# City) is the known-good fallback, but then you must find a stationary target.
+#
+# ARITHMETIC FOR THIS PROFILE. Manifestation is granted at 12, so:
+#   * ONE water elemental FITS.
+#   * A SECOND water elemental is refused. That is the ALREADY-HOLDING message.
+#   * A magma elemental is refused as your FIRST companion, holding nothing at
+#     all. That is the TOO-HEAVY-ALONE message, and it is the one that used to
+#     be a flat lie. Read it very carefully.
+#
+# NO RAW NUMBERS are allowed in player-facing text outside the `status` sheet.
+# Quote any you find.
+#
+ephemeral:
+  profile: early
+  start_room: 5227
+  overlays:
+    grant_skills:
+      manifestation: 12
+      enchanting: 10
+    grant_spells:
+      conjure-water: 1
+      conjure-magma: 1
+    grant_items:
+      - 40183 # The Blackrazor, two-handed, reserves health
+      - 40187 # Seething Prism, neck, reserves all three pools
+  budgets:
+    wall_clock: 60m
+
+goals:
+  - >-
+    THE HEADLINE CHECK. With no companions and nothing reserved, confirm
+    `status` shows Reserved as none, then try to conjure a magma elemental.
+    Quote the refusal word for word. It must NOT claim you already hold
+    anything, because you hold nothing. It should tell you the creature itself
+    asks for more than you can hold. Does it read as a rule you could have
+    known, and does it tell you anything you can act on? Then check your
+    conviction before and after: a refused cast must cost you NOTHING. Try it
+    two or three times and watch the number.
+  - >-
+    Now summon a water elemental, which should succeed, and try a second one.
+    Quote that refusal too. This one SHOULD mention what you are already
+    holding, and should tell you to remove an item, disenchant, or dismiss a
+    companion. Confirm it does not tell you to "set something aside", which
+    means the opposite of what it should.
+  - >-
+    Watch the Reserved row as you go from nothing, to one companion, to
+    refused. Report every value it showed. The question that matters: could you
+    tell you were about to be refused BEFORE you were refused? If it still
+    reads mid-range right up to the moment you are turned down, say so.
+  - >-
+    THE BAR. Fight the training dummy and let yourself get genuinely hurt, then
+    equip The Blackrazor, which sets a large share of your health aside. Compare
+    the health bar in your prompt against what `status` says in words. They must
+    agree. The bar must never look full or nearly full when `status` calls you
+    hurt. This is the defect that could get a player killed, so be precise and
+    quote both.
+  - >-
+    THE MISSED GOAL. Fight the training dummy alongside your water elemental
+    for at least eight rounds and watch what the elemental does EVERY round.
+    Report any round where it does nothing at all. The dummy does not fight
+    back or move, so nothing should interrupt it. This could not be tested last
+    time and is the biggest unknown left.
+  - >-
+    Equip and remove The Blackrazor and the Seething Prism. Each time, confirm
+    you are TOLD that something went into reserve, in words rather than
+    numbers. Then dismiss your companion and confirm the reservation is
+    released everywhere you can see it. If any display still shows a
+    reservation for a companion you no longer have, that is a finding.
+  - >-
+    General adversarial pass. Anything that reads wrong, renders oddly, shows a
+    raw number where it should describe an effect, or contradicts its own help
+    text. Report bluntly. Known-open and NOT worth re-reporting: `help prompt`
+    documents conviction as {mp}, quell and defy narrate with a generic verb,
+    room contents show a percentage per mob, and help text in some files shows
+    literal HTML entities.
