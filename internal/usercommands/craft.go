@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -226,6 +228,24 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 	if targetItem == nil {
 		user.SendText(messaging.CategorySystem, `<ansi fg="red">Could not find a valid item in that slot.</ansi>`)
 		return true, nil
+	}
+
+	// U7b: refuse a breaching enchant BEFORE the multi-round activity starts.
+	// Refusing here costs the player nothing, where refusing at completion can
+	// only refund materials after the rounds are already spent.
+	//
+	// Subtracting what the target item already reserves is what makes
+	// re-enchanting work: the old enchantment is replaced rather than stacked,
+	// so only the difference is new.
+	if def := enchantments.GetEnchantment(recipe.EnchantType); def != nil && def.ReservePool != "" {
+		pool := characters.Pool(def.ReservePool)
+		added := user.Character.EnchantReserveAt(recipe.EnchantType, 0, targetItem.GetSpec().Hands, pool) -
+			user.Character.ItemReserveOnPool(*targetItem, pool)
+		if user.Character.WouldBreachReservationCap(pool, added) {
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s</ansi>`,
+				user.Character.ReservationRefusal(pool)))
+			return true, nil
+		}
 	}
 
 	// Safety: complete immediately if time_rounds <= 0
