@@ -544,7 +544,11 @@ func (c *Character) wearArmorSlot(i items.Item, spec items.ItemSpec) (returnItem
 		}
 		returnItems = append(returnItems, c.Equipment.ComponentBag)
 		c.Equipment.ComponentBag = i
-		c.SortComponentItems()
+		// SortComponentItems deliberately does NOT run here. It is the one call
+		// in this helper that touches state outside c.Equipment (it moves items
+		// between c.Items and c.ComponentItems), and Wear's reservation revert
+		// works by restoring the whole Worn value, which cannot undo a sort. It
+		// now runs in Wear, after the ceiling check passes.
 	case items.Legs:
 		if c.Equipment.Legs.IsDisabled() {
 			return returnItems, false, `You can't wear things on your legs.`
@@ -591,14 +595,53 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 		return returnItems, false, `That requires too many hands.`
 	}
 
-	// Weapon + shield placement uses pair-based logic.
+	// U7b reservation ceiling. The check runs AFTER placement and reverts,
+	// because equipping DISPLACES and the displaced item's own reservation
+	// counts, so the delta is not knowable until the slot resolves. Comparing
+	// overage before against overage after is also what delivers D4
+	// grandfathering: a character already past the ceiling can still swap one
+	// reserving ring for an equally reserving one, where a plain
+	// over-the-ceiling test would refuse that and force them to strip.
+	//
+	// A snapshot is also the only thing that stays correct now that an
+	// enchantment's reservation depends on the WEARER's enchanting rank rather
+	// than on the item alone: equipping something that grants that skill moves
+	// the reservation on gear already worn, which no per-item delta could see.
+	//
+	// Restoring the whole Worn value is a sound revert because both placement
+	// helpers write ONLY into c.Equipment (wearWeaponOrShield through pointers
+	// into it, wearArmorSlot by assigning slot fields), with two exceptions,
+	// both handled: SortComponentItems was moved out of wearArmorSlot and runs
+	// below, and wearWeaponOrShield's own reapplyPermabuffs is re-run against
+	// the restored equipment on the refusal path.
+	beforeReserve := c.ReservationOverages()
+	savedEquipment := c.Equipment
+
+	// Weapon + shield placement uses pair-based logic; armor + non-weapon slots
+	// use the simple switch.
 	if spec.Type == items.Weapon || spec.Type == items.Offhand {
-		return c.wearWeaponOrShield(i, spec, iHandsRequired, c.CanDualWield())
+		returnItems, newItemWorn, failureReason = c.wearWeaponOrShield(i, spec, iHandsRequired, c.CanDualWield())
+	} else {
+		returnItems, newItemWorn, failureReason = c.wearArmorSlot(i, spec)
 	}
 
-	// Armor + non-weapon slots use the simple switch.
-	returnItems, newItemWorn, failureReason = c.wearArmorSlot(i, spec)
-	if newItemWorn {
+	if !newItemWorn {
+		return returnItems, newItemWorn, failureReason
+	}
+
+	if pool, worse := beforeReserve.Worsened(c.ReservationOverages()); worse {
+		c.Equipment = savedEquipment
+		c.reapplyPermabuffs()
+		return nil, false, c.ReservationRefusal(pool)
+	}
+
+	if spec.Type == items.ComponentBag {
+		c.SortComponentItems()
+	}
+	if spec.Type != items.Weapon && spec.Type != items.Offhand {
+		// Preserved from the pre-U7b shape: permabuffs are reapplied on the
+		// armour path only (wearWeaponOrShield does its own), and only on
+		// success.
 		c.reapplyPermabuffs(returnItems...)
 	}
 	return returnItems, newItemWorn, failureReason

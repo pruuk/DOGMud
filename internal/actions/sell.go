@@ -336,7 +336,7 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 		if buyReason == "gear_upgrade" {
 			newItem := items.New(item.ItemId)
 			if newItem.ItemId > 0 {
-				returnedItems, wore, _ := mob.Character.Wear(newItem)
+				returnedItems, wore, wearFailure := mob.Character.Wear(newItem)
 				if wore {
 					for _, old := range returnedItems {
 						if old.ItemId > 0 {
@@ -348,6 +348,16 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 						seller.GetUserId(),
 					)
 				} else {
+					// The gear-upgrade path calls Wear directly, so it is the one
+					// place a refusal (the U7b reservation ceiling among them)
+					// would otherwise vanish: the merchant shelves the item and
+					// the seller sees nothing to explain why the upgrade did not
+					// take.
+					if wearFailure != "" {
+						room.SendTextVisual(messaging.CategoryLoot,
+							fmt.Sprintf(`<ansi fg="mobname">%s</ansi> considers the <ansi fg="itemname">%s</ansi>, then shelves it instead.`,
+								mob.Character.Name, newItem.DisplayName()))
+					}
 					shopInv.AddStockAtRound(item.ItemId, 1, util.GetRoundCount())
 				}
 			} else {
