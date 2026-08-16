@@ -2,14 +2,21 @@
 
 ## 2026-08-16: Reading your own bars, honestly
 
-Your health, stamina and conviction bars now measure what you can actually
-reach. Anything your gear or your companions hold in reserve is out of the
-pool for as long as they hold it, so it is no longer drawn as part of the
-bar. A full bar means you are as recovered as you can be, and a bar at a
-third means you have a third of what you can hold. Before this, the reserved
-part of the bar was drawn in a shade that many clients cannot show apart from
-the filled part, so a badly wounded character could show a bar that looked
-completely full. That was the most dangerous kind of wrong, and it is gone.
+Your health, stamina and conviction bars now show three things instead of
+two. The lit part is how much you are carrying of what you can actually
+reach, the dark part is what you have spent, and a shaded band fenced off at
+the right hand end is the share your gear or your companions are holding in
+reserve. The whole bar is still your whole pool, so the band shows you at a
+glance how much of yourself is spoken for.
+
+The lit part is measured only against what you can reach, so it can never
+overstate you. Before this, the reserved band was drawn in a shade that many
+clients cannot show apart from the lit part, and the lit part was measured
+against the whole pool, so a badly wounded character could show a bar that
+looked completely full. That was the most dangerous kind of wrong, and it is
+gone. The band now uses a shade that stays distinct on plain text clients as
+well. Your bars and the Vitals panel in the web client now draw the same
+three parts in the same places.
 
 The status sheet now reads from the same pool the bar does, so the two can no
 longer describe the same wound in two different ways.

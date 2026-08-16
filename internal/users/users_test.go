@@ -1098,13 +1098,15 @@ func TestRenderVitalBar(t *testing.T) {
 		assert.Contains(t, bar, "░") // empty blocks
 	})
 
-	t.Run("with reservation the gauge spans the reachable pool", func(t *testing.T) {
-		// 50 of a pool whose reachable ceiling is 80 is five eighths full, so
-		// six filled blocks and four empty. The reserved fifth is NOT drawn:
-		// it is the denominator, not a band. See renderVitalBar's comment.
+	t.Run("with reservation the band takes its slice and the gauge fills the rest", func(t *testing.T) {
+		// A fifth of the pool is reserved, so two of the ten blocks are band.
+		// The remaining eight blocks carry 50 of a reachable 80, which is five
+		// eighths, so five filled and three empty.
 		bar := renderVitalBar(50, 100, 20)
-		assert.Equal(t, 6, strings.Count(bar, "█"))
-		assert.Equal(t, 4, strings.Count(bar, "░"))
+		assert.Equal(t, 5, strings.Count(bar, "█"))
+		assert.Equal(t, 3, strings.Count(bar, "░"))
+		assert.Equal(t, 2, strings.Count(bar, "▒"))
+		// '▓' collapses onto '█' in the ASCII downgrade. It must never appear.
 		assert.NotContains(t, bar, "▓")
 	})
 
@@ -1124,19 +1126,106 @@ func TestRenderVitalBar(t *testing.T) {
 	})
 }
 
-// asciiBar collapses a rendered bar the way a player on an ASCII-only client
-// sees it. internal/util's downgrade table maps '█' and '▓' BOTH to '#', and
-// '░' to '.', which is why a reserved band drawn as a third shade was invisible
-// as a distinct thing and read as filled.
+// asciiBar renders a bar the way a player on an ASCII-only client actually
+// sees it, by running the REAL downgrade (util.ConvertToAscii) rather than a
+// local table that could drift away from it. That drift is the whole story
+// here: the 2026-08-15 over-report shipped because the reserved band used '▓',
+// and util's table maps '▓' and '█' both to '#', so the band read as filled.
+// Everything but the three bar characters is stripped, which removes the ansi
+// tag markup (it contains no '#', '.' or ':').
 func asciiBar(bar string) string {
-	r := strings.NewReplacer("█", "#", "▓", "#", "▒", ":", "░", ".")
 	out := strings.Builder{}
-	for _, ch := range r.Replace(bar) {
+	for _, ch := range util.ConvertToAscii(bar) {
 		if ch == '#' || ch == '.' || ch == ':' {
 			out.WriteRune(ch)
 		}
 	}
 	return out.String()
+}
+
+// The ASCII downgrade is load-bearing, so pin it directly rather than only
+// through the bar. The three regions have to survive as three distinct
+// characters; if any two collapse, the bar starts lying again and every
+// expectation below would still pass while saying nothing.
+func TestRenderVitalBar_AsciiDowngradeKeepsTheThreeRegionsDistinct(t *testing.T) {
+	filled := util.ConvertToAscii("█")
+	empty := util.ConvertToAscii("░")
+	reservedGlyph := util.ConvertToAscii("▒")
+
+	assert.Equal(t, "#", filled, "filled block must downgrade to '#'")
+	assert.Equal(t, ".", empty, "empty block must downgrade to '.'")
+	assert.Equal(t, ":", reservedGlyph, "reserved block must downgrade to ':'")
+
+	assert.NotEqual(t, filled, reservedGlyph,
+		"reserved collapsed onto filled in ASCII -- this is the exact shape of the "+
+			"2026-08-15 bug, where the '▓' band read as more filled bar")
+	assert.NotEqual(t, empty, reservedGlyph,
+		"reserved collapsed onto empty in ASCII -- the band would be invisible as a band")
+	assert.NotEqual(t, filled, empty)
+
+	// '▓' is the trap glyph. It is fine that it maps to '#'; what matters is
+	// that the bar never uses it.
+	assert.Equal(t, "#", util.ConvertToAscii("▓"))
+
+	// And the same three characters must be distinguishable in a real bar.
+	ascii := asciiBar(renderVitalBar(101, 440, 176))
+	assert.Contains(t, ascii, "#", "no filled region survived the downgrade")
+	assert.Contains(t, ascii, ".", "no empty region survived the downgrade")
+	assert.Contains(t, ascii, ":", "no reserved region survived the downgrade")
+	assert.Len(t, ascii, 10)
+}
+
+// The reservation must be VISIBLE in the prompt. Dropping the band removed the
+// 2026-08-15 lie but also removed the information: the owner, fielding two
+// flesh golems, saw three solid full bars in the prompt while the web Vitals
+// panel showed a clear dark band on each, and nothing on screen explained why
+// companions were being refused.
+func TestRenderVitalBar_ReservationIsVisible(t *testing.T) {
+	t.Run("a reserved character shows a band even at full reachable health", func(t *testing.T) {
+		bar := renderVitalBar(264, 440, 176)
+		assert.Contains(t, bar, "▒",
+			"a reserved character's bar has no reserved band, so the prompt is silent "+
+				"about the reservation while the web Vitals panel shows it")
+		assert.Equal(t, "######::::", asciiBar(bar))
+	})
+
+	t.Run("no reservation draws no band", func(t *testing.T) {
+		assert.NotContains(t, renderVitalBar(440, 440, 0), "▒")
+		assert.NotContains(t, renderVitalBar(101, 440, 0), "▒")
+	})
+
+	t.Run("a tiny reservation still gets a whole block rather than vanishing", func(t *testing.T) {
+		// 1 of 440 rounds to zero blocks. It is clamped up to one instead: a
+		// band a shade too wide costs nothing, a band that vanishes is the bug.
+		bar := renderVitalBar(439, 440, 1)
+		assert.Equal(t, 1, strings.Count(bar, "▒"))
+		assert.Equal(t, "#########:", asciiBar(bar))
+	})
+
+	t.Run("a near-total reservation still leaves a working gauge", func(t *testing.T) {
+		// The band caps at nine blocks so at least one block still empties as
+		// the character takes damage.
+		full := renderVitalBar(10, 440, 430)
+		hurt := renderVitalBar(1, 440, 430)
+		assert.Equal(t, "#:::::::::", asciiBar(full))
+		assert.Equal(t, ".:::::::::", asciiBar(hurt))
+	})
+
+	t.Run("the band never steals the last filled block at full reachable health", func(t *testing.T) {
+		// Filled is counted against the USABLE blocks, not against ten, so
+		// however the band rounds, a character at their reachable ceiling has
+		// every non-band block lit.
+		for _, reserved := range []int{0, 1, 37, 40, 100, 176, 260, 400, 439} {
+			reachable := 440 - reserved
+			bar := renderVitalBar(reachable, 440, reserved)
+			ascii := asciiBar(bar)
+			assert.Equal(t, 10, len(ascii))
+			assert.NotContains(t, ascii, ".",
+				"reserved=%d at full reachable health %d left an EMPTY block: the band "+
+					"rounding stole a filled block from a character who is as recovered "+
+					"as they can be (bar %q)", reserved, reachable, ascii)
+		}
+	})
 }
 
 // The defect this exists to prevent, in the numbers a 2026-08-15 playtest
@@ -1150,9 +1239,10 @@ func TestRenderVitalBar_NeverReadsFullBelowTheReachableCeiling(t *testing.T) {
 	// drew six filled plus four reserved, and the ASCII downgrade turned that
 	// into ten '#' -- a completely full bar on a character carrying real damage.
 	t.Run("at the reachable ceiling the bar is full, and honestly so", func(t *testing.T) {
-		// 272 clamps to the 264 reachable ceiling, which IS full. What must not
-		// happen is that the same ten '#' also appear below the ceiling.
-		assert.Equal(t, "##########", asciiBar(renderVitalBar(272, 440, 176)))
+		// 272 clamps to the 264 reachable ceiling, which IS full. Full now means
+		// every USABLE block lit, with the reserved four fenced off after them
+		// as ':' -- distinct from '#', which is what the old '▓' band was not.
+		assert.Equal(t, "######::::", asciiBar(renderVitalBar(272, 440, 176)))
 	})
 
 	// Measured case two: 101 of 440 with 176 reserved, which `status` correctly
@@ -1161,12 +1251,17 @@ func TestRenderVitalBar_NeverReadsFullBelowTheReachableCeiling(t *testing.T) {
 	t.Run("a fraction of the reachable pool never reads full", func(t *testing.T) {
 		ascii := asciiBar(renderVitalBar(101, 440, 176))
 		assert.NotEqual(t, "##########", ascii)
-		// 101 of a 264 reachable ceiling is 38%, so three filled blocks.
-		assert.Equal(t, "###.......", ascii)
+		// 101 of a 264 reachable ceiling is 38% of six usable blocks, floored to
+		// two. Four of the six usable blocks stay visibly empty.
+		assert.Equal(t, "##....::::", ascii)
+		assert.Equal(t, 2, strings.Count(ascii, "#"))
 	})
 
 	// The general rule, swept. Anything short of the reachable ceiling must
-	// leave at least one empty block behind, at every reservation level.
+	// leave at least one empty block behind, at every reservation level. Note
+	// the assertion is on '#' count, not on the whole string: a bar of ten '#'
+	// is not the only way to over-report once a band exists, so what is pinned
+	// is that no usable block is lit that should not be.
 	t.Run("swept across reservations", func(t *testing.T) {
 		for _, reserved := range []int{0, 40, 100, 176, 260, 400, 440, 500} {
 			reachable := 440 - reserved
@@ -1181,6 +1276,10 @@ func TestRenderVitalBar_NeverReadsFullBelowTheReachableCeiling(t *testing.T) {
 				assert.NotEqual(t, "##########", ascii,
 					"current=%d max=440 reserved=%d rendered a FULL bar below the reachable ceiling %d",
 					cur, reserved, reachable)
+				assert.Contains(t, ascii, ".",
+					"current=%d max=440 reserved=%d left NO empty block below the reachable "+
+						"ceiling %d, so the gauge reads as recovered (bar %q)",
+					cur, reserved, reachable, ascii)
 			}
 		}
 	})

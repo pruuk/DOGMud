@@ -30,9 +30,16 @@ a deeper pool to draw on, or a lesser thing to bind.
 
 <ansi fg="yellow">━━━ Reading It ━━━</ansi>
 
-Your health, stamina and conviction bars show the pool you can still
-reach, not your listed one. A full bar means you are as recovered as
-you can be while you are carrying what you carry.
+Your health, stamina and conviction bars are drawn in three parts. The
+lit part is what you are carrying, the dark part is what you have
+spent, and the shaded band at the right hand end is what is being held
+in reserve. The lit and dark parts together are the pool you can still
+reach, so when they are all lit you are as recovered as you can be
+while you are carrying what you carry. The band tells you how much of
+that pool is not coming back until you set something down.
+
+On a plain text client the three parts show as <ansi fg="white">#</ansi> for carried,
+<ansi fg="white">.</ansi> for spent, and <ansi fg="white">:</ansi> for held in reserve.
 
 Type <ansi fg="command">status</ansi> and look at the Reserved line under your pools. Each pool
 gets a word of its own, and each word measures how close you are to the

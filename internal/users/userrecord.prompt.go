@@ -73,42 +73,64 @@ func RenderVitalBar(current, max, reserved int) string {
 //
 //	>60% → green, >30% → gold, ≤30% → red
 //
-// THE TEN BLOCKS SPAN THE REACHABLE POOL, NOT THE RAW MAXIMUM. `reserved` is a
-// DENOMINATOR here, not a band to draw: the gauge measures max - reserved,
-// which is the only ceiling the character can ever get back to. A full gauge
-// therefore means "as recovered as you can be", and a gauge at a third means
-// "a third of what you can hold".
+// THE TEN BLOCKS SPAN THE RAW MAXIMUM, AND THE RESERVED SHARE TAKES ITS OWN
+// PROPORTIONAL SLICE AT THE RIGHT-HAND END. The bar's whole length still means
+// "your whole pool"; the band fenced off at the end means "this part is spoken
+// for and is not coming back while it is spoken for"; and the blocks to the
+// left of the band are the reachable pool, filled from current / (max -
+// reserved). That is the same three-region model webclient-pure.html draws
+// (buildVitalsSeg: a usable region sized to the unreserved fraction, a dark
+// drain masking its spent part, a crosshatched reserved block after it), so
+// the prompt and the web Vitals panel now say the same thing about the same
+// character at the same moment.
 //
-// It used to draw the reserved share as its own ▓ band inside the same ten
-// blocks, with the usable portion scaled against the RAW max. That is what a
-// 2026-08-15 playtest caught lying: 272 of 440 health with 176 reserved drew
-// six ██ plus four ▓▓, and internal/util's ASCII downgrade table maps BOTH
-// '█' and '▓' to '#' (util.go, asciiReplacements), so the player saw ##########
-// and read a full bar while sitting on a bleeding character. Any design that
-// leans on a third shade to carry safety-critical meaning is one charset away
-// from that same lie, and the charset is the player's choice, not ours.
+// TWO BUGS ARE BEING HELD OFF AT ONCE HERE, AND THEY PULL IN OPPOSITE
+// DIRECTIONS. Both were found in play, a day apart.
 //
-// Three further reasons this is the right base, not merely the safe one:
+//	Over-report (2026-08-15). The bar once scaled its filled count against the
+//	RAW max and drew the reserved share as a ▓ band. internal/util's ASCII
+//	downgrade table maps BOTH '█' and '▓' to '#' (unicodeToAscii in util.go),
+//	so at 272 of 440 health with 176 reserved a player on an ASCII client saw
+//	########## and read a full bar while bleeding, and at 101 of 440 saw seven
+//	of ten segments lit at 23% health. A player could bleed out reading a
+//	healthy gauge.
 //
-//   - characters.EffectivePoolMax's own contract says to use it for EVERY
-//     percentage-of-max threshold, and a vitals bar is the most literal one in
-//     the game. Against the raw max a reserved character can never fill the
-//     gauge no matter how completely they recover.
-//   - The color was ALREADY computed against the reachable max while the blocks
-//     were counted against the raw max, so the bar contradicted itself: gold
-//     text over a bar that looked six-tenths green.
-//   - The web client does exactly this. webclient-pure.html fills its bars from
-//     availablePct() = current / max(1, max - reserved) and renders reservation
-//     as a separate crosshatch, which it can afford because it has real colors.
+//	Under-report (2026-08-16). The first fix dropped the band entirely and
+//	measured the ten blocks against the reachable pool. That is honest about
+//	damage but silent about reservation: a player fielding two flesh golems saw
+//	three completely full bars in the prompt and a clearly banded set in the web
+//	Vitals panel, with nothing on screen to explain why companions were being
+//	refused. Correct under its own model, and disagreeing with the other
+//	surface.
 //
-// Reservation has not stopped being visible; it moved to the surfaces built to
-// carry it: the `status` sheet's Reserved row, the equip disclosure, and the
-// refusal message. A slow-changing property belongs on a sheet you read, not
-// inside a fast-moving safety gauge you glance at.
+// The glyph table is what makes having both possible. '█' → '#', '░' → '.',
+// and '▒' → ':' are three DISTINCT ASCII characters, so the three regions stay
+// three regions after the downgrade. '▓' is the one shade that must never be
+// used for this, because it collapses onto filled. The ASCII split is pinned by
+// a test that runs the real util.ConvertToAscii, not a local approximation,
+// because a silent collapse in that table is exactly how the over-report shipped.
 //
-// The filled count FLOORS rather than rounds, so ten blocks means exactly full
-// and nothing else. Rounding would have shown a full bar from 95% of the
-// reachable pool upward, which is a smaller version of the bug being fixed.
+// ROUNDING, AND THE TENSION IN IT:
+//
+//   - The FILLED count floors, so ten filled blocks means exactly full and
+//     nothing else. Rounding would show a full bar from 95% upward, which is a
+//     smaller version of the over-report.
+//   - The filled count is measured against the USABLE blocks, not against ten,
+//     so widening or narrowing the band by a rounding step can never steal the
+//     last filled block from someone at genuinely full reachable health: at
+//     current == effectiveMax, filled == usable exactly, whatever the band did.
+//   - The BAND rounds to nearest, then is clamped to at least one block whenever
+//     reserved > 0, so a real reservation is never a zero-width band. A tiny
+//     reservation therefore reads slightly larger than it is. That is the
+//     deliberate trade: a band that is a shade too wide costs nothing, a band
+//     that vanishes is the bug this function exists to fix.
+//   - The band is also capped at nine blocks so the gauge itself never
+//     disappears. A near-totally reserved character keeps one block that still
+//     empties as they take damage.
+//
+// Color stays measured against the reachable pool, matching the status sheet's
+// vitals row (characters.EffectivePoolMaxNamed) so the two agree on how hurt
+// the player is.
 func renderVitalBar(current, max, reserved int) string {
 	if max <= 0 {
 		max = 1
@@ -128,14 +150,28 @@ func renderVitalBar(current, max, reserved int) string {
 		current = effectiveMax
 	}
 
-	filledBlocks := int(math.Floor(float64(current) / float64(effectiveMax) * 10.0))
-	if filledBlocks > 10 {
-		filledBlocks = 10
+	// The reserved band: proportional slice of the whole bar, never zero-width
+	// when a real reservation exists, never wide enough to swallow the gauge.
+	reservedBlocks := 0
+	if reserved > 0 {
+		reservedBlocks = int(math.Round(float64(reserved) / float64(max) * 10.0))
+		if reservedBlocks < 1 {
+			reservedBlocks = 1
+		}
+		if reservedBlocks > 9 {
+			reservedBlocks = 9
+		}
+	}
+	usableBlocks := 10 - reservedBlocks
+
+	filledBlocks := int(math.Floor(float64(current) / float64(effectiveMax) * float64(usableBlocks)))
+	if filledBlocks > usableBlocks {
+		filledBlocks = usableBlocks
 	}
 	if filledBlocks < 0 {
 		filledBlocks = 0
 	}
-	emptyBlocks := 10 - filledBlocks
+	emptyBlocks := usableBlocks - filledBlocks
 
 	// Color based on current vs effective max. 256-color indices chosen to match
 	// the web vitals gradient (Material colors) as closely as the cube allows —
@@ -161,6 +197,15 @@ func renderVitalBar(current, max, reserved int) string {
 	if emptyBlocks > 0 {
 		result += fmt.Sprintf(`<ansi fg="238">%s</ansi>`,
 			strings.Repeat("░", emptyBlocks))
+	}
+
+	if reservedBlocks > 0 {
+		// Mid grey, deliberately lighter than the near-black empty blocks, so the
+		// band reads as a distinct fenced-off region rather than more emptiness.
+		// This mirrors the web panel, where the reserved block carries a lighter
+		// crosshatch over a dark ground.
+		result += fmt.Sprintf(`<ansi fg="244">%s</ansi>`,
+			strings.Repeat("▒", reservedBlocks))
 	}
 
 	return result
