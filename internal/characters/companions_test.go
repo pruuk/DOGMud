@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v2"
@@ -229,11 +230,16 @@ func TestCalcCompanionReserve_FloorsAtOne(t *testing.T) {
 // D5: the cap subsumes CanAffordCompanion, which is removed rather than kept
 // alongside. Two ceilings on the same pool means the weaker one never fires.
 func TestCanAffordCompanionIsGone(t *testing.T) {
-	// This test exists only as a tombstone. If someone reintroduces the method
-	// the compiler will not complain, so state the intent in prose: companion
-	// affordability is now WouldBreachReservationCap(PoolConviction, reserve)
-	// plus the GetMaxCompanions count backstop, checked at the call site.
-	t.Skip("tombstone: see WouldBreachReservationCap and GetMaxCompanions")
+	// Reintroducing the method would break no build anywhere, so assert its
+	// absence directly rather than leaving a skip that proves nothing. A
+	// skip-only test also trips the repo's own TestNoSkipOnlyPlaceholderTests
+	// guard, which exists for exactly this reason.
+	if _, found := reflect.TypeOf(&Character{}).MethodByName("CanAffordCompanion"); found {
+		t.Fatal("CanAffordCompanion is back. D5 removed it: two ceilings on one " +
+			"pool means the weaker never fires. Companion affordability is now " +
+			"WouldBreachReservationCap(PoolConviction, reserve) plus the " +
+			"GetMaxCompanions count backstop, checked at the call site")
+	}
 }
 
 // ─── CalcCompanionPool ───────────────────────────────────────────────────────

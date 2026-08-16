@@ -52,6 +52,27 @@ not relitigate them.
 | D15 | A **reservation readout** ships, in descriptive bands only. No numbers. |
 | D16 | Dismissing a companion destroying its gear is **accepted as-is**. No change. |
 
+### 2.1 Accepted outcomes, surfaced during execution. NOT defects.
+
+Both emerged from the recomputed calibration in Task 4 and were put to the
+owner. Both were **accepted with reasons**. Do not re-file either as a bug, and
+do not "fix" them in a later slice without asking first.
+
+**A novice summoner cannot field a top-tier conjure at all.** At manifestation 5
+a magma elemental reserves more than the whole 66% ceiling allows, so it is
+refused rather than merely expensive. **Owner: fine.** The higher summons are
+already hard-gated by spell discovery, and discovering them means grinding
+manifestation, so a character who can cast magma has the rank to hold it. The
+gate is redundant with an existing gate, not a new wall.
+
+**At the top end, pet tier stops costing companion slots.** At manifestation 55
+with a rank-4 Manifester mutation, golem and magma both bottom out at the soft
+count backstop of 5, so the reduction caps flatten the tier differentiation the
+multiplier exists to create. **Owner: fine.** Reaching that state takes a long
+time and the mutation ranks come slowly, so it describes an endgame character
+who has earned it. `CompanionReserveTotalCap` (0.79) is the lever if that ever
+changes.
+
 ---
 
 ## 3. The companion power model
