@@ -942,6 +942,25 @@ Run: `go test ./internal/characters/ 2>&1 | head -20`
 
 `internal/characters/companion_calibration_test.go` references `CalcCompanionStatPool` and will fail to build. Read it, and rewrite each assertion against `CalcCompanionPool` with the new expected values computed from `B = charisma + manifestation x 5`. **Do not delete the file** and do not weaken an assertion to make it pass: if a case cannot be expressed under the new formula, say so in your report rather than dropping it.
 
+> **Correction, found during Task 3:** this is wrong.
+> `companion_calibration_test.go` does **not** reference `CalcCompanionStatPool`
+> at all. It exercises the reserve-and-budget path only
+> (`CalcCompanionReserve` plus `CanAffordCompanion`), so Task 3 leaves it
+> building and passing untouched. It **will** break in Task 4, when
+> `CanAffordCompanion` is deleted per D5, and that is where its rewrite belongs.
+> Its `fieldN` helper is the only thing to change: point it at the new cap
+> predicate instead of `CanAffordCompanion`. The `base` costs it passes (350,
+> 440, 735) are per-type base reserve costs, which Task 4 rebases onto
+> `CompanionReserveDefault x petMultiplier`, so the expected companion counts
+> must be recomputed there rather than preserved.
+>
+> Two further Task 3 notes: deleting `TestCalcRaisedStatPool` orphans the
+> `math` import in `companions_test.go`, which must be removed or the package
+> will not build. And the doc comment the plan supplies for
+> `CalcSpawnPoolFromBase` says "the 200 in the fallback below is unreachable"
+> while the code it supplies sets that fallback to 150; the shipped comment was
+> reworded to match the code.
+
 Step 6 has no separate commit; Task 4 commits the three tasks together.
 
 ---
@@ -955,7 +974,7 @@ Step 6 has no separate commit; Task 4 commits the three tasks together.
 
 Two changes land together because they are the same decision seen from two sides. D9 makes the ongoing budget track pet power instead of a flat companion count, and D5 removes `CanAffordCompanion` because the cap subsumes it. Keeping both would leave two different ceilings on the same pool: `CanAffordCompanion` is a 100% conviction-only cap (`CompanionCastingFloorPct` defaults to 0.0 and is absent from `config.yaml`, so it reduces to "must not exceed the max") sitting beside a 66% three-pool one, and the weaker of the two would never fire.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `internal/characters/companions_test.go`, replace `TestCalcCompanionReserve_Calibration` (lines 150-177) with:
 
@@ -1050,12 +1069,12 @@ func TestCanAffordCompanionIsGone(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `go test ./internal/characters/ -run 'TestCompanionReserveBase|TestCalcCompanionReserve' -v`
 Expected: FAIL, `undefined: CompanionReserveBase`.
 
-- [ ] **Step 3: Implement the derived base and the rider**
+- [x] **Step 3: Implement the derived base and the rider**
 
 In `internal/characters/companions.go`, replace `CalcCompanionReserve` (lines 167-178) and DELETE `CanAffordCompanion` (lines 180-192) entirely, leaving:
 
@@ -1119,13 +1138,13 @@ func (c *Character) CalcCompanionReserve(baseCost int) int {
 
 Add `"github.com/GoMudEngine/GoMud/internal/costs"` to the file's imports.
 
-- [ ] **Step 4: Delete the obsolete affordability test**
+- [x] **Step 4: Delete the obsolete affordability test**
 
 Run: `git rm internal/characters/companion_afford_test.go`
 
 That file tests `CanAffordCompanion` end to end and has no meaning once the method is gone. The tombstone in Step 1 records why.
 
-- [ ] **Step 5: Update the four compile-broken readers**
+- [x] **Step 5: Update the four compile-broken readers**
 
 Deleting `SummonBasePool`, `SummonConvictionReserve` and `CanAffordCompanion` breaks four files by construction. All four are fixed here so this commit is green; Task 9 then does the auto-spawn and login work that has no compile pressure behind it.
 
@@ -1211,7 +1230,7 @@ In `internal/hooks/charm_spell.go`, replace lines 36-45 with:
 
 The count backstop is now reported separately here as well. It never was before: `CanAffordCompanion` folded the count cap and the conviction budget into one bool, so a player at their companion limit was told they lacked conviction. Drop the now-unused `configs` import if the compiler says so.
 
-- [ ] **Step 6: Delete the two knobs the removal orphaned**
+- [x] **Step 6: Delete the two knobs the removal orphaned**
 
 `CompanionCastingFloorPct` had exactly one reader, `CanAffordCompanion`, and is now dead. It is absent from `config.yaml`, so deleting it changes nothing at runtime, but leaving it reads as a live tuning dial and is not one.
 
@@ -1219,7 +1238,7 @@ In `internal/configs/config.balance.go`, delete the `CompanionCastingFloorPct` f
 
 Leave `ManifestStatScaleChaFactor` and `ManifestStatScaleSkillFactor` alone: `CalcSpawnPoolFromBase` still reads both, and they are shipped in `config.yaml` at lines 1268-1269.
 
-- [ ] **Step 7: Run the full affected set**
+- [x] **Step 7: Run the full affected set**
 
 ```bash
 gofmt -l internal/
@@ -1230,16 +1249,30 @@ Expected: `gofmt` prints nothing, the build is clean, and every package passes. 
 
 If `internal/hooks/companion_reserve_backfill_test.go` or `internal/usercommands/assess_disclosure_test.go` fails, read it before changing it: both encode real behaviour and their expectations move because the reserve figures move, not because the behaviour is wrong. Update the expected numbers, never the assertion's shape.
 
-- [ ] **Step 8: Commit Tasks 2, 3 and 4 together**
+- [x] **Step 8: Commit Tasks 2, 3 and 4 together**
+
+**Before staging, fix the two TEST files that read the retired fields.** They
+are invisible to `go build` and will fail `go test` compilation:
+
+- `internal/hooks/companion_reserve_backfill_test.go:23` sets
+  `SummonConvictionReserve`.
+- `internal/usercommands/assess_disclosure_test.go:27,:32` set
+  `SummonConvictionReserve: 350` and `: 440`.
+
+Convert both to `SummonPetMultiplier` with values that preserve each test's
+intent, deriving the reserve through the same path production now uses.
 
 ```bash
 git add internal/spells/spells.go internal/spells/summon_fields_test.go \
+        internal/spells/test_main_test.go \
         internal/characters/companions.go internal/characters/companions_test.go \
         internal/characters/companion_calibration_test.go \
         internal/characters/companion_afford_test.go \
         internal/behaviortree/actions_mob.go \
         internal/hooks/companion_summon.go internal/hooks/companion_reserve_backfill.go \
+        internal/hooks/companion_reserve_backfill_test.go \
         internal/hooks/charm_spell.go internal/usercommands/assess.go \
+        internal/usercommands/assess_disclosure_test.go \
         internal/configs/config.balance.go internal/configs/config.balance.mobs.go \
         internal/configs/config.balance.companions_test.go
 git commit -m "feat(companions): pet multipliers replace base pools, and price the reservation
@@ -3055,6 +3088,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 **Files:**
 - Modify: `internal/characters/context.md`, `internal/spells/context.md`, `internal/enchantments/context.md`, `internal/hooks/context.md`
+- Modify: **`docs/schemas/spell.md`** (added after Task 2: it documents all three retired fields, `summon_base_pool` and `summon_scaling_divisor` and `summon_conviction_reserve`, in its field table at :49-50 and in two worked examples at :113-114 and :131-132. A schema doc describing fields the loader no longer reads is worse than none, because content authors code against it.)
 - Modify: `docs/PATCH_NOTES.md`
 - Modify: `docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`
 - Modify: `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`
