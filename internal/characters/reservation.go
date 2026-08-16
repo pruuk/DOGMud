@@ -244,10 +244,17 @@ func reservationBand(reserve, maxPool, cap int) string {
 // a player has no other way to learn that their own gear is the obstacle and
 // resting will never fix it. Bands only, never a number, matching the disclosure
 // style `stand` and `assess` already use.
+//
+// It says "gear and bonds", not "gear". This one string is shared by equip,
+// enchant, tier-up, charm, summon, raise and the homunculus. On the companion
+// paths the reservation actually blocking the player is very often another
+// companion, so blaming gear alone would send them stripping armour when what
+// they need to do is release a pet. Naming both is the only wording that is
+// true on every path that sends it.
 func (c *Character) ReservationRefusal(p Pool) string {
 	max := c.poolMax(p)
 	share := ReserveShareBand(c.GetPoolReservation(string(p), max), max)
-	return `Your gear already holds ` + share + ` of your ` + poolDisplayName(p) +
+	return `Your gear and bonds already hold ` + share + ` of your ` + poolDisplayName(p) +
 		` in reserve. You cannot take on more until you set something else aside.`
 }
 
