@@ -401,7 +401,7 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **Adjectives system**: Visual indicators for character states (sleeping, charmed, poisoned, prone, etc.)
 - **Quest indicators**: Visual markers for quest-relevant NPCs
 
-## Pool Reservation and the Ceiling (U7b, `reservation.go`)
+### Pool Reservation and the Ceiling (U7b, `reservation.go`)
 
 Some gear and every fielded companion **reserve** part of a pool: the points are
 still counted in the max but can never be spent. `GetPoolReservation`
