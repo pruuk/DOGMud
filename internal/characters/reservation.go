@@ -26,6 +26,12 @@ import (
 // no mutation today; 120% with one rank of Extra Arms.
 
 // ReservationCap returns the maximum total reservation permitted on a pool.
+//
+// The 0.66 below duplicates the config defaulter on purpose. DO NOT remove it
+// as redundant: this package loads no config in tests, so PoolReservationCapPct
+// reads 0 there, and without the fallback every cap in every test silently
+// becomes 0. That does not fail anything loudly. It makes the cap tests pass
+// for the wrong reason, which is worse than a red build.
 func (c *Character) ReservationCap(p Pool) int {
 	pct := float64(configs.GetBalanceConfig().PoolReservationCapPct)
 	if pct <= 0 || pct > 1 {
