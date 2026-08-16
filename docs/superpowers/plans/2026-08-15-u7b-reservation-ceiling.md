@@ -2393,13 +2393,47 @@ In `internal/hooks/chrysifier_homunculus.go`, replace the last paragraph of `tic
 // and always manifests", which was true and is no longer: an ungated write into
 // a capped pool is exactly what the ceiling exists to stop.
 //
-// WATCH THIS IN PLAYTEST. The homunculus is a CRAFTING apex whose owner has no
-// particular reason to have invested in manifestation, and its base reserve is
-// the heaviest in the game. A Chrysifier with little manifestation may now be
-// unable to field their own apex. The refusal is spoken rather than silent
-// precisely so that shows up as a report instead of a mystery; the lever, if it
-// bites, is HomunculusConvictionReserve.
+// The homunculus is a CRAFTING apex whose owner has no particular reason to
+// have invested in manifestation. At the old base of 1000 the cap would have
+// made it unfieldable by exactly the character it is built for, while leaving
+// it fieldable by a summoner who does not need it. Owner decision 2026-08-15:
+// the base drops to 300. Only one homunculus can exist at a time regardless,
+// which hasLiveHomunculus already enforces.
+//
+// STILL WATCH THIS IN PLAYTEST. 300 fits a 66% cap only from roughly 455
+// Conviction max upward, and nearer 500 once the rank-0 rider penalty applies,
+// so a low-Conviction crafter can still be refused. The refusal is spoken
+// rather than silent precisely so that shows up as a report instead of a
+// mystery; the lever, if it bites, is HomunculusConvictionReserve.
 ```
+
+- [ ] **Step 6a: Lower the homunculus base reserve to 300 (owner, 2026-08-15)**
+
+In `internal/configs/config.balance.mobs.go`, change the default:
+
+```go
+	if b.HomunculusConvictionReserve < 1 {
+		b.HomunculusConvictionReserve = 300
+	}
+```
+
+And in `internal/configs/config.balance.go`, correct the field comment so it no
+longer advertises the old number:
+
+```go
+	HomunculusConvictionReserve   ConfigInt   `yaml:"HomunculusConvictionReserve"`   // Chrysifier: base Conviction the homunculus reserves before reduction (default 300; was 1000 before the U7b cap made that unfieldable by its own crafter)
+```
+
+Update the assertion in `internal/configs/config.balance.chrysifier_test.go`
+from `!= 1000` / `want 1000` to `!= 300` / `want 300`.
+
+**The controller also adds the key to `_datafiles/config.yaml`** so the value is
+documented where it lives. Do not edit that file yourself.
+
+**Do NOT add a count cap.** `hasLiveHomunculus`
+(`internal/hooks/chrysifier_homunculus.go:65`) already returns early at
+`:89` when a live homunculus exists, so the max of one the owner asked for is
+present today. Adding a second gate would be two mechanisms for one rule.
 
 Then replace `spawnHomunculus`'s reserve section. Move the reserve above the spawn and gate on it: insert immediately after `cfg := configs.GetBalanceConfig()` at line 110:
 
