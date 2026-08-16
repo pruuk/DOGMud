@@ -2138,30 +2138,36 @@ func TestCharacter_GetMovementStaminaCost(t *testing.T) {
 	// than the old flat base x terrain. That is the intended half of the trade;
 	// the other half, a laden traveller paying markedly more, is in
 	// movement_cost_test.go.
+	//
+	// The banking change rewrote the EXPECTED COLUMN a second time. These are
+	// fractional now, not whole points: the function returns the true price and
+	// the caller banks the remainder through ApplyCostFloatOrRefuse. The old
+	// column read 1, 1, 2, 2 for these four rows, which is three prices for four
+	// terrains and is precisely the flattening the change removes.
 	tests := []struct {
 		name              string
 		terrainMultiplier float64
-		expectedCost      int
+		expectedCost      float64
 	}{
 		{
 			name:              "Normal terrain, no items",
 			terrainMultiplier: 1.0,
-			expectedCost:      1, // 0.5 * 1.0 * 1.0 * 1.096 = 0.548 -> floor 1 (was 2)
+			expectedCost:      0.548, // 0.5 * 1.0 * 1.0 * 1.096 (was a floored 1)
 		},
 		{
 			name:              "Easy terrain (road), no items",
 			terrainMultiplier: 0.5,
-			expectedCost:      1, // 0.5 * 0.5 * 1.0 * 1.096 = 0.274 -> floor 1 (was 1)
+			expectedCost:      0.274, // 0.5 * 0.5 * 1.0 * 1.096 (was a floored 1)
 		},
 		{
 			name:              "Rough terrain (mountains), no items",
 			terrainMultiplier: 2.0,
-			expectedCost:      2, // 0.5 * 2.0 * 1.0 * 1.096 = 1.096 -> 2 (was 4)
+			expectedCost:      1.096, // 0.5 * 2.0 * 1.0 * 1.096 (was a ceiled 2)
 		},
 		{
 			name:              "Very rough terrain, no items",
 			terrainMultiplier: 3.0,
-			expectedCost:      2, // 0.5 * 3.0 * 1.0 * 1.096 = 1.644 -> 2 (was 6)
+			expectedCost:      1.644, // 0.5 * 3.0 * 1.0 * 1.096 (was a ceiled 2)
 		},
 	}
 
@@ -2172,7 +2178,7 @@ func TestCharacter_GetMovementStaminaCost(t *testing.T) {
 			c.Stats.Strength.ValueAdj = 100
 
 			cost := c.GetMovementStaminaCost(tt.terrainMultiplier)
-			assert.Equal(t, tt.expectedCost, cost, "Movement stamina cost")
+			assert.InDelta(t, tt.expectedCost, cost, 1e-6, "Movement stamina cost")
 		})
 	}
 }

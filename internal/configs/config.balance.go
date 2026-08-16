@@ -289,7 +289,17 @@ type Balance struct {
 	// ── STAMINA & CONVICTION ──────────────────────────────────────────────────
 	MovementBaseStaminaCost ConfigFloat `yaml:"MovementBaseStaminaCost"` // Flat cost to move on normal terrain, BEFORE encumbrance and skill (default 0.5)
 	MovementMaxStaminaCost  ConfigFloat `yaml:"MovementMaxStaminaCost"`  // Ceiling for any single move action (default 20.0)
-	MovementCostFloor       ConfigInt   `yaml:"MovementCostFloor"`       // Minimum stamina any single move can cost (default 1)
+	// The U7 movement-banking change deleted MovementCostFloor. It was the
+	// minimum stamina a single move could cost, and it existed only because
+	// GetMovementStaminaCost returned an int: an unfloored sub-1.0 cost would
+	// have rounded away to a free move. Movement now banks its fractional
+	// remainder through ApplyCostFloatOrRefuse, so a sub-1.0 charge is not free,
+	// it is a whole point every second or third room, and any floor at or above
+	// 1 would flatten the encumbrance curve back into the single step with flat
+	// shoulders that an in-game measurement found. The key may still be present
+	// in config.yaml -- yaml.Unmarshal is non-strict, so an orphaned key is
+	// ignored rather than fatal, and the line can be dropped whenever that file
+	// is next edited.
 	// U7 Task 10: movement is priced partly on the actor's search rank, so
 	// travelling has to be able to EARN that discount -- but only barely.
 	// This is the probability that a successful move RECORDS a search use;

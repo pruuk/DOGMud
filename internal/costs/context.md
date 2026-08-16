@@ -47,6 +47,7 @@ const (
 	ActionParry  Action = `parry`
 	ActionBlock  Action = `block`
 	ActionMove   Action = `move`
+	ActionFlee   Action = `flee`
 
 	// Paid in CONVICTION, and both registered Physical: false.
 	ActionQuell Action = `quell`
@@ -128,14 +129,14 @@ value gets a neutral 1.0 rather than a free action.
   authored price of the action, and capping it would flatten cheap actions
   against expensive ones.
 
-- **Three production callers of `Calc` as of U7 Task 10** (this was "one" through
-  Task 6 and is no longer): `characters.GetDefenseCostFloat` (all five
-  defences), `characters.GetMovementStaminaCost` (movement) and
-  `combat.attackCostPerSwing` (one attack swing). Retuning
-  `CostTotalMultiplierMax` therefore moves defence, movement and attack prices
-  together. In practice it still binds only on defence: movement's worst case is
-  `5.0 x 1.10 = 5.5` against the 6.0 ceiling and attack's is the same, because
-  neither carries a per-action premium above 1.0.
+- **Four production callers of `Calc`** (this was "one" through Task 6 and is no
+  longer): `characters.GetDefenseCostFloat` (all five defences),
+  `characters.GetMovementStaminaCost` (movement), `combat.attackCostPerSwing`
+  (one attack swing) and `usercommands.Flee`. Retuning `CostTotalMultiplierMax`
+  therefore moves defence, movement, attack and flee prices together. In
+  practice it still binds only on defence: movement's worst case is
+  `5.0 x 1.10 = 5.5` against the 6.0 ceiling, and attack's and flee's are the
+  same, because none of the three carries a per-action premium above 1.0.
 
 - **The clamp is rank-dependent, and only bites novices.** It caps the composed
   multiplier, so the rank the actor holds decides the load at which it starts
@@ -218,10 +219,22 @@ Three, as of U7 Task 10.
 - **Movement** (Task 8): `characters.GetMovementStaminaCost` folds the terrain
   multiplier into `Base` (terrain is a property of the move, not the actor, and
   `Base` is deliberately outside the clamp), then applies the mutation speed
-  modifier, the hidden multiplier, `MovementMaxStaminaCost` and
-  `MovementCostFloor` after `Calc` returns. Movement does NOT use
-  `ApplyCostFloat` and cannot bank a remainder: `go.go` spends whole stamina, so
-  the result is ceilinged to an int, which is what the floor exists to protect.
+  modifier, the hidden multiplier and `MovementMaxStaminaCost` after `Calc`
+  returns. It returns a FLOAT and `go.go` charges it through
+  `Character.ApplyCostFloatOrRefuse`, the all-or-nothing sibling of
+  `ApplyCostFloat`: movement banks its remainder like every other priced action
+  AND still refuses when unaffordable, which is the U5b-2 gate that makes flee
+  the only player-initiated disengage in combat. It used to return an int and
+  ceil every move, which flattened a 1.0-to-5.0 encumbrance range into three
+  distinct prices; `MovementCostFloor` was deleted with the ceiling, because a
+  banked sub-1 charge is not free and any floor at or above 1 re-flattens the
+  curve.
+- **Flee**: `usercommands.Flee` prices `FleeStaminaCost` as the `Base` through
+  the `ActionFlee` row (physical, governed by `skills.Skullduggery`, which is
+  the skill `combat.ResolveFleeBlockers` already rolls) and charges it with
+  `ApplyCostFloat`. `ApplyCostFloat`, NOT `ApplyCostFloatOrRefuse`: flee must
+  never refuse for cost, and `ApplyCostFloat` delegates to `ApplyCostPartial`.
+  Flee and movement are deliberate mirror images here.
 
 The registry remains the seam for the rest: ranged, taunt, rally, warcry, the
 thirteen currently-free special moves, grapple initiation and sneak each become

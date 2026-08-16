@@ -1,8 +1,6 @@
 package characters
 
 import (
-	"math"
-
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
@@ -26,7 +24,29 @@ func (c *Character) DeductActionPoints(amount int) bool {
 // GetMovementStaminaCost prices one room move in stamina.
 //
 // terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc. The result
-// is floored at MovementCostFloor and capped at MovementMaxStaminaCost.
+// is capped at MovementMaxStaminaCost.
+//
+// RETURNS A FRACTIONAL COST, and the caller must charge it through
+// ApplyCostFloatOrRefuse so the sub-1 remainder is banked. It used to return an
+// int and ceil every move independently, which made the encumbrance term
+// useless: at a base of 0.5 an empty traveller computed 0.55 and one at two
+// thirds of capacity computed 0.79, and both ceiled to 1. An in-game
+// measurement found exactly that shape, a single step with flat shoulders,
+// where light and heavy both cost 1 per room and overburdened and crushed both
+// cost 2 to 3. A multiplier that ranges from 1.0 to 5.0 cannot be expressed in
+// whole points on top of a base below 1; banking the remainder is what gives it
+// its range back. Movement was the last priced action in the game not using the
+// carry.
+//
+// MovementCostFloor went with the ceiling. Its whole job was "a move is never
+// free", which was true of a rounded cost that could round down to nothing and
+// is false of a banked one: a charge of 0.55 is not free, it is a point of
+// stamina every second room. Any floor at or above 1 would re-flatten precisely
+// the curve this change exists to unflatten, and a floor below 1 is
+// unreachable anyway, because MovementBaseStaminaCost and every multiplier are
+// validated positive and BiomeInfo.GetMovementCost never returns less than a
+// positive terrain value. The knob is deleted rather than set to zero so no
+// later edit can quietly reinstate the flattening.
 //
 // U7 Task 8: movement is a PHYSICAL ACTION and is priced by the same formula as
 // every other one --
@@ -66,7 +86,7 @@ func (c *Character) DeductActionPoints(amount int) bool {
 // inverse-skill curve at 1.10, a product of 5.5 that cannot reach 6.0. The real
 // ceiling on a move is MovementMaxStaminaCost, which unlike Calc's clamp bounds
 // terrain and the hidden-movement multiplier as well.
-func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
+func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) float64 {
 	b := configs.GetBalanceConfig()
 	maxCost := float64(b.MovementMaxStaminaCost)
 
@@ -97,14 +117,7 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
 		cost = maxCost
 	}
 
-	// A move never costs less than the floor. Unlike a defence, movement cannot
-	// bank a fractional remainder -- go.go spends whole stamina -- so an
-	// unfloored sub-1.0 cost would round to a genuinely free move.
-	total := int(math.Ceil(cost))
-	if floor := int(b.MovementCostFloor); total < floor {
-		total = floor
-	}
-	return total
+	return cost
 }
 
 // U7 Task 7 deleted GetAttackStaminaCost and DeductAttackStamina. Between them

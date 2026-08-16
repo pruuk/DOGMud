@@ -34,9 +34,9 @@ func (b *Balance) validateMisc() {
 	if b.MovementMaxStaminaCost <= 0 {
 		b.MovementMaxStaminaCost = 20.0
 	}
-	if b.MovementCostFloor <= 0 {
-		b.MovementCostFloor = 1
-	}
+	// MovementCostFloor's default went with the field. See the comment where it
+	// was declared: banking the fractional remainder is what stops a move being
+	// free now, and a floor would flatten the curve instead of protecting it.
 	// U7 Task 10. Note the `== 0` rather than the `<= 0` used above: absence
 	// means "take the default", but a NEGATIVE value is an explicit "switch
 	// travel-training off" and is left alone so movementTrainsSearch can read it

@@ -274,6 +274,65 @@ func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult {
 	return c.ApplyCostPartial(pool, int(whole))
 }
 
+// ApplyCostFloatOrRefuse is the all-or-nothing sibling of ApplyCostFloat: it
+// banks the sub-integer remainder the same way, but pays the whole part IN FULL
+// or refuses outright, reporting whether it paid.
+//
+// It exists because movement needs both halves at once and neither existing
+// primitive gives both. ApplyCost refuses but is integer-only, and rounding a
+// move up to a whole point flattens the encumbrance curve into a single step
+// with flat shoulders: at MovementBaseStaminaCost 0.5 an empty traveller and one
+// at two thirds of capacity both ceil to 1, and a multiplier that ranges to 5.0
+// gets to express three distinct prices in total. ApplyCostFloat has the
+// fractional precision but delegates to ApplyCostPartial, which pays what it can
+// rather than refusing, and movement REFUSING when unaffordable is load-bearing
+// (U5b-2): it is the gate that makes flee the only player-initiated disengage
+// while in combat.
+//
+// ORDERING IS THE WHOLE POINT. The affordability decision is taken against a
+// CANDIDATE debt held in a local, before anything is written back. On the
+// refusal path the function returns having mutated neither the carry nor the
+// pool, so a refused action cannot quietly accumulate debt that a later,
+// affordable action would then be slammed with. There is no early return
+// between the two writes on the success path either, so the pair cannot be
+// half-applied.
+//
+// The deduction itself is delegated to ApplyCost so the "in full or not at all"
+// floor rule stays in exactly one place. CanAfford and ApplyCost read the same
+// pool with nothing interleaved between them, so the delegated call cannot fail
+// after the check passed; its result is returned rather than discarded so a
+// future change to either cannot silently diverge.
+//
+// A non-finite or non-positive amount is free: it succeeds, banks nothing, and
+// changes nothing. Same reasoning as ApplyCostFloat, where the consequence of
+// letting NaN reach the carry is a permanently cost-free pool.
+func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool {
+	// NaN fails every comparison, so `amount <= 0` alone does NOT stop it.
+	if amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) {
+		return true
+	}
+
+	if c.costCarry == nil {
+		c.costCarry = make(map[Pool]float64, 3)
+	}
+
+	// Candidate values only. Nothing below this line writes until the refusal
+	// path has been ruled out.
+	debt := c.costCarry[pool] + amount
+	whole := math.Floor(debt)
+
+	if whole > 0 && !c.CanAfford(pool, int(whole)) {
+		return false
+	}
+
+	c.costCarry[pool] = debt - whole
+
+	if whole <= 0 {
+		return true
+	}
+	return c.ApplyCost(pool, int(whole))
+}
+
 // applyVitalChange is the single signed pipeline behind ApplyHarm and
 // ApplyRestore. Negative delta is harm, positive is restore.
 //

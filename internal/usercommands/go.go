@@ -218,15 +218,24 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		staminaCost := user.Character.GetMovementStaminaCost(terrainMultiplier)
 		if mutations.IsFlying(user.Character.Mutations) {
 			// Winged Flight glides over terrain — movement barely tires you.
-			staminaCost = int(float64(staminaCost) * float64(configs.GetBalanceConfig().FlightMoveStaminaMult))
-			if staminaCost < 1 {
-				staminaCost = 1
-			}
+			//
+			// The old "never below 1" clamp here is gone with the integer cost.
+			// It was the same flattening as MovementCostFloor wearing a
+			// different hat, and on a fractional cost it inverted the mutation:
+			// halving a 0.55 move to 0.27 and then clamping it back to a whole
+			// point made flight cost a laden flyer MORE than the unfloored
+			// ground price it was meant to undercut.
+			staminaCost *= float64(configs.GetBalanceConfig().FlightMoveStaminaMult)
 		}
 		// U5b-2: movement REFUSES when unaffordable -- the character keeps every
 		// other action, and this is the gate that makes flee the only
 		// player-initiated disengage while in combat.
-		if !user.Character.ApplyCost(characters.PoolStamina, staminaCost) {
+		//
+		// ApplyCostFloatOrRefuse, not ApplyCost: the cost is fractional and its
+		// remainder is banked so the encumbrance curve keeps its full range. The
+		// refusal below happens BEFORE anything is banked, so a refused move
+		// leaves no debt behind.
+		if !user.Character.ApplyCostFloatOrRefuse(characters.PoolStamina, staminaCost) {
 			user.SendText(messaging.CategorySystem, "You're too exhausted to move! Rest and recover your stamina.")
 			// Refund the action points since movement failed
 			user.Character.ActionPoints += actionCost

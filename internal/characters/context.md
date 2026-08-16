@@ -129,6 +129,12 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 // COST; the integer pair erases the per-action modifiers. See Gotchas.
 func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
 
+// ApplyCostFloatOrRefuse banks the remainder exactly as ApplyCostFloat does but
+// pays the whole part IN FULL or refuses outright. The affordability decision is
+// taken before anything is written, so a refused action leaves both the pool and
+// the carry untouched and cannot accumulate debt. Movement is the caller.
+func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool
+
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
 func (c *Character) ApplyRestore(pool Pool, amount int) int
 
@@ -326,8 +332,14 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `GetMovementStaminaCost` on `costs.Calc`: `MovementBaseStaminaCost` × terrain ×
   encumbrance × inverse-skill (governing skill `search`, from the
   `costs.ActionMove` registry row), then the mutation speed modifier, the hidden
-  multiplier, the `MovementMaxStaminaCost` cap and a `MovementCostFloor` floor,
-  in that order. The encumbrance term it replaced was written inline here and
+  multiplier and the `MovementMaxStaminaCost` cap, in that order. It returns a
+  **float**, and `go.go` charges it through `ApplyCostFloatOrRefuse` so the
+  remainder is banked and movement still refuses when unaffordable. It used to
+  return an int and ceil each move independently, which flattened the whole
+  1.0-to-5.0 encumbrance range into three distinct prices, measured in-game as a
+  single step with flat shoulders. `MovementCostFloor` was deleted with the
+  ceiling: a banked sub-1 charge is not free, and any floor at or above 1
+  re-flattens the curve it was meant to protect. The encumbrance term it replaced was written inline here and
   was flat 1.0 until the actor **exceeded** carry capacity, so it priced nothing
   for anyone not deliberately overloaded. The base drops to **0.5** to pay for
   the curve now charging from the first pound: ordinary travel gets slightly
@@ -747,7 +759,8 @@ while keeping the Awareness machine as the canonical state source.
 When a character is `Hidden`, movement stamina cost is multiplied by
 `HiddenMoveStaminaMultiplier` (default and shipped value both 3.0). This
 is read in `GetMovementStaminaCost()` and applied after the shared cost
-composition and before the cap and floor.
+composition and before the cap. (There is no floor any more; movement banks its
+fractional remainder instead.)
 
 ### Integration with Combat Phase
 
