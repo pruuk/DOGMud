@@ -1,53 +1,83 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">stamina</ansi>
 
-Stamina (SP) is your physical endurance -- one of your three resource
-pools, alongside Health and Conviction. It is the fuel of the body in a
-fight, and managing it is the difference between winning a long exchange
-and gassing out halfway through one.
+Stamina (SP) is your physical endurance, one of your three resource pools,
+alongside Health and Conviction. It is the fuel of the body in a fight, and
+managing it is the difference between winning a long exchange and gassing
+out halfway through one.
 
 <ansi fg="yellow">━━━ What Stamina Powers ━━━</ansi>
 
-  - <ansi fg="stat">Defending</ansi> -- dodging, parrying, and blocking all cost stamina.
-  - <ansi fg="stat">Special moves</ansi> -- bash, trip, kick, and the like.
-  - <ansi fg="stat">Getting back up</ansi> -- standing from prone takes a real effort.
-  - <ansi fg="stat">Movement</ansi> -- travelling, and hauling more than you can comfortably
-    carry, both draw on it.
+  - <ansi fg="stat">Attacking</ansi>: every swing you throw costs stamina, and a fast
+    fighter who strikes several times in a round pays for each blow. A
+    flurry costs more than a single strike.
+  - <ansi fg="stat">Defending</ansi>: dodging, parrying, and blocking all cost stamina.
+  - <ansi fg="stat">Special moves</ansi>: bash, trip, kick, and the like.
+  - <ansi fg="stat">Getting back up</ansi>: standing from prone takes a real effort.
+  - <ansi fg="stat">Movement</ansi>: travelling costs stamina, and what you are carrying
+    raises that price from the very first pound.
 
 <ansi fg="yellow">━━━ The Cost of Defending ━━━</ansi>
 
-Every defensive attempt spends stamina -- and it spends it whether the
-defense succeeds or fails. Dodging is the cheapest, parrying costs more,
-and blocking with a shield is the most expensive of the three. Because a
-single incoming blow can test all of your defenses at once, a hard-pressed
-fighter bleeds stamina fast. Shield-heavy styles hit hardest on the pool;
-dodge-focused styles are leaner.
+A defensive attempt spends stamina, and it spends it whether the defense
+succeeds or fails. When a blow comes at you, you meet it with whichever of
+your defenses serves you best against that particular strike, and you pay
+for that one alone. One incoming swing is never charged to you three times
+over.
+
+The three physical defenses are not priced alike. Dodging is the dearest,
+because you throw your whole body out of the way. Blocking sits in the
+middle, since a shield takes the blow for you. Parrying is the cheapest, as
+a weapon already in your hand need only turn the strike aside. A style
+built around dodging therefore leans on the most expensive defense in the
+game, while a fighter who parries keeps more in the pool for a long fight.
+
+Attacks on your mind and your resolve are turned aside differently.
+Steeling yourself against a spell, or standing firm against a taunt, draws
+on Conviction rather than Stamina, and the load you carry does not make
+either of them harder.
+
+<ansi fg="yellow">━━━ Weight and Skill ━━━</ansi>
+
+Two things change the price of everything physical you do.
+
+The load on your back makes attacking, defending, and travelling dearer. It
+begins to cost you from the first pound, but the climb is gentle across
+most of the range, so a sensible pack is barely felt. As you approach the
+limit of what you can carry, the cost rises steeply, and hauling a full
+load into a fight is expensive enough to change how that fight goes. Weight
+has no effect on acts of will.
+
+Skill runs the other way. The more practised you are, the less the same
+action takes out of you. A beginner pays a little over the going rate, and
+a master pays well under half of it. Training a defense makes it cheaper to
+use as well as more reliable.
 
 <ansi fg="yellow">━━━ Running Low ━━━</ansi>
 
-Stamina does not fail all at once at some cliff-edge -- it fades. As the
-pool drains, your effectiveness slides down with it, smoothly and steadily:
-you land fewer and weaker blows, your defenses grow less reliable (while
-still costing full stamina to attempt), and if you bottom out you may not
-have the strength left to stand at all. Fighting on an empty pool is a
-death spiral -- the tools keep costing but stop working. When you feel it
-going, break off and recover, or <ansi fg="command">flee</ansi> outright.
+Stamina does not fail all at once at some cliff edge. It fades. As the pool
+drains, your effectiveness slides down with it, smoothly and steadily: you
+swing less often, you land fewer blows, and the blows you do land hit
+softer. You keep your defenses even when the pool is empty, and you will
+still spend what little is left on them, but a fighter running on nothing
+is at a real disadvantage against one who is not. When you feel it going,
+break off and recover, or <ansi fg="command">flee</ansi> outright.
 
 <ansi fg="yellow">━━━ Regeneration ━━━</ansi>
 
 Stamina returns a little each round, and much faster while you are out of
-combat and at rest -- the same rhythm as Health and Conviction. In-combat
+combat and at rest, the same rhythm as Health and Conviction. In-combat
 recovery is deliberately slow, so extended fights are a test of endurance.
 If you are losing the stamina war, disengage and let it come back before
 you commit again.
 
 <ansi fg="yellow">━━━ Raising It ━━━</ansi>
 
-Your maximum Stamina is governed by <ansi fg="stat">Vitality</ansi>, which -- like every stat on
-Gaius -- grows through use. The more you fight, endure, and exert, the
-deeper the pool becomes and the longer you last before it tells. Some
-equipment and buffs raise Vitality (and so stamina) as well.
+Your maximum Stamina is governed by <ansi fg="stat">Vitality</ansi>, which, like every stat on
+Gaius, grows through use. The more you fight, endure, and exert, the deeper
+the pool becomes and the longer you last before it tells. Some equipment
+and buffs raise Vitality (and so stamina) as well.
 
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help health</ansi>, <ansi fg="command">help conviction</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help stand</ansi>
-  <ansi fg="command">help flee</ansi>, <ansi fg="command">help status</ansi>
+  <ansi fg="command">help flee</ansi>, <ansi fg="command">help status</ansi>, <ansi fg="command">help encumbrance</ansi>
