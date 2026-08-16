@@ -40,6 +40,8 @@ character:
     heal: 3
     mind-spike: 3
     sparks: 3
+  skills:
+    spellcasting: 1
   stats:
     dexterity:
       training: 20

@@ -1,6 +1,7 @@
 mobid: 111
 zone: Summons
 archetype: fighting
+behavior_archetype: generic_fighter
 statpool: 18
 itemdropchance: 0
 hostile: false
