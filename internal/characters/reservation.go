@@ -27,11 +27,15 @@ import (
 
 // ReservationCap returns the maximum total reservation permitted on a pool.
 //
-// The 0.66 below duplicates the config defaulter on purpose. DO NOT remove it
-// as redundant: this package loads no config in tests, so PoolReservationCapPct
-// reads 0 there, and without the fallback every cap in every test silently
-// becomes 0. That does not fail anything loudly. It makes the cap tests pass
-// for the wrong reason, which is worse than a red build.
+// The 0.66 below is belt and braces, not a required fallback. An earlier
+// version of this comment claimed the package loads no config in tests and so
+// reads 0 here. That was measured and is FALSE: GetBalanceConfig returns fully
+// defaulted values in this package's tests, PoolReservationCapPct among them.
+//
+// The guard stays anyway, for the same reason ContestFloor rejects zero: a cap
+// of 0 or one out of range would not fail loudly, it would silently disable the
+// ceiling everywhere, including in every test that thinks it is exercising it.
+// A mechanism that quietly turns itself off is worse than a red build.
 func (c *Character) ReservationCap(p Pool) int {
 	pct := float64(configs.GetBalanceConfig().PoolReservationCapPct)
 	if pct <= 0 || pct > 1 {
