@@ -113,13 +113,23 @@ func (before ReservationSnapshot) Worsened(after ReservationSnapshot) (Pool, boo
 // enchantment on an item whose spec ALSO carries a reserve_*_pct) and the
 // contributions intentionally stack. That is by design, not a leftover.
 func (c *Character) ItemReserveOnPool(itm items.Item, p Pool) int {
+	return c.itemReserveOnPoolWithMax(itm, p, c.poolMax(p))
+}
+
+// itemReserveOnPoolWithMax is the single body both entry points share.
+//
+// GetPoolReservation needs the poolMax-taking form because RecalculateStats
+// calls it mid-derivation, with a max it has just computed and not yet written
+// back to the character. Reading c.poolMax(p) there would price the reservation
+// against the PREVIOUS max. Keep exactly one body: an inlined second copy is
+// what let the total and the per-item figure disagree silently before U7b.
+func (c *Character) itemReserveOnPoolWithMax(itm items.Item, p Pool, poolMax int) int {
 	pool := string(p)
-	poolMax := c.poolMax(p)
 	spec := itm.GetSpec()
 	total := 0
 
 	if itm.HasChrysalisEnchantment() && itm.ReservePool == pool {
-		total += c.EnchantReserveAt(itm.EnchantType, itm.EnchantTier, spec.Hands, p)
+		total += c.enchantReserveAtWithMax(itm.EnchantType, itm.EnchantTier, spec.Hands, poolMax)
 	}
 
 	var itemPct float64
@@ -151,12 +161,20 @@ func (c *Character) ItemReserveOnPool(itm items.Item, p Pool) int {
 // deliberately left flat: that reservation is the item's price, not a piece of
 // craft the wearer's skill has any purchase on.
 func (c *Character) EnchantReserveAt(enchantType string, tier int, hands int, p Pool) int {
+	return c.enchantReserveAtWithMax(enchantType, tier, hands, c.poolMax(p))
+}
+
+// enchantReserveAtWithMax is the shared body, taking the pool max explicitly for
+// the same mid-derivation reason itemReserveOnPoolWithMax does.
+func (c *Character) enchantReserveAtWithMax(enchantType string, tier int, hands int, poolMax int) int {
 	pct := enchantments.GetTierReservePct(enchantType, tier, hands)
 	if pct <= 0 {
 		return 0
 	}
+	// The rider scales the PERCENTAGE, before the floor, so it cannot be rounded
+	// away on a small pool.
 	pct *= costs.SkillCostMultiplier(c.GetSkillLevel(skills.Enchanting))
-	return int(math.Floor(float64(c.poolMax(p)) * pct))
+	return int(math.Floor(float64(poolMax) * pct))
 }
 
 // ── Player-facing bands ──────────────────────────────────────────────────────

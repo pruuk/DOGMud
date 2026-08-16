@@ -119,13 +119,24 @@ func TestItemSpecPoolReservation_StacksWithChrysalisEnchant(t *testing.T) {
 	if c.HealthMax.Value != 400 {
 		t.Fatalf("test setup invariant broken: expected HealthMax.Value 400, got %d", c.HealthMax.Value)
 	}
-	// Spec: floor(400 * 0.25) = 100. Enchant tier 0: floor(400 * 0.10) = 40
-	// (1-handed, so no two-hand doubling). Total = 140.
-	if res := c.GetPoolReservation("health", c.HealthMax.Value); res != 140 {
-		t.Fatalf("expected 140 reserved (100 spec + 40 enchant), got %d", res)
+	// Spec: floor(400 * 0.25) = 100, flat -- the pinnacle share is the item's
+	// price and is deliberately NOT scaled by the wearer's craft.
+	//
+	// Enchant tier 0: floor(400 * 0.10 * enchantingRider) (1-handed, so no
+	// two-hand doubling). U7b scales the ENCHANT share by the wearer's
+	// enchanting rank through costs.SkillCostMultiplier. This fixture never
+	// touches Skills, so it wears the rank a fresh validated character really
+	// has: 1, not 0, because Validate() runs ensureAllSkills and that floors
+	// every known skill at 1. The rider at rank 1 is 1.096, so the enchant
+	// share is floor(43.84) = 43 rather than the pre-rider 40, and the total
+	// is 143. The number is asserted for a rank-1 wearer on purpose; do not
+	// pin the fixture's enchanting rank at the neutral 25 to make the old
+	// figure come back.
+	if res := c.GetPoolReservation("health", c.HealthMax.Value); res != 143 {
+		t.Fatalf("expected 143 reserved (100 spec + 43 enchant at enchanting rank 1), got %d", res)
 	}
-	if c.Health != 260 {
-		t.Fatalf("expected current health clamped to 260 (400 - 140), got %d", c.Health)
+	if c.Health != 257 {
+		t.Fatalf("expected current health clamped to 257 (400 - 143), got %d", c.Health)
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
-	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -242,32 +241,24 @@ func (c *Character) RecalculateStats() {
 // the given pool ("health", "stamina", "conviction"). For the "conviction"
 // pool it also adds each live companion's snapshotted ConvictionReserve — the
 // companion Conviction economy piggybacks on this same reservation total.
+//
+// The enchantment half of each item's share is scaled by the wearer's
+// enchanting rank (D10 §4.2); the pinnacle-item half is not. See
+// EnchantReserveAt in reservation.go for why.
 func (c *Character) GetPoolReservation(pool string, poolMax int) int {
 	total := 0
+
+	// Per item, through the same helper the enforcement sites use to price a
+	// single swap, so the total and the per-item figure cannot drift apart. The
+	// helper carries the note about one item contributing through BOTH a
+	// Chrysalis enchantment and a spec reserve_*_pct at once, which stacks by
+	// design.
+	//
+	// poolMax is passed down rather than read fresh: RecalculateStats calls this
+	// mid-derivation with the value it has just computed, before that value has
+	// been written back to the character.
 	for _, itm := range c.Equipment.GetAllItems() {
-		spec := itm.GetSpec()
-
-		// NOTE: a single item can contribute through BOTH mechanisms at once
-		// (a Chrysalis enchantment on an item whose spec also carries a
-		// reserve_*_pct) — the contributions intentionally stack. This is by
-		// design, not a leftover from the old early-continue structure.
-		if itm.HasChrysalisEnchantment() && itm.ReservePool == pool {
-			pct := enchantments.GetTierReservePct(itm.EnchantType, itm.EnchantTier, spec.Hands)
-			total += int(math.Floor(float64(poolMax) * pct))
-		}
-
-		var itemPct float64
-		switch pool {
-		case "health":
-			itemPct = spec.ReserveHealthPct
-		case "stamina":
-			itemPct = spec.ReserveStaminaPct
-		case "conviction":
-			itemPct = spec.ReserveConvictionPct
-		}
-		if itemPct > 0 {
-			total += int(math.Floor(float64(poolMax) * itemPct))
-		}
+		total += c.itemReserveOnPoolWithMax(itm, Pool(pool), poolMax)
 	}
 
 	// Companions reserve Conviction while fielded (snapshotted at summon time).
