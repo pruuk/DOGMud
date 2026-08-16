@@ -56,7 +56,7 @@ Releasing a companion now updates the web client straight away. It used to
 keep showing the will that companion had been holding, long after the bond
 was broken.
 
-## 2026-08-15: What you promise away, and what you keep
+## 2026-08-16: What you promise away, and what you keep
 
 Some of what you carry does not simply help you. A Chrysalis enchantment
 feeds on its wearer, and a companion draws on your will for as long as it
