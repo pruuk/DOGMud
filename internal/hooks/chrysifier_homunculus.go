@@ -3,6 +3,7 @@ package hooks
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -74,10 +75,25 @@ func hasLiveHomunculus(ch *characters.Character) bool {
 
 // tickHomunculus keeps a Homunculus-apex owner supplied with their crafted twin:
 // if they hold the apex and have no live homunculus, it (re)forges one after a
-// short respawn cooldown. There is NO affordability gate — the homunculus is the
-// owner's apex identity and always manifests; its heavy Conviction reservation
-// simply eats their pool (usually leaving them their one big companion and
-// little else). Called per-round from UserRoundTick.
+// short respawn cooldown. Called per-round from UserRoundTick.
+//
+// U7b added the reservation gate this path never had. Its old docstring said
+// "There is NO affordability gate -- the homunculus is the owner's apex identity
+// and always manifests", which was true and is no longer: an ungated write into
+// a capped pool is exactly what the ceiling exists to stop.
+//
+// The homunculus is a CRAFTING apex whose owner has no particular reason to
+// have invested in manifestation. At the old base of 1000 the cap would have
+// made it unfieldable by exactly the character it is built for, while leaving
+// it fieldable by a summoner who does not need it. Owner decision 2026-08-15:
+// the base drops to 300. Only one homunculus can exist at a time regardless,
+// which hasLiveHomunculus already enforces.
+//
+// STILL WATCH THIS IN PLAYTEST. 300 fits a 66% cap only from roughly 455
+// Conviction max upward, and nearer 500 once the rank-0 rider penalty applies,
+// so a low-Conviction crafter can still be refused. The refusal is spoken
+// rather than silent precisely so that shows up as a report instead of a
+// mystery; the lever, if it bites, is HomunculusConvictionReserve.
 func tickHomunculus(user *users.UserRecord, room *rooms.Room) {
 	if room == nil {
 		return
@@ -109,6 +125,17 @@ func spawnHomunculus(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 	ch := user.Character
 	cfg := configs.GetBalanceConfig()
 
+	reserve := ch.CalcCompanionReserve(int(cfg.HomunculusConvictionReserve))
+	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
+		// Spoken, not silent. The caller backs off for ten rounds on nil, so a
+		// silent refusal here would look to the player exactly like the apex
+		// being broken.
+		user.SendText(messaging.CategorySpellManifestation,
+			`Your homunculus stirs and will not hold its shape. `+
+				ch.ReservationRefusal(characters.PoolConviction))
+		return nil
+	}
+
 	pool := homunculusStatPool(homunculusCraftSum(ch), float64(cfg.HomunculusCraftScale))
 	mob := mobs.NewMobByIdFresh(mobs.MobId(homunculusMobId), room.RoomId, pool)
 	if mob == nil {
@@ -134,7 +161,6 @@ func spawnHomunculus(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 	mob.Character.EndAggro()
 	ch.TrackCharmed(mob.InstanceId, true)
 
-	reserve := ch.CalcCompanionReserve(int(cfg.HomunculusConvictionReserve))
 	info := characters.CompanionInfo{
 		MobId:             homunculusMobId,
 		InstanceId:        mob.InstanceId,

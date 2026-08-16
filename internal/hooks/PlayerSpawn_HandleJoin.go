@@ -62,11 +62,13 @@ func respawnCompanions(user *users.UserRecord) {
 	}
 	user.Character.Companions = cleaned
 
-	// Companions saved before the Conviction economy (2026-07-13) loaded with
-	// no reservation and sustained for free — stamp them now.
-	if backfillCompanionReserves(user.Character) {
-		user.Character.RecalculateStats()
-	}
+	// D11: recompute every companion's reserve from what it would cost today.
+	// The snapshot is deliberately frozen at summon time so it cannot drift
+	// mid-life, which makes login the only place a rebase can reach a returning
+	// veteran. This never dismisses anyone; reservation is refused on addition
+	// only, and a recompute that leaves them further over says so rather than
+	// letting a silently dearer bond read as a bug.
+	refreshCompanionReservesOnLogin(user)
 
 	for i := range user.Character.Companions {
 		comp := &user.Character.Companions[i]

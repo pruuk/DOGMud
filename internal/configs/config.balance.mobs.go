@@ -158,7 +158,7 @@ func (b *Balance) validateMobs() {
 		b.HomunculusCraftScale = 4.0
 	}
 	if b.HomunculusConvictionReserve < 1 {
-		b.HomunculusConvictionReserve = 1000
+		b.HomunculusConvictionReserve = 300
 	}
 
 	// ── GOAL SELECTION ───────────────────────────────────────────────────────

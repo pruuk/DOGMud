@@ -276,7 +276,9 @@ func (c *Character) CalcCompanionReserve(baseCost int) int {
 	if r := int(math.Round(reserve)); r > 0 {
 		return r
 	}
-	// A companion that reserves nothing is an unbounded one, and the login
-	// backfill uses 0 as its "legacy record" marker besides.
+	// A companion that reserves nothing is an unbounded one. (Until U7b the
+	// login pass also read 0 as its "legacy record" marker; D11 replaced that
+	// backfill with a recompute of every companion, so 0 marks nothing now and
+	// the floor stands on its own.)
 	return 1
 }

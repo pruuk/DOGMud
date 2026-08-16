@@ -7,7 +7,7 @@ func TestChrysifierDefaults(t *testing.T) {
 	if float64(b.HomunculusCraftScale) != 4.0 {
 		t.Fatalf("HomunculusCraftScale = %v, want 4.0", float64(b.HomunculusCraftScale))
 	}
-	if int(b.HomunculusConvictionReserve) != 1000 {
-		t.Fatalf("HomunculusConvictionReserve = %v, want 1000", int(b.HomunculusConvictionReserve))
+	if int(b.HomunculusConvictionReserve) != 300 {
+		t.Fatalf("HomunculusConvictionReserve = %v, want 300", int(b.HomunculusConvictionReserve))
 	}
 }

@@ -654,7 +654,7 @@ type Balance struct {
 	CompanionSoftCapApex          ConfigInt   `yaml:"CompanionSoftCapApex"`          // Soft count backstop with the Manifester apex (default 7)
 	CompanionReserveDefault       ConfigInt   `yaml:"CompanionReserveDefault"`       // Base reserve a companion costs, scaled by the spell's summon_pet_multiplier (default 280)
 	HomunculusCraftScale          ConfigFloat `yaml:"HomunculusCraftScale"`          // Chrysifier: homunculus statpool = (sum of crafting-skill levels) * this (default 4.0)
-	HomunculusConvictionReserve   ConfigInt   `yaml:"HomunculusConvictionReserve"`   // Chrysifier: base Conviction the homunculus reserves before reduction (default 1000)
+	HomunculusConvictionReserve   ConfigInt   `yaml:"HomunculusConvictionReserve"`   // Chrysifier: base Conviction the homunculus reserves before reduction (default 300; was 1000 before the U7b cap made that unfieldable by its own crafter)
 
 	// ── SHOP ECONOMY ─────────────────────────────────────────────────────────
 	ShopBuyRatio              ConfigFloat `yaml:"ShopBuyRatio,omitempty"`              // Base buy/sell spread: NPC buy offer = baseValue * BuyRatio * scarcityMult (default 0.50)
