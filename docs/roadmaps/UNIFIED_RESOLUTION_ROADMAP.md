@@ -176,7 +176,8 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U5c** | **Credit detection.** Immediate, *attributed* death when health drops below 1 at the harm site, replacing the deferred `Die(state.ActorRef{})` round-tick sweep. Sweep stays as a backstop for non-harm paths. | M | U5b | **Yes** |
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | **The unified cost model.** NEW SLICE, added 2026-08-13; everything below it shifted by one. Applies the spec's single cost formula to every action: flat config base, encumbrance multiplier (physical only), inverse-skill multiplier, per-action modifier. Takes defence cost off the hardcoded 2/4/5 for real. **Must map the companion / reserved-CP interaction before building.** | L | U5, U6 | **Yes** |
-| **U8** | New cost surface: ranged, taunt and spell/taunt resistance start costing; skill-less roll on insufficient resource. (Was U7. The inverse-skill cost band moved into the new U7, where the whole formula now lives.) | M | U7 | **Yes** |
+| **U7b** | **The reservation ceiling.** NEW SLICE, added 2026-08-15 at the owner's request; runs immediately after U7. Cap total reservation on a pool at 50-75% of its max and **refuse the breaching action** rather than letting it succeed and clamp: wielding or equipping a reserving item, enchanting, summoning, conjuring, raising. **Companions are in scope** and are the reason this cannot wait: they reserve on prod today. Also re-examines five raw-max reads whose U7-review rejection rested on the false premise that mobs cannot reserve. **Must precede U8**, which is what turns an over-reserved pool from cosmetic into crippling. | M | U7 | **Yes** |
+| **U8** | New cost surface: ranged, taunt and spell/taunt resistance start costing; **the special moves (bash, trip, kick and the rest), plus rally, warcry, grapple initiation and sneak, wired onto the U7 cost model** (they are free today, and `help stamina` wrongly claimed otherwise until 2026-08-15); skill-less roll on insufficient resource. (Was U7. The inverse-skill cost band moved into the new U7, where the whole formula now lives.) | M | **U7b** | **Yes** |
 | **U9** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. | M | U6 | **Yes** |
 | **U10** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
 | **U12** | **Targeting and target-switching audit.** Added 2026-08-14 at the owner's request. This code has been rewritten several times and never re-examined as a whole; the arc has since removed a great deal of the complexity it was written around. Re-read it end to end and simplify what the flip made redundant. Surface: `actions/target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go`, `usercommands/target.go`, and `internal/parser` (~780 lines together). Audit first, then propose — the deliverable is a findings pass, and any simplification is scoped from what it finds rather than assumed up front. | M | U6 | **No** (simplification only; anything behavioural splits out) |
@@ -309,6 +310,67 @@ than companion-specific, and reserve is already excluded from the low-resource
 progression path (see the *fyttyn vitality exploit, 2026-04-16* comment). What is
 unmapped is how a cost model should treat a reserved pool: does a cost see the
 reserve, and does an actor holding a companion pay more or simply have less?
+
+**RESOLVED by U7: have less, not pay more.** `Character.EffectivePoolMax(pool)`
+returns `max - reservation` and is used for percentage-of-max thresholds and
+ratio computations. Costs and affordability checks must NEVER use it, because
+`RecalculateStats` already clamps the current value, so a cost reading the
+effective max would subtract the reservation twice. Regeneration deliberately
+still reads the raw max.
+
+**ACCEPTED, not a bug: encumbrance barely matters outside combat.** The
+2026-08-15 playtest measured out-of-combat stamina regen at about +8 per round
+against a worst-case move of 3, so a crushed traveller GAINS stamina by walking.
+Closing that would mean cutting out-of-combat regen or making travel much
+dearer, and both pull against the deliberate decision to make ordinary travel
+cheaper than it was. **Owner call: accept it.** Stamina is a combat resource
+whose travel dimension is flavour. Do not re-file this as a defect.
+
+Two things WERE fixed off the back of that run: movement now banks its
+fractional remainder like every other priced action, instead of ceiling each
+move independently and flattening a 5x multiplier into a single step; and
+`flee` was brought onto the cost model, having been a flat charge with no
+encumbrance term, so escaping fully laden cost exactly what escaping empty did.
+
+### U7b — the reservation ceiling
+
+**Added 2026-08-15 at the owner's request**, immediately after U7 and before U8.
+
+**Scope.** Total reservation on a pool is capped at somewhere between 50% and
+75% of that pool's max, to be modelled rather than guessed, and any action that
+would push past the cap is **REFUSED** rather than allowed to succeed and clamp.
+Refusal applies at the breaching action: wielding or equipping a reserving item,
+enchanting, summoning, conjuring, raising. Players and NPCs alike.
+
+**Why it cannot wait, and why it is not only a player concern.** Companions
+reserve on prod today: hand one enchanted items and the reserved portion shows
+in its resource bars. `Character.GetPoolReservation` iterates equipment with **no
+`IsMob` gate whatsoever**, so any character with reserving gear reserves. Two
+consequences:
+
+1. **Companion reservation must be clamped too**, and the mob equip-if-better
+   path must handle a refusal gracefully. `Character.Wear` already returns a
+   `failureReason`; `rooms.go` and `bountyhunter.go` check it, but
+   `internal/actions/sell.go` discards it and would fail silently. Note
+   `give.go` queues `GiftAccepted` **before** the equip decision, so a decline
+   currently reads as accept-then-return.
+2. **Five raw-max reads rejected during U7 review must be re-examined.** That
+   rejection rested on "mobs cannot carry a reservation", which is false for
+   companions. A reserved companion currently reads as permanently wounded to
+   the mob AI target scorers and the packmate heal selectors, the same defect U7
+   fixed on the player side. Sites: three self-side reads in `internal/combat/ai.go`,
+   plus `behaviortree/conditions_mob.go`, `action_cast_best_in_category.go`, and
+   `hpPercent` in `actions_archer.go`.
+
+**Why it must precede U8.** U8's skill-strip on insufficient resource is what
+turns an over-reserved pool from cosmetic into crippling. Shipping the strip
+without the ceiling makes a zero-reserved pool a permanent triple-digit defence
+penalty.
+
+**Related U7 guard, already shipped.** `EffectivePoolMax` floors at 1 rather
+than 0, because every consumer reads a zero max as "no penalty at all", which
+made total reservation the *strongest* state in the game on five separate
+curves. That floor is belt and braces; this ceiling is the real fix.
 
 ### U0 — delete the spell-initiation gate
 
