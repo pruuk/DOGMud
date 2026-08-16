@@ -12,23 +12,42 @@ than Willpower and spellcasting. The strength of the bond
 determines how powerful your companions are and how many you
 can maintain at once.
 
-<ansi fg="yellow">━━━ Companion Limit ━━━</ansi>
+<ansi fg="yellow">━━━ What a Companion Costs ━━━</ansi>
 
-Your manifestation skill determines how many companions you
-can maintain. As your skill grows, you can sustain more bonds
-simultaneously. Even a novice can maintain a single companion
-as long as they know at least one manifestation spell.
+Calling a companion costs conviction once, at the moment you
+cast. Holding it costs conviction for as long as it stays with
+you. That held share is set aside from your pool and cannot be
+spent until the companion is dismissed or dies.
+
+The held share, not the casting price, is what limits how many
+companions you can field. A mightier companion holds more of
+your will, so a small following of strong creatures and a
+larger following of weaker ones can cost you the same.
+
+Skill in manifestation lowers what each companion holds, so a
+practised summoner keeps more companions on the same will.
+Rank buys you roster size, not only power.
+
+There is a limit to how much of any pool may be held in reserve
+at once. Reach it and the next binding is refused outright,
+rather than quietly leaving you weaker. Use <ansi fg="command">status</ansi> to see how
+much of each pool is already spoken for.
+
+There is also a plain upper count on how many creatures will
+follow you at once, whatever your will could otherwise hold.
 
 <ansi fg="yellow">━━━ Companion Types ━━━</ansi>
 
   <ansi fg="yellow">Summoned</ansi>    Called from nothing. Strength scales
-              with your Charisma and skill.
+              with your Charisma and skill, and is the
+              same wherever you stand.
   <ansi fg="yellow">Conjured</ansi>    Similar to summoned, but draws from
               a different magical tradition.
   <ansi fg="yellow">Charmed</ansi>     An existing creature bent to your will.
               Retains its original capabilities.
   <ansi fg="yellow">Raised</ansi>      Necromantic reanimation of the fallen.
-              Strength scales with your skill.
+              Drawn partly from the remains, so better
+              remains make a better servant.
 
 <ansi fg="yellow">━━━ Necromancy ━━━</ansi>
 
@@ -45,7 +64,8 @@ as long as they know at least one manifestation spell.
 Companions fight alongside you automatically if auto-assist
 is enabled. Use <ansi fg="command">companion</ansi> to review your active bonds,
 toggle assist behavior, or check each companion's condition.
-Use <ansi fg="command">dismiss</ansi> to end a bond — but be warned, dismissing
+Use <ansi fg="command">dismiss</ansi> to end a bond, but be warned: dismissing
 a companion can have consequences.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>,
+  <ansi fg="command">help reservation</ansi>, <ansi fg="command">help assess</ansi>

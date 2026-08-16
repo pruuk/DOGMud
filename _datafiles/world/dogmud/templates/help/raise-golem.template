@@ -2,15 +2,18 @@
 
 The <ansi fg="command">Raise Golem</ansi> spell reshapes a corpse into a massive, lumbering
 construct of flesh and bone that obliterates all in its path. Golems are
-the ultimate expressions of necromantic power — brutal, unstoppable, and
-requiring the remains of truly magnificent creatures to sustain.
+the ultimate expressions of necromantic power, brutal and unstoppable, and
+they need the remains of truly magnificent creatures to sustain.
 
 Golems are colossal melee combatants that crush foes with overwhelming
 physical force. They move with the weight of small mountains, shaking the
 earth beneath their feet.
 
-The undead servant's power scales with your willpower and spellcasting skill.
-More skilled casters raise more formidable specimens.
+The servant's power scales with your Charisma and manifestation skill, and
+with the remains you raise it from. Part of it is drawn from the corpse, so
+the same spell over better remains yields a better servant. A golem is the
+most demanding of the raised undead to keep, and holding one will usually
+mean holding little else.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -19,13 +22,23 @@ More skilled casters raise more formidable specimens.
 <ansi fg="yellow">Base Folds:  </ansi> Long channel
 <ansi fg="yellow">Corpse:      </ansi> <ansi fg="white-bold">Requires overwhelming remains</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Nearby corpse or ground loot</ansi>
-<ansi fg="yellow">Conv. Cost:  </ansi> Staggering
+<ansi fg="yellow">Cast Cost:   </ansi> Steep, and paid only once
+<ansi fg="yellow">Held Cost:   </ansi> Heavy, for as long as you keep it
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Manifestation</ansi>
 
 <ansi fg="white-bold">Notes:</ansi>
   - The golem appears under your command and aids you in combat.
   - Once raised, the undead servant remains active as a companion.
   - Use the <ansi fg="command">assess</ansi> command to evaluate a corpse's quality.
+  - Raising costs conviction once. Keeping the servant sets conviction
+    aside for as long as it walks with you, and that held share, not
+    the casting price, is what limits how many you can field.
+  - A mightier servant holds more of your will, and better remains
+    make a mightier servant.
+  - Skill in manifestation lowers what a companion holds, so practice
+    buys you a larger following as well as a stronger one.
+  - If your conviction is already spoken for, the raising is refused
+    outright rather than leaving you weaker, and costs you nothing.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
-  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>
+  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>

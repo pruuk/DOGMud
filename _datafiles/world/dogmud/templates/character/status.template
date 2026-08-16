@@ -6,6 +6,7 @@
  └─────────────────────────────────────────────────────────────────────────────┘
  ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Vitals</ansi> ──────────────────────────────────────────────────────────────────┐
  │ <ansi fg="yellow">Health:     </ansi>{{ vitalQuality .Character.Health .Character.HealthMax.Value 13 }}<ansi fg="yellow">Stamina:    </ansi>{{ vitalQuality .Character.Stamina .Character.StaminaMax.Value 13 }}<ansi fg="yellow">Conviction: </ansi>{{ vitalQuality .Character.Conviction .Character.ConvictionMax.Value 13 }} │
+ │ <ansi fg="yellow">Reserved:   </ansi>{{ reservationQuality (.Character.ReservationBandName "health") 13 }}            {{ reservationQuality (.Character.ReservationBandName "stamina") 13 }}            {{ reservationQuality (.Character.ReservationBandName "conviction") 13 }} │
  │ <ansi fg="yellow">Toxicity:   </ansi>{{ toxicityQuality .Character.ToxicityBandName 13 }}<ansi fg="yellow">Encumbrance:</ansi>{{ encumbranceQuality .Character.GetCarriedWeight .Character.CarryCapacity 13 }}                          │
  └─────────────────────────────────────────────────────────────────────────────┘
  ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Defenses</ansi> ────────────────────────────────────────────────────────────────┐

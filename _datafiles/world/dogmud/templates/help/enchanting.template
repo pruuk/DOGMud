@@ -1,19 +1,30 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">enchanting</ansi> (skill)
 
-Enchantments are not forged — they are grown. Living Chrysalis
+Enchantments are not forged -- they are grown. Living Chrysalis
 mutations bind themselves to your equipment through crafted settings,
 growing stronger with use. The skill is governed by
 <ansi fg="yellow">Perception</ansi>.
 
 <ansi fg="yellow">━━━ How Enchantments Work ━━━</ansi>
 
-An enchanted item claims a portion of your life force. You will see
-a dark section in your vital bars — that energy belongs to the
-enchantment now. As you fight with the enchanted item equipped, the
-bond deepens and may advance to a higher tier.
+A Chrysalis enchantment feeds on its wearer. You will see a dark
+section in your vital bars -- that part of the pool belongs to the
+enchantment now, for as long as you wear the item. It is not damage
+and rest will not return it. As you fight with the enchanted item
+equipped, the bond deepens and may advance to a higher tier.
 
-Two-handed weapons receive doubled enchantment effects, but also
-double the reserve cost.
+A deeper tier feeds more. Two-handed weapons receive doubled
+enchantment effects, and feed twice as deeply for them.
+
+There is a limit to how much of any pool may be held in reserve at
+once, counting your gear and your companions together. An enchantment
+will not deepen further when you have nothing left to give it, and a
+new one will be refused rather than quietly leaving you weaker. The
+refusal costs you nothing.
+
+A skilled enchanter binds magic that takes less from its wearer, so
+raising the skill widens what you can carry as surely as it improves
+what you can make.
 
 <ansi fg="yellow">━━━ Requirements ━━━</ansi>
 
@@ -32,7 +43,7 @@ Enchanting targets your equipped gear by slot name:
   <ansi fg="command">craft chitin-brace 2.wrist</ansi>  Enchants your second wrist slot.
 
 For slots with only one item (head, neck, body, etc.), just use
-the recipe name — no slot specifier needed.
+the recipe name, with no slot specifier needed.
 
 <ansi fg="yellow">━━━ Enchantment Recipes ━━━</ansi>
 
@@ -63,4 +74,5 @@ Type <ansi fg="command">help <recipe-name></ansi> for details on any recipe.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help craft</ansi>, <ansi fg="command">help disenchant</ansi>, <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help craft</ansi>, <ansi fg="command">help disenchant</ansi>, <ansi fg="command">help skills</ansi>,
+  <ansi fg="command">help reservation</ansi>

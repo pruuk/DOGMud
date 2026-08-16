@@ -315,6 +315,33 @@ var (
 			}
 			return result
 		},
+		// reservationQuality(bandName[, padTo]) returns a colored word for how
+		// much of a pool is held in reserve by gear and companions, from
+		// Character.ReservationBandName. Optionally padded to padTo visual
+		// characters, following the vitalQuality / toxicityQuality /
+		// encumbranceQuality convention used in the status template.
+		//
+		// Words only, never a number. "at limit" is not a fraction: it means the
+		// reservation ceiling has been reached and nothing further can be added,
+		// which is the one thing a player actually needs to act on.
+		"reservationQuality": func(bandName string, padTo ...int) string {
+			var color string
+			switch bandName {
+			case "notable":
+				color = "yellow"
+			case "heavy":
+				color = "red"
+			case "at limit":
+				color = "red-bold"
+			default: // "none", "slight", "modest"
+				color = "green"
+			}
+			result := `<ansi fg="` + color + `">` + bandName + `</ansi>`
+			if len(padTo) > 0 && padTo[0] > len(bandName) {
+				result += strings.Repeat(" ", padTo[0]-len(bandName))
+			}
+			return result
+		},
 		"mitigationQuality": func(pct float64) string {
 			percent := pct * 100
 			switch {

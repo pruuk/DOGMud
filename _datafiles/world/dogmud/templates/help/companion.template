@@ -31,13 +31,26 @@ For each companion you will see:
 
 <ansi fg="yellow">━━━ The Cost of Keeping Them ━━━</ansi>
 
-Every companion you field reserves part of your conviction pool for
-as long as it serves — the bond is held with your own will. That
-reserved conviction cannot be spent on spells or shouts until the
-companion is dismissed or dies. Mightier forms ask for more, and
-higher manifestation skill shrinks the price. <ansi fg="command">assess</ansi> tells you what
-a raise would cost before you commit; if you find yourself unable to
-cast, check how much of your pool your companions are holding.
+Binding a companion costs conviction once, at the moment you cast.
+Keeping it costs conviction for as long as it walks with you. That
+second cost is the one that matters. It is set aside from your pool,
+it cannot be spent on spells or shouts, and it returns only when the
+companion is dismissed or dies. Rest will not bring it back.
+
+A mightier companion sets aside more of your will. That is the real
+trade between one form and another, not the price you pay to cast it.
+
+Skill in manifestation lowers what each companion sets aside, so a
+practised summoner holds more of them on the same will. Rank buys you
+a larger following, not only a stronger one.
+
+There is a limit to how much of any pool you may hold in reserve at
+once. When you reach it, the binding is refused outright instead of
+quietly leaving you weaker, and the refusal costs you nothing. Dismiss
+a companion or remove a draining item to make room.
+
+Use <ansi fg="command">assess</ansi> to see what a raise would ask before you commit, and
+<ansi fg="command">status</ansi> to see how much of each pool is already spoken for.
 
 <ansi fg="yellow">━━━ Persistence ━━━</ansi>
 
@@ -66,4 +79,5 @@ If a companion falls in battle it is gone. Summon or charm
 a new one to replace it. Guard your companions carefully
 in dangerous areas.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help dismiss</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help dismiss</ansi>,
+  <ansi fg="command">help reservation</ansi>, <ansi fg="command">help conviction</ansi>

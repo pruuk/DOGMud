@@ -1,7 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">raise-wraith</ansi> spell
 
 The <ansi fg="command">Raise Wraith</ansi> spell tears the lingering spirit from a corpse and
-binds it into an ethereal form — half ghost, half hunger. Wraiths are
+binds it into an ethereal form, half ghost and half hunger. Wraiths are
 difficult to strike and sap the will of those they wound. Only a creature of
 considerable essence can sustain this transformation.
 
@@ -9,8 +9,10 @@ Wraiths are swift, ethereal spellcasters that manifest eldritch magics. They
 evade physical attacks with unnatural grace and assault foes with magical
 assaults from beyond the veil.
 
-The undead servant's power scales with your willpower and spellcasting skill.
-More skilled casters raise more formidable specimens.
+The servant's power scales with your Charisma and manifestation skill, and
+with the remains you raise it from. Part of it is drawn from the corpse, so
+the same spell over better remains yields a better servant. A wraith is a
+light thing to keep, close to a skeleton in what it asks of you.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -19,13 +21,23 @@ More skilled casters raise more formidable specimens.
 <ansi fg="yellow">Base Folds:  </ansi> Moderate channel
 <ansi fg="yellow">Corpse:      </ansi> <ansi fg="white-bold">Requires substantial remains</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Nearby corpse or ground loot</ansi>
-<ansi fg="yellow">Conv. Cost:  </ansi> Moderate
+<ansi fg="yellow">Cast Cost:   </ansi> Modest, and paid only once
+<ansi fg="yellow">Held Cost:   </ansi> Light, for as long as you keep it
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Manifestation</ansi>
 
 <ansi fg="white-bold">Notes:</ansi>
   - The wraith appears under your command and aids you in combat.
   - Once raised, the undead servant remains active as a companion.
   - Use the <ansi fg="command">assess</ansi> command to evaluate a corpse's quality.
+  - Raising costs conviction once. Keeping the servant sets conviction
+    aside for as long as it walks with you, and that held share, not
+    the casting price, is what limits how many you can field.
+  - A mightier servant holds more of your will, and better remains
+    make a mightier servant.
+  - Skill in manifestation lowers what a companion holds, so practice
+    buys you a larger following as well as a stronger one.
+  - If your conviction is already spoken for, the raising is refused
+    outright rather than leaving you weaker, and costs you nothing.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
-  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>
+  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>

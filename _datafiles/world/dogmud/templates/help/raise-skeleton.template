@@ -3,14 +3,16 @@
 The <ansi fg="command">Raise Skeleton</ansi> spell animates the bones of a nearby corpse,
 stripping flesh and sinew away to leave a rattling skeleton servant under
 your command. The weakest of the raised undead, but requiring little essence
-to conjure. Almost any corpse will do.
+to raise. Almost any corpse will do.
 
 Skeletons are fast and fragile, striking with swift melee attacks but
 lacking the durability of their heavier undead kin. They move with jarring,
 brittle grace.
 
-The undead servant's power scales with your willpower and spellcasting skill.
-More skilled casters summon more formidable specimens.
+The servant's power scales with your Charisma and manifestation skill, and
+with the remains you raise it from. Part of it is drawn from the corpse, so
+the same spell over better remains yields a better servant. Of all the
+raised undead, a skeleton asks the least of you to keep.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -19,13 +21,23 @@ More skilled casters summon more formidable specimens.
 <ansi fg="yellow">Base Folds:  </ansi> Brief channel
 <ansi fg="yellow">Corpse:      </ansi> <ansi fg="white-bold">Requires weak remains</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Nearby corpse or ground loot</ansi>
-<ansi fg="yellow">Conv. Cost:  </ansi> Modest
+<ansi fg="yellow">Cast Cost:   </ansi> Light, and paid only once
+<ansi fg="yellow">Held Cost:   </ansi> Light, for as long as you keep it
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Manifestation</ansi>
 
 <ansi fg="white-bold">Notes:</ansi>
   - The skeleton appears under your command and aids you in combat.
   - Once raised, the undead servant remains active as a companion.
   - Use the <ansi fg="command">assess</ansi> command to evaluate a corpse's quality.
+  - Raising costs conviction once. Keeping the servant sets conviction
+    aside for as long as it walks with you, and that held share, not
+    the casting price, is what limits how many you can field.
+  - A mightier servant holds more of your will, and better remains
+    make a mightier servant.
+  - Skill in manifestation lowers what a companion holds, so practice
+    buys you a larger following as well as a stronger one.
+  - If your conviction is already spoken for, the raising is refused
+    outright rather than leaving you weaker, and costs you nothing.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
-  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>
+  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>

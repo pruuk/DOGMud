@@ -148,23 +148,13 @@ func convictionReserveBand(reserve, maxPool int) string {
 // what SHARE of a pool a reservation holds, with no flavour committing it to
 // Conviction. `stand` uses it to disclose a stamina reservation. Player-facing
 // text never shows the raw number.
+//
+// The edges now live in characters.ReserveShareBand, because the cap refusals
+// on `Wear`, summon, charm and the two auto-spawn paths need the same words and
+// cannot import usercommands. Kept as a package-local name so assess.go and
+// stand.go read unchanged.
 func reserveShareBand(reserve, maxPool int) string {
-	if maxPool <= 0 || reserve >= maxPool {
-		return `all`
-	}
-	frac := float64(reserve) / float64(maxPool)
-	switch {
-	case frac < 0.15:
-		return `a small part`
-	case frac < 0.30:
-		return `a modest share`
-	case frac < 0.50:
-		return `a significant portion`
-	case frac < 0.75:
-		return `a heavy share`
-	default:
-		return `nearly all`
-	}
+	return characters.ReserveShareBand(reserve, maxPool)
 }
 
 // joinRaiseForms renders a form list as prose: "a skeleton", "a skeleton or

@@ -5,6 +5,10 @@ swarm servant that fights alongside the caster. The ritual demands
 intense concentration to execute but yields a tireless ally capable
 of harrying and overwhelming individual enemies.
 
+Of every companion in the game, the swarm asks the least of you to
+keep. It is a good choice beside a heavier bond, or for a summoner
+whose will is already largely spoken for.
+
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">cast summon-hive-swarm</ansi>
@@ -13,11 +17,25 @@ of harrying and overwhelming individual enemies.
 
   <ansi fg="yellow">Type:        </ansi> Help Single
   <ansi fg="yellow">School:      </ansi> Mental
-  <ansi fg="yellow">Base Folds:  </ansi> 24
-  <ansi fg="yellow">Conv. Cost:  </ansi> 50
+  <ansi fg="yellow">Base Folds:  </ansi> Long channel
+  <ansi fg="yellow">Cast Cost:   </ansi> Light, and paid only once
+  <ansi fg="yellow">Held Cost:   </ansi> Slight, for as long as you keep it
 
 <ansi fg="white-bold">Notes:</ansi>
   - Requires a Hive Fragment in your inventory to cast.
   - The swarm persists until destroyed or dismissed.
+  - Summoning it costs conviction once. Keeping it sets conviction
+    aside for as long as it stays with you, and that held share,
+    not the casting price, is what limits how many you can field.
+  - A mightier companion holds more of your will. This one is
+    among the least demanding you can bind.
+  - Skill in manifestation lowers what a companion holds, so
+    practice buys you a larger following as well as a stronger one.
+  - A summoned swarm is the same wherever you stand. No remains
+    are needed and none are consumed.
+  - If your conviction is already spoken for, the summoning is
+    refused outright rather than leaving you weaker, and costs
+    you nothing.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
+  <ansi fg="command">help reservation</ansi>
