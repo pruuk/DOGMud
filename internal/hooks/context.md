@@ -1330,6 +1330,92 @@ reads the target's `Presence.State()` and blocks for `Disconnected` and
 `Despawning`. Idle/AFK/Dormant targets are explicitly NOT blocked.
 See `internal/state/combatphase/context.md` for the full veto chain.
 
+## Companion reservation and the U7b ceiling (2026-08-15)
+
+Every path in this package that can raise a character's pool reservation now
+consults `characters.WouldBreachReservationCap` first and refuses rather than
+writing past the ceiling. There are five, and two of them never had any
+affordability check at all before U7b.
+
+### Login recompute (`companion_reserve_backfill.go`, `PlayerSpawn_HandleJoin.go`)
+
+```go
+func companionBaseReserveFor(mobId int) int
+func refreshCompanionReserves(ch *characters.Character) bool
+func refreshCompanionReservesOnLogin(user *users.UserRecord)
+func companionRebaseNotice(ch *characters.Character) string
+```
+
+`refreshCompanionReserves` **replaced** `backfillCompanionReserves`, which only
+stamped records that loaded as 0. It now recomputes **every** companion's
+`ConvictionReserve` from what that mob id would be charged today, and returns
+true if any moved. `ConvictionReserve` is deliberately frozen at summon time so
+it cannot drift mid-life, which makes login the only place a rebase can reach a
+returning veteran.
+
+`refreshCompanionReservesOnLogin` wraps it and **tells the player** when the
+recompute left them further past the ceiling than they were. That disclosure is
+not politeness: companion reserve is priced partly off manifestation,
+`GetSkillLevel` counts equipment stat mods, and `skill_manifestation` is in the
+gold-scaled loot affix pool, so selling a `+manifestation` item makes every
+companion dearer at the next login with nothing happening in between.
+
+It **never dismisses a companion**, whatever the total comes to. Reservation is
+refused on addition only.
+
+### Auto-spawn gates
+
+`spawnBroodFloor` (`manifester_companions.go`) and `spawnHomunculus`
+(`chrysifier_homunculus.go`) both gate on the ceiling **before** creating the
+mob. Neither had any check before: they wrote a reservation into a pool that
+might have had no room for it, every round, forever. Both return nil on
+refusal, which their callers already handle by backing off ten rounds. The
+homunculus refusal is **spoken**, because that path is the one most likely to
+bite a crafter and a silent failure would read as the apex being broken.
+`HomunculusConvictionReserve` dropped from 1000 to **300** for the same reason.
+
+### Cast gates
+
+`resolveCompanionSummon` (`companion_summon.go`) and `resolveCharmSpell`
+(`charm_spell.go`) replaced the deleted `CanAffordCompanion` with two separate
+refusals: the companion **count** cap and the reservation **ceiling**, reported
+separately so a player at their companion limit is not wrongly told they lack
+conviction. Summon reserve is derived from the spell's
+`SummonPetMultiplier` through `characters.CompanionReserveBase`; charm passes 0,
+meaning unscaled, so charm's price did not move.
+
+### Enchant tier-up and craft completion (`NewRound_UserRoundTick.go`)
+
+```go
+const enchantTierUpBlockedCooldown = `enchant-tierup-blocked`
+
+func enchantTierUpWouldBreach(ch *characters.Character, itm *items.Item) bool
+func enchantApplyWouldBreach(ch *characters.Character, itm *items.Item, enchantType string) (characters.Pool, bool)
+func tickChrysalisEnchantments(ch *characters.Character, randN func(int) int) []string
+```
+
+Tier-up is a **passive** breach with no action to refuse: it rolls every combat
+round on every Chrysalis-enchanted equipped item and doubles the reserved
+fraction at low tiers, so a character sitting just under the ceiling can cross
+it mid-fight having done nothing. `tickChrysalisEnchantments` skips the advance
+and says why, throttled by a cooldown because the roll retries every round. It
+deliberately does **not** reset `EnchantUses`, so the item stays ready to
+advance the moment its wearer makes room.
+
+`tickChrysalisEnchantments` was extracted from an inline loop in
+`UserRoundTick` and takes its roll source as a parameter (production passes
+`util.Rand`) so the ceiling behaviour can be driven deterministically from a
+test rather than waiting on a 2%-per-round die. It returns lines to send;
+they all belong to `messaging.CategorySkillProgress`.
+
+`enchantApplyWouldBreach` guards the enchanting **craft completion**.
+`usercommands/craft.go` refuses before the work starts, but the rounds in
+between are not free of change: a worn enchantment can tier up mid-craft and a
+lapsing buff can shrink the pool the ceiling is measured against. Refusing here
+still returns the materials. Subtracting what the target already reserves is
+what makes re-enchanting work, since the old enchantment is replaced rather
+than stacked.
+
 ## Dependencies
 
 - `internal/events` - Event system for listener registration and event processing
@@ -1351,7 +1437,7 @@ See `internal/state/combatphase/context.md` for the full veto chain.
 - `internal/state/presence` - Presence state machine (chunk 5)
 ## Files: one handler per file
 
-116 non-test files. The filename **is** the index — each is named for the event
+120 non-test files. The filename **is** the index. Each is named for the event
 it handles and the job it does, so `NewRound_IdleMobs.go` is the idle-mob step
 of the new-round event.
 

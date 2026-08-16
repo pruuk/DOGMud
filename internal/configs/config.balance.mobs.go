@@ -149,16 +149,16 @@ func (b *Balance) validateMobs() {
 	}
 	if b.CompanionReserveDefault < 1 {
 		// 2026-08-03: 350 → 280 alongside the -20% pass on every spell's
-		// summon_conviction_reserve, so charm (which uses this fallback)
-		// prices like the skeleton tier it always matched.
+		// authored reserve, so charm (which uses this unscaled) prices like the
+		// skeleton tier it always matched. U7b turned it into the BASE every
+		// summon_pet_multiplier scales, so it now sets the whole ladder.
 		b.CompanionReserveDefault = 280
 	}
-	// CompanionCastingFloorPct intentionally defaults to 0.0 (costs self-limit).
 	if b.HomunculusCraftScale <= 0 {
 		b.HomunculusCraftScale = 4.0
 	}
 	if b.HomunculusConvictionReserve < 1 {
-		b.HomunculusConvictionReserve = 1000
+		b.HomunculusConvictionReserve = 300
 	}
 
 	// ── GOAL SELECTION ───────────────────────────────────────────────────────

@@ -81,6 +81,15 @@ func tickBroodMotherFloor(user *users.UserRecord, room *rooms.Room) {
 func spawnBroodFloor(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 	ch := user.Character
 
+	// U7b: check the budget BEFORE spawning. This path had no affordability
+	// check of any kind, so it wrote a reservation into a pool that might have
+	// had no room for it, every round, forever. Failing here returns nil, which
+	// the caller already handles by backing off for ten rounds.
+	reserve := ch.CalcCompanionReserve(broodFloorReserve)
+	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
+		return nil
+	}
+
 	mob := mobs.NewMobByIdFresh(mobs.MobId(broodSpawnMobId), room.RoomId, 120)
 	if mob == nil {
 		return nil
@@ -90,7 +99,6 @@ func spawnBroodFloor(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 	mob.Character.EndAggro()
 	ch.TrackCharmed(mob.InstanceId, true)
 
-	reserve := ch.CalcCompanionReserve(broodFloorReserve)
 	info := characters.CompanionInfo{
 		MobId:             broodSpawnMobId,
 		InstanceId:        mob.InstanceId,

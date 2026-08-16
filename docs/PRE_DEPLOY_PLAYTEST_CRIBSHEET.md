@@ -188,3 +188,54 @@ unloaded GAINS stamina, so drain first and engage immediately.
       laden. It should cost conviction and the pack should make no
       difference at all. If a heavy load makes holding your nerve dearer,
       that is a finding.
+
+### 10b. U7b: the reservation ceiling
+
+Total reservation on each pool is now capped, the breaching action is
+refused rather than allowed through and clamped, and nothing is ever taken
+from a character who is already past the cap. Alongside it, every summoned
+and raised creature was re-priced and re-powered. Judge this on whether the
+refusals are legible and whether the pet tiers feel genuinely different.
+
+- [ ] `status` on Meirok before anything else. His conviction should read
+      `notable` or `heavy`, not `at limit`: his two golems rebase on login
+      and he should land comfortably under the ceiling with both kept. If
+      it says `at limit`, the login refresh did not run.
+- [ ] Try to breach it deliberately. Stack reserving gear until `status`
+      says `at limit`, then try to wear one more reserving item. Confirm
+      the refusal names reservation rather than exhaustion, carries no
+      numbers, and leaves the previous item still worn and the new one
+      still in your pack.
+- [ ] Sidegrade while at the limit. With one pool reading `at limit`, swap
+      one reserving item for another of the same weight. It must be
+      ALLOWED. If it is refused, grandfathering is broken and the character
+      has been forced to strip.
+- [ ] Conjure a magma elemental as a mid-level summoner. It used to be
+      uncastable. Confirm the cast lands, then confirm `status` shows the
+      reservation it now costs to keep.
+- [ ] Raise a skeleton and a flesh golem off comparable remains, one after
+      the other. The golem must be visibly the stronger of the two at every
+      size of remains, not merely marginally so at large ones. Try it once
+      over something weak and once over something formidable.
+- [ ] Fight alongside a water elemental, a skeleton and a hive swarm. Each
+      should act on nearly every round. If any of the three regularly
+      stands there doing nothing, its archetype fix did not take.
+- [ ] Fight alongside a fire elemental. It should keep acting all fight,
+      not ward itself once and then idle.
+- [ ] A Chrysifier with the homunculus apex. Confirm the homunculus still
+      manifests. If it refuses and speaks the reservation message, report
+      it immediately: the homunculus is a crafting apex whose owner has no
+      reason to have invested in manifestation, and it carries the heaviest
+      base reserve in the game, so this is the interaction most likely to
+      bite. Its base was already lowered once for exactly this reason.
+- [ ] Fight long enough for an enchant tier-up while near the limit.
+      Confirm the skip message arrives, that it does not repeat every
+      round, and that the item still tiers up later once you remove
+      something.
+- [ ] Log in after selling or losing a piece of gear that grants
+      manifestation. You should be told your bonds were re-priced, in
+      words, and nothing should be dismissed.
+- [ ] A brand-new character who is both a novice enchanter and a novice
+      summoner pays a small premium on each. Each half is deliberate, the
+      compounding is not designed. Note whether it is noticeable in play or
+      purely theoretical.

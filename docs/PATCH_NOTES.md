@@ -1,5 +1,118 @@
 # DOGMud Patch Notes
 
+## 2026-08-16: Reading your own bars, honestly
+
+Your health, stamina and conviction bars now measure what you can actually
+reach. Anything your gear or your companions hold in reserve is out of the
+pool for as long as they hold it, so it is no longer drawn as part of the
+bar. A full bar means you are as recovered as you can be, and a bar at a
+third means you have a third of what you can hold. Before this, the reserved
+part of the bar was drawn in a shade that many clients cannot show apart from
+the filled part, so a badly wounded character could show a bar that looked
+completely full. That was the most dangerous kind of wrong, and it is gone.
+
+The status sheet now reads from the same pool the bar does, so the two can no
+longer describe the same wound in two different ways.
+
+The Reserved row on your status sheet now measures against the limit rather
+than against the whole pool, which is what it was always meant to tell you.
+It will warn you as you approach the ceiling instead of only once you have
+already reached it.
+
+Putting on something that draws on you now says so, in plain words, at the
+moment you put it on. You will hear which of your pools it takes from and how
+much of each is now spoken for, so a refusal later on will never come out of
+nowhere.
+
+Taking it off says so too. Before, the game told you when capacity was taken
+and never once told you it had come back, which made reservation look like a
+door that only opened one way. Now removing something that was holding part
+of you says what your gear and bonds are left holding, in the same plain
+words. Gear that was never holding anything stays as quiet on the way off as
+it does on the way on.
+
+Those plain words are now one set of words. The line you get when you put
+something on, the line you get when the game refuses you, and the Reserved
+row on your status sheet all describe the same state the same way, and each
+one is measured against the limit rather than against your whole pool. Until
+now they used three different scales, so the same character could be called
+one thing by the sheet and another thing by the line above it. Type
+help reservation to see the short words and the longer ones side by side.
+
+The game also names only what is really holding you. If your reservation is
+all companions, it talks about your bonds and does not mention gear, and it
+offers you the one thing that would actually help rather than a list you
+cannot act on. A player wearing nothing at all used to be told that their
+gear was the problem.
+
+Releasing a companion now updates the web client straight away. It used to
+keep showing the will that companion had been holding, long after the bond
+was broken.
+
+## 2026-08-15: What you promise away, and what you keep
+
+Some of what you carry does not simply help you. A Chrysalis enchantment
+feeds on its wearer, and a companion draws on your will for as long as it
+walks beside you. Until now there was no limit at all on how much of
+yourself you could promise away, and it was entirely possible to give away
+so much that almost nothing was left to fight with. There is a limit now,
+and the game refuses cleanly at it: the item is not worn, the enchantment is
+not begun, the creature is not called, and you have lost nothing by asking.
+
+Nothing will ever be taken from you. If you are already past the limit,
+everything you have stays exactly where it is, and you will only be told no
+when you try to add. You can still trade one burden for another of the same
+weight, even while you are at the limit, so nothing forces you to strip.
+Type status to see what each of your pools has set aside, in plain words.
+
+There are two quite different reasons the game can tell you no here, and it
+now says which one you have run into. Sometimes what you already carry is
+simply full, and the way forward is to remove a draining item, disenchant
+one, or dismiss a companion. Sometimes the single thing you are reaching for
+asks more than the limit allows all by itself, and then putting things down
+will not help at all: you need a deeper pool to draw on, or a lesser thing
+to bind. A mighty creature can be out of reach as your very first companion
+for exactly that reason, and the game used to blame gear you were not even
+wearing.
+
+A binding you cannot sustain is also refused before the casting begins,
+rather than after it has run its course. Calling a creature draws on your
+conviction the whole time you are shaping it, so a refusal that arrived at
+the end left you out of pocket for nothing. Both helpfiles promised such a
+refusal costs you nothing. Now it does.
+
+An enchantment on your gear can also deepen on its own while you fight. If
+deepening would carry you past the limit, it waits instead, and says so. The
+work it has already done is not lost, and it will grow the moment you make
+room for it.
+
+Summoned and raised creatures have been rebuilt from the ground up. Calling
+one is far cheaper than it was, and keeping one costs more, which is the
+trade that makes a servant a real choice rather than a formality. The gap
+between a weak servant and a strong one is now honest at every level of
+remains: a flesh golem is properly the stronger of the two whether you raise
+it over a rat or over a warlord, where before the difference all but vanished
+once the remains were rich enough. What you pay to keep a creature now
+follows how powerful that creature is, so a stable of feeble servants and one
+towering one are priced for what they actually are.
+
+Four summoned creatures had been quietly wasting a large share of their turns
+and now fight properly. The water elemental, the skeleton and the hive swarm
+were standing idle through whole rounds. The fire elemental warded itself
+once at the start of a fight and then did nothing at all for the rest of it.
+The air and fire elementals were also casting with no training behind them,
+unlike every other summon that casts, and now begin trained like their kin.
+
+Skill pays twice, on both halves of this. A practised enchanter binds magic
+that asks less of whoever wears it, so the same enchantment sits lighter on
+a master's gear than on a novice's. A practised summoner holds more on the
+same will, so experience buys room for another bond rather than only a
+stronger one. Both are gentle at first and generous later, and a complete
+novice pays a small premium on each until they have some craft behind them.
+
+The homunculus is also markedly less demanding to keep than it was, so the
+crafters it was built for can actually field it.
+
 ## 2026-08-15: A light pack is finally worth carrying
 
 Travelling used to cost the same whether you set out empty-handed or with

@@ -37,6 +37,9 @@ character:
   spellbook:
     conviction-armor: 3
     conviction-ward: 3
+    conviction-surge: 3
+  skills:
+    spellcasting: 1
   stats:
     dexterity:
       training: 20

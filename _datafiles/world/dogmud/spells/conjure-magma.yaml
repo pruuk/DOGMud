@@ -7,7 +7,7 @@ description: Forces a magma elemental through the planar boundary and
 type: neutral
 schools:
   - manifestation
-cost: 450
+cost: 50
 waitrounds: 5
 difficulty: 55
 primarystat: willpower
@@ -26,6 +26,4 @@ wait_user_text: >-
   The floor heaves. Orange light bleeds through the cracks.
   Something immense and blazing hot is forcing its way through...
 summon_mob_id: 314
-summon_base_pool: 130
-summon_conviction_reserve: 352
-summon_scaling_divisor: 500
+summon_pet_multiplier: 1.25

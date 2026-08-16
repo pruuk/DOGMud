@@ -1,7 +1,7 @@
 package characters
 
 import (
-	"math"
+	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v2"
@@ -24,7 +24,7 @@ func TestGetMaxCompanions_SoftBackstop(t *testing.T) {
 	defer seedMut()
 
 	// No manifestation investment still returns the soft cap — the real gate is
-	// the Conviction budget (CanAffordCompanion), not this count.
+	// the Conviction reservation ceiling, not this count.
 	c := New()
 	assert.Equal(t, 5, c.GetMaxCompanions())
 
@@ -147,7 +147,43 @@ func TestCompanionInfo_ConvictionReserveField(t *testing.T) {
 
 // ─── CalcCompanionReserve ─────────────────────────────────────────────────────
 
-func TestCalcCompanionReserve_Calibration(t *testing.T) {
+// The base a companion reserves is now CompanionReserveDefault scaled by the
+// pet's multiplier (D9), so the ongoing budget tracks pet POWER rather than
+// being a flat two-tier charge shared across both families.
+func TestCompanionReserveBase_TracksThePetMultiplier(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		multiplier float64
+		want       int
+	}{
+		{"magma", 1.25, 350},
+		{"earth", 1.05, 294},
+		{"fire / golem", 1.00, 280},
+		{"vampire", 0.83, 232},
+		{"water / spectre / steppe spirit", 0.75, 210},
+		{"zombie", 0.67, 188},
+		{"wraith", 0.58, 162},
+		{"skeleton", 0.50, 140},
+		{"hive swarm", 0.30, 84},
+		// Charm has no authored pet, so it reserves the unscaled default. Its
+		// price therefore does not move in U7b.
+		{"charm (no pet)", 1.00, 280},
+		// The paths with no pet tier at all (charm, the brood floor, the
+		// homunculus) pass 0, which means "unscaled" rather than "free".
+		{"unscaled (multiplier 0)", 0, 280},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, CompanionReserveBase(tt.multiplier))
+		})
+	}
+}
+
+// CalcCompanionReserve composes the U7 inverse-skill band ON TOP OF the existing
+// manifestation reduction (D10 §4.1). Compose, never replace: the U7 curve
+// bottoms at 0.40 while the existing reduction already reaches 0.45 at
+// manifestation 55 and 0.21 with the Manifester mutation, so a replacement would
+// make companions DEARER for everyone, the exact opposite of intent.
+func TestCalcCompanionReserve_ComposesTheInverseSkillRider(t *testing.T) {
 	seedMut := mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
 		"broodmaster": {
 			MutationId: "broodmaster", Name: "Broodmaster", Rarity: 5, Pole: "belief",
@@ -156,78 +192,150 @@ func TestCalcCompanionReserve_Calibration(t *testing.T) {
 	})
 	defer seedMut()
 
-	newbie := New()
-	newbie.Skills[string(skills.Manifestation)] = 5
-	assert.Equal(t, 333, newbie.CalcCompanionReserve(350)) // 350*(1-0.05)=332.5 -> 333
+	// Rank 0: the rider's PENALTY half applies, deliberately and consistently
+	// with the item side. A rank-0 summoner pays 1.10x, so 280 -> 308.
+	novice := New()
+	novice.Skills[string(skills.Manifestation)] = 0
+	assert.Equal(t, 308, novice.CalcCompanionReserve(280))
 
-	meirok := New()
-	meirok.Skills[string(skills.Manifestation)] = 48
-	assert.Equal(t, 229, meirok.CalcCompanionReserve(440)) // 440*(1-0.48)=228.8 -> 229
+	// Rank 25 is the rider's neutral point (1.00x), and the existing skill
+	// reduction is 0.25, so 280 * 0.75 * 1.00 = 210.
+	mid := New()
+	mid.Skills[string(skills.Manifestation)] = 25
+	assert.Equal(t, 210, mid.CalcCompanionReserve(280))
 
-	archety := New()
-	archety.Skills[string(skills.Manifestation)] = 55
-	archety.Mutations = map[string]int{"broodmaster": 4}
-	assert.Equal(t, 92, archety.CalcCompanionReserve(440))  // 440*0.21 = 92.4 -> 92
-	assert.Equal(t, 154, archety.CalcCompanionReserve(735)) // 735*0.21 = 154.35 -> 154
-
-	unit := New()
-	unit.Skills[string(skills.Manifestation)] = 65
-	unit.Mutations = map[string]int{"broodmaster": 4}
-	assert.Equal(t, 154, unit.CalcCompanionReserve(735)) // reduction caps at 0.79 -> same as archetyped
+	// The composed curve must never be worse than the existing reduction alone
+	// at any rank past the rider's neutral point -- that is the property that
+	// makes composition safe.
+	for rank := 25; rank <= 100; rank++ {
+		c := New()
+		c.Skills[string(skills.Manifestation)] = rank
+		composed := c.CalcCompanionReserve(280)
+		if composed > 210 {
+			t.Fatalf("manifestation %d: composed reserve %d exceeds the rank-25 figure 210; "+
+				"the curve must be monotonically non-increasing past neutral", rank, composed)
+		}
+	}
 }
 
-// ─── CalcCompanionStatPool ────────────────────────────────────────────────────
+// The reserve must never round to zero: a free companion is an unbounded one.
+func TestCalcCompanionReserve_FloorsAtOne(t *testing.T) {
+	c := New()
+	c.Skills[string(skills.Manifestation)] = 100
+	if got := c.CalcCompanionReserve(1); got < 1 {
+		t.Fatalf("CalcCompanionReserve(1) = %d, want at least 1", got)
+	}
+}
 
-func TestCalcCompanionStatPool(t *testing.T) {
-	// Config defaults kick in when no config is loaded:
-	//   ManifestStatScaleChaFactor  = 150  (zero-value triggers default)
-	//   ManifestStatScaleSkillFactor = 0.02 (zero-value triggers default)
+// D5: the cap subsumes CanAffordCompanion, which is removed rather than kept
+// alongside. Two ceilings on the same pool means the weaker one never fires.
+func TestCanAffordCompanionIsGone(t *testing.T) {
+	// Reintroducing the method would break no build anywhere, so assert its
+	// absence directly rather than leaving a skip that proves nothing. A
+	// skip-only test also trips the repo's own TestNoSkipOnlyPlaceholderTests
+	// guard, which exists for exactly this reason.
+	if _, found := reflect.TypeOf(&Character{}).MethodByName("CanAffordCompanion"); found {
+		t.Fatal("CanAffordCompanion is back. D5 removed it: two ceilings on one " +
+			"pool means the weaker never fires. Companion affordability is now " +
+			"WouldBreachReservationCap(PoolConviction, reserve) plus the " +
+			"GetMaxCompanions count backstop, checked at the call site")
+	}
+}
+
+// ─── CalcCompanionPool ───────────────────────────────────────────────────────
+
+// The numbers here are the spec's own expected-outcome table, which is
+// internally consistent with B = 406 (Charisma 166 + manifestation 48 x 5).
+//
+// Rounding is math.Round, half away from zero. Three of the four skeleton rows
+// in the spec's table land on a .5 and round UP, which is what pins it; the
+// magma crossover confirms it independently (406 x 1.25 = 507.5 -> 508, the
+// spec's stated conjure-magma figure). The spec's "126" for the 100-pool
+// skeleton is an arithmetic slip and should read 127.
+func TestCalcCompanionPool(t *testing.T) {
+	const cha, manifest = 166, 48 // B = 166 + 240 = 406
 
 	tests := []struct {
-		name               string
-		baseStatPool       int
-		charisma           int
-		manifestationSkill int
-		want               int
+		name       string
+		charisma   int
+		manifest   int
+		multiplier float64
+		corpsePool int
+		want       int
 	}{
-		{
-			// scale = 1.0 + 100/150 + 0*0.02 = 1.667  →  120 * 1.667 = 200
-			name:         "wolf base cha=100 manifest=0",
-			baseStatPool: 120, charisma: 100, manifestationSkill: 0,
-			want: 200,
-		},
-		{
-			// scale = 1.0 + 100/150 + 25*0.02 = 1.0 + 0.667 + 0.5 = 2.167  →  120 * 2.167 = 260
-			name:         "wolf base cha=100 manifest=25",
-			baseStatPool: 120, charisma: 100, manifestationSkill: 25,
-			want: 260,
-		},
-		{
-			// scale = 1.667 (same as first case)  →  18 * 1.667 = 30
-			name:         "swarm base cha=100 manifest=0",
-			baseStatPool: 18, charisma: 100, manifestationSkill: 0,
-			want: 30,
-		},
-		{
-			// scale = 1.0 + 150/150 + 50*0.02 = 1.0 + 1.0 + 1.0 = 3.0  →  120 * 3.0 = 360
-			name:         "wolf base cha=150 manifest=50",
-			baseStatPool: 120, charisma: 150, manifestationSkill: 50,
-			want: 360,
-		},
-		{
-			// scale = 1.0 + 0/150 + 0*0.02 = 1.0  →  120 * 1.0 = 120 (no charisma boost)
-			name:         "cha=0 manifest=0 no boost",
-			baseStatPool: 120, charisma: 0, manifestationSkill: 0,
-			want: 120,
-		},
+		// Conjures: no corpse, so the multiplier applies to B directly.
+		{"conjure magma", cha, manifest, 1.25, 0, 508},
+		{"conjure earth", cha, manifest, 1.05, 0, 426},
+		{"conjure fire", cha, manifest, 1.00, 0, 406},
+		{"conjure water", cha, manifest, 0.75, 0, 305}, // 304.5 -> 305
+		{"hive swarm", cha, manifest, 0.30, 0, 122},    // 121.8 -> 122
+
+		// Raises: the multiplier applies AFTER the corpse average, which is the
+		// whole point of the reshape. Every tier stays proportionally separated
+		// at every corpse size.
+		{"golem on a trash corpse", cha, manifest, 1.00, 100, 253},
+		{"skeleton on a trash corpse", cha, manifest, 0.50, 100, 127},
+		{"golem on a boss corpse", cha, manifest, 1.00, 400, 403},
+		{"skeleton on a boss corpse", cha, manifest, 0.50, 400, 202},
+		{"golem on a rich corpse", cha, manifest, 1.00, 1000, 703},
+		{"skeleton on a rich corpse", cha, manifest, 0.50, 1000, 352},
+		{"golem on the Core Guardian", cha, manifest, 1.00, 2800, 1603},
+		{"skeleton on the Core Guardian", cha, manifest, 0.50, 2800, 802},
+
+		// A fresh summoner: no manifestation investment at all.
+		{"novice conjures fire", 100, 0, 1.00, 0, 100},
+		{"novice raises a skeleton", 100, 0, 0.50, 60, 40},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CalcCompanionStatPool(tt.baseStatPool, tt.charisma, tt.manifestationSkill)
+			got := CalcCompanionPool(tt.charisma, tt.manifest, tt.multiplier, tt.corpsePool)
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// Every pet tier must stay proportionally separated however big the corpse is.
+// This is the property the reshape exists to deliver, and it is the one a future
+// "simplification" back to a pre-average multiplier would silently destroy.
+func TestCalcCompanionPool_TiersStaySeparatedAtEveryCorpseSize(t *testing.T) {
+	const cha, manifest = 166, 48
+	for _, corpse := range []int{0, 100, 500, 1000, 2800, 10000} {
+		golem := CalcCompanionPool(cha, manifest, 1.00, corpse)
+		skeleton := CalcCompanionPool(cha, manifest, 0.50, corpse)
+		ratio := float64(golem) / float64(skeleton)
+		if ratio < 1.99 || ratio > 2.01 {
+			t.Errorf("corpse %d: golem/skeleton = %.4f, want 2.0 at every corpse size "+
+				"(the multiplier must be applied AFTER the average, not before)", corpse, ratio)
+		}
+	}
+}
+
+// A zero or negative multiplier must not silently field a pool-zero companion.
+func TestCalcCompanionPool_FloorsAtOne(t *testing.T) {
+	if got := CalcCompanionPool(100, 0, 0, 0); got != 1 {
+		t.Errorf("a zero multiplier = %d, want 1 (never a pool-zero companion)", got)
+	}
+	if got := CalcCompanionPool(0, 0, 1.0, 0); got != 1 {
+		t.Errorf("a zero-charisma novice = %d, want 1", got)
+	}
+}
+
+// ─── CalcSpawnPoolFromBase ───────────────────────────────────────────────────
+
+// The behaviour-tree add scaler keeps the OLD shape and is renamed to say so.
+// It is not the player companion formula and must not be confused for one: its
+// callers are authored boss encounters whose base_pool values (50 for the Core
+// Guardian's repair frames, 300 for the Sentinel) were tuned against exactly
+// this curve.
+func TestCalcSpawnPoolFromBase(t *testing.T) {
+	// Config defaults apply when no config is loaded:
+	//   ManifestStatScaleChaFactor   = 150
+	//   ManifestStatScaleSkillFactor = 0.02
+	// scale = 1.0 + 100/150 + 0*0.02 = 1.667  ->  50 * 1.667 = 83
+	assert.Equal(t, 83, CalcSpawnPoolFromBase(50, 100, 0))
+	// scale = 1.667  ->  300 * 1.667 = 500
+	assert.Equal(t, 500, CalcSpawnPoolFromBase(300, 100, 0))
 }
 
 // ─── CompanionInfo YAML persistence ──────────────────────────────────────────
@@ -278,32 +386,4 @@ func TestCompanionInfo_YAMLPersistence(t *testing.T) {
 	assert.Equal(t, original.Mutations, restored.Mutations)
 	assert.Equal(t, original.SpellBook, restored.SpellBook)
 	assert.InDelta(t, original.MutationProgress, restored.MutationProgress, 1e-9)
-}
-
-// ─── CalcRaisedStatPool ──────────────────────────────────────────────────────
-
-func TestCalcRaisedStatPool(t *testing.T) {
-	// 50/50 split: companionScale * 0.5 + corpsePool * 0.5
-	// Test uses hardcoded defaults (chaFactor=150, skillFactor=0.02)
-
-	// Skeleton (base 60), Cha 100, Manifest 0, corpse pool 50
-	// companionScale = CalcCompanionStatPool(60, 100, 0) = 60 * (1 + 100/150 + 0) = 60 * 1.667 = 100
-	// raisedPool = 100 * 0.5 + 50 * 0.5 = 50 + 25 = 75
-	companionScale := CalcCompanionStatPool(60, 100, 0)
-	raisedPool := int(math.Round(float64(companionScale)*0.5 + float64(50)*0.5))
-	assert.Equal(t, 75, raisedPool)
-
-	// Wraith (base 70), Cha 150, Manifest 25, corpse pool 150
-	// companionScale = 70 * (1 + 150/150 + 25*0.02) = 70 * (1 + 1.0 + 0.5) = 70 * 2.5 = 175
-	// raisedPool = 175 * 0.5 + 150 * 0.5 = 87.5 + 75 = 162.5 → 163
-	companionScale = CalcCompanionStatPool(70, 150, 25)
-	raisedPool = int(math.Round(float64(companionScale)*0.5 + float64(150)*0.5))
-	assert.Equal(t, 163, raisedPool)
-
-	// Golem (base 120), Cha 100, Manifest 50, corpse pool 500
-	// companionScale = 120 * (1 + 100/150 + 50*0.02) = 120 * (1 + 0.667 + 1.0) = 120 * 2.667 = 320
-	// raisedPool = 320 * 0.5 + 500 * 0.5 = 160 + 250 = 410
-	companionScale = CalcCompanionStatPool(120, 100, 50)
-	raisedPool = int(math.Round(float64(companionScale)*0.5 + float64(500)*0.5))
-	assert.Equal(t, 410, raisedPool)
 }

@@ -449,6 +449,9 @@ type Balance struct {
 	CraftDifficultyProgressionScale ConfigFloat `yaml:"CraftDifficultyProgressionScale"` // Per-point recipe skill_minimum bonus to skill progression (default 0.02)
 	SelfCastProgressionMultiplier   ConfigFloat `yaml:"SelfCastProgressionMultiplier"`   // Progression multiplier when spell only targets self (default 0.5)
 
+	// ── POOL RESERVATION ─────────────────────────────────────────────────────
+	PoolReservationCapPct ConfigFloat `yaml:"PoolReservationCapPct"` // Ceiling on TOTAL reservation per pool, as a fraction of that pool's max (default 0.66)
+
 	// ── ENCHANTMENTS ─────────────────────────────────────────────────────────
 	EnchantTierUpBaseChance     ConfigFloat `yaml:"EnchantTierUpBaseChance"`     // Chance per use (once threshold met) to advance tier (default 0.02)
 	EnchantTierUsesBase         ConfigInt   `yaml:"EnchantTierUsesBase"`         // Uses needed for tier 0→1 (default 25)
@@ -647,12 +650,11 @@ type Balance struct {
 	CompanionReserveMutPctPerRank ConfigFloat `yaml:"CompanionReserveMutPctPerRank"` // Reservation reduction per Manifester mutation rank (default 0.06)
 	CompanionReserveMutCap        ConfigFloat `yaml:"CompanionReserveMutCap"`        // Max reduction from the Manifester mutation (default 0.24)
 	CompanionReserveTotalCap      ConfigFloat `yaml:"CompanionReserveTotalCap"`      // Combined reduction ceiling (default 0.79)
-	CompanionSoftCap              ConfigInt   `yaml:"CompanionSoftCap"`              // Soft count backstop; real limit is the Conviction budget (default 5)
+	CompanionSoftCap              ConfigInt   `yaml:"CompanionSoftCap"`              // Soft count backstop; real limit is the reservation ceiling (default 5)
 	CompanionSoftCapApex          ConfigInt   `yaml:"CompanionSoftCapApex"`          // Soft count backstop with the Manifester apex (default 7)
-	CompanionReserveDefault       ConfigInt   `yaml:"CompanionReserveDefault"`       // Fallback reserve when a summon spell omits summon_conviction_reserve (default 280)
-	CompanionCastingFloorPct      ConfigFloat `yaml:"CompanionCastingFloorPct"`      // Conviction fraction kept unreservable as casting headroom (default 0.0)
+	CompanionReserveDefault       ConfigInt   `yaml:"CompanionReserveDefault"`       // Base reserve a companion costs, scaled by the spell's summon_pet_multiplier (default 280)
 	HomunculusCraftScale          ConfigFloat `yaml:"HomunculusCraftScale"`          // Chrysifier: homunculus statpool = (sum of crafting-skill levels) * this (default 4.0)
-	HomunculusConvictionReserve   ConfigInt   `yaml:"HomunculusConvictionReserve"`   // Chrysifier: base Conviction the homunculus reserves before reduction (default 1000)
+	HomunculusConvictionReserve   ConfigInt   `yaml:"HomunculusConvictionReserve"`   // Chrysifier: base Conviction the homunculus reserves before reduction (default 300; was 1000 before the U7b cap made that unfieldable by its own crafter)
 
 	// ── SHOP ECONOMY ─────────────────────────────────────────────────────────
 	ShopBuyRatio              ConfigFloat `yaml:"ShopBuyRatio,omitempty"`              // Base buy/sell spread: NPC buy offer = baseValue * BuyRatio * scarcityMult (default 0.50)

@@ -7,22 +7,27 @@ import "testing"
 // companions' CP reservation was judged fair but undisclosed).
 
 func TestConvictionReserveBand(t *testing.T) {
+	// The ladder is measured against the reservable CEILING, not the pool, so
+	// every edge below is a fraction of 660 (the cap on a pool of 1000 at the
+	// shipped and defaulted 0.66) rather than of 1000.
 	const maxPool = 1000
 	cases := []struct {
 		reserve int
 		want    string
 	}{
-		{50, "a small part"},           // 5%
-		{149, "a small part"},          // just under 15%
-		{150, "a modest share"},        // 15%
-		{299, "a modest share"},        // just under 30%
-		{300, "a significant portion"}, // 30%
-		{499, "a significant portion"},
-		{500, "a heavy share"}, // 50%
-		{749, "a heavy share"},
-		{750, "nearly all"}, // 75%
-		{999, "nearly all"},
-		{1000, "more than your spirit could hold"}, // >= max
+		{50, "a slight part"},   // under 15% of the ceiling
+		{98, "a slight part"},   // just under 15%
+		{99, "a modest share"},  // 15%
+		{230, "a modest share"}, // just under 35%
+		{231, "a notable share"},
+		{362, "a notable share"},
+		{363, "a heavy share"}, // 55%
+		{494, "a heavy share"},
+		{495, "nearly all you can set aside"}, // 75%
+		{659, "nearly all you can set aside"},
+		{660, "all you can set aside"}, // the ceiling itself
+		{999, "all you can set aside"},
+		{1000, "more than your spirit could hold"}, // >= the whole pool
 		{1500, "more than your spirit could hold"},
 	}
 	for _, tc := range cases {

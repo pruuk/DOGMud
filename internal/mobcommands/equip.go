@@ -64,6 +64,17 @@ func Equip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	actor := &actions.MobActor{Mob: mob, Room: room}
 	result := actions.EquipItem(actor, matchItem.Name())
 
+	if !result.Equipped && result.FailureReason != "" {
+		// gearup drives this command with `wear !<id>` and infers success by
+		// diffing the equipment set, so without this a refusal is invisible on
+		// every mob path: nothing worn, nothing said, and the giver with no way
+		// to learn why. Speaking it makes a companion declining a gift read as a
+		// decision rather than a bug.
+		room.SendTextVisual(messaging.CategoryEquipment,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns the <ansi fg="item">%s</ansi> over, then sets it aside.`,
+				mob.Character.Name, matchItem.DisplayName()))
+	}
+
 	if result.Equipped {
 		for _, oldItem := range result.DisplacedItems {
 			if oldItem.ItemId != 0 {

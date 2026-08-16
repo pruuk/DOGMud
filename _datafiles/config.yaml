@@ -1227,6 +1227,28 @@ Balance:
   EnchantRemovalPenaltyRounds: 50   # Rounds of withdrawal debuff after disenchant
   EnchantMaxTier: 4                 # Maximum tier (tiers 0–4 = 5 levels total)
 
+  # ── POOL RESERVATION ────────────────────────────────────────────────────────
+  # Ceiling on TOTAL reservation per pool, as a fraction of that pool's max.
+  # Applies to health, stamina and conviction alike, and to companions as well
+  # as players (GetPoolReservation has never had a mob gate, and companions
+  # wearing enchanted gear reserve on prod today).
+  #
+  # The breaching action is REFUSED rather than allowed through and clamped,
+  # and a character already past the ceiling keeps everything they have: only
+  # additions are refused. That grandfathering falls out of the arithmetic, so
+  # nobody is ever force-dismissed by a retune here.
+  #
+  # Raising this toward 1.0 walks back toward the pre-U7b state, where 96%
+  # health reservation was reachable with shipped gear and no mutation.
+  # Lowering it makes multi-companion summoners and deep enchant stacks choose
+  # sooner. Every enforcement site reads it live, so a change takes effect on
+  # restart with no migration and no data edit.
+  #
+  # 0 or above 1 is REJECTED by the defaulter and falls back to 0.66. A cap
+  # that silently disabled itself is the one failure mode nobody would notice
+  # until U8's skill-strip made an over-reserved pool crippling.
+  PoolReservationCapPct: 0.66
+
   # ── ENCHANT SALVAGE BANDS ───────────────────────────────────────────────────
   # Tiered potion → enchanting-mat mapping, keyed by alchemy recipe
   # skill_minimum. Band 1 (below Band2Min) always yields binding-paste.
@@ -1267,6 +1289,18 @@ Balance:
   # ── MANIFESTATION / COMPANION SCALING ──────────────────────────────────────
   ManifestStatScaleChaFactor: 150    # Charisma divisor — stronger Cha contribution to companion pools
   ManifestStatScaleSkillFactor: 0.02 # Manifestation skill additive factor per rank
+  # HomunculusConvictionReserve: base Conviction the Chrysifier homunculus
+  #   reserves, before the owner's manifestation and mutation reductions. It was
+  #   1000 until U7b, and at 1000 the new reservation ceiling made a CRAFTING
+  #   apex unfieldable by exactly the crafter it was built for, while leaving it
+  #   fieldable by a summoner who does not need it.
+  #
+  #   At 300 it still wants roughly 455 Conviction max to fit under a 66% cap,
+  #   and nearer 500 once the rank-0 skill rider applies, so a very
+  #   low-Conviction crafter can still be refused. That refusal is SPOKEN rather
+  #   than silent precisely so it arrives as a player report instead of a
+  #   mystery. This is the lever if it bites.
+  HomunculusConvictionReserve: 300
 
   # ── CARAVAN SYSTEM ───────────────────────────────────────────────────────────
   # Zones whose vendors restock on caravan visit only (per-mob

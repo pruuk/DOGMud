@@ -21,15 +21,18 @@ func seedAssessFixture(t *testing.T, convictionMax int) (*users.UserRecord, *roo
 	t.Helper()
 
 	cleanSpells := spells.SeedSpellsForTest(map[string]*spells.SpellData{
+		// Reserve is derived, never authored: the pet multiplier is the only
+		// dial. Skeleton 0.50 and golem 1.00 mirror the live YAMLs, giving
+		// bases of 140 and 280 against CompanionReserveDefault 280.
 		"raise-skeleton": {
 			SpellId: "raise-skeleton", Name: "Raise Skeleton",
 			SummonMobId: 300, SummonRequiresCorpse: true,
-			SummonMinCorpsePool: 30, SummonConvictionReserve: 350,
+			SummonMinCorpsePool: 30, SummonPetMultiplier: 0.50,
 		},
 		"raise-golem": {
 			SpellId: "raise-golem", Name: "Raise Golem",
 			SummonMobId: 305, SummonRequiresCorpse: true,
-			SummonMinCorpsePool: 500, SummonConvictionReserve: 440,
+			SummonMinCorpsePool: 500, SummonPetMultiplier: 1.00,
 		},
 	})
 
@@ -56,7 +59,9 @@ func seedAssessFixture(t *testing.T, convictionMax int) (*users.UserRecord, *roo
 }
 
 func TestAssess_DisclosesReservationBand(t *testing.T) {
-	// Big pool: 350 reserve on 4000 max ≈ 9% → "a small part", affordable.
+	// Big pool: the skeleton's base 140 at manifestation 0 costs 140 * 1.10 =
+	// 154. The band is measured against the ceiling (2640 on a 4000 pool), and
+	// 154 is under a sixteenth of that → "a slight part".
 	u, room, cleanup := seedAssessFixture(t, 4000)
 	defer cleanup()
 
@@ -69,20 +74,21 @@ func TestAssess_DisclosesReservationBand(t *testing.T) {
 	if !strings.Contains(msgs, "It could sustain: skeleton.") {
 		t.Errorf("supported list wrong (want skeleton only from the spell gates):\n%s", msgs)
 	}
-	if !strings.Contains(msgs, "Raising a skeleton would set aside a small part of your conviction") {
+	if !strings.Contains(msgs, "Raising a skeleton would set aside a slight part of your conviction") {
 		t.Errorf("missing/incorrect reservation disclosure:\n%s", msgs)
 	}
 	if strings.Contains(msgs, "could not spare") {
 		t.Errorf("affordable reservation flagged as unaffordable:\n%s", msgs)
 	}
-	if strings.Contains(msgs, "350") {
+	if strings.Contains(msgs, "154") {
 		t.Errorf("raw reserve number leaked to the player:\n%s", msgs)
 	}
 }
 
 func TestAssess_FlagsUnaffordableReservation(t *testing.T) {
-	// Tiny pool: 350 reserve on 300 max → more than the pool, unaffordable.
-	u, room, cleanup := seedAssessFixture(t, 300)
+	// Tiny pool: the same 154 reserve on a 150 max is more than the whole
+	// pool, so it is both over-pool and past the reservation ceiling.
+	u, room, cleanup := seedAssessFixture(t, 150)
 	defer cleanup()
 
 	handled, err := Assess("goblin", u, room, events.CmdSecretly)

@@ -1,0 +1,111 @@
+# U7b targeted adversarial playtest: the reservation ceiling and the rebuilt
+# companion power model.
+#
+# WHAT CHANGED, TESTER:
+#   * There is now a CEILING on how much of any pool your gear and companions
+#     may hold in reserve. Crossing it REFUSES the next thing rather than
+#     letting it through and quietly weakening you.
+#   * Casting a companion costs conviction ONCE. Keeping it reserves conviction
+#     for as long as you hold it, and that reservation is the real limit on how
+#     many you can field.
+#   * A stronger companion reserves more. That is the trade, not the cast price.
+#   * Conjuring got MUCH cheaper to cast. It used to cost several times what
+#     raising did.
+#   * `status` now shows a "Reserved:" row, in words.
+#   * There is a new `help reservation`, and `help companion`,
+#     `help manifestation` and all thirteen summon spell helpfiles were
+#     rewritten.
+#
+# NONE OF THIS HAS BEEN PLAYED. Every statement above is design intent, not an
+# observation. Measure what actually happens and report it, especially where it
+# contradicts the intent. Do not confirm expectations back to me.
+#
+# ARITHMETIC FOR THIS PROFILE, so you know what to expect and can tell a bug
+# from a design choice. Charisma about 100, manifestation granted at 20, so
+# ConvictionMax is about 405 and the ceiling sits near two thirds of that.
+#   * One water elemental should FIT.
+#   * A SECOND water elemental should be REFUSED.
+#   * A magma elemental should be REFUSED OUTRIGHT even as your first
+#     companion, because a top-tier conjure reserves more than the whole
+#     ceiling allows at this rank. That is a known and accepted design
+#     outcome, NOT a bug: report how it READS, not that it happened.
+#
+# THE REFUSAL IS THE PRODUCT. A refusal that names the wrong cause is the
+# single worst outcome this run can find. Every refusal must name RESERVATION.
+# If any message blames exhaustion, tiredness, or "not enough conviction"
+# without saying the reservation is holding it, report it loudly and quote it
+# verbatim.
+#
+# NO RAW NUMBERS ARE ALLOWED in any player-facing text. If you see a
+# percentage, a point total or a multiplier anywhere outside the deliberate
+# `status` stat sheet, that is a defect. Quote it.
+#
+# CARRIED FORWARD, still true:
+#   * Out-of-combat regen is about 8 stamina per round.
+#   * The AI port allows 3 commands per round and drops the rest with a visible
+#     notice. That is a real limit, not a bug. But if you see several commands
+#     echoed run together into one nonsense command with NO notice, a fixed bug
+#     has regressed: report it immediately.
+#   * `cast <spell>` needs a target for harm spells. Summons do not take one.
+#
+# START ROOM 462 (Thornwall City), NOT the early profile's own 5200, which sits
+# behind the Awakening Rite gate where movement is refused.
+#
+ephemeral:
+  profile: early
+  start_room: 462
+  overlays:
+    grant_skills:
+      manifestation: 20
+      enchanting: 10
+    grant_spells:
+      conjure-water: 1
+      conjure-magma: 1
+      raise-skeleton: 1
+    grant_items:
+      - 40183 # The Blackrazor, a two-handed weapon that reserves health
+      - 40187 # Seething Prism, a neck item that reserves all three pools
+  budgets:
+    wall_clock: 60m
+
+goals:
+  - >-
+    Read your reservation before touching anything. Run `status` and find the
+    Reserved row. Report exactly what it shows and whether you can tell from it
+    how much room you have left. Then run `help reservation`, `help companion`
+    and `help manifestation` and say plainly whether, after reading them, you
+    understand what reservation is and what raises it. If a player could not
+    work it out from those three files, that is the finding.
+  - >-
+    Summon a water elemental. Watch the Reserved row before and after. Then try
+    to summon a second one. It should be refused. Quote the refusal message
+    exactly. Does it name reservation as the cause? Does it tell you what you
+    could do about it? Does it contain any number?
+  - >-
+    Try to conjure a magma elemental as your only companion. It should be
+    refused outright at this rank. Quote the message. This is expected, so the
+    question is only whether the refusal reads as a rule you could have known
+    about or as the game breaking.
+  - >-
+    Equip The Blackrazor and the Seething Prism and watch the Reserved row move
+    for health, stamina and conviction. Then, while holding a companion, try to
+    equip them and see whether anything is refused. If you are refused, confirm
+    you can still take the item OFF and re-equip something equally heavy, since
+    being stuck unable to swap gear would be a serious defect.
+  - >-
+    Compare a conjured companion with a raised one. Kill something to get a
+    corpse, raise a skeleton, and compare it against the water elemental in a
+    fight. Which is stronger, and does the difference match what the helpfiles
+    led you to expect? Note that a raised companion draws partly on the remains
+    used, so a weak corpse should give a weak servant.
+  - >-
+    Fight alongside a companion for several rounds and watch what it actually
+    does. Does it attack every round, or does it stand idle? Report any round
+    where your companion appears to do nothing at all.
+  - >-
+    General adversarial pass. Anything that reads wrong, renders oddly, shows a
+    raw number where it should describe an effect, or contradicts its own help
+    text is a finding. Report bluntly. Known-open items you do NOT need to
+    re-report: `help prompt` documents conviction as {mp}, attacking an absent
+    target answers "You attack the darkness!", and quell and defy narrate with
+    a generic verb because they have no messages of their own yet.

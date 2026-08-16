@@ -2,9 +2,13 @@
 
 The <ansi fg="command">Conjure Water Elemental</ansi> spell tears a water elemental from the
 elemental plane and binds it to your will. Water elementals are
-dependable front-line companions — heavily vitalized, resistant to
+dependable front-line companions, heavily vitalized, resistant to
 sustained punishment, and relentless in melee. Their elemental nature
 makes them immune to drowning and many terrain hazards.
+
+Of the elementals you can call, this one asks the least of you, in the
+casting and in the keeping alike. It is the natural first binding for a
+new conjurer.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -14,13 +18,24 @@ makes them immune to drowning and many terrain hazards.
 
   <ansi fg="yellow">Type:        </ansi> Neutral
   <ansi fg="yellow">School:      </ansi> Manifestation
-  <ansi fg="yellow">Base Folds:  </ansi> 4
-  <ansi fg="yellow">Conv. Cost:  </ansi> Substantial
+  <ansi fg="yellow">Base Folds:  </ansi> Brief channel
+  <ansi fg="yellow">Cast Cost:   </ansi> Light, and paid only once
+  <ansi fg="yellow">Held Cost:   </ansi> Modest, for as long as you keep it
 
 <ansi fg="white-bold">Notes:</ansi>
   - No component is required to cast this spell.
   - The elemental persists until destroyed or dismissed.
-  - Scaling improves with your Charisma and Manifestation skill.
-  - You cannot exceed your companion limit with this spell.
+  - Calling it costs conviction once. Keeping it sets conviction
+    aside for as long as it stays with you, and that held share,
+    not the casting price, is what limits how many you can field.
+  - A mightier elemental holds more of your will. That is the real
+    trade between one elemental and another.
+  - Skill in manifestation lowers what a companion holds, so
+    practice buys you a larger following as well as a stronger one.
+  - A conjured elemental is the same wherever you stand. No remains
+    are needed and none are consumed.
+  - If your conviction is already spoken for, the binding is refused
+    outright rather than leaving you weaker, and costs you nothing.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
+  <ansi fg="command">help reservation</ansi>

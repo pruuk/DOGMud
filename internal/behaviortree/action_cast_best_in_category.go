@@ -118,8 +118,9 @@ func findMostWoundedPackmate(self *mobs.Mob) *mobs.Mob {
 	var best *mobs.Mob
 	bestRatio := 2.0 // impossible ratio so any candidate wins
 	for _, pm := range mobs.FindPackmatesInRoom(self) {
-		// Raw max on purpose -- see condPackmateBelowHpRatio. Packmates are
-		// always mobs, and mobs carry no pool reservation.
+		// Raw max on purpose -- see condPackmateBelowHpRatio. Not because mobs
+		// cannot reserve (they can, and companions do) but because
+		// FindPackmatesInRoom skips charmed mobs, so no companion reaches here.
 		maxHp := pm.Character.HealthMax.Value
 		if maxHp <= 0 {
 			continue

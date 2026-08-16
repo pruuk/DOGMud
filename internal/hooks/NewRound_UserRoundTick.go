@@ -30,6 +30,117 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/worldevents"
 )
 
+// enchantTierUpBlockedCooldown throttles the "this cannot deepen" line. The
+// roll retries every combat round, so without a throttle a wearer sitting at
+// the ceiling would be told the same thing several times a fight.
+const enchantTierUpBlockedCooldown = `enchant-tierup-blocked`
+
+// enchantTierUpWouldBreach reports whether advancing this item one enchantment
+// tier would carry the wearer's total reservation past the ceiling.
+//
+// Tier-up is a PASSIVE breach with no action to refuse: it rolls every combat
+// round on every Chrysalis-enchanted equipped item, and it DOUBLES the reserved
+// fraction at low tiers, so a character sitting just under the ceiling can cross
+// it mid-fight having done nothing. Grandfathering means it can never force a
+// dismissal; it simply must not make things worse.
+//
+// Unlike the equip seam, nothing has been placed or displaced yet here, so the
+// current reservation is the real one and the delta can be priced directly.
+func enchantTierUpWouldBreach(ch *characters.Character, itm *items.Item) bool {
+	if itm.ReservePool == `` {
+		return false
+	}
+	pool := characters.Pool(itm.ReservePool)
+	hands := itm.GetSpec().Hands
+	added := ch.EnchantReserveAt(itm.EnchantType, itm.EnchantTier+1, hands, pool) -
+		ch.EnchantReserveAt(itm.EnchantType, itm.EnchantTier, hands, pool)
+	return ch.WouldBreachReservationCap(pool, added)
+}
+
+// enchantApplyWouldBreach reports whether binding a fresh tier-0 `enchantType`
+// to `itm` would carry the wearer past the ceiling, on which pool, and by how
+// much the binding would ADD. The added figure is returned rather than
+// recomputed at the call site because ReservationRefusal needs it to tell a
+// "this one thing is too heavy on its own" refusal from a "you are already
+// full" one.
+//
+// Subtracting what the target already reserves is what makes RE-enchanting
+// work: the old enchantment is replaced rather than stacked, so only the
+// difference is new.
+func enchantApplyWouldBreach(ch *characters.Character, itm *items.Item, enchantType string) (characters.Pool, int, bool) {
+	def := enchantments.GetEnchantment(enchantType)
+	if def == nil || def.ReservePool == `` {
+		return ``, 0, false
+	}
+	pool := characters.Pool(def.ReservePool)
+	added := ch.EnchantReserveAt(enchantType, 0, itm.GetSpec().Hands, pool) -
+		ch.ItemReserveOnPool(*itm, pool)
+	return pool, added, ch.WouldBreachReservationCap(pool, added)
+}
+
+// tickChrysalisEnchantments advances every equipped Chrysalis-enchanted item by
+// one round of use and returns the lines to send the wearer, all of which
+// belong to messaging.CategorySkillProgress.
+//
+// randN is the roll source (production passes util.Rand). It is a parameter so
+// the ceiling behaviour can be driven deterministically from a test rather than
+// waiting on a 2%-per-round die.
+func tickChrysalisEnchantments(ch *characters.Character, randN func(int) int) []string {
+
+	bal := configs.GetBalanceConfig()
+	maxTier := int(bal.EnchantMaxTier)
+
+	lines := []string{}
+
+	for _, itemPtr := range ch.Equipment.GetAllItemPtrs() {
+		if !itemPtr.HasChrysalisEnchantment() {
+			continue
+		}
+		itemPtr.EnchantUses++
+
+		eDef := enchantments.GetEnchantment(itemPtr.EnchantType)
+		if eDef == nil {
+			continue
+		}
+
+		currentTier := itemPtr.EnchantTier
+		if currentTier >= maxTier || currentTier >= len(eDef.Tiers)-1 {
+			continue
+		}
+
+		threshold := float64(bal.EnchantTierUsesBase) * math.Pow(float64(bal.EnchantTierUsesScale), float64(currentTier))
+		if float64(itemPtr.EnchantUses) < threshold {
+			continue
+		}
+		if randN(100) >= int(float64(bal.EnchantTierUpBaseChance)*100) {
+			continue
+		}
+
+		if enchantTierUpWouldBreach(ch, itemPtr) {
+			// Say why, but not every round. EnchantUses is deliberately NOT
+			// reset: the item stays ready to advance the moment its wearer
+			// makes room, rather than losing the progress it earned.
+			if ch.TryCooldown(enchantTierUpBlockedCooldown, `200 rounds`) {
+				lines = append(lines, `<ansi fg="yellow">Your `+itemPtr.DisplayName()+
+					` strains to deepen, but your gear already holds too much of you in `+
+					`reserve. Set another burden aside and it can grow.</ansi>`)
+			}
+			continue
+		}
+
+		itemPtr.EnchantTier++
+		itemPtr.EnchantUses = 0
+		enchantments.ApplyTier(itemPtr, eDef, itemPtr.EnchantTier)
+
+		newTier := itemPtr.EnchantTier
+		if newTier < len(eDef.Tiers) && eDef.Tiers[newTier].TierUpMessage != `` {
+			lines = append(lines, fmt.Sprintf(`<ansi fg="magenta">%s</ansi>`, eDef.Tiers[newTier].TierUpMessage))
+		}
+	}
+
+	return lines
+}
+
 //
 // Player Round Tick
 //
@@ -433,6 +544,16 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										targetItem := user.Character.Equipment.GetSlotPointer(enchantTargetSlot)
 										if targetItem == nil || targetItem.ItemId < 1 {
 											user.SendText(messaging.CategoryWarning, `<ansi fg="red">The item is no longer equipped. The enchanting fails, but your materials are returned.</ansi>`)
+										} else if pool, added, breach := enchantApplyWouldBreach(user.Character, targetItem, recipe.EnchantType); breach {
+											// U7b: craft.go refuses this before the work starts, but
+											// the rounds in between are not free of change: a worn
+											// enchantment can tier up mid-craft, and a lapsing buff
+											// can shrink the pool the ceiling is measured against.
+											// Refusing here still returns the materials, exactly as
+											// the "no longer equipped" case above does.
+											user.SendText(messaging.CategoryWarning, fmt.Sprintf(
+												`<ansi fg="red">%s The enchanting fails, but your materials are returned.</ansi>`,
+												user.Character.ReservationRefusal(pool, added)))
 										} else {
 											user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 											eDef := enchantments.GetEnchantment(recipe.EnchantType)
@@ -507,37 +628,8 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 
 				// Stage 31.6: Chrysalis enchantment ticking (combat only)
 				if user.Character.IsInCombat() {
-					for _, itemPtr := range user.Character.Equipment.GetAllItemPtrs() {
-						if !itemPtr.HasChrysalisEnchantment() {
-							continue
-						}
-						itemPtr.EnchantUses++
-
-						eDef := enchantments.GetEnchantment(itemPtr.EnchantType)
-						if eDef == nil {
-							continue
-						}
-
-						currentTier := itemPtr.EnchantTier
-						maxTier := int(configs.GetBalanceConfig().EnchantMaxTier)
-						if currentTier >= maxTier || currentTier >= len(eDef.Tiers)-1 {
-							continue
-						}
-
-						bal := configs.GetBalanceConfig()
-						threshold := float64(bal.EnchantTierUsesBase) * math.Pow(float64(bal.EnchantTierUsesScale), float64(currentTier))
-						if float64(itemPtr.EnchantUses) >= threshold {
-							if util.Rand(100) < int(float64(bal.EnchantTierUpBaseChance)*100) {
-								itemPtr.EnchantTier++
-								itemPtr.EnchantUses = 0
-								enchantments.ApplyTier(itemPtr, eDef, itemPtr.EnchantTier)
-
-								newTier := itemPtr.EnchantTier
-								if newTier < len(eDef.Tiers) && eDef.Tiers[newTier].TierUpMessage != "" {
-									user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(`<ansi fg="magenta">%s</ansi>`, eDef.Tiers[newTier].TierUpMessage))
-								}
-							}
-						}
+					for _, line := range tickChrysalisEnchantments(user.Character, util.Rand) {
+						user.SendText(messaging.CategorySkillProgress, line)
 					}
 				}
 

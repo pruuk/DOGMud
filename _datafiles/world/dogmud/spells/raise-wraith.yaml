@@ -2,13 +2,13 @@ spellid: raise-wraith
 name: Raise Wraith
 aliases: [wraith]
 description: Tears the lingering spirit from a corpse and binds it into
-  an ethereal form — half ghost, half hunger. Wraiths are difficult to
+  an ethereal form, half ghost and half hunger. Wraiths are difficult to
   strike and sap the will of those they wound. Only a creature of
   considerable essence can sustain this transformation.
 type: neutral
 schools:
   - manifestation
-cost: 45
+cost: 35
 waitrounds: 8
 difficulty: 30
 primarystat: willpower
@@ -27,8 +27,6 @@ wait_user_text: >-
   spirit. Something cold and furious stirs at the edge of your
   vision...
 summon_mob_id: 302
-summon_base_pool: 70
-summon_conviction_reserve: 280
-summon_scaling_divisor: 500
+summon_pet_multiplier: 0.58
 summon_requires_corpse: true
 summon_min_corpse_pool: 120

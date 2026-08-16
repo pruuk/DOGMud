@@ -1,0 +1,71 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">reservation</ansi>
+
+Some things you carry do not simply help you -- they hold part of you
+back. A Chrysalis enchantment feeds on the wearer. A companion draws on
+your will for as long as it walks beside you. What they take is called
+reservation, and it is set aside from one of your three pools for as
+long as you keep them.
+
+Reserved strength is not lost and it is not damage. Rest will not bring
+it back, because nothing took it from you. It is simply spoken for. What
+it does mean is that your true ceiling is lower than your listed one,
+and everything that measures you against a full pool measures you
+against the part you can still reach.
+
+<ansi fg="yellow">━━━ The Limit ━━━</ansi>
+
+You cannot set aside more than a certain share of any one pool. When you
+reach that limit, the game will refuse the thing that would push you
+past it: wearing another draining item, beginning another enchantment,
+or binding another companion. It refuses cleanly and costs you nothing.
+
+It will never take anything away from you. If you are already past the
+limit, everything you have stays exactly where it is. You will only be
+told no when you try to add.
+
+Some single things ask for more than the limit allows all on their own.
+A mighty companion is the usual one. When you are told that a thing
+alone is too much, nothing you put down will make room for it. You need
+a deeper pool to draw on, or a lesser thing to bind.
+
+<ansi fg="yellow">━━━ Reading It ━━━</ansi>
+
+Your health, stamina and conviction bars show the pool you can still
+reach, not your listed one. A full bar means you are as recovered as
+you can be while you are carrying what you carry.
+
+Type <ansi fg="command">status</ansi> and look at the Reserved line under your pools. Each pool
+gets a word of its own, and each word measures how close you are to the
+limit rather than to your whole pool:
+
+  <ansi fg="green">none</ansi> or <ansi fg="green">slight</ansi>    Nothing worth worrying about.
+  <ansi fg="green">modest</ansi>            A real cost, comfortably borne.
+  <ansi fg="yellow">notable</ansi>           You are giving up something to keep this.
+  <ansi fg="red">heavy</ansi>             Well along. Choose the next one with care.
+  <ansi fg="red-bold">near limit</ansi>        Almost no room left. The next thing may be refused.
+  <ansi fg="red-bold">at limit</ansi>          You cannot add anything more to this pool.
+
+When the game speaks to you in a sentence it uses the same rungs in
+longer words, so you can match one to the other without doing any sums:
+
+  <ansi fg="green">slight</ansi>            a slight part
+  <ansi fg="green">modest</ansi>            a modest share
+  <ansi fg="yellow">notable</ansi>           a notable share
+  <ansi fg="red">heavy</ansi>             a heavy share
+  <ansi fg="red-bold">near limit</ansi>        nearly all you can set aside
+  <ansi fg="red-bold">at limit</ansi>          all you can set aside
+
+<ansi fg="yellow">━━━ Making Room ━━━</ansi>
+
+Remove a draining item, disenchant something you wear, or dismiss a
+companion, and the share comes straight back. When the game refuses you
+it names only the ones you could actually do, so if it does not mention
+your gear, your gear is not what is holding you.
+
+Skill also buys room. A practised enchanter binds magic that takes less
+from its wearer, and a practised summoner holds a companion on less of
+their will. Both are worth raising if you mean to live this way.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help status</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help conviction</ansi>

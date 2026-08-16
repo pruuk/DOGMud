@@ -4,7 +4,7 @@ aliases: [repair]
 description: >
   Directs a raw current through failing servos and cracked plating,
   forcing damaged construct systems to knit themselves whole again.
-  Mob-castable only — this is a construct maintenance routine, not a
+  Mob-castable only. This is a construct maintenance routine, not a
   spell any living caster could learn.
 type: helpsingle
 schools:

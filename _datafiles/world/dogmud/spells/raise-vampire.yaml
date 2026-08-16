@@ -8,7 +8,7 @@ description: Performs the forbidden rite that transforms a worthy
 type: neutral
 schools:
   - manifestation
-cost: 80
+cost: 45
 waitrounds: 12
 difficulty: 45
 primarystat: willpower
@@ -28,8 +28,6 @@ wait_user_text: >-
   hunting for the thread of self that the dark gift requires.
   Something almost stirs...
 summon_mob_id: 304
-summon_base_pool: 100
-summon_conviction_reserve: 352
-summon_scaling_divisor: 500
+summon_pet_multiplier: 0.83
 summon_requires_corpse: true
 summon_min_corpse_pool: 300

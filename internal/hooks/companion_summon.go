@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -36,13 +35,10 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	ch := user.Character
 
 	// ── 1. Reservation + budget gate ────────────────────────────────────
-	// The Conviction budget is the real limit (a soft count backstop lives in
-	// CanAffordCompanion). Fail early, before consuming any component/corpse.
-	baseReserve := spellData.SummonConvictionReserve
-	if baseReserve <= 0 {
-		baseReserve = int(configs.GetBalanceConfig().CompanionReserveDefault)
-	}
-	// Count cap and conviction budget both fail CanAffordCompanion — report them
+	// Reservation is DERIVED from the pet multiplier (D9), never authored.
+	// Fail early, before consuming any component or corpse.
+	baseReserve := characters.CompanionReserveBase(spellData.SummonPetMultiplier)
+	// Count cap and conviction budget are separate refusals, reported
 	// separately so a player at their companion limit isn't wrongly told they
 	// lack conviction.
 	if len(ch.Companions) >= ch.GetMaxCompanions() {
@@ -51,9 +47,9 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 		return false
 	}
 	reserve := ch.CalcCompanionReserve(baseReserve)
-	if !ch.CanAffordCompanion(reserve) {
+	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
 		user.SendText(messaging.CategorySpellManifestation,
-			"You cannot spare the conviction to bind another companion.")
+			ch.ReservationRefusal(characters.PoolConviction, reserve))
 		return false
 	}
 
@@ -75,7 +71,6 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 
 	// ── 3. Corpse consumption (if required) ─────────────────────────────
 	var corpsePool int
-	corpseConsumed := false
 
 	if spellData.SummonRequiresCorpse {
 		targetIdx, pool, reason := selectRaiseCorpse(room.Corpses, spellRest, targetIndex, int(spellData.SummonMinCorpsePool))
@@ -89,19 +84,16 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 
 		// Remove the corpse
 		room.Corpses = append(room.Corpses[:targetIdx], room.Corpses[targetIdx+1:]...)
-		corpseConsumed = true
 	}
 
 	// ── 4. Stat scaling ─────────────────────────────────────────────────
 	charisma := ch.Stats.Charisma.ValueAdj
 	manifestSkill := ch.GetSkillLevel(skills.Manifestation)
 
-	pool := characters.CalcCompanionStatPool(spellData.SummonBasePool, charisma, manifestSkill)
-
-	// If a corpse was consumed, average the scaled pool with the corpse pool
-	if corpseConsumed {
-		pool = (pool + corpsePool) / 2
-	}
+	// corpsePool is 0 unless a corpse was consumed, and CalcCompanionPool reads
+	// a non-positive corpse pool as "conjured". The corpse average now lives
+	// INSIDE that function -- averaging again here would average twice.
+	pool := characters.CalcCompanionPool(charisma, manifestSkill, spellData.SummonPetMultiplier, corpsePool)
 
 	// ── 5. Spawn and register ───────────────────────────────────────────
 	mob := mobs.NewMobByIdFresh(mobs.MobId(spellData.SummonMobId), room.RoomId, pool)

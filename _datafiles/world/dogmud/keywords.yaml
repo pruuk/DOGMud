@@ -33,6 +33,7 @@ help:
       - pet
       - pets
       - rep
+      - reservation
       - skills
       - sleep
       - spells
@@ -236,6 +237,7 @@ help-aliases:
   prone:            [knockdown, knocked-down, knocked down]
   trip:             [tailsweep]
   companion:        [companions]
+  reservation:      [reserved, reserve, set aside]
   surrender:        [submit, tap out, tapout]
   stamina:          [endurance, energy]
   bank:             [deposit, withdraw]

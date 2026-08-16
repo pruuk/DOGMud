@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -31,7 +31,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if corpse.Character.IsCharmed() {
-		user.SendText(messaging.CategorySystem, `These remains were bound to a master. The essence is spent — there is nothing left to raise.`)
+		user.SendText(messaging.CategorySystem, `These remains were bound to a master. The essence is spent. There is nothing left to raise.`)
 		return true, nil
 	}
 
@@ -51,27 +51,29 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		stats.Willpower.Training +
 		stats.Charisma.Training
 
-	// Describe the power level without exposing raw numbers.
+	// Describe the power level without exposing raw numbers. Each phrase
+	// completes the sentence "You sense ..." on its own, so it needs no
+	// dash and no second clause bolted on afterwards.
 	var essenceDesc string
 	switch {
 	case totalTraining >= 500:
-		essenceDesc = `overwhelming essence — death barely contains it`
+		essenceDesc = `overwhelming essence in these remains, more than death can hold`
 	case totalTraining >= 300:
-		essenceDesc = `immense essence — a truly mighty creature`
+		essenceDesc = `immense essence in these remains, a truly mighty creature in life`
 	case totalTraining >= 200:
-		essenceDesc = `powerful essence — formidable in life`
+		essenceDesc = `powerful essence in these remains, formidable in life`
 	case totalTraining >= 120:
-		essenceDesc = `substantial essence — a strong life force`
+		essenceDesc = `substantial essence in these remains, a strong life force`
 	case totalTraining >= 60:
-		essenceDesc = `moderate essence`
+		essenceDesc = `moderate essence in these remains`
 	case totalTraining >= 30:
-		essenceDesc = `faint residual essence`
+		essenceDesc = `faint residual essence in these remains`
 	default:
-		essenceDesc = `barely a trace of essence`
+		essenceDesc = `barely a trace of essence in these remains`
 	}
 
 	user.SendText(messaging.CategorySystem, `You study the remains of <ansi fg="mob-corpse">`+corpse.Character.Name+`</ansi>.`)
-	user.SendText(messaging.CategorySystem, `You sense `+essenceDesc+` within.`)
+	user.SendText(messaging.CategorySystem, `You sense `+essenceDesc+`.`)
 
 	// List which undead types this corpse could support, driven by the raise
 	// spells' own summon_min_corpse_pool gates so assess and the spells can
@@ -92,11 +94,8 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 		supported = append(supported, form)
 
-		base := sp.SummonConvictionReserve
-		if base <= 0 {
-			base = int(configs.GetBalanceConfig().CompanionReserveDefault)
-		}
-		reserve := user.Character.CalcCompanionReserve(base)
+		reserve := user.Character.CalcCompanionReserve(
+			characters.CompanionReserveBase(sp.SummonPetMultiplier))
 		band := convictionReserveBand(reserve, user.Character.ConvictionMax.Value)
 		var grp *raiseGroup
 		for _, g := range groups {
@@ -124,7 +123,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		for _, g := range groups {
 			line := fmt.Sprintf(`Raising %s would set aside %s of your conviction while it serves.`,
 				joinRaiseForms(g.forms), g.band)
-			if !user.Character.CanAffordCompanion(g.maxReserve) {
+			if user.Character.WouldBreachReservationCap(characters.PoolConviction, g.maxReserve) {
 				line += ` You could not spare that right now.`
 			}
 			user.SendText(messaging.CategorySystem, line)
@@ -151,23 +150,13 @@ func convictionReserveBand(reserve, maxPool int) string {
 // what SHARE of a pool a reservation holds, with no flavour committing it to
 // Conviction. `stand` uses it to disclose a stamina reservation. Player-facing
 // text never shows the raw number.
+//
+// The edges now live in characters.ReserveShareBand, because the cap refusals
+// on `Wear`, summon, charm and the two auto-spawn paths need the same words and
+// cannot import usercommands. Kept as a package-local name so assess.go and
+// stand.go read unchanged.
 func reserveShareBand(reserve, maxPool int) string {
-	if maxPool <= 0 || reserve >= maxPool {
-		return `all`
-	}
-	frac := float64(reserve) / float64(maxPool)
-	switch {
-	case frac < 0.15:
-		return `a small part`
-	case frac < 0.30:
-		return `a modest share`
-	case frac < 0.50:
-		return `a significant portion`
-	case frac < 0.75:
-		return `a heavy share`
-	default:
-		return `nearly all`
-	}
+	return characters.ReserveShareBand(reserve, maxPool)
 }
 
 // joinRaiseForms renders a form list as prose: "a skeleton", "a skeleton or

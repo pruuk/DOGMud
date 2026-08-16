@@ -2,10 +2,13 @@
 
 The <ansi fg="command">Conjure Air Elemental</ansi> spell tears an air elemental from the
 elemental plane and binds it to your command. Air elementals are the
-fastest creatures a conjurer can call — blindingly quick, capable of
-striking several times before a foe can land a counter. Their fragility
-is their trade-off; what they lack in staying power they repay with
+fastest creatures a conjurer can call, blindingly quick, and able to
+strike several times before a foe can land a counter. Their fragility
+is their trade-off. What they lack in staying power they repay with
 relentless aggression and an almost uncatchable evasion.
+
+It holds more of your will than a water elemental does, and less than
+a fire elemental.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -15,14 +18,25 @@ relentless aggression and an almost uncatchable evasion.
 
   <ansi fg="yellow">Type:        </ansi> Neutral
   <ansi fg="yellow">School:      </ansi> Manifestation
-  <ansi fg="yellow">Base Folds:  </ansi> 8
-  <ansi fg="yellow">Conv. Cost:  </ansi> Staggering
+  <ansi fg="yellow">Base Folds:  </ansi> Moderate channel
+  <ansi fg="yellow">Cast Cost:   </ansi> Moderate, and paid only once
+  <ansi fg="yellow">Held Cost:   </ansi> Notable, for as long as you keep it
 
 <ansi fg="white-bold">Notes:</ansi>
   - No component is required to cast this spell.
   - Air elementals excel at evasion and high-speed harassment.
   - The elemental persists until destroyed or dismissed.
-  - Scaling improves with your Charisma and Manifestation skill.
-  - You cannot exceed your companion limit with this spell.
+  - Calling it costs conviction once. Keeping it sets conviction
+    aside for as long as it stays with you, and that held share,
+    not the casting price, is what limits how many you can field.
+  - A mightier elemental holds more of your will. That is the real
+    trade between one elemental and another.
+  - Skill in manifestation lowers what a companion holds, so
+    practice buys you a larger following as well as a stronger one.
+  - A conjured elemental is the same wherever you stand. No remains
+    are needed and none are consumed.
+  - If your conviction is already spoken for, the binding is refused
+    outright rather than leaving you weaker, and costs you nothing.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help companion</ansi>,
+  <ansi fg="command">help reservation</ansi>

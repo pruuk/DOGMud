@@ -6,7 +6,7 @@ description: Tears a water elemental from the elemental plane and binds it
 type: neutral
 schools:
   - manifestation
-cost: 150
+cost: 30
 waitrounds: 2
 difficulty: 15
 primarystat: willpower
@@ -24,6 +24,4 @@ wait_user_text: >-
   The moisture in the air thickens. Water begins to spiral
   inward from every direction...
 summon_mob_id: 310
-summon_base_pool: 80
-summon_conviction_reserve: 280
-summon_scaling_divisor: 500
+summon_pet_multiplier: 0.75

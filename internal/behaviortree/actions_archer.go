@@ -180,13 +180,20 @@ func archerMeleeEngaged(mob *mobs.Mob) bool {
 	return false
 }
 
-// hpPercent returns the mob's current health as a percentage of its max
-// (0..100). A non-positive max is treated as full health.
+// hpPercent returns the character's current health as a percentage of the max it
+// can ACTUALLY reach (0..100). A non-positive max is treated as full health.
+//
+// EffectivePoolMax, not HealthMax.Value. Every caller is self-side, and a
+// companion carrying reserving gear would otherwise read as permanently wounded
+// at a completely full pool: at the U7b ceiling, permanently at 34%. That would
+// make a reserved archer refuse to kite forever, since the kite branch bails
+// when it judges itself too hurt to disengage safely.
 func hpPercent(char *characters.Character) float64 {
-	if char.HealthMax.Value <= 0 {
+	max := char.EffectivePoolMax(characters.PoolHealth)
+	if max <= 0 {
 		return 100
 	}
-	return float64(char.Health) * 100 / float64(char.HealthMax.Value)
+	return float64(char.Health) * 100 / float64(max)
 }
 
 // actTryFire fires a loaded ranged weapon at the mob's aggro target. Same-room

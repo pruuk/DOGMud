@@ -43,6 +43,14 @@ func (b *Balance) validateSpells() {
 		b.SpellProficiencyCastsPerPoint = 50
 	}
 
+	// ── POOL RESERVATION ─────────────────────────────────────────────────────
+	if b.PoolReservationCapPct <= 0 || b.PoolReservationCapPct > 1 {
+		// 0.66 (U7b). Both guards matter: <= 0 is "absent from config.yaml", and
+		// > 1 would make the cap unreachable and silently disable the ceiling,
+		// which is the one failure mode nobody would notice until U8 shipped.
+		b.PoolReservationCapPct = 0.66
+	}
+
 	// ── ENCHANTMENTS ─────────────────────────────────────────────────────────
 	if b.EnchantTierUpBaseChance <= 0 {
 		b.EnchantTierUpBaseChance = 0.02

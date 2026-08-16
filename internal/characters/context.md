@@ -120,6 +120,11 @@ func (c *Character) CanAfford(pool Pool, amount int) bool
 // It never returns 0, deliberately: see the Gotchas note on the floor.
 func (c *Character) EffectivePoolMax(p Pool) int
 
+// Same value, keyed by the pool's plain name, FOR TEMPLATES ONLY. text/template
+// cannot convert an untyped string constant to Pool, so the typed form above is
+// unreachable from status.template.
+func (c *Character) EffectivePoolMaxNamed(pool string) int
+
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
@@ -400,6 +405,148 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **Formatted names** (`formattedname.go`): Rich text rendering with adjectives and color coding
 - **Adjectives system**: Visual indicators for character states (sleeping, charmed, poisoned, prone, etc.)
 - **Quest indicators**: Visual markers for quest-relevant NPCs
+
+### Pool Reservation and the Ceiling (U7b, `reservation.go`)
+
+Some gear and every fielded companion **reserve** part of a pool: the points are
+still counted in the max but can never be spent. `GetPoolReservation`
+(`validate.go`) is the total; `reservation.go` owns the ceiling on that total,
+the per-item arithmetic behind it, and the words shown to the player.
+
+Total reservation on a pool is capped at `PoolReservationCapPct` (Go default
+0.66, absent from `config.yaml`) of that pool's max, per pool. The breaching
+action is **refused** rather than allowed through and clamped, and a character
+already over the ceiling keeps everything they have: only additions are refused.
+
+```go
+// The ceiling.
+func (c *Character) ReservationCap(p Pool) int
+func (c *Character) WouldBreachReservationCap(p Pool, added int) bool
+
+// Before/after overage, for the seams that cannot price their own delta.
+type ReservationSnapshot struct{ Health, Stamina, Conviction int }
+func (c *Character) ReservationOverages() ReservationSnapshot
+func (before ReservationSnapshot) Worsened(after ReservationSnapshot) (Pool, bool)
+
+// Per-item arithmetic, shared with GetPoolReservation so the total and the
+// single-item figure cannot drift apart.
+func (c *Character) ItemReserveOnPool(itm items.Item, p Pool) int
+func (c *Character) EnchantReserveAt(enchantType string, tier int, hands int, p Pool) int
+
+// Raw reservation + pool max together, for the equip disclosure. Distinct from
+// ReservationSnapshot, which records overage past the cap.
+type ReservationTotals struct {
+	Health, Stamina, Conviction          int
+	HealthMax, StaminaMax, ConvictionMax int
+}
+func (c *Character) ReservationTotals() ReservationTotals
+
+// The equip line and its mirror on remove, or "" when no pool's reserved SHARE
+// moved in that direction. Callers must treat empty as "say nothing".
+func (c *Character) ReservationIncreaseNotice(before ReservationTotals) string
+func (c *Character) ReservationDecreaseNotice(before ReservationTotals) string
+
+// Player-facing words. Never a raw number.
+func ReserveShareBand(reserve, maxPool int) string
+func (c *Character) ReservationBandName(pool string) string
+func (c *Character) ReservationRefusal(p Pool, added int) string
+```
+
+### Companions (`companions.go`)
+
+```go
+const ManifestationPoolCoefficient = 5
+
+// Companion stat pool. base = charisma + manifestationSkill*5; for a
+// corpse-consuming raise the corpse pool is averaged into base FIRST, and the
+// pet multiplier is applied to the result. Floors at 1.
+func CalcCompanionPool(charisma, manifestationSkill int, petMultiplier float64, corpsePool int) int
+
+// The behaviour-tree add scaler. NOT the companion formula.
+func CalcSpawnPoolFromBase(baseStatPool, charisma, manifestationSkill int) int
+
+// round(CompanionReserveDefault * petMultiplier). A multiplier <= 0 means
+// "unscaled" and returns the raw default.
+func CompanionReserveBase(petMultiplier float64) int
+
+// Applies the manifestation-skill and Manifester-mutation reductions and then
+// composes the U7 inverse-skill rider on top. Floors at 1.
+func (c *Character) CalcCompanionReserve(baseCost int) int
+```
+
+`CanAffordCompanion` was **deleted** in U7b. With `CompanionCastingFloorPct`
+defaulting to 0 it reduced to a 100% cap on conviction alone, which the ceiling
+now supersedes on all three pools.
+
+### Gotchas
+
+1. **`GetPoolReservation` has no `IsMob` gate.** Companions reserve, and they do
+   so on prod today: hand a companion enchanted gear and the reserved portion
+   shows in its bars. Any code that assumes reservation is player-only is wrong.
+2. **`Worsened`, not a cap test, at the equip seam.** A cap test would refuse an
+   already-over-cap character an equal-for-equal swap, and so force them to
+   strip. Grandfathering (D4) rules that out. `ReservationSnapshot` records
+   overage only, never signed headroom, so one pool improving cannot mask
+   another pool breaching.
+3. **`Wear` reverts by restoring the whole `Worn` value.** That is only sound
+   because the placement helpers touch nothing outside `c.Equipment`.
+   `SortComponentItems` was moved out of `wearArmorSlot` into `Wear` for exactly
+   this reason. Anything new added to a placement helper that mutates state
+   outside `c.Equipment` breaks the revert silently.
+4. **`CalcCompanionPool` applies the multiplier AFTER the corpse average.**
+   Folding it into the base collapses the pet tiers as corpses grow: under the
+   old shape five times the price bought about 15% more pet at a large corpse.
+5. **`CalcSpawnPoolFromBase` is NOT the companion formula.** It is the
+   behaviour-tree add scaler, its only caller is
+   `behaviortree.actSummonCompanion`, and its callers are authored boss
+   encounters tuned against its exact curve. Moving them onto the companion
+   formula would nerf the Sentinel's adds roughly fivefold.
+6. **`CalcCompanionReserve` composes the U7 rider onto the existing reduction,
+   it never replaces it.** Replacing is strictly worse at every rank: the U7
+   curve bottoms at 0.40 while the existing reduction already reaches 0.45 at
+   manifestation 55. Composed, it is a 10% penalty at rank 0 and a discount
+   past rank 25, which is deliberate.
+7. **ONE ladder, two vocabularies.** `reserveLadder` in `reservation.go` holds
+   both spellings of every rung side by side, `reserveRungOf` holds the only
+   copy of the edges, and both are keyed to the **cap**, not the pool, so the
+   words report remaining headroom. `ReserveShareBand` returns the prose half
+   (it has to read inside a sentence), `ReservationBandName` the short half (the
+   status sheet's column is 13 wide). Change a rung and you change both halves
+   of it, in one place. They were keyed differently until 2026-08-16 and the
+   result was three vocabularies contradicting each other at the same instant:
+   the equip line said "a significant portion" of health and "a heavy share" of
+   conviction while the sheet, one line away, said `heavy` and `near limit`.
+   Separately, the sheet was cap-keyed on its top rung only, which made the row
+   read `notable` through three consecutive refusals. `near limit` is the rung
+   of warning before `at limit`.
+8. **`EnchantReserveAt` scales the enchantment share by the wearer's enchanting
+   rank, and the item's own `reserve_*_pct` not at all.** The rider is applied
+   to the percentage before the floor, so it cannot be rounded away on a small
+   pool. Calling `enchantments.GetTierReservePct` directly gives an unridden
+   figure and will disagree with the character's real total.
+9. **The two notices compare SHARES, not points.** `reserve_*_pct` is a
+   percentage of the pool max, so any item that raises a pool raises the
+   reserved points on gear already worn. A points comparison would announce a
+   reservation increase for a plain +Vitality helmet, which is why
+   `ReservationTotals` carries the maxima alongside the reserves. `shareShrank`
+   is written out rather than expressed as `!shareGrew`: an unchanged share is
+   neither, and the negation would make the remove line fire on every remove.
+10. **Bars measure `EffectivePoolMax`, everywhere.** The prompt gauge
+    (`users.renderVitalBar`), the `status` vitals row and the web client's
+    `availablePct()` all divide by the reachable pool. Drawing the reserved
+    share as a distinct band inside a ten-block ASCII gauge does not work:
+    `internal/util`'s downgrade table maps both the filled block and the
+    crosshatch to `#`, so the reserved band read as filled and a bleeding
+    character saw a full bar.
+11. **Reservation messages name only the sources actually loaded.**
+    `reserveSourcesOn` walks the same two places `GetPoolReservation` totals,
+    and `subject()` / `verb()` / `remedies()` build the sentence from what it
+    finds; `ReservationHolders` exports the subject and verb for
+    `internal/hooks`. A fixed "Your gear and bonds" told a 2026-08-16 playtest
+    character holding one companion and wearing nothing that its gear was the
+    problem, and the fixed remedy list told it to take off gear it did not
+    have. Note the two gear kinds are tracked apart, because disenchanting
+    cannot help a pinnacle item whose own spec reserves.
 
 ## Stage 7.5: Prone Condition System
 
@@ -1257,13 +1404,13 @@ implementation-detail rationale.
 
 ## Files
 
-45 non-test files. Grouped by what they own:
+46 non-test files. Grouped by what they own:
 
 | Group | Files |
 |-------|-------|
 | Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go` |
 | Stats & progression | `progression.go`, `skills.go`, `effective_stats.go`, `statmods`-adjacent helpers, `mobmastery.go`, `kdstats.go` |
-| Resources & conditions | `pools.go`, `resources.go`, `conditions.go`, `cooldowns.go`, `buffs.go`, `sight.go` |
+| Resources & conditions | `pools.go`, `reservation.go`, `resources.go`, `conditions.go`, `cooldowns.go`, `buffs.go`, `sight.go` |
 | Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go` |
 | Combat | `combat.go`, `combat_state_compat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go` |
 | Casting | `cast_helpers.go`, `spells.go` |

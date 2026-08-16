@@ -6,7 +6,7 @@ description: Drags a hulking earth elemental into the world and binds it
 type: neutral
 schools:
   - manifestation
-cost: 200
+cost: 45
 waitrounds: 3
 difficulty: 25
 primarystat: willpower
@@ -24,6 +24,4 @@ wait_user_text: >-
   The floor shudders. Something vast and patient stirs beneath it,
   rising reluctantly toward your call...
 summon_mob_id: 311
-summon_base_pool: 90
-summon_conviction_reserve: 280
-summon_scaling_divisor: 500
+summon_pet_multiplier: 1.05

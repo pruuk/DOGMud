@@ -9,8 +9,10 @@ Vampires are predatory spellcasters that drain the lifeforce from their foes
 through both claw and sorcery. They heal themselves by wounding others,
 making them dangerous foes that grow stronger as battle rages.
 
-The undead servant's power scales with your willpower and spellcasting skill.
-More skilled casters raise more formidable specimens.
+The servant's power scales with your Charisma and manifestation skill, and
+with the remains you raise it from. Part of it is drawn from the corpse, so
+the same spell over better remains yields a better servant. A vampire is a
+demanding thing to keep, second only to a flesh golem.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -19,13 +21,23 @@ More skilled casters raise more formidable specimens.
 <ansi fg="yellow">Base Folds:  </ansi> Extended channel
 <ansi fg="yellow">Corpse:      </ansi> <ansi fg="white-bold">Requires immense remains</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Nearby corpse or ground loot</ansi>
-<ansi fg="yellow">Conv. Cost:  </ansi> Heavy
+<ansi fg="yellow">Cast Cost:   </ansi> Notable, and paid only once
+<ansi fg="yellow">Held Cost:   </ansi> Notable, for as long as you keep it
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Manifestation</ansi>
 
 <ansi fg="white-bold">Notes:</ansi>
   - The vampire appears under your command and aids you in combat.
   - Once raised, the undead servant remains active as a companion.
   - Use the <ansi fg="command">assess</ansi> command to evaluate a corpse's quality.
+  - Raising costs conviction once. Keeping the servant sets conviction
+    aside for as long as it walks with you, and that held share, not
+    the casting price, is what limits how many you can field.
+  - A mightier servant holds more of your will, and better remains
+    make a mightier servant.
+  - Skill in manifestation lowers what a companion holds, so practice
+    buys you a larger following as well as a stronger one.
+  - If your conviction is already spoken for, the raising is refused
+    outright rather than leaving you weaker, and costs you nothing.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help manifestation</ansi>,
-  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>
+  <ansi fg="command">help assess</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help reservation</ansi>

@@ -172,6 +172,41 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 	}
 
+	// 6b. U7b: refuse an unsustainable binding at INITIATION, before any
+	// conviction moves.
+	//
+	// Spell conviction is charged per round as the cast channels (the upkeep
+	// ApplyCost in combat_shared_helpers.go), while the reservation gates in
+	// companion_summon.go and charm_spell.go sit at RESOLUTION. So a doomed
+	// summon used to channel to completion, spend the whole cost, and only then
+	// refuse -- measured at a full pool's worth of conviction for a refused
+	// elemental, and it could even roll skill progression on the way. Both
+	// `help companion` and `help manifestation` promise the refusal costs
+	// nothing; this is what makes that true.
+	//
+	// The resolution-time checks STAY as a backstop and must not be removed. A
+	// multi-round channel gives the world time to move the ceiling out from
+	// under a cast that was affordable when it began: gear comes off, a buff
+	// lapses and shrinks the pool, another companion arrives.
+	//
+	// SummonPetMultiplier is 0 for charm, and CompanionReserveBase(0) is the
+	// unscaled default -- exactly what charm_spell.go prices. Keeping one
+	// expression for both is what stops the two seams disagreeing.
+	if spellInfo.SummonMobId > 0 || spellInfo.EffectType == `charm` {
+		if len(user.Character.Companions) >= user.Character.GetMaxCompanions() {
+			user.SendText(messaging.CategorySpellManifestation,
+				`You are already sustaining as many companions as your will can hold.`)
+			return true, nil
+		}
+		reserve := user.Character.CalcCompanionReserve(
+			characters.CompanionReserveBase(spellInfo.SummonPetMultiplier))
+		if user.Character.WouldBreachReservationCap(characters.PoolConviction, reserve) {
+			user.SendText(messaging.CategorySpellManifestation,
+				user.Character.ReservationRefusal(characters.PoolConviction, reserve))
+			return true, nil
+		}
+	}
+
 	// The player-only spell-initiation roll was deleted here (roadmap U0).
 	// CalcInitiationChance clamped at 95 while a maxed caster's computed value
 	// was 1372, so mastery could never touch it: every caster failed one cast in

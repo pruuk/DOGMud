@@ -626,10 +626,16 @@ func ScoreGrapple(mob *mobs.Mob, target *characters.Character) int {
 		return 0
 	}
 
-	// SELF-side: the raw max is correct here. Reservation comes from equipped
-	// reserve_*_pct items, Chrysalis enchantments and fielded companions, none of
-	// which mobs carry, so EffectivePoolMax would be a no-op that implies mobs do.
-	mobHealthPercent := float64(mob.Character.Health) * 100.0 / float64(mob.Character.HealthMax.Value)
+	// SELF-side, and EffectivePoolMax deliberately. The old comment here said
+	// "reservation comes from equipped reserve_*_pct items, Chrysalis
+	// enchantments and fielded companions, none of which mobs carry, so
+	// EffectivePoolMax would be a no-op that implies mobs do." That is FALSE for
+	// companions: GetPoolReservation has no IsMob gate, and companions wearing
+	// enchanted gear reserve on prod today. Against the raw max a geared
+	// companion reads as permanently wounded and scores its own tactics for a
+	// crisis it is not in. At the U7b ceiling that misreading tops out at
+	// "permanently at 34% health".
+	mobHealthPercent := float64(mob.Character.Health) * 100.0 / float64(mob.Character.EffectivePoolMax(characters.PoolHealth))
 	if mobHealthPercent < 20 {
 		score -= 50
 	}
@@ -683,8 +689,9 @@ func ScoreDrain(mob *mobs.Mob, target *characters.Character) int {
 
 	// Bonus when the vampire is hurt — drain recovers HP, so prioritize it
 	// when the attacker needs healing.
-	// SELF-side: raw max on purpose -- see ScoreGrapple.
-	hpPct := float64(mob.Character.Health) * 100 / float64(mob.Character.HealthMax.Value)
+	// SELF-side, EffectivePoolMax -- see ScoreGrapple. Reservation is not
+	// woundedness, and companions DO reserve.
+	hpPct := float64(mob.Character.Health) * 100 / float64(mob.Character.EffectivePoolMax(characters.PoolHealth))
 	if hpPct < 60 {
 		score += 25
 	}
@@ -718,8 +725,9 @@ func preferredSpell(mob *mobs.Mob) string {
 		}
 	}
 	// Heal when critically low
-	// SELF-side: raw max on purpose -- see ScoreGrapple.
-	selfPct := float64(mob.Character.Health) * 100 / float64(mob.Character.HealthMax.Value)
+	// SELF-side, EffectivePoolMax -- see ScoreGrapple. A reserved companion must
+	// not panic-heal at a full pool.
+	selfPct := float64(mob.Character.Health) * 100 / float64(mob.Character.EffectivePoolMax(characters.PoolHealth))
 	if selfPct < 30 {
 		if _, has := mob.Character.SpellBook["heal"]; has {
 			if sd := spells.GetSpell("heal"); sd != nil && mob.Character.Conviction >= sd.Cost {
