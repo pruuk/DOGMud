@@ -2842,7 +2842,39 @@ D15: a reservation readout, in descriptive bands only, no numbers anywhere. Thre
 - Create: `_datafiles/world/dogmud/templates/help/reservation.template`
 - Modify: `_datafiles/world/dogmud/keywords.yaml`
 - Modify: `_datafiles/world/dogmud/templates/help/companion.template`, `enchanting.template`, `conviction.template`, `manifestation.template`
+- Modify: **all thirteen per-spell helpfiles** (added at the owner's request, 2026-08-15): `conjure-{air,earth,fire,magma,water}.template`, `raise-{golem,skeleton,spectre,vampire,wraith,zombie}.template`, `summon-{hive-swarm,steppe-spirit}.template`
 - Test: `internal/templates/reservation_quality_test.go` (create)
+
+**The thirteen spell helpfiles carry stale cost copy.** They were written when
+conjures cost up to 450 conviction. `conjure-magma.template` says
+`Conv. Cost: Devastating` and its prose calls the toll "devastating"; the cast
+cost is now joint-highest inside a flat band that tops out an order of magnitude
+lower. Every one of the thirteen needs its cost line re-read against the shipped
+value.
+
+**Owner requirement, 2026-08-15: explain how the system actually works.** A
+player currently has no reachable explanation of any of it. Across
+`companion.template`, `manifestation.template` and the thirteen spell files,
+cover:
+
+- Casting a companion costs conviction **once**. Keeping it reserves conviction
+  **for as long as you hold it**, and that reservation is the real limit on how
+  many you can field.
+- A stronger companion reserves more. That is the trade, not the cast price.
+- Practising manifestation makes companions cheaper to hold, so rank buys
+  roster size rather than only power.
+- A raised companion is drawn partly from the remains you raise it from, so
+  better remains make a better servant, while a conjured one is the same
+  wherever you stand.
+- There is a ceiling on how much of any pool your gear and companions may hold
+  in reserve, and reaching it means the next thing is **refused** rather than
+  quietly weakening you.
+
+**No hard numbers anywhere in any of it.** No percentages, no point totals, no
+multipliers. Describe the feel and the direction. 80-char wrap, ESL-clear, and
+no en or em dashes. Note three summon YAML `description:` fields
+(`raise-golem`, `raise-spectre`, `raise-wraith`) already contain em dashes and
+are player-facing; fix those while here.
 
 - [ ] **Step 1: Write the failing test**
 
