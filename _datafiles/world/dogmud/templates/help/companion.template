@@ -46,8 +46,14 @@ a larger following, not only a stronger one.
 
 There is a limit to how much of any pool you may hold in reserve at
 once. When you reach it, the binding is refused outright instead of
-quietly leaving you weaker, and the refusal costs you nothing. Dismiss
-a companion or remove a draining item to make room.
+quietly leaving you weaker. You are told before the casting begins, so
+the refusal costs you nothing at all. Dismiss a companion or remove a
+draining item to make room.
+
+A mighty companion can ask for more than the limit allows on its own,
+even when you hold nothing at all. When you are told that, putting
+things down will not help. Bind a lesser creature, deepen your pool, or
+raise your manifestation until it will hold.
 
 Use <ansi fg="command">assess</ansi> to see what a raise would ask before you commit, and
 <ansi fg="command">status</ansi> to see how much of each pool is already spoken for.

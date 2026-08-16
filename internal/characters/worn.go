@@ -632,7 +632,11 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 	if pool, worse := beforeReserve.Worsened(c.ReservationOverages()); worse {
 		c.Equipment = savedEquipment
 		c.reapplyPermabuffs()
-		return nil, false, c.ReservationRefusal(pool)
+		// The item's own contribution is what "added" means here: the snapshot
+		// delta measures OVERAGE growth, which is smaller than the demand
+		// whenever the wearer was already over, and would misreport a
+		// single-item-too-heavy refusal as a merely-full one.
+		return nil, false, c.ReservationRefusal(pool, c.ItemReserveOnPool(i, pool))
 	}
 
 	if spec.Type == items.ComponentBag {

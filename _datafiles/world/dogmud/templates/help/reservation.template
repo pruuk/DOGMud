@@ -23,6 +23,11 @@ It will never take anything away from you. If you are already past the
 limit, everything you have stays exactly where it is. You will only be
 told no when you try to add.
 
+Some single things ask for more than the limit allows all on their own.
+A mighty companion is the usual one. When you are told that a thing
+alone is too much, nothing you put down will make room for it. You need
+a deeper pool to draw on, or a lesser thing to bind.
+
 <ansi fg="yellow">━━━ Reading It ━━━</ansi>
 
 Type <ansi fg="command">status</ansi> and look at the Reserved line under your pools. Each pool

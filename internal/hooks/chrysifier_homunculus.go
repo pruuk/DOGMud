@@ -132,7 +132,7 @@ func spawnHomunculus(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 		// being broken.
 		user.SendText(messaging.CategorySpellManifestation,
 			`Your homunculus stirs and will not hold its shape. `+
-				ch.ReservationRefusal(characters.PoolConviction))
+				ch.ReservationRefusal(characters.PoolConviction, reserve))
 		return nil
 	}
 

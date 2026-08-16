@@ -243,7 +243,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 			user.Character.ItemReserveOnPool(*targetItem, pool)
 		if user.Character.WouldBreachReservationCap(pool, added) {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s</ansi>`,
-				user.Character.ReservationRefusal(pool)))
+				user.Character.ReservationRefusal(pool, added)))
 			return true, nil
 		}
 	}

@@ -58,20 +58,24 @@ func enchantTierUpWouldBreach(ch *characters.Character, itm *items.Item) bool {
 }
 
 // enchantApplyWouldBreach reports whether binding a fresh tier-0 `enchantType`
-// to `itm` would carry the wearer past the ceiling, and on which pool.
+// to `itm` would carry the wearer past the ceiling, on which pool, and by how
+// much the binding would ADD. The added figure is returned rather than
+// recomputed at the call site because ReservationRefusal needs it to tell a
+// "this one thing is too heavy on its own" refusal from a "you are already
+// full" one.
 //
 // Subtracting what the target already reserves is what makes RE-enchanting
 // work: the old enchantment is replaced rather than stacked, so only the
 // difference is new.
-func enchantApplyWouldBreach(ch *characters.Character, itm *items.Item, enchantType string) (characters.Pool, bool) {
+func enchantApplyWouldBreach(ch *characters.Character, itm *items.Item, enchantType string) (characters.Pool, int, bool) {
 	def := enchantments.GetEnchantment(enchantType)
 	if def == nil || def.ReservePool == `` {
-		return ``, false
+		return ``, 0, false
 	}
 	pool := characters.Pool(def.ReservePool)
 	added := ch.EnchantReserveAt(enchantType, 0, itm.GetSpec().Hands, pool) -
 		ch.ItemReserveOnPool(*itm, pool)
-	return pool, ch.WouldBreachReservationCap(pool, added)
+	return pool, added, ch.WouldBreachReservationCap(pool, added)
 }
 
 // tickChrysalisEnchantments advances every equipped Chrysalis-enchanted item by
@@ -540,7 +544,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										targetItem := user.Character.Equipment.GetSlotPointer(enchantTargetSlot)
 										if targetItem == nil || targetItem.ItemId < 1 {
 											user.SendText(messaging.CategoryWarning, `<ansi fg="red">The item is no longer equipped. The enchanting fails, but your materials are returned.</ansi>`)
-										} else if pool, breach := enchantApplyWouldBreach(user.Character, targetItem, recipe.EnchantType); breach {
+										} else if pool, added, breach := enchantApplyWouldBreach(user.Character, targetItem, recipe.EnchantType); breach {
 											// U7b: craft.go refuses this before the work starts, but
 											// the rounds in between are not free of change: a worn
 											// enchantment can tier up mid-craft, and a lapsing buff
@@ -549,7 +553,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 											// the "no longer equipped" case above does.
 											user.SendText(messaging.CategoryWarning, fmt.Sprintf(
 												`<ansi fg="red">%s The enchanting fails, but your materials are returned.</ansi>`,
-												user.Character.ReservationRefusal(pool)))
+												user.Character.ReservationRefusal(pool, added)))
 										} else {
 											user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 											eDef := enchantments.GetEnchantment(recipe.EnchantType)

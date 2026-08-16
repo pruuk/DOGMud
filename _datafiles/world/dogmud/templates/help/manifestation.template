@@ -30,8 +30,14 @@ Rank buys you roster size, not only power.
 
 There is a limit to how much of any pool may be held in reserve
 at once. Reach it and the next binding is refused outright,
-rather than quietly leaving you weaker. Use <ansi fg="command">status</ansi> to see how
-much of each pool is already spoken for.
+rather than quietly leaving you weaker. You are told before the
+casting begins, so a refused binding costs you nothing. Use
+<ansi fg="command">status</ansi> to see how much of each pool is already spoken for.
+
+A mighty creature can ask for more than the limit allows on its
+own, even when you hold nothing at all. Putting things down will
+not help there. Bind a lesser creature, or raise your rank until
+it will hold.
 
 There is also a plain upper count on how many creatures will
 follow you at once, whatever your will could otherwise hold.

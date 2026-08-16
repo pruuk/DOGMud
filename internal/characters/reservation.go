@@ -245,17 +245,46 @@ func reservationBand(reserve, maxPool, cap int) string {
 // resting will never fix it. Bands only, never a number, matching the disclosure
 // style `stand` and `assess` already use.
 //
-// It says "gear and bonds", not "gear". This one string is shared by equip,
-// enchant, tier-up, charm, summon, raise and the homunculus. On the companion
-// paths the reservation actually blocking the player is very often another
-// companion, so blaming gear alone would send them stripping armour when what
-// they need to do is release a pet. Naming both is the only wording that is
-// true on every path that sends it.
-func (c *Character) ReservationRefusal(p Pool) string {
+// `added` is the reservation the refused action would ADD, and it is required
+// because there are two entirely different refusals hiding behind one cap test.
+//
+//	added > cap   The single thing on its own demands more than the ceiling
+//	              allows. What the character already holds is irrelevant, and
+//	              putting things down cannot help. This is the case an
+//	              adversarial playtest hit first: a magma elemental refused as
+//	              a FIRST companion, at zero reservation, told it "already
+//	              held a small part" of a pool it held none of. Never send the
+//	              holding wording here: at zero reservation it is simply false.
+//	added <= cap  What is already held plus this addition crosses the ceiling.
+//	              Here the holding wording is both true and actionable, and
+//	              the arithmetic guarantees the character really is holding
+//	              something (current + added > cap >= added implies current > 0).
+//
+// The holding case says "gear and bonds", not "gear". This branch is shared by
+// equip, enchant, tier-up, charm, summon, raise and the homunculus. On the
+// companion paths the reservation actually blocking the player is very often
+// another companion, so blaming gear alone would send them stripping armour
+// when what they need to do is release a pet.
+//
+// The remedy wording is lifted from help reservation's "Making Room" section on
+// purpose. The pre-fix text said "set something else aside", which that helpfile
+// defines as RESERVING -- so the refusal was telling the player to reserve more
+// when it meant the exact opposite.
+func (c *Character) ReservationRefusal(p Pool, added int) string {
+	pool := poolDisplayName(p)
+
+	if added > c.ReservationCap(p) {
+		return `That alone would set aside more of your ` + pool +
+			` than you are able to hold in reserve. Nothing you put down will ` +
+			`make room for it. You need a deeper well to draw on, or something ` +
+			`that asks less of you.`
+	}
+
 	max := c.poolMax(p)
 	share := ReserveShareBand(c.GetPoolReservation(string(p), max), max)
-	return `Your gear and bonds already hold ` + share + ` of your ` + poolDisplayName(p) +
-		` in reserve. You cannot take on more until you set something else aside.`
+	return `Your gear and bonds already hold ` + share + ` of your ` + pool +
+		` in reserve. You cannot take on more until you make room: remove a ` +
+		`draining item, disenchant one, or dismiss a companion.`
 }
 
 func poolDisplayName(p Pool) string {

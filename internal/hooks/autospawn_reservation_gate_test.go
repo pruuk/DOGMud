@@ -59,7 +59,7 @@ func TestHomunculusGate_RefusesAndNamesReservation(t *testing.T) {
 		"a homunculus on a full pool must be refused, not written anyway")
 
 	msg := `Your homunculus stirs and will not hold its shape. ` +
-		ch.ReservationRefusal(characters.PoolConviction)
+		ch.ReservationRefusal(characters.PoolConviction, reserve)
 
 	assert.Contains(t, msg, "reserve",
 		"the refusal must name reservation, or the player has no way to learn that resting will not fix it")

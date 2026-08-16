@@ -43,7 +43,7 @@ func resolveCharmSpell(user *users.UserRecord, targetMob *mobs.Mob, room *rooms.
 		return false
 	}
 	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
-		user.SendText(messaging.CategorySystem, ch.ReservationRefusal(characters.PoolConviction))
+		user.SendText(messaging.CategorySystem, ch.ReservationRefusal(characters.PoolConviction, reserve))
 		return false
 	}
 

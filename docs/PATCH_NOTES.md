@@ -16,6 +16,22 @@ when you try to add. You can still trade one burden for another of the same
 weight, even while you are at the limit, so nothing forces you to strip.
 Type status to see what each of your pools has set aside, in plain words.
 
+There are two quite different reasons the game can tell you no here, and it
+now says which one you have run into. Sometimes what you already carry is
+simply full, and the way forward is to remove a draining item, disenchant
+one, or dismiss a companion. Sometimes the single thing you are reaching for
+asks more than the limit allows all by itself, and then putting things down
+will not help at all: you need a deeper pool to draw on, or a lesser thing
+to bind. A mighty creature can be out of reach as your very first companion
+for exactly that reason, and the game used to blame gear you were not even
+wearing.
+
+A binding you cannot sustain is also refused before the casting begins,
+rather than after it has run its course. Calling a creature draws on your
+conviction the whole time you are shaping it, so a refusal that arrived at
+the end left you out of pocket for nothing. Both helpfiles promised such a
+refusal costs you nothing. Now it does.
+
 An enchantment on your gear can also deepen on its own while you fight. If
 deepening would carry you past the limit, it waits instead, and says so. The
 work it has already done is not lost, and it will grow the moment you make

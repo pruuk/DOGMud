@@ -49,7 +49,7 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	reserve := ch.CalcCompanionReserve(baseReserve)
 	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
 		user.SendText(messaging.CategorySpellManifestation,
-			ch.ReservationRefusal(characters.PoolConviction))
+			ch.ReservationRefusal(characters.PoolConviction, reserve))
 		return false
 	}
 
