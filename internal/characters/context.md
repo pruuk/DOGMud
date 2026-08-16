@@ -336,6 +336,18 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   is a property of the move, not the actor; the clamp is inert for movement
   either way (5.0 × 1.10 = 5.5 against a 6.0 ceiling) and
   `MovementMaxStaminaCost` is the real cap.
+- **`EncumbranceTier(carried, capacity float64) (label, color string)`** is the
+  ONE place carried weight is turned into something a player sees. It is a
+  package-level function, not a method, because callers already hold the two
+  floats and some of them (the `encumbranceQuality` template func) do not hold a
+  `*Character` at all. Two consumers today: the `inventory` command and the
+  `status` sheet. It lives here rather than beside either of them precisely
+  because it has two: a second copy of the thresholds would drift, and the drift
+  would be invisible, since both copies would render a plausible word, just not
+  the same word for the same load. It returns a WORD and never a number, and a
+  capacity of `<= 0` reports `crushed` (correct reading, and it keeps the
+  division safe). Now that weight prices every physical action, this word is a
+  balance readout, so it is under the no-hard-numbers rule.
 - **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCostFloat`.**
   There are FIVE defence constants. `DefenseDodge` / `DefenseParry` /
   `DefenseBlock` cost stamina; U6 added `DefenseQuell` (mental-spell defence,
