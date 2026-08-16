@@ -354,13 +354,44 @@ consequences:
    `internal/actions/sell.go` discards it and would fail silently. Note
    `give.go` queues `GiftAccepted` **before** the equip decision, so a decline
    currently reads as accept-then-return.
-2. **Five raw-max reads rejected during U7 review must be re-examined.** That
+2. **FOUR raw-max reads must move to `EffectivePoolMax`, not six.** The U7-review
    rejection rested on "mobs cannot carry a reservation", which is false for
-   companions. A reserved companion currently reads as permanently wounded to
-   the mob AI target scorers and the packmate heal selectors, the same defect U7
-   fixed on the player side. Sites: three self-side reads in `internal/combat/ai.go`,
-   plus `behaviortree/conditions_mob.go`, `action_cast_best_in_category.go`, and
-   `hpPercent` in `actions_archer.go`.
+   companions: Meirok's two golems wear enchanted gear reserving their own
+   health and conviction, on the live save. Genuinely affected, all self-side:
+   the three reads in `internal/combat/ai.go` (`ScoreGrapple`, `ScoreDrain`,
+   `preferredSpell`) and `hpPercent` in `behaviortree/actions_archer.go`.
+   **NOT affected:** `behaviortree/conditions_mob.go` and
+   `action_cast_best_in_category.go` both go through
+   `mobs.FindPackmatesInRoom`, which **skips charmed mobs**
+   (`internal/mobs/packmates.go:42`), and every companion is charmed. Correct
+   their comments rather than their code. Magnitude scales with the cap: at a
+   66% cap a fully geared companion would read as permanently at 34% health.
+
+**The cap cannot be enforced only on the adding action.** Research 2026-08-15
+found several ways reservation rises with **no player action to refuse**, and
+the first is not an edge case:
+
+- **Enchant tier-up.** `internal/hooks/NewRound_UserRoundTick.go` rolls
+  `EnchantTierUpBaseChance` in combat and increments the tier, which **doubles
+  the reserve fraction at low tiers**. A character at 74% can cross the cap
+  mid-fight having done nothing. The only coherent design is to skip the
+  tier-up when it would breach and say why. This was named nowhere in the
+  original spec.
+- `ConditionEnchantWithdrawal` shrinks the pool max *after* the reservation
+  clamp, so it raises the reservation share without touching the numerator.
+- `BodyConvictionScale` deepens as body-pole mutations accrue. Live on Meirok
+  today at 0.894.
+- `MigrateEnchantments` on login re-applies enchantment definitions, so
+  retuning any tier's `reserve_pct` grows existing reservations at load.
+- `companion_reserve_backfill.go` stamps a reserve on legacy zero-reserve
+  companions at login with no budget check at all.
+
+**`CanAffordCompanion` is weaker than the spec claimed.**
+`CompanionCastingFloorPct` defaults to 0.0 and is absent from `config.yaml`, so
+the check reduces to "total conviction reservation must not exceed the max",
+i.e. a **100% cap, not a partial budget**, and conviction only. Health and
+stamina have **no gate anywhere**. Two spawn paths (brood-mother, homunculus)
+never call it at all.
 
 **Why it must precede U8.** U8's skill-strip on insufficient resource is what
 turns an over-reserved pool from cosmetic into crippling. Shipping the strip
