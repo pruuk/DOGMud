@@ -853,10 +853,6 @@ Balance:
   #
   #   Terrain still multiplies on top, so a swamp remains dearer than a road.
   MovementBaseStaminaCost: 0.5
-  # MovementCostFloor: the least any single move can ever cost. Without it a
-  #   light, skilled traveller would round down to free movement, and free
-  #   movement removes every reason to care about stamina while exploring.
-  MovementCostFloor: 1
   # MovementMaxStaminaCost: ceiling for any single move, regardless of terrain.
   MovementMaxStaminaCost: 20.0
   # MovementSearchTrainChance: chance that one successful move records a use of
