@@ -1,9 +1,10 @@
 # melee_self_buff archetype
 #
 # A melee specialist who maintains self-buffs first, attacks otherwise.
-# Reused by vampire, air elemental, fire elemental, plus any future
+# Reused by vampire (304) and fire elemental (313), plus any future
 # melee-specialist mobs that opt in via behavior_archetype: melee_self_buff
-# on their mob YAML.
+# on their mob YAML. This list used to name the air elemental (312) as well,
+# which was never true: 312 is pure_caster.
 #
 # On packmate_hurt (a same-room routine-matched packmate was attacked):
 #   engage the attacker via the existing attack action (sets Aggro from

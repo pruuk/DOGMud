@@ -129,11 +129,15 @@ func condPackmateBelowHpRatio(params map[string]any, ctx *EvalContext) Result {
 	}
 	threshold := getFloatParam(params, "threshold", 0.40)
 	for _, pm := range mobs.FindPackmatesInRoom(self) {
-		// Raw max on purpose, NOT EffectivePoolMax. FindPackmatesInRoom returns
-		// *mobs.Mob only, and pool reservation comes from equipped reserve_*_pct
-		// items, Chrysalis enchantments and fielded companions, none of which a
-		// mob carries. Player party members are a different code path
-		// (condPartyMemberBelowPct), and that one IS reserve-aware.
+		// Raw max on purpose, NOT EffectivePoolMax -- but not for the reason this
+		// comment used to give. It said mobs carry no pool reservation, which is
+		// false: GetPoolReservation has no IsMob gate and companions wearing
+		// enchanted gear reserve on prod today. The real reason is narrower and
+		// more durable: FindPackmatesInRoom SKIPS charmed mobs
+		// (internal/mobs/packmates.go:42) and every companion is charmed, so no
+		// reserving character can reach this loop. If that filter ever changes,
+		// this read must change with it. Player party members are a different
+		// code path (condPartyMemberBelowPct), and that one IS reserve-aware.
 		maxHp := pm.Character.HealthMax.Value
 		if maxHp <= 0 {
 			continue
