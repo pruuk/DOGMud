@@ -115,8 +115,25 @@ type CostResult struct {
 func (c *Character) PoolValue(p Pool) int
 func (c *Character) CanAfford(pool Pool, amount int) bool
 
+// EffectivePoolMax is poolMax - GetPoolReservation, floored at 1 (U7 Task 11).
+// The denominator for every percentage-OF-MAX threshold. NEVER for affordability.
+// It never returns 0, deliberately: see the Gotchas note on the floor.
+func (c *Character) EffectivePoolMax(p Pool) int
+
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
+
+// ApplyCostFloat charges a FRACTIONAL cost, banking the sub-integer remainder
+// in the per-character, per-pool carry so the average converges (U7 Task 3).
+// Delegates the deduction to ApplyCostPartial. THE ENTRY POINT FOR EVERY U7
+// COST; the integer pair erases the per-action modifiers. See Gotchas.
+func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
+
+// ApplyCostFloatOrRefuse banks the remainder exactly as ApplyCostFloat does but
+// pays the whole part IN FULL or refuses outright. The affordability decision is
+// taken before anything is written, so a refused action leaves both the pool and
+// the carry untouched and cannot accumulate debt. Movement is the caller.
+func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool
 
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
 func (c *Character) ApplyRestore(pool Pool, amount int) int
@@ -166,11 +183,96 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `hooks/item_procs.go:99`). They retire with `Heal` in U5c.
 - **`CostResult.Short` is what a later chunk reads to strip the skill term.**
   The penalty for being short is a worse roll, not a lost action.
-- **`CanAfford` reads the RAW pool, not reserve-excluded.** No affordability
-  check in the codebase consults `GetPoolReservation` today. Note
-  `validate.go:146` already clamps current pools to the reserve-excluded ceiling,
-  so a raw-reading cost helper and a reserve-enforcing validator are in mild
-  tension. Do not resolve that here.
+- **`ApplyCostFloat` banks a fractional remainder, and the bank is the reason
+  U7's tuning is visible at all.** Every U7 cost is
+  `base x encumbrance x inverse-skill x per-action modifier`, so it is almost
+  never a whole number, and the pools are ints. Round each action and the small
+  factors vanish: dodge, parry and block collapse onto the SAME integer for a
+  low-skill character at every base this game would ship, which makes the
+  modifiers decoration. The bank is `costCarry map[Pool]float64`, an UNEXPORTED
+  field on `Character` (`character.go`), per pool and per character. Each call
+  adds the amount to the carry, charges `floor` of the total through
+  `ApplyCostPartial`, and leaves the fraction behind. Cumulative charged is
+  therefore `floor(cumulative amount)`: it under-charges by strictly less than
+  one over any run of actions, and that bound does not grow.
+
+  **What resets it:** nothing in the game does, deliberately, and nothing needs
+  to. It is **NOT persisted** (an in-flight fraction is worth less than the byte
+  it would cost in a save file, and a stale one after a reload would be
+  indistinguishable from a rounding bug), so it starts empty on every load,
+  spawn and relog. There is no `yaml:"-"` tag on purpose: an unexported field is
+  already invisible to the marshaller, and a yaml tag on one is a silent no-op
+  that misleads the next reader.
+
+  **Two contracts that look wrong and are not:**
+
+  - A charge that floors to zero is **not `Short`**, even on an empty pool.
+    `Short` means "the actor could not pay what this action demanded", and a
+    floored charge of zero demanded nothing; the whole amount went into the
+    bank. Returning true would penalise a free action, and would then penalise
+    the SAME fraction again on the later action that floors it to one or more.
+  - Once the carry hands a whole number to the pool, the full floored amount is
+    removed from the carry **even when the pool was too empty to cover it**, and
+    the unpaid part is written off rather than re-banked. Otherwise an exhausted
+    actor accumulates unbounded debt and is slammed with the backlog on the
+    first tick their pool refills. Being short already costs the skill term; it
+    must not also become a loan.
+
+  **A non-finite amount is free and banks nothing.** NaN and infinity are
+  reachable here because a cost is a product of four config-sourced floats, and
+  letting one through poisons that pool's carry PERMANENTLY: NaN survives the
+  floor, every later charge floors to NaN, `int(NaN)` converts to the minimum
+  int64, and `ApplyCostPartial` reads that as non-positive and charges nothing.
+  One bad value makes the pool cost-free for the rest of the session with no
+  log, no panic and no failing test. Note `amount <= 0` alone does NOT catch NaN
+  (NaN fails every comparison), which is why the guard tests it explicitly.
+
+  **Template invariant.** `mobs.newMobByIdInternal` shallow-copies the mob
+  template (`mob := *m`) and re-makes `PlayerDamage` on the next line precisely
+  because a shallow copy shares maps. `costCarry` is NOT re-made there, and is
+  safe only because it is lazily allocated by `ApplyCostFloat` and a template's
+  `Character` is never charged. Anything that charges a template (a balance
+  preview tool, an offline simulator) would allocate the map ON THE TEMPLATE and
+  hand every instance spawned afterwards the same shared carry. Re-make it
+  alongside `PlayerDamage` before doing that.
+- **`CanAfford` reads the RAW pool, not reserve-excluded, and that is correct.**
+  `RecalculateStats` already clamps the CURRENT pool to `max - reserve` every
+  round, so a cost that subtracted the reservation a second time would charge the
+  reserve twice. A companion or enchantment holder should **have less, not pay
+  more**. The original 2026-08-12 U7 spec contained exactly that double
+  subtraction and it was deleted for this reason; do not re-add it.
+- **`EffectivePoolMax` is the denominator for percentage-OF-MAX thresholds, and
+  ONLY for those.** A threshold taken off the raw max is compared against a
+  reserve-clamped current value, which is the same double charge from the other
+  direction. That was a live bug: `stand` demanded `StandMinStamina` (0.15) of
+  the RAW max, so a 30%-reserved character was asked for 21.4% of the pool they
+  could actually fill, and past **85% reservation** the gate demanded more
+  stamina than the pool could ever hold -- a permanent lockout reported as
+  exhaustion, which resting cannot fix. U7 Task 11 routed `stand` and every
+  `combat.ResourceMultiplier` denominator through it. The refusal message now
+  discloses reservation in a descriptive band (`reserveShareBand` in
+  `internal/usercommands/assess.go`), never a raw number.
+- **`EffectivePoolMax` is floored at 1, NOT at 0, and it never returns 0.**
+  Total reservation is reachable (stacked Chrysalis enchantments; a two-handed
+  item doubles its reserve share). Every consumer treats a non-positive max as
+  "no penalty at all" and bails to the neutral answer -- `ResourceMultiplier`
+  returns `1.0`, `IsLowGrappleStamina` returns `false`,
+  `grappleStaminaMultiplier` returns `1.0` -- so a floor of 0 gave a character
+  with a permanently EMPTY pool full swing count, full hit chance and full melee
+  damage, the exact inversion of the pre-U7 behaviour. A floor of 1 makes that
+  character compute ratio `0/1 = 0` and take the MAXIMUM depletion penalty. It
+  matches the pool-max clamp `validatePoolClamps` already applies
+  (`validate.go:135-137`). The `if eff <= 0` guards at the call sites are
+  therefore dead code, kept as belt and braces.
+  One consequence is intended and must not be "fixed": `stand` computes
+  `int(1 * StandMinStamina) = 0`, so a fully reserved character stands for free.
+  There is no stamina left to charge, and refusing would recreate the permanent
+  floor-lockout Task 11 removed.
+- **Regen deliberately still reads the RAW max.** `HealthPerRound`,
+  `StaminaPerRound` and `ConvictionPerRound` in `resources.go` are the named
+  exception: making them reserve-aware is a NERF to reserved characters, and the
+  faster refill relative to the usable pool is what offsets the depletion penalty
+  they carry. Each carries a comment saying so. It is not drift.
 - **Harm and restore are one signed pipeline** (`applyVitalChange`) behind two
   positive-only wrappers. Sign inversion is this codebase's signature failure
   mode; the wrappers exist so no call site can get the direction wrong.
@@ -205,37 +307,85 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   candidate. Movement is a two-pool transaction with a hand-rolled refund.
 - **`DeductStamina` and `DeductDefenseStamina` no longer exist.** U5b-2 deleted
   both. `flee` and the defence charge now call `ApplyCostPartial` directly, and
-  movement (`usercommands/go.go`) calls `ApplyCost`. The one survivor in
-  `resources.go` is `DeductAttackStamina`, which is `Deprecated:` and is already
-  a thin wrapper over `ApplyCostPartial`; it stays only because nothing
-  downstream strips the skill term until U8. `DeductActionPoints` is a different
-  pool entirely (see the ActionPoints note above).
-- **Defence base stamina costs are config, not Go.** `DodgeBaseStaminaCost`,
-  `ParryBaseStaminaCost` and `BlockBaseStaminaCost` feed
-  `GetDefenseStaminaCost`, which computes `int(base * multiplier)` TRUNCATED and
-  then floors at 1. Rounding instead of truncating would change dodge's live
-  cost.
-- **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCost`.**
-  There are FIVE defence constants and `GetDefenseStaminaCost` prices only
-  three. `DefenseDodge` / `DefenseParry` / `DefenseBlock` cost stamina; U6 added
-  `DefenseQuell` (mental-spell defence, `Willpower + spellcasting × SkillWeight`)
-  and `DefenseDefy` (social defence, `Willpower + rhetoric × SkillWeight`), and
-  both cost **conviction**. Grepping for a stamina cost on either finds nothing
-  and proves nothing.
+  movement (`usercommands/go.go`) calls `ApplyCost`. U7 Task 7 then deleted the
+  last two, `GetAttackStaminaCost` and `DeductAttackStamina`: the attacker's
+  cost was charged ONCE PER ROUND by the four combat wrappers however many
+  swings the round contained, while the defender paid on every incoming swing.
+  Attacks are priced per swing now by `combat.ChargeAttackCost`, through the
+  same `costs.Calc` composition the defences use. `DeductActionPoints` is a
+  different pool entirely (see the ActionPoints note above).
+- **Defence costs are one config formula, not per-defence Go arithmetic.** U7
+  Task 6 deleted `GetDefenseStaminaCost` and with it the three per-defence base
+  knobs (`DodgeBaseStaminaCost`, `ParryBaseStaminaCost`,
+  `BlockBaseStaminaCost`). All five defences now price through `costs.Calc`:
+
+  - dodge / parry / block: `DefenceBaseStaminaCost` × encumbrance ×
+    inverse-skill × `{Dodge,Parry,Block}CostModifier` (1.25 / 1.10 / 1.15).
+  - quell / defy: `QuellBaseConvictionCost` / `DefyBaseConvictionCost` ×
+    inverse-skill, modifier a neutral 1.0. **No encumbrance term** — their
+    `costs.ActionQuell` / `ActionDefy` registry rows are `Physical: false`, and
+    that row is the only thing keeping it off them.
+
+  Every action with a governing skill takes the inverse-skill discount, mental
+  and social included: quell is governed by spellcasting and defy by rhetoric.
+- **Movement is priced by the same formula.** U7 Task 8 put
+  `GetMovementStaminaCost` on `costs.Calc`: `MovementBaseStaminaCost` × terrain ×
+  encumbrance × inverse-skill (governing skill `search`, from the
+  `costs.ActionMove` registry row), then the mutation speed modifier, the hidden
+  multiplier and the `MovementMaxStaminaCost` cap, in that order. It returns a
+  **float**, and `go.go` charges it through `ApplyCostFloatOrRefuse` so the
+  remainder is banked and movement still refuses when unaffordable. It used to
+  return an int and ceil each move independently, which flattened the whole
+  1.0-to-5.0 encumbrance range into three distinct prices, measured in-game as a
+  single step with flat shoulders. `MovementCostFloor` was deleted with the
+  ceiling: a banked sub-1 charge is not free, and any floor at or above 1
+  re-flattens the curve it was meant to protect. The encumbrance term it replaced was written inline here and
+  was flat 1.0 until the actor **exceeded** carry capacity, so it priced nothing
+  for anyone not deliberately overloaded. The base drops to **0.5** to pay for
+  the curve now charging from the first pound: ordinary travel gets slightly
+  cheaper, travel at capacity markedly dearer. Terrain rides inside `Base`
+  because `Calc` clamps the product of the actor-derived multipliers and terrain
+  is a property of the move, not the actor; the clamp is inert for movement
+  either way (5.0 × 1.10 = 5.5 against a 6.0 ceiling) and
+  `MovementMaxStaminaCost` is the real cap.
+- **`EncumbranceTier(carried, capacity float64) (label, color string)`** is the
+  ONE place carried weight is turned into something a player sees. It is a
+  package-level function, not a method, because callers already hold the two
+  floats and some of them (the `encumbranceQuality` template func) do not hold a
+  `*Character` at all. Two consumers today: the `inventory` command and the
+  `status` sheet. It lives here rather than beside either of them precisely
+  because it has two: a second copy of the thresholds would drift, and the drift
+  would be invisible, since both copies would render a plausible word, just not
+  the same word for the same load. It returns a WORD and never a number, and a
+  capacity of `<= 0` reports `crushed` (correct reading, and it keeps the
+  division safe). Now that weight prices every physical action, this word is a
+  balance readout, so it is under the no-hard-numbers rule.
+- **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCostFloat`.**
+  There are FIVE defence constants. `DefenseDodge` / `DefenseParry` /
+  `DefenseBlock` cost stamina; U6 added `DefenseQuell` (mental-spell defence,
+  `Willpower + spellcasting × SkillWeight`) and `DefenseDefy` (social defence,
+  `Willpower + rhetoric × SkillWeight`), and both cost **conviction**. Grepping
+  for a stamina cost on either finds nothing and proves nothing.
 
   ```go
-  func DefensePool(defenseType string) Pool              // quell/defy -> PoolConviction
-  func (c *Character) GetDefenseCost(defenseType string) int
+  func DefensePool(defenseType string) Pool                      // quell/defy -> PoolConviction
+  func (c *Character) GetDefenseCostFloat(defenseType string) float64
+  func (c *Character) GetDefenseCost(defenseType string) int     // tests only; see below
+  func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
   ```
 
-  `GetDefenseStaminaCost` still returns **0** for quell and defy via its default
-  arm. That is correct for what it measures and a trap for its callers: the old
-  `ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...))` shape charges zero
-  and the defence is **free** — silently, with no compile error, since melee
-  never emits either name. U6 Task 12 added the pair and moved
-  `runBestOfAllDefense` and `combat.ResolveChannelDefence` onto it. An
-  unrecognised name maps to `PoolStamina` at cost 0, so the pair charges nothing
-  rather than draining an arbitrary pool.
+  **Use the FLOAT pair.** `GetDefenseCost` truncates, and at the shipped base and
+  modifiers all three physical defences floor to the same `1` — the per-defence
+  tuning simply vanishes. That was a live bug: `combat.ResolveChannelDefence`
+  charged through the integer entry point until U7, so blocking a
+  `target_defense_type: physical` spell (eleven shipped spells set it) cost 1
+  instead of 1.2604 and was indistinguishable from dodging. `ApplyCostFloat`
+  banks the sub-integer remainder, so the difference survives as an average. No
+  production caller of `GetDefenseCost` remains.
+
+  The pairing matters independently: pool and amount must be read off the SAME
+  defence name. An unrecognised name maps to `PoolStamina` at cost 0, so the pair
+  charges nothing rather than draining an arbitrary pool.
 - **`GetDefenseSequence` is melee-only and does not know about quell or defy.**
   It derives dodge/parry/block from equipment. The per-channel defence set lives
   in `combat.DefenceSetFor` instead.
@@ -607,9 +757,10 @@ while keeping the Awareness machine as the canonical state source.
 ### Hidden movement stamina scaling
 
 When a character is `Hidden`, movement stamina cost is multiplied by
-`HiddenMoveStaminaMultiplier` (config default 1.0, tunable at runtime).
-This is read in `GetMovementStaminaCost()` and applied before returning
-the movement cost to the caller.
+`HiddenMoveStaminaMultiplier` (default and shipped value both 3.0). This
+is read in `GetMovementStaminaCost()` and applied after the shared cost
+composition and before the cap. (There is no floor any more; movement banks its
+fractional remainder instead.)
 
 ### Integration with Combat Phase
 

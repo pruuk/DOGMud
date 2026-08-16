@@ -22,6 +22,40 @@ func (c *Character) CarryCapacity() float64 {
 	return base * (1.0 + mutations.GetCarryCapacityMultiplier(c.Mutations))
 }
 
+// EncumbranceTier maps a carried weight and a carry capacity onto the
+// player-facing burden word and the ansi color it is drawn in.
+//
+// This lives here, rather than next to either of its callers, because it has
+// two of them: the `inventory` command and the `encumbranceQuality` template
+// function that puts the same word on the `status` sheet. Two copies of the
+// thresholds would drift, and the drift would be invisible (both would render
+// a plausible word, just not the same one for the same load).
+//
+// Deliberately returns a WORD and never a number. Carried weight now prices
+// every physical action through costs.EncumbranceMultiplier, which makes it a
+// balance value, and balance values are not shown to players.
+//
+// A capacity of zero or less reports "crushed": that is the correct reading
+// for an actor who cannot carry anything, and it also keeps the division
+// below safe.
+func EncumbranceTier(carried, capacity float64) (label, color string) {
+	if capacity <= 0 {
+		return "crushed", "magenta-bold"
+	}
+	switch ratio := carried / capacity; {
+	case ratio <= 0.25:
+		return "light", "green"
+	case ratio <= 0.50:
+		return "moderate", "yellow"
+	case ratio <= 0.75:
+		return "heavy", "red"
+	case ratio <= 1.00:
+		return "overburdened", "red-bold"
+	default:
+		return "crushed", "magenta-bold"
+	}
+}
+
 // GetCarriedWeight returns the total weight of all carried items in pounds
 func (c *Character) GetCarriedWeight() float64 {
 	// Backpack item weights

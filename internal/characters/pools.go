@@ -1,6 +1,8 @@
 package characters
 
 import (
+	"math"
+
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
@@ -59,6 +61,60 @@ func (c *Character) poolMax(p Pool) int {
 		return c.ConvictionMax.Value
 	}
 	return 0
+}
+
+// EffectivePoolMax returns the ceiling the character can ACTUALLY reach: the raw
+// maximum with pool reservation (Chrysalis enchantments, pinnacle-item
+// reserve_*_pct, fielded companions) taken out.
+//
+// FLOORED AT 1, NOT AT 0, AND THE DIFFERENCE IS A BALANCE INVERSION. Total
+// reservation is reachable: stacked Chrysalis enchantments, and a two-handed
+// item doubling its reserve share (see GetTierReservePct in
+// internal/enchantments), can hold 100% or more of a pool. Every consumer of
+// this value reads a non-positive max as "no penalty at all" and bails to the
+// neutral answer -- combat.ResourceMultiplier returns 1.0, IsLowGrappleStamina
+// returns false, grappleStaminaMultiplier returns 1.0 -- so a floor of 0 handed
+// a character with a permanently EMPTY pool full swing count, full hit chance
+// and full melee damage. That is the exact opposite of the pre-U7 behaviour and
+// of the intent. With a floor of 1 the same character computes ratio 0/1 = 0 and
+// takes the MAXIMUM depletion penalty, which is what a permanently empty pool
+// should mean. The floor matches the pool-max clamp validatePoolClamps already
+// applies at validate.go:135-137 (HealthMax, StaminaMax and ConvictionMax are
+// each raised to at least 1).
+//
+// Consequence worth stating: this function NEVER returns 0, so `if eff <= 0`
+// guards at its call sites are dead code kept only as belt and braces.
+//
+// One consumer does not get its old behaviour back and must not be "fixed":
+// `stand` computes int(1 * StandMinStamina) = 0 for a fully reserved character,
+// so they stand for free. That is correct. There is no stamina left to charge
+// them, and refusing them would recreate the permanent floor-lockout U7 Task 11
+// exists to remove.
+//
+// USE IT FOR EVERY PERCENTAGE-OF-MAX THRESHOLD. A threshold measured against the
+// raw max is compared to a current value that RecalculateStats has already
+// clamped to max - reserve, so the reserved fraction is charged to the actor
+// twice: `stand` demanded 15% of the raw max from a pool that could only ever
+// hold max - reserve, which is unsatisfiable past 85% reservation and a graded
+// tax below it, and every ResourceMultiplier call reading the raw max left a
+// reserved actor permanently partway down the depletion penalty curve, unable to
+// reach 1.0 at full pools.
+//
+// NEVER USE IT FOR AFFORDABILITY. Costs read the CURRENT pool, and the current
+// pool is already reserve-clamped every round, so subtracting the reservation
+// again at cost time charges the reserve a second time. The original
+// 2026-08-12 spec had exactly that double-subtraction in it and it was deleted
+// for this reason; do not re-add it. A companion or enchantment holder should
+// simply HAVE LESS, not PAY MORE.
+//
+// Regeneration is a deliberate exception and still reads the raw max -- see
+// HealthPerRound/StaminaPerRound/ConvictionPerRound in resources.go.
+func (c *Character) EffectivePoolMax(p Pool) int {
+	max := c.poolMax(p)
+	if eff := max - c.GetPoolReservation(string(p), max); eff > 1 {
+		return eff
+	}
+	return 1
 }
 
 // setPool writes a pool. Unexported so every caller goes through a primitive
@@ -151,6 +207,130 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult {
 	}
 	c.setPool(pool, current-charged)
 	return CostResult{Charged: charged, Short: charged < amount}
+}
+
+// ApplyCostFloat charges a fractional cost, banking the remainder so the average
+// charged converges on the amount asked for. Not exactly: cumulative charged is
+// floor(cumulative amount), so it under-charges by strictly less than 1 over any
+// run of actions -- 100 charges of 2.3 total 229, not 230. The bound does not
+// grow, which is the point.
+//
+// Every U7 cost is a float: base x encumbrance x inverse skill x per-action
+// modifier. Rounding each action to an integer destroys the small factors --
+// verified: dodge, parry and block all collapse to the same number for a
+// low-skill character at every base this game would ship. The carry is per pool
+// and per character, and is not persisted.
+//
+// The deduction itself is delegated to ApplyCostPartial so the floor rules and
+// the Short flag stay in exactly one place.
+//
+// A non-finite amount is treated as free and banks nothing. NaN and infinity are
+// reachable here -- a cost is a product of four config-sourced floats -- and
+// letting one through poisons the pool's carry PERMANENTLY: NaN survives the
+// floor, every later charge floors to NaN, int(NaN) converts to the minimum
+// int64, and ApplyCostPartial reads that as non-positive and charges nothing.
+// One bad value would make that pool cost-free for the rest of the session,
+// with no log, no panic and no failing test. costs.EncumbranceMultiplier guards
+// the same way at the other end.
+//
+// SHORT WHEN THE FLOORED CHARGE IS ZERO: it is false, even on an empty pool.
+// Short means "the actor could not pay what this action demanded", and a floored
+// charge of zero demanded nothing -- the whole amount went into the bank. U8
+// reads Short to strip the skill term from the action's roll, so returning true
+// here would penalise an action that cost nothing, and would then penalise the
+// SAME fraction again on the later action that floors it to one or more and
+// legitimately reports Short against the empty pool. Within the carry the debt
+// is not forgiven, only deferred, so it is charged and reported exactly once.
+// This also matches the sibling contract: ApplyCostPartial treats a non-positive
+// amount as free and not Short.
+//
+// Once the carry hands a whole number to the pool, though, the subject changes:
+// the full floored amount is always removed from the carry, even when the pool
+// was too empty to cover it, and that unpaid remainder is written off rather
+// than re-banked. (No contradiction with the paragraph above -- the carry defers
+// a FRACTION until it is worth charging; a charge the POOL could not cover is
+// simply not reclaimed.) An exhausted actor would otherwise accumulate an
+// unbounded debt and be slammed with the whole backlog on the first tick their
+// pool refilled. Being short is already punished by the lost skill term; it must
+// not also become a loan.
+func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult {
+	// NaN fails every comparison, so `amount <= 0` alone does NOT stop it.
+	if amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) {
+		return CostResult{}
+	}
+
+	if c.costCarry == nil {
+		c.costCarry = make(map[Pool]float64, 3)
+	}
+
+	debt := c.costCarry[pool] + amount
+	whole := math.Floor(debt)
+	c.costCarry[pool] = debt - whole
+
+	if whole <= 0 {
+		return CostResult{}
+	}
+
+	return c.ApplyCostPartial(pool, int(whole))
+}
+
+// ApplyCostFloatOrRefuse is the all-or-nothing sibling of ApplyCostFloat: it
+// banks the sub-integer remainder the same way, but pays the whole part IN FULL
+// or refuses outright, reporting whether it paid.
+//
+// It exists because movement needs both halves at once and neither existing
+// primitive gives both. ApplyCost refuses but is integer-only, and rounding a
+// move up to a whole point flattens the encumbrance curve into a single step
+// with flat shoulders: at MovementBaseStaminaCost 0.5 an empty traveller and one
+// at two thirds of capacity both ceil to 1, and a multiplier that ranges to 5.0
+// gets to express three distinct prices in total. ApplyCostFloat has the
+// fractional precision but delegates to ApplyCostPartial, which pays what it can
+// rather than refusing, and movement REFUSING when unaffordable is load-bearing
+// (U5b-2): it is the gate that makes flee the only player-initiated disengage
+// while in combat.
+//
+// ORDERING IS THE WHOLE POINT. The affordability decision is taken against a
+// CANDIDATE debt held in a local, before anything is written back. On the
+// refusal path the function returns having mutated neither the carry nor the
+// pool, so a refused action cannot quietly accumulate debt that a later,
+// affordable action would then be slammed with. There is no early return
+// between the two writes on the success path either, so the pair cannot be
+// half-applied.
+//
+// The deduction itself is delegated to ApplyCost so the "in full or not at all"
+// floor rule stays in exactly one place. CanAfford and ApplyCost read the same
+// pool with nothing interleaved between them, so the delegated call cannot fail
+// after the check passed; its result is returned rather than discarded so a
+// future change to either cannot silently diverge.
+//
+// A non-finite or non-positive amount is free: it succeeds, banks nothing, and
+// changes nothing. Same reasoning as ApplyCostFloat, where the consequence of
+// letting NaN reach the carry is a permanently cost-free pool.
+func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool {
+	// NaN fails every comparison, so `amount <= 0` alone does NOT stop it.
+	if amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) {
+		return true
+	}
+
+	if c.costCarry == nil {
+		c.costCarry = make(map[Pool]float64, 3)
+	}
+
+	// Candidate values only. Nothing below this line writes until the refusal
+	// path has been ruled out.
+	debt := c.costCarry[pool] + amount
+	whole := math.Floor(debt)
+
+	if whole > 0 && !c.CanAfford(pool, int(whole)) {
+		return false
+	}
+
+	c.costCarry[pool] = debt - whole
+
+	if whole <= 0 {
+		return true
+	}
+	return c.ApplyCost(pool, int(whole))
 }
 
 // applyVitalChange is the single signed pipeline behind ApplyHarm and

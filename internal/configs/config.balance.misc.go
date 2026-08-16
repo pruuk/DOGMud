@@ -18,15 +18,38 @@ func (b *Balance) validateMisc() {
 	clampPct(&b.PlayerConvictionRegenPct, 0.01)
 
 	// ── STAMINA & CONVICTION ──────────────────────────────────────────────────
+	// U7 Task 8: 2.0 -> 0.5. The base is no longer the whole price of a move --
+	// it is now multiplied by the shared encumbrance curve and the inverse-skill
+	// curve, exactly as every other physical action is. At 0.5 an ordinary
+	// traveller pays slightly LESS than the old flat 2.0 and a traveller at carry
+	// capacity pays markedly more, which is the point: the term it replaced was
+	// flat 1.0 until the actor EXCEEDED capacity and therefore priced nothing for
+	// anyone who was not deliberately overloaded.
+	//
+	// config.yaml still ships MovementBaseStaminaCost: 2.0 and that value WINS
+	// over this default until the Task 12 config pass lowers it.
 	if b.MovementBaseStaminaCost <= 0 {
-		b.MovementBaseStaminaCost = 2.0
+		b.MovementBaseStaminaCost = 0.5
 	}
 	if b.MovementMaxStaminaCost <= 0 {
 		b.MovementMaxStaminaCost = 20.0
 	}
-	if b.UnarmedAttackStaminaCost < 1 {
-		b.UnarmedAttackStaminaCost = 4
+	// MovementCostFloor's default went with the field. See the comment where it
+	// was declared: banking the fractional remainder is what stops a move being
+	// free now, and a floor would flatten the curve instead of protecting it.
+	// U7 Task 10. Note the `== 0` rather than the `<= 0` used above: absence
+	// means "take the default", but a NEGATIVE value is an explicit "switch
+	// travel-training off" and is left alone so movementTrainsSearch can read it
+	// as off. Clamped at 1.0 because it is a probability, not a rate.
+	if b.MovementSearchTrainChance == 0 {
+		b.MovementSearchTrainChance = 0.005
 	}
+	if b.MovementSearchTrainChance > 1.0 {
+		b.MovementSearchTrainChance = 1.0
+	}
+	// U7 Task 7 deleted UnarmedAttackStaminaCost's default with the field. The
+	// attack charge is per swing now and lives in validateCombat with the rest of
+	// the U7 cost knobs.
 
 	// ── RESOURCE MAXIMUMS ─────────────────────────────────────────────────────
 	if b.HealthBase < 0 {

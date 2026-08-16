@@ -23,6 +23,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -616,5 +617,55 @@ func TestCondPartyAtHome_HomeRoomZero_Failure(t *testing.T) {
 	ctx := &EvalContext{InstanceId: 8043}
 	if result := fn(nil, ctx); result != Failure {
 		t.Errorf("expected Failure when HomeRoomId==0, got %v", result)
+	}
+}
+
+// U7 Task 11 regression. Party members are partyActors and are routinely
+// PLAYERS, whose current pool RecalculateStats already clamps to
+// max - reservation every round. Measuring the ratio against the RAW max
+// therefore reports a reserved player as permanently below the threshold at a
+// completely full pool, so an NPC party healer would try to top them up forever.
+//
+// The member here reserves 40% of health and is at 60/100, which is their
+// FULL reachable pool. Against EffectivePoolMax that reads 100% and the
+// condition must fail. Against HealthMax.Value it reads 60% and fires.
+func TestCondPartyMemberBelowPct_ReservationIsNotWoundedness(t *testing.T) {
+	fn := LookupCondition("party_member_below_pct")
+
+	mob, _ := makeHPPartyMob(t, 8010, 60, 100)
+	mob.Character.Equipment.Neck = items.Item{
+		ItemId: 999940,
+		Spec: &items.ItemSpec{
+			ItemId:           999940,
+			Name:             "leeching collar",
+			Type:             items.Neck,
+			Subtype:          items.Wearable,
+			ReserveHealthPct: 0.40,
+		},
+	}
+	if res := mob.Character.GetPoolReservation("health", 100); res != 40 {
+		t.Fatalf("fixture: reservation = %d, want 40; the inline item spec did not take", res)
+	}
+	if eff := mob.Character.EffectivePoolMax(characters.PoolHealth); eff != 60 {
+		t.Fatalf("fixture: EffectivePoolMax(health) = %d, want 60", eff)
+	}
+
+	ctx := &EvalContext{InstanceId: 8010}
+	// 80 sits between the two readings: 100% (correct) is above it, 60% (raw) is
+	// below it, so the threshold is what makes the revert visible.
+	params := map[string]any{"pool": "hp", "percent": 80}
+	if result := fn(params, ctx); result != Failure {
+		t.Errorf("a party member at their FULL reachable health (60/60, 40 reserved) "+
+			"reported below 80%%, got %v. The condition is dividing by HealthMax.Value "+
+			"instead of EffectivePoolMax, so a reserved player reads as permanently "+
+			"wounded and NPC healers never stop topping them up", result)
+	}
+
+	// The condition must still fire on a genuinely wounded member, or the
+	// assertion above would pass on a condition that never returns Success.
+	mob.Character.Health = 10
+	if result := fn(params, ctx); result != Success {
+		t.Errorf("a genuinely wounded member (10/60) did not report below 80%%, got %v; "+
+			"this test would prove nothing", result)
 	}
 }

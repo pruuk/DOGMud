@@ -10,22 +10,56 @@ type Balance struct {
 	// stat-based roll. Default 0.15 (15%). Valid range 0.05–0.50.
 	RollSpread ConfigFloat `yaml:"RollSpread"`
 
+	// ── COMBAT: ATTACK COSTS ─────────────────────────────────────────────────
+	// U7 Task 7: an attack is charged PER SWING, through the same costs.Calc
+	// formula the defences use -- base x encumbrance x inverse skill x modifier.
+	// Before this, the attacker paid ONCE PER ROUND no matter how many weapons
+	// and swings resolved, while the defender paid on every incoming swing. A
+	// twelve-swing build therefore attacked twelve times for the price of one,
+	// which is what made offence effectively free next to defence. Both sides of
+	// an exchange are now priced on the same basis.
+	//
+	// The base is deliberately the same 1.0 as DefenceBaseStaminaCost, and the
+	// modifier a neutral 1.0: attacking is the reference action the three defence
+	// modifiers (1.25 / 1.15 / 1.10) are tuned against, so it starts at parity
+	// and moves only when play says it should.
+	//
+	// This replaced UnarmedAttackStaminaCost and the per-weapon staminacost item
+	// field. Weapon weight already prices a heavy weapon through the encumbrance
+	// multiplier, so reading a per-weapon cost here as well would charge for the
+	// same heaviness twice.
+	AttackBaseStaminaCost ConfigFloat `yaml:"AttackBaseStaminaCost"` // Base stamina cost for ONE swing, before multipliers (default 1.0)
+	AttackCostModifier    ConfigFloat `yaml:"AttackCostModifier"`    // Per-action cost modifier for attacking (default 1.0 — the neutral reference the defence modifiers are tuned against)
+
 	// ── COMBAT: DEFENSE COSTS ────────────────────────────────────────────────
-	DodgeBaseStaminaCost ConfigInt   `yaml:"DodgeBaseStaminaCost"` // Base stamina cost for dodge, before multiplier (default 2)
-	ParryBaseStaminaCost ConfigInt   `yaml:"ParryBaseStaminaCost"` // Base stamina cost for parry, before multiplier (default 4)
-	BlockBaseStaminaCost ConfigInt   `yaml:"BlockBaseStaminaCost"` // Base stamina cost for block, before multiplier (default 5)
-	DodgeMultiplier      ConfigFloat `yaml:"DodgeMultiplier"`      // Stamina cost multiplier for dodge (default 0.9)
-	ParryMultiplier      ConfigFloat `yaml:"ParryMultiplier"`      // Stamina cost multiplier for parry (default 0.9)
-	BlockMultiplier      ConfigFloat `yaml:"BlockMultiplier"`      // Stamina cost multiplier for block (default 0.9)
+	// U7 Task 6 replaced the six per-defence knobs (DodgeBaseStaminaCost,
+	// ParryBaseStaminaCost, BlockBaseStaminaCost and the three cost multipliers)
+	// with ONE shared base and three per-action modifiers. The old pair-per-
+	// defence shape let base and multiplier drift against each other, and the
+	// integer truncation at the end of the old formula ate the difference anyway:
+	// 2x0.9, 4x0.9 and 5x0.9 landed on 1, 3 and 4 with no way to express
+	// anything between them. The three physical defences are now priced by
+	// costs.Calc -- base x encumbrance x inverse skill x modifier -- and charged
+	// through the fractional carry, so a fourteen percent gap between two
+	// modifiers survives instead of rounding to nothing.
+	//
+	// Those six keys may still be present in config.yaml. yaml.Unmarshal is
+	// non-strict, so an orphaned key is ignored rather than fatal.
+	DefenceBaseStaminaCost ConfigFloat `yaml:"DefenceBaseStaminaCost"` // Shared base stamina cost for dodge/parry/block, before multipliers (default 1.0)
+	DodgeCostModifier      ConfigFloat `yaml:"DodgeCostModifier"`      // Per-action cost modifier for dodge (default 1.25 — dearest; the whole body moves)
+	ParryCostModifier      ConfigFloat `yaml:"ParryCostModifier"`      // Per-action cost modifier for parry (default 1.10 — cheapest; a weapon interposes)
+	BlockCostModifier      ConfigFloat `yaml:"BlockCostModifier"`      // Per-action cost modifier for block (default 1.15)
 
 	// U6 Task 12: quell and defy are paid in CONVICTION, not stamina, so they
 	// get their own base costs rather than a fourth and fifth stamina knob. The
-	// pairing lives in characters.DefensePool / Character.GetDefenseCost; charging
-	// either through GetDefenseStaminaCost returns 0 and makes the defence free.
+	// pairing lives in characters.DefensePool / Character.GetDefenseCostFloat,
+	// which read the pool and the amount off the same defence name.
 	//
-	// No cost MULTIPLIER to match the physical three. Those exist because the
-	// three were retuned together against a shared stamina pool; there is nothing
-	// to retune against yet here, and a base cost alone is already tunable.
+	// U7 Task 6 left these FLAT while routing the physical three through
+	// costs.Calc. The principled price for a mounted defence is a fraction of the
+	// incoming action's cost, which needs the attacker's cost threaded through the
+	// defence path; neither defence has been seen in live play yet, so that is
+	// deferred rather than guessed at. A base cost alone is already tunable.
 	QuellBaseConvictionCost ConfigInt `yaml:"QuellBaseConvictionCost"` // Base conviction cost for quell (default 2)
 	DefyBaseConvictionCost  ConfigInt `yaml:"DefyBaseConvictionCost"`  // Base conviction cost for defy (default 2)
 
@@ -253,9 +287,31 @@ type Balance struct {
 	MobConvictionRegenPct    ConfigFloat `yaml:"MobConvictionRegenPct"`    // Fraction of ConvictionMax regen'd per tick — NPCs (default 0.02)
 
 	// ── STAMINA & CONVICTION ──────────────────────────────────────────────────
-	MovementBaseStaminaCost  ConfigFloat `yaml:"MovementBaseStaminaCost"`  // Flat cost to move on normal terrain (default 2.0)
-	MovementMaxStaminaCost   ConfigFloat `yaml:"MovementMaxStaminaCost"`   // Ceiling for any single move action (default 20.0)
-	UnarmedAttackStaminaCost ConfigInt   `yaml:"UnarmedAttackStaminaCost"` // Stamina per unarmed attack (default 4)
+	MovementBaseStaminaCost ConfigFloat `yaml:"MovementBaseStaminaCost"` // Flat cost to move on normal terrain, BEFORE encumbrance and skill (default 0.5)
+	MovementMaxStaminaCost  ConfigFloat `yaml:"MovementMaxStaminaCost"`  // Ceiling for any single move action (default 20.0)
+	// The U7 movement-banking change deleted MovementCostFloor. It was the
+	// minimum stamina a single move could cost, and it existed only because
+	// GetMovementStaminaCost returned an int: an unfloored sub-1.0 cost would
+	// have rounded away to a free move. Movement now banks its fractional
+	// remainder through ApplyCostFloatOrRefuse, so a sub-1.0 charge is not free,
+	// it is a whole point every second or third room, and any floor at or above
+	// 1 would flatten the encumbrance curve back into the single step with flat
+	// shoulders that an in-game measurement found. The key may still be present
+	// in config.yaml -- yaml.Unmarshal is non-strict, so an orphaned key is
+	// ignored rather than fatal, and the line can be dropped whenever that file
+	// is next edited.
+	// U7 Task 10: movement is priced partly on the actor's search rank, so
+	// travelling has to be able to EARN that discount -- but only barely.
+	// This is the probability that a successful move RECORDS a search use;
+	// it is deliberately not a multiplier on the odds of a use that is
+	// counted every step (see movementTrainsSearch in usercommands/go.go).
+	// Zero or negative switches travel-training off entirely.
+	MovementSearchTrainChance ConfigFloat `yaml:"MovementSearchTrainChance"` // Chance a successful move records a search use (default 0.005, i.e. 1 in 200)
+	// U7 Task 7 deleted UnarmedAttackStaminaCost. It was the fallback arm of a
+	// per-round, per-weapon attack charge that no longer exists; attacking is
+	// priced per swing by AttackBaseStaminaCost above, armed or not. The key may
+	// still be present in config.yaml -- yaml.Unmarshal is non-strict, so an
+	// orphaned key is ignored rather than fatal.
 
 	// ── RESOURCE MAXIMUMS ─────────────────────────────────────────────────────
 	HealthBase             ConfigInt `yaml:"HealthBase"`             // Flat HP before stat contribution (default 5)
@@ -285,6 +341,42 @@ type Balance struct {
 	MobInstanceMaxAgeDays    ConfigInt   `yaml:"MobInstanceMaxAgeDays"`    // Max age in days before stale instance files are pruned (default 7)
 	RegenProgressionBase     ConfigFloat `yaml:"RegenProgressionBase"`     // Max chance at 0% resource per stat per tick (default 0.005)
 	RegenProgressionCurve    ConfigFloat `yaml:"RegenProgressionCurve"`    // Exponent shaping the depletion→chance curve (default 3.0)
+
+	// ── COSTS: INVERSE-SKILL MULTIPLIER (U7) ─────────────────────────────────
+	// costs.SkillCostMultiplier runs INVERSE to skill: a practised fighter
+	// spends less stamina/conviction on the same action than an untrained
+	// one. Two linear segments joined at CostSkillMidRank, clamped flat below
+	// rank 0 and at/above CostSkillCapRank. NOT combat.SkillMultiplier (a
+	// sqrt curve scaling damage UPWARD) — same-shaped signature, opposite
+	// direction, different job; named SkillCostMultiplier specifically so an
+	// unqualified in-package call inside combat can never resolve to it.
+	//
+	// Unlike some knobs elsewhere in this file (e.g. StaminaPerStrength: 0),
+	// 0 is NOT a usable value for any of the five fields below — each is
+	// replaced by its default at load if left at or below 0 (the two rank
+	// fields if left below 1).
+	CostSkillMultAtZero ConfigFloat `yaml:"CostSkillMultAtZero"` // Cost multiplier at rank 0 (default 1.10)
+	CostSkillMultAtMid  ConfigFloat `yaml:"CostSkillMultAtMid"`  // Cost multiplier at CostSkillMidRank, neutral (default 1.00)
+	CostSkillMultAtCap  ConfigFloat `yaml:"CostSkillMultAtCap"`  // Cost multiplier at/above CostSkillCapRank (default 0.40)
+	CostSkillMidRank    ConfigInt   `yaml:"CostSkillMidRank"`    // Virtual rank where the multiplier is neutral (default 25)
+	CostSkillCapRank    ConfigInt   `yaml:"CostSkillCapRank"`    // Virtual rank where the discount maxes out (default 100); must exceed CostSkillMidRank, enforced in validateProgression
+
+	// ── COSTS: ENCUMBRANCE MULTIPLIER (U7) ───────────────────────────────────
+	// costs.EncumbranceMultiplier prices carried weight into PHYSICAL actions
+	// only. Two linear segments joined at CostEncumbranceKnee: gentle from
+	// empty to the knee, steep from the knee to capacity, flat at/above it.
+	CostEncumbranceKnee     ConfigFloat `yaml:"CostEncumbranceKnee"`     // Fraction of capacity where the curve steepens (default 0.75)
+	CostEncumbranceKneeMult ConfigFloat `yaml:"CostEncumbranceKneeMult"` // Multiplier at the knee (default 1.5)
+	CostEncumbranceMax      ConfigFloat `yaml:"CostEncumbranceMax"`      // Multiplier at/above capacity (default 5.0)
+
+	// ── COSTS: COMPOSED-TOTAL CEILING (U7) ───────────────────────────────────
+	// costs.Calc clamps the PRODUCT of its multipliers (encumbrance x inverse
+	// skill x per-action modifier) to this, NOT each factor in turn. Clamping
+	// factors individually still lets encumbrance 5.0, a rank-0 penalty 1.10
+	// and a defence premium 1.25 stack to 6.875x, which a laden novice cannot
+	// pay — and "cannot pay" reads to the player as autofail-everything, not as
+	// expensive. The action's Base price sits OUTSIDE this clamp.
+	CostTotalMultiplierMax ConfigFloat `yaml:"CostTotalMultiplierMax"` // Ceiling on the composed cost multiplier (default 6.0)
 
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	// Per-stat and per-skill multipliers on progression chance.

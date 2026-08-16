@@ -117,9 +117,12 @@ func calcSwingCount(sourceChar *characters.Character, weaponSpeed float64, extra
 		swings *= dualWieldMod
 	}
 
-	// Apply smooth stamina-based swing count penalty
+	// Apply smooth stamina-based swing count penalty. EffectivePoolMax, not the
+	// raw max (U7 Task 11): current stamina is already reserve-clamped, so a raw
+	// denominator would park every reserved actor partway down this curve and
+	// deny them ratio 1.0 even at a full pool.
 	spPenalty := float64(bal.StaminaPenaltyMax)
-	swings *= ResourceMultiplier(sourceChar.Stamina, sourceChar.StaminaMax.Value, spPenalty)
+	swings *= ResourceMultiplier(sourceChar.Stamina, sourceChar.EffectivePoolMax(characters.PoolStamina), spPenalty)
 
 	// Apply encumbrance penalty (weight-based)
 	carriedWeight := sourceChar.GetCarriedWeight()
@@ -355,9 +358,10 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 	dmgMean += float64(statModBonus)
 	rawDmgForCrit += float64(statModBonus)
 
-	// Apply smooth health-based melee damage penalty
+	// Apply smooth health-based melee damage penalty. EffectivePoolMax, not the
+	// raw max -- see calcSwings.
 	hpPenalty := float64(configs.GetBalanceConfig().HealthPenaltyMax)
-	dmgMult := ResourceMultiplier(sourceChar.Health, sourceChar.HealthMax.Value, hpPenalty)
+	dmgMult := ResourceMultiplier(sourceChar.Health, sourceChar.EffectivePoolMax(characters.PoolHealth), hpPenalty)
 	dmgMean *= dmgMult
 	rawDmgForCrit *= dmgMult
 
@@ -409,9 +413,10 @@ func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Ch
 	attackScore := float64(sourceChar.GetEffectiveDexterity()) + float64(sourceChar.GetCombatSkillLevel())*float64(bal.SkillWeight)
 	attackScore -= float64(penalty)
 
-	// Apply smooth stamina-based hit chance penalty
+	// Apply smooth stamina-based hit chance penalty. EffectivePoolMax, not the
+	// raw max -- see calcSwings.
 	spPenalty := float64(bal.StaminaPenaltyMax)
-	staminaMult := ResourceMultiplier(sourceChar.Stamina, sourceChar.StaminaMax.Value, spPenalty)
+	staminaMult := ResourceMultiplier(sourceChar.Stamina, sourceChar.EffectivePoolMax(characters.PoolStamina), spPenalty)
 	attackScore *= staminaMult
 
 	// Stage 7.5: Apply prone attack multipliers. Chunk 4b R1: FSM-driven —
@@ -725,14 +730,20 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 	// the defence free. U8 reads CostResult.Short to strip the skill term from
 	// the defence score; this chunk discards it.
 	// U6 Task 12: charged through the DefensePool / GetDefenseCost pair rather
-	// than PoolStamina + GetDefenseStaminaCost. Melee only ever emits the three
-	// physical defences, for which the pair returns exactly what the old call
-	// did, so this is not a behaviour change. It removes the trap: the old shape
-	// charges quell and defy ZERO, silently, if either is ever added here.
+	// than PoolStamina + a stamina-only cost. Melee only ever emits the three
+	// physical defences, but the pair removes the trap: the old shape charges
+	// quell and defy ZERO, silently, if either is ever added here.
+	//
+	// U7 Task 6: the amount is now a float from costs.Calc and is charged through
+	// ApplyCostFloat, which banks the sub-integer remainder. Both halves matter.
+	// The three defence modifiers differ by five to fourteen percent; charged as
+	// integers they all truncate to the same number and the tuning does nothing.
+	// This is also the first time these numbers reach a real character -- until
+	// Task 1 this site charged a discarded copy of the defender.
 	if best.defenseType != "" {
-		_ = targetChar.ApplyCostPartial(
+		_ = targetChar.ApplyCostFloat(
 			characters.DefensePool(best.defenseType),
-			targetChar.GetDefenseCost(best.defenseType))
+			targetChar.GetDefenseCostFloat(best.defenseType))
 	}
 
 	return best

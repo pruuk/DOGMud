@@ -144,6 +144,17 @@ func convictionReserveBand(reserve, maxPool int) string {
 	if maxPool <= 0 || reserve >= maxPool {
 		return `more than your spirit could hold`
 	}
+	return reserveShareBand(reserve, maxPool)
+}
+
+// reserveShareBand is the pool-agnostic half of convictionReserveBand: it names
+// what SHARE of a pool a reservation holds, with no flavour committing it to
+// Conviction. `stand` uses it to disclose a stamina reservation. Player-facing
+// text never shows the raw number.
+func reserveShareBand(reserve, maxPool int) string {
+	if maxPool <= 0 || reserve >= maxPool {
+		return `all`
+	}
 	frac := float64(reserve) / float64(maxPool)
 	switch {
 	case frac < 0.15:

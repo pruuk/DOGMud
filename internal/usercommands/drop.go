@@ -27,10 +27,37 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if args[0] == "all" {
 
-		// "drop all gold" — drop all gold explicitly
-		if len(args) >= 2 && args[1] == "gold" && user.Character.Gold > 0 {
-			Drop(fmt.Sprintf("%d gold", user.Character.Gold), user, room, flags)
+		// "drop all gold": drop all gold explicitly.
+		//
+		// Dispatched on the WORD, not on the balance. Gating this on
+		// `Gold > 0` meant a penniless player typing "drop all gold" fell
+		// through to the bare-"drop all" fallback below and emptied their
+		// entire pack instead.
+		if len(args) >= 2 && args[1] == "gold" {
+			if user.Character.Gold > 0 {
+				// Propagate the delegate's result rather than discarding it: a
+				// swallowed error here would report success on a failed drop.
+				return Drop(fmt.Sprintf("%d gold", user.Character.Gold), user, room, flags)
+			}
+			user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
 			return true, nil
+		}
+
+		// "drop all <name>": the space form of "drop all.<name>".
+		//
+		// Both spellings mean "every <name> I am carrying" and both must
+		// FILTER BY NAME. Only the dot form ever did: util.GetMatchNumber
+		// recognises "all.stone" but knows nothing about "all stone", and the
+		// `args[0] == "all"` test above swallowed the space form before the
+		// dot-form handler further down could ever see it. The result was that
+		// "drop all stone" dropped the player's whole inventory, quest items
+		// included, on a command that named exactly one thing.
+		//
+		// Normalising to the dot form and re-entering keeps ONE filtered
+		// implementation (the loop at the "all.item support" comment below)
+		// rather than a second copy that can drift from it.
+		if len(args) >= 2 {
+			return Drop("all."+strings.Join(args[1:], " "), user, room, flags)
 		}
 
 		// "drop all" — drop all items but not gold

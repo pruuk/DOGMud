@@ -1,5 +1,116 @@
 # DOGMud Patch Notes
 
+## 2026-08-15: A light pack is finally worth carrying
+
+Travelling used to cost the same whether you set out empty-handed or with
+your pack two thirds full. The game was rounding every step up to a whole
+measure of stamina, so the difference between a light load and a heavy one
+had nowhere to show itself, and only a genuinely crushing burden ever
+changed the number. Steps are now counted as they really are, and the cost
+of a room is carried forward until it adds up. A light traveller now covers
+noticeably more ground on the same reserves than a laden one, and an easy
+road is genuinely easier than a rough one instead of merely being called so.
+Walking while overloaded is correspondingly harder. Refusing a step you
+cannot afford still refuses cleanly and costs you nothing.
+
+Breaking off to flee is now priced the way every other physical effort is.
+It used to cost a flat amount no matter what you were hauling, so running
+for your life with everything you owned on your back was as cheap as running
+with nothing. It is not cheap any more. Fleeing is still something you can
+always attempt, however spent you are, and it will never be refused for want
+of stamina.
+
+Typing flee a second time while the first attempt is still resolving now
+tells you so, instead of answering with silence.
+
+## 2026-08-15: Say what you mean, and be told the truth
+
+"Drop all stone" now drops your stones. It used to drop everything you had,
+quest items and all, because the game read the word "all" and stopped
+reading. "Get all stone" had the matching fault and swept up the whole
+floor. Both spellings, with a dot or with a space, now act on the one thing
+you named. Asking to drop all your gold when you have none also says so,
+instead of quietly emptying your pack.
+
+The stamina helpfile was telling you the opposite of the truth about
+defending. It said dodging was the cheapest defence and blocking the
+dearest. It is the other way around, and a player who read it and built
+around dodging was optimising into the most expensive defence in the game.
+It also suggested one incoming blow could charge you for several defences at
+once. It cannot: you meet the blow with whichever defence serves you best
+and pay for that one alone. Both are corrected, and the file now covers what
+attacking costs and how weight and skill move every price.
+
+The encumbrance helpfile described a burden counted in objects. It is
+weight, and always was. A pack of feathers and a pack holding an anvil are
+not the same load. The file now says so, and explains that weight raises the
+price of attacking and defending as well as walking.
+
+Your burden now appears on your status sheet next to your toxicity, so you
+no longer have to open your pack or edit your prompt to find out how heavily
+you are loaded before a fight.
+
+For those using a client that reads the game's data feed: a resource pool at
+rock bottom now reports itself as empty rather than saying nothing at all.
+Bars that used to freeze at their last reading when you ran dry will now
+show you the truth at the moment it matters most.
+
+## 2026-08-15: Effort has a price, and skill is the discount
+
+Every action you take is now priced by the same rule. What it costs depends
+on three things: the action itself, how much you are carrying, and how
+practised you are at it. Nothing is free simply because nobody had got
+around to charging for it.
+
+Defending costs stamina. It never did, on any melee defence, for the whole
+life of the game, which is why a long fight used to leave the person
+swinging tired and the person defending fresh. Throwing your whole body out
+of the way is the dearest of the three, getting a shield in the way costs
+less, and turning a blade with your own weapon is the cheapest of all. Pick
+your defence with that in mind.
+
+Attacking is charged for every blow you throw, not once per round. A fighter
+with several weapons, or several arms, used to swing a dozen times for the
+price of one while the person in front of them paid for every one of those
+dozen. Both sides pay for what they actually do now, so a flurry is a real
+commitment and a miss still costs you the swing.
+
+What you carry matters. A light pack barely registers, and the price climbs
+slowly while you have room to spare, but it rises sharply once you are near
+your limit and is punishing at the top. Fighting while hauling a full load
+of ore is now a decision, not a free ride. Drop your heavy loot or sell it
+before the fight.
+
+Practice pays for itself. A complete beginner pays a little over the going
+rate for anything, and a master pays well under half. This applies to
+everything with a skill behind it, including defending, so the way to fight
+longer is to get better rather than to eat more.
+
+Travelling has changed shape. An ordinary walk with an ordinary pack is a
+touch cheaper than it was, but travelling with your carrying limit in sight
+is much dearer, and the difference between the two is now something you can
+feel over a long road. Walking also very rarely teaches you something about
+reading the ground. It is far slower than searching or foraging on purpose,
+but a life on the road eventually sharpens your eye, and a sharper eye is
+harder to sneak up on.
+
+Turning aside a spell aimed at your mind, or refusing a taunt, draws on
+your conviction as before. Neither cares what is in your pack: the weight on
+your back has no say in whether you can hold your nerve.
+
+One old cruelty is gone. If your gear or your companions hold back part of
+your strength, the game now measures you against the strength you can
+actually reach. Before, a character who had given up enough of a pool could
+be knocked down and told they were too tired to stand, forever, and no
+amount of rest would fix it, because the bar was set above anything they
+could ever hold.
+
+That measure runs both ways. Rested is rested: enemies no longer read a
+character whose gear holds back part of their health as wounded prey, and
+allies no longer fuss over someone who is already as whole as they can be.
+Nor does giving up a whole pool make you untouchable. A pool your gear keeps
+permanently empty now weighs on you exactly as an empty pool should.
+
 ## 2026-08-15: The casters remember their spells
 
 Some enemies were written as spellcasters and never once cast. A mob that

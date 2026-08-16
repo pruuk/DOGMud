@@ -286,11 +286,22 @@ type ItemSpec struct {
 	AmmoTag               string     `yaml:"ammo_tag,omitempty"`                // Ranged weapons: ammo type required (arrows/bolts/shot). Ammo items: type provided.
 	MinStrength           int        `yaml:"min_strength,omitempty"`            // Minimum Strength to wield (heavy bows/arbalest)
 	WaitRounds            int        `yaml:"waitrounds,omitempty"`              // How many extra rounds each combat requires
-	StaminaCost           int        `yaml:"staminacost,omitempty"`             // Stamina cost per attack with this weapon
-	SpeedMultiplier       float64    `yaml:"speedmultiplier,omitempty"`         // Attack speed modifier (1.0 = unarmed baseline, <1.0 slower, >1.0 faster)
-	Weight                float64    `yaml:"weight,omitempty"`                  // Weight in pounds (affects encumbrance)
-	GrappleModifier       float64    `yaml:"grapplemodifier,omitempty"`         // Grapple bonus/penalty (Stage 8.2)
-	EscapeModifier        float64    `yaml:"escapemodifier,omitempty"`          // Armor escape modifier for Grounded position (Stage 8.7)
+	// StaminaCost is DEPRECATED and no longer read for cost. U7 Task 7 replaced
+	// the per-weapon attack charge with a config base (AttackBaseStaminaCost)
+	// times the encumbrance multiplier, charged per swing. A heavy weapon already
+	// costs more through its WEIGHT feeding that encumbrance multiplier, so
+	// reading this field as well would charge for the same heaviness twice.
+	//
+	// The field is KEPT rather than deleted because thirty item files author the
+	// staminacost key. The production loader is non-strict and would ignore an
+	// unknown key, but internal/fileloader carries a probeStrict hook that the
+	// boot smoke test enables, and deleting the Go field would make all thirty
+	// fail that probe. Removing it needs a content pass over those files first.
+	StaminaCost     int     `yaml:"staminacost,omitempty"`     // Deprecated (U7 Task 7): unread; see above
+	SpeedMultiplier float64 `yaml:"speedmultiplier,omitempty"` // Attack speed modifier (1.0 = unarmed baseline, <1.0 slower, >1.0 faster)
+	Weight          float64 `yaml:"weight,omitempty"`          // Weight in pounds (affects encumbrance)
+	GrappleModifier float64 `yaml:"grapplemodifier,omitempty"` // Grapple bonus/penalty (Stage 8.2)
+	EscapeModifier  float64 `yaml:"escapemodifier,omitempty"`  // Armor escape modifier for Grounded position (Stage 8.7)
 	// Reach is the weapon's operational reach in meters. Combat
 	// consults reach in grapple positions: weapons whose reach
 	// exceeds the position's effective radius are penalized (see
@@ -385,6 +396,13 @@ func (d *Damage) InitDiceRoll(dRoll string) {
 
 // GetAttackStaminaCost returns the stamina cost for attacking with this weapon.
 // Returns a default based on weapon type if not explicitly set.
+//
+// Deprecated: U7 Task 7 removed its only production caller
+// (Character.GetAttackStaminaCost). Attacks are priced per swing by
+// combat.ChargeAttackCost -- a config base times the encumbrance multiplier the
+// weapon's WEIGHT already feeds -- so nothing reads a per-weapon cost any more.
+// Kept alongside the StaminaCost field it reads; both go together in the content
+// pass that clears staminacost out of the thirty item files that set it.
 func (is *ItemSpec) GetAttackStaminaCost() int {
 	if is.StaminaCost > 0 {
 		return is.StaminaCost

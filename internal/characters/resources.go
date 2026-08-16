@@ -1,10 +1,9 @@
 package characters
 
 import (
-	"math"
-
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
@@ -22,33 +21,84 @@ func (c *Character) DeductActionPoints(amount int) bool {
 	return true
 }
 
-// GetMovementStaminaCost calculates the stamina cost for movement based on
-// terrain difficulty and encumbrance.
-// terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc.
-// Returns stamina cost (2-20 stamina range).
-func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
+// GetMovementStaminaCost prices one room move in stamina.
+//
+// terrainMultiplier: 1.0 = normal terrain, 2.0 = rough terrain, etc. The result
+// is capped at MovementMaxStaminaCost.
+//
+// RETURNS A FRACTIONAL COST, and the caller must charge it through
+// ApplyCostFloatOrRefuse so the sub-1 remainder is banked. It used to return an
+// int and ceil every move independently, which made the encumbrance term
+// useless: at a base of 0.5 an empty traveller computed 0.55 and one at two
+// thirds of capacity computed 0.79, and both ceiled to 1. An in-game
+// measurement found exactly that shape, a single step with flat shoulders,
+// where light and heavy both cost 1 per room and overburdened and crushed both
+// cost 2 to 3. A multiplier that ranges from 1.0 to 5.0 cannot be expressed in
+// whole points on top of a base below 1; banking the remainder is what gives it
+// its range back. Movement was the last priced action in the game not using the
+// carry.
+//
+// MovementCostFloor went with the ceiling. Its whole job was "a move is never
+// free", which was true of a rounded cost that could round down to nothing and
+// is false of a banked one: a charge of 0.55 is not free, it is a point of
+// stamina every second room. Any floor at or above 1 would re-flatten precisely
+// the curve this change exists to unflatten, and a floor below 1 is
+// unreachable anyway, because MovementBaseStaminaCost and every multiplier are
+// validated positive and BiomeInfo.GetMovementCost never returns less than a
+// positive terrain value. The knob is deleted rather than set to zero so no
+// later edit can quietly reinstate the flattening.
+//
+// U7 Task 8: movement is a PHYSICAL ACTION and is priced by the same formula as
+// every other one --
+//
+//	base x terrain x encumbrance(actor) x inverse-skill(actor)
+//
+// -- replacing an encumbrance term written inline here that was flat 1.0 until
+// the actor EXCEEDED carry capacity and only ramped toward 5.0 at DOUBLE
+// capacity. That shape priced nothing for anybody who was not deliberately
+// overloaded: every realistically laden character in the game sat at exactly
+// 1.0, so the term may as well not have existed. The shared curve
+// (costs.EncumbranceMultiplier) starts charging from the first pound and reaches
+// its maximum AT capacity, so a full pack is felt on the road as well as in a
+// fight.
+//
+// The base drops to 0.5 to pay for it. It is no longer the whole price of a
+// move, so leaving it at 2.0 would have made ordinary travel dearer as a side
+// effect of fixing the load term. At 0.5 ordinary travel gets slightly CHEAPER
+// than the old flat two and travel near capacity gets markedly dearer, which is
+// the intended shape. config.yaml ships 0.5 to match; it predates U7 and was the
+// one U7 knob whose stale shipped value would have overridden the Go default.
+//
+// The governing skill is SEARCH, from the costs registry rather than named here
+// -- picking your footing well is the same faculty as noticing what is underfoot.
+// At the universal rank-1 floor the discount is a near-neutral 1.096; it only
+// becomes visible once load or terrain has pushed the cost clear of the floor.
+//
+// TERRAIN IS FOLDED INTO Base, NOT APPLIED AFTER Calc. Calc clamps the PRODUCT
+// of its multipliers (CostTotalMultiplierMax, 6.0) and terrain is not one of its
+// inputs, so multiplying it in afterwards would put terrain outside a clamp that
+// is documented as covering the whole composed multiplier. Base is explicitly
+// outside that clamp by design -- it is the authored price of the action -- and
+// terrain is a property of the move being priced rather than of the actor, so it
+// belongs there. This is also numerically identical to the pre-U7 arithmetic,
+// which began `baseCost * terrainMultiplier` too. The practical effect of the
+// clamp on movement is nil either way: encumbrance tops out at 5.0 and the
+// inverse-skill curve at 1.10, a product of 5.5 that cannot reach 6.0. The real
+// ceiling on a move is MovementMaxStaminaCost, which unlike Calc's clamp bounds
+// terrain and the hidden-movement multiplier as well.
+func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) float64 {
 	b := configs.GetBalanceConfig()
-	baseCost := float64(b.MovementBaseStaminaCost)
 	maxCost := float64(b.MovementMaxStaminaCost)
 
-	// Apply terrain multiplier
-	cost := baseCost * terrainMultiplier
-
-	// Calculate encumbrance multiplier based on weight
-	encumbranceMultiplier := 1.0
-	carriedWeight := c.GetCarriedWeight()
-	capacity := c.CarryCapacity()
-
-	if carriedWeight > capacity {
-		// Overencumbered: scale from 1.0 to 5.0 based on how much over capacity
-		overAmount := carriedWeight - capacity
-		overRatio := overAmount / capacity
-		// Cap at 5x multiplier when carrying 2x capacity
-		encumbranceMultiplier = 1.0 + math.Min(overRatio*4.0, 4.0)
-	}
-
-	// Apply encumbrance multiplier
-	cost *= encumbranceMultiplier
+	spec := costs.SpecFor(costs.ActionMove)
+	cost := costs.Calc(costs.Input{
+		Base:      float64(b.MovementBaseStaminaCost) * terrainMultiplier,
+		Carried:   c.GetCarriedWeight(),
+		Capacity:  c.CarryCapacity(),
+		Physical:  spec.Physical,
+		SkillRank: c.GetSkillLevel(spec.Skill),
+		HasSkill:  spec.HasSkill,
+	})
 
 	// Phase 24.2: Apply mutation movement speed modifier (Hasted, Extra Legs, etc.)
 	if moveMod := mutations.GetMovementSpeedModifier(c.Mutations); moveMod != 0 {
@@ -57,7 +107,7 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
 
 	// Sneaking costs extra stamina — moving carefully is harder.
 	// HiddenMoveStaminaMultiplier (default 3.0) stacks multiplicatively
-	// with encumbrance: over-encumbered hidden movement is brutal (5×3 = 15× cost).
+	// with encumbrance: hidden movement at capacity is brutal (5×3 = 15× cost).
 	if c.IsHidden() {
 		cost *= float64(b.HiddenMoveStaminaMultiplier)
 	}
@@ -67,55 +117,36 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) int {
 		cost = maxCost
 	}
 
-	// Minimum 1 stamina
-	if cost < 1.0 {
-		cost = 1.0
-	}
-
-	return int(math.Ceil(cost))
+	return cost
 }
 
-// GetAttackStaminaCost calculates the stamina cost for making an attack.
-// Cost is based on weapon type (or unarmed if no weapon).
-func (c *Character) GetAttackStaminaCost() int {
-	// Check main hand weapon
-	if c.Equipment.Weapon.ItemId > 0 {
-		weaponSpec := c.Equipment.Weapon.GetSpec()
-		return weaponSpec.GetAttackStaminaCost()
-	}
-
-	// Check offhand weapon (dual wielding)
-	if c.Equipment.Offhand.ItemId > 0 {
-		offhandSpec := c.Equipment.Offhand.GetSpec()
-		return offhandSpec.GetAttackStaminaCost()
-	}
-
-	// Unarmed combat costs less stamina
-	return int(configs.GetBalanceConfig().UnarmedAttackStaminaCost)
-}
-
-// DeductAttackStamina deducts stamina for an attack and returns the actual cost deducted.
-// If character doesn't have enough stamina, deducts what they have and returns that amount.
+// U7 Task 7 deleted GetAttackStaminaCost and DeductAttackStamina. Between them
+// they were the entire attacker-side cost model, and it was charged ONCE PER
+// ROUND by the four combat wrappers however many weapons and swings the round
+// actually contained -- while the defender paid on every incoming swing. Use
+// combat.ChargeAttackCost, which prices one swing through costs.Calc (base x
+// encumbrance x inverse skill x modifier, the same composition the five defences
+// use) and charges it per swing thrown.
 //
-// Deprecated: use ApplyCostPartial. Its pay-what-you-can behaviour is correct
-// but nothing downstream strips the skill term yet; U8 adds that.
-func (c *Character) DeductAttackStamina() int {
-	cost := c.GetAttackStaminaCost()
-	return c.ApplyCostPartial(PoolStamina, cost).Charged
-}
+// The per-weapon arm is gone for a second reason beyond the round/swing one:
+// weapon weight already prices a heavy weapon through the encumbrance
+// multiplier, so reading a weapon's authored staminacost as well would charge
+// for the same heaviness twice.
 
 // DefensePool names the resource pool a defence is paid out of.
 //
 // The physical three cost STAMINA; quell and defy cost CONVICTION. Before U6
 // there was no mapping at all and every call site simply assumed PoolStamina,
-// which is why GetDefenseStaminaCost returning 0 for quell and defy would have
-// made both defences free with no compile error and no failing test.
+// which is why the old stamina-only cost function returning 0 for quell and
+// defy would have made both defences free with no compile error and no failing
+// test.
 //
-// Charge through the PAIR -- DefensePool for the pool, GetDefenseCost for the
-// amount. Either alone can charge the wrong thing; together they cannot.
+// Charge through the PAIR -- DefensePool for the pool, GetDefenseCostFloat for
+// the amount. Either alone can charge the wrong thing; together they cannot.
 //
-// An unrecognised defence name maps to PoolStamina, where GetDefenseCost also
-// returns 0, so the pair charges nothing rather than draining an arbitrary pool.
+// An unrecognised defence name maps to PoolStamina, where GetDefenseCostFloat
+// also returns 0, so the pair charges nothing rather than draining an arbitrary
+// pool.
 func DefensePool(defenseType string) Pool {
 	switch defenseType {
 	case DefenseQuell, DefenseDefy:
@@ -125,22 +156,119 @@ func DefensePool(defenseType string) Pool {
 	}
 }
 
-// GetDefenseCost returns what a defence costs in the pool DefensePool names for
-// it, and is the entry point every caller should use.
+// GetDefenseCostFloat prices one defence, and is the entry point every caller
+// that can spend a fractional cost should use.
 //
-// U6 Task 12 added it because GetDefenseStaminaCost cannot answer the question
-// on its own: it is stamina-only and returns 0 for the two conviction defences.
-func (c *Character) GetDefenseCost(defenseType string) int {
+// The three PHYSICAL defences run through costs.Calc:
+//
+//	DefenceBaseStaminaCost x encumbrance x inverse-skill x per-action modifier
+//
+// The modifiers (dodge 1.25, block 1.15, parry 1.10) are the whole reason this
+// returns a float. They differ by as little as five percent, and the old
+// integer formula truncated every one of them onto the same handful of whole
+// numbers; charge the result through Character.ApplyCostFloat, which banks the
+// remainder, and the difference survives as an average instead of vanishing.
+//
+// ALL FIVE defences price through the one formula, quell and defy included.
+// Every action with a governing skill takes the inverse-skill discount, mental
+// and social no exception: quell is governed by spellcasting and defy by
+// rhetoric, so a practised caster spends less conviction turning a working aside
+// than a novice does, exactly as a practised fighter spends less stamina
+// blocking. Their bases are the two conviction knobs rather than the shared
+// stamina one, and their per-action modifier is a neutral 1.0 -- there is no
+// third conviction-defence to tune them against.
+//
+// What keeps encumbrance off them is the costs registry, not this function:
+// ActionQuell and ActionDefy are registered Physical: false, so costs.Calc
+// never applies the encumbrance multiplier to either. That row is the single
+// point of truth for it, and flipping it would move the price of quell under
+// load -- which is what TestQuellAndDefyAreFlatAndUnencumbered asserts against.
+//
+// The principled price for a mounted defence is still a FRACTION OF THE
+// INCOMING ACTION's cost -- a save should scale with what it is answering --
+// but that needs the attacker's cost threaded through seven call sites and a
+// signature change on the defence path. Deferred on purpose; the flat base is
+// tunable today.
+//
+// An unrecognised defence costs 0 rather than being priced as something else,
+// which pairs with DefensePool mapping it to PoolStamina: together they charge
+// nothing instead of draining an arbitrary pool.
+func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
 	bal := configs.GetBalanceConfig()
 
+	var action costs.Action
+	var base, modifier float64
+
 	switch defenseType {
+	case DefenseDodge:
+		action = costs.ActionDodge
+		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.DodgeCostModifier)
+	case DefenseParry:
+		action = costs.ActionParry
+		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.ParryCostModifier)
+	case DefenseBlock:
+		action = costs.ActionBlock
+		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.BlockCostModifier)
 	case DefenseQuell:
-		return atLeastOneCost(int(bal.QuellBaseConvictionCost))
+		action = costs.ActionQuell
+		base, modifier = float64(bal.QuellBaseConvictionCost), 1.0
 	case DefenseDefy:
-		return atLeastOneCost(int(bal.DefyBaseConvictionCost))
+		action = costs.ActionDefy
+		base, modifier = float64(bal.DefyBaseConvictionCost), 1.0
 	default:
-		return c.GetDefenseStaminaCost(defenseType)
+		return 0
 	}
+
+	spec := costs.SpecFor(action)
+	cost := costs.Calc(costs.Input{
+		Base:      base,
+		Carried:   c.GetCarriedWeight(),
+		Capacity:  c.CarryCapacity(),
+		Physical:  spec.Physical,
+		SkillRank: c.GetSkillLevel(spec.Skill),
+		HasSkill:  spec.HasSkill,
+		Modifier:  modifier,
+	})
+
+	// A mounted defence must never come out FREE. This is the float sibling of
+	// atLeastOneCost, and it deliberately does not floor at 1: ApplyCostFloat
+	// banks the sub-integer remainder, so a mastered caster's 0.8 conviction is
+	// really paid over five saves, and clamping it up to a whole point would
+	// delete the mastery discount the paragraph above grants. Zero is the only
+	// value that is genuinely free forever, so zero is what this catches.
+	//
+	// It is unreachable under any validated Balance -- validateCombat forces
+	// every base positive and both multiplier curves are positive by
+	// construction -- and exists so a hand-built Balance cannot silently make a
+	// defence cost nothing.
+	if cost <= 0 {
+		return float64(atLeastOneCost(int(base)))
+	}
+	return cost
+}
+
+// GetDefenseCost returns what a defence costs in the pool DefensePool names for
+// it, as a whole number.
+//
+// USE GetDefenseCostFloat. NO production caller uses this one any more: the
+// melee site migrated in U7 Task 6 and ResolveChannelDefence (the ranged, spell
+// and social channels) followed, which is what fixed block against a physical
+// spell falling from four stamina to one. The only remaining callers are the
+// defence-cost tests in this package, which use it to pin exactly how lossy it
+// is. Rounding a U7 cost to an integer destroys the tuning the float version
+// exists to carry -- at the shipped base and modifiers all three physical
+// defences floor to 1 here, so a caller using this cannot see the difference
+// between dodging, parrying and blocking.
+//
+// Floored, not rounded, with a floor of 1: a defence that costs nothing is not
+// a defence, and rounding up would overcharge every defence in the game by up
+// to a whole point.
+func (c *Character) GetDefenseCost(defenseType string) int {
+	cost := c.GetDefenseCostFloat(defenseType)
+	if cost <= 0 {
+		return 0
+	}
+	return atLeastOneCost(int(cost))
 }
 
 // atLeastOneCost floors a mounted defence's cost at 1, matching the clamp the
@@ -153,45 +281,9 @@ func atLeastOneCost(cost int) int {
 	return cost
 }
 
-// GetDefenseStaminaCost returns stamina cost for a defense type (Stage 7.1).
-//
-// STAMINA ONLY, AND IT DOES NOT COVER EVERY DEFENCE. DefenseQuell and
-// DefenseDefy cost CONVICTION, so they fall to the default arm and return 0.
-// That is correct for what this function measures and a trap for its callers:
-// charging a defence with
-// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)) charges quell or
-// defy ZERO and the defence is FREE -- silently, with no compile error and no
-// test failure, since melee never emits either name today.
-//
-// Prefer the DefensePool / GetDefenseCost pair above, which cannot make that
-// mistake. This stays exported because runBestOfAllDefense's melee-only path and
-// its affordability tests still read it directly.
-func (c *Character) GetDefenseStaminaCost(defenseType string) int {
-	bal := configs.GetBalanceConfig()
-
-	baseCost := 0
-	multiplier := 1.0
-
-	switch defenseType {
-	case DefenseDodge:
-		baseCost = int(bal.DodgeBaseStaminaCost)
-		multiplier = float64(bal.DodgeMultiplier)
-	case DefenseParry:
-		baseCost = int(bal.ParryBaseStaminaCost)
-		multiplier = float64(bal.ParryMultiplier)
-	case DefenseBlock:
-		baseCost = int(bal.BlockBaseStaminaCost)
-		multiplier = float64(bal.BlockMultiplier)
-	default:
-		return 0
-	}
-
-	cost := int(float64(baseCost) * multiplier)
-	if cost < 1 {
-		cost = 1 // minimum 1 stamina
-	}
-	return cost
-}
+// U7 Task 6 deleted GetDefenseStaminaCost. It was stamina-only, returned 0 for
+// the two conviction defences, and its base x multiplier arithmetic is now the
+// per-action modifier arm of costs.Calc. Use GetDefenseCostFloat.
 
 // ApplyHealthChange applies a SIGNED health delta and returns the applied
 // delta. It is not a legacy path: it survives U5b because it owns a side effect
@@ -260,6 +352,9 @@ func (c *Character) HealthPerRound() int {
 	}
 	// StatMod reinterpreted as percentage bonus (e.g. 5 → +5%)
 	pct += float64(c.StatMod(string(statmods.HealthRecovery))) / 100.0
+	// RAW max on purpose, not EffectivePoolMax: reserve-aware regen would be a
+	// NERF to reserved characters, and the faster refill relative to the usable
+	// pool is what offsets the depletion penalty they already carry.
 	base := int(pct * float64(c.HealthMax.Value))
 	if base < 1 {
 		base = 1
@@ -280,6 +375,7 @@ func (c *Character) StaminaPerRound() int {
 		pct = float64(b.MobStaminaRegenPct)
 	}
 	pct += float64(c.StatMod(string(statmods.StaminaRecovery))) / 100.0
+	// RAW max on purpose, not EffectivePoolMax -- see HealthPerRound.
 	base := int(pct * float64(c.StaminaMax.Value))
 	if base < 1 {
 		base = 1
@@ -307,6 +403,7 @@ func (c *Character) ConvictionPerRound() int {
 		pct = float64(b.MobConvictionRegenPct)
 	}
 	pct += float64(c.StatMod(string(statmods.ConvictionRecovery))) / 100.0
+	// RAW max on purpose, not EffectivePoolMax -- see HealthPerRound.
 	base := int(pct * float64(c.ConvictionMax.Value))
 	if base < 1 {
 		base = 1

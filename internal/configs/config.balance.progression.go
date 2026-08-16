@@ -26,6 +26,65 @@ func (b *Balance) validateProgression() {
 		b.SkillWeight = 2.0
 	}
 
+	// ── COSTS: INVERSE-SKILL MULTIPLIER (U7) ────────────────────────────────
+	if b.CostSkillMultAtZero <= 0 {
+		b.CostSkillMultAtZero = 1.10
+	}
+	if b.CostSkillMultAtMid <= 0 {
+		b.CostSkillMultAtMid = 1.00
+	}
+	if b.CostSkillMultAtCap <= 0 {
+		b.CostSkillMultAtCap = 0.40
+	}
+	if b.CostSkillMidRank < 1 {
+		b.CostSkillMidRank = 25
+	}
+	if b.CostSkillCapRank < 1 {
+		b.CostSkillCapRank = 100
+	}
+	// Cross-field invariant: the cap rank must sit strictly above the mid
+	// rank, or costs.SkillCostMultiplier's two segments invert (the "above
+	// mid" segment would run backwards). Enforced here, once, at load, where
+	// a bad config.yaml edit is visible; costs.SkillCostMultiplier also
+	// carries a belt-and-braces guard against this same case in case a
+	// caller ever constructs a Balance by hand and skips validation.
+	if b.CostSkillCapRank <= b.CostSkillMidRank {
+		b.CostSkillCapRank = b.CostSkillMidRank + 1
+	}
+
+	// ── COSTS: ENCUMBRANCE MULTIPLIER (U7) ──────────────────────────────────
+	if b.CostEncumbranceKnee <= 0 || b.CostEncumbranceKnee >= 1.0 {
+		b.CostEncumbranceKnee = 0.75
+	}
+	// Below 1.0 is not "a gentle curve", it is an INVERSION: the first segment
+	// runs from 1.0 at empty down to the knee multiplier, so loading up would
+	// make every physical action CHEAPER. Corrected to the default rather than
+	// clamped to 1.0, because a knee of exactly 1.0 flattens the whole first
+	// segment and is almost certainly not what the author meant either.
+	if b.CostEncumbranceKneeMult < 1.0 {
+		b.CostEncumbranceKneeMult = 1.5
+	}
+	if b.CostEncumbranceMax <= 0 {
+		b.CostEncumbranceMax = 5.0
+	}
+	// Cross-field invariant: the maximum must sit strictly above the knee
+	// multiplier, or costs.EncumbranceMultiplier's second segment runs
+	// BACKWARDS -- a character past the knee would get cheaper as they loaded
+	// further toward capacity. Enforced here, once, at load, where a bad
+	// config.yaml edit is visible, and paired with the knee guard above so both
+	// halves of the curve's monotonicity are settled before any caller reads it.
+	if b.CostEncumbranceMax <= b.CostEncumbranceKneeMult {
+		b.CostEncumbranceMax = b.CostEncumbranceKneeMult * 2
+	}
+
+	// ── COSTS: COMPOSED-TOTAL CEILING (U7) ──────────────────────────────────
+	// The ceiling costs.Calc puts on the PRODUCT of its multipliers. 0 is not a
+	// usable value here (it would price every action free), so it falls back to
+	// the default rather than being honoured.
+	if b.CostTotalMultiplierMax <= 0 {
+		b.CostTotalMultiplierMax = 6.0
+	}
+
 	// ── PROGRESSION MULTIPLIERS ──────────────────────────────────────────────
 	if b.StatProgressionMultipliers == nil {
 		b.StatProgressionMultipliers = map[string]float64{}

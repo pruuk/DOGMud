@@ -16,6 +16,59 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// getAllMatchingFromFloor picks up every item on the floor matching itemName,
+// reporting the sweep as a single summary line rather than one line per item.
+//
+// Shared by the two spellings that mean the same thing: "get all.<name>" (dot
+// form) and "get all <name>" (space form). It exists so those two cannot drift
+// apart, which is exactly what went wrong before: only the dot form filtered,
+// and the space form fell through to "grab the entire floor".
+//
+// Stops early on an `exploding` item (never swept up by accident) and on the
+// first item the character cannot carry.
+func getAllMatchingFromFloor(user *users.UserRecord, room *rooms.Room, itemName string) {
+	picked := 0
+	for {
+		matchItem, found := room.FindOnFloor(itemName, false)
+		if !found {
+			break
+		}
+
+		if matchItem.HasAdjective(`exploding`) {
+			break
+		}
+
+		user.Character.CancelBuffsWithFlag(buffs.Hidden)
+
+		if user.Character.StoreItem(matchItem) {
+			room.RemoveItem(matchItem, false)
+
+			events.AddToQueue(events.ItemOwnership{
+				UserId: user.UserId,
+				Item:   matchItem,
+				Gained: true,
+			})
+
+			picked++
+		} else {
+			user.SendText(messaging.CategorySystem,
+				fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
+			)
+			break
+		}
+	}
+	if picked == 0 {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see any "%s" to pick up.`, itemName))
+		return
+	}
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You pick up %d item(s).`, picked))
+	room.SendTextVisual(messaging.CategoryLoot,
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> picks up some items.`, user.Character.Name),
+		user.UserId,
+	)
+	sendEncumbranceWarning(user)
+}
+
 func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// Can't pick things up if you can't see
@@ -127,6 +180,30 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 		}
 
+		// "get all <name>": the space form of "get all.<name>".
+		//
+		// Placed LAST inside this block on purpose: every branch above claims a
+		// specific meaning for the trailing word (your component bag, your
+		// bandolier, a room container, a corpse), and those must keep winning.
+		// Only once none of them matched is the trailing word an item name.
+		//
+		// Without this branch the space form fell straight through to the
+		// grab-the-whole-floor fallback below, so "get all stone" hoovered up
+		// everything lying in the room, and its mirror "drop all stone" dumped
+		// the player's whole inventory. Only the dot form was ever filtered,
+		// because util.GetMatchNumber understands "all.stone" and not
+		// "all stone".
+		if len(args) >= 2 {
+			// "get all gold" still means the gold, not an item called gold.
+			if len(args) == 2 && args[1] == "gold" {
+				// Propagate the delegate's result rather than discarding it: a
+				// swallowed error here would report success on a failed get.
+				return Get(`gold`, user, room, flags)
+			}
+			getAllMatchingFromFloor(user, room, strings.Join(args[1:], " "))
+			return true, nil
+		}
+
 		// get all — grab everything from the floor
 		if room.Gold > 0 {
 			Get(`gold`, user, room, flags)
@@ -147,46 +224,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	{
 		itemName, matchNum := util.GetMatchNumber(args[0])
 		if matchNum == -1 {
-			picked := 0
-			for {
-				matchItem, found := room.FindOnFloor(itemName, false)
-				if !found {
-					break
-				}
-
-				if matchItem.HasAdjective(`exploding`) {
-					break
-				}
-
-				user.Character.CancelBuffsWithFlag(buffs.Hidden)
-
-				if user.Character.StoreItem(matchItem) {
-					room.RemoveItem(matchItem, false)
-
-					events.AddToQueue(events.ItemOwnership{
-						UserId: user.UserId,
-						Item:   matchItem,
-						Gained: true,
-					})
-
-					picked++
-				} else {
-					user.SendText(messaging.CategorySystem,
-						fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
-					)
-					break
-				}
-			}
-			if picked == 0 {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see any "%s" to pick up.`, itemName))
-			} else {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You pick up %d item(s).`, picked))
-				room.SendTextVisual(messaging.CategoryLoot,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> picks up some items.`, user.Character.Name),
-					user.UserId,
-				)
-				sendEncumbranceWarning(user)
-			}
+			getAllMatchingFromFloor(user, room, itemName)
 			return true, nil
 		}
 	}

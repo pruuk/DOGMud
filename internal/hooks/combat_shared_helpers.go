@@ -62,10 +62,13 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 			}
 		}
 
-		// Apply smooth conviction-based spell damage penalty
+		// Apply smooth conviction-based spell damage penalty. EffectivePoolMax,
+		// not the raw max (U7 Task 11): a caster fielding a companion has their
+		// current Conviction reserve-clamped already, so a raw denominator would
+		// tax their spell damage on top of shrinking their pool.
 		cpPenalty := float64(configs.GetBalanceConfig().ConvictionPenaltyMax)
 		rawDmg *= combat.ResourceMultiplier(caster.Conviction,
-			caster.ConvictionMax.Value, cpPenalty)
+			caster.EffectivePoolMax(characters.PoolConviction), cpPenalty)
 
 		// Apply mitigation based on defense type
 		var mitigPct, cap float64

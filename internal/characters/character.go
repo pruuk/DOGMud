@@ -154,6 +154,27 @@ type Character struct {
 	tauntHoldUntilRound    uint64 `yaml:"-"`
 	tauntHoldUserId        int    `yaml:"-"`
 	tauntHoldMobInstanceId int    `yaml:"-"`
+	// costCarry banks the sub-integer remainder of every cost so that small
+	// per-action modifiers survive. Pools are ints, and dodge, parry and block
+	// differ by only 14%; rounding each action to a whole number collapses all
+	// three onto the same integer for a low-skill character, which makes the
+	// modifiers decoration. Deliberately NOT persisted: an in-flight fraction is
+	// worth less than the byte it would take in a save file, and a stale one
+	// after a reload would be indistinguishable from a rounding bug.
+	//
+	// No yaml:"-" tag on purpose. An unexported field is already invisible to the
+	// marshaller, and a yaml tag on one is a silent no-op that misleads the next
+	// reader into thinking it is load-bearing.
+	//
+	// TEMPLATE INVARIANT: mobs.newMobByIdInternal shallow-copies the mob template
+	// (`mob := *m`) and re-makes PlayerDamage on the very next line precisely
+	// because a shallow copy shares maps. costCarry is NOT re-made there, and is
+	// safe only because it is lazily allocated by ApplyCostFloat and a template's
+	// Character is never charged. Anything that charges a template -- a balance
+	// preview tool, an offline simulator -- would allocate the map on the
+	// template and hand every instance spawned afterwards the SAME shared carry.
+	// Re-make it alongside PlayerDamage before doing that.
+	costCarry map[Pool]float64
 	// CombatPhase is the canonical state machine for "am I in combat?" and
 	// "who am I targeting?". It runs alongside the Aggro field; both are
 	// kept in sync by SetAggro/EndAggro. Direct .Aggro reads remain valid.
@@ -676,8 +697,8 @@ const (
 	// down), defy answers a social attack (you refuse to rise to it).
 	//
 	// Both cost CONVICTION, not stamina. Charge them through the
-	// DefensePool / GetDefenseCost pair; GetDefenseStaminaCost deliberately
-	// returns 0 for them, so charging through it makes them free.
+	// DefensePool / GetDefenseCostFloat pair, which reads the pool and the
+	// amount off the same defence name and so cannot charge the wrong one.
 	DefenseQuell string = "quell"
 	DefenseDefy  string = "defy"
 )

@@ -120,15 +120,15 @@ fair representation in combat text, and having multiple defense types is
 always better (wider net).
 
 **Defense Types:**
-1. **Dodge** - Unarmed Combat + Dexterity, costs 2 stamina, always available
+1. **Dodge** - Unarmed Combat + Dexterity, dearest to mount, always available
    - Reduced by heavy armor and encumbrance
    - -50% effectiveness when prone
-2. **Parry** - Weapon Combat + weapon parry rating, costs 4 stamina, requires weapon
+2. **Parry** - Weapon Combat + weapon parry rating, cheapest, requires weapon
    - Two-handed weapons get bonus to parry
    - Can parry with either hand when dual wielding
    - -30% effectiveness when prone
-3. **Block** - Weapon Combat + shield block rating, costs 5 stamina, requires shield
-   - Most stamina-intensive but highly effective
+3. **Block** - Weapon Combat + shield block rating, requires shield
+   - Highly effective; priced between parry and dodge
    - -20% effectiveness when prone (shield still works from ground)
 
 **Defense Floor:** `ContestFloor` (0.125) is symmetric and lives inside
@@ -138,13 +138,25 @@ and a massively outclassing attacker is still stopped at the same rate. U6 Task
 they were applied after crit resolution had already returned, so the attack
 floor was only ever evaluated on the swings a defence crit did not consume.
 
-**Stamina Costs:**
-- Only the winning defense (best margin) costs stamina — losing defenses are free
-- The winner is charged with `ApplyCostPartial`, so a defender who cannot pay in
-  full still defends and simply pays what is left (U5b-2)
-- Defense costs are config, not Go: `DodgeBaseStaminaCost` / `ParryBaseStaminaCost`
-  / `BlockBaseStaminaCost` × the matching multiplier, truncated, floored at 1.
-  The 2 / 4 / 5 above are the *base* values; shipped effective costs are 1 / 3 / 4.
+**Defence Costs:**
+- Only the winning defense (best margin) costs anything — losing defenses are free
+- The winner is charged with `ApplyCostFloat` (which delegates to
+  `ApplyCostPartial`), so a defender who cannot pay in full still defends and
+  simply pays what is left (U5b-2)
+- Defence costs are one config formula, not per-defence Go arithmetic. U7 Task 6
+  deleted `GetDefenseStaminaCost` and the three per-defence base knobs
+  (`DodgeBaseStaminaCost` / `ParryBaseStaminaCost` / `BlockBaseStaminaCost`)
+  with it. The price is now `costs.Calc`: `DefenceBaseStaminaCost` (1.0) ×
+  encumbrance × inverse-skill × `{Dodge,Parry,Block}CostModifier` (1.25 / 1.10 /
+  1.15). For an unladen rank-1 defender that is dodge **1.370**, block
+  **1.2604**, parry **1.2056**.
+- **Charge through `GetDefenseCostFloat` + `ApplyCostFloat`, never the integer
+  pair.** All three of those numbers truncate to `1`, so an integer charge erases
+  the modifiers entirely. That was live: `ResolveChannelDefence` used the integer
+  entry point until U7, and `DefenceSetFor` routes dodge and block there for
+  `ChannelRanged` and `ChannelSpellPhysical` (eleven shipped spells declare
+  `target_defense_type: physical`), so block against a physical spell was charged
+  1 rather than 1.2604.
 - `ResourceMultiplier` is attack-side only. It does NOT penalise defence today —
   see the exhaustion gotcha under "Contest core" below.
 
@@ -159,6 +171,50 @@ floor was only ever evaluated on the swings a defence crit did not consume.
 - One floor, `ContestFloor`, applied once inside `RunContest`. There is no
   second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity
+
+### Attack cost is charged PER SWING (U7 Task 7)
+
+`ChargeAttackCost(attacker *characters.Character, swings int) characters.CostResult`
+in `attack_cost.go` is the attacker-side price. **Where it is charged:** in each
+of the four wrappers in `combat.go` (`AttackPlayerVsMob`, `AttackPlayerVsPlayer`,
+`AttackMobVsPlayer`, `AttackMobVsMob`), immediately after `calculateCombat`
+returns, off `attackResult.SwingsThrown`. It is NOT charged inside
+`calculateCombat` and not inside the weapon or swing loops.
+
+```go
+attackResult := calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
+ChargeAttackCost(user.Character, attackResult.SwingsThrown)
+```
+
+One swing is priced by the unexported `attackCostPerSwing`, which is the same
+`costs.Calc` composition the five defences use:
+`AttackBaseStaminaCost` × encumbrance × inverse-skill × `AttackCostModifier`.
+The whole round is then charged as `perSwing × swings` through
+`Character.ApplyCostFloat`, never `ApplyCostPartial`. The per-swing figure is a
+product of four config floats and is rarely a whole number, so an integer charge
+per round would erase the encumbrance and skill terms this task exists to
+introduce.
+
+Points that bite:
+
+- **`SwingsThrown` counts swings THROWN, not swings that landed.** It is
+  incremented in `calculateCombat` before resolution and outside the per-swing
+  flag reset, and it accumulates across every weapon in the round because
+  `attackResult` outlives the weapon loop. A missed swing is effort spent.
+- **The skill rank comes from `GetCombatSkillLevel`**, which picks the skill
+  matching the EQUIPPED weapon (weapon / unarmed / ranged combat), not the
+  registry's nominal `skills.WeaponCombat`. An unarmed brawler's practice
+  discounts their swings. It returns a minimum of 1, so a fresh character lands
+  on the rank-1 multiplier rather than the rank-0 one.
+- **A nil attacker or a non-positive swing count charges nothing** and returns
+  the zero `CostResult`. Zero swings is a real state (no weapons to swing, target
+  already gone) and is deliberately not `Short`: nothing was demanded.
+- **This replaced a once-per-round `DeductAttackStamina` call** in each of the
+  four wrappers. A twelve-swing build attacked twelve times for the price of one
+  while the defender paid on every incoming swing, which is the single largest
+  reason offence was effectively free next to defence.
+- The returned `CostResult` is what U8 reads to strip the skill term from an
+  attacker who could not pay in full. Discarding it is safe today, not later.
 
 ### Defence sets are a property of the channel (U6 Task 11)
 
@@ -224,13 +280,13 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    falls through to the zero value, which `items.GetDefenseMessage` already
    handles by returning an empty set.
 3. **The cost path is stamina-only.** **FIXED.** `characters.DefensePool` +
-   `Character.GetDefenseCost` are the pair to charge through; `DefensePool` maps
-   quell and defy to `PoolConviction` and everything else to `PoolStamina`, and
-   `GetDefenseCost` reads `QuellBaseConvictionCost` / `DefyBaseConvictionCost`
-   for the two. `runBestOfAllDefense` was moved onto the pair as well (a no-op
-   for the physical three) so the old shape survives nowhere.
-   `GetDefenseStaminaCost` still exists and still returns 0 for quell and defy;
-   that is the trap the pair replaces.
+   `Character.GetDefenseCostFloat` are the pair to charge through; `DefensePool`
+   maps quell and defy to `PoolConviction` and everything else to `PoolStamina`,
+   and `GetDefenseCostFloat` prices the two off `QuellBaseConvictionCost` /
+   `DefyBaseConvictionCost`. `runBestOfAllDefense` and `ResolveChannelDefence`
+   are both on the pair, so the old shape survives nowhere.
+   `GetDefenseStaminaCost` — the stamina-only function that returned 0 for quell
+   and defy, which is the trap the pair replaces — was DELETED in U7 Task 6.
 4. **Analytics and the admin dashboard lose the swing entirely.** **DEFERRED,
    and not currently reachable.** `analytics.go` is fed from
    `AttackResult.SwingEvents`, which only the melee pipeline populates;
@@ -752,6 +808,24 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 
 ### Gotchas
 
+- **`calculateCombat` takes BOTH combatants as `*characters.Character`, and they
+  must stay pointers.** The signature is
+  `calculateCombat(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, ctx combatContext) AttackResult`,
+  changed from value parameters in U7 Task 1. It took its combatants BY VALUE
+  from the day it was written, so every wrapper handed it a copy and every
+  in-place mutation a callee made was written to that copy and discarded on
+  return. The costly one was the defence charge: `runBestOfAllDefense` charges
+  the defender in-place, which means melee dodge, parry and block cost nothing
+  in production for the entire life of the code. The attacker's cost only ever
+  survived because the wrappers charge it themselves, OUTSIDE this function, and
+  damage only survived because it travels home in `AttackResult` and the wrapper
+  applies it to the real character. Reverting also re-disables three writes that
+  only work through the pointer: cross-round momentum (`UpdateMomentum`), the
+  `SurpriseAttack`-to-`DefaultAttack` demotion in `SetAggro`, and defender
+  skill-use tracking on mobs. **Nothing about that failure is visible.** The
+  compiler is happy either way, and a test asserting that a charge was
+  *requested* (`ApplyCostPartial` reports `Charged: 4`) still passes while the
+  real character's stamina never moves. Do not "simplify" the parameters back.
 - **`runBestOfAllDefense` has no affordability gate, on purpose.** Every defence
   in the sequence enters the contest regardless of the defender's stamina, and
   only the winner is charged, partially. Re-adding a gate would drop an
@@ -977,8 +1051,8 @@ attempts escape. On success, player leaves combat.
 side effects:
 
 ```
-attackResult = calculateCombat(*user.Character, mob.Character, User, Mob)
-user.Character.DeductAttackStamina()
+attackResult = calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
+ChargeAttackCost(user.Character, attackResult.SwingsThrown)  // U7: PER SWING
 mob.Character.ApplyHealthChange(-totalDmg)
 mob.Character.TrackPlayerDamage(userId, dmg)  // loot attribution
 user.Character.OnStatUse("strength")          // progression
@@ -1595,7 +1669,7 @@ can add parallel snapshot checks at the same start-of-round site.
 
 | File | Purpose |
 |------|---------|
-| `combat.go` | Round resolution entry points |
+| `combat.go` | Round resolution entry points. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** The four wrappers charge the attacker after it returns, via `ChargeAttackCost(char, attackResult.SwingsThrown)`. |
 | `combat_helpers.go` | Extracted helpers. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
@@ -1605,7 +1679,8 @@ can add parallel snapshot checks at the same start-of-round site.
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
 | `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). Consumed by `ResolveChannelDefence` for the three non-melee channels; melee still builds its own `defSeq`. See "Defence sets are a property of the channel" below. |
-| `attackresult.go` | The result value passed back to callers |
+| `attack_cost.go` | `ChargeAttackCost(attacker, swings)` — the attacker-side price, U7 Task 7. One swing costs `AttackBaseStaminaCost` × encumbrance × inverse-skill × `AttackCostModifier` through `costs.Calc`, the same composition the five defences use, charged `× swings` through `ApplyCostFloat`. **This replaced a once-per-round `DeductAttackStamina` call in each of the four wrappers**: a twelve-swing build attacked twelve times for the price of one while the defender paid on every incoming swing, which is what made offence effectively free next to defence. Skill rank comes from `GetCombatSkillLevel` (weapon-appropriate, minimum 1), not the registry's nominal `skills.WeaponCombat`. A nil attacker or non-positive swing count charges nothing and is not `Short`. |
+| `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only) — `ChargeAttackCost` prices the round off it. |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |
 | `skill_moves.go` | Skill-driven combat moves (bash/trip/kick/...). **U6 Task 13:** `ExecuteSkillMove` scales damage through `defenceDamageMultiplier` instead of gating it on `attackSuccess` alone, so `SkillMoveResult.Hit == false` with `Damage > 0` is a legal pair (a defended attempt still lands partial damage), and `Damage` is the contest-scaled amount actually applied to the defender's health pool, not the unscaled base. `SkillMoveResult` gained `StatusApplied bool`, which stays binary — true only when `Hit == true`. |

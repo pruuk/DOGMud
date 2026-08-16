@@ -24,12 +24,54 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// movementTrainsSearch reports whether this move should record a search use.
+//
+// U7 prices movement partly on the actor's search rank, so travelling has to be
+// able to earn that discount -- today movement trains nothing at all, which
+// leaves nearly every live character at rank one with no way to improve it by
+// walking. But walking must stay the SLOW road: search is already easy to raise
+// through forage, search and track, and it should never be the case that the
+// best way to become a tracker is to pace back and forth.
+//
+// The rarity is in whether the use is RECORDED, not in the odds attached to it.
+// CheckSkillProgression derives its decay from the skill's use count
+// (virtualRank = useCount / UsesPerRank), so recording a use on every step would
+// bury the counter under tens of thousands of walked rooms and leave forage,
+// search and track training almost worthless -- and scaling the odds down
+// instead does not help, because the counter still climbs once per step and
+// outruns the progression it is paying for.
+//
+// At the shipped 1-in-200 gate it takes on the order of 7,700 room moves to see
+// search rank 10 and something like 33,000 to reach rank 35: "you picked up an
+// eye for the road over a very long time", not a training strategy. A 1-in-50
+// gate would get to rank 35 in roughly 8,300 moves and would make walking the
+// dominant route, which is exactly what this is tuned to avoid.
+//
+// Second-order effect, and deliberate: search also feeds hidden-creature
+// detection on room entry (Perception + Search against Dex + Skullduggery, later
+// in this same file) and foraging yields. So a well-travelled character slowly
+// grows harder to sneak up on and slightly better at living off the land. That
+// is the intended flavour of the change -- please do not "fix" it.
+//
+// A zero or negative MovementSearchTrainChance switches the feature off.
+func movementTrainsSearch() bool {
+	chance := float64(configs.GetBalanceConfig().MovementSearchTrainChance)
+	if chance <= 0 {
+		return false
+	}
+	// util.Rand is the randomness idiom in this file. Resolving against 100,000
+	// keeps a knob as small as 0.00001 meaningful.
+	const resolution = 100000
+	return util.Rand(resolution) < int(chance*resolution)
+}
 
 // unlockExit performs the shared tail of a successful exit unlock: it tells the
 // actor, narrates to the room, plays the unlock sound, and clears the lock on
@@ -176,23 +218,36 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		staminaCost := user.Character.GetMovementStaminaCost(terrainMultiplier)
 		if mutations.IsFlying(user.Character.Mutations) {
 			// Winged Flight glides over terrain — movement barely tires you.
-			staminaCost = int(float64(staminaCost) * float64(configs.GetBalanceConfig().FlightMoveStaminaMult))
-			if staminaCost < 1 {
-				staminaCost = 1
-			}
+			//
+			// The old "never below 1" clamp here is gone with the integer cost.
+			// It was the same flattening as MovementCostFloor wearing a
+			// different hat, and on a fractional cost it inverted the mutation:
+			// halving a 0.55 move to 0.27 and then clamping it back to a whole
+			// point made flight cost a laden flyer MORE than the unfloored
+			// ground price it was meant to undercut.
+			staminaCost *= float64(configs.GetBalanceConfig().FlightMoveStaminaMult)
 		}
 		// U5b-2: movement REFUSES when unaffordable -- the character keeps every
 		// other action, and this is the gate that makes flee the only
 		// player-initiated disengage while in combat.
-		if !user.Character.ApplyCost(characters.PoolStamina, staminaCost) {
+		//
+		// ApplyCostFloatOrRefuse, not ApplyCost: the cost is fractional and its
+		// remainder is banked so the encumbrance curve keeps its full range. The
+		// refusal below happens BEFORE anything is banked, so a refused move
+		// leaves no debt behind.
+		if !user.Character.ApplyCostFloatOrRefuse(characters.PoolStamina, staminaCost) {
 			user.SendText(messaging.CategorySystem, "You're too exhausted to move! Rest and recover your stamina.")
 			// Refund the action points since movement failed
 			user.Character.ActionPoints += actionCost
 			return true, nil
 		}
 
-		// Warn if stamina is getting low (< 25% of max)
-		if user.Character.Stamina < user.Character.StaminaMax.Value/4 {
+		// Warn if stamina is getting low (< 25% of the pool they can reach).
+		// EffectivePoolMax, not the raw max (U7 Task 11): current stamina is
+		// already reserve-clamped, so a raw denominator nags a 40%-reserved
+		// character about being winded at what is, for them, a full pool. No
+		// mechanical effect, but the message is still wrong.
+		if user.Character.Stamina < user.Character.EffectivePoolMax(characters.PoolStamina)/4 {
 			user.SendText(messaging.CategorySystem, "<ansi fg=\"yellow\">You're feeling winded. Consider resting to recover your stamina.</ansi>")
 		}
 
@@ -323,6 +378,15 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			// snapshot. OriginalRoomId returns the room's own id for
 			// non-ephemeral rooms, so this is a no-op there.
 			user.Character.MarkRoomVisited(destRoom.Zone, matchRoom)
+
+			// U7 Task 10: a completed move rarely trains search. This sits
+			// inside the MoveToRoom success branch on purpose -- a refused
+			// move (no action points, unaffordable stamina), a locked exit the
+			// actor could not open, and a MoveToRoom error all return or
+			// message out above and never reach here.
+			if movementTrainsSearch() {
+				user.Character.OnSkillUse(string(skills.Search), user.UserId)
+			}
 
 			// Tell the player they are moving
 			if isSneaking {

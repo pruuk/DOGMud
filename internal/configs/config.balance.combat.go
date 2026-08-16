@@ -9,24 +9,38 @@ func (b *Balance) validateCombat() {
 		b.RollSpread = 0.15
 	}
 
+	// ── COMBAT: ATTACK COSTS ─────────────────────────────────────────────────
+	// U7 Task 7: one swing, priced by costs.Calc. Seeded at parity with
+	// DefenceBaseStaminaCost and a neutral modifier -- attacking is the reference
+	// the three defence modifiers are tuned against, so it starts at 1.0 x 1.0
+	// and moves only when play says it should.
+	if b.AttackBaseStaminaCost <= 0 {
+		b.AttackBaseStaminaCost = 1.0
+	}
+	if b.AttackCostModifier <= 0 {
+		b.AttackCostModifier = 1.0
+	}
+
 	// ── COMBAT: DEFENSE COSTS ────────────────────────────────────────────────
-	if b.DodgeMultiplier <= 0 {
-		b.DodgeMultiplier = 0.9
+	// U7 Task 6: one shared base plus three per-action modifiers, composed by
+	// costs.Calc. The base is 1.0 rather than the old 2/4/5 because the formula
+	// now multiplies it by encumbrance and by the inverse-skill term, either of
+	// which can more than double it on its own; starting from the old numbers
+	// would have made a laden novice unable to defend at all.
+	if b.DefenceBaseStaminaCost <= 0 {
+		b.DefenceBaseStaminaCost = 1.0
 	}
-	if b.ParryMultiplier <= 0 {
-		b.ParryMultiplier = 0.9
+	// Dodge is deliberately dearest and parry cheapest: moving the whole body out
+	// of the way is more tiring than interposing a weapon, with a shield between
+	// the two.
+	if b.DodgeCostModifier <= 0 {
+		b.DodgeCostModifier = 1.25
 	}
-	if b.BlockMultiplier <= 0 {
-		b.BlockMultiplier = 0.9
+	if b.ParryCostModifier <= 0 {
+		b.ParryCostModifier = 1.10
 	}
-	if b.DodgeBaseStaminaCost < 1 {
-		b.DodgeBaseStaminaCost = 2
-	}
-	if b.ParryBaseStaminaCost < 1 {
-		b.ParryBaseStaminaCost = 4
-	}
-	if b.BlockBaseStaminaCost < 1 {
-		b.BlockBaseStaminaCost = 5
+	if b.BlockCostModifier <= 0 {
+		b.BlockCostModifier = 1.15
 	}
 	// U6 Task 12: paid in conviction, not stamina. Seeded at 2, matching dodge --
 	// the cheapest physical defence -- because neither has been played against

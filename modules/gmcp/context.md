@@ -233,6 +233,28 @@ These three fields were appended to the existing `Char.Vitals` payload
 | `stamina_reserved`  | int  | Stamina currently set aside and unavailable         |
 | `conviction_reserved` | int | Conviction currently set aside and unavailable    |
 
+### No field in Char.Vitals carries `omitempty`
+
+`Char.Vitals` is a full-state **snapshot**, republished whenever a pool moves,
+and every field is always sent. This is load-bearing, not tidiness.
+
+Under `omitempty` a value of exactly zero dropped the key from the JSON
+entirely, and a client that merges each payload over the previous one (the
+normal Mudlet idiom) then kept rendering the last non-zero reading. A U7
+playtest caught it live: the payload arrived as
+`{"hp":118,"hp_max":437,"stamina_max":429,...}` with no `stamina` key at all
+while stamina was genuinely exhausted, so the client's stamina bar stayed put
+at the exact moment the number mattered most.
+
+The three `*_reserved` fields follow the same rule even though a zero there
+means "no reservation" rather than "an empty pool": a reservation that **ends**
+must be observable, and omitting the key transmits that transition as silence,
+leaving a stale reserved band drawn on the bar.
+
+`TestCharVitals_ZeroPoolsAreSentAsZero` (`gmcp.Vitals_test.go`) asserts key
+PRESENCE, not value, and fails if `omitempty` is reintroduced on any field.
+Do not add it back.
+
 ### Client Usage
 
 The client trigger engine reads these fields from each incoming

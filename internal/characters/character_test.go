@@ -2127,33 +2127,47 @@ func TestCharacter_GetSkillLevel(t *testing.T) {
 }
 
 func TestCharacter_GetMovementStaminaCost(t *testing.T) {
-	// These tests use characters with no items (zero carried weight),
-	// so only terrain multiplier affects cost. Encumbrance tests require
-	// real item specs and are covered by integration tests.
+	// These characters carry no items, so the encumbrance multiplier is a
+	// neutral 1.0 and only terrain and the rank-1 inverse-skill term (1.096)
+	// move the price. Encumbrance is covered by movement_cost_test.go, which
+	// registers real item specs.
+	//
+	// U7 Task 8 rewrote every row here. The base dropped from 2.0 to 0.5 and the
+	// cost now runs through the shared encumbrance and inverse-skill curves, so
+	// an UNLADEN traveller — the only kind this table describes — pays much less
+	// than the old flat base x terrain. That is the intended half of the trade;
+	// the other half, a laden traveller paying markedly more, is in
+	// movement_cost_test.go.
+	//
+	// The banking change rewrote the EXPECTED COLUMN a second time. These are
+	// fractional now, not whole points: the function returns the true price and
+	// the caller banks the remainder through ApplyCostFloatOrRefuse. The old
+	// column read 1, 1, 2, 2 for these four rows, which is three prices for four
+	// terrains and is precisely the flattening the change removes.
 	tests := []struct {
 		name              string
 		terrainMultiplier float64
-		expectedCost      int
+		expectedCost      float64
 	}{
 		{
 			name:              "Normal terrain, no items",
 			terrainMultiplier: 1.0,
-			expectedCost:      2, // baseCost 2.0 * 1.0 = 2
+			expectedCost:      0.548, // 0.5 * 1.0 * 1.0 * 1.096 (was a floored 1)
 		},
 		{
 			name:              "Easy terrain (road), no items",
 			terrainMultiplier: 0.5,
-			expectedCost:      1, // baseCost 2.0 * 0.5 = 1
+			expectedCost:      0.274, // 0.5 * 0.5 * 1.0 * 1.096 (was a floored 1)
 		},
 		{
 			name:              "Rough terrain (mountains), no items",
 			terrainMultiplier: 2.0,
-			expectedCost:      4, // baseCost 2.0 * 2.0 = 4
+			expectedCost:      1.096, // 0.5 * 2.0 * 1.0 * 1.096 (was a ceiled 2)
 		},
 		{
 			name:              "Very rough terrain, no items",
 			terrainMultiplier: 3.0,
-			expectedCost:      6, // baseCost 2.0 * 3.0 = 6
+			expectedCost:      1.644, // 0.5 * 3.0 * 1.0 * 1.096 (was a ceiled 2)
 		},
 	}
 
@@ -2164,90 +2178,17 @@ func TestCharacter_GetMovementStaminaCost(t *testing.T) {
 			c.Stats.Strength.ValueAdj = 100
 
 			cost := c.GetMovementStaminaCost(tt.terrainMultiplier)
-			assert.Equal(t, tt.expectedCost, cost, "Movement stamina cost")
+			assert.InDelta(t, tt.expectedCost, cost, 1e-6, "Movement stamina cost")
 		})
 	}
 }
 
-func TestCharacter_GetAttackStaminaCost(t *testing.T) {
-	tests := []struct {
-		name         string
-		weaponId     int
-		offhandId    int
-		expectedCost int
-	}{
-		{
-			name:         "Unarmed combat",
-			weaponId:     0,
-			offhandId:    0,
-			expectedCost: 4,
-		},
-		// Note: Testing with actual weapons requires loading weapon data
-		// which depends on item loading infrastructure. The weapon cost
-		// logic is tested via integration tests with real weapons.
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := New()
-			if tt.weaponId > 0 {
-				c.Equipment.Weapon = items.Item{ItemId: tt.weaponId}
-			}
-			if tt.offhandId > 0 {
-				c.Equipment.Offhand = items.Item{ItemId: tt.offhandId}
-			}
-
-			cost := c.GetAttackStaminaCost()
-			assert.Equal(t, tt.expectedCost, cost, "Attack stamina cost")
-		})
-	}
-}
-
-func TestCharacter_DeductAttackStamina(t *testing.T) {
-	tests := []struct {
-		name              string
-		initialStamina    int
-		weaponId          int
-		expectedDeducted  int
-		expectedRemaining int
-	}{
-		{
-			name:              "Sufficient stamina - unarmed",
-			initialStamina:    100,
-			weaponId:          0,
-			expectedDeducted:  4,
-			expectedRemaining: 96,
-		},
-		{
-			name:              "Insufficient stamina",
-			initialStamina:    2,
-			weaponId:          0,
-			expectedDeducted:  2, // Deducts what's available
-			expectedRemaining: 0,
-		},
-		{
-			name:              "Zero stamina",
-			initialStamina:    0,
-			weaponId:          0,
-			expectedDeducted:  0,
-			expectedRemaining: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := New()
-			c.Stamina = tt.initialStamina
-			if tt.weaponId > 0 {
-				c.Equipment.Weapon = items.Item{ItemId: tt.weaponId}
-			}
-
-			deducted := c.DeductAttackStamina()
-			assert.Equal(t, tt.expectedDeducted, deducted, "Stamina deducted")
-			assert.Equal(t, tt.expectedRemaining, c.Stamina, "Remaining stamina")
-		})
-	}
-}
+// U7 Task 7 deleted TestCharacter_GetAttackStaminaCost and
+// TestCharacter_DeductAttackStamina with the two methods they covered. The first
+// pinned an unarmed attack at a flat 4 stamina and the second pinned the
+// once-per-round deduction of that same 4; both facts are gone. Attacks are now
+// priced per swing by combat.ChargeAttackCost and covered by
+// internal/combat/attack_cost_test.go.
 
 func TestCharacter_GetModifiedAttackCount(t *testing.T) {
 	tests := []struct {
@@ -2546,54 +2487,16 @@ func TestGetDefenseScore(t *testing.T) {
 	})
 }
 
-func TestGetDefenseStaminaCost(t *testing.T) {
-	// Default multipliers are 0.9 for all three
-	//
-	// Also pins U5a's move of the base costs 2/4/5 out of Go and into config.
-	// A test binary never loads config.yaml, but GetBalanceConfig runs
-	// ensureConfigValidated, so these are the VALIDATION defaults -- which is
-	// exactly the point: it proves the defaults match the literals that were
-	// deleted. Truncation, not rounding: int(2*0.9)=1, int(4*0.9)=3,
-	// int(5*0.9)=4.
-	//
-	// Note the dodge row is the weakest of the three: int(0*0.9)=0 also floors
-	// to 1, so dodge=1 is produced both by a correct move and by the knob being
-	// entirely unwired. Parry and block are the rows that actually detect a
-	// botched move.
-	tests := []struct {
-		name string
-		def  string
-		want int // base * 0.9 truncated to int
-	}{
-		{"dodge: 2 * 0.9 = 1", DefenseDodge, 1},
-		{"parry: 4 * 0.9 = 3", DefenseParry, 3},
-		{"block: 5 * 0.9 = 4", DefenseBlock, 4},
-		{"unknown → 0", "unknown", 0},
-
-		// U6: quell and defy cost CONVICTION, so they have no stamina cost and
-		// fall to the default arm. Pinned deliberately -- if a future change
-		// makes either return non-zero here, that is a defence being charged
-		// against the wrong pool, and this row is the alarm. Conversely these
-		// zeros mean routing quell/defy through
-		// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)) makes them
-		// FREE. U6 Task 12 fixed that by adding the DefensePool / GetDefenseCost
-		// pair, which TestDefensePoolAndCost below covers; this row stays as the
-		// alarm on the underlying trap.
-		{"quell → 0 (conviction, not stamina)", DefenseQuell, 0},
-		{"defy → 0 (conviction, not stamina)", DefenseDefy, 0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := New()
-			got := c.GetDefenseStaminaCost(tt.def)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
+// U7 Task 6 deleted TestGetDefenseStaminaCost along with the function it
+// covered. Its rows pinned the old base x multiplier arithmetic (dodge
+// int(2*0.9)=1, parry int(4*0.9)=3, block int(5*0.9)=4) and the two
+// conviction defences returning 0 stamina. The arithmetic is now the per-action
+// modifier arm of costs.Calc, covered by defence_cost_test.go; the
+// wrong-pool alarm survives as the PoolConviction rows in
+// TestDefensePoolAndCost below.
 
 // TestDefensePoolAndCost covers the pair that replaced the bare
-// ApplyCostPartial(PoolStamina, GetDefenseStaminaCost(...)) call shape.
+// ApplyCostPartial(PoolStamina, <stamina-only cost>) call shape.
 //
 // The pairing is the whole point: the pool and the amount must be read off the
 // SAME defence name. The two conviction rows are what the old shape got wrong,
@@ -2605,13 +2508,19 @@ func TestDefensePoolAndCost(t *testing.T) {
 		wantPool Pool
 		wantCost int
 	}{
+		// U7 Task 6: all three physical defences floor to 1 on the INTEGER entry
+		// point (unladen costs measure 1.370 / 1.206 / 1.260), where they used
+		// to be 1 / 3 / 4. That flattening is not a regression, it is the reason
+		// GetDefenseCostFloat exists and the reason the melee charge site was
+		// moved onto ApplyCostFloat: the ordering these rows can no longer see is
+		// pinned in defence_cost_test.go.
 		{"dodge is stamina", DefenseDodge, PoolStamina, 1},
-		{"parry is stamina", DefenseParry, PoolStamina, 3},
-		{"block is stamina", DefenseBlock, PoolStamina, 4},
+		{"parry is stamina", DefenseParry, PoolStamina, 1},
+		{"block is stamina", DefenseBlock, PoolStamina, 1},
 
-		// Validation defaults, matching the TestGetDefenseStaminaCost pattern
-		// above: a test binary never loads config.yaml, so these prove the
-		// defaults exist and are non-zero rather than pinning a shipped value.
+		// Validation defaults: a test binary never loads config.yaml, so these
+		// prove the defaults exist and are non-zero rather than pinning a
+		// shipped value.
 		{"quell is conviction", DefenseQuell, PoolConviction, 2},
 		{"defy is conviction", DefenseDefy, PoolConviction, 2},
 

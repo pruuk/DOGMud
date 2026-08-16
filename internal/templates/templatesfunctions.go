@@ -301,6 +301,20 @@ var (
 			}
 			return result
 		},
+		// encumbranceQuality(carried, capacity[, padTo]) returns a colored
+		// burden word for how heavily the character is loaded, matching what
+		// the `inventory` command prints. Both share characters.EncumbranceTier
+		// so the two screens can never disagree about the same load.
+		// Optionally padded to padTo visual characters, following the
+		// vitalQuality/toxicityQuality convention used in the status template.
+		"encumbranceQuality": func(carried, capacity float64, padTo ...int) string {
+			label, color := characters.EncumbranceTier(carried, capacity)
+			result := `<ansi fg="` + color + `">` + label + `</ansi>`
+			if len(padTo) > 0 && padTo[0] > len(label) {
+				result += strings.Repeat(" ", padTo[0]-len(label))
+			}
+			return result
+		},
 		"mitigationQuality": func(pct float64) string {
 			percent := pct * 100
 			switch {

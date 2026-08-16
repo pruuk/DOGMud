@@ -51,10 +51,10 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 		targetCanSee: messaging.CanSeeClearly(&mob.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob, ctx)
+	attackResult := calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
 
-	// Deduct stamina for the attack
-	user.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. See ChargeAttackCost.
+	ChargeAttackCost(user.Character, attackResult.SwingsThrown)
 
 	if attackResult.DamageToSource != 0 {
 		user.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mob.InstanceId})
@@ -134,10 +134,10 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 		targetCanSee: messaging.CanSeeClearly(userDef.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User, ctx)
+	attackResult := calculateCombat(userAtk.Character, userDef.Character, User, User, ctx)
 
-	// Deduct stamina for the attack
-	userAtk.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. See ChargeAttackCost.
+	ChargeAttackCost(userAtk.Character, attackResult.SwingsThrown)
 
 	if attackResult.DamageToSource != 0 {
 		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: userDef.UserId})
@@ -217,10 +217,12 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) At
 		targetCanSee: messaging.CanSeeClearly(user.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User, ctx)
+	attackResult := calculateCombat(&mob.Character, user.Character, Mob, User, ctx)
 
-	// Deduct stamina for the attack
-	mob.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. The & is load-bearing --
+	// Mob.Character is a VALUE field, so a bare mob.Character here would charge a
+	// copy and the mob would attack for free.
+	ChargeAttackCost(&mob.Character, attackResult.SwingsThrown)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: user.UserId})
 
@@ -268,10 +270,11 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob, forceCrit bool) AttackRe
 		targetCanSee: messaging.CanSeeClearly(&mobDef.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob, ctx)
+	attackResult := calculateCombat(&mobAtk.Character, &mobDef.Character, Mob, Mob, ctx)
 
-	// Deduct stamina for the attack
-	mobAtk.Character.DeductAttackStamina()
+	// U7 Task 7: charged PER SWING, not once per round. The & is load-bearing --
+	// see AttackMobVsPlayer.
+	ChargeAttackCost(&mobAtk.Character, attackResult.SwingsThrown)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mobDef.InstanceId})
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget*-1, state.ActorRef{MobInstanceId: mobAtk.InstanceId})
@@ -427,7 +430,30 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	return attackResult
 }
 
-func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, ctx combatContext) AttackResult {
+// calculateCombat resolves one round of swings from sourceChar at targetChar.
+//
+// Both combatants MUST stay pointers. Do not "simplify" them back to values.
+// This function took its combatants by value from the day it was written, and
+// every wrapper obligingly handed it a copy, so every in-place mutation the
+// callees made was written to that copy and thrown away when the function
+// returned. The costly one was the defence charge: runBestOfAllDefense calls
+// ApplyCostPartial on the defender, which means melee dodge, parry and block
+// have cost nothing in production for the entire life of the code. The
+// attacker's cost only survived because the wrappers call DeductAttackStamina
+// themselves, outside this function, and damage only survived because it
+// travels home in AttackResult and the wrapper applies it to the real
+// character.
+//
+// Nothing about that failure is visible. The compiler is happy either way, and
+// a test that asserts a charge was *requested* (ApplyCostPartial reports
+// Charged: 4) still passes while the real character's stamina never moves. If
+// you take a value parameter here again you will silently switch the whole
+// melee cost model back off and the suite will stay green.
+//
+// Reverting also re-disables three writes that only work through the pointer:
+// cross-round momentum (UpdateMomentum), the SurpriseAttack-to-DefaultAttack
+// demotion in SetAggro, and defender skill-use tracking on mobs.
+func calculateCombat(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, ctx combatContext) AttackResult {
 
 	attackResult := AttackResult{}
 
@@ -435,7 +461,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 	statModDBonus := sourceChar.StatMod(`damage`)
 	extraAttacks := sourceChar.StatMod(`attacks`)
 
-	attackWeapons := collectAttackWeapons(&sourceChar)
+	attackWeapons := collectAttackWeapons(sourceChar)
 
 	attackMessagePrefix := ``
 	backstabCrit := false
@@ -449,8 +475,8 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 	for weaponIdx, weapon := range attackWeapons {
 
-		ws := buildWeaponSetup(&sourceChar, &targetChar, weapon, weaponIdx, len(attackWeapons))
-		sdp := buildDamageParams(&sourceChar, &targetChar, ws, statModDBonus, sourceType)
+		ws := buildWeaponSetup(sourceChar, targetChar, weapon, weaponIdx, len(attackWeapons))
+		sdp := buildDamageParams(sourceChar, targetChar, ws, statModDBonus, sourceType)
 		sdp.critBuffs = ws.critBuffs
 
 		// Track per-weapon hits for skill progression
@@ -459,11 +485,11 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 		}
 
 		// Single merged swing count per weapon
-		swingCount := calcSwingCount(&sourceChar, ws.weaponSpeed, extraAttacks, ws.isOffhand)
+		swingCount := calcSwingCount(sourceChar, ws.weaponSpeed, extraAttacks, ws.isOffhand)
 
 		mudlog.Debug("DistDamage", "swings", swingCount, "baseDmg", ws.baseDmg, "variance", dice.StdDevFor(sdp.dmgMean), "dmgMean", sdp.dmgMean, "weaponMult", ws.weaponDmgMult, "critBuffs", ws.critBuffs)
 
-		critThreshold := calcCritThreshold(&sourceChar, &targetChar)
+		critThreshold := calcCritThreshold(sourceChar, targetChar)
 
 		for j := 0; j < swingCount; j++ {
 
@@ -474,31 +500,38 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 			attackResult.Fumble = false
 			attackResult.DoubleFumble = false
 
+			// Counted here, BEFORE resolution and outside the reset above, so it
+			// counts swings THROWN rather than swings that landed: a missed swing
+			// is effort spent and must be paid for. It accumulates across every
+			// weapon in the round because attackResult outlives the weapon loop.
+			// U7 Task 7 charges the attacker per swing off this number.
+			attackResult.SwingsThrown++
+
 			attackTargetDamage := 0
 			attackTargetReduction := 0
 			attackSourceDamage := 0
 			attackSourceReduction := 0
 
-			attackScore := calcAttackScore(&sourceChar, &targetChar, ws.penalty, ctx)
+			attackScore := calcAttackScore(sourceChar, targetChar, ws.penalty, ctx)
 
 			// Chunk 4e: position-tiered hit modifiers. Multiplies attackScore by
 			// the attacker's self-position modifier and the target's position
 			// modifier. Both default to 1.0 outside grapples. See
 			// internal/state/position/modifiers.go.
-			attackScore *= applyPositionHitModifiers(&sourceChar, &targetChar)
+			attackScore *= applyPositionHitModifiers(sourceChar, targetChar)
 
 			defenseSequence := targetChar.GetDefenseSequence()
 
 			// Third-party grapple vulnerability
-			defenseSequence, isThirdParty := filterDefensesForThirdParty(&attackResult, &sourceChar, &targetChar, defenseSequence)
+			defenseSequence, isThirdParty := filterDefensesForThirdParty(&attackResult, sourceChar, targetChar, defenseSequence)
 
 			// Roll attack once via best-of-all defense
-			best := runBestOfAllDefense(&attackResult, &sourceChar, &targetChar, defenseSequence, attackScore, isThirdParty, ctx)
+			best := runBestOfAllDefense(&attackResult, sourceChar, targetChar, defenseSequence, attackScore, isThirdParty, ctx)
 
 			// New resolution order: fumbles → crits → normal → floors
 			// Chunk 3.3: ctx.forceCrit is true when the defender was snapshotted
 			// as Sleeping at round start; every swing against them this round crits.
-			res := resolveDefenseOutcome(&attackResult, best, &sourceChar, &targetChar, critThreshold, isThirdParty, ctx.forceCrit)
+			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit)
 
 			// Momentum builds only on clean wins and resets on deflections,
 			// matching pre-U6 behavior where a deflected swing was a miss.
@@ -568,7 +601,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 			// Only build attack messages for non-double-fumble (double fumble already sent)
 			if !res.doubleFumble {
-				buildAttackMessages(&attackResult, &sourceChar, &targetChar, ws, sdp,
+				buildAttackMessages(&attackResult, sourceChar, targetChar, ws, sdp,
 					attackTargetDamage, attackTargetReduction, attackSourceDamage, attackSourceReduction,
 					sourceType, targetType, attackMessagePrefix, res.defended)
 			}
@@ -580,7 +613,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 		}
 
 		attackResult.WeaponHits = append(attackResult.WeaponHits, weaponHit)
-		applyPetDamage(&attackResult, &sourceChar, &targetChar, targetType)
+		applyPetDamage(&attackResult, sourceChar, targetChar, targetType)
 	}
 
 	// If unarmed (no weapons at all), add unarmed entry

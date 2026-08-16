@@ -430,22 +430,33 @@ Balance:
   # These ONLY affect how much stamina each defense costs. They do NOT
   # change how effective the defense is at avoiding hits.
   #
-  # Defence stamina costs. Final cost is int(base * multiplier), TRUNCATED, then
-  # floored at 1. With the multipliers at 0.9 the live costs are dodge 1,
-  # parry 3, block 4. Rounding instead of truncating would take dodge to 2, a
-  # 100% rise on the most-used defence in the game.
+  # U7 replaced the old per-defence base costs with ONE base plus a per-action
+  # modifier, so every defence is priced by the same formula as every other
+  # action in the game:
   #
-  # The base costs were hardcoded in Go until U5a moved them here; only the
-  # multipliers were ever configurable, which is the anti-pattern the resolution
-  # arc exists to remove.
+  #   cost = base x encumbrance x inverseSkill x perActionModifier
   #
-  # U7 replaces this shape entirely: base cost becomes one term in a unified
-  # formula with an encumbrance multiplier and an inverse-skill multiplier, and
-  # these values become modifiers rather than bases. Do not retune them here in
-  # the meantime, that retune is a modelled change, not a nudge.
-  DodgeBaseStaminaCost: 2
-  ParryBaseStaminaCost: 4
-  BlockBaseStaminaCost: 5
+  # The three retired keys (DodgeBaseStaminaCost 2, ParryBaseStaminaCost 4,
+  # BlockBaseStaminaCost 5) and their three multipliers (DodgeMultiplier and
+  # friends, all 0.9) were deleted rather than left in place. The loader is
+  # non-strict and would have ignored them silently, which is exactly the
+  # problem: they read like live tuning dials and were not.
+  #
+  # DefenceBaseStaminaCost: what ONE defence costs before any multiplier.
+  #   Deliberately the same 1.0 as AttackBaseStaminaCost, so a round of
+  #   attacking and a round of defending cost the same before skill and load
+  #   are taken into account. Charged per defence resolved, not per round.
+  DefenceBaseStaminaCost: 1.0
+  #
+  # The per-defence modifiers. These are the ONLY thing that separates the
+  # three defences by price, and the ordering is a design statement rather than
+  # a tuning accident: dodge moves your whole body and is dearest, block takes
+  # the blow on a shield and is next, parry only interposes a weapon already in
+  # your hand and is cheapest. Raising DodgeCostModifier makes evasive
+  # unarmoured builds pay more for the defence they lean on hardest.
+  DodgeCostModifier: 1.25
+  ParryCostModifier: 1.10
+  BlockCostModifier: 1.15
   #
   # QuellBaseConvictionCost / DefyBaseConvictionCost: quell (mental spells) and
   #   defy (taunts) are paid in CONVICTION, not stamina, because they are acts
@@ -455,9 +466,10 @@ Balance:
   #   conservative direction. First retune is a config edit.
   QuellBaseConvictionCost: 2
   DefyBaseConvictionCost: 2
-  DodgeMultiplier: 0.9
-  ParryMultiplier: 0.9
-  BlockMultiplier: 0.9
+  #
+  # Quell and defy are NOT multiplied by encumbrance. They are acts of will,
+  # not of body, so a heavy pack does not make them dearer. They DO take the
+  # inverse-skill discount, like every other action with a skill behind it.
 
   # ── COMBAT: DEFENSE EFFECTIVENESS ─────────────────────────────────────────
   # MULTIPLIER on the defense score BEFORE the opposed roll. Applied in
@@ -832,14 +844,40 @@ Balance:
   MobConvictionRegenPct: 0.02    # NPC conviction regen per tick (raised to match players)
 
   # ── STAMINA & CONVICTION ────────────────────────────────────────────────────
-  # MovementBaseStaminaCost: stamina spent per room move on normal terrain.
-  #   Difficult terrain multiplies this (e.g. swamp 2x → 4 SP per move).
-  MovementBaseStaminaCost: 2.0
+  # MovementBaseStaminaCost: stamina spent per room move on normal terrain,
+  #   BEFORE the encumbrance and inverse-skill multipliers and before the
+  #   terrain multiplier. Lowered from 2.0 to 0.5 by U7. This is not a nerf
+  #   reversal: travelling light now costs LESS than it used to, while
+  #   travelling near your carrying limit costs a great deal more. The point of
+  #   the move was to make load, rather than distance, the thing that tires you.
+  #
+  #   Terrain still multiplies on top, so a swamp remains dearer than a road.
+  MovementBaseStaminaCost: 0.5
   # MovementMaxStaminaCost: ceiling for any single move, regardless of terrain.
   MovementMaxStaminaCost: 20.0
-  # UnarmedAttackStaminaCost: stamina per unarmed attack (weapons use their
-  #   own stamina_cost field from the item spec).
-  UnarmedAttackStaminaCost: 4
+  # MovementSearchTrainChance: chance that one successful move records a use of
+  #   the search skill, which is what gives movement its inverse-skill
+  #   discount. Deliberately tiny. Search is already easy to train through
+  #   forage and other mechanics, and a generous rate here would make every
+  #   player a grandmaster searcher purely by walking around, with every other
+  #   skill lagging behind. Set to 0 for the default; set NEGATIVE to disable
+  #   the training entirely.
+  MovementSearchTrainChance: 0.005
+  #
+  # AttackBaseStaminaCost: what ONE swing costs before multipliers, armed or
+  #   unarmed alike. It replaces UnarmedAttackStaminaCost (retired at 4), which
+  #   priced only bare hands and left weapons to an item field. Charged PER
+  #   SWING: a fast fighter throwing several blows in a round now pays for all
+  #   of them, where the old code charged once per round no matter how many
+  #   times you struck.
+  AttackBaseStaminaCost: 1.0
+  # AttackCostModifier: attacking's per-action modifier, the counterpart of the
+  #   three defence modifiers above. It ships NEUTRAL at 1.0 on purpose: it is
+  #   the reference the defence modifiers were tuned against, so dodge costing
+  #   a quarter more than a swing is a statement about dodge, not about
+  #   attacking. Raise it to make trading blows dearer than turning them
+  #   aside, which would push the game toward defensive play.
+  AttackCostModifier: 1.0
 
   # ── RESOURCE MAXIMUMS ───────────────────────────────────────────────────────
   # Formulas:
@@ -1017,6 +1055,66 @@ Balance:
   #   - 5.0 = very steep (almost nothing above 50% pool)
   #   Range: 0.5 to 10.0.
   RegenProgressionCurve: 3.0
+
+  # ── COSTS: THE SHARED CURVES (U7) ───────────────────────────────────────────
+  # Every action in the game is priced by one formula:
+  #
+  #   cost = base x encumbrance x inverseSkill x perActionModifier
+  #
+  # The base is per action and lives with that action's own knobs above. The
+  # three multipliers are shared, and this is where they are shaped. Changing
+  # anything in this block moves the price of EVERY action at once, so treat a
+  # change here as a modelled retune rather than a nudge.
+  #
+  # Note the multipliers apply differently by action kind: encumbrance touches
+  # PHYSICAL actions only (a heavy pack does not make an act of will harder),
+  # while the inverse-skill discount applies to any action with a skill behind
+  # it, physical or not.
+
+  # INVERSE-SKILL MULTIPLIER. Runs OPPOSITE to the familiar skill curve: a
+  #   practised fighter spends less on the same action than an untrained one.
+  #   Two straight segments joined at CostSkillMidRank, flat below rank 0 and
+  #   flat at or above CostSkillCapRank.
+  #
+  #   The midpoint is deliberately NEUTRAL at 1.00, which makes rank 25 the
+  #   line where an action costs exactly its base. Below it you pay a small
+  #   penalty, above it you earn a real discount. That keeps the novice
+  #   penalty mild (a beginner should feel unskilled, not punished) while
+  #   letting mastery matter: at the cap an action costs well under half.
+  #
+  #   0 is NOT a usable value for any of these five. Each is replaced by its
+  #   default at load if left at or below 0, and the two rank fields if left
+  #   below 1. CostSkillCapRank must exceed CostSkillMidRank; that is enforced
+  #   at load, not merely documented.
+  CostSkillMultAtZero: 1.10
+  CostSkillMultAtMid: 1.00
+  CostSkillMultAtCap: 0.40
+  CostSkillMidRank: 25
+  CostSkillCapRank: 100
+
+  # ENCUMBRANCE MULTIPLIER. Prices carried weight into physical actions. Two
+  #   straight segments joined at the knee: gentle from empty up to the knee,
+  #   steep from the knee to full capacity, flat at or beyond capacity.
+  #
+  #   The knee is the whole design. Below it a player should not have to think
+  #   about weight at all, so the climb to 1.5 across three quarters of the
+  #   range is barely perceptible. Above it the cost triples across the last
+  #   quarter, which is what turns "carry everything" from the obvious choice
+  #   into a real decision. Lowering CostEncumbranceKnee makes the game
+  #   punish hoarding much earlier and is the single most disruptive value in
+  #   this block.
+  CostEncumbranceKnee: 0.75
+  CostEncumbranceKneeMult: 1.5
+  CostEncumbranceMax: 5.0
+
+  # COMPOSED-TOTAL CEILING. Clamps the PRODUCT of the three multipliers, not
+  #   each one in turn. Clamping them individually still lets a full
+  #   encumbrance penalty, a novice penalty and a dodge premium stack to
+  #   nearly seven times base, which a laden beginner simply cannot pay, and a
+  #   cost nobody can pay does not read to the player as expensive. It reads
+  #   as everything failing for no stated reason. The action's base price sits
+  #   OUTSIDE this ceiling, so raising a base still raises the final cost.
+  CostTotalMultiplierMax: 6.0
 
   # ── CHARACTER CREATION ──────────────────────────────────────────────────────
   # Stats are rolled as a normal distribution, clamped to [Min, Max].
