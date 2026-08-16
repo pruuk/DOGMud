@@ -1014,17 +1014,42 @@ type GMCPCharModule_Payload_Stats struct {
 // /////////////////
 // Char.Vitals
 // /////////////////
+// NOTHING in this struct carries `omitempty`, and that is deliberate.
+//
+// Char.Vitals is a full-state SNAPSHOT, not a delta: it is republished
+// whenever a pool moves, and a GMCP client is expected to render whatever the
+// latest payload says. Under `omitempty` a value of zero drops the key
+// entirely, and a client that merges each payload over its previous state
+// (which is the normal Mudlet/Mudslinger idiom) then keeps displaying the last
+// non-zero reading. That inverts the meaning of the message at the exact
+// moment it matters most: a playtest observed
+// `{"hp":118,"hp_max":437,"stamina_max":429,...}` with no `stamina` key at all
+// when stamina was genuinely exhausted, so the client's stamina bar stayed
+// where it was while the character could not afford to act.
+//
+// The `*_reserved` fields are included in that rule even though a zero there
+// arguably means "no reservation" rather than "an empty pool". The same latch
+// applies: a reservation that ENDS must be observable, and under `omitempty`
+// the transition from a live reservation to none is transmitted as silence,
+// leaving a stale reserved band drawn on the client's bar. "No reservation" is
+// represented faithfully and unambiguously by an explicit 0, and three extra
+// integer keys per payload is not a bandwidth argument worth having.
+//
+// Toxicity already carried an "always present" comment; the rest of the struct
+// now matches it, as does GMCPPartyModule_Payload_Vitals, which never had
+// `omitempty` on its percentages. Do not add `omitempty` back to any field
+// here.
 type GMCPCharModule_Payload_Vitals struct {
-	Hp            int `json:"hp,omitempty"`
-	HpMax         int `json:"hp_max,omitempty"`
-	Stamina       int `json:"stamina,omitempty"`
-	StaminaMax    int `json:"stamina_max,omitempty"`
-	Conviction    int `json:"conviction,omitempty"`
-	ConvictionMax int `json:"conviction_max,omitempty"`
+	Hp            int `json:"hp"`
+	HpMax         int `json:"hp_max"`
+	Stamina       int `json:"stamina"`
+	StaminaMax    int `json:"stamina_max"`
+	Conviction    int `json:"conviction"`
+	ConvictionMax int `json:"conviction_max"`
 
-	HpReserved         int `json:"hp_reserved,omitempty"`
-	StaminaReserved    int `json:"stamina_reserved,omitempty"`
-	ConvictionReserved int `json:"conviction_reserved,omitempty"`
+	HpReserved         int `json:"hp_reserved"`
+	StaminaReserved    int `json:"stamina_reserved"`
+	ConvictionReserved int `json:"conviction_reserved"`
 
 	// Toxicity severity band: "clear", "queasy", "sick", or "critical".
 	// Always present so the web client can track transitions.
