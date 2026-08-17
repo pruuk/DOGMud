@@ -231,12 +231,11 @@ def encumbrance_multiplier(load):
 
 
 def action_cost(base, load, skill, physical=True, modifier=1.0):
-    if modifier < 0:
-        raise ValueError("action cost modifier cannot be negative")
     multiplier = skill_cost_multiplier(skill)
     if physical:
         multiplier *= encumbrance_multiplier(load)
-    multiplier *= modifier
+    if modifier > 0:
+        multiplier *= modifier
     multiplier = min(multiplier, SHIPPED["CostTotalMultiplierMax"])
     return base * multiplier
 
@@ -913,15 +912,11 @@ def assert_review_admission_accounting():
     assert (recovered.attempted, recovered.admitted) == (4.0, 2.0)
 
 
-def assert_review_zero_modifier_is_zero():
-    """Explicit zero is a valid authored modifier, not a neutral default."""
-    assert action_cost(3.0, 0.5, 25, modifier=0.0) == 0.0
-    try:
-        action_cost(3.0, 0.5, 25, modifier=-1.0)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("negative action modifier must be rejected")
+def assert_review_nonpositive_modifier_is_neutral():
+    """Mirror costs.Calc: only positive modifiers alter the cost."""
+    neutral = action_cost(3.0, 0.5, 25, modifier=1.0)
+    assert action_cost(3.0, 0.5, 25, modifier=0.0) == neutral
+    assert action_cost(3.0, 0.5, 25, modifier=-1.0) == neutral
 
 
 def assert_review_all_selected_equivalents():
@@ -1108,7 +1103,7 @@ if __name__ == '__main__':
 
     assert_review_ranged_cadence_is_source_driven()
     assert_review_admission_accounting()
-    assert_review_zero_modifier_is_zero()
+    assert_review_nonpositive_modifier_is_neutral()
     assert_review_all_selected_equivalents()
     assert_review_exact_event_sequences()
     all_passing_packages, u8_candidate_packages = generate_candidate_packages()

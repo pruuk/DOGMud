@@ -261,8 +261,9 @@ combat regeneration. Role ratio remains 2:1 at every modeled load.
 | **Owner** | **136/133** | **133/127** | **132/123** | **129/117** | **126/112** | **125/108** | **122/102** | **119/96** | **119/93** | **116/87** |
 
 The model asserts refusal no-mutation, separate attempted/admitted counters,
-fractional carry, partial-payment writeoff, recovery, explicit modifier zero,
-and negative-modifier rejection. Owner full-pay novice examples are:
+fractional carry, partial-payment writeoff, recovery, and live modifier
+semantics: only a positive modifier changes cost, while zero or negative is the
+neutral 1.0 exactly as in `costs.Calc`. Owner full-pay novice examples are:
 
 | Pool | Affordable | Exhausted | Recovered |
 |---|---|---|---|
