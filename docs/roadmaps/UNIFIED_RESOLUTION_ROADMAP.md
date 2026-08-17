@@ -177,7 +177,7 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | **The unified cost model.** NEW SLICE, added 2026-08-13; everything below it shifted by one. Applies the spec's single cost formula to every action: flat config base, encumbrance multiplier (physical only), inverse-skill multiplier, per-action modifier. Takes defence cost off the hardcoded 2/4/5 for real. **Must map the companion / reserved-CP interaction before building.** | L | U5, U6 | **Yes** |
 | **U7b** | ✅ **DONE.** **The reservation ceiling.** NEW SLICE, added 2026-08-15 at the owner's request; runs immediately after U7. Cap total reservation on a pool at 50-75% of its max and **refuse the breaching action** rather than letting it succeed and clamp: wielding or equipping a reserving item, enchanting, summoning, conjuring, raising. **Companions are in scope** and are the reason this cannot wait: they reserve on prod today. Also re-examines five raw-max reads whose U7-review rejection rested on the false premise that mobs cannot reserve. **Must precede U8**, which is what turns an over-reserved pool from cosmetic into crippling. | M | U7 | **Yes** |
-| **U8** | New cost surface: ranged, taunt and spell/taunt resistance start costing; **the special moves (bash, trip, kick and the rest), plus rally, warcry, grapple initiation and sneak, wired onto the U7 cost model** (they are free today, and `help stamina` wrongly claimed otherwise until 2026-08-15); skill-less roll on insufficient resource. (Was U7. The inverse-skill cost band moved into the new U7, where the whole formula now lives.) | M | **U7b** | **Yes** |
+| **U8** | **Unified action-cost admission.** Add shoot, reload, taunt, rally, warcry, sneak, throw, grapple initiation and the full bash/trip/kick/beast-move family to the U7 model. Voluntary actions pay in full or refuse; autoattack, defence, flee and grapple maintenance remain life-preserving partial-pay actions and omit skill when short. Adds one non-mutating quote/commit seam, player/mob parity, current help/context docs and an adversarial playtest. Quell and defy already cost Conviction after U7; U8 adds their short-resource behavior rather than charging twice. | L | **U7b** | **Yes** |
 | **U9** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. **Also the natural home for unifying a spell's `primarystat` with a skill's primary stat** (owner, 2026-08-15): `SpellData.PrimaryStat` is declared by 58 spell files, all `willpower`, and read by **zero** Go code, while resolution hardcodes Willpower in six places. Do not delete it as dead before U9 decides, since it is the only written record of the intent. | M | U6 | **Yes** |
 | **U10** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
 | **U12** | **Targeting and target-switching audit.** Added 2026-08-14 at the owner's request. This code has been rewritten several times and never re-examined as a whole; the arc has since removed a great deal of the complexity it was written around. Re-read it end to end and simplify what the flip made redundant. Surface: `actions/target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go`, `usercommands/target.go`, and `internal/parser` (~780 lines together). Audit first, then propose — the deliverable is a findings pass, and any simplification is scoped from what it finds rather than assumed up front. | M | U6 | **No** (simplification only; anything behavioural splits out) |
@@ -247,8 +247,10 @@ would have caused a real defect. Corrected by the user 2026-08-13. There are
 or HARM to pick the right one:
 
 1. **A cost may never drive any pool below 0.** Spell costs, stamina for actions,
-   all of it. If the actor cannot pay, that is a separate decision (U8 owns
-   "the roll still happens with no skill"), not an overdraw.
+   all of it. If the actor cannot pay, that is a separate decision: U8 refuses
+   voluntary actions, while life-preserving autoattack, defence, flee and
+   grapple maintenance still resolve without their skill term. Neither policy
+   permits overdraw.
 2. **Harm floors stamina and conviction at 0.** They stop at empty.
 3. **Harm may drive health below 0, and MUST be allowed to. That is how death
    works.** `ApplyHealthChange` (`internal/characters/resources.go`) deliberately
@@ -457,6 +459,54 @@ Separately, the inverse-skill rider is a penalty at low rank on **both** the
 item and the companion side, so a character who is a novice at enchanting and
 manifestation both pays it twice on two different pools. Each half is settled;
 the compounding is not, and is a playtest question rather than a code change.
+
+### U8 — unified action-cost admission
+
+**Designed 2026-08-17.** Source of truth:
+[`2026-08-17-u8-unified-action-cost-admission-design.md`](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
+
+U8 is both a new cost surface and the consolidation slice for action admission.
+It extends the existing U7 action registry and calculator through one
+non-mutating quote followed by an explicit full or partial commit. It does
+**not** put pool mutation into `combat.RunContest`, and no caller may reproduce
+the cost formula.
+
+**Full-pay or refuse:** shoot, reload, taunt, rally, warcry, sneak, throw,
+grapple initiation, bash, trip, kick, hamstring, rake, maul, pounce, gore,
+drain and throttle. Refusal happens after read-only validity gates but before
+cooldown, ammunition, item use, round consumption, awareness transition or
+effect.
+
+**Partial-pay and resolve without skill when short:** autoattack, the selected
+defence, flee, and both sides of grapple maintenance. These are the actions
+whose refusal leaves an exhausted actor helpless rather than merely choosing a
+different move. Quell and defy already charge Conviction through U7; U8 only
+adds their insufficient-resource consequence.
+
+Grapple maintenance joins the registry as physical + Unarmed Combat. Preserve
+the controller/controlled cost ratio by applying its existing role multiplier
+to the base before the U7 product clamp. Either participant can independently
+lose its skill term in the drift contest.
+
+Reload is deliberately included: it is a physical Ranged Combat action, and
+loading a weapon is tiring even though its outcome is deterministic. `charge`
+inherits trip and `howl` inherits taunt; aliases never receive duplicate cost
+entries.
+
+**Balance gate.** A cooldown-gated physical manoeuvre should cost modestly more
+than one ordinary swing but no more than four ordinary swings for the same
+typical character, load and skill. Model ranged shoot-plus-reload cycles,
+rhetoric sustainability and grapple's combined cost/effectiveness pressure
+before choosing shipped values.
+
+**Documentation is not deferred to U11.** U8 updates affected helpfiles,
+every touched package's `context.md`, config comments, patch notes and this
+roadmap, then runs the adversarial in-game playtest required for new
+player-facing copy.
+
+**Recorded follow-up, out of scope:** audit mutation-active command
+registrations, implementations, tests, help and config for dead remnants after
+the mutation removals. Surprise attack remains U10's redesign.
 
 ### U0 — delete the spell-initiation gate
 
@@ -708,8 +758,12 @@ Notes that matter for anyone routing costs:
   assumed hit was binary. It becomes a continuum. Candidates: swings won outright
   (~50% at parity), swings dealing any damage (~96%), or all swings. They differ
   by 2× at parity and far more at the extremes.
-- **Before U8** — ranged and taunt are free today on both sides. Giving them
-  costs is a real nerf to two playstyles that have never paid.
+- **Before U8** — shoot, reload, taunt, rally, warcry, sneak, throw, grapple
+  initiation and the special-move family are free today. Giving them costs is a
+  real nerf to playstyles that have never paid. Model the entire matrix,
+  including shoot-plus-reload cycles, rhetoric sustainability and grapple
+  maintenance. A cooldown-gated physical manoeuvre targets more than one but
+  no more than four ordinary swings for the same typical actor, load and skill.
 
 ---
 

@@ -4,6 +4,15 @@
 **Status:** Design approved in conversation. Companion to
 `2026-08-12-unified-contest-resolution-design.md`. Both decompose into plans next.
 
+> **U8 refinement, 2026-08-17:** U7 and U7b changed the implementation facts
+> beneath this early arc-level design. The authoritative action-admission and
+> insufficient-resource rules now live in
+> [`2026-08-17-u8-unified-action-cost-admission-design.md`](2026-08-17-u8-unified-action-cost-admission-design.md).
+> In particular, voluntary actions refuse when unaffordable, only
+> life-preserving actions partially pay and lose skill, and affordability reads
+> the already reserve-clamped current pool rather than subtracting reservation
+> a second time.
+
 ---
 
 ## 1. Scope
@@ -150,11 +159,13 @@ Knobs: `CostSkillMultiplierMax` 1.25, `CostSkillMultiplierMin` 0.75,
 `CostSkillNeutralRank` 35, `CostSkillFloorRank` 100. Clamped at `min` beyond
 `top`, so a hypothetical rank-150 character gains nothing further.
 
-### 3.4 Insufficient resource: the roll still happens, with no skill
+### 3.4 Insufficient resource: policy follows the action
 
-**If the actor cannot pay, the action still resolves — but contributes NO skill
-to its roll.** Score becomes bare `stat × modifiers`, dropping the `skill × 5`
-term entirely.
+**Life-preserving actions still resolve when the actor cannot pay, but
+contribute NO skill to their roll.** U8 defines these as autoattack, defence,
+flee and grapple maintenance. Score becomes bare `stat × modifiers`, dropping
+the skill term entirely. Voluntary actions pay in full or refuse before
+consuming their secondary state.
 
 This was reconsidered during design. Outright autofail was the first proposal
 and is worse, because it removes the actor from the contest completely and so
@@ -170,8 +181,9 @@ without literally being so.
 
 Rules:
 
-- **Availability is measured with reserve excluded**, consistently with
-  `OnRegenTick`. Use `GetPoolReservation`; never read the raw pool.
+- **Availability reads the current pool directly.** U7 already clamps current
+  to the usable, reservation-excluded ceiling. Calling `GetPoolReservation` or
+  using `EffectivePoolMax` here would subtract reservation twice.
 - **Charge only for the defence actually used** — the one that won the best-of-N.
   Today's `runBestOfAllDefense` already does this
   (`combat_helpers.go:657`, "Deduct stamina only for the winning defense"). It is
@@ -276,18 +288,19 @@ Remaining work is small and specific:
 1. **Ranged and taunt are free today.** Giving them costs is a real nerf to two
    playstyles that have never paid. Model it before shipping; do not discover it
    in play.
-2. **Autofail plus reserve is a sharp edge.** A player who reserves CP heavily
-   could find themselves unable to resist *any* mental spell. That is intended,
-   but it needs to be legible to the player — the messaging must say the resource
-   was the reason, not just report a failure.
-3. **Never read a raw pool for affordability.** Always subtract
-   `GetPoolReservation`. The `OnRegenTick` call sites carry an exploit-fix comment
-   for exactly this.
+2. **Skill stripping plus reserve is a sharp edge.** A player who reserves CP
+   heavily may resist mental spells at raw Willpower with no Spellcasting. That
+   is intended, but messaging must name exhaustion rather than imply an
+   automatic failure.
+3. **Never subtract reservation during affordability.** Current is already
+   reserve-clamped by U7; subtracting `GetPoolReservation` or comparing against
+   `EffectivePoolMax` double-counts it.
 4. **Conviction damage already drains CP.** Do not "fix" it to drain HP for
    consistency with the other channels; it is the precedent this design follows.
 5. **Cost multipliers compound.** Encumbrance × skill × per-action config can
-   stack into an unaffordable cost for a heavily-laden novice, which silently
-   becomes autofail-everything. Clamp the product, not just each factor.
+   stack into an unaffordable cost for a heavily-laden novice, which becomes
+   refuse-everything or skill-less life-preserving actions. Clamp the product,
+   not just each factor.
 6. **A skill-less roll is not a small penalty.** Dropping the skill term costs a
    rank-69 character 345 points of score. Verify against the 5.9 floors that an
    exhausted defender still lands within the floor band rather than falling so
@@ -304,9 +317,10 @@ Remaining work is small and specific:
 - **Spell cast costs may need rebalancing** given how much CP is reserved for
   companions and enchantments. Explicitly out of scope here; likely its own chunk
   once the cost model is in and measurable.
-Both previously-open items are now decided: the inverse-skill band is centred at
-rank 35 running 1.25 to 0.75 (section 3.3), and an unaffordable action rolls
-without its skill term rather than autofailing (section 3.4).
+Both previously-open items were subsequently decided. U7 owns the shipped
+inverse-skill band, whose live values differ from this early proposal. U8 owns
+insufficient resource: voluntary actions refuse, while life-preserving actions
+partially pay and roll without their skill term (section 3.4).
 
 ---
 
@@ -319,9 +333,9 @@ without its skill term rather than autofailing (section 3.4).
 3. No new weapon needs an authored stamina cost; base costs are config values
    modified by encumbrance and skill.
 4. Ranged, taunt, and defending against spells and taunts all cost something.
-5. Insufficient resource drops the skill term from the roll rather than
-   autofailing, measured with reserve excluded, with player-legible messaging
-   saying why.
+5. Insufficient resource refuses voluntary actions without consuming secondary
+   state; life-preserving actions partially pay and drop their skill term. Both
+   use the already reserve-clamped current pool and player-legible messaging.
 6. **The three floor rules hold.** CORRECTED 2026-08-13; this criterion
    previously read "No pool can be driven negative from any path", which is
    wrong and would cause a real defect if implemented literally. There are three
