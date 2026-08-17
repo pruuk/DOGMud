@@ -27,6 +27,25 @@
 
 ---
 
+## Adversarial plan review
+
+An independent read-only subagent reviewed this plan against the approved spec,
+unified-resolution roadmap, project instructions, and live repository code on
+2026-08-17. The first pass returned **Not ready** with five Critical, nine
+Important, and three Minor findings. The plan was amended to resolve all of
+them, including request defaults, intermediate compile safety, deterministic
+balance modelling, exact attack/defence request construction, real narration
+owners and loaders, awareness/cooldown ordering, wrapper test coverage, helpfile
+scope, and safe staging.
+
+Two closure passes rechecked the amended working tree. The final reviewer
+verdict was **Ready to execute: Yes**, with no unresolved Critical or Important
+finding. This review satisfies the pre-execution adversarial plan-review gate;
+it does not replace the implementation reviews or the final in-game adversarial
+content playtest in Task 14.
+
+---
+
 ## Shared names this plan uses
 
 These names are fixed for the implementation so later tasks do not invent parallel seams.
@@ -85,6 +104,15 @@ func (r CostCommitResult) Short() bool {
 }
 ```
 
+Every single-action request explicitly sets `Units: 1`. Actions with no
+authored relative modifier set `Modifier: 1.0`; attack and the three physical
+defences pass their existing configured modifiers through the raw request,
+while quell and defy deliberately pass neutral `1.0`. `Units <= 0`
+means there is deliberately no action to charge. A non-positive modifier
+retains `costs.Calc`'s existing zero-value-as-neutral behavior; it does not make
+an action free. Non-positive or non-finite bases and non-finite calculated
+amounts produce a harmless no-charge quote and bank no carry.
+
 `CostQuote` is exported as a value that can be passed between packages, but it contains only a pointer to an unexported quote state. That state records the owner character, pool/carry snapshot, calculated amount, and a consumed bit. Callers may inspect only `Affordable()`; only `Character.CommitCost` may interpret the snapshot or mark it consumed. This makes a zero-whole quote single-use too, even though committing it changes no pool state.
 
 The new shared config bases are intentionally few:
@@ -111,14 +139,35 @@ Sharing the special-move and rhetoric bases is deliberate: these actions share c
 
 - [ ] **Step 1: Add the failing U8 acceptance assertions**
 
-Add named character/load fixtures for novice, mid-skill, veteran, and the live-character bands already represented by the model. Add empty, typical, knee, and capacity loads. Add an `ordinary_swing_cost(character, load, skill)` reference and fail until U8 candidate bases exist.
+Build a new U8 cost-model section; the current script models U6 damage only and
+contains no U7 cost tables to extend. Use these fixed synthetic actor inputs
+plus the tracked anonymized live-character band so the model and evidence are
+reproducible without production saves:
+
+| Fixture | Six base stats | Governing skill | Load ratios |
+|---|---:|---:|---|
+| Novice | 100 | 5 | 0%, 50%, 75%, 100% capacity |
+| Mid-skill | 110 | 25 | 0%, 50%, 75%, 100% capacity |
+| Veteran | 136 | 69 | 0%, 50%, 75%, 100% capacity |
+| Synthetic high | 175 | 100 | 0%, 50%, 75%, 100% capacity |
+| Anonymized live band | Read six stats and each governing skill from `tools/playtest/profiles/veteran.yaml` | Per-action tracked skill | 0%, 50%, 75%, 100% capacity |
+
+The tracked `veteran` profile is explicitly documented in
+`tools/playtest/profiles/README.md` as sanitized from a Meirok-class archive;
+do not consult or embed production saves. Derive Stamina/Conviction maxima and
+regeneration from the live code formulas using shipped config coefficients,
+rather than claiming the balance config contains character fixtures or copying
+derived outputs into Python. Use the shipped `SpecialMoveCooldown` for legal
+action cadence. Add an
+`ordinary_swing_cost(character, load, skill)` reference and fail until U8
+candidate packages exist.
 
 The model must assert all of these, not merely print them:
 
 ```python
 assert special_move_cost > ordinary_swing_cost
 assert special_move_cost <= ordinary_swing_cost * 4
-assert reload_cost < shoot_cost
+assert reload_cost <= shoot_cost * 0.75
 assert controlled_grapple_cost > controller_grapple_cost
 assert all(cost <= product_clamp_bound for cost in laden_novice_costs)
 ```
@@ -129,7 +178,7 @@ Calculate the comparisons for the same character, load, and governing skill. Fou
 
 Run: `python tools/balance/unified_resolution_model.py`
 
-Expected: non-zero exit identifying missing U8 bases or an unsatisfied U8 constraint; existing U7 tables must still render before the failure.
+Expected: non-zero exit identifying the absent U8 cost-model section or an unsatisfied U8 constraint; the existing U6 damage tables must still render before the failure.
 
 - [ ] **Step 3: Model action cadence and combined cycles**
 
@@ -141,13 +190,59 @@ Add tables for:
 - controller and controlled grapple timelines for at least ten rounds; and
 - affordable, exhausted, and recovered transitions for every pool.
 
-Enumerate candidate bases in this exact set:
+The thirty-round traces are exact:
+
+- **special combat:** one ordinary swing and one winning defence every round;
+  use one special move on round 1 and then every
+  `SpecialMoveCooldown` rounds;
+- **ranged:** begin loaded and shoot on round 1; reload on the first following
+  round whose special-move cooldown is ready; shoot on the next round; repeat,
+  with no invented shoot cooldown;
+- **rhetoric:** use one of taunt/rally/warcry on round 1 and then every
+  `SpecialMoveCooldown` rounds;
+- **sneak:** model a detected attempt on round 1 and then every
+  `SneakFailCooldown` rounds, resetting awareness to Visible between attempts;
+  and
+- **grapple:** charge both roles once per round for ten rounds.
+
+Apply current shipped regeneration after each round using the same combat/non-
+combat rule as the live hooks. Track gross debit separately from net pool state
+so regeneration cannot hide whether a price is meaningful.
+
+Enumerate three candidate grids:
 
 ```python
-U8_CANDIDATES = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0)
+PHYSICAL_CANDIDATES = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0)
+RHETORIC_CANDIDATES = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0)
+GRAPPLE_CANDIDATES = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0)
 ```
 
-Select the simplest candidate satisfying every assertion. For grapple maintenance, model the existing `GrappleControllerCostMultiplier` and `GrappleControlledCostMultiplier` before `costs.Calc`; if the current base 5 fails the combined-pressure constraints, retune it from the same candidate set and record the behavior change explicitly.
+Every candidate package must satisfy these quantitative gates:
+
+- every typical-load special move costs more than one and no more than four
+  ordinary swings for the same fixture and governing skill;
+- reload costs no more than 75% of shoot for every ranged fixture;
+- thirty rounds of legal-cadence ranged or rhetoric use produces gross U8
+  debits of at least 5% and no more than 35% of that fixture's unreserved pool;
+- no single voluntary action costs more than 25% of a typical fixture's current
+  usable pool;
+- a typical-load autoattack/defence/special-move combat trace does not reach
+  zero Stamina before round 20;
+- controller and controlled grapple traces both last at least ten rounds from a
+  full pool at typical load, and their cost ratio stays within one percentage
+  point of the configured role-multiplier ratio at every modelled load; and
+- every laden-novice multiplier remains at or below
+  `CostTotalMultiplierMax`.
+
+For every passing package, calculate one scalar pressure score: the arithmetic
+mean of `gross U8 debit / unreserved pool max` across every fixture and the five
+traces above. Sort ascending by `(pressure_score, special, shoot, reload, sneak,
+rhetoric, grapple)`. The lowest package is the first row; the highest is the
+last; the midpoint is the row whose score is closest to the arithmetic midpoint
+of the low and high scores, with the same lexicographic tuple breaking ties.
+Present exactly those three packages. For grapple maintenance, apply the
+existing role multipliers before `costs.Calc`. If the current base 5 fails,
+include the retune and its behavioral effect in every candidate package.
 
 - [ ] **Step 4: Record the evidence and chosen values**
 
@@ -159,13 +254,16 @@ Create `docs/superpowers/plans/2026-08-17-u8-cost-model-evidence.md` containing:
 - ten-round grapple pool traces for both roles; and
 - a short rationale for each selected value and every rejected boundary candidate.
 
-No later task may use a value absent from this evidence file.
+Present the three passing packages to the owner and stop at this explicit
+balance checkpoint. Record the owner's selected package and rationale in the
+evidence file. No later task may use a value absent from that approved package;
+the implementer does not choose among candidates.
 
 - [ ] **Step 5: Run and commit the model gate**
 
 Run: `python tools/balance/unified_resolution_model.py`
 
-Expected: exit 0, all U7 and U8 assertions pass, and the printed numbers match the evidence file.
+Expected: exit 0, all existing U6 and new U8 assertions pass, and the printed numbers match the evidence file.
 
 Commit:
 
@@ -187,6 +285,10 @@ git commit -m "test: model U8 action cost pressure"
 - Create: `internal/characters/action_cost_test.go`
 - Modify: `internal/configs/config.balance.go`
 - Modify: `internal/configs/config.balance.combat.go`
+- Modify: `internal/combat/attack_cost.go`
+- Modify: `internal/usercommands/flee.go`
+- Modify: `internal/usercommands/flee_cost_test.go`
+- Modify: `internal/characters/resources.go`
 - Modify: `_datafiles/config.yaml`
 - Modify: `internal/costs/context.md`
 - Modify: `internal/characters/context.md`
@@ -209,7 +311,13 @@ Expected: FAIL because the constants and `SkillSource` metadata do not exist.
 
 - [ ] **Step 2: Replace `HasSkill` with explicit skill selection**
 
-Implement `SkillSource`, update existing registry entries, add every U8 entry, and update `costs.Calc` callers to derive `HasSkill` from `spec.SkillSource != SkillNone`. Do not teach the pure `costs` package how to read a character.
+Implement `SkillSource`, update existing registry entries, add every U8 entry,
+and migrate every current `Spec.HasSkill` consumer in
+`internal/characters/resources.go`, `internal/combat/attack_cost.go`,
+`internal/usercommands/flee.go`, and `internal/usercommands/flee_cost_test.go`
+to `spec.SkillSource != costs.SkillNone`. `costs.Input.HasSkill` remains the
+pure calculator input. Do not retain a second boolean in `Spec`, and do not
+teach the pure `costs` package how to read a character.
 
 - [ ] **Step 3: Write quote/commit tests before implementation**
 
@@ -223,7 +331,9 @@ Create `internal/characters/action_cost_test.go` with focused tests that prove:
 - full refusal changes neither carry nor pool;
 - partial payment charges only the available whole amount and reports `CostPartiallyPaid`;
 - a whole due of zero reports `CostNoCharge`, not short;
-- non-positive and non-finite base/modifier inputs bank nothing;
+- non-positive or non-finite bases and non-finite calculated amounts bank
+  nothing, while a non-positive modifier remains neutral exactly as in
+  `costs.Calc`;
 - a stale quote refuses without charging a different amount; and
 - a quote committed by another character or committed twice refuses; and
 - reservation is not subtracted from the current pool a second time.
@@ -242,7 +352,7 @@ func (q CostQuote) Affordable() bool
 func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult
 ```
 
-`QuoteActionCost` resolves the registry spec, selects the fixed skill or `GetCombatSkillLevel`, calls `costs.Calc` once, multiplies its unrounded result by `Units`, and creates an unexported state containing `owner: c`, the current pool/carry snapshot, and `consumed: false`. `Units <= 0` yields a no-charge quote. `CommitCost` first rejects a nil state, a different owner, a consumed quote, or changed pool/carry values. It marks an accepted quote consumed before applying its policy. Full refusal leaves pool and carry untouched. Partial commit stores the fractional remainder, charges `min(wholeDue, currentPool)`, and discards the unpaid whole portion.
+`QuoteActionCost` resolves the registry spec, selects the fixed skill or `GetCombatSkillLevel`, calls `costs.Calc` once, multiplies its unrounded result by `Units`, and creates an unexported state containing `owner: c`, the current pool/carry snapshot, and `consumed: false`. `Units <= 0`, a non-positive/non-finite base, or a non-finite calculated amount yields a no-charge quote. A non-positive modifier is passed through so `costs.Calc` treats it as neutral. `CommitCost` first rejects a nil state, a different owner, a consumed quote, or changed pool/carry values. It marks an accepted quote consumed before applying its policy. Full refusal leaves pool and carry untouched. Partial commit stores the fractional remainder, charges `min(wholeDue, currentPool)`, and discards the unpaid whole portion.
 
 Keep `ApplyCostFloat` and `ApplyCostFloatOrRefuse` as compatibility wrappers until all old callers are intentionally migrated; implement them in terms of the same private fractional calculation so the two paths cannot drift.
 
@@ -264,19 +374,22 @@ Add the five new fields named in “Shared names this plan uses” as `ConfigFlo
 
 - [ ] **Step 7: Run and commit the foundation**
 
-Run:
+Run formatting before tests, then verify the whole repository still compiles at
+this checkpoint:
 
 ```bash
-go test ./internal/costs ./internal/characters ./internal/configs
 gofmt -w internal/costs/action.go internal/costs/action_test.go internal/characters/pools.go internal/characters/pools_test.go internal/characters/cooldowns.go internal/characters/action_cost_test.go internal/configs/config.balance.go internal/configs/config.balance.combat.go
+gofmt -l internal/ modules/
+go test ./internal/costs ./internal/characters ./internal/configs
+go build ./...
 ```
 
-Expected: all tests pass; `gofmt -l` on the named Go files prints nothing.
+Expected: `gofmt -l` prints nothing; all tests and the full build pass.
 
 Commit:
 
 ```bash
-git add internal/costs internal/characters internal/configs _datafiles/config.yaml
+git add internal/costs/action.go internal/costs/action_test.go internal/characters/pools.go internal/characters/pools_test.go internal/characters/cooldowns.go internal/characters/action_cost_test.go internal/characters/resources.go internal/configs/config.balance.go internal/configs/config.balance.combat.go internal/combat/attack_cost.go internal/usercommands/flee.go internal/usercommands/flee_cost_test.go _datafiles/config.yaml internal/costs/context.md internal/characters/context.md internal/configs/context.md
 git commit -m "feat: add unified action cost admission"
 ```
 
@@ -294,7 +407,12 @@ git commit -m "feat: add unified action cost admission"
 
 - [ ] **Step 1: Write the shared action helper tests**
 
-Pin that `admitFullCost(actor, action, pool, base)` delegates to `QuoteActionCost` and then calls `CommitCost(quote, CostFullOrRefuse)`, charges player and mob actors identically, and never emits text itself.
+Pin that `admitFullCost(actor, action, pool, base)` is the helper for voluntary
+actions with no authored relative modifier and constructs
+`ActionCostRequest{Action: action, Pool: pool, Base: base, Modifier: 1.0,
+Units: 1}`, delegates to `QuoteActionCost`, and then calls
+`CommitCost(quote, CostFullOrRefuse)`. It charges player and mob actors
+identically and never emits text itself.
 
 Add these helpers:
 
@@ -318,7 +436,7 @@ Expected: PASS.
 Commit:
 
 ```bash
-git add internal/actions internal/usercommands/context.md internal/mobcommands/context.md
+git add internal/actions/action_cost.go internal/actions/action_cost_test.go internal/actions/actor.go internal/actions/context.md internal/usercommands/context.md internal/mobcommands/context.md
 git commit -m "refactor: centralize shared action admission"
 ```
 
@@ -358,6 +476,7 @@ git commit -m "refactor: centralize shared action admission"
 - Modify: `internal/usercommands/throttle.go`
 - Modify: `internal/mobcommands/bash.go`
 - Modify: `internal/mobcommands/charge.go`
+- Modify: `internal/mobcommands/charge_test.go`
 - Modify: `internal/mobcommands/trip.go`
 - Modify: `internal/mobcommands/kick.go`
 - Modify: `internal/mobcommands/grapple.go`
@@ -374,14 +493,24 @@ git commit -m "refactor: centralize shared action admission"
 
 The table must invoke all eleven shared actions and assert for each:
 
-1. an invalid target/body/equipment/state returns before quoting;
-2. an active `special-move` cooldown returns before quoting;
+1. an invalid target/body/equipment/state returns before commit;
+2. an active `special-move` cooldown returns before commit;
 3. an otherwise-valid unaffordable action returns `CostRefused`;
 4. refusal preserves cooldown and all action-specific state;
 5. an affordable miss/fumble pays once and consumes the cooldown; and
 6. higher governing skill or lower load reduces the quote through U7.
 
 For grapple initiation, additionally assert no grapple state exists after refusal. For drain, assert `ExecuteDrainArea` does not acquire a cost. For mob aliases, assert `charge` charges only through `ExecuteTrip` and `howl` is not touched in this task.
+
+Create the exact test functions
+`TestChargeAliasChargesOnlyThroughTrip`,
+`TestDrainAreaDoesNotAcquireActionCost`, and
+`TestMutationActivesDoNotDoubleCharge`; the focused command in Step 4 relies on
+those names and must not be allowed to match zero tests silently.
+
+Because quoting is intentionally non-mutating, add an AST/order guard proving
+validity and `CooldownReady` branches precede `admitFullCost` in each shared
+function; runtime tests prove the observable before-commit contract.
 
 Run: `go test ./internal/actions -run 'TestSpecialMove.*Admission' -v`
 
@@ -403,7 +532,7 @@ Run:
 
 ```bash
 go test ./internal/actions ./internal/usercommands ./internal/mobcommands
-go test ./... -run 'Test(Charge|Howl|DrainArea).*Charge' -count=1
+go test ./internal/actions ./internal/mobcommands -run '^(TestChargeAliasChargesOnlyThroughTrip|TestDrainAreaDoesNotAcquireActionCost|TestMutationActivesDoNotDoubleCharge)$' -count=1
 ```
 
 Expected: PASS; the alias and mutation/boss paths show no second charge.
@@ -411,7 +540,7 @@ Expected: PASS; the alias and mutation/boss paths show no second charge.
 Commit:
 
 ```bash
-git add internal/actions internal/usercommands internal/mobcommands
+git add internal/actions/combat_bash.go internal/actions/combat_trip.go internal/actions/combat_kick.go internal/actions/combat_grapple.go internal/actions/combat_hamstring.go internal/actions/combat_rake.go internal/actions/combat_maul.go internal/actions/combat_pounce.go internal/actions/combat_gore.go internal/actions/combat_drain.go internal/actions/combat_throttle.go internal/actions/combat_test.go internal/actions/combat_kick_raptor_test.go internal/actions/combat_rake_test.go internal/actions/combat_maul_test.go internal/actions/combat_pounce_test.go internal/actions/combat_gore_test.go internal/actions/combat_drain_test.go internal/actions/combat_throttle_test.go internal/actions/command_readiness_drift_test.go internal/usercommands/bash.go internal/usercommands/trip.go internal/usercommands/kick.go internal/usercommands/grapple.go internal/usercommands/rake.go internal/usercommands/maul.go internal/usercommands/pounce.go internal/usercommands/gore.go internal/usercommands/drain.go internal/usercommands/throttle.go internal/mobcommands/bash.go internal/mobcommands/charge.go internal/mobcommands/charge_test.go internal/mobcommands/trip.go internal/mobcommands/kick.go internal/mobcommands/grapple.go internal/mobcommands/hamstring.go internal/mobcommands/rake.go internal/mobcommands/maul.go internal/mobcommands/pounce.go internal/mobcommands/gore.go internal/mobcommands/drain.go internal/mobcommands/throttle.go
 git commit -m "feat: price physical special moves"
 ```
 
@@ -432,13 +561,24 @@ git commit -m "feat: price physical special moves"
 
 - [ ] **Step 1: Write shoot-plus-reload cycle regressions**
 
-For shoot, assert a refused action leaves `weapon.Loaded`, cooldown, round state, ammunition inventory, and target health unchanged. Assert an affordable miss still unloads, pays once, and consumes the round. For reload, assert refusal leaves the ammunition bundle count, `Loaded`, and cooldown unchanged; success consumes exactly one projectile, pays once, loads, and consumes cooldown.
+For shoot, assert a refused action leaves `weapon.Loaded`, round state,
+ammunition inventory, and target health unchanged. Shoot has no special-move
+cooldown before or after U8; add a guard that it neither queries nor mutates
+one. Assert an affordable miss still unloads, pays once, and consumes the
+round. For reload, assert refusal leaves the ammunition bundle count, `Loaded`,
+and cooldown unchanged; success consumes exactly one projectile, pays once,
+loads, and consumes cooldown.
 
 Drive both player and mob wrappers and assert the same mechanical deltas. Assert the combined successful shoot-plus-reload charge equals the two independent quotes and agrees with Task 1's evidence fixture.
 
 - [ ] **Step 2: Reorder `ExecuteFire`**
 
-Complete target parse, visibility, weapon, loaded-state, ammunition compatibility, charm/non-combatant, and line-of-fire checks first. Check cooldown availability without consuming it. Commit `ActionShoot` / Stamina / `ShootBaseStaminaCost`. Only then set `Loaded = false`, consume the cooldown/round, and call the existing ranged resolver.
+Complete target parse, visibility, weapon, loaded-state, ammunition
+compatibility, charm/non-combatant, and line-of-fire checks first. Commit
+`ActionShoot` / Stamina / `ShootBaseStaminaCost`. Only then set
+`Loaded = false`, consume the combat round, and call the existing ranged
+resolver. Do not add a cooldown check or cooldown mutation to shoot; reload
+alone owns the shared special-move cooldown.
 
 - [ ] **Step 3: Reorder `ExecuteReload`**
 
@@ -471,7 +611,12 @@ git commit -m "feat: price ranged fire and reload"
 
 - [ ] **Step 1: Write preservation tests**
 
-Throw refusal must preserve the exact item instance, stack quantity, special-move cooldown, target health, and round state. Sneak refusal must leave awareness out of Concealing/Hidden, preserve cooldown/round state, and fire no progression. Affordable failed attempts pay and retain existing failure/progression semantics.
+Throw refusal must preserve the exact item instance, stack quantity,
+special-move cooldown, target health, and round state. Sneak refusal must leave
+awareness out of Concealing/Hidden, preserve the player-only failure cooldown
+and round state, and fire no progression. Affordable failed attempts pay and
+retain existing failure/progression semantics. Mob sneak must not acquire the
+player failure cooldown.
 
 Run: `go test ./internal/actions ./internal/usercommands ./internal/mobcommands -run 'Test(Throw|Sneak).*Cost' -v`
 
@@ -483,7 +628,13 @@ Resolve target, item, ownership, throwable validity, and cooldown availability r
 
 - [ ] **Step 3: Reorder shared sneak**
 
-In `actions.Sneak`, complete actor/state/room and cooldown checks, commit `ActionSneak` / Stamina / `SneakBaseStaminaCost`, then call `TransitionToConcealing` and run existing contests. Return the structured cost to both wrappers; only the user wrapper prints refusal.
+Keep the read-only prior-failure cooldown check in the player wrapper, using
+`CooldownReady`; the mob wrapper has no equivalent cooldown. In
+`actions.Sneak`, complete shared actor/state/room checks, commit `ActionSneak` /
+Stamina / `SneakBaseStaminaCost`, then call `TransitionToConcealing` and run
+existing contests. Return the structured cost to both wrappers; only the user
+wrapper prints refusal and only it applies `SneakFailCooldown` after being
+spotted.
 
 - [ ] **Step 4: Run and commit**
 
@@ -514,27 +665,47 @@ git commit -m "feat: admit throw and sneak costs atomically"
 - Modify: `internal/usercommands/warcry.go`
 - Modify: `internal/mobcommands/taunt.go`
 - Modify: `internal/mobcommands/howl.go`
+- Modify: `internal/mobcommands/predator_test.go`
 - Modify: `internal/mobcommands/rally.go`
 - Modify: `internal/mobcommands/warcry.go`
 
 - [ ] **Step 1: Write Conviction admission tests**
 
-Assert unaffordable taunt creates no aggro/conviction harm, unaffordable rally applies no buff, and unaffordable warcry applies no room buffs. All three preserve cooldown and round state. Affordable failed taunt still pays; affordable rally/warcry pay once before applying effects. Encumbrance must not change any quote, while Rhetoric rank must.
+Assert unaffordable taunt creates no aggro/conviction harm, unaffordable rally
+applies no buff, and unaffordable warcry applies no room buffs. For hidden
+actors, invalid, cooldown-blocked, and refused attempts remain hidden; only a
+successfully admitted noisy action transitions to Revealing. All three preserve
+cooldown and round state on refusal. Affordable failed taunt still pays;
+affordable rally/warcry pay once before applying effects. Encumbrance must not
+change any quote, while Rhetoric rank must.
+
+Create `TestHowlAliasChargesOnlyThroughTaunt` under
+`internal/mobcommands/predator_test.go`; Step 3 invokes that exact name.
 
 - [ ] **Step 2: Reorder the shared actions**
 
-After read-only validity and `CooldownReady`, commit `ActionTaunt`, `ActionRally`, or `ActionWarcry` against Conviction with `RhetoricActionBaseConvictionCost`. Only then consume the special-move cooldown and apply contest/buffs/progression. Mob `howl` delegates to `ExecuteTaunt` and must not quote independently.
+After read-only validity and `CooldownReady`, commit `ActionTaunt`,
+`ActionRally`, or `ActionWarcry` against Conviction with
+`RhetoricActionBaseConvictionCost`. Only then transition a hidden actor to
+Revealing, consume the special-move cooldown, and apply
+contest/buffs/progression. Mob `howl` delegates to `ExecuteTaunt` and must not
+quote independently.
 
 - [ ] **Step 3: Run and commit**
 
-Run: `go test ./internal/actions ./internal/usercommands ./internal/mobcommands -run 'Test(Taunt|Rally|Warcry|Howl)' -count=1`
+Run:
+
+```bash
+go test ./internal/actions ./internal/usercommands ./internal/mobcommands -run 'Test(Taunt|Rally|Warcry|Howl)' -count=1
+go test ./internal/mobcommands -run '^TestHowlAliasChargesOnlyThroughTaunt$' -count=1
+```
 
 Expected: PASS.
 
 Commit:
 
 ```bash
-git add internal/actions internal/usercommands internal/mobcommands
+git add internal/actions/combat_taunt.go internal/actions/combat_rally.go internal/actions/combat_warcry.go internal/actions/command_readiness_drift_test.go internal/actions/contest_sign_taunt_test.go internal/actions/rhetoric_progression_test.go internal/usercommands/taunt.go internal/usercommands/rally.go internal/usercommands/warcry.go internal/mobcommands/taunt.go internal/mobcommands/howl.go internal/mobcommands/predator_test.go internal/mobcommands/rally.go internal/mobcommands/warcry.go
 git commit -m "feat: price rhetoric actions"
 ```
 
@@ -560,7 +731,11 @@ Build a deterministic attacker with multiple planned swings and too little Stami
 - swing count and weapon damage still use the combat skill exactly as before; and
 - the player shortage message is emitted once, not once per swing.
 
-Add an affordable control showing identical hit-score inputs and damage to pre-U8 behavior except for admission timing.
+Add an affordable control proving that the skill, swing-count, and damage terms
+are unchanged. The Stamina resource multiplier deliberately reads the
+post-commit pool because the approved ordering pays before resolution; test
+that single timing change explicitly rather than claiming the full hit-score
+input is identical to pre-U8 behavior.
 
 - [ ] **Step 2: Extract a pre-resolution attack plan**
 
@@ -570,7 +745,23 @@ Add `omitAttackSkill bool` to `combatContext`. In `calcAttackScore`, skip only t
 
 - [ ] **Step 3: Replace post-resolution charging**
 
-Quote `ActionAttack` with `Units: plan.totalSwings`, partially commit once, set `omitAttackSkill` from `result.Short()`, then resolve the plan. Delete or reduce `ChargeAttackCost` to the new admission wrapper; no wrapper may charge after `calculateCombat` returns.
+Quote `ActionAttack` from raw config values, never from the already-composed
+`attackCostPerSwing` result:
+
+```go
+ActionCostRequest{
+	Action:   costs.ActionAttack,
+	Pool:     characters.PoolStamina,
+	Base:     float64(cfg.AttackBaseStaminaCost),
+	Modifier: float64(cfg.AttackCostModifier),
+	Units:    plan.totalSwings,
+}
+```
+
+Partially commit once, set `omitAttackSkill` from `result.Short()`, then resolve
+the plan. Delete or reduce `ChargeAttackCost` to the new raw-request admission
+wrapper; no wrapper may charge after `calculateCombat` returns and no composed
+per-swing cost may be reused as a request base.
 
 - [ ] **Step 4: Run and commit**
 
@@ -581,7 +772,7 @@ Expected: PASS.
 Commit:
 
 ```bash
-git add internal/combat
+git add internal/combat/combat.go internal/combat/combat_helpers.go internal/combat/attack_cost.go internal/combat/attack_cost_test.go internal/combat/attack_admission_test.go
 git commit -m "feat: resolve short autoattacks without skill"
 ```
 
@@ -592,6 +783,8 @@ git commit -m "feat: resolve short autoattacks without skill"
 **Files:**
 - Modify: `internal/characters/combat.go`
 - Create: `internal/characters/defense_score_test.go`
+- Modify: `internal/characters/resources.go`
+- Modify: `internal/characters/defence_cost_test.go`
 - Modify: `internal/combat/combat_helpers.go`
 - Modify: `internal/combat/defence_multiplier.go`
 - Modify: `internal/combat/contest_sign_test.go`
@@ -615,11 +808,33 @@ Move only the dodge/parry/block/quell/defy governing-skill addend behind `includ
 
 - [ ] **Step 2: Write best-of-all admission tests**
 
-Provide mixed-affordability candidates and deterministic contest results. Assert all eligible defences enter, each candidate includes skill iff its own quote is affordable, only `Result.Winner` commits, losing short candidates neither charge nor message nor progress, and a short winner does all three once. Assert dodge/parry/block use Stamina and quell/defy use Conviction.
+First add one raw request factory:
+
+```go
+func (c *Character) QuoteDefenseCost(defenseType string) (CostQuote, bool)
+```
+
+Its private mapping selects the raw configured base, action, pool, and modifier
+for all five defence names. Refactor `GetDefenseCostFloat` through that same
+mapping so an already-composed cost can never be fed back to
+`QuoteActionCost`. Add a five-row test pinning each raw mapping and final quote.
+
+Then provide mixed-affordability candidates and injected deterministic contest
+results. Assert all eligible defences enter, each candidate includes skill iff
+its own quote is affordable, only `Result.Winner` commits, losing short
+candidates neither charge nor message nor progress, and a short winner does
+all three once. Assert dodge/parry/block use Stamina and quell/defy use
+Conviction.
 
 - [ ] **Step 3: Implement quote-before-contest in melee**
 
-Pair each contest entry with its `CostQuote`. Build its score with `GetDefenseScoreFor(type, quote.Affordable())`. After `RunContest`, partially commit only the winner and store `CostCommitResult` in `bestDefenseResult`. Keep winner progression and narration after that commit.
+Pair each contest entry with its `CostQuote`. Build its score with
+`GetDefenseScoreFor(type, quote.Affordable())`. Extract private orchestration
+that accepts a runner of type
+`func(float64, []contest.Entry) contest.Result`; production passes
+`RunContest`, while tests pass a deterministic runner. After the runner returns,
+partially commit only the winner and store `CostCommitResult` in
+`bestDefenseResult`. Keep winner progression and narration after that commit.
 
 - [ ] **Step 4: Return a structured channel-defence result**
 
@@ -627,23 +842,37 @@ Replace the scalar return with:
 
 ```go
 type ChannelDefenceResult struct {
-	DamageMultiplier float64
-	DefenceType      string
-	DefenseZScore    float64
-	Defended         bool
-	DefensiveCrit    bool
-	Cost             characters.CostCommitResult
+	DamageMultiplier          float64
+	DefenceType               string
+	DefenseRollZScore         float64
+	NormalizedDefenceMargin   float64
+	Defended                  bool
+	DefensiveCrit             bool
+	Cost                      characters.CostCommitResult
 }
 ```
 
-`ResolveChannelDefence` follows the same quote-all/commit-winner algorithm. Update every spell and taunt caller to read `.DamageMultiplier`. Keep the existing attack/defence margin sign and mitigation curve tests unchanged; extend them to assert the structured fields.
+`ResolveChannelDefence` follows the same quote-all/commit-winner algorithm
+through a private runner-injected helper; its production wrapper always passes
+`RunContest`. Update every spell and taunt caller to read
+`.DamageMultiplier`. Keep the existing attack/defence margin sign and mitigation
+curve tests unchanged; extend them to assert the structured fields. No new
+production caller may invoke `contest.Run` directly.
+
+`NormalizedDefenceMargin` is the opposed margin already used by the mitigation
+curve: `-res.Margin / (res.DefenseRoll.StdDev * math.Sqrt2)`. It is `0` for an
+attack win, an uncontested result, a floored defensive save, or a non-positive
+standard deviation; floor saves remain bare wins and cannot crit.
+`DefenseRollZScore` is the defender roll's self-relative z-score and must never
+be substituted for the opposed margin. Add tests distinguishing the two and
+pinning the floored sentinel behavior.
 
 - [ ] **Step 5: Run and commit**
 
 Run:
 
 ```bash
-go test ./internal/characters -run 'TestGetDefenseScore' -count=1
+go test ./internal/characters -run 'Test(GetDefenseScore|QuoteDefenseCost|DefenseCost)' -count=1
 go test ./internal/combat ./internal/actions ./internal/hooks -run 'Test.*Defen|Test.*Quell|Test.*Defy|Test.*Taunt|Test.*Spell' -count=1
 ```
 
@@ -652,7 +881,7 @@ Expected: PASS; statistical contest-sign tests retain their existing bounds.
 Commit:
 
 ```bash
-git add internal/characters internal/combat internal/actions/combat_taunt.go internal/hooks/spell_resolution.go
+git add internal/characters/combat.go internal/characters/defense_score_test.go internal/characters/resources.go internal/characters/defence_cost_test.go internal/combat/combat_helpers.go internal/combat/defence_multiplier.go internal/combat/contest_sign_test.go internal/combat/defence_admission_test.go internal/actions/combat_taunt.go internal/hooks/spell_resolution.go
 git commit -m "feat: resolve short defences without skill"
 ```
 
@@ -732,7 +961,7 @@ Expected: PASS and Task 1's grapple traces still match.
 Commit:
 
 ```bash
-git add internal/hooks internal/grapplemessaging/context.md
+git add internal/hooks/Position_GrappleTick.go internal/hooks/Position_GrappleTick_test.go internal/hooks/grapple_cost_test.go internal/hooks/context.md internal/grapplemessaging/context.md
 git commit -m "feat: unify grapple maintenance costs"
 ```
 
@@ -743,12 +972,18 @@ git commit -m "feat: unify grapple maintenance costs"
 **Files:**
 - Modify: `internal/items/defensive_messages.go`
 - Create: `internal/items/defensive_messages_test.go`
+- Create: `internal/items/defensive_messages_integration_test.go`
 - Create: `_datafiles/world/dogmud/defense-messages/quell.yaml`
 - Create: `_datafiles/world/dogmud/defense-messages/defy.yaml`
 - Modify: `internal/combat/defence_multiplier.go`
 - Create: `internal/combat/channel_defence_messages_test.go`
 - Modify: `internal/hooks/spell_resolution.go`
 - Modify: `internal/actions/combat_taunt.go`
+- Modify: `internal/usercommands/taunt.go`
+- Create: `internal/usercommands/taunt_test.go`
+- Modify: `internal/mobcommands/taunt.go`
+- Modify: `internal/mobcommands/howl.go`
+- Modify: `internal/mobcommands/predator_test.go`
 - Modify: `internal/items/context.md`
 - Modify: `internal/combat/context.md`
 
@@ -769,9 +1004,18 @@ Expected: FAIL until validation is implemented.
 
 - [ ] **Step 2: Add one coordinated selector**
 
-Add a renderer that selects one random index from the band and uses that same index for `ToDefender`, `ToAttacker`, and `ToRoom`. Do not call `MessageOptions.Get()` independently three times. Apply token replacement after selection and return one triad to the caller.
+Add an outcome-aware renderer that receives `defensiveCrit` plus the normalized
+defence margin. A defensive crit always selects Heavy. A non-critical defended
+outcome selects only Weak or Normal, even when its self-relative roll z-score
+exceeds the old Heavy threshold; partial mitigation must never receive
+full-negation prose. Select one random index from the chosen band and use that
+same index for `ToDefender`, `ToAttacker`, and `ToRoom`. Do not call
+`MessageOptions.Get()` independently three times. Apply token replacement after
+selection and return one triad to the caller.
 
-Test with uniquely numbered audience strings so all three rendered messages prove they used the same index.
+Test with uniquely numbered audience strings so all three rendered messages
+prove they used the same index. Pin both outcome directions: defensive crit
+always yields Heavy, and non-critical defence never yields Heavy.
 
 - [ ] **Step 3: Author the two YAML files**
 
@@ -779,17 +1023,31 @@ Each file has weak, normal, and heavy bands, each with at least five coordinated
 
 - [ ] **Step 4: Route live spell and social outcomes**
 
-Use `ChannelDefenceResult` to select quell for mental-spell defence and defy for social defence, render exactly one coordinated triad, and send it through the existing defender/attacker/room audience routes. Remove the replaced hardcoded one-off messages. For AoE spells, narrate once per actual target outcome and never add a duplicate shortage line to observers.
+Use `ChannelDefenceResult` to select quell for mental-spell defence and defy for
+social defence, render exactly one coordinated triad, and send it through the
+existing defender/attacker/room audience routes. `ExecuteTaunt` returns the
+structured defence outcome but continues to leave audience rendering to its
+callers. Remove the hardcoded defy branches from
+`internal/usercommands/taunt.go`, `internal/mobcommands/taunt.go`, and
+`internal/mobcommands/howl.go`; each wrapper renders the one shared triad with
+its existing visibility/category rules. For AoE spells, narrate once per actual
+target outcome and never add a duplicate shortage line to observers.
 
-Add integration tests proving partial mitigation selects weak/normal-compatible wording without “fully negated” claims, defensive crit selects heavy full-negation wording, and all three audiences receive the matching variant.
+Add integration tests proving partial mitigation selects weak/normal-compatible
+wording without “fully negated” claims, defensive crit selects heavy
+full-negation wording, and all three audiences receive the matching variant.
+`internal/items/defensive_messages_integration_test.go` must point config at the
+repository data root and call the real `items.LoadDataFiles` path so the new
+files' names, IDs, shape, and validation are exercised rather than seeding an
+in-memory map.
 
 - [ ] **Step 5: Run and commit**
 
 Run:
 
 ```bash
-go test ./internal/items ./internal/combat ./internal/actions ./internal/hooks -run 'Test.*(DefenseMessage|Quell|Defy|ChannelDefence)' -count=1
-go test ./internal/items ./internal/actions ./internal/hooks
+go test ./internal/items ./internal/combat ./internal/actions ./internal/hooks ./internal/usercommands ./internal/mobcommands -run 'Test.*(DefenseMessage|Quell|Defy|ChannelDefence|Taunt|Howl)' -count=1
+go test ./internal/items ./internal/actions ./internal/hooks ./internal/usercommands ./internal/mobcommands -count=1
 ```
 
 Expected: PASS; both YAML files load through the real data loader.
@@ -797,7 +1055,7 @@ Expected: PASS; both YAML files load through the real data loader.
 Commit:
 
 ```bash
-git add internal/items internal/combat internal/hooks/spell_resolution.go internal/actions/combat_taunt.go _datafiles/world/dogmud/defense-messages
+git add internal/items/defensive_messages.go internal/items/defensive_messages_test.go internal/items/defensive_messages_integration_test.go internal/items/context.md internal/combat/defence_multiplier.go internal/combat/channel_defence_messages_test.go internal/combat/context.md internal/hooks/spell_resolution.go internal/actions/combat_taunt.go internal/usercommands/taunt.go internal/usercommands/taunt_test.go internal/mobcommands/taunt.go internal/mobcommands/howl.go internal/mobcommands/predator_test.go _datafiles/world/dogmud/defense-messages/quell.yaml _datafiles/world/dogmud/defense-messages/defy.yaml
 git commit -m "feat: add quell and defy defence narration"
 ```
 
@@ -821,6 +1079,18 @@ git commit -m "feat: add quell and defy defence narration"
 - Modify: `_datafiles/world/dogmud/templates/help/defy.template`
 - Modify: `_datafiles/world/dogmud/templates/help/weapon-combat.template`
 - Modify: `_datafiles/world/dogmud/templates/help/unarmed-combat.template`
+- Modify: `_datafiles/world/dogmud/templates/help/bash.template`
+- Modify: `_datafiles/world/dogmud/templates/help/trip.template`
+- Modify: `_datafiles/world/dogmud/templates/help/kick.template`
+- Modify: `_datafiles/world/dogmud/templates/help/rake.template`
+- Modify: `_datafiles/world/dogmud/templates/help/maul.template`
+- Modify: `_datafiles/world/dogmud/templates/help/pounce.template`
+- Modify: `_datafiles/world/dogmud/templates/help/gore.template`
+- Modify: `_datafiles/world/dogmud/templates/help/drain.template`
+- Modify: `_datafiles/world/dogmud/templates/help/throttle.template`
+- Modify: `_datafiles/world/dogmud/templates/help/special.template`
+- Modify: `_datafiles/world/dogmud/templates/help/conviction.template`
+- Create: `internal/templates/u8_help_test.go`
 - Modify: touched `internal/*/context.md` files named in Tasks 2-12
 - Modify: `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`
 - Modify: `docs/roadmaps/CURRENT_BACKLOG.md`
@@ -832,7 +1102,18 @@ Use output capture to assert one concise, pool-aware line for each voluntary ref
 
 - [ ] **Step 2: Update helpfiles**
 
-Explain which actions consume Stamina or Conviction, that load and governing skill affect price, that voluntary actions require full payment, and that autoattack/defence/flee/grapple maintenance remain possible in a desperate skill-less form. Mention reload as physical exertion and grapple's two-sided upkeep. Keep prose player-facing and omit numeric tuning.
+Explain which actions consume Stamina or Conviction, that load and governing
+skill affect price, that voluntary actions require full payment, and that
+autoattack/defence/flee/grapple maintenance remain possible in a desperate
+skill-less form. Mention reload as physical exertion and grapple's two-sided
+upkeep. Audit every command-specific special-move helpfile plus `special` and
+`conviction`, including cross-references. Keep prose player-facing and omit
+numeric tuning.
+
+Create `internal/templates/u8_help_test.go` with a table containing every help
+path named in this task. Point template config at the repository data root and
+call `templates.Process` for each path. Missing templates or processing errors
+fail; this test must not skip when a path is absent.
 
 - [ ] **Step 3: Audit package context files**
 
@@ -852,14 +1133,15 @@ Mark U8 implementation complete only after Task 14 passes. Until then, update th
 
 - [ ] **Step 5: Run and commit documentation checks**
 
-Run: `go test ./internal/templates ./internal/usercommands ./internal/actions`
+Run: `go test ./internal/templates ./internal/usercommands ./internal/actions -count=1`
 
-Expected: help templates load and touched messaging tests pass.
+Expected: every changed help template is processed by the explicit table and
+touched messaging tests pass.
 
 Commit:
 
 ```bash
-git add _datafiles/world/dogmud/templates/help internal docs/roadmaps docs/PATCH_NOTES.md
+git add _datafiles/world/dogmud/templates/help/combat.template _datafiles/world/dogmud/templates/help/stamina.template _datafiles/world/dogmud/templates/help/ranged-combat.template _datafiles/world/dogmud/templates/help/shoot.template _datafiles/world/dogmud/templates/help/reload.template _datafiles/world/dogmud/templates/help/grapple.template _datafiles/world/dogmud/templates/help/sneak.template _datafiles/world/dogmud/templates/help/throw.template _datafiles/world/dogmud/templates/help/taunt.template _datafiles/world/dogmud/templates/help/rally.template _datafiles/world/dogmud/templates/help/warcry.template _datafiles/world/dogmud/templates/help/quell.template _datafiles/world/dogmud/templates/help/defy.template _datafiles/world/dogmud/templates/help/weapon-combat.template _datafiles/world/dogmud/templates/help/unarmed-combat.template _datafiles/world/dogmud/templates/help/bash.template _datafiles/world/dogmud/templates/help/trip.template _datafiles/world/dogmud/templates/help/kick.template _datafiles/world/dogmud/templates/help/rake.template _datafiles/world/dogmud/templates/help/maul.template _datafiles/world/dogmud/templates/help/pounce.template _datafiles/world/dogmud/templates/help/gore.template _datafiles/world/dogmud/templates/help/drain.template _datafiles/world/dogmud/templates/help/throttle.template _datafiles/world/dogmud/templates/help/special.template _datafiles/world/dogmud/templates/help/conviction.template internal/templates/u8_help_test.go internal/costs/context.md internal/characters/context.md internal/configs/context.md internal/actions/context.md internal/usercommands/context.md internal/mobcommands/context.md internal/combat/context.md internal/hooks/context.md internal/items/context.md internal/grapplemessaging/context.md docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md docs/roadmaps/CURRENT_BACKLOG.md docs/PATCH_NOTES.md
 git commit -m "docs: explain unified action admission"
 ```
 
