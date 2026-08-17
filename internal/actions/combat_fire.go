@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -29,6 +30,7 @@ type FireResult struct {
 
 	MoveResult combat.SkillMoveResult
 	Executed   bool
+	Cost       characters.CostCommitResult
 
 	NoWeapon       bool
 	NotLoaded      bool
@@ -98,6 +100,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	if !weapon.Loaded {
 		return FireResult{WeaponName: weapon.DisplayName(), NotLoaded: true}
 	}
+	weaponSnapshot := *weapon
 
 	args := strings.Fields(rest)
 	if len(args) < 1 {
@@ -195,10 +198,26 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		defChar = u.Character
 	}
 
+	cfg := configs.GetBalanceConfig()
+	result.Cost = admitFullCost(actor, costs.ActionShoot, characters.PoolStamina,
+		float64(cfg.ShootBaseStaminaCost))
+	if result.Cost.Status == characters.CostRefused {
+		return result
+	}
+	if !weapon.Equals(weaponSnapshot) || !weapon.Loaded {
+		return result
+	}
+
+	// A same-room opening shot enters combat only after paid admission. This
+	// gives RecordAndWait an engagement to charge without mutating aggro for a
+	// refused shot. Cross-room shots remain one-shot and aggro-free.
+	if !crossRoom && char.Aggro == nil {
+		char.SetAggro(targetUserId, targetMobInstanceId, characters.DefaultAttack)
+	}
+
 	// The shot: unload first (fires even on a miss), then resolve.
 	weapon.Loaded = false
 
-	cfg := configs.GetBalanceConfig()
 	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale)
 	rangedRank := char.GetSkillLevel(skills.RangedCombat)
 

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/language"
@@ -60,6 +61,10 @@ func Reload(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	// Player-facing ranged-weapon reload.
 	res := actions.ExecuteReload(&actions.UserActor{User: user, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		return true, nil
+	}
 
 	switch {
 	case res.Crafting:

@@ -16,8 +16,8 @@ func Reload(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	res := actions.ExecuteReload(&actions.MobActor{Mob: mob, Room: room})
 
-	// Only a successful reload produces a room message; everything else is
-	// silent for mobs.
+	// Only a successful reload produces a room message; CostRefused and every
+	// other early exit remain silent for mobs.
 	if !res.Loaded {
 		return true, nil
 	}

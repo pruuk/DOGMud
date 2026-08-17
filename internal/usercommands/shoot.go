@@ -37,7 +37,7 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// here, before firing. We re-resolve the would-be target (mirroring
 	// ExecuteFire's parse) without applying damage. The duplicated resolution is
 	// the deliberate price of safe pre-fire gating.
-	tUserId, tMobId, tRoom, crossRoom := resolveShootTarget(room, rest)
+	tUserId, _, tRoom, _ := resolveShootTarget(room, rest)
 
 	// Issue 3 (self-target): room.FindByName can resolve the shooter.
 	if tUserId > 0 && tUserId == user.UserId {
@@ -70,32 +70,11 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 	}
 
-	// Issue 2 (free opening shot): RecordAndWait inside ExecuteFire only charges
-	// the attacker a combat round when Aggro != nil. Kick sets aggro BEFORE its
-	// core resolver for exactly this reason; shoot used to set it AFTER, so an
-	// out-of-combat opener consumed no round (free shot + a full melee swing the
-	// next round). Mirror kick: for a same-room opener, engage now so the round
-	// is charged. Cross-room stays aggro-free by design (the sniper isn't in the
-	// round loop). If ExecuteFire then refuses the shot (charm / non-combatant /
-	// no-target → !Executed) we roll the speculative aggro back below so a
-	// rejected shot never starts combat.
-	aggroPreset := false
-	if !crossRoom && user.Character.Aggro == nil {
-		if tMobId > 0 {
-			user.Character.SetAggro(0, tMobId, characters.DefaultAttack)
-			aggroPreset = true
-		} else if tUserId > 0 {
-			user.Character.SetAggro(tUserId, 0, characters.DefaultAttack)
-			aggroPreset = true
-		}
-	}
-
 	result := actions.ExecuteFire(&actions.UserActor{User: user, Room: room}, rest)
 
-	// Roll back the speculative opening-shot aggro if the shot was refused
-	// (any !Executed early return below: charm, non-combatant, no-target, etc.).
-	if aggroPreset && !result.Executed {
-		user.Character.EndAggro()
+	if result.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		return true, nil
 	}
 
 	// --- Early exits (no shot fired) ---
