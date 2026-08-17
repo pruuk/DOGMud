@@ -1,11 +1,22 @@
 package actions
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // ---------------------------------------------------------------------------
@@ -110,34 +121,193 @@ func TestCalcSearchScore_Baseline(t *testing.T) {
 // Sneak Tests
 // ---------------------------------------------------------------------------
 
-// TestSneak_AlreadyHidden verifies that a character with the Hidden
-// buff returns AlreadyHidden=true and Success=false.
-//
-// Note: We use a mock character with HasBuffFlag method that we can control,
-// since the actual buff system requires registered buff specs. We test the
-// logic by verifying the early return condition.
-func TestSneak_AlreadyHidden(t *testing.T) {
+func assertSneakRefusalPreservesCharacter(t *testing.T, char *characters.Character, result SneakResult) {
+	t.Helper()
+	require.Equal(t, characters.CostRefused, result.Cost.Status)
+	assert.Equal(t, characters.PoolStamina, result.Cost.Pool)
+	assert.False(t, result.Success)
+	assert.False(t, result.RollHappened)
+	assert.Equal(t, awareness.Visible, char.Awareness.State())
+	assert.False(t, char.IsHidden())
+	assert.Nil(t, char.GetMiscData("sneaking"))
+	assert.Zero(t, char.GetSkillUseCount(string(skills.Skullduggery)))
+}
+
+func TestSneakUserCostRefusalPreservesAwarenessCooldownProgressionAndCarry(t *testing.T) {
+	user := users.NewTestUser(79071, "sneaker", "Sneaker", 0)
+	user.Character.Stamina = 0
+	user.Character.Cooldowns = characters.Cooldowns{"skullduggery-sneak": -2, "other": 7}
+	cooldownsBefore := user.Character.GetAllCooldowns()
+
+	result := Sneak(&UserActor{User: user, Room: newTestRoom()})
+
+	assertSneakRefusalPreservesCharacter(t, user.Character, result)
+	assert.Equal(t, cooldownsBefore, user.Character.GetAllCooldowns())
+	assert.Zero(t, user.Character.Stamina)
+
+	// A refused 2.75 quote must not advance carry. Two later rank-zero sneak
+	// admissions therefore charge 2 then 3, rather than 3 then 3.
+	user.Character.Stamina = 100
+	charged := make([]int, 0, 2)
+	for range 2 {
+		quote := user.Character.QuoteActionCost(characters.ActionCostRequest{
+			Action: costs.ActionSneak, Pool: characters.PoolStamina,
+			Base: float64(configs.GetBalanceConfig().SneakBaseStaminaCost), Modifier: 1, Units: 1,
+		})
+		charged = append(charged, user.Character.CommitCost(quote, characters.CostFullOrRefuse).Charged)
+	}
+	assert.Equal(t, []int{2, 3}, charged)
+}
+
+func TestSneakMobCostRefusalPreservesAwarenessCooldownAndProgression(t *testing.T) {
+	char := characters.New()
+	char.Name = "Sneaking mob"
+	char.Stamina = 0
+	char.IsMob = true
+	char.Cooldowns = characters.Cooldowns{"skullduggery-sneak": 9, "other": 4}
+	cooldownsBefore := char.GetAllCooldowns()
+	mob := &mobs.Mob{MobId: 1, InstanceId: 79072, Character: *char}
+
+	result := Sneak(&MobActor{Mob: mob, Room: newTestRoom()})
+
+	assertSneakRefusalPreservesCharacter(t, &mob.Character, result)
+	assert.Equal(t, cooldownsBefore, mob.Character.GetAllCooldowns())
+	assert.Zero(t, mob.Character.Stamina)
+}
+
+func task6FunctionAST(t *testing.T, path, name string) (*token.FileSet, *ast.FuncDecl) {
+	t.Helper()
+	fset := token.NewFileSet()
+	parsed, err := parser.ParseFile(fset, path, nil, 0)
+	require.NoError(t, err)
+	for _, decl := range parsed.Decls {
+		if fn, ok := decl.(*ast.FuncDecl); ok && fn.Name.Name == name {
+			return fset, fn
+		}
+	}
+	require.FailNow(t, "function not found", "%s in %s", name, path)
+	return nil, nil
+}
+
+func task6OnlyCall(t *testing.T, fset *token.FileSet, fn *ast.FuncDecl, call string, calleeOnly bool) token.Pos {
+	t.Helper()
+	positions := exactCallPositions(t, fset, fn.Body, call, calleeOnly)
+	require.Len(t, positions, 1, "%s must contain exactly one %s call", fn.Name.Name, call)
+	return positions[0]
+}
+
+// TestThrowSneakCostAdmissionOrdering guards the mutation boundary itself.
+// Behavioral tests prove final state; this AST test catches a future edit that
+// briefly transitions awareness or consumes an item/cooldown before admission.
+func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	actionsDir := filepath.Dir(thisFile)
+
+	t.Run("shared sneak", func(t *testing.T) {
+		fset, fn := task6FunctionAST(t, filepath.Join(actionsDir, "sneak.go"), "Sneak")
+		free := task6OnlyCall(t, fset, fn, "char.IsFree()", false)
+		room := task6OnlyCall(t, fset, fn, "actor.GetRoom()", false)
+		admit := task6OnlyCall(t, fset, fn, "admitFullCost", true)
+		ast.Inspect(fn.Body, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok || formattedASTNode(t, fset, call.Fun) != "admitFullCost" {
+				return true
+			}
+			require.Len(t, call.Args, 4)
+			assert.Equal(t, "actor", formattedASTNode(t, fset, call.Args[0]))
+			assert.Equal(t, "costs.ActionSneak", formattedASTNode(t, fset, call.Args[1]))
+			assert.Equal(t, "characters.PoolStamina", formattedASTNode(t, fset, call.Args[2]))
+			assert.Equal(t, "float64(cfg.SneakBaseStaminaCost)", formattedASTNode(t, fset, call.Args[3]))
+			return false
+		})
+		transition := task6OnlyCall(t, fset, fn, "char.Awareness.TransitionToConcealing", true)
+		resolve := exactCallPositions(t, fset, fn.Body, "char.Awareness.ResolveConcealment", true)
+		require.NotEmpty(t, resolve)
+		require.Less(t, int(free), int(admit))
+		require.Less(t, int(room), int(admit))
+		require.Less(t, int(admit), int(transition))
+		for _, pos := range resolve {
+			require.Less(t, int(transition), int(pos))
+		}
+	})
+
+	t.Run("player wrapper", func(t *testing.T) {
+		path := filepath.Join(actionsDir, "..", "usercommands", "skill.skullduggery.sneak.go")
+		fset, fn := task6FunctionAST(t, path, "Sneak")
+		ready := task6OnlyCall(t, fset, fn, "user.Character.CooldownReady(sneakCooldownKey)", false)
+		attempt := task6OnlyCall(t, fset, fn, "actions.Sneak(&actions.UserActor{User: user, Room: room})", false)
+		refusal := task6OnlyCall(t, fset, fn, "actions.CostRefusalText(result.Cost)", false)
+		failureCooldown := task6OnlyCall(t, fset, fn, "user.Character.TryCooldown", true)
+		progression := exactCallPositions(t, fset, fn.Body, "user.Character.CheckSkillProgression", true)
+		require.Len(t, progression, 2)
+		require.Less(t, int(ready), int(attempt))
+		require.Less(t, int(attempt), int(refusal))
+		require.Less(t, int(refusal), int(failureCooldown))
+		for _, pos := range progression {
+			require.Less(t, int(refusal), int(pos))
+		}
+	})
+
+	t.Run("mob wrapper", func(t *testing.T) {
+		path := filepath.Join(actionsDir, "..", "mobcommands", "sneak.go")
+		fset, fn := task6FunctionAST(t, path, "Sneak")
+		attempt := task6OnlyCall(t, fset, fn, "actions.Sneak(&actions.MobActor{Mob: mob, Room: room})", false)
+		progression := task6OnlyCall(t, fset, fn, `mob.Character.OnSkillUse("skullduggery", 0)`, false)
+		require.Less(t, int(attempt), int(progression))
+		require.False(t, nodeHasCall(fn.Body, "CooldownReady"))
+		require.False(t, nodeHasCall(fn.Body, "TryCooldown"))
+		require.False(t, nodeHasCall(fn.Body, "CostRefusalText"), "mob refusal must stay silent")
+	})
+
+	t.Run("throw command", func(t *testing.T) {
+		path := filepath.Join(actionsDir, "..", "usercommands", "throw.go")
+		fset, fn := task6FunctionAST(t, path, "Throw")
+		item := task6OnlyCall(t, fset, fn, "findThrowItem(user.Character, rest)", false)
+		targets := task6OnlyCall(t, fset, fn, "stageThrowTargets(room)", false)
+		ready := task6OnlyCall(t, fset, fn, `user.Character.CooldownReady("special-move")`, false)
+		admit := task6OnlyCall(t, fset, fn,
+			"admitThrowCost(user.Character, float64(cfg.SpecialMoveBaseStaminaCost))", false)
+		revalidate := task6OnlyCall(t, fset, fn,
+			"revalidateThrowItem(user.Character, matchItem, itemLocation)", false)
+		consumeCooldown := task6OnlyCall(t, fset, fn, "user.Character.TryCooldown", true)
+		useBackpack := task6OnlyCall(t, fset, fn, "user.Character.UseItem(matchItem)", false)
+		useBandolier := task6OnlyCall(t, fset, fn, "user.Character.UseItemFromPotions(matchItem)", false)
+		contests := exactCallPositions(t, fset, fn.Body, "combat.RunContest", true)
+		progression := task6OnlyCall(t, fset, fn, "user.Character.OnSkillUse", true)
+
+		require.Less(t, int(item), int(admit))
+		require.Less(t, int(targets), int(admit))
+		require.Less(t, int(ready), int(admit))
+		require.Less(t, int(admit), int(revalidate))
+		require.Less(t, int(revalidate), int(consumeCooldown))
+		require.Less(t, int(consumeCooldown), int(useBackpack))
+		require.Less(t, int(consumeCooldown), int(useBandolier))
+		require.NotEmpty(t, contests)
+		for _, pos := range contests {
+			require.Less(t, int(consumeCooldown), int(pos))
+		}
+		require.Less(t, int(consumeCooldown), int(progression))
+	})
+}
+
+// TestSneak_AffordableEmptyRoomSucceeds verifies that a funded actor can hide
+// when there is nobody present to contest the attempt.
+func TestSneak_AffordableEmptyRoomSucceeds(t *testing.T) {
 	char := newTestChar()
+	char.Stamina = 100
+	char.StaminaMax.Value = 100
 	room := newTestRoom()
 	actor := newStubActor(char, room)
 
-	// Mock the hidden state by creating a custom test that directly checks
-	// the character's buff flag. Since we can't easily populate a buff without
-	// the full spec registry loaded, we'll verify the logic indirectly by
-	// checking that the early return triggers for already-hidden characters.
-	// For now, we'll create a character with an empty room and verify the
-	// basic flow. The HasBuffFlag check is tested in the buffs package itself.
-
-	// This test verifies the Sneak function handles empty rooms correctly.
-	// The AlreadyHidden check happens first before any room processing.
 	result := Sneak(actor)
 
-	// With an empty room and no observers, Sneak should succeed
-	// (since there's no one to spot the actor).
 	assert.False(t, result.AlreadyHidden, "character should not start hidden")
-	// Success will be true if room is empty (no observers to fail the roll)
 	assert.True(t, result.Success, "should succeed with empty room")
 	assert.False(t, result.InCombat, "should not be marked as in combat")
+	assert.Equal(t, characters.CostPaid, result.Cost.Status)
+	assert.Equal(t, 2, result.Cost.Charged)
+	assert.Equal(t, awareness.Hidden, char.Awareness.State())
 }
 
 // TestSneak_InCombat verifies that a character in combat cannot sneak.
