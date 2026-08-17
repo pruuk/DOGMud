@@ -77,7 +77,9 @@ Mob progression uses `MobProgressionRate` as a multiplier.
 ### Character States and Modifiers
 - **Aggro system** (`aggro.go`): Combat targeting and threat management
 - **Buffs integration**: Status effects that modify character capabilities
-- **Cooldowns** (`cooldowns.go`): Time-based ability restrictions
+- **Cooldowns** (`cooldowns.go`): Time-based ability restrictions.
+  `CooldownReady` is the read-only admission query; `TryCooldown` consumes only
+  after successful admission.
 - **Prone system** (Stage 7.5): Knockdown condition with stat-based recovery mechanics
 
 ### Resource Pools
@@ -128,6 +130,15 @@ func (c *Character) EffectivePoolMaxNamed(pool string) int
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
+// Quote is read-only; commit is owner-bound, snapshot-validated, and single-use.
+func (c *Character) QuoteActionCost(req ActionCostRequest) CostQuote
+func (q CostQuote) Affordable() bool
+func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult
+
+// CostFullOrRefuse is atomic refusal; CostPartial writes off unpaid whole debt.
+// Status is CostNoCharge, CostPaid, CostPartiallyPaid, or CostRefused.
+func (r CostCommitResult) Short() bool
+
 // ApplyCostFloat charges a FRACTIONAL cost, banking the sub-integer remainder
 // in the per-character, per-pool carry so the average converges (U7 Task 3).
 // Delegates the deduction to ApplyCostPartial. THE ENTRY POINT FOR EVERY U7
@@ -139,6 +150,9 @@ func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
 // taken before anything is written, so a refused action leaves both the pool and
 // the carry untouched and cannot accumulate debt. Movement is the caller.
 func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool
+
+// Does not initialize or prune Cooldowns.
+func (c *Character) CooldownReady(trackingTag string) bool
 
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
 func (c *Character) ApplyRestore(pool Pool, amount int) int

@@ -97,7 +97,7 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) float64 {
 		Capacity:  c.CarryCapacity(),
 		Physical:  spec.Physical,
 		SkillRank: c.GetSkillLevel(spec.Skill),
-		HasSkill:  spec.HasSkill,
+		HasSkill:  spec.SkillSource != costs.SkillNone,
 	})
 
 	// Phase 24.2: Apply mutation movement speed modifier (Hasted, Extra Legs, etc.)
@@ -226,7 +226,7 @@ func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
 		Capacity:  c.CarryCapacity(),
 		Physical:  spec.Physical,
 		SkillRank: c.GetSkillLevel(spec.Skill),
-		HasSkill:  spec.HasSkill,
+		HasSkill:  spec.SkillSource != costs.SkillNone,
 		Modifier:  modifier,
 	})
 

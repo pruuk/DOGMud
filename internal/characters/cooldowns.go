@@ -71,6 +71,12 @@ func (c *Character) GetCooldown(trackingTag string) int {
 	return c.Cooldowns[trackingTag]
 }
 
+// CooldownReady reports whether a cooldown is absent or expired without
+// initializing or pruning the cooldown map.
+func (c *Character) CooldownReady(trackingTag string) bool {
+	return c.Cooldowns == nil || c.Cooldowns[trackingTag] <= 0
+}
+
 func (c *Character) GetAllCooldowns() map[string]int {
 
 	ret := map[string]int{}

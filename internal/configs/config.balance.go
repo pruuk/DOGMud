@@ -184,36 +184,41 @@ type Balance struct {
 	GrappleStaminaPenaltyCurve      ConfigFloat `yaml:"GrappleStaminaPenaltyCurve"`      // Exponent shape of stamina penalty curve (default 1.5)
 	GrappleEncumbrancePenaltyMax    ConfigFloat `yaml:"GrappleEncumbrancePenaltyMax"`    // Max roll-mult reduction at max encumbrance (default 0.80)
 	GrappleEncumbrancePenaltyCurve  ConfigFloat `yaml:"GrappleEncumbrancePenaltyCurve"`  // Exponent shape of encumbrance penalty curve (default 1.5)
-	GrappleStaminaCostPerRound      ConfigInt   `yaml:"GrappleStaminaCostPerRound"`      // Base per-round stamina cost in grapples (default 5)
+	GrappleStaminaCostPerRound      ConfigFloat `yaml:"GrappleStaminaCostPerRound"`      // Ongoing grapple-maintenance base before role and shared cost multipliers (default 2)
 	GrappleControllerCostMultiplier ConfigFloat `yaml:"GrappleControllerCostMultiplier"` // Controller's per-round cost multiplier (default 1.0)
 	GrappleControlledCostMultiplier ConfigFloat `yaml:"GrappleControlledCostMultiplier"` // Controlled's per-round cost multiplier (default 2.0)
 	PositionConsistencyCheckRounds  ConfigInt   `yaml:"PositionConsistencyCheckRounds"`  // How often the periodic invariant checker runs (default 10)
 
 	// ── COMBAT: SPECIAL MOVES ────────────────────────────────────────────────
-	SpecialMoveCooldown     ConfigInt   `yaml:"SpecialMoveCooldown"`     // Shared cooldown rounds for bash/trip/kick (default 5)
-	FlightOpposedEdge       ConfigInt   `yaml:"FlightOpposedEdge"`       // Winged Flight: melee opposed-roll edge a flyer gets over the earthbound (default 25)
-	FlightMoveStaminaMult   ConfigFloat `yaml:"FlightMoveStaminaMult"`   // Winged Flight: move-stamina cost multiplier while flying (default 0.5)
-	FlightFleeStaminaMult   ConfigFloat `yaml:"FlightFleeStaminaMult"`   // Winged Flight: flee-stamina cost multiplier while flying (default 0.5)
-	FleeStaminaCost         ConfigInt   `yaml:"FleeStaminaCost"`         // Base stamina charged for breaking off to flee (default 10). Charged PARTIALLY: an exhausted character still gets to flee. U7 may fold this into NonHarmContestBaseCost.
-	TauntHoldRounds         ConfigInt   `yaml:"TauntHoldRounds"`         // Rounds a successful taunt pins the target's aggro onto the taunter (default 4)
-	BashDamagePercent       ConfigFloat `yaml:"BashDamagePercent"`       // Fraction of normal melee damage (default 0.50)
-	BashKnockdownChance     ConfigInt   `yaml:"BashKnockdownChance"`     // Base % knockdown chance (default 40)
-	TripDamagePercent       ConfigFloat `yaml:"TripDamagePercent"`       // Fraction of normal melee damage (default 0.25)
-	TripKnockdownChance     ConfigInt   `yaml:"TripKnockdownChance"`     // Base % knockdown chance (default 60)
-	KickDamagePercent       ConfigFloat `yaml:"KickDamagePercent"`       // Fraction of normal melee damage (default 0.80)
-	KickKnockdownChance     ConfigInt   `yaml:"KickKnockdownChance"`     // Base % knockdown chance (default 35)
-	StompDamagePercent      ConfigFloat `yaml:"StompDamagePercent"`      // Stomp damage when target is prone (default 1.20)
-	KneeDamagePercent       ConfigFloat `yaml:"KneeDamagePercent"`       // Knee damage in grapple (default 1.00)
-	CoupDeGraceRounds       ConfigInt   `yaml:"CoupDeGraceRounds"`       // Rounds before mob finishes downed player (default 1; 0=disabled)
-	DrainHealRatio          ConfigFloat `yaml:"DrainHealRatio"`          // Fraction of drain damage the attacker heals (lifesteal), default 0.75
-	ThrottleInterruptChance ConfigFloat `yaml:"ThrottleInterruptChance"` // Chance throttle interrupts a casting victim, default 0.75
+	SpecialMoveBaseStaminaCost       ConfigFloat `yaml:"SpecialMoveBaseStaminaCost"`       // Base stamina cost for special moves, including grapple initiation, before shared multipliers (default 4)
+	SpecialMoveCooldown              ConfigInt   `yaml:"SpecialMoveCooldown"`              // Shared cooldown rounds for bash/trip/kick (default 5)
+	FlightOpposedEdge                ConfigInt   `yaml:"FlightOpposedEdge"`                // Winged Flight: melee opposed-roll edge a flyer gets over the earthbound (default 25)
+	FlightMoveStaminaMult            ConfigFloat `yaml:"FlightMoveStaminaMult"`            // Winged Flight: move-stamina cost multiplier while flying (default 0.5)
+	FlightFleeStaminaMult            ConfigFloat `yaml:"FlightFleeStaminaMult"`            // Winged Flight: flee-stamina cost multiplier while flying (default 0.5)
+	FleeStaminaCost                  ConfigInt   `yaml:"FleeStaminaCost"`                  // Base stamina charged for breaking off to flee (default 10). Charged PARTIALLY: an exhausted character still gets to flee. U7 may fold this into NonHarmContestBaseCost.
+	TauntHoldRounds                  ConfigInt   `yaml:"TauntHoldRounds"`                  // Rounds a successful taunt pins the target's aggro onto the taunter (default 4)
+	RhetoricActionBaseConvictionCost ConfigFloat `yaml:"RhetoricActionBaseConvictionCost"` // Base conviction cost for taunt/rally/warcry before shared multipliers (default 4)
+	BashDamagePercent                ConfigFloat `yaml:"BashDamagePercent"`                // Fraction of normal melee damage (default 0.50)
+	BashKnockdownChance              ConfigInt   `yaml:"BashKnockdownChance"`              // Base % knockdown chance (default 40)
+	TripDamagePercent                ConfigFloat `yaml:"TripDamagePercent"`                // Fraction of normal melee damage (default 0.25)
+	TripKnockdownChance              ConfigInt   `yaml:"TripKnockdownChance"`              // Base % knockdown chance (default 60)
+	KickDamagePercent                ConfigFloat `yaml:"KickDamagePercent"`                // Fraction of normal melee damage (default 0.80)
+	KickKnockdownChance              ConfigInt   `yaml:"KickKnockdownChance"`              // Base % knockdown chance (default 35)
+	StompDamagePercent               ConfigFloat `yaml:"StompDamagePercent"`               // Stomp damage when target is prone (default 1.20)
+	KneeDamagePercent                ConfigFloat `yaml:"KneeDamagePercent"`                // Knee damage in grapple (default 1.00)
+	CoupDeGraceRounds                ConfigInt   `yaml:"CoupDeGraceRounds"`                // Rounds before mob finishes downed player (default 1; 0=disabled)
+	DrainHealRatio                   ConfigFloat `yaml:"DrainHealRatio"`                   // Fraction of drain damage the attacker heals (lifesteal), default 0.75
+	ThrottleInterruptChance          ConfigFloat `yaml:"ThrottleInterruptChance"`          // Chance throttle interrupts a casting victim, default 0.75
 
 	// ── COMBAT: RANGED ───────────────────────────────────────────────────────
+	ShootBaseStaminaCost     ConfigFloat `yaml:"ShootBaseStaminaCost"`     // Base stamina cost to shoot before shared multipliers (default 2)
+	ReloadBaseStaminaCost    ConfigFloat `yaml:"ReloadBaseStaminaCost"`    // Base stamina cost to reload before shared multipliers (default 1)
 	RangedShotScale          ConfigFloat `yaml:"RangedShotScale"`          // Global multiplier on all ranged shot damage (default 1.0)
 	RangedShieldDefenseBonus ConfigInt   `yaml:"RangedShieldDefenseBonus"` // Flat defense-score bonus vs ranged when defender has a shield (default 15)
 
 	// ── SKULLDUGGERY ─────────────────────────────────────────────────────────
-	SneakFailCooldown              ConfigInt   `yaml:"SneakFailCooldown"`              // Rounds before sneak retry after failure (default 3)
+	SneakBaseStaminaCost           ConfigFloat `yaml:"SneakBaseStaminaCost"`           // Base stamina cost to sneak before shared multipliers (default 2.5)
+	SneakFailCooldown              ConfigInt   `yaml:"SneakFailCooldown"`              // Rounds before sneak retry after failure (default 0)
 	SurpriseAttackOffhandPenalty   ConfigFloat `yaml:"SurpriseAttackOffhandPenalty"`   // Hit penalty for offhand surprise attack (default 0.10)
 	SurpriseAttackExtraArm1Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm1Penalty"` // Hit penalty for extra arm 1 (default 0.25)
 	SurpriseAttackExtraArm2Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm2Penalty"` // Hit penalty for extra arm 2 (default 0.40)

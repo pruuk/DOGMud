@@ -138,7 +138,7 @@ func TestFleeCost_TakesTheEncumbranceTerm(t *testing.T) {
 			Capacity:  u.Character.CarryCapacity(),
 			Physical:  spec.Physical,
 			SkillRank: u.Character.GetSkillLevel(spec.Skill),
-			HasSkill:  spec.HasSkill,
+			HasSkill:  spec.SkillSource != costs.SkillNone,
 		})))
 		if spent[tc.name] != want {
 			t.Errorf("%s: flee charged %d stamina, want %d; the command is not "+

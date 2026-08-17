@@ -555,6 +555,25 @@ full resolution flow and policy matrix.
 |------|---------|--------|
 | `RangedShotScale` | 1.0 | Global multiplier on all ranged shot damage. Tune up/down to adjust ranged vs melee balance without touching individual weapon stats. |
 | `RangedShieldDefenseBonus` | 15 | Flat defense-score bonus added to a defender's ranged-defense roll when they have a shield equipped in their offhand. Shields are more useful against arrows/bolts than bare hands. |
+
+### Unified action-cost admission (U8)
+
+These are raw bases before `costs.Calc`; they are not rounded final charges.
+Validation rejects missing, non-positive, NaN, and infinite values. A
+non-positive action modifier remains the calculator's neutral `1.0` behavior.
+
+| Knob | Default/shipped | Actions |
+|------|----------------:|---------|
+| `ShootBaseStaminaCost` | 2 | Shoot |
+| `ReloadBaseStaminaCost` | 1 | Reload |
+| `SpecialMoveBaseStaminaCost` | 4 | Bash, trip, kick, grapple initiation, hamstring, rake, maul, pounce, gore, drain, throttle, throw |
+| `SneakBaseStaminaCost` | 2.5 | Sneak |
+| `RhetoricActionBaseConvictionCost` | 4 | Taunt, rally, warcry |
+| `GrappleStaminaCostPerRound` | 2 | Ongoing grapple maintenance before controller/controlled role multiplier |
+
+`GrappleStaminaCostPerRound` is a `ConfigFloat`; grapple initiation uses the
+special-move base instead. `SneakFailCooldown` remains effectively zero.
+
 ## Files
 
 Config is split one file per section, all assembled in `configs.go`.

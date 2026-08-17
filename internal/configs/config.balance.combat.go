@@ -1,5 +1,12 @@
 package configs
 
+import "math"
+
+func validPositiveActionCost(v ConfigFloat) bool {
+	f := float64(v)
+	return f > 0 && !math.IsNaN(f) && !math.IsInf(f, 0)
+}
+
 // validateCombat sets defaults for combat rolls, defense, prone/grapple,
 // special moves, skullduggery, darkness, damage channels, mitigation caps,
 // and toxicity fields.
@@ -106,11 +113,17 @@ func (b *Balance) validateCombat() {
 	}
 
 	// ── SPECIAL MOVES ────────────────────────────────────────────────────────
+	if !validPositiveActionCost(b.SpecialMoveBaseStaminaCost) {
+		b.SpecialMoveBaseStaminaCost = 4
+	}
 	if b.SpecialMoveCooldown < 1 {
 		b.SpecialMoveCooldown = 5
 	}
 	if b.TauntHoldRounds < 1 {
 		b.TauntHoldRounds = 4
+	}
+	if !validPositiveActionCost(b.RhetoricActionBaseConvictionCost) {
+		b.RhetoricActionBaseConvictionCost = 4
 	}
 
 	// ── MUTATION: WINGED FLIGHT ──
@@ -128,6 +141,12 @@ func (b *Balance) validateCombat() {
 	}
 
 	// ── RANGED ───────────────────────────────────────────────────────────────
+	if !validPositiveActionCost(b.ShootBaseStaminaCost) {
+		b.ShootBaseStaminaCost = 2
+	}
+	if !validPositiveActionCost(b.ReloadBaseStaminaCost) {
+		b.ReloadBaseStaminaCost = 1
+	}
 	if b.RangedShotScale <= 0 {
 		b.RangedShotScale = 1.0
 	}
@@ -138,8 +157,11 @@ func (b *Balance) validateCombat() {
 	}
 
 	// ── SKULLDUGGERY ─────────────────────────────────────────────────────────
+	if !validPositiveActionCost(b.SneakBaseStaminaCost) {
+		b.SneakBaseStaminaCost = 2.5
+	}
 	if b.SneakFailCooldown < 0 {
-		b.SneakFailCooldown = 3
+		b.SneakFailCooldown = 0
 	}
 	if b.StealSkillMultiplier <= 0 {
 		b.StealSkillMultiplier = 1.0
@@ -229,8 +251,8 @@ func (b *Balance) validateCombat() {
 	if b.GrappleEncumbrancePenaltyCurve <= 0 {
 		b.GrappleEncumbrancePenaltyCurve = 1.5
 	}
-	if b.GrappleStaminaCostPerRound <= 0 {
-		b.GrappleStaminaCostPerRound = 5
+	if !validPositiveActionCost(b.GrappleStaminaCostPerRound) {
+		b.GrappleStaminaCostPerRound = 2
 	}
 	if b.GrappleControllerCostMultiplier <= 0 {
 		b.GrappleControllerCostMultiplier = 1.0

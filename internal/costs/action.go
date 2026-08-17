@@ -31,24 +31,55 @@ const (
 	// a working or to refuse an insult.
 	ActionQuell Action = `quell`
 	ActionDefy  Action = `defy`
+
+	ActionShoot           Action = `shoot`
+	ActionReload          Action = `reload`
+	ActionBash            Action = `bash`
+	ActionTrip            Action = `trip`
+	ActionKick            Action = `kick`
+	ActionGrapple         Action = `grapple`
+	ActionGrappleMaintain Action = `grapple-maintain`
+	ActionHamstring       Action = `hamstring`
+	ActionRake            Action = `rake`
+	ActionMaul            Action = `maul`
+	ActionPounce          Action = `pounce`
+	ActionGore            Action = `gore`
+	ActionDrain           Action = `drain`
+	ActionThrottle        Action = `throttle`
+	ActionThrow           Action = `throw`
+	ActionSneak           Action = `sneak`
+	ActionTaunt           Action = `taunt`
+	ActionRally           Action = `rally`
+	ActionWarcry          Action = `warcry`
+)
+
+// SkillSource says how a caller resolves the skill rank used to price an
+// action. Fixed actions use Spec.Skill; equipped-combat actions ask the actor
+// which combat skill their current weapon uses.
+type SkillSource uint8
+
+const (
+	SkillNone SkillSource = iota
+	SkillFixed
+	SkillEquippedCombat
 )
 
 // Spec is what the registry knows about an action: which skill discounts it,
 // and whether encumbrance applies.
 type Spec struct {
-	Skill    skills.SkillTag // governing skill; meaningless unless HasSkill
-	HasSkill bool            // false for actions with no associated skill
-	Physical bool            // physical actions take the encumbrance multiplier
+	Skill       skills.SkillTag // governing skill for SkillFixed actions
+	SkillSource SkillSource
+	Physical    bool // physical actions take the encumbrance multiplier
 }
 
 // registry maps each priced action to its spec. Package-level and read-only
 // after init; nothing mutates it at runtime.
 var registry = map[Action]Spec{
-	ActionAttack: {Skill: skills.WeaponCombat, HasSkill: true, Physical: true},
-	ActionDodge:  {Skill: skills.UnarmedCombat, HasSkill: true, Physical: true},
-	ActionParry:  {Skill: skills.WeaponCombat, HasSkill: true, Physical: true},
-	ActionBlock:  {Skill: skills.WeaponCombat, HasSkill: true, Physical: true},
-	ActionMove:   {Skill: skills.Search, HasSkill: true, Physical: true},
+	ActionAttack: {SkillSource: SkillEquippedCombat, Physical: true},
+	ActionDodge:  {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionParry:  {Skill: skills.WeaponCombat, SkillSource: SkillFixed, Physical: true},
+	ActionBlock:  {Skill: skills.WeaponCombat, SkillSource: SkillFixed, Physical: true},
+	ActionMove:   {Skill: skills.Search, SkillSource: SkillFixed, Physical: true},
 
 	// Flee is physical, and SKULLDUGGERY governs it. That is not an invented
 	// pairing to fill the field: combat.ResolveFleeBlockers already rolls the
@@ -58,13 +89,33 @@ var registry = map[Action]Spec{
 	// obvious reason: a full pack is exactly what you cannot sprint away in,
 	// and before this entry escaping with a third more than your capacity on
 	// your back cost precisely what escaping empty-handed cost.
-	ActionFlee: {Skill: skills.Skullduggery, HasSkill: true, Physical: true},
+	ActionFlee: {Skill: skills.Skullduggery, SkillSource: SkillFixed, Physical: true},
 
 	// Physical: false is load-bearing, not an oversight. Quell answers a mental
 	// spell and defy answers a social attack; charging either an encumbrance
 	// premium would price a caster's saving throw off their backpack.
-	ActionQuell: {Skill: skills.Spellcasting, HasSkill: true, Physical: false},
-	ActionDefy:  {Skill: skills.Rhetoric, HasSkill: true, Physical: false},
+	ActionQuell: {Skill: skills.Spellcasting, SkillSource: SkillFixed},
+	ActionDefy:  {Skill: skills.Rhetoric, SkillSource: SkillFixed},
+
+	ActionShoot:           {Skill: skills.RangedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionReload:          {Skill: skills.RangedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionBash:            {Skill: skills.WeaponCombat, SkillSource: SkillFixed, Physical: true},
+	ActionTrip:            {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionKick:            {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionGrapple:         {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionGrappleMaintain: {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionHamstring:       {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionRake:            {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionMaul:            {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionPounce:          {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionGore:            {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionDrain:           {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionThrottle:        {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionThrow:           {Skill: skills.Skullduggery, SkillSource: SkillFixed, Physical: true},
+	ActionSneak:           {Skill: skills.Skullduggery, SkillSource: SkillFixed, Physical: true},
+	ActionTaunt:           {Skill: skills.Rhetoric, SkillSource: SkillFixed},
+	ActionRally:           {Skill: skills.Rhetoric, SkillSource: SkillFixed},
+	ActionWarcry:          {Skill: skills.Rhetoric, SkillSource: SkillFixed},
 }
 
 // SpecFor returns the registry entry for an action.

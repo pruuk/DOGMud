@@ -613,7 +613,14 @@ Balance:
   #
   # SpecialMoveCooldown: rounds before another special move can be used.
   #   Example: 4 = after a bash, must wait 4 rounds before bash/trip/kick/cast.
+  # SpecialMoveBaseStaminaCost is the configured base before load, governing
+  #   skill, and action modifiers. Grapple initiation uses this special base;
+  #   ongoing maintenance uses GrappleStaminaCostPerRound instead.
+  SpecialMoveBaseStaminaCost: 4
   SpecialMoveCooldown: 4
+  # RhetoricActionBaseConvictionCost prices taunt, rally, and warcry before the
+  #   shared inverse-skill multiplier. Carried load never affects these actions.
+  RhetoricActionBaseConvictionCost: 4
   #
   # DamagePercent: fraction of a normal melee swing's damage this move deals.
   # KnockdownChance: base % chance to knock the target prone on hit.
@@ -629,6 +636,10 @@ Balance:
   #   0 = disabled (mob disengages when player is downed).
   #   1 = mob finishes the player after 1 grace round of lying helpless.
   CoupDeGraceRounds: 1
+  # Shoot and reload bases are composed by the shared action-cost formula with
+  #   Ranged Combat and physical load. They are not final whole-point charges.
+  ShootBaseStaminaCost: 2
+  ReloadBaseStaminaCost: 1
   # - RangedShotScale -
   #   Global multiplier on ranged shot damage (tuning knob)
   RangedShotScale: 1.0
@@ -807,9 +818,9 @@ Balance:
   GrappleStaminaPenaltyCurve: 1.5       # Exponent — higher = steeper near 0% stamina
   GrappleEncumbrancePenaltyMax: 0.80    # Max roll-mult reduction at "crushed" encumbrance
   GrappleEncumbrancePenaltyCurve: 1.5   # Exponent — higher = steeper near max
-  GrappleStaminaCostPerRound: 5         # Base per-round stamina cost in grapples
-  GrappleControllerCostMultiplier: 1.0  # Controller side multiplier (5 × 1.0 = 5/round)
-  GrappleControlledCostMultiplier: 2.0  # Controlled side multiplier (5 × 2.0 = 10/round)
+  GrappleStaminaCostPerRound: 2         # Ongoing base before role, load, and Unarmed Combat skill
+  GrappleControllerCostMultiplier: 1.0  # Controller base multiplier (2 × 1.0 before shared cost calculation)
+  GrappleControlledCostMultiplier: 2.0  # Controlled base multiplier (2 × 2.0 before shared cost calculation)
   GrappleStaminaLowThreshold: 0.25      # Stamina fraction below which "you're getting gassed" fires once per grapple
   PositionConsistencyCheckRounds: 10    # How often the periodic invariant checker runs
 
@@ -844,6 +855,9 @@ Balance:
   MobConvictionRegenPct: 0.02    # NPC conviction regen per tick (raised to match players)
 
   # ── STAMINA & CONVICTION ────────────────────────────────────────────────────
+  # SneakBaseStaminaCost is the configured base before load and Skullduggery.
+  #   A detected attempt currently has no additional failure cooldown.
+  SneakBaseStaminaCost: 2.5
   # MovementBaseStaminaCost: stamina spent per room move on normal terrain,
   #   BEFORE the encumbrance and inverse-skill multipliers and before the
   #   terrain multiplier. Lowered from 2.0 to 0.5 by U7. This is not a nerf

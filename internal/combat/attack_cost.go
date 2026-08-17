@@ -36,7 +36,7 @@ func attackCostPerSwing(attacker *characters.Character) float64 {
 		Capacity:  attacker.CarryCapacity(),
 		Physical:  spec.Physical,
 		SkillRank: attacker.GetCombatSkillLevel(),
-		HasSkill:  spec.HasSkill,
+		HasSkill:  spec.SkillSource != costs.SkillNone,
 		Modifier:  float64(bal.AttackCostModifier),
 	})
 }

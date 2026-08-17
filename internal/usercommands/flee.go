@@ -56,7 +56,7 @@ func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		Capacity:  user.Character.CarryCapacity(),
 		Physical:  spec.Physical,
 		SkillRank: user.Character.GetSkillLevel(spec.Skill),
-		HasSkill:  spec.HasSkill,
+		HasSkill:  spec.SkillSource != costs.SkillNone,
 	})
 	if mutations.IsFlying(user.Character.Mutations) {
 		// No "never below 1" clamp any more: the charge is fractional and its
