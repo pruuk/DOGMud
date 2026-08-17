@@ -400,7 +400,7 @@ func applyMobEffect_damage(
 	quelled := false
 	fullyQuelled := false
 	if !isCrit && casterChar != nil {
-		mult := combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
+		mult := combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character).DamageMultiplier
 		if mult < 1.0 {
 			quelled = true
 			if mult == 0.0 {
@@ -504,7 +504,7 @@ func applyMobEffect_knockdown(
 	// the same split Task 13 applies to maneuvers.
 	kdQuelled := false
 	if !isCrit && casterChar != nil {
-		mult := combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
+		mult := combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character).DamageMultiplier
 		if mult < 1.0 {
 			kdQuelled = true
 			dmg = int(math.Round(float64(dmg) * mult))
@@ -768,7 +768,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		fullyQuelled := false
 		if !isCrit {
 			mult := combat.ResolveChannelDefence(
-				spellAttackChannel(spellData), user.Character, target.Character)
+				spellAttackChannel(spellData), user.Character, target.Character).DamageMultiplier
 			if mult < 1.0 {
 				quelled = true
 				if mult == 0.0 {
@@ -1356,7 +1356,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		fullyQuelled := false
 		if !isCrit {
 			mult := combat.ResolveChannelDefence(
-				spellAttackChannel(spellData), &caster.Character, target.Character)
+				spellAttackChannel(spellData), &caster.Character, target.Character).DamageMultiplier
 			if mult < 1.0 {
 				quelled = true
 				if mult == 0.0 {
@@ -1439,7 +1439,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		// binary, matching the player-cast knockdown branch above.
 		if !isCrit {
 			mult := combat.ResolveChannelDefence(
-				spellAttackChannel(spellData), &caster.Character, target.Character)
+				spellAttackChannel(spellData), &caster.Character, target.Character).DamageMultiplier
 			if mult < 1.0 {
 				dmg = int(math.Round(float64(dmg) * mult))
 				if dmg < 1 && mult > 0 {

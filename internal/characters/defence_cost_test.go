@@ -10,6 +10,83 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
+// Each row pins the uncomposed request that must feed QuoteActionCost. The
+// whole/carry literals then pin the final quote independently at neutral load
+// and neutral skill cost. This catches feeding GetDefenseCostFloat's composed
+// result back as Base, which would apply load, skill, and modifier twice.
+func TestQuoteDefenseCost_UsesRawRequestMappingExactlyOnce(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance.DefenceBaseStaminaCost = 10
+	cfg.Balance.DodgeCostModifier = 1.25
+	cfg.Balance.ParryCostModifier = 1.10
+	cfg.Balance.BlockCostModifier = 1.15
+	cfg.Balance.QuellBaseConvictionCost = 20
+	cfg.Balance.DefyBaseConvictionCost = 30
+	cfg.Balance.CostSkillMultAtZero = 1
+	cfg.Balance.CostSkillMultAtMid = 1
+	cfg.Balance.CostSkillMultAtCap = 1
+	cfg.Balance.CostSkillMidRank = 25
+	cfg.Balance.CostSkillCapRank = 100
+	cfg.Balance.CostTotalMultiplierMax = 100
+	configs.SetConfigForTest(t, cfg)
+
+	c := New()
+	c.Stamina = 100
+	c.Conviction = 100
+
+	tests := []struct {
+		defence  string
+		action   costs.Action
+		pool     Pool
+		base     float64
+		modifier float64
+		whole    int
+		carry    float64
+		price    float64
+	}{
+		{DefenseDodge, costs.ActionDodge, PoolStamina, 10, 1.25, 12, 0.5, 12.5},
+		{DefenseParry, costs.ActionParry, PoolStamina, 10, 1.10, 11, 0, 11},
+		{DefenseBlock, costs.ActionBlock, PoolStamina, 10, 1.15, 11, 0.5, 11.5},
+		{DefenseQuell, costs.ActionQuell, PoolConviction, 20, 1.0, 20, 0, 20},
+		{DefenseDefy, costs.ActionDefy, PoolConviction, 30, 1.0, 30, 0, 30},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.defence, func(t *testing.T) {
+			req, ok := defenseCostRequest(tc.defence)
+			if !ok {
+				t.Fatal("raw request mapping reported unknown defence")
+			}
+			if req.Action != tc.action || req.Pool != tc.pool || req.Base != tc.base ||
+				req.Modifier != tc.modifier || req.Units != 1 {
+				t.Fatalf("raw request = %+v, want action=%q pool=%q base=%.2f modifier=%.2f units=1",
+					req, tc.action, tc.pool, tc.base, tc.modifier)
+			}
+
+			quote, ok := c.QuoteDefenseCost(tc.defence)
+			if !ok || quote.state == nil {
+				t.Fatal("QuoteDefenseCost did not return a valid mapped quote")
+			}
+			if quote.state.pool != tc.pool || quote.state.wholeDue != tc.whole ||
+				math.Abs(quote.state.nextCarry-tc.carry) > 1e-9 || !quote.Affordable() {
+				t.Fatalf("quote state pool=%q whole=%d carry=%.4f affordable=%v; want pool=%q whole=%d carry=%.4f affordable=true",
+					quote.state.pool, quote.state.wholeDue, quote.state.nextCarry,
+					quote.Affordable(), tc.pool, tc.whole, tc.carry)
+			}
+			if got := c.GetDefenseCostFloat(tc.defence); math.Abs(got-tc.price) > 1e-9 {
+				t.Fatalf("compatibility price = %.4f, want raw request composed once to %.4f", got, tc.price)
+			}
+		})
+	}
+
+	if _, ok := defenseCostRequest("not-a-defence"); ok {
+		t.Fatal("unknown defence unexpectedly has a raw request")
+	}
+	if _, ok := c.QuoteDefenseCost("not-a-defence"); ok {
+		t.Fatal("unknown defence unexpectedly produced a quote")
+	}
+}
+
 // Dodge is deliberately the most expensive defence: moving the whole body is
 // more tiring than interposing a weapon or a shield.
 //

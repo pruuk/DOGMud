@@ -94,8 +94,46 @@ type bestDefenseResult struct {
 	defenseType  string
 	hitRoll      dice.RollResult
 	defRoll      dice.RollResult
+	cost         characters.CostCommitResult
 	defenseFloor bool // true if defense succeeded via floor save
 	floored      bool // the contest floor CHANGED this outcome; it must never crit
+}
+
+type defenceContestRunner func(float64, []contest.Entry) contest.Result
+
+type quotedDefenceCandidate struct {
+	entry  contest.Entry
+	quote  characters.CostQuote
+	quoted bool
+}
+
+const defenceShortageText = "You mount a desperate response, too spent to bring practiced technique to it."
+
+func commitDefenceWinner(defender *characters.Character, candidates []quotedDefenceCandidate, res contest.Result) characters.CostCommitResult {
+	if defender == nil || !res.Contested {
+		return characters.CostCommitResult{Status: characters.CostNoCharge}
+	}
+	for _, candidate := range candidates {
+		if candidate.entry.Name == res.Winner {
+			if !candidate.quoted {
+				return characters.CostCommitResult{Status: characters.CostNoCharge}
+			}
+			return defender.CommitCost(candidate.quote, characters.CostPartial)
+		}
+	}
+	return characters.CostCommitResult{Status: characters.CostNoCharge}
+}
+
+func sendDefenceShortageOnce(result *AttackResult, defender *characters.Character, cost characters.CostCommitResult) {
+	if result == nil || defender == nil || defender.GetUserId() <= 0 || !cost.Short() {
+		return
+	}
+	for _, msg := range result.MessagesToTarget {
+		if msg.Category == messaging.CategorySystem && msg.Text == defenceShortageText {
+			return
+		}
+	}
+	result.SendToTarget(messaging.CategorySystem, defenceShortageText)
 }
 
 // calcSwingCount computes the number of swings for a single weapon per round.
@@ -614,18 +652,23 @@ func filterDefensesForThirdParty(result *AttackResult, sourceChar *characters.Ch
 // by the widest margin. Returns the best result.
 //
 // Chunk U1: the rolling and selecting now live in internal/contest. Everything
-// this function still does is melee-specific and deliberately stayed here —
-// building each defence's score, tracking attempts for stance, and charging
-// the winner.
+// this function still does is melee-specific and deliberately stayed here:
+// quoting and building each defence's score, tracking attempts for stance, and
+// committing only the selected winner.
 //
 // Chunk U5b-2 removed the affordability check that used to sit alongside those.
 // Every defence in defSeq now enters the contest regardless of the defender's
 // stamina, and only the winner is charged, partially. See the comment at the
 // top of the entry loop for why.
 func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character, defSeq []string, atkScore float64, isThirdParty bool, ctx combatContext) bestDefenseResult {
+	return runBestOfAllDefenseWithRunner(result, sourceChar, targetChar, defSeq, atkScore, isThirdParty, ctx, RunContest)
+}
+
+func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character, defSeq []string, atkScore float64, isThirdParty bool, ctx combatContext, runner defenceContestRunner) bestDefenseResult {
 	bal := configs.GetBalanceConfig()
 
 	entries := make([]contest.Entry, 0, len(defSeq))
+	candidates := make([]quotedDefenceCandidate, 0, len(defSeq))
 
 	for _, defenseType := range defSeq {
 		// Track defense attempt
@@ -645,12 +688,16 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		// the floor lives inside RunContest. An exhausted actor still acts; the
 		// winning defence is charged partially below.
 		//
-		// The defender's exhaustion currently costs their defence NOTHING:
-		// GetDefenseScore has no resource term, and stripping the skill term is
-		// U8. That gap is deliberate and disclosed, not an oversight.
+		// U8 keeps every candidate in the contest but removes the governing skill
+		// addend from this candidate when its own immutable quote is unaffordable.
+		// Stats, equipment and the multipliers below remain unchanged.
 
-		// Calculate defense score for this defense type
-		defenseScore := targetChar.GetDefenseScore(defenseType)
+		// Quote every eligible defence before the contest without mutating the
+		// defender. Only this candidate's affordability controls whether its own
+		// governing skill addend reaches the score.
+		quote, quoted := targetChar.QuoteDefenseCost(defenseType)
+		includeSkill := !quoted || quote.Affordable()
+		defenseScore := targetChar.GetDefenseScoreFor(defenseType, includeSkill)
 
 		// Apply base effectiveness multipliers. Shared with the non-physical
 		// channels rather than switched inline here: U6 Task 12 left two copies
@@ -731,10 +778,16 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		// swings — spells use a different resolution path).
 		defenseScore += mutations.GetPhysicalDefenseBonus(targetChar.Mutations)
 
-		entries = append(entries, contest.Entry{Name: defenseType, Score: defenseScore})
+		entry := contest.Entry{Name: defenseType, Score: defenseScore}
+		entries = append(entries, entry)
+		candidates = append(candidates, quotedDefenceCandidate{
+			entry:  entry,
+			quote:  quote,
+			quoted: quoted,
+		})
 	}
 
-	res := RunContest(atkScore, entries)
+	res := runner(atkScore, entries)
 
 	best := bestDefenseResult{
 		hitRoll: res.AttackRoll,
@@ -756,29 +809,13 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 		best.margin = math.Inf(-1)
 	}
 
-	// Charge stamina only for the winning defence.
-	//
-	// U5b-2: partial, not full-or-refuse. With the affordability gate above
-	// removed, an exhausted defender can now win the contest, so this call must
-	// be able to charge what little is there rather than declining and leaving
-	// the defence free. U8 reads CostResult.Short to strip the skill term from
-	// the defence score; this chunk discards it.
-	// U6 Task 12: charged through the DefensePool / GetDefenseCost pair rather
-	// than PoolStamina + a stamina-only cost. Melee only ever emits the three
-	// physical defences, but the pair removes the trap: the old shape charges
-	// quell and defy ZERO, silently, if either is ever added here.
-	//
-	// U7 Task 6: the amount is now a float from costs.Calc and is charged through
-	// ApplyCostFloat, which banks the sub-integer remainder. Both halves matter.
-	// The three defence modifiers differ by five to fourteen percent; charged as
-	// integers they all truncate to the same number and the tuning does nothing.
-	// This is also the first time these numbers reach a real character -- until
-	// Task 1 this site charged a discarded copy of the defender.
-	if best.defenseType != "" {
-		_ = targetChar.ApplyCostFloat(
-			characters.DefensePool(best.defenseType),
-			targetChar.GetDefenseCostFloat(best.defenseType))
-	}
+	// Commit exactly the immutable quote paired with Result.Winner. The winner
+	// pays even when the attacker won the contest; losing candidates remain
+	// unconsumed and therefore cannot affect pool, carry, messaging, or
+	// progression. Partial payment is life-preserving and strips only the skill
+	// term already omitted above.
+	best.cost = commitDefenceWinner(targetChar, candidates, res)
+	sendDefenceShortageOnce(result, targetChar, best.cost)
 
 	return best
 }

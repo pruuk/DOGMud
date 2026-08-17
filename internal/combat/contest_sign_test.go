@@ -198,7 +198,23 @@ func runAvoidanceContest(t *testing.T, n int, channel AttackChannel, attacker, d
 	for i := 0; i < n; i++ {
 		// The defender carries no userId, which is the no-user sentinel: the
 		// progression calls inside look up nothing and must not panic.
-		mult := ResolveChannelDefence(channel, attacker, defender)
+		result := ResolveChannelDefence(channel, attacker, defender)
+		mult := result.DamageMultiplier
+		if result.DefenceType == "" {
+			t.Errorf("iteration %d returned no selected defence for a contested channel", i)
+		}
+		if mult < 1.0 && !result.Defended {
+			t.Errorf("iteration %d returned defensive multiplier %v with Defended=false", i, mult)
+		}
+		if mult == 1.0 && result.Defended {
+			t.Errorf("iteration %d returned attack-win multiplier with Defended=true", i)
+		}
+		if result.DefensiveCrit != (mult == 0.0) {
+			t.Errorf("iteration %d returned multiplier %v with DefensiveCrit=%v", i, mult, result.DefensiveCrit)
+		}
+		if mult == 1.0 && result.NormalizedDefenceMargin != 0 {
+			t.Errorf("iteration %d attack win normalized margin = %v, want zero", i, result.NormalizedDefenceMargin)
+		}
 		switch {
 		case mult == 0.0:
 			out.fullNegations++

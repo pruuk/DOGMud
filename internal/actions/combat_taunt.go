@@ -240,7 +240,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		defied := false
 		fullyDefied := false
 		if !isCrit {
-			mult := combat.ResolveChannelDefence(combat.ChannelSocial, char, target.Char)
+			mult := combat.ResolveChannelDefence(combat.ChannelSocial, char, target.Char).DamageMultiplier
 			if mult < 1.0 {
 				defied = true
 				if mult == 0.0 {
