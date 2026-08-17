@@ -22,7 +22,7 @@ NEW  : a defensive win means margin-scaled mitigation, 50% at a bare win
 import itertools
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import mean
 
@@ -40,6 +40,8 @@ Z_LIM = 6.0
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / "_datafiles" / "config.yaml"
 VETERAN_PROFILE_PATH = ROOT / "tools" / "playtest" / "profiles" / "veteran.yaml"
+ITEM_STATE_PATH = ROOT / "internal" / "items" / "items.go"
+ITEM_SPEC_PATH = ROOT / "internal" / "items" / "itemspec.go"
 
 PHYSICAL_CANDIDATES = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0)
 RHETORIC_CANDIDATES = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0)
@@ -91,6 +93,22 @@ def _load_shipped_values():
 
 
 SHIPPED = _load_shipped_values()
+
+
+def _discover_ranged_capacity():
+    """Return the current projectile capacity asserted from the live item model."""
+    state_source = ITEM_STATE_PATH.read_text(encoding="utf-8")
+    spec_source = ITEM_SPEC_PATH.read_text(encoding="utf-8")
+    assert re.search(r"\bLoaded\s+bool\s+`yaml:\"loaded,omitempty\"`", state_source), (
+        "ranged state is no longer the asserted one-projectile Loaded bool"
+    )
+    assert not re.search(r"\b(?:Ammo|Magazine|Projectile)Capacity\b", state_source + spec_source), (
+        "a ranged capacity field now exists; extend the capacity discovery model"
+    )
+    return 1
+
+
+RANGED_WEAPON_CAPACITY = _discover_ranged_capacity()
 
 
 def _profile_stats_and_skills(path):
@@ -213,11 +231,12 @@ def encumbrance_multiplier(load):
 
 
 def action_cost(base, load, skill, physical=True, modifier=1.0):
+    if modifier < 0:
+        raise ValueError("action cost modifier cannot be negative")
     multiplier = skill_cost_multiplier(skill)
     if physical:
         multiplier *= encumbrance_multiplier(load)
-    if modifier > 0:
-        multiplier *= modifier
+    multiplier *= modifier
     multiplier = min(multiplier, SHIPPED["CostTotalMultiplierMax"])
     return base * multiplier
 
@@ -249,11 +268,13 @@ def regen_per_hook(fixture, pool, combat):
 class PoolTrace:
     current: int
     carry: float = 0.0
-    gross: float = 0.0
+    attempted: float = 0.0
+    admitted: float = 0.0
+    admitted_by_action: dict = field(default_factory=dict)
     zero_round: int = 0
 
-    def commit(self, amount, full):
-        self.gross += amount
+    def commit(self, amount, full, action=""):
+        self.attempted += amount
         debt = self.carry + amount
         whole = math.floor(debt + 1e-12)
         if full and whole > self.current:
@@ -261,6 +282,9 @@ class PoolTrace:
         self.carry = debt - whole
         charged = min(self.current, whole)
         self.current -= charged
+        self.admitted += charged
+        if action:
+            self.admitted_by_action[action] = self.admitted_by_action.get(action, 0.0) + charged
         if charged < whole:
             return "short"
         return "paid" if whole else "no-charge"
@@ -273,8 +297,22 @@ def run_trace(fixture, pool, events, rounds, combat, initial=None):
     rows = []
     for round_number in range(1, rounds + 1):
         statuses = []
-        for amount, full in events.get(round_number, ()):
-            statuses.append(trace.commit(amount, full))
+        for event in events.get(round_number, ()):
+            if isinstance(event[0], str):
+                name, amount, full = event[:3]
+                state_path = "->".join(event[3:])
+            else:
+                name = ""
+                amount, full = event
+                state_path = ""
+            status = trace.commit(amount, full, name)
+            if name:
+                label = f"{name}:{status}"
+                if state_path:
+                    label += f"[{state_path}]"
+                statuses.append(label)
+            else:
+                statuses.append(status)
         if trace.current == 0 and not trace.zero_round:
             trace.zero_round = round_number
         regen = 0
@@ -301,9 +339,130 @@ class CandidatePackage:
         return (self.special, self.shoot, self.reload, self.sneak, self.rhetoric, self.grapple)
 
 
+def selected_action_equivalents(package, fixture):
+    """Price every selected base in ordinary swings for the same skill rank."""
+    specifications = (
+        ("special", "stamina", "unarmed-combat", package.special, True, 1.0),
+        ("shoot", "stamina", "ranged-combat", package.shoot, True, 1.0),
+        ("reload", "stamina", "ranged-combat", package.reload, True, 1.0),
+        ("sneak", "stamina", "skullduggery", package.sneak, True, 1.0),
+        ("rhetoric", "conviction", "rhetoric", package.rhetoric, False, 1.0),
+        (
+            "grapple-controller", "stamina", "unarmed-combat",
+            package.grapple, True, SHIPPED["GrappleControllerCostMultiplier"],
+        ),
+        (
+            "grapple-controlled", "stamina", "unarmed-combat",
+            package.grapple, True, SHIPPED["GrappleControlledCostMultiplier"],
+        ),
+    )
+    rows = []
+    for action, pool, skill_tag, base, physical, modifier in specifications:
+        skill = fixture.skill(skill_tag)
+        cost = action_cost(
+            base, TYPICAL_LOAD if physical else 0.0, skill,
+            physical=physical, modifier=modifier,
+        )
+        swing = ordinary_swing_cost(fixture, TYPICAL_LOAD, skill)
+        rows.append({
+            "action": action,
+            "pool": pool,
+            "governing_skill": skill_tag,
+            "cost": cost,
+            "swing_equivalent": cost / swing,
+        })
+    return tuple(rows)
+
+
 def _rounds_every(interval, start=1, end=TRACE_ROUNDS):
     # A shipped zero cooldown means no delay: at most one attempt per round.
     return range(start, end + 1, max(1, interval))
+
+
+def _ranged_action_schedule(cooldown=None, capacity=None, rounds=TRACE_ROUNDS):
+    """Build the one authoritative shoot/reload cadence from live constraints."""
+    cooldown = int(SHIPPED["SpecialMoveCooldown"] if cooldown is None else cooldown)
+    capacity = RANGED_WEAPON_CAPACITY if capacity is None else capacity
+    assert cooldown >= 1
+    assert capacity >= 1
+
+    schedule = []
+    loaded = capacity
+    reload_ready = 1
+    shoot_ready = 1
+    for round_number in range(1, rounds + 1):
+        if loaded > 0 and round_number >= shoot_ready:
+            schedule.append((round_number, "shoot"))
+            loaded -= 1
+        elif loaded == 0 and round_number >= reload_ready:
+            schedule.append((round_number, "reload"))
+            loaded = capacity
+            reload_ready = round_number + cooldown
+            shoot_ready = round_number + 1
+    return tuple(schedule)
+
+
+def ranged_event_sequence(package, fixture, cooldown=None, capacity=None):
+    ranged_mult = action_cost(1.0, TYPICAL_LOAD, fixture.skill("ranged-combat"))
+    costs = {
+        "shoot": package.shoot * ranged_mult,
+        "reload": package.reload * ranged_mult,
+    }
+    events = {}
+    for round_number, action in _ranged_action_schedule(cooldown, capacity):
+        events[round_number] = [(action, costs[action], True)]
+    return events
+
+
+def special_combat_events(package, fixture):
+    attack = ordinary_swing_cost(
+        fixture, TYPICAL_LOAD, fixture.skill("weapon-combat")
+    )
+    defense = action_cost(
+        SHIPPED["DefenceBaseStaminaCost"], TYPICAL_LOAD,
+        fixture.skill("unarmed-combat"), modifier=max(
+            SHIPPED["DodgeCostModifier"], SHIPPED["ParryCostModifier"],
+            SHIPPED["BlockCostModifier"],
+        ),
+    )
+    special = max(_special_skill_costs(fixture, package.special, TYPICAL_LOAD))
+    special_rounds = set(_rounds_every(int(SHIPPED["SpecialMoveCooldown"])))
+    events = {}
+    for round_number in range(1, TRACE_ROUNDS + 1):
+        events[round_number] = [
+            ("attack", attack, False),
+            ("defence", defense, False),
+        ]
+        if round_number in special_rounds:
+            events[round_number].append(("special", special, True))
+    return events
+
+
+def rhetoric_event_sequence(package, fixture):
+    amount = action_cost(
+        package.rhetoric, 0.0, fixture.skill("rhetoric"), physical=False,
+    )
+    return {
+        round_number: [("rhetoric", amount, True)]
+        for round_number in _rounds_every(int(SHIPPED["SpecialMoveCooldown"]))
+    }
+
+
+def sneak_event_sequence(package, fixture):
+    amount = action_cost(
+        package.sneak, TYPICAL_LOAD, fixture.skill("skullduggery"),
+    )
+    return {
+        round_number: [(
+            "sneak-detected", amount, True,
+            "Visible", "Concealing", "Visible",
+        )]
+        for round_number in _rounds_every(int(SHIPPED["SneakFailCooldown"]))
+    }
+
+
+def _sequence_attempted(events):
+    return sum(event[1] for round_events in events.values() for event in round_events)
 
 
 def _special_skill_costs(fixture, base, load):
@@ -319,24 +478,41 @@ def _special_skill_costs(fixture, base, load):
 def _u8_trace_ratios(package, fixture):
     usable_stamina = usable_pool_max(fixture.stamina_max)
     usable_conviction = usable_pool_max(fixture.conviction_max)
-    special_uses = len(tuple(_rounds_every(int(SHIPPED["SpecialMoveCooldown"]))))
-    sneak_uses = len(tuple(_rounds_every(int(SHIPPED["SneakFailCooldown"]))))
 
-    special = special_uses * mean(_special_skill_costs(fixture, package.special, TYPICAL_LOAD))
-    ranged_mult = action_cost(1.0, TYPICAL_LOAD, fixture.skill("ranged-combat"))
-    # With the current Loaded bool every shipped ranged weapon has capacity 1.
-    # Round 1 shoots; rounds 2,6,... reload; the following rounds shoot.
-    ranged = 8 * ranged_mult * (package.shoot + package.reload)
-    rhetoric = special_uses * action_cost(
-        package.rhetoric, 0.0, fixture.skill("rhetoric"), physical=False,
+    special_trace, _ = run_trace(
+        fixture, "stamina", special_combat_events(package, fixture),
+        TRACE_ROUNDS, combat=True,
     )
-    sneak = sneak_uses * action_cost(
-        package.sneak, TYPICAL_LOAD, fixture.skill("skullduggery"),
+    special = special_trace.admitted_by_action.get("special", 0.0)
+
+    ranged_trace, _ = run_trace(
+        fixture, "stamina", ranged_event_sequence(package, fixture),
+        TRACE_ROUNDS, combat=True,
     )
-    grapple_mult = action_cost(1.0, TYPICAL_LOAD, fixture.skill("unarmed-combat"))
-    controller = GRAPPLE_ROUNDS * package.grapple * SHIPPED["GrappleControllerCostMultiplier"] * grapple_mult
-    controlled = GRAPPLE_ROUNDS * package.grapple * SHIPPED["GrappleControlledCostMultiplier"] * grapple_mult
-    grapple = mean((controller, controlled))
+    ranged = (
+        ranged_trace.admitted_by_action.get("shoot", 0.0)
+        + ranged_trace.admitted_by_action.get("reload", 0.0)
+    )
+
+    rhetoric_trace, _ = run_trace(
+        fixture, "conviction", rhetoric_event_sequence(package, fixture),
+        TRACE_ROUNDS, combat=True,
+    )
+    rhetoric = rhetoric_trace.admitted_by_action.get("rhetoric", 0.0)
+
+    sneak_trace, _ = run_trace(
+        fixture, "stamina", sneak_event_sequence(package, fixture),
+        TRACE_ROUNDS, combat=False,
+    )
+    sneak = sneak_trace.admitted_by_action.get("sneak-detected", 0.0)
+
+    controller_trace, _ = _grapple_trace(
+        package, fixture, SHIPPED["GrappleControllerCostMultiplier"],
+    )
+    controlled_trace, _ = _grapple_trace(
+        package, fixture, SHIPPED["GrappleControlledCostMultiplier"],
+    )
+    grapple = mean((controller_trace.admitted, controlled_trace.admitted))
     return (
         special / usable_stamina,
         ranged / usable_stamina,
@@ -347,25 +523,19 @@ def _u8_trace_ratios(package, fixture):
 
 
 def _combat_survives_to_round_20(package, fixture):
-    events = {}
-    attack = ordinary_swing_cost(
-        fixture, TYPICAL_LOAD, fixture.skill("weapon-combat")
+    trace, _ = run_trace(
+        fixture, "stamina", special_combat_events(package, fixture),
+        TRACE_ROUNDS, combat=True,
     )
-    defense = action_cost(
-        SHIPPED["DefenceBaseStaminaCost"], TYPICAL_LOAD,
-        fixture.skill("unarmed-combat"), modifier=max(
-            SHIPPED["DodgeCostModifier"], SHIPPED["ParryCostModifier"],
-            SHIPPED["BlockCostModifier"],
-        ),
-    )
-    special = max(_special_skill_costs(fixture, package.special, TYPICAL_LOAD))
-    special_rounds = set(_rounds_every(int(SHIPPED["SpecialMoveCooldown"])))
-    for round_number in range(1, TRACE_ROUNDS + 1):
-        events[round_number] = [(attack, False), (defense, False)]
-        if round_number in special_rounds:
-            events[round_number].append((special, True))
-    trace, _ = run_trace(fixture, "stamina", events, TRACE_ROUNDS, combat=True)
     return trace.zero_round == 0 or trace.zero_round >= 20
+
+
+def _package_pressure_score(package):
+    return mean(
+        ratio
+        for fixture in FIXTURES
+        for ratio in _u8_trace_ratios(package, fixture)
+    )
 
 
 def _grapple_trace(package, fixture, role_multiplier):
@@ -378,8 +548,6 @@ def _grapple_trace(package, fixture, role_multiplier):
 
 
 def _candidate_passes(package):
-    cooldown = int(SHIPPED["SpecialMoveCooldown"])
-    special_uses = len(tuple(_rounds_every(cooldown)))
     for fixture in FIXTURES:
         for skill_tag in ("weapon-combat", "unarmed-combat", "skullduggery"):
             skill = fixture.skill(skill_tag)
@@ -389,19 +557,28 @@ def _candidate_passes(package):
             if not (special > swing and special <= swing * 4):
                 return False
 
-        ranged_mult = action_cost(1.0, TYPICAL_LOAD, fixture.skill("ranged-combat"))
-        shoot = package.shoot * ranged_mult
-        reload_cost = package.reload * ranged_mult
+        ranged_events = ranged_event_sequence(package, fixture)
+        shoot = next(event[1] for events in ranged_events.values() for event in events
+                     if event[0] == "shoot")
+        reload_cost = next(event[1] for events in ranged_events.values() for event in events
+                           if event[0] == "reload")
         if reload_cost > shoot * 0.75 + 1e-12:
             return False
 
         usable_stamina = usable_pool_max(fixture.stamina_max)
         usable_conviction = usable_pool_max(fixture.conviction_max)
-        ranged_ratio = 8 * (shoot + reload_cost) / usable_stamina
+        ranged_trace, _ = run_trace(
+            fixture, "stamina", ranged_events, TRACE_ROUNDS, combat=True,
+        )
+        ranged_ratio = ranged_trace.admitted / usable_stamina
         rhetoric_cost = action_cost(
             package.rhetoric, 0.0, fixture.skill("rhetoric"), physical=False,
         )
-        rhetoric_ratio = special_uses * rhetoric_cost / usable_conviction
+        rhetoric_trace, _ = run_trace(
+            fixture, "conviction", rhetoric_event_sequence(package, fixture),
+            TRACE_ROUNDS, combat=True,
+        )
+        rhetoric_ratio = rhetoric_trace.admitted / usable_conviction
         if not (0.05 <= ranged_ratio <= 0.35 and 0.05 <= rhetoric_ratio <= 0.35):
             return False
 
@@ -463,11 +640,7 @@ def generate_candidate_packages():
         package = CandidatePackage(*values)
         if not _candidate_passes(package):
             continue
-        score = mean(
-            ratio
-            for fixture in FIXTURES
-            for ratio in _u8_trace_ratios(package, fixture)
-        )
+        score = _package_pressure_score(package)
         passing.append(CandidatePackage(*values, pressure_score=score))
     passing.sort(key=lambda p: (p.pressure_score, *p.values()))
     assert passing, "U8 candidate grid has no package satisfying every gate"
@@ -513,7 +686,7 @@ def _full_pay_transition(fixture, pool, amount):
     )
 
 
-def print_u8_model(selected):
+def print_u8_model(selected, owner_selected):
     novice = FIXTURES[0]
     print("\n=== U8 action-cost candidate model ===")
     print("Shipped source values:")
@@ -531,70 +704,83 @@ def print_u8_model(selected):
             f"  {label:<10} {package.pressure_score:6.2%} "
             + " ".join(f"{_fmt(value):>6}" for value in package.values())
         )
+    print(
+        f"  {'owner':<10} {owner_selected.pressure_score:6.2%} "
+        + " ".join(f"{_fmt(value):>6}" for value in owner_selected.values())
+    )
 
-    print("\n  Typical-load special cost (ordinary single-swing equivalents):")
-    print("  band       fixture                    swing  special  equivalent")
-    for label, package in zip(("low", "midpoint", "high"), selected):
-        for fixture in FIXTURES:
-            skill = fixture.skill("unarmed-combat")
-            swing = ordinary_swing_cost(fixture, TYPICAL_LOAD, skill)
-            special = action_cost(package.special, TYPICAL_LOAD, skill)
+    print("\n  Owner-selected action costs (ordinary single-swing equivalents):")
+    print("  fixture                    action                 pool        skill             cost equivalent")
+    for fixture in FIXTURES:
+        for row in selected_action_equivalents(owner_selected, fixture):
             print(
-                f"  {label:<10} {fixture.name:<26} {swing:6.2f} "
-                f"{special:8.2f} {special / swing:10.2f}x"
+                f"  {fixture.name:<26} {row['action']:<22} {row['pool']:<11} "
+                f"{row['governing_skill']:<17} {row['cost']:6.2f} "
+                f"{row['swing_equivalent']:9.2f}x"
             )
 
     print("\n  Thirty-round ranged and rhetoric traces at the reservation ceiling:")
-    print("  band       fixture                    ranged gross/end     rhetoric gross/end")
-    for label, package in zip(("low", "midpoint", "high"), selected):
+    print("  band       fixture                    ranged attempt/admit/end  rhetoric attempt/admit/end")
+    displayed = (*zip(("low", "midpoint", "high"), selected), ("owner", owner_selected))
+    for label, package in displayed:
         for fixture in FIXTURES:
-            ranged_mult = action_cost(1.0, TYPICAL_LOAD, fixture.skill("ranged-combat"))
-            ranged_events = {}
-            for round_number in range(1, TRACE_ROUNDS + 1):
-                if round_number == 1 or (round_number >= 3 and (round_number - 3) % 4 == 0):
-                    ranged_events[round_number] = [(package.shoot * ranged_mult, True)]
-                elif round_number >= 2 and (round_number - 2) % 4 == 0:
-                    ranged_events[round_number] = [(package.reload * ranged_mult, True)]
+            ranged_events = ranged_event_sequence(package, fixture)
             ranged_trace, _ = run_trace(
                 fixture, "stamina", ranged_events, TRACE_ROUNDS, combat=True,
             )
-            rhetoric_amount = action_cost(
-                package.rhetoric, 0.0, fixture.skill("rhetoric"), physical=False,
-            )
-            rhetoric_events = {
-                round_number: [(rhetoric_amount, True)]
-                for round_number in _rounds_every(int(SHIPPED["SpecialMoveCooldown"]))
-            }
             rhetoric_trace, _ = run_trace(
-                fixture, "conviction", rhetoric_events, TRACE_ROUNDS, combat=True,
+                fixture, "conviction", rhetoric_event_sequence(package, fixture),
+                TRACE_ROUNDS, combat=True,
             )
             print(
                 f"  {label:<10} {fixture.name:<26} "
-                f"{ranged_trace.gross:6.1f}/{ranged_trace.current:<4} "
-                f"{rhetoric_trace.gross:9.1f}/{rhetoric_trace.current:<4}"
+                f"{ranged_trace.attempted:6.1f}/{ranged_trace.admitted:5.1f}/{ranged_trace.current:<4} "
+                f"{rhetoric_trace.attempted:9.1f}/{rhetoric_trace.admitted:5.1f}/{rhetoric_trace.current:<4}"
             )
 
-    print("\n  Current one-projectile ranged cycle (all shipped ranged weapons):")
-    print("  round      1  2  3  6  7 10 11 14 15 18 19 22 23 26 27 30")
-    print("  action   shoot reload shoot reload shoot reload shoot reload shoot reload shoot reload shoot reload shoot reload")
+    print("\n  Source-derived ranged cycle (shipped capacity/cooldown):")
+    schedule = _ranged_action_schedule()
+    print("  round    " + " ".join(f"{round_number:>6}" for round_number, _ in schedule))
+    print("  action   " + " ".join(f"{action:>6}" for _, action in schedule))
 
-    print("\n  Rhetoric gross pressure across reservation bands (fixture range):")
+    print("\n  Rhetoric attempted pressure across reservation bands (fixture range):")
     print("  band       reserved    pressure range")
-    for label, package in zip(("low", "midpoint", "high"), selected):
+    for label, package in displayed:
         for reserved_ratio in (0.0, SHIPPED["PoolReservationCapPct"] / 2, SHIPPED["PoolReservationCapPct"]):
             ratios = []
             for fixture in FIXTURES:
                 usable = fixture.conviction_max - math.floor(fixture.conviction_max * reserved_ratio)
-                cost = action_cost(package.rhetoric, 0.0, fixture.skill("rhetoric"), physical=False)
-                ratios.append(8 * cost / usable)
+                attempted = _sequence_attempted(rhetoric_event_sequence(package, fixture))
+                ratios.append(attempted / usable)
             print(
                 f"  {label:<10} {reserved_ratio:7.0%}    "
                 f"{min(ratios):6.2%} .. {max(ratios):6.2%}"
             )
 
+    exact_traces = (
+        (
+            "combined special / attack / defence", "stamina",
+            special_combat_events(owner_selected, novice), True,
+        ),
+        (
+            "detected sneak with awareness reset", "stamina",
+            sneak_event_sequence(owner_selected, novice), False,
+        ),
+        (
+            "rhetoric cadence and recovery", "conviction",
+            rhetoric_event_sequence(owner_selected, novice), True,
+        ),
+    )
+    for title, pool, events, combat in exact_traces:
+        _, rows = run_trace(novice, pool, events, TRACE_ROUNDS, combat=combat)
+        print(f"\n  Owner-selected novice thirty-round {title} trace:")
+        print("  round  pool  regen  resolved action/state")
+        for round_number, current, regen, status in rows:
+            print(f"  {round_number:>5} {current:>5} {regen:>6}  {status}")
+
     print("\n  Ten-round novice grapple pools at typical load (controller/controlled):")
     print("  band       r1      r2      r3      r4      r5      r6      r7      r8      r9      r10")
-    for label, package in zip(("low", "midpoint", "high"), selected):
+    for label, package in displayed:
         controller_trace, controller_rows = _grapple_trace(
             package, novice, SHIPPED["GrappleControllerCostMultiplier"],
         )
@@ -610,7 +796,7 @@ def print_u8_model(selected):
 
     print("\n  Full-pay admission transitions (novice, typical load):")
     print("  band       pool        affordable       exhausted       recovered")
-    for label, package in zip(("low", "midpoint", "high"), selected):
+    for label, package in displayed:
         amounts = {
             "stamina": action_cost(
                 package.special, TYPICAL_LOAD, novice.skill("unarmed-combat")
@@ -629,7 +815,7 @@ def print_u8_model(selected):
             )
 
     print("\n  Laden-novice product-clamp assertions:")
-    for label, package in zip(("low", "midpoint", "high"), selected):
+    for label, package in displayed:
         laden_novice_costs = [
             action_cost(base, 1.0, novice.skill("unarmed-combat"))
             for base in package.values()[:4]
@@ -676,6 +862,156 @@ def assert_u8_acceptance(selected):
             base * SHIPPED["CostTotalMultiplierMax"] for base in package.values()[:4]
         ]
         assert all(cost <= bound + 1e-12 for cost, bound in zip(laden_novice_costs, product_clamp_bounds))
+
+
+def assert_review_ranged_cadence_is_source_driven():
+    """Changing the shipped cooldown must change ranged pressure everywhere."""
+    package = CandidatePackage(4.0, 2.0, 1.0, 2.5, 4.0, 2.0)
+    fixture = FIXTURES[0]
+    original = SHIPPED["SpecialMoveCooldown"]
+    try:
+        baseline = _u8_trace_ratios(package, fixture)[1]
+        SHIPPED["SpecialMoveCooldown"] = original + 1
+        changed = _u8_trace_ratios(package, fixture)[1]
+    finally:
+        SHIPPED["SpecialMoveCooldown"] = original
+    assert not math.isclose(baseline, changed), (
+        "ranged pressure ignored a shipped SpecialMoveCooldown change"
+    )
+
+
+def assert_review_admission_accounting():
+    """Refusal is atomic; partial payment writes off debt and records admission."""
+    refused = PoolTrace(current=0, carry=0.25)
+    before = (refused.current, refused.carry)
+    assert refused.commit(1.5, full=True) == "refused"
+    assert (refused.current, refused.carry) == before
+    assert getattr(refused, "attempted", None) == 1.5
+    assert getattr(refused, "admitted", None) == 0.0
+
+    partial = PoolTrace(current=1, carry=0.25)
+    assert partial.commit(2.0, full=False) == "short"
+    assert (partial.current, partial.carry) == (0, 0.25)
+    assert partial.attempted == 2.0
+    assert partial.admitted == 1.0
+
+    # The unpaid whole point is written off. After restoring two points, only
+    # the new 0.75 plus the existing 0.25 carry is charged.
+    partial.current = 2
+    assert partial.commit(0.75, full=True) == "paid"
+    assert (partial.current, partial.carry) == (1, 0.0)
+    assert partial.admitted == 2.0
+
+    recovered, rows = run_trace(
+        FIXTURES[0], "stamina",
+        {1: [(2.0, True)], 4: [(2.0, True)]},
+        rounds=4, combat=False, initial=0,
+    )
+    assert rows[0] == (1, 0, 0, "refused")
+    assert rows[2] == (3, 8, 8, "idle")
+    assert rows[3] == (4, 6, 0, "paid")
+    assert (recovered.attempted, recovered.admitted) == (4.0, 2.0)
+
+
+def assert_review_zero_modifier_is_zero():
+    """Explicit zero is a valid authored modifier, not a neutral default."""
+    assert action_cost(3.0, 0.5, 25, modifier=0.0) == 0.0
+    try:
+        action_cost(3.0, 0.5, 25, modifier=-1.0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("negative action modifier must be rejected")
+
+
+def assert_review_all_selected_equivalents():
+    """Evidence data covers all six bases, including both grapple roles."""
+    helper = globals().get("selected_action_equivalents")
+    assert callable(helper), "selected-action equivalent model is absent"
+    package = CandidatePackage(4.0, 2.0, 1.0, 2.5, 4.0, 2.0)
+    rows = helper(package, FIXTURES[0])
+    assert tuple(row["action"] for row in rows) == (
+        "special", "shoot", "reload", "sneak", "rhetoric",
+        "grapple-controller", "grapple-controlled",
+    )
+    assert tuple(row["pool"] for row in rows) == (
+        "stamina", "stamina", "stamina", "stamina", "conviction",
+        "stamina", "stamina",
+    )
+    assert all(row["governing_skill"] for row in rows)
+    assert all(row["cost"] >= 0 and row["swing_equivalent"] >= 0 for row in rows)
+
+
+def assert_review_exact_event_sequences():
+    """All exact thirty-round traces share asserted event builders."""
+    builders = {
+        name: globals().get(name)
+        for name in (
+            "special_combat_events", "ranged_event_sequence",
+            "rhetoric_event_sequence", "sneak_event_sequence",
+        )
+    }
+    assert all(callable(builder) for builder in builders.values()), (
+        f"missing exact trace builder(s): "
+        f"{[name for name, builder in builders.items() if not callable(builder)]}"
+    )
+
+    package = CandidatePackage(4.0, 2.0, 1.0, 2.5, 4.0, 2.0)
+    fixture = FIXTURES[0]
+    special = builders["special_combat_events"](package, fixture)
+    assert tuple(round_number for round_number, events in special.items()
+                 if any(event[0] == "special" for event in events)) == (1, 5, 9, 13, 17, 21, 25, 29)
+    assert all(tuple(event[0] for event in special[round_number])[:2] == ("attack", "defence")
+               for round_number in range(1, TRACE_ROUNDS + 1))
+
+    ranged = builders["ranged_event_sequence"](package, fixture)
+    assert tuple((round_number, events[0][0]) for round_number, events in ranged.items()) == (
+        (1, "shoot"), (2, "reload"), (3, "shoot"), (6, "reload"),
+        (7, "shoot"), (10, "reload"), (11, "shoot"), (14, "reload"),
+        (15, "shoot"), (18, "reload"), (19, "shoot"), (22, "reload"),
+        (23, "shoot"), (26, "reload"), (27, "shoot"), (30, "reload"),
+    )
+
+    rhetoric = builders["rhetoric_event_sequence"](package, fixture)
+    assert tuple(rhetoric) == (1, 5, 9, 13, 17, 21, 25, 29)
+
+    sneak = builders["sneak_event_sequence"](package, fixture)
+    assert tuple(sneak) == tuple(range(1, TRACE_ROUNDS + 1))
+    assert all(events[0][3:] == ("Visible", "Concealing", "Visible")
+               for events in sneak.values())
+
+    _, special_rows = run_trace(
+        fixture, "stamina", special, TRACE_ROUNDS, combat=True,
+    )
+    assert tuple(row[1] for row in special_rows) == (
+        129, 126, 125, 122, 113, 112, 108, 105, 98, 95,
+        92, 90, 81, 78, 77, 74, 65, 63, 60, 57,
+        50, 47, 43, 42, 33, 30, 29, 25, 16, 15,
+    )
+    assert all("attack:paid,defence:paid" in row[3] for row in special_rows)
+
+    _, rhetoric_rows = run_trace(
+        fixture, "conviction", rhetoric, TRACE_ROUNDS, combat=True,
+    )
+    assert tuple(row[1] for row in rhetoric_rows) == (
+        134, 134, 138, 138, 134, 138, 138, 138, 138, 138,
+        138, 138, 133, 133, 138, 138, 134, 138, 138, 138,
+        138, 138, 138, 138, 133, 133, 138, 138, 134, 138,
+    )
+    assert tuple(row[2] for row in rhetoric_rows) == tuple(
+        8 if round_number % 3 == 0 else 0
+        for round_number in range(1, TRACE_ROUNDS + 1)
+    )
+
+    _, sneak_rows = run_trace(
+        fixture, "stamina", sneak, TRACE_ROUNDS, combat=False,
+    )
+    assert tuple(row[1] for row in sneak_rows) == (
+        135, 131, 136, 132, 128, 133, 129, 126, 130, 126,
+        123, 127, 124, 120, 124, 121, 117, 122, 118, 114,
+        119, 115, 112, 116, 112, 109, 113, 110, 106, 110,
+    )
+    assert all("[Visible->Concealing->Visible]" in row[3] for row in sneak_rows)
 
 
 def _z_grid():
@@ -770,7 +1106,18 @@ if __name__ == '__main__':
     for cap in (0.75, 0.80, 0.85):
         run(0.65, cap)
 
+    assert_review_ranged_cadence_is_source_driven()
+    assert_review_admission_accounting()
+    assert_review_zero_modifier_is_zero()
+    assert_review_all_selected_equivalents()
+    assert_review_exact_event_sequences()
     all_passing_packages, u8_candidate_packages = generate_candidate_packages()
+    owner_values = (4.0, 2.0, 1.0, 2.5, 4.0, 2.0)
+    owner_package = CandidatePackage(*owner_values)
+    assert _candidate_passes(owner_package), "owner-selected package fails a corrected gate"
+    owner_selected = CandidatePackage(
+        *owner_values, pressure_score=_package_pressure_score(owner_package),
+    )
     assert_u8_acceptance(u8_candidate_packages)
-    print_u8_model(u8_candidate_packages)
+    print_u8_model(u8_candidate_packages, owner_selected)
     print(f"\n  {len(all_passing_packages)} packages passed every U8 gate.")
