@@ -328,11 +328,13 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
     and defy never signal "evaded a blow". **DEFERRED**; flavour only, and
     unreachable today.
 
-Content gaps, owned by U11 rather than Task 12: no `quell.yaml` / `defy.yaml`
-under `_datafiles/world/dogmud/defense-messages/` (`GetDefenseMessage` already
-returns empty for an unknown key, so this degrades rather than breaks); no
-help-alias in `keywords.yaml`; `help combat` still enumerates only the physical
-three.
+The help-alias and helpfile gaps were closed after Task 12. The remaining
+content gap is owned by U8: add `quell.yaml` / `defy.yaml` under
+`_datafiles/world/dogmud/defense-messages/`, extend the three-valued message
+type mapping, and route the live spell and social paths through five coordinated
+variants per weak/normal/heavy band. `GetDefenseMessage` currently returns empty
+for either unknown key, so the missing data degrades to hardcoded narration
+rather than breaking. Broader combat-message unification remains deferred.
 
 ### `ResolveChannelDefence` — the non-melee defence resolver (U6 Task 12)
 

@@ -45,6 +45,7 @@ gain mutable character, cooldown or inventory responsibilities.
 | D8 | Where both player and NPC entry points exist, their wrappers use the same action entry, quote and commit behavior. U8 does not invent new NPC commands solely for parity. |
 | D9 | Relevant helpfiles and every touched package's `context.md` ship current in U8 rather than waiting for U11. |
 | D10 | Surprise attack remains in U10; mutation-active dead-code cleanup is a recorded follow-up, not U8 scope. |
+| D11 | Quell and defy gain data-driven defence narration on the existing defence-message shape: five coordinated variants per intensity band for each defence, routed through their live spell and social paths. |
 
 ---
 
@@ -336,13 +337,33 @@ action automatically failed:
 - flee: the character breaks away on instinct rather than technique; and
 - grapple: strength and leverage remain while trained control slips.
 
+### 8.1 Quell and defy defence narration
+
+U8 closes the content gap between the physical and non-physical defences. Add
+`_datafiles/world/dogmud/defense-messages/quell.yaml` and `defy.yaml`, extend
+the defence-message type mapping to recognize both names, and route the live
+spell and social defence paths through those pools rather than leaving their
+outcomes as one-off hardcoded strings.
+
+Each file carries the existing `weak`, `normal` and `heavy` intensity bands.
+Each band contains at least **five coordinated variants**, where one variant is
+the matching `todefender`, `toattacker` and `toroom` rendering of the same beat.
+The copy must distinguish a narrow response, a clean response and an outright
+defensive-crit negation without claiming that a partial quell or defy erased the
+incoming effect.
+
+This is content parity and a narrow routing change, not the deferred combat
+messaging unification. U8 may extract only the smallest shared rendering seam
+needed to consume the existing data shape without duplicating it again.
+
 Rules:
 
 - no raw costs, pool values, modifiers, ranks or percentages;
 - one message per action or combat round;
 - no messages for losing defence candidates;
 - no repetition per swing, blocker, observer, AoE target or grapple target;
-- existing combat narration remains authoritative for the actual outcome; and
+- the data-driven defence narration remains authoritative for the actual
+  outcome; shortage copy must not duplicate or contradict it; and
 - NPCs use identical mechanics without invisible player-private messages.
 
 Because U8 authors player-facing copy, the content playtest-review SOP applies.
@@ -392,6 +413,14 @@ configured base and payment policy. Physical cost responds to load; mental and
 social cost does not. Higher governing skill reduces price through the existing
 curve.
 
+The defence-message loader recognizes quell and defy, validates all three
+intensity bands, and the live mental-spell and social paths select their
+data-driven defender, attacker and room variants. Tests pin partial versus
+full-negation wording. Validation rejects a missing band, fewer than five
+variants, an empty audience list or unequal defender/attacker/room counts, so
+missing or mismatched audience variants cannot silently degrade to the old
+hardcoded copy.
+
 Full refusal preserves cooldown, ammunition, thrown item, concealment state,
 buffs, grapple state and combat round as applicable. Valid misses and fumbles
 still pay. Where both player and NPC entry points exist, they charge exactly
@@ -421,7 +450,9 @@ and mutation actives avoiding a second charge.
 - package context audit finds no stale symbols or behavior;
 - affected help text and patch notes are current; and
 - adversarial in-game playtest covers every action family at affordable,
-  exhausted and recovered states, with special attention to repeated messages.
+  exhausted and recovered states, with special attention to repeated messages;
+  the pass must also observe weak, normal and heavy quell/defy narration from
+  every audience that can be exercised in-game.
 
 ---
 
@@ -432,12 +463,20 @@ and mutation actives avoiding a second charge.
 - Spell casting cost retuning is separate.
 - Grapple transitions, outcome bands and effectiveness curves are unchanged.
 - Mutation actives that remain live keep their existing costs.
+- Broad combat-message unification remains a separate design effort.
 
 **Recorded follow-up: mutation-active command dead-code audit.** Inventory the
 current command registry, mutation definitions, implementations, tests,
 helpfiles and config knobs after the mutation removals. Delete only entries
 proven unreachable or obsolete. This is intentionally outside U8 so uncertainty
 in that older surface cannot delay the unified action-cost slice.
+
+**Recorded follow-up: unified combat messaging.** Re-inventory combat narration
+after the resolution arc, then design one ownership model for data selection,
+audience rendering, visibility, event categories and hardcoded spell, rhetoric,
+mob-command and melee messages. U8 only brings quell and defy onto the existing
+defence-message data shape; it must not turn that local repair into an
+unplanned messaging-framework rewrite.
 
 ---
 
@@ -454,4 +493,7 @@ in that older surface cannot delay the unified action-cost slice.
 7. Model evidence supports every shipped base.
 8. Relevant help, `context.md`, config comments, roadmap and patch notes are
    current.
-9. The adversarial playtest gate passes.
+9. Quell and defy each ship five coordinated variants in every intensity band,
+   and their live paths use those data pools for defender, attacker and room
+   narration.
+10. The adversarial playtest gate passes.
