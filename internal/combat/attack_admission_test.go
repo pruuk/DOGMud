@@ -305,17 +305,6 @@ func combatFuncDecl(t *testing.T, file *ast.File, name string) *ast.FuncDecl {
 	return nil
 }
 
-func directCallName(call *ast.CallExpr) string {
-	switch fn := call.Fun.(type) {
-	case *ast.Ident:
-		return fn.Name
-	case *ast.SelectorExpr:
-		return fn.Sel.Name
-	default:
-		return ""
-	}
-}
-
 func callsInBody(body *ast.BlockStmt) []*ast.CallExpr {
 	var calls []*ast.CallExpr
 	ast.Inspect(body, func(node ast.Node) bool {
@@ -336,42 +325,172 @@ func formattedCombatNode(t *testing.T, fset *token.FileSet, node ast.Node) strin
 	return out.String()
 }
 
-// TestAttackCostAdmissionStructure catches the realistic recurrence mutations
-// that behavioral pool assertions cannot distinguish: moving the charge after
-// resolution, charging twice, recalculating a depleted plan, or passing the
-// already-composed per-swing result back as ActionCostRequest.Base.
-func TestAttackCostAdmissionStructurePlansAndCommitsRawQuoteOnce(t *testing.T) {
-	combatFset, combatFile := combatSourceFile(t, "combat.go")
-	resolve := combatFuncDecl(t, combatFile, "resolveCombatRound")
-	resolveCalls := callsInBody(resolve.Body)
-	var chargePositions, calculatePositions []token.Pos
-	for _, call := range resolveCalls {
-		switch directCallName(call) {
-		case "ChargeAttackCost":
-			chargePositions = append(chargePositions, call.Pos())
-		case "calculateCombat":
-			calculatePositions = append(calculatePositions, call.Pos())
+func combatCallArgsMatch(t *testing.T, fset *token.FileSet, call *ast.CallExpr, want []string) bool {
+	t.Helper()
+	if len(call.Args) != len(want) {
+		return false
+	}
+	for i, arg := range call.Args {
+		if formattedCombatNode(t, fset, arg) != want[i] {
+			return false
 		}
 	}
-	if len(chargePositions) != 1 || len(calculatePositions) != 1 || chargePositions[0] >= calculatePositions[0] {
-		t.Fatalf("resolveCombatRound charge/calculate positions = %v/%v; want exactly one charge before one resolution",
-			chargePositions, calculatePositions)
+	return true
+}
+
+// requireLocalCombatCall accepts only a package-local function call whose Fun
+// is the expected *ast.Ident. A selector with the same terminal name is not a
+// local call and must fail the guard rather than being collapsed into one.
+func requireLocalCombatCall(t *testing.T, fset *token.FileSet, body *ast.BlockStmt, name string, wantArgs ...string) *ast.CallExpr {
+	t.Helper()
+	var named, exact []*ast.CallExpr
+	for _, call := range callsInBody(body) {
+		ident, ok := call.Fun.(*ast.Ident)
+		if !ok || ident.Name != name {
+			continue
+		}
+		named = append(named, call)
+		if combatCallArgsMatch(t, fset, call, wantArgs) {
+			exact = append(exact, call)
+		}
 	}
-	var omitPositions []token.Pos
-	ast.Inspect(resolve.Body, func(node ast.Node) bool {
+	if len(named) != 1 || len(exact) != 1 {
+		var got []string
+		for _, call := range named {
+			got = append(got, formattedCombatNode(t, fset, call))
+		}
+		t.Fatalf("local %s calls = %v; want exactly %s(%s)",
+			name, got, name, strings.Join(wantArgs, ", "))
+	}
+	return exact[0]
+}
+
+func requireCombatMethodCall(t *testing.T, fset *token.FileSet, body *ast.BlockStmt, receiver, method string, wantArgs ...string) *ast.CallExpr {
+	t.Helper()
+	var named, exact []*ast.CallExpr
+	for _, call := range callsInBody(body) {
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != method {
+			continue
+		}
+		named = append(named, call)
+		receiverIdent, ok := sel.X.(*ast.Ident)
+		if ok && receiverIdent.Name == receiver && combatCallArgsMatch(t, fset, call, wantArgs) {
+			exact = append(exact, call)
+		}
+	}
+	if len(named) != 1 || len(exact) != 1 {
+		var got []string
+		for _, call := range named {
+			got = append(got, formattedCombatNode(t, fset, call))
+		}
+		t.Fatalf(".%s calls = %v; want exactly %s.%s(%s)",
+			method, got, receiver, method, strings.Join(wantArgs, ", "))
+	}
+	return exact[0]
+}
+
+func requireCombatMethodCallArity(t *testing.T, fset *token.FileSet, body *ast.BlockStmt, receiver, method string, arity int) *ast.CallExpr {
+	t.Helper()
+	var named, exact []*ast.CallExpr
+	for _, call := range callsInBody(body) {
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != method {
+			continue
+		}
+		named = append(named, call)
+		receiverIdent, ok := sel.X.(*ast.Ident)
+		if ok && receiverIdent.Name == receiver && len(call.Args) == arity {
+			exact = append(exact, call)
+		}
+	}
+	if len(named) != 1 || len(exact) != 1 {
+		var got []string
+		for _, call := range named {
+			got = append(got, formattedCombatNode(t, fset, call))
+		}
+		t.Fatalf(".%s calls = %v; want exactly one %s.%s call with %d arguments",
+			method, got, receiver, method, arity)
+	}
+	return exact[0]
+}
+
+func requireCombatCallAssignment(t *testing.T, body *ast.BlockStmt, call *ast.CallExpr, name string) {
+	t.Helper()
+	matches := 0
+	ast.Inspect(body, func(node ast.Node) bool {
 		assign, ok := node.(*ast.AssignStmt)
-		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+		if !ok || assign.Tok != token.DEFINE || len(assign.Lhs) == 0 || len(assign.Rhs) != 1 || assign.Rhs[0] != call {
 			return true
 		}
-		if formattedCombatNode(t, combatFset, assign.Lhs[0]) == "ctx.omitAttackSkill" &&
-			formattedCombatNode(t, combatFset, assign.Rhs[0]) == "costResult.Short()" {
-			omitPositions = append(omitPositions, assign.Pos())
+		ident, ok := assign.Lhs[0].(*ast.Ident)
+		if ok && ident.Name == name {
+			matches++
 		}
 		return true
 	})
-	if len(omitPositions) != 1 || omitPositions[0] <= chargePositions[0] || omitPositions[0] >= calculatePositions[0] {
-		t.Fatalf("resolveCombatRound short-skill assignment positions = %v; want costResult.Short exactly once between charge and resolution",
-			omitPositions)
+	if matches != 1 {
+		t.Fatalf("call assignment to %s matches = %d, want exactly one := assignment", name, matches)
+	}
+}
+
+func requireShortSkillAssignment(t *testing.T, body *ast.BlockStmt) token.Pos {
+	t.Helper()
+	var positions []token.Pos
+	ast.Inspect(body, func(node ast.Node) bool {
+		assign, ok := node.(*ast.AssignStmt)
+		if !ok || assign.Tok != token.ASSIGN || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			return true
+		}
+		lhs, ok := assign.Lhs[0].(*ast.SelectorExpr)
+		if !ok || lhs.Sel.Name != "omitAttackSkill" {
+			return true
+		}
+		lhsReceiver, ok := lhs.X.(*ast.Ident)
+		if !ok || lhsReceiver.Name != "ctx" {
+			return true
+		}
+		rhs, ok := assign.Rhs[0].(*ast.CallExpr)
+		if !ok || len(rhs.Args) != 0 {
+			return true
+		}
+		method, ok := rhs.Fun.(*ast.SelectorExpr)
+		if !ok || method.Sel.Name != "Short" {
+			return true
+		}
+		rhsReceiver, ok := method.X.(*ast.Ident)
+		if ok && rhsReceiver.Name == "costResult" {
+			positions = append(positions, assign.Pos())
+		}
+		return true
+	})
+	if len(positions) != 1 {
+		t.Fatalf("ctx.omitAttackSkill = costResult.Short() assignments = %v, want exactly one", positions)
+	}
+	return positions[0]
+}
+
+// TestAttackCostAdmissionStructure catches the realistic recurrence mutations
+// that behavioral pool assertions cannot distinguish: moving the charge after
+// resolution, dropping either ctx propagation edge, charging twice, routing a
+// wrapper's actors incorrectly, recalculating a depleted plan, using a different
+// commit receiver/policy, or passing a composed per-swing result back as Base.
+func TestAttackCostAdmissionStructurePlansAndCommitsRawQuoteOnce(t *testing.T) {
+	combatFset, combatFile := combatSourceFile(t, "combat.go")
+	resolve := combatFuncDecl(t, combatFile, "resolveCombatRound")
+	planCall := requireLocalCombatCall(t, combatFset, resolve.Body, "buildAttackPlan",
+		"sourceChar", "targetChar")
+	requireCombatCallAssignment(t, resolve.Body, planCall, "plan")
+	chargeCall := requireLocalCombatCall(t, combatFset, resolve.Body, "ChargeAttackCost",
+		"sourceChar", "plan.totalSwings")
+	requireCombatCallAssignment(t, resolve.Body, chargeCall, "costResult")
+	omitPosition := requireShortSkillAssignment(t, resolve.Body)
+	calculateCall := requireLocalCombatCall(t, combatFset, resolve.Body, "calculateCombat",
+		"sourceChar", "targetChar", "sourceType", "targetType", "plan", "ctx")
+	requireCombatCallAssignment(t, resolve.Body, calculateCall, "attackResult")
+	if !(planCall.Pos() < chargeCall.Pos() && chargeCall.Pos() < omitPosition && omitPosition < calculateCall.Pos()) {
+		t.Fatalf("resolveCombatRound plan/charge/omit/calculate positions = %d/%d/%d/%d; want strict pre-resolution order",
+			planCall.Pos(), chargeCall.Pos(), omitPosition, calculateCall.Pos())
 	}
 
 	calculate := combatFuncDecl(t, combatFile, "calculateCombat")
@@ -384,55 +503,69 @@ func TestAttackCostAdmissionStructurePlansAndCommitsRawQuoteOnce(t *testing.T) {
 		"CommitCost":           true,
 	}
 	for _, call := range callsInBody(calculate.Body) {
-		if name := directCallName(call); forbidden[name] {
+		var name string
+		switch fn := call.Fun.(type) {
+		case *ast.Ident:
+			name = fn.Name
+		case *ast.SelectorExpr:
+			name = fn.Sel.Name
+		}
+		if forbidden[name] {
 			t.Errorf("calculateCombat still calls %s; it must consume the pre-payment plan and never charge", name)
 		}
 	}
+	requireLocalCombatCall(t, combatFset, calculate.Body, "calcAttackScore",
+		"sourceChar", "targetChar", "ws.penalty", "ctx")
 
-	for _, name := range []string{"AttackPlayerVsMob", "AttackPlayerVsPlayer", "AttackMobVsPlayer", "AttackMobVsMob"} {
-		fn := combatFuncDecl(t, combatFile, name)
-		resolved := 0
+	wrapperCalls := []struct {
+		name string
+		args []string
+	}{
+		{"AttackPlayerVsMob", []string{"user.Character", "&mob.Character", "User", "Mob", "ctx"}},
+		{"AttackPlayerVsPlayer", []string{"userAtk.Character", "userDef.Character", "User", "User", "ctx"}},
+		{"AttackMobVsPlayer", []string{"&mob.Character", "user.Character", "Mob", "User", "ctx"}},
+		{"AttackMobVsMob", []string{"&mobAtk.Character", "&mobDef.Character", "Mob", "Mob", "ctx"}},
+	}
+	for _, wrapper := range wrapperCalls {
+		fn := combatFuncDecl(t, combatFile, wrapper.name)
+		requireLocalCombatCall(t, combatFset, fn.Body, "resolveCombatRound", wrapper.args...)
 		for _, call := range callsInBody(fn.Body) {
-			switch directCallName(call) {
-			case "resolveCombatRound":
-				resolved++
-			case "calculateCombat", "ChargeAttackCost", "QuoteActionCost", "CommitCost":
-				t.Errorf("%s bypasses round admission through %s", name, directCallName(call))
+			var bypass string
+			switch called := call.Fun.(type) {
+			case *ast.Ident:
+				if called.Name != "resolveCombatRound" && forbidden[called.Name] {
+					bypass = called.Name
+				}
+			case *ast.SelectorExpr:
+				if forbidden[called.Sel.Name] {
+					bypass = called.Sel.Name
+				}
 			}
-		}
-		if resolved != 1 {
-			t.Errorf("%s calls resolveCombatRound %d times, want exactly once", name, resolved)
+			if bypass != "" {
+				t.Errorf("%s bypasses round admission through %s", wrapper.name, bypass)
+			}
 		}
 	}
 
 	costFset, costFile := combatSourceFile(t, "attack_cost.go")
 	charge := combatFuncDecl(t, costFile, "ChargeAttackCost")
-	var request *ast.CompositeLit
-	commitPartial := 0
-	for _, call := range callsInBody(charge.Body) {
-		if directCallName(call) == "CommitCost" && len(call.Args) == 2 &&
-			formattedCombatNode(t, costFset, call.Args[1]) == "characters.CostPartial" {
-			commitPartial++
-		}
-	}
-	ast.Inspect(charge.Body, func(node ast.Node) bool {
-		lit, ok := node.(*ast.CompositeLit)
-		if !ok || formattedCombatNode(t, costFset, lit.Type) != "characters.ActionCostRequest" {
-			return true
-		}
-		request = lit
-		return true
-	})
-	if request == nil {
-		t.Fatal("ChargeAttackCost does not construct a raw characters.ActionCostRequest")
+	quoteCall := requireCombatMethodCallArity(t, costFset, charge.Body, "attacker", "QuoteActionCost", 1)
+	requireCombatCallAssignment(t, charge.Body, quoteCall, "quote")
+	request, ok := quoteCall.Args[0].(*ast.CompositeLit)
+	if !ok || formattedCombatNode(t, costFset, request.Type) != "characters.ActionCostRequest" {
+		t.Fatalf("QuoteActionCost argument = %T, want characters.ActionCostRequest literal", quoteCall.Args[0])
 	}
 	fields := map[string]string{}
 	for _, elt := range request.Elts {
 		kv, ok := elt.(*ast.KeyValueExpr)
 		if !ok {
-			continue
+			t.Fatalf("ActionCostRequest contains non-keyed element %s", formattedCombatNode(t, costFset, elt))
 		}
-		fields[formattedCombatNode(t, costFset, kv.Key)] = formattedCombatNode(t, costFset, kv.Value)
+		field := formattedCombatNode(t, costFset, kv.Key)
+		if _, duplicate := fields[field]; duplicate {
+			t.Fatalf("ActionCostRequest contains duplicate field %s", field)
+		}
+		fields[field] = formattedCombatNode(t, costFset, kv.Value)
 	}
 	want := map[string]string{
 		"Action":   "costs.ActionAttack",
@@ -441,14 +574,16 @@ func TestAttackCostAdmissionStructurePlansAndCommitsRawQuoteOnce(t *testing.T) {
 		"Modifier": "float64(cfg.AttackCostModifier)",
 		"Units":    "swings",
 	}
+	if len(fields) != len(want) {
+		t.Errorf("ActionCostRequest has %d fields, want exactly %d: %v", len(fields), len(want), fields)
+	}
 	for field, value := range want {
 		if fields[field] != value {
 			t.Errorf("ActionCostRequest.%s = %q, want raw %q", field, fields[field], value)
 		}
 	}
-	if commitPartial != 1 {
-		t.Errorf("ChargeAttackCost partial commits = %d, want exactly one", commitPartial)
-	}
+	requireCombatMethodCall(t, costFset, charge.Body, "attacker", "CommitCost",
+		"quote", "characters.CostPartial")
 
 	// The test imports costs so a renamed/removed registry constant is a compile
 	// failure rather than an AST string silently becoming stale.
