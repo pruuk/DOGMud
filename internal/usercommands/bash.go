@@ -12,8 +12,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+var stageSpecialMoveTarget = actions.StageMeleeTarget
+
 func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	actor, handled := actions.StageMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "bash",
 	})
 	if handled {

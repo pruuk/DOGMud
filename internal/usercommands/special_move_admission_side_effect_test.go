@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -18,12 +19,72 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type specialMoveCommand func(string, *users.UserRecord, *rooms.Room, events.EventFlag) (bool, error)
+
+type staleWrapperCooldownActor struct {
+	actions.Actor
+	characterCalls int
+}
+
+func (a *staleWrapperCooldownActor) GetCharacter() *characters.Character {
+	a.characterCalls++
+	char := a.Actor.GetCharacter()
+	if a.characterCalls == 2 {
+		char.Cooldowns["special-move"] = 3
+	}
+	return char
+}
+
+func specialMoveWrapperCases() []struct {
+	name      string
+	command   specialMoveCommand
+	speciesID int
+} {
+	return []struct {
+		name      string
+		command   specialMoveCommand
+		speciesID int
+	}{
+		{name: "bash", command: Bash, speciesID: 10},
+		{name: "trip", command: Trip, speciesID: 11},
+		{name: "kick", command: Kick, speciesID: 11},
+		{name: "grapple", command: Grapple, speciesID: 11},
+		{name: "rake", command: Rake, speciesID: 12},
+		{name: "maul", command: Maul, speciesID: 13},
+		{name: "pounce", command: Pounce, speciesID: 13},
+		{name: "gore", command: Gore, speciesID: 14},
+		{name: "drain", command: Drain, speciesID: 15},
+		{name: "throttle", command: Throttle, speciesID: 13},
+	}
+}
+
+func replaceStagedBaseActor(t *testing.T, staged actions.Actor, replacement actions.Actor) {
+	t.Helper()
+	value := reflect.ValueOf(staged)
+	require.Equal(t, reflect.Pointer, value.Kind())
+	value = value.Elem()
+	field := value.FieldByName("Actor")
+	require.True(t, field.IsValid(), "real StageMeleeTarget result must retain its embedded actor")
+	require.True(t, field.CanSet(), "real StageMeleeTarget embedded actor must be replaceable inside the test seam")
+	field.Set(reflect.ValueOf(replacement))
+}
+
+func stagedBaseActor(t *testing.T, staged actions.Actor) actions.Actor {
+	t.Helper()
+	value := reflect.ValueOf(staged)
+	require.Equal(t, reflect.Pointer, value.Kind())
+	field := value.Elem().FieldByName("Actor")
+	require.True(t, field.IsValid())
+	base, ok := field.Interface().(actions.Actor)
+	require.True(t, ok)
+	return base
+}
 
 func seedSpecialMoveSpecies() func() {
 	return species.SeedSpeciesForTest(map[int]*species.Species{
@@ -190,6 +251,7 @@ func TestStagedSpecialMovePaidMissCommitsEngagement(t *testing.T) {
 
 	actor, handled := actions.StageMeleeTarget(user, room, "#100", actions.MeleeTargetOpts{Verb: "trip"})
 	require.False(t, handled)
+	t.Setenv("GODEBUG", "randseednop=0")
 	rand.Seed(1)
 	res := actions.ExecuteTrip(actor)
 
@@ -232,4 +294,119 @@ func TestStagedSpecialMoveTargetGoneBeforeAdmissionHasNoSideEffects(t *testing.T
 	assert.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId))
 	assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId))
 	assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false))
+}
+
+// TestSpecialMoveWrappersStagedRacesHaveNoEngagementSideEffects catches any
+// player wrapper bypassing the shared staging seam or committing engagement
+// before its shared executor has both admitted cost and consumed cooldown.
+// Every row invokes the real command entry point; the seam only creates the
+// target-loss/cooldown transition after real target validation has staged it.
+func TestSpecialMoveWrappersStagedRacesHaveNoEngagementSideEffects(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	speciesCleanup := seedSpecialMoveSpecies()
+	defer speciesCleanup()
+
+	user, room := getTestUserAndRoom(t)
+	target := mobs.GetInstance(100)
+	require.NotNil(t, target)
+
+	scenarios := []struct {
+		name            string
+		wantStamina     int
+		wantCooldown    int
+		transitionStage func(*testing.T, actions.Actor, *rooms.Room, *mobs.Mob) actions.Actor
+	}{
+		{
+			name:         "target_gone",
+			wantStamina:  100,
+			wantCooldown: 0,
+			transitionStage: func(t *testing.T, actor actions.Actor, room *rooms.Room, target *mobs.Mob) actions.Actor {
+				room.RemoveMob(target.InstanceId)
+				mobs.SetInstanceForTest(target.InstanceId, nil)
+				t.Cleanup(func() {
+					mobs.SetInstanceForTest(target.InstanceId, target)
+					room.AddMob(target.InstanceId)
+				})
+				return actor
+			},
+		},
+		{
+			name:         "cooldown_stale_after_readiness",
+			wantStamina:  96,
+			wantCooldown: 3,
+			transitionStage: func(t *testing.T, actor actions.Actor, _ *rooms.Room, _ *mobs.Mob) actions.Actor {
+				base := stagedBaseActor(t, actor)
+				replaceStagedBaseActor(t, actor, &staleWrapperCooldownActor{Actor: base})
+				return actor
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		for _, tc := range specialMoveWrapperCases() {
+			t.Run(scenario.name+"/"+tc.name, func(t *testing.T) {
+				configureSpecialMoveFaction(t)
+				resetSpecialMoveWrapperFixture(t, user, target, tc.speciesID, 100)
+				setCombatPositionParallel(user.Character, position.Standing)
+				setCombatPositionParallel(&target.Character, position.Standing)
+
+				targetHealth := target.Character.Health
+				targetStamina := target.Character.Stamina
+				targetConditions := len(target.Character.Conditions)
+				targetBuffs := len(target.Character.Buffs.GetBuffs())
+				actorHealth := user.Character.Health
+				actorConditions := len(user.Character.Conditions)
+				actorBuffs := len(user.Character.Buffs.GetBuffs())
+				actorPosition := user.Character.Position.State()
+				targetPosition := target.Character.Position.State()
+
+				originalStage := stageSpecialMoveTarget
+				stageCalls := 0
+				stageSpecialMoveTarget = func(user *users.UserRecord, room *rooms.Room, rest string, opts actions.MeleeTargetOpts) (actions.Actor, bool) {
+					stageCalls++
+					actor, handled := actions.StageMeleeTarget(user, room, rest, opts)
+					if handled {
+						return actor, handled
+					}
+					return scenario.transitionStage(t, actor, room, target), false
+				}
+				t.Cleanup(func() { stageSpecialMoveTarget = originalStage })
+
+				handled, err := tc.command("#100", user, room, 0)
+				require.NoError(t, err)
+				require.True(t, handled)
+				require.Equal(t, 1, stageCalls, "wrapper must enter the exact shared staging seam once")
+				require.Equal(t, scenario.wantStamina, user.Character.Stamina)
+				if scenario.wantCooldown == 0 {
+					require.Empty(t, user.Character.Cooldowns)
+				} else {
+					require.Equal(t, scenario.wantCooldown, user.Character.Cooldowns["special-move"])
+				}
+
+				assert.Nil(t, user.Character.Aggro, "staged race must not commit aggro")
+				assert.Equal(t, 0, specialMoveRoundsWaiting(user.Character), "staged race must not consume a combat round")
+				assert.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId))
+				assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId))
+				assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false))
+				require.Equal(t, actorHealth, user.Character.Health)
+				require.Len(t, user.Character.Conditions, actorConditions)
+				require.Len(t, user.Character.Buffs.GetBuffs(), actorBuffs)
+				require.Equal(t, targetHealth, target.Character.Health)
+				require.Equal(t, targetStamina, target.Character.Stamina)
+				require.Len(t, target.Character.Conditions, targetConditions)
+				require.Len(t, target.Character.Buffs.GetBuffs(), targetBuffs)
+				require.Nil(t, target.Character.Aggro)
+				require.Equal(t, actorPosition, user.Character.Position.State())
+				require.Equal(t, targetPosition, target.Character.Position.State())
+			})
+		}
+	}
+}
+
+func specialMoveRoundsWaiting(char *characters.Character) int {
+	if char.Aggro == nil {
+		return 0
+	}
+	return char.Aggro.RoundsWaiting
 }

@@ -14,7 +14,7 @@ import (
 )
 
 func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	actor, handled := actions.StageMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "rake",
 	})
 	if handled {

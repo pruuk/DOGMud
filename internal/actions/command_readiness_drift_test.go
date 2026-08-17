@@ -334,12 +334,12 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 					handledName, handledOK := assign.Lhs[1].(*ast.Ident)
 					call, callOK := assign.Rhs[0].(*ast.CallExpr)
 					if actorOK && handledOK && callOK && actorName.Name == "actor" && handledName.Name == "handled" &&
-						formattedASTNode(t, fset, call.Fun) == "actions.StageMeleeTarget" {
+						formattedASTNode(t, fset, call.Fun) == "stageSpecialMoveTarget" {
 						stageIndex = i
 						break
 					}
 				}
-				require.GreaterOrEqual(t, stageIndex, 0, "%s must assign actor, handled from actions.StageMeleeTarget", function)
+				require.GreaterOrEqual(t, stageIndex, 0, "%s must assign actor, handled from stageSpecialMoveTarget", function)
 				require.Less(t, stageIndex+1, len(fn.Body.List), "%s must branch immediately after staging", function)
 				handledBranch, ok := fn.Body.List[stageIndex+1].(*ast.IfStmt)
 				require.True(t, ok, "%s must branch on handled immediately after staging", function)
@@ -347,6 +347,7 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 				require.Len(t, handledBranch.Body.List, 1)
 				require.True(t, handledReturn(handledBranch.Body.List[0]))
 				require.False(t, nodeHasCall(fn.Body, "AcquireMeleeTarget"), "%s must not eagerly acquire/engage", function)
+				require.False(t, nodeHasCall(fn.Body, "StageMeleeTarget"), "%s must not bypass the shared wrapper staging seam", function)
 
 				executeName := "actions.Execute" + function
 				executeAssignment := false
