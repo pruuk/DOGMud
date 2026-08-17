@@ -31,6 +31,9 @@ type PounceResult struct {
 	// OnCooldown is true when the special-move cooldown blocked the pounce.
 	OnCooldown bool
 
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
+
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
@@ -63,13 +66,12 @@ type PounceResult struct {
 func ExecutePounce(actor Actor) PounceResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return PounceResult{NoTarget: true}
+	if char.IsActing() {
+		return PounceResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return PounceResult{NoTarget: true}
 	}
@@ -99,6 +101,7 @@ func ExecutePounce(actor Actor) PounceResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return PounceResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move — uses bash's damage percent and knockdown chance;
 	// KnockdownToSupine=true drives the target backward (face-up). No bleed:

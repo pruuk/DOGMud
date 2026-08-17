@@ -14,14 +14,15 @@ import (
 )
 
 func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := actions.StageMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb:         "trip",
 		CraftingVerb: "trip someone",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
-	res := actions.ExecuteTrip(&actions.UserActor{User: user, Room: room})
+	res := actions.ExecuteTrip(actor)
 	if res.Cost.Status == characters.CostRefused {
 		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
 		return true, nil
@@ -40,6 +41,10 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if res.NoTarget {
 		user.SendText(messaging.CategorySystem, "You have no target!")
+		return true, nil
+	}
+	if res.TargetOnFloor {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf("%s is already on the ground.", res.Target.Name))
 		return true, nil
 	}
 

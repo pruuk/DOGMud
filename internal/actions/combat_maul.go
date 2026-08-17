@@ -30,6 +30,9 @@ type MaulResult struct {
 	// OnCooldown is true when the special-move cooldown blocked the maul.
 	OnCooldown bool
 
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
+
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
@@ -59,13 +62,12 @@ type MaulResult struct {
 func ExecuteMaul(actor Actor) MaulResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return MaulResult{NoTarget: true}
+	if char.IsActing() {
+		return MaulResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return MaulResult{NoTarget: true}
 	}
@@ -89,6 +91,7 @@ func ExecuteMaul(actor Actor) MaulResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return MaulResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move (reuse kick's config for damage percent — maul is
 	// a heavier strike than rake — no knockdown; the savage tearing deals higher

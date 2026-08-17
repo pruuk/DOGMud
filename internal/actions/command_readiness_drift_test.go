@@ -1,7 +1,9 @@
 package actions
 
 import (
+	"bytes"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/token"
 	"maps"
@@ -21,28 +23,98 @@ import (
 )
 
 type specialMoveOrderGuard struct {
-	file        string
-	function    string
-	validations []string
+	file            string
+	function        string
+	earlyReturns    []specialMoveEarlyReturn
+	postCommitCalls []string
+	roundAssignment bool
+}
+
+type specialMoveEarlyReturn struct {
+	condition string
+	field     string
+}
+
+func formattedASTNode(t *testing.T, fset *token.FileSet, node ast.Node) string {
+	t.Helper()
+	var buf bytes.Buffer
+	require.NoError(t, format.Node(&buf, fset, node))
+	return buf.String()
+}
+
+func compositeReturnHasTrueField(stmt ast.Stmt, field string) bool {
+	ret, ok := stmt.(*ast.ReturnStmt)
+	if !ok || len(ret.Results) != 1 {
+		return false
+	}
+	lit, ok := ret.Results[0].(*ast.CompositeLit)
+	if !ok {
+		return false
+	}
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+		key, keyOK := kv.Key.(*ast.Ident)
+		value, valueOK := kv.Value.(*ast.Ident)
+		if keyOK && valueOK && key.Name == field && value.Name == "true" {
+			return true
+		}
+	}
+	return false
 }
 
 // TestSpecialMoveAdmissionOrdering catches a validity branch, read-only
 // cooldown probe, cost admission, or consuming cooldown being moved across the
-// required boundary. It walks each function's Go AST and compares call
-// positions; source-text presence alone cannot satisfy it.
+// required boundary. It walks each function's Go AST, matches exact guard
+// expressions and their immediate typed early returns, checks every occurrence
+// of the ordering calls, and proves resolution/effect/round/progression nodes
+// remain after the consuming cooldown. Selector-name presence cannot satisfy it.
 func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 	guards := []specialMoveOrderGuard{
-		{"combat_bash.go", "ExecuteBash", []string{"IsActing", "HasShield", "HasBodyPart", "ResolveAggroTarget"}},
-		{"combat_trip.go", "ExecuteTrip", []string{"IsActing", "ResolveAggroTarget", "HasBodyPart"}},
-		{"combat_kick.go", "ExecuteKick", []string{"IsActing", "ResolveAggroTarget", "HasBodyPart"}},
-		{"combat_grapple.go", "ExecuteGrapple", []string{"IsActing", "HasBodyPart", "ResolveAggroTarget", "IsControlImmune"}},
-		{"combat_hamstring.go", "ExecuteHamstring", []string{"ResolveAggroTarget", "GetSpecies", "HasBodyPart"}},
-		{"combat_rake.go", "ExecuteRake", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsClawed"}},
-		{"combat_maul.go", "ExecuteMaul", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsFanged"}},
-		{"combat_pounce.go", "ExecutePounce", []string{"ResolveAggroTarget", "IsGrappling", "SpeciesIsQuadrupedPredator"}},
-		{"combat_gore.go", "ExecuteGore", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsHorned"}},
-		{"combat_drain.go", "ExecuteDrain", []string{"ResolveAggroTarget", "SpeciesHasLifeDrain"}},
-		{"combat_throttle.go", "ExecuteThrottle", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsFanged"}},
+		{"combat_bash.go", "ExecuteBash", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
+			{"!char.HasShield() && !naturalBash", "NoShield"}, {"!char.HasBodyPart(\"arms\") && !naturalBash", "NoShield"},
+		}, []string{"ExecuteSkillMove", "RecordAndWait", "OnSkillUse"}, false},
+		{"combat_trip.go", "ExecuteTrip", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoTarget"},
+			{"target.Char.IsOnFloor()", "TargetOnFloor"},
+		}, []string{"ExecuteSkillMove", "RecordAndWait", "OnSkillUse"}, false},
+		{"combat_kick.go", "ExecuteKick", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoTarget"},
+		}, []string{"ExecuteSkillMove", "RecordAndWait", "OnSkillUse"}, false},
+		{"combat_grapple.go", "ExecuteGrapple", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!char.HasBodyPart(\"arms\")", "GrappleImmune"}, {"!target.Found", "NoTarget"},
+			{"target.Char.IsGrappling()", "TargetGrappling"},
+		}, []string{"ExecuteGrappleMove", "RecordAndWait", "OnSkillUse"}, false},
+		{"combat_hamstring.go", "ExecuteHamstring", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoLegs"},
+			{"sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart(\"hands\")", "NotBeast"},
+		}, []string{"ExecuteSkillMove", "AddCondition", "RecordSpecialMove", "OnSkillUse"}, true},
+		{"combat_rake.go", "ExecuteRake", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsClawed(char)", "NotClawed"},
+		}, []string{"ExecuteSkillMove", "AddCondition", "RecordSpecialMove", "OnSkillUse"}, true},
+		{"combat_maul.go", "ExecuteMaul", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
+		}, []string{"ExecuteSkillMove", "AddCondition", "RecordSpecialMove", "OnSkillUse"}, true},
+		{"combat_pounce.go", "ExecutePounce", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"char.IsGrappling()", "Grappling"},
+			{"!combat.SpeciesIsQuadrupedPredator(char)", "NotPredator"},
+		}, []string{"ExecuteSkillMove", "RecordSpecialMove", "OnSkillUse"}, true},
+		{"combat_gore.go", "ExecuteGore", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsHorned(char)", "NotHorned"},
+		}, []string{"ExecuteSkillMove", "RecordSpecialMove", "OnSkillUse"}, true},
+		{"combat_drain.go", "ExecuteDrain", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!combat.SpeciesHasLifeDrain(char)", "NotLifeDrainer"},
+		}, []string{"ExecuteSkillMove", "AddCondition", "Heal", "RecordSpecialMove", "OnSkillUse"}, true},
+		{"combat_throttle.go", "ExecuteThrottle", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
+		}, []string{"ExecuteSkillMove", "AddCondition", "AddBuff", "InterruptTargetCast", "RecordSpecialMove", "OnSkillUse"}, true},
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)
@@ -55,7 +127,7 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 			parsed, err := parser.ParseFile(fset, filepath.Join(actionsDir, guard.file), nil, 0)
 			require.NoError(t, err)
 
-			calls := map[string]token.Pos{}
+			calls := map[string][]token.Pos{}
 			var body *ast.BlockStmt
 			for _, decl := range parsed.Decls {
 				fn, ok := decl.(*ast.FuncDecl)
@@ -77,33 +149,110 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 				case *ast.SelectorExpr:
 					name = fn.Sel.Name
 				}
-				if name != "" && calls[name] == token.NoPos {
-					calls[name] = call.Pos()
+				if name != "" {
+					calls[name] = append(calls[name], call.Pos())
 				}
 				return true
 			})
 
-			ready := calls["CooldownReady"]
-			admit := calls["admitFullCost"]
-			consume := calls["TryCooldown"]
-			require.NotEqual(t, token.NoPos, ready, "%s must use the read-only cooldown probe", guard.function)
-			require.NotEqual(t, token.NoPos, admit, "%s must use shared cost admission", guard.function)
-			require.NotEqual(t, token.NoPos, consume, "%s must consume cooldown only after admission", guard.function)
+			require.Len(t, calls["CooldownReady"], 1, "%s must have one read-only cooldown probe", guard.function)
+			require.Len(t, calls["admitFullCost"], 1, "%s must have one shared cost admission", guard.function)
+			require.Len(t, calls["TryCooldown"], 1, "%s must have one consuming cooldown", guard.function)
+			ready := calls["CooldownReady"][0]
+			admit := calls["admitFullCost"][0]
+			consume := calls["TryCooldown"][0]
 			require.Less(t, int(ready), int(admit), "CooldownReady must precede admission")
 			require.Less(t, int(admit), int(consume), "admission must precede consuming TryCooldown")
-			for _, validation := range guard.validations {
-				pos := calls[validation]
-				require.NotEqual(t, token.NoPos, pos, "%s validation marker %s must exist", guard.function, validation)
-				require.Less(t, int(pos), int(ready), "%s validation %s must precede CooldownReady and admission", guard.function, validation)
+
+			require.Len(t, calls["resolveActionTarget"], 1, "%s must resolve through the staged-target-aware seam", guard.function)
+			require.Less(t, int(calls["resolveActionTarget"][0]), int(ready), "target resolution must precede cooldown/admission")
+			if guard.function != "ExecuteHamstring" {
+				require.Len(t, calls["commitMeleeEngagement"], 1, "%s must commit staged engagement once", guard.function)
+				require.Greater(t, int(calls["commitMeleeEngagement"][0]), int(consume),
+					"%s must not commit engagement before successful admission/cooldown", guard.function)
+			}
+
+			for _, expected := range guard.earlyReturns {
+				found := false
+				for _, stmt := range body.List {
+					ifStmt, ok := stmt.(*ast.IfStmt)
+					if !ok || formattedASTNode(t, fset, ifStmt.Cond) != expected.condition || len(ifStmt.Body.List) != 1 {
+						continue
+					}
+					if compositeReturnHasTrueField(ifStmt.Body.List[0], expected.field) {
+						found = true
+						require.Less(t, int(ifStmt.Pos()), int(ready), "%s guard %s must precede CooldownReady", guard.function, expected.condition)
+					}
+				}
+				require.True(t, found, "%s must have exact early return `if %s { return ...{%s: true} }`", guard.function, expected.condition, expected.field)
+			}
+
+			for _, name := range guard.postCommitCalls {
+				require.NotEmpty(t, calls[name], "%s must retain %s", guard.function, name)
+				for _, pos := range calls[name] {
+					require.Greater(t, int(pos), int(consume), "%s call %s must follow consuming TryCooldown", guard.function, name)
+					if guard.function != "ExecuteHamstring" {
+						require.Greater(t, int(pos), int(calls["commitMeleeEngagement"][0]),
+							"%s call %s must follow engagement commit", guard.function, name)
+					}
+				}
+			}
+			if guard.roundAssignment {
+				roundPositions := []token.Pos{}
+				ast.Inspect(body, func(node ast.Node) bool {
+					assign, ok := node.(*ast.AssignStmt)
+					if !ok {
+						return true
+					}
+					for _, lhs := range assign.Lhs {
+						if sel, ok := lhs.(*ast.SelectorExpr); ok && sel.Sel.Name == "RoundsWaiting" {
+							roundPositions = append(roundPositions, assign.Pos())
+						}
+					}
+					return true
+				})
+				require.NotEmpty(t, roundPositions, "%s must consume a combat round", guard.function)
+				for _, pos := range roundPositions {
+					require.Greater(t, int(pos), int(consume), "%s round mutation must follow consuming TryCooldown", guard.function)
+				}
 			}
 		})
 	}
 }
 
-// TestSpecialMoveWrapperAdmission catches a player wrapper dropping the shared
-// refusal prose or a mob wrapper rendering private exhaustion text. The AST
-// guard covers every wrapper in the atomic family, including charge's trip
-// alias; howl is deliberately absent because this task must not touch it.
+func handledReturn(stmt ast.Stmt) bool {
+	ret, ok := stmt.(*ast.ReturnStmt)
+	if !ok || len(ret.Results) != 2 {
+		return false
+	}
+	first, firstOK := ret.Results[0].(*ast.Ident)
+	second, secondOK := ret.Results[1].(*ast.Ident)
+	return firstOK && secondOK && first.Name == "true" && second.Name == "nil"
+}
+
+func nodeHasCall(node ast.Node, name string) bool {
+	found := false
+	ast.Inspect(node, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		switch fn := call.Fun.(type) {
+		case *ast.Ident:
+			found = found || fn.Name == name
+		case *ast.SelectorExpr:
+			found = found || fn.Sel.Name == name
+		}
+		return !found
+	})
+	return found
+}
+
+// TestSpecialMoveWrapperAdmission catches a wrapper using selector names
+// without owning the exact refusal branch. Player wrappers must stage target
+// acquisition, compare result.Cost.Status to characters.CostRefused, render
+// shared prose, then immediately return. Mob wrappers make the same comparison
+// and immediately return without text.
 func TestSpecialMoveWrapperAdmission(t *testing.T) {
 	playerWrappers := []string{"bash", "trip", "kick", "grapple", "rake", "maul", "pounce", "gore", "drain", "throttle"}
 	mobWrappers := []string{"bash", "charge", "trip", "kick", "grapple", "hamstring", "rake", "maul", "pounce", "gore", "drain", "throttle"}
@@ -111,35 +260,42 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 	require.True(t, ok)
 	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
 
-	inspectWrapper := func(t *testing.T, dir, file, function string) (hasCost, hasRefused, hasRefusalText bool) {
+	inspectWrapper := func(t *testing.T, dir, file, function, resultName string, player bool) {
 		t.Helper()
-		parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(repoRoot, "internal", dir, file+".go"), nil, 0)
+		fset := token.NewFileSet()
+		parsed, err := parser.ParseFile(fset, filepath.Join(repoRoot, "internal", dir, file+".go"), nil, 0)
 		require.NoError(t, err)
 		for _, decl := range parsed.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
 			if !ok || fn.Name.Name != function {
 				continue
 			}
+			expectedCondition := resultName + ".Cost.Status == characters.CostRefused"
+			var refusal *ast.IfStmt
 			ast.Inspect(fn.Body, func(node ast.Node) bool {
-				switch n := node.(type) {
-				case *ast.CallExpr:
-					if sel, ok := n.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "CostRefusalText" {
-						hasRefusalText = true
-					}
-				case *ast.SelectorExpr:
-					switch n.Sel.Name {
-					case "Cost":
-						hasCost = true
-					case "CostRefused":
-						hasRefused = true
-					}
+				ifStmt, ok := node.(*ast.IfStmt)
+				if ok && formattedASTNode(t, fset, ifStmt.Cond) == expectedCondition {
+					refusal = ifStmt
+					return false
 				}
 				return true
 			})
+			require.NotNil(t, refusal, "%s must own exact refusal comparison %s", function, expectedCondition)
+			if player {
+				require.True(t, nodeHasCall(fn.Body, "StageMeleeTarget"), "%s must stage target acquisition without engagement", function)
+				require.False(t, nodeHasCall(fn.Body, "AcquireMeleeTarget"), "%s must not eagerly acquire/engage", function)
+				require.Len(t, refusal.Body.List, 2, "%s refusal branch must send shared text then return", function)
+				require.True(t, nodeHasCall(refusal.Body.List[0], "SendText"), "%s refusal branch must send player text first", function)
+				require.True(t, nodeHasCall(refusal.Body.List[0], "CostRefusalText"), "%s refusal branch must use shared refusal text", function)
+				require.True(t, handledReturn(refusal.Body.List[1]), "%s refusal branch must immediately return handled", function)
+			} else {
+				require.Len(t, refusal.Body.List, 1, "%s mob refusal branch must be silent and immediate", function)
+				require.True(t, handledReturn(refusal.Body.List[0]), "%s mob refusal branch must return handled", function)
+				require.False(t, nodeHasCall(fn.Body, "CostRefusalText"), "%s mob wrapper must not render private refusal text", function)
+			}
 			return
 		}
 		t.Fatalf("%s.%s wrapper not found", dir, function)
-		return false, false, false
 	}
 
 	for _, name := range playerWrappers {
@@ -148,9 +304,11 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 				"bash": "Bash", "trip": "Trip", "kick": "Kick", "grapple": "Grapple", "rake": "Rake",
 				"maul": "Maul", "pounce": "Pounce", "gore": "Gore", "drain": "Drain", "throttle": "Throttle",
 			}[name]
-			hasCost, hasRefused, hasText := inspectWrapper(t, "usercommands", name, function)
-			require.True(t, hasCost && hasRefused, "%s must branch specifically on result.Cost refusal", function)
-			require.True(t, hasText, "%s must render actions.CostRefusalText", function)
+			resultName := "res"
+			if name == "bash" {
+				resultName = "bashResult"
+			}
+			inspectWrapper(t, "usercommands", name, function, resultName, true)
 		})
 	}
 	for _, name := range mobWrappers {
@@ -160,9 +318,11 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 				"hamstring": "Hamstring", "rake": "Rake", "maul": "Maul", "pounce": "Pounce", "gore": "Gore",
 				"drain": "Drain", "throttle": "Throttle",
 			}[name]
-			hasCost, hasRefused, hasText := inspectWrapper(t, "mobcommands", name, function)
-			require.True(t, hasCost && hasRefused, "%s must consume result.Cost refusal silently", function)
-			require.False(t, hasText, "%s must not render private cost-refusal text", function)
+			resultName := "res"
+			if name == "bash" {
+				resultName = "bashResult"
+			}
+			inspectWrapper(t, "mobcommands", name, function, resultName, false)
 		})
 	}
 }
@@ -179,9 +339,47 @@ type driftCase struct {
 func setDriftAggroMobTarget(m *mobs.Mob, targetID int) {
 	target := &mobs.Mob{InstanceId: targetID}
 	target.Character.Name = "Target"
+	target.Character.HealthMax.Value = 1_000_000
+	target.Character.Health = 1_000_000
+	target.Character.StaminaMax.Value = 1_000_000
+	target.Character.Stamina = 1_000_000
 	setCombatPositionParallel(&target.Character, position.Standing)
 	mobs.SetInstanceForTest(targetID, target)
 	m.Character.SetAggro(0, targetID, characters.DefaultAttack)
+}
+
+func runExecuteAndReadExecuted(cmd string, actor Actor) bool {
+	switch cmd {
+	case "taunt":
+		return ExecuteTaunt(actor).Executed
+	case "rally":
+		return ExecuteRally(actor).Executed
+	case "warcry":
+		return ExecuteWarcry(actor).Executed
+	case "bash":
+		return ExecuteBash(actor).Executed
+	case "trip":
+		return ExecuteTrip(actor).Executed
+	case "kick":
+		return ExecuteKick(actor).Executed
+	case "grapple":
+		return ExecuteGrapple(actor).Executed
+	case "hamstring":
+		return ExecuteHamstring(actor).Executed
+	case "rake":
+		return ExecuteRake(actor).Executed
+	case "maul":
+		return ExecuteMaul(actor).Executed
+	case "pounce":
+		return ExecutePounce(actor).Executed
+	case "gore":
+		return ExecuteGore(actor).Executed
+	case "drain":
+		return ExecuteDrain(actor).Executed
+	case "throttle":
+		return ExecuteThrottle(actor).Executed
+	}
+	return false
 }
 
 // TestCommandReadinessDrift asserts CommandIsReady and each Execute*
@@ -217,6 +415,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 		7305: {SpeciesId: 7305, Name: "fanged-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
 		7306: {SpeciesId: 7306, Name: "horned-test", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore},
 		7307: {SpeciesId: 7307, Name: "vampire-test", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+		7308: {SpeciesId: 7308, Name: "natural-basher-test", BodyParts: []string{"arms", "legs"}, NaturalBash: true},
+		7309: {SpeciesId: 7309, Name: "legless-fanged-test", BodyParts: []string{"mouth"}, NaturalAttack: items.Bite},
 		// Hands-bearing beast-identity species for the _hashands drift rows.
 		// These have the correct identity (clawed/fanged/horned) but also have
 		// "hands", so all beast natural-weapon moves must be blocked.
@@ -229,7 +429,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 	cases := []driftCase{
 		// ─── taunt ────────────────────────────────────────────────
 		{"taunt_ready", "taunt",
-			func(m *mobs.Mob) { /* default has aggro */ },
+			func(m *mobs.Mob) { setDriftAggroMobTarget(m, 228) },
 			true, ""},
 		{"taunt_crafting", "taunt",
 			func(m *mobs.Mob) {
@@ -286,6 +486,20 @@ func TestCommandReadinessDrift(t *testing.T) {
 				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 			},
 			true, ""},
+		{"trip_target_gone", "trip",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7300
+				m.Character.SetAggro(0, 999991, characters.DefaultAttack)
+			},
+			false, "NoTarget"},
+		{"trip_target_on_floor", "trip",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7300
+				setDriftAggroMobTarget(m, 229)
+				target := mobs.GetInstance(229)
+				setCombatPositionParallel(&target.Character, position.Prone)
+			},
+			false, "TargetOnFloor"},
 		{"trip_crafting", "trip",
 			func(m *mobs.Mob) {
 				setCraftingForTest(m)
@@ -316,6 +530,12 @@ func TestCommandReadinessDrift(t *testing.T) {
 		// agreement test, not a reason-flag agreement test. If
 		// ExecuteBash's gate ordering ever changes to put cooldown
 		// before NoShield, add the bash_cooldown row back.
+		{"bash_ready", "bash",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7308
+				setDriftAggroMobTarget(m, 230)
+			},
+			true, ""},
 		{"bash_crafting", "bash",
 			func(m *mobs.Mob) {
 				setCraftingForTest(m)
@@ -339,6 +559,12 @@ func TestCommandReadinessDrift(t *testing.T) {
 			false, "NoShield"},
 
 		// ─── grapple ──────────────────────────────────────────────
+		{"grapple_ready", "grapple",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7307
+				setDriftAggroMobTarget(m, 231)
+			},
+			true, ""},
 		{"grapple_crafting", "grapple",
 			func(m *mobs.Mob) {
 				setCraftingForTest(m)
@@ -359,6 +585,14 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"grapple_no_aggro", "grapple",
 			func(m *mobs.Mob) { m.Character.EndAggro() },
 			false, "NoTarget"},
+		{"grapple_target_grappling", "grapple",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7307
+				setDriftAggroMobTarget(m, 232)
+				target := mobs.GetInstance(232)
+				setCombatPositionParallel(&target.Character, position.Clinch)
+			},
+			false, "TargetGrappling"},
 		// SpeciesId 0 → species.GetSpecies(0) returns nil (no species loaded in
 		// unit-test context) → HasBodyPart("arms") returns false. A valid
 		// non-grappling target is registered so target resolution succeeds and
@@ -397,6 +631,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			func(m *mobs.Mob) {
 				// SpeciesId 7300 has legs (seeded above) so the anatomy gate passes.
 				m.Character.SpeciesId = 7300
+				setDriftAggroMobTarget(m, 233)
 			},
 			true, ""},
 		{"kick_crafting", "kick",
@@ -434,8 +669,10 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"rake_ready", "rake",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7304 // clawed-test seeded above
+				setDriftAggroMobTarget(m, 234)
 			},
 			true, ""},
+		{"rake_crafting", "rake", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
 		{"rake_cooldown", "rake",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7304
@@ -472,8 +709,10 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"maul_ready", "maul",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7305 // fanged-test seeded above
+				setDriftAggroMobTarget(m, 235)
 			},
 			true, ""},
+		{"maul_crafting", "maul", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
 		{"maul_cooldown", "maul",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7305
@@ -510,8 +749,10 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"pounce_ready", "pounce",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7304 // clawed-test seeded above (has legs + claws)
+				setDriftAggroMobTarget(m, 236)
 			},
 			true, ""},
+		{"pounce_crafting", "pounce", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
 		{"pounce_cooldown", "pounce",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7304
@@ -566,8 +807,10 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"gore_ready", "gore",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7306 // horned-test seeded above
+				setDriftAggroMobTarget(m, 237)
 			},
 			true, ""},
+		{"gore_crafting", "gore", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
 		{"gore_cooldown", "gore",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7306
@@ -603,8 +846,10 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"drain_ready", "drain",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7307 // lifedrain-test seeded above
+				setDriftAggroMobTarget(m, 238)
 			},
 			true, ""},
+		{"drain_crafting", "drain", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
 		{"drain_cooldown", "drain",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7307
@@ -640,8 +885,10 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"throttle_ready", "throttle",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7305 // fanged-test seeded above
+				setDriftAggroMobTarget(m, 239)
 			},
 			true, ""},
+		{"throttle_crafting", "throttle", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
 		{"throttle_cooldown", "throttle",
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7305
@@ -668,6 +915,21 @@ func TestCommandReadinessDrift(t *testing.T) {
 				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 			},
 			false, "NotFanged"},
+
+		// ─── hamstring ────────────────────────────────────────────────────────
+		{"hamstring_ready", "hamstring",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7305
+				setDriftAggroMobTarget(m, 240)
+			},
+			true, ""},
+		{"hamstring_crafting", "hamstring", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
+		{"hamstring_no_legs", "hamstring",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7309
+				setDriftAggroMobTarget(m, 241)
+			},
+			false, "NoLegs"},
 
 		// ─── _hashands rows ───────────────────────────────────────────────────
 		// Each row seeds a species with the correct beast identity (clawed/fanged/
@@ -748,7 +1010,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			// The mutate function may set up target mobs via
 			// mobs.SetInstanceForTest; we clean them all up here.
 			defer func() {
-				for id := 200; id <= 227; id++ {
+				for id := 200; id <= 241; id++ {
 					mobs.SetInstanceForTest(id, nil)
 				}
 			}()
@@ -761,9 +1023,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 				"CommandIsReady(%s) for case %q", tc.cmd, tc.name)
 
 			if tc.wantReady {
-				// Don't run Execute* for happy-path — some have target-
-				// resolution or other side effects that require more
-				// setup. The !wantReady path is where drift matters.
+				assert.True(t, runExecuteAndReadExecuted(tc.cmd, actor),
+					"Execute%s for ready case %q must execute against its real funded target", tc.cmd, tc.name)
 				return
 			}
 
@@ -837,6 +1098,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 			return r.OnCooldown
 		case "NoTarget":
 			return r.NoTarget
+		case "TargetOnFloor":
+			return r.TargetOnFloor
 		}
 	case "bash":
 		r := ExecuteBash(actor)
@@ -859,6 +1122,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 			return r.NoTarget
 		case "GrappleImmune":
 			return r.GrappleImmune
+		case "TargetGrappling":
+			return r.TargetGrappling
 		}
 	case "kick":
 		r := ExecuteKick(actor)
@@ -873,6 +1138,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 	case "rake":
 		r := ExecuteRake(actor)
 		switch flag {
+		case "Crafting":
+			return r.Crafting
 		case "OnCooldown":
 			return r.OnCooldown
 		case "NoTarget":
@@ -883,6 +1150,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 	case "maul":
 		r := ExecuteMaul(actor)
 		switch flag {
+		case "Crafting":
+			return r.Crafting
 		case "OnCooldown":
 			return r.OnCooldown
 		case "NoTarget":
@@ -893,6 +1162,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 	case "pounce":
 		r := ExecutePounce(actor)
 		switch flag {
+		case "Crafting":
+			return r.Crafting
 		case "OnCooldown":
 			return r.OnCooldown
 		case "NoTarget":
@@ -905,6 +1176,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 	case "gore":
 		r := ExecuteGore(actor)
 		switch flag {
+		case "Crafting":
+			return r.Crafting
 		case "OnCooldown":
 			return r.OnCooldown
 		case "NoTarget":
@@ -915,6 +1188,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 	case "drain":
 		r := ExecuteDrain(actor)
 		switch flag {
+		case "Crafting":
+			return r.Crafting
 		case "OnCooldown":
 			return r.OnCooldown
 		case "NoTarget":
@@ -925,6 +1200,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 	case "throttle":
 		r := ExecuteThrottle(actor)
 		switch flag {
+		case "Crafting":
+			return r.Crafting
 		case "OnCooldown":
 			return r.OnCooldown
 		case "NoTarget":
@@ -935,12 +1212,16 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 	case "hamstring":
 		r := ExecuteHamstring(actor)
 		switch flag {
+		case "Crafting":
+			return r.Crafting
 		case "OnCooldown":
 			return r.OnCooldown
 		case "NoTarget":
 			return r.NoTarget
 		case "NotBeast":
 			return r.NotBeast
+		case "NoLegs":
+			return r.NoLegs
 		}
 	}
 	return false

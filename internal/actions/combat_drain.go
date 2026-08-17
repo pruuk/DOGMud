@@ -32,6 +32,9 @@ type DrainResult struct {
 	// OnCooldown is true when the special-move cooldown blocked the drain.
 	OnCooldown bool
 
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
+
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
@@ -71,13 +74,12 @@ type DrainResult struct {
 func ExecuteDrain(actor Actor) DrainResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return DrainResult{NoTarget: true}
+	if char.IsActing() {
+		return DrainResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return DrainResult{NoTarget: true}
 	}
@@ -101,6 +103,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return DrainResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move. Drain uses TripDamagePercent — the sapping strike
 	// is lighter than a full melee blow; the lifesteal makes up the difference.

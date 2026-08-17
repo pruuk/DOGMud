@@ -48,6 +48,9 @@ type TripResult struct {
 
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
+
+	// TargetOnFloor is true when the target is already down.
+	TargetOnFloor bool
 }
 
 // ExecuteTrip performs the core trip resolution shared between player and mob
@@ -69,13 +72,8 @@ func ExecuteTrip(actor Actor) TripResult {
 		return TripResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return TripResult{NoTarget: true}
-	}
-
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return TripResult{NoTarget: true}
 	}
@@ -84,6 +82,9 @@ func ExecuteTrip(actor Actor) TripResult {
 	// Placed on the common path before the tailsweep variant split so both forms are gated.
 	if !char.HasBodyPart("legs") {
 		return TripResult{NoTarget: true}
+	}
+	if target.Char.IsOnFloor() {
+		return TripResult{Target: target, TargetOnFloor: true}
 	}
 
 	cfg := configs.GetBalanceConfig()
@@ -97,6 +98,7 @@ func ExecuteTrip(actor Actor) TripResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return TripResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Determine trip variant and associated params.
 	variant := TripStandard

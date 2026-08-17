@@ -14,14 +14,15 @@ import (
 )
 
 func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := actions.StageMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "maul",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
 	// Delegate core resolution to the shared action.
-	res := actions.ExecuteMaul(&actions.UserActor{User: user, Room: room})
+	res := actions.ExecuteMaul(actor)
 	if res.Cost.Status == characters.CostRefused {
 		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
 		return true, nil

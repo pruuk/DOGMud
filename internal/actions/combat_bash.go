@@ -58,11 +58,6 @@ func ExecuteBash(actor Actor) BashResult {
 		return BashResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return BashResult{NoTarget: true}
-	}
-
 	// Must have a shield equipped — unless this creature bashes naturally
 	// (golems/elementals slam with their body).
 	naturalBash := false
@@ -80,7 +75,7 @@ func ExecuteBash(actor Actor) BashResult {
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return BashResult{NoTarget: true}
 	}
@@ -96,6 +91,7 @@ func ExecuteBash(actor Actor) BashResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return BashResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{

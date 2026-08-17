@@ -40,6 +40,9 @@ type GrappleResult struct {
 
 	// GrappleImmune is true when the target cannot be grappled (ethereal, fire, etc.)
 	GrappleImmune bool
+
+	// TargetGrappling is true when the target is already in a grapple.
+	TargetGrappling bool
 }
 
 // ExecuteGrapple performs the core grapple resolution shared between player
@@ -60,8 +63,9 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 		return GrappleResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
+	// Resolve the aggro target.
+	target := resolveActionTarget(actor, char)
+	if !target.Found {
 		return GrappleResult{NoTarget: true}
 	}
 
@@ -74,11 +78,8 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 	if !char.HasBodyPart("arms") {
 		return GrappleResult{GrappleImmune: true}
 	}
-
-	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
-	if !target.Found {
-		return GrappleResult{NoTarget: true}
+	if target.Char.IsGrappling() {
+		return GrappleResult{Target: target, TargetGrappling: true}
 	}
 
 	// Grapple immunity (ethereal creatures, fire elementals, etc.)
@@ -102,6 +103,7 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return GrappleResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the grapple move. Player actors pass their UserId; mobs pass 0.
 	attackerId := actor.GetUserId()

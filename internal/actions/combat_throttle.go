@@ -31,6 +31,9 @@ type ThrottleResult struct {
 	// OnCooldown is true when the special-move cooldown blocked the throttle.
 	OnCooldown bool
 
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
+
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
@@ -67,13 +70,12 @@ type ThrottleResult struct {
 func ExecuteThrottle(actor Actor) ThrottleResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return ThrottleResult{NoTarget: true}
+	if char.IsActing() {
+		return ThrottleResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return ThrottleResult{NoTarget: true}
 	}
@@ -97,6 +99,7 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return ThrottleResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move (reuse kick's config for damage percent; no
 	// knockdown — the choke deals stamina drain and cast interrupt instead).

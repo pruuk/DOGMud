@@ -12,13 +12,14 @@ import (
 )
 
 func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := actions.StageMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "grapple",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
-	res := actions.ExecuteGrapple(&actions.UserActor{User: user, Room: room})
+	res := actions.ExecuteGrapple(actor)
 	if res.Cost.Status == characters.CostRefused {
 		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
 		return true, nil
@@ -37,6 +38,10 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	if res.NoTarget {
 		user.SendText(messaging.CategorySystem, "You have no target!")
+		return true, nil
+	}
+	if res.TargetGrappling {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf("%s is already grappling.", res.Target.Name))
 		return true, nil
 	}
 

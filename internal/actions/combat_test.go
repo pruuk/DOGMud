@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,6 +97,28 @@ func embeddedSpecialMoveCost(t *testing.T, result any) characters.CostCommitResu
 		return characters.CostCommitResult{}
 	}
 	return reflect.ValueOf(result).FieldByIndex(field.Index).Interface().(characters.CostCommitResult)
+}
+
+func specialMoveBoolField(t *testing.T, result any, name string) bool {
+	t.Helper()
+	value := reflect.ValueOf(result)
+	field := value.FieldByName(name)
+	if !field.IsValid() {
+		t.Errorf("%s must expose %s", value.Type().Name(), name)
+		return false
+	}
+	if field.Kind() != reflect.Bool {
+		t.Errorf("%s.%s must be bool", value.Type().Name(), name)
+		return false
+	}
+	return field.Bool()
+}
+
+func assertRawSpecialMoveRejected(t *testing.T, result any, reason string) {
+	t.Helper()
+	require.False(t, specialMoveBoolField(t, result, "Executed"))
+	require.True(t, specialMoveBoolField(t, result, reason))
+	require.Equal(t, characters.CostNoCharge, embeddedSpecialMoveCost(t, result).Status)
 }
 
 func specialMoveAdmissionCases(t *testing.T) []specialMoveAdmissionCase {
@@ -351,6 +374,88 @@ func TestSpecialMoveStaleCooldownAdmission(t *testing.T) {
 			require.Len(t, target.Buffs.GetBuffs(), targetBuffs)
 			require.Equal(t, actorState, char.Position.State())
 			require.Equal(t, targetState, target.Position.State())
+		})
+	}
+}
+
+// TestSpecialMoveMissingReadinessGatesAdmission catches trip charging an
+// already-grounded target, grapple disturbing an existing grapple, or
+// hamstring admitting an actor without legs. These are readiness-invalid
+// states and must return a specific reason before cost/cooldown mutation.
+func TestSpecialMoveMissingReadinessGatesAdmission(t *testing.T) {
+	cleanup := seedSpecialMoveAdmissionSpecies()
+	defer cleanup()
+
+	t.Run("trip rejects target already on floor", func(t *testing.T) {
+		actor, char, target := newSpecialMoveAdmissionActor(t, 8102, 50, 0, false)
+		setCombatPositionParallel(target, position.Prone)
+		result := ExecuteTrip(actor)
+		assertRawSpecialMoveRejected(t, result, "TargetOnFloor")
+		require.Equal(t, 50, char.Stamina)
+		require.Empty(t, char.Cooldowns)
+		require.Equal(t, 0, char.Aggro.RoundsWaiting)
+		require.Equal(t, position.Prone, target.Position.State())
+	})
+
+	t.Run("grapple rejects target already grappling", func(t *testing.T) {
+		actor, char, target := newSpecialMoveAdmissionActor(t, 8102, 50, 0, false)
+		setCombatPositionParallel(target, position.Clinch)
+		result := ExecuteGrapple(actor)
+		assertRawSpecialMoveRejected(t, result, "TargetGrappling")
+		require.Equal(t, 50, char.Stamina)
+		require.Empty(t, char.Cooldowns)
+		require.Equal(t, 0, char.Aggro.RoundsWaiting)
+		require.Equal(t, position.Standing, char.Position.State())
+		require.Equal(t, position.Clinch, target.Position.State())
+	})
+
+	t.Run("hamstring rejects actor without legs", func(t *testing.T) {
+		actor, char, target := newSpecialMoveAdmissionActor(t, 8103, 50, 0, false)
+		char.SpeciesId = 8107
+		result := ExecuteHamstring(actor)
+		assertRawSpecialMoveRejected(t, result, "NoLegs")
+		require.Equal(t, 50, char.Stamina)
+		require.Empty(t, char.Cooldowns)
+		require.Equal(t, 0, char.Aggro.RoundsWaiting)
+		require.Equal(t, target.HealthMax.Value, target.Health)
+	})
+}
+
+// TestSpecialMoveActingAdmission catches direct shared/mob dispatch charging
+// or resolving any of the seven mutation/beast moves while the actor is
+// casting. IsActing is universal readiness and must precede target/cost work.
+func TestSpecialMoveActingAdmission(t *testing.T) {
+	cleanup := seedSpecialMoveAdmissionSpecies()
+	defer cleanup()
+
+	tests := []struct {
+		name      string
+		speciesID int
+		execute   func(Actor) any
+	}{
+		{"hamstring", 8103, func(a Actor) any { return ExecuteHamstring(a) }},
+		{"rake", 8104, func(a Actor) any { return ExecuteRake(a) }},
+		{"maul", 8103, func(a Actor) any { return ExecuteMaul(a) }},
+		{"pounce", 8103, func(a Actor) any { return ExecutePounce(a) }},
+		{"gore", 8105, func(a Actor) any { return ExecuteGore(a) }},
+		{"drain", 8106, func(a Actor) any { return ExecuteDrain(a) }},
+		{"throttle", 8103, func(a Actor) any { return ExecuteThrottle(a) }},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actor, char, target := newSpecialMoveAdmissionActor(t, tc.speciesID, 50, 0, false)
+			setCastingForTest(char, activity.CastingData{SpellId: "test-spell", FoldsNeeded: 2})
+			targetHealth, targetStamina := target.Health, target.Stamina
+			result := tc.execute(actor)
+			assertRawSpecialMoveRejected(t, result, "Crafting")
+			require.Equal(t, 50, char.Stamina)
+			require.Empty(t, char.Cooldowns)
+			require.Equal(t, 0, char.Aggro.RoundsWaiting)
+			require.Equal(t, targetHealth, target.Health)
+			require.Equal(t, targetStamina, target.Stamina)
+			require.Empty(t, target.Conditions)
+			require.True(t, char.IsCasting())
 		})
 	}
 }

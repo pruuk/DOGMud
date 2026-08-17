@@ -84,13 +84,8 @@ func ExecuteKick(actor Actor) KickResult {
 		return KickResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return KickResult{NoTarget: true}
-	}
-
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return KickResult{NoTarget: true}
 	}
@@ -111,6 +106,7 @@ func ExecuteKick(actor Actor) KickResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return KickResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Determine kick variant and associated params.
 	variant := KickStandard

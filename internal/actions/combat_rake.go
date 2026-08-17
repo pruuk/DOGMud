@@ -30,6 +30,9 @@ type RakeResult struct {
 	// OnCooldown is true when the special-move cooldown blocked the rake.
 	OnCooldown bool
 
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
+
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
@@ -59,13 +62,12 @@ type RakeResult struct {
 func ExecuteRake(actor Actor) RakeResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return RakeResult{NoTarget: true}
+	if char.IsActing() {
+		return RakeResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return RakeResult{NoTarget: true}
 	}
@@ -89,6 +91,7 @@ func ExecuteRake(actor Actor) RakeResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return RakeResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move (reuse trip's config for damage percent, no
 	// knockdown — the clawed raking strike deals moderate damage and bleeds

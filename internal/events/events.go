@@ -353,6 +353,32 @@ func DrainQueuedMessagesForTest(userId int) []string {
 	return found
 }
 
+// DrainQueuedPlayerAttackedMobsForTest removes all PlayerAttackedMob events
+// for the given user and returns them. Pass 0 to drain every such event.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedPlayerAttackedMobsForTest(userId int) []PlayerAttackedMob {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []PlayerAttackedMob
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		attacked, ok := pe.event.(PlayerAttackedMob)
+		if !ok {
+			remaining = append(remaining, pe)
+			continue
+		}
+		if userId == 0 || attacked.UserId == userId {
+			found = append(found, attacked)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // DrainQueuedPatrolWaypointArrivalsForTest removes all PatrolWaypointArrival
 // events from the global queue for the given mob instance id and returns them.
 //

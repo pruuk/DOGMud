@@ -77,11 +77,14 @@ That was not hypothetical. Until 2026-08-14 only `attack`, `shoot` and (half of)
 on a faction NPC for free. Killing it was still caught by the death hook's
 murder record, but assaulting and walking away cost nothing.
 
-**You almost certainly do not need to call it directly.** `AcquireMeleeTarget`
-(`melee_target.go`) now seeds for every command that routes through it, which is
-all eleven melee specials: kick, bash, trip, grapple, taunt, gore, maul, pounce,
-rake, throttle, drain. Add a new melee special the same way and it inherits the
-behaviour. `throw` seeds from its own `engageAfterThrow` because it is an AoE.
+**You almost certainly do not need to call it directly.** Admission-gated
+physical specials call `StageMeleeTarget` and carry its returned `Actor` into
+their shared `Execute*` function. The action resolves that staged target
+read-only, admits cost, consumes cooldown, then commits aggro and calls
+`SeedAggression`. Invalid, stale, cooldown-blocked, and cost-refused attempts
+therefore cannot seed combat side effects. `AcquireMeleeTarget` preserves eager
+engagement for existing non-staged callers such as taunt. `throw` seeds from its
+own `engageAfterThrow` because it is an AoE.
 
 The two halves fire on **deliberately different** conditions, and getting this
 backwards spams crimes and bounties off a single engagement:

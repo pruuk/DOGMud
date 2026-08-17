@@ -13,14 +13,15 @@ import (
 )
 
 func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := actions.StageMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "bash",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
 	// Delegate core bash logic to the shared action.
-	bashResult := actions.ExecuteBash(&actions.UserActor{User: user, Room: room})
+	bashResult := actions.ExecuteBash(actor)
 	if bashResult.Cost.Status == characters.CostRefused {
 		user.SendText(messaging.CategorySystem, actions.CostRefusalText(bashResult.Cost))
 		return true, nil

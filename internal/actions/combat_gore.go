@@ -30,6 +30,9 @@ type GoreResult struct {
 	// OnCooldown is true when the special-move cooldown blocked the gore.
 	OnCooldown bool
 
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
+
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
@@ -55,13 +58,12 @@ type GoreResult struct {
 func ExecuteGore(actor Actor) GoreResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return GoreResult{NoTarget: true}
+	if char.IsActing() {
+		return GoreResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return GoreResult{NoTarget: true}
 	}
@@ -84,6 +86,7 @@ func ExecuteGore(actor Actor) GoreResult {
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
 		return GoreResult{Cost: cost, OnCooldown: true}
 	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move — uses kick's damage percent for the charge
 	// impact and bash's knockdown chance; KnockdownToSupine=true drives the

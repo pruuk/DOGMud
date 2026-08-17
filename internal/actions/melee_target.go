@@ -71,110 +71,111 @@ func (o MeleeTargetOpts) selfTargetMsg() string {
 	return fmt.Sprintf("You can't %s yourself.", o.Verb)
 }
 
-// AcquireMeleeTarget runs the shared gate-and-engage preamble that every melee
-// special move needs before delegating to its Execute* action.
-//
-// It returns handled=true when it has already sent the player a message and the
-// calling command should return immediately. handled=false means the actor is
-// engaged (or was already in combat) and the caller should proceed.
-//
-// Steps, in order:
-//  1. Refuse if the actor is mid-activity (craft/salvage/cast).
-//  2. If already in combat, do nothing — the existing target stands.
-//  3. Otherwise require a target, resolve it, and reject self-targeting,
-//     non-combatants, attack-immune mobs, player companions (charmed),
-//     PvP-disallowed players, and the actor's own party members.
-//  4. Set aggro so the subsequent Execute* call has an engagement to act on.
-//
-// This was copy-pasted across 11 command files (bash, drain, gore, grapple,
-// kick, maul, pounce, rake, taunt, throttle, trip), differing only in wording.
-// Beyond the duplication, each copy performed a redundant second room scan
-// (room.FindByName) purely to distinguish "can't target yourself" from "not
-// here" — that scan happens once here, and only on the error path.
-func AcquireMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opts MeleeTargetOpts) bool {
+type stagedMeleeActor struct {
+	Actor
+	target    AggroTarget
+	commit    func()
+	committed bool
+}
 
+func (a *stagedMeleeActor) actionTarget() AggroTarget {
+	aggro := &characters.Aggro{UserId: a.target.UserId, MobInstanceId: a.target.MobInstanceId}
+	return ResolveAggroTarget(aggro)
+}
+
+func (a *stagedMeleeActor) commitMeleeEngagement() {
+	if a.committed {
+		return
+	}
+	a.committed = true
+	if a.commit != nil {
+		a.commit()
+	}
+}
+
+func resolveActionTarget(actor Actor, char *characters.Character) AggroTarget {
+	if staged, ok := actor.(interface{ actionTarget() AggroTarget }); ok {
+		return staged.actionTarget()
+	}
+	return ResolveAggroTarget(char.Aggro)
+}
+
+func commitMeleeEngagement(actor Actor) {
+	if staged, ok := actor.(interface{ commitMeleeEngagement() }); ok {
+		staged.commitMeleeEngagement()
+	}
+}
+
+// StageMeleeTarget validates and resolves a target without setting aggro or
+// seeding aggression. Admission-gated actions commit the returned actor only
+// after their cost and consuming cooldown succeed.
+func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opts MeleeTargetOpts) (Actor, bool) {
+	base := &UserActor{User: user, Room: room}
 	if user.Character.IsActing() {
 		user.SendText(messaging.CategorySystem, opts.craftingMsg())
-		return true
+		return nil, true
 	}
-
-	// Already fighting: keep the current target.
 	if user.Character.IsInCombat() {
-		return false
+		return base, false
 	}
-
 	if rest == "" {
 		user.SendText(messaging.CategorySystem, opts.promptMsg())
-		return true
+		return nil, true
 	}
 
-	target, err := ResolveTargetActor(room, rest, ResolveTargetOptions{
-		ExcludeUserId: user.UserId,
-	})
+	target, err := ResolveTargetActor(room, rest, ResolveTargetOptions{ExcludeUserId: user.UserId})
 	if err != nil {
-		// Self-exclusion collapses to NotFound, so distinguish the two here.
 		if pId, _ := room.FindByName(rest); pId == user.UserId {
 			user.SendText(messaging.CategorySystem, opts.selfTargetMsg())
-			return true
+			return nil, true
 		}
 		user.SendText(messaging.CategorySystem, "You don't see them here.")
-		return true
+		return nil, true
 	}
 
 	if !target.IsPlayer() {
 		mob := target.(*MobActor).Mob
-		// Player companions are off-limits to every melee special move, the
-		// same way `attack` already refuses them. Before this was centralised,
-		// only taunt enforced it, so a companion could be bashed/kicked/
-		// grappled/tripped with no message at all.
 		switch mobs.CheckPlayerHarm(mob) {
 		case mobs.HarmBlockedCompanion:
 			user.SendText(messaging.CategorySystem, opts.charmedMsg())
-			return true
+			return nil, true
 		case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
 			user.SendText(messaging.CategorySystem,
 				fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, mob.Character.Name))
-			return true
+			return nil, true
 		}
-		// Judge fresh aggression BEFORE SetAggro overwrites it: either no prior
-		// aggro at all, or aggro pointed at a different target. Same test as
-		// attack.go, and it has to happen on this side of the assignment.
-		freshAggro := user.Character.Aggro == nil ||
-			user.Character.Aggro.MobInstanceId != mob.InstanceId
-
-		user.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
-
-		// Every melee special move engages through here: kick, bash, trip,
-		// grapple, taunt, and the mutation attacks (gore, maul, pounce, rake,
-		// throttle, drain). Until 2026-08-14 none of them seeded anything, so
-		// all eleven were invisible to the revenge, opinion and justice
-		// systems while `attack` and `shoot` were not. Seeding at this shared
-		// seam rather than in each command is what stops them diverging again.
-		//
-		// taunt is included on purpose. It deals conviction damage, so it is an
-		// attack in this world, and treating it as one is simpler than carving
-		// out an exception nobody would remember.
-		SeedAggression(user, mob, room, freshAggro)
-		return false
+		freshAggro := user.Character.Aggro == nil || user.Character.Aggro.MobInstanceId != mob.InstanceId
+		stagedTarget := AggroTarget{Char: &mob.Character, Name: mob.Character.Name, MobInstanceId: mob.InstanceId, Found: true}
+		return &stagedMeleeActor{Actor: base, target: stagedTarget, commit: func() {
+			user.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+			SeedAggression(user, mob, room, freshAggro)
+		}}, false
 	}
 
 	p := target.(*UserActor).User
 	if pvpErr := room.CanPvp(user, p); pvpErr != nil {
 		user.SendText(messaging.CategorySystem, pvpErr.Error())
-		return true
+		return nil, true
 	}
-
-	// Party members are not valid targets. room.CanPvp does NOT cover this — it
-	// only checks fighting-allowed, PVP-enabled, the experience threshold and
-	// PVP-area — so without this an enabled-PvP area let a player bash, kick,
-	// grapple or trip their own party member, while `attack` and `shoot` both
-	// refused. Same bypass shape as the charmed-companion gate above.
 	if partyInfo := parties.Get(user.UserId); partyInfo != nil && partyInfo.IsMember(p.UserId) {
 		user.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
-		return true
+		return nil, true
 	}
 
-	user.Character.SetAggro(p.UserId, 0, characters.DefaultAttack)
+	stagedTarget := AggroTarget{Char: p.Character, Name: p.Character.Name, UserId: p.UserId, Found: true}
+	return &stagedMeleeActor{Actor: base, target: stagedTarget, commit: func() {
+		user.Character.SetAggro(p.UserId, 0, characters.DefaultAttack)
+	}}, false
+}
+
+// AcquireMeleeTarget preserves eager engagement for existing callers such as
+// taunt. Physical specials stage instead and commit inside Execute*.
+func AcquireMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opts MeleeTargetOpts) bool {
+	actor, handled := StageMeleeTarget(user, room, rest, opts)
+	if handled {
+		return true
+	}
+	commitMeleeEngagement(actor)
 	return false
 }
