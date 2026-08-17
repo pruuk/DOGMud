@@ -13,8 +13,10 @@ returns a `*Result` struct with outcome data.
   (`internal/mobcommands/`), and behavior tree primitives
   (`internal/behaviortree/`).
 - Each action returns a structured result for programmatic consumption.
-- Messages to players/mobs are sent by actions themselves, not by callers
-  (callers only dispatch; actions own messaging).
+- Shared actions own mechanical outcomes. Player-command wrappers retain
+  private player-only rendering decisions; in particular, shared cost admission
+  returns `characters.CostCommitResult` and never emits a refusal line for an
+  actor.
 - Skill progression (`OnStatUse`, `OnSkillUse`) is triggered within actions,
   not by callers.
 
@@ -27,16 +29,29 @@ The `Actor` interface unifies player and mob behavior:
 ```go
 type Actor interface {
 	GetCharacter() *characters.Character
-	GetMobId() int                  // 0 for players
-	GetUserId() string              // "" for mobs
-	SendText(text string)
-	SendRoom(text string)
+	GetRoom() *rooms.Room
+	SendText(cat messaging.Category, msg string)
+	SendRoomCommunication(msg string, excludeSelf bool)
+	GetName() string
+	IsPlayer() bool
+	GetUserId() int                 // 0 for mobs
+	GetMobInstanceId() int          // 0 for players
+	AddBuff(buffId int, source string)
 	OnStatUse(stat string)
 	OnSkillUse(skill string)
 	OnCriticalSuccess(skill string)
 	OnCriticalFailure(skill string)
 }
 ```
+
+### Action-cost admission
+
+`admitFullCost` is the internal voluntary-action seam. It creates a neutral
+single-unit request, then delegates the full-or-refuse decision, pool update,
+and fractional carry to `Character.QuoteActionCost` and `Character.CommitCost`.
+It performs no direct `ApplyCost*` call and emits no private text. Later U8
+shared action results carry the returned `CostCommitResult`; user wrappers can
+render a refused status while equivalent mob wrappers stay silent.
 
 - **UserActor** (`actor_user.go`): wraps a `*users.User`, sends text via
   `user.SendText()`, skill progression goes through `user.Character.OnSkillUse()`.

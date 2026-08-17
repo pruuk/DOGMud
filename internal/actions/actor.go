@@ -11,7 +11,9 @@ import (
 // actor_mob.go implement this for *users.UserRecord and *mobs.Mob
 // respectively.
 type Actor interface {
-	// GetCharacter returns the underlying character data.
+	// GetCharacter returns the underlying character data. Shared action-cost
+	// admission quotes and commits through this Character; action code must not
+	// call legacy direct-cost primitives itself.
 	GetCharacter() *characters.Character
 
 	// GetRoom returns the room the actor currently occupies.

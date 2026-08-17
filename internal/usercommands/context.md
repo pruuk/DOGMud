@@ -268,6 +268,10 @@ What matters is the shape, not the list:
 - **Shared logic belongs in `internal/actions`**, behind `actions.Actor`, so
   the user and mob paths cannot drift. A command file should be argument
   parsing plus a call into `actions`.
+- **Voluntary-action admission** is mechanical shared-action work. A user
+  wrapper will render a private, pool-aware refusal only when its returned
+  `CostCommitResult` has `Status == characters.CostRefused`; it must not
+  re-quote, re-commit, or charge a pool directly.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must
   *split* input into multiple slots (item vs. container, mob vs. player).

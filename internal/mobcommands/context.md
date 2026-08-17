@@ -193,3 +193,6 @@ why a command available to both players and mobs must be registered twice
 - **Shared logic belongs in `internal/actions`**, behind `actions.Actor`, so
   the two paths cannot drift. A command file should be argument parsing plus a
   call into `actions`.
+- **Voluntary-action admission** stays in that shared action path. Mob wrappers
+  consume the returned `CostCommitResult` for control flow but never emit a
+  player-private refusal line and never charge a pool independently.
