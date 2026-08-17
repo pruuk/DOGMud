@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -21,6 +22,9 @@ func Rake(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	res := actions.ExecuteRake(&actions.MobActor{Mob: mob, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
 
 	// Anatomy/identity refusal: silently swallow so the btree can fall through.
 	if res.NotClawed {

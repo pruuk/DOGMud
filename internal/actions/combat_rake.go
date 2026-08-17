@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -13,6 +14,8 @@ import (
 // RakeResult holds the outcome of a rake attempt for the caller to use when
 // formatting messages, firing events, and updating UI.
 type RakeResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -61,12 +64,6 @@ func ExecuteRake(actor Actor) RakeResult {
 		return RakeResult{NoTarget: true}
 	}
 
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return RakeResult{OnCooldown: true}
-	}
-
 	// Resolve the aggro target.
 	target := ResolveAggroTarget(char.Aggro)
 	if !target.Found {
@@ -79,6 +76,18 @@ func ExecuteRake(actor Actor) RakeResult {
 	// non-clawed or tool-using mob.
 	if char.HasBodyPart("hands") || !combat.SpeciesIsClawed(char) {
 		return RakeResult{NotClawed: true}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return RakeResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionRake, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return RakeResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return RakeResult{Cost: cost, OnCooldown: true}
 	}
 
 	// Execute the skill move (reuse trip's config for damage percent, no
@@ -135,6 +144,7 @@ func ExecuteRake(actor Actor) RakeResult {
 	}
 
 	return RakeResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

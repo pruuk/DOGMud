@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -21,6 +22,9 @@ func Kick(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Delegate core kick logic to the shared action (includes stomp/knee variant
 	// detection so mobs now use the appropriate variant automatically).
 	res := actions.ExecuteKick(&actions.MobActor{Mob: mob, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
 
 	// Any early-exit condition: silently return.
 	if !res.Executed {

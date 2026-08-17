@@ -4,9 +4,30 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TestChargeAliasChargesOnlyThroughTrip catches the charge decoration wrapper
+// remaining free or adding a second private charge around ExecuteTrip.
+func TestChargeAliasChargesOnlyThroughTrip(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+
+	mob, room := getTestMobAndRoom(t)
+	mob.Character.Aggro = &characters.Aggro{MobInstanceId: 200}
+	mob.Character.Cooldowns = characters.Cooldowns{}
+	mob.Character.Items = nil
+	mob.Character.Skills = map[string]int{string(skills.UnarmedCombat): 0}
+	mob.Character.Stamina = 50
+
+	handled, err := Charge("", mob, room)
+	require.True(t, handled)
+	require.NoError(t, err)
+	require.Equal(t, 46, mob.Character.Stamina,
+		"charge must pay exactly the one four-point rank-zero trip admission")
+}
 
 // TestCharge_Decoration_MobTarget verifies that Charge executes cleanly when
 // targeting a mob (mob-vs-mob path) — a path not covered by predator_test.go.

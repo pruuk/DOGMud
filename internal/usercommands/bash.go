@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -20,6 +21,10 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// Delegate core bash logic to the shared action.
 	bashResult := actions.ExecuteBash(&actions.UserActor{User: user, Room: room})
+	if bashResult.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(bashResult.Cost))
+		return true, nil
+	}
 
 	if bashResult.Crafting {
 		// Safety net — should have been caught by the pre-reject above.

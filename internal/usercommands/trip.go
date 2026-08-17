@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -21,6 +22,10 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	res := actions.ExecuteTrip(&actions.UserActor{User: user, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		return true, nil
+	}
 
 	if res.Crafting {
 		// Safety net — should have been caught by the pre-reject above.

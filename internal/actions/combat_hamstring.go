@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -15,6 +16,8 @@ import (
 // HamstringResult holds the outcome of a hamstring attempt for the caller to
 // use when formatting messages, firing events, and updating UI.
 type HamstringResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -61,12 +64,6 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 		return HamstringResult{NoTarget: true}
 	}
 
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return HamstringResult{OnCooldown: true}
-	}
-
 	// Resolve the aggro target.
 	target := ResolveAggroTarget(char.Aggro)
 	if !target.Found {
@@ -80,6 +77,18 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 	sp := species.GetSpecies(char.SpeciesId)
 	if sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart("hands") {
 		return HamstringResult{NotBeast: true}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return HamstringResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionHamstring, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return HamstringResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return HamstringResult{Cost: cost, OnCooldown: true}
 	}
 
 	// Execute the skill move (reuse trip's config for damage percent, no knockdown).
@@ -133,6 +142,7 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 	}
 
 	return HamstringResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

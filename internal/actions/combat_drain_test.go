@@ -37,11 +37,9 @@ func TestDrain_OnCooldown(t *testing.T) {
 	room := newTestRoom()
 	actor := newStubActor(char, room)
 
-	// Set aggro so we pass the nil check and reach the cooldown gate.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
-
-	// Burn the cooldown slot so the next Try call is blocked.
-	char.Cooldowns.Try("special-move", "3 rounds")
+	prepareSpecialMoveCooldown(t, char, 7907, 7907, &species.Species{
+		SpeciesId: 7907, Name: "cooldown-vampire", BodyParts: []string{"mouth"}, LifeDrain: true,
+	})
 
 	result := ExecuteDrain(actor)
 
@@ -85,6 +83,7 @@ func TestDrain_NotLifeDrainer(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 6002 // vampire — LifeDrain
 		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		fundSpecialMove(char)
 
 		result := ExecuteDrain(newStubActor(char, newTestRoom()))
 
@@ -120,6 +119,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	char.Stats.Strength.ValueAdj = 500
 	char.HealthMax.Value = 200
 	char.Health = 150 // 50 HP below max — heal is observable
+	fundSpecialMove(char)
 
 	// Retry until we observe a hit (probability with str=500 vs dex=1 is very
 	// high per round; ContestFloor caps it at roughly a 1-in-8 save).
@@ -196,6 +196,7 @@ func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 	char.SpeciesId = 6004 // vampire
 	char.Stats.Strength.ValueAdj = 100
 	char.HealthMax.Value = 100000
+	fundSpecialMove(char)
 
 	var res DrainResult
 	foundPartial := false
@@ -295,6 +296,26 @@ func TestDrainArea_NoPlayers(t *testing.T) {
 
 	assert.False(t, result.Executed, "drain area with no players should not execute")
 	assert.True(t, result.NoTargets, "drain area with no players should report NoTargets")
+}
+
+// TestDrainAreaDoesNotAcquireActionCost catches the boss-area primitive being
+// routed through the single-target voluntary drain admission.
+func TestDrainAreaDoesNotAcquireActionCost(t *testing.T) {
+	p1 := seedDrainAreaPlayer(7091, "area-cost-target", "Area Cost Target")
+	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{7091: p1})
+	defer cleanupUsers()
+
+	room := newTestRoom()
+	room.AddPlayer(7091)
+	char := drainAreaAttacker()
+	char.Stamina = 37
+	char.Cooldowns = characters.Cooldowns{}
+
+	result := ExecuteDrainArea(newStubActor(char, room))
+
+	assert.True(t, result.Executed)
+	assert.Equal(t, 37, char.Stamina, "area drain must not charge the single-target action cost")
+	assert.Empty(t, char.Cooldowns, "area drain must not consume the special-move cooldown")
 }
 
 // TestDrainArea_SinglePlayer verifies the single-player case: the player

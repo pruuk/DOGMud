@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -22,6 +23,9 @@ func Pounce(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	res := actions.ExecutePounce(&actions.MobActor{Mob: mob, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
 
 	// Grappling gate: silently swallow so the btree can fall through.
 	if res.Grappling {

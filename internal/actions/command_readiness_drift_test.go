@@ -1,6 +1,12 @@
 package actions
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"maps"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -11,7 +17,155 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+type specialMoveOrderGuard struct {
+	file        string
+	function    string
+	validations []string
+}
+
+// TestSpecialMoveAdmissionOrdering catches a validity branch, read-only
+// cooldown probe, cost admission, or consuming cooldown being moved across the
+// required boundary. It walks each function's Go AST and compares call
+// positions; source-text presence alone cannot satisfy it.
+func TestSpecialMoveAdmissionOrdering(t *testing.T) {
+	guards := []specialMoveOrderGuard{
+		{"combat_bash.go", "ExecuteBash", []string{"IsActing", "HasShield", "HasBodyPart", "ResolveAggroTarget"}},
+		{"combat_trip.go", "ExecuteTrip", []string{"IsActing", "ResolveAggroTarget", "HasBodyPart"}},
+		{"combat_kick.go", "ExecuteKick", []string{"IsActing", "ResolveAggroTarget", "HasBodyPart"}},
+		{"combat_grapple.go", "ExecuteGrapple", []string{"IsActing", "HasBodyPart", "ResolveAggroTarget", "IsControlImmune"}},
+		{"combat_hamstring.go", "ExecuteHamstring", []string{"ResolveAggroTarget", "GetSpecies", "HasBodyPart"}},
+		{"combat_rake.go", "ExecuteRake", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsClawed"}},
+		{"combat_maul.go", "ExecuteMaul", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsFanged"}},
+		{"combat_pounce.go", "ExecutePounce", []string{"ResolveAggroTarget", "IsGrappling", "SpeciesIsQuadrupedPredator"}},
+		{"combat_gore.go", "ExecuteGore", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsHorned"}},
+		{"combat_drain.go", "ExecuteDrain", []string{"ResolveAggroTarget", "SpeciesHasLifeDrain"}},
+		{"combat_throttle.go", "ExecuteThrottle", []string{"ResolveAggroTarget", "HasBodyPart", "SpeciesIsFanged"}},
+	}
+
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	actionsDir := filepath.Dir(thisFile)
+
+	for _, guard := range guards {
+		t.Run(guard.function, func(t *testing.T) {
+			fset := token.NewFileSet()
+			parsed, err := parser.ParseFile(fset, filepath.Join(actionsDir, guard.file), nil, 0)
+			require.NoError(t, err)
+
+			calls := map[string]token.Pos{}
+			var body *ast.BlockStmt
+			for _, decl := range parsed.Decls {
+				fn, ok := decl.(*ast.FuncDecl)
+				if ok && fn.Name.Name == guard.function {
+					body = fn.Body
+					break
+				}
+			}
+			require.NotNil(t, body, "%s must exist", guard.function)
+			ast.Inspect(body, func(node ast.Node) bool {
+				call, ok := node.(*ast.CallExpr)
+				if !ok {
+					return true
+				}
+				name := ""
+				switch fn := call.Fun.(type) {
+				case *ast.Ident:
+					name = fn.Name
+				case *ast.SelectorExpr:
+					name = fn.Sel.Name
+				}
+				if name != "" && calls[name] == token.NoPos {
+					calls[name] = call.Pos()
+				}
+				return true
+			})
+
+			ready := calls["CooldownReady"]
+			admit := calls["admitFullCost"]
+			consume := calls["TryCooldown"]
+			require.NotEqual(t, token.NoPos, ready, "%s must use the read-only cooldown probe", guard.function)
+			require.NotEqual(t, token.NoPos, admit, "%s must use shared cost admission", guard.function)
+			require.NotEqual(t, token.NoPos, consume, "%s must consume cooldown only after admission", guard.function)
+			require.Less(t, int(ready), int(admit), "CooldownReady must precede admission")
+			require.Less(t, int(admit), int(consume), "admission must precede consuming TryCooldown")
+			for _, validation := range guard.validations {
+				pos := calls[validation]
+				require.NotEqual(t, token.NoPos, pos, "%s validation marker %s must exist", guard.function, validation)
+				require.Less(t, int(pos), int(ready), "%s validation %s must precede CooldownReady and admission", guard.function, validation)
+			}
+		})
+	}
+}
+
+// TestSpecialMoveWrapperAdmission catches a player wrapper dropping the shared
+// refusal prose or a mob wrapper rendering private exhaustion text. The AST
+// guard covers every wrapper in the atomic family, including charge's trip
+// alias; howl is deliberately absent because this task must not touch it.
+func TestSpecialMoveWrapperAdmission(t *testing.T) {
+	playerWrappers := []string{"bash", "trip", "kick", "grapple", "rake", "maul", "pounce", "gore", "drain", "throttle"}
+	mobWrappers := []string{"bash", "charge", "trip", "kick", "grapple", "hamstring", "rake", "maul", "pounce", "gore", "drain", "throttle"}
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
+
+	inspectWrapper := func(t *testing.T, dir, file, function string) (hasCost, hasRefused, hasRefusalText bool) {
+		t.Helper()
+		parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(repoRoot, "internal", dir, file+".go"), nil, 0)
+		require.NoError(t, err)
+		for _, decl := range parsed.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Name.Name != function {
+				continue
+			}
+			ast.Inspect(fn.Body, func(node ast.Node) bool {
+				switch n := node.(type) {
+				case *ast.CallExpr:
+					if sel, ok := n.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "CostRefusalText" {
+						hasRefusalText = true
+					}
+				case *ast.SelectorExpr:
+					switch n.Sel.Name {
+					case "Cost":
+						hasCost = true
+					case "CostRefused":
+						hasRefused = true
+					}
+				}
+				return true
+			})
+			return
+		}
+		t.Fatalf("%s.%s wrapper not found", dir, function)
+		return false, false, false
+	}
+
+	for _, name := range playerWrappers {
+		t.Run("player_"+name, func(t *testing.T) {
+			function := map[string]string{
+				"bash": "Bash", "trip": "Trip", "kick": "Kick", "grapple": "Grapple", "rake": "Rake",
+				"maul": "Maul", "pounce": "Pounce", "gore": "Gore", "drain": "Drain", "throttle": "Throttle",
+			}[name]
+			hasCost, hasRefused, hasText := inspectWrapper(t, "usercommands", name, function)
+			require.True(t, hasCost && hasRefused, "%s must branch specifically on result.Cost refusal", function)
+			require.True(t, hasText, "%s must render actions.CostRefusalText", function)
+		})
+	}
+	for _, name := range mobWrappers {
+		t.Run("mob_"+name, func(t *testing.T) {
+			function := map[string]string{
+				"bash": "Bash", "charge": "Charge", "trip": "Trip", "kick": "Kick", "grapple": "Grapple",
+				"hamstring": "Hamstring", "rake": "Rake", "maul": "Maul", "pounce": "Pounce", "gore": "Gore",
+				"drain": "Drain", "throttle": "Throttle",
+			}[name]
+			hasCost, hasRefused, hasText := inspectWrapper(t, "mobcommands", name, function)
+			require.True(t, hasCost && hasRefused, "%s must consume result.Cost refusal silently", function)
+			require.False(t, hasText, "%s must not render private cost-refusal text", function)
+		})
+	}
+}
 
 // driftCase describes one point in the (command × gate) matrix.
 type driftCase struct {
@@ -20,6 +174,14 @@ type driftCase struct {
 	mutate     func(*mobs.Mob)
 	wantReady  bool
 	wantReason string // Execute*-side flag when not ready; ignored when wantReady=true
+}
+
+func setDriftAggroMobTarget(m *mobs.Mob, targetID int) {
+	target := &mobs.Mob{InstanceId: targetID}
+	target.Character.Name = "Target"
+	setCombatPositionParallel(&target.Character, position.Standing)
+	mobs.SetInstanceForTest(targetID, target)
+	m.Character.SetAggro(0, targetID, characters.DefaultAttack)
 }
 
 // TestCommandReadinessDrift asserts CommandIsReady and each Execute*
@@ -136,12 +298,9 @@ func TestCommandReadinessDrift(t *testing.T) {
 			false, "Crafting"},
 		{"trip_cooldown", "trip",
 			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7300
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
-				targetMob := &mobs.Mob{InstanceId: 202}
-				targetMob.Character.Name = "Target"
-				setCombatPositionParallel(&targetMob.Character, position.Standing)
-				mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
-				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+				setDriftAggroMobTarget(m, 202)
 			},
 			false, "OnCooldown"},
 		{"trip_no_aggro", "trip",
@@ -192,12 +351,9 @@ func TestCommandReadinessDrift(t *testing.T) {
 			false, "Crafting"},
 		{"grapple_cooldown", "grapple",
 			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7307
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
-				targetMob := &mobs.Mob{InstanceId: 205}
-				targetMob.Character.Name = "Target"
-				setCombatPositionParallel(&targetMob.Character, position.Standing)
-				mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
-				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+				setDriftAggroMobTarget(m, 205)
 			},
 			false, "OnCooldown"},
 		{"grapple_no_aggro", "grapple",
@@ -250,7 +406,9 @@ func TestCommandReadinessDrift(t *testing.T) {
 			false, "Crafting"},
 		{"kick_cooldown", "kick",
 			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7300
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 208)
 			},
 			false, "OnCooldown"},
 		{"kick_no_aggro", "kick",
@@ -261,9 +419,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 		// SpeciesId 0 → nil species → no legs. Default mob has aggro set;
 		// CommandIsReady("kick") checks Aggro then HasBodyPart("legs") with no
 		// target resolution, so the legs gate is the blocking condition.
-		// ExecuteKick burns the cooldown, resolves the target (user 1 not found
-		// in test context → NoTarget:true), which coincidentally matches the
-		// reused flag for the anatomy gate. Boolean agreement is the goal.
+		// ExecuteKick resolves the target before admission. The missing user
+		// returns NoTarget without consuming cost or cooldown.
 		{"kick_no_legs", "kick",
 			func(m *mobs.Mob) {
 				// SpeciesId stays 0 (nil species, no legs). Default aggro to user 1.
@@ -283,6 +440,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7304
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 222)
 			},
 			false, "OnCooldown"},
 		{"rake_no_aggro", "rake",
@@ -320,6 +478,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7305
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 223)
 			},
 			false, "OnCooldown"},
 		{"maul_no_aggro", "maul",
@@ -357,6 +516,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7304
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 224)
 			},
 			false, "OnCooldown"},
 		{"pounce_no_aggro", "pounce",
@@ -367,9 +527,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 			false, "NoTarget"},
 		// pounce_notpredator: SpeciesId 0 → nil species → not a quadruped predator.
 		// Default mob has aggro to user 1. CommandIsReady returns false.
-		// ExecutePounce burns the cooldown, resolves the target (user 1 not
-		// found → NoTarget first), but with a registered target mob we can
-		// reach the NotPredator gate.
+		// ExecutePounce resolves the target before admission; a registered target
+		// lets the NotPredator validity gate be observed directly.
 		{"pounce_notpredator", "pounce",
 			func(m *mobs.Mob) {
 				// SpeciesId 0 → nil species → not a quadruped predator.
@@ -413,6 +572,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7306
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 225)
 			},
 			false, "OnCooldown"},
 		{"gore_no_aggro", "gore",
@@ -423,9 +583,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 			false, "NoTarget"},
 		// gore_nothorned: SpeciesId 0 → nil species → not horned.
 		// Default mob has aggro to user 1. CommandIsReady returns false.
-		// ExecuteGore burns the cooldown, resolves the target (user 1 not
-		// found → NoTarget first), but with a registered target mob we can
-		// reach the NotHorned gate.
+		// ExecuteGore resolves the target before admission; a registered target
+		// lets the NotHorned validity gate be observed directly.
 		{"gore_nothorned", "gore",
 			func(m *mobs.Mob) {
 				// SpeciesId 0 → nil species → not horned.
@@ -450,6 +609,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7307
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 226)
 			},
 			false, "OnCooldown"},
 		{"drain_no_aggro", "drain",
@@ -460,9 +620,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 			false, "NoTarget"},
 		// drain_notlifedrainer: SpeciesId 0 → nil species → no LifeDrain.
 		// Default mob has aggro to user 1. CommandIsReady returns false.
-		// ExecuteDrain burns the cooldown, resolves the target (user 1 not
-		// found → NoTarget first), but with a registered target mob we can
-		// reach the NotLifeDrainer gate.
+		// ExecuteDrain resolves the target before admission; a registered target
+		// lets the NotLifeDrainer validity gate be observed directly.
 		{"drain_notlifedrainer", "drain",
 			func(m *mobs.Mob) {
 				// SpeciesId 0 → nil species → no LifeDrain flag.
@@ -487,6 +646,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			func(m *mobs.Mob) {
 				m.Character.SpeciesId = 7305
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 227)
 			},
 			false, "OnCooldown"},
 		{"throttle_no_aggro", "throttle",
@@ -496,9 +656,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 			},
 			false, "NoTarget"},
 		// throttle_notfanged: SpeciesId 0 → nil species → not fanged. Default
-		// mob has aggro to user 1. CommandIsReady returns false. ExecuteThrottle
-		// burns the cooldown, resolves the target (user 1 not found → NoTarget
-		// first), but with a registered target mob we can reach the NotFanged gate.
+		// mob has aggro to user 1. A registered target lets ExecuteThrottle reach
+		// the NotFanged validity gate before admission.
 		{"throttle_notfanged", "throttle",
 			func(m *mobs.Mob) {
 				// SpeciesId 0 → nil species → not fanged.
@@ -589,7 +748,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			// The mutate function may set up target mobs via
 			// mobs.SetInstanceForTest; we clean them all up here.
 			defer func() {
-				for id := 200; id <= 221; id++ {
+				for id := 200; id <= 227; id++ {
 					mobs.SetInstanceForTest(id, nil)
 				}
 			}()
@@ -608,9 +767,29 @@ func TestCommandReadinessDrift(t *testing.T) {
 				return
 			}
 
+			staminaBefore := mob.Character.Stamina
+			cooldownsBefore := maps.Clone(mob.Character.Cooldowns)
+			roundsBefore := 0
+			if mob.Character.Aggro != nil {
+				roundsBefore = mob.Character.Aggro.RoundsWaiting
+			}
 			gotFlag := runExecuteAndReadFlag(tc.cmd, actor, tc.wantReason)
 			assert.True(t, gotFlag,
 				"Execute%s for case %q did not return %s=true", tc.cmd, tc.name, tc.wantReason)
+			physicalSpecial := map[string]bool{
+				"bash": true, "trip": true, "kick": true, "grapple": true, "hamstring": true,
+				"rake": true, "maul": true, "pounce": true, "gore": true, "drain": true, "throttle": true,
+			}
+			if physicalSpecial[tc.cmd] {
+				assert.Equal(t, staminaBefore, mob.Character.Stamina,
+					"readiness rejection %q must precede cost admission", tc.name)
+				assert.Equal(t, cooldownsBefore, mob.Character.Cooldowns,
+					"readiness rejection %q must not consume or rewrite cooldown", tc.name)
+				if mob.Character.Aggro != nil {
+					assert.Equal(t, roundsBefore, mob.Character.Aggro.RoundsWaiting,
+						"readiness rejection %q must not consume a round", tc.name)
+				}
+			}
 		})
 	}
 }

@@ -36,11 +36,9 @@ func TestRake_OnCooldown(t *testing.T) {
 	room := newTestRoom()
 	actor := newStubActor(char, room)
 
-	// Set aggro so we pass the nil check and reach the cooldown gate.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
-
-	// Burn the cooldown slot so the next Try call is blocked.
-	char.Cooldowns.Try("special-move", "3 rounds")
+	prepareSpecialMoveCooldown(t, char, 7903, 7903, &species.Species{
+		SpeciesId: 7903, Name: "cooldown-feline", BodyParts: []string{"legs"}, NaturalAttack: items.Claws,
+	})
 
 	result := ExecuteRake(actor)
 
@@ -84,6 +82,7 @@ func TestRake_NotClawed(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 5002 // feline — clawed
 		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		fundSpecialMove(char)
 
 		result := ExecuteRake(newStubActor(char, newTestRoom()))
 
@@ -92,9 +91,9 @@ func TestRake_NotClawed(t *testing.T) {
 	})
 }
 
-// TestRake_NoTargetAfterCooldown verifies that when aggro is set to an
+// TestRake_TargetGone verifies that when aggro is set to an
 // invalid mob instance ID (target gone), Executed is false and NoTarget
-// is true (even after cooldown clears).
+// is true without consuming the cooldown.
 func TestRake_TargetGone(t *testing.T) {
 	char := characters.New()
 	room := newTestRoom()
@@ -105,7 +104,7 @@ func TestRake_TargetGone(t *testing.T) {
 
 	result := ExecuteRake(actor)
 
-	// Cooldown Try fires first (setting it), so OnCooldown should be false.
+	// Target validation precedes cooldown admission, so OnCooldown is false.
 	// Target resolution then fails → NoTarget.
 	assert.False(t, result.Executed, "rake with missing target should not execute")
 	assert.True(t, result.NoTarget, "rake should report NoTarget when the resolved target is gone")

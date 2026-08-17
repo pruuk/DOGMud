@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -13,6 +14,8 @@ import (
 // MaulResult holds the outcome of a maul attempt for the caller to use when
 // formatting messages, firing events, and updating UI.
 type MaulResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -61,12 +64,6 @@ func ExecuteMaul(actor Actor) MaulResult {
 		return MaulResult{NoTarget: true}
 	}
 
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return MaulResult{OnCooldown: true}
-	}
-
 	// Resolve the aggro target.
 	target := ResolveAggroTarget(char.Aggro)
 	if !target.Found {
@@ -79,6 +76,18 @@ func ExecuteMaul(actor Actor) MaulResult {
 	// non-fanged or tool-using mob.
 	if char.HasBodyPart("hands") || !combat.SpeciesIsFanged(char) {
 		return MaulResult{NotFanged: true}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return MaulResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionMaul, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return MaulResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return MaulResult{Cost: cost, OnCooldown: true}
 	}
 
 	// Execute the skill move (reuse kick's config for damage percent — maul is
@@ -136,6 +145,7 @@ func ExecuteMaul(actor Actor) MaulResult {
 	}
 
 	return MaulResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

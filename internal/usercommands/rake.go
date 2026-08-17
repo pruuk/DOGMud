@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -21,6 +22,10 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// Delegate core resolution to the shared action.
 	res := actions.ExecuteRake(&actions.UserActor{User: user, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		return true, nil
+	}
 
 	if res.NotClawed {
 		user.SendText(messaging.CategorySystem, "You have no claws to rake with.")

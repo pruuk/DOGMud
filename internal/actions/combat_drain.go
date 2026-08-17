@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -15,6 +16,8 @@ import (
 // DrainResult holds the outcome of a drain attempt for the caller to use when
 // formatting messages, firing events, and updating UI.
 type DrainResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -73,12 +76,6 @@ func ExecuteDrain(actor Actor) DrainResult {
 		return DrainResult{NoTarget: true}
 	}
 
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return DrainResult{OnCooldown: true}
-	}
-
 	// Resolve the aggro target.
 	target := ResolveAggroTarget(char.Aggro)
 	if !target.Found {
@@ -91,6 +88,18 @@ func ExecuteDrain(actor Actor) DrainResult {
 	// mob.
 	if !combat.SpeciesHasLifeDrain(char) {
 		return DrainResult{NotLifeDrainer: true}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return DrainResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionDrain, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return DrainResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return DrainResult{Cost: cost, OnCooldown: true}
 	}
 
 	// Execute the skill move. Drain uses TripDamagePercent — the sapping strike
@@ -165,6 +174,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 	}
 
 	return DrainResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

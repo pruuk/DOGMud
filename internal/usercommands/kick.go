@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -22,6 +23,10 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// Delegate core resolution to the shared action.
 	res := actions.ExecuteKick(&actions.UserActor{User: user, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		return true, nil
+	}
 
 	if res.Crafting {
 		// Safety net — should have been caught by the pre-reject above.

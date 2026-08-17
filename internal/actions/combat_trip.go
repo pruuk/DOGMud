@@ -3,8 +3,10 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -23,6 +25,8 @@ const (
 // TripResult holds the outcome of a trip attempt for the caller to use when
 // formatting messages, firing events, and updating UI.
 type TripResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -70,13 +74,6 @@ func ExecuteTrip(actor Actor) TripResult {
 		return TripResult{NoTarget: true}
 	}
 
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	cooldownStr := fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)
-	if !char.Cooldowns.Try("special-move", cooldownStr) {
-		return TripResult{OnCooldown: true}
-	}
-
 	// Resolve the aggro target.
 	target := ResolveAggroTarget(char.Aggro)
 	if !target.Found {
@@ -87,6 +84,18 @@ func ExecuteTrip(actor Actor) TripResult {
 	// Placed on the common path before the tailsweep variant split so both forms are gated.
 	if !char.HasBodyPart("legs") {
 		return TripResult{NoTarget: true}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return TripResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionTrip, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return TripResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return TripResult{Cost: cost, OnCooldown: true}
 	}
 
 	// Determine trip variant and associated params.
@@ -152,6 +161,7 @@ func ExecuteTrip(actor Actor) TripResult {
 	}
 
 	return TripResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Variant:    variant,
