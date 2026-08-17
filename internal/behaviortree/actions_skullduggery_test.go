@@ -39,6 +39,8 @@ func TestActTrySneak_SuccessWhenNoObservers(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
+	mob.Character.StaminaMax.Value = 100
+	mob.Character.Stamina = 100
 	mob.Character.Stats.Dexterity.ValueAdj = 200 // very high sneak score
 	mob.Character.Aggro = nil                    // not in combat
 
@@ -49,6 +51,9 @@ func TestActTrySneak_SuccessWhenNoObservers(t *testing.T) {
 	ctx := &EvalContext{InstanceId: 105, RoomId: 1}
 	if r := actTrySneak(map[string]any{}, ctx); r != Success {
 		t.Errorf("expected Success for mob alone in room, got %v", r)
+	}
+	if mob.Character.Stamina >= 100 {
+		t.Errorf("expected successful sneak to pay stamina, still have %d", mob.Character.Stamina)
 	}
 	// Note: mob.AddBuff enqueues an event rather than applying synchronously,
 	// so HasBuffFlag is not reliable here without an event-loop tick.
@@ -69,19 +74,20 @@ func TestActTrySneak_AlreadyHiddenReturnsSuccess(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
+	mob.Character.Stamina = 0
 	mob.Character.Aggro = nil
 
 	room := rooms.LoadRoom(1)
 	room.AddMob(105)
 
-	// Apply hidden buff directly.
-	if err := mob.Character.AddBuff(9, false); err != nil {
-		t.Fatalf("AddBuff(9) failed: %v", err)
-	}
+	grantHiddenBuff(t, &mob.Character)
 
 	ctx := &EvalContext{InstanceId: 105, RoomId: 1}
 	if r := actTrySneak(map[string]any{}, ctx); r != Success {
 		t.Errorf("expected Success when already hidden, got %v", r)
+	}
+	if mob.Character.Stamina != 0 {
+		t.Errorf("already-hidden sneak must bypass admission, stamina=%d", mob.Character.Stamina)
 	}
 }
 

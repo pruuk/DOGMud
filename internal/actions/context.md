@@ -204,19 +204,40 @@ Computes a power-ratio assessment of `target` from `actor`'s perspective.
 
 **Function:** `Sneak(actor) SneakResult`
 
-Applies the Hidden buff (ID 9) to the actor after an opposed roll against
-all observers in the room.
+Attempts to transition the actor from Visible through Concealing to Hidden
+after an opposed roll against every eligible observer in the room. A player
+actor excludes themself and party members; a mob excludes itself.
 
-- **Roll:** `actor Perception + Stealth` vs `each observer's Dexterity +
-  Skullduggery`.
-- **Success:** Actor gains the Hidden buff; returns `SneakResult.Success =
-  true`.
-- **Failure:** Actor fails to sneak; returns `Success = false`. (No "you
-  were seen" message — the stealth fails silently.)
-- **Progression:** Triggers `actor.OnStatUse("perception")` and
-  `actor.OnSkillUse("stealth")`.
-- **Cooldown:** Shares the `skullduggery` cooldown key (10 rounds, config:
-  `SkullduggeryActionCooldown`).
+- **Readiness and admission:** Already-Hidden, combat, activity, awareness,
+  and room checks are read-only and run before cost admission. A valid attempt
+  commits `ActionSneak` against Stamina using `SneakBaseStaminaCost`,
+  Skullduggery's inverse-skill multiplier, physical encumbrance, and
+  full-or-refuse policy. Only a paid admission may call
+  `TransitionToConcealing` or roll observers.
+- **Structured result:** `SneakResult.Cost` is the
+  `characters.CostCommitResult` from admission. `CostRefused` means no
+  awareness, cooldown, round, contest, or progression mutation occurred.
+  `AlreadyHidden` and `InCombat` are pre-admission outcomes and therefore have
+  a zero-value cost result.
+- **Roll:** The sneaker uses effective Dexterity plus the Skullduggery skill
+  multiplier and stealth bonuses, modified by light conditions per observer.
+  Each observer uses effective Perception plus the Search skill multiplier.
+  Resolution flows through `combat.RunContest`.
+- **Success/failure:** Success resolves Concealing to Hidden, queues the Hidden
+  buff mirror, sets the `sneaking` misc key, and returns `Success`. The first
+  observer who wins resolves the actor back to Visible and populates
+  `SpottedByName`. `RollHappened` distinguishes a contested attempt from an
+  empty-room success.
+- **Player wrapper ownership:** The user command owns the skill gate, busy and
+  prior-failure-cooldown messages, stamina-refusal text, and player-facing
+  success/failure text. It checks the prior failure cooldown with read-only
+  `CooldownReady`; only a spotted paid attempt may apply
+  `SneakFailCooldown`, and an absent/zero value remains disabled. Player
+  Skullduggery progression runs only when `RollHappened` is true and only after
+  paid resolution.
+- **Mob wrapper ownership:** The mob command renders no refusal text and has no
+  player failure cooldown. It returns immediately on `CostRefused`; only a
+  successful paid attempt calls `OnSkillUse("skullduggery", 0)`.
 
 ### Steal
 
