@@ -24,9 +24,12 @@ references relevant to the task instead of loading every historical plan.
   assumptions, task ordering, test commands, scope boundaries, and spec
   coverage. Resolve every valid Critical and Important finding in the plan, or
   bring a disputed finding to the user explicitly, before offering or starting
-  execution. A planner self-review does not satisfy this gate. If subagents are
-  unavailable, stop and disclose that the gate has not run rather than calling
-  the plan ready.
+  execution. After review closes, append a brief `## Plan changelog` at the end
+  of the plan recording the original plan, the review-driven material changes,
+  and the final reviewer verdict. Keep it concise; it is an audit trail, not a
+  copy of the full review. A planner self-review does not satisfy this gate. If
+  subagents are unavailable, stop and disclose that the gate has not run rather
+  than calling the plan ready.
 - Do not treat an existing plan as proof that its assumptions still match the
   repository. Verify symbols, config values, and shipped behavior first.
 - Delegate only when the user, an applicable skill, or these instructions call

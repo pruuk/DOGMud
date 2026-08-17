@@ -1246,3 +1246,14 @@ Do not claim completion until the final command outputs and playtest transcript 
 - Helpfiles, context, config comments, patch notes, roadmap, and backlog follow-ups: Task 13.
 - Model evidence, recurrence guards, clean boot, and adversarial in-game review: Tasks 1 and 14.
 - Out-of-scope protections for surprise attack, mutation cleanup, boss drain, aliases, U9 progression, and broad messaging unification: Global Constraints plus Tasks 4 and 13.
+
+---
+
+## Plan changelog
+
+- **2026-08-17 — Original:** Defined the 14-task U8 quote/commit, action-admission,
+  skill-stripping, narration, documentation, and validation implementation.
+- **2026-08-17 — Adversarial review:** Made request defaults and task checkpoints
+  compile-safe; made balance selection deterministic; corrected action ordering,
+  modifier ownership, narration owners/loaders, test coverage, help scope, and
+  staging safety. Final independent verdict: **Ready to execute: Yes**.
