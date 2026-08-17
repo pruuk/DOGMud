@@ -271,6 +271,56 @@ func TestFire_CrossRoomMob(t *testing.T) {
 	assert.False(t, char.Equipment.Weapon.Loaded, "weapon must be unloaded after firing")
 }
 
+// TestFire_UnseenTargetIsRejectedBeforeAdmission guards the target-visibility
+// gate on both supported lines of fire. A hidden occupant remains present in
+// Room.FindByName, so name resolution alone is not enough: the shot must be
+// refused before stamina, aggro, ammunition, health, or round state changes.
+func TestFire_UnseenTargetIsRejectedBeforeAdmission(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		defenderRoomId int
+		rest           string
+		hideTarget     bool
+		blindShooter   bool
+	}{
+		{name: "same room hidden target", defenderRoomId: 1, rest: "skeleton", hideTarget: true},
+		{name: "cross room hidden target", defenderRoomId: 2, rest: "skeleton north", hideTarget: true},
+		{name: "same room blinded shooter", defenderRoomId: 1, rest: "skeleton", blindShooter: true},
+		{name: "cross room blinded shooter", defenderRoomId: 2, rest: "skeleton north", blindShooter: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, cleanup := seedFireMobInRoom(t, tc.defenderRoomId, 1)
+			defer cleanup()
+
+			target := mobs.GetInstance(500)
+			require.NotNil(t, target)
+			if tc.hideTarget {
+				addHiddenBuff(&target.Character)
+			}
+
+			char := fireAttacker()
+			char.Stamina = 10
+			char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
+			if tc.blindShooter {
+				char.AddCondition(characters.ConditionBlinded, 3, 1, "test")
+			}
+			actor := newStubActor(char, rooms.LoadRoom(1))
+			healthBefore := target.Character.Health
+
+			res := ExecuteFire(actor, tc.rest)
+
+			require.True(t, res.NoTarget)
+			assert.False(t, res.Executed)
+			assert.Equal(t, characters.CostCommitResult{}, res.Cost)
+			assert.Equal(t, 10, char.Stamina)
+			assert.True(t, char.Equipment.Weapon.Loaded)
+			assert.Nil(t, char.Aggro)
+			assert.Equal(t, healthBefore, target.Character.Health)
+			assert.Equal(t, 0, char.Cooldowns["special-move"])
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // 6. Fire does NOT consume the special-move cooldown
 // ---------------------------------------------------------------------------
@@ -412,6 +462,11 @@ func TestFireAdmissionOrdering(t *testing.T) {
 
 	admit := admissionCallPositions(t, fset, body, "costs.ActionShoot", "ShootBaseStaminaCost")
 	require.Len(t, admit, 1)
+	roomVisibility := exactCallPositions(t, fset, body,
+		"messaging.CanSeeClearly(char, targetRoom)", false)
+	hiddenTarget := exactCallPositions(t, fset, body, "defChar.IsHidden()", false)
+	require.Len(t, roomVisibility, 1)
+	require.Len(t, hiddenTarget, 1)
 	resolve := exactCallPositions(t, fset, body, "combat.ExecuteSkillMove", true)
 	round := exactCallPositions(t, fset, body, "RecordAndWait", true)
 	require.Len(t, resolve, 1)
@@ -440,6 +495,8 @@ func TestFireAdmissionOrdering(t *testing.T) {
 	})
 	require.Len(t, unloads, 1)
 	assert.Empty(t, cooldownCalls, "shoot must neither query nor mutate any cooldown")
+	assert.Less(t, int(roomVisibility[0]), int(admit[0]))
+	assert.Less(t, int(hiddenTarget[0]), int(admit[0]))
 	assert.Less(t, int(admit[0]), int(unloads[0]))
 	assert.Less(t, int(unloads[0]), int(resolve[0]))
 	assert.Less(t, int(admit[0]), int(round[0]))

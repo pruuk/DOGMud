@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -196,6 +197,15 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		}
 		result.TargetName = u.Character.Name
 		defChar = u.Character
+	}
+
+	// FindByName deliberately includes every occupant. Apply the same
+	// actor-aware sight query used by combat rendering, plus the target's
+	// canonical hidden state, before admission. An unseen named occupant is not
+	// a valid line of fire and must not cost stamina or mutate combat state.
+	if !messaging.CanSeeClearly(char, targetRoom) || defChar.IsHidden() {
+		result.NoTarget = true
+		return result
 	}
 
 	cfg := configs.GetBalanceConfig()

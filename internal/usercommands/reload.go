@@ -17,6 +17,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// executeReloadAction is the player-wrapper action seam. Production keeps the
+// shared action directly; tests can deterministically invalidate secondary
+// state during admission while still exercising this real wrapper end to end.
+var executeReloadAction = actions.ExecuteReload
+
 /*
 * Role Permissions:
 * reload <items|biomes|translations|mapcache>   (Admin — data-file reload)
@@ -60,7 +65,7 @@ func Reload(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	// Player-facing ranged-weapon reload.
-	res := actions.ExecuteReload(&actions.UserActor{User: user, Room: room})
+	res := executeReloadAction(&actions.UserActor{User: user, Room: room})
 	if res.Cost.Status == characters.CostRefused {
 		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
 		return true, nil
@@ -88,6 +93,13 @@ func Reload(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	case res.OnCooldown:
 		user.SendText(messaging.CategorySystem, "You need a moment before you can reload.")
+		return true, nil
+	}
+	if !res.Loaded {
+		// Admission may have been paid just before synchronous equipment,
+		// ammunition, or cooldown state went stale. The action preserves that
+		// single payment but performs no reload; keep the wrapper equally silent
+		// and do not publish success or notify quests.
 		return true, nil
 	}
 

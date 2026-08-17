@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -628,6 +629,130 @@ func TestReloadRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 			assert.Equal(t, 20, mob.Character.Items[1].Uses)
 			assert.Equal(t, characters.Cooldowns{"special-move": -2, "other": 7}, mob.Character.Cooldowns)
 			assert.Empty(t, events.DrainQueuedMessagesForTest(target.UserId), "mob refusal must stay silent")
+		})
+	}
+}
+
+type staleReloadPlayerActor struct {
+	actions.Actor
+	characterCalls int
+	onAdmission    func(*characters.Character)
+}
+
+func (a *staleReloadPlayerActor) GetCharacter() *characters.Character {
+	a.characterCalls++
+	char := a.Actor.GetCharacter()
+	if a.characterCalls == 3 && a.onAdmission != nil {
+		a.onAdmission(char)
+	}
+	return char
+}
+
+// TestReloadPaidStalePlayerWrapperHasNoSuccessSideEffects drives the real
+// player command wrapper through each paid admission-time invalidation. The
+// paid cost remains, but a stale action must never be rendered or published as
+// a successful reload and must never advance a reload-gated quest.
+func TestReloadPaidStalePlayerWrapperHasNoSuccessSideEffects(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		mutate   func(*characters.Character)
+		assertNo func(*testing.T, *characters.Character)
+	}{
+		{
+			name: "weapon changed",
+			mutate: func(char *characters.Character) {
+				replacement := char.Equipment.Weapon
+				replacement.ItemId++
+				spec := *replacement.Spec
+				spec.ItemId = replacement.ItemId
+				replacement.Spec = &spec
+				char.Equipment.Weapon = replacement
+			},
+			assertNo: func(t *testing.T, char *characters.Character) {
+				assert.False(t, char.Equipment.Weapon.Loaded)
+				assert.Equal(t, 20, char.Items[1].Uses)
+				assert.Zero(t, char.Cooldowns["special-move"])
+			},
+		},
+		{
+			name: "ammunition disappeared",
+			mutate: func(char *characters.Character) {
+				char.Items = char.Items[:1]
+			},
+			assertNo: func(t *testing.T, char *characters.Character) {
+				assert.False(t, char.Equipment.Weapon.Loaded)
+				require.Len(t, char.Items, 1)
+				assert.Equal(t, 70003, char.Items[0].ItemId)
+				assert.Zero(t, char.Cooldowns["special-move"])
+			},
+		},
+		{
+			name: "cooldown became busy",
+			mutate: func(char *characters.Character) {
+				char.Cooldowns["special-move"] = 3
+			},
+			assertNo: func(t *testing.T, char *characters.Character) {
+				assert.False(t, char.Equipment.Weapon.Loaded)
+				assert.Equal(t, 20, char.Items[1].Uses)
+				assert.Equal(t, 3, char.Cooldowns["special-move"])
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			cleanupQuests := questengine.ResetEngineForTest()
+			defer cleanupQuests()
+			pinRangedCostEvidence(t)
+
+			user, room := getTestUserAndRoom(t)
+			prepareRangedCostCycle(user.Character, false, 50)
+			observer := users.GetByUserId(2)
+			require.NotNil(t, observer)
+
+			const questFlag = "99001-reloaded"
+			questengine.GetEngine().RegisterQuest(&questengine.QuestDef{
+				QuestId: 99001,
+				Name:    "Stale Reload Wrapper Test",
+				Steps:   []questengine.QuestStep{{Id: "start"}},
+				Flags: []questengine.QuestFlagDef{{
+					Key: "reloaded", Values: []string{"yes"},
+				}},
+				Triggers: []questengine.TriggerDef{{
+					Event:   "command",
+					Command: "reload",
+					Actions: []questengine.ActionDef{{SetFlag: &questengine.QuestFlagAction{
+						Key: questFlag, Value: "yes",
+					}}},
+				}},
+			})
+
+			originalExecute := executeReloadAction
+			executeReloadAction = func(actor actions.Actor) actions.ReloadResult {
+				return actions.ExecuteReload(&staleReloadPlayerActor{
+					Actor:       actor,
+					onAdmission: tc.mutate,
+				})
+			}
+			t.Cleanup(func() { executeReloadAction = originalExecute })
+
+			events.DrainQueuedMessagesForTest(user.UserId)
+			events.DrainQueuedMessagesForTest(observer.UserId)
+			handled, err := Reload("", user, room, 0)
+			require.True(t, handled)
+			require.NoError(t, err)
+
+			assert.Equal(t, 49, user.Character.Stamina,
+				"the one already-paid admission remains charged")
+			tc.assertNo(t, user.Character)
+			assert.NotContains(t,
+				strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n"),
+				"You ready your")
+			assert.NotContains(t,
+				strings.Join(events.DrainQueuedMessagesForTest(observer.UserId), "\n"),
+				"readies their")
+			assert.Empty(t, user.Character.GetQuestFlag(questFlag),
+				"a paid stale reload must not advance the reload quest")
 		})
 	}
 }
