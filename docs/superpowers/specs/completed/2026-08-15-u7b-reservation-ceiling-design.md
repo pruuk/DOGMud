@@ -3,7 +3,7 @@
 **Created:** 2026-08-15
 **Slice:** U7b of the unified-contest arc. Runs immediately after U7
 (merged, PR #48, `1f6251fb6`) and **must precede U8**.
-**Roadmap:** [`UNIFIED_RESOLUTION_ROADMAP.md`](../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md), section "U7b"
+**Roadmap:** [`UNIFIED_RESOLUTION_ROADMAP.md`](../../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md), section "U7b"
 **Research inputs:** owner decisions 2026-08-15; two research passes recorded in
 this document's Evidence section.
 

@@ -398,8 +398,8 @@ Goal→profile binding and mudagent remain 0.3c.
 `feature/stage-0.3b-synthetic-playtest-profiles-v2` — six templates,
 `internal/playtestprofiles` materializer, `main.go` boot hook, playtestenv
 manifest/overrides/`Artifacts.Creds`, runner `Dockerfile` COPY. Spec/plan:
-`docs/superpowers/specs/2026-08-08-synthetic-playtest-profiles-design.md`,
-`docs/superpowers/plans/2026-08-08-synthetic-playtest-profiles.md`.
+`docs/superpowers/specs/completed/2026-08-08-synthetic-playtest-profiles-design.md`,
+`docs/superpowers/plans/completed/2026-08-08-synthetic-playtest-profiles.md`.
 Evidence: package unit tests green; Windows Docker
 `TestDockerIntegration/profiles_*` PASS (fresh+creds+AI login,
 veteran+heal overlay, bad room fail, empty creation-flow). Adversarial
@@ -421,7 +421,7 @@ report (partial findings + cleanup outcome), never a false success.
 **Boundary:** Explicit user requests and existing SOP-required adversarial
 playtests may trigger the command automatically. The command accepts no
 production or remote target. Design:
-`docs/superpowers/specs/2026-08-08-single-agent-ephemeral-playtests-design.md`.
+`docs/superpowers/specs/completed/2026-08-08-single-agent-ephemeral-playtests-design.md`.
 
 **Status (2026-08-08):** Done on
 `feature/stage-0.3c-single-agent-ephemeral-playtests`. Delivered
@@ -444,7 +444,7 @@ per-actor token/turn limits remain soft guidelines. When an actor stops early,
 an explicit `on_actor_stop` policy (default **continue**) preserves other
 actors' evidence and still guarantees environment cleanup. Non-interacting
 parallel work stays multiple 0.3c runs. Design:
-`docs/superpowers/specs/2026-08-08-multi-agent-ephemeral-scenarios-design.md`.
+`docs/superpowers/specs/completed/2026-08-08-multi-agent-ephemeral-scenarios-design.md`.
 
 **Status: Done (2026-08-08).** Evidence: `playtestrun scenario` +
 `ParseScenario` / `RunScenario`; prod-identity denylist + `ForbiddenIdentity`;
@@ -1194,7 +1194,7 @@ predetermined fixes. Decompose this XL chunk before implementation.
 **Decomposed 2026-08-10** into 3.6b-1 (amortised commit), 3.6b-2 (dirty-set
 write-behind) and 3.6b-3 (transactional value transfers, conditional). Design:
 `docs/superpowers/specs/2026-08-10-autosave-async-writes-design.md`. Plan:
-`docs/superpowers/plans/2026-08-10-autosave-amortised-commit-plan.md`.
+`docs/superpowers/plans/completed/2026-08-10-autosave-amortised-commit-plan.md`.
 
 ##### 3.6b-1 — Amortised commit: **DONE 2026-08-10**
 
