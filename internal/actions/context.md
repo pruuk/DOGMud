@@ -37,8 +37,8 @@ type Actor interface {
 	GetUserId() int                 // 0 for mobs
 	GetMobInstanceId() int          // 0 for players
 	AddBuff(buffId int, source string)
-	OnStatUse(stat string)
-	OnSkillUse(skill string)
+	OnStatUse(stat string) bool
+	OnSkillUse(skill string) bool
 	OnCriticalSuccess(skill string)
 	OnCriticalFailure(skill string)
 }
@@ -51,13 +51,15 @@ single-unit request, then delegates the full-or-refuse decision, pool update,
 and fractional carry to `Character.QuoteActionCost` and `Character.CommitCost`.
 It performs no direct `ApplyCost*` call and emits no private text. Later U8
 shared action results carry the returned `CostCommitResult`; user wrappers can
-render a refused status while equivalent mob wrappers stay silent.
+render a refused status through `CostRefusalText`, while equivalent mob wrappers
+stay silent.
 
-- **UserActor** (`actor_user.go`): wraps a `*users.User`, sends text via
+- **UserActor** (`actor_user.go`): wraps a `*users.UserRecord`, sends text via
   `user.SendText()`, skill progression goes through `user.Character.OnSkillUse()`.
-- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`, sends text via room's
-  `BroadcastSub()` (mob has no direct text sender), skill progression goes through
-  `mob.Character.OnSkillUse()`.
+- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`; `SendText` is a no-op
+  because a mob has no private player connection. `SendRoomCommunication` is
+  the NPC room-broadcast path, routed through the room's visual messaging
+  pipeline. Skill progression goes through `mob.Character.OnSkillUse()`.
 
 ---
 

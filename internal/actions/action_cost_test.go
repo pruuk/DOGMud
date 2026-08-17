@@ -132,6 +132,18 @@ func TestCostRefusalText_UsesPoolAwareProseOnlyForRefusal(t *testing.T) {
 	}
 }
 
+// TestCostRefusalText_ExportsTheWrapperSeam catches an exported wrapper API
+// that bypasses the pool-aware private helper or returns a different result.
+func TestCostRefusalText_ExportsTheWrapperSeam(t *testing.T) {
+	for _, result := range []characters.CostCommitResult{
+		{Status: characters.CostRefused, Pool: characters.PoolStamina},
+		{Status: characters.CostRefused, Pool: characters.PoolConviction},
+		{Status: characters.CostPaid, Pool: characters.PoolStamina},
+	} {
+		require.Equal(t, costRefusalText(result), CostRefusalText(result))
+	}
+}
+
 // TestAdmitFullCost_DoesNotEmitPrivateText catches shared admission code that
 // renders a player message itself instead of leaving that decision to the user
 // wrapper. The real UserActor routes any such text into the event queue.

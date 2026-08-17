@@ -36,3 +36,9 @@ func costRefusalText(result characters.CostCommitResult) string {
 		return ""
 	}
 }
+
+// CostRefusalText supplies the pool-aware refusal prose that player-command
+// wrappers render for a refused voluntary action. Mob wrappers remain silent.
+func CostRefusalText(result characters.CostCommitResult) string {
+	return costRefusalText(result)
+}
