@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -14,14 +15,18 @@ import (
 )
 
 func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "taunt",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
-	actor := &actions.UserActor{User: user, Room: room}
 	result := actions.ExecuteTaunt(actor)
+	if result.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		return true, nil
+	}
 
 	if result.Crafting {
 		// Safety net — should have been caught by the pre-reject above.

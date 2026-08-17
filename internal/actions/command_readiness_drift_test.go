@@ -262,6 +262,208 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 	}
 }
 
+// TestTauntRallyWarcryAdmissionOrdering guards the social-action mutation
+// boundary. It requires exact read-only validity/cooldown probes before the
+// Conviction admission and exact reveal/cooldown/effect/progression calls only
+// after admission. Taunt additionally resolves through the staged target seam,
+// revalidates after payment, and commits engagement only after cooldown
+// consumption.
+func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	actionsDir := filepath.Dir(thisFile)
+
+	type rhetoricOrderGuard struct {
+		file       string
+		function   string
+		resultType string
+		action     string
+		guards     []specialMoveEarlyReturn
+		effect     string
+	}
+	guards := []rhetoricOrderGuard{
+		{
+			file: "combat_taunt.go", function: "ExecuteTaunt", resultType: "TauntResult", action: "costs.ActionTaunt",
+			guards: []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}},
+			effect: "combat.RunContest",
+		},
+		{
+			file: "combat_rally.go", function: "ExecuteRally", resultType: "RallyResult", action: "costs.ActionRally",
+			guards: []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"char.HasBuff(80)", "AlreadyActive"}},
+			effect: "ApplyRallyEffect",
+		},
+		{
+			file: "combat_warcry.go", function: "ExecuteWarcry", resultType: "WarcryResult", action: "costs.ActionWarcry",
+			guards: []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"char.HasBuff(79)", "AlreadyActive"}},
+			effect: "ApplyWarcryEffect",
+		},
+	}
+
+	for _, guard := range guards {
+		t.Run(guard.function, func(t *testing.T) {
+			fset := token.NewFileSet()
+			parsed, err := parser.ParseFile(fset, filepath.Join(actionsDir, guard.file), nil, 0)
+			require.NoError(t, err)
+			var fn *ast.FuncDecl
+			for _, decl := range parsed.Decls {
+				candidate, ok := decl.(*ast.FuncDecl)
+				if ok && candidate.Name.Name == guard.function {
+					fn = candidate
+					break
+				}
+			}
+			require.NotNil(t, fn)
+
+			ready := exactCallPositions(t, fset, fn.Body, `char.CooldownReady("special-move")`, false)
+			admit := exactCallPositions(t, fset, fn.Body, "admitFullCost", true)
+			ast.Inspect(fn.Body, func(node ast.Node) bool {
+				call, ok := node.(*ast.CallExpr)
+				if !ok || formattedASTNode(t, fset, call.Fun) != "admitFullCost" {
+					return true
+				}
+				require.Len(t, call.Args, 4)
+				require.Equal(t, "actor", formattedASTNode(t, fset, call.Args[0]))
+				require.Equal(t, guard.action, formattedASTNode(t, fset, call.Args[1]))
+				require.Equal(t, "characters.PoolConviction", formattedASTNode(t, fset, call.Args[2]))
+				require.Equal(t, "float64(cfg.RhetoricActionBaseConvictionCost)", formattedASTNode(t, fset, call.Args[3]))
+				return false
+			})
+			consume := exactCallPositions(t, fset, fn.Body,
+				`char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, false)
+			reveal := exactCallPositions(t, fset, fn.Body, "char.Awareness.TransitionToRevealing", true)
+			effects := exactCallPositions(t, fset, fn.Body, guard.effect, true)
+			progression := exactCallPositions(t, fset, fn.Body, "actor.OnSkillUse", true)
+			if guard.function != "ExecuteTaunt" {
+				progression = exactCallPositions(t, fset, fn.Body, "awardRhetoricUse", true)
+			}
+			require.Len(t, ready, 1)
+			require.Len(t, admit, 1)
+			require.Len(t, consume, 1)
+			require.Len(t, reveal, 1)
+			require.NotEmpty(t, effects)
+			require.NotEmpty(t, progression)
+			require.Less(t, int(ready[0]), int(admit[0]))
+			require.Less(t, int(admit[0]), int(consume[0]))
+			require.Less(t, int(consume[0]), int(reveal[0]))
+			for _, pos := range effects {
+				require.Less(t, int(consume[0]), int(pos))
+			}
+			for _, pos := range progression {
+				require.Less(t, int(consume[0]), int(pos))
+			}
+
+			for _, expected := range guard.guards {
+				found := false
+				for _, stmt := range fn.Body.List {
+					ifStmt, ok := stmt.(*ast.IfStmt)
+					if !ok || formattedASTNode(t, fset, ifStmt.Cond) != expected.condition || len(ifStmt.Body.List) != 1 {
+						continue
+					}
+					if compositeReturnHasTrueField(ifStmt.Body.List[0], guard.resultType, expected.field) {
+						found = found || ifStmt.Pos() < ready[0]
+					}
+				}
+				require.True(t, found, "%s must keep exact read-only guard %s", guard.function, expected.condition)
+			}
+
+			roundPositions := []token.Pos{}
+			ast.Inspect(fn.Body, func(node ast.Node) bool {
+				assign, ok := node.(*ast.AssignStmt)
+				if ok && assign.Tok == token.ASSIGN && len(assign.Lhs) == 1 && len(assign.Rhs) == 1 &&
+					formattedASTNode(t, fset, assign.Lhs[0]) == "char.Aggro.RoundsWaiting" &&
+					formattedASTNode(t, fset, assign.Rhs[0]) == "1" {
+					roundPositions = append(roundPositions, assign.Pos())
+				}
+				return true
+			})
+			require.NotEmpty(t, roundPositions)
+			for _, pos := range roundPositions {
+				require.Less(t, int(consume[0]), int(pos))
+			}
+
+			if guard.function == "ExecuteTaunt" {
+				resolve := exactCallPositions(t, fset, fn.Body, "resolveActionTarget(actor, char)", false)
+				commit := exactCallPositions(t, fset, fn.Body, "commitMeleeEngagement(actor)", false)
+				require.Len(t, resolve, 2, "taunt must validate before admission and revalidate after payment")
+				require.Len(t, commit, 1)
+				require.Less(t, int(resolve[0]), int(ready[0]))
+				require.Less(t, int(admit[0]), int(resolve[1]))
+				require.Less(t, int(resolve[1]), int(consume[0]))
+				require.Less(t, int(consume[0]), int(commit[0]))
+				for _, pos := range effects {
+					require.Less(t, int(commit[0]), int(pos))
+				}
+			}
+		})
+	}
+}
+
+// TestTauntRallyWarcryWrapperAdmission proves the exact public/private split:
+// players render the shared Conviction refusal and return, while mob wrappers
+// compare the same structured result and return silently. Taunt must enter the
+// existing staged target seam instead of eager acquisition.
+func TestTauntRallyWarcryWrapperAdmission(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
+
+	type wrapperGuard struct {
+		dir, file, function, execute string
+		player, staged               bool
+	}
+	wrappers := []wrapperGuard{
+		{"usercommands", "taunt", "Taunt", "actions.ExecuteTaunt(actor)", true, true},
+		{"usercommands", "rally", "Rally", "actions.ExecuteRally(&actions.UserActor{User: user, Room: room})", true, false},
+		{"usercommands", "warcry", "Warcry", "actions.ExecuteWarcry(&actions.UserActor{User: user, Room: room})", true, false},
+		{"mobcommands", "taunt", "Taunt", "actions.ExecuteTaunt(actor)", false, false},
+		{"mobcommands", "howl", "Howl", "actions.ExecuteTaunt(actor)", false, false},
+		{"mobcommands", "rally", "Rally", "actions.ExecuteRally(&actions.MobActor{Mob: mob, Room: room})", false, false},
+		{"mobcommands", "warcry", "Warcry", "actions.ExecuteWarcry(&actions.MobActor{Mob: mob, Room: room})", false, false},
+	}
+
+	for _, guard := range wrappers {
+		t.Run(guard.dir+"/"+guard.function, func(t *testing.T) {
+			fset := token.NewFileSet()
+			parsed, err := parser.ParseFile(fset, filepath.Join(repoRoot, "internal", guard.dir, guard.file+".go"), nil, 0)
+			require.NoError(t, err)
+			var fn *ast.FuncDecl
+			for _, decl := range parsed.Decls {
+				candidate, ok := decl.(*ast.FuncDecl)
+				if ok && candidate.Name.Name == guard.function {
+					fn = candidate
+					break
+				}
+			}
+			require.NotNil(t, fn)
+			require.Len(t, exactCallPositions(t, fset, fn.Body, guard.execute, false), 1)
+
+			var refusal *ast.IfStmt
+			for _, stmt := range fn.Body.List {
+				ifStmt, ok := stmt.(*ast.IfStmt)
+				if ok && formattedASTNode(t, fset, ifStmt.Cond) == "result.Cost.Status == characters.CostRefused" {
+					refusal = ifStmt
+					break
+				}
+			}
+			require.NotNil(t, refusal)
+			if guard.player {
+				require.Len(t, refusal.Body.List, 2)
+				require.True(t, nodeHasCall(refusal.Body.List[0], "SendText"))
+				require.True(t, nodeHasCall(refusal.Body.List[0], "CostRefusalText"))
+				require.True(t, handledReturn(refusal.Body.List[1]))
+			} else {
+				require.Len(t, refusal.Body.List, 1)
+				require.True(t, handledReturn(refusal.Body.List[0]))
+				require.False(t, nodeHasCall(fn.Body, "CostRefusalText"))
+			}
+			if guard.staged {
+				require.Len(t, exactCallPositions(t, fset, fn.Body, "stageSpecialMoveTarget", true), 1)
+				require.False(t, nodeHasCall(fn.Body, "AcquireMeleeTarget"))
+			}
+		})
+	}
+}
+
 func handledReturn(stmt ast.Stmt) bool {
 	ret, ok := stmt.(*ast.ReturnStmt)
 	if !ok || len(ret.Results) != 2 {
@@ -518,6 +720,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"taunt_cooldown", "taunt",
 			func(m *mobs.Mob) {
 				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 242)
 			},
 			false, "OnCooldown"},
 		{"taunt_no_aggro", "taunt",
@@ -1089,7 +1292,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			// The mutate function may set up target mobs via
 			// mobs.SetInstanceForTest; we clean them all up here.
 			defer func() {
-				for id := 200; id <= 241; id++ {
+				for id := 200; id <= 242; id++ {
 					mobs.SetInstanceForTest(id, nil)
 				}
 			}()
@@ -1108,6 +1311,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			}
 
 			staminaBefore := mob.Character.Stamina
+			convictionBefore := mob.Character.Conviction
 			cooldownsBefore := maps.Clone(mob.Character.Cooldowns)
 			roundsBefore := 0
 			if mob.Character.Aggro != nil {
@@ -1123,6 +1327,17 @@ func TestCommandReadinessDrift(t *testing.T) {
 			if physicalSpecial[tc.cmd] {
 				assert.Equal(t, staminaBefore, mob.Character.Stamina,
 					"readiness rejection %q must precede cost admission", tc.name)
+				assert.Equal(t, cooldownsBefore, mob.Character.Cooldowns,
+					"readiness rejection %q must not consume or rewrite cooldown", tc.name)
+				if mob.Character.Aggro != nil {
+					assert.Equal(t, roundsBefore, mob.Character.Aggro.RoundsWaiting,
+						"readiness rejection %q must not consume a round", tc.name)
+				}
+			}
+			rhetoricAction := map[string]bool{"taunt": true, "rally": true, "warcry": true}
+			if rhetoricAction[tc.cmd] {
+				assert.Equal(t, convictionBefore, mob.Character.Conviction,
+					"readiness rejection %q must precede Conviction admission", tc.name)
 				assert.Equal(t, cooldownsBefore, mob.Character.Cooldowns,
 					"readiness rejection %q must not consume or rewrite cooldown", tc.name)
 				if mob.Character.Aggro != nil {

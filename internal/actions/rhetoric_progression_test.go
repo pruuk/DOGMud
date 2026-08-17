@@ -1,10 +1,20 @@
 package actions
 
 import (
+	"math/rand"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,6 +26,384 @@ type recordingActor struct {
 	Actor
 	char       *characters.Character
 	skillsUsed []string
+}
+
+type rhetoricActionOutcome struct {
+	cost          characters.CostCommitResult
+	executed      bool
+	onCooldown    bool
+	invalid       bool
+	selfBuffID    int
+	selfCondition characters.ConditionType
+}
+
+type rhetoricActionCase struct {
+	name       string
+	action     costs.Action
+	execute    func(Actor) rhetoricActionOutcome
+	invalidate func(*characters.Character)
+}
+
+var rhetoricTargetID = 9700
+
+func rhetoricActionCases() []rhetoricActionCase {
+	return []rhetoricActionCase{
+		{
+			name:   "taunt",
+			action: costs.ActionTaunt,
+			execute: func(actor Actor) rhetoricActionOutcome {
+				result := ExecuteTaunt(actor)
+				return rhetoricActionOutcome{cost: result.Cost, executed: result.Executed, onCooldown: result.OnCooldown, invalid: result.NoTarget}
+			},
+			invalidate: func(char *characters.Character) { char.EndAggro() },
+		},
+		{
+			name:   "rally",
+			action: costs.ActionRally,
+			execute: func(actor Actor) rhetoricActionOutcome {
+				result := ExecuteRally(actor)
+				return rhetoricActionOutcome{cost: result.Cost, executed: result.Executed, onCooldown: result.OnCooldown, invalid: result.AlreadyActive, selfBuffID: 80, selfCondition: characters.ConditionRally}
+			},
+			invalidate: func(char *characters.Character) { char.AddBuff(80, false) },
+		},
+		{
+			name:   "warcry",
+			action: costs.ActionWarcry,
+			execute: func(actor Actor) rhetoricActionOutcome {
+				result := ExecuteWarcry(actor)
+				return rhetoricActionOutcome{cost: result.Cost, executed: result.Executed, onCooldown: result.OnCooldown, invalid: result.AlreadyActive, selfBuffID: 79, selfCondition: characters.ConditionWarcry}
+			},
+			invalidate: func(char *characters.Character) { char.AddBuff(79, false) },
+		},
+	}
+}
+
+func newRhetoricActor(t *testing.T, player bool, conviction, rhetoric int) (*recordingActor, *characters.Character, *characters.Character) {
+	t.Helper()
+	rhetoricTargetID++
+
+	target := characters.New()
+	target.Name = "Rhetoric Target"
+	target.Conviction = 1_000_000
+	target.ConvictionMax.Base = 1_000_000
+	target.ConvictionMax.Recalculate()
+	target.Stats.Willpower.ValueAdj = 1_000_000
+	target.Buffs = buffs.New()
+	targetMob := &mobs.Mob{InstanceId: rhetoricTargetID, Character: *target}
+	targetMob.Character.MobInstanceId = targetMob.InstanceId
+	mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+	t.Cleanup(func() { mobs.SetInstanceForTest(targetMob.InstanceId, nil) })
+
+	char := characters.New()
+	char.Name = "Rhetoric Actor"
+	char.Conviction = conviction
+	char.ConvictionMax.Base = 100
+	char.ConvictionMax.Recalculate()
+	char.Stats.Charisma.ValueAdj = 1
+	char.Skills[string(skills.Rhetoric)] = rhetoric
+	char.Buffs = buffs.New()
+	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	room := &rooms.Room{RoomId: 1}
+
+	var base Actor
+	if player {
+		user := &users.UserRecord{UserId: rhetoricTargetID + 10_000, Character: char}
+		base = &UserActor{User: user, Room: room}
+	} else {
+		mob := &mobs.Mob{InstanceId: rhetoricTargetID + 20_000, Character: *char}
+		char = &mob.Character
+		base = &MobActor{Mob: mob, Room: room}
+	}
+	return &recordingActor{Actor: base, char: char}, char, &targetMob.Character
+}
+
+func hideRhetoricActor(t *testing.T, char *characters.Character) {
+	t.Helper()
+	char.Awareness = awareness.NewMachine()
+	reason := state.TransitionReason{Trigger: "rhetoric_admission_test"}
+	require.NoError(t, char.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+	char.Awareness.ResolveConcealment(true, reason)
+	require.Equal(t, awareness.Hidden, char.Awareness.State())
+}
+
+func assertRhetoricRefusalCarryPreserved(t *testing.T, actor Actor, char *characters.Character, action costs.Action) {
+	t.Helper()
+	char.Conviction = 100
+	base := float64(configs.GetBalanceConfig().RhetoricActionBaseConvictionCost)
+	first := admitFullCost(actor, action, characters.PoolConviction, base)
+	second := admitFullCost(actor, action, characters.PoolConviction, base)
+	require.Equal(t, 4, first.Charged)
+	require.Equal(t, 4, second.Charged, "refused quote must not bank fractional carry")
+}
+
+func TestTauntRallyWarcryRefusalIsAtomicForPlayerAndMob(t *testing.T) {
+	cleanup := seedBuffsForTest()
+	defer cleanup()
+
+	for _, tc := range rhetoricActionCases() {
+		for _, player := range []bool{true, false} {
+			kind := "mob"
+			if player {
+				kind = "player"
+			}
+			t.Run(tc.name+"/"+kind, func(t *testing.T) {
+				actor, char, target := newRhetoricActor(t, player, 0, 0)
+				hideRhetoricActor(t, char)
+				char.Cooldowns = characters.Cooldowns{"expired": -2, "other": 7}
+				cooldownsBefore := char.GetAllCooldowns()
+				target.Aggro = &characters.Aggro{UserId: 404, RoundsWaiting: 6}
+				targetAggroBefore := *target.Aggro
+				targetConviction := target.Conviction
+				targetBuffs := len(target.Buffs.GetBuffs())
+
+				result := tc.execute(actor)
+
+				require.False(t, result.executed)
+				require.Equal(t, characters.CostRefused, result.cost.Status)
+				require.Equal(t, characters.PoolConviction, result.cost.Pool)
+				require.Zero(t, result.cost.Charged)
+				require.Zero(t, char.Conviction)
+				require.Equal(t, awareness.Hidden, char.Awareness.State())
+				require.Equal(t, cooldownsBefore, char.GetAllCooldowns())
+				require.Zero(t, char.Aggro.RoundsWaiting)
+				require.Equal(t, targetConviction, target.Conviction)
+				require.Equal(t, targetAggroBefore, *target.Aggro)
+				require.Len(t, target.Buffs.GetBuffs(), targetBuffs)
+				require.Empty(t, actor.skillsUsed)
+				if result.selfBuffID != 0 {
+					require.False(t, char.HasBuff(result.selfBuffID))
+					require.False(t, char.HasCondition(result.selfCondition))
+				}
+				assertRhetoricRefusalCarryPreserved(t, actor, char, tc.action)
+			})
+		}
+	}
+}
+
+func TestTauntRallyWarcryReadOnlyGatesPreserveHiddenState(t *testing.T) {
+	cleanup := seedBuffsForTest()
+	defer cleanup()
+
+	for _, tc := range rhetoricActionCases() {
+		t.Run(tc.name+"/invalid", func(t *testing.T) {
+			actor, char, target := newRhetoricActor(t, false, 10, 0)
+			hideRhetoricActor(t, char)
+			tc.invalidate(char)
+			targetConviction := target.Conviction
+			result := tc.execute(actor)
+
+			require.True(t, result.invalid)
+			require.False(t, result.executed)
+			require.Equal(t, characters.CostNoCharge, result.cost.Status)
+			require.Equal(t, 10, char.Conviction)
+			require.Equal(t, awareness.Hidden, char.Awareness.State())
+			require.Empty(t, char.Cooldowns)
+			require.Equal(t, targetConviction, target.Conviction)
+			require.Empty(t, actor.skillsUsed)
+		})
+
+		t.Run(tc.name+"/cooldown", func(t *testing.T) {
+			actor, char, target := newRhetoricActor(t, false, 10, 0)
+			hideRhetoricActor(t, char)
+			char.Cooldowns = characters.Cooldowns{"special-move": 3, "other": 8}
+			before := char.GetAllCooldowns()
+			targetConviction := target.Conviction
+			result := tc.execute(actor)
+
+			require.True(t, result.onCooldown)
+			require.False(t, result.executed)
+			require.Equal(t, characters.CostNoCharge, result.cost.Status)
+			require.Equal(t, 10, char.Conviction)
+			require.Equal(t, awareness.Hidden, char.Awareness.State())
+			require.Equal(t, before, char.GetAllCooldowns())
+			require.Zero(t, char.Aggro.RoundsWaiting)
+			require.Equal(t, targetConviction, target.Conviction)
+			require.Empty(t, actor.skillsUsed)
+			if result.selfBuffID != 0 {
+				require.False(t, char.HasBuff(result.selfBuffID))
+				require.False(t, char.HasCondition(result.selfCondition))
+			}
+		})
+	}
+}
+
+func TestRallyWarcryPaidBuffsChargeOnceBeforeEffects(t *testing.T) {
+	cleanup := seedBuffsForTest()
+	defer cleanup()
+
+	for _, tc := range rhetoricActionCases()[1:] {
+		for _, player := range []bool{true, false} {
+			kind := "mob"
+			if player {
+				kind = "player"
+			}
+			t.Run(tc.name+"/"+kind, func(t *testing.T) {
+				actor, char, _ := newRhetoricActor(t, player, 10, 0)
+				hideRhetoricActor(t, char)
+
+				result := tc.execute(actor)
+
+				require.True(t, result.executed)
+				require.Equal(t, characters.CostPaid, result.cost.Status)
+				require.Equal(t, characters.PoolConviction, result.cost.Pool)
+				require.Equal(t, 4, result.cost.Charged)
+				require.Equal(t, 6, char.Conviction)
+				require.Equal(t, awareness.Visible, char.Awareness.State())
+				require.Greater(t, char.Cooldowns["special-move"], 0)
+				require.Equal(t, 1, char.Aggro.RoundsWaiting)
+				require.True(t, char.HasBuff(result.selfBuffID))
+				require.True(t, char.HasCondition(result.selfCondition))
+				require.Equal(t, []string{string(skills.Rhetoric)}, actor.skillsUsed)
+			})
+		}
+	}
+}
+
+func TestTauntAffordableMissPaysOnceAndConsumesNoisyAction(t *testing.T) {
+	pinTauntContestKnobs(t)
+
+	for seed := int64(1); seed <= 20; seed++ {
+		actor, char, target := newRhetoricActor(t, false, 10, 0)
+		hideRhetoricActor(t, char)
+		startTargetConviction := target.Conviction
+		rand.Seed(seed)
+		result := ExecuteTaunt(actor)
+		if result.Fumble || result.Hit {
+			continue
+		}
+
+		require.True(t, result.Executed)
+		require.Equal(t, characters.CostPaid, result.Cost.Status)
+		require.Equal(t, 4, result.Cost.Charged)
+		require.Equal(t, 6, char.Conviction)
+		require.Equal(t, startTargetConviction, target.Conviction)
+		require.Equal(t, awareness.Visible, char.Awareness.State())
+		require.Greater(t, char.Cooldowns["special-move"], 0)
+		require.Equal(t, 1, char.Aggro.RoundsWaiting)
+		require.Equal(t, []string{string(skills.Rhetoric)}, actor.skillsUsed)
+		return
+	}
+	t.Fatal("twenty overwhelming taunts produced no ordinary paid miss")
+}
+
+func TestTauntRefusalDoesNotCommitStagedAggression(t *testing.T) {
+	base, char, target := newRhetoricActor(t, true, 0, 0)
+	char.EndAggro()
+	target.EndAggro()
+	commits := 0
+	staged := &stagedMeleeActor{
+		Actor:  base,
+		target: AggroTarget{Char: target, Name: target.Name, MobInstanceId: target.MobInstanceId, Found: true},
+		commit: func() {
+			commits++
+			char.SetAggro(0, target.MobInstanceId, characters.DefaultAttack)
+			target.SetAggro(base.GetUserId(), 0, characters.DefaultAttack)
+		},
+	}
+
+	result := ExecuteTaunt(staged)
+
+	require.Equal(t, characters.CostRefused, result.Cost.Status)
+	require.Zero(t, commits)
+	require.Nil(t, char.Aggro)
+	require.Nil(t, target.Aggro)
+}
+
+type staleRhetoricTargetActor struct {
+	Actor
+	targetID       int
+	characterCalls int
+}
+
+func (a *staleRhetoricTargetActor) GetCharacter() *characters.Character {
+	a.characterCalls++
+	char := a.Actor.GetCharacter()
+	if a.characterCalls == 2 {
+		mobs.SetInstanceForTest(a.targetID, nil)
+	}
+	return char
+}
+
+func TestTauntPaidStaleTargetPreservesEffectsAndEngagement(t *testing.T) {
+	actor, char, target := newRhetoricActor(t, false, 10, 0)
+	hideRhetoricActor(t, char)
+	targetID := char.Aggro.MobInstanceId
+	target.Aggro = &characters.Aggro{UserId: 505, RoundsWaiting: 9}
+	targetAggro := *target.Aggro
+	targetConviction := target.Conviction
+	stale := &staleRhetoricTargetActor{Actor: actor, targetID: targetID}
+
+	result := ExecuteTaunt(stale)
+
+	require.True(t, result.NoTarget)
+	require.False(t, result.Executed)
+	require.Equal(t, characters.CostPaid, result.Cost.Status)
+	require.Equal(t, 4, result.Cost.Charged)
+	require.Equal(t, 6, char.Conviction)
+	require.Equal(t, awareness.Hidden, char.Awareness.State())
+	require.Empty(t, char.Cooldowns)
+	require.Zero(t, char.Aggro.RoundsWaiting)
+	require.Equal(t, targetConviction, target.Conviction)
+	require.Equal(t, targetAggro, *target.Aggro)
+	require.Empty(t, actor.skillsUsed)
+}
+
+func TestTauntRallyWarcryPaidStaleCooldownPreservesEffects(t *testing.T) {
+	cleanup := seedBuffsForTest()
+	defer cleanup()
+
+	for _, tc := range rhetoricActionCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			actor, char, target := newRhetoricActor(t, false, 10, 0)
+			hideRhetoricActor(t, char)
+			targetConviction := target.Conviction
+			stale := &staleCooldownActor{Actor: actor}
+
+			result := tc.execute(stale)
+
+			require.False(t, result.executed)
+			require.True(t, result.onCooldown)
+			require.Equal(t, characters.CostPaid, result.cost.Status)
+			require.Equal(t, 4, result.cost.Charged)
+			require.Equal(t, 6, char.Conviction)
+			require.Equal(t, awareness.Hidden, char.Awareness.State())
+			require.Equal(t, 3, char.Cooldowns["special-move"])
+			require.Zero(t, char.Aggro.RoundsWaiting)
+			require.Equal(t, targetConviction, target.Conviction)
+			require.Empty(t, actor.skillsUsed)
+			if result.selfBuffID != 0 {
+				require.False(t, char.HasBuff(result.selfBuffID))
+				require.False(t, char.HasCondition(result.selfCondition))
+			}
+		})
+	}
+}
+
+func TestTauntRallyWarcryQuotesUseSkillButIgnoreEncumbrance(t *testing.T) {
+	quote := func(t *testing.T, action costs.Action, rank int, laden bool) characters.CostCommitResult {
+		t.Helper()
+		char := characters.New()
+		char.Conviction = 100
+		char.ConvictionMax.Value = 100
+		char.Skills[string(skills.Rhetoric)] = rank
+		if laden {
+			char.Items = []items.Item{{ItemId: 9701, Spec: &items.ItemSpec{ItemId: 9701, Name: "rhetoric ballast", Weight: char.CarryCapacity()}}}
+		}
+		return char.CommitCost(char.QuoteActionCost(characters.ActionCostRequest{
+			Action: action, Pool: characters.PoolConviction, Base: 10, Modifier: 1, Units: 1,
+		}), characters.CostFullOrRefuse)
+	}
+
+	for _, action := range []costs.Action{costs.ActionTaunt, costs.ActionRally, costs.ActionWarcry} {
+		t.Run(string(action), func(t *testing.T) {
+			novice := quote(t, action, 0, false)
+			master := quote(t, action, 100, false)
+			laden := quote(t, action, 0, true)
+			require.Equal(t, 11, novice.Charged, "rank-zero literal quote")
+			require.Equal(t, 4, master.Charged, "rank-100 literal quote")
+			require.Equal(t, 11, laden.Charged, "nonphysical quote must ignore full encumbrance")
+		})
+	}
 }
 
 func (r *recordingActor) GetCharacter() *characters.Character { return r.char }
@@ -39,7 +427,9 @@ func TestRegression_WarcryRallyAwardRhetoric(t *testing.T) {
 			Name:  "Test Subject",
 			Aggro: &characters.Aggro{}, // non-nil Aggro => IsInCombat()
 		}
+		c.ConvictionMax.Base = 100
 		c.Validate()
+		c.Conviction = 100
 		return &recordingActor{char: c}
 	}
 

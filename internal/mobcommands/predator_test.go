@@ -1,6 +1,12 @@
 package mobcommands
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"math/rand"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -316,6 +322,68 @@ func TestHowl_InCombat(t *testing.T) {
 	}
 
 	mob.Character.Aggro = nil
+}
+
+// TestHowlAliasChargesOnlyThroughTaunt executes the real wrapper and guards
+// the alias boundary structurally. A second quote/commit in Howl would charge
+// eight or nine Conviction at rank zero instead of the one four-point taunt
+// admission asserted here.
+func TestHowlAliasChargesOnlyThroughTaunt(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+
+	mob, room := getTestMobAndRoom(t)
+	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.Stats.Charisma.ValueAdj = 100
+	mob.Character.ConvictionMax.Value = 50
+	mob.Character.Conviction = 50
+	mob.Character.Skills = map[string]int{"rhetoric": 0}
+	rand.Seed(1)
+
+	handled, err := Howl("", mob, room)
+	require.NoError(t, err)
+	require.True(t, handled)
+	require.Equal(t, 46, mob.Character.Conviction)
+	require.Greater(t, mob.Character.Cooldowns["special-move"], 0)
+	require.Equal(t, 1, mob.Character.Aggro.RoundsWaiting)
+
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	fset := token.NewFileSet()
+	parsed, err := parser.ParseFile(fset, filepath.Join(filepath.Dir(thisFile), "howl.go"), nil, 0)
+	require.NoError(t, err)
+	var howl *ast.FuncDecl
+	for _, decl := range parsed.Decls {
+		candidate, ok := decl.(*ast.FuncDecl)
+		if ok && candidate.Name.Name == "Howl" {
+			howl = candidate
+			break
+		}
+	}
+	require.NotNil(t, howl)
+	executeCalls, ownQuotes := 0, 0
+	ast.Inspect(howl.Body, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		switch fn := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			if fn.Sel.Name == "ExecuteTaunt" {
+				executeCalls++
+			}
+			if fn.Sel.Name == "QuoteActionCost" || fn.Sel.Name == "CommitCost" {
+				ownQuotes++
+			}
+		case *ast.Ident:
+			if fn.Name == "admitFullCost" {
+				ownQuotes++
+			}
+		}
+		return true
+	})
+	require.Equal(t, 1, executeCalls)
+	require.Zero(t, ownQuotes, "howl must not quote or commit apart from ExecuteTaunt")
 }
 
 // ─── Cooldown Interaction ───────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -14,6 +15,7 @@ import (
 
 // RallyResult reports the outcome of a rally cooldown+buff application.
 type RallyResult struct {
+	Cost          characters.CostCommitResult
 	Executed      bool    // true if the rally actually applied
 	OnCooldown    bool    // blocked by shared special-move cooldown
 	Crafting      bool    // blocked because the actor is mid-craft
@@ -29,14 +31,6 @@ type RallyResult struct {
 func ExecuteRally(actor Actor) RallyResult {
 	char := actor.GetCharacter()
 
-	// Rallying is a noisy action — reveal if hidden.
-	if char.IsHidden() {
-		char.Awareness.TransitionToRevealing(state.TransitionReason{
-			Trigger:  awareness.TriggerNoisyAction,
-			Metadata: map[string]any{"command": "rally"},
-		})
-	}
-
 	// IsActing applies universally — any active activity (cast/craft/salvage)
 	// blocks rally. Mobs can craft/cast too and should not interrupt their
 	// activity to rally.
@@ -51,8 +45,24 @@ func ExecuteRally(actor Actor) RallyResult {
 	}
 
 	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !char.CooldownReady("special-move") {
 		return RallyResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionRally, characters.PoolConviction,
+		float64(cfg.RhetoricActionBaseConvictionCost))
+	if cost.Status == characters.CostRefused {
+		return RallyResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return RallyResult{Cost: cost, OnCooldown: true}
+	}
+
+	// Rallying is noisy only after paid admission and cooldown ownership.
+	if char.IsHidden() {
+		char.Awareness.TransitionToRevealing(state.TransitionReason{
+			Trigger:  awareness.TriggerNoisyAction,
+			Metadata: map[string]any{"command": "rally"},
+		})
 	}
 
 	bonus, duration := ApplyRallyEffect(char)
@@ -67,6 +77,7 @@ func ExecuteRally(actor Actor) RallyResult {
 	awardRhetoricUse(actor, char)
 
 	return RallyResult{
+		Cost:     cost,
 		Executed: true,
 		Bonus:    bonus,
 		Duration: duration,

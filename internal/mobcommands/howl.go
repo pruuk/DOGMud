@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -19,6 +20,9 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	actor := &actions.MobActor{Mob: mob, Room: room}
 	result := actions.ExecuteTaunt(actor)
+	if result.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
 
 	if !result.Executed {
 		return true, nil

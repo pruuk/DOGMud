@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -18,6 +19,8 @@ import (
 // TauntResult holds the outcome of a taunt/howl conviction attack for the
 // caller to use when formatting messages and firing events.
 type TauntResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -83,36 +86,47 @@ type TauntResult struct {
 func ExecuteTaunt(actor Actor) TauntResult {
 	char := actor.GetCharacter()
 
-	// Taunting is a noisy action — reveal if hidden. The Combat Phase
-	// cascade also fires a reveal when combat is entered; both paths are
-	// idempotent against an already-Revealing/Visible actor.
-	if char.IsHidden() {
-		char.Awareness.TransitionToRevealing(state.TransitionReason{
-			Trigger:  awareness.TriggerNoisyAction,
-			Metadata: map[string]any{"command": "taunt"},
-		})
-	}
-
 	// Don't interrupt any active activity (cast/craft/salvage) to taunt.
 	if char.IsActing() {
 		return TauntResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before calling.
-	if char.Aggro == nil {
-		return TauntResult{NoTarget: true}
-	}
-
-	// Check shared special-move cooldown.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return TauntResult{OnCooldown: true}
-	}
-
-	// Resolve target.
-	target := ResolveAggroTarget(char.Aggro)
+	// Resolve the target through the staged-target-aware seam. Player wrappers
+	// can validate a named opener here without setting aggro or seeding
+	// aggression before admission.
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return TauntResult{NoTarget: true}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return TauntResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionTaunt, characters.PoolConviction,
+		float64(cfg.RhetoricActionBaseConvictionCost))
+	if cost.Status == characters.CostRefused {
+		return TauntResult{Cost: cost}
+	}
+
+	// The target can leave after the quote commits. The already-paid cost stays
+	// paid, but a stale target must not consume cooldown, commit engagement,
+	// reveal the actor, or resolve a contest.
+	target = resolveActionTarget(actor, char)
+	if !target.Found {
+		return TauntResult{Cost: cost, NoTarget: true}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return TauntResult{Cost: cost, OnCooldown: true}
+	}
+	commitMeleeEngagement(actor)
+
+	// Taunting is noisy only once the paid attempt owns the cooldown and target.
+	if char.IsHidden() {
+		char.Awareness.TransitionToRevealing(state.TransitionReason{
+			Trigger:  awareness.TriggerNoisyAction,
+			Metadata: map[string]any{"command": "taunt"},
+		})
 	}
 
 	// Conviction attack: Charisma + (rhetoric * SkillWeight) vs
@@ -163,6 +177,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 
 		return TauntResult{
+			Cost:       cost,
 			Target:     target,
 			Executed:   true,
 			Fumble:     true,
@@ -285,6 +300,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 
 		return TauntResult{
+			Cost:        cost,
 			Target:      target,
 			Executed:    true,
 			Hit:         true,
@@ -308,6 +324,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	}
 
 	return TauntResult{
+		Cost:     cost,
 		Target:   target,
 		Executed: true,
 		Hit:      false,
