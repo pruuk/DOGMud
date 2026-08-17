@@ -71,6 +71,49 @@ func compositeReturnHasTrueField(stmt ast.Stmt, resultType, field string) bool {
 	return false
 }
 
+func compositeReturnHasExactFields(t *testing.T, fset *token.FileSet, stmt ast.Stmt, resultType string, fields map[string]string) bool {
+	t.Helper()
+	ret, ok := stmt.(*ast.ReturnStmt)
+	if !ok || len(ret.Results) != 1 {
+		return false
+	}
+	lit, ok := ret.Results[0].(*ast.CompositeLit)
+	if !ok || len(lit.Elts) != len(fields) {
+		return false
+	}
+	typ, ok := lit.Type.(*ast.Ident)
+	if !ok || typ.Name != resultType {
+		return false
+	}
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			return false
+		}
+		key, ok := kv.Key.(*ast.Ident)
+		if !ok || fields[key.Name] != formattedASTNode(t, fset, kv.Value) {
+			return false
+		}
+	}
+	return true
+}
+
+func exactGuardedReturn(t *testing.T, fset *token.FileSet, body *ast.BlockStmt, condition, resultType string, fields map[string]string) *ast.IfStmt {
+	t.Helper()
+	matches := []*ast.IfStmt{}
+	for _, stmt := range body.List {
+		ifStmt, ok := stmt.(*ast.IfStmt)
+		if !ok || formattedASTNode(t, fset, ifStmt.Cond) != condition || len(ifStmt.Body.List) != 1 {
+			continue
+		}
+		if compositeReturnHasExactFields(t, fset, ifStmt.Body.List[0], resultType, fields) {
+			matches = append(matches, ifStmt)
+		}
+	}
+	require.Len(t, matches, 1, "%s must guard exact typed return %s%v", condition, resultType, fields)
+	return matches[0]
+}
+
 func exactCallPositions(t *testing.T, fset *token.FileSet, body *ast.BlockStmt, want string, calleeOnly bool) []token.Pos {
 	t.Helper()
 	positions := []token.Pos{}
@@ -284,7 +327,7 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 	guards := []rhetoricOrderGuard{
 		{
 			file: "combat_taunt.go", function: "ExecuteTaunt", resultType: "TauntResult", action: "costs.ActionTaunt",
-			guards: []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}},
+			guards: []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"!tauntTargetIsCurrent(target, target, originalRoomID, char)", "NoTarget"}},
 			effect: "combat.RunContest",
 		},
 		{
@@ -345,6 +388,20 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 			require.Less(t, int(ready[0]), int(admit[0]))
 			require.Less(t, int(admit[0]), int(consume[0]))
 			require.Less(t, int(consume[0]), int(reveal[0]))
+
+			readyBranch := exactGuardedReturn(t, fset, fn.Body,
+				`!char.CooldownReady("special-move")`, guard.resultType,
+				map[string]string{"OnCooldown": "true"})
+			refusalBranch := exactGuardedReturn(t, fset, fn.Body,
+				"cost.Status == characters.CostRefused", guard.resultType,
+				map[string]string{"Cost": "cost"})
+			consumeBranch := exactGuardedReturn(t, fset, fn.Body,
+				`!char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, guard.resultType,
+				map[string]string{"Cost": "cost", "OnCooldown": "true"})
+			require.Less(t, int(readyBranch.Pos()), int(admit[0]))
+			require.Less(t, int(admit[0]), int(refusalBranch.Pos()))
+			require.Less(t, int(refusalBranch.Pos()), int(consumeBranch.Pos()))
+			require.Less(t, int(consumeBranch.Pos()), int(reveal[0]))
 			for _, pos := range effects {
 				require.Less(t, int(consume[0]), int(pos))
 			}
@@ -389,6 +446,11 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 				require.Less(t, int(resolve[0]), int(ready[0]))
 				require.Less(t, int(admit[0]), int(resolve[1]))
 				require.Less(t, int(resolve[1]), int(consume[0]))
+				staleTargetBranch := exactGuardedReturn(t, fset, fn.Body,
+					"!tauntTargetIsCurrent(targetSnapshot, target, originalRoomID, char)", "TauntResult",
+					map[string]string{"Cost": "cost", "NoTarget": "true"})
+				require.Less(t, int(resolve[1]), int(staleTargetBranch.Pos()))
+				require.Less(t, int(staleTargetBranch.Pos()), int(consume[0]))
 				require.Less(t, int(consume[0]), int(commit[0]))
 				for _, pos := range effects {
 					require.Less(t, int(commit[0]), int(pos))

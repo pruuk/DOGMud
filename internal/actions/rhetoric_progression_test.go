@@ -84,6 +84,7 @@ func newRhetoricActor(t *testing.T, player bool, conviction, rhetoric int) (*rec
 
 	target := characters.New()
 	target.Name = "Rhetoric Target"
+	target.RoomId = 1
 	target.Conviction = 1_000_000
 	target.ConvictionMax.Base = 1_000_000
 	target.ConvictionMax.Recalculate()
@@ -96,6 +97,7 @@ func newRhetoricActor(t *testing.T, player bool, conviction, rhetoric int) (*rec
 
 	char := characters.New()
 	char.Name = "Rhetoric Actor"
+	char.RoomId = 1
 	char.Conviction = conviction
 	char.ConvictionMax.Base = 100
 	char.ConvictionMax.Recalculate()
@@ -345,6 +347,105 @@ func TestTauntPaidStaleTargetPreservesEffectsAndEngagement(t *testing.T) {
 	require.Zero(t, char.Aggro.RoundsWaiting)
 	require.Equal(t, targetConviction, target.Conviction)
 	require.Equal(t, targetAggro, *target.Aggro)
+	require.Empty(t, actor.skillsUsed)
+}
+
+type rhetoricAdmissionRaceActor struct {
+	Actor
+	characterCalls int
+	onAdmission    func()
+}
+
+func (a *rhetoricAdmissionRaceActor) GetCharacter() *characters.Character {
+	a.characterCalls++
+	char := a.Actor.GetCharacter()
+	if a.characterCalls == 2 && a.onAdmission != nil {
+		a.onAdmission()
+	}
+	return char
+}
+
+func TestTauntPaidMovedTargetPreservesEffectsAndEngagement(t *testing.T) {
+	actor, char, target := newRhetoricActor(t, false, 10, 0)
+	hideRhetoricActor(t, char)
+	target.Aggro = &characters.Aggro{UserId: 606, RoundsWaiting: 8}
+	targetAggro := *target.Aggro
+	targetConviction := target.Conviction
+	targetConditions := len(target.Conditions)
+	targetBuffs := len(target.Buffs.GetBuffs())
+	race := &rhetoricAdmissionRaceActor{Actor: actor, onAdmission: func() {
+		target.RoomId = 2
+	}}
+
+	result := ExecuteTaunt(race)
+
+	require.True(t, result.NoTarget)
+	require.False(t, result.Executed)
+	require.Equal(t, characters.CostPaid, result.Cost.Status)
+	require.Equal(t, 4, result.Cost.Charged)
+	require.Equal(t, 6, char.Conviction)
+	require.Equal(t, awareness.Hidden, char.Awareness.State())
+	require.Empty(t, char.Cooldowns)
+	require.Equal(t, 2, target.RoomId)
+	require.Zero(t, char.Aggro.RoundsWaiting)
+	require.Equal(t, targetConviction, target.Conviction)
+	require.Equal(t, targetAggro, *target.Aggro)
+	require.Len(t, target.Conditions, targetConditions)
+	require.Len(t, target.Buffs.GetBuffs(), targetBuffs)
+	require.Empty(t, actor.skillsUsed)
+}
+
+func TestTauntPaidSwappedAggroPreservesBothTargetsAndRound(t *testing.T) {
+	actor, char, original := newRhetoricActor(t, false, 10, 0)
+	hideRhetoricActor(t, char)
+	original.Aggro = &characters.Aggro{UserId: 707, RoundsWaiting: 7}
+	originalAggro := *original.Aggro
+	originalConviction := original.Conviction
+	originalConditions := len(original.Conditions)
+	originalBuffs := len(original.Buffs.GetBuffs())
+
+	rhetoricTargetID++
+	replacement := characters.New()
+	replacement.Name = "Replacement Target"
+	replacement.RoomId = 1
+	replacement.MobInstanceId = rhetoricTargetID
+	replacement.ConvictionMax.Base = 1_000_000
+	replacement.ConvictionMax.Recalculate()
+	replacement.Conviction = 1_000_000
+	replacement.Stats.Willpower.ValueAdj = 1_000_000
+	replacement.Buffs = buffs.New()
+	replacement.Aggro = &characters.Aggro{UserId: 808, RoundsWaiting: 6}
+	replacementMob := &mobs.Mob{InstanceId: rhetoricTargetID, Character: *replacement}
+	mobs.SetInstanceForTest(replacementMob.InstanceId, replacementMob)
+	t.Cleanup(func() { mobs.SetInstanceForTest(replacementMob.InstanceId, nil) })
+	replacement = &replacementMob.Character
+	replacementAggro := *replacement.Aggro
+	replacementConviction := replacement.Conviction
+	replacementConditions := len(replacement.Conditions)
+	replacementBuffs := len(replacement.Buffs.GetBuffs())
+	race := &rhetoricAdmissionRaceActor{Actor: actor, onAdmission: func() {
+		char.Aggro = &characters.Aggro{MobInstanceId: replacementMob.InstanceId}
+	}}
+
+	result := ExecuteTaunt(race)
+
+	require.True(t, result.NoTarget)
+	require.False(t, result.Executed)
+	require.Equal(t, characters.CostPaid, result.Cost.Status)
+	require.Equal(t, 4, result.Cost.Charged)
+	require.Equal(t, 6, char.Conviction)
+	require.Equal(t, awareness.Hidden, char.Awareness.State())
+	require.Empty(t, char.Cooldowns)
+	require.Equal(t, replacementMob.InstanceId, char.Aggro.MobInstanceId)
+	require.Zero(t, char.Aggro.RoundsWaiting)
+	require.Equal(t, originalConviction, original.Conviction)
+	require.Equal(t, originalAggro, *original.Aggro)
+	require.Len(t, original.Conditions, originalConditions)
+	require.Len(t, original.Buffs.GetBuffs(), originalBuffs)
+	require.Equal(t, replacementConviction, replacement.Conviction)
+	require.Equal(t, replacementAggro, *replacement.Aggro)
+	require.Len(t, replacement.Conditions, replacementConditions)
+	require.Len(t, replacement.Buffs.GetBuffs(), replacementBuffs)
 	require.Empty(t, actor.skillsUsed)
 }
 

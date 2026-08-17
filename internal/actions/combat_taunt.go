@@ -71,6 +71,15 @@ type TauntResult struct {
 	AggroPulled bool
 }
 
+func tauntTargetIsCurrent(snapshot, current AggroTarget, originalRoomID int, char *characters.Character) bool {
+	return snapshot.Found && current.Found &&
+		snapshot.Char == current.Char &&
+		snapshot.UserId == current.UserId &&
+		snapshot.MobInstanceId == current.MobInstanceId &&
+		char.RoomId == originalRoomID &&
+		current.Char.RoomId == originalRoomID
+}
+
 // ExecuteTaunt performs the shared conviction-attack resolution used by both
 // the player "taunt" command and the mob "howl" command. It handles:
 //   - Aggro / cooldown guards
@@ -85,6 +94,7 @@ type TauntResult struct {
 // out-of-combat aggro setup (e.g. player targeting before entering combat).
 func ExecuteTaunt(actor Actor) TauntResult {
 	char := actor.GetCharacter()
+	originalRoomID := char.RoomId
 
 	// Don't interrupt any active activity (cast/craft/salvage) to taunt.
 	if char.IsActing() {
@@ -95,9 +105,10 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	// can validate a named opener here without setting aggro or seeding
 	// aggression before admission.
 	target := resolveActionTarget(actor, char)
-	if !target.Found {
+	if !tauntTargetIsCurrent(target, target, originalRoomID, char) {
 		return TauntResult{NoTarget: true}
 	}
+	targetSnapshot := target
 
 	cfg := configs.GetBalanceConfig()
 	if !char.CooldownReady("special-move") {
@@ -113,7 +124,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	// paid, but a stale target must not consume cooldown, commit engagement,
 	// reveal the actor, or resolve a contest.
 	target = resolveActionTarget(actor, char)
-	if !target.Found {
+	if !tauntTargetIsCurrent(targetSnapshot, target, originalRoomID, char) {
 		return TauntResult{Cost: cost, NoTarget: true}
 	}
 	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
