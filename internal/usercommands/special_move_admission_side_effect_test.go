@@ -208,6 +208,7 @@ func TestStagedSpecialMoveTargetGoneBeforeAdmissionHasNoSideEffects(t *testing.T
 	defer cleanup()
 	speciesCleanup := seedSpecialMoveSpecies()
 	defer speciesCleanup()
+	configureSpecialMoveFaction(t)
 
 	user, room := getTestUserAndRoom(t)
 	target := mobs.GetInstance(100)
@@ -227,6 +228,8 @@ func TestStagedSpecialMoveTargetGoneBeforeAdmissionHasNoSideEffects(t *testing.T
 	require.True(t, res.NoTarget)
 	require.Equal(t, 100, user.Character.Stamina)
 	require.Empty(t, user.Character.Cooldowns)
-	require.Nil(t, user.Character.Aggro)
-	require.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId))
+	assert.Nil(t, user.Character.Aggro)
+	assert.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId))
+	assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId))
+	assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false))
 }

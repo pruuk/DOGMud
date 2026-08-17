@@ -23,11 +23,13 @@ import (
 )
 
 type specialMoveOrderGuard struct {
-	file            string
-	function        string
-	earlyReturns    []specialMoveEarlyReturn
-	postCommitCalls []string
-	roundAssignment bool
+	file              string
+	function          string
+	resultType        string
+	action            string
+	earlyReturns      []specialMoveEarlyReturn
+	postCommitCallees []string
+	roundAssignment   bool
 }
 
 type specialMoveEarlyReturn struct {
@@ -42,13 +44,17 @@ func formattedASTNode(t *testing.T, fset *token.FileSet, node ast.Node) string {
 	return buf.String()
 }
 
-func compositeReturnHasTrueField(stmt ast.Stmt, field string) bool {
+func compositeReturnHasTrueField(stmt ast.Stmt, resultType, field string) bool {
 	ret, ok := stmt.(*ast.ReturnStmt)
 	if !ok || len(ret.Results) != 1 {
 		return false
 	}
 	lit, ok := ret.Results[0].(*ast.CompositeLit)
 	if !ok {
+		return false
+	}
+	typ, ok := lit.Type.(*ast.Ident)
+	if !ok || typ.Name != resultType {
 		return false
 	}
 	for _, elt := range lit.Elts {
@@ -65,6 +71,26 @@ func compositeReturnHasTrueField(stmt ast.Stmt, field string) bool {
 	return false
 }
 
+func exactCallPositions(t *testing.T, fset *token.FileSet, body *ast.BlockStmt, want string, calleeOnly bool) []token.Pos {
+	t.Helper()
+	positions := []token.Pos{}
+	ast.Inspect(body, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		var candidate ast.Node = call
+		if calleeOnly {
+			candidate = call.Fun
+		}
+		if formattedASTNode(t, fset, candidate) == want {
+			positions = append(positions, call.Pos())
+		}
+		return true
+	})
+	return positions
+}
+
 // TestSpecialMoveAdmissionOrdering catches a validity branch, read-only
 // cooldown probe, cost admission, or consuming cooldown being moved across the
 // required boundary. It walks each function's Go AST, matches exact guard
@@ -73,48 +99,48 @@ func compositeReturnHasTrueField(stmt ast.Stmt, field string) bool {
 // remain after the consuming cooldown. Selector-name presence cannot satisfy it.
 func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 	guards := []specialMoveOrderGuard{
-		{"combat_bash.go", "ExecuteBash", []specialMoveEarlyReturn{
+		{"combat_bash.go", "ExecuteBash", "BashResult", "costs.ActionBash", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"!char.HasShield() && !naturalBash", "NoShield"}, {"!char.HasBodyPart(\"arms\") && !naturalBash", "NoShield"},
-		}, []string{"ExecuteSkillMove", "RecordAndWait", "OnSkillUse"}, false},
-		{"combat_trip.go", "ExecuteTrip", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		{"combat_trip.go", "ExecuteTrip", "TripResult", "costs.ActionTrip", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoTarget"},
 			{"target.Char.IsOnFloor()", "TargetOnFloor"},
-		}, []string{"ExecuteSkillMove", "RecordAndWait", "OnSkillUse"}, false},
-		{"combat_kick.go", "ExecuteKick", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		{"combat_kick.go", "ExecuteKick", "KickResult", "costs.ActionKick", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoTarget"},
-		}, []string{"ExecuteSkillMove", "RecordAndWait", "OnSkillUse"}, false},
-		{"combat_grapple.go", "ExecuteGrapple", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		{"combat_grapple.go", "ExecuteGrapple", "GrappleResult", "costs.ActionGrapple", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!char.HasBodyPart(\"arms\")", "GrappleImmune"}, {"!target.Found", "NoTarget"},
 			{"target.Char.IsGrappling()", "TargetGrappling"},
-		}, []string{"ExecuteGrappleMove", "RecordAndWait", "OnSkillUse"}, false},
-		{"combat_hamstring.go", "ExecuteHamstring", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteGrappleMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		{"combat_hamstring.go", "ExecuteHamstring", "HamstringResult", "costs.ActionHamstring", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoLegs"},
 			{"sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart(\"hands\")", "NotBeast"},
-		}, []string{"ExecuteSkillMove", "AddCondition", "RecordSpecialMove", "OnSkillUse"}, true},
-		{"combat_rake.go", "ExecuteRake", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		{"combat_rake.go", "ExecuteRake", "RakeResult", "costs.ActionRake", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsClawed(char)", "NotClawed"},
-		}, []string{"ExecuteSkillMove", "AddCondition", "RecordSpecialMove", "OnSkillUse"}, true},
-		{"combat_maul.go", "ExecuteMaul", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		{"combat_maul.go", "ExecuteMaul", "MaulResult", "costs.ActionMaul", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
-		}, []string{"ExecuteSkillMove", "AddCondition", "RecordSpecialMove", "OnSkillUse"}, true},
-		{"combat_pounce.go", "ExecutePounce", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		{"combat_pounce.go", "ExecutePounce", "PounceResult", "costs.ActionPounce", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"char.IsGrappling()", "Grappling"},
 			{"!combat.SpeciesIsQuadrupedPredator(char)", "NotPredator"},
-		}, []string{"ExecuteSkillMove", "RecordSpecialMove", "OnSkillUse"}, true},
-		{"combat_gore.go", "ExecuteGore", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		{"combat_gore.go", "ExecuteGore", "GoreResult", "costs.ActionGore", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsHorned(char)", "NotHorned"},
-		}, []string{"ExecuteSkillMove", "RecordSpecialMove", "OnSkillUse"}, true},
-		{"combat_drain.go", "ExecuteDrain", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		{"combat_drain.go", "ExecuteDrain", "DrainResult", "costs.ActionDrain", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!combat.SpeciesHasLifeDrain(char)", "NotLifeDrainer"},
-		}, []string{"ExecuteSkillMove", "AddCondition", "Heal", "RecordSpecialMove", "OnSkillUse"}, true},
-		{"combat_throttle.go", "ExecuteThrottle", []specialMoveEarlyReturn{
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "char.Heal", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		{"combat_throttle.go", "ExecuteThrottle", "ThrottleResult", "costs.ActionThrottle", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
-		}, []string{"ExecuteSkillMove", "AddCondition", "AddBuff", "InterruptTargetCast", "RecordSpecialMove", "OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "target.Char.AddBuff", "InterruptTargetCast", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)
@@ -127,7 +153,6 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 			parsed, err := parser.ParseFile(fset, filepath.Join(actionsDir, guard.file), nil, 0)
 			require.NoError(t, err)
 
-			calls := map[string][]token.Pos{}
 			var body *ast.BlockStmt
 			for _, decl := range parsed.Decls {
 				fn, ok := decl.(*ast.FuncDecl)
@@ -137,38 +162,53 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 				}
 			}
 			require.NotNil(t, body, "%s must exist", guard.function)
-			ast.Inspect(body, func(node ast.Node) bool {
-				call, ok := node.(*ast.CallExpr)
-				if !ok {
-					return true
+			charAssignments := 0
+			exactCharAssignment := 0
+			cfgAssignments := 0
+			exactCfgAssignment := 0
+			for _, stmt := range body.List {
+				assign, ok := stmt.(*ast.AssignStmt)
+				if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+					continue
 				}
-				name := ""
-				switch fn := call.Fun.(type) {
-				case *ast.Ident:
-					name = fn.Name
-				case *ast.SelectorExpr:
-					name = fn.Sel.Name
+				switch formattedASTNode(t, fset, assign.Lhs[0]) {
+				case "char":
+					charAssignments++
+					if formattedASTNode(t, fset, assign.Rhs[0]) == "actor.GetCharacter()" {
+						exactCharAssignment++
+					}
+				case "cfg":
+					cfgAssignments++
+					if formattedASTNode(t, fset, assign.Rhs[0]) == "configs.GetBalanceConfig()" {
+						exactCfgAssignment++
+					}
 				}
-				if name != "" {
-					calls[name] = append(calls[name], call.Pos())
-				}
-				return true
-			})
-
-			require.Len(t, calls["CooldownReady"], 1, "%s must have one read-only cooldown probe", guard.function)
-			require.Len(t, calls["admitFullCost"], 1, "%s must have one shared cost admission", guard.function)
-			require.Len(t, calls["TryCooldown"], 1, "%s must have one consuming cooldown", guard.function)
-			ready := calls["CooldownReady"][0]
-			admit := calls["admitFullCost"][0]
-			consume := calls["TryCooldown"][0]
+			}
+			require.Equal(t, 1, charAssignments, "%s must bind char exactly once", guard.function)
+			require.Equal(t, 1, exactCharAssignment, "%s char receiver must be the supplied actor's character", guard.function)
+			require.Equal(t, 1, cfgAssignments, "%s must bind cfg exactly once", guard.function)
+			require.Equal(t, 1, exactCfgAssignment, "%s cooldown/base config must be the live balance config", guard.function)
+			readyCalls := exactCallPositions(t, fset, body, `char.CooldownReady("special-move")`, false)
+			admitCalls := exactCallPositions(t, fset, body,
+				"admitFullCost(actor, "+guard.action+", characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))", false)
+			consumeCalls := exactCallPositions(t, fset, body,
+				`char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, false)
+			require.Len(t, readyCalls, 1, "%s must use the actor character and exact special-move tag for its read-only probe", guard.function)
+			require.Len(t, admitCalls, 1, "%s must admit the exact action, stamina pool, and configured base", guard.function)
+			require.Len(t, consumeCalls, 1, "%s must use the actor character, exact tag, and configured duration for consuming cooldown", guard.function)
+			ready := readyCalls[0]
+			admit := admitCalls[0]
+			consume := consumeCalls[0]
 			require.Less(t, int(ready), int(admit), "CooldownReady must precede admission")
 			require.Less(t, int(admit), int(consume), "admission must precede consuming TryCooldown")
 
-			require.Len(t, calls["resolveActionTarget"], 1, "%s must resolve through the staged-target-aware seam", guard.function)
-			require.Less(t, int(calls["resolveActionTarget"][0]), int(ready), "target resolution must precede cooldown/admission")
+			resolveCalls := exactCallPositions(t, fset, body, "resolveActionTarget(actor, char)", false)
+			require.Len(t, resolveCalls, 1, "%s must resolve through the staged-target-aware seam with actor and character", guard.function)
+			require.Less(t, int(resolveCalls[0]), int(ready), "target resolution must precede cooldown/admission")
 			if guard.function != "ExecuteHamstring" {
-				require.Len(t, calls["commitMeleeEngagement"], 1, "%s must commit staged engagement once", guard.function)
-				require.Greater(t, int(calls["commitMeleeEngagement"][0]), int(consume),
+				commitCalls := exactCallPositions(t, fset, body, "commitMeleeEngagement(actor)", false)
+				require.Len(t, commitCalls, 1, "%s must commit the staged actor once", guard.function)
+				require.Greater(t, int(commitCalls[0]), int(consume),
 					"%s must not commit engagement before successful admission/cooldown", guard.function)
 			}
 
@@ -179,7 +219,7 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 					if !ok || formattedASTNode(t, fset, ifStmt.Cond) != expected.condition || len(ifStmt.Body.List) != 1 {
 						continue
 					}
-					if compositeReturnHasTrueField(ifStmt.Body.List[0], expected.field) {
+					if compositeReturnHasTrueField(ifStmt.Body.List[0], guard.resultType, expected.field) {
 						found = true
 						require.Less(t, int(ifStmt.Pos()), int(ready), "%s guard %s must precede CooldownReady", guard.function, expected.condition)
 					}
@@ -187,13 +227,15 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 				require.True(t, found, "%s must have exact early return `if %s { return ...{%s: true} }`", guard.function, expected.condition, expected.field)
 			}
 
-			for _, name := range guard.postCommitCalls {
-				require.NotEmpty(t, calls[name], "%s must retain %s", guard.function, name)
-				for _, pos := range calls[name] {
-					require.Greater(t, int(pos), int(consume), "%s call %s must follow consuming TryCooldown", guard.function, name)
+			for _, callee := range guard.postCommitCallees {
+				positions := exactCallPositions(t, fset, body, callee, true)
+				require.NotEmpty(t, positions, "%s must retain exact call identity %s", guard.function, callee)
+				for _, pos := range positions {
+					require.Greater(t, int(pos), int(consume), "%s call %s must follow consuming TryCooldown", guard.function, callee)
 					if guard.function != "ExecuteHamstring" {
-						require.Greater(t, int(pos), int(calls["commitMeleeEngagement"][0]),
-							"%s call %s must follow engagement commit", guard.function, name)
+						commitCalls := exactCallPositions(t, fset, body, "commitMeleeEngagement(actor)", false)
+						require.Greater(t, int(pos), int(commitCalls[0]),
+							"%s call %s must follow engagement commit", guard.function, callee)
 					}
 				}
 			}
@@ -204,10 +246,10 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 					if !ok {
 						return true
 					}
-					for _, lhs := range assign.Lhs {
-						if sel, ok := lhs.(*ast.SelectorExpr); ok && sel.Sel.Name == "RoundsWaiting" {
-							roundPositions = append(roundPositions, assign.Pos())
-						}
+					if assign.Tok == token.ASSIGN && len(assign.Lhs) == 1 && len(assign.Rhs) == 1 &&
+						formattedASTNode(t, fset, assign.Lhs[0]) == "char.Aggro.RoundsWaiting" &&
+						formattedASTNode(t, fset, assign.Rhs[0]) == "1" {
+						roundPositions = append(roundPositions, assign.Pos())
 					}
 					return true
 				})
@@ -282,8 +324,44 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 			})
 			require.NotNil(t, refusal, "%s must own exact refusal comparison %s", function, expectedCondition)
 			if player {
-				require.True(t, nodeHasCall(fn.Body, "StageMeleeTarget"), "%s must stage target acquisition without engagement", function)
+				stageIndex := -1
+				for i, stmt := range fn.Body.List {
+					assign, ok := stmt.(*ast.AssignStmt)
+					if !ok || len(assign.Lhs) != 2 || len(assign.Rhs) != 1 {
+						continue
+					}
+					actorName, actorOK := assign.Lhs[0].(*ast.Ident)
+					handledName, handledOK := assign.Lhs[1].(*ast.Ident)
+					call, callOK := assign.Rhs[0].(*ast.CallExpr)
+					if actorOK && handledOK && callOK && actorName.Name == "actor" && handledName.Name == "handled" &&
+						formattedASTNode(t, fset, call.Fun) == "actions.StageMeleeTarget" {
+						stageIndex = i
+						break
+					}
+				}
+				require.GreaterOrEqual(t, stageIndex, 0, "%s must assign actor, handled from actions.StageMeleeTarget", function)
+				require.Less(t, stageIndex+1, len(fn.Body.List), "%s must branch immediately after staging", function)
+				handledBranch, ok := fn.Body.List[stageIndex+1].(*ast.IfStmt)
+				require.True(t, ok, "%s must branch on handled immediately after staging", function)
+				require.Equal(t, "handled", formattedASTNode(t, fset, handledBranch.Cond))
+				require.Len(t, handledBranch.Body.List, 1)
+				require.True(t, handledReturn(handledBranch.Body.List[0]))
 				require.False(t, nodeHasCall(fn.Body, "AcquireMeleeTarget"), "%s must not eagerly acquire/engage", function)
+
+				executeName := "actions.Execute" + function
+				executeAssignment := false
+				for _, stmt := range fn.Body.List {
+					assign, ok := stmt.(*ast.AssignStmt)
+					if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 || formattedASTNode(t, fset, assign.Lhs[0]) != resultName {
+						continue
+					}
+					call, ok := assign.Rhs[0].(*ast.CallExpr)
+					if ok && formattedASTNode(t, fset, call.Fun) == executeName && len(call.Args) == 1 &&
+						formattedASTNode(t, fset, call.Args[0]) == "actor" {
+						executeAssignment = true
+					}
+				}
+				require.True(t, executeAssignment, "%s must pass its staged actor directly to %s", function, executeName)
 				require.Len(t, refusal.Body.List, 2, "%s refusal branch must send shared text then return", function)
 				require.True(t, nodeHasCall(refusal.Body.List[0], "SendText"), "%s refusal branch must send player text first", function)
 				require.True(t, nodeHasCall(refusal.Body.List[0], "CostRefusalText"), "%s refusal branch must use shared refusal text", function)
