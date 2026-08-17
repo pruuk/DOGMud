@@ -161,7 +161,7 @@ func (b *Balance) validateCombat() {
 		b.SneakBaseStaminaCost = 2.5
 	}
 	if b.SneakFailCooldown < 0 {
-		b.SneakFailCooldown = 0
+		b.SneakFailCooldown = 3
 	}
 	if b.StealSkillMultiplier <= 0 {
 		b.StealSkillMultiplier = 1.0

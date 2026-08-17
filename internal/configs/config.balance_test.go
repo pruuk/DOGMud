@@ -172,11 +172,24 @@ func TestBalance_ShippedActionCostBasesMatchModelEvidence(t *testing.T) {
 	}
 }
 
-func TestBalance_SneakFailCooldownInvalidValueDefaultsToEffectiveZero(t *testing.T) {
-	b := &Balance{SneakFailCooldown: -1}
-	b.validateCombat()
-	if b.SneakFailCooldown != 0 {
-		t.Fatalf("SneakFailCooldown fallback = %d, want effective shipped value 0", int(b.SneakFailCooldown))
+func TestBalance_SneakFailCooldownDistinguishesAbsentFromInvalid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input ConfigInt
+		want  ConfigInt
+	}{
+		{"absent remains effective zero", 0, 0},
+		{"negative uses historical fallback", -1, 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Balance{SneakFailCooldown: tt.input}
+			b.validateCombat()
+			if b.SneakFailCooldown != tt.want {
+				t.Fatalf("SneakFailCooldown = %d, want %d", int(b.SneakFailCooldown), int(tt.want))
+			}
+		})
 	}
 }
 

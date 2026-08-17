@@ -218,7 +218,7 @@ type Balance struct {
 
 	// ── SKULLDUGGERY ─────────────────────────────────────────────────────────
 	SneakBaseStaminaCost           ConfigFloat `yaml:"SneakBaseStaminaCost"`           // Base stamina cost to sneak before shared multipliers (default 2.5)
-	SneakFailCooldown              ConfigInt   `yaml:"SneakFailCooldown"`              // Rounds before sneak retry after failure (default 0)
+	SneakFailCooldown              ConfigInt   `yaml:"SneakFailCooldown"`              // Absent/zero means no failure cooldown; an invalid negative falls back to 3
 	SurpriseAttackOffhandPenalty   ConfigFloat `yaml:"SurpriseAttackOffhandPenalty"`   // Hit penalty for offhand surprise attack (default 0.10)
 	SurpriseAttackExtraArm1Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm1Penalty"` // Hit penalty for extra arm 1 (default 0.25)
 	SurpriseAttackExtraArm2Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm2Penalty"` // Hit penalty for extra arm 2 (default 0.40)

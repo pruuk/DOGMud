@@ -572,7 +572,9 @@ non-positive action modifier remains the calculator's neutral `1.0` behavior.
 | `GrappleStaminaCostPerRound` | 2 | Ongoing grapple maintenance before controller/controlled role multiplier |
 
 `GrappleStaminaCostPerRound` is a `ConfigFloat`; grapple initiation uses the
-special-move base instead. `SneakFailCooldown` remains effectively zero.
+special-move base instead. The absent shipped `SneakFailCooldown` remains
+effectively zero; an explicitly invalid negative retains its historical
+fallback of 3.
 
 ## Files
 
