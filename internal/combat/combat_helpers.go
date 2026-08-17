@@ -33,6 +33,10 @@ const unloadedMeleeDamageCap = 0.30
 type combatContext struct {
 	sourceCanSee bool // source has nightvision OR room visibility >= 1
 	targetCanSee bool // target has nightvision OR room visibility >= 1
+	// omitAttackSkill is set only when the round's aggregate attack quote was
+	// partially paid. It affects the opposed hit score and nothing else: swing
+	// planning and damage keep using the equipped combat skill.
+	omitAttackSkill bool
 	// Chunk 3.3: when true, the first hit of this round is guaranteed to
 	// crit regardless of the z-score threshold. Set by the round dispatcher
 	// when the defender was snapshotted as Sleeping at round start.
@@ -54,6 +58,15 @@ type weaponSetup struct {
 	weaponDmgMult float64
 	isOffhand     bool
 	penalty       int // dual wield penalty
+	swingCount    int // planned before the round's aggregate Stamina commit
+}
+
+// attackPlan is the immutable-ish pre-payment snapshot calculateCombat
+// consumes. weaponSetup values include each weapon's planned swing count;
+// totalSwings is the aggregate quote unit count for the round.
+type attackPlan struct {
+	weapons     []weaponSetup
+	totalSwings int
 }
 
 // swingDamageParams holds per-swing damage values after pipeline calculations.
@@ -160,6 +173,24 @@ func calcSwingCount(sourceChar *characters.Character, weaponSpeed float64, extra
 	}
 
 	return result
+}
+
+// buildAttackPlan snapshots the round's weapons, their prepared setup and all
+// skill/resource-driven swing counts before Stamina is committed. Resolution
+// must consume this plan rather than recalculate from the depleted pool.
+func buildAttackPlan(sourceChar *characters.Character, targetChar *characters.Character) attackPlan {
+	attackWeapons := collectAttackWeapons(sourceChar)
+	extraAttacks := sourceChar.StatMod(`attacks`)
+	plan := attackPlan{weapons: make([]weaponSetup, 0, len(attackWeapons))}
+
+	for weaponIdx, weapon := range attackWeapons {
+		ws := buildWeaponSetup(sourceChar, targetChar, weapon, weaponIdx, len(attackWeapons))
+		ws.swingCount = calcSwingCount(sourceChar, ws.weaponSpeed, extraAttacks, ws.isOffhand)
+		plan.totalSwings += ws.swingCount
+		plan.weapons = append(plan.weapons, ws)
+	}
+
+	return plan
 }
 
 // collectAttackWeapons gathers all weapons the character can attack with.
@@ -410,7 +441,10 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 // calcAttackScore computes the attack roll score with all modifiers.
 func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Character, penalty int, ctx combatContext) float64 {
 	bal := configs.GetBalanceConfig()
-	attackScore := float64(sourceChar.GetEffectiveDexterity()) + float64(sourceChar.GetCombatSkillLevel())*float64(bal.SkillWeight)
+	attackScore := float64(sourceChar.GetEffectiveDexterity())
+	if !ctx.omitAttackSkill {
+		attackScore += float64(sourceChar.GetCombatSkillLevel()) * float64(bal.SkillWeight)
+	}
 	attackScore -= float64(penalty)
 
 	// Apply smooth stamina-based hit chance penalty. EffectivePoolMax, not the

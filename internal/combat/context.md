@@ -172,32 +172,32 @@ floor was only ever evaluated on the swings a defence crit did not consume.
   second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity
 
-### Attack cost is charged PER SWING (U7 Task 7)
+### Attack rounds are planned and admitted before resolution (U8 Task 8)
 
-`ChargeAttackCost(attacker *characters.Character, swings int) characters.CostResult`
-in `attack_cost.go` is the attacker-side price. **Where it is charged:** in each
-of the four wrappers in `combat.go` (`AttackPlayerVsMob`, `AttackPlayerVsPlayer`,
-`AttackMobVsPlayer`, `AttackMobVsMob`), immediately after `calculateCombat`
-returns, off `attackResult.SwingsThrown`. It is NOT charged inside
-`calculateCombat` and not inside the weapon or swing loops.
+`resolveCombatRound` is the shared player/mob path. It builds an `attackPlan`
+containing prepared weapon setups and each weapon's swing count, quotes the
+aggregate `totalSwings`, commits once, and only then calls `calculateCombat`.
+The calculator consumes that snapshot and never rebuilds weapons, recalculates
+swings, or charges the attacker.
 
 ```go
-attackResult := calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
-ChargeAttackCost(user.Character, attackResult.SwingsThrown)
+plan := buildAttackPlan(sourceChar, targetChar)
+costResult := ChargeAttackCost(sourceChar, plan.totalSwings)
+ctx.omitAttackSkill = costResult.Short()
+attackResult := calculateCombat(sourceChar, targetChar, sourceType, targetType, plan, ctx)
 ```
 
-One swing is priced by the unexported `attackCostPerSwing`, which is the same
-`costs.Calc` composition the five defences use:
-`AttackBaseStaminaCost` × encumbrance × inverse-skill × `AttackCostModifier`.
-The whole round is then charged as `perSwing × swings` through
-`Character.ApplyCostFloat`, never `ApplyCostPartial`. The per-swing figure is a
-product of four config floats and is rarely a whole number, so an integer charge
-per round would erase the encumbrance and skill terms this task exists to
-introduce.
+`ChargeAttackCost(attacker *characters.Character, swings int)
+characters.CostCommitResult` is a thin raw-request admission wrapper. It quotes
+`ActionAttack` against `PoolStamina` with `AttackBaseStaminaCost`,
+`AttackCostModifier`, and `Units: swings`; `QuoteActionCost` owns registry,
+encumbrance, equipped-skill and multiplier composition. It then commits once
+with `CostPartial`. Never pass a composed per-swing value back as `Base`.
 
 Points that bite:
 
-- **`SwingsThrown` counts swings THROWN, not swings that landed.** It is
+- **Every planned swing is attempted, even on a short commit.** `SwingsThrown`
+  counts swings THROWN, not swings that landed. It is
   incremented in `calculateCombat` before resolution and outside the per-swing
   flag reset, and it accumulates across every weapon in the round because
   `attackResult` outlives the weapon loop. A missed swing is effort spent.
@@ -206,15 +206,24 @@ Points that bite:
   registry's nominal `skills.WeaponCombat`. An unarmed brawler's practice
   discounts their swings. It returns a minimum of 1, so a fresh character lands
   on the rank-1 multiplier rather than the rank-0 one.
-- **A nil attacker or a non-positive swing count charges nothing** and returns
-  the zero `CostResult`. Zero swings is a real state (no weapons to swing, target
-  already gone) and is deliberately not `Short`: nothing was demanded.
+- **A nil attacker or a non-positive swing count is no-charge and not short.**
+  `Short()` is true only for `CostPartiallyPaid`; the unpaid whole portion is
+  written off, so there is no debt on the next round and Stamina never goes
+  negative.
+- **A short commit omits only the equipped combat-skill addend from the hit
+  score.** Skill-driven swing planning was already snapshotted and damage still
+  uses its skill multiplier. Crit/fumble, mitigation, contest floors, resource
+  multipliers, and progression hooks are unchanged. The Stamina hit multiplier
+  deliberately sees the post-commit pool.
+- **Only player sources receive the private shortage explanation**, exactly
+  once per combat round. Mobs use the same admission and resolution mechanics
+  without receiving that player-facing message.
 - **This replaced a once-per-round `DeductAttackStamina` call** in each of the
   four wrappers. A twelve-swing build attacked twelve times for the price of one
   while the defender paid on every incoming swing, which is the single largest
   reason offence was effectively free next to defence.
-- The returned `CostResult` is what U8 reads to strip the skill term from an
-  attacker who could not pay in full. Discarding it is safe today, not later.
+- The returned `CostCommitResult` must reach `resolveCombatRound`; dropping it
+  would silently restore the equipped skill on partially paid attacks.
 
 ### Defence sets are a property of the channel (U6 Task 11)
 
@@ -812,15 +821,16 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 
 - **`calculateCombat` takes BOTH combatants as `*characters.Character`, and they
   must stay pointers.** The signature is
-  `calculateCombat(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, ctx combatContext) AttackResult`,
+  `calculateCombat(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, plan attackPlan, ctx combatContext) AttackResult`,
   changed from value parameters in U7 Task 1. It took its combatants BY VALUE
   from the day it was written, so every wrapper handed it a copy and every
   in-place mutation a callee made was written to that copy and discarded on
   return. The costly one was the defence charge: `runBestOfAllDefense` charges
   the defender in-place, which means melee dodge, parry and block cost nothing
-  in production for the entire life of the code. The attacker's cost only ever
-  survived because the wrappers charge it themselves, OUTSIDE this function, and
-  damage only survived because it travels home in `AttackResult` and the wrapper
+  in production for the entire life of the code. The attacker's cost historically
+  survived because wrappers charged the real character outside this function;
+  U8 now commits it through `resolveCombatRound` immediately before resolution.
+  Damage survives because it travels home in `AttackResult` and the wrapper
   applies it to the real character. Reverting also re-disables three writes that
   only work through the pointer: cross-round momentum (`UpdateMomentum`), the
   `SurpriseAttack`-to-`DefaultAttack` demotion in `SetAggro`, and defender
@@ -1049,12 +1059,11 @@ attempts escape. On success, player leaves combat.
 
 ### 3. The Core Attack: `combat.AttackPlayerVsMob()`
 
-`combat/combat.go` — Wrapper that calls `calculateCombat()` then applies
-side effects:
+`combat/combat.go` — Wrapper that calls the shared admission/resolution path,
+then applies side effects:
 
 ```
-attackResult = calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
-ChargeAttackCost(user.Character, attackResult.SwingsThrown)  // U7: PER SWING
+attackResult, _ = resolveCombatRound(user.Character, &mob.Character, User, Mob, ctx)
 mob.Character.ApplyHealthChange(-totalDmg)
 mob.Character.TrackPlayerDamage(userId, dmg)  // loot attribution
 user.Character.OnStatUse("strength")          // progression
@@ -1671,8 +1680,8 @@ can add parallel snapshot checks at the same start-of-round site.
 
 | File | Purpose |
 |------|---------|
-| `combat.go` | Round resolution entry points. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** The four wrappers charge the attacker after it returns, via `ChargeAttackCost(char, attackResult.SwingsThrown)`. |
-| `combat_helpers.go` | Extracted helpers. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
+| `combat.go` | Round resolution entry points. `resolveCombatRound` builds and admits one aggregate attack plan before resolution, then passes the committed short state into hit scoring. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** |
+| `combat_helpers.go` | Extracted helpers, including the immutable-ish `attackPlan` snapshot consumed by `calculateCombat`. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
 | `crit_floor.go` | Crit floors, 1% both directions (5.11e). **U6 Task 9 changed the DENOMINATORS: the attack floor applies to swings that WON THE CONTEST and the defence floor to swings the DEFENCE won, keyed on `best.margin` (defence-positive, so `<= 0` is an attack win), not on `res.hit`.** The old hit/miss split stops being answerable once a defensive win deals partial damage, because a deflected swing then has `res.hit == true` while the defence won. A floored outcome and an uncontested swing (`defenseType == ""`) are promoted by neither floor. **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. **U6 Task 10:** a promotion to a defence crit now also clears `res.hit` and `res.damageMult`, because an ordinary defensive win arrives here already landing partial damage. |
@@ -1681,8 +1690,8 @@ can add parallel snapshot checks at the same start-of-round site.
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
 | `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). Consumed by `ResolveChannelDefence` for the three non-melee channels; melee still builds its own `defSeq`. See "Defence sets are a property of the channel" below. |
-| `attack_cost.go` | `ChargeAttackCost(attacker, swings)` — the attacker-side price, U7 Task 7. One swing costs `AttackBaseStaminaCost` × encumbrance × inverse-skill × `AttackCostModifier` through `costs.Calc`, the same composition the five defences use, charged `× swings` through `ApplyCostFloat`. **This replaced a once-per-round `DeductAttackStamina` call in each of the four wrappers**: a twelve-swing build attacked twelve times for the price of one while the defender paid on every incoming swing, which is what made offence effectively free next to defence. Skill rank comes from `GetCombatSkillLevel` (weapon-appropriate, minimum 1), not the registry's nominal `skills.WeaponCombat`. A nil attacker or non-positive swing count charges nothing and is not `Short`. |
-| `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only) — `ChargeAttackCost` prices the round off it. |
+| `attack_cost.go` | `ChargeAttackCost(attacker, swings)` — the raw aggregate `ActionAttack` quote and one `CostPartial` commit. Composition remains centralized in `QuoteActionCost`; `Short()` is true only for `CostPartiallyPaid`. |
+| `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only). Admission now prices the pre-resolution plan's `totalSwings`, while this result proves all planned attempts ran. |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |
 | `skill_moves.go` | Skill-driven combat moves (bash/trip/kick/...). **U6 Task 13:** `ExecuteSkillMove` scales damage through `defenceDamageMultiplier` instead of gating it on `attackSuccess` alone, so `SkillMoveResult.Hit == false` with `Damage > 0` is a legal pair (a defended attempt still lands partial damage), and `Damage` is the contest-scaled amount actually applied to the defender's health pool, not the unscaled base. `SkillMoveResult` gained `StatusApplied bool`, which stays binary — true only when `Hit == true`. |
