@@ -1,7 +1,10 @@
 package templates
 
 import (
+	"fmt"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -44,12 +47,19 @@ var u8ActionHelpPaths = []string{
 
 var ansiTagPattern = regexp.MustCompile(`</?ansi(?:\s+[^>]*)?>`)
 var helpCrossReferencePattern = regexp.MustCompile(`(?i)<ansi\s+fg="command"[^>]*>\s*help\s+([a-z0-9-]+)\s*</ansi>`)
+var forbiddenU8NumericTuningPattern = regexp.MustCompile(`(?i)(?:\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?[- ]rounds?\b|\b\d+(?:\.\d+)?\s+(?:points?|ranks?|modifiers?)\b)`)
+var forbiddenU8WordedTuningPattern = regexp.MustCompile(`(?i)(?:\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|half|quarter|first|second|third)\s+(?:percent|points?|ranks?|modifiers?)\b|\b(?:half|quarter)\s+(?:damage|armou?r)\b|\bfirst pound\b|\bunder half\b|\b(?:novice|master(?:ful)?)\s+(?:pays?|costs?)\b)`)
 
 func useU8DataFiles(t *testing.T) {
 	t.Helper()
+	useU8DataFilesAt(t, u8DataFilesRoot)
+}
+
+func useU8DataFilesAt(t *testing.T, dataRoot string) {
+	t.Helper()
 
 	cfg := configs.GetConfig()
-	cfg.FilePaths.DataFiles = configs.ConfigString(u8DataFilesRoot)
+	cfg.FilePaths.DataFiles = configs.ConfigString(dataRoot)
 	configs.SetConfigForTest(t, cfg)
 
 	// TestMain registers the default world's filesystem. Force Process through
@@ -72,6 +82,78 @@ func processU8Help(t *testing.T, path string) string {
 func normalizedHelpText(rendered string) string {
 	withoutTags := ansiTagPattern.ReplaceAllString(rendered, "")
 	return strings.ToLower(strings.Join(strings.Fields(withoutTags), " "))
+}
+
+func findForbiddenU8HelpDisclosures(rendered string) []string {
+	visible := normalizedHelpText(rendered)
+	disclosures := make([]string, 0)
+	if strings.Contains(visible, "—") {
+		disclosures = append(disclosures, "—")
+	}
+	disclosures = append(disclosures, forbiddenU8NumericTuningPattern.FindAllString(visible, -1)...)
+	disclosures = append(disclosures, forbiddenU8WordedTuningPattern.FindAllString(visible, -1)...)
+	return disclosures
+}
+
+func u8HelpCrossReferenceTopics(rendered string) []string {
+	matches := helpCrossReferencePattern.FindAllStringSubmatch(rendered, -1)
+	topics := make([]string, 0, len(matches))
+	for _, match := range matches {
+		topics = append(topics, strings.ToLower(match[1]))
+	}
+	return topics
+}
+
+func validateU8HelpCrossReferences(sourcePath, rendered string) error {
+	for _, topic := range u8HelpCrossReferenceTopics(rendered) {
+		result, err := Process("help/"+topic, nil)
+		if err != nil {
+			return fmt.Errorf("%s emits broken cross-reference %q: %w", sourcePath, "help "+topic, err)
+		}
+		if strings.TrimSpace(result) == "" || strings.Contains(result, "[TEMPLATE") {
+			return fmt.Errorf("%s emits broken cross-reference %q", sourcePath, "help "+topic)
+		}
+	}
+	return nil
+}
+
+func TestU8HelpTuningGuardInspectsStyledVisibleText(t *testing.T) {
+	styledDisclosure := `Cost: <ansi fg="yellow">one </ansi><ansi fg="skill">rank</ansi>; still.`
+	rawDisclosurePattern := regexp.MustCompile(`(?i)\bone\s+ranks?\b`)
+	require.Empty(t, rawDisclosurePattern.FindAllString(styledDisclosure, -1),
+		"mutation control: a raw-output scan must miss the disclosure split by ANSI tags")
+
+	visible := normalizedHelpText(styledDisclosure)
+	assert.Equal(t, "cost: one rank; still.", visible,
+		"normalization must preserve word boundaries and punctuation")
+	assert.Contains(t, findForbiddenU8HelpDisclosures(styledDisclosure), "one rank",
+		"the visible-text guard must catch the styled tuning disclosure")
+}
+
+func TestU8CrossReferenceValidationRejectsMissingDOGMudOnlyTopic(t *testing.T) {
+	registeredDefaultShoot := false
+	for _, registeredFS := range fileSystems {
+		if _, err := registeredFS.ReadFile("templates/help/shoot.template"); err == nil {
+			registeredDefaultShoot = true
+			break
+		}
+	}
+	require.True(t, registeredDefaultShoot,
+		"mutation control requires the registered default-world shoot template")
+
+	dataRoot := t.TempDir()
+	templatePath := filepath.Join(dataRoot, "templates", "help", "shoot.template")
+	require.NoError(t, os.MkdirAll(filepath.Dir(templatePath), 0o755))
+	require.NoError(t, os.WriteFile(templatePath, []byte(
+		`DOGMud-only shoot fixture: <ansi fg="command">help dogmud-only-missing</ansi>`), 0o600))
+	useU8DataFilesAt(t, dataRoot)
+
+	rendered := processU8Help(t, "help/shoot")
+	require.Contains(t, rendered, "DOGMud-only shoot fixture",
+		"the configured data root must win over the registered default template")
+	assert.Equal(t, []string{"dogmud-only-missing"}, u8HelpCrossReferenceTopics(rendered))
+	assert.ErrorContains(t, validateU8HelpCrossReferences("help/shoot", rendered),
+		`help/shoot emits broken cross-reference "help dogmud-only-missing"`)
 }
 
 // Catches a required action-cost helpfile being deleted, renamed, malformed,
@@ -131,16 +213,11 @@ func TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning(t *testing.T) {
 		})
 	}
 
-	forbiddenTuning := regexp.MustCompile(`(?i)(?:\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?[- ]rounds?\b|\b\d+(?:\.\d+)?\s+(?:points?|ranks?|modifiers?)\b)`)
-	forbiddenWordedTuning := regexp.MustCompile(`(?i)(?:\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|half|quarter|first|second|third)\s+(?:percent|points?|ranks?|modifiers?)\b|\b(?:half|quarter)\s+(?:damage|armou?r)\b|\bfirst pound\b|\bunder half\b|\b(?:novice|master(?:ful)?)\s+(?:pays?|costs?)\b)`)
 	for _, path := range u8ActionHelpPaths {
 		t.Run(path+"/no-raw-tuning", func(t *testing.T) {
 			rendered := processU8Help(t, path)
-			assert.NotContains(t, rendered, "—", "player help must not use em dashes")
-			assert.Empty(t, forbiddenTuning.FindAllString(rendered, -1),
-				"player help must describe costs and timing without raw tuning")
-			assert.Empty(t, forbiddenWordedTuning.FindAllString(rendered, -1),
-				"player help must not spell out tuning values")
+			assert.Empty(t, findForbiddenU8HelpDisclosures(rendered),
+				"visible player help must not use em dashes or disclose raw or worded tuning")
 		})
 	}
 }
@@ -153,22 +230,19 @@ func TestU8StaminaHelpDistinguishesFleeFromGrappleCadence(t *testing.T) {
 }
 
 func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
-	cfg := configs.GetConfig()
-	cfg.FilePaths.DataFiles = configs.ConfigString(u8DataFilesRoot)
-	configs.SetConfigForTest(t, cfg)
+	useU8DataFiles(t)
 
 	for _, path := range u8ActionHelpPaths {
 		t.Run(path, func(t *testing.T) {
-			rendered, err := Process(path, nil)
-			require.NoError(t, err)
-			matches := helpCrossReferencePattern.FindAllStringSubmatch(rendered, -1)
-			for _, match := range matches {
-				topic := strings.ToLower(match[1])
-				result, err := Process("help/"+topic, nil)
-				require.NoError(t, err, "%s emits broken cross-reference %q", path, "help "+topic)
-				require.NotEmpty(t, strings.TrimSpace(result), "%s emits empty cross-reference %q", path, "help "+topic)
-				require.NotContains(t, result, "[TEMPLATE", "%s emits broken cross-reference %q", path, "help "+topic)
+			rendered := processU8Help(t, path)
+			if path == "help/shoot" {
+				assert.Contains(t, rendered, "Fire a loaded ranged weapon at a target in your room",
+					"the validator must inspect DOGMud's shoot template, not the registered default")
+				assert.Equal(t, []string{"reload", "ranged-combat", "stamina", "equip"},
+					u8HelpCrossReferenceTopics(rendered),
+					"all four DOGMud shoot cross-references must be enumerated")
 			}
+			require.NoError(t, validateU8HelpCrossReferences(path, rendered))
 		})
 	}
 }
