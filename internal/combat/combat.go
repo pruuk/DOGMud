@@ -498,11 +498,10 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			attackResult.Fumble = false
 			attackResult.DoubleFumble = false
 
-			// Counted here, BEFORE resolution and outside the reset above, so it
-			// counts swings THROWN rather than swings that landed: a missed swing
-			// is effort spent and must be paid for. It accumulates across every
-			// weapon in the round because attackResult outlives the weapon loop.
-			// U7 Task 7 charges the attacker per swing off this number.
+			// Counted here after pre-resolution plan admission and outside the
+			// reset above. SwingsThrown reports how many planned swings actually
+			// resolved across every weapon; U8 pricing uses plan.totalSwings before
+			// this loop and never derives a post-resolution charge from this field.
 			attackResult.SwingsThrown++
 
 			attackTargetDamage := 0

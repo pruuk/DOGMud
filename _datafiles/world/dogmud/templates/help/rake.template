@@ -24,6 +24,10 @@ damage and applies a bleeding condition on a successful strike.
   <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
 
+Rake spends Stamina and requires full payment before the strike. Carried load
+raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
+
 Rake's persistent bleed makes it valuable for wearing down
 opponents over the course of a longer fight. See
 <ansi fg="command">help conditions</ansi> for details on the bleeding effect.
@@ -31,4 +35,5 @@ opponents over the course of a longer fight. See
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help hamstring</ansi>, <ansi fg="command">help kick</ansi>,
-  <ansi fg="command">help conditions</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help special</ansi>, <ansi fg="command">help combat</ansi>

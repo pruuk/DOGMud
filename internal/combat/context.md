@@ -140,25 +140,20 @@ floor was only ever evaluated on the swings a defence crit did not consume.
 
 **Defence Costs:**
 - Only the winning defense (best margin) costs anything — losing defenses are free
-- The winner is charged with `ApplyCostFloat` (which delegates to
-  `ApplyCostPartial`), so a defender who cannot pay in full still defends and
-  simply pays what is left (U5b-2)
+- Every eligible defence is quoted without mutation. Its candidate score
+  includes the governing skill only when that quote is affordable. The contest
+  winner alone commits with `CostPartial`; a short winner pays what remains and
+  resolves without only that governing-skill term.
 - Defence costs are one config formula, not per-defence Go arithmetic. U7 Task 6
   deleted `GetDefenseStaminaCost` and the three per-defence base knobs
   (`DodgeBaseStaminaCost` / `ParryBaseStaminaCost` / `BlockBaseStaminaCost`)
-  with it. The price is now `costs.Calc`: `DefenceBaseStaminaCost` (1.0) ×
-  encumbrance × inverse-skill × `{Dodge,Parry,Block}CostModifier` (1.25 / 1.10 /
-  1.15). For an unladen rank-1 defender that is dodge **1.370**, block
-  **1.2604**, parry **1.2056**.
-- **Charge through `GetDefenseCostFloat` + `ApplyCostFloat`, never the integer
-  pair.** All three of those numbers truncate to `1`, so an integer charge erases
-  the modifiers entirely. That was live: `ResolveChannelDefence` used the integer
-  entry point until U7, and `DefenceSetFor` routes dodge and block there for
-  `ChannelRanged` and `ChannelSpellPhysical` (eleven shipped spells declare
-  `target_defense_type: physical`), so block against a physical spell was charged
-  1 rather than 1.2604.
+  with it. Quote composition applies the configured base, physical encumbrance,
+  inverse governing skill, and defence modifier while preserving fractional
+  carry.
+- Dodge, parry, and block use Stamina. Quell and defy use Conviction and are
+  non-physical, so encumbrance does not enter those quotes.
 - `ResourceMultiplier` is attack-side only. It does NOT penalise defence today —
-  see the exhaustion gotcha under "Contest core" below.
+  shortage instead removes only the selected defence's governing skill term.
 
 **Implementation:**
 - `runBestOfAllDefense()` in `combat_helpers.go` builds each defense's score and
@@ -288,12 +283,11 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    formatting `"Grimwald s your attack!"`. `itemsDefenseType` deliberately still
    falls through to the zero value, which `items.GetDefenseMessage` already
    handles by returning an empty set.
-3. **The cost path is stamina-only.** **FIXED.** `characters.DefensePool` +
-   `Character.GetDefenseCostFloat` are the pair to charge through; `DefensePool`
-   maps quell and defy to `PoolConviction` and everything else to `PoolStamina`,
-   and `GetDefenseCostFloat` prices the two off `QuellBaseConvictionCost` /
-   `DefyBaseConvictionCost`. `runBestOfAllDefense` and `ResolveChannelDefence`
-   are both on the pair, so the old shape survives nowhere.
+3. **The cost path is stamina-only.** **FIXED.**
+   `Character.QuoteDefenseCost` maps every recognized defence to its registry
+   action, pool, base, and modifier in one raw request. Both melee and channel
+   resolvers commit only the winner with `CostPartial`, so the old stamina-only
+   direct-charge shape survives nowhere.
    `GetDefenseStaminaCost` — the stamina-only function that returned 0 for quell
    and defy, which is the trap the pair replaces — was DELETED in U7 Task 6.
 4. **Analytics and the admin dashboard lose the swing entirely.** **DEFERRED,
@@ -303,10 +297,9 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    social defences are invisible to `combatstats` — which was equally true of
    `TrySpellDeflection` and `TryStoicResolve`, so this is not a regression. It
    becomes live the moment quell or defy is wired into melee.
-5. **Effectiveness knobs: FIXED. Positional knobs: DEFERRED.**
-   `QuellEffectiveness` and `DefyEffectiveness` exist (Task 11 added them,
-   default 1.0) and `ResolveChannelDefence` applies all five through
-   `defenceEffectiveness`. The prone / clinch / grounded switches in
+5. **Effectiveness knobs: FIXED. Positional knobs: DEFERRED.** Both melee and
+   channel candidate builders apply all five configured values through the
+   centralized `defenceEffectiveness` mapping. The prone / clinch / grounded switches in
    `runBestOfAllDefense` were converted from bare string literals to the
    `characters.Defense*` constants, but still have no quell/defy arms: giving
    them one needs `ProneQuellPenalty` and five more knobs that do not exist, and
@@ -318,13 +311,10 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    0.0 multiplier for a defensive crit, which fully negates, but there is no
    `AttackResult` in that path so `applyCritEffects` (riposte / sweep / shield
    slam) has nothing to fire from. Same as pre-U6 behaviour.
-7. **The two parallel `DefenseType` enums are still three-valued.**
-   **DELIBERATELY UNCHANGED.** `combat.DefenseType` (`attackresult.go`) and
-   `items.DefenseType` (`internal/items/defensive_messages.go`) still mirror only
-   dodge/parry/block. Task 12 did not need them, because the non-physical
-   channels never construct an `AttackResult`. Keep it that way until there is
-   message data behind the constants: `case combat.DefenseQuell:` failing to
-   compile is a LOUD failure, and loud beats silent.
+7. **The message enum now recognizes all five defences.** `items.DefenseType`
+   includes quell and defy so channel outcomes can select their data pools.
+   `combat.DefenseType` remains the three-valued melee `AttackResult` enum;
+   channel resolution returns `ChannelDefenceResult` instead.
 8. **`PowerScore` averages three defences.** **DEFERRED.** `calculations.go`
    computes `(dodge + parry + block) / 3.0`, under-weighting a character built on
    mental or social defence (feeds `modules/leaderboards`).
@@ -337,7 +327,6 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
     and defy never signal "evaded a blow". **DEFERRED**; flavour only, and
     unreachable today.
 
-The help-alias and helpfile gaps were closed after Task 12. The remaining
 U8 closed the non-physical content gap with `quell.yaml` and `defy.yaml` under
 `_datafiles/world/dogmud/defense-messages/`. `RenderChannelDefenceMessages`
 consumes the exact `ChannelDefenceResult` returned by resolution, suppresses
@@ -846,19 +835,11 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
   compiler is happy either way, and a test asserting that a charge was
   *requested* (`ApplyCostPartial` reports `Charged: 4`) still passes while the
   real character's stamina never moves. Do not "simplify" the parameters back.
-- **`runBestOfAllDefense` has no affordability gate, on purpose.** Every defence
-  in the sequence enters the contest regardless of the defender's stamina, and
-  only the winner is charged, partially. Re-adding a gate would drop an
-  exhausted defender out of the contest entirely, leaving them nothing but the
-  uncontested fall-through, which since U6 Task 8 is an unconditional hit --
-  the old flat save that used to catch that case is gone. Defence attempts and
-  stance counting happen above where the gate
-  used to be, so they are unaffected either way.
-- **Exhaustion currently costs a defender nothing.** `GetDefenseScore` has no
-  resource term and every `ResourceMultiplier` caller is attack-side, so between
-  U5b-2 and U8 a 0-stamina defender defends exactly as well as a rested one.
-  That is a known, temporary, deliberate gap; U8 strips the skill term. Do not
-  "fix" it by re-adding a gate.
+- **`runBestOfAllDefense` never excludes an unaffordable defence.** Every
+  eligible defence receives a read-only quote and enters the contest. An
+  unaffordable candidate omits only its own skill term; another candidate may
+  remain fully trained. Only the winner commits and messages, so losing short
+  candidates are silent and free.
 - **Read `contest.Result.Margin`. Never a `dice.RollResult`'s
   `.Margin`.** The core rolls each side with `dice.Roll`, which does not
   populate `RollResult.Margin`, so `res.AttackRoll.Margin` and
@@ -1182,15 +1163,13 @@ shield). All three are rolled simultaneously:
 
 ```
 For each defense in [dodge, parry, block]:
-  1. Track the attempt and bump the stance counter. NOTHING is charged here,
-     and there is no affordability gate (U5b-2) — every defence enters the
-     contest and only the winner pays, partially, further down.
-  2. defenseScore = mob.GetDefenseScore(defenseType)
+  1. Quote without mutation. Nothing is charged here; every eligible defence
+     enters, with its skill term included only when affordable.
+  2. defenseScore = mob.GetDefenseScoreFor(defenseType, includeSkill)
        dodge: DEX-based
        parry: weapon parry rating
        block: shield block rating
-  3. Multiply by effectiveness (DodgeEffectiveness, ParryEffectiveness,
-     BlockEffectiveness from config).
+  3. Multiply by the centralized defenceEffectiveness mapping.
   4. Multiply by prone penalties if applicable.
   5. Hand the scores to RunContest: ONE attack roll contested by every defence
      entry, with ContestFloor applied to the outcome. runBestOfAllDefense no
@@ -1198,7 +1177,7 @@ For each defense in [dodge, parry, block]:
   6. The core returns an ATTACK-positive margin; runBestOfAllDefense flips it
      once at the seam so bestDefenseResult.margin stays DEFENCE-positive
      (margin = defenseRoll.Value - hitRoll.Value).
-  7. Keep the defense with the HIGHEST margin.
+  7. Keep the defense with the HIGHEST margin, then commit only that candidate.
 ```
 
 **iv. Resolve Defense** — `resolveDefenseOutcome()`

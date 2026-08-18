@@ -558,23 +558,23 @@ full resolution flow and policy matrix.
 
 ### Unified action-cost admission (U8)
 
-These are raw bases before `costs.Calc`; they are not rounded final charges.
+These are raw config inputs before `costs.Calc`; they are not final charges.
 Validation rejects missing, non-positive, NaN, and infinite values. A
 non-positive action modifier remains the calculator's neutral `1.0` behavior.
 
-| Knob | Default/shipped | Actions |
-|------|----------------:|---------|
-| `ShootBaseStaminaCost` | 2 | Shoot |
-| `ReloadBaseStaminaCost` | 1 | Reload |
-| `SpecialMoveBaseStaminaCost` | 4 | Bash, trip, kick, grapple initiation, hamstring, rake, maul, pounce, gore, drain, throttle, throw |
-| `SneakBaseStaminaCost` | 2.5 | Sneak |
-| `RhetoricActionBaseConvictionCost` | 4 | Taunt, rally, warcry |
-| `GrappleStaminaCostPerRound` | 2 | Ongoing grapple maintenance before controller/controlled role multiplier |
+| Knob | Actions |
+|------|---------|
+| `ShootBaseStaminaCost` | Shoot |
+| `ReloadBaseStaminaCost` | Reload |
+| `SpecialMoveBaseStaminaCost` | Bash, trip, kick, grapple initiation, hamstring, rake, maul, pounce, gore, drain, throttle, throw |
+| `SneakBaseStaminaCost` | Sneak |
+| `RhetoricActionBaseConvictionCost` | Taunt, rally, warcry |
+| `GrappleStaminaCostPerRound` | Ongoing grapple maintenance before controller/controlled role multiplier |
 
 `GrappleStaminaCostPerRound` is a `ConfigFloat`; grapple initiation uses the
-special-move base instead. The absent shipped `SneakFailCooldown` remains
-effectively zero; an explicitly invalid negative retains its historical
-fallback of 3.
+special-move base instead. Physical rows add encumbrance, every row applies the
+inverse governing-skill term, and callers may supply a documented modifier.
+See the live config and validation code for tuning values.
 
 ## Files
 

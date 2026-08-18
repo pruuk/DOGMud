@@ -10,18 +10,26 @@ this is the one that is new, so it is worth understanding early.
 
   - <ansi fg="stat">Spellcasting</ansi> -- every spell you cast draws on your Conviction.
   - <ansi fg="stat">Rhetoric in combat</ansi> -- taunts, and the rally and warcry battle-shouts.
+  - <ansi fg="stat">Mental defences</ansi> -- quell against hostile mind magic and defy
+    against rhetoric attacks.
   - <ansi fg="stat">Conviction-channel attacks</ansi> -- strikes that lean on presence, not muscle.
 
 <ansi fg="yellow">━━━ Running Low ━━━</ansi>
 
-As your Conviction drains, the things it powers weaken with it:
+Rhetoric actions require full payment and refuse before their cooldown or
+effect if you cannot muster the resolve. Rhetoric skill lowers their price;
+carried load does not affect acts of will.
+
+Quell and defy remain possible when Conviction runs short. The selected defence
+spends what remains and answers without its governing skill. Losing defence
+choices are never charged. As your Conviction drains, other things it powers
+weaken with it:
   - Your spells bite less deeply.
   - Your taunts land less often and hold less firmly.
   - Rally and warcry lose their force.
 
-A caster or a taunt-focused fighter who lets Conviction bottom out is as
-spent as a swordsman out of Stamina -- the tools still cost you, but they
-no longer land like they should. When it runs dry, break off and recover.
+A caster or a taunt-focused fighter who lets Conviction bottom out is as spent
+as a swordsman out of Stamina. When it runs dry, break off and recover.
 
 Companions, and some gear, hold part of the pool aside for as long as you
 keep them. That held share is not damage and rest will not return it, so
@@ -43,4 +51,5 @@ use. Cast, persuade, and command, and the pool that fuels them widens.
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help health</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help rhetoric</ansi>, <ansi fg="command">help status</ansi>
+  <ansi fg="command">help quell</ansi>, <ansi fg="command">help defy</ansi>,
   <ansi fg="command">help reservation</ansi>

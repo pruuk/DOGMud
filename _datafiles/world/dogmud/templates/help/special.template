@@ -29,6 +29,11 @@ These moves represent bursts of focused effort — the body and mind need a
 moment to recover before another such effort can be made. You can still
 attack normally between special moves.
 
+Physical moves spend Stamina; rhetoric moves spend Conviction. Carried load
+raises physical prices, while each move's governing skill lowers its price.
+These voluntary actions require full payment and refuse before consuming their
+cooldown, item, ammunition, combat round, or effect.
+
 <ansi fg="yellow">Checking cooldowns:</ansi>
 
   Use <ansi fg="command">cooldowns</ansi> to see all active cooldowns, including how many rounds
@@ -36,4 +41,5 @@ attack normally between special moves.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bash</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help cast</ansi>, <ansi fg="command">help cooldowns</ansi>,
-  <ansi fg="command">help submission</ansi>
+  <ansi fg="command">help submission</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help conviction</ansi>

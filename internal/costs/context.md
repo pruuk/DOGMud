@@ -215,18 +215,14 @@ Declared in `internal/configs/config.balance.go`, defaulted and validated in
 
 ## Consumers
 
-Three, as of U7 Task 10.
-
-- **Defence** (Task 6): `characters.GetDefenseCostFloat` prices all five
-  defences through `Calc`, and `internal/combat` charges the result via
-  `Character.ApplyCostFloat` at both defence sites (`runBestOfAllDefense` for
-  melee, `ResolveChannelDefence` for the ranged, spell and social channels).
-- **Attack** (Task 7): `combat.attackCostPerSwing` prices ONE swing; the
-  exported `combat.ChargeAttackCost(attacker, swings)` multiplies by the swings
-  actually thrown and charges through `ApplyCostFloat`. The four wrappers in
-  `combat/combat.go` call it after `calculateCombat` returns. Note it reads the
-  rank off `GetCombatSkillLevel` (weapon-appropriate) rather than the registry's
-  nominal `skills.WeaponCombat`.
+- **Defence:** melee and channel resolvers quote every eligible candidate,
+  construct its score with skill only when affordable, and commit only the
+  contest winner with `CostPartial`. Losing candidates neither charge nor
+  message. Physical defences use Stamina; quell and defy use Conviction.
+- **Attack:** `combat.ChargeAttackCost` quotes the pre-resolution swing plan and
+  commits once with `CostPartial`. A short plan still resolves every swing but
+  omits the equipped combat-skill term from hit scoring. `SwingsThrown` is an
+  outcome count, never the pricing source.
 - **Movement** (Task 8): `characters.GetMovementStaminaCost` folds the terrain
   multiplier into `Base` (terrain is a property of the move, not the actor, and
   `Base` is deliberately outside the clamp), then applies the mutation speed
@@ -242,11 +238,16 @@ Three, as of U7 Task 10.
   curve.
 - **Flee**: `usercommands.Flee` prices `FleeStaminaCost` as the `Base` through
   the `ActionFlee` row (physical, governed by `skills.Skullduggery`, which is
-  the skill `combat.ResolveFleeBlockers` already rolls) and charges it with
-  `ApplyCostFloat`. `ApplyCostFloat`, NOT `ApplyCostFloatOrRefuse`: flee must
-  never refuse for cost, and `ApplyCostFloat` delegates to `ApplyCostPartial`.
-  Flee and movement are deliberate mirror images here.
+  the skill `combat.ResolveFleeBlockers` already rolls), then quotes and commits
+  once with `CostPartial`. A short flee still enters Disengaging and resolves
+  every blocker without Skullduggery.
+- **Voluntary U8 actions:** shoot, reload, physical specials, grapple
+  initiation, throw, sneak, taunt, rally, and warcry quote through their
+  registry rows and commit with `CostFullOrRefuse` before secondary state.
+- **Grapple maintenance:** both participants independently quote
+  `ActionGrappleMaintain` after applying the controller or controlled role to
+  the base, then commit partially before the drift contest.
 
 The registry now includes every U8 cost surface: ranged, taunt, rally, warcry,
 the special-move family, grapple initiation and maintenance, throw, and sneak.
-Later U8 tasks migrate their call sites onto the quote/commit seam.
+Their call sites all use the character-owned quote/commit seam.

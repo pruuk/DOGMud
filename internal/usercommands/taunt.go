@@ -47,9 +47,9 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	// Chunk 4.5: notify seeders that a player engaged a mob via taunt.
-	// Taunt is symmetric to attack for rules 6 + 9 — it is also a
-	// player-initiated combat engagement. Only fire for mob targets.
+	// Preserve the command-level taunt notification after ExecuteTaunt has paid,
+	// revalidated the target, consumed cooldown, and committed engagement. Only
+	// fire for mob targets; refused or stale attempts returned above.
 	if result.Target.MobInstanceId > 0 {
 		events.AddToQueue(events.PlayerAttackedMob{
 			UserId:        user.UserId,

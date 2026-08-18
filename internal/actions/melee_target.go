@@ -169,8 +169,9 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 	}}, false
 }
 
-// AcquireMeleeTarget preserves eager engagement for existing callers such as
-// taunt. Physical specials stage instead and commit inside Execute*.
+// AcquireMeleeTarget preserves the legacy eager-engagement helper for callers
+// that explicitly need it. Admission-gated specials and taunt use
+// StageMeleeTarget and commit inside Execute* only after payment and cooldown.
 func AcquireMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opts MeleeTargetOpts) bool {
 	actor, handled := StageMeleeTarget(user, room, rest, opts)
 	if handled {

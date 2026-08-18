@@ -1,6 +1,7 @@
 # DOGMud Current Backlog
 
-Last reviewed: 2026-08-17 against `master` at `b638619eb`.
+Last reviewed: 2026-08-17 against the U8 implementation working tree based on
+`f3d3111c3`.
 
 This is the compact cross-roadmap memory for planning. It is an index, not a
 second requirements document. Follow the linked canonical roadmap/spec/plan for
@@ -13,11 +14,11 @@ Source: [Unified Resolution Roadmap](UNIFIED_RESOLUTION_ROADMAP.md)
 
 U7b (reservation ceiling) shipped in PR #49. The open sequence is:
 
-1. **U8 - new cost surface.** Put ranged, taunt, resistance, special moves,
-   rally, warcry, grapple initiation, and sneak onto the U7 cost model; use the
-   skill-less roll behavior when a resource cannot be paid. Add data-driven
-   quell/defy defence narration with five variants per intensity band. Depends
-   on U7b.
+1. **U8 - implementation complete; Task 14 validation pending.** The unified
+   action-cost surface, admission policy, data-backed quell/defy narration, and
+   behavior-specific documentation are complete on the feature branch. U8 is
+   not roadmap-complete until the full verification and adversarial playtest
+   gate passes. Source: [U8 design](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
 2. **U9 - progression events.** Replace progression side effects with explicit
    events for both participants and decide how spell `primarystat` becomes the
    authoritative resolution stat.
@@ -81,10 +82,14 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 
 ## Deferred Follow-ons
 
+- **Audit and remove dead mutation active command skills:** inventory command
+  registration, mutation definitions, implementations, tests, help, and config
+  knobs after the mutation removals. Delete only entries proven unreachable or
+  obsolete. This remains explicitly outside U8.
 - **NPC maintenance routines (Mob Aliveness 3.5):** the only deferred item in an
   otherwise complete 45-chunk roadmap. Source:
   [Mob Aliveness Roadmap](MOB_ALIVENESS_ROADMAP.md).
-- **Centralized messaging framework:** combat-state Perception shipped dormant
+- **Unify fragmented combat/action messaging:** combat-state Perception shipped dormant
   and has no consumer. A future framework would own visibility gating,
   anonymized infrared rendering, look blocking, event-category colors, wrapping,
   companion-name leakage, and the scattered ownership of melee, spell,

@@ -278,6 +278,10 @@ What matters is the shape, not the list:
   asynchronous round hook. `ok == false` is not reusable state: on a phase
   flee it means a resolver already owns the attempt, while a true legacy
   `Aggro{Type:Flee}` path defaults to the historical full-skill behavior.
+- **Player shortage lines are private and singular.** Autoattack, winning
+  defence, flee, and grapple maintenance explain the skill-less resolution once
+  at their owning round/action boundary. Losing defence candidates never emit a
+  line. NPC wrappers use the same mechanics without private output.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must
   *split* input into multiple slots (item vs. container, mob vs. player).
@@ -288,10 +292,10 @@ Enumerate every step; a partially-wired admin command is the classic failure:
 handler file, registration entry, help file, mob twin (or allowlist entry),
 and — if it is player-facing — an entry in the relevant help category.
 
-**If the command attacks a mob, it must seed aggression.** Route it through
-`actions.AcquireMeleeTarget` and you get it for free; that is how all eleven
-melee specials (kick, bash, trip, grapple, taunt, gore, maul, pounce, rake,
-throttle, drain) are covered. Anything with its own targeting — `attack`,
+**If the command attacks a mob, it must seed aggression.** Admission-gated
+melee specials and taunt route through `actions.StageMeleeTarget`; their shared
+`Execute*` action commits engagement only after payment and cooldown. Anything
+with its own targeting — `attack`,
 `shoot`, `throw` — calls `actions.SeedAggression` itself. Skip it and the
 attack is invisible to the revenge, opinion and justice systems: no assault
 crime, no rep hit, no bounty, no witness memory. That was the real state of all

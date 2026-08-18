@@ -49,8 +49,8 @@ type Actor interface {
 `admitFullCost` is the internal voluntary-action seam. It creates a neutral
 single-unit request, then delegates the full-or-refuse decision, pool update,
 and fractional carry to `Character.QuoteActionCost` and `Character.CommitCost`.
-It performs no direct `ApplyCost*` call and emits no private text. Later U8
-shared action results carry the returned `CostCommitResult`; user wrappers can
+It performs no direct `ApplyCost*` call and emits no private text. U8 shared
+action results carry the returned `CostCommitResult`; user wrappers can
 render a refused status through `CostRefusalText`, while equivalent mob wrappers
 stay silent.
 
@@ -82,9 +82,9 @@ physical specials call `StageMeleeTarget` and carry its returned `Actor` into
 their shared `Execute*` function. The action resolves that staged target
 read-only, admits cost, consumes cooldown, then commits aggro and calls
 `SeedAggression`. Invalid, stale, cooldown-blocked, and cost-refused attempts
-therefore cannot seed combat side effects. `AcquireMeleeTarget` preserves eager
-engagement for existing non-staged callers such as taunt. `throw` seeds from its
-own `engageAfterThrow` because it is an AoE.
+therefore cannot seed combat side effects. Taunt uses the same staged engagement
+contract. `AcquireMeleeTarget` remains only as a legacy eager helper; `throw`
+seeds from its own `engageAfterThrow` because it is an AoE.
 
 The two halves fire on **deliberately different** conditions, and getting this
 backwards spams crimes and bounties off a single engagement:

@@ -126,6 +126,16 @@ Success is an opposed roll of Strength vs. the target's Strength
 and Dexterity. Grapple-immune creatures (e.g. elementals, oozes)
 cannot be grappled.
 
+The initial grapple is a special move that spends Stamina and requires full
+payment. Once the hold exists, both participants pay upkeep independently each
+round. The controlling role is less costly than struggling underneath, and
+carried load raises either price while <ansi fg="skill">unarmed-combat</ansi>
+skill lowers it.
+
+Upkeep never ends the grapple merely because someone is short. A participant
+spends what remains and contests that round without Unarmed Combat skill, as
+trained control slips but strength and leverage remain.
+
 When you decisively win a grapple round from a dominant position,
 the engine may fire a submission attempt automatically — no command
 needed. See <ansi fg="command">help submission</ansi>.
@@ -133,4 +143,5 @@ needed. See <ansi fg="command">help submission</ansi>.
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help attack</ansi>,
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
   <ansi fg="command">help submission</ansi>, <ansi fg="command">help surrender</ansi>,
-  <ansi fg="command">help reach</ansi>
+  <ansi fg="command">help reach</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help special</ansi>

@@ -177,7 +177,7 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U6** | **THE FLIP.** Uniform ×5, multiplier defence, margin-scaled mitigation, designed defence sets, `avoidance.go` absorbed, tuning package applied. **All legacy parameters deleted.** | L | U2–U5 | **Yes — all of it** |
 | **U7** | **The unified cost model.** NEW SLICE, added 2026-08-13; everything below it shifted by one. Applies the spec's single cost formula to every action: flat config base, encumbrance multiplier (physical only), inverse-skill multiplier, per-action modifier. Takes defence cost off the hardcoded 2/4/5 for real. **Must map the companion / reserved-CP interaction before building.** | L | U5, U6 | **Yes** |
 | **U7b** | ✅ **DONE.** **The reservation ceiling.** NEW SLICE, added 2026-08-15 at the owner's request; runs immediately after U7. Cap total reservation on a pool at 50-75% of its max and **refuse the breaching action** rather than letting it succeed and clamp: wielding or equipping a reserving item, enchanting, summoning, conjuring, raising. **Companions are in scope** and are the reason this cannot wait: they reserve on prod today. Also re-examines five raw-max reads whose U7-review rejection rested on the false premise that mobs cannot reserve. **Must precede U8**, which is what turns an over-reserved pool from cosmetic into crippling. | M | U7 | **Yes** |
-| **U8** | **Unified action-cost admission.** Add shoot, reload, taunt, rally, warcry, sneak, throw, grapple initiation and the full bash/trip/kick/beast-move family to the U7 model. Voluntary actions pay in full or refuse; autoattack, defence, flee and grapple maintenance remain life-preserving partial-pay actions and omit skill when short. Adds one non-mutating quote/commit seam, player/mob parity, current help/context docs and an adversarial playtest. Quell and defy already cost Conviction after U7; U8 adds their short-resource behavior rather than charging twice, plus five data-driven narration variants per intensity band for each defence. | L | **U7b** | **Yes** |
+| **U8** | **IMPLEMENTATION COMPLETE ON FEATURE BRANCH; TASK 14 VALIDATION PENDING. Unified action-cost admission.** Shoot, reload, taunt, rally, warcry, sneak, throw, grapple initiation and the full bash/trip/kick/beast-move family now use the U7 model. Voluntary actions pay in full or refuse; autoattack, defence, flee and grapple maintenance remain life-preserving partial-pay actions and omit skill when short. One non-mutating quote/commit seam owns admission with player/mob parity. Quell and defy use coordinated data-backed narration. U8 is not roadmap-complete until the Task 14 full verification and adversarial playtest pass. | L | **U7b** | **Yes** |
 | **U9** | Progression layer: events not side effects, both sides, doing vs observing, skill **and** stat on every event. Category C (crafting, salvage) reaches it too. **Also the natural home for unifying a spell's `primarystat` with a skill's primary stat** (owner, 2026-08-15): `SpellData.PrimaryStat` is declared by 58 spell files, all `willpower`, and read by **zero** Go code, while resolution hardcodes Willpower in six places. Do not delete it as dead before U9 decides, since it is the only written record of the intent. | M | U6 | **Yes** |
 | **U10** | **Disruption model.** Concentration becomes a proper contest; knockdown and prone recovery become opposed rolls. | M | U1, U0 | **Yes** |
 | **U12** | **Targeting and target-switching audit.** Added 2026-08-14 at the owner's request. This code has been rewritten several times and never re-examined as a whole; the arc has since removed a great deal of the complexity it was written around. Re-read it end to end and simplify what the flip made redundant. Surface: `actions/target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go`, `usercommands/target.go`, and `internal/parser` (~780 lines together). Audit first, then propose — the deliverable is a findings pass, and any simplification is scoped from what it finds rather than assumed up front. | M | U6 | **No** (simplification only; anything behavioural splits out) |
@@ -465,6 +465,10 @@ the compounding is not, and is a playtest question rather than a code change.
 **Designed 2026-08-17.** Source of truth:
 [`2026-08-17-u8-unified-action-cost-admission-design.md`](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
 
+**Status 2026-08-17:** implementation Tasks 1 through 13 are complete on the
+feature branch. Task 14 full validation and the required adversarial in-game
+playtest remain pending, so U8 is not roadmap-complete or shipped.
+
 U8 is both a new cost surface and the consolidation slice for action admission.
 It extends the existing U7 action registry and calculator through one
 non-mutating quote followed by an explicit full or partial commit. It does
@@ -510,9 +514,13 @@ every touched package's `context.md`, config comments, patch notes and this
 roadmap, then runs the adversarial in-game playtest required for new
 player-facing copy.
 
-**Recorded follow-up, out of scope:** audit mutation-active command
+**Recorded follow-up, out of scope:** audit and remove dead mutation-active command
 registrations, implementations, tests, help and config for dead remnants after
 the mutation removals. Surprise attack remains U10's redesign.
+
+**Recorded follow-up, out of scope:** unify fragmented combat and action
+messaging after the resolution arc. U8 moves quell and defy onto the existing
+defence-message data shape but does not redesign broader message ownership.
 
 ### U0 — delete the spell-initiation gate
 

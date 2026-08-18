@@ -24,6 +24,10 @@ special moves (bash, trip, kick). Uses the
 <ansi fg="skill">Skullduggery</ansi> skill and progresses
 <ansi fg="stat">Dexterity</ansi>.
 
+Throwing spends Stamina and requires full payment. Carried load raises the
+price, while <ansi fg="skill">skullduggery</ansi> lowers it. If you are too
+spent, the exact item, cooldown, and combat state remain unchanged.
+
 <ansi fg="yellow">Aging and Storage:</ansi>
 
   Grenades age over time like potions. Fresh grenades work
@@ -38,4 +42,5 @@ special moves (bash, trip, kick). Uses the
   Use <ansi fg="command">sort</ansi> to move grenades into your bandolier.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help flashbang</ansi>, <ansi fg="command">help firebomb</ansi>,
-  <ansi fg="command">help toxic-flask</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help sort</ansi>
+  <ansi fg="command">help toxic-flask</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help craft</ansi>, <ansi fg="command">help sort</ansi>

@@ -14,10 +14,16 @@ ranged weapon in either hand, it is reloaded automatically. Reloading
 takes a moment and shares a cooldown with other special moves, so plan
 your shots — you cannot reload again until it recovers.
 
+Reloading is physical exertion that spends Stamina and requires full payment.
+Carried load raises the price, while <ansi fg="skill">ranged-combat</ansi> skill
+lowers it. If you are too spent, no ammunition or cooldown is consumed and the
+weapon remains unchanged.
+
 You need matching ammunition in your pack. When a bundle runs dry you
 will be told it was your last.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help wield</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help ranged-combat</ansi>,
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help wield</ansi>
 
 <ansi fg="black-bold">─────────────────────────────────────────────────────────────────</ansi>
 

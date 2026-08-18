@@ -1,5 +1,31 @@
 # DOGMud Patch Notes
 
+## 2026-08-17: Effort now reaches every combat choice
+
+Ranged attacks, reloading, physical maneuvers, sneaking, thrown items, and
+grapple openings now draw on Stamina. Taunts, rallying cries, and warcries draw
+on Conviction. What you carry makes physical effort dearer, while practice in
+the skill behind an action makes its price easier to bear.
+
+Actions you choose now refuse cleanly when you cannot pay. A refused shot does
+not fire, a refused reload does not take ammunition, and a refused maneuver
+does not consume its cooldown or change the fight. The game tells you whether
+your body is too spent or your resolve is too thin without exposing its tuning.
+
+The actions that keep you alive remain available in a crisis. Normal attacks,
+the defence that actually answers an incoming threat, fleeing, and ongoing
+grapple control spend whatever remains and still resolve. When you are short,
+instinct and raw effort carry the action without the governing skill. Defence
+choices that lose the contest cost nothing and stay silent.
+
+Reloading now counts as physical exertion. Grapples also ask something of both
+participants each round, with the fighter in control and the fighter struggling
+underneath paying their own upkeep independently.
+
+Quell and defy now answer hostile magic and rhetoric with varied narration that
+matches how decisively the defence worked. Both spend Conviction, and both stay
+possible in a desperate, untrained form when resolve runs short.
+
 ## 2026-08-16: Reading your own bars, honestly
 
 Your health, stamina and conviction bars now show three things instead of

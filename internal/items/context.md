@@ -354,6 +354,11 @@ normalized margin of 0.5 and Normal at or above it. They never use Heavy,
 because ordinary defence still allows a partial effect through. Defensive
 crits alone use Heavy and may truthfully describe full negation.
 
+These coordinated pools are authoritative for the actual quell or defy
+outcome. Callers pass the resolved defence result and display-ready, actor-aware
+identities; they do not add a competing hardcoded outcome line. Private
+shortage text is separate and never sent to observers or NPC actors.
+
 ### Message Selection and Token Replacement
 ```go
 // Get attack message based on damage percentage

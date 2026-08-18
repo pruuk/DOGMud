@@ -23,6 +23,10 @@ Each shot uses your combat round. Cross-room fire does not
 automatically pull you into melee — the target must close the
 distance to engage.
 
+Shooting spends Stamina and requires full payment. Carried load raises the
+price, while <ansi fg="skill">ranged-combat</ansi> skill lowers it. If you are
+too spent, you do not fire or consume the round.
+
 <ansi fg="yellow">━━━ Progression ━━━</ansi>
 
 Ranged-combat improves through use. Shots that connect have a
@@ -30,4 +34,5 @@ chance to advance the skill. Perception governs aimed-shot
 accuracy and damage.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help reload</ansi>,
-  <ansi fg="command">help ranged-combat</ansi>, <ansi fg="command">help wield</ansi>
+  <ansi fg="command">help ranged-combat</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help wield</ansi>

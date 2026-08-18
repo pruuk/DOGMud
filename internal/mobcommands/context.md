@@ -196,3 +196,6 @@ why a command available to both players and mobs must be registered twice
 - **Voluntary-action admission** stays in that shared action path. Mob wrappers
   consume the returned `CostCommitResult` for control flow but never emit a
   player-private refusal line and never charge a pool independently.
+- **Partial shortages are silent too.** Mob autoattack, winning defence, flee,
+  and grapple maintenance use the same short-funded, skill-less mechanics as
+  players without an invisible private warning.

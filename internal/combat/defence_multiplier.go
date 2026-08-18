@@ -75,10 +75,10 @@ func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) f
 // defenceEffectiveness returns the config multiplier applied to a defence's
 // score before it enters a contest.
 //
-// runBestOfAllDefense reads the same three physical knobs inline; this is the
-// same table for the channels that do not run through it. An unrecognised
-// defence gets 1.0 and not 0, so a defence added to DefenceSetFor without a knob
-// enters the contest at face value instead of silently losing every roll.
+// Both melee and channel defence candidate builders use this centralized
+// mapping. An unrecognised defence gets 1.0 and not 0, so a defence added to
+// DefenceSetFor without a knob enters the contest at face value instead of
+// silently losing every roll.
 func defenceEffectiveness(defenceType string) float64 {
 	bal := configs.GetBalanceConfig()
 	switch defenceType {

@@ -35,6 +35,12 @@ without a shield.
 Dodging trains <ansi fg="skill">unarmed-combat</ansi> and
 <ansi fg="stat">dexterity</ansi>.
 
+Unarmed attacks, dodges, physical special moves, and grapple upkeep spend
+Stamina. Carried load raises the Stamina price, while
+<ansi fg="skill">unarmed-combat</ansi> skill lowers it. Voluntary moves require
+full payment. Autoattacks, a winning dodge, and grapple upkeep remain possible
+when short, but resolve without this skill.
+
 <ansi fg="yellow">━━━ Progression ━━━</ansi>
 
 This skill improves through use:
@@ -46,4 +52,5 @@ This skill improves through use:
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help combat</ansi>,
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help trip</ansi>,
-  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>
+  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>

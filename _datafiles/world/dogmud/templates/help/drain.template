@@ -21,12 +21,15 @@ successful hit also leaves the target bleeding.
   <ansi fg="stat">Damage:</ansi> Moderate — lighter than a full melee strike; the
     lifesteal makes up the difference in sustained fights.
   <ansi fg="stat">Lifesteal:</ansi> On a hit, the attacker heals for a fraction of
-    damage dealt (governed by the DrainHealRatio balance knob,
-    default 75%).
+    damage dealt.
   <ansi fg="stat">Bleed:</ansi> The target gains a Bleeding condition on hit,
     dealing ongoing damage each round.
   <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+
+Drain spends Stamina and requires full payment before the strike. Carried load
+raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
 
 Drain is most effective when the vampire is wounded — the
 combined bleed and heal make it excellent for sustained
@@ -36,5 +39,6 @@ flag, making it the vampire's exclusive ability.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help maul</ansi>, <ansi fg="command">help rake</ansi>, <ansi fg="command">help conditions</ansi>,
-  <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help maul</ansi>, <ansi fg="command">help rake</ansi>,
+  <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help special</ansi>, <ansi fg="command">help combat</ansi>

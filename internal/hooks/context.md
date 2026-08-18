@@ -1043,6 +1043,10 @@ For each pair inside `processGrapplePair`:
    through the existing solo consistency path, with no pool, carry, warning, or
    drift-contest mutation.
 
+   This is intentionally not a flat upkeep subtraction: role adjusts the base
+   before the shared physical load and inverse-Unarmed calculation, and each
+   participant owns a separate quote and fractional carry update.
+
 2. **Opposed control roll** — Score values computed for both sides via
    the formula above, with `grappleStaminaMultiplier` and the encumbrance
    multiplier already baked in and each participant's own admission deciding

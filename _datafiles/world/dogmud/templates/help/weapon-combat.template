@@ -10,6 +10,11 @@ with a weapon has a chance to advance this skill.
 
 This skill also affects your parry defense when wielding a weapon.
 
+Weapon attacks, parries, and weapon-based special moves spend Stamina. Carried
+load raises the Stamina price, while <ansi fg="skill">weapon-combat</ansi> skill
+lowers it. Voluntary special moves require full payment. Autoattacks and a
+winning parry remain possible when short, but resolve without this skill.
+
 <ansi fg="yellow">━━━ Reach and Grappling ━━━</ansi>
 
 Melee weapons have a reach that affects how well they perform in
@@ -20,4 +25,5 @@ fully effective. See <ansi fg="command">help grapple</ansi> and
 <ansi fg="command">help reach</ansi> for details.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help skills</ansi>, <ansi fg="command">help equip</ansi>,
-  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help reach</ansi>
+  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help reach</ansi>,
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>

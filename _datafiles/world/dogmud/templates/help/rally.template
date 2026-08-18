@@ -28,10 +28,16 @@ ability to dodge, parry, and block incoming attacks.
   <ansi fg="stat">Cooldown:</ansi> Shared with bash, trip, kick, and taunt
   <ansi fg="stat">Skill:</ansi> Progresses Rhetoric and Charisma
 
+Rally spends Conviction and requires full payment before any ally receives the
+effect. <ansi fg="skill">Rhetoric</ansi> lowers the price; carried load does not
+affect this act of will. If you cannot muster the resolve, no cooldown or buff
+is consumed.
+
 Rally can be used before combat begins, making it useful
 for pre-buffing before engaging a tough enemy. Higher Rhetoric
 skill and Charisma increase the potency of the effect.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help warcry</ansi>, <ansi fg="command">help rhetoric</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help warcry</ansi>, <ansi fg="command">help rhetoric</ansi>,
+  <ansi fg="command">help conviction</ansi>, <ansi fg="command">help combat</ansi>
