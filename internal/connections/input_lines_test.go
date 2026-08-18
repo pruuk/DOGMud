@@ -91,21 +91,32 @@ func TestSplitInputLines_TerminatorVariants(t *testing.T) {
 	}
 }
 
-// A telnet negotiation payload is binary and may legitimately contain 0x0A or
-// 0x0D — NAWS reports window dimensions as raw bytes, so a terminal 10 columns
-// wide embeds a literal LF. Splitting such a chunk would corrupt the
-// negotiation, so chunks carrying IAC are passed through untouched.
-func TestSplitInputLines_NeverSplitsChunksCarryingIAC(t *testing.T) {
+// A standalone telnet negotiation payload is binary and may legitimately
+// contain 0x0A or 0x0D. It must remain untouched.
+func TestSplitInputLines_PreservesStandaloneIACChunk(t *testing.T) {
 	const iac = 0xFF
 
 	naws := []byte{iac, 0xFA, 0x1F, 0x00, 0x0A, 0x00, 0x18, iac, 0xF0}
 	if got := splitInputLines(naws); got != nil {
 		t.Errorf("split a NAWS negotiation with a 0x0A height byte: %q", got)
 	}
+}
 
-	glued := append(append([]byte{}, naws...), []byte("east\r\nwest\r\n")...)
-	if got := splitInputLines(glued); got != nil {
-		t.Errorf("split a chunk containing IAC: %q; negotiation bytes must pass through whole", got)
+func TestSplitInputLines_SeparatesTextAfterIACNegotiation(t *testing.T) {
+	const iac = 0xFF
+
+	gmcp := []byte{iac, 0xFA, 0xC9, 'C', 'o', 'r', 'e', '.', 'H', 'e', 'l', 'l', 'o', iac, 0xF0}
+	glued := append(append([]byte{}, gmcp...), []byte("pt_early_abc123\r\n")...)
+
+	got := splitInputLines(glued)
+	want := [][]byte{gmcp, []byte("pt_early_abc123\r\n")}
+	if len(got) != len(want) {
+		t.Fatalf("splitInputLines(glued negotiation + username) = %q, want %q", got, want)
+	}
+	for i := range want {
+		if !bytes.Equal(got[i], want[i]) {
+			t.Errorf("segment %d = %q, want %q", i, got[i], want[i])
+		}
 	}
 }
 

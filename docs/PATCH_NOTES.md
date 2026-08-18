@@ -1,6 +1,6 @@
 # DOGMud Patch Notes
 
-## 2026-08-17: Effort now reaches every combat choice
+## 2026-08-18: Effort now reaches every combat choice
 
 Ranged attacks, reloading, physical maneuvers, sneaking, thrown items, and
 grapple openings now draw on Stamina. Taunts, rallying cries, and warcries draw
@@ -25,6 +25,15 @@ underneath paying their own upkeep independently.
 Quell and defy now answer hostile magic and rhetoric with varied narration that
 matches how decisively the defence worked. Both spend Conviction, and both stay
 possible in a desperate, untrained form when resolve runs short.
+
+Fleeing now closes cleanly when the fight ends before the escape round. A stale
+attempt cannot charge you after a target dies, and trying to flee outside a
+fight no longer breaks a spell you were still preparing. Cast cancellation
+messages also keep the underlying resource accounting out of combat prose.
+
+Clients that negotiate terminal features during login now keep the first typed
+line separate from that negotiation. Rapid logins and batched commands no
+longer risk losing or merging the first command.
 
 ## 2026-08-16: Reading your own bars, honestly
 

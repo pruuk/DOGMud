@@ -161,10 +161,11 @@ func TestHandlePlayerFlee_ReentrantConsumptionDoesNotResolveTwice(t *testing.T) 
 	}
 }
 
-// Catches returning from the non-fleeing hook branch without retracting a
-// command handoff whose Disengaging phase was canceled before the round. The
-// subsequent true legacy sentinel must keep its full-skill default and cannot
-// leave the canceled short admission reusable.
+// Catches a target-death cascade canceling Disengaging before the next combat
+// round. The paid attempt needs one terminal line at cancellation time because
+// EndAggro can remove the player from handlePlayerFlee's later round path.
+// The subsequent true legacy sentinel must keep its full-skill default and
+// cannot leave the canceled short admission reusable.
 func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -183,13 +184,23 @@ func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
 	if !u.Character.IsDisengaging() {
 		t.Fatal("fixture did not publish an admitted Disengaging flee")
 	}
+	events.DrainQueuedMessagesForTest(u.UserId)
 
 	u.Character.CombatPhase.ForceIdle(state.TransitionReason{
-		Trigger: combatphase.TriggerForceIdle,
+		Trigger: combatphase.TriggerTargetDied,
 		Actor:   state.ActorRef{UserId: u.UserId},
 	})
 	if u.Character.CombatPhase.State() != combatphase.Idle {
 		t.Fatalf("terminal cancellation left state %v, want Idle", u.Character.CombatPhase.State())
+	}
+	terminalLines := 0
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "fight ends before you need to flee") {
+			terminalLines++
+		}
+	}
+	if terminalLines != 1 {
+		t.Fatalf("target-death cancellation terminal lines = %d, want 1", terminalLines)
 	}
 	if handlePlayerFlee(u, room, u.UserId) {
 		t.Fatal("terminally canceled flee was resolved again")

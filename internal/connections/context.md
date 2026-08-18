@@ -222,10 +222,12 @@ arrived as `eastwesteast`. Hand-typing cannot produce that, but speedwalks,
 aliases, triggers and pasted blocks do, so it hit TinTin++, MUSHclient and the
 zMUD family hardest.
 
-Chunks carrying a telnet IAC byte are deliberately **never** split, because
-negotiation payloads are binary and may contain a literal `0x0A` or `0x0D` (NAWS
-encodes window dimensions as raw bytes). Those pass through whole. See
-`input_lines.go`.
+Telnet IAC negotiations are isolated as their own segments before printable
+lines are split. Bytes inside a negotiation are never treated as delimiters,
+because binary payloads may contain a literal `0x0A` or `0x0D` (NAWS encodes
+window dimensions as raw bytes). Printable input coalesced after a completed
+negotiation, including an AI client's username after its GMCP handshake, is
+therefore preserved as a separate line. See `input_lines.go`.
 
 ### Input Handler Chain
 ```go
@@ -734,7 +736,7 @@ This comprehensive connections system provides robust network connection managem
 |------|---------|
 | `connections.go` | The connection registry and lifecycle |
 | `connectiondetails.go` | Per-connection state |
-| `input_lines.go` | Splits one socket read into individual input lines |
+| `input_lines.go` | Isolates telnet negotiations and splits one socket read into individual input lines |
 | `clientsettings.go` | Negotiated client capabilities |
 | `heartbeat.go` | Keepalive / zombie detection |
 | `copyover.go` | Handing sockets across a hot restart |

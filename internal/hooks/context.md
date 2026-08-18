@@ -640,6 +640,15 @@ over all mob instances that compares `Character` pointer identity. This
 is acceptable because transition events fire at most once per state
 change (not per round).
 
+### CombatPhase_FleeCancellation.go
+
+Registers an `AfterTransition` callback on every character. When an admitted
+player flee moves from `Disengaging` to `Idle` for a terminal reason other than
+flee success or the player's own death, the callback retracts the one-use flee
+admission and sends exactly one terminal explanation. This covers target-death
+and combat-cleanup paths that remove the player from the next combat round
+before `handlePlayerFlee` can resolve the attempt.
+
 ### CombatPhase_CompanionAssist.go
 
 Registers `SubscribeAttackersChange` on every character. When a charmed

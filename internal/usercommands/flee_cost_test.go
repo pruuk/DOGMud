@@ -65,8 +65,8 @@ func TestFleeCost_ShortAttemptCommitsAvailableStaminaAndCarriesNoSkill(t *testin
 func TestFleeCost_TransitionVetoLeavesNoAdmission(t *testing.T) {
 	u, room, cleanup := fleeFixture(t, 9256, 99848, 0)
 	defer cleanup()
-	u.Character.Stamina = 0
 	engageFleeFixture(t, u)
+	before := u.Character.Stamina
 	u.Character.CombatPhase.RegisterPositionCheck(func() bool { return false })
 
 	if _, err := Flee("", u, room, 0); err != nil {
@@ -77,6 +77,97 @@ func TestFleeCost_TransitionVetoLeavesNoAdmission(t *testing.T) {
 	}
 	if _, admitted := TakeFleeAdmission(u); admitted {
 		t.Fatal("transition-vetoed short admission leaked into a later resolution")
+	}
+	if u.Character.Stamina != before {
+		t.Errorf("position-vetoed flee spent stamina: got %d, want %d", u.Character.Stamina, before)
+	}
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "attempt to flee") ||
+			strings.Contains(msg, "instinct rather than technique") {
+			t.Errorf("position-vetoed flee published a nonexistent attempt: %q", msg)
+		}
+	}
+}
+
+// A target-death cascade can force the character to Idle after Flee's initial
+// in-combat check but before the Disengaging transition is admitted. That
+// rejected transition must be indistinguishable from the earlier queued-input
+// race: no cost, no attempt banner, and one terminal explanation.
+func TestFleeCost_TransitionRaceToIdleDoesNotPayOrClaimAttempt(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9259, 99852, 0)
+	defer cleanup()
+	engageFleeFixture(t, u)
+	before := u.Character.Stamina
+	u.Character.CombatPhase.RegisterPositionCheck(func() bool {
+		u.Character.CombatPhase.ForceIdle(state.TransitionReason{
+			Trigger: combatphase.TriggerTargetDied,
+		})
+		return true
+	})
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+
+	if u.Character.Stamina != before {
+		t.Errorf("transition-raced flee spent stamina: got %d, want %d", u.Character.Stamina, before)
+	}
+	if u.Character.IsDisengaging() {
+		t.Fatal("transition-raced flee entered Disengaging")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("transition-raced flee published an admission with no resolver")
+	}
+
+	var sawTerminal, sawAttempt bool
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		sawTerminal = sawTerminal || strings.Contains(msg, "not in combat")
+		sawAttempt = sawAttempt || strings.Contains(msg, "attempt to flee") ||
+			strings.Contains(msg, "instinct rather than technique")
+	}
+	if !sawTerminal {
+		t.Error("transition-raced flee gave no terminal explanation")
+	}
+	if sawAttempt {
+		t.Error("transition-raced flee claimed an escape attempt began")
+	}
+}
+
+// A flee command can be accepted from the socket while the player is fighting
+// but reach the command handler after the same round kills and respawns them.
+// The death cascade has already forced CombatPhase back to Idle by then. The
+// stale command must not spend from the revived character or claim that an
+// escape attempt began when no round resolver can ever produce its outcome.
+func TestFleeCost_IdleRaceAfterDeathDoesNotPayOrClaimAttempt(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9258, 99851, 0)
+	defer cleanup()
+	before := u.Character.Stamina
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+
+	if u.Character.Stamina != before {
+		t.Errorf("idle stale flee spent stamina: got %d, want %d", u.Character.Stamina, before)
+	}
+	if u.Character.IsDisengaging() {
+		t.Fatal("idle stale flee entered Disengaging")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("idle stale flee published an admission with no resolver")
+	}
+
+	var sawTerminal, sawAttempt bool
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		sawTerminal = sawTerminal || strings.Contains(msg, "not in combat")
+		sawAttempt = sawAttempt || strings.Contains(msg, "attempt to flee") ||
+			strings.Contains(msg, "instinct rather than technique")
+	}
+	if !sawTerminal {
+		t.Error("idle stale flee gave no terminal explanation")
+	}
+	if sawAttempt {
+		t.Error("idle stale flee claimed an escape attempt began")
 	}
 }
 
@@ -109,6 +200,25 @@ func TestFleeCost_RejectedCommandClearsOrphanedAdmission(t *testing.T) {
 	}
 	if _, admitted := TakeFleeAdmission(u); admitted {
 		t.Fatal("rejected command left an orphaned flee admission reusable")
+	}
+}
+
+// The transition is visible to the round driver before the command has
+// finished committing its cost decision. A reentrant resolver must not consume
+// that pending marker, while terminal cancellation still must be able to.
+func TestTakeFleeAdmission_PendingHandoffWaitsForCommandOrCancellation(t *testing.T) {
+	u, _, cleanup := fleeFixture(t, 9260, 99853, 0)
+	defer cleanup()
+	u.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{})
+
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("round resolver consumed a pending flee handoff")
+	}
+	if !CancelFleeAdmission(u) {
+		t.Fatal("terminal cancellation could not retract a pending flee handoff")
+	}
+	if CancelFleeAdmission(u) {
+		t.Fatal("pending flee handoff was canceled more than once")
 	}
 }
 
@@ -242,6 +352,7 @@ func TestFleeCost_FlyingModifiesTheQuotedBaseBeforeCommit(t *testing.T) {
 	u, room, cleanup := fleeFixture(t, 9255, 99847, 0)
 	defer cleanup()
 	u.Character.Mutations = map[string]int{"winged-flight": 1}
+	engageFleeFixture(t, u)
 	before := u.Character.Stamina
 
 	if _, err := Flee("", u, room, 0); err != nil {
@@ -283,6 +394,7 @@ func TestFleeCost_TakesTheEncumbranceTerm(t *testing.T) {
 
 	for _, tc := range cases {
 		u, room, cleanup := fleeFixture(t, tc.userId, tc.itemId, tc.fraction)
+		engageFleeFixture(t, u)
 
 		before := u.Character.Stamina
 		if _, err := Flee("", u, room, 0); err != nil {
@@ -324,6 +436,7 @@ func TestFleeCost_ExhaustedCharacterStillGetsToAttempt(t *testing.T) {
 	defer cleanup()
 
 	u.Character.Stamina = 0
+	engageFleeFixture(t, u)
 
 	if _, err := Flee("", u, room, 0); err != nil {
 		t.Fatalf("Flee returned %v", err)

@@ -1,11 +1,18 @@
 package connections
 
-import "bytes"
-
 // telnetIAC is the telnet "Interpret As Command" marker that opens every
 // negotiation sequence. Defined locally so this file stays free of any import
 // that the connection layer would not otherwise need.
 const telnetIAC = 0xFF
+
+const (
+	telnetSE   = 0xF0
+	telnetSB   = 0xFA
+	telnetWILL = 0xFB
+	telnetWONT = 0xFC
+	telnetDO   = 0xFD
+	telnetDONT = 0xFE
+)
 
 // splitInputLines splits one socket read into its individual input lines.
 //
@@ -25,21 +32,35 @@ const telnetIAC = 0xFF
 // Returns nil when there is nothing to split (zero lines, one line, or a
 // still-incomplete line), so callers keep their existing single-read path.
 //
-// Chunks carrying an IAC byte are never split. Telnet negotiation payloads are
+// Telnet negotiations are emitted as distinct segments. Their payloads are
 // binary and may legitimately contain a literal 0x0A or 0x0D: NAWS encodes the
 // window dimensions as raw bytes, so a terminal ten columns wide embeds an LF.
-// Splitting there would corrupt the negotiation, so such chunks pass through
-// whole, exactly as they did before.
+// Delimiters are therefore recognized only outside IAC sequences. Isolating
+// the negotiation also preserves a printable line coalesced into the same
+// socket read, such as an AI client's GMCP handshake followed by its username.
 func splitInputLines(b []byte) [][]byte {
-	if len(b) == 0 || bytes.IndexByte(b, telnetIAC) >= 0 {
+	if len(b) == 0 {
 		return nil
 	}
 
 	var out [][]byte
 
 	start := 0
-	for i := 0; i < len(b); i++ {
+	for i := 0; i < len(b); {
+		if b[i] == telnetIAC {
+			if start < i {
+				out = append(out, b[start:i])
+			}
+
+			end := telnetSequenceEnd(b, i)
+			out = append(out, b[i:end])
+			i = end
+			start = end
+			continue
+		}
+
 		if b[i] != '\r' && b[i] != '\n' {
+			i++
 			continue
 		}
 
@@ -52,7 +73,7 @@ func splitInputLines(b []byte) [][]byte {
 
 		out = append(out, b[start:end])
 		start = end
-		i = end - 1
+		i = end
 	}
 
 	// Whatever trails the last terminator is a line the client has not
@@ -66,6 +87,41 @@ func splitInputLines(b []byte) [][]byte {
 		return nil
 	}
 	return out
+}
+
+// telnetSequenceEnd returns the first byte after the IAC sequence beginning at
+// start. Incomplete sequences consume the remainder of the current socket read
+// and are left intact for the existing telnet handler.
+func telnetSequenceEnd(b []byte, start int) int {
+	if start+1 >= len(b) {
+		return len(b)
+	}
+
+	switch b[start+1] {
+	case telnetIAC:
+		return start + 2
+	case telnetWILL, telnetWONT, telnetDO, telnetDONT:
+		if start+3 > len(b) {
+			return len(b)
+		}
+		return start + 3
+	case telnetSB:
+		for i := start + 2; i+1 < len(b); i++ {
+			if b[i] != telnetIAC {
+				continue
+			}
+			if b[i+1] == telnetIAC {
+				i++
+				continue
+			}
+			if b[i+1] == telnetSE {
+				return i + 2
+			}
+		}
+		return len(b)
+	default:
+		return start + 2
+	}
 }
 
 // queueSplitInput splits a freshly read chunk and stores everything after the

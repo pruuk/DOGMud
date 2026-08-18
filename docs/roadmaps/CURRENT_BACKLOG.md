@@ -1,7 +1,6 @@
 # DOGMud Current Backlog
 
-Last reviewed: 2026-08-17 against the U8 implementation working tree based on
-`f3d3111c3`.
+Last reviewed: 2026-08-18 against the Task 14 validated U8 feature branch.
 
 This is the compact cross-roadmap memory for planning. It is an index, not a
 second requirements document. Follow the linked canonical roadmap/spec/plan for
@@ -12,13 +11,14 @@ tracker status outrank filenames and unchecked boxes in old plans.
 
 Source: [Unified Resolution Roadmap](UNIFIED_RESOLUTION_ROADMAP.md)
 
-U7b (reservation ceiling) shipped in PR #49. The open sequence is:
+U7b (reservation ceiling) shipped in PR #49. U8 has now passed its final
+verification, isolated boot, and adversarial gameplay gate. The sequence is:
 
-1. **U8 - implementation complete; Task 14 validation pending.** The unified
-   action-cost surface, admission policy, data-backed quell/defy narration, and
-   behavior-specific documentation are complete on the feature branch. U8 is
-   not roadmap-complete until the full verification and adversarial playtest
-   gate passes. Source: [U8 design](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
+1. **U8 - complete and shipped.** The unified action-cost surface, admission
+   policy, data-backed quell/defy narration, and behavior-specific
+   documentation passed Task 14's full verification, isolated boot, and
+   adversarial playtest gate. Source:
+   [U8 design](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
 2. **U9 - progression events.** Replace progression side effects with explicit
    events for both participants and decide how spell `primarystat` becomes the
    authoritative resolution stat.

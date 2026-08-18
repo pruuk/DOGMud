@@ -21,6 +21,7 @@ const (
 
 type fleeAdmission struct {
 	includeSkill bool
+	ready        bool
 }
 
 // TakeFleeAdmission atomically consumes the pending command's admission.
@@ -31,11 +32,30 @@ func TakeFleeAdmission(user *users.UserRecord) (includeSkill bool, ok bool) {
 	if user == nil {
 		return false, false
 	}
+	// The command publishes a pending marker before asking CombatPhase to
+	// transition. A round that observes Disengaging in that tiny handoff window
+	// must leave the marker for the command to finish instead of consuming an
+	// attempt whose cost decision is not ready yet.
+	peek, ok := user.GetTempData(fleeIncludeSkillTempKey).(fleeAdmission)
+	if !ok || !peek.ready {
+		return false, false
+	}
 	admission, ok := user.TakeTempData(fleeIncludeSkillTempKey).(fleeAdmission)
-	if !ok {
+	if !ok || !admission.ready {
 		return false, false
 	}
 	return admission.includeSkill, true
+}
+
+// CancelFleeAdmission retracts either a pending or ready handoff. CombatPhase
+// terminal-transition hooks use it when combat ends after the command was
+// admitted but before the flee round can resolve.
+func CancelFleeAdmission(user *users.UserRecord) bool {
+	if user == nil {
+		return false
+	}
+	_, ok := user.TakeTempData(fleeIncludeSkillTempKey).(fleeAdmission)
+	return ok
 }
 
 func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -69,6 +89,41 @@ func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, `You're already trying to break away. Give it a moment.`)
 		return true, nil
 	}
+	// Input is accepted before command events are drained. A lethal combat
+	// round can therefore kill, respawn, and force CombatPhase to Idle before a
+	// queued flee reaches this handler. Reject that stale command before it
+	// spends the revived character's stamina or publishes an attempt that no
+	// round resolver can finish. This also gives ordinary out-of-combat use a
+	// definitive response instead of a paid, outcome-less attempt.
+	if !user.Character.IsInCombat() {
+		user.SendText(messaging.CategorySystem, `You're not in combat; there's nothing to flee from.`)
+		return true, nil
+	}
+	// Publish a pending handoff before the state transition. Cost and player-
+	// facing attempt text belong only to an accepted Disengaging transition;
+	// charging first lets a target-death or position veto create a paid attempt
+	// that no round resolver can finish.
+	user.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{})
+	if user.Character.CombatPhase == nil {
+		CancelFleeAdmission(user)
+		user.SendText(messaging.CategorySystem, `You can't break away just yet.`)
+		return true, nil
+	}
+	if err := user.Character.CombatPhase.TransitionToDisengaging(state.TransitionReason{
+		Trigger: combatphase.TriggerFleeCommand,
+		Actor:   state.ActorRef{UserId: user.UserId},
+	}); err != nil {
+		CancelFleeAdmission(user)
+		if !user.Character.IsInCombat() {
+			user.SendText(messaging.CategorySystem, `You're not in combat; there's nothing to flee from.`)
+		} else if user.Character.IsStandingGrapple() || user.Character.IsGroundGrapple() {
+			user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't flee while grappled!</ansi>`)
+		} else {
+			user.SendText(messaging.CategorySystem, `You can't break away just yet.`)
+		}
+		return true, nil
+	}
+
 	// Quote and partially commit once. Flee remains life-preserving: shortage
 	// never refuses the attempt, but its blocker contests lose Skullduggery.
 	bal := configs.GetBalanceConfig()
@@ -84,33 +139,15 @@ func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		Units:    1,
 	})
 	costResult := user.Character.CommitCost(quote, characters.CostPartial)
+	user.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{
+		includeSkill: !costResult.Short(),
+		ready:        true,
+	})
 	if costResult.Short() {
 		user.SendText(messaging.CategorySystem, fleeShortageText)
 	}
-	// Publish before the transition so even synchronous/reentrant transition
-	// observers see the attempt-scoped admission. A veto atomically retracts it.
-	user.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{
-		includeSkill: !costResult.Short(),
-	})
 
 	user.SendText(messaging.CategorySystem, `You attempt to flee...`)
-
-	// Task 15: use CombatPhase.TransitionToDisengaging instead of the legacy
-	// Aggro{Type:Flee} sentinel. The round driver's handlePlayerFlee checks
-	// IsDisengaging() which reads CombatPhase state directly.
-	// A veto retracts the handoff because no round resolver owns the rejected
-	// transition.
-	// TODO Task 18: no legacy fallback needed; Aggro field is gone.
-	if user.Character.CombatPhase != nil {
-		if err := user.Character.CombatPhase.TransitionToDisengaging(state.TransitionReason{
-			Trigger: combatphase.TriggerFleeCommand,
-			Actor:   state.ActorRef{UserId: user.UserId},
-		}); err != nil {
-			user.TakeTempData(fleeIncludeSkillTempKey)
-		}
-	} else {
-		user.TakeTempData(fleeIncludeSkillTempKey)
-	}
 
 	return true, nil
 }

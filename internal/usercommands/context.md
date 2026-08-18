@@ -272,12 +272,20 @@ What matters is the shape, not the list:
   wrapper will render a private, pool-aware refusal only when its returned
   `CostCommitResult` has `Status == characters.CostRefused`; it must not
   re-quote, re-commit, or charge a pool directly.
-- **Flee is the life-preserving partial-pay exception.** `Flee` publishes one
-  transient `fleeAdmission` around its successful transition to Disengaging;
-  `TakeFleeAdmission(user) (includeSkill, ok)` atomically consumes it in the
-  asynchronous round hook. `ok == false` is not reusable state: on a phase
-  flee it means a resolver already owns the attempt, while a true legacy
-  `Aggro{Type:Flee}` path defaults to the historical full-skill behavior.
+- **Flee is the life-preserving partial-pay exception.** `Flee` first publishes
+  a pending `fleeAdmission`, transitions to Disengaging, then commits cost and
+  marks the admission ready. `TakeFleeAdmission(user) (includeSkill, ok)`
+  atomically consumes only a ready admission in the asynchronous round hook;
+  `CancelFleeAdmission` retracts pending or ready state when combat terminates.
+  A rejected transition or an out-of-combat queued command spends nothing and
+  publishes no attempt. `ok == false` is not reusable state: on a phase flee it
+  means the command is still publishing or a resolver/cancellation already
+  owns the attempt, while a true legacy `Aggro{Type:Flee}` path defaults to the
+  historical full-skill behavior.
+- **Casting interception preserves terminal semantics.** `flee` cancels a
+  pending fold-cast only when the character is actually in combat; an
+  out-of-combat rejection leaves the cast intact. The cancellation line never
+  exposes the raw conviction already invested in the cast.
 - **Player shortage lines are private and singular.** Autoattack, winning
   defence, flee, and grapple maintenance explain the skill-less resolution once
   at their owning round/action boundary. Losing defence candidates never emit a
