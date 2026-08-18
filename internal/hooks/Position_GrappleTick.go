@@ -30,6 +30,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -253,7 +254,24 @@ func resolvePartner(c *characters.Character) *characters.Character {
 // math. ControlLevel is sunset entirely; the per-round outcome IS
 // the position change.
 func processGrapplePair(controller, controlled *characters.Character) {
+	processGrapplePairWithContest(controller, controlled, combat.RunContest)
+}
+
+func processGrapplePairWithContest(
+	controller, controlled *characters.Character,
+	runContest func(float64, []contest.Entry) contest.Result,
+) {
 	cfg := configs.GetBalanceConfig()
+	ctrlCost := commitGrappleMaintenance(controller,
+		float64(cfg.GrappleControllerCostMultiplier), cfg)
+	cdCost := commitGrappleMaintenance(controlled,
+		float64(cfg.GrappleControlledCostMultiplier), cfg)
+	if ctrlCost.Short() {
+		emitGrappleMaintenanceShortage(controller)
+	}
+	if cdCost.Short() {
+		emitGrappleMaintenanceShortage(controlled)
+	}
 
 	// Score formula (spec 2026-05-19 §3):
 	//   score = (0.7·Str + 0.3·Dex + skill_coef·UnarmedCombat)
@@ -264,10 +282,10 @@ func processGrapplePair(controller, controlled *characters.Character) {
 	// markAggressor call (chunk 4b-fixup-2 T5). It persists for the
 	// lifetime of the grapple — even after reversals, the original
 	// initiator keeps the bonus.
-	ctrlScore := grappleScore(controller, isAggressorSide(controller), cfg)
-	cdScore := grappleScore(controlled, isAggressorSide(controlled), cfg)
+	ctrlScore := grappleScore(controller, isAggressorSide(controller), cfg, !ctrlCost.Short())
+	cdScore := grappleScore(controlled, isAggressorSide(controlled), cfg, !cdCost.Short())
 
-	res := combat.RunContest(ctrlScore, []contest.Entry{{Score: cdScore}})
+	res := runContest(ctrlScore, []contest.Entry{{Score: cdScore}})
 
 	// LastDriftRoll snapshot for chunk-4d Position_SubmissionTick.
 	currentRound := util.GetRoundCount()
@@ -332,8 +350,6 @@ func processGrapplePair(controller, controlled *characters.Character) {
 		dispatchItemProcs("on_grapple", controlled, controller, nil, 0)
 	}
 
-	// Stamina cost unchanged.
-	applyGrappleStaminaCost(controller, controlled, cfg)
 	fireStaminaWarningIfLow(controller)
 	fireStaminaWarningIfLow(controlled)
 
@@ -646,13 +662,16 @@ func broadcastToRoomExcluding(controller, controlled *characters.Character,
 // where skill_coef = 2.2 for the aggressor side, 2.0 for the defender.
 // Returns 0 for a nil character (defensive — callers should never
 // pass nil but the function shouldn't panic on it).
-func grappleScore(c *characters.Character, isAggressor bool, cfg configs.Balance) float64 {
+func grappleScore(c *characters.Character, isAggressor bool, cfg configs.Balance, includeSkill bool) float64 {
 	if c == nil {
 		return 0
 	}
 	strVal := float64(c.Stats.Strength.Value)
 	dexVal := float64(c.Stats.Dexterity.Value)
-	skill := float64(c.GetSkillLevel(skills.UnarmedCombat))
+	skill := 0.0
+	if includeSkill {
+		skill = float64(c.GetSkillLevel(skills.UnarmedCombat))
+	}
 
 	skillCoef := 2.0
 	if isAggressor {
@@ -727,21 +746,27 @@ func grappleEncumbranceMultiplier(c *characters.Character, cfg configs.Balance) 
 	return 1.0 - maxPen*math.Pow(normalized, curve)
 }
 
-// applyGrappleStaminaCost deducts asymmetric per-round stamina from
-// both sides. Cost can drive stamina to 0; the character keeps
-// grappling (the penalty curve maxes out, which is the intended
-// "smother" feedback loop).
-//
-// That sentence is ApplyCostPartial's contract verbatim: charge what is there,
-// never refuse, never go below empty. Hence the primitive owns the floor and
-// the explicit clamps are gone. The CostResult is discarded on purpose --
-// nothing here reads Short until U8 gives being short a consequence.
-func applyGrappleStaminaCost(controller, controlled *characters.Character, cfg configs.Balance) {
-	base := float64(cfg.GrappleStaminaCostPerRound)
-	ctrlCost := int(math.Round(base * float64(cfg.GrappleControllerCostMultiplier)))
-	cdCost := int(math.Round(base * float64(cfg.GrappleControlledCostMultiplier)))
-	controller.ApplyCostPartial(characters.PoolStamina, ctrlCost)
-	controlled.ApplyCostPartial(characters.PoolStamina, cdCost)
+// commitGrappleMaintenance prices one participant independently. The role
+// multiplier changes the authored base before the shared physical-action
+// pipeline composes encumbrance and inverse Unarmed Combat.
+func commitGrappleMaintenance(
+	c *characters.Character,
+	roleMultiplier float64,
+	cfg configs.Balance,
+) characters.CostCommitResult {
+	base := float64(cfg.GrappleStaminaCostPerRound) * roleMultiplier
+	quote := c.QuoteActionCost(characters.ActionCostRequest{
+		Action: costs.ActionGrappleMaintain,
+		Pool:   characters.PoolStamina,
+		Base:   base,
+		Units:  1,
+	})
+	return c.CommitCost(quote, characters.CostPartial)
+}
+
+func emitGrappleMaintenanceShortage(c *characters.Character) {
+	sendToCharacter(c, `Exhaustion strips the trained control from your `+
+		`grapple; your technique is slipping.`)
 }
 
 // applyControlShift updates both sides' ControlLevel state based on

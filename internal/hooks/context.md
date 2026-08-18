@@ -991,7 +991,8 @@ to `processGrapplePair`:
 
 ### Score formula (2026-05-19 rework)
 
-Each side's per-round score is computed by `grappleScore(c, isAggressor, cfg)`:
+Each side's per-round score is computed by
+`grappleScore(c, isAggressor, cfg, includeSkill)`:
 
 ```
 score = (0.7·Str + 0.3·Dex + skill_coef·UnarmedCombat)
@@ -1019,15 +1020,30 @@ grappling"). Earlier versions of this formula read `WeaponCombat`
 by mistake; that bug auto-escaped every grapple for any unarmed-
 trained player.
 
+`includeSkill` is the maintenance-admission gate. A participant who cannot
+fully pay that round keeps the Strength/Dexterity base plus the existing
+stamina-depletion and grapple-encumbrance effectiveness multipliers, but loses
+only the Unarmed Combat term. The other participant's skill term is independent.
+
 See `docs/superpowers/specs/2026-05-19-grapple-drift-formula-rework-design.md`
 for the design rationale and sample z-score table.
 
 For each pair inside `processGrapplePair`:
 
-1. **Opposed control roll** — Score values computed for both sides via
+1. **Per-round maintenance admission** — Each participant independently
+   multiplies `GrappleStaminaCostPerRound` by the controller or controlled role
+   multiplier, then quotes `costs.ActionGrappleMaintain` against Stamina and
+   commits with `characters.CostPartial`. This composes the shared physical
+   encumbrance and inverse-Unarmed cost multipliers, preserves fractional carry,
+   and floors the pool at zero. Both commits happen before the contest, including
+   on the round that resolves an escape. A short player receives one private
+   grapple-flow line; the partner, observers, and NPC participants do not.
+
+2. **Opposed control roll** — Score values computed for both sides via
    the formula above, with `grappleStaminaMultiplier` and the encumbrance
-   multiplier already baked in. Produces a signed ZScore representing the
-   controller's margin.
+   multiplier already baked in and each participant's own admission deciding
+   whether Unarmed Combat is included. Produces a signed ZScore representing
+   the controller's margin.
 
    The roll itself is not made here. Since U3 this package makes no
    contest of its own: it calls `combat.RunContest` for the grapple
@@ -1048,13 +1064,13 @@ For each pair inside `processGrapplePair`:
    preserved deliberately so U3 stays a provable no-op; there is a
    `NOTE(U6)` at the site and U6 owns the correction.
 
-2. **Outcome resolution via `position.ResolveOutcome`** — Passes the
+3. **Outcome resolution via `position.ResolveOutcome`** — Passes the
    controller, signed ZScore, and defender's posture to the resolver,
    which returns an `Outcome` struct describing the kind
    (Advance / Degrade / Reversal / Escape / Hold) and target position
    if applicable.
 
-3. **Transition application** — Dispatches the outcome:
+4. **Transition application** — Dispatches the outcome:
    - `OutcomeAdvance` / `OutcomeDegrade`: calls `applyAdvanceOrEscape`
      to transition to the target position.
    - `OutcomeReversal`: calls `applyReversal` to swap controller and
@@ -1065,7 +1081,7 @@ For each pair inside `processGrapplePair`:
    - Resets per-grapple cooldown maps on escape (when breaking to
      Standing).
 
-4. **ControlLevel shift (`applyControlShift`)** — After the position
+5. **ControlLevel shift (`applyControlShift`)** — After the position
    outcome is applied, `applyControlShift(controller, controlled, z)`
    updates both sides' `Character.Control` FSM state based on the
    z-score magnitude:
@@ -1075,11 +1091,6 @@ For each pair inside `processGrapplePair`:
    Winner shifts toward Controlling; loser shifts toward Controlled.
    Each step fires the boundary-cross callback when crossing
    LosingControl or BecomingControlled.
-
-5. **Per-round stamina cost** — `GrappleStaminaCostPerRound`, scaled
-   by `GrappleControllerCostMultiplier` (default 1.0) for controller or
-   `GrappleControlledCostMultiplier` (default 2.0) for controlled. The
-   asymmetry creates the "smother" feedback loop.
 
 6. **Outcome messaging** — Calls `emitOutcomeMessages` to dispatch
    outcome-specific template messages (Advance / Degrade / Reversal /
