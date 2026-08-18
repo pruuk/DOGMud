@@ -20,7 +20,7 @@ to the ground on a successful hit.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Heavy — the leaping body-slam deals significant
+  <ansi fg="stat">Damage:</ansi> Heavy. The leaping body-slam deals significant
     harm on contact.
   <ansi fg="stat">Knockdown:</ansi> A successful pounce has a strong chance to
     drive the target backward off their feet (Supine),
@@ -39,7 +39,7 @@ details on Supine.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help rake</ansi>, <ansi fg="command">help maul</ansi>, <ansi fg="command">help hamstring</ansi>,
+  <ansi fg="command">help rake</ansi>, <ansi fg="command">help maul</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help kick</ansi>, <ansi fg="command">help conditions</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>,
+  <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help combat</ansi>

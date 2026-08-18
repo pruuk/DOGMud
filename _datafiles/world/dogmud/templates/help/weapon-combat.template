@@ -1,7 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">weapon-combat</ansi> skill
 
 The <ansi fg="skill">weapon-combat</ansi> skill governs your proficiency
-with all melee weapons — swords, axes, maces, daggers, and more.
+with all melee weapons: swords, axes, maces, daggers, and more.
 Higher ranks improve your hit chance, damage output, and ability
 to dual-wield effectively.
 
@@ -19,7 +19,7 @@ winning parry remain possible when short, but resolve without this skill.
 
 Melee weapons have a reach that affects how well they perform in
 close-quarters grapples. Long weapons (swords, axes, staves) are
-penalised when you're locked in a clinch or ground grapple — there
+penalised when you're locked in a clinch or ground grapple; there
 isn't room to swing them freely. Short weapons (daggers) remain
 fully effective. See <ansi fg="command">help grapple</ansi> and
 <ansi fg="command">help reach</ansi> for details.

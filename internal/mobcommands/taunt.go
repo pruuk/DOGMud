@@ -93,6 +93,11 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 func sendChannelDefenceMessages(out combat.ChannelDefenceResult, mob *mobs.Mob,
 	defender *users.UserRecord, room *rooms.Room, defenderName, attack string) {
+	if defender != nil {
+		if text := combat.ChannelDefenceShortageText(out, defender.Character); text != "" {
+			defender.SendText(messaging.CategorySystem, text)
+		}
+	}
 	attackerName := mob.Character.GetMobNameIndexed(0, room.GetMobDuplicateIndex(mob.InstanceId)).String()
 	defenderIdentity := defenderName
 	if defender != nil {

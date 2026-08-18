@@ -272,6 +272,12 @@ var runPlayerSpellContest = combat.RunContest
 // replace it briefly with a literal outcome and restore it with t.Cleanup.
 var runPlayerSpellDefence = combat.ResolveChannelDefence
 
+// The mob-cast seams serve the same deterministic dispatch tests as the
+// player-cast seams above. Production always points both at the canonical
+// contest and defence resolvers.
+var runMobSpellContest = combat.RunContest
+var runMobSpellDefence = combat.ResolveChannelDefence
+
 // resolveAgainstMob performs the opposed roll and applies the effect to a mob.
 // Returns true if the cast fumbled (ZScore <= -2.0). A fumble aborts any
 // post-target spell effects (summon, charm, Go hooks) in the caller's main
@@ -380,6 +386,11 @@ func spellSchoolCategory(spellData *spells.SpellData) messaging.Category {
 func sendSpellChannelDefenceMessages(room *rooms.Room, category messaging.Category,
 	out combat.ChannelDefenceResult, attackerName, defenderName, attackName string,
 	attackerUser, defenderUser *users.UserRecord, indexOverride ...int) {
+	if defenderUser != nil {
+		if text := combat.ChannelDefenceShortageText(out, defenderUser.Character); text != "" {
+			defenderUser.SendText(messaging.CategorySystem, text)
+		}
+	}
 	triad := combat.RenderChannelDefenceMessages(out, combat.ChannelDefenceIdentities{
 		Attacker: attackerName,
 		Defender: defenderName,
@@ -1331,7 +1342,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &target.Character)
-	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
+	spellContest := runMobSpellContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	if atkRoll.ZScore <= -2.0 {
 		dmg := magnitude / 4
@@ -1351,7 +1362,7 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, spellAttack float64, magnitude int) {
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
+	spellContest := runMobSpellContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 	round := util.GetRoundCount()
 	if atkRoll.ZScore <= -2.0 {
@@ -1384,7 +1395,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		// U6 Task 12: one contest, on the channel's own defence set.
 		defence := combat.ChannelDefenceResult{DamageMultiplier: 1}
 		if !isCrit {
-			defence = combat.ResolveChannelDefence(
+			defence = runMobSpellDefence(
 				spellAttackChannel(spellData), &caster.Character, target.Character)
 			mult := defence.DamageMultiplier
 			if mult < 1.0 {
@@ -1445,7 +1456,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		// binary, matching the player-cast knockdown branch above.
 		kdDefence := combat.ChannelDefenceResult{DamageMultiplier: 1}
 		if !isCrit {
-			kdDefence = combat.ResolveChannelDefence(
+			kdDefence = runMobSpellDefence(
 				spellAttackChannel(spellData), &caster.Character, target.Character)
 			mult := kdDefence.DamageMultiplier
 			if mult < 1.0 {

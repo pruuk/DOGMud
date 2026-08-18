@@ -17,7 +17,7 @@ damage and applies a bleeding condition on a successful strike.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Moderate — the slashing strike itself deals real harm.
+  <ansi fg="stat">Damage:</ansi> Moderate. The slashing strike itself deals real harm.
   <ansi fg="stat">Bleed:</ansi> A successful rake opens wounds that continue to
     bleed over several rounds, dealing additional damage beyond
     the initial strike.
@@ -34,6 +34,6 @@ opponents over the course of a longer fight. See
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help hamstring</ansi>, <ansi fg="command">help kick</ansi>,
+  <ansi fg="command">help kick</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help special</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help combat</ansi>

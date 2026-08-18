@@ -38,10 +38,10 @@ cooldown, combat round, or effect is consumed.
   allies and controlling the flow of battle.
 
   Aggro pull triggers on both normal hits and critical hits. It
-  only applies to hostile creatures — taunting another player will
+  only applies to hostile creatures; taunting another player will
   not redirect their attacks.
 
-As a target's conviction drains, their fighting spirit fades with it —
+As a target's conviction drains, their fighting spirit fades with it;
 their attacks and defenses weaken steadily, the same way exhaustion
 saps a fighter. Conviction recovers over time like health and stamina.
 

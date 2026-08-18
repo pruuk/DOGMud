@@ -17,7 +17,7 @@ to the ground.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Solid but not as heavy as a full weapon swing — the
+  <ansi fg="stat">Damage:</ansi> Solid but not as heavy as a full weapon swing; the
     goal is the knockdown, not the wound.
   <ansi fg="stat">Knockdown Chance:</ansi> Decent, resolved against the defender's
     Dexterity and combat skill. Not as reliable as trip, but

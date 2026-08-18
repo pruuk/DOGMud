@@ -141,8 +141,10 @@ func (r CostCommitResult) Short() bool
 
 // ApplyCostFloat charges a FRACTIONAL cost, banking the sub-integer remainder
 // in the per-character, per-pool carry so the average converges (U7 Task 3).
-// Delegates the deduction to ApplyCostPartial. THE ENTRY POINT FOR EVERY U7
-// COST; the integer pair erases the per-action modifiers. See Gotchas.
+// It delegates the deduction to ApplyCostPartial and remains available for
+// legacy or specialized callers. Registered action costs use the read-only
+// QuoteActionCost path above and CommitCost for atomic admission and charging;
+// both paths retain fractional carry. See Gotchas.
 func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
 
 // ApplyCostFloatOrRefuse banks the remainder exactly as ApplyCostFloat does but

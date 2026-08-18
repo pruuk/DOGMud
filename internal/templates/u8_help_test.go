@@ -43,6 +43,7 @@ var u8ActionHelpPaths = []string{
 }
 
 var ansiTagPattern = regexp.MustCompile(`</?ansi(?:\s+[^>]*)?>`)
+var helpCrossReferencePattern = regexp.MustCompile(`(?i)<ansi\s+fg="command"[^>]*>\s*help\s+([a-z0-9-]+)\s*</ansi>`)
 
 func useU8DataFiles(t *testing.T) {
 	t.Helper()
@@ -131,11 +132,43 @@ func TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning(t *testing.T) {
 	}
 
 	forbiddenTuning := regexp.MustCompile(`(?i)(?:\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?[- ]rounds?\b|\b\d+(?:\.\d+)?\s+(?:points?|ranks?|modifiers?)\b)`)
+	forbiddenWordedTuning := regexp.MustCompile(`(?i)(?:\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|half|quarter|first|second|third)\s+(?:percent|points?|ranks?|modifiers?)\b|\b(?:half|quarter)\s+(?:damage|armou?r)\b|\bfirst pound\b|\bunder half\b|\b(?:novice|master(?:ful)?)\s+(?:pays?|costs?)\b)`)
 	for _, path := range u8ActionHelpPaths {
 		t.Run(path+"/no-raw-tuning", func(t *testing.T) {
 			rendered := processU8Help(t, path)
+			assert.NotContains(t, rendered, "—", "player help must not use em dashes")
 			assert.Empty(t, forbiddenTuning.FindAllString(rendered, -1),
 				"player help must describe costs and timing without raw tuning")
+			assert.Empty(t, forbiddenWordedTuning.FindAllString(rendered, -1),
+				"player help must not spell out tuning values")
+		})
+	}
+}
+
+func TestU8StaminaHelpDistinguishesFleeFromGrappleCadence(t *testing.T) {
+	useU8DataFiles(t)
+	rendered := normalizedHelpText(processU8Help(t, "help/stamina"))
+	assert.Contains(t, rendered,
+		"flee spends once when you issue the command; grapple upkeep spends each continuing round")
+}
+
+func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(u8DataFilesRoot)
+	configs.SetConfigForTest(t, cfg)
+
+	for _, path := range u8ActionHelpPaths {
+		t.Run(path, func(t *testing.T) {
+			rendered, err := Process(path, nil)
+			require.NoError(t, err)
+			matches := helpCrossReferencePattern.FindAllStringSubmatch(rendered, -1)
+			for _, match := range matches {
+				topic := strings.ToLower(match[1])
+				result, err := Process("help/"+topic, nil)
+				require.NoError(t, err, "%s emits broken cross-reference %q", path, "help "+topic)
+				require.NotEmpty(t, strings.TrimSpace(result), "%s emits empty cross-reference %q", path, "help "+topic)
+				require.NotContains(t, result, "[TEMPLATE", "%s emits broken cross-reference %q", path, "help "+topic)
+			}
 		})
 	}
 }

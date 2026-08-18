@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -85,6 +84,7 @@ func TestThrowCostRefusalPreservesExactItemAndCombatState(t *testing.T) {
 	user.Character.Stamina = 0
 	user.Character.SetAggro(0, target.InstanceId, characters.DefaultAttack)
 	user.Character.Aggro.RoundsWaiting = 0
+	events.DrainQueuedMessagesForTest(user.UserId)
 
 	itemsBefore := append([]items.Item(nil), user.Character.Items...)
 	cooldownsBefore := user.Character.GetAllCooldowns()
@@ -107,6 +107,7 @@ func TestThrowCostRefusalPreservesExactItemAndCombatState(t *testing.T) {
 	assert.Equal(t, 0, user.Character.Aggro.RoundsWaiting, "refusal must not consume the combat round")
 	assert.Equal(t, progressionBefore, user.Character.GetSkillUseCount(string(skills.Skullduggery)))
 	assert.Equal(t, 0, user.Character.Stamina)
+	assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)
 
 	// A refused quote must not advance fractional carry. Rank-zero throw costs
 	// 4.4 from a zero carry, so two fresh commits charge 4 then 4 (not 4 then 5).
@@ -289,10 +290,9 @@ func TestSneakUserCostRefusalPreservesCooldownAwarenessProgressionAndRound(t *te
 	assert.Zero(t, user.Character.GetSkillUseCount(string(skills.Skullduggery)))
 	assert.Equal(t, roundBefore, user.Character.AttacksThisRound)
 	assert.Equal(t, 0, user.Character.Stamina)
-	msgs := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	assert.Contains(t, msgs, actions.CostRefusalText(characters.CostCommitResult{
-		Status: characters.CostRefused, Pool: characters.PoolStamina,
-	}))
+	lines := events.DrainQueuedMessagesForTest(user.UserId)
+	assertVoluntaryRefusalOutput(t, lines, characters.PoolStamina)
+	msgs := strings.Join(lines, "\n")
 	assert.NotContains(t, msgs, "You slip into the shadows.")
 }
 

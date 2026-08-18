@@ -109,6 +109,17 @@ type quotedDefenceCandidate struct {
 
 const defenceShortageText = "You mount a desperate response, too spent to bring practiced technique to it."
 
+// ChannelDefenceShortageText returns the combat-owned private shortage prose
+// for a short channel defence that actually stopped or softened the attack.
+// Delivery stays with the channel wrapper because combat does not own user
+// connections. An empty string means that no player-facing message is due.
+func ChannelDefenceShortageText(out ChannelDefenceResult, defender *characters.Character) string {
+	if defender == nil || defender.GetUserId() <= 0 || !out.Defended || !out.Cost.Short() {
+		return ""
+	}
+	return defenceShortageText
+}
+
 func commitDefenceWinner(defender *characters.Character, candidates []quotedDefenceCandidate, res contest.Result) characters.CostCommitResult {
 	if defender == nil || !res.Contested {
 		return characters.CostCommitResult{Status: characters.CostNoCharge}

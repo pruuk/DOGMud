@@ -104,14 +104,30 @@ func seedChannelRoutingMessages(t *testing.T) func() {
 			ToRoom:     messages("room"),
 		}}
 	}
-	return items.SeedDefenseMessagesForTest(map[items.DefenseType]*items.DefenseMessageGroup{
-		items.DefenseQuell: {
-			OptionId: items.DefenseQuell,
+	groups := make(map[items.DefenseType]*items.DefenseMessageGroup)
+	for _, defenceType := range []items.DefenseType{
+		items.DefenseQuell, items.DefenseDodge, items.DefenseBlock,
+	} {
+		groups[defenceType] = &items.DefenseMessageGroup{
+			OptionId: defenceType,
 			Options: items.DefenseIntensity{
 				items.Weak: mk("weak"), items.Normal: mk("normal"), items.Heavy: mk("heavy"),
 			},
-		},
-	})
+		}
+	}
+	return items.SeedDefenseMessagesForTest(groups)
+}
+
+const expectedChannelDefenceShortageLine = "You mount a desperate response, too spent to bring practiced technique to it."
+
+func countExactLine(lines []string, want string) int {
+	count := 0
+	for _, line := range lines {
+		if strings.Contains(line, want) {
+			count++
+		}
+	}
+	return count
 }
 
 func drainChannelRoutingQueues(userIDs ...int) map[int][]string {
@@ -229,6 +245,108 @@ func TestSpellChannelDefenceRuntimeQueuesUseOutcomeAndStaySilentOnAttackWin(t *t
 		if len(lines) != 0 {
 			t.Fatalf("attack win narrated false defence success to user %d: %s", userID, strings.Join(lines, " | "))
 		}
+	}
+}
+
+func TestSpellChannelDefenceShortageIsPrivateForMentalAndPhysicalWinners(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := seedChannelRoutingMessages(t)
+	defer restoreMessages()
+	room := rooms.LoadRoom(1)
+	attacker, defender := users.GetByUserId(1), users.GetByUserId(2)
+	observer := users.NewTestUser(3, "observer", "Orin", 1003)
+	observer.Character.RoomId = room.RoomId
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: attacker, 2: defender, 3: observer})
+	defer restoreUsers()
+	room.AddPlayer(observer.UserId)
+
+	for _, defenceType := range []string{characters.DefenseQuell, characters.DefenseDodge, characters.DefenseBlock} {
+		t.Run(defenceType, func(t *testing.T) {
+			drainChannelRoutingQueues(1, 2, 3)
+			out := combat.ChannelDefenceResult{
+				DefenceType: defenceType, Defended: true, DamageMultiplier: 0.3,
+				Cost: characters.CostCommitResult{Status: characters.CostPartiallyPaid, Pool: characters.PoolConviction},
+			}
+			sendSpellChannelDefenceMessages(room, messaging.CategorySpellMental, out,
+				"attacker", "defender", "Mind Fog", attacker, defender)
+			queues := drainChannelRoutingQueues(1, 2, 3)
+			require.Zero(t, countExactLine(queues[1], expectedChannelDefenceShortageLine))
+			require.Equal(t, 1, countExactLine(queues[2], expectedChannelDefenceShortageLine))
+			require.Zero(t, countExactLine(queues[3], expectedChannelDefenceShortageLine))
+		})
+	}
+}
+
+func TestSpellChannelDefenceShortageSilenceCases(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := seedChannelRoutingMessages(t)
+	defer restoreMessages()
+	room := rooms.LoadRoom(1)
+	attacker, defender := users.GetByUserId(1), users.GetByUserId(2)
+	short := characters.CostCommitResult{Status: characters.CostPartiallyPaid, Pool: characters.PoolConviction}
+	paid := characters.CostCommitResult{Status: characters.CostPaid, Pool: characters.PoolConviction}
+
+	for _, tc := range []struct {
+		name         string
+		out          combat.ChannelDefenceResult
+		defenderUser *users.UserRecord
+	}{
+		{"attack_win", combat.ChannelDefenceResult{DefenceType: characters.DefenseQuell, Cost: short, DamageMultiplier: 1}, defender},
+		{"affordable", combat.ChannelDefenceResult{DefenceType: characters.DefenseQuell, Defended: true, Cost: paid, DamageMultiplier: 0.3}, defender},
+		{"npc_defender", combat.ChannelDefenceResult{DefenceType: characters.DefenseQuell, Defended: true, Cost: short, DamageMultiplier: 0.3}, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			drainChannelRoutingQueues(1, 2)
+			sendSpellChannelDefenceMessages(room, messaging.CategorySpellMental, tc.out,
+				"attacker", "defender", "Mind Fog", attacker, tc.defenderUser)
+			for userID, lines := range drainChannelRoutingQueues(1, 2) {
+				require.Zero(t, countExactLine(lines, expectedChannelDefenceShortageLine), "user %d", userID)
+			}
+		})
+	}
+}
+
+func TestMobAreaSpellEmitsOnePrivateShortagePerActualPlayerTarget(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := seedChannelRoutingMessages(t)
+	defer restoreMessages()
+	room := rooms.LoadRoom(1)
+	caster := mobs.GetInstance(100)
+	require.NotNil(t, caster)
+	for _, userID := range []int{1, 2} {
+		target := users.GetByUserId(userID)
+		target.Character.Health = 100
+		target.Character.HealthMax.Value = 100
+	}
+	originalContest := runMobSpellContest
+	runMobSpellContest = func(float64, []contest.Entry) contest.Result {
+		return contest.Result{
+			AttackRoll:  dice.RollResult{Value: 101, Mean: 100, StdDev: 15},
+			DefenseRoll: dice.RollResult{Value: 100, Mean: 100, StdDev: 15},
+			Margin:      1, Contested: true, Success: true,
+		}
+	}
+	t.Cleanup(func() { runMobSpellContest = originalContest })
+	originalDefence := runMobSpellDefence
+	runMobSpellDefence = func(combat.AttackChannel, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+		return combat.ChannelDefenceResult{
+			DefenceType: characters.DefenseQuell, Defended: true, DamageMultiplier: 0.3,
+			Cost: characters.CostCommitResult{Status: characters.CostPartiallyPaid, Pool: characters.PoolConviction},
+		}
+	}
+	t.Cleanup(func() { runMobSpellDefence = originalDefence })
+	spell := &spells.SpellData{
+		SpellId: "mind-storm", Name: "Mind Storm", Type: spells.HarmArea,
+		EffectType: "damage", TargetDefenseType: "mental", EffectMagnitude: 10,
+		Schools: []string{spells.SchoolMental},
+	}
+	drainChannelRoutingQueues(1, 2)
+	resolveMobSpell(caster, activity.CastingData{SpellId: spell.SpellId}, spell, room)
+	for userID, lines := range drainChannelRoutingQueues(1, 2) {
+		require.Equal(t, 1, countExactLine(lines, expectedChannelDefenceShortageLine), "user %d", userID)
 	}
 }
 

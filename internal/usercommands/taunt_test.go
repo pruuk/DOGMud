@@ -56,6 +56,18 @@ func defyRuntimeLines(userID int) []string {
 	return result
 }
 
+const expectedDefenceShortageLine = "You mount a desperate response, too spent to bring practiced technique to it."
+
+func exactRuntimeLineCount(userID int, want string) int {
+	count := 0
+	for _, line := range events.DrainQueuedMessagesForTest(userID) {
+		if strings.Contains(line, want) {
+			count++
+		}
+	}
+	return count
+}
+
 func defyVariant(t *testing.T, line string) string {
 	t.Helper()
 	lower := strings.ToLower(line)
@@ -215,4 +227,79 @@ func TestPlayerTauntRuntimeRoutesCanonicalDefyAcrossRealWrappers(t *testing.T) {
 		require.Empty(t, defyRuntimeLines(attacker.UserId))
 		require.Empty(t, defyRuntimeLines(observer.UserId))
 	})
+}
+
+func TestPlayerTauntShortDefyIsPrivateAndExactlyOnce(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := seedTauntRuntimeMessages(t)
+	defer restoreMessages()
+	attacker := users.GetByUserId(1)
+	defender := users.GetByUserId(2)
+	observer := users.NewTestUser(3, "orin", "Orin", 1003)
+	observer.Character.RoomId = 1
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: attacker, 2: defender, 3: observer})
+	defer restoreUsers()
+	room := rooms.LoadRoom(1)
+	room.AddPlayer(observer.UserId)
+	originalAction := executeTauntAction
+	executeTauntAction = func(actions.Actor) actions.TauntResult {
+		return actions.TauntResult{
+			Executed: true, Hit: true,
+			Target: actions.AggroTarget{Char: defender.Character, Name: defender.Character.Name,
+				UserId: defender.UserId, Found: true},
+			Defence: combat.ChannelDefenceResult{
+				DefenceType: characters.DefenseDefy, Defended: true, DamageMultiplier: 0.3,
+				Cost: characters.CostCommitResult{Status: characters.CostPartiallyPaid, Pool: characters.PoolConviction},
+			},
+		}
+	}
+	t.Cleanup(func() { executeTauntAction = originalAction })
+	for _, id := range []int{attacker.UserId, defender.UserId, observer.UserId} {
+		events.DrainQueuedMessagesForTest(id)
+	}
+
+	handled, err := Taunt("bobrick", attacker, room, 0)
+	require.NoError(t, err)
+	require.True(t, handled)
+	require.Zero(t, exactRuntimeLineCount(attacker.UserId, expectedDefenceShortageLine))
+	require.Equal(t, 1, exactRuntimeLineCount(defender.UserId, expectedDefenceShortageLine))
+	require.Zero(t, exactRuntimeLineCount(observer.UserId, expectedDefenceShortageLine))
+}
+
+func TestPlayerTauntDefenceShortageSilenceCases(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		out  combat.ChannelDefenceResult
+	}{
+		{name: "attack_win", out: combat.ChannelDefenceResult{
+			DefenceType: characters.DefenseDefy, DamageMultiplier: 1,
+			Cost: characters.CostCommitResult{Status: characters.CostPartiallyPaid, Pool: characters.PoolConviction},
+		}},
+		{name: "affordable_defence", out: combat.ChannelDefenceResult{
+			DefenceType: characters.DefenseDefy, Defended: true, DamageMultiplier: 0.3,
+			Cost: characters.CostCommitResult{Status: characters.CostPaid, Pool: characters.PoolConviction},
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			restoreMessages := seedTauntRuntimeMessages(t)
+			defer restoreMessages()
+			attacker, defender := users.GetByUserId(1), users.GetByUserId(2)
+			room := rooms.LoadRoom(1)
+			originalAction := executeTauntAction
+			executeTauntAction = func(actions.Actor) actions.TauntResult {
+				return actions.TauntResult{Executed: true, Hit: true,
+					Target: actions.AggroTarget{Char: defender.Character, Name: defender.Character.Name,
+						UserId: defender.UserId, Found: true}, Defence: tc.out}
+			}
+			t.Cleanup(func() { executeTauntAction = originalAction })
+			events.DrainQueuedMessagesForTest(attacker.UserId)
+			events.DrainQueuedMessagesForTest(defender.UserId)
+			_, err := Taunt("bobrick", attacker, room, 0)
+			require.NoError(t, err)
+			require.Zero(t, exactRuntimeLineCount(defender.UserId, expectedDefenceShortageLine))
+		})
+	}
 }

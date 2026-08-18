@@ -18,7 +18,7 @@ strike than rake.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Heavy — the savage bite deals significant harm.
+  <ansi fg="stat">Damage:</ansi> Heavy. The savage bite deals significant harm.
   <ansi fg="stat">Bleed:</ansi> A successful maul opens deep wounds that bleed
     severely over several rounds, dealing substantial additional
     damage beyond the initial strike.
@@ -35,6 +35,6 @@ finisher for wearing down prey over a sustained fight. See
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help rake</ansi>, <ansi fg="command">help hamstring</ansi>, <ansi fg="command">help kick</ansi>,
+  <ansi fg="command">help rake</ansi>, <ansi fg="command">help kick</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help special</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help combat</ansi>

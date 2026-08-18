@@ -18,7 +18,7 @@ has a strong chance to shatter any spell your victim is casting.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Moderate — the choke bite deals direct harm.
+  <ansi fg="stat">Damage:</ansi> Moderate. The choke bite deals direct harm.
   <ansi fg="stat">Bleed:</ansi> A successful throttle opens shallow throat wounds
     that bleed briefly.
   <ansi fg="stat">Stamina Drain:</ansi> The Throttled condition saps stamina over
@@ -34,11 +34,11 @@ Throttle spends Stamina and requires full payment before the bite. Carried load
 raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
 If you are too spent, no cooldown, combat round, or effect is consumed.
 
-Throttle rewards patience — most valuable when an opponent is
+Throttle rewards patience and is most valuable when an opponent is
 mid-incantation, letting you silence the spell before it fires.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help maul</ansi>, <ansi fg="command">help rake</ansi>, <ansi fg="command">help hamstring</ansi>,
+  <ansi fg="command">help maul</ansi>, <ansi fg="command">help rake</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help special</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help combat</ansi>

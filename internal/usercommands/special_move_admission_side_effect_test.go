@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -15,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	mobcmd "github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -188,9 +188,58 @@ func TestSpecialMoveWrappersRefusalHasNoEngagementSideEffects(t *testing.T) {
 			require.True(t, handled)
 			require.Equal(t, 0, user.Character.Stamina)
 			require.Empty(t, user.Character.Cooldowns)
-			require.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n"),
-				"You are too spent to manage that right now.")
+			assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)
 			assertNoSpecialMoveEngagement(t, user, target)
+		})
+	}
+}
+
+func TestMobSpecialMoveWrappersRefuseSilentlyWithoutMutation(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	speciesCleanup := seedSpecialMoveSpecies()
+	defer speciesCleanup()
+
+	cases := []struct {
+		name      string
+		command   func(string, *mobs.Mob, *rooms.Room) (bool, error)
+		speciesID int
+	}{
+		{"bash", mobcmd.Bash, 10},
+		{"trip", mobcmd.Trip, 11},
+		{"kick", mobcmd.Kick, 11},
+		{"grapple", mobcmd.Grapple, 11},
+		{"rake", mobcmd.Rake, 12},
+		{"maul", mobcmd.Maul, 13},
+		{"pounce", mobcmd.Pounce, 13},
+		{"gore", mobcmd.Gore, 14},
+		{"drain", mobcmd.Drain, 15},
+		{"throttle", mobcmd.Throttle, 13},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mob, room := mobs.GetInstance(100), rooms.LoadRoom(1)
+			mob.Character.SpeciesId = tc.speciesID
+			mob.Character.Stamina = 0
+			mob.Character.Cooldowns = characters.Cooldowns{}
+			mob.Character.SetAggro(1, 0, characters.DefaultAttack)
+			beforeAggro := *mob.Character.Aggro
+			beforeHealth := mob.Character.Health
+			for _, userID := range []int{1, 2} {
+				events.DrainQueuedMessagesForTest(userID)
+			}
+
+			handled, err := tc.command("", mob, room)
+			require.NoError(t, err)
+			require.True(t, handled)
+			require.Zero(t, mob.Character.Stamina)
+			require.Equal(t, beforeHealth, mob.Character.Health)
+			require.Equal(t, beforeAggro, *mob.Character.Aggro)
+			require.Empty(t, mob.Character.Cooldowns)
+			require.Zero(t, mob.Character.AttacksThisRound)
+			for _, userID := range []int{1, 2} {
+				require.Empty(t, events.DrainQueuedMessagesForTest(userID), "mob refusal leaked to user %d", userID)
+			}
 		})
 	}
 }

@@ -16,7 +16,7 @@ a tactical move rather than a finisher.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Light — the goal is the floor, not the hit.
+  <ansi fg="stat">Damage:</ansi> Light. The goal is the floor, not the hit.
   <ansi fg="stat">Knockdown Chance:</ansi> The most reliable knockdown of the three
     special moves, resolved against the defender's Dexterity and
     combat skill.

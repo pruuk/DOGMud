@@ -602,6 +602,44 @@ func TestMobTauntAndHowlRuntimeHideIndexedActorAndExcludeDefender(t *testing.T) 
 	}
 }
 
+func TestMobTauntShortDefyNotifiesOnlyPlayerDefenderOnce(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := seedMobTauntRuntimeMessages(t)
+	defer restoreMessages()
+	mob := mobs.GetInstance(100)
+	defender, observer := users.GetByUserId(1), users.GetByUserId(2)
+	room := rooms.LoadRoom(1)
+	mob.Character.Aggro = &characters.Aggro{UserId: defender.UserId}
+	originalAction := executeTauntAction
+	executeTauntAction = func(actions.Actor) actions.TauntResult {
+		return actions.TauntResult{
+			Executed: true, Hit: true,
+			Target: actions.AggroTarget{Char: defender.Character, Name: defender.Character.Name,
+				UserId: defender.UserId, Found: true},
+			Defence: combat.ChannelDefenceResult{
+				DefenceType: characters.DefenseDefy, Defended: true, DamageMultiplier: 0.3,
+				Cost: characters.CostCommitResult{Status: characters.CostPartiallyPaid, Pool: characters.PoolConviction},
+			},
+		}
+	}
+	t.Cleanup(func() { executeTauntAction = originalAction })
+	events.DrainQueuedMessagesForTest(defender.UserId)
+	events.DrainQueuedMessagesForTest(observer.UserId)
+	_, err := Taunt("", mob, room)
+	require.NoError(t, err)
+	want := "You mount a desperate response, too spent to bring practiced technique to it."
+	for userID, wantCount := range map[int]int{defender.UserId: 1, observer.UserId: 0} {
+		count := 0
+		for _, line := range events.DrainQueuedMessagesForTest(userID) {
+			if strings.Contains(line, want) {
+				count++
+			}
+		}
+		require.Equal(t, wantCount, count, "user %d", userID)
+	}
+}
+
 func TestMobTauntRuntimeRoutesMobToMobDefyAndPreservesAggroPull(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()

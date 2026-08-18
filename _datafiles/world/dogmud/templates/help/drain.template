@@ -18,7 +18,7 @@ successful hit also leaves the target bleeding.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Moderate — lighter than a full melee strike; the
+  <ansi fg="stat">Damage:</ansi> Moderate, lighter than a full melee strike; the
     lifesteal makes up the difference in sustained fights.
   <ansi fg="stat">Lifesteal:</ansi> On a hit, the attacker heals for a fraction of
     damage dealt.
@@ -31,7 +31,7 @@ Drain spends Stamina and requires full payment before the strike. Carried load
 raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
 If you are too spent, no cooldown, combat round, or effect is consumed.
 
-Drain is most effective when the vampire is wounded — the
+Drain is most effective when the vampire is wounded; the
 combined bleed and heal make it excellent for sustained
 pressure. Unlike most beast moves, drain is not gated on
 a natural attack type; it is gated on the LifeDrain species

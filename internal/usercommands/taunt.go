@@ -123,6 +123,11 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 func sendChannelDefenceMessages(out combat.ChannelDefenceResult, identities combat.ChannelDefenceIdentities, attack string,
 	attacker, defender *users.UserRecord, room *rooms.Room, defenderUserID int) {
+	if defender != nil {
+		if text := combat.ChannelDefenceShortageText(out, defender.Character); text != "" {
+			defender.SendText(messaging.CategorySystem, text)
+		}
+	}
 	triad := combat.RenderChannelDefenceMessages(out, identities, attack)
 	if triad.ToAttacker == "" {
 		return

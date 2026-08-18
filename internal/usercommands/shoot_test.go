@@ -557,10 +557,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		assert.Nil(t, user.Character.Aggro)
 		assert.Equal(t, 3, user.Character.Cooldowns["special-move"])
 		assert.Equal(t, 500, target.Character.Health)
-		want := actions.CostRefusalText(characters.CostCommitResult{
-			Status: characters.CostRefused, Pool: characters.PoolStamina,
-		})
-		assert.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n"), want)
+		assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)
 	})
 
 	t.Run("mob", func(t *testing.T) {
@@ -610,10 +607,7 @@ func TestReloadRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 				assert.False(t, user.Character.Equipment.Weapon.Loaded)
 				assert.Equal(t, 20, user.Character.Items[1].Uses)
 				assert.Equal(t, characters.Cooldowns{"special-move": -2, "other": 7}, user.Character.Cooldowns)
-				want := actions.CostRefusalText(characters.CostCommitResult{
-					Status: characters.CostRefused, Pool: characters.PoolStamina,
-				})
-				assert.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n"), want)
+				assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)
 				return
 			}
 

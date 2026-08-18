@@ -9,7 +9,7 @@ same window.
   <ansi fg="command">bash</ansi>, <ansi fg="command">kick</ansi>, <ansi fg="command">trip</ansi>, <ansi fg="command">grapple</ansi>
               - Melee control moves: stagger, disorient, knock down, restrain.
   <ansi fg="command">taunt</ansi>, <ansi fg="command">warcry</ansi>, <ansi fg="command">rally</ansi>
-              - Shouts and rallying cries — the voice spends from the
+              - Shouts and rallying cries; the voice spends from the
                 same well of focus.
   <ansi fg="command">cast</ansi>      - Initiates spellcasting. Counts as a special move on
               initiation.
@@ -20,12 +20,12 @@ same window.
   Mutation abilities (<ansi fg="command">venom-coat</ansi>, <ansi fg="command">cocoon</ansi>) share it too.
 
 Submissions (chokes, joint locks) fire automatically when you
-have dominant control in a grapple — no command needed. See
+have dominant control in a grapple; no command needed. See
 <ansi fg="command">help submission</ansi>.
 
 <ansi fg="yellow">Why shared cooldown?</ansi>
 
-These moves represent bursts of focused effort — the body and mind need a
+These moves represent bursts of focused effort. The body and mind need a
 moment to recover before another such effort can be made. You can still
 attack normally between special moves.
 
