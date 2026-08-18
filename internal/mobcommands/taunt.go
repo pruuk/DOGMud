@@ -2,7 +2,6 @@ package mobcommands
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -38,6 +37,13 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.Target.UserId > 0 {
 		targetPlayer = users.GetByUserId(result.Target.UserId)
 	}
+	targetIdentity := targetName
+	if targetPlayer != nil {
+		targetIdentity = targetPlayer.Character.GetPlayerName(targetPlayer.UserId).String()
+	} else if targetMob := mobs.GetInstance(result.Target.MobInstanceId); targetMob != nil {
+		targetIdentity = targetMob.Character.GetMobNameIndexed(0,
+			room.GetMobDuplicateIndex(targetMob.InstanceId)).String()
+	}
 
 	switch {
 	case result.Fumble:
@@ -56,7 +62,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
 			fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName),
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
-		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetName, "taunt")
+		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, "taunt")
 
 		// Aggro-pull confirmation: the taunt yanked the target off its prior
 		// foe and pinned it (taunt-hold). AggroPulled is only ever set when the
@@ -85,14 +91,28 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 func sendChannelDefenceMessages(out combat.ChannelDefenceResult, mob *mobs.Mob,
 	defender *users.UserRecord, room *rooms.Room, defenderName, attack string) {
-	triad := combat.RenderChannelDefenceMessages(out, mob.Character.Name, defenderName, attack)
+	attackerName := mob.Character.GetMobNameIndexed(0, room.GetMobDuplicateIndex(mob.InstanceId)).String()
+	defenderIdentity := defenderName
+	if defender != nil {
+		defenderIdentity = defender.Character.GetPlayerName(defender.UserId).String()
+	}
+	triad := combat.RenderChannelDefenceMessages(out, combat.ChannelDefenceIdentities{
+		Attacker: attackerName,
+		Defender: defenderIdentity,
+	}, attack)
 	if triad.ToRoom == "" {
 		return
 	}
+	excluded := make([]int, 0, 1)
 	if defender != nil {
-		defender.SendText(messaging.CategoryTauntResist, string(triad.ToDefender))
+		personal := string(triad.ToDefender)
+		if !canSeeInDark(defender, room) {
+			personal = messaging.Anonymize(personal)
+		}
+		defender.SendText(messaging.CategoryTauntResist, personal)
+		excluded = append(excluded, defender.UserId)
 	}
 	visible := string(triad.ToRoom)
-	unseen := strings.ReplaceAll(visible, mob.Character.Name, "Something")
-	sendAudioRoomText(room, mob, messaging.CategoryTauntResist, unseen, visible)
+	unseen := messaging.Anonymize(visible)
+	sendAudioRoomText(room, mob, messaging.CategoryTauntResist, unseen, visible, excluded...)
 }

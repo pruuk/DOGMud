@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -83,7 +84,17 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	case result.Hit:
 		sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
 			"username", targetType, user, targetPlayer, room, result.Target.UserId)
-		sendChannelDefenceMessages(result.Defence, sourceName, targetName, "taunt",
+		identities := combat.ChannelDefenceIdentities{
+			Attacker: user.Character.GetPlayerName(user.UserId).String(),
+			Defender: targetName,
+		}
+		if targetPlayer != nil {
+			identities.Defender = targetPlayer.Character.GetPlayerName(user.UserId).String()
+		} else if targetMob := mobs.GetInstance(result.Target.MobInstanceId); targetMob != nil {
+			identities.Defender = targetMob.Character.GetMobNameIndexed(user.UserId,
+				room.GetMobDuplicateIndex(targetMob.InstanceId)).String()
+		}
+		sendChannelDefenceMessages(result.Defence, identities, "taunt",
 			user, targetPlayer, room, result.Target.UserId)
 
 		if result.AggroPulled {
@@ -108,9 +119,9 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	return true, nil
 }
 
-func sendChannelDefenceMessages(out combat.ChannelDefenceResult, sourceName, targetName, attack string,
+func sendChannelDefenceMessages(out combat.ChannelDefenceResult, identities combat.ChannelDefenceIdentities, attack string,
 	attacker, defender *users.UserRecord, room *rooms.Room, defenderUserID int) {
-	triad := combat.RenderChannelDefenceMessages(out, sourceName, targetName, attack)
+	triad := combat.RenderChannelDefenceMessages(out, identities, attack)
 	if triad.ToAttacker == "" {
 		return
 	}

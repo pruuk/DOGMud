@@ -9,11 +9,16 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +28,6 @@ import (
 func TestConsume_NoCorpses(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
-
 	mob, room := getTestMobAndRoom(t)
 
 	// Room starts with no corpses
@@ -409,6 +413,71 @@ func TestTauntAndHowlRouteStructuredDefyOutcomeExactlyOnce(t *testing.T) {
 			})
 			require.Equal(t, 1, renderCalls, "%s must render ExecuteTaunt's outcome once", filename)
 			require.Zero(t, legacyBranches, "%s must not retain hardcoded defy branches", filename)
+		})
+	}
+}
+
+func TestMobDefyRoutingExcludesDefenderAndAnonymizesDarkIdentity(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreBiomes := rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"cave": {BiomeId: "cave", Name: "Cave", Symbol: ".", DarkArea: true, MovementCost: 1},
+	})
+	defer restoreBiomes()
+	restoreBuffs := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		9001: {BuffId: 9001, Name: "Test Infrared", RoundInterval: 1, TriggerCount: 1, Flags: []buffs.Flag{buffs.InfraredVision}},
+	})
+	defer restoreBuffs()
+
+	mk := func(prefix string) items.DefenseOptions {
+		five := func(text string) items.MessageOptions {
+			message := items.ItemMessage(text)
+			return items.MessageOptions{message, message, message, message, message}
+		}
+		return items.DefenseOptions{Together: items.DefenseTogetherMessages{
+			ToDefender: five(prefix + " defender sees {attacker} defied by {defender}"),
+			ToAttacker: five(prefix + " attacker sees {defender} defy {attacker}"),
+			ToRoom:     five(prefix + " room sees {defender} defy {attacker}"),
+		}}
+	}
+	restoreMessages := items.SeedDefenseMessagesForTest(map[items.DefenseType]*items.DefenseMessageGroup{
+		items.DefenseDefy: {OptionId: items.DefenseDefy, Options: items.DefenseIntensity{
+			items.Weak: mk("weak"), items.Normal: mk("normal"), items.Heavy: mk("heavy"),
+		}},
+	})
+	defer restoreMessages()
+
+	mob := mobs.GetInstance(100)
+	target := users.GetByUserId(1)
+	observer := users.GetByUserId(2)
+	darkRoom := rooms.LoadRoom(2)
+	require.NotNil(t, darkRoom)
+	darkRoom.Biome = "cave"
+	require.Zero(t, darkRoom.GetVisibility())
+	mob.Character.RoomId = 2
+	target.Character.RoomId = 2
+	observer.Character.RoomId = 2
+	darkRoom.AddMob(mob.InstanceId)
+	darkRoom.AddPlayer(target.UserId)
+	darkRoom.AddPlayer(observer.UserId)
+	require.True(t, observer.Character.Buffs.AddBuff(9001, true))
+
+	for _, attack := range []string{"taunt", "howl"} {
+		t.Run(attack, func(t *testing.T) {
+			events.DrainQueuedMessagesForTest(target.UserId)
+			events.DrainQueuedMessagesForTest(observer.UserId)
+			sendChannelDefenceMessages(combat.ChannelDefenceResult{
+				DefenceType: string(items.DefenseDefy), Defended: true, NormalizedDefenceMargin: 0.1, DamageMultiplier: 0.4,
+			}, mob, target, darkRoom, target.Character.Name, attack)
+
+			targetLines := events.DrainQueuedMessagesForTest(target.UserId)
+			observerLines := events.DrainQueuedMessagesForTest(observer.UserId)
+			require.Len(t, targetLines, 1, "defender must receive one personal line, not its observer line too")
+			require.Len(t, observerLines, 1)
+			for _, line := range []string{targetLines[0], observerLines[0]} {
+				require.NotContains(t, line, mob.Character.Name, "dark routing leaked mob identity")
+				require.Contains(t, line, "a figure")
+			}
 		})
 	}
 }

@@ -369,23 +369,51 @@ func spellSchoolCategory(spellData *spells.SpellData) messaging.Category {
 // represent mob participants, which do not receive private player text.
 func sendSpellChannelDefenceMessages(room *rooms.Room, category messaging.Category,
 	out combat.ChannelDefenceResult, attackerName, defenderName, attackName string,
-	attackerUser, defenderUser *users.UserRecord) {
-	triad := combat.RenderChannelDefenceMessages(out, attackerName, defenderName, attackName)
+	attackerUser, defenderUser *users.UserRecord, indexOverride ...int) {
+	triad := combat.RenderChannelDefenceMessages(out, combat.ChannelDefenceIdentities{
+		Attacker: attackerName,
+		Defender: defenderName,
+	}, attackName, indexOverride...)
 	if triad.ToRoom == "" {
 		return
 	}
 	excluded := make([]int, 0, 2)
 	if attackerUser != nil {
-		attackerUser.SendText(category, string(triad.ToAttacker))
+		if room != nil {
+			room.SendTextVisualToUser(attackerUser, category, string(triad.ToAttacker))
+		} else {
+			attackerUser.SendText(category, string(triad.ToAttacker))
+		}
 		excluded = append(excluded, attackerUser.UserId)
 	}
 	if defenderUser != nil {
-		defenderUser.SendText(category, string(triad.ToDefender))
+		if room != nil {
+			room.SendTextVisualToUser(defenderUser, category, string(triad.ToDefender))
+		} else {
+			defenderUser.SendText(category, string(triad.ToDefender))
+		}
 		excluded = append(excluded, defenderUser.UserId)
 	}
 	if room != nil {
 		sendVisualRoomText(room, category, string(triad.ToRoom), excluded...)
 	}
+}
+
+// spellDefenceIdentity returns the display-ready identity for either kind of
+// spell participant. Mob identities retain the room's duplicate index.
+func spellDefenceIdentity(char *characters.Character, user *users.UserRecord, room *rooms.Room) string {
+	if char == nil {
+		return ""
+	}
+	if user != nil {
+		return char.GetPlayerName(user.UserId).String()
+	}
+	if room != nil && char.MobInstanceId > 0 {
+		if mob := mobs.GetInstance(char.MobInstanceId); mob != nil {
+			return mobDisplayName(mob, room, 0)
+		}
+	}
+	return char.GetMobName(0).String()
 }
 
 // setMobSpellAggro sets reciprocal aggro between the caster and the
@@ -444,12 +472,8 @@ func applyMobEffect_damage(
 		dispatchItemProcs("on_spell_hit", casterChar, &mob.Character, nil, dmg)
 	}
 	setMobSpellAggro(user, mob)
-	attackerName := ""
-	if casterChar != nil {
-		attackerName = casterChar.Name
-	}
 	sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), defence,
-		attackerName, mob.Character.Name, spellData.Name, user, nil)
+		spellDefenceIdentity(casterChar, user, room), mName, spellData.Name, user, nil)
 	if user != nil {
 		if !defence.Defended {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
@@ -525,6 +549,23 @@ func applyMobEffect_knockdown(
 			}
 		}
 	}
+	return applyMobKnockdownOutcome(user, casterChar, mob, room, spellData, dmg, kdDefence, critTag, mName)
+}
+
+// applyMobKnockdownOutcome applies the already-resolved damage defence and the
+// independent binary knockdown. Keeping this phase separate makes explicit
+// that even a defensive crit negates damage, not the preserved position effect.
+func applyMobKnockdownOutcome(
+	user *users.UserRecord,
+	casterChar *characters.Character,
+	mob *mobs.Mob,
+	room *rooms.Room,
+	spellData *spells.SpellData,
+	dmg int,
+	kdDefence combat.ChannelDefenceResult,
+	critTag string,
+	mName string,
+) int {
 	mob.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(casterChar))
 	cancelDamageBuffs(&mob.Character)
 	if dmg > 0 {
@@ -545,12 +586,8 @@ func applyMobEffect_knockdown(
 		knocked = false
 	}
 	setMobSpellAggro(user, mob)
-	attackerName := ""
-	if casterChar != nil {
-		attackerName = casterChar.Name
-	}
 	sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), kdDefence,
-		attackerName, mob.Character.Name, spellData.Name, user, nil)
+		spellDefenceIdentity(casterChar, user, room), mName, spellData.Name, user, nil)
 	if user != nil {
 		if !knocked {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
@@ -791,7 +828,8 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			}
 		}
 		sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), defence,
-			user.Character.Name, target.Character.Name, spellData.Name, user, target)
+			spellDefenceIdentity(user.Character, user, room),
+			spellDefenceIdentity(target.Character, target, room), spellData.Name, user, target)
 		if defence.DefensiveCrit {
 			return
 		}
@@ -1347,7 +1385,8 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			}
 		}
 		sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), defence,
-			caster.Character.Name, target.Character.Name, spellData.Name, nil, target)
+			spellDefenceIdentity(&caster.Character, nil, room),
+			spellDefenceIdentity(target.Character, target, room), spellData.Name, nil, target)
 		if defence.DefensiveCrit {
 			break
 		}
@@ -1412,7 +1451,8 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			dispatchItemProcs("on_spell_hit", &caster.Character, target.Character, nil, dmg)
 		}
 		sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), kdDefence,
-			caster.Character.Name, target.Character.Name, spellData.Name, nil, target)
+			spellDefenceIdentity(&caster.Character, nil, room),
+			spellDefenceIdentity(target.Character, target, room), spellData.Name, nil, target)
 		// Chunk 4b W5 cutover: mob-cast knockdown on player. Same
 		// Supine choice as the player-cast branch above.
 		knocked := true

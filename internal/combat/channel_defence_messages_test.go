@@ -9,11 +9,13 @@ import (
 
 func channelMessageFixture() *items.DefenseMessageGroup {
 	mk := func(prefix string) items.DefenseOptions {
-		message := func(suffix string) items.ItemMessage { return items.ItemMessage(prefix + suffix) }
+		message := func(audience, suffix string) items.ItemMessage {
+			return items.ItemMessage(prefix + "-" + audience + "-" + suffix + " {attacker} {defender}")
+		}
 		return items.DefenseOptions{Together: items.DefenseTogetherMessages{
-			ToDefender: items.MessageOptions{message("-def-0"), message("-def-1"), message("-def-2"), message("-def-3"), message("-def-4")},
-			ToAttacker: items.MessageOptions{message("-atk-0"), message("-atk-1"), message("-atk-2"), message("-atk-3"), message("-atk-4")},
-			ToRoom:     items.MessageOptions{message("-room-0"), message("-room-1"), message("-room-2"), message("-room-3"), message("-room-4")},
+			ToDefender: items.MessageOptions{message("def", "0"), message("def", "1"), message("def", "2"), message("def", "3"), message("def", "4")},
+			ToAttacker: items.MessageOptions{message("atk", "0"), message("atk", "1"), message("atk", "2"), message("atk", "3"), message("atk", "4")},
+			ToRoom:     items.MessageOptions{message("room", "0"), message("room", "1"), message("room", "2"), message("room", "3"), message("room", "4")},
 		}}
 	}
 	return &items.DefenseMessageGroup{OptionId: items.DefenseQuell, Options: items.DefenseIntensity{
@@ -37,7 +39,10 @@ func TestChannelDefenceMessagesUsesCanonicalOutcomeWithoutRerolling(t *testing.T
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := RenderChannelDefenceMessages(tc.out, "Rurik", "Selka", "Mind Fog", 1)
+			got := RenderChannelDefenceMessages(tc.out, ChannelDefenceIdentities{
+				Attacker: `<ansi fg="username">Rurik</ansi>`,
+				Defender: `<ansi fg="mobname">Selka #2</ansi>`,
+			}, "Mind Fog", 1)
 			if tc.want == "" {
 				if got.ToDefender != "" || got.ToAttacker != "" || got.ToRoom != "" {
 					t.Fatalf("attack win rendered defence success: %+v", got)
@@ -45,8 +50,14 @@ func TestChannelDefenceMessagesUsesCanonicalOutcomeWithoutRerolling(t *testing.T
 				return
 			}
 			for audience, line := range map[string]string{"defender": string(got.ToDefender), "attacker": string(got.ToAttacker), "room": string(got.ToRoom)} {
-				if !strings.HasPrefix(line, tc.want+"-") || !strings.HasSuffix(line, "-1") {
+				if !strings.HasPrefix(line, tc.want+"-") || !strings.Contains(line, "-1 ") {
 					t.Fatalf("%s line %q does not use %s band and shared index 1", audience, line, tc.want)
+				}
+				if !strings.Contains(line, `<ansi fg="username">Rurik</ansi>`) || !strings.Contains(line, `<ansi fg="mobname">Selka #2</ansi>`) {
+					t.Fatalf("%s line lost actor-aware identities: %q", audience, line)
+				}
+				if !strings.Contains(line, `<ansi fg="username">Rurik</ansi> <ansi fg="mobname">Selka #2</ansi>`) {
+					t.Fatalf("%s line swapped attacker and defender identities: %q", audience, line)
 				}
 			}
 		})

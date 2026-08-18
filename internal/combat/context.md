@@ -343,14 +343,17 @@ U8 closed the non-physical content gap with `quell.yaml` and `defy.yaml` under
 consumes the exact `ChannelDefenceResult` returned by resolution, suppresses
 attack wins, and delegates coordinated band/index/token selection to
 `items.RenderDefenseMessage`. Spell and social callers deliver that one triad
-through their existing audience and visibility routes. Broader combat-message
+through their existing audience and visibility routes. Callers supply
+actor-aware, display-ready `ChannelDefenceIdentities`, including duplicate-mob
+indices, so neutral pool tokens work for every player/mob orientation and the
+central visibility pipeline can anonymize them. Broader combat-message
 unification remains deferred.
 
 ### `ResolveChannelDefence` — the non-melee defence resolver (U6 Task 12)
 
 ```go
 func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) ChannelDefenceResult
-func RenderChannelDefenceMessages(out ChannelDefenceResult, attacker, defender, attack string, indexOverride ...int) items.DefenseMessageTriad
+func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad
 func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) float64
 func AwardDefenceProgression(c *characters.Character, userId int, defenceType string)
 ```

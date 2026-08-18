@@ -151,15 +151,23 @@ type ChannelDefenceResult struct {
 	Cost                    characters.CostCommitResult
 }
 
+// ChannelDefenceIdentities carries actor-aware, display-ready identities into
+// the shared defence renderer. Callers supply username/mobname ANSI tags (and
+// duplicate-mob suffixes) before neutral message placeholders are replaced.
+type ChannelDefenceIdentities struct {
+	Attacker string
+	Defender string
+}
+
 // RenderChannelDefenceMessages renders the canonical channel outcome without
 // rolling or deriving a second result. Attack wins return an empty triad.
-func RenderChannelDefenceMessages(out ChannelDefenceResult, attacker, defender, attack string, indexOverride ...int) items.DefenseMessageTriad {
+func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad {
 	if !out.Defended {
 		return items.DefenseMessageTriad{}
 	}
 	return items.RenderDefenseMessage(items.DefenseType(out.DefenceType), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
-		items.TokenAttacker: attacker,
-		items.TokenDefender: defender,
+		items.TokenAttacker: identities.Attacker,
+		items.TokenDefender: identities.Defender,
 		items.TokenAttack:   attack,
 		items.TokenWeapon:   attack,
 	}, indexOverride...)
