@@ -272,6 +272,12 @@ What matters is the shape, not the list:
   wrapper will render a private, pool-aware refusal only when its returned
   `CostCommitResult` has `Status == characters.CostRefused`; it must not
   re-quote, re-commit, or charge a pool directly.
+- **Flee is the life-preserving partial-pay exception.** `Flee` publishes one
+  transient `fleeAdmission` around its successful transition to Disengaging;
+  `TakeFleeAdmission(user) (includeSkill, ok)` atomically consumes it in the
+  asynchronous round hook. `ok == false` is not reusable state: on a phase
+  flee it means a resolver already owns the attempt, while a true legacy
+  `Aggro{Type:Flee}` path defaults to the historical full-skill behavior.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must
   *split* input into multiple slots (item vs. container, mob vs. player).

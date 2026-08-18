@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
@@ -37,8 +38,12 @@ func TestFleeCost_ShortAttemptCommitsAvailableStaminaAndCarriesNoSkill(t *testin
 	if !u.Character.IsDisengaging() {
 		t.Fatalf("short flee left state %v, want Disengaging", u.Character.CombatPhase.State())
 	}
-	if FleeIncludesSkill(u) {
+	includeSkill, admitted := TakeFleeAdmission(u)
+	if !admitted || includeSkill {
 		t.Error("short flee retained Skullduggery eligibility")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Error("a consumed flee admission was reusable")
 	}
 	if got := u.Character.GetSkillUseCount(string(costs.SpecFor(costs.ActionFlee).Skill)); got != 0 {
 		t.Errorf("short flee progressed Skullduggery %d times, want 0", got)
@@ -52,6 +57,112 @@ func TestFleeCost_ShortAttemptCommitsAvailableStaminaAndCarriesNoSkill(t *testin
 	}
 	if shortageLines != 1 {
 		t.Errorf("shortage lines = %d, want exactly 1 per command", shortageLines)
+	}
+}
+
+// Catches leaving a short admission behind when CombatPhase rejects the
+// transition. A later legacy flee must not inherit a canceled attempt's state.
+func TestFleeCost_TransitionVetoLeavesNoAdmission(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9256, 99848, 0)
+	defer cleanup()
+	u.Character.Stamina = 0
+	engageFleeFixture(t, u)
+	u.Character.CombatPhase.RegisterPositionCheck(func() bool { return false })
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	if u.Character.IsDisengaging() {
+		t.Fatal("position-vetoed flee entered Disengaging")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("transition-vetoed short admission leaked into a later resolution")
+	}
+}
+
+// Catches returning through a command-level rejection before retracting an
+// orphaned handoff. A rejected command cannot leave an earlier attempt's
+// admission available to an asynchronous round resolver.
+func TestFleeCost_RejectedCommandClearsOrphanedAdmission(t *testing.T) {
+	const noFleeBuffID = 99849
+	cleanupBuffs := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		noFleeBuffID: {
+			BuffId:        noFleeBuffID,
+			Name:          "test no-flee",
+			Description:   "rejects a flee command",
+			RoundInterval: 1,
+			TriggerCount:  1,
+			Flags:         []buffs.Flag{buffs.NoFlee},
+		},
+	})
+	defer cleanupBuffs()
+
+	u, room, cleanup := fleeFixture(t, 9257, 99850, 0)
+	defer cleanup()
+	u.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{includeSkill: false})
+	if !u.Character.Buffs.AddBuff(noFleeBuffID, false) {
+		t.Fatal("fixture could not apply the no-flee buff")
+	}
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("rejected command left an orphaned flee admission reusable")
+	}
+}
+
+// Catches treating a positive fractional quote as short merely because the
+// pool is empty. With literal 1 x 1.10 x 0.5 = 0.55, the first attempt owes no
+// whole point and is eligible; the second carries to 1.10, owes one, and is
+// exactly partially paid at zero Stamina.
+func TestFleeCost_ZeroStaminaFractionalCarryBecomesShortOnlyWhenWholeDue(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance.FleeStaminaCost = 1
+	cfg.Balance.FlightFleeStaminaMult = 0.5
+	configs.SetConfigForTest(t, cfg)
+	cleanupMutations := mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"winged-flight": {
+			MutationId: "winged-flight", Name: "Winged Flight", Rarity: 8,
+			Pros: []mutations.MutationEffect{{Type: "flag", Target: "flying"}},
+		},
+	})
+	defer cleanupMutations()
+
+	u, room, cleanup := fleeFixture(t, 9257, 99849, 0)
+	defer cleanup()
+	u.Character.Mutations = map[string]int{"winged-flight": 1}
+	u.Character.Stamina = 0
+	engageFleeFixture(t, u)
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("first Flee returned %v", err)
+	}
+	includeSkill, admitted := TakeFleeAdmission(u)
+	if !admitted || !includeSkill {
+		t.Fatal("0.55 quote at zero Stamina was marked short before a whole point was due")
+	}
+	u.Character.CombatPhase.ResolveFlee(false)
+	events.DrainQueuedMessagesForTest(u.UserId)
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("second Flee returned %v", err)
+	}
+	includeSkill, admitted = TakeFleeAdmission(u)
+	if !admitted || includeSkill {
+		t.Fatal("carried 1.10 quote at zero Stamina was not reported partially paid")
+	}
+	if u.Character.Stamina != 0 {
+		t.Fatalf("partial fractional commit changed zero Stamina to %d", u.Character.Stamina)
+	}
+	shortageLines := 0
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "instinct rather than technique") {
+			shortageLines++
+		}
+	}
+	if shortageLines != 1 {
+		t.Fatalf("second fractional attempt shortage lines = %d, want 1", shortageLines)
 	}
 }
 

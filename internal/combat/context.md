@@ -1698,7 +1698,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | `grapple.go` / `grapple_move.go` | The grappling state machine and transitions |
 | `submission.go` / `submission_outcome.go` | Submissions and their resolution |
 | `reach.go` | Weapon reach and its interaction with clinch |
-| `flee.go` / `flight.go` | Disengaging and flight movement |
+| `flee.go` / `flight.go` | Disengaging and flight movement. `ResolveFleeBlockers(fleer, room, includeSkill)` keeps Dexterity, prone/supine penalty, blocker ordering, blocker Unarmed Combat, and `RunContest`; `includeSkill=false` removes only the fleer's Skullduggery term and its progression. |
 | `taunt_messages.go` | Rhetoric channel messaging |
 | `ai.go` | Combat-side AI helpers |
 | `analytics.go` | Combat statistics collection |

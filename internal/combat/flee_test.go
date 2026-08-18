@@ -174,6 +174,37 @@ func TestResolveFleeBlockers_PlayerBlockerWins(t *testing.T) {
 	assert.True(t, blocker.IsPlayer())
 }
 
+// Catches passing includeSkill=true to the score helper on the short path. The
+// fleer's enormous skill would beat this mob if it leaked into the real roll.
+func TestResolveFleeBlockers_ShortMobOutcomeOmitsSkill(t *testing.T) {
+	fleer := newFleerMob(100, "trained fleer", 1, 1000)
+	blockerMob := newBlockerMob(200, "mob blocker", 500, 0, 0, 100)
+	cleanup := seedFleeFixture(t, &fleer.Character,
+		map[int]*mobs.Mob{100: fleer, 200: blockerMob}, nil)
+	defer cleanup()
+
+	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), false)
+	require.NotNil(t, blocker, "short real contest retained the fleer's enormous skill")
+	assert.Equal(t, 200, blocker.MobInstanceId)
+}
+
+// Catches a player-blocker branch bypassing the shared short flee score. The
+// same high-skill fleer must lose when only Dexterity 1 reaches RunContest.
+func TestResolveFleeBlockers_ShortPlayerOutcomeOmitsSkill(t *testing.T) {
+	fleer := newFleerMob(100, "trained fleer", 1, 1000)
+	blockerUser := users.NewTestUser(1, "blocker", "Player Blocker", 1001)
+	blockerUser.Character.Stats.Dexterity.ValueAdj = 500
+	blockerUser.Character.Skills = map[string]int{string(skills.UnarmedCombat): 0}
+	blockerUser.Character.SetAggro(0, 100, characters.DefaultAttack)
+	cleanup := seedFleeFixture(t, &fleer.Character,
+		map[int]*mobs.Mob{100: fleer}, map[int]*users.UserRecord{1: blockerUser})
+	defer cleanup()
+
+	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), false)
+	require.NotNil(t, blocker, "short player-blocker contest retained the fleer's enormous skill")
+	assert.Equal(t, 1, blocker.UserId)
+}
+
 func TestResolveFleeBlockers_NonTargetingCombatantIgnored(t *testing.T) {
 	// Strong mob in the room but its aggro points at a DIFFERENT
 	// target — the helper should NOT count it as a blocker.

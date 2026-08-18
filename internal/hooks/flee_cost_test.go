@@ -1,13 +1,16 @@
 package hooks
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -23,7 +26,7 @@ func TestHandlePlayerFlee_ShortCommandDoesNotProgressSkullduggery(t *testing.T) 
 
 	u := users.GetByUserId(1)
 	room := rooms.LoadRoom(1)
-	room.Exits = nil // keep the full-skill mutation away from Look infrastructure
+	room.Exits = nil // keep legacy/default resolution away from Look infrastructure
 	blocker := mobs.GetInstance(100)
 	if err := u.Character.Validate(); err != nil {
 		t.Fatalf("validate fleer: %v", err)
@@ -42,10 +45,116 @@ func TestHandlePlayerFlee_ShortCommandDoesNotProgressSkullduggery(t *testing.T) 
 	if !u.Character.IsDisengaging() {
 		t.Fatalf("fixture did not enter Disengaging")
 	}
+	events.DrainQueuedMessagesForTest(u.UserId)
 	if !handlePlayerFlee(u, room, u.UserId) {
 		t.Fatal("short flee was not resolved")
 	}
 	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 0 {
 		t.Errorf("short flee progressed Skullduggery %d times, want 0", got)
+	}
+	blocked := false
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "blocks you from fleeing") {
+			blocked = true
+		}
+	}
+	if !blocked {
+		t.Fatal("short hook resolution did not produce the mob blocker outcome")
+	}
+
+	// The prior admission is consumed. A legacy sentinel with no new command
+	// therefore defaults to full skill and progresses exactly once.
+	blocker.Character.EndAggro()
+	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
+	if !handlePlayerFlee(u, room, u.UserId) {
+		t.Fatal("legacy/default flee was not resolved")
+	}
+	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
+		t.Errorf("legacy resolution after consumed short attempt progressed skill %d times, want 1", got)
+	}
+}
+
+// Catches consuming admission only after the grapple early return. Grapple can
+// begin after the command enters Disengaging but before the asynchronous round.
+func TestHandlePlayerFlee_GrappleCancellationConsumesAdmission(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u := users.GetByUserId(1)
+	room := rooms.LoadRoom(1)
+	if err := u.Character.Validate(); err != nil {
+		t.Fatalf("validate fleer: %v", err)
+	}
+	u.Character.Stamina = 0
+	u.Character.SetAggro(0, 100, characters.DefaultAttack)
+	u.Character.CombatPhase.OnRoundTick()
+	if _, err := usercommands.Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	setCombatPositionParallel(u.Character, position.Clinch)
+
+	if !handlePlayerFlee(u, room, u.UserId) {
+		t.Fatal("grapple cancellation did not handle flee")
+	}
+	if _, admitted := usercommands.TakeFleeAdmission(u); admitted {
+		t.Fatal("grapple cancellation left the short admission reusable")
+	}
+}
+
+// Catches leaving admission behind on the no-exit failure path.
+func TestHandlePlayerFlee_NoExitConsumesAdmission(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u := users.GetByUserId(1)
+	room := rooms.LoadRoom(1)
+	room.Exits = nil
+	if err := u.Character.Validate(); err != nil {
+		t.Fatalf("validate fleer: %v", err)
+	}
+	u.Character.Stamina = 0
+	u.Character.SetAggro(0, 100, characters.DefaultAttack)
+	u.Character.CombatPhase.OnRoundTick()
+	if _, err := usercommands.Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+
+	if !handlePlayerFlee(u, room, u.UserId) {
+		t.Fatal("no-exit failure did not handle flee")
+	}
+	if _, admitted := usercommands.TakeFleeAdmission(u); admitted {
+		t.Fatal("no-exit failure left the short admission reusable")
+	}
+}
+
+// Catches interpreting an already-consumed phase admission as a fresh legacy
+// flee. A reentrant handler must leave the first resolver's Disengaging state
+// and progression untouched.
+func TestHandlePlayerFlee_ReentrantConsumptionDoesNotResolveTwice(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u := users.GetByUserId(1)
+	room := rooms.LoadRoom(1)
+	room.Exits = nil
+	if err := u.Character.Validate(); err != nil {
+		t.Fatalf("validate fleer: %v", err)
+	}
+	u.Character.Stamina = 0
+	u.Character.SetAggro(0, 100, characters.DefaultAttack)
+	u.Character.CombatPhase.OnRoundTick()
+	if _, err := usercommands.Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	includeSkill, admitted := usercommands.TakeFleeAdmission(u)
+	if !admitted || includeSkill {
+		t.Fatal("fixture did not consume a short admission")
+	}
+
+	if !handlePlayerFlee(u, room, u.UserId) {
+		t.Fatal("reentrant flee was not recognized")
+	}
+	if !u.Character.IsDisengaging() {
+		t.Fatal("reentrant consumer resolved the first in-flight attempt")
+	}
+	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 0 {
+		t.Fatalf("reentrant consumer progressed Skullduggery %d times, want 0", got)
 	}
 }

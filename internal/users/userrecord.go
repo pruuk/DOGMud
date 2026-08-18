@@ -509,6 +509,27 @@ func (u *UserRecord) GetTempData(key string) any {
 	return nil
 }
 
+// TakeTempData atomically reads and deletes one transient session value. Use it
+// for single-use handoffs where separate GetTempData and SetTempData(nil) calls
+// would allow concurrent or reentrant consumers to observe the same value.
+func (u *UserRecord) TakeTempData(key string) any {
+	if u == nil {
+		return nil
+	}
+	u.sessionMu.Lock()
+	defer u.sessionMu.Unlock()
+
+	if u.tempDataStore == nil {
+		return nil
+	}
+	value, ok := u.tempDataStore[key]
+	if !ok {
+		return nil
+	}
+	delete(u.tempDataStore, key)
+	return value
+}
+
 func (u *UserRecord) HasRolePermission(permissionId string, simpleMatch ...bool) bool {
 
 	if u.Role == RoleAdmin {

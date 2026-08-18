@@ -495,6 +495,11 @@ func (u *UserRecord) GetTempData(key string) any {
     
     return nil
 }
+
+// Atomically returns and deletes one transient value. Use this for single-use
+// asynchronous handoffs; composing GetTempData with SetTempData(key, nil) is
+// not atomic under concurrent or reentrant consumption.
+func (u *UserRecord) TakeTempData(key string) any
 ```
 
 ### Configuration Management
