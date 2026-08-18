@@ -267,6 +267,11 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 // complete resolution dispatch without changing the canonical defence runner.
 var runPlayerSpellContest = combat.RunContest
 
+// runPlayerSpellDefence is the secondary channel-defence seam for player-cast
+// spells. It defaults to the canonical resolver; same-package dispatch tests
+// replace it briefly with a literal outcome and restore it with t.Cleanup.
+var runPlayerSpellDefence = combat.ResolveChannelDefence
+
 // resolveAgainstMob performs the opposed roll and applies the effect to a mob.
 // Returns true if the cast fumbled (ZScore <= -2.0). A fumble aborts any
 // post-target spell effects (summon, charm, Go hooks) in the caller's main
@@ -456,7 +461,7 @@ func applyMobEffect_damage(
 	// defensive crit.
 	defence := combat.ChannelDefenceResult{DamageMultiplier: 1}
 	if !isCrit && casterChar != nil {
-		defence = combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
+		defence = runPlayerSpellDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
 		mult := defence.DamageMultiplier
 		if mult < 1.0 {
 			dmg = int(math.Round(float64(dmg) * mult))
@@ -545,7 +550,7 @@ func applyMobEffect_knockdown(
 	// the same split Task 13 applies to maneuvers.
 	kdDefence := combat.ChannelDefenceResult{DamageMultiplier: 1}
 	if !isCrit && casterChar != nil {
-		kdDefence = combat.ResolveChannelDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
+		kdDefence = runPlayerSpellDefence(spellAttackChannel(spellData), casterChar, &mob.Character)
 		mult := kdDefence.DamageMultiplier
 		if mult < 1.0 {
 			dmg = int(math.Round(float64(dmg) * mult))
@@ -822,7 +827,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		// U6 Task 12: one contest, on the channel's own defence set.
 		defence := combat.ChannelDefenceResult{DamageMultiplier: 1}
 		if !isCrit {
-			defence = combat.ResolveChannelDefence(
+			defence = runPlayerSpellDefence(
 				spellAttackChannel(spellData), user.Character, target.Character)
 			mult := defence.DamageMultiplier
 			if mult < 1.0 {

@@ -2,6 +2,9 @@ package hooks
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -9,7 +12,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -22,6 +24,65 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
+
+func TestChannelDefenceRoutingTestsDoNotLoadGlobalItemRegistries(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	parsed, err := parser.ParseFile(token.NewFileSet(), here, nil, 0)
+	require.NoError(t, err)
+	loadCalls := 0
+	ast.Inspect(parsed, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		selector, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || selector.Sel.Name != "LoadDataFiles" {
+			return true
+		}
+		if pkg, ok := selector.X.(*ast.Ident); ok && pkg.Name == "items" {
+			loadCalls++
+		}
+		return true
+	})
+	require.Zero(t, loadCalls, "hooks tests must not replace the global item and attack-message registries")
+}
+
+func TestPlayerSpellKnockdownUsesDeterministicDefenceSeam(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(filepath.Dir(here), "spell_resolution.go"), nil, 0)
+	require.NoError(t, err)
+	var knockdown *ast.FuncDecl
+	for _, decl := range parsed.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if ok && fn.Name.Name == "applyMobEffect_knockdown" {
+			knockdown = fn
+			break
+		}
+	}
+	require.NotNil(t, knockdown)
+	seamCalls, directCalls := 0, 0
+	ast.Inspect(knockdown.Body, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		switch fn := call.Fun.(type) {
+		case *ast.Ident:
+			if fn.Name == "runPlayerSpellDefence" {
+				seamCalls++
+			}
+		case *ast.SelectorExpr:
+			if pkg, ok := fn.X.(*ast.Ident); ok && pkg.Name == "combat" && fn.Sel.Name == "ResolveChannelDefence" {
+				directCalls++
+			}
+		}
+		return true
+	})
+	require.Equal(t, 1, seamCalls, "player knockdown dispatch must resolve defence through its package seam once")
+	require.Zero(t, directCalls, "direct canonical resolver calls make dispatch tests stochastic")
+}
 
 func seedChannelRoutingMessages(t *testing.T) func() {
 	t.Helper()
@@ -171,64 +232,6 @@ func TestSpellChannelDefenceRuntimeQueuesUseOutcomeAndStaySilentOnAttackWin(t *t
 	}
 }
 
-func TestRepositoryQuellPoolsRouteCoordinatedPartialAndCritTriadsToRealQueues(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-	restoreMessages := items.SeedDefenseMessagesForTest(nil)
-	defer restoreMessages()
-	_, here, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(here), "..", ".."))
-	cfg := configs.GetConfig()
-	cfg.FilePaths.DataFiles = configs.ConfigString(filepath.Join(repoRoot, "_datafiles", "world", "dogmud"))
-	configs.SetConfigForTest(t, cfg)
-	items.LoadDataFiles()
-
-	attacker := users.GetByUserId(1)
-	defender := users.GetByUserId(2)
-	observer := users.NewTestUser(3, "observer", "Orin", 1003)
-	observer.Character.RoomId = 1
-	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: attacker, 2: defender, 3: observer})
-	defer restoreUsers()
-	room := rooms.LoadRoom(1)
-	room.AddPlayer(observer.UserId)
-	identities := combat.ChannelDefenceIdentities{
-		Attacker: attacker.Character.GetPlayerName(attacker.UserId).String(),
-		Defender: defender.Character.GetPlayerName(defender.UserId).String(),
-	}
-
-	for _, tc := range []struct {
-		name string
-		out  combat.ChannelDefenceResult
-	}{
-		{"partial", combat.ChannelDefenceResult{DefenceType: characters.DefenseQuell, Defended: true, NormalizedDefenceMargin: 0.1, DamageMultiplier: 0.4}},
-		{"defensive_crit", combat.ChannelDefenceResult{DefenceType: characters.DefenseQuell, Defended: true, DefensiveCrit: true, DamageMultiplier: 0}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			drainChannelRoutingQueues(1, 2, 3)
-			want := combat.RenderChannelDefenceMessages(tc.out, identities, "Mind Fog", 2)
-			require.NotEmpty(t, want.ToAttacker)
-			sendSpellChannelDefenceMessages(room, messaging.CategorySpellMental, tc.out,
-				identities.Attacker, identities.Defender, "Mind Fog", attacker, defender, 2)
-			queues := drainChannelRoutingQueues(1, 2, 3)
-			require.Len(t, queues[attacker.UserId], 1)
-			require.Len(t, queues[defender.UserId], 1)
-			require.Len(t, queues[observer.UserId], 1)
-			require.Contains(t, queues[attacker.UserId][0], string(want.ToAttacker))
-			require.Contains(t, queues[defender.UserId][0], string(want.ToDefender))
-			require.Contains(t, queues[observer.UserId][0], string(want.ToRoom))
-			combined := strings.ToLower(strings.Join([]string{string(want.ToAttacker), string(want.ToDefender), string(want.ToRoom)}, " "))
-			if tc.out.DefensiveCrit {
-				require.Contains(t, combined, "damage")
-				require.Contains(t, combined, "other effects remain possible")
-			} else {
-				require.Contains(t, combined, "blunt")
-				require.NotContains(t, combined, "all damage")
-			}
-		})
-	}
-}
-
 func TestSpellChannelDefencePreservesComputedDuplicateMobIdentity(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -273,10 +276,6 @@ func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t
 			defer cleanup()
 			restoreMessages := seedChannelRoutingMessages(t)
 			defer restoreMessages()
-			cfg := configs.GetConfig()
-			cfg.Balance.QuellEffectiveness = 100
-			cfg.Balance.ContestFloor = 0
-			configs.SetConfigForTest(t, cfg)
 			originalContest := runPlayerSpellContest
 			runPlayerSpellContest = func(float64, []contest.Entry) contest.Result {
 				return contest.Result{
@@ -286,6 +285,14 @@ func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t
 				}
 			}
 			t.Cleanup(func() { runPlayerSpellContest = originalContest })
+			originalDefence := runPlayerSpellDefence
+			runPlayerSpellDefence = func(combat.AttackChannel, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+				return combat.ChannelDefenceResult{
+					DefenceType: characters.DefenseQuell, Defended: true,
+					DefensiveCrit: true, DamageMultiplier: 0,
+				}
+			}
+			t.Cleanup(func() { runPlayerSpellDefence = originalDefence })
 
 			room := rooms.LoadRoom(1)
 			attacker := users.GetByUserId(1)
@@ -297,9 +304,9 @@ func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t
 				SpellId: "force-wave", Name: "Force Wave", Type: spellType,
 				EffectType: "knockdown", TargetDefenseType: "mental", EffectMagnitude: 20,
 			}
-			attacker.Character.Stats.Willpower.ValueAdj = 110
+			attacker.Character.Stats.Willpower.ValueAdj = 1000
 			attacker.Character.Skills = map[string]int{"spellcasting": 0}
-			target.Character.Stats.Willpower.ValueAdj = 100
+			target.Character.Stats.Willpower.ValueAdj = 1
 			target.Character.Skills = map[string]int{"spellcasting": 0}
 			require.True(t, target.Character.IsStanding(), "fixture must begin standing")
 			drainChannelRoutingQueues(attacker.UserId, observer.UserId)
