@@ -65,6 +65,11 @@ type TauntResult struct {
 	AggroPulled bool
 }
 
+// runTauntContest is the primary social-attack contest seam. The default is
+// always the canonical contest runner; same-package tests replace it briefly
+// to exercise admission, damage, defence, and aggro effects deterministically.
+var runTauntContest = combat.RunContest
+
 func tauntTargetIsCurrent(snapshot, current AggroTarget, originalRoomID int, char *characters.Character) bool {
 	return snapshot.Found && current.Found &&
 		snapshot.Char == current.Char &&
@@ -151,7 +156,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	attackScore *= convMult
 
 	// Opposed roll for hit/miss/fumble/crit classification.
-	res := combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
+	res := runTauntContest(attackScore, []contest.Entry{{Score: defenseScore}})
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User

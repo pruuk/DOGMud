@@ -328,7 +328,7 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 		{
 			file: "combat_taunt.go", function: "ExecuteTaunt", resultType: "TauntResult", action: "costs.ActionTaunt",
 			guards: []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"!tauntTargetIsCurrent(target, target, originalRoomID, char)", "NoTarget"}},
-			effect: "combat.RunContest",
+			effect: "runTauntContest",
 		},
 		{
 			file: "combat_rally.go", function: "ExecuteRally", resultType: "RallyResult", action: "costs.ActionRally",
@@ -474,11 +474,11 @@ func TestTauntRallyWarcryWrapperAdmission(t *testing.T) {
 		player, staged               bool
 	}
 	wrappers := []wrapperGuard{
-		{"usercommands", "taunt", "Taunt", "actions.ExecuteTaunt(actor)", true, true},
+		{"usercommands", "taunt", "Taunt", "executeTauntAction(actor)", true, true},
 		{"usercommands", "rally", "Rally", "actions.ExecuteRally(&actions.UserActor{User: user, Room: room})", true, false},
 		{"usercommands", "warcry", "Warcry", "actions.ExecuteWarcry(&actions.UserActor{User: user, Room: room})", true, false},
-		{"mobcommands", "taunt", "Taunt", "actions.ExecuteTaunt(actor)", false, false},
-		{"mobcommands", "howl", "Howl", "actions.ExecuteTaunt(actor)", false, false},
+		{"mobcommands", "taunt", "Taunt", "executeTauntAction(actor)", false, false},
+		{"mobcommands", "howl", "Howl", "executeTauntAction(actor)", false, false},
 		{"mobcommands", "rally", "Rally", "actions.ExecuteRally(&actions.MobActor{Mob: mob, Room: room})", false, false},
 		{"mobcommands", "warcry", "Warcry", "actions.ExecuteWarcry(&actions.MobActor{Mob: mob, Room: room})", false, false},
 	}

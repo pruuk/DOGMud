@@ -2,16 +2,23 @@ package hooks
 
 import (
 	"fmt"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +30,7 @@ func seedChannelRoutingMessages(t *testing.T) func() {
 			result := make(items.MessageOptions, 5)
 			truth := ""
 			if band == "heavy" {
-				truth = " damaging force negated"
+				truth = " no damage taken; momentum remains"
 			}
 			for i := range result {
 				result[i] = items.ItemMessage(fmt.Sprintf("%s-%s-index=%d%s {attacker} resists-with {defender} via {attack}", band, audience, i, truth))
@@ -164,6 +171,64 @@ func TestSpellChannelDefenceRuntimeQueuesUseOutcomeAndStaySilentOnAttackWin(t *t
 	}
 }
 
+func TestRepositoryQuellPoolsRouteCoordinatedPartialAndCritTriadsToRealQueues(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := items.SeedDefenseMessagesForTest(nil)
+	defer restoreMessages()
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(here), "..", ".."))
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(filepath.Join(repoRoot, "_datafiles", "world", "dogmud"))
+	configs.SetConfigForTest(t, cfg)
+	items.LoadDataFiles()
+
+	attacker := users.GetByUserId(1)
+	defender := users.GetByUserId(2)
+	observer := users.NewTestUser(3, "observer", "Orin", 1003)
+	observer.Character.RoomId = 1
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: attacker, 2: defender, 3: observer})
+	defer restoreUsers()
+	room := rooms.LoadRoom(1)
+	room.AddPlayer(observer.UserId)
+	identities := combat.ChannelDefenceIdentities{
+		Attacker: attacker.Character.GetPlayerName(attacker.UserId).String(),
+		Defender: defender.Character.GetPlayerName(defender.UserId).String(),
+	}
+
+	for _, tc := range []struct {
+		name string
+		out  combat.ChannelDefenceResult
+	}{
+		{"partial", combat.ChannelDefenceResult{DefenceType: characters.DefenseQuell, Defended: true, NormalizedDefenceMargin: 0.1, DamageMultiplier: 0.4}},
+		{"defensive_crit", combat.ChannelDefenceResult{DefenceType: characters.DefenseQuell, Defended: true, DefensiveCrit: true, DamageMultiplier: 0}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			drainChannelRoutingQueues(1, 2, 3)
+			want := combat.RenderChannelDefenceMessages(tc.out, identities, "Mind Fog", 2)
+			require.NotEmpty(t, want.ToAttacker)
+			sendSpellChannelDefenceMessages(room, messaging.CategorySpellMental, tc.out,
+				identities.Attacker, identities.Defender, "Mind Fog", attacker, defender, 2)
+			queues := drainChannelRoutingQueues(1, 2, 3)
+			require.Len(t, queues[attacker.UserId], 1)
+			require.Len(t, queues[defender.UserId], 1)
+			require.Len(t, queues[observer.UserId], 1)
+			require.Contains(t, queues[attacker.UserId][0], string(want.ToAttacker))
+			require.Contains(t, queues[defender.UserId][0], string(want.ToDefender))
+			require.Contains(t, queues[observer.UserId][0], string(want.ToRoom))
+			combined := strings.ToLower(strings.Join([]string{string(want.ToAttacker), string(want.ToDefender), string(want.ToRoom)}, " "))
+			if tc.out.DefensiveCrit {
+				require.Contains(t, combined, "damage")
+				require.Contains(t, combined, "other effects remain possible")
+			} else {
+				require.Contains(t, combined, "blunt")
+				require.NotContains(t, combined, "all damage")
+			}
+		})
+	}
+}
+
 func TestSpellChannelDefencePreservesComputedDuplicateMobIdentity(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -201,13 +266,26 @@ func TestSpellChannelDefencePreservesComputedDuplicateMobIdentity(t *testing.T) 
 	}
 }
 
-func TestDefensiveCritNarrationCoexistsWithSingleAndAreaKnockdown(t *testing.T) {
+func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t *testing.T) {
 	for _, spellType := range []spells.SpellType{spells.HarmSingle, spells.HarmArea} {
 		t.Run(string(spellType), func(t *testing.T) {
 			cleanup := seedAllRegistries()
 			defer cleanup()
 			restoreMessages := seedChannelRoutingMessages(t)
 			defer restoreMessages()
+			cfg := configs.GetConfig()
+			cfg.Balance.QuellEffectiveness = 100
+			cfg.Balance.ContestFloor = 0
+			configs.SetConfigForTest(t, cfg)
+			originalContest := runPlayerSpellContest
+			runPlayerSpellContest = func(float64, []contest.Entry) contest.Result {
+				return contest.Result{
+					AttackRoll:  dice.RollResult{Value: 101, Mean: 100, StdDev: 15},
+					DefenseRoll: dice.RollResult{Value: 100, Mean: 100, StdDev: 15},
+					Margin:      1, Contested: true, Success: true,
+				}
+			}
+			t.Cleanup(func() { runPlayerSpellContest = originalContest })
 
 			room := rooms.LoadRoom(1)
 			attacker := users.GetByUserId(1)
@@ -215,28 +293,34 @@ func TestDefensiveCritNarrationCoexistsWithSingleAndAreaKnockdown(t *testing.T) 
 			target := mobs.GetInstance(100)
 			target.Character.MobInstanceId = target.InstanceId
 			target.Character.Health = 100
-			targetName := mobDisplayName(target, room, attacker.UserId)
 			spell := &spells.SpellData{
 				SpellId: "force-wave", Name: "Force Wave", Type: spellType,
-				EffectType: "knockdown", TargetDefenseType: "mental",
+				EffectType: "knockdown", TargetDefenseType: "mental", EffectMagnitude: 20,
 			}
+			attacker.Character.Stats.Willpower.ValueAdj = 110
+			attacker.Character.Skills = map[string]int{"spellcasting": 0}
+			target.Character.Stats.Willpower.ValueAdj = 100
+			target.Character.Skills = map[string]int{"spellcasting": 0}
+			require.True(t, target.Character.IsStanding(), "fixture must begin standing")
 			drainChannelRoutingQueues(attacker.UserId, observer.UserId)
 
-			gotDamage := applyMobKnockdownOutcome(attacker, attacker.Character, target, room, spell, 0,
-				combat.ChannelDefenceResult{
-					DefenceType: "quell", Defended: true, DefensiveCrit: true, DamageMultiplier: 0,
-				}, "", targetName)
+			casting := activity.CastingData{SpellId: spell.SpellId}
+			if spellType == spells.HarmSingle {
+				casting.TargetMobInstanceIds = []int{target.InstanceId}
+			}
+			resolveSpell(attacker, casting, spell, room)
 
-			require.Zero(t, gotDamage)
+			require.Equal(t, 100, target.Character.Health, "defensive crit must reduce damage to zero")
 			require.True(t, target.Character.IsSupine() || target.Character.IsProne(),
-				"zero-damage defensive crit must preserve the binary knockdown")
+				"zero-damage defensive crit must preserve the binary knockdown; state=%v", target.Character.Position.State())
 			attackerLines := drainChannelRoutingQueues(attacker.UserId)[attacker.UserId]
 			require.Len(t, attackerLines, 1)
 			require.Contains(t, strings.ToLower(attackerLines[0]), "heavy-attacker")
-			require.Contains(t, strings.ToLower(attackerLines[0]), "damaging force")
+			require.Contains(t, strings.ToLower(attackerLines[0]), "no damage taken")
 			observerLines := drainChannelRoutingQueues(observer.UserId)[observer.UserId]
 			require.Len(t, observerLines, 2)
-			require.Contains(t, strings.ToLower(observerLines[0]), "damaging force")
+			require.Contains(t, strings.ToLower(observerLines[0]), "no damage taken")
+			require.Contains(t, strings.ToLower(observerLines[0]), "momentum remains")
 			require.Contains(t, strings.ToLower(observerLines[1]), "knocks")
 			require.Contains(t, strings.ToLower(observerLines[1]), "ground")
 		})

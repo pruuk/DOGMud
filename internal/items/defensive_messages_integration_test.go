@@ -78,13 +78,28 @@ func TestDefenseMessageRepositoryPoolsKeepPartialAndKnockdownWordingTruthful(t *
 	}
 
 	quellHeavy := defenseMessages[DefenseQuell].Options[Heavy].Together
-	for audience, messages := range map[string]MessageOptions{
-		"defender": quellHeavy.ToDefender, "attacker": quellHeavy.ToAttacker, "room": quellHeavy.ToRoom,
+	defyHeavy := defenseMessages[DefenseDefy].Options[Heavy].Together
+	for defenseType, together := range map[DefenseType]DefenseTogetherMessages{
+		DefenseQuell: quellHeavy,
+		DefenseDefy:  defyHeavy,
 	} {
-		for index, message := range messages {
-			lower := strings.ToLower(string(message))
-			if !strings.Contains(lower, "damag") && !strings.Contains(lower, "harm") && !strings.Contains(lower, "mental force") {
-				t.Errorf("quell heavy %s[%d] does not limit negation claim to damage/mental force: %q", audience, index, message)
+		for audience, messages := range map[string]MessageOptions{
+			"defender": together.ToDefender, "attacker": together.ToAttacker, "room": together.ToRoom,
+		} {
+			for index, message := range messages {
+				lower := strings.ToLower(string(message))
+				for _, forbidden := range []string{
+					"every harmful thread", "harmful force in", "utterly unmoved", "untouched",
+					"no purchase at all", "dies unheard", "every trace of its force",
+					"all its force is gone", "refuses you completely", "dismisses the {attack} completely",
+				} {
+					if strings.Contains(lower, forbidden) {
+						t.Errorf("%s heavy %s[%d] globally negates secondary effects with %q: %q", defenseType, audience, index, forbidden, message)
+					}
+				}
+				if !strings.Contains(lower, "damage") && !strings.Contains(lower, "injury") && !strings.Contains(lower, "conviction harm") {
+					t.Errorf("%s heavy %s[%d] does not identify zero damage/injury specifically: %q", defenseType, audience, index, message)
+				}
 			}
 		}
 	}

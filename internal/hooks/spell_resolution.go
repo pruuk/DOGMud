@@ -262,6 +262,11 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	}
 }
 
+// runPlayerSpellContest is the primary player-spell contest seam. Keeping the
+// dependency at its owner lets deterministic same-package tests exercise the
+// complete resolution dispatch without changing the canonical defence runner.
+var runPlayerSpellContest = combat.RunContest
+
 // resolveAgainstMob performs the opposed roll and applies the effect to a mob.
 // Returns true if the cast fumbled (ZScore <= -2.0). A fumble aborts any
 // post-target spell effects (summon, charm, Go hooks) in the caller's main
@@ -270,7 +275,7 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, &mob.Character)
-	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
+	spellContest := runPlayerSpellContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	round := util.GetRoundCount()
@@ -756,7 +761,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, spellAttack float64, magnitude int) (fumbled bool) {
 
 	defVal := spellDefenseValue(spellData.TargetDefenseType, target.Character)
-	spellContest := combat.RunContest(spellAttack, []contest.Entry{{Score: defVal}})
+	spellContest := runPlayerSpellContest(spellAttack, []contest.Entry{{Score: defVal}})
 	success, atkMargin, atkRoll := spellContest.Success, spellContest.Margin, spellContest.AttackRoll
 
 	// Backfire on fumble

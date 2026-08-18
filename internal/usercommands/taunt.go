@@ -15,6 +15,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+var executeTauntAction = actions.ExecuteTaunt
+
 func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "taunt",
@@ -23,7 +25,7 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	result := actions.ExecuteTaunt(actor)
+	result := executeTauntAction(actor)
 	if result.Cost.Status == characters.CostRefused {
 		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
 		return true, nil

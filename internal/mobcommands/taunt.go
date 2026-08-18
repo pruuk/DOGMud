@@ -12,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+var executeTauntAction = actions.ExecuteTaunt
+
 // Taunt is a generic conviction attack with non-wolf flavor text. Used by
 // tank archetypes (golems, elementals) where wolf-themed "howl" messaging
 // would be incongruous. Mechanically identical to Howl; purely a flavor wrapper.
@@ -22,7 +24,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	actor := &actions.MobActor{Mob: mob, Room: room}
-	result := actions.ExecuteTaunt(actor)
+	result := executeTauntAction(actor)
 	if result.Cost.Status == characters.CostRefused {
 		return true, nil
 	}

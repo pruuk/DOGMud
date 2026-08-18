@@ -1,14 +1,17 @@
 package mobcommands
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"math/rand"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -22,6 +25,41 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func seedMobTauntRuntimeMessages(t *testing.T) func() {
+	t.Helper()
+	mk := func(band string) items.DefenseOptions {
+		messages := func(audience string) items.MessageOptions {
+			result := make(items.MessageOptions, 5)
+			for i := range result {
+				result[i] = items.ItemMessage(fmt.Sprintf("DEFY %s variant=%d %s: {attacker} tests {defender}; no conviction harm, attention may shift", audience, i, band))
+			}
+			return result
+		}
+		return items.DefenseOptions{Together: items.DefenseTogetherMessages{
+			ToDefender: messages("defender"), ToAttacker: messages("attacker"), ToRoom: messages("room"),
+		}}
+	}
+	return items.SeedDefenseMessagesForTest(map[items.DefenseType]*items.DefenseMessageGroup{
+		items.DefenseDefy: {
+			OptionId: items.DefenseDefy,
+			Options: items.DefenseIntensity{
+				items.Weak: mk("weak"), items.Normal: mk("normal"), items.Heavy: mk("heavy"),
+			},
+		},
+	})
+}
+
+func mobDefyRuntimeLines(userID int) []string {
+	all := events.DrainQueuedMessagesForTest(userID)
+	result := make([]string, 0, len(all))
+	for _, line := range all {
+		if strings.Contains(strings.ToLower(line), "defy ") {
+			result = append(result, line)
+		}
+	}
+	return result
+}
 
 // ─── Consume ────────────────────────────────────────────────────────────────
 
@@ -380,6 +418,9 @@ func TestHowlAliasChargesOnlyThroughTaunt(t *testing.T) {
 				ownQuotes++
 			}
 		case *ast.Ident:
+			if fn.Name == "executeTauntAction" {
+				executeCalls++
+			}
 			if fn.Name == "admitFullCost" {
 				ownQuotes++
 			}
@@ -397,12 +438,17 @@ func TestTauntAndHowlRouteStructuredDefyOutcomeExactlyOnce(t *testing.T) {
 		t.Run(filename, func(t *testing.T) {
 			parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(filepath.Dir(thisFile), filename), nil, 0)
 			require.NoError(t, err)
-			renderCalls, legacyBranches := 0, 0
+			actionCalls, renderCalls, legacyBranches := 0, 0, 0
 			ast.Inspect(parsed, func(node ast.Node) bool {
 				switch n := node.(type) {
 				case *ast.CallExpr:
-					if ident, ok := n.Fun.(*ast.Ident); ok && ident.Name == "sendChannelDefenceMessages" {
-						renderCalls++
+					if ident, ok := n.Fun.(*ast.Ident); ok {
+						switch ident.Name {
+						case "executeTauntAction":
+							actionCalls++
+						case "sendChannelDefenceMessages":
+							renderCalls++
+						}
 					}
 				case *ast.SelectorExpr:
 					if n.Sel.Name == "Defied" || n.Sel.Name == "FullyDefied" {
@@ -411,6 +457,7 @@ func TestTauntAndHowlRouteStructuredDefyOutcomeExactlyOnce(t *testing.T) {
 				}
 				return true
 			})
+			require.Equal(t, 1, actionCalls, "%s must call the package-local action seam once", filename)
 			require.Equal(t, 1, renderCalls, "%s must render ExecuteTaunt's outcome once", filename)
 			require.Zero(t, legacyBranches, "%s must not retain hardcoded defy branches", filename)
 		})
@@ -479,6 +526,114 @@ func TestMobDefyRoutingExcludesDefenderAndAnonymizesDarkIdentity(t *testing.T) {
 				require.Contains(t, line, "a figure")
 			}
 		})
+	}
+}
+
+func TestMobTauntAndHowlRuntimeHideIndexedActorAndExcludeDefender(t *testing.T) {
+	commands := []struct {
+		name string
+		run  func(string, *mobs.Mob, *rooms.Room) (bool, error)
+	}{
+		{"taunt", Taunt},
+		{"howl", Howl},
+	}
+	for _, command := range commands {
+		t.Run(command.name, func(t *testing.T) {
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			restoreMessages := seedMobTauntRuntimeMessages(t)
+			defer restoreMessages()
+			restoreBiomes := rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+				"cave": {BiomeId: "cave", Name: "Cave", Symbol: ".", DarkArea: true, MovementCost: 1},
+			})
+			defer restoreBiomes()
+			restoreBuffs := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+				9001: {BuffId: 9001, Name: "Test Infrared", RoundInterval: 1, TriggerCount: 1, Flags: []buffs.Flag{buffs.InfraredVision}},
+			})
+			defer restoreBuffs()
+
+			first := mobs.GetInstance(100)
+			actor := mobs.GetInstance(200)
+			target := users.GetByUserId(1)
+			observer := users.GetByUserId(2)
+			darkRoom := rooms.LoadRoom(2)
+			darkRoom.Biome = "cave"
+			first.Character.RoomId = darkRoom.RoomId
+			actor.Character.RoomId = darkRoom.RoomId
+			actor.Character.Name = first.Character.Name
+			actor.Character.MobInstanceId = actor.InstanceId
+			actor.Character.Aggro = &characters.Aggro{UserId: target.UserId}
+			originalAction := executeTauntAction
+			called := false
+			executeTauntAction = func(actions.Actor) actions.TauntResult {
+				called = true
+				return actions.TauntResult{
+					Executed: true, Hit: true,
+					Target:  actions.AggroTarget{Char: target.Character, Name: target.Character.Name, UserId: target.UserId, Found: true},
+					Defence: combat.ChannelDefenceResult{DefenceType: characters.DefenseDefy, Defended: true, DefensiveCrit: true, DamageMultiplier: 0},
+				}
+			}
+			t.Cleanup(func() { executeTauntAction = originalAction })
+			target.Character.RoomId = darkRoom.RoomId
+			observer.Character.RoomId = darkRoom.RoomId
+			darkRoom.AddMob(first.InstanceId)
+			darkRoom.AddMob(actor.InstanceId)
+			darkRoom.AddPlayer(target.UserId)
+			darkRoom.AddPlayer(observer.UserId)
+			require.Equal(t, 2, darkRoom.GetMobDuplicateIndex(actor.InstanceId))
+			require.True(t, observer.Character.Buffs.AddBuff(9001, true))
+			events.DrainQueuedMessagesForTest(target.UserId)
+			events.DrainQueuedMessagesForTest(observer.UserId)
+
+			handled, err := command.run("", actor, darkRoom)
+			require.NoError(t, err)
+			require.True(t, handled)
+			require.True(t, called, "real wrapper must reach its action seam")
+			targetLines := mobDefyRuntimeLines(target.UserId)
+			observerLines := mobDefyRuntimeLines(observer.UserId)
+			require.Len(t, targetLines, 1, "real wrapper must not redeliver the room line to its defender")
+			require.Len(t, observerLines, 1)
+			for _, line := range []string{targetLines[0], observerLines[0]} {
+				require.NotContains(t, line, first.Character.Name, "indexed mob identity leaked through dark routing")
+				require.Contains(t, line, "a figure")
+				require.Contains(t, line, `fg="taunt-resist"`)
+			}
+		})
+	}
+}
+
+func TestMobTauntRuntimeRoutesMobToMobDefyAndPreservesAggroPull(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := seedMobTauntRuntimeMessages(t)
+	defer restoreMessages()
+	actor := mobs.GetInstance(100)
+	target := mobs.GetInstance(200)
+	room := rooms.LoadRoom(1)
+	actor.Character.Aggro = &characters.Aggro{MobInstanceId: target.InstanceId}
+	target.Character.MobInstanceId = target.InstanceId
+	target.Character.Aggro = &characters.Aggro{UserId: 1}
+	originalAction := executeTauntAction
+	executeTauntAction = func(actions.Actor) actions.TauntResult {
+		return actions.TauntResult{
+			Executed: true, Hit: true, AggroPulled: true,
+			Target:  actions.AggroTarget{Char: &target.Character, Name: target.Character.Name, MobInstanceId: target.InstanceId, Found: true},
+			Defence: combat.ChannelDefenceResult{DefenceType: characters.DefenseDefy, Defended: true, DefensiveCrit: true, DamageMultiplier: 0},
+		}
+	}
+	t.Cleanup(func() { executeTauntAction = originalAction })
+	events.DrainQueuedMessagesForTest(1)
+	events.DrainQueuedMessagesForTest(2)
+
+	handled, err := Taunt("", actor, room)
+	require.NoError(t, err)
+	require.True(t, handled)
+	for _, userID := range []int{1, 2} {
+		lines := mobDefyRuntimeLines(userID)
+		require.Len(t, lines, 1)
+		require.Contains(t, lines[0], "Skeleton")
+		require.Contains(t, lines[0], "Merchant")
+		require.Contains(t, strings.ToLower(lines[0]), "attention may shift")
 	}
 }
 

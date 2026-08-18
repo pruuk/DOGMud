@@ -15,8 +15,8 @@ the recipient's connection.
    CanSeeShapes, or skip-visual-deliver-audio. Consumes the chunk-6
    Perception FSM (see `internal/state/perception/`).
 4. **Anonymize** (infrared-only path) — regex strips `username` /
-   `mobname` / `petname` ANSI name tags, substitutes "a figure" + the
-   `combat-anon` color alias.
+   `mobname` / `petname` ANSI name tags, including suffixed mob tags such as
+   `mobname-dup2`, then substitutes "a figure" + the `combat-anon` color alias.
 5. **Apply category color tag** — `<ansi fg="<category-alias>">…</ansi>`.
 6. **Wrap** at recipient's `UserRecord.LineWidth` (default 80, range
    40–240), ANSI-aware.

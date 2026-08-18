@@ -2,10 +2,10 @@ package messaging
 
 import "regexp"
 
-// nameTagPattern matches <ansi fg="username|mobname|petname">…</ansi>
-// for the anonymizer pass.
+// nameTagPattern matches player/pet identity tags and mob identity tags with
+// the suffixes used for duplicate indices and display roles.
 var nameTagPattern = regexp.MustCompile(
-	`<ansi fg="(username|mobname|petname)">[^<]+</ansi>`,
+	`<ansi fg="(username|mobname(?:-[A-Za-z0-9_-]+)?|petname)">[^<]+</ansi>`,
 )
 
 // Anonymize strips player/mob/pet name ANSI tags and replaces them

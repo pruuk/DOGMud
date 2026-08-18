@@ -19,7 +19,7 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	actor := &actions.MobActor{Mob: mob, Room: room}
-	result := actions.ExecuteTaunt(actor)
+	result := executeTauntAction(actor)
 	if result.Cost.Status == characters.CostRefused {
 		return true, nil
 	}
