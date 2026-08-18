@@ -310,6 +310,10 @@ crime, no rep hit, no bounty, no witness memory. That was the real state of all
 twelve special-move paths until 2026-08-14. See `internal/actions/context.md`
 for the fresh-aggro contract, which is easy to get backwards.
 
+When a taunt is defended, the coordinated Defy message is the complete result
+for each audience. Do not also emit the ordinary taunt-hit narration; that
+would describe the same resolution twice and can contradict the defence.
+
 **`throw` is the grenade verb and is untargeted by design** — it takes an item,
 never a target, and resolves as a room AoE. Aimed thrown weapons (darts,
 javelins) belong under `ranged-combat` and `ExecuteFire` instead. Settled

@@ -24,7 +24,9 @@ underneath paying their own upkeep independently.
 
 Quell and defy now answer hostile magic and rhetoric with varied narration that
 matches how decisively the defence worked. Both spend Conviction, and both stay
-possible in a desperate, untrained form when resolve runs short.
+possible in a desperate, untrained form when resolve runs short. A successful
+defy now replaces the ordinary taunt or howl hit line instead of repeating the
+exchange afterward.
 
 Fleeing now closes cleanly when the fight ends before the escape round. A stale
 attempt cannot charge you after a target dies, and trying to flee outside a

@@ -54,16 +54,18 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge that breaks into a strangled gasp.`, mob.Character.Name))
 
 	case result.Hit:
-		if targetPlayer != nil {
-			if canSeeInDark(targetPlayer, room) {
-				targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
-			} else {
-				targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
+		if !result.Defence.Defended {
+			if targetPlayer != nil {
+				if canSeeInDark(targetPlayer, room) {
+					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
+				} else {
+					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
+				}
 			}
+			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
+				fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
 		}
-		sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
-			fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName),
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
 		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, "taunt")
 
 		// Aggro-pull confirmation: the taunt yanked the target off its prior

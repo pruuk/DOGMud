@@ -589,10 +589,12 @@ func TestMobTauntAndHowlRuntimeHideIndexedActorAndExcludeDefender(t *testing.T) 
 			require.NoError(t, err)
 			require.True(t, handled)
 			require.True(t, called, "real wrapper must reach its action seam")
-			targetLines := mobDefyRuntimeLines(target.UserId)
-			observerLines := mobDefyRuntimeLines(observer.UserId)
-			require.Len(t, targetLines, 1, "real wrapper must not redeliver the room line to its defender")
-			require.Len(t, observerLines, 1)
+			targetLines := events.DrainQueuedMessagesForTest(target.UserId)
+			observerLines := events.DrainQueuedMessagesForTest(observer.UserId)
+			require.Len(t, targetLines, 1,
+				"defended %s must replace its generic defender hit line and exclude the room line", command.name)
+			require.Len(t, observerLines, 1,
+				"defended %s must replace its generic room hit line", command.name)
 			for _, line := range []string{targetLines[0], observerLines[0]} {
 				require.NotContains(t, line, first.Character.Name, "indexed mob identity leaked through dark routing")
 				require.Contains(t, line, "a figure")

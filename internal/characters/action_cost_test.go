@@ -218,6 +218,15 @@ func TestCommitCostRejectsStaleQuoteWithoutRepricing(t *testing.T) {
 	if got.Status != CostRefused || got.Charged != 0 || c.Stamina != 9 || math.Abs(c.costCarry[PoolStamina]-0.25) > 1e-9 {
 		t.Fatalf("stale commit = %+v pool=%d carry=%v, want refused and unchanged", got, c.Stamina, c.costCarry[PoolStamina])
 	}
+
+	// Restoring the quoted snapshot must not revive a same-owner quote after
+	// its first commit attempt. Otherwise a caller can retry an admission whose
+	// freshness check already rejected it.
+	c.Stamina = 10
+	restored := c.CommitCost(q, CostFullOrRefuse)
+	if restored.Status != CostRefused || restored.Charged != 0 || c.Stamina != 10 || math.Abs(c.costCarry[PoolStamina]-0.25) > 1e-9 {
+		t.Fatalf("restored stale quote = %+v pool=%d carry=%v, want consumed refusal and unchanged", restored, c.Stamina, c.costCarry[PoolStamina])
+	}
 }
 
 func TestCommitCostRejectsQuoteWithChangedCarry(t *testing.T) {
@@ -244,6 +253,11 @@ func TestCommitCostRejectsDifferentOwner(t *testing.T) {
 	got := other.CommitCost(q, CostFullOrRefuse)
 	if got.Status != CostRefused || got.Charged != 0 || owner.Stamina != 10 || other.Stamina != 10 {
 		t.Fatalf("cross-owner commit = %+v owner=%d other=%d, want refused and unchanged", got, owner.Stamina, other.Stamina)
+	}
+
+	ownerCommit := owner.CommitCost(q, CostFullOrRefuse)
+	if ownerCommit.Status != CostPaid || ownerCommit.Charged != 2 || owner.Stamina != 8 || other.Stamina != 10 {
+		t.Fatalf("owner after cross-owner attempt = %+v owner=%d other=%d, want paid/8/10", ownerCommit, owner.Stamina, other.Stamina)
 	}
 }
 

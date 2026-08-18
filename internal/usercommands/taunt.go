@@ -84,8 +84,10 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 
 	case result.Hit:
-		sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
-			"username", targetType, user, targetPlayer, room, result.Target.UserId)
+		if !result.Defence.Defended {
+			sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
+				"username", targetType, user, targetPlayer, room, result.Target.UserId)
+		}
 		identities := combat.ChannelDefenceIdentities{
 			Attacker: user.Character.GetPlayerName(user.UserId).String(),
 			Defender: targetName,

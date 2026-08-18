@@ -14,10 +14,11 @@ Source: [Unified Resolution Roadmap](UNIFIED_RESOLUTION_ROADMAP.md)
 U7b (reservation ceiling) shipped in PR #49. U8 has now passed its final
 verification, isolated boot, and adversarial gameplay gate. The sequence is:
 
-1. **U8 - complete and shipped.** The unified action-cost surface, admission
-   policy, data-backed quell/defy narration, and behavior-specific
-   documentation passed Task 14's full verification, isolated boot, and
-   adversarial playtest gate. Source:
+1. **U8 - implementation and validation complete; integration pending.** The
+   feature branch's unified action-cost surface, admission policy, data-backed
+   quell/defy narration, and behavior-specific documentation passed Task 14's
+   full verification, isolated boot, and adversarial playtest gate. It has not
+   yet been integrated into `master`. Source:
    [U8 design](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
 2. **U9 - progression events.** Replace progression side effects with explicit
    events for both participants and decide how spell `primarystat` becomes the

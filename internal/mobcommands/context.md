@@ -40,6 +40,9 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `SpeciesHasLifeDrain` / `SpeciesIsQuadrupedPredator` at three sync points:
   `CanUse*` in `ai.go`, `CommandIsReady`, and the action entry. Drift rows
   in `command_readiness_drift_test.go` keep all three in sync.
+- **Rhetoric**: `taunt` and its wolf-flavoured `howl` variant use the shared
+  coordinated Defy renderer when defended. Its attacker, defender, and room
+  lines replace the ordinary hit narration rather than following it.
 - **Tactical support**: `callforhelp` - Coordinated group combat behaviors
 - **Self-preservation**: Retreat and defensive behaviors
 

@@ -131,6 +131,8 @@ func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
 // Quote is read-only; commit is owner-bound, snapshot-validated, and single-use.
+// The valid owner's first commit attempt consumes the quote, even if snapshot
+// validation rejects it; a wrong-owner attempt cannot consume it.
 func (c *Character) QuoteActionCost(req ActionCostRequest) CostQuote
 func (q CostQuote) Affordable() bool
 func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult

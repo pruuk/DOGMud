@@ -49,16 +49,18 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lets out a pitiful howl that trails off weakly.`, mob.Character.Name))
 
 	case result.Hit:
-		if targetPlayer != nil {
-			if canSeeInDark(targetPlayer, room) {
-				targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
-			} else {
-				targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
+		if !result.Defence.Defended {
+			if targetPlayer != nil {
+				if canSeeInDark(targetPlayer, room) {
+					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
+				} else {
+					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
+				}
 			}
+			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
+				fmt.Sprintf(`Something lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, targetName),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
 		}
-		sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
-			fmt.Sprintf(`Something lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, targetName),
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
 		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, "howl")
 
 		// Aggro-pull confirmation: the howl yanked the target off its prior foe

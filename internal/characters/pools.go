@@ -179,6 +179,11 @@ func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult 
 	if c == nil || s.owner != c || s.consumed {
 		return result
 	}
+	// A valid owner's first commit attempt consumes the quote even when its
+	// snapshot has gone stale. Otherwise restoring the old pool/carry values
+	// would revive a quote whose freshness check already rejected it. A wrong
+	// owner cannot consume the quote and deny the real owner its attempt.
+	s.consumed = true
 	carry := 0.0
 	if c.costCarry != nil {
 		carry = c.costCarry[s.pool]
@@ -187,7 +192,6 @@ func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult 
 		return result
 	}
 
-	s.consumed = true
 	if !s.validAmount {
 		result.Status = CostNoCharge
 		return result
