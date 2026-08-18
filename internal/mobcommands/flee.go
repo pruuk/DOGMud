@@ -45,7 +45,7 @@ func Flee(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Identical math to the player-flee path in handlePlayerFlee; the
 	// helper handles both player and mob blockers, the prone penalty,
 	// and the targeting filter.
-	if combat.ResolveFleeBlockers(&mob.Character, room) != nil {
+	if combat.ResolveFleeBlockers(&mob.Character, room, true) != nil {
 		room.SendTextVisual(messaging.CategoryRoomExit,
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to flee but is blocked!`, mob.Character.Name))
 		return true, nil

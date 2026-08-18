@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
@@ -20,27 +21,37 @@ import (
 // still get to flee: go.go refuses all movement while in combat, so fleeing is
 // the only player-initiated disengage. Refusing it at zero stamina would leave
 // no alternative action that changes the character's situation.
-func TestFleeCost_ExhaustedCharacterIsChargedPartiallyNotRefused(t *testing.T) {
-	c := characters.New()
-	c.StaminaMax.Base = 100
-	c.StaminaMax.Recalculate()
-	c.Stamina = 3
+func TestFleeCost_ShortAttemptCommitsAvailableStaminaAndCarriesNoSkill(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9250, 99842, 0)
+	defer cleanup()
+	u.Character.Stamina = 3
+	engageFleeFixture(t, u)
 
-	cost := int(configs.GetBalanceConfig().FleeStaminaCost)
-	if cost <= 3 {
-		t.Fatalf("test fixture assumes FleeStaminaCost (%d) exceeds the 3 stamina on hand", cost)
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
 	}
 
-	res := c.ApplyCostPartial(characters.PoolStamina, cost)
+	if u.Character.Stamina != 0 {
+		t.Errorf("stamina after short flee = %d, want 0", u.Character.Stamina)
+	}
+	if !u.Character.IsDisengaging() {
+		t.Fatalf("short flee left state %v, want Disengaging", u.Character.CombatPhase.State())
+	}
+	if FleeIncludesSkill(u) {
+		t.Error("short flee retained Skullduggery eligibility")
+	}
+	if got := u.Character.GetSkillUseCount(string(costs.SpecFor(costs.ActionFlee).Skill)); got != 0 {
+		t.Errorf("short flee progressed Skullduggery %d times, want 0", got)
+	}
 
-	if res.Charged != 3 {
-		t.Errorf("charged = %d, want 3 (everything that was there)", res.Charged)
+	shortageLines := 0
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "instinct rather than technique") {
+			shortageLines++
+		}
 	}
-	if !res.Short {
-		t.Error("Short = false, want true -- U8 reads this to strip the skill term")
-	}
-	if c.Stamina != 0 {
-		t.Errorf("stamina after a partial flee charge = %d, want 0", c.Stamina)
+	if shortageLines != 1 {
+		t.Errorf("shortage lines = %d, want exactly 1 per command", shortageLines)
 	}
 }
 
@@ -88,6 +99,45 @@ func fleeFixture(t *testing.T, userId, itemId int, fraction float64) (*users.Use
 	return u, room, func() {
 		events.DrainQueuedMessagesForTest(userId)
 		cleanUsers()
+	}
+}
+
+func engageFleeFixture(t *testing.T, u *users.UserRecord) {
+	t.Helper()
+	if err := u.Character.CombatPhase.TransitionToEngaging(
+		combatphase.EngagingData{Target: state.ActorRef{MobInstanceId: 4242}},
+		state.TransitionReason{Trigger: combatphase.TriggerAttackCommand},
+	); err != nil {
+		t.Fatalf("fixture could not enter combat: %v", err)
+	}
+	u.Character.CombatPhase.OnRoundTick()
+}
+
+// Catches applying flight after quoting (where it cannot affect the immutable
+// amount), omitting it, or returning to the old manual float debit.
+func TestFleeCost_FlyingModifiesTheQuotedBaseBeforeCommit(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance.FleeStaminaCost = 10
+	cfg.Balance.FlightFleeStaminaMult = 0.5
+	configs.SetConfigForTest(t, cfg)
+	cleanupMutations := mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"winged-flight": {
+			MutationId: "winged-flight", Name: "Winged Flight", Rarity: 8,
+			Pros: []mutations.MutationEffect{{Type: "flag", Target: "flying"}},
+		},
+	})
+	defer cleanupMutations()
+
+	u, room, cleanup := fleeFixture(t, 9255, 99847, 0)
+	defer cleanup()
+	u.Character.Mutations = map[string]int{"winged-flight": 1}
+	before := u.Character.Stamina
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	if spent := before - u.Character.Stamina; spent != 5 {
+		t.Errorf("flying flee charged %d, want literal 5 from base 10 x modifier 0.5", spent)
 	}
 }
 
@@ -194,13 +244,7 @@ func TestFleeCost_ASecondFleeSaysSomething(t *testing.T) {
 	// Disengaging is only reachable from Engaging/Engaged, so put the fixture
 	// in a fight first. Without this the second-flee branch is unreachable and
 	// the test would pass on nothing.
-	if err := u.Character.CombatPhase.TransitionToEngaging(
-		combatphase.EngagingData{Target: state.ActorRef{MobInstanceId: 4242}},
-		state.TransitionReason{Trigger: combatphase.TriggerAttackCommand},
-	); err != nil {
-		t.Fatalf("fixture could not enter combat: %v", err)
-	}
-	u.Character.CombatPhase.OnRoundTick()
+	engageFleeFixture(t, u)
 
 	if _, err := Flee("", u, room, 0); err != nil {
 		t.Fatalf("first Flee returned %v", err)

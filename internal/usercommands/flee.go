@@ -14,6 +14,22 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+const (
+	fleeIncludeSkillTempKey = "flee-include-skill"
+	fleeShortageText        = "You break away on instinct rather than technique, too spent to use your training."
+)
+
+// FleeIncludesSkill reports the admission decision captured by the most recent
+// flee command. Legacy flee sentinels predate cost admission and therefore
+// retain their prior full-skill behavior when no decision was stored.
+func FleeIncludesSkill(user *users.UserRecord) bool {
+	if user == nil {
+		return true
+	}
+	includeSkill, ok := user.GetTempData(fleeIncludeSkillTempKey).(bool)
+	return !ok || includeSkill
+}
+
 func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// A no-go root (e.g. a Jailed holding-cell buff — 5.1c) pins the player in
@@ -40,46 +56,25 @@ func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	// Fleeing costs stamina — a flyer breaks away far more easily (Winged Flight).
-	//
-	// Priced through costs.Calc like every other action rather than as the flat
-	// int it used to be. FleeStaminaCost stays the BASE, so the knob keeps
-	// meaning what it says, and the registry supplies the encumbrance and
-	// inverse-skill terms. Before this, escaping under a crushing load cost
-	// exactly what escaping empty-handed cost, which quietly undid the premise
-	// that what you carry is a decision.
+	// Quote and partially commit once. Flee remains life-preserving: shortage
+	// never refuses the attempt, but its blocker contests lose Skullduggery.
 	bal := configs.GetBalanceConfig()
-	spec := costs.SpecFor(costs.ActionFlee)
-	fleeStaminaCost := costs.Calc(costs.Input{
-		Base:      float64(bal.FleeStaminaCost),
-		Carried:   user.Character.GetCarriedWeight(),
-		Capacity:  user.Character.CarryCapacity(),
-		Physical:  spec.Physical,
-		SkillRank: user.Character.GetSkillLevel(spec.Skill),
-		HasSkill:  spec.SkillSource != costs.SkillNone,
-	})
+	modifier := 1.0
 	if mutations.IsFlying(user.Character.Mutations) {
-		// No "never below 1" clamp any more: the charge is fractional and its
-		// remainder is banked, so a small cost is deferred rather than rounded
-		// away, and clamping would have made a flyer's discount vanish at
-		// exactly the light loads it is supposed to help.
-		fleeStaminaCost *= float64(bal.FlightFleeStaminaMult)
+		modifier = float64(bal.FlightFleeStaminaMult)
 	}
-	// U5b-2: flee charges what it can and NEVER refuses. go.go refuses all
-	// movement while in combat, so fleeing is the only player-initiated
-	// disengage; refusing it at zero stamina would leave no alternative action
-	// that changes the character's situation.
-	//
-	// ApplyCostFloat preserves that exactly: it banks the sub-1 remainder and
-	// then delegates the whole part to ApplyCostPartial, which takes whatever is
-	// in the pool and never refuses. It is the fractional form of the same
-	// primitive, NOT the all-or-nothing one movement uses.
-	//
-	// The old "You're too exhausted to flee!" message is deleted rather than
-	// left unreachable (standing rule 4). U8 reads CostResult.Short to strip the
-	// skill term from fleeScore's skullduggery contribution; this chunk discards
-	// it.
-	_ = user.Character.ApplyCostFloat(characters.PoolStamina, fleeStaminaCost)
+	quote := user.Character.QuoteActionCost(characters.ActionCostRequest{
+		Action:   costs.ActionFlee,
+		Pool:     characters.PoolStamina,
+		Base:     float64(bal.FleeStaminaCost),
+		Modifier: modifier,
+		Units:    1,
+	})
+	costResult := user.Character.CommitCost(quote, characters.CostPartial)
+	user.SetTempData(fleeIncludeSkillTempKey, !costResult.Short())
+	if costResult.Short() {
+		user.SendText(messaging.CategorySystem, fleeShortageText)
+	}
 
 	user.SendText(messaging.CategorySystem, `You attempt to flee...`)
 

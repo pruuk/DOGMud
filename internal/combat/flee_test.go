@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,7 +126,7 @@ func TestResolveFleeBlockers_NoOpposers(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	assert.Nil(t, blocker, "no combatants in room → no blocker")
 }
 
@@ -139,7 +140,7 @@ func TestResolveFleeBlockers_MobBlockerWins(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	require.NotNil(t, blocker, "strong mob blocker should win opposed roll")
 	assert.Equal(t, "bouncer", blocker.Name)
 	assert.Equal(t, 200, blocker.MobInstanceId)
@@ -166,7 +167,7 @@ func TestResolveFleeBlockers_PlayerBlockerWins(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	require.NotNil(t, blocker, "strong player blocker should win opposed roll")
 	assert.Equal(t, "Aliceia", blocker.Name)
 	assert.Equal(t, 1, blocker.UserId)
@@ -184,12 +185,44 @@ func TestResolveFleeBlockers_NonTargetingCombatantIgnored(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	assert.Nil(t, blocker, "combatant not targeting the fleer should not block")
 }
 
 func TestResolveFleeBlockers_NilInputs(t *testing.T) {
-	assert.Nil(t, ResolveFleeBlockers(nil, nil))
+	assert.Nil(t, ResolveFleeBlockers(nil, nil, false))
 	c := &characters.Character{}
-	assert.Nil(t, ResolveFleeBlockers(c, nil))
+	assert.Nil(t, ResolveFleeBlockers(c, nil, false))
+}
+
+// Catches ignoring includeSkill, applying the prone penalty only to Dexterity,
+// or letting a short attempt progress the stripped skill.
+func TestResolveFleeBlockers_ShortUsesDexterityAndPronePenaltyWithoutSkill(t *testing.T) {
+	standing := newFleerMob(100, "fleer", 80, 4)
+	if got := fleeContestScore(&standing.Character, false); got != 80 {
+		t.Errorf("short standing score = %.0f, want literal Dexterity 80", got)
+	}
+	setCombatPositionParallel(&standing.Character, position.Prone)
+	if got := fleeContestScore(&standing.Character, false); got != 40 {
+		t.Errorf("short prone score = %.0f, want (Dexterity 80) x 0.5 = 40", got)
+	}
+	if got := standing.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 0 {
+		t.Errorf("short score progressed Skullduggery %d times, want 0", got)
+	}
+}
+
+// Catches stripping Skullduggery from affordable flees or failing to preserve
+// the pre-existing successful-attempt progression behavior.
+func TestResolveFleeBlockers_AffordableIncludesAndProgressesSkill(t *testing.T) {
+	fleer := newFleerMob(100, "fleer", 80, 4)
+	cleanup := seedFleeFixture(t, &fleer.Character, map[int]*mobs.Mob{100: fleer}, nil)
+	defer cleanup()
+
+	if got := fleeContestScore(&fleer.Character, true); got != 180 {
+		t.Errorf("affordable score = %.0f, want Dexterity 80 + Skullduggery 4 x 25 = 180", got)
+	}
+	ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
+	if got := fleer.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
+		t.Errorf("affordable flee progressed Skullduggery %d times, want 1", got)
+	}
 }

@@ -47,23 +47,18 @@ func (b FleeBlocker) IsPlayer() bool { return b.UserId != 0 }
 // targeting me" check degenerated to "is this player targeting
 // themselves" — always false in practice). Routing through this
 // helper restores the intended PvP-blocker behavior.
-func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlocker {
+func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeSkill bool) *FleeBlocker {
 	if fleer == nil || room == nil {
 		return nil
+	}
+	if includeSkill {
+		fleer.OnSkillUse(string(skills.Skullduggery), fleer.GetUserId())
 	}
 
 	fleerUid := fleer.GetUserId()
 	fleerMid := fleer.GetMobInstanceId()
 
-	// Prone penalty: Supine and Prone both halve the fleer's score
-	// (legacy enum couldn't distinguish, and the design intent is
-	// "you're slower because you're on the floor" — applies equally).
-	pronePenalty := 1.0
-	if fleer.IsProne() || fleer.IsSupine() {
-		pronePenalty = 0.5
-	}
-	fleeScore := float64(fleer.GetEffectiveDexterity()+
-		fleer.GetSkillLevel(skills.Skullduggery)*25) * pronePenalty
+	fleeScore := fleeContestScore(fleer, includeSkill)
 
 	// Mobs first, then players. Both loops use FindFighting to scope
 	// to combatants only; the in-loop targeting filter narrows to
@@ -113,6 +108,21 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlo
 	}
 
 	return nil
+}
+
+func fleeContestScore(fleer *characters.Character, includeSkill bool) float64 {
+	if fleer == nil {
+		return 0
+	}
+	score := fleer.GetEffectiveDexterity()
+	if includeSkill {
+		score += fleer.GetSkillLevel(skills.Skullduggery) * 25
+	}
+	pronePenalty := 1.0
+	if fleer.IsProne() || fleer.IsSupine() {
+		pronePenalty = 0.5
+	}
+	return float64(score) * pronePenalty
 }
 
 // mobTargetsFleer reports whether mob m's aggro points at the fleer

@@ -566,7 +566,8 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// `for _, userId := range` shadowed the outer fleer's id, so PvP
 	// players never blocked each other from fleeing). Perspective-
 	// specific messaging stays here.
-	if blocker := combat.ResolveFleeBlockers(user.Character, uRoom); blocker != nil {
+	includeSkill := usercommands.FleeIncludesSkill(user)
+	if blocker := combat.ResolveFleeBlockers(user.Character, uRoom, includeSkill); blocker != nil {
 		var targetTag string
 		if blocker.IsPlayer() {
 			targetTag = "username"
