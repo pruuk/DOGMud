@@ -52,6 +52,7 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
 			fmt.Sprintf(`Something lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, targetName),
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
+		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetName, "howl")
 
 		// Aggro-pull confirmation: the howl yanked the target off its prior foe
 		// and pinned it (taunt-hold). AggroPulled is only ever set when the
@@ -60,19 +61,6 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
 				`Something turns, drawn snarling toward a new foe.`,
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns from its prey and snarls at <ansi fg="mobname">%s</ansi>!`, targetName, mob.Character.Name))
-		}
-
-		// Defy messaging.
-		if result.FullyDefied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You defy the howl outright, and it washes over you harmlessly.</ansi>`)
-			}
-		} else if result.Defied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You defy the howl's fury, and most of it loses its bite.</ansi>`)
-			}
 		}
 
 	default: // miss

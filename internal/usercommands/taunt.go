@@ -83,27 +83,11 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	case result.Hit:
 		sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
 			"username", targetType, user, targetPlayer, room, result.Target.UserId)
+		sendChannelDefenceMessages(result.Defence, sourceName, targetName, "taunt",
+			user, targetPlayer, room, result.Target.UserId)
 
 		if result.AggroPulled {
 			sendAggroPullMessages(user, room, sourceName, targetName)
-		}
-
-		// Defy messaging. A partial outcome must not claim the taunt did
-		// nothing: the words still landed, they simply lost their edge.
-		if result.FullyDefied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategorySystem,
-					`<ansi fg="green">You defy the words outright, and they leave you unmoved.</ansi>`)
-			}
-			user.SendText(messaging.CategorySystem,
-				`<ansi fg="yellow">Your target defies you, and the words find no purchase at all.</ansi>`)
-		} else if result.Defied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategorySystem,
-					`<ansi fg="green">You defy the barrage of words, and most of it loses its edge.</ansi>`)
-			}
-			user.SendText(messaging.CategorySystem,
-				`<ansi fg="yellow">Your target defies you, and the barb loses its edge.</ansi>`)
 		}
 
 	default:
@@ -122,6 +106,19 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}, bridge, bridge)
 
 	return true, nil
+}
+
+func sendChannelDefenceMessages(out combat.ChannelDefenceResult, sourceName, targetName, attack string,
+	attacker, defender *users.UserRecord, room *rooms.Room, defenderUserID int) {
+	triad := combat.RenderChannelDefenceMessages(out, sourceName, targetName, attack)
+	if triad.ToAttacker == "" {
+		return
+	}
+	attacker.SendText(messaging.CategoryTauntResist, string(triad.ToAttacker))
+	if defender != nil {
+		defender.SendText(messaging.CategoryTauntResist, string(triad.ToDefender))
+	}
+	room.SendTextVisual(messaging.CategoryTauntResist, string(triad.ToRoom), attacker.UserId, defenderUserID)
 }
 
 // sendAggroPullMessages notifies the taunter and the room that the mob

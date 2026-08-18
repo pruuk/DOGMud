@@ -340,6 +340,20 @@ type TogetherMessages struct {
 }
 ```
 
+### Defence Message Structure
+
+Defence pools use the same data-loader architecture under
+`defense-messages/`. `DefenseDodge`, `DefenseParry`, `DefenseBlock`,
+`DefenseQuell`, and `DefenseDefy` identify the five files. Every file must
+provide `weak`, `normal`, and `heavy`; each band must have equal defender,
+attacker, and room lists containing at least five non-empty variants.
+
+`RenderDefenseMessage` chooses one index and applies it to all three audiences
+before token replacement. Ordinary defended channel outcomes use Weak below a
+normalized margin of 0.5 and Normal at or above it. They never use Heavy,
+because ordinary defence still allows a partial effect through. Defensive
+crits alone use Heavy and may truthfully describe full negation.
+
 ### Message Selection and Token Replacement
 ```go
 // Get attack message based on damage percentage

@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
@@ -148,6 +149,20 @@ type ChannelDefenceResult struct {
 	Defended                bool
 	DefensiveCrit           bool
 	Cost                    characters.CostCommitResult
+}
+
+// RenderChannelDefenceMessages renders the canonical channel outcome without
+// rolling or deriving a second result. Attack wins return an empty triad.
+func RenderChannelDefenceMessages(out ChannelDefenceResult, attacker, defender, attack string, indexOverride ...int) items.DefenseMessageTriad {
+	if !out.Defended {
+		return items.DefenseMessageTriad{}
+	}
+	return items.RenderDefenseMessage(items.DefenseType(out.DefenceType), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
+		items.TokenAttacker: attacker,
+		items.TokenDefender: defender,
+		items.TokenAttack:   attack,
+		items.TokenWeapon:   attack,
+	}, indexOverride...)
 }
 
 // ResolveChannelDefence runs ONE opposed contest for a channel that does not go

@@ -56,15 +56,9 @@ type TauntResult struct {
 	// SelfDamage is the self-conviction damage taken on a fumble.
 	SelfDamage int
 
-	// Defied reports that the target's defy PARTIALLY blunted the conviction
-	// damage. The taunt still landed and still dealt damage, for less. U6 Task 12
-	// renamed this from Deflected: "deflected" belonged to the deleted flat
-	// avoidance pair and read as a clean miss, which a partial outcome is not.
-	Defied bool
-
-	// FullyDefied reports that the target's defy CRITICALLY won and negated the
-	// conviction damage entirely. Renamed from CritDeflected.
-	FullyDefied bool
+	// Defence is the canonical defy contest outcome. Callers render this once
+	// for their own audience and visibility rules.
+	Defence combat.ChannelDefenceResult
 
 	// AggroPulled is true when the taunt forced the target to switch aggro
 	// to the taunter (target was fighting someone else).
@@ -237,15 +231,11 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		// ResolveChannelDefence charges and progresses the defence itself, so the
 		// defenderUserId this call site used to thread through is now read off the
 		// defender.
-		defied := false
-		fullyDefied := false
+		defence := combat.ChannelDefenceResult{DamageMultiplier: 1}
 		if !isCrit {
-			mult := combat.ResolveChannelDefence(combat.ChannelSocial, char, target.Char).DamageMultiplier
+			defence = combat.ResolveChannelDefence(combat.ChannelSocial, char, target.Char)
+			mult := defence.DamageMultiplier
 			if mult < 1.0 {
-				defied = true
-				if mult == 0.0 {
-					fullyDefied = true
-				}
 				dmg = int(math.Round(float64(dmg) * mult))
 				if dmg < 1 && mult > 0 {
 					dmg = 1
@@ -318,8 +308,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 			Crit:        isCrit,
 			Damage:      dmg,
 			DmgDesc:     dmgDesc,
-			Defied:      defied,
-			FullyDefied: fullyDefied,
+			Defence:     defence,
 			AggroPulled: agroPulled,
 		}
 	}

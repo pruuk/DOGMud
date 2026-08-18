@@ -386,6 +386,33 @@ func TestHowlAliasChargesOnlyThroughTaunt(t *testing.T) {
 	require.Zero(t, ownQuotes, "howl must not quote or commit apart from ExecuteTaunt")
 }
 
+func TestTauntAndHowlRouteStructuredDefyOutcomeExactlyOnce(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	for _, filename := range []string{"taunt.go", "howl.go"} {
+		t.Run(filename, func(t *testing.T) {
+			parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(filepath.Dir(thisFile), filename), nil, 0)
+			require.NoError(t, err)
+			renderCalls, legacyBranches := 0, 0
+			ast.Inspect(parsed, func(node ast.Node) bool {
+				switch n := node.(type) {
+				case *ast.CallExpr:
+					if ident, ok := n.Fun.(*ast.Ident); ok && ident.Name == "sendChannelDefenceMessages" {
+						renderCalls++
+					}
+				case *ast.SelectorExpr:
+					if n.Sel.Name == "Defied" || n.Sel.Name == "FullyDefied" {
+						legacyBranches++
+					}
+				}
+				return true
+			})
+			require.Equal(t, 1, renderCalls, "%s must render ExecuteTaunt's outcome once", filename)
+			require.Zero(t, legacyBranches, "%s must not retain hardcoded defy branches", filename)
+		})
+	}
+}
+
 // ─── Cooldown Interaction ───────────────────────────────────────────────────
 
 func TestSpecialMoveCooldown_SharedAcrossCommands(t *testing.T) {

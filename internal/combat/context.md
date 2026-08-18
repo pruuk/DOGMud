@@ -338,25 +338,30 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
     unreachable today.
 
 The help-alias and helpfile gaps were closed after Task 12. The remaining
-content gap is owned by U8: add `quell.yaml` / `defy.yaml` under
-`_datafiles/world/dogmud/defense-messages/`, extend the three-valued message
-type mapping, and route the live spell and social paths through five coordinated
-variants per weak/normal/heavy band. `GetDefenseMessage` currently returns empty
-for either unknown key, so the missing data degrades to hardcoded narration
-rather than breaking. Broader combat-message unification remains deferred.
+U8 closed the non-physical content gap with `quell.yaml` and `defy.yaml` under
+`_datafiles/world/dogmud/defense-messages/`. `RenderChannelDefenceMessages`
+consumes the exact `ChannelDefenceResult` returned by resolution, suppresses
+attack wins, and delegates coordinated band/index/token selection to
+`items.RenderDefenseMessage`. Spell and social callers deliver that one triad
+through their existing audience and visibility routes. Broader combat-message
+unification remains deferred.
 
 ### `ResolveChannelDefence` — the non-melee defence resolver (U6 Task 12)
 
 ```go
-func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) float64
+func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) ChannelDefenceResult
+func RenderChannelDefenceMessages(out ChannelDefenceResult, attacker, defender, attack string, indexOverride ...int) items.DefenseMessageTriad
 func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) float64
 func AwardDefenceProgression(c *characters.Character, userId int, defenceType string)
 ```
 
-`ResolveChannelDefence` runs ONE opposed contest and returns the ATTACKER's
-damage multiplier: `1.0` when the attack wins, `0.0` on a defensive crit, and
-between `0.0` and `0.5` on an ordinary defensive win, off the same
-`DefenceMitigation` curve melee uses.
+`ResolveChannelDefence` runs ONE opposed contest and returns the canonical
+structured outcome. Damage consumers read `DamageMultiplier`; narration reads
+`Defended`, `DefensiveCrit`, `NormalizedDefenceMargin`, and `DefenceType` from
+that same result. It does not reroll or infer a second outcome. The multiplier
+is `1.0` when the attack wins, `0.0` on a defensive crit, and between `0.0` and
+`0.5` on an ordinary defensive win, off the same `DefenceMitigation` curve
+melee uses.
 
 It replaces `TrySpellDeflection` and `TryStoicResolve`, which each ran a SECOND
 independent contest on top of their channel's primary roll, on different stats,

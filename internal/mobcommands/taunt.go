@@ -2,9 +2,11 @@ package mobcommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -54,6 +56,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
 			fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName),
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
+		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetName, "taunt")
 
 		// Aggro-pull confirmation: the taunt yanked the target off its prior
 		// foe and pinned it (taunt-hold). AggroPulled is only ever set when the
@@ -62,19 +65,6 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
 				`Something wheels around, drawn to a new challenger.`,
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> wheels around and locks onto <ansi fg="mobname">%s</ansi>!`, targetName, mob.Character.Name))
-		}
-
-		// Defy messaging.
-		if result.FullyDefied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You defy the challenge outright, and it rolls off you like rain from stone.</ansi>`)
-			}
-		} else if result.Defied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You set your jaw and defy the challenge, and most of its bite is gone.</ansi>`)
-			}
 		}
 
 	default: // miss
@@ -91,4 +81,18 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func sendChannelDefenceMessages(out combat.ChannelDefenceResult, mob *mobs.Mob,
+	defender *users.UserRecord, room *rooms.Room, defenderName, attack string) {
+	triad := combat.RenderChannelDefenceMessages(out, mob.Character.Name, defenderName, attack)
+	if triad.ToRoom == "" {
+		return
+	}
+	if defender != nil {
+		defender.SendText(messaging.CategoryTauntResist, string(triad.ToDefender))
+	}
+	visible := string(triad.ToRoom)
+	unseen := strings.ReplaceAll(visible, mob.Character.Name, "Something")
+	sendAudioRoomText(room, mob, messaging.CategoryTauntResist, unseen, visible)
 }

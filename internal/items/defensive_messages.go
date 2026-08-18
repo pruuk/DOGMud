@@ -2,6 +2,9 @@ package items
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 var (
@@ -15,6 +18,8 @@ const (
 	DefenseDodge DefenseType = "dodge"
 	DefenseParry DefenseType = "parry"
 	DefenseBlock DefenseType = "block"
+	DefenseQuell DefenseType = "quell"
+	DefenseDefy  DefenseType = "defy"
 )
 
 type DefenseMessageGroup struct {
@@ -34,6 +39,14 @@ type DefenseTogetherMessages struct {
 	ToRoom     MessageOptions `yaml:"toroom"`
 }
 
+// DefenseMessageTriad is one coordinated event rendered for its three
+// audiences. All fields always come from the same variant index.
+type DefenseMessageTriad struct {
+	ToDefender ItemMessage
+	ToAttacker ItemMessage
+	ToRoom     ItemMessage
+}
+
 // Presumably to ensure the datafile hasn't messed something up.
 func (d *DefenseMessageGroup) Id() DefenseType {
 	return d.OptionId
@@ -45,12 +58,78 @@ func (d *DefenseMessageGroup) Validate() error {
 	// Make sure all important options are present.
 	optionsToCheck := []Intensity{Weak, Normal, Heavy}
 	for _, option := range optionsToCheck {
-		if _, ok := d.Options[option]; !ok {
+		defenseOptions, ok := d.Options[option]
+		if !ok {
 			return fmt.Errorf("missing option[`%s`] for %s", option, d.OptionId)
+		}
+		audiences := []struct {
+			name     string
+			messages MessageOptions
+		}{
+			{"todefender", defenseOptions.Together.ToDefender},
+			{"toattacker", defenseOptions.Together.ToAttacker},
+			{"toroom", defenseOptions.Together.ToRoom},
+		}
+		for _, audience := range audiences {
+			if len(audience.messages) < 5 {
+				return fmt.Errorf("option[`%s`].%s for %s must contain at least 5 variants", option, audience.name, d.OptionId)
+			}
+			for index, message := range audience.messages {
+				if strings.TrimSpace(string(message)) == "" {
+					return fmt.Errorf("option[`%s`].%s[%d] for %s must be non-empty", option, audience.name, index, d.OptionId)
+				}
+			}
+		}
+		if len(defenseOptions.Together.ToDefender) != len(defenseOptions.Together.ToAttacker) ||
+			len(defenseOptions.Together.ToDefender) != len(defenseOptions.Together.ToRoom) {
+			return fmt.Errorf("option[`%s`] audience lists for %s must have equal lengths", option, d.OptionId)
 		}
 	}
 
 	return nil
+}
+
+// RenderDefenseMessage chooses an outcome-appropriate band and renders one
+// coordinated defender/attacker/room triad. Defensive crits alone use Heavy;
+// ordinary defensive wins cap at Normal because they still let an effect
+// through. An optional index is accepted for deterministic tests.
+func RenderDefenseMessage(defenseType DefenseType, defensiveCrit bool, normalizedDefenceMargin float64, tokenReplacements map[TokenName]string, indexOverride ...int) DefenseMessageTriad {
+	intensity := Weak
+	if defensiveCrit {
+		intensity = Heavy
+	} else if normalizedDefenceMargin >= 0.5 {
+		intensity = Normal
+	}
+
+	group := defenseMessages[defenseType]
+	if group == nil {
+		return DefenseMessageTriad{}
+	}
+	options, ok := group.Options[intensity]
+	if !ok || len(options.Together.ToDefender) == 0 ||
+		len(options.Together.ToDefender) != len(options.Together.ToAttacker) ||
+		len(options.Together.ToDefender) != len(options.Together.ToRoom) {
+		return DefenseMessageTriad{}
+	}
+
+	index := util.Rand(len(options.Together.ToDefender))
+	if len(indexOverride) > 0 {
+		index = indexOverride[0] % len(options.Together.ToDefender)
+		if index < 0 {
+			index += len(options.Together.ToDefender)
+		}
+	}
+	triad := DefenseMessageTriad{
+		ToDefender: options.Together.ToDefender[index],
+		ToAttacker: options.Together.ToAttacker[index],
+		ToRoom:     options.Together.ToRoom[index],
+	}
+	for token, value := range tokenReplacements {
+		triad.ToDefender = triad.ToDefender.SetTokenValue(token, value)
+		triad.ToAttacker = triad.ToAttacker.SetTokenValue(token, value)
+		triad.ToRoom = triad.ToRoom.SetTokenValue(token, value)
+	}
+	return triad
 }
 
 func (d *DefenseMessageGroup) Filepath() string {
