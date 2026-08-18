@@ -10,6 +10,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -156,5 +158,54 @@ func TestHandlePlayerFlee_ReentrantConsumptionDoesNotResolveTwice(t *testing.T) 
 	}
 	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 0 {
 		t.Fatalf("reentrant consumer progressed Skullduggery %d times, want 0", got)
+	}
+}
+
+// Catches returning from the non-fleeing hook branch without retracting a
+// command handoff whose Disengaging phase was canceled before the round. The
+// subsequent true legacy sentinel must keep its full-skill default and cannot
+// leave the canceled short admission reusable.
+func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u := users.GetByUserId(1)
+	room := rooms.LoadRoom(1)
+	room.Exits = nil
+	if err := u.Character.Validate(); err != nil {
+		t.Fatalf("validate fleer: %v", err)
+	}
+	u.Character.Stamina = 0
+	u.Character.SetAggro(0, 100, characters.DefaultAttack)
+	u.Character.CombatPhase.OnRoundTick()
+	if _, err := usercommands.Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	if !u.Character.IsDisengaging() {
+		t.Fatal("fixture did not publish an admitted Disengaging flee")
+	}
+
+	u.Character.CombatPhase.ForceIdle(state.TransitionReason{
+		Trigger: combatphase.TriggerForceIdle,
+		Actor:   state.ActorRef{UserId: u.UserId},
+	})
+	if u.Character.CombatPhase.State() != combatphase.Idle {
+		t.Fatalf("terminal cancellation left state %v, want Idle", u.Character.CombatPhase.State())
+	}
+	if handlePlayerFlee(u, room, u.UserId) {
+		t.Fatal("terminally canceled flee was resolved again")
+	}
+
+	// A subsequent legacy-only flee has no cost admission and therefore keeps
+	// the historical full-skill progression behavior.
+	mobs.GetInstance(100).Character.EndAggro()
+	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
+	if !handlePlayerFlee(u, room, u.UserId) {
+		t.Fatal("legacy/default flee was not resolved")
+	}
+	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
+		t.Fatalf("legacy flee after terminal cancellation progressed skill %d times, want 1", got)
+	}
+	if _, admitted := usercommands.TakeFleeAdmission(u); admitted {
+		t.Fatal("terminal cancellation left the old short admission reusable")
 	}
 }

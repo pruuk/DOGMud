@@ -540,6 +540,10 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		isFleeing = true
 	}
 	if !isFleeing {
+		// A terminal transition can cancel Disengaging before this asynchronous
+		// round runs. Atomically retract that orphan; an absent handoff is a
+		// harmless no-op for ordinary non-flee combat rounds.
+		usercommands.TakeFleeAdmission(user)
 		return false
 	}
 	// Consume admission before any resolution branch. A phase-based flee can
