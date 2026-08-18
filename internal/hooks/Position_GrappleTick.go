@@ -261,6 +261,10 @@ func processGrapplePairWithContest(
 	controller, controlled *characters.Character,
 	runContest func(float64, []contest.Entry) contest.Result,
 ) {
+	if controller == controlled {
+		forceBreakSolo(controller, "self-linked grapple pair")
+		return
+	}
 	cfg := configs.GetBalanceConfig()
 	ctrlCost := commitGrappleMaintenance(controller,
 		float64(cfg.GrappleControllerCostMultiplier), cfg)

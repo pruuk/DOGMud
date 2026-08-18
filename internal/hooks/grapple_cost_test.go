@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -80,6 +81,77 @@ func loadGrapplerToFraction(c *characters.Character, itemID int, fraction float6
 	}}
 }
 
+// Catches allowing a corrupted symmetric grapple to alias both participant
+// roles to one Character. The tick must force-break the invalid solo state
+// before either role quotes, messages, or rolls.
+func TestGrappleMaintenanceRejectsSelfLinkedPairBeforeAdmission(t *testing.T) {
+	setGrappleCostConfig(t)
+	cases := []struct {
+		name    string
+		userID  int
+		stamina int
+	}{
+		{name: "funded", userID: 1600, stamina: 3},
+		{name: "empty", userID: 1601, stamina: 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			u := users.NewTestUser(tc.userID, tc.name+"-self-grappler", "Self Grappler", uint64(tc.userID))
+			cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{tc.userID: u})
+			defer cleanupUsers()
+			if err := u.Character.Validate(); err != nil {
+				t.Fatalf("validate character: %v", err)
+			}
+			loadGrapplerToFraction(u.Character, 99200+tc.userID, 0.35)
+			self := state.ActorRef{UserId: tc.userID}
+			if err := u.Character.Position.TransitionToClinch(position.GrappleData{Partner: self},
+				state.TransitionReason{Trigger: position.TriggerGrappleEntry}); err != nil {
+				t.Fatalf("create corrupted self-linked Clinch: %v", err)
+			}
+			if partner := resolvePartner(u.Character); partner != u.Character {
+				t.Fatalf("fixture partner = %p, want self %p", partner, u.Character)
+			}
+			u.Character.Stamina = tc.stamina
+			snapshot := characters.DriftRollSnapshot{Round: 999, MarginAttacker: 17}
+			u.Character.LastDriftRoll = snapshot
+			_ = events.DrainQueuedMessagesForTest(tc.userID)
+
+			processGrappleTick(events.NewRound{})
+
+			if u.Character.Position.State() != position.Standing {
+				t.Fatalf("self-linked position = %s, want Standing force-break",
+					u.Character.Position.State())
+			}
+			if u.Character.Stamina != tc.stamina {
+				t.Fatalf("self-linked tick changed stamina %d -> %d",
+					tc.stamina, u.Character.Stamina)
+			}
+			if u.Character.LastDriftRoll != snapshot {
+				t.Fatalf("self-linked tick changed drift snapshot %+v -> %+v",
+					snapshot, u.Character.LastDriftRoll)
+			}
+			if got := shortageMessageCount(events.DrainQueuedMessagesForTest(tc.userID)); got != 0 {
+				t.Fatalf("self-linked tick emitted %d shortage messages, want none", got)
+			}
+
+			// The invalid tick must not even advance private fractional carry. At
+			// this load a fresh 0.5 base remains sub-integer, while the corrupted
+			// pair's two role commits would leave enough carry to charge one.
+			u.Character.Stamina = 1
+			diagnostic := u.Character.CommitCost(u.Character.QuoteActionCost(characters.ActionCostRequest{
+				Action: costs.ActionGrappleMaintain,
+				Pool:   characters.PoolStamina,
+				Base:   0.5,
+				Units:  1,
+			}), characters.CostPartial)
+			if diagnostic.Charged != 0 {
+				t.Fatalf("self-linked tick advanced fractional carry: diagnostic charged %d, want 0",
+					diagnostic.Charged)
+			}
+		})
+	}
+}
+
 // Catches charging a rounded private integer instead of quoting the
 // role-adjusted maintenance base through encumbrance and inverse Unarmed.
 func TestGrappleMaintenanceQuotesEachRoleAtEveryModeledLoad(t *testing.T) {
@@ -113,6 +185,46 @@ func TestGrappleMaintenanceQuotesEachRoleAtEveryModeledLoad(t *testing.T) {
 					controlledSpent, controllerSpent)
 			}
 		})
+	}
+}
+
+// Catches resetting fractional carry, rounding each role-adjusted price, or
+// multiplying the controlled role after a controller-sized quote has already
+// split whole debit from carry. At 35% load the shared encumbrance multiplier
+// is 1.2333..., so controller/controlled prices are 2.4666.../4.9333....
+func TestGrappleMaintenancePreservesIndependentFractionalCarryAcrossRounds(t *testing.T) {
+	setGrappleCostConfig(t)
+	controller, controlled := grappleCostPair(t, 1650, 1651)
+	loadGrapplerToFraction(controller, 99300, 0.35)
+	loadGrapplerToFraction(controlled, 99301, 0.35)
+
+	wantControllerDebit := []int{2, 2, 3, 2, 3, 2}
+	wantControlledDebit := []int{4, 5, 5, 5, 5, 5}
+	wantControllerSpent := []int{2, 4, 7, 9, 12, 14}
+	wantControlledSpent := []int{4, 9, 14, 19, 24, 29}
+	previousController := 100
+	previousControlled := 100
+	for round := range wantControllerDebit {
+		processGrapplePairWithContest(controller, controlled, fixedGrappleContest(0))
+
+		controllerDebit := previousController - controller.Stamina
+		controlledDebit := previousControlled - controlled.Stamina
+		controllerSpent := 100 - controller.Stamina
+		controlledSpent := 100 - controlled.Stamina
+		if controllerDebit != wantControllerDebit[round] ||
+			controlledDebit != wantControlledDebit[round] {
+			t.Fatalf("round %d debit controller/controlled %d/%d, want %d/%d",
+				round+1, controllerDebit, controlledDebit,
+				wantControllerDebit[round], wantControlledDebit[round])
+		}
+		if controllerSpent != wantControllerSpent[round] ||
+			controlledSpent != wantControlledSpent[round] {
+			t.Fatalf("round %d cumulative controller/controlled %d/%d, want %d/%d",
+				round+1, controllerSpent, controlledSpent,
+				wantControllerSpent[round], wantControlledSpent[round])
+		}
+		previousController = controller.Stamina
+		previousControlled = controlled.Stamina
 	}
 }
 

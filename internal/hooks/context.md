@@ -1038,6 +1038,10 @@ For each pair inside `processGrapplePair`:
    and floors the pool at zero. Both commits happen before the contest, including
    on the round that resolves an escape. A short player receives one private
    grapple-flow line; the partner, observers, and NPC participants do not.
+   Before either quote, `processGrapplePairWithContest` rejects pointer-aliased
+   participants. A corrupted self-linked symmetric grapple is force-broken
+   through the existing solo consistency path, with no pool, carry, warning, or
+   drift-contest mutation.
 
 2. **Opposed control roll** — Score values computed for both sides via
    the formula above, with `grappleStaminaMultiplier` and the encumbrance
