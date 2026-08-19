@@ -679,12 +679,19 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	}
 
 	// ── Bonus tier: ONCE per round, OUTSIDE the weapon loop ─────────────
-	// Outside on purpose. AttackResult.WeaponHits is populated only by the
-	// weapon loop in calculateCombat, so an UNARMED attacker produces none --
-	// which is why the CleanHit fallback above exists. Evaluating the bonus
-	// tier inside the loop would silently delete crit-received toughening and
-	// the whole bonus tier for every unarmed attacker, and most mobs are
-	// unarmed.
+	// Outside on purpose: the bonus tier is a property of the ROUND, not of a
+	// swing, so evaluating it inside the loop would pay it once per weapon.
+	// An unarmed attacker is the worst case rather than an exempt one --
+	// collectAttackWeapons unconditionally supplies a fist for an empty main
+	// hand plus an offhand fist, so unarmed produces TWO entries and would
+	// have been double-paid. Measured 2026-08-19; an earlier draft of this
+	// comment claimed unarmed produced none, which is false. The
+	// len(WeaponHits) == 0 fallback above is therefore defensive rather than
+	// the unarmed path.
+	//
+	// The once-per-round dedupe in ApplyProgression would have caught the
+	// duplicate anyway, but only by accident, and only for events sharing a
+	// dedupe key. Structure it correctly rather than relying on that.
 	//
 	// Firing conditions are preserved exactly: res.Crit and res.Fumble are the
 	// per-round aggregates the pre-U9 code used (documented at
