@@ -20,8 +20,8 @@ Reading the code, three things are true that the row does not say:
 1. **U6 built more of this than the roadmap admits.** `OnSkillUseScaled`
    already fires the skill's primary stat via `skills.GetSkillPrimaryStat`, so
    "skill and stat on every event" is already true at every ordinary
-   `OnSkillUse` site (88 production `OnSkillUse` / `OnStatUse` call sites,
-   across roughly 50 files). `combat.AwardDefenceProgression` is already THE
+   `OnSkillUse` site (96 production `OnSkillUse` / `OnSkillUseScaled` /
+   `OnStatUse` call sites across 46 files, counted 2026-08-19). `combat.AwardDefenceProgression` is already THE
    five-defence mapping, and `processDefenderProgression` already dedupes once
    per defence type per round.
 2. **U8 built the registry this slice needs.** `internal/costs/action.go`
@@ -53,8 +53,8 @@ faucet, and make the spell record load-bearing."
 - Two new config knobs, replacing one hardcoded literal (§6).
 - `SpellData.PrimaryStat` wired to both resolution and progression, caster side
   only, with the manifestation family corrected to `charisma` (§8).
-- Four defects fixed in passing (§7.3), including a melee double-progression
-  that roughly doubles every melee attacker's rates today.
+- Five defects fixed in passing (§7.3), including melee double-progression on
+  BOTH the attack and the defence side.
 - The firing-condition audit (§9), which is a deliverable, not a refactor.
 
 **Out, and deliberately so:**
@@ -74,40 +74,79 @@ it. Owner decision, 2026-08-19.
 
 ## 3. The faucet, and why this slice is urgent
 
-`Character.OnCritReceived` routes through `CheckRegenProgression`, which was
-written for regen ticks. It applies mob gating, the per-stat multiplier and the
-mutation multiplier — but it **never calls `CalculateProgressionChance` and
-never applies `StatProgressionRate`**. The chance is a flat 0.25 at every
-virtual rank.
+There are **two** independent reasons vitality progression does not decay, and
+the first draft of this spec found only one of them. Adversarial review found
+the second, which is the load-bearing one.
 
-That is rank-independent stat progression driven by being hit, which is the
-same shape as the vitality exploit that `internal/migration/0.16.0.go` exists
-to freeze:
+**Reason one: the chance never consults rank.** `Character.OnCritReceived`
+routes through `CheckRegenProgression`, which was written for regen ticks. It
+applies mob gating, the per-stat multiplier and the mutation multiplier — but it
+**never calls `CalculateProgressionChance` and never applies
+`StatProgressionRate`**. The chance is a flat 0.25 at every virtual rank.
+
+**Reason two: the rank never moves.** `CheckStatProgression` derives
+`virtualRank` from `GetStatUseCount(statName)` (`progression.go:163`). Measured
+2026-08-19, production `OnStatUse` call sites by stat:
+
+| dexterity | strength | willpower | perception | charisma | **vitality** |
+|---|---|---|---|---|---|
+| 7 | 6 | 4 | 4 | 4 | **0** |
+
+**Nothing in the game tracks vitality use**, and `CheckRegenProgression` — the
+only path that progresses it — does not track either. So vitality's virtual
+rank is pinned at 0 until the anti-exploit floor engages at value 150, and
+below that its progression chance is **constant regardless of how much vitality
+the character already has**.
+
+That is not merely the same *shape* as the exploit `internal/migration/0.16.0.go`
+exists to freeze:
 
 > Player fyttyn ground raw vitality to 411 [...]
 
-U6 made it worse without anyone noticing. Crit is now margin-driven, so crit
-rates against a badly outclassed defender approach certainty. Standing in front
-of something far stronger than you is a no-decay vitality, willpower or
-charisma tap whose rate rises with how outmatched you are.
+It is the *mechanism* of it. Fixing reason one alone would have taken the
+headline number from 25% to a flat 13.5% and left the rank-independence intact,
+while the spec claimed a curve that decayed to 0.67%.
 
-**Fix:** the crit-received event becomes an ordinary matrix cell and runs
-`CheckStatProgression` like everything else, at the observing multiplier.
+U6 made it worse again. Crit is margin-driven now, so crit rates against a badly
+outclassed defender approach certainty: standing in front of something far
+stronger than you is a no-decay tap whose rate rises with how outmatched you are.
 
-| Virtual rank | Today | After |
+### 3.1 The fix, both halves
+
+1. **Crit-received runs the decayed curve.** `OnCritReceived` calls
+   `CheckStatProgression` at the observing multiplier, like every other event.
+2. **Both `CheckRegenProgression` callers track the use.** `OnCritReceived` and
+   `OnRegenTick` call `TrackStatUse` before rolling, so the counter that decays
+   the curve actually moves. Owner decision, 2026-08-19: do both, because
+   fixing only the crit path leaves open the exact low-health grind fyttyn used.
+
+With both halves, the rate a character actually experiences:
+
+| Vitality virtual rank | Before | After |
 |---|---|---|
 | 0 | 25.0% | 13.5% |
 | 75 | 25.0% | 3.0% |
 | 150 (soft cap) | 25.0% | 0.67% |
 
-Computed from shipped `config.yaml` values: `BaseProgressionChance` 0.12,
-`ProgressionDecayBelowCap` 3.0, `StatProgressionRate` 2.25,
-`ObservedCritProgressionBonus` 0.5. Per-stat and mutation multipliers apply on
-top in both columns and cancel out of the comparison.
+and, unlike the first draft's version of this table, **the rank column is now
+reachable**, because half two makes the counter move.
 
-`CheckRegenProgression` itself stays. It is still correct for `OnRegenTick`,
-whose chance is derived from pool depletion rather than from rank, and whose
-exploit surface is separately guarded by the reserve exclusion.
+Computed from shipped `config.yaml` values: `BaseProgressionChance` 0.12,
+`ProgressionDecayBelowCap` 3.0, `StatProgressionSoftCap` 150,
+`StatProgressionRate` 2.25, `ObservedCritProgressionBonus` 0.5. Per-stat and
+mutation multipliers apply on top in both columns and cancel out of the
+comparison.
+
+**Half two reaches further than vitality**, and that is deliberate but must be
+named. `OnRegenTick` progresses willpower and charisma from conviction, strength
+and vitality from stamina, vitality and willpower from health. All of those
+begin to decay with use for the first time. Veteran growth in those stats slows
+sharply. This is the largest single behaviour change in U9 and it is listed in
+§7.1.
+
+`CheckRegenProgression` itself stays. Its chance is still correctly derived from
+pool depletion rather than from rank; what changes is that its callers now
+record that the stat was exercised.
 
 ---
 
@@ -200,6 +239,17 @@ than an accident.
 message ("You learn from your mistake!") already implies a bonus that
 `OnCriticalFailure` does not currently pay — it passes 1.0.
 
+**Crit and fumble are determined by MARGIN, not by a self-relative z-score.**
+Since 5.11d the engine decides a contest crit from the normalized opposed-roll
+margin: `defence_multiplier.go:307` uses `DefenseContestCrit(-res.Margin,
+res.DefenseRoll)`, which tests `margin / (stdDev × √2)` against
+`ContestCritThreshold` (`margin_crit.go:90,126`). Any consumer that re-derives
+crit from `AttackRoll.ZScore` will fire the bonus tier on a **different set of
+swings than the game narrates as crits** — two mechanisms answering one
+question, which is what this arc exists to delete. The seam must read the
+existing helpers, or the already-computed `ChannelDefenceResult.DefensiveCrit`,
+and must never re-derive.
+
 ### 5.1 The four rules
 
 1. **Every event runs the decayed curve.** See §3.
@@ -240,8 +290,20 @@ as off-switches.
 
 | Knob | Value | Note |
 |---|---|---|
-| `CritProgressionBonus` | 2.0 | Replaces a **hardcoded 2.0 literal** in `internal/characters/progression.go`, per standing rule 1: no balance number inside `internal/`. |
+| `CritProgressionBonus` | 2.0 | Replaces the **hardcoded 2.0 literals** in `internal/characters/progression.go`, per standing rule 1: no balance number inside `internal/`. |
 | `ObservedCritProgressionBonus` | 0.5 | New. |
+
+There are **two** such literals, not one. `progression.go:301`
+(`OnCriticalSuccess`) is deleted by §7.3 anyway, but `progression.go:332`
+(`OnFirstMobKill`, the first-kill-of-a-mob-type bonus) carries its own bare
+`2.0` and would have survived. It reads the knob too. Adversarial review caught
+this; without it §6 would have claimed rule-1 compliance it had not achieved.
+
+`buffSkillMult = 2.0` at `progression.go:105` is deliberately **left alone**. It
+is the Skill Attunement buff's doubling, a buff effect rather than a crit
+multiplier, and folding it into `CritProgressionBonus` would couple two
+unrelated things to one knob. It is a separate rule-1 item, filed rather than
+fixed here.
 
 Starting values are the parent spec's proposals. Tuning is deferred to the
 post-build playtest, per project convention.
@@ -264,7 +326,9 @@ enumerated here so each can be called out individually in the PR.
 | Crit-received also awards the **defence skill**, which it never did | Small increase | Players and mobs |
 | Fumbles earn `CritProgressionBonus` instead of 1.0 | Increase | Both sides |
 | Observing events on defence crit / defence fumble / attack fumble | Increase, new events | Both sides |
-| Melee double-progression deleted (§7.3) | **Large cut**, roughly halves melee attacker rates | Players and mobs |
+| Melee ATTACK double-progression deleted (§7.3) | **Large cut**, roughly halves melee attacker rates | Players and mobs |
+| Melee DEFENCE double-progression deleted (§7.3) | **Large cut**, scales with swings defended per round | Players and mobs |
+| Regen and crit-received paths now TRACK the stat use (§3.1 half two) | **Large cut at veteran level**, and the first time vitality has ever decayed | Players and mobs |
 | Bonus events dedupe once per round | Cut in multi-swing rounds | Both sides |
 | Floored outcomes no longer earn bonuses | Cut at extreme mismatch | Both sides |
 | Caster stat progression halves (double-roll fixed, §7.3) | Cut | Players and mobs |
@@ -274,7 +338,34 @@ enumerated here so each can be called out individually in the PR.
 Covered in §8. Expected delta is near zero and is verified file-by-file rather
 than asserted.
 
-### 7.3 Four defects fixed in passing
+### 7.3 Five defects fixed in passing
+
+- **Melee DEFENCE progression fires twice per round too.** Found by adversarial
+  review 2026-08-19, and it is the symmetric half of the attack duplication
+  below. An earlier draft of this spec documented this path as correct.
+
+  `internal/combat/combat_helpers.go:1227-1229`, inside `sendDefenseMessages`,
+  fires on **every defended swing**:
+
+  ```go
+  if skillToProgress != "" {
+      targetChar.TrackSkillUse(skillToProgress)
+      targetChar.CheckSkillProgression(skillToProgress, targetChar.GetUserId(), 1.0)
+  }
+  ```
+
+  while `processDefenderProgression` → `AwardDefenceProgression` → `OnSkillUse`
+  independently awards the same skill once per defence type at end of round —
+  and `OnSkillUse` also rolls the primary stat, which the per-swing path does
+  not.
+
+  So a defender who dodges four swings takes five skill rolls, not one. The
+  per-swing `CheckSkillProgression` call is deleted; `TrackSkillUse` is deleted
+  with it, since `OnSkillUse` already tracks. **`sendDefenseMessages` must not
+  be added to the U9 guard test's allow-list** — allow-listing it is how this
+  defect becomes permanent.
+
+
 
 - **Melee progression fires twice per round.** `internal/hooks/NewRound_DoCombat_unified.go`
   runs progression in two phases against the same actors in the same round:
@@ -387,6 +478,20 @@ at spell load. The field is load-bearing now, so a typo must fail at boot rather
 than silently falling back to a default. This matches the project's existing
 convention that authored content panics at startup on an unresolved reference.
 
+**The upstream default world must be fixed too, or a fresh checkout panics.**
+Adversarial review found that `_datafiles/world/default/spells/` holds 8 spell
+files and **none of them declares `primarystat`**, while
+`internal/configs/config.filepaths.go:23` defaults `DataFiles` to
+`_datafiles/world/default` whenever the key is absent. Our shipped
+`config.yaml` sets it to the dogmud tree, so our own boot test would have passed
+and hidden this — a fresh checkout, a stripped container config or an ephemeral
+playtest env would have boot-panicked.
+
+Owner decision, 2026-08-19: **add `primarystat` to all 8 default files** rather
+than softening the validator. A silent fallback is precisely what let this field
+mean nothing for its entire life, and it would swallow typos as well as
+omissions.
+
 ---
 
 ## 9. The audit deliverable
@@ -405,16 +510,25 @@ convention:
 | `throw` | always, hit or miss |
 | `taunt` | always, all three outcomes |
 | `warcry` / `rally` | always in combat, **50%** out of combat |
-| Defences | once per defence type per round |
+| Melee defences, per-round path | once per defence type per round (`processDefenderProgression`) |
+| Melee defences, per-swing path | **every defended swing** (`combat_helpers.go:1228`) — the duplicate deleted by §7.3 |
+| Channel defences (spell, social) | **whenever the contest ran, win or lose** (`defence_multiplier.go:246`) |
 
 The audit records every site, its firing condition, what it awards, and whether
 the divergence looks deliberate or accidental. It is what U10b and U10c act on.
-**U9 changes none of these.**
+**U9 changes none of these**, except by deleting the duplicated per-swing melee
+defence roll, which is a defect rather than a firing convention.
 
-One open question goes into the audit rather than being decided here: spec
-§5.0's ordinary row awards the defender on hit *or* miss, while melee today
-awards only a defence that was actually used. That is a firing condition, so it
-is U10b's call.
+Two open questions go into the audit rather than being decided here:
+
+1. Spec §5.0's ordinary row awards the defender on hit *or* miss, while melee
+   today awards only a defence that actually registered.
+2. **Melee and the channel path already disagree with each other**: melee gates
+   on a defence having registered, while `resolveChannelDefenceWithRunner`
+   awards the best defence whether it won or lost. Two live conventions for one
+   question.
+
+Both are firing conditions, so both are U10b's call.
 
 ---
 
