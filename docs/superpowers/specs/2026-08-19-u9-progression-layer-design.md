@@ -111,7 +111,7 @@ U6 made it worse again. Crit is margin-driven now, so crit rates against a badly
 outclassed defender approach certainty: standing in front of something far
 stronger than you is a no-decay tap whose rate rises with how outmatched you are.
 
-### 3.1 The fix, both halves
+### 3.1 The fix, three parts
 
 1. **Crit-received runs the decayed curve.** `OnCritReceived` calls
    `CheckStatProgression` at the observing multiplier, like every other event.
