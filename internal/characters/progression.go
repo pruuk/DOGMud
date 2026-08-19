@@ -149,8 +149,9 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 // statProgressionChance computes the probability (0.0-1.0) that a stat
 // progression roll succeeds for statName, given a bonus multiplier. This is
 // the single source of truth for the chance CheckStatProgression rolls
-// against -- critReceivedChance shares it too, so OnCritReceived and its test
-// compute the exact same expression instead of one drifting from the other.
+// against. The faucet test calls it directly too, so the test pins the exact
+// expression production rolls rather than a hand-rolled duplicate that could
+// silently drift from it.
 //
 // A mob at or past MobStatCap, or with mob progression disabled, returns 0
 // (the hard-cap short-circuit CheckStatProgression used to perform itself).
