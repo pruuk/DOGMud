@@ -83,6 +83,23 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 
 ## Deferred Follow-ons
 
+- **The lint gate silently inverts on any PR over 20,000 diff lines.**
+  `only-new-issues` asks the GitHub API for the PR patch and feeds it to
+  `--new-from-patch`. The API refuses any diff above 20,000 lines with
+  `code: too_large`, and when that call fails `golangci-lint-action` cannot
+  tell new findings from old, so it reports the **entire** grandfathered
+  backlog and the gate fails on code the branch never touched. U8
+  (2026-08-18, PR #51) was the first change large enough to hit this; its
+  lint failure was entirely this, verified by `--new-from-rev=master`
+  reporting 0 and by CI's own count falling to master's exact 96 baseline.
+  `fetch-depth: 0` on the checkout was tried and does **not** help: the
+  action has no local-diff fallback on `pull_request` events (reverted in
+  `dab4006ff`, so the workflow is unchanged). A real fix means passing
+  `--new-from-merge-base` explicitly, which needs care because
+  `validate.yml` is shared by the PR and push-to-master callers and that
+  flag would compare master against itself on a push. Until then:
+  **when the lint gate fails, check `golangci-lint run --new-from-rev=master`
+  locally before believing it**, and keep large changes split where practical.
 - **Defender name rendered from the wrong viewer's perspective (cosmetic):**
   `mobcommands/taunt.go` and `hooks/spell_resolution.go` build a defender's
   display name with `GetPlayerName(defender.UserId)` rather than the id of the
