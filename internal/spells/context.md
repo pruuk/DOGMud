@@ -50,21 +50,51 @@ type SpellData struct {
     HealthCost        int       // Optional Health cost for vital school
     WaitRounds        int       // Casting delay in rounds
     Difficulty        int       // Success modifier (0-100%)
-    PrimaryStat       string    // INERT. Parsed, never read. See the note below.
+    PrimaryStat       string    // REQUIRED (U9). Caster-side stat. See below.
     BaseFolds         int       // Number of folds required to cast
     TargetDefenseType string    // "physical", "mental", or "none"
     EffectType        string    // "damage", "heal", "shield", "dot", "knockdown", "purge", "none"
     EffectMagnitude   int       // Base power of the effect
     EffectDuration    int       // For DoT: number of tick cycles
 }
+
+func (s *SpellData) CasterStatValue(stats stats.Statistics) int
+func (s *SpellData) Validate() error // calls the unexported validatePrimaryStat
 ```
 
-**`PrimaryStat` is inert.** Every spell YAML authors a `primarystat:` and the
-loader parses it into the struct, but as of 2026-08-15 nothing in `internal/`
-or `modules/` ever reads `SpellData.PrimaryStat`. Spell power and progression
-are driven by the resolution path's own stat choice, not by this field, so
-changing it in a YAML has no effect. Do not cite it as evidence of which stat a
-spell runs on, and do not "fix" a spell by editing it.
+**`PrimaryStat` is REQUIRED and validated at load (U9).** `Validate()` calls
+the unexported `validatePrimaryStat`, which fails the boot if `primarystat:`
+is empty or not one of the six stat names (`strength`, `dexterity`,
+`perception`, `vitality`, `willpower`, `charisma`) -- a typo now fails at
+startup instead of silently doing nothing, which is what the field used to
+do (see the boot-test SOP in `CLAUDE.md`). `CasterStatValue(stats
+stats.Statistics) int` reads the matching field off the caster's
+`stats.Statistics` and is CASTER SIDE ONLY -- the defender's stat is owned
+by the U6 defence set (`quell` stays on Willpower by design; routing it
+through here would silently move quell off the stat U6 designed it around).
+
+It drives:
+- the caster's spell attack roll (`characters.CalcSpellAttack(spellData.CasterStatValue(...), skillLevel)`,
+  `internal/hooks/spell_resolution.go`),
+- spell duration and shield-bonus magnitude (`calcSpellDuration`, both via
+  `spellData.CasterStatValue(...)`),
+- and, in `internal/hooks/NewRound_DoCombat_helpers.go`, which stat the cast
+  TRAINS: `OnSkillUseScaled` already rolls the casting skill's own default
+  primary stat (spellcasting -> willpower, manifestation -> charisma), and an
+  explicit `OnStatUse(spellData.PrimaryStat, userId)` fires ONLY when the
+  spell's `primarystat` differs from that default -- so for every spell
+  shipped at 2026-08-19 (which all declare willpower or charisma matching
+  their school) this is a no-op in practice; it exists so a spell that
+  declares something else actually trains it.
+
+**It does NOT drive raw damage magnitude.** `calcSpellDamageForCharacter`
+(`internal/hooks/combat_shared_helpers.go`) reads `caster.Stats.Willpower.ValueAdj`
+directly through `combat.CalcRawDamage`, not `spellData.CasterStatValue(...)`.
+A spell with a non-willpower `primarystat` still rolls its attack and trains
+its progression off that stat, but its damage number is Willpower regardless.
+This is not drift to "fix" without a design decision -- it is the current
+shipped behaviour, and the Effect Types row below has been corrected to
+match it rather than the aspiration.
 
 ### Spell Difficulty and Target Types
 
@@ -105,7 +135,7 @@ const (
 
 | EffectType | Behavior |
 |------------|----------|
-| `damage` | Direct HP damage to target(s), scaled by EffectMagnitude and PrimaryStat |
+| `damage` | Direct HP damage to target(s). New pipeline (DamageMultiplier > 0) scales off Willpower always, NOT PrimaryStat -- see the PrimaryStat note above. Legacy path (DamageMultiplier == 0) scales off EffectMagnitude. |
 | `heal` | Direct HP restoration to target(s) |
 | `shield` | Applies ConditionShield with magnitude = damage absorbed |
 | `dot` | Applies ConditionPoisoned; ticks for EffectDuration cycles (each cycle = 3 rounds in AutoHeal) |
@@ -231,7 +261,8 @@ chrysalis-construct, summon-hive-swarm.
 
 | Hook File | What It Does |
 |-----------|-------------|
-| `internal/hooks/spell_resolution.go` | Effect dispatch (damage, heal, shield, dot, knockdown, purge), HelpArea targeting |
+| `internal/hooks/spell_resolution.go` | Effect dispatch (damage, heal, shield, dot, knockdown, purge), HelpArea targeting. U9: the player- and mob-caster magical-crit branches build a `progression.Outcome{ToughenStat: characters.ToughenStatFor("magical"), Exceptional: progression.ExcAttackCrit}`, take `progression.BonusEvents`, and apply only the defender side via `target.Character.ApplyProgression(...)` -- see `internal/progression/context.md` and `internal/characters/context.md`'s "Contest Progression Seam" section. |
+| `internal/hooks/NewRound_DoCombat_helpers.go` | Ordinary casting progression: `OnSkillUseScaled` on the casting skill (spellcasting or manifestation), then `OnStatUse(spellData.PrimaryStat, ...)` when it differs from that skill's default stat. |
 | `internal/hooks/NewRound_DoCombat.go` | Spell discovery after cast, DamageBonus buff check |
 | `internal/hooks/NewRound_AutoHeal.go` | Mob poison DoT ticking |
 | `internal/hooks/NewRound_UserRoundTick.go` | MutationRate buff check |

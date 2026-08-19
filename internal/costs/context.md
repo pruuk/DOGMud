@@ -17,7 +17,10 @@ config-only leaf.
 ## Files
 
 - `cost.go` — `Input`, `Calc`. The composition and the product clamp.
-- `action.go` — `Action`, `Spec`, the registry, `SpecFor`.
+- `action.go` -- U9: the registry itself moved to `internal/actionspec`. This
+  file is now just type aliases (`Action`, `Spec`, `SkillSource`, every
+  `Action*` constant) plus `SpecFor`, so no pre-U9 call site had to change.
+  New code should import `internal/actionspec` directly instead.
 - `skill.go` — `SkillCostMultiplier`, the inverse-skill curve.
 - `encumbrance.go` — `EncumbranceMultiplier`, the carried-weight curve.
 - `action_test.go`, `cost_test.go`, `skill_test.go`, `encumbrance_test.go` —
@@ -39,37 +42,33 @@ type Input struct {
 	Modifier  float64 // per-action tuning knob
 }
 
-// action.go
-type Action string
+// action.go -- U9: these are now type/const ALIASES into internal/actionspec,
+// not native declarations. The registry, Spec's fields (including U9's new
+// Stat override), and StatFor live there. See internal/actionspec/context.md.
+type Action = actionspec.Action
+type Spec = actionspec.Spec
+type SkillSource = actionspec.SkillSource
 
 const (
-	ActionAttack Action = `attack`
-	ActionDodge  Action = `dodge`
-	ActionParry  Action = `parry`
-	ActionBlock  Action = `block`
-	ActionMove   Action = `move`
-	ActionFlee   Action = `flee`
+	SkillNone           = actionspec.SkillNone
+	SkillFixed          = actionspec.SkillFixed
+	SkillEquippedCombat = actionspec.SkillEquippedCombat
+)
+
+const (
+	ActionAttack = actionspec.ActionAttack
+	ActionDodge  = actionspec.ActionDodge
+	ActionParry  = actionspec.ActionParry
+	ActionBlock  = actionspec.ActionBlock
+	ActionMove   = actionspec.ActionMove
+	ActionFlee   = actionspec.ActionFlee
 
 	// Paid in CONVICTION, and both registered Physical: false.
-	ActionQuell Action = `quell`
-	ActionDefy  Action = `defy`
-	// U8 also registers shoot, reload, every special move, grapple initiation
+	ActionQuell = actionspec.ActionQuell
+	ActionDefy  = actionspec.ActionDefy
+	// Also registered: shoot, reload, every special move, grapple initiation
 	// and maintenance, throw, sneak, taunt, rally, and warcry.
 )
-
-type SkillSource uint8
-
-const (
-	SkillNone SkillSource = iota
-	SkillFixed
-	SkillEquippedCombat
-)
-
-type Spec struct {
-	Skill       skills.SkillTag // governing skill for SkillFixed actions
-	SkillSource SkillSource
-	Physical    bool // physical actions take the encumbrance multiplier
-}
 ```
 
 ## Public API
@@ -165,8 +164,8 @@ value gets a neutral 1.0 rather than a free action.
 - **Leaf rule: never import `internal/characters`.** `characters` reaches this
   package (or will), so the reverse edge is a cycle. That is why `Input` carries
   plain `float64`s instead of an actor: callers extract carried weight, capacity
-  and skill rank themselves. Importing `internal/skills` is fine — verified not
-  to reach `characters`. Guard with
+  and skill rank themselves. Importing `internal/skills` or `internal/actionspec`
+  is fine -- verified not to reach `characters`. Guard with
   `go list -deps ./internal/costs | grep GoMudEngine`.
 
 - **`0` is not a usable value for any `Cost*` knob.** Every one of them is
@@ -205,7 +204,9 @@ value gets a neutral 1.0 rather than a free action.
 ## Dependencies
 
 - `internal/configs` — every curve and the clamp read `GetBalanceConfig()`.
-- `internal/skills` — `SkillTag` only, for the registry.
+- `internal/actionspec` -- U9: the action registry itself (`Action`, `Spec`,
+  the constants, `SpecFor`), re-exported here as aliases. `internal/skills`
+  (`SkillTag`) is now only a transitive dependency through it.
 
 Knobs owned: `CostSkillMultAtZero`, `CostSkillMultAtMid`, `CostSkillMultAtCap`,
 `CostSkillMidRank`, `CostSkillCapRank`, `CostEncumbranceKnee`,

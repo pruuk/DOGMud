@@ -274,6 +274,18 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    was what it contested; quell contests **willpower**, so willpower is what it
    trains. Losing perception as a spell-defence stat is the intended outcome of
    the unification, not a cost of it.
+
+   **U9** split the skill/stat mapping out into its own function,
+   `DefenceSkillAndStat(defenceType string) (skill, stat string)`, which
+   `AwardDefenceProgression` now calls rather than carrying the switch itself.
+   `awardChannelDefenceBonus` (also `defence_multiplier.go`) reads the SAME
+   function to fill a `progression.Outcome` for the crit/fumble bonus tier --
+   see "Contest core" below. Parry's second stat (strength, alongside
+   dexterity) is deliberately NOT in `DefenceSkillAndStat`'s single return;
+   `AwardDefenceProgression` adds it as a special case afterward, preserved
+   verbatim from pre-U9 behaviour. An unrecognised defence returns two empty
+   strings from `DefenceSkillAndStat` rather than guessing -- passing an empty
+   skill on is not inert, `CheckSkillProgression("")` still takes the roll.
 2. **`sendDefenseMessages` progresses the WRONG skill and prints broken
    grammar.** **FIXED defensively, still unreachable.** Its switch
    (`combat_helpers.go`) can still leave `skillToProgress` and `defenseVerb`
@@ -345,6 +357,11 @@ func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters
 func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad
 func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) float64
 func AwardDefenceProgression(c *characters.Character, userId int, defenceType string)
+
+// U9: THE skill/stat mapping for all five defences. AwardDefenceProgression
+// and the channel crit/fumble bonus tier both read it so the mapping exists
+// once. An unrecognised defence returns two empty strings.
+func DefenceSkillAndStat(defenceType string) (skill, stat string)
 ```
 
 `ResolveChannelDefence` runs ONE opposed contest and returns the canonical
@@ -382,6 +399,24 @@ Things that bite:
   `contest_sign_test.go` is the guard.
 - **A FLOORED save returns the bare 0.5 and never the curve**, same rule as
   melee: the ±1 sentinel is in raw score units, not sigma.
+- **U9: `ResolveChannelDefence` also pays a crit/fumble progression bonus
+  tier**, via the unexported `awardChannelDefenceBonus`. It classifies the
+  finished contest with `progression.Classify(attackCrit, defenceCrit,
+  attackFumble, defenceFumble)` -- using the SAME margin-derived crit and
+  self-relative fumble signals `defenceDamageMultiplier` and
+  `applyCritEffects` already compute, not a re-derivation -- builds a
+  `progression.Outcome` (attacker skill/stat from the new unexported
+  `channelAttackSkillAndStat`, defender skill/stat from `DefenceSkillAndStat`,
+  `ToughenStat` from `characters.ToughenStatFor(channelDamageChannel(channel))`),
+  and calls `progression.BonusEvents` -- NOT `EventsForContest` -- because the
+  ordinary events are already awarded by `AwardDefenceProgression` above and
+  by the attacker's own call site; asking for both here would double-award.
+  A floored contest (`res.Floored`) pays nothing, matching
+  `progression.BonusEvents`'s own floor rule. `channelDamageChannel` maps
+  both spell channels to `"magical"` (never `"physical"` for
+  `ChannelSpellPhysical` -- the damage is still cast off willpower even when
+  `target_defense_type: physical` changes which defence answers it) and
+  `ChannelSocial` to `"conviction"`.
 
 ### A defensive win is a PARTIAL DEFLECTION, not a clean miss (U6 Task 10)
 
@@ -892,6 +927,9 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 ## Dependencies
 
 - `internal/characters` - Character stats, equipment, and abilities
+- `internal/progression` - Pure contest-progression event layer (U9);
+  `defence_multiplier.go` builds `progression.Outcome`s and calls
+  `progression.Classify` / `BonusEvents`
 - `internal/contest` - The shared contest core (rolling + best-of-N selection)
 - `internal/items` - Weapon specifications and combat messaging
 - `internal/users` - Player character management and state
