@@ -237,8 +237,17 @@ func TestAutoattackAffordableCostPreservesSkillSwingCountAndDamage(t *testing.T)
 }
 
 // TestAutoattackShortCostPreservesProgressionAndMessagesOnlyPlayers catches a
-// short round suppressing the existing progression hook or leaking a private
-// player-only explanation into mob combat.
+// short round leaking a private player-only explanation into mob combat.
+//
+// U9: this test used to also assert that AttackPlayerVsMob itself tracked
+// Unarmed Combat skill use once per round. That assertion was pinning the
+// phase-2/phase-5 melee progression duplication (see
+// internal/hooks/progression_duplication_test.go) — AttackPlayerVsMob no
+// longer does any progression tracking at all; that is now the exclusive job
+// of hooks.applyCombatProgression (phase 5 of the unified combat
+// orchestrator), which this low-level combat-package test does not invoke.
+// The assertion was removed rather than updated to a new count because there
+// is nothing left in this call path to count.
 func TestAutoattackShortCostPreservesProgressionAndMessagesOnlyPlayers(t *testing.T) {
 	pinAutoattackAdmissionBalance(t)
 	t.Cleanup(rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
@@ -257,9 +266,6 @@ func TestAutoattackShortCostPreservesProgressionAndMessagesOnlyPlayers(t *testin
 	result := AttackPlayerVsMob(user, targetMob, true)
 	if got := countAutoattackShortageMessages(result); got != 1 {
 		t.Fatalf("player wrapper shortage messages = %d, want one", got)
-	}
-	if got := user.Character.SkillUseCount[string(skills.UnarmedCombat)]; got != 1 {
-		t.Fatalf("short successful round tracked Unarmed Combat %d times, want existing once-per-round hook", got)
 	}
 	if result.SwingsThrown != 4 {
 		t.Fatalf("player wrapper attempted %d swings, want all 4 planned", result.SwingsThrown)

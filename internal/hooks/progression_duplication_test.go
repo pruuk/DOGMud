@@ -24,8 +24,12 @@ func countUses(c *characters.Character) (strength, dexterity, weapon int) {
 // TestMeleeProgressionFiresOncePerRound pins the intended contract: ONE
 // strength track and ONE weapon-combat track per attacker per round.
 //
-// It is expected to FAIL before the deletion task, with roughly double counts.
-// That failure is the confirmation the spec asked for.
+// U9: melee progression was confirmed (via this test, RED before the fix) to
+// fire twice per round against the same actors — once from combat.Attack*vs*
+// / trackMobAttackProgression (phase 2) and once from applyCombatProgression
+// (phase 5, the unified orchestrator's dedicated progression phase). Phase 2
+// was deleted; phase 5 is now the single melee progression path. This test
+// stays as a permanent regression guard so the duplication cannot come back.
 func TestMeleeProgressionFiresOncePerRound(t *testing.T) {
 	atk, def := newCombatPairForTest(t)
 
@@ -42,9 +46,10 @@ func TestMeleeProgressionFiresOncePerRound(t *testing.T) {
 		t.Errorf("weapon-combat tracked %d times in one round, want 1", got)
 	}
 	// Dexterity is tracked directly AND as weapon-combat's primary stat, so the
-	// intended count is 2, not 1. Anything above that is duplication.
-	if got := afterDex - beforeDex; got > 2 {
-		t.Errorf("dexterity tracked %d times in one round, want at most 2", got)
+	// intended count is exactly 2. Asserting only "at most 2" would not catch
+	// under-counting (e.g. a regression dropping it to 0 or 1), so pin it exactly.
+	if got := afterDex - beforeDex; got != 2 {
+		t.Errorf("dexterity tracked %d times in one round, want exactly 2", got)
 	}
 }
 
