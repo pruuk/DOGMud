@@ -300,6 +300,26 @@ and must never re-derive.
 4. **Partial-pay actions progress in full.** U8 lets an exhausted actor
    autoattack, defend, flee and maintain a grapple without the skill term.
    Exhaustion is a combat-effectiveness penalty, not a progression penalty.
+5. **Bonus events do not track a use — EXCEPT the observed one.** Added
+   2026-08-19 during execution, after routing melee through the seam revealed
+   the blanket rule was too broad.
+
+   The parent spec's rule is that a bonus event must not inflate the use
+   counter, because the counter becomes a virtual rank and the curve
+   *decreases* with rank — so tracking a crit would punish critting. That
+   reasoning is sound for `ClassCrit` and `ClassFumble`, which belong to the
+   party who *did* the thing.
+
+   It does not hold for `ClassObserved`. You do not want to be crit, so there
+   is no achievement to punish, and the crit-received toughening event is
+   precisely the thing whose tracking makes vitality's rank move — the
+   mechanism §3 exists to close. Routing melee through the seam had silently
+   dropped that tracking while the spell path, still unrouted, kept it, so the
+   two disagreed on a rule U9 itself introduced.
+
+   **The rule is therefore keyed on Class: doer events do not track, observed
+   events do.** Owner decision, 2026-08-19: *"The whole point of this effort is
+   to unify."*
 
 ### 5.2 Observers are participants only
 
@@ -564,6 +584,43 @@ Two open questions go into the audit rather than being decided here:
    question.
 
 Both are firing conditions, so both are U10b's call.
+
+### 9.1 A resolution-layer divergence found during execution — U10b
+
+Surfaced 2026-08-19 by the guard test in §10, when the owner asked why the
+spell path needed its own crit handling at all.
+
+**A critting spell skips the defence contest entirely.**
+`internal/hooks/spell_resolution.go` reads:
+
+```go
+defence := combat.ChannelDefenceResult{DamageMultiplier: 1}
+if !isCrit {
+    defence = runPlayerSpellDefence(spellAttackChannel(spellData), ...)
+    ...
+}
+```
+
+`isCrit` is decided from the attack roll BEFORE any defence is contested, and
+on a crit `runPlayerSpellDefence` never runs. So **quell cannot answer a
+critting spell**, the defender earns no defence progression from it, and the
+crit is applied at full magnitude with no contest.
+
+That is precisely the trap the parent contest spec's own list names: *"An attack
+crit forces a hit. Any crit adjustment evaluated before the hit outcome is final
+becomes an undeclared second hit floor."* Melee does not work this way — there,
+crit is derived from the contest margin, so the contest always runs.
+
+**U9 does not change it**, because letting quell mitigate critting spells alters
+spell damage against every defender with the skill, which is a balance change
+needing modelling and a playtest. It is recorded here as **U10b's**, alongside
+the firing-condition work, since it is the same class of problem: two paths
+answering one question differently.
+
+U9 did unify the **progression** half — all three previously-unrouted
+crit-received sites (two in `spell_resolution.go`, one in `combat_taunt.go`) now
+go through the seam, so what the event carries is consistent even while when the
+contest runs is not.
 
 ---
 
