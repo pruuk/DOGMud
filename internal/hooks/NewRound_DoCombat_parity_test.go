@@ -30,12 +30,18 @@ import (
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
 // enableMobProgression cranks the relevant balance knobs so OnStatUse / the
-// regen-progression roll inside OnCritReceived advance with high probability
-// per call. Returns a cleanup that restores the previous overlay values.
+// progression roll inside OnCritReceived advance with high probability per
+// call. Returns a cleanup that restores the previous overlay values.
 //
 // Boosting BaseProgressionChance to 1.0 and MobProgressionRate to 1.0 makes
 // progression rolls deterministic enough that 50 trials is effectively flake-
 // free (per-call success >= 0.25).
+//
+// ObservedCritProgressionBonus is a documented off-switch (validateProgression
+// only corrects NEGATIVE values, so 0 -- the zero-valued struct a Go test
+// binary starts with -- stays 0). U9 moved OnCritReceived onto the decayed
+// curve and gated it on this multiplier, so it must be cranked here too or
+// OnCritReceived is a silent no-op regardless of the other knobs.
 func enableMobProgression(t *testing.T) func() {
 	t.Helper()
 
@@ -46,22 +52,24 @@ func enableMobProgression(t *testing.T) func() {
 	prevGp := configs.GetGamePlayConfig()
 
 	require.NoError(t, configs.AddOverlayOverrides(map[string]any{
-		"GamePlay.UseSkillProgression":  true,
-		"Balance.MobProgressionEnabled": true,
-		"Balance.MobProgressionRate":    1.0,
-		"Balance.BaseProgressionChance": 1.0,
-		"Balance.MobStatCap":            10000,
-		"Balance.MobSkillCap":           10000,
+		"GamePlay.UseSkillProgression":         true,
+		"Balance.MobProgressionEnabled":        true,
+		"Balance.MobProgressionRate":           1.0,
+		"Balance.BaseProgressionChance":        1.0,
+		"Balance.MobStatCap":                   10000,
+		"Balance.MobSkillCap":                  10000,
+		"Balance.ObservedCritProgressionBonus": 1.0,
 	}))
 
 	return func() {
 		_ = configs.AddOverlayOverrides(map[string]any{
-			"GamePlay.UseSkillProgression":  bool(prevGp.UseSkillProgression),
-			"Balance.MobProgressionEnabled": bool(prevBal.MobProgressionEnabled),
-			"Balance.MobProgressionRate":    float64(prevBal.MobProgressionRate),
-			"Balance.BaseProgressionChance": float64(prevBal.BaseProgressionChance),
-			"Balance.MobStatCap":            int(prevBal.MobStatCap),
-			"Balance.MobSkillCap":           int(prevBal.MobSkillCap),
+			"GamePlay.UseSkillProgression":         bool(prevGp.UseSkillProgression),
+			"Balance.MobProgressionEnabled":        bool(prevBal.MobProgressionEnabled),
+			"Balance.MobProgressionRate":           float64(prevBal.MobProgressionRate),
+			"Balance.BaseProgressionChance":        float64(prevBal.BaseProgressionChance),
+			"Balance.MobStatCap":                   int(prevBal.MobStatCap),
+			"Balance.MobSkillCap":                  int(prevBal.MobSkillCap),
+			"Balance.ObservedCritProgressionBonus": float64(prevBal.ObservedCritProgressionBonus),
 		})
 	}
 }
@@ -92,11 +100,14 @@ func recordMessages() (*[]string, func()) {
 // handleMobVsMob (NewRound_DoCombat_helpers.go) that fires
 // `defMob.Character.OnCritReceived("physical", 0)` on crit hits.
 //
-// OnCritReceived → CheckRegenProgression("vitality", 0, 0.25) is the only
-// observable side effect, and it is probabilistic. To make the assertion
-// deterministic we crank the progression knobs (per call success ~0.25) and
-// drive enough trials that the cumulative failure probability is negligible
-// (0.75^50 ≈ 5.6e-7).
+// OnCritReceived → CheckStatProgression("vitality", 0, ObservedCritProgressionBonus)
+// is the only observable side effect (U9: this used to route through
+// CheckRegenProgression at a hardcoded flat 0.25 chance -- see
+// internal/characters/progression.go), and it is probabilistic. To make the
+// assertion deterministic we crank the progression knobs (BaseProgressionChance
+// and ObservedCritProgressionBonus to 1.0, so the effective per-call chance is
+// bounded well above the previous 0.25) and drive enough trials that the
+// cumulative failure probability is negligible.
 //
 // We invoke OnCritReceived directly here rather than try to drive a forced
 // crit through the full handleMobVsMob path, because the underlying

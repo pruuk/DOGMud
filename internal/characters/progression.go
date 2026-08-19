@@ -146,19 +146,24 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 	return false
 }
 
-// CheckStatProgression rolls against the progression chance for a stat.
-// If the roll succeeds, the stat's Training value is increased by 1.
-// Returns true if progression fired (stat actually gained), false otherwise.
-func (c *Character) CheckStatProgression(statName string, userId int, bonusMultiplier float64) bool {
+// statProgressionChance computes the probability (0.0-1.0) that a stat
+// progression roll succeeds for statName, given a bonus multiplier. This is
+// the single source of truth for the chance CheckStatProgression rolls
+// against -- critReceivedChance shares it too, so OnCritReceived and its test
+// compute the exact same expression instead of one drifting from the other.
+//
+// A mob at or past MobStatCap, or with mob progression disabled, returns 0
+// (the hard-cap short-circuit CheckStatProgression used to perform itself).
+func (c *Character) statProgressionChance(statName string, bonusMultiplier float64) float64 {
 	b := configs.GetBalanceConfig()
 
 	// Mob-specific gating
 	if c.IsMob {
 		if !bool(b.MobProgressionEnabled) {
-			return false
+			return 0
 		}
 		if c.GetStatValue(statName) >= int(b.MobStatCap) {
-			return false // hard cap
+			return 0 // hard cap
 		}
 		bonusMultiplier *= float64(b.MobProgressionRate)
 	}
@@ -177,6 +182,36 @@ func (c *Character) CheckStatProgression(statName string, userId int, bonusMulti
 	chance := CalculateProgressionChance(virtualRank, int(b.StatProgressionSoftCap)) * bonusMultiplier * mutStatMult * statMult * float64(b.StatProgressionRate)
 	if chance > 1.0 {
 		chance = 1.0
+	}
+	return chance
+}
+
+// critReceivedChance computes the probability OnCritReceived will roll
+// against for statName, without actually rolling. Extracted so the faucet
+// test pins the SAME expression the implementation uses rather than a
+// hand-rolled duplicate that could silently drift from it.
+func (c *Character) critReceivedChance(statName string) float64 {
+	mult := float64(configs.GetBalanceConfig().ObservedCritProgressionBonus)
+	if mult <= 0 {
+		return 0
+	}
+	return c.statProgressionChance(statName, mult)
+}
+
+// CheckStatProgression rolls against the progression chance for a stat.
+// If the roll succeeds, the stat's Training value is increased by 1.
+// Returns true if progression fired (stat actually gained), false otherwise.
+func (c *Character) CheckStatProgression(statName string, userId int, bonusMultiplier float64) bool {
+	b := configs.GetBalanceConfig()
+
+	chance := c.statProgressionChance(statName, bonusMultiplier)
+	if chance <= 0 {
+		return false
+	}
+
+	virtualRank := c.GetStatUseCount(statName) / int(b.UsesPerRank)
+	if statVal := c.GetStatValue(statName); statVal > int(b.StatProgressionSoftCap) && statVal > virtualRank {
+		virtualRank = statVal
 	}
 
 	threshold := int(chance * 10000)
@@ -345,28 +380,91 @@ func (c *Character) OnFirstMobKill(userId int) {
 //	physical crit → vitality (body toughens from surviving hard blows)
 //	magical crit  → willpower (mind hardens against arcane trauma)
 //	rhetoric crit → charisma (ego steels itself after being shaken)
+//
+// U9: this routes through CheckStatProgression, NOT CheckRegenProgression.
+// CheckRegenProgression is correct for OnRegenTick, whose chance comes from
+// pool depletion, but it never calls CalculateProgressionChance and never
+// applies StatProgressionRate -- so as a crit handler it was a flat chance at
+// every virtual rank. That is rank-independent stat progression driven by being
+// hit, which is structurally the fyttyn vitality exploit (see
+// internal/migration/0.16.0.go), and U6's margin-driven crit rates made it
+// worse by pushing crit rates against an outclassed defender toward certainty.
+//
+// The multiplier is ObservedCritProgressionBonus: receiving is worth strictly
+// less than doing.
 func (c *Character) OnCritReceived(damageChannel string, userId int) {
 	if !configs.GetGamePlayConfig().UseSkillProgression {
 		return
 	}
 
-	var statName string
-	switch damageChannel {
-	case "physical":
-		statName = "vitality"
-	case "magical":
-		statName = "willpower"
-	case "conviction":
-		statName = "charisma"
-	default:
+	statName := ToughenStatFor(damageChannel)
+	if statName == "" {
 		return
 	}
 
-	c.CheckRegenProgression(statName, userId, 0.25)
+	mult := float64(configs.GetBalanceConfig().ObservedCritProgressionBonus)
+	if mult <= 0 {
+		return
+	}
+
+	// TRACK BEFORE ROLLING. This is the second half of the faucet fix and it is
+	// the load-bearing half. CheckStatProgression derives virtualRank from
+	// GetStatUseCount, and NOTHING in the game tracks vitality use -- zero
+	// production OnStatUse("vitality") sites, and CheckRegenProgression never
+	// tracked either. So vitality's rank sat at 0 until its VALUE passed 150,
+	// which meant its progression chance was constant no matter how much
+	// vitality the character already had. Moving to the decayed curve without
+	// this would have bought a flat 25% -> 13.5% cut and left the
+	// rank-independence, which is the actual fyttyn mechanism, fully intact.
+	c.TrackStatUse(statName)
+	c.CheckStatProgression(statName, userId, mult)
+}
+
+// ToughenStatFor maps a damage channel to the stat that TAKING a critical hit
+// in that channel trains. Exported because the contest seam needs the same
+// mapping to fill Outcome.ToughenStat, and two copies would drift.
+func ToughenStatFor(damageChannel string) string {
+	switch damageChannel {
+	case "physical":
+		return "vitality"
+	case "magical":
+		return "willpower"
+	case "conviction":
+		return "charisma"
+	}
+	return ""
+}
+
+// regenDamperFactor is the rank-based damping factor CheckRegenProgression
+// applies on top of its pool-depletion chance. It uses the SAME curve the
+// rest of progression uses rather than a second one, normalised against
+// BaseProgressionChance so it is exactly 1.0 at rank 0 -- a fresh character's
+// passive growth is completely unchanged, and this is a pure veteran nerf.
+//
+// Without this, CheckRegenProgression's chance is derived from pool depletion
+// alone and never falls no matter how much the stat has already been used,
+// which is how a character grinds a stat at low health forever. That is the
+// fyttyn mechanism (see internal/migration/0.16.0.go), and vitality is hit
+// hardest because regen is its ONLY source of progression.
+//
+// A BaseProgressionChance of 0 (progression fully disabled) returns 0 rather
+// than dividing by zero.
+func (c *Character) regenDamperFactor(statName string) float64 {
+	b := configs.GetBalanceConfig()
+	base := float64(b.BaseProgressionChance)
+	if base <= 0 {
+		return 0
+	}
+	virtualRank := c.GetStatUseCount(statName) / int(b.UsesPerRank)
+	if statVal := c.GetStatValue(statName); statVal > int(b.StatProgressionSoftCap) && statVal > virtualRank {
+		virtualRank = statVal
+	}
+	return CalculateProgressionChance(virtualRank, int(b.StatProgressionSoftCap)) / base
 }
 
 // CheckRegenProgression rolls against a given chance for stat progression,
-// applying mob gating, per-stat multipliers, and mutation bonuses.
+// applying mob gating, per-stat multipliers, mutation bonuses, and the
+// rank-based regen damper (regenDamperFactor).
 // Used by OnRegenTick for regen-based stat progression.
 func (c *Character) CheckRegenProgression(statName string, userId int, chance float64) {
 	b := configs.GetBalanceConfig()
@@ -388,6 +486,9 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 	// Mutation stat progression multiplier
 	mutStatMult := 1.0 + mutations.GetStatProgressionMultiplier(c.Mutations)
 	chance *= mutStatMult
+
+	// Damp by rank. See regenDamperFactor's doc comment for why this exists.
+	chance *= c.regenDamperFactor(statName)
 
 	if chance <= 0 {
 		return
@@ -450,6 +551,12 @@ func (c *Character) OnRegenTick(current, max int, relatedStats []string, userId 
 	}
 
 	for _, statName := range relatedStats {
+		// Same reason as OnCritReceived: CheckRegenProgression rolls but never
+		// records that the stat was exercised, so the rank that decays the
+		// curve never moved. Health/stamina/conviction regen is the largest
+		// source of vitality progression in the game and was entirely
+		// rank-free.
+		c.TrackStatUse(statName)
 		c.CheckRegenProgression(statName, userId, chance)
 	}
 }
