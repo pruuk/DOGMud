@@ -114,7 +114,52 @@ are in §5.3.
 
 ## 5. Decisions required before the implementation plan
 
-### 5.1 BLOCKING: mobs have skill 0 almost everywhere (spec's premise was wrong)
+### 5.1 ✅ RESOLVED (owner, 2026-08-19): accept the repriced gold dial
+
+**Decision: mobs get no new skill mechanism. Statpool remains the single power
+source, and the gold price of threatening a skilled player rises. If post-arc
+playtesting says endgame fights got too easy, retune instance multipliers or
+author per-boss skills in config/content — not code.**
+
+The decision was made on EXECUTED numbers, not estimates — the real Elemental
+Queen (321) and King (320) spawned 200× per cell through the real spawn path
+(`statpool: 4`, `ScaleSpawnStatPools` pool = gold×4, archetype distribution,
+authored training, spawn mutations), against Meirok's real save (Wil 148,
+spellcasting 52 → quell 408; Dex 110 + weapon-combat 69 → special-defence 455):
+
+| | TODAY hit / crit | AFTER hit / crit |
+|---|---|---|
+| Queen 300g (Wil 329, sc 1) | 87% / **75%** | 24% / 0% |
+| Queen 500g (Wil 545) | 87% / 93% | 79% / 22% |
+| Queen 1000g (Wil 1075) | 87% / 98% | 87% / 82% |
+| King bash 364g (Str 396) | 87% / 72% | 32% / 0% |
+| King bash 500g | 87% / 88% | 71% / 11% |
+| King bash 1000g | 87% / 97% | 87% / 77% |
+
+Reading: today's royalty are quell-skipping crit machines (the Queen crits
+Meirok on ~75% of casts at her actual fight price, and a crit bypasses quell
+entirely — quell touches only the ~12% non-crit hits). After the flip the
+dial still works; **~500g buys what ~300g buys today**, with headroom to
+~12,500g under the pool cap.
+
+Corrections to this section's earlier draft, so they are not repeated:
+
+- **"Zero mob YAMLs author skills" was FALSE** — a column-anchored grep missed
+  the nested key. **79 mob files author skills; every authored value is 1.**
+  Owner: values above 1 existed and were deliberately rewritten to 1 in a past
+  balance pass. The authoring mechanism works today (the Queen's
+  `spellcasting: 1` loads through the normal path), so per-boss skill is
+  already a content dial needing zero code.
+- **Mob spellbook integers are CAST COUNTS**, not skill (`conviction-spike:
+  50` = 50 prior casts feeding a legacy proficiency bonus capped at +20 in
+  `GetBaseCastSuccessChance`). Do not read them as ranks.
+- **The executed table slightly understates the royals**: instance royalty
+  also load gold-scaled gear, and the affix pool includes universal skill
+  affixes (`skill_spellcasting` etc., cost 12/point in
+  `internal/items/affixgen.go`), which `GetSkillLevel` picks up as StatMods.
+  The diagnostic spawned them bare. Direction: favourable to this decision.
+
+#### The superseded analysis, kept for the record
 
 The arc's standing line "every mob is combat skill 1" is true **only through
 `GetCombatSkillLevel`'s fallback, which only the melee autoattack path uses**.
@@ -139,9 +184,9 @@ Options (owner call):
 | (c) Derive mob skill from statpool (gold-scaled instances included) | One formula; scales with the existing difficulty dial | New mechanism; needs its own mini-model |
 
 The modelling used (b)-equivalent assumptions and still saw the collapse, so
-**(b) alone does not preserve mob threat.** Recommendation: (c) for instance
-mobs + (a) for authored bosses, but this is a design decision, not a modelling
-conclusion.
+**(b) alone does not preserve mob threat.** None of (a)/(b)/(c) was taken: the
+executed endgame numbers above showed the dial reprices rather than breaks,
+and the owner accepted the repricing outright.
 
 ### 5.2 Fizzle MUST become a partial-damage outcome (confirming spec §8.1)
 
@@ -220,7 +265,14 @@ All verified in source by group A; all are "one crit path" violations:
 
 ---
 
-**Gate status: DISCHARGED**, contingent on the §5 decisions. The
-implementation plan may be written once §5.1 (mob skill) is decided; §5.2's
-answer is effectively forced; §5.3–5.5 can be decided at plan review without
-re-modelling.
+**Gate status: FULLY DISCHARGED, all decisions made (owner, 2026-08-19):**
+
+| Decision | Outcome |
+|---|---|
+| §5.1 mob skill | **Accept the repriced gold dial.** No new mechanism; adjust in post-arc playtesting if endgame comes out too easy. Per-boss authored skills remain available as a content dial. |
+| §5.2 fizzle | Partial-damage outcome (forced by the numbers). |
+| §5.3 down-tier concentration | Accept; watch in playtest. |
+| §5.4 drift aggressor edge | Restore via explicit config modifier (`GrappleAggressorDriftBonus`-style knob, tuned near today's +0.196). |
+| §5.5 kiting | Accepted with the cost known; playtest feel item. |
+
+**The implementation plan may be written.**

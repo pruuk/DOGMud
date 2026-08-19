@@ -355,17 +355,19 @@ single most important thing for modelling to quantify.
 
 ## 7. Modelling gate — MANDATORY, before any code
 
-> ✅ **DISCHARGED 2026-08-19**, contingent on decisions:
+> ✅ **FULLY DISCHARGED 2026-08-19, all decisions made**:
 > [`2026-08-19-u6b-modelling.md`](2026-08-19-u6b-modelling.md). Three scripts
 > under `tools/balance/u6b_model_*.py`, anchors reproduced, appendices A–C
-> alongside. **One BLOCKING decision before the plan: mobs are skill 0 on
-> every non-melee path** (zero mob YAMLs author skills; the skill-1 fallback
-> lives only in `GetCombatSkillLevel`, which only melee autoattack uses), so
-> as-specced the flip guts mob specials AND mob casters against skilled
-> players. Modelling doc §5.1 has the options. Also forced: fizzle becomes a
-> partial-damage outcome (§5.2 — the neutral spell results depend on it), and
-> the drift reweight deletes the aggressor's edge (§5.4) unless it returns as
-> an explicit config modifier.
+> alongside, and the mob-skill question settled on EXECUTED spawns of the real
+> Elemental King and Queen at gold-scaled pools. Owner decisions: **accept the
+> repriced gold dial** (mob power stays statpool-only; ~500g buys what ~300g
+> buys today; adjust in post-arc playtesting if too easy — per-boss authored
+> `skills:` remain a zero-code content dial, all currently rewritten to 1 from
+> a past balance pass); fizzle becomes a partial-damage outcome; down-tier
+> concentration accepted for playtest; the drift aggressor edge returns as an
+> explicit config knob; kiting accepted with its cost known. **Note the flip
+> also deletes today's top-end pathology: a 300g Queen currently crits Meirok
+> on ~75% of casts and crit skips quell entirely.**
 
 No weight changes until this is done and reviewed. It discharges a gate the
 roadmap raised before U6 and that U6 shipped without.
