@@ -3,6 +3,7 @@ package characters
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/progression"
 )
 
@@ -44,6 +45,60 @@ func TestApplyProgression_BonusDoesNotTrackTheUse(t *testing.T) {
 
 	if got := c.GetSkillUseCount("weapon-combat"); got != 0 {
 		t.Errorf("bonus event tracked the use count (%d), which decays progression", got)
+	}
+}
+
+// Task 15b refined the "bonus events never track" rule by Class: the party
+// who DID the exceptional thing (ClassCrit / ClassFumble) must not track,
+// since tracking would decay their own future progression -- but the party
+// who RECEIVED it (ClassObserved) must, because for a crit-received
+// toughening event, tracking is the only thing that ever moves the target
+// stat's virtual rank. This test pins both halves directly against the
+// applier, independent of the exercise-through-the-real-crit route.
+func TestApplyProgression_ObservedBonusTracksButCritDoesNot(t *testing.T) {
+	c := newProgressionTestCharacter(t)
+
+	// applyBonusProgression's tracking branch is gated on
+	// GamePlay.UseSkillProgression, same as the rest of the bonus tier
+	// (mirrors the pre-seam OnCritReceived gate). A Go test binary starts
+	// with the zero value (false), so it must be enabled here or the
+	// tracking calls this test exists to pin are skipped entirely.
+	prevGp := configs.GetGamePlayConfig()
+	if err := configs.AddOverlayOverrides(map[string]any{
+		"GamePlay.UseSkillProgression": true,
+	}); err != nil {
+		t.Fatalf("AddOverlayOverrides: %v", err)
+	}
+	defer func() {
+		_ = configs.AddOverlayOverrides(map[string]any{
+			"GamePlay.UseSkillProgression": bool(prevGp.UseSkillProgression),
+		})
+	}()
+
+	observed := []progression.Event{{
+		Side: progression.SideDefender, Skill: "dodge",
+		Stat: "vitality", Class: progression.ClassObserved, Multiplier: 0.5,
+	}}
+	c.ApplyProgression(observed, progression.SideDefender, 0, 1)
+
+	if got := c.GetSkillUseCount("dodge"); got != 1 {
+		t.Errorf("ClassObserved skill use count = %d, want 1 (observed bonus events must track)", got)
+	}
+	if got := c.GetStatUseCount("vitality"); got != 1 {
+		t.Errorf("ClassObserved stat use count = %d, want 1 (observed bonus events must track)", got)
+	}
+
+	crit := []progression.Event{{
+		Side: progression.SideAttacker, Skill: "weapon-combat",
+		Stat: "dexterity", Class: progression.ClassCrit, Multiplier: 2.0,
+	}}
+	c.ApplyProgression(crit, progression.SideAttacker, 0, 2)
+
+	if got := c.GetSkillUseCount("weapon-combat"); got != 0 {
+		t.Errorf("ClassCrit skill use count = %d, want 0 (the doer must not track)", got)
+	}
+	if got := c.GetStatUseCount("dexterity"); got != 0 {
+		t.Errorf("ClassCrit stat use count = %d, want 0 (the doer must not track)", got)
 	}
 }
 

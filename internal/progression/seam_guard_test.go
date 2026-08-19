@@ -38,16 +38,19 @@ var allowedDirectProgression = map[string]bool{
 	// this guard flags it, something reintroduced the duplication -- do NOT
 	// silence it by adding a row here; investigate the regression instead.
 
-	// internal/hooks/spell_resolution.go is DELIBERATELY ABSENT, though it
-	// currently flags. Two sites (the player-caster and mob-caster magical-
-	// crit branches) call target.Character.OnCritReceived("magical", ...)
-	// directly instead of building a progression.Outcome{ToughenStat: ...}
-	// and routing it through characters.ApplyProgression the way
+	// internal/hooks/spell_resolution.go is NOT listed here (Task 15b, closed
+	// the finding below). It used to flag: the player-caster and mob-caster
+	// magical-crit branches called target.Character.OnCritReceived("magical",
+	// ...) directly instead of building a progression.Outcome{ToughenStat:
+	// ...} and routing it through characters.ApplyProgression the way
 	// defence_multiplier.go and NewRound_DoCombat_unified.go do for melee.
-	// That is a real, unaccounted-for gap in U9's coverage -- spell combat's
-	// crit-received willpower toughening bypasses the seam this guard exists
-	// to protect. It is a finding to route in a follow-up task, not a file to
-	// wave through here. Do NOT add an entry for it to get this test green.
+	// Both sites (and the parallel internal/actions/combat_taunt.go conviction
+	// site, which this guard does not scan but which was routed the same way
+	// for consistency) now build a progression.Outcome{ToughenStat: ...,
+	// Exceptional: ExcAttackCrit}, take progression.BonusEvents, and apply
+	// only the defender side via characters.ApplyProgression. The file needs
+	// no allow-list entry because it no longer calls anything in
+	// progressionCalls directly.
 }
 
 // progressionCalls are the method names that fire progression directly. This
@@ -85,12 +88,11 @@ var progressionCalls = map[string]bool{
 // this. That has not happened in this codebase; if it ever does, narrow the
 // match (e.g. by receiver type or import) rather than allow-listing the file.
 //
-// KNOWN FAILURE, left uncleaned on purpose: this currently fails on
-// internal/hooks/spell_resolution.go (two OnCritReceived call sites -- see
-// the comment above). That is real, unrouted duplication the guard correctly
-// caught; it is not silenced here because doing so would be exactly the kind
-// of allow-listing this guard exists to prevent. Route spell_resolution.go
-// through characters.ApplyProgression to turn this green.
+// Formerly a KNOWN FAILURE on internal/hooks/spell_resolution.go (two
+// OnCritReceived call sites -- see the allow-list comment above for what that
+// was and how it was closed, Task 15b). Left as history rather than deleted:
+// this guard is meant to catch exactly this shape of regression, and the note
+// records what it caught once.
 func TestContestPathsFireProgressionOnlyThroughTheApplier(t *testing.T) {
 	for _, pkg := range []string{"internal/combat", "internal/hooks"} {
 		fset := token.NewFileSet()

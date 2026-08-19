@@ -599,8 +599,10 @@ func (c *Character) ClaimedBonusThisRound(skillName string) bool {
 // grants mutation cluster drift, emits the SkillUsed quest event and rolls the
 // skill's primary stat.
 //
-// Bonus events are pure extra rolls: no use tracking (it would decay the curve,
-// spec 5.2), no cluster drift, no quest event.
+// Bonus events are pure extra rolls with no cluster drift and no quest event.
+// Whether they ALSO track the use counter depends on the Class -- see
+// applyBonusProgression for the refined rule (it is not a blanket "bonus
+// events never track" any more).
 func (c *Character) ApplyProgression(events []progression.Event, side progression.Side, userId int, round uint64) {
 	if c == nil {
 		return
@@ -631,12 +633,42 @@ func (c *Character) ApplyProgression(events []progression.Event, side progressio
 
 // applyBonusProgression takes the extra skill and stat rolls a crit, fumble or
 // observed exceptional event earns, and speaks the flavour line on a success.
+//
+// Refined tracking rule (the "bonus events never track" rule was too broad):
+//
+//	ClassCrit / ClassFumble (the party who DID it) -- do NOT track. The use
+//	count becomes a virtual rank and CalculateProgressionChance is
+//	monotonically DECREASING in rank, so tracking the doer would punish the
+//	very achievement (crit, or the lesson learned from a fumble) the bonus
+//	roll exists to reward.
+//
+//	ClassObserved (the party who RECEIVED it) -- DO track. Nobody chooses to
+//	be crit, so there is no achievement here for tracking to punish, and for
+//	the crit-received toughening event specifically, tracking is the ONLY
+//	thing that moves the target stat's virtual rank at all: nothing else in
+//	the game calls OnStatUse/TrackStatUse for e.g. vitality. Leaving it
+//	untracked means the stat's rank sits at 0 forever regardless of its
+//	VALUE, which buys a flat, rank-independent chance no matter how much the
+//	stat has already grown -- the fyttyn vitality exploit (see
+//	internal/migration/0.16.0.go). Tracking before rolling (as below) is the
+//	fix, mirroring the pre-seam OnCritReceived behaviour this replaces.
 func (c *Character) applyBonusProgression(ev progression.Event, userId int) {
 	if !configs.GetGamePlayConfig().UseSkillProgression {
 		return
 	}
 	if ev.Multiplier <= 0 {
 		return // the knob is set to its off-switch
+	}
+
+	if ev.Class == progression.ClassObserved {
+		// TRACK BEFORE ROLLING, so this event's own use counts toward the
+		// virtual rank the roll below is judged against.
+		if ev.Skill != "" {
+			c.TrackSkillUse(ev.Skill)
+		}
+		if ev.Stat != "" {
+			c.TrackStatUse(ev.Stat)
+		}
 	}
 
 	if ev.Skill != "" && c.CheckSkillProgression(ev.Skill, userId, ev.Multiplier) && userId > 0 {

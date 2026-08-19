@@ -44,7 +44,7 @@ type Input struct {
 
 // action.go -- U9: these are now type/const ALIASES into internal/actionspec,
 // not native declarations. The registry, Spec's fields (including U9's new
-// Stat override), and StatFor live there. See internal/actionspec/context.md.
+// live there. See internal/actionspec/context.md.
 type Action = actionspec.Action
 type Spec = actionspec.Spec
 type SkillSource = actionspec.SkillSource

@@ -64,22 +64,24 @@ const (
 	SkillEquippedCombat
 )
 
-// Spec is what the registry knows about an action: which skill discounts it,
-// whether encumbrance applies, and which stat it exercises.
+// Spec is what the registry knows about an action: which skill discounts it
+// and whether encumbrance applies.
+//
+// U9 briefly added a Stat override here, on the theory that one table could
+// answer "which skill and stat does this action exercise" for both cost and
+// progression. It was removed in the same slice, unused. The progression seam
+// derives both names from CONTEXT rather than from an action key -- the weapon
+// that threw the swing, the defence that registered, the spell record being
+// cast -- and none of those callers has a costs.Action in hand to look up.
+//
+// If a later slice routes crafting and the other non-contest sites through the
+// registry, add it back WITH its consumer in the same change. Shipping a
+// parsed-but-never-read field is the exact defect U9 spent a task removing from
+// SpellData.PrimaryStat, which sat inert for the project's whole life.
 type Spec struct {
 	Skill       skills.SkillTag // governing skill for SkillFixed actions
 	SkillSource SkillSource
 	Physical    bool // physical actions take the encumbrance multiplier
-
-	// Stat OVERRIDES the stat this action exercises for progression. Empty --
-	// which is every registered action -- means the skill's primary stat, which
-	// is already what every one of them wants.
-	//
-	// It exists for the two cases that genuinely diverge: a spell declaring its
-	// own primarystat, and the toughening stat awarded for a crit RECEIVED
-	// (vitality / willpower / charisma), which is deliberately not the stat that
-	// fed the defence score.
-	Stat string
 }
 
 // registry maps each priced action to its spec. Package-level and read-only
@@ -139,20 +141,4 @@ var registry = map[Action]Spec{
 // row.
 func SpecFor(a Action) Spec {
 	return registry[a]
-}
-
-// StatFor returns the stat an action exercises: the Spec's override if it has
-// one, otherwise the governing skill's primary stat.
-//
-// Returns empty for a Spec with neither, which callers must treat as "no stat
-// roll" rather than passing it on -- CheckStatProgression("") takes a roll and
-// a success sends a levelup banner naming no stat at all.
-func StatFor(s Spec) string {
-	if s.Stat != "" {
-		return s.Stat
-	}
-	if s.Skill == "" {
-		return ""
-	}
-	return skills.GetSkillPrimaryStat(string(s.Skill))
 }

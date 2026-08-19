@@ -67,6 +67,41 @@ func TestMeleeDefenceProgressionFiresOncePerRound(t *testing.T) {
 	}
 }
 
+// TestMeleeCritReceived_TracksDefenderVitality is Task 15b's end-to-end proof
+// that routing melee's crit-received event through characters.ApplyProgression
+// did not silently drop its use-count tracking.
+//
+// applyCombatProgression has built a progression.Outcome{ToughenStat:
+// characters.ToughenStatFor("physical"), ...} and handed it to the seam since
+// U9 -- that part was never in question. What Task 15b's applyBonusProgression
+// change fixes is that the seam's bonus tier used to apply a BLANKET
+// "bonus events never track" rule to every Class, including ClassObserved (the
+// defender's crit-RECEIVED event). That silently regressed pre-seam
+// OnCritReceived, which always tracked before rolling (see the comment on
+// applyBonusProgression). Without tracking, vitality's virtual rank never
+// moves regardless of how many crits a defender has eaten -- the exact fyttyn
+// exploit shape U9 was supposed to have closed.
+//
+// This drives the FULL production path (handleCombatRound -> ... ->
+// applyCombatProgression -> characters.ApplyProgression), not the applier in
+// isolation (that half is pinned directly in
+// internal/characters/progression_apply_test.go), so a regression in the
+// wiring between melee and the applier would also be caught here.
+func TestMeleeCritReceived_TracksDefenderVitality(t *testing.T) {
+	cleanupCfg := enableMobProgression(t)
+	defer cleanupCfg()
+
+	atk, def := newCombatPairForTest(t)
+	before := def.GetCharacter().GetStatUseCount("vitality")
+
+	runOneCombatRoundForTest(t, atk, def) // forceCrit=true: guarantees res.Crit
+
+	if got := def.GetCharacter().GetStatUseCount("vitality") - before; got != 1 {
+		t.Errorf("defender vitality use count changed by %d in one forced-crit round, want 1 -- "+
+			"crit-received progression must track through the seam", got)
+	}
+}
+
 // newDualWieldingCombatPairForTest builds a player attacker vs. mob defender
 // (PvM quadrant), like newCombatPairForTest, except the attacker wields two
 // separate one-handed weapons (main hand + offhand) instead of a single
