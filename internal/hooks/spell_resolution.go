@@ -81,8 +81,12 @@ func playerHarmTargetPermitted(spellType spells.SpellType, mob *mobs.Mob) bool {
 
 func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) {
 
-	skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)
-	spellAttack := characters.CalcSpellAttack(user.Character.Stats.Willpower.ValueAdj, skillLevel)
+	castSkill := skills.Spellcasting
+	if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
+		castSkill = skills.Manifestation
+	}
+	skillLevel := user.Character.GetSkillLevel(castSkill)
+	spellAttack := characters.CalcSpellAttack(spellData.CasterStatValue(user.Character.Stats), skillLevel)
 	magnitude := spellData.EffectMagnitude
 
 	// --- Identify: resolve against caster's item, no targets ---
@@ -523,7 +527,7 @@ func applyMobEffect_dot(
 	casterWil := 100
 	if user != nil {
 		casterSkill = user.Character.GetSkillLevel(skills.Spellcasting)
-		casterWil = user.Character.Stats.Willpower.ValueAdj
+		casterWil = spellData.CasterStatValue(user.Character.Stats)
 	}
 	dotDuration := calcSpellDuration(spellData.BaseFolds, casterSkill, casterWil) / 3
 	if dotDuration < 3 {
@@ -722,7 +726,7 @@ func applyMobEffect_heal(
 	casterName := "Something"
 	if casterChar != nil {
 		skillLevel = casterChar.GetSkillLevel(skills.Spellcasting)
-		willpower = casterChar.Stats.Willpower.ValueAdj
+		willpower = spellData.CasterStatValue(casterChar.Stats)
 		casterName = casterChar.Name
 	}
 	regenMult := float64(magnitude)
@@ -919,7 +923,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			// Crit: boost the multiplier portion above 1x by 2x
 			regenMult = 1.0 + (regenMult-1.0)*2.0
 		}
-		durationRounds := calcSpellDuration(spellData.BaseFolds, skillLevel, user.Character.Stats.Willpower.ValueAdj) / 2
+		durationRounds := calcSpellDuration(spellData.BaseFolds, skillLevel, spellData.CasterStatValue(user.Character.Stats)) / 2
 		if durationRounds < 6 {
 			durationRounds = 6
 		}
@@ -977,7 +981,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 	case "shield":
 		skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)
 		weightedSkill := int(math.Round(float64(skillLevel) * float64(configs.GetBalanceConfig().SkillWeight)))
-		shieldBonus := (user.Character.Stats.Willpower.ValueAdj + weightedSkill) / 3
+		shieldBonus := (spellData.CasterStatValue(user.Character.Stats) + weightedSkill) / 3
 		if shieldBonus < 1 {
 			shieldBonus = 1
 		}
@@ -988,7 +992,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 				shieldBonus = 1
 			}
 		}
-		duration := calcSpellDuration(spellData.BaseFolds, skillLevel, user.Character.Stats.Willpower.ValueAdj)
+		duration := calcSpellDuration(spellData.BaseFolds, skillLevel, spellData.CasterStatValue(user.Character.Stats))
 		if isCrit {
 			shieldBonus = int(float64(shieldBonus) * 1.5)
 		}
@@ -1143,8 +1147,12 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 		return
 	}
 
-	skillLevel := mob.Character.GetSkillLevel(skills.Spellcasting)
-	spellAttack := characters.CalcSpellAttack(mob.Character.Stats.Willpower.ValueAdj, skillLevel)
+	castSkill := skills.Spellcasting
+	if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
+		castSkill = skills.Manifestation
+	}
+	skillLevel := mob.Character.GetSkillLevel(castSkill)
+	spellAttack := characters.CalcSpellAttack(spellData.CasterStatValue(mob.Character.Stats), skillLevel)
 	magnitude := spellData.EffectMagnitude
 
 	if spellData.Type == spells.HarmArea {
@@ -1292,7 +1300,7 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 		if regenMult < 1.0 {
 			regenMult = 1.0
 		}
-		durationRounds := calcSpellDuration(spellData.BaseFolds, skillLevel, mob.Character.Stats.Willpower.ValueAdj) / 2
+		durationRounds := calcSpellDuration(spellData.BaseFolds, skillLevel, spellData.CasterStatValue(mob.Character.Stats)) / 2
 		if durationRounds < 6 {
 			durationRounds = 6
 		}
@@ -1323,7 +1331,7 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 	case "shield":
 		skillLevel := mob.Character.GetSkillLevel(skills.Spellcasting)
 		weightedSkill := int(math.Round(float64(skillLevel) * float64(configs.GetBalanceConfig().SkillWeight)))
-		shieldBonus := (mob.Character.Stats.Willpower.ValueAdj + weightedSkill) / 3
+		shieldBonus := (spellData.CasterStatValue(mob.Character.Stats) + weightedSkill) / 3
 		if shieldBonus < 1 {
 			shieldBonus = 1
 		}
@@ -1334,7 +1342,7 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 				shieldBonus = 1
 			}
 		}
-		duration := calcSpellDuration(spellData.BaseFolds, skillLevel, mob.Character.Stats.Willpower.ValueAdj)
+		duration := calcSpellDuration(spellData.BaseFolds, skillLevel, spellData.CasterStatValue(mob.Character.Stats))
 		mob.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
 		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 			`A shimmering barrier forms around %s.`, mobDisplayName(mob, room, 0)))
@@ -1448,7 +1456,11 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			target.Character.OnCritReceived("magical", target.UserId)
 		}
 	case "dot":
-		dotDuration := calcSpellDuration(spellData.BaseFolds, caster.Character.GetSkillLevel(skills.Spellcasting), caster.Character.Stats.Willpower.ValueAdj) / 3
+		castSkill := skills.Spellcasting
+		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
+			castSkill = skills.Manifestation
+		}
+		dotDuration := calcSpellDuration(spellData.BaseFolds, caster.Character.GetSkillLevel(castSkill), spellData.CasterStatValue(caster.Character.Stats)) / 3
 		if dotDuration < 3 {
 			dotDuration = 3
 		}

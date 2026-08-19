@@ -378,10 +378,20 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 			// manifestation maps to charisma, spellcasting to willpower -- so an
 			// explicit OnStatUse beside it double-rolled every cast. The stat a
 			// spell trains now comes from its primarystat (Task 13).
+			castSkill := skills.Spellcasting
 			if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
-				user.Character.OnSkillUseScaled(string(skills.Manifestation), userId, spellBonus)
-			} else {
-				user.Character.OnSkillUseScaled(string(skills.Spellcasting), userId, spellBonus)
+				castSkill = skills.Manifestation
+			}
+			user.Character.OnSkillUseScaled(string(castSkill), userId, spellBonus)
+
+			// primarystat overrides the skill's default stat. Manifestation
+			// already maps to charisma and spellcasting to willpower, so for
+			// every shipped file this is a no-op -- it exists so a spell that
+			// declares something else actually trains it.
+			if spellData != nil {
+				if st := spellData.PrimaryStat; st != "" && st != skills.GetSkillPrimaryStat(string(castSkill)) {
+					user.Character.OnStatUse(st, userId)
+				}
 			}
 		}
 
@@ -527,10 +537,18 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		// OnSkillUseScaled already rolls the skill's primary stat -- see the
 		// identical fix in handlePlayerFoldCasting above for why the explicit
 		// OnStatUse calls here double-rolled every mob cast.
+		castSkill := skills.Spellcasting
 		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
-			mob.Character.OnSkillUseScaled(string(skills.Manifestation), 0, spellBonus)
-		} else {
-			mob.Character.OnSkillUseScaled(string(skills.Spellcasting), 0, spellBonus)
+			castSkill = skills.Manifestation
+		}
+		mob.Character.OnSkillUseScaled(string(castSkill), 0, spellBonus)
+
+		// primarystat overrides the skill's default stat -- see the identical
+		// override in handlePlayerFoldCasting above.
+		if spellData != nil {
+			if st := spellData.PrimaryStat; st != "" && st != skills.GetSkillPrimaryStat(string(castSkill)) {
+				mob.Character.OnStatUse(st, 0)
+			}
 		}
 
 		// Task 6: Spell discovery for caster mobs.

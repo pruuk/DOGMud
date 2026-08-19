@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/pkg/errors"
@@ -237,7 +238,55 @@ func (s *SpellData) Filepath() string {
 	return util.FilePath(fmt.Sprintf("%s.yaml", s.SpellId))
 }
 
+// validStats is the closed set a spell's primarystat may name.
+var validStats = map[string]struct{}{
+	"strength": {}, "dexterity": {}, "perception": {},
+	"vitality": {}, "willpower": {}, "charisma": {},
+}
+
+// U9 made primarystat load-bearing: it drives both the caster-side stat in
+// spell resolution and the stat the cast trains. A typo must therefore fail at
+// boot rather than falling back to a default, which is how the field spent its
+// whole life describing an intent nothing implemented.
+func (s *SpellData) validatePrimaryStat() error {
+	if s.PrimaryStat == "" {
+		return fmt.Errorf("spell %q: primarystat is required", s.SpellId)
+	}
+	if _, ok := validStats[s.PrimaryStat]; !ok {
+		return fmt.Errorf("spell %q: primarystat %q is not one of the six stats", s.SpellId, s.PrimaryStat)
+	}
+	return nil
+}
+
+// CasterStatValue returns the caster-side stat value this spell's rolls,
+// duration and shield strength are built from.
+//
+// CASTER SIDE ONLY. The DEFENDER's stat is owned by the U6 defence set --
+// spell_resolution.go's quell read and charm's target resist both stay on
+// Willpower by design, and routing them through here would silently move quell
+// off the stat U6 designed it around.
+func (s *SpellData) CasterStatValue(stats stats.Statistics) int {
+	switch s.PrimaryStat {
+	case "strength":
+		return stats.Strength.ValueAdj
+	case "dexterity":
+		return stats.Dexterity.ValueAdj
+	case "perception":
+		return stats.Perception.ValueAdj
+	case "vitality":
+		return stats.Vitality.ValueAdj
+	case "charisma":
+		return stats.Charisma.ValueAdj
+	default:
+		return stats.Willpower.ValueAdj
+	}
+}
+
 func (s *SpellData) Validate() error {
+
+	if err := s.validatePrimaryStat(); err != nil {
+		return err
+	}
 
 	if s.Difficulty < 0 {
 		s.Difficulty = 0

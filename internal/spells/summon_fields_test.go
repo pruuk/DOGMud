@@ -26,7 +26,7 @@ func TestSpellData_SummonPetMultiplierParses(t *testing.T) {
 // A summon spell with no multiplier is an authoring error the loader must warn
 // about, exactly as it used to warn about a missing base pool.
 func TestSpellData_ValidateWarnsOnMissingPetMultiplier(t *testing.T) {
-	sd := SpellData{SpellId: "test-summon", SummonMobId: 300}
+	sd := SpellData{SpellId: "test-summon", SummonMobId: 300, PrimaryStat: "charisma"}
 	if err := sd.Validate(); err != nil {
 		t.Fatalf("Validate returned an error, want nil: %v", err)
 	}
