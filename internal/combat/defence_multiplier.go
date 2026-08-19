@@ -7,7 +7,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // DefenceMitigation maps a defender's NORMALIZED margin onto the fraction of
@@ -262,12 +264,21 @@ func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *
 
 	out.DefenceType = res.Winner
 	out.Cost = commitDefenceWinner(defender, candidates, res)
+	// U9: the ordinary defence award is unchanged in WHEN it fires -- whenever
+	// the contest ran, win or lose, which is what this path has always done and
+	// is deliberately different from melee's defence-used gate. That divergence
+	// is recorded in the firing audit and is U10b's to reconcile.
+	//
+	// What is new is the bonus tier: a defensive crit or fumble now pays the
+	// defender, and the attacker observes it.
 	for _, candidate := range candidates {
 		if candidate.entry.Name == res.Winner {
 			AwardDefenceProgression(defender, defender.GetUserId(), res.Winner)
 			break
 		}
 	}
+
+	awardChannelDefenceBonus(channel, attacker, defender, res)
 
 	// A floor changes the outcome without changing the underlying rolls. Keep
 	// the winner and cost, but expose zero statistical sentinels so later prose
@@ -341,4 +352,112 @@ func defenceDamageMultiplier(res contest.Result) float64 {
 	defMargin := -res.Margin / (stdDev * math.Sqrt2)
 
 	return 1.0 - DefenceMitigation(defMargin)
+}
+
+// awardChannelDefenceBonus pays the crit/fumble tier for a channel contest.
+//
+// The ORDINARY events are left to AwardDefenceProgression and to the attacker's
+// own call site, so Outcome carries only the skill and stat names the bonus
+// cells need -- populating the ordinary fields here would double-award.
+func awardChannelDefenceBonus(channel AttackChannel, attacker, defender *characters.Character, res contest.Result) {
+	if !res.Contested || res.Floored {
+		return
+	}
+
+	// Crit is decided by NORMALIZED MARGIN, not by a self-relative z-score.
+	// Since 5.11d the engine tests margin/(stdDev*sqrt2) against
+	// ContestCritThreshold; re-deriving crit from AttackRoll.ZScore here would
+	// fire the bonus tier on a DIFFERENT set of swings than the game narrates
+	// as crits, which is two mechanisms answering one question.
+	//
+	// Note the sign: Result.Margin is ATTACK-positive, so the defence side
+	// negates it, exactly as defenceDamageMultiplier does at
+	// defence_multiplier.go:307.
+	attackCrit := AttackContestCrit(res.Margin, res.AttackRoll)
+	defenceCrit := DefenseContestCrit(-res.Margin, res.DefenseRoll)
+
+	// Fumble stays self-relative: it is a property of one bad roll, not of the
+	// gap between two. ContestCritThreshold is the same magnitude in both
+	// directions.
+	attackFumble := res.AttackRoll.ZScore <= -ContestCritThreshold
+	defenceFumble := res.DefenseRoll.ZScore <= -ContestCritThreshold
+
+	exceptional := progression.Classify(attackCrit, defenceCrit, attackFumble, defenceFumble)
+	if exceptional == progression.ExcNone {
+		return
+	}
+
+	atkSkill, atkStat := channelAttackSkillAndStat(channel, attacker)
+	defSkill, defStat := DefenceSkillAndStat(res.Winner)
+
+	out := progression.Outcome{
+		AttackerSkill: atkSkill,
+		AttackerStat:  atkStat,
+		DefenderSkill: defSkill,
+		DefenderStat:  defStat,
+		ToughenStat:   characters.ToughenStatFor(channelDamageChannel(channel)),
+		Exceptional:   exceptional,
+	}
+
+	bal := configs.GetBalanceConfig()
+	bonuses := progression.Bonuses{
+		Doing:     float64(bal.CritProgressionBonus),
+		Observing: float64(bal.ObservedCritProgressionBonus),
+	}
+
+	// BonusEvents, not EventsForContest: the ordinary events on this path are
+	// already awarded by AwardDefenceProgression above and by the attacker's
+	// own call site, so asking for them here would double-award.
+	evs := progression.BonusEvents(out, bonuses)
+
+	round := util.GetRoundCount()
+	attacker.ApplyProgression(evs, progression.SideAttacker, attacker.GetUserId(), round)
+	defender.ApplyProgression(evs, progression.SideDefender, defender.GetUserId(), round)
+}
+
+// channelAttackSkillAndStat mirrors ChannelAttackScore's channel-to-skill/stat
+// mapping. It exists only because ChannelAttackScore returns a float (the
+// contest score), not the names that fed it -- the bonus tier needs the
+// names. Do not fork a second mapping: Task 13 moves the spell attack ROLL
+// onto primarystat but leaves ChannelAttackScore's willpower-based CONTEST
+// score untouched, so this stays in lockstep with that function, not with
+// whatever the attack roll uses.
+func channelAttackSkillAndStat(channel AttackChannel, attacker *characters.Character) (skill, stat string) {
+	if attacker == nil {
+		return "", ""
+	}
+	switch channel {
+	case ChannelSpellMental, ChannelSpellPhysical:
+		return string(skills.Spellcasting), "willpower"
+	case ChannelSocial:
+		return string(skills.Rhetoric), "charisma"
+	default:
+		return "", ""
+	}
+}
+
+// channelDamageChannel maps an AttackChannel onto the "physical"/"magical"/
+// "conviction" damage-channel string ToughenStatFor expects.
+//
+// Both spell channels answer "magical" here, NOT "physical" for
+// ChannelSpellPhysical. TargetDefenseType: physical only changes which
+// defence answers the spell (dodge/block instead of quell); the damage
+// itself is still cast off willpower and always goes through
+// combat.ChannelMagical in calcSpellDamageForCharacter
+// (internal/hooks/combat_shared_helpers.go). Mapping ChannelSpellPhysical to
+// "physical" here would toughen the wrong stat (vitality instead of
+// willpower) on a defensive crit.
+//
+// ChannelMelee and ChannelRanged are omitted deliberately: ChannelMelee never
+// reaches this path (defence_sets.go:32-34) and ChannelRanged has its own
+// rangedDefenseScore route, so callers here never pass either.
+func channelDamageChannel(channel AttackChannel) string {
+	switch channel {
+	case ChannelSpellPhysical, ChannelSpellMental:
+		return "magical"
+	case ChannelSocial:
+		return "conviction"
+	default:
+		return ""
+	}
 }
