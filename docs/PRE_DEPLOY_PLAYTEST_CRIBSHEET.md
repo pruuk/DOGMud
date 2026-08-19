@@ -239,3 +239,28 @@ refusals are legible and whether the pet tiers feel genuinely different.
       summoner pays a small premium on each. Each half is deliberate, the
       compounding is not designed. Note whether it is noticeable in play or
       purely theoretical.
+
+## U9 progression layer (2026-08-19)
+
+Rates moved in BOTH directions in U9, so the felt frequency is what matters,
+not the arithmetic. Four duplications were removed and one faucet was closed;
+the crit and fumble bonus tiers were added or widened at the same time.
+
+- [ ] Fight for ten or more rounds and count how often a skill or stat
+      improvement banner appears. Before U9 a melee round awarded its
+      attacker progression twice and its defender once per defended swing,
+      so the honest expectation is FEWER banners than you are used to, not
+      more. If it feels dead rather than merely slower, say so.
+- [ ] Land a critical hit and watch for the brilliance message. Take one and
+      confirm you are told nothing (receiving is deliberately silent) but
+      that vitality still creeps up over a long fight.
+- [ ] Fumble deliberately, repeatedly, and confirm the learn-from-mistakes
+      message still arrives. Fumbles now pay the same bonus a crit does,
+      which is new.
+- [ ] Cast a summon, a conjure, or a raise and confirm it trains presence
+      rather than resolve. These were mislabelled in data for their whole
+      life.
+- [ ] Sit at low health and let yourself regenerate for a long stretch on a
+      VETERAN character. Passive growth should now tail off noticeably. On a
+      NEW character it must feel exactly as it always did; if early growth
+      got slower, the damping is wrong and that is a bug, not tuning.

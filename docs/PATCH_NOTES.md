@@ -1,6 +1,27 @@
 # DOGMud Patch Notes
 
-## 2026-08-18: Effort now reaches every combat choice
+## 2026-08-19: Learning from a fight, on both sides of it
+
+Landing a decisive blow, or making a serious mistake, now teaches you something
+about the technique you used and the attribute behind it. Both halves are
+awarded together, so a moment of brilliance improves the same things it drew on.
+Failure teaches as well as success does. The person on the other side learns
+from it too, at a lesser rate, because watching a thing happen to you is worth
+less than doing it.
+
+Surviving a punishing hit still toughens you. It now follows the same curve as
+every other kind of practice, so it rewards genuine progress rather than
+repetition. The same is true of the slow recovery that happens while you rest
+and heal: it teaches most while you are still building yourself up, and less
+once you have already come a long way. Nothing about early growth changes.
+
+Several places were quietly handing out practice more than once for a single
+action. A round of swordplay, a defended flurry, and a spell all counted
+themselves twice. They now count once, so what you earn reflects what you did.
+
+Spells that call something into being, or bind a creature to your will, now
+train the presence they actually run on rather than the discipline they were
+mislabelled with.
 
 Ranged attacks, reloading, physical maneuvers, sneaking, thrown items, and
 grapple openings now draw on Stamina. Taunts, rallying cries, and warcries draw
