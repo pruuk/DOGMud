@@ -326,12 +326,16 @@ for quell and defy.
 
 ## 6. Behaviour changes, named
 
+> **Corrected 2026-08-19 by the modelling gate** — see
+> [`2026-08-19-u6b-modelling.md`](2026-08-19-u6b-modelling.md) §7. The first
+> version of this table over-claimed on spell PvE and was simply wrong about
+> taunt.
+
 | Change | Direction | Who |
 |---|---|---|
-| Spell attacker skill ×15 → ×5 | **Large cut** | All |
-| Spell defender gains `spellcasting×5` on the hit contest (was ×0) | **Large increase** | All |
-| Taunt: defender's skill contested once instead of twice | Cut to defence | All |
-| Spell and taunt crits now face their defence | Cut to crit reliability | All |
+| Spell attacker skill ×15 → ×5, defender gains `spellcasting×5` | **PvE ≈ unchanged (0.99×). Caster-vs-caster transformed**: 85.5%/84%-crit → 49.7%/2.5%, 0.19× | All |
+| Taunt: defender no longer contested twice | **Pure ATTACKER buff** — hit/crit bit-identical; E[mult] 0.338 → 0.658 | All |
+| Spell crits now face quell | Cut to crit reliability (spell ONLY; taunt already did) | All |
 | Ranged + 14 special moves: skill ×1 → ×5 both sides | Increase | All |
 | Ranged + 14 special moves: real defence SET | Increase to defenders | All |
 | **16 attacks gain a crit tier that never existed** | **Large increase** | All |
@@ -350,6 +354,18 @@ single most important thing for modelling to quantify.
 ---
 
 ## 7. Modelling gate — MANDATORY, before any code
+
+> ✅ **DISCHARGED 2026-08-19**, contingent on decisions:
+> [`2026-08-19-u6b-modelling.md`](2026-08-19-u6b-modelling.md). Three scripts
+> under `tools/balance/u6b_model_*.py`, anchors reproduced, appendices A–C
+> alongside. **One BLOCKING decision before the plan: mobs are skill 0 on
+> every non-melee path** (zero mob YAMLs author skills; the skill-1 fallback
+> lives only in `GetCombatSkillLevel`, which only melee autoattack uses), so
+> as-specced the flip guts mob specials AND mob casters against skilled
+> players. Modelling doc §5.1 has the options. Also forced: fizzle becomes a
+> partial-damage outcome (§5.2 — the neutral spell results depend on it), and
+> the drift reweight deletes the aggressor's edge (§5.4) unless it returns as
+> an explicit config modifier.
 
 No weight changes until this is done and reviewed. It discharges a gate the
 roadmap raised before U6 and that U6 shipped without.
