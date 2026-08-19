@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -96,32 +97,58 @@ var progressionCalls = map[string]bool{
 func TestContestPathsFireProgressionOnlyThroughTheApplier(t *testing.T) {
 	for _, pkg := range []string{"internal/combat", "internal/hooks"} {
 		fset := token.NewFileSet()
-		pkgs, err := parser.ParseDir(fset, filepath.Join("..", "..", pkg), nil, 0)
+		dir := filepath.Join("..", "..", pkg)
+
+		// os.ReadDir + ParseFile rather than parser.ParseDir: the latter is
+		// deprecated as of Go 1.25 (SA1019), and the lint gate is
+		// only-new-issues, so a new file using it fails CI. We only need each
+		// file's syntax tree, not package association, so the deprecation's
+		// actual concern (ParseDir ignores build tags when grouping files into
+		// packages) does not apply here.
+		entries, err := os.ReadDir(dir)
 		if err != nil {
-			t.Fatalf("parse %s: %v", pkg, err)
+			t.Fatalf("read %s: %v", pkg, err)
 		}
-		for _, p := range pkgs {
-			for path, file := range p.Files {
-				rel := filepath.Join(pkg, filepath.Base(path))
-				if strings.HasSuffix(path, "_test.go") || allowedDirectProgression[rel] {
-					continue
-				}
-				ast.Inspect(file, func(n ast.Node) bool {
-					call, ok := n.(*ast.CallExpr)
-					if !ok {
-						return true
-					}
-					sel, ok := call.Fun.(*ast.SelectorExpr)
-					if !ok {
-						return true
-					}
-					if progressionCalls[sel.Sel.Name] {
-						t.Errorf("%s fires %s directly; contest paths must go through characters.ApplyProgression",
-							fset.Position(call.Pos()), sel.Sel.Name)
-					}
-					return true
-				})
+
+		// Count what we actually inspected. A guard that silently scans zero
+		// files passes forever and protects nothing, which is what a path
+		// change or a bad filter would produce. Both packages are large; 20 is
+		// far below their real size and far above zero.
+		scanned := 0
+
+		for _, entry := range entries {
+			name := entry.Name()
+			if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+				continue
 			}
+			if allowedDirectProgression[filepath.Join(pkg, name)] {
+				continue
+			}
+			file, err := parser.ParseFile(fset, filepath.Join(dir, name), nil, 0)
+			if err != nil {
+				t.Fatalf("parse %s: %v", filepath.Join(pkg, name), err)
+			}
+			scanned++
+			ast.Inspect(file, func(n ast.Node) bool {
+				call, ok := n.(*ast.CallExpr)
+				if !ok {
+					return true
+				}
+				sel, ok := call.Fun.(*ast.SelectorExpr)
+				if !ok {
+					return true
+				}
+				if progressionCalls[sel.Sel.Name] {
+					t.Errorf("%s fires %s directly; contest paths must go through characters.ApplyProgression",
+						fset.Position(call.Pos()), sel.Sel.Name)
+				}
+				return true
+			})
+		}
+
+		if scanned < 20 {
+			t.Errorf("guard inspected only %d files in %s; it is not actually scanning the package and would pass no matter what the code did",
+				scanned, pkg)
 		}
 	}
 }
