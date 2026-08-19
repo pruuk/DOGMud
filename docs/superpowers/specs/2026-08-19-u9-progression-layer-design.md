@@ -458,9 +458,9 @@ ever. The ladder can only fire on a save carrying a non-zero `charm_duration`
 from an older build. The ×25 weight is therefore buying survivability against a
 mechanic that does not run — a pure leftover, not a compensating balance.
 
-**Verify this before building U10c**: whether any live save still carries a
-non-zero `charm_duration` decides whether the redesign needs a migration or can
-simply start assigning durations.
+**No migration is needed.** Owner, 2026-08-19: no veteran player uses charm,
+because the conjure and raise options are strictly better, so U10c is free to
+rewrite how the spell works without preserving any live charm state.
 
 **Owner decision:** redesign charm with a real duration, remove the re-roll
 ladder, and return the weight to uniform 5.0. Its own slice because it is a
