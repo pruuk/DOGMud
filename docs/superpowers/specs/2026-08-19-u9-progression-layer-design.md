@@ -617,6 +617,31 @@ mechanics redesign rather than a progression change, and because dropping a
 four-figure attack score to a three-figure one needs modelling and a playtest,
 not a sweep inside another slice.
 
+### 12.1 U10c also owns charm's DEFENCE stat
+
+Charm is the **only manifestation spell that attacks another character** (owner,
+2026-08-19). The other thirteen create or raise companions and declare
+`target_defense_type: none`, so they contest nothing at all. This is also why
+§8.1 can leave `ChannelAttackScore` on Willpower safely: no manifestation spell
+ever reaches it.
+
+That makes charm's defence a real design question rather than a consistency one.
+It currently resists on `Willpower + 10% of the target's total stat training`
+(`charm_spell.go:63-64`), and **either Willpower or Charisma is defensible**:
+charm is a working pressed against a mind, which argues Willpower, but it is
+also an act of social domination whose attack side already runs on Charisma,
+which argues the defender's Charisma should answer it.
+
+U9 changes nothing here. It is recorded because U10c is rewriting this exact
+function and should decide deliberately rather than preserving the current stat
+by inertia.
+
+Note the interaction with the U6 defence set: charm does not use one. It never
+reaches `ResolveChannelDefence`, so neither `quell` nor `defy` answers it. If
+U10c wants charm answered by a named defence rather than a bespoke score, that
+is a row in `DefenceSetFor` plus a channel — a larger change than swapping the
+stat, and worth costing separately.
+
 ---
 
 ## 13. Open items for spec review

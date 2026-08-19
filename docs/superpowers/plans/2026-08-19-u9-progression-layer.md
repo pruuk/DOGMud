@@ -2212,11 +2212,18 @@ This covers the channels that actually resolve through
 with `ChannelRanged`: `shoot` has its own `rangedDefenseScore` path. And
 `ChannelMelee` is documented at `defence_sets.go:32-34` as never routed here, so
 the test below must construct its own `ChannelDefenceResult` rather than assume
-a melee call reaches this function. Verify before writing the test:
+a melee call reaches this function.
+
+The five spell sites reach it through the `runPlayerSpellDefence` wrapper, not
+by calling `ResolveChannelDefence` directly, so grepping the exported name alone
+finds only taunt and understates the scope:
 
 ```bash
-grep -rn "ResolveChannelDefence\|resolveChannelDefenceWithRunner" --include=*.go internal/ | grep -v _test
+grep -rn "spellAttackChannel\|runPlayerSpellDefence\|ResolveChannelDefence" --include=*.go internal/ | grep -v _test
 ```
+
+Expected: `spell_resolution.go` lines 475, 564, 854, 1411 and 1472, plus
+`combat_taunt.go:244`.
 
 **Files:**
 - Modify: `internal/combat/defence_multiplier.go`
@@ -2710,21 +2717,59 @@ if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 skillLevel := user.Character.GetSkillLevel(castSkill)
 ```
 
-**And `combat.ChannelAttackScore` (`defence_multiplier.go:64-66`) independently
-builds the spell attacker's score as `Willpower + Spellcasting × SkillWeight`.**
-Left untouched, the same spell would roll to hit on charisma and contest the
-defence on willpower. It needs the spell's stat and skill threaded in, or an
-explicit decision — recorded here — that the defence contest deliberately stays
-on Willpower for every spell.
+**`combat.ChannelAttackScore` (`defence_multiplier.go:64-66`) stays on
+Willpower, and that is correct — do not touch it.** It independently builds the
+spell attacker's score as `Willpower + Spellcasting × SkillWeight`, which looks
+like it would contradict a charisma `primarystat`. It cannot, because **no
+manifestation-school spell ever reaches it** (owner, 2026-08-19):
 
-**Stop and ask before choosing.** Threading `primarystat` into
-`ChannelAttackScore` changes the *hit rate* of every manifestation spell against
-quell, which is a balance change beyond the "near-zero delta" §8.2 promises.
-Verify first:
+- The 13 summons, conjures and raises declare `target_defense_type: none` **and**
+  `effect_type: none`, so they resolve through `resolveCompanionSummon` and
+  never call `runPlayerSpellDefence`. They create or raise companions; there is
+  nothing to contest.
+- **Charm is the only manifestation spell that attacks another character**, and
+  it routes to `resolveCharmSpell` (`spell_resolution.go:231`), a bespoke path
+  with its own attack score (`Charisma + Manifestation × 25`) and its own
+  defence score (target `Willpower` + 10% of training total). It never touches
+  `ChannelAttackScore` either.
+
+So every spell that reaches `ChannelAttackScore` is a Willpower spell already.
+Threading `primarystat` through it would be surgery for zero live callers.
+
+- [ ] **Step 5b: Guard the assumption that makes 5a safe**
+
+The safety above rests on a **data** property, not a code one: no
+manifestation-school spell currently contests anything. Author one that does and
+the mismatch appears silently, with the spell rolling to hit on Willpower while
+its `primarystat` says charisma.
+
+```go
+// The charisma/willpower split is prevented by data, not by code:
+// ChannelAttackScore hardcodes Willpower, and no manifestation-school spell
+// reaches it. Authoring a contesting manifestation spell breaks that silently,
+// so fail loudly here instead. If this fires, either thread primarystat into
+// ChannelAttackScore or give the new spell its own resolution path as charm has.
+func TestNoManifestationSpellContestsThroughTheSharedChannel(t *testing.T) {
+	for _, sp := range spells.GetAllSpells() {
+		if !sp.HasSchool(spells.SchoolManifestation) {
+			continue
+		}
+		if sp.SpellId == "charm" {
+			continue // bespoke path, see resolveCharmSpell
+		}
+		if sp.TargetDefenseType != "" && sp.TargetDefenseType != "none" {
+			t.Errorf("manifestation spell %q declares target_defense_type %q; "+
+				"it will contest on Willpower while its primarystat says %q",
+				sp.SpellId, sp.TargetDefenseType, sp.PrimaryStat)
+		}
+	}
+}
+```
+
+Confirm `GetAllSpells` (or the real accessor name) before writing it:
 
 ```bash
-grep -n "func ChannelAttackScore" -A25 internal/combat/defence_multiplier.go
-grep -rn "ChannelAttackScore" --include=*.go internal/ | grep -v _test
+grep -n "func GetAllSpells\|func GetSpell\b\|allSpells" internal/spells/spells.go | head
 ```
 
 - [ ] **Step 6: Override the progression stat**
@@ -3094,7 +3139,7 @@ In `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`:
 4. Add a **U10c** row:
 
 ```markdown
-| **U10c** | **Charm redesign.** Added 2026-08-19. `charm_spell.go` scores `Charisma + Manifestation x 25`, a skill weight of 25 against U6's uniform 5.0, so it survived the flip. It was compensating for a periodic resist ladder that is **dead code**: nothing assigns `CharmDuration` at cast time and the ladder is gated on it being non-zero, so a charmed mob is charmed for 99999 rounds with no resist check. Give charm a real duration, delete the ladder, return the weight to 5.0. No migration needed (owner: no veteran uses charm). Needs modelling and a playtest. | M | U9 | **Yes** |
+| **U10c** | **Charm redesign.** Added 2026-08-19. `charm_spell.go` scores `Charisma + Manifestation x 25`, a skill weight of 25 against U6's uniform 5.0, so it survived the flip. It was compensating for a periodic resist ladder that is **dead code**: nothing assigns `CharmDuration` at cast time and the ladder is gated on it being non-zero, so a charmed mob is charmed for 99999 rounds with no resist check. Give charm a real duration, delete the ladder, return the weight to 5.0. **Also decide charm's DEFENCE stat**: it is the only manifestation spell that attacks anyone, it resists on Willpower today, and Charisma is equally defensible for an act of social domination whose attack side is already Charisma (spec §12.1). No migration needed (owner: no veteran uses charm). Needs modelling and a playtest. | M | U9 | **Yes** |
 ```
 
 5. Add a line to the "Modelling gates" section: **Before tuning
@@ -3205,9 +3250,11 @@ merges before or after a feel check.
   attackers), plus a fifth defect the spec had documented as correct behaviour.
   Where a step says "an earlier draft did X", that is not commentary — it is the
   specific mistake the step exists to prevent you repeating.
-- **Two steps deliberately stop and ask** rather than guessing: Task 13 step 5a
-  (whether `ChannelAttackScore` moves off Willpower, which changes spell hit
-  rates) and any fourth hit from the Task 15 guard.
+- **One step deliberately stops and asks** rather than guessing: any fourth hit
+  from the Task 15 guard beyond the three it expects. (An earlier draft also
+  flagged `ChannelAttackScore` as a stop-and-ask; the owner resolved it —
+  no manifestation spell reaches it, so it stays on Willpower and Task 13 step
+  5b guards that assumption instead.)
 - **Do not change when progression fires.** Every task preserves existing firing
   conditions. If a change seems obviously right, it belongs in the Task 2 audit
   as a recommendation, not in the code.
