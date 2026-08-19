@@ -3,8 +3,10 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -14,6 +16,8 @@ import (
 // GrappleResult holds the outcome of a grapple attempt for the caller to use
 // when formatting messages, firing events, and updating UI.
 type GrappleResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -36,6 +40,9 @@ type GrappleResult struct {
 
 	// GrappleImmune is true when the target cannot be grappled (ethereal, fire, etc.)
 	GrappleImmune bool
+
+	// TargetGrappling is true when the target is already in a grapple.
+	TargetGrappling bool
 }
 
 // ExecuteGrapple performs the core grapple resolution shared between player
@@ -56,8 +63,9 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 		return GrappleResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
+	// Resolve the aggro target.
+	target := resolveActionTarget(actor, char)
+	if !target.Found {
 		return GrappleResult{NoTarget: true}
 	}
 
@@ -66,22 +74,12 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 		return GrappleResult{GrappleImmune: true}
 	}
 
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	cooldownStr := fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)
-	if !char.Cooldowns.Try("special-move", cooldownStr) {
-		return GrappleResult{OnCooldown: true}
-	}
-
 	// Grappling is a humanoid technique — requires arms to seize/hold.
 	if !char.HasBodyPart("arms") {
 		return GrappleResult{GrappleImmune: true}
 	}
-
-	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
-	if !target.Found {
-		return GrappleResult{NoTarget: true}
+	if target.Char.IsGrappling() {
+		return GrappleResult{Target: target, TargetGrappling: true}
 	}
 
 	// Grapple immunity (ethereal creatures, fire elementals, etc.)
@@ -93,6 +91,19 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 	if mutations.IsControlImmune(target.Char.Mutations) {
 		return GrappleResult{Target: target, GrappleImmune: true}
 	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return GrappleResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionGrapple, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return GrappleResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return GrappleResult{Cost: cost, OnCooldown: true}
+	}
+	commitMeleeEngagement(actor)
 
 	// Execute the grapple move. Player actors pass their UserId; mobs pass 0.
 	attackerId := actor.GetUserId()
@@ -117,6 +128,7 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 	}
 
 	return GrappleResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

@@ -218,6 +218,16 @@ func TestExecuteTaunt_CriticalStillReachable(t *testing.T) {
 		}
 
 		res := ExecuteTaunt(&MobActor{Mob: attacker})
+		if res.Executed {
+			if res.Cost.Status != characters.CostPaid || res.Cost.Charged != 4 {
+				t.Fatalf("admitted taunt cost = %+v, want one paid four-point Conviction charge", res.Cost)
+			}
+			wantConviction := 999 - res.Cost.Charged - res.SelfDamage
+			if attacker.Character.Conviction != wantConviction {
+				t.Fatalf("taunter conviction = %d, want %d after one admission and reported self-harm",
+					attacker.Character.Conviction, wantConviction)
+			}
+		}
 		switch {
 		case !res.Executed:
 			notExecuted++

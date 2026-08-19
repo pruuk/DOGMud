@@ -608,5 +608,9 @@ This event system provides the foundation for GoMud's decoupled architecture, en
 | `eventlogger.go` | Event logging |
 | `const.go` | Constants and flags |
 
+Test-only queue drain seams in `events.go` include
+`DrainQueuedPlayerAttackedMobsForTest(userId)`. Passing zero drains all queued
+`PlayerAttackedMob` events; a nonzero ID drains only that player's events.
+
 This is the synchronous engine bus. `internal/worldevents` is a separate,
 passive record of notable happenings — do not confuse the two.

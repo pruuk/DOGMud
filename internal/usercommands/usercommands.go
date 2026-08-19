@@ -419,22 +419,21 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 	// Fold-casting intercept: while holding folds, most action commands are blocked.
 	// Informational commands (AllowedWhenDowned=true) pass through.
 	// 'cancel' always allowed (to stop casting).
-	// 'flee' clears the cast and then proceeds.
+	// 'flee' clears the cast only when there is a live combat to flee. An
+	// out-of-combat rejection must not destroy an otherwise valid pending cast.
 	if user.Character.Activity != nil && user.Character.Activity.IsCasting() {
-		if cmd == `flee` {
-			cs, _ := user.Character.Activity.CastingData()
+		if cmd == `flee` && user.Character.IsInCombat() {
 			_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
 				Trigger: activity.TriggerCastCancel,
 				Actor:   state.ActorRef{UserId: user.UserId},
 			})
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="cyan">You lose your concentration as you flee! %d conviction is lost.</ansi>`,
-				cs.ConvictionSpent))
+			user.SendText(messaging.CategorySystem,
+				`<ansi fg="cyan">You lose your concentration as you flee!</ansi>`)
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
 				`<ansi fg="username">%s</ansi> breaks their concentration.`,
 				user.Character.Name), user.UserId)
 			// Fall through — let the flee command execute normally
-		} else if cmd != `cancel` {
+		} else if cmd != `cancel` && cmd != `flee` {
 			if cmdInfo, hasCmdInfo := userCommands[cmd]; !hasCmdInfo || !cmdInfo.AllowedWhenDowned {
 				cs, _ := user.Character.Activity.CastingData()
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(

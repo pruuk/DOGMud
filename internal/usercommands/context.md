@@ -268,6 +268,28 @@ What matters is the shape, not the list:
 - **Shared logic belongs in `internal/actions`**, behind `actions.Actor`, so
   the user and mob paths cannot drift. A command file should be argument
   parsing plus a call into `actions`.
+- **Voluntary-action admission** is mechanical shared-action work. A user
+  wrapper will render a private, pool-aware refusal only when its returned
+  `CostCommitResult` has `Status == characters.CostRefused`; it must not
+  re-quote, re-commit, or charge a pool directly.
+- **Flee is the life-preserving partial-pay exception.** `Flee` first publishes
+  a pending `fleeAdmission`, transitions to Disengaging, then commits cost and
+  marks the admission ready. `TakeFleeAdmission(user) (includeSkill, ok)`
+  atomically consumes only a ready admission in the asynchronous round hook;
+  `CancelFleeAdmission` retracts pending or ready state when combat terminates.
+  A rejected transition or an out-of-combat queued command spends nothing and
+  publishes no attempt. `ok == false` is not reusable state: on a phase flee it
+  means the command is still publishing or a resolver/cancellation already
+  owns the attempt, while a true legacy `Aggro{Type:Flee}` path defaults to the
+  historical full-skill behavior.
+- **Casting interception preserves terminal semantics.** `flee` cancels a
+  pending fold-cast only when the character is actually in combat; an
+  out-of-combat rejection leaves the cast intact. The cancellation line never
+  exposes the raw conviction already invested in the cast.
+- **Player shortage lines are private and singular.** Autoattack, winning
+  defence, flee, and grapple maintenance explain the skill-less resolution once
+  at their owning round/action boundary. Losing defence candidates never emit a
+  line. NPC wrappers use the same mechanics without private output.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must
   *split* input into multiple slots (item vs. container, mob vs. player).
@@ -278,15 +300,19 @@ Enumerate every step; a partially-wired admin command is the classic failure:
 handler file, registration entry, help file, mob twin (or allowlist entry),
 and — if it is player-facing — an entry in the relevant help category.
 
-**If the command attacks a mob, it must seed aggression.** Route it through
-`actions.AcquireMeleeTarget` and you get it for free; that is how all eleven
-melee specials (kick, bash, trip, grapple, taunt, gore, maul, pounce, rake,
-throttle, drain) are covered. Anything with its own targeting — `attack`,
+**If the command attacks a mob, it must seed aggression.** Admission-gated
+melee specials and taunt route through `actions.StageMeleeTarget`; their shared
+`Execute*` action commits engagement only after payment and cooldown. Anything
+with its own targeting — `attack`,
 `shoot`, `throw` — calls `actions.SeedAggression` itself. Skip it and the
 attack is invisible to the revenge, opinion and justice systems: no assault
 crime, no rep hit, no bounty, no witness memory. That was the real state of all
 twelve special-move paths until 2026-08-14. See `internal/actions/context.md`
 for the fresh-aggro contract, which is easy to get backwards.
+
+When a taunt is defended, the coordinated Defy message is the complete result
+for each audience. Do not also emit the ordinary taunt-hit narration; that
+would describe the same resolution twice and can contradict the defence.
 
 **`throw` is the grenade verb and is untargeted by design** — it takes an item,
 never a target, and resolves as a room AoE. Aimed thrown weapons (darts,

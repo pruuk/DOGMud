@@ -18,13 +18,17 @@ to the ground on a successful hit.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Solid — the charging impact deals meaningful
+  <ansi fg="stat">Damage:</ansi> Solid. The charging impact deals meaningful
     harm on contact.
   <ansi fg="stat">Knockdown:</ansi> A successful gore has a strong chance to
     drive the target backward off their feet (Supine),
     leaving them vulnerable to follow-up attacks.
   <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+
+Gore spends Stamina and requires full payment before the charge. Carried load
+raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
 
 Gore is a powerful opener that combines direct damage with
 a knockdown attempt. Unlike pounce, it relies on raw
@@ -34,4 +38,6 @@ strength and momentum rather than agility. See
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help pounce</ansi>, <ansi fg="command">help maul</ansi>, <ansi fg="command">help rake</ansi>,
-  <ansi fg="command">help kick</ansi>, <ansi fg="command">help conditions</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help kick</ansi>, <ansi fg="command">help conditions</ansi>,
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>,
+  <ansi fg="command">help combat</ansi>

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -427,6 +428,48 @@ func TestUserRecord_TempData(t *testing.T) {
 		assert.Equal(t, 1, u.GetTempData("a"))
 		assert.Equal(t, "two", u.GetTempData("b"))
 	})
+}
+
+// Catches implementing take as GetTempData followed by SetTempData(nil): two
+// concurrent/reentrant consumers could both observe the same admission.
+func TestUserRecord_TakeTempDataConsumesAtomically(t *testing.T) {
+	u := &UserRecord{}
+	u.SetTempData("single-use", "admission")
+
+	const consumers = 32
+	start := make(chan struct{})
+	results := make(chan any, consumers)
+	var wg sync.WaitGroup
+	for range consumers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			results <- u.TakeTempData("single-use")
+		}()
+	}
+	close(start)
+	wg.Wait()
+	close(results)
+
+	consumed := 0
+	missing := 0
+	for result := range results {
+		switch result {
+		case "admission":
+			consumed++
+		case nil:
+			missing++
+		default:
+			t.Fatalf("unexpected take result %#v", result)
+		}
+	}
+	if consumed != 1 || missing != consumers-1 {
+		t.Fatalf("atomic takes returned consumed=%d missing=%d, want 1 and %d", consumed, missing, consumers-1)
+	}
+	if got := u.GetTempData("single-use"); got != nil {
+		t.Fatalf("value remained after atomic take: %#v", got)
+	}
 }
 
 func TestUserRecord_ConfigOption(t *testing.T) {

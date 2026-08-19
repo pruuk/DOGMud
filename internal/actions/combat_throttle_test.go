@@ -39,11 +39,9 @@ func TestThrottle_OnCooldown(t *testing.T) {
 	room := newTestRoom()
 	actor := newStubActor(char, room)
 
-	// Set aggro so we pass the nil check and reach the cooldown gate.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
-
-	// Burn the cooldown slot so the next Try call is blocked.
-	char.Cooldowns.Try("special-move", "3 rounds")
+	prepareSpecialMoveCooldown(t, char, 7908, 7908, &species.Species{
+		SpeciesId: 7908, Name: "cooldown-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+	})
 
 	result := ExecuteThrottle(actor)
 
@@ -87,6 +85,7 @@ func TestThrottle_NotFanged(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 7002 // wolf — fanged
 		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		fundSpecialMove(char)
 
 		result := ExecuteThrottle(newStubActor(char, newTestRoom()))
 
@@ -127,6 +126,7 @@ func TestThrottle_Executed_BleedAndBuff(t *testing.T) {
 	char := characters.New()
 	char.SpeciesId = 7003
 	char.Stats.Strength.ValueAdj = 500
+	fundSpecialMove(char)
 
 	// Retry until we observe a hit.
 	hitSeen := false
@@ -216,6 +216,7 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 	char := characters.New()
 	char.SpeciesId = 7004
 	char.Stats.Strength.ValueAdj = 500
+	fundSpecialMove(char)
 
 	// Store pre-interrupt conviction to verify refund.
 	convictionBefore := targetMob.Character.Conviction

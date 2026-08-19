@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -36,14 +37,19 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	sneakCooldownKey := skills.Skullduggery.String(`sneak`)
 
 	// Check cooldown — only block if on cooldown from a prior failure
-	if user.Character.GetCooldown(sneakCooldownKey) > 0 {
+	if !user.Character.CooldownReady(sneakCooldownKey) {
+		remaining := user.Character.Cooldowns[sneakCooldownKey]
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			"You need to wait %d more rounds before you can try that again.",
-			user.Character.GetCooldown(sneakCooldownKey)))
+			remaining))
 		return true, nil
 	}
 
 	result := actions.Sneak(&actions.UserActor{User: user, Room: room})
+	if result.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		return true, nil
+	}
 
 	switch {
 	case result.AlreadyHidden:
@@ -56,8 +62,10 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	case result.SpottedByName != "":
 		// Apply failure cooldown so the player can't spam sneak
-		user.Character.TryCooldown(sneakCooldownKey,
-			fmt.Sprintf(`%d rounds`, cfg.SneakFailCooldown))
+		if cfg.SneakFailCooldown > 0 {
+			user.Character.TryCooldown(sneakCooldownKey,
+				fmt.Sprintf(`%d rounds`, cfg.SneakFailCooldown))
+		}
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`You try to blend into the shadows but <ansi fg="mobname">%s</ansi> notices you.`,
 			result.SpottedByName))

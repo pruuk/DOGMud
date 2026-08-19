@@ -52,6 +52,15 @@ func PickTemplate(pool []string, cooldowns map[string]bool, keyPrefix string) st
 - **Both names are substituted positionally** — `RenderTemplate` does not know
   which is the player. Getting controller and controlled the wrong way round
   produces text that is grammatical and completely wrong.
+- **Maintenance-shortage text is participant-private.** The grapple tick uses
+  its existing `sendToCharacter` grapple-flow route once for each short player.
+  It is not a template triad: partners and observers must not receive it, and
+  the route deliberately no-ops for NPCs. Reversal and submission messaging
+  must not replay the maintenance warning.
+- **The message follows independent admission.** Controller and controlled
+  participants receive separate role-adjusted maintenance quotes before drift.
+  Either may be short and lose only their own Unarmed Combat term; do not infer
+  one participant's status from the other or from the eventual contest result.
 
 ## Dependencies
 

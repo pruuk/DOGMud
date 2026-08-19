@@ -12,4 +12,9 @@ Party members won't give you away.
 
 Requires the <ansi fg="skill">skullduggery</ansi> skill.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help skullduggery</ansi>, <ansi fg="command">help steal</ansi>
+Sneaking spends Stamina and requires full payment before concealment begins.
+Carried load raises the price, while <ansi fg="skill">skullduggery</ansi> lowers
+it. If you are too spent, your visibility and cooldown remain unchanged.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help skullduggery</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help steal</ansi>

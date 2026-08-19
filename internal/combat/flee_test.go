@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,8 +126,12 @@ func TestResolveFleeBlockers_NoOpposers(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker, contested := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	assert.Nil(t, blocker, "no combatants in room → no blocker")
+	// contested is what the wrappers gate skullduggery practice on. An empty
+	// room must report false, or walking out of a room where nothing was
+	// fighting you would train escape artistry.
+	assert.False(t, contested, "no opposed roll was made, so nothing was contested")
 }
 
 func TestResolveFleeBlockers_MobBlockerWins(t *testing.T) {
@@ -139,7 +144,7 @@ func TestResolveFleeBlockers_MobBlockerWins(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker, _ := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	require.NotNil(t, blocker, "strong mob blocker should win opposed roll")
 	assert.Equal(t, "bouncer", blocker.Name)
 	assert.Equal(t, 200, blocker.MobInstanceId)
@@ -166,11 +171,42 @@ func TestResolveFleeBlockers_PlayerBlockerWins(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker, _ := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	require.NotNil(t, blocker, "strong player blocker should win opposed roll")
 	assert.Equal(t, "Aliceia", blocker.Name)
 	assert.Equal(t, 1, blocker.UserId)
 	assert.True(t, blocker.IsPlayer())
+}
+
+// Catches passing includeSkill=true to the score helper on the short path. The
+// fleer's enormous skill would beat this mob if it leaked into the real roll.
+func TestResolveFleeBlockers_ShortMobOutcomeOmitsSkill(t *testing.T) {
+	fleer := newFleerMob(100, "trained fleer", 1, 1000)
+	blockerMob := newBlockerMob(200, "mob blocker", 500, 0, 0, 100)
+	cleanup := seedFleeFixture(t, &fleer.Character,
+		map[int]*mobs.Mob{100: fleer, 200: blockerMob}, nil)
+	defer cleanup()
+
+	blocker, _ := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), false)
+	require.NotNil(t, blocker, "short real contest retained the fleer's enormous skill")
+	assert.Equal(t, 200, blocker.MobInstanceId)
+}
+
+// Catches a player-blocker branch bypassing the shared short flee score. The
+// same high-skill fleer must lose when only Dexterity 1 reaches RunContest.
+func TestResolveFleeBlockers_ShortPlayerOutcomeOmitsSkill(t *testing.T) {
+	fleer := newFleerMob(100, "trained fleer", 1, 1000)
+	blockerUser := users.NewTestUser(1, "blocker", "Player Blocker", 1001)
+	blockerUser.Character.Stats.Dexterity.ValueAdj = 500
+	blockerUser.Character.Skills = map[string]int{string(skills.UnarmedCombat): 0}
+	blockerUser.Character.SetAggro(0, 100, characters.DefaultAttack)
+	cleanup := seedFleeFixture(t, &fleer.Character,
+		map[int]*mobs.Mob{100: fleer}, map[int]*users.UserRecord{1: blockerUser})
+	defer cleanup()
+
+	blocker, _ := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), false)
+	require.NotNil(t, blocker, "short player-blocker contest retained the fleer's enormous skill")
+	assert.Equal(t, 1, blocker.UserId)
 }
 
 func TestResolveFleeBlockers_NonTargetingCombatantIgnored(t *testing.T) {
@@ -184,12 +220,60 @@ func TestResolveFleeBlockers_NonTargetingCombatantIgnored(t *testing.T) {
 	)
 	defer cleanup()
 
-	blocker := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1))
+	blocker, _ := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	assert.Nil(t, blocker, "combatant not targeting the fleer should not block")
 }
 
 func TestResolveFleeBlockers_NilInputs(t *testing.T) {
-	assert.Nil(t, ResolveFleeBlockers(nil, nil))
+	blocker, contested := ResolveFleeBlockers(nil, nil, false)
+	assert.Nil(t, blocker)
+	assert.False(t, contested, "nil inputs cannot have run a contest")
 	c := &characters.Character{}
-	assert.Nil(t, ResolveFleeBlockers(c, nil))
+	blocker, contested = ResolveFleeBlockers(c, nil, false)
+	assert.Nil(t, blocker)
+	assert.False(t, contested, "nil room cannot have run a contest")
+}
+
+// Catches ignoring includeSkill, applying the prone penalty only to Dexterity,
+// or letting a short attempt progress the stripped skill.
+func TestResolveFleeBlockers_ShortUsesDexterityAndPronePenaltyWithoutSkill(t *testing.T) {
+	standing := newFleerMob(100, "fleer", 80, 4)
+	if got := fleeContestScore(&standing.Character, false); got != 80 {
+		t.Errorf("short standing score = %.0f, want literal Dexterity 80", got)
+	}
+	setCombatPositionParallel(&standing.Character, position.Prone)
+	if got := fleeContestScore(&standing.Character, false); got != 40 {
+		t.Errorf("short prone score = %.0f, want (Dexterity 80) x 0.5 = 40", got)
+	}
+	if got := standing.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 0 {
+		t.Errorf("short score progressed Skullduggery %d times, want 0", got)
+	}
+}
+
+// Catches stripping Skullduggery from an affordable flee's SCORE, and pins the
+// resolver as progression-free.
+//
+// An earlier version of this test asserted the opposite -- that the resolver
+// awards one skullduggery use -- on the stated premise that it was "preserving
+// the pre-existing successful-attempt progression behavior". There was no such
+// pre-existing behavior: master's flee path awards skullduggery NOWHERE, so the
+// award was introduced by this branch and the test codified it. It also fired
+// here, before any opposed roll, which meant fleeing an empty room trained the
+// skill. The award now lives in the two flee wrappers and is gated on a contest
+// having actually happened; this test guards the resolver against regaining it.
+func TestResolveFleeBlockers_AffordableIncludesSkillButDoesNotProgressIt(t *testing.T) {
+	fleer := newFleerMob(100, "fleer", 80, 4)
+	cleanup := seedFleeFixture(t, &fleer.Character, map[int]*mobs.Mob{100: fleer}, nil)
+	defer cleanup()
+
+	if got := fleeContestScore(&fleer.Character, true); got != 180 {
+		t.Errorf("affordable score = %.0f, want Dexterity 80 + Skullduggery 4 x 25 = 180", got)
+	}
+	_, contested := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
+	if contested {
+		t.Error("no combatant targets the fleer, so contested must be false")
+	}
+	if got := fleer.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 0 {
+		t.Errorf("resolver progressed Skullduggery %d times, want 0 (the wrapper owns the award)", got)
+	}
 }

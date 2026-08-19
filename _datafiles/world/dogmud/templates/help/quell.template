@@ -10,8 +10,13 @@ its own when something reaches for you.
 <ansi fg="yellow">━━━ How It Works ━━━</ansi>
 
   <ansi fg="stat">Uses:</ansi> Willpower and your Spellcasting skill
-  <ansi fg="stat">Costs:</ansi> Conviction, not stamina
+  <ansi fg="stat">Costs:</ansi> Quell spends Conviction, not Stamina
   <ansi fg="stat">Answers:</ansi> Spells that attack the mind
+
+Your <ansi fg="skill">spellcasting</ansi> skill lowers the price; carried load
+does not affect this mental defence. If you cannot pay in full, quell still
+answers the spell after spending what remains, but without Spellcasting skill.
+Only the defence selected for the incoming effect is charged.
 
 A spell that attacks the body is answered by dodge or block
 instead. Which defence applies is decided by the spell, not by you.
@@ -21,7 +26,8 @@ instead. Which defence applies is decided by the spell, not by you.
 Quelling is not all or nothing. Put a working down decisively and
 it does nothing at all. Only just manage it and the spell still
 reaches you, weakened. A barely successful quell is better than
-none, and a masterful one is better still.
+none, and a masterful one is better still. The narrated response follows the
+actual degree of defence rather than a fixed line.
 
 <ansi fg="yellow">━━━ Improving It ━━━</ansi>
 

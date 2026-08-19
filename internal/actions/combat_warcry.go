@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -14,6 +15,7 @@ import (
 
 // WarcryResult reports the outcome of a warcry cooldown+buff application.
 type WarcryResult struct {
+	Cost          characters.CostCommitResult
 	Executed      bool    // true if the warcry actually applied
 	OnCooldown    bool    // blocked by shared special-move cooldown
 	Crafting      bool    // blocked because the actor is mid-craft
@@ -29,14 +31,6 @@ type WarcryResult struct {
 func ExecuteWarcry(actor Actor) WarcryResult {
 	char := actor.GetCharacter()
 
-	// War cry is a noisy action — reveal if hidden.
-	if char.IsHidden() {
-		char.Awareness.TransitionToRevealing(state.TransitionReason{
-			Trigger:  awareness.TriggerNoisyAction,
-			Metadata: map[string]any{"command": "warcry"},
-		})
-	}
-
 	// IsActing applies universally — any active activity (cast/craft/salvage)
 	// blocks warcry. Mobs can craft/cast too and should not interrupt their
 	// activity to warcry.
@@ -51,8 +45,27 @@ func ExecuteWarcry(actor Actor) WarcryResult {
 	}
 
 	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !char.CooldownReady("special-move") {
 		return WarcryResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionWarcry, characters.PoolConviction,
+		float64(cfg.RhetoricActionBaseConvictionCost))
+	if cost.Status == characters.CostRefused {
+		return WarcryResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return WarcryResult{Cost: cost, OnCooldown: true}
+	}
+
+	// A warcry reveals only after paid admission and cooldown ownership.
+	if char.IsHidden() {
+		// Best effort: the only failure modes are an activity veto or an
+		// already-Revealing state, both of which mean the actor is not quietly
+		// hidden any more, which is all this call is for.
+		_ = char.Awareness.TransitionToRevealing(state.TransitionReason{
+			Trigger:  awareness.TriggerNoisyAction,
+			Metadata: map[string]any{"command": "warcry"},
+		})
 	}
 
 	bonus, duration := ApplyWarcryEffect(char)
@@ -69,6 +82,7 @@ func ExecuteWarcry(actor Actor) WarcryResult {
 	awardRhetoricUse(actor, char)
 
 	return WarcryResult{
+		Cost:     cost,
 		Executed: true,
 		Bonus:    bonus,
 		Duration: duration,

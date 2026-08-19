@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -18,7 +19,10 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	actor := &actions.MobActor{Mob: mob, Room: room}
-	result := actions.ExecuteTaunt(actor)
+	result := executeTauntAction(actor)
+	if result.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
 
 	if !result.Executed {
 		return true, nil
@@ -30,6 +34,13 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.Target.UserId > 0 {
 		targetPlayer = users.GetByUserId(result.Target.UserId)
 	}
+	targetIdentity := targetName
+	if targetPlayer != nil {
+		targetIdentity = targetPlayer.Character.GetPlayerName(targetPlayer.UserId).String()
+	} else if targetMob := mobs.GetInstance(result.Target.MobInstanceId); targetMob != nil {
+		targetIdentity = targetMob.Character.GetMobNameIndexed(0,
+			room.GetMobDuplicateIndex(targetMob.InstanceId)).String()
+	}
 
 	switch {
 	case result.Fumble:
@@ -38,16 +49,19 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lets out a pitiful howl that trails off weakly.`, mob.Character.Name))
 
 	case result.Hit:
-		if targetPlayer != nil {
-			if canSeeInDark(targetPlayer, room) {
-				targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
-			} else {
-				targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
+		if !result.Defence.Defended {
+			if targetPlayer != nil {
+				if canSeeInDark(targetPlayer, room) {
+					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
+				} else {
+					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
+				}
 			}
+			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
+				fmt.Sprintf(`Something lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, targetName),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
 		}
-		sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
-			fmt.Sprintf(`Something lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, targetName),
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
+		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, "howl")
 
 		// Aggro-pull confirmation: the howl yanked the target off its prior foe
 		// and pinned it (taunt-hold). AggroPulled is only ever set when the
@@ -56,19 +70,6 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
 				`Something turns, drawn snarling toward a new foe.`,
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns from its prey and snarls at <ansi fg="mobname">%s</ansi>!`, targetName, mob.Character.Name))
-		}
-
-		// Defy messaging.
-		if result.FullyDefied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You defy the howl outright, and it washes over you harmlessly.</ansi>`)
-			}
-		} else if result.Defied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategoryTauntResist,
-					`<ansi fg="green">You defy the howl's fury, and most of it loses its bite.</ansi>`)
-			}
 		}
 
 	default: // miss

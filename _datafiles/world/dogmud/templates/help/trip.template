@@ -16,12 +16,16 @@ a tactical move rather than a finisher.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Light — the goal is the floor, not the hit.
+  <ansi fg="stat">Damage:</ansi> Light. The goal is the floor, not the hit.
   <ansi fg="stat">Knockdown Chance:</ansi> The most reliable knockdown of the three
     special moves, resolved against the defender's Dexterity and
     combat skill.
   <ansi fg="stat">Cooldown:</ansi> Shared with bash and kick.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+
+Trip spends Stamina and requires full payment before the sweep. Carried load
+raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
 
 Trip's high knockdown rate makes it excellent for setting up your
 allies' attacks. If successful, your target becomes <ansi fg="red">prone</ansi>
@@ -31,4 +35,5 @@ for a short time. See <ansi fg="command">help prone</ansi> for details.
 
   <ansi fg="command">help bash</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help stand</ansi>, <ansi fg="command">help prone</ansi>,
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help combat</ansi>

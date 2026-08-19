@@ -533,13 +533,30 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// set by TransitionToDisengaging in flee.go. This replaces the legacy
 	// Aggro.Type == Flee sentinel check.
 	// TODO Task 18: remove legacy Aggro.Type fallback once Aggro is gone.
-	isFleeing := user.Character.IsDisengaging()
-	if !isFleeing && user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
+	phaseFleeing := user.Character.IsDisengaging()
+	isFleeing := phaseFleeing
+	if !phaseFleeing && user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
 		// Legacy path: Aggro-only set (no CombatPhase wired). Still handled.
 		isFleeing = true
 	}
 	if !isFleeing {
+		// A terminal transition can cancel Disengaging before this asynchronous
+		// round runs. Atomically retract that orphan; an absent handoff is a
+		// harmless no-op for ordinary non-flee combat rounds.
+		usercommands.TakeFleeAdmission(user)
 		return false
+	}
+	// Consume admission before any resolution branch. A phase-based flee can
+	// only come from the command, so missing admission means another/reentrant
+	// resolver already owns it. A true legacy Aggro sentinel has no handoff and
+	// retains historical full-skill behavior.
+	includeSkill := true
+	if phaseFleeing {
+		var admitted bool
+		includeSkill, admitted = usercommands.TakeFleeAdmission(user)
+		if !admitted {
+			return true
+		}
 	}
 
 	// Revert to Default combat regardless of outcome (legacy path only).
@@ -566,7 +583,17 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// `for _, userId := range` shadowed the outer fleer's id, so PvP
 	// players never blocked each other from fleeing). Perspective-
 	// specific messaging stays here.
-	if blocker := combat.ResolveFleeBlockers(user.Character, uRoom); blocker != nil {
+	blocker, contested := combat.ResolveFleeBlockers(user.Character, uRoom, includeSkill)
+	// Skullduggery practice is awarded HERE, by the wrapper, and only when an
+	// opposed roll actually happened. Two conditions, both load-bearing:
+	// includeSkill is false when the fleer was too spent to pay in full and
+	// therefore never brought the skill to the contest (practising a skill you
+	// did not use is not practice), and contested is false when nothing in the
+	// room was targeting the fleer, so there was no contest to learn from.
+	if contested && includeSkill {
+		user.Character.OnSkillUse(string(skills.Skullduggery), user.UserId)
+	}
+	if blocker != nil {
 		var targetTag string
 		if blocker.IsPlayer() {
 			targetTag = "username"

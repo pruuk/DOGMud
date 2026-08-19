@@ -29,6 +29,8 @@ const (
 	Mob  SourceTarget = "mob"
 )
 
+const autoattackShortageText = "Exhaustion keeps your training from coming cleanly through."
+
 // Performs a combat round from a player to a mob
 // forceCrit is true when the defender was snapshotted as Sleeping at
 // round start (chunk 3.3); all swings this round against them crit.
@@ -51,10 +53,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 		targetCanSee: messaging.CanSeeClearly(&mob.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(user.Character, &mob.Character, User, Mob, ctx)
-
-	// U7 Task 7: charged PER SWING, not once per round. See ChargeAttackCost.
-	ChargeAttackCost(user.Character, attackResult.SwingsThrown)
+	attackResult, _ := resolveCombatRound(user.Character, &mob.Character, User, Mob, ctx)
 
 	if attackResult.DamageToSource != 0 {
 		user.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mob.InstanceId})
@@ -134,10 +133,7 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 		targetCanSee: messaging.CanSeeClearly(userDef.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(userAtk.Character, userDef.Character, User, User, ctx)
-
-	// U7 Task 7: charged PER SWING, not once per round. See ChargeAttackCost.
-	ChargeAttackCost(userAtk.Character, attackResult.SwingsThrown)
+	attackResult, _ := resolveCombatRound(userAtk.Character, userDef.Character, User, User, ctx)
 
 	if attackResult.DamageToSource != 0 {
 		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: userDef.UserId})
@@ -217,12 +213,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) At
 		targetCanSee: messaging.CanSeeClearly(user.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(&mob.Character, user.Character, Mob, User, ctx)
-
-	// U7 Task 7: charged PER SWING, not once per round. The & is load-bearing --
-	// Mob.Character is a VALUE field, so a bare mob.Character here would charge a
-	// copy and the mob would attack for free.
-	ChargeAttackCost(&mob.Character, attackResult.SwingsThrown)
+	attackResult, _ := resolveCombatRound(&mob.Character, user.Character, Mob, User, ctx)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: user.UserId})
 
@@ -270,11 +261,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob, forceCrit bool) AttackRe
 		targetCanSee: messaging.CanSeeClearly(&mobDef.Character, room),
 		forceCrit:    forceCrit,
 	}
-	attackResult := calculateCombat(&mobAtk.Character, &mobDef.Character, Mob, Mob, ctx)
-
-	// U7 Task 7: charged PER SWING, not once per round. The & is load-bearing --
-	// see AttackMobVsPlayer.
-	ChargeAttackCost(&mobAtk.Character, attackResult.SwingsThrown)
+	attackResult, _ := resolveCombatRound(&mobAtk.Character, &mobDef.Character, Mob, Mob, ctx)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mobDef.InstanceId})
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget*-1, state.ActorRef{MobInstanceId: mobAtk.InstanceId})
@@ -430,7 +417,24 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	return attackResult
 }
 
-// calculateCombat resolves one round of swings from sourceChar at targetChar.
+// resolveCombatRound plans, admits and then resolves one autoattack round. The
+// same mechanical path serves players and mobs; only a player source receives
+// the private once-per-round shortage explanation.
+func resolveCombatRound(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, ctx combatContext) (AttackResult, characters.CostCommitResult) {
+	plan := buildAttackPlan(sourceChar, targetChar)
+	costResult := ChargeAttackCost(sourceChar, plan.totalSwings)
+	ctx.omitAttackSkill = costResult.Short()
+
+	attackResult := calculateCombat(sourceChar, targetChar, sourceType, targetType, plan, ctx)
+	if sourceType == User && costResult.Short() {
+		attackResult.SendToSource(messaging.CategorySystem, autoattackShortageText)
+	}
+	return attackResult, costResult
+}
+
+// calculateCombat resolves one pre-planned round of swings from sourceChar at
+// targetChar. Weapon setup and swing count are snapshots from before the
+// aggregate Stamina commit and must not be recalculated here.
 //
 // Both combatants MUST stay pointers. Do not "simplify" them back to values.
 // This function took its combatants by value from the day it was written, and
@@ -439,10 +443,10 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 // returned. The costly one was the defence charge: runBestOfAllDefense calls
 // ApplyCostPartial on the defender, which means melee dodge, parry and block
 // have cost nothing in production for the entire life of the code. The
-// attacker's cost only survived because the wrappers call DeductAttackStamina
-// themselves, outside this function, and damage only survived because it
-// travels home in AttackResult and the wrapper applies it to the real
-// character.
+// attacker's cost only survived historically because wrappers charged the real
+// character outside this function. U8 now commits that cost in
+// resolveCombatRound before calling here; damage still travels home in
+// AttackResult and the wrapper applies it to the real character.
 //
 // Nothing about that failure is visible. The compiler is happy either way, and
 // a test that asserts a charge was *requested* (ApplyCostPartial reports
@@ -453,15 +457,12 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 // Reverting also re-disables three writes that only work through the pointer:
 // cross-round momentum (UpdateMomentum), the SurpriseAttack-to-DefaultAttack
 // demotion in SetAggro, and defender skill-use tracking on mobs.
-func calculateCombat(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, ctx combatContext) AttackResult {
+func calculateCombat(sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget, plan attackPlan, ctx combatContext) AttackResult {
 
 	attackResult := AttackResult{}
 
 	// Statmods can add a damage bonus
 	statModDBonus := sourceChar.StatMod(`damage`)
-	extraAttacks := sourceChar.StatMod(`attacks`)
-
-	attackWeapons := collectAttackWeapons(sourceChar)
 
 	attackMessagePrefix := ``
 	backstabCrit := false
@@ -471,21 +472,18 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 		sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
 	}
 
-	attackResult.DefenderWasAttacked = len(attackWeapons) > 0
+	attackResult.DefenderWasAttacked = len(plan.weapons) > 0
 
-	for weaponIdx, weapon := range attackWeapons {
-
-		ws := buildWeaponSetup(sourceChar, targetChar, weapon, weaponIdx, len(attackWeapons))
+	for _, ws := range plan.weapons {
 		sdp := buildDamageParams(sourceChar, targetChar, ws, statModDBonus, sourceType)
 		sdp.critBuffs = ws.critBuffs
 
 		// Track per-weapon hits for skill progression
 		weaponHit := WeaponHitInfo{
-			SkillTag: string(characters.CombatSkillTagForItem(weapon)),
+			SkillTag: string(characters.CombatSkillTagForItem(ws.weapon)),
 		}
 
-		// Single merged swing count per weapon
-		swingCount := calcSwingCount(sourceChar, ws.weaponSpeed, extraAttacks, ws.isOffhand)
+		swingCount := ws.swingCount
 
 		mudlog.Debug("DistDamage", "swings", swingCount, "baseDmg", ws.baseDmg, "variance", dice.StdDevFor(sdp.dmgMean), "dmgMean", sdp.dmgMean, "weaponMult", ws.weaponDmgMult, "critBuffs", ws.critBuffs)
 
@@ -500,11 +498,10 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			attackResult.Fumble = false
 			attackResult.DoubleFumble = false
 
-			// Counted here, BEFORE resolution and outside the reset above, so it
-			// counts swings THROWN rather than swings that landed: a missed swing
-			// is effort spent and must be paid for. It accumulates across every
-			// weapon in the round because attackResult outlives the weapon loop.
-			// U7 Task 7 charges the attacker per swing off this number.
+			// Counted here after pre-resolution plan admission and outside the
+			// reset above. SwingsThrown reports how many planned swings actually
+			// resolved across every weapon; U8 pricing uses plan.totalSwings before
+			// this loop and never derives a post-resolution charge from this field.
 			attackResult.SwingsThrown++
 
 			attackTargetDamage := 0
@@ -617,7 +614,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	}
 
 	// If unarmed (no weapons at all), add unarmed entry
-	if len(attackWeapons) == 0 {
+	if len(plan.weapons) == 0 {
 		attackResult.DefenderWasAttacked = true
 	}
 

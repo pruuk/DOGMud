@@ -17,10 +17,10 @@ import (
 // mob belongs to, and bumps player rep with each (only when the perpetrator is
 // identified).
 //
-// Lives here rather than in internal/usercommands because the melee special
-// moves engage through AcquireMeleeTarget in this package, and usercommands
-// already depends on actions. Callers: attack, target, shoot (all in
-// usercommands) and SeedAggression below.
+// Lives here rather than in internal/usercommands because admission-gated
+// melee actions stage and commit engagement in this package, while
+// usercommands already depends on actions. Callers: attack, target, shoot (all
+// in usercommands) and SeedAggression below.
 func RecordAssaultCrime(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room) {
 	factionIds := factions.FactionsForMob(mob)
 	if len(factionIds) == 0 {

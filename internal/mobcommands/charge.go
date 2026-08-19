@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -22,6 +23,18 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	res := actions.ExecuteTrip(actions.NewMobActorInRoom(mob, room))
+	if res.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
+
+	// See narrateTripWhiffOnProne in trip.go. `charge` is the verb most exposed
+	// to this: it is authored into CombatCommands on the boar and its kin, and
+	// that dispatch path never consults actions.CommandIsReady, so a charge WILL
+	// be selected against a player who is already down.
+	if res.TargetOnFloor {
+		narrateChargeWhiffOnProne(mob, room, res.Target)
+		return true, nil
+	}
 
 	if res.OnCooldown || res.NoTarget || !res.Executed {
 		return true, nil
@@ -92,4 +105,31 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// narrateChargeWhiffOnProne is the charge-flavoured sibling of
+// narrateTripWhiffOnProne. A charging animal that commits to a target already
+// lying down overruns them; that is the picture the player should get, rather
+// than a round in which nothing at all appears to happen.
+func narrateChargeWhiffOnProne(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget) {
+	mobName := mob.Character.Name
+
+	var targetChar *users.UserRecord
+	if target.UserId > 0 {
+		targetChar = users.GetByUserId(target.UserId)
+	}
+
+	if targetChar != nil {
+		if canSeeInDark(targetChar, room) {
+			targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi> thunders in, but you are already down, and it overruns you.`, mobName))
+		} else {
+			targetChar.SendText(messaging.CategoryTrip,
+				`Something thunders in, but you are already down, and it overruns you.`)
+		}
+	}
+
+	room.SendTextVisual(messaging.CategoryTrip, fmt.Sprintf(
+		`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who is already down, and overruns them.`,
+		mobName, target.Name), target.UserId)
 }

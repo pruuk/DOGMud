@@ -1,6 +1,13 @@
 package configs
 
-import "testing"
+import (
+	"math"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"gopkg.in/yaml.v2"
+)
 
 func TestBalanceConfig_DefaultPricingBaselineQty(t *testing.T) {
 	cfg := &Balance{}
@@ -94,6 +101,95 @@ func TestBalance_RangedDefaults(t *testing.T) {
 	}
 	if b.RangedShieldDefenseBonus != 15 {
 		t.Errorf("RangedShieldDefenseBonus default = %d, want 15", int(b.RangedShieldDefenseBonus))
+	}
+}
+
+func TestBalance_ActionCostBaseDefaultsRejectMissingAndInvalidValues(t *testing.T) {
+	tests := []struct {
+		name string
+		bad  ConfigFloat
+	}{
+		{"missing", 0},
+		{"negative", -1},
+		{"nan", ConfigFloat(math.NaN())},
+		{"positive infinity", ConfigFloat(math.Inf(1))},
+		{"negative infinity", ConfigFloat(math.Inf(-1))},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Balance{
+				ShootBaseStaminaCost:             tt.bad,
+				ReloadBaseStaminaCost:            tt.bad,
+				SpecialMoveBaseStaminaCost:       tt.bad,
+				SneakBaseStaminaCost:             tt.bad,
+				RhetoricActionBaseConvictionCost: tt.bad,
+				GrappleStaminaCostPerRound:       tt.bad,
+			}
+			b.validateCombat()
+
+			got := []ConfigFloat{
+				b.ShootBaseStaminaCost,
+				b.ReloadBaseStaminaCost,
+				b.SpecialMoveBaseStaminaCost,
+				b.SneakBaseStaminaCost,
+				b.RhetoricActionBaseConvictionCost,
+				b.GrappleStaminaCostPerRound,
+			}
+			want := []ConfigFloat{2, 1, 4, 2.5, 4, 2}
+			for i := range want {
+				if got[i] != want[i] {
+					t.Errorf("base %d = %v, want %v", i, float64(got[i]), float64(want[i]))
+				}
+			}
+		})
+	}
+}
+
+func TestBalance_ShippedActionCostBasesMatchModelEvidence(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "_datafiles", "config.yaml"))
+	if err != nil {
+		t.Fatalf("read shipped config: %v", err)
+	}
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		t.Fatalf("decode shipped config: %v", err)
+	}
+
+	got := []ConfigFloat{
+		cfg.Balance.ShootBaseStaminaCost,
+		cfg.Balance.ReloadBaseStaminaCost,
+		cfg.Balance.SpecialMoveBaseStaminaCost,
+		cfg.Balance.SneakBaseStaminaCost,
+		cfg.Balance.RhetoricActionBaseConvictionCost,
+		cfg.Balance.GrappleStaminaCostPerRound,
+	}
+	want := []ConfigFloat{2, 1, 4, 2.5, 4, 2}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("shipped base %d = %v, want %v", i, float64(got[i]), float64(want[i]))
+		}
+	}
+}
+
+func TestBalance_SneakFailCooldownDistinguishesAbsentFromInvalid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input ConfigInt
+		want  ConfigInt
+	}{
+		{"absent remains effective zero", 0, 0},
+		{"negative uses historical fallback", -1, 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Balance{SneakFailCooldown: tt.input}
+			b.validateCombat()
+			if b.SneakFailCooldown != tt.want {
+				t.Fatalf("SneakFailCooldown = %d, want %d", int(b.SneakFailCooldown), int(tt.want))
+			}
+		})
 	}
 }
 

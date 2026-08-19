@@ -14,7 +14,57 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+const (
+	fleeIncludeSkillTempKey = "flee-include-skill"
+	fleeShortageText        = "You break away on instinct rather than technique, too spent to use your training."
+)
+
+type fleeAdmission struct {
+	includeSkill bool
+	ready        bool
+}
+
+// TakeFleeAdmission atomically consumes the pending command's admission.
+// The second result distinguishes a real command handoff from missing or
+// already-consumed state; the round hook uses that to reject reentrant phase
+// resolution while preserving true legacy fallback behavior.
+func TakeFleeAdmission(user *users.UserRecord) (includeSkill bool, ok bool) {
+	if user == nil {
+		return false, false
+	}
+	// The command publishes a pending marker before asking CombatPhase to
+	// transition. A round that observes Disengaging in that tiny handoff window
+	// must leave the marker for the command to finish instead of consuming an
+	// attempt whose cost decision is not ready yet.
+	peek, ok := user.GetTempData(fleeIncludeSkillTempKey).(fleeAdmission)
+	if !ok || !peek.ready {
+		return false, false
+	}
+	admission, ok := user.TakeTempData(fleeIncludeSkillTempKey).(fleeAdmission)
+	if !ok || !admission.ready {
+		return false, false
+	}
+	return admission.includeSkill, true
+}
+
+// CancelFleeAdmission retracts either a pending or ready handoff. CombatPhase
+// terminal-transition hooks use it when combat ends after the command was
+// admitted but before the flee round can resolve.
+func CancelFleeAdmission(user *users.UserRecord) bool {
+	if user == nil {
+		return false
+	}
+	_, ok := user.TakeTempData(fleeIncludeSkillTempKey).(fleeAdmission)
+	return ok
+}
+
 func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	// Any command that is not the already-active attempt owns no pending
+	// admission yet, so retract an orphan before any rejection path returns.
+	// Do not clear the handoff for a genuine attempt still awaiting its round.
+	if !user.Character.IsDisengaging() {
+		user.SetTempData(fleeIncludeSkillTempKey, nil)
+	}
 
 	// A no-go root (e.g. a Jailed holding-cell buff — 5.1c) pins the player in
 	// place; flee must honor it too, or it becomes a jail-escape hole (the
@@ -39,62 +89,65 @@ func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, `You're already trying to break away. Give it a moment.`)
 		return true, nil
 	}
-
-	// Fleeing costs stamina — a flyer breaks away far more easily (Winged Flight).
-	//
-	// Priced through costs.Calc like every other action rather than as the flat
-	// int it used to be. FleeStaminaCost stays the BASE, so the knob keeps
-	// meaning what it says, and the registry supplies the encumbrance and
-	// inverse-skill terms. Before this, escaping under a crushing load cost
-	// exactly what escaping empty-handed cost, which quietly undid the premise
-	// that what you carry is a decision.
-	bal := configs.GetBalanceConfig()
-	spec := costs.SpecFor(costs.ActionFlee)
-	fleeStaminaCost := costs.Calc(costs.Input{
-		Base:      float64(bal.FleeStaminaCost),
-		Carried:   user.Character.GetCarriedWeight(),
-		Capacity:  user.Character.CarryCapacity(),
-		Physical:  spec.Physical,
-		SkillRank: user.Character.GetSkillLevel(spec.Skill),
-		HasSkill:  spec.HasSkill,
-	})
-	if mutations.IsFlying(user.Character.Mutations) {
-		// No "never below 1" clamp any more: the charge is fractional and its
-		// remainder is banked, so a small cost is deferred rather than rounded
-		// away, and clamping would have made a flyer's discount vanish at
-		// exactly the light loads it is supposed to help.
-		fleeStaminaCost *= float64(bal.FlightFleeStaminaMult)
+	// Input is accepted before command events are drained. A lethal combat
+	// round can therefore kill, respawn, and force CombatPhase to Idle before a
+	// queued flee reaches this handler. Reject that stale command before it
+	// spends the revived character's stamina or publishes an attempt that no
+	// round resolver can finish. This also gives ordinary out-of-combat use a
+	// definitive response instead of a paid, outcome-less attempt.
+	if !user.Character.IsInCombat() {
+		user.SendText(messaging.CategorySystem, `You're not in combat; there's nothing to flee from.`)
+		return true, nil
 	}
-	// U5b-2: flee charges what it can and NEVER refuses. go.go refuses all
-	// movement while in combat, so fleeing is the only player-initiated
-	// disengage; refusing it at zero stamina would leave no alternative action
-	// that changes the character's situation.
-	//
-	// ApplyCostFloat preserves that exactly: it banks the sub-1 remainder and
-	// then delegates the whole part to ApplyCostPartial, which takes whatever is
-	// in the pool and never refuses. It is the fractional form of the same
-	// primitive, NOT the all-or-nothing one movement uses.
-	//
-	// The old "You're too exhausted to flee!" message is deleted rather than
-	// left unreachable (standing rule 4). U8 reads CostResult.Short to strip the
-	// skill term from fleeScore's skullduggery contribution; this chunk discards
-	// it.
-	_ = user.Character.ApplyCostFloat(characters.PoolStamina, fleeStaminaCost)
+	// Publish a pending handoff before the state transition. Cost and player-
+	// facing attempt text belong only to an accepted Disengaging transition;
+	// charging first lets a target-death or position veto create a paid attempt
+	// that no round resolver can finish.
+	user.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{})
+	if user.Character.CombatPhase == nil {
+		CancelFleeAdmission(user)
+		user.SendText(messaging.CategorySystem, `You can't break away just yet.`)
+		return true, nil
+	}
+	if err := user.Character.CombatPhase.TransitionToDisengaging(state.TransitionReason{
+		Trigger: combatphase.TriggerFleeCommand,
+		Actor:   state.ActorRef{UserId: user.UserId},
+	}); err != nil {
+		CancelFleeAdmission(user)
+		if !user.Character.IsInCombat() {
+			user.SendText(messaging.CategorySystem, `You're not in combat; there's nothing to flee from.`)
+		} else if user.Character.IsStandingGrapple() || user.Character.IsGroundGrapple() {
+			user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't flee while grappled!</ansi>`)
+		} else {
+			user.SendText(messaging.CategorySystem, `You can't break away just yet.`)
+		}
+		return true, nil
+	}
+
+	// Quote and partially commit once. Flee remains life-preserving: shortage
+	// never refuses the attempt, but its blocker contests lose Skullduggery.
+	bal := configs.GetBalanceConfig()
+	modifier := 1.0
+	if mutations.IsFlying(user.Character.Mutations) {
+		modifier = float64(bal.FlightFleeStaminaMult)
+	}
+	quote := user.Character.QuoteActionCost(characters.ActionCostRequest{
+		Action:   costs.ActionFlee,
+		Pool:     characters.PoolStamina,
+		Base:     float64(bal.FleeStaminaCost),
+		Modifier: modifier,
+		Units:    1,
+	})
+	costResult := user.Character.CommitCost(quote, characters.CostPartial)
+	user.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{
+		includeSkill: !costResult.Short(),
+		ready:        true,
+	})
+	if costResult.Short() {
+		user.SendText(messaging.CategorySystem, fleeShortageText)
+	}
 
 	user.SendText(messaging.CategorySystem, `You attempt to flee...`)
-
-	// Task 15: use CombatPhase.TransitionToDisengaging instead of the legacy
-	// Aggro{Type:Flee} sentinel. The round driver's handlePlayerFlee checks
-	// IsDisengaging() which reads CombatPhase state directly.
-	// Veto errors (e.g., grappled) are silently ignored here — the grapple check
-	// in handlePlayerFlee catches them a moment later.
-	// TODO Task 18: no legacy fallback needed; Aggro field is gone.
-	if user.Character.CombatPhase != nil {
-		_ = user.Character.CombatPhase.TransitionToDisengaging(state.TransitionReason{
-			Trigger: combatphase.TriggerFleeCommand,
-			Actor:   state.ActorRef{UserId: user.UserId},
-		})
-	}
 
 	return true, nil
 }

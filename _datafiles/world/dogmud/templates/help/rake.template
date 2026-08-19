@@ -17,12 +17,16 @@ damage and applies a bleeding condition on a successful strike.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Moderate — the slashing strike itself deals real harm.
+  <ansi fg="stat">Damage:</ansi> Moderate. The slashing strike itself deals real harm.
   <ansi fg="stat">Bleed:</ansi> A successful rake opens wounds that continue to
     bleed over several rounds, dealing additional damage beyond
     the initial strike.
   <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+
+Rake spends Stamina and requires full payment before the strike. Carried load
+raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
 
 Rake's persistent bleed makes it valuable for wearing down
 opponents over the course of a longer fight. See
@@ -30,5 +34,6 @@ opponents over the course of a longer fight. See
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help hamstring</ansi>, <ansi fg="command">help kick</ansi>,
-  <ansi fg="command">help conditions</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help kick</ansi>, <ansi fg="command">help special</ansi>,
+  <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help combat</ansi>

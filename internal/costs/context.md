@@ -8,9 +8,9 @@ table says, per action, which skill governs it and whether encumbrance applies;
 `Calc` composes the multipliers and clamps their product.
 
 It deliberately does **not** charge anything. Nothing here reads or writes a
-`Character`, touches a resource pool, or decides whether an actor can afford
-what it just priced. Deduction is `characters.ApplyCostFloat` (which banks the
-sub-integer remainder); refusal policy lives at the call site. This package
+`Character` or touches a resource pool. `characters.QuoteActionCost` resolves
+the registry metadata into calculator input, and `characters.CommitCost` owns
+affordability, fractional carry, and full-versus-partial policy. This package
 answers "what does this cost", full stop, which is what lets it stay a
 config-only leaf.
 
@@ -20,7 +20,8 @@ config-only leaf.
 - `action.go` — `Action`, `Spec`, the registry, `SpecFor`.
 - `skill.go` — `SkillCostMultiplier`, the inverse-skill curve.
 - `encumbrance.go` — `EncumbranceMultiplier`, the carried-weight curve.
-- `cost_test.go`, `skill_test.go`, `encumbrance_test.go` — table tests. The
+- `action_test.go`, `cost_test.go`, `skill_test.go`, `encumbrance_test.go` —
+  table tests. `action_test.go` pins the complete action matrix. The
   bench-figure case in `cost_test.go` pins three real characters' swing costs so
   the tuning bench and the code cannot drift apart silently.
 
@@ -52,12 +53,22 @@ const (
 	// Paid in CONVICTION, and both registered Physical: false.
 	ActionQuell Action = `quell`
 	ActionDefy  Action = `defy`
+	// U8 also registers shoot, reload, every special move, grapple initiation
+	// and maintenance, throw, sneak, taunt, rally, and warcry.
+)
+
+type SkillSource uint8
+
+const (
+	SkillNone SkillSource = iota
+	SkillFixed
+	SkillEquippedCombat
 )
 
 type Spec struct {
-	Skill    skills.SkillTag // governing skill; meaningless unless HasSkill
-	HasSkill bool            // false for actions with no associated skill
-	Physical bool            // physical actions take the encumbrance multiplier
+	Skill       skills.SkillTag // governing skill for SkillFixed actions
+	SkillSource SkillSource
+	Physical    bool // physical actions take the encumbrance multiplier
 }
 ```
 
@@ -93,7 +104,7 @@ raw := costs.Calc(costs.Input{
 	Capacity:  capacity,
 	Physical:  spec.Physical,
 	SkillRank: rank, // actor's rank in spec.Skill
-	HasSkill:  spec.HasSkill,
+	HasSkill:  spec.SkillSource != costs.SkillNone,
 	Modifier:  float64(bal.DodgeCostModifier), // 1.25; parry 1.10, block 1.15
 })
 ```
@@ -175,11 +186,11 @@ value gets a neutral 1.0 rather than a free action.
   the rows existed but `GetDefenseCostFloat` returned early for both, so nothing
   read them and flipping one changed nothing.
 
-- **A skill discount is not a physical-only privilege.** `HasSkill: true` on the
-  mental and social rows is deliberate: every action with a governing skill takes
-  the inverse-skill multiplier, so a practised caster spends less conviction on
-  quell and a practised orator less on defy. `Physical` governs encumbrance and
-  `HasSkill` governs the skill discount; they are independent.
+- **A skill discount is not a physical-only privilege.** `SkillFixed` on the
+  mental and social rows is deliberate: every action with a governing skill
+  takes the inverse-skill multiplier. `Physical` governs encumbrance and
+  `SkillSource` governs rank selection; they are independent. Attack alone uses
+  `SkillEquippedCombat`; fixed rows read `Spec.Skill`.
 
 - **An unregistered `Action` returns the zero `Spec`, it does not panic.** The
   result is a flat base cost with no skill discount and no encumbrance. That is
@@ -204,18 +215,14 @@ Declared in `internal/configs/config.balance.go`, defaulted and validated in
 
 ## Consumers
 
-Three, as of U7 Task 10.
-
-- **Defence** (Task 6): `characters.GetDefenseCostFloat` prices all five
-  defences through `Calc`, and `internal/combat` charges the result via
-  `Character.ApplyCostFloat` at both defence sites (`runBestOfAllDefense` for
-  melee, `ResolveChannelDefence` for the ranged, spell and social channels).
-- **Attack** (Task 7): `combat.attackCostPerSwing` prices ONE swing; the
-  exported `combat.ChargeAttackCost(attacker, swings)` multiplies by the swings
-  actually thrown and charges through `ApplyCostFloat`. The four wrappers in
-  `combat/combat.go` call it after `calculateCombat` returns. Note it reads the
-  rank off `GetCombatSkillLevel` (weapon-appropriate) rather than the registry's
-  nominal `skills.WeaponCombat`.
+- **Defence:** melee and channel resolvers quote every eligible candidate,
+  construct its score with skill only when affordable, and commit only the
+  contest winner with `CostPartial`. Losing candidates neither charge nor
+  message. Physical defences use Stamina; quell and defy use Conviction.
+- **Attack:** `combat.ChargeAttackCost` quotes the pre-resolution swing plan and
+  commits once with `CostPartial`. A short plan still resolves every swing but
+  omits the equipped combat-skill term from hit scoring. `SwingsThrown` is an
+  outcome count, never the pricing source.
 - **Movement** (Task 8): `characters.GetMovementStaminaCost` folds the terrain
   multiplier into `Base` (terrain is a property of the move, not the actor, and
   `Base` is deliberately outside the clamp), then applies the mutation speed
@@ -231,11 +238,16 @@ Three, as of U7 Task 10.
   curve.
 - **Flee**: `usercommands.Flee` prices `FleeStaminaCost` as the `Base` through
   the `ActionFlee` row (physical, governed by `skills.Skullduggery`, which is
-  the skill `combat.ResolveFleeBlockers` already rolls) and charges it with
-  `ApplyCostFloat`. `ApplyCostFloat`, NOT `ApplyCostFloatOrRefuse`: flee must
-  never refuse for cost, and `ApplyCostFloat` delegates to `ApplyCostPartial`.
-  Flee and movement are deliberate mirror images here.
+  the skill `combat.ResolveFleeBlockers` already rolls), then quotes and commits
+  once with `CostPartial`. A short flee still enters Disengaging and resolves
+  every blocker without Skullduggery.
+- **Voluntary U8 actions:** shoot, reload, physical specials, grapple
+  initiation, throw, sneak, taunt, rally, and warcry quote through their
+  registry rows and commit with `CostFullOrRefuse` before secondary state.
+- **Grapple maintenance:** both participants independently quote
+  `ActionGrappleMaintain` after applying the controller or controlled role to
+  the base, then commit partially before the drift contest.
 
-The registry remains the seam for the rest: ranged, taunt, rally, warcry, the
-thirteen currently-free special moves, grapple initiation and sneak each become
-a registry entry plus a config base, with no change at their call sites.
+The registry now includes every U8 cost surface: ranged, taunt, rally, warcry,
+the special-move family, grapple initiation and maintenance, throw, and sneak.
+Their call sites all use the character-owned quote/commit seam.

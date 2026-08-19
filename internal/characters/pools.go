@@ -3,6 +3,7 @@ package characters
 import (
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
@@ -35,6 +36,206 @@ const (
 type CostResult struct {
 	Charged int  // amount actually taken from the pool
 	Short   bool // the actor could not pay in full
+}
+
+// CostPolicy selects whether an unaffordable whole charge refuses the action
+// or takes what remains and lets the action continue without its skill term.
+type CostPolicy uint8
+
+const (
+	CostFullOrRefuse CostPolicy = iota
+	CostPartial
+)
+
+// CostStatus is the structured outcome of committing an action-cost quote.
+type CostStatus uint8
+
+const (
+	CostNoCharge CostStatus = iota
+	CostPaid
+	CostPartiallyPaid
+	CostRefused
+)
+
+// ActionCostRequest contains the raw, uncomposed inputs for one priced action.
+type ActionCostRequest struct {
+	Action   costs.Action
+	Pool     Pool
+	Base     float64
+	Modifier float64
+	Units    int
+}
+
+// CostCommitResult reports what committing a quote did without exposing cost
+// values to player-facing rendering code.
+type CostCommitResult struct {
+	Status  CostStatus
+	Pool    Pool
+	Charged int
+}
+
+// Short reports whether a partial policy could not cover the whole amount due.
+func (r CostCommitResult) Short() bool {
+	return r.Status == CostPartiallyPaid
+}
+
+// CostQuote is an immediate, single-use action-cost quote. Its state is private
+// so callers cannot alter the amount, owner, snapshots, or consumed bit.
+type CostQuote struct {
+	state *costQuoteState
+}
+
+type costQuoteState struct {
+	owner         *Character
+	pool          Pool
+	poolSnapshot  int
+	carrySnapshot float64
+	wholeDue      int
+	nextCarry     float64
+	validAmount   bool
+	affordable    bool
+	consumed      bool
+}
+
+// fractionalCost converts an unrounded amount plus existing carry into the
+// whole amount due now and the fractional carry to retain. Invalid values leave
+// the prior carry untouched.
+func fractionalCost(carry, amount float64) (whole int, nextCarry float64, valid bool) {
+	if amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) ||
+		math.IsNaN(carry) || math.IsInf(carry, 0) {
+		return 0, carry, false
+	}
+
+	debt := carry + amount
+	if math.IsNaN(debt) || math.IsInf(debt, 0) {
+		return 0, carry, false
+	}
+	wholeFloat := math.Floor(debt)
+	// >=, not >. float64(math.MaxInt) rounds UP to exactly 2^63, which is one
+	// past the largest representable int. A wholeFloat of exactly that value
+	// passes a strict > and reaches int(wholeFloat), where an out-of-range
+	// float-to-int conversion is implementation-defined and yields MinInt on
+	// amd64. A negative whole then reads as "nothing due" in every consumer
+	// (ApplyCostFloatOrRefuse tests whole > 0, CommitCost tests wholeDue <= 0),
+	// so the single most expensive action imaginable would be charged NOTHING.
+	// The guard exists for exactly this case; it must not have a hole at the
+	// boundary it guards.
+	if wholeFloat >= float64(math.MaxInt) {
+		return math.MaxInt, 0, true
+	}
+	return int(wholeFloat), debt - wholeFloat, true
+}
+
+// QuoteActionCost calculates an action price without mutating the character.
+func (c *Character) QuoteActionCost(req ActionCostRequest) CostQuote {
+	carry := 0.0
+	if c != nil && c.costCarry != nil {
+		carry = c.costCarry[req.Pool]
+	}
+	state := &costQuoteState{
+		owner:         c,
+		pool:          req.Pool,
+		carrySnapshot: carry,
+		nextCarry:     carry,
+	}
+	if c == nil {
+		return CostQuote{state: state}
+	}
+	state.poolSnapshot = c.PoolValue(req.Pool)
+
+	if req.Units <= 0 || req.Base <= 0 || math.IsNaN(req.Base) || math.IsInf(req.Base, 0) {
+		state.affordable = true
+		return CostQuote{state: state}
+	}
+
+	spec := costs.SpecFor(req.Action)
+	skillRank := 0
+	switch spec.SkillSource {
+	case costs.SkillFixed:
+		skillRank = c.GetSkillLevel(spec.Skill)
+	case costs.SkillEquippedCombat:
+		skillRank = c.GetCombatSkillLevel()
+	}
+
+	amount := costs.Calc(costs.Input{
+		Base:      req.Base,
+		Carried:   c.GetCarriedWeight(),
+		Capacity:  c.CarryCapacity(),
+		Physical:  spec.Physical,
+		SkillRank: skillRank,
+		HasSkill:  spec.SkillSource != costs.SkillNone,
+		Modifier:  req.Modifier,
+	}) * float64(req.Units)
+
+	state.wholeDue, state.nextCarry, state.validAmount = fractionalCost(carry, amount)
+	state.affordable = !state.validAmount || state.wholeDue <= state.poolSnapshot
+	return CostQuote{state: state}
+}
+
+// Affordable reports whether a full commit can pay the quoted whole amount.
+func (q CostQuote) Affordable() bool {
+	return q.state != nil && !q.state.consumed && q.state.affordable
+}
+
+// CommitCost atomically commits a fresh quote according to policy. Quotes are
+// owner-bound, single-use, and rejected if their pool or carry snapshot changed.
+func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult {
+	if q.state == nil {
+		return CostCommitResult{Status: CostRefused}
+	}
+	s := q.state
+	result := CostCommitResult{Status: CostRefused, Pool: s.pool}
+	if c == nil || s.owner != c || s.consumed {
+		return result
+	}
+	// A valid owner's first commit attempt consumes the quote even when its
+	// snapshot has gone stale. Otherwise restoring the old pool/carry values
+	// would revive a quote whose freshness check already rejected it. A wrong
+	// owner cannot consume the quote and deny the real owner its attempt.
+	s.consumed = true
+	carry := 0.0
+	if c.costCarry != nil {
+		carry = c.costCarry[s.pool]
+	}
+	if c.PoolValue(s.pool) != s.poolSnapshot || carry != s.carrySnapshot {
+		return result
+	}
+
+	if !s.validAmount {
+		result.Status = CostNoCharge
+		return result
+	}
+	if policy != CostFullOrRefuse && policy != CostPartial {
+		return result
+	}
+	if policy == CostFullOrRefuse && !s.affordable {
+		return result
+	}
+
+	if c.costCarry == nil {
+		c.costCarry = make(map[Pool]float64, 3)
+	}
+	c.costCarry[s.pool] = s.nextCarry
+	if s.wholeDue <= 0 {
+		result.Status = CostNoCharge
+		return result
+	}
+
+	charged := s.wholeDue
+	if policy == CostPartial && charged > s.poolSnapshot {
+		charged = s.poolSnapshot
+		if charged < 0 {
+			charged = 0
+		}
+	}
+	c.setPool(s.pool, s.poolSnapshot-charged)
+	result.Charged = charged
+	if charged < s.wholeDue {
+		result.Status = CostPartiallyPaid
+	} else {
+		result.Status = CostPaid
+	}
+	return result
 }
 
 // PoolValue reads the current value of a pool.
@@ -272,24 +473,25 @@ func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult {
 // pool refilled. Being short is already punished by the lost skill term; it must
 // not also become a loan.
 func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult {
-	// NaN fails every comparison, so `amount <= 0` alone does NOT stop it.
-	if amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) {
+	carry := 0.0
+	if c.costCarry != nil {
+		carry = c.costCarry[pool]
+	}
+	whole, nextCarry, valid := fractionalCost(carry, amount)
+	if !valid {
 		return CostResult{}
 	}
 
 	if c.costCarry == nil {
 		c.costCarry = make(map[Pool]float64, 3)
 	}
-
-	debt := c.costCarry[pool] + amount
-	whole := math.Floor(debt)
-	c.costCarry[pool] = debt - whole
+	c.costCarry[pool] = nextCarry
 
 	if whole <= 0 {
 		return CostResult{}
 	}
 
-	return c.ApplyCostPartial(pool, int(whole))
+	return c.ApplyCostPartial(pool, whole)
 }
 
 // ApplyCostFloatOrRefuse is the all-or-nothing sibling of ApplyCostFloat: it
@@ -325,30 +527,28 @@ func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult {
 // changes nothing. Same reasoning as ApplyCostFloat, where the consequence of
 // letting NaN reach the carry is a permanently cost-free pool.
 func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool {
-	// NaN fails every comparison, so `amount <= 0` alone does NOT stop it.
-	if amount <= 0 || math.IsNaN(amount) || math.IsInf(amount, 0) {
+	carry := 0.0
+	if c.costCarry != nil {
+		carry = c.costCarry[pool]
+	}
+	whole, nextCarry, valid := fractionalCost(carry, amount)
+	if !valid {
 		return true
+	}
+
+	if whole > 0 && !c.CanAfford(pool, whole) {
+		return false
 	}
 
 	if c.costCarry == nil {
 		c.costCarry = make(map[Pool]float64, 3)
 	}
-
-	// Candidate values only. Nothing below this line writes until the refusal
-	// path has been ruled out.
-	debt := c.costCarry[pool] + amount
-	whole := math.Floor(debt)
-
-	if whole > 0 && !c.CanAfford(pool, int(whole)) {
-		return false
-	}
-
-	c.costCarry[pool] = debt - whole
+	c.costCarry[pool] = nextCarry
 
 	if whole <= 0 {
 		return true
 	}
-	return c.ApplyCost(pool, int(whole))
+	return c.ApplyCost(pool, whole)
 }
 
 // applyVitalChange is the single signed pipeline behind ApplyHarm and

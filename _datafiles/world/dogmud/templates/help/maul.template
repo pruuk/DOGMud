@@ -18,12 +18,16 @@ strike than rake.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Heavy — the savage bite deals significant harm.
+  <ansi fg="stat">Damage:</ansi> Heavy. The savage bite deals significant harm.
   <ansi fg="stat">Bleed:</ansi> A successful maul opens deep wounds that bleed
     severely over several rounds, dealing substantial additional
     damage beyond the initial strike.
   <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+
+Maul spends Stamina and requires full payment before the strike. Carried load
+raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
 
 Maul's heavy damage and persistent deep bleed make it a potent
 finisher for wearing down prey over a sustained fight. See
@@ -31,5 +35,6 @@ finisher for wearing down prey over a sustained fight. See
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help rake</ansi>, <ansi fg="command">help hamstring</ansi>, <ansi fg="command">help kick</ansi>,
-  <ansi fg="command">help conditions</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help rake</ansi>, <ansi fg="command">help kick</ansi>, <ansi fg="command">help special</ansi>,
+  <ansi fg="command">help conditions</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help combat</ansi>

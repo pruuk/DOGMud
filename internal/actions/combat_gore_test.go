@@ -36,11 +36,9 @@ func TestGore_OnCooldown(t *testing.T) {
 	room := newTestRoom()
 	actor := newStubActor(char, room)
 
-	// Set aggro so we pass the nil check and reach the cooldown gate.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
-
-	// Burn the cooldown slot so the next Try call is blocked.
-	char.Cooldowns.Try("special-move", "3 rounds")
+	prepareSpecialMoveCooldown(t, char, 7906, 7906, &species.Species{
+		SpeciesId: 7906, Name: "cooldown-boar", BodyParts: []string{"legs", "horns"}, NaturalAttack: items.Gore,
+	})
 
 	result := ExecuteGore(actor)
 
@@ -109,6 +107,7 @@ func TestGore_Executed(t *testing.T) {
 	char := characters.New()
 	char.SpeciesId = 7501 // boar — horned
 	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	fundSpecialMove(char)
 
 	result := ExecuteGore(newStubActor(char, newTestRoom()))
 

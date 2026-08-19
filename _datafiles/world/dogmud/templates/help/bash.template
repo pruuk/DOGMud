@@ -17,7 +17,7 @@ to the ground.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Solid but not as heavy as a full weapon swing — the
+  <ansi fg="stat">Damage:</ansi> Solid but not as heavy as a full weapon swing; the
     goal is the knockdown, not the wound.
   <ansi fg="stat">Knockdown Chance:</ansi> Decent, resolved against the defender's
     Dexterity and combat skill. Not as reliable as trip, but
@@ -27,6 +27,10 @@ to the ground.
   <ansi fg="stat">Cooldown:</ansi> Shared with trip and kick.
   <ansi fg="stat">Skill:</ansi> Progresses Weapon Combat
 
+Bash spends Stamina and requires full payment before the strike. Carried load
+raises the price, while <ansi fg="skill">weapon-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
+
 If the knockdown succeeds, your target becomes <ansi fg="red">prone</ansi> for a short
 time, suffering attack and defense penalties. See
 <ansi fg="command">help prone</ansi> for details.
@@ -35,4 +39,5 @@ time, suffering attack and defense penalties. See
 
   <ansi fg="command">help trip</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help stand</ansi>, <ansi fg="command">help prone</ansi>,
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help special</ansi>,
   <ansi fg="command">help combat</ansi>

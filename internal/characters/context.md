@@ -77,7 +77,9 @@ Mob progression uses `MobProgressionRate` as a multiplier.
 ### Character States and Modifiers
 - **Aggro system** (`aggro.go`): Combat targeting and threat management
 - **Buffs integration**: Status effects that modify character capabilities
-- **Cooldowns** (`cooldowns.go`): Time-based ability restrictions
+- **Cooldowns** (`cooldowns.go`): Time-based ability restrictions.
+  `CooldownReady` is the read-only admission query; `TryCooldown` consumes only
+  after successful admission.
 - **Prone system** (Stage 7.5): Knockdown condition with stat-based recovery mechanics
 
 ### Resource Pools
@@ -128,10 +130,23 @@ func (c *Character) EffectivePoolMaxNamed(pool string) int
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
+// Quote is read-only; commit is owner-bound, snapshot-validated, and single-use.
+// The valid owner's first commit attempt consumes the quote, even if snapshot
+// validation rejects it; a wrong-owner attempt cannot consume it.
+func (c *Character) QuoteActionCost(req ActionCostRequest) CostQuote
+func (q CostQuote) Affordable() bool
+func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult
+
+// CostFullOrRefuse is atomic refusal; CostPartial writes off unpaid whole debt.
+// Status is CostNoCharge, CostPaid, CostPartiallyPaid, or CostRefused.
+func (r CostCommitResult) Short() bool
+
 // ApplyCostFloat charges a FRACTIONAL cost, banking the sub-integer remainder
 // in the per-character, per-pool carry so the average converges (U7 Task 3).
-// Delegates the deduction to ApplyCostPartial. THE ENTRY POINT FOR EVERY U7
-// COST; the integer pair erases the per-action modifiers. See Gotchas.
+// It delegates the deduction to ApplyCostPartial and remains available for
+// legacy or specialized callers. Registered action costs use the read-only
+// QuoteActionCost path above and CommitCost for atomic admission and charging;
+// both paths retain fractional carry. See Gotchas.
 func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
 
 // ApplyCostFloatOrRefuse banks the remainder exactly as ApplyCostFloat does but
@@ -139,6 +154,9 @@ func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
 // taken before anything is written, so a refused action leaves both the pool and
 // the carry untouched and cannot accumulate debt. Movement is the caller.
 func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool
+
+// Does not initialize or prune Cooldowns.
+func (c *Character) CooldownReady(trackingTag string) bool
 
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
 func (c *Character) ApplyRestore(pool Pool, amount int) int
@@ -175,20 +193,21 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   belongs at the display layer: call `Character.DisplayHealth()`, never re-add a
   floor here. As of U5b-2 all seven remaining per-site floors are gone, so this
   is uniform.
-- **`ApplyCost` vs `ApplyCostPartial` is not a style choice.** Refuse where a
-  meaningful alternative action remains (movement, stand, spellcasting, mutation
-  special moves); charge partially where refusal would leave the actor helpless
-  (auto-attack, dodge/parry/block, grapple upkeep, flee). The split is NOT
-  volitional-vs-involuntary and NOT "uses a cooldown"; both framings were tried
-  and both are provably false. Death from exhaustion was tried in this game and
-  players hated it.
+- **Cost policy is explicit at commit.** U8 voluntary named actions use
+  `QuoteActionCost` plus `CommitCost(..., CostFullOrRefuse)` before secondary
+  state. Autoattack, the winning defence, flee, and grapple maintenance use
+  `CostPartial` because exhaustion must weaken rather than suppress those
+  life-preserving resolutions. Lower-level `ApplyCost*` methods remain for
+  legacy and non-U8 consumers; do not bypass the action quote for a registered
+  action.
 - **A green pool-mutation guard does not mean every pool write is routed.**
   `resources.go` is exempt as a FILE, so `Heal()`'s writes are invisible and so
   are its three production callers (`actions/combat_drain.go:126`, `:281`,
   `hooks/item_procs.go:99`). They retire with `Heal` in U5c.
-- **`CostResult.Short` is what a later chunk reads to strip the skill term.**
-  The penalty for being short is a worse roll, not a lost action.
-- **`ApplyCostFloat` banks a fractional remainder, and the bank is the reason
+- **`CostCommitResult.Short()` strips only the governing skill term** for a
+  partially paid autoattack, winning defence, flee, or grapple participant. The
+  action still resolves and does not inherit unpaid debt.
+- **`ApplyCostFloat` and `CommitCost` bank a fractional remainder, and the bank is the reason
   U7's tuning is visible at all.** Every U7 cost is
   `base x encumbrance x inverse-skill x per-action modifier`, so it is almost
   never a whole number, and the pools are ints. Round each action and the small
@@ -235,11 +254,12 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   **Template invariant.** `mobs.newMobByIdInternal` shallow-copies the mob
   template (`mob := *m`) and re-makes `PlayerDamage` on the next line precisely
   because a shallow copy shares maps. `costCarry` is NOT re-made there, and is
-  safe only because it is lazily allocated by `ApplyCostFloat` and a template's
-  `Character` is never charged. Anything that charges a template (a balance
-  preview tool, an offline simulator) would allocate the map ON THE TEMPLATE and
-  hand every instance spawned afterwards the same shared carry. Re-make it
-  alongside `PlayerDamage` before doing that.
+  safe only because it is lazily allocated by `ApplyCostFloat` or `CommitCost`
+  and a template's `Character` is never charged. Anything that charges a
+  template through either path (a balance preview tool, an offline simulator)
+  would allocate the map ON THE TEMPLATE and hand every instance spawned
+  afterwards the same shared carry. Re-make it alongside `PlayerDamage` before
+  doing that.
 - **`CanAfford` reads the RAW pool, not reserve-excluded, and that is correct.**
   `RecalculateStats` already clamps the CURRENT pool to `max - reserve` every
   round, so a cost that subtracted the reservation a second time would charge the
@@ -310,15 +330,12 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **ActionPoints is a fourth pool and is NOT in `Pool`.** It is an inherited
   GoMud movement throttle, redundant with stamina movement costs, and a deletion
   candidate. Movement is a two-pool transaction with a hand-rolled refund.
-- **`DeductStamina` and `DeductDefenseStamina` no longer exist.** U5b-2 deleted
-  both. `flee` and the defence charge now call `ApplyCostPartial` directly, and
-  movement (`usercommands/go.go`) calls `ApplyCost`. U7 Task 7 then deleted the
-  last two, `GetAttackStaminaCost` and `DeductAttackStamina`: the attacker's
-  cost was charged ONCE PER ROUND by the four combat wrappers however many
-  swings the round contained, while the defender paid on every incoming swing.
-  Attacks are priced per swing now by `combat.ChargeAttackCost`, through the
-  same `costs.Calc` composition the defences use. `DeductActionPoints` is a
-  different pool entirely (see the ActionPoints note above).
+- **Legacy deductors no longer exist.** Registered actions use
+  `QuoteActionCost` and `CommitCost`. Autoattack prices its pre-resolution swing
+  plan once; defence quotes every candidate and commits only the winner; flee
+  commits once before its asynchronous blocker resolution; grapple maintenance
+  commits each participant independently before drift. `DeductActionPoints` is
+  a different pool entirely (see the ActionPoints note above).
 - **Defence costs are one config formula, not per-defence Go arithmetic.** U7
   Task 6 deleted `GetDefenseStaminaCost` and with it the three per-defence base
   knobs (`DodgeBaseStaminaCost`, `ParryBaseStaminaCost`,
@@ -365,7 +382,7 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   capacity of `<= 0` reports `crushed` (correct reading, and it keeps the
   division safe). Now that weight prices every physical action, this word is a
   balance readout, so it is under the no-hard-numbers rule.
-- **Charge a defence through the PAIR: `DefensePool` + `GetDefenseCostFloat`.**
+- **Map a defence through `DefensePool` and its registered action.**
   There are FIVE defence constants. `DefenseDodge` / `DefenseParry` /
   `DefenseBlock` cost stamina; U6 added `DefenseQuell` (mental-spell defence,
   `Willpower + spellcasting × SkillWeight`) and `DefenseDefy` (social defence,
@@ -373,20 +390,16 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   for a stamina cost on either finds nothing and proves nothing.
 
   ```go
-  func DefensePool(defenseType string) Pool                      // quell/defy -> PoolConviction
-  func (c *Character) GetDefenseCostFloat(defenseType string) float64
-  func (c *Character) GetDefenseCost(defenseType string) int     // tests only; see below
-  func (c *Character) ApplyCostFloat(pool Pool, amount float64) CostResult
+  func DefensePool(defenseType string) Pool                      // legacy compatibility
+  func (c *Character) QuoteDefenseCost(defenseType string) (CostQuote, bool)
+  func (c *Character) QuoteActionCost(req ActionCostRequest) CostQuote
+  func (c *Character) CommitCost(q CostQuote, policy CostPolicy) CostCommitResult
   ```
 
-  **Use the FLOAT pair.** `GetDefenseCost` truncates, and at the shipped base and
-  modifiers all three physical defences floor to the same `1` — the per-defence
-  tuning simply vanishes. That was a live bug: `combat.ResolveChannelDefence`
-  charged through the integer entry point until U7, so blocking a
-  `target_defense_type: physical` spell (eleven shipped spells set it) cost 1
-  instead of 1.2604 and was indistinguishable from dodging. `ApplyCostFloat`
-  banks the sub-integer remainder, so the difference survives as an average. No
-  production caller of `GetDefenseCost` remains.
+  The quote preserves fractional carry and per-defence modifiers. Melee and
+  channel resolvers quote all eligible candidates without mutation, decide the
+  best contest result, then commit that winner with `CostPartial`. No production
+  resolver charges through the legacy integer helper.
 
   The pairing matters independently: pool and amount must be read off the SAME
   defence name. An unrecognised name maps to `PoolStamina` at cost 0, so the pair

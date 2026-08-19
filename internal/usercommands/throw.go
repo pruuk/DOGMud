@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -21,6 +22,70 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+type throwItemLocation uint8
+
+const (
+	throwItemBackpack throwItemLocation = iota
+	throwItemBandolier
+)
+
+type stagedThrowTarget struct {
+	instanceID int
+	mob        *mobs.Mob
+}
+
+var admitThrowCost = func(char *characters.Character, base float64) characters.CostCommitResult {
+	quote := char.QuoteActionCost(characters.ActionCostRequest{
+		Action: costs.ActionThrow, Pool: characters.PoolStamina,
+		Base: base, Modifier: 1, Units: 1,
+	})
+	return char.CommitCost(quote, characters.CostFullOrRefuse)
+}
+
+func findThrowItem(char *characters.Character, noun string) (items.Item, throwItemLocation, bool) {
+	if match, found := char.FindInBackpack(noun); found {
+		return match, throwItemBackpack, true
+	}
+	match, found := char.FindInPotions(noun)
+	return match, throwItemBandolier, found
+}
+
+func revalidateThrowItem(char *characters.Character, snapshot items.Item, location throwItemLocation) (items.Item, bool) {
+	pool := char.Items
+	if location == throwItemBandolier {
+		pool = char.PotionItems
+	}
+	for _, current := range pool {
+		if current.Equals(snapshot) && current.Uses == snapshot.Uses && current.GetSpec().Subtype == items.Throwable {
+			return current, true
+		}
+	}
+	return items.Item{}, false
+}
+
+func stageThrowTargets(room *rooms.Room) []stagedThrowTarget {
+	targets := make([]stagedThrowTarget, 0)
+	for _, instanceID := range room.GetMobs(rooms.FindAll) {
+		mob := mobs.GetInstance(instanceID)
+		if mob == nil || mobs.CheckPlayerHarm(mob).Blocked() {
+			continue
+		}
+		targets = append(targets, stagedThrowTarget{instanceID: instanceID, mob: mob})
+	}
+	return targets
+}
+
+func revalidateThrowTarget(room *rooms.Room, staged stagedThrowTarget, liveIDs map[int]bool) *mobs.Mob {
+	if !liveIDs[staged.instanceID] {
+		return nil
+	}
+	mob := mobs.GetInstance(staged.instanceID)
+	if mob == nil || mob != staged.mob || mob.Character.RoomId != room.RoomId || mobs.CheckPlayerHarm(mob).Blocked() {
+		return nil
+	}
+	return mob
+}
 
 // maybeInterruptOnThrow cancels a mob's in-progress fold-cast if the thrown
 // item id is a configured boss-interrupt disruptor
@@ -116,18 +181,10 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// javelin. See the matching note on ExecuteFire for the one open problem
 	// (a thrown weapon is its own ammunition).
 
-	// Special-move cooldown
 	cfg := configs.GetBalanceConfig()
-	if !user.Character.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
-		return true, nil
-	}
 
 	// Find throwable in backpack or bandolier
-	matchItem, found := user.Character.FindInBackpack(rest)
-	if !found {
-		matchItem, found = user.Character.FindInPotions(rest)
-	}
+	matchItem, itemLocation, found := findThrowItem(user.Character, rest)
 	if !found {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a "%s" to throw.`, rest))
 		return true, nil
@@ -139,7 +196,9 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	// Check if grenade has spoiled — auto-detonates in hand
+	// Determine spoilage without consuming the item. Every mutation waits until
+	// full cost admission and a consuming cooldown both succeed.
+	spoiled := false
 	if spec.Aging.HasAging() && matchItem.CraftedRound > 0 {
 		currentRound := util.GetRoundCount()
 		var elapsed uint64
@@ -148,23 +207,51 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 		effSpeed := items.CalcEffectiveAgingSpeed(matchItem.BottleMultiplier, matchItem.CraftSkill)
 		phase, _ := items.GetAgingPhase(elapsed, spec.Aging, effSpeed)
-		if phase == items.PhaseSpoiled {
-			user.Character.UseItem(matchItem)
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="red-bold">You pull out the <ansi fg="itemname">%s</ansi> and it crumbles apart in your hand -- it's gone bad!</ansi>`,
-				matchItem.DisplayName()))
-			return true, nil
-		}
+		spoiled = phase == items.PhaseSpoiled
+	}
+
+	stagedTargets := stageThrowTargets(room)
+	if !user.Character.CooldownReady("special-move") {
+		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		return true, nil
+	}
+
+	cost := admitThrowCost(user.Character, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(cost))
+		return true, nil
+	}
+
+	// Admission can synchronously invalidate a staged inventory identity in a
+	// test seam (or future hook). The paid admission remains paid, but no other
+	// item, cooldown, resolution, progression, or round is mutated.
+	matchItem, found = revalidateThrowItem(user.Character, matchItem, itemLocation)
+	if !found {
+		return true, nil
+	}
+	if !user.Character.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return true, nil
 	}
 
 	// Consume the item
-	usesLeft := user.Character.UseItem(matchItem)
+	usesLeft := 0
+	if itemLocation == throwItemBandolier {
+		usesLeft = user.Character.UseItemFromPotions(matchItem)
+	} else {
+		usesLeft = user.Character.UseItem(matchItem)
+	}
 	if usesLeft < 1 {
 		events.AddToQueue(events.ItemOwnership{
 			UserId: user.UserId,
 			Item:   matchItem,
 			Gained: false,
 		})
+	}
+	if spoiled {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`<ansi fg="red-bold">You pull out the <ansi fg="itemname">%s</ansi> and it crumbles apart in your hand -- it's gone bad!</ansi>`,
+			matchItem.DisplayName()))
+		return true, nil
 	}
 
 	// Quest engine: command notification — a successful throw advances
@@ -199,14 +286,13 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// engage both sides once the blast is resolved. See engageAfterThrow.
 	hitMobs := []*mobs.Mob{}
 
-	for _, mobInstId := range room.GetMobs(rooms.FindAll) {
-		mob := mobs.GetInstance(mobInstId)
+	liveTargetIDs := make(map[int]bool, len(stagedTargets))
+	for _, instanceID := range room.GetMobs(rooms.FindAll) {
+		liveTargetIDs[instanceID] = true
+	}
+	for _, stagedTarget := range stagedTargets {
+		mob := revalidateThrowTarget(room, stagedTarget, liveTargetIDs)
 		if mob == nil {
-			continue
-		}
-
-		// Skip companions, non-combatants and player-attack-immune mobs.
-		if mobs.CheckPlayerHarm(mob).Blocked() {
 			continue
 		}
 

@@ -13,8 +13,10 @@ returns a `*Result` struct with outcome data.
   (`internal/mobcommands/`), and behavior tree primitives
   (`internal/behaviortree/`).
 - Each action returns a structured result for programmatic consumption.
-- Messages to players/mobs are sent by actions themselves, not by callers
-  (callers only dispatch; actions own messaging).
+- Shared actions own mechanical outcomes. Player-command wrappers retain
+  private player-only rendering decisions; in particular, shared cost admission
+  returns `characters.CostCommitResult` and never emits a refusal line for an
+  actor.
 - Skill progression (`OnStatUse`, `OnSkillUse`) is triggered within actions,
   not by callers.
 
@@ -27,22 +29,37 @@ The `Actor` interface unifies player and mob behavior:
 ```go
 type Actor interface {
 	GetCharacter() *characters.Character
-	GetMobId() int                  // 0 for players
-	GetUserId() string              // "" for mobs
-	SendText(text string)
-	SendRoom(text string)
-	OnStatUse(stat string)
-	OnSkillUse(skill string)
+	GetRoom() *rooms.Room
+	SendText(cat messaging.Category, msg string)
+	SendRoomCommunication(msg string, excludeSelf bool)
+	GetName() string
+	IsPlayer() bool
+	GetUserId() int                 // 0 for mobs
+	GetMobInstanceId() int          // 0 for players
+	AddBuff(buffId int, source string)
+	OnStatUse(stat string) bool
+	OnSkillUse(skill string) bool
 	OnCriticalSuccess(skill string)
 	OnCriticalFailure(skill string)
 }
 ```
 
-- **UserActor** (`actor_user.go`): wraps a `*users.User`, sends text via
+### Action-cost admission
+
+`admitFullCost` is the internal voluntary-action seam. It creates a neutral
+single-unit request, then delegates the full-or-refuse decision, pool update,
+and fractional carry to `Character.QuoteActionCost` and `Character.CommitCost`.
+It performs no direct `ApplyCost*` call and emits no private text. U8 shared
+action results carry the returned `CostCommitResult`; user wrappers can
+render a refused status through `CostRefusalText`, while equivalent mob wrappers
+stay silent.
+
+- **UserActor** (`actor_user.go`): wraps a `*users.UserRecord`, sends text via
   `user.SendText()`, skill progression goes through `user.Character.OnSkillUse()`.
-- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`, sends text via room's
-  `BroadcastSub()` (mob has no direct text sender), skill progression goes through
-  `mob.Character.OnSkillUse()`.
+- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`; `SendText` is a no-op
+  because a mob has no private player connection. `SendRoomCommunication` is
+  the NPC room-broadcast path, routed through the room's visual messaging
+  pipeline. Skill progression goes through `mob.Character.OnSkillUse()`.
 
 ---
 
@@ -60,11 +77,16 @@ That was not hypothetical. Until 2026-08-14 only `attack`, `shoot` and (half of)
 on a faction NPC for free. Killing it was still caught by the death hook's
 murder record, but assaulting and walking away cost nothing.
 
-**You almost certainly do not need to call it directly.** `AcquireMeleeTarget`
-(`melee_target.go`) now seeds for every command that routes through it, which is
-all eleven melee specials: kick, bash, trip, grapple, taunt, gore, maul, pounce,
-rake, throttle, drain. Add a new melee special the same way and it inherits the
-behaviour. `throw` seeds from its own `engageAfterThrow` because it is an AoE.
+**You almost certainly do not need to call it directly.** Admission-gated
+physical specials call `StageMeleeTarget` and carry its returned `Actor` into
+their shared `Execute*` function. The action resolves that staged target
+read-only, admits cost, consumes cooldown, then commits aggro and calls
+`SeedAggression`. Invalid, stale, cooldown-blocked, and cost-refused attempts
+therefore cannot seed combat side effects. Taunt uses the same staged engagement
+contract. `AcquireMeleeTarget` is **deleted**: it was the pre-U8 eager
+gate-and-engage helper, it had no production callers left, and keeping it would
+have kept an engage-before-paying path available to a future command. `throw`
+seeds from its own `engageAfterThrow` because it is an AoE.
 
 The two halves fire on **deliberately different** conditions, and getting this
 backwards spams crimes and bounties off a single engagement:
@@ -184,19 +206,40 @@ Computes a power-ratio assessment of `target` from `actor`'s perspective.
 
 **Function:** `Sneak(actor) SneakResult`
 
-Applies the Hidden buff (ID 9) to the actor after an opposed roll against
-all observers in the room.
+Attempts to transition the actor from Visible through Concealing to Hidden
+after an opposed roll against every eligible observer in the room. A player
+actor excludes themself and party members; a mob excludes itself.
 
-- **Roll:** `actor Perception + Stealth` vs `each observer's Dexterity +
-  Skullduggery`.
-- **Success:** Actor gains the Hidden buff; returns `SneakResult.Success =
-  true`.
-- **Failure:** Actor fails to sneak; returns `Success = false`. (No "you
-  were seen" message — the stealth fails silently.)
-- **Progression:** Triggers `actor.OnStatUse("perception")` and
-  `actor.OnSkillUse("stealth")`.
-- **Cooldown:** Shares the `skullduggery` cooldown key (10 rounds, config:
-  `SkullduggeryActionCooldown`).
+- **Readiness and admission:** Already-Hidden, combat, activity, awareness,
+  and room checks are read-only and run before cost admission. A valid attempt
+  commits `ActionSneak` against Stamina using `SneakBaseStaminaCost`,
+  Skullduggery's inverse-skill multiplier, physical encumbrance, and
+  full-or-refuse policy. Only a paid admission may call
+  `TransitionToConcealing` or roll observers.
+- **Structured result:** `SneakResult.Cost` is the
+  `characters.CostCommitResult` from admission. `CostRefused` means no
+  awareness, cooldown, round, contest, or progression mutation occurred.
+  `AlreadyHidden` and `InCombat` are pre-admission outcomes and therefore have
+  a zero-value cost result.
+- **Roll:** The sneaker uses effective Dexterity plus the Skullduggery skill
+  multiplier and stealth bonuses, modified by light conditions per observer.
+  Each observer uses effective Perception plus the Search skill multiplier.
+  Resolution flows through `combat.RunContest`.
+- **Success/failure:** Success resolves Concealing to Hidden, queues the Hidden
+  buff mirror, sets the `sneaking` misc key, and returns `Success`. The first
+  observer who wins resolves the actor back to Visible and populates
+  `SpottedByName`. `RollHappened` distinguishes a contested attempt from an
+  empty-room success.
+- **Player wrapper ownership:** The user command owns the skill gate, busy and
+  prior-failure-cooldown messages, stamina-refusal text, and player-facing
+  success/failure text. It checks the prior failure cooldown with read-only
+  `CooldownReady`; only a spotted paid attempt may apply
+  `SneakFailCooldown`, and an absent/zero value remains disabled. Player
+  Skullduggery progression runs only when `RollHappened` is true and only after
+  paid resolution.
+- **Mob wrapper ownership:** The mob command renders no refusal text and has no
+  player failure cooldown. It returns immediately on `CostRefused`; only a
+  successful paid attempt calls `OnSkillUse("skullduggery", 0)`.
 
 ### Steal
 

@@ -15,12 +15,19 @@ import (
 //
 // cat selects the audio color/category (typically CategorySpeech,
 // CategoryShout, CategoryNPCDialogue, etc.).
-func sendAudioRoomText(room *rooms.Room, mob *mobs.Mob, cat messaging.Category, anonMsg string, fullMsg string) {
+func sendAudioRoomText(room *rooms.Room, mob *mobs.Mob, cat messaging.Category, anonMsg string, fullMsg string, excludedUserIDs ...int) {
+	excluded := make(map[int]struct{}, len(excludedUserIDs))
+	for _, userID := range excludedUserIDs {
+		excluded[userID] = struct{}{}
+	}
 	if room.GetVisibility() >= 1 {
-		room.SendText(cat, fullMsg)
+		room.SendText(cat, fullMsg, excludedUserIDs...)
 		return
 	}
 	for _, uid := range room.GetPlayers() {
+		if _, skip := excluded[uid]; skip {
+			continue
+		}
 		u := users.GetByUserId(uid)
 		if u == nil {
 			continue

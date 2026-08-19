@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -13,14 +14,19 @@ import (
 )
 
 func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "rake",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
 	// Delegate core resolution to the shared action.
-	res := actions.ExecuteRake(&actions.UserActor{User: user, Room: room})
+	res := actions.ExecuteRake(actor)
+	if res.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		return true, nil
+	}
 
 	if res.NotClawed {
 		user.SendText(messaging.CategorySystem, "You have no claws to rake with.")

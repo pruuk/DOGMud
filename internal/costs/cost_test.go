@@ -73,7 +73,7 @@ func TestCalcMatchesTheTunedBenchFigures(t *testing.T) {
 
 func TestSpecForUnregisteredActionIsInert(t *testing.T) {
 	s := SpecFor(Action("not-a-real-action"))
-	if s.HasSkill || s.Physical {
+	if s.SkillSource != SkillNone || s.Physical {
 		t.Fatalf("an unregistered action must price as a flat base, got %+v", s)
 	}
 }

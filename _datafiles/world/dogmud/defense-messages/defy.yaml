@@ -1,0 +1,63 @@
+# Social defence messages. Each index is one coordinated event.
+optionid: defy
+options:
+  weak:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You defy {attacker}''s {attack}, taking some of its sting.</ansi>'
+      - '<ansi fg="defense-good">You set your jaw against the {attack}, though the words still bite.</ansi>'
+      - '<ansi fg="defense-good">You refuse to rise fully to {attacker}''s {attack}.</ansi>'
+      - '<ansi fg="defense-good">You hold onto your nerve as the {attack} finds a narrow purchase.</ansi>'
+      - '<ansi fg="defense-good">You answer the {attack} with stubborn silence, blunting its edge.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} defies your {attack}, taking some of its sting.</ansi>'
+      - '<ansi fg="attack-bad">{defender} sets their jaw, though your words still bite.</ansi>'
+      - '<ansi fg="attack-bad">{defender} refuses to rise fully to your {attack}.</ansi>'
+      - '<ansi fg="attack-bad">Your {attack} finds only a narrow purchase on {defender}.</ansi>'
+      - '<ansi fg="attack-bad">{defender} answers your {attack} with silence, blunting its edge.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} defies {attacker}''s {attack}, taking some of its sting.</ansi>'
+      - '<ansi fg="combat">{defender} sets their jaw, though the words still bite.</ansi>'
+      - '<ansi fg="combat">{defender} refuses to rise fully to {attacker}''s {attack}.</ansi>'
+      - '<ansi fg="combat">{attacker}''s {attack} finds only a narrow purchase.</ansi>'
+      - '<ansi fg="combat">{defender} answers the {attack} with stubborn silence.</ansi>'
+  normal:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You defy {attacker}''s {attack}, stripping away most of its force.</ansi>'
+      - '<ansi fg="defense-good">You meet the {attack} with cold refusal, though a faint sting remains.</ansi>'
+      - '<ansi fg="defense-good">You see through {attacker}''s provocation and dull most of its sting.</ansi>'
+      - '<ansi fg="defense-good">You turn the {attack} aside with a steady stare, leaving little sting.</ansi>'
+      - '<ansi fg="defense-good">Your resolve holds firm, though the {attack} leaves a faint sting.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} defies your {attack}, stripping away most of its force.</ansi>'
+      - '<ansi fg="attack-bad">{defender} meets your {attack} with cold refusal, though some sting remains.</ansi>'
+      - '<ansi fg="attack-bad">{defender} sees through your provocation and dulls most of its sting.</ansi>'
+      - '<ansi fg="attack-bad">{defender} turns most of your {attack} aside with a steady stare.</ansi>'
+      - '<ansi fg="attack-bad">{defender} holds firm, though your {attack} leaves a faint sting.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} defies {attacker}''s {attack}, stripping away most of its force.</ansi>'
+      - '<ansi fg="combat">{defender} meets {attacker}''s {attack} with cold refusal, though some sting remains.</ansi>'
+      - '<ansi fg="combat">{defender} sees through the provocation and dulls most of its sting.</ansi>'
+      - '<ansi fg="combat">{defender} turns most of the {attack} aside with a steady stare.</ansi>'
+      - '<ansi fg="combat">{defender} holds firm, though {attacker}''s {attack} leaves a faint sting.</ansi>'
+  heavy:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You take no conviction harm from {attacker}''s {attack}, though it still draws your attention.</ansi>'
+      - '<ansi fg="defense-good">The {attack} causes no conviction injury, even as its challenge pulls your focus.</ansi>'
+      - '<ansi fg="defense-good">Your resolve prevents all conviction harm from {attacker}, though you still answer the challenge.</ansi>'
+      - '<ansi fg="defense-good">You suffer no conviction injury from the {attack}, though it can still redirect your attention.</ansi>'
+      - '<ansi fg="defense-good">{attacker}''s {attack} deals no conviction harm, while its demand still reaches you.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} takes no conviction harm from your {attack}, though it still draws their attention.</ansi>'
+      - '<ansi fg="attack-bad">Your {attack} causes {defender} no conviction injury, even as its challenge pulls their focus.</ansi>'
+      - '<ansi fg="attack-bad">{defender} prevents all conviction harm from you, though they still answer the challenge.</ansi>'
+      - '<ansi fg="attack-bad">{defender} suffers no conviction injury from your {attack}, though it can still redirect their attention.</ansi>'
+      - '<ansi fg="attack-bad">Your {attack} deals {defender} no conviction harm, while its demand still reaches them.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} takes no conviction harm from {attacker}''s {attack}, though it still draws their attention.</ansi>'
+      - '<ansi fg="combat">The {attack} causes {defender} no conviction injury, even as its challenge pulls their focus.</ansi>'
+      - '<ansi fg="combat">{defender} prevents all conviction harm from {attacker}, though they still answer the challenge.</ansi>'
+      - '<ansi fg="combat">{defender} suffers no conviction injury from the {attack}, though it can still redirect their attention.</ansi>'
+      - '<ansi fg="combat">{attacker}''s {attack} deals {defender} no conviction harm, while its demand still reaches them.</ansi>'

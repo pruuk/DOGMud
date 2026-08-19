@@ -36,11 +36,9 @@ func TestPounce_OnCooldown(t *testing.T) {
 	room := newTestRoom()
 	actor := newStubActor(char, room)
 
-	// Set aggro so we pass the nil check and reach the cooldown gate.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
-
-	// Burn the cooldown slot so the next Try call is blocked.
-	char.Cooldowns.Try("special-move", "3 rounds")
+	prepareSpecialMoveCooldown(t, char, 7905, 7905, &species.Species{
+		SpeciesId: 7905, Name: "cooldown-predator", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+	})
 
 	result := ExecutePounce(actor)
 
@@ -97,6 +95,7 @@ func TestPounce_NotPredator(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 6003 // wolf — legged + fanged
 		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		fundSpecialMove(char)
 
 		result := ExecutePounce(newStubActor(char, newTestRoom()))
 
@@ -155,6 +154,7 @@ func TestPounce_Executed(t *testing.T) {
 	char := characters.New()
 	char.SpeciesId = 6101 // feline — legged + clawed
 	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	fundSpecialMove(char)
 
 	result := ExecutePounce(newStubActor(char, newTestRoom()))
 

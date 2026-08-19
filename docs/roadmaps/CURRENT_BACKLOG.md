@@ -1,6 +1,6 @@
 # DOGMud Current Backlog
 
-Last reviewed: 2026-08-17 against `master` at `b638619eb`.
+Last reviewed: 2026-08-18 against the Task 14 validated U8 feature branch.
 
 This is the compact cross-roadmap memory for planning. It is an index, not a
 second requirements document. Follow the linked canonical roadmap/spec/plan for
@@ -11,13 +11,15 @@ tracker status outrank filenames and unchecked boxes in old plans.
 
 Source: [Unified Resolution Roadmap](UNIFIED_RESOLUTION_ROADMAP.md)
 
-U7b (reservation ceiling) shipped in PR #49. The open sequence is:
+U7b (reservation ceiling) shipped in PR #49. U8 has now passed its final
+verification, isolated boot, and adversarial gameplay gate. The sequence is:
 
-1. **U8 - new cost surface.** Put ranged, taunt, resistance, special moves,
-   rally, warcry, grapple initiation, and sneak onto the U7 cost model; use the
-   skill-less roll behavior when a resource cannot be paid. Add data-driven
-   quell/defy defence narration with five variants per intensity band. Depends
-   on U7b.
+1. **U8 - implementation and validation complete; integration pending.** The
+   feature branch's unified action-cost surface, admission policy, data-backed
+   quell/defy narration, and behavior-specific documentation passed Task 14's
+   full verification, isolated boot, and adversarial playtest gate. It has not
+   yet been integrated into `master`. Source:
+   [U8 design](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
 2. **U9 - progression events.** Replace progression side effects with explicit
    events for both participants and decide how spell `primarystat` becomes the
    authoritative resolution stat.
@@ -81,10 +83,38 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 
 ## Deferred Follow-ons
 
+- **The lint gate silently inverts on any PR over 20,000 diff lines.**
+  `only-new-issues` asks the GitHub API for the PR patch and feeds it to
+  `--new-from-patch`. The API refuses any diff above 20,000 lines with
+  `code: too_large`, and when that call fails `golangci-lint-action` cannot
+  tell new findings from old, so it reports the **entire** grandfathered
+  backlog and the gate fails on code the branch never touched. U8
+  (2026-08-18, PR #51) was the first change large enough to hit this; its
+  lint failure was entirely this, verified by `--new-from-rev=master`
+  reporting 0 and by CI's own count falling to master's exact 96 baseline.
+  `fetch-depth: 0` on the checkout was tried and does **not** help: the
+  action has no local-diff fallback on `pull_request` events (reverted in
+  `dab4006ff`, so the workflow is unchanged). A real fix means passing
+  `--new-from-merge-base` explicitly, which needs care because
+  `validate.yml` is shared by the PR and push-to-master callers and that
+  flag would compare master against itself on a push. Until then:
+  **when the lint gate fails, check `golangci-lint run --new-from-rev=master`
+  locally before believing it**, and keep large changes split where practical.
+- **Defender name rendered from the wrong viewer's perspective (cosmetic):**
+  `mobcommands/taunt.go` and `hooks/spell_resolution.go` build a defender's
+  display name with `GetPlayerName(defender.UserId)` rather than the id of the
+  player who will read the line, so the `(aggro)` suffix is computed from the
+  defender's own perspective instead of the reader's. Wrong decoration only; the
+  name itself is correct. Found in the U8 review, 2026-08-18. Belongs with the
+  combat/action messaging unification below rather than as a one-off patch.
+- **Audit and remove dead mutation active command skills:** inventory command
+  registration, mutation definitions, implementations, tests, help, and config
+  knobs after the mutation removals. Delete only entries proven unreachable or
+  obsolete. This remains explicitly outside U8.
 - **NPC maintenance routines (Mob Aliveness 3.5):** the only deferred item in an
   otherwise complete 45-chunk roadmap. Source:
   [Mob Aliveness Roadmap](MOB_ALIVENESS_ROADMAP.md).
-- **Centralized messaging framework:** combat-state Perception shipped dormant
+- **Unify fragmented combat/action messaging:** combat-state Perception shipped dormant
   and has no consumer. A future framework would own visibility gating,
   anonymized infrared rendering, look blocking, event-category colors, wrapping,
   companion-name leakage, and the scattered ownership of melee, spell,

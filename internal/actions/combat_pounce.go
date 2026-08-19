@@ -3,8 +3,10 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -12,6 +14,8 @@ import (
 // PounceResult holds the outcome of a pounce attempt for the caller to use
 // when formatting messages, firing events, and updating UI.
 type PounceResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -26,6 +30,9 @@ type PounceResult struct {
 
 	// OnCooldown is true when the special-move cooldown blocked the pounce.
 	OnCooldown bool
+
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
 
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
@@ -59,19 +66,12 @@ type PounceResult struct {
 func ExecutePounce(actor Actor) PounceResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return PounceResult{NoTarget: true}
-	}
-
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return PounceResult{OnCooldown: true}
+	if char.IsActing() {
+		return PounceResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return PounceResult{NoTarget: true}
 	}
@@ -89,6 +89,19 @@ func ExecutePounce(actor Actor) PounceResult {
 	if !combat.SpeciesIsQuadrupedPredator(char) {
 		return PounceResult{NotPredator: true}
 	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return PounceResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionPounce, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return PounceResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return PounceResult{Cost: cost, OnCooldown: true}
+	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move — uses bash's damage percent and knockdown chance;
 	// KnockdownToSupine=true drives the target backward (face-up). No bleed:
@@ -134,6 +147,7 @@ func ExecutePounce(actor Actor) PounceResult {
 	}
 
 	return PounceResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

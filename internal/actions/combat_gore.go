@@ -3,8 +3,10 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -12,6 +14,8 @@ import (
 // GoreResult holds the outcome of a gore attempt for the caller to use
 // when formatting messages, firing events, and updating UI.
 type GoreResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -25,6 +29,9 @@ type GoreResult struct {
 
 	// OnCooldown is true when the special-move cooldown blocked the gore.
 	OnCooldown bool
+
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
 
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
@@ -51,19 +58,12 @@ type GoreResult struct {
 func ExecuteGore(actor Actor) GoreResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return GoreResult{NoTarget: true}
-	}
-
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return GoreResult{OnCooldown: true}
+	if char.IsActing() {
+		return GoreResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return GoreResult{NoTarget: true}
 	}
@@ -74,6 +74,19 @@ func ExecuteGore(actor Actor) GoreResult {
 	if char.HasBodyPart("hands") || !combat.SpeciesIsHorned(char) {
 		return GoreResult{NotHorned: true}
 	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return GoreResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionGore, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return GoreResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return GoreResult{Cost: cost, OnCooldown: true}
+	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move — uses kick's damage percent for the charge
 	// impact and bash's knockdown chance; KnockdownToSupine=true drives the
@@ -119,6 +132,7 @@ func ExecuteGore(actor Actor) GoreResult {
 	}
 
 	return GoreResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

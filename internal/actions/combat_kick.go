@@ -3,8 +3,10 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -26,6 +28,8 @@ const (
 // KickResult holds the outcome of a kick attempt for the caller to use when
 // formatting messages, firing events, and updating UI.
 type KickResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -80,20 +84,8 @@ func ExecuteKick(actor Actor) KickResult {
 		return KickResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return KickResult{NoTarget: true}
-	}
-
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	cooldownStr := fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)
-	if !char.Cooldowns.Try("special-move", cooldownStr) {
-		return KickResult{OnCooldown: true}
-	}
-
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return KickResult{NoTarget: true}
 	}
@@ -102,6 +94,19 @@ func ExecuteKick(actor Actor) KickResult {
 	if !char.HasBodyPart("legs") {
 		return KickResult{NoTarget: true}
 	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return KickResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionKick, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return KickResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return KickResult{Cost: cost, OnCooldown: true}
+	}
+	commitMeleeEngagement(actor)
 
 	// Determine kick variant and associated params.
 	variant := KickStandard
@@ -183,6 +188,7 @@ func ExecuteKick(actor Actor) KickResult {
 	}
 
 	return KickResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Variant:    variant,

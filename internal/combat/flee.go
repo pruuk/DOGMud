@@ -47,23 +47,23 @@ func (b FleeBlocker) IsPlayer() bool { return b.UserId != 0 }
 // targeting me" check degenerated to "is this player targeting
 // themselves" — always false in practice). Routing through this
 // helper restores the intended PvP-blocker behavior.
-func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlocker {
+// The second return value reports whether ANY opposed roll was actually made.
+// Callers use it to award skullduggery practice, which is deliberately NOT done
+// here: this function is named "resolve", it is called from two packages, and a
+// progression write buried in it awarded practice for a contest that never
+// happened -- walking out of a room where nothing was fighting you trained
+// skullduggery exactly as much as breaking a grapple line did. Progression is
+// the wrapper's job; see U9, which makes that split explicit everywhere.
+func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeSkill bool) (*FleeBlocker, bool) {
 	if fleer == nil || room == nil {
-		return nil
+		return nil, false
 	}
+	contested := false
 
 	fleerUid := fleer.GetUserId()
 	fleerMid := fleer.GetMobInstanceId()
 
-	// Prone penalty: Supine and Prone both halve the fleer's score
-	// (legacy enum couldn't distinguish, and the design intent is
-	// "you're slower because you're on the floor" — applies equally).
-	pronePenalty := 1.0
-	if fleer.IsProne() || fleer.IsSupine() {
-		pronePenalty = 0.5
-	}
-	fleeScore := float64(fleer.GetEffectiveDexterity()+
-		fleer.GetSkillLevel(skills.Skullduggery)*25) * pronePenalty
+	fleeScore := fleeContestScore(fleer, includeSkill)
 
 	// Mobs first, then players. Both loops use FindFighting to scope
 	// to combatants only; the in-loop targeting filter narrows to
@@ -81,12 +81,13 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlo
 		}
 		blockScore := float64(m.Character.GetEffectiveDexterity() +
 			m.Character.GetSkillLevel(skills.UnarmedCombat)*25)
+		contested = true
 		success := RunContest(fleeScore, []contest.Entry{{Score: blockScore}}).Success
 		if !success {
 			return &FleeBlocker{
 				Name:          m.Character.Name,
 				MobInstanceId: m.InstanceId,
-			}
+			}, contested
 		}
 	}
 
@@ -103,16 +104,32 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room) *FleeBlo
 		}
 		blockScore := float64(u.Character.GetEffectiveDexterity() +
 			u.Character.GetSkillLevel(skills.UnarmedCombat)*25)
+		contested = true
 		success := RunContest(fleeScore, []contest.Entry{{Score: blockScore}}).Success
 		if !success {
 			return &FleeBlocker{
 				Name:   u.Character.Name,
 				UserId: u.UserId,
-			}
+			}, contested
 		}
 	}
 
-	return nil
+	return nil, contested
+}
+
+func fleeContestScore(fleer *characters.Character, includeSkill bool) float64 {
+	if fleer == nil {
+		return 0
+	}
+	score := fleer.GetEffectiveDexterity()
+	if includeSkill {
+		score += fleer.GetSkillLevel(skills.Skullduggery) * 25
+	}
+	pronePenalty := 1.0
+	if fleer.IsProne() || fleer.IsSupine() {
+		pronePenalty = 0.5
+	}
+	return float64(score) * pronePenalty
 }
 
 // mobTargetsFleer reports whether mob m's aggro points at the fleer

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -18,6 +19,8 @@ import (
 // TauntResult holds the outcome of a taunt/howl conviction attack for the
 // caller to use when formatting messages and firing events.
 type TauntResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -53,19 +56,27 @@ type TauntResult struct {
 	// SelfDamage is the self-conviction damage taken on a fumble.
 	SelfDamage int
 
-	// Defied reports that the target's defy PARTIALLY blunted the conviction
-	// damage. The taunt still landed and still dealt damage, for less. U6 Task 12
-	// renamed this from Deflected: "deflected" belonged to the deleted flat
-	// avoidance pair and read as a clean miss, which a partial outcome is not.
-	Defied bool
-
-	// FullyDefied reports that the target's defy CRITICALLY won and negated the
-	// conviction damage entirely. Renamed from CritDeflected.
-	FullyDefied bool
+	// Defence is the canonical defy contest outcome. Callers render this once
+	// for their own audience and visibility rules.
+	Defence combat.ChannelDefenceResult
 
 	// AggroPulled is true when the taunt forced the target to switch aggro
 	// to the taunter (target was fighting someone else).
 	AggroPulled bool
+}
+
+// runTauntContest is the primary social-attack contest seam. The default is
+// always the canonical contest runner; same-package tests replace it briefly
+// to exercise admission, damage, defence, and aggro effects deterministically.
+var runTauntContest = combat.RunContest
+
+func tauntTargetIsCurrent(snapshot, current AggroTarget, originalRoomID int, char *characters.Character) bool {
+	return snapshot.Found && current.Found &&
+		snapshot.Char == current.Char &&
+		snapshot.UserId == current.UserId &&
+		snapshot.MobInstanceId == current.MobInstanceId &&
+		char.RoomId == originalRoomID &&
+		current.Char.RoomId == originalRoomID
 }
 
 // ExecuteTaunt performs the shared conviction-attack resolution used by both
@@ -82,37 +93,53 @@ type TauntResult struct {
 // out-of-combat aggro setup (e.g. player targeting before entering combat).
 func ExecuteTaunt(actor Actor) TauntResult {
 	char := actor.GetCharacter()
-
-	// Taunting is a noisy action — reveal if hidden. The Combat Phase
-	// cascade also fires a reveal when combat is entered; both paths are
-	// idempotent against an already-Revealing/Visible actor.
-	if char.IsHidden() {
-		char.Awareness.TransitionToRevealing(state.TransitionReason{
-			Trigger:  awareness.TriggerNoisyAction,
-			Metadata: map[string]any{"command": "taunt"},
-		})
-	}
+	originalRoomID := char.RoomId
 
 	// Don't interrupt any active activity (cast/craft/salvage) to taunt.
 	if char.IsActing() {
 		return TauntResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before calling.
-	if char.Aggro == nil {
+	// Resolve the target through the staged-target-aware seam. Player wrappers
+	// can validate a named opener here without setting aggro or seeding
+	// aggression before admission.
+	target := resolveActionTarget(actor, char)
+	if !tauntTargetIsCurrent(target, target, originalRoomID, char) {
 		return TauntResult{NoTarget: true}
 	}
+	targetSnapshot := target
 
-	// Check shared special-move cooldown.
 	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !char.CooldownReady("special-move") {
 		return TauntResult{OnCooldown: true}
 	}
+	cost := admitFullCost(actor, costs.ActionTaunt, characters.PoolConviction,
+		float64(cfg.RhetoricActionBaseConvictionCost))
+	if cost.Status == characters.CostRefused {
+		return TauntResult{Cost: cost}
+	}
 
-	// Resolve target.
-	target := ResolveAggroTarget(char.Aggro)
-	if !target.Found {
-		return TauntResult{NoTarget: true}
+	// The target can leave after the quote commits. The already-paid cost stays
+	// paid, but a stale target must not consume cooldown, commit engagement,
+	// reveal the actor, or resolve a contest.
+	target = resolveActionTarget(actor, char)
+	if !tauntTargetIsCurrent(targetSnapshot, target, originalRoomID, char) {
+		return TauntResult{Cost: cost, NoTarget: true}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return TauntResult{Cost: cost, OnCooldown: true}
+	}
+	commitMeleeEngagement(actor)
+
+	// Taunting is noisy only once the paid attempt owns the cooldown and target.
+	if char.IsHidden() {
+		// Best effort: the only failure modes are an activity veto or an
+		// already-Revealing state, both of which mean the actor is not quietly
+		// hidden any more, which is all this call is for.
+		_ = char.Awareness.TransitionToRevealing(state.TransitionReason{
+			Trigger:  awareness.TriggerNoisyAction,
+			Metadata: map[string]any{"command": "taunt"},
+		})
 	}
 
 	// Conviction attack: Charisma + (rhetoric * SkillWeight) vs
@@ -132,7 +159,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	attackScore *= convMult
 
 	// Opposed roll for hit/miss/fumble/crit classification.
-	res := combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
+	res := runTauntContest(attackScore, []contest.Entry{{Score: defenseScore}})
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User
@@ -163,6 +190,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 
 		return TauntResult{
+			Cost:       cost,
 			Target:     target,
 			Executed:   true,
 			Fumble:     true,
@@ -211,15 +239,11 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		// ResolveChannelDefence charges and progresses the defence itself, so the
 		// defenderUserId this call site used to thread through is now read off the
 		// defender.
-		defied := false
-		fullyDefied := false
+		defence := combat.ChannelDefenceResult{DamageMultiplier: 1}
 		if !isCrit {
-			mult := combat.ResolveChannelDefence(combat.ChannelSocial, char, target.Char)
+			defence = combat.ResolveChannelDefence(combat.ChannelSocial, char, target.Char)
+			mult := defence.DamageMultiplier
 			if mult < 1.0 {
-				defied = true
-				if mult == 0.0 {
-					fullyDefied = true
-				}
 				dmg = int(math.Round(float64(dmg) * mult))
 				if dmg < 1 && mult > 0 {
 					dmg = 1
@@ -285,14 +309,14 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 
 		return TauntResult{
+			Cost:        cost,
 			Target:      target,
 			Executed:    true,
 			Hit:         true,
 			Crit:        isCrit,
 			Damage:      dmg,
 			DmgDesc:     dmgDesc,
-			Defied:      defied,
-			FullyDefied: fullyDefied,
+			Defence:     defence,
 			AggroPulled: agroPulled,
 		}
 	}
@@ -308,6 +332,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	}
 
 	return TauntResult{
+		Cost:     cost,
 		Target:   target,
 		Executed: true,
 		Hit:      false,

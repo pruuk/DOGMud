@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -18,6 +19,9 @@ func Grapple(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	res := actions.ExecuteGrapple(&actions.MobActor{Mob: mob, Room: room})
+	if res.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
 
 	if res.OnCooldown || res.NoTarget || res.GrappleImmune || !res.Executed {
 		return true, nil

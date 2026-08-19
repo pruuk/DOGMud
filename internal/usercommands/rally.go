@@ -16,6 +16,10 @@ import (
 
 func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	result := actions.ExecuteRally(&actions.UserActor{User: user, Room: room})
+	if result.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		return true, nil
+	}
 
 	if result.Crafting {
 		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't rally while focused on your work. Finish or be interrupted first.</ansi>`)

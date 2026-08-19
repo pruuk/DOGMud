@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // Flee makes a mob disengage from combat and move to a random adjacent room.
@@ -45,7 +46,14 @@ func Flee(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Identical math to the player-flee path in handlePlayerFlee; the
 	// helper handles both player and mob blockers, the prone penalty,
 	// and the targeting filter.
-	if combat.ResolveFleeBlockers(&mob.Character, room) != nil {
+	blocker, contested := combat.ResolveFleeBlockers(&mob.Character, room, true)
+	// Parity with the player path in handlePlayerFlee: practice for breaking
+	// off is awarded by the wrapper, and only when a contest actually occurred.
+	// MobSkillCap in CheckSkillProgression bounds what a mob can reach.
+	if contested {
+		mob.Character.OnSkillUse(string(skills.Skullduggery), 0)
+	}
+	if blocker != nil {
 		room.SendTextVisual(messaging.CategoryRoomExit,
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to flee but is blocked!`, mob.Character.Name))
 		return true, nil

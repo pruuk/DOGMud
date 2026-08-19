@@ -3,7 +3,9 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
@@ -13,6 +15,7 @@ type ReloadResult struct {
 	AmmoTag       string // ammo type involved (set for NoAmmo messaging too)
 	AmmoName      string // display name of the bundle consumed from
 	BundleEmptied bool   // the bundle's last Use was consumed
+	Cost          characters.CostCommitResult
 
 	Loaded        bool // success
 	NoWeapon      bool // no ranged weapon equipped
@@ -60,6 +63,7 @@ func ExecuteReload(actor Actor) ReloadResult {
 	if weapon.Loaded {
 		return ReloadResult{WeaponName: weapon.DisplayName(), AlreadyLoaded: true}
 	}
+	weaponSnapshot := *weapon
 
 	ammoTag := weapon.GetSpec().AmmoTag
 
@@ -67,7 +71,7 @@ func ExecuteReload(actor Actor) ReloadResult {
 	bundleIdx := -1
 	for idx := range char.Items {
 		spec := char.Items[idx].GetSpec()
-		if spec.Type == items.Ammo && spec.AmmoTag == ammoTag {
+		if char.Items[idx].Uses > 0 && spec.Type == items.Ammo && spec.AmmoTag == ammoTag {
 			bundleIdx = idx
 			break
 		}
@@ -75,11 +79,11 @@ func ExecuteReload(actor Actor) ReloadResult {
 	if bundleIdx < 0 {
 		return ReloadResult{WeaponName: weapon.DisplayName(), AmmoTag: ammoTag, NoAmmo: true}
 	}
+	bundleSnapshot := char.Items[bundleIdx]
 
-	// Shared special-move cooldown — the cost of the reload. Last gate, so a
-	// reload that would fail for any earlier reason never burns the cooldown.
+	// Shared special-move cooldown availability is the last read-only gate.
 	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !char.CooldownReady("special-move") {
 		return ReloadResult{WeaponName: weapon.DisplayName(), OnCooldown: true}
 	}
 
@@ -87,17 +91,57 @@ func ExecuteReload(actor Actor) ReloadResult {
 		WeaponName: weapon.DisplayName(),
 		AmmoTag:    ammoTag,
 		AmmoName:   char.Items[bundleIdx].DisplayName(),
-		Loaded:     true,
 	}
+	result.Cost = admitFullCost(actor, costs.ActionReload, characters.PoolStamina,
+		float64(cfg.ReloadBaseStaminaCost))
+	if result.Cost.Status == characters.CostRefused {
+		return result
+	}
+
+	// Admission calls through the actor seam, so a test double (or a future
+	// synchronous hook) can invalidate the already-checked equipment/inventory
+	// state. Follow the admitted item identities rather than a stale slice index;
+	// if either disappeared, retain the one paid admission and do nothing else.
+	if !weapon.Equals(weaponSnapshot) || weapon.Loaded || weapon.GetSpec().AmmoTag != ammoTag {
+		return result
+	}
+	bundleIdx = -1
+	for idx := range char.Items {
+		spec := char.Items[idx].GetSpec()
+		if char.Items[idx].Equals(bundleSnapshot) && char.Items[idx].Uses > 0 &&
+			spec.Type == items.Ammo && spec.AmmoTag == ammoTag {
+			bundleIdx = idx
+			break
+		}
+	}
+	if bundleIdx < 0 {
+		return result
+	}
+	bundleBefore := char.Items[bundleIdx]
 
 	// Consume one Use; remove the bundle when emptied. RemoveItem matches by
 	// ItemId+UUID (Item.Equals), so the post-decrement value still matches.
 	char.Items[bundleIdx].Uses--
+	bundleRemoved := false
 	if char.Items[bundleIdx].Uses <= 0 {
 		result.BundleEmptied = true
 		char.RemoveItem(char.Items[bundleIdx])
+		bundleRemoved = true
 	}
 
 	weapon.Loaded = true
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		weapon.Loaded = false
+		result.BundleEmptied = false
+		if bundleRemoved {
+			char.Items = append(char.Items, items.Item{})
+			copy(char.Items[bundleIdx+1:], char.Items[bundleIdx:])
+			char.Items[bundleIdx] = bundleBefore
+		} else {
+			char.Items[bundleIdx] = bundleBefore
+		}
+		return result
+	}
+	result.Loaded = true
 	return result
 }

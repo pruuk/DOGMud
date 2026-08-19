@@ -20,13 +20,17 @@ to the ground on a successful hit.
 
 <ansi fg="yellow">Mechanics:</ansi>
 
-  <ansi fg="stat">Damage:</ansi> Heavy — the leaping body-slam deals significant
+  <ansi fg="stat">Damage:</ansi> Heavy. The leaping body-slam deals significant
     harm on contact.
   <ansi fg="stat">Knockdown:</ansi> A successful pounce has a strong chance to
     drive the target backward off their feet (Supine),
     leaving them vulnerable to follow-up attacks.
   <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
+
+Pounce spends Stamina and requires full payment before the leap. Carried load
+raises the price, while <ansi fg="skill">unarmed-combat</ansi> skill lowers it.
+If you are too spent, no cooldown, combat round, or effect is consumed.
 
 Pounce is a powerful opener that combines direct damage with
 a knockdown attempt, setting up devastating follow-ups for
@@ -35,5 +39,7 @@ details on Supine.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help rake</ansi>, <ansi fg="command">help maul</ansi>, <ansi fg="command">help hamstring</ansi>,
-  <ansi fg="command">help kick</ansi>, <ansi fg="command">help conditions</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help rake</ansi>, <ansi fg="command">help maul</ansi>, <ansi fg="command">help special</ansi>,
+  <ansi fg="command">help kick</ansi>, <ansi fg="command">help conditions</ansi>,
+  <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help combat</ansi>

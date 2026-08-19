@@ -18,6 +18,25 @@ func TestAnonymizeReplacesMobnameTag(t *testing.T) {
 	}
 }
 
+func TestAnonymizeReplacesIndexedAndSuffixedMobnameTags(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+	}{
+		{"duplicate_two", `<ansi fg="mobname-dup2">Thornwall Thug #2</ansi> snarls`},
+		{"duplicate_four", `<ansi fg="mobname-dup4">Thornwall Thug #4</ansi> snarls`},
+		{"display_suffix", `<ansi fg="mobname-target">Thornwall Thug</ansi> snarls`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			want := `<ansi fg="combat-anon">a figure</ansi> snarls`
+			if got := Anonymize(tc.in); got != want {
+				t.Fatalf("indexed/suffixed mob identity leaked: got %q want %q", got, want)
+			}
+		})
+	}
+}
+
 func TestAnonymizeReplacesPetnameTag(t *testing.T) {
 	in := `<ansi fg="petname">Rex</ansi> follows`
 	want := `<ansi fg="combat-anon">a figure</ansi> follows`

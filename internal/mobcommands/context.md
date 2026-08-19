@@ -40,6 +40,9 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `SpeciesHasLifeDrain` / `SpeciesIsQuadrupedPredator` at three sync points:
   `CanUse*` in `ai.go`, `CommandIsReady`, and the action entry. Drift rows
   in `command_readiness_drift_test.go` keep all three in sync.
+- **Rhetoric**: `taunt` and its wolf-flavoured `howl` variant use the shared
+  coordinated Defy renderer when defended. Its attacker, defender, and room
+  lines replace the ordinary hit narration rather than following it.
 - **Tactical support**: `callforhelp` - Coordinated group combat behaviors
 - **Self-preservation**: Retreat and defensive behaviors
 
@@ -193,3 +196,9 @@ why a command available to both players and mobs must be registered twice
 - **Shared logic belongs in `internal/actions`**, behind `actions.Actor`, so
   the two paths cannot drift. A command file should be argument parsing plus a
   call into `actions`.
+- **Voluntary-action admission** stays in that shared action path. Mob wrappers
+  consume the returned `CostCommitResult` for control flow but never emit a
+  player-private refusal line and never charge a pool independently.
+- **Partial shortages are silent too.** Mob autoattack, winning defence, flee,
+  and grapple maintenance use the same short-funded, skill-less mechanics as
+  players without an invisible private warning.

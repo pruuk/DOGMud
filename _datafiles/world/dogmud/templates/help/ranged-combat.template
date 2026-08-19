@@ -1,7 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">ranged-combat</ansi> skill
 
 The <ansi fg="skill">ranged-combat</ansi> skill governs your proficiency
-with ranged weapons — bows, crossbows, pistols, and slings.
+with ranged weapons: bows, crossbows, pistols, and slings.
 Higher ranks improve your hit chance and damage at range.
 
 <ansi fg="yellow">━━━ Aimed Shots ━━━</ansi>
@@ -13,7 +13,12 @@ more than raw muscle.
 
 Each weapon must be loaded before it fires. Use
 <ansi fg="command">reload</ansi> to ready it after each shot. Ammunition comes in
-bundles — arrows, bolts, or shot — carried in your pack.
+bundles such as arrows, bolts, or shot carried in your pack.
+
+Shooting and reloading spend Stamina and require full payment. Your carried
+load raises their price, while <ansi fg="skill">ranged-combat</ansi> skill lowers
+it. If you are too spent, the action refuses before a shot, ammunition, or
+cooldown is consumed.
 
 <ansi fg="yellow">━━━ Range ━━━</ansi>
 
@@ -29,4 +34,4 @@ This skill improves through use:
   - Perception advances from aimed-shot attacks
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help reload</ansi>,
-  <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>

@@ -4093,6 +4093,24 @@ func TestTryCommand(t *testing.T) {
 			"Activity must be Free after cancel")
 	})
 
+	t.Run("casting_flee_outside_combat_preserves_cast", func(t *testing.T) {
+		user := users.GetByUserId(1)
+		user.Character.Aggro = nil
+		if user.Character.Activity == nil {
+			user.Character.Activity = activity.NewMachine()
+		}
+		_ = user.Character.Activity.TransitionToCasting(
+			activity.CastingData{SpellId: "sparks", ConvictionSpent: 0, FoldsNeeded: 4},
+			state.TransitionReason{Trigger: activity.TriggerCastBegin},
+		)
+		handled, err := TryCommand("flee", "", 1, events.CmdSkipScripts)
+		assert.True(t, handled)
+		assert.NoError(t, err)
+		assert.True(t, user.Character.Activity.IsCasting(),
+			"out-of-combat flee rejection must not cancel the pending cast")
+		_ = user.Character.Activity.TransitionToFree(state.TransitionReason{Trigger: "test-cleanup"})
+	})
+
 	t.Run("casting_flee_clears_cast", func(t *testing.T) {
 		user := users.GetByUserId(1)
 		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}

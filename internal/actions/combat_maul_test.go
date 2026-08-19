@@ -36,11 +36,9 @@ func TestMaul_OnCooldown(t *testing.T) {
 	room := newTestRoom()
 	actor := newStubActor(char, room)
 
-	// Set aggro so we pass the nil check and reach the cooldown gate.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
-
-	// Burn the cooldown slot so the next Try call is blocked.
-	char.Cooldowns.Try("special-move", "3 rounds")
+	prepareSpecialMoveCooldown(t, char, 7904, 7904, &species.Species{
+		SpeciesId: 7904, Name: "cooldown-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+	})
 
 	result := ExecuteMaul(actor)
 
@@ -84,6 +82,7 @@ func TestMaul_NotFanged(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 5002 // wolf — fanged
 		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		fundSpecialMove(char)
 
 		result := ExecuteMaul(newStubActor(char, newTestRoom()))
 
@@ -104,7 +103,7 @@ func TestMaul_TargetGone(t *testing.T) {
 
 	result := ExecuteMaul(actor)
 
-	// Cooldown Try fires first (setting it), so OnCooldown should be false.
+	// Target validation precedes cooldown admission, so OnCooldown is false.
 	// Target resolution then fails → NoTarget.
 	assert.False(t, result.Executed, "maul with missing target should not execute")
 	assert.True(t, result.NoTarget, "maul should report NoTarget when the resolved target is gone")

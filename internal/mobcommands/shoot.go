@@ -19,7 +19,8 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	result := actions.ExecuteFire(&actions.MobActor{Mob: mob, Room: room}, rest)
 
-	// Silent early exits — mobs don't narrate their own failed attempts.
+	// Silent early exits — including CostRefused — because mobs don't narrate
+	// their own failed attempts. ExecuteFire keeps every mechanic unchanged.
 	if !result.Executed {
 		return true, nil
 	}

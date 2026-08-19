@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"math"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -118,7 +119,7 @@ func grappleScoreApproxEqual(a, b float64) bool {
 func TestGrappleScore_StrCoefficient(t *testing.T) {
 	cfg := configs.GetBalanceConfig()
 	c := makeGrappleCharacter(t, 100, 0, 0)
-	got := grappleScore(c, false, cfg)
+	got := grappleScore(c, false, cfg, true)
 	want := 70.0 // 0.7 * 100 + 0 + 0
 	if !grappleScoreApproxEqual(got, want) {
 		t.Errorf("Str=100 only → score = %v, want %v", got, want)
@@ -128,7 +129,7 @@ func TestGrappleScore_StrCoefficient(t *testing.T) {
 func TestGrappleScore_DexCoefficient(t *testing.T) {
 	cfg := configs.GetBalanceConfig()
 	c := makeGrappleCharacter(t, 0, 100, 0)
-	got := grappleScore(c, false, cfg)
+	got := grappleScore(c, false, cfg, true)
 	want := 30.0 // 0 + 0.3 * 100 + 0
 	if !grappleScoreApproxEqual(got, want) {
 		t.Errorf("Dex=100 only → score = %v, want %v", got, want)
@@ -138,7 +139,7 @@ func TestGrappleScore_DexCoefficient(t *testing.T) {
 func TestGrappleScore_SkillCoefficientDefender(t *testing.T) {
 	cfg := configs.GetBalanceConfig()
 	c := makeGrappleCharacter(t, 0, 0, 50)
-	got := grappleScore(c, false, cfg)
+	got := grappleScore(c, false, cfg, true)
 	want := 100.0 // 0 + 0 + 2.0 * 50
 	if !grappleScoreApproxEqual(got, want) {
 		t.Errorf("UC=50 defender → score = %v, want %v", got, want)
@@ -148,7 +149,7 @@ func TestGrappleScore_SkillCoefficientDefender(t *testing.T) {
 func TestGrappleScore_SkillCoefficientAggressor(t *testing.T) {
 	cfg := configs.GetBalanceConfig()
 	c := makeGrappleCharacter(t, 0, 0, 50)
-	got := grappleScore(c, true, cfg)
+	got := grappleScore(c, true, cfg, true)
 	want := 110.0 // 0 + 0 + 2.2 * 50
 	if !grappleScoreApproxEqual(got, want) {
 		t.Errorf("UC=50 aggressor → score = %v, want %v", got, want)
@@ -158,7 +159,7 @@ func TestGrappleScore_SkillCoefficientAggressor(t *testing.T) {
 func TestGrappleScore_CombinedFormulaDefender(t *testing.T) {
 	cfg := configs.GetBalanceConfig()
 	c := makeGrappleCharacter(t, 100, 100, 30)
-	got := grappleScore(c, false, cfg)
+	got := grappleScore(c, false, cfg, true)
 	want := 160.0 // 0.7*100 + 0.3*100 + 2.0*30 = 70 + 30 + 60
 	if !grappleScoreApproxEqual(got, want) {
 		t.Errorf("S100/D100/UC30 defender → score = %v, want %v", got, want)
@@ -168,7 +169,7 @@ func TestGrappleScore_CombinedFormulaDefender(t *testing.T) {
 func TestGrappleScore_CombinedFormulaAggressor(t *testing.T) {
 	cfg := configs.GetBalanceConfig()
 	c := makeGrappleCharacter(t, 100, 100, 30)
-	got := grappleScore(c, true, cfg)
+	got := grappleScore(c, true, cfg, true)
 	want := 166.0 // 0.7*100 + 0.3*100 + 2.2*30 = 70 + 30 + 66
 	if !grappleScoreApproxEqual(got, want) {
 		t.Errorf("S100/D100/UC30 aggressor → score = %v, want %v", got, want)
@@ -181,8 +182,8 @@ func TestGrappleScore_EscapeModifierIgnored(t *testing.T) {
 	// (no field read in the function body).
 	cfg := configs.GetBalanceConfig()
 	c := makeGrappleCharacter(t, 100, 100, 0)
-	baseline := grappleScore(c, false, cfg)
-	got := grappleScore(c, false, cfg)
+	baseline := grappleScore(c, false, cfg, true)
+	got := grappleScore(c, false, cfg, true)
 	if !grappleScoreApproxEqual(got, baseline) {
 		t.Errorf("score should not depend on EscapeModifier; got %v, baseline %v", got, baseline)
 	}
@@ -190,7 +191,7 @@ func TestGrappleScore_EscapeModifierIgnored(t *testing.T) {
 
 func TestGrappleScore_NilCharacter(t *testing.T) {
 	cfg := configs.GetBalanceConfig()
-	got := grappleScore(nil, false, cfg)
+	got := grappleScore(nil, false, cfg, true)
 	if got != 0 {
 		t.Errorf("nil character → score = %v, want 0", got)
 	}
@@ -222,8 +223,8 @@ func TestGrappleScore_QuesterVsBoarSurvives(t *testing.T) {
 	quester := makeGrappleCharacter(t, 116, 126, 30)
 	boar := makeGrappleCharacter(t, 149, 91, 0)
 
-	atkScore := grappleScore(quester, true, cfg) // quester is aggressor
-	defScore := grappleScore(boar, false, cfg)
+	atkScore := grappleScore(quester, true, cfg, true) // quester is aggressor
+	defScore := grappleScore(boar, false, cfg, true)
 
 	// Quester0's score should exceed boar's despite raw Str gap.
 	if atkScore <= defScore {
@@ -251,8 +252,8 @@ func TestGrappleScore_UntrainedVsTrainedDefenderEscapes(t *testing.T) {
 	untrained := makeGrappleCharacter(t, 100, 100, 0)
 	trained := makeGrappleCharacter(t, 100, 100, 30)
 
-	atkScore := grappleScore(untrained, true, cfg) // 100 + 0
-	defScore := grappleScore(trained, false, cfg)  // 100 + 60
+	atkScore := grappleScore(untrained, true, cfg, true) // 100 + 0
+	defScore := grappleScore(trained, false, cfg, true)  // 100 + 60
 
 	margin := atkScore - defScore
 	sigma := atkScore * 0.15
@@ -272,8 +273,8 @@ func TestGrappleScore_EqualPairHolds(t *testing.T) {
 	a := makeGrappleCharacter(t, 100, 100, 15)
 	b := makeGrappleCharacter(t, 100, 100, 15)
 
-	atkScore := grappleScore(a, true, cfg)  // 100 + 33 = 133
-	defScore := grappleScore(b, false, cfg) // 100 + 30 = 130
+	atkScore := grappleScore(a, true, cfg, true)  // 100 + 33 = 133
+	defScore := grappleScore(b, false, cfg, true) // 100 + 30 = 130
 
 	margin := atkScore - defScore
 	sigma := atkScore * 0.15
@@ -282,5 +283,26 @@ func TestGrappleScore_EqualPairHolds(t *testing.T) {
 	if z < 0 || z >= 0.5 {
 		t.Errorf("expected z in [0, 0.5) (Hold band, slight aggressor edge), got z=%.2f (atk=%.1f def=%.1f)",
 			z, atkScore, defScore)
+	}
+}
+
+// Catches treating "short" as a zero score or bypassing the established
+// depletion/load effectiveness penalties along with the skill term.
+func TestGrappleScoreWithoutSkillKeepsStatAndEffectivenessTerms(t *testing.T) {
+	cfg := configs.GetBalanceConfig()
+	cfg.GrappleStaminaPenaltyMax = 0.6
+	cfg.GrappleStaminaPenaltyCurve = 1
+	cfg.GrappleEncumbrancePenaltyMax = 0.8
+	cfg.GrappleEncumbrancePenaltyCurve = 1.5
+	c := makeGrappleCharacter(t, 100, 100, 50)
+	c.Stamina = 0
+	c.StaminaMax.Value = 100
+	loadGrapplerToFraction(c, 99200, 1)
+
+	got := grappleScore(c, true, cfg, false)
+	want := 100.0 * 0.4 * (1.0 - 0.8*math.Pow(1.0/3.0, 1.5))
+	if !grappleScoreApproxEqual(got, want) {
+		t.Fatalf("short score = %.6f, want %.6f from stats x stamina x encumbrance",
+			got, want)
 	}
 }

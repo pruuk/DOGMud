@@ -3,8 +3,10 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -13,6 +15,8 @@ import (
 // BashResult holds the outcome of a bash attempt for the caller to use when
 // formatting messages, firing events, and updating UI.
 type BashResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -54,11 +58,6 @@ func ExecuteBash(actor Actor) BashResult {
 		return BashResult{Crafting: true}
 	}
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return BashResult{NoTarget: true}
-	}
-
 	// Must have a shield equipped — unless this creature bashes naturally
 	// (golems/elementals slam with their body).
 	naturalBash := false
@@ -75,18 +74,24 @@ func ExecuteBash(actor Actor) BashResult {
 		return BashResult{NoShield: true}
 	}
 
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	cooldownStr := fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)
-	if !char.Cooldowns.Try("special-move", cooldownStr) {
-		return BashResult{OnCooldown: true}
-	}
-
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return BashResult{NoTarget: true}
 	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return BashResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionBash, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return BashResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return BashResult{Cost: cost, OnCooldown: true}
+	}
+	commitMeleeEngagement(actor)
 
 	// Execute the skill move.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
@@ -125,6 +130,7 @@ func ExecuteBash(actor Actor) BashResult {
 	}
 
 	return BashResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

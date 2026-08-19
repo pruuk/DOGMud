@@ -5,11 +5,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
@@ -20,27 +22,257 @@ import (
 // still get to flee: go.go refuses all movement while in combat, so fleeing is
 // the only player-initiated disengage. Refusing it at zero stamina would leave
 // no alternative action that changes the character's situation.
-func TestFleeCost_ExhaustedCharacterIsChargedPartiallyNotRefused(t *testing.T) {
-	c := characters.New()
-	c.StaminaMax.Base = 100
-	c.StaminaMax.Recalculate()
-	c.Stamina = 3
+func TestFleeCost_ShortAttemptCommitsAvailableStaminaAndCarriesNoSkill(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9250, 99842, 0)
+	defer cleanup()
+	u.Character.Stamina = 3
+	engageFleeFixture(t, u)
 
-	cost := int(configs.GetBalanceConfig().FleeStaminaCost)
-	if cost <= 3 {
-		t.Fatalf("test fixture assumes FleeStaminaCost (%d) exceeds the 3 stamina on hand", cost)
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
 	}
 
-	res := c.ApplyCostPartial(characters.PoolStamina, cost)
+	if u.Character.Stamina != 0 {
+		t.Errorf("stamina after short flee = %d, want 0", u.Character.Stamina)
+	}
+	if !u.Character.IsDisengaging() {
+		t.Fatalf("short flee left state %v, want Disengaging", u.Character.CombatPhase.State())
+	}
+	includeSkill, admitted := TakeFleeAdmission(u)
+	if !admitted || includeSkill {
+		t.Error("short flee retained Skullduggery eligibility")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Error("a consumed flee admission was reusable")
+	}
+	if got := u.Character.GetSkillUseCount(string(costs.SpecFor(costs.ActionFlee).Skill)); got != 0 {
+		t.Errorf("short flee progressed Skullduggery %d times, want 0", got)
+	}
 
-	if res.Charged != 3 {
-		t.Errorf("charged = %d, want 3 (everything that was there)", res.Charged)
+	shortageLines := 0
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "instinct rather than technique") {
+			shortageLines++
+		}
 	}
-	if !res.Short {
-		t.Error("Short = false, want true -- U8 reads this to strip the skill term")
+	if shortageLines != 1 {
+		t.Errorf("shortage lines = %d, want exactly 1 per command", shortageLines)
 	}
-	if c.Stamina != 0 {
-		t.Errorf("stamina after a partial flee charge = %d, want 0", c.Stamina)
+}
+
+// Catches leaving a short admission behind when CombatPhase rejects the
+// transition. A later legacy flee must not inherit a canceled attempt's state.
+func TestFleeCost_TransitionVetoLeavesNoAdmission(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9256, 99848, 0)
+	defer cleanup()
+	engageFleeFixture(t, u)
+	before := u.Character.Stamina
+	u.Character.CombatPhase.RegisterPositionCheck(func() bool { return false })
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	if u.Character.IsDisengaging() {
+		t.Fatal("position-vetoed flee entered Disengaging")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("transition-vetoed short admission leaked into a later resolution")
+	}
+	if u.Character.Stamina != before {
+		t.Errorf("position-vetoed flee spent stamina: got %d, want %d", u.Character.Stamina, before)
+	}
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "attempt to flee") ||
+			strings.Contains(msg, "instinct rather than technique") {
+			t.Errorf("position-vetoed flee published a nonexistent attempt: %q", msg)
+		}
+	}
+}
+
+// A target-death cascade can force the character to Idle after Flee's initial
+// in-combat check but before the Disengaging transition is admitted. That
+// rejected transition must be indistinguishable from the earlier queued-input
+// race: no cost, no attempt banner, and one terminal explanation.
+func TestFleeCost_TransitionRaceToIdleDoesNotPayOrClaimAttempt(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9259, 99852, 0)
+	defer cleanup()
+	engageFleeFixture(t, u)
+	before := u.Character.Stamina
+	u.Character.CombatPhase.RegisterPositionCheck(func() bool {
+		u.Character.CombatPhase.ForceIdle(state.TransitionReason{
+			Trigger: combatphase.TriggerTargetDied,
+		})
+		return true
+	})
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+
+	if u.Character.Stamina != before {
+		t.Errorf("transition-raced flee spent stamina: got %d, want %d", u.Character.Stamina, before)
+	}
+	if u.Character.IsDisengaging() {
+		t.Fatal("transition-raced flee entered Disengaging")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("transition-raced flee published an admission with no resolver")
+	}
+
+	var sawTerminal, sawAttempt bool
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		sawTerminal = sawTerminal || strings.Contains(msg, "not in combat")
+		sawAttempt = sawAttempt || strings.Contains(msg, "attempt to flee") ||
+			strings.Contains(msg, "instinct rather than technique")
+	}
+	if !sawTerminal {
+		t.Error("transition-raced flee gave no terminal explanation")
+	}
+	if sawAttempt {
+		t.Error("transition-raced flee claimed an escape attempt began")
+	}
+}
+
+// A flee command can be accepted from the socket while the player is fighting
+// but reach the command handler after the same round kills and respawns them.
+// The death cascade has already forced CombatPhase back to Idle by then. The
+// stale command must not spend from the revived character or claim that an
+// escape attempt began when no round resolver can ever produce its outcome.
+func TestFleeCost_IdleRaceAfterDeathDoesNotPayOrClaimAttempt(t *testing.T) {
+	u, room, cleanup := fleeFixture(t, 9258, 99851, 0)
+	defer cleanup()
+	before := u.Character.Stamina
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+
+	if u.Character.Stamina != before {
+		t.Errorf("idle stale flee spent stamina: got %d, want %d", u.Character.Stamina, before)
+	}
+	if u.Character.IsDisengaging() {
+		t.Fatal("idle stale flee entered Disengaging")
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("idle stale flee published an admission with no resolver")
+	}
+
+	var sawTerminal, sawAttempt bool
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		sawTerminal = sawTerminal || strings.Contains(msg, "not in combat")
+		sawAttempt = sawAttempt || strings.Contains(msg, "attempt to flee") ||
+			strings.Contains(msg, "instinct rather than technique")
+	}
+	if !sawTerminal {
+		t.Error("idle stale flee gave no terminal explanation")
+	}
+	if sawAttempt {
+		t.Error("idle stale flee claimed an escape attempt began")
+	}
+}
+
+// Catches returning through a command-level rejection before retracting an
+// orphaned handoff. A rejected command cannot leave an earlier attempt's
+// admission available to an asynchronous round resolver.
+func TestFleeCost_RejectedCommandClearsOrphanedAdmission(t *testing.T) {
+	const noFleeBuffID = 99849
+	cleanupBuffs := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		noFleeBuffID: {
+			BuffId:        noFleeBuffID,
+			Name:          "test no-flee",
+			Description:   "rejects a flee command",
+			RoundInterval: 1,
+			TriggerCount:  1,
+			Flags:         []buffs.Flag{buffs.NoFlee},
+		},
+	})
+	defer cleanupBuffs()
+
+	u, room, cleanup := fleeFixture(t, 9257, 99850, 0)
+	defer cleanup()
+	u.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{includeSkill: false})
+	if !u.Character.Buffs.AddBuff(noFleeBuffID, false) {
+		t.Fatal("fixture could not apply the no-flee buff")
+	}
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("rejected command left an orphaned flee admission reusable")
+	}
+}
+
+// The transition is visible to the round driver before the command has
+// finished committing its cost decision. A reentrant resolver must not consume
+// that pending marker, while terminal cancellation still must be able to.
+func TestTakeFleeAdmission_PendingHandoffWaitsForCommandOrCancellation(t *testing.T) {
+	u, _, cleanup := fleeFixture(t, 9260, 99853, 0)
+	defer cleanup()
+	u.SetTempData(fleeIncludeSkillTempKey, fleeAdmission{})
+
+	if _, admitted := TakeFleeAdmission(u); admitted {
+		t.Fatal("round resolver consumed a pending flee handoff")
+	}
+	if !CancelFleeAdmission(u) {
+		t.Fatal("terminal cancellation could not retract a pending flee handoff")
+	}
+	if CancelFleeAdmission(u) {
+		t.Fatal("pending flee handoff was canceled more than once")
+	}
+}
+
+// Catches treating a positive fractional quote as short merely because the
+// pool is empty. With literal 1 x 1.10 x 0.5 = 0.55, the first attempt owes no
+// whole point and is eligible; the second carries to 1.10, owes one, and is
+// exactly partially paid at zero Stamina.
+func TestFleeCost_ZeroStaminaFractionalCarryBecomesShortOnlyWhenWholeDue(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance.FleeStaminaCost = 1
+	cfg.Balance.FlightFleeStaminaMult = 0.5
+	configs.SetConfigForTest(t, cfg)
+	cleanupMutations := mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"winged-flight": {
+			MutationId: "winged-flight", Name: "Winged Flight", Rarity: 8,
+			Pros: []mutations.MutationEffect{{Type: "flag", Target: "flying"}},
+		},
+	})
+	defer cleanupMutations()
+
+	u, room, cleanup := fleeFixture(t, 9257, 99849, 0)
+	defer cleanup()
+	u.Character.Mutations = map[string]int{"winged-flight": 1}
+	u.Character.Stamina = 0
+	engageFleeFixture(t, u)
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("first Flee returned %v", err)
+	}
+	includeSkill, admitted := TakeFleeAdmission(u)
+	if !admitted || !includeSkill {
+		t.Fatal("0.55 quote at zero Stamina was marked short before a whole point was due")
+	}
+	u.Character.CombatPhase.ResolveFlee(false)
+	events.DrainQueuedMessagesForTest(u.UserId)
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("second Flee returned %v", err)
+	}
+	includeSkill, admitted = TakeFleeAdmission(u)
+	if !admitted || includeSkill {
+		t.Fatal("carried 1.10 quote at zero Stamina was not reported partially paid")
+	}
+	if u.Character.Stamina != 0 {
+		t.Fatalf("partial fractional commit changed zero Stamina to %d", u.Character.Stamina)
+	}
+	shortageLines := 0
+	for _, msg := range events.DrainQueuedMessagesForTest(u.UserId) {
+		if strings.Contains(msg, "instinct rather than technique") {
+			shortageLines++
+		}
+	}
+	if shortageLines != 1 {
+		t.Fatalf("second fractional attempt shortage lines = %d, want 1", shortageLines)
 	}
 }
 
@@ -91,6 +323,46 @@ func fleeFixture(t *testing.T, userId, itemId int, fraction float64) (*users.Use
 	}
 }
 
+func engageFleeFixture(t *testing.T, u *users.UserRecord) {
+	t.Helper()
+	if err := u.Character.CombatPhase.TransitionToEngaging(
+		combatphase.EngagingData{Target: state.ActorRef{MobInstanceId: 4242}},
+		state.TransitionReason{Trigger: combatphase.TriggerAttackCommand},
+	); err != nil {
+		t.Fatalf("fixture could not enter combat: %v", err)
+	}
+	u.Character.CombatPhase.OnRoundTick()
+}
+
+// Catches applying flight after quoting (where it cannot affect the immutable
+// amount), omitting it, or returning to the old manual float debit.
+func TestFleeCost_FlyingModifiesTheQuotedBaseBeforeCommit(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance.FleeStaminaCost = 10
+	cfg.Balance.FlightFleeStaminaMult = 0.5
+	configs.SetConfigForTest(t, cfg)
+	cleanupMutations := mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"winged-flight": {
+			MutationId: "winged-flight", Name: "Winged Flight", Rarity: 8,
+			Pros: []mutations.MutationEffect{{Type: "flag", Target: "flying"}},
+		},
+	})
+	defer cleanupMutations()
+
+	u, room, cleanup := fleeFixture(t, 9255, 99847, 0)
+	defer cleanup()
+	u.Character.Mutations = map[string]int{"winged-flight": 1}
+	engageFleeFixture(t, u)
+	before := u.Character.Stamina
+
+	if _, err := Flee("", u, room, 0); err != nil {
+		t.Fatalf("Flee returned %v", err)
+	}
+	if spent := before - u.Character.Stamina; spent != 5 {
+		t.Errorf("flying flee charged %d, want literal 5 from base 10 x modifier 0.5", spent)
+	}
+}
+
 // THE ASSERTION THAT BITES IF FLEE STOPS TAKING THE ENCUMBRANCE TERM. Before
 // U7 flee was a flat int with no load term at all, so breaking away with a third
 // more than your capacity on your back cost exactly what breaking away
@@ -122,6 +394,7 @@ func TestFleeCost_TakesTheEncumbranceTerm(t *testing.T) {
 
 	for _, tc := range cases {
 		u, room, cleanup := fleeFixture(t, tc.userId, tc.itemId, tc.fraction)
+		engageFleeFixture(t, u)
 
 		before := u.Character.Stamina
 		if _, err := Flee("", u, room, 0); err != nil {
@@ -138,7 +411,7 @@ func TestFleeCost_TakesTheEncumbranceTerm(t *testing.T) {
 			Capacity:  u.Character.CarryCapacity(),
 			Physical:  spec.Physical,
 			SkillRank: u.Character.GetSkillLevel(spec.Skill),
-			HasSkill:  spec.HasSkill,
+			HasSkill:  spec.SkillSource != costs.SkillNone,
 		})))
 		if spent[tc.name] != want {
 			t.Errorf("%s: flee charged %d stamina, want %d; the command is not "+
@@ -163,6 +436,7 @@ func TestFleeCost_ExhaustedCharacterStillGetsToAttempt(t *testing.T) {
 	defer cleanup()
 
 	u.Character.Stamina = 0
+	engageFleeFixture(t, u)
 
 	if _, err := Flee("", u, room, 0); err != nil {
 		t.Fatalf("Flee returned %v", err)
@@ -194,13 +468,7 @@ func TestFleeCost_ASecondFleeSaysSomething(t *testing.T) {
 	// Disengaging is only reachable from Engaging/Engaged, so put the fixture
 	// in a fight first. Without this the second-flee branch is unreachable and
 	// the test would pass on nothing.
-	if err := u.Character.CombatPhase.TransitionToEngaging(
-		combatphase.EngagingData{Target: state.ActorRef{MobInstanceId: 4242}},
-		state.TransitionReason{Trigger: combatphase.TriggerAttackCommand},
-	); err != nil {
-		t.Fatalf("fixture could not enter combat: %v", err)
-	}
-	u.Character.CombatPhase.OnRoundTick()
+	engageFleeFixture(t, u)
 
 	if _, err := Flee("", u, room, 0); err != nil {
 		t.Fatalf("first Flee returned %v", err)

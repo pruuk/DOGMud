@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -13,14 +14,19 @@ import (
 )
 
 func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "drain",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
 	// Delegate core resolution to the shared action.
-	res := actions.ExecuteDrain(&actions.UserActor{User: user, Room: room})
+	res := actions.ExecuteDrain(actor)
+	if res.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		return true, nil
+	}
 
 	if res.NotLifeDrainer {
 		user.SendText(messaging.CategorySystem, "Your body cannot drain the life from another.")

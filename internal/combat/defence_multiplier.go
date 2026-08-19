@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
@@ -74,10 +75,10 @@ func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) f
 // defenceEffectiveness returns the config multiplier applied to a defence's
 // score before it enters a contest.
 //
-// runBestOfAllDefense reads the same three physical knobs inline; this is the
-// same table for the channels that do not run through it. An unrecognised
-// defence gets 1.0 and not 0, so a defence added to DefenceSetFor without a knob
-// enters the contest at face value instead of silently losing every roll.
+// Both melee and channel defence candidate builders use this centralized
+// mapping. An unrecognised defence gets 1.0 and not 0, so a defence added to
+// DefenceSetFor without a knob enters the contest at face value instead of
+// silently losing every roll.
 func defenceEffectiveness(defenceType string) float64 {
 	bal := configs.GetBalanceConfig()
 	switch defenceType {
@@ -137,10 +138,43 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 	}
 }
 
+// ChannelDefenceResult is the canonical mechanical outcome of one channel
+// defence. Damage callers consume DamageMultiplier; later narration consumes
+// the defence identity, normalized opposed margin, and crit flag.
+type ChannelDefenceResult struct {
+	DamageMultiplier        float64
+	DefenceType             string
+	DefenseRollZScore       float64
+	NormalizedDefenceMargin float64
+	Defended                bool
+	DefensiveCrit           bool
+	Cost                    characters.CostCommitResult
+}
+
+// ChannelDefenceIdentities carries actor-aware, display-ready identities into
+// the shared defence renderer. Callers supply username/mobname ANSI tags (and
+// duplicate-mob suffixes) before neutral message placeholders are replaced.
+type ChannelDefenceIdentities struct {
+	Attacker string
+	Defender string
+}
+
+// RenderChannelDefenceMessages renders the canonical channel outcome without
+// rolling or deriving a second result. Attack wins return an empty triad.
+func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad {
+	if !out.Defended {
+		return items.DefenseMessageTriad{}
+	}
+	return items.RenderDefenseMessage(items.DefenseType(out.DefenceType), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
+		items.TokenAttacker: identities.Attacker,
+		items.TokenDefender: identities.Defender,
+		items.TokenAttack:   attack,
+		items.TokenWeapon:   attack,
+	}, indexOverride...)
+}
+
 // ResolveChannelDefence runs ONE opposed contest for a channel that does not go
-// through the melee hitroll, and returns the attacker's damage multiplier:
-// 1.0 when the attack wins, 0.0 on a defensive crit, and between 0.0 and 0.5
-// when the defence wins without critting.
+// through the melee hitroll and returns its structured outcome.
 //
 // It replaces TrySpellDeflection and TryStoicResolve, which each ran a SECOND
 // independent contest on top of the channel's primary roll, on different stats,
@@ -148,58 +182,91 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 // mitigation curve as the physical pipeline; only the defence set differs. That
 // is what let both be deleted rather than ported.
 //
-// The mounted defence is CHARGED and PROGRESSED whether or not it wins, matching
-// both the melee path (runBestOfAllDefense charges the best defence every swing)
-// and the two deleted functions (which awarded progression unconditionally).
-// It is charged against the pool its type names, via the DefensePool /
-// GetDefenseCostFloat pair, which read the pool and the amount off the same
-// defence name and so cannot charge one defence's price against another's pool.
+// The selected defence is CHARGED and PROGRESSED whether or not it wins,
+// matching both the melee path and the two deleted functions (which awarded
+// progression unconditionally). Every eligible defence is quoted before the
+// contest and only Result.Winner's paired quote is committed.
 //
 // THE PHYSICAL DEFENCES DO ARRIVE HERE, so the FLOAT entry point is mandatory.
 // DefenceSetFor sends dodge and block to this function for ChannelRanged and
 // ChannelSpellPhysical, and eleven shipped spells declare
-// target_defense_type: physical. Charging them through the integer entry point
-// floors every physical defence onto the same whole number -- block prices at
-// 1.2604 and would be charged 1, exactly what dodge is charged -- which deletes
-// the per-defence modifiers this path is supposed to price. ApplyCostFloat banks
-// the remainder instead, so the distinction survives as an average. An earlier
-// comment here asserted the physical three never reached this site; that was
-// never true.
-func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) float64 {
+// target_defense_type: physical. QuoteDefenseCost retains fractional carry and
+// the distinct physical modifiers, so this path must not fall back to the lossy
+// integer compatibility price. An earlier comment here asserted the physical
+// three never reached this site; that was never true.
+func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) ChannelDefenceResult {
+	return resolveChannelDefenceWithRunner(channel, attacker, defender, RunContest)
+}
+
+func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *characters.Character, runner defenceContestRunner) ChannelDefenceResult {
+	out := ChannelDefenceResult{
+		DamageMultiplier: 1.0,
+		Cost:             characters.CostCommitResult{Status: characters.CostNoCharge},
+	}
 	if attacker == nil || defender == nil {
-		return 1.0
+		return out
 	}
 
 	defences := DefenceSetFor(channel)
 	if len(defences) == 0 {
 		// No defence answers this channel. Uncontested is an attack win, which
 		// is what a full multiplier says.
-		return 1.0
+		return out
 	}
 
 	atkScore := ChannelAttackScore(channel, attacker)
 
 	entries := make([]contest.Entry, 0, len(defences))
+	candidates := make([]quotedDefenceCandidate, 0, len(defences))
 	for _, d := range defences {
-		entries = append(entries, contest.Entry{
+		quote, quoted := defender.QuoteDefenseCost(d)
+		includeSkill := !quoted || quote.Affordable()
+		entry := contest.Entry{
 			Name:  d,
-			Score: defender.GetDefenseScore(d) * defenceEffectiveness(d),
+			Score: defender.GetDefenseScoreFor(d, includeSkill) * defenceEffectiveness(d),
+		}
+		entries = append(entries, entry)
+		candidates = append(candidates, quotedDefenceCandidate{
+			entry:  entry,
+			quote:  quote,
+			quoted: quoted,
 		})
 	}
 
-	res := RunContest(atkScore, entries)
+	res := runner(atkScore, entries)
+	if !res.Contested {
+		return out
+	}
+	out.DamageMultiplier = defenceDamageMultiplier(res)
 
-	// Winner is the defence that answered best, and is set whenever anything was
-	// contested -- win or lose. Test it rather than res.Contested only because it
-	// is also what names the pool and the skill.
-	if res.Winner != "" {
-		_ = defender.ApplyCostFloat(
-			characters.DefensePool(res.Winner),
-			defender.GetDefenseCostFloat(res.Winner))
-		AwardDefenceProgression(defender, defender.GetUserId(), res.Winner)
+	out.DefenceType = res.Winner
+	out.Cost = commitDefenceWinner(defender, candidates, res)
+	for _, candidate := range candidates {
+		if candidate.entry.Name == res.Winner {
+			AwardDefenceProgression(defender, defender.GetUserId(), res.Winner)
+			break
+		}
 	}
 
-	return defenceDamageMultiplier(res)
+	// A floor changes the outcome without changing the underlying rolls. Keep
+	// the winner and cost, but expose zero statistical sentinels so later prose
+	// cannot mistake the original roll for the strength of a floor-granted save.
+	if !res.Floored {
+		out.DefenseRollZScore = res.DefenseRoll.ZScore
+	}
+	if res.Success {
+		return out
+	}
+
+	out.Defended = true
+	if res.Floored {
+		return out
+	}
+	out.DefensiveCrit = out.DamageMultiplier == 0
+	if res.DefenseRoll.StdDev > 0 {
+		out.NormalizedDefenceMargin = -res.Margin / (res.DefenseRoll.StdDev * math.Sqrt2)
+	}
+	return out
 }
 
 // defenceDamageMultiplier converts a finished opposed contest into the

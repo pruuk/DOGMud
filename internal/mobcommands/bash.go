@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -21,6 +22,9 @@ func Bash(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	// Delegate core bash logic to the shared action.
 	bashResult := actions.ExecuteBash(&actions.MobActor{Mob: mob, Room: room})
+	if bashResult.Cost.Status == characters.CostRefused {
+		return true, nil
+	}
 
 	// Any early-exit condition: silently return.
 	if !bashResult.Executed {

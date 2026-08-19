@@ -97,7 +97,7 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) float64 {
 		Capacity:  c.CarryCapacity(),
 		Physical:  spec.Physical,
 		SkillRank: c.GetSkillLevel(spec.Skill),
-		HasSkill:  spec.HasSkill,
+		HasSkill:  spec.SkillSource != costs.SkillNone,
 	})
 
 	// Phase 24.2: Apply mutation movement speed modifier (Hasted, Extra Legs, etc.)
@@ -133,6 +133,55 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) float64 {
 // multiplier, so reading a weapon's authored staminacost as well would charge
 // for the same heaviness twice.
 
+// defenseCostRequest is the single raw mapping for every mounted defence. It
+// deliberately returns an uncomposed request: QuoteActionCost and the legacy
+// float compatibility path each compose these inputs exactly once.
+func defenseCostRequest(defenseType string) (ActionCostRequest, bool) {
+	bal := configs.GetBalanceConfig()
+	req := ActionCostRequest{Units: 1}
+
+	switch defenseType {
+	case DefenseDodge:
+		req.Action = costs.ActionDodge
+		req.Pool = PoolStamina
+		req.Base = float64(bal.DefenceBaseStaminaCost)
+		req.Modifier = float64(bal.DodgeCostModifier)
+	case DefenseParry:
+		req.Action = costs.ActionParry
+		req.Pool = PoolStamina
+		req.Base = float64(bal.DefenceBaseStaminaCost)
+		req.Modifier = float64(bal.ParryCostModifier)
+	case DefenseBlock:
+		req.Action = costs.ActionBlock
+		req.Pool = PoolStamina
+		req.Base = float64(bal.DefenceBaseStaminaCost)
+		req.Modifier = float64(bal.BlockCostModifier)
+	case DefenseQuell:
+		req.Action = costs.ActionQuell
+		req.Pool = PoolConviction
+		req.Base = float64(bal.QuellBaseConvictionCost)
+		req.Modifier = 1.0
+	case DefenseDefy:
+		req.Action = costs.ActionDefy
+		req.Pool = PoolConviction
+		req.Base = float64(bal.DefyBaseConvictionCost)
+		req.Modifier = 1.0
+	default:
+		return ActionCostRequest{}, false
+	}
+
+	return req, true
+}
+
+// QuoteDefenseCost returns an immutable quote for one recognized defence.
+func (c *Character) QuoteDefenseCost(defenseType string) (CostQuote, bool) {
+	req, ok := defenseCostRequest(defenseType)
+	if !ok {
+		return CostQuote{}, false
+	}
+	return c.QuoteActionCost(req), true
+}
+
 // DefensePool names the resource pool a defence is paid out of.
 //
 // The physical three cost STAMINA; quell and defy cost CONVICTION. Before U6
@@ -141,23 +190,23 @@ func (c *Character) GetMovementStaminaCost(terrainMultiplier float64) float64 {
 // defy would have made both defences free with no compile error and no failing
 // test.
 //
-// Charge through the PAIR -- DefensePool for the pool, GetDefenseCostFloat for
-// the amount. Either alone can charge the wrong thing; together they cannot.
+// Legacy compatibility callers read this alongside GetDefenseCostFloat. New
+// mounted-defence resolution uses QuoteDefenseCost, which gets both fields from
+// defenseCostRequest and commits the resulting immutable quote.
 //
 // An unrecognised defence name maps to PoolStamina, where GetDefenseCostFloat
 // also returns 0, so the pair charges nothing rather than draining an arbitrary
 // pool.
 func DefensePool(defenseType string) Pool {
-	switch defenseType {
-	case DefenseQuell, DefenseDefy:
-		return PoolConviction
-	default:
-		return PoolStamina
+	if req, ok := defenseCostRequest(defenseType); ok {
+		return req.Pool
 	}
+	return PoolStamina
 }
 
-// GetDefenseCostFloat prices one defence, and is the entry point every caller
-// that can spend a fractional cost should use.
+// GetDefenseCostFloat is the compatibility price for one defence. New charging
+// code uses QuoteDefenseCost so affordability and fractional carry are captured
+// before the contest and only the selected winner can commit.
 //
 // The three PHYSICAL defences run through costs.Calc:
 //
@@ -194,40 +243,20 @@ func DefensePool(defenseType string) Pool {
 // which pairs with DefensePool mapping it to PoolStamina: together they charge
 // nothing instead of draining an arbitrary pool.
 func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
-	bal := configs.GetBalanceConfig()
-
-	var action costs.Action
-	var base, modifier float64
-
-	switch defenseType {
-	case DefenseDodge:
-		action = costs.ActionDodge
-		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.DodgeCostModifier)
-	case DefenseParry:
-		action = costs.ActionParry
-		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.ParryCostModifier)
-	case DefenseBlock:
-		action = costs.ActionBlock
-		base, modifier = float64(bal.DefenceBaseStaminaCost), float64(bal.BlockCostModifier)
-	case DefenseQuell:
-		action = costs.ActionQuell
-		base, modifier = float64(bal.QuellBaseConvictionCost), 1.0
-	case DefenseDefy:
-		action = costs.ActionDefy
-		base, modifier = float64(bal.DefyBaseConvictionCost), 1.0
-	default:
+	req, ok := defenseCostRequest(defenseType)
+	if !ok {
 		return 0
 	}
 
-	spec := costs.SpecFor(action)
+	spec := costs.SpecFor(req.Action)
 	cost := costs.Calc(costs.Input{
-		Base:      base,
+		Base:      req.Base,
 		Carried:   c.GetCarriedWeight(),
 		Capacity:  c.CarryCapacity(),
 		Physical:  spec.Physical,
 		SkillRank: c.GetSkillLevel(spec.Skill),
-		HasSkill:  spec.HasSkill,
-		Modifier:  modifier,
+		HasSkill:  spec.SkillSource != costs.SkillNone,
+		Modifier:  req.Modifier,
 	})
 
 	// A mounted defence must never come out FREE. This is the float sibling of
@@ -242,7 +271,7 @@ func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
 	// construction -- and exists so a hand-built Balance cannot silently make a
 	// defence cost nothing.
 	if cost <= 0 {
-		return float64(atLeastOneCost(int(base)))
+		return float64(atLeastOneCost(int(req.Base)))
 	}
 	return cost
 }

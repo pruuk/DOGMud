@@ -306,15 +306,20 @@ func (c *Character) GetDefenseSequence() []string {
 	return defenses
 }
 
-// GetDefenseScore calculates defense score for a given defense type (Stage 7.1)
-func (c *Character) GetDefenseScore(defenseType string) float64 {
+// GetDefenseScoreFor calculates a defence score, optionally omitting only its
+// governing skill addend. Short-funded defences still retain every stat,
+// equipment, condition, and mutation term.
+func (c *Character) GetDefenseScoreFor(defenseType string, includeSkill bool) float64 {
 	dex := float64(c.GetEffectiveDexterity())
 	skillWeight := float64(configs.GetBalanceConfig().SkillWeight)
 
 	switch defenseType {
 	case DefenseDodge:
 		// Dodge: Dexterity + UnarmedCombat skill + mutation dodge modifier
-		unarmedSkill := float64(c.GetSkillLevel(skills.UnarmedCombat)) * skillWeight
+		unarmedSkill := 0.0
+		if includeSkill {
+			unarmedSkill = float64(c.GetSkillLevel(skills.UnarmedCombat)) * skillWeight
+		}
 		score := dex + unarmedSkill + mutations.GetDodgeModifier(c.Mutations)
 		// Phase 24.5: Blinded condition reduces dodge
 		if c.HasCondition(ConditionBlinded) {
@@ -324,28 +329,45 @@ func (c *Character) GetDefenseScore(defenseType string) float64 {
 
 	case DefenseParry:
 		// Parry: Dexterity + WeaponCombat skill + best weapon ParryRating
-		weaponSkill := float64(c.GetSkillLevel(skills.WeaponCombat)) * skillWeight
+		weaponSkill := 0.0
+		if includeSkill {
+			weaponSkill = float64(c.GetSkillLevel(skills.WeaponCombat)) * skillWeight
+		}
 		parryRating := c.BestParryRating()
 		return dex + weaponSkill + float64(parryRating)
 
 	case DefenseBlock:
 		// Block: (Strength + Dexterity)/2 + WeaponCombat skill + best shield BlockRating
 		str := float64(c.Stats.Strength.ValueAdj)
-		weaponSkill := float64(c.GetSkillLevel(skills.WeaponCombat)) * skillWeight
+		weaponSkill := 0.0
+		if includeSkill {
+			weaponSkill = float64(c.GetSkillLevel(skills.WeaponCombat)) * skillWeight
+		}
 		blockRating := c.BestBlockRating()
 		return (str+dex)/2 + weaponSkill + float64(blockRating)
 
 	case DefenseQuell:
 		// Mental-spell defence. Costs CONVICTION, not stamina.
-		spellcasting := float64(c.GetSkillLevel(skills.Spellcasting)) * skillWeight
+		spellcasting := 0.0
+		if includeSkill {
+			spellcasting = float64(c.GetSkillLevel(skills.Spellcasting)) * skillWeight
+		}
 		return float64(c.Stats.Willpower.ValueAdj) + spellcasting
 
 	case DefenseDefy:
 		// Social defence. Costs CONVICTION, not stamina.
-		rhetoric := float64(c.GetSkillLevel(skills.Rhetoric)) * skillWeight
+		rhetoric := 0.0
+		if includeSkill {
+			rhetoric = float64(c.GetSkillLevel(skills.Rhetoric)) * skillWeight
+		}
 		return float64(c.Stats.Willpower.ValueAdj) + rhetoric
 
 	default:
 		return 0
 	}
+}
+
+// GetDefenseScore retains the full legacy defence score.
+func (c *Character) GetDefenseScore(defenseType string) float64 {
+	return c.GetDefenseScoreFor(defenseType, true)
 }

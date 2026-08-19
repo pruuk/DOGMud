@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -11,15 +12,22 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+var stageSpecialMoveTarget = actions.StageMeleeTarget
+
 func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "bash",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
 	// Delegate core bash logic to the shared action.
-	bashResult := actions.ExecuteBash(&actions.UserActor{User: user, Room: room})
+	bashResult := actions.ExecuteBash(actor)
+	if bashResult.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(bashResult.Cost))
+		return true, nil
+	}
 
 	if bashResult.Crafting {
 		// Safety net — should have been caught by the pre-reject above.

@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -15,6 +16,8 @@ import (
 // HamstringResult holds the outcome of a hamstring attempt for the caller to
 // use when formatting messages, firing events, and updating UI.
 type HamstringResult struct {
+	Cost characters.CostCommitResult
+
 	// Target is the resolved aggro target. Valid only when Executed is true.
 	Target AggroTarget
 
@@ -28,8 +31,14 @@ type HamstringResult struct {
 	// OnCooldown is true when the special-move cooldown blocked the hamstring.
 	OnCooldown bool
 
+	// Crafting is true when the actor is occupied by another activity.
+	Crafting bool
+
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
+
+	// NoLegs is true when the actor lacks the anatomy needed to hamstring.
+	NoLegs bool
 
 	// NotBeast is true when the actor lacks the beast anatomy required for
 	// hamstring (not fanged-or-clawed, or has "hands" marking it as a
@@ -56,21 +65,17 @@ type HamstringResult struct {
 func ExecuteHamstring(actor Actor) HamstringResult {
 	char := actor.GetCharacter()
 
-	// Must be in combat (aggro set) before this function is called.
-	if char.Aggro == nil {
-		return HamstringResult{NoTarget: true}
-	}
-
-	// Check special-move cooldown using the config value.
-	cfg := configs.GetBalanceConfig()
-	if !char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return HamstringResult{OnCooldown: true}
+	if char.IsActing() {
+		return HamstringResult{Crafting: true}
 	}
 
 	// Resolve the aggro target.
-	target := ResolveAggroTarget(char.Aggro)
+	target := resolveActionTarget(actor, char)
 	if !target.Found {
 		return HamstringResult{NoTarget: true}
+	}
+	if !char.HasBodyPart("legs") {
+		return HamstringResult{NoLegs: true}
 	}
 
 	// Beast identity gate (defense-in-depth): only handless fanged/clawed
@@ -80,6 +85,18 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 	sp := species.GetSpecies(char.SpeciesId)
 	if sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart("hands") {
 		return HamstringResult{NotBeast: true}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	if !char.CooldownReady("special-move") {
+		return HamstringResult{OnCooldown: true}
+	}
+	cost := admitFullCost(actor, costs.ActionHamstring, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return HamstringResult{Cost: cost}
+	}
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return HamstringResult{Cost: cost, OnCooldown: true}
 	}
 
 	// Execute the skill move (reuse trip's config for damage percent, no knockdown).
@@ -133,6 +150,7 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 	}
 
 	return HamstringResult{
+		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
 		Executed:   true,

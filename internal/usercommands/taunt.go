@@ -4,24 +4,32 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+var executeTauntAction = actions.ExecuteTaunt
+
 func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if actions.AcquireMeleeTarget(user, room, rest, actions.MeleeTargetOpts{
+	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb: "taunt",
-	}) {
+	})
+	if handled {
 		return true, nil
 	}
 
-	actor := &actions.UserActor{User: user, Room: room}
-	result := actions.ExecuteTaunt(actor)
+	result := executeTauntAction(actor)
+	if result.Cost.Status == characters.CostRefused {
+		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		return true, nil
+	}
 
 	if result.Crafting {
 		// Safety net — should have been caught by the pre-reject above.
@@ -39,9 +47,9 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	// Chunk 4.5: notify seeders that a player engaged a mob via taunt.
-	// Taunt is symmetric to attack for rules 6 + 9 — it is also a
-	// player-initiated combat engagement. Only fire for mob targets.
+	// Preserve the command-level taunt notification after ExecuteTaunt has paid,
+	// revalidated the target, consumed cooldown, and committed engagement. Only
+	// fire for mob targets; refused or stale attempts returned above.
 	if result.Target.MobInstanceId > 0 {
 		events.AddToQueue(events.PlayerAttackedMob{
 			UserId:        user.UserId,
@@ -76,29 +84,25 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 
 	case result.Hit:
-		sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
-			"username", targetType, user, targetPlayer, room, result.Target.UserId)
+		if !result.Defence.Defended {
+			sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
+				"username", targetType, user, targetPlayer, room, result.Target.UserId)
+		}
+		identities := combat.ChannelDefenceIdentities{
+			Attacker: user.Character.GetPlayerName(user.UserId).String(),
+			Defender: targetName,
+		}
+		if targetPlayer != nil {
+			identities.Defender = targetPlayer.Character.GetPlayerName(user.UserId).String()
+		} else if targetMob := mobs.GetInstance(result.Target.MobInstanceId); targetMob != nil {
+			identities.Defender = targetMob.Character.GetMobNameIndexed(user.UserId,
+				room.GetMobDuplicateIndex(targetMob.InstanceId)).String()
+		}
+		sendChannelDefenceMessages(result.Defence, identities, "taunt",
+			user, targetPlayer, room, result.Target.UserId)
 
 		if result.AggroPulled {
 			sendAggroPullMessages(user, room, sourceName, targetName)
-		}
-
-		// Defy messaging. A partial outcome must not claim the taunt did
-		// nothing: the words still landed, they simply lost their edge.
-		if result.FullyDefied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategorySystem,
-					`<ansi fg="green">You defy the words outright, and they leave you unmoved.</ansi>`)
-			}
-			user.SendText(messaging.CategorySystem,
-				`<ansi fg="yellow">Your target defies you, and the words find no purchase at all.</ansi>`)
-		} else if result.Defied {
-			if targetPlayer != nil {
-				targetPlayer.SendText(messaging.CategorySystem,
-					`<ansi fg="green">You defy the barrage of words, and most of it loses its edge.</ansi>`)
-			}
-			user.SendText(messaging.CategorySystem,
-				`<ansi fg="yellow">Your target defies you, and the barb loses its edge.</ansi>`)
 		}
 
 	default:
@@ -117,6 +121,24 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}, bridge, bridge)
 
 	return true, nil
+}
+
+func sendChannelDefenceMessages(out combat.ChannelDefenceResult, identities combat.ChannelDefenceIdentities, attack string,
+	attacker, defender *users.UserRecord, room *rooms.Room, defenderUserID int) {
+	if defender != nil {
+		if text := combat.ChannelDefenceShortageText(out, defender.Character); text != "" {
+			defender.SendText(messaging.CategorySystem, text)
+		}
+	}
+	triad := combat.RenderChannelDefenceMessages(out, identities, attack)
+	if triad.ToAttacker == "" {
+		return
+	}
+	attacker.SendText(messaging.CategoryTauntResist, string(triad.ToAttacker))
+	if defender != nil {
+		defender.SendText(messaging.CategoryTauntResist, string(triad.ToDefender))
+	}
+	room.SendTextVisual(messaging.CategoryTauntResist, string(triad.ToRoom), attacker.UserId, defenderUserID)
 }
 
 // sendAggroPullMessages notifies the taunter and the room that the mob

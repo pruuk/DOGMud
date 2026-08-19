@@ -1,8 +1,11 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -13,6 +16,8 @@ import (
 
 // SneakResult holds the outcome of a Sneak call.
 type SneakResult struct {
+	// Cost reports whether shared admission paid or refused the attempt.
+	Cost characters.CostCommitResult
 	// Success is true when the actor entered the hidden state.
 	Success bool
 	// SpottedByName is the name of the observer who detected the actor.
@@ -56,6 +61,21 @@ func Sneak(actor Actor) SneakResult {
 	if char.Aggro != nil {
 		return SneakResult{InCombat: true}
 	}
+	if !char.IsFree() || char.Awareness == nil || char.Awareness.State() != awareness.Visible {
+		return SneakResult{}
+	}
+
+	room := actor.GetRoom()
+	if room == nil {
+		return SneakResult{}
+	}
+
+	cfg := configs.GetBalanceConfig()
+	cost := admitFullCost(actor, costs.ActionSneak, characters.PoolStamina,
+		float64(cfg.SneakBaseStaminaCost))
+	if cost.Status == characters.CostRefused {
+		return SneakResult{Cost: cost}
+	}
 
 	// Transition to Concealing; the activity veto fires here if the actor
 	// is busy crafting/casting. On veto error we return without a result
@@ -65,10 +85,8 @@ func Sneak(actor Actor) SneakResult {
 		state.TransitionReason{Trigger: awareness.TriggerSneakCommand},
 	); err != nil {
 		// Activity veto or invalid transition (e.g. already Concealing).
-		return SneakResult{}
+		return SneakResult{Cost: cost}
 	}
-
-	room := actor.GetRoom()
 
 	// Build party exclusion set for player actors.
 	// Mob actors have no party (GetUserId returns 0); parties.Get(0) returns nil.
@@ -110,7 +128,7 @@ func Sneak(actor Actor) SneakResult {
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,
 			})
-			return SneakResult{SpottedByName: observer.Character.Name, RollHappened: true}
+			return SneakResult{Cost: cost, SpottedByName: observer.Character.Name, RollHappened: true}
 		}
 	}
 
@@ -131,7 +149,7 @@ func Sneak(actor Actor) SneakResult {
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,
 			})
-			return SneakResult{SpottedByName: m.Character.Name, RollHappened: true}
+			return SneakResult{Cost: cost, SpottedByName: m.Character.Name, RollHappened: true}
 		}
 	}
 
@@ -142,5 +160,5 @@ func Sneak(actor Actor) SneakResult {
 	})
 	char.SetMiscData(`sneaking`, true)
 
-	return SneakResult{Success: true, RollHappened: rollHappened}
+	return SneakResult{Cost: cost, Success: true, RollHappened: rollHappened}
 }

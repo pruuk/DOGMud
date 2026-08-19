@@ -1,0 +1,63 @@
+# Mental-spell defence messages. Each index is one coordinated event.
+optionid: quell
+options:
+  weak:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You catch the edge of {attacker}''s {attack}, dulling its force.</ansi>'
+      - '<ansi fg="defense-good">You push against the {attack}; part of its pressure still reaches you.</ansi>'
+      - '<ansi fg="defense-good">You steady your thoughts and blunt {attacker}''s {attack}.</ansi>'
+      - '<ansi fg="defense-good">Your will strains against the {attack}, weakening what gets through.</ansi>'
+      - '<ansi fg="defense-good">You disrupt the edge of {attacker}''s working, but do not break it.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} catches the edge of your {attack}, dulling its force.</ansi>'
+      - '<ansi fg="attack-bad">{defender} pushes against your {attack}, though part still lands.</ansi>'
+      - '<ansi fg="attack-bad">{defender} steadies their thoughts and blunts your {attack}.</ansi>'
+      - '<ansi fg="attack-bad">{defender} strains against your {attack}, weakening it.</ansi>'
+      - '<ansi fg="attack-bad">{defender} disrupts the edge of your working without breaking it.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} catches the edge of {attacker}''s {attack}.</ansi>'
+      - '<ansi fg="combat">{defender} pushes against the {attack}, though part still lands.</ansi>'
+      - '<ansi fg="combat">{defender} steadies and blunts {attacker}''s {attack}.</ansi>'
+      - '<ansi fg="combat">{defender} strains against the {attack}, weakening it.</ansi>'
+      - '<ansi fg="combat">{defender} disrupts the edge of {attacker}''s working.</ansi>'
+  normal:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You quell the heart of {attacker}''s {attack}, though a fading echo reaches you.</ansi>'
+      - '<ansi fg="defense-good">You impose calm on the {attack} and strip away most of its force.</ansi>'
+      - '<ansi fg="defense-good">You unravel the strongest threads of {attacker}''s {attack}, but a remnant reaches you.</ansi>'
+      - '<ansi fg="defense-good">Your will closes firmly around the {attack}, though a muted pulse reaches you.</ansi>'
+      - '<ansi fg="defense-good">You break the {attack}''s momentum, though a remnant reaches you.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} quells the heart of your {attack}, though an echo still lands.</ansi>'
+      - '<ansi fg="attack-bad">{defender} imposes calm on your {attack} and strips away most of its force.</ansi>'
+      - '<ansi fg="attack-bad">{defender} unravels the strongest threads of your {attack}, though a remnant lands.</ansi>'
+      - '<ansi fg="attack-bad">{defender} closes their will around your {attack}, though a muted pulse lands.</ansi>'
+      - '<ansi fg="attack-bad">{defender} breaks your {attack}''s momentum, though a remnant lands.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} quells the heart of {attacker}''s {attack}, though an echo still lands.</ansi>'
+      - '<ansi fg="combat">{defender} imposes calm on the {attack}, stripping away most of its force.</ansi>'
+      - '<ansi fg="combat">{defender} unravels the strongest threads of {attacker}''s {attack}, though a remnant lands.</ansi>'
+      - '<ansi fg="combat">{defender} closes their will around the {attack}, though a muted pulse lands.</ansi>'
+      - '<ansi fg="combat">{defender} breaks {attacker}''s {attack}''s momentum, though a remnant lands.</ansi>'
+  heavy:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You take no damage from {attacker}''s {attack}, though its momentum still reaches you.</ansi>'
+      - '<ansi fg="defense-good">You close your mind against injury from the {attack}, though its motion can still move you.</ansi>'
+      - '<ansi fg="defense-good">You prevent all damage from {attacker}''s working, while its other effects remain possible.</ansi>'
+      - '<ansi fg="defense-good">Your will prevents injury from the {attack}, though its force can still displace you.</ansi>'
+      - '<ansi fg="defense-good">You suffer no damage from {attacker}''s working, though the working itself persists.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} takes no damage from your {attack}, though its momentum still reaches them.</ansi>'
+      - '<ansi fg="attack-bad">{defender} closes their mind against injury from your {attack}, though its motion can still move them.</ansi>'
+      - '<ansi fg="attack-bad">{defender} prevents all damage from your working, while its other effects remain possible.</ansi>'
+      - '<ansi fg="attack-bad">{defender} prevents injury from your {attack}, though its force can still displace them.</ansi>'
+      - '<ansi fg="attack-bad">{defender} suffers no damage from your working, though the working itself persists.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} takes no damage from {attacker}''s {attack}, though its momentum still reaches them.</ansi>'
+      - '<ansi fg="combat">{defender} closes their mind against injury from the {attack}, though its motion can still move them.</ansi>'
+      - '<ansi fg="combat">{defender} prevents all damage from {attacker}''s working, while its other effects remain possible.</ansi>'
+      - '<ansi fg="combat">{defender} prevents injury from the {attack}, though its force can still displace them.</ansi>'
+      - '<ansi fg="combat">{defender} suffers no damage from {attacker}''s working, though the working itself persists.</ansi>'

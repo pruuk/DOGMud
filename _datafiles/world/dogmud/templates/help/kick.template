@@ -11,7 +11,7 @@ automatically adapts to the combat situation:
 <ansi fg="yellow">━━━ Stomp (prone target) ━━━</ansi>
 
   When the target is already on the ground, your kick becomes
-  a devastating stomp that bypasses half their armor. Also
+  a devastating stomp that bypasses some of their armor. Also
   extends how long they stay down. This is the payoff for
   knocking someone prone.
 
@@ -19,7 +19,7 @@ automatically adapts to the combat situation:
 
   When you hold a dominant position in a clinch or ground
   grapple, your kick becomes a close-range knee strike.
-  Strong damage that works where kicks can't — and where
+  Strong damage that works where kicks can't and where
   long weapons struggle.
 
 <ansi fg="yellow">Usage: </ansi>
@@ -31,4 +31,11 @@ automatically adapts to the combat situation:
 Requires being in combat. Shares a cooldown with other
 special moves (bash, trip). Uses the <ansi fg="skill">unarmed-combat</ansi> skill.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bash</ansi>, <ansi fg="command">help trip</ansi>, <ansi fg="command">help grapple</ansi>
+Kick spends Stamina and requires full payment before any selected variant.
+Carried load raises the price, while <ansi fg="skill">unarmed-combat</ansi>
+skill lowers it. If you are too spent, no cooldown, combat round, or effect is
+consumed.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bash</ansi>, <ansi fg="command">help trip</ansi>,
+  <ansi fg="command">help grapple</ansi>, <ansi fg="command">help stamina</ansi>,
+  <ansi fg="command">help special</ansi>

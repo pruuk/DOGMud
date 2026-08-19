@@ -19,11 +19,16 @@ damage. It attacks their will to fight rather than their body.
   <ansi fg="stat">Hit Check:</ansi> Opposed roll
     - Attacker: Charisma + Rhetoric skill
     - Defender: Willpower + Rhetoric skill
-  <ansi fg="stat">Damage:</ansi> Based on Charisma, Rhetoric rank, and target's
+  <ansi fg="stat">Damage:</ansi> Based on Charisma, Rhetoric skill, and target's
     conviction mitigation
   <ansi fg="stat">Damage Type:</ansi> Conviction (mental/social)
-  <ansi fg="stat">Cooldown:</ansi> 5 rounds (shared with bash, trip, and kick)
+  <ansi fg="stat">Cooldown:</ansi> Shared with bash, trip, and kick
   <ansi fg="stat">Skill:</ansi> Progresses Rhetoric
+
+Taunting spends Conviction and requires full payment before the contest or
+engagement begins. <ansi fg="skill">Rhetoric</ansi> lowers the price; carried
+load does not affect this act of will. If you cannot muster the resolve, no
+cooldown, combat round, or effect is consumed.
 
 <ansi fg="yellow">Aggro Pull:</ansi>
 
@@ -33,10 +38,10 @@ damage. It attacks their will to fight rather than their body.
   allies and controlling the flow of battle.
 
   Aggro pull triggers on both normal hits and critical hits. It
-  only applies to hostile creatures — taunting another player will
+  only applies to hostile creatures; taunting another player will
   not redirect their attacks.
 
-As a target's conviction drains, their fighting spirit fades with it —
+As a target's conviction drains, their fighting spirit fades with it;
 their attacks and defenses weaken steadily, the same way exhaustion
 saps a fighter. Conviction recovers over time like health and stamina.
 
@@ -46,4 +51,5 @@ this protection.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help rhetoric</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help rhetoric</ansi>, <ansi fg="command">help conviction</ansi>,
+  <ansi fg="command">help defy</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help skills</ansi>

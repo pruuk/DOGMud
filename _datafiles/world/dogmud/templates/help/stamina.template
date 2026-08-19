@@ -11,9 +11,13 @@ out halfway through one.
     fighter who strikes several times in a round pays for each blow. A
     flurry costs more than a single strike.
   - <ansi fg="stat">Defending</ansi>: dodging, parrying, and blocking all cost stamina.
+  - <ansi fg="stat">Ranged actions</ansi>: shooting and reloading both cost stamina.
+  - <ansi fg="stat">Special moves</ansi>: physical maneuvers, thrown items, sneaking,
+    and starting a grapple all cost stamina.
+  - <ansi fg="stat">Grappling</ansi>: both participants spend stamina on each continuing round.
+  - <ansi fg="stat">Fleeing</ansi>: each command spends stamina once as you try to escape.
   - <ansi fg="stat">Getting back up</ansi>: standing from prone takes a real effort.
-  - <ansi fg="stat">Movement</ansi>: travelling costs stamina, and what you are carrying
-    raises that price from the very first pound.
+  - <ansi fg="stat">Movement</ansi>: travelling costs stamina, and load raises the price.
 
 <ansi fg="yellow">━━━ The Cost of Defending ━━━</ansi>
 
@@ -37,29 +41,30 @@ either of them harder.
 
 <ansi fg="yellow">━━━ Weight and Skill ━━━</ansi>
 
-Two things change the price of everything physical you do.
+Two things change the price of everything physical you do: load raises the
+price, while the governing skill lowers it.
 
-The load on your back makes attacking, defending, and travelling dearer. It
-begins to cost you from the first pound, but the climb is gentle across
-most of the range, so a sensible pack is barely felt. As you approach the
-limit of what you can carry, the cost rises steeply, and hauling a full
-load into a fight is expensive enough to change how that fight goes. Weight
-has no effect on acts of will.
+The load on your back makes attacking, defending, and travelling dearer.
+Heavier loads demand more effort, especially as you approach what you can
+carry. Weight has no effect on acts of will.
 
-Skill runs the other way. The more practised you are, the less the same
-action takes out of you. A beginner pays a little over the going rate, and
-a master pays well under half of it. Training a defense makes it cheaper to
-use as well as more reliable.
+Skill runs the other way. Practice lowers the price of the actions governed
+by that skill. Training a defense makes it cheaper to use as well as more
+reliable.
 
 <ansi fg="yellow">━━━ Running Low ━━━</ansi>
 
-Stamina does not fail all at once at some cliff edge. It fades. As the pool
-drains, your effectiveness slides down with it, smoothly and steadily: you
-swing less often, you land fewer blows, and the blows you do land hit
-softer. You keep your defenses even when the pool is empty, and you will
-still spend what little is left on them, but a fighter running on nothing
-is at a real disadvantage against one who is not. When you feel it going,
-break off and recover, or <ansi fg="command">flee</ansi> outright.
+Voluntary physical actions require full payment. If you are too spent, they
+refuse before consuming ammunition, items, cooldowns, or effects. Autoattacks,
+the defense that wins an incoming contest, fleeing, and ongoing grapple upkeep
+remain possible. They spend what is left and resolve without their governing
+skill. Losing defense choices never charge you.
+
+Flee spends once when you issue the command; grapple upkeep spends each
+continuing round.
+
+Low Stamina also weakens physical effectiveness. When you feel it going, break
+off and recover, or <ansi fg="command">flee</ansi> outright.
 
 <ansi fg="yellow">━━━ Regeneration ━━━</ansi>
 
