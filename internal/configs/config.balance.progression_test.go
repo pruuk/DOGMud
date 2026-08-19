@@ -72,6 +72,33 @@ func TestValidateProgression_CostEncumbrancePairPreservedWhenValid(t *testing.T)
 	}
 }
 
+// Zero must SURVIVE validation on both knobs. The neighbouring progression
+// knobs validate with `<= 0`, which silently replaces a deliberate 0 with the
+// default. These two are documented off-switches, so they validate on `< 0`.
+func TestProgressionBonuses_ZeroIsLegal(t *testing.T) {
+	b := &Balance{CritProgressionBonus: 0, ObservedCritProgressionBonus: 0}
+	b.validateProgression()
+	if float64(b.CritProgressionBonus) != 0 {
+		t.Errorf("CritProgressionBonus = %.2f, want 0 (explicit off-switch preserved)", float64(b.CritProgressionBonus))
+	}
+	if float64(b.ObservedCritProgressionBonus) != 0 {
+		t.Errorf("ObservedCritProgressionBonus = %.2f, want 0 (explicit off-switch preserved)", float64(b.ObservedCritProgressionBonus))
+	}
+}
+
+// A negative value is not a meaningful configuration (unlike 0, which is a
+// deliberate off-switch) and must be corrected back to the documented default.
+func TestProgressionBonuses_NegativeIsCorrected(t *testing.T) {
+	b := &Balance{CritProgressionBonus: -1, ObservedCritProgressionBonus: -1}
+	b.validateProgression()
+	if float64(b.CritProgressionBonus) != 2.0 {
+		t.Errorf("CritProgressionBonus = %.2f, want 2.0 (default after negative correction)", float64(b.CritProgressionBonus))
+	}
+	if float64(b.ObservedCritProgressionBonus) != 0.5 {
+		t.Errorf("ObservedCritProgressionBonus = %.2f, want 0.5 (default after negative correction)", float64(b.ObservedCritProgressionBonus))
+	}
+}
+
 // A knee multiplier BELOW 1.0 inverts the first segment: the curve would run
 // from 1.0 at empty down to the knee, making a loaded character cheaper to act
 // than an empty one. Positive, so the old `<= 0` guard let it through.
