@@ -10,7 +10,7 @@ quest_required: "12-end"
 cost: 35
 waitrounds: 3
 difficulty: 15
-primarystat: willpower
+primarystat: charisma
 base_folds: 6
 target_defense_type: none
 effect_type: none

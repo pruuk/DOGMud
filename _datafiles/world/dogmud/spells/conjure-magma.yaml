@@ -10,7 +10,7 @@ schools:
 cost: 50
 waitrounds: 5
 difficulty: 55
-primarystat: willpower
+primarystat: charisma
 base_folds: 14
 target_defense_type: none
 effect_type: none
