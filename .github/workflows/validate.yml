@@ -27,28 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          # fetch-depth: 0 so the action has real git history to diff against.
-          # It used to be omitted on the stated grounds that it "is only needed
-          # for merge_group events, which this repo does not use". That was
-          # wrong for large changes: only-new-issues asks the GitHub API for the
-          # PR patch, and the API REFUSES any diff over 20,000 lines with
-          # `code: too_large`. When that call fails the action cannot compute
-          # what is new, so it falls back to reporting the ENTIRE grandfathered
-          # backlog and the gate fails on 96 findings the branch never touched.
-          # U8 (2026-08-18) was the first change big enough to hit it. With full
-          # history the action can diff locally instead of asking the API.
-          fetch-depth: 0
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      # only-new-issues grandfathers the pre-existing findings (96 as of
-      # 2026-08-18) so this gates what a change introduces without first
-      # clearing the backlog. It works on push as well as pull_request.
-      #
-      # To check locally what a branch actually adds, which is the only way to
-      # tell a real regression from this fallback:
-      #   golangci-lint run --new-from-rev=master
+      # only-new-issues grandfathers the pre-existing findings (97 as of
+      # 2026-08-10) so this gates what a change introduces without first
+      # clearing the backlog. It works on push as well as pull_request: the
+      # action asks the GitHub API for the diff of the push (before..after) and
+      # feeds it to --new-from-patch. That is why master can run the identical
+      # job rather than a weaker one. fetch-depth: 0 is only needed for
+      # merge_group events, which this repo does not use.
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
