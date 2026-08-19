@@ -282,12 +282,19 @@ slice.
    advantage of shooting from cover rather than as a missing feature. Document
    it as designed; do not invent a substitute so the table looks symmetrical.
 
-   **Defy additionally warrants an in-kind counter.** The owner named a
-   counter-taunt as attractive, and it fits: answering a social attack socially
-   is more legible than answering it with a fist, and taunt already has a full
-   resolution path to reuse. Whether defy's crit produces a counter-taunt
-   INSTEAD of a melee counter, or the defender picks, is a design choice for
-   this slice; both are coherent.
+   **A defy crit produces a counter-taunt, REPLACING the melee counter.**
+   Owner decision, 2026-08-19. Answering a social attack socially is more
+   legible than answering it with a fist, and taunt already has a full
+   resolution path to reuse. Defy is therefore the one channel whose counter is
+   not a melee swing.
+
+   **A ranged counter is deliberately OUT.** In theory a defender wielding a
+   ranged weapon could answer a cross-room shot in kind, which would close the
+   one gap in the reach table. Owner decision, 2026-08-19: leave it out. It
+   would add a second conditional counter path (wielding-dependent as well as
+   reach-dependent) for a narrow case, and the cross-room shot being
+   uncounterable is already coherent as a property of the weapon. Recorded here
+   so a later reader sees it was considered and declined, not missed.
 
    **Messaging is a hard requirement, not polish.** The owner's condition was
    explicitly "as long as the messaging to the combatants and observers makes
@@ -422,11 +429,11 @@ retuning, that is a `config.yaml` edit, per standing rule 1.
    and parryable, which the existing `defense-messages/` data shape already
    supports. Shipping the mechanic without the text would leave players losing
    to something unnarrated, which is the gap U8 had to close for quell and defy.
-5. ~~The counterattack tier: extend or scope?~~ **RESOLVED 2026-08-19**: the
-   tier extends to every channel, gated on reach, with a melee counter as the
-   default and the cross-room shot documented as the one coherent exception.
-   See §4.3 item 3. What remains open is narrower: **does a defy crit produce a
-   counter-taunt instead of a melee counter, or does the defender get both?**
+5. ~~The counterattack tier: extend or scope?~~ **RESOLVED 2026-08-19.** The
+   tier extends to every channel, gated on reach: a melee counter by default,
+   a counter-taunt REPLACING it for defy, the cross-room shot documented as the
+   one coherent exception, and a wielding-dependent ranged counter considered
+   and declined. See §4.3 item 3. Nothing open here.
 6. **Should 16 attacks gaining crit ship in the same slice as ×1→×5?** They
    compound. A case exists for landing the weight unification first, measuring
    it in play, then adding the crit tier. That splits U6b in two and delays the
