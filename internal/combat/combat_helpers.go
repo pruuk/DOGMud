@@ -1191,42 +1191,37 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 	result.DefenseUsed = DefenseType(best.defenseType)
 
 	var defenseVerb string
-	var skillToProgress string
 	var itemsDefenseType items.DefenseType
 	switch best.defenseType {
 	case characters.DefenseDodge:
 		defenseVerb = "dodge"
 		itemsDefenseType = items.DefenseDodge
-		skillToProgress = string(skills.UnarmedCombat)
 	case characters.DefenseParry:
 		defenseVerb = "parry"
 		itemsDefenseType = items.DefenseParry
-		skillToProgress = string(skills.WeaponCombat)
 	case characters.DefenseBlock:
 		defenseVerb = "block"
 		itemsDefenseType = items.DefenseBlock
-		skillToProgress = string(skills.WeaponCombat)
 	}
 
 	// The generic fallback text below formats as "%s %ss your attack!", so an
-	// empty verb reads "Grimwald s your attack!". Same unreachable-today arm as
-	// the skill guard; same fix.
+	// empty verb reads "Grimwald s your attack!". Unreachable today (melee
+	// always resolves to one of the three cases above), but made unreachable
+	// by construction rather than by argument.
 	if defenseVerb == "" {
 		defenseVerb = "counter"
 	}
 
-	// Trigger skill progression for successful defense.
-	//
-	// U6 Task 12 added the guard. An unmatched defence leaves skillToProgress
-	// empty, and an empty skill name is NOT inert: TrackSkillUse("") and
-	// CheckSkillProgression("", ...) take the roll like any other name, and a
-	// success sends the player a levelup banner naming no skill at all. Melee
-	// cannot reach that arm today; this makes it unreachable by construction
-	// rather than by argument.
-	if skillToProgress != "" {
-		targetChar.TrackSkillUse(skillToProgress)
-		targetChar.CheckSkillProgression(skillToProgress, targetChar.GetUserId(), 1.0)
-	}
+	// U9: this function used to also roll defender skill progression here
+	// (TrackSkillUse + CheckSkillProgression on skillToProgress), once per
+	// defended swing. That duplicated hooks.processDefenderProgression ->
+	// combat.AwardDefenceProgression, which already rolls the same skill (and
+	// the primary stat, which this path never did) once per defence type per
+	// round. A defender who dodged four swings in a round took five skill
+	// rolls. Deleted; AwardDefenceProgression is now the only defender
+	// progression path, and its docstring carries the empty-skill-name hazard
+	// this guard used to document -- sendDefenseMessages is a messaging
+	// function and should not carry a progression side effect at all.
 
 	// Get narrative defense messages based on defense z-score
 	defenseMsgs := items.GetDefenseMessage(itemsDefenseType, best.defRoll.ZScore)
