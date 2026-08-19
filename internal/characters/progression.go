@@ -186,18 +186,6 @@ func (c *Character) statProgressionChance(statName string, bonusMultiplier float
 	return chance
 }
 
-// critReceivedChance computes the probability OnCritReceived will roll
-// against for statName, without actually rolling. Extracted so the faucet
-// test pins the SAME expression the implementation uses rather than a
-// hand-rolled duplicate that could silently drift from it.
-func (c *Character) critReceivedChance(statName string) float64 {
-	mult := float64(configs.GetBalanceConfig().ObservedCritProgressionBonus)
-	if mult <= 0 {
-		return 0
-	}
-	return c.statProgressionChance(statName, mult)
-}
-
 // CheckStatProgression rolls against the progression chance for a stat.
 // If the roll succeeds, the stat's Training value is increased by 1.
 // Returns true if progression fired (stat actually gained), false otherwise.

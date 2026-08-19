@@ -8,11 +8,24 @@ import (
 )
 
 // critReceivedChanceForTest computes the chance OnCritReceived will roll
-// against for statName, without tracking or rolling. Wraps the unexported
-// critReceivedChance so the implementation and the tests share the exact
-// same expression.
+// against for statName, without tracking or rolling.
+//
+// It calls statProgressionChance -- the SAME expression CheckStatProgression
+// rolls against, which is what OnCritReceived delegates to -- so this pins
+// production's formula rather than a hand-rolled duplicate that could drift.
+// Only the ObservedCritProgressionBonus gate is restated here, and it is one
+// comparison.
+//
+// This lives in the test file rather than beside OnCritReceived because
+// OnCritReceived needs the MULTIPLIER, not the chance: CheckStatProgression
+// computes the chance itself. A production helper returning the chance would
+// have had no production caller, and the lint gate is only-new-issues.
 func critReceivedChanceForTest(c *Character, statName string) float64 {
-	return c.critReceivedChance(statName)
+	mult := float64(configs.GetBalanceConfig().ObservedCritProgressionBonus)
+	if mult <= 0 {
+		return 0
+	}
+	return c.statProgressionChance(statName, mult)
 }
 
 // regenDecayFactorForTest computes the rank-based damping factor
