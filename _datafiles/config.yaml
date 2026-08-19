@@ -931,6 +931,18 @@ Balance:
   StatProgressionRate: 2.25      # 6e: ~2.25x STAT progression (skills unaffected)
   ProgressionDecayBelowCap: 3.0  # Exponential steepness below soft cap (higher = faster decay)
   ProgressionDecayAboveCap: 2.0  # Exponential steepness above soft cap
+  # CritProgressionBonus: multiplier on the progression roll for whichever side
+  # DID the crit or the fumble. Failure teaches, so a fumble pays it too.
+  # Raising it makes exceptional moments the main way characters improve;
+  # lowering it makes progression purely a function of repetition. 0 turns
+  # bonus progression off entirely and is a legal value.
+  CritProgressionBonus: 2.0
+  # ObservedCritProgressionBonus: multiplier for the side that RECEIVED the crit
+  # or fumble rather than causing it. Deliberately well below
+  # CritProgressionBonus: observing is worth strictly less than doing. This is
+  # also the rate at which being critically hit toughens you, which before U9
+  # was a flat rate that never decayed with rank. 0 is a legal off-switch.
+  ObservedCritProgressionBonus: 0.5
 
   # ── PER-STAT PROGRESSION MULTIPLIERS ────────────────────────────────────────
   # Scales the progression chance for each stat independently.
