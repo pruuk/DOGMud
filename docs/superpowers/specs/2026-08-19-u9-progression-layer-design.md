@@ -20,8 +20,8 @@ Reading the code, three things are true that the row does not say:
 1. **U6 built more of this than the roadmap admits.** `OnSkillUseScaled`
    already fires the skill's primary stat via `skills.GetSkillPrimaryStat`, so
    "skill and stat on every event" is already true at every ordinary
-   `OnSkillUse` site (96 production `OnSkillUse` / `OnSkillUseScaled` /
-   `OnStatUse` call sites across 46 files, counted 2026-08-19). `combat.AwardDefenceProgression` is already THE
+   `OnSkillUse` site (93 production `OnSkillUse` / `OnSkillUseScaled` /
+   `OnStatUse` call sites across 45 files, or 135 across 52 counting the crit, track and regen entry points; audited 2026-08-19). `combat.AwardDefenceProgression` is already THE
    five-defence mapping, and `processDefenderProgression` already dedupes once
    per defence type per round.
 2. **U8 built the registry this slice needs.** `internal/costs/action.go`
@@ -119,6 +119,47 @@ stronger than you is a no-decay tap whose rate rises with how outmatched you are
    `OnRegenTick` call `TrackStatUse` before rolling, so the counter that decays
    the curve actually moves. Owner decision, 2026-08-19: do both, because
    fixing only the crit path leaves open the exact low-health grind fyttyn used.
+3. **`CheckRegenProgression` itself consults rank.** Added 2026-08-19 after
+   parts 1 and 2 were already agreed, because verification showed they were not
+   enough on their own.
+
+**Why part 3 exists, and why the first draft of this section was wrong.**
+`CheckRegenProgression` contains **zero** references to rank or use count: its
+chance is `base × (1 − ratio)^curve` from pool depletion, times the per-stat and
+mutation multipliers, and nothing else. So parts 1 and 2 alone make the *counter*
+move — which correctly decays crit-received, since that now routes through
+`CheckStatProgression` — while **the regen roll itself stays flat forever**.
+
+An earlier draft of this spec claimed part 2 made willpower, charisma and
+strength "decay with use for the first time" and that "veteran growth slows
+sharply". That was false. The low-health grind *is* the regen path, and it would
+have survived untouched while this document claimed the faucet was closed.
+
+**The form.** Rather than introduce a second curve or a new knob, the regen
+chance is multiplied by the existing curve, normalised against its own base:
+
+```
+decayFactor = CalculateProgressionChance(virtualRank, StatProgressionSoftCap)
+              / BaseProgressionChance
+```
+
+`CalculateProgressionChance` returns exactly `BaseProgressionChance` at rank 0,
+so the factor is **1.0 for a fresh character and the change is a pure veteran
+nerf** — nobody's early game gets slower. It reaches `exp(-3) ≈ 0.05` at the
+soft cap. Guard the division: a `BaseProgressionChance` of 0 must yield a factor
+of 0, not a NaN.
+
+| Vitality virtual rank | Regen chance, before | Regen chance, after |
+|---|---|---|
+| 0 | 1.00× | **1.00×** (unchanged) |
+| 75 | 1.00× | **0.22×** |
+| 150 (soft cap) | 1.00× | **0.05×** |
+
+**Blast radius, stated honestly.** `OnRegenTick` maps health to vitality and
+willpower, stamina to strength and vitality, and conviction to willpower and
+charisma. Regen is also the **only** source of vitality progression in the game,
+so vitality slows the most. This is the largest single behaviour change in U9
+and it is listed in §7.1.
 
 With both halves, the rate a character actually experiences:
 
@@ -137,16 +178,9 @@ Computed from shipped `config.yaml` values: `BaseProgressionChance` 0.12,
 mutation multipliers apply on top in both columns and cancel out of the
 comparison.
 
-**Half two reaches further than vitality**, and that is deliberate but must be
-named. `OnRegenTick` progresses willpower and charisma from conviction, strength
-and vitality from stamina, vitality and willpower from health. All of those
-begin to decay with use for the first time. Veteran growth in those stats slows
-sharply. This is the largest single behaviour change in U9 and it is listed in
-§7.1.
-
-`CheckRegenProgression` itself stays. Its chance is still correctly derived from
-pool depletion rather than from rank; what changes is that its callers now
-record that the stat was exercised.
+`CheckRegenProgression` keeps its depletion-derived chance — how empty the pool
+is remains the thing that drives passive growth. What changes is that the result
+is now damped by rank, and that its callers record the stat was exercised.
 
 ---
 
@@ -328,7 +362,8 @@ enumerated here so each can be called out individually in the PR.
 | Observing events on defence crit / defence fumble / attack fumble | Increase, new events | Both sides |
 | Melee ATTACK double-progression deleted (§7.3) | **Large cut**, roughly halves melee attacker rates | Players and mobs |
 | Melee DEFENCE double-progression deleted (§7.3) | **Large cut**, scales with swings defended per round | Players and mobs |
-| Regen and crit-received paths now TRACK the stat use (§3.1 half two) | **Large cut at veteran level**, and the first time vitality has ever decayed | Players and mobs |
+| Regen and crit-received paths now TRACK the stat use (§3.1 part 2) | Enables rank decay; no direct rate change of its own | Players and mobs |
+| Regen progression damped by rank (§3.1 part 3) | **Largest change in U9.** Unchanged at rank 0, ~0.22x at rank 75, ~0.05x at the soft cap. Vitality slows most, being regen-only | Players and mobs |
 | Bonus events dedupe once per round | Cut in multi-swing rounds | Both sides |
 | Floored outcomes no longer earn bonuses | Cut at extreme mismatch | Both sides |
 | Caster stat progression halves (double-roll fixed, §7.3) | Cut | Players and mobs |

@@ -1578,10 +1578,75 @@ In `OnRegenTick`, track each related stat before rolling it:
 	}
 ```
 
+- [ ] **Step 3c: Damp the regen roll by rank**
+
+**Tracking alone does not close the faucet, and an earlier draft of this plan
+wrongly claimed it did.** `CheckRegenProgression` contains ZERO references to
+rank or use count — verified — so its chance stays flat forever no matter how
+much the counter moves. Steps 3a and 3b make crit-received decay; this step is
+what makes the low-health regen grind decay, which is the thing the fyttyn
+migration exists to undo.
+
+Add the damping inside `CheckRegenProgression`, after the existing per-stat and
+mutation multipliers and before the `chance > 1.0` clamp:
+
+```go
+	// Damp by rank, using the SAME curve the rest of progression uses rather
+	// than a second one. Normalising against BaseProgressionChance makes the
+	// factor exactly 1.0 at rank 0, so a fresh character's passive growth is
+	// completely unchanged and this is a pure veteran nerf.
+	//
+	// Without this the chance is derived from pool depletion alone and never
+	// falls, which is how a character grinds a stat at low health forever. That
+	// is the fyttyn mechanism (see internal/migration/0.16.0.go), and vitality
+	// is hit hardest because regen is its ONLY source of progression.
+	base := float64(b.BaseProgressionChance)
+	if base <= 0 {
+		return // no base means no progression at all; avoid a NaN factor
+	}
+	virtualRank := c.GetStatUseCount(statName) / int(b.UsesPerRank)
+	if statVal := c.GetStatValue(statName); statVal > int(b.StatProgressionSoftCap) && statVal > virtualRank {
+		virtualRank = statVal // same anti-exploit floor CheckStatProgression uses
+	}
+	chance *= CalculateProgressionChance(virtualRank, int(b.StatProgressionSoftCap)) / base
+```
+
+Note the anti-exploit floor is copied deliberately: without it an admin or
+migrated character with a high stat VALUE but a zero use count would sit at the
+undamped rank-0 rate forever, which is the same hole `CheckStatProgression`
+already guards against.
+
+- [ ] **Step 3d: Pin the regen damping**
+
+```go
+// Rank 0 must be COMPLETELY unchanged -- this is a veteran nerf, not an
+// early-game one. Anything else and every new character silently gets slower.
+func TestRegenProgression_UnchangedAtRankZero(t *testing.T) {
+	c := newProgressionTestCharacter(t)
+	if got := regenDecayFactorForTest(c, "vitality"); got != 1.0 {
+		t.Errorf("rank-0 regen decay factor = %v, want exactly 1.0", got)
+	}
+}
+
+func TestRegenProgression_DecaysWithRank(t *testing.T) {
+	low := newProgressionTestCharacter(t)
+	high := newProgressionTestCharacter(t)
+	for i := 0; i < 25*150; i++ {
+		high.TrackStatUse("vitality")
+	}
+	if regenDecayFactorForTest(high, "vitality") >= regenDecayFactorForTest(low, "vitality") {
+		t.Error("regen progression did not decay with rank; the low-health grind is still open")
+	}
+}
+```
+
+Extract the factor into an unexported helper both the implementation and the
+test call, rather than duplicating the expression in the test.
+
 **Name the blast radius in the commit.** `OnRegenTick` maps health to vitality
 and willpower, stamina to strength and vitality, conviction to willpower and
-charisma. All of those now decay with use for the first time, so veteran growth
-in them slows sharply. This is the single largest behaviour change in U9 and it
+charisma. Regen is the ONLY source of vitality progression in the game, so
+vitality slows most. This is the single largest behaviour change in U9 and it
 belongs in spec §7.1, which already lists it.
 
 Run: `go test ./internal/characters/ -v` — expected PASS. A regen-progression
