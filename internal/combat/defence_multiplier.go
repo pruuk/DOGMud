@@ -96,6 +96,34 @@ func defenceEffectiveness(defenceType string) float64 {
 	return 1.0
 }
 
+// DefenceSkillAndStat is THE mapping from a defence to what it trains, in one
+// place, for all five defences. AwardDefenceProgression and the crit/fumble
+// bonus tier both read it, so the five rows exist once.
+//
+// Note the asymmetry with AwardDefenceProgression: parry deliberately awards
+// BOTH dexterity and strength there, while this returns the single stat the
+// bonus tier wants. That is intentional. Do not "simplify" the two into one by
+// dropping parry's second stat.
+//
+// An unrecognised defence returns two empty strings rather than guessing.
+// Passing an empty skill on is not inert: CheckSkillProgression("") takes the
+// roll and a success banners no skill at all.
+func DefenceSkillAndStat(defenceType string) (skill, stat string) {
+	switch defenceType {
+	case characters.DefenseDodge:
+		return string(skills.UnarmedCombat), "dexterity"
+	case characters.DefenseParry:
+		return string(skills.WeaponCombat), "dexterity"
+	case characters.DefenseBlock:
+		return string(skills.WeaponCombat), "strength"
+	case characters.DefenseQuell:
+		return string(skills.Spellcasting), "willpower"
+	case characters.DefenseDefy:
+		return string(skills.Rhetoric), "willpower"
+	}
+	return "", ""
+}
+
 // AwardDefenceProgression fires the skill and stat progression a defence earns
 // the character who mounted it. It is THE mapping, in one place, for all five
 // defences.
@@ -118,23 +146,16 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 	if c == nil {
 		return
 	}
-	switch defenceType {
-	case characters.DefenseDodge:
-		c.OnSkillUse(string(skills.UnarmedCombat), userId)
-		c.OnStatUse("dexterity", userId)
-	case characters.DefenseParry:
-		c.OnSkillUse(string(skills.WeaponCombat), userId)
-		c.OnStatUse("dexterity", userId)
+	skill, stat := DefenceSkillAndStat(defenceType)
+	if skill == "" {
+		return // unrecognised defence awards nothing rather than guessing
+	}
+	c.OnSkillUse(skill, userId)
+	c.OnStatUse(stat, userId)
+	// Parry is the one two-stat defence: it takes both the timing and the
+	// force to turn a blade. Preserved from pre-U9 behaviour verbatim.
+	if defenceType == characters.DefenseParry {
 		c.OnStatUse("strength", userId)
-	case characters.DefenseBlock:
-		c.OnSkillUse(string(skills.WeaponCombat), userId)
-		c.OnStatUse("strength", userId)
-	case characters.DefenseQuell:
-		c.OnSkillUse(string(skills.Spellcasting), userId)
-		c.OnStatUse("willpower", userId)
-	case characters.DefenseDefy:
-		c.OnSkillUse(string(skills.Rhetoric), userId)
-		c.OnStatUse("willpower", userId)
 	}
 }
 
