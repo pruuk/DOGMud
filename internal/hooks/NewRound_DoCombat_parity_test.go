@@ -11,21 +11,22 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // ─── Combat-Quadrant Parity Tests ─────────────────────────────────────────────
-// These tests lock the four parity-gap fixes made in Stage 1 of the combat
+// These tests lock the parity-gap fixes made in Stage 1 of the combat
 // quadrant unification work. See docs/superpowers/specs/2026-04-18-combat-
 // quadrant-unification-design.md for context.
 //
-// Three of the gaps are missing callbacks on the MvM (mob-vs-mob) code path
-// that PvM, MvP, and PvP all already had. The fourth is the deletion of a
-// legacy MvP-only inline ConditionShield reduction that double-counted the
-// magnitude already applied inside the mitigation layer.
+// Originally four gaps: three were missing callbacks on the MvM (mob-vs-mob)
+// code path that PvM, MvP, and PvP all already had, and the fourth was the
+// deletion of a legacy MvP-only inline ConditionShield reduction that
+// double-counted the magnitude already applied inside the mitigation layer.
+// Gap 2 (attacker crit callbacks) was removed here -- see the note above
+// "Gap 3" below for why.
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
@@ -137,41 +138,19 @@ func TestMvM_DefenderReceivesOnCritReceived(t *testing.T) {
 		"OnCritReceived(\"physical\",...) should advance vitality training over 50 trials at p~0.25/call; the new MvM call site at handleMobVsMob ensures this fires for mob defenders on crit hits")
 }
 
-// ─── Gap 2: MvM attacker crit callbacks ───────────────────────────────────────
-
-// TestMvM_AttackerCritCallbacksFire locks the per-weapon-hit crit callbacks
-// added to handleMobVsMob (Gap 2). The PvP/MvP versions invoke both
-// OnCriticalSuccess (when wh.CleanHit && wh.Crit) and OnCriticalFailure (when
-// wh.Fumble) on the attacker.
+// ─── Gap 2: MvM attacker crit callbacks (removed, U9 Task 12) ─────────────────
 //
-// Both methods unconditionally call TrackSkillUse(...) at their head before
-// any progression-gating, so the SkillUseCount counter is the deterministic
-// observable. We drive the methods directly for the same randomness reasons
-// outlined in TestMvM_DefenderReceivesOnCritReceived.
-func TestMvM_AttackerCritCallbacksFire(t *testing.T) {
-	cleanupRegistries := seedAllRegistries()
-	defer cleanupRegistries()
-	cleanupCfg := enableMobProgression(t)
-	defer cleanupCfg()
-
-	mob := mobs.GetInstance(100)
-	require.NotNil(t, mob)
-	mob.Character.IsMob = true
-	if mob.Character.SkillUseCount == nil {
-		mob.Character.SkillUseCount = map[string]int{}
-	}
-	delete(mob.Character.SkillUseCount, "critical_success")
-	delete(mob.Character.SkillUseCount, "critical_failure")
-
-	skillTag := string(skills.UnarmedCombat)
-	mob.Character.OnCriticalSuccess(skillTag, 0)
-	mob.Character.OnCriticalFailure(skillTag, 0)
-
-	assert.Equal(t, 1, mob.Character.SkillUseCount["critical_success"],
-		"OnCriticalSuccess must bump TrackSkillUse(\"critical_success\"); the new MvM crit-success branch in handleMobVsMob fires this for mob attackers")
-	assert.Equal(t, 1, mob.Character.SkillUseCount["critical_failure"],
-		"OnCriticalFailure must bump TrackSkillUse(\"critical_failure\"); the new MvM fumble branch in handleMobVsMob fires this for mob attackers")
-}
+// TestMvM_AttackerCritCallbacksFire used to lock the per-weapon-hit crit
+// callbacks that called Character.OnCriticalSuccess/OnCriticalFailure on the
+// attacker, asserting the "critical_success"/"critical_failure"
+// TrackSkillUse counters it bumped. U9 Task 12 deleted both methods: their
+// production callers were removed by Tasks 9/10 (this MvM crit-callback site
+// included), the counters they wrote were phantom (nothing read them), and
+// the applier (characters.applyBonusProgression) now speaks the crit/fumble
+// flavour lines itself. Attacker crit/fumble bonus-progression coverage for
+// the unified combat path now lives in internal/hooks/progression_seam_test.go
+// (TestMeleeCrit_AwardsDefenderToughening, TestMeleeFumble_StillAwardsTheAttacker,
+// TestUnarmedAttacker_StillReachesTheBonusTier).
 
 // ─── Gap 3: MvM attacker stat-gain room messages ──────────────────────────────
 

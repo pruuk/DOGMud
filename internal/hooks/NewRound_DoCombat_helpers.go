@@ -374,12 +374,14 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		}
 
 		if spellBonus > 0 {
+			// OnSkillUseScaled already rolls the skill's primary stat --
+			// manifestation maps to charisma, spellcasting to willpower -- so an
+			// explicit OnStatUse beside it double-rolled every cast. The stat a
+			// spell trains now comes from its primarystat (Task 13).
 			if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 				user.Character.OnSkillUseScaled(string(skills.Manifestation), userId, spellBonus)
-				user.Character.OnStatUse("charisma", userId)
 			} else {
 				user.Character.OnSkillUseScaled(string(skills.Spellcasting), userId, spellBonus)
-				user.Character.OnStatUse("willpower", userId)
 			}
 		}
 
@@ -522,12 +524,13 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 			bal := configs.GetBalanceConfig()
 			spellBonus = 1.0 + float64(spellData.Difficulty)*float64(bal.SpellDifficultyProgressionScale)
 		}
+		// OnSkillUseScaled already rolls the skill's primary stat -- see the
+		// identical fix in handlePlayerFoldCasting above for why the explicit
+		// OnStatUse calls here double-rolled every mob cast.
 		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 			mob.Character.OnSkillUseScaled(string(skills.Manifestation), 0, spellBonus)
-			mob.Character.OnStatUse("charisma", 0)
 		} else {
 			mob.Character.OnSkillUseScaled(string(skills.Spellcasting), 0, spellBonus)
-			mob.Character.OnStatUse("willpower", 0)
 		}
 
 		// Task 6: Spell discovery for caster mobs.

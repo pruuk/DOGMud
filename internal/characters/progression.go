@@ -316,46 +316,14 @@ func (c *Character) DriftFromCombat(cluster string, round uint64) {
 	c.AddClusterAffinity(cluster, float64(configs.GetBalanceConfig().MutationAffinityPerCombatEvent))
 }
 
-// OnCriticalSuccess is called when a character lands a critical hit or
-// achieves a critical success. Triggers progression checks with a
-// 2x bonus multiplier for both the skill and related stats.
-func (c *Character) OnCriticalSuccess(context string, userId int) {
-	c.TrackSkillUse("critical_success")
-	mudlog.Debug("Progression", "event", "critical_success", "context", context, "character", c.Name)
-
-	if configs.GetGamePlayConfig().UseSkillProgression {
-		if c.CheckSkillProgression(context, userId, 2.0) {
-			if userId > 0 {
-				msg := fmt.Sprintf(`<ansi fg="magenta">***</ansi> A moment of brilliance! Your <ansi fg="yellow">%s</ansi> technique improves! <ansi fg="magenta">***</ansi>`, context)
-				events.AddToQueue(events.Message{UserId: userId, Text: msg + "\n"})
-			}
-		}
-	}
-}
-
-// OnCriticalFailure is called when a character critically fails a skill
-// check or combat action. Learning from mistakes — standard progression chance.
-func (c *Character) OnCriticalFailure(context string, userId int) {
-	c.TrackSkillUse("critical_failure")
-	mudlog.Debug("Progression", "event", "critical_failure", "context", context, "character", c.Name)
-
-	if configs.GetGamePlayConfig().UseSkillProgression {
-		if c.CheckSkillProgression(context, userId, 1.0) {
-			if userId > 0 {
-				msg := fmt.Sprintf(`<ansi fg="red">!!!</ansi> You learn from your mistake! Your <ansi fg="yellow">%s</ansi> understanding deepens. <ansi fg="red">!!!</ansi>`, context)
-				events.AddToQueue(events.Message{UserId: userId, Text: msg + "\n"})
-			}
-		}
-	}
-}
-
 // OnFirstMobKill is called when a player kills a mob type for the first time.
 // Triggers a bonus combat skill progression check.
 func (c *Character) OnFirstMobKill(userId int) {
 	mudlog.Debug("Progression", "event", "first_mob_kill", "character", c.Name)
 
 	if configs.GetGamePlayConfig().UseSkillProgression {
-		if c.CheckSkillProgression("combat", userId, 2.0) {
+		bonus := float64(configs.GetBalanceConfig().CritProgressionBonus)
+		if c.CheckSkillProgression("combat", userId, bonus) {
 			msg := `<ansi fg="magenta">***</ansi> Defeating a new foe hones your combat instincts! <ansi fg="magenta">***</ansi>`
 			events.AddToQueue(events.Message{UserId: userId, Text: msg + "\n"})
 		}

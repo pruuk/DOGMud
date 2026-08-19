@@ -53,12 +53,6 @@ type Actor interface {
 
 	// OnStatUse triggers stat progression.
 	OnStatUse(statName string) bool
-
-	// OnCriticalSuccess records a critical hit for progression bonuses.
-	OnCriticalSuccess(skillName string)
-
-	// OnCriticalFailure records a fumble for progression tracking.
-	OnCriticalFailure(skillName string)
 }
 
 // FunctionExporter mirrors usercommands.FunctionExporter — a decoupling
