@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -34,7 +33,6 @@ func TestMutationActivesDoNotDoubleCharge(t *testing.T) {
 		actor, char, _ := newSpecialMoveAdmissionActor(t, 8201, 50, 0, false)
 		char.Mutations = map[string]int{}
 		char.Mutations["tail"] = 1
-		rand.Seed(1)
 		result := ExecuteTrip(actor)
 		cost := embeddedSpecialMoveCost(t, result)
 		require.Equal(t, TripTailsweep, result.Variant)
@@ -47,7 +45,6 @@ func TestMutationActivesDoNotDoubleCharge(t *testing.T) {
 		char.Mutations = map[string]int{}
 		char.Mutations["raptor-legs"] = 1
 		char.Items = nil
-		rand.Seed(1)
 		result := ExecuteKick(actor)
 		cost := embeddedSpecialMoveCost(t, result)
 		require.Equal(t, KickStandard, result.Variant)

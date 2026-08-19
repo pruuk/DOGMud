@@ -301,6 +301,10 @@ func TestStagedSpecialMovePaidMissCommitsEngagement(t *testing.T) {
 	actor, handled := actions.StageMeleeTarget(user, room, "#100", actions.MeleeTargetOpts{Verb: "trip"})
 	require.False(t, handled)
 	t.Setenv("GODEBUG", "randseednop=0")
+	// nolint:staticcheck // Seeding the GLOBAL source is the point: the code under
+	// test uses package-level rand, and there is no non-deprecated way to make
+	// that deterministic. The GODEBUG above is what un-does the Go 1.20 no-op,
+	// so unlike the other two former call sites this one actually takes effect.
 	rand.Seed(1)
 	res := actions.ExecuteTrip(actor)
 

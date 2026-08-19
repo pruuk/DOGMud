@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -264,11 +263,14 @@ func TestRallyWarcryPaidBuffsChargeOnceBeforeEffects(t *testing.T) {
 func TestTauntAffordableMissPaysOnceAndConsumesNoisyAction(t *testing.T) {
 	pinTauntContestKnobs(t)
 
-	for seed := int64(1); seed <= 20; seed++ {
+	// Retried rather than seeded. rand.Seed has been a no-op since Go 1.20
+	// unless GODEBUG=randseednop=0 is set, which this file does not set, so
+	// each iteration was already an independent draw -- which is what makes
+	// retrying until a miss work in the first place.
+	for attempt := 0; attempt < 20; attempt++ {
 		actor, char, target := newRhetoricActor(t, false, 10, 0)
 		hideRhetoricActor(t, char)
 		startTargetConviction := target.Conviction
-		rand.Seed(seed)
 		result := ExecuteTaunt(actor)
 		if result.Fumble || result.Hit {
 			continue

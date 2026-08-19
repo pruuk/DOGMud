@@ -59,7 +59,10 @@ func ExecuteWarcry(actor Actor) WarcryResult {
 
 	// A warcry reveals only after paid admission and cooldown ownership.
 	if char.IsHidden() {
-		char.Awareness.TransitionToRevealing(state.TransitionReason{
+		// Best effort: the only failure modes are an activity veto or an
+		// already-Revealing state, both of which mean the actor is not quietly
+		// hidden any more, which is all this call is for.
+		_ = char.Awareness.TransitionToRevealing(state.TransitionReason{
 			Trigger:  awareness.TriggerNoisyAction,
 			Metadata: map[string]any{"command": "warcry"},
 		})

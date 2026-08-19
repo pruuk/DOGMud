@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"math/rand"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -380,7 +379,6 @@ func TestHowlAliasChargesOnlyThroughTaunt(t *testing.T) {
 	mob.Character.ConvictionMax.Value = 50
 	mob.Character.Conviction = 50
 	mob.Character.Skills = map[string]int{"rhetoric": 0}
-	rand.Seed(1)
 
 	handled, err := Howl("", mob, room)
 	require.NoError(t, err)

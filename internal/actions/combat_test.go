@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"math/rand"
 	"reflect"
 	"testing"
 
@@ -304,9 +303,13 @@ func TestSpecialMoveFamilyAdmission(t *testing.T) {
 			})
 
 			t.Run("affordable_miss_pays_once", func(t *testing.T) {
-				for seed := int64(1); seed <= 20; seed++ {
+				// Retried rather than seeded. rand.Seed has been a no-op since
+				// Go 1.20 unless GODEBUG=randseednop=0 is set, which this file
+				// does not set, so the seeding this loop used to do bought
+				// nothing -- every iteration was already an independent random
+				// draw, which is exactly what makes the retry work.
+				for attempt := 0; attempt < 20; attempt++ {
 					actor, char, _ := newSpecialMoveAdmissionActor(t, tc.speciesID, 50, 0, false)
-					rand.Seed(seed)
 					got := tc.execute(actor)
 					if got.hit {
 						continue // a configured contest floor may rescue the overwhelming miss
@@ -327,13 +330,14 @@ func TestSpecialMoveFamilyAdmission(t *testing.T) {
 				highActor, _, _ := newSpecialMoveAdmissionActor(t, tc.speciesID, 100, 100, false)
 				emptyActor, _, _ := newSpecialMoveAdmissionActor(t, tc.speciesID, 100, 25, false)
 				ladenActor, _, _ := newSpecialMoveAdmissionActor(t, tc.speciesID, 100, 25, true)
-				rand.Seed(1)
+				// No seeding: the assertions below compare CHARGED COST, which
+				// is a pure function of base, governing skill and carried load.
+				// The roll does not enter it, so these four calls do not need to
+				// share a random sequence -- which is just as well, because the
+				// rand.Seed calls that used to sit here were no-ops.
 				low := tc.execute(lowActor)
-				rand.Seed(1)
 				high := tc.execute(highActor)
-				rand.Seed(1)
 				empty := tc.execute(emptyActor)
-				rand.Seed(1)
 				laden := tc.execute(ladenActor)
 				require.Less(t, high.cost.Charged, low.cost.Charged, "registry-selected governing skill must reduce the quote")
 				require.Less(t, empty.cost.Charged, laden.cost.Charged, "lower physical load must reduce the quote")
@@ -358,7 +362,6 @@ func TestSpecialMoveStaleCooldownAdmission(t *testing.T) {
 			health, targetStamina := target.Health, target.Stamina
 			conditions, targetBuffs := len(target.Conditions), len(target.Buffs.GetBuffs())
 			actorState, targetState := char.Position.State(), target.Position.State()
-			rand.Seed(1)
 
 			got := tc.execute(actor)
 
