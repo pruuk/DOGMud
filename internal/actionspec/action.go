@@ -65,11 +65,21 @@ const (
 )
 
 // Spec is what the registry knows about an action: which skill discounts it,
-// and whether encumbrance applies.
+// whether encumbrance applies, and which stat it exercises.
 type Spec struct {
 	Skill       skills.SkillTag // governing skill for SkillFixed actions
 	SkillSource SkillSource
 	Physical    bool // physical actions take the encumbrance multiplier
+
+	// Stat OVERRIDES the stat this action exercises for progression. Empty --
+	// which is every registered action -- means the skill's primary stat, which
+	// is already what every one of them wants.
+	//
+	// It exists for the two cases that genuinely diverge: a spell declaring its
+	// own primarystat, and the toughening stat awarded for a crit RECEIVED
+	// (vitality / willpower / charisma), which is deliberately not the stat that
+	// fed the defence score.
+	Stat string
 }
 
 // registry maps each priced action to its spec. Package-level and read-only
@@ -129,4 +139,20 @@ var registry = map[Action]Spec{
 // row.
 func SpecFor(a Action) Spec {
 	return registry[a]
+}
+
+// StatFor returns the stat an action exercises: the Spec's override if it has
+// one, otherwise the governing skill's primary stat.
+//
+// Returns empty for a Spec with neither, which callers must treat as "no stat
+// roll" rather than passing it on -- CheckStatProgression("") takes a roll and
+// a success sends a levelup banner naming no stat at all.
+func StatFor(s Spec) string {
+	if s.Stat != "" {
+		return s.Stat
+	}
+	if s.Skill == "" {
+		return ""
+	}
+	return skills.GetSkillPrimaryStat(string(s.Skill))
 }
