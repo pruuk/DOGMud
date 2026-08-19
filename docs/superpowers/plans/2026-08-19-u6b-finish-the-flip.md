@@ -4,6 +4,16 @@
 
 **Tasks:** 21.
 
+> **Revised 2026-08-19 after a blind adversarial review** (16 findings, 5 of
+> them showstoppers). Where a step says "an earlier draft did X", that is the
+> specific mistake the step exists to prevent repeating. The largest: the first
+> draft hoisted melee's WHOLE dynamic crit bar to every channel, contradicting
+> the modelling the owner's binding gate decisions were computed on — the
+> spell/taunt numbers used the constant bar, and the skill-shift reads MELEE
+> combat skill, so the full hoist would have let a swordsman's weapon skill
+> lower his spell crit bar and collapsed royal crits at every gold price,
+> silently un-deciding gate decision §5.1.
+
 **Goal:** Every uncertain combat outcome resolves through one contest shape — one
 contest that always runs, crit from that contest's margin against one bar, damage
 from that margin, a counter tier on every channel gated on reach — and every
@@ -40,13 +50,15 @@ onto the U9 branch.
 |---|---|---|
 | 1 | Fizzle becomes a partial-damage defence outcome; only the word is a copy question | Gate decision §5.2 (forced by the numbers) |
 | 2 | `shoot` keeps Perception as its attack stat; only the weight unifies | Spec §8.2 |
-| 3 | Melee's dynamic crit bar (Accuracy 1.5 / Blink 2.5 / skill-shift, floor 1.5) is HOISTED to all channels, not deleted | Spec §8.3 recommendation |
+| 3 | **The BUFF half of the crit bar hoists; the skill-shift stays melee-only.** `CritBarFor` = base 2.0, Accuracy→1.5, Blink→2.5, NO skill shift; melee composes its existing skill-difference shift on top (bit-identical for melee). This satisfies §8.3's actual rationale ("a buff that works on one channel only is a bug") while preserving every modelled number — the spell/taunt model used the constant bar, and any skill-shift on non-melee channels would (a) couple a swordsman's WEAPON skill to his SPELL crit bar, which nobody decided, and (b) collapse royal crit rates at every gold price, invalidating gate decision §5.1. A full hoist requires re-modelling and re-affirming §5.1 — owner's call, not this plan's. | Review finding 1 |
 | 4 | `throw` gets the ranged defence set (dodge, block) and margin-scaled damage | Spec §4.5; modelled in appendix C |
 | 5 | Counters are free (no cost), like riposte today; non-melee channels get a counter-SWING on any defensive crit; melee keeps its per-defence trio (riposte/auto-trip/auto-bash) | Spec §4.3 "riposte's mechanism" |
 | 6 | Defy's crit counter-taunts INSTEAD of counter-swinging | Owner decision 2026-08-19 |
 | 7 | The fumble-before-success ordering (fumble aborts even winning attacks, capping hit at 87.5%−fumble) is KEPT and documented, now uniformly | Modelling §6.3 "document or change, deliberately" |
-| 8 | The crit-damage rank input is the RAW skill rank everywhere (taunt's ×5-weighted input was the outlier and is corrected — a named nerf to taunt crit damage) | Modelling §6.2; `CritOrMitigatedDamage` signature |
+| 8 | The RAW skill rank is the ONE rank input everywhere — crit damage AND base damage. Taunt fed the ×5-weighted rank to BOTH (`CritOrMitigatedDamage` and `CalcRawDamage`'s `SkillMultiplier`); correcting both is a named taunt nerf: crit multiplier ×15.75→×4.6 at Meirok, and base damage for rhetoric ranks below the soft cap (raw 30: multiplier 3.0→2.55). One rank field, two consumers, no split. | Review finding 12; modelling §6.2 |
 | 9 | Mob skill: nothing changes (accept the repriced gold dial) | Gate decision §5.1 |
+| 10 | `CalcSneakScore` and the OPPOSED detection/shadow/plant/steal scores convert to linear ×SkillWeight; **`CalcSearchScore` keeps its `SkillMultiplier×25` shape for the three Category B consumers** (forage yield `forage.go:19`, `search.go` thresholds, `track.go:120`) which the spec walls off from this slice. A new linear function serves the contest sites. Converting `CalcSearchScore` in place would have silently changed forage yields and search/track rates in direct contradiction of spec §3.2. | Review finding 5 |
+| 11 | Non-melee channels gain a FUMBLE abort they never had (specials and ranged had no fumble concept). Named per channel; uniform per Assumption 7. | Review finding E |
 
 ## Standing rules (from the arc — violations are defects)
 
@@ -102,9 +114,21 @@ onto the U9 branch.
 - Modify: `internal/combat/combat_helpers.go` (~line 553 `calcCritThreshold`, ~line 966 the defensive 2.0)
 - Test: `internal/combat/crit_bar_test.go` (create)
 
-Melee's bar is dynamic (`calcCritThreshold`: base 2.0, Accuracy→1.5, Blink→2.5,
-skill-difference shift, floor 1.5); every other channel uses the const
-`ContestCritThreshold = 2.0`. Assumption 3: hoist the dynamic bar.
+Melee's bar is dynamic (`calcCritThreshold` at `combat_helpers.go:553-600`:
+base 2.0, Accuracy→1.5, Blink→2.5, then shifted by
+`sourceChar.GetCombatSkillLevel() − targetChar.GetCombatSkillLevel()` with a
+1.5 floor and NO upper ceiling); every other channel uses the const
+`ContestCritThreshold = 2.0`.
+
+**Assumption 3 (revised): only the BUFF half hoists.** `CritBarFor` = base
+2.0, Accuracy→1.5, Blink→2.5, no skill term. Melee composes its existing
+skill-difference shift ON TOP inside `calcCritThreshold`, which becomes a
+melee-only wrapper around `CritBarFor` — bit-identical for melee. The
+skill-shift must NOT reach other channels: it reads the MELEE combat skill, so
+a full hoist would couple a swordsman's weapon skill to his spell crit bar and
+would put a mob attacker (combat skill 1) versus Meirok (weapon-combat 69) at
+bar `2.0 + 0.05×68 = 5.4`, collapsing royal crits at every gold price — the
+numbers gate decision §5.1 rests on were computed at the constant bar.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -125,32 +149,35 @@ func barChar(t *testing.T, combatSkill int) *characters.Character {
 	return c
 }
 
-// The hoisted bar must be BIT-IDENTICAL to melee's private calcCritThreshold
-// for every input — this task is a pure extraction for melee.
-func TestCritBarFor_MatchesLegacyMeleeBar(t *testing.T) {
+// CritBarFor carries the BUFFS only. It must NOT carry the skill shift — see
+// the task preamble; asserting that here is the point of the test.
+func TestCritBarFor_BuffsOnlyNoSkillShift(t *testing.T) {
+	// use the package's existing buff-flag test idiom — find it first:
+	// grep -n "buffs.Accuracy\|HasBuffFlag" internal/combat/*_test.go | head
+	atk, def := barChar(t, 69), barChar(t, 1) // extreme skill gap
+	if got := CritBarFor(atk, def); got != 2.0 {
+		t.Errorf("CritBarFor carried a skill shift: got %v, want 2.0 (skill gap must not move the shared bar)", got)
+	}
+	// accuracy -> 1.5, blink -> 2.5 (set flags via the existing idiom)
+}
+
+// Melee stays BIT-IDENTICAL: calcCritThreshold (now composing CritBarFor +
+// melee's own skill shift) must equal its pre-refactor output for every input.
+func TestCalcCritThreshold_MeleeUnchanged(t *testing.T) {
 	cases := []struct {
-		name          string
-		atkBuff       buffs.Flag
-		defBuff       buffs.Flag
+		name               string
 		atkSkill, defSkill int
+		want               float64
 	}{
-		{"parity", "", "", 30, 30},
-		{"accuracy", buffs.Accuracy, "", 30, 30},
-		{"blink", "", buffs.Blink, 30, 30},
-		{"skill advantage pins at floor", "", "", 69, 1},
-		{"skill disadvantage raises", "", "", 1, 69},
+		{"parity", 30, 30, 2.0},
+		{"skill advantage pins at floor", 69, 1, 1.5},
+		{"skill disadvantage raises, no ceiling", 1, 69, 2.0 + 0.05*68},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			atk, def := barChar(t, tc.atkSkill), barChar(t, tc.defSkill)
-			if tc.atkBuff != "" {
-				// use the package's existing test idiom for setting a buff flag;
-				// check crit_floor_test.go / combat_helpers_test.go for the helper
-			}
-			got := CritBarFor(atk, def)
-			want := calcCritThreshold(atk, def)
-			if got != want {
-				t.Errorf("CritBarFor=%v calcCritThreshold=%v", got, want)
+			if got := calcCritThreshold(atk, def); got != tc.want {
+				t.Errorf("calcCritThreshold=%v want %v", got, tc.want)
 			}
 		})
 	}
@@ -179,13 +206,20 @@ package combat
 
 import "github.com/GoMudEngine/GoMud/internal/characters"
 
-// CritBarFor is THE attacker-side crit threshold, for every channel.
+// CritBarFor is THE attacker-side crit threshold for every channel: base 2.0,
+// 1.5 under the attacker's Accuracy buff, 2.5 against a Blinking defender.
+// Hoisted from melee in U6b so a buff which changes crit odds changes them on
+// every attack the buyer makes — before this, Accuracy buffed sword crits and
+// not spell, bash or shot crits, and Blink protected against swords only.
 //
-// It is melee's formerly-private dynamic bar (base 2.0, Accuracy 1.5, Blink
-// 2.5, shifted by combat-skill difference with a 1.5 floor), hoisted in U6b so
-// that a buff which changes crit odds changes them on every attack the buyer
-// makes — before this, Accuracy buffed sword crits and not spell, bash or shot
-// crits, and Blink protected against swords only.
+// It deliberately does NOT carry melee's skill-difference shift. That shift
+// reads GetCombatSkillLevel — the MELEE skill — so hoisting it would couple a
+// swordsman's weapon skill to his spell crit bar, and would raise a mob
+// attacker's bar against any skilled player without ceiling, collapsing the
+// gold-scaled boss crit rates the U6b gate decisions were computed on (see
+// 2026-08-19-u6b-modelling.md §5.1). Melee composes the shift on top in
+// calcCritThreshold; extending a shift to another channel is a modelling
+// change, not a refactor.
 //
 // Nil on either side falls back to the constant: the seam also resolves
 // contests against static difficulties that have no character behind them.
@@ -193,7 +227,10 @@ func CritBarFor(attacker, defender *characters.Character) float64 {
 	if attacker == nil || defender == nil {
 		return ContestCritThreshold
 	}
-	return calcCritThreshold(attacker, defender)
+	bar := ContestCritThreshold
+	// read the exact flag checks out of calcCritThreshold and move them here;
+	// calcCritThreshold then calls this and applies only its skill shift
+	return bar
 }
 
 // DefenseCritBar is the defender-side threshold. Melee shipped this as a
@@ -205,11 +242,19 @@ func CritBarFor(attacker, defender *characters.Character) float64 {
 func DefenseCritBar() float64 { return ContestCritThreshold }
 ```
 
-Then in `combat_helpers.go`: replace the two direct uses (find with
-`grep -n "calcCritThreshold\|:= 2.0" internal/combat/combat_helpers.go`) so the
-melee swing loop reads `CritBarFor(sourceChar, targetChar)` and the defensive
-check reads `DefenseCritBar()`. `calcCritThreshold` itself stays (it is the
-implementation `CritBarFor` wraps).
+Then in `combat_helpers.go`: `calcCritThreshold` (:553) is rewritten to
+`bar := CritBarFor(source, target)` plus its EXISTING skill-difference shift
+and 1.5 floor, unchanged — melee keeps calling `calcCritThreshold` and is
+bit-identical. The separate hardcoded defensive `2.0` (:966, inside
+`resolveDefenseOutcomeCore`) becomes `DefenseCritBar()`.
+
+- [ ] **Step 3b: Re-affirm the modelled numbers under the buffs-only bar**
+
+Run `python tools/balance/u6b_model_spell_taunt.py` — its `CRIT_T = 2.0` is now
+EXACTLY the unbuffed bar every non-melee channel uses, so every number in the
+modelling doc (and gate decision §5.1's royalty table) holds without re-running
+variants. Record that in the commit. Had the skill shift hoisted, all of those
+numbers would be invalid — that is what the review caught.
 
 - [ ] **Step 4: Run the tests**
 
@@ -238,11 +283,38 @@ stop being melee-only. DefenseCritBar stays a constant deliberately."
 - Modify: `internal/characters/combat.go` (`GetDefenseSequence` — deleted after migration)
 - Test: `internal/combat/defence_entries_test.go` (create)
 
-Today melee builds its set from `characters.GetDefenseSequence`
-(equipment-gated: parry needs a weapon, TWICE when dual-wielding, block needs a
-shield; `filterDefensesForThirdParty` for grapples) and the channel path builds
-from `DefenceSetFor` with NO equipment gate — a shieldless bare-handed defender
-can roll block against a bolt or a physical spell.
+Today melee builds its set from `characters.GetDefenseSequence` (the consuming
+call is at `internal/combat/combat.go:455`, not combat_helpers.go) and the
+channel path builds from `DefenceSetFor` with NO equipment gate — a shieldless
+bare-handed defender can roll block against a bolt or a physical spell.
+
+**THE GATE IS SUBTLER THAN "parry needs a weapon, block needs a shield" —
+read `characters/combat.go:271-307` and `worn.go:300,327` in full and copy the
+checks EXACTLY.** The review caught three divergences a paraphrase would ship:
+
+1. **Block requires a weapon AND `HasShield()`** — a shield-without-weapon
+   defender gets dodge only today.
+2. **`HasShield()` includes species NaturalBash** (`worn.go:300`) — earth
+   elementals block with no shield ITEM. A `BestBlockRating() > 0` gate would
+   strip them. Gate on `HasShield()`, not on the rating.
+3. **`IsUnarmedStyle()` never parries** (`worn.go:327` — bare hands, Fist and
+   Claws weapons) even when "armed". A plain wielded-weapon check would grant
+   parry to a knuckle-fighter melee never gave it.
+
+Any divergence from the copied checks CHANGES MELEE, and Task 19's parity cell
+asserts melee is untouched — it will fire without explaining why.
+
+**Seam boundary, stated so it cannot be half-implemented:**
+`DefenceEntriesFor` returns **gated defence NAMES** (with dual-parry
+duplication and opts filtering) — NOT scores. Melee's candidate loop
+(`combat_helpers.go:678-800`) keeps ALL of its own scoring: clinch/grounded
+penalties, Rally, `ConditionDefensePenalty`, darkness, third-party penalty,
+Incorporeal, per-candidate quoting/skill-strip, and the
+`DefenseAttempts`/`IncrementDefenseCount` bookkeeping. The channel seam keeps
+its own scoring via `GetDefenseScoreFor` × `defenceEffectiveness` as today.
+Returning scored entries would either lose or double-apply everything above.
+Prone defence penalties apply inside each consumer's scoring (the channel seam
+gains them; melee already has them) — NOT inside the name builder.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -282,7 +354,7 @@ func TestDefenceEntriesFor_EquipmentGate(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := namesOf(DefenceEntriesFor(tc.channel, tc.def, DefenceEntryOpts{}))
+			got := DefenceEntriesFor(tc.channel, tc.def, DefenceEntryOpts{})
 			assertSameSet(t, got, tc.want)
 		})
 	}
@@ -291,7 +363,7 @@ func TestDefenceEntriesFor_EquipmentGate(t *testing.T) {
 // Dual-wield double parry survives the migration: two parry entries.
 func TestDefenceEntriesFor_DualWieldDoubleParry(t *testing.T) {
 	dw := newDualWieldDefenceTestCharacter(t)
-	got := namesOf(DefenceEntriesFor(ChannelMelee, dw, DefenceEntryOpts{}))
+	got := DefenceEntriesFor(ChannelMelee, dw, DefenceEntryOpts{})
 	if countOf(got, characters.DefenseParry) != 2 {
 		t.Errorf("dual-wield parry entries = %d, want 2 (set: %v)", countOf(got, characters.DefenseParry), got)
 	}
@@ -320,37 +392,30 @@ type DefenceEntryOpts struct {
 	ThirdPartyVsGrappler bool
 }
 
-// DefenceEntriesFor is THE defence-set builder for every channel, melee
-// included. It merges DefenceSetFor's channel table with the equipment gate
-// that previously lived only in characters.GetDefenseSequence:
+// DefenceEntriesFor is THE defence-set NAME builder for every channel, melee
+// included. It intersects DefenceSetFor's channel table with the equipment
+// gate copied VERBATIM from characters.GetDefenseSequence (which this task
+// then deletes):
 //
-//   - parry requires a wielded weapon, and appears TWICE when dual-wielding
-//     (two blades, two chances — preserved from the melee builder verbatim)
-//   - block requires a shield (BestBlockRating() > 0); without one, "block" is
-//     not in the set on ANY channel. Before U6b the channel path had no gate
-//     and a bare-handed defender could roll block against a bolt.
-//   - dodge, quell and defy are always available on their channels.
+//   - parry: wielded weapon AND !IsUnarmedStyle() — knuckle/claw fighters
+//     never parry; appears TWICE when dual-wielding (two blades, two chances)
+//   - block: wielded weapon AND HasShield() — which includes species
+//     NaturalBash, so an earth elemental blocks with no shield item; do NOT
+//     gate on BestBlockRating()
+//   - dodge, quell and defy: always available on their channels
 //
-// Entries come back scored via GetDefenseScoreFor x defenceEffectiveness, with
-// the prone defence penalties applied — which before U6b hit melee only, so a
-// prone defender dodged a bolt at full score while dodging a sword at penalty.
-func DefenceEntriesFor(channel AttackChannel, defender *characters.Character, opts DefenceEntryOpts) []contest.Entry {
-	// Build from DefenceSetFor(channel); for each defence apply:
-	//   1. the equipment gate above (read the current GetDefenseSequence for
-	//      the exact wielding checks and copy them here — then delete it)
-	//   2. score := defender.GetDefenseScoreFor(d, includeSkill) — leave the
-	//      includeSkill/cost quoting to the caller seam exactly as
-	//      resolveChannelDefenceWithRunner does today
-	//   3. prone penalties: if defender is prone, multiply by the existing
-	//      ProneDodgePenalty / ProneParryPenalty / ProneBlockPenalty knobs
-	//      (grep -rn "ProneDodgePenalty" internal/ for the exact read idiom)
-	//   4. opts filters.
-}
+// It returns NAMES ONLY. Scoring stays with the consumer: melee's candidate
+// loop keeps its situational penalties/quoting/bookkeeping; the channel seam
+// keeps GetDefenseScoreFor x defenceEffectiveness, and gains the prone
+// penalties there (before U6b a prone defender dodged a bolt at full score
+// while dodging a sword at penalty).
+func DefenceEntriesFor(channel AttackChannel, defender *characters.Character, opts DefenceEntryOpts) []string
 ```
 
 The exact wielding checks are copied out of `characters.GetDefenseSequence`
 (read it in full first — `grep -n "func (c \*Character) GetDefenseSequence" -A40
-internal/characters/combat.go`). Then:
+internal/characters/combat.go` — and the two helpers it leans on at
+`worn.go:300` and `worn.go:327`). Then:
 
 - `runBestOfAllDefense` (melee) consumes `DefenceEntriesFor(ChannelMelee, ...)`.
 - `resolveChannelDefenceWithRunner` consumes it for the channels (Task 3 wires
@@ -523,7 +588,20 @@ runner)`:
 4. The U9 bonus tier (`awardChannelDefenceBonus`) now takes its attacker skill
    and stat FROM `side` — `channelAttackSkillAndStat` is deleted; its channel
    switch has no reason to exist once the caller states the names.
-5. Public wrappers:
+   **And it consumes the seam's ALREADY-DERIVED crit/fumble verdicts** —
+   today it re-derives `attackCrit` itself via the const-bar
+   `AttackContestCrit` (`defence_multiplier.go:376-380`), under a comment
+   forbidding exactly that duplication. Left as-is, an Accuracy-buffed
+   attacker would crit at bar 1.5 for narration and damage while the
+   progression bonus still demanded 2.0 — two verdicts for one contest. Pass
+   `out.AttackerCrit`/`out.AttackerFumble` in; delete the re-derivation.
+5. **`channelDamageChannel` gains melee → `"physical"` and ranged →
+   `"physical"` rows.** Its default arm returns `""` on the stated premise
+   that those channels never reach this path — false after Tasks 6–8, and
+   `ToughenStatFor("")` would silently make a bash crit toughen the
+   defender's DEXTERITY instead of vitality. Delete the stale premise comment
+   with it.
+6. Public wrappers:
 
 ```go
 // ResolveChannelAttack is THE channel resolution entry point.
@@ -554,12 +632,42 @@ the legacy wrapper).
 - Config: `_datafiles/config.yaml` (delete the knob line, HEAD-blob method)
 - Test: `internal/hooks/spell_collapse_test.go` (create)
 
-**Verify first — the five skips and both gates:**
+**Verify first — the five skips, both gates, and the FUNCTION TOPOLOGY:**
 
 ```bash
 grep -n "if !isCrit" internal/hooks/spell_resolution.go        # expect 5 hits
-grep -n "runPlayerSpellContest\|runMobSpellContest\|spellDefenseValue\|CalcSpellAttack" internal/hooks/spell_resolution.go internal/characters/cast_helpers.go
+grep -n "runPlayerSpellContest\|runMobSpellContest\|runPlayerSpellDefence\|spellDefenseValue\|CalcSpellAttack" internal/hooks/spell_resolution.go internal/characters/cast_helpers.go
 ```
+
+**The topology is the hard part, not the deletion.** The gates live in FOUR
+resolvers (`resolveAgainstMob` ~:293, `resolveAgainstPlayer` ~:796, and the two
+mob-caster variants ~:1379/:1399), but the defence contest, its narration and
+the DefensiveCrit early-return live inside the EFFECT APPLIERS
+(`applyMobEffect_damage`, `applyMobEffect_knockdown`, `applyPlayerEffect`, and
+the two mob-caster damage/DoT arms — the five `!isCrit` sites), reached through
+the **`runPlayerSpellDefence` seam variable (~:275-278)**. One-contest-per-cast
+means: the resolver runs `ResolveChannelAttack` ONCE and **threads the
+`ChannelDefenceResult` through the applier signatures**; the appliers consume
+it (damage scaling, narration, DefensiveCrit return) instead of rolling their
+own. An earlier draft sketched everything inline in `resolveAgainstPlayer` and
+said nothing about the threading — following it would have left the appliers
+rolling a second contest. Delete the `runPlayerSpellDefence` seam variable
+once nothing calls it.
+
+**Two follow-on deletions in the same task:**
+
+- The U9-era direct crit-received toughening blocks
+  (`spell_resolution.go` ~:824-842 and ~:1466-1480) become DUPLICATES once the
+  seam's bonus tier sees the crit — the once-per-round dedupe would mask the
+  double-fire, not prevent it. Delete them; the seam covers it. (Taunt's
+  equivalent goes in Task 5.)
+- `internal/spells/manifestation_channel_guard_test.go` forbids manifestation
+  spells from declaring a contested `target_defense_type` BECAUSE
+  `ChannelAttackScore` hardcoded Willpower. This task makes that content
+  legitimate (`AttackSide` carries the spell's primarystat), and the test
+  references the dead symbol only in comments, so nothing will force the
+  update. **Retire it, replacing it with its inversion**: a loader test that a
+  contesting manifestation spell resolves with its declared stat.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -686,9 +794,18 @@ form); crit-damage rank input is the RAW rhetoric rank (Assumption 8).
 	out := combat.ResolveChannelAttack(combat.ChannelSocial, side, char, target.Char)
 ```
 
-Delete `runTauntContest` and the `if !isCrit` skip. Crit damage: pass
-`side.SkillRank` (raw) to `CritOrMitigatedDamage` — **named nerf**: Meirok's
-taunt crit multiplier drops ×15.75 → ×4.6.
+Delete `runTauntContest` and the `if !isCrit` skip, plus taunt's direct
+crit-received toughening block (~:267 — a Task 4-class duplicate once the
+seam's bonus tier runs).
+
+**The rank input, BOTH consumers (Assumption 8):** taunt feeds the ×5-weighted
+rhetoric rank to `CritOrMitigatedDamage` AND to `CalcRawDamage`'s
+`SkillMultiplier` (`combat_taunt.go` ~:205-209). Pass `side.SkillRank` (raw) to
+both. Two named nerfs, not one: crit multiplier ×15.75 → ×4.6 at Meirok, and
+base damage for any rhetoric rank below the soft cap (raw 30: SkillMultiplier
+3.0 → 2.55; at 50+ the clamp makes it a wash). The modelling's E[mult]
+0.338→0.658 table did not include the base-damage half — say so in the PR
+rather than implying the modelling blessed it.
 
 This removes the LAST caller of the legacy `ResolveChannelDefence` wrapper
 (Task 4 removed the spell ones): delete the wrapper and `ChannelAttackScore`.
@@ -769,14 +886,22 @@ type SkillMoveResult struct {
 ```
 
 Body: replace the direct `RunContest` + `defenceDamageMultiplier` with
-`out := ResolveChannelAttack(p.Channel, p.Attack, p.Attacker, p.Defender)`;
-`result.Hit = !out.Defended || out.DamageMultiplier > 0` per the existing
-partial-damage doc; `result.Crit = out.AttackerCrit`; `result.Fumble =
-out.AttackerFumble`; damage through `CritOrMitigatedDamage(rawDmg,
-p.Attack.SkillRank, out.AttackerCrit, mitig, cap)` then `× out.DamageMultiplier`
-on non-crits (a crit bypasses mitigation AND the defence multiplier is
-irrelevant because a crit means the attack won the contest decisively).
-StatusApplied stays binary on Hit, unchanged.
+`out := ResolveChannelAttack(p.Channel, p.Attack, p.Attacker, p.Defender)`.
+
+**`result.Hit = !out.Defended` — the contest WIN, exactly as today.** An
+earlier draft wrote `!out.Defended || out.DamageMultiplier > 0`, which — since
+floored saves are 0.5 and rolled defensive wins are 0–0.5 — would have made
+nearly every DEFENDED outcome a "Hit", so knockdown rolls started firing on
+defended bashes and every caller's hit messaging flipped, while the same task
+claimed StatusApplied semantics were unchanged. Defended-partial damage lands
+with `Hit == false`, per the current `skill_moves.go` doc; StatusApplied and
+KnockedDown stay gated on the contest win.
+
+`result.Crit = out.AttackerCrit`; `result.Fumble = out.AttackerFumble` (a NEW
+abort for these moves — Assumption 11, named); damage through
+`CritOrMitigatedDamage(rawDmg, p.Attack.SkillRank, out.AttackerCrit, mitig,
+cap)` then `× out.DamageMultiplier` on non-crits (a crit means the attack won
+decisively; the multiplier is 1.0 there by construction).
 
 Convert the three callers in this task (bash shown; kick/trip identical shape):
 
@@ -818,7 +943,18 @@ mobs, 0.60–0.77× vs skilled players).
 
 Mechanical sweep of the same conversion. Find every caller first:
 `grep -rn "ExecuteSkillMove(" --include=*.go internal/ | grep -v _test` — the
-plan expects 14 total; report the real count. Beast moves pass
+plan expects 14 total (verified 2026-08-19; note **`combat_drain.go` has TWO
+call sites, :112 and :268** — converting one and not the other compiles and
+half-converts drain); report the real count.
+
+**Also in this task**: the defender-side economy change every converted move
+carries, named ONCE here for the whole family — routing through the seam means
+the defender's winning defence is now CHARGED (U7/U8) and the defender is
+PROGRESSED **win-or-lose** (the channel path's convention, documented as
+divergent from melee's defence-used gate — U10b's question). Today's
+scalar-defence specials cost defenders nothing and taught them nothing. That is
+an intended consequence of unification, but it is a rate change on the
+DEFENDER's side that the per-task "named changes" lists would otherwise miss. Beast moves pass
 `skills.UnarmedCombat` and their existing stats. The two counter-effect callers
 (dodge-crit auto-trip, block-crit auto-bash in `combat_shared_helpers.go`) set
 `IsCounter: true`. Delete the Task 6 shim if one was used. Full suites green.
@@ -921,8 +1057,12 @@ func TestCounter_MeleeTrioUnchanged(t *testing.T) {}
 // Rules, all owner decisions 2026-08-19:
 //   - reach-gated: attacker and defender must share a room. The cross-room
 //     shot is the one uncounterable attack, as a property of the weapon.
-//   - defy crits COUNTER-TAUNT instead (the defender's taunt resolution runs
-//     with IsCounter semantics), replacing the swing.
+//   - defy crits COUNTER-TAUNT instead, replacing the swing. NOTE THE
+//     PLACEMENT: taunt resolution lives in internal/actions, which IMPORTS
+//     internal/combat — this package can never call it. The counter-taunt is
+//     wired AT THE TAUNT CALL SITE in internal/actions (the defy-crit exit),
+//     via a dedicated cost-free entry point; see the carve-out below. Its
+//     test lives in internal/actions for the same reason.
 //   - a counter never earns a counter: everything this function triggers
 //     carries IsCounter, and ExecuteCounter is never invoked for a result
 //     produced under IsCounter.
@@ -933,11 +1073,34 @@ func TestCounter_MeleeTrioUnchanged(t *testing.T) {}
 func ExecuteCounter(defender, attacker *characters.Character, channel AttackChannel, sameRoom bool) CounterResult
 ```
 
-Wire at each channel's defensive-crit exit (spell, taunt, specials, same-room
-fire). Extract riposte's `0.5` literal to the `CounterDamagePercent` knob
-(config declaration + validation `< 0` reset + config.yaml via HEAD blob) and
-point the melee riposte block at the same knob — melee behaviour unchanged at
-the shipped 0.5.
+Wire at each channel's defensive-crit exit, **enumerated — the four quadrants
+exist on the spell channel and both directions everywhere**: spell
+player-caster path, spell mob-caster path (a PLAYER defender counters a mob
+caster; a MOB defender counters a player caster), taunt (both directions),
+every `ExecuteSkillMove` consumer via `result.Defence.DefensiveCrit`, and
+same-room `ExecuteFire`. A wiring list that only covers the player-attacker
+direction hands mobs a counter immunity nobody decided.
+
+**The defy counter-taunt carve-out, explicit:** `ExecuteTaunt` burns the
+`special-move` cooldown (`combat_taunt.go` ~:130), pays U8 admission cost, and
+mutates aggro (~:189) — ALL wrong for a free counter. The counter-taunt entry
+point (in `internal/actions`, per the import direction above) must bypass
+cooldown, cost and aggro mutation, carry `IsCounter` so it can never earn a
+counter, and reuse only the CONTEST + narration of taunt resolution. Assert
+each bypass in the actions-package test.
+
+Extract riposte's `0.5` literal (`hooks/combat_shared_helpers.go:244`) to the
+`CounterDamagePercent` knob (config declaration + validation `< 0` reset +
+config.yaml via HEAD blob) and point the melee riposte block at the same knob —
+melee behaviour unchanged at the shipped 0.5.
+
+**Countered-party economy, named:** a counter-swing routed through the seam
+means the ORIGINAL ATTACKER, now defending the counter, is charged for their
+defence and progressed by it — today's auto-trip/auto-bash cost and taught the
+countered party nothing. "Counters are free" is true only for the counterer.
+This applies to melee's existing auto-trip/auto-bash too the moment Task 7
+routes them through the seam — a melee-side change Tasks 6–7 inherit and this
+task's PR text must carry.
 
 - [ ] **Step 4: Suites green. Named change:** counter tier on four channels
 (modelling: 32–42 free damage/round down-tier — accepted for playtest; kiting
@@ -961,23 +1124,51 @@ pasted under a spell. Same copy rules as Task 9. Commit.
 
 ## Task 12: Flee to uniform weights
 
-**Files:** `internal/combat/flee.go` (~:83, ~:106 — verify `grep -n "\*25\|x 25\|25)" internal/combat/flee.go`); test extend `internal/combat/flee_test.go`.
+**Files:** `internal/combat/flee.go`; test extend `internal/combat/flee_test.go`.
 
-Replace both hardcoded `×25` with `× SkillWeight` (config read). Modelling:
-floor/ceiling-pinned near no-op (only novice-vs-trash moves, −8.9pp) — a flee
-test that moves MORE than that is a wiring error. Delete the literals; the
-Task 18 literal-guard pins their absence. Commit.
+**THREE ×25 literals, not two** — verify with `grep -nE '\* *25' internal/combat/flee.go`
+(the pattern MUST tolerate spaces around `*`):
+
+| Site | Side |
+|---|---|
+| `flee.go:83` | blocker score, `...UnarmedCombat)*25` |
+| `flee.go:106` | blocker score (user variant) |
+| **`flee.go:126`, `fleeContestScore`** | **the FLEER's score — `GetSkillLevel(skills.Skullduggery) * 25`, spaced, invisible to a `\*25` grep** |
+
+An earlier draft named only the two blocker sites; converting those alone drops
+blockers to ×5 while the fleer keeps ×25, making flee near-unblockable for
+anyone with skullduggery — the exact inverse of the modelled near-no-op, and
+the same declared-converted-while-unconverted failure this arc keeps repeating.
+
+Replace all three with `× SkillWeight` (config read). Modelling: floor/ceiling
+pinned near no-op (only novice-vs-trash moves, −8.9pp) — a flee test that moves
+MORE than that is a wiring error. Task 18's literal-guard regex must also
+tolerate the spaced form. Commit.
 
 ---
 
 ## Task 13: Grapple initiation + submission
 
-**Files:** `internal/combat/grapple.go`, `internal/combat/submission.go`; config knobs `GrappleProneAttackerMod` (0.3) / `GrappleProneDefenderMod` (0.5); tests extend the packages' existing suites.
+**Files:** `internal/combat/grapple.go`, `internal/combat/submission.go`,
+**`internal/combat/grapple_move.go`** (the crit-band consumer an earlier draft
+omitted); config knobs `GrappleProneAttackerMod` (**0.5**) /
+`GrappleProneDefenderMod` (**0.3**); tests extend the packages' existing suites.
 
-- Grapple: attack/defence gain `× SkillWeight` on their skill terms; crit moves
-  from the self-relative `AttackZScore` to margin-vs-`CritBarFor` (named: the
-  "Stage 8.4" semantics die); prone literals 0.3/0.5 → the two new knobs at
-  identical shipped values.
+**The knob values, from the CODE — an earlier draft had them SWAPPED:**
+`grapple.go:74` is the DEFENDER prone → `DefenseScore *= 0.3`; `grapple.go:79`
+is the ATTACKER prone → `AttackScore *= 0.5`. So `GrappleProneAttackerMod: 0.5`
+and `GrappleProneDefenderMod: 0.3`. Copy the literal each site currently uses
+into the knob that replaces IT; shipping the swapped values is a silent double
+flip (prone attackers worse, prone defenders better).
+
+- Grapple: attack/defence gain `× SkillWeight` on their skill terms.
+- **Crit semantics live in `grapple_move.go:41-56`, not grapple.go**: a
+  three-band ladder on `GrappleResult.AttackZScore` (>2.0 crit, <0.5 weak,
+  <−2.0 fumble). Convert the CRIT band to normalized-margin-vs-`CritBarFor`
+  and the WEAK band to the normalized margin (same quantity, same 0.5 line);
+  the fumble band is already self-relative and stays (Assumption 7). Thread
+  the margin through `GrappleResult` — converting grapple.go's roll while the
+  ladder still reads the old z-score is a half-conversion that compiles.
 - Submission: `SubSkillWeight` (1.5) deleted from config and code — both sides
   ×SkillWeight; the stun tier moves to margin crit (named: stun-crit vs trash
   2%→18–62% per modelling, accepted for playtest).
@@ -1004,37 +1195,68 @@ Commit.
 
 ---
 
-## Task 15: Throw and steal
+## Task 15: Throw, steal — and plant, which an earlier draft missed entirely
 
-**Files:** `internal/usercommands/throw.go` (~:267-305, ~:355-365), `internal/actions/steal.go` (~:98-101, ~:171, ~:349); config deletion `StealSkillMultiplier`; tests in both packages.
+**Files:** `internal/usercommands/throw.go` (~:267-305, ~:355-365),
+`internal/actions/steal.go` (~:98-101, ~:171, ~:349, **and :509**),
+**`internal/actions/plant.go`** (~:108-109 and its FOUR `RunContest` sites at
+~:157, :276, :325, :414 — verify all with grep); config deletion
+`StealSkillMultiplier`; tests in the three packages.
 
 - **Throw** (Assumption 4): per-defender resolution routes through
   `ResolveChannelAttack(ChannelRanged, side, ...)` with
   `side = {Dex, "dexterity", Skullduggery, rank, 1.0}` — the CURRENT attack
-  score is `Dex + skull×5` (already SkillWeight-coupled; the spec's §2.2 row
-  understated it). The defender's stat-as-pseudo-skill (`Per × 2.5`) dies with
-  the defence set. Damage gains the multiplier curve and the crit tier (named:
-  12→165 expected vs trash — accepted for playtest).
-- **Steal**: attacker `StealSkillMultiplier` → uniform `× SkillWeight` (knob
-  deleted); defender raw Perception → `Perception + skullduggery×SkillWeight`
-  (the defender's counter-craft is skullduggery — document the choice in the
-  code). No crit tier: steal's outcomes are caught/unseen, not damage — state
-  that as the documented reason per spec §4.5.
+  score is `Dex + skull×SkillWeight` (already knob-coupled; the spec's §2.2 row
+  understated it). The defender's stat-as-pseudo-skill (`Per × SkillWeight×0.5`)
+  dies with the defence set. Damage gains the multiplier curve and the crit
+  tier (named: 12→165 expected vs trash — accepted for playtest).
+- **Steal — the REAL attacker shape, so the sqrt term is not missed:** today
+  it is `(Dex + combat.SkillMultiplier(rank)×25.0) × StealSkillMultiplier`
+  (`steal.go:99-101`) — a sqrt-curve regime TIMES a global knob, not a linear
+  weight. It becomes `Dex + rank×SkillWeight`, both the sqrt×25 term and the
+  knob deleted. Defender: raw Perception → `Perception +
+  skullduggery×SkillWeight` (the counter-craft is skullduggery — document the
+  choice). **A FOURTH steal contest exists at `steal.go:509`** — the
+  container-theft observer pass, scored on raw highest-observer Perception,
+  same ×0-defender class; convert it with the rest. No crit tier: steal's
+  outcomes are caught/unseen, not damage — the documented reason per §4.5.
+- **Plant shares steal's engine and an earlier draft omitted it**:
+  `plant.go:108-109` builds `SkillMultiplier(rank)×25.0` then multiplies by
+  `cfg.StealSkillMultiplier` — deleting the knob without converting plant
+  BREAKS THE BUILD, and plant holds four more `RunContest` sites in the same
+  unowned class. Convert plant to the same linear shape as steal in this task;
+  its four sites get Task 18 owner entries.
 Commit.
 
 ---
 
 ## Task 16: Sneak and hidden detection
 
-**Files:** `internal/actions/skill_helpers.go` (`CalcSneakScore`, `CalcSearchScore`), `internal/usercommands/go.go` hidden-detection callers; tests extend.
+**Files:** `internal/actions/skill_helpers.go`, `internal/usercommands/go.go`,
+`internal/actions/shadow.go` (~:176), `internal/actions/sneak.go`,
+`internal/usercommands/skill.skullduggery.shadow.go` (~:136); tests extend.
 
-Replace `combat.SkillMultiplier(rank) × 25.0` in both score builders with
-`rank × SkillWeight` (linear, uniform — the sqrt×25 shape was a sixth regime).
-The light-conditional multipliers stay untouched. **Named change:** stealth and
-detection curves change shape (sqrt→linear); at rank 50 the old term was
-`3.0×25=75` and the new is `250` — model the crossover in the task (one table
-in the commit message: ranks 5/25/50 old-vs-new for both sides; net detection
-odds shift less than either side alone since both move). Commit.
+**`CalcSearchScore` does NOT convert in place — an earlier draft would have
+silently changed the Category B sites the spec walls off.** Its consumers split
+two ways:
+
+| Consumer | Class | Fate |
+|---|---|---|
+| `go.go` hidden detection, `sneak.go` (×2), `shadow.go:176`, `skill.skullduggery.shadow.go:136`, `steal.go:402`, `plant.go:323` | OPPOSED contests | move to a NEW linear function |
+| **`forage.go:19` (forage YIELD — not even a contest), `search.go:63` (flat thresholds ×6), `track.go:120`** | **Category B — spec §3.2: "U6b does not silently absorb them"** | **keep `CalcSearchScore` untouched** |
+
+Add `CalcDetectionScore(c) = Perception + rank(search)×SkillWeight` for the
+opposed sites; `CalcSneakScore` converts in place (all its consumers are
+opposed), keeping the light-conditional multipliers untouched;
+`CalcSearchScore` keeps its `SkillMultiplier×25` shape with a comment naming
+the Category B sites as its remaining, deliberately-unconverted consumers.
+
+**Named change:** stealth/detection curves change shape (sqrt→linear) on the
+OPPOSED sites only; at rank 50 the old term was `3.0×25=75`, the new is `250`;
+at rank 5 it DROPS (~41→25) — one table in the commit (ranks 5/25/50,
+old-vs-new, both sides; net detection odds move less than either side alone
+since both move). Forage yields and search/track rates move ZERO — assert that
+with a regression test on `CalcSearchScore`'s output. Commit.
 
 ---
 
@@ -1085,11 +1307,24 @@ protects channels somebody remembered to name:
 //    deprecated parser.ParseDir), scanning internal/... for selector calls to
 //    RunContest; assert scanned-file count > 50 so the guard cannot silently
 //    scan nothing (the U9 guard's vacuity lesson).
+// Keys are FILE:FUNC (spec §9), not files — a file-level allowlist hides new
+// unowned sites inside allowlisted files, and steal.go/plant.go each hold four
+// contests. Derive func names from the enclosing FuncDecl during the AST walk.
 var contestSiteOwners = map[string]string{
-	"internal/combat/defence_multiplier.go": "the seam itself",
-	"internal/combat/flee.go":               "U6b task 12",
-	"internal/hooks/Position_GrappleTick.go": "U6b task 14",
-	// every other surviving site: an entry naming its owner, or the test fails
+	"internal/combat/defence_multiplier.go:resolveChannelAttackWithRunner": "the seam itself",
+	"internal/combat/flee.go:ResolveFleeBlockers":                          "U6b task 12",
+	"internal/combat/flee.go:fleeContestScore":                             "U6b task 12",
+	"internal/hooks/Position_GrappleTick.go:processGrapplePair":            "U6b task 14",
+	// Pre-assigned owners for the sites the review found OUTSIDE the family of
+	// seven — the implementer must not invent owners mid-task:
+	"internal/actions/defuse.go:...":                 "deliberate: trap-difficulty contest, converted U4",
+	"internal/hooks/NewRound_MobRoundTick.go:...":    "U10c (charm-refresh; redesigned wholesale there)",
+	"internal/actions/plant.go:...":                  "U6b task 15 (four sites)",
+	"internal/actions/steal.go:...":                  "U6b task 15 (four sites incl. :509 observer pass)",
+	"internal/actions/shadow.go:...":                 "U6b task 16",
+	"internal/actions/sneak.go:...":                  "U6b task 16 (two sites)",
+	"internal/usercommands/skill.skullduggery.shadow.go:...": "U6b task 16",
+	// fill the real func names from the first guard run's failure output
 }
 func TestEveryContestSiteIsOwned(t *testing.T)
 
@@ -1103,6 +1338,9 @@ func TestEveryChannelUsesUniformDefenceSkillWeight(t *testing.T)
 //    the dead numbers (x25, x2.2, x2.0-as-drift-coef, SubSkillWeight,
 //    StealSkillMultiplier, SpellAttackSkillFactor identifiers) — knob-greps
 //    cannot see literals, which is how flee's x25 hid for the whole arc.
+//    The regex MUST tolerate spaces around the operator (`\* *25`): flee's
+//    third literal is written `* 25` and a tight pattern misses it, which is
+//    exactly how the plan's own first draft missed it.
 func TestNoLegacySkillWeightLiteralSurvives(t *testing.T)
 ```
 
@@ -1117,11 +1355,15 @@ Commit.
 
 - [ ] `gofmt -l internal/ modules/` → nothing.
 - [ ] `go test ./... -count=1` → zero failures.
-- [ ] **Parity damage-per-swing ±10%** (arc completion criterion 5): extend
-  `tools/balance/u6b_model_moves_ranged.py` with a before/after
-  melee-autoattack expected-damage cell at light/mid/BIS mitigation and assert
-  within ±10% — melee autoattack is UNTOUCHED by U6b, so any drift is a leak
-  from Tasks 1–2 (bar extraction / entry builder). Run and record.
+- [ ] **Parity damage-per-swing ±10%** (arc completion criterion 5), in GO,
+  not only in the model: a Python model extension can only reproduce the model
+  and can never detect a Go-side leak from Tasks 1–2. Write a Go statistical
+  test in `internal/combat`: N=200,000 simulated melee swings at a fixed
+  matchup (light/mid/BIS mitigation cells), assert the empirical mean damage is
+  within tolerance of the analytic value computed inside the test from the
+  same shipped formula. A Task 1 bar leak or a Task 2 gate divergence moves
+  the empirical mean; the analytic anchor does not. Keep the model
+  cross-check as a second opinion, not the check.
 - [ ] Isolated boot: detached worktree + port overrides, per the standing
   recipe —
 
@@ -1212,6 +1454,12 @@ manual pass (crib sheet) is the final gate, per the arc's no-deploy rule.
 - **The modelling scripts are the oracle**: when a converted channel's measured
   rate disagrees with the modelling doc's table for the same cell, one of them
   is wrong — reconcile before proceeding, do not average.
-- Two named nerfs land quietly if unwatched: taunt crit damage (Assumption 8)
-  and shieldless channel defence (Task 2). Both are in their task's commit and
-  must be in the PR body.
+- Named nerfs/changes that land quietly if unwatched, all in their task's
+  commit AND the PR body: taunt crit AND base damage (Assumption 8), shieldless
+  channel defence (Task 2), the specials fumble abort (Assumption 11), the
+  defender-side cost/progression economy on specials and counters (Tasks 7 and
+  10), and the opposed-stealth curve reshape (Task 16).
+- **This plan was corrected by a blind adversarial review before execution**
+  (16 findings; the header note names the largest). Where a task says "an
+  earlier draft did X", that is a trap that was already sprung once — do not
+  "simplify" the guard back out.
