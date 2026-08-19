@@ -53,7 +53,8 @@ faucet, and make the spell record load-bearing."
 - Two new config knobs, replacing one hardcoded literal (§6).
 - `SpellData.PrimaryStat` wired to both resolution and progression, caster side
   only, with the manifestation family corrected to `charisma` (§8).
-- Three defects fixed in passing (§7.3).
+- Four defects fixed in passing (§7.3), including a melee double-progression
+  that roughly doubles every melee attacker's rates today.
 - The firing-condition audit (§9), which is a deliverable, not a refactor.
 
 **Out, and deliberately so:**
@@ -263,6 +264,7 @@ enumerated here so each can be called out individually in the PR.
 | Crit-received also awards the **defence skill**, which it never did | Small increase | Players and mobs |
 | Fumbles earn `CritProgressionBonus` instead of 1.0 | Increase | Both sides |
 | Observing events on defence crit / defence fumble / attack fumble | Increase, new events | Both sides |
+| Melee double-progression deleted (§7.3) | **Large cut**, roughly halves melee attacker rates | Players and mobs |
 | Bonus events dedupe once per round | Cut in multi-swing rounds | Both sides |
 | Floored outcomes no longer earn bonuses | Cut at extreme mismatch | Both sides |
 | Caster stat progression halves (double-roll fixed, §7.3) | Cut | Players and mobs |
@@ -272,7 +274,40 @@ enumerated here so each can be called out individually in the PR.
 Covered in §8. Expected delta is near zero and is verified file-by-file rather
 than asserted.
 
-### 7.3 Three defects fixed in passing
+### 7.3 Four defects fixed in passing
+
+- **Melee progression fires twice per round.** `internal/hooks/NewRound_DoCombat_unified.go`
+  runs progression in two phases against the same actors in the same round:
+
+  | Phase | Call | What it awards the attacker |
+  |---|---|---|
+  | 2 | `rollCombatAttack` → `combat.AttackPlayerVsMob` (`combat.go:76-103`), and `trackMobAttackProgression` (`combat.go:185`) for the mob quadrants | `OnStatUse("strength")`, `OnStatUse("dexterity")`, `OnSkillUse(combatSkill)`, `OnCriticalSuccess` |
+  | 5 | `applyCombatProgression` (`:188`) | `emitAttackerStatGain("strength")`, `emitAttackerStatGain("dexterity")`, per-`WeaponHits` `OnSkillUse` + `OnCriticalSuccess` / `OnCriticalFailure` |
+
+  Both are unconditional. `applyCombatProgression`'s doc comment describes
+  itself as the path that handles all four quadrants including their
+  divergences, which reads as the unified orchestrator having been added
+  without the per-quadrant calls being deleted.
+
+  Net effect, if confirmed: roughly **two strength rolls, two skill rolls and
+  four or more dexterity rolls per round** where the design intends one each.
+  Dexterity compounds because `OnSkillUseScaled` fires the skill's primary stat
+  and both weapon-combat and unarmed-combat map to dexterity. Crits pay the
+  bonus twice. `AttackMobVsPlayer:230` additionally gives the **defender** an
+  `OnStatUse("dexterity")` on top of `AwardDefenceProgression`'s dodge award.
+
+  **This is read from source, not measured.** The plan's first code task is an
+  instrumented test that counts actual `SkillUseCount` and `StatUseCount` deltas
+  across one round in all four quadrants, before anything is deleted. If the
+  duplication is real, Phase 2's progression is deleted and Phase 5 becomes the
+  single path, which is where the U9 seam plugs in anyway. If it is somehow not
+  real, the plan stops and the spec is corrected.
+
+  This is the largest rate change in U9 and it is a **cut**, so it compounds
+  with §5.1 rule 2's dedupe. The two together must be assessed at playtest
+  before `CritProgressionBonus` is tuned.
+
+
 
 - **Spell double-roll.** `internal/hooks/NewRound_DoCombat_helpers.go:319-326`
   (user) and `:468-474` (mob) call `OnStatUse("charisma")` or
