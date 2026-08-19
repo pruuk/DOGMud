@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -41,6 +42,15 @@ type FireResult struct {
 	IsCharmed      bool
 	IsNonCombatant bool
 	Crafting       bool
+
+	// TooDarkToAim and Blinded are distinct from NoTarget, and from each other,
+	// on purpose. In both the target is present and named correctly and the
+	// shooter simply cannot see to line up an aimed shot -- but "it is too dark"
+	// is a lie to a blinded player standing in daylight, and "you are blind" is a
+	// lie to a sighted one standing in an unlit cave. Folding either into
+	// NoTarget renders as "Could not find your target.", which reads as a typo.
+	TooDarkToAim bool
+	Blinded      bool
 }
 
 // rangedDefenseScore computes the defender's score against a ranged shot:
@@ -203,8 +213,30 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// actor-aware sight query used by combat rendering, plus the target's
 	// canonical hidden state, before admission. An unseen named occupant is not
 	// a valid line of fire and must not cost stamina or mutate combat state.
-	if !messaging.CanSeeClearly(char, targetRoom) || defChar.IsHidden() {
+	//
+	// Three DISTINCT reasons, reported separately, because they need three
+	// different sentences. CanSeeClearly folds blindness and an unlit room into
+	// one bool, which is right for rendering and wrong for explaining.
+	//
+	// A hidden target is genuinely not findable, so NoTarget is honest. The
+	// other two are not: the target is right there and correctly named, and an
+	// aimed shot is a Perception action that needs to see what it is aiming at.
+	// Telling that player "Could not find your target." sends them hunting for a
+	// typo that does not exist.
+	//
+	// Melee deliberately has no equivalent gate. Swinging blind at something in
+	// the same room is a reasonable thing to let a player do; lining up a bow
+	// shot is not.
+	if defChar.IsHidden() {
 		result.NoTarget = true
+		return result
+	}
+	if char.Perception != nil && char.Perception.State() == perception.Blinded {
+		result.Blinded = true
+		return result
+	}
+	if !messaging.CanSeeClearly(char, targetRoom) {
+		result.TooDarkToAim = true
 		return result
 	}
 

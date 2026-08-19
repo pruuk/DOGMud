@@ -276,17 +276,23 @@ func TestFire_CrossRoomMob(t *testing.T) {
 // Room.FindByName, so name resolution alone is not enough: the shot must be
 // refused before stamina, aggro, ammunition, health, or round state changes.
 func TestFire_UnseenTargetIsRejectedBeforeAdmission(t *testing.T) {
+	// The three rejection reasons report through THREE different flags, because
+	// they need three different sentences. A hidden target really is unfindable;
+	// a blinded shooter and an unlit room both have the target right in front of
+	// them and would be misinformed by "Could not find your target."
 	for _, tc := range []struct {
 		name           string
 		defenderRoomId int
 		rest           string
 		hideTarget     bool
 		blindShooter   bool
+		wantNoTarget   bool
+		wantBlinded    bool
 	}{
-		{name: "same room hidden target", defenderRoomId: 1, rest: "skeleton", hideTarget: true},
-		{name: "cross room hidden target", defenderRoomId: 2, rest: "skeleton north", hideTarget: true},
-		{name: "same room blinded shooter", defenderRoomId: 1, rest: "skeleton", blindShooter: true},
-		{name: "cross room blinded shooter", defenderRoomId: 2, rest: "skeleton north", blindShooter: true},
+		{name: "same room hidden target", defenderRoomId: 1, rest: "skeleton", hideTarget: true, wantNoTarget: true},
+		{name: "cross room hidden target", defenderRoomId: 2, rest: "skeleton north", hideTarget: true, wantNoTarget: true},
+		{name: "same room blinded shooter", defenderRoomId: 1, rest: "skeleton", blindShooter: true, wantBlinded: true},
+		{name: "cross room blinded shooter", defenderRoomId: 2, rest: "skeleton north", blindShooter: true, wantBlinded: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, cleanup := seedFireMobInRoom(t, tc.defenderRoomId, 1)
@@ -309,7 +315,9 @@ func TestFire_UnseenTargetIsRejectedBeforeAdmission(t *testing.T) {
 
 			res := ExecuteFire(actor, tc.rest)
 
-			require.True(t, res.NoTarget)
+			require.Equal(t, tc.wantNoTarget, res.NoTarget, "NoTarget flag")
+			require.Equal(t, tc.wantBlinded, res.Blinded, "Blinded flag")
+			assert.False(t, res.TooDarkToAim, "neither case is a lighting problem")
 			assert.False(t, res.Executed)
 			assert.Equal(t, characters.CostCommitResult{}, res.Cost)
 			assert.Equal(t, 10, char.Stamina)
@@ -626,4 +634,43 @@ func TestRangedShotRawDamage_BalanceBand(t *testing.T) {
 	if raw < 180 || raw > 220 {
 		t.Errorf("arbalest baseline raw %v outside 180-220 spec band", raw)
 	}
+}
+
+// TestFire_DarkRoomIsRejectedAsLightingNotAsMissingTarget covers the case the
+// unseen-target matrix above does not: the shooter can see fine, but the room
+// is unlit.
+//
+// This gate was introduced with U8 and originally shared NoTarget with the
+// hidden-target case, so the player was told "Could not find your target." for
+// a target standing in front of them, in every unlit room in the world. Melee
+// has no equivalent gate, so `attack skeleton` worked in the same room where
+// `shoot skeleton` claimed the skeleton was not there.
+func TestFire_DarkRoomIsRejectedAsLightingNotAsMissingTarget(t *testing.T) {
+	_, cleanup := seedFireMobInRoom(t, 1, 1)
+	defer cleanup()
+
+	// DarkArea without LitArea drives GetVisibility() to 0, which is what
+	// messaging.CanSeeClearly reads.
+	biomeCleanup := rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"cave": {BiomeId: "cave", Name: "Cave", Symbol: ".", DarkArea: true, MovementCost: 1},
+	})
+	defer biomeCleanup()
+	rooms.LoadRoom(1).Biome = "cave"
+
+	char := fireAttacker()
+	char.Stamina = 10
+	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
+	actor := newStubActor(char, rooms.LoadRoom(1))
+
+	res := ExecuteFire(actor, "skeleton")
+
+	require.True(t, res.TooDarkToAim, "an unlit room is a lighting refusal")
+	assert.False(t, res.NoTarget, "the target is present and correctly named")
+	assert.False(t, res.Blinded, "the shooter's eyes are fine")
+	assert.False(t, res.Executed)
+	// Refused before admission: nothing is spent and nothing is committed.
+	assert.Equal(t, characters.CostCommitResult{}, res.Cost)
+	assert.Equal(t, 10, char.Stamina)
+	assert.True(t, char.Equipment.Weapon.Loaded)
+	assert.Nil(t, char.Aggro)
 }

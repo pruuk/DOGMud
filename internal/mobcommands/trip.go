@@ -24,6 +24,18 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
+	// A target already on the floor cannot be tripped. actions.CommandIsReady
+	// gates this for behavior-tree mobs, but the CombatCommands fallback in
+	// NewRound_DoCombat_helpers does NOT consult readiness -- it picks a random
+	// authored verb -- and seven shipped mobs list trip or charge there. Without
+	// this branch those mobs spend the round producing no damage, no message and
+	// no cooldown, which is invisible to the player and reads as the game
+	// hanging. Narrate the wasted effort instead.
+	if res.TargetOnFloor {
+		narrateTripWhiffOnProne(mob, room, res.Target)
+		return true, nil
+	}
+
 	if res.OnCooldown || res.NoTarget || !res.Executed {
 		return true, nil
 	}
@@ -146,4 +158,36 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// narrateTripWhiffOnProne gives the round a visible outcome when a mob throws a
+// trip or charge at a target who is already on the floor.
+//
+// The move itself is refused upstream in actions.ExecuteTrip, so nothing is
+// charged, no cooldown is taken and no damage is rolled. The ONLY thing this
+// adds is the sentence that stops the round from being invisible. Before U8 the
+// trip resolved and dealt reduced damage, so the player at least saw something;
+// with the prone gate in place, silence here would be a strict regression in
+// legibility even though it is an improvement in mechanics.
+func narrateTripWhiffOnProne(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget) {
+	mobName := mob.Character.Name
+
+	var targetChar *users.UserRecord
+	if target.UserId > 0 {
+		targetChar = users.GetByUserId(target.UserId)
+	}
+
+	if targetChar != nil {
+		if canSeeInDark(targetChar, room) {
+			targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi> rushes at you and finds only the ground you are already on.`, mobName))
+		} else {
+			targetChar.SendText(messaging.CategoryTrip,
+				`Something rushes past you and finds only the ground you are already on.`)
+		}
+	}
+
+	room.SendTextVisual(messaging.CategoryTrip, fmt.Sprintf(
+		`<ansi fg="mobname">%s</ansi> rushes at <ansi fg="username">%s</ansi>, who is already down, and carries straight past.`,
+		mobName, target.Name), target.UserId)
 }

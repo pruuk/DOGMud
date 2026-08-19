@@ -229,6 +229,13 @@ window dimensions as raw bytes). Printable input coalesced after a completed
 negotiation, including an AI client's username after its GMCP handshake, is
 therefore preserved as a separate line. See `input_lines.go`.
 
+A subnegotiation whose `IAC SE` terminator does not arrive in the same socket
+read sets `ConnectionDetails.midSubnegotiation` (guarded by `readQueueMu`), and
+the next read resumes inside it. Without that carry the continuation chunk does
+not begin with `IAC`, so it would be scanned as typed text and cut in half on an
+embedded `0x0A`. GMCP JSON payloads are long enough to cross a read boundary,
+so this is reachable in normal play, not just in theory.
+
 ### Input Handler Chain
 ```go
 type InputHandler func(ci *ClientInput, handlerState map[string]any) (doNextHandler bool)

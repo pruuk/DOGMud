@@ -583,7 +583,17 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// `for _, userId := range` shadowed the outer fleer's id, so PvP
 	// players never blocked each other from fleeing). Perspective-
 	// specific messaging stays here.
-	if blocker := combat.ResolveFleeBlockers(user.Character, uRoom, includeSkill); blocker != nil {
+	blocker, contested := combat.ResolveFleeBlockers(user.Character, uRoom, includeSkill)
+	// Skullduggery practice is awarded HERE, by the wrapper, and only when an
+	// opposed roll actually happened. Two conditions, both load-bearing:
+	// includeSkill is false when the fleer was too spent to pay in full and
+	// therefore never brought the skill to the contest (practising a skill you
+	// did not use is not practice), and contested is false when nothing in the
+	// room was targeting the fleer, so there was no contest to learn from.
+	if contested && includeSkill {
+		user.Character.OnSkillUse(string(skills.Skullduggery), user.UserId)
+	}
+	if blocker != nil {
 		var targetTag string
 		if blocker.IsPlayer() {
 			targetTag = "username"

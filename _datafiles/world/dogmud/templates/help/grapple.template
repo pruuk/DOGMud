@@ -126,6 +126,11 @@ Success is an opposed roll of Strength vs. the target's Strength
 and Dexterity. Grapple-immune creatures (e.g. elementals, oozes)
 cannot be grappled.
 
+A target who is already locked in a grapple cannot be seized by
+anyone else. If a companion or another fighter has hold of it, you
+cannot take hold of it too. Strike it instead, or wait for the hold
+to break.
+
 The initial grapple is a special move that spends Stamina and requires full
 payment. Once the hold exists, both participants pay upkeep independently each
 round. The controlling role is less costly than struggling underneath, and

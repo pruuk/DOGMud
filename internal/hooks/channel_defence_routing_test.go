@@ -439,9 +439,15 @@ func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t
 			require.True(t, target.Character.IsSupine() || target.Character.IsProne(),
 				"zero-damage defensive crit must preserve the binary knockdown; state=%v", target.Character.Position.State())
 			attackerLines := drainChannelRoutingQueues(attacker.UserId)[attacker.UserId]
-			require.Len(t, attackerLines, 1)
+			// TWO lines, not one. The defence triad tells the caster their
+			// damage was stopped; the second line tells them the target went
+			// down anyway. The room broadcast below excludes the caster, so
+			// without that second line the caster would be the only person
+			// present who does not know the target is now prone.
+			require.Len(t, attackerLines, 2)
 			require.Contains(t, strings.ToLower(attackerLines[0]), "heavy-attacker")
 			require.Contains(t, strings.ToLower(attackerLines[0]), "no damage taken")
+			require.Contains(t, strings.ToLower(attackerLines[1]), "knocked to the ground")
 			observerLines := drainChannelRoutingQueues(observer.UserId)[observer.UserId]
 			require.Len(t, observerLines, 2)
 			require.Contains(t, strings.ToLower(observerLines[0]), "no damage taken")

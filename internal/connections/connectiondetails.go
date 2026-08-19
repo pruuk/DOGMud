@@ -163,6 +163,14 @@ type ConnectionDetails struct {
 	readQueue   [][]byte
 	readQueueMu sync.Mutex
 
+	// midSubnegotiation is true when the previous socket read ended INSIDE a
+	// telnet subnegotiation whose IAC SE had not arrived yet. The next read is
+	// then pure payload until that terminator turns up, and must not be split
+	// on an embedded 0x0A/0x0D -- NAWS encodes window size as raw bytes and a
+	// GMCP JSON payload is easily large enough to cross a read boundary. Guarded
+	// by readQueueMu, which already serialises the rest of the split state.
+	midSubnegotiation bool
+
 	// clientIP is the *real* source address when the socket peer is not the
 	// player — i.e. a websocket arriving through a reverse proxy. Empty for
 	// telnet, which has no proxy in front of it, and empty for a websocket

@@ -83,7 +83,9 @@ their shared `Execute*` function. The action resolves that staged target
 read-only, admits cost, consumes cooldown, then commits aggro and calls
 `SeedAggression`. Invalid, stale, cooldown-blocked, and cost-refused attempts
 therefore cannot seed combat side effects. Taunt uses the same staged engagement
-contract. `AcquireMeleeTarget` remains only as a legacy eager helper; `throw`
+contract. `AcquireMeleeTarget` is **deleted**: it was the pre-U8 eager
+gate-and-engage helper, it had no production callers left, and keeping it would
+have kept an engage-before-paying path available to a future command. `throw`
 seeds from its own `engageAfterThrow` because it is an AoE.
 
 The two halves fire on **deliberately different** conditions, and getting this

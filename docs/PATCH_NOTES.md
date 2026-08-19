@@ -22,6 +22,17 @@ Reloading now counts as physical exertion. Grapples also ask something of both
 participants each round, with the fighter in control and the fighter struggling
 underneath paying their own upkeep independently.
 
+A few moves are now honest about when they simply do not apply. An aimed shot
+needs light, and in the dark you are told so plainly instead of being told your
+target cannot be found. Melee is unaffected, so a close fight remains an option.
+A target already held in a grapple cannot be seized by a second attacker. A
+target already on the ground cannot be tripped or charged, and a beast that
+tries it visibly overruns them rather than appearing to do nothing at all.
+
+Breaking away from a fight that someone actively tried to stop now counts as
+practice toward the skill behind escaping. Slipping out of a room where nothing
+was fighting you does not.
+
 Quell and defy now answer hostile magic and rhetoric with varied narration that
 matches how decisively the defence worked. Both spend Conviction, and both stay
 possible in a desperate, untrained form when resolve runs short. A successful

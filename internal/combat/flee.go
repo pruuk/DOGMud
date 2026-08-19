@@ -47,13 +47,18 @@ func (b FleeBlocker) IsPlayer() bool { return b.UserId != 0 }
 // targeting me" check degenerated to "is this player targeting
 // themselves" — always false in practice). Routing through this
 // helper restores the intended PvP-blocker behavior.
-func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeSkill bool) *FleeBlocker {
+// The second return value reports whether ANY opposed roll was actually made.
+// Callers use it to award skullduggery practice, which is deliberately NOT done
+// here: this function is named "resolve", it is called from two packages, and a
+// progression write buried in it awarded practice for a contest that never
+// happened -- walking out of a room where nothing was fighting you trained
+// skullduggery exactly as much as breaking a grapple line did. Progression is
+// the wrapper's job; see U9, which makes that split explicit everywhere.
+func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeSkill bool) (*FleeBlocker, bool) {
 	if fleer == nil || room == nil {
-		return nil
+		return nil, false
 	}
-	if includeSkill {
-		fleer.OnSkillUse(string(skills.Skullduggery), fleer.GetUserId())
-	}
+	contested := false
 
 	fleerUid := fleer.GetUserId()
 	fleerMid := fleer.GetMobInstanceId()
@@ -76,12 +81,13 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeS
 		}
 		blockScore := float64(m.Character.GetEffectiveDexterity() +
 			m.Character.GetSkillLevel(skills.UnarmedCombat)*25)
+		contested = true
 		success := RunContest(fleeScore, []contest.Entry{{Score: blockScore}}).Success
 		if !success {
 			return &FleeBlocker{
 				Name:          m.Character.Name,
 				MobInstanceId: m.InstanceId,
-			}
+			}, contested
 		}
 	}
 
@@ -98,16 +104,17 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeS
 		}
 		blockScore := float64(u.Character.GetEffectiveDexterity() +
 			u.Character.GetSkillLevel(skills.UnarmedCombat)*25)
+		contested = true
 		success := RunContest(fleeScore, []contest.Entry{{Score: blockScore}}).Success
 		if !success {
 			return &FleeBlocker{
 				Name:   u.Character.Name,
 				UserId: u.UserId,
-			}
+			}, contested
 		}
 	}
 
-	return nil
+	return nil, contested
 }
 
 func fleeContestScore(fleer *characters.Character, includeSkill bool) float64 {

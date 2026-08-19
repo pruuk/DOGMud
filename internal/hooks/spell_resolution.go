@@ -618,6 +618,18 @@ func applyMobKnockdownOutcome(
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 				`Your %s slams %s to the ground! (<ansi fg="damage">%s</ansi>)%s`,
 				spellData.Name, mName, combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value), critTag))
+		} else {
+			// Defended AND still knocked down. The defence triad above narrates
+			// the defence, but the knockdown is a BINARY position effect that
+			// the defence only ever scaled the DAMAGE of -- so a defended target,
+			// including one that defended with a crit, can still go down. The
+			// room broadcast below excludes the caster, so without this line the
+			// person who cast the spell is the only one in the room who never
+			// learns their target is prone. This is what the deleted "quells
+			// your %s, but still goes down!" message used to carry. No damage
+			// description here: the triad already said what got through.
+			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`%s is knocked to the ground regardless!`, mName))
 		}
 		if knocked {
 			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(

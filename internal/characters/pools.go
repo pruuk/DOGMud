@@ -111,7 +111,16 @@ func fractionalCost(carry, amount float64) (whole int, nextCarry float64, valid 
 		return 0, carry, false
 	}
 	wholeFloat := math.Floor(debt)
-	if wholeFloat > float64(math.MaxInt) {
+	// >=, not >. float64(math.MaxInt) rounds UP to exactly 2^63, which is one
+	// past the largest representable int. A wholeFloat of exactly that value
+	// passes a strict > and reaches int(wholeFloat), where an out-of-range
+	// float-to-int conversion is implementation-defined and yields MinInt on
+	// amd64. A negative whole then reads as "nothing due" in every consumer
+	// (ApplyCostFloatOrRefuse tests whole > 0, CommitCost tests wholeDue <= 0),
+	// so the single most expensive action imaginable would be charged NOTHING.
+	// The guard exists for exactly this case; it must not have a hole at the
+	// boundary it guards.
+	if wholeFloat >= float64(math.MaxInt) {
 		return math.MaxInt, 0, true
 	}
 	return int(wholeFloat), debt - wholeFloat, true

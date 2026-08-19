@@ -27,6 +27,11 @@ Shooting spends Stamina and requires full payment. Carried load raises the
 price, while <ansi fg="skill">ranged-combat</ansi> skill lowers it. If you are
 too spent, you do not fire or consume the round.
 
+An aimed shot needs light. In a dark room you cannot line one up, and the
+shot is refused before it costs you anything. Carry a light source, or see
+in the dark by other means. Swinging in melee has no such requirement, so a
+close fight is still an option when you cannot shoot.
+
 <ansi fg="yellow">━━━ Progression ━━━</ansi>
 
 Ranged-combat improves through use. Shots that connect have a

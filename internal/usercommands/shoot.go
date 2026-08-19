@@ -102,6 +102,15 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		user.SendText(messaging.CategorySystem, `Could not find your target.`)
 		return true, nil
 	}
+	if result.Blinded {
+		user.SendText(messaging.CategorySystem, `You can't see well enough to aim.`)
+		return true, nil
+	}
+	if result.TooDarkToAim {
+		user.SendText(messaging.CategorySystem,
+			`It is too dark to aim. You need light, or eyes that do not need it.`)
+		return true, nil
+	}
 	if result.IsCharmed {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is your friend!`, result.TargetName))
 		return true, nil
@@ -132,8 +141,8 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Mirror melee's reveal-on-engage: a cross-room shot that deals ANY
 	// damage (a clean hit or a defended partial) drops stealth. Only a
 	// zero-damage cross-room miss stays hidden — the sniper gets exactly one
-	// free clean miss, not one free hit. (Same-room shooter aggro is set
-	// pre-fire; see Issue 2 above.)
+	// free clean miss, not one free hit. (Same-room shooter aggro is set inside
+	// ExecuteFire, AFTER cost admission, so a refused shot never engages.)
 	if result.CrossRoom && dealt {
 		user.Character.CancelCombatBuffs()
 	}

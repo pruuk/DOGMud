@@ -65,14 +65,32 @@ func TestHandlePlayerFlee_ShortCommandDoesNotProgressSkullduggery(t *testing.T) 
 	}
 
 	// The prior admission is consumed. A legacy sentinel with no new command
-	// therefore defaults to full skill and progresses exactly once.
-	blocker.Character.EndAggro()
+	// therefore defaults to full skill, and because the blocker is STILL
+	// targeting the fleer an opposed roll happens, so the wrapper awards
+	// exactly one skullduggery use.
+	//
+	// The blocker deliberately keeps its aggro here. An earlier version of this
+	// test called blocker.Character.EndAggro() first, which left nothing to
+	// contest -- and still expected an award, because the award used to fire
+	// unconditionally inside ResolveFleeBlockers before any roll. It is now
+	// gated on a contest having happened, so the fixture has to supply one.
 	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
 	if !handlePlayerFlee(u, room, u.UserId) {
 		t.Fatal("legacy/default flee was not resolved")
 	}
 	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
 		t.Errorf("legacy resolution after consumed short attempt progressed skill %d times, want 1", got)
+	}
+
+	// And with nothing left targeting the fleer, a further legacy resolution
+	// runs no contest and therefore must not award anything more.
+	blocker.Character.EndAggro()
+	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
+	if !handlePlayerFlee(u, room, u.UserId) {
+		t.Fatal("uncontested legacy flee was not resolved")
+	}
+	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
+		t.Errorf("uncontested flee progressed skill to %d, want it to stay at 1", got)
 	}
 }
 
@@ -206,9 +224,12 @@ func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
 		t.Fatal("terminally canceled flee was resolved again")
 	}
 
-	// A subsequent legacy-only flee has no cost admission and therefore keeps
-	// the historical full-skill progression behavior.
-	mobs.GetInstance(100).Character.EndAggro()
+	// A subsequent legacy-only flee has no cost admission and therefore defaults
+	// to full skill. Point the mob at the player so an opposed roll actually
+	// happens: skullduggery practice is awarded by the wrapper for a contest
+	// that took place, not for the act of typing flee. The fixture above only
+	// ever set the PLAYER's aggro, which is not what ResolveFleeBlockers reads.
+	mobs.GetInstance(100).Character.SetAggro(u.UserId, 0, characters.DefaultAttack)
 	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
 	if !handlePlayerFlee(u, room, u.UserId) {
 		t.Fatal("legacy/default flee was not resolved")
@@ -216,6 +237,7 @@ func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
 	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
 		t.Fatalf("legacy flee after terminal cancellation progressed skill %d times, want 1", got)
 	}
+	mobs.GetInstance(100).Character.EndAggro()
 	if _, admitted := usercommands.TakeFleeAdmission(u); admitted {
 		t.Fatal("terminal cancellation left the old short admission reusable")
 	}

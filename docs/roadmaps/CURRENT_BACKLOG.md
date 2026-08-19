@@ -83,6 +83,13 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 
 ## Deferred Follow-ons
 
+- **Defender name rendered from the wrong viewer's perspective (cosmetic):**
+  `mobcommands/taunt.go` and `hooks/spell_resolution.go` build a defender's
+  display name with `GetPlayerName(defender.UserId)` rather than the id of the
+  player who will read the line, so the `(aggro)` suffix is computed from the
+  defender's own perspective instead of the reader's. Wrong decoration only; the
+  name itself is correct. Found in the U8 review, 2026-08-18. Belongs with the
+  combat/action messaging unification below rather than as a one-off patch.
 - **Audit and remove dead mutation active command skills:** inventory command
   registration, mutation definitions, implementations, tests, help, and config
   knobs after the mutation removals. Delete only entries proven unreachable or
