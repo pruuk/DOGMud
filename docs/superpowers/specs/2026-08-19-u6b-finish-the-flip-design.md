@@ -248,18 +248,54 @@ slice.
    being a separate change. It is named because it changes what a spell crit
    *means*: today it means "beat a raw stat", afterwards "beat the defender's
    quell decisively".
-3. **The counterattack tier extends beyond melee, or is documented as
-   deliberately melee-only.** A defensive crit currently negates damage in four
-   channels and unlocks nothing. Two coherent answers:
-   - **Extend it.** A quell crit interrupts the caster; a defy crit turns the
-     taunt back; a block crit against a shot closes distance. Each needs a
-     designed effect, which is real design work, not a refactor.
-   - **Scope it deliberately.** State that the counterattack tier is a melee
-     property because only melee is in reach to counter, and that other
-     channels' defensive crit is full negation and nothing more.
+3. **The counterattack tier extends to every channel, gated on REACH.**
+   Owner decision, 2026-08-19.
 
-   **This spec does not choose** — see §8. It does require that the answer be
-   written down, because the current state is neither, it is an omission.
+   The tier is universal; what varies is whether you are close enough to
+   answer. **A defensive crit in the same room earns a melee counter.** The
+   mechanism already exists: parry's riposte is a free counter-swing at half
+   weapon damage through `CalcRawDamage(..., ChannelPhysical)`
+   (`hooks/combat_shared_helpers.go`). It is wired to parry only; U6b wires it
+   to a defensive crit on any channel where the defender is in reach.
+
+   **Do NOT model the counter as "interrupting" the attack.** An earlier draft
+   of this spec suggested a quell crit interrupts the caster, which the owner
+   correctly rejected: by the time quell answers, the spell has already
+   resolved. There is nothing left to interrupt. A defensive crit is not
+   prevention, it is a decisive defence that leaves you an opening. The counter
+   is what you do with the opening.
+
+   Reach, measured 2026-08-19:
+
+   | Channel | Attacker's position | Melee counter possible |
+   |---|---|---|
+   | Melee | same room, always | yes |
+   | Spell | **same room only** (no adjacent-room targeting exists) | yes |
+   | Taunt | same room | yes |
+   | Ranged, same-room shot | same room | yes |
+   | **Ranged, cross-room shot** | adjacent room (`shoot <target> <direction>`) | **no** |
+   | Special moves | same room, always | yes |
+
+   The cross-room shot is the only case with no counter, and that is a
+   **coherent asymmetry rather than a hole**: you cannot punch someone in the
+   next room. It is also a real property of the weapon, so it reads as an
+   advantage of shooting from cover rather than as a missing feature. Document
+   it as designed; do not invent a substitute so the table looks symmetrical.
+
+   **Defy additionally warrants an in-kind counter.** The owner named a
+   counter-taunt as attractive, and it fits: answering a social attack socially
+   is more legible than answering it with a fist, and taunt already has a full
+   resolution path to reuse. Whether defy's crit produces a counter-taunt
+   INSTEAD of a melee counter, or the defender picks, is a design choice for
+   this slice; both are coherent.
+
+   **Messaging is a hard requirement, not polish.** The owner's condition was
+   explicitly "as long as the messaging to the combatants and observers makes
+   sense". A melee counter following a quell crit must read as a person putting
+   a working down and stepping in, not as a generic riposte string pasted under
+   a spell. Each channel needs its own attacker, defender and room text on the
+   existing `defense-messages/` triad shape. Shipping the mechanic without it
+   repeats the gap U8 had to close for quell and defy.
 4. **Fumble stays self-relative** (`roll.ZScore <= -ContestCritThreshold`), not
    margin-derived. A fumble is a property of one bad roll rather than of the
    gap between two, and that is already consistent across the channels that
@@ -314,7 +350,8 @@ Every one is deliberate and must be called out individually in the PR.
 | Special moves become dodgeable / parryable / blockable with narration | New player-visible text | Everyone |
 | **16 attacks gain a crit tier that has never existed** (14 special moves + aimed shot) | **Large increase** in their damage ceiling | Players and mobs |
 | Spell crit now means "beat quell decisively", not "beat a raw stat" | Cut to spell crit rate | Players and mobs |
-| Counterattack tier extended beyond melee, or scoped in writing | Depends on §8 answer | Defenders |
+| Counterattack tier extended to every channel, gated on reach | **Increase** to defender value on 4 channels that had none | Players and mobs |
+| Cross-room shots remain uncounterable, now as a documented property | Advantage to shooting from an adjacent room | Ranged attackers |
 
 **Mobs all carry combat skill 1**, so every ×1→×5 change widens the
 player-versus-mob gap far more than the player-versus-player gap. That
@@ -345,7 +382,15 @@ Model, at minimum:
 5. **Defence-set width.** A bash answered by three defences instead of one
    scalar is strictly better for the defender; quantify by how much before
    assuming it is acceptable.
-6. **The new crit tier on 16 attacks.** These have never crit. Model their
+6. **The counterattack tier on four new channels.** A defensive crit currently
+   negates damage and nothing more outside melee; afterwards it also earns a
+   free counter-swing. Model how often a defensive crit actually occurs per
+   channel post-flip (it is margin-driven, so it rises sharply when the
+   defender outclasses the attacker) and what that counter is worth. **Cross-
+   room shots are excluded by reach**, so quantify how much that is worth to a
+   ranged attacker who stays in the next room; if it is large, that is a real
+   incentive to kite and worth knowing before players find it.
+7. **The new crit tier on 16 attacks.** These have never crit. Model their
    damage ceiling before and after, especially the beast moves (rake, maul,
    pounce, gore) which mobs use heavily and which would gain a crit tier
    against players at the same time players gain one against them. Combine
@@ -377,14 +422,11 @@ retuning, that is a `config.yaml` edit, per standing rule 1.
    and parryable, which the existing `defense-messages/` data shape already
    supports. Shipping the mechanic without the text would leave players losing
    to something unnarrated, which is the gap U8 had to close for quell and defy.
-5. **The counterattack tier: extend or scope?** (§4.3 item 3.) A defensive crit
-   unlocks riposte / auto-trip / auto-bash in melee and nothing anywhere else.
-   Either every channel's defensive crit gets a designed effect, or the tier is
-   documented as deliberately melee-only. **This is the one genuinely open
-   DESIGN question in the slice** — the rest is unification of things that
-   already have a right answer. If extending, it wants its own design pass and
-   arguably its own slice, because "what does a quell crit do to a caster" is a
-   new mechanic rather than a converted one.
+5. ~~The counterattack tier: extend or scope?~~ **RESOLVED 2026-08-19**: the
+   tier extends to every channel, gated on reach, with a melee counter as the
+   default and the cross-room shot documented as the one coherent exception.
+   See §4.3 item 3. What remains open is narrower: **does a defy crit produce a
+   counter-taunt instead of a melee counter, or does the defender get both?**
 6. **Should 16 attacks gaining crit ship in the same slice as ×1→×5?** They
    compound. A case exists for landing the weight unification first, measuring
    it in play, then adding the crit tier. That splits U6b in two and delays the
