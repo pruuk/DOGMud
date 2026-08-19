@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Tasks:** 18 (Task 9b was added after adversarial review).
+
 **Goal:** Give every progression event in the contest paths one shape — a pure event returned by a leaf package and applied by a single applier — close a rank-independent progression faucet, delete a melee double-progression, and make `SpellData.PrimaryStat` load-bearing.
 
 **Architecture:** A new leaf package `internal/progression` computes a list of `Event` values from plain contest facts. `internal/characters` gains one applier that turns events into skill and stat rolls. `internal/costs/action.go` moves to a new leaf `internal/actionspec` so both cost and progression read one action registry. The combat and spell paths build events and hand them to the applier; nothing else changes about when progression fires.
@@ -57,7 +59,9 @@ gofmt -l internal/ modules/     # must print nothing
 | `internal/actionspec/context.md` | **New.** Package documentation. |
 | `internal/characters/progression.go` | Gains `ApplyProgression` and `applyBonusProgression`; `OnCritReceived` moves off `CheckRegenProgression`; phantom `TrackSkillUse` calls deleted. |
 | `internal/characters/character.go:298` area | Gains the unexported `bonusProgressionRound` dedupe map beside `combatDriftRound`. |
-| `internal/combat/combat.go` | Per-quadrant progression **deleted** (Task 9). |
+| `internal/combat/combat.go` | Per-quadrant attacker progression and both defender-dexterity lines **deleted** (Task 9). |
+| `internal/combat/combat_helpers.go` | The per-swing defender roll in `sendDefenseMessages` **deleted** (Task 9b). |
+| `_datafiles/world/default/spells/*.yaml` | 8 upstream files gain `primarystat`, or a fresh checkout boot-panics. |
 | `internal/combat/defence_multiplier.go` | Channel-defence path routed through the seam. |
 | `internal/hooks/NewRound_DoCombat_unified.go` | `applyCombatProgression` becomes the single melee progression path and builds events. |
 | `internal/hooks/NewRound_DoCombat_helpers.go` | Spell double-roll deleted; spell path supplies `primarystat`. |
@@ -211,13 +215,18 @@ Seed it with the seven divergent conditions already known:
 | `throw` (`usercommands/throw.go:399`) | always, hit or miss |
 | `taunt` (`actions/combat_taunt.go:183,270,325`) | always, all three outcomes |
 | `warcry` / `rally` (`actions/skill_helpers.go`, `awardRhetoricUse`) | always in combat, **50%** out of combat |
-| Melee defences (`hooks/NewRound_DoCombat_helpers.go`, `processDefenderProgression`) | once per defence type per round, keyed on `SwingEvent.DefenseUsed` |
+| Melee defences, per-round (`hooks/NewRound_DoCombat_helpers.go`, `processDefenderProgression`) | once per defence type per round, keyed on `SwingEvent.DefenseUsed` |
+| Melee defences, per-swing (`combat/combat_helpers.go:1228`, in `sendDefenseMessages`) | **every defended swing** — the duplicate Task 9b deletes |
 | Channel defences (`combat/defence_multiplier.go:246`) | **whenever the contest ran**, win or lose |
 
-Call out explicitly, in its own section, the last two rows: melee awards defence
-progression only when a defence actually registered, while the channel path
-awards it to the best defence regardless of whether it won. That is the
-concrete form of the open question in spec §9 and it is **U10b's call**.
+Call out explicitly, in its own section, the last three rows:
+
+- Melee has **two** defender progression sites, one per swing and one per round.
+  That is a defect, not a convention, and Task 9b removes it. An earlier draft
+  of the spec listed only the per-round one and called melee correct.
+- What remains is a genuine convention disagreement: melee awards a defence only
+  when one actually registered, while the channel path awards the best defence
+  whether it won or lost. Two live answers to one question, and **U10b's call**.
 
 Close with a "Recommended convention" section stating the owner's shape: one
 event per success, with crit and critical-failure as a separate bonus on top.
@@ -530,7 +539,7 @@ func TestOrdinary_BothSidesOneEventEach(t *testing.T) {
 
 func TestAttackCrit_AttackerDoesDefenderToughens(t *testing.T) {
 	o := fullOutcome()
-	o.AttackCrit = true
+	o.Exceptional = ExcAttackCrit
 	evs := EventsForContest(o, bonuses())
 
 	a := find(t, evs, SideAttacker, ClassCrit)
@@ -552,7 +561,7 @@ func TestAttackCrit_AttackerDoesDefenderToughens(t *testing.T) {
 
 func TestDefenceCrit_DefenderDoesAttackerObserves(t *testing.T) {
 	o := fullOutcome()
-	o.DefenceCrit = true
+	o.Exceptional = ExcDefenceCrit
 	evs := EventsForContest(o, bonuses())
 
 	d := find(t, evs, SideDefender, ClassCrit)
@@ -568,7 +577,7 @@ func TestDefenceCrit_DefenderDoesAttackerObserves(t *testing.T) {
 // Failure teaches: spec 5.0's matrix pays the bonus to whoever fumbled.
 func TestAttackFumble_AttackerEarnsTheBonus(t *testing.T) {
 	o := fullOutcome()
-	o.AttackFumble = true
+	o.Exceptional = ExcAttackFumble
 	evs := EventsForContest(o, bonuses())
 
 	a := find(t, evs, SideAttacker, ClassFumble)
@@ -585,7 +594,7 @@ func TestAttackFumble_AttackerEarnsTheBonus(t *testing.T) {
 
 func TestDefenceFumble_DefenderEarnsTheBonus(t *testing.T) {
 	o := fullOutcome()
-	o.DefenceFumble = true
+	o.Exceptional = ExcDefenceFumble
 	evs := EventsForContest(o, bonuses())
 
 	if got := find(t, evs, SideDefender, ClassFumble).Multiplier; got != 2.0 {
@@ -600,7 +609,7 @@ func TestDefenceFumble_DefenderEarnsTheBonus(t *testing.T) {
 // teaches; an exceptional event the dice did not produce does not.
 func TestFloored_OrdinaryOnlyNoBonus(t *testing.T) {
 	o := fullOutcome()
-	o.AttackCrit = true
+	o.Exceptional = ExcAttackCrit
 	o.Floored = true
 	evs := EventsForContest(o, bonuses())
 
@@ -627,12 +636,71 @@ func TestNoDefenderFields_NoDefenderEvents(t *testing.T) {
 
 func TestZeroBonuses_ActAsOffSwitches(t *testing.T) {
 	o := fullOutcome()
-	o.AttackCrit = true
+	o.Exceptional = ExcAttackCrit
 	evs := EventsForContest(o, Bonuses{Doing: 0, Observing: 0})
 	for _, e := range evs {
 		if e.Class != ClassOrdinary && e.Multiplier != 0 {
 			t.Errorf("zeroed bonus produced multiplier %v", e.Multiplier)
 		}
+	}
+}
+
+// The split exists so melee can take the bonus tier WITHOUT a second ordinary
+// defender event, which its per-round AwardDefenceProgression already awards.
+func TestBonusEvents_EmitsNoOrdinary(t *testing.T) {
+	o := fullOutcome()
+	o.Exceptional = ExcAttackCrit
+	for _, e := range BonusEvents(o, bonuses()) {
+		if e.Class == ClassOrdinary {
+			t.Errorf("BonusEvents emitted an ordinary event: %+v", e)
+		}
+	}
+}
+
+func TestOrdinaryEvents_EmitsNoBonus(t *testing.T) {
+	o := fullOutcome()
+	o.Exceptional = ExcAttackCrit
+	for _, e := range OrdinaryEvents(o) {
+		if e.Class != ClassOrdinary {
+			t.Errorf("OrdinaryEvents emitted a bonus event: %+v", e)
+		}
+	}
+}
+
+// One contest lands on exactly ONE matrix row. Four independent booleans let a
+// caller pay four bonus rolls for one swing, and pay a fumble bonus to the
+// winner; the enum makes that unrepresentable.
+func TestClassify_Precedence(t *testing.T) {
+	cases := []struct {
+		name                                              string
+		atkCrit, defCrit, atkFumble, defFumble bool
+		want                                              Exceptional
+	}{
+		{"nothing", false, false, false, false, ExcNone},
+		{"attack crit", true, false, false, false, ExcAttackCrit},
+		{"defence crit", false, true, false, false, ExcDefenceCrit},
+		{"attack fumble", false, false, true, false, ExcAttackFumble},
+		{"defence fumble", false, false, false, true, ExcDefenceFumble},
+		// A fumble is self-relative and a crit is margin-derived, so an
+		// attacker can roll terribly and still be out-rolled worse. The crit is
+		// what the game narrated, so the crit is what pays.
+		{"crit outranks a co-occurring fumble", false, true, true, false, ExcDefenceCrit},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := Classify(tc.atkCrit, tc.defCrit, tc.atkFumble, tc.defFumble); got != tc.want {
+				t.Errorf("Classify = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// Exactly two bonus events per contest, never four.
+func TestBonusEvents_NeverPaysBothAxes(t *testing.T) {
+	o := fullOutcome()
+	o.Exceptional = ExcAttackCrit
+	if got := len(BonusEvents(o, bonuses())); got != 2 {
+		t.Errorf("BonusEvents produced %d events, want exactly 2", got)
 	}
 }
 ```
@@ -726,14 +794,55 @@ type Outcome struct {
 	// better. Falls back to DefenderStat when empty.
 	ToughenStat string
 
-	AttackCrit    bool
-	AttackFumble  bool
-	DefenceCrit   bool
-	DefenceFumble bool
+	// Exceptional names the ONE exceptional result this contest produced.
+	// It is a single enum rather than four booleans on purpose: the spec's
+	// matrix is five mutually exclusive rows, and four independent flags let a
+	// caller pay four bonus events for one contest, or pay a fumble bonus to
+	// the side that won. Use Classify to derive it.
+	Exceptional Exceptional
 
 	// Floored reports that a contest floor CHANGED the outcome. Floored
 	// contests award ordinary events but never bonuses.
 	Floored bool
+}
+
+// Exceptional names which single row of the spec's matrix a contest landed on.
+type Exceptional uint8
+
+const (
+	ExcNone Exceptional = iota
+	ExcAttackCrit
+	ExcAttackFumble
+	ExcDefenceCrit
+	ExcDefenceFumble
+)
+
+// Classify reduces the engine's crit and fumble signals to the one row that
+// fired, in a fixed precedence.
+//
+// Crits cannot collide: since 5.11d a contest crit is derived from the
+// NORMALIZED MARGIN, and one margin cannot be both strongly positive and
+// strongly negative, so attackCrit and defenceCrit are mutually exclusive by
+// construction.
+//
+// Fumbles CAN collide with a crit, because a fumble is self-relative (the
+// z-score of one roll) rather than margin-derived: an attacker can roll
+// terribly and still be out-rolled worse. When that happens the CRIT wins,
+// because the crit is the outcome the game narrated to both players, and
+// paying a bonus for an event nobody was told about is how progression stops
+// being legible.
+func Classify(attackCrit, defenceCrit, attackFumble, defenceFumble bool) Exceptional {
+	switch {
+	case attackCrit:
+		return ExcAttackCrit
+	case defenceCrit:
+		return ExcDefenceCrit
+	case attackFumble:
+		return ExcAttackFumble
+	case defenceFumble:
+		return ExcDefenceFumble
+	}
+	return ExcNone
 }
 
 // Bonuses carries the two config-driven multipliers. They are arguments rather
@@ -743,35 +852,40 @@ type Bonuses struct {
 	Observing float64 // ObservedCritProgressionBonus
 }
 
-// EventsForContest returns every progression event one resolved contest
-// implies. Ordinary events come first, then bonuses, so a caller applying them
-// in order tracks the use before rolling the bonus.
-func EventsForContest(o Outcome, b Bonuses) []Event {
-	evs := make([]Event, 0, 4)
-
+// OrdinaryEvents returns only the ordinary-use events an Outcome implies: one
+// per side whose Skill or Stat is populated.
+//
+// It is SEPARATE from BonusEvents because callers genuinely need one without
+// the other. Melee awards its defender's ordinary event once per round through
+// AwardDefenceProgression, but evaluates its bonus tier from the same Outcome;
+// asking for both there would award the defender an extra ordinary event per
+// weapon hit. Making the caller filter a combined slice is how that bug gets
+// written, so the package does the split.
+func OrdinaryEvents(o Outcome) []Event {
+	evs := make([]Event, 0, 2)
 	if o.AttackerSkill != "" || o.AttackerStat != "" {
 		evs = append(evs, Event{
-			Side:       SideAttacker,
-			Skill:      o.AttackerSkill,
-			Stat:       o.AttackerStat,
-			Class:      ClassOrdinary,
-			Multiplier: 1.0,
+			Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat,
+			Class: ClassOrdinary, Multiplier: 1.0,
 		})
 	}
 	if o.DefenderSkill != "" || o.DefenderStat != "" {
 		evs = append(evs, Event{
-			Side:       SideDefender,
-			Skill:      o.DefenderSkill,
-			Stat:       o.DefenderStat,
-			Class:      ClassOrdinary,
-			Multiplier: 1.0,
+			Side: SideDefender, Skill: o.DefenderSkill, Stat: o.DefenderStat,
+			Class: ClassOrdinary, Multiplier: 1.0,
 		})
 	}
+	return evs
+}
 
-	// A floor overrode the dice. Participation still teaches; an exceptional
-	// event that did not actually happen does not.
-	if o.Floored {
-		return evs
+// BonusEvents returns only the crit/fumble tier: the pair of events the one
+// exceptional result implies, or nothing.
+//
+// A floored outcome returns nothing. A floor overrode the dice, and an
+// exceptional event that did not actually happen teaches nobody.
+func BonusEvents(o Outcome, b Bonuses) []Event {
+	if o.Floored || o.Exceptional == ExcNone {
+		return nil
 	}
 
 	toughen := o.ToughenStat
@@ -779,41 +893,44 @@ func EventsForContest(o Outcome, b Bonuses) []Event {
 		toughen = o.DefenderStat
 	}
 
-	switch {
-	case o.AttackCrit:
-		evs = append(evs,
-			Event{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassCrit, b.Doing},
+	switch o.Exceptional {
+	case ExcAttackCrit:
+		return []Event{
+			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassCrit, b.Doing},
 			// The one cell that swaps the stat: a crit RECEIVED toughens.
-			Event{SideDefender, o.DefenderSkill, toughen, ClassObserved, b.Observing},
-		)
-	case o.AttackFumble:
-		evs = append(evs,
-			Event{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassFumble, b.Doing},
-			Event{SideDefender, o.DefenderSkill, o.DefenderStat, ClassObserved, b.Observing},
-		)
+			{SideDefender, o.DefenderSkill, toughen, ClassObserved, b.Observing},
+		}
+	case ExcAttackFumble:
+		return []Event{
+			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassFumble, b.Doing},
+			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassObserved, b.Observing},
+		}
+	case ExcDefenceCrit:
+		return []Event{
+			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassCrit, b.Doing},
+			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
+		}
+	case ExcDefenceFumble:
+		return []Event{
+			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassFumble, b.Doing},
+			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
+		}
 	}
+	return nil
+}
 
-	switch {
-	case o.DefenceCrit:
-		evs = append(evs,
-			Event{SideDefender, o.DefenderSkill, o.DefenderStat, ClassCrit, b.Doing},
-			Event{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
-		)
-	case o.DefenceFumble:
-		evs = append(evs,
-			Event{SideDefender, o.DefenderSkill, o.DefenderStat, ClassFumble, b.Doing},
-			Event{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
-		)
-	}
-
-	return evs
+// EventsForContest is OrdinaryEvents followed by BonusEvents, for the callers
+// that want both. Ordinary events come first so a caller applying them in order
+// tracks the use before rolling the bonus.
+func EventsForContest(o Outcome, b Bonuses) []Event {
+	return append(OrdinaryEvents(o), BonusEvents(o, b)...)
 }
 ```
 
 - [ ] **Step 4: Run the tests**
 
 Run: `go test ./internal/progression/ -v`
-Expected: PASS, all nine.
+Expected: PASS, all twelve.
 
 - [ ] **Step 5: Commit**
 
@@ -1029,16 +1146,26 @@ func TestApplyProgression_BonusDedupesWithinARound(t *testing.T) {
 		Stat: "dexterity", Class: progression.ClassCrit, Multiplier: 2.0,
 	}}
 
-	if !c.claimBonusProgression("weapon-combat", progression.ClassCrit, 7) {
+	ev := bonus[0]
+	if !c.claimBonusProgression(ev, 7) {
 		t.Fatal("first claim in round 7 was refused")
 	}
-	if c.claimBonusProgression("weapon-combat", progression.ClassCrit, 7) {
+	if c.claimBonusProgression(ev, 7) {
 		t.Error("second claim in the same round was allowed")
 	}
-	if !c.claimBonusProgression("weapon-combat", progression.ClassCrit, 8) {
+	if !c.claimBonusProgression(ev, 8) {
 		t.Error("claim in the next round was refused")
 	}
-	_ = bonus
+
+	// Same skill, DIFFERENT stat, same round: must NOT collide. A crit received
+	// trains the defence skill with the toughening stat while a fumble observed
+	// trains it with the defence stat, and keying on skill alone would let the
+	// first consume the other's slot.
+	other := ev
+	other.Stat = "vitality"
+	if !c.claimBonusProgression(other, 7) {
+		t.Error("a same-skill different-stat event collided with an unrelated claim")
+	}
 }
 
 func TestApplyProgression_OrdinaryDoesNotDedupe(t *testing.T) {
@@ -1165,19 +1292,51 @@ Append to `internal/characters/progression.go`:
 //
 // A round of 0 means "no round context" and always claims, so non-combat
 // callers are never silently suppressed.
-func (c *Character) claimBonusProgression(skillName string, class progression.Class, round uint64) bool {
+func (c *Character) claimBonusProgression(ev progression.Event, round uint64) bool {
 	if round == 0 {
 		return true
 	}
 	if c.bonusProgressionRound == nil {
 		c.bonusProgressionRound = make(map[string]uint64)
 	}
-	key := skillName + "|" + strconv.Itoa(int(class))
+	skillName, class := ev.Skill, ev.Class
+	// The stat is part of the key, not just the skill. Observed events can
+	// carry the SAME skill with DIFFERENT stats -- a crit received trains the
+	// defence skill with the TOUGHENING stat, while a fumble observed trains it
+	// with the defence stat. Keying on skill alone would let the first of those
+	// in a round consume the slot for the other. Events with an empty skill
+	// name (which the unarmed and no-defence paths can produce) would otherwise
+	// all collapse onto one key.
+	key := skillName + "|" + ev.Stat + "|" + strconv.Itoa(int(class))
 	if c.bonusProgressionRound[key] >= round {
 		return false
 	}
 	c.bonusProgressionRound[key] = round
 	return true
+}
+
+// ClaimedBonusThisRound reports whether a bonus progression event has already
+// fired for this skill this round, for any class.
+//
+// Exported deliberately. It is the only observable the bonus tier leaves behind
+// -- bonus events do not track use counts by design -- so tests in OTHER
+// packages (internal/combat, internal/hooks) need it to assert that the tier
+// ran at all. A _test.go helper cannot serve them: test files compile only into
+// their own package's test binary.
+func (c *Character) ClaimedBonusThisRound(skillName string) bool {
+	if c == nil || c.bonusProgressionRound == nil {
+		return false
+	}
+	round := util.GetRoundCount()
+	// Keys are "skill|stat|class" and the caller does not know the stat, so
+	// match on the skill segment.
+	prefix := skillName + "|"
+	for key, claimed := range c.bonusProgressionRound {
+		if claimed >= round && strings.HasPrefix(key, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // ApplyProgression applies every event belonging to one side to this character.
@@ -1200,7 +1359,7 @@ func (c *Character) ApplyProgression(events []progression.Event, side progressio
 			continue
 		}
 		if ev.Class.IsBonus() {
-			if !c.claimBonusProgression(ev.Skill, ev.Class, round) {
+			if !c.claimBonusProgression(ev, round) {
 				continue
 			}
 			c.applyBonusProgression(ev, userId)
@@ -1264,7 +1423,7 @@ go build ./internal/characters/ ./internal/progression/
 - [ ] **Step 5: Run the tests**
 
 Run: `go test ./internal/characters/ -run TestApplyProgression -v`
-Expected: PASS, all nine.
+Expected: PASS, all eight.
 
 - [ ] **Step 6: Commit**
 
@@ -1370,6 +1529,17 @@ func (c *Character) OnCritReceived(damageChannel string, userId int) {
 	if mult <= 0 {
 		return
 	}
+
+	// TRACK BEFORE ROLLING. This is the second half of the faucet fix and it is
+	// the load-bearing half. CheckStatProgression derives virtualRank from
+	// GetStatUseCount, and NOTHING in the game tracks vitality use -- zero
+	// production OnStatUse("vitality") sites, and CheckRegenProgression never
+	// tracked either. So vitality's rank sat at 0 until its VALUE passed 150,
+	// which meant its progression chance was constant no matter how much
+	// vitality the character already had. Moving to the decayed curve without
+	// this would have bought a flat 25% -> 13.5% cut and left the
+	// rank-independence, which is the actual fyttyn mechanism, fully intact.
+	c.TrackStatUse(statName)
 	c.CheckStatProgression(statName, userId, mult)
 }
 
@@ -1388,6 +1558,34 @@ func ToughenStatFor(damageChannel string) string {
 	return ""
 }
 ```
+
+- [ ] **Step 3b: Track the use on the regen path too**
+
+Owner decision, 2026-08-19: do **both** callers, because fixing only the crit
+path leaves open the low-health grind fyttyn actually used.
+
+In `OnRegenTick`, track each related stat before rolling it:
+
+```go
+	for _, statName := range relatedStats {
+		// Same reason as OnCritReceived: CheckRegenProgression rolls but never
+		// records that the stat was exercised, so the rank that decays the
+		// curve never moved. Health/stamina/conviction regen is the largest
+		// source of vitality progression in the game and was entirely
+		// rank-free.
+		c.TrackStatUse(statName)
+		c.CheckRegenProgression(statName, userId, chance)
+	}
+```
+
+**Name the blast radius in the commit.** `OnRegenTick` maps health to vitality
+and willpower, stamina to strength and vitality, conviction to willpower and
+charisma. All of those now decay with use for the first time, so veteran growth
+in them slows sharply. This is the single largest behaviour change in U9 and it
+belongs in spec §7.1, which already lists it.
+
+Run: `go test ./internal/characters/ -v` — expected PASS. A regen-progression
+test asserting a rank-free rate is asserting the faucet; update it and say so.
 
 - [ ] **Step 4: Pin the rates numerically (spec §10)**
 
@@ -1495,10 +1693,23 @@ Do the same in `AttackPlayerVsPlayer` (lines 164, 174 area).
 Delete `trackMobAttackProgression` entirely (`combat.go:185-203`) and its two
 call sites in `AttackMobVsPlayer` and `AttackMobVsMob`.
 
-Also delete `user.Character.OnStatUse("dexterity", user.UserId)` at
-`AttackMobVsPlayer:230` — the defender's dexterity is awarded by
-`AwardDefenceProgression` on a dodge, and by `applyCombatProgression`'s
-defender path. This line was a third source.
+Also delete the defender-dexterity lines. There are **two**, one per mob-attacker
+quadrant, and deleting only the first breaks the four-quadrant parity convention
+that spec §5.3 invokes:
+
+| File:line | Function |
+|---|---|
+| `internal/combat/combat.go:231` | `AttackMobVsPlayer` — `user.Character.OnStatUse("dexterity", user.UserId)` |
+| `internal/combat/combat.go:286` | `AttackMobVsMob` — `mobDef.Character.OnStatUse("dexterity", 0)`, commented "mirrors player defender tracking in AttackMobVsPlayer" |
+
+The defender's dexterity is already awarded by `AwardDefenceProgression` on a
+dodge. These were a third and fourth source. Verify both line numbers before
+editing — the earlier draft of this plan said 230 for the first and did not know
+about the second at all:
+
+```bash
+grep -n 'OnStatUse("dexterity"' internal/combat/combat.go
+```
 
 - [ ] **Step 3: Let the compiler find the orphans**
 
@@ -1552,6 +1763,90 @@ dodge award from AwardDefenceProgression."
 
 ---
 
+## Task 9b: Delete the melee DEFENCE double-progression
+
+The symmetric half of Task 9, found by adversarial review. An earlier draft of
+the spec documented this path as correct behaviour.
+
+**Files:**
+- Modify: `internal/combat/combat_helpers.go` (~line 1227)
+- Test: `internal/hooks/progression_duplication_test.go` (extend)
+
+- [ ] **Step 1: Write the failing test**
+
+```go
+// A defender who dodges four swings in a round takes ONE dodge progression
+// event, not five. combat_helpers.go's sendDefenseMessages rolled per defended
+// swing while processDefenderProgression rolled once per round.
+func TestMeleeDefenceProgressionFiresOncePerRound(t *testing.T) {
+	atk, def := newDualWieldingCombatPairForTest(t)
+	before := def.GetCharacter().GetSkillUseCount("unarmed-combat")
+
+	runOneCombatRoundAllDodgedForTest(t, atk, def)
+
+	if got := def.GetCharacter().GetSkillUseCount("unarmed-combat") - before; got != 1 {
+		t.Errorf("defender dodge tracked %d times in one round, want 1", got)
+	}
+}
+```
+
+- [ ] **Step 2: Run it and record the number**
+
+Run: `go test ./internal/hooks/ -run TestMeleeDefenceProgressionFiresOncePerRound -v`
+Expected: **FAIL**, with a count equal to (swings defended) + 1.
+
+Record the real number. It is the evidence for the PR.
+
+- [ ] **Step 3: Delete the per-swing roll**
+
+In `internal/combat/combat_helpers.go`, delete both lines of this block
+(currently ~1227-1229), keeping the `if skillToProgress != ""` guard's
+surrounding code intact:
+
+```go
+	if skillToProgress != "" {
+		targetChar.TrackSkillUse(skillToProgress)
+		targetChar.CheckSkillProgression(skillToProgress, targetChar.GetUserId(), 1.0)
+	}
+```
+
+Delete the whole `if` block. `processDefenderProgression` →
+`AwardDefenceProgression` → `OnSkillUse` already tracks the use, rolls the
+skill, **and** rolls the primary stat — which this per-swing path never did, so
+the surviving path is the more complete one.
+
+Leave the U6 Task 12 comment above it that explains why the empty-name guard
+exists; move it to `AwardDefenceProgression` if it no longer has a home, since
+the hazard it documents (an empty skill name is not inert) is still real.
+
+- [ ] **Step 4: Run the tests**
+
+Run: `go test ./internal/combat/... ./internal/hooks/... -v`
+Expected: PASS, including the new test.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add internal/combat/combat_helpers.go internal/hooks/progression_duplication_test.go
+git commit -m "fix(u9): delete the melee defence double-progression
+
+The symmetric half of the attack duplication. sendDefenseMessages rolled
+TrackSkillUse + CheckSkillProgression on every defended swing while
+processDefenderProgression rolled the same skill once per round through
+AwardDefenceProgression -- which also rolls the primary stat, so the
+per-swing path was both duplicate and less complete.
+
+A defender who dodged four swings took five skill rolls.
+
+Measured before the fix: <fill in the Step 2 number>.
+
+Found by adversarial review; an earlier draft of the spec documented
+this path as correct and would have allow-listed it into the U9 guard
+test permanently."
+```
+
+---
+
 ## Task 10: Route melee through the seam
 
 **Files:**
@@ -1593,6 +1888,63 @@ func TestMeleeOrdinary_StillOneEventPerRound(t *testing.T) {
 		t.Errorf("weapon-combat tracked %d times, want 1", got)
 	}
 }
+
+// REGRESSION (adversarial review, finding 1): the defender's ordinary defence
+// event is awarded once per round by processDefenderProgression. An earlier
+// draft of this task also emitted it from the seam INSIDE the WeaponHits loop,
+// which awarded it once per weapon hit on top.
+func TestMeleeDefender_OrdinaryEventNotMultipliedByWeaponCount(t *testing.T) {
+	atk, def := newDualWieldingCombatPairForTest(t) // 2+ weapons, so N > 1
+	before := def.GetCharacter().GetSkillUseCount("unarmed-combat")
+
+	runOneCombatRoundAllDodgedForTest(t, atk, def)
+
+	if got := def.GetCharacter().GetSkillUseCount("unarmed-combat") - before; got != 1 {
+		t.Errorf("defender dodge tracked %d times in one round, want 1 regardless of weapon count", got)
+	}
+}
+
+// REGRESSION (adversarial review, finding 2): a fumbled swing has CleanHit
+// false. Deriving the bonus skill from a CleanHit-gated field left it empty and
+// deleted attacker fumble progression entirely.
+func TestMeleeFumble_StillAwardsTheAttacker(t *testing.T) {
+	o := progression.Outcome{
+		AttackerSkill: "weapon-combat",
+		AttackerStat:  "dexterity",
+		Exceptional:   progression.ExcAttackFumble,
+	}
+	evs := progression.BonusEvents(o, progression.Bonuses{Doing: 2.0, Observing: 0.5})
+
+	var found bool
+	for _, e := range evs {
+		if e.Side == progression.SideAttacker && e.Class == progression.ClassFumble {
+			found = true
+			if e.Skill == "" {
+				t.Error("attacker fumble event carries no skill, so no roll fires")
+			}
+		}
+	}
+	if !found {
+		t.Error("no attacker fumble event produced")
+	}
+}
+
+// REGRESSION (adversarial review, finding 3): WeaponHits is empty for an
+// unarmed attacker, and most mobs are unarmed. Evaluating the bonus tier inside
+// the WeaponHits loop deleted the whole tier for them.
+func TestUnarmedAttacker_StillReachesTheBonusTier(t *testing.T) {
+	atk, def := newUnarmedCombatPairForTest(t)
+
+	runOneCombatRoundForcingCritForTest(t, atk, def)
+
+	if len(lastAttackResultForTest(atk).WeaponHits) != 0 {
+		t.Fatal("fixture is not actually unarmed; WeaponHits is populated")
+	}
+	// The bonus tier ran if the round claimed a bonus slot for the defender.
+	if !def.GetCharacter().ClaimedBonusThisRound("unarmed-combat") {
+		t.Error("unarmed attacker's crit produced no defender bonus event")
+	}
+}
 ```
 
 `runOneCombatRoundForcingCritForTest` uses the existing `forceCrit` parameter
@@ -1624,33 +1976,59 @@ Replace the progression portion of `applyCombatProgression` (the block from
 	emitAttackerStatGain(atk, "strength", atkUid)
 	emitAttackerStatGain(atk, "dexterity", atkUid)
 
-	defencesUsed := defenceTypesUsed(*res)
-
+	// ── Ordinary attacker events: per weapon hit, gated on CleanHit ──────
+	// Firing condition unchanged from pre-U9. ORDINARY ONLY: the defender's
+	// ordinary event is awarded once per round by processDefenderProgression
+	// below, so asking for it here as well would award it per weapon hit.
 	for _, wh := range res.WeaponHits {
-		out := progression.Outcome{
-			ToughenStat:  characters.ToughenStatFor("physical"),
-			AttackCrit:   wh.Crit,
-			AttackFumble: wh.Fumble,
-			Floored:      false, // melee swings do not expose a per-swing floor flag
+		if !wh.CleanHit {
+			continue
 		}
-		if wh.CleanHit {
-			out.AttackerSkill = wh.SkillTag
-			out.AttackerStat = skills.GetSkillPrimaryStat(wh.SkillTag)
-		}
-		// The defender's ordinary event is awarded once per defence type per
-		// round by the loop below, not per weapon, so it is deliberately absent
-		// here. The defender still needs a SKILL name for the observed cell.
-		out.DefenderSkill = defenceSkillFor(defencesUsed)
-		out.DefenderStat = defenceStatFor(defencesUsed)
-
-		evs := progression.EventsForContest(out, bonuses)
-		atkChar.ApplyProgression(evs, progression.SideAttacker, atkUid, round)
-		defChar.ApplyProgression(evs, progression.SideDefender, defUid, round)
+		atkChar.ApplyProgression(
+			progression.OrdinaryEvents(progression.Outcome{
+				AttackerSkill: wh.SkillTag,
+				AttackerStat:  skills.GetSkillPrimaryStat(wh.SkillTag),
+			}),
+			progression.SideAttacker, atkUid, round)
 	}
-
 	if len(res.WeaponHits) == 0 && res.CleanHit {
 		atkChar.OnSkillUse(string(skills.UnarmedCombat), atkUid)
 	}
+
+	// ── Bonus tier: ONCE per round, OUTSIDE the weapon loop ─────────────
+	// Outside on purpose. AttackResult.WeaponHits is populated only by the
+	// weapon loop in calculateCombat, so an UNARMED attacker produces none --
+	// which is why the CleanHit fallback above exists. Evaluating the bonus
+	// tier inside the loop would silently delete crit-received toughening and
+	// the whole bonus tier for every unarmed attacker, and most mobs are
+	// unarmed.
+	//
+	// Firing conditions are preserved exactly: res.Crit and res.Fumble are the
+	// per-round aggregates the pre-U9 code used (documented at
+	// attackresult.go:74-79 as reset per swing, so they reflect the LAST
+	// swing). That last-swing semantics is odd and is recorded in the firing
+	// audit for U10b. U9 does not change it.
+	defencesUsed := defenceTypesUsed(*res)
+	bonusSkill, bonusStat := attackerBonusSkillAndStat(*res, atkChar)
+
+	bonusOut := progression.Outcome{
+		AttackerSkill: bonusSkill,
+		AttackerStat:  bonusStat,
+		DefenderSkill: defenceSkillFor(defencesUsed),
+		DefenderStat:  defenceStatFor(defencesUsed),
+		ToughenStat:   characters.ToughenStatFor("physical"),
+		Exceptional: progression.Classify(
+			res.Hit && res.Crit,
+			res.ParryCritDetected || res.DodgeCritDetected || res.BlockCritDetected,
+			res.Fumble,
+			false, // melee exposes no defence-fumble signal on AttackResult
+		),
+		Floored: false, // melee exposes no per-swing floor flag; see step 6
+	}
+
+	bonusEvs := progression.BonusEvents(bonusOut, bonuses)
+	atkChar.ApplyProgression(bonusEvs, progression.SideAttacker, atkUid, round)
+	defChar.ApplyProgression(bonusEvs, progression.SideDefender, defUid, round)
 
 	// Defender dodge/parry/block ordinary events, unchanged: once per defence
 	// type per round.
@@ -1767,6 +2145,30 @@ func defenceStatFor(used []combat.DefenseType) string {
 	_, stat := combat.DefenceSkillAndStat(string(used[0]))
 	return stat
 }
+
+// attackerBonusSkillAndStat names the skill the attacker's crit or FUMBLE
+// bonus trains.
+//
+// It deliberately does NOT gate on CleanHit. A fumbled swing has CleanHit
+// false, so deriving the bonus skill from a CleanHit-gated field would leave it
+// empty and applyBonusProgression would skip the roll -- silently deleting
+// attacker fumble progression, which pre-U9 fired via OnCriticalFailure with
+// the real skill tag and which spec 7.1 lists as an INCREASE.
+//
+// Falls back through: the first weapon's tag, then the character's current
+// combat skill (correct for the unarmed case, which has no WeaponHits at all).
+func attackerBonusSkillAndStat(res combat.AttackResult, atkChar *characters.Character) (skill, stat string) {
+	if len(res.WeaponHits) > 0 {
+		skill = res.WeaponHits[0].SkillTag
+	}
+	if skill == "" && atkChar != nil {
+		skill = string(atkChar.GetCombatSkillTag())
+	}
+	if skill == "" {
+		return "", ""
+	}
+	return skill, skills.GetSkillPrimaryStat(skill)
+}
 ```
 
 Then simplify `processDefenderProgression` to consume `defenceTypesUsed`:
@@ -1802,8 +2204,19 @@ Changing WHEN any of this fires is U10b's job."
 
 ## Task 11: Route the channel-defence path through the seam
 
-This covers spell, ranged and social defences, which resolve through
+This covers the channels that actually resolve through
 `resolveChannelDefenceWithRunner` rather than through melee's swing loop.
+
+**Scope, corrected:** that is the **five spell sites and `combat_taunt.go:244`**
+— not "spell, ranged and social" as an earlier draft claimed. Nothing calls it
+with `ChannelRanged`: `shoot` has its own `rangedDefenseScore` path. And
+`ChannelMelee` is documented at `defence_sets.go:32-34` as never routed here, so
+the test below must construct its own `ChannelDefenceResult` rather than assume
+a melee call reaches this function. Verify before writing the test:
+
+```bash
+grep -rn "ResolveChannelDefence\|resolveChannelDefenceWithRunner" --include=*.go internal/ | grep -v _test
+```
 
 **Files:**
 - Modify: `internal/combat/defence_multiplier.go`
@@ -1844,16 +2257,16 @@ func TestChannelDefence_FlooredAwardsNoBonus(t *testing.T) {
 	// A floored save is the system overriding the dice; it is not a defensive
 	// crit and must not pay the bonus. Assert via the dedupe map, which only a
 	// bonus event touches.
-	if defender.claimedBonusThisRoundForTest("unarmed-combat") {
+	if defender.ClaimedBonusThisRound("unarmed-combat") {
 		t.Error("a floored outcome fired a bonus progression event")
 	}
 }
 ```
 
-`claimedBonusThisRoundForTest` is a small test-only accessor on `Character`
-in an `export_test.go`-style file inside `internal/characters`, since
-`bonusProgressionRound` is unexported. Check whether the package already has an
-`export_test.go` convention before adding one.
+`ClaimedBonusThisRound` is the **exported** accessor added in Task 7. It cannot
+be a `_test.go` helper: test files compile only into their own package's test
+binary, so a helper in `internal/characters` would be invisible here in
+`internal/combat`.
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -1906,11 +2319,26 @@ func awardChannelDefenceBonus(channel AttackChannel, attacker, defender *charact
 		return
 	}
 
-	defenceCrit := !res.Success && res.DefenseRoll.ZScore >= critZScore
-	defenceFumble := res.DefenseRoll.ZScore <= -critZScore
-	attackCrit := res.Success && res.AttackRoll.ZScore >= critZScore
-	attackFumble := res.AttackRoll.ZScore <= -critZScore
-	if !defenceCrit && !defenceFumble && !attackCrit && !attackFumble {
+	// Crit is decided by NORMALIZED MARGIN, not by a self-relative z-score.
+	// Since 5.11d the engine tests margin/(stdDev*sqrt2) against
+	// ContestCritThreshold; re-deriving crit from AttackRoll.ZScore here would
+	// fire the bonus tier on a DIFFERENT set of swings than the game narrates
+	// as crits, which is two mechanisms answering one question.
+	//
+	// Note the sign: Result.Margin is ATTACK-positive, so the defence side
+	// negates it, exactly as defenceDamageMultiplier does at
+	// defence_multiplier.go:307.
+	attackCrit := AttackContestCrit(res.Margin, res.AttackRoll)
+	defenceCrit := DefenseContestCrit(-res.Margin, res.DefenseRoll)
+
+	// Fumble stays self-relative: it is a property of one bad roll, not of the
+	// gap between two. ContestCritThreshold is the same magnitude in both
+	// directions.
+	attackFumble := res.AttackRoll.ZScore <= -ContestCritThreshold
+	defenceFumble := res.DefenseRoll.ZScore <= -ContestCritThreshold
+
+	exceptional := progression.Classify(attackCrit, defenceCrit, attackFumble, defenceFumble)
+	if exceptional == progression.ExcNone {
 		return
 	}
 
@@ -1923,10 +2351,7 @@ func awardChannelDefenceBonus(channel AttackChannel, attacker, defender *charact
 		DefenderSkill: defSkill,
 		DefenderStat:  defStat,
 		ToughenStat:   characters.ToughenStatFor(channelDamageChannel(channel)),
-		AttackCrit:    attackCrit,
-		AttackFumble:  attackFumble,
-		DefenceCrit:   defenceCrit,
-		DefenceFumble: defenceFumble,
+		Exceptional:   exceptional,
 	}
 
 	bal := configs.GetBalanceConfig()
@@ -1935,20 +2360,14 @@ func awardChannelDefenceBonus(channel AttackChannel, attacker, defender *charact
 		Observing: float64(bal.ObservedCritProgressionBonus),
 	}
 
-	// Only the bonus cells: EventsForContest emits ordinary events for any side
-	// whose Skill/Stat is populated, and those are already awarded elsewhere on
-	// this path.
-	all := progression.EventsForContest(out, bonuses)
-	bonusOnly := all[:0:0]
-	for _, e := range all {
-		if e.Class.IsBonus() {
-			bonusOnly = append(bonusOnly, e)
-		}
-	}
+	// BonusEvents, not EventsForContest: the ordinary events on this path are
+	// already awarded by AwardDefenceProgression above and by the attacker's
+	// own call site, so asking for them here would double-award.
+	evs := progression.BonusEvents(out, bonuses)
 
 	round := util.GetRoundCount()
-	attacker.ApplyProgression(bonusOnly, progression.SideAttacker, attacker.GetUserId(), round)
-	defender.ApplyProgression(bonusOnly, progression.SideDefender, defender.GetUserId(), round)
+	attacker.ApplyProgression(evs, progression.SideAttacker, attacker.GetUserId(), round)
+	defender.ApplyProgression(evs, progression.SideDefender, defender.GetUserId(), round)
 }
 ```
 
@@ -1966,11 +2385,23 @@ first mapping and reuse it:
 grep -n "func ChannelAttackScore" -A25 internal/combat/*.go
 ```
 
-`critZScore` is the existing crit threshold constant. Find its real name:
+**`ChannelAttackScore` is where the spell attacker's stat is decided**, and it
+independently builds `Willpower + Spellcasting × SkillWeight`
+(`defence_multiplier.go:64-66`). Task 13 moves the spell attack roll onto
+`primarystat` but does **not** touch this. Left alone, a manifestation spell
+would roll to hit on charisma in one place and contest the defence on willpower
+in another. Task 13 step 5a now owns it; this task must not fork a second
+mapping.
 
-```bash
-grep -rn "ZScore >= 2.0\|critThreshold\|CritZScore" --include=*.go internal/combat/ | head
-```
+The crit helpers already exist and are **verified**, so nothing needs finding:
+
+| Symbol | Where |
+|---|---|
+| `AttackContestCrit(margin, roll)` | `internal/combat/crit_floor.go:68` |
+| `DefenseContestCrit(margin, roll)` | `internal/combat/crit_floor.go:85` |
+| `ContestCritThreshold` (= 2.0) | `internal/combat/margin_crit.go:90` |
+
+There is no `critZScore` constant; an earlier draft of this plan invented one.
 
 - [ ] **Step 5: Run the tests**
 
@@ -2049,6 +2480,24 @@ becomes:
 ```
 
 Apply the identical deletion to the mob branch (~468-474).
+
+- [ ] **Step 3b: Move `OnFirstMobKill`'s hardcoded 2.0 onto the knob**
+
+There are **two** bare `2.0` literals in `internal/characters/progression.go`,
+not one. `:301` (`OnCriticalSuccess`) is deleted below anyway, but `:332`
+(`OnFirstMobKill`) would have survived, leaving standing rule 1 unsatisfied
+while §6 claimed otherwise.
+
+```go
+	if configs.GetGamePlayConfig().UseSkillProgression {
+		bonus := float64(configs.GetBalanceConfig().CritProgressionBonus)
+		if c.CheckSkillProgression("combat", userId, bonus) {
+```
+
+**Leave `buffSkillMult = 2.0` at `:105` alone.** That is the Skill Attunement
+buff's doubling, a buff effect rather than a crit multiplier; folding it into
+`CritProgressionBonus` would couple two unrelated things to one knob. It is a
+separate rule-1 item and is filed, not fixed here.
 
 - [ ] **Step 4: Delete the phantom skill keys**
 
@@ -2238,6 +2687,46 @@ At line 1451 also replace the hardcoded spellcasting rank with the caster's
 rank in the spell's actual skill (manifestation for manifestation-school
 spells), matching the branch already used for progression.
 
+- [ ] **Step 5a: Fix the SKILL rank too, in three places**
+
+Replacing only the *stat* produces `Charisma + spellcasting-rank × weight` for a
+manifestation spell — the manifestation stat mixed with the spellcasting skill.
+Adversarial review caught this; an earlier draft fixed only line 1451.
+
+The lines immediately above `:85` and `:1147` read:
+
+```go
+skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)   // and mob.Character at :1147
+```
+
+Both must resolve the spell's actual skill, the same way the progression branch
+already does:
+
+```go
+castSkill := skills.Spellcasting
+if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
+	castSkill = skills.Manifestation
+}
+skillLevel := user.Character.GetSkillLevel(castSkill)
+```
+
+**And `combat.ChannelAttackScore` (`defence_multiplier.go:64-66`) independently
+builds the spell attacker's score as `Willpower + Spellcasting × SkillWeight`.**
+Left untouched, the same spell would roll to hit on charisma and contest the
+defence on willpower. It needs the spell's stat and skill threaded in, or an
+explicit decision — recorded here — that the defence contest deliberately stays
+on Willpower for every spell.
+
+**Stop and ask before choosing.** Threading `primarystat` into
+`ChannelAttackScore` changes the *hit rate* of every manifestation spell against
+quell, which is a balance change beyond the "near-zero delta" §8.2 promises.
+Verify first:
+
+```bash
+grep -n "func ChannelAttackScore" -A25 internal/combat/defence_multiplier.go
+grep -rn "ChannelAttackScore" --include=*.go internal/ | grep -v _test
+```
+
 - [ ] **Step 6: Override the progression stat**
 
 In `NewRound_DoCombat_helpers.go`, after the `OnSkillUseScaled` call, add the
@@ -2341,13 +2830,37 @@ Charm is the only file of 59 that never declared it. Its school is already
 `Charisma + Manifestation`, so this makes the data agree with behaviour that
 already exists.
 
-- [ ] **Step 5: Verify the whole set loads**
+- [ ] **Step 4b: Add `primarystat` to the 8 upstream default-world spells**
+
+**This is a boot-panic our own config would have hidden.**
+`_datafiles/world/default/spells/` holds 8 files and **none declares
+`primarystat`**, while `internal/configs/config.filepaths.go:23` defaults
+`DataFiles` to `_datafiles/world/default` whenever the key is absent. Our
+`config.yaml` sets it to the dogmud tree, so the Task 17 boot test passes — but
+a fresh checkout, a stripped container config or an ephemeral playtest env would
+panic the moment `primarystat` became required.
+
+Owner decision, 2026-08-19: fix the 8 files rather than soften the validator,
+because a silent fallback is exactly what let this field mean nothing for its
+whole life and would swallow typos as well as omissions.
 
 ```bash
-grep -c "^primarystat:" _datafiles/world/dogmud/spells/*.yaml | grep ":0$"
+ls _datafiles/world/default/spells/*.yaml
+grep -L "primarystat" _datafiles/world/default/spells/*.yaml
 ```
 
-Expected: no output — every one of the 59 files now declares it.
+Add `primarystat: willpower` to each unless its `schools:` block says
+`manifestation`, in which case use `charisma` — check each file, do not assume.
+
+- [ ] **Step 5: Verify BOTH trees load**
+
+```bash
+grep -c "^primarystat:" _datafiles/world/dogmud/spells/*.yaml   | grep ":0$"
+grep -c "^primarystat:" _datafiles/world/default/spells/*.yaml  | grep ":0$"
+```
+
+Expected: no output from either — all 59 dogmud files and all 8 default-world
+files now declare it.
 
 - [ ] **Step 6: Commit**
 
@@ -2403,17 +2916,32 @@ import (
 // forage, search, steal, and the rest) are deliberately untouched by U9 and are
 // not covered by this guard. Routing them is U10b's job.
 var allowedDirectProgression = map[string]bool{
-	// The applier itself, and the shared five-defence mapping.
-	filepath.Join("internal", "characters", "progression.go"):      true,
-	filepath.Join("internal", "combat", "defence_multiplier.go"):   true,
+	// The shared five-defence mapping (AwardDefenceProgression).
+	filepath.Join("internal", "combat", "defence_multiplier.go"): true,
 	// Melee's unarmed fallback and the quadrant-flavoured stat-gain emitter.
 	filepath.Join("internal", "hooks", "NewRound_DoCombat_unified.go"): true,
 	filepath.Join("internal", "hooks", "NewRound_DoCombat_helpers.go"): true,
+	// Crafting is Category C. Deliberately out of U9's scope and out of the
+	// contest paths; U10b routes it. Listed so its exemption is a decision on
+	// the record rather than an accident of which files got scanned.
+	filepath.Join("internal", "hooks", "NewRound_MobRoundTick.go"):  true,
+	filepath.Join("internal", "hooks", "NewRound_UserRoundTick.go"): true,
+
+	// internal/combat/combat_helpers.go is DELIBERATELY ABSENT. Task 9b deletes
+	// the per-swing defender roll that lives there. If this guard flags it,
+	// something reintroduced the duplication -- do NOT silence it by adding a
+	// row here.
 }
 
 var progressionCalls = map[string]bool{
 	"OnSkillUse": true, "OnSkillUseScaled": true, "OnStatUse": true,
 	"CheckSkillProgression": true, "CheckStatProgression": true,
+	// The consolidated entry points too, so the calls U9 just deleted cannot
+	// quietly return. TrackSkillUse/TrackStatUse are included because a bonus
+	// event that tracks is a curve-decay bug the rate tests would not catch.
+	"OnCritReceived": true, "OnCriticalSuccess": true, "OnCriticalFailure": true,
+	"TrackSkillUse": true, "TrackStatUse": true,
+	"CheckRegenProgression": true,
 }
 
 func TestContestPathsFireProgressionOnlyThroughTheApplier(t *testing.T) {
@@ -2450,14 +2978,31 @@ func TestContestPathsFireProgressionOnlyThroughTheApplier(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run it**
+- [ ] **Step 2: Run it, expecting a specific failure set**
 
 Run: `go test ./internal/progression/ -run TestContestPaths -v`
-Expected: PASS.
 
-If it flags a file, decide deliberately: either route that site through the
-applier, or add it to `allowedDirectProgression` **with a comment saying why**.
-An allow-list entry with no reason is how the guard becomes decoration.
+**Do not expect a clean pass on the first run.** Scanned against the tree before
+U9, this guard flags three files, and each has a different correct answer:
+
+| Flagged | Correct response |
+|---|---|
+| `internal/combat/combat_helpers.go:1228` | **Fixed by Task 9b**, which deletes it. If it still flags, Task 9b was not applied. Never allow-list it. |
+| `internal/hooks/NewRound_MobRoundTick.go:496` | Mob crafting: Category C, allow-listed above with a reason. |
+| `internal/hooks/NewRound_UserRoundTick.go:591` | User crafting: same. |
+
+So the expected result **after Tasks 9, 9b, 10 and 11** is PASS. Run it early
+anyway to confirm it flags exactly those three and nothing else — a fourth hit
+is a site nobody has accounted for.
+
+Note the guard scans `internal/combat` and `internal/hooks` only.
+`internal/characters/progression.go` is where the applier lives and is never
+scanned, so listing it in the allow-list would be dead weight; an earlier draft
+of this plan did exactly that.
+
+If it flags something new, decide deliberately: either route that site through
+the applier, or allow-list it **with a comment saying why**. An allow-list entry
+with no reason is how the guard becomes decoration.
 
 - [ ] **Step 3: Commit**
 
@@ -2653,7 +3198,16 @@ merges before or after a feel check.
 ## Notes for the implementer
 
 - **Task 1 is a gate.** If the melee duplication does not reproduce, stop and
-  report. Tasks 9 and 10 assume it.
+  report. Tasks 9, 9b and 10 assume it.
+- **This plan was revised after a blind adversarial review**, which found three
+  showstoppers in Task 10 alone (a defender rate multiplication, attacker fumble
+  progression deleted outright, and the whole bonus tier dropped for unarmed
+  attackers), plus a fifth defect the spec had documented as correct behaviour.
+  Where a step says "an earlier draft did X", that is not commentary — it is the
+  specific mistake the step exists to prevent you repeating.
+- **Two steps deliberately stop and ask** rather than guessing: Task 13 step 5a
+  (whether `ChannelAttackScore` moves off Willpower, which changes spell hit
+  rates) and any fourth hit from the Task 15 guard.
 - **Do not change when progression fires.** Every task preserves existing firing
   conditions. If a change seems obviously right, it belongs in the Task 2 audit
   as a recommendation, not in the code.
