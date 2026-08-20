@@ -681,6 +681,29 @@ the free supply-handoff paths — these are NOT routed through `actions.Sell`.
 
 ---
 
+## Counter tier (U6b Task 10)
+
+`combat_counter.go` wires the counter tier on this package's exits:
+
+- `counterSkillMoveExit(actor, defender, move, channel, sameRoom)` fires
+  `combat.ExecuteCounter` at every `ExecuteSkillMove` consumer's
+  defensive-crit exit (bash/gore/hamstring/kick/maul/pounce/rake/throttle/
+  trip/drain/drain-area, plus `ExecuteFire` with `sameRoom = !crossRoom` —
+  the cross-room shot is the ONE uncounterable attack). It refuses results
+  carrying `SkillMoveResult.IsCounter`, so a counter never earns a counter.
+- `executeCounterTaunt(counterer, target)` is the defy carve-out: a defy CRIT
+  counter-TAUNTS instead of counter-swinging, wired at `ExecuteTaunt`'s exit
+  (`counterTauntExit`) because `internal/combat` cannot import this package.
+  It bypasses the special-move cooldown, U8 admission cost, and all aggro
+  mutation (owner decisions 2026-08-19), reuses only the contest + damage
+  shape of taunt resolution, and never inspects its own contest's
+  `DefensiveCrit`. `TauntResult.Counter` carries its outcome.
+
+Counter-swings route through the seam, so the ORIGINAL attacker defends them
+and is charged + progressed for it (the countered-party economy). Narration
+is generic Task 10 text dispatched from these helpers; Task 11 ships
+channel-correct counter triads.
+
 ## Available Actions Summary
 
 | Action | Package | Actor→Target | Returns | Messaging | Cooldown |
@@ -818,7 +841,7 @@ the rest are ordinary verbs.
 | Readiness gates | `action_readiness.go`, `command_readiness.go` |
 | Targeting | `target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go` |
 | Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go`, `aggression.go` |
-| Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
+| Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
 | Casting | `cast.go`, `cast_interrupt.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `scan.go`, `track.go`, `surprise_attack.go`, `steal.go` |

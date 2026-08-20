@@ -112,6 +112,9 @@ func ExecuteBash(actor Actor) BashResult {
 		KnockdownToSupine: true, // bash sends defender backward
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	// Determine source/target types for analytics.
 	sourceType := combat.User
 	if !actor.IsPlayer() {

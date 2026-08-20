@@ -1444,6 +1444,25 @@ still returns the materials. Subtracting what the target already reserves is
 what makes re-enchanting work, since the old enchantment is replaced rather
 than stacked.
 
+## Counter tier wiring (U6b Task 10)
+
+`counter_tier.go` hosts `fireSpellCounterTier`, called at all FOUR spell
+quadrants in `spell_resolution.go` (`resolveAgainstMob`,
+`resolveAgainstPlayer`, `resolveMobSpellAgainstMob`,
+`resolveMobSpellAgainstPlayer`): a defensive crit against a cast fires
+`combat.ExecuteCounter` — a free seam-routed counter-swing at the caster.
+Both directions are wired on purpose; covering only the player-attacker
+direction would hand mobs a counter immunity nobody decided. Spells are
+same-room by construction, so the reach gate always passes here.
+
+Related, in `combat_shared_helpers.go`: melee riposte's damage fraction reads
+`CounterDamagePercent` (shipped 0.5 — the old literal, behaviour unchanged),
+and the block is skipped entirely at 0 because `CalcRawDamage` treats
+`itemMult <= 0` as "unset" 0.30. Riposte stays UNCONTESTED (its historical
+maths); only the cross-channel tier's swing runs through the seam. The
+auto-trip/auto-bash `ExecuteSkillMove` calls carry `IsCounter`, which the
+tier's wiring refuses — counters never recurse.
+
 ## Dependencies
 
 - `internal/events` - Event system for listener registration and event processing

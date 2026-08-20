@@ -66,6 +66,11 @@ type TauntResult struct {
 	// AggroPulled is true when the taunt forced the target to switch aggro
 	// to the taunter (target was fighting someone else).
 	AggroPulled bool
+
+	// Counter reports the defy carve-out (U6b Task 10): a defy CRIT answers
+	// with a free counter-taunt from the target, wired at this call site
+	// because internal/combat can never call taunt resolution.
+	Counter CounterTauntResult
 }
 
 func tauntTargetIsCurrent(snapshot, current AggroTarget, originalRoomID int, char *characters.Character) bool {
@@ -307,6 +312,13 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		char.Aggro.RoundsWaiting = 1
 	}
 
+	// U6b Task 10, the defy carve-out: a defy CRIT counter-taunts, replacing
+	// the counter-swing every other channel gets. Wired here — after the
+	// taunt has fully resolved (aggro pull included) — because internal/combat
+	// cannot call taunt resolution. The entry point bypasses cooldown, U8
+	// admission cost, and aggro mutation, and can never earn a counter.
+	counter := counterTauntExit(actor, char, target, out)
+
 	return TauntResult{
 		Cost:        cost,
 		Target:      target,
@@ -317,5 +329,6 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		DmgDesc:     dmgDesc,
 		Defence:     out,
 		AggroPulled: agroPulled,
+		Counter:     counter,
 	}
 }

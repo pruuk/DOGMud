@@ -44,6 +44,11 @@ type SkillMoveResult struct {
 	// normalized margin, and the committed cost — for narration and the
 	// Task 10 counter tier.
 	Defence ChannelDefenceResult
+
+	// IsCounter echoes SkillMoveParams.IsCounter so counter-tier wiring that
+	// only sees the RESULT can refuse to fire off a move that IS a counter
+	// (Task 10: a counter never earns a counter).
+	IsCounter bool
 }
 
 // SkillMoveParams configures a skill move (bash/kick/trip) execution.
@@ -106,7 +111,7 @@ func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
 // executeSkillMoveWithRunner is ExecuteSkillMove with an injectable contest
 // runner, so tests can force crit/fumble/defended outcomes deterministically.
 func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) SkillMoveResult {
-	result := SkillMoveResult{}
+	result := SkillMoveResult{IsCounter: p.IsCounter}
 
 	// Get target's max HP for damage descriptions
 	result.TargetMaxHP = p.Defender.HealthMax.Value

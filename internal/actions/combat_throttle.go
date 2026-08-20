@@ -120,6 +120,9 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	bleedDmg := 0
 	interrupted := false
 

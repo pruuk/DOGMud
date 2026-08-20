@@ -1433,7 +1433,8 @@ values directly.
 | `combat/criteffects.go` | `AttemptCritDisarm`, `SetGrappleOpportunity`, `HasGrappleOpportunity`, `GetGrappleOpportunityBonus`, `ClearGrappleOpportunity` |
 | `combat/grapple.go` | `AttemptGrapple`, `ApplyGrappleResult`, `CheckClinchProgression`, `CheckGroundedEscape`, `ApplyPositionProgression`, `IsThirdPartyAttack` |
 | `combat/grapple_move.go` | `ExecuteGrappleMove`, `GrappleMoveResult`, `GrappleMoveDisarmWeapon` |
-| `combat/skill_moves.go` | `ExecuteSkillMove`, `SkillMoveResult`, `SkillMoveParams` |
+| `combat/skill_moves.go` | `ExecuteSkillMove`, `SkillMoveResult`, `SkillMoveParams`. U6b Task 10: `SkillMoveResult.IsCounter` echoes `SkillMoveParams.IsCounter` so counter-tier wiring that only sees the result can refuse to fire off a move that IS a counter |
+| `combat/counter.go` | U6b Task 10 counter tier: `ExecuteCounter(defender, attacker, channel, sameRoom) CounterResult` — one free counter-swing for a defensive crit, priced by `CounterDamagePercent` (0 = off-switch, handled here because `CalcRawDamage` treats `itemMult <= 0` as "unset" 0.30), reach-gated (`sameRoom` false = the cross-room shot, the ONE uncounterable attack), routed through `ExecuteSkillMove` with `IsCounter` so the countered party defends it (charged + progressed: the countered-party economy) and no counter can chain. The defy carve-out (counter-TAUNT) lives in `internal/actions/combat_counter.go` — this package cannot call taunt resolution |
 | `combat/calculations.go` | Hit chance, crit probability, power ranking, alignment calculations |
 | `combat/descriptions.go` | `GetDamageDescription`, `GetHealDescription`, `GetDifficultyDescription` helpers |
 | `combat/taunt_messages.go` | Taunt/conviction combat messages |

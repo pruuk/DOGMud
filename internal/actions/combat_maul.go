@@ -113,6 +113,9 @@ func ExecuteMaul(actor Actor) MaulResult {
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	// On hit: apply bleed condition (duration 5, magnitude = Strength/8,
 	// min 3) — stronger bleed than rake.
 	bleedDmg := 0

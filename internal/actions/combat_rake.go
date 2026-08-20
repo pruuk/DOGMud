@@ -113,6 +113,9 @@ func ExecuteRake(actor Actor) RakeResult {
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	// On hit: apply bleed condition (duration 4, magnitude = Strength/12,
 	// min 2).
 	bleedDmg := 0

@@ -155,6 +155,9 @@ func ExecuteKick(actor Actor) KickResult {
 		MitigationMultiplier: mitigationMult,
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	// Stomp extends prone duration on a successful hit.
 	if result.Hit && variant == KickStomp &&
 		(target.Char.IsProne() || target.Char.IsSupine()) {

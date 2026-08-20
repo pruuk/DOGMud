@@ -359,6 +359,10 @@ func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, 
 	// defence stopped or blunted it — but keeps its partial damage.
 	combat.RecordSpell(combat.User, combat.Mob, !out.Defended, out.AttackerCrit, false, out.Defended, dmgDealt, out.AttackRollZScore, user.Character, &mob.Character, round)
 
+	// U6b Task 10: the MOB defender's crit defence counters the player caster.
+	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
+		&mob.Character, user.Character, nil, user)
+
 	return false
 }
 
@@ -862,6 +866,11 @@ func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room
 			target.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
 		}
 	}
+
+	// U6b Task 10: the defending player's crit defence counters the caster.
+	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
+		target.Character, user.Character, target, user)
+
 	return false
 }
 
@@ -1346,6 +1355,10 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		return
 	}
 	applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, out)
+
+	// U6b Task 10: the defending mob's crit defence counters the mob caster.
+	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
+		&target.Character, &caster.Character, nil, nil)
 }
 
 // resolveMobSpellAgainstPlayer runs the ONE channel contest for a mob-cast
@@ -1529,6 +1542,10 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 	// Stage 30.1: a defended cast records in the old fizzle column — the
 	// defence stopped or blunted it — but keeps its partial damage.
 	combat.RecordSpell(combat.Mob, combat.User, !out.Defended, isCrit, false, out.Defended, mobSpellDmg, out.AttackRollZScore, &caster.Character, target.Character, round)
+
+	// U6b Task 10: the PLAYER defender's crit defence counters the mob caster.
+	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
+		target.Character, &caster.Character, target, nil)
 }
 
 // resolveIdentify finds the named item on the caster and renders

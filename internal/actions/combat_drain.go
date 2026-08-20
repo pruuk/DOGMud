@@ -126,6 +126,9 @@ func ExecuteDrain(actor Actor) DrainResult {
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	// On hit: bleed the victim. Bleed is a status effect (binary), so it stays
 	// gated on a clean hit.
 	bleedDmg := 0
@@ -284,6 +287,9 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 			DamagePercent: float64(cfg.TripDamagePercent),
 			DamageStat:    char.Stats.Strength.ValueAdj,
 		})
+
+		// U6b Task 10: each player's own crit defence earns their own counter.
+		counterSkillMoveExit(actor, target.Character, moveResult, combat.ChannelMelee, true)
 
 		pr := DrainAreaPlayerResult{UserId: uid, MoveResult: moveResult}
 

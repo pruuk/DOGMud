@@ -109,6 +109,9 @@ func ExecuteGore(actor Actor) GoreResult {
 		DamageStat:        char.Stats.Strength.ValueAdj,
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	// Determine source/target types for analytics.
 	sourceType := combat.User
 	if !actor.IsPlayer() {

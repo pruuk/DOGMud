@@ -139,6 +139,9 @@ func ExecuteTrip(actor Actor) TripResult {
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+
 	// Choose the move name for analytics based on variant.
 	moveName := "trip"
 	if variant == TripTailsweep {

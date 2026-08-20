@@ -237,11 +237,19 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 	cfg := configs.GetBalanceConfig()
 
 	// ── Parry crit → riposte: free counter-swing ────────────────────────
-	if roundResult.ParryCritDetected {
+	// U6b Task 10: the damage fraction is the CounterDamagePercent knob (the
+	// same knob pricing the cross-channel counter tier; shipped 0.5, exactly
+	// the old literal). 0 is the documented off-switch and must be handled
+	// HERE: CalcRawDamage treats itemMult <= 0 as "unset" and substitutes
+	// 0.30, which would turn the off-switch into a 30%-damage riposte. The
+	// riposte otherwise keeps its historical uncontested maths — melee
+	// behaviour is unchanged at the shipped value.
+	counterPct := float64(cfg.CounterDamagePercent)
+	if roundResult.ParryCritDetected && counterPct > 0 {
 		raw := combat.CalcRawDamage(
 			defender.Stats.Strength.ValueAdj,
 			defender.GetCombatSkillLevel(),
-			0.5, // riposte hits at half weapon damage
+			counterPct,
 			combat.ChannelPhysical,
 		)
 		dmgMean := combat.ApplyMitigation(raw, attacker.GetPhysicalMitigation(),
