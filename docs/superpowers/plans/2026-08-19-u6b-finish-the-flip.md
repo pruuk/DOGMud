@@ -48,10 +48,10 @@ onto the U9 branch.
 
 | # | Assumption | Source |
 |---|---|---|
-| 1 | Fizzle becomes a partial-damage defence outcome; only the word is a copy question | Gate decision §5.2 (forced by the numbers) |
+| 1 | Fizzle becomes a partial-damage defence outcome. **Copy ratified (owner, 2026-08-19):** defended casts speak the existing quell/dodge/block defence triads, exactly as melee narrates defences; the WORD "fizzle" survives only as flavor inside one or two quell defensive-crit (heavy-band) variants, where the spell truly is fully stopped; fumbles keep the backfire copy. "Fizzle" must never narrate a partial hit — that would lie about what happened. | Gate decision §5.2; owner copy decision |
 | 2 | `shoot` keeps Perception as its attack stat; only the weight unifies | Spec §8.2 |
 | 3 | **The crit bar hoists as a pure function of the CHANNEL's skill pair, with a shipped ceiling.** Owner decision, 2026-08-19: `CritBarFor(atkRank, defRank)` = `base 2.0 − slope×(atkRank − defRank)`, clamped to `[CritBarFloor, CritBarCeiling]`, with three new config knobs: `CritBarSkillSlope` **0.05**, `CritBarFloor` **1.5**, `CritBarCeiling` **3.0** (0 = uncapped). The attacker's rank is `AttackSide.SkillRank` (the channel's governing skill); the defender's rank is the WINNING defence's governing skill (via `DefenceSkillAndStat`). The blind review's finding-1 objection (a melee-skill hoist would couple weapon skill to spell crits and collapse the §5.1 royalty crits) is answered by BOTH halves: the per-channel pair removes the coupling, and the 3.0 ceiling keeps gold able to buy crits back against veterans on every channel — Queen@1000g crits Meirok ~47% (vs 82.5% at the old const bar, ~5% uncapped). **The ceiling changes live MELEE too** (a 1000g King goes from ~0.1% to ~28% melee crits vs Meirok — the old melee bar was uncapped); named in Task 1. **Accuracy and Blink are deleted**: their two bar reads are the only references in the codebase, no shipped content grants either flag, and the owner does not recognise them — upstream stowaways. | Owner directives 2026-08-19; review finding 1 |
-| 4 | `throw` gets the ranged defence set (dodge, block) and margin-scaled damage | Spec §4.5; modelled in appendix C |
+| 4 | `throw` reuses `ChannelRanged`'s set — **ratified (owner, 2026-08-19)**: it is AoE resolved PER TARGET (one grenade, each target contests independently with their own margin and own crit-or-not); every target can dodge (dive clear), a SHIELDED target can block (hunker behind the shield), and the Task 2 equipment gate means shieldless targets get dodge only. No throw-specific set row. Margin-scaled damage per target. | Spec §4.5; modelled in appendix C; owner decision |
 | 5 | Counters are free (no cost), like riposte today; non-melee channels get a counter-SWING on any defensive crit; melee keeps its per-defence trio (riposte/auto-trip/auto-bash) | Spec §4.3 "riposte's mechanism" |
 | 6 | Defy's crit counter-taunts INSTEAD of counter-swinging | Owner decision 2026-08-19 |
 | 7 | The fumble-before-success ordering (fumble aborts even winning attacks, capping hit at 87.5%−fumble) is KEPT and documented, now uniformly | Modelling §6.3 "document or change, deliberately" |
@@ -823,10 +823,13 @@ already ran"), and `characters.CalcSpellAttack` once nothing calls it. The mob
 path (`resolveAgainstMob` and the mob-caster variants) gets the identical shape
 with `mob.Character`.
 
-**Copy decision:** the "fizzles" strings become the channel defence narration
-(`sendSpellChannelDefenceMessages` already exists and renders quell triads).
-Where a defended cast previously printed "fizzles", the quell/dodge/block triad
-now speaks. Keep the fumble/backfire copy untouched.
+**Copy decision (ratified — Assumption 1):** the "fizzles" strings are deleted;
+defended casts speak the channel defence triads
+(`sendSpellChannelDefenceMessages` already exists and renders them). The word
+"fizzle" survives ONLY as flavor inside one or two quell defensive-crit
+(heavy-band) variants — Task 9 adds those variants — where the spell truly is
+fully stopped. It must never narrate a partial hit. Fumble/backfire copy
+untouched.
 
 - [ ] **Step 4: Delete the knob**
 
@@ -1090,7 +1093,10 @@ takes the attack name. Check the data shape first
 (`ls _datafiles/world/dogmud/defense-messages/` and read one file — quell.yaml
 landed in U8 with weak/normal/heavy bands, 5 variants per band). Every
 newly-defendable attack (16) must render: defender line, attacker line, room
-line, per applicable defence, per band. **Player-copy rules: 80-char wrap, no
+line, per applicable defence, per band. **Also in this task (Assumption 1):
+add one or two "fizzle"-flavored variants to quell's defensive-crit / heavy
+band** ("the working fizzles against your quelling will" class) — the word's
+only surviving home, used exclusively where the spell is fully stopped. **Player-copy rules: 80-char wrap, no
 em dashes, no raw numbers, ESL-clear.** This is content — Task 21's adversarial
 playtest gate covers it; do not skip variants ("shipping the mechanic without
 the text repeats the gap U8 closed for quell and defy").
