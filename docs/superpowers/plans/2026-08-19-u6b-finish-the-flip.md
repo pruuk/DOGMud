@@ -50,7 +50,7 @@ onto the U9 branch.
 |---|---|---|
 | 1 | Fizzle becomes a partial-damage defence outcome; only the word is a copy question | Gate decision §5.2 (forced by the numbers) |
 | 2 | `shoot` keeps Perception as its attack stat; only the weight unifies | Spec §8.2 |
-| 3 | **The BUFF half of the crit bar hoists; the skill-shift stays melee-only.** `CritBarFor` = base 2.0, Accuracy→1.5, Blink→2.5, NO skill shift; melee composes its existing skill-difference shift on top (bit-identical for melee). This satisfies §8.3's actual rationale ("a buff that works on one channel only is a bug") while preserving every modelled number — the spell/taunt model used the constant bar, and any skill-shift on non-melee channels would (a) couple a swordsman's WEAPON skill to his SPELL crit bar, which nobody decided, and (b) collapse royal crit rates at every gold price, invalidating gate decision §5.1. A full hoist requires re-modelling and re-affirming §5.1 — owner's call, not this plan's. | Review finding 1 |
+| 3 | **The crit bar hoists as a pure function of the CHANNEL's skill pair, with a shipped ceiling.** Owner decision, 2026-08-19: `CritBarFor(atkRank, defRank)` = `base 2.0 − slope×(atkRank − defRank)`, clamped to `[CritBarFloor, CritBarCeiling]`, with three new config knobs: `CritBarSkillSlope` **0.05**, `CritBarFloor` **1.5**, `CritBarCeiling` **3.0** (0 = uncapped). The attacker's rank is `AttackSide.SkillRank` (the channel's governing skill); the defender's rank is the WINNING defence's governing skill (via `DefenceSkillAndStat`). The blind review's finding-1 objection (a melee-skill hoist would couple weapon skill to spell crits and collapse the §5.1 royalty crits) is answered by BOTH halves: the per-channel pair removes the coupling, and the 3.0 ceiling keeps gold able to buy crits back against veterans on every channel — Queen@1000g crits Meirok ~47% (vs 82.5% at the old const bar, ~5% uncapped). **The ceiling changes live MELEE too** (a 1000g King goes from ~0.1% to ~28% melee crits vs Meirok — the old melee bar was uncapped); named in Task 1. **Accuracy and Blink are deleted**: their two bar reads are the only references in the codebase, no shipped content grants either flag, and the owner does not recognise them — upstream stowaways. | Owner directives 2026-08-19; review finding 1 |
 | 4 | `throw` gets the ranged defence set (dodge, block) and margin-scaled damage | Spec §4.5; modelled in appendix C |
 | 5 | Counters are free (no cost), like riposte today; non-melee channels get a counter-SWING on any defensive crit; melee keeps its per-defence trio (riposte/auto-trip/auto-bash) | Spec §4.3 "riposte's mechanism" |
 | 6 | Defy's crit counter-taunts INSTEAD of counter-swinging | Owner decision 2026-08-19 |
@@ -63,10 +63,13 @@ onto the U9 branch.
 ## Standing rules (from the arc — violations are defects)
 
 1. **No balance number inside `internal/`.** Every tuning value is a config knob.
-   New knobs this plan adds: `CounterDamagePercent` (0.5), `GrappleAggressorDriftBonus`
-   (value computed in Task 14), `GrappleProneAttackerMod` (0.3), `GrappleProneDefenderMod`
-   (0.5). Deleted knobs: `SpellAttackSkillFactor`, `RangedShieldDefenseBonus`,
-   `SubSkillWeight`, `StealSkillMultiplier`.
+   New knobs this plan adds: `CritBarSkillSlope` (0.05), `CritBarFloor` (1.5),
+   `CritBarCeiling` (3.0; 0 = uncapped), `CounterDamagePercent` (0.5),
+   `GrappleAggressorDriftBonus` (value computed in Task 14),
+   `GrappleProneAttackerMod` (0.5), `GrappleProneDefenderMod` (0.3).
+   Deleted knobs: `SpellAttackSkillFactor`, `RangedShieldDefenseBonus`,
+   `SubSkillWeight`, `StealSkillMultiplier`. Deleted flags: `buffs.Accuracy`,
+   `buffs.Blink` (no shipped content grants either; upstream stowaways).
 2. **`_datafiles/config.yaml` carries skip-worktree.** Build every config commit
    from the `git show HEAD:` blob via `git hash-object -w` + `git update-index
    --cacheinfo`, then RESTORE the skip-worktree flag (`git update-index
@@ -107,28 +110,53 @@ onto the U9 branch.
 
 ---
 
-## Task 1: Hoist the crit bar
+## Task 1: The crit bar — per-channel skill pair, knobbed, ceilinged
 
 **Files:**
 - Create: `internal/combat/crit_bar.go`
 - Modify: `internal/combat/combat_helpers.go` (~line 553 `calcCritThreshold`, ~line 966 the defensive 2.0)
+- Modify: `internal/configs/config.balance.go` + `config.balance.combat.go` (three new knobs)
+- Modify: `internal/buffs/buffspec.go` (delete the `Accuracy` and `Blink` flag constants)
+- Config: `_datafiles/config.yaml` (three knob lines, HEAD-blob method)
 - Test: `internal/combat/crit_bar_test.go` (create)
 
-Melee's bar is dynamic (`calcCritThreshold` at `combat_helpers.go:553-600`:
-base 2.0, Accuracy→1.5, Blink→2.5, then shifted by
-`sourceChar.GetCombatSkillLevel() − targetChar.GetCombatSkillLevel()` with a
-1.5 floor and NO upper ceiling); every other channel uses the const
+Melee's bar today (`calcCritThreshold` at `combat_helpers.go:553-600`): base
+2.0, Accuracy→1.5, Blink→2.5, then shifted by
+`sourceChar.GetCombatSkillLevel() − targetChar.GetCombatSkillLevel()` at 0.05
+per point, floored 1.5, NO ceiling. Every other channel uses the const
 `ContestCritThreshold = 2.0`.
 
-**Assumption 3 (revised): only the BUFF half hoists.** `CritBarFor` = base
-2.0, Accuracy→1.5, Blink→2.5, no skill term. Melee composes its existing
-skill-difference shift ON TOP inside `calcCritThreshold`, which becomes a
-melee-only wrapper around `CritBarFor` — bit-identical for melee. The
-skill-shift must NOT reach other channels: it reads the MELEE combat skill, so
-a full hoist would couple a swordsman's weapon skill to his spell crit bar and
-would put a mob attacker (combat skill 1) versus Meirok (weapon-combat 69) at
-bar `2.0 + 0.05×68 = 5.4`, collapsing royal crits at every gold price — the
-numbers gate decision §5.1 rests on were computed at the constant bar.
+**The target (Assumption 3, owner decision 2026-08-19):**
+
+```
+bar = clamp(2.0 − CritBarSkillSlope × (atkRank − defRank),
+            CritBarFloor, CritBarCeiling)      // ceiling 0 = uncapped
+```
+
+- **The ranks are the CHANNEL's, not melee's.** Attacker: the channel's
+  governing skill (`AttackSide.SkillRank` at the seam; equipped combat skill
+  for melee). Defender: the WINNING defence's governing skill — spellcasting
+  behind quell, rhetoric behind defy, weapon/unarmed behind parry-block/dodge
+  (`DefenceSkillAndStat` already maps it). Using melee skill for a spell crit
+  bar was the review's finding 1: an incoherent coupling.
+- **Three new config knobs**, because 0.05 and 1.5 are balance literals in
+  `internal/` and this is the moment they are touched (standing rule 1):
+  `CritBarSkillSlope: 0.05`, `CritBarFloor: 1.5`, `CritBarCeiling: 3.0`.
+  Validation: slope `< 0` → 0.05; floor `<= 0` → 1.5; **ceiling `< 0` → 3.0
+  and `0` is LEGAL, meaning uncapped** — document the off-switch beside it.
+- **The ceiling is NEW to melee and is a named live-behaviour change**: the
+  old melee bar was uncapped, so a stat-rich skill-1 mob attacker faced bar
+  5.4 vs a veteran and effectively never crit. At ceiling 3.0 a 1000g King
+  goes from ~0.1% to ~28% melee crits vs Meirok, and the same shape applies to
+  every channel (Queen@1000g spell crits ~47% vs 82.5% at the old const bar,
+  ~5% uncapped). Owner chose the ceiling explicitly with that table in hand;
+  flipping it later is one config edit.
+- **Accuracy and Blink are DELETED, not hoisted.** Their two bar reads are the
+  only references in the entire codebase, no shipped buff grants either flag,
+  and the owner does not recognise them — upstream stowaways. Delete the reads
+  and the two constants in `buffspec.go`. Zero live behaviour change; name it
+  in the commit and list both in the dead-code followup memory
+  (`project-spell-proficiency-dead-code` is the same class).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -149,21 +177,45 @@ func barChar(t *testing.T, combatSkill int) *characters.Character {
 	return c
 }
 
-// CritBarFor carries the BUFFS only. It must NOT carry the skill shift — see
-// the task preamble; asserting that here is the point of the test.
-func TestCritBarFor_BuffsOnlyNoSkillShift(t *testing.T) {
-	// use the package's existing buff-flag test idiom — find it first:
-	// grep -n "buffs.Accuracy\|HasBuffFlag" internal/combat/*_test.go | head
-	atk, def := barChar(t, 69), barChar(t, 1) // extreme skill gap
-	if got := CritBarFor(atk, def); got != 2.0 {
-		t.Errorf("CritBarFor carried a skill shift: got %v, want 2.0 (skill gap must not move the shared bar)", got)
+// CritBarFor is pure arithmetic on the CHANNEL's skill pair. Inject the three
+// knobs via the package's balance-config test idiom (grep -n "SkillWeight"
+// internal/combat/*_test.go for the pattern); these cases assume shipped
+// values slope 0.05, floor 1.5, ceiling 3.0.
+func TestCritBarFor(t *testing.T) {
+	cases := []struct {
+		name             string
+		atkRank, defRank int
+		want             float64
+	}{
+		{"parity", 30, 30, 2.0},
+		{"attacker out-skills: pins at floor", 69, 1, 1.5},
+		{"defender out-skills: rises", 30, 40, 2.5},
+		{"defender far out-skills: CEILING binds", 1, 69, 3.0},
+		{"boss case: skill-1 mob vs spellcasting 52", 1, 52, 3.0},
 	}
-	// accuracy -> 1.5, blink -> 2.5 (set flags via the existing idiom)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := CritBarFor(tc.atkRank, tc.defRank); got != tc.want {
+				t.Errorf("CritBarFor(%d,%d)=%v want %v", tc.atkRank, tc.defRank, got, tc.want)
+			}
+		})
+	}
 }
 
-// Melee stays BIT-IDENTICAL: calcCritThreshold (now composing CritBarFor +
-// melee's own skill shift) must equal its pre-refactor output for every input.
-func TestCalcCritThreshold_MeleeUnchanged(t *testing.T) {
+// Ceiling 0 means UNCAPPED — the documented off-switch. A validator that
+// "corrects" 0 back to 3.0 would make uncapping impossible; pin it.
+func TestCritBarFor_ZeroCeilingIsUncapped(t *testing.T) {
+	// inject ceiling 0, then:
+	if got := CritBarFor(1, 69); got != 2.0+0.05*68 {
+		t.Errorf("uncapped bar = %v, want %v", got, 2.0+0.05*68)
+	}
+}
+
+// Melee routes through the same function on its combat-skill pair. Identical
+// to the old bar at and below 3.0; ABOVE 3.0 the new ceiling binds — the named
+// melee change (a stat-rich skill-1 mob vs a veteran now caps at 3.0 instead
+// of 5.4). Accuracy/Blink are gone: no branch to test.
+func TestCalcCritThreshold_MeleePair(t *testing.T) {
 	cases := []struct {
 		name               string
 		atkSkill, defSkill int
@@ -171,7 +223,7 @@ func TestCalcCritThreshold_MeleeUnchanged(t *testing.T) {
 	}{
 		{"parity", 30, 30, 2.0},
 		{"skill advantage pins at floor", 69, 1, 1.5},
-		{"skill disadvantage raises, no ceiling", 1, 69, 2.0 + 0.05*68},
+		{"mob vs veteran: ceiling binds (was 5.4 uncapped)", 1, 69, 3.0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -183,13 +235,6 @@ func TestCalcCritThreshold_MeleeUnchanged(t *testing.T) {
 	}
 }
 
-// nil actors fall back to the constant bar: the channel seam resolves contests
-// where one side may be a static difficulty with no character.
-func TestCritBarFor_NilFallsBackToConstant(t *testing.T) {
-	if got := CritBarFor(nil, nil); got != ContestCritThreshold {
-		t.Errorf("CritBarFor(nil,nil)=%v want %v", got, ContestCritThreshold)
-	}
-}
 ```
 
 - [ ] **Step 2: Run to verify failure**
@@ -206,71 +251,107 @@ package combat
 
 import "github.com/GoMudEngine/GoMud/internal/characters"
 
-// CritBarFor is THE attacker-side crit threshold for every channel: base 2.0,
-// 1.5 under the attacker's Accuracy buff, 2.5 against a Blinking defender.
-// Hoisted from melee in U6b so a buff which changes crit odds changes them on
-// every attack the buyer makes — before this, Accuracy buffed sword crits and
-// not spell, bash or shot crits, and Blink protected against swords only.
+// CritBarFor is THE attacker-side crit threshold for every channel, as a pure
+// function of the CHANNEL's skill pair (owner decision, 2026-08-19):
 //
-// It deliberately does NOT carry melee's skill-difference shift. That shift
-// reads GetCombatSkillLevel — the MELEE skill — so hoisting it would couple a
-// swordsman's weapon skill to his spell crit bar, and would raise a mob
-// attacker's bar against any skilled player without ceiling, collapsing the
-// gold-scaled boss crit rates the U6b gate decisions were computed on (see
-// 2026-08-19-u6b-modelling.md §5.1). Melee composes the shift on top in
-// calcCritThreshold; extending a shift to another channel is a modelling
-// change, not a refactor.
+//	bar = clamp(base − slope×(atkRank − defRank), floor, ceiling)
 //
-// Nil on either side falls back to the constant: the seam also resolves
-// contests against static difficulties that have no character behind them.
-func CritBarFor(attacker, defender *characters.Character) float64 {
-	if attacker == nil || defender == nil {
-		return ContestCritThreshold
+// atkRank is the attack's governing skill rank (AttackSide.SkillRank at the
+// seam; the equipped combat skill for melee). defRank is the WINNING defence's
+// governing skill rank — spellcasting behind quell, rhetoric behind defy, the
+// weapon/unarmed skills behind the physical three. Out-skill your target and
+// the bar falls toward the floor; get out-skilled and it rises to the CEILING,
+// which is what lets a gold-scaled, skill-poor boss still buy crits against a
+// veteran (uncapped, a 1000g boss crits a veteran essentially never — the
+// pre-U6b melee behaviour; the shipped 3.0 puts it near half its saturated
+// rate instead). Ceiling 0 means uncapped, and is legal.
+//
+// All three values are config (CritBarSkillSlope 0.05, CritBarFloor 1.5,
+// CritBarCeiling 3.0) — they were balance literals inside internal/ before
+// U6b, which standing rule 1 forbids.
+//
+// Melee's old Accuracy/Blink adjustments do not survive: no shipped content
+// ever granted either flag and both were deleted as upstream stowaways.
+func CritBarFor(atkRank, defRank int) float64 {
+	b := configs.GetBalanceConfig()
+	bar := ContestCritThreshold - float64(b.CritBarSkillSlope)*float64(atkRank-defRank)
+	if bar < float64(b.CritBarFloor) {
+		bar = float64(b.CritBarFloor)
 	}
-	bar := ContestCritThreshold
-	// read the exact flag checks out of calcCritThreshold and move them here;
-	// calcCritThreshold then calls this and applies only its skill shift
+	if c := float64(b.CritBarCeiling); c > 0 && bar > c {
+		bar = c
+	}
 	return bar
 }
 
 // DefenseCritBar is the defender-side threshold. Melee shipped this as a
-// hardcoded 2.0 separate from its own dynamic attack bar; U6b keeps it a single
-// constant for every channel, ON PURPOSE — a defensive crit unlocks the counter
-// tier, and shifting that bar by the attacker's buffs would let an attacker's
-// Accuracy make them EASIER to counter, which reads backwards. Documented here
-// so nobody "unifies" it into CritBarFor without deciding that.
+// hardcoded 2.0 separate from its own dynamic attack bar; U6b keeps it a
+// single constant for every channel, ON PURPOSE — a defensive crit unlocks
+// the counter tier, and skill already reaches the defensive-crit rate through
+// the margin (a skilled defender out-rolls more often and by more). Shifting
+// this bar by the same skill pair would triple-count skill on the defence
+// side. Documented here so nobody "unifies" it into CritBarFor without
+// deciding that.
 func DefenseCritBar() float64 { return ContestCritThreshold }
 ```
 
-Then in `combat_helpers.go`: `calcCritThreshold` (:553) is rewritten to
-`bar := CritBarFor(source, target)` plus its EXISTING skill-difference shift
-and 1.5 floor, unchanged — melee keeps calling `calcCritThreshold` and is
-bit-identical. The separate hardcoded defensive `2.0` (:966, inside
-`resolveDefenseOutcomeCore`) becomes `DefenseCritBar()`.
+Then in `combat_helpers.go`: `calcCritThreshold` (:553) becomes a thin melee
+wrapper — `CritBarFor(sourceChar.GetCombatSkillLevel(),
+targetChar.GetCombatSkillLevel())` — deleting its Accuracy/Blink branches and
+its inline slope/floor arithmetic (the knobs carry them now). The separate
+hardcoded defensive `2.0` (:966, inside `resolveDefenseOutcomeCore`) becomes
+`DefenseCritBar()`. Delete the `Accuracy`/`Blink` constants from
+`internal/buffs/buffspec.go` (their only references were the two branches just
+removed) and add the three knobs (declaration + validation per the preamble +
+config.yaml lines via the HEAD-blob method, each documented beside its value
+including the ceiling's 0-means-uncapped off-switch).
 
-- [ ] **Step 3b: Re-affirm the modelled numbers under the buffs-only bar**
+- [ ] **Step 3b: Record the crit-column deltas the ceiling produces**
 
-Run `python tools/balance/u6b_model_spell_taunt.py` — its `CRIT_T = 2.0` is now
-EXACTLY the unbuffed bar every non-melee channel uses, so every number in the
-modelling doc (and gate decision §5.1's royalty table) holds without re-running
-variants. Record that in the commit. Had the skill shift hoisted, all of those
-numbers would be invalid — that is what the review caught.
+The §5.1 royalty table was executed at the const 2.0 bar; the owner chose the
+per-channel pair + ceiling 3.0 WITH the delta table in hand (2026-08-19).
+Record it in the commit so the numbers are on the PR:
+
+| Attack vs Meirok | old const bar | shipped (pair + ceiling 3.0) |
+|---|---|---|
+| Queen spell 500g / 1000g / 2000g | 21.7% / 82.5% / 96.5% | 3.7% / 47.3% / 79.2% |
+| King melee 1000g | ~0.1% (old melee bar was UNCAPPED 5.4) | ~28% — the named MELEE change |
+| King bash 1000g | n/a (no crit tier existed) | ~39% |
+
+Hit rates and non-crit damage are bar-independent and unchanged. Extend
+`tools/balance/u6b_model_spell_taunt.py`'s `CRIT_T` to read the clamped-pair
+bar so the modelling doc's crit columns can be regenerated under the shipped
+values, and note the regeneration in the modelling doc.
 
 - [ ] **Step 4: Run the tests**
 
 Run: `go test ./internal/combat/ -run "TestCritBarFor|TestCalcCritThreshold" -v`
 then the full package: `go test ./internal/combat/ -count=1`
-Expected: PASS, zero existing-test changes — melee behaviour is bit-identical.
+Expected: the new tests PASS. Existing melee tests pass UNCHANGED except any
+that pinned (a) the Accuracy/Blink branches — they pinned dead flags; or (b) a
+bar above 3.0 — they pinned the uncapped behaviour the ceiling deliberately
+changes. Update and name each.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/combat/
-git commit -m "refactor(u6b): hoist melee's dynamic crit bar into CritBarFor
+git add internal/combat/ internal/buffs/ internal/configs/ _datafiles/
+git commit -m "feat(u6b): one crit bar for every channel, knobbed and ceilinged
 
-Pure extraction: melee routes through it bit-identically. Later tasks
-give every other channel the same bar, so Accuracy/Blink/skill-shift
-stop being melee-only. DefenseCritBar stays a constant deliberately."
+CritBarFor(atkRank, defRank) is pure arithmetic on the CHANNEL's skill
+pair: base 2.0 minus CritBarSkillSlope per point of attacker skill
+advantage, clamped to [CritBarFloor, CritBarCeiling]. Three new knobs
+ship at 0.05 / 1.5 / 3.0; ceiling 0 is the documented uncapped
+off-switch. Melee routes through it on its combat-skill pair.
+
+Named melee change: the old melee bar was UNCAPPED, so a stat-rich
+skill-1 mob vs a veteran faced bar 5.4 and effectively never crit; at
+the shipped ceiling a 1000g boss melee-crits a veteran ~28% of the
+time. Owner chose the ceiling with the delta table in hand.
+
+Deletes the Accuracy and Blink buff flags and their two bar reads --
+the only references in the codebase; no shipped content grants either;
+upstream stowaways. Zero live change from that half."
 ```
 
 ---
@@ -579,11 +660,15 @@ runner)`:
 2. Defence entries come from `DefenceEntriesFor(channel, defender, opts)`
    (Task 2), with the existing quote/affordability/strip logic wrapped around
    each entry exactly as today.
-3. After the contest: `out.AttackerCrit = !res.Floored && AttackContestCrit(res.Margin, res.AttackRoll)`
-   **with the bar**: `AttackContestCrit` uses the const — add a bar-parameterised
-   variant `AttackContestCritAt(margin float64, roll dice.RollResult, bar float64) bool`
-   in `crit_floor.go` (the existing function becomes a call with
-   `ContestCritThreshold`) and use `CritBarFor(attacker, defender)`.
+3. After the contest: `out.AttackerCrit = !res.Floored && AttackContestCritAt(res.Margin, res.AttackRoll, bar)`
+   where the bar is the CHANNEL's skill pair:
+   `bar := CritBarFor(side.SkillRank, defenderRankOf(res.Winner))` — the
+   defender rank is the WINNING defence's governing skill rank, resolved via
+   `DefenceSkillAndStat(res.Winner)` + `defender.GetSkillLevel(...)`
+   (uncontested/static outcomes use defRank 0). Add the bar-parameterised
+   `AttackContestCritAt(margin float64, roll dice.RollResult, bar float64) bool`
+   in `crit_floor.go`; the existing `AttackContestCrit` becomes a call with
+   `ContestCritThreshold`.
    `out.AttackerFumble = res.AttackRoll.ZScore <= -DefenseCritBar()`.
 4. The U9 bonus tier (`awardChannelDefenceBonus`) now takes its attacker skill
    and stat FROM `side` — `channelAttackSkillAndStat` is deleted; its channel
@@ -591,8 +676,8 @@ runner)`:
    **And it consumes the seam's ALREADY-DERIVED crit/fumble verdicts** —
    today it re-derives `attackCrit` itself via the const-bar
    `AttackContestCrit` (`defence_multiplier.go:376-380`), under a comment
-   forbidding exactly that duplication. Left as-is, an Accuracy-buffed
-   attacker would crit at bar 1.5 for narration and damage while the
+   forbidding exactly that duplication. Left as-is, a skill-advantaged
+   attacker would crit at the floored bar for narration and damage while the
    progression bonus still demanded 2.0 — two verdicts for one contest. Pass
    `out.AttackerCrit`/`out.AttackerFumble` in; delete the re-derivation.
 5. **`channelDamageChannel` gains melee → `"physical"` and ranged →
