@@ -545,6 +545,21 @@ Balance:
   #   mechanism everywhere including in every Go test.
   ContestFloor: 0.125
 
+  # ── CRIT BAR (U6b) ──────────────────────────────────────────────────
+  # The crit threshold every channel tests its normalized margin against:
+  #   bar = 2.0 - CritBarSkillSlope x (attacker rank - defender rank)
+  # clamped to [CritBarFloor, CritBarCeiling]. The ranks are the CHANNEL
+  # governing skills: the attack skill vs the WINNING defence skill.
+  # Out-skill your target and the bar falls toward the floor; get
+  # out-skilled and it rises to the ceiling. The ceiling is what lets a
+  # gold-scaled, skill-poor boss still buy crits against a veteran.
+  # Raising the ceiling makes skill protect harder against boss crits;
+  # CritBarCeiling: 0 is LEGAL and means uncapped (bosses then almost
+  # never crit skilled defenders, on any channel).
+  CritBarSkillSlope: 0.05
+  CritBarFloor: 1.5
+  CritBarCeiling: 3.0
+
   # ── COMBAT: PRONE & GRAPPLE ───────────────────────────────────────────────
   # When a character is knocked prone, these multipliers modify combat scores.
   #
