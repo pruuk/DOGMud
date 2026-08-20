@@ -29,7 +29,7 @@ const (
 //
 // WIRED EVERYWHERE, through DefenceEntriesFor. Since U6b Task 2 this table is
 // consumed only via DefenceEntriesFor, which intersects it with the defender's
-// equipment gate: melee's runBestOfAllDefense set and ResolveChannelDefence's
+// equipment gate: melee's runBestOfAllDefense set and ResolveChannelAttack's
 // channel sets both come from that one builder. Adding a defence to a row here
 // reaches every consumer of that channel, subject to the equipment gate below
 // (dodge, quell and defy are ungated; parry and block are equipment-gated).

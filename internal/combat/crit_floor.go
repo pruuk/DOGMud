@@ -88,7 +88,7 @@ func AttackContestCritAt(margin float64, roll dice.RollResult, bar float64) bool
 // that field, so it is a silent constant zero. Never pass the attack-positive
 // `Result.Margin` unnegated either. Since U6 Task 13 the ONE caller is
 // defenceDamageMultiplier (defence_multiplier.go), which does it correctly;
-// ResolveChannelDefence and ExecuteSkillMove (skill_moves.go) both reach this
+// ResolveChannelAttack and ExecuteSkillMove (skill_moves.go) both reach this
 // through that shared helper rather than calling it directly.
 // internal/combat/contest_sign_test.go is what keeps it that way.
 func DefenseContestCrit(margin float64, roll dice.RollResult) bool {

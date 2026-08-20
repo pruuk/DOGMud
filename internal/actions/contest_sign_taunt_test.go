@@ -16,33 +16,22 @@ import (
 // ATTACKER-SIDE mirror of internal/combat/contest_sign_test.go (roadmap U3).
 //
 // That file guards the DEFENDER-side crit read, which since U6 Task 12 lives in
-// combat.ResolveChannelDefence (it was TryStoicResolve and TrySpellDeflection
-// when this was written). It guards nothing attacker-side, and a final U3 review
-// proved the hole with a one-token mutation in combat_taunt.go:
+// the channel resolver (combat.ResolveChannelAttack after the U6b Task 5
+// collapse; it was TryStoicResolve and TrySpellDeflection when this was
+// written). It guards nothing attacker-side, and a final U3 review proved the
+// hole with a one-token mutation in combat_taunt.go (res.Margin ->
+// res.AttackRoll.Margin) that killed taunt criticals permanently while
+// internal/actions, internal/combat and internal/hooks all stayed green.
 //
-//	res.Margin  ->  res.AttackRoll.Margin
-//
-// which kills taunt criticals permanently while internal/actions,
-// internal/combat and internal/hooks all stayed green. Taunt is a site U3 itself
-// migrated, into a .Margin read U3 itself introduced. This test is the thing
-// that notices.
-//
-// TRAP 1 -- THE MARGIN GOES TO ZERO. contest.Run rolls via dice.Roll, which
-// populates Value/Mean/StdDev/ZScore/Percentile but NOT .Success or .Margin.
-// Only the older dice.OpposedRoll populates those two. So res.AttackRoll.Margin
-// and res.DefenseRoll.Margin are a constant 0 on every contest this package
-// runs. Reading one compiles, and nothing else fails.
-//
-// TRAP 2 -- THE MARGIN IS SIGNED THE WRONG WAY. contest.Result.Margin is
-// ATTACK-positive. ExecuteTaunt performs the ATTACKER's crit check, so it must
-// pass the margin UNNEGATED; the defensive mirror in ResolveChannelDefence
-// negates. Getting that backwards also compiles, and puts the crit on the losing
-// side.
-//
-// THE ONLY OBSERVABLE EITHER TRAP DISTURBS IS TauntResult.Crit. A zeroed margin
-// normalises to z = 0 and a flipped margin to a large negative z; both sit below
-// combat.ContestCritThreshold forever, so Crit simply stops being true. Damage
-// still lands, the taunt still hits, nothing panics.
+// U6b Task 5 moved the margin read itself into the seam
+// (resolveChannelAttackWithRunner derives AttackerCrit), whose own guards live
+// beside it in internal/combat. What THIS test still owns end to end is the
+// taunt WIRING of that verdict: ExecuteTaunt must consume the seam's
+// AttackerCrit into TauntResult.Crit. Dropping that consumption, hardcoding it
+// false, or rebuilding a local crit check from a roll's never-populated
+// .Margin field (the original trap) all compile, fail nothing else, and stop
+// Crit from ever being true. Damage still lands, the taunt still hits,
+// nothing panics.
 //
 // Hence: drive an overwhelming taunter against a hopeless target and require
 // Crit to appear. Counting happens inside the loop; every assertion runs
@@ -73,8 +62,8 @@ import (
 //     zero, so the pin now matters even in a test binary.
 //
 //   - MinDefenseCritChance, for the same reason on the other side. A promoted
-//     defensive crit inside ResolveChannelDefence does not touch Crit, but
-//     pinning it keeps the non-crit branch deterministic.
+//     defensive crit inside the seam does not touch Crit, but pinning it keeps
+//     the non-crit branch deterministic.
 //
 //   - SkillWeight, pinned NON-zero at 5. It is the multiplier on both sides'
 //     rhetoric, so it sets the score gap the iteration-count arithmetic below is
@@ -90,6 +79,11 @@ func pinTauntContestKnobs(t *testing.T) {
 	c.Balance.ContestFloor = 0
 
 	c.Balance.SkillWeight = tauntSkillWeight
+
+	// U6b Task 5: the one contest's defence entry is defy, scaled by this knob
+	// before the roll. It validates to 1.0 in a test binary; pinned so the
+	// defence score stays the one the iteration count was computed from.
+	c.Balance.DefyEffectiveness = 1.0
 
 	configs.SetConfigForTest(t, c)
 }
@@ -134,11 +128,13 @@ func setTauntStatBase(t *testing.T, si *stats.StatInfo, base int) {
 //	s          = StdDevFor(250) = 250 * 0.15 = 37.5
 //	s*sqrt(2)  = spread of (atk - def)       = 53.03
 //
-// contest.Result.Margin ~ N(A - D, s*sqrt(2)) = N(230, 53.03). AttackContestCrit
-// fires when Margin / (s*sqrt(2)) >= combat.ContestCritThreshold (2.0), i.e.
-// when Margin >= 106.07:
+// contest.Result.Margin ~ N(A - D, s*sqrt(2)) = N(230, 53.03). Since U6b the
+// seam's crit bar is CritBarFor(atk rank 10, def rank 0), which in a test
+// binary is clamp(2.0 - 0.05*10, 1.5, 3.0) = 1.5 — LOWER than the old constant
+// 2.0 bar, so using 2.0 below keeps the iteration budget conservative. The
+// crit fires at worst when Margin / (s*sqrt(2)) >= 2.0, i.e. Margin >= 106.07:
 //
-//	z = (106.07 - 230) / 53.03 = -2.34   ->   p(crit | contested) = 0.990
+//	z = (106.07 - 230) / 53.03 = -2.34   ->   p(crit | contested) >= 0.990
 //
 // A fumble (AttackRoll.ZScore <= -2.0, about 2.3%) returns before the crit check
 // is reached, and a miss needs Margin < 0 at z = -4.34 (about 7e-6). So per

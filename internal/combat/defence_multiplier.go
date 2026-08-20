@@ -45,38 +45,9 @@ func DefenceMitigation(normalizedDefenceMargin float64) float64 {
 	return 0.5 + 0.5*(normalizedDefenceMargin/ContestCritThreshold)
 }
 
-// ChannelAttackScore builds the attacker's score for a channel that does not go
-// through the melee hitroll.
-//
-// Note both spell channels share one score. The channel decides what DEFENDS
-// against the attack, not what powers it: a physical-flavoured spell is still
-// cast with willpower and spellcasting, it is simply dodged rather than quelled.
-//
-// The physical channels return 0 rather than guessing. Melee and ranged build
-// their attack score in calcAttackScore with weapon, reach, position and
-// resource terms this cannot see, and a plausible-looking wrong number here
-// would be worse than an obviously wrong one.
-func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) float64 {
-	if attacker == nil {
-		return 0
-	}
-	skillWeight := float64(configs.GetBalanceConfig().SkillWeight)
-
-	switch channel {
-	case ChannelSpellMental, ChannelSpellPhysical:
-		return float64(attacker.Stats.Willpower.ValueAdj) +
-			float64(attacker.GetSkillLevel(skills.Spellcasting))*skillWeight
-	case ChannelSocial:
-		return float64(attacker.Stats.Charisma.ValueAdj) +
-			float64(attacker.GetSkillLevel(skills.Rhetoric))*skillWeight
-	default:
-		return 0
-	}
-}
-
 // AttackSide is the attacker's half of a channel contest, made explicit.
 //
-// Before U6b the seam derived the attack score internally (ChannelAttackScore,
+// Before U6b the seam derived the attack score internally (a deleted helper
 // hardcoded Willpower+Spellcasting / Charisma+Rhetoric), which meant a spell's
 // primarystat (U9) could not reach the hit contest and the progression naming
 // had to mirror the hardcode. Callers now say exactly what attacks:
@@ -289,53 +260,6 @@ func SetChannelAttackContestRunnerForTest(runner func(float64, []contest.Entry) 
 	return func() { channelAttackContestRunner = prev }
 }
 
-// ResolveChannelDefence remains for the taunt/spell callers until Tasks 4-5
-// migrate them onto ResolveChannelAttack, building the legacy default side
-// from the old ChannelAttackScore semantics. DELETED in Task 5 once the last
-// caller moves; ChannelAttackScore goes with it.
-func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) ChannelDefenceResult {
-	return resolveChannelDefenceWithRunner(channel, attacker, defender, RunContest)
-}
-
-// resolveChannelDefenceWithRunner is the legacy shim behind
-// ResolveChannelDefence: it builds the default AttackSide and delegates.
-// Deleted with the wrapper in Task 5.
-func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *characters.Character, runner defenceContestRunner) ChannelDefenceResult {
-	return resolveChannelAttackWithRunner(channel, legacyChannelAttackSide(channel, attacker), attacker, defender, runner)
-}
-
-// legacyChannelAttackSide reproduces ChannelAttackScore's hardcoded pairs as
-// an explicit AttackSide, so the legacy wrapper's callers keep the exact score
-// and bar inputs they had: side.score() equals ChannelAttackScore for every
-// channel (the physical channels score 0 there and the zero side scores 0
-// here), and SkillRank is the same real rank the U9 bonus tier used to read
-// through its per-channel hardcode (deleted this task). Stays in lockstep
-// with ChannelAttackScore until Task 5 deletes both.
-func legacyChannelAttackSide(channel AttackChannel, attacker *characters.Character) AttackSide {
-	if attacker == nil {
-		return AttackSide{Mult: 1.0}
-	}
-	switch channel {
-	case ChannelSpellMental, ChannelSpellPhysical:
-		return AttackSide{
-			Stat:      attacker.Stats.Willpower.ValueAdj,
-			StatName:  "willpower",
-			Skill:     skills.Spellcasting,
-			SkillRank: attacker.GetSkillLevel(skills.Spellcasting),
-			Mult:      1.0,
-		}
-	case ChannelSocial:
-		return AttackSide{
-			Stat:      attacker.Stats.Charisma.ValueAdj,
-			StatName:  "charisma",
-			Skill:     skills.Rhetoric,
-			SkillRank: attacker.GetSkillLevel(skills.Rhetoric),
-			Mult:      1.0,
-		}
-	}
-	return AttackSide{Mult: 1.0}
-}
-
 func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, attacker, defender *characters.Character, runner defenceContestRunner) ChannelDefenceResult {
 	out := ChannelDefenceResult{
 		DamageMultiplier: 1.0,
@@ -456,7 +380,7 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 // crit, exactly 0.5 on a floored save, and 0.0-0.5 along the DefenceMitigation
 // curve for a rolled defensive win.
 //
-// This is the exact tail of ResolveChannelDefence's derivation, extracted so
+// This is the exact tail of ResolveChannelAttack's derivation, extracted so
 // skill_moves.go's maneuvers (bash/trip/kick) can share it rather than
 // hand-copy the sign negation, the floored sentinel, and the sqrt(2)
 // normaliser below -- context.md records the sign and .Margin traps as

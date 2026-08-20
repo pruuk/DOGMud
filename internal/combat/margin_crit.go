@@ -98,9 +98,9 @@ const ContestCritThreshold = 2.0
 // perspective of the side being tested. Result.Margin is ATTACK-positive
 // (attack roll minus winning defence roll), so:
 //
-//	attacker's crit check  -> pass it unnegated  (combat_taunt.go, the spell
-//	                          sites in internal/hooks)
-//	defender's crit check  -> negate it          (ResolveChannelDefence)
+//	attacker's crit check  -> pass it unnegated  (ResolveChannelAttack's
+//	                          attacker verdict)
+//	defender's crit check  -> negate it          (defenceDamageMultiplier)
 //
 // NEVER pass a dice.RollResult's .Margin field. Since U1-U3 every caller
 // resolves through internal/contest, which rolls each side with dice.Roll, and

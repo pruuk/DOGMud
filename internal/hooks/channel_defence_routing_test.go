@@ -79,7 +79,7 @@ func TestSpellResolversRunOneContestAndAppliersRollNone(t *testing.T) {
 				}
 			case *ast.SelectorExpr:
 				if pkg, ok := callee.X.(*ast.Ident); ok && pkg.Name == "combat" &&
-					(callee.Sel.Name == "ResolveChannelDefence" || callee.Sel.Name == "ResolveChannelAttack" || callee.Sel.Name == "RunContest") {
+					(callee.Sel.Name == "ResolveChannelAttack" || callee.Sel.Name == "RunContest") {
 					directCalls++
 				}
 			}

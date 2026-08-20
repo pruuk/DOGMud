@@ -9,7 +9,7 @@ import (
 // TestContestingManifestationSpellResolvesWithItsDeclaredStat is the
 // INVERSION of the retired manifestation_channel_guard_test.go. That guard
 // forbade manifestation spells from declaring a contested target_defense_type
-// because combat.ChannelAttackScore hardcoded Willpower + Spellcasting, so a
+// because the deleted channel score helper hardcoded Willpower + Spellcasting, so a
 // contesting manifestation spell would have attacked with the wrong stat and
 // skill. U6b Task 4 deleted that constraint's reason: the resolver now builds
 // a combat.AttackSide from the spell's own primarystat (CasterStatValue) and

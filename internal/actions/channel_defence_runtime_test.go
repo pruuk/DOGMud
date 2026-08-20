@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/contest"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,19 +17,17 @@ func TestExecuteTauntDefensiveCritPreservesAggroPullForPlayerAndMobActors(t *tes
 		}
 		t.Run(name, func(t *testing.T) {
 			cfg := configs.GetConfig()
-			cfg.Balance.DefyEffectiveness = 1_000_000
 			cfg.Balance.ContestFloor = 0
+			cfg.Balance.MinAttackCritChance = 0
 			configs.SetConfigForTest(t, cfg)
 
-			originalContest := runTauntContest
-			runTauntContest = func(float64, []contest.Entry) contest.Result {
-				return contest.Result{
-					AttackRoll:  dice.RollResult{Value: 101, Mean: 100, StdDev: 15},
-					DefenseRoll: dice.RollResult{Value: 100, Mean: 100, StdDev: 15},
-					Margin:      1, Contested: true, Success: true,
-				}
-			}
-			t.Cleanup(func() { runTauntContest = originalContest })
+			// U6b Task 5: the old gate stub (runTauntContest) is gone with the
+			// gate. Force a decisive DEFENSIVE crit through the one seam
+			// contest instead: a -4 sigma attack margin fully negates
+			// (DamageMultiplier 0), with clean roll z-scores so neither a
+			// fumble nor a defence fumble fires by accident.
+			restore := combat.SetChannelAttackContestRunnerForTest(tauntDeterministicRunner(t, -4, 0.5, 2.5))
+			t.Cleanup(restore)
 
 			actor, _, target := newRhetoricActor(t, player, 100, 0)
 			target.Aggro = &characters.Aggro{UserId: 4242}

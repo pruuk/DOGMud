@@ -681,7 +681,7 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 		//
 		// There are still no quell or defy arms, and that gap is DISCLOSED, not
 		// an oversight: quell and defy do not run through this function (they
-		// resolve in ResolveChannelDefence), and giving them positional penalties
+		// resolve in ResolveChannelAttack), and giving them positional penalties
 		// would need ProneQuellPenalty and four more knobs that do not exist.
 		// Whoever wires either defence into melee owns adding them.
 		switch {

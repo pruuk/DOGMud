@@ -328,7 +328,7 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 		{
 			file: "combat_taunt.go", function: "ExecuteTaunt", resultType: "TauntResult", action: "costs.ActionTaunt",
 			guards: []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"!tauntTargetIsCurrent(target, target, originalRoomID, char)", "NoTarget"}},
-			effect: "runTauntContest",
+			effect: "combat.ResolveChannelAttack",
 		},
 		{
 			file: "combat_rally.go", function: "ExecuteRally", resultType: "RallyResult", action: "costs.ActionRally",
