@@ -909,20 +909,17 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
   margin into the curve. `RunContest` is still the single choke point for every
   opposed contest in the game, so it remains the cheapest place to instrument
   the floor-reliance rate the roadmap wants modelled.
-- **`SkillMoveParams.AttackSkill` and `.DefenseSkill` are RAW skill
-  levels with NO `SkillWeight` applied.** `ExecuteSkillMove` adds them
-  straight to the stats (`AttackSkill + AttackStat` vs `DefenseSkill +
-  DefenseStat`), so every one of its callers runs at an effective
-  weight of ×1 on both sides. That is deliberate today and is NOT what
-  the arc's flip table assumes, which is why U6's "uniform ×5" needs a
-  modelling gate before it lands (see the roadmap).
-- **`DefenseStat: 0` is a real pattern, not an oversight.**
-  `actions/combat_fire.go` (ranged) folds the defender's whole defence
-  (Dexterity, combat skill, and a flat shield bonus when an offhand with
-  a block rating is worn) into a single scalar via `rangedDefenseScore`
-  and passes it as `DefenseSkill`, leaving `DefenseStat` zero. Anything
-  that reweights `DefenseSkill` reweights the defender's Dexterity and
-  the shield bonus along with it.
+- **`SkillMoveParams` has no legacy scalar-defence fields.** U6b Task 7
+  deleted `AttackSkill`/`AttackStat`/`DefenseSkill`/`DefenseStat`; every
+  caller passes `Channel` + an `Attack` `AttackSide` carrying the RAW
+  skill rank (the seam applies `SkillWeight` inside `AttackSide.score()`),
+  and the defender's answer is the equipment-gated defence SET from
+  `DefenceEntriesFor`, scored per defence by `GetDefenseScoreFor`. The
+  old ranged pattern of folding the defender (Dexterity, combat skill,
+  a flat shield bonus) into one scalar died with it (U6b Task 8):
+  `actions/combat_fire.go` now sends `ChannelRanged`, a shield is a real
+  block contest entry, and a shot can crit against `CritBarFor`'s pair
+  bar.
 
 ## Dependencies
 
