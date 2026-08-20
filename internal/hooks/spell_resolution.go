@@ -1067,7 +1067,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 // resolution: the field picks which defence set answers the one contest
 // (a "physical" spell is dodged/blocked, everything else is quelled), and the
 // defender's score comes from GetDefenseScoreFor via the seam — the deleted
-// deleted defence-value helper's raw-stat read is gone with the two-contest gate.
+// defence-value helper's raw-stat read is gone with the two-contest gate.
 //
 // Everything that is not explicitly "physical" -- including "mental", "none" and
 // the empty default -- answers as mental. That is the conservative direction:

@@ -1,5 +1,39 @@
 # DOGMud Patch Notes
 
+## 2026-08-19: One fight, one set of rules
+
+Every kind of attack now resolves the same way. A spell, a taunt, an aimed
+shot, a thrown blade, a bash, a trip, and a plain sword swing all run through
+the same contest of attacker against defender, and your training counts on
+both sides of it.
+
+Your skill now defends you against everything. Before this change, a
+defender's practice counted fully against some attacks and not at all against
+others. Hostile magic in particular tested only your raw resolve, no matter
+how deeply you had studied the art of turning it aside. Now the skill behind
+each defence weighs in against every kind of attack, in the same way, every
+time.
+
+Special moves and shots can be met like any other blow. A bash, a kick, a
+thrown weapon, and an aimed shot can now be dodged or blocked just as a plain
+swing can. The same moves can also strike true. A perfectly placed special
+move or shot now lands as a critical hit, with the words to match. Before,
+none of these attacks could ever land a critical, and none of them faced your
+full range of defences.
+
+A truly decisive defence now answers back. When you turn an attack aside
+completely, you strike back in the same breath, and the answer fits the
+insult: turning aside a blow earns a counter-blow, and shrugging off someone's
+mockery earns them a barb of your own. An attacker shooting from another room
+stays out of reach and cannot be countered, which is exactly why shooting from
+another room is worth something.
+
+The conditions that steady or spoil your aim now apply to every kind of
+attack. Fighting from the ground weakens your special moves and shots just as
+it weakens your swings, exhaustion drags on everything you attempt, and a
+sleeping target is helpless against every kind of attack in those first
+moments, not just against a blade.
+
 ## 2026-08-19: Learning from a fight, on both sides of it
 
 Landing a decisive blow, or making a serious mistake, now teaches you something

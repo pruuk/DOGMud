@@ -248,18 +248,22 @@ cost finds nothing and proves nothing.
 A set of size one is still a contest, not a different mechanism. That
 unification is what let `avoidance.go` be deleted in Task 12.
 
-**Wired for three channels, not for melee.** `ResolveChannelDefence`
-(`defence_multiplier.go`) consumes this table for `ChannelSpellMental`,
-`ChannelSpellPhysical` and `ChannelSocial` — the five spell sites in
-`internal/hooks/spell_resolution.go` and the taunt site in
-`internal/actions/combat_taunt.go`. **Melee does not.** `runBestOfAllDefense`
-still builds its own equipment-derived `defSeq` from
-`characters.GetDefenseSequence`, so editing the `ChannelMelee` row here changes
-nothing on its own.
+**Wired everywhere since U6b Task 2, through `DefenceEntriesFor`.** The bare
+table is no longer consumed directly by any resolver. `DefenceEntriesFor(
+channel, defender, opts)` (`defence_sets.go`) intersects it with the defender's
+equipment gate — `equipmentGatedMeleeDefences`, the only surviving copy of the
+deleted `characters.GetDefenseSequence` — and is THE defence-set name builder
+for every channel. `ResolveChannelAttack` (`defence_multiplier.go`) calls it
+for ranged, both spell channels and social; melee's `calculateCombat` calls it
+for `ChannelMelee` and keeps its own scoring loop (`runBestOfAllDefense`) over
+the names it returns. Editing a channel row here now reaches every consumer of
+that channel, subject to the equipment gate (dodge, quell and defy are
+ungated; parry and block are equipment-gated).
 
-That split is what makes the checklist below read the way it does. Almost every
-remaining item is a MELEE-pipeline consumer, and quell and defy cannot reach the
-melee pipeline, so those items are latent-if-wired rather than live.
+The checklist below predates that flip. Quell and defy are still absent from
+the `ChannelMelee` row, so the melee-pipeline items below stay latent rather
+than live — but wiring them in is now a one-row edit plus the knobs each item
+names, not a second pipeline.
 
 **Every consumer downstream of a defence name was written against a CLOSED
 three-way set.** All of them are `switch`/map/`==` over a string-family type, so
@@ -268,7 +272,7 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
 
 1. **Defender progression.** **FIXED.** `combat.AwardDefenceProgression`
    (`defence_multiplier.go`) is now THE per-defence mapping for all five, and
-   both `ResolveChannelDefence` and `hooks.processDefenderProgression` call it
+   both `ResolveChannelAttack` and `hooks.processDefenderProgression` call it
    rather than each carrying a switch. Note the stat change on the spell row:
    the deleted `TrySpellDeflection` awarded **perception**, because perception
    was what it contested; quell contests **willpower**, so willpower is what it
@@ -305,7 +309,7 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
 4. **Analytics and the admin dashboard lose the swing entirely.** **DEFERRED,
    and not currently reachable.** `analytics.go` is fed from
    `AttackResult.SwingEvents`, which only the melee pipeline populates;
-   `ResolveChannelDefence` does not build an `AttackResult` at all. So spell and
+   `ResolveChannelAttack` does not build an `AttackResult` at all. So spell and
    social defences are invisible to `combatstats` — which was equally true of
    `TrySpellDeflection` and `TryStoicResolve`, so this is not a regression. It
    becomes live the moment quell or defy is wired into melee.
@@ -317,12 +321,15 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    them one needs `ProneQuellPenalty` and five more knobs that do not exist, and
    the defences do not run through that function anyway. Disclosed in a comment
    at the switch.
-6. **A quell/defy defensive crit has nowhere to record itself.** **DEFERRED, not
-   reachable.** `AttackResult` still declares only `ParryCritDetected` /
-   `DodgeCritDetected` / `BlockCritDetected`. `ResolveChannelDefence` returns a
-   0.0 multiplier for a defensive crit, which fully negates, but there is no
-   `AttackResult` in that path so `applyCritEffects` (riposte / sweep / shield
-   slam) has nothing to fire from. Same as pre-U6 behaviour.
+6. **A quell/defy defensive crit now answers back.** **FIXED by the U6b
+   counter tier (Tasks 10/11).** `AttackResult` still declares only
+   `ParryCritDetected` / `DodgeCritDetected` / `BlockCritDetected`, and
+   `applyCritEffects` (riposte / sweep / shield slam) remains melee-only —
+   but a channel defensive crit is no longer inert: `ResolveChannelAttack`
+   returns a 0.0 multiplier (full negation) and its callers fire
+   `ExecuteCounter` (or the defy counter-taunt in `internal/actions`), so
+   every channel's decisive defence earns its answering move. See
+   `counter.go` in the file table.
 7. **The message enum now recognizes all five defences.** `items.DefenseType`
    includes quell and defy so channel outcomes can select their data pools.
    `combat.DefenseType` remains the three-valued melee `AttackResult` enum;
@@ -350,12 +357,15 @@ indices, so neutral pool tokens work for every player/mob orientation and the
 central visibility pipeline can anonymize them. Broader combat-message
 unification remains deferred.
 
-### `ResolveChannelDefence` — the non-melee defence resolver (U6 Task 12)
+### `ResolveChannelAttack` — the channel attack resolver (U6 Task 12, U6b)
+
+Named `ResolveChannelDefence` until U6b Task 4 widened it into THE seam for
+every non-melee attack (ranged, both spell channels, social, and all 16
+special moves via `ExecuteSkillMove`).
 
 ```go
-func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) ChannelDefenceResult
+func ResolveChannelAttack(channel AttackChannel, side AttackSide, attacker, defender *characters.Character) ChannelDefenceResult
 func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad
-func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) float64
 func AwardDefenceProgression(c *characters.Character, userId int, defenceType string)
 
 // U9: THE skill/stat mapping for all five defences. AwardDefenceProgression
@@ -364,7 +374,16 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 func DefenceSkillAndStat(defenceType string) (skill, stat string)
 ```
 
-`ResolveChannelDefence` runs ONE opposed contest and returns the canonical
+**The attack score is caller-supplied via `AttackSide`** (U6b Task 4), which
+replaced the deleted internal `ChannelAttackScore` helper (it hardcoded
+Willpower + spellcasting / Charisma + rhetoric and returned 0 for melee and
+ranged). Callers state `Stat`/`StatName`, `Skill`, the RAW `SkillRank` (the
+seam applies `SkillWeight` inside `AttackSide.score()`), a situational `Mult`
+(0 reads as unset, 1.0), and `ForceCrit` (the sleeping-victim auto-crit).
+Progression and cost read the same fields, so the score and the events cannot
+drift apart.
+
+`ResolveChannelAttack` runs ONE opposed contest and returns the canonical
 structured outcome. Damage consumers read `DamageMultiplier`; narration reads
 `Defended`, `DefensiveCrit`, `NormalizedDefenceMargin`, and `DefenceType` from
 that same result. It does not reroll or infer a second outcome. The multiplier
@@ -382,10 +401,11 @@ ignored rather than fatal.)
 
 Things that bite:
 
-- **`ChannelAttackScore` returns 0 for melee and ranged**, on purpose. Those
-  build their score in `calcAttackScore` with weapon, reach, position and
-  resource terms this function cannot see.
-- **Both spell channels share one attack score.** The channel decides what
+- **Melee never enters this function.** Its score carries weapon, reach,
+  position and resource terms built in `calcAttackScore`, and its swings run
+  through `runBestOfAllDefense` — it shares only `DefenceEntriesFor`, the
+  progression mapping and the crit bar with this seam.
+- **Both spell channels share one attack side.** The channel decides what
   DEFENDS, not what powers the attack: a physical-flavoured spell is still cast
   with willpower and spellcasting, it is simply dodged rather than quelled.
 - **The mounted defence is charged and progressed WIN OR LOSE**, matching melee
@@ -399,14 +419,15 @@ Things that bite:
   `contest_sign_test.go` is the guard.
 - **A FLOORED save returns the bare 0.5 and never the curve**, same rule as
   melee: the ±1 sentinel is in raw score units, not sigma.
-- **U9: `ResolveChannelDefence` also pays a crit/fumble progression bonus
+- **U9: `ResolveChannelAttack` also pays a crit/fumble progression bonus
   tier**, via the unexported `awardChannelDefenceBonus`. It classifies the
   finished contest with `progression.Classify(attackCrit, defenceCrit,
   attackFumble, defenceFumble)` -- using the SAME margin-derived crit and
   self-relative fumble signals `defenceDamageMultiplier` and
   `applyCritEffects` already compute, not a re-derivation -- builds a
-  `progression.Outcome` (attacker skill/stat from the new unexported
-  `channelAttackSkillAndStat`, defender skill/stat from `DefenceSkillAndStat`,
+  `progression.Outcome` (attacker skill/stat straight off the caller-supplied
+  `AttackSide.Skill` / `AttackSide.StatName` since U6b Task 4, which deleted
+  the hardcoded mapping helper; defender skill/stat from `DefenceSkillAndStat`,
   `ToughenStat` from `characters.ToughenStatFor(channelDamageChannel(channel))`),
   and calls `progression.BonusEvents` -- NOT `EventsForContest` -- because the
   ordinary events are already awarded by `AwardDefenceProgression` above and
@@ -442,7 +463,7 @@ it fully negates and fires the counterattack.
 Before this, a defensive win was zero damage while `TrySpellDeflection` and
 `TryStoicResolve` produced a flat 0.5 or 0.0 for spells and taunts: two
 mechanisms answering one question. Task 12 folded those channels onto this curve
-via `ResolveChannelDefence` and deleted both functions.
+via what is now `ResolveChannelAttack` and deleted both functions.
 
 Four things that bite:
 
@@ -836,18 +857,22 @@ Melee is no longer an exception. U6 pointed `runBestOfAllDefense` at
 `MinAttackHitChance` pair from `resolveDefenseOutcomeCore`, so melee is
 floored once, in the same place as everything else.
 
-Callers today: `ExecuteSkillMove`, `AttemptGrapple`,
-`RollSubmissionAttempt`, `ResolveChannelDefence`,
-`actions.ExecuteTaunt`, `usercommands.Throw`,
-`hooks.processGrapplePair` (grapple drift), `hooks.tickMobCharmState`
-(charm reroll), the spell sites in `hooks/spell_resolution.go` +
-`hooks/charm_spell.go`, both flee rolls in `flee.go`, and the U4
-out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
+Callers today are enumerated and OWNED by `TestEveryContestSiteIsOwned`
+(`contest_site_guard_test.go`, U6b Task 18): a new production `RunContest`
+call site fails that test until it is claimed there. The big consolidation
+is `ResolveChannelAttack` — since U6b it is the ONE contest behind every
+non-melee attack (the spell sites in `hooks/spell_resolution.go`,
+`actions.ExecuteTaunt`, `actions/combat_fire.go`, `usercommands.Throw`,
+and the 16 special moves via `ExecuteSkillMove`). Direct sites beyond it:
+melee's `runBestOfAllDefense`, `AttemptGrapple`, `RollSubmissionAttempt`,
+both flee rolls in `flee.go`, `hooks.processGrapplePair` (grapple drift),
+`hooks.tickMobCharmState` (charm reroll), `hooks.resolveCharmSpell`, and
+the U4 out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 `actions/steal.go`, `actions/plant.go`, `actions/defuse.go`,
 `usercommands/go.go` and
 `usercommands/skill.skullduggery.shadow.go`. `dice.OpposedRollStat` and
-`dice.OpposedRollStatWithFloors` have zero production callers and carry
-`Deprecated:` markers; U6 deletes them.
+`dice.OpposedRollStatWithFloors` still exist with zero production callers
+and `Deprecated:` markers; the deletion U6 owed is still outstanding.
 
 ### Gotchas
 
@@ -884,7 +909,7 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 - **`Result.Margin` is ATTACK-positive.** Pass it **unnegated** for an
   attacker's crit check (`actions/combat_taunt.go`, the spell sites in
   `internal/hooks`); pass **`-res.Margin`** for a defender's
-  (`ResolveChannelDefence`). Mixing the conventions
+  (`ResolveChannelAttack`). Mixing the conventions
   compiles cleanly and puts the crit on the losing side. Note that
   `bestDefenseResult.margin` uses the OPPOSITE convention
   (defence-positive) because `runBestOfAllDefense` flips it once at the
@@ -904,7 +929,7 @@ out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
   (`SetConfigForTest` assigns without validating, so the zero survives). Pinning
   `dice.SetContestFloors` no longer reaches this path at all.
 - **`Result.Floored` is read by `defenceDamageMultiplier`** (`defence_multiplier.go`,
-  reached via `ResolveChannelDefence` and `ExecuteSkillMove`), which takes the
+  reached via `ResolveChannelAttack` and `ExecuteSkillMove`), which takes the
   bare 0.5 multiplier on a floored save rather than feeding the ±1 sentinel
   margin into the curve. `RunContest` is still the single choke point for every
   opposed contest in the game, so it remains the cheapest place to instrument
@@ -1746,12 +1771,12 @@ own identical terms (converging that is not Task 17's mandate).
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
 | `crit_floor.go` | Crit floors, 1% both directions (5.11e). **U6 Task 9 changed the DENOMINATORS: the attack floor applies to swings that WON THE CONTEST and the defence floor to swings the DEFENCE won, keyed on `best.margin` (defence-positive, so `<= 0` is an attack win), not on `res.hit`.** The old hit/miss split stops being answerable once a defensive win deals partial damage, because a deflected swing then has `res.hit == true` while the defence won. A floored outcome and an uncontested swing (`defenseType == ""`) are promoted by neither floor. **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. **U6 Task 10:** a promotion to a defence crit now also clears `res.hit` and `res.damageMult`, because an ordinary defensive win arrives here already landing partial damage. |
-| `defence_multiplier.go` | `DefenceMitigation` — the margin-scaled damage reduction a defensive win now earns (U6 Task 10). 50% at a bare win, 100% at `ContestCritThreshold`. Its 0.5 and its threshold are STRUCTURAL, not config knobs: the threshold is the point the curve has to meet so that full negation by a defensive crit is continuous with it rather than a cliff. Also `ResolveChannelDefence` / `ChannelAttackScore` / `AwardDefenceProgression` (U6 Task 12) — the resolver the spell and social channels use in place of the deleted `avoidance.go`. **U6 Task 13** extracted `defenceDamageMultiplier(res contest.Result) float64` from `ResolveChannelDefence`'s tail — it converts a finished opposed contest into the attacker's damage multiplier (1.0 attack win, 0.0 defensive crit, exactly 0.5 on a floored save, 0.0-0.5 off the curve otherwise) and is now the ONE place the sign negation, the floored sentinel, and the sqrt(2) normaliser live; both `ResolveChannelDefence` and `skill_moves.go`'s `ExecuteSkillMove` call it. |
+| `defence_multiplier.go` | `DefenceMitigation` — the margin-scaled damage reduction a defensive win now earns (U6 Task 10). 50% at a bare win, 100% at `ContestCritThreshold`. Its 0.5 and its threshold are STRUCTURAL, not config knobs: the threshold is the point the curve has to meet so that full negation by a defensive crit is continuous with it rather than a cliff. Also `ResolveChannelAttack` / `AttackSide` / `AwardDefenceProgression` — the U6 Task 12 resolver (then `ResolveChannelDefence`) that replaced the deleted `avoidance.go`, widened by U6b Task 4 into THE seam every non-melee attack rides, with the attack score caller-supplied via `AttackSide` (the internal `ChannelAttackScore` helper was deleted with the flip). **U6 Task 13** extracted `defenceDamageMultiplier(res contest.Result) float64` from the resolver's tail — it converts a finished opposed contest into the attacker's damage multiplier (1.0 attack win, 0.0 defensive crit, exactly 0.5 on a floored save, 0.0-0.5 off the curve otherwise) and is now the ONE place the sign negation, the floored sentinel, and the sqrt(2) normaliser live, reached through `ResolveChannelAttack` (and so by `ExecuteSkillMove`). |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `situational.go` | U6b Task 17: `SituationalAttackMult(attacker, channel)` — the shared attacker-side situational accuracy layer (prone + stamina depletion on the physical channels only; see "Shared situational-modifier layer"). Also the round-start sleeping snapshot: `PublishSleepingSnapshot` (written once per round by `hooks.DoCombat`) and `SleepingForceCrit(defender)` — THE lookup for the sleeping-victim auto-crit contract, consumed by melee's round passes and threaded into channel contests as `AttackSide.ForceCrit`. |
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
-| `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). Consumed by `ResolveChannelDefence` for the three non-melee channels; melee still builds its own `defSeq`. See "Defence sets are a property of the channel" below. |
+| `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). Since U6b Task 2 consumed only via `DefenceEntriesFor`, the equipment-gated name builder EVERY channel uses: `ResolveChannelAttack` for the non-melee channels, and melee's `calculateCombat` for the names `runBestOfAllDefense` scores. See "Defence sets are a property of the channel" below. |
 | `attack_cost.go` | `ChargeAttackCost(attacker, swings)` — the raw aggregate `ActionAttack` quote and one `CostPartial` commit. Composition remains centralized in `QuoteActionCost`; `Short()` is true only for `CostPartiallyPaid`. |
 | `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only). Admission now prices the pre-resolution plan's `totalSwings`, while this result proves all planned attempts ran. |
 | `criteffects.go` | Critical and fumble effects |

@@ -18,11 +18,20 @@ at ~300g and fight her seriously.
 - [ ] Difficulty: does the fight feel fair for the gold paid? She should
       open with a chrysalis-cocoon shield, throw conviction-spike at you,
       conviction-barrage when you bring company, and flee below 30% health.
-- [ ] QUELL, finally observed live: her conviction spells are mental, so
-      your quell (Willpower + Spellcasting) answers them. Watch for: a
-      resisted cast being narrated, your CONVICTION pool dropping when you
-      defend (win or lose), a barely-resisted spell still stinging with
-      damage words, and a decisively-resisted one doing nothing.
+- [ ] QUELL answers EVERY cast now. She was picked as the quell instrument
+      back when a royal crit skipped quell entirely; U6b removed that skip,
+      so there is no longer any cast your quell does not contest. Expect
+      visible quell narration on every cast: your CONVICTION dropping when
+      you defend (win or lose), a barely-quelled spell still stinging with
+      damage words, and a decisively-quelled one doing nothing. A cast that
+      resolves in silence is a finding.
+- [ ] Far fewer royal crits at 300g. Her crits used to ignore your training;
+      the crit bar now weighs her skill against yours, and she is no
+      swordsman, so at 300g the crits should be rare. Note the deliberate
+      repricing that came with this: roughly 500g now buys the threat 300g
+      used to. If her fight feels flat for the gold, that is the repricing
+      (tunable via the instance stat-pool multipliers and cap in config),
+      not a resolution bug.
 - [ ] Floor and ceiling feel: in a long fight you should occasionally be
       stopped while dominating, and she should occasionally get through
       while losing. Neither should feel like the game cheating.
@@ -264,3 +273,29 @@ the crit and fumble bonus tiers were added or widened at the same time.
       VETERAN character. Passive growth should now tail off noticeably. On a
       NEW character it must feel exactly as it always did; if early growth
       got slower, the damping is wrong and that is a bug, not tuning.
+
+## U6b: finish the flip (2026-08-19)
+
+Every attack now runs the same single contest, every attack can crit, and a
+fully turned-aside attack earns an answer. Judge these on whether the new
+moments read clearly, not on rates.
+
+- [ ] Bash and shot crits land and are narrated: special moves and aimed
+      shots could never crit before U6b. Bash something repeatedly and put
+      arrows into something tough until a critical lands on each. The crit
+      should be unmistakable in the text and visibly harder-hitting; if a
+      whole session produces none on either, or one lands without crit
+      wording, that is a finding.
+- [ ] A counter fires after a decisive quell: in the queen fight (or against
+      any caster), watch for a cast you quell so completely that you answer
+      it in the same breath. The counter should read as YOUR move, arrive
+      immediately after the quell line, and never chain into a second
+      counter. Defy works the same way against taunts, answering with a barb
+      instead of a blow.
+- [ ] Boss-kiting from the adjacent room, as a FEEL item: the cross-room
+      shot is deliberately the one attack that cannot be countered, which
+      makes shooting a boss from next door strictly safer than standing in
+      the arena. Kite something dangerous from the adjacent room for a few
+      rounds and report how it feels: legitimate tactics, or an exploit
+      that needs a design answer. No verdict is baked in yet; your read
+      here decides whether it goes to the backlog.

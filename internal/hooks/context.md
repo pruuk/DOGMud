@@ -1076,10 +1076,13 @@ For each pair inside `processGrapplePair`:
    `Balance.ContestFloor`, read only in
    `internal/combat/run_contest.go`.
 
-   The signed z here is `res.Margin / res.AttackRoll.StdDev`, which is
-   missing the `sqrt(2)` that `combat.ContestCrit` applies. That is
-   preserved deliberately so U3 stays a provable no-op; there is a
-   `NOTE(U6)` at the site and U6 owns the correction.
+   The signed z here is `res.Margin / (res.AttackRoll.StdDev * math.Sqrt2)`.
+   U6b Task 14 landed the sqrt(2) correction the U3 no-op deliberately
+   deferred: the pre-fix code divided by `StdDev` alone, inflating every
+   drift z by about 41%. Floor-forced rounds keep the ±1 sentinel margin,
+   which normalises to ~0 and lands in the Hold band by design — the long
+   comment at the site in `Position_GrappleTick.go` explains why that is
+   kept and must not be "fixed".
 
 3. **Outcome resolution via `position.ResolveOutcome`** — Passes the
    controller, signed ZScore, and defender's posture to the resolver,
