@@ -150,6 +150,15 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		m := mobs.GetInstance(attackMobInstanceId)
 
+		// A resolved id whose instance is gone (a stale id flowing through
+		// #id targeting, or the instance destroyed between resolution and
+		// here) used to fall through and return with NO output at all. A
+		// failed resolution must always message the player.
+		if m == nil {
+			user.SendText(messaging.CategorySystem, `You don't see them here.`)
+			return true, nil
+		}
+
 		if m != nil {
 			dupIdx := room.GetMobDuplicateIndex(m.InstanceId)
 			mName := m.Character.GetMobNameIndexed(user.UserId, dupIdx).String()
@@ -253,7 +262,19 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	} else if attackPlayerId > 0 {
 
-		if p := users.GetByUserId(attackPlayerId); p != nil {
+		p := users.GetByUserId(attackPlayerId)
+
+		// Same silent fall-through as the mob branch above. This one is
+		// reachable in production: `attack @<id>` (the party auto-attack
+		// form) resolves through r.players without a liveness check, so a
+		// stale player id arrived here as a non-nil id with no user record
+		// behind it and the command returned with no output.
+		if p == nil {
+			user.SendText(messaging.CategorySystem, `You don't see them here.`)
+			return true, nil
+		}
+
+		if p != nil {
 
 			if pvpErr := room.CanPvp(user, p); pvpErr != nil {
 				user.SendText(messaging.CategorySystem, pvpErr.Error())
