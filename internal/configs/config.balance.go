@@ -242,10 +242,9 @@ type Balance struct {
 	ThrottleInterruptChance          ConfigFloat `yaml:"ThrottleInterruptChance"`          // Chance throttle interrupts a casting victim, default 0.75
 
 	// ── COMBAT: RANGED ───────────────────────────────────────────────────────
-	ShootBaseStaminaCost     ConfigFloat `yaml:"ShootBaseStaminaCost"`     // Base stamina cost to shoot before shared multipliers (default 2)
-	ReloadBaseStaminaCost    ConfigFloat `yaml:"ReloadBaseStaminaCost"`    // Base stamina cost to reload before shared multipliers (default 1)
-	RangedShotScale          ConfigFloat `yaml:"RangedShotScale"`          // Global multiplier on all ranged shot damage (default 1.0)
-	RangedShieldDefenseBonus ConfigInt   `yaml:"RangedShieldDefenseBonus"` // Flat defense-score bonus vs ranged when defender has a shield (default 15)
+	ShootBaseStaminaCost  ConfigFloat `yaml:"ShootBaseStaminaCost"`  // Base stamina cost to shoot before shared multipliers (default 2)
+	ReloadBaseStaminaCost ConfigFloat `yaml:"ReloadBaseStaminaCost"` // Base stamina cost to reload before shared multipliers (default 1)
+	RangedShotScale       ConfigFloat `yaml:"RangedShotScale"`       // Global multiplier on all ranged shot damage (default 1.0)
 
 	// ── SKULLDUGGERY ─────────────────────────────────────────────────────────
 	SneakBaseStaminaCost           ConfigFloat `yaml:"SneakBaseStaminaCost"`           // Base stamina cost to sneak before shared multipliers (default 2.5)

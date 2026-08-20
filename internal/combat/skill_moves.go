@@ -93,7 +93,14 @@ type SkillMoveParams struct {
 // is already calibrated for the grapple context. Grapple-entry, trip,
 // and bash are force-driven and are similarly reach-agnostic.
 func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
-	return executeSkillMoveWithRunner(p, RunContest)
+	// Read the swappable contest core (production-initialised to RunContest,
+	// never repointed outside tests) rather than RunContest directly, so
+	// SetChannelAttackContestRunnerForTest reaches out-of-package callers of
+	// THIS entry point too — U6b Task 8's fire seam tests drive the real
+	// ExecuteFire path against a deterministic contest exactly the way the
+	// taunt (Task 5) and spell (Task 4) collapse tests already do for
+	// ResolveChannelAttack.
+	return executeSkillMoveWithRunner(p, channelAttackContestRunner)
 }
 
 // executeSkillMoveWithRunner is ExecuteSkillMove with an injectable contest

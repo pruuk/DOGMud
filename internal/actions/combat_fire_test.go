@@ -221,33 +221,10 @@ func TestFire_SameRoomMob_PerceptionGoverns(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// 4. rangedDefenseScore: shield adds exactly RangedShieldDefenseBonus
-// ---------------------------------------------------------------------------
-
-func TestRangedDefenseScore_ShieldBonus(t *testing.T) {
-	base := characters.New()
-	base.Stats.Dexterity.ValueAdj = 50
-
-	withShield := characters.New()
-	withShield.Stats.Dexterity.ValueAdj = 50
-	withShield.Equipment.Offhand = items.Item{
-		ItemId: 99,
-		Spec: &items.ItemSpec{
-			ItemId:      99,
-			Name:        "buckler",
-			Type:        items.Offhand,
-			BlockRating: 10,
-		},
-	}
-
-	baseScore := rangedDefenseScore(base)
-	shieldScore := rangedDefenseScore(withShield)
-
-	bonus := float64(configs.GetBalanceConfig().RangedShieldDefenseBonus)
-	assert.Equal(t, baseScore+bonus, shieldScore,
-		"a shield should add exactly RangedShieldDefenseBonus to the ranged defense score")
-}
+// (Section 4 retired by U6b Task 8: it pinned the deleted folded defence
+// scalar's flat shield bonus. Its replacement contract — a shield contributes
+// a real block CONTEST entry and no flat addend anywhere in the score path —
+// is pinned by combat_fire_seam_test.go.)
 
 // ---------------------------------------------------------------------------
 // 5. Cross-room: loaded + valid exit + adjacent-room target → CrossRoom
