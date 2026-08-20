@@ -74,6 +74,25 @@ func TestNormalizeSkipsCritBannerAsterisks(t *testing.T) {
 	}
 }
 
+func TestNormalizeSkipsTrailingBracketTag(t *testing.T) {
+	// A line ending in a bracketed tag like `[CRIT!]` is already
+	// terminated — no period after the closing bracket.
+	in := `You unleash a devastating verbal onslaught on Practice Butt! <ansi fg="crit-text">[CRIT!]</ansi>`
+	got := Normalize(CategoryTauntSuccess, in)
+	if got != in {
+		t.Errorf("trailing ] must not gain punctuation, got %q", got)
+	}
+}
+
+func TestNormalizeSkipsTrailingParenTag(t *testing.T) {
+	// Same for a trailing parenthesized aside.
+	in := `You mock them mercilessly! (a soul-shattering tirade)`
+	got := Normalize(CategoryTauntSuccess, in)
+	if got != in {
+		t.Errorf("trailing ) must not gain punctuation, got %q", got)
+	}
+}
+
 func TestNormalizeNoLonePeriodAfterTrailingNewline(t *testing.T) {
 	// A message ending in punctuation + newline must pass through
 	// unchanged — previously the newline hid the `...` from the

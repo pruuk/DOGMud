@@ -196,9 +196,12 @@ func appendEndPunct(text string) string {
 	}
 	last := trimmed[len(trimmed)-1]
 	switch last {
-	case '.', '!', '?', ',', ')', '"', '\'', '*':
+	case '.', '!', '?', ',', ')', ']', '"', '\'', '*':
 		// `*` covers `***` banner decorations (crits, deaths,
 		// achievements) — never append punctuation after them.
+		// `)` and `]` cover trailing parenthesized/bracketed tags
+		// ("(a soul-shattering tirade)", "[CRIT!]") — a line ending
+		// in one is already terminated.
 		return text
 	}
 	return trimmed + "." + suffix + trailing
