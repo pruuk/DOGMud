@@ -74,6 +74,40 @@ func ChannelAttackScore(channel AttackChannel, attacker *characters.Character) f
 	}
 }
 
+// AttackSide is the attacker's half of a channel contest, made explicit.
+//
+// Before U6b the seam derived the attack score internally (ChannelAttackScore,
+// hardcoded Willpower+Spellcasting / Charisma+Rhetoric), which meant a spell's
+// primarystat (U9) could not reach the hit contest and the progression naming
+// had to mirror the hardcode. Callers now say exactly what attacks:
+//
+//	Stat      fully-modified stat VALUE feeding the score
+//	StatName  which stat that is — progression events carry it
+//	Skill     governing skill — progression, cost and crit-rank input carry it
+//	SkillRank RAW rank. It multiplies by SkillWeight for the score, and feeds
+//	          CritDamageMultiplier UNWEIGHTED (Assumption 8 — taunt used to
+//	          pass the weighted value, a x15.75-vs-x4.6 outlier, corrected).
+//	Mult      situational multiplier on the whole score (1.0 default; taunt's
+//	          conviction-depletion factor and Task 17's shared modifiers land
+//	          here)
+type AttackSide struct {
+	Stat      int
+	StatName  string
+	Skill     skills.SkillTag
+	SkillRank int
+	Mult      float64
+}
+
+// score is the attack score the side enters the contest with. Mult 0 is the
+// zero value, not an annihilator: it reads as "unset", 1.0.
+func (s AttackSide) score() float64 {
+	m := s.Mult
+	if m == 0 {
+		m = 1.0
+	}
+	return (float64(s.Stat) + float64(s.SkillRank)*float64(configs.GetBalanceConfig().SkillWeight)) * m
+}
+
 // defenceEffectiveness returns the config multiplier applied to a defence's
 // score before it enters a contest.
 //
@@ -172,6 +206,16 @@ type ChannelDefenceResult struct {
 	Defended                bool
 	DefensiveCrit           bool
 	Cost                    characters.CostCommitResult
+
+	// U6b: the attacker's half of the same contest. Crit is margin-derived
+	// against CritBarFor and NEVER set on a Floored outcome; Fumble is
+	// self-relative (AttackRoll.ZScore <= -DefenseCritBar()) and callers must
+	// resolve it BEFORE success — a fumbled attack aborts even when the roll
+	// won (Assumption 7, uniform across channels; it caps hit at the ceiling
+	// minus the fumble rate, which is the pre-U6b spell/taunt behaviour made
+	// universal and documented).
+	AttackerCrit   bool
+	AttackerFumble bool
 }
 
 // ChannelDefenceIdentities carries actor-aware, display-ready identities into
@@ -196,8 +240,10 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 	}, indexOverride...)
 }
 
-// ResolveChannelDefence runs ONE opposed contest for a channel that does not go
-// through the melee hitroll and returns its structured outcome.
+// ResolveChannelAttack is THE channel resolution entry point (U6b Task 3): it
+// runs ONE opposed contest for a channel that does not go through the melee
+// hitroll and returns its structured outcome, with the attacker's half made
+// explicit by the caller-supplied AttackSide.
 //
 // It replaces TrySpellDeflection and TryStoicResolve, which each ran a SECOND
 // independent contest on top of the channel's primary roll, on different stats,
@@ -218,11 +264,58 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 // the distinct physical modifiers, so this path must not fall back to the lossy
 // integer compatibility price. An earlier comment here asserted the physical
 // three never reached this site; that was never true.
+func ResolveChannelAttack(channel AttackChannel, side AttackSide, attacker, defender *characters.Character) ChannelDefenceResult {
+	return resolveChannelAttackWithRunner(channel, side, attacker, defender, RunContest)
+}
+
+// ResolveChannelDefence remains for the taunt/spell callers until Tasks 4-5
+// migrate them onto ResolveChannelAttack, building the legacy default side
+// from the old ChannelAttackScore semantics. DELETED in Task 5 once the last
+// caller moves; ChannelAttackScore goes with it.
 func ResolveChannelDefence(channel AttackChannel, attacker, defender *characters.Character) ChannelDefenceResult {
 	return resolveChannelDefenceWithRunner(channel, attacker, defender, RunContest)
 }
 
+// resolveChannelDefenceWithRunner is the legacy shim behind
+// ResolveChannelDefence: it builds the default AttackSide and delegates.
+// Deleted with the wrapper in Task 5.
 func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *characters.Character, runner defenceContestRunner) ChannelDefenceResult {
+	return resolveChannelAttackWithRunner(channel, legacyChannelAttackSide(channel, attacker), attacker, defender, runner)
+}
+
+// legacyChannelAttackSide reproduces ChannelAttackScore's hardcoded pairs as
+// an explicit AttackSide, so the legacy wrapper's callers keep the exact score
+// and bar inputs they had: side.score() equals ChannelAttackScore for every
+// channel (the physical channels score 0 there and the zero side scores 0
+// here), and SkillRank is the same real rank the U9 bonus tier used to read
+// through its per-channel hardcode (deleted this task). Stays in lockstep
+// with ChannelAttackScore until Task 5 deletes both.
+func legacyChannelAttackSide(channel AttackChannel, attacker *characters.Character) AttackSide {
+	if attacker == nil {
+		return AttackSide{Mult: 1.0}
+	}
+	switch channel {
+	case ChannelSpellMental, ChannelSpellPhysical:
+		return AttackSide{
+			Stat:      attacker.Stats.Willpower.ValueAdj,
+			StatName:  "willpower",
+			Skill:     skills.Spellcasting,
+			SkillRank: attacker.GetSkillLevel(skills.Spellcasting),
+			Mult:      1.0,
+		}
+	case ChannelSocial:
+		return AttackSide{
+			Stat:      attacker.Stats.Charisma.ValueAdj,
+			StatName:  "charisma",
+			Skill:     skills.Rhetoric,
+			SkillRank: attacker.GetSkillLevel(skills.Rhetoric),
+			Mult:      1.0,
+		}
+	}
+	return AttackSide{Mult: 1.0}
+}
+
+func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, attacker, defender *characters.Character, runner defenceContestRunner) ChannelDefenceResult {
 	out := ChannelDefenceResult{
 		DamageMultiplier: 1.0,
 		Cost:             characters.CostCommitResult{Status: characters.CostNoCharge},
@@ -241,7 +334,7 @@ func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *
 		return out
 	}
 
-	atkScore := ChannelAttackScore(channel, attacker)
+	atkScore := side.score()
 
 	bal := configs.GetBalanceConfig()
 	proneDefender := defender.IsProne() || defender.IsSupine()
@@ -287,6 +380,16 @@ func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *
 	}
 	out.DamageMultiplier = defenceDamageMultiplier(res)
 
+	// U6b Task 3: the attacker's verdicts, derived ONCE from this contest.
+	// The bar is the CHANNEL's skill pair — the attack's governing rank
+	// against the WINNING defence's governing rank. A floored outcome carries
+	// the +-1 sentinel margin and cannot be a crit (the same rule
+	// applyCritFloors declares in melee). Fumble is self-relative and callers
+	// resolve it BEFORE success — a fumbled attack aborts even a winning roll.
+	bar := CritBarFor(side.SkillRank, defenderRankOf(defender, res.Winner))
+	out.AttackerCrit = !res.Floored && AttackContestCritAt(res.Margin, res.AttackRoll, bar)
+	out.AttackerFumble = res.AttackRoll.ZScore <= -DefenseCritBar()
+
 	out.DefenceType = res.Winner
 	out.Cost = commitDefenceWinner(defender, candidates, res)
 	// U9: the ordinary defence award is unchanged in WHEN it fires -- whenever
@@ -303,7 +406,7 @@ func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *
 		}
 	}
 
-	awardChannelDefenceBonus(channel, attacker, defender, res)
+	awardChannelDefenceBonus(channel, side, attacker, defender, res, out.AttackerCrit, out.AttackerFumble)
 
 	// A floor changes the outcome without changing the underlying rolls. Keep
 	// the winner and cost, but expose zero statistical sentinels so later prose
@@ -379,32 +482,47 @@ func defenceDamageMultiplier(res contest.Result) float64 {
 	return 1.0 - DefenceMitigation(defMargin)
 }
 
+// defenderRankOf resolves the WINNING defence's governing skill rank — the
+// defender half of CritBarFor's pair. Uncontested/static outcomes (an empty or
+// unrecognised winner) use rank 0 rather than guessing a skill.
+func defenderRankOf(defender *characters.Character, winner string) int {
+	skillName, _ := DefenceSkillAndStat(winner)
+	if skillName == "" || defender == nil {
+		return 0
+	}
+	return defender.GetSkillLevel(skills.SkillTag(skillName))
+}
+
 // awardChannelDefenceBonus pays the crit/fumble tier for a channel contest.
 //
 // The ORDINARY events are left to AwardDefenceProgression and to the attacker's
 // own call site, so Outcome carries only the skill and stat names the bonus
 // cells need -- populating the ordinary fields here would double-award.
-func awardChannelDefenceBonus(channel AttackChannel, attacker, defender *characters.Character, res contest.Result) {
+//
+// The attacker's crit and fumble verdicts are CONSUMED, not re-derived: the
+// seam already decided them once against CritBarFor's pair bar, and a second
+// derivation here (the pre-U6b const-bar AttackContestCrit call) would let a
+// skill-advantaged attacker crit at the floored bar for narration and damage
+// while the progression bonus still demanded 2.0 — two verdicts for one
+// contest. The attacker's skill and stat likewise come FROM the AttackSide the
+// caller passed, not a per-channel hardcode.
+func awardChannelDefenceBonus(channel AttackChannel, side AttackSide, attacker, defender *characters.Character, res contest.Result, attackCrit, attackFumble bool) {
 	if !res.Contested || res.Floored {
 		return
 	}
 
-	// Crit is decided by NORMALIZED MARGIN, not by a self-relative z-score.
-	// Since 5.11d the engine tests margin/(stdDev*sqrt2) against
-	// ContestCritThreshold; re-deriving crit from AttackRoll.ZScore here would
-	// fire the bonus tier on a DIFFERENT set of swings than the game narrates
-	// as crits, which is two mechanisms answering one question.
+	// The DEFENDER's crit is still decided here, by NORMALIZED MARGIN against
+	// the constant defender bar (see DefenseCritBar for why it does not move
+	// with the skill pair).
 	//
 	// Note the sign: Result.Margin is ATTACK-positive, so the defence side
 	// negates it, exactly as defenceDamageMultiplier does at
 	// defence_multiplier.go:307.
-	attackCrit := AttackContestCrit(res.Margin, res.AttackRoll)
 	defenceCrit := DefenseContestCrit(-res.Margin, res.DefenseRoll)
 
 	// Fumble stays self-relative: it is a property of one bad roll, not of the
 	// gap between two. ContestCritThreshold is the same magnitude in both
 	// directions.
-	attackFumble := res.AttackRoll.ZScore <= -ContestCritThreshold
 	defenceFumble := res.DefenseRoll.ZScore <= -ContestCritThreshold
 
 	exceptional := progression.Classify(attackCrit, defenceCrit, attackFumble, defenceFumble)
@@ -412,7 +530,7 @@ func awardChannelDefenceBonus(channel AttackChannel, attacker, defender *charact
 		return
 	}
 
-	atkSkill, atkStat := channelAttackSkillAndStat(channel, attacker)
+	atkSkill, atkStat := string(side.Skill), side.StatName
 	defSkill, defStat := DefenceSkillAndStat(res.Winner)
 
 	out := progression.Outcome{
@@ -440,27 +558,6 @@ func awardChannelDefenceBonus(channel AttackChannel, attacker, defender *charact
 	defender.ApplyProgression(evs, progression.SideDefender, defender.GetUserId(), round)
 }
 
-// channelAttackSkillAndStat mirrors ChannelAttackScore's channel-to-skill/stat
-// mapping. It exists only because ChannelAttackScore returns a float (the
-// contest score), not the names that fed it -- the bonus tier needs the
-// names. Do not fork a second mapping: Task 13 moves the spell attack ROLL
-// onto primarystat but leaves ChannelAttackScore's willpower-based CONTEST
-// score untouched, so this stays in lockstep with that function, not with
-// whatever the attack roll uses.
-func channelAttackSkillAndStat(channel AttackChannel, attacker *characters.Character) (skill, stat string) {
-	if attacker == nil {
-		return "", ""
-	}
-	switch channel {
-	case ChannelSpellMental, ChannelSpellPhysical:
-		return string(skills.Spellcasting), "willpower"
-	case ChannelSocial:
-		return string(skills.Rhetoric), "charisma"
-	default:
-		return "", ""
-	}
-}
-
 // channelDamageChannel maps an AttackChannel onto the "physical"/"magical"/
 // "conviction" damage-channel string ToughenStatFor expects.
 //
@@ -473,11 +570,14 @@ func channelAttackSkillAndStat(channel AttackChannel, attacker *characters.Chara
 // "physical" here would toughen the wrong stat (vitality instead of
 // willpower) on a defensive crit.
 //
-// ChannelMelee and ChannelRanged are omitted deliberately: ChannelMelee never
-// reaches this path (defence_sets.go:32-34) and ChannelRanged has its own
-// rangedDefenseScore route, so callers here never pass either.
+// ChannelMelee and ChannelRanged both answer "physical": U6b routes the
+// special-attack and ranged resolutions through this seam, and a "" fallthrough
+// would make ToughenStatFor("") silently toughen the wrong stat on a bash or
+// bolt crit.
 func channelDamageChannel(channel AttackChannel) string {
 	switch channel {
+	case ChannelMelee, ChannelRanged:
+		return "physical"
 	case ChannelSpellPhysical, ChannelSpellMental:
 		return "magical"
 	case ChannelSocial:
