@@ -8,9 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/costs"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -263,12 +261,24 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		Command: "throw",
 	}, questBridge, questBridge)
 
-	// AoE resolution: opposed roll per hostile mob in room
-	skillWeight := float64(cfg.SkillWeight)
+	// AoE resolution — U6b Task 15: every hostile in the room contests the ONE
+	// grenade independently through the channel seam. Per target: its own
+	// equipment-gated defence set (dodge for everyone; block only behind a
+	// shield — you cannot parry a blast), its own margin, its own crit-or-not.
+	// The old hand-rolled defender score (Dex + Perception as a x0.5
+	// pseudo-skill) died with the defence set. The attack side was ALREADY
+	// Dex + skullduggery x SkillWeight; the seam now derives the same score
+	// from AttackSide.
 	skullduggery := user.Character.GetSkillLevel(skills.Skullduggery)
 	dexterity := user.Character.GetEffectiveDexterity()
 
-	attackerScore := float64(dexterity) + float64(skullduggery)*skillWeight
+	side := combat.AttackSide{
+		Stat:      dexterity,
+		StatName:  "dexterity",
+		Skill:     skills.Skullduggery,
+		SkillRank: skullduggery,
+		Mult:      1.0,
+	}
 
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(
 		`<ansi fg="yellow-bold">You hurl the <ansi fg="itemname">%s</ansi> into the fray!</ansi>`,
@@ -296,13 +306,15 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			continue
 		}
 
-		defenderScore := float64(mob.Character.GetEffectiveDexterity()) +
-			float64(mob.Character.GetEffectivePerception())*skillWeight*0.5
+		// ONE contest per target through the seam: the defender's set is
+		// quoted, charged, and progressed inside; the attacker's crit and
+		// fumble verdicts come from this same contest.
+		out := combat.ResolveChannelAttack(combat.ChannelRanged, side,
+			user.Character, &mob.Character)
 
-		res := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}})
-
-		// Fumble check: effect hits thrower instead
-		if res.AttackRoll.ZScore <= -2.0 {
+		// Fumble check (self-relative, resolved BEFORE success — a fumbled
+		// throw aborts even a winning roll): effect hits thrower instead.
+		if out.AttackerFumble {
 			fumbled = true
 			user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your throw goes horribly wrong — the projectile detonates in your hand!</ansi>`)
 			room.SendTextVisual(messaging.CategoryHitRanged, fmt.Sprintf(
@@ -344,54 +356,97 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				mob.Character.Name), user.UserId)
 		}
 
-		if !res.Success {
-			continue
-		}
+		hit := !out.Defended
 
-		hitCount++
-		hitMobs = append(hitMobs, mob)
-
-		// Apply effects to mob
+		// Damage — U6b Task 15: the multiplier curve and the crit tier. A
+		// crit bypasses mitigation and scales by CritDamageMultiplier(raw
+		// rank); a defended throw still splashes partial damage along the
+		// shared DefenceMitigation curve (0.5 on a bare defensive win, down
+		// to 0.0 on a defensive crit).
+		dmg := 0
 		if hasDamage {
 			rawDmg := combat.CalcRawDamage(dexterity, skullduggery, spec.DamageMultiplier, combat.ChannelPhysical)
 			mitPct := mob.Character.GetPhysicalMitigation()
 			mitCap := combat.MitigationCap(combat.ChannelPhysical)
-			mitigated := combat.ApplyMitigation(rawDmg, mitPct, mitCap)
-			finalRoll := dice.RollStat(mitigated)
-			dmg := int(math.Round(finalRoll.Value))
-			if dmg < 1 {
-				dmg = 1
+			dmg = combat.CritOrMitigatedDamage(rawDmg, skullduggery, out.AttackerCrit, mitPct, mitCap)
+			if !out.AttackerCrit {
+				dmg = int(float64(dmg) * out.DamageMultiplier)
+				if out.DamageMultiplier > 0 && dmg < 1 {
+					dmg = 1
+				}
 			}
-			mob.Character.ApplyHarm(characters.PoolHealth, dmg,
-				state.ActorRef{UserId: user.UserId})
-			dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`The explosion catches <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`,
-				mob.Character.Name, dmgDesc))
+			if dmg > 0 {
+				mob.Character.ApplyHarm(characters.PoolHealth, dmg,
+					state.ActorRef{UserId: user.UserId})
+			}
 		}
 
-		if hasBuffs {
-			for _, buffId := range spec.BuffIds {
-				mob.AddBuff(buffId, `grenade`)
+		if out.Defended {
+			// U6b Task 9/15: a defended throw speaks the channel defence
+			// triad (dodge, or block behind a shield), naming what actually
+			// stopped or blunted it. Room lines never carry damage; when the
+			// blast still clipped the defender, the thrower's own line
+			// carries the tier instead of the triad's attacker line.
+			triad := combat.RenderChannelDefenceMessages(out, combat.ChannelDefenceIdentities{
+				Attacker: user.Character.GetPlayerName(user.UserId).String(),
+				Defender: mob.Character.GetMobNameIndexed(user.UserId,
+					room.GetMobDuplicateIndex(mob.InstanceId)).String(),
+			}, "firebomb")
+			if dmg > 0 {
+				dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
+				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+					`The edge of the blast still catches <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`,
+					mob.Character.Name, dmgDesc))
+			} else if triad.ToAttacker != "" {
+				user.SendText(messaging.CategoryDodge, string(triad.ToAttacker))
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi> is caught in the blast!`,
-				mob.Character.Name))
+			if triad.ToRoom != "" {
+				room.SendTextVisual(messaging.CategoryDodge, string(triad.ToRoom), user.UserId)
+			}
 		}
 
-		combat.RecordSpecialMove(combat.User, combat.Mob, "throw",
-			true, 0, user.Character, &mob.Character, util.GetRoundCount())
+		if hit {
+			hitCount++
+
+			if hasDamage {
+				dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
+				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+					`The explosion catches <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`,
+					mob.Character.Name, dmgDesc))
+			}
+
+			if hasBuffs {
+				for _, buffId := range spec.BuffIds {
+					mob.AddBuff(buffId, `grenade`)
+				}
+				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi> is caught in the blast!`,
+					mob.Character.Name))
+			}
+
+			combat.RecordSpecialMove(combat.User, combat.Mob, "throw",
+				true, 0, user.Character, &mob.Character, util.GetRoundCount())
+		}
+
+		// Everything the blast actually touched engages: full hits, and
+		// defended targets the splash still damaged. A defensive crit (zero
+		// damage, no buffs) walked away clean.
+		if hit || dmg > 0 {
+			hitMobs = append(hitMobs, mob)
+		}
 	}
 
 	if !fumbled {
-		if hitCount == 0 {
+		if len(hitMobs) == 0 {
+			// Nothing was hit and nothing was even clipped — a defended
+			// partial no longer reads as "harmlessly".
 			user.SendText(messaging.CategorySystem, "The projectile misses everything and shatters harmlessly.")
 		} else if hitCount == 1 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="green">Your throw strikes true!</ansi>`))
-		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="green">Your throw catches multiple targets!</ansi>`))
+			user.SendText(messaging.CategorySystem,
+				`<ansi fg="green">Your throw strikes true!</ansi>`)
+		} else if hitCount > 1 {
+			user.SendText(messaging.CategorySystem,
+				`<ansi fg="green">Your throw catches multiple targets!</ansi>`)
 		}
 	}
 

@@ -102,11 +102,12 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 
 	isHidden := char.IsHidden()
 
-	// Compute attacker score (identical formula to steal).
+	// Compute attacker score (identical formula to steal). U6b Task 15:
+	// linear rank x SkillWeight; the sqrt-curve x25 regime and the
+	// steal-specific balance knob it multiplied by are both gone.
 	rank := char.GetSkillLevel(skills.Skullduggery)
-	base := float64(char.Stats.Dexterity.ValueAdj) +
-		combat.SkillMultiplier(rank)*25.0
-	attackerScore := base * float64(cfg.StealSkillMultiplier)
+	attackerScore := float64(char.Stats.Dexterity.ValueAdj) +
+		float64(rank)*float64(cfg.SkillWeight)
 	if isHidden {
 		attackerScore += float64(cfg.StealHiddenBonus)
 	}
@@ -153,7 +154,7 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item,
 		}
 	}
 
-	defenderScore := float64(m.Character.Stats.Perception.ValueAdj)
+	defenderScore := stealVictimScore(&m.Character)
 	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
 
 	room := actor.GetRoom()
@@ -272,7 +273,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
 	// Skill-use and progression.
 	actor.OnSkillUse(string(skills.Skullduggery))
 
-	defenderScore := float64(targetUser.Character.Stats.Perception.ValueAdj)
+	defenderScore := stealVictimScore(targetUser.Character)
 	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
 
 	if !success {
@@ -361,7 +362,10 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 		}
 	}
 
-	// Find highest Perception observer (players + mobs, excluding party).
+	// Find the best observer (players + mobs, excluding party). U6b Task 15:
+	// scored via stealVictimScore (Perception + skullduggery x SkillWeight),
+	// same conversion as steal's container observer pass -- the old score was
+	// raw Perception with the observer's skill at x0.
 	partySet := map[int]bool{}
 	if uid := actor.GetUserId(); uid > 0 {
 		partySet[uid] = true
@@ -373,7 +377,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 	}
 	selfMobId := actor.GetMobInstanceId()
 
-	highestPerception := 0.0
+	highestObserverScore := 0.0
 	spotterName := ""
 	hasObserver := false
 
@@ -385,9 +389,9 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 		if observer == nil {
 			continue
 		}
-		perScore := float64(observer.Character.Stats.Perception.ValueAdj)
-		if perScore > highestPerception {
-			highestPerception = perScore
+		obsScore := stealVictimScore(observer.Character)
+		if obsScore > highestObserverScore {
+			highestObserverScore = obsScore
 			spotterName = observer.Character.Name
 			hasObserver = true
 		}
@@ -401,9 +405,9 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 		if m == nil {
 			continue
 		}
-		perScore := float64(m.Character.Stats.Perception.ValueAdj)
-		if perScore > highestPerception {
-			highestPerception = perScore
+		obsScore := stealVictimScore(&m.Character)
+		if obsScore > highestObserverScore {
+			highestObserverScore = obsScore
 			spotterName = m.Character.Name
 			hasObserver = true
 		}
@@ -411,7 +415,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 
 	success := true
 	if hasObserver {
-		success = combat.RunContest(attackerScore, []contest.Entry{{Score: highestPerception}}).Success
+		success = combat.RunContest(attackerScore, []contest.Entry{{Score: highestObserverScore}}).Success
 	}
 
 	if !success {

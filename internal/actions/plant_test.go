@@ -234,24 +234,22 @@ func TestPlant_SharesStealCooldown(t *testing.T) {
 // in plantOnPlayer (result.Detected=true after successful plant) is reachable
 // under realistic stats.
 //
-// Design rationale (mirrors steal detection test):
+// Design rationale (mirrors steal detection test; U6b Task 15/16 linear
+// shapes):
 //
-//	Plant uses: attackerScore (Dex + SkillMult(rank)*25) * StealSkillMultiplier
-//	            vs defenderScore = raw Perception
-//	Detection uses: CalcSearchScore (Perception + SkillMult(search)*25)
-//	                vs CalcSneakScore (Dex + SkillMult(skullduggery)*25)
+//	Plant uses: attackerScore (Dex + rank x SkillWeight)
+//	            vs stealVictimScore (Perception + skullduggery x SkillWeight)
+//	Detection uses: CalcDetectionScore (Perception + search x SkillWeight)
+//	                vs CalcSneakScore (Dex + skullduggery x SkillWeight)
 //
-// By giving the defender a high Search skill rank we boost CalcSearchScore
-// far above their raw Perception, while their raw Perception stays low enough
-// that the plant roll succeeds reliably.
+// By giving the defender a high Search skill rank we boost CalcDetectionScore
+// far above their raw Perception, while their raw Perception (and zero
+// skullduggery) stays low enough that the plant roll succeeds reliably.
 //
 //	Actor:    Dex=110, skullduggery rank=2
-//	          attackerScore  ≈ 145   (beats Per=40 → plant nearly certain)
-//	          CalcSneakScore ≈ 145
 //	Defender: Perception=40, Search rank=50
-//	          CalcSearchScore ≈ 40 + 3.0*25 = 115
 //
-// Detection is 115 vs 145, a ~24% per-trial chance. Over 50 trials the
+// Detection wins a healthy fraction of trials. Over 50 trials the
 // probability of zero detections is <0.0001%.
 func TestPlant_MobOnPlayer_DetectionWin(t *testing.T) {
 	const trials = 50

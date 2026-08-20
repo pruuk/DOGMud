@@ -173,9 +173,6 @@ func (b *Balance) validateCombat() {
 	if b.SneakFailCooldown < 0 {
 		b.SneakFailCooldown = 3
 	}
-	if b.StealSkillMultiplier <= 0 {
-		b.StealSkillMultiplier = 1.0
-	}
 	if b.StealHiddenBonus < 0 {
 		b.StealHiddenBonus = 25
 	}
