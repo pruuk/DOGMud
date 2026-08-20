@@ -179,3 +179,95 @@ func TestCollectAttackWeapons_TwoHandedInExtraArm3_NoExtraArm4Fist(t *testing.T)
 	assert.Equal(t, 3, len(got),
 		"sword + offhand-fist + 2H in arm5; got: %+v", got)
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Regression suite for the 2026-08-19 adversarial-playtest finding: a
+// character who removed both wielded Drowned Claws and wielded a Hunting
+// Bow kept printing claws swing narration ("Your Drowned Claws (Masterwork)
+// CRITICALLY EVISCERATES ...") plus a bludgeoning crit line naming the bow
+// ("You deliver a CRITICAL BASH ... with your Hunting Bow!").
+//
+// Diagnosis: NOT stale weapon state. The playtest veteran profile carries
+// the extra-arms mutation at level 1 with a fourth Drowned Claws copy
+// equipped in the ExtraArm1 slot ("Arm 3:" in inventory). Removing Weapon
+// and Offhand leaves that arm armed, and buildAttackPlan is rebuilt from
+// live Equipment every round, so the claws swings were real and correctly
+// narrated. The "CRITICAL BASH" line is the bludgeoning-category crit band
+// for the bow swing: meleeDisplaySubtype maps Shooting → Bludgeoning in the
+// melee auto-attack path (a bow swung in melee is an improvised club); it
+// has nothing to do with the bash special move.
+//
+// These tests pin both facts so a future refactor cannot silently
+// introduce the stale-weapon bug the playtest suspected.
+// ─────────────────────────────────────────────────────────────────────────
+
+// weaponIds extracts the ItemIds from a collected attack set.
+func weaponIds(ws []items.Item) []int {
+	ids := make([]int, 0, len(ws))
+	for _, w := range ws {
+		ids = append(ids, w.ItemId)
+	}
+	return ids
+}
+
+// Swapping equipment between rounds must change the attack set immediately:
+// collectAttackWeapons reads live Equipment, never a cached engagement-time
+// snapshot.
+func TestCollectAttackWeapons_LiveEquipment_NoStaleWeapon(t *testing.T) {
+	claws := func(id int) items.Item {
+		return items.Item{ItemId: id, Spec: &items.ItemSpec{
+			Type: items.Weapon, Subtype: items.Claws, Hands: 1}}
+	}
+	bow := items.Item{ItemId: 300, Spec: &items.ItemSpec{
+		Type: items.Weapon, Subtype: items.Shooting, Hands: 1}}
+
+	c := newCharWithArms(0)
+	c.Equipment.Weapon = claws(100)
+	c.Equipment.Offhand = claws(101)
+
+	got := weaponIds(collectAttackWeapons(c))
+	assert.Equal(t, []int{100, 101}, got, "engaged with dual claws")
+
+	// Mid-aggro re-gear: remove both claws, wield the bow.
+	c.Equipment.Weapon = bow
+	c.Equipment.Offhand = items.Item{ItemId: 0}
+
+	got = weaponIds(collectAttackWeapons(c))
+	assert.Equal(t, []int{300, 0}, got,
+		"next round must swing bow + offhand fist; a claws id here would be the stale-weapon bug")
+}
+
+// Playtest repro: extra-arms level 1 with claws in Weapon, Offhand AND
+// ExtraArm1. Removing main + offhand and wielding a bow leaves the ExtraArm1
+// claws in the attack set — that swing is real, not narration residue.
+func TestCollectAttackWeapons_ExtraArmWeapon_SurvivesMainAndOffhandRemove(t *testing.T) {
+	clawSpec := &items.ItemSpec{Type: items.Weapon, Subtype: items.Claws, Hands: 1}
+	bow := items.Item{ItemId: 300, Spec: &items.ItemSpec{
+		Type: items.Weapon, Subtype: items.Shooting, Hands: 1}}
+
+	c := newCharWithArms(1)
+	c.Equipment.Weapon = items.Item{ItemId: 100, Spec: clawSpec}
+	c.Equipment.Offhand = items.Item{ItemId: 101, Spec: clawSpec}
+	c.Equipment.ExtraArm1 = items.Item{ItemId: 102, Spec: clawSpec}
+
+	// "remove claws, remove claws, wield bow" — ExtraArm1 untouched.
+	c.Equipment.Weapon = bow
+	c.Equipment.Offhand = items.Item{ItemId: 0}
+
+	got := weaponIds(collectAttackWeapons(c))
+	assert.Equal(t, []int{300, 102, 0}, got,
+		"bow + THIRD-ARM claws + offhand fist; the claws swing comes from Arm 3, not from a stale cache")
+}
+
+// The "CRITICAL BASH ... with your Hunting Bow" line: a ranged weapon swung
+// in the melee auto-attack path renders through the Bludgeoning message
+// category (improvised club). It is crit-band flavor text, not the bash
+// special move.
+func TestMeleeDisplaySubtype_ShootingRendersAsBludgeoning(t *testing.T) {
+	got := meleeDisplaySubtype(items.Shooting, 1.5, 0)
+	assert.Equal(t, items.Bludgeoning, got,
+		"bow melee swings must narrate through the bludgeoning pool")
+
+	// Claws stay claws regardless of reach/position defaults.
+	assert.Equal(t, items.Claws, meleeDisplaySubtype(items.Claws, 0.5, 0))
+}
