@@ -212,7 +212,7 @@ options:
         - 'Lunging forward, you deliver a clean bite to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You pivot and drive your <ansi fg="item">{itemname}</ansi> through <ansi fg="{targettype}">{target}</ansi>''s guard!'
         - 'Feinting {position}, you snap your <ansi fg="item">{itemname}</ansi> shut with swift force!'
-        - 'You draw their defense {momentum} and clamp down on <ansi fg="{targettype}">{target}</ansi>!'
+        - 'You draw their defense while {momentum} and clamp down on <ansi fg="{targettype}">{target}</ansi>!'
         - 'Reading their stance, you strike with practiced predatory timing!'
         master:
         - 'You press your advantage with a lunging snap while {momentum}!'
@@ -273,7 +273,7 @@ options:
         - 'You attack with overwhelming, bestial rage!'
         expert:
         - 'You lunge and drive your <ansi fg="item">{itemname}</ansi> brutally into <ansi fg="{targettype}">{target}</ansi>''s {bodypart}!'
-        - 'Pivoting on your heel, you snap shut with tremendous force {momentum}!'
+        - 'Pivoting on your heel, you snap shut with tremendous force while {momentum}!'
         - 'You advance aggressively and bite with crushing power!'
         - 'Feinting a retreat, you surge forward with a devastating clamp!'
         - 'You draw their guard aside and deliver a punishing bite!'
@@ -339,7 +339,7 @@ options:
         - 'You land a <ansi fg="cyan-bold">DEVASTATING SNAP</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You surge and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SHRED</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - 'Lunging forward with {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT BITE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Lunging forward while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT BITE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You flow like a hunting beast and your jaws <ansi fg="cyan-bold">LACERATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} stance!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS BITE</ansi> through <ansi fg="{targettype}">{target}</ansi>!'

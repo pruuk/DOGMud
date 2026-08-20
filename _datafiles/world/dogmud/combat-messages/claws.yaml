@@ -212,7 +212,7 @@ options:
         - 'Stepping forward, you deliver a clean tear to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You pivot and lacerate through <ansi fg="{targettype}">{target}</ansi>''s guard with calculated precision!'
         - 'Feinting {position}, you bring your <ansi fg="item">{itemname}</ansi> down in a swift arc!'
-        - 'You draw their defense {momentum} and shred low at <ansi fg="{targettype}">{target}</ansi>!'
+        - 'You draw their defense while {momentum} and shred low at <ansi fg="{targettype}">{target}</ansi>!'
         - 'Reading their stance, you strike with practiced predator precision!'
         master:
         - 'You press your advantage with a sweeping rake while {momentum}!'
@@ -276,7 +276,7 @@ options:
         - 'You attack with overwhelming, bestial rage!'
         expert:
         - 'You step in close and deliver a brutal tear to <ansi fg="{targettype}">{target}</ansi> from your {stance} position!'
-        - 'Pivoting on your heel, you shred deeply into <ansi fg="{targettype}">{target}</ansi>''s flank with {momentum}!'
+        - 'Pivoting on your heel, you shred deeply into <ansi fg="{targettype}">{target}</ansi>''s flank while {momentum}!'
         - 'You advance aggressively and rake with tremendous force!'
         - 'Feinting a retreat, you surge forward with a devastating rend!'
         - 'You draw their guard aside and deliver a punishing laceration!'
@@ -344,7 +344,7 @@ options:
         - 'You land a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You whirl and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SHREDS</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - 'Lunging forward with {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT TEAR</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Lunging forward while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT TEAR</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You flow like a hunting beast and your claws <ansi fg="cyan-bold">LACERATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} stance!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS RAKE</ansi> through <ansi fg="{targettype}">{target}</ansi>!'

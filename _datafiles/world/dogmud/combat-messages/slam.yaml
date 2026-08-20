@@ -142,7 +142,7 @@ options:
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s masterful footwork sends the crushing charge wide!'
         - '<ansi fg="{targettype}">{target}</ansi> reads the intent and evades with perfect timing!'
-        - 'A collision of skill — <ansi fg="{sourcetype}">{source}</ansi>''s slam meets only empty air!'
+        - 'A collision of skill: <ansi fg="{sourcetype}">{source}</ansi>''s slam meets only empty air!'
   weak:
     # messages for when they are in the same room
     together:
@@ -273,7 +273,7 @@ options:
         - 'You hurl yourself into <ansi fg="{targettype}">{target}</ansi> with overwhelming rage!'
         expert:
         - 'You step in and drive your {itemname} into <ansi fg="{targettype}">{target}</ansi> with brutal {stance} force!'
-        - 'Pivoting hard, you hurl your full mass into <ansi fg="{targettype}">{target}</ansi>''s {bodypart} with {momentum}!'
+        - 'Pivoting hard, you hurl your full mass into <ansi fg="{targettype}">{target}</ansi>''s {bodypart} while {momentum}!'
         - 'You advance aggressively and body check with tremendous crushing power!'
         - 'Feinting a retreat, you surge forward with a devastating full-weight slam!'
         - 'You draw their guard and deliver a punishing body slam!'
@@ -339,20 +339,20 @@ options:
         - 'You land a <ansi fg="cyan-bold">CRUSHING IMPACT</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You surge and your {itemname} <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - 'Charging with {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT SLAM</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Charging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT SLAM</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You crash like a living avalanche and <ansi fg="cyan-bold">PULVERIZE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely — you <ansi fg="cyan-bold">SHATTER</ansi> them from your {stance} stance!'
+        - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely and you <ansi fg="cyan-bold">SHATTER</ansi> them from your {stance} stance!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS BODY SLAM</ansi> through <ansi fg="{targettype}">{target}</ansi>!'
         master:
-        - 'Your tactical brilliance creates the perfect angle — you <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{targettype}">{target}</ansi> with crushing mass!'
+        - 'Your tactical brilliance creates the perfect angle and you <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{targettype}">{target}</ansi> with crushing mass!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL SLAM</ansi>!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">BONE-SHATTERING STRIKE</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">CRUSH</ansi> <ansi fg="{targettype}">{target}</ansi> with masterful force!'
-        - 'Your positioning is flawless — your {itemname} <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Your positioning is flawless, and your {itemname} <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your unstoppable charge culminates in a <ansi fg="cyan-bold">CRITICAL BODY SLAM</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">CRASH THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi> with devastating fury!'
-        - 'The tide of battle favors you — your bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'The tide of battle favors you, and your bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s {itemname} <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> into you!'
@@ -363,16 +363,16 @@ options:
         - '<ansi fg="{sourcetype}">{source}</ansi> surges and their bulk <ansi fg="cyan-bold">OBLITERATES</ansi> you!'
         - '<ansi fg="{sourcetype}">{source}</ansi> charges and delivers a <ansi fg="cyan-bold">PERFECT SLAM</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> crashes like a living avalanche and <ansi fg="cyan-bold">PULVERIZES</ansi> you!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens you completely — you are <ansi fg="cyan-bold">SHATTERED</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens you completely and you are <ansi fg="cyan-bold">SHATTERED</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS SLAM</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance creates the perfect angle — you are <ansi fg="cyan-bold">DEVASTATED</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance creates the perfect angle and you are <ansi fg="cyan-bold">DEVASTATED</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> executes a <ansi fg="cyan-bold">BONE-SHATTERING STRIKE</ansi> from the perfect angle!'
         - '<ansi fg="{sourcetype}">{source}</ansi> exploits total advantage and <ansi fg="cyan-bold">CRUSHES</ansi> you with precision!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless — you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s unstoppable charge culminates in a <ansi fg="cyan-bold">CRITICAL SLAM</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">CRASHES THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi> — their bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> you!'
+        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi>, and their bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> you!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s {itemname} <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
@@ -382,16 +382,16 @@ options:
         - '<ansi fg="{sourcetype}">{source}</ansi> surges and their bulk <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> charges forward with a <ansi fg="cyan-bold">PERFECT SLAM</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> crashes like an avalanche and <ansi fg="cyan-bold">PULVERIZES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens <ansi fg="{targettype}">{target}</ansi> — <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens <ansi fg="{targettype}">{target}</ansi>: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS SLAM</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance creates the perfect angle — <ansi fg="cyan-bold">DEVASTATION</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance creates the perfect angle: <ansi fg="cyan-bold">DEVASTATION</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> executes a <ansi fg="cyan-bold">BONE-SHATTERING STRIKE</ansi> from the perfect angle!'
         - '<ansi fg="{sourcetype}">{source}</ansi> exploits total advantage and <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless — <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s unstoppable charge culminates in a <ansi fg="cyan-bold">CRITICAL SLAM</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">CRASHES THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi> — their bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi>, and their bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
   fumble:
     # messages for when they are in the same room
     together:
@@ -402,13 +402,13 @@ options:
         - 'Your body check <ansi fg="red-bold">FUMBLES</ansi> awkwardly, leaving you vulnerable!'
         - 'You lose your footing and your slam <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
-        - 'Your tactical charge fails catastrophically — you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical charge fails catastrophically and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> your slam!'
         - 'Your feint backfires and you <ansi fg="red-bold">FUMBLE</ansi> badly under your own momentum!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s unexpected counter sends your perfect slam into a <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi> your charge!'
-        - 'Your masterful slam is disrupted — you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
+        - 'Your masterful slam is disrupted and you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s charge <ansi fg="red-bold">FUMBLES</ansi> pathetically as they stumble!'
@@ -422,17 +422,17 @@ options:
         master:
         - 'Your defense forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their power, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the slam!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful charge is disrupted — they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful charge is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s charge <ansi fg="red-bold">FUMBLES</ansi> wildly at <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their slam at <ansi fg="{targettype}">{target}</ansi> and stumbles!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their body check in a clumsy crash!'
         expert:
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical charge fails — they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical charge fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s feint backfires catastrophically!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s defense forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful power, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s perfect slam is disrupted — a <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s perfect slam is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>!'

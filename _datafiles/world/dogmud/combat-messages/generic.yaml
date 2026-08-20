@@ -582,7 +582,7 @@ options:
         master:
         - 'A masterful strike <ansi fg="red-bold">FUMBLES</ansi>!'
         - 'A masterful ranged strike <ansi fg="red-bold">FUMBLES</ansi>!'
-  # U5c: sent when a hit lands on a target that is ALREADY DYING — it has taken
+  # U5c: sent when a hit lands on a target that is ALREADY DYING; it has taken
   # its lethal blow and the attributed death is queued but not yet resolved.
   # These fire instead of ordinary hit text, and never alongside a second kill
   # announcement: the killing blow is announced exactly once, by whoever landed

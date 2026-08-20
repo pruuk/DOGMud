@@ -208,7 +208,7 @@ options:
         - 'Stepping into the strike, you drive your <ansi fg="item">{itemname}</ansi> through <ansi fg="{targettype}">{target}</ansi>''s guard!'
         - 'You pivot and drain decisively, {momentum}!'
         - 'Feinting {position}, you bring your <ansi fg="item">{itemname}</ansi> in for a sharp, sapping strike!'
-        - 'You draw their defense {momentum} and drive your <ansi fg="item">{itemname}</ansi> home!'
+        - 'You draw their defense while {momentum} and drive your <ansi fg="item">{itemname}</ansi> home!'
         - 'Reading their stance, you strike with practiced, vampiric precision!'
         master:
         - 'You press your advantage with a sweeping drain while {momentum}!'
@@ -269,7 +269,7 @@ options:
         - 'You feed with overwhelming, vampiric hunger!'
         expert:
         - 'You step in and latch on hard, sapping <ansi fg="{targettype}">{target}</ansi> from your {stance} position!'
-        - 'Pivoting hard, you slam your <ansi fg="item">{itemname}</ansi> deep into <ansi fg="{targettype}">{target}</ansi> with {momentum}!'
+        - 'Pivoting hard, you slam your <ansi fg="item">{itemname}</ansi> deep into <ansi fg="{targettype}">{target}</ansi> while {momentum}!'
         - 'You advance with terrible focus and drink viciously!'
         - 'Feinting a retreat, you surge forward with a devastating drain!'
         - 'You draw their guard and drive your <ansi fg="item">{itemname}</ansi> in with consuming force!'
@@ -335,7 +335,7 @@ options:
         - 'You land a <ansi fg="cyan-bold">DEVASTATING SAP</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You lunge and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">FEED</ansi> on <ansi fg="{targettype}">{target}</ansi> completely!'
-        - 'Striking {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT DRAIN</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Striking while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT DRAIN</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You flow like a predator and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">LEECH</ansi> <ansi fg="{targettype}">{target}</ansi> dry!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> their vitality from your {stance} stance!'
         - 'Reading every breath, you deliver a <ansi fg="cyan-bold">FLAWLESS DRAIN</ansi> through <ansi fg="{targettype}">{target}</ansi>!'
