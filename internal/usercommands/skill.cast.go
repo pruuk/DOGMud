@@ -30,7 +30,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// 0. Dead characters can't cast (Health <= 0).
 	if user.Character.IsDisabled() {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't cast — you're dead.</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't cast. You are dead.</ansi>`)
 		return true, nil
 	}
 
