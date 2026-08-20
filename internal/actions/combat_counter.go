@@ -13,13 +13,19 @@ package actions
 //     internal/combat) because taunt resolution needs this package and
 //     internal/combat can never import it.
 //
-// Narration is the generic Task 10 text (Task 11 ships channel-correct
-// counter triads). It is dispatched from these helpers because the counter is
-// a tier side effect, not part of the action's own result contract; callers
-// keep rendering their own outcome exactly as before.
+// Narration is channel-correct (U6b Task 11), rendered by internal/combat
+// from the counter-* pools in defense-messages/. SEQUENCING (the Task 10 wart,
+// fixed by Task 11): counterSkillMoveExit does NOT dispatch — the counter
+// would print before the move's own outcome, because messages render in call
+// order and the wrappers narrate AFTER ExecuteX returns. Instead the
+// CounterResult rides up on the action's result struct, and the command
+// wrapper calls DispatchCounterMessages after its own outcome text — the same
+// flow the defence triads use. The defy counter-taunt keeps dispatching from
+// its exit (Task 10's review flagged only the skill-move ordering; the taunt
+// path was accepted as-is), but its narration now comes from the counter-defy
+// pool via combat.BuildCounterTauntMessages.
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -37,6 +43,12 @@ import (
 // attempted it. sameRoom carries the reach gate (false only for the
 // cross-room shot, the one uncounterable attack).
 //
+// It resolves the counter-swing (damage lands HERE) but dispatches nothing:
+// the result rides up on the action's result struct so the command wrapper
+// can speak it AFTER the move's own outcome (DispatchCounterMessages) —
+// messages render in call order, so dispatching from inside the action put
+// the counter before the move it answered (the Task 10 wart).
+//
 // Recursion guard: a result produced under IsCounter is refused here — the
 // tier never fires FROM a counter. ExecuteCounter marks its own swing
 // IsCounter, closing the loop.
@@ -46,20 +58,23 @@ func counterSkillMoveExit(actor Actor, defender *characters.Character,
 	if !move.Defence.DefensiveCrit || move.IsCounter {
 		return combat.CounterResult{}
 	}
-	res := combat.ExecuteCounter(defender, actor.GetCharacter(), channel, sameRoom)
-	if !res.Countered {
-		return res
-	}
-	dispatchCounterSwingMessages(actor, defender, res)
-	return res
+	return combat.ExecuteCounter(defender, actor.GetCharacter(), channel, sameRoom)
 }
 
-// dispatchCounterSwingMessages routes the generic counter narration: private
-// lines to whichever participants are players, one visual line to the room.
-func dispatchCounterSwingMessages(actor Actor, defender *characters.Character, res combat.CounterResult) {
+// DispatchCounterMessages routes the channel-correct counter narration:
+// private lines to whichever participants are players, one visual line to the
+// room. Command wrappers call it AFTER rendering the move's own outcome so
+// the counter reads as the answer it is (the Task 11 ordering fix). actor is
+// the COUNTERED party (the one whose move was crit-defended); the counterer's
+// line routes via res.CountererUserId. Safe to call unconditionally — a
+// result that never countered dispatches nothing.
+func DispatchCounterMessages(actor Actor, res combat.CounterResult) {
+	if !res.Countered {
+		return
+	}
 	exclude := []int{}
-	if res.DefenderMsg != "" {
-		if u := users.GetByUserId(defender.GetUserId()); u != nil {
+	if res.DefenderMsg != "" && res.CountererUserId > 0 {
+		if u := users.GetByUserId(res.CountererUserId); u != nil {
 			u.SendText(messaging.CategoryHitMelee, res.DefenderMsg)
 			exclude = append(exclude, u.UserId)
 		}
@@ -200,33 +215,12 @@ func counterTauntExit(actor Actor, char *characters.Character, target AggroTarge
 		return res
 	}
 
-	// Narration: no numbers, no interrupt framing — the taunt already
-	// resolved; the counter is what the counterer does with the opening.
-	counterName := target.Char.Name
-	taunterName := char.Name
-	var countererMsg, taunterMsg, roomMsg string
-	if res.Damage > 0 {
-		dmgDesc := combat.GetConvictionDamageDescription(res.Damage, maxOfOne(char.ConvictionMax.Value))
-		countererMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ RETORT!</ansi> You throw %s's taunt right back in their face! (<ansi fg="damage">%s</ansi>)`,
-			taunterName, dmgDesc)
-		taunterMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ RETORT!</ansi> %s throws your taunt right back in your face! (<ansi fg="damage">%s</ansi>)`,
-			counterName, dmgDesc)
-		roomMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ RETORT!</ansi> %s throws %s's taunt right back!`,
-			counterName, taunterName)
-	} else {
-		countererMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ RETORT!</ansi> You snap back at %s, but the words fail to bite!`,
-			taunterName)
-		taunterMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ RETORT!</ansi> %s snaps back at you, but the words fail to bite!`,
-			counterName)
-		roomMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ RETORT!</ansi> %s snaps back at %s!`,
-			counterName, taunterName)
-	}
+	// Narration (U6b Task 11): the counter-defy pool — the jeer turned back.
+	// No numbers, no interrupt framing — the taunt already resolved; the
+	// counter is what the counterer does with the opening.
+	countererMsg, taunterMsg, roomMsg := combat.BuildCounterTauntMessages(
+		target.Char.Name, char.Name,
+		res.Defence.AttackerCrit, res.Damage, maxOfOne(char.ConvictionMax.Value))
 
 	exclude := []int{}
 	if target.UserId > 0 {

@@ -5,13 +5,14 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
 // CounterResult holds the outcome of one counter tier firing: whether the
-// tier fired at all, the seam-resolved counter-swing, and generic narration
-// for the three audiences (Task 11 replaces these with per-channel counter
-// triads; until then the swing reuses the shared damage-description
-// vocabulary).
+// tier fired at all, the seam-resolved counter-swing, and channel-correct
+// narration for the three audiences (U6b Task 11: rendered from the
+// counter-* pools in defense-messages/, chosen by the ORIGINAL attack's
+// channel).
 type CounterResult struct {
 	// Countered reports whether the counter-swing actually fired. False when
 	// the reach gate refused (cross-room), the knob disabled the tier, or a
@@ -33,8 +34,16 @@ type CounterResult struct {
 	Damage      int
 	TargetMaxHP int
 
-	// Generic Task 10 narration. DefenderMsg addresses the COUNTERER (the one
-	// who earned the counter), AttackerMsg the countered original attacker.
+	// CountererUserId is the counterer's user id (0 for mobs), captured so
+	// dispatchers that only receive this result (the Task 11 ordering fix
+	// returns it up through the action result structs) can route the
+	// counterer's private line without re-resolving the character.
+	CountererUserId int
+
+	// Channel-correct counter narration (U6b Task 11), rendered from the
+	// counter-* pools in _datafiles/world/dogmud/defense-messages/.
+	// DefenderMsg addresses the COUNTERER (the one who earned the counter),
+	// AttackerMsg the countered original attacker.
 	DefenderMsg string
 	AttackerMsg string
 	RoomMsg     string
@@ -115,35 +124,138 @@ func ExecuteCounter(defender, attacker *characters.Character, channel AttackChan
 	result.Move = move
 	result.Damage = move.Damage
 	result.TargetMaxHP = move.TargetMaxHP
+	result.CountererUserId = defender.GetUserId()
 	fillCounterMessages(&result, defender, attacker)
 	return result
 }
 
-// fillCounterMessages writes the generic Task 10 narration. The framing is
-// deliberate: the defence already decided the attack; the counter is what the
-// defender does with the opening it left. Task 11 replaces these with
-// channel-correct counter triads.
+// counterPrefix marks every counter line so the tier stays scannable in a
+// busy round; the narration itself comes from the channel's counter pool.
+const counterPrefix = `<ansi fg="cyan-bold">⚔ COUNTER!</ansi> `
+
+// counterPoolFor maps the ORIGINAL attack's channel to its counter-narration
+// pool (U6b Task 11): a counter must read channel-correct, never a generic
+// riposte string pasted under a spell. Both spell channels share the
+// put-the-working-down pool. ChannelSocial never arrives here (the defy
+// carve-out counter-taunts via BuildCounterTauntMessages instead of swinging),
+// so the default is the physical exploit-the-opening pool.
+func counterPoolFor(channel AttackChannel) items.DefenseType {
+	switch channel {
+	case ChannelRanged:
+		return items.DefenseCounterRanged
+	case ChannelSpellPhysical, ChannelSpellMental:
+		return items.DefenseCounterQuell
+	default:
+		return items.DefenseCounterMelee
+	}
+}
+
+// counterBand converts a counter outcome to the pool's band inputs: heavy
+// (crit=true) when the counter-swing itself critted and landed, normal
+// (margin 1.0) when it landed, weak otherwise (turned aside or fumbled).
+func counterBand(crit bool, damage int) (bandCrit bool, bandMargin float64) {
+	if damage <= 0 {
+		return false, 0.0
+	}
+	return crit, 1.0
+}
+
+// fillCounterMessages renders the channel-correct counter triad (U6b Task 11)
+// from the counter-* pools, appending the damage description to the two
+// personal lines the same way the special-move wrappers do (room lines never
+// carry damage). The framing is deliberate: the defence already decided the
+// attack; the counter is what the defender does with the opening it left.
+// When the pool is not loaded (unit tests without data files), the generic
+// Task 10 narration stands in so the tier never goes silent.
 func fillCounterMessages(result *CounterResult, defender, attacker *characters.Character) {
+	bandCrit, bandMargin := counterBand(result.Move.Crit, result.Damage)
+	triad := items.RenderDefenseMessage(counterPoolFor(result.Channel), bandCrit, bandMargin,
+		map[items.TokenName]string{
+			items.TokenAttacker: attacker.Name,
+			items.TokenDefender: defender.Name,
+		})
+	if triad.ToRoom == "" {
+		fillGenericCounterMessages(result, defender, attacker)
+		return
+	}
+	dmgTag := ""
+	if result.Damage > 0 {
+		dmgTag = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`,
+			GetDamageDescription(result.Damage, result.TargetMaxHP))
+	}
+	result.DefenderMsg = counterPrefix + string(triad.ToDefender) + dmgTag
+	result.AttackerMsg = counterPrefix + string(triad.ToAttacker) + dmgTag
+	result.RoomMsg = counterPrefix + string(triad.ToRoom)
+}
+
+// fillGenericCounterMessages is the Task 10 narration, kept only as the
+// fallback for environments where the counter pools are not loaded.
+func fillGenericCounterMessages(result *CounterResult, defender, attacker *characters.Character) {
 	if result.Damage > 0 {
 		dmgDesc := GetDamageDescription(result.Damage, result.TargetMaxHP)
 		result.DefenderMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ COUNTER!</ansi> Your decisive defense leaves an opening and you strike back at %s! (<ansi fg="damage">%s</ansi>)`,
+			counterPrefix+`Your decisive defense leaves an opening and you strike back at %s! (<ansi fg="damage">%s</ansi>)`,
 			attacker.Name, dmgDesc)
 		result.AttackerMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ COUNTER!</ansi> %s turns your failed attack into a swift strike of their own! (<ansi fg="damage">%s</ansi>)`,
+			counterPrefix+`%s turns your failed attack into a swift strike of their own! (<ansi fg="damage">%s</ansi>)`,
 			defender.Name, dmgDesc)
 		result.RoomMsg = fmt.Sprintf(
-			`<ansi fg="cyan-bold">⚔ COUNTER!</ansi> %s seizes the opening and strikes back at %s!`,
+			counterPrefix+`%s seizes the opening and strikes back at %s!`,
 			defender.Name, attacker.Name)
 		return
 	}
 	result.DefenderMsg = fmt.Sprintf(
-		`<ansi fg="cyan-bold">⚔ COUNTER!</ansi> You strike back at %s, but the answer is turned aside!`,
+		counterPrefix+`You strike back at %s, but the answer is turned aside!`,
 		attacker.Name)
 	result.AttackerMsg = fmt.Sprintf(
-		`<ansi fg="cyan-bold">⚔ COUNTER!</ansi> %s strikes back at you, but you turn the answer aside!`,
+		counterPrefix+`%s strikes back at you, but you turn the answer aside!`,
 		defender.Name)
 	result.RoomMsg = fmt.Sprintf(
-		`<ansi fg="cyan-bold">⚔ COUNTER!</ansi> %s strikes back at %s, but the answer is turned aside!`,
+		counterPrefix+`%s strikes back at %s, but the answer is turned aside!`,
 		defender.Name, attacker.Name)
+}
+
+// retortPrefix marks the defy carve-out's counter-taunt lines.
+const retortPrefix = `<ansi fg="cyan-bold">⚔ RETORT!</ansi> `
+
+// BuildCounterTauntMessages renders the defy counter-taunt triad (U6b Task 11)
+// from the counter-defy pool: the jeer turned back on the one who threw it.
+// countererName is the one whose defy critted; taunterName the original
+// taunter now being counter-taunted. Damage is conviction damage; the
+// description is appended to the two personal lines only. Lives here (not in
+// internal/actions with the carve-out's wiring) so every counter narration
+// composes through the same pool idiom; falls back to the generic Task 10
+// retort lines when the pool is not loaded.
+func BuildCounterTauntMessages(countererName, taunterName string, crit bool, damage, taunterMaxCP int) (countererMsg, taunterMsg, roomMsg string) {
+	bandCrit, bandMargin := counterBand(crit, damage)
+	triad := items.RenderDefenseMessage(items.DefenseCounterDefy, bandCrit, bandMargin,
+		map[items.TokenName]string{
+			items.TokenAttacker: taunterName,
+			items.TokenDefender: countererName,
+		})
+	if triad.ToRoom == "" {
+		return buildGenericCounterTauntMessages(countererName, taunterName, damage, taunterMaxCP)
+	}
+	dmgTag := ""
+	if damage > 0 {
+		dmgTag = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`,
+			GetConvictionDamageDescription(damage, taunterMaxCP))
+	}
+	return retortPrefix + string(triad.ToDefender) + dmgTag,
+		retortPrefix + string(triad.ToAttacker) + dmgTag,
+		retortPrefix + string(triad.ToRoom)
+}
+
+// buildGenericCounterTauntMessages is the Task 10 retort narration, kept only
+// as the fallback for environments where the counter-defy pool is not loaded.
+func buildGenericCounterTauntMessages(countererName, taunterName string, damage, taunterMaxCP int) (countererMsg, taunterMsg, roomMsg string) {
+	if damage > 0 {
+		dmgDesc := GetConvictionDamageDescription(damage, taunterMaxCP)
+		return fmt.Sprintf(retortPrefix+`You throw %s's taunt right back in their face! (<ansi fg="damage">%s</ansi>)`, taunterName, dmgDesc),
+			fmt.Sprintf(retortPrefix+`%s throws your taunt right back in your face! (<ansi fg="damage">%s</ansi>)`, countererName, dmgDesc),
+			fmt.Sprintf(retortPrefix+`%s throws %s's taunt right back!`, countererName, taunterName)
+	}
+	return fmt.Sprintf(retortPrefix+`You snap back at %s, but the words fail to bite!`, taunterName),
+		fmt.Sprintf(retortPrefix+`%s snaps back at you, but the words fail to bite!`, countererName),
+		fmt.Sprintf(retortPrefix+`%s snaps back at %s!`, countererName, taunterName)
 }

@@ -24,6 +24,11 @@ type HamstringResult struct {
 	// MoveResult is the outcome from ExecuteSkillMove. Valid only when Executed is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Executed reports whether the hamstring was actually performed. False when any
 	// early-exit condition fired (OnCooldown, NoTarget).
 	Executed bool
@@ -118,7 +123,7 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 	})
 
 	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
-	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// On hit: apply bleed condition (duration 5, magnitude = Strength/10, min 2).
 	bleedDmg := 0
@@ -160,6 +165,7 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Executed:   true,
 		BleedDmg:   bleedDmg,
 	}

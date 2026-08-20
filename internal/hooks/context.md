@@ -1453,7 +1453,13 @@ quadrants in `spell_resolution.go` (`resolveAgainstMob`,
 `combat.ExecuteCounter` — a free seam-routed counter-swing at the caster.
 Both directions are wired on purpose; covering only the player-attacker
 direction would hand mobs a counter immunity nobody decided. Spells are
-same-room by construction, so the reach gate always passes here.
+same-room by construction, so the reach gate always passes here. Narration
+(U6b Task 11) is the channel-correct counter-quell pool ("put the working
+down, step through the gap"), rendered inside `combat.ExecuteCounter`;
+dispatching from these exits is ordering-correct because the cast's own
+outcome has already been narrated when they fire. `resolveMobDrainArea`
+dispatches its per-player counters via `actions.DispatchCounterMessages`
+AFTER its own drain narration.
 
 Related, in `combat_shared_helpers.go`: melee riposte's damage fraction reads
 `CounterDamagePercent` (shipped 0.5 — the old literal, behaviour unchanged),

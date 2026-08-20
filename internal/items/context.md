@@ -344,9 +344,16 @@ type TogetherMessages struct {
 
 Defence pools use the same data-loader architecture under
 `defense-messages/`. `DefenseDodge`, `DefenseParry`, `DefenseBlock`,
-`DefenseQuell`, and `DefenseDefy` identify the five files. Every file must
-provide `weak`, `normal`, and `heavy`; each band must have equal defender,
-attacker, and room lists containing at least five non-empty variants.
+`DefenseQuell`, and `DefenseDefy` identify the five defence files. Four
+counter-narration pools ride the same loader, shape, and validator (U6b
+Task 11): `DefenseCounterMelee`, `DefenseCounterRanged`,
+`DefenseCounterQuell`, and `DefenseCounterDefy` — not defences themselves but
+the channel-correct narration for the counter earned by a defensive crit,
+with reinterpreted bands (weak = the counter is turned aside, normal = it
+lands, heavy = it crits; `internal/combat` maps outcomes to `(crit, margin)`
+inputs accordingly). Every file must provide `weak`, `normal`, and `heavy`;
+each band must have equal defender, attacker, and room lists containing at
+least five non-empty variants.
 
 `RenderDefenseMessage` chooses one index and applies it to all three audiences
 before token replacement. Ordinary defended channel outcomes use Weak below a

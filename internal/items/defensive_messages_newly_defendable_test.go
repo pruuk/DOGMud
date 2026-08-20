@@ -123,10 +123,101 @@ func TestNewlyDefendableAttackNamesRenderTriads(t *testing.T) {
 	}
 }
 
+// TestCounterPoolsRenderTriads is the U6b Task 11 loader gate: every
+// channel's counter-narration pool (counter-melee, counter-ranged,
+// counter-quell, counter-defy) must render a non-empty defender/attacker/room
+// triad at each band, for every variant, with all tokens substituted and no
+// em/en dashes. Counter bands mean: weak = the counter is turned aside (no
+// damage), normal = the counter lands, heavy = the counter crits — mapped to
+// the renderer's (crit, margin) inputs the same way combat.fillCounterMessages
+// maps them.
+func TestCounterPoolsRenderTriads(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	originalItems, originalAttack, originalDefense := items, attackMessages, defenseMessages
+	t.Cleanup(func() { items, attackMessages, defenseMessages = originalItems, originalAttack, originalDefense })
+
+	_, here, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(here), "..", ".."))
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(filepath.Join(repoRoot, "_datafiles", "world", "dogmud"))
+	configs.SetConfigForTest(t, cfg)
+	LoadDataFiles()
+
+	counterPools := []DefenseType{
+		DefenseCounterMelee, DefenseCounterRanged, DefenseCounterQuell, DefenseCounterDefy,
+	}
+
+	bands := []struct {
+		name   string
+		band   Intensity
+		crit   bool
+		margin float64
+	}{
+		{"weak", Weak, false, 0.0},     // counter turned aside: no damage
+		{"normal", Normal, false, 1.0}, // counter lands
+		{"heavy", Heavy, true, 1.0},    // counter crits
+	}
+
+	leftoverTokens := []string{"{attack}", "{attacker}", "{defender}", "{weapon}"}
+
+	for _, pool := range counterPools {
+		group := defenseMessages[pool]
+		if group == nil {
+			t.Fatalf("no counter pool loaded for %q", pool)
+		}
+		seen := map[string]bool{}
+		for _, band := range bands {
+			variants := len(group.Options[band.band].Together.ToDefender)
+			if variants < 5 {
+				t.Fatalf("%s %s has %d variants; want at least 5", pool, band.name, variants)
+			}
+			for idx := 0; idx < variants; idx++ {
+				triad := RenderDefenseMessage(pool, band.crit, band.margin, map[TokenName]string{
+					TokenAttacker: "Rurik",
+					TokenDefender: "Selka",
+				}, idx)
+				for audience, msg := range map[string]ItemMessage{
+					"defender": triad.ToDefender,
+					"attacker": triad.ToAttacker,
+					"room":     triad.ToRoom,
+				} {
+					text := string(msg)
+					if strings.TrimSpace(text) == "" {
+						t.Errorf("%s %s[%d] %s line is empty", pool, band.name, idx, audience)
+						continue
+					}
+					for _, leftover := range leftoverTokens {
+						if strings.Contains(text, leftover) {
+							t.Errorf("%s %s[%d] %s line leaves token %s unsubstituted: %q",
+								pool, band.name, idx, audience, leftover, text)
+						}
+					}
+					if strings.Contains(text, "—") || strings.Contains(text, "–") {
+						t.Errorf("%s %s[%d] %s line contains an em/en dash: %q",
+							pool, band.name, idx, audience, text)
+					}
+					// Varied copy, no duplicate lines within a pool+audience.
+					key := audience + "|" + text
+					if seen[key] {
+						t.Errorf("%s %s[%d] %s line duplicates another variant: %q",
+							pool, band.name, idx, audience, text)
+					}
+					seen[key] = true
+				}
+			}
+		}
+	}
+}
+
 // TestQuellFizzleFlavorLivesOnlyInTheHeavyBand pins the ratified copy decision
 // (U6b Assumption 1): the word "fizzle" survives ONLY inside quell's
 // defensive-crit (heavy) band, where the spell truly is fully stopped. It must
-// never narrate a partial hit — no weak/normal variant in any pool may use it.
+// never narrate a partial hit — no weak/normal variant in any pool may use
+// it, and the U6b Task 11 counter pools must stay out of the fizzle business
+// entirely.
 func TestQuellFizzleFlavorLivesOnlyInTheHeavyBand(t *testing.T) {
 	mudlog.SetupLogger(nil, "", "", false)
 	originalItems, originalAttack, originalDefense := items, attackMessages, defenseMessages
@@ -142,7 +233,8 @@ func TestQuellFizzleFlavorLivesOnlyInTheHeavyBand(t *testing.T) {
 	configs.SetConfigForTest(t, cfg)
 	LoadDataFiles()
 
-	allDefences := []DefenseType{DefenseDodge, DefenseParry, DefenseBlock, DefenseQuell, DefenseDefy}
+	allDefences := []DefenseType{DefenseDodge, DefenseParry, DefenseBlock, DefenseQuell, DefenseDefy,
+		DefenseCounterMelee, DefenseCounterRanged, DefenseCounterQuell, DefenseCounterDefy}
 	fizzleFound := false
 	for _, defence := range allDefences {
 		group := defenseMessages[defence]

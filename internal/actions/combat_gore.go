@@ -23,6 +23,11 @@ type GoreResult struct {
 	// is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Executed reports whether the gore was actually performed. False when
 	// any early-exit condition fired (OnCooldown, NoTarget, NotHorned).
 	Executed bool
@@ -110,7 +115,7 @@ func ExecuteGore(actor Actor) GoreResult {
 	})
 
 	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
-	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User
@@ -142,6 +147,7 @@ func ExecuteGore(actor Actor) GoreResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Executed:   true,
 	}
 }

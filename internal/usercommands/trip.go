@@ -178,5 +178,8 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		Command: "trip",
 	}, bridge, bridge)
 
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(actor, res.Counter)
+
 	return true, nil
 }

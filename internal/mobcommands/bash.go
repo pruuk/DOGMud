@@ -104,5 +104,8 @@ func Bash(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			target.UserId)
 	}
 
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(&actions.MobActor{Mob: mob, Room: room}, bashResult.Counter)
+
 	return true, nil
 }

@@ -211,6 +211,9 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		Command: "shoot",
 	}, bridge, bridge)
 
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(&actions.UserActor{User: user, Room: room}, result.Counter)
+
 	return true, nil
 }
 

@@ -20,6 +20,17 @@ const (
 	DefenseBlock DefenseType = "block"
 	DefenseQuell DefenseType = "quell"
 	DefenseDefy  DefenseType = "defy"
+
+	// Counter-narration pools (U6b Task 11). Not defences themselves: each is
+	// the channel-correct narration for the counter EARNED by a defensive
+	// crit on that channel. They ride the same loader, shape, and validator
+	// as the defence pools. Band semantics differ from the defence pools:
+	// weak = the counter is turned aside (no damage), normal = the counter
+	// lands, heavy = the counter crits.
+	DefenseCounterMelee  DefenseType = "counter-melee"
+	DefenseCounterRanged DefenseType = "counter-ranged"
+	DefenseCounterQuell  DefenseType = "counter-quell"
+	DefenseCounterDefy   DefenseType = "counter-defy"
 )
 
 type DefenseMessageGroup struct {

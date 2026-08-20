@@ -1271,6 +1271,11 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> tears the life from everyone in the room!`,
 		mob.Character.Name, spellData.Name))
+
+	// U6b Task 11: each earned counter renders AFTER the drain's own outcome.
+	for _, pr := range result.PlayerResults {
+		actions.DispatchCounterMessages(actions.NewMobActorInRoom(mob, room), pr.Counter)
+	}
 }
 
 // applyMobSelfEffect handles self-targeted help spells (heal, minor-shield).

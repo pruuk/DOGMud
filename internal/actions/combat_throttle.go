@@ -24,6 +24,11 @@ type ThrottleResult struct {
 	// is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Executed reports whether the throttle was actually performed. False when
 	// any early-exit condition fired (OnCooldown, NoTarget).
 	Executed bool
@@ -121,7 +126,7 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 	})
 
 	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
-	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	bleedDmg := 0
 	interrupted := false
@@ -183,6 +188,7 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 		Cost:            cost,
 		Target:          target,
 		MoveResult:      result,
+		Counter:         counter,
 		Executed:        true,
 		BleedDmg:        bleedDmg,
 		InterruptedCast: interrupted,

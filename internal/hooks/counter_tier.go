@@ -19,10 +19,13 @@ import (
 // construction (the cross-room shot — internal/actions.ExecuteFire — is the
 // one uncounterable attack).
 //
-// The generic Task 10 narration is dispatched with the same audience routing
-// the melee crit-effects use (CategoryHitMelee: the counter-swing IS a melee
-// answer); Task 11 replaces it with channel-correct counter triads. Nil user
-// records represent mob participants, which receive no private text.
+// The channel-correct counter narration (U6b Task 11, the counter-quell pool:
+// the working put down, the gap stepped through) is dispatched with the same
+// audience routing the melee crit-effects use (CategoryHitMelee: the
+// counter-swing IS a melee answer). Dispatching here is ordering-correct for
+// spells: the cast's own outcome narration has already been sent by the time
+// these exits fire. Nil user records represent mob participants, which
+// receive no private text.
 //
 // Recursion is impossible here by construction: casts are never made under
 // IsCounter (the counter-swing is a melee-shaped ExecuteSkillMove, never a

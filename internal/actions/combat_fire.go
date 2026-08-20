@@ -34,6 +34,12 @@ type FireResult struct {
 	Executed   bool
 	Cost       characters.CostCommitResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when a
+	// same-room shot was crit-defended and answered. The command wrapper
+	// speaks its narration AFTER the shot's own outcome via
+	// DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	NoWeapon       bool
 	NotLoaded      bool
 	BadSyntax      bool
@@ -270,8 +276,9 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// U6b Task 10: a crit-defended shot earns the defender a counter-swing,
 	// REACH-GATED — only when the shooter shares the room. The cross-room
 	// shot is the ONE uncounterable attack (owner decision: a property of
-	// the weapon, not a wiring hole).
-	counterSkillMoveExit(actor, defChar, result.MoveResult, combat.ChannelRanged, !crossRoom)
+	// the weapon, not a wiring hole). The wrapper speaks the counter AFTER
+	// the shot's own outcome via DispatchCounterMessages (Task 11).
+	result.Counter = counterSkillMoveExit(actor, defChar, result.MoveResult, combat.ChannelRanged, !crossRoom)
 
 	// Analytics + round consumption (same pattern as kick). Fire never burns
 	// the special-move cooldown — only the combat round.

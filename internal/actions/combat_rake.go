@@ -23,6 +23,11 @@ type RakeResult struct {
 	// is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Executed reports whether the rake was actually performed. False when any
 	// early-exit condition fired (OnCooldown, NoTarget).
 	Executed bool
@@ -114,7 +119,7 @@ func ExecuteRake(actor Actor) RakeResult {
 	})
 
 	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
-	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// On hit: apply bleed condition (duration 4, magnitude = Strength/12,
 	// min 2).
@@ -157,6 +162,7 @@ func ExecuteRake(actor Actor) RakeResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Executed:   true,
 		BleedDmg:   bleedDmg,
 	}

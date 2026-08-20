@@ -25,6 +25,11 @@ type DrainResult struct {
 	// is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Executed reports whether the drain was actually performed. False when any
 	// early-exit condition fired (OnCooldown, NoTarget, NotLifeDrainer).
 	Executed bool
@@ -127,7 +132,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 	})
 
 	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
-	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// On hit: bleed the victim. Bleed is a status effect (binary), so it stays
 	// gated on a clean hit.
@@ -187,6 +192,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Executed:   true,
 		Healed:     healed,
 		BleedDmg:   bleedDmg,
@@ -201,6 +207,11 @@ type DrainAreaPlayerResult struct {
 
 	// MoveResult is the outcome from ExecuteSkillMove against this player.
 	MoveResult combat.SkillMoveResult
+
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
 
 	// BleedDmg is the per-tick bleed magnitude applied to this player on a
 	// hit (Strength/12, min 2). Zero on a miss.
@@ -289,9 +300,10 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 		})
 
 		// U6b Task 10: each player's own crit defence earns their own counter.
-		counterSkillMoveExit(actor, target.Character, moveResult, combat.ChannelMelee, true)
+		// The caller speaks it after its own drain narration (Task 11).
+		counter := counterSkillMoveExit(actor, target.Character, moveResult, combat.ChannelMelee, true)
 
-		pr := DrainAreaPlayerResult{UserId: uid, MoveResult: moveResult}
+		pr := DrainAreaPlayerResult{UserId: uid, MoveResult: moveResult, Counter: counter}
 
 		// Bleed is a status effect (binary), so it stays gated on a clean hit.
 		if moveResult.Hit {

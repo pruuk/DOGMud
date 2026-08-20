@@ -177,6 +177,9 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 	}
 
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(&actions.MobActor{Mob: mob, Room: room}, res.Counter)
+
 	return true, nil
 }
 

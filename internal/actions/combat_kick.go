@@ -37,6 +37,11 @@ type KickResult struct {
 	// is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Variant reports which kick form was used.
 	Variant KickVariant
 
@@ -156,7 +161,7 @@ func ExecuteKick(actor Actor) KickResult {
 	})
 
 	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
-	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// Stomp extends prone duration on a successful hit.
 	if result.Hit && variant == KickStomp &&
@@ -198,6 +203,7 @@ func ExecuteKick(actor Actor) KickResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Variant:    variant,
 		Executed:   true,
 	}

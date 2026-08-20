@@ -146,5 +146,8 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	}
 
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(actor, res.Counter)
+
 	return true, nil
 }

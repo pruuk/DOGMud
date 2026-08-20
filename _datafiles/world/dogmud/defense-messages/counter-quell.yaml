@@ -1,0 +1,71 @@
+# Counter narration for the SPELL channels (U6b Task 11): a defensive crit
+# against a cast (a quell crit on a mental working, or a dodge or block crit
+# on a physical one) earns the defender a free counter-swing, read as putting
+# the working down and stepping in through the gap it leaves. Never a generic
+# riposte line pasted under a spell (the owner's hard requirement).
+# {defender} is the COUNTERER; {attacker} is the countered caster. Bands:
+# weak = the counter is turned aside (no damage), normal = the counter
+# lands, heavy = the counter crits. No 'fizzle' here: that word belongs to
+# quell's own heavy band only.
+optionid: counter-quell
+options:
+  weak:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You ground the working and lunge in, but {attacker} wards your blow.</ansi>'
+      - '<ansi fg="defense-good">You step through the fading spell, but {attacker} pulls back in time.</ansi>'
+      - '<ansi fg="defense-good">You press in as the working dies, but {attacker} keeps their guard.</ansi>'
+      - '<ansi fg="defense-good">You surge through the gap the spell left, but {attacker} turns you aside.</ansi>'
+      - '<ansi fg="defense-good">You rush {attacker} while the working is spent, but they hold you off.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} grounds your working and lunges in, but you ward the blow.</ansi>'
+      - '<ansi fg="attack-bad">{defender} steps through your fading spell, but you pull back in time.</ansi>'
+      - '<ansi fg="attack-bad">{defender} presses in as your working dies, but you keep your guard.</ansi>'
+      - '<ansi fg="attack-bad">{defender} surges through the gap your spell left, but you turn them aside.</ansi>'
+      - '<ansi fg="attack-bad">{defender} rushes you while your working is spent, but you hold them off.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} grounds the working and lunges at {attacker}, who wards the blow.</ansi>'
+      - '<ansi fg="combat">{defender} steps through the fading spell, but {attacker} pulls back in time.</ansi>'
+      - '<ansi fg="combat">{defender} presses in as the working dies, but {attacker} keeps their guard.</ansi>'
+      - '<ansi fg="combat">{defender} surges through the gap the spell left, but {attacker} turns them aside.</ansi>'
+      - '<ansi fg="combat">{defender} rushes {attacker} while the working is spent, but is held off.</ansi>'
+  normal:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You ground the last of the working and strike {attacker} through the gap.</ansi>'
+      - '<ansi fg="defense-good">You step in as the spell unravels and strike {attacker}.</ansi>'
+      - '<ansi fg="defense-good">With the working broken, you close in and strike {attacker} cleanly.</ansi>'
+      - '<ansi fg="defense-good">You slip through the failing magic and drive a blow into {attacker}.</ansi>'
+      - '<ansi fg="defense-good">You answer the spent spell with a swift blow to {attacker}.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} grounds the last of your working and strikes you through the gap.</ansi>'
+      - '<ansi fg="attack-bad">{defender} steps in as your spell unravels and strikes you.</ansi>'
+      - '<ansi fg="attack-bad">{defender} closes in past your broken working and strikes you cleanly.</ansi>'
+      - '<ansi fg="attack-bad">{defender} slips through your failing magic and drives a blow into you.</ansi>'
+      - '<ansi fg="attack-bad">{defender} answers your spent spell with a swift blow.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} grounds the last of the working and strikes {attacker}.</ansi>'
+      - '<ansi fg="combat">{defender} steps in as the spell unravels and strikes {attacker}.</ansi>'
+      - '<ansi fg="combat">{defender} closes in past the broken working and strikes {attacker}.</ansi>'
+      - '<ansi fg="combat">{defender} slips through the failing magic and strikes {attacker}.</ansi>'
+      - '<ansi fg="combat">{defender} answers the spent spell with a swift blow to {attacker}.</ansi>'
+  heavy:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You put the working down and crash into {attacker} at full force.</ansi>'
+      - '<ansi fg="defense-good">You snuff the working and hammer {attacker} before it can reform.</ansi>'
+      - '<ansi fg="defense-good">You break the working apart and drive a brutal strike into {attacker}.</ansi>'
+      - '<ansi fg="defense-good">You stride through the dead spell and strike {attacker} with all your weight.</ansi>'
+      - '<ansi fg="defense-good">You smother the magic and punish {attacker} at close quarters.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} puts your working down and crashes into you at full force.</ansi>'
+      - '<ansi fg="attack-bad">{defender} snuffs your working and hammers you before it can reform.</ansi>'
+      - '<ansi fg="attack-bad">{defender} breaks your working apart and drives a brutal strike into you.</ansi>'
+      - '<ansi fg="attack-bad">{defender} strides through your dead spell and strikes with all their weight.</ansi>'
+      - '<ansi fg="attack-bad">{defender} smothers your magic and punishes you at close quarters.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} puts the working down and crashes into {attacker}.</ansi>'
+      - '<ansi fg="combat">{defender} snuffs the working and hammers {attacker}.</ansi>'
+      - '<ansi fg="combat">{defender} breaks the working apart and strikes {attacker} brutally.</ansi>'
+      - '<ansi fg="combat">{defender} strides through the dead spell and strikes {attacker} hard.</ansi>'
+      - '<ansi fg="combat">{defender} smothers the magic and punishes {attacker} at close quarters.</ansi>'

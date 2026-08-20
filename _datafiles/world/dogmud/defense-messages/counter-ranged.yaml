@@ -1,0 +1,69 @@
+# Counter narration for the RANGED channel (U6b Task 11): a dodge or block
+# crit against a same-room shot earns the defender a free counter-swing,
+# read as closing on the shooter behind the wasted shot. The cross-room shot
+# is the one uncounterable attack, so every line here assumes arm's reach.
+# {defender} is the COUNTERER; {attacker} is the countered shooter. Bands:
+# weak = the counter is turned aside (no damage), normal = the counter
+# lands, heavy = the counter crits.
+optionid: counter-ranged
+options:
+  weak:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You rush {attacker} behind the wasted shot, but they hold you off.</ansi>'
+      - '<ansi fg="defense-good">You dart inside {attacker}''s aim, but your strike is turned away.</ansi>'
+      - '<ansi fg="defense-good">You close in on {attacker}, but they slip your blow.</ansi>'
+      - '<ansi fg="defense-good">You knock the weapon wide and swing, but {attacker} twists clear.</ansi>'
+      - '<ansi fg="defense-good">You surge past the spent shot, but {attacker} keeps you at bay.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} rushes you behind your wasted shot, but you hold them off.</ansi>'
+      - '<ansi fg="attack-bad">{defender} darts inside your aim, but you turn their strike away.</ansi>'
+      - '<ansi fg="attack-bad">{defender} closes in on you, but you slip their blow.</ansi>'
+      - '<ansi fg="attack-bad">{defender} knocks your weapon wide and swings, but you twist clear.</ansi>'
+      - '<ansi fg="attack-bad">{defender} surges past your spent shot, but you keep them at bay.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} rushes {attacker} behind the wasted shot, but is held off.</ansi>'
+      - '<ansi fg="combat">{defender} darts inside {attacker}''s aim, but the strike is turned away.</ansi>'
+      - '<ansi fg="combat">{defender} closes in on {attacker}, who slips the blow.</ansi>'
+      - '<ansi fg="combat">{defender} knocks {attacker}''s weapon wide, but the swing finds nothing.</ansi>'
+      - '<ansi fg="combat">{defender} surges past the spent shot, but {attacker} keeps them at bay.</ansi>'
+  normal:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You close the distance behind the wasted shot and strike {attacker}.</ansi>'
+      - '<ansi fg="defense-good">You dart inside {attacker}''s aim and land a solid blow.</ansi>'
+      - '<ansi fg="defense-good">Before {attacker} can steady the weapon, your strike lands.</ansi>'
+      - '<ansi fg="defense-good">You knock the weapon wide and hit {attacker} squarely.</ansi>'
+      - '<ansi fg="defense-good">You make {attacker} pay for shooting at arm''s reach.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} closes the distance behind your wasted shot and strikes you.</ansi>'
+      - '<ansi fg="attack-bad">{defender} darts inside your aim and lands a solid blow.</ansi>'
+      - '<ansi fg="attack-bad">Before you can steady the weapon, {defender}''s strike lands.</ansi>'
+      - '<ansi fg="attack-bad">{defender} knocks your weapon wide and hits you squarely.</ansi>'
+      - '<ansi fg="attack-bad">{defender} makes you pay for shooting at arm''s reach.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} closes on {attacker} behind the wasted shot and strikes.</ansi>'
+      - '<ansi fg="combat">{defender} darts inside {attacker}''s aim and lands a solid blow.</ansi>'
+      - '<ansi fg="combat">Before {attacker} can steady the weapon, {defender}''s strike lands.</ansi>'
+      - '<ansi fg="combat">{defender} knocks {attacker}''s weapon wide and hits them squarely.</ansi>'
+      - '<ansi fg="combat">{defender} makes {attacker} pay for shooting at arm''s reach.</ansi>'
+  heavy:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You are on {attacker} before the shot''s echo fades, striking hard.</ansi>'
+      - '<ansi fg="defense-good">You slip the shot and crash into {attacker} at full force.</ansi>'
+      - '<ansi fg="defense-good">You close in a heartbeat and hammer {attacker} at close quarters.</ansi>'
+      - '<ansi fg="defense-good">You catch {attacker} flat footed behind the weapon and strike true.</ansi>'
+      - '<ansi fg="defense-good">You turn the spent shot into your moment and slam into {attacker}.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} is on you before the shot''s echo fades, striking hard.</ansi>'
+      - '<ansi fg="attack-bad">{defender} slips your shot and crashes into you at full force.</ansi>'
+      - '<ansi fg="attack-bad">{defender} closes in a heartbeat and hammers you at close quarters.</ansi>'
+      - '<ansi fg="attack-bad">{defender} catches you flat footed behind your weapon and strikes true.</ansi>'
+      - '<ansi fg="attack-bad">{defender} turns your spent shot into their moment and slams into you.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} is on {attacker} before the shot''s echo fades.</ansi>'
+      - '<ansi fg="combat">{defender} slips the shot and crashes into {attacker} at full force.</ansi>'
+      - '<ansi fg="combat">{defender} closes in a heartbeat and hammers {attacker}.</ansi>'
+      - '<ansi fg="combat">{defender} catches {attacker} flat footed and strikes true.</ansi>'
+      - '<ansi fg="combat">{defender} turns the spent shot into their moment and slams into {attacker}.</ansi>'

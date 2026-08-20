@@ -33,6 +33,11 @@ type TripResult struct {
 	// MoveResult is the outcome from ExecuteSkillMove. Valid only when Executed is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Variant reports which trip form was used.
 	Variant TripVariant
 
@@ -140,7 +145,7 @@ func ExecuteTrip(actor Actor) TripResult {
 	})
 
 	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
-	counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// Choose the move name for analytics based on variant.
 	moveName := "trip"
@@ -173,6 +178,7 @@ func ExecuteTrip(actor Actor) TripResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Variant:    variant,
 		Executed:   true,
 	}

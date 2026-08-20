@@ -700,9 +700,19 @@ the free supply-handoff paths — these are NOT routed through `actions.Sell`.
   `DefensiveCrit`. `TauntResult.Counter` carries its outcome.
 
 Counter-swings route through the seam, so the ORIGINAL attacker defends them
-and is charged + progressed for it (the countered-party economy). Narration
-is generic Task 10 text dispatched from these helpers; Task 11 ships
-channel-correct counter triads.
+and is charged + progressed for it (the countered-party economy).
+
+Narration (U6b Task 11) is channel-correct, rendered by `internal/combat`
+from the `counter-*` pools in `defense-messages/` (melee/ranged/quell by the
+original attack's channel; the counter-taunt from `counter-defy` via
+`combat.BuildCounterTauntMessages`). SEQUENCING: `counterSkillMoveExit` does
+NOT dispatch — messages render in call order and the wrappers narrate after
+`ExecuteX` returns, so the `CounterResult` rides up on each action's result
+struct (`Counter` field on Bash/Drain/Fire/Gore/Hamstring/Kick/Maul/Pounce/
+Rake/Throttle/Trip results and `DrainAreaPlayerResult`) and the command
+wrapper calls the exported `DispatchCounterMessages(actor, res)` AFTER its
+own outcome text. The defy counter-taunt still dispatches from
+`counterTauntExit` (Task 10's review accepted the taunt path's ordering).
 
 ## Available Actions Summary
 
