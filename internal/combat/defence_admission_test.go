@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
@@ -359,6 +360,17 @@ func TestResolveChannelDefence_MixedAffordabilityCommitsAndProgressesOnlyWinner(
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	defender.Stamina = 11 // dodge short at 12; block affordable at 11
+
+	// U6b Task 2: this test used to run BARE-handed and still received a block
+	// entry -- that was the ungated-channel-set defect DefenceEntriesFor fixed
+	// (a shieldless defender no longer blocks a physical spell). Equip weapon +
+	// shield so block legitimately enters the set; BlockRating stays 0 so the
+	// pinned score of 160 is unchanged.
+	defender.Equipment.Weapon = items.Item{ItemId: 10, Spec: &items.ItemSpec{Type: items.Weapon}}
+	defender.Equipment.Offhand = items.Item{ItemId: 11, Spec: &items.ItemSpec{
+		Type:               items.Offhand,
+		PhysicalMitigation: 5,
+	}}
 
 	out := resolveChannelDefenceWithRunner(ChannelSpellPhysical, attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {

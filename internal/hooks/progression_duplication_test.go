@@ -111,7 +111,7 @@ func TestMeleeCritReceived_TracksDefenderVitality(t *testing.T) {
 // defended swing" from "fires once per round".
 //
 // The defender (mob 100) is left unarmed (no Equipment.Weapon), so
-// GetDefenseSequence returns dodge only -- IsUnarmedStyle() is true and
+// combat.DefenceEntriesFor returns dodge only -- IsUnarmedStyle() is true and
 // parry/block never enter the contest. Its Dexterity is set absurdly high so
 // dodge overwhelms the attacker's score regardless of the RNG: RunContest's
 // per-swing floor is pinned to 0 by runOneCombatRoundAllDodgedForTest, so

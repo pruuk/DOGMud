@@ -267,44 +267,10 @@ func (c *Character) GetConvictionMitigation() float64 {
 	return float64(gearMit+nonGearMit) / 100.0
 }
 
-// GetDefenseSequence returns ordered defenses based on equipment (Stage 7.1)
-func (c *Character) GetDefenseSequence() []string {
-	defenses := []string{}
-
-	// Everyone can dodge
-	defenses = append(defenses, DefenseDodge)
-
-	// Unarmed-style fighters (bare hands, fists, claws) only dodge — no parry
-	if c.IsUnarmedStyle() {
-		return defenses
-	}
-
-	// If dual wielding (two weapons)
-	if c.IsDualWielding() {
-		// dodge → parry main → parry off
-		defenses = append(defenses, DefenseParry) // main hand parry
-		defenses = append(defenses, DefenseParry) // offhand parry
-		return defenses
-	}
-
-	// If wielding weapon + shield
-	if c.Equipment.Weapon.ItemId > 0 && c.HasShield() {
-		// dodge → parry → block
-		defenses = append(defenses, DefenseParry)
-		defenses = append(defenses, DefenseBlock)
-		return defenses
-	}
-
-	// If wielding single weapon (no offhand or offhand is not shield/weapon)
-	if c.Equipment.Weapon.ItemId > 0 {
-		// dodge → parry
-		defenses = append(defenses, DefenseParry)
-		return defenses
-	}
-
-	// Default: just dodge
-	return defenses
-}
+// GetDefenseSequence was deleted by U6b Task 2. Its equipment gate lives on,
+// copied branch for branch, as combat.equipmentGatedMeleeDefences inside
+// combat.DefenceEntriesFor — the single defence-set name builder for every
+// channel.
 
 // GetDefenseScoreFor calculates a defence score, optionally omitting only its
 // governing skill addend. Short-funded defences still retain every stat,

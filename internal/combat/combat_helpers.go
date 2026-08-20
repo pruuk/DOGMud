@@ -584,12 +584,9 @@ func filterDefensesForThirdParty(result *AttackResult, sourceChar *characters.Ch
 		return defSeq, false
 	}
 
-	filteredDefenses := []string{}
-	for _, def := range defSeq {
-		if def == characters.DefenseBlock {
-			filteredDefenses = append(filteredDefenses, def)
-		}
-	}
+	// Set reduction is shared with DefenceEntriesFor's ThirdPartyVsGrappler
+	// opt; only the vulnerability messaging below is melee-specific.
+	filteredDefenses := thirdPartyGrappleDefences(defSeq)
 
 	// If no defenses remain, send vulnerability messages and auto-hit.
 	// Vulnerability prose is hit-prep — the swing is about to land.

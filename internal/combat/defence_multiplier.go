@@ -211,8 +211,9 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 // contest and only Result.Winner's paired quote is committed.
 //
 // THE PHYSICAL DEFENCES DO ARRIVE HERE, so the FLOAT entry point is mandatory.
-// DefenceSetFor sends dodge and block to this function for ChannelRanged and
-// ChannelSpellPhysical, and eleven shipped spells declare
+// DefenceEntriesFor sends dodge (and, for shielded defenders, block) to this
+// function for ChannelRanged and ChannelSpellPhysical, and eleven shipped
+// spells declare
 // target_defense_type: physical. QuoteDefenseCost retains fractional carry and
 // the distinct physical modifiers, so this path must not fall back to the lossy
 // integer compatibility price. An earlier comment here asserted the physical
@@ -230,7 +231,10 @@ func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *
 		return out
 	}
 
-	defences := DefenceSetFor(channel)
+	// U6b Task 2: the set comes from the equipment-gated name builder, not the
+	// bare channel table — a shieldless bare-handed defender no longer rolls
+	// block against a bolt or a physical spell.
+	defences := DefenceEntriesFor(channel, defender, DefenceEntryOpts{})
 	if len(defences) == 0 {
 		// No defence answers this channel. Uncontested is an attack win, which
 		// is what a full multiplier says.
@@ -239,14 +243,35 @@ func resolveChannelDefenceWithRunner(channel AttackChannel, attacker, defender *
 
 	atkScore := ChannelAttackScore(channel, attacker)
 
+	bal := configs.GetBalanceConfig()
+	proneDefender := defender.IsProne() || defender.IsSupine()
+
 	entries := make([]contest.Entry, 0, len(defences))
 	candidates := make([]quotedDefenceCandidate, 0, len(defences))
 	for _, d := range defences {
 		quote, quoted := defender.QuoteDefenseCost(d)
 		includeSkill := !quoted || quote.Affordable()
+		score := defender.GetDefenseScoreFor(d, includeSkill) * defenceEffectiveness(d)
+
+		// U6b Task 2: prone defence penalties now apply on every channel —
+		// before this a prone defender dodged a bolt at full score while
+		// dodging a sword at penalty. Same knobs as melee's candidate loop;
+		// quell and defy have no prone knobs and are deliberately unpenalised
+		// (matching melee's disclosed gap in combat_helpers.go).
+		if proneDefender {
+			switch d {
+			case characters.DefenseDodge:
+				score *= float64(bal.ProneDodgePenalty)
+			case characters.DefenseParry:
+				score *= float64(bal.ProneParryPenalty)
+			case characters.DefenseBlock:
+				score *= float64(bal.ProneBlockPenalty)
+			}
+		}
+
 		entry := contest.Entry{
 			Name:  d,
-			Score: defender.GetDefenseScoreFor(d, includeSkill) * defenceEffectiveness(d),
+			Score: score,
 		}
 		entries = append(entries, entry)
 		candidates = append(candidates, quotedDefenceCandidate{
