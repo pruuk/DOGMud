@@ -152,7 +152,8 @@ func ExecuteKick(actor Actor) KickResult {
 		Attack: combat.AttackSide{
 			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
 			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
-			Mult: 1.0,
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:        damagePercent,
 		KnockdownChance:      knockdownChance,

@@ -107,7 +107,7 @@ func TestHandleMobCombat_ArcherKitesAndFiresAfterAggroLoss(t *testing.T) {
 
 	// Drive ONE real combat round.
 	evt := events.NewRound{RoundNumber: 5}
-	handleMobCombat(evt, map[int]bool{}, map[int]bool{})
+	handleMobCombat(evt)
 
 	cmds := events.DrainQueuedInputsForTest(archer.InstanceId)
 	assert.Contains(t, cmds, "shoot Aliceia south",

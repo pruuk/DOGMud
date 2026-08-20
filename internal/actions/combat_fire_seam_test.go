@@ -120,12 +120,17 @@ func TestFireSeam_ShieldedDefenderGetsBlockEntry(t *testing.T) {
 
 	// The attack side is Perception + ranged rank × SkillWeight (rank 1 —
 	// characters.New seeds every skill at 1), NOT a score with the defender
-	// folded into it.
+	// folded into it. U6b Task 17: times the shared situational layer — the
+	// shot's own paid stamina admission leaves the shooter fractionally below
+	// full, so the ranged channel's depletion accuracy term is live here (its
+	// table is pinned by internal/combat/situational_test.go; this equality
+	// pins that NOTHING ELSE touches the score).
 	cfg := configs.GetBalanceConfig()
-	wantAtk := float64(atkChar.GetEffectivePerception()) +
-		float64(atkChar.GetSkillLevel(skills.RangedCombat))*float64(cfg.SkillWeight)
+	wantAtk := (float64(atkChar.GetEffectivePerception()) +
+		float64(atkChar.GetSkillLevel(skills.RangedCombat))*float64(cfg.SkillWeight)) *
+		combat.SituationalAttackMult(atkChar, combat.ChannelRanged)
 	require.InDelta(t, wantAtk, atkScore, 1e-9,
-		"ranged attack score must be Perception + ranged rank x SkillWeight, with no defender term")
+		"ranged attack score must be (Perception + ranged rank x SkillWeight) x situational, with no defender term")
 
 	require.Len(t, entries, 2, "shielded defender vs a shot: dodge + block, no parry")
 	require.Equal(t, characters.DefenseDodge, entries[0].Name)

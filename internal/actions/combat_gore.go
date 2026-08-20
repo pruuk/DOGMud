@@ -106,7 +106,8 @@ func ExecuteGore(actor Actor) GoreResult {
 		Attack: combat.AttackSide{
 			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
 			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
-			Mult: 1.0,
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:     float64(cfg.KickDamagePercent),
 		KnockdownChance:   int(cfg.BashKnockdownChance),

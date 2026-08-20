@@ -264,7 +264,8 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		Attack: combat.AttackSide{
 			Stat: char.GetEffectivePerception(), StatName: "perception",
 			Skill: skills.RangedCombat, SkillRank: rangedRank,
-			Mult: 1.0,
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelRanged),
+			ForceCrit: combat.SleepingForceCrit(defChar),
 		},
 		DamagePercent:        shotMult,
 		KnockdownChance:      0,

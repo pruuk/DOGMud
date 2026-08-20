@@ -293,7 +293,13 @@ func spellAttackSideFor(spellData *spells.SpellData, casterChar *characters.Char
 		StatName:  statName,
 		Skill:     castSkill,
 		SkillRank: casterChar.GetSkillLevel(castSkill),
-		Mult:      1.0,
+		// Task 17: composed with the shared situational layer, which is 1.0
+		// on both spell channels by the declared table — you cast fine from
+		// the ground, and the conviction-depletion penalty is already applied
+		// in the damage term (calcSpellDamageForCharacter), so it must not
+		// reach accuracy a second time here. ForceCrit is per-target and set
+		// by each resolveAgainst* call site.
+		Mult: combat.SituationalAttackMult(casterChar, spellAttackChannel(spellData)),
 	}
 }
 
@@ -321,6 +327,8 @@ func scaleSpellDamageByDefence(dmg int, out combat.ChannelDefenceResult) int {
 // fires (the failed binding uses up the catalyst regardless).
 func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, side combat.AttackSide, magnitude int) (fumbled bool) {
 
+	// Task 17: the sleeping-victim forced crit reaches the spell channel.
+	side.ForceCrit = combat.SleepingForceCrit(&mob.Character)
 	out := runSpellChannelAttack(spellAttackChannel(spellData), side, user.Character, &mob.Character)
 
 	round := util.GetRoundCount()
@@ -840,6 +848,8 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 // rather than prevented it.
 func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, side combat.AttackSide, magnitude int) (fumbled bool) {
 
+	// Task 17: the sleeping-victim forced crit reaches the spell channel.
+	side.ForceCrit = combat.SleepingForceCrit(target.Character)
 	out := runSpellChannelAttack(spellAttackChannel(spellData), side, user.Character, target.Character)
 
 	// Backfire on fumble — resolved BEFORE success, per the seam's contract.
@@ -1349,6 +1359,8 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, combat.ChannelDefenceResult{DamageMultiplier: 1})
 		return
 	}
+	// Task 17: the sleeping-victim forced crit reaches the spell channel.
+	side.ForceCrit = combat.SleepingForceCrit(&target.Character)
 	out := runSpellChannelAttack(spellAttackChannel(spellData), side, &caster.Character, &target.Character)
 	if out.AttackerFumble {
 		dmg := magnitude / 4
@@ -1374,6 +1386,8 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 // the collapse (U6b Task 4).
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
 	spellData *spells.SpellData, side combat.AttackSide, magnitude int) {
+	// Task 17: the sleeping-victim forced crit reaches the spell channel.
+	side.ForceCrit = combat.SleepingForceCrit(target.Character)
 	out := runSpellChannelAttack(spellAttackChannel(spellData), side, &caster.Character, target.Character)
 	round := util.GetRoundCount()
 	if out.AttackerFumble {

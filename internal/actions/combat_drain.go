@@ -124,7 +124,8 @@ func ExecuteDrain(actor Actor) DrainResult {
 		Attack: combat.AttackSide{
 			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
 			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
-			Mult: 1.0,
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   float64(cfg.TripDamagePercent),
 		KnockdownChance: 0, // No knockdown — the drain itself is the payoff
@@ -293,7 +294,8 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 			Attack: combat.AttackSide{
 				Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
 				Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
-				Mult: 1.0,
+				Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+				ForceCrit: combat.SleepingForceCrit(target.Character),
 			},
 			DamagePercent: float64(cfg.TripDamagePercent),
 			DamageStat:    char.Stats.Strength.ValueAdj,

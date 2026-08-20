@@ -289,7 +289,10 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			Attack: combat.AttackSide{
 				Stat: defender.GetEffectiveDexterity(), StatName: "dexterity",
 				Skill: skills.UnarmedCombat, SkillRank: defender.GetSkillLevel(skills.UnarmedCombat),
-				Mult: 1.0,
+				// Task 17: the countering character pays their own prone /
+				// stamina-depletion accuracy terms. No ForceCrit: the counter
+				// target just swung, so they cannot be sleeping.
+				Mult: combat.SituationalAttackMult(defender, combat.ChannelMelee),
 			},
 			IsCounter:       true,
 			DamagePercent:   float64(cfg.TripDamagePercent),
@@ -345,7 +348,10 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			Attack: combat.AttackSide{
 				Stat: defender.Stats.Strength.ValueAdj, StatName: "strength",
 				Skill: skills.WeaponCombat, SkillRank: defender.GetSkillLevel(skills.WeaponCombat),
-				Mult: 1.0,
+				// Task 17: the countering character pays their own prone /
+				// stamina-depletion accuracy terms. No ForceCrit: the counter
+				// target just swung, so they cannot be sleeping.
+				Mult: combat.SituationalAttackMult(defender, combat.ChannelMelee),
 			},
 			IsCounter:         true,
 			DamagePercent:     float64(cfg.BashDamagePercent),

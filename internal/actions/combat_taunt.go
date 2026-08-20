@@ -166,7 +166,12 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		StatName:  "charisma",
 		Skill:     skills.Rhetoric,
 		SkillRank: char.GetSkillLevel(skills.Rhetoric),
-		Mult:      convMult,
+		// Task 17: composed with the shared situational layer, which is 1.0
+		// on the social channel by the declared table (prone: N; the resource
+		// depletion cell is the convMult already applied here plus the damage
+		// term below — the shared layer must not tax it a second time).
+		Mult:      convMult * combat.SituationalAttackMult(char, combat.ChannelSocial),
+		ForceCrit: combat.SleepingForceCrit(target.Char),
 	}
 	out := combat.ResolveChannelAttack(combat.ChannelSocial, side, char, target.Char)
 

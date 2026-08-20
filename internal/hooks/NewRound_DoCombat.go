@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -34,14 +35,22 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// handlePlayerCombat and handleMobCombat both run — ensures every
 	// attacker in both passes sees a consistent, unmodified set of sleeping
 	// defenders.
+	//
+	// Task 17: the snapshot is PUBLISHED to the combat package rather than
+	// threaded as parameters, because the melee passes below are no longer
+	// its only consumers — every channel attack (cast/shoot/taunt/bash/...)
+	// resolving later in the same round reads it through
+	// combat.SleepingForceCrit, which is now the ONE lookup for the
+	// sleeping-victim auto-crit contract on every channel.
 	sleepingUserIds, sleepingMobInstanceIds := snapshotSleepingVictims()
+	combat.PublishSleepingSnapshot(util.GetRoundCount(), sleepingUserIds, sleepingMobInstanceIds)
 
 	//
 	// Combat rounds
 	//
-	affectedPlayers1, affectedMobs1 := handlePlayerCombat(evt, sleepingUserIds, sleepingMobInstanceIds)
+	affectedPlayers1, affectedMobs1 := handlePlayerCombat(evt)
 
-	affectedPlayers2, affectedMobs2 := handleMobCombat(evt, sleepingUserIds, sleepingMobInstanceIds)
+	affectedPlayers2, affectedMobs2 := handleMobCombat(evt)
 
 	// Do any resolution or extra checks based on everyone that has been involved in combat this round.
 	handleAffected(append(affectedPlayers1, affectedPlayers2...), append(affectedMobs1, affectedMobs2...))
@@ -80,7 +89,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
-func handlePlayerCombat(evt events.NewRound, sleepingUserIds map[int]bool, sleepingMobInstanceIds map[int]bool) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
+func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 	moonMod := float64(configs.GetBalanceConfig().MoonStatModMax)
 
@@ -152,13 +161,13 @@ func handlePlayerCombat(evt events.NewRound, sleepingUserIds map[int]bool, sleep
 				if defUser := users.GetByUserId(user.Character.Aggro.UserId); defUser != nil {
 					defRoom := rooms.LoadRoom(defUser.Character.RoomId)
 					def = actions.NewUserActorInRoom(defUser, defRoom)
-					defForceCrit = sleepingUserIds[user.Character.Aggro.UserId]
+					defForceCrit = combat.SleepingForceCrit(defUser.Character)
 				}
 			} else if user.Character.Aggro.MobInstanceId > 0 {
 				if defMob := mobs.GetInstance(user.Character.Aggro.MobInstanceId); defMob != nil {
 					defRoom := rooms.LoadRoom(defMob.Character.RoomId)
 					def = actions.NewMobActorInRoom(defMob, defRoom)
-					defForceCrit = sleepingMobInstanceIds[user.Character.Aggro.MobInstanceId]
+					defForceCrit = combat.SleepingForceCrit(&defMob.Character)
 				}
 			}
 			if def != nil {
@@ -207,7 +216,7 @@ func archerReengageable(mob *mobs.Mob, room *rooms.Room, round uint64) bool {
 	return room.FindExitTo(lastSeen) != ""
 }
 
-func handleMobCombat(evt events.NewRound, sleepingUserIds map[int]bool, sleepingMobInstanceIds map[int]bool) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
+func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 	moonMod := float64(configs.GetBalanceConfig().MoonStatModMax)
 	tStart := time.Now()
@@ -392,13 +401,13 @@ func handleMobCombat(evt events.NewRound, sleepingUserIds map[int]bool, sleeping
 				if defUser := users.GetByUserId(mob.Character.Aggro.UserId); defUser != nil {
 					defRoom := rooms.LoadRoom(defUser.Character.RoomId)
 					def = actions.NewUserActorInRoom(defUser, defRoom)
-					defForceCrit = sleepingUserIds[mob.Character.Aggro.UserId]
+					defForceCrit = combat.SleepingForceCrit(defUser.Character)
 				}
 			} else if mob.Character.Aggro.MobInstanceId > 0 {
 				if defMob := mobs.GetInstance(mob.Character.Aggro.MobInstanceId); defMob != nil {
 					defRoom := rooms.LoadRoom(defMob.Character.RoomId)
 					def = actions.NewMobActorInRoom(defMob, defRoom)
-					defForceCrit = sleepingMobInstanceIds[mob.Character.Aggro.MobInstanceId]
+					defForceCrit = combat.SleepingForceCrit(&defMob.Character)
 				}
 			}
 			if def != nil {
@@ -505,9 +514,11 @@ func applyMoonMods(ch *characters.Character, moonMod float64) func() {
 
 // snapshotSleepingVictims walks all online users and all mob instances and
 // records which ones currently have the Sleeping buff flag. The two maps are
-// passed into handlePlayerCombat and handleMobCombat so that both combat
-// passes can resolve forceCrit=true for any defender that was asleep at the
-// very start of the round.
+// published to the combat package (combat.PublishSleepingSnapshot) so that
+// both melee combat passes AND every channel attack resolving later in the
+// same round (Task 17) can resolve forceCrit=true — via
+// combat.SleepingForceCrit — for any defender that was asleep at the very
+// start of the round.
 //
 // Chunk 3.3: this must be called ONCE at the top of DoCombat, before either
 // combat pass runs, so that cancel-on-damage (fired mid-round inside

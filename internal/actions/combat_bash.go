@@ -109,7 +109,8 @@ func ExecuteBash(actor Actor) BashResult {
 		Attack: combat.AttackSide{
 			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
 			Skill: skills.WeaponCombat, SkillRank: char.GetSkillLevel(skills.WeaponCombat),
-			Mult: 1.0,
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:     float64(cfg.BashDamagePercent),
 		KnockdownChance:   int(cfg.BashKnockdownChance),

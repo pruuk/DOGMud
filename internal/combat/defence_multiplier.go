@@ -59,14 +59,20 @@ func DefenceMitigation(normalizedDefenceMargin float64) float64 {
 //	          CritDamageMultiplier UNWEIGHTED (Assumption 8 — taunt used to
 //	          pass the weighted value, a x15.75-vs-x4.6 outlier, corrected).
 //	Mult      situational multiplier on the whole score (1.0 default; taunt's
-//	          conviction-depletion factor and Task 17's shared modifiers land
-//	          here)
+//	          conviction-depletion factor and Task 17's shared modifiers —
+//	          SituationalAttackMult — land here)
+//	ForceCrit the sleeping-victim auto-crit (Task 17): a decision taken BEFORE
+//	          the roll, mirroring melee's resolveDefenseOutcomeCore semantics
+//	          exactly — the attack crits, cannot fumble, and wins even when
+//	          the defence took the margin. Callers derive it from
+//	          SleepingForceCrit(defender).
 type AttackSide struct {
 	Stat      int
 	StatName  string
 	Skill     skills.SkillTag
 	SkillRank int
 	Mult      float64
+	ForceCrit bool
 }
 
 // score is the attack score the side enters the contest with. Mult 0 is the
@@ -275,7 +281,9 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	defences := DefenceEntriesFor(channel, defender, DefenceEntryOpts{})
 	if len(defences) == 0 {
 		// No defence answers this channel. Uncontested is an attack win, which
-		// is what a full multiplier says.
+		// is what a full multiplier says. A forced crit (sleeping victim) is
+		// still a crit with nobody defending.
+		out.AttackerCrit = side.ForceCrit
 		return out
 	}
 
@@ -321,6 +329,7 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 
 	res := runner(atkScore, entries)
 	if !res.Contested {
+		out.AttackerCrit = side.ForceCrit
 		return out
 	}
 	out.AttackRollZScore = res.AttackRoll.ZScore
@@ -335,6 +344,20 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	bar := CritBarFor(side.SkillRank, defenderRankOf(defender, res.Winner))
 	out.AttackerCrit = !res.Floored && AttackContestCritAt(res.Margin, res.AttackRoll, bar)
 	out.AttackerFumble = res.AttackRoll.ZScore <= -DefenseCritBar()
+
+	// Task 17: the sleeping-victim forced crit, mirroring melee's
+	// resolveDefenseOutcomeCore exactly. It is a decision taken BEFORE the
+	// roll, so it is exempt from the floored gate above (the sentinel margin
+	// says nothing about it), it suppresses the fumble verdict (melee clears
+	// attackFumble so a forced crit cannot resolve as a fumble), and — below,
+	// after the defence has been charged and progressed — it forces the WIN,
+	// because a sleeper whose defence happened to take the margin must not
+	// quietly resolve as an ordinary save. The bonus tier observes the forced
+	// verdicts, matching melee, where the forced res.crit feeds progression.
+	if side.ForceCrit {
+		out.AttackerCrit = true
+		out.AttackerFumble = false
+	}
 
 	out.DefenceType = res.Winner
 	out.Cost = commitDefenceWinner(defender, candidates, res)
@@ -361,6 +384,17 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 		out.DefenseRollZScore = res.DefenseRoll.ZScore
 	}
 	if res.Success {
+		return out
+	}
+
+	// Task 17: the forced crit forces the WIN too — melee's
+	// resolveDefenseOutcomeCore sets attackWon under forceCrit for exactly
+	// this case. The defence above was still quoted, charged and progressed
+	// (the victim's reflexes still moved, exactly as on the melee path); it
+	// just cannot keep the outcome. Restore the attack-win multiplier the
+	// defensive margin took away.
+	if side.ForceCrit {
+		out.DamageMultiplier = 1.0
 		return out
 	}
 
@@ -464,7 +498,11 @@ func awardChannelDefenceBonus(channel AttackChannel, side AttackSide, attacker, 
 	// Note the sign: Result.Margin is ATTACK-positive, so the defence side
 	// negates it, exactly as defenceDamageMultiplier does at
 	// defence_multiplier.go:307.
-	defenceCrit := DefenseContestCrit(-res.Margin, res.DefenseRoll)
+	//
+	// Under ForceCrit the defensive crit never materializes (Task 17): melee's
+	// forced attackWon means setDefenseCritFlags can never fire there, so the
+	// bonus tier must not pay a defensive crit the outcome erased.
+	defenceCrit := !side.ForceCrit && DefenseContestCrit(-res.Margin, res.DefenseRoll)
 
 	// Fumble stays self-relative: it is a property of one bad roll, not of the
 	// gap between two. ContestCritThreshold is the same magnitude in both

@@ -1684,26 +1684,58 @@ for the submission-type mapping and eligibility predicates.
 
 ---
 
-## First-hit crit on sleepers (chunk 3.3)
+## First-hit crit on sleepers (chunk 3.3, extended to every channel by U6b Task 17)
 
-The damage pipeline accepts a `forceCrit bool` parameter on
-`resolveDefenseOutcome` (in `combat_helpers.go`) that bypasses
-the Z-score threshold and bumps to threshold+0.5 (clearly-crit).
+The melee damage pipeline accepts a `forceCrit bool` parameter on
+`resolveDefenseOutcome` (in `combat_helpers.go`): the attack crits,
+cannot fumble, and wins even when the defence took the margin.
 
-`handleCombatRound` receives `forceCrit` from
-`NewRound_DoCombat.snapshotSleepingVictims()` — a start-of-round
-snapshot of all players + mobs with the Sleeping flag. All
-damage events in the round against snapshotted victims force-crit,
-even after cancel-on-damage clears the buff mid-round.
+U6b Task 17 made the same contract reach EVERY channel:
+
+- `hooks.DoCombat` publishes its start-of-round snapshot via
+  `PublishSleepingSnapshot(round, userIds, mobInstanceIds)`
+  (`situational.go`), and `SleepingForceCrit(defender)` is now THE
+  lookup — live Sleeping flag OR this-round snapshot. The melee passes
+  in `NewRound_DoCombat.go` and every channel call site read it.
+- Channel attacks thread the verdict as `AttackSide.ForceCrit`,
+  honoured inside `resolveChannelAttackWithRunner` with melee-mirrored
+  semantics: `AttackerCrit` true (floored gate exempt), `AttackerFumble`
+  cleared, the WIN forced (`Defended` false, `DamageMultiplier` 1.0),
+  and the bonus tier observes the forced verdicts while the erased
+  defensive crit pays nothing. The defence is still quoted, charged and
+  progressed — it just cannot keep the outcome.
 
 The snapshot approach means: the sleeper is asleep at round start →
 the entire first round crits → the first hit wakes them
 (`CancelOnDamage` fires) → subsequent hits in the same round still
 force-crit from the snapshot, but the sleeper is now active and can
-start fighting back next round.
+start fighting back next round. A stale snapshot (any other round)
+says nothing; only the live flag answers then.
 
 Other future first-hit-crit triggers (surprise attack, backstab)
 can add parallel snapshot checks at the same start-of-round site.
+
+## Shared situational-modifier layer (U6b Task 17)
+
+`SituationalAttackMult(attacker, channel)` (`situational.go`) composes
+the attacker-side situational accuracy multipliers per a DECLARED
+per-channel table (absence is deliberate):
+
+| modifier | melee | ranged | specials | spell | social |
+|---|---|---|---|---|---|
+| prone attacker (`ProneAttackMultiplier`) | Y | Y | Y | N | N |
+| stamina depletion (`ResourceMultiplier`, `StaminaPenaltyMax`) | Y | Y | Y | N* | N* |
+
+\* spell and social pay resource depletion in their DAMAGE term
+(conviction, in `calcSpellDamageForCharacter` / taunt's `convMult`),
+so the shared layer returns 1.0 there rather than taxing accuracy a
+second time. Encumbrance is cost-side only (U7's domain), never an
+accuracy term. Prone-DEFENDER vulnerability stays melee-only in
+`calcAttackScore` — this function takes no defender.
+
+Channel call sites (spell/taunt/fire/all `ExecuteSkillMove` callers)
+compose it into `AttackSide.Mult`; melee's `calcAttackScore` keeps its
+own identical terms (converging that is not Task 17's mandate).
 
 ## Files
 
@@ -1716,6 +1748,7 @@ can add parallel snapshot checks at the same start-of-round site.
 | `crit_floor.go` | Crit floors, 1% both directions (5.11e). **U6 Task 9 changed the DENOMINATORS: the attack floor applies to swings that WON THE CONTEST and the defence floor to swings the DEFENCE won, keyed on `best.margin` (defence-positive, so `<= 0` is an attack win), not on `res.hit`.** The old hit/miss split stops being answerable once a defensive win deals partial damage, because a deflected swing then has `res.hit == true` while the defence won. A floored outcome and an uncontested swing (`defenseType == ""`) are promoted by neither floor. **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. **U6 Task 10:** a promotion to a defence crit now also clears `res.hit` and `res.damageMult`, because an ordinary defensive win arrives here already landing partial damage. |
 | `defence_multiplier.go` | `DefenceMitigation` — the margin-scaled damage reduction a defensive win now earns (U6 Task 10). 50% at a bare win, 100% at `ContestCritThreshold`. Its 0.5 and its threshold are STRUCTURAL, not config knobs: the threshold is the point the curve has to meet so that full negation by a defensive crit is continuous with it rather than a cliff. Also `ResolveChannelDefence` / `ChannelAttackScore` / `AwardDefenceProgression` (U6 Task 12) — the resolver the spell and social channels use in place of the deleted `avoidance.go`. **U6 Task 13** extracted `defenceDamageMultiplier(res contest.Result) float64` from `ResolveChannelDefence`'s tail — it converts a finished opposed contest into the attacker's damage multiplier (1.0 attack win, 0.0 defensive crit, exactly 0.5 on a floored save, 0.0-0.5 off the curve otherwise) and is now the ONE place the sign negation, the floored sentinel, and the sqrt(2) normaliser live; both `ResolveChannelDefence` and `skill_moves.go`'s `ExecuteSkillMove` call it. |
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
+| `situational.go` | U6b Task 17: `SituationalAttackMult(attacker, channel)` — the shared attacker-side situational accuracy layer (prone + stamina depletion on the physical channels only; see "Shared situational-modifier layer"). Also the round-start sleeping snapshot: `PublishSleepingSnapshot` (written once per round by `hooks.DoCombat`) and `SleepingForceCrit(defender)` — THE lookup for the sleeping-victim auto-crit contract, consumed by melee's round passes and threaded into channel contests as `AttackSide.ForceCrit`. |
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
 | `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). Consumed by `ResolveChannelDefence` for the three non-melee channels; melee still builds its own `defSeq`. See "Defence sets are a property of the channel" below. |

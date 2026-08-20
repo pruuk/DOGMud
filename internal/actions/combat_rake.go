@@ -111,7 +111,8 @@ func ExecuteRake(actor Actor) RakeResult {
 		Attack: combat.AttackSide{
 			Stat: char.GetEffectiveDexterity(), StatName: "dexterity",
 			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
-			Mult: 1.0,
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   float64(cfg.TripDamagePercent),
 		KnockdownChance: 0, // No knockdown — bleed instead
