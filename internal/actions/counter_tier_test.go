@@ -12,12 +12,15 @@ package actions
 //     cross-room shot is the ONE uncounterable attack.
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -284,4 +287,79 @@ func TestSkillMoveExit_DefensiveCritCounters(t *testing.T) {
 		"a crit-defended skill move must run two contests: the move and the counter-swing")
 	require.Less(t, mover.Character.Health, 100000,
 		"the counter-swing must damage the one who attempted the move")
+}
+
+// U6b playtest closeout (2026-08-19): the defy counter-taunt exchange was
+// never decisively observed live, so the dispatch is pinned here: when a
+// PLAYER's taunt is defy-critted, counterTauntExit must put the retort's
+// taunter-audience line (rendered from the counter-defy pool) in front of
+// that player — the exchange can never resolve silently for the one player
+// who can see it.
+func TestCounterTaunt_RetortNarratesToThePlayerTaunter(t *testing.T) {
+	pinTauntCollapseKnobs(t)
+	pinActionsCounterKnob(t, 0.5)
+
+	restoreMessages := items.SeedDefenseMessagesForTest(map[items.DefenseType]*items.DefenseMessageGroup{
+		items.DefenseCounterDefy: counterRetortMessageFixture(),
+	})
+	defer restoreMessages()
+
+	// Player taunter vs mob counterer, through the REAL ExecuteTaunt.
+	actor, char, target := newRhetoricActor(t, true, 100, 0)
+	char.Health = 1000
+	char.HealthMax.Value = 1000
+	target.Health = 1000
+	target.HealthMax.Value = 1000
+
+	calls := 0
+	restore := combat.SetChannelAttackContestRunnerForTest(counterSequencedRunner(t, &calls,
+		tauntDeterministicRunner(t, -2.5, -0.5, 2.5), // the taunt is defy-critted
+		tauntDeterministicRunner(t, 0.5, 0.5, -0.5),  // the counter-taunt lands
+	))
+	t.Cleanup(restore)
+
+	events.DrainQueuedMessagesForTest(actor.GetUserId())
+
+	res := ExecuteTaunt(actor)
+
+	require.True(t, res.Executed, "the taunt must execute (cost %+v)", res.Cost)
+	require.True(t, res.Defence.DefensiveCrit, "fixture error: the taunt was supposed to be defy-critted")
+	require.True(t, res.Counter.Fired, "the defy crit must fire the counter-taunt")
+
+	lines := events.DrainQueuedMessagesForTest(actor.GetUserId())
+	retortLines := []string{}
+	for _, line := range lines {
+		if strings.Contains(line, "RETORT!") {
+			retortLines = append(retortLines, line)
+		}
+	}
+	require.Len(t, retortLines, 1,
+		"the countered player taunter must receive exactly one retort line; got %v", lines)
+	require.Contains(t, strings.ToLower(retortLines[0]), "counterretort-attacker",
+		"the taunter's line must be the counter-defy pool's attacker-audience render")
+	require.Contains(t, retortLines[0], char.Name,
+		"the retort must name the original taunter")
+}
+
+// counterRetortMessageFixture seeds a marked counter-defy pool for the
+// dispatch pin above.
+func counterRetortMessageFixture() *items.DefenseMessageGroup {
+	mk := func(band string) items.DefenseOptions {
+		messages := func(audience string) items.MessageOptions {
+			result := make(items.MessageOptions, 5)
+			for i := range result {
+				result[i] = items.ItemMessage("counterretort-" + audience + "-" + band +
+					" {defender} turns the jeer back on {attacker}")
+			}
+			return result
+		}
+		return items.DefenseOptions{Together: items.DefenseTogetherMessages{
+			ToDefender: messages("defender"),
+			ToAttacker: messages("attacker"),
+			ToRoom:     messages("room"),
+		}}
+	}
+	return &items.DefenseMessageGroup{OptionId: items.DefenseCounterDefy, Options: items.DefenseIntensity{
+		items.Weak: mk("weak"), items.Normal: mk("normal"), items.Heavy: mk("heavy"),
+	}}
 }

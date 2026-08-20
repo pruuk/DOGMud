@@ -10,6 +10,7 @@ package hooks
 //     melee swing path and ONLY there, and never chains into the tier.
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -17,6 +18,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -288,4 +291,78 @@ func TestSpellCounter_PlayerVsPlayerAndMobVsMob(t *testing.T) {
 		"the mob-vs-mob exit must feed the tier too")
 	require.Less(t, mobCaster.Character.Health, 100000,
 		"the defending mob's counter must damage the mob caster")
+}
+
+// U6b playtest closeout (2026-08-19): the quell lane's counter narration was
+// never observed live (the caster mob never cast). The dispatch is pinned
+// here: on a decisive defensive crit against a cast, the countered CASTER
+// must receive the counter line, rendered from the counter-quell pool (both
+// spell channels share it), never silently dropped.
+func TestSpellCounter_NarrationReachesCasterFromCounterQuellPool(t *testing.T) {
+	pinCounterTierKnobs(t, 0.5)
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := items.SeedDefenseMessagesForTest(map[items.DefenseType]*items.DefenseMessageGroup{
+		items.DefenseCounterQuell: counterQuellNarrationFixture(),
+	})
+	defer restoreMessages()
+
+	caster := users.GetByUserId(1)
+	mob := mobInstanceForCollapseTest(t)
+	room := roomForCollapseTest(t)
+	caster.Character.Health = 100000
+	caster.Character.HealthMax.Value = 100000
+	caster.Character.Stamina = 500
+	caster.Character.StaminaMax.Value = 500
+
+	calls := 0
+	restore := combat.SetChannelAttackContestRunnerForTest(sequencedContestRunner(t, &calls,
+		alwaysDefensiveCritContest(t), // the cast is crit-defended
+		attackWinContest(t),           // the counter-swing lands
+	))
+	t.Cleanup(restore)
+
+	spell := physicalHarmSpellForCollapseTest()
+	side := spellAttackSideFor(spell, caster.Character)
+	events.DrainQueuedMessagesForTest(caster.UserId)
+	fumbled := resolveAgainstMob(caster, mob, room, spell, side, spell.EffectMagnitude)
+	require.False(t, fumbled)
+	require.Equal(t, 2, calls, "the cast and the counter-swing")
+
+	lines := events.DrainQueuedMessagesForTest(caster.UserId)
+	counterLines := []string{}
+	for _, line := range lines {
+		if strings.Contains(line, "COUNTER!") {
+			counterLines = append(counterLines, line)
+		}
+	}
+	require.Len(t, counterLines, 1,
+		"the countered caster must receive exactly one counter line; got %v", lines)
+	require.Contains(t, strings.ToLower(counterLines[0]), "counterquell-attacker",
+		"the caster's line must be the counter-quell pool's attacker-audience render")
+	require.Contains(t, counterLines[0], mob.Character.Name,
+		"the counter line must name the countering defender")
+}
+
+// counterQuellNarrationFixture seeds a marked counter-quell pool for the
+// dispatch pin above.
+func counterQuellNarrationFixture() *items.DefenseMessageGroup {
+	mk := func(band string) items.DefenseOptions {
+		messages := func(audience string) items.MessageOptions {
+			result := make(items.MessageOptions, 5)
+			for i := range result {
+				result[i] = items.ItemMessage("counterquell-" + audience + "-" + band +
+					" {defender} steps through the gap {attacker} left")
+			}
+			return result
+		}
+		return items.DefenseOptions{Together: items.DefenseTogetherMessages{
+			ToDefender: messages("defender"),
+			ToAttacker: messages("attacker"),
+			ToRoom:     messages("room"),
+		}}
+	}
+	return &items.DefenseMessageGroup{OptionId: items.DefenseCounterQuell, Options: items.DefenseIntensity{
+		items.Weak: mk("weak"), items.Normal: mk("normal"), items.Heavy: mk("heavy"),
+	}}
 }
