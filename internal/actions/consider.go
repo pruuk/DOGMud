@@ -70,7 +70,7 @@ func predictionFor(ratio float64) string {
 	case ratio > 2:
 		return `<ansi fg="green">The odds favor you</ansi>`
 	case ratio > 1:
-		return `<ansi fg="yellow">An even contest — tread carefully</ansi>`
+		return `<ansi fg="yellow">An even contest. Tread carefully</ansi>`
 	case ratio > 0.5:
 		return `<ansi fg="red-bold">They have the upper hand</ansi>`
 	case ratio > 0:

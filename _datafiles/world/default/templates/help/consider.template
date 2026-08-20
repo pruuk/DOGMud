@@ -12,7 +12,7 @@ you a gut-feeling estimate of how a fight might go.
   <ansi fg="blue-bold">They pose no threat to you</ansi>
   <ansi fg="green">You hold a clear advantage</ansi>
   <ansi fg="green">The odds favor you</ansi>
-  <ansi fg="yellow">An even contest — tread carefully</ansi>
+  <ansi fg="yellow">An even contest. Tread carefully</ansi>
   <ansi fg="red-bold">They have the upper hand</ansi>
   <ansi fg="red-bold">You are severely outmatched</ansi>
   <ansi fg="red-bold">You will not survive this fight</ansi>

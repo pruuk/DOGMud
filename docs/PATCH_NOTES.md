@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-08-19: Polish from the battle narration review
+
+A line ending in a bracketed or parenthesized note, such as a critical-hit
+tag, no longer gains a stray period after the closing bracket. The verdict
+you hear when you size up an evenly matched opponent now reads more cleanly.
+
 ## 2026-08-19: One fight, one set of rules
 
 Every kind of attack now resolves the same way. A spell, a taunt, an aimed
