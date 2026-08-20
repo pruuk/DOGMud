@@ -1571,32 +1571,39 @@ attempt:
 
 ```
 attackerScore = attempter.Strength
-              + attempter.UnarmedCombatSkill × SubSkillWeight
+              + attempter.UnarmedCombatSkill × SkillWeight
 defenderScore = recipient.Strength
               + recipient.Vitality
-              + recipient.UnarmedCombatSkill × SubSkillWeight
+              + recipient.UnarmedCombatSkill × SkillWeight
 ```
 
 Both sides are rolled by the shared contest core: `RollSubmissionAttempt`
 calls `RunContest(atkScore, []contest.Entry{{Score: defScore}})`, so the
-one symmetric floor applies here like everywhere else. The attacker's
-z-score determines the tier (see below).
+one symmetric floor applies here like everywhere else.
 
-Note the skill weight: the sub roll multiplies unarmed combat by
-`SubSkillWeight` (1.5) on **both** sides. That is its own regime, shared
-with nothing else. See "Contest core (chunks U1 to U6)" above.
+Note the skill weight: since U6b Task 13 both sides use the global
+`SkillWeight`, same as every other additive contest score. The old
+sub-only weight knob (1.5, a regime shared with nothing else) is
+deleted. See "Contest core (chunks U1 to U6)" above.
 
 ### Tier classification
 
-`ClassifySubmissionTier(success bool, attackerZ float64) SubmissionTier`
-maps the roll result to one of four tiers:
+`ClassifySubmissionTier(success bool, stunCrit bool, attackerZ float64)
+SubmissionTier` maps the roll result to one of four tiers. `stunCrit` is
+decided in `RollSubmissionAttempt` as a margin crit: the normalized
+contest margin (`Result.Margin / (AttackRoll.StdDev × √2)`) measured
+against `CritBarFor` over both sides' unarmed-combat ranks, never on a
+floored outcome (U6b Task 13 — the old self-relative z-threshold was
+opponent-blind, a flat ~2%; the margin form models at 18-62% depending
+on matchup, accepted for playtest). The bad band stays self-relative ON
+PURPOSE: a fumble is the attempter's own blunder.
 
 | Tier | Condition | Effect |
 |------|-----------|--------|
 | `SubTierBad` | Attacker failed AND attackerZ < `SubBadZThreshold` | Attempter falls Prone; grapple breaks to Standing. |
 | `SubTierNeutral` | Attacker failed, z >= threshold | No effect; grapple continues. |
-| `SubTierSuccess` | Attacker succeeded, z < `SubCritZThreshold` | Apply attempter's `SubmissionPolicy`. |
-| `SubTierCrit` | Attacker succeeded, z >= `SubCritZThreshold` | Apply policy + apply Stunned buff (id 84) to recipient when policy is mercy. |
+| `SubTierSuccess` | Attacker succeeded, no stun-crit | Apply attempter's `SubmissionPolicy`. |
+| `SubTierCrit` | Attacker succeeded, stun-crit (margin >= `CritBarFor`) | Apply policy + apply Stunned buff (id 84) to recipient when policy is mercy. |
 
 ### Policy outcome ladder
 
@@ -1661,17 +1668,16 @@ transitions in T7. See `internal/state/life/context.md` for the
 
 ### Balance knobs (`Balance` section in config)
 
-Six knobs control submission window eligibility and tier classification.
-The `SubSkillWeight` default is 1.5 (not 1.0 as the T3 plan assumed —
-updated at validation time).
+Four knobs control submission window eligibility and tier classification.
+(U6b Task 13 deleted the sub-only skill weight knob — both sides now use
+the global `SkillWeight` — and the sub crit z-threshold, because the
+stun-crit tier is a margin crit vs `CritBarFor` with no z knob.)
 
 | Knob | Default | Effect |
 |------|---------|--------|
 | `SubmissionAttemptAlpha` | 1.0 | Min drift-margin z-score to open a sub window on either side of the grapple. |
 | `SubmissionAttemptCritZ` | 2.0 | Defender drift z >= this opens a bottom-sub window regardless of margin. |
-| `SubSkillWeight` | 1.5 | Unarmed-combat skill contribution multiplier in the sub roll. |
 | `SubBadZThreshold` | -1.0 | Sub-roll z-score below which the bad tier fires (attempter falls Prone). |
-| `SubCritZThreshold` | 2.0 | Sub-roll z-score at or above which the crit tier fires (recipient stunned). |
 | `SubGoldLossFraction` | 0.20 | Fraction of defender's carried gold transferred to attacker on subdue/cripple. |
 
 See `internal/configs/context.md` "Submission System (chunk 4d)" for

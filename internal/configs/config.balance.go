@@ -127,15 +127,22 @@ type Balance struct {
 	GrappleGroundControlAttackMultiplier   ConfigFloat `yaml:"GrappleGroundControlAttackMultiplier"`   // Attack score multiplier for a ground-grapple controller (default 1.15)
 	GrappleStandingControlAttackMultiplier ConfigFloat `yaml:"GrappleStandingControlAttackMultiplier"` // Attack score multiplier for a standing-grapple controller (default 1.08)
 	GrappleGroundedVulnerabilityMultiplier ConfigFloat `yaml:"GrappleGroundedVulnerabilityMultiplier"` // Attack score multiplier vs a grounded, non-controlling target (default 1.15)
-	StandStaminaCost                       ConfigFloat `yaml:"StandStaminaCost"`                       // Fraction of max stamina to stand up (default 0.15)
-	StandMinStamina                        ConfigFloat `yaml:"StandMinStamina"`                        // Minimum fraction of max SP to stand (default 0.15)
-	ThirdPartyGrapplePenalty               ConfigFloat `yaml:"ThirdPartyGrapplePenalty"`               // Defense multiplier when grappled vs third party (default 0.70)
-	ClinchDodgePenalty                     ConfigFloat `yaml:"ClinchDodgePenalty"`                     // Dodge score multiplier while clinched (default 0.80)
-	ClinchParryPenalty                     ConfigFloat `yaml:"ClinchParryPenalty"`                     // Parry score multiplier while clinched (default 0.83)
-	ClinchBlockPenalty                     ConfigFloat `yaml:"ClinchBlockPenalty"`                     // Block score multiplier while clinched (default 0.85)
-	GroundedDodgePenalty                   ConfigFloat `yaml:"GroundedDodgePenalty"`                   // Dodge score multiplier while grounded (default 0.75)
-	GroundedParryPenalty                   ConfigFloat `yaml:"GroundedParryPenalty"`                   // Parry score multiplier while grounded (default 0.77)
-	GroundedBlockPenalty                   ConfigFloat `yaml:"GroundedBlockPenalty"`                   // Block score multiplier while grounded (default 0.80)
+	// U6b Task 13: the AttemptGrapple prone literals, knobbed at identical
+	// shipped values. NOTE the direction — an earlier draft had them swapped:
+	// the DEFENDER-prone site multiplies the defense score by 0.3, the
+	// ATTACKER-prone site multiplies the attack score by 0.5.
+	GrappleProneAttackerMod ConfigFloat `yaml:"GrappleProneAttackerMod"` // Attack score multiplier when the grapple attacker is prone/supine (default 0.5)
+	GrappleProneDefenderMod ConfigFloat `yaml:"GrappleProneDefenderMod"` // Defense score multiplier when the grapple defender is prone/supine (default 0.3)
+
+	StandStaminaCost         ConfigFloat `yaml:"StandStaminaCost"`         // Fraction of max stamina to stand up (default 0.15)
+	StandMinStamina          ConfigFloat `yaml:"StandMinStamina"`          // Minimum fraction of max SP to stand (default 0.15)
+	ThirdPartyGrapplePenalty ConfigFloat `yaml:"ThirdPartyGrapplePenalty"` // Defense multiplier when grappled vs third party (default 0.70)
+	ClinchDodgePenalty       ConfigFloat `yaml:"ClinchDodgePenalty"`       // Dodge score multiplier while clinched (default 0.80)
+	ClinchParryPenalty       ConfigFloat `yaml:"ClinchParryPenalty"`       // Parry score multiplier while clinched (default 0.83)
+	ClinchBlockPenalty       ConfigFloat `yaml:"ClinchBlockPenalty"`       // Block score multiplier while clinched (default 0.85)
+	GroundedDodgePenalty     ConfigFloat `yaml:"GroundedDodgePenalty"`     // Dodge score multiplier while grounded (default 0.75)
+	GroundedParryPenalty     ConfigFloat `yaml:"GroundedParryPenalty"`     // Parry score multiplier while grounded (default 0.77)
+	GroundedBlockPenalty     ConfigFloat `yaml:"GroundedBlockPenalty"`     // Block score multiplier while grounded (default 0.80)
 	// GrappleStaminaLowThreshold is the stamina fraction (0.0–1.0) below
 	// which a character is considered "low stamina" for grapple purposes.
 	// Used by IsLowGrappleStamina() and the mob_low_grapple_stamina btree
@@ -170,9 +177,7 @@ type Balance struct {
 	// docs/superpowers/specs/2026-05-18-state-chunk-4d-submission-rework-design.md
 	SubmissionAttemptAlpha ConfigFloat `yaml:"submission_attempt_alpha"`  // Min drift-margin (std devs) that opens a sub window (either side)
 	SubmissionAttemptCritZ ConfigFloat `yaml:"submission_attempt_crit_z"` // Defender-side shortcut: drift z >= this opens a bottom-sub window regardless of margin
-	SubSkillWeight         ConfigFloat `yaml:"sub_skill_weight"`          // Unarmed-combat skill contribution multiplier in the sub roll
 	SubBadZThreshold       ConfigFloat `yaml:"sub_bad_z_threshold"`       // Z-score below which the sub roll's bad-tier (attempter falls prone) fires
-	SubCritZThreshold      ConfigFloat `yaml:"sub_crit_z_threshold"`      // Z-score at or above which the sub roll's crit-tier (recipient stunned) fires
 	SubGoldLossFraction    ConfigFloat `yaml:"sub_gold_loss_fraction"`    // Fraction of carried gold transferred to the aggressor on subdue/cripple
 	BrokenLimbBuffDuration ConfigInt   `yaml:"broken_limb_buff_duration"` // Duration in rounds for the broken-limb buff; expires naturally via standard buff tick
 

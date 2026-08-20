@@ -108,6 +108,15 @@ func (b *Balance) validateCombat() {
 	if b.GrappleGroundedVulnerabilityMultiplier <= 0 {
 		b.GrappleGroundedVulnerabilityMultiplier = 1.15
 	}
+	// U6b Task 13: AttemptGrapple's prone literals, knobbed. Score
+	// multipliers, not off-switches — a non-positive value is a config error
+	// and falls back to the default rather than zeroing a side's score.
+	if b.GrappleProneAttackerMod <= 0 {
+		b.GrappleProneAttackerMod = 0.5
+	}
+	if b.GrappleProneDefenderMod <= 0 {
+		b.GrappleProneDefenderMod = 0.3
+	}
 	if b.ProneVulnerabilityMultiplier <= 0 {
 		b.ProneVulnerabilityMultiplier = 1.15
 	}
@@ -206,14 +215,11 @@ func (b *Balance) validateCombat() {
 	if b.SubmissionAttemptCritZ <= 0 {
 		b.SubmissionAttemptCritZ = 2.0
 	}
-	if b.SubSkillWeight <= 0 {
-		b.SubSkillWeight = 1.5
-	}
+	// U6b Task 13: the sub-only skill weight knob is deleted (both sub-roll
+	// sides use the global SkillWeight) and so is the sub crit z-threshold (the
+	// stun-crit tier is a margin crit vs CritBarFor now; the z knob had no reader left).
 	if b.SubBadZThreshold == 0 {
 		b.SubBadZThreshold = -1.0
-	}
-	if b.SubCritZThreshold <= 0 {
-		b.SubCritZThreshold = 2.0
 	}
 	if b.SubGoldLossFraction < 0 || b.SubGoldLossFraction > 1.0 {
 		b.SubGoldLossFraction = 0.20
