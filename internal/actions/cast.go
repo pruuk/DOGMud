@@ -252,8 +252,17 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		spellRest = targetName
 	}
 
-	// 3a. Harm spells (single/multi) require at least one resolved target.
-	if spellInfo.Type == spells.HarmSingle || spellInfo.Type == spells.HarmMulti {
+	// 3a. Harm spells require at least one resolved target.
+	//
+	// HarmArea is included (U7b admission rule): a cast that cannot possibly
+	// land must be refused BEFORE any resources are spent. Without this, an
+	// area spell cast in a room with no valid targets ran the full multi-round
+	// cast, charged conviction, and then reported "finds no targets" at
+	// resolution. Targets that leave mid-cast (or dodge at resolution) still
+	// legitimately consume the cast — only the found-zero-at-initiation case
+	// is a refusal.
+	if spellInfo.Type == spells.HarmSingle || spellInfo.Type == spells.HarmMulti ||
+		spellInfo.Type == spells.HarmArea {
 		if len(targetUserIds) == 0 && len(targetMobInstanceIds) == 0 {
 			return CastResult{SpellInfo: spellInfo, NoTarget: true}
 		}
