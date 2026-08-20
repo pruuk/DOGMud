@@ -286,4 +286,37 @@ func TestExecuteSkillMove_IsCounterSuppressesCounterTier(t *testing.T) {
 	if res2.Hit != res.Hit || res2.Defence.DefensiveCrit != res.Defence.DefensiveCrit {
 		t.Error("IsCounter changed resolution before Task 10 gave it a consumer")
 	}
+
+	// U6b Task 7 (the auto-trip/auto-bash counters now carry the flag): an
+	// IsCounter move that WINS its contest must still resolve normally —
+	// hit, damage applied, status landed. The flag only marks the move as a
+	// counter for Task 10's tier; it must never suppress the counter-move's
+	// OWN effects.
+	winRunner := func(atkScore float64, entries []contest.Entry) contest.Result {
+		stdDev := dice.StdDevFor(atkScore)
+		return contest.Result{
+			Contested: true,
+			Winner:    entries[0].Name,
+			Success:   true,
+			Margin:    0.5 * stdDev * math.Sqrt2, // clean win, under the crit bar
+			AttackRoll: dice.RollResult{
+				Value: atkScore, Mean: atkScore, StdDev: stdDev, ZScore: 0,
+			},
+			DefenseRoll: dice.RollResult{
+				Mean: entries[0].Score, StdDev: stdDev, ZScore: 0,
+			},
+		}
+	}
+	def3 := newSeamTestDefender()
+	healthBefore := def3.Health
+	p3 := bashSeamParams(atk, def3)
+	p3.IsCounter = true
+	res3 := executeSkillMoveWithRunner(p3, winRunner)
+	if !res3.Hit || res3.Damage < 1 || !res3.StatusApplied {
+		t.Errorf("IsCounter suppressed the counter-move's own resolution: Hit=%v Damage=%d StatusApplied=%v",
+			res3.Hit, res3.Damage, res3.StatusApplied)
+	}
+	if def3.Health >= healthBefore {
+		t.Error("IsCounter winning move's damage was not applied to the defender's pool")
+	}
 }

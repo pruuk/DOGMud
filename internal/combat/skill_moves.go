@@ -2,7 +2,6 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -22,8 +21,8 @@ type SkillMoveResult struct {
 
 	// Crit is the attacker's margin-derived critical, decided ONCE inside
 	// ResolveChannelAttack against CritBarFor's pair bar (U6b). A crit
-	// bypasses mitigation via CritOrMitigatedDamage. Never set on the legacy
-	// path.
+	// bypasses mitigation via CritOrMitigatedDamage. Only ResolveChannelAttack
+	// sets it.
 	Crit bool
 
 	// Fumble is a NEW abort for these moves (U6b, Assumption 11): a fumbled
@@ -43,7 +42,7 @@ type SkillMoveResult struct {
 
 	// Defence exposes the seam's full outcome — DefenceType, DefensiveCrit,
 	// normalized margin, and the committed cost — for narration and the
-	// Task 10 counter tier. Zero-valued on the legacy path.
+	// Task 10 counter tier.
 	Defence ChannelDefenceResult
 }
 
@@ -53,9 +52,8 @@ type SkillMoveParams struct {
 	Defender *characters.Character
 
 	// Channel selects the defence set (ChannelMelee for the physical moves,
-	// ChannelRanged for fire). An EMPTY Channel routes down the legacy
-	// scalar-defence path below — DELETE(u6b-task7) along with that path
-	// once the remaining callers convert.
+	// ChannelRanged for fire). Required — the legacy scalar-defence path was
+	// deleted in U6b Task 7; every caller sets Channel + Attack.
 	Channel AttackChannel
 
 	// Attack is the attacker's half of the contest. Callers pass the RAW
@@ -80,21 +78,12 @@ type SkillMoveParams struct {
 	// opt into the Supine path; trip / kick / hamstring / bite stay
 	// face-forward.
 	KnockdownToSupine bool
-
-	// DELETE(u6b-task7): legacy scalar-defence inputs, read only when
-	// Channel is empty. Task 7 converts the remaining callers onto
-	// Channel + Attack and deletes these four fields plus SkillRank.
-	AttackStat   int // stat value for attack score (e.g. Strength or Dexterity)
-	AttackSkill  int // attacker's relevant skill level
-	DefenseStat  int // defender's Dexterity
-	DefenseSkill int // defender's combat skill level
-	SkillRank    int // for SkillMultiplier in damage calc (legacy path only)
 }
 
 // ExecuteSkillMove performs the core combat resolution for bash/kick/trip.
-// It handles the opposed contest (via ResolveChannelAttack when Channel is
-// set: equipment-gated defence set, defence costing + skill-strip, defence
-// progression, and the once-per-contest attacker crit/fumble verdicts),
+// It handles the opposed contest (via ResolveChannelAttack: equipment-gated
+// defence set, defence costing + skill-strip, defence progression, and the
+// once-per-contest attacker crit/fumble verdicts),
 // the damage pipeline, knockdown determination, and applies HP reduction +
 // prone status. Callers handle messaging and analytics.
 //
@@ -122,63 +111,41 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	mitig := p.Defender.GetPhysicalMitigation() * mitigMult
 	cap := MitigationCap(ChannelPhysical)
 
-	if p.Channel == "" {
-		// DELETE(u6b-task7): legacy scalar-defence path, byte-for-byte the
-		// pre-U6b resolution (x1 skill weights, single dex+skill defender
-		// number, no defence cost, no crit/fumble tier) for the callers
-		// Task 7 has not yet converted. New code must set Channel + Attack.
-		attackerScore := float64(p.AttackSkill) + float64(p.AttackStat)
-		defenderScore := float64(p.DefenseSkill) + float64(p.DefenseStat)
-		res := runner(attackerScore, []contest.Entry{{Score: defenderScore}})
-		result.Hit = res.Success
+	// U6b Task 6: ONE contest through the channel seam. The defence is a
+	// SET (DefenceEntriesFor: a shieldless defender never rolls block),
+	// the winning defence is quoted, charged, skill-stripped when
+	// unaffordable, and progressed — the defender economy the melee path
+	// already has. The crit/fumble bonus tier fires once INSIDE the seam;
+	// nothing here derives a second verdict. (Task 7 deleted the legacy
+	// scalar-defence branch; the seam is now the only path.)
+	out := resolveChannelAttackWithRunner(p.Channel, p.Attack, p.Attacker, p.Defender, runner)
+	result.Defence = out
+	result.Crit = out.AttackerCrit
+	result.Fumble = out.AttackerFumble
 
-		rawDmg := CalcRawDamage(p.DamageStat, p.SkillRank, p.DamagePercent, ChannelPhysical)
-		dmgMean := ApplyMitigation(rawDmg, mitig, cap)
-		baseDamage := int(dice.RollStat(dmgMean).Value)
-		if baseDamage < 1 {
-			baseDamage = 1
-		}
-		damageMult := defenceDamageMultiplier(res)
-		result.Damage = int(float64(baseDamage) * damageMult)
-		if damageMult > 0 && result.Damage < 1 {
-			result.Damage = 1
-		}
-	} else {
-		// U6b Task 6: ONE contest through the channel seam. The defence is a
-		// SET (DefenceEntriesFor: a shieldless defender never rolls block),
-		// the winning defence is quoted, charged, skill-stripped when
-		// unaffordable, and progressed — the defender economy the melee path
-		// already has. The crit/fumble bonus tier fires once INSIDE the seam;
-		// nothing here derives a second verdict.
-		out := resolveChannelAttackWithRunner(p.Channel, p.Attack, p.Attacker, p.Defender, runner)
-		result.Defence = out
-		result.Crit = out.AttackerCrit
-		result.Fumble = out.AttackerFumble
-
-		// Fumble aborts BEFORE success (Assumption 11): no damage, no status,
-		// no knockdown. The defence was still charged and progressed inside
-		// the seam — the defender mounted it either way.
-		if result.Fumble {
-			return result
-		}
-
-		// The contest WIN, exactly as the legacy path's res.Success.
-		result.Hit = !out.Defended
-
-		// Damage pipeline: crit bypasses mitigation and scales by
-		// CritDamageMultiplier(RAW rank); non-crits mitigate then scale by
-		// the defence multiplier (1.0 on an attack win by construction, 0.5
-		// on a floored save, 0.0-0.5 on a rolled defensive win).
-		rawDmg := CalcRawDamage(p.DamageStat, p.Attack.SkillRank, p.DamagePercent, ChannelPhysical)
-		dmg := CritOrMitigatedDamage(rawDmg, p.Attack.SkillRank, result.Crit, mitig, cap)
-		if !result.Crit {
-			dmg = int(float64(dmg) * out.DamageMultiplier)
-			if out.DamageMultiplier > 0 && dmg < 1 {
-				dmg = 1
-			}
-		}
-		result.Damage = dmg
+	// Fumble aborts BEFORE success (Assumption 11): no damage, no status,
+	// no knockdown. The defence was still charged and progressed inside
+	// the seam — the defender mounted it either way.
+	if result.Fumble {
+		return result
 	}
+
+	// The contest WIN.
+	result.Hit = !out.Defended
+
+	// Damage pipeline: crit bypasses mitigation and scales by
+	// CritDamageMultiplier(RAW rank); non-crits mitigate then scale by
+	// the defence multiplier (1.0 on an attack win by construction, 0.5
+	// on a floored save, 0.0-0.5 on a rolled defensive win).
+	rawDmg := CalcRawDamage(p.DamageStat, p.Attack.SkillRank, p.DamagePercent, ChannelPhysical)
+	dmg := CritOrMitigatedDamage(rawDmg, p.Attack.SkillRank, result.Crit, mitig, cap)
+	if !result.Crit {
+		dmg = int(float64(dmg) * out.DamageMultiplier)
+		if out.DamageMultiplier > 0 && dmg < 1 {
+			dmg = 1
+		}
+	}
+	result.Damage = dmg
 
 	if result.Damage > 0 {
 		p.Defender.ApplyHarm(characters.PoolHealth, result.Damage,

@@ -106,17 +106,21 @@ func ExecutePounce(actor Actor) PounceResult {
 	// Execute the skill move — uses bash's damage percent and knockdown chance;
 	// KnockdownToSupine=true drives the target backward (face-up). No bleed:
 	// pounce is a knockdown opener, not a DoT.
+	// U6b Task 7: through the channel seam — raw rank in, the seam applies
+	// SkillWeight (x1 -> x5 both sides); the defence is the equipment-gated
+	// set, charged and progressed; the crit tier and fumble abort exist now.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:          char,
-		Defender:          target.Char,
-		AttackStat:        char.GetEffectiveDexterity(),
-		AttackSkill:       char.GetSkillLevel(skills.UnarmedCombat),
-		DefenseStat:       target.Char.GetEffectiveDexterity(),
-		DefenseSkill:      target.Char.GetCombatSkillLevel(),
+		Attacker: char,
+		Defender: target.Char,
+		Channel:  combat.ChannelMelee,
+		Attack: combat.AttackSide{
+			Stat: char.GetEffectiveDexterity(), StatName: "dexterity",
+			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
+			Mult: 1.0,
+		},
 		DamagePercent:     float64(cfg.BashDamagePercent),
 		KnockdownChance:   int(cfg.BashKnockdownChance),
 		KnockdownToSupine: true, // predator leaps and drives target backward
-		SkillRank:         char.GetSkillLevel(skills.UnarmedCombat),
 		DamageStat:        char.Stats.Strength.ValueAdj,
 	})
 

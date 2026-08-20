@@ -91,17 +91,21 @@ func ExecuteGore(actor Actor) GoreResult {
 	// Execute the skill move — uses kick's damage percent for the charge
 	// impact and bash's knockdown chance; KnockdownToSupine=true drives the
 	// target forward (face-up). No bleed: gore is a knockdown opener.
+	// U6b Task 7: through the channel seam — raw rank in, the seam applies
+	// SkillWeight (x1 -> x5 both sides); the defence is the equipment-gated
+	// set, charged and progressed; the crit tier and fumble abort exist now.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:          char,
-		Defender:          target.Char,
-		AttackStat:        char.Stats.Strength.ValueAdj,
-		AttackSkill:       char.GetSkillLevel(skills.UnarmedCombat),
-		DefenseStat:       target.Char.GetEffectiveDexterity(),
-		DefenseSkill:      target.Char.GetCombatSkillLevel(),
+		Attacker: char,
+		Defender: target.Char,
+		Channel:  combat.ChannelMelee,
+		Attack: combat.AttackSide{
+			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
+			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
+			Mult: 1.0,
+		},
 		DamagePercent:     float64(cfg.KickDamagePercent),
 		KnockdownChance:   int(cfg.BashKnockdownChance),
 		KnockdownToSupine: true, // horned charge drives target forward (face-up)
-		SkillRank:         char.GetSkillLevel(skills.UnarmedCombat),
 		DamageStat:        char.Stats.Strength.ValueAdj,
 	})
 

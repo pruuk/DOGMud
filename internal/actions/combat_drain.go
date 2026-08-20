@@ -109,16 +109,20 @@ func ExecuteDrain(actor Actor) DrainResult {
 	// is lighter than a full melee blow; the lifesteal makes up the difference.
 	// Strength drives both the attack and the damage, reflecting the predatory
 	// grip. Dexterity governs the defender's evasion.
+	// U6b Task 7: through the channel seam — raw rank in, the seam applies
+	// SkillWeight (x1 -> x5 both sides); the defence is the equipment-gated
+	// set, charged and progressed; the crit tier and fumble abort exist now.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:        char,
-		Defender:        target.Char,
-		AttackStat:      char.Stats.Strength.ValueAdj,
-		AttackSkill:     char.GetSkillLevel(skills.UnarmedCombat),
-		DefenseStat:     target.Char.GetEffectiveDexterity(),
-		DefenseSkill:    target.Char.GetCombatSkillLevel(),
+		Attacker: char,
+		Defender: target.Char,
+		Channel:  combat.ChannelMelee,
+		Attack: combat.AttackSide{
+			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
+			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
+			Mult: 1.0,
+		},
 		DamagePercent:   float64(cfg.TripDamagePercent),
 		KnockdownChance: 0, // No knockdown — the drain itself is the payoff
-		SkillRank:       char.GetSkillLevel(skills.UnarmedCombat),
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 
@@ -265,15 +269,19 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 			continue // skip vanished/downed players — already out of the fight
 		}
 
+		// U6b Task 7: through the channel seam, same conversion as the
+		// single-target drain above — each player defends with their own
+		// equipment-gated set, charged and progressed per contest.
 		moveResult := combat.ExecuteSkillMove(combat.SkillMoveParams{
-			Attacker:      char,
-			Defender:      target.Character,
-			AttackStat:    char.Stats.Strength.ValueAdj,
-			AttackSkill:   char.GetSkillLevel(skills.UnarmedCombat),
-			DefenseStat:   target.Character.GetEffectiveDexterity(),
-			DefenseSkill:  target.Character.GetCombatSkillLevel(),
+			Attacker: char,
+			Defender: target.Character,
+			Channel:  combat.ChannelMelee,
+			Attack: combat.AttackSide{
+				Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
+				Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
+				Mult: 1.0,
+			},
 			DamagePercent: float64(cfg.TripDamagePercent),
-			SkillRank:     char.GetSkillLevel(skills.UnarmedCombat),
 			DamageStat:    char.Stats.Strength.ValueAdj,
 		})
 

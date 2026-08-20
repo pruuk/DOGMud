@@ -263,16 +263,24 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale)
 	rangedRank := char.GetSkillLevel(skills.RangedCombat)
 
+	// U6b Task 7 (ahead of Task 8's schedule, forced by the legacy-field
+	// deletion): fire routes through the channel seam. ChannelRanged decides
+	// the defence set — dodge for everyone, block only for shielded
+	// defenders — replacing the folded rangedDefenseScore scalar. Task 8
+	// still owns deleting rangedDefenseScore + RangedShieldDefenseBonus and
+	// the seam test; the attack stat stays GetEffectivePerception() until
+	// Task 8 rules on Assumption 2.
 	result.MoveResult = combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:             char,
-		Defender:             defChar,
-		AttackStat:           char.GetEffectivePerception(),
-		AttackSkill:          rangedRank,
-		DefenseStat:          0, // folded into DefenseSkill via rangedDefenseScore
-		DefenseSkill:         int(rangedDefenseScore(defChar)),
+		Attacker: char,
+		Defender: defChar,
+		Channel:  combat.ChannelRanged,
+		Attack: combat.AttackSide{
+			Stat: char.GetEffectivePerception(), StatName: "perception",
+			Skill: skills.RangedCombat, SkillRank: rangedRank,
+			Mult: 1.0,
+		},
 		DamagePercent:        shotMult,
 		KnockdownChance:      0,
-		SkillRank:            rangedRank,
 		DamageStat:           char.GetEffectivePerception(),
 		MitigationMultiplier: 1.0,
 	})

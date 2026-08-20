@@ -271,16 +271,21 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 
 	// ── Dodge crit → auto-trip (ignores cooldown) ───────────────────────
 	if roundResult.DodgeCritDetected {
+		// U6b Task 7: through the channel seam. IsCounter marks this as a
+		// move executed AS a counter — consumed by Task 10 (a counter must
+		// never trigger another counter); behaviour-neutral until then.
 		tripResult := combat.ExecuteSkillMove(combat.SkillMoveParams{
-			Attacker:        defender,
-			Defender:        attacker,
-			AttackStat:      defender.GetEffectiveDexterity(),
-			AttackSkill:     defender.GetSkillLevel(skills.UnarmedCombat),
-			DefenseStat:     attacker.GetEffectiveDexterity(),
-			DefenseSkill:    attacker.GetCombatSkillLevel(),
+			Attacker: defender,
+			Defender: attacker,
+			Channel:  combat.ChannelMelee,
+			Attack: combat.AttackSide{
+				Stat: defender.GetEffectiveDexterity(), StatName: "dexterity",
+				Skill: skills.UnarmedCombat, SkillRank: defender.GetSkillLevel(skills.UnarmedCombat),
+				Mult: 1.0,
+			},
+			IsCounter:       true,
 			DamagePercent:   float64(cfg.TripDamagePercent),
 			KnockdownChance: int(cfg.TripKnockdownChance),
-			SkillRank:       defender.GetSkillLevel(skills.UnarmedCombat),
 			DamageStat:      defender.GetEffectiveDexterity(),
 		})
 		result.AutoTrip = true
@@ -322,16 +327,21 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 
 	// ── Block crit → auto-bash (ignores cooldown) ───────────────────────
 	if roundResult.BlockCritDetected {
+		// U6b Task 7: through the channel seam. IsCounter marks this as a
+		// move executed AS a counter — consumed by Task 10 (a counter must
+		// never trigger another counter); behaviour-neutral until then.
 		bashResult := combat.ExecuteSkillMove(combat.SkillMoveParams{
-			Attacker:          defender,
-			Defender:          attacker,
-			AttackStat:        defender.Stats.Strength.ValueAdj,
-			AttackSkill:       defender.GetSkillLevel(skills.WeaponCombat),
-			DefenseStat:       attacker.GetEffectiveDexterity(),
-			DefenseSkill:      attacker.GetCombatSkillLevel(),
+			Attacker: defender,
+			Defender: attacker,
+			Channel:  combat.ChannelMelee,
+			Attack: combat.AttackSide{
+				Stat: defender.Stats.Strength.ValueAdj, StatName: "strength",
+				Skill: skills.WeaponCombat, SkillRank: defender.GetSkillLevel(skills.WeaponCombat),
+				Mult: 1.0,
+			},
+			IsCounter:         true,
 			DamagePercent:     float64(cfg.BashDamagePercent),
 			KnockdownChance:   int(cfg.BashKnockdownChance),
-			SkillRank:         defender.GetSkillLevel(skills.WeaponCombat),
 			DamageStat:        defender.Stats.Strength.ValueAdj,
 			KnockdownToSupine: true, // bash sends attacker backward
 		})
