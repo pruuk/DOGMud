@@ -173,7 +173,7 @@ func shadowPlayer(actor Actor, targetUserId int, cfg configs.Balance) ShadowResu
 	// defending entry. Same formula as shadowDetectionRoll in
 	// usercommands/skill.skullduggery.shadow.go (Per+Search vs Dex+Skullduggery).
 	sneakScore := CalcSneakScoreVsObserver(char, targetUser.Character, actor.GetRoom())
-	searchScore := CalcSearchScore(targetUser.Character)
+	searchScore := CalcDetectionScore(targetUser.Character)
 	detected := combat.RunContest(searchScore, []contest.Entry{{Score: sneakScore}}).Success
 	if detected {
 		targetUser.SendText(messaging.CategorySystem, "You sense someone following close behind you.")
