@@ -1226,13 +1226,18 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	chargeState.Set("core_charge", chargeState.GetInt("core_charge")+1)
 
 	for _, pr := range result.PlayerResults {
-		if !pr.MoveResult.Hit && pr.MoveResult.Damage == 0 {
-			// Defended with zero damage (a defensive crit): matches this
-			// path's existing silent-miss behavior.
-			continue
-		}
 		target := users.GetByUserId(pr.UserId)
 		if target == nil {
+			continue
+		}
+		if !pr.MoveResult.Hit && pr.MoveResult.Damage == 0 {
+			// Defended with zero damage (a defensive crit). This used to be a
+			// silent miss; U6b Task 9 speaks the defence triad so the player
+			// who fully stopped the pull learns what saved them.
+			sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), pr.MoveResult.Defence,
+				spellDefenceIdentity(&mob.Character, nil, room),
+				spellDefenceIdentity(target.Character, target, room),
+				spellData.Name, nil, target)
 			continue
 		}
 		if pr.MoveResult.Hit {

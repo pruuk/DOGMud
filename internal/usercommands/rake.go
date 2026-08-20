@@ -93,8 +93,10 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "claw rake", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "claw rake", messaging.CategoryHitNaturalSharp, false) {
 		missMsgs := []string{
 			`Your raking claws miss <ansi fg="mobname">%s</ansi>!`,
 			`You swipe at <ansi fg="mobname">%s</ansi> but they dodge your claws!`,

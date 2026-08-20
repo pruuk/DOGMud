@@ -83,10 +83,12 @@ func Gore(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something charges you and you sidestep most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who mostly dodges but still gets grazed by the horns!`, mobName, target.Name),
-			target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "goring charge", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who mostly dodges but still gets grazed by the horns!`, mobName, target.Name),
+				target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "goring charge", messaging.CategoryHitNaturalSharp, false) {
 		if targetUser != nil {
 			if canSee {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at you, but you sidestep the gore!`, mobName))

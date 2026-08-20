@@ -63,10 +63,12 @@ func Hamstring(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something lunges at your legs and you dodge most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, who mostly dodges but still gets caught!`, mobName, target.Name),
-			targetPlayerId)
-	} else {
+		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "hamstring slash", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, who mostly dodges but still gets caught!`, mobName, target.Name),
+				targetPlayerId)
+		}
+	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "hamstring slash", messaging.CategoryHitNaturalSharp, false) {
 		if targetChar != nil {
 			if canSee {
 				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at your legs, but you sidestep the attack!`, mobName))

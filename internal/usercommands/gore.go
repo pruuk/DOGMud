@@ -115,8 +115,10 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "goring charge", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "goring charge", messaging.CategoryHitNaturalSharp, false) {
 		missMsgs := []string{
 			`Your charge at <ansi fg="mobname">%s</ansi> misses as they sidestep your horns!`,
 			`You thunder toward <ansi fg="mobname">%s</ansi> but they dodge your gore!`,

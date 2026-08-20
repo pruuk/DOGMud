@@ -100,10 +100,12 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName),
-			user.UserId, res.Target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "throttle lunge", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName),
+				user.UserId, res.Target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "throttle lunge", messaging.CategoryHitNaturalSharp, false) {
 		missMsgs := []string{
 			`Your throttle lunge misses <ansi fg="mobname">%s</ansi>'s throat!`,
 			`You snap at <ansi fg="mobname">%s</ansi>'s throat but they pull away!`,

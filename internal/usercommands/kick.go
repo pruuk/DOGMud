@@ -216,6 +216,15 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Send messages.
 	dmgDesc := combat.GetDamageDescription(res.MoveResult.Damage, res.MoveResult.TargetMaxHP)
 
+	// Attack name for the defence triad renderer (U6b Task 9).
+	attackName := "kick"
+	switch res.Variant {
+	case actions.KickStomp:
+		attackName = "stomp"
+	case actions.KickKnee:
+		attackName = "knee strike"
+	}
+
 	if res.MoveResult.Hit {
 		if res.MoveResult.KnockedDown && len(knockdownMsgs) > 0 {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(knockdownMsgs[util.Rand(len(knockdownMsgs))], targetName, dmgDesc))
@@ -231,12 +240,17 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(kickRoomMsgs[util.Rand(len(kickRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 		}
 	} else if res.MoveResult.Damage > 0 {
+		// Defended-partial: personal lines carry the damage; the room line
+		// names the defence that blunted the kick (U6b Task 9).
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
 		}
-		room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, attackName, messaging.CategoryKick, true) {
+			room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, attackName, messaging.CategoryKick, false) {
+		// No defence to narrate (e.g. a fumbled kick): plain miss text.
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName))
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name))

@@ -67,10 +67,12 @@ func Rake(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something swipes at you and you dodge most of it, but it still scratches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swipes its claws at <ansi fg="username">%s</ansi>, who mostly dodges but still gets scratched!`, mobName, target.Name),
-			target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "claw rake", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swipes its claws at <ansi fg="username">%s</ansi>, who mostly dodges but still gets scratched!`, mobName, target.Name),
+				target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "claw rake", messaging.CategoryHitNaturalSharp, false) {
 		if targetUser != nil {
 			if canSee {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swipes its claws at you, but misses!`, mobName))

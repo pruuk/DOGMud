@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -52,11 +53,29 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		targetColored = fmt.Sprintf(`<ansi fg="username">%s</ansi>`, result.TargetName)
 	}
 
+	// U6b Task 9: a defended same-room shot speaks the channel defence triad
+	// (dodge or block). Cross-room shots keep their origin-anonymous arrival
+	// lines: the triad names the shooter, which the target's room cannot see.
+	var triadDef, triadRoom string
+	if !result.CrossRoom && result.MoveResult.Defence.Defended {
+		triad := combat.RenderChannelDefenceMessages(result.MoveResult.Defence, combat.ChannelDefenceIdentities{
+			Attacker: mobName,
+			Defender: targetColored,
+		}, "aimed shot")
+		triadDef, triadRoom = string(triad.ToDefender), string(triad.ToRoom)
+	}
+
 	// Direct line to a player target.
 	if !result.IsTargetMob && result.TargetUserId > 0 {
 		if u := users.GetByUserId(result.TargetUserId); u != nil {
+			if result.MoveResult.Defence.Defended {
+				if text := combat.ChannelDefenceShortageText(result.MoveResult.Defence, u.Character); text != "" {
+					u.SendText(messaging.CategorySystem, text)
+				}
+			}
 			shooter := mobName
-			if result.IsSneaking || !canSeeInDark(u, room) {
+			anonymous := result.IsSneaking || !canSeeInDark(u, room)
+			if anonymous {
 				shooter = `Someone`
 			}
 			switch {
@@ -64,6 +83,12 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you!`, shooter))
 			case partial:
 				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you!`, shooter))
+			case triadDef != "":
+				personal := triadDef
+				if anonymous {
+					personal = messaging.Anonymize(personal)
+				}
+				u.SendText(messaging.CategoryHitRanged, personal)
 			default:
 				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
 			}
@@ -72,9 +97,14 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	if !result.IsSneaking {
 		if !result.CrossRoom {
-			room.SendTextVisual(messaging.CategoryHitRanged,
-				fmt.Sprintf(`%s fires their %s at %s!`, mobName, weapon, targetColored),
-				result.TargetUserId)
+			if triadRoom != "" {
+				room.SendTextVisual(messaging.CategoryHitRanged, triadRoom,
+					result.TargetUserId)
+			} else {
+				room.SendTextVisual(messaging.CategoryHitRanged,
+					fmt.Sprintf(`%s fires their %s at %s!`, mobName, weapon, targetColored),
+					result.TargetUserId)
+			}
 		} else {
 			// Shooter's room sees the shot leave.
 			room.SendTextVisual(messaging.CategoryHitRanged,

@@ -67,10 +67,12 @@ func Maul(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, who twists mostly free but still gets torn!`, mobName, target.Name),
-			target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "savage bite", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, who twists mostly free but still gets torn!`, mobName, target.Name),
+				target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "savage bite", messaging.CategoryHitNaturalSharp, false) {
 		if targetUser != nil {
 			if canSee {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at you, but misses!`, mobName))

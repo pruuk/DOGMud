@@ -229,12 +229,28 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		targetColored = fmt.Sprintf(`<ansi fg="username">%s</ansi>`, result.TargetName)
 	}
 
-	// Shooter's own feedback.
+	// U6b Task 9: a defended same-room shot speaks the channel defence triad
+	// (dodge or block), naming what actually stopped or blunted it.
+	// Cross-room shots keep their origin-anonymous arrival lines: the triad
+	// names the shooter, which the target's room cannot see.
+	var triadAtk, triadDef, triadRoom string
+	if !result.CrossRoom && result.MoveResult.Defence.Defended {
+		triad := combat.RenderChannelDefenceMessages(result.MoveResult.Defence, combat.ChannelDefenceIdentities{
+			Attacker: user.Character.GetPlayerName(user.UserId).String(),
+			Defender: targetColored,
+		}, "aimed shot")
+		triadAtk, triadDef, triadRoom = string(triad.ToAttacker), string(triad.ToDefender), string(triad.ToRoom)
+	}
+
+	// Shooter's own feedback. A fully stopped shot (a defensive crit) speaks
+	// the triad; a defended partial keeps the damage-carrying line.
 	switch {
 	case hit:
 		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot takes %s (<ansi fg="damage">%s</ansi>)!`, targetColored, tier))
 	case partial:
 		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot goes wide of %s, but the edge of it still clips them! (<ansi fg="damage">%s</ansi>)`, targetColored, tier))
+	case triadAtk != "":
+		user.SendText(messaging.CategoryDodge, triadAtk)
 	default:
 		user.SendText(messaging.CategoryDodge, fmt.Sprintf(`Your shot goes wide of %s!`, targetColored))
 	}
@@ -242,6 +258,11 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	// Direct line to a player target.
 	if !result.IsTargetMob && result.TargetUserId > 0 {
 		if p := users.GetByUserId(result.TargetUserId); p != nil {
+			if result.MoveResult.Defence.Defended {
+				if text := combat.ChannelDefenceShortageText(result.MoveResult.Defence, p.Character); text != "" {
+					p.SendText(messaging.CategorySystem, text)
+				}
+			}
 			shooter := fmt.Sprintf(`<ansi fg="username">%s</ansi>`, user.Character.Name)
 			if result.IsSneaking {
 				shooter = `Someone`
@@ -251,6 +272,12 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you (<ansi fg="damage">%s</ansi>)!`, shooter, tier))
 			case partial:
 				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you! (<ansi fg="damage">%s</ansi>)`, shooter, tier))
+			case triadDef != "":
+				personal := triadDef
+				if result.IsSneaking {
+					personal = messaging.Anonymize(personal)
+				}
+				p.SendText(messaging.CategoryHitRanged, personal)
 			default:
 				p.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
 			}
@@ -262,11 +289,16 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 
 	if !result.CrossRoom {
 		// Same-room broadcast (exclude shooter + player target). Suppressed
-		// when sneaking.
+		// when sneaking. A defended shot's room line comes from the triad.
 		if !result.IsSneaking {
-			room.SendTextVisual(messaging.CategoryHitRanged,
-				fmt.Sprintf(`%s fires their %s at %s!`, shooterName, weapon, targetColored),
-				user.UserId, result.TargetUserId)
+			if triadRoom != "" {
+				room.SendTextVisual(messaging.CategoryHitRanged, triadRoom,
+					user.UserId, result.TargetUserId)
+			} else {
+				room.SendTextVisual(messaging.CategoryHitRanged,
+					fmt.Sprintf(`%s fires their %s at %s!`, shooterName, weapon, targetColored),
+					user.UserId, result.TargetUserId)
+			}
 		}
 		return
 	}

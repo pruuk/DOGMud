@@ -86,10 +86,12 @@ func Bash(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targetUser.SendText(messaging.CategoryBash, fmt.Sprintf(`Something's <ansi fg="yellow-bold">%s</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">%s</ansi>)`, bashLabel, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryBash,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s <ansi fg="username">%s</ansi> %s, who staggers but stays up!`, mobName, bashVerb, target.Name, bashWith),
-			target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(mob, room, target, result.Defence, bashLabel, messaging.CategoryBash, true) {
+			room.SendTextVisual(messaging.CategoryBash,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s <ansi fg="username">%s</ansi> %s, who staggers but stays up!`, mobName, bashVerb, target.Name, bashWith),
+				target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, bashLabel, messaging.CategoryBash, false) {
 		if targetUser != nil {
 			if canSee {
 				targetUser.SendText(messaging.CategoryBash, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts a %s, but misses!`, mobName, bashLabel))
