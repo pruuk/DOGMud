@@ -567,6 +567,14 @@ Balance:
   #   Example: attacker score 110, multiplier 0.80 → score 88.
   ProneAttackMultiplier: 0.80
   #
+  # GrappleProneDefenderMod / GrappleProneAttackerMod: grapple-contest score
+  # multipliers when that SIDE is prone or supine. The names carry the side
+  # they modify; the shipped values are deliberately asymmetric (a downed
+  # defender is far easier to pin than a kneeling attacker is weakened) and
+  # were literals in the code before U6b.
+  GrappleProneDefenderMod: 0.3
+  GrappleProneAttackerMod: 0.5
+  #
   # ProneDodge/Parry/BlockPenalty: fraction of defense score kept while prone.
   #   1.0 = full defense (no penalty). 0.50 = half defense. 0 = no defense.
   #   Example: dodge score 100, penalty 0.95 → score 95.
