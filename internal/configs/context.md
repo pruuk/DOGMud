@@ -552,7 +552,10 @@ full resolution flow and policy matrix.
 | Knob | Default | Effect |
 |------|---------|--------|
 | `RangedShotScale` | 1.0 | Global multiplier on all ranged shot damage. Tune up/down to adjust ranged vs melee balance without touching individual weapon stats. |
-| `RangedShieldDefenseBonus` | 15 | Flat defense-score bonus added to a defender's ranged-defense roll when they have a shield equipped in their offhand. Shields are more useful against arrows/bolts than bare hands. |
+
+The flat ranged shield-bonus knob was deleted by U6b Task 8: a shielded
+defender now answers a shot with a real block CONTEST entry via the channel
+defence seam (`combat.DefenceEntriesFor`), not a score addend.
 
 ### Unified action-cost admission (U8)
 
