@@ -110,6 +110,12 @@ type Balance struct {
 	CritBarFloor      ConfigFloat `yaml:"CritBarFloor"`      // Lowest the bar may fall (default 1.5)
 	CritBarCeiling    ConfigFloat `yaml:"CritBarCeiling"`    // Highest the bar may rise (default 3.0); 0 = uncapped, and is legal
 
+	// CounterDamagePercent: a defensive crit earns the defender one free
+	// answering swing at this fraction of normal weapon damage (U6b counter
+	// tier; the same knob melee riposte used at its old hardcoded 0.5).
+	// 0 is LEGAL and disables counter damage entirely.
+	CounterDamagePercent ConfigFloat `yaml:"CounterDamagePercent"` // Counter-swing damage fraction (default 0.5); 0 disables
+
 	// ── COMBAT: PRONE & GRAPPLE ──────────────────────────────────────────────
 	ProneAttackMultiplier        ConfigFloat `yaml:"ProneAttackMultiplier"`        // Multiplier on attack score while prone (default 0.80)
 	ProneDodgePenalty            ConfigFloat `yaml:"ProneDodgePenalty"`            // Multiplier on dodge score while prone (default 0.70)

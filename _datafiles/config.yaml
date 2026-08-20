@@ -559,6 +559,12 @@ Balance:
   CritBarSkillSlope: 0.05
   CritBarFloor: 1.5
   CritBarCeiling: 3.0
+  #
+  # CounterDamagePercent: a defensive crit earns the defender a free counter
+  # (U6b): one answering swing at this fraction of normal weapon damage.
+  # This is the same knob melee riposte has always used at its old
+  # hardcoded value. 0 is LEGAL and disables counter damage entirely.
+  CounterDamagePercent: 0.5
 
   # ── COMBAT: PRONE & GRAPPLE ───────────────────────────────────────────────
   # When a character is knocked prone, these multipliers modify combat scores.
@@ -674,9 +680,6 @@ Balance:
   # - RangedShotScale -
   #   Global multiplier on ranged shot damage (tuning knob)
   RangedShotScale: 1.0
-  # - RangedShieldDefenseBonus -
-  #   Defense bonus vs ranged shots when the defender holds a shield
-  RangedShieldDefenseBonus: 15
 
   # ── COMBAT: SPELL COSTS ───────────────────────────────────────────────────
   # Global multipliers for spell resource costs. Applied to ALL spells.

@@ -337,6 +337,13 @@ func (b *Balance) validateCombat() {
 		b.CritBarCeiling = 3.0
 	}
 
+	// `< 0`, not `<= 0`: CounterDamagePercent 0 is the documented off-switch
+	// (counters connect but deal nothing); the <= idiom would silently restore
+	// the default and make disabling counter damage impossible.
+	if b.CounterDamagePercent < 0 {
+		b.CounterDamagePercent = 0.5
+	}
+
 	// ── TOXICITY ────────────────────────────────────────────────────────────
 	if b.ToxicityDecayPerTick <= 0 {
 		b.ToxicityDecayPerTick = 1.0
