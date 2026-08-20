@@ -216,6 +216,12 @@ type ChannelDefenceResult struct {
 	// universal and documented).
 	AttackerCrit   bool
 	AttackerFumble bool
+
+	// AttackRollZScore is the attacker's own roll quality from the ONE contest,
+	// surfaced for analytics (combat.RecordSpell) so callers that no longer run
+	// their own contest can still record the roll that decided the cast. Zero
+	// when the contest never ran (nil participants or an empty defence set).
+	AttackRollZScore float64
 }
 
 // ChannelDefenceIdentities carries actor-aware, display-ready identities into
@@ -265,7 +271,22 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 // integer compatibility price. An earlier comment here asserted the physical
 // three never reached this site; that was never true.
 func ResolveChannelAttack(channel AttackChannel, side AttackSide, attacker, defender *characters.Character) ChannelDefenceResult {
-	return resolveChannelAttackWithRunner(channel, side, attacker, defender, RunContest)
+	return resolveChannelAttackWithRunner(channel, side, attacker, defender, channelAttackContestRunner)
+}
+
+// channelAttackContestRunner is the contest core behind ResolveChannelAttack.
+// Production never repoints it; SetChannelAttackContestRunnerForTest swaps it
+// so out-of-package tests (internal/hooks) can drive the FULL seam — cost
+// admission, progression, the bonus tier — against a deterministic contest
+// outcome instead of stubbing the seam away and losing those side effects.
+var channelAttackContestRunner defenceContestRunner = RunContest
+
+// SetChannelAttackContestRunnerForTest swaps the contest runner behind
+// ResolveChannelAttack and returns a restore func for t.Cleanup.
+func SetChannelAttackContestRunnerForTest(runner func(float64, []contest.Entry) contest.Result) (restore func()) {
+	prev := channelAttackContestRunner
+	channelAttackContestRunner = runner
+	return func() { channelAttackContestRunner = prev }
 }
 
 // ResolveChannelDefence remains for the taunt/spell callers until Tasks 4-5
@@ -378,6 +399,7 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	if !res.Contested {
 		return out
 	}
+	out.AttackRollZScore = res.AttackRoll.ZScore
 	out.DamageMultiplier = defenceDamageMultiplier(res)
 
 	// U6b Task 3: the attacker's verdicts, derived ONCE from this contest.

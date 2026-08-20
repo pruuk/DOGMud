@@ -11,7 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/facts"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -462,96 +461,13 @@ func TestProcessFoldRound_NormalSpell_PositionCanBreak(t *testing.T) {
 
 // ─── Spell Resolution Helpers ─────────────────────────────────────────────────
 
-func TestSpellDefenseValue_Physical(t *testing.T) {
-	ch := &characters.Character{}
-	ch.Stats.Dexterity.ValueAdj = 115
-	require.Zero(t, ch.Toxicity, "fixture must be untoxified for the baseline case")
-	val := spellDefenseValue("physical", ch)
-	assert.Equal(t, 115.0, val, "physical spell defense is a Dexterity check")
-}
-
-// TestSpellDefenseValue_PhysicalUsesEffectiveDexterity pins the accessor, not
-// just the stat. spellDefenseValue reads GetEffectiveDexterity(), the
-// engine-wide accessor for live combat and skill rolls, so transient
-// impairments apply to spell evasion exactly as they apply to dodging a sword.
-// Reading Stats.Dexterity.ValueAdj directly would leave a toxified defender
-// dodging spells at full reflexes while dodging melee at reduced ones.
-//
-// Toxicity is the only impairment GetEffectiveDexterity currently models: the
-// >=90% band multiplies Dexterity by 0.90 (see GetToxicityPenalties).
-func TestSpellDefenseValue_PhysicalUsesEffectiveDexterity(t *testing.T) {
-	ch := &characters.Character{}
-	ch.Stats.Dexterity.ValueAdj = 150
-
-	clean := spellDefenseValue("physical", ch)
-	require.Equal(t, 150.0, clean, "sanity: untoxified defender defends at full Dexterity")
-
-	// Drive toxicity into the top band (>=90% of max), which costs 10% Dexterity.
-	toxMax := ch.GetToxicityMax()
-	require.Greater(t, toxMax, 0.0, "sanity: toxicity max must be positive")
-	ch.Toxicity = toxMax * 0.95
-
-	poisoned := spellDefenseValue("physical", ch)
-	assert.Less(t, poisoned, clean,
-		"a toxified defender must be easier to land a physical-defense spell on")
-	assert.Equal(t, float64(int(150*0.90)), poisoned,
-		"physical spell defense must apply the same 10% toxicity Dexterity penalty melee does")
-	assert.Equal(t, float64(ch.GetEffectiveDexterity()), poisoned,
-		"physical spell defense must equal GetEffectiveDexterity exactly")
-}
-
-func TestSpellDefenseValue_Mental(t *testing.T) {
-	// Willpower has no "effective" variant — toxicity penalises regen,
-	// Perception and Dexterity only — so this branch stays on ValueAdj and the
-	// asymmetry with the physical branch is deliberate.
-	ch := &characters.Character{}
-	ch.Stats.Willpower.ValueAdj = 120
-	ch.Toxicity = ch.GetToxicityMax() // fully toxified
-	val := spellDefenseValue("mental", ch)
-	assert.Equal(t, 120.0, val, "toxicity must not touch mental spell defense")
-}
-
-func TestSpellDefenseValue_Unknown(t *testing.T) {
-	ch := &characters.Character{}
-	val := spellDefenseValue("", ch)
-	assert.Equal(t, 0.0, val)
-}
-
-// TestSpellDefenseValue_PhysicalIgnoresMitigation pins the project design rule
-// that a to-hit roll is entirely decoupled from mitigation. Armor and the Minor
-// Shield condition reduce the DAMAGE a landed spell deals
-// (calcSpellDamageForCharacter applies GetPhysicalMitigation); they must have no
-// effect whatsoever on whether the spell lands.
-//
-// This replaces three tests that asserted the opposite. They encoded a bug that
-// has now been introduced twice: 596e1f199 left armor as the sole determinant of
-// physical spell defense, and 784543a3d re-derived it from
-// GetPhysicalMitigation() after the legacy field went dead.
-func TestSpellDefenseValue_PhysicalIgnoresMitigation(t *testing.T) {
-	cleanup := items.SeedItemsForTest(map[int]*items.ItemSpec{
-		8001: {ItemId: 8001, Type: items.Body, Name: "test plate", PhysicalMitigation: 30},
-		8002: {ItemId: 8002, Type: items.Head, Name: "test helm", PhysicalMitigation: 10},
-		8003: {ItemId: 8003, Type: items.Legs, Name: "test greaves", PhysicalMitigation: 40},
-	})
-	defer cleanup()
-
-	bare := &characters.Character{}
-	bare.Stats.Dexterity.ValueAdj = 100
-
-	armored := &characters.Character{}
-	armored.Stats.Dexterity.ValueAdj = 100
-	armored.Equipment.Body = items.Item{ItemId: 8001}
-	armored.Equipment.Head = items.Item{ItemId: 8002}
-	armored.Equipment.Legs = items.Item{ItemId: 8003}
-	armored.AddCondition(characters.ConditionShield, 10, 30.0, "test")
-
-	require.Greater(t, armored.GetPhysicalMitigation(), 0.0,
-		"sanity: the armored fixture really does carry mitigation")
-
-	assert.Equal(t, spellDefenseValue("physical", bare), spellDefenseValue("physical", armored),
-		"armor, legacy damagereduction and the shield condition must not change whether a spell lands")
-	assert.Equal(t, 100.0, spellDefenseValue("physical", armored))
-}
+// The five raw-stat spell-defense-value tests were deleted with their helper
+// (U6b Task 4): they pinned the raw-stat defender side of the two-contest hit
+// gate, which was the defect (a defender's skill never entered the roll). The
+// defender side of the ONE contest is now GetDefenseScoreFor via
+// combat.ResolveChannelAttack, which preserves the invariants they guarded:
+// dodge reads GetEffectiveDexterity (toxicity applies) and no defence score
+// reads armor or mitigation — hit stays decoupled from mitigation.
 
 // ─── CalcSpellDamageForCharacter ──────────────────────────────────────────────
 
@@ -2234,7 +2150,7 @@ func TestResolveAgainstMob_Basic(t *testing.T) {
 	mob.Character.Health = 100
 	spellData := spells.GetSpell("sparks")
 
-	resolveAgainstMob(u, mob, room, spellData, 200.0, 30)
+	resolveAgainstMob(u, mob, room, spellData, spellAttackSideFor(spellData, u.Character), 30)
 	// Should resolve without panic
 }
 
@@ -2249,7 +2165,7 @@ func TestApplyMobEffect_Damage(t *testing.T) {
 	mob.Character.Health = 100
 
 	spellData := spells.GetSpell("sparks")
-	dmg := applyMobEffect(u, u.Character, mob, room, spellData, 30, false)
+	dmg := applyMobEffect(u, u.Character, mob, room, spellData, 30, spellContestAttackWin())
 	assert.GreaterOrEqual(t, dmg, 0)
 }
 
@@ -2262,7 +2178,7 @@ func TestApplyMobEffect_DamageWithCrit(t *testing.T) {
 	mob.Character.Health = 100
 
 	spellData := spells.GetSpell("sparks")
-	dmg := applyMobEffect(u, u.Character, mob, room, spellData, 30, true)
+	dmg := applyMobEffect(u, u.Character, mob, room, spellData, 30, spellContestAttackCrit())
 	assert.GreaterOrEqual(t, dmg, 0)
 }
 
@@ -2283,7 +2199,7 @@ func TestApplyMobEffect_DotEffect(t *testing.T) {
 		EffectMagnitude:   10,
 	}
 
-	dmg := applyMobEffect(u, u.Character, mob, room, dotSpell, 10, false)
+	dmg := applyMobEffect(u, u.Character, mob, room, dotSpell, 10, spellContestAttackWin())
 	assert.Equal(t, 0, dmg)
 }
 
@@ -2295,7 +2211,7 @@ func TestApplyMobEffect_NilUser(t *testing.T) {
 	mob.Character.Health = 100
 
 	spellData := spells.GetSpell("sparks")
-	dmg := applyMobEffect(nil, nil, mob, room, spellData, 30, false)
+	dmg := applyMobEffect(nil, nil, mob, room, spellData, 30, spellContestAttackWin())
 	assert.GreaterOrEqual(t, dmg, 0)
 }
 
@@ -2323,7 +2239,7 @@ func TestApplyMobEffect_Knockdown(t *testing.T) {
 		DamageMultiplier:  0.5,
 		EffectMagnitude:   20,
 	}
-	dmg := applyMobEffect(u, u.Character, mob, room, kdSpell, 20, false)
+	dmg := applyMobEffect(u, u.Character, mob, room, kdSpell, 20, spellContestAttackWin())
 	assert.GreaterOrEqual(t, dmg, 0)
 	assert.True(t, mob.Character.IsSupine() || mob.Character.IsProne(), "mob should be knocked down")
 }
@@ -2342,7 +2258,7 @@ func TestApplyMobEffect_Buff(t *testing.T) {
 		EffectType: "buff",
 		BuffIds:    []int{100},
 	}
-	dmg := applyMobEffect(u, u.Character, mob, room, buffSpell, 0, false)
+	dmg := applyMobEffect(u, u.Character, mob, room, buffSpell, 0, spellContestAttackWin())
 	assert.Equal(t, 0, dmg)
 }
 
@@ -2359,7 +2275,7 @@ func TestApplyMobEffect_DefaultEffect(t *testing.T) {
 		Type:       spells.HarmSingle,
 		EffectType: "unknown-effect",
 	}
-	dmg := applyMobEffect(u, u.Character, mob, room, unknownSpell, 10, false)
+	dmg := applyMobEffect(u, u.Character, mob, room, unknownSpell, 10, spellContestAttackWin())
 	assert.Equal(t, 0, dmg)
 }
 
@@ -2373,7 +2289,7 @@ func TestResolveAgainstPlayer_Basic(t *testing.T) {
 	room := rooms.LoadRoom(1)
 
 	spellData := spells.GetSpell("sparks")
-	resolveAgainstPlayer(caster, target, room, spellData, 200.0, 30)
+	resolveAgainstPlayer(caster, target, room, spellData, spellAttackSideFor(spellData, caster.Character), 30)
 	// Should resolve without panic
 }
 
@@ -2392,7 +2308,7 @@ func TestApplyPlayerEffect_Purge(t *testing.T) {
 		EffectType: "purge",
 	}
 	target.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
-	applyPlayerEffect(caster, target, room, purgeSpell, 10, false)
+	applyPlayerEffect(caster, target, room, purgeSpell, 10, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_PurgeSelf(t *testing.T) {
@@ -2407,7 +2323,7 @@ func TestApplyPlayerEffect_PurgeSelf(t *testing.T) {
 		EffectType: "purge",
 	}
 	u.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
-	applyPlayerEffect(u, u, room, purgeSpell, 10, false)
+	applyPlayerEffect(u, u, room, purgeSpell, 10, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_Heal(t *testing.T) {
@@ -2423,7 +2339,7 @@ func TestApplyPlayerEffect_Heal(t *testing.T) {
 		EffectType:      "heal",
 		EffectMagnitude: 3,
 	}
-	applyPlayerEffect(caster, target, room, healSpell, 3, false)
+	applyPlayerEffect(caster, target, room, healSpell, 3, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_HealSelf(t *testing.T) {
@@ -2438,7 +2354,7 @@ func TestApplyPlayerEffect_HealSelf(t *testing.T) {
 		EffectType:      "heal",
 		EffectMagnitude: 3,
 	}
-	applyPlayerEffect(u, u, room, healSpell, 3, false)
+	applyPlayerEffect(u, u, room, healSpell, 3, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_HealCrit(t *testing.T) {
@@ -2454,7 +2370,7 @@ func TestApplyPlayerEffect_HealCrit(t *testing.T) {
 		EffectType:      "heal",
 		EffectMagnitude: 3,
 	}
-	applyPlayerEffect(caster, target, room, healSpell, 3, true)
+	applyPlayerEffect(caster, target, room, healSpell, 3, spellContestAttackCrit())
 }
 
 func TestApplyPlayerEffect_Buff(t *testing.T) {
@@ -2470,7 +2386,7 @@ func TestApplyPlayerEffect_Buff(t *testing.T) {
 		EffectType: "buff",
 		BuffIds:    []int{100},
 	}
-	applyPlayerEffect(caster, target, room, buffSpell, 0, false)
+	applyPlayerEffect(caster, target, room, buffSpell, 0, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_BuffSelf(t *testing.T) {
@@ -2485,7 +2401,7 @@ func TestApplyPlayerEffect_BuffSelf(t *testing.T) {
 		EffectType: "buff",
 		BuffIds:    []int{100},
 	}
-	applyPlayerEffect(u, u, room, buffSpell, 0, false)
+	applyPlayerEffect(u, u, room, buffSpell, 0, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_Shield(t *testing.T) {
@@ -2500,7 +2416,7 @@ func TestApplyPlayerEffect_Shield(t *testing.T) {
 		Name:       "Shield",
 		EffectType: "shield",
 	}
-	applyPlayerEffect(caster, target, room, shieldSpell, 10, false)
+	applyPlayerEffect(caster, target, room, shieldSpell, 10, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_ShieldSelf(t *testing.T) {
@@ -2514,7 +2430,7 @@ func TestApplyPlayerEffect_ShieldSelf(t *testing.T) {
 		Name:       "Shield",
 		EffectType: "shield",
 	}
-	applyPlayerEffect(u, u, room, shieldSpell, 10, false)
+	applyPlayerEffect(u, u, room, shieldSpell, 10, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_Default(t *testing.T) {
@@ -2529,7 +2445,7 @@ func TestApplyPlayerEffect_Default(t *testing.T) {
 		Name:       "Mystery",
 		EffectType: "unknown-player-effect",
 	}
-	applyPlayerEffect(caster, target, room, unknownSpell, 10, false)
+	applyPlayerEffect(caster, target, room, unknownSpell, 10, spellContestAttackWin())
 }
 
 // ─── Spell Resolution: resolveMobSpell ────────────────────────────────────────
@@ -2657,7 +2573,7 @@ func TestResolveMobSpellAgainstPlayer(t *testing.T) {
 	room := rooms.LoadRoom(1)
 	spellData := spells.GetSpell("sparks")
 
-	resolveMobSpellAgainstPlayer(mob, target, room, spellData, 100.0, 30)
+	resolveMobSpellAgainstPlayer(mob, target, room, spellData, spellAttackSideFor(spellData, &mob.Character), 30)
 }
 
 // ─── Combat Helper: handlePartyAutoAttack ─────────────────────────────────────
