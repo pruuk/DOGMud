@@ -575,6 +575,14 @@ Balance:
   GrappleProneDefenderMod: 0.3
   GrappleProneAttackerMod: 0.5
   #
+  # GrappleAggressorDriftBonus: whole-score multiplier on the grapple
+  # AGGRESSOR side of the per-round drift contest. The old 2.2-vs-2.0
+  # coefficient accident gave the aggressor an edge; uniform weights
+  # deleted it, and this knob restores it deliberately. 1.038 was SOLVED
+  # (tools/balance/u6b_model_counters_family_costs.py) to reproduce the
+  # old parity drift of about +0.196 steps per round at every tier.
+  GrappleAggressorDriftBonus: 1.038
+  #
   # ProneDodge/Parry/BlockPenalty: fraction of defense score kept while prone.
   #   1.0 = full defense (no penalty). 0.50 = half defense. 0 = no defense.
   #   Example: dodge score 100, penalty 0.95 → score 95.
