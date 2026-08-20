@@ -1239,9 +1239,6 @@ Balance:
   # Formula includes: SpellcastingLevel × SpellFoldsSkillFactor
   SpellFoldsSkillFactor: 25
   #
-  # Spell attack: mean for the spell's opposed hit roll.
-  # Formula includes: SpellcastingLevel × SpellAttackSkillFactor
-  SpellAttackSkillFactor: 3
   #
   # Proficiency: successful casts needed to gain 1 proficiency point
   #   with a specific spell. Higher proficiency reduces fizzle chance.
