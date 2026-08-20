@@ -314,6 +314,22 @@ func (b *Balance) validateCombat() {
 		b.MinDefenseCritChance = 0.01
 	}
 
+	// Crit bar (U6b). Slope 0 is legal (a flat bar); only a negative slope is
+	// corrected. Floor must be positive.
+	if b.CritBarSkillSlope < 0 {
+		b.CritBarSkillSlope = 0.05
+	}
+	if b.CritBarFloor <= 0 {
+		b.CritBarFloor = 1.5
+	}
+	// Ceiling 0 is LEGAL and means UNCAPPED -- the documented off-switch that
+	// restores the pre-U6b unbounded bar. Do NOT use the <=0 idiom here: a
+	// validator that "corrects" 0 back to 3.0 makes uncapping impossible.
+	// Only a negative ceiling is corrected.
+	if b.CritBarCeiling < 0 {
+		b.CritBarCeiling = 3.0
+	}
+
 	// ── TOXICITY ────────────────────────────────────────────────────────────
 	if b.ToxicityDecayPerTick <= 0 {
 		b.ToxicityDecayPerTick = 1.0

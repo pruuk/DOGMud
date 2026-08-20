@@ -95,6 +95,21 @@ type Balance struct {
 	MinAttackCritChance  ConfigFloat `yaml:"MinAttackCritChance"`  // Floor probability a landed hit is a crit (default 0.01)
 	MinDefenseCritChance ConfigFloat `yaml:"MinDefenseCritChance"` // Floor probability a successful defense is a defensive crit (default 0.01)
 
+	// Crit bar (U6b). combat.CritBarFor computes the attacker-side crit
+	// threshold for EVERY channel from the channel's skill pair:
+	//
+	//	bar = clamp(2.0 - CritBarSkillSlope*(atkRank-defRank),
+	//	            CritBarFloor, CritBarCeiling)
+	//
+	// The slope and floor were balance literals inside internal/combat before
+	// U6b (0.05 and 1.5, melee-only). The ceiling is NEW: uncapped, a
+	// gold-scaled skill-1 boss faced bar 5.4 vs a veteran and effectively
+	// never crit. CritBarCeiling 0 is LEGAL and means UNCAPPED -- it is the
+	// documented off-switch, restoring the pre-U6b unbounded bar.
+	CritBarSkillSlope ConfigFloat `yaml:"CritBarSkillSlope"` // Bar shift per point of attacker skill advantage (default 0.05)
+	CritBarFloor      ConfigFloat `yaml:"CritBarFloor"`      // Lowest the bar may fall (default 1.5)
+	CritBarCeiling    ConfigFloat `yaml:"CritBarCeiling"`    // Highest the bar may rise (default 3.0); 0 = uncapped, and is legal
+
 	// ── COMBAT: PRONE & GRAPPLE ──────────────────────────────────────────────
 	ProneAttackMultiplier        ConfigFloat `yaml:"ProneAttackMultiplier"`        // Multiplier on attack score while prone (default 0.80)
 	ProneDodgePenalty            ConfigFloat `yaml:"ProneDodgePenalty"`            // Multiplier on dodge score while prone (default 0.70)
