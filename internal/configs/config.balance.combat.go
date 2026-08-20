@@ -117,6 +117,12 @@ func (b *Balance) validateCombat() {
 	if b.GrappleProneDefenderMod <= 0 {
 		b.GrappleProneDefenderMod = 0.3
 	}
+	// U6b Task 14: the drift aggressor edge is a score multiplier, not an
+	// off-switch — a non-positive value is a config error and falls back to
+	// the modelled default (see config.balance.go for the solve provenance).
+	if b.GrappleAggressorDriftBonus <= 0 {
+		b.GrappleAggressorDriftBonus = 1.038
+	}
 	if b.ProneVulnerabilityMultiplier <= 0 {
 		b.ProneVulnerabilityMultiplier = 1.15
 	}

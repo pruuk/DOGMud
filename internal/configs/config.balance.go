@@ -134,6 +134,17 @@ type Balance struct {
 	GrappleProneAttackerMod ConfigFloat `yaml:"GrappleProneAttackerMod"` // Attack score multiplier when the grapple attacker is prone/supine (default 0.5)
 	GrappleProneDefenderMod ConfigFloat `yaml:"GrappleProneDefenderMod"` // Defense score multiplier when the grapple defender is prone/supine (default 0.3)
 
+	// U6b Task 14 (gate decision §5.4): the grapple-drift aggressor edge,
+	// restored as a deliberate config knob after the accidental 2.2-vs-2.0
+	// skill-coefficient edge was deleted in the SkillWeight reweight. The
+	// value 1.038 was SOLVED, not guessed: it restores parity E[drift]
+	// ≈ +0.196 steps/round under the √2-fixed + SkillWeight-reweighted
+	// maths (tools/balance/u6b_model_counters_family_costs.py, drift
+	// aggressor-bonus solve). Because the bonus is a multiplier on the
+	// whole score, the restored parity drift is scale-free — the same
+	// +0.196 at every parity tier.
+	GrappleAggressorDriftBonus ConfigFloat `yaml:"GrappleAggressorDriftBonus"` // Multiplier on the grapple aggressor's whole drift score (default 1.038)
+
 	StandStaminaCost         ConfigFloat `yaml:"StandStaminaCost"`         // Fraction of max stamina to stand up (default 0.15)
 	StandMinStamina          ConfigFloat `yaml:"StandMinStamina"`          // Minimum fraction of max SP to stand (default 0.15)
 	ThirdPartyGrapplePenalty ConfigFloat `yaml:"ThirdPartyGrapplePenalty"` // Defense multiplier when grappled vs third party (default 0.70)

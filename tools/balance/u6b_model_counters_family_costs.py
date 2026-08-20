@@ -42,12 +42,17 @@ Every formula is mirrored from source, not prose (verified 2026-08-19):
   grapple init   combat/grapple.go AttemptGrapple Dex + combatSkill*1 both,
                  defender prone 0.3x, attacker prone 0.5x, crit-failure on
                  SELF z <= -2 on a failed attempt
-  drift          hooks/Position_GrappleTick.go:283,311-314
-                 score = 0.7*Str + 0.3*Dex + coef*Unarmed (2.2 aggr / 2.0 def)
-                 z = res.Margin / res.AttackRoll.StdDev   <- NOTE(U6): MISSING
-                 sqrt(2); the live z is inflated ~41%. Routed through
-                 combat.RunContest, so the 12.5% floor flip applies and its
-                 sentinel z lands in Hold.
+  drift          hooks/Position_GrappleTick.go
+                 PRE-U6b-Task-14 live code (what item8_drift's 'current'
+                 variant models): score = 0.7*Str + 0.3*Dex + coef*Unarmed
+                 (2.2 aggr / 2.0 def); z = res.Margin / res.AttackRoll.StdDev
+                 missing sqrt(2), so the live z was inflated ~41%.
+                 FIXED by Task 14: coef -> SkillWeight both sides, aggressor
+                 edge -> GrappleAggressorDriftBonus (whole-score multiplier,
+                 solved by item8_drift_solve_aggressor_bonus), z divided by
+                 stdDev*sqrt(2). Routed through combat.RunContest, so the
+                 12.5% floor flip applies and its sentinel z lands in Hold
+                 (kept deliberately, documented at the z site).
                  tiers (state/position/outcomes.go:22): hold<0.5, 1-step<1.0,
                  2-step<2.0, 3-step>=2.0; negative side degrade/reversal/escape
   submission     combat/submission.go Str + Unarmed*SubSkillWeight(1.5) vs
@@ -556,9 +561,11 @@ def drift_dist(a, d, use_sqrt2):
 def item8_drift():
     print("--- GRAPPLE DRIFT: 0.7*Str+0.3*Dex + coef*Unarmed, coef 2.2/2.0")
     print("    z tiers: hold<0.5 | 1-step<1.0 | 2-step<2.0 | 3-step>=2.0")
-    print("    LIVE DEFECT (Position_GrappleTick.go:311): z = Margin/stdDev,")
-    print("    missing sqrt(2) -> every z inflated 41%. Floor: 12.5% of rounds")
-    print("    forced to Hold (sentinel margin ~0 sigma) - in EVERY variant.")
+    print("    DEFECT (FIXED by U6b Task 14 in Position_GrappleTick.go):")
+    print("    z = Margin/stdDev was missing sqrt(2) -> every z inflated 41%.")
+    print("    'current' below models the PRE-fix live code. Floor: 12.5% of")
+    print("    rounds forced to Hold (sentinel margin ~0 sigma) - in EVERY")
+    print("    variant; kept deliberately (documented at the z site).")
     variants = [
         ("current (2.2/2.0, no sqrt2)", (2.2, 2.0), False),
         ("sqrt2 fix only", (2.2, 2.0), True),
@@ -585,6 +592,51 @@ def item8_drift():
                 f"{p[k]*100:6.1f}%" for k in ("hold", "adv1", "adv2", "adv3",
                                               "degrade", "reversal", "escape"))
                 + f"{move*100:7.1f}%{esteps:9.3f}")
+
+
+def _drift_esteps(p):
+    return (p["adv1"] + 2 * p["adv2"] + 3 * p["adv3"]
+            - p["degrade"] - 2 * p["reversal"] - 3 * p["escape"])
+
+
+def item8_drift_solve_aggressor_bonus():
+    """U6b Task 14 solve: the reweight to SkillWeight (5/5) deletes the
+    accidental 2.2-vs-2.0 aggressor edge (parity E[drift] -> exactly 0).
+    Solve for GrappleAggressorDriftBonus B, a multiplier on the aggressor's
+    WHOLE drift score, such that under the fixed maths (5/5 + sqrt2) parity
+    E[drift] equals the old live parity value. Note the attacker's stdDev
+    scales with B too (stdDev = score * RollSpread), so the parity mean z is
+    (1 - 1/B)/(RollSpread*sqrt2): scale-free. One B restores the same
+    E[drift] at EVERY parity tier."""
+    print("--- GRAPPLE DRIFT AGGRESSOR-BONUS SOLVE (U6b Task 14)")
+    base = (0.7 * JOURNEY.s("strength") + 0.3 * JOURNEY.s("dexterity")
+            + W * JOURNEY.k("unarmed-combat"))
+    a_old = (0.7 * JOURNEY.s("strength") + 0.3 * JOURNEY.s("dexterity")
+             + 2.2 * JOURNEY.k("unarmed-combat"))
+    d_old = (0.7 * JOURNEY.s("strength") + 0.3 * JOURNEY.s("dexterity")
+             + 2.0 * JOURNEY.k("unarmed-combat"))
+    target = _drift_esteps(drift_dist(a_old, d_old, False))
+    print(f"    target: parity journeyman E[drift] under live maths "
+          f"(2.2/2.0, no sqrt2) = {target:+.4f} steps/round")
+    lo, hi = 1.0, 1.5
+    for _ in range(80):
+        mid = (lo + hi) / 2.0
+        if _drift_esteps(drift_dist(mid * base, base, True)) > target:
+            hi = mid
+        else:
+            lo = mid
+    b = (lo + hi) / 2.0
+    print(f"    solved GrappleAggressorDriftBonus = {b:.4f} "
+          f"(ship rounded 1.038)")
+    for name, tier in (("novice", NOVICE), ("journeyman", JOURNEY),
+                       ("adept", ADEPT)):
+        pb = (0.7 * tier.s("strength") + 0.3 * tier.s("dexterity")
+              + W * tier.k("unarmed-combat"))
+        e = _drift_esteps(drift_dist(1.038 * pb, pb, True))
+        print(f"    parity {name:11s} @ shipped 1.038: E[drift] = "
+              f"{e:+.4f} steps/round")
+    print("    (multiplicative bonus -> parity mean z is scale-free; the")
+    print("     shipped value restores ~+0.196 at every parity tier)")
 
 
 def _run_my_trace(fixture, events, rounds, ceiling, defence_action="defence"):
@@ -720,3 +772,4 @@ if __name__ == "__main__":
     item8_family()
     item8_drift()
     item9_costs()
+    item8_drift_solve_aggressor_bonus()

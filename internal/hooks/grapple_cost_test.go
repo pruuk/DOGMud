@@ -33,6 +33,11 @@ func setGrappleCostConfig(t *testing.T) configs.Balance {
 	cfg.Balance.CostEncumbranceKneeMult = 1.5
 	cfg.Balance.CostEncumbranceMax = 5
 	cfg.Balance.CostTotalMultiplierMax = 6
+	// U6b Task 14: the drift skill term is SkillWeight (was hardcoded
+	// 2.2/2.0) and the aggressor edge is GrappleAggressorDriftBonus.
+	// Pin both so score expectations below are deterministic.
+	cfg.Balance.SkillWeight = 5
+	cfg.Balance.GrappleAggressorDriftBonus = 1.038
 	configs.SetConfigForTest(t, cfg)
 	return cfg.Balance
 }
@@ -238,6 +243,13 @@ func fixedGrappleContest(margin float64) func(float64, []contest.Entry) contest.
 
 // Catches wiring one participant's short result to both scores, or leaving
 // Unarmed in the short participant's score.
+//
+// U6b Task 14: this test previously pinned the hardcoded 2.2/2.0 skill
+// coefficients (want 210 = 100 + 2.2×50; want 180 = 100 + 2.0×40) — a
+// defect. Now: skill × SkillWeight (5) both sides, and the aggressor
+// (the controller here, marked by prepareGrappleCostPair) carries the
+// GrappleAggressorDriftBonus (1.038) whole-score multiplier — including
+// on a short round, where only the skill term is stripped.
 func TestGrappleMaintenanceShortageRemovesOnlyThatParticipantsSkill(t *testing.T) {
 	setGrappleCostConfig(t)
 	cases := []struct {
@@ -245,8 +257,8 @@ func TestGrappleMaintenanceShortageRemovesOnlyThatParticipantsSkill(t *testing.T
 		shortController                          bool
 		wantControllerScore, wantControlledScore float64
 	}{
-		{name: "controller short", shortController: true, wantControllerScore: 100, wantControlledScore: 180},
-		{name: "controlled short", shortController: false, wantControllerScore: 210, wantControlledScore: 100},
+		{name: "controller short", shortController: true, wantControllerScore: 100 * 1.038, wantControlledScore: 300},
+		{name: "controlled short", shortController: false, wantControllerScore: 350 * 1.038, wantControlledScore: 100},
 	}
 	for i, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -282,6 +294,11 @@ func TestGrappleMaintenanceShortageRemovesOnlyThatParticipantsSkill(t *testing.T
 
 // Catches charging after outcome dispatch: an escape must not bypass either
 // participant's maintenance commit, and partial payment must floor both pools.
+//
+// U6b Task 14: the injected margin was -2.5 at stdDev 1, which only reached
+// the escape band (z ≤ -2.0) through the √2-less z the live code was missing
+// (a pinned defect: -2.5/√2 ≈ -1.77 is a reversal, not an escape). -3.0
+// normalises to -2.12 under the corrected maths and stays an escape.
 func TestGrappleMaintenanceChargesBothBeforeEscapeResolution(t *testing.T) {
 	setGrappleCostConfig(t)
 	controller, controlled := grappleCostPair(t, 1300, 1301)
@@ -296,7 +313,7 @@ func TestGrappleMaintenanceChargesBothBeforeEscapeResolution(t *testing.T) {
 				t.Fatalf("pools at contest controller/controlled %d/%d, want 0/0",
 					controller.Stamina, controlled.Stamina)
 			}
-			return fixedGrappleContest(-2.5)(attack, defenses)
+			return fixedGrappleContest(-3.0)(attack, defenses)
 		})
 
 	if !contestCalled {
