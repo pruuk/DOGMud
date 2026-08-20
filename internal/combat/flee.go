@@ -2,6 +2,7 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -22,10 +23,10 @@ type FleeBlocker struct {
 func (b FleeBlocker) IsPlayer() bool { return b.UserId != 0 }
 
 // ResolveFleeBlockers walks every combatant in `room` currently
-// targeting `fleer`, rolls each one's Dex+UnarmedCombat×25 against
-// the fleer's Dex+Skullduggery×25 (with a 0.5× prone penalty when
-// the fleer is Prone or Supine), and returns the first blocker
-// whose roll wins. Returns nil if nobody blocks.
+// targeting `fleer`, rolls each one's Dex+UnarmedCombat×SkillWeight
+// against the fleer's Dex+Skullduggery×SkillWeight (with a 0.5×
+// prone penalty when the fleer is Prone or Supine), and returns the
+// first blocker whose roll wins. Returns nil if nobody blocks.
 //
 // Works for player and mob fleers alike: the helper reads
 // fleer.GetUserId() and fleer.GetMobInstanceId() to identify which
@@ -79,8 +80,7 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeS
 		if !mobTargetsFleer(m, fleerUid, fleerMid) {
 			continue
 		}
-		blockScore := float64(m.Character.GetEffectiveDexterity() +
-			m.Character.GetSkillLevel(skills.UnarmedCombat)*25)
+		blockScore := fleeBlockScore(&m.Character)
 		contested = true
 		success := RunContest(fleeScore, []contest.Entry{{Score: blockScore}}).Success
 		if !success {
@@ -102,8 +102,7 @@ func ResolveFleeBlockers(fleer *characters.Character, room *rooms.Room, includeS
 		if !playerTargetsFleer(u, fleerUid, fleerMid) {
 			continue
 		}
-		blockScore := float64(u.Character.GetEffectiveDexterity() +
-			u.Character.GetSkillLevel(skills.UnarmedCombat)*25)
+		blockScore := fleeBlockScore(u.Character)
 		contested = true
 		success := RunContest(fleeScore, []contest.Entry{{Score: blockScore}}).Success
 		if !success {
@@ -121,15 +120,25 @@ func fleeContestScore(fleer *characters.Character, includeSkill bool) float64 {
 	if fleer == nil {
 		return 0
 	}
-	score := fleer.GetEffectiveDexterity()
+	score := float64(fleer.GetEffectiveDexterity())
 	if includeSkill {
-		score += fleer.GetSkillLevel(skills.Skullduggery) * 25
+		score += float64(fleer.GetSkillLevel(skills.Skullduggery)) *
+			float64(configs.GetBalanceConfig().SkillWeight)
 	}
 	pronePenalty := 1.0
 	if fleer.IsProne() || fleer.IsSupine() {
 		pronePenalty = 0.5
 	}
-	return float64(score) * pronePenalty
+	return score * pronePenalty
+}
+
+// fleeBlockScore is a would-be blocker's side of the flee contest:
+// Dex + UnarmedCombat × SkillWeight. Shared by the mob and player
+// blocker loops in ResolveFleeBlockers.
+func fleeBlockScore(blocker *characters.Character) float64 {
+	return float64(blocker.GetEffectiveDexterity()) +
+		float64(blocker.GetSkillLevel(skills.UnarmedCombat))*
+			float64(configs.GetBalanceConfig().SkillWeight)
 }
 
 // mobTargetsFleer reports whether mob m's aggro points at the fleer
