@@ -1,12 +1,13 @@
 # U10 — the disruption model
 
-**Status:** design ratified 2026-08-21; **rev 2 after the three-reviewer
-adversarial pass** (13 + 12 + 10 verified findings). Rev 2 corrections the
-reader must not miss: the hold-rate table is recomputed on the ENGINE's
-variance model and relabeled (rev 1 mislabeled prone as 250); the throttle
-cast-interrupt is claimed (rev 1 dropped a roadmap-assigned site); surprise
-attack is explicitly split out as U10d; progression is **success-only**,
-superseding rev 1's win-or-lose. Roadmap source:
+**Status:** design ratified 2026-08-21; **rev 3** after TWO three-reviewer
+blind adversarial passes (rev 1: 35 findings; rev 2: 45 findings) and the
+owner rulings each surfaced. Rev 3 headlines: the knockdown conversion is a
+**named rebalance, not a preservation** (the old config lied about its own
+rates — see §4); the throttle interrupt resolves through the concentration
+seam at the 2% floor; manual `stand` is documented as the deliberate
+pay-stamina bypass of the recovery contest; an adversarial playtest gate is
+part of the slice. Roadmap source:
 `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` §U10 + the unowned-sites table
 (~line 115). Conventions: U6b (one contest seam), U9 (one progression path).
 
@@ -24,7 +25,9 @@ instances of the ×0-skill defect the arc exists to kill:
      `handlePlayerConcentrationBreak` (`NewRound_DoCombat_helpers.go:857`)
      when damage lands on a casting **player** (mobs have no damage-path
      break today; U10 preserves that asymmetry). Any damage ≥1 rolls
-     (`damagePct` floored to 1), so chip damage generates rolls.
+     (`damagePct` floored to 1), so chip damage generates rolls. DoT and
+     condition ticks never route through this path — the chip threshold in
+     §2.1 creates no new DoT immunity.
    - the **position path**: `processFoldRound`
      (`combat_shared_helpers.go:549-581`) rolls once per fold round from
      `position.PositionDisruptionDmgEquiv` (chunk 4f: 13 positions ×
@@ -32,43 +35,51 @@ instances of the ×0-skill defect the arc exists to kill:
 2. **The throttle cast-interrupt** (`internal/actions/combat_throttle.go:151`,
    inside `ExecuteThrottle`): a landed throttle on a casting victim cancels
    the cast on a flat `ThrottleInterruptChance` coin (**75%**, Go default —
-   the knob is absent from `config.yaml`). It bypasses concentration
-   entirely; the caster's Willpower and skill count for nothing.
+   the knob never shipped in `config.yaml`). It bypasses concentration
+   entirely. Throttle is **mob-only by anatomy**: the gate at
+   `combat_throttle.go:92` requires a handless, fanged species, so no
+   player can ever use it — the interrupt is something done TO casters.
 3. **Knockdown** (`internal/combat/skill_moves.go:175`, inside
-   `executeSkillMoveWithRunner`): `dice.RollStat(50) < KnockdownChance` —
-   flat per-move percentages (shipped bash/gore/pounce 50, trip 60, kick 35;
-   the Go default for bash is 40 — the shipped yaml values are the anchor).
-   The defender's stats and skills contribute **nothing**; the only defence
-   is the control-immunity mutation gate.
+   `executeSkillMoveWithRunner`): `dice.RollStat(50) < KnockdownChance`.
+   **The config has been lying about its own rates**: `RollStat(50)` is
+   Normal(50, 7.5), not a d100, so the knobs are thresholds on a normal
+   curve. Shipped values produce TRUE live rates of bash/gore/pounce
+   **50%**, trip **~91%** (near-guaranteed, not the claimed 60%), kick
+   **~2.3%** (effectively never, not the claimed 35%). The defender's
+   stats and skills contribute nothing either way; the only defence is the
+   control-immunity mutation gate.
 4. **Prone recovery** (`Character.AttemptRecovery`,
    `internal/characters/skills.go:47`): after `MinRecoveryRounds`, a solo
-   roll `25 + 20·ln(dex/25)` (cap 90) vs `dice.RollStat(50)`. No opponent
-   term, no skill term.
+   roll (chance `25 + 20·ln(dex/25)`, cap 90, vs Normal(50, 7.5) — ~64%
+   per round at DEX 100). No opponent term, no skill term. Note the manual
+   `stand` command is separate and stays: it buys an **uncontested** stand
+   for stamina (§5).
 
 Knobs that exist only to feed dead paths: `SpellConcentrationBase`,
 `SpellInitiationWillpowerDivisor`, `ThrottleInterruptChance`, and the three
-`*KnockdownChance` percentages.
+`*KnockdownChance` thresholds.
 
 **Explicitly OUT of this slice: the surprise-attack redesign.** The roadmap
 had assigned it to U10; owner decision 2026-08-21 splits it out as **U10d**
 (its own brainstorm → spec → plan, per the 2026-08-13 decision that it is a
-redesign, not a migration). This slice adds the U10d row to the roadmap and
-changes nothing in `surprise_attack.go`.
+redesign, not a migration). This slice adds the U10d row to the roadmap
+(and re-homes the roadmap's `:121` and `:173` references), touching nothing
+in `surprise_attack.go`.
 
 ## 2. Concentration becomes a contest
 
-**Caster score: `Wil + spellcasting × SkillWeight (5.0)` against a static
-difficulty set by what happened.** Resolution is a new
-`combat.RunConcentrationContest(casterScore, difficulty)` — the floored twin
-of `contest.AgainstDifficulty`, built the same way `RunContest` is: it calls
-`contest.RunWithFloors` with a single static entry and is the ONE place the
-concentration floor (§2.3) is read. (`AgainstDifficulty` itself is unfloored
-and keeps zero production callers.) Guard obligations, both of them: a row in
-`internal/combat/contest_site_guard_test.go` AND an exemption in the
-root-level `contest_floor_guard_test.go` (`guardedRollExemptions["contest"]`),
-which fails any new `contest.RunWithFloors` caller file it does not know.
+**The caster is the attack side of every concentration contest:
+`Wil + spellcasting × SkillWeight (5.0)` against a disruption score.** For
+the damage and position paths the disruption is a static difficulty; for
+the throttle interrupt it is the throttler's live score (§3). Resolution is
+a new `combat.RunConcentrationContest(casterScore, disruption)` — built
+exactly like `RunContest`: it calls `contest.RunWithFloors` with a single
+entry and is the ONE place `ConcentrationFloor` is read. `Success` = the
+caster HELD, in every case. Guard obligations, both: a row in
+`internal/combat/contest_site_guard_test.go` AND a file exemption in the
+root-level `contest_floor_guard_test.go` (`guardedRollExemptions["contest"]`).
 
-### 2.1 Difficulties
+### 2.1 Static difficulties
 
 | Disruption | Difficulty |
 |---|---|
@@ -78,27 +89,26 @@ which fails any new `contest.RunWithFloors` caller file it does not know.
 The position lattice keeps chunk 4f's full granularity at face value
 (owner 08-21, **re-ratified over the corrected table below**): supine and
 guard-bottom 250, **prone 300**, clinch 400, mount-controlled 600,
-crucifix-controlled 700, and so on — the existing equivalents times ten,
-one conversion rule, no new knob. This is deliberately HARSHER for low/mid
-casters than the roadmap's 3-row summary intended (its "prone 250" row would
-have given a journeyman 46% instead of the shipped 16%); the owner chose the
-lattice's relativities with the corrected numbers in hand. Retuning later
-means editing the lattice values, not the conversion.
+crucifix-controlled 700 — the existing equivalents times ten, one
+conversion rule, no new knob. This is deliberately HARSHER for low/mid
+casters than the roadmap's 3-row summary intended (its "prone 250" row
+would have given a journeyman 46% instead of the shipped 16%); the owner
+chose the lattice's relativities with the corrected numbers in hand.
+Retuning later means editing the lattice values, not the conversion.
 
-The damage threshold replaces today's "any damage ≥1 rolls": chip damage
-below 10% of the pool no longer generates a roll at all. **Named
-consequence:** fast weak attackers lose their anti-caster role entirely — a
-swarm of sub-10% hits never threatens a cast (today each chip hit broke a
-Wil-100 caster ~26% of the time). Ratified with the threshold. Knob:
-`ConcentrationDamageThresholdPct` (default 10).
+The damage threshold replaces today's "any damage ≥1 rolls". **Named
+consequence:** fast weak attackers lose their anti-caster role — a swarm of
+sub-10% hits never threatens a cast (today each chip hit broke a Wil-100
+caster ~26% of the time). Ratified with the threshold. Knob:
+`ConcentrationDamageThresholdPct` (default 10; validation rewrites values
+below 1, so "roll on any hit" is expressed as 1, not 0).
 
-### 2.2 Hold rates — ENGINE model (recomputed rev 2)
+### 2.2 Hold rates — engine model
 
-Rev 1's table was computed with independent per-side variances and labeled
-"verified"; the engine rolls **both sides with the attacker's stdDev**
-(`contest.go:97-103`), so the margin's σ is `RollSpread × casterScore × √2`,
-and the floor **flips** outcomes (probability `f`, observed
-`p + f(1−2p)`) rather than clamping. Correct numbers, correct labels:
+The engine rolls **both sides with the attacker's stdDev**
+(`contest.go:97-103`), so the margin's σ is
+`RollSpread × casterScore × √2`, and the floor **flips** outcomes
+(probability `f`, observed `p + f(1−2p)`) rather than clamping:
 
 | Caster (score) | 250 supine/guard-btm | **300 PRONE** | 400 clinch | 600 mount-ctl | 700 crucifix-ctl |
 |---|---|---|---|---|---|
@@ -107,167 +117,184 @@ and the floor **flips** outcomes (probability `f`, observed
 | adept (335) | 87% | **68%** | 19% | 2% | 2% |
 | Meirok (403) | 94% | **87%** | 51% | 3% | 2% |
 
-Damage column examples (difficulty = pct×10): a 25% hit (250) reads as the
-first column; a 40% hit (400) as the clinch column — Meirok holds a 40% hit
-about half the time, a journeyman never does.
+Damage column examples: a 25% hit reads as the first column; a 40% hit as
+the clinch column.
 
-Grapple stays a deliberate caster-killer, and deep controlled positions stop
-everyone. **Rejected (roadmap, modelled): opposed against the disruptor** for
-the passive position/damage paths — it hard-counters casting outright at the
-top, so endgame bosses would switch casting off. (The throttle interrupt IS
-opposed — see §3 — because it is an active move by a specific attacker, not
-ambient state.)
+Grapple stays a deliberate caster-killer, and deep controlled positions
+stop everyone. **Rejected (roadmap, modelled): opposed against the
+disruptor** for the passive position/damage paths — it hard-counters
+casting outright at the top. (The throttle IS opposed — §3 — because it is
+an active move by a specific attacker, not ambient state; it still runs at
+the concentration floor.)
 
 ### 2.3 The concentration floor
 
-**`ConcentrationFloor: 0.02`** (owner 08-21), symmetric flip: with
-probability 0.02 the outcome inverts, so observed hold rates live in
-[~2%, ~98%] — no hold is certain and no caster is hopeless. The standard
-`ContestFloor` 0.125 would break a master 1-in-8 per qualifying disruption.
-One new knob, read only inside `RunConcentrationContest`.
+**`ConcentrationFloor: 0.02`** (owner 08-21), symmetric flip: observed hold
+rates live in [~2%, ~98%]. The standard `ContestFloor` 0.125 would break a
+master 1-in-8 per qualifying disruption — including per throttle, which is
+why the throttle contest ALSO runs at this floor (owner 08-21). One new
+knob, read only inside `RunConcentrationContest`.
 
 ### 2.4 What survives unchanged
 
-- **`NoDamageInterrupt`** telegraph semantics: both concentration paths skip
-  flagged casts exactly as today. (The throttle interrupt honors it too —
-  see §3.)
-- **Layering**: the damage path and the per-round position path can each
-  break a single cast independently.
-- Break messaging keeps its current routing; no raw numbers in player text.
-- Mob casters run the identical position path; mob spellcasting is 1
-  everywhere, so mob holds are Willpower-driven, which is correct.
+- **`NoDamageInterrupt`** telegraph semantics: both concentration paths
+  skip flagged casts as today, and the throttle interrupt now honors the
+  flag too (a small deliberate fix — the old coin ignored it; only
+  `core-discharge`/`core-drain` carry the flag, and since no player can
+  throttle, no player counter-play is lost).
+- **Layering**: damage path and per-round position path can each break a
+  single cast independently.
+- Break messaging keeps its routing; no raw numbers in player text.
+- Mob casters run the identical position path.
 
-### 2.5 Deletions
+### 2.5 Deletions and stale-copy sweep
 
-- `CalcConcentrationChance`, its tests, and the stale "U9 removes it"
-  comment (`cast_helpers.go:41-43`).
-- `SpellConcentrationBase`, `SpellInitiationWillpowerDivisor` (Go fields at
-  `config.balance.go:487-488`, defaults at `config.balance.spells.go:18-22`,
-  `config.yaml` ~1201-1209).
-- Stale doc references in `internal/state/position/disruption.go` comments
-  and the `internal/state/{position,control,activity}` +
-  `internal/characters` + `internal/hooks` context.md files.
+- `CalcConcentrationChance`, its tests, the stale comment
+  (`cast_helpers.go:41-43`).
+- `SpellConcentrationBase`, `SpellInitiationWillpowerDivisor` (fields
+  `config.balance.go:487-488`, defaults `config.balance.spells.go:18-23`,
+  `config.yaml` ~1247-1255), `ThrottleInterruptChance` (field :248,
+  defaults `config.balance.misc.go:251-256`).
+- Stale prose that must not survive: `disruption.go` comments;
+  `internal/state/{position,control,activity}`, `internal/characters`,
+  `internal/hooks`, `internal/actions` context.md references;
+  `config.yaml:540-541` ("concentration ... not floored" becomes false);
+  the `AgainstDifficulty` doc example ("recovering from prone with nobody
+  holding you down" — now a free stand, no roll); helpfiles
+  `grapple.template:116`, `cast.template:16`, `spell.template:18`,
+  `throttle.template:27`, `prone.template:40,53-54`, `stand.template:20,29`;
+  `docs/roadmaps/CURRENT_BACKLOG.md:26-34`.
 
-## 3. The throttle interrupt becomes an OPPOSED contest
+## 3. The throttle interrupt: opposed, through the concentration seam
 
-Owner decision 2026-08-21: unlike the passive disruption difficulties, a
-throttle is an active move by a specific attacker, so it resolves as a true
-opposed roll through `combat.RunContest` (standard `ContestFloor`):
+Owner decisions 2026-08-21: opposed roll, at the concentration floor.
 
-- **Throttler:** `Dex + unarmed-combat × SkillWeight`
-- **Caster:** `Wil + spellcasting × SkillWeight`
-- Contest success = the cast is interrupted (existing
-  `InterruptTargetCast` path, 50% conviction refund — unchanged).
-- `NoDamageInterrupt` casts skip the contest entirely (today the flat coin
-  does not check the flag; a telegraphed boss cast should not be
-  throttle-cancellable when incidental damage cannot break it either — this
-  is a deliberate small behaviour fix, called out in the PR).
-- `ThrottleInterruptChance` is deleted (field `config.balance.go:248`,
-  defaults `config.balance.misc.go:251-256`; it never shipped in
-  `config.yaml`). At parity the contest gives ~50% vs today's flat 75%:
-  throttling a peer caster gets harder, throttling up-tier much harder,
-  down-tier easier. Deliberate.
+- **Caster (attack side): `Wil + spellcasting × SkillWeight`.**
+- **Throttler (the disruption entry): `Dex + unarmed-combat × SkillWeight`.**
+- Resolved by `combat.RunConcentrationContest(holdScore, gripScore)` —
+  same seam, same floor, `Success` = held; on a loss the existing
+  `InterruptTargetCast` path fires (50% conviction refund, unchanged).
+- At parity ~50% interrupt vs today's flat 75%: throttling a peer caster
+  gets harder, up-tier much harder, down-tier easier. Deliberate.
+- `ThrottleInterruptChance` dies. The existing
+  `TestThrottle_CastInterrupt` (`combat_throttle_test.go:165-266`) pins the
+  coin via a string-keyed override of the deleted knob and must be
+  reworked onto the contest, not left to rot.
 - Progression: the caster fires one spellcasting event **only on a
-  successful hold** (§6). The throttler's unarmed use was already progressed
-  by the throttle's own hit resolution; no new attacker event.
+  successful hold** (§6). The throttler's own progression came from the
+  move's hit resolution; no new attacker event.
 
-## 4. Knockdown becomes an opposed contest
+## 4. Knockdown becomes an opposed contest — A NAMED REBALANCE
 
-The post-hit knockdown roll in `executeSkillMoveWithRunner` becomes
-`combat.RunContest` (standard floor; site allowlisted):
+The post-hit knockdown roll becomes `combat.RunContest` (standard floor;
+site allowlisted):
 
-- **Attacker score:** `p.Attack.score() × KnockdownFactor` (the move's
-  existing attack basis times a per-move factor).
+- **Attacker score:** `p.Attack.score() × KnockdownFactor`.
 - **Defender score:** `Dex + unarmed-combat × SkillWeight`.
-- **Control immunity** stays a hard gate before the contest; factor 0 means
-  the move has no knockdown component (no contest, no progression).
+- **Control immunity** stays a hard gate; factor 0 = no knockdown
+  component (no contest, no progression).
 
-**Per-move differentiation survives as a score factor**, parity-anchored to
-the SHIPPED percentages (engine model, rev 2 exact values):
+**Anchoring (owner-ratified 08-21): the INTENDED rates, not the accidental
+live ones.** The old knobs claimed 50/60/35 but delivered 50/~91/~2.3
+(§1.3) — trip was near-certain and kick knockdown effectively did not
+exist. The factors make the contest deliver the intended numbers at score
+parity, which means **this ships as a rebalance**: trip drops from
+near-guaranteed to a real contest, kick knockdown starts actually
+happening. The PR names it; nothing claims preservation.
 
-| Move | shipped chance | `KnockdownFactor` |
-|---|---|---|
-| bash / gore / pounce | 50% | **1.000** |
-| trip | 60% | **1.057** |
-| kick | 35% | **0.924** |
+| Move | intended (ratified) | old TRUE live rate | `KnockdownFactor` |
+|---|---|---|---|
+| bash / gore / pounce | 50% | 50% | **1.000** |
+| trip | 60% | ~91% | **1.057** |
+| kick | 35% | ~2.3% | **0.924** |
 
-Named consequence of anchoring to shipped yaml (50) rather than the old Go
-default (40): a deployment that omitted the key shifts bash 40%→50% at
-parity. Accepted — prod ships the key.
+(Factors solved on the engine model; the `ContestFloor` flip pulls
+observed parity rates slightly toward even — `p + F(1−2p)` — which the
+calibration test encodes.) Skill-gap behaviour at factor 1.0: novice-150
+vs master-500 knocks down 12.5% (floor-bound); parity 50%; master vs
+novice ~87%. The old rolls had every matchup identical.
 
-Skill-gap behaviour (factor 1.0, `ContestFloor` 0.125 flip): novice-150 vs
-master-500 knocks down **12%**; parity **50%**; master-500 vs novice-150
-**87%**. A novice cannot reliably trip a master; nothing is certain either
-way. Old flat rolls had every matchup identical.
-
-Renames: `BashKnockdownChance`/`TripKnockdownChance`/`KickKnockdownChance`
-(ConfigInt, %) become `BashKnockdownFactor`/`TripKnockdownFactor`/
-`KickKnockdownFactor` (ConfigFloat) — a knob whose semantics change must not
+Renames: the three `*KnockdownChance` knobs (ConfigInt thresholds) become
+`*KnockdownFactor` (ConfigFloat) — a knob whose semantics change must not
 keep its old name. `SkillMoveParams.KnockdownChance int` becomes
-`KnockdownFactor float64`; **all fifteen production setters move** (ten
-`internal/actions/combat_*.go` including `combat_throttle.go:125`,
+`KnockdownFactor float64`. **Fourteen struct-literal setters + two
+local-variable feeds across eleven `internal/actions` files,
 `internal/combat/counter.go:119`, and the counter-tier auto-trip/auto-bash
-at `internal/hooks/combat_shared_helpers.go:299,358`), plus five
-`internal/combat` test files that construct the field.
+at `internal/hooks/combat_shared_helpers.go:299,358`** all move, plus five
+`internal/combat` test files (several of which encode "guaranteed
+knockdown", a semantics only reproducible with the contest floor pinned
+off and an overwhelming factor).
 
-## 5. Prone recovery becomes an opposed contest
+## 5. Prone recovery: contested when held down, and the `stand` bargain
 
-`AttemptRecovery` keeps its shape (position gate, `MinRecoveryRounds`
-consumption, `ConditionRecoveryPenalty`, FSM transition) and replaces only
-the roll:
+Two ways off the ground, by design (owner 08-21):
 
-- **Contested when someone is actually holding you down**, defined as: any
-  living actor in the recoverer's room whose **aggro is ON the recoverer**
-  (rev 2 fix — rev 1 keyed on the recoverer's OWN aggro, which free-stood a
-  passive victim mid-fight and invited a drop-target-stand-retarget loop).
-  Opponent = the strongest such holder by recovery score. Both sides score
-  `Dex + unarmed-combat × SkillWeight`; resolved through `combat.RunContest`
-  (standard floor).
-- **Nobody aggroing the recoverer** (out of combat, room emptied, or purely
-  one-sided aggro FROM the recoverer): stand automatically once
-  `MinRecoveryRounds` is consumed. The solo Dex curve is deleted.
+1. **The manual `stand` command is the paid, UNCONTESTED exit** — it costs
+   stamina and stands you regardless of who is on you (existing behavior,
+   now named as deliberate: paying stamina buys certainty).
+2. **The free automatic recovery is what U10 contests.** `AttemptRecovery`
+   keeps its shape (position gate, `MinRecoveryRounds`,
+   `ConditionRecoveryPenalty`, FSM transition); only the roll changes:
+   - **Contested when someone is holding you down**: any living, same-room
+     actor in the recoverer's inbound-attacker set — via the prescribed
+     accessor `Character.Attackers()` (`character.go:795`; direct `Aggro`
+     reads are forbidden, `characters/context.md:961-964`). Opponent = the
+     strongest such holder by recovery score. Both sides score
+     `Dex + unarmed-combat × SkillWeight`; resolved through
+     `combat.RunContest` (standard floor).
+   - **Nobody attacking the recoverer**: stand automatically once
+     `MinRecoveryRounds` is consumed. The solo Dex curve is deleted.
 
-**Feel numbers, stated (rev 2):** at parity the contest stands you ~50% per
-round (old curve at DEX 100: ~64%) — expected time down rises slightly,
-~2 rounds after the minimum. Against a hopeless gap the floor stands you
-12.5% per round: **mean ~8 rounds on the mat after the minimum**, taking one
-attack per round (`ConditionRecoveryPenalty` re-applies each failed round).
-That is a real boss-fight feel change from today's opponent-blind ~64%;
-accepted for now, tuned post-arc-playtest if it plays badly (the lever is
-`ContestFloor` or a recovery-specific floor added then, not now).
+**Feel numbers, correctly framed:** the contest binds mobs and players who
+cannot (or will not) pay stamina. At parity the free path stands you ~50%
+per round (old opponent-blind curve: ~64% at DEX 100). Against a hopeless
+gap the floor stands you 12.5% per round — mean ~8 rounds on the mat after
+the minimum — but a player in that spot can always buy the exit with
+`stand`. Accepted; post-arc playtest is the retune point.
 
 ## 6. Progression (U9 seam) — SUCCESS-ONLY
 
 Owner decision 2026-08-21 (superseding the same-day win-or-lose call):
-**U10's contests adopt U10b's convention from birth — one event per
-SUCCESS**, so U10b inherits nothing to rework here:
+**one event per contest SUCCESS**:
 
 - **Concentration** (damage path, position path, throttle defence): the
   caster fires ONE `OnSkillUse("spellcasting")` only when the hold
-  SUCCEEDS.
+  succeeds. The position path fires per HELD fold round — the same
+  per-round cadence melee progression already has; farming it requires a
+  live aggressor actively hurting you, and the auto/free stand removes the
+  idle case.
 - **Knockdown defence:** the defender fires `OnSkillUse("unarmed-combat")`
-  only when they RESIST the knockdown.
-- **Recovery:** the recoverer fires `OnSkillUse("unarmed-combat")` only when
-  they STAND. A free (uncontested) stand fires nothing.
-- No new attacker-side events anywhere: the throttle/bash/trip/kick hit
-  already progressed through U9's seam; a second event per swing is the
-  duplication U9 deleted.
+  only on a RESIST. Note the channel seam ALREADY fires the defender's
+  winning-defence skill once per contested swing win-or-lose
+  (`AwardDefenceProgression`, `defence_multiplier.go:363-373`) — that
+  existing award is untouched; the knockdown resist event is additional
+  and tests must expect both.
+- **Recovery:** the recoverer fires `OnSkillUse("unarmed-combat")` only on
+  a contested STAND. Free stands fire nothing.
+- No new attacker-side events anywhere.
 
-U10b's roadmap row should note these sites are already on its convention.
+**What U10b still owns here:** its full convention is "one event per
+success **with crit and critical-failure as a separate bonus on top**."
+U10 ships the success half only; the bonus layer for these sites lands
+with U10b's sweep. The U10b roadmap row is annotated accordingly (rev 2's
+"inherits nothing" claim was wrong).
 
-## 7. Owner decisions (2026-08-21, superseding order within the day: latest wins)
+## 7. Owner decisions (2026-08-21; latest-in-day wins)
 
-1. **Full position lattice kept, ×10, no scale knob** — re-ratified over the
-   corrected (harsher) table in §2.2.
-2. **Recovery contested only by actors aggroing the recoverer; free stand
-   otherwise.**
-3. **`ConcentrationFloor: 0.02`**, own knob.
-4. **Progression success-only** (U10b's convention from birth; supersedes
-   the morning's win-or-lose answer).
-5. **Throttle interrupt = opposed roll** (throttler Dex+unarmed vs caster
-   Wil+spellcasting), claimed by U10.
-6. **Surprise attack split out as U10d** — roadmap row added, nothing in
-   this slice touches it.
+1. **Full position lattice ×10, no scale knob** — re-ratified over the
+   corrected (harsher) table.
+2. **Recovery contested only by actors attacking the recoverer; free stand
+   otherwise. Manual `stand` stays the paid uncontested exit.**
+3. **`ConcentrationFloor: 0.02`**, own knob — governing the throttle
+   contest too.
+4. **Progression success-only** (U10b's success half from birth; bonus
+   layer stays U10b's).
+5. **Throttle interrupt = opposed roll through the concentration seam.**
+6. **Surprise attack split out as U10d.**
+7. **Knockdown anchors to the INTENDED 50/60/35 as a named rebalance** —
+   the accidental live rates (50/~91/~2.3) are a latent config bug, not a
+   baseline to preserve.
+8. **Adversarial playtest gate ships in the slice.**
 
 ## 8. Done when
 
@@ -275,22 +302,22 @@ Each criterion ships as a test (U6b lesson):
 
 1. `CalcConcentrationChance` does not exist; no production site computes a
    concentration percentage outside `RunConcentrationContest`.
-2. `combat.RunConcentrationContest` is the only concentration resolver, both
-   guards name it, and a source-scan test asserts it is the only reader of
-   `ConcentrationFloor`.
-3. The knockdown, recovery, and throttle rolls are `RunContest` sites on the
-   allowlist; `dice.RollStat(50)` appears at neither converted site and
-   `util.Rand` no longer decides the throttle interrupt.
-4. `SpellConcentrationBase`, `SpellInitiationWillpowerDivisor`, and
-   `ThrottleInterruptChance` are gone from Go and (where present) yaml;
-   `ConcentrationFloor`, `ConcentrationDamageThresholdPct`, and the three
-   `KnockdownFactor` knobs exist with shipped values. (Asserted against the
-   HEAD blob via `git show`, not the skip-worktree disk copy.)
-5. A sub-threshold hit (< 10% of pool) on a folding caster produces no
-   concentration roll; a supra-threshold hit produces exactly one.
-6. Parity calibration: at equal scores the knockdown rates reproduce
-   50/60/35 within the floor-adjusted expectation `p + F(1−2p)` ± 2 points
-   (statistical, 200k/cell).
-7. Progression: exactly one event on a WON contest and zero on a lost one,
-   for concentration, knockdown defence, and recovery — asserted by
-   `SkillUseCount` deltas, not prose.
+2. `combat.RunConcentrationContest` is the only concentration resolver,
+   both guards name it, and a source-scan test (Go files only) asserts it
+   is the only reader of `ConcentrationFloor`.
+3. The knockdown, recovery, and throttle rolls are seam sites;
+   `dice.RollStat(50` appears at neither converted site and `util.Rand` no
+   longer decides the throttle interrupt.
+4. The four dead knobs are gone from Go and (where present) yaml; the five
+   new knobs exist with shipped values. (Asserted against the HEAD blob via
+   `git show`, never the skip-worktree disk copy.)
+5. A sub-threshold hit on a folding caster produces no concentration roll;
+   a supra-threshold hit produces exactly one.
+6. Parity calibration: knockdown reproduces 50/60/35 within
+   `p + F(1−2p)` ± 2 points (statistical, 200k/cell).
+7. Progression: exactly one event on a WON contest and zero extra on a
+   lost one, for concentration (all three triggers), knockdown defence
+   (over the seam's existing per-contest award), and recovery — asserted
+   by `GetSkillUseCount` deltas, not prose.
+8. The adversarial playtest ran against the finished slice and its
+   findings were dispositioned before handoff.
