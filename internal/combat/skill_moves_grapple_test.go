@@ -13,8 +13,12 @@ import (
 )
 
 // makeGrappleTestParams builds SkillMoveParams that HIT (via the forced
-// clean-win runner below) and roll a knockdown (KnockdownFactor 2.0), so the
-// only variable under test is whether the FSM knockdown transition succeeds.
+// clean-win runner below) and roll a knockdown (KnockdownFactor 1000.0,
+// overwhelming and certain with the floor off — U10 made knockdown an
+// opposed contest, so callers asserting a deterministic KnockedDown must
+// both pin the floor off and use a factor no defender score can contest),
+// so the only variable under test is whether the FSM knockdown transition
+// succeeds.
 //
 // U6b Task 7: converted off the legacy scalar-defence shape (AttackStat 1000
 // vs DefenseStat 1 at x1 weights — a pinned defect) onto the seam. The hit is
@@ -31,7 +35,7 @@ func makeGrappleTestParams(defender *characters.Character) SkillMoveParams {
 			Skill: skills.WeaponCombat, SkillRank: 50,
 			Mult: 1.0,
 		},
-		DamagePercent: 1.0, KnockdownFactor: 2.0,
+		DamagePercent: 1.0, KnockdownFactor: 1000.0,
 		DamageStat: 100, MitigationMultiplier: 1.0,
 	}
 }
@@ -58,6 +62,7 @@ func cleanWinRunner(atkScore float64, entries []contest.Entry) contest.Result {
 // A standing target: the knockdown transition succeeds → KnockedDown true.
 func TestExecuteSkillMove_KnockdownStanding(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
+	pinContestFloorOff(t)
 
 	d := characters.New()
 	d.HealthMax.Value = 1000
@@ -75,6 +80,7 @@ func TestExecuteSkillMove_KnockdownStanding(t *testing.T) {
 // — no misleading "you knock them down!" narration. Damage still applies.
 func TestExecuteSkillMove_KnockdownGrappledIsSuppressed(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
+	pinContestFloorOff(t)
 
 	d := characters.New()
 	d.HealthMax.Value = 1000

@@ -44,6 +44,7 @@ func TestExecuteSkillMove_NilDefenderPosition(t *testing.T) {
 	// defence-set/costing/progression plumbing has real pools and maps to work
 	// on; the Position under test is then EXPLICITLY nilled — the guard's
 	// trigger is a nil FSM, however the character got that way.
+	pinContestFloorOff(t)
 	require.NotPanics(t, func() {
 		for i := 0; i < 200; i++ {
 			def := characters.New()
@@ -62,8 +63,12 @@ func TestExecuteSkillMove_NilDefenderPosition(t *testing.T) {
 					Skill: skills.WeaponCombat, SkillRank: 50,
 					Mult: 1.0,
 				},
-				DamagePercent:   0.8,
-				KnockdownFactor: 2.0, // guarantee the knockdown branch on a hit
+				DamagePercent: 0.8,
+				// Overwhelming, certain with the floor off (U10: knockdown is
+				// now an opposed contest, not a threshold roll) -- this
+				// guarantees the knockdown branch fires on a hit so the
+				// nil-Position guard actually gets exercised across the loop.
+				KnockdownFactor: 1000.0,
 				DamageStat:      100,
 			})
 		}

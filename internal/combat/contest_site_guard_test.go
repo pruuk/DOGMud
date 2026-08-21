@@ -75,6 +75,8 @@ var contestSiteOwners = map[string]string{
 	"internal/actions/defuse.go:Defuse":                         "deliberate: trap-difficulty contest, converted U4",
 	"internal/hooks/NewRound_MobRoundTick.go:tickMobCharmState": "U10c (charm-refresh; redesigned wholesale there)",
 	"internal/hooks/charm_spell.go:resolveCharmSpell":           "U10c (the charm-cast contest; the charm family is redesigned wholesale there)",
+
+	"internal/combat/skill_moves.go:executeSkillMoveWithRunner": "U10 (knockdown opposed contest after a landed special move)",
 }
 
 // contestCoreSelectors are the internal/contest entry points a selector call

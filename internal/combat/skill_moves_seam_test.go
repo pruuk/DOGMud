@@ -33,7 +33,13 @@ func bashSeamParams(atk, def *characters.Character) SkillMoveParams {
 			Skill: skills.WeaponCombat, SkillRank: 40,
 			Mult: 1.0,
 		},
-		DamagePercent:        1.0,
+		DamagePercent: 1.0,
+		// Not certainty-critical here: none of this file's assertions read
+		// result.KnockedDown (the fixed defended/fumble outcomes gate the
+		// knockdown branch off entirely, and the two Hit==true cases don't
+		// assert on it either). U10 made knockdown an opposed contest, so a
+		// factor of 2.0 no longer guarantees anything on its own -- kept at
+		// the pre-U10 value only because nothing here depends on the result.
 		KnockdownFactor:      2.0,
 		DamageStat:           100,
 		MitigationMultiplier: 1.0,

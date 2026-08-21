@@ -16,6 +16,7 @@ func TestExecuteSkillMove_ControlImmuneNeverKnockedDown(t *testing.T) {
 	defer cleanup()
 
 	pinDefenceAdmissionConfig(t)
+	pinContestFloorOff(t)
 
 	atk := characters.New()
 
@@ -34,7 +35,12 @@ func TestExecuteSkillMove_ControlImmuneNeverKnockedDown(t *testing.T) {
 				Skill: skills.WeaponCombat, SkillRank: 50,
 				Mult: 1.0,
 			},
-			DamagePercent: 0.5, KnockdownFactor: 2.0, // guaranteed knockdown on a hit
+			// KnockdownFactor is irrelevant for the control-immune assertion --
+			// IsControlImmune short-circuits BEFORE the knockdown contest ever
+			// runs, so no factor value can move that branch. It also has to be
+			// large enough that the NORMAL defender's knockdown contest (a real
+			// opposed roll under U10) lands at least once across 30 attempts.
+			DamagePercent: 0.5, KnockdownFactor: 1000.0,
 			DamageStat: 100,
 		}
 	}
