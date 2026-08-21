@@ -499,6 +499,32 @@ func TestProcessFoldRound_NormalSpell_PositionCanBreak(t *testing.T) {
 	assert.True(t, brokeAtLeastOnce, "a normal (non-flagged) spell should still be breakable by position disruption while Prone")
 }
 
+// TestProcessFoldRound_ProneHopelessCasterBreaks pins the U10 contest swap for
+// the position path: prone difficulty is 300 vs. a Wil-1/skill-0 caster's
+// score of ~1, so the break chance is ~98% per round.
+//
+// Uses a FRESH caster per iteration (the same pattern as the neighboring
+// TestProcessFoldRound_NormalSpell_PositionCanBreak), not one caster looped
+// across "rounds": CastingData.FoldsNeeded is 0 by default (newCastingChar
+// never reads the spell's BaseFolds), so a HELD round still falls through to
+// AdvanceCastingFolds(0,0), which reports complete immediately and clears the
+// caster's Activity. Reusing one caster across iterations would silently stop
+// exercising the position check after its first non-break round, which is
+// what made the original version of this test flake at the 0.02 floor.
+func TestProcessFoldRound_ProneHopelessCasterBreaks(t *testing.T) {
+	cleanup := spells.SeedSpellsForTest(map[string]*spells.SpellData{
+		"sparks": {SpellId: "sparks", BaseFolds: 4},
+	})
+	defer cleanup()
+
+	broke := false
+	for i := 0; i < 200 && !broke; i++ {
+		ch := newProneCastingChar("sparks")
+		broke = processFoldRound(ch).ProneBroke
+	}
+	assert.True(t, broke, "a Wil-1 caster folding while prone should break within 200 rounds")
+}
+
 // ─── Spell Resolution Helpers ─────────────────────────────────────────────────
 
 // The five raw-stat spell-defense-value tests were deleted with their helper

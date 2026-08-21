@@ -22,7 +22,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // =============================================================================
@@ -553,10 +552,11 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 	// never to incidental party damage or position churn.
 	spellData := spells.GetSpell(cs.SpellId)
 
-	// Position-based concentration disruption (chunk 4f). Replaces the
-	// three deterministic 100% gates (Prone/Supine/Grapple) that chunks
-	// pre-4e shipped. Now: damage%-equivalent per (position, role) →
-	// existing CalcConcentrationChance(Wil, dmgPctEquiv) curve → roll.
+	// Position-based concentration disruption (chunk 4f, contested since
+	// U10). Replaces the three deterministic 100% gates (Prone/Supine/
+	// Grapple) that chunks pre-4e shipped. Now: damage%-equivalent per
+	// (position, role) → x10 → combat.RunConcentrationContest against the
+	// caster's concentrationScore, the arc's standard contest shape.
 	// Standing returns 0 and skips the check entirely.
 	//
 	// The damage-path checkConcentrationBreak still fires independently
@@ -571,11 +571,19 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 		}
 		dmgPctEquiv := position.PositionDisruptionDmgEquiv(posState, ctrlState)
 		if dmgPctEquiv > 0 {
-			chance := characters.CalcConcentrationChance(
-				char.Stats.Willpower.ValueAdj, dmgPctEquiv)
-			roll := util.Rand(100)
-			util.LogRoll(`Position Concentration`, roll, chance)
-			if roll >= chance {
+			// Chunk 4f's lattice keeps its full granularity; the x10
+			// conversion is the design (owner 2026-08-21, re-ratified over
+			// the corrected table — prone 300, deep holds 600-700).
+			res := combat.RunConcentrationContest(concentrationScore(char), float64(dmgPctEquiv*10))
+			if res.Success {
+				// Success-only progression: one spellcasting event per HELD
+				// round (melee fires per combat round on the same basis;
+				// farming requires a live aggressor). Routed through the
+				// U9 applier — the progression seam guard forbids direct
+				// OnSkillUse calls from this package.
+				char.ApplyProgression(progression.OrdinaryEvents(progression.Outcome{AttackerSkill: string(skills.Spellcasting)}),
+					progression.SideAttacker, char.GetUserId(), 0)
+			} else {
 				// Concentration broke. Route messaging by which break
 				// flag the caller expects for this position. Default
 				// falls back to GrappleBroke for any future non-Standing
@@ -593,7 +601,7 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 				}
 				return result
 			}
-			// Roll passed — concentration held this round; fold continues.
+			// Contest held — the fold continues this round.
 		}
 	}
 
