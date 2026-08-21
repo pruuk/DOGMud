@@ -218,10 +218,13 @@ options:
         beginner:
         - 'You throw a desperate swing that <ansi fg="cyan-bold">CONNECTS PERFECTLY</ansi> with <ansi fg="{targettype}">{target}</ansi>!'
         - 'You stumble forward and accidentally deliver a <ansi fg="cyan-bold">CRUSHING BLOW</ansi>!'
+        - 'Your <ansi fg="item">{itemname}</ansi> flies wide but somehow lands a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
+        - 'You flail with your <ansi fg="item">{itemname}</ansi> and by pure luck land a <ansi fg="cyan-bold">DEVASTATING BLOW</ansi>!'
         expert:
         - 'You time a perfect counter and <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your combination builds to a <ansi fg="cyan-bold">THUNDEROUS FINISHING BLOW</ansi>!'
         - 'You read the opening and deliver a <ansi fg="cyan-bold">PICTURE-PERFECT KNOCKOUT STRIKE</ansi>!'
+        - 'You slip past <ansi fg="{targettype}">{target}</ansi>''s guard and drive a <ansi fg="cyan-bold">TEXTBOOK KNOCKOUT BLOW</ansi> into their {bodypart}!'
         master:
         - 'You flow through <ansi fg="{targettype}">{target}</ansi>''s defenses and <ansi fg="cyan-bold">OBLITERATE</ansi> them with a devastating combination!'
         - 'Your {stance} mastery finds the perfect angle - you <ansi fg="cyan-bold">ANNIHILATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
@@ -231,19 +234,31 @@ options:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">CONNECTS PERFECTLY</ansi> with a wild swing!'
         - 'A lucky hit from <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s wild <ansi fg="item">{itemname}</ansi> somehow lands a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on you!'
+        - 'By pure luck, <ansi fg="{sourcetype}">{source}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING BLOW</ansi> on you!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> delivers a <ansi fg="cyan-bold">DEVASTATING COUNTER</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s combination ends in a <ansi fg="cyan-bold">THUNDEROUS BLOW</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> slips past your guard and drives a <ansi fg="cyan-bold">TEXTBOOK KNOCKOUT BLOW</ansi> into your {bodypart}!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> reads your defense and lands a <ansi fg="cyan-bold">PICTURE-PERFECT STRIKE</ansi> on your {bodypart}!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> flows through your defenses and <ansi fg="cyan-bold">OBLITERATES</ansi> you!'
         - '<ansi fg="{sourcetype}">{source}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> finds the perfect angle and <ansi fg="cyan-bold">ANNIHILATES</ansi> your {bodypart}!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> seizes the moment and <ansi fg="cyan-bold">DEMOLISHES</ansi> you with a perfectly placed strike!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">CONNECTS PERFECTLY</ansi> with <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s wild swing somehow <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'By pure luck, <ansi fg="{sourcetype}">{source}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING BLOW</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> delivers a <ansi fg="cyan-bold">DEVASTATING COUNTER</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> slips past <ansi fg="{targettype}">{target}</ansi>''s guard and lands a <ansi fg="cyan-bold">TEXTBOOK KNOCKOUT BLOW</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s combination ends in a <ansi fg="cyan-bold">PICTURE-PERFECT STRIKE</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> flows through every defense and <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> finds the perfect angle and <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> reads <ansi fg="{targettype}">{target}</ansi> completely and <ansi fg="cyan-bold">DEMOLISHES</ansi> them with a perfectly placed strike!'
   fumble:
     together:
       toattacker:
@@ -251,29 +266,43 @@ options:
         - 'You swing wildly and <ansi fg="red-bold">FUMBLE</ansi>, nearly falling over!'
         - 'You trip over your own feet and <ansi fg="red-bold">FUMBLE</ansi> your attack!'
         - 'Your clumsy strike <ansi fg="red-bold">FUMBLES</ansi> and you stumble sideways!'
+        - 'You overreach with your <ansi fg="item">{itemname}</ansi> and <ansi fg="red-bold">FUMBLE</ansi>, nearly landing on your face!'
         expert:
         - 'Your foot slips mid-combination and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You overcommit to a strike and <ansi fg="red-bold">FUMBLE</ansi>, off-balance!'
         - 'Your timing breaks and your attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
+        - 'You plant your foot wrong mid strike and your attack <ansi fg="red-bold">FUMBLES</ansi> away!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s unexpected counter disrupts your flow - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect technique, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'A subtle shift from <ansi fg="{targettype}">{target}</ansi> breaks your rhythm - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'You read <ansi fg="{targettype}">{target}</ansi> a heartbeat too late and your technique <ansi fg="red-bold">FUMBLES</ansi>!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi> swings and <ansi fg="red-bold">FUMBLES</ansi>, nearly falling!'
         - '<ansi fg="{sourcetype}">{source}</ansi> trips and <ansi fg="red-bold">FUMBLES</ansi> their attack!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overreaches with their <ansi fg="item">{itemname}</ansi> and <ansi fg="red-bold">FUMBLES</ansi>, nearly landing on their face!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s wild swing goes wide and they <ansi fg="red-bold">FUMBLE</ansi> badly!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s combination breaks down into a <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> overcommits and <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> plants a foot wrong and their attack <ansi fg="red-bold">FUMBLES</ansi> away!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s timing slips mid strike and they <ansi fg="red-bold">FUMBLE</ansi> badly!'
         master:
         - 'Your defense disrupts <ansi fg="{sourcetype}">{source}</ansi>''s flow - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> reads you a heartbeat too late and their technique <ansi fg="red-bold">FUMBLES</ansi>!'
+        - 'A subtle shift from you breaks <ansi fg="{sourcetype}">{source}</ansi>''s rhythm and they <ansi fg="red-bold">FUMBLE</ansi>!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> trips and <ansi fg="red-bold">FUMBLES</ansi> their attack!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overreaches and <ansi fg="red-bold">FUMBLES</ansi>, nearly landing on their face!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s attack breaks down into a <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overcommits against <ansi fg="{targettype}">{target}</ansi> and <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s timing slips mid strike and the attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
         master:
         - 'Despite perfect form, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{targettype}">{target}</ansi>''s subtle shift breaks <ansi fg="{sourcetype}">{source}</ansi>''s rhythm and they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> reads <ansi fg="{targettype}">{target}</ansi> a heartbeat too late and their technique <ansi fg="red-bold">FUMBLES</ansi>!'
