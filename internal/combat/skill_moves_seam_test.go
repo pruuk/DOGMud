@@ -34,10 +34,14 @@ func bashSeamParams(atk, def *characters.Character) SkillMoveParams {
 			Mult: 1.0,
 		},
 		DamagePercent: 1.0,
-		// Not certainty-critical here: none of this file's assertions read
-		// result.KnockedDown (the fixed defended/fumble outcomes gate the
+		// Not certainty-critical here: no assertion in this file depends
+		// on the knockdown contest's outcome (the KnockedDown reads all
+		// sit in defended/fumble outcomes where Hit==false gates the
 		// knockdown branch off entirely, and the two Hit==true cases don't
-		// assert on it either). U10 made knockdown an opposed contest, so a
+		// assert on it). Note the contest DOES run live in the Hit==true
+		// cases and fires a defender resist-progression event on a resist —
+		// a future Hit==true test asserting progression counts must account
+		// for that. U10 made knockdown an opposed contest, so a
 		// factor of 2.0 no longer guarantees anything on its own -- kept at
 		// the pre-U10 value only because nothing here depends on the result.
 		KnockdownFactor:      2.0,
