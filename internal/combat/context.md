@@ -545,15 +545,22 @@ penalty profile via `IsProne() || IsSupine()` reads in
 
 **Recovery mechanics** (chunk 4b W6 / W7 cutover):
 
-1. **Automatic recovery** — stat-based logarithmic formula
-   `min(90, 25 + 20 × ln(DEX/25))`. Implemented in
-   `Character.AttemptRecovery(statValue int)`. Gates on
-   `IsProne() || IsSupine()` and reads `MinRecoveryRounds` from
-   `ProneData` / `SupineData`. Decrements via
-   `Position.ConsumeRecoveryRound()` (mutates the per-state slot in
-   place). On success fires `Position.TransitionToStanding(TriggerRecoveryRoll)`.
-   Called every round via `NewRound_UserRoundTick` and `NewRound_MobRoundTick`.
-   Failed attempts add `ConditionRecoveryPenalty` (limits attacks to 1).
+1. **Automatic recovery** — U10 replaced the solo Dex-log curve with an
+   opposed contest against whoever is holding the recoverer down (or a free
+   stand if nobody is). `Character.AttemptRecovery(contestWin func() bool)`
+   (`internal/characters/skills.go`) gates on `IsProne() || IsSupine()` and
+   reads `MinRecoveryRounds` from `ProneData` / `SupineData`, decrementing via
+   `Position.ConsumeRecoveryRound()`. `contestWin` is built per-call by
+   `recoveryContest()` (`internal/hooks/recovery_contest.go`, the
+   `contestSiteOwners` entry for this contest): it scores `Dex +
+   UnarmedCombat×SkillWeight` for the recoverer and the strongest living
+   same-room attacker from `Character.Attackers()`, then runs
+   `combat.RunContest`. `nil` (nobody qualifies) means an automatic stand
+   with no roll and no progression; a won contest fires exactly one
+   `OnSkillUse(UnarmedCombat)`, a lost one fires nothing. On success fires
+   `Position.TransitionToStanding(TriggerRecoveryRoll)`. Called every round
+   via `NewRound_UserRoundTick` and `NewRound_MobRoundTick`. Failed/gated
+   attempts add `ConditionRecoveryPenalty` (limits attacks to 1).
 
 2. **Manual recovery** — `stand` command (`internal/usercommands/stand.go`)
    - Costs `StandStaminaCost` (config, 15% of max). Requires

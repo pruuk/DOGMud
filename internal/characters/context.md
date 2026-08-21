@@ -712,67 +712,75 @@ func (c *Character) GetAdjectives() []string {
 
 This makes prone status visible in character descriptions and room listings.
 
-### Automatic Recovery System
-The `AttemptRecovery(statValue int)` method implements stat-based recovery with logarithmic scaling:
+### Automatic Recovery System (U10: opposed contest, not a solo stat curve)
+`AttemptRecovery(contestWin func() bool) (bool, bool)` is the once-per-round
+FREE stand attempt for a prone/supine character. The old solo Dex-log curve
+(`min(90, 25 + 20*ln(dex/25))` vs `dice.RollStat(50)`) is gone.
 
 ```go
-func (c *Character) AttemptRecovery(statValue int) (bool, bool) {
-    // Returns: (attemptMade, success)
-
-    if !c.Prone {
-        return false, false  // Not prone, no recovery needed
+func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
+    if !c.IsProne() && !c.IsSupine() {
+        return false, false
     }
 
-    if c.ProneRoundsRemaining > 0 {
-        c.ProneRoundsRemaining--
-        c.RecoveryPenaltyThisRound = true
-        return false, false  // Still in minimum duration, no messages
+    // MinRecoveryRounds gate, read from ProneData/SupineData, unchanged.
+    if minRounds > 0 {
+        c.Position.ConsumeRecoveryRound()
+        c.AddCondition(ConditionRecoveryPenalty, 1, 1.0, "prone recovery")
+        return false, false
     }
 
-    // Calculate recovery chance: min(90, 25 + 20 × ln(stat/25))
-    chance := 25.0 + 20.0*math.Log(float64(statValue)/25.0)
-    if chance > 90.0 {
-        chance = 90.0  // Cap at 90% to keep some uncertainty
+    success := true
+    if contestWin != nil {
+        success = contestWin()
+        if success {
+            c.OnSkillUse(string(skills.UnarmedCombat), c.GetUserId())
+        }
     }
-
-    roll := dice.Roll(50, 15.0)
-    success := roll.Value < chance
 
     if success {
-        c.Prone = false
-        c.ProneRoundsRemaining = 0
+        c.Position.TransitionToStanding(state.TransitionReason{Trigger: position.TriggerRecoveryRoll})
     } else {
-        c.RecoveryPenaltyThisRound = true
+        c.AddCondition(ConditionRecoveryPenalty, 1, 1.0, "prone recovery")
     }
 
-    return true, success  // Attempt made, return success status
+    return true, success
 }
 ```
 
-**Recovery Formula Rationale:**
-- Logarithmic scaling provides smooth progression without overpowering high stats
-- 25 stat (low) = 25% chance, 100 stat (average) = 53%, 300 stat (high) = 75%
-- 90% cap maintains tactical uncertainty even at extreme stats
-- Generic `statValue` parameter allows future use for other conditions (grapple uses Strength, etc.)
+**Contested vs. free — caller decides:**
+- `contestWin == nil` → automatic stand once `MinRecoveryRounds` is consumed.
+  No roll, no progression. This is the case when nobody has aggro on the
+  recoverer.
+- `contestWin != nil` → the caller-built opposed contest (see
+  `internal/hooks/recovery_contest.go`) against whoever is holding the
+  character down. **Success-only progression**: exactly one
+  `OnSkillUse(UnarmedCombat)` fires on a WON contest; a lost contest or a
+  free stand fires nothing.
+- `AttemptRecovery` itself never touches `internal/combat` or `internal/contest`
+  — it only calls the injected closure. All contest-building (score formula,
+  opponent selection, `combat.RunContest`) lives in the caller, which is why
+  the site-guard allowlist entry is on `recoveryContest`, not on this method.
 
 **Integration with Combat Hooks:**
-Called in `NewRound_UserRoundTick` and `NewRound_MobRoundTick`:
+Called every round in `NewRound_UserRoundTick` and `NewRound_MobRoundTick`,
+both of which pass `recoveryContest(...)` (nil when nobody qualifies):
 
 ```go
-// After cooldown ticks, attempt recovery if prone
-if attemptMade, success := user.Character.AttemptRecovery(user.Character.Stats.Dexterity.ValueAdj); attemptMade {
+if attemptMade, success := user.Character.AttemptRecovery(recoveryContest(user.Character)); attemptMade {
     if success {
-        user.SendText("You scramble to your feet!")
+        user.SendText(messaging.CategorySystem, "You scramble to your feet!")
         room.SendText("<user> clambers to their feet in a rushed panic.", user.UserId)
     } else {
-        user.SendText("You attempt to stand, but slip back down!")
+        user.SendText(messaging.CategorySystem, "You attempt to stand, but slip back down!")
         room.SendText("<user> attempts to stand, but slips and falls.", user.UserId)
     }
 }
-
-// Clear recovery penalty flag at end of round
-user.Character.RecoveryPenaltyThisRound = false
 ```
+
+The manual `stand` command (`internal/usercommands/stand.go`) is the separate,
+deliberate PAID exit: it spends stamina for an uncontested stand and does not
+call `AttemptRecovery` at all.
 
 ### Cooldown System Usage
 The cooldown system (`cooldowns.go`) is used for special combat moves:

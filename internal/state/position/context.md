@@ -830,9 +830,13 @@ S3. Controller identity now derives from
 position. |
 | `internal/characters/combatposition.go` | `characters/` |
 **Deleted** — T21. File removed; all enum helpers gone. |
-| `AttemptRecovery()` path | `characters/` | **Shipped W6** — gates on
-`IsProne() \|\| IsSupine()`, reads
-`ProneData/SupineData.MinRecoveryRounds`. |
+| `AttemptRecovery()` path | `characters/` | **Shipped W6, reworked U10** —
+gates on `IsProne() \|\| IsSupine()`, reads
+`ProneData/SupineData.MinRecoveryRounds`. U10 replaced the solo Dex-log
+recovery curve with a caller-supplied `contestWin func() bool`: nil is a
+free stand, non-nil is the opposed recovery contest built by
+`internal/hooks/recovery_contest.go` against whoever holds the recoverer
+down. |
 
 ---
 
