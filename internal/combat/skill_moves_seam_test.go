@@ -34,7 +34,7 @@ func bashSeamParams(atk, def *characters.Character) SkillMoveParams {
 			Mult: 1.0,
 		},
 		DamagePercent:        1.0,
-		KnockdownChance:      100,
+		KnockdownFactor:      2.0,
 		DamageStat:           100,
 		MitigationMultiplier: 1.0,
 		KnockdownToSupine:    true,

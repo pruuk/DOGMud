@@ -35,7 +35,7 @@ func makePartialTestParams(attacker, defender *characters.Character) SkillMovePa
 			Mult: 1.0,
 		},
 		DamagePercent:   1.0,
-		KnockdownChance: 100, // maximal, so a leaked status/knockdown on a
+		KnockdownFactor: 2.0, // maximal, so a leaked status/knockdown on a
 		// defended attempt would be caught rather than hidden by a low roll.
 		DamageStat:           100,
 		MitigationMultiplier: 1.0,

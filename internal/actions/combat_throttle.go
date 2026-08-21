@@ -122,7 +122,7 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   float64(cfg.KickDamagePercent),
-		KnockdownChance: 0, // No knockdown — choke + stamina drain instead
+		KnockdownFactor: 0, // No knockdown — choke + stamina drain instead
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 

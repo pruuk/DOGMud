@@ -34,7 +34,7 @@ func TestExecuteSkillMove_ControlImmuneNeverKnockedDown(t *testing.T) {
 				Skill: skills.WeaponCombat, SkillRank: 50,
 				Mult: 1.0,
 			},
-			DamagePercent: 0.5, KnockdownChance: 100, // guaranteed knockdown on a hit
+			DamagePercent: 0.5, KnockdownFactor: 2.0, // guaranteed knockdown on a hit
 			DamageStat: 100,
 		}
 	}

@@ -296,7 +296,7 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			},
 			IsCounter:       true,
 			DamagePercent:   float64(cfg.TripDamagePercent),
-			KnockdownChance: int(cfg.TripKnockdownChance),
+			KnockdownFactor: float64(cfg.TripKnockdownFactor),
 			DamageStat:      defender.GetEffectiveDexterity(),
 		})
 		result.AutoTrip = true
@@ -355,7 +355,7 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			},
 			IsCounter:         true,
 			DamagePercent:     float64(cfg.BashDamagePercent),
-			KnockdownChance:   int(cfg.BashKnockdownChance),
+			KnockdownFactor:   float64(cfg.BashKnockdownFactor),
 			DamageStat:        defender.Stats.Strength.ValueAdj,
 			KnockdownToSupine: true, // bash sends attacker backward
 		})

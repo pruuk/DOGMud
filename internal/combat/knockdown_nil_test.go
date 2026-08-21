@@ -63,7 +63,7 @@ func TestExecuteSkillMove_NilDefenderPosition(t *testing.T) {
 					Mult: 1.0,
 				},
 				DamagePercent:   0.8,
-				KnockdownChance: 100, // guarantee the knockdown branch on a hit
+				KnockdownFactor: 2.0, // guarantee the knockdown branch on a hit
 				DamageStat:      100,
 			})
 		}

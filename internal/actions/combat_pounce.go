@@ -63,7 +63,7 @@ type PounceResult struct {
 //   - Compound predator gate: legs AND (fanged OR clawed)
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Dexterity
 //     attack stat, Dexterity defense stat, BashDamagePercent, Strength damage
-//     stat, BashKnockdownChance, KnockdownToSupine=true — backward knockdown)
+//     stat, BashKnockdownFactor, KnockdownToSupine=true — backward knockdown)
 //   - combat.RecordSpecialMove for analytics + RoundsWaiting = 1
 //   - OnSkillUse(UnarmedCombat) on hit for progression
 //
@@ -125,7 +125,7 @@ func ExecutePounce(actor Actor) PounceResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:     float64(cfg.BashDamagePercent),
-		KnockdownChance:   int(cfg.BashKnockdownChance),
+		KnockdownFactor:   float64(cfg.BashKnockdownFactor),
 		KnockdownToSupine: true, // predator leaps and drives target backward
 		DamageStat:        char.Stats.Strength.ValueAdj,
 	})

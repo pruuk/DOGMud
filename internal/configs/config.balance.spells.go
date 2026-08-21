@@ -39,6 +39,12 @@ func (b *Balance) validateSpells() {
 	if b.SpellProficiencyCastsPerPoint < 1 {
 		b.SpellProficiencyCastsPerPoint = 50
 	}
+	if b.ConcentrationFloor <= 0 || b.ConcentrationFloor > 0.5 {
+		b.ConcentrationFloor = 0.02
+	}
+	if b.ConcentrationDamageThresholdPct < 1 {
+		b.ConcentrationDamageThresholdPct = 10
+	}
 
 	// ── POOL RESERVATION ─────────────────────────────────────────────────────
 	if b.PoolReservationCapPct <= 0 || b.PoolReservationCapPct > 1 {

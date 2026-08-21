@@ -13,7 +13,7 @@ import (
 )
 
 // makeGrappleTestParams builds SkillMoveParams that HIT (via the forced
-// clean-win runner below) and roll a knockdown (KnockdownChance 100), so the
+// clean-win runner below) and roll a knockdown (KnockdownFactor 2.0), so the
 // only variable under test is whether the FSM knockdown transition succeeds.
 //
 // U6b Task 7: converted off the legacy scalar-defence shape (AttackStat 1000
@@ -31,7 +31,7 @@ func makeGrappleTestParams(defender *characters.Character) SkillMoveParams {
 			Skill: skills.WeaponCombat, SkillRank: 50,
 			Mult: 1.0,
 		},
-		DamagePercent: 1.0, KnockdownChance: 100,
+		DamagePercent: 1.0, KnockdownFactor: 2.0,
 		DamageStat: 100, MitigationMultiplier: 1.0,
 	}
 }

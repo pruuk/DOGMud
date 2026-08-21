@@ -108,13 +108,13 @@ func ExecuteTrip(actor Actor) TripResult {
 	// Determine trip variant and associated params.
 	variant := TripStandard
 	damagePercent := float64(cfg.TripDamagePercent)
-	knockdownChance := int(cfg.TripKnockdownChance)
+	knockdownFactor := float64(cfg.TripKnockdownFactor)
 
 	// Tailsweep: actor has the tail mutation.
 	if _, ok := char.Mutations["tail"]; ok {
 		variant = TripTailsweep
-		damagePercent = 0.40 // Better than regular trip (0.25)
-		knockdownChance = 70 // Better than regular trip (60%)
+		damagePercent = 0.40  // Better than regular trip (0.25)
+		knockdownFactor = 1.4 // Better than regular trip (factor-equivalent of the old flat-70 threshold, 70/50)
 
 		// Apply tail equipment bonuses if a tail item is equipped.
 		if char.Equipment.Tail.ItemId > 0 {
@@ -122,7 +122,10 @@ func ExecuteTrip(actor Actor) TripResult {
 			if tailSpec.DamageMultiplier > 0 {
 				damagePercent += tailSpec.DamageMultiplier / 100.0
 			}
-			knockdownChance += char.Equipment.Tail.StatMod("knockdown")
+			// U10 Task 1: StatMod("knockdown") is still denominated in the old
+			// 0-100 threshold points; /50 converts it into factor units under
+			// the transitional bridge (factor*50).
+			knockdownFactor += float64(char.Equipment.Tail.StatMod("knockdown")) / 50.0
 		}
 	}
 
@@ -141,7 +144,7 @@ func ExecuteTrip(actor Actor) TripResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   damagePercent,
-		KnockdownChance: knockdownChance,
+		KnockdownFactor: knockdownFactor,
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 

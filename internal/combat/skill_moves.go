@@ -73,7 +73,7 @@ type SkillMoveParams struct {
 	IsCounter bool
 
 	DamagePercent        float64 // config knob (e.g. BashDamagePercent)
-	KnockdownChance      int     // config knob (e.g. BashKnockdownChance)
+	KnockdownFactor      float64 // config knob (e.g. BashKnockdownFactor)
 	DamageStat           int     // stat for CalcRawDamage (always Strength)
 	MitigationMultiplier float64 // 1.0 = full, 0.5 = half mitigation (stomp)
 
@@ -172,8 +172,13 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 		// immovable and cannot be knocked down — the blow still lands and deals
 		// damage, it just doesn't take them off their feet.
 		if !mutations.IsControlImmune(p.Defender.Mutations) {
+			// TRANSITIONAL (U10 Task 1->7): threshold roll against
+			// factor*50. NOT behavior-preserving for trip/kick -- the old
+			// thresholds sat on a normal curve and delivered ~91%/~2.3%;
+			// the ratified target is 60%/35%, which the Task 7 contest
+			// delivers. This bridge only keeps the tree green in between.
 			knockdownRoll := dice.RollStat(50)
-			if knockdownRoll.Value < float64(p.KnockdownChance) {
+			if knockdownRoll.Value < p.KnockdownFactor*50.0 {
 				result.KnockedDown = true
 			}
 		}
