@@ -47,29 +47,6 @@ func TestCalcFoldsPerRound(t *testing.T) {
 	}
 }
 
-func TestCalcConcentrationChance(t *testing.T) {
-	tests := []struct {
-		willpower int
-		damagePct int
-		expected  int
-	}{
-		// clamp(50 + willpower/4 - damagePct, 5, 95)
-		{100, 5, 70},  // 50+25-5=70  (average caster, minor hit)
-		{100, 20, 55}, // 50+25-20=55 (average caster, moderate hit)
-		{100, 50, 25}, // 50+25-50=25 (average caster, heavy hit)
-		{0, 50, 5},    // 50+0-50=0  → clamped to 5
-		{180, 5, 90},  // 50+45-5=90 (high willpower caster)
-		{200, 1, 95},  // 50+50-1=99 → clamped to 95
-	}
-	for _, tt := range tests {
-		got := CalcConcentrationChance(tt.willpower, tt.damagePct)
-		if got != tt.expected {
-			t.Errorf("CalcConcentrationChance(%d, %d) = %d, want %d",
-				tt.willpower, tt.damagePct, got, tt.expected)
-		}
-	}
-}
-
 // The spell-attack score test was deleted with its helper (U6b Task 4). It
 // pinned the x15-per-rank spell hit-gate score (weighted skill x the deleted
 // skill-factor knob) — pinning the defect the collapse removes. The caster's

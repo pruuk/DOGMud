@@ -498,8 +498,6 @@ type Balance struct {
 	DiscoveryPerceptionScale        ConfigFloat `yaml:"DiscoveryPerceptionScale"`        // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
 	DiscoverySkillScale             ConfigFloat `yaml:"DiscoverySkillScale"`             // Raw skill contribution reaches 1.0 at rank / this (default 100)
 	DiscoveryMaxDecayOffset         ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`         // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
-	SpellInitiationWillpowerDivisor ConfigInt   `yaml:"SpellInitiationWillpowerDivisor"` // Willpower / this = initiation bonus (default 4)
-	SpellConcentrationBase          ConfigInt   `yaml:"SpellConcentrationBase"`          // Base % concentration chance when struck (default 50)
 	SpellFoldsSkillFactor           ConfigInt   `yaml:"SpellFoldsSkillFactor"`           // Skill * this in folds-per-round calc (default 25)
 	SpellProficiencyCastsPerPoint   ConfigInt   `yaml:"SpellProficiencyCastsPerPoint"`   // Casts needed per 1 proficiency point (default 50)
 	SpellDifficultyProgressionScale ConfigFloat `yaml:"SpellDifficultyProgressionScale"` // Per-point spell difficulty bonus to skill progression (default 0.01)

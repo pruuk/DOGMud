@@ -1,6 +1,6 @@
-// Per-position spell-disruption damage%-equivalents (chunk 4f). Fed into
-// the existing characters.CalcConcentrationChance(Wil, dmgPctEquiv) curve
-// in internal/hooks/combat_shared_helpers.go:processFoldRound to produce a
+// Per-position spell-disruption damage%-equivalents (chunk 4f). Multiplied
+// by ten and contested through combat.RunConcentrationContest in
+// internal/hooks/combat_shared_helpers.go:processFoldRound to produce a
 // per-round, Willpower-mediated disruption chance. Replaces the three
 // deterministic 100% gates that chunks 4e and earlier shipped.
 //
@@ -19,7 +19,8 @@ import (
 
 // PositionDisruptionDmgEquiv returns the damage%-equivalent for a caster in
 // the given position + control role. Returns 0 for Standing (skip the
-// check). Returned value is fed to CalcConcentrationChance(Wil, dmgPctEquiv).
+// check). The returned value is multiplied by ten and contested through
+// combat.RunConcentrationContest in processFoldRound.
 func PositionDisruptionDmgEquiv(pos State, role control.State) int {
 	switch pos {
 	case Standing:

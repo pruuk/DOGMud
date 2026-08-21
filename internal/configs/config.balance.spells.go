@@ -15,12 +15,6 @@ func (b *Balance) validateSpells() {
 	}
 
 	// ── SPELLCASTING ─────────────────────────────────────────────────────────
-	if b.SpellConcentrationBase <= 0 {
-		b.SpellConcentrationBase = 50
-	}
-	if b.SpellInitiationWillpowerDivisor < 1 {
-		b.SpellInitiationWillpowerDivisor = 4
-	}
 	if b.SpellFoldsSkillFactor < 1 {
 		b.SpellFoldsSkillFactor = 25
 	}
