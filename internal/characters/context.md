@@ -1398,7 +1398,7 @@ SkillWeight`. Success = the caster HELD.
 
 1. **Damage-path** (`checkConcentrationBreak` in
    `internal/hooks/combat_shared_helpers.go`): fires when the caster takes
-   damage mid-cast, but only above `ConcentrationDamageThresholdPct` (10) of
+   damage mid-cast, but only at or above `ConcentrationDamageThresholdPct` (10) of
    max HP — chip damage never rolls at all. `disruption = damagePct * 10`.
 2. **Position-path** (`processFoldRound`, chunk 4f): fires every fold round
    when the caster is not `Standing`. `disruption` comes from

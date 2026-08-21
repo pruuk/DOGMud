@@ -612,7 +612,8 @@ Three tactical combat abilities with knockdown mechanics and shared cooldown:
 defScore}})` where `defScore = Defender.Dex + unarmed-combat×SkillWeight`,
 standard `ContestFloor`. A lost contest (resist) fires one success-only
 unarmed-combat progression event for the defender. This is a **named
-rebalance**: the deleted `*KnockdownChance` knobs (40/60/35) were thresholds
+rebalance**: the deleted `*KnockdownChance` knobs (shipped 50/60/35;
+bash's Go default was 40) were thresholds
 on a `Normal(50, 7.5)` roll, not literal percentages — they actually
 delivered roughly 50% bash / 91% trip / 2.3% kick at parity. The
 `*KnockdownFactor` knobs below deliver the originally-intended rates.

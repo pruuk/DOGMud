@@ -422,7 +422,7 @@ The Activity machine's `Casting` state is disrupted by two independent paths:
 
 1. **Damage-path** (`checkConcentrationBreak` in
    `internal/hooks/combat_shared_helpers.go`): fires when the caster takes
-   damage above `ConcentrationDamageThresholdPct` (10) of max HP (chip damage
+   damage at or above `ConcentrationDamageThresholdPct` (10) of max HP (chip damage
    never rolls). Runs `combat.RunConcentrationContest(concentrationScore(ch),
    damagePct*10)` (U10: an opposed contest, not a chance curve); on a lost
    contest fires `TriggerConcentrationBreak`.
