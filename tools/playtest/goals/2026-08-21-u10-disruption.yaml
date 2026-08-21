@@ -1,0 +1,70 @@
+# U10 disruption-model adversarial gate. The slice made four things real
+# contests: holding a spell under damage, holding it while prone or
+# grappled, a beast's throat-grip interrupting your cast, and knockdown
+# and free prone recovery. Your training now matters everywhere it used
+# to be ignored. You are a mid-skill caster: most of these fights sit in
+# the observable middle band where both outcomes should appear.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Small scrapes while you weave a spell produce NO concentration
+#     message at all: no roll happens below a meaningful bite. A solid
+#     hit while weaving either breaks you (a shatter line) or you hold
+#     and the fold continues.
+#   * Casting while prone or held is much harder. Deep holds should stop
+#     your casting almost every time.
+#   * A trip or bash against you sometimes works and sometimes does not,
+#     and it should FEEL related to who you both are. Kicks can now
+#     genuinely floor people; trips are no longer near-certain.
+#   * When knocked down with an enemy on you, waiting for the free
+#     recovery is a real fight; typing stand pays stamina and gets you
+#     up regardless. With nobody attacking you, you just rise on your
+#     own after a moment.
+#   * Damage is words, never numbers. That is correct.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the
+# darkness!"; corpses persist; consider calls walkovers even; the North
+# Road bandit camp mobs shuttle between rooms without fighting (filed).
+# 3 commands per round on the AI port. Read every line.
+
+ephemeral:
+  profile: specialist-caster
+  start_room: 462
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    CONCENTRATION UNDER FIRE (headline): find a weak hostile melee
+    attacker, start a long spell, and let it hit you while you weave.
+    Log round by round: did a chip hit produce any concentration text at
+    all (it must NOT), did a heavy hit either shatter or visibly resolve
+    into a continued fold. Quote every concentration line verbatim. Then
+    repeat against something that hits hard. If any sub-threshold scrape
+    prints a break or a roll, that is a finding.
+  - >-
+    POSITION: get knocked prone mid-cast (or start a cast while prone)
+    and report whether the cast survives; try several times. Casting
+    while held in a grapple should fail nearly always. Quote the break
+    lines and note which position you were in.
+  - >-
+    KNOCKDOWN BOTH WAYS: let mobs trip, bash, or kick you and tally
+    attempts vs actual knockdowns across at least ten attempts; the rate
+    should feel contested, not certain. Use your own kick and trip on a
+    weak mob and tally the same; kicks that land should sometimes floor
+    them. Report the tallies plainly.
+  - >-
+    RECOVERY VS THE PAID STAND: when knocked down with an enemy on you,
+    once wait for the free recovery and count the rounds you stayed
+    down; once type stand immediately and confirm it gets you up at the
+    cost of feeling winded. When knocked down and the enemy dies or
+    leaves, confirm you rise on your own promptly. Quote the recovery
+    and stand lines.
+  - >-
+    THROTTLE (opportunistic): if you can find a snake or other fanged
+    limbless beast, cast near it and let it choke you mid-weave. Your
+    training contests its grip now: report holds and losses and quote
+    the lines. Skip without penalty if no such beast is findable.
+  - >-
+    GENERAL adversarial pass: anything that reads wrong, prints raw
+    numbers, shows an unreplaced token, double-prints, or contradicts
+    help text is a finding. Quote everything verbatim.
