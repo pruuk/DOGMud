@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -134,14 +135,30 @@ func checkConcentrationBreak(ch *characters.Character, damage int) bool {
 	}
 	maxHealth := ch.HealthMax.Value
 	damagePct := damage * 100 / maxHealth
-	if damagePct < 1 {
-		damagePct = 1
+	if damagePct < int(configs.GetBalanceConfig().ConcentrationDamageThresholdPct) {
+		// Chip damage does not generate rolls at all (U10).
+		return false
 	}
-	chance := characters.CalcConcentrationChance(
-		ch.Stats.Willpower.ValueAdj, damagePct)
-	roll := util.Rand(100)
-	util.LogRoll(`Concentration`, roll, chance)
-	return roll >= chance
+	res := combat.RunConcentrationContest(concentrationScore(ch), float64(damagePct*10))
+	if res.Success {
+		// Success-only progression (U10b's success half, adopted from
+		// birth): one spellcasting event per HELD contest. Routed through
+		// the shared applier, not a direct OnSkillUse call, so this contest
+		// path stays covered by the U9 seam guard
+		// (internal/progression/seam_guard_test.go) the same as every other
+		// contest site.
+		ch.ApplyProgression(
+			progression.OrdinaryEvents(progression.Outcome{AttackerSkill: string(skills.Spellcasting)}),
+			progression.SideAttacker, ch.GetUserId(), 0)
+	}
+	return !res.Success
+}
+
+// concentrationScore is the caster's side of every concentration contest:
+// Wil + spellcasting x SkillWeight, the arc's standard shape.
+func concentrationScore(ch *characters.Character) float64 {
+	return float64(ch.Stats.Willpower.ValueAdj) +
+		float64(ch.GetSkillLevel(skills.Spellcasting))*float64(configs.GetBalanceConfig().SkillWeight)
 }
 
 // WeaponBreakResult holds the outcome of a weapon break test.
