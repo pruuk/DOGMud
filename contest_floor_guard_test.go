@@ -65,6 +65,9 @@ var guardedRollExemptions = map[string]map[string]string{
 		// Defines combat.RunContest, so it is the one place that legitimately
 		// hands contest.RunWithFloors an explicit floor.
 		"internal/combat/run_contest.go": "defines combat.RunContest",
+		// Defines combat.RunConcentrationContest — the one ConcentrationFloor
+		// reader (U10).
+		"internal/combat/run_concentration_contest.go": "defines combat.RunConcentrationContest — the one ConcentrationFloor reader (U10)",
 	},
 }
 

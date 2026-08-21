@@ -25,3 +25,11 @@ func TestU10KnobDefaults(t *testing.T) {
 		t.Errorf("KickKnockdownFactor default = %v, want 0.924", got)
 	}
 }
+
+func TestU10ConcentrationFloorRejection(t *testing.T) {
+	b := Balance{ConcentrationFloor: 0.6}
+	b.Validate()
+	if got := float64(b.ConcentrationFloor); got != 0.02 {
+		t.Errorf("ConcentrationFloor 0.6 should be rejected to 0.02, got %v", got)
+	}
+}

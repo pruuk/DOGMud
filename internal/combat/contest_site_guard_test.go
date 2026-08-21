@@ -47,6 +47,7 @@ import (
 var contestSiteOwners = map[string]string{
 	// The seams themselves.
 	"internal/combat/run_contest.go:RunContest":                            "the floor seam itself — the ONE place Balance.ContestFloor is read",
+	"internal/combat/run_concentration_contest.go:RunConcentrationContest": "the concentration floor seam — the ONE place Balance.ConcentrationFloor is read (U10)",
 	"internal/combat/defence_multiplier.go:var channelAttackContestRunner": "the channel seam itself — the contest core behind ResolveChannelAttack",
 	"internal/combat/combat_helpers.go:runBestOfAllDefense":                "melee's best-of-all defence core (U6; crit bar unified by U6b task 1)",
 	"internal/contest/contest.go:AgainstDifficulty":                        "the contest core itself (difficulty checks share Run's crit semantics)",
