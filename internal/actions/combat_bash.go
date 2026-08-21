@@ -113,7 +113,7 @@ func ExecuteBash(actor Actor) BashResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:     float64(cfg.BashDamagePercent),
-		KnockdownChance:   int(cfg.BashKnockdownChance),
+		KnockdownFactor:   float64(cfg.BashKnockdownFactor),
 		DamageStat:        char.Stats.Strength.ValueAdj,
 		KnockdownToSupine: true, // bash sends defender backward
 	})

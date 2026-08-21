@@ -299,3 +299,32 @@ moments read clearly, not on rates.
       rounds and report how it feels: legitimate tactics, or an exploit
       that needs a design answer. No verdict is baked in yet; your read
       here decides whether it goes to the backlog.
+
+## U10: disruption model (2026-08-21)
+
+Concentration, knockdown, and prone recovery all moved from flat chances (or,
+for knockdown, thresholds that quietly delivered the wrong rates) onto opposed
+contests. Judge whether skill now visibly matters in each of these moments.
+
+- [ ] Hold a cast under fire at both low and high spellcasting skill. A chip
+      hit should never even threaten the cast (no roll, no message). A big
+      hit should visibly risk it, and a high-skill caster should hold through
+      damage that breaks a novice's concentration in the same fight.
+- [ ] Cast while prone, and separately while grappled. Both should be
+      noticeably harder to hold together than casting on your feet, with
+      grapple the harsher of the two. This is intended to make grapple a
+      real anti-caster tool, not an oversight.
+- [ ] Get tripped and kicked across a skill gap (a novice vs. a trained
+      defender, or vice versa). Trip should now be resistible sometimes
+      instead of landing almost every time, and kick's knockdown should
+      actually happen sometimes instead of almost never. Report the felt
+      rate, not just whether it changed.
+- [ ] Get knocked down with an aggressor still on you, and separately with
+      no one attacking you. Pinned recovery should read as a real contest
+      (sometimes you get up free, sometimes you don't) while an unopposed
+      knockdown should still let you scramble up automatically. Compare
+      both against paying stamina for the guaranteed manual `stand`.
+- [ ] Let a fanged beast throttle you while you are mid-cast. The choke
+      should now test your training against its grip rather than rolling
+      a flat coin: a practiced caster should sometimes hold the cast
+      together through a throttle that would break a novice.

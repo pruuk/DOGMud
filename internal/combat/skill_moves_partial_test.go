@@ -35,8 +35,12 @@ func makePartialTestParams(attacker, defender *characters.Character) SkillMovePa
 			Mult: 1.0,
 		},
 		DamagePercent:   1.0,
-		KnockdownChance: 100, // maximal, so a leaked status/knockdown on a
-		// defended attempt would be caught rather than hidden by a low roll.
+		KnockdownFactor: 1000.0, // overwhelming, so a leaked
+		// status/knockdown on a defended attempt would be caught rather
+		// than hidden by a low roll. This file's assertions never depend
+		// on the knockdown contest's outcome (KnockedDown is only read in
+		// Hit==false outcomes, where the branch cannot run), so the live
+		// contest floor is fine unpinned here.
 		DamageStat:           100,
 		MitigationMultiplier: 1.0,
 	}

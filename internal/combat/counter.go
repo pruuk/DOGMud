@@ -116,7 +116,7 @@ func ExecuteCounter(defender, attacker *characters.Character, channel AttackChan
 		},
 		IsCounter:       true,
 		DamagePercent:   pct,
-		KnockdownChance: 0,
+		KnockdownFactor: 0,
 		DamageStat:      defender.Stats.Strength.ValueAdj,
 	})
 

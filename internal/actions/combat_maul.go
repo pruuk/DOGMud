@@ -115,7 +115,7 @@ func ExecuteMaul(actor Actor) MaulResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   float64(cfg.KickDamagePercent),
-		KnockdownChance: 0, // No knockdown — savage bleed instead
+		KnockdownFactor: 0, // No knockdown — savage bleed instead
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 

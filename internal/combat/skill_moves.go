@@ -2,9 +2,12 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/progression"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
@@ -73,7 +76,7 @@ type SkillMoveParams struct {
 	IsCounter bool
 
 	DamagePercent        float64 // config knob (e.g. BashDamagePercent)
-	KnockdownChance      int     // config knob (e.g. BashKnockdownChance)
+	KnockdownFactor      float64 // config knob (e.g. BashKnockdownFactor)
 	DamageStat           int     // stat for CalcRawDamage (always Strength)
 	MitigationMultiplier float64 // 1.0 = full, 0.5 = half mitigation (stomp)
 
@@ -167,14 +170,29 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	if result.Hit {
 		result.StatusApplied = true
 
-		// Knockdown roll — standardized to dice.RollStat(50). Control-immune
-		// defenders (Ironhide's Living Carapace, Colossus's Ossified Frame) are
-		// immovable and cannot be knocked down — the blow still lands and deals
-		// damage, it just doesn't take them off their feet.
-		if !mutations.IsControlImmune(p.Defender.Mutations) {
-			knockdownRoll := dice.RollStat(50)
-			if knockdownRoll.Value < float64(p.KnockdownChance) {
+		// Knockdown is an opposed contest (U10): the move's attack score
+		// times its intended-rate factor, against the defender's
+		// Dex + unarmed-combat x SkillWeight. This is a NAMED REBALANCE:
+		// the old thresholds delivered ~91% trip / ~2.3% kick despite
+		// claiming 60/35 (normal-curve thresholds, not percentages); the
+		// contest delivers the intended rates at parity. Control-immune
+		// defenders are immovable and never contest. Factor 0 = no
+		// knockdown component (no contest, no progression).
+		if !mutations.IsControlImmune(p.Defender.Mutations) && p.KnockdownFactor > 0 {
+			defScore := float64(p.Defender.Stats.Dexterity.ValueAdj) +
+				float64(p.Defender.GetSkillLevel(skills.UnarmedCombat))*float64(configs.GetBalanceConfig().SkillWeight)
+			kd := RunContest(p.Attack.score()*p.KnockdownFactor, []contest.Entry{{Score: defScore}})
+			if kd.Success {
 				result.KnockedDown = true
+			} else {
+				// Success-only progression: the defender fires one
+				// unarmed-combat event only on a RESIST — on top of the
+				// seam's ordinary per-contest defence award, which is
+				// unchanged. Routed through the U9 applier: the progression
+				// seam guard forbids direct OnSkillUse calls in this package.
+				p.Defender.ApplyProgression(
+					progression.OrdinaryEvents(progression.Outcome{DefenderSkill: string(skills.UnarmedCombat)}),
+					progression.SideDefender, p.Defender.GetUserId(), 0)
 			}
 		}
 

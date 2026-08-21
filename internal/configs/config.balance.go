@@ -87,8 +87,23 @@ type Balance struct {
 	// one rule (U6).
 	//
 	// Governs OPPOSED contests only. Static-difficulty rolls (search, track,
-	// forage, concentration) are roadmap category B/C and are not floored.
+	// forage) are roadmap category B/C and are not floored. Concentration
+	// IS floored, by its own ConcentrationFloor below (U10).
 	ContestFloor ConfigFloat `yaml:"ContestFloor"`
+
+	// ConcentrationFloor is the symmetric last-resort flip probability for
+	// concentration contests ONLY (all three triggers: damage, position,
+	// throttle). The standard ContestFloor (0.125) would break a master's
+	// concentration one disruption in eight; concentration gets its own,
+	// much smaller mercy band. Read in exactly one place:
+	// combat.RunConcentrationContest.
+	ConcentrationFloor ConfigFloat `yaml:"ConcentrationFloor"` // default 0.02
+
+	// ConcentrationDamageThresholdPct: damage below this percent of the
+	// caster's health pool does not roll for concentration at all. Chip
+	// damage should not generate rolls. Values below 1 are rewritten to
+	// the default; "roll on any hit" is expressed as 1.
+	ConcentrationDamageThresholdPct ConfigInt `yaml:"ConcentrationDamageThresholdPct"` // default 10
 
 	// Crit floors (chunk 5.11e). Denominated in HITS, not swings, and applied
 	// only after the hit outcome is final. Set either to 0 to disable it.
@@ -236,16 +251,15 @@ type Balance struct {
 	TauntHoldRounds                  ConfigInt   `yaml:"TauntHoldRounds"`                  // Rounds a successful taunt pins the target's aggro onto the taunter (default 4)
 	RhetoricActionBaseConvictionCost ConfigFloat `yaml:"RhetoricActionBaseConvictionCost"` // Base conviction cost for taunt/rally/warcry before shared multipliers (default 4)
 	BashDamagePercent                ConfigFloat `yaml:"BashDamagePercent"`                // Fraction of normal melee damage (default 0.50)
-	BashKnockdownChance              ConfigInt   `yaml:"BashKnockdownChance"`              // Base % knockdown chance (default 40)
+	BashKnockdownFactor              ConfigFloat `yaml:"BashKnockdownFactor"`              // Knockdown score factor; intended-rate anchor 50% at parity (default 1.0)
 	TripDamagePercent                ConfigFloat `yaml:"TripDamagePercent"`                // Fraction of normal melee damage (default 0.25)
-	TripKnockdownChance              ConfigInt   `yaml:"TripKnockdownChance"`              // Base % knockdown chance (default 60)
+	TripKnockdownFactor              ConfigFloat `yaml:"TripKnockdownFactor"`              // Knockdown score factor; intended-rate anchor 60% at parity (default 1.057)
 	KickDamagePercent                ConfigFloat `yaml:"KickDamagePercent"`                // Fraction of normal melee damage (default 0.80)
-	KickKnockdownChance              ConfigInt   `yaml:"KickKnockdownChance"`              // Base % knockdown chance (default 35)
+	KickKnockdownFactor              ConfigFloat `yaml:"KickKnockdownFactor"`              // Knockdown score factor; intended-rate anchor 35% at parity (default 0.924)
 	StompDamagePercent               ConfigFloat `yaml:"StompDamagePercent"`               // Stomp damage when target is prone (default 1.20)
 	KneeDamagePercent                ConfigFloat `yaml:"KneeDamagePercent"`                // Knee damage in grapple (default 1.00)
 	CoupDeGraceRounds                ConfigInt   `yaml:"CoupDeGraceRounds"`                // Rounds before mob finishes downed player (default 1; 0=disabled)
 	DrainHealRatio                   ConfigFloat `yaml:"DrainHealRatio"`                   // Fraction of drain damage the attacker heals (lifesteal), default 0.75
-	ThrottleInterruptChance          ConfigFloat `yaml:"ThrottleInterruptChance"`          // Chance throttle interrupts a casting victim, default 0.75
 
 	// ── COMBAT: RANGED ───────────────────────────────────────────────────────
 	ShootBaseStaminaCost  ConfigFloat `yaml:"ShootBaseStaminaCost"`  // Base stamina cost to shoot before shared multipliers (default 2)
@@ -484,8 +498,6 @@ type Balance struct {
 	DiscoveryPerceptionScale        ConfigFloat `yaml:"DiscoveryPerceptionScale"`        // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
 	DiscoverySkillScale             ConfigFloat `yaml:"DiscoverySkillScale"`             // Raw skill contribution reaches 1.0 at rank / this (default 100)
 	DiscoveryMaxDecayOffset         ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`         // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
-	SpellInitiationWillpowerDivisor ConfigInt   `yaml:"SpellInitiationWillpowerDivisor"` // Willpower / this = initiation bonus (default 4)
-	SpellConcentrationBase          ConfigInt   `yaml:"SpellConcentrationBase"`          // Base % concentration chance when struck (default 50)
 	SpellFoldsSkillFactor           ConfigInt   `yaml:"SpellFoldsSkillFactor"`           // Skill * this in folds-per-round calc (default 25)
 	SpellProficiencyCastsPerPoint   ConfigInt   `yaml:"SpellProficiencyCastsPerPoint"`   // Casts needed per 1 proficiency point (default 50)
 	SpellDifficultyProgressionScale ConfigFloat `yaml:"SpellDifficultyProgressionScale"` // Per-point spell difficulty bonus to skill progression (default 0.01)

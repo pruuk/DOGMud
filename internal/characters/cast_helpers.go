@@ -37,27 +37,6 @@ func CalcFoldsPerRound(primaryStat, skillLevel int) int {
 // no amount of skill could beat it and every caster failed one cast in twenty
 // forever. Concentration break already covers the intent and does respond to
 // skill. Do not reintroduce a flat initiation gate.
-//
-// NOTE: SpellInitiationWillpowerDivisor survives despite its name because
-// CalcConcentrationChance below also reads it. Roadmap U9 removes it when
-// concentration is rebuilt as a proper contest.
-
-// CalcConcentrationChance returns the % chance to maintain concentration
-// when struck for damagePct percent of max health.
-// Formula: clamp(base + willpower/divisor - damagePct, 5, 95)
-func CalcConcentrationChance(willpower, damagePct int) int {
-	b := configs.GetBalanceConfig()
-	base := int(b.SpellConcentrationBase)
-	divisor := int(b.SpellInitiationWillpowerDivisor)
-	chance := base + willpower/divisor - damagePct
-	if chance < 5 {
-		return 5
-	}
-	if chance > 95 {
-		return 95
-	}
-	return chance
-}
 
 // The spell-attack score helper was deleted in roadmap U6b Task 4. It built
 // the spell hit gate's attacker score as willpower + weightedSkill * a config

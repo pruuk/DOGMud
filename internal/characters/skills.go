@@ -4,7 +4,6 @@ import (
 	"math"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -36,15 +35,23 @@ func (c *Character) GetAllSkillRanks() map[string]int {
 	return retMap
 }
 
-// AttemptRecovery attempts to recover from Prone or Supine status.
+// AttemptRecovery tries the FREE automatic stand once per round for a
+// prone/supine character. contestWin is the opposed recovery contest
+// against whoever is holding the character down, built by the caller
+// (internal/hooks/recovery_contest.go) — nil means nobody is attacking the
+// recoverer and the stand is automatic once MinRecoveryRounds is consumed
+// (owner 2026-08-21). The old solo Dex curve is gone: free recovery is
+// either contested or automatic. The manual `stand` command is the
+// separate, deliberate PAID exit: stamina buys an uncontested stand.
+//
 // Returns (attemptMade, success) — attemptMade=true only if minimum duration
-// has passed and a roll was made. success indicates whether the recovery attempt
-// succeeded (only meaningful if attemptMade is true).
+// has passed and a stand was resolved. success indicates whether the recovery
+// attempt succeeded (only meaningful if attemptMade is true).
 //
 // Gates on the new Position FSM (IsProne || IsSupine) and reads
 // MinRecoveryRounds from the per-state data. On success fires
 // Position.TransitionToStanding(TriggerRecoveryRoll).
-func (c *Character) AttemptRecovery(statValue int) (bool, bool) {
+func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
 	if !c.IsProne() && !c.IsSupine() {
 		return false, false
 	}
@@ -68,21 +75,18 @@ func (c *Character) AttemptRecovery(statValue int) (bool, bool) {
 		return false, false
 	}
 
-	// Minimum duration passed, now roll for recovery based on stat.
-	// DEX 25 = 25%, DEX 100 = 50%, DEX 300 = 75%, caps at 90%.
-	chance := 25.0
-	if statValue > 0 {
-		chance = 25.0 + 20.0*math.Log(float64(statValue)/25.0)
-		if chance > 90.0 {
-			chance = 90.0
-		}
-		if chance < 0 {
-			chance = 0
+	success := true
+	if contestWin != nil {
+		success = contestWin()
+		if success {
+			// Success-only progression (U10b's success half): one
+			// unarmed-combat event per WON recovery contest. Free stands
+			// and lost contests fire nothing. Direct OnSkillUse is fine
+			// here: this package is the applier's home and outside the
+			// progression seam guard's walk.
+			c.OnSkillUse(string(skills.UnarmedCombat), c.GetUserId())
 		}
 	}
-
-	roll := dice.RollStat(50)
-	success := roll.Value < chance
 
 	if success {
 		if err := c.Position.TransitionToStanding(state.TransitionReason{Trigger: position.TriggerRecoveryRoll}); err != nil {

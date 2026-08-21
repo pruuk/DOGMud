@@ -15,12 +15,6 @@ func (b *Balance) validateSpells() {
 	}
 
 	// ── SPELLCASTING ─────────────────────────────────────────────────────────
-	if b.SpellConcentrationBase <= 0 {
-		b.SpellConcentrationBase = 50
-	}
-	if b.SpellInitiationWillpowerDivisor < 1 {
-		b.SpellInitiationWillpowerDivisor = 4
-	}
 	if b.SpellFoldsSkillFactor < 1 {
 		b.SpellFoldsSkillFactor = 25
 	}
@@ -38,6 +32,12 @@ func (b *Balance) validateSpells() {
 	}
 	if b.SpellProficiencyCastsPerPoint < 1 {
 		b.SpellProficiencyCastsPerPoint = 50
+	}
+	if b.ConcentrationFloor <= 0 || b.ConcentrationFloor > 0.5 {
+		b.ConcentrationFloor = 0.02
+	}
+	if b.ConcentrationDamageThresholdPct < 1 {
+		b.ConcentrationDamageThresholdPct = 10
 	}
 
 	// ── POOL RESERVATION ─────────────────────────────────────────────────────

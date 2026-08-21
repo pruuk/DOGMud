@@ -108,13 +108,16 @@ func ExecuteTrip(actor Actor) TripResult {
 	// Determine trip variant and associated params.
 	variant := TripStandard
 	damagePercent := float64(cfg.TripDamagePercent)
-	knockdownChance := int(cfg.TripKnockdownChance)
+	knockdownFactor := float64(cfg.TripKnockdownFactor)
 
 	// Tailsweep: actor has the tail mutation.
 	if _, ok := char.Mutations["tail"]; ok {
 		variant = TripTailsweep
 		damagePercent = 0.40 // Better than regular trip (0.25)
-		knockdownChance = 70 // Better than regular trip (60%)
+		// U10: tailsweep's intended parity rate is 70% (vs regular trip's
+		// 60%). Solved on the same engine curve as the config factors:
+		// 70% needs factor 1.125. Re-derive alongside them on any retune.
+		knockdownFactor = 1.125
 
 		// Apply tail equipment bonuses if a tail item is equipped.
 		if char.Equipment.Tail.ItemId > 0 {
@@ -122,7 +125,12 @@ func ExecuteTrip(actor Actor) TripResult {
 			if tailSpec.DamageMultiplier > 0 {
 				damagePercent += tailSpec.DamageMultiplier / 100.0
 			}
-			knockdownChance += char.Equipment.Tail.StatMod("knockdown")
+			// U10: StatMod("knockdown") is denominated in intended parity
+			// percentage points on top of tailsweep's 70%. The local slope
+			// of the factor curve there is ~0.009 per point (75% = 1.167,
+			// 80% = 1.217, vs the 1.125 base), so the shipped items
+			// (knockdown 5 and 10) land within a point of their intent.
+			knockdownFactor += float64(char.Equipment.Tail.StatMod("knockdown")) * 0.009
 		}
 	}
 
@@ -141,7 +149,7 @@ func ExecuteTrip(actor Actor) TripResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   damagePercent,
-		KnockdownChance: knockdownChance,
+		KnockdownFactor: knockdownFactor,
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 

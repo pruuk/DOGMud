@@ -119,7 +119,7 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   float64(cfg.TripDamagePercent),
-		KnockdownChance: 0, // No knockdown — bleed instead
+		KnockdownFactor: 0, // No knockdown — bleed instead
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 

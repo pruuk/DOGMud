@@ -181,7 +181,13 @@ gated), so armed undead still drain.
 **`InterruptTargetCast`** is a shared helper that reuses the engine's
 existing `activity.TriggerCastCancel` cast-cancel path (conviction
 refund included). No new silence flag is introduced. `ExecuteThrottle`
-calls it with a `ThrottleInterruptChance` (0.75) probability gate.
+gates the call behind an opposed concentration contest (U10): the
+throttler's grip (`Dex + unarmed-combat×SkillWeight`) against the
+target's hold (`Wil + spellcasting×SkillWeight`) via
+`combat.RunConcentrationContest`, floored only by `ConcentrationFloor`
+(0.02) — not the old flat `ThrottleInterruptChance` coin flip, which is
+deleted. A held contest fires success-only spellcasting progression for
+the target instead of an interrupt.
 
 ---
 

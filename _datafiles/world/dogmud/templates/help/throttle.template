@@ -3,7 +3,8 @@
 The <ansi fg="command">throttle</ansi> command drives your natural fangs into your
 opponent's throat in a crushing choke, cutting off their air.
 It deals direct damage, applies a lingering stamina drain, and
-has a strong chance to shatter any spell your victim is casting.
+tests whether their concentration can survive the grip if they
+are casting a spell.
 
 <ansi fg="yellow">Requirements:</ansi>
 
@@ -23,10 +24,12 @@ has a strong chance to shatter any spell your victim is casting.
     that bleed briefly.
   <ansi fg="stat">Stamina Drain:</ansi> The Throttled condition saps stamina over
     several rounds as the victim struggles for breath.
-  <ansi fg="stat">Cast Interrupt:</ansi> When the victim is casting a spell, throttle
-    has a high chance to shatter their concentration entirely.
-    Their unspent conviction is partially refunded but the spell
-    is lost.
+  <ansi fg="stat">Cast Interrupt:</ansi> When the victim is casting a spell, the
+    choke tests their grip on it. Their own Willpower and
+    spellcasting training contest the throttle, so a practiced
+    caster can hold through it, while a novice is more likely to
+    lose the spell entirely. When it breaks, their unspent
+    conviction is partially refunded but the spell is lost.
   <ansi fg="stat">Cooldown:</ansi> Shared with other special moves.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
 

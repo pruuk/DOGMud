@@ -227,32 +227,26 @@ func (b *Balance) validateMisc() {
 	if b.BashDamagePercent <= 0 || b.BashDamagePercent > 1.0 {
 		b.BashDamagePercent = 0.50
 	}
-	if b.BashKnockdownChance < 0 || b.BashKnockdownChance > 100 {
-		b.BashKnockdownChance = 40
+	if b.BashKnockdownFactor <= 0 {
+		b.BashKnockdownFactor = 1.0
 	}
 	if b.TripDamagePercent <= 0 || b.TripDamagePercent > 1.0 {
 		b.TripDamagePercent = 0.25
 	}
-	if b.TripKnockdownChance < 0 || b.TripKnockdownChance > 100 {
-		b.TripKnockdownChance = 60
+	if b.TripKnockdownFactor <= 0 {
+		b.TripKnockdownFactor = 1.057
 	}
 	if b.KickDamagePercent <= 0 || b.KickDamagePercent > 2.0 {
 		b.KickDamagePercent = 0.80
 	}
-	if b.KickKnockdownChance < 0 || b.KickKnockdownChance > 100 {
-		b.KickKnockdownChance = 35
+	if b.KickKnockdownFactor <= 0 {
+		b.KickKnockdownFactor = 0.924
 	}
 	if b.DrainHealRatio <= 0 {
 		b.DrainHealRatio = 0.75
 	}
 	if b.DrainHealRatio > 2.0 {
 		b.DrainHealRatio = 2.0
-	}
-	if b.ThrottleInterruptChance <= 0 {
-		b.ThrottleInterruptChance = 0.75
-	}
-	if b.ThrottleInterruptChance > 1.0 {
-		b.ThrottleInterruptChance = 1.0
 	}
 	if b.StompDamagePercent <= 0 || b.StompDamagePercent > 3.0 {
 		b.StompDamagePercent = 1.20

@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -366,8 +367,10 @@ func TestCheckConcentrationBreak_NegativeDamage(t *testing.T) {
 }
 
 func TestCheckConcentrationBreak_WithDamage(t *testing.T) {
-	// With an active cast and damage > 0, the function should run
-	// (result depends on RNG so we just verify it doesn't panic)
+	// With an active cast and damage above the U10 chip-damage threshold
+	// (50% of pool, well above the 10% cutoff), the function should run the
+	// contest and return cleanly either way — result depends on RNG so we
+	// just verify it doesn't panic.
 	ch := newCastingChar("sparks")
 	ch.HealthMax.Value = 100
 	ch.Stats.Willpower.ValueAdj = 100
@@ -401,7 +404,8 @@ func TestCheckConcentrationBreak_NormalSpell_StillBreaks(t *testing.T) {
 
 	ch := newCastingChar("sparks")
 	ch.HealthMax.Value = 100
-	// Low willpower + massive damage% should break virtually every time.
+	// Low willpower + no skill + massive damage% (well above the 10%
+	// chip-damage threshold) should lose the contest virtually every time.
 	ch.Stats.Willpower.ValueAdj = 1
 
 	brokeAtLeastOnce := false
@@ -412,6 +416,42 @@ func TestCheckConcentrationBreak_NormalSpell_StillBreaks(t *testing.T) {
 		}
 	}
 	assert.True(t, brokeAtLeastOnce, "a normal (non-flagged) spell should still be breakable by damage")
+}
+
+// TestCheckConcentrationBreak_BelowThresholdNeverRolls pins the U10 chip-
+// damage floor: damage under ConcentrationDamageThresholdPct (10%) of the
+// pool never even reaches the contest, so it can neither break concentration
+// nor fire a spellcasting progression event.
+func TestCheckConcentrationBreak_BelowThresholdNeverRolls(t *testing.T) {
+	ch := newCastingChar("mind-spike")
+	ch.HealthMax.Value = 1000
+	before := ch.GetSkillUseCount(string(skills.Spellcasting))
+	for i := 0; i < 200; i++ {
+		if checkConcentrationBreak(ch, 50) { // 5% of pool
+			t.Fatal("sub-threshold damage must never break concentration")
+		}
+	}
+	if got := ch.GetSkillUseCount(string(skills.Spellcasting)); got != before {
+		t.Fatalf("sub-threshold damage fired progression: %d -> %d", before, got)
+	}
+}
+
+// TestCheckConcentrationBreak_ProgressionFiresOnlyOnHolds pins the U10
+// success-only progression convention: a spellcasting event fires exactly
+// once per HELD contest and never on a lost one.
+func TestCheckConcentrationBreak_ProgressionFiresOnlyOnHolds(t *testing.T) {
+	ch := newCastingChar("mind-spike")
+	ch.HealthMax.Value = 100
+	before := ch.GetSkillUseCount(string(skills.Spellcasting))
+	holds := 0
+	for i := 0; i < 200; i++ {
+		if !checkConcentrationBreak(ch, 30) { // 30% hit, difficulty 300
+			holds++
+		}
+	}
+	if got := ch.GetSkillUseCount(string(skills.Spellcasting)) - before; got != holds {
+		t.Fatalf("progression events %d != holds %d (success-only rule)", got, holds)
+	}
 }
 
 // newProneCastingChar builds a Character mid-cast (Activity=Casting) and
@@ -457,6 +497,32 @@ func TestProcessFoldRound_NormalSpell_PositionCanBreak(t *testing.T) {
 		}
 	}
 	assert.True(t, brokeAtLeastOnce, "a normal (non-flagged) spell should still be breakable by position disruption while Prone")
+}
+
+// TestProcessFoldRound_ProneHopelessCasterBreaks pins the U10 contest swap for
+// the position path: prone difficulty is 300 vs. a Wil-1/skill-0 caster's
+// score of ~1, so the break chance is ~98% per round.
+//
+// Uses a FRESH caster per iteration (the same pattern as the neighboring
+// TestProcessFoldRound_NormalSpell_PositionCanBreak), not one caster looped
+// across "rounds": CastingData.FoldsNeeded is 0 by default (newCastingChar
+// never reads the spell's BaseFolds), so a HELD round still falls through to
+// AdvanceCastingFolds(0,0), which reports complete immediately and clears the
+// caster's Activity. Reusing one caster across iterations would silently stop
+// exercising the position check after its first non-break round, which is
+// what made the original version of this test flake at the 0.02 floor.
+func TestProcessFoldRound_ProneHopelessCasterBreaks(t *testing.T) {
+	cleanup := spells.SeedSpellsForTest(map[string]*spells.SpellData{
+		"sparks": {SpellId: "sparks", BaseFolds: 4},
+	})
+	defer cleanup()
+
+	broke := false
+	for i := 0; i < 200 && !broke; i++ {
+		ch := newProneCastingChar("sparks")
+		broke = processFoldRound(ch).ProneBroke
+	}
+	assert.True(t, broke, "a Wil-1 caster folding while prone should break within 200 rounds")
 }
 
 // ─── Spell Resolution Helpers ─────────────────────────────────────────────────

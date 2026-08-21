@@ -1,5 +1,21 @@
 # DOGMud Patch Notes
 
+## 2026-08-21: Holding a spell is a skill
+
+Keeping a spell together while someone hits you is now a real contest, and
+your spellcasting training is half of it. A practiced caster holds through
+pain that would shatter a novice. Small scrapes no longer threaten your
+casting at all. Being wrestled to the ground is still the surest way to
+stop a caster, and a beast at your throat now tests your training against
+its grip instead of rolling plain luck.
+
+Knocking someone down now has to beat them. A trip or bash measures your
+skill against their footwork, so clumsy attackers cannot floor a master by
+luck alone, and some moves that almost never took anyone down now can.
+Getting back up for free is a contest against whoever is standing over
+you. Standing by command still works as it always has: you spend the
+effort, you get up. If nobody is on you, you simply rise.
+
 ## 2026-08-21: A critical hit now means it
 
 Combat text no longer calls an ordinary hit critical. Before, a solidly

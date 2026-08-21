@@ -268,7 +268,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 			ForceCrit: combat.SleepingForceCrit(defChar),
 		},
 		DamagePercent:        shotMult,
-		KnockdownChance:      0,
+		KnockdownFactor:      0,
 		DamageStat:           char.GetEffectivePerception(),
 		MitigationMultiplier: 1.0,
 	})

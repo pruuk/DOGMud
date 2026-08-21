@@ -55,7 +55,7 @@ type GoreResult struct {
 //   - Horned-species gate: SpeciesIsHorned (gore natural attack)
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Strength
 //     attack stat, Dexterity defense stat, KickDamagePercent,
-//     BashKnockdownChance, KnockdownToSupine=true — forward charge knockback)
+//     BashKnockdownFactor, KnockdownToSupine=true — forward charge knockback)
 //   - combat.RecordSpecialMove for analytics + RoundsWaiting = 1
 //   - OnSkillUse(UnarmedCombat) on hit for progression
 //
@@ -110,7 +110,7 @@ func ExecuteGore(actor Actor) GoreResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:     float64(cfg.KickDamagePercent),
-		KnockdownChance:   int(cfg.BashKnockdownChance),
+		KnockdownFactor:   float64(cfg.BashKnockdownFactor),
 		KnockdownToSupine: true, // horned charge drives target forward (face-up)
 		DamageStat:        char.Stats.Strength.ValueAdj,
 	})

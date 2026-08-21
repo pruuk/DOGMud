@@ -128,7 +128,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:   float64(cfg.TripDamagePercent),
-		KnockdownChance: 0, // No knockdown — the drain itself is the payoff
+		KnockdownFactor: 0, // No knockdown — the drain itself is the payoff
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
 

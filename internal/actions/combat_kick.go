@@ -72,13 +72,18 @@ type KickResult struct {
 // any combat-initiation logic (e.g. SetAggro for player out-of-combat kick).
 // raptorLegsKickBonus boosts standard-kick damage and knockdown when the
 // attacker has the Raptor Legs mutation (digitigrade, talon-clawed legs).
-// Returns the (possibly) adjusted damagePercent and knockdownChance.
-func raptorLegsKickBonus(owned map[string]int, damagePercent float64, knockdownChance int) (float64, int) {
+// Returns the (possibly) adjusted damagePercent and knockdownFactor.
+// U10: the old +15 bonus lifted kick's intended parity rate from 35% to
+// 50%. Solved on the same engine curve as the config factors
+// (P = Phi((f-1)/(RollSpread*f*sqrt(2))) at shipped RollSpread 0.15):
+// 50% needs factor 1.0, so the bonus over KickKnockdownFactor (0.924)
+// is +0.076. Re-derive alongside the config factors on any retune.
+func raptorLegsKickBonus(owned map[string]int, damagePercent float64, knockdownFactor float64) (float64, float64) {
 	if _, ok := owned["raptor-legs"]; ok {
 		damagePercent += 0.20
-		knockdownChance += 15
+		knockdownFactor += 0.076
 	}
-	return damagePercent, knockdownChance
+	return damagePercent, knockdownFactor
 }
 
 func ExecuteKick(actor Actor) KickResult {
@@ -116,14 +121,14 @@ func ExecuteKick(actor Actor) KickResult {
 	// Determine kick variant and associated params.
 	variant := KickStandard
 	damagePercent := float64(cfg.KickDamagePercent)
-	knockdownChance := int(cfg.KickKnockdownChance)
+	knockdownFactor := float64(cfg.KickKnockdownFactor)
 	mitigationMult := 1.0
 
 	// Stomp: target is downed (prone or supine, not grappled).
 	if target.Char.IsProne() || target.Char.IsSupine() {
 		variant = KickStomp
 		damagePercent = float64(cfg.StompDamagePercent)
-		knockdownChance = 0
+		knockdownFactor = 0
 		mitigationMult = 0.5
 	}
 
@@ -132,13 +137,13 @@ func ExecuteKick(actor Actor) KickResult {
 	if char.IsGrappling() && char.IsController() {
 		variant = KickKnee
 		damagePercent = float64(cfg.KneeDamagePercent)
-		knockdownChance = 0
+		knockdownFactor = 0
 		mitigationMult = 1.0
 	}
 
 	// Raptor Legs mutation: talon-clawed legs make a plain kick bite far harder.
 	if variant == KickStandard {
-		damagePercent, knockdownChance = raptorLegsKickBonus(char.Mutations, damagePercent, knockdownChance)
+		damagePercent, knockdownFactor = raptorLegsKickBonus(char.Mutations, damagePercent, knockdownFactor)
 	}
 
 	// Execute the skill move.
@@ -156,7 +161,7 @@ func ExecuteKick(actor Actor) KickResult {
 			ForceCrit: combat.SleepingForceCrit(target.Char),
 		},
 		DamagePercent:        damagePercent,
-		KnockdownChance:      knockdownChance,
+		KnockdownFactor:      knockdownFactor,
 		DamageStat:           char.Stats.Strength.ValueAdj,
 		MitigationMultiplier: mitigationMult,
 	})

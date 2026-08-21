@@ -179,7 +179,7 @@ func expireMobCombatMemory(mob *mobs.Mob) {
 
 // tickMobProneRecovery — current inline block at lines 107–118.
 func tickMobProneRecovery(mob *mobs.Mob) {
-	if attemptMade, success := mob.Character.AttemptRecovery(mob.Character.Stats.Dexterity.ValueAdj); attemptMade {
+	if attemptMade, success := mob.Character.AttemptRecovery(recoveryContest(&mob.Character)); attemptMade {
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
 			mName := mobDisplayName(mob, room, 0)
 			if success {

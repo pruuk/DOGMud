@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -21,7 +22,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // =============================================================================
@@ -134,14 +134,30 @@ func checkConcentrationBreak(ch *characters.Character, damage int) bool {
 	}
 	maxHealth := ch.HealthMax.Value
 	damagePct := damage * 100 / maxHealth
-	if damagePct < 1 {
-		damagePct = 1
+	if damagePct < int(configs.GetBalanceConfig().ConcentrationDamageThresholdPct) {
+		// Chip damage does not generate rolls at all (U10).
+		return false
 	}
-	chance := characters.CalcConcentrationChance(
-		ch.Stats.Willpower.ValueAdj, damagePct)
-	roll := util.Rand(100)
-	util.LogRoll(`Concentration`, roll, chance)
-	return roll >= chance
+	res := combat.RunConcentrationContest(concentrationScore(ch), float64(damagePct*10))
+	if res.Success {
+		// Success-only progression (U10b's success half, adopted from
+		// birth): one spellcasting event per HELD contest. Routed through
+		// the shared applier, not a direct OnSkillUse call, so this contest
+		// path stays covered by the U9 seam guard
+		// (internal/progression/seam_guard_test.go) the same as every other
+		// contest site.
+		ch.ApplyProgression(
+			progression.OrdinaryEvents(progression.Outcome{AttackerSkill: string(skills.Spellcasting)}),
+			progression.SideAttacker, ch.GetUserId(), 0)
+	}
+	return !res.Success
+}
+
+// concentrationScore is the caster's side of every concentration contest:
+// Wil + spellcasting x SkillWeight, the arc's standard shape.
+func concentrationScore(ch *characters.Character) float64 {
+	return float64(ch.Stats.Willpower.ValueAdj) +
+		float64(ch.GetSkillLevel(skills.Spellcasting))*float64(configs.GetBalanceConfig().SkillWeight)
 }
 
 // WeaponBreakResult holds the outcome of a weapon break test.
@@ -296,7 +312,7 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			},
 			IsCounter:       true,
 			DamagePercent:   float64(cfg.TripDamagePercent),
-			KnockdownChance: int(cfg.TripKnockdownChance),
+			KnockdownFactor: float64(cfg.TripKnockdownFactor),
 			DamageStat:      defender.GetEffectiveDexterity(),
 		})
 		result.AutoTrip = true
@@ -355,7 +371,7 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			},
 			IsCounter:         true,
 			DamagePercent:     float64(cfg.BashDamagePercent),
-			KnockdownChance:   int(cfg.BashKnockdownChance),
+			KnockdownFactor:   float64(cfg.BashKnockdownFactor),
 			DamageStat:        defender.Stats.Strength.ValueAdj,
 			KnockdownToSupine: true, // bash sends attacker backward
 		})
@@ -536,10 +552,11 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 	// never to incidental party damage or position churn.
 	spellData := spells.GetSpell(cs.SpellId)
 
-	// Position-based concentration disruption (chunk 4f). Replaces the
-	// three deterministic 100% gates (Prone/Supine/Grapple) that chunks
-	// pre-4e shipped. Now: damage%-equivalent per (position, role) →
-	// existing CalcConcentrationChance(Wil, dmgPctEquiv) curve → roll.
+	// Position-based concentration disruption (chunk 4f, contested since
+	// U10). Replaces the three deterministic 100% gates (Prone/Supine/
+	// Grapple) that chunks pre-4e shipped. Now: damage%-equivalent per
+	// (position, role) → x10 → combat.RunConcentrationContest against the
+	// caster's concentrationScore, the arc's standard contest shape.
 	// Standing returns 0 and skips the check entirely.
 	//
 	// The damage-path checkConcentrationBreak still fires independently
@@ -554,11 +571,19 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 		}
 		dmgPctEquiv := position.PositionDisruptionDmgEquiv(posState, ctrlState)
 		if dmgPctEquiv > 0 {
-			chance := characters.CalcConcentrationChance(
-				char.Stats.Willpower.ValueAdj, dmgPctEquiv)
-			roll := util.Rand(100)
-			util.LogRoll(`Position Concentration`, roll, chance)
-			if roll >= chance {
+			// Chunk 4f's lattice keeps its full granularity; the x10
+			// conversion is the design (owner 2026-08-21, re-ratified over
+			// the corrected table — prone 300, deep holds 600-700).
+			res := combat.RunConcentrationContest(concentrationScore(char), float64(dmgPctEquiv*10))
+			if res.Success {
+				// Success-only progression: one spellcasting event per HELD
+				// round (melee fires per combat round on the same basis;
+				// farming requires a live aggressor). Routed through the
+				// U9 applier — the progression seam guard forbids direct
+				// OnSkillUse calls from this package.
+				char.ApplyProgression(progression.OrdinaryEvents(progression.Outcome{AttackerSkill: string(skills.Spellcasting)}),
+					progression.SideAttacker, char.GetUserId(), 0)
+			} else {
 				// Concentration broke. Route messaging by which break
 				// flag the caller expects for this position. Default
 				// falls back to GrappleBroke for any future non-Standing
@@ -576,7 +601,7 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 				}
 				return result
 			}
-			// Roll passed — concentration held this round; fold continues.
+			// Contest held — the fold continues this round.
 		}
 	}
 
