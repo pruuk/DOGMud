@@ -537,13 +537,25 @@ Balance:
   #   Picking the wrong pair used to be numerically invisible in production and
   #   would have become a live balance bug on the first retune.
   #
-  #   Applies to OPPOSED contests only. Static-difficulty rolls -- search,
-  #   track, forage, concentration -- are not floored.
+  #   Applies to OPPOSED contests only.
+  #   Static-difficulty rolls -- search, track, forage -- are not floored.
+  #   Concentration IS floored, by its own ConcentrationFloor below, through
+  #   combat.RunConcentrationContest.
   #
   #   Range: above 0.0 and at most 0.50. Zero is NOT legal: it fails validation
   #   and reverts to 0.125, because a zero here would silently disable the
   #   mechanism everywhere including in every Go test.
   ContestFloor: 0.125
+  # ConcentrationFloor: the symmetric mercy band for concentration
+  #   contests only (damage, position, and throttle triggers). The
+  #   standard ContestFloor would break a master one-in-eight per
+  #   disruption; concentration holds get a much smaller band. Zero is
+  #   not allowed (rewritten to the default).
+  ConcentrationFloor: 0.02
+  # ConcentrationDamageThresholdPct: damage below this percent of the pool
+  #   never rolls for concentration. Chip damage should not generate
+  #   rolls. Minimum 1; there is no roll-on-any-hit zero setting.
+  ConcentrationDamageThresholdPct: 10
 
   # ── CRIT BAR (U6b) ──────────────────────────────────────────────────
   # The crit threshold every channel tests its normalized margin against:
@@ -660,14 +672,20 @@ Balance:
   RhetoricActionBaseConvictionCost: 4
   #
   # DamagePercent: fraction of a normal melee swing's damage this move deals.
-  # KnockdownChance: base % chance to knock the target prone on hit.
-  #   The actual roll is modified by attacker Str vs defender Str.
   BashDamagePercent: 0.50        # Bash deals 50% of a normal swing
-  BashKnockdownChance: 50        # Bash: 50% base knockdown chance
   TripDamagePercent: 0.25        # Trip deals 25% of a normal swing (low damage, high knockdown)
-  TripKnockdownChance: 60        # Trip: 60% base knockdown chance
   KickDamagePercent: 0.40        # Kick deals 40% of a normal swing
-  KickKnockdownChance: 35        # Kick: 35% base knockdown chance
+  #
+  # KnockdownFactor: multiplier on the attacker's score in the knockdown
+  # contest (attack score x factor vs defender Dex + unarmed x SkillWeight).
+  # Anchored to the INTENDED per-move rates at score parity (the old
+  # threshold knobs claimed these numbers but never delivered them). The
+  # contest floor pulls observed parity rates slightly toward even. Zero
+  # is not allowed (rewritten to the default); a move with no knockdown
+  # component sets factor 0 in code, not here.
+  BashKnockdownFactor: 1.0       # intended half-and-half at parity
+  TripKnockdownFactor: 1.057     # intended strong-favorite at parity
+  KickKnockdownFactor: 0.924     # intended underdog at parity
   #
   # CoupDeGraceRounds: rounds a mob waits before finishing a downed player.
   #   0 = disabled (mob disengages when player is downed).
@@ -1243,16 +1261,6 @@ Balance:
   # and every caster failed one cast in twenty forever, each failure carrying a
   # 2-round cooldown. Concentration break already covers the intent and, unlike
   # initiation, responds to skill. Do not reintroduce a flat initiation gate.
-  #
-  # SpellInitiationWillpowerDivisor SURVIVES despite its name: CalcConcentrationChance
-  # reads it too. Roadmap U9 removes it when concentration becomes a real contest.
-  SpellInitiationWillpowerDivisor: 4   # Wil / this = concentration bonus
-  #
-  # Concentration: % chance to maintain casting when struck mid-cast.
-  # NOTE: this formula has NO spellcasting term, so a master's skill contributes
-  # nothing to holding a spell together. Roadmap U9 rebuilds it as a contest of
-  # Wil + spellcasting*5 against a difficulty set by what disrupted you.
-  SpellConcentrationBase: 50
   #
   # Folds per round: how fast a spell charges each combat round.
   # Formula includes: SpellcastingLevel × SpellFoldsSkillFactor
