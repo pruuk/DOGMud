@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-08-21: A critical hit now means it
+
+Combat text no longer calls an ordinary hit critical. Before, a solidly
+above-average swing could borrow the wording of a critical strike without
+being one, so fights read as a stream of shouted criticals with only some of
+them marked as the real thing. Now the dramatic wording and the critical
+marker always arrive together, and a true critical that lands on heavy armor
+no longer borrows the words of a glancing blow.
+
+Critical hits and fumbles also have many more ways to be described, so a
+flurry of them no longer repeats the same line over and over. Unarmed
+fighters, staff wielders, and casters swinging their implements in
+desperation get the most new variety.
+
 ## 2026-08-19: Polish from the battle narration review
 
 A line ending in a bracketed or parenthesized note, such as a critical-hit

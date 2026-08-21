@@ -1336,6 +1336,26 @@ func deflectedSwingLines(defense DefenseType, sourceName, targetName, dmgDesc st
 	return toAttacker, toDefender
 }
 
+// attackMessagePct clamps the damage percentage used for attack-message band
+// selection so the crit-worded pool (pctDamage >= 101 in GetAttackMessage) is
+// used exactly when the swing actually crit. Without this, any above-average
+// damage roll — roughly half of clean hits under RollSpread — selected
+// crit-worded text with no *** banner, and a heavily mitigated real crit
+// bannered weak-worded text. Damage itself is untouched; this only picks
+// which pool narrates it.
+func attackMessagePct(pctDamage int, isCrit bool) int {
+	if isCrit {
+		if pctDamage <= 100 {
+			return 101
+		}
+		return pctDamage
+	}
+	if pctDamage > 100 {
+		return 100
+	}
+	return pctDamage
+}
+
 // buildAttackMessages constructs and sends all combat messages for a swing.
 //
 // defended is hitResolution.defended: the defence won the contest but the
@@ -1403,7 +1423,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// The feint check is deliberately skipped: this swing dealt real
 		// damage, so reading it as a deliberate feint would be wrong.
 	} else {
-		msgs = items.GetAttackMessage(displaySubtype, int(pctDamage))
+		msgs = items.GetAttackMessage(displaySubtype, attackMessagePct(int(pctDamage), result.Crit))
 		// Feint check: skilled attackers can turn misses into deliberate-looking
 		// feints. Decision (U6 Task 14): this gate stays on true zero-damage
 		// outcomes (defensive crits, uncontested misses). Pre-U6 it also fired
