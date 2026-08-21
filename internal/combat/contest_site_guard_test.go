@@ -77,6 +77,7 @@ var contestSiteOwners = map[string]string{
 	"internal/hooks/charm_spell.go:resolveCharmSpell":           "U10c (the charm-cast contest; the charm family is redesigned wholesale there)",
 
 	"internal/combat/skill_moves.go:executeSkillMoveWithRunner": "U10 (knockdown opposed contest after a landed special move)",
+	"internal/hooks/recovery_contest.go:recoveryContest":        "U10 (prone-recovery opposed contest; free stands never contest)",
 }
 
 // contestCoreSelectors are the internal/contest entry points a selector call

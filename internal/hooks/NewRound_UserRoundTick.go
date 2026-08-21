@@ -241,8 +241,9 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 				// Roundtick any cooldowns
 				user.Character.Cooldowns.RoundTick()
 
-				// Stage 7.5: Attempt automatic recovery from prone (uses DEX)
-				if attemptMade, success := user.Character.AttemptRecovery(user.Character.Stats.Dexterity.ValueAdj); attemptMade {
+				// Stage 7.5: Attempt automatic recovery from prone (contested
+				// if someone is holding the character down, free otherwise)
+				if attemptMade, success := user.Character.AttemptRecovery(recoveryContest(user.Character)); attemptMade {
 					if success {
 						user.SendText(messaging.CategorySystem, "You scramble to your feet!")
 						if room := rooms.LoadRoom(user.Character.RoomId); room != nil {

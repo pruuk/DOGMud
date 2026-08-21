@@ -120,8 +120,7 @@ func Run(atkScore float64, entries []Entry) Result {
 }
 
 // AgainstDifficulty contests a score against a fixed number rather than against
-// an opponent — searching a room, following a trail, foraging, recovering from
-// prone with nobody holding you down.
+// an opponent — searching a room, following a trail, foraging.
 //
 // It is deliberately the same code path as Run, so a difficulty check produces
 // the same crit, fumble and margin semantics as any other contest. The
