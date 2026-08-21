@@ -259,7 +259,6 @@ type Balance struct {
 	KneeDamagePercent                ConfigFloat `yaml:"KneeDamagePercent"`                // Knee damage in grapple (default 1.00)
 	CoupDeGraceRounds                ConfigInt   `yaml:"CoupDeGraceRounds"`                // Rounds before mob finishes downed player (default 1; 0=disabled)
 	DrainHealRatio                   ConfigFloat `yaml:"DrainHealRatio"`                   // Fraction of drain damage the attacker heals (lifesteal), default 0.75
-	ThrottleInterruptChance          ConfigFloat `yaml:"ThrottleInterruptChance"`          // Chance throttle interrupts a casting victim, default 0.75
 
 	// ── COMBAT: RANGED ───────────────────────────────────────────────────────
 	ShootBaseStaminaCost  ConfigFloat `yaml:"ShootBaseStaminaCost"`  // Base stamina cost to shoot before shared multipliers (default 2)

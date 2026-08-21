@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
@@ -162,18 +163,35 @@ func TestThrottle_Executed_BleedAndBuff(t *testing.T) {
 		"target should have Throttled buff (id 89) after a successful throttle")
 }
 
-// TestThrottle_CastInterrupt verifies that when ThrottleInterruptChance is
-// forced to 1.0 and the target is casting, the cast is interrupted and
-// InterruptedCast=true is returned.
+// TestThrottle_CastInterrupt verifies that a throttle hit against a casting
+// target resolves the cast-interrupt through the concentration seam (U10):
+// the target's hold (Willpower + spellcasting) is contested against the
+// throttler's grip (Dexterity + unarmed-combat), floored at
+// Balance.ConcentrationFloor.
+//
+// Determinism strategy: this test pins ConcentrationFloor to 0 via
+// AddOverlayOverrides rather than accepting the standard 2% mercy-flip.
+// Validate()'s `<= 0 || > 0.5` rewrite only ever runs once — configData
+// tracks a `validated` bool and ensureConfigValidated is a sync-once gate —
+// so an overlay applied after startup validation is never re-validated and 0
+// sticks (confirmed: AddOverlayOverrides unmarshals straight onto the live
+// Config, it never calls Validate). With the floor at 0,
+// contest.RunWithFloors's floor<=0 branch returns the raw contest untouched
+// (no mercy-flip at all), so pairing that with an overwhelming grip-vs-hold
+// gap (target Willpower 1 vs. a five-figure attacker Dexterity) makes the
+// interrupt outcome deterministic rather than merely "near-certain" — no
+// realistic roll variance can flip a margin that lopsided. The throttle
+// move's own to-hit roll is a separate, independent contest, so the
+// retry-until-hit loop below (unchanged from the prior version) still
+// covers that residual variance.
 func TestThrottle_CastInterrupt(t *testing.T) {
-	// Force interrupt chance to 100%.
+	prevFloor := float64(configs.GetBalanceConfig().ConcentrationFloor)
 	_ = configs.AddOverlayOverrides(map[string]any{
-		"Balance.ThrottleInterruptChance": 1.0,
+		"Balance.ConcentrationFloor": 0.0,
 	})
 	defer func() {
-		// Reset to default after this test.
 		_ = configs.AddOverlayOverrides(map[string]any{
-			"Balance.ThrottleInterruptChance": 0.75,
+			"Balance.ConcentrationFloor": prevFloor,
 		})
 	}()
 
@@ -189,7 +207,9 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 	})
 	defer speciesCleanup()
 
-	// Register a target mob that is currently casting.
+	// Register a target mob that is currently casting, with a near-zero hold
+	// (tiny Willpower) and a tiny Dexterity so the throttle move itself lands
+	// reliably.
 	targetMob := &mobs.Mob{InstanceId: 7299}
 	targetMob.Character.Name = "CastingTarget"
 	targetMob.Character.HealthMax.Value = 500
@@ -199,6 +219,7 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 	targetMob.Character.Conviction = 50
 	targetMob.Character.ConvictionMax.Value = 100
 	targetMob.Character.Stats.Dexterity.ValueAdj = 1
+	targetMob.Character.Stats.Willpower.ValueAdj = 1
 	targetMob.Character.Buffs = buffs.New()
 	setCombatPositionParallel(&targetMob.Character, position.Standing)
 	// Set the target into a casting state.
@@ -212,10 +233,13 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 
 	assert.True(t, targetMob.Character.IsCasting(), "pre-condition: target should be casting")
 
-	// Attacker with high Strength for near-guaranteed hit.
+	// Attacker: high Strength for a near-guaranteed hit, and a five-figure
+	// Dexterity so the throttler's grip overwhelms the target's near-zero
+	// hold regardless of the random baseline characters.New() rolled.
 	char := characters.New()
 	char.SpeciesId = 7004
 	char.Stats.Strength.ValueAdj = 500
+	char.Stats.Dexterity.ValueAdj = 5000
 	fundSpecialMove(char)
 
 	// Store pre-interrupt conviction to verify refund.
@@ -250,9 +274,11 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 		t.Fatal("no hit in 100 attempts — throttle hit path is broken")
 	}
 
-	// Cast should have been interrupted.
+	// Cast should have been interrupted: with the floor pinned to 0 and an
+	// overwhelming grip-vs-hold gap, the concentration contest is
+	// deterministic here.
 	assert.True(t, res.InterruptedCast,
-		"InterruptedCast should be true when throttle hits a casting target with 100%% chance")
+		"InterruptedCast should be true when an overwhelming grip contests a near-zero hold with ConcentrationFloor pinned to 0")
 	assert.False(t, targetMob.Character.IsCasting(),
 		"target should no longer be casting after throttle interrupt")
 
@@ -263,6 +289,117 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 	assert.GreaterOrEqual(t, targetMob.Character.Conviction, 0,
 		"target conviction should not be negative after refund")
 
+}
+
+// TestThrottle_CastInterrupt_OverwhelmingCaster is the companion case: a
+// caster whose hold (Willpower + spellcasting) overwhelmingly outweighs the
+// throttler's grip (Dexterity + unarmed-combat) should rarely lose the
+// concentration contest, and every HELD contest must fire exactly one
+// success-only spellcasting progression event — no event on the (rare)
+// interrupts, mirroring internal/hooks' checkConcentrationBreak.
+//
+// Determinism strategy: rather than asserting on a single roll, this test
+// drives 20 LANDED throttle hits (the concentration contest's floor-driven
+// 2% mercy chance is deliberately left at its shipped default here, unlike
+// the sibling test above) and checks two count-equality invariants that hold
+// regardless of which individual rolls the floor happens to flip:
+//  1. heldCount == the spellcasting SkillUseCount delta (success-only
+//     progression, proven exactly rather than probabilistically).
+//  2. heldCount >= 1 — the odds of zero holds across 20 tries against an
+//     overwhelming caster is on the order of 0.02^20, i.e. not a real flake
+//     risk.
+//
+// interruptCount < heldCount is also asserted as a sanity check that
+// interrupts stay rare; failing it would require roughly 10+ interrupts out
+// of 20 trials at a real per-trial rate near 2%, which is not a realistic
+// flake either.
+func TestThrottle_CastInterrupt_OverwhelmingCaster(t *testing.T) {
+	// Deliberately NOT overriding ConcentrationFloor — this test exercises
+	// the shipped 2% mercy floor, not the pinned-to-0 guaranteed case above.
+
+	buffCleanup := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		89: {BuffId: 89, Name: "Throttled", TriggerCount: 3, RoundInterval: 1},
+	})
+	defer buffCleanup()
+
+	speciesCleanup := species.SeedSpeciesForTest(map[int]*species.Species{
+		7005: {SpeciesId: 7005, Name: "fanged-overwhelmed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+	})
+	defer speciesCleanup()
+
+	// Target: overwhelming caster. High Willpower via .Base + RecalculateStats
+	// (the arc's standard "derive it, don't just poke ValueAdj" idiom), plus
+	// a high spellcasting rank via the existing char.Skills[...] idiom.
+	targetMob := &mobs.Mob{InstanceId: 7399}
+	targetMob.Character.Name = "OverwhelmingCaster"
+	targetMob.Character.Stats.Willpower.Base = 5000
+	targetMob.Character.RecalculateStats()
+	targetMob.Character.HealthMax.Value = 500
+	targetMob.Character.Health = 500
+	targetMob.Character.Stamina = 500
+	targetMob.Character.StaminaMax.Value = 500
+	targetMob.Character.Conviction = 50
+	targetMob.Character.ConvictionMax.Value = 100
+	// Tiny Dexterity so the throttle move itself lands reliably — this is
+	// the move's own to-hit roll, independent of the concentration contest.
+	targetMob.Character.Stats.Dexterity.ValueAdj = 1
+	targetMob.Character.Skills = map[string]int{string(skills.Spellcasting): 100}
+	targetMob.Character.Buffs = buffs.New()
+	setCombatPositionParallel(&targetMob.Character, position.Standing)
+	mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+	defer mobs.SetInstanceForTest(targetMob.InstanceId, nil)
+
+	castData := activity.CastingData{
+		SpellId:             "fireball",
+		TotalConvictionCost: 30,
+		ConvictionSpent:     10,
+	}
+	setCastingForTest(&targetMob.Character, castData)
+
+	// Attacker: modest, unmodified grip (default characters.New() Dexterity
+	// and unarmed-combat rank 1) — dwarfed by the target's engineered hold
+	// regardless of characters.New()'s random stat roll.
+	char := characters.New()
+	char.SpeciesId = 7005
+	char.Stats.Strength.ValueAdj = 500
+	fundSpecialMove(char)
+
+	startProgression := targetMob.Character.GetSkillUseCount(string(skills.Spellcasting))
+	heldCount := 0
+	interruptCount := 0
+	landed := 0
+
+	for i := 0; i < 500 && landed < 20; i++ {
+		if !targetMob.Character.IsCasting() {
+			setCastingForTest(&targetMob.Character, castData)
+		}
+		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.Cooldowns = characters.Cooldowns{}
+
+		res := ExecuteThrottle(newStubActor(char, newTestRoom()))
+		if !res.Executed || !res.MoveResult.Hit {
+			continue
+		}
+		landed++
+		if res.InterruptedCast {
+			interruptCount++
+		} else {
+			heldCount++
+		}
+	}
+
+	if landed < 20 {
+		t.Fatalf("only %d landed hits in 500 attempts — throttle hit path is broken", landed)
+	}
+
+	endProgression := targetMob.Character.GetSkillUseCount(string(skills.Spellcasting))
+
+	assert.Equal(t, heldCount, endProgression-startProgression,
+		"spellcasting progression should fire exactly once per held contest (success-only, no event on interrupt)")
+	assert.GreaterOrEqual(t, heldCount, 1,
+		"an overwhelming caster should hold at least once across 20 landed hits (odds of zero holds is ~0.02^20)")
+	assert.Less(t, interruptCount, heldCount,
+		"an overwhelming caster should be interrupted far less often than it holds")
 }
 
 // TestThrottle_TargetGone verifies that when aggro is set to an invalid mob
