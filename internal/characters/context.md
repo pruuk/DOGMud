@@ -1384,32 +1384,36 @@ position's sub pool (`TopSubmissionsForPosition` or
 `pickSubmissionRoundRobin` each time a sub attempt fires so the same
 sub type is not hammered every round. Not persisted: `yaml:"-"`.
 
-### CalcConcentrationChance (cast_helpers.go)
+### Concentration is a contest, not a solo curve (U10)
 
-```go
-func CalcConcentrationChance(willpower, damagePct int) int
-```
+`CalcConcentrationChance` (the old Willpower-divisor curve) is **deleted**.
+Concentration is now resolved by `combat.RunConcentrationContest(casterScore,
+disruption)` (`internal/combat/run_concentration_contest.go`), the one place
+`Balance.ConcentrationFloor` (0.02) is read. The caster is always the attack
+side; `casterScore` is `concentrationScore()`
+(`internal/hooks/combat_shared_helpers.go`): `Wil.ValueAdj + spellcasting ×
+SkillWeight`. Success = the caster HELD.
 
-Returns the % chance (0-100) that a caster maintains concentration given
-their Willpower and an incoming disruption expressed as a percentage of max
-HP. Higher Willpower → higher chance to hold; higher `damagePct` →
-lower chance to hold. The formula uses a Willpower divisor and a flat base,
-both tunable via config.
-
-**Consumed by two independent disruption paths:**
+**Three independent disruption triggers, all through the same contest:**
 
 1. **Damage-path** (`checkConcentrationBreak` in
-   `internal/hooks/combat_shared_helpers.go`): fires when the caster
-   takes damage mid-cast. `damagePct = (damage * 100) / maxHP`.
-2. **Position-path** (`processFoldRound`, chunk 4f): fires every fold
-   round when the caster is not `Standing`. `damagePct` comes from
-   `position.PositionDisruptionDmgEquiv(pos, role)` —
-   `internal/state/position/disruption.go`. Standing returns 0 (call
-   to `CalcConcentrationChance` is skipped entirely in that case).
+   `internal/hooks/combat_shared_helpers.go`): fires when the caster takes
+   damage mid-cast, but only above `ConcentrationDamageThresholdPct` (10) of
+   max HP — chip damage never rolls at all. `disruption = damagePct * 10`.
+2. **Position-path** (`processFoldRound`, chunk 4f): fires every fold round
+   when the caster is not `Standing`. `disruption` comes from
+   `position.PositionDisruptionDmgEquiv(pos, role) * 10` —
+   `internal/state/position/disruption.go`. Standing returns 0 (the contest
+   is skipped entirely in that case).
+3. **Throttle-path** (`ExecuteThrottle`, `internal/actions/combat_throttle.go`):
+   a live opposing score instead of a static difficulty — the throttler's
+   grip (`Dex + unarmed-combat × SkillWeight`) against the target's hold.
+   Telegraphed `NoDamageInterrupt` casts are exempt from all three triggers.
 
-Both paths call `characters.CalcConcentrationChance` with the same
-Willpower curve; both can break a cast in the same round (layered
-disruption). Tests live in `internal/characters/casting_test.go`.
+All three can break the same cast in a single round (layered disruption).
+Progression is success-only: one `OnSkillUse`/`ApplyProgression` event on a
+HELD contest, nothing on a broken one. Tests live in
+`internal/characters/casting_test.go`.
 
 ### OnCharacterCreated additions (chunk 4a + 4b)
 

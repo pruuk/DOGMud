@@ -11,13 +11,13 @@ the ground by special attacks like <ansi fg="command">bash</ansi>,
     knockdown of the three)
   - Hit by a successful <ansi fg="command">kick</ansi> attack
 
-  All knockdown attempts are modified by opposed skill checks — a
+  All knockdown attempts are modified by opposed skill checks. A
   skilled defender is harder to floor than a novice.
 
 <ansi fg="yellow">Effects While Prone:</ansi>
 
   <ansi fg="red">Attack Penalties:</ansi>
-    - Attacking from the ground is substantially harder — both your
+    - Attacking from the ground is substantially harder. Both your
       accuracy and the force behind each swing suffer.
 
   <ansi fg="red">Defense Penalties:</ansi>
@@ -37,8 +37,10 @@ You have two ways to recover from being prone:
 
   1. <ansi fg="stat">Automatic Recovery:</ansi>
      - After a short delay you automatically attempt to stand each round.
-     - Success depends on your Dexterity — nimble characters recover
-       faster. Each attempt costs your action for that round.
+     - Getting up for free is a contest against whoever is holding
+       you down (their Dexterity and unarmed skill against yours).
+       If nobody is attacking you, you simply stand back up.
+       Each attempt costs your action for that round.
      - No stamina cost.
 
   2. <ansi fg="stat">Manual Recovery:</ansi> (<ansi fg="command">help stand</ansi>)
@@ -48,10 +50,11 @@ You have two ways to recover from being prone:
 
 <ansi fg="yellow">Strategy:</ansi>
 
-Being prone is dangerous — your opponent gains significant advantages.
+Being prone is dangerous. Your opponent gains significant advantages.
 Automatic recovery is free (only costs your action), so save stamina
-unless you absolutely must get up immediately. High Dexterity characters
-recover faster on their own.
+unless you absolutely must get up immediately. If nobody is holding
+you down, you simply stand; if someone is, getting up for free means
+beating them in a contest, which favors a nimble, trained defender.
 
 <ansi fg="yellow">See Also:</ansi>
 

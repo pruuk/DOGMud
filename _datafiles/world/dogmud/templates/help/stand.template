@@ -17,7 +17,8 @@ chunk of stamina.
 <ansi fg="yellow">Mechanics:</ansi>
 
   <ansi fg="stat">Stamina Cost:</ansi> A meaningful portion of your maximum stamina
-  <ansi fg="stat">Success Rate:</ansi> 100% (guaranteed, unlike automatic recovery)
+  <ansi fg="stat">Success Rate:</ansi> Guaranteed. You spend the effort and get up
+    regardless of who is holding you down
   <ansi fg="stat">Action Cost:</ansi> Uses your action for the current round
 
 <ansi fg="yellow">Automatic Recovery:</ansi>
@@ -26,8 +27,9 @@ If you don't manually stand, you will <ansi fg="yellow">automatically attempt</a
 recover each round after a brief delay:
 
   - <ansi fg="stat">Minimum Duration:</ansi> Must remain prone for at least one full round
-  - <ansi fg="stat">Recovery Chance:</ansi> Scales with your Dexterity — nimble characters
-    scramble to their feet faster than lumbering ones
+  - <ansi fg="stat">Recovery Chance:</ansi> A free stand is a contest against whoever is
+    holding you down. If nobody is attacking you, you simply
+    stand back up
   - <ansi fg="stat">Recovery Penalty:</ansi> Only one attack that round (your focus is on
     getting up)
 
@@ -35,7 +37,7 @@ recover each round after a brief delay:
 
 Use <ansi fg="command">stand</ansi> when you must get up immediately and have stamina to
 spare. Otherwise, save your stamina and let automatic recovery handle
-it — you still get one attack while scrambling up.
+it. You still get one attack while scrambling up.
 
 If you are sleeping, <ansi fg="command">stand</ansi> will wake you up.
 

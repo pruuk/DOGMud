@@ -78,14 +78,16 @@ Bad-tier outcome. AI tiebreaker: `applyGrappledControlledTiebreak` in
 `internal/mobcommands/lookfortrouble.go` biases mob target selection toward
 grapple-controlled players.
 
-**4f shipped:** Chance-based position concentration disruption.
+**4f shipped:** Position concentration disruption.
 `disruption.go` (`PositionDisruptionDmgEquiv`) provides a per-(position,
 role) damage%-equivalent integer. `processFoldRound` in
 `internal/hooks/combat_shared_helpers.go` replaced the three deterministic
-100% break gates with a single call to this lookup +
-`characters.CalcConcentrationChance(Wil, dmgPctEquiv)` + `util.Rand(100)`.
-Standing returns 0 (check skipped). Grapple helpfile softened to match.
-Chunk 4 (Position) is now **CLOSED**.
+100% break gates with a single call to this lookup, ×10, fed into
+`combat.RunConcentrationContest(concentrationScore(char), dmgPctEquiv*10)`
+(U10: reworked from the original chance-based curve into an opposed contest
+against the caster's `Wil + spellcasting×SkillWeight`, floored only by
+`Balance.ConcentrationFloor` 0.02). Standing returns 0 (check skipped).
+Grapple helpfile softened to match. Chunk 4 (Position) is now **CLOSED**.
 
 **Next:** Chunk 5 — Presence system.
 

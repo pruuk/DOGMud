@@ -409,6 +409,11 @@ party markers are web-only — the ASCII `map` command is unaffected.
   moved every production caller off them and U6 deletes them.
   `contest.Run` and `contest.AgainstDifficulty` are **unfloored**; both root
   guard tests fail a new production caller.
+- **Concentration contests are a separate seam.** Damage, position, and
+  throttle disruption triggers all run through `combat.RunConcentrationContest`
+  (`internal/combat/run_concentration_contest.go`), not `RunContest`. It is
+  floored by `Balance.ConcentrationFloor` (0.02), a deliberately smaller mercy
+  band than the standard `ContestFloor`.
 - `dice.RollStat(mean)` is still correct for a single non-contested roll, with
   no stdDev argument needed.
 - These `dice` wrappers automatically apply the global `RollSpread` factor: `stdDev = mean × RollSpread`

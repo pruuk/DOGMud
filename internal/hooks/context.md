@@ -1233,35 +1233,39 @@ resolving sub outcomes. If > 0, forces the tier to `SubTierBad` regardless
 of the roll result. Both submitter and partner accumulators are reset to 0
 at the end of each per-pair tick via defer.
 
-### Chunk 4f: chance-based position concentration disruption
+### Chunk 4f (U10: opposed contest, not chance-based)
 
-**`processFoldRound`** in `combat_shared_helpers.go` (chunk 4f) replaces the
-earlier deterministic 100% break gates (Prone/Supine/Grapple from chunks 4a-4e)
-with a single chance-based check:
+**`processFoldRound`** in `combat_shared_helpers.go` replaced the earlier
+deterministic 100% break gates (Prone/Supine/Grapple from chunks 4a-4e), then
+U10 replaced the chunk-4f chance-based curve with an opposed contest:
 
 1. Reads `position.PositionDisruptionDmgEquiv(posState, ctrlState)` from
    `internal/state/position/disruption.go`. Returns 0 for `Standing`
    (check skipped entirely).
-2. Feeds the damage%-equivalent into the existing
-   `characters.CalcConcentrationChance(Wil, dmgPctEquiv)` curve (same
-   function used by the damage-path `checkConcentrationBreak`).
-3. Rolls `util.Rand(100)` and calls `util.LogRoll("Position Concentration", ...)`
-   for observability.
-4. On failure, calls `clearCastingActivity(TriggerConcentrationBreak)` and
-   returns `ProneBroke: true` or `GrappleBroke: true` (caller routes messages).
-5. On success, fold accumulation continues normally.
+2. Multiplies the damage%-equivalent by 10 and runs
+   `combat.RunConcentrationContest(concentrationScore(char), dmgPctEquiv*10)`
+   (`internal/combat/run_concentration_contest.go`) — the caster's
+   `Wil + spellcasting×SkillWeight` against that difficulty, floored only by
+   `Balance.ConcentrationFloor` (0.02).
+3. On a WON contest, one success-only `ApplyProgression` spellcasting event
+   fires and fold accumulation continues normally.
+4. On a lost contest, calls `clearCastingActivity(TriggerConcentrationBreak)`
+   and returns `ProneBroke: true` or `GrappleBroke: true` (caller routes
+   messages).
 
-**Layered disruption:** The damage-path `checkConcentrationBreak` still fires
-independently when damage lands during a round. Both paths can break a single
-cast in the same round. The Activity machine does not have a concept of "already
-broke this round" — two breaks in one round simply fire `TransitionToFree` twice;
-the second call is a no-op from the `Free` state.
+**Layered disruption:** The damage-path `checkConcentrationBreak` and the
+throttle-path (`ExecuteThrottle`, `internal/actions/combat_throttle.go`) can
+each independently break the same cast in the same round — all three routes
+share the one `RunConcentrationContest` entry point. The Activity machine
+does not have a concept of "already broke this round" — two breaks in one
+round simply fire `TransitionToFree` twice; the second call is a no-op from
+the `Free` state.
 
 Cross-references:
 - `internal/state/position/disruption.go` — per-position dmg%-equivalent table
 - `internal/state/position/context.md` — chunk 4f status + Guard inversion note
-- `characters.CalcConcentrationChance` — shared Willpower curve
-  (`internal/characters/cast_helpers.go`)
+- `combat.RunConcentrationContest` — the shared contest entry point
+  (`internal/combat/run_concentration_contest.go`)
 
 ### Reach pipeline integration (chunk 4c)
 

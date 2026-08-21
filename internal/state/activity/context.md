@@ -422,18 +422,22 @@ The Activity machine's `Casting` state is disrupted by two independent paths:
 
 1. **Damage-path** (`checkConcentrationBreak` in
    `internal/hooks/combat_shared_helpers.go`): fires when the caster takes
-   damage. Rolls `characters.CalcConcentrationChance(Wil, damagePct)`;
-   on failure fires `TriggerConcentrationBreak`. Unchanged since chunk 3.
+   damage above `ConcentrationDamageThresholdPct` (10) of max HP (chip damage
+   never rolls). Runs `combat.RunConcentrationContest(concentrationScore(ch),
+   damagePct*10)` (U10: an opposed contest, not a chance curve); on a lost
+   contest fires `TriggerConcentrationBreak`.
 
 2. **Position-path** (`processFoldRound`, chunk 4f): at the start of every
    fold round, if the caster is not `Standing`, looks up
    `position.PositionDisruptionDmgEquiv(pos, role)` from
-   `internal/state/position/disruption.go`, feeds it through the same
-   `CalcConcentrationChance` curve, and rolls. Standing returns 0 (check
-   skipped). Both paths can break a single cast in the same round
-   (layered disruption). See `internal/hooks/context.md` for the full
-   walkthrough and `internal/state/position/context.md` for the per-position
-   table.
+   `internal/state/position/disruption.go`, feeds the result ×10 through the
+   same `combat.RunConcentrationContest`, and reads `.Success`. Standing
+   returns 0 (check skipped). Both paths can break a single cast in the same
+   round (layered disruption), and a third path — the throttle special move
+   (`ExecuteThrottle`, `internal/actions/combat_throttle.go`) — runs the same
+   contest with a live opposing grip score instead of a static difficulty.
+   See `internal/hooks/context.md` for the full walkthrough and
+   `internal/state/position/context.md` for the per-position table.
 
 The Activity machine itself has no position awareness — `processFoldRound`
 drives the break by calling `clearCastingActivity(char,

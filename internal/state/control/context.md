@@ -72,12 +72,12 @@ Per-pair invariant (in `internal/state/position/validation.go`):
 
 - **Position disruption lookup** (`internal/state/position/disruption.go`,
   chunk 4f): `PositionDisruptionDmgEquiv(pos, role)` returns a
-  damage%-equivalent integer per (position, control-role) pair. Fed into
-  `characters.CalcConcentrationChance(Wil, dmgPctEquiv)` in
-  `processFoldRound` to produce a Willpower-mediated chance-based
-  concentration break. Guard position inverts: bottom (Controlling) has
-  lower disruption than top (Controlled) because the controlled side has
-  hands and movement suppressed.
+  damage%-equivalent integer per (position, control-role) pair. Fed (×10) into
+  `combat.RunConcentrationContest(concentrationScore(char), dmgPctEquiv*10)`
+  in `processFoldRound` (U10: an opposed contest against the caster's
+  `Wil + spellcasting×SkillWeight`, not a chance curve). Guard position
+  inverts: bottom (Controlling) has lower disruption than top (Controlled)
+  because the controlled side has hands and movement suppressed.
 
 ## Not currently used for
 

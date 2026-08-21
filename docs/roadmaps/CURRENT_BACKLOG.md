@@ -23,15 +23,22 @@ verification, isolated boot, and adversarial gameplay gate. The sequence is:
 2. **U9 - progression events.** Replace progression side effects with explicit
    events for both participants and decide how spell `primarystat` becomes the
    authoritative resolution stat.
-3. **U10 - disruption model.** Make concentration a contest and make knockdown
-   and prone recovery opposed rolls.
-4. **U12 - targeting audit.** Re-read and simplify target resolution and target
+3. **U10 - disruption model. SHIPPED 2026-08-21.** Concentration is now a
+   contest (`combat.RunConcentrationContest`) across three original triggers
+   (damage, position, and now throttle's cast interrupt, claimed from the
+   unowned-sites sweep) plus knockdown and prone recovery as opposed rolls.
+   The surprise-attack redesign originally scoped into U10 was split out as
+   **U10d** (owner, 2026-08-21) since it needs its own brainstorm/spec/plan
+   cycle rather than a mechanical migration.
+4. **U10d - surprise-attack redesign.** Split from U10. Sequenced alongside
+   U10b/U10c, before U12.
+5. **U12 - targeting audit.** Re-read and simplify target resolution and target
    switching after the resolution flip. Behavioral changes must split out.
-5. **U11 - arc closer.** Documentation, `context.md` sweep, config organization,
+6. **U11 - arc closer.** Documentation, `context.md` sweep, config organization,
    help registry/category cleanup, and the final adversarial playtest. It runs
-   after U8-U10 and U12; no code slice lands after this closer.
+   after U8-U10d and U12; no code slice lands after this closer.
 
-U9, U10, and the U12 audit may be planned independently where their file sets
+U9, U10d, and the U12 audit may be planned independently where their file sets
 and decisions do not overlap. Recheck the canonical dependency table first.
 
 ## Adversarial Review Remediation

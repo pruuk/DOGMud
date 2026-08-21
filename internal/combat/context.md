@@ -606,10 +606,21 @@ the codebase were migrated in the chunk-4b reader sweep before deletion.
 ### Special Combat Moves
 Three tactical combat abilities with knockdown mechanics and shared cooldown:
 
+**Knockdown is an opposed contest (U10), not a chance-threshold roll.**
+`executeSkillMoveWithRunner` (`internal/combat/skill_moves.go`) runs
+`RunContest(p.Attack.score()*p.KnockdownFactor, []contest.Entry{{Score:
+defScore}})` where `defScore = Defender.Dex + unarmed-combat×SkillWeight`,
+standard `ContestFloor`. A lost contest (resist) fires one success-only
+unarmed-combat progression event for the defender. This is a **named
+rebalance**: the deleted `*KnockdownChance` knobs (40/60/35) were thresholds
+on a `Normal(50, 7.5)` roll, not literal percentages — they actually
+delivered roughly 50% bash / 91% trip / 2.3% kick at parity. The
+`*KnockdownFactor` knobs below deliver the originally-intended rates.
+
 **Bash Command** (`usercommands/bash.go`):
 - Requirements: Shield equipped (checked via `HasShield()`), in active combat
 - Damage: 50% of Strength stat (config: `BashDamagePercent`)
-- Knockdown chance: 40% base (config: `BashKnockdownChance`)
+- Knockdown factor: `BashKnockdownFactor` (1.0) — intended-rate anchor ~50% at parity
 - Opposed check: Weapon Combat + Strength vs. target's combat skill + Dexterity
 - Skill progression: Weapon Combat
 - On knockdown: Sets `target.Prone = true`, `ProneRoundsRemaining = 2`
@@ -617,7 +628,7 @@ Three tactical combat abilities with knockdown mechanics and shared cooldown:
 **Trip Command** (`usercommands/trip.go`):
 - Requirements: In active combat
 - Damage: 25% of Strength stat (config: `TripDamagePercent`)
-- Knockdown chance: 60% base (config: `TripKnockdownChance`) - highest of the three
+- Knockdown factor: `TripKnockdownFactor` (1.057) — intended-rate anchor ~60% at parity (the old chance-threshold knob actually delivered ~91%)
 - Opposed check: Unarmed Combat + Dexterity vs. target's combat skill + Dexterity
 - Skill progression: Unarmed Combat
 - Tactical: Low damage, high setup potential
@@ -625,7 +636,7 @@ Three tactical combat abilities with knockdown mechanics and shared cooldown:
 **Kick Command** (`usercommands/kick.go`):
 - Requirements: In active combat
 - Damage: 40% of Strength stat (config: `KickDamagePercent`)
-- Knockdown chance: 35% base (config: `KickKnockdownChance`)
+- Knockdown factor: `KickKnockdownFactor` (0.924) — intended-rate anchor ~35% at parity (the old chance-threshold knob actually delivered ~2.3%)
 - Opposed check: Unarmed Combat + Strength vs. target's combat skill + Dexterity
 - Skill progression: Unarmed Combat
 - Balanced: Moderate damage and knockdown
@@ -705,7 +716,7 @@ same pattern as Phase 2: the AI `CanUse*` viability check in `ai.go`,
 | `pounce` | quadruped predator, not already grappling | Leap opener: knockdown + damage, no bleed (`pounce.yaml`) |
 | `gore` | horned (`horns` body part — load-validated) | Charge: damage + knockback (`gore.yaml`) |
 | `drain` | `LifeDrain` flag (vampire) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`drain.yaml`) |
-| `throttle` | fanged | Damage + `ConditionBleeding` + Throttled buff #89 (stamina DoT) + high-probability cast interrupt via shared `actions.InterruptTargetCast` helper (`ThrottleInterruptChance` 0.75), which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund). No new silence flag. (`throttle.yaml`) |
+| `throttle` | fanged | Damage + `ConditionBleeding` + Throttled buff #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02) — not the old flat `ThrottleInterruptChance` coin flip, which is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`throttle.yaml`) |
 
 **New species field:** `LifeDrain bool` (yaml `lifedrain`). Vampire
 (species 34) carries `lifedrain: true`; the boar (species 6) received
@@ -722,7 +733,7 @@ weighted into the existing `default` and `aggressive` profiles.
 | Knob | Default | Effect |
 |------|---------|--------|
 | `DrainHealRatio` | 0.75 | Fraction of drain damage returned as healing to the attacker |
-| `ThrottleInterruptChance` | 0.75 | Probability throttle breaks the target's active cast |
+| ~~`ThrottleInterruptChance`~~ | ~~0.75~~ | **Deleted (U10).** The flat coin-flip is replaced by an opposed concentration contest — see the beast-moveset table above and `combat.RunConcentrationContest`. |
 
 **New buff:** `89-throttled.yaml` — stamina tick DoT, no special flags.
 
@@ -1783,6 +1794,7 @@ own identical terms (converging that is not Task 17's mandate).
 | `situational.go` | U6b Task 17: `SituationalAttackMult(attacker, channel)` — the shared attacker-side situational accuracy layer (prone + stamina depletion on the physical channels only; see "Shared situational-modifier layer"). Also the round-start sleeping snapshot: `PublishSleepingSnapshot` (written once per round by `hooks.DoCombat`) and `SleepingForceCrit(defender)` — THE lookup for the sleeping-victim auto-crit contract, consumed by melee's round passes and threaded into channel contests as `AttackSide.ForceCrit`. |
 | `calculations.go` | Core combat maths |
 | `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
+| `run_concentration_contest.go` | `RunConcentrationContest(casterScore, disruption) contest.Result` (U10) — the single entry point for every concentration contest (damage, position, throttle triggers). The one place `Balance.ConcentrationFloor` (0.02) is read; deliberately its own, much smaller mercy band than `ContestFloor`. |
 | `defence_sets.go` | `AttackChannel` + `DefenceSetFor` — which defences apply to which attack type, as data (U6 Task 11). Since U6b Task 2 consumed only via `DefenceEntriesFor`, the equipment-gated name builder EVERY channel uses: `ResolveChannelAttack` for the non-melee channels, and melee's `calculateCombat` for the names `runBestOfAllDefense` scores. See "Defence sets are a property of the channel" below. |
 | `attack_cost.go` | `ChargeAttackCost(attacker, swings)` — the raw aggregate `ActionAttack` quote and one `CostPartial` commit. Composition remains centralized in `QuoteActionCost`; `Short()` is true only for `CostPartiallyPaid`. |
 | `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only). Admission now prices the pre-resolution plan's `totalSwings`, while this result proves all planned attempts ran. |

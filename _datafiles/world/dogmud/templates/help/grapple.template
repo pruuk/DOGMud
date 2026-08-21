@@ -112,10 +112,11 @@ Both hands are committed when you're grappling:
 
   - Eating and drinking are unavailable until you're free.
   - Spellcasting and other concentration-heavy actions become
-    harder when you're on the ground or pinned in a grapple. Your
-    Willpower decides how often your concentration holds; a
-    strong-willed caster can sometimes finish a spell from
-    underneath, while a distracted one rarely manages it.
+    harder when you're on the ground or pinned in a grapple.
+    Your Willpower and your spellcasting training together
+    decide how often your concentration holds; a strong-willed,
+    practiced caster can sometimes finish a spell from
+    underneath, while a distracted novice rarely manages it.
   - You cannot move from the room until the grapple ends.
 
 <ansi fg="yellow">Usage: </ansi>
