@@ -42,21 +42,78 @@ import (
 // by AwardDefenceProgression regardless, so wiring either into melee later is a
 // row in DefenceSetFor and nothing else.
 func processDefenderProgression(c *characters.Character, userId int, result combat.AttackResult) {
+	for _, d := range defenceTypesUsed(result) {
+		combat.AwardDefenceProgression(c, userId, string(d))
+	}
+}
+
+// defenceTypesUsed returns the set of defences that registered this round, in
+// the same fixed order processDefenderProgression uses. Extracted so the seam
+// and the ordinary award read one definition of "which defences happened".
+func defenceTypesUsed(result combat.AttackResult) []combat.DefenseType {
 	used := make(map[combat.DefenseType]bool, 3)
 	for _, se := range result.SwingEvents {
 		if se.DefenseUsed != combat.DefenseNone {
 			used[se.DefenseUsed] = true
 		}
 	}
-
-	// Fixed order, so a round that used several defences always progresses them
-	// in the same sequence. Ranging a map here would randomise which skill
-	// levelup banner the player sees first.
+	out := make([]combat.DefenseType, 0, 3)
 	for _, d := range []combat.DefenseType{combat.DefenseDodge, combat.DefenseParry, combat.DefenseBlock} {
 		if used[d] {
-			combat.AwardDefenceProgression(c, userId, string(d))
+			out = append(out, d)
 		}
 	}
+	return out
+}
+
+// defenceSkillFor names the skill and stat the defender's OBSERVED event trains
+// when a crit or fumble happens. It uses the first defence that registered this
+// round; with no defence registered it returns empty, which suppresses the
+// event rather than guessing.
+//
+// It delegates to combat.DefenceSkillAndStat rather than switching again here.
+// A second copy of the five-defence mapping is exactly the drift this arc
+// exists to remove, and it would go stale the first time a defence changed what
+// it trains.
+func defenceSkillFor(used []combat.DefenseType) string {
+	if len(used) == 0 {
+		return ""
+	}
+	skill, _ := combat.DefenceSkillAndStat(string(used[0]))
+	return skill
+}
+
+// defenceStatFor is defenceSkillFor's stat counterpart, from the same mapping.
+func defenceStatFor(used []combat.DefenseType) string {
+	if len(used) == 0 {
+		return ""
+	}
+	_, stat := combat.DefenceSkillAndStat(string(used[0]))
+	return stat
+}
+
+// attackerBonusSkillAndStat names the skill the attacker's crit or FUMBLE
+// bonus trains.
+//
+// It deliberately does NOT gate on CleanHit. A fumbled swing has CleanHit
+// false, so deriving the bonus skill from a CleanHit-gated field would leave it
+// empty and applyBonusProgression would skip the roll -- silently deleting
+// attacker fumble progression, which pre-U9 fired via OnCriticalFailure with
+// the real skill tag and which spec 7.1 lists as an INCREASE.
+//
+// Falls back through: the first weapon's tag, then the character's current
+// combat skill (correct for the unarmed case, which has no WeaponHits at all).
+func attackerBonusSkillAndStat(res combat.AttackResult, atkChar *characters.Character) (skill, stat string) {
+	if len(res.WeaponHits) > 0 {
+		skill = res.WeaponHits[0].SkillTag
+	}
+	if skill == "" && atkChar != nil {
+		skill = string(atkChar.GetCombatSkillTag())
+	}
+	if skill == "" {
+		return "", ""
+	}
+	return skill, skills.GetSkillPrimaryStat(skill)
 }
 
 // mobDisplayName returns the formatted display name for a mob in combat text,
@@ -317,12 +374,24 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		}
 
 		if spellBonus > 0 {
+			// OnSkillUseScaled already rolls the skill's primary stat --
+			// manifestation maps to charisma, spellcasting to willpower -- so an
+			// explicit OnStatUse beside it double-rolled every cast. The stat a
+			// spell trains now comes from its primarystat (Task 13).
+			castSkill := skills.Spellcasting
 			if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
-				user.Character.OnSkillUseScaled(string(skills.Manifestation), userId, spellBonus)
-				user.Character.OnStatUse("charisma", userId)
-			} else {
-				user.Character.OnSkillUseScaled(string(skills.Spellcasting), userId, spellBonus)
-				user.Character.OnStatUse("willpower", userId)
+				castSkill = skills.Manifestation
+			}
+			user.Character.OnSkillUseScaled(string(castSkill), userId, spellBonus)
+
+			// primarystat overrides the skill's default stat. Manifestation
+			// already maps to charisma and spellcasting to willpower, so for
+			// every shipped file this is a no-op -- it exists so a spell that
+			// declares something else actually trains it.
+			if spellData != nil {
+				if st := spellData.PrimaryStat; st != "" && st != skills.GetSkillPrimaryStat(string(castSkill)) {
+					user.Character.OnStatUse(st, userId)
+				}
 			}
 		}
 
@@ -465,12 +534,21 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 			bal := configs.GetBalanceConfig()
 			spellBonus = 1.0 + float64(spellData.Difficulty)*float64(bal.SpellDifficultyProgressionScale)
 		}
+		// OnSkillUseScaled already rolls the skill's primary stat -- see the
+		// identical fix in handlePlayerFoldCasting above for why the explicit
+		// OnStatUse calls here double-rolled every mob cast.
+		castSkill := skills.Spellcasting
 		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
-			mob.Character.OnSkillUseScaled(string(skills.Manifestation), 0, spellBonus)
-			mob.Character.OnStatUse("charisma", 0)
-		} else {
-			mob.Character.OnSkillUseScaled(string(skills.Spellcasting), 0, spellBonus)
-			mob.Character.OnStatUse("willpower", 0)
+			castSkill = skills.Manifestation
+		}
+		mob.Character.OnSkillUseScaled(string(castSkill), 0, spellBonus)
+
+		// primarystat overrides the skill's default stat -- see the identical
+		// override in handlePlayerFoldCasting above.
+		if spellData != nil {
+			if st := spellData.PrimaryStat; st != "" && st != skills.GetSkillPrimaryStat(string(castSkill)) {
+				mob.Character.OnStatUse(st, 0)
+			}
 		}
 
 		// Task 6: Spell discovery for caster mobs.

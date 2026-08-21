@@ -77,11 +77,3 @@ func (a *UserActor) OnSkillUse(skillName string) bool {
 func (a *UserActor) OnStatUse(statName string) bool {
 	return a.User.Character.OnStatUse(statName, a.User.UserId)
 }
-
-func (a *UserActor) OnCriticalSuccess(skillName string) {
-	a.User.Character.OnCriticalSuccess(skillName, a.User.UserId)
-}
-
-func (a *UserActor) OnCriticalFailure(skillName string) {
-	a.User.Character.OnCriticalFailure(skillName, a.User.UserId)
-}

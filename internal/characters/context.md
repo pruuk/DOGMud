@@ -69,6 +69,114 @@ Mob progression uses `MobProgressionRate` as a multiplier.
 - `OnRegenTick(current, max, relatedStats, userId)` — computes chance, calls CheckRegenProgression per stat
 - `CheckRegenProgression(statName, userId, chance)` — applies mob gating, multipliers, rolls
 
+**U9: `CheckRegenProgression` now damps by rank.** It used to derive its
+chance from pool depletion alone and never fall no matter how much the stat
+had already grown, which let a character grind a stat (vitality especially,
+since regen is its only progression source) at low health forever -- the
+`fyttyn` mechanism (`internal/migration/0.16.0.go`). The unexported
+`regenDamperFactor(statName) float64` multiplies the depletion chance by
+`CalculateProgressionChance(virtualRank, StatProgressionSoftCap) /
+BaseProgressionChance`, so it is exactly `1.0` at rank 0 (a fresh character's
+passive growth is unchanged) and falls as the stat's virtual rank climbs. It
+returns `0` if `BaseProgressionChance <= 0` rather than dividing by zero.
+`OnRegenTick` now calls `TrackStatUse` for each related stat *before* rolling,
+which is the load-bearing half -- without it vitality's rank stayed at 0
+regardless of value, since nothing else in production calls
+`OnStatUse("vitality", ...)`.
+
+### The Contest Progression Seam (U9)
+
+`internal/progression` is the pure event layer for contest-driven
+progression (melee and the three channel defences: quell, defy, spell). It
+computes `[]progression.Event` from the plain facts of one resolved contest
+and fires nothing itself. `characters.ApplyProgression` is the single place
+those events get applied to a real character -- see
+`internal/progression/context.md` for the full event/outcome model.
+
+```go
+// ApplyProgression applies every event belonging to one side (an Outcome
+// produces events for both sides; callers invoke this once per side). round
+// is util.GetRoundCount(); pass 0 for non-combat callers to always claim.
+func (c *Character) ApplyProgression(events []progression.Event, side progression.Side, userId int, round uint64)
+
+// ClaimedBonusThisRound reports whether a bonus (crit/fumble/observed) event
+// already fired for this skill this round, for any class. Exported so tests
+// in internal/combat and internal/hooks can assert the bonus tier ran, since
+// bonus events leave no other observable trace (they deliberately do not
+// always track a use count -- see the Gotchas below).
+func (c *Character) ClaimedBonusThisRound(skillName string) bool
+
+// ToughenStatFor maps a damage channel to the stat RECEIVING a crit in that
+// channel trains: "physical" -> vitality, "magical" -> willpower,
+// "conviction" -> charisma. Exported because internal/combat and
+// internal/hooks fill Outcome.ToughenStat with it. Unrecognised channel
+// returns "".
+func ToughenStatFor(damageChannel string) string
+```
+
+`OnCritReceived(damageChannel, userId)` still exists, but as of U9 it has
+**zero production callers** -- every former call site (the player- and
+mob-caster magical-crit branches in `internal/hooks/spell_resolution.go`,
+and the parallel conviction site in `internal/actions/combat_taunt.go`) was
+rewritten to build a `progression.Outcome{ToughenStat: ...}`, take
+`progression.BonusEvents`, and call `ApplyProgression` directly instead -- see
+the seam guard note below. The method's own implementation was also moved OFF
+`CheckRegenProgression` onto `CheckStatProgression` (the decayed curve) and
+now calls `TrackStatUse` before rolling, for the same rank-independence
+reason as the regen damper above; it is kept as a documented API for any
+future non-contest crit-received site, not because anything calls it today.
+
+**`OnCriticalSuccess` and `OnCriticalFailure` were DELETED in U9.** Anything
+that still cites them is describing pre-U9 behaviour. Crit and fumble
+progression for contest paths now flows exclusively through
+`progression.BonusEvents` + `ApplyProgression`.
+
+#### Gotchas (progression seam)
+
+- **Contest-path callers (`internal/combat`, `internal/hooks`) may NOT call a
+  progression primitive directly.** `internal/progression/seam_guard_test.go`
+  is an AST test that fails any call to `OnSkillUse`, `OnSkillUseScaled`,
+  `OnStatUse`, `CheckSkillProgression`, `CheckStatProgression`,
+  `OnCritReceived`, `OnCriticalSuccess`, `OnCriticalFailure`,
+  `TrackSkillUse`, `TrackStatUse`, or `CheckRegenProgression` from those two
+  packages outside a small, commented allow-list. Route through
+  `progression.Outcome` + `ApplyProgression` instead. The guard does not walk
+  `internal/actions`, so `combat_taunt.go`'s conviction crit site is routed
+  the same way by convention, not by enforcement.
+  The ~93 non-contest call sites elsewhere (craft, salvage, forage, search,
+  steal, and the rest) are deliberately untouched by U9 and are not covered
+  by this guard; routing them is a later slice's job.
+- **`ApplyProgression`'s ordinary path is NOT a new code path.** For
+  `progression.ClassOrdinary` events it calls `OnSkillUseScaled` (tracking,
+  mutation cluster drift, the `SkillUsed` quest event, the primary-stat roll)
+  exactly as pre-U9 call sites did directly. Only bonus-class events go
+  through the new `applyBonusProgression` path.
+- **Bonus events track a use count ONLY for `progression.ClassObserved`.**
+  `CheckSkillProgression`/`CheckStatProgression` derive a virtual rank from
+  the use counter, and `CalculateProgressionChance` is monotonically
+  DECREASING in rank -- tracking a crit or fumble would punish the very
+  achievement the bonus rewards. The observed party has no achievement to
+  punish, and for the crit-received toughening stat specifically, tracking
+  is the ONLY thing that ever moves that stat's rank (nothing else calls
+  `OnStatUse` for e.g. vitality). This is enforced in the unexported
+  `applyBonusProgression`, keyed off `ev.Class == progression.ClassObserved`.
+- **Bonus events are deduped once per round per (skill, stat, class) via the
+  unexported `claimBonusProgression`**, backed by the unexported
+  `bonusProgressionRound map[string]uint64` field on `Character`
+  (transient, not persisted). Ordinary per-swing events are deliberately NOT
+  deduped -- only the bonus tier needed protection from a margin-driven crit
+  rate firing on nearly every swing of a lopsided fight. A `round` of `0`
+  always claims, so non-combat callers are never silently suppressed. The key
+  includes the stat, not just the skill, because an observed crit and an
+  observed fumble on the same skill can carry different stats (toughening
+  stat vs. defence stat) and must not consume each other's slot.
+- **`ApplyProgression` rolls a stat a second time only when `ev.Stat` differs
+  from the skill's own primary stat** (`skills.GetSkillPrimaryStat(ev.Skill)`).
+  `OnSkillUseScaled` already rolled the primary stat, so this guards against a
+  double roll for the common case and only fires for the two cases that
+  genuinely diverge: a spell's own `primarystat` override, and the
+  crit-received toughening stat.
+
 ### Equipment System (`worn.go`)
 - **Equipment slots**: Weapon, Offhand, Head, Neck, Body, Belt, Gloves, Ring, Legs, Feet
 - **Stat modifications**: Equipment provides stat bonuses aggregated across all slots
@@ -1402,6 +1510,8 @@ implementation-detail rationale.
 - `internal/buffs`: Status effect system
 - `internal/species`: Character species definitions
 - `internal/skills`: Skill system integration
+- `internal/progression`: Pure contest-progression event layer (U9);
+  `ApplyProgression` applies its `[]Event` output
 - `internal/spells`: Magic system integration
 - `internal/quests`: Quest system integration
 - `internal/pets`: Pet system integration

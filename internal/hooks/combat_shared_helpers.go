@@ -36,8 +36,21 @@ import (
 func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters.Character, target *characters.Character, magnitude int, isCrit bool) int {
 
 	if spellData.DamageMultiplier > 0 && caster != nil {
-		skillLevel := caster.GetSkillLevel(skills.Spellcasting)
-		rawDmg := combat.CalcRawDamage(caster.Stats.Willpower.ValueAdj, skillLevel, spellData.DamageMultiplier, combat.ChannelMagical)
+		// U9: the spell's own primarystat and school drive damage, exactly as
+		// they now drive its attack roll, duration and shield strength. This
+		// site was missed by U9's original list of caster-side reads, which was
+		// enumerated from spell_resolution.go only -- so for a while a spell
+		// could roll to hit on one stat and deal damage on another.
+		//
+		// No shipped spell changes behaviour here: the fourteen charisma spells
+		// are the manifestation family, and none of them carries a
+		// DamageMultiplier.
+		castSkill := skills.Spellcasting
+		if spellData.HasSchool(spells.SchoolManifestation) {
+			castSkill = skills.Manifestation
+		}
+		skillLevel := caster.GetSkillLevel(castSkill)
+		rawDmg := combat.CalcRawDamage(spellData.CasterStatValue(caster.Stats), skillLevel, spellData.DamageMultiplier, combat.ChannelMagical)
 
 		// Mutation graph: spell-power passives (Ether Gland, Corvid Brain) amplify caster output.
 		if spBonus := mutations.GetSpellPowerMultiplier(caster.Mutations); spBonus != 0 {

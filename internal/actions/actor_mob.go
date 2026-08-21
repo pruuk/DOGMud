@@ -78,11 +78,3 @@ func (a *MobActor) OnSkillUse(skillName string) bool {
 func (a *MobActor) OnStatUse(statName string) bool {
 	return a.Mob.Character.OnStatUse(statName, 0)
 }
-
-func (a *MobActor) OnCriticalSuccess(skillName string) {
-	a.Mob.Character.OnCriticalSuccess(skillName, 0)
-}
-
-func (a *MobActor) OnCriticalFailure(skillName string) {
-	a.Mob.Character.OnCriticalFailure(skillName, 0)
-}

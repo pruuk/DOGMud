@@ -19,6 +19,15 @@ func (b *Balance) validateProgression() {
 	if b.ProgressionDecayAboveCap <= 0 {
 		b.ProgressionDecayAboveCap = 2.0
 	}
+	// `< 0`, NOT `<= 0`. Both knobs are documented off-switches and 0 is a
+	// legal shipped value; the `<= 0` idiom used by the neighbouring knobs
+	// would silently restore the default and make disabling them impossible.
+	if b.CritProgressionBonus < 0 {
+		b.CritProgressionBonus = 2.0
+	}
+	if b.ObservedCritProgressionBonus < 0 {
+		b.ObservedCritProgressionBonus = 0.5
+	}
 	if b.UsesPerRank < 1 {
 		b.UsesPerRank = 25
 	}

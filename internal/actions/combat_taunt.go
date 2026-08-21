@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
@@ -262,9 +263,23 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 		dmgDesc := combat.GetConvictionDamageDescription(dmg, convMaxRef)
 
-		// Crit received: conviction progression for target player.
+		// Crit received: conviction progression for target player, routed
+		// through the U9 seam (characters.ApplyProgression) rather than
+		// calling OnCritReceived directly, so taunt shares the same applier
+		// as melee and the spell paths. progression.BonusEvents also derives
+		// an attacker ClassCrit event from ExcAttackCrit, but taunt has never
+		// awarded the taunter a crit bonus for landing one, so only the
+		// defender side is applied -- the attacker event is built and
+		// silently discarded, matching prior behaviour exactly.
 		if isCrit && target.UserId > 0 {
-			target.Char.OnCritReceived("conviction", target.UserId)
+			bonusEvs := progression.BonusEvents(progression.Outcome{
+				ToughenStat: characters.ToughenStatFor("conviction"),
+				Exceptional: progression.ExcAttackCrit,
+			}, progression.Bonuses{
+				Doing:     float64(cfg.CritProgressionBonus),
+				Observing: float64(cfg.ObservedCritProgressionBonus),
+			})
+			target.Char.ApplyProgression(bonusEvs, progression.SideDefender, target.UserId, util.GetRoundCount())
 		}
 
 		actor.OnSkillUse(string(skills.Rhetoric))

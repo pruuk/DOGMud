@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -643,36 +644,84 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 		defChar.TrackPlayerDamage(atkUid, res.DamageToTarget)
 	}
 
-	// Defender OnCritReceived (parity across all four quadrants — Stage 1
-	// closed the MvM and PvM gaps).
-	if res.Hit && res.Crit {
-		defChar.OnCritReceived("physical", defUid)
+	// U9: melee builds a progression.Outcome and hands it to the seam. The
+	// FIRING CONDITIONS below are unchanged from pre-U9 -- CleanHit for the
+	// attacker's skill, the defence-used set for the defender. What changed is
+	// what the events carry. Changing when they fire is U10b.
+	round := util.GetRoundCount()
+	bonuses := progression.Bonuses{
+		Doing:     float64(configs.GetBalanceConfig().CritProgressionBonus),
+		Observing: float64(configs.GetBalanceConfig().ObservedCritProgressionBonus),
 	}
 
-	// Attacker stat progression with quadrant-flavored room messages.
+	// Attacker stat progression keeps its quadrant-flavoured room messages, so
+	// it stays on its own helper rather than becoming an event.
 	emitAttackerStatGain(atk, "strength", atkUid)
 	emitAttackerStatGain(atk, "dexterity", atkUid)
 
-	// Attacker per-weapon skill + crit callbacks.
-	// U6 Task 14: CleanHit, not Hit — a deflected swing deals partial damage
-	// but the defence won the contest, so the attacker earns no skill
-	// progression from it (the defender's D/P/B progression below is the side
-	// that earned something).
+	// ── Ordinary attacker events: per weapon hit, gated on CleanHit ──────
+	// Firing condition unchanged from pre-U9. ORDINARY ONLY: the defender's
+	// ordinary event is awarded once per round by processDefenderProgression
+	// below, so asking for it here as well would award it per weapon hit.
 	for _, wh := range res.WeaponHits {
-		if wh.CleanHit {
-			atkChar.OnSkillUse(wh.SkillTag, atkUid)
-			if wh.Crit {
-				atkChar.OnCriticalSuccess(wh.SkillTag, atkUid)
-			}
-		} else if wh.Fumble {
-			atkChar.OnCriticalFailure(wh.SkillTag, atkUid)
+		if !wh.CleanHit {
+			continue
 		}
+		atkChar.ApplyProgression(
+			progression.OrdinaryEvents(progression.Outcome{
+				AttackerSkill: wh.SkillTag,
+				AttackerStat:  skills.GetSkillPrimaryStat(wh.SkillTag),
+			}),
+			progression.SideAttacker, atkUid, round)
 	}
 	if len(res.WeaponHits) == 0 && res.CleanHit {
 		atkChar.OnSkillUse(string(skills.UnarmedCombat), atkUid)
 	}
 
-	// Defender dodge/parry/block.
+	// ── Bonus tier: ONCE per round, OUTSIDE the weapon loop ─────────────
+	// Outside on purpose: the bonus tier is a property of the ROUND, not of a
+	// swing, so evaluating it inside the loop would pay it once per weapon.
+	// An unarmed attacker is the worst case rather than an exempt one --
+	// collectAttackWeapons unconditionally supplies a fist for an empty main
+	// hand plus an offhand fist, so unarmed produces TWO entries and would
+	// have been double-paid. Measured 2026-08-19; an earlier draft of this
+	// comment claimed unarmed produced none, which is false. The
+	// len(WeaponHits) == 0 fallback above is therefore defensive rather than
+	// the unarmed path.
+	//
+	// The once-per-round dedupe in ApplyProgression would have caught the
+	// duplicate anyway, but only by accident, and only for events sharing a
+	// dedupe key. Structure it correctly rather than relying on that.
+	//
+	// Firing conditions are preserved exactly: res.Crit and res.Fumble are the
+	// per-round aggregates the pre-U9 code used (documented at
+	// attackresult.go:74-79 as reset per swing, so they reflect the LAST
+	// swing). That last-swing semantics is odd and is recorded in the firing
+	// audit for U10b. U9 does not change it.
+	defencesUsed := defenceTypesUsed(*res)
+	bonusSkill, bonusStat := attackerBonusSkillAndStat(*res, atkChar)
+
+	bonusOut := progression.Outcome{
+		AttackerSkill: bonusSkill,
+		AttackerStat:  bonusStat,
+		DefenderSkill: defenceSkillFor(defencesUsed),
+		DefenderStat:  defenceStatFor(defencesUsed),
+		ToughenStat:   characters.ToughenStatFor("physical"),
+		Exceptional: progression.Classify(
+			res.Hit && res.Crit,
+			res.ParryCritDetected || res.DodgeCritDetected || res.BlockCritDetected,
+			res.Fumble,
+			false, // melee exposes no defence-fumble signal on AttackResult
+		),
+		Floored: false, // melee exposes no per-swing floor flag; see step 6
+	}
+
+	bonusEvs := progression.BonusEvents(bonusOut, bonuses)
+	atkChar.ApplyProgression(bonusEvs, progression.SideAttacker, atkUid, round)
+	defChar.ApplyProgression(bonusEvs, progression.SideDefender, defUid, round)
+
+	// Defender dodge/parry/block ordinary events, unchanged: once per defence
+	// type per round.
 	processDefenderProgression(defChar, defUid, *res)
 }
 

@@ -215,16 +215,32 @@ func TestRunBestOfAllDefense_MixedAffordabilityPairsWinnerWithItsOwnQuote(t *tes
 		t.Fatalf("shortage messages = %d, want 0; the losing short dodge is silent", got)
 	}
 
+	// U9: sendDefenseMessages no longer rolls skill progression at all (that
+	// was the melee defence double-progression bug -- it duplicated
+	// hooks.processDefenderProgression -> combat.AwardDefenceProgression,
+	// which now does it once per defence type per round at the round-
+	// orchestrator level, outside what this unit test exercises). Both the
+	// losing and the winning defence must therefore show zero here; this
+	// assertion stays only to guard against progression creeping back into
+	// this function.
 	resolveDefenseOutcome(result, best, attacker, defender, ContestCritThreshold, false, false)
 	if got := defender.SkillUseCount[string(skills.UnarmedCombat)]; got != 0 {
 		t.Fatalf("losing dodge progression = %d, want 0", got)
 	}
-	if got := defender.SkillUseCount[string(skills.WeaponCombat)]; got != 1 {
-		t.Fatalf("winning parry progression = %d, want 1", got)
+	if got := defender.SkillUseCount[string(skills.WeaponCombat)]; got != 0 {
+		t.Fatalf("winning parry progression = %d, want 0 -- sendDefenseMessages no longer progresses skills", got)
 	}
 }
 
-func TestRunBestOfAllDefense_ShortWinnerChargesMessagesAndProgressesOnce(t *testing.T) {
+// U9: this test used to also pin sendDefenseMessages's per-swing skill
+// progression ("...AndProgressesOnce" in its old name). That progression was
+// the melee defence double-progression bug -- deleted, since
+// hooks.processDefenderProgression -> combat.AwardDefenceProgression already
+// covers it once per defence type per round at the round-orchestrator level,
+// outside what this unit test exercises. What remains genuinely real at this
+// level -- cost charging and the once-per-round shortage message dedup -- is
+// what the name now describes.
+func TestRunBestOfAllDefense_ShortWinnerChargesAndMessagesOnce(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	defender.Stamina = 5
@@ -260,9 +276,12 @@ func TestRunBestOfAllDefense_ShortWinnerChargesMessagesAndProgressesOnce(t *test
 		t.Fatalf("shortage messages = %d, want exactly 1 for the round", got)
 	}
 
+	// sendDefenseMessages no longer rolls skill progression at all (see the
+	// docstring above), so both entries read zero here regardless of which
+	// defence won or was short.
 	resolveDefenseOutcome(result, best, attacker, defender, ContestCritThreshold, false, false)
-	if got := defender.SkillUseCount[string(skills.UnarmedCombat)]; got != 1 {
-		t.Fatalf("short winning dodge progression = %d, want 1 under existing policy", got)
+	if got := defender.SkillUseCount[string(skills.UnarmedCombat)]; got != 0 {
+		t.Fatalf("short winning dodge progression = %d, want 0 -- sendDefenseMessages no longer progresses skills", got)
 	}
 	if got := defender.SkillUseCount[string(skills.WeaponCombat)]; got != 0 {
 		t.Fatalf("losing parry progression = %d, want 0", got)

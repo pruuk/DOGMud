@@ -11,31 +11,38 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // ─── Combat-Quadrant Parity Tests ─────────────────────────────────────────────
-// These tests lock the four parity-gap fixes made in Stage 1 of the combat
+// These tests lock the parity-gap fixes made in Stage 1 of the combat
 // quadrant unification work. See docs/superpowers/specs/2026-04-18-combat-
 // quadrant-unification-design.md for context.
 //
-// Three of the gaps are missing callbacks on the MvM (mob-vs-mob) code path
-// that PvM, MvP, and PvP all already had. The fourth is the deletion of a
-// legacy MvP-only inline ConditionShield reduction that double-counted the
-// magnitude already applied inside the mitigation layer.
+// Originally four gaps: three were missing callbacks on the MvM (mob-vs-mob)
+// code path that PvM, MvP, and PvP all already had, and the fourth was the
+// deletion of a legacy MvP-only inline ConditionShield reduction that
+// double-counted the magnitude already applied inside the mitigation layer.
+// Gap 2 (attacker crit callbacks) was removed here -- see the note above
+// "Gap 3" below for why.
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
 // enableMobProgression cranks the relevant balance knobs so OnStatUse / the
-// regen-progression roll inside OnCritReceived advance with high probability
-// per call. Returns a cleanup that restores the previous overlay values.
+// progression roll inside OnCritReceived advance with high probability per
+// call. Returns a cleanup that restores the previous overlay values.
 //
 // Boosting BaseProgressionChance to 1.0 and MobProgressionRate to 1.0 makes
 // progression rolls deterministic enough that 50 trials is effectively flake-
 // free (per-call success >= 0.25).
+//
+// ObservedCritProgressionBonus is a documented off-switch (validateProgression
+// only corrects NEGATIVE values, so 0 -- the zero-valued struct a Go test
+// binary starts with -- stays 0). U9 moved OnCritReceived onto the decayed
+// curve and gated it on this multiplier, so it must be cranked here too or
+// OnCritReceived is a silent no-op regardless of the other knobs.
 func enableMobProgression(t *testing.T) func() {
 	t.Helper()
 
@@ -46,22 +53,24 @@ func enableMobProgression(t *testing.T) func() {
 	prevGp := configs.GetGamePlayConfig()
 
 	require.NoError(t, configs.AddOverlayOverrides(map[string]any{
-		"GamePlay.UseSkillProgression":  true,
-		"Balance.MobProgressionEnabled": true,
-		"Balance.MobProgressionRate":    1.0,
-		"Balance.BaseProgressionChance": 1.0,
-		"Balance.MobStatCap":            10000,
-		"Balance.MobSkillCap":           10000,
+		"GamePlay.UseSkillProgression":         true,
+		"Balance.MobProgressionEnabled":        true,
+		"Balance.MobProgressionRate":           1.0,
+		"Balance.BaseProgressionChance":        1.0,
+		"Balance.MobStatCap":                   10000,
+		"Balance.MobSkillCap":                  10000,
+		"Balance.ObservedCritProgressionBonus": 1.0,
 	}))
 
 	return func() {
 		_ = configs.AddOverlayOverrides(map[string]any{
-			"GamePlay.UseSkillProgression":  bool(prevGp.UseSkillProgression),
-			"Balance.MobProgressionEnabled": bool(prevBal.MobProgressionEnabled),
-			"Balance.MobProgressionRate":    float64(prevBal.MobProgressionRate),
-			"Balance.BaseProgressionChance": float64(prevBal.BaseProgressionChance),
-			"Balance.MobStatCap":            int(prevBal.MobStatCap),
-			"Balance.MobSkillCap":           int(prevBal.MobSkillCap),
+			"GamePlay.UseSkillProgression":         bool(prevGp.UseSkillProgression),
+			"Balance.MobProgressionEnabled":        bool(prevBal.MobProgressionEnabled),
+			"Balance.MobProgressionRate":           float64(prevBal.MobProgressionRate),
+			"Balance.BaseProgressionChance":        float64(prevBal.BaseProgressionChance),
+			"Balance.MobStatCap":                   int(prevBal.MobStatCap),
+			"Balance.MobSkillCap":                  int(prevBal.MobSkillCap),
+			"Balance.ObservedCritProgressionBonus": float64(prevBal.ObservedCritProgressionBonus),
 		})
 	}
 }
@@ -92,11 +101,14 @@ func recordMessages() (*[]string, func()) {
 // handleMobVsMob (NewRound_DoCombat_helpers.go) that fires
 // `defMob.Character.OnCritReceived("physical", 0)` on crit hits.
 //
-// OnCritReceived → CheckRegenProgression("vitality", 0, 0.25) is the only
-// observable side effect, and it is probabilistic. To make the assertion
-// deterministic we crank the progression knobs (per call success ~0.25) and
-// drive enough trials that the cumulative failure probability is negligible
-// (0.75^50 ≈ 5.6e-7).
+// OnCritReceived → CheckStatProgression("vitality", 0, ObservedCritProgressionBonus)
+// is the only observable side effect (U9: this used to route through
+// CheckRegenProgression at a hardcoded flat 0.25 chance -- see
+// internal/characters/progression.go), and it is probabilistic. To make the
+// assertion deterministic we crank the progression knobs (BaseProgressionChance
+// and ObservedCritProgressionBonus to 1.0, so the effective per-call chance is
+// bounded well above the previous 0.25) and drive enough trials that the
+// cumulative failure probability is negligible.
 //
 // We invoke OnCritReceived directly here rather than try to drive a forced
 // crit through the full handleMobVsMob path, because the underlying
@@ -126,41 +138,19 @@ func TestMvM_DefenderReceivesOnCritReceived(t *testing.T) {
 		"OnCritReceived(\"physical\",...) should advance vitality training over 50 trials at p~0.25/call; the new MvM call site at handleMobVsMob ensures this fires for mob defenders on crit hits")
 }
 
-// ─── Gap 2: MvM attacker crit callbacks ───────────────────────────────────────
-
-// TestMvM_AttackerCritCallbacksFire locks the per-weapon-hit crit callbacks
-// added to handleMobVsMob (Gap 2). The PvP/MvP versions invoke both
-// OnCriticalSuccess (when wh.CleanHit && wh.Crit) and OnCriticalFailure (when
-// wh.Fumble) on the attacker.
+// ─── Gap 2: MvM attacker crit callbacks (removed, U9 Task 12) ─────────────────
 //
-// Both methods unconditionally call TrackSkillUse(...) at their head before
-// any progression-gating, so the SkillUseCount counter is the deterministic
-// observable. We drive the methods directly for the same randomness reasons
-// outlined in TestMvM_DefenderReceivesOnCritReceived.
-func TestMvM_AttackerCritCallbacksFire(t *testing.T) {
-	cleanupRegistries := seedAllRegistries()
-	defer cleanupRegistries()
-	cleanupCfg := enableMobProgression(t)
-	defer cleanupCfg()
-
-	mob := mobs.GetInstance(100)
-	require.NotNil(t, mob)
-	mob.Character.IsMob = true
-	if mob.Character.SkillUseCount == nil {
-		mob.Character.SkillUseCount = map[string]int{}
-	}
-	delete(mob.Character.SkillUseCount, "critical_success")
-	delete(mob.Character.SkillUseCount, "critical_failure")
-
-	skillTag := string(skills.UnarmedCombat)
-	mob.Character.OnCriticalSuccess(skillTag, 0)
-	mob.Character.OnCriticalFailure(skillTag, 0)
-
-	assert.Equal(t, 1, mob.Character.SkillUseCount["critical_success"],
-		"OnCriticalSuccess must bump TrackSkillUse(\"critical_success\"); the new MvM crit-success branch in handleMobVsMob fires this for mob attackers")
-	assert.Equal(t, 1, mob.Character.SkillUseCount["critical_failure"],
-		"OnCriticalFailure must bump TrackSkillUse(\"critical_failure\"); the new MvM fumble branch in handleMobVsMob fires this for mob attackers")
-}
+// TestMvM_AttackerCritCallbacksFire used to lock the per-weapon-hit crit
+// callbacks that called Character.OnCriticalSuccess/OnCriticalFailure on the
+// attacker, asserting the "critical_success"/"critical_failure"
+// TrackSkillUse counters it bumped. U9 Task 12 deleted both methods: their
+// production callers were removed by Tasks 9/10 (this MvM crit-callback site
+// included), the counters they wrote were phantom (nothing read them), and
+// the applier (characters.applyBonusProgression) now speaks the crit/fumble
+// flavour lines itself. Attacker crit/fumble bonus-progression coverage for
+// the unified combat path now lives in internal/hooks/progression_seam_test.go
+// (TestMeleeCrit_AwardsDefenderToughening, TestMeleeFumble_StillAwardsTheAttacker,
+// TestUnarmedAttacker_StillReachesTheBonusTier).
 
 // ─── Gap 3: MvM attacker stat-gain room messages ──────────────────────────────
 

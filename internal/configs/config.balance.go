@@ -338,14 +338,18 @@ type Balance struct {
 	StatProgressionRate      ConfigFloat `yaml:"StatProgressionRate"`      // Global multiplier on STAT progression chance; skills unaffected (default 1.0)
 	ProgressionDecayBelowCap ConfigFloat `yaml:"ProgressionDecayBelowCap"` // Exponential steepness below soft cap (default 3.0)
 	ProgressionDecayAboveCap ConfigFloat `yaml:"ProgressionDecayAboveCap"` // Exponential steepness above soft cap (default 2.0)
-	MobProgressionEnabled    ConfigBool  `yaml:"MobProgressionEnabled"`    // Enable mob stat/skill progression (default true)
-	MobProgressionRate       ConfigFloat `yaml:"MobProgressionRate"`       // Multiplier on progression chance vs players (default 0.5)
-	MobStatCap               ConfigInt   `yaml:"MobStatCap"`               // Hard cap on mob stats from progression (default 200)
-	MobSkillCap              ConfigInt   `yaml:"MobSkillCap"`              // Hard cap on mob skill level from progression (default 3)
-	MobSaveIntervalRounds    ConfigInt   `yaml:"MobSaveIntervalRounds"`    // Rounds between periodic mob instance saves (default 100)
-	MobInstanceMaxAgeDays    ConfigInt   `yaml:"MobInstanceMaxAgeDays"`    // Max age in days before stale instance files are pruned (default 7)
-	RegenProgressionBase     ConfigFloat `yaml:"RegenProgressionBase"`     // Max chance at 0% resource per stat per tick (default 0.005)
-	RegenProgressionCurve    ConfigFloat `yaml:"RegenProgressionCurve"`    // Exponent shaping the depletion→chance curve (default 3.0)
+
+	CritProgressionBonus         ConfigFloat `yaml:"CritProgressionBonus"`         // Progression multiplier for the party who DID a crit or fumble (default 2.0; 0 disables)
+	ObservedCritProgressionBonus ConfigFloat `yaml:"ObservedCritProgressionBonus"` // Progression multiplier for the party who RECEIVED one (default 0.5; 0 disables)
+
+	MobProgressionEnabled ConfigBool  `yaml:"MobProgressionEnabled"` // Enable mob stat/skill progression (default true)
+	MobProgressionRate    ConfigFloat `yaml:"MobProgressionRate"`    // Multiplier on progression chance vs players (default 0.5)
+	MobStatCap            ConfigInt   `yaml:"MobStatCap"`            // Hard cap on mob stats from progression (default 200)
+	MobSkillCap           ConfigInt   `yaml:"MobSkillCap"`           // Hard cap on mob skill level from progression (default 3)
+	MobSaveIntervalRounds ConfigInt   `yaml:"MobSaveIntervalRounds"` // Rounds between periodic mob instance saves (default 100)
+	MobInstanceMaxAgeDays ConfigInt   `yaml:"MobInstanceMaxAgeDays"` // Max age in days before stale instance files are pruned (default 7)
+	RegenProgressionBase  ConfigFloat `yaml:"RegenProgressionBase"`  // Max chance at 0% resource per stat per tick (default 0.005)
+	RegenProgressionCurve ConfigFloat `yaml:"RegenProgressionCurve"` // Exponent shaping the depletion→chance curve (default 3.0)
 
 	// ── COSTS: INVERSE-SKILL MULTIPLIER (U7) ─────────────────────────────────
 	// costs.SkillCostMultiplier runs INVERSE to skill: a practised fighter

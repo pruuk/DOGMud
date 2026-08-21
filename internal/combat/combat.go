@@ -73,9 +73,12 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 	// Remember who has hit him
 	mob.Character.TrackPlayerDamage(user.UserId, attackResult.DamageToTarget)
 
-	// Track progression stats for the attacking player
-	user.Character.OnStatUse("strength", user.UserId)
-	user.Character.OnStatUse("dexterity", user.UserId)
+	// U9: progression for the attacking player is handled exclusively by
+	// applyCombatProgression (phase 5 of the unified combat orchestrator,
+	// internal/hooks/NewRound_DoCombat_unified.go). This function used to
+	// also call OnStatUse/OnSkillUse here, which double-tracked every melee
+	// swing. See internal/hooks/progression_duplication_test.go.
+	//
 	// U6 Task 14: CleanHit, not Hit. A deflected swing deals partial damage
 	// (Hit is true) but the defence won the contest — the attacker earns no
 	// progression from it and hears the miss sound; the dodge/parry/block
@@ -83,43 +86,11 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 	// progression through their defence.
 	if attackResult.CleanHit {
 		user.PlaySound(`hit-other`, `combat`)
-		combatSkill := string(user.Character.GetCombatSkillTag())
-		user.Character.OnSkillUse(combatSkill, user.UserId)
-		if attackResult.Crit {
-			user.Character.OnCriticalSuccess(combatSkill, user.UserId)
-		}
-		// Track weapon-combat when dual wielding (dual wield governed by weapon-combat).
-		// Exception: dual-wielding unarmed weapons (fist/claws, e.g., knuckles in both
-		// hands) stays on unarmed-combat only — weapon-combat progression would be
-		// inappropriate for pure unarmed combat.
-		if isDualWieldingWeaponCombat(user.Character) {
-			user.Character.OnSkillUse(string(skills.WeaponCombat), user.UserId)
-		}
 	} else {
 		user.PlaySound(`miss`, `combat`)
-		if attackResult.Fumble {
-			combatSkill := string(user.Character.GetCombatSkillTag())
-			user.Character.OnCriticalFailure(combatSkill, user.UserId)
-		}
 	}
 
 	return attackResult
-}
-
-// isDualWieldingWeaponCombat reports whether the character is wielding two
-// weapons where at least one trains weapon-combat. Returns false when both
-// hands are empty, when only one hand is armed, when the offhand is a shield
-// (type != Weapon), or when both weapons are unarmed subtypes (fist/claws).
-func isDualWieldingWeaponCombat(c *characters.Character) bool {
-	if c.Equipment.Weapon.ItemId == 0 || c.Equipment.Offhand.ItemId == 0 {
-		return false
-	}
-	if c.Equipment.Offhand.GetSpec().Type != items.Weapon {
-		return false
-	}
-	mainTag := characters.CombatSkillTagForItem(c.Equipment.Weapon)
-	offTag := characters.CombatSkillTagForItem(c.Equipment.Offhand)
-	return mainTag == skills.WeaponCombat || offTag == skills.WeaponCombat
 }
 
 // Performs a combat round from a player to a player
@@ -150,56 +121,20 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 		chunk4eAccumulateSubInterruptDamage(userAtk.Character, userDef.Character, attackResult.DamageToTarget, attackResult.Crit)
 	}
 
-	// Track progression stats for the attacking player
-	userAtk.Character.OnStatUse("strength", userAtk.UserId)
-	userAtk.Character.OnStatUse("dexterity", userAtk.UserId)
+	// U9: progression for the attacking player is handled exclusively by
+	// applyCombatProgression (phase 5 of the unified combat orchestrator,
+	// internal/hooks/NewRound_DoCombat_unified.go). See AttackPlayerVsMob.
+	//
 	// U6 Task 14: CleanHit, not Hit — a deflected swing awards the attacker
 	// nothing and plays the miss sound (see AttackPlayerVsMob).
 	if attackResult.CleanHit {
 		userAtk.PlaySound(`hit-other`, `combat`)
 		userDef.PlaySound(`hit-self`, `combat`)
-		combatSkill := string(userAtk.Character.GetCombatSkillTag())
-		userAtk.Character.OnSkillUse(combatSkill, userAtk.UserId)
-		if attackResult.Crit {
-			userAtk.Character.OnCriticalSuccess(combatSkill, userAtk.UserId)
-		}
-		// Track weapon-combat when dual wielding real weapons (see helper below)
-		if isDualWieldingWeaponCombat(userAtk.Character) {
-			userAtk.Character.OnSkillUse(string(skills.WeaponCombat), userAtk.UserId)
-		}
 	} else {
 		userAtk.PlaySound(`miss`, `combat`)
-		if attackResult.Fumble {
-			combatSkill := string(userAtk.Character.GetCombatSkillTag())
-			userAtk.Character.OnCriticalFailure(combatSkill, userAtk.UserId)
-		}
 	}
 
 	return attackResult
-}
-
-// trackMobAttackProgression mirrors the player progression calls in
-// AttackPlayerVsMob / AttackPlayerVsPlayer for a mob attacker.
-// MobActor cannot be used here because actions imports combat (cycle).
-// We call character methods directly with userId=0 (mob convention).
-func trackMobAttackProgression(mob *mobs.Mob, result AttackResult) {
-	mob.Character.OnStatUse("strength", 0)
-	mob.Character.OnStatUse("dexterity", 0)
-	// U6 Task 14: CleanHit, not Hit — a deflected swing (partial damage, but
-	// the defence won the contest) earns the attacking mob no skill progression.
-	for _, wh := range result.WeaponHits {
-		if wh.CleanHit {
-			mob.Character.OnSkillUse(wh.SkillTag, 0)
-			if wh.Crit {
-				mob.Character.OnCriticalSuccess(wh.SkillTag, 0)
-			}
-		} else if wh.Fumble {
-			mob.Character.OnCriticalFailure(wh.SkillTag, 0)
-		}
-	}
-	if len(result.WeaponHits) == 0 && result.CleanHit {
-		mob.Character.OnSkillUse(string(skills.UnarmedCombat), 0)
-	}
 }
 
 // Performs a combat round from a mob to a player
@@ -227,11 +162,12 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) At
 		chunk4eAccumulateSubInterruptDamage(&mob.Character, user.Character, attackResult.DamageToTarget, attackResult.Crit)
 	}
 
-	// Track defender's dexterity use (reacting to attacks)
-	user.Character.OnStatUse("dexterity", user.UserId)
-
-	// Track progression for the attacking mob (mirrors player attacker logic)
-	trackMobAttackProgression(mob, attackResult)
+	// U9: attacker progression and the defender's third dexterity-tracking
+	// source used to live here. Both are now handled exclusively by
+	// applyCombatProgression (phase 5, internal/hooks/NewRound_DoCombat_unified.go):
+	// the attacking mob via its per-weapon-hit loop, and the defending
+	// player's dexterity via AwardDefenceProgression on a dodge. This block
+	// duplicated both. See internal/hooks/progression_duplication_test.go.
 
 	// U6 Task 14: CleanHit, not Hit — a deflected swing plays no hit-self
 	// sound; the defence narration carries the player's perception of it.
@@ -280,10 +216,9 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob, forceCrit bool) AttackRe
 		mobDef.Character.TrackPlayerDamage(charmedUserId, attackResult.DamageToTarget)
 	}
 
-	// Track progression for both mobs
-	trackMobAttackProgression(mobAtk, attackResult)
-	// Defender dexterity (mirrors player defender tracking in AttackMobVsPlayer)
-	mobDef.Character.OnStatUse("dexterity", 0)
+	// U9: progression for both mobs used to be tracked here. It is now
+	// handled exclusively by applyCombatProgression (phase 5, see
+	// AttackMobVsPlayer above).
 
 	return attackResult
 }
