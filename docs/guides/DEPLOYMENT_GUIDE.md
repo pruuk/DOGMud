@@ -320,10 +320,15 @@ Network:
   MaxHumanConnections: 50
   MaxAIConnections: 10
   # Which machines are allowed to tell the server the real client IP via the
-  # X-Forwarded-For header. Leave this alone unless your reverse proxy runs on
-  # a DIFFERENT host from the MUD. See "Reverse proxies and the real client
-  # IP" below before changing it.
-  TrustedProxies: []
+  # X-Forwarded-For header. In THIS guide's setup Caddy is a compose
+  # container, so its connections arrive from the mud_network subnet, NOT
+  # loopback — this must name that subnet or admin-auth throttling and web
+  # IP bans key on Caddy's address for everyone. Verify the subnet after
+  # first boot with:
+  #   docker network inspect mud_network --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
+  # and correct this value if it differs. See "Reverse proxies and the real
+  # client IP" below.
+  TrustedProxies: ["172.18.0.0/16"]
 ```
 
 Save and exit nano: press `Ctrl+O`, then `Enter`, then `Ctrl+X`.
@@ -331,7 +336,8 @@ Save and exit nano: press `Ctrl+O`, then `Enter`, then `Ctrl+X`.
 ### 6.x Reverse proxies and the real client IP
 
 Caddy terminates TLS and proxies to the MUD, so from the MUD's point of view
-every web-client player connects from `127.0.0.1`. Left uncorrected that makes
+every web-client player connects from Caddy's own address (its `mud_network`
+container IP in this guide's compose setup). Left uncorrected that makes
 **IP bans do nothing for anyone using `/webclient`** (loopback is exempt from
 ban checks, so a banned player just switches from telnet to the web client),
 and it makes every abuse log line show the proxy's address instead of the
@@ -340,9 +346,32 @@ player's.
 The MUD corrects for this by reading the `X-Forwarded-For` header that Caddy
 adds — but **only from a machine listed in `Network.TrustedProxies`**.
 
-- **Same-host Caddy (the setup in this guide): leave `TrustedProxies: []`.**
-  The empty default means loopback only (`127.0.0.1/32`, `::1/128`), which is
-  exactly what a container-to-container or same-host proxy connects from.
+- **Caddy as a compose service (the setup in this guide): you MUST set
+  `TrustedProxies` to the compose network's subnet.** A container-to-container
+  connection does NOT come from loopback — the server sees Caddy's container
+  address on `mud_network` (something like `172.18.0.3`). With the empty
+  default (loopback only), the header is ignored, and every web visitor on
+  the internet collapses onto Caddy's one address. Get the subnet and set it:
+
+  ```bash
+  docker network inspect mud_network --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
+  ```
+
+  ```yaml
+  Network:
+    TrustedProxies: ["172.18.0.0/16"]   # whatever the inspect printed
+  ```
+
+  Only your own compose containers live on `mud_network`, so this does not
+  widen trust beyond your own proxy. **Symptoms of forgetting this:** the
+  admin page permanently answers "Too many failed authentication attempts"
+  (internet scanners share the one throttle bucket with you — this locked
+  the real admin out of production on 2026-08-21), and IP bans do nothing
+  for web-client players (they all record Caddy's address). The log line
+  `ADMIN AUTH THROTTLE ip="172.18.0.x"` repeating is the fingerprint.
+- **Caddy on the same host but NOT in a container** (installed via apt,
+  proxying to a port on localhost): the empty default is correct — that
+  proxy really does connect from `127.0.0.1`.
 - **Proxy on a different host:** add that host's address, e.g.
   `TrustedProxies: ["10.1.2.3/32"]`.
 
