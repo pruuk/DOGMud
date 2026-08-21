@@ -87,7 +87,8 @@ type Balance struct {
 	// one rule (U6).
 	//
 	// Governs OPPOSED contests only. Static-difficulty rolls (search, track,
-	// forage, concentration) are roadmap category B/C and are not floored.
+	// forage) are roadmap category B/C and are not floored. Concentration
+	// IS floored, by its own ConcentrationFloor below (U10).
 	ContestFloor ConfigFloat `yaml:"ContestFloor"`
 
 	// ConcentrationFloor is the symmetric last-resort flip probability for

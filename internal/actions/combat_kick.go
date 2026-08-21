@@ -73,13 +73,15 @@ type KickResult struct {
 // raptorLegsKickBonus boosts standard-kick damage and knockdown when the
 // attacker has the Raptor Legs mutation (digitigrade, talon-clawed legs).
 // Returns the (possibly) adjusted damagePercent and knockdownFactor.
-// U10 Task 1: the old +15 bonus was denominated in percentage points
-// against the pre-U10 0-100 knockdown chance; +0.30 is the equivalent
-// bonus in factor terms under the transitional bridge (factor*50).
+// U10: the old +15 bonus lifted kick's intended parity rate from 35% to
+// 50%. Solved on the same engine curve as the config factors
+// (P = Phi((f-1)/(RollSpread*f*sqrt(2))) at shipped RollSpread 0.15):
+// 50% needs factor 1.0, so the bonus over KickKnockdownFactor (0.924)
+// is +0.076. Re-derive alongside the config factors on any retune.
 func raptorLegsKickBonus(owned map[string]int, damagePercent float64, knockdownFactor float64) (float64, float64) {
 	if _, ok := owned["raptor-legs"]; ok {
 		damagePercent += 0.20
-		knockdownFactor += 0.30
+		knockdownFactor += 0.076
 	}
 	return damagePercent, knockdownFactor
 }
