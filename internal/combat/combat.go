@@ -452,7 +452,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			// internal/state/position/modifiers.go.
 			attackScore *= applyPositionHitModifiers(sourceChar, targetChar)
 
-			defenseSequence := targetChar.GetDefenseSequence()
+			defenseSequence := DefenceEntriesFor(ChannelMelee, targetChar, DefenceEntryOpts{})
 
 			// Third-party grapple vulnerability
 			defenseSequence, isThirdParty := filterDefensesForThirdParty(&attackResult, sourceChar, targetChar, defenseSequence)

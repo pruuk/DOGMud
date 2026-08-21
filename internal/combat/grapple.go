@@ -1,10 +1,15 @@
 package combat
 
 import (
+	"math"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
@@ -22,31 +27,59 @@ type GrappleResult struct {
 	// are carried separately in the two fields below.
 	AttackRoll      float64
 	DefenseRoll     float64
-	PositionPenalty float64 // For defender if prone
-	AttackZScore    float64 // For crit detection (Stage 8.4)
+	PositionPenalty float64 // For defender if prone (negative = defender was down)
+	AttackZScore    float64 // Self-relative; feeds ONLY the fumble band since U6b Task 13
 	DefenseZScore   float64 // For reference (Stage 8.4)
+	// U6b Task 13: crit derives from the normalized contest MARGIN measured
+	// against the unarmed-combat pair bar, replacing the Stage 8.4
+	// self-relative z-score (which was opponent-blind — a dominant grappler
+	// critted at the same ~2.3% as a hopeless one). These ride on the result
+	// because the band ladder lives in grapple_move.go — re-deriving crit
+	// there from AttackZScore would be a half-conversion that compiles.
+	NormalizedMargin float64 // Attack-positive contest margin in std-dev units
+	CritBar          float64 // CritBarFor over both sides' unarmed-combat ranks
+	Floored          bool    // Contest floor changed the outcome; a floored win cannot crit
+	Crit             bool    // !Floored && NormalizedMargin >= CritBar
+}
+
+// normalizedContestMargin converts an attack-positive contest margin into
+// std-dev units — the quantity CritBarFor's bar is denominated in. Both sides
+// of a RunContest are rolled with the attacker's stdDev, so their difference
+// has standard deviation stdDev*sqrt(2); dividing by stdDev alone would
+// inflate the result by ~41% (see margin_crit.go, trap T3). Falls back to the
+// roll's self-relative z-score when there is no usable scale, matching
+// ContestCritAt's fallback.
+func normalizedContestMargin(margin float64, roll dice.RollResult) float64 {
+	if roll.StdDev > 0 {
+		return margin / (roll.StdDev * math.Sqrt2)
+	}
+	return roll.ZScore
 }
 
 // AttemptGrapple performs a grapple attempt from attacker to defender.
 // Returns a GrappleResult with the outcome and details.
 //
-// Grapple calculation:
-// attackScore = attacker.Dex + attacker.CombatSkill + weapon.GrappleModifier
-// defenseScore = defender.Dex + defender.CombatSkill
+// Grapple calculation (skill terms weighted by the global SkillWeight knob
+// since U6b Task 13, joining the same regime as flee/defence/submission):
+// attackScore = attacker.Dex + attacker.CombatSkill×SkillWeight + weapon.GrappleModifier
+// defenseScore = defender.Dex + defender.CombatSkill×SkillWeight
 //
-// Position modifiers:
-// - If defender is prone: defenseScore *= 0.3  (-70% defense when already down)
-// - If attacker is prone: attackScore *= 0.5   (-50% offense when attacking from ground)
+// Position modifiers (both knobs, U6b Task 13; identical shipped values to
+// the old literals — NOTE the direction, an earlier draft had them swapped):
+// - If defender is prone: defenseScore *= GrappleProneDefenderMod (0.3)
+// - If attacker is prone: attackScore *= GrappleProneAttackerMod (0.5)
 //
 // Position transitions on success:
 // - Standing → Clinched
 // - Prone → Grounded (direct, skip Clinched)
 func AttemptGrapple(attacker *characters.Character, defender *characters.Character) GrappleResult {
 	result := GrappleResult{}
+	cfg := configs.GetBalanceConfig()
+	skillWeight := float64(cfg.SkillWeight)
 
-	// Base scores: Dex + Combat Skill
-	attackerCombatSkill := float64(attacker.GetCombatSkillLevel())
-	defenderCombatSkill := float64(defender.GetCombatSkillLevel())
+	// Base scores: Dex + Combat Skill × SkillWeight
+	attackerCombatSkill := float64(attacker.GetCombatSkillLevel()) * skillWeight
+	defenderCombatSkill := float64(defender.GetCombatSkillLevel()) * skillWeight
 
 	// Check for 1-round grapple opportunity from prior dodge crit (Stage 8.4)
 	opportunityBonus := GetGrappleOpportunityBonus(attacker)
@@ -67,16 +100,18 @@ func AttemptGrapple(attacker *characters.Character, defender *characters.Charact
 		}
 	}
 
-	// Position modifiers
+	// Position modifiers (U6b Task 13: literals → knobs at identical shipped
+	// values; each side reads ITS OWN knob — an earlier draft swapped them)
 	if defender.IsProne() || defender.IsSupine() {
-		// Defender at -70% defense when already down (brutal!)
-		result.PositionPenalty = -0.7
-		result.DefenseScore *= 0.3
+		// Defender heavily penalized when already down (brutal!)
+		defenderMod := float64(cfg.GrappleProneDefenderMod)
+		result.PositionPenalty = defenderMod - 1.0
+		result.DefenseScore *= defenderMod
 	}
 
 	if attacker.IsProne() || attacker.IsSupine() {
-		// Attacker at -50% offense when attacking from ground
-		result.AttackScore *= 0.5
+		// Attacker penalized when attacking from the ground
+		result.AttackScore *= float64(cfg.GrappleProneAttackerMod)
 	}
 
 	// Opposed roll
@@ -86,8 +121,21 @@ func AttemptGrapple(attacker *characters.Character, defender *characters.Charact
 	result.Margin = res.Margin
 	result.AttackRoll = res.AttackRoll.Value
 	result.DefenseRoll = res.DefenseRoll.Value
-	result.AttackZScore = res.AttackRoll.ZScore   // Stage 8.4: For crit detection
+	result.AttackZScore = res.AttackRoll.ZScore   // Self-relative; fumble band only (U6b Task 13)
 	result.DefenseZScore = res.DefenseRoll.ZScore // Stage 8.4: For reference
+
+	// U6b Task 13: crit = the normalized contest margin measured against the
+	// unarmed-combat pair bar. A floored outcome carries the ±1 sentinel
+	// margin and can never crit. The bar's ranks are BOTH sides'
+	// unarmed-combat — grappling is an unarmed contest regardless of what the
+	// attacker happens to be wielding.
+	result.Floored = res.Floored
+	result.NormalizedMargin = normalizedContestMargin(res.Margin, res.AttackRoll)
+	result.CritBar = CritBarFor(
+		attacker.GetSkillLevel(skills.UnarmedCombat),
+		defender.GetSkillLevel(skills.UnarmedCombat),
+	)
+	result.Crit = !result.Floored && result.NormalizedMargin >= result.CritBar
 
 	// Determine whether the new grapple position is a ground grapple.
 	if res.Success {

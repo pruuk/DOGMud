@@ -71,12 +71,14 @@ func Drain(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something reaches for you and you slip most of its grip, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> reaches for <ansi fg="username">%s</ansi> hungrily, who slips mostly free but still gets caught!`, mobName, target.Name),
-			target.UserId)
+		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "draining grasp", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> reaches for <ansi fg="username">%s</ansi> hungrily, who slips mostly free but still gets caught!`, mobName, target.Name),
+				target.UserId)
+		}
 
 		// Note: the mob heals itself; no message needed (matches the hit case).
-	} else {
+	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "draining grasp", messaging.CategoryHitNaturalSharp, false) {
 		if targetUser != nil {
 			if canSee {
 				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> reaches for you hungrily, but misses!`, mobName))
@@ -88,6 +90,9 @@ func Drain(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> reaches for <ansi fg="username">%s</ansi> hungrily, but misses!`, mobName, target.Name),
 			target.UserId)
 	}
+
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(&actions.MobActor{Mob: mob, Room: room}, res.Counter)
 
 	return true, nil
 }

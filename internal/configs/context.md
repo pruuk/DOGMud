@@ -520,19 +520,17 @@ formula and exempt subtype list.
 
 ### Submission System (chunk 4d)
 
-Six knobs control when submission windows open and how tiers are
-resolved. All live under `Balance` in `_datafiles/config.yaml`.
-The `SubSkillWeight` default is 1.5 (higher than the initial T3 plan
-value of 1.0 — adjusted at validation time in
-`config.balance.combat.go`).
+Four knobs control when submission windows open and how tiers are
+resolved. All live under `Balance` in `_datafiles/config.yaml`. (U6b
+Task 13 deleted the sub-only skill weight knob — both sides of the sub
+roll now use the global `SkillWeight` — and the sub crit z-threshold:
+the stun-crit tier is a margin crit vs `CritBarFor` and has no z knob.)
 
 | Knob | Default | Effect |
 |------|---------|--------|
 | `SubmissionAttemptAlpha` | 1.0 | Min drift-margin z-score (absolute) for a sub window to open on either side of the grapple. |
 | `SubmissionAttemptCritZ` | 2.0 | Defender drift z >= this opens a bottom-sub window regardless of margin (the crit shortcut). |
-| `SubSkillWeight` | 1.5 | Unarmed-combat skill contribution multiplier in the sub roll. Higher = more skill-dependent outcomes. |
 | `SubBadZThreshold` | -1.0 | Sub-roll z-score below which the bad tier fires (attempter falls Prone, grapple breaks). |
-| `SubCritZThreshold` | 2.0 | Sub-roll z-score at or above which the crit tier fires (recipient gets 1-round Stunned buff on mercy policy). |
 | `SubGoldLossFraction` | 0.20 | Fraction of defender's carried gold transferred to attacker on subdue/cripple outcomes. |
 
 See `internal/combat/context.md` "Submission System (chunk 4d)" for the
@@ -554,7 +552,10 @@ full resolution flow and policy matrix.
 | Knob | Default | Effect |
 |------|---------|--------|
 | `RangedShotScale` | 1.0 | Global multiplier on all ranged shot damage. Tune up/down to adjust ranged vs melee balance without touching individual weapon stats. |
-| `RangedShieldDefenseBonus` | 15 | Flat defense-score bonus added to a defender's ranged-defense roll when they have a shield equipped in their offhand. Shields are more useful against arrows/bolts than bare hands. |
+
+The flat ranged shield-bonus knob was deleted by U6b Task 8: a shielded
+defender now answers a shot with a real block CONTEST entry via the channel
+defence seam (`combat.DefenceEntriesFor`), not a score addend.
 
 ### Unified action-cost admission (U8)
 

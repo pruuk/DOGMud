@@ -238,34 +238,46 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH BLINDING POWER</ansi> as it strikes <ansi fg="{targettype}">{target}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL CHANNELED BLOW</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS</ansi> on impact!'
+        - 'You swing with clumsy luck and your <ansi fg="item">{itemname}</ansi> connects for a <ansi fg="cyan-bold">CRUSHING BLOW</ansi>!'
         expert:
         - 'You channel devastating force and <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
+        - 'You time your swing perfectly and the crystal head lands a <ansi fg="cyan-bold">RESOUNDING CRITICAL</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - 'Your tactical brilliance creates the perfect opening - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">SHATTER THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'With regal precision, you place the full weight of your <ansi fg="item">{itemname}</ansi> to <ansi fg="cyan-bold">SOVEREIGN EFFECT</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH BLINDING POWER</ansi> striking you!'
         - 'You are hit by a <ansi fg="cyan-bold">CRITICAL CHANNELED BLOW</ansi>!'
+        - 'You are struck by a lucky <ansi fg="cyan-bold">CRUSHING BLOW</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s clumsy swing somehow lands a <ansi fg="cyan-bold">CRITICAL CHANNELED BLOW</ansi>!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> channels devastating force and <ansi fg="cyan-bold">DEVASTATES</ansi> you!'
         - '<ansi fg="{sourcetype}">{source}</ansi> opens your guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> times the swing perfectly for a <ansi fg="cyan-bold">RESOUNDING CRITICAL</ansi>!'
+        - 'The crystal head finds its mark and you suffer a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">SHATTERS THROUGH</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> places the full weight of the blow with <ansi fg="cyan-bold">SOVEREIGN EFFECT</ansi>!'
+        - 'You reel under a <ansi fg="cyan-bold">BLOW OF MERCILESS FORCE</ansi> as <ansi fg="{sourcetype}">{source}</ansi> finds their mark!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH BLINDING POWER</ansi> striking <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL CHANNELED BLOW</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s clumsy swing lands a lucky <ansi fg="cyan-bold">CRUSHING BLOW</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> channels devastating force and <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> opens the guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> times the swing perfectly for a <ansi fg="cyan-bold">RESOUNDING CRITICAL</ansi> against <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">SHATTERS THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> places the weight of the blow with <ansi fg="cyan-bold">SOVEREIGN EFFECT</ansi>, and <ansi fg="{targettype}">{target}</ansi> reels!'
   fumble:
     together:
       toattacker:
@@ -273,29 +285,43 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as the crystal dims!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and your grip slips on the iron rod!'
         - 'You overcommit to your swing and <ansi fg="red-bold">FUMBLE</ansi>, stumbling!'
+        - 'Your <ansi fg="item">{itemname}</ansi> slips from your grasp and you <ansi fg="red-bold">FUMBLE</ansi> the blow!'
         expert:
         - 'Your tactical approach fails - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your channeled swing!'
+        - 'You mistime your swing and <ansi fg="red-bold">FUMBLE</ansi> against <ansi fg="{targettype}">{target}</ansi>!'
+        - 'The weight of your <ansi fg="item">{itemname}</ansi> betrays you and you <ansi fg="red-bold">FUMBLE</ansi>!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s unexpected counter forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'For a single careless moment you lose your grip and <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{targettype}">{target}</ansi>''s footwork wrongfoots you and you <ansi fg="red-bold">FUMBLE</ansi> the strike!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as the crystal dims!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> clumsily!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s grip slips and they <ansi fg="red-bold">FUMBLE</ansi> the swing!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> stumbles and <ansi fg="red-bold">FUMBLES</ansi> the blow meant for you!'
         expert:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> mistimes the swing and <ansi fg="red-bold">FUMBLES</ansi>!'
+        - 'The weight of their <ansi fg="item">{itemname}</ansi> betrays <ansi fg="{sourcetype}">{source}</ansi> and they <ansi fg="red-bold">FUMBLE</ansi>!'
         master:
         - 'Your defense forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+        - 'Your footwork wrongfoots <ansi fg="{sourcetype}">{source}</ansi> and they <ansi fg="red-bold">FUMBLE</ansi> the strike!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> loses their grip for a careless moment and <ansi fg="red-bold">FUMBLES</ansi>!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as the crystal dims!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their swing against <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}''s</ansi> grip slips and they <ansi fg="red-bold">FUMBLE</ansi> the swing at <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
+        - 'The weight of the <ansi fg="item">{itemname}</ansi> betrays <ansi fg="{sourcetype}">{source}</ansi> and they <ansi fg="red-bold">FUMBLE</ansi>!'
         master:
         - '<ansi fg="{targettype}">{target}''s</ansi> defense forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{targettype}">{target}''s</ansi> footwork wrongfoots <ansi fg="{sourcetype}">{source}</ansi> and they <ansi fg="red-bold">FUMBLE</ansi> the strike!'

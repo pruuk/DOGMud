@@ -103,7 +103,9 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "draining grasp", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		}
 
 		// Lifesteal scales on damage actually applied, so a partial drain can
 		// still heal the attacker a little. Describe it the same way a full
@@ -116,7 +118,7 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc))
 		}
-	} else {
+	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "draining grasp", messaging.CategoryHitNaturalSharp, false) {
 		missMsgs := []string{
 			`Your drain misses <ansi fg="mobname">%s</ansi>!`,
 			`You reach for <ansi fg="mobname">%s</ansi> but they slip away!`,
@@ -136,6 +138,9 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	}
+
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(actor, res.Counter)
 
 	return true, nil
 }

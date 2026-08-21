@@ -276,3 +276,16 @@ All verified in source by group A; all are "one crit path" violations:
 | §5.5 kiting | Accepted with the cost known; playtest feel item. |
 
 **The implementation plan may be written.**
+
+> **Crit-bar addendum (2026-08-19, during Task 1).** After this gate closed,
+> the owner directed the crit bar to be a clamped function of the CHANNEL's
+> skill pair with a shipped ceiling (`CritBarSkillSlope 0.05 / CritBarFloor
+> 1.5 / CritBarCeiling 3.0`; 0 = uncapped). Every table in this document is
+> bar-independent EXCEPT the P(crit) columns, which were computed at the
+> constant 2.0 bar. The shipped-bar deltas for the §5.1 royalty cells (script:
+> `u6b_model_spell_taunt.py`, `shipped_bar_deltas()`): Queen vs Meirok crits
+> at 500g/1000g/2000g are **3.7% / 47.3% / 79.3%** shipped, vs 21.7% / 82.5% /
+> 96.5% at the const bar and ~0% / 5.3% / 23.1% uncapped. The owner chose the
+> ceiling with this table in hand. The ceiling also changes live MELEE (its
+> old bar was uncapped): a 1000g King goes from ~0.1% to ~28% melee crits vs
+> a veteran.

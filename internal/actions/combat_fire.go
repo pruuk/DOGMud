@@ -34,6 +34,12 @@ type FireResult struct {
 	Executed   bool
 	Cost       characters.CostCommitResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when a
+	// same-room shot was crit-defended and answered. The command wrapper
+	// speaks its narration AFTER the shot's own outcome via
+	// DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	NoWeapon       bool
 	NotLoaded      bool
 	BadSyntax      bool
@@ -51,25 +57,6 @@ type FireResult struct {
 	// NoTarget renders as "Could not find your target.", which reads as a typo.
 	TooDarkToAim bool
 	Blinded      bool
-}
-
-// rangedDefenseScore computes the defender's score against a ranged shot:
-// Dexterity + combat skill, plus the configured shield bonus when an offhand
-// with a block rating is equipped. Parry contributes nothing to ranged
-// defense by design (you can't parry a bolt).
-func rangedDefenseScore(defender *characters.Character) float64 {
-	score := float64(defender.GetEffectiveDexterity()) + float64(defender.GetCombatSkillLevel())
-	if defender.Equipment.Offhand.ItemId > 0 {
-		// NOTE: Item.GetSpec() returns an ItemSpec by VALUE, not a pointer, so
-		// there is intentionally no nil check here (one would not even compile).
-		// A registry miss yields the zero-value ItemSpec, whose BlockRating is 0,
-		// so the guard below simply skips the shield bonus. This is safe by
-		// value semantics — please don't "fix" it by adding a nil check.
-		if spec := defender.Equipment.Offhand.GetSpec(); spec.BlockRating > 0 {
-			score += float64(configs.GetBalanceConfig().RangedShieldDefenseBonus)
-		}
-	}
-	return score
 }
 
 // ExecuteFire resolves a ranged shot immediately. rest is either "<target>"
@@ -263,20 +250,36 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale)
 	rangedRank := char.GetSkillLevel(skills.RangedCombat)
 
+	// U6b Tasks 7+8: fire routes through the channel seam. ChannelRanged
+	// decides the defence set — dodge for everyone, block only for shielded
+	// defenders (a real contest entry, replacing the deleted flat
+	// shield-bonus knob and the folded defence scalar) — and a
+	// shot can crit against CritBarFor's pair bar. The attack stat is
+	// GetEffectivePerception() (Assumption 2: aimed shots are
+	// deliberate-move actions, not auto-attack swings).
 	result.MoveResult = combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:             char,
-		Defender:             defChar,
-		AttackStat:           char.GetEffectivePerception(),
-		AttackSkill:          rangedRank,
-		DefenseStat:          0, // folded into DefenseSkill via rangedDefenseScore
-		DefenseSkill:         int(rangedDefenseScore(defChar)),
+		Attacker: char,
+		Defender: defChar,
+		Channel:  combat.ChannelRanged,
+		Attack: combat.AttackSide{
+			Stat: char.GetEffectivePerception(), StatName: "perception",
+			Skill: skills.RangedCombat, SkillRank: rangedRank,
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelRanged),
+			ForceCrit: combat.SleepingForceCrit(defChar),
+		},
 		DamagePercent:        shotMult,
 		KnockdownChance:      0,
-		SkillRank:            rangedRank,
 		DamageStat:           char.GetEffectivePerception(),
 		MitigationMultiplier: 1.0,
 	})
 	result.Executed = true
+
+	// U6b Task 10: a crit-defended shot earns the defender a counter-swing,
+	// REACH-GATED — only when the shooter shares the room. The cross-room
+	// shot is the ONE uncounterable attack (owner decision: a property of
+	// the weapon, not a wiring hole). The wrapper speaks the counter AFTER
+	// the shot's own outcome via DispatchCounterMessages (Task 11).
+	result.Counter = counterSkillMoveExit(actor, defChar, result.MoveResult, combat.ChannelRanged, !crossRoom)
 
 	// Analytics + round consumption (same pattern as kick). Fire never burns
 	// the special-move cooldown — only the combat round.

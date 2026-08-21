@@ -30,7 +30,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// 0. Dead characters can't cast (Health <= 0).
 	if user.Character.IsDisabled() {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't cast — you're dead.</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't cast. You are dead.</ansi>`)
 		return true, nil
 	}
 
@@ -238,9 +238,13 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, `You need a moment before you can do that.`)
 		return true, nil
 	case result.NoTarget:
-		// HarmSingle / HelpSingle can set this; supply a context-aware message.
+		// HarmSingle / HarmArea / HelpSingle can set this; supply a
+		// context-aware message.
 		if spellInfo.Type == spells.HelpSingle {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">You don't see "%s" here.</ansi>`, targetName))
+		} else if spellInfo.Type == spells.HarmArea {
+			// Refused before any resources were spent (U7b admission rule).
+			user.SendText(messaging.CategorySystem, `<ansi fg="red">There is nothing here for that spell to strike.</ansi>`)
 		} else {
 			user.SendText(messaging.CategorySystem, `<ansi fg="red">You need a target to cast that spell.</ansi>`)
 		}

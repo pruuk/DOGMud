@@ -19,7 +19,7 @@ options:
       - '<ansi fg="defense-good">You flinch back reflexively, narrowly escaping harm!</ansi>'
       - '<ansi fg="defense-good">You pivot at the last second, feeling the rush of air as the attack passes!</ansi>'
       - '<ansi fg="defense-good">You throw yourself aside desperately, barely avoiding the blow!</ansi>'
-      - '<ansi fg="defense-good">You lean back sharply, the weapon grazing past!</ansi>'
+      - '<ansi fg="defense-good">You lean back sharply as the <ansi fg="item">{attack}</ansi> rushes past!</ansi>'
       toattacker:
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> barely dodges your attack!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> twists aside at the last moment!</ansi>'
@@ -30,7 +30,7 @@ options:
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> flinches back reflexively, narrowly escaping!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> pivots at the last second, your attack just missing!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> throws themselves aside desperately!</ansi>'
-      - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> leans back sharply as your weapon grazes past!</ansi>'
+      - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> leans back sharply as your <ansi fg="item">{attack}</ansi> rushes past!</ansi>'
       toroom:
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> barely dodges <ansi fg="user">{attacker}</ansi>''s attack.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> twists aside at the last moment.</ansi>'
@@ -41,7 +41,7 @@ options:
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> flinches back reflexively.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> pivots sharply, the attack just missing.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> throws themselves aside desperately.</ansi>'
-      - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> leans back sharply as the weapon grazes past.</ansi>'
+      - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> leans back sharply as the <ansi fg="item">{attack}</ansi> rushes past.</ansi>'
 
   normal:
     # Standard dodges - defender successfully avoided the attack (z-score 0.5-2.0)
@@ -54,7 +54,7 @@ options:
       - '<ansi fg="defense-good">You slip aside, avoiding <ansi fg="user">{attacker}</ansi>''s <ansi fg="item">{attack}</ansi>!</ansi>'
       - '<ansi fg="defense-good">You duck and roll, coming up out of reach!</ansi>'
       - '<ansi fg="defense-good">You dance back, staying just out of range!</ansi>'
-      - '<ansi fg="defense-good">You pivot smoothly, letting the attack pass by!</ansi>'
+      - '<ansi fg="defense-good">You pivot smoothly, letting the <ansi fg="item">{attack}</ansi> pass by!</ansi>'
       - '<ansi fg="defense-good">You lean away from the strike with practiced ease!</ansi>'
       - '<ansi fg="defense-good">You shift your weight and glide aside!</ansi>'
       - '<ansi fg="defense-good">You bob and weave, avoiding the blow!</ansi>'
@@ -69,7 +69,7 @@ options:
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> slips aside, avoiding your <ansi fg="item">{attack}</ansi>!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> ducks and rolls out of reach!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> dances back, staying out of range!</ansi>'
-      - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> pivots smoothly, your attack passing by!</ansi>'
+      - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> pivots smoothly, your <ansi fg="item">{attack}</ansi> passing by!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> leans away from your strike with ease!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> shifts weight and glides aside!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> bobs and weaves, avoiding your blow!</ansi>'
@@ -84,7 +84,7 @@ options:
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> slips aside gracefully.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> ducks and rolls out of reach.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> dances back, avoiding the strike.</ansi>'
-      - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> pivots smoothly as the attack passes.</ansi>'
+      - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> pivots smoothly as the <ansi fg="item">{attack}</ansi> passes.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> leans away from the strike.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> shifts and glides aside.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> bobs and weaves around the blow.</ansi>'
@@ -96,7 +96,7 @@ options:
     # Easy/decisive dodges - defender easily avoided a poor attack (z-score >= 2.0)
     together:
       todefender:
-      - '<ansi fg="defense-good">You sidestep <ansi fg="user">{attacker}</ansi>''s clumsy attack with ease!</ansi>'
+      - '<ansi fg="defense-good">You sidestep <ansi fg="user">{attacker}</ansi>''s clumsy <ansi fg="item">{attack}</ansi> with ease!</ansi>'
       - '<ansi fg="defense-good">You effortlessly evade <ansi fg="user">{attacker}</ansi>''s wild swing!</ansi>'
       - '<ansi fg="defense-good">You casually step aside, barely needing to move!</ansi>'
       - '<ansi fg="defense-good">You gracefully dodge the telegraphed strike!</ansi>'
@@ -111,7 +111,7 @@ options:
       - '<ansi fg="defense-good">You sidestep gracefully, not even breaking stride!</ansi>'
       - '<ansi fg="defense-good">You slip away before the attack even reaches you!</ansi>'
       toattacker:
-      - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> sidesteps your clumsy attack with ease!</ansi>'
+      - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> sidesteps your clumsy <ansi fg="item">{attack}</ansi> with ease!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> effortlessly evades your wild swing!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> casually steps aside, barely moving!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> gracefully dodges your telegraphed strike!</ansi>'
@@ -126,7 +126,7 @@ options:
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> sidesteps gracefully, not breaking stride!</ansi>'
       - '<ansi fg="attack-bad"><ansi fg="mob">{defender}</ansi> slips away before your attack reaches them!</ansi>'
       toroom:
-      - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> sidesteps the clumsy attack with ease.</ansi>'
+      - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> sidesteps the clumsy <ansi fg="item">{attack}</ansi> with ease.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> effortlessly evades the wild swing.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> casually steps aside.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{defender}</ansi> gracefully dodges the telegraphed strike.</ansi>'

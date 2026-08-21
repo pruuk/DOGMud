@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/stats"
 )
 
@@ -14,9 +15,11 @@ import (
 // It was written against TrySpellDeflection and TryStoicResolve, the two flat
 // avoidance functions that ran a SECOND independent contest on top of each
 // channel's primary roll. U6 Task 12 deleted both and folded the spell and
-// social channels onto ResolveChannelDefence. The traps did not go anywhere:
-// that function performs the same DEFENDER-side crit read on the same
-// attack-positive margin, so the guard was re-pointed rather than dropped.
+// social channels onto a shared channel resolver; U6b Task 5 deleted that
+// legacy wrapper in turn and left ResolveChannelAttack, with the attack side
+// caller-built (this file builds it via channelSideForSignTest). The traps did
+// not go anywhere: the seam performs the same DEFENDER-side crit read on the
+// same attack-positive margin, so the guard was re-pointed rather than dropped.
 //
 // Both tests here are DEFENDER-side. The attacker-side mirror is
 // internal/actions/contest_sign_taunt_test.go, added when a U3 review found that
@@ -35,7 +38,7 @@ import (
 // attack-signed one compiles cleanly and puts the crit on the losing side.
 //
 // THE ONLY OBSERVABLE EITHER TRAP DISTURBS IS THE 0.0 RETURN.
-// ResolveChannelDefence returns 1.0 (defender lost), a partial multiplier in
+// ResolveChannelAttack returns 1.0 (defender lost), a partial multiplier in
 // (0.0, 0.5] (defender won), or 0.0 (defender won decisively = defensive crit =
 // full negation). A zeroed margin normalises to z = 0 and a flipped margin
 // normalises to a large NEGATIVE z; both sit below ContestCritThreshold forever,
@@ -45,7 +48,7 @@ import (
 // true under both mutations, which is why this file asserts the 0.0 explicitly.
 //
 // U6 Task 12 also made the partial a CURVE rather than a flat configured value.
-// TestResolveChannelDefence_PartialIsACurveNotAStep is what keeps it one: under
+// TestResolveChannelAttack_PartialIsACurveNotAStep is what keeps it one: under
 // either sign mutation every partial pins to the 0.5 bare-win floor, because
 // DefenceMitigation clamps a non-positive margin, and that test fails on the
 // absence of any value strictly between the endpoints.
@@ -79,7 +82,7 @@ import (
 //     the only possible route to 0.0.
 //
 //   - The five per-defence effectiveness knobs, pinned to 1.0. U6 Task 12 made
-//     ResolveChannelDefence scale each defence's score by its knob before the
+//     the channel resolver scale each defence's score by its knob before the
 //     contest, so an unpinned QuellEffectiveness or DefyEffectiveness would move
 //     the defence score the iteration-count arithmetic below is computed from.
 //     They validate to 1.0 in a test binary today; pinned so that stays true.
@@ -136,7 +139,7 @@ func setStatBase(t *testing.T, si *stats.StatInfo, base int) {
 
 // Scores, and the arithmetic that picks the iteration count.
 //
-// ResolveChannelDefence rolls BOTH sides with the ATTACKER's standard deviation,
+// ResolveChannelAttack rolls BOTH sides with the ATTACKER's standard deviation,
 // through contest.Run, which does `stdDev := dice.StdDevFor(atkScore)` and rolls
 // every entry with it. RollSpread is 0.15 in a test binary (dice's package-level
 // default; nothing calls SetRollSpread here), which was confirmed by observing
@@ -170,7 +173,7 @@ const (
 	avoidanceIterations  = 200
 )
 
-// avoidanceOutcomes tallies what ResolveChannelDefence returned across a run.
+// avoidanceOutcomes tallies what ResolveChannelAttack returned across a run.
 //
 // The three buckets are the three OUTCOMES, not three values: the partial is a
 // curve since U6 Task 12, so anything strictly inside (0, 1) is a partial and
@@ -187,18 +190,45 @@ func (o avoidanceOutcomes) total() int {
 	return o.fullNegations + o.bareWins + o.curvedWins + o.attackWins + o.outOfRange
 }
 
-// runAvoidanceContest drives ResolveChannelDefence n times and buckets the
+// channelSideForSignTest builds the AttackSide the production callers build
+// for these channels (spellAttackSideFor in hooks; ExecuteTaunt in actions),
+// so these guards keep contesting the exact scores the deleted legacy wrapper
+// and its default-side builder used to derive.
+func channelSideForSignTest(channel AttackChannel, attacker *characters.Character) AttackSide {
+	switch channel {
+	case ChannelSpellMental, ChannelSpellPhysical:
+		return AttackSide{
+			Stat:      attacker.Stats.Willpower.ValueAdj,
+			StatName:  "willpower",
+			Skill:     skills.Spellcasting,
+			SkillRank: attacker.GetSkillLevel(skills.Spellcasting),
+			Mult:      1.0,
+		}
+	case ChannelSocial:
+		return AttackSide{
+			Stat:      attacker.Stats.Charisma.ValueAdj,
+			StatName:  "charisma",
+			Skill:     skills.Rhetoric,
+			SkillRank: attacker.GetSkillLevel(skills.Rhetoric),
+			Mult:      1.0,
+		}
+	}
+	return AttackSide{Mult: 1.0}
+}
+
+// runAvoidanceContest drives ResolveChannelAttack n times and buckets the
 // returns. Counting happens inside the loop and every assertion in the callers
 // runs unconditionally after it, so no caller can report PASS having checked
 // nothing.
 func runAvoidanceContest(t *testing.T, n int, channel AttackChannel, attacker, defender *characters.Character) avoidanceOutcomes {
 	t.Helper()
 
+	side := channelSideForSignTest(channel, attacker)
 	var out avoidanceOutcomes
 	for i := 0; i < n; i++ {
 		// The defender carries no userId, which is the no-user sentinel: the
 		// progression calls inside look up nothing and must not panic.
-		result := ResolveChannelDefence(channel, attacker, defender)
+		result := ResolveChannelAttack(channel, side, attacker, defender)
 		mult := result.DamageMultiplier
 		if result.DefenceType == "" {
 			t.Errorf("iteration %d returned no selected defence for a contested channel", i)
@@ -234,10 +264,10 @@ func runAvoidanceContest(t *testing.T, n int, channel AttackChannel, attacker, d
 	return out
 }
 
-// TestResolveChannelDefence_SpellMentalFullNegationStillReachable guards the
+// TestResolveChannelAttack_SpellMentalFullNegationStillReachable guards the
 // DEFENDER-side crit read for the mental-spell channel, answered by quell.
 //
-// ResolveChannelDefence passes `-res.Margin` to DefenseContestCrit. Dropping the
+// ResolveChannelAttack passes `-res.Margin` to DefenseContestCrit. Dropping the
 // negation, or reverting to a `res.DefenseRoll.Margin` read that contest.Run
 // never populates, kills the 0.0 return without failing anything else.
 //
@@ -245,7 +275,7 @@ func runAvoidanceContest(t *testing.T, n int, channel AttackChannel, attacker, d
 // defender's PERCEPTION; quell contests WILLPOWER. Losing perception as a
 // spell-defence stat is the intended outcome of the unification, and this line
 // is where that shows up in the guard.
-func TestResolveChannelDefence_SpellMentalFullNegationStillReachable(t *testing.T) {
+func TestResolveChannelAttack_SpellMentalFullNegationStillReachable(t *testing.T) {
 	pinAvoidanceContestKnobs(t)
 
 	attacker := characters.New()
@@ -262,7 +292,7 @@ func TestResolveChannelDefence_SpellMentalFullNegationStillReachable(t *testing.
 			got, avoidanceIterations)
 	}
 	if out.fullNegations == 0 {
-		t.Errorf("ResolveChannelDefence(ChannelSpellMental) never returned 0.0 across %d "+
+		t.Errorf("ResolveChannelAttack(ChannelSpellMental) never returned 0.0 across %d "+
 			"iterations (full negations=%d bare=%d curved=%d attack wins=%d); expected "+
 			"~99.7%% of iterations to fully negate at attack score %d vs defence score %d. "+
 			"The defensive crit derives from the contest margin, so this is what a zeroed "+
@@ -273,7 +303,7 @@ func TestResolveChannelDefence_SpellMentalFullNegationStillReachable(t *testing.
 	}
 }
 
-// TestResolveChannelDefence_SocialFullNegationStillReachable guards the same
+// TestResolveChannelAttack_SocialFullNegationStillReachable guards the same
 // read on the social channel, answered by defy.
 //
 // The path it replaces (TryStoicResolve) was migrated in U3 from a
@@ -281,7 +311,7 @@ func TestResolveChannelDefence_SpellMentalFullNegationStillReachable(t *testing.
 // DEFENCE-positive and correctly unnegated, onto a contest.Result whose Margin
 // is ATTACK-positive and must be negated. Both halves of that had to change
 // together, silently, and this test is what would have noticed.
-func TestResolveChannelDefence_SocialFullNegationStillReachable(t *testing.T) {
+func TestResolveChannelAttack_SocialFullNegationStillReachable(t *testing.T) {
 	pinAvoidanceContestKnobs(t)
 
 	attacker := characters.New()
@@ -297,7 +327,7 @@ func TestResolveChannelDefence_SocialFullNegationStillReachable(t *testing.T) {
 			got, avoidanceIterations)
 	}
 	if out.fullNegations == 0 {
-		t.Errorf("ResolveChannelDefence(ChannelSocial) never returned 0.0 across %d "+
+		t.Errorf("ResolveChannelAttack(ChannelSocial) never returned 0.0 across %d "+
 			"iterations (full negations=%d bare=%d curved=%d attack wins=%d); expected "+
 			"~99.7%% of iterations to fully negate at attack score %d vs defence score %d. "+
 			"The defensive crit derives from the contest margin, so this is what a zeroed "+
@@ -308,7 +338,7 @@ func TestResolveChannelDefence_SocialFullNegationStillReachable(t *testing.T) {
 	}
 }
 
-// TestResolveChannelDefence_OverwhelmingAttackerIsNeverNegated pins the OTHER
+// TestResolveChannelAttack_OverwhelmingAttackerIsNeverNegated pins the OTHER
 // side of the sign.
 //
 // The two tests above prove a decisive DEFENDER can reach 0.0. They cannot, on
@@ -318,7 +348,7 @@ func TestResolveChannelDefence_SocialFullNegationStillReachable(t *testing.T) {
 //
 // The floor is pinned to 0 in pinAvoidanceContestKnobs, so there is no
 // last-resort save to steal iterations here.
-func TestResolveChannelDefence_OverwhelmingAttackerIsNeverNegated(t *testing.T) {
+func TestResolveChannelAttack_OverwhelmingAttackerIsNeverNegated(t *testing.T) {
 	pinAvoidanceContestKnobs(t)
 
 	attacker := characters.New()
@@ -334,20 +364,20 @@ func TestResolveChannelDefence_OverwhelmingAttackerIsNeverNegated(t *testing.T) 
 			got, avoidanceIterations)
 	}
 	if out.fullNegations != 0 {
-		t.Errorf("ResolveChannelDefence fully negated %d of %d iterations with the "+
+		t.Errorf("ResolveChannelAttack fully negated %d of %d iterations with the "+
 			"attacker at score %d against a defender at %d. A crit on the losing side "+
 			"is what an inverted margin convention looks like",
 			out.fullNegations, avoidanceIterations, avoidanceDefenseStat, avoidanceAttackStat)
 	}
 	if out.attackWins == 0 {
-		t.Errorf("ResolveChannelDefence never returned 1.0 across %d iterations against "+
+		t.Errorf("ResolveChannelAttack never returned 1.0 across %d iterations against "+
 			"a defender outscored two to one (full negations=%d bare=%d curved=%d); "+
 			"res.Success is being read backwards",
 			avoidanceIterations, out.fullNegations, out.bareWins, out.curvedWins)
 	}
 }
 
-// TestResolveChannelDefence_PartialIsACurveNotAStep is the guard the flat
+// TestResolveChannelAttack_PartialIsACurveNotAStep is the guard the flat
 // avoidance multipliers did not need and the curve does.
 //
 // A defensive win mitigates 50% at a bare win, rising to 100% at
@@ -363,7 +393,7 @@ func TestResolveChannelDefence_OverwhelmingAttackerIsNeverNegated(t *testing.T) 
 // and about 2.3% of contests clear two sigma into a full negation. Over 2000
 // iterations the chance of missing any one bucket is far below the 1e-6
 // false-failure budget.
-func TestResolveChannelDefence_PartialIsACurveNotAStep(t *testing.T) {
+func TestResolveChannelAttack_PartialIsACurveNotAStep(t *testing.T) {
 	pinAvoidanceContestKnobs(t)
 
 	const parityIterations = 2000

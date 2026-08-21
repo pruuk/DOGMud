@@ -108,6 +108,13 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 		}
 	} else if result.Damage > 0 {
+		// Defended-partial: personal lines carry the damage; the room line
+		// names the defence that blunted the move (U6b Task 9).
+		tripAttack := "trip"
+		if hasTail {
+			tripAttack = "tailsweep"
+		}
+		tripTriadSent := sendMoveDefenceTriad(mob, room, target, result.Defence, tripAttack, messaging.CategoryTrip, true)
 		if hasTail {
 			if targetChar != nil {
 				if canSee {
@@ -116,9 +123,11 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps at you and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			room.SendTextVisual(messaging.CategoryTrip,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
-				targetPlayerId)
+			if !tripTriadSent {
+				room.SendTextVisual(messaging.CategoryTrip,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
+					targetPlayerId)
+			}
 		} else {
 			if targetChar != nil {
 				if canSee {
@@ -127,12 +136,23 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			room.SendTextVisual(messaging.CategoryTrip,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
-				targetPlayerId)
+			if !tripTriadSent {
+				room.SendTextVisual(messaging.CategoryTrip,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
+					targetPlayerId)
+			}
 		}
 	} else {
+		// Fully stopped: speak the triad naming the winning defence; fall
+		// back to plain miss text when there is no defence to narrate (a
+		// fumble). U6b Task 9.
+		tripAttack := "trip"
 		if hasTail {
+			tripAttack = "tailsweep"
+		}
+		if sendMoveDefenceTriad(mob, room, target, result.Defence, tripAttack, messaging.CategoryTrip, false) {
+			// Triad already spoke for all audiences.
+		} else if hasTail {
 			if targetChar != nil {
 				if canSee {
 					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swings their tail at you, but you avoid it!`, mobName))
@@ -156,6 +176,9 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targetPlayerId)
 		}
 	}
+
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(&actions.MobActor{Mob: mob, Room: room}, res.Counter)
 
 	return true, nil
 }

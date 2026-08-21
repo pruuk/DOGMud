@@ -108,6 +108,21 @@ func (b *Balance) validateCombat() {
 	if b.GrappleGroundedVulnerabilityMultiplier <= 0 {
 		b.GrappleGroundedVulnerabilityMultiplier = 1.15
 	}
+	// U6b Task 13: AttemptGrapple's prone literals, knobbed. Score
+	// multipliers, not off-switches — a non-positive value is a config error
+	// and falls back to the default rather than zeroing a side's score.
+	if b.GrappleProneAttackerMod <= 0 {
+		b.GrappleProneAttackerMod = 0.5
+	}
+	if b.GrappleProneDefenderMod <= 0 {
+		b.GrappleProneDefenderMod = 0.3
+	}
+	// U6b Task 14: the drift aggressor edge is a score multiplier, not an
+	// off-switch — a non-positive value is a config error and falls back to
+	// the modelled default (see config.balance.go for the solve provenance).
+	if b.GrappleAggressorDriftBonus <= 0 {
+		b.GrappleAggressorDriftBonus = 1.038
+	}
 	if b.ProneVulnerabilityMultiplier <= 0 {
 		b.ProneVulnerabilityMultiplier = 1.15
 	}
@@ -150,11 +165,6 @@ func (b *Balance) validateCombat() {
 	if b.RangedShotScale <= 0 {
 		b.RangedShotScale = 1.0
 	}
-	// <= 0 mirrors SpecialMoveCooldown/GrappleStaminaCostPerRound convention:
-	// treat 0 as absent (a shield granting zero bonus makes no design sense).
-	if b.RangedShieldDefenseBonus <= 0 {
-		b.RangedShieldDefenseBonus = 15
-	}
 
 	// ── SKULLDUGGERY ─────────────────────────────────────────────────────────
 	if !validPositiveActionCost(b.SneakBaseStaminaCost) {
@@ -162,9 +172,6 @@ func (b *Balance) validateCombat() {
 	}
 	if b.SneakFailCooldown < 0 {
 		b.SneakFailCooldown = 3
-	}
-	if b.StealSkillMultiplier <= 0 {
-		b.StealSkillMultiplier = 1.0
 	}
 	if b.StealHiddenBonus < 0 {
 		b.StealHiddenBonus = 25
@@ -206,14 +213,11 @@ func (b *Balance) validateCombat() {
 	if b.SubmissionAttemptCritZ <= 0 {
 		b.SubmissionAttemptCritZ = 2.0
 	}
-	if b.SubSkillWeight <= 0 {
-		b.SubSkillWeight = 1.5
-	}
+	// U6b Task 13: the sub-only skill weight knob is deleted (both sub-roll
+	// sides use the global SkillWeight) and so is the sub crit z-threshold (the
+	// stun-crit tier is a margin crit vs CritBarFor now; the z knob had no reader left).
 	if b.SubBadZThreshold == 0 {
 		b.SubBadZThreshold = -1.0
-	}
-	if b.SubCritZThreshold <= 0 {
-		b.SubCritZThreshold = 2.0
 	}
 	if b.SubGoldLossFraction < 0 || b.SubGoldLossFraction > 1.0 {
 		b.SubGoldLossFraction = 0.20
@@ -312,6 +316,29 @@ func (b *Balance) validateCombat() {
 	}
 	if b.MinDefenseCritChance < 0 || b.MinDefenseCritChance > 1.0 {
 		b.MinDefenseCritChance = 0.01
+	}
+
+	// Crit bar (U6b). Slope 0 is legal (a flat bar); only a negative slope is
+	// corrected. Floor must be positive.
+	if b.CritBarSkillSlope < 0 {
+		b.CritBarSkillSlope = 0.05
+	}
+	if b.CritBarFloor <= 0 {
+		b.CritBarFloor = 1.5
+	}
+	// Ceiling 0 is LEGAL and means UNCAPPED -- the documented off-switch that
+	// restores the pre-U6b unbounded bar. Do NOT use the <=0 idiom here: a
+	// validator that "corrects" 0 back to 3.0 makes uncapping impossible.
+	// Only a negative ceiling is corrected.
+	if b.CritBarCeiling < 0 {
+		b.CritBarCeiling = 3.0
+	}
+
+	// `< 0`, not `<= 0`: CounterDamagePercent 0 is the documented off-switch
+	// (counters connect but deal nothing); the <= idiom would silently restore
+	// the default and make disabling counter damage impossible.
+	if b.CounterDamagePercent < 0 {
+		b.CounterDamagePercent = 0.5
 	}
 
 	// ── TOXICITY ────────────────────────────────────────────────────────────

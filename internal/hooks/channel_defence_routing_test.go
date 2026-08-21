@@ -12,8 +12,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
-	"github.com/GoMudEngine/GoMud/internal/contest"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -48,40 +46,55 @@ func TestChannelDefenceRoutingTestsDoNotLoadGlobalItemRegistries(t *testing.T) {
 	require.Zero(t, loadCalls, "hooks tests must not replace the global item and attack-message registries")
 }
 
-func TestPlayerSpellKnockdownUsesDeterministicDefenceSeam(t *testing.T) {
+// TestSpellResolversRunOneContestAndAppliersRollNone replaces the retired
+// TestPlayerSpellKnockdownUsesDeterministicDefenceSeam, which pinned the OLD
+// topology (each applier rolling its own defence through the deleted
+// per-applier defence seam). U6b Task 4's contract is the inverse: exactly
+// the four resolvers call the runSpellChannelAttack seam, exactly once each,
+// and the appliers CONSUME the threaded result — zero contest or defence
+// calls of their own, and no direct combat.ResolveChannel* calls anywhere
+// (direct canonical calls also make dispatch tests stochastic).
+func TestSpellResolversRunOneContestAndAppliersRollNone(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 	parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(filepath.Dir(here), "spell_resolution.go"), nil, 0)
 	require.NoError(t, err)
-	var knockdown *ast.FuncDecl
+
+	seamCallsByFunc := map[string]int{}
+	directCalls := 0
 	for _, decl := range parsed.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
-		if ok && fn.Name.Name == "applyMobEffect_knockdown" {
-			knockdown = fn
-			break
+		if !ok || fn.Body == nil {
+			continue
 		}
-	}
-	require.NotNil(t, knockdown)
-	seamCalls, directCalls := 0, 0
-	ast.Inspect(knockdown.Body, func(node ast.Node) bool {
-		call, ok := node.(*ast.CallExpr)
-		if !ok {
+		ast.Inspect(fn.Body, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			switch callee := call.Fun.(type) {
+			case *ast.Ident:
+				if callee.Name == "runSpellChannelAttack" {
+					seamCallsByFunc[fn.Name.Name]++
+				}
+			case *ast.SelectorExpr:
+				if pkg, ok := callee.X.(*ast.Ident); ok && pkg.Name == "combat" &&
+					(callee.Sel.Name == "ResolveChannelAttack" || callee.Sel.Name == "RunContest") {
+					directCalls++
+				}
+			}
 			return true
-		}
-		switch fn := call.Fun.(type) {
-		case *ast.Ident:
-			if fn.Name == "runPlayerSpellDefence" {
-				seamCalls++
-			}
-		case *ast.SelectorExpr:
-			if pkg, ok := fn.X.(*ast.Ident); ok && pkg.Name == "combat" && fn.Sel.Name == "ResolveChannelDefence" {
-				directCalls++
-			}
-		}
-		return true
-	})
-	require.Equal(t, 1, seamCalls, "player knockdown dispatch must resolve defence through its package seam once")
-	require.Zero(t, directCalls, "direct canonical resolver calls make dispatch tests stochastic")
+		})
+	}
+
+	require.Equal(t, map[string]int{
+		"resolveAgainstMob":            1,
+		"resolveAgainstPlayer":         1,
+		"resolveMobSpellAgainstMob":    1,
+		"resolveMobSpellAgainstPlayer": 1,
+	}, seamCallsByFunc,
+		"exactly the four resolvers run the ONE contest, once each; an applier rolling its own defence reintroduces the second contest")
+	require.Zero(t, directCalls, "spell resolution must reach the canonical resolver only through its package seam")
 }
 
 func seedChannelRoutingMessages(t *testing.T) func() {
@@ -321,23 +334,14 @@ func TestMobAreaSpellEmitsOnePrivateShortagePerActualPlayerTarget(t *testing.T) 
 		target.Character.Health = 100
 		target.Character.HealthMax.Value = 100
 	}
-	originalContest := runMobSpellContest
-	runMobSpellContest = func(float64, []contest.Entry) contest.Result {
-		return contest.Result{
-			AttackRoll:  dice.RollResult{Value: 101, Mean: 100, StdDev: 15},
-			DefenseRoll: dice.RollResult{Value: 100, Mean: 100, StdDev: 15},
-			Margin:      1, Contested: true, Success: true,
-		}
-	}
-	t.Cleanup(func() { runMobSpellContest = originalContest })
-	originalDefence := runMobSpellDefence
-	runMobSpellDefence = func(combat.AttackChannel, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+	original := runSpellChannelAttack
+	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
 		return combat.ChannelDefenceResult{
 			DefenceType: characters.DefenseQuell, Defended: true, DamageMultiplier: 0.3,
 			Cost: characters.CostCommitResult{Status: characters.CostPartiallyPaid, Pool: characters.PoolConviction},
 		}
 	}
-	t.Cleanup(func() { runMobSpellDefence = originalDefence })
+	t.Cleanup(func() { runSpellChannelAttack = original })
 	spell := &spells.SpellData{
 		SpellId: "mind-storm", Name: "Mind Storm", Type: spells.HarmArea,
 		EffectType: "damage", TargetDefenseType: "mental", EffectMagnitude: 10,
@@ -387,30 +391,29 @@ func TestSpellChannelDefencePreservesComputedDuplicateMobIdentity(t *testing.T) 
 	}
 }
 
-func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t *testing.T) {
+// TestResolveSpellDispatchDefensiveCritStopsKnockdownSpell replaces the
+// retired TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit,
+// which pinned the two-contest defect: the old hit gate had already "landed"
+// the cast before the defence was consulted, so a defensive crit could zero
+// the damage yet the knockdown still went through. With ONE contest (U6b
+// Task 4) a defensive crit means the attack LOST outright — no damage AND no
+// knockdown, exactly ExecuteSkillMove's Hit/StatusApplied split — and the
+// heavy-band defence triad is the only narration.
+func TestResolveSpellDispatchDefensiveCritStopsKnockdownSpell(t *testing.T) {
 	for _, spellType := range []spells.SpellType{spells.HarmSingle, spells.HarmArea} {
 		t.Run(string(spellType), func(t *testing.T) {
 			cleanup := seedAllRegistries()
 			defer cleanup()
 			restoreMessages := seedChannelRoutingMessages(t)
 			defer restoreMessages()
-			originalContest := runPlayerSpellContest
-			runPlayerSpellContest = func(float64, []contest.Entry) contest.Result {
-				return contest.Result{
-					AttackRoll:  dice.RollResult{Value: 101, Mean: 100, StdDev: 15},
-					DefenseRoll: dice.RollResult{Value: 100, Mean: 100, StdDev: 15},
-					Margin:      1, Contested: true, Success: true,
-				}
-			}
-			t.Cleanup(func() { runPlayerSpellContest = originalContest })
-			originalDefence := runPlayerSpellDefence
-			runPlayerSpellDefence = func(combat.AttackChannel, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+			original := runSpellChannelAttack
+			runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
 				return combat.ChannelDefenceResult{
 					DefenceType: characters.DefenseQuell, Defended: true,
 					DefensiveCrit: true, DamageMultiplier: 0,
 				}
 			}
-			t.Cleanup(func() { runPlayerSpellDefence = originalDefence })
+			t.Cleanup(func() { runSpellChannelAttack = original })
 
 			room := rooms.LoadRoom(1)
 			attacker := users.GetByUserId(1)
@@ -422,10 +425,6 @@ func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t
 				SpellId: "force-wave", Name: "Force Wave", Type: spellType,
 				EffectType: "knockdown", TargetDefenseType: "mental", EffectMagnitude: 20,
 			}
-			attacker.Character.Stats.Willpower.ValueAdj = 1000
-			attacker.Character.Skills = map[string]int{"spellcasting": 0}
-			target.Character.Stats.Willpower.ValueAdj = 1
-			target.Character.Skills = map[string]int{"spellcasting": 0}
 			require.True(t, target.Character.IsStanding(), "fixture must begin standing")
 			drainChannelRoutingQueues(attacker.UserId, observer.UserId)
 
@@ -436,24 +435,59 @@ func TestResolveSpellDispatchPreservesSingleAndAreaKnockdownAfterDefensiveCrit(t
 			resolveSpell(attacker, casting, spell, room)
 
 			require.Equal(t, 100, target.Character.Health, "defensive crit must reduce damage to zero")
-			require.True(t, target.Character.IsSupine() || target.Character.IsProne(),
-				"zero-damage defensive crit must preserve the binary knockdown; state=%v", target.Character.Position.State())
+			require.True(t, target.Character.IsStanding(),
+				"a defensive crit is a lost contest: the binary knockdown must be stopped with the damage; state=%v",
+				target.Character.Position.State())
 			attackerLines := drainChannelRoutingQueues(attacker.UserId)[attacker.UserId]
-			// TWO lines, not one. The defence triad tells the caster their
-			// damage was stopped; the second line tells them the target went
-			// down anyway. The room broadcast below excludes the caster, so
-			// without that second line the caster would be the only person
-			// present who does not know the target is now prone.
-			require.Len(t, attackerLines, 2)
+			require.Len(t, attackerLines, 1, "the defence triad is the only narration for a fully stopped cast")
 			require.Contains(t, strings.ToLower(attackerLines[0]), "heavy-attacker")
 			require.Contains(t, strings.ToLower(attackerLines[0]), "no damage taken")
-			require.Contains(t, strings.ToLower(attackerLines[1]), "knocked to the ground")
 			observerLines := drainChannelRoutingQueues(observer.UserId)[observer.UserId]
-			require.Len(t, observerLines, 2)
+			require.Len(t, observerLines, 1)
 			require.Contains(t, strings.ToLower(observerLines[0]), "no damage taken")
 			require.Contains(t, strings.ToLower(observerLines[0]), "momentum remains")
-			require.Contains(t, strings.ToLower(observerLines[1]), "knocks")
-			require.Contains(t, strings.ToLower(observerLines[1]), "ground")
 		})
 	}
+}
+
+// A rolled (non-crit) defensive win against a knockdown spell keeps the
+// maneuver split's other half: partial damage still lands, the knockdown does
+// not, and the triad narrates the defence.
+func TestResolveSpellDispatchDefendedKnockdownDealsPartialDamageWithoutKnockdown(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMessages := seedChannelRoutingMessages(t)
+	defer restoreMessages()
+	original := runSpellChannelAttack
+	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+		return combat.ChannelDefenceResult{
+			DefenceType: characters.DefenseQuell, Defended: true,
+			NormalizedDefenceMargin: 0.1, DamageMultiplier: 0.4,
+		}
+	}
+	t.Cleanup(func() { runSpellChannelAttack = original })
+
+	room := rooms.LoadRoom(1)
+	attacker := users.GetByUserId(1)
+	target := mobs.GetInstance(100)
+	target.Character.MobInstanceId = target.InstanceId
+	target.Character.Health = 1000
+	target.Character.HealthMax.Value = 1000
+	spell := &spells.SpellData{
+		SpellId: "force-wave", Name: "Force Wave", Type: spells.HarmSingle,
+		EffectType: "knockdown", TargetDefenseType: "mental", EffectMagnitude: 20,
+		DamageMultiplier: 1.0,
+	}
+	require.True(t, target.Character.IsStanding(), "fixture must begin standing")
+	drainChannelRoutingQueues(attacker.UserId)
+
+	resolveSpell(attacker, activity.CastingData{
+		SpellId:              spell.SpellId,
+		TargetMobInstanceIds: []int{target.InstanceId},
+	}, spell, room)
+
+	require.Less(t, target.Character.Health, 1000,
+		"a defended knockdown cast still deals reduced-but-nonzero damage")
+	require.True(t, target.Character.IsStanding(),
+		"a defended cast must not apply the binary knockdown; state=%v", target.Character.Position.State())
 }

@@ -1,0 +1,68 @@
+# Counter narration for the SOCIAL channel (U6b Task 11): a defy crit
+# against a taunt fires the COUNTER-TAUNT, turning the jeer back on the one
+# who threw it. No swing, no steel: every line here is words and nerve.
+# {defender} is the COUNTERER (whose defy critted); {attacker} is the
+# original taunter. Bands: weak = the retort fails to bite (no conviction
+# damage), normal = the retort lands, heavy = the retort crits.
+optionid: counter-defy
+options:
+  weak:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You twist {attacker}''s jeer around, but it fails to bite.</ansi>'
+      - '<ansi fg="defense-good">You throw the taunt back at {attacker}, but they only sneer.</ansi>'
+      - '<ansi fg="defense-good">You snap a barb back at {attacker}, but it slides off their pride.</ansi>'
+      - '<ansi fg="defense-good">You mock {attacker}''s own words, but they refuse the bait.</ansi>'
+      - '<ansi fg="defense-good">Your retort reaches {attacker}, but their nerve holds.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} twists your jeer around, but it fails to bite.</ansi>'
+      - '<ansi fg="attack-bad">{defender} throws your taunt back at you, but you only sneer.</ansi>'
+      - '<ansi fg="attack-bad">{defender} snaps a barb back at you, but it slides off your pride.</ansi>'
+      - '<ansi fg="attack-bad">{defender} mocks your own words back at you, but you refuse the bait.</ansi>'
+      - '<ansi fg="attack-bad">{defender}''s retort reaches you, but your nerve holds.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} twists {attacker}''s jeer back around, but it fails to bite.</ansi>'
+      - '<ansi fg="combat">{defender} throws the taunt back at {attacker}, who only sneers.</ansi>'
+      - '<ansi fg="combat">{defender} snaps a barb back at {attacker}, but it slides off their pride.</ansi>'
+      - '<ansi fg="combat">{defender} mocks {attacker}''s own words, but the bait is refused.</ansi>'
+      - '<ansi fg="combat">{defender}''s retort reaches {attacker}, but their nerve holds.</ansi>'
+  normal:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You twist the jeer around and send it home, and {attacker} flinches.</ansi>'
+      - '<ansi fg="defense-good">You throw {attacker}''s taunt right back, and it stings.</ansi>'
+      - '<ansi fg="defense-good">Your retort lands, and {attacker}''s bravado wavers.</ansi>'
+      - '<ansi fg="defense-good">You answer mockery with mockery, and {attacker}''s face falls.</ansi>'
+      - '<ansi fg="defense-good">You turn {attacker}''s own words against them, and they bite deep.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} twists your jeer around and sends it home, and you flinch.</ansi>'
+      - '<ansi fg="attack-bad">{defender} throws your taunt right back, and it stings.</ansi>'
+      - '<ansi fg="attack-bad">{defender}''s retort lands, and your bravado wavers.</ansi>'
+      - '<ansi fg="attack-bad">{defender} answers your mockery in kind, and your face falls.</ansi>'
+      - '<ansi fg="attack-bad">{defender} turns your own words against you, and they bite deep.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} twists the jeer around and sends it home, and {attacker} flinches.</ansi>'
+      - '<ansi fg="combat">{defender} throws {attacker}''s taunt right back, and it stings.</ansi>'
+      - '<ansi fg="combat">{defender}''s retort lands, and {attacker}''s bravado wavers.</ansi>'
+      - '<ansi fg="combat">{defender} answers {attacker}''s mockery in kind, and their face falls.</ansi>'
+      - '<ansi fg="combat">{defender} turns {attacker}''s own words against them, and they bite deep.</ansi>'
+  heavy:
+    together:
+      todefender:
+      - '<ansi fg="defense-good">You turn the taunt inside out, and {attacker} is left speechless.</ansi>'
+      - '<ansi fg="defense-good">Your retort cuts to the bone, and {attacker}''s composure cracks.</ansi>'
+      - '<ansi fg="defense-good">You fling the jeer back sharper than it came, and {attacker} pales.</ansi>'
+      - '<ansi fg="defense-good">You strip {attacker}''s bluster bare, and shame does the rest.</ansi>'
+      - '<ansi fg="defense-good">Your answer lands like a slap, and {attacker} falters.</ansi>'
+      toattacker:
+      - '<ansi fg="attack-bad">{defender} turns your taunt inside out, and you are left speechless.</ansi>'
+      - '<ansi fg="attack-bad">{defender}''s retort cuts to the bone, and your composure cracks.</ansi>'
+      - '<ansi fg="attack-bad">{defender} flings your jeer back sharper than it came, and you pale.</ansi>'
+      - '<ansi fg="attack-bad">{defender} strips your bluster bare, and shame does the rest.</ansi>'
+      - '<ansi fg="attack-bad">{defender}''s answer lands like a slap, and you falter.</ansi>'
+      toroom:
+      - '<ansi fg="combat">{defender} turns the taunt inside out, and {attacker} is left speechless.</ansi>'
+      - '<ansi fg="combat">{defender}''s retort cuts to the bone, and {attacker}''s composure cracks.</ansi>'
+      - '<ansi fg="combat">{defender} flings the jeer back sharper than it came, and {attacker} pales.</ansi>'
+      - '<ansi fg="combat">{defender} strips {attacker}''s bluster bare, and shame does the rest.</ansi>'
+      - '<ansi fg="combat">{defender}''s answer lands like a slap, and {attacker} falters.</ansi>'

@@ -249,24 +249,23 @@ func TestSteal_MobOnPlayer(t *testing.T) {
 // stealFromPlayer (result.Detected = true + targetUser.SendText) is reachable
 // under realistic stats.
 //
-// Design rationale:
+// Design rationale (U6b Task 15/16 linear shapes):
 //
-//	Theft uses: attackerScore (Dex + SkillMult(rank)*25) * StealSkillMultiplier
-//	            vs defenderScore = raw Perception
-//	Detection uses: CalcSearchScore (Perception + SkillMult(search)*25)
-//	                vs CalcSneakScore (Dex + SkillMult(skullduggery)*25)
+//	Theft uses: attackerScore (Dex + rank x SkillWeight)
+//	            vs stealVictimScore (Perception + skullduggery x SkillWeight)
+//	Detection uses: CalcDetectionScore (Perception + search x SkillWeight)
+//	                vs CalcSneakScore (Dex + skullduggery x SkillWeight)
 //
-// By giving the defender a high Search skill rank we boost CalcSearchScore
-// far above their raw Perception, while their raw Perception stays low enough
-// that the theft roll succeeds reliably.
+// By giving the defender a high Search skill rank we boost CalcDetectionScore
+// far above their raw Perception, while their raw Perception (and zero
+// skullduggery) stays low enough that the theft roll succeeds reliably.
 //
-//	Actor:    Dex=110, skullduggery rank=2
-//	          attackerScore  ≈ 145   (beats Per=40 → theft nearly certain)
-//	          CalcSneakScore ≈ 145
-//	Defender: Perception=40, Search rank=50
-//	          CalcSearchScore ≈ 40 + 3.0*25 = 115
+//	Actor:    Dex=110, skullduggery rank=2 — theft score well above the
+//	          defender's, sneak score competitive with detection
+//	Defender: Perception=40, Search rank=50 — detection score far above
+//	          their raw Perception
 //
-// Detection is 115 vs 145, a ~24% per-trial chance. Over 50 trials the
+// Detection wins a healthy fraction of trials. Over 50 trials the
 // probability of seeing at least one detection event is >99.999%.
 func TestSteal_MobOnPlayer_DetectionWin(t *testing.T) {
 	const playerGold = 200

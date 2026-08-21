@@ -512,9 +512,12 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   The pairing matters independently: pool and amount must be read off the SAME
   defence name. An unrecognised name maps to `PoolStamina` at cost 0, so the pair
   charges nothing rather than draining an arbitrary pool.
-- **`GetDefenseSequence` is melee-only and does not know about quell or defy.**
-  It derives dodge/parry/block from equipment. The per-channel defence set lives
-  in `combat.DefenceSetFor` instead.
+- **`GetDefenseSequence` was deleted by U6b Task 2** (a tombstone comment
+  marks the site in `combat.go`). Its equipment gate — dodge always; parry and
+  block by weapon, dual-wield and shield — lives on as the only remaining copy
+  inside `combat.DefenceEntriesFor` (`internal/combat/defence_sets.go`), which
+  now builds the defence-name set for every channel, melee included. The
+  per-channel defence table itself is `combat.DefenceSetFor`.
 
 ### Combat and Interaction Systems
 - **Kill/Death statistics** (`kdstats.go`): PvP and PvE combat tracking

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
@@ -355,12 +356,23 @@ func TestRunBestOfAllDefense_ShortNPCWinnerGetsNoPrivateMessage(t *testing.T) {
 	}
 }
 
-func TestResolveChannelDefence_MixedAffordabilityCommitsAndProgressesOnlyWinner(t *testing.T) {
+func TestResolveChannelAttack_MixedAffordabilityCommitsAndProgressesOnlyWinner(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	defender.Stamina = 11 // dodge short at 12; block affordable at 11
 
-	out := resolveChannelDefenceWithRunner(ChannelSpellPhysical, attacker, defender,
+	// U6b Task 2: this test used to run BARE-handed and still received a block
+	// entry -- that was the ungated-channel-set defect DefenceEntriesFor fixed
+	// (a shieldless defender no longer blocks a physical spell). Equip weapon +
+	// shield so block legitimately enters the set; BlockRating stays 0 so the
+	// pinned score of 160 is unchanged.
+	defender.Equipment.Weapon = items.Item{ItemId: 10, Spec: &items.ItemSpec{Type: items.Weapon}}
+	defender.Equipment.Offhand = items.Item{ItemId: 11, Spec: &items.ItemSpec{
+		Type:               items.Offhand,
+		PhysicalMitigation: 5,
+	}}
+
+	out := resolveChannelAttackWithRunner(ChannelSpellPhysical, channelSideForSignTest(ChannelSpellPhysical, attacker), attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {
 			if len(entries) != 2 {
 				t.Fatalf("eligible entries = %d, want 2", len(entries))
@@ -391,12 +403,12 @@ func TestResolveChannelDefence_MixedAffordabilityCommitsAndProgressesOnlyWinner(
 	}
 }
 
-func TestResolveChannelDefence_ShortWinnerUsesConvictionAndOmitsOnlySkill(t *testing.T) {
+func TestResolveChannelAttack_ShortWinnerUsesConvictionAndOmitsOnlySkill(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	defender.Conviction = 5
 
-	out := resolveChannelDefenceWithRunner(ChannelSocial, attacker, defender,
+	out := resolveChannelAttackWithRunner(ChannelSocial, channelSideForSignTest(ChannelSocial, attacker), attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {
 			if len(entries) != 1 || entries[0].Name != characters.DefenseDefy || entries[0].Score != 100 {
 				t.Fatalf("short defy entry = %+v, want Willpower-only score 100", entries)
@@ -416,13 +428,13 @@ func TestResolveChannelDefence_ShortWinnerUsesConvictionAndOmitsOnlySkill(t *tes
 	}
 }
 
-func TestResolveChannelDefence_ReportsOpposedMarginDistinctFromRollZScore(t *testing.T) {
+func TestResolveChannelAttack_ReportsOpposedMarginDistinctFromRollZScore(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	attacker.SetSkill(string(skills.Spellcasting), 20)
 	defender.Conviction = 100
 
-	out := resolveChannelDefenceWithRunner(ChannelSpellMental, attacker, defender,
+	out := resolveChannelAttackWithRunner(ChannelSpellMental, channelSideForSignTest(ChannelSpellMental, attacker), attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {
 			if atkScore != 140 {
 				t.Fatalf("spell attack score = %.2f, want 140", atkScore)
@@ -455,13 +467,13 @@ func TestResolveChannelDefence_ReportsOpposedMarginDistinctFromRollZScore(t *tes
 	}
 }
 
-func TestResolveChannelDefence_FlooredSaveUsesBareWinSentinels(t *testing.T) {
+func TestResolveChannelAttack_FlooredSaveUsesBareWinSentinels(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	attacker.SetSkill(string(skills.Spellcasting), 20)
 	defender.Conviction = 100
 
-	out := resolveChannelDefenceWithRunner(ChannelSpellMental, attacker, defender,
+	out := resolveChannelAttackWithRunner(ChannelSpellMental, channelSideForSignTest(ChannelSpellMental, attacker), attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {
 			if atkScore != 140 || len(entries) != 1 || entries[0].Score != 140 {
 				t.Fatalf("floor inputs = attack %.2f entries %+v, want equal 140 scores", atkScore, entries)
@@ -482,13 +494,13 @@ func TestResolveChannelDefence_FlooredSaveUsesBareWinSentinels(t *testing.T) {
 	}
 }
 
-func TestResolveChannelDefence_DefensiveCritReportsFullNegation(t *testing.T) {
+func TestResolveChannelAttack_DefensiveCritReportsFullNegation(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	attacker.SetSkill(string(skills.Rhetoric), 30)
 	defender.Conviction = 100
 
-	out := resolveChannelDefenceWithRunner(ChannelSocial, attacker, defender,
+	out := resolveChannelAttackWithRunner(ChannelSocial, channelSideForSignTest(ChannelSocial, attacker), attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {
 			if atkScore != 160 || len(entries) != 1 || entries[0].Score != 160 {
 				t.Fatalf("crit inputs = attack %.2f entries %+v, want equal 160 scores", atkScore, entries)
@@ -511,12 +523,12 @@ func TestResolveChannelDefence_DefensiveCritReportsFullNegation(t *testing.T) {
 	}
 }
 
-func TestResolveChannelDefence_NonpositiveStdDevHasZeroNormalizedMargin(t *testing.T) {
+func TestResolveChannelAttack_NonpositiveStdDevHasZeroNormalizedMargin(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	defender.Conviction = 100
 
-	out := resolveChannelDefenceWithRunner(ChannelSpellMental, attacker, defender,
+	out := resolveChannelAttackWithRunner(ChannelSpellMental, channelSideForSignTest(ChannelSpellMental, attacker), attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {
 			if len(entries) != 1 || entries[0].Name != characters.DefenseQuell || entries[0].Score != 140 {
 				t.Fatalf("zero-spread entries = %+v, want full-score quell at 140", entries)
@@ -538,11 +550,11 @@ func TestResolveChannelDefence_NonpositiveStdDevHasZeroNormalizedMargin(t *testi
 	}
 }
 
-func TestResolveChannelDefence_UncontestedUsesZeroSentinels(t *testing.T) {
+func TestResolveChannelAttack_UncontestedUsesZeroSentinels(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	called := false
-	out := resolveChannelDefenceWithRunner(AttackChannel("unknown"), attacker, defender,
+	out := resolveChannelAttackWithRunner(AttackChannel("unknown"), channelSideForSignTest(AttackChannel("unknown"), attacker), attacker, defender,
 		func(_ float64, _ []contest.Entry) contest.Result {
 			called = true
 			return contest.Result{}
@@ -556,12 +568,12 @@ func TestResolveChannelDefence_UncontestedUsesZeroSentinels(t *testing.T) {
 	}
 }
 
-func TestResolveChannelDefence_InjectedUncontestedResultUsesFullDamage(t *testing.T) {
+func TestResolveChannelAttack_InjectedUncontestedResultUsesFullDamage(t *testing.T) {
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
 	defender.Conviction = 100
 
-	out := resolveChannelDefenceWithRunner(ChannelSpellMental, attacker, defender,
+	out := resolveChannelAttackWithRunner(ChannelSpellMental, channelSideForSignTest(ChannelSpellMental, attacker), attacker, defender,
 		func(atkScore float64, entries []contest.Entry) contest.Result {
 			if len(entries) != 1 {
 				t.Fatalf("entries = %d, want one quoted quell before runner", len(entries))

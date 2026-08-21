@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 func TestExecuteSkillMove_ControlImmuneNeverKnockedDown(t *testing.T) {
@@ -14,15 +15,27 @@ func TestExecuteSkillMove_ControlImmuneNeverKnockedDown(t *testing.T) {
 	})
 	defer cleanup()
 
+	pinDefenceAdmissionConfig(t)
+
 	atk := characters.New()
 
+	// U6b Task 7: these params previously pinned the legacy scalar-defence
+	// shape (AttackStat/DefenseStat at x1 skill weights, no defence set) —
+	// a defect kept alive only for unconverted callers. The move now
+	// resolves through the channel seam; the overwhelming AttackSide keeps
+	// hits (and thus knockdown rolls) near-certain, which is all this test
+	// needs to distinguish control immunity.
 	params := func(def *characters.Character) SkillMoveParams {
 		return SkillMoveParams{
 			Attacker: atk, Defender: def,
-			AttackStat: 300, AttackSkill: 50, // overwhelming, so attacks land
-			DefenseStat: 1, DefenseSkill: 1,
+			Channel: ChannelMelee,
+			Attack: AttackSide{ // overwhelming, so attacks land
+				Stat: 300, StatName: "strength",
+				Skill: skills.WeaponCombat, SkillRank: 50,
+				Mult: 1.0,
+			},
 			DamagePercent: 0.5, KnockdownChance: 100, // guaranteed knockdown on a hit
-			SkillRank: 10, DamageStat: 100,
+			DamageStat: 100,
 		}
 	}
 

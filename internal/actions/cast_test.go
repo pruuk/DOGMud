@@ -206,3 +206,30 @@ func TestInitiateCast_CostPropagation(t *testing.T) {
 	assert.Equal(t, 42, result.TotalCost,
 		"TotalCost should equal the spell's raw Cost field")
 }
+
+// ---------------------------------------------------------------------------
+// TestInitiateCast_HarmAreaNoTargets_RefusedBeforePayment
+// ---------------------------------------------------------------------------
+
+// TestInitiateCast_HarmAreaNoTargets_RefusedBeforePayment pins the U7b
+// admission rule for area harm spells: a cast that finds ZERO valid targets
+// at initiation must be refused before any resources are spent or cooldowns
+// consumed. (Targets that leave mid-cast, or that all dodge at resolution,
+// still legitimately consume the cast — only the found-zero case refuses.)
+func TestInitiateCast_HarmAreaNoTargets_RefusedBeforePayment(t *testing.T) {
+	sd, cleanup := seedTestSpell("test-aoe-empty", spells.HarmArea, 4)
+	defer cleanup()
+
+	actor, char, _ := newCastActor()
+	convictionBefore := char.Conviction
+
+	result := InitiateCast(actor, sd.SpellId, "")
+
+	assert.True(t, result.NoTarget, "NoTarget should be set for an empty room")
+	assert.False(t, result.Initiated, "Initiated should be false")
+	assert.Equal(t, convictionBefore, char.Conviction,
+		"conviction must be unchanged when the cast is refused")
+	_, onCooldown := char.Cooldowns["special-move"]
+	assert.False(t, onCooldown,
+		"special-move cooldown must not be consumed by a refused cast")
+}

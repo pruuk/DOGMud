@@ -37,6 +37,11 @@ type KickResult struct {
 	// is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Variant reports which kick form was used.
 	Variant KickVariant
 
@@ -137,19 +142,27 @@ func ExecuteKick(actor Actor) KickResult {
 	}
 
 	// Execute the skill move.
+	// U6b Task 6: through the channel seam — raw rank in, the seam applies
+	// SkillWeight (x1 -> x5 both sides); the defence is the equipment-gated
+	// set, charged and progressed; the crit tier and fumble abort exist now.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:             char,
-		Defender:             target.Char,
-		AttackStat:           char.Stats.Strength.ValueAdj,
-		AttackSkill:          char.GetSkillLevel(skills.UnarmedCombat),
-		DefenseStat:          target.Char.GetEffectiveDexterity(),
-		DefenseSkill:         target.Char.GetCombatSkillLevel(),
+		Attacker: char,
+		Defender: target.Char,
+		Channel:  combat.ChannelMelee,
+		Attack: combat.AttackSide{
+			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
+			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
+		},
 		DamagePercent:        damagePercent,
 		KnockdownChance:      knockdownChance,
-		SkillRank:            char.GetSkillLevel(skills.UnarmedCombat),
 		DamageStat:           char.Stats.Strength.ValueAdj,
 		MitigationMultiplier: mitigationMult,
 	})
+
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// Stomp extends prone duration on a successful hit.
 	if result.Hit && variant == KickStomp &&
@@ -191,6 +204,7 @@ func ExecuteKick(actor Actor) KickResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Variant:    variant,
 		Executed:   true,
 	}

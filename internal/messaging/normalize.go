@@ -169,9 +169,13 @@ func capitalizeStart(text string) string {
 
 // appendEndPunct adds a `.` if the last non-tag non-space char isn't
 // already a sentence terminator. Skips banner lines (start with `━`),
-// pure exclamations, and pure-tag wrappers.
+// `***`-decorated lines (crit/death banners), pure exclamations, and
+// pure-tag wrappers. Trailing newlines are looked *through* for the
+// check and preserved on output — previously a message ending "...\n"
+// had the `.` appended after the newline, printing a stray lone-period
+// line (seen after `search`, `help`, and `inventory` output).
 func appendEndPunct(text string) string {
-	trimmed := strings.TrimRight(text, " \t")
+	trimmed := strings.TrimRight(text, " \t\r\n")
 	if trimmed == "" {
 		return text
 	}
@@ -179,6 +183,8 @@ func appendEndPunct(text string) string {
 	if strings.HasPrefix(strings.TrimSpace(text), "━") {
 		return text
 	}
+	// Trailing whitespace/newlines to reattach after the period.
+	trailing := text[len(trimmed):]
 	// Strip a trailing </ansi> for the check; reattach.
 	suffix := ""
 	for strings.HasSuffix(trimmed, "</ansi>") {
@@ -190,8 +196,13 @@ func appendEndPunct(text string) string {
 	}
 	last := trimmed[len(trimmed)-1]
 	switch last {
-	case '.', '!', '?', ',', ')', '"', '\'':
+	case '.', '!', '?', ',', ')', ']', '"', '\'', '*':
+		// `*` covers `***` banner decorations (crits, deaths,
+		// achievements) — never append punctuation after them.
+		// `)` and `]` cover trailing parenthesized/bracketed tags
+		// ("(a soul-shattering tirade)", "[CRIT!]") — a line ending
+		// in one is already terminated.
 		return text
 	}
-	return trimmed + "." + suffix
+	return trimmed + "." + suffix + trailing
 }

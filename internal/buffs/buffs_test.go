@@ -44,7 +44,7 @@ func seedRegistry() func() {
 			Description:   "Your aim is true.",
 			TriggerCount:  6,
 			RoundInterval: 2,
-			Flags:         []Flag{Accuracy},
+			Flags:         []Flag{NightVision},
 			StatMods:      statmods.StatMods{"perception": 10, "dexterity": 5},
 		},
 		104: {
@@ -123,9 +123,11 @@ func TestBuffs_Validate(t *testing.T) {
 	hasteIds := bs.GetBuffIdsWithFlag(Haste)
 	assert.Contains(t, hasteIds, 100)
 
-	// Accuracy flag should map to buff 103
-	accIds := bs.GetBuffIdsWithFlag(Accuracy)
-	assert.Contains(t, accIds, 103)
+	// NightVision flag should map to buff 103. (This fixture used the Accuracy
+	// flag until U6b deleted it as an upstream stowaway; any flag serves — the
+	// test pins registry flag→id mapping, not any particular flag.)
+	nvIds := bs.GetBuffIdsWithFlag(NightVision)
+	assert.Contains(t, nvIds, 103)
 }
 
 // ─── Buffs.HasFlag ──────────────────────────────────────────────────────────

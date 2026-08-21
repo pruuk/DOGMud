@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -266,8 +267,10 @@ func TestResolveFleeBlockers_AffordableIncludesSkillButDoesNotProgressIt(t *test
 	cleanup := seedFleeFixture(t, &fleer.Character, map[int]*mobs.Mob{100: fleer}, nil)
 	defer cleanup()
 
-	if got := fleeContestScore(&fleer.Character, true); got != 180 {
-		t.Errorf("affordable score = %.0f, want Dexterity 80 + Skullduggery 4 x 25 = 180", got)
+	skillWeight := float64(configs.GetBalanceConfig().SkillWeight)
+	if want := 80 + 4*skillWeight; fleeContestScore(&fleer.Character, true) != want {
+		t.Errorf("affordable score = %.0f, want Dexterity 80 + Skullduggery 4 x SkillWeight %.1f = %.0f",
+			fleeContestScore(&fleer.Character, true), skillWeight, want)
 	}
 	_, contested := ResolveFleeBlockers(&fleer.Character, rooms.LoadRoom(1), true)
 	if contested {
@@ -275,5 +278,44 @@ func TestResolveFleeBlockers_AffordableIncludesSkillButDoesNotProgressIt(t *test
 	}
 	if got := fleer.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 0 {
 		t.Errorf("resolver progressed Skullduggery %d times, want 0 (the wrapper owns the award)", got)
+	}
+}
+
+// Task 12 (U6b): flee's skill terms read Balance.SkillWeight from config
+// instead of the old hardcoded x25 (three literals: two blocker sites plus
+// the spaced `* 25` in fleeContestScore). Pin a distinctive weight and
+// assert BOTH sides of the contest move by exactly Δrank × SkillWeight.
+func TestFleeScores_SkillTermUsesConfiguredSkillWeight(t *testing.T) {
+	const weight = 7.0
+	c := configs.GetConfig()
+	c.Balance.SkillWeight = weight
+	configs.SetConfigForTest(t, c)
+
+	// Fleer side: fleeContestScore with includeSkill=true.
+	fleerLow := newFleerMob(100, "fleer-low", 80, 4)
+	fleerHigh := newFleerMob(101, "fleer-high", 80, 10)
+	lowScore := fleeContestScore(&fleerLow.Character, true)
+	highScore := fleeContestScore(&fleerHigh.Character, true)
+	if got, want := lowScore, 80+4*weight; got != want {
+		t.Errorf("fleer score = %.1f, want Dex 80 + Skullduggery 4 x SkillWeight %.0f = %.1f",
+			got, weight, want)
+	}
+	if got, want := highScore-lowScore, (10-4)*weight; got != want {
+		t.Errorf("fleer score delta = %.1f, want Δrank 6 x SkillWeight %.0f = %.1f",
+			got, weight, want)
+	}
+
+	// Blocker side: fleeBlockScore (used by both the mob and user loops).
+	blockLow := newBlockerMob(200, "block-low", 80, 4, 0, 100)
+	blockHigh := newBlockerMob(201, "block-high", 80, 10, 0, 100)
+	lowBlock := fleeBlockScore(&blockLow.Character)
+	highBlock := fleeBlockScore(&blockHigh.Character)
+	if got, want := lowBlock, 80+4*weight; got != want {
+		t.Errorf("blocker score = %.1f, want Dex 80 + UnarmedCombat 4 x SkillWeight %.0f = %.1f",
+			got, weight, want)
+	}
+	if got, want := highBlock-lowBlock, (10-4)*weight; got != want {
+		t.Errorf("blocker score delta = %.1f, want Δrank 6 x SkillWeight %.0f = %.1f",
+			got, weight, want)
 	}
 }

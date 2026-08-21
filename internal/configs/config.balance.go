@@ -95,6 +95,27 @@ type Balance struct {
 	MinAttackCritChance  ConfigFloat `yaml:"MinAttackCritChance"`  // Floor probability a landed hit is a crit (default 0.01)
 	MinDefenseCritChance ConfigFloat `yaml:"MinDefenseCritChance"` // Floor probability a successful defense is a defensive crit (default 0.01)
 
+	// Crit bar (U6b). combat.CritBarFor computes the attacker-side crit
+	// threshold for EVERY channel from the channel's skill pair:
+	//
+	//	bar = clamp(2.0 - CritBarSkillSlope*(atkRank-defRank),
+	//	            CritBarFloor, CritBarCeiling)
+	//
+	// The slope and floor were balance literals inside internal/combat before
+	// U6b (0.05 and 1.5, melee-only). The ceiling is NEW: uncapped, a
+	// gold-scaled skill-1 boss faced bar 5.4 vs a veteran and effectively
+	// never crit. CritBarCeiling 0 is LEGAL and means UNCAPPED -- it is the
+	// documented off-switch, restoring the pre-U6b unbounded bar.
+	CritBarSkillSlope ConfigFloat `yaml:"CritBarSkillSlope"` // Bar shift per point of attacker skill advantage (default 0.05)
+	CritBarFloor      ConfigFloat `yaml:"CritBarFloor"`      // Lowest the bar may fall (default 1.5)
+	CritBarCeiling    ConfigFloat `yaml:"CritBarCeiling"`    // Highest the bar may rise (default 3.0); 0 = uncapped, and is legal
+
+	// CounterDamagePercent: a defensive crit earns the defender one free
+	// answering swing at this fraction of normal weapon damage (U6b counter
+	// tier; the same knob melee riposte used at its old hardcoded 0.5).
+	// 0 is LEGAL and disables counter damage entirely.
+	CounterDamagePercent ConfigFloat `yaml:"CounterDamagePercent"` // Counter-swing damage fraction (default 0.5); 0 disables
+
 	// ── COMBAT: PRONE & GRAPPLE ──────────────────────────────────────────────
 	ProneAttackMultiplier        ConfigFloat `yaml:"ProneAttackMultiplier"`        // Multiplier on attack score while prone (default 0.80)
 	ProneDodgePenalty            ConfigFloat `yaml:"ProneDodgePenalty"`            // Multiplier on dodge score while prone (default 0.70)
@@ -112,15 +133,33 @@ type Balance struct {
 	GrappleGroundControlAttackMultiplier   ConfigFloat `yaml:"GrappleGroundControlAttackMultiplier"`   // Attack score multiplier for a ground-grapple controller (default 1.15)
 	GrappleStandingControlAttackMultiplier ConfigFloat `yaml:"GrappleStandingControlAttackMultiplier"` // Attack score multiplier for a standing-grapple controller (default 1.08)
 	GrappleGroundedVulnerabilityMultiplier ConfigFloat `yaml:"GrappleGroundedVulnerabilityMultiplier"` // Attack score multiplier vs a grounded, non-controlling target (default 1.15)
-	StandStaminaCost                       ConfigFloat `yaml:"StandStaminaCost"`                       // Fraction of max stamina to stand up (default 0.15)
-	StandMinStamina                        ConfigFloat `yaml:"StandMinStamina"`                        // Minimum fraction of max SP to stand (default 0.15)
-	ThirdPartyGrapplePenalty               ConfigFloat `yaml:"ThirdPartyGrapplePenalty"`               // Defense multiplier when grappled vs third party (default 0.70)
-	ClinchDodgePenalty                     ConfigFloat `yaml:"ClinchDodgePenalty"`                     // Dodge score multiplier while clinched (default 0.80)
-	ClinchParryPenalty                     ConfigFloat `yaml:"ClinchParryPenalty"`                     // Parry score multiplier while clinched (default 0.83)
-	ClinchBlockPenalty                     ConfigFloat `yaml:"ClinchBlockPenalty"`                     // Block score multiplier while clinched (default 0.85)
-	GroundedDodgePenalty                   ConfigFloat `yaml:"GroundedDodgePenalty"`                   // Dodge score multiplier while grounded (default 0.75)
-	GroundedParryPenalty                   ConfigFloat `yaml:"GroundedParryPenalty"`                   // Parry score multiplier while grounded (default 0.77)
-	GroundedBlockPenalty                   ConfigFloat `yaml:"GroundedBlockPenalty"`                   // Block score multiplier while grounded (default 0.80)
+	// U6b Task 13: the AttemptGrapple prone literals, knobbed at identical
+	// shipped values. NOTE the direction — an earlier draft had them swapped:
+	// the DEFENDER-prone site multiplies the defense score by 0.3, the
+	// ATTACKER-prone site multiplies the attack score by 0.5.
+	GrappleProneAttackerMod ConfigFloat `yaml:"GrappleProneAttackerMod"` // Attack score multiplier when the grapple attacker is prone/supine (default 0.5)
+	GrappleProneDefenderMod ConfigFloat `yaml:"GrappleProneDefenderMod"` // Defense score multiplier when the grapple defender is prone/supine (default 0.3)
+
+	// U6b Task 14 (gate decision §5.4): the grapple-drift aggressor edge,
+	// restored as a deliberate config knob after the accidental 2.2-vs-2.0
+	// skill-coefficient edge was deleted in the SkillWeight reweight. The
+	// value 1.038 was SOLVED, not guessed: it restores parity E[drift]
+	// ≈ +0.196 steps/round under the √2-fixed + SkillWeight-reweighted
+	// maths (tools/balance/u6b_model_counters_family_costs.py, drift
+	// aggressor-bonus solve). Because the bonus is a multiplier on the
+	// whole score, the restored parity drift is scale-free — the same
+	// +0.196 at every parity tier.
+	GrappleAggressorDriftBonus ConfigFloat `yaml:"GrappleAggressorDriftBonus"` // Multiplier on the grapple aggressor's whole drift score (default 1.038)
+
+	StandStaminaCost         ConfigFloat `yaml:"StandStaminaCost"`         // Fraction of max stamina to stand up (default 0.15)
+	StandMinStamina          ConfigFloat `yaml:"StandMinStamina"`          // Minimum fraction of max SP to stand (default 0.15)
+	ThirdPartyGrapplePenalty ConfigFloat `yaml:"ThirdPartyGrapplePenalty"` // Defense multiplier when grappled vs third party (default 0.70)
+	ClinchDodgePenalty       ConfigFloat `yaml:"ClinchDodgePenalty"`       // Dodge score multiplier while clinched (default 0.80)
+	ClinchParryPenalty       ConfigFloat `yaml:"ClinchParryPenalty"`       // Parry score multiplier while clinched (default 0.83)
+	ClinchBlockPenalty       ConfigFloat `yaml:"ClinchBlockPenalty"`       // Block score multiplier while clinched (default 0.85)
+	GroundedDodgePenalty     ConfigFloat `yaml:"GroundedDodgePenalty"`     // Dodge score multiplier while grounded (default 0.75)
+	GroundedParryPenalty     ConfigFloat `yaml:"GroundedParryPenalty"`     // Parry score multiplier while grounded (default 0.77)
+	GroundedBlockPenalty     ConfigFloat `yaml:"GroundedBlockPenalty"`     // Block score multiplier while grounded (default 0.80)
 	// GrappleStaminaLowThreshold is the stamina fraction (0.0–1.0) below
 	// which a character is considered "low stamina" for grapple purposes.
 	// Used by IsLowGrappleStamina() and the mob_low_grapple_stamina btree
@@ -155,9 +194,7 @@ type Balance struct {
 	// docs/superpowers/specs/2026-05-18-state-chunk-4d-submission-rework-design.md
 	SubmissionAttemptAlpha ConfigFloat `yaml:"submission_attempt_alpha"`  // Min drift-margin (std devs) that opens a sub window (either side)
 	SubmissionAttemptCritZ ConfigFloat `yaml:"submission_attempt_crit_z"` // Defender-side shortcut: drift z >= this opens a bottom-sub window regardless of margin
-	SubSkillWeight         ConfigFloat `yaml:"sub_skill_weight"`          // Unarmed-combat skill contribution multiplier in the sub roll
 	SubBadZThreshold       ConfigFloat `yaml:"sub_bad_z_threshold"`       // Z-score below which the sub roll's bad-tier (attempter falls prone) fires
-	SubCritZThreshold      ConfigFloat `yaml:"sub_crit_z_threshold"`      // Z-score at or above which the sub roll's crit-tier (recipient stunned) fires
 	SubGoldLossFraction    ConfigFloat `yaml:"sub_gold_loss_fraction"`    // Fraction of carried gold transferred to the aggressor on subdue/cripple
 	BrokenLimbBuffDuration ConfigInt   `yaml:"broken_limb_buff_duration"` // Duration in rounds for the broken-limb buff; expires naturally via standard buff tick
 
@@ -211,10 +248,9 @@ type Balance struct {
 	ThrottleInterruptChance          ConfigFloat `yaml:"ThrottleInterruptChance"`          // Chance throttle interrupts a casting victim, default 0.75
 
 	// ── COMBAT: RANGED ───────────────────────────────────────────────────────
-	ShootBaseStaminaCost     ConfigFloat `yaml:"ShootBaseStaminaCost"`     // Base stamina cost to shoot before shared multipliers (default 2)
-	ReloadBaseStaminaCost    ConfigFloat `yaml:"ReloadBaseStaminaCost"`    // Base stamina cost to reload before shared multipliers (default 1)
-	RangedShotScale          ConfigFloat `yaml:"RangedShotScale"`          // Global multiplier on all ranged shot damage (default 1.0)
-	RangedShieldDefenseBonus ConfigInt   `yaml:"RangedShieldDefenseBonus"` // Flat defense-score bonus vs ranged when defender has a shield (default 15)
+	ShootBaseStaminaCost  ConfigFloat `yaml:"ShootBaseStaminaCost"`  // Base stamina cost to shoot before shared multipliers (default 2)
+	ReloadBaseStaminaCost ConfigFloat `yaml:"ReloadBaseStaminaCost"` // Base stamina cost to reload before shared multipliers (default 1)
+	RangedShotScale       ConfigFloat `yaml:"RangedShotScale"`       // Global multiplier on all ranged shot damage (default 1.0)
 
 	// ── SKULLDUGGERY ─────────────────────────────────────────────────────────
 	SneakBaseStaminaCost           ConfigFloat `yaml:"SneakBaseStaminaCost"`           // Base stamina cost to sneak before shared multipliers (default 2.5)
@@ -224,7 +260,6 @@ type Balance struct {
 	SurpriseAttackExtraArm2Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm2Penalty"` // Hit penalty for extra arm 2 (default 0.40)
 	SurpriseAttackExtraArm3Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm3Penalty"` // Hit penalty for extra arm 3 (default 0.55)
 	SurpriseAttackExtraArm4Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm4Penalty"` // Hit penalty for extra arm 4 (default 0.70)
-	StealSkillMultiplier           ConfigFloat `yaml:"StealSkillMultiplier"`           // Tuning knob for steal/plant rolls (default 1.0)
 	StealHiddenBonus               ConfigInt   `yaml:"StealHiddenBonus"`               // Bonus to attacker score when hidden (default 25)
 	StealCooldown                  ConfigInt   `yaml:"StealCooldown"`                  // Steal/plant cooldown in real seconds (default 60)
 	ShadowCooldown                 ConfigInt   `yaml:"ShadowCooldown"`                 // Rounds before re-shadowing (default 5)
@@ -452,7 +487,6 @@ type Balance struct {
 	SpellInitiationWillpowerDivisor ConfigInt   `yaml:"SpellInitiationWillpowerDivisor"` // Willpower / this = initiation bonus (default 4)
 	SpellConcentrationBase          ConfigInt   `yaml:"SpellConcentrationBase"`          // Base % concentration chance when struck (default 50)
 	SpellFoldsSkillFactor           ConfigInt   `yaml:"SpellFoldsSkillFactor"`           // Skill * this in folds-per-round calc (default 25)
-	SpellAttackSkillFactor          ConfigInt   `yaml:"SpellAttackSkillFactor"`          // Skill * this in spell attack mean (default 3)
 	SpellProficiencyCastsPerPoint   ConfigInt   `yaml:"SpellProficiencyCastsPerPoint"`   // Casts needed per 1 proficiency point (default 50)
 	SpellDifficultyProgressionScale ConfigFloat `yaml:"SpellDifficultyProgressionScale"` // Per-point spell difficulty bonus to skill progression (default 0.01)
 	CraftDifficultyProgressionScale ConfigFloat `yaml:"CraftDifficultyProgressionScale"` // Per-point recipe skill_minimum bonus to skill progression (default 0.02)

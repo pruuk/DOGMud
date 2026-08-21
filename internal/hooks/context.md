@@ -1076,10 +1076,13 @@ For each pair inside `processGrapplePair`:
    `Balance.ContestFloor`, read only in
    `internal/combat/run_contest.go`.
 
-   The signed z here is `res.Margin / res.AttackRoll.StdDev`, which is
-   missing the `sqrt(2)` that `combat.ContestCrit` applies. That is
-   preserved deliberately so U3 stays a provable no-op; there is a
-   `NOTE(U6)` at the site and U6 owns the correction.
+   The signed z here is `res.Margin / (res.AttackRoll.StdDev * math.Sqrt2)`.
+   U6b Task 14 landed the sqrt(2) correction the U3 no-op deliberately
+   deferred: the pre-fix code divided by `StdDev` alone, inflating every
+   drift z by about 41%. Floor-forced rounds keep the ±1 sentinel margin,
+   which normalises to ~0 and lands in the Hold band by design — the long
+   comment at the site in `Position_GrappleTick.go` explains why that is
+   kept and must not be "fixed".
 
 3. **Outcome resolution via `position.ResolveOutcome`** — Passes the
    controller, signed ZScore, and defender's posture to the resolver,
@@ -1443,6 +1446,31 @@ lapsing buff can shrink the pool the ceiling is measured against. Refusing here
 still returns the materials. Subtracting what the target already reserves is
 what makes re-enchanting work, since the old enchantment is replaced rather
 than stacked.
+
+## Counter tier wiring (U6b Task 10)
+
+`counter_tier.go` hosts `fireSpellCounterTier`, called at all FOUR spell
+quadrants in `spell_resolution.go` (`resolveAgainstMob`,
+`resolveAgainstPlayer`, `resolveMobSpellAgainstMob`,
+`resolveMobSpellAgainstPlayer`): a defensive crit against a cast fires
+`combat.ExecuteCounter` — a free seam-routed counter-swing at the caster.
+Both directions are wired on purpose; covering only the player-attacker
+direction would hand mobs a counter immunity nobody decided. Spells are
+same-room by construction, so the reach gate always passes here. Narration
+(U6b Task 11) is the channel-correct counter-quell pool ("put the working
+down, step through the gap"), rendered inside `combat.ExecuteCounter`;
+dispatching from these exits is ordering-correct because the cast's own
+outcome has already been narrated when they fire. `resolveMobDrainArea`
+dispatches its per-player counters via `actions.DispatchCounterMessages`
+AFTER its own drain narration.
+
+Related, in `combat_shared_helpers.go`: melee riposte's damage fraction reads
+`CounterDamagePercent` (shipped 0.5 — the old literal, behaviour unchanged),
+and the block is skipped entirely at 0 because `CalcRawDamage` treats
+`itemMult <= 0` as "unset" 0.30. Riposte stays UNCONTESTED (its historical
+maths); only the cross-channel tier's swing runs through the seam. The
+auto-trip/auto-bash `ExecuteSkillMove` calls carry `IsCounter`, which the
+tier's wiring refuses — counters never recurse.
 
 ## Dependencies
 

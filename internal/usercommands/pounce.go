@@ -122,8 +122,10 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "pounce", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "pounce", messaging.CategoryHitNaturalSharp, false) {
 		missMsgs := []string{
 			`Your leap at <ansi fg="mobname">%s</ansi> misses as they sidestep!`,
 			`You spring at <ansi fg="mobname">%s</ansi> but they dodge your pounce!`,
@@ -143,6 +145,9 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	}
+
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(actor, res.Counter)
 
 	return true, nil
 }

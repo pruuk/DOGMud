@@ -44,7 +44,7 @@ options:
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads your posture and angles their <ansi fg="item">{itemname}</ansi> for the kill.'
         - 'With unsettling calm, <ansi fg="{sourcetype}">{source}</ansi> lowers their head to strike.'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> settle into position — a clear and lethal threat.'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> settle into position: a clear and lethal threat.'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi> bares their <ansi fg="item">{itemname}</ansi> at <ansi fg="{targettype}">{target}</ansi>.'
@@ -212,7 +212,7 @@ options:
         - 'Stepping into the lunge, you drive your <ansi fg="item">{itemname}</ansi> through <ansi fg="{targettype}">{target}</ansi>''s guard!'
         - 'You pivot and savage decisively, {momentum}!'
         - 'Feinting {position}, you snap your <ansi fg="item">{itemname}</ansi> shut on <ansi fg="{targettype}">{target}</ansi>''s flesh!'
-        - 'You draw their defense {momentum} and worry <ansi fg="{targettype}">{target}</ansi>''s flank!'
+        - 'You draw their defense while {momentum} and worry <ansi fg="{targettype}">{target}</ansi>''s flank!'
         - 'Reading their stance, you savage with practiced, beast-like precision!'
         master:
         - 'You press your advantage with a savage mauling while {momentum}!'
@@ -272,7 +272,7 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> sink deep into <ansi fg="{targettype}">{target}</ansi>!'
         - 'You maul with overwhelming, bestial fury!'
         expert:
-        - 'You surge forward and savage <ansi fg="{targettype}">{target}</ansi> from your {stance} position with {momentum}!'
+        - 'You surge forward and savage <ansi fg="{targettype}">{target}</ansi> from your {stance} position while {momentum}!'
         - 'Pivoting hard, you slam your <ansi fg="item">{itemname}</ansi> into <ansi fg="{targettype}">{target}</ansi>''s throat viciously!'
         - 'You advance with thunderous force and bite viciously into <ansi fg="{targettype}">{target}</ansi>!'
         - 'Feinting a retreat, you surge forward with a devastating savage bite!'
@@ -339,7 +339,7 @@ options:
         - 'You land a <ansi fg="cyan-bold">DEVASTATING SAVAGE BITE</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You surge and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SAVAGE</ansi> <ansi fg="{targettype}">{target}</ansi> with horrifying force!'
-        - 'Lunging {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT MAULING</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Lunging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT MAULING</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You flow like a hunting predator and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">TEAR THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> from your {stance} stance!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS SAVAGE BITE</ansi> through <ansi fg="{targettype}">{target}</ansi>!'

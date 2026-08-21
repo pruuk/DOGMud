@@ -240,10 +240,12 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH SIGIL-FIRE</ansi> as it strikes <ansi fg="{targettype}">{target}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES</ansi> as it slams into <ansi fg="{targettype}">{target}</ansi>!'
+        - 'You drive your <ansi fg="item">{itemname}</ansi> home with a <ansi fg="cyan-bold">RESOUNDING CRITICAL</ansi>!'
         expert:
         - 'You whirl your staff and <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{targettype}">{target}</ansi> with both ends!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS SWEEP</ansi>!'
+        - 'Timing your strike to the beat of their footwork, you land a <ansi fg="cyan-bold">TEXTBOOK CRITICAL</ansi>!'
         master:
         - 'Your tactical brilliance creates the perfect opening - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi>!'
@@ -253,22 +255,31 @@ options:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH SIGIL-FIRE</ansi> striking you!'
         - 'You are hit by a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> from <ansi fg="{sourcetype}">{source}</ansi>''s staff!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> catches you square with a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> as their staff blazes!'
+        - 'You reel as <ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES</ansi> into you!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> whirls their staff and <ansi fg="cyan-bold">DEVASTATES</ansi> you!'
         - '<ansi fg="{sourcetype}">{source}</ansi> opens your guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> reads your timing perfectly and <ansi fg="cyan-bold">DEVASTATES</ansi> you with a flawless sweep!'
+        - 'You barely register the feint before <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">CRUSHES THROUGH</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s staff moves like an extension of their will as you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - 'With effortless precision, <ansi fg="{sourcetype}">{source}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against you!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH SIGIL-FIRE</ansi> striking <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> with their staff!'
+        - 'A <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> from <ansi fg="{sourcetype}">{source}</ansi> sends <ansi fg="{targettype}">{target}</ansi> staggering!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> whirls their staff and <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> opens the guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> reads the exchange perfectly and lands a <ansi fg="cyan-bold">FLAWLESS SWEEP</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">CRUSHES THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s staff becomes an extension of their will as <ansi fg="{targettype}">{target}</ansi> is <ansi fg="cyan-bold">OBLITERATED</ansi>!'
   fumble:
     together:
       toattacker:
@@ -276,29 +287,43 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as you lose your grip!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and tangle your own feet with the staff!'
         - 'You overextend your sweep and <ansi fg="red-bold">FUMBLE</ansi>, nearly dropping your weapon!'
+        - 'You swing too hard and <ansi fg="red-bold">FUMBLE</ansi>, the <ansi fg="item">{itemname}</ansi> slipping in your sweaty grip!'
         expert:
         - 'Your tactical sweep fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your strike!'
+        - 'Your timing slips for just a moment and you <ansi fg="red-bold">FUMBLE</ansi> the exchange!'
+        - 'You overcommit to the feint and <ansi fg="red-bold">FUMBLE</ansi>, staff twisting awkwardly in your hands!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s unexpected counter forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'For one heartbeat your flowing rhythm breaks and you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Even your practiced hands betray you as you <ansi fg="red-bold">FUMBLE</ansi> the strike!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as they fumble their grip!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> and tangles their own feet!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overswings and <ansi fg="red-bold">FUMBLES</ansi>, the <ansi fg="item">{itemname}</ansi> nearly slipping from their hands!'
+        - 'You watch <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLE</ansi> as their staff twists wide!'
         expert:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> tactical sweep fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi> their strike!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s timing slips and they <ansi fg="red-bold">FUMBLE</ansi> right in front of you!'
+        - 'You spot the opening as <ansi fg="{sourcetype}">{source}</ansi> overcommits and <ansi fg="red-bold">FUMBLES</ansi>!'
         master:
         - 'Your defense forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+        - 'Even <ansi fg="{sourcetype}">{source}</ansi>''s flowing rhythm breaks for a heartbeat and they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'You seize the rare opening as <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the strike!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as they fumble their grip!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their sweep against <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overswings wildly and <ansi fg="red-bold">FUMBLES</ansi> the <ansi fg="item">{itemname}</ansi>!'
         expert:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> tactical sweep fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s timing slips and the sweep <ansi fg="red-bold">FUMBLES</ansi> wide of <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - '<ansi fg="{targettype}">{target}''s</ansi> defense forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+        - 'For one rare heartbeat, <ansi fg="{sourcetype}">{source}</ansi>''s flowing form breaks and they <ansi fg="red-bold">FUMBLE</ansi> before <ansi fg="{targettype}">{target}</ansi>!'

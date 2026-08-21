@@ -280,8 +280,9 @@ func (c *Character) GetDefenseCostFloat(defenseType string) float64 {
 // it, as a whole number.
 //
 // USE GetDefenseCostFloat. NO production caller uses this one any more: the
-// melee site migrated in U7 Task 6 and ResolveChannelDefence (the ranged, spell
-// and social channels) followed, which is what fixed block against a physical
+// melee site migrated in U7 Task 6 and the channel resolver (now
+// combat.ResolveChannelAttack — the ranged, spell and social channels)
+// followed, which is what fixed block against a physical
 // spell falling from four stamina to one. The only remaining callers are the
 // defence-cost tests in this package, which use it to pin exactly how lossy it
 // is. Rounding a U7 cost to an integer destroys the tuning the float version

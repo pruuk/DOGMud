@@ -1,0 +1,67 @@
+# U6b flip RE-CHECK after the first sweep's fixes. The first run (same day)
+# verified: dodge/parry triads both directions, unarmed = dodge-only gating,
+# the SWEEP counter, fumble narration, cross-room shots, non-combatant
+# protection. It could NOT observe the lanes below, and several copy defects
+# it found were since fixed. Confirm the lanes, confirm the fixes, trust
+# nothing.
+#
+# WHERE YOU ARE. Start 4050, a few rooms from the North Road bandit camp at
+# 4052: lookout, fighter, CASTER, and Soren the leader. The caster casts
+# mental spells (mind-spike, mind-fog, nerve-disruption) which your QUELL
+# defence answers with your conviction. Bandits also taunt, which your DEFY
+# defence answers. This camp is the vehicle for every lane below. Fights
+# may be long; that is the point. `consider` before engaging; retreat and
+# recover when needed (you know heal spells). Dying is acceptable data but
+# ends the run early, so do not be reckless.
+#
+# KNOWN NON-BUGS, do not refile: bandits hide (a hidden mob answers "You
+# attack the darkness!" and fights against you render little; already
+# filed); fighting while a bow is wielded melee-swings it as a club by
+# design; damage is words, never numbers; corpses persist for hours.
+#
+# 3 commands per round on the AI port. Read every line.
+
+ephemeral:
+  profile: mid
+  start_room: 4050
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    QUELL LANE (headline): get a long fight with the Bandit Caster. Every
+    mental cast she lands or loses must narrate: her weaving line, then
+    either the spell striking you or your quell putting the working down,
+    in words that make sense. Quote verbatim at least three quell lines.
+    Silence after a weaving line is a finding.
+  - >-
+    COUNTER AFTER QUELL: if you decisively quell her cast, a counter may
+    follow from you. Its text must read as grounding the working and
+    stepping in, never as a generic riposte pasted under a spell. Quote
+    it if you see it; note plainly if you never do.
+  - >-
+    DEFY LANE: bandits taunt. When one taunts you and your defy turns it,
+    the exchange must narrate as words, and a decisive defy may answer
+    with a counter-taunt (you turn the jeer back). Also taunt THEM a few
+    times: your own taunt must always print something (an attempt, a hit,
+    a miss, or a refusal), never nothing.
+  - >-
+    SPELL-SIDE ATTACK: cast your own harmful spells at them. Your cast
+    must narrate its outcome. If a cast is refused because nothing valid
+    is there, it must refuse BEFORE charging you: watch your conviction
+    bar on any refusal ("There is nothing here for that spell to
+    strike.") and report if it drops.
+  - >-
+    COPY FIXES TO CONFIRM: no combat line may contain "with on the
+    offensive" or any "with <momentum>" glue that reads broken; crit
+    banners must not end with a period after the asterisks; no stray
+    lone period line after search or help output; dismissing is not
+    testable here but any em dash anywhere in player text is a finding.
+  - >-
+    BLOCK LANE (opportunistic): if any bandit drops a shield, wear it
+    and let them swing at you; blocked hits must narrate the block
+    triad. Skip without penalty if no shield appears.
+  - >-
+    GENERAL: anything that reads wrong, prints raw numbers, shows an
+    unreplaced token like {momentum}, or contradicts help text is a
+    finding. Quote everything verbatim.

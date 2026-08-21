@@ -27,9 +27,6 @@ func (b *Balance) validateSpells() {
 	if b.SpellDamageScale <= 0 {
 		b.SpellDamageScale = 1.0
 	}
-	if b.SpellAttackSkillFactor < 1 {
-		b.SpellAttackSkillFactor = 3
-	}
 	if b.SpellDifficultyProgressionScale <= 0 {
 		b.SpellDifficultyProgressionScale = 0.01
 	}

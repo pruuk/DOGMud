@@ -25,6 +25,11 @@ type DrainResult struct {
 	// is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Executed reports whether the drain was actually performed. False when any
 	// early-exit condition fired (OnCooldown, NoTarget, NotLifeDrainer).
 	Executed bool
@@ -109,18 +114,26 @@ func ExecuteDrain(actor Actor) DrainResult {
 	// is lighter than a full melee blow; the lifesteal makes up the difference.
 	// Strength drives both the attack and the damage, reflecting the predatory
 	// grip. Dexterity governs the defender's evasion.
+	// U6b Task 7: through the channel seam — raw rank in, the seam applies
+	// SkillWeight (x1 -> x5 both sides); the defence is the equipment-gated
+	// set, charged and progressed; the crit tier and fumble abort exist now.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:        char,
-		Defender:        target.Char,
-		AttackStat:      char.Stats.Strength.ValueAdj,
-		AttackSkill:     char.GetSkillLevel(skills.UnarmedCombat),
-		DefenseStat:     target.Char.GetEffectiveDexterity(),
-		DefenseSkill:    target.Char.GetCombatSkillLevel(),
+		Attacker: char,
+		Defender: target.Char,
+		Channel:  combat.ChannelMelee,
+		Attack: combat.AttackSide{
+			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
+			Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
+		},
 		DamagePercent:   float64(cfg.TripDamagePercent),
 		KnockdownChance: 0, // No knockdown — the drain itself is the payoff
-		SkillRank:       char.GetSkillLevel(skills.UnarmedCombat),
 		DamageStat:      char.Stats.Strength.ValueAdj,
 	})
+
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// On hit: bleed the victim. Bleed is a status effect (binary), so it stays
 	// gated on a clean hit.
@@ -180,6 +193,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Executed:   true,
 		Healed:     healed,
 		BleedDmg:   bleedDmg,
@@ -194,6 +208,11 @@ type DrainAreaPlayerResult struct {
 
 	// MoveResult is the outcome from ExecuteSkillMove against this player.
 	MoveResult combat.SkillMoveResult
+
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
 
 	// BleedDmg is the per-tick bleed magnitude applied to this player on a
 	// hit (Strength/12, min 2). Zero on a miss.
@@ -265,19 +284,28 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 			continue // skip vanished/downed players — already out of the fight
 		}
 
+		// U6b Task 7: through the channel seam, same conversion as the
+		// single-target drain above — each player defends with their own
+		// equipment-gated set, charged and progressed per contest.
 		moveResult := combat.ExecuteSkillMove(combat.SkillMoveParams{
-			Attacker:      char,
-			Defender:      target.Character,
-			AttackStat:    char.Stats.Strength.ValueAdj,
-			AttackSkill:   char.GetSkillLevel(skills.UnarmedCombat),
-			DefenseStat:   target.Character.GetEffectiveDexterity(),
-			DefenseSkill:  target.Character.GetCombatSkillLevel(),
+			Attacker: char,
+			Defender: target.Character,
+			Channel:  combat.ChannelMelee,
+			Attack: combat.AttackSide{
+				Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
+				Skill: skills.UnarmedCombat, SkillRank: char.GetSkillLevel(skills.UnarmedCombat),
+				Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+				ForceCrit: combat.SleepingForceCrit(target.Character),
+			},
 			DamagePercent: float64(cfg.TripDamagePercent),
-			SkillRank:     char.GetSkillLevel(skills.UnarmedCombat),
 			DamageStat:    char.Stats.Strength.ValueAdj,
 		})
 
-		pr := DrainAreaPlayerResult{UserId: uid, MoveResult: moveResult}
+		// U6b Task 10: each player's own crit defence earns their own counter.
+		// The caller speaks it after its own drain narration (Task 11).
+		counter := counterSkillMoveExit(actor, target.Character, moveResult, combat.ChannelMelee, true)
+
+		pr := DrainAreaPlayerResult{UserId: uid, MoveResult: moveResult, Counter: counter}
 
 		// Bleed is a status effect (binary), so it stays gated on a clean hit.
 		if moveResult.Hit {

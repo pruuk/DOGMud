@@ -465,3 +465,40 @@ if __name__ == '__main__':
     taunt_tables()
     damage_weighted_tables()
     headline()
+
+
+# ── U6b Task 1 addendum: the SHIPPED crit bar ────────────────────────────────
+# The tables above use CRIT_T = 2.0, the constant bar. U6b ships the bar as a
+# clamped function of the CHANNEL's skill pair (owner decision 2026-08-19):
+#
+#   bar = clamp(2.0 - CritBarSkillSlope*(atk_rank - def_rank),
+#               CritBarFloor, CritBarCeiling)     # 0.05 / 1.5 / 3.0 shipped
+#
+# Everything except P(crit) is bar-independent, so only crit columns move.
+def shipped_crit_bar(atk_rank, def_rank, slope=0.05, floor=1.5, ceiling=3.0):
+    bar = 2.0 - slope * (atk_rank - def_rank)
+    if bar < floor:
+        bar = floor
+    if ceiling > 0 and bar > ceiling:
+        bar = ceiling
+    return bar
+
+
+def shipped_bar_deltas():
+    """Crit columns for the §5.1 royalty cells under the shipped bar."""
+    print('\n== shipped-bar crit deltas (Queen sc1 vs Meirok sc52; bar %.2f) =='
+          % shipped_crit_bar(1, 52))
+    meirok_quell = 408.0
+    for gold, wil in ((300, 329), (500, 545), (1000, 1075), (2000, 2135)):
+        a = wil + 5.0
+        mu = (a - meirok_quell) / (SPREAD * a * math.sqrt(2.0))
+        for name, bar in (('const 2.0', 2.0),
+                          ('shipped', shipped_crit_bar(1, 52)),
+                          ('uncapped', 2.0 + 0.05 * 51)):
+            crit = max(0.0, 1.0 - PHI(bar - mu))
+            print('  %5dg  %-9s bar=%.2f  P(crit)=%6.1f%%'
+                  % (gold, name, bar, crit * 100.0))
+
+
+if __name__ == '__main__' and True:
+    shipped_bar_deltas()

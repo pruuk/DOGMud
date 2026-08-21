@@ -98,9 +98,9 @@ const ContestCritThreshold = 2.0
 // perspective of the side being tested. Result.Margin is ATTACK-positive
 // (attack roll minus winning defence roll), so:
 //
-//	attacker's crit check  -> pass it unnegated  (combat_taunt.go, the spell
-//	                          sites in internal/hooks)
-//	defender's crit check  -> negate it          (ResolveChannelDefence)
+//	attacker's crit check  -> pass it unnegated  (ResolveChannelAttack's
+//	                          attacker verdict)
+//	defender's crit check  -> negate it          (defenceDamageMultiplier)
 //
 // NEVER pass a dice.RollResult's .Margin field. Since U1-U3 every caller
 // resolves through internal/contest, which rolls each side with dice.Roll, and
@@ -122,10 +122,18 @@ const ContestCritThreshold = 2.0
 // when a floor fires. That sentinel normalises to a near-zero z, so a hit handed
 // out by the floor cannot also be a crit. This is intended.
 func ContestCrit(margin float64, roll dice.RollResult) bool {
+	return ContestCritAt(margin, roll, ContestCritThreshold)
+}
+
+// ContestCritAt is ContestCrit against a caller-supplied bar instead of the
+// constant threshold — the channel seam passes CritBarFor's clamped skill-pair
+// bar (U6b Task 3). The margin contract above applies unchanged; only the
+// threshold moves.
+func ContestCritAt(margin float64, roll dice.RollResult, bar float64) bool {
 	if roll.StdDev > 0 {
-		return margin/(roll.StdDev*math.Sqrt2) >= ContestCritThreshold
+		return margin/(roll.StdDev*math.Sqrt2) >= bar
 	}
 	// No usable scale to normalise against; fall back to the legacy
 	// self-relative check rather than dividing by zero.
-	return roll.ZScore >= ContestCritThreshold
+	return roll.ZScore >= bar
 }

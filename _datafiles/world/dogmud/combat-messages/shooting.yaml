@@ -403,7 +403,7 @@ options:
         - 'Dancing around <ansi fg="{targettype}">{target}</ansi>, you fire with deadly purpose!'
         - 'You exploit an opening and fire decisively at <ansi fg="{targettype}">{target}</ansi>!'
         - 'Following through, you deliver a solid shot to <ansi fg="{targettype}">{target}</ansi>!'
-        - 'You capitalize on your {momentum} and strike true!'
+        - 'You press your advantage while {momentum} and strike true!'
         - 'Your {stance} marksmanship flashes as you maintain the pressure!'
         - 'You are {momentum} as your shot strikes into <ansi fg="{targettype}">{target}</ansi>!'
         - 'While {momentum}, you fire decisively at <ansi fg="{targettype}">{target}</ansi>!'
@@ -425,7 +425,7 @@ options:
         - '<ansi fg="{sourcetype}">{source}</ansi> dances around you and fires purposefully!'
         - '<ansi fg="{sourcetype}">{source}</ansi> exploits an opening and fires decisively!'
         - '<ansi fg="{sourcetype}">{source}</ansi> follows through with a solid shot!'
-        - '<ansi fg="{sourcetype}">{source}</ansi> capitalizes on their {momentum} and strikes true!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> presses the advantage while {momentum} and strikes true!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s shot flashes as they maintain pressure!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s shot catches you in the {bodypart}!'
       toroom:
@@ -799,7 +799,7 @@ options:
         master:
         - 'Despite perfect conditions, your {stance} approach <ansi fg="red-bold">FUMBLES</ansi> through the <ansi fg="exit">{exitname}</ansi>!'
         - 'Your instinctive marksmanship <ansi fg="red-bold">FUMBLES</ansi> unexpectedly through the <ansi fg="exit">{exitname}</ansi>!'
-        - 'Even with {momentum}, your shot <ansi fg="red-bold">FUMBLES</ansi> through the <ansi fg="exit">{exitname}</ansi>!'
+        - 'Even while {momentum}, your shot <ansi fg="red-bold">FUMBLES</ansi> through the <ansi fg="exit">{exitname}</ansi>!'
       todefender:
         beginner:
         - 'A shot from the <ansi fg="exit">{entrancename}</ansi> <ansi fg="red-bold">FUMBLES</ansi> harmlessly past you!'

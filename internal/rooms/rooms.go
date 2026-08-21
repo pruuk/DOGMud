@@ -1857,6 +1857,20 @@ func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, 
 	playerLookup := map[string]int{}
 	for _, uId := range r.GetPlayers(findTypes...) {
 		u := users.GetByUserId(uId)
+
+		// A stale id in r.players makes GetByUserId return nil. This is the
+		// exact player-side twin of the findMobByName stale-id panic fixed
+		// 2026-08-08: FindByName resolves the mob FIRST, then this loop
+		// panicked on the stale user id, the panic threw away the already-
+		// resolved mob id, and events.invokeListenerSafely swallowed the
+		// whole command with zero output. Because look/GetRoomDetails never
+		// calls this function, the room kept rendering normally — "look
+		// lists it, nothing can target it", for every named command, until
+		// the player list changed. See respawn_targeting_test.go.
+		if u == nil {
+			continue
+		}
+
 		playerLookup[u.Character.Name] = u.UserId
 		namesInRoom = append(namesInRoom, u.Character.Name)
 	}

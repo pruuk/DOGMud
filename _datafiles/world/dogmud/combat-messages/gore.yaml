@@ -44,7 +44,7 @@ options:
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads your posture and angles their <ansi fg="item">{itemname}</ansi> perfectly.'
         - 'With unsettling calm, <ansi fg="{sourcetype}">{source}</ansi> lowers their <ansi fg="item">{itemname}</ansi> to strike.'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> settle into position — a clear and lethal threat.'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> settle into position: a clear and lethal threat.'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi> lowers their <ansi fg="item">{itemname}</ansi> at <ansi fg="{targettype}">{target}</ansi>.'
@@ -212,7 +212,7 @@ options:
         - 'Stepping into the charge, you drive your <ansi fg="item">{itemname}</ansi> through <ansi fg="{targettype}">{target}</ansi>''s guard!'
         - 'You pivot and hook decisively, {momentum}!'
         - 'Feinting {position}, you bring your <ansi fg="item">{itemname}</ansi> up in a sharp sweeping arc!'
-        - 'You draw their defense {momentum} and drive your <ansi fg="item">{itemname}</ansi> low!'
+        - 'You draw their defense while {momentum} and drive your <ansi fg="item">{itemname}</ansi> low!'
         - 'Reading their stance, you charge with practiced, beast-like precision!'
         master:
         - 'You press your advantage with a sweeping hook while {momentum}!'
@@ -273,7 +273,7 @@ options:
         - 'You charge with overwhelming, bestial fury!'
         expert:
         - 'You lower and drive forward, impaling <ansi fg="{targettype}">{target}</ansi> from your {stance} position!'
-        - 'Pivoting hard, you slam your <ansi fg="item">{itemname}</ansi> deep into <ansi fg="{targettype}">{target}</ansi> with {momentum}!'
+        - 'Pivoting hard, you slam your <ansi fg="item">{itemname}</ansi> deep into <ansi fg="{targettype}">{target}</ansi> while {momentum}!'
         - 'You advance with thunderous force and hook viciously!'
         - 'Feinting a retreat, you surge forward with a devastating impale!'
         - 'You draw their guard and drive your <ansi fg="item">{itemname}</ansi> in with punishing force!'
@@ -339,7 +339,7 @@ options:
         - 'You land a <ansi fg="cyan-bold">DEVASTATING CHARGE</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You charge and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">IMPALE</ansi> <ansi fg="{targettype}">{target}</ansi> clean through!'
-        - 'Lunging {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT GORE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Lunging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT GORE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You flow like a charging beast and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SKEWER</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} stance!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS IMPALE</ansi> through <ansi fg="{targettype}">{target}</ansi>!'

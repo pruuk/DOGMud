@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,18 +39,29 @@ func TestExecuteSkillMove_NilDefenderPosition(t *testing.T) {
 	// The knockdown branch derefs Defender.Position and is gated behind two
 	// dice rolls. Loop enough to hit it essentially every run; with the guard
 	// in place the call never panics regardless of whether knockdown triggers.
+	// U6b Task 7: converted off the legacy scalar-defence shape (a pinned
+	// defect) onto the seam. The characters are built with New() so the seam's
+	// defence-set/costing/progression plumbing has real pools and maps to work
+	// on; the Position under test is then EXPLICITLY nilled — the guard's
+	// trigger is a nil FSM, however the character got that way.
 	require.NotPanics(t, func() {
 		for i := 0; i < 200; i++ {
-			def := &characters.Character{Name: "Def"} // Position intentionally nil
+			def := characters.New()
+			def.Name = "Def"
+			def.Position = nil // intentionally nil — the guard under test
 			def.HealthMax.Value = 100
 			def.Health = 100
+			atk := characters.New()
+			atk.Name = "Atk"
 			ExecuteSkillMove(SkillMoveParams{
-				Attacker:        &characters.Character{Name: "Atk", Position: position.NewMachine()},
-				Defender:        def,
-				AttackStat:      500, // overwhelming attacker → near-certain hit
-				AttackSkill:     50,
-				DefenseStat:     1,
-				DefenseSkill:    0,
+				Attacker: atk,
+				Defender: def,
+				Channel:  ChannelMelee,
+				Attack: AttackSide{ // overwhelming attacker → near-certain hit
+					Stat: 500, StatName: "strength",
+					Skill: skills.WeaponCombat, SkillRank: 50,
+					Mult: 1.0,
+				},
 				DamagePercent:   0.8,
 				KnockdownChance: 100, // guarantee the knockdown branch on a hit
 				DamageStat:      100,

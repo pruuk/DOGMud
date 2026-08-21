@@ -23,6 +23,11 @@ type BashResult struct {
 	// MoveResult is the outcome from ExecuteSkillMove. Valid only when Executed is true.
 	MoveResult combat.SkillMoveResult
 
+	// Counter is the counter tier outcome (U6b Tasks 10-11): non-zero when the
+	// defender crit-defended and answered. The command wrapper speaks its
+	// narration AFTER the move's own outcome via DispatchCounterMessages.
+	Counter combat.CounterResult
+
 	// Executed reports whether the bash was actually performed. False when any
 	// early-exit condition fired (OnCooldown, NoTarget, NoShield).
 	Executed bool
@@ -94,19 +99,27 @@ func ExecuteBash(actor Actor) BashResult {
 	commitMeleeEngagement(actor)
 
 	// Execute the skill move.
+	// U6b Task 6: through the channel seam — raw rank in, the seam applies
+	// SkillWeight (x1 -> x5 both sides); the defence is the equipment-gated
+	// set, charged and progressed; the crit tier and fumble abort exist now.
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker:          char,
-		Defender:          target.Char,
-		AttackStat:        char.Stats.Strength.ValueAdj,
-		AttackSkill:       char.GetSkillLevel(skills.WeaponCombat),
-		DefenseStat:       target.Char.GetEffectiveDexterity(),
-		DefenseSkill:      target.Char.GetCombatSkillLevel(),
+		Attacker: char,
+		Defender: target.Char,
+		Channel:  combat.ChannelMelee,
+		Attack: combat.AttackSide{
+			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
+			Skill: skills.WeaponCombat, SkillRank: char.GetSkillLevel(skills.WeaponCombat),
+			Mult:      combat.SituationalAttackMult(char, combat.ChannelMelee),
+			ForceCrit: combat.SleepingForceCrit(target.Char),
+		},
 		DamagePercent:     float64(cfg.BashDamagePercent),
 		KnockdownChance:   int(cfg.BashKnockdownChance),
-		SkillRank:         char.GetSkillLevel(skills.WeaponCombat),
 		DamageStat:        char.Stats.Strength.ValueAdj,
 		KnockdownToSupine: true, // bash sends defender backward
 	})
+
+	// U6b Task 10: a crit-defended move earns the defender a counter-swing.
+	counter := counterSkillMoveExit(actor, target.Char, result, combat.ChannelMelee, true)
 
 	// Determine source/target types for analytics.
 	sourceType := combat.User
@@ -133,6 +146,7 @@ func ExecuteBash(actor Actor) BashResult {
 		Cost:       cost,
 		Target:     target,
 		MoveResult: result,
+		Counter:    counter,
 		Executed:   true,
 	}
 }

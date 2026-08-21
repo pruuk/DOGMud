@@ -59,17 +59,11 @@ func CalcConcentrationChance(willpower, damagePct int) int {
 	return chance
 }
 
-// CalcSpellAttack returns the attacker score for a spell contest: the mean the
-// contest core rolls the caster's side against. U2 moved the spell sites off
-// dice.OpposedRoll* and onto that core (reached then via contest.RunWithFloors
-// plus a pair of private floor accessors in internal/hooks); U3 deleted those
-// accessors, and U6 collapsed the wrappers that replaced them, so the core is
-// now reached through combat.RunContest.
-// Higher willpower and spellcasting level increase spell offense.
-// Formula: willpower + round(spellcastingLevel * SkillWeight) * SpellAttackSkillFactor
-func CalcSpellAttack(willpower, spellcastingLevel int) float64 {
-	b := configs.GetBalanceConfig()
-	factor := int(b.SpellAttackSkillFactor)
-	weightedSkill := int(math.Round(float64(spellcastingLevel) * float64(b.SkillWeight)))
-	return float64(willpower + weightedSkill*factor)
-}
+// The spell-attack score helper was deleted in roadmap U6b Task 4. It built
+// the spell hit gate's attacker score as willpower + weightedSkill * a config
+// skill factor, an x15-per-rank outlier (SkillWeight 5 x factor 3) no other
+// channel had. The spell channel now runs ONE contest through
+// combat.ResolveChannelAttack with a caller-built combat.AttackSide (the
+// spell's own primarystat + the school's governing skill at plain
+// SkillWeight); the skill-factor balance knob was deleted with it. Do not
+// reintroduce a separate spell hit gate.

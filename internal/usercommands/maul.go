@@ -93,8 +93,10 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if targetChar != nil {
 			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-	} else {
+		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "savage bite", messaging.CategoryHitNaturalSharp, true) {
+			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		}
+	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "savage bite", messaging.CategoryHitNaturalSharp, false) {
 		missMsgs := []string{
 			`Your savage bite misses <ansi fg="mobname">%s</ansi>!`,
 			`You snap at <ansi fg="mobname">%s</ansi> but they dodge your fangs!`,
@@ -114,6 +116,9 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
 	}
+
+	// U6b Task 11: the counter renders AFTER the move's own outcome.
+	actions.DispatchCounterMessages(actor, res.Counter)
 
 	return true, nil
 }

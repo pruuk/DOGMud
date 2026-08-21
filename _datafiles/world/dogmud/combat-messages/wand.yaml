@@ -238,10 +238,12 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> as it strikes <ansi fg="{targettype}">{target}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> on impact!'
+        - 'By pure luck, your wild swing with your <ansi fg="item">{itemname}</ansi> connects and <ansi fg="cyan-bold">CRACKS INTO</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You channel overwhelming force and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them with arcane fury!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
+        - 'You slip past their guard and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - 'Your tactical brilliance creates the perfect opening - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> strike!'
@@ -251,22 +253,31 @@ options:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> as it strikes you!'
         - 'You are hit by a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> from <ansi fg="{sourcetype}">{source}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s wild swing gets lucky and <ansi fg="cyan-bold">CRACKS INTO</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> as it slams into you!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> channels overwhelming force and <ansi fg="cyan-bold">DEVASTATES</ansi> you!'
         - '<ansi fg="{sourcetype}">{source}</ansi> opens your guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> you with arcane fury!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> reads your stance and <ansi fg="cyan-bold">FLAWLESSLY STRIKES</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> slips past your guard and <ansi fg="cyan-bold">CRACKS TRUE</ansi> against you!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance creates the perfect opening - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">SEARS THROUGH</ansi> you utterly!'
+        - 'With almost contemptuous ease, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> needs only the barest motion to deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against you!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> striking <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s wild swing gets lucky, <ansi fg="cyan-bold">CRACKING INTO</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - '<ansi fg="{sourcetype}">{source}</ansi> channels overwhelming force and <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> opens the guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> slips past the guard and <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical brilliance - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">SEARS THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'With almost contemptuous ease, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
   fumble:
     together:
       toattacker:
@@ -274,29 +285,43 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as the energy fizzles out!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and nearly drop your <ansi fg="item">{itemname}</ansi>!'
         - 'You overextend your thrust and <ansi fg="red-bold">FUMBLE</ansi>, stumbling forward!'
+        - 'You swing your <ansi fg="item">{itemname}</ansi> wildly and <ansi fg="red-bold">FUMBLE</ansi>, nearly braining yourself!'
         expert:
         - 'Your channeled strike misfires - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your arcane jab!'
+        - 'Your footing slips at the worst moment and you <ansi fg="red-bold">FUMBLE</ansi> the strike!'
+        - 'You overcommit to the feint and <ansi fg="red-bold">FUMBLE</ansi>, your <ansi fg="item">{itemname}</ansi> skittering off course!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s unexpected counter disrupts your channel - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a surge of wild magic causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'A moment''s carelessness is all it takes - you <ansi fg="red-bold">FUMBLE</ansi> despite your mastery!'
+        - 'Your <ansi fg="item">{itemname}</ansi> catches on <ansi fg="{targettype}">{target}</ansi>''s guard and you <ansi fg="red-bold">FUMBLE</ansi>!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as its energy fizzles!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> in a clumsy display!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>, nearly braining themselves!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overextends their thrust and <ansi fg="red-bold">FUMBLES</ansi>, stumbling toward you!'
         expert:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> channeled strike misfires - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi> their arcane jab!'
+        - '<ansi fg="{sourcetype}">{source}''s</ansi> footing slips and they <ansi fg="red-bold">FUMBLE</ansi> the strike against you!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi>, their <ansi fg="item">{itemname}</ansi> skittering wide!'
         master:
         - 'Your defense disrupts <ansi fg="{sourcetype}">{source}</ansi>''s channel - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their strike!'
+        - 'A moment''s carelessness costs <ansi fg="{sourcetype}">{source}</ansi> - they <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
+        - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> catches on your guard and they <ansi fg="red-bold">FUMBLE</ansi>!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as its energy fizzles!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their arcane strike against <ansi fg="{targettype}">{target}</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>, nearly braining themselves!'
         expert:
         - '<ansi fg="{sourcetype}">{source}''s</ansi> channeled strike misfires - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{targettype}">{target}</ansi>!'
         master:
         - '<ansi fg="{targettype}">{target}''s</ansi> defense disrupts <ansi fg="{sourcetype}">{source}</ansi>''s channel - a <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+        - 'Despite masterful form, <ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> catches wrong and they <ansi fg="red-bold">FUMBLE</ansi>!'

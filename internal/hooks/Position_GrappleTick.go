@@ -277,10 +277,10 @@ func processGrapplePairWithContest(
 		emitGrappleMaintenanceShortage(controlled)
 	}
 
-	// Score formula (spec 2026-05-19 §3):
-	//   score = (0.7·Str + 0.3·Dex + skill_coef·UnarmedCombat)
+	// Score formula (spec 2026-05-19 §3, reweighted U6b Task 14):
+	//   score = (0.7·Str + 0.3·Dex + SkillWeight·UnarmedCombat)
 	//           × stamina_mult × encumbrance_mult
-	//   skill_coef = 2.2 (aggressor) or 2.0 (defender)
+	//           [× GrappleAggressorDriftBonus for the aggressor]
 	//
 	// IsAggressor is set on GrappleData by ApplyGrappleResult's
 	// markAggressor call (chunk 4b-fixup-2 T5). It persists for the
@@ -304,13 +304,24 @@ func processGrapplePairWithContest(
 
 	// Compute signed z used by ResolveOutcome.
 	//
-	// NOTE(U6): normalised by stdDev alone, without the sqrt(2) that
-	// ContestCrit applies. Both sides roll with the attacker's stdDev, so their
-	// difference has stdDev*sqrt(2). Preserved as-is here because U3 is a
-	// provable no-op; U6 owns the correction.
+	// √2 normalisation (U6b Task 14, the correction the roadmap assigned to
+	// U6): both sides roll with the attacker's stdDev, so the margin's
+	// standard deviation is stdDev·√2. Dividing by stdDev alone (the pre-fix
+	// code) inflated every drift z by ~41% and made per-round drift swing
+	// ~29% wider than the outcome bands were designed for.
+	//
+	// FLOOR-FORCED HOLDS — pre-existing, documented, deliberately kept
+	// (U6b Task 14 item 4): when the contest floor flips this round's
+	// outcome (ContestFloor 0.125 → 12.5% of drift rounds), contest.Run
+	// stamps the ±1 sentinel margin. Against a realistic stdDev (score ×
+	// RollSpread, tens of points), ±1/(stdDev·√2) normalises to ~0, so every
+	// floor-flipped round lands in the Hold band regardless of scores — in
+	// every modelled variant. The floor's job here is "no runaway", and Hold
+	// is exactly that; do not "fix" this by re-deriving a band from the
+	// sentinel.
 	z := 0.0
 	if res.AttackRoll.StdDev > 0 {
-		z = res.Margin / res.AttackRoll.StdDev
+		z = res.Margin / (res.AttackRoll.StdDev * math.Sqrt2)
 	}
 
 	source := controller.Position.State()
@@ -657,13 +668,18 @@ func broadcastToRoomExcluding(controller, controlled *characters.Character,
 }
 
 // grappleScore computes one side's per-round drift score. Spec
-// 2026-05-19 §3. Symmetric formula for both sides; aggressor gets a
-// 10% bonus on the skill term (initiative edge).
+// 2026-05-19 §3, reweighted by U6b Task 14: the skill term uses the
+// global SkillWeight on both sides (the old hardcoded per-side skill
+// coefficients were the only additive contest score not on SkillWeight,
+// and the tenth-of-a-point gap between them was an accidental
+// aggressor edge). The aggressor's edge is
+// restored deliberately as GrappleAggressorDriftBonus, a config
+// multiplier on the aggressor's whole score (initiative edge).
 //
-//	score = (0.7·Str + 0.3·Dex + skill_coef·UnarmedCombat)
+//	score = (0.7·Str + 0.3·Dex + SkillWeight·UnarmedCombat)
 //	        × stamina_multiplier × encumbrance_multiplier
+//	        [× GrappleAggressorDriftBonus when isAggressor]
 //
-// where skill_coef = 2.2 for the aggressor side, 2.0 for the defender.
 // Returns 0 for a nil character (defensive — callers should never
 // pass nil but the function shouldn't panic on it).
 func grappleScore(c *characters.Character, isAggressor bool, cfg configs.Balance, includeSkill bool) float64 {
@@ -677,13 +693,12 @@ func grappleScore(c *characters.Character, isAggressor bool, cfg configs.Balance
 		skill = float64(c.GetSkillLevel(skills.UnarmedCombat))
 	}
 
-	skillCoef := 2.0
+	base := 0.7*strVal + 0.3*dexVal + float64(cfg.SkillWeight)*skill
+	score := base * grappleStaminaMultiplier(c, cfg) * grappleEncumbranceMultiplier(c, cfg)
 	if isAggressor {
-		skillCoef = 2.2
+		score *= float64(cfg.GrappleAggressorDriftBonus)
 	}
-
-	base := 0.7*strVal + 0.3*dexVal + skillCoef*skill
-	return base * grappleStaminaMultiplier(c, cfg) * grappleEncumbranceMultiplier(c, cfg)
+	return score
 }
 
 // isAggressorSide returns true if this character's GrappleData

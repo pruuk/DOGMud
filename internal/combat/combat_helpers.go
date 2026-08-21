@@ -549,78 +549,31 @@ func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Ch
 	return attackScore
 }
 
-// calcCritThreshold computes the z-score threshold for critical hits.
+// calcCritThreshold is melee's thin wrapper over CritBarFor (U6b), passing
+// its combat-skill pair. All the arithmetic — base 2.0, the per-point slope,
+// the floor, the NEW ceiling — lives in CritBarFor and its three config
+// knobs. Melee is bit-identical to the old inline form at and below the
+// ceiling; above it, the ceiling binds (the old bar was uncapped, so a
+// stat-rich skill-1 mob vs a weapon-combat-69 veteran faced bar 5.4 and
+// effectively never crit).
+//
+// READ THIS BEFORE REASONING ABOUT CRIT RATES. What this returns is only the
+// BAR. Since chunk 5.11d the thing measured against the bar is the normalized
+// opposed-roll MARGIN, not a self-relative z-score — see margin_crit.go and
+// the CritBarFor doc for the full account, including the deliberate skill
+// double count and its saturation (playtest-confirmed 2026-08-14; do not
+// "fix" it).
+//
+// GetCombatSkillLevel returns 1 when unset (characters/skills.go) and no mob
+// YAML defines a skills block, so every mob in the world is combat skill 1.
+// As attacker, nearly every established character is thus pinned at the
+// floor; as defender, they push a mob attacker's bar up to the ceiling.
+//
+// Chunk 5.11c: position-based crit modifiers live in calcAttackScore, not
+// here. Do not reintroduce them. The old Accuracy/Blink buff branches were
+// DELETED by U6b — upstream stowaways no shipped content ever granted.
 func calcCritThreshold(sourceChar *characters.Character, targetChar *characters.Character) float64 {
-	critThreshold := 2.0
-	if sourceChar.HasBuffFlag(buffs.Accuracy) {
-		critThreshold = 1.5
-	}
-	if targetChar.HasBuffFlag(buffs.Blink) {
-		critThreshold = 2.5
-	}
-	// Skill advantage shifts the crit threshold.
-	//
-	// READ THIS BEFORE REASONING ABOUT CRIT RATES. What this function returns
-	// is only the BAR. Since chunk 5.11d the thing measured against that bar is
-	// the normalized opposed-roll MARGIN, not a self-relative z-score, so the
-	// opponent's stats, gear and position dominate the actual crit rate. See
-	// margin_crit.go. A high-stat boss rolls high defences, the margin collapses
-	// or goes negative, and crits become rare no matter what this returns; a
-	// trash mob leaves an enormous margin and crits land constantly. Do NOT
-	// conclude from the threshold alone that crit rate is matchup-independent —
-	// that was the pre-5.11d behaviour and it is exactly what 5.11d removed.
-	//
-	// The skill term below DOES saturate, and that part is INTENDED. Confirmed
-	// by playtest 2026-08-14 and kept deliberately: do not "fix" it.
-	// GetCombatSkillLevel returns 1 when unset (characters/skills.go) and no mob
-	// YAML defines a skills block, so every mob in the world is combat skill 1.
-	// skillDiff is therefore the player's combat skill minus one, and at 0.05
-	// per point the 1.5 floor is reached at combat skill 11. For nearly every
-	// established character the bar is thus pinned at 1.5 rather than 2.0
-	// against every target.
-	//
-	// At PARITY that is the difference between a 2.3% and a 6.7% crit rate
-	// (ContestCritThreshold is 2.0 precisely to reproduce the legacy rate at
-	// parity). Away from parity the margin, not the bar, is what decides.
-	//
-	// Note the double count, deliberate but worth knowing: combat skill already
-	// raises the margin through the attack score (SkillWeight), and it lowers
-	// this bar as well. Skill therefore reaches crit rate twice. The playtest
-	// says this feels good, so it stays; rebalancing it changes FEEL, not a
-	// defect.
-	//
-	// If mobs ever gain real combat skills, revisit: the slope was written for
-	// two-sided values and would behave very differently.
-	skillDiff := sourceChar.GetCombatSkillLevel() - targetChar.GetCombatSkillLevel()
-	critThreshold -= float64(skillDiff) * 0.05
-
-	// Floor after skill adjustment: never easier than Accuracy buff level (~6.7% crit)
-	if critThreshold < 1.5 {
-		critThreshold = 1.5
-	}
-
-	// Chunk 5.11c: position-based crit modifiers MOVED OUT to calcAttackScore,
-	// alongside the prone multipliers that already lived there. Do not
-	// reintroduce them here.
-	//
-	// Two reasons. First, prone and grapple are the same category of effect and
-	// were using two different mechanisms in two different files. Second, the
-	// ground-grapple pair silently cancelled: both participants satisfy
-	// IsGroundGrapple() (a position state) while IsController() is a separate
-	// control fsm, so the controller's -0.4 and the victim's +0.4 netted to
-	// ZERO -- ground control, the stronger position, was worth strictly less
-	// than the standing -0.2.
-	//
-	// Buff modifiers (Accuracy, Blink) stay on the threshold. They are not
-	// positional; "this character crits more readily" is exactly what a
-	// threshold expresses.
-
-	// Absolute floor. Retained for the buff modifiers above.
-	if critThreshold < 1.0 {
-		critThreshold = 1.0
-	}
-
-	return critThreshold
+	return CritBarFor(sourceChar.GetCombatSkillLevel(), targetChar.GetCombatSkillLevel())
 }
 
 // filterDefensesForThirdParty removes active defenses when the target is in a grapple
@@ -631,12 +584,9 @@ func filterDefensesForThirdParty(result *AttackResult, sourceChar *characters.Ch
 		return defSeq, false
 	}
 
-	filteredDefenses := []string{}
-	for _, def := range defSeq {
-		if def == characters.DefenseBlock {
-			filteredDefenses = append(filteredDefenses, def)
-		}
-	}
+	// Set reduction is shared with DefenceEntriesFor's ThirdPartyVsGrappler
+	// opt; only the vulnerability messaging below is melee-specific.
+	filteredDefenses := thirdPartyGrappleDefences(defSeq)
 
 	// If no defenses remain, send vulnerability messages and auto-hit.
 	// Vulnerability prose is hit-prep — the swing is about to land.
@@ -731,7 +681,7 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 		//
 		// There are still no quell or defy arms, and that gap is DISCLOSED, not
 		// an oversight: quell and defy do not run through this function (they
-		// resolve in ResolveChannelDefence), and giving them positional penalties
+		// resolve in ResolveChannelAttack), and giving them positional penalties
 		// would need ProneQuellPenalty and four more knobs that do not exist.
 		// Whoever wires either defence into melee owns adding them.
 		switch {
@@ -963,7 +913,7 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 // early returns below.
 func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
 	fumbleThreshold := -2.0
-	defCritThreshold := 2.0
+	defCritThreshold := DefenseCritBar()
 
 	res := hitResolution{
 		hitRoll: best.hitRoll,
@@ -1386,6 +1336,26 @@ func deflectedSwingLines(defense DefenseType, sourceName, targetName, dmgDesc st
 	return toAttacker, toDefender
 }
 
+// attackMessagePct clamps the damage percentage used for attack-message band
+// selection so the crit-worded pool (pctDamage >= 101 in GetAttackMessage) is
+// used exactly when the swing actually crit. Without this, any above-average
+// damage roll — roughly half of clean hits under RollSpread — selected
+// crit-worded text with no *** banner, and a heavily mitigated real crit
+// bannered weak-worded text. Damage itself is untouched; this only picks
+// which pool narrates it.
+func attackMessagePct(pctDamage int, isCrit bool) int {
+	if isCrit {
+		if pctDamage <= 100 {
+			return 101
+		}
+		return pctDamage
+	}
+	if pctDamage > 100 {
+		return 100
+	}
+	return pctDamage
+}
+
 // buildAttackMessages constructs and sends all combat messages for a swing.
 //
 // defended is hitResolution.defended: the defence won the contest but the
@@ -1453,7 +1423,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// The feint check is deliberately skipped: this swing dealt real
 		// damage, so reading it as a deliberate feint would be wrong.
 	} else {
-		msgs = items.GetAttackMessage(displaySubtype, int(pctDamage))
+		msgs = items.GetAttackMessage(displaySubtype, attackMessagePct(int(pctDamage), result.Crit))
 		// Feint check: skilled attackers can turn misses into deliberate-looking
 		// feints. Decision (U6 Task 14): this gate stays on true zero-damage
 		// outcomes (defensive crits, uncontested misses). Pre-U6 it also fired

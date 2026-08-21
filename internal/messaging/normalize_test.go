@@ -63,3 +63,50 @@ func TestNormalizeIdempotent(t *testing.T) {
 		t.Errorf("normalize must be idempotent: %q vs %q", once, twice)
 	}
 }
+
+func TestNormalizeSkipsCritBannerAsterisks(t *testing.T) {
+	// Crit/death/achievement banners end with `***` (often inside an
+	// ansi close tag). No period may be appended after the decoration.
+	in := `<ansi fg="crit-text">***</ansi> You land a PERFECT TEAR! <ansi fg="crit-text">***</ansi>`
+	got := Normalize(CategoryHitMelee, in)
+	if got != in {
+		t.Errorf("*** banner must not gain punctuation, got %q", got)
+	}
+}
+
+func TestNormalizeSkipsTrailingBracketTag(t *testing.T) {
+	// A line ending in a bracketed tag like `[CRIT!]` is already
+	// terminated — no period after the closing bracket.
+	in := `You unleash a devastating verbal onslaught on Practice Butt! <ansi fg="crit-text">[CRIT!]</ansi>`
+	got := Normalize(CategoryTauntSuccess, in)
+	if got != in {
+		t.Errorf("trailing ] must not gain punctuation, got %q", got)
+	}
+}
+
+func TestNormalizeSkipsTrailingParenTag(t *testing.T) {
+	// Same for a trailing parenthesized aside.
+	in := `You mock them mercilessly! (a soul-shattering tirade)`
+	got := Normalize(CategoryTauntSuccess, in)
+	if got != in {
+		t.Errorf("trailing ) must not gain punctuation, got %q", got)
+	}
+}
+
+func TestNormalizeNoLonePeriodAfterTrailingNewline(t *testing.T) {
+	// A message ending in punctuation + newline must pass through
+	// unchanged — previously the newline hid the `...` from the
+	// terminator check and a stray `.` line was appended.
+	in := "You snoop around for a bit...\n"
+	got := Normalize(CategorySystem, in)
+	if got != in {
+		t.Errorf("trailing newline must not cause a lone period, got %q", got)
+	}
+}
+
+func TestNormalizeAppendKeepsTrailingNewline(t *testing.T) {
+	got := Normalize(CategoryHitMelee, "you strike deeply\n")
+	if got != "You strike deeply.\n" {
+		t.Errorf("period must go before the trailing newline, got %q", got)
+	}
+}

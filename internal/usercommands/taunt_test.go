@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"math"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -13,10 +14,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -304,5 +309,109 @@ func TestPlayerTauntDefenceShortageSilenceCases(t *testing.T) {
 			require.NoError(t, err)
 			require.Zero(t, exactRuntimeLineCount(defender.UserId, expectedDefenceShortageLine))
 		})
+	}
+}
+
+// deterministicTauntContest returns a channel-contest runner whose normalized
+// attack margin is exactly normMargin sigma (attack-positive; negative is a
+// defence win by that many sigma), with explicit roll z-scores so fumbles and
+// defence crits fire only when asked for.
+func deterministicTauntContest(normMargin, atkZ, defZ float64) func(float64, []contest.Entry) contest.Result {
+	return func(atkScore float64, entries []contest.Entry) contest.Result {
+		stdDev := dice.StdDevFor(atkScore)
+		if stdDev <= 0 {
+			stdDev = 15
+		}
+		margin := normMargin * stdDev * math.Sqrt2
+		result := contest.Result{
+			Contested: true,
+			Success:   margin > 0,
+			Margin:    margin,
+			AttackRoll: dice.RollResult{
+				Value: atkScore + atkZ*stdDev, Mean: atkScore,
+				StdDev: stdDev, ZScore: atkZ,
+			},
+		}
+		if len(entries) > 0 {
+			result.Winner = entries[0].Name
+			result.DefenseRoll = dice.RollResult{
+				Value: atkScore + atkZ*stdDev - margin, Mean: entries[0].Score,
+				StdDev: stdDev, ZScore: defZ,
+			}
+		}
+		return result
+	}
+}
+
+// TestPlayerTauntMidCombatAndGrappledAlwaysNarrates closes the U6b playtest
+// cell the live sessions could not observe (every eligible mid-combat target
+// died within a round or hid): the REAL actions.ExecuteTaunt — no stubbed
+// action seam — driven through the player wrapper while already in combat,
+// and again while grappled, must put at least one line in front of the
+// player for EVERY contest outcome. The events pump swallows listener panics
+// in production (internal/events/listeners.go), so a panicking taunt path
+// would be silent live; this test calls the wrapper directly, so any panic
+// fails it loudly.
+func TestPlayerTauntMidCombatAndGrappledAlwaysNarrates(t *testing.T) {
+	outcomes := []struct {
+		name                   string
+		normMargin, atkZ, defZ float64
+		wantSubstring          string
+	}{
+		{"attack_win", 0.5, 0.5, -0.5, "taunt"},
+		{"defended_partial", -0.5, 0.5, 0.5, "defy attacker"},
+		{"defensive_crit", -4, 0.5, 2.5, "defy attacker"},
+		{"fumble", -1, -2.5, 0.5, ""},
+	}
+	for _, grappled := range []bool{false, true} {
+		stance := "mid_combat_standing"
+		if grappled {
+			stance = "mid_combat_grappled"
+		}
+		for _, tc := range outcomes {
+			t.Run(stance+"/"+tc.name, func(t *testing.T) {
+				cleanup := seedAllRegistries()
+				defer cleanup()
+				restoreMessages := seedTauntRuntimeMessages(t)
+				defer restoreMessages()
+				cfg := configs.GetConfig()
+				cfg.Balance.ContestFloor = 0
+				cfg.Balance.MinAttackCritChance = 0
+				cfg.Balance.MinDefenseCritChance = 0
+				configs.SetConfigForTest(t, cfg)
+				restoreContest := combat.SetChannelAttackContestRunnerForTest(
+					deterministicTauntContest(tc.normMargin, tc.atkZ, tc.defZ))
+				t.Cleanup(restoreContest)
+
+				attacker := users.GetByUserId(1)
+				room := rooms.LoadRoom(1)
+				target := mobs.GetInstance(100)
+				require.NotNil(t, target)
+				target.Character.MobInstanceId = target.InstanceId
+
+				// Mid-combat: aggro already points at the live, visible mob,
+				// exactly the state the playtest could never hold long enough
+				// to observe.
+				attacker.Character.SetAggro(0, target.InstanceId, characters.DefaultAttack)
+				if grappled {
+					setCombatPositionParallel(attacker.Character, position.Clinch)
+				}
+				events.DrainQueuedMessagesForTest(attacker.UserId)
+
+				handled, err := Taunt("", attacker, room, 0)
+				require.NoError(t, err)
+				require.True(t, handled)
+
+				lines := events.DrainQueuedMessagesForTest(attacker.UserId)
+				require.NotEmpty(t, lines,
+					"a %s taunt (%s) left the player with ZERO output — the silent-taunt defect",
+					tc.name, stance)
+				if tc.wantSubstring != "" {
+					joined := strings.ToLower(strings.Join(lines, "\n"))
+					require.Contains(t, joined, tc.wantSubstring,
+						"the %s outcome (%s) must narrate its result to the taunter", tc.name, stance)
+				}
+			})
+		}
 	}
 }

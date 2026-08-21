@@ -44,7 +44,7 @@ options:
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads your weight distribution with predatory precision.'
         - 'With unsettling stillness, <ansi fg="{sourcetype}">{source}</ansi> coils to spring.'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s eyes track your center of mass — a clear and lethal intent.'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s eyes track your center of mass: a clear and lethal intent.'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi> crouches low and fixes <ansi fg="{targettype}">{target}</ansi> with a predator''s stare.'
@@ -85,7 +85,7 @@ options:
         - '<ansi fg="{sourcetype}">{source}</ansi> paces wide and low, probing your guard.'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads your weight distribution with predator certainty.'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s eyes track your breathing — waiting for one wrong step.'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s eyes track your breathing, waiting for one wrong step.'
         - '<ansi fg="{sourcetype}">{source}</ansi> analyzes your stance with still, terrible focus.'
       toroom:
         beginner:
@@ -103,7 +103,7 @@ options:
       toattacker:
         beginner:
         - 'You spring at <ansi fg="{targettype}">{target}</ansi> but they sidestep your pounce!'
-        - 'Your leap carries you past <ansi fg="{targettype}">{target}</ansi> — they step aside!'
+        - 'Your leap carries you past <ansi fg="{targettype}">{target}</ansi>, and they step aside!'
         - 'You launch at <ansi fg="{targettype}">{target}</ansi> but miss entirely!'
         - 'Your pounce falls short as <ansi fg="{targettype}">{target}</ansi> retreats!'
         expert:
@@ -212,7 +212,7 @@ options:
         - 'Launching from your coiled stance, you drive into <ansi fg="{targettype}">{target}</ansi>''s guard!'
         - 'You pivot and spring decisively, {momentum}!'
         - 'Feinting {position}, you burst forward in a driving leap!'
-        - 'You draw their defense {momentum} and explode into <ansi fg="{targettype}">{target}</ansi>!'
+        - 'You draw their defense while {momentum} and explode into <ansi fg="{targettype}">{target}</ansi>!'
         - 'Reading their stance, you pounce with practiced, beast-like precision!'
         master:
         - 'You press your advantage with a surging leap while {momentum}!'
@@ -273,7 +273,7 @@ options:
         - 'You pounce with overwhelming, bestial fury!'
         expert:
         - 'You spring and drive your full weight into <ansi fg="{targettype}">{target}</ansi> from your {stance} position!'
-        - 'Pivoting hard, you slam your body into <ansi fg="{targettype}">{target}</ansi> with {momentum}!'
+        - 'Pivoting hard, you slam your body into <ansi fg="{targettype}">{target}</ansi> while {momentum}!'
         - 'You advance with thunderous force and crash into them!'
         - 'Feinting a retreat, you surge forward with a devastating leap!'
         - 'You draw their guard and drive your weight in with punishing force!'
@@ -339,20 +339,20 @@ options:
         - 'You land a <ansi fg="cyan-bold">DEVASTATING POUNCE</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
         expert:
         - 'You spring and your body <ansi fg="cyan-bold">SLAMS</ansi> <ansi fg="{targettype}">{target}</ansi> with perfect force!'
-        - 'Lunging {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT POUNCE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
+        - 'Lunging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT POUNCE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
         - 'You flow like a striking beast and <ansi fg="cyan-bold">CRASH INTO</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely — you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} crouch!'
+        - 'Your masterful feint opens <ansi fg="{targettype}">{target}</ansi> completely and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} crouch!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS POUNCE</ansi> through <ansi fg="{targettype}">{target}</ansi>''s guard!'
         master:
-        - 'Your tactical spring creates the perfect opening — you <ansi fg="cyan-bold">SLAM</ansi> <ansi fg="{targettype}">{target}</ansi> with apex fury!'
+        - 'Your tactical spring creates the perfect opening and you <ansi fg="cyan-bold">SLAM</ansi> <ansi fg="{targettype}">{target}</ansi> with apex fury!'
         - 'Your {stance} burst culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> pounce!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING POUNCE</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">DRIVE INTO</ansi> <ansi fg="{targettype}">{target}</ansi> with masterful, brutal force!'
-        - 'Your positioning is flawless — your body <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>''s stance!'
+        - 'Your positioning is flawless, and your body <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{targettype}">{target}</ansi>''s stance!'
         - 'Your unstoppable leap culminates in a <ansi fg="cyan-bold">CRITICAL SLAM</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">CRASH THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi> with devastating force!'
-        - 'The tide of battle favors you — your pounce <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'The tide of battle favors you, and your pounce <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s pounce <ansi fg="cyan-bold">CRITICALLY HITS</ansi> you!'
@@ -363,16 +363,16 @@ options:
         - '<ansi fg="{sourcetype}">{source}</ansi> springs and their body <ansi fg="cyan-bold">SLAMS</ansi> into you!'
         - '<ansi fg="{sourcetype}">{source}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT POUNCE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> flows like a striking beast and <ansi fg="cyan-bold">CRASHES INTO</ansi> you!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens you completely — you are <ansi fg="cyan-bold">ANNIHILATED</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens you completely and you are <ansi fg="cyan-bold">ANNIHILATED</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS POUNCE</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical spring creates the opening — you are <ansi fg="cyan-bold">SLAMMED</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical spring creates the opening and you are <ansi fg="cyan-bold">SLAMMED</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING POUNCE</ansi> from the perfect angle!'
         - '<ansi fg="{sourcetype}">{source}</ansi> exploits total advantage and <ansi fg="cyan-bold">DRIVES INTO</ansi> you with brutality!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless — you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s unstoppable leap ends in a <ansi fg="cyan-bold">CRITICAL SLAM</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">CRASHES THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi> — their pounce <ansi fg="cyan-bold">DECIMATES</ansi> you!'
+        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi>, and their pounce <ansi fg="cyan-bold">DECIMATES</ansi> you!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s pounce <ansi fg="cyan-bold">CRITICALLY HITS</ansi> <ansi fg="{targettype}">{target}</ansi>!'
@@ -382,16 +382,16 @@ options:
         - '<ansi fg="{sourcetype}">{source}</ansi> springs and their body <ansi fg="cyan-bold">SLAMS</ansi> <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT POUNCE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> flows like a beast and <ansi fg="cyan-bold">CRASHES INTO</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens <ansi fg="{targettype}">{target}</ansi> — <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful feint opens <ansi fg="{targettype}">{target}</ansi>: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         master:
         - '<ansi fg="{sourcetype}">{source}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS POUNCE</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical spring creates the opening — <ansi fg="cyan-bold">DEVASTATION</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical spring creates the opening: <ansi fg="cyan-bold">DEVASTATION</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING POUNCE</ansi> from the perfect angle!'
         - '<ansi fg="{sourcetype}">{source}</ansi> exploits total advantage and <ansi fg="cyan-bold">DRIVES INTO</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless — <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s leap culminates in a <ansi fg="cyan-bold">CRITICAL SLAM</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> channels all momentum and <ansi fg="cyan-bold">CRASHES THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi> — their pounce <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
+        - 'The tide favors <ansi fg="{sourcetype}">{source}</ansi>, and their pounce <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
   fumble:
     # messages for when they are in the same room
     together:
@@ -402,13 +402,13 @@ options:
         - 'Your spring <ansi fg="red-bold">FUMBLES</ansi> badly, leaving you wide open!'
         - 'You lose your footing and your pounce <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
-        - 'Your tactical pounce fails catastrophically — you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical pounce fails catastrophically and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> the leap!'
         - 'Your feint backfires and you <ansi fg="red-bold">FUMBLE</ansi> the spring badly!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s unexpected sidestep forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Your masterful pounce is disrupted — you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
+        - 'Your masterful pounce is disrupted and you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
       todefender:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s leap <ansi fg="red-bold">FUMBLES</ansi> as they overshoot you!'
@@ -422,17 +422,17 @@ options:
         master:
         - 'Your sidestep forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the pounce!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful leap is disrupted — they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s masterful leap is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       toroom:
         beginner:
         - '<ansi fg="{sourcetype}">{source}</ansi>''s leap <ansi fg="red-bold">FUMBLES</ansi> wildly past <ansi fg="{targettype}">{target}</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their pounce at <ansi fg="{targettype}">{target}</ansi> and stumbles past!'
         - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their spring in a clumsy, lurching stumble!'
         expert:
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical approach fails — they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{sourcetype}">{source}</ansi>''s feint backfires catastrophically!'
         master:
         - '<ansi fg="{targettype}">{target}</ansi>''s sidestep forces <ansi fg="{sourcetype}">{source}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{sourcetype}">{source}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{sourcetype}">{source}</ansi>''s perfect leap is disrupted — a <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{sourcetype}">{source}</ansi>''s perfect leap is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>!'

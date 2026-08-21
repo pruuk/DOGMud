@@ -545,12 +545,49 @@ Balance:
   #   mechanism everywhere including in every Go test.
   ContestFloor: 0.125
 
+  # ── CRIT BAR (U6b) ──────────────────────────────────────────────────
+  # The crit threshold every channel tests its normalized margin against:
+  #   bar = 2.0 - CritBarSkillSlope x (attacker rank - defender rank)
+  # clamped to [CritBarFloor, CritBarCeiling]. The ranks are the CHANNEL
+  # governing skills: the attack skill vs the WINNING defence skill.
+  # Out-skill your target and the bar falls toward the floor; get
+  # out-skilled and it rises to the ceiling. The ceiling is what lets a
+  # gold-scaled, skill-poor boss still buy crits against a veteran.
+  # Raising the ceiling makes skill protect harder against boss crits;
+  # CritBarCeiling: 0 is LEGAL and means uncapped (bosses then almost
+  # never crit skilled defenders, on any channel).
+  CritBarSkillSlope: 0.05
+  CritBarFloor: 1.5
+  CritBarCeiling: 3.0
+  #
+  # CounterDamagePercent: a defensive crit earns the defender a free counter
+  # (U6b): one answering swing at this fraction of normal weapon damage.
+  # This is the same knob melee riposte has always used at its old
+  # hardcoded value. 0 is LEGAL and disables counter damage entirely.
+  CounterDamagePercent: 0.5
+
   # ── COMBAT: PRONE & GRAPPLE ───────────────────────────────────────────────
   # When a character is knocked prone, these multipliers modify combat scores.
   #
   # ProneAttackMultiplier: attack score when attacking WHILE prone.
   #   Example: attacker score 110, multiplier 0.80 → score 88.
   ProneAttackMultiplier: 0.80
+  #
+  # GrappleProneDefenderMod / GrappleProneAttackerMod: grapple-contest score
+  # multipliers when that SIDE is prone or supine. The names carry the side
+  # they modify; the shipped values are deliberately asymmetric (a downed
+  # defender is far easier to pin than a kneeling attacker is weakened) and
+  # were literals in the code before U6b.
+  GrappleProneDefenderMod: 0.3
+  GrappleProneAttackerMod: 0.5
+  #
+  # GrappleAggressorDriftBonus: whole-score multiplier on the grapple
+  # AGGRESSOR side of the per-round drift contest. The old 2.2-vs-2.0
+  # coefficient accident gave the aggressor an edge; uniform weights
+  # deleted it, and this knob restores it deliberately. 1.038 was SOLVED
+  # (tools/balance/u6b_model_counters_family_costs.py) to reproduce the
+  # old parity drift of about +0.196 steps per round at every tier.
+  GrappleAggressorDriftBonus: 1.038
   #
   # ProneDodge/Parry/BlockPenalty: fraction of defense score kept while prone.
   #   1.0 = full defense (no penalty). 0.50 = half defense. 0 = no defense.
@@ -643,9 +680,6 @@ Balance:
   # - RangedShotScale -
   #   Global multiplier on ranged shot damage (tuning knob)
   RangedShotScale: 1.0
-  # - RangedShieldDefenseBonus -
-  #   Defense bonus vs ranged shots when the defender holds a shield
-  RangedShieldDefenseBonus: 15
 
   # ── COMBAT: SPELL COSTS ───────────────────────────────────────────────────
   # Global multipliers for spell resource costs. Applied to ALL spells.
@@ -1224,9 +1258,6 @@ Balance:
   # Formula includes: SpellcastingLevel × SpellFoldsSkillFactor
   SpellFoldsSkillFactor: 25
   #
-  # Spell attack: mean for the spell's opposed hit roll.
-  # Formula includes: SpellcastingLevel × SpellAttackSkillFactor
-  SpellAttackSkillFactor: 3
   #
   # Proficiency: successful casts needed to gain 1 proficiency point
   #   with a specific spell. Higher proficiency reduces fizzle chance.

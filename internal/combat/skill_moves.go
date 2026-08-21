@@ -2,7 +2,6 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -13,7 +12,24 @@ import (
 // SkillMoveResult holds the outcome of a bash/kick/trip execution.
 // Callers use these fields to dispatch messaging and analytics.
 type SkillMoveResult struct {
-	Hit    bool
+	// Hit is the contest WIN, exactly as it has always been. Defended-partial
+	// damage lands with Hit == false; do NOT widen this to "dealt damage"
+	// (`!Defended || DamageMultiplier > 0`) — that formula would make nearly
+	// every defended outcome a "hit" and fire knockdown rolls on defended
+	// bashes (caught in adversarial review before it shipped).
+	Hit bool
+
+	// Crit is the attacker's margin-derived critical, decided ONCE inside
+	// ResolveChannelAttack against CritBarFor's pair bar (U6b). A crit
+	// bypasses mitigation via CritOrMitigatedDamage. Only ResolveChannelAttack
+	// sets it.
+	Crit bool
+
+	// Fumble is a NEW abort for these moves (U6b, Assumption 11): a fumbled
+	// swing (self-relative AttackRoll.ZScore at or under -DefenseCritBar())
+	// aborts BEFORE success — no damage, no status — even when the roll won.
+	Fumble bool
+
 	Damage int
 	// StatusApplied reports whether the maneuver's status effect landed.
 	// This stays binary -- unlike Damage, there is no "partially tripped":
@@ -23,19 +39,41 @@ type SkillMoveResult struct {
 	StatusApplied bool
 	KnockedDown   bool
 	TargetMaxHP   int
+
+	// Defence exposes the seam's full outcome — DefenceType, DefensiveCrit,
+	// normalized margin, and the committed cost — for narration and the
+	// Task 10 counter tier.
+	Defence ChannelDefenceResult
+
+	// IsCounter echoes SkillMoveParams.IsCounter so counter-tier wiring that
+	// only sees the RESULT can refuse to fire off a move that IS a counter
+	// (Task 10: a counter never earns a counter).
+	IsCounter bool
 }
 
 // SkillMoveParams configures a skill move (bash/kick/trip) execution.
 type SkillMoveParams struct {
-	Attacker             *characters.Character
-	Defender             *characters.Character
-	AttackStat           int     // stat value for attack score (e.g. Strength or Dexterity)
-	AttackSkill          int     // attacker's relevant skill level
-	DefenseStat          int     // defender's Dexterity
-	DefenseSkill         int     // defender's combat skill level
+	Attacker *characters.Character
+	Defender *characters.Character
+
+	// Channel selects the defence set (ChannelMelee for the physical moves,
+	// ChannelRanged for fire). Required — the legacy scalar-defence path was
+	// deleted in U6b Task 7; every caller sets Channel + Attack.
+	Channel AttackChannel
+
+	// Attack is the attacker's half of the contest. Callers pass the RAW
+	// skill rank; the seam applies SkillWeight (the x1 -> x5 flip lives in
+	// AttackSide.score(), not here). Attack.SkillRank is the single rank
+	// input for the score, the crit bar, AND the damage multiplier curve.
+	Attack AttackSide
+
+	// IsCounter marks a move executed AS a counter. Plumbed in U6b Task 6,
+	// consumed by Task 10: when set, the counter tier must not fire from
+	// this move (a counter must never trigger another counter).
+	IsCounter bool
+
 	DamagePercent        float64 // config knob (e.g. BashDamagePercent)
 	KnockdownChance      int     // config knob (e.g. BashKnockdownChance)
-	SkillRank            int     // for SkillMultiplier in damage calc
 	DamageStat           int     // stat for CalcRawDamage (always Strength)
 	MitigationMultiplier float64 // 1.0 = full, 0.5 = half mitigation (stomp)
 
@@ -48,8 +86,11 @@ type SkillMoveParams struct {
 }
 
 // ExecuteSkillMove performs the core combat resolution for bash/kick/trip.
-// It handles the opposed roll, damage pipeline, knockdown determination,
-// and applies HP reduction + prone status. Callers handle messaging and analytics.
+// It handles the opposed contest (via ResolveChannelAttack: equipment-gated
+// defence set, defence costing + skill-strip, defence progression, and the
+// once-per-contest attacker crit/fumble verdicts),
+// the damage pipeline, knockdown determination, and applies HP reduction +
+// prone status. Callers handle messaging and analytics.
 //
 // Reach adjustment (chunk 4c): kick/stomp/knee variants are body-driven
 // (foot/knee impacts), not weapon-driven, so they do NOT apply the reach
@@ -57,52 +98,73 @@ type SkillMoveParams struct {
 // is already calibrated for the grapple context. Grapple-entry, trip,
 // and bash are force-driven and are similarly reach-agnostic.
 func ExecuteSkillMove(p SkillMoveParams) SkillMoveResult {
-	result := SkillMoveResult{}
+	// Read the swappable contest core (production-initialised to RunContest,
+	// never repointed outside tests) rather than RunContest directly, so
+	// SetChannelAttackContestRunnerForTest reaches out-of-package callers of
+	// THIS entry point too — U6b Task 8's fire seam tests drive the real
+	// ExecuteFire path against a deterministic contest exactly the way the
+	// taunt (Task 5) and spell (Task 4) collapse tests already do for
+	// ResolveChannelAttack.
+	return executeSkillMoveWithRunner(p, channelAttackContestRunner)
+}
+
+// executeSkillMoveWithRunner is ExecuteSkillMove with an injectable contest
+// runner, so tests can force crit/fumble/defended outcomes deterministically.
+func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) SkillMoveResult {
+	result := SkillMoveResult{IsCounter: p.IsCounter}
 
 	// Get target's max HP for damage descriptions
 	result.TargetMaxHP = p.Defender.HealthMax.Value
 
-	// Opposed roll: attacker skill+stat vs defender dex+combat skill
-	attackerScore := float64(p.AttackSkill) + float64(p.AttackStat)
-	defenderScore := float64(p.DefenseSkill) + float64(p.DefenseStat)
-	res := RunContest(attackerScore, []contest.Entry{{Score: defenderScore}})
-	attackSuccess := res.Success
-
-	// Damage pipeline: CalcRawDamage → ApplyMitigation → dice.RollStat
-	rawDmg := CalcRawDamage(p.DamageStat, p.SkillRank, p.DamagePercent, ChannelPhysical)
-	targetMitig := p.Defender.GetPhysicalMitigation()
 	mitigMult := p.MitigationMultiplier
 	if mitigMult <= 0 {
 		mitigMult = 1.0
 	}
-	dmgMean := ApplyMitigation(rawDmg, targetMitig*mitigMult, MitigationCap(ChannelPhysical))
-	dmgRoll := dice.RollStat(dmgMean)
-	baseDamage := int(dmgRoll.Value)
-	if baseDamage < 1 {
-		baseDamage = 1
+	mitig := p.Defender.GetPhysicalMitigation() * mitigMult
+	cap := MitigationCap(ChannelPhysical)
+
+	// U6b Task 6: ONE contest through the channel seam. The defence is a
+	// SET (DefenceEntriesFor: a shieldless defender never rolls block),
+	// the winning defence is quoted, charged, skill-stripped when
+	// unaffordable, and progressed — the defender economy the melee path
+	// already has. The crit/fumble bonus tier fires once INSIDE the seam;
+	// nothing here derives a second verdict. (Task 7 deleted the legacy
+	// scalar-defence branch; the seam is now the only path.)
+	out := resolveChannelAttackWithRunner(p.Channel, p.Attack, p.Attacker, p.Defender, runner)
+	result.Defence = out
+	result.Crit = out.AttackerCrit
+	result.Fumble = out.AttackerFumble
+
+	// Fumble aborts BEFORE success (Assumption 11): no damage, no status,
+	// no knockdown. The defence was still charged and progressed inside
+	// the seam — the defender mounted it either way.
+	if result.Fumble {
+		return result
 	}
 
-	result.Hit = attackSuccess
+	// The contest WIN.
+	result.Hit = !out.Defended
 
-	// Defence resolution: a defence win DEFLECTS rather than erases.
-	// defenceDamageMultiplier (also used by spells and social via
-	// ResolveChannelDefence, and the same DefenceMitigation curve melee
-	// applies via normalizedDefenseMargin) scales baseDamage down: 1.0 on an
-	// attack win, 0.0 on a defensive crit, 0.0-0.5 on a rolled defensive win,
-	// exactly 0.5 on a floored save. The status effect (below) stays binary
-	// regardless.
-	damageMult := defenceDamageMultiplier(res)
-	result.Damage = int(float64(baseDamage) * damageMult)
-	if damageMult > 0 && result.Damage < 1 {
-		result.Damage = 1
+	// Damage pipeline: crit bypasses mitigation and scales by
+	// CritDamageMultiplier(RAW rank); non-crits mitigate then scale by
+	// the defence multiplier (1.0 on an attack win by construction, 0.5
+	// on a floored save, 0.0-0.5 on a rolled defensive win).
+	rawDmg := CalcRawDamage(p.DamageStat, p.Attack.SkillRank, p.DamagePercent, ChannelPhysical)
+	dmg := CritOrMitigatedDamage(rawDmg, p.Attack.SkillRank, result.Crit, mitig, cap)
+	if !result.Crit {
+		dmg = int(float64(dmg) * out.DamageMultiplier)
+		if out.DamageMultiplier > 0 && dmg < 1 {
+			dmg = 1
+		}
 	}
+	result.Damage = dmg
 
 	if result.Damage > 0 {
 		p.Defender.ApplyHarm(characters.PoolHealth, result.Damage,
 			state.ActorRef{UserId: p.Attacker.GetUserId(), MobInstanceId: p.Attacker.MobInstanceId})
 	}
 
-	if attackSuccess {
+	if result.Hit {
 		result.StatusApplied = true
 
 		// Knockdown roll — standardized to dice.RollStat(50). Control-immune

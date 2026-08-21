@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -189,65 +190,65 @@ func TestFire_Unloaded(t *testing.T) {
 // 3. Loaded + same-room mob target → Executed, unloads, Perception governs
 // ---------------------------------------------------------------------------
 
+// "Perception governs" is a property of the SCORE the seam sends to the
+// contest, so assert on that score through a deterministic runner rather than
+// on stochastic win rates. The old form looped 8 live-dice shots and asserted
+// every one hit; the self-relative fumble (~2.3% per shot, independent of any
+// stat gap) failed roughly one run in six.
 func TestFire_SameRoomMob_PerceptionGoverns(t *testing.T) {
-	pinContestFloorOff(t)
+	// Fresh defender — ExecuteSkillMove mutates HP.
+	_, cleanup := seedFireMobInRoom(t, 1, 1)
+	defer cleanup()
 
-	const runs = 8
-	for i := 0; i < runs; i++ {
-		// Fresh defender each run — ExecuteSkillMove mutates HP.
-		_, cleanup := seedFireMobInRoom(t, 1, 1)
+	// Intercept the ONE contest: capture the attack score and hand back a
+	// deterministic ordinary attack win (normalized margin 0.5 — no crit at
+	// any bar, no fumble, no floor in play).
+	calls := 0
+	var gotAtkScore float64
+	restore := combat.SetChannelAttackContestRunnerForTest(func(atkScore float64, entries []contest.Entry) contest.Result {
+		calls++
+		gotAtkScore = atkScore
+		return tauntDeterministicRunner(t, 0.5, 0.5, -0.5)(atkScore, entries)
+	})
+	defer restore()
 
-		char := fireAttacker()
-		char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
-		actor := newStubActor(char, rooms.LoadRoom(1))
+	char := fireAttacker()
+	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
+	actor := newStubActor(char, rooms.LoadRoom(1))
 
-		res := ExecuteFire(actor, "skeleton")
+	res := ExecuteFire(actor, "skeleton")
 
-		require.True(t, res.Executed, "run %d: expected Executed", i)
-		assert.True(t, res.IsTargetMob, "run %d: target should be a mob", i)
-		assert.Equal(t, 500, res.TargetMobInstanceId, "run %d", i)
-		assert.False(t, res.CrossRoom, "run %d: same-room shot", i)
-		// Writeback: the equipment slot itself is now unloaded.
-		assert.False(t, char.Equipment.Weapon.Loaded,
-			"run %d: weapon must be unloaded after firing", i)
+	require.True(t, res.Executed, "expected Executed")
+	assert.True(t, res.IsTargetMob, "target should be a mob")
+	assert.Equal(t, 500, res.TargetMobInstanceId)
+	assert.False(t, res.CrossRoom, "same-room shot")
+	// Writeback: the equipment slot itself is now unloaded.
+	assert.False(t, char.Equipment.Weapon.Loaded,
+		"weapon must be unloaded after firing")
 
-		// Perception 300 attacker vs Dex 1 defender → always a hit.
-		assert.True(t, res.MoveResult.Hit, "run %d: Perception attacker should always hit", i)
-		// Damage drove off Perception (300), not the Strength floor (1).
-		assert.Greater(t, res.MoveResult.Damage, 1,
-			"run %d: damage should reflect Perception, not collapse to the Str floor", i)
+	// THE assertion: the score the seam contested is Perception (300) + ranged
+	// rank × SkillWeight, times the shared situational layer (Task 17 — the
+	// shot's own stamina admission leaves the shooter fractionally below full),
+	// and NOT a score built on the Strength floor (1).
+	require.Equal(t, 1, calls, "ExecuteFire must run exactly ONE contest")
+	cfg := configs.GetBalanceConfig()
+	wantAtk := (float64(char.GetEffectivePerception()) +
+		float64(char.GetSkillLevel(skills.RangedCombat))*float64(cfg.SkillWeight)) *
+		combat.SituationalAttackMult(char, combat.ChannelRanged)
+	require.InDelta(t, wantAtk, gotAtkScore, 1e-9,
+		"the contested attack score must be governed by Perception")
 
-		cleanup()
-	}
+	// The deterministic win landed, and damage drove off Perception (mean ~90
+	// at these knobs), not the Strength floor: P(roll ≤ 1) is ~1e-11.
+	assert.True(t, res.MoveResult.Hit, "the deterministic attack win must land")
+	assert.Greater(t, res.MoveResult.Damage, 1,
+		"damage should reflect Perception, not collapse to the Str floor")
 }
 
-// ---------------------------------------------------------------------------
-// 4. rangedDefenseScore: shield adds exactly RangedShieldDefenseBonus
-// ---------------------------------------------------------------------------
-
-func TestRangedDefenseScore_ShieldBonus(t *testing.T) {
-	base := characters.New()
-	base.Stats.Dexterity.ValueAdj = 50
-
-	withShield := characters.New()
-	withShield.Stats.Dexterity.ValueAdj = 50
-	withShield.Equipment.Offhand = items.Item{
-		ItemId: 99,
-		Spec: &items.ItemSpec{
-			ItemId:      99,
-			Name:        "buckler",
-			Type:        items.Offhand,
-			BlockRating: 10,
-		},
-	}
-
-	baseScore := rangedDefenseScore(base)
-	shieldScore := rangedDefenseScore(withShield)
-
-	bonus := float64(configs.GetBalanceConfig().RangedShieldDefenseBonus)
-	assert.Equal(t, baseScore+bonus, shieldScore,
-		"a shield should add exactly RangedShieldDefenseBonus to the ranged defense score")
-}
+// (Section 4 retired by U6b Task 8: it pinned the deleted folded defence
+// scalar's flat shield bonus. Its replacement contract — a shield contributes
+// a real block CONTEST entry and no flat addend anywhere in the score path —
+// is pinned by combat_fire_seam_test.go.)
 
 // ---------------------------------------------------------------------------
 // 5. Cross-room: loaded + valid exit + adjacent-room target → CrossRoom

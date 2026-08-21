@@ -13,7 +13,7 @@ type GrappleMoveResult struct {
 	PositionDesc   string             // "clinched" or "grounded"
 	DisarmResult   *DisarmResult      // nil if no disarm triggered
 	CritFailure    *CritFailureResult // nil if no crit failure
-	DefensePenalty bool               // true if z < 0.5 failure penalty applied
+	DefensePenalty bool               // true if the weak-failure penalty applied (normalized margin < 0.5)
 }
 
 // ExecuteGrappleMove performs the full grapple command resolution:
@@ -37,8 +37,11 @@ func ExecuteGrappleMove(attacker, defender *characters.Character,
 			result.PositionDesc = "grounded"
 		}
 
-		// Check for grapple crit disarm (z > 2.0 in any grapple position)
-		if result.AttackZScore > 2.0 {
+		// Grapple crit disarm — U6b Task 13: keyed on the margin-derived
+		// Crit (normalized margin >= CritBarFor over the unarmed pair),
+		// replacing the Stage 8.4 self-relative z > 2.0, which was
+		// opponent-blind.
+		if result.Crit {
 
 			disarm := AttemptCritDisarm(attacker, defender, 15.0)
 			if disarm.Success {
@@ -46,13 +49,17 @@ func ExecuteGrappleMove(attacker, defender *characters.Character,
 			}
 		}
 	} else {
-		// Simple failure (z < 0.5): Defense penalty
-		if result.AttackZScore < 0.5 {
+		// Weak failure: same 0.5 line, now on the normalized MARGIN
+		// (U6b Task 13) — a decisively lost contest always lands under it,
+		// where the old self-relative z hit only its own wobble (~69%).
+		if result.NormalizedMargin < 0.5 {
 			attacker.AddCondition(characters.ConditionDefensePenalty, 1, 0.85, "failed grapple")
 			result.DefensePenalty = true
 		}
 
-		// Critical failure (z < -2.0): Fall prone + reversal opportunity
+		// Critical failure (z < -2.0): self-relative ON PURPOSE — a fumble
+		// is the attacker's own blunder, not a contested outcome, so this
+		// band survives the U6b margin conversion unchanged.
 		if result.AttackZScore < -2.0 {
 			critResult := HandleGrappleCritFailure(attacker, defender)
 			result.CritFailure = &critResult

@@ -99,9 +99,8 @@ func TestBalance_RangedDefaults(t *testing.T) {
 	if b.RangedShotScale != 1.0 {
 		t.Errorf("RangedShotScale default = %v, want 1.0", float64(b.RangedShotScale))
 	}
-	if b.RangedShieldDefenseBonus != 15 {
-		t.Errorf("RangedShieldDefenseBonus default = %d, want 15", int(b.RangedShieldDefenseBonus))
-	}
+	// The flat ranged shield-bonus knob was deleted by U6b Task 8: a shield
+	// now enters the ranged contest as a real block entry, not a score addend.
 }
 
 func TestBalance_ActionCostBaseDefaultsRejectMissingAndInvalidValues(t *testing.T) {

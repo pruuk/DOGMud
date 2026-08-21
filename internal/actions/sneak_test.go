@@ -273,7 +273,11 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		consumeCooldown := task6OnlyCall(t, fset, fn, "user.Character.TryCooldown", true)
 		useBackpack := task6OnlyCall(t, fset, fn, "user.Character.UseItem(matchItem)", false)
 		useBandolier := task6OnlyCall(t, fset, fn, "user.Character.UseItemFromPotions(matchItem)", false)
-		contests := exactCallPositions(t, fset, fn.Body, "combat.RunContest", true)
+		// U6b Task 15: throw resolves per-target through the channel seam
+		// (combat.ResolveChannelAttack), not a hand-rolled combat.RunContest.
+		// The ordering contract this test guards is unchanged: no contest
+		// may run before the cooldown is consumed.
+		contests := exactCallPositions(t, fset, fn.Body, "combat.ResolveChannelAttack", true)
 		progression := task6OnlyCall(t, fset, fn, "user.Character.OnSkillUse", true)
 
 		require.Less(t, int(item), int(admit))

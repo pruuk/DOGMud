@@ -260,34 +260,48 @@ func TestRallyWarcryPaidBuffsChargeOnceBeforeEffects(t *testing.T) {
 	}
 }
 
-func TestTauntAffordableMissPaysOnceAndConsumesNoisyAction(t *testing.T) {
+// This test used to demand an ordinary paid MISS. The U6b Task 5 collapse
+// deleted the miss outcome with the gate: a taunt the defender out-rolls is
+// now a DEFENDED taunt (Hit=true, Defence.Defended=true, partial damage),
+// exactly like a defended spell cast. What the test actually pinned — a paid,
+// noisy, cooldown-consuming attempt that does not land cleanly still pays
+// exactly once, reveals the actor, and fires exactly one skill use — survives
+// on the defended outcome, so it is re-pinned there. The hopeless attacker
+// (Cha 1 vs Willpower 1,000,000) makes the defence win a decisive defensive
+// crit, so the target's conviction moves ONLY by the admitted defy cost.
+func TestTauntAffordableDefendedPaysOnceAndConsumesNoisyAction(t *testing.T) {
 	pinTauntContestKnobs(t)
 
-	// Retried rather than seeded. rand.Seed has been a no-op since Go 1.20
-	// unless GODEBUG=randseednop=0 is set, which this file does not set, so
-	// each iteration was already an independent draw -- which is what makes
-	// retrying until a miss work in the first place.
+	// Retried rather than seeded, to skip the ~2.3% self-relative fumbles.
+	// rand.Seed has been a no-op since Go 1.20 unless GODEBUG=randseednop=0 is
+	// set, which this file does not set, so each iteration is an independent
+	// draw -- which is what makes retrying until a non-fumble work.
 	for attempt := 0; attempt < 20; attempt++ {
 		actor, char, target := newRhetoricActor(t, false, 10, 0)
 		hideRhetoricActor(t, char)
 		startTargetConviction := target.Conviction
 		result := ExecuteTaunt(actor)
-		if result.Fumble || result.Hit {
+		if result.Fumble {
 			continue
 		}
 
 		require.True(t, result.Executed)
+		require.True(t, result.Hit, "a non-fumble taunt is always delivered since the collapse")
+		require.True(t, result.Defence.Defended, "a Cha-1 taunter cannot out-roll a Willpower-1e6 defy")
+		require.True(t, result.Defence.DefensiveCrit, "the hopeless gap makes every defy win decisive")
+		require.Zero(t, result.Damage, "a defensive crit fully negates")
 		require.Equal(t, characters.CostPaid, result.Cost.Status)
 		require.Equal(t, 4, result.Cost.Charged)
 		require.Equal(t, 6, char.Conviction)
-		require.Equal(t, startTargetConviction, target.Conviction)
+		require.Equal(t, startTargetConviction-result.Defence.Cost.Charged, target.Conviction,
+			"only the admitted defy cost may move the defender's conviction")
 		require.Equal(t, awareness.Visible, char.Awareness.State())
 		require.Greater(t, char.Cooldowns["special-move"], 0)
 		require.Equal(t, 1, char.Aggro.RoundsWaiting)
 		require.Equal(t, []string{string(skills.Rhetoric)}, actor.skillsUsed)
 		return
 	}
-	t.Fatal("twenty overwhelming taunts produced no ordinary paid miss")
+	t.Fatal("twenty hopeless taunts all fumbled; the retry loop is broken")
 }
 
 func TestTauntRefusalDoesNotCommitStagedAggression(t *testing.T) {

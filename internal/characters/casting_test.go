@@ -70,20 +70,8 @@ func TestCalcConcentrationChance(t *testing.T) {
 	}
 }
 
-func TestCalcSpellAttack(t *testing.T) {
-	tests := []struct {
-		will, skill int
-		expected    float64
-	}{
-		// willpower + weightedSkill*3, SkillWeight=2.0
-		{100, 0, 100.0},
-		{100, 5, 130.0},  // 100 + 10*3 = 130
-		{150, 10, 210.0}, // 150 + 20*3 = 210
-		{0, 0, 0.0},
-	}
-	for _, tt := range tests {
-		if got := CalcSpellAttack(tt.will, tt.skill); got != tt.expected {
-			t.Errorf("CalcSpellAttack(%d,%d)=%v want %v", tt.will, tt.skill, got, tt.expected)
-		}
-	}
-}
+// The spell-attack score test was deleted with its helper (U6b Task 4). It
+// pinned the x15-per-rank spell hit-gate score (weighted skill x the deleted
+// skill-factor knob) — pinning the defect the collapse removes. The caster's
+// contest side is now combat.AttackSide (stat + rank x SkillWeight), pinned
+// by TestAttackSide_Score in internal/combat.

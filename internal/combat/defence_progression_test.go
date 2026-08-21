@@ -8,7 +8,7 @@ import (
 )
 
 // newDefenceTestCharacter builds a bare, safely-initialised character for
-// resolveChannelDefenceWithRunner tests. characters.New() is already the
+// resolveChannelAttackWithRunner tests. characters.New() is already the
 // pattern this package's other defence tests use (see defenceFixture in
 // defense_affordability_test.go) -- it fully initialises the maps
 // (SkillUseCount, StatUseCount, Cooldowns, MiscData, ...) that
@@ -36,7 +36,7 @@ func TestChannelDefence_FlooredAwardsNoBonus(t *testing.T) {
 	}
 
 	before := defender.GetSkillUseCount("unarmed-combat")
-	resolveChannelDefenceWithRunner(ChannelMelee, attacker, defender, runner)
+	resolveChannelAttackWithRunner(ChannelMelee, channelSideForSignTest(ChannelMelee, attacker), attacker, defender, runner)
 
 	if got := defender.GetSkillUseCount("unarmed-combat") - before; got != 1 {
 		t.Errorf("floored defence awarded %d ordinary events, want 1", got)

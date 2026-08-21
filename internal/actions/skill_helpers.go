@@ -26,11 +26,12 @@ import (
 // against different observers in the same room (e.g., NightVision
 // observers see the room as lit; non-NightVision observers do not).
 func CalcSneakScore(c *characters.Character, effectiveLit bool) float64 {
+	cfg := configs.GetBalanceConfig()
+
 	base := float64(c.Stats.Dexterity.ValueAdj) +
-		combat.SkillMultiplier(c.GetSkillLevel(skills.Skullduggery))*25.0 +
+		float64(c.GetSkillLevel(skills.Skullduggery))*float64(cfg.SkillWeight) +
 		mutations.GetStealthBonus(c.Mutations)
 
-	cfg := configs.GetBalanceConfig()
 	emits := c.HasFlagFromAnySource(buffs.EmitsLight)
 
 	switch {
@@ -55,9 +56,34 @@ func CalcSneakScoreVsObserver(sneaker, observer *characters.Character, room *roo
 	return CalcSneakScore(sneaker, effectiveLit)
 }
 
+// CalcDetectionScore is the observer-side score for OPPOSED detection
+// contests (spotting a sneaker, sensing a shadower, noticing a pickpocket).
+// Linear regime, matching the unified contest formula:
+// Perception + rank(search)*SkillWeight.
+//
+// Task 16 (U6b) split the old CalcSearchScore consumers two ways: every
+// opposed contest site moved here; the non-contest / flat-threshold sites
+// stayed on CalcSearchScore (see below).
+func CalcDetectionScore(c *characters.Character) float64 {
+	return float64(c.Stats.Perception.ValueAdj) +
+		float64(c.GetSkillLevel(skills.Search))*
+			float64(configs.GetBalanceConfig().SkillWeight)
+}
+
 // CalcSearchScore returns the observation score for a character detecting
 // hidden things. Higher values mean better detection ability.
 // Formula: Perception + SkillMultiplier(search)*25.
+//
+// DELIBERATELY UNCONVERTED (spec §3.2 Category B — "U6b does not silently
+// absorb them"). Its remaining consumers are NOT opposed contests and their
+// output rates must not move:
+//   - forage.go (foragedSearchScore): forage YIELD, not even a contest
+//   - search.go (Search): flat difficulty thresholds tuned x6 against this shape
+//   - track.go: static difficulty roll
+//
+// Opposed detection sites use CalcDetectionScore instead. A regression test
+// (TestCalcSearchScore_RegressionFrozen) pins this function's output
+// byte-identical to the sqrt-curve values.
 func CalcSearchScore(c *characters.Character) float64 {
 	return float64(c.Stats.Perception.ValueAdj) +
 		combat.SkillMultiplier(c.GetSkillLevel(skills.Search))*25.0

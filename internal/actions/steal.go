@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
@@ -48,6 +49,29 @@ type StealResult struct {
 	DefenderName  string // who/what was robbed
 	OnCooldown    bool   // attempt was blocked by skullduggery cooldown
 	Reason        string // when Succeeded==false and !OnCooldown, why
+}
+
+// stealVictimScore is the defender's half of every theft/plant contest:
+// Perception + skullduggery x SkillWeight. Before U6b Task 15 this was raw
+// Perception -- the defender's skill entered the contest at x0.
+//
+// The counter-craft is SKULLDUGGERY, and that is a deliberate, documented
+// choice: noticing fingers in your pocket (or a hand slipping something into
+// a chest you are standing next to) is craft knowledge -- a practiced thief
+// recognises the technique being worked on them. Search is the ACTIVE
+// looking skill and already answers the sneak/hidden-detection family via
+// CalcDetectionScore (Task 16); routing theft defence through search would
+// double-book that skill and leave the thief's own craft worthless on
+// defence.
+//
+// There is deliberately NO crit tier anywhere in steal/plant: the outcomes
+// are caught/unseen, not damage, so a margin-scaled multiplier has nothing
+// to scale (spec section 4.5: a documented reason where a defence set is not
+// meaningful).
+func stealVictimScore(c *characters.Character) float64 {
+	return float64(c.Stats.Perception.ValueAdj) +
+		float64(c.GetSkillLevel(skills.Skullduggery))*
+			float64(configs.GetBalanceConfig().SkillWeight)
 }
 
 // Steal runs a skullduggery theft attempt from actor against the
@@ -94,11 +118,14 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 
 	isHidden := char.IsHidden()
 
-	// Compute attacker score.
+	// Compute attacker score. U6b Task 15: linear rank x SkillWeight, the
+	// same shape as every other contest in the game. The old regime was
+	// (Dex + sqrt-curve x25) times a steal-specific global balance knob;
+	// both the sqrt term and the knob (deleted from the balance config)
+	// die here.
 	rank := char.GetSkillLevel(skills.Skullduggery)
-	base := float64(char.Stats.Dexterity.ValueAdj) +
-		combat.SkillMultiplier(rank)*25.0
-	attackerScore := base * float64(cfg.StealSkillMultiplier)
+	attackerScore := float64(char.Stats.Dexterity.ValueAdj) +
+		float64(rank)*float64(cfg.SkillWeight)
 	if isHidden {
 		attackerScore += float64(cfg.StealHiddenBonus)
 	}
@@ -168,7 +195,7 @@ func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
 		}
 	}
 
-	defenderScore := float64(m.Character.Stats.Perception.ValueAdj)
+	defenderScore := stealVictimScore(&m.Character)
 	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
 
 	room := actor.GetRoom()
@@ -346,7 +373,7 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 	// Skill-use and progression.
 	actor.OnSkillUse(string(skills.Skullduggery))
 
-	defenderScore := float64(targetUser.Character.Stats.Perception.ValueAdj)
+	defenderScore := stealVictimScore(targetUser.Character)
 	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
 
 	if !success {
@@ -399,7 +426,7 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 
 	// Independent detection roll: victim may notice even on success.
 	if !actor.IsPlayer() {
-		searchScore := CalcSearchScore(targetUser.Character)
+		searchScore := CalcDetectionScore(targetUser.Character)
 		sneakScore := CalcSneakScoreVsObserver(actor.GetCharacter(), targetUser.Character, actor.GetRoom())
 		detected := combat.RunContest(searchScore, []contest.Entry{{Score: sneakScore}}).Success
 		if detected {
@@ -456,7 +483,12 @@ func stealFromContainer(actor Actor, containerName string,
 		}
 	}
 
-	// Find highest Perception observer (players + mobs, excluding party).
+	// Find the best observer (players + mobs, excluding party). U6b Task 15:
+	// this is the FOURTH steal contest, and it was scored on raw
+	// highest-observer Perception -- the same x0-skill defender class as the
+	// victim contests above. Observers now score stealVictimScore
+	// (Perception + skullduggery x SkillWeight): spotting a theft in
+	// progress is the same counter-craft as noticing one worked on you.
 	partySet := map[int]bool{}
 	if uid := actor.GetUserId(); uid > 0 {
 		partySet[uid] = true
@@ -468,7 +500,7 @@ func stealFromContainer(actor Actor, containerName string,
 	}
 	selfMobId := actor.GetMobInstanceId()
 
-	highestPerception := 0.0
+	highestObserverScore := 0.0
 	spotterName := ""
 	hasObserver := false
 
@@ -480,9 +512,9 @@ func stealFromContainer(actor Actor, containerName string,
 		if observer == nil {
 			continue
 		}
-		perScore := float64(observer.Character.Stats.Perception.ValueAdj)
-		if perScore > highestPerception {
-			highestPerception = perScore
+		obsScore := stealVictimScore(observer.Character)
+		if obsScore > highestObserverScore {
+			highestObserverScore = obsScore
 			spotterName = observer.Character.Name
 			hasObserver = true
 		}
@@ -496,9 +528,9 @@ func stealFromContainer(actor Actor, containerName string,
 		if m == nil {
 			continue
 		}
-		perScore := float64(m.Character.Stats.Perception.ValueAdj)
-		if perScore > highestPerception {
-			highestPerception = perScore
+		obsScore := stealVictimScore(&m.Character)
+		if obsScore > highestObserverScore {
+			highestObserverScore = obsScore
 			spotterName = m.Character.Name
 			hasObserver = true
 		}
@@ -506,7 +538,7 @@ func stealFromContainer(actor Actor, containerName string,
 
 	success := true
 	if hasObserver {
-		success = combat.RunContest(attackerScore, []contest.Entry{{Score: highestPerception}}).Success
+		success = combat.RunContest(attackerScore, []contest.Entry{{Score: highestObserverScore}}).Success
 	}
 
 	if !success {

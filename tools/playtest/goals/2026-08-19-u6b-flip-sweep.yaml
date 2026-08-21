@@ -1,0 +1,73 @@
+# U6b "finish the flip" adversarial sweep. This branch changed how EVERY
+# attack in the game resolves: one contest seam for melee, ranged, spell,
+# taunt, special moves, throw, grapple, and flee. Defence skill now counts
+# against everything, special moves and shots can crit, and a decisive
+# defence answers back with a counter (melee counter, or a counter-taunt
+# when someone shrugs off your mockery). All of that ships with brand new
+# defence and counter narration. Your mandate: fight on every channel,
+# read every line as a confused human would, and report bluntly.
+#
+# START ROOM 5227 IS "THE DRILL YARD" with a TRAINING DUMMY that does not
+# wander, hide, or flee. Use it for repeatable swings. For channels that
+# need a fighting opponent (counters only fire when the DEFENDER wins
+# decisively, and the dummy may never attack you), pick a weak live mob
+# nearby; 462 (Thornwall City) is the known-good fallback hub.
+#
+# NO RAW NUMBERS may appear in combat or spell text outside the `status`
+# sheet. Quote any you find. Em dashes and en dashes are banned in player
+# copy; quote any you see. Rendered lines must fit 80 columns.
+
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Melee sweep: attack the training dummy and watch at least fifteen
+    rounds. Every defended swing must narrate WHICH defence stopped it
+    (dodge, parry, or block) in a triad that reads naturally. Crits and
+    fumbles must be narrated. Nothing may print twice, out of order, or
+    with a raw number.
+  - >-
+    Special moves: use bash, kick, and trip repeatedly. Each must be
+    dodgeable, parryable, or blockable with proper narration, and each
+    must be ABLE to crit (watch for a critical special landing across
+    many attempts). The move's own outcome line must print BEFORE any
+    counter narration, never after.
+  - >-
+    Spell channel: cast sparks and conviction-spike at a target several
+    times. A defended cast must narrate quell (the working being put
+    down), not silence. A spell crit must be possible. If the defender
+    decisively quells a cast, a counter may follow and its text must
+    read as putting the working down and stepping in, not as a generic
+    riposte pasted under a spell.
+  - >-
+    Taunt channel: taunt a mob repeatedly. Defended taunts must narrate
+    defy. If your taunt is decisively defied, the answer is a
+    counter-taunt: the mob turns your words back. Confirm the exchange
+    reads as words, not swings.
+  - >-
+    Ranged: buy or find any ranged weapon (you carry gold), then shoot a
+    target in your room and from an ADJACENT room. Same-room shots can
+    be defended and countered; a shot from the next room must NOT be
+    counterable (staying out of reach is the point). Confirm both.
+  - >-
+    Grapple and flee: grapple a weak mob, then break away; separately,
+    start a fight and flee from it. Both must resolve and narrate
+    sanely under the new contest rules.
+  - >-
+    Throw: throw an item at a target (a flask, a stone, anything you
+    can throw). Confirm it resolves, can be defended with narration,
+    and does not error.
+  - >-
+    Being attacked: let a weak mob swing at you for several rounds with
+    your three defences available. Confirm your OWN defence narration
+    reads well from the defender's seat, and if you defend decisively,
+    your character's counter fires and narrates after the attacker's
+    move text.
+  - >-
+    General adversarial pass: anything else that reads wrong, renders
+    oddly, prints raw numbers, shows tokens like {attack} unreplaced,
+    or contradicts help text is a finding. Read every line.

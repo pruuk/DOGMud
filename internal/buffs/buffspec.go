@@ -57,8 +57,6 @@ const (
 	// Useful flags
 	Hidden         Flag = `hidden`
 	Sleeping       Flag = `sleeping` // chunk 3.3: bearer is asleep
-	Accuracy       Flag = `accuracy`
-	Blink          Flag = `blink`
 	EmitsLight     Flag = `lightsource`
 	SuperHearing   Flag = `superhearing`
 	NightVision    Flag = `nightvision`

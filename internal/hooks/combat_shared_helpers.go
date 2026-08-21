@@ -237,11 +237,19 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 	cfg := configs.GetBalanceConfig()
 
 	// ── Parry crit → riposte: free counter-swing ────────────────────────
-	if roundResult.ParryCritDetected {
+	// U6b Task 10: the damage fraction is the CounterDamagePercent knob (the
+	// same knob pricing the cross-channel counter tier; shipped 0.5, exactly
+	// the old literal). 0 is the documented off-switch and must be handled
+	// HERE: CalcRawDamage treats itemMult <= 0 as "unset" and substitutes
+	// 0.30, which would turn the off-switch into a 30%-damage riposte. The
+	// riposte otherwise keeps its historical uncontested maths — melee
+	// behaviour is unchanged at the shipped value.
+	counterPct := float64(cfg.CounterDamagePercent)
+	if roundResult.ParryCritDetected && counterPct > 0 {
 		raw := combat.CalcRawDamage(
 			defender.Stats.Strength.ValueAdj,
 			defender.GetCombatSkillLevel(),
-			0.5, // riposte hits at half weapon damage
+			counterPct,
 			combat.ChannelPhysical,
 		)
 		dmgMean := combat.ApplyMitigation(raw, attacker.GetPhysicalMitigation(),
@@ -271,16 +279,24 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 
 	// ── Dodge crit → auto-trip (ignores cooldown) ───────────────────────
 	if roundResult.DodgeCritDetected {
+		// U6b Task 7: through the channel seam. IsCounter marks this as a
+		// move executed AS a counter — consumed by Task 10 (a counter must
+		// never trigger another counter); behaviour-neutral until then.
 		tripResult := combat.ExecuteSkillMove(combat.SkillMoveParams{
-			Attacker:        defender,
-			Defender:        attacker,
-			AttackStat:      defender.GetEffectiveDexterity(),
-			AttackSkill:     defender.GetSkillLevel(skills.UnarmedCombat),
-			DefenseStat:     attacker.GetEffectiveDexterity(),
-			DefenseSkill:    attacker.GetCombatSkillLevel(),
+			Attacker: defender,
+			Defender: attacker,
+			Channel:  combat.ChannelMelee,
+			Attack: combat.AttackSide{
+				Stat: defender.GetEffectiveDexterity(), StatName: "dexterity",
+				Skill: skills.UnarmedCombat, SkillRank: defender.GetSkillLevel(skills.UnarmedCombat),
+				// Task 17: the countering character pays their own prone /
+				// stamina-depletion accuracy terms. No ForceCrit: the counter
+				// target just swung, so they cannot be sleeping.
+				Mult: combat.SituationalAttackMult(defender, combat.ChannelMelee),
+			},
+			IsCounter:       true,
 			DamagePercent:   float64(cfg.TripDamagePercent),
 			KnockdownChance: int(cfg.TripKnockdownChance),
-			SkillRank:       defender.GetSkillLevel(skills.UnarmedCombat),
 			DamageStat:      defender.GetEffectiveDexterity(),
 		})
 		result.AutoTrip = true
@@ -322,16 +338,24 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 
 	// ── Block crit → auto-bash (ignores cooldown) ───────────────────────
 	if roundResult.BlockCritDetected {
+		// U6b Task 7: through the channel seam. IsCounter marks this as a
+		// move executed AS a counter — consumed by Task 10 (a counter must
+		// never trigger another counter); behaviour-neutral until then.
 		bashResult := combat.ExecuteSkillMove(combat.SkillMoveParams{
-			Attacker:          defender,
-			Defender:          attacker,
-			AttackStat:        defender.Stats.Strength.ValueAdj,
-			AttackSkill:       defender.GetSkillLevel(skills.WeaponCombat),
-			DefenseStat:       attacker.GetEffectiveDexterity(),
-			DefenseSkill:      attacker.GetCombatSkillLevel(),
+			Attacker: defender,
+			Defender: attacker,
+			Channel:  combat.ChannelMelee,
+			Attack: combat.AttackSide{
+				Stat: defender.Stats.Strength.ValueAdj, StatName: "strength",
+				Skill: skills.WeaponCombat, SkillRank: defender.GetSkillLevel(skills.WeaponCombat),
+				// Task 17: the countering character pays their own prone /
+				// stamina-depletion accuracy terms. No ForceCrit: the counter
+				// target just swung, so they cannot be sleeping.
+				Mult: combat.SituationalAttackMult(defender, combat.ChannelMelee),
+			},
+			IsCounter:         true,
 			DamagePercent:     float64(cfg.BashDamagePercent),
 			KnockdownChance:   int(cfg.BashKnockdownChance),
-			SkillRank:         defender.GetSkillLevel(skills.WeaponCombat),
 			DamageStat:        defender.Stats.Strength.ValueAdj,
 			KnockdownToSupine: true, // bash sends attacker backward
 		})

@@ -100,7 +100,7 @@ func Dismiss(rest string, user *users.UserRecord,
 	if isPlayerCrafted {
 		// Mage-crafted companion dissolves peacefully — no aggro, immediate despawn.
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`You release <ansi fg="mobname">%s</ansi> — it dissolves back into the energies that shaped it.`,
+			`You release <ansi fg="mobname">%s</ansi>. It dissolves back into the energies that shaped it.`,
 			compName,
 		))
 		room.SendTextVisual(messaging.CategoryMobEmote,

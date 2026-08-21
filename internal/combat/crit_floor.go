@@ -66,7 +66,16 @@ func ApplyCritFloor(isCrit bool, floor float64) bool {
 // the defensive sign and puts the crit on the losing side. All three mistakes
 // compile and break no test but the sign guards.
 func AttackContestCrit(margin float64, roll dice.RollResult) bool {
-	return ApplyCritFloor(ContestCrit(margin, roll), AttackCritFloor())
+	return AttackContestCritAt(margin, roll, ContestCritThreshold)
+}
+
+// AttackContestCritAt is AttackContestCrit against a caller-supplied bar
+// instead of the constant threshold. The channel seam
+// (resolveChannelAttackWithRunner) passes CritBarFor's clamped skill-pair bar
+// here (U6b Task 3); AttackContestCrit's margin contract applies unchanged,
+// and the attack-side crit floor still promotes after the bar test.
+func AttackContestCritAt(margin float64, roll dice.RollResult, bar float64) bool {
+	return ApplyCritFloor(ContestCritAt(margin, roll, bar), AttackCritFloor())
 }
 
 // DefenseContestCrit is the defensive mirror, used where a defender fully
@@ -79,7 +88,7 @@ func AttackContestCrit(margin float64, roll dice.RollResult) bool {
 // that field, so it is a silent constant zero. Never pass the attack-positive
 // `Result.Margin` unnegated either. Since U6 Task 13 the ONE caller is
 // defenceDamageMultiplier (defence_multiplier.go), which does it correctly;
-// ResolveChannelDefence and ExecuteSkillMove (skill_moves.go) both reach this
+// ResolveChannelAttack and ExecuteSkillMove (skill_moves.go) both reach this
 // through that shared helper rather than calling it directly.
 // internal/combat/contest_sign_test.go is what keeps it that way.
 func DefenseContestCrit(margin float64, roll dice.RollResult) bool {

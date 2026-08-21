@@ -1,0 +1,62 @@
+# Bandit Caster (mob 285) 1-on-1 cast check. THE single owed question from
+# the U6b flip playtests: two prior runs reported her meleeing instead of
+# casting, yet every code link is verified correct (per-mob overlay declines
+# combat rounds, defensive_caster archetype casts from her spellbook,
+# mob cast resolves its target from aggro, shared 4-round cooldown shapes
+# cadence). This run exists to settle it by observation. Nothing else
+# matters; skip every other lane.
+#
+# WHO SHE IS. Room 4052 (Bandit Camp) holds a fighter (284), the CASTER
+# (285), and Soren the leader (286). The caster knows mind-fog, mind-spike,
+# nerve-disruption (mental attacks your QUELL answers, costing you
+# conviction) and mend-wounds (self-heal below 40% health). You start at
+# 4050, about a dozen rooms from the camp (route hint: from the barn head
+# north, then east, east to the ditch, south, then west).
+#
+# WHAT CORRECT LOOKS LIKE. Round she decides to cast: "Bandit Caster
+# begins weaving a spell." plus a flavor line (unfocused stare, psionic
+# fog). She then folds the spell over a round or three, NOT meleeing,
+# then it lands on you or your quell turns it. After a cast resolves she
+# is on a shared cooldown for about four rounds and WILL melee during
+# them; melee between casts is correct, melee INSTEAD of any cast ever
+# is the failure.
+#
+# HOW TO GET A LONG FIGHT. She must not die fast and you must not either.
+# Aggro her BY NAME (attack bandit caster), then immediately remove your
+# wielded weapon (remove <weapon>) so your auto-swings do little, and
+# just stand and observe. Heal yourself as needed; you know heal spells.
+# The other bandits will pile in; that is fine, your eyes stay on HER
+# lines. If she dies or you must flee, recover and do a second fight the
+# same way. Two fights of ten or more rounds each is the target.
+#
+# KNOWN NON-BUGS, do not refile: bandits hide ("You attack the darkness!"
+# answers a hidden mob); damage is words, never numbers; corpses persist;
+# consider calls walkovers even; 3 commands per round on the AI port.
+
+ephemeral:
+  profile: mid
+  start_room: 4050
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    THE ONLY HEADLINE: does the Bandit Caster ever cast? Keep a
+    round-by-round log of what SHE did each round of every fight with
+    her: weaving line, folding silence, spell landing, your quell
+    turning it, melee swing, emote, nothing. Quote every casting-related
+    line verbatim. VERDICT REQUIRED at the end: PASS only if you saw
+    the weaving line and a spell resolve at least twice across your
+    fights, with melee confined to the rounds between casts. FAIL if
+    ten or more observed rounds pass without a single weaving line;
+    state the count of rounds you watched.
+  - >-
+    While weaving, she must NOT melee. If a round contains both her
+    weaving or folding AND a melee swing from her, quote both lines
+    together; that is a finding on its own.
+  - >-
+    Secondary, only if the fight offers it: below roughly half health
+    she should weave mend-wounds on herself; nearly dead she should
+    flee. Note plainly if seen or not seen. Your quell lines when her
+    mental spells come at you: quote up to three verbatim, and note
+    whether your conviction pool dropped when you defended.
