@@ -276,7 +276,20 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 	// block another that fires right after it (the discharge it arms).
 	if !spellInfo.IgnoreMoveCooldown {
 		cfg := configs.GetBalanceConfig()
-		if !char.TryCooldown(`special-move`, fmt.Sprintf(`%d rounds`, cfg.SpecialMoveCooldown)) {
+		// Corpse-free summons take their OWN, much longer key. They need no
+		// corpse and no target, so sharing the 4-round special-move budget let
+		// conjure-water run at the 225/hr ceiling standing still, with a free
+		// summon/dismiss loop (dismiss has no cooldown and costs no slot).
+		// Discriminated on SummonMobId: raise spells carry it too but are
+		// excluded by SummonRequiresCorpse, and charm has no SummonMobId at all,
+		// so it stays a normal combat action on the shared budget.
+		cooldownKey := `special-move`
+		cooldownRounds := int(cfg.SpecialMoveCooldown)
+		if spellInfo.SummonMobId > 0 && !spellInfo.SummonRequiresCorpse {
+			cooldownKey = `conjure`
+			cooldownRounds = int(cfg.ConjureCooldown)
+		}
+		if !char.TryCooldown(cooldownKey, fmt.Sprintf(`%d rounds`, cooldownRounds)) {
 			return CastResult{SpellInfo: spellInfo, OnCooldown: true}
 		}
 	}

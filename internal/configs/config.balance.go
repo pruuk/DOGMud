@@ -520,6 +520,7 @@ type Balance struct {
 	DiscoveryMaxDecayOffset         ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`         // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
 	SpellFoldsSkillFactor           ConfigInt   `yaml:"SpellFoldsSkillFactor"`           // Skill * this in folds-per-round calc (default 25)
 	SpellProficiencyCastsPerPoint   ConfigInt   `yaml:"SpellProficiencyCastsPerPoint"`   // Casts needed per 1 proficiency point (default 50)
+	ConjureCooldown                 ConfigInt   `yaml:"ConjureCooldown"`                 // Rounds between corpse-free conjure/summon casts, on their own key (default 36)
 	SpellDifficultyProgressionScale ConfigFloat `yaml:"SpellDifficultyProgressionScale"` // Per-point spell difficulty bonus to skill progression (default 0.01)
 	CraftDifficultyProgressionScale ConfigFloat `yaml:"CraftDifficultyProgressionScale"` // Per-point recipe skill_minimum bonus to skill progression (default 0.02)
 	SelfCastProgressionMultiplier   ConfigFloat `yaml:"SelfCastProgressionMultiplier"`   // Progression multiplier when spell only targets self (default 0.5)
