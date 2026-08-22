@@ -983,6 +983,12 @@ Balance:
   StatProgressionRate: 2.25      # 6e: ~2.25x STAT progression (skills unaffected)
   ProgressionDecayBelowCap: 3.0  # Exponential steepness below soft cap (higher = faster decay)
   ProgressionDecayAboveCap: 2.0  # Exponential steepness above soft cap
+  # Smallest chance a stat or skill roll may present. Below this a stat is not
+  # slow, it is SEALED: the roll quantises to zero and can never fire again.
+  # Two of Meiroks six stats were in that state (strength 3.98e-05, dexterity
+  # 9.25e-12) before this existed. Does NOT apply to regen progression, whose
+  # chance is meant to vanish as the pool fills.
+  ProgressionChanceFloor: 0.00001
   # CritProgressionBonus: multiplier on the progression roll for whichever side
   # DID the crit or the fumble. Failure teaches, so a fumble pays it too.
   # Raising it makes exceptional moments the main way characters improve;
