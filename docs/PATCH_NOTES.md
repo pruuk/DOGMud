@@ -1,5 +1,32 @@
 # DOGMud Patch Notes
 
+## 2026-08-22: An hour spent on any craft should be worth about an hour
+
+How quickly a skill or an attribute improves has been rebalanced around time
+spent rather than times used. A swing of a sword and an afternoon at a forge
+were counted the same way before, so activities that happen many times a minute
+raced ahead of ones that happen a few times an hour. Now an hour of concerted
+effort on any path should move you a comparable distance.
+
+Weapon work, spellcraft, oratory, archery and the summoning arts all improve
+noticeably faster than they did. Crafting, haggling and salvage improve more
+slowly per piece of work, because you get far more chances at them in an hour
+than the old numbers assumed.
+
+Sizing up a creature or peering at something no longer sharpens your senses on
+its own. It had become the quickest way to train perception by a wide margin,
+and it asked nothing of you. Spotting someone or something hidden as you enter a
+room now teaches you instead, which is the same instinct actually being tested.
+
+Haggling now rewards the bargain rather than the pile. Selling a stack of forty
+identical pelts counts as one piece of trading practice, not forty.
+
+Conjured allies keep their own rhythm. Calling up an elemental or a swarm now
+takes considerably longer between summonings, so it sits closer to the pace of
+raising the dead, which has always had to wait on a body. Charming a creature is
+unchanged, and so is raising one.
+
+
 ## 2026-08-22: Difficulty follows what you have built, not what you have done
 
 How hard something is to improve now depends on how far you have already taken
