@@ -403,7 +403,12 @@ type Balance struct {
 
 	MobProgressionEnabled ConfigBool  `yaml:"MobProgressionEnabled"` // Enable mob stat/skill progression (default true)
 	MobProgressionRate    ConfigFloat `yaml:"MobProgressionRate"`    // Multiplier on progression chance vs players (default 0.5)
-	MobStatCap            ConfigInt   `yaml:"MobStatCap"`            // Hard cap on mob stats from progression (default 200)
+	MobStatCap            ConfigInt   `yaml:"MobStatCap"`            // Legacy VALUE cap on mob stats. Superseded by MobStatTrainingCap; see config.yaml.
+	// MobStatTrainingCap caps how many points a mob may GAIN, rather than the
+	// value it may reach. The old value cap was asymmetric: a mob with base 250
+	// could gain nothing while one with base 180 could gain 20, purely because
+	// of how big it was authored.
+	MobStatTrainingCap    ConfigInt   `yaml:"MobStatTrainingCap"`    // Max points a mob may gain per stat (default 50)
 	MobSkillCap           ConfigInt   `yaml:"MobSkillCap"`           // Hard cap on mob skill level from progression (default 3)
 	MobSaveIntervalRounds ConfigInt   `yaml:"MobSaveIntervalRounds"` // Rounds between periodic mob instance saves (default 100)
 	MobInstanceMaxAgeDays ConfigInt   `yaml:"MobInstanceMaxAgeDays"` // Max age in days before stale instance files are pruned (default 7)

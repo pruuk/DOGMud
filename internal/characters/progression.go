@@ -190,7 +190,7 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 // expression production rolls rather than a hand-rolled duplicate that could
 // silently drift from it.
 //
-// A mob at or past MobStatCap, or with mob progression disabled, returns 0
+// A mob at or past MobStatTrainingCap, or with mob progression disabled, returns 0
 // (the hard-cap short-circuit CheckStatProgression used to perform itself).
 func (c *Character) statProgressionChance(statName string, bonusMultiplier float64) float64 {
 	b := configs.GetBalanceConfig()
@@ -200,7 +200,12 @@ func (c *Character) statProgressionChance(statName string, bonusMultiplier float
 		if !bool(b.MobProgressionEnabled) {
 			return 0
 		}
-		if c.GetStatValue(statName) >= int(b.MobStatCap) {
+		// Cap on GAINS, not on value. The old value cap was asymmetric: a mob
+		// authored at base 250 could gain nothing while one at 180 could gain
+		// 20, purely because of how big it was written. Training is
+		// gains-since-spawn for mobs too since Phase C, so this is now the
+		// same rule players would get if they had one.
+		if c.GetStatTraining(statName) >= int(b.MobStatTrainingCap) {
 			return 0 // hard cap
 		}
 		bonusMultiplier *= float64(b.MobProgressionRate)
@@ -476,7 +481,10 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 		if !bool(b.MobProgressionEnabled) {
 			return
 		}
-		if c.GetStatValue(statName) >= int(b.MobStatCap) {
+		// Gains cap, same rule as statProgressionChance. Missing this site
+		// would leave the regen faucet -- which is what actually drives a
+		// mob's vitality -- capped by value while everything else moved.
+		if c.GetStatTraining(statName) >= int(b.MobStatTrainingCap) {
 			return
 		}
 		chance *= float64(b.MobProgressionRate)

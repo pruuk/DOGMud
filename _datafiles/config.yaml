@@ -1107,6 +1107,13 @@ Balance:
   # stat from its template StatPool is NOT counted against this cap -- only
   # the final computed stat value matters. Default 200 (double human baseline).
   MobStatCap: 200
+  # MobStatTrainingCap caps how many points a mob may GAIN per stat, which is
+  # what MobStatCap should always have done. The value cap above is asymmetric:
+  # a mob authored at base 250 can gain nothing while one at 180 can gain 20,
+  # purely because of how big it was written. Since U10b-0 Phase C a mob's
+  # Training is gains-since-spawn, exactly as a player's is, so capping gains
+  # treats every creature the same regardless of its authored size.
+  MobStatTrainingCap: 50
   # Maximum skill level a mob can reach through use-based progression.
   # Player soft cap is 50; mobs are intentionally much lower since they
   # fight constantly. At rank 3, the SkillMultiplier curve gives ~1.77x

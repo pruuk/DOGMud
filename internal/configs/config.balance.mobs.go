@@ -72,6 +72,12 @@ func (b *Balance) validateMobs() {
 	if b.MobStatCap < 1 {
 		b.MobStatCap = 200
 	}
+	// Safety default: a config that omits this must get the cap back, not lose
+	// it. There is no off-switch reading of 0 here -- a zero gain cap would
+	// freeze every mob at spawn.
+	if b.MobStatTrainingCap <= 0 {
+		b.MobStatTrainingCap = 50
+	}
 	if b.MobSkillCap < 1 {
 		b.MobSkillCap = 3
 	}

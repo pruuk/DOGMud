@@ -171,3 +171,31 @@ func TestRegenDamper_KeysOnTrainingNotUseCount(t *testing.T) {
 			got, fresh.regenDamperFactor("vitality"))
 	}
 }
+
+// The mob stat cap is on GAINS, not on value. The old value cap was asymmetric:
+// a mob authored at base 250 could gain nothing while one at base 180 could gain
+// 20, purely because of how big it was written.
+func TestMobStatCap_IsOnGainsNotValue(t *testing.T) {
+	withRepoRoot(t)
+	b := configs.GetBalanceConfig()
+
+	// A very large mob with no gains yet must still be able to progress.
+	huge := New()
+	huge.IsMob = true
+	huge.Stats.Strength.Base = int(b.MobStatCap) + 100 // far past the old value cap
+	huge.Stats.Strength.Training = 0
+	huge.Stats.Strength.Recalculate()
+	if got := huge.statProgressionChance("strength", 1.0); got <= 0 {
+		t.Errorf("a mob past the old value cap cannot gain anything: chance %v", got)
+	}
+
+	// A mob that has already gained its allowance is done, whatever its size.
+	capped := New()
+	capped.IsMob = true
+	capped.Stats.Strength.Base = 60
+	capped.Stats.Strength.Training = int(b.MobStatTrainingCap)
+	capped.Stats.Strength.Recalculate()
+	if got := capped.statProgressionChance("strength", 1.0); got != 0 {
+		t.Errorf("a mob at MobStatTrainingCap still has chance %v, want 0", got)
+	}
+}
