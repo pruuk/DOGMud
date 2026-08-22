@@ -3,12 +3,55 @@
 The owner's manual checklist for the end-of-arc playtest with Meirok on the
 local server. Covers everything on master through U6 plus the caster-brain
 fix (2026-08-15). U7-U12 items get appended as they land; do not deploy
-until every section has been played and the two MANDATORY items pass.
+until every section has been played, the two MANDATORY items pass, and
+every section 0 BLOCKER is fixed.
 
 Meirok baseline for reference: melee score ~455 (Dex 110 + weapon-combat 69
 x SkillWeight 5), block 523, spellcasting 51, crit mult 5.45. Against trash
 he one-shots everything, so most sections need the named instruments below,
 not street fights.
+
+## 0. BLOCKERS: fix before this arc deploys
+
+Findings that must be **fixed**, not merely played around. Distinct from
+section 9, which lists things that are accepted-open and should not be
+re-reported.
+
+### 0a. A corpse blocks targeting of the live mob sharing its name
+
+Found 2026-08-22 in the U10b-0 Phase B playtest. Owner ruled it a pre-deploy
+blocker. Section 9's older "corpse targeting can pick the wrong corpse" is the
+milder cousin of this; this one refuses the live actor outright.
+
+Reproduction, in a room holding both:
+
+```
+Also here: Bandit Scout (100%)
+On the Ground: Bandit Scout corpse
+
+consider scout        -> You don't see them here.
+consider bandit scout -> You don't see them here.
+look scout            -> [the CORPSE] "This is a corpse. They are dead."
+```
+
+Control, live NPC with no matching corpse in the room:
+
+```
+consider garve -> You consider Caravan Guard Garve...
+```
+
+Eighteen consecutive refusals across two rooms. It is common rather than
+exotic: after any fight the mob you most want to consider or look at is exactly
+the one whose corpse is now on the floor, and same-type mobs respawn into the
+same room.
+
+It also silently starves progression. `look <target>` and `consider` are two of
+only three production callers of `OnStatUse("perception")` (the third is
+`shoot`), so wherever a corpse is lying around, perception has almost no faucet.
+
+When checking the fix: confirm `consider <mob>` and `look <mob>` both reach the
+live creature with its own corpse present, and that `look <mob> corpse` still
+reaches the corpse.
 
 ## 1. MANDATORY: the Elemental Queen (planar oasis instance, ~300g)
 
@@ -135,6 +178,9 @@ UTF-8 symbols; AI-port batched commands drop silently; corpse targeting by
 mob name can pick the wrong corpse; "looks a little confused (east )"
 leaks a direction token; Dense Muscles hides its conviction/charisma cost.
 All filed. Anything NOT on this list that reads wrong is a fresh finding.
+
+Note the corpse-targeting entry has a sharper sibling that is a **deploy
+blocker**, not an accepted-open finding: see section 0a.
 
 ## 10. Reserved for U7-U12
 
