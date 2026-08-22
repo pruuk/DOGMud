@@ -1,0 +1,63 @@
+# U10b-0 Phase D rate measurement.
+#
+# THIS IS A MEASUREMENT RUN, NOT A BUG HUNT. Your job is to generate a large,
+# clean sample of ordinary combat and ordinary foraging so the engine's own
+# combat analytics can be read afterwards. The numbers come out of the server's
+# analytics file, not out of your report -- so what matters most is VOLUME and
+# TYPICALITY, not commentary.
+#
+# WHAT WE ARE MEASURING (you do not need to count any of this yourself):
+#   * How often an attack lands versus is avoided.
+#   * How many rounds an average fight lasts, start to kill.
+#   * How often foraging succeeds.
+#
+# HOW TO BE USEFUL:
+#   * Fight ordinary, roughly-matched enemies. Do not seek out trivially weak
+#     ones or wildly dangerous ones -- both skew the sample.
+#   * Fight A LOT. Prefer many ordinary fights over a few dramatic ones. Rest
+#     and heal between fights rather than fleeing at low health, so fights run
+#     to a natural finish.
+#   * Do NOT use special moves, spells, taunts or thrown weapons unless a fight
+#     genuinely requires it. We want the baseline swing-versus-defence picture.
+#   * Between fights, forage repeatedly in whatever terrain you are standing in.
+#     Report roughly how many attempts found something and how many found
+#     nothing, and in what kind of terrain.
+#   * Note plainly how long a typical fight felt: roughly how many rounds from
+#     first swing to the enemy dying.
+#
+# You are a moderately experienced character. Play straightforwardly.
+#
+# KNOWN NON-BUGS, do not report: hidden mobs answer "You attack the darkness!";
+# corpses persist; damage is words rather than numbers; 3 commands per round on
+# the AI port; a corpse can shadow a live mob of the same name when targeting.
+
+ephemeral:
+  profile: mid
+  start_room: 462
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    VOLUME OF ORDINARY COMBAT (headline): fight as many roughly-matched
+    enemies as you can in the time available, using plain attacks. Rest between
+    fights so each one runs to a real finish rather than ending in a flight.
+    Aim for at least fifteen completed fights. Report how many fights you
+    finished and roughly how many rounds a typical one took.
+  - >-
+    FIGHT LENGTH: for at least five fights, say plainly how many rounds passed
+    between your first swing and the enemy dying. If fights vary a lot, say so
+    and give the range rather than an average.
+  - >-
+    FORAGING SUCCESS: between fights, forage repeatedly wherever you are.
+    Report how many attempts you made, how many found something, and what kind
+    of terrain you were in. If you can, try a second kind of terrain and report
+    it separately.
+  - >-
+    BASELINE PURITY: avoid special moves, spells, taunts and thrown weapons
+    unless survival demands it. If you did use them, say which and roughly how
+    often, so that part of the sample can be set aside.
+  - >-
+    ANYTHING BROKEN: this is not a bug hunt, but if something is plainly wrong
+    -- a raw number shown to the player, an unreplaced token, a doubled
+    message, a dead end -- quote it verbatim and carry on measuring.
