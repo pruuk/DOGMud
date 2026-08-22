@@ -88,7 +88,13 @@ func TestStatRank_TrainingRaisesDifficulty(t *testing.T) {
 }
 
 // The two documented anchors from spec section 5, which are what pin soft cap 50.
-// perception's per-stat multiplier is 1.0, so it shows the raw curve.
+//
+// This asserts on the RAW curve, dividing the per-stat multiplier back out.
+// Before U10b-0 Phase D, perception's multiplier happened to be exactly 1.0, so
+// the raw curve was readable directly -- but Phase D retuned it to 0.41, and no
+// stat has a 1.0 multiplier any more. Re-anchoring to tuned numbers would just
+// break again at the next retune, so the multiplier is divided out instead: the
+// anchors then hold for any tuning, which is what "the documented curve" means.
 func TestStatChance_ReproducesTheDocumentedAnchors(t *testing.T) {
 	withRepoRoot(t)
 
@@ -96,17 +102,21 @@ func TestStatChance_ReproducesTheDocumentedAnchors(t *testing.T) {
 	if int(b.StatProgressionSoftCap) != 50 {
 		t.Fatalf("StatProgressionSoftCap is %d, want 50", int(b.StatProgressionSoftCap))
 	}
+	mult := b.GetStatProgressionMultiplier("perception")
+	if mult <= 0 {
+		t.Fatalf("perception progression multiplier is %v, want > 0", mult)
+	}
 
 	fresh := New()
-	if got := fresh.statProgressionChance("perception", 1.0); got < 0.26 || got > 0.28 {
-		t.Errorf("fresh stat chance %v, want ~0.27 (0.12 x 2.25)", got)
+	if got := fresh.statProgressionChance("perception", 1.0) / mult; got < 0.26 || got > 0.28 {
+		t.Errorf("fresh raw stat chance %v, want ~0.27 (0.12 x 2.25)", got)
 	}
 
 	trained := New()
 	trained.Stats.Perception.Training = 50 // the old "stat at 150"
 	trained.Stats.Perception.Recalculate()
-	if got := trained.statProgressionChance("perception", 1.0); got < 0.012 || got > 0.015 {
-		t.Errorf("chance at Training 50 is %v, want ~0.0134", got)
+	if got := trained.statProgressionChance("perception", 1.0) / mult; got < 0.012 || got > 0.015 {
+		t.Errorf("raw chance at Training 50 is %v, want ~0.0134", got)
 	}
 }
 

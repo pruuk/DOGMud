@@ -256,16 +256,20 @@ func TestCalculateProgressionChance_SampleValues(t *testing.T) {
 }
 
 func TestGetProgressionMultiplier(t *testing.T) {
+	// Solved, not chosen: `python tools/balance/u10b_solve_v3.py`. If this fails
+	// after a retune, REGENERATE these rather than editing them to fit.
+	// unarmed sits below weapon on purpose -- the offhand fist earns 1.83x the
+	// uses, so equal values would make an empty offhand dominant.
 	tests := []struct {
 		skill    string
 		expected float64
 	}{
-		{"weapon-combat", 0.3},
-		{"unarmed-combat", 0.3},
-		{"spellcasting", 0.5},
-		{"search", 2.0},
-		{"bartering", 2.0},
-		{"skullduggery", 2.0},
+		{"weapon-combat", 1.27},
+		{"unarmed-combat", 0.69},
+		{"spellcasting", 3.90},
+		{"search", 1.00},
+		{"bartering", 2.07},
+		{"skullduggery", 0.83},
 		{"unknown-skill", 1.0},
 	}
 
