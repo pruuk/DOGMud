@@ -32,6 +32,12 @@ func saveCompanionState(user *users.UserRecord) {
 		}
 
 		// Copy stat training from individual fields into the map.
+		//
+		// Stamp the schema version: what we write here is gains-only, so the
+		// next restore must NOT run the legacy split over it. Without this every
+		// logout would re-mark the companion as pre-Phase-C and the migration
+		// would subtract the authored stats and pool again, draining the pet.
+		comp.SchemaVersion = mobs.InstanceSchemaVersion
 		if comp.StatTraining == nil {
 			comp.StatTraining = make(map[string]int)
 		}

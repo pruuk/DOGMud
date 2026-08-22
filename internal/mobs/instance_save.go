@@ -20,6 +20,12 @@ import (
 // across server restarts. Combat state (health, stamina, aggro, etc.) is
 // intentionally excluded — mobs respawn at full resources.
 type MobInstanceData struct {
+	// SchemaVersion is absent (0) in any save written before U10b-0 Phase C.
+	// Those files fused authored stats, spawn pool and gains into the *Training
+	// fields; LegacyTrainingToGains separates them on load. A save at
+	// InstanceSchemaVersion is already gains-only and is restored verbatim.
+	SchemaVersion int `yaml:"schema_version,omitempty"`
+
 	StrengthTraining   int            `yaml:"strength_training,omitempty"`
 	DexterityTraining  int            `yaml:"dexterity_training,omitempty"`
 	PerceptionTraining int            `yaml:"perception_training,omitempty"`
@@ -104,6 +110,7 @@ func SaveMobInstance(mob *Mob) error {
 	}
 
 	data := MobInstanceData{
+		SchemaVersion:      InstanceSchemaVersion,
 		StrengthTraining:   mob.Character.Stats.Strength.Training,
 		DexterityTraining:  mob.Character.Stats.Dexterity.Training,
 		PerceptionTraining: mob.Character.Stats.Perception.Training,

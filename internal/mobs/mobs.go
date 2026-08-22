@@ -472,13 +472,27 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 			savedInstance = LoadMobInstance(mob.MobId, mob.Zone, mob.Character.Name, homeRoomId)
 		}
 		if savedInstance != nil {
-			// Restore saved progression
-			mob.Character.Stats.Strength.Training = savedInstance.StrengthTraining
-			mob.Character.Stats.Dexterity.Training = savedInstance.DexterityTraining
-			mob.Character.Stats.Perception.Training = savedInstance.PerceptionTraining
-			mob.Character.Stats.Vitality.Training = savedInstance.VitalityTraining
-			mob.Character.Stats.Willpower.Training = savedInstance.WillpowerTraining
-			mob.Character.Stats.Charisma.Training = savedInstance.CharismaTraining
+			// Restore saved progression.
+			//
+			// A save without a SchemaVersion predates U10b-0 Phase C, when the
+			// authored stats and the spawn pool both lived in Training. The pool
+			// has already been rolled into Base above, and the template supplies
+			// the authored part, so reusing the saved value as-is would count
+			// both twice. LegacyTrainingToGains separates them.
+			saved := map[string]int{
+				"strength": savedInstance.StrengthTraining, "dexterity": savedInstance.DexterityTraining,
+				"perception": savedInstance.PerceptionTraining, "vitality": savedInstance.VitalityTraining,
+				"willpower": savedInstance.WillpowerTraining, "charisma": savedInstance.CharismaTraining,
+			}
+			if savedInstance.SchemaVersion < InstanceSchemaVersion {
+				saved = LegacyTrainingToGains(mob.MobId, saved)
+			}
+			mob.Character.Stats.Strength.Training = saved["strength"]
+			mob.Character.Stats.Dexterity.Training = saved["dexterity"]
+			mob.Character.Stats.Perception.Training = saved["perception"]
+			mob.Character.Stats.Vitality.Training = saved["vitality"]
+			mob.Character.Stats.Willpower.Training = saved["willpower"]
+			mob.Character.Stats.Charisma.Training = saved["charisma"]
 			if savedInstance.Skills != nil {
 				mob.Character.Skills = savedInstance.Skills
 			}

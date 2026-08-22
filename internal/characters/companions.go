@@ -52,21 +52,26 @@ const (
 // CompanionInfo holds the persistent state of a single companion.
 // InstanceId is runtime-only and is not saved to disk.
 type CompanionInfo struct {
-	MobId            int                 `yaml:"mobid"`
-	InstanceId       int                 `yaml:"-"` // runtime only
-	SourceType       CompanionSourceType `yaml:"source_type"`
-	Name             string              `yaml:"name"`
-	BaseName         string              `yaml:"base_name,omitempty"` // mob template name, e.g. "Spirit Wolf"
-	Nickname         string              `yaml:"nickname,omitempty"`  // player-given name, e.g. "Fred"
-	AutoAssist       bool                `yaml:"auto_assist"`
-	StatTraining     map[string]int      `yaml:"stat_training,omitempty"`
-	Skills           map[string]int      `yaml:"skills,omitempty"`
-	SkillUseCount    map[string]int      `yaml:"skill_use_count,omitempty"`
-	Mutations        map[string]int      `yaml:"mutations,omitempty"`
-	SpellBook        map[string]int      `yaml:"spellbook,omitempty"`
-	MutationProgress float64             `yaml:"mutation_progress,omitempty"`
-	CharmDuration    int                 `yaml:"charm_duration,omitempty"` // Rounds until charm re-roll (0 = no timer)
-	CharmRerolls     int                 `yaml:"charm_rerolls,omitempty"`  // Number of times charm has been re-rolled
+	MobId      int                 `yaml:"mobid"`
+	InstanceId int                 `yaml:"-"` // runtime only
+	SourceType CompanionSourceType `yaml:"source_type"`
+	Name       string              `yaml:"name"`
+	BaseName   string              `yaml:"base_name,omitempty"` // mob template name, e.g. "Spirit Wolf"
+	Nickname   string              `yaml:"nickname,omitempty"`  // player-given name, e.g. "Fred"
+	AutoAssist bool                `yaml:"auto_assist"`
+	// SchemaVersion is absent (0) on any companion saved before U10b-0 Phase C.
+	// StatTraining in those files fused the template's authored stats, the
+	// spawn pool and earned gains into one number; the spawn path separates
+	// them on restore. A companion at the current version is gains-only.
+	SchemaVersion    int            `yaml:"schema_version,omitempty"`
+	StatTraining     map[string]int `yaml:"stat_training,omitempty"`
+	Skills           map[string]int `yaml:"skills,omitempty"`
+	SkillUseCount    map[string]int `yaml:"skill_use_count,omitempty"`
+	Mutations        map[string]int `yaml:"mutations,omitempty"`
+	SpellBook        map[string]int `yaml:"spellbook,omitempty"`
+	MutationProgress float64        `yaml:"mutation_progress,omitempty"`
+	CharmDuration    int            `yaml:"charm_duration,omitempty"` // Rounds until charm re-roll (0 = no timer)
+	CharmRerolls     int            `yaml:"charm_rerolls,omitempty"`  // Number of times charm has been re-rolled
 	// Gear persistence — snapshotted at logout, restored on respawn.
 	Items     []items.Item `yaml:"items,omitempty"`     // Carried (backpack)
 	Equipment Worn         `yaml:"equipment,omitempty"` // Equipped/worn slots
