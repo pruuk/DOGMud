@@ -44,9 +44,9 @@ character:
   gold: 40
   stats:
     dexterity:
-      training: 14
+      base: 114
     charisma:
-      training: 6
+      base: 106
   shop:
     - itemid: 40012
     - itemid: 40007

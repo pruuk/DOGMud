@@ -44,11 +44,11 @@ character:
   gold: 60
   stats:
     strength:
-      training: 12
+      base: 112
     vitality:
-      training: 8
+      base: 108
     perception:
-      training: 4
+      base: 104
   shop:
     - itemid: 10021
     - itemid: 20004

@@ -40,8 +40,8 @@ character:
   gold: 45
   stats:
     perception:
-      training: 4
+      base: 104
     dexterity:
-      training: 4
+      base: 104
   shop:
     - itemid: 40144

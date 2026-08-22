@@ -34,8 +34,8 @@ character:
   level: 1
   stats:
     strength:
-      training: 20
+      base: 150
     vitality:
-      training: 20
+      base: 220
     dexterity:
-      training: -10
+      base: 40

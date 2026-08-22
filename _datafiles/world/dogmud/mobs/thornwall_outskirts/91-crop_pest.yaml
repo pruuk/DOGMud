@@ -38,14 +38,14 @@ character:
     - itemid: 24
   stats:
     dexterity:
-      training: 10
+      base: 70
     strength:
-      training: -10
+      base: 10
     vitality:
-      training: -5
+      base: 10
     perception:
-      training: 5
+      base: 45
     willpower:
-      training: -15
+      base: -5
     charisma:
-      training: -20
+      base: -15

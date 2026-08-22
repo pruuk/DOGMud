@@ -46,7 +46,20 @@ func (c *Character) RecalculateStats() {
 		{&c.Stats.Charisma, string(statmods.Charisma), "charisma"},
 	}
 
-	// Pass 1 — species-base hydration (only when Base is 0, per original logic).
+	// Pass 1 — species-base hydration: fill in a Base the data never set.
+	//
+	// The test is "Base is 0 AND the YAML did not author a base: key". Base == 0
+	// on its own cannot tell an unset stat apart from a deliberately zero one,
+	// and U10b-0 Phase A produces the latter: folding a mob's authored training
+	// into its base leaves two stats at exactly zero (a scrubland dog's
+	// willpower, a scavenger bird's vitality — both authored as the negation of
+	// their species baseline). Hydrating those back would silently undo the
+	// author's intent.
+	//
+	// BaseAuthored is false for every character built in Go — a rolled player
+	// (whose Base is never zero anyway), a bare fixture, a shallow-copied mob
+	// instance — so this keeps the historical behaviour everywhere except the
+	// one case it exists to fix.
 	if speciesInfo := species.GetSpecies(c.SpeciesId); speciesInfo != nil {
 		speciesEntries := []struct {
 			ptr  *stats.StatInfo
@@ -60,7 +73,7 @@ func (c *Character) RecalculateStats() {
 			{&c.Stats.Charisma, speciesInfo.Stats.Charisma.Base},
 		}
 		for _, e := range speciesEntries {
-			if e.ptr.Base == 0 {
+			if e.ptr.Base == 0 && !e.ptr.BaseAuthored {
 				e.ptr.Base = e.base
 			}
 		}

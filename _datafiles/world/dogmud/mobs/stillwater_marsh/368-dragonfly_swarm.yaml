@@ -29,10 +29,10 @@ character:
   gold: 0
   stats:
     strength:
-      training: 4
+      base: 74
     dexterity:
-      training: 16
+      base: 116
     perception:
-      training: 14
+      base: 94
     vitality:
-      training: 10
+      base: 70

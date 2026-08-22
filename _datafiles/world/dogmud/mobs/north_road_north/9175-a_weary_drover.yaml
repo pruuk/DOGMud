@@ -43,10 +43,10 @@ character:
   gold: 8
   stats:
     vitality:
-      training: 8
+      base: 108
     perception:
-      training: 7
+      base: 107
     strength:
-      training: 5
+      base: 105
     charisma:
-      training: 3
+      base: 103

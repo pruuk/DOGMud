@@ -45,4 +45,4 @@ character:
   gold: 4
   stats:
     willpower:
-      training: 8
+      base: 108

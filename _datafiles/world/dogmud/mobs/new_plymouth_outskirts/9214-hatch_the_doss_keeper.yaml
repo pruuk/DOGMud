@@ -42,8 +42,8 @@ character:
   gold: 60
   stats:
     perception:
-      training: 8
+      base: 108
     strength:
-      training: 6
+      base: 106
     willpower:
-      training: 5
+      base: 105

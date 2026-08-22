@@ -33,9 +33,9 @@ character:
   gold: 0
   stats:
     strength:
-      training: 10
+      base: 190
     vitality:
-      training: 10
+      base: 190
 itemdropchance: 75
 loot_pool:
   - 10027

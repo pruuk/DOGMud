@@ -43,6 +43,6 @@ character:
       itemid: 20024
   stats:
     perception:
-      training: 5
+      base: 105
     charisma:
-      training: 5
+      base: 105

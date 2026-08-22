@@ -41,11 +41,11 @@ character:
   gold: 20
   stats:
     willpower:
-      training: 18
+      base: 118
     perception:
-      training: 12
+      base: 112
     charisma:
-      training: 8
+      base: 108
   skills:
     spellcasting: 1
   spellbook:

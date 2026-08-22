@@ -71,6 +71,6 @@ character:
       price: 2
   stats:
     charisma:
-      training: 8
+      base: 108
     vitality:
-      training: 5
+      base: 105

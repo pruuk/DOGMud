@@ -45,14 +45,14 @@ character:
   gold: 0
   stats:
     dexterity:
-      training: 8
+      base: 138
     strength:
-      training: 7
+      base: 97
     vitality:
-      training: 6
+      base: 86
     perception:
-      training: 2
+      base: 142
     willpower:
-      training: 1
+      base: 16
     charisma:
-      training: 1
+      base: 11

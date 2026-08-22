@@ -39,6 +39,6 @@ character:
   gold: 4
   stats:
     charisma:
-      training: 4
+      base: 104
     dexterity:
-      training: 3
+      base: 103

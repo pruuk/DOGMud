@@ -29,9 +29,9 @@ character:
   gold: 0
   stats:
     dexterity:
-      training: 12
+      base: 62
     perception:
-      training: 8
+      base: 68
   skills:
     unarmed-combat: 1
 itemdropchance: 75

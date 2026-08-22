@@ -30,4 +30,4 @@ character:
   level: 1
   stats:
     vitality:
-      training: 5
+      base: 65

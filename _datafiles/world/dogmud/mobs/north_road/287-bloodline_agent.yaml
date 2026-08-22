@@ -44,16 +44,16 @@ character:
       itemid: 20010
   stats:
     strength:
-      training: 25
+      base: 125
     dexterity:
-      training: 20
+      base: 120
     vitality:
-      training: 20
+      base: 120
     perception:
-      training: 18
+      base: 118
     willpower:
-      training: 15
+      base: 115
     charisma:
-      training: 10
+      base: 110
   skills:
     weapon-combat: 1

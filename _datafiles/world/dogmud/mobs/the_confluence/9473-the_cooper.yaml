@@ -38,8 +38,8 @@ character:
   gold: 50
   stats:
     strength:
-      training: 5
+      base: 105
     perception:
-      training: 3
+      base: 103
   shop:
     - itemid: 40144

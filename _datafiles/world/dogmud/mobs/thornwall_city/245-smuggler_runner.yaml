@@ -36,9 +36,9 @@ character:
   gold: 3
   stats:
     dexterity:
-      training: 5
+      base: 105
     strength:
-      training: 2
+      base: 102
   skills:
     skullduggery: 1
   items:

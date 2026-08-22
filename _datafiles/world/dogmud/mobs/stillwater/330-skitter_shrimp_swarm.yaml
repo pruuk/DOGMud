@@ -31,11 +31,11 @@ character:
   speciesid: 12
   stats:
     dexterity:
-      training: 4
+      base: 104
     perception:
-      training: 3
+      base: 83
     vitality:
-      training: -2
+      base: 58
   items:
     - itemid: 40051
       dropchance: 60

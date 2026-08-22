@@ -46,11 +46,11 @@ character:
   gold: 35
   stats:
     charisma:
-      training: 12
+      base: 112
     perception:
-      training: 8
+      base: 108
     willpower:
-      training: 4
+      base: 104
   shop:
     - itemid: 30021
     - itemid: 30020

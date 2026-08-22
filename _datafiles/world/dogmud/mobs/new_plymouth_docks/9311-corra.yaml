@@ -50,11 +50,11 @@ character:
   gold: 50
   stats:
     vitality:
-      training: 10
+      base: 110
     strength:
-      training: 6
+      base: 106
     willpower:
-      training: 4
+      base: 104
   shop:
     - itemid: 30023
     - itemid: 30026

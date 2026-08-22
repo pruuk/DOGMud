@@ -36,8 +36,8 @@ character:
   gold: 5
   stats:
     strength:
-      training: 4
+      base: 104
     dexterity:
-      training: 3
+      base: 103
     vitality:
-      training: 3
+      base: 103

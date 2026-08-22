@@ -43,8 +43,8 @@ character:
       itemid: 20068
   stats:
     strength:
-      training: 8
+      base: 108
     vitality:
-      training: 8
+      base: 108
     dexterity:
-      training: 2
+      base: 102

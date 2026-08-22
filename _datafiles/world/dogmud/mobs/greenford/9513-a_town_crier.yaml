@@ -41,6 +41,6 @@ character:
   gold: 5
   stats:
     charisma:
-      training: 7
+      base: 107
     perception:
-      training: 3
+      base: 103

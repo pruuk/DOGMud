@@ -63,9 +63,9 @@ character:
       itemid: 40230
   stats:
     strength:
-      training: 15
+      base: 215
     vitality:
-      training: 12
+      base: 202
     perception:
-      training: 6
+      base: 76
 itemdropchance: 75

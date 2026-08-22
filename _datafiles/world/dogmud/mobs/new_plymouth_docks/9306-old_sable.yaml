@@ -50,11 +50,11 @@ character:
   gold: 110
   stats:
     perception:
-      training: 12
+      base: 112
     charisma:
-      training: 8
+      base: 108
     dexterity:
-      training: 4
+      base: 104
   shop:
     - itemid: 40024
     - itemid: 40025

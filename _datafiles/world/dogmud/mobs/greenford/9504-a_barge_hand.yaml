@@ -39,6 +39,6 @@ character:
   gold: 8
   stats:
     strength:
-      training: 6
+      base: 106
     vitality:
-      training: 4
+      base: 104

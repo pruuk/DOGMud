@@ -32,8 +32,8 @@ character:
     # satisfying kill. Strength/dexterity stay near-floor; species basedamage
     # is 0, so it remains harmless (the player takes no real damage).
     vitality:
-      training: -185
+      base: 15
     strength:
-      training: -3
+      base: 7
     dexterity:
-      training: -3
+      base: 7

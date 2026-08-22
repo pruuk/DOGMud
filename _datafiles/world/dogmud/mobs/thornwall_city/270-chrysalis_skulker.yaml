@@ -45,11 +45,11 @@ character:
   gold: 8
   stats:
     dexterity:
-      training: 30
+      base: 130
     perception:
-      training: 20
+      base: 120
     strength:
-      training: 15
+      base: 115
   skills:
     skullduggery: 1
     weapon-combat: 1

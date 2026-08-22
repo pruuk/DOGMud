@@ -48,8 +48,8 @@ character:
   gold: 40
   stats:
     perception:
-      training: 14
+      base: 114
     willpower:
-      training: 6
+      base: 106
   shop:
     - itemid: 40006

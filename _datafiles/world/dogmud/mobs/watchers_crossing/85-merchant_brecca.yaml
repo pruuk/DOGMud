@@ -88,8 +88,8 @@ character:
       price: 1
   stats:
     perception:
-      training: 10
+      base: 110
     charisma:
-      training: 5
+      base: 105
     dexterity:
-      training: 5
+      base: 105

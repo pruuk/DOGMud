@@ -15,17 +15,17 @@ character:
   speciesid: 1
   stats:
     strength:
-      training: 10
+      base: 110
     dexterity:
-      training: 20
+      base: 120
     perception:
-      training: 20
+      base: 120
     vitality:
-      training: 15
+      base: 115
     willpower:
-      training: 10
+      base: 110
     charisma:
-      training: 5
+      base: 105
   skills:
     ranged-combat: 1
     unarmed-combat: 1

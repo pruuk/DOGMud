@@ -86,7 +86,7 @@ SOP including the `behavior_archetype` priority order.
 | `speciesid` | int | **yes** | Species template. See known species below. |
 | `level` | int | no | Starting level. Default: 1. |
 | `gold` | int | no | Gold the mob carries (can be looted). |
-| `stats` | map | no | Stat overrides applied at spawn. Each stat has a `training` key (positive or negative integer adjustment). |
+| `stats` | map | no | Stat overrides. Each stat takes a `base` key (the mob's starting value for that stat). Never author `training`; see section 4a. |
 | `items` | list | no | Items the mob spawns with. Each entry: `itemid: N`. |
 
 **Known species IDs** (from `_datafiles/world/dogmud/species/`):
@@ -136,7 +136,7 @@ character:
   speciesid: 10              # rodent species
   stats:
     vitality:
-      training: -2           # Slightly less HP than baseline
+      base: 8                # Species base is 10, so slightly less HP
   items:
     - itemid: 40002          # Spawns carrying this item
 ```
@@ -200,6 +200,30 @@ A mob needs either `tactic_preset` or `tactics` (or both) for the reactive AI to
 **Available triggers:** `combat_start`, `health_below:N`, `target_casting`, `target_prone`, `target_grappled`, `multiple_targets`, `single_target`, `no_aggro`, `not_hidden`, `after_action:X`, `player_entered`, `has_buff:N`, `missing_buff:N`
 
 **Available actions:** `flee`, `hide`, `kick`, `bash`, `trip`, `call_for_help`, `retarget_strongest`, `cast <spell>`, `track_memory`, `recall`
+
+**Authored stats go in `base:`, never `training:`.**
+`StatInfo` has two authored-looking fields and they mean different things:
+
+- `base:` is what the mob starts with. Leave a stat out entirely and it is
+  filled in from the species record instead, so the mob tracks future species
+  rebalances. Author `base:` only when this mob should differ from its species.
+- `training:` is what progression has added *since the mob spawned*. A template
+  has not spawned, so it is always zero there.
+
+That distinction is load-bearing: U10b-0 makes the progression curve read
+`Training` as its rank, so a template that parks its stat values there starts
+partway down the decay curve and can be frozen by the gain cap at spawn.
+
+Before 2026-08-22 the convention was the opposite and 599 templates authored
+`training:`. `tools/fold_mob_training_to_base.py` folded them
+(`base_new = species_base + training`) and
+`TestNoMobTemplateCarriesAuthoredTraining` in `internal/mobs` now fails, naming
+the file and line, if the old convention comes back. If you trip it, move the
+number into `base:` and add the stat's species base to it.
+
+One sharp edge: species hydration fills a stat whose `base:` key is **absent**,
+not one whose base happens to be zero. `base: 0` therefore means a real zero and
+is honoured (see `stats.StatInfo.BaseAuthored`). Two mobs rely on this.
 
 **`statpool` distributes by archetype.**
 Stats in `statpool` are weighted by `archetype` at spawn: `"fighting"` favors Str/Dex/Vit (80/20 split), `"casting"` favors Per/Wil/Cha (20/80 split), and default is uniform. Identical mob templates will still vary. Use explicit `stats:` overrides when a specific stat spread matters.

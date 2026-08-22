@@ -40,10 +40,10 @@ character:
   gold: 18
   stats:
     dexterity:
-      training: 16
+      base: 116
     perception:
-      training: 10
+      base: 110
     strength:
-      training: 5
+      base: 105
   skills:
     skullduggery: 1

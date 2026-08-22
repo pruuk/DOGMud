@@ -54,9 +54,9 @@ character:
   gold: 0
   stats:
     strength:
-      training: 30
+      base: 190
     vitality:
-      training: 30
+      base: 250
 loot_pool:
   - 10047
   - 20092

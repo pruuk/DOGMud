@@ -38,8 +38,8 @@ character:
     rhetoric: 1
   stats:
     strength:
-      training: 25
+      base: 205
     vitality:
-      training: 20
+      base: 200
     willpower:
-      training: 5
+      base: 65

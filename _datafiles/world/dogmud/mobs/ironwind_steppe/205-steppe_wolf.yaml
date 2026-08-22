@@ -40,8 +40,8 @@ character:
   level: 1
   stats:
     strength:
-      training: 5
+      base: 95
     dexterity:
-      training: 5
+      base: 135
     perception:
-      training: 3
+      base: 143

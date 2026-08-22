@@ -159,3 +159,49 @@ func TestStatPoolTotal_UnknownSpeciesContributesNoBaseline(t *testing.T) {
 		t.Errorf("StatPoolTotal = %d for an unknown species, want 42", got)
 	}
 }
+
+// ── species hydration vs an authored zero ───────────────────────────────────
+
+// Validate fills an unset Base from the species record. It must not do that to a
+// stat the data deliberately set to zero.
+//
+// U10b-0 Phase A folds every mob's authored training into its base, and two
+// stats land on exactly zero because they were authored as the negation of
+// their species baseline (a scrubland dog's willpower against species base 15,
+// a scavenger bird's vitality against 10). Keying hydration on Base == 0 alone
+// would hand both stats their baseline back and quietly undo the author.
+func TestValidate_DoesNotHydrateAnAuthoredZeroBase(t *testing.T) {
+	withSpeciesData(t)
+	human := species.GetSpecies(1)
+	if human == nil || human.Stats.Willpower.Base == 0 {
+		t.Fatal("species 1 must load with a nonzero willpower base for this test to mean anything")
+	}
+
+	authoredZero := &Character{SpeciesId: 1}
+	authoredZero.Stats.Willpower.BaseAuthored = true // as an explicit `base: 0` decodes
+	authoredZero.Validate()
+	if got := authoredZero.Stats.Willpower.Base; got != 0 {
+		t.Errorf("an authored base: 0 was hydrated to %d", got)
+	}
+
+	unset := &Character{SpeciesId: 1}
+	unset.Validate()
+	if got := unset.Stats.Willpower.Base; got != human.Stats.Willpower.Base {
+		t.Errorf("an unset base was not hydrated: got %d, want %d", got, human.Stats.Willpower.Base)
+	}
+}
+
+// A rolled character's Base must survive Validate untouched. BaseAuthored is
+// false for everything built in Go, so the Base == 0 half of the guard is what
+// protects this — dropping it would overwrite every rolled stat with the
+// species baseline.
+func TestValidate_LeavesARolledBaseAlone(t *testing.T) {
+	withSpeciesData(t)
+
+	c := &Character{SpeciesId: 1}
+	c.Stats.Strength.Base = 123
+	c.Validate()
+	if got := c.Stats.Strength.Base; got != 123 {
+		t.Errorf("rolled Base = %d after Validate, want 123", got)
+	}
+}

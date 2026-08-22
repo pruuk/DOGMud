@@ -36,6 +36,6 @@ character:
   gold: 9
   stats:
     perception:
-      training: 3
+      base: 103
     dexterity:
-      training: 4
+      base: 104

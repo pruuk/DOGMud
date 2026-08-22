@@ -43,11 +43,11 @@ character:
   gold: 70
   stats:
     perception:
-      training: 10
+      base: 110
     charisma:
-      training: 7
+      base: 107
     willpower:
-      training: 5
+      base: 105
   shop:
     - itemid: 40038
     - itemid: 30021

@@ -34,6 +34,6 @@ character:
   level: 1
   stats:
     strength:
-      training: 3
+      base: 93
     vitality:
-      training: 3
+      base: 83

@@ -93,7 +93,22 @@ precedence.
 | `species.go` | Structs, registry, loader, body-part validation |
 | `species_test.go` | Unit tests for body-part logic |
 | `test_helpers.go` | Test utilities |
+| `testing_support.go` | `SetSpeciesForTest` / `LoadForTest` — scoped roster swaps |
 | `context.md` | This file — package overview for Claude Code |
+
+### Loading the roster inside a test
+
+`LoadDataFiles()` is called once from `main.go`, so a test binary starts with an
+empty roster and `GetSpecies` returns nil for everything. Filling it is not
+inert: other packages build bare fixtures whose behaviour changes once a species
+record exists to hydrate from (`internal/characters`' `Wear` tests are a live
+example, and they fail if the roster is left loaded).
+
+Use `LoadForTest(t)` — it loads the real files and restores the previous roster
+via `t.Cleanup` — or `SetSpeciesForTest(t, map)` to install a fixture roster.
+Both mirror `configs.SetConfigForTest`. `LoadForTest` reads
+`configs.GetFilePathsConfig().DataFiles` relative to the working directory, so
+the caller must already be at the repo root.
 
 ---
 

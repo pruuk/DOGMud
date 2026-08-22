@@ -46,11 +46,11 @@ character:
   gold: 45
   stats:
     strength:
-      training: 14
+      base: 114
     vitality:
-      training: 8
+      base: 108
     dexterity:
-      training: 4
+      base: 104
   shop:
     - itemid: 40001
     - itemid: 40018

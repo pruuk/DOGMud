@@ -39,12 +39,12 @@ character:
   items:
     - itemid: 39    # Tova's Lockbox Key
   stats:
-    strength:    {training: 25}
-    dexterity:   {training: 25}
-    vitality:    {training: 25}
-    perception:  {training: 30}
-    willpower:   {training: 25}
-    charisma:    {training: 20}
+    strength:    {base: 125}
+    dexterity:   {base: 125}
+    vitality:    {base: 125}
+    perception:  {base: 130}
+    willpower:   {base: 125}
+    charisma:    {base: 120}
   spellbook:
     fold-recall: 25
   tactics:

@@ -44,8 +44,8 @@ character:
     spellcasting: 1
   stats:
     dexterity:
-      training: 20
+      base: 220
     perception:
-      training: 20
+      base: 180
     willpower:
-      training: 10
+      base: 70

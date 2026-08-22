@@ -34,11 +34,11 @@ character:
   level: 1
   gold: 0
   stats:
-    strength: {training: 35}
-    dexterity: {training: 15}
-    vitality: {training: 30}
-    perception: {training: 15}
-    willpower: {training: 10}
-    charisma: {training: 5}
+    strength: {base: 135}
+    dexterity: {base: 115}
+    vitality: {base: 130}
+    perception: {base: 115}
+    willpower: {base: 110}
+    charisma: {base: 105}
   skills:
     weapon-combat: 1

@@ -39,11 +39,11 @@ character:
   gold: 5000
   stats:
     charisma:
-      training: 8
+      base: 108
     perception:
-      training: 8
+      base: 108
     willpower:
-      training: 5
+      base: 105
   shop:
     # Existing tools/lantern/inn items (preserve original quantities + prices)
     - itemid: 40038    # oil lantern

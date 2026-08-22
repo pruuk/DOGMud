@@ -47,10 +47,10 @@ character:
       itemid: 10009
   stats:
     strength:
-      training: 8
+      base: 108
     charisma:
-      training: 8
+      base: 108
     perception:
-      training: 5
+      base: 105
     willpower:
-      training: 5
+      base: 105

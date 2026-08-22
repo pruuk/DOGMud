@@ -59,14 +59,14 @@ character:
     - itemid: 30062
   stats:
     perception:
-      training: 58
+      base: 158
     dexterity:
-      training: 46
+      base: 146
     vitality:
-      training: 38
+      base: 138
     strength:
-      training: 28
+      base: 128
     willpower:
-      training: 18
+      base: 118
     charisma:
-      training: 12
+      base: 112

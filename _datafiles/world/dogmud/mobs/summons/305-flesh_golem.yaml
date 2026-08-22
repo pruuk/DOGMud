@@ -41,8 +41,8 @@ character:
     rhetoric: 1
   stats:
     strength:
-      training: 25
+      base: 245
     vitality:
-      training: 25
+      base: 265
     dexterity:
-      training: -10
+      base: 55

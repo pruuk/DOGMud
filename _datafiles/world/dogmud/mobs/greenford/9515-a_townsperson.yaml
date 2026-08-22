@@ -41,6 +41,6 @@ character:
   gold: 5
   stats:
     vitality:
-      training: 4
+      base: 104
     charisma:
-      training: 3
+      base: 103

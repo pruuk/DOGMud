@@ -44,6 +44,6 @@ character:
   gold: 4
   stats:
     willpower:
-      training: 7
+      base: 107
     perception:
-      training: 5
+      base: 105

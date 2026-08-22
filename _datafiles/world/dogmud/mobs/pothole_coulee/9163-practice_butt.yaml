@@ -37,8 +37,8 @@ character:
     # next student. Strength/dexterity near floor + species basedamage 0 keep
     # it harmless — it never deals real damage.
     vitality:
-      training: -188
+      base: 12
     strength:
-      training: -3
+      base: 7
     dexterity:
-      training: -3
+      base: 7

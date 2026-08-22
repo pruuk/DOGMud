@@ -51,7 +51,7 @@ character:
   gold: 5
   stats:
     dexterity:
-      training: 6
+      base: 66
     perception:
-      training: 4
+      base: 44
 itemdropchance: 0

@@ -69,11 +69,11 @@ character:
     alchemy: 1
   stats:
     perception:
-      training: 15
+      base: 115
     willpower:
-      training: 10
+      base: 110
     charisma:
-      training: -5
+      base: 95
   shop:
     # Thornwall chrysalis (in-shop crafted)
     - itemid: 40010    # Chrysalis Core

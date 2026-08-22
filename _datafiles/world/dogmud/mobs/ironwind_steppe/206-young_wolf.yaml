@@ -39,6 +39,6 @@ character:
   level: 1
   stats:
     dexterity:
-      training: 5
+      base: 135
     strength:
-      training: 3
+      base: 93

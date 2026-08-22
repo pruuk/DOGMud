@@ -808,6 +808,49 @@ if !user.Character.Cooldowns.Try("combat-special", fmt.Sprintf("%d rounds", cfg.
 - `Try(key, period)` checks if cooldown expired and resets if action performed
 - `Get(key)` returns remaining rounds for display purposes
 
+## Species Base Hydration, and the Two Accessors U10b-0 Added
+
+`Validate` pass 1 fills in a stat's `Base` from the species record. The test is
+**`Base == 0` AND `!BaseAuthored`** — both halves matter and removing either
+breaks something:
+
+- Drop `Base == 0` and every rolled character has its stats overwritten with the
+  species baseline on the next `Validate`.
+- Drop `!BaseAuthored` and a stat the data deliberately set to zero gets its
+  species baseline handed back. Two mob templates rely on this: a scrubland
+  dog's willpower and a scavenger bird's vitality were authored as the exact
+  negation of their species base, so folding that into `base:` produces a real
+  zero. See `stats.StatInfo.BaseAuthored`, which is set by the yaml.v2
+  unmarshaler when a `base:` key was actually present.
+
+Two accessors on `Character` back the progression re-key:
+
+```go
+func (c *Character) GetStatTraining(statName string) int
+func (c *Character) StatPoolTotal() int
+```
+
+`GetStatTraining` is the progression curve's rank input. Unlike `GetStatValue`
+it excludes `Base` (the baseline started with) and `Mods` (equipment and
+spells), so difficulty depends only on gains actually made — equipping a stat
+item must never make that stat harder to train.
+
+`StatPoolTotal` is "how much creature is there":
+`sum(Base) - speciesBase + sum(Training)`. Four systems need that number —
+`assess`'s essence bands, `corpseRaisePool`, charm resistance, and the charm
+re-roll contest — and all four used to open-code it as a sum of `.Training`,
+which only worked while a mob's authored stats and spawn pool both lived there.
+The expression is invariant across both U10b-0 data moves, which is why the
+accessor could land before them. Species baselines are not uniform (0 to 6000
+across the roster), so the subtraction is a per-species lookup, and a nil
+species record contributes no baseline because such a character's `Base` was
+never hydrated either.
+
+One consequence worth knowing: `assess` does not filter player corpses (`raise`
+does, on `UserId != 0`), and a player's `Base` is a gaussian roll rather than a
+species baseline, so a player corpse now reports the whole character rather than
+only its trained points. Deliberate.
+
 ## Mitigation System (Three Channels)
 
 The character package provides three mitigation getter methods that compute

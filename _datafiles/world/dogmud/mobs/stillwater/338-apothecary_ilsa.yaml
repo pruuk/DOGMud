@@ -61,11 +61,11 @@ character:
     alchemy: 1
   stats:
     perception:
-      training: 12
+      base: 112
     willpower:
-      training: 8
+      base: 108
     dexterity:
-      training: 8
+      base: 108
   shop:
     # Stillwater unique (forager-fed)
     - itemid: 40056    # marsh willow bark

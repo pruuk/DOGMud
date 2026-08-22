@@ -42,11 +42,11 @@ character:
   gold: 90
   stats:
     perception:
-      training: 8
+      base: 108
     strength:
-      training: 6
+      base: 106
     charisma:
-      training: 4
+      base: 104
   shop:
     - itemid: 40067
     - itemid: 40038

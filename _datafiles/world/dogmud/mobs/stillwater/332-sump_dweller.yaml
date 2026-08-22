@@ -40,15 +40,13 @@ character:
   speciesid: 23
   stats:
     strength:
-      training: 22
-    dexterity:
-      training: 0
+      base: 102
     perception:
-      training: 12
+      base: 72
     vitality:
-      training: 120
+      base: 240
     willpower:
-      training: 12
+      base: 102
   skills:
     weapon-combat: 1
     unarmed-combat: 1
