@@ -758,8 +758,22 @@ The question is whether advancement *feels* fair across activities.
 ## Out of scope, filed rather than fixed
 
 - **`vitality` at 4.5** — ~52%/use, needs its own slice (Task 6 Step 3).
-- **`charge` records 95 events at a 0.0% hit rate** in the analytics — looks like
-  a bug, not balance.
+- **`charge` records 95 events at a 0.0% hit rate** in the analytics. It is a
+  **mob-only** ability (`internal/mobcommands/charge.go`; `divergences.go:177`
+  marks it `mob-ai`), so a large attacker/defender skill gap is a plausible
+  explanation — every mob is combat skill 1. But note the arithmetic before
+  dismissing it: at a true 5% hit rate, P(0 hits in 95 attempts) is 0.8%; it
+  needs a true rate near 2% for luck alone to be comfortable. Worth a look at
+  whether `charge` reports `Hit` correctly to `RecordSpecialMove` at all —
+  `mobcommands/charge.go` contains no `RecordSpecialMove` call, so find who
+  records it and with what.
+- 🚩 **`TestTaunt_StalePlayerIdInRoom_StillMessages` is FLAKY** (`internal/usercommands`).
+  Measured during Task 3: **2 of 4** full-package runs fail on a tree WITHOUT any
+  Phase D change, and 1 of 6 with. It passes 3/3 when run alone, so it is
+  order-dependent, not logic-dependent. **This invalidates the standing
+  assumption that `go test ./...` has no known failures and therefore that any
+  failure is real.** Anyone gating on a green suite needs to know this one lies.
+  Not a Phase D regression; do not chase it inside this phase.
 - **`"Your fists flies wide"`** — subject/verb disagreement in unarmed crit
   narration, found in the measurement session.
 - **`playtestrun stop` does not stop the container** — known harness bug,
