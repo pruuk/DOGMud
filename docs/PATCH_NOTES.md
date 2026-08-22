@@ -1,5 +1,27 @@
 # DOGMud Patch Notes
 
+## 2026-08-22: Difficulty follows what you have built, not what you have done
+
+How hard something is to improve now depends on how far you have already taken
+it, rather than on how many times you have used it. Practising a lot no longer
+makes the next step harder by itself.
+
+This fixes something that felt unfair and was. If you leaned on one strength for
+a long time, it grew more and more reluctant to improve, while a strength you
+had barely touched stayed easy. The two are now judged the same way: by what you
+have actually gained.
+
+Equipment no longer works against you either. Wearing gear that raises an
+attribute used to make that same attribute harder to train, so your best kit
+quietly slowed the growth it was helping. It does not any more.
+
+Creatures are judged the same way you are. A large beast is no longer harder to
+teach than a small one simply for being written large, and the biggest creatures
+in the world, which previously could not improve at all, now can. Creatures that
+live a long time and fight constantly can grow further than they used to, which
+matters most for a companion you keep at your side. A creature that dies goes
+back to what it was.
+
 ## 2026-08-22: Practice always counts for something
 
 If you had drilled an ability far enough, it could quietly stop improving
