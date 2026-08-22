@@ -667,6 +667,14 @@ Balance:
   #   ongoing maintenance uses GrappleStaminaCostPerRound instead.
   SpecialMoveBaseStaminaCost: 4
   SpecialMoveCooldown: 4
+
+  # - ConjureCooldown -
+  # Rounds between corpse-free conjure/summon casts, on their OWN cooldown key
+  # rather than the shared special-move budget. Conjure needs no corpse and no
+  # target, so an unthrottled conjure ran at 225 casts/hour standing still, with
+  # a free summon/dismiss loop. 36 rounds paces it to roughly the raise+assess
+  # rate. Retune once the kill rate is measured.
+  ConjureCooldown: 36
   # RhetoricActionBaseConvictionCost prices taunt, rally, and warcry before the
   #   shared inverse-skill multiplier. Carried load never affects these actions.
   RhetoricActionBaseConvictionCost: 4
@@ -1014,31 +1022,64 @@ Balance:
   # unarmed-combat both map dexterity as their primary stat, firing
   # OnStatUse("dexterity") multiple times per combat round.
   StatProgressionMultipliers:
-    strength: 0.20     # Tuned 39.2: combat stats fire many times/round; low mult prevents runaway growth
-    dexterity: 0.15    # Tuned 2026-06-02: dashboard showed dex as the slowest stat even at 0.10; bumped +50% (still lowest — weapon + unarmed both fire dex/round)
-    perception: 1.0
-    vitality: 4.5      # Tuned 2026-06-02: dashboard still showed vitality a bit slow at 4.0; bumped +12.5% (no skill primaries vit, so call-count lags other 1.0 stats)
-    willpower: 1.0
-    charisma: 0.22     # Tuned 2026-06-02: dashboard showed charisma a tiny bit slow at 0.20; small +10% bump (rhetoric fires often in group fights, so kept modest)
+    # Solved on measured play-time rates, U10b-0 Phase D revision 3.
+    # Regenerate with `python tools/balance/u10b_solve_v3.py`.
+    strength: 0.48
+    # dexterity is the fastest-firing stat by a wide margin: the attacker gain,
+    # BOTH weapon entries, and every defence (+2 dex on dodge and parry alike).
+    dexterity: 0.12
+    # perception after Phase D unhooked look/consider. Its feeders are now
+    # forage/search, the perception crafts, salvage and ranged-combat.
+    perception: 0.41
+    # NOT retuned by Phase D. Vitality's faucets are the regen damper and the
+    # crit-toughen path, neither of which is a uses/hour track, so the solver has
+    # no row for it. Known gap: it reads ~52%/use and needs its own slice.
+    vitality: 4.5
+    willpower: 2.21
+    # charisma has no direct player faucet; it is the primary stat behind
+    # rhetoric, bartering and manifestation.
+    charisma: 0.70
 
   # ── PER-SKILL PROGRESSION MULTIPLIERS ───────────────────────────────────────
   # Overrides the hardcoded skill progression multipliers in skills.go.
   # Combat skills fire many times per round (low mult), utility skills
   # fire rarely (high mult). Only skills listed here override the defaults.
   SkillProgressionMultipliers:
-    weapon-combat: 0.23   # Tuned 39.6: +25% from 0.18
-    unarmed-combat: 0.23  # Tuned 39.6: +25% from 0.18
-    spellcasting: 0.63    # Tuned 39.6: +25% from 0.5
-    rhetoric: 0.58        # Tuned 39.6: +15% from 0.5
-    bartering: 2.0
-    manifestation: 0.38   # Tuned 39.6: +25% from 0.3
-    blacksmithing: 3.5  # Crafting skills fire rarely (once per craft); boosted for feel
-    alchemy: 3.5
-    tailoring: 3.5
-    cooking: 3.5
-    jewelcrafting: 3.5
-    enchanting: 3.5
-    salvage: 2.0
+    # Solved on measured play-time rates, U10b-0 Phase D revision 3.
+    # Regenerate with `python tools/balance/u10b_solve_v3.py`.
+    # MUST stay in sync with SkillProgressionMultipliers in internal/skills/skills.go
+    # -- that Go map is what every test binary sees, since tests never load this file.
+    #
+    # unarmed sits BELOW weapon deliberately: the offhand fist takes 4 swings to
+    # a longsword's 2 and collects the dodge award (83.6% of all defences), so it
+    # earns 1.83x the uses. Equal values make an empty offhand dominant.
+    weapon-combat: 1.27
+    unarmed-combat: 0.69
+    # These share ONE 4-round "special-move" key with 15 other verbs, so a
+    # concerted grinder gets ~22.5 uses/hour between them, not each. ranged-combat
+    # joins indirectly: firing is ungated but reload is, and a weapon must be
+    # loaded to fire.
+    ranged-combat: 4.98
+    spellcasting: 3.90
+    rhetoric: 4.98
+    # Assumes the Phase D conjure cooldown. Without it manifestation runs at
+    # 225/hr standing still and this over-rewards it ~9x.
+    manifestation: 4.46
+    # search is anchored on forage's 6-round cooldown at 100% engagement, NOT on
+    # the `search` command, which is anti-botting-gated and cannot be ground.
+    search: 1.00
+    # bartering assumes the Phase D per-transaction fix; awarding per unit made
+    # it unbounded in time and unfittable.
+    bartering: 2.07
+    skullduggery: 0.83
+    salvage: 2.07
+    # Crafts at 40% engagement: an hour of crafting is gather THEN craft.
+    blacksmithing: 1.41
+    alchemy: 1.41
+    tailoring: 1.41
+    cooking: 1.41
+    jewelcrafting: 1.41
+    enchanting: 1.41
 
   # ── SALVAGE ────────────────────────────────────────────────────────────────
   SalvageMinChance: 0.15      # Per-ingredient recovery chance at skill 1
