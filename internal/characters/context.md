@@ -48,12 +48,46 @@ bonus that flows into `CheckSkillProgression`. `OnSkillUse` delegates with
 `1.0 + difficulty * SpellDifficultyProgressionScale`, craft completion passes
 `1.0 + skillMinimum * CraftDifficultyProgressionScale`.
 
+### The roll resolution and `ProgressionChanceFloor` (U10b-0 Phase B)
+
+Every progression roll uses `progressionRollDenominator` (1,000,000) rather than
+the 10,000 it used to. At 10,000, any chance below 0.01% produced a threshold of
+exactly zero: the stat was not slow, it was **sealed**, and could never progress
+again. Measured against `_datafiles/world/dogmud/users/3.yaml` with the shipped
+config, two of that character's six stats were in that state (strength
+3.98e-05, dexterity 9.25e-12).
+
+`Balance.ProgressionChanceFloor` (shipped 1e-5) is applied as the last step of
+`statProgressionChance` and of `CheckSkillProgression`'s chance assembly, after
+every multiplier.
+
+**Both halves are required and each fixed a different stat.** Resolution alone
+revived strength (threshold 39) but left dexterity dead; the floor is what
+revived dexterity (threshold 10). At the old resolution the floor itself would
+have quantised to zero.
+
+Two things to preserve if you touch this:
+
+- **`chance > 0` guards both floors.** The mob hard-cap short-circuits return a
+  genuine zero meaning "this mob may not progress at all", and the floor must
+  not resurrect that. Pinned by
+  `TestStatProgressionChance_FloorDoesNotResurrectAHardZero`.
+- **The floor is applied in the chance expression, not at the roll site**, so
+  every caller of that expression — `CheckStatProgression`, `OnCritReceived`,
+  the faucet test — sees the same guarantee.
+
+The knob's validator uses `<= 0`, not the `< 0` idiom the deliberate
+off-switches use, because a config that omits it must get the floor back rather
+than lose it. That distinction is not academic: `ObservedCritProgressionBonus`
+uses `< 0` and is therefore sitting at 0 on any config that omits the key.
+
+
 ### Regen-Based Stat Progression
 Every regen tick (every 3 rounds), each resource pool has a small chance to
 trigger stat progression based on how depleted it is. This replaced the old
 hard 25%-threshold `OnLowResource` system.
 
-**Formula:** `chance = RegenProgressionBase × (1 - current/max) ^ RegenProgressionCurve`
+**Formula:** `chance = RegenProgressionBase × (1 - current/effectiveMax) ^ RegenProgressionCurve`
 
 **Config knobs:** `RegenProgressionBase` (default 0.01), `RegenProgressionCurve` (default 3.0)
 
@@ -66,8 +100,36 @@ The existing `StatProgressionMultipliers` still apply on top.
 Mob progression uses `MobProgressionRate` as a multiplier.
 
 **Key methods:**
-- `OnRegenTick(current, max, relatedStats, userId)` — computes chance, calls CheckRegenProgression per stat
+- `OnRegenTick(pool Pool, relatedStats []string, userId int)` — derives the chance, calls CheckRegenProgression per stat
+- `regenTickChance(pool Pool) float64` — the chance one tick presents, or 0 for no roll
 - `CheckRegenProgression(statName, userId, chance)` — applies mob gating, multipliers, rolls
+
+**The ratio measures the REACHABLE pool, not the raw one (U10b-0 Phase B).**
+A character sitting at their reserved cap is not depleted, they are full, so the
+denominator is raw max minus `GetPoolReservation`. Reading the raw max there
+turns a large reservation into a permanent progression farm — the fyttyn
+vitality exploit, 2026-04-16.
+
+`OnRegenTick` takes a `Pool` rather than a `(current, max)` pair specifically so
+no caller can get that wrong. Six call sites used to compute the adjusted max by
+hand, correctly, with nothing pinning it.
+
+Two traps if you touch this:
+
+- **Do not reach for `EffectivePoolMax`.** It is floored at 1 and never returns
+  0, so a fully reserved pool would present `max=1, current=0, ratio=0` — the
+  *maximum* chance, permanently. That is the same faucet inverted.
+  `regenTickChance` returns 0 for a pool with nothing reachable in it, pinned by
+  `TestRegenTickChance_TotallyReservedPoolIsZeroNotMaximum`.
+- **Only the progression RATIO moved to the effective max.** The regen AMOUNT
+  (`HealthPerRound` / `StaminaPerRound` / `ConvictionPerRound` in
+  `resources.go`) deliberately still reads the raw max. See `EffectivePoolMax`'s
+  own doc comment.
+
+**Regen progression is NOT floored.** `ProgressionChanceFloor` applies to the
+two rank-driven sites only. This chance is deliberately proportional to
+depletion and is *supposed* to vanish as the pool fills; flooring it would lift
+a near-full-pool chance by orders of magnitude.
 
 **U9: `CheckRegenProgression` now damps by rank.** It used to derive its
 chance from pool depletion alone and never fall no matter how much the stat
