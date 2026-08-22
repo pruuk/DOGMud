@@ -164,8 +164,38 @@ self-only `HelpSingle` casts, and is **0** — no roll at all — for
 
 The structure above is now known. What the code cannot tell us:
 
-1. **`forage` success rate per attempt**, by biome and by Search rank. Sets
-   perception's realised rate against its 150/hr ceiling.
+1. ~~**`forage` success rate per attempt**~~ — **ANSWERED, closed-form.** Forage
+   success is a plain gaussian check, so it is computable rather than sampled:
+   `searchScore = Perception + SkillMultiplier(searchRank)×25`
+   (`skill_helpers.go:87`), rolled `Normal(score, 0.15×score)` against a
+   per-biome difficulty (`forage_core.go:129`). See
+   `tools/balance/forage_rate.py`.
+
+   | profile | per / rank | score | forest | mountains | realised uses/hr |
+   |---|---|---|---|---|---|
+   | fresh | 100 / 0 | 125.0 | 60.5% | 21.2% | 90.8 |
+   | early | 100 / 10 | 147.4 | 89.2% | 63.0% | 133.8 |
+   | mid | 110 / 20 | 166.6 | 96.9% | 85.7% | 145.3 |
+   | practised | 120 / 35 | 186.8 | 99.1% | 95.3% | 148.7 |
+   | soft-capped | 130 / 50 | 205.0 | 99.7% | 98.3% | 149.6 |
+
+   **The find rate saturates by Search rank ~20.** Past that the 6-round
+   cooldown is the only binding constraint, so forage's realised perception
+   rate is essentially its **150/hr ceiling** for anyone past early game. Only
+   a genuinely fresh character in a hard biome (mountains/cliffs, 21%/14%) is
+   yield-bound rather than cooldown-bound.
+
+   Two consequences for the retune. First, forage's rate is a **constant**, not
+   a curve — the multiplier carries all of the tuning, since the cooldown is a
+   hardcoded literal. Second, `look`/`consider` at ~3,600/hr is roughly **24x**
+   forage's best case, so tuning perception to forage makes the ungated path
+   24x over-rewarding unless it is gated too.
+
+   **Open design question:** what does "an hour of grinding forage" mean for
+   engagement? The owner's 10% ruling covers combat, where finding mobs
+   dominates. Foraging is stationary and repeatable, so its realised engagement
+   is much closer to 100% — which is the difference between 15 and 150
+   uses/hour, a 10x swing in the solved multiplier.
 2. **Realised engagement** — how much of an hour is actually spent in the
    activity versus travelling. The owner's 10% ruling is an estimate.
 3. **Clean-hit probability** in real combat, which sets the weapon-combat and
