@@ -139,7 +139,8 @@ since regen is its only progression source) at low health forever -- the
 `regenDamperFactor(statName) float64` multiplies the depletion chance by
 `CalculateProgressionChance(virtualRank, StatProgressionSoftCap) /
 BaseProgressionChance`, so it is exactly `1.0` at rank 0 (a fresh character's
-passive growth is unchanged) and falls as the stat's virtual rank climbs. It
+passive growth is unchanged) and falls as the stat's rank climbs. **Rank is
+`StatInfo.Training` since U10b-0 Phase C**, not a use counter. It
 returns `0` if `BaseProgressionChance <= 0` rather than dividing by zero.
 `OnRegenTick` now calls `TrackStatUse` for each related stat *before* rolling,
 which is the load-bearing half -- without it vitality's rank stayed at 0
@@ -214,10 +215,13 @@ progression for contest paths now flows exclusively through
   exactly as pre-U9 call sites did directly. Only bonus-class events go
   through the new `applyBonusProgression` path.
 - **Bonus events track a use count ONLY for `progression.ClassObserved`.**
-  `CheckSkillProgression`/`CheckStatProgression` derive a virtual rank from
-  the use counter, and `CalculateProgressionChance` is monotonically
-  DECREASING in rank -- tracking a crit or fumble would punish the very
-  achievement the bonus rewards. The observed party has no achievement to
+  This dates from when rank came from the use counter, and
+  `CalculateProgressionChance` is monotonically DECREASING in rank, so tracking
+  a crit or fumble would have punished the very achievement the bonus rewards.
+  **Since U10b-0 Phase C rank is `Training` / the skill level, so tracking no
+  longer affects difficulty at all** -- the counters are telemetry. The
+  asymmetry is retained because the dashboard still reports those counts, but it
+  no longer has a balance consequence. The observed party has no achievement to
   punish, and for the crit-received toughening stat specifically, tracking
   is the ONLY thing that ever moves that stat's rank (nothing else calls
   `OnStatUse` for e.g. vitality). This is enforced in the unexported
@@ -1669,3 +1673,38 @@ the retired API; they do not exist. The live predicates are in
 `position_predicates.go` — `IsGrappling()`, `IsStandingGrapple()`,
 `IsGroundGrapple()`, `IsOnFloor()`, `IsBackGround()`, and the rest. Likewise
 there is no `IsBlinded()`; use `HasAnyBlindSource()` (`sight.go`).
+
+## Progression rank: trained points, not uses (U10b-0 Phase C)
+
+The chance that a stat or skill improves is keyed to **how far it has already
+come**, never to how often it has been used:
+
+- **stat rank** = `GetStatTraining(stat)`, i.e. `StatInfo.Training`
+- **skill rank** = `c.Skills[name]`, the level itself
+
+Four sites read it, and all four must agree: `statProgressionChance`,
+`skillProgressionChance`, `CheckStatProgression`'s debug log, and
+`regenDamperFactor`.
+
+Three things this removed, each deliberate:
+
+- **The use counters no longer feed the curve.** Keying on them punished
+  frequency: a stat used constantly exhausted its curve while one used rarely
+  stayed cheap forever. Counters are still written to saves and shown on the
+  admin dashboard, so they remain useful telemetry, and `UsesPerRank` is kept
+  only for that display.
+- **The anti-exploit value floor is gone** ("if the value exceeds the soft cap,
+  use the value as the rank"). It existed because a counter could be low while
+  the value was high; that cannot happen when the rank IS the gains.
+- **Equipment can no longer make a stat harder to train.** The floor read
+  `GetStatValue`, which includes `Mods`, so wearing a stat item raised your own
+  difficulty. `Training` excludes both `Base` and `Mods` by construction.
+
+`StatProgressionSoftCap` is **50** trained points, which reproduces both
+documented anchors: a fresh stat is ~27% per use and a stat with 50 trained
+points ~1.3%. `SkillSoftCap` stays 50 because skills already keyed on level
+above it.
+
+`skillProgressionChance` was extracted from `CheckSkillProgression` in this
+phase so the expression has one home. An inline copy is what let the admin
+dashboard's chance display drift from production.

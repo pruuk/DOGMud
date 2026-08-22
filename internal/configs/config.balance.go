@@ -381,7 +381,7 @@ type Balance struct {
 
 	// ── PROGRESSION ───────────────────────────────────────────────────────────
 	SkillSoftCap             ConfigInt   `yaml:"SkillSoftCap"`             // Virtual ranks where progression slows sharply (default 50)
-	StatProgressionSoftCap   ConfigInt   `yaml:"StatProgressionSoftCap"`   // Virtual rank where stat progression slows sharply (default 150); also the anti-exploit floor — stats above this pin virtual rank to the raw stat value. NOT a cap on stat values.
+	StatProgressionSoftCap   ConfigInt   `yaml:"StatProgressionSoftCap"`   // Trained points at which stat progression slows sharply (default 50). NOT a cap on stat values, and no longer an anti-exploit floor: rank IS the trained points, so a high value cannot buy a cheap rank.
 	UsesPerRank              ConfigInt   `yaml:"UsesPerRank"`              // Skill/stat uses that equal one virtual rank (default 25)
 	BaseProgressionChance    ConfigFloat `yaml:"BaseProgressionChance"`    // Starting chance to progress at rank 0 (default 0.30)
 	StatProgressionRate      ConfigFloat `yaml:"StatProgressionRate"`      // Global multiplier on STAT progression chance; skills unaffected (default 1.0)

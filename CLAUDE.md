@@ -363,10 +363,11 @@ party markers are web-only — the ASCII `map` command is unaffected.
   and call the same `Recalculate()`) was silently shrinking every resource pool
   by roughly 40%. Do not reintroduce compression in `StatInfo.Recalculate()` —
   anything added there hits the pools too.
-- `StatProgressionSoftCap` (default 150) is the *virtual rank* where progression
-  slows sharply, plus the anti-exploit floor in `CheckStatProgression`. It is not
-  a ceiling on stat values. This is the real brake on runaway stats: no
-  production character has organically exceeded 195 under it.
+- `StatProgressionSoftCap` (default **50**) is the number of **trained points**
+  at which progression slows sharply. It is not a ceiling on stat values. The
+  old anti-exploit floor in `CheckStatProgression` is **gone** (U10b-0 Phase C):
+  it existed because a use counter could be low while the stat value was high,
+  which cannot happen now that the rank IS the gains.
 - Resource pools: `HealthMax = 5 + Vit×3 + Str×1`, `StaminaMax = 5 + Vit×3 +
   Wil×1`, `ConvictionMax = 5 + Cha×3 + Wil×1`. One primary stat (×3) and one
   secondary (×1) each. Coefficients live in the balance config; note that a knob
@@ -374,17 +375,20 @@ party markers are web-only — the ASCII `map` command is unaffected.
   legal shipped value (`StaminaPerStrength: 0`).
 - Skills (10 total) cap softly at 50 (`skillSoftCap`). They progress via
   `OnSkillUse()` → `CheckSkillProgression()`, probabilistically.
-- **A progression roll happens on EVERY use, not every 25 uses.** Corrected
-  2026-08-04; the old "every ~25 uses" wording here was wrong.
-  `UsesPerRank` (25) is not a check cadence. It is the divisor that converts the
-  use counter into a **virtual rank** (`progression.go:92`, `:163`), and that
-  rank is what decays the odds. So it is "a roll every use, whose odds step down
-  every 25 uses", not "a roll every 25 uses".
+- **A progression roll happens on EVERY use**, and the odds depend on how far
+  the stat or skill has already come, not on how often it has been used.
+  **Rank is `StatInfo.Training` for a stat and the skill level for a skill**
+  (U10b-0 Phase C). Use counters are still recorded in saves and shown on the
+  admin dashboard, but they are **telemetry only** and no longer feed the curve;
+  `UsesPerRank` is retained for that display and drives nothing.
+- **Equipment cannot make a stat harder to train.** The retired value floor read
+  `GetStatValue`, which includes `Mods`, so wearing a stat item raised your own
+  difficulty. Rank now reads `Training` alone.
 - Curve (`CalculateProgressionChance`, `internal/characters/progression.go:44-62`):
   below the soft cap `base × exp(-decayBelow × rank/softCap)`, above it the
   decay continues with `decayAbove` rather than reaching zero. Stat rolls also
   multiply by `StatProgressionRate`. With shipped config a fresh stat is roughly
-  27% per use, falling to roughly 1.3% at virtual rank 150.
+  27% per use, falling to roughly 1.3% at **50 trained points**.
 - Shipped config again differs from the Go defaults: `BaseProgressionChance`
   0.12 shipped against a 0.30 default, `StatProgressionRate` 2.25 against 1.0.
   Read `config.yaml`, not the defaults.

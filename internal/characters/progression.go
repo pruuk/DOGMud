@@ -76,42 +76,45 @@ func CalculateProgressionChance(currentRank int, softCap int) float64 {
 	return aboveCapFloor * math.Exp(-decayAbove*(ratio-1.0))
 }
 
-// CheckSkillProgression rolls against the progression chance for a skill.
-// If the roll succeeds, the skill level is increased. Returns true if
-// progression fired (skill actually gained), false otherwise.
-// bonusMultiplier scales the chance (e.g. 2.0 for critical successes).
-func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMultiplier float64) bool {
+// skillProgressionChance computes the probability (0.0-1.0) that a skill
+// progression roll succeeds for skillName, given a bonus multiplier. This is the
+// single source of truth for the chance CheckSkillProgression rolls against,
+// mirroring statProgressionChance.
+//
+// Extracted from CheckSkillProgression in U10b-0 Phase C. An inline copy is what
+// let the admin dashboard's chance display drift from production, and Phase E
+// needs to call the real expression rather than a duplicate.
+//
+// A mob at or past its skill cap, or with mob progression disabled, returns 0.
+func (c *Character) skillProgressionChance(skillName string, bonusMultiplier float64) float64 {
 	b := configs.GetBalanceConfig()
+	actualSkillName := resolveSkillName(skillName)
 
 	// Mob-specific gating
 	if c.IsMob {
 		if !bool(b.MobProgressionEnabled) {
-			return false
+			return 0
 		}
-		actualSkill := resolveSkillName(skillName)
-		if lvl, ok := c.Skills[actualSkill]; ok && lvl >= int(b.MobSkillCap) {
-			return false // hard cap
+		if lvl, ok := c.Skills[actualSkillName]; ok && lvl >= int(b.MobSkillCap) {
+			return 0 // hard cap
 		}
 		bonusMultiplier *= float64(b.MobProgressionRate)
 	}
 
-	// Normalize use count by the skill's progression multiplier so that
-	// frequently-fired skills (combat) don't exhaust the progression curve
-	// faster than infrequently-fired skills (utility). Without this,
-	// combat skills asymptote at ~15 progs vs ~100 for utility skills.
-	progressMult := skills.GetProgressionMultiplier(skillName)
-	adjustedUseCount := c.GetSkillUseCount(skillName)
-	if progressMult > 0 && progressMult < 1.0 {
-		adjustedUseCount = int(float64(adjustedUseCount) * progressMult)
-	}
-	virtualRank := adjustedUseCount / int(b.UsesPerRank)
-	// If the actual skill level exceeds the soft cap, use it as a floor for the virtual rank.
-	// This prevents characters with artificially high skills (e.g. admin accounts) from
-	// exploiting the low use-count portion of the progression curve.
-	actualSkillName := resolveSkillName(skillName)
-	if skillLevel, ok := c.Skills[actualSkillName]; ok && skillLevel > int(b.SkillSoftCap) && skillLevel > virtualRank {
-		virtualRank = skillLevel
-	}
+	// Rank is the skill LEVEL. It used to be a use counter normalised by the
+	// skill's progression multiplier, which existed to stop frequently-fired
+	// skills exhausting the curve faster than rare ones. Keying on the level
+	// makes difficulty depend on how far the skill has actually come, which is
+	// frequency-independent by construction, so the normalisation goes with it.
+	//
+	// The old anti-exploit floor ("if the level exceeds the soft cap, use it as
+	// the rank") is deleted for the same reason: it existed because a counter
+	// could be low while the level was high, which cannot happen when the rank
+	// IS the level.
+	//
+	// GetProgressionMultiplier survives below as a per-skill PACE dial.
+	virtualRank := c.Skills[actualSkillName]
+
 	// Phase 24.2: Apply mutation skill progression multiplier
 	mutSkillMult := 1.0 + mutations.GetSkillProgressionMultiplier(c.Mutations)
 	// Phase 25.3: Skill Attunement buff doubles skill progression chance
@@ -119,16 +122,32 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 	if c.HasBuffFlag(buffs.SkillProgress) {
 		buffSkillMult = 2.0
 	}
-	chance := CalculateProgressionChance(virtualRank, int(b.SkillSoftCap)) * bonusMultiplier * skills.GetProgressionMultiplier(skillName) * mutSkillMult * buffSkillMult
+
+	chance := CalculateProgressionChance(virtualRank, int(b.SkillSoftCap)) *
+		bonusMultiplier * skills.GetProgressionMultiplier(skillName) *
+		mutSkillMult * buffSkillMult
 	if chance > 1.0 {
 		chance = 1.0
 	}
-	// Same guarantee as the stat path: a skill may become vanishingly slow but
-	// never sealed. `chance > 0` preserves the mob hard-cap short-circuits
-	// above, which return a genuine zero.
+	// A skill may become vanishingly slow but never sealed. `chance > 0`
+	// preserves the mob hard-cap short-circuit above, which returns a genuine
+	// zero meaning "may not progress at all".
 	if floor := float64(b.ProgressionChanceFloor); chance > 0 && chance < floor {
 		chance = floor
 	}
+	return chance
+}
+
+// CheckSkillProgression rolls against the progression chance for a skill.
+// If the roll succeeds, the skill level is increased. Returns true if
+// progression fired (skill actually gained), false otherwise.
+// bonusMultiplier scales the chance (e.g. 2.0 for critical successes).
+func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMultiplier float64) bool {
+	chance := c.skillProgressionChance(skillName, bonusMultiplier)
+	if chance <= 0 {
+		return false
+	}
+	virtualRank := c.Skills[resolveSkillName(skillName)]
 
 	// Roll: chance is 0.0–1.0, scaled to the integer roll resolution.
 	threshold := int(chance * progressionRollDenominator)
@@ -187,13 +206,17 @@ func (c *Character) statProgressionChance(statName string, bonusMultiplier float
 		bonusMultiplier *= float64(b.MobProgressionRate)
 	}
 
-	virtualRank := c.GetStatUseCount(statName) / int(b.UsesPerRank)
-	// If the actual stat value exceeds the soft cap, use it as a floor for the virtual rank.
-	// This prevents characters with artificially high stats (e.g. admin accounts) from
-	// exploiting the low use-count portion of the progression curve.
-	if statVal := c.GetStatValue(statName); statVal > int(b.StatProgressionSoftCap) && statVal > virtualRank {
-		virtualRank = statVal
-	}
+	// Rank is TRAINED POINTS, not uses and not the final value. Uses measured
+	// how often you swung, which punished frequency; the value included Base
+	// (the baseline you started with) and Mods (equipment), so gear made a stat
+	// HARDER to train and a big mob was harder to train than a small one.
+	// Training is exactly what progression has added, so difficulty depends only
+	// on gains actually made.
+	//
+	// The old anti-exploit value floor is deleted along with the counter: it
+	// existed because a counter could be low while the value was high, which
+	// cannot happen when the rank IS the gains.
+	virtualRank := c.GetStatTraining(statName)
 	// Phase 24.2: Apply mutation stat progression multiplier
 	mutStatMult := 1.0 + mutations.GetStatProgressionMultiplier(c.Mutations)
 	// Phase 39.1: Per-stat progression multiplier from config
@@ -221,17 +244,12 @@ func (c *Character) statProgressionChance(statName string, bonusMultiplier float
 // If the roll succeeds, the stat's Training value is increased by 1.
 // Returns true if progression fired (stat actually gained), false otherwise.
 func (c *Character) CheckStatProgression(statName string, userId int, bonusMultiplier float64) bool {
-	b := configs.GetBalanceConfig()
-
 	chance := c.statProgressionChance(statName, bonusMultiplier)
 	if chance <= 0 {
 		return false
 	}
 
-	virtualRank := c.GetStatUseCount(statName) / int(b.UsesPerRank)
-	if statVal := c.GetStatValue(statName); statVal > int(b.StatProgressionSoftCap) && statVal > virtualRank {
-		virtualRank = statVal
-	}
+	virtualRank := c.GetStatTraining(statName)
 
 	threshold := int(chance * progressionRollDenominator)
 	roll := util.Rand(progressionRollDenominator)
@@ -442,10 +460,7 @@ func (c *Character) regenDamperFactor(statName string) float64 {
 	if base <= 0 {
 		return 0
 	}
-	virtualRank := c.GetStatUseCount(statName) / int(b.UsesPerRank)
-	if statVal := c.GetStatValue(statName); statVal > int(b.StatProgressionSoftCap) && statVal > virtualRank {
-		virtualRank = statVal
-	}
+	virtualRank := c.GetStatTraining(statName)
 	return CalculateProgressionChance(virtualRank, int(b.StatProgressionSoftCap)) / base
 }
 

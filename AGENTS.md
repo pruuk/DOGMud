@@ -235,8 +235,10 @@ re-sleep. Preserve the first-round vulnerability of sleeping targets.
   stat compression; `ValueAdj == Value`. Never reintroduce compression in
   `StatInfo.Recalculate()` because resource maxima use the same type.
 - `StatProgressionSoftCap` and skill soft cap are chance-curve concepts, not
-  ceilings. A progression roll happens every use; `UsesPerRank` converts use
-  count to virtual rank and does not set the check cadence. Player
+  ceilings. A progression roll happens every use, and the odds are keyed to how
+  far the stat or skill has come: **rank is `StatInfo.Training` for a stat and
+  the skill level for a skill** (U10b-0 Phase C). Use counters survive as
+  telemetry only and `UsesPerRank` drives nothing. Player
   `IncreaseStat`/`IncreaseSkill` are uncapped; mob caps are explicit mob-only
   guards.
 - For every opposed contest, use `combat.RunContest`. Production must not call

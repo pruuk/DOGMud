@@ -59,10 +59,11 @@ func TestCritReceivedProgression_DecaysWithRank(t *testing.T) {
 	low := newProgressionTestCharacter(t)
 	high := newProgressionTestCharacter(t)
 
-	// Drive the high character's virtual rank up via its use counter.
-	for i := 0; i < 25*120; i++ {
-		high.TrackStatUse("vitality")
-	}
+	// Drive the high character's rank up. Rank is TRAINED POINTS since
+	// U10b-0 Phase C, not the use counter -- a character who has swung a
+	// million times but gained nothing is still a beginner.
+	high.Stats.Vitality.Training = 40
+	high.Stats.Vitality.Recalculate()
 
 	lowChance := critReceivedChanceForTest(low, "vitality")
 	highChance := critReceivedChanceForTest(high, "vitality")
@@ -85,9 +86,9 @@ func TestRegenProgression_UnchangedAtRankZero(t *testing.T) {
 func TestRegenProgression_DecaysWithRank(t *testing.T) {
 	low := newProgressionTestCharacter(t)
 	high := newProgressionTestCharacter(t)
-	for i := 0; i < 25*150; i++ {
-		high.TrackStatUse("vitality")
-	}
+	// Rank is trained points, not uses (U10b-0 Phase C).
+	high.Stats.Vitality.Training = 40
+	high.Stats.Vitality.Recalculate()
 	if regenDecayFactorForTest(high, "vitality") >= regenDecayFactorForTest(low, "vitality") {
 		t.Error("regen progression did not decay with rank; the low-health grind is still open")
 	}
