@@ -17,6 +17,18 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// progressionRollDenominator is the integer resolution every progression roll
+// uses. It was 10,000, which quantised any chance below 0.01% to a threshold of
+// zero — a stat in that state could never progress again, and two of a live
+// character's six were there (strength 3.98e-05, dexterity 9.25e-12 against
+// users/3.yaml and the shipped config). util.Rand is already integer, so the
+// finer resolution costs nothing.
+//
+// Resolution alone does not remove the seal, it only moves it further out the
+// curve; Balance.ProgressionChanceFloor is what removes it. Both are needed —
+// at 10,000 the shipped floor of 1e-5 would itself quantise to zero.
+const progressionRollDenominator = 1000000
+
 // skillNameMap maps progression context names to actual skill tags.
 // Can be used to alias legacy names to new skill tags.
 var skillNameMap = map[string]string{}
@@ -111,13 +123,19 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 	if chance > 1.0 {
 		chance = 1.0
 	}
+	// Same guarantee as the stat path: a skill may become vanishingly slow but
+	// never sealed. `chance > 0` preserves the mob hard-cap short-circuits
+	// above, which return a genuine zero.
+	if floor := float64(b.ProgressionChanceFloor); chance > 0 && chance < floor {
+		chance = floor
+	}
 
-	// Roll: chance is 0.0–1.0, convert to 0–10000 for integer roll
-	threshold := int(chance * 10000)
-	roll := util.Rand(10000)
+	// Roll: chance is 0.0–1.0, scaled to the integer roll resolution.
+	threshold := int(chance * progressionRollDenominator)
+	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
-		mudlog.Debug("Progression", "check", "skill", "result", "PROGRESS", "skill", skillName, "rank", virtualRank, "chance", fmt.Sprintf("%.2f%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
+		mudlog.Debug("Progression", "check", "skill", "result", "PROGRESS", "skill", skillName, "rank", virtualRank, "chance", fmt.Sprintf("%.4g%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
 		actualSkill := resolveSkillName(skillName)
 
 		if skills.SkillExists(actualSkill) {
@@ -184,6 +202,18 @@ func (c *Character) statProgressionChance(statName string, bonusMultiplier float
 	if chance > 1.0 {
 		chance = 1.0
 	}
+	// Floor last, after every multiplier. Progression is meant to become
+	// asymptotically slow, never impossible, and the integer roll quantises
+	// anything smaller than one part in progressionRollDenominator down to
+	// "never". Applied here rather than at the roll site so every caller of this
+	// expression -- CheckStatProgression, OnCritReceived, the faucet test --
+	// sees the same guarantee.
+	//
+	// `chance > 0` matters: the mob gates above return a hard 0 meaning "this
+	// mob may not progress at all", and the floor must not resurrect that.
+	if floor := float64(b.ProgressionChanceFloor); chance > 0 && chance < floor {
+		chance = floor
+	}
 	return chance
 }
 
@@ -203,11 +233,11 @@ func (c *Character) CheckStatProgression(statName string, userId int, bonusMulti
 		virtualRank = statVal
 	}
 
-	threshold := int(chance * 10000)
-	roll := util.Rand(10000)
+	threshold := int(chance * progressionRollDenominator)
+	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
-		mudlog.Debug("Progression", "check", "stat", "result", "PROGRESS", "stat", statName, "rank", virtualRank, "chance", fmt.Sprintf("%.2f%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
+		mudlog.Debug("Progression", "check", "stat", "result", "PROGRESS", "stat", statName, "rank", virtualRank, "chance", fmt.Sprintf("%.4g%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
 		if c.IncreaseStat(statName, 1) {
 			if userId > 0 {
 				msg := banner.Format(banner.Stat, statName, nil)
@@ -454,9 +484,9 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 		chance = 1.0
 	}
 
-	// Roll: chance is 0.0–1.0, convert to 0–10000 for integer roll
-	threshold := int(chance * 10000)
-	roll := util.Rand(10000)
+	// Roll: chance is 0.0–1.0, scaled to the integer roll resolution.
+	threshold := int(chance * progressionRollDenominator)
+	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
 		mudlog.Debug("Progression", "check", "regen_stat", "result", "PROGRESS", "stat", statName,
@@ -471,38 +501,72 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 	}
 }
 
-// OnRegenTick is called every regen tick (every 3 rounds) for each resource
-// pool. It computes a smooth chance based on how depleted the pool is and
-// rolls for stat progression on each related stat.
+// regenTickChance is the progression chance one regen tick presents for a pool,
+// or 0 when no roll should happen. Extracted from OnRegenTick so it can be
+// tested without waiting on a probabilistic roll, and so the reserved-pool rule
+// lives in exactly one place.
 //
-// Formula: chance = RegenProgressionBase × (1 - current/max) ^ RegenProgressionCurve
+// Formula: chance = RegenProgressionBase × (1 - current/effectiveMax) ^ RegenProgressionCurve
 //
-// Resource→stat mappings:
+// The ratio measures the pool the character can actually REACH — raw max minus
+// reservation — because a character sitting at their reserved cap is not
+// depleted, they are full. Reading the raw max there turns a large reservation
+// into a permanent progression farm (the fyttyn vitality exploit, 2026-04-16).
 //
-//	Health    → vitality, willpower
-//	Stamina   → strength, vitality
-//	Conviction→ willpower, charisma
-func (c *Character) OnRegenTick(current, max int, relatedStats []string, userId int) {
+// Note this is the progression RATIO only. The regen AMOUNT deliberately keeps
+// the raw max; see EffectivePoolMax's doc comment and HealthPerRound and its
+// siblings in resources.go.
+func (c *Character) regenTickChance(p Pool) float64 {
 	if !configs.GetGamePlayConfig().UseSkillProgression {
-		return
-	}
-	if max <= 0 {
-		return
+		return 0
 	}
 
-	ratio := float64(current) / float64(max)
+	rawMax := c.poolMax(p)
+	if rawMax <= 0 {
+		return 0
+	}
+	// Deliberately NOT EffectivePoolMax: that is floored at 1 and never returns
+	// 0, so a fully reserved pool would present max=1, current=0, ratio=0 — the
+	// maximum chance, permanently. That is the same faucet inverted. A pool with
+	// nothing reachable in it offers no progression at all.
+	effMax := rawMax - c.GetPoolReservation(string(p), rawMax)
+	if effMax <= 0 {
+		return 0
+	}
+
+	ratio := float64(c.PoolValue(p)) / float64(effMax)
 	if ratio >= 1.0 {
-		return // Pool is full, no progression chance
+		return 0 // at the top of what they can reach: not depleted
 	}
 	if ratio < 0 {
 		ratio = 0
 	}
 
 	b := configs.GetBalanceConfig()
-	base := float64(b.RegenProgressionBase)
-	curve := float64(b.RegenProgressionCurve)
+	chance := float64(b.RegenProgressionBase) *
+		math.Pow(1.0-ratio, float64(b.RegenProgressionCurve))
+	if chance <= 0 {
+		return 0
+	}
+	return chance
+}
 
-	chance := base * math.Pow(1.0-ratio, curve)
+// OnRegenTick is called every regen tick (every 3 rounds) for each resource
+// pool, and rolls regen-driven stat progression for the stats that pool
+// exercises.
+//
+// It takes a Pool rather than a (current, max) pair on purpose. Six call sites
+// used to compute the reservation-adjusted max by hand — correctly, but with
+// nothing pinning it — and the next caller to get it wrong reopens a
+// progression faucet. There is no longer a max to pass.
+//
+// Resource→stat mappings:
+//
+//	Health    → vitality, willpower
+//	Stamina   → strength, vitality
+//	Conviction→ willpower, charisma
+func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
+	chance := c.regenTickChance(p)
 	if chance <= 0 {
 		return
 	}

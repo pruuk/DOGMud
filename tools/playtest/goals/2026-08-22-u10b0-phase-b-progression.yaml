@@ -1,0 +1,66 @@
+# U10b-0 Phase B adversarial gate. The slice changed two things under the hood:
+# progression rolls got a much finer resolution plus a floor, so a heavily
+# practised ability can no longer stop improving forever, and resting no longer
+# treats a pool you cannot refill as though you were hurt.
+#
+# BE HONEST ABOUT WHAT THIS SESSION CAN AND CANNOT SHOW. The floor is roughly
+# one chance in a hundred thousand uses. You will NOT see a floored ability
+# improve in one session, and you should not claim you did. The fix itself is
+# proven by unit tests. Your job is the opposite question: did anything ELSE
+# move that was not supposed to?
+#
+# You are a seasoned character. Ordinary progression should feel exactly as it
+# always has.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Skills and attributes still improve at a believable pace, with the usual
+#     banner when they do. Weaker skills improve noticeably; well-drilled ones
+#     rarely. Nothing should improve constantly, and nothing that you use hard
+#     for a long stretch should feel completely inert.
+#   * Resting and recovering feels normal. Health, stamina and conviction climb
+#     as they always did. The AMOUNT you recover is deliberately unchanged.
+#   * If you have gear or a companion holding part of a pool in reserve, sitting
+#     at the top of what you can actually reach should feel like being full, not
+#     like being wounded.
+#   * No raw numbers anywhere, no unreplaced tokens, no doubled messages.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the darkness!";
+# corpses persist; damage is words rather than numbers; assessing a person's
+# remains says they are beyond your craft; 3 commands per round on the AI port.
+
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    PROGRESSION STILL HAPPENS (headline): fight and use skills hard for a
+    sustained stretch, at least thirty rounds of real activity, and record every
+    improvement banner you see verbatim along with what you were doing. Then
+    say plainly whether the rate felt normal for a seasoned character: neither a
+    constant stream nor total silence. A complete absence of any improvement
+    across the whole session is a finding worth reporting loudly.
+  - >-
+    SPREAD ACROSS ABILITIES: deliberately use a mix of things you are clearly
+    expert at and things you are clearly weak at. The weak ones should improve
+    noticeably more often than the expert ones. Report the counts for each and
+    say whether that ordering held. If a weak skill never improves at all, that
+    is a finding.
+  - >-
+    RESTING AND RECOVERY: let yourself get badly hurt, then rest and watch the
+    pools refill. Report whether the pace feels like it always has. Then check
+    the status sheet and note whether any part of your health, stamina or
+    conviction is described as held in reserve. If it is, rest to the top of
+    what you can reach and describe how that state reads: does the game treat
+    you as recovered, or as still hurt?
+  - >-
+    COMPANIONS: summon or field a companion, which holds part of your conviction
+    in reserve while it serves, then rest to full. Confirm that sitting at your
+    reduced ceiling reads as full rather than as depleted. Dismiss it and
+    confirm the ceiling returns. Quote the relevant lines.
+  - >-
+    GENERAL adversarial pass: anything that reads wrong, prints a raw number
+    where it should print words, shows an unreplaced token, double-prints,
+    dead-ends, or contradicts help text is a finding. Quote everything verbatim.

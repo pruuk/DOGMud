@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-08-22: Practice always counts for something
+
+If you had drilled an ability far enough, it could quietly stop improving
+altogether. Not slowly. Not almost never. It simply could not improve again,
+no matter how long you kept at it, and there was no way to tell from inside
+the game that it had happened. Two of the attributes on one long-serving
+character were in that state.
+
+Improvement now always remains possible. Something you have practised for a
+very long time still improves very slowly, which is the intent, but the door
+never closes. If one of your strongest attributes has felt stuck for a long
+while, it was, and it is not any more.
+
+Resting to recover no longer counts a pool you cannot actually refill. If part
+of your health, stamina or conviction is held in reserve by your gear or by a
+companion, sitting at the top of what you can reach now counts as being full
+rather than as being hurt.
+
 ## 2026-08-22: Reading the dead
 
 Studying remains tells you more than it used to. Assessing a fallen person

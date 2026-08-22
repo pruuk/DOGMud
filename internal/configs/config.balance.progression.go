@@ -28,6 +28,12 @@ func (b *Balance) validateProgression() {
 	if b.ObservedCritProgressionBonus < 0 {
 		b.ObservedCritProgressionBonus = 0.5
 	}
+	// `<= 0`, not `< 0`: this is a safety floor, not an off-switch. A config
+	// that omits the key must get the floor, not lose it — the `< 0` idiom two
+	// lines above is why ObservedCritProgressionBonus sits at 0 in production.
+	if b.ProgressionChanceFloor <= 0 {
+		b.ProgressionChanceFloor = 1e-5
+	}
 	if b.UsesPerRank < 1 {
 		b.UsesPerRank = 25
 	}

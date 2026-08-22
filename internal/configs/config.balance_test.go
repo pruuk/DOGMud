@@ -217,3 +217,29 @@ func TestBalanceConfig_ForagerDefaults(t *testing.T) {
 		}
 	}
 }
+
+// ProgressionChanceFloor is a SAFETY default, so its validator uses `<= 0`:
+// a config that omits the key, or sets it to 0, gets the default back. The
+// `< 0` idiom used by the deliberate off-switches (CritProgressionBonus,
+// ObservedCritProgressionBonus) would leave an omitted key at zero, which is
+// precisely the failure this knob exists to prevent — a chance that can reach
+// zero and seal a stat forever.
+func TestProgressionChanceFloor_AbsentOrZeroGetsTheDefault(t *testing.T) {
+	for _, in := range []float64{0, -1, -0.5} {
+		cfg := &Balance{ProgressionChanceFloor: ConfigFloat(in)}
+		cfg.Validate()
+		if float64(cfg.ProgressionChanceFloor) != 1e-5 {
+			t.Errorf("ProgressionChanceFloor %v validated to %v, want 1e-05",
+				in, float64(cfg.ProgressionChanceFloor))
+		}
+	}
+}
+
+func TestProgressionChanceFloor_ExplicitValueSurvives(t *testing.T) {
+	cfg := &Balance{ProgressionChanceFloor: ConfigFloat(2e-4)}
+	cfg.Validate()
+	if float64(cfg.ProgressionChanceFloor) != 2e-4 {
+		t.Errorf("an explicit floor was overwritten: got %v, want 0.0002",
+			float64(cfg.ProgressionChanceFloor))
+	}
+}

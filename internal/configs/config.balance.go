@@ -387,6 +387,16 @@ type Balance struct {
 	StatProgressionRate      ConfigFloat `yaml:"StatProgressionRate"`      // Global multiplier on STAT progression chance; skills unaffected (default 1.0)
 	ProgressionDecayBelowCap ConfigFloat `yaml:"ProgressionDecayBelowCap"` // Exponential steepness below soft cap (default 3.0)
 	ProgressionDecayAboveCap ConfigFloat `yaml:"ProgressionDecayAboveCap"` // Exponential steepness above soft cap (default 2.0)
+	// ProgressionChanceFloor is the smallest chance a rank-driven progression
+	// roll may present. Below it a stat or skill is not merely slow, it is
+	// sealed: the roll quantises to zero and can never fire again. Two of a
+	// live character's six stats were in that state before this knob existed.
+	//
+	// Applied ONLY to the two rank-driven sites (CheckStatProgression,
+	// CheckSkillProgression). CheckRegenProgression is deliberately excluded:
+	// its chance is proportional to pool depletion and is SUPPOSED to vanish as
+	// the pool fills.
+	ProgressionChanceFloor ConfigFloat `yaml:"ProgressionChanceFloor"` // Smallest chance a rank-driven progression roll may present (default 0.00001)
 
 	CritProgressionBonus         ConfigFloat `yaml:"CritProgressionBonus"`         // Progression multiplier for the party who DID a crit or fumble (default 2.0; 0 disables)
 	ObservedCritProgressionBonus ConfigFloat `yaml:"ObservedCritProgressionBonus"` // Progression multiplier for the party who RECEIVED one (default 0.5; 0 disables)
