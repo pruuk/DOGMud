@@ -244,6 +244,32 @@ func (c *Character) GetStatValue(statName string) int {
 	return 0
 }
 
+// GetStatTraining returns the trained component of the named stat, or 0 if
+// unrecognised.
+//
+// This is the progression curve's rank input (U10b-0). Unlike GetStatValue it
+// excludes Base (the baseline the character or mob started with) and Mods
+// (equipment and spells), so difficulty depends only on gains actually made.
+// Equipping a stat item must never make a stat harder to train, and a mob with a
+// large authored stat pool must not be harder to train than a small one.
+func (c *Character) GetStatTraining(statName string) int {
+	switch statName {
+	case "strength":
+		return c.Stats.Strength.Training
+	case "dexterity":
+		return c.Stats.Dexterity.Training
+	case "perception":
+		return c.Stats.Perception.Training
+	case "vitality":
+		return c.Stats.Vitality.Training
+	case "willpower":
+		return c.Stats.Willpower.Training
+	case "charisma":
+		return c.Stats.Charisma.Training
+	}
+	return 0
+}
+
 // GetCombatSkillTag returns the appropriate combat skill tag based on
 // the character's equipped weapon type.
 func (c *Character) GetCombatSkillTag() skills.SkillTag {
