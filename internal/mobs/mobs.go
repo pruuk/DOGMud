@@ -568,19 +568,26 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 					// Even distribution across all 6 stats
 					statIdx = util.Rand(6)
 				}
+				// Pool points land in Base, not Training. Training is gains-since-spawn
+				// for players, and U10b-0 makes the progression curve read it as the
+				// difficulty rank -- a mob whose authored pool sat there would start
+				// partway down the decay curve and could be frozen outright by its gain
+				// cap. Safe with respect to species hydration: this runs on a copy of a
+				// template already Validated at load, so Base already carries species +
+				// authored, and Validate skips a nonzero Base.
 				switch statIdx {
 				case 0:
-					mob.Character.Stats.Strength.Training++
+					mob.Character.Stats.Strength.Base++
 				case 1:
-					mob.Character.Stats.Dexterity.Training++
+					mob.Character.Stats.Dexterity.Base++
 				case 2:
-					mob.Character.Stats.Vitality.Training++
+					mob.Character.Stats.Vitality.Base++
 				case 3:
-					mob.Character.Stats.Perception.Training++
+					mob.Character.Stats.Perception.Base++
 				case 4:
-					mob.Character.Stats.Willpower.Training++
+					mob.Character.Stats.Willpower.Base++
 				case 5:
-					mob.Character.Stats.Charisma.Training++
+					mob.Character.Stats.Charisma.Base++
 				}
 			}
 		}
