@@ -29,14 +29,19 @@ func TestRollResolution_MakesTheShippedFloorExpressible(t *testing.T) {
 	}
 }
 
-// A character whose virtual rank has run away must still have a live, if tiny,
-// chance. This is Meirok's real dexterity position.
+// A character who has taken a stat a very long way must still have a live, if
+// tiny, chance rather than a sealed one.
+//
+// The fixture drives Training, not the use counter: since Phase C the counter
+// no longer feeds the curve, and a use-count fixture here would pass trivially
+// by describing a fresh character.
 func TestStatProgressionChance_IsFloored(t *testing.T) {
 	withRepoRoot(t)
 
 	c := New()
 	c.Name = "FlooredStat"
-	c.StatUseCount["dexterity"] = 39772
+	c.Stats.Dexterity.Training = 300
+	c.Stats.Dexterity.Recalculate()
 
 	got := c.statProgressionChance("dexterity", 1.0)
 	floor := float64(configs.GetBalanceConfig().ProgressionChanceFloor)
@@ -76,7 +81,7 @@ func TestStatProgressionChance_HealthyChanceIsUntouched(t *testing.T) {
 	}
 }
 
-// A mob past its hard cap returns a genuine zero meaning "may not progress at
+// A mob past its gain cap returns a genuine zero meaning "may not progress at
 // all". The floor must not resurrect that.
 func TestStatProgressionChance_FloorDoesNotResurrectAHardZero(t *testing.T) {
 	withRepoRoot(t)
@@ -85,11 +90,13 @@ func TestStatProgressionChance_FloorDoesNotResurrectAHardZero(t *testing.T) {
 	c := New()
 	c.Name = "CappedMob"
 	c.IsMob = true
-	c.Stats.Strength.Base = int(b.MobStatCap) + 10
+	// Past the GAINS cap (Phase C): the value cap was asymmetric and was
+	// replaced, so a big Base no longer produces a hard zero.
+	c.Stats.Strength.Training = int(b.MobStatTrainingCap)
 	c.Stats.Strength.Recalculate()
 
 	if got := c.statProgressionChance("strength", 1.0); got != 0 {
-		t.Errorf("a mob past MobStatCap has chance %v, want exactly 0", got)
+		t.Errorf("a mob past MobStatTrainingCap has chance %v, want exactly 0", got)
 	}
 }
 

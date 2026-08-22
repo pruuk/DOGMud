@@ -72,8 +72,28 @@ func (b *Balance) validateMobs() {
 	if b.MobStatCap < 1 {
 		b.MobStatCap = 200
 	}
+	// Safety default: a config that omits this must get the cap back, not lose
+	// it. There is no off-switch reading of 0 here -- a zero gain cap would
+	// freeze every mob at spawn.
+	if b.MobStatTrainingCap <= 0 {
+		b.MobStatTrainingCap = 50
+	}
 	if b.MobSkillCap < 1 {
 		b.MobSkillCap = 3
+	}
+	// Safety defaults: 0 is not an off-switch for either. A zero soft cap
+	// would divide the curve by zero's guard and a zero hard cap would freeze
+	// every mob's skills at spawn.
+	if b.MobSkillSoftCap <= 0 {
+		b.MobSkillSoftCap = 20
+	}
+	if b.MobSkillTrainingCap <= 0 {
+		b.MobSkillTrainingCap = 25
+	}
+	// Cross-field invariant: a hard cap at or below the soft cap makes the
+	// soft cap unreachable and the curve's second segment dead.
+	if b.MobSkillTrainingCap <= b.MobSkillSoftCap {
+		b.MobSkillTrainingCap = b.MobSkillSoftCap + 1
 	}
 	if b.MobSaveIntervalRounds < 1 {
 		b.MobSaveIntervalRounds = 100

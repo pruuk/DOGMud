@@ -8,7 +8,7 @@ func (b *Balance) validateProgression() {
 		b.SkillSoftCap = 50
 	}
 	if b.StatProgressionSoftCap < 1 {
-		b.StatProgressionSoftCap = 150
+		b.StatProgressionSoftCap = 50
 	}
 	if b.BaseProgressionChance <= 0 || b.BaseProgressionChance > 1.0 {
 		b.BaseProgressionChance = 0.30

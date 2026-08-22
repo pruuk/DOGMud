@@ -111,13 +111,24 @@ func respawnCompanions(user *users.UserRecord) {
 // applyCompanionState writes saved CompanionInfo progression onto a fresh mob.
 func applyCompanionState(mob *mobs.Mob, comp *characters.CompanionInfo) {
 	// Stat training.
+	//
+	// A companion without a SchemaVersion was saved before U10b-0 Phase C, when
+	// the template's authored stats and the spawn pool both lived in Training.
+	// This mob came from NewMobByIdFresh, which has already rolled a fresh pool
+	// into Base, and the template supplies the authored part -- so assigning the
+	// saved value as-is would count both a second time and roughly double the
+	// pet. LegacyTrainingToGains separates out what was actually earned.
 	if comp.StatTraining != nil {
-		mob.Character.Stats.Strength.Training = comp.StatTraining["strength"]
-		mob.Character.Stats.Dexterity.Training = comp.StatTraining["dexterity"]
-		mob.Character.Stats.Perception.Training = comp.StatTraining["perception"]
-		mob.Character.Stats.Vitality.Training = comp.StatTraining["vitality"]
-		mob.Character.Stats.Willpower.Training = comp.StatTraining["willpower"]
-		mob.Character.Stats.Charisma.Training = comp.StatTraining["charisma"]
+		saved := comp.StatTraining
+		if comp.SchemaVersion < mobs.InstanceSchemaVersion {
+			saved = mobs.LegacyTrainingToGains(mobs.MobId(comp.MobId), saved)
+		}
+		mob.Character.Stats.Strength.Training = saved["strength"]
+		mob.Character.Stats.Dexterity.Training = saved["dexterity"]
+		mob.Character.Stats.Perception.Training = saved["perception"]
+		mob.Character.Stats.Vitality.Training = saved["vitality"]
+		mob.Character.Stats.Willpower.Training = saved["willpower"]
+		mob.Character.Stats.Charisma.Training = saved["charisma"]
 	}
 
 	// Skill maps.

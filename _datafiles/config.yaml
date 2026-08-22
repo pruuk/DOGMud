@@ -968,17 +968,23 @@ Balance:
   ConvictionPerWillpower: 1      # + Wil x this toward ConvictionMax (secondary)
 
   # ── PROGRESSION ─────────────────────────────────────────────────────────────
-  # Skills and stats improve via use-based progression. Every UsesPerRank
-  # uses count as 1 "virtual rank" for the progression chance formula.
+  # Skills and stats improve through use, but how HARD they are to improve is
+  # keyed to how far they have already come, not to how often they have been
+  # used. A stat's rank is its trained points; a skill's rank is its level.
   # Chance decays exponentially as rank approaches the soft cap.
-  # Example: skill with 50 uses (= rank 2), BaseProgressionChance 0.12:
-  #   chance ≈ 0.12 × e^(-3.0 × 2/50) ≈ 10.6% per check
-  SkillSoftCap: 50               # Virtual ranks where progression slows sharply
-  # Also the anti-exploit floor: stats above this pin virtual rank to the raw
-  # stat value, so artificially high stats (e.g. admin accounts) can't exploit
-  # the cheap low-use-count portion of the curve. NOT a cap on stat values.
-  StatProgressionSoftCap: 150    # Virtual rank where stat progression slows sharply
-  UsesPerRank: 25                # Skill/stat uses that equal one virtual rank
+  #
+  # Keying on use counts punished frequency: a stat you used constantly
+  # exhausted its curve while one you used rarely stayed cheap forever. It also
+  # leaked equipment into difficulty, because the old anti-exploit floor read
+  # the final stat VALUE, which includes gear.
+  SkillSoftCap: 50               # Skill level at which progression slows sharply
+  # NOT a cap on stat values, and no longer an anti-exploit floor: rank IS the
+  # trained points, so a high value cannot buy a cheap rank.
+  # A fresh stat is ~27% per use (0.12 x 2.25); at 50 trained points, ~1.3%.
+  StatProgressionSoftCap: 50     # Trained points at which stat progression slows sharply
+  # Retained as TELEMETRY only. Use counters are still recorded in saves and
+  # shown on the admin dashboard, but they no longer feed the progression curve.
+  UsesPerRank: 25                # Legacy: uses per virtual rank (no longer drives decay)
   BaseProgressionChance: 0.12    # Chance to progress per check at rank 0 (12%)
   StatProgressionRate: 2.25      # 6e: ~2.25x STAT progression (skills unaffected)
   ProgressionDecayBelowCap: 3.0  # Exponential steepness below soft cap (higher = faster decay)
@@ -1101,11 +1107,37 @@ Balance:
   # stat from its template StatPool is NOT counted against this cap -- only
   # the final computed stat value matters. Default 200 (double human baseline).
   MobStatCap: 200
+  # MobStatTrainingCap caps how many points a mob may GAIN per stat, which is
+  # what MobStatCap should always have done. The value cap above is asymmetric:
+  # a mob authored at base 250 can gain nothing while one at 180 can gain 20,
+  # purely because of how big it was written. Since U10b-0 Phase C a mob's
+  # Training is gains-since-spawn, exactly as a player's is, so capping gains
+  # treats every creature the same regardless of its authored size.
+  MobStatTrainingCap: 50
   # Maximum skill level a mob can reach through use-based progression.
   # Player soft cap is 50; mobs are intentionally much lower since they
   # fight constantly. At rank 3, the SkillMultiplier curve gives ~1.77x
   # damage -- meaningful but not overwhelming. Range: 1-50.
   MobSkillCap: 3
+  # MobSkillSoftCap / MobSkillTrainingCap supersede MobSkillCap above.
+  #
+  # The old cap of 3 was reachable in roughly 180 rounds of fighting, so any
+  # long-lived creature hit its ceiling and stopped. These raise it: mobs decay
+  # against their own soft cap (they fight far more often than players, so the
+  # shared 50 leaves them flat too long) and stop at the hard cap.
+  #
+  # This is a CEILING, not a starting point. Every mob begins at skill 1, and
+  # at shipped pacing reaching 10 takes ~1,500 combat rounds and 25 takes
+  # ~17,500. An ordinary mob dies long before that and respawns at 1, so in
+  # practice the raise lands on companions and other creatures that persist
+  # and fight constantly. Skill progression cannot survive death: the instance
+  # file is deleted in the death pipeline.
+  #
+  # At rank 25 a mob's damage multiplier is 2.41x (vs 1.49x at 3) and its
+  # contest contribution is +125 (vs +15). To walk the raise back, lower
+  # MobSkillTrainingCap -- not the multiplier curve, which players share.
+  MobSkillSoftCap: 20
+  MobSkillTrainingCap: 25
 
   # ── REGEN-BASED STAT PROGRESSION ──────────────────────────────────────────
   # Every regen tick (every 3 rounds), each resource pool (HP, SP, CP) has

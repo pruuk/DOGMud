@@ -381,7 +381,7 @@ type Balance struct {
 
 	// ── PROGRESSION ───────────────────────────────────────────────────────────
 	SkillSoftCap             ConfigInt   `yaml:"SkillSoftCap"`             // Virtual ranks where progression slows sharply (default 50)
-	StatProgressionSoftCap   ConfigInt   `yaml:"StatProgressionSoftCap"`   // Virtual rank where stat progression slows sharply (default 150); also the anti-exploit floor — stats above this pin virtual rank to the raw stat value. NOT a cap on stat values.
+	StatProgressionSoftCap   ConfigInt   `yaml:"StatProgressionSoftCap"`   // Trained points at which stat progression slows sharply (default 50). NOT a cap on stat values, and no longer an anti-exploit floor: rank IS the trained points, so a high value cannot buy a cheap rank.
 	UsesPerRank              ConfigInt   `yaml:"UsesPerRank"`              // Skill/stat uses that equal one virtual rank (default 25)
 	BaseProgressionChance    ConfigFloat `yaml:"BaseProgressionChance"`    // Starting chance to progress at rank 0 (default 0.30)
 	StatProgressionRate      ConfigFloat `yaml:"StatProgressionRate"`      // Global multiplier on STAT progression chance; skills unaffected (default 1.0)
@@ -403,8 +403,18 @@ type Balance struct {
 
 	MobProgressionEnabled ConfigBool  `yaml:"MobProgressionEnabled"` // Enable mob stat/skill progression (default true)
 	MobProgressionRate    ConfigFloat `yaml:"MobProgressionRate"`    // Multiplier on progression chance vs players (default 0.5)
-	MobStatCap            ConfigInt   `yaml:"MobStatCap"`            // Hard cap on mob stats from progression (default 200)
-	MobSkillCap           ConfigInt   `yaml:"MobSkillCap"`           // Hard cap on mob skill level from progression (default 3)
+	MobStatCap            ConfigInt   `yaml:"MobStatCap"`            // Legacy VALUE cap on mob stats. Superseded by MobStatTrainingCap; see config.yaml.
+	// MobStatTrainingCap caps how many points a mob may GAIN, rather than the
+	// value it may reach. The old value cap was asymmetric: a mob with base 250
+	// could gain nothing while one with base 180 could gain 20, purely because
+	// of how big it was authored.
+	MobStatTrainingCap ConfigInt `yaml:"MobStatTrainingCap"` // Max points a mob may gain per stat (default 50)
+	MobSkillCap        ConfigInt `yaml:"MobSkillCap"`        // Legacy hard cap on mob skill level. Superseded by MobSkillTrainingCap.
+	// Mobs get their own soft cap because they fight far more often than
+	// players do, so the shared 50 would leave their curve too flat for too
+	// long. The hard cap is what actually bounds them.
+	MobSkillSoftCap       ConfigInt   `yaml:"MobSkillSoftCap"`       // Skill level at which mob progression slows sharply (default 20)
+	MobSkillTrainingCap   ConfigInt   `yaml:"MobSkillTrainingCap"`   // Hard cap on mob skill level from progression (default 25)
 	MobSaveIntervalRounds ConfigInt   `yaml:"MobSaveIntervalRounds"` // Rounds between periodic mob instance saves (default 100)
 	MobInstanceMaxAgeDays ConfigInt   `yaml:"MobInstanceMaxAgeDays"` // Max age in days before stale instance files are pruned (default 7)
 	RegenProgressionBase  ConfigFloat `yaml:"RegenProgressionBase"`  // Max chance at 0% resource per stat per tick (default 0.005)

@@ -941,12 +941,16 @@ func TestNewMobById(t *testing.T) {
 	t.Run("force stat pool", func(t *testing.T) {
 		mob := NewMobById(5, 60, 50) // force 50 stat points
 		assert.NotNil(t, mob)
-		// Verify some training was distributed
+		// The pool lands in Base since Phase C, so measure the delta from the
+		// template rather than reading Training (which is now gains-only and
+		// must be zero on a fresh spawn).
+		_, totalPool := spawnPoolDelta(t, mob)
+		assert.Equal(t, 50, totalPool)
 		s := &mob.Character.Stats
-		totalTraining := s.Strength.Training + s.Dexterity.Training +
-			s.Perception.Training + s.Vitality.Training +
-			s.Willpower.Training + s.Charisma.Training
-		assert.Equal(t, 50, totalTraining)
+		assert.Equal(t, 0, s.Strength.Training+s.Dexterity.Training+
+			s.Perception.Training+s.Vitality.Training+
+			s.Willpower.Training+s.Charisma.Training,
+			"a freshly spawned mob has no gains yet")
 	})
 
 	t.Run("fighting archetype distributes physical", func(t *testing.T) {
@@ -959,11 +963,9 @@ func TestNewMobById(t *testing.T) {
 			if mob == nil {
 				continue
 			}
-			s := &mob.Character.Stats
-			phys := s.Strength.Training + s.Dexterity.Training + s.Vitality.Training
-			mental := s.Perception.Training + s.Willpower.Training + s.Charisma.Training
-			totalPhys += phys
-			totalMental += mental
+			d, _ := spawnPoolDelta(t, mob)
+			totalPhys += d["strength"] + d["dexterity"] + d["vitality"]
+			totalMental += d["perception"] + d["willpower"] + d["charisma"]
 			DestroyInstance(mob.InstanceId)
 		}
 		// Fighting should have ~80% physical
@@ -980,11 +982,9 @@ func TestNewMobById(t *testing.T) {
 			if mob == nil {
 				continue
 			}
-			s := &mob.Character.Stats
-			phys := s.Strength.Training + s.Dexterity.Training + s.Vitality.Training
-			mental := s.Perception.Training + s.Willpower.Training + s.Charisma.Training
-			totalPhys += phys
-			totalMental += mental
+			d, _ := spawnPoolDelta(t, mob)
+			totalPhys += d["strength"] + d["dexterity"] + d["vitality"]
+			totalMental += d["perception"] + d["willpower"] + d["charisma"]
 			DestroyInstance(mob.InstanceId)
 		}
 		mentalRatio := float64(totalMental) / float64(totalPhys+totalMental)
@@ -994,10 +994,7 @@ func TestNewMobById(t *testing.T) {
 	t.Run("default archetype distributes evenly", func(t *testing.T) {
 		mob := NewMobById(5, 100, 120) // no archetype, 120 pool
 		assert.NotNil(t, mob)
-		s := &mob.Character.Stats
-		total := s.Strength.Training + s.Dexterity.Training +
-			s.Perception.Training + s.Vitality.Training +
-			s.Willpower.Training + s.Charisma.Training
+		_, total := spawnPoolDelta(t, mob)
 		assert.Equal(t, 120, total)
 		DestroyInstance(mob.InstanceId)
 	})
@@ -1485,6 +1482,34 @@ func TestNewMobById_StillLoadsInstanceFile(t *testing.T) {
 
 // ─── Tank archetype distribution ────────────────────────────────────────────
 
+// spawnPoolDelta returns how many stat points the spawn-pool distribution added
+// to a freshly spawned mob, per stat and in total.
+//
+// U10b-0 Phase C moved the pool from Training to Base, so it is no longer a
+// standalone number: the instance's Base is the template's Base (species
+// baseline plus authored stats) PLUS the pool. Measuring the delta against the
+// template is what isolates the pool again.
+func spawnPoolDelta(t *testing.T, mob *Mob) (perStat map[string]int, total int) {
+	t.Helper()
+	tmpl := GetMobSpec(mob.MobId)
+	if tmpl == nil {
+		t.Fatalf("no template for mob %d", mob.MobId)
+	}
+	i, j := &mob.Character.Stats, &tmpl.Character.Stats
+	perStat = map[string]int{
+		"strength":   i.Strength.Base - j.Strength.Base,
+		"dexterity":  i.Dexterity.Base - j.Dexterity.Base,
+		"perception": i.Perception.Base - j.Perception.Base,
+		"vitality":   i.Vitality.Base - j.Vitality.Base,
+		"willpower":  i.Willpower.Base - j.Willpower.Base,
+		"charisma":   i.Charisma.Base - j.Charisma.Base,
+	}
+	for _, v := range perStat {
+		total += v
+	}
+	return perStat, total
+}
+
 // TestNewMobById_TankArchetypeDistributesStats verifies the new tank
 // archetype allocates ~25% Cha and ~20% Vit out of the stat pool,
 // with ~15% each Str/Dex/Wil and ~10% Per. Large pool (1000) shrinks
@@ -1505,22 +1530,17 @@ func TestNewMobById_TankArchetypeDistributesStats(t *testing.T) {
 		t.Fatal("NewMobById returned nil")
 	}
 
-	total := mob.Character.Stats.Strength.Training +
-		mob.Character.Stats.Dexterity.Training +
-		mob.Character.Stats.Vitality.Training +
-		mob.Character.Stats.Perception.Training +
-		mob.Character.Stats.Willpower.Training +
-		mob.Character.Stats.Charisma.Training
+	d, total := spawnPoolDelta(t, mob)
 
 	assert.Equal(t, 1000, total, "tank stat pool must sum to 1000 with no leakage")
 
 	// Slack bands: expected ±25% of target share (1000-unit pool).
-	assert.GreaterOrEqual(t, mob.Character.Stats.Charisma.Training, 200,
-		"Cha training should be ≥200 (~25% target)")
-	assert.GreaterOrEqual(t, mob.Character.Stats.Vitality.Training, 150,
-		"Vit training should be ≥150 (~20% target)")
-	assert.LessOrEqual(t, mob.Character.Stats.Perception.Training, 150,
-		"Per training should be ≤150 (~10% target)")
+	assert.GreaterOrEqual(t, d["charisma"], 200,
+		"Cha share should be ≥200 (~25% target)")
+	assert.GreaterOrEqual(t, d["vitality"], 150,
+		"Vit share should be ≥150 (~20% target)")
+	assert.LessOrEqual(t, d["perception"], 150,
+		"Per share should be ≤150 (~10% target)")
 }
 
 // ─── Routine and RoutineLinks ─────────────────────────────────────────────

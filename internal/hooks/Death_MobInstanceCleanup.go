@@ -13,11 +13,20 @@ import (
 // file, destroys the in-memory instance, updates the home-room
 // spawn slot, and removes the mob from the current room.
 //
-// NOTE (Chunk-2): This observer is wired but dormant until
-// Task 10 routes mob death paths through Life.TransitionToDead.
-// The existing inline cleanup block in
-// internal/mobcommands/suicide.go (lines 225-237) is the live
-// path today; it will be removed when Task 10 lands.
+// This observer is LIVE. characters.Die routes mob death through
+// Life.TransitionToDead, and mobs.newMobByIdInternal calls
+// ResetForMobInstance between the shallow copy and Validate, so the
+// callbacks re-fire closed over the INSTANCE rather than the template.
+// Without that reset this would see MobInstanceId == 0 and early-return,
+// and nothing would ever be cleaned up.
+//
+// (The note that used to sit here said the observer was dormant pending a
+// Task 10 that has since landed. Only the suicide vanish path still bypasses
+// the Life machine, and it deletes the instance file itself.)
+//
+// Deleting the file here is what stops progression surviving death, which
+// U10b-0 Phase C made load-bearing when it raised the mob skill ceiling from
+// 3 to 25. Pinned by mobs.TestDeathDeletesInstance_RespawnReadsFromTemplate.
 func wireMobInstanceCleanup(c *characters.Character) {
 	c.Life.Inner().AfterTransition("mob_instance_cleanup",
 		func(from, to life.State, r state.TransitionReason) {
