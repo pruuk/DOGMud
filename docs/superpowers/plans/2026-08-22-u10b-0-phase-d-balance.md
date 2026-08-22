@@ -2,294 +2,354 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Balance progression on **play time**, so that an hour of concerted
-grinding yields comparable progress whatever you choose to grind.
+**Revision 2**, after three blind adversarial reviews of revision 1. Revision 1's
+Task D3 rested on a false premise and its model was wrong in four measured ways.
+Every correction is marked **[R2]** and the reason is stated, so nothing is
+quietly re-derived.
+
+**Goal:** Balance progression on **play time**, so an hour of concerted grinding
+yields comparable progress whatever you grind.
 
 **Architecture:** The re-key changed what the curve is keyed to; this phase
-changes how fast it moves. The decay constants keep the curve's **shape** and
-the per-stat / per-skill multipliers set its **rate**. Rates are derived from
-measured uses-per-hour rather than from use counts, because a use is not a
-comparable unit across activities: an hour of combat is hundreds of swings, an
-hour of crafting is tens of crafts.
+changes how fast it moves. Decay constants keep the curve's **shape**; the
+per-stat and per-skill multipliers set its **rate**. Rates derive from measured
+uses-per-hour, because a use is not comparable across activities.
 
-**Tech Stack:** `_datafiles/config.yaml` (multipliers, `ObservedCritProgressionBonus`),
-plus the Go defaults that shadow them. Models in `tools/balance/u10b_*.py`.
+**Tech Stack:** `_datafiles/config.yaml`, `internal/skills/skills.go` (the Go
+shadow map), and the models in `tools/balance/u10b_*.py`.
 
-**Spec:** `docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md`
+**Spec:** `.../2026-08-21-u10b-0-progression-rank-from-training-design.md`
 sections 13.3, 13.4, 14.2. **Phase index:** `2026-08-21-u10b-0-README.md`.
 
-**Branch:** `feature/u10b-0-phase-d-balance`, cut from `master` once PR #57 merges.
+**Branch:** `feature/u10b-0-phase-d-balance`, already cut from master.
 
 ---
 
-## Owner rulings that fix the target
+## Owner rulings
 
-**2026-08-22.**
-
-1. **~10% engagement** over a real hour for combat and crafting. The rest is
-   travelling to find mobs, gathering materials, walking to stations, recovering.
-2. **3 points/hour for combat tracks, 4 for everything else.** Crafting spends
-   gold and materials, so it may run a little faster; combat carries risk and
-   time-to-find, so it is measured a little cheaper.
-3. **The knee is fine, and progressing past the soft cap is wanted.** It has
-   implications for titles, rank-band names and balance, and those are accepted.
+1. **~10% engagement** over a real hour for combat and crafting.
+2. **3 points/hour for combat tracks, 4 for everything else.**
+3. **The knee is fine and progressing past the soft cap is wanted**, with its
+   implications for titles and rank bands accepted.
 
 ---
 
-## What is already settled, so nobody re-derives it
+## [R2] What revision 1 got wrong
 
-**All figures below were computed against the shipped config; the models are
-committed under `tools/balance/` so they can be re-run rather than trusted.**
+Recorded so it is not repeated, and because two of the four also mislead anyone
+reading the surrounding code.
 
-`RoundSeconds` is 4, so an hour is **900 rounds**. Recipe `time_rounds` is mode
-4 / median 5. At 10% engagement that is **90 combat rounds** and **18 crafts**
-per hour.
+### 1. Both crit knobs are LIVE. Revision 1's Task D3 was a no-op.
 
-**Per-event accounting** (verified in `NewRound_DoCombat_unified.go`,
-`defence_multiplier.go`, `progression.go`):
+`git show HEAD:_datafiles/config.yaml` lines 1003 and 1009 ship
+`CritProgressionBonus: 2.0` and `ObservedCritProgressionBonus: 0.5`, added by
+`81061c6b4` on 2026-08-19. Revision 1 read the **working-tree** copy, which
+carries the git skip-worktree bit and predates U6b.
 
-- attacking, per exchange: `strength` +1 and `dexterity` +1 (`emitAttackerStatGain`)
-- per clean weapon hit: the combat skill +1, and its primary stat +1
-- defending, per round: the defence skill +1 and its stat +1 (parry also `strength`)
-- **any skill use also fires `OnStatUse(primary stat)`**
-- crafting, per craft: the craft skill +1 and its primary stat +1
+So the crit-toughen faucet (physical -> vitality, magical -> willpower,
+conviction -> charisma) has been live for weeks, and the doer-side crit/fumble
+bonus tier is live at 2.0. **Neither needs enabling; both must be *modelled*.**
 
-**Two traps that already produced wrong answers in this arc, both from grepping
-for a string literal where production passes a variable:**
+Two stale comments propagated this and are corrected in Task D0:
+- `internal/configs/config.balance.progression.go:33` — "*is why
+  ObservedCritProgressionBonus sits at 0 in production*"
+- `internal/characters/progression_faucet_test.go:48` — "*an absent key (as in
+  the shipped config.yaml today)*"
 
-- `OnStatUse("dexterity")` appears **nowhere**. Combat passes the stat as a
-  variable, and dexterity is trained on **every attack**.
-- `OnSkillUse("manifestation")` appears only in `assess.go`. The cast path picks
-  the skill from the spell's **school**, so all 14 `SchoolManifestation` spells
-  (`raise-*`, `charm`, `conjure-*`, `summon-*`) train it too.
+### 2. `OnCritReceived` is dead code, not the crit path.
 
-**Casting is CP-bound over an hour, not cooldown-bound.** `waitrounds` caps the
-burst rate; conviction regen caps the sustained rate. A mid character
-regenerates ~2,700 CP/hr (2% of a 450 pool every 3 rounds) plus the 450 they
-start with, which funds ~79 casts at a typical 40 CP spell against a burst cap
-of 900.
+It has **zero production callers**. U9 replaced it with the event seam:
+`NewRound_DoCombat_unified.go:704-721` builds `progression.Outcome{ToughenStat:
+...}`, `progression.BonusEvents` emits it, `applyBonusProgression`
+(`progression.go:748-785`) rolls it. `defence_multiplier.go:489-543` does the
+same for non-melee channels. Model against the seam, not the dead function.
+
+### 3. The model missed the defence faucet and the offhand fist.
+
+`AwardDefenceProgression` calls `OnSkillUse(skill)` — which itself fires
+`OnStatUse(primary)` — and **then** `OnStatUse(stat)`. Since weapon-combat and
+unarmed-combat both map to dexterity: dodge gives dexterity **+2**, parry
+dexterity **+2** and strength +1, block dexterity +1 and strength +1. And
+`collectAttackWeapons` supplies a **fist for an empty offhand**, so a 1H
+character produces two `WeaponHits` entries. Strength and dexterity uses/hour
+roughly **double**; `unarmed-combat` is trained by every armed character.
+
+### 4. Crafting and casting are not multiplier 1.0.
+
+Both use `OnSkillUseScaled` with a difficulty bonus applied **to the skill roll
+only** (the stat roll inside always passes 1.0):
+`craftBonus = 1 + skill_minimum x 0.02` (median **1.40** over 126 recipes),
+`spellBonus = 1 + difficulty x 0.01` (median **1.25**; **1.35** over the 14
+manifestation spells). **Salvage does not get it** — it calls bare `OnSkillUse`
+— so salvage and the crafts cannot share a multiplier.
+
+### 5. Smaller factual corrections
+
+- `search` has a **2-round cooldown** (`actions/search.go:53`), so its concerted
+  ceiling is **450/hour**, not the 180 revision 1 assumed.
+- `skullduggery` has **no search faucet** — steal, plant, shadow, defuse,
+  surprise-attack, throw.
+- `rhetoric` has **no conversation faucet** — taunt and the defy defence only.
+- Manifestation is **cast-time bound** at 10% engagement (90/4 = 22 casts/hr),
+  not CP-bound; the CP sustain is higher than the engaged burst cap.
+- Anchor drift is **1.822x per 10 ranks** (`exp(3 x 10/50)`), not 1.5x. A fresh
+  character progresses at **4.48x** the target.
+- Eleven Go-map / config entries disagree, not one, and **three skills have no
+  config entry at all**.
+
+### 6. [R2] "Past the soft cap buys accuracy and zero damage" was WRONG
+
+`SkillMultiplier` clamps at the soft cap, so **base-hit** damage plateaus. But
+two damage paths do not clamp:
+
+- **`CritDamageMultiplier` is linear and uncapped**: `2.0 + 0.05 x rank`. Rank 50
+  gives 4.5x, rank 69 gives 5.45x, rank 100 would give 7.0x.
+- **`CritBarFor` uses raw unclamped ranks**: `bar = 2.0 - 0.05 x (atkRank -
+  defRank)`, floored at `CritBarFloor` 1.5, so out-skilling keeps raising crit
+  frequency until a 10-rank advantage binds.
+
+`crit_bar.go:31` records the double count as deliberate. So past the knee, skill
+buys accuracy, crit **frequency** and crit **magnitude** — growth shifts from
+every-swing to crit-weighted, making high-skill characters spikier rather than
+merely more accurate. **`CritDamagePerSkill` is the knob to watch** if past-cap
+characters feel explosive; it has no ceiling.
 
 ---
 
 ## Standing rules
 
-1. **Go defaults move with shipped values.** A test binary never loads
-   `config.yaml`.
-2. **`config.yaml` carries the git skip-worktree bit.** Build the commit from
-   `git show HEAD:_datafiles/config.yaml`, never from disk, and never commit the
-   local `HttpPort` / `LogLevel` / `LogToFile` overrides. See
-   `reference_config_yaml_skip_worktree`.
+1. **[R2] Some tests DO load `config.yaml`.** `withRepoRoot`
+   (`internal/characters/poolmax_test.go:24-44`) chdirs to the repo root and
+   calls `configs.ReloadConfig()`. Thirteen test files use it. Revision 1's
+   blanket "a test binary never loads config.yaml" is false.
+2. **[R2] The disk copy and the committed blob must move together.** Because of
+   rule 1 plus the skip-worktree bit, a change made only to the git blob is
+   **invisible locally but live in CI**, and a commit built from disk **deletes**
+   whatever the disk is missing. Task D0 exists for this.
 3. **Decay sets shape, multipliers set rate.** `ProgressionDecayBelowCap` (3.0)
-   and `AboveCap` (2.0) already reproduce both documented anchors — a fresh stat
-   at ~27% and a stat with 50 trained points at ~1.34%. **Do not touch them.**
-4. **The per-stat multiplier is shared with the regen faucet.**
-   `CheckRegenProgression` applies `GetStatProgressionMultiplier` and the damper,
-   so changing a stat's multiplier for combat pace also rescales what the regen
-   tick grants it. This is not separable; it is why Task D3 exists.
+   and `AboveCap` (2.0) reproduce both documented anchors. **Do not touch them.**
+4. **Go defaults move with shipped values** — and for skills the Go map in
+   `internal/skills/skills.go` is a real fallback, authoritative wherever
+   `config.yaml` has no key.
+5. **The per-stat multiplier is shared with the regen faucet.**
+   `CheckRegenProgression` applies `GetStatProgressionMultiplier` and the damper.
 
 ---
 
-## Task D1: measure the assumptions before moving any knob
+## Task D0: repair the config desync FIRST
 
-The rates in D2 rest on five assumptions. Three are the owner's or come from
-data; **two are estimates I invented and they drive the largest changes in the
-table.** Measure them before shipping a 2.5x nerf on an estimate.
+**This is the live hazard that produced revision 1's central error, and it is
+still armed.** The working-tree `_datafiles/config.yaml` is missing at least
+twelve knobs the committed blob has: `ConcentrationFloor`,
+`ConcentrationDamageThresholdPct`, `CritBarSkillSlope`/`Floor`/`Ceiling`,
+`CounterDamagePercent`, three `Grapple*Mod` knobs, and the three U10
+`*KnockdownFactor` knobs — while still carrying the retired `*KnockdownChance`
+ones. A commit built from disk silently reverts U6b and U10, because every one
+of those defaults on absence rather than erroring.
 
-| assumption | source | trust |
+- [ ] **Step 1:** Rebuild the disk copy from `git show HEAD:_datafiles/config.yaml`,
+      re-applying only the three intentional local overrides: `HttpPort: 8090`,
+      `LogLevel`, `LogToFile: false`. Confirm with a `--strip-trailing-cr` diff
+      that nothing else differs.
+- [ ] **Step 2:** Fix the two stale comments named in [R2] item 1.
+- [ ] **Step 3:** Fix the false paragraph in `tools/balance/u10b_time_solve.py`'s
+      header if any remains, and the "dormant" claims in
+      `tools/balance/u10b_vitality_model.py`.
+- [ ] **Step 4:** Commit. This is a correctness fix that stands alone and should
+      land before any tuning.
+
+---
+
+## Task D1: measure uses/hour before moving any knob
+
+The whole table is uses/hour multiplied by arithmetic. Revision 1 got two of
+those inputs wrong by 2.5x and the correction moved `perception` from 0.37 to
+0.15. **Measure before shipping.**
+
+| input | source | trust |
 |---|---|---|
-| 10% engagement | owner ruling | settled |
-| 5-round median craft | recipe data | settled |
-| 4-second round | `Timing.RoundSeconds` | settled |
-| **180 utility uses/hour** | my estimate | **measure** |
-| **CP haircuts on casting** | my estimate | **measure** |
+| 10% engagement | owner | settled |
+| 4-second round, 5-round median craft | config / data | settled |
+| search 450/hr ceiling | 2-round cooldown | **is the ceiling realistic play?** |
+| combat per-round accounting | code-derived | **verify empirically** |
+| craft / spell difficulty bonus medians | data | settled |
 
-**Files:** none — this is a measurement task.
-
-- [ ] **Step 1: Instrument, do not eyeball**
-
-Progression banners are too rare to count by hand at these rates. Add a
-temporary debug counter, or read the existing `mudlog.Debug("Progression", ...)`
-lines out of the server log, which already carry `chance`, `roll` and
-`threshold` per event. The log is the cheaper route and needs no code change.
-
-- [ ] **Step 2: Run `mid` on each track for a measured wall-clock period**
-
-`mid` is the right instrument and `veteran` is not: `mid` has every stat at
-Training 0, no companions, and ordinary kit, where `veteran` one-shots bandits
-and yielded one event in 18 kills.
-
-```text
-/playtest local --checkout <abs> feature-tester <goals-file>
-```
-
-Drive one track per run: combat, crafting, utility search, casting. Record
-**uses per wall-clock minute**, not gains — gains are the thing being solved
-for, uses are the input.
-
-- [ ] **Step 3: Feed the measurements back into the model**
-
-Edit the `uses/hour` figures at the top of
-`tools/balance/u10b_time_solve.py` and re-run. If a measured rate differs from
-the estimate by more than about 30%, the solved multiplier moves materially and
-**the table in D2 must be regenerated rather than used as written.**
+- [ ] **Step 1:** Read realised uses out of the `mudlog.Debug("Progression", ...)`
+      lines rather than counting banners; they carry `chance`, `roll`, `threshold`.
+- [ ] **Step 2:** Run `mid` on each track for a measured wall-clock period.
+      `mid` has every stat at Training 0 and no companions.
+      **[R2] `mid` measures at rank 0-18, and the solve is anchored at rank 25.**
+      Uses/hour is rank-independent so measuring *uses* is valid — but do **not**
+      use realised *gains* as a pass/fail gate, because at rank 0 they run 4.48x
+      the target by design.
+- [ ] **Step 3:** Feed measured uses/hour into `tools/balance/u10b_time_solve.py`
+      and regenerate. Any input off by >30% moves its multiplier materially.
 
 ---
 
-## Task D2: the per-stat and per-skill multipliers
+## Task D2: the multipliers
 
-**Files:** Modify `_datafiles/config.yaml` **and `internal/skills/skills.go`.**
+**Files:** `_datafiles/config.yaml` **and** `internal/skills/skills.go`.
 
-⚠️ **Skills have a Go-side shadow default and stats do not.** Verified:
+`GetStatProgressionMultiplier` returns 1.0 when config has no entry, so stats
+live only in config. `GetSkillProgressionMultiplier` returns `(0, false)` meaning
+"use the hardcoded default", so **skills have a Go fallback that must move too**.
+**[R2] `ranged-combat`, `skullduggery` and `search` have no config entry at all**
+— D2 must *add* those keys. Eleven entries currently disagree between the two.
 
-- `GetStatProgressionMultiplier` returns **1.0** when the config has no entry.
-  Config is the only source; there is nothing to keep in sync.
-- `GetSkillProgressionMultiplier` returns `(0, false)` meaning *"use the
-  hardcoded default"*, and `skills.GetProgressionMultiplier` then falls back to
-  the `SkillProgressionMultipliers` map in `internal/skills/skills.go`.
+- [ ] **Step 1:** Regenerate rather than transcribe:
+      `python tools/balance/u10b_time_solve.py`
 
-So a skill multiplier changed only in `config.yaml` leaves the old value live for
-any config that omits the key — including **every test binary**, which never
-loads `config.yaml`. **Update both**, exactly as the standing rule about Go
-defaults requires.
+Solved 2026-08-22 (revision 2), at rank 25:
 
-Note the two maps also disagree today: the Go map has `WeaponCombat: 0.3` while
-`config.yaml` ships `weapon-combat: 0.23`. Bring them into line rather than
-preserving the split.
+| track | uses/hr | bonus | shipped | solved |
+|---|---|---|---|---|
+| `weapon-combat` | 105 | 1.00 | 0.23 | **1.07** |
+| `unarmed-combat` | 75 | 1.00 | 0.23 | **1.49** |
+| `ranged-combat` * | 45 | 1.00 | 0.50 | **2.49** |
+| `spellcasting` | 45 | 1.25 | 0.63 | **1.99** |
+| `rhetoric` | 90 | 1.00 | 0.58 | **1.24** |
+| `manifestation` | 38 | 1.35 | 0.38 | **2.95** |
+| `skullduggery` * | 100 | 1.00 | 2.00 | **1.49** |
+| `search` * | 450 | 1.00 | 2.00 | **0.33** |
+| `bartering` | 100 | 1.00 | 2.00 | **1.49** |
+| `salvage` | 18 | 1.00 | 2.00 | **8.30** |
+| the six crafts | 18 | 1.40 | 3.50 | **5.93** |
+| `strength` | 150 | 1.00 | 0.20 | **0.33** |
+| `dexterity` | 330 | 1.00 | 0.15 | **0.15** (unchanged) |
+| `perception` | 450 | 1.00 | 1.00 | **0.15** |
+| `willpower` | 45 | 1.00 | 1.00 | **1.11** |
+| `charisma` | 100 | 1.00 | 0.22 | **0.66** |
 
-- [ ] **Step 1: Apply the solved table**
+`*` = no config key today; add it.
 
-Regenerate rather than transcribe:
+- [ ] **Step 2:** Rewrite the comment above each map. The current text explains
+      the values as compensation for firing frequency; that reasoning is now
+      inverted — combat's low per-hour yield is exactly why its multiplier rises.
+      State the engagement assumption, the 3/4 targets, and point at the model.
 
-```bash
-python tools/balance/u10b_time_solve.py
-```
+---
 
-Target values as solved on 2026-08-22, at rank 25:
+## Task D3: [R2] the structural problem the solve cannot fix
 
-| track | shipped | solved |
+**One multiplier per stat, many feeder tracks with 25x different use rates.**
+Fitting `perception` to `search` at 450/hr gives 4.07 pts/hr from searching and
+**0.16 pts/hr** from alchemy, cooking, enchanting or salvage — the same stat,
+25x apart, and the gap lands on crafters, the group the 4/hr target was meant to
+favour.
+
+| training perception by | uses/hr | pts/hr at m=0.15 |
 |---|---|---|
-| `weapon-combat` | 0.23 | **1.24** |
-| `unarmed-combat` | 0.23 | **1.24** |
-| `ranged-combat` | 0.50 | **2.49** |
-| `spellcasting` | 0.63 | **1.87** |
-| `rhetoric` | 0.58 | **1.12** |
-| `manifestation` | 0.38 | **2.99** |
-| `skullduggery` | 2.00 | **0.83** |
-| `search` | 2.00 | **0.83** |
-| `bartering` | 2.00 | **1.49** |
-| `salvage` | 2.00 | **8.30** |
-| `blacksmithing`, `alchemy`, `tailoring`, `cooking`, `jewelcrafting`, `enchanting` | 3.50 | **8.30** |
-| `strength` | 0.20 | **0.55** |
-| `dexterity` | 0.15 | **0.28** |
-| `perception` | 1.00 | **0.37** |
-| `willpower` | 1.00 | **0.83** |
-| `charisma` | 0.22 | **0.66** |
+| search | 450 | 4.07 |
+| consider / look | 60 | 0.54 |
+| ranged-combat | 45 | 0.41 |
+| alchemy / cooking / enchanting / salvage | 18 | 0.16 |
 
-- [ ] **Step 2: Rewrite the comment block above each map**
+Dexterity has the same shape, milder (combat 330 vs crafts 18).
 
-The current comments explain the multipliers as compensation for firing
-frequency ("Combat skills fire many times per round, so they get a low
-multiplier"). That reasoning is now **inverted**: the numbers are solved so that
-an hour of grinding any track yields comparable progress, and combat's low
-per-use rate is exactly why its multiplier is now HIGH rather than low. Say
-that, state the engagement assumption and the 3/hr and 4/hr targets, and point
-at `tools/balance/u10b_time_solve.py` so the next person re-solves rather than
-guesses.
+**A scalar cannot serve tracks 25x apart. Pick a lever, do not pretend the
+multiplier solves it:**
 
-- [ ] **Step 3: Note the two entries that change character most**
+- [ ] **Option A (recommended): fix `search`, not `perception`.** Its 2-round
+      cooldown is the outlier. Lengthen it, or damp perception specifically on
+      the search path, then fit `perception` to a mid-rate faucet (~60-100/hr),
+      which puts it near **0.6-1.0** and leaves crafters whole.
+- [ ] **Option B:** accept the spread and document that stats are trained
+      primarily by their dominant activity.
+- [ ] **Option C:** per-faucet stat multipliers. Most correct, most work, new
+      config surface.
 
-`salvage` moves 2.00 -> 8.30 because it is craft-paced, not utility-paced, and
-was grouped wrongly. `search`, `skullduggery` and `perception` drop to ~0.4x:
-searching while travelling was paying better per hour than fighting. Both belong
-in the patch notes.
+**Needs an owner decision before D2 ships**, because Option A changes
+`perception`'s solved value by ~5x.
 
 ---
 
-## Task D3: vitality, the damper, and the crit faucet — solved together
+## Task D4: vitality, with both faucets live
 
-**These are three changes to one number and they pull in different directions.
-Do not make them independently.**
+Vitality has two faucets and **both are already live** — revision 1 wrongly
+treated the crit one as dormant.
 
-Vitality has **two** faucets and neither is `OnStatUse`:
+- **Regen tick.** [R2] `OnRegenTick` runs for **both** Health and Stamina, and
+  vitality is in both lists, so it gets **two rolls per tick**, not one.
+  Revision 1's "1 gain per 72 rounds" is ~2x pessimistic on its regen component.
+- **Taking a physical crit**, via the bonus-event seam at
+  `ObservedCritProgressionBonus: 0.5`.
 
-- the **regen tick**, live today
-- **taking a physical crit**, via `OnCritReceived` -> `ToughenStatFor`, which is
-  **dormant** because `ObservedCritProgressionBonus` is absent from
-  `config.yaml` and its validator uses the `< 0` idiom, so it stays at 0
+Phase C already cut vitality without touching its multiplier: the regen damper
+was pinned at 1.0 because nothing moved vitality's rank, and is now **0.43x at
+Training 14**, **0.09x at Training 40**.
 
-Phase C already cut vitality hard without touching its multiplier: the regen
-damper was previously pinned at exactly 1.0 because nothing ever moved
-vitality's rank. It is now **0.43x at Training 14** and **0.09x at Training 40**.
-
-So enabling the crit knob *adds* a faucet at the same moment the damper
-*removes* pace. Modelled at the shipped 4.5, with the knob set to 0.5, a
-character fighting at half health gains vitality about once per 72 rounds at
-Training 14, slowing to once per 139 by Training 25.
-
-- [ ] **Step 1: Set `ObservedCritProgressionBonus: 0.5` in `config.yaml`**
-
-Absent means 0 means the path is dead for **vitality, willpower and charisma**
-alike. Setting it is what makes "taking a beating toughens you" real.
-
-- [ ] **Step 2: Do NOT cut `vitality` to ~1.0**
-
-Spec 13.3 says to start at ~1.0. That instruction predates the damper biting and
-predates the crit path being enabled; taken literally it would be a third cut on
-top of two. Re-run `tools/balance/u10b_vitality_model.py` and set the multiplier
-against the measured result, holding the same 4/hr target the other non-combat
-tracks use.
-
-- [ ] **Step 3: Check willpower and charisma too**
-
-Both gain a crit-toughen faucet the moment the knob is set, on top of the D2
-solve which assumed only their existing faucets. Re-run the model with the crit
-path live and adjust if either overshoots its target.
+- [ ] **Step 1:** Correct `u10b_vitality_model.py` (two regen rolls; crit path
+      live, not dormant) and re-run.
+- [ ] **Step 2:** Solve `vitality` against both live faucets at the 4/hr target.
+      **Do not apply spec 13.3's "start at ~1.0" literally** — that instruction
+      predates the damper biting and predates knowing the crit path was live.
+- [ ] **Step 3:** Re-check `willpower` and `charisma`, which also receive
+      crit-toughen and regen contributions the D2 solve does not model.
+      `charisma` is the most affected: regen alone adds ~1.4 pts/hr at m=0.66.
 
 ---
 
-## Task D4: gates
+## Task D5: [R2] consequences the solve does not contain
 
-- [ ] `gofmt -l internal/ modules/` prints nothing; `go build ./...`; full
-      `go test ./... -count=1`. Note `internal/usercommands` and
-      `internal/mobcommands` are independently flaky on master — rerun before
-      assuming a failure is yours.
-- [ ] **Confirm the documented anchors still hold.**
-      `TestStatChance_ReproducesTheDocumentedAnchors` pins a fresh stat at ~27%
-      and Training 50 at ~1.34%. Those are properties of the CURVE, so a
-      multiplier change must not move them for `perception` (multiplier 1.0 ->
-      0.37 **will** move them; update the test to a stat whose multiplier is
-      still 1.0, or re-anchor the expected values, but do not delete it).
-- [ ] Boot test in an isolated detached worktree (`mkdir -p _datafiles/logs`
-      first; exit **124** is success; never grep the bare word `panic`).
-- [ ] Patch notes: player-facing, no raw numbers, no em dashes, 80 columns. The
-      honest statement is that how quickly things improve now depends on the time
-      spent rather than on which activity happens to fire most often, that
-      fighting and crafting improve faster than before, and that searching
-      improves more slowly.
-- [ ] **Adversarial playtest with `mid`, not `veteran`.** Re-measure one track
-      and confirm the realised rate is near the target.
-- [ ] Ship via PR to `pruuk/DOGMud`, hand over, do not merge.
+- [ ] **Mobs and companions share these multipliers.** `MobProgressionRate` 0.5
+      multiplies on top. A ~5x combat raise takes a companion's `weapon-combat`
+      1 -> 25 from ~194 play-hours to ~36. **This falsifies the config comment
+      Phase C shipped**, which justifies `MobSkillTrainingCap: 25` on the grounds
+      that ~17,500 rounds makes it unreachable. Either revisit the cap or rewrite
+      that comment; do not leave it asserting something now false.
+- [ ] **Existing characters.** Of ~102 saves, six are past a soft cap. Meirok
+      (`users/3.yaml`) has `perception` Training **51** — the only stat past 50 on
+      any character — and perception is primary for five of his six top skills.
+      Under D2 as written he takes a 6.7x cut there. **A migration is not
+      possible** (multipliers are not stored per character), so this is a
+      deliberate, uncompensated redistribution and the patch notes must say so
+      plainly.
+- [ ] **The low end.** At 5.93 a fresh craft skill's chance is
+      `0.12 x 5.93 x 1.40 = 0.996`, clamped to 1.0 — the first craft always
+      levels, and the clamp wastes part of the multiplier exactly where new
+      players are.
+- [ ] **Titles.** Meirok's skill total is 848 against a `GetSkillTier`
+      denominator of 850, and the two skills gating "grandmaster" (`manifestation`
+      48, `ranged-combat` 1) receive two of the three largest raises. Confirm
+      with the owner against these numbers rather than the general ruling.
+
+---
+
+## Task D6: gates
+
+- [ ] `gofmt`, `go build ./...`, full `go test ./... -count=1`.
+- [ ] **[R2] `TestGetProgressionMultiplier`
+      (`internal/characters/progression_test.go:258-277`) hard-asserts the Go map
+      values** and will fail. Revision 1 did not name it.
+- [ ] **[R2] `TestStatChance_ReproducesTheDocumentedAnchors`** — revision 1's
+      remedy ("use a stat whose multiplier is still 1.0") is **impossible**; after
+      D2 no stat has 1.0. Either re-anchor the expected values or use a name
+      absent from the map, and say which.
+- [ ] **[R2] `CLAUDE.md` states the same anchors as fact** ("roughly 27% per
+      use... roughly 1.3%"). The doc moves with the test.
+- [ ] Boot test in an isolated detached worktree (`mkdir -p _datafiles/logs`;
+      exit **124** is success; never grep the bare word `panic`).
+- [ ] Patch notes: player-facing, no raw numbers, no em dashes, 80 columns. Must
+      be honest that searching improves much more slowly and that a
+      perception-built character is materially affected.
+- [ ] Adversarial playtest with `mid`. Measure **uses**, not gains (see D1).
+- [ ] PR to `pruuk/DOGMud`, hand over, do not merge.
 
 ---
 
 ## Self-Review
 
-**Spec coverage:** 13.3 (vitality vs the right faucet) -> D3 · 13.4 (decay sets
-shape, multipliers set rate) -> standing rule 3 and D2 · 14.2 (solve
-multipliers for pace) -> D2, re-cast as time rather than uses.
+**Spec coverage:** 13.3 -> D4 · 13.4 -> standing rule 3 and D2 · 14.2 -> D2,
+recast as time rather than uses.
 
-**Not in this phase, deliberately:** the dashboard (E), and any change to which
-code paths train what. The manifestation companion-tick idea the owner raised is
-a **flavour** change, not a balance one — the multiplier sits with the crafts
-without it — so it belongs in its own slice.
-
-**Known-weak points, stated rather than hidden:**
-- The whole table rests on uses-per-hour, and two of those figures are estimates.
-  D1 exists because of that, and D2 is not safe to ship until D1 runs.
-- A point is not worth the same in every track. Combat trains two stats plus a
-  skill at once, so "3/hr each" is really ~9 points of total growth per hour
-  against crafting's ~6. The owner accepted this deliberately: combat carries
-  risk and consumable cost.
-- Rank 25 is the reference point. The solve holds exactly there and drifts either
-  side, because the curve's shape differs from the old model's. Anchoring
-  elsewhere moves every number by roughly 1.5x per 10 ranks.
+**Known-weak points:**
+- D3 is an unresolved design decision, not a task with a known answer. D2 cannot
+  ship correctly until it is settled.
+- The bonus tier (`CritProgressionBonus` 2.0 doer, 0.5 observer) adds skill and
+  stat rolls on crit and fumble rounds that the D2 solve does not count. Against
+  an outclassed target, where U6's margin-driven crit rate is high, this is not
+  a rounding error.
+- Rank 25 is the anchor; the realised rate is 4.48x target at rank 0 and 0.22x
+  at rank 50. Cross-track *parity* holds at every rank, but the absolute target
+  does not.

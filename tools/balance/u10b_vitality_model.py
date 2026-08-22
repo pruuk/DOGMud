@@ -1,9 +1,16 @@
 """Vitality cannot be solved by the generic pace model.
 
+REVISION 2 (2026-08-22), after blind review. R1 claimed the crit faucet was
+dormant. It is NOT: ObservedCritProgressionBonus ships at 0.5 in the COMMITTED
+config (line 1009, added 81061c6b4 on 2026-08-19). R1 read the stale
+working-tree copy. BOTH faucets are live.
+
 Its OnStatUse faucet does not exist -- nothing in production calls it -- so
 "match the old OnStatUse pace" is undefined. Its two real faucets are the regen
-tick (live) and taking a physical crit (dormant until Phase D sets
-ObservedCritProgressionBonus).
+tick and taking a physical crit, and both are LIVE today.
+
+[R2] Vitality also gets TWO regen rolls per tick, not one: OnRegenTick runs for
+both PoolHealth and PoolStamina and vitality is in both stat lists.
 """
 
 import math
@@ -14,7 +21,7 @@ D_BELOW = 3.0
 NEW_SOFT = 50.0
 REGEN_BASE = 0.01     # RegenProgressionBase
 REGEN_CURVE = 3.0     # RegenProgressionCurve
-CRIT_BONUS = 0.5      # ObservedCritProgressionBonus, once set
+CRIT_BONUS = 0.5      # ObservedCritProgressionBonus -- SHIPPED, live today
 
 
 def curve(rank):
@@ -35,7 +42,7 @@ def regen_chance(T, depletion, m):
 
 
 def crit_chance(T, m):
-    """Chance per physical crit RECEIVED, once the knob is set."""
+    """Chance per physical crit RECEIVED. Live today."""
     return min(1.0, curve(T) * RATE * m * CRIT_BONUS)
 
 
@@ -50,7 +57,7 @@ for T in (0, 5, 14, 25, 40):
         regen_chance(T, 1.0, 4.5), regen_chance(T, 0.5, 4.5), regen_chance(T, 0.25, 4.5)))
 
 print()
-print("Crit-toughen, per physical crit RECEIVED (dormant today, Phase D enables)")
+print("Crit-toughen, per physical crit RECEIVED (LIVE today at 0.5)")
 print("%-10s %-12s %s" % ("Training", "m=4.50", "m=1.00"))
 for T in (0, 5, 14, 25, 40):
     print("%-10d %-12.4f %.4f" % (T, crit_chance(T, 4.5), crit_chance(T, 1.0)))
