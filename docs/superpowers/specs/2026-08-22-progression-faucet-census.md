@@ -270,3 +270,36 @@ cooldown and costs no special-move slot**, so the summon/dismiss cycle is free.
 grind, not one of the hardest. Any multiplier fitted to an assumed corpse or
 regen bottleneck will over-reward it by roughly 4x (225/hr realised against the
 ~56/hr the raise-line framing implies).
+
+## Live confirmation, and a failed measurement run
+
+An instrumented session was run on current code
+(`tools/playtest/goals/2026-08-22-u10b0-phase-d-rate-measurement.yaml`, run
+`d1e12f2437c85587`, commit `787b6fcbd`) to measure clean-hit rate and fight
+length post-arc. **It failed its primary goal** and is reported in full at
+`tools/playtest/reports/2026-08-22-local-feature-tester-phase-d-rate-measurement.md`.
+
+It did confirm two census findings live:
+
+- **The ungated perception faucet is real.** The very first `consider` issued
+  printed `STATISTIC INCREASED / perception`. One command, no cooldown, no
+  gate.
+- **The offhand fist fires as modelled** — one exchange narrated both
+  `Your Iron Longsword TEARS THROUGH...` and `...slam them with your fists!`,
+  confirming two `WeaponHits` entries from a 1H weapon with an empty offhand.
+
+**Why it failed, and what it means for the rig:** `mid.yaml` starts in an urban
+hub (room 462, Thornwall City) eight moves from any hostile. The first matched
+enemy was hidden and fled; the only reliable enemy died in one round and
+respawns slowly. Add this to the reviewer's finding that `mid` cannot exercise
+8 of 16 tracks: **it also cannot reach matched combat inside a 30-minute
+budget.** The container's analytics were never flushed
+(`FlushIntervalSec: 300`) before the watchdog tore it down, so the swings that
+did occur were lost.
+
+**Consequence for the retune:** the best available clean-hit measurement
+remains the **96,723-event historical dataset at 0.5752**, with the explicit
+caveat that it predates U6b, U9, U10 and Phases A/B/C. That is three orders of
+magnitude more data than a 30-minute session can produce, and its weakness is a
+stated caveat rather than a missing number. Revision 2's assumed 0.5 is wrong
+by ~15% against it either way.
