@@ -42,14 +42,10 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
-	// Sum all stat training values as a proxy for the creature's total power.
-	stats := corpse.Character.Stats
-	totalTraining := stats.Strength.Training +
-		stats.Dexterity.Training +
-		stats.Perception.Training +
-		stats.Vitality.Training +
-		stats.Willpower.Training +
-		stats.Charisma.Training
+	// StatPoolTotal is "how much creature is there" — the authored stat pool
+	// plus everything progression added, with the species baseline and
+	// equipment excluded. Used here as a proxy for the creature's total power.
+	totalTraining := corpse.Character.StatPoolTotal()
 
 	// Describe the power level without exposing raw numbers. Each phrase
 	// completes the sentence "You sense ..." on its own, so it needs no

@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -40,10 +39,17 @@ func seedAssessFixture(t *testing.T, convictionMax int) (*users.UserRecord, *roo
 	u.Character.ConvictionMax.Value = convictionMax
 	cleanUsers := users.SeedUsersForTest(map[int]*users.UserRecord{adUserId: u})
 
+	// Deliberately a bare Character rather than characters.New(): assess scores
+	// a corpse with StatPoolTotal, which is sum(Base) - speciesBase +
+	// sum(Training). New() rolls a gaussian Base for all six stats, and this
+	// test binary has no species roster to cancel it against, so a New()
+	// fixture would score ~640 instead of the 40 the spell gates below are
+	// written for — and would vary run to run. A real mob corpse carries its
+	// species baseline in Base and cancels exactly; species 0 here contributes
+	// no baseline, so the pool is precisely the authored Training.
 	corpse := rooms.Corpse{
 		MobId: 1234,
 	}
-	corpse.Character = *characters.New()
 	corpse.Character.Name = "goblin"
 	corpse.Character.Stats.Strength.Training = 20
 	corpse.Character.Stats.Vitality.Training = 20 // total 40 → skeleton only
