@@ -46,10 +46,11 @@ func regenDecayFactorForTest(c *Character, statName string) float64 {
 // chance must FALL as the stat's virtual rank rises.
 func TestCritReceivedProgression_DecaysWithRank(t *testing.T) {
 	// ObservedCritProgressionBonus is a documented off-switch: validateProgression
-	// only corrects NEGATIVE values, so an absent key (as in the shipped
-	// config.yaml today) or the zero-valued struct a Go test binary sees leaves
-	// it at 0 and critReceivedChance short-circuits to 0 for everyone. Inject a
-	// representative nonzero value so this test actually exercises the curve,
+	// only corrects NEGATIVE values, so a zero leaves it at 0 and
+	// critReceivedChance short-circuits to 0 for everyone. The shipped
+	// config.yaml sets it to 0.5 (since 81061c6b4, 2026-08-19), but a Go test
+	// binary never loads config.yaml and so sees the zero-valued struct.
+	// Inject a value matching the shipped one so this test exercises the curve,
 	// mirroring the existing config-injection pattern used elsewhere in this
 	// package (see defence_cost_test.go).
 	cfg := configs.GetConfig()

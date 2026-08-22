@@ -461,7 +461,12 @@ func ToughenStatFor(damageChannel string) string {
 // alone and never falls no matter how much the stat has already been used,
 // which is how a character grinds a stat at low health forever. That is the
 // fyttyn mechanism (see internal/migration/0.16.0.go), and vitality is hit
-// hardest because regen is its ONLY source of progression.
+// hardest because regen is its DOMINANT source of progression. Not its only
+// one: ToughenStatFor("physical") routes taken-crit progression to vitality
+// via CritProgressionBonus / ObservedCritProgressionBonus, both live since
+// 81061c6b4 (2026-08-19). Vitality also takes TWO regen rolls per tick, not
+// one, because it appears in both the Health and the Stamina stat lists in
+// NewRound_AutoHeal.go.
 //
 // A BaseProgressionChance of 0 (progression fully disabled) returns 0 rather
 // than dividing by zero.
