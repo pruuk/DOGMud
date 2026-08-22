@@ -456,14 +456,67 @@ It also compounds: under the re-key a mob's skill rank *is* its level, so a mob
 at skill 1 sits at nearly the maximum progression chance and climbs steadily,
 where before it stopped at 3.
 
+### The pacing, modelled — the cap is a ceiling, not a start
+
+**Every mob starts at skill 1.** Verified: all 124 authored skill entries across
+the 79 templates with a `skills:` block are level `1`, and `ensureAllSkills`
+floors every other skill at 1. Nothing spawns near the cap.
+
+Climbing is slow. With the shipped config (`MobProgressionRate` 0.5,
+`weapon-combat`/`unarmed-combat` multiplier 0.23, soft cap 20), a mob swinging
+once per round needs:
+
+| to reach skill | combat rounds |
+|---|---|
+| 3 (today's cap) | ~180 |
+| 10 | ~1,500 |
+| 20 | ~8,500 |
+| 25 | ~17,500 |
+
+So an ordinary mob never approaches it — it dies in a handful of rounds and
+respawns at 1. The raise lands only on creatures that persist AND fight
+constantly, which in practice means companions. That is the "favourite pet"
+dynamic the owner asked for, so this is a ceiling raise rather than a broad mob
+buff, and needs no separate sign-off — only accurate patch notes.
+
+### Audit: skill progression cannot survive death (verified 2026-08-22)
+
+Because this raise makes the invariant load-bearing, the whole chain was
+audited rather than assumed:
+
+- `characters/die.go` routes mob death through `Life.TransitionToDead`, so the
+  `Death_MobInstanceCleanup` observer fires. **Its "wired but dormant pending
+  Task 10" comment is STALE** — Task 10 landed. Fix the comment in this task.
+- The observer fires on the **instance**: `mobs.go` calls
+  `ResetForMobInstance()` between the shallow copy and `Validate()`, nilling the
+  Life machine and clearing `combatPhaseWired` so callbacks re-fire closed over
+  the instance. Without it the observer would see `MobInstanceId == 0` and
+  early-return, and nothing would ever be cleaned up.
+- `scheduleMobDespawnFromLife` deletes the instance file *before* destroying the
+  in-memory record, so a respawn reads no file.
+- All 15 `DestroyInstance` call sites were checked. Every one that skips the
+  delete is legitimate: bounty hunters (`SaveMobInstance` early-returns on
+  `bh_target_user_id`, no file exists), companions and charmed mobs
+  (early-returns on `IsCharmed()`, state lives on `CompanionInfo`), and room
+  unload (`roommanager.go` saves *then* destroys — the mob is not dead).
+- A mob that never dies does keep its skills across room unload/reload, which is
+  correct. It is bounded: `main.go` calls
+  `PruneStaleInstances(MobInstanceMaxAgeDays)` at boot, so a file untouched for
+  7 days is removed and that mob reverts to template.
+
+- [ ] **Add a permanent gate for it.** A test that a mob whose skills were
+      raised above template, saved, then put through the death-path delete,
+      respawns reading from template. The audit above is a point-in-time check;
+      this is what keeps it true.
+- [ ] **Fix the stale "dormant" comment** on `wireMobInstanceCleanup`.
+
 - [ ] Add `MobSkillSoftCap` (20) and `MobSkillTrainingCap` (25) with `<= 0`
       defaults, in both the Go defaults and `config.yaml`.
 - [ ] Use `MobSkillSoftCap` as the curve's soft cap for mobs and
       `MobSkillTrainingCap` as the hard gate, replacing `MobSkillCap`.
-- [ ] **Before shipping, put the table above in front of the owner** with a
-      recommendation. If the buff is unwanted, the lever is
-      `MobSkillTrainingCap`, not the multiplier curve, which is shared with
-      players.
+Owner reviewed the pacing 2026-08-22 and accepted the raise. If it ever needs
+walking back, the lever is `MobSkillTrainingCap`, not the multiplier curve,
+which is shared with players.
 
 ---
 
