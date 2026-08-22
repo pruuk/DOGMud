@@ -1,0 +1,69 @@
+# U10b-0 Phase C adversarial gate. How hard something is to improve now depends
+# on how far you have already taken it, not on how many times you have used it.
+#
+# THIS IS THE SESSION THAT CAN ACTUALLY SEE IT. The previous phase could not:
+# the veteran's seeded use counters put every combat stat at the bottom of the
+# old curve, so nothing ever fired. Those counters no longer matter, and this
+# character's trained points are low, so improvement should be VISIBLE within a
+# normal stretch of play. If you finish the session having seen none at all,
+# that is the headline finding and you should say so loudly.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Attributes and skills improve at a believable pace while you fight and
+#     act. Not constantly, but clearly present over tens of rounds.
+#   * The things you are WORST at improve most often. A skill you have barely
+#     touched should climb noticeably faster than one you have mastered.
+#   * Wearing gear that raises an attribute does not slow that attribute down.
+#     This is the subtle one and it is worth testing deliberately.
+#   * Creatures still hit, soak and die about as they always have. Nothing in
+#     this slice is supposed to change a creature's strength, only how easily it
+#     learns.
+#   * Companions keep what they earned across a logout, and do not suddenly
+#     become far stronger or far weaker.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the darkness!";
+# corpses persist; damage is words rather than numbers; a corpse can shadow the
+# live creature of the same name when you target it (already filed as a deploy
+# blocker); 3 commands per round on the AI port.
+
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    IMPROVEMENT IS VISIBLE (headline): fight and act steadily for a long
+    stretch, at least forty rounds of real activity, and record every
+    improvement banner verbatim with what you were doing at the time. Then say
+    plainly whether the pace feels right for a seasoned character. Seeing NONE
+    across the whole session is a finding worth reporting loudly, because this
+    is the slice that was supposed to make them appear.
+  - >-
+    WEAKEST IMPROVES FASTEST: pick something you are clearly expert at and
+    something you are clearly poor at, use both heavily, and tally improvements
+    for each. The weak one should climb noticeably more often. Report both
+    counts and say whether the ordering held. If the expert one climbs just as
+    often, that is a finding.
+  - >-
+    GEAR MUST NOT PUNISH YOU: check your equipment for anything that raises an
+    attribute. Use that attribute heavily while wearing it, then remove the
+    item, use it heavily again, and compare how often it improved. It should
+    feel the same. This used to be backwards, with your best gear quietly
+    slowing the very thing it boosted, so it is worth the time to test.
+  - >-
+    CREATURES ARE UNCHANGED IN A FIGHT: fight a decent spread of ordinary
+    creatures and say whether any is obviously out of step with its description.
+    Nothing here should have altered how hard anything hits or how much it
+    soaks. Name the creature and quote the lines for anything that feels wrong.
+  - >-
+    COMPANIONS ACROSS A LOGOUT: field a companion, fight alongside it for a
+    while, note how it performs, then quit and log back in. Confirm it returns
+    and does not feel dramatically stronger or weaker than when you left. Quote
+    anything describing it. A pet that comes back visibly transformed either way
+    is a finding.
+  - >-
+    GENERAL adversarial pass: anything that reads wrong, prints a raw number
+    where it should print words, shows an unreplaced token, double-prints,
+    dead-ends, or contradicts help text is a finding. Quote everything verbatim.
