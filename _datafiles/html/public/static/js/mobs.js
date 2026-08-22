@@ -557,7 +557,7 @@
     // ---- Stats & Combat ----
     insp.appendChild(sectionTitle("Stats & Combat"));
     insp.appendChild(numField("Stat pool", "statPool", detail.statPool));
-    var st = detail.statTraining || {};
+    var st = detail.statBase || {};
     var statRows = [];
     for (var si = 0; si < STAT_KEYS.length; si += 2) {
       var pair = STAT_KEYS.slice(si, si + 2);
@@ -566,11 +566,11 @@
         inp.addEventListener("input", markDirty);
         inp.addEventListener("blur", function () { if (this.value !== "") this.value = String(Math.round(parseFloat(this.value) || 0)); });
         statRows.push({ key: sk, input: inp });
-        return labelWrap(cap(sk) + " training", inp);
+        return labelWrap(cap(sk) + " base", inp);
       });
       insp.appendChild(ce("div", { "class": "row" }, statCols));
     }
-    F.statTraining = function () {
+    F.statBase = function () {
       var out = {};
       statRows.forEach(function (r) { out[r.key] = parseInt(r.input.value, 10) || 0; });
       return out;
@@ -733,7 +733,7 @@
       zone: g("zone", d.zone || ""),
       name: g("name", ""), description: g("description", ""),
       adjectives: g("adjectives", []), speciesId: g("speciesId", 0), gold: g("gold", 0),
-      statTraining: g("statTraining", {}), equipment: g("equipment", {}),
+      statBase: g("statBase", {}), equipment: g("equipment", {}),
       carriedItems: g("carriedItems", []), shop: g("shop", []),
       statPool: g("statPool", 0), archetype: g("archetype", ""), autoAggro: g("autoAggro", false),
       aiProfile: g("aiProfile", ""), specialMoveChance: g("specialMoveChance", 0),

@@ -62,8 +62,8 @@ func TestBuildMobUpdate_RoundTripsAndPreserves(t *testing.T) {
 		Description: "Sharp-eyed.", SpeciesId: 1, StatPool: 60, Archetype: "fighting",
 		AutoAggro: true, AIProfile: "tactical", ActivityLevel: 10,
 		IdleCommands: []string{"emote scans the road."}, Gold: 25,
-		StatTraining: map[string]int{"strength": 10, "perception": 5},
-		LootPool:     []int{40001}, Relationships: nil /* form didn't touch them */}
+		StatBase: map[string]int{"strength": 10, "perception": 5},
+		LootPool: []int{40001}, Relationships: nil /* form didn't touch them */}
 	res := buildMobUpdate(w.deps(), req)
 	if !res.Ok {
 		t.Fatalf("update should succeed, got %+v", res)
@@ -71,12 +71,20 @@ func TestBuildMobUpdate_RoundTripsAndPreserves(t *testing.T) {
 	got := w.saved[0]
 	if got.Character.Name != "Keen Guard" || !got.AutoAggro || got.AIProfile != "tactical" ||
 		got.StatPool != 60 || got.Character.Gold != 25 ||
-		got.Character.Stats.Strength.Training != 10 {
+		got.Character.Stats.Strength.Base != 10 || !got.Character.Stats.Strength.BaseAuthored {
 		t.Errorf("fields not round-tripped: %+v", got)
 	}
 	if len(got.Relationships) != 1 || len(got.KnowsFacts) != 1 {
 		t.Errorf("form-absent fields must be preserved from base, got rel=%v facts=%v",
 			got.Relationships, got.KnowsFacts)
+	}
+	// The editor must never write a template'''s Training. U10b-0 reads Training
+	// as the progression curve'''s difficulty rank, so a value there would make
+	// the mob start partway down the decay curve; the mobs package gate test
+	// catches it on disk, and this catches it in memory before the save.
+	if got.Character.Stats.Strength.Training != 0 || got.Character.Stats.Perception.Training != 0 {
+		t.Errorf("editor wrote Training on a template: str=%d per=%d",
+			got.Character.Stats.Strength.Training, got.Character.Stats.Perception.Training)
 	}
 }
 
