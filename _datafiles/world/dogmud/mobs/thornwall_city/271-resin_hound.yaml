@@ -41,10 +41,10 @@ character:
   gold: 0
   stats:
     perception:
-      training: 15
+      base: 155
     dexterity:
-      training: 12
+      base: 142
     vitality:
-      training: 8
+      base: 88
   skills:
     unarmed-combat: 1

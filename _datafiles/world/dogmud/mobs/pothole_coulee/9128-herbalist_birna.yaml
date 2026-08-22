@@ -42,17 +42,17 @@ character:
   gold: 0
   stats:
     perception:
-      training: 12
+      base: 112
     willpower:
-      training: 10
+      base: 110
     vitality:
-      training: 8
+      base: 108
     dexterity:
-      training: 6
+      base: 106
     charisma:
-      training: 4
+      base: 104
     strength:
-      training: 4
+      base: 104
   shop:
     - itemid: 40006    # glass vial
       quantity: 0

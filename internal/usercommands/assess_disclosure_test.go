@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -40,10 +39,17 @@ func seedAssessFixture(t *testing.T, convictionMax int) (*users.UserRecord, *roo
 	u.Character.ConvictionMax.Value = convictionMax
 	cleanUsers := users.SeedUsersForTest(map[int]*users.UserRecord{adUserId: u})
 
+	// Deliberately a bare Character rather than characters.New(): assess scores
+	// a corpse with StatPoolTotal, which is sum(Base) - speciesBase +
+	// sum(Training). New() rolls a gaussian Base for all six stats, and this
+	// test binary has no species roster to cancel it against, so a New()
+	// fixture would score ~640 instead of the 40 the spell gates below are
+	// written for — and would vary run to run. A real mob corpse carries its
+	// species baseline in Base and cancels exactly; species 0 here contributes
+	// no baseline, so the pool is precisely the authored Training.
 	corpse := rooms.Corpse{
 		MobId: 1234,
 	}
-	corpse.Character = *characters.New()
 	corpse.Character.Name = "goblin"
 	corpse.Character.Stats.Strength.Training = 20
 	corpse.Character.Stats.Vitality.Training = 20 // total 40 → skeleton only
@@ -102,5 +108,43 @@ func TestAssess_FlagsUnaffordableReservation(t *testing.T) {
 	}
 	if !strings.Contains(msgs, "could not spare") {
 		t.Errorf("unaffordable reservation not flagged:\n%s", msgs)
+	}
+}
+
+// A player corpse can never be raised: selectRaiseCorpse skips any corpse with
+// a UserId. Assess must not advertise forms for one, or it promises a summon
+// that raise then answers with "You cannot find suitable remains".
+//
+// The mismatch predates U10b-0 but that slice made it common rather than rare.
+// Assess scores a corpse with StatPoolTotal, and a player's Base is a gaussian
+// roll rather than a species baseline, so player corpses went from reporting
+// only their trained points (usually under the 30-point floor, so no forms
+// listed) to reporting the whole character. Observed in the Phase A playtest:
+// "It could sustain: skeleton, zombie, wraith" followed by raise refusing.
+func TestAssess_PlayerCorpseAdvertisesNoRaisableForms(t *testing.T) {
+	u, room, cleanup := seedAssessFixture(t, 4000)
+	defer cleanup()
+
+	// Same essence as the mob fixture, but these are a player's remains.
+	room.Corpses[0].UserId = 4242
+
+	handled, err := Assess("goblin", u, room, events.CmdSecretly)
+	if err != nil || !handled {
+		t.Fatalf("Assess failed: handled=%v err=%v", handled, err)
+	}
+
+	msgs := strings.Join(events.DrainQueuedMessagesForTest(adUserId), "\n")
+	if strings.Contains(msgs, "It could sustain") {
+		t.Errorf("assess advertised raisable forms for a player corpse:\n%s", msgs)
+	}
+	if strings.Contains(msgs, "would set aside") {
+		t.Errorf("assess disclosed a reservation for a raise that cannot happen:\n%s", msgs)
+	}
+	// It should still read the essence — that part is informative and correct.
+	if !strings.Contains(msgs, "You sense") {
+		t.Errorf("assess stopped describing the essence entirely:\n%s", msgs)
+	}
+	if !strings.Contains(msgs, "cannot be called back") {
+		t.Errorf("assess did not say why these remains are unraisable:\n%s", msgs)
 	}
 }

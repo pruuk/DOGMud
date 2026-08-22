@@ -46,7 +46,7 @@ The mobs system is built around several key components:
 ### 1. **Dynamic Instance Management**
 - Unique instance IDs for each spawned mob
 - Automatic stat calculation and equipment validation
-- Stats come from species base stats + mob YAML `statpool` bonus (no zone-level autoscaling)
+- Stats come from species base stats, the template's authored `base:` overrides, and the mob YAML `statpool` bonus (no zone-level autoscaling)
 - Stats and skills defined directly in YAML (no level-based scaling)
 - Memory management with automatic cleanup
 
@@ -834,6 +834,40 @@ func ReduceHostility() {
     }
 }
 ```
+
+## Authored Stats Live in `base:`, Not `training:`
+
+A mob template's stat values are authored under `character.stats.<stat>.base`.
+`training` is reserved for what progression adds *after* the mob spawns, and
+must be zero in any template.
+
+This was the opposite convention until 2026-08-22, when 599 of the 641 templates
+authored `training:` directly (values from -188 to 100000). U10b-0 makes the
+progression curve read `Training` as its difficulty rank, so a template carrying
+its values there starts partway down the decay curve and can be frozen outright
+by the gain cap at spawn. `tools/fold_mob_training_to_base.py` performed the
+move as `base_new = species_base + training`; it is a line-based transform
+precisely so the 21 explanatory comments inside those stat blocks survive.
+
+Two things enforce and explain the convention:
+
+- `template_training_test.go` — `TestNoMobTemplateCarriesAuthoredTraining` walks
+  the configured mob data root and fails with the file and line of every
+  offender. It matches both YAML shapes: block (`      training: 12`) and flow
+  (`    strength:    {training: 35}` — six templates use the latter, and an
+  anchored pattern silently passes all 36 of their entries).
+- `docs/schemas/mob.md` section 4 — the authoring guidance a builder reads.
+
+Omitting a stat entirely is still the right default: `characters.Validate` fills
+an absent `base:` from the species record, so that stat keeps tracking future
+species rebalances. Author `base:` only where the mob should differ from its
+species. Note that an explicit `base: 0` is honoured rather than hydrated, via
+`stats.StatInfo.BaseAuthored` — two mobs depend on it.
+
+Phase C of U10b-0 additionally moves the runtime `statpool` distribution from
+`.Training++` to `.Base++`, at which point `Training` means gains-since-spawn
+for mobs exactly as it does for players. Until then the spawn pool still lands
+in `Training`.
 
 ## File Organization and Persistence
 

@@ -46,9 +46,9 @@ character:
   gold: 30
   stats:
     willpower:
-      training: 10
+      base: 110
     charisma:
-      training: 6
+      base: 106
   shop:
     - itemid: 40106
     - itemid: 27

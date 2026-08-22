@@ -41,11 +41,11 @@ character:
   level: 1
   stats:
     dexterity:
-      training: 8
+      base: 88
     perception:
-      training: 5
+      base: 55
     strength:
-      training: -3
+      base: 57
   skills:
     skullduggery: 1
     search: 1

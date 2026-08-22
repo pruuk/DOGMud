@@ -40,12 +40,12 @@ character:
   level: 1
   stats:
     strength:
-      training: 10
+      base: 90
     dexterity:
-      training: 8
+      base: 58
     perception:
-      training: 5
+      base: 65
     vitality:
-      training: 5
+      base: 125
   skills:
     skullduggery: 1

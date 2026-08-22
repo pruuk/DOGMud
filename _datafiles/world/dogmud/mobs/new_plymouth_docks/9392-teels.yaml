@@ -41,8 +41,8 @@ character:
   gold: 3
   stats:
     perception:
-      training: 3
+      base: 103
     willpower:
-      training: -2
+      base: 98
     vitality:
-      training: -3
+      base: 97

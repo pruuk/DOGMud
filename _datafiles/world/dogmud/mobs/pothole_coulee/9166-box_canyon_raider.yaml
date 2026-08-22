@@ -40,14 +40,14 @@ character:
       itemid: 20011
   stats:
     strength:
-      training: 16
+      base: 116
     vitality:
-      training: 16
+      base: 116
     dexterity:
-      training: 13
+      base: 113
     perception:
-      training: 8
+      base: 108
     willpower:
-      training: 4
+      base: 104
     charisma:
-      training: 3
+      base: 103

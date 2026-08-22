@@ -41,10 +41,10 @@ character:
       dropchance: 20
   stats:
     vitality:
-      training: 10
+      base: 25
     strength:
-      training: -5
+      base: 15
     dexterity:
-      training: -5
+      base: 55
     perception:
-      training: 5
+      base: 45

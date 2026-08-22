@@ -47,10 +47,10 @@ character:
     - itemid: 30063
   stats:
     strength:
-      training: 8
+      base: 108
     dexterity:
-      training: 8
+      base: 108
     perception:
-      training: 10
+      base: 110
     vitality:
-      training: 5
+      base: 105

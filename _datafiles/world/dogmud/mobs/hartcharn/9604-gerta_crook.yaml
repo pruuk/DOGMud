@@ -43,9 +43,9 @@ character:
     cooking: 1
   stats:
     vitality:
-      training: 5
+      base: 105
     perception:
-      training: 3
+      base: 103
   shop:
     # Stillwater unique cooking (caravan-fed)
     - itemid: 40057    # lake mint

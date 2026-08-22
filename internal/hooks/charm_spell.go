@@ -53,12 +53,7 @@ func resolveCharmSpell(user *users.UserRecord, targetMob *mobs.Mob, room *rooms.
 
 	// ── 4. Build defense score ─────────────────────────────────────────
 	ts := targetMob.Character.Stats
-	statTrainingTotal := ts.Strength.Training +
-		ts.Dexterity.Training +
-		ts.Perception.Training +
-		ts.Vitality.Training +
-		ts.Willpower.Training +
-		ts.Charisma.Training
+	statTrainingTotal := targetMob.Character.StatPoolTotal()
 
 	defenseScore := ts.Willpower.ValueAdj +
 		int(math.Round(float64(statTrainingTotal)*0.10))

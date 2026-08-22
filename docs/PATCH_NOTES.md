@@ -1,5 +1,22 @@
 # DOGMud Patch Notes
 
+## 2026-08-22: Reading the dead
+
+Studying remains tells you more than it used to. Assessing a fallen person
+now weighs the whole of who they were rather than only what they had trained
+in life, so the essence you sense reads closer to the person you knew. What
+you learn from a fallen creature is unchanged.
+
+Assessing a person's remains no longer lists forms of undead they could
+sustain. It never could raise them, and saying otherwise only led you into
+casting a summons that had to refuse. It now says plainly that the dead of
+your own kind lie beyond that craft.
+
+Under the surface, every creature in the world had the way its strength is
+written down rebuilt. Nothing about any of them changed: every creature hits,
+soaks, and falls exactly as it did before. The change clears the way for work
+on how skills and attributes grow.
+
 ## 2026-08-21: Holding a spell is a skill
 
 Keeping a spell together while someone hits you is now a real contest, and

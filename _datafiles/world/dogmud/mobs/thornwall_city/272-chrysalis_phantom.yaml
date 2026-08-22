@@ -60,13 +60,13 @@ character:
   gold: 25
   stats:
     dexterity:
-      training: 60
+      base: 160
     perception:
-      training: 40
+      base: 140
     strength:
-      training: 30
+      base: 130
     vitality:
-      training: 25
+      base: 125
   skills:
     skullduggery: 1
     unarmed-combat: 1

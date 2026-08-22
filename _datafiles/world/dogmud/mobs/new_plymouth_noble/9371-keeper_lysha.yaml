@@ -48,4 +48,4 @@ character:
   gold: 20
   stats:
     perception:
-      training: 14
+      base: 114

@@ -43,6 +43,6 @@ character:
   gold: 12
   stats:
     strength:
-      training: 5
+      base: 105
     willpower:
-      training: 4
+      base: 104

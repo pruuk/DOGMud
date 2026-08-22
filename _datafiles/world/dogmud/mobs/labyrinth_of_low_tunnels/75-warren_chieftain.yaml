@@ -60,16 +60,16 @@ character:
     - itemid: 10012
   stats:
     strength:
-      training: 15
+      base: 115
     vitality:
-      training: 15
+      base: 115
     willpower:
-      training: 10
+      base: 110
     dexterity:
-      training: -5
+      base: 95
     perception:
-      training: 5
+      base: 105
     charisma:
-      training: -10
+      base: 90
   mutations:
     thick-hide: 2

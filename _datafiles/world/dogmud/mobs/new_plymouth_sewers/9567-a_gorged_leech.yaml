@@ -48,9 +48,9 @@ character:
   gold: 8
   stats:
     strength:
-      training: 8
+      base: 138
     vitality:
-      training: 8
+      base: 178
     perception:
-      training: 4
+      base: 34
 itemdropchance: 0

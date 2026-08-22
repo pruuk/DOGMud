@@ -45,12 +45,12 @@ character:
   items:
     - itemid: 40    # Halix's Lockbox Key
   stats:
-    strength:    {training: 35}
-    dexterity:   {training: 35}
-    vitality:    {training: 40}
-    perception:  {training: 45}
-    willpower:   {training: 35}
-    charisma:    {training: 35}
+    strength:    {base: 135}
+    dexterity:   {base: 135}
+    vitality:    {base: 140}
+    perception:  {base: 145}
+    willpower:   {base: 135}
+    charisma:    {base: 135}
   spellbook:
     fold-recall: 25
   tactics:

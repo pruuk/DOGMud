@@ -38,8 +38,8 @@ character:
   gold: 20
   stats:
     strength:
-      training: 14
+      base: 114
     vitality:
-      training: 8
+      base: 108
     perception:
-      training: 6
+      base: 106

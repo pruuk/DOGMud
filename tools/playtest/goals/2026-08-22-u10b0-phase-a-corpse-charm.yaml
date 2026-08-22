@@ -1,0 +1,75 @@
+# U10b-0 Phase A adversarial gate. The slice rewrote 599 mob templates and
+# re-pointed four systems at a new shared accessor. Nothing about it is
+# supposed to be visible in play, which is exactly why it needs a human-shaped
+# reader: a boot test proves the world loads, not that a corpse still reads
+# like the creature it came from.
+#
+# You are a seasoned manifestor. Your job is the three player-facing surfaces
+# this touched, plus anything else that looks wrong along the way.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Assess describes a corpse's essence in words, never numbers, and the
+#     description should track how tough the creature actually was. A rat and
+#     a boss must not read the same. A big monster reading as "barely a trace"
+#     would be the failure this gate exists to catch.
+#   * Assess and raise must agree. If assess says a corpse could sustain a
+#     given undead form, raising that form must not then refuse the corpse for
+#     being too weak, and vice versa. A disagreement between those two lines
+#     is a finding, quoted in full.
+#   * Charm should feel contested against the creature's size: something small
+#     bends easier than something large. Not a coin flip, not a certainty.
+#   * Mobs should hit, soak, and die about as hard as you remember. Every mob
+#     in the game had its stats rewritten in the data files; the arithmetic
+#     says nothing moved, and you are the check on that.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the
+# darkness!"; corpses persist in the room; damage is words rather than
+# numbers; 3 commands per round on the AI port. Read every line of output.
+
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    ASSESS ACROSS THE RANGE (headline): kill several creatures of clearly
+    different weight, from the flimsiest thing you can find up to the toughest
+    you can safely take, and assess each corpse. Quote every essence line
+    verbatim alongside what the creature was and how hard the fight actually
+    felt. The wording must climb with the creature. Call out anything where a
+    tough kill reads weak or a trivial kill reads mighty, and say plainly
+    whether the ordering makes sense to you as a player.
+  - >-
+    ASSESS AND RAISE MUST AGREE: on each corpse you assess, read the list of
+    forms it says it could sustain, then actually attempt to raise one of the
+    listed forms and one form it did NOT list. The listed one should be
+    accepted on corpse strength grounds and the unlisted one refused for being
+    too weak. Quote both replies. Any case where assess promises a form that
+    raise then rejects, or refuses a form raise accepts, is a finding.
+  - >-
+    YOUR OWN CORPSE: get yourself killed on purpose somewhere safe to return
+    to, come back to where you died, and assess your own remains. Quote the
+    line. This one deliberately changed in this slice, so describe how it reads
+    to you: does the phrasing make sense for a person rather than a beast, and
+    does the strength it reports seem plausible for you? Then try to raise it
+    and confirm it is refused as a player corpse rather than accepted.
+  - >-
+    CHARM: attempt to charm several creatures of clearly different weight, at
+    least ten attempts overall. Tally successes against failures per size of
+    creature and report the tallies plainly. Small things should bend more
+    often than large ones, and nothing should be a certainty either way. If a
+    charm holds, wait for it to lapse and quote the line when the creature
+    turns on you or wanders off.
+  - >-
+    MOB FEEL: fight a decent spread of ordinary mobs and say whether anything
+    is obviously out of step with its description. A creature that ought to be
+    frail soaking hits forever, a small pest hitting like a boss, a named
+    monster dying in one swing. Name the mob and quote the combat lines. Be
+    blunt; a shrug here is worth nothing.
+  - >-
+    GENERAL adversarial pass: anything that reads wrong, prints a raw number
+    where it should print words, shows an unreplaced token, double-prints,
+    dead-ends, or contradicts help text is a finding. Quote everything
+    verbatim.

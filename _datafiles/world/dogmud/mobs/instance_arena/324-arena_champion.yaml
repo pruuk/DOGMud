@@ -43,10 +43,10 @@ character:
   gold: 15
   stats:
     strength:
-      training: 8
+      base: 108
     dexterity:
-      training: 4
+      base: 104
     vitality:
-      training: 6
+      base: 106
     perception:
-      training: 3
+      base: 103

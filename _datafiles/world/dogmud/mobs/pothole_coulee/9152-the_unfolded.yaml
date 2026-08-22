@@ -50,17 +50,17 @@ character:
   gold: 0
   stats:
     willpower:
-      training: 70
+      base: 160
     vitality:
-      training: 55
+      base: 175
     perception:
-      training: 35
+      base: 95
     charisma:
-      training: 18
+      base: 28
     dexterity:
-      training: 14
+      base: 64
     strength:
-      training: 8
+      base: 88
   skills:
     spellcasting: 1
   spellbook:

@@ -44,12 +44,12 @@ character:
   items:
     - itemid: 41    # Kessa's Lockbox Key
   stats:
-    strength:    {training: 25}
-    dexterity:   {training: 28}
-    vitality:    {training: 25}
-    perception:  {training: 30}
-    willpower:   {training: 22}
-    charisma:    {training: 20}
+    strength:    {base: 125}
+    dexterity:   {base: 128}
+    vitality:    {base: 125}
+    perception:  {base: 130}
+    willpower:   {base: 122}
+    charisma:    {base: 120}
   spellbook:
     fold-recall: 25
   tactics:

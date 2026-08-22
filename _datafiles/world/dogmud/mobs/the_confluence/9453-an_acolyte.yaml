@@ -39,6 +39,6 @@ character:
   gold: 2
   stats:
     willpower:
-      training: 5
+      base: 105
     vitality:
-      training: 3
+      base: 103

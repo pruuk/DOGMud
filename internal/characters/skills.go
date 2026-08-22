@@ -244,6 +244,68 @@ func (c *Character) GetStatValue(statName string) int {
 	return 0
 }
 
+// GetStatTraining returns the trained component of the named stat, or 0 if
+// unrecognised.
+//
+// This is the progression curve's rank input (U10b-0). Unlike GetStatValue it
+// excludes Base (the baseline the character or mob started with) and Mods
+// (equipment and spells), so difficulty depends only on gains actually made.
+// Equipping a stat item must never make a stat harder to train, and a mob with a
+// large authored stat pool must not be harder to train than a small one.
+func (c *Character) GetStatTraining(statName string) int {
+	switch statName {
+	case "strength":
+		return c.Stats.Strength.Training
+	case "dexterity":
+		return c.Stats.Dexterity.Training
+	case "perception":
+		return c.Stats.Perception.Training
+	case "vitality":
+		return c.Stats.Vitality.Training
+	case "willpower":
+		return c.Stats.Willpower.Training
+	case "charisma":
+		return c.Stats.Charisma.Training
+	}
+	return 0
+}
+
+// StatPoolTotal returns "how much creature is there": the authored stat pool
+// plus everything progression has added, excluding the species baseline and
+// excluding equipment.
+//
+// Four systems need this number — assess's essence bands, corpseRaisePool, charm
+// resistance, and the charm re-roll contest — and all four used to open-code it
+// as a sum of .Training. That worked only while a mob's authored stats and spawn
+// pool both lived in Training. U10b-0 moves both to Base so Training can mean
+// gains-since-spawn for mobs exactly as it does for players.
+//
+// Subtracting the species baseline is what keeps the answer stable across that
+// move, and it is why the bands in assess.go did not need recalibrating. Species
+// baselines are not uniform (0 to 6000 across the roster), so this must be a
+// per-species lookup, not a constant.
+//
+// A nil species record contributes no baseline: such a character's Base was
+// never hydrated either, so the two cancel.
+func (c *Character) StatPoolTotal() int {
+	total := c.Stats.Strength.Base + c.Stats.Dexterity.Base +
+		c.Stats.Perception.Base + c.Stats.Vitality.Base +
+		c.Stats.Willpower.Base + c.Stats.Charisma.Base +
+		c.Stats.Strength.Training + c.Stats.Dexterity.Training +
+		c.Stats.Perception.Training + c.Stats.Vitality.Training +
+		c.Stats.Willpower.Training + c.Stats.Charisma.Training
+
+	if sp := species.GetSpecies(c.SpeciesId); sp != nil {
+		total -= sp.Stats.Strength.Base + sp.Stats.Dexterity.Base +
+			sp.Stats.Perception.Base + sp.Stats.Vitality.Base +
+			sp.Stats.Willpower.Base + sp.Stats.Charisma.Base
+	}
+	if total < 0 {
+		total = 0
+	}
+	return total
+}
+
 // GetCombatSkillTag returns the appropriate combat skill tag based on
 // the character's equipped weapon type.
 func (c *Character) GetCombatSkillTag() skills.SkillTag {

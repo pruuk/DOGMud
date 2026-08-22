@@ -51,10 +51,10 @@ character:
   level: 1
   stats:
     strength:
-      training: 10
+      base: 100
     vitality:
-      training: 8
+      base: 88
     dexterity:
-      training: 5
+      base: 135
     perception:
-      training: 5
+      base: 145

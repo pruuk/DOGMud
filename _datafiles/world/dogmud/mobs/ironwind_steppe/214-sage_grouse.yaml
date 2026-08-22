@@ -30,4 +30,4 @@ character:
   level: 1
   stats:
     perception:
-      training: 5
+      base: 165

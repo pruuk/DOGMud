@@ -43,6 +43,6 @@ character:
   gold: 10
   stats:
     willpower:
-      training: 10
+      base: 110
     charisma:
-      training: 6
+      base: 106

@@ -56,11 +56,11 @@ character:
     tailoring: 1
   stats:
     dexterity:
-      training: 12
+      base: 112
     perception:
-      training: 8
+      base: 108
     willpower:
-      training: 5
+      base: 105
   shop:
     # Base sewing tools
     - itemid: 40012    # thread spool

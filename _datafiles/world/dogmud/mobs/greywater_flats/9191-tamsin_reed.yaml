@@ -39,11 +39,11 @@ character:
   gold: 20
   stats:
     strength:
-      training: 6
+      base: 106
     dexterity:
-      training: 4
+      base: 104
     perception:
-      training: 8
+      base: 108
   shop:
     - itemid: 30021
     - itemid: 40038

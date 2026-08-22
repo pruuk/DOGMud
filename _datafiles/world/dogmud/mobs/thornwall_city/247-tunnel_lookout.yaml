@@ -35,9 +35,9 @@ character:
   gold: 2
   stats:
     perception:
-      training: 8
+      base: 108
     dexterity:
-      training: 5
+      base: 105
   skills:
     skullduggery: 1
   items:

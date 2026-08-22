@@ -49,10 +49,10 @@ character:
     - itemid: 10014
   stats:
     strength:
-      training: 8
+      base: 108
     perception:
-      training: 8
+      base: 108
     vitality:
-      training: 5
+      base: 105
     willpower:
-      training: 5
+      base: 105

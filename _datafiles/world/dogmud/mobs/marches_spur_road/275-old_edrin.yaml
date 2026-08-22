@@ -54,13 +54,13 @@ character:
   gold: 50
   stats:
     willpower:
-      training: 55
+      base: 155
     perception:
-      training: 45
+      base: 145
     charisma:
-      training: 40
+      base: 140
     vitality:
-      training: 50
+      base: 150
   spellbook:
     fold-recall: 30
     hemorrhagic-burst: 20

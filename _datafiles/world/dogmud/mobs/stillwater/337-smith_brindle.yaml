@@ -62,13 +62,13 @@ character:
     blacksmithing: 1
   stats:
     strength:
-      training: 14
+      base: 114
     vitality:
-      training: 8
+      base: 108
     perception:
-      training: 5
+      base: 105
     dexterity:
-      training: 6
+      base: 106
   shop:
     # Stillwater unique (forager-fed)
     - itemid: 40059    # lake-iron nodule

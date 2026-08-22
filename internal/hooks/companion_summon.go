@@ -187,11 +187,11 @@ func worseReason(a, b raiseSkipReason) raiseSkipReason {
 }
 
 // corpseRaisePool is the stat metric the raise spell scores a corpse by — the
-// same Training sum `assess` reports, so the two agree on a corpse's worth.
+// same number `assess` reports, so the two agree on a corpse's worth. That
+// invariant is now enforced by both calling StatPoolTotal rather than by two
+// copies of the same sum staying in step.
 func corpseRaisePool(c rooms.Corpse) int {
-	s := c.Character.Stats
-	return s.Strength.Training + s.Dexterity.Training + s.Perception.Training +
-		s.Vitality.Training + s.Willpower.Training + s.Charisma.Training
+	return c.Character.StatPoolTotal()
 }
 
 // selectRaiseCorpse picks the targetIndex-th valid mob corpse to raise (1-based

@@ -42,14 +42,10 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
-	// Sum all stat training values as a proxy for the creature's total power.
-	stats := corpse.Character.Stats
-	totalTraining := stats.Strength.Training +
-		stats.Dexterity.Training +
-		stats.Perception.Training +
-		stats.Vitality.Training +
-		stats.Willpower.Training +
-		stats.Charisma.Training
+	// StatPoolTotal is "how much creature is there" — the authored stat pool
+	// plus everything progression added, with the species baseline and
+	// equipment excluded. Used here as a proxy for the creature's total power.
+	totalTraining := corpse.Character.StatPoolTotal()
 
 	// Describe the power level without exposing raw numbers. Each phrase
 	// completes the sentence "You sense ..." on its own, so it needs no
@@ -75,6 +71,22 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	user.SendText(messaging.CategorySystem, `You study the remains of <ansi fg="mob-corpse">`+corpse.Character.Name+`</ansi>.`)
 	user.SendText(messaging.CategorySystem, `You sense `+essenceDesc+`.`)
 
+	// A player's remains never answer the call: selectRaiseCorpse skips any
+	// corpse carrying a UserId, so listing forms below would promise a summon
+	// that raise then refuses with "You cannot find suitable remains here".
+	//
+	// The essence reading above stays, because it is informative. After U10b-0
+	// it reflects the whole character rather than only their trained points,
+	// which is what turned this from a rare mismatch into a common one: a
+	// player corpse used to score below the lowest form's gate and quietly list
+	// nothing at all.
+	if corpse.UserId != 0 {
+		user.SendText(messaging.CategorySystem,
+			`Whatever this was in life cannot be called back. The dead of your own kind are beyond your craft.`)
+		user.Character.OnSkillUse(string(skills.Manifestation), user.UserId)
+		return true, nil
+	}
+
 	// List which undead types this corpse could support, driven by the raise
 	// spells' own summon_min_corpse_pool gates so assess and the spells can
 	// never disagree. For each supported form, also work out the Conviction
@@ -85,6 +97,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		forms      []string
 		maxReserve int
 	}
+
 	var supported []string
 	var groups []*raiseGroup
 	for _, form := range []string{`skeleton`, `zombie`, `wraith`, `spectre`, `vampire`, `golem`} {

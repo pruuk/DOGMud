@@ -32,6 +32,6 @@ character:
   gold: 10
   stats:
     strength:
-      training: 5
+      base: 105
     charisma:
-      training: 5
+      base: 105

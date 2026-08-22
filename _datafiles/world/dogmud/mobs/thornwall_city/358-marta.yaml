@@ -40,17 +40,17 @@ character:
   # Equipment TBD per Ketil's pattern -- fists for v1 stat tuning.
   stats:
     strength:
-      training: 32
+      base: 132
     dexterity:
-      training: 12
+      base: 112
     vitality:
-      training: 28
+      base: 128
     perception:
-      training: 12
+      base: 112
     willpower:
-      training: 10
+      base: 110
     charisma:
-      training: 8
+      base: 108
   spellbook:
     fold-recall: 20
   tactics:

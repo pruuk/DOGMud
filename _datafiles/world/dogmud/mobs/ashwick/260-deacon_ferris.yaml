@@ -41,8 +41,8 @@ character:
   gold: 0
   stats:
     willpower:
-      training: 8
+      base: 108
     perception:
-      training: 6
+      base: 106
     charisma:
-      training: 4
+      base: 104

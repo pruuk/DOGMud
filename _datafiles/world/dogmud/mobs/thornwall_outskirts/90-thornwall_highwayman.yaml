@@ -47,10 +47,10 @@ character:
       itemid: 20024
   stats:
     dexterity:
-      training: 8
+      base: 108
     perception:
-      training: 5
+      base: 105
     strength:
-      training: 3
+      base: 103
   skills:
     skullduggery: 1

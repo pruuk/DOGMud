@@ -39,9 +39,9 @@ character:
   gold: 50
   stats:
     vitality:
-      training: 12
+      base: 112
     strength:
-      training: 6
+      base: 106
   shop:
     - itemid: 40002
     - itemid: 40019

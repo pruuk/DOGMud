@@ -36,8 +36,8 @@ character:
     rhetoric: 1
   stats:
     strength:
-      training: 20
+      base: 180
     vitality:
-      training: 20
+      base: 240
     perception:
-      training: 5
+      base: 55

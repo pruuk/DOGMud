@@ -42,8 +42,8 @@ character:
     spellcasting: 1
   stats:
     charisma:
-      training: 15
+      base: 185
     willpower:
-      training: 10
+      base: 160
     dexterity:
-      training: 10
+      base: 160

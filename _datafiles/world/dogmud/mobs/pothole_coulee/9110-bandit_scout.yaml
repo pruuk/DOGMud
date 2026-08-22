@@ -42,10 +42,10 @@ character:
       itemid: 10021
   stats:
     strength:
-      training: 4
+      base: 104
     dexterity:
-      training: 8
+      base: 108
     perception:
-      training: 4
+      base: 104
     vitality:
-      training: 2
+      base: 102

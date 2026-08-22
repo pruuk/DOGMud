@@ -44,4 +44,4 @@ character:
   gold: 15
   stats:
     charisma:
-      training: 12
+      base: 112

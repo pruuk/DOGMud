@@ -18,6 +18,48 @@ type StatInfo struct {
 	Racial   int `yaml:"-"`                  // Value provided by racial benefits
 	Base     int `yaml:"base,omitempty"`     // Base stat value
 	Mods     int `yaml:"-"`                  // How much it's modded by equipment, spells, etc.
+	// BaseAuthored reports that the YAML this stat was decoded from actually
+	// carried a `base:` key, as opposed to leaving it out. Species hydration
+	// (characters.Validate) needs the distinction: it fills an unset Base from
+	// the species record, and `Base == 0` alone cannot tell "unset" apart from
+	// "deliberately zero". Two mob stats legitimately fold to exactly zero.
+	//
+	// Runtime-only, and `base:` keeps its omitempty, so a Base of 0 written
+	// back out is indistinguishable from an absent one on the next load. That
+	// is fine for the paths that exist today (mob templates are re-read from
+	// their authored YAML; instance saves carry Training, not Base; player
+	// rolls are never zero) but it is the sharp edge to know about.
+	BaseAuthored bool `yaml:"-"`
+}
+
+// UnmarshalYAML decodes exactly as the default decoder would, and additionally
+// records whether a `base:` key was present.
+//
+// This is the gopkg.in/yaml.v2 Unmarshaler signature, because that is what
+// internal/fileloader (and therefore every mob, species and user file) decodes
+// with. The handful of yaml.v3 call sites do not reach a stat whose base could
+// be an authored zero -- playtestprofiles.cloneUser round-trips a player, whose
+// rolled Base is never zero.
+//
+// The local type strips the method set so the nested unmarshal does not recurse
+// back into here; the probe then re-reads the same node just to see whether the
+// key existed at all.
+func (si *StatInfo) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plainStatInfo StatInfo
+	var raw plainStatInfo
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	*si = StatInfo(raw)
+
+	var probe struct {
+		Base *int `yaml:"base"`
+	}
+	if err := unmarshal(&probe); err != nil {
+		return err
+	}
+	si.BaseAuthored = probe.Base != nil
+	return nil
 }
 
 func (si *StatInfo) SetMod(mod ...int) {

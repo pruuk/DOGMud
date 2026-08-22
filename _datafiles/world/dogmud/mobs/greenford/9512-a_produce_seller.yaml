@@ -42,8 +42,8 @@ character:
   gold: 15
   stats:
     perception:
-      training: 5
+      base: 105
     vitality:
-      training: 4
+      base: 104
   shop:
     - itemid: 40158

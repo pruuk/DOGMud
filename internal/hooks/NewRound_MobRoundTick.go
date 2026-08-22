@@ -405,12 +405,7 @@ func tickMobCharmState(mob *mobs.Mob) {
 						attackScore := float64(owner.Character.Stats.Charisma.ValueAdj) +
 							float64(manifestSkill)*25.0
 
-						targetPool := mob.Character.Stats.Strength.Training +
-							mob.Character.Stats.Dexterity.Training +
-							mob.Character.Stats.Perception.Training +
-							mob.Character.Stats.Vitality.Training +
-							mob.Character.Stats.Willpower.Training +
-							mob.Character.Stats.Charisma.Training
+						targetPool := mob.Character.StatPoolTotal()
 						defenseScore := float64(mob.Character.Stats.Willpower.ValueAdj) +
 							float64(targetPool)*0.10
 

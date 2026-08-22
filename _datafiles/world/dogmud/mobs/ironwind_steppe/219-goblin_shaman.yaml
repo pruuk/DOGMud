@@ -44,13 +44,13 @@ character:
   level: 1
   stats:
     willpower:
-      training: 10
+      base: 80
     charisma:
-      training: 8
+      base: 38
     perception:
-      training: 5
+      base: 55
     strength:
-      training: -5
+      base: 55
   spellbook:
     chrysalis-cocoon: 50
     conviction-spike: 50

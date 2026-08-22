@@ -26,7 +26,7 @@ The stats system is built around several key components:
 
 **Multi-Layer Calculation System:**
 - **Base Values**: Species starting statistics
-- **Training Points**: Player-allocated stat improvements (gained through use-based progression)
+- **Training**: What use-based progression has added since the character existed. Never authored in data; see "Base vs Training" below.
 - **Equipment Modifiers**: Temporary bonuses from gear and effects
 - **No Diminishing Returns**: `ValueAdj` is a straight copy of `Value` — stats are used raw, uncapped
 
@@ -68,13 +68,48 @@ type Statistics struct {
 ### Individual Stat Information
 ```go
 type StatInfo struct {
-    Training int // Player-allocated training points (persistent)
-    Value    int // Final calculated value (runtime)
-    ValueAdj int // Always equals Value now; kept only so existing call sites compile
-    Base     int // Species base value (persistent)
-    Mods     int // Equipment/effect modifiers (runtime)
+    Training int  // Points progression has added since the character existed (persistent)
+    Value    int  // Final calculated value (runtime)
+    ValueAdj int  // Always equals Value now; kept only so existing call sites compile
+    Racial   int  // Copy of Base, set by Recalculate (runtime)
+    Base     int  // Starting value: species baseline, character roll, or authored (persistent)
+    Mods     int  // Equipment/effect modifiers (runtime)
+    BaseAuthored bool // The YAML carried a `base:` key (runtime, see below)
 }
 ```
+
+### `Base` vs `Training`, and `BaseAuthored`
+
+`Base` is what the character or mob started with. `Training` is strictly what
+progression added on top — `IncreaseStat` is the only thing that raises it. That
+split matters because U10b-0 makes the progression curve read `Training` as its
+difficulty rank: anything else parked there would make a stat harder to raise
+for reasons that have nothing to do with how much it has already been raised.
+
+Mob templates used to author their stat values under `training:`; 599 of them
+did. `tools/fold_mob_training_to_base.py` moved those into `base:` on
+2026-08-22, and `internal/mobs`'s `TestNoMobTemplateCarriesAuthoredTraining`
+keeps them there.
+
+`BaseAuthored` exists because that fold produces two stats whose value is
+exactly zero, and `characters.Validate` fills an *unset* `Base` from the species
+record. `Base == 0` alone cannot tell "nobody said" from "deliberately zero", so
+`UnmarshalYAML` records whether a `base:` key was actually present and the
+hydration pass consults it.
+
+Three things to know about it:
+
+- It implements the **gopkg.in/yaml.v2** `Unmarshaler` interface, because that
+  is what `internal/fileloader` decodes with. A v3-shaped method would compile
+  and never be called on the engine's real load path.
+- It is runtime-only (`yaml:"-"`), and `base:` keeps `omitempty`, so a `Base` of
+  0 written back out is indistinguishable from an absent one on the next load.
+  That is fine for the paths that exist today — mob templates are re-read from
+  their authored YAML, instance saves carry `Training` rather than `Base`, and a
+  rolled player `Base` is never zero — but it is the sharp edge.
+- It is false for every `StatInfo` built in Go. Hydration still also requires
+  `Base == 0`, which is what stops a rolled character's stats being overwritten
+  with the species baseline.
 
 ## Stat Calculation System
 
@@ -135,5 +170,7 @@ barteringBonus := character.Stats.Charisma.ValueAdj / 10
 
 ## Dependencies
 
-- None outside the standard library. `internal/stats` no longer imports `math`
-  now that `Recalculate()` has no compression curve to compute.
+- `gopkg.in/yaml.v2`, for `StatInfo.UnmarshalYAML` only. That is the library
+  `internal/fileloader` decodes with, so the Unmarshaler interface has to match
+  it. Nothing else here needs a dependency: `Recalculate()` stopped importing
+  `math` when the compression curve was removed.

@@ -53,6 +53,7 @@ than reading an old result:
 |------|--------------|
 | [`../tools/context_md_audit.py`](../tools/context_md_audit.py) | Finds `context.md` files documenting symbols the package no longer defines. Coverage is 100%; accuracy is what rots. Triage the output, it has known false positives |
 | [`../tools/balance/`](../tools/balance/) | Combat balance models behind roadmap 5.11 — skill leverage, real player-vs-mob matchups, and the `SkillWeight`/statpool tuning matrix |
+| [`../tools/fold_mob_training_to_base.py`](../tools/fold_mob_training_to_base.py) | One-shot U10b-0 Phase A migration that folded authored mob `training:` into `base:` across 599 templates, kept as the record of the arithmetic. `--verify <report.csv>` re-checks it against the files on disk |
 
 ## History
 

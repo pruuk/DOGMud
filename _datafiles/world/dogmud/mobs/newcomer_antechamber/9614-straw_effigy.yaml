@@ -33,4 +33,4 @@ character:
     # stranding the fight (Malia's 2026-07-18 stuck-point). It deals no damage,
     # so there is no time pressure -- make it effectively unkillable.
     vitality:
-      training: 100000
+      base: 100200

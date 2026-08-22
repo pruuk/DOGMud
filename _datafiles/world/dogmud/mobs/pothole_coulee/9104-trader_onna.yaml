@@ -40,11 +40,11 @@ character:
   gold: 1000
   stats:
     perception:
-      training: 7
+      base: 107
     charisma:
-      training: 6
+      base: 106
     willpower:
-      training: 4
+      base: 104
   # Stock and pricing are engine-driven by the living economy: RestockQty
   # and MaxStock come from each item's rarity tier, and the price is
   # value × scarcity. Per-entry quantity/quantitymax/price are NOT read on

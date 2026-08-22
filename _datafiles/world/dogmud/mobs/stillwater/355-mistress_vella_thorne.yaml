@@ -55,10 +55,10 @@ character:
     heal: 4
   stats:
     perception:
-      training: 12
+      base: 112
     willpower:
-      training: 14
+      base: 114
     charisma:
-      training: 10
+      base: 110
     dexterity:
-      training: 6
+      base: 106

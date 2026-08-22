@@ -37,6 +37,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -75,12 +76,15 @@ type mobUpdateReq struct {
 	MobId int    `json:"mobId"`
 	Zone  string `json:"zone"`
 	// character block
-	Name         string         `json:"name"`
-	Description  string         `json:"description"`
-	Adjectives   []string       `json:"adjectives"`
-	SpeciesId    int            `json:"speciesId"`
-	Gold         int            `json:"gold"`
-	StatTraining map[string]int `json:"statTraining"` // strength/dexterity/perception/vitality/willpower/charisma
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Adjectives  []string `json:"adjectives"`
+	SpeciesId   int      `json:"speciesId"`
+	Gold        int      `json:"gold"`
+	// StatBase is the mob's starting value per stat. It is deliberately NOT
+	// Training: a template has not spawned, so Training must be zero there, and
+	// U10b-0 reads Training as the progression curve's difficulty rank.
+	StatBase     map[string]int `json:"statBase"`     // strength/dexterity/perception/vitality/willpower/charisma
 	Equipment    map[string]int `json:"equipment"`    // worn-slot key (characters.WornSlot.Key) -> itemId (0/absent = empty)
 	CarriedItems []int          `json:"carriedItems"` // itemIds
 	Shop         []mobShopRow   `json:"shop"`
@@ -266,10 +270,10 @@ func mobToReq(m *mobs.Mob) mobUpdateReq {
 		HideEquipmentSlots: m.HideEquipmentSlots, CharmImmune: m.CharmImmune,
 		NonCombatant: m.NonCombatant, PlayerAttackImmune: m.PlayerAttackImmune,
 	}
-	req.StatTraining = map[string]int{
-		"strength": m.Character.Stats.Strength.Training, "dexterity": m.Character.Stats.Dexterity.Training,
-		"perception": m.Character.Stats.Perception.Training, "vitality": m.Character.Stats.Vitality.Training,
-		"willpower": m.Character.Stats.Willpower.Training, "charisma": m.Character.Stats.Charisma.Training,
+	req.StatBase = map[string]int{
+		"strength": m.Character.Stats.Strength.Base, "dexterity": m.Character.Stats.Dexterity.Base,
+		"perception": m.Character.Stats.Perception.Base, "vitality": m.Character.Stats.Vitality.Base,
+		"willpower": m.Character.Stats.Willpower.Base, "charisma": m.Character.Stats.Charisma.Base,
 	}
 	req.Equipment = wornToMap(m.Character.Equipment)
 	for _, it := range m.Character.Items {
@@ -314,25 +318,35 @@ func reqToMob(base *mobs.Mob, req mobUpdateReq) mobs.Mob {
 	m.Character.Adjectives, m.Character.SpeciesId, m.Character.Gold = req.Adjectives, req.SpeciesId, req.Gold
 	// The form always submits all six stat keys together — but apply each
 	// key only if present, rather than unconditionally reading the map (which
-	// would silently zero a stat's Training on any partial/malformed payload
-	// instead of leaving the base value alone).
-	if v, ok := req.StatTraining["strength"]; ok {
-		m.Character.Stats.Strength.Training = v
-	}
-	if v, ok := req.StatTraining["dexterity"]; ok {
-		m.Character.Stats.Dexterity.Training = v
-	}
-	if v, ok := req.StatTraining["perception"]; ok {
-		m.Character.Stats.Perception.Training = v
-	}
-	if v, ok := req.StatTraining["vitality"]; ok {
-		m.Character.Stats.Vitality.Training = v
-	}
-	if v, ok := req.StatTraining["willpower"]; ok {
-		m.Character.Stats.Willpower.Training = v
-	}
-	if v, ok := req.StatTraining["charisma"]; ok {
-		m.Character.Stats.Charisma.Training = v
+	// would silently zero a stat on any partial/malformed payload instead of
+	// leaving the existing value alone).
+	//
+	// Writing Base rather than Training is the point (U10b-0 Phase A): a
+	// template has not spawned, so its Training must stay zero, and the
+	// progression curve now reads Training as a difficulty rank. BaseAuthored
+	// is set alongside so an explicitly zeroed stat is not re-hydrated from the
+	// species record on the next Validate.
+	//
+	// Known limitation, shared with the builder's existing habit of discarding
+	// YAML comments on save: base: keeps omitempty, so a stat saved as zero
+	// comes back absent and DOES hydrate on the next boot. Two mobs
+	// (81-scrubland_dog willpower, 82-scavenger_bird vitality) carry a real
+	// zero; do not round-trip those through the builder.
+	for _, e := range []struct {
+		key string
+		ptr *stats.StatInfo
+	}{
+		{"strength", &m.Character.Stats.Strength},
+		{"dexterity", &m.Character.Stats.Dexterity},
+		{"perception", &m.Character.Stats.Perception},
+		{"vitality", &m.Character.Stats.Vitality},
+		{"willpower", &m.Character.Stats.Willpower},
+		{"charisma", &m.Character.Stats.Charisma},
+	} {
+		if v, ok := req.StatBase[e.key]; ok {
+			e.ptr.Base = v
+			e.ptr.BaseAuthored = true
+		}
 	}
 	// Equipment/carried items are base-aware: an id that matches what the base
 	// template already had in that slot (or already held in inventory) keeps

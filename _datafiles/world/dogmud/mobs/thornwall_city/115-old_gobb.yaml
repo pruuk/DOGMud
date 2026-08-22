@@ -37,11 +37,11 @@ character:
   gold: 0
   stats:
     charisma:
-      training: 14
+      base: 114
     perception:
-      training: 6
+      base: 106
     strength:
-      training: 8
+      base: 108
 relationships:
   - to: 116
     type: friend

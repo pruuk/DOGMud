@@ -37,6 +37,6 @@ character:
   gold: 7
   stats:
     perception:
-      training: 3
+      base: 103
     vitality:
-      training: 4
+      base: 104
