@@ -1,0 +1,81 @@
+# U10b-0 Phase D adversarial feel check.
+#
+# The whole balance of how fast you improve has been retuned. Some things now
+# improve much faster than before and some much slower, deliberately. Your job
+# is to say whether the RESULT feels fair, not whether it works.
+#
+# You start in open country outside the city walls, with enemies close at hand.
+# This is deliberate: an earlier run started inside the city and spent a third
+# of its time walking, so do not wander back into town looking for something to
+# do.
+#
+# WHAT CHANGED, in plain terms. Do not quote these back as findings.
+#   * Fighting, spellcraft, oratory, archery and summoning should all improve
+#     noticeably faster than you may remember.
+#   * Crafting, haggling and salvage should improve more slowly per piece of
+#     work, because you get many more chances at them in an hour.
+#   * Sizing up a creature or peering at something no longer teaches you
+#     anything by itself. Spotting something hidden does.
+#   * Selling a stack of many identical things counts as one piece of trading
+#     practice, not one per item.
+#   * Calling up a conjured ally now takes much longer between summonings.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Improvement banners appear often enough to feel rewarding but not
+#     constantly. Something you are weak at should improve much more readily
+#     than something you are already good at.
+#   * No activity should feel completely dead. If you work hard at something for
+#     a long stretch and NOTHING ever improves, that is the single most
+#     important thing you can report.
+#   * Nothing should improve so fast it feels absurd or exploitable. If you find
+#     a way to make something improve over and over for almost no effort, say
+#     so loudly and describe exactly what you did.
+#   * No raw numbers anywhere, no unreplaced tokens, no doubled messages.
+#
+# KNOWN NON-BUGS, do not refile: hidden creatures answer "You attack the
+# darkness!"; corpses persist; damage is described in words rather than numbers;
+# a corpse can shadow a live creature of the same name when you target it; three
+# commands per round on this connection.
+
+ephemeral:
+  profile: mid
+  start_room: 444
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    FIGHTING PACE (headline): fight steadily for a long stretch, at least
+    twenty rounds of real combat, resting between fights so each one finishes
+    properly. Record every improvement banner verbatim with what you were doing
+    at the time. Then say plainly whether the pace felt rewarding, sparse, or
+    absurd. A complete absence of improvement across sustained fighting is a
+    finding worth reporting loudly.
+  - >-
+    STRONG VERSUS WEAK: deliberately alternate between something you are
+    clearly good at and something you are clearly bad at. Report the counts for
+    each. The weak one should improve noticeably more often. If a weak ability
+    never improves at all across real effort, that is a finding.
+  - >-
+    SENSES: examine and size up creatures repeatedly and confirm this teaches
+    you nothing on its own. Then forage repeatedly in the open country and
+    confirm that DOES teach you. Report roughly how many times you did each and
+    what you saw. If examining still trains your senses, that is a bug.
+  - >-
+    TRADING: acquire several identical items and sell them in one go, then sell
+    a single item separately. Report whether the bulk sale seemed to teach you
+    more than the single sale did. It should not.
+  - >-
+    CONJURING, only if you can cast: summon a conjured ally, dismiss it, and
+    immediately try to summon it again. Report exactly what the game tells you
+    and whether the wait feels reasonable or punishing. Then try raising or
+    charming instead and say whether those feel different.
+  - >-
+    EXPLOIT HUNT: actively try to find the cheapest possible way to make
+    something improve. Repeat a single cheap action many times and watch. If any
+    action improves you repeatedly for almost no cost, time, or risk, describe
+    it precisely.
+  - >-
+    GENERAL adversarial pass: anything that reads wrong, prints a raw number
+    where it should print words, shows an unreplaced token, double-prints, dead
+    ends, or contradicts help text is a finding. Quote everything verbatim.
