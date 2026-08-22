@@ -209,3 +209,64 @@ Items 1 and 3 are measurable from a single instrumented playtest counting the
 (`progression.go:302,323`). **Not** the `"check"` lines at `:163`, `:269`,
 `:521` — those sit inside `if roll < threshold` and fire only on a **gain**,
 so they count successes rather than uses.
+
+## Manifestation: measured, and neither bound the owner named is binding
+
+The owner's framing was that manifestation is gated by *"how fast you can kill
+(corpses for assess and raise) OR how fast your conviction regens (standing in
+a temple with the regen multiplier)"*. Measured, **the cheapest path needs
+neither**.
+
+**The "temple" is the `sanctuary` room mutator**
+(`_datafiles/world/dogmud/mutators/sanctuary.yaml`), `regenmultiplier: 5.0`,
+applied in `roomRegenMultiplier` → `regenMultFromSpecs`. It is the only room
+mutator in the game with a regen multiplier.
+
+**Conviction supply.** `ConvictionMax = 5 + Cha×3 + Wil×1`. For a mid character
+(Cha 100, Wil 100) that is **405**, and `ConvictionPerRound = floor(405 × 0.02)
+= 8/round` at the shipped `PlayerConvictionRegenPct: 0.02`. Regen fires every
+round in `NewRound_AutoHeal`.
+
+| | CP/round | CP/hour |
+|---|---|---|
+| anywhere | 8 | 7,200 |
+| in a `sanctuary` room | 40 | 36,000 |
+
+**Spell costs** (all 14 manifestation spells, from their YAML):
+
+| spell | cost | difficulty | waitrounds | needs |
+|---|---|---|---|---|
+| conjure-water | 30 | 15 | 2 | nothing |
+| raise-skeleton | 30 | 10 | 4 | corpse (`summon_requires_corpse: true`) |
+| summon-hive-swarm | 30 | 45 | 3 | nothing |
+| conjure-air | 40 | 30 | 3 | nothing |
+| raise-zombie | 35 | 20 | 6 | corpse, pool ≥ 60 |
+| conjure-magma | 50 | 55 | 5 | nothing |
+| raise-golem | 50 | 50 | **16** | corpse |
+| charm | 120 | 60 | 1 | a hostile mob |
+
+**The binding constraint is the shared `special-move` cooldown, not CP.** At 4
+rounds that is 225 casts/hour. Comparing:
+
+| path | CP bound (no sanctuary) | CP bound (sanctuary) | waitrounds bound | **actual** |
+|---|---|---|---|---|
+| conjure-water (30) | 240/hr | 1,200/hr | 450/hr | **225/hr — cooldown** |
+| median spell (40) | 180/hr | 900/hr | — | 180/hr, or 225 in sanctuary |
+| charm (120) | 60/hr | 300/hr | 900/hr | 60/hr, or 225 in sanctuary |
+| raise-golem (50) | 144/hr | 720/hr | **56/hr** | **56/hr — waitrounds** |
+
+So a player grinding manifestation spams **conjure-water**: cheapest, lowest
+difficulty, no corpse, no target, `waitrounds` below the shared cooldown. It
+runs at the **cooldown ceiling of 225/hr even outside a sanctuary**, and it is
+not combat-gated at all — you can stand still and do it, so its realised
+engagement is near 100%, not 10%.
+
+Two secondary constraints exist and do **not** bind: `CompanionSoftCap` is 5
+(Go default, absent from `config.yaml`), and summons hold conviction in reserve
+against a `PoolReservationCapPct: 0.66` ceiling — but **`dismiss` has no
+cooldown and costs no special-move slot**, so the summon/dismiss cycle is free.
+
+**Consequence for the retune:** manifestation is one of the *easiest* tracks to
+grind, not one of the hardest. Any multiplier fitted to an assumed corpse or
+regen bottleneck will over-reward it by roughly 4x (225/hr realised against the
+~56/hr the raise-line framing implies).
