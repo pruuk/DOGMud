@@ -17,6 +17,18 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// progressionRollDenominator is the integer resolution every progression roll
+// uses. It was 10,000, which quantised any chance below 0.01% to a threshold of
+// zero — a stat in that state could never progress again, and two of a live
+// character's six were there (strength 3.98e-05, dexterity 9.25e-12 against
+// users/3.yaml and the shipped config). util.Rand is already integer, so the
+// finer resolution costs nothing.
+//
+// Resolution alone does not remove the seal, it only moves it further out the
+// curve; Balance.ProgressionChanceFloor is what removes it. Both are needed —
+// at 10,000 the shipped floor of 1e-5 would itself quantise to zero.
+const progressionRollDenominator = 1000000
+
 // skillNameMap maps progression context names to actual skill tags.
 // Can be used to alias legacy names to new skill tags.
 var skillNameMap = map[string]string{}
@@ -111,10 +123,16 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 	if chance > 1.0 {
 		chance = 1.0
 	}
+	// Same guarantee as the stat path: a skill may become vanishingly slow but
+	// never sealed. `chance > 0` preserves the mob hard-cap short-circuits
+	// above, which return a genuine zero.
+	if floor := float64(b.ProgressionChanceFloor); chance > 0 && chance < floor {
+		chance = floor
+	}
 
-	// Roll: chance is 0.0–1.0, convert to 0–10000 for integer roll
-	threshold := int(chance * 10000)
-	roll := util.Rand(10000)
+	// Roll: chance is 0.0–1.0, scaled to the integer roll resolution.
+	threshold := int(chance * progressionRollDenominator)
+	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
 		mudlog.Debug("Progression", "check", "skill", "result", "PROGRESS", "skill", skillName, "rank", virtualRank, "chance", fmt.Sprintf("%.2f%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
@@ -184,6 +202,18 @@ func (c *Character) statProgressionChance(statName string, bonusMultiplier float
 	if chance > 1.0 {
 		chance = 1.0
 	}
+	// Floor last, after every multiplier. Progression is meant to become
+	// asymptotically slow, never impossible, and the integer roll quantises
+	// anything smaller than one part in progressionRollDenominator down to
+	// "never". Applied here rather than at the roll site so every caller of this
+	// expression -- CheckStatProgression, OnCritReceived, the faucet test --
+	// sees the same guarantee.
+	//
+	// `chance > 0` matters: the mob gates above return a hard 0 meaning "this
+	// mob may not progress at all", and the floor must not resurrect that.
+	if floor := float64(b.ProgressionChanceFloor); chance > 0 && chance < floor {
+		chance = floor
+	}
 	return chance
 }
 
@@ -203,8 +233,8 @@ func (c *Character) CheckStatProgression(statName string, userId int, bonusMulti
 		virtualRank = statVal
 	}
 
-	threshold := int(chance * 10000)
-	roll := util.Rand(10000)
+	threshold := int(chance * progressionRollDenominator)
+	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
 		mudlog.Debug("Progression", "check", "stat", "result", "PROGRESS", "stat", statName, "rank", virtualRank, "chance", fmt.Sprintf("%.2f%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
@@ -454,9 +484,9 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 		chance = 1.0
 	}
 
-	// Roll: chance is 0.0–1.0, convert to 0–10000 for integer roll
-	threshold := int(chance * 10000)
-	roll := util.Rand(10000)
+	// Roll: chance is 0.0–1.0, scaled to the integer roll resolution.
+	threshold := int(chance * progressionRollDenominator)
+	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
 		mudlog.Debug("Progression", "check", "regen_stat", "result", "PROGRESS", "stat", statName,
