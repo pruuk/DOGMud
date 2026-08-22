@@ -501,38 +501,72 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 	}
 }
 
-// OnRegenTick is called every regen tick (every 3 rounds) for each resource
-// pool. It computes a smooth chance based on how depleted the pool is and
-// rolls for stat progression on each related stat.
+// regenTickChance is the progression chance one regen tick presents for a pool,
+// or 0 when no roll should happen. Extracted from OnRegenTick so it can be
+// tested without waiting on a probabilistic roll, and so the reserved-pool rule
+// lives in exactly one place.
 //
-// Formula: chance = RegenProgressionBase × (1 - current/max) ^ RegenProgressionCurve
+// Formula: chance = RegenProgressionBase × (1 - current/effectiveMax) ^ RegenProgressionCurve
 //
-// Resource→stat mappings:
+// The ratio measures the pool the character can actually REACH — raw max minus
+// reservation — because a character sitting at their reserved cap is not
+// depleted, they are full. Reading the raw max there turns a large reservation
+// into a permanent progression farm (the fyttyn vitality exploit, 2026-04-16).
 //
-//	Health    → vitality, willpower
-//	Stamina   → strength, vitality
-//	Conviction→ willpower, charisma
-func (c *Character) OnRegenTick(current, max int, relatedStats []string, userId int) {
+// Note this is the progression RATIO only. The regen AMOUNT deliberately keeps
+// the raw max; see EffectivePoolMax's doc comment and HealthPerRound and its
+// siblings in resources.go.
+func (c *Character) regenTickChance(p Pool) float64 {
 	if !configs.GetGamePlayConfig().UseSkillProgression {
-		return
-	}
-	if max <= 0 {
-		return
+		return 0
 	}
 
-	ratio := float64(current) / float64(max)
+	rawMax := c.poolMax(p)
+	if rawMax <= 0 {
+		return 0
+	}
+	// Deliberately NOT EffectivePoolMax: that is floored at 1 and never returns
+	// 0, so a fully reserved pool would present max=1, current=0, ratio=0 — the
+	// maximum chance, permanently. That is the same faucet inverted. A pool with
+	// nothing reachable in it offers no progression at all.
+	effMax := rawMax - c.GetPoolReservation(string(p), rawMax)
+	if effMax <= 0 {
+		return 0
+	}
+
+	ratio := float64(c.PoolValue(p)) / float64(effMax)
 	if ratio >= 1.0 {
-		return // Pool is full, no progression chance
+		return 0 // at the top of what they can reach: not depleted
 	}
 	if ratio < 0 {
 		ratio = 0
 	}
 
 	b := configs.GetBalanceConfig()
-	base := float64(b.RegenProgressionBase)
-	curve := float64(b.RegenProgressionCurve)
+	chance := float64(b.RegenProgressionBase) *
+		math.Pow(1.0-ratio, float64(b.RegenProgressionCurve))
+	if chance <= 0 {
+		return 0
+	}
+	return chance
+}
 
-	chance := base * math.Pow(1.0-ratio, curve)
+// OnRegenTick is called every regen tick (every 3 rounds) for each resource
+// pool, and rolls regen-driven stat progression for the stats that pool
+// exercises.
+//
+// It takes a Pool rather than a (current, max) pair on purpose. Six call sites
+// used to compute the reservation-adjusted max by hand — correctly, but with
+// nothing pinning it — and the next caller to get it wrong reopens a
+// progression faucet. There is no longer a max to pass.
+//
+// Resource→stat mappings:
+//
+//	Health    → vitality, willpower
+//	Stamina   → strength, vitality
+//	Conviction→ willpower, charisma
+func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
+	chance := c.regenTickChance(p)
 	if chance <= 0 {
 		return
 	}
