@@ -135,7 +135,7 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
-		mudlog.Debug("Progression", "check", "skill", "result", "PROGRESS", "skill", skillName, "rank", virtualRank, "chance", fmt.Sprintf("%.2f%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
+		mudlog.Debug("Progression", "check", "skill", "result", "PROGRESS", "skill", skillName, "rank", virtualRank, "chance", fmt.Sprintf("%.4g%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
 		actualSkill := resolveSkillName(skillName)
 
 		if skills.SkillExists(actualSkill) {
@@ -237,7 +237,7 @@ func (c *Character) CheckStatProgression(statName string, userId int, bonusMulti
 	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
-		mudlog.Debug("Progression", "check", "stat", "result", "PROGRESS", "stat", statName, "rank", virtualRank, "chance", fmt.Sprintf("%.2f%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
+		mudlog.Debug("Progression", "check", "stat", "result", "PROGRESS", "stat", statName, "rank", virtualRank, "chance", fmt.Sprintf("%.4g%%", chance*100), "roll", roll, "threshold", threshold, "character", c.Name)
 		if c.IncreaseStat(statName, 1) {
 			if userId > 0 {
 				msg := banner.Format(banner.Stat, statName, nil)
