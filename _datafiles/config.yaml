@@ -1119,6 +1119,25 @@ Balance:
   # fight constantly. At rank 3, the SkillMultiplier curve gives ~1.77x
   # damage -- meaningful but not overwhelming. Range: 1-50.
   MobSkillCap: 3
+  # MobSkillSoftCap / MobSkillTrainingCap supersede MobSkillCap above.
+  #
+  # The old cap of 3 was reachable in roughly 180 rounds of fighting, so any
+  # long-lived creature hit its ceiling and stopped. These raise it: mobs decay
+  # against their own soft cap (they fight far more often than players, so the
+  # shared 50 leaves them flat too long) and stop at the hard cap.
+  #
+  # This is a CEILING, not a starting point. Every mob begins at skill 1, and
+  # at shipped pacing reaching 10 takes ~1,500 combat rounds and 25 takes
+  # ~17,500. An ordinary mob dies long before that and respawns at 1, so in
+  # practice the raise lands on companions and other creatures that persist
+  # and fight constantly. Skill progression cannot survive death: the instance
+  # file is deleted in the death pipeline.
+  #
+  # At rank 25 a mob's damage multiplier is 2.41x (vs 1.49x at 3) and its
+  # contest contribution is +125 (vs +15). To walk the raise back, lower
+  # MobSkillTrainingCap -- not the multiplier curve, which players share.
+  MobSkillSoftCap: 20
+  MobSkillTrainingCap: 25
 
   # ── REGEN-BASED STAT PROGRESSION ──────────────────────────────────────────
   # Every regen tick (every 3 rounds), each resource pool (HP, SP, CP) has

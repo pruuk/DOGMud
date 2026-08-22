@@ -95,7 +95,7 @@ func (c *Character) skillProgressionChance(skillName string, bonusMultiplier flo
 		if !bool(b.MobProgressionEnabled) {
 			return 0
 		}
-		if lvl, ok := c.Skills[actualSkillName]; ok && lvl >= int(b.MobSkillCap) {
+		if lvl, ok := c.Skills[actualSkillName]; ok && lvl >= int(b.MobSkillTrainingCap) {
 			return 0 // hard cap
 		}
 		bonusMultiplier *= float64(b.MobProgressionRate)
@@ -123,7 +123,13 @@ func (c *Character) skillProgressionChance(skillName string, bonusMultiplier flo
 		buffSkillMult = 2.0
 	}
 
-	chance := CalculateProgressionChance(virtualRank, int(b.SkillSoftCap)) *
+	// Mobs decay against their own soft cap: they fight far more often than
+	// players, so sharing the player curve would leave them flat for too long.
+	softCap := int(b.SkillSoftCap)
+	if c.IsMob {
+		softCap = int(b.MobSkillSoftCap)
+	}
+	chance := CalculateProgressionChance(virtualRank, softCap) *
 		bonusMultiplier * skills.GetProgressionMultiplier(skillName) *
 		mutSkillMult * buffSkillMult
 	if chance > 1.0 {
