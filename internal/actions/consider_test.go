@@ -67,14 +67,23 @@ func (a *fakeActor) OnStatUse(statName string) bool {
 func (a *fakeActor) OnCriticalSuccess(skillName string) {}
 func (a *fakeActor) OnCriticalFailure(skillName string) {}
 
-func TestConsider_OnStatUsePerception(t *testing.T) {
+// Consider must NOT train perception. Inverted by U10b-0 Phase D Task 1: look
+// and consider were the only stat faucets with no cooldown and no gate, worth
+// ~3,600 perception uses/hour against forage's 150 ceiling. This is the
+// behavioural half of the guard; consider_no_progression_test.go is the
+// structural half and also covers look.go.
+func TestConsider_DoesNotTrainPerception(t *testing.T) {
 	self := newFakeActor("self", 100, 100, true)
 	target := newFakeActor("target", 100, 100, true)
 
 	Consider(self, target)
-	if self.statUses["perception"] != 1 {
-		t.Errorf("expected perception OnStatUse called once, got %d",
-			self.statUses["perception"])
+	if got := self.statUses["perception"]; got != 0 {
+		t.Errorf("Consider trained perception %d time(s); Phase D removed the "+
+			"ungated faucet and it must award nothing", got)
+	}
+	if len(self.statUses) != 0 {
+		t.Errorf("Consider trained %v; it must award no progression at all",
+			self.statUses)
 	}
 }
 
