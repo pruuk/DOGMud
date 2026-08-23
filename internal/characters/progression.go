@@ -616,48 +616,39 @@ func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 	}
 }
 
-// PoolProgressionStats returns the stats a pool exercises. It is the SAME
-// mapping OnRegenTick's callers pass for regen, deliberately: recovering a pool
-// and having it torn down should train the same thing, so a new damage channel
-// (taunt already damages conviction) becomes a progression faucet for free.
+// PoolProgressionStats returns the stats a hit to this pool trains.
 //
-//	Health     -> vitality           (NOT willpower -- see below)
-//	Stamina    -> strength, vitality
-//	Conviction -> willpower          (NOT charisma -- see below)
+// SCOPED TO VITALITY ON PURPOSE. An earlier draft mirrored the regen mapping and
+// gave every pool two stats, which dragged willpower and charisma in and
+// immediately collided with paths that already train them: defy trains rhetoric
+// (primary stat charisma) on every resolved taunt, and quell plus the magical
+// toughen path both train willpower. Stripping those overlaps one at a time left
+// a mapping that no longer described anything -- conviction damage training
+// willpower has nothing to do with the problem this faucet exists to solve.
 //
-// CONVICTION DROPS CHARISMA, and the reason generalises. A channel's defence
-// award already trains that channel's stat: AwardDefenceProgression fires
-// whenever the contest RAN, win or lose, so on a lost defence you get both the
-// defence practice and this faucet. For the physical channel that is harmless --
-// dodge/parry/block train dexterity and strength while the pool trains vitality
-// and willpower, so nothing overlaps. For conviction it is not: defy trains
-// rhetoric, whose primary stat IS charisma, so including charisma here awards
-// the same stat twice for one event.
+// The problem is one sentence: vitality had no faucet that did not require
+// risking death. Regen only pays while a pool is depleted and crit-toughen only
+// fires when you are critted, so the only safe route was encumbering yourself to
+// pin stamina near empty, worth ~59x ordinary play. So the fix is one sentence
+// too: a real hit to a BODY pool trains vitality.
 //
-// HEALTH DROPS WILLPOWER for the same reason, one channel over. Health is
-// damaged by BOTH the physical and the magical channels, and the pool has no way
-// to know which one hit it. Physical is harmless (dodge/parry/block train
-// dexterity and strength), but magical is not: quell trains willpower, and
-// ToughenStatFor("magical") is willpower too, so a spell crit was awarding
-// willpower three times over. Health therefore trains vitality alone -- which is
-// the stat this faucet exists for, and the only one with no safe faucet of its
-// own. Willpower already has spellcasting, the quell defence and the magical
-// toughen path.
+// Vitality collides with nothing -- no defence award trains it (dodge, parry and
+// block train dexterity and strength) -- so this needs no knowledge of the damage
+// channel and cannot double-award.
 //
-// It bites on conviction and nowhere else because conviction damage is ~3x
-// larger relative to its pool (RhetoricDamageScale 3.00 against MeleeDamageScale
-// 0.52): a raw taunt removes ~18.5% of a 405 conviction pool where a raw melee
-// hit removes ~6.1% of a 425 health pool. So a partially-mitigated melee hit
-// falls under the threshold and never double-awards, while a taunt clears it
-// even at 50% mitigation.
+//	Health     -> vitality
+//	Stamina    -> vitality
+//	Conviction -> nothing
+//
+// Conviction is deliberately absent. It is not a body pool, and a conviction
+// faucet would be a charisma/willpower change, which is a separate decision with
+// its own multipliers to re-solve. Stamina is present although nothing damages it
+// today: it is the same body-pool idea, and it means a future stamina-damage
+// channel is a faucet the moment it exists.
 func PoolProgressionStats(p Pool) []string {
 	switch p {
-	case PoolHealth:
+	case PoolHealth, PoolStamina:
 		return []string{"vitality"}
-	case PoolStamina:
-		return []string{"strength", "vitality"}
-	case PoolConviction:
-		return []string{"willpower"}
 	}
 	return nil
 }
