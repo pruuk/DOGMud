@@ -21,6 +21,17 @@ room now teaches you instead, which is the same instinct actually being tested.
 Haggling now rewards the bargain rather than the pile. Selling a stack of forty
 identical pelts counts as one piece of trading practice, not forty.
 
+Toughness is now built by being hit. Before, the only ways to harden your body
+were to run yourself down to the edge of death or to be struck by a telling
+blow, both of which meant risking dying to make progress. Taking a solid hit
+now toughens you on its own. A glancing blow you mostly turned aside will not
+do it, and neither will standing somewhere nothing can really hurt you, so it
+rewards real fights rather than patience.
+
+Wearing yourself out still hardens you too, and rather more readily than
+before, so the old road of marching under a heavy load is still worth walking.
+It is simply no longer the only one.
+
 Conjured allies keep their own rhythm. Calling up an elemental or a swarm now
 takes considerably longer between summonings, so it sits closer to the pace of
 raising the dead, which has always had to wait on a body. Charming a creature is
