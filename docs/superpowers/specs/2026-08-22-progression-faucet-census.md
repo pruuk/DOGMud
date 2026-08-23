@@ -327,6 +327,15 @@ rate would give P(0 in 331) = 0.13%); it is the missing parameter. **The combat
 dashboard silently under-reports crits**, and any crit rate computed from this
 file is a melee-and-spell rate only.
 
+**Special-move crits ARE implemented; only the RECORDER is stale.** This was
+checked after the fact, because "the analytics show zero" reads like a dropped
+feature and is not one. `combat_taunt.go:236` takes `isCrit := out.AttackerCrit`
+-- a real margin-derived verdict from the unified seam -- and a taunt crit
+bypasses the target's conviction mitigation AND scales by the taunter's rhetoric
+rank through `CritOrMitigatedDamage`. bash and kick carry `ForceCrit` and their
+own crit-tier handling. The unified-crit goal was met in gameplay; only
+`RecordSpecialMove`, which predates it, never gained the parameter.
+
 **What can crit, from code rather than data.** `channelDamageChannel`
 (`defence_multiplier.go:561`) maps `ChannelMelee`/`ChannelRanged` -> "physical",
 `ChannelSpellPhysical`/`ChannelSpellMental` -> "magical", `ChannelSocial` ->
