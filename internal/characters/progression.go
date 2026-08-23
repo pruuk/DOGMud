@@ -623,7 +623,23 @@ func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 //
 //	Health     -> vitality, willpower
 //	Stamina    -> strength, vitality
-//	Conviction -> willpower, charisma
+//	Conviction -> willpower          (NOT charisma -- see below)
+//
+// CONVICTION DROPS CHARISMA, and the reason generalises. A channel's defence
+// award already trains that channel's stat: AwardDefenceProgression fires
+// whenever the contest RAN, win or lose, so on a lost defence you get both the
+// defence practice and this faucet. For the physical channel that is harmless --
+// dodge/parry/block train dexterity and strength while the pool trains vitality
+// and willpower, so nothing overlaps. For conviction it is not: defy trains
+// rhetoric, whose primary stat IS charisma, so including charisma here awards
+// the same stat twice for one event.
+//
+// It bites on conviction and nowhere else because conviction damage is ~3x
+// larger relative to its pool (RhetoricDamageScale 3.00 against MeleeDamageScale
+// 0.52): a raw taunt removes ~18.5% of a 405 conviction pool where a raw melee
+// hit removes ~6.1% of a 425 health pool. So a partially-mitigated melee hit
+// falls under the threshold and never double-awards, while a taunt clears it
+// even at 50% mitigation.
 func PoolProgressionStats(p Pool) []string {
 	switch p {
 	case PoolHealth:
@@ -631,7 +647,7 @@ func PoolProgressionStats(p Pool) []string {
 	case PoolStamina:
 		return []string{"strength", "vitality"}
 	case PoolConviction:
-		return []string{"willpower", "charisma"}
+		return []string{"willpower"}
 	}
 	return nil
 }

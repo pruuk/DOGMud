@@ -56,10 +56,18 @@ func TestOnDamageTaken_AtThreshold_TrainsBothPoolStats(t *testing.T) {
 	}
 }
 
-// Conviction damage trains willpower and charisma. This is the taunt case: taunt
-// resolves on ChannelSocial and damages conviction, so it becomes a progression
-// faucet through the SAME mapping regen uses, with no extra wiring.
-func TestOnDamageTaken_ConvictionDamage_TrainsWillpowerAndCharisma(t *testing.T) {
+// Conviction damage trains willpower but explicitly NOT charisma.
+//
+// This is the taunt case. defy's award (AwardDefenceProgression) fires whenever
+// the contest ran, win or lose, and trains rhetoric, whose primary stat is
+// charisma. Including charisma here would award the same stat twice for one
+// event -- a plain taunt moved the defender's charisma by 2 instead of 1, which
+// taunt_collapse_test.go's drift guard correctly caught.
+//
+// It bites on conviction and nowhere else because conviction damage is ~3x
+// larger relative to its pool, so a partially-mitigated taunt still clears the
+// threshold where a partially-mitigated melee hit does not.
+func TestOnDamageTaken_ConvictionDamage_TrainsWillpowerNotCharisma(t *testing.T) {
 	withRepoRoot(t)
 	c := damageTestChar(t, "Taunted")
 
@@ -68,8 +76,9 @@ func TestOnDamageTaken_ConvictionDamage_TrainsWillpowerAndCharisma(t *testing.T)
 	if got := c.StatUseCount["willpower"]; got != 1 {
 		t.Errorf("willpower trained %d times, want 1", got)
 	}
-	if got := c.StatUseCount["charisma"]; got != 1 {
-		t.Errorf("charisma trained %d times, want 1", got)
+	if got := c.StatUseCount["charisma"]; got != 0 {
+		t.Errorf("conviction damage trained charisma %d times, want 0: defy's "+
+			"own award already trains it via rhetoric", got)
 	}
 	if got := c.StatUseCount["vitality"]; got != 0 {
 		t.Errorf("conviction damage trained vitality %d times, want 0", got)
@@ -110,8 +119,8 @@ func TestOnDamageTaken_ThresholdUsesReachableMax(t *testing.T) {
 	}
 	c.OnDamageTaken(PoolConviction, hit, 0)
 
-	if got := c.StatUseCount["charisma"]; got != 1 {
-		t.Errorf("charisma trained %d times, want 1: the gate must use the "+
+	if got := c.StatUseCount["willpower"]; got != 1 {
+		t.Errorf("willpower trained %d times, want 1: the gate must use the "+
 			"reachable max, not the raw one", got)
 	}
 }
