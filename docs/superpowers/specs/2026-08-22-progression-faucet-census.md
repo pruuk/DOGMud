@@ -303,3 +303,42 @@ caveat that it predates U6b, U9, U10 and Phases A/B/C. That is three orders of
 magnitude more data than a 30-minute session can produce, and its weakness is a
 stated caveat rather than a missing number. Revision 2's assumed 0.5 is wrong
 by ~15% against it either way.
+
+
+## Crit instrumentation gap, and what can actually crit
+
+Found while modelling vitality (2026-08-22).
+
+**`RecordSpecialMove` cannot record a crit.** Its signature takes `hit` but no
+`crit`, and it never sets `Crit`, `AttackZScore` or `DefenseZScore`
+(`internal/combat/analytics.go:280`). Every special move therefore reads **0.0%
+crits** in the analytics across 96,723 events:
+
+| type | events | hits | crits |
+|---|---|---|---|
+| unarmed | 70,616 | 40,167 | 2,976 (4.2%) |
+| weapon | 21,612 | 13,405 | 1,734 (8.0%) |
+| spell | 459 | 363 | 10 (2.2%) |
+| **taunt** | **331** | **199** | **0** |
+| grapple / kick / trip / bash / hamstring / pounce / stomp / tailsweep / howl / shoot / throw / maul / bite / gore / knee / submit / throttle / rake | ~1,800 combined | — | **0** |
+
+Zero crits across ~1,800 special-move events is not luck (taunt alone at a 2%
+rate would give P(0 in 331) = 0.13%); it is the missing parameter. **The combat
+dashboard silently under-reports crits**, and any crit rate computed from this
+file is a melee-and-spell rate only.
+
+**What can crit, from code rather than data.** `channelDamageChannel`
+(`defence_multiplier.go:561`) maps `ChannelMelee`/`ChannelRanged` -> "physical",
+`ChannelSpellPhysical`/`ChannelSpellMental` -> "magical", `ChannelSocial` ->
+"conviction"; `ToughenStatFor` then gives vitality / willpower / charisma. Taunt
+DOES route through `ResolveChannelAttack(ChannelSocial, ...)`
+(`combat_taunt.go:176`), so **a taunt crit structurally toughens the target's
+charisma** — it simply cannot be observed today.
+
+**There is no stamina crit.** The three damage channels are physical, magical
+and conviction. Stamina is a cost pool, not a damage channel, so nothing
+toughens off stamina damage through the crit path.
+
+**Followup:** add a `crit` parameter to `RecordSpecialMove` and thread it from
+the special-move resolutions, so the dashboard and any future balance work see
+the real rate.
