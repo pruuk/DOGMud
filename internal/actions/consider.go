@@ -22,10 +22,14 @@ type ConsiderResult struct {
 // actor's POV. For UserActor: also formats a colored prediction
 // string and calls actor.SendText(...). For MobActor: SendText
 // is a no-op (existing actor abstraction), so the math runs
-// silently. Triggers OnStatUse("perception") on the actor.
+// silently.
+//
+// Deliberately awards NO progression. look and consider were the only stat
+// faucets with no cooldown and no gate -- roughly 3,600 perception uses/hour
+// against forage's 150 ceiling. Perception is now trained by search/forage,
+// the perception crafts, salvage and ranged-combat via SkillPrimaryStats.
+// Do not re-add a progression call here.
 func Consider(actor Actor, target Actor) ConsiderResult {
-	actor.OnStatUse("perception")
-
 	selfChar := actor.GetCharacter()
 	targetChar := target.GetCharacter()
 

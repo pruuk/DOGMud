@@ -3,6 +3,17 @@ package configs
 // validateProgression sets defaults for skill/stat progression curves,
 // multipliers, regen progression, and mutation progression fields.
 func (b *Balance) validateProgression() {
+	// `<= 0`, not `< 0`: a floor, not an off-switch. With no threshold every
+	// point of chip damage would train the pool's stats, so parking in a zone
+	// that cannot hurt you and walking away from the keyboard would farm
+	// vitality overnight. 5% of the pool's REACHABLE max (raw minus reservation)
+	// is generous -- the mean landed hit removes about 45 against a ~425 health
+	// pool, roughly twice the gate -- so real fights pass and chip damage does
+	// not.
+	if b.DamageProgressionThresholdPct <= 0 {
+		b.DamageProgressionThresholdPct = 0.05
+	}
+
 	// ── PROGRESSION ───────────────────────────────────────────────────────────
 	if b.SkillSoftCap < 1 {
 		b.SkillSoftCap = 50
@@ -29,8 +40,12 @@ func (b *Balance) validateProgression() {
 		b.ObservedCritProgressionBonus = 0.5
 	}
 	// `<= 0`, not `< 0`: this is a safety floor, not an off-switch. A config
-	// that omits the key must get the floor, not lose it — the `< 0` idiom two
-	// lines above is why ObservedCritProgressionBonus sits at 0 in production.
+	// that omits the key must get the floor, not lose it. Contrast the `< 0`
+	// idiom two lines above: it makes 0 a usable off-switch, at the cost that
+	// an ABSENT key also reads as 0. Both crit knobs were absent — and so
+	// inert — until 81061c6b4 (2026-08-19) added them; they now ship at 2.0
+	// and 0.5. A Go test binary still sees the zero-valued struct, so tests
+	// that exercise the crit faucet must inject a value explicitly.
 	if b.ProgressionChanceFloor <= 0 {
 		b.ProgressionChanceFloor = 1e-5
 	}

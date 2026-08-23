@@ -351,30 +351,47 @@ func GetSkillPrimaryStat(skillName string) string {
 // SkillProgressionMultipliers controls how fast each skill progresses.
 // Combat skills fire many times per round, so they get a low multiplier.
 // Utility skills are used less often, so they get a high multiplier.
+// Solved on measured play-time rates, U10b-0 Phase D revision 3. Regenerate with
+// `python tools/balance/u10b_solve_v3.py`; do not hand-edit these to taste.
+//
+// MUST stay in sync with Balance.SkillProgressionMultipliers in
+// _datafiles/config.yaml. GetSkillProgressionMultiplier returns (0, false) on a
+// config miss, meaning "use the hardcoded default", so THIS map is what every
+// test binary sees -- tests never load config.yaml.
 var SkillProgressionMultipliers = map[SkillTag]float64{
-	// Combat skills — fire multiple times per round
-	WeaponCombat:  0.3,
-	UnarmedCombat: 0.3,
-	// Ranged combat — one aimed shot per action (reload on cooldown), so it
-	// fires less often than melee; moderate rate like the other per-action skills.
-	RangedCombat: 0.5,
-	// Magic skills — moderate frequency
-	Spellcasting: 0.5,
-	// Social combat — moderate frequency
-	Rhetoric: 0.5,
-	// Companion management — moderate use frequency
-	Manifestation: 0.5,
-	// Utility skills — used infrequently
-	Search:        2.0,
-	Bartering:     2.0,
-	Skullduggery:  2.0,
-	Blacksmithing: 2.0,
-	Alchemy:       2.0,
-	Tailoring:     2.0,
-	Cooking:       2.0,
-	Jewelcrafting: 2.0,
-	Enchanting:    2.0,
-	Salvage:       2.0,
+	// Melee. unarmed sits BELOW weapon deliberately: measured, the offhand fist
+	// takes 4 swings to a longsword's 2 (so P(entry clean) is 0.967 against
+	// 0.820, since CleanHit is OR-aggregated across a weapon's swings) and it
+	// collects the dodge award, which is 83.6% of all defences. It therefore
+	// earns 1.83x the uses, and equal values make an empty offhand dominant.
+	WeaponCombat:  1.27,
+	UnarmedCombat: 0.69,
+	// These three share ONE 4-round "special-move" key with 15 other verbs, so a
+	// concerted grinder gets only ~22.5 uses/hour between them, not each.
+	// ranged-combat joins indirectly: firing is ungated but reload is, and a
+	// weapon must be loaded to fire.
+	RangedCombat: 4.98,
+	Spellcasting: 3.90,
+	Rhetoric:     4.98,
+	// Assumes the Phase D conjure cooldown is in place. Without it manifestation
+	// runs at 225/hr standing still and this over-rewards it ~9x.
+	Manifestation: 4.46,
+	// Utility. bartering assumes the Phase D per-transaction fix; awarding per
+	// unit made it unbounded in time and unfittable. search is anchored on
+	// forage's 6-round cooldown at 100% engagement, NOT on the `search` command,
+	// which is anti-botting-gated and cannot be ground.
+	Search:       1.00,
+	Bartering:    2.07,
+	Skullduggery: 0.83,
+	Salvage:      2.07,
+	// Crafts, at the owner's 40% engagement: an hour of crafting is gather THEN
+	// craft, so only part of it is spent at the station.
+	Blacksmithing: 1.41,
+	Alchemy:       1.41,
+	Tailoring:     1.41,
+	Cooking:       1.41,
+	Jewelcrafting: 1.41,
+	Enchanting:    1.41,
 }
 
 // GetSkillRankDescription converts a numeric skill level to a qualitative

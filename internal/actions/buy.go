@@ -355,14 +355,16 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 	// The closure-passed attempt callback returns the result of a single purchase.
 	// If successful, tryMerchant loops up to quantity times, calling attempt()
 	// for each additional unit purchase.
-	tryMerchant := func(attempt func() BuyResult) (BuyResult, bool) {
-		first := attempt()
+	// attempt receives isFirst so the callback can award bartering progression
+	// exactly once per command rather than once per unit (Phase D Task 3).
+	tryMerchant := func(attempt func(isFirst bool) BuyResult) (BuyResult, bool) {
+		first := attempt(true)
 		if !first.Success {
 			return first, false
 		}
 		purchased := 1
 		for purchased < quantity {
-			next := attempt()
+			next := attempt(false)
 			if !next.Success {
 				break
 			}
@@ -390,10 +392,10 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 		if shopUser == nil {
 			continue
 		}
-		result, sold := tryMerchant(func() BuyResult {
+		result, sold := tryMerchant(func(isFirst bool) BuyResult {
 			r := tryPurchaseLegacy(buyer, itemRequest, nil, shopUser)
 			if r.Success {
-				postSuccessBookkeeping(buyer, nil, shopUser)
+				postSuccessBookkeeping(buyer, nil, shopUser, isFirst)
 			}
 			return r
 		})
@@ -413,10 +415,10 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 
 		shopInv := shops.GetShopInventory(shopMob.Zone, int(shopMob.MobId), shopMob.HomeRoomId)
 		if shopInv != nil {
-			result, sold := tryMerchant(func() BuyResult {
+			result, sold := tryMerchant(func(isFirst bool) BuyResult {
 				r := tryPurchaseFromInventory(buyer, itemRequest, shopMob, shopInv)
 				if r.Success {
-					postSuccessBookkeeping(buyer, shopMob, nil)
+					postSuccessBookkeeping(buyer, shopMob, nil, isFirst)
 				}
 				return r
 			})
@@ -424,11 +426,11 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 				return result
 			}
 		} else {
-			result, sold := tryMerchant(func() BuyResult {
+			result, sold := tryMerchant(func(isFirst bool) BuyResult {
 				shopMob.Character.Shop.Restock()
 				r := tryPurchaseLegacy(buyer, itemRequest, shopMob, nil)
 				if r.Success {
-					postSuccessBookkeeping(buyer, shopMob, nil)
+					postSuccessBookkeeping(buyer, shopMob, nil, isFirst)
 				}
 				return r
 			})
@@ -782,8 +784,17 @@ func executePurchaseBuff(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 // postSuccessBookkeeping runs after any successful purchase: skill
 // progression for the buyer, charisma stat-use on the merchant mob,
 // and quest-engine notification gated by buyer.IsPlayer().
-func postSuccessBookkeeping(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRecord) {
-	buyer.OnSkillUse("bartering")
+// awardProgression is true only for the FIRST unit of a multi-buy. Bartering
+// used to award per unit with no cooldown, so `buy 200 x` fired 200 progression
+// rolls from one command, which made bartering unbounded in time -- no
+// uses/hour could be fitted to it (U10b-0 Phase D Task 3). The merchant-side
+// charisma roll and the quest notification stay PER UNIT: quest steps count
+// items, so collapsing them would break "buy N of X" objectives.
+func postSuccessBookkeeping(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRecord,
+	awardProgression bool) {
+	if awardProgression {
+		buyer.OnSkillUse("bartering")
+	}
 
 	if shopMob != nil {
 		shopMob.Character.OnStatUse("charisma", 0)

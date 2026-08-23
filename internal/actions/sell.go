@@ -180,7 +180,7 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 	var out SellResult
 	out.Reason = SellStopSoldAll
 	for out.Sold < quantity {
-		value, res := sellOneToMerchant(seller, itemName, room, mob, shopInv)
+		value, res := sellOneToMerchant(seller, itemName, room, mob, shopInv, out.Sold == 0)
 		if res != SellStopSoldAll {
 			// Running out of matching items mid-loop is a NORMAL completion
 			// (the "sold all I had" case) — only surface it as SellStopNoItem
@@ -215,7 +215,7 @@ func sellSweep(seller Actor, room *rooms.Room) SellResult {
 		if mob == nil {
 			continue
 		}
-		value, res := sellOneToMerchant(seller, itm.Name(), room, mob, shopInv)
+		value, res := sellOneToMerchant(seller, itm.Name(), room, mob, shopInv, !soldAny)
 		if res == SellStopSoldAll {
 			soldAny = true
 			out.Sold++
@@ -234,8 +234,14 @@ func sellSweep(seller Actor, room *rooms.Room) SellResult {
 //   - seller-side access via Actor (GetCharacter / Gold / RemoveItem).
 //   - shop-gold drain + merchant-broke check apply only to player sellers
 //     (decision 2: NPC selling never bankrupts a shop).
+//
+// awardProgression is true only for the FIRST sale of a command. Bartering used
+// to award per unit with no cooldown, so `sell all` on a 200-item stack fired
+// 200 progression rolls from one command, which made bartering unbounded in
+// time -- no uses/hour could be fitted to it (U10b-0 Phase D Task 3).
 func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
-	mob *mobs.Mob, shopInv *shops.ShopInventory) (soldValue int, res SellStopReason) {
+	mob *mobs.Mob, shopInv *shops.ShopInventory,
+	awardProgression bool) (soldValue int, res SellStopReason) {
 
 	char := seller.GetCharacter()
 	item, found := sellFindItemInChar(char, itemName)
@@ -373,9 +379,11 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 		mob.Character.Shop.StockItem(item.ItemId)
 	}
 
-	// Progression.
-	seller.OnSkillUse(string(skills.Bartering))
-	mob.Character.OnStatUse("charisma", 0)
+	// Progression. FIRST sale of the command only -- see the doc comment.
+	if awardProgression {
+		seller.OnSkillUse(string(skills.Bartering))
+		mob.Character.OnStatUse("charisma", 0)
+	}
 
 	return sellValue, SellStopSoldAll
 }

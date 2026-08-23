@@ -628,6 +628,15 @@ func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int 
 
 	applied := -c.applyVitalChange(pool, -amount)
 
+	// Absorbing a real hit trains the stats that pool exercises. Additive to the
+	// crit-toughen path, which is unchanged. Hooked HERE because ApplyHarm is the
+	// universal damage seam: ApplyHealthChange (the wrapper the eight combat.go
+	// sites keep) delegates to it for negative deltas, so melee, spells,
+	// maneuvers, damage-over-time and toxicity all pass through this one point.
+	// Gated on a share of the pool so chip damage in a harmless zone cannot farm
+	// progression unattended -- see OnDamageTaken.
+	c.OnDamageTaken(pool, applied, c.GetUserId())
+
 	// U5c: lethal health harm queues an ATTRIBUTED death rather than killing
 	// inline. Inline would despawn a mob synchronously (Die fires its observers
 	// in-band, and Death_MobInstanceCleanup removes the instance) and pull it

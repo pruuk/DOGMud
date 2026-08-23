@@ -81,9 +81,6 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	target, err := actions.ResolveTargetActor(room, lookAt)
 	if err == nil {
 
-		// Track perception use when examining a target
-		user.Character.OnStatUse("perception", user.UserId)
-
 		if target.IsPlayer() {
 
 			u := target.(*actions.UserActor).User

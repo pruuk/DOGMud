@@ -3,6 +3,15 @@ package configs
 // validateSpells sets defaults for spell costs, spellcasting parameters,
 // and enchantment fields.
 func (b *Balance) validateSpells() {
+	// `<= 0`, not `< 0`: a pacing floor, not an off-switch. Conjure and the
+	// corpse-free summons need no corpse and no target, so with no cooldown of
+	// their own they ran at the shared special-move ceiling -- 225 casts/hour,
+	// standing still, at ~100% engagement. That made manifestation the easiest
+	// track in the game to grind. Sized to roughly the raise+assess rate.
+	if b.ConjureCooldown <= 0 {
+		b.ConjureCooldown = 36
+	}
+
 	// ── SPELL COSTS ──────────────────────────────────────────────────────────
 	if b.SpellConvictionCostMultiplier <= 0 {
 		b.SpellConvictionCostMultiplier = 1.0

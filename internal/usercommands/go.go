@@ -616,6 +616,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						user.SendText(messaging.CategorySystem, fmt.Sprintf(
 							`You notice <ansi fg="username">%s</ansi> lurking in the shadows.`,
 							hiddenP.Character.Name))
+						// Winning the observer side of a hidden-detection contest trains
+						// Search, whose primary stat is perception. Opportunity-gated:
+						// it needs a hidden actor present and fires at most once per
+						// room entry per hidden actor. Added by U10b-0 Phase D Task 2 --
+						// this contest ran and awarded nothing at all before.
+						user.Character.OnSkillUse(string(skills.Search), user.UserId)
 					}
 				}
 
@@ -637,6 +643,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 							`<ansi fg="username">%s</ansi> spots <ansi fg="mobname">%s</ansi> hiding in the shadows!`,
 							user.Character.Name, mob.Character.Name),
 							user.UserId)
+						// Winning the observer side of a hidden-detection contest trains
+						// Search, whose primary stat is perception. Opportunity-gated:
+						// it needs a hidden actor present and fires at most once per
+						// room entry per hidden actor. Added by U10b-0 Phase D Task 2 --
+						// this contest ran and awarded nothing at all before.
+						user.Character.OnSkillUse(string(skills.Search), user.UserId)
 					}
 				}
 			}
