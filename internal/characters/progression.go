@@ -621,7 +621,7 @@ func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 // and having it torn down should train the same thing, so a new damage channel
 // (taunt already damages conviction) becomes a progression faucet for free.
 //
-//	Health     -> vitality, willpower
+//	Health     -> vitality           (NOT willpower -- see below)
 //	Stamina    -> strength, vitality
 //	Conviction -> willpower          (NOT charisma -- see below)
 //
@@ -634,6 +634,16 @@ func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 // rhetoric, whose primary stat IS charisma, so including charisma here awards
 // the same stat twice for one event.
 //
+// HEALTH DROPS WILLPOWER for the same reason, one channel over. Health is
+// damaged by BOTH the physical and the magical channels, and the pool has no way
+// to know which one hit it. Physical is harmless (dodge/parry/block train
+// dexterity and strength), but magical is not: quell trains willpower, and
+// ToughenStatFor("magical") is willpower too, so a spell crit was awarding
+// willpower three times over. Health therefore trains vitality alone -- which is
+// the stat this faucet exists for, and the only one with no safe faucet of its
+// own. Willpower already has spellcasting, the quell defence and the magical
+// toughen path.
+//
 // It bites on conviction and nowhere else because conviction damage is ~3x
 // larger relative to its pool (RhetoricDamageScale 3.00 against MeleeDamageScale
 // 0.52): a raw taunt removes ~18.5% of a 405 conviction pool where a raw melee
@@ -643,7 +653,7 @@ func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 func PoolProgressionStats(p Pool) []string {
 	switch p {
 	case PoolHealth:
-		return []string{"vitality", "willpower"}
+		return []string{"vitality"}
 	case PoolStamina:
 		return []string{"strength", "vitality"}
 	case PoolConviction:

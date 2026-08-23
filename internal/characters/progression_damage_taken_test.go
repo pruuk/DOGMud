@@ -41,7 +41,11 @@ func TestOnDamageTaken_BelowThreshold_TrainsNothing(t *testing.T) {
 	}
 }
 
-func TestOnDamageTaken_AtThreshold_TrainsBothPoolStats(t *testing.T) {
+// Health damage trains vitality, and deliberately NOT willpower: health takes
+// both physical and magical damage and the pool cannot tell which, but quell and
+// the magical toughen path both already train willpower, so including it awarded
+// willpower three times on a spell crit.
+func TestOnDamageTaken_AtThreshold_TrainsVitalityNotWillpower(t *testing.T) {
 	withRepoRoot(t)
 	c := damageTestChar(t, "Hurt")
 
@@ -51,8 +55,9 @@ func TestOnDamageTaken_AtThreshold_TrainsBothPoolStats(t *testing.T) {
 	if got := c.StatUseCount["vitality"]; got != 1 {
 		t.Errorf("vitality trained %d times, want 1", got)
 	}
-	if got := c.StatUseCount["willpower"]; got != 1 {
-		t.Errorf("willpower trained %d times, want 1", got)
+	if got := c.StatUseCount["willpower"]; got != 0 {
+		t.Errorf("health damage trained willpower %d times, want 0: quell and "+
+			"the magical toughen path already train it", got)
 	}
 }
 
