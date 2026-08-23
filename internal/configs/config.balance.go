@@ -413,12 +413,13 @@ type Balance struct {
 	// Mobs get their own soft cap because they fight far more often than
 	// players do, so the shared 50 would leave their curve too flat for too
 	// long. The hard cap is what actually bounds them.
-	MobSkillSoftCap       ConfigInt   `yaml:"MobSkillSoftCap"`       // Skill level at which mob progression slows sharply (default 20)
-	MobSkillTrainingCap   ConfigInt   `yaml:"MobSkillTrainingCap"`   // Hard cap on mob skill level from progression (default 25)
-	MobSaveIntervalRounds ConfigInt   `yaml:"MobSaveIntervalRounds"` // Rounds between periodic mob instance saves (default 100)
-	MobInstanceMaxAgeDays ConfigInt   `yaml:"MobInstanceMaxAgeDays"` // Max age in days before stale instance files are pruned (default 7)
-	RegenProgressionBase  ConfigFloat `yaml:"RegenProgressionBase"`  // Max chance at 0% resource per stat per tick (default 0.005)
-	RegenProgressionCurve ConfigFloat `yaml:"RegenProgressionCurve"` // Exponent shaping the depletion→chance curve (default 3.0)
+	MobSkillSoftCap               ConfigInt   `yaml:"MobSkillSoftCap"`               // Skill level at which mob progression slows sharply (default 20)
+	MobSkillTrainingCap           ConfigInt   `yaml:"MobSkillTrainingCap"`           // Hard cap on mob skill level from progression (default 25)
+	MobSaveIntervalRounds         ConfigInt   `yaml:"MobSaveIntervalRounds"`         // Rounds between periodic mob instance saves (default 100)
+	MobInstanceMaxAgeDays         ConfigInt   `yaml:"MobInstanceMaxAgeDays"`         // Max age in days before stale instance files are pruned (default 7)
+	DamageProgressionThresholdPct ConfigFloat `yaml:"DamageProgressionThresholdPct"` // Fraction of a pool's reachable max a single hit must remove to train that pool's stats (default 0.05)
+	RegenProgressionBase          ConfigFloat `yaml:"RegenProgressionBase"`          // Max chance at 0% resource per stat per tick (default 0.005)
+	RegenProgressionCurve         ConfigFloat `yaml:"RegenProgressionCurve"`         // Exponent shaping the depletion→chance curve (default 3.0)
 
 	// ── COSTS: INVERSE-SKILL MULTIPLIER (U7) ─────────────────────────────────
 	// costs.SkillCostMultiplier runs INVERSE to skill: a practised fighter

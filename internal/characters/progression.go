@@ -616,6 +616,85 @@ func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 	}
 }
 
+// PoolProgressionStats returns the stats a pool exercises. It is the SAME
+// mapping OnRegenTick's callers pass for regen, deliberately: recovering a pool
+// and having it torn down should train the same thing, so a new damage channel
+// (taunt already damages conviction) becomes a progression faucet for free.
+//
+//	Health     -> vitality, willpower
+//	Stamina    -> strength, vitality
+//	Conviction -> willpower, charisma
+func PoolProgressionStats(p Pool) []string {
+	switch p {
+	case PoolHealth:
+		return []string{"vitality", "willpower"}
+	case PoolStamina:
+		return []string{"strength", "vitality"}
+	case PoolConviction:
+		return []string{"willpower", "charisma"}
+	}
+	return nil
+}
+
+// OnDamageTaken rolls progression for the stats a pool exercises when a SINGLE
+// hit removes a meaningful share of that pool.
+//
+// Why this exists. Vitality's other two faucets are both RISK-GATED: the regen
+// path only pays while a pool is depleted, and the crit-toughen path only fires
+// when you are critted. Draining health means risking death, and getting critted
+// means fighting something that can kill you, so the only safe way to train
+// vitality was the obscure trick of encumbering yourself to pin stamina near
+// empty -- which was worth ~59x ordinary play. Absorbing a real hit is the
+// plentiful, unobscure event that toughness should actually come from: roughly
+// 20 qualifying hits per hour against 2.7 crits.
+//
+// The threshold is what stops it degenerating. Without one, parking in a zone
+// that cannot hurt you and walking away from the keyboard would farm progression
+// off chip damage overnight. DamageProgressionThresholdPct is measured against
+// the pool's REACHABLE max (raw minus reservation), matching regenTickChance, so
+// a character whose pool is mostly reserved is not held to a ceiling they cannot
+// use.
+//
+// This is ADDITIVE to the crit path, which stays exactly as it was: a crit still
+// toughens through ToughenStatFor with ObservedCritProgressionBonus.
+func (c *Character) OnDamageTaken(p Pool, applied int, userId int) {
+	if applied <= 0 {
+		return
+	}
+	if !configs.GetGamePlayConfig().UseSkillProgression {
+		return
+	}
+	stats := PoolProgressionStats(p)
+	if len(stats) == 0 {
+		return
+	}
+
+	rawMax := c.poolMax(p)
+	if rawMax <= 0 {
+		return
+	}
+	pct := float64(configs.GetBalanceConfig().DamageProgressionThresholdPct)
+
+	// Fast path: reservation only ever SHRINKS the reachable max, so clearing
+	// the threshold against the raw max clears it against the reachable one too.
+	// The mean landed hit is about twice the gate, so most hits stop here and
+	// never pay for the equipment walk inside GetPoolReservation.
+	if float64(applied) < pct*float64(rawMax) {
+		effMax := rawMax - c.GetPoolReservation(string(p), rawMax)
+		if effMax <= 0 || float64(applied) < pct*float64(effMax) {
+			return
+		}
+	}
+
+	for _, statName := range stats {
+		// Track before rolling, so this event counts toward the rank the roll is
+		// judged against -- the same ordering OnRegenTick and applyBonusProgression
+		// use, and the fix for the fyttyn rank-free faucet.
+		c.TrackStatUse(statName)
+		c.CheckStatProgression(statName, userId, 1.0)
+	}
+}
+
 // GetSkillUseCount returns how many times a skill has been used.
 func (c *Character) GetSkillUseCount(skillName string) int {
 	if c.SkillUseCount == nil {

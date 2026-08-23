@@ -3,6 +3,17 @@ package configs
 // validateProgression sets defaults for skill/stat progression curves,
 // multipliers, regen progression, and mutation progression fields.
 func (b *Balance) validateProgression() {
+	// `<= 0`, not `< 0`: a floor, not an off-switch. With no threshold every
+	// point of chip damage would train the pool's stats, so parking in a zone
+	// that cannot hurt you and walking away from the keyboard would farm
+	// vitality overnight. 5% of the pool's REACHABLE max (raw minus reservation)
+	// is generous -- the mean landed hit removes about 45 against a ~425 health
+	// pool, roughly twice the gate -- so real fights pass and chip damage does
+	// not.
+	if b.DamageProgressionThresholdPct <= 0 {
+		b.DamageProgressionThresholdPct = 0.05
+	}
+
 	// ── PROGRESSION ───────────────────────────────────────────────────────────
 	if b.SkillSoftCap < 1 {
 		b.SkillSoftCap = 50
