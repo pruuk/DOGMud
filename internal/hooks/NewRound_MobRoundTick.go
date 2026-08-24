@@ -10,9 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/bountyhunter"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/goals"
@@ -23,7 +21,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -391,68 +388,6 @@ func tickMobCharmState(mob *mobs.Mob) {
 		}
 	}
 
-	// Re-roll contested Charisma vs Willpower on CharmDuration tick.
-	if mob.Character.IsCharmed() {
-		if charmedUserId := mob.Character.GetCharmedUserId(); charmedUserId > 0 {
-			if owner := users.GetByUserId(charmedUserId); owner != nil {
-				if comp := owner.Character.GetCompanionByInstanceId(mob.InstanceId); comp != nil &&
-					comp.SourceType == characters.CompanionCharmed &&
-					comp.CharmDuration > 0 {
-
-					comp.CharmDuration--
-					if comp.CharmDuration == 0 {
-						manifestSkill := owner.Character.GetSkillLevel(skills.Manifestation)
-						attackScore := float64(owner.Character.Stats.Charisma.ValueAdj) +
-							float64(manifestSkill)*25.0
-
-						targetPool := mob.Character.StatPoolTotal()
-						defenseScore := float64(mob.Character.Stats.Willpower.ValueAdj) +
-							float64(targetPool)*0.10
-
-						effectiveness := 1.0 - float64(comp.CharmRerolls)*0.01*float64(comp.CharmRerolls)
-						if effectiveness < 0.50 {
-							effectiveness = 0.50
-						}
-						attackScore *= effectiveness
-
-						res := combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
-
-						if res.Success {
-							newDuration := 50 + owner.Character.Stats.Charisma.ValueAdj/2 +
-								manifestSkill*3
-							comp.CharmDuration = newDuration
-							comp.CharmRerolls++
-
-							owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-								`<ansi fg="cyan">Your hold on %s wavers... but you reassert your will.</ansi>`,
-								comp.Name))
-							if comp.CharmRerolls >= 5 {
-								owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-									`<ansi fg="red">%s's eyes flash with defiance. Your control is slipping...</ansi>`,
-									comp.Name))
-							} else if comp.CharmRerolls >= 3 {
-								owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-									`<ansi fg="yellow">You sense %s's will straining against your bond...</ansi>`,
-									comp.Name))
-							}
-						} else {
-							owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-								`<ansi fg="red-bold">%s breaks free of your control!</ansi>`, comp.Name))
-							if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-								sendVisualRoomText(room, messaging.CategoryMobEmote, fmt.Sprintf(
-									`<ansi fg="red">%s snarls and turns on %s!</ansi>`,
-									mob.Character.Name, owner.Character.Name), owner.UserId)
-							}
-							mob.Character.RemoveCharm()
-							owner.Character.TrackCharmed(mob.InstanceId, false)
-							owner.Character.RemoveCompanion(mob.InstanceId)
-							mob.Character.SetAggro(owner.UserId, 0, characters.DefaultAttack)
-						}
-					}
-				}
-			}
-		}
-	}
 }
 
 // tickMobCrafting advances or completes an active mob crafting operation.
