@@ -551,4 +551,29 @@ them through the plugin registry's `fs.ReadFileFS` implementation.
 
 Note: filesystem-touching tests in this package chdir to the repo root and call
 `configs.ReloadConfig()` — Go test binaries run with the CWD set to their own
-package directory. `auth_test.go` is the precedent.
+package directory. `auth_test.go` is the precedent. **Because they share one
+binary with everything else here, a test that depends on a balance knob must
+pin it with `configs.SetConfigForTest` rather than read whatever is ambient.**
+`admin_progression_test.go` is the precedent for that.
+
+### `admin.progression.go` reads production, never a copy of it
+
+Since U10b-0 Phase E the page calls
+`characters.ProgressionChanceForStat` / `ProgressionChanceForSkill` at
+`bonusMultiplier = 1.0`, and derives the dead-stat alarm from
+`characters.ProgressionRollThreshold`. It previously hand-rolled bare
+`CalculateProgressionChance`, which omitted `StatProgressionRate` and every
+per-stat, per-skill, mutation and buff multiplier — that drift is why the page
+could not surface the two sealed stats Phase B fixed. **Do not reintroduce a
+local chance calculation here.**
+
+`usesToReach` / `expectedRankForUses` invert the progression curve and replace
+the retired `uses / UsesPerRank` division. Both **saturate** at the soft cap
+once lifetime uses exceed the cost of reaching it, so Expected Rank is a triage
+signal, not a measurement; the panel says so in full and the doc comments carry
+the measured evidence.
+
+`getStatBaseValue` (Base + Training) is deliberately local — there is no
+`characters` equivalent — and `buildStatHealth` must keep using it rather than
+`GetStatValue`. `StatInfo.Value` is `yaml:"-"` and `loadRecentUserFiles` never
+calls `Recalculate()`, so `GetStatValue` reports 0 for every offline player.
