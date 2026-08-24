@@ -136,15 +136,28 @@ const counterPrefix = `<ansi fg="cyan-bold">⚔ COUNTER!</ansi> `
 // counterPoolFor maps the ORIGINAL attack's channel to its counter-narration
 // pool (U6b Task 11): a counter must read channel-correct, never a generic
 // riposte string pasted under a spell. Both spell channels share the
-// put-the-working-down pool. ChannelSocial never arrives here (the defy
-// carve-out counter-taunts via BuildCounterTauntMessages instead of swinging),
-// so the default is the physical exploit-the-opening pool.
+// put-the-working-down pool.
+//
+// ChannelSocial used to be unreachable here, because taunt is the only social
+// attack and it short-circuits its defy-crit into a counter-TAUNT at the call
+// site rather than swinging. U10c broke that assumption: charm is now a social
+// SPELL, and fireSpellCounterTier has no such carve-out, so a defy-crit against
+// a charm does arrive.
+//
+// It gets counter-defy rather than falling through to the physical pool. That
+// pool already exists and was unused on this path. Note the counter itself is
+// still a physical swing -- ExecuteCounter builds strength + combat skill for
+// every channel, and the channel selects narration only -- so this makes the
+// prose honest, not the mechanics social. Giving social attacks a genuinely
+// social counter is a larger change than U10c's plumbing slice.
 func counterPoolFor(channel AttackChannel) items.DefenseType {
 	switch channel {
 	case ChannelRanged:
 		return items.DefenseCounterRanged
 	case ChannelSpellPhysical, ChannelSpellMental:
 		return items.DefenseCounterQuell
+	case ChannelSocial:
+		return items.DefenseCounterDefy
 	default:
 		return items.DefenseCounterMelee
 	}
