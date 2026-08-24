@@ -8,6 +8,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-24-u10c-charm-redesign-design.md` — sections 11-14 supersede 1-10; 13 supersedes 11.3.2.
 
+**Also folded in:** `dismiss` gains the same presence gate the expiry path uses (Task 8), so the two exits from a charmed bond cannot disagree about the anti-grief rule.
+
 **Out of scope, and belongs to Slice D:** the `EverCharmed` instance-save guard, the shopkeeper regression test, the spell description and helpfile, patch notes, the playtest gate.
 
 ---
@@ -128,7 +130,7 @@ different file than it staged. `--cacheinfo` clears skip-worktree; restoring it
 is not optional.
 
 **Also add the two keys to the on-disk file by hand**, or the boot test in
-Task 8 exercises the Go defaults rather than the shipped values.
+Task 11 exercises the Go defaults rather than the shipped values.
 
 - [ ] **Step 5: Commit.**
 
@@ -389,6 +391,27 @@ whether that makes gate 3 reachable for a companion at all — if it is not, say
 so in a comment rather than adding a guard against nothing. **Link-dead is a
 separate path and must still be checked.**
 
+- [ ] **Step 2b: Use `dismiss`'s bookkeeping ORDER, not your own**
+
+`dismiss` is the other place a charmed bond ends, and it got the ordering right
+for a reason it records at `dismiss.go:91-93`:
+
+> *"Remove the companion record before doing anything that might trigger
+> room-wide combat logic."*
+
+Setting aggro before `RemoveCompanion` can re-enter combat resolution while the
+pet is half-removed — still on `Companions`, no longer charmed. Follow the same
+sequence here:
+
+```go
+	mob.Character.RemoveCharm()                       // 1. break the link
+	charmedUser.Character.TrackCharmed(mob.InstanceId, false) // 2. untrack
+	charmedUser.Character.RemoveCompanion(mob.InstanceId)     // 3. drop the record
+	charmedUser.Character.RecalculateStats()                  // 4. free the reserve
+	events.AddToQueue(events.CharacterVitalsChanged{UserId: charmedUser.UserId})
+	// 5. ONLY NOW may aggro be set.
+```
+
 - [ ] **Step 3: Release the reservation properly**
 
 `RemoveCompanion` is not enough. Call `RecalculateStats()`, then queue the
@@ -441,7 +464,80 @@ wants, since `RoundsRemaining` parks at 0 rather than going negative.
 
 ---
 
-### Task 8: Delete the dead companion fields
+### Task 8: Give `dismiss` the same room check — belt and suspenders
+
+**Files:** `internal/usercommands/dismiss.go`; test alongside.
+
+`dismiss` is the third way a charmed bond ends, and it is the odd one out. After
+this slice:
+
+| Exit | Grudge? | Creature survives? | Room check? |
+|---|---|---|---|
+| `dismiss` | yes | yes | **no** |
+| expiry (Task 6) | yes | yes | **yes** |
+| logout | no | no | n/a |
+
+`dismiss.go` sets `SetAggro(user.UserId, ...)` unconditionally. A player who
+dismisses a charmed creature they are not standing next to creates exactly the
+cross-zone hunter that spec 3.10's presence gate exists to prevent — the rule
+Task 6 implements carefully is violated by the command next door.
+
+**Owner ruling 2026-08-24: this is very hard to reach in practice** — companions
+follow their owner closely — **but add the guard anyway. Belt and suspenders.**
+Do not spend effort trying to construct the scenario in game; the point is that
+the two exits should not disagree about a rule, not that anyone is hitting it.
+
+- [ ] **Step 1: Write the failing test**
+
+```go
+// The expiry path gates its grudge on the owner being present, because a
+// hostile creature with patrol and pathto behaviour can otherwise follow a
+// player across zones. dismiss must not be a way around that rule.
+//
+// Reaching this in play is very hard -- companions follow closely -- so this
+// is a guard, not a bug fix. It exists so the two exits from a charmed bond
+// cannot disagree about the same anti-grief rule.
+func TestDismiss_AbsentCharmedCreatureDoesNotGetAggro(t *testing.T) {
+	// Seed a charmed companion whose Character.RoomId differs from the
+	// dismissing user's. Call Dismiss. Assert:
+	//   - the companion record is removed (dismiss still works)
+	//   - the reservation is released
+	//   - mob.Character.Aggro is nil
+}
+
+// The normal case must keep working: dismiss a creature you are standing next
+// to and it turns on you.
+func TestDismiss_PresentCharmedCreatureStillTurnsOnYou(t *testing.T) { /* ... */ }
+```
+
+- [ ] **Step 2: Add the guard**
+
+Wrap the aggro and its two messages, leaving every other step unchanged:
+
+```go
+	// Charmed wild creature — the bond-break is a betrayal; it turns hostile.
+	//
+	// Only if the owner is THERE to receive it. A creature dismissed from
+	// another room would otherwise acquire aggro it can carry across zones via
+	// patrol and pathto, which is the griefing shape spec 3.10 rules out for
+	// the expiry path. Reaching this is very hard in practice -- companions
+	// follow closely -- so it is a guard rather than a fix, and it exists so
+	// the two exits from a charmed bond cannot disagree about the same rule.
+	if mob.Character.RoomId == user.Character.RoomId {
+		mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+		// ... the two existing messages, unchanged ...
+	}
+```
+
+**Leave the room broadcast where it is** — the room should still see the
+dismissal even when the creature is elsewhere; check which of the three
+messages is the room one before wrapping.
+
+- [ ] **Step 3:** `go test ./internal/usercommands/ -count=1`. Commit.
+
+---
+
+### Task 9: Delete the dead companion fields
 
 **Files:** `internal/characters/companions.go`.
 
@@ -468,7 +564,7 @@ Expect nothing — both are `omitempty` and were never assigned.
 
 ---
 
-### Task 9: Retire the second allowlist row
+### Task 10: Retire the second allowlist row
 
 **Files:** `internal/combat/contest_site_guard_test.go`.
 
@@ -486,7 +582,7 @@ Expect nothing — both are `omitempty` and were never assigned.
 
 ---
 
-### Task 10: Gates
+### Task 11: Gates
 
 - [ ] `gofmt -l internal/ modules/` prints nothing.
 - [ ] `go build ./...`; tests for `combat`, `hooks`, `characters`, `configs`,
