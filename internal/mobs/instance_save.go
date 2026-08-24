@@ -81,7 +81,18 @@ func instancePath(mobId MobId, zone string, mobName string, homeRoomId int) stri
 // docs/superpowers/specs/2026-04-21-summons-dont-persist-design.md.
 func SaveMobInstance(mob *Mob) error {
 	// Companions live on CompanionInfo, not in mobs.instances/.
-	if mob.Character.IsCharmed() {
+	//
+	// EverCharmed, not just IsCharmed: once a bond expires the ex-companion is
+	// uncharmed while STILL WEARING the equipment its owner handed it. Saving it
+	// would bake player gear into a world mob permanently, because
+	// MobInstanceData persists Equipment and mobs.go's loader re-equips it on
+	// respawn -- kill, loot, re-charm, repeat. The betrayal stays real in-session
+	// (it fights you with your own gear) but nothing is written to disk.
+	//
+	// EverCharmed is yaml:"-" ON PURPOSE, and that is what makes this work: it is
+	// read from the live character here and never persisted, so a reboot clears
+	// it and an ordinary world mob is never permanently barred from saving.
+	if mob.Character.IsCharmed() || mob.Character.EverCharmed {
 		return nil
 	}
 

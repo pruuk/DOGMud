@@ -1064,8 +1064,10 @@ For each pair inside `processGrapplePair`:
 
    The roll itself is not made here. Since U3 this package makes no
    contest of its own: it calls `combat.RunContest` for the grapple
-   drift, the charm reroll, the charm spell, the spell sites, and
-   riposte-trip and auto-bash via `combat.ExecuteSkillMove`. It imports
+   drift, the spell sites, and riposte-trip and auto-bash via
+   `combat.ExecuteSkillMove`. Charm no longer appears in that list:
+   U10c deleted its per-tick re-roll ladder outright and moved the
+   cast onto the `ChannelSocial` contest the seam already ran. It imports
    `internal/contest` for the `Entry` type only and must never call that
    package's `Run`, `AgainstDifficulty` or `RunWithFloors`. The private
    floor accessors this package used to keep, `maneuverHitFloor` /
@@ -1336,8 +1338,10 @@ after `NewMobPresence()`. Three vetoes (Active→Dormant, Active→Despawning,
 Dormant→Despawning) all share one policy closure:
 
 - Returns `VetoError` when `!mob.Despawns() || mob.IsEssential() ||
-  mob.Character.IsCharmed()`. Shopkeepers, foragers, caravan crew, and
-  charmed companions are permanently Active.
+  mob.Character.IsCharmed()`. Shopkeepers, foragers and caravan crew are
+  permanently Active. A charmed creature is Active only WHILE charmed --
+  since U10c bonds expire, so the veto lapses with the bond and the
+  ex-companion becomes eligible again like any other mob.
 
 ### RoomChange_PresencePlayerEntry.go
 
@@ -1411,13 +1415,20 @@ bite a crafter and a silent failure would read as the apex being broken.
 
 ### Cast gates
 
-`resolveCompanionSummon` (`companion_summon.go`) and `resolveCharmSpell`
+`resolveCompanionSummon` (`companion_summon.go`) and `applyMobEffect_charm`
 (`charm_spell.go`) replaced the deleted `CanAffordCompanion` with two separate
 refusals: the companion **count** cap and the reservation **ceiling**, reported
 separately so a player at their companion limit is not wrongly told they lack
 conviction. Summon reserve is derived from the spell's
 `SummonPetMultiplier` through `characters.CompanionReserveBase`; charm passes 0,
 meaning unscaled, so charm's price did not move.
+
+U10c renamed the charm arm from `resolveCharmSpell` to `applyMobEffect_charm`
+and moved it into `applyMobEffect`'s switch, because the old function ran a
+second private `RunContest` on top of the one the cast had already run and
+discarded -- one cast resolved twice and the player saw both narrations. The
+flat reserve is deliberate (spec 3.8): a sewer rat and an Elemental King tie up
+the same conviction, because charm's price is the DANGER, not the invoice.
 
 ### Enchant tier-up and craft completion (`NewRound_UserRoundTick.go`)
 

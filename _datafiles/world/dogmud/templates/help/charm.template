@@ -1,40 +1,51 @@
-<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">charm</ansi> spell
-
-The <ansi fg="command">Charm</ansi> spell reaches into a creature's mind and bends its will to
-yours, turning it into a loyal companion. The creature will follow you
-and fight at your side until the hold on its mind fades.
-
-Success is determined by an opposed roll — your charisma and
-manifestation skill against the creature's willpower and mental
-fortitude. Creatures already in combat are harder to charm, as their
-minds are focused on survival rather than open to influence.
-
-Your hold gradually loosens over time. When the charm finally breaks,
-the creature reverts to its natural state and may turn hostile. The
-stronger your charisma and the higher your manifestation skill, the
-longer the charm endures.
-
-<ansi fg="yellow">Usage: </ansi>
-
-  <ansi fg="command">cast charm</ansi>             Attempts to charm your current combat target.
-  <ansi fg="command">cast charm [target]</ansi>    Targets a specific creature by name.
-
-<ansi fg="yellow">Casting:     </ansi> Long channel — requires deep concentration
-<ansi fg="yellow">Target:      </ansi> Single creature
-<ansi fg="yellow">Defense:     </ansi> Mental (opposed by target's willpower)
-<ansi fg="yellow">Duration:    </ansi> Scales with charisma and manifestation skill
-<ansi fg="yellow">Conv. Cost:  </ansi> Very high — drains most of your conviction
-<ansi fg="yellow">School:      </ansi> Manifestation
-
-<ansi fg="white-bold">Notes:</ansi>
-  - Charm cannot be used on other players.
-  - Merchants, powerful named creatures, and certain others are
-    immune — their minds are beyond your reach.
-  - Creatures already in combat resist more strongly. Engaging a
-    target before casting gives it an edge in the mental contest.
-  - You may only have a limited number of companions at once.
-    Release one with <ansi fg="command">dismiss</ansi> before charming another.
-  - If the charm breaks while the creature is near you, expect it
-    to become hostile immediately.
-
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">charm</ansi> spell
+
+The <ansi fg="command">Charm</ansi> spell reaches into a creature's mind and bends its will to
+yours. It will follow you and fight at your side as your companion.
+
+A stubborn mind fights you hardest. Raw strength is no defence at all,
+so the biggest thing in the room can be the easiest to take, and by far
+the worst to lose hold of. A creature already fighting resists more
+strongly, and one already fighting you resists most of all.
+
+<ansi fg="white-bold">The hold ends.</ansi> There is no warning, and no sign of it weakening. How
+completely you won the contest decides how long you keep the creature,
+so the same spell cast twice can give you very different amounts of
+time. You are never told how much you have.
+
+A creature caught asleep is easiest to take, and held longest.
+
+When the hold ends, if you are standing beside it, it turns on you. If
+you are elsewhere it simply goes back to being what it was. Either way
+the conviction you spent holding it returns to you.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">cast charm</ansi>             Attempts to charm your current combat target.
+  <ansi fg="command">cast charm [target]</ansi>    Targets a specific creature by name.
+
+<ansi fg="yellow">Casting:     </ansi> Long channel, requires deep concentration
+<ansi fg="yellow">Target:      </ansi> Single creature
+<ansi fg="yellow">Defense:     </ansi> Defy (the creature's willpower and its skill at
+              arguing back)
+<ansi fg="yellow">Duration:    </ansi> Decided by how completely you won
+<ansi fg="yellow">Conv. Cost:  </ansi> Very high, and more is held for as long as the
+              bond lasts
+<ansi fg="yellow">School:      </ansi> Manifestation
+
+<ansi fg="white-bold">Notes:</ansi>
+  - Charm cannot be used on other players.
+  - Merchants, powerful named creatures, and anyone who is not a
+    fighter are beyond your reach.
+  - A charmed creature keeps any gear you hand it, and grows stronger
+    fighting at your side. Both of those cut two ways.
+  - A powerful creature is no harder to charm than a weak one. It is
+    only far worse to be standing next to when the hold ends.
+  - Letting one go is not a peaceful parting. <ansi fg="command">dismiss</ansi> and it turns
+    on you at once, so free a slot before you need one rather than in
+    the middle of a fight.
+  - You may only hold a limited number of companions at once.
+  - Logging out destroys anything you have charmed, along with
+    whatever it was carrying. Take back anything you lent it first.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>

@@ -2,7 +2,7 @@
 // from tracked templates and an optional per-run manifest.
 package playtestprofiles
 
-// KnownTemplateIDs are the six tracked synthetic profiles.
+// KnownTemplateIDs are the seven tracked synthetic profiles.
 var KnownTemplateIDs = []string{
 	"fresh",
 	"early",
@@ -10,6 +10,7 @@ var KnownTemplateIDs = []string{
 	"veteran",
 	"specialist-caster",
 	"admin",
+	"charmer",
 }
 
 // Manifest is the ephemeral per-run materialization request.

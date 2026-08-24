@@ -238,6 +238,14 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, `You need a moment before you can do that.`)
 		return true, nil
 	case result.NoTarget:
+		// The refusal may already have been narrated with a specific reason -- a
+		// protected NPC, or a player target for a mob-only spell. Adding the
+		// generic line after one of those contradicts it: the player named a
+		// target, was told why it was refused, and is then told they named
+		// nobody. Caught by the 2026-08-24 charm playtest on two paths.
+		if result.RefusalExplained {
+			return true, nil
+		}
 		// HarmSingle / HarmArea / HelpSingle can set this; supply a
 		// context-aware message.
 		if spellInfo.Type == spells.HelpSingle {

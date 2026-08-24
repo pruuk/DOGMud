@@ -408,21 +408,33 @@ func tickMobCharmState(mob *mobs.Mob) {
 		owner = users.GetByUserId(charmedUserId)
 	}
 
-	// ── Gate 1: only a CHARMED companion grudges ────────────────────────────
+	// -- Was this a charmed COMPANION? --------------------------------------
 	// Five other systems put a creature in Charmed state -- summons, brood
 	// spawns, the homunculus, befriend, and behaviour-tree companions -- and
 	// applyMobEffect_charm is the only producer of CompanionCharmed in the
-	// codebase. A conjured creature turning on the conjurer would be a bug, not
-	// a mechanic.
-	grudge := false
+	// codebase.
+	//
+	// This is deliberately SEPARATE from the grudge decision below. The gates
+	// decide whether the creature ATTACKS; they must never decide whether the
+	// bookkeeping happens. Slice C conflated the two and shipped a bond that,
+	// when it lapsed with its owner in another room, broke the charm but left
+	// the CompanionInfo record in place -- holding its conviction reservation
+	// and its companion slot forever, and still being dragged along by
+	// TransportCompanions, which iterates Companions with no charm check.
+	wasCompanion := false
 	if owner != nil {
 		if comp := owner.Character.GetCompanionByInstanceId(mob.InstanceId); comp != nil &&
 			comp.SourceType == characters.CompanionCharmed {
-			grudge = true
+			wasCompanion = true
 		}
 	}
 
-	// ── Gate 2: the owner must be PRESENT to receive it ─────────────────────
+	// -- Gate 1: only a charmed companion grudges ----------------------------
+	// A conjured creature turning on its conjurer would be a bug, not a
+	// mechanic.
+	grudge := wasCompanion
+
+	// -- Gate 2: the owner must be PRESENT to receive it ---------------------
 	// A bond lapsing while the caster is elsewhere must not manufacture a
 	// creature that hunts them across zones. Aggro at range is how charm would
 	// become a griefing tool rather than a gamble (spec 3.10).
@@ -430,54 +442,54 @@ func tickMobCharmState(mob *mobs.Mob) {
 		grudge = false
 	}
 
-	// ── Gate 3: the owner must not be LEAVING ───────────────────────────────
+	// -- Gate 3: the owner must not be LEAVING -------------------------------
 	// A clean logout cannot reach this: saveCompanionState destroys every
 	// companion instance before HandleLeave's Expire() loop runs, so the mob is
 	// gone by the time any tick could see it. LINK-DEAD is the live case -- a
 	// zombied player stays in the room while the clock keeps running, and
 	// firing a grudge at someone whose connection just dropped is indefensible.
 	// (users.go's own link-dead cleanup zeroes RoundsRemaining, but only for the
-	// tutorial Guide, which gate 1 already excludes.)
+	// tutorial Guide, which is not a charmed companion.)
 	if grudge && owner.Character.HasAdjective(`zombie`) {
 		grudge = false
 	}
 
-	if !grudge {
-		// Not a grudge: unwind quietly, exactly as before.
-		if mob.Character.RemoveCharm() > 0 && owner != nil {
-			owner.Character.TrackCharmed(mob.InstanceId, false)
+	if grudge {
+		owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
+			`<ansi fg="red-bold">%s breaks free of your control!</ansi>`, mob.Character.Name))
+		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+			sendVisualRoomText(room, messaging.CategoryMobEmote, fmt.Sprintf(
+				`<ansi fg="red">%s snarls and turns on %s!</ansi>`,
+				mob.Character.Name, owner.Character.Name), owner.UserId)
 		}
-		runCharmExpiredCommand(mob, cmd)
-		return
 	}
 
-	room := rooms.LoadRoom(mob.Character.RoomId)
-
-	owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-		`<ansi fg="red-bold">%s breaks free of your control!</ansi>`, mob.Character.Name))
-	if room != nil {
-		sendVisualRoomText(room, messaging.CategoryMobEmote, fmt.Sprintf(
-			`<ansi fg="red">%s snarls and turns on %s!</ansi>`,
-			mob.Character.Name, owner.Character.Name), owner.UserId)
-	}
-
-	// Bookkeeping order is dismiss.go's, and for dismiss.go's reason: drop the
-	// companion record BEFORE anything that can trigger room-wide combat logic.
-	// Setting aggro first re-enters combat resolution while the pet is half
-	// removed -- still on Companions, no longer charmed.
+	// -- Bookkeeping, which is NOT gated -------------------------------------
+	// Order is dismiss.go's, for dismiss.go's recorded reason: drop the
+	// companion record BEFORE anything that can trigger room-wide combat logic,
+	// or aggro re-enters combat resolution while the pet is half removed --
+	// still on Companions, no longer charmed.
 	mob.Character.RemoveCharm()
-	owner.Character.TrackCharmed(mob.InstanceId, false)
-	owner.Character.RemoveCompanion(mob.InstanceId)
+	if owner != nil {
+		owner.Character.TrackCharmed(mob.InstanceId, false)
+	}
 
-	// RemoveCompanion alone does not give the conviction back. The reservation
-	// is DERIVED from the live companion slice during RecalculateStats, and the
-	// bar the player is staring at is refreshed by the event -- which matters
-	// most at exactly this moment, because they are now being attacked.
-	owner.Character.RecalculateStats()
-	events.AddToQueue(events.CharacterVitalsChanged{UserId: owner.UserId})
+	if wasCompanion {
+		owner.Character.RemoveCompanion(mob.InstanceId)
+
+		// RemoveCompanion alone does not give the conviction back. The
+		// reservation is DERIVED from the live companion slice during
+		// RecalculateStats, and the bar the player is staring at is refreshed
+		// by the event -- which matters most when the bond broke in their face,
+		// because they are now being attacked.
+		owner.Character.RecalculateStats()
+		events.AddToQueue(events.CharacterVitalsChanged{UserId: owner.UserId})
+	}
 
 	// Only now may aggro be set.
-	mob.Character.SetAggro(owner.UserId, 0, characters.DefaultAttack)
+	if grudge {
+		mob.Character.SetAggro(owner.UserId, 0, characters.DefaultAttack)
+	}
 
 	runCharmExpiredCommand(mob, cmd)
 }

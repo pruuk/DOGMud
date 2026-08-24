@@ -884,8 +884,7 @@ non-melee attack (the spell sites in `hooks/spell_resolution.go`,
 `actions.ExecuteTaunt`, `actions/combat_fire.go`, `usercommands.Throw`,
 and the 16 special moves via `ExecuteSkillMove`). Direct sites beyond it:
 melee's `runBestOfAllDefense`, `AttemptGrapple`, `RollSubmissionAttempt`,
-both flee rolls in `flee.go`, `hooks.processGrapplePair` (grapple drift),
-`hooks.tickMobCharmState` (charm reroll), `hooks.resolveCharmSpell`, and
+both flee rolls in `flee.go`, `hooks.processGrapplePair` (grapple drift), and
 the U4 out-of-combat sites in `actions/sneak.go`, `actions/shadow.go`,
 `actions/steal.go`, `actions/plant.go`, `actions/defuse.go`,
 `usercommands/go.go` and

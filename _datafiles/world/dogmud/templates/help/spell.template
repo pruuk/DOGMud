@@ -9,8 +9,8 @@
 <ansi fg="yellow">Base Folds:  </ansi> <ansi fg="white-bold">{{ .BaseFolds }}</ansi>
 <ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">{{ .Cost }}</ansi>
 <ansi fg="yellow">Wait Time:   </ansi> <ansi fg="white-bold">{{ .WaitRounds }} rounds</ansi>
-{{ if .TargetDefenseType -}}
-<ansi fg="yellow">Resisted by: </ansi> <ansi fg="white-bold">{{ .TargetDefenseType }} defense</ansi>
+{{ with defensename .TargetDefenseType -}}
+<ansi fg="yellow">Resisted by: </ansi> <ansi fg="white-bold">{{ . }}</ansi>
 {{ end -}}
 {{ if .ComponentTag -}}
 <ansi fg="red-bold">Requires:    </ansi> <ansi fg="white-bold">{{ .ComponentTag }}</ansi> in your inventory to cast

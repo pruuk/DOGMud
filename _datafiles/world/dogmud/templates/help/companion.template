@@ -60,10 +60,13 @@ Use <ansi fg="command">assess</ansi> to see what a raise would ask before you co
 
 <ansi fg="yellow">━━━ Persistence ━━━</ansi>
 
-Companions persist across sessions. When you log out, your
-companions wait for your return. Summoned and raised
-companions linger in the world until you reconnect. Charmed
-companions persist as long as the magical bond holds.
+Most companions persist across sessions. When you log out,
+summoned and raised companions wait for your return, lingering
+in the world until you reconnect.
+
+Charmed creatures do not. Logging out destroys anything you
+have charmed, along with whatever it was carrying, so take back
+any gear you lent it before you go.
 
 <ansi fg="yellow">━━━ Stealth Warning ━━━</ansi>
 

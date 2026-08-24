@@ -31,6 +31,22 @@ type CastResult struct {
 	OnCooldown     bool // special-move cooldown blocked the cast
 	NoTarget       bool // required target could not be resolved
 
+	// RefusalExplained is set alongside NoTarget when the refusal has ALREADY
+	// been narrated to the actor with a specific reason -- a protected NPC, or a
+	// player target for a mob-only spell.
+	//
+	// Without it the caller adds its generic "You need a target to cast that
+	// spell", which flatly contradicts the line before it: the player DID name a
+	// target and was told why it was refused, then gets told they named nobody.
+	// A 2026-08-24 playtest caught both paths back to back:
+	//
+	//	You can't target Food Vendor with a harmful spell.
+	//	You need a target to cast that spell.
+	//
+	//	You cannot bend another person's mind to your will.
+	//	You need a target to cast that spell.
+	RefusalExplained bool
+
 	// Computed values exposed so the wrapper can apply its own logic.
 	FoldsNeeded   int
 	FoldsPerRound int
@@ -93,7 +109,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 				// Companions, non-combatants and player_attack_immune mobs are
 				// off-limits to harmful spells, exactly as they are to melee.
 				if rejectHarmTarget(actor, mId) {
-					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
@@ -113,7 +129,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 				if spellInfo.EffectType == "charm" {
 					actor.SendText(messaging.CategorySystem,
 						`You cannot bend another person's mind to your will.`)
-					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 				}
 				// Players cannot self-target harmful single spells; mobs can
 				// since they would never target themselves this way in practice.
@@ -143,7 +159,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 			pId, mId := resolvePlayerAggroTarget(actor, room)
 			if mId > 0 {
 				if rejectHarmTarget(actor, mId) {
-					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
@@ -170,7 +186,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 			pId, mId := room.FindByName(targetName)
 			if mId > 0 {
 				if rejectHarmTarget(actor, mId) {
-					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
@@ -180,7 +196,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 			pId, mId := resolvePlayerAggroTarget(actor, room)
 			if mId > 0 {
 				if rejectHarmTarget(actor, mId) {
-					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {

@@ -2,9 +2,15 @@ spellid: charm
 name: Charm
 description: |
   You reach into the mind of a hostile creature and bend its
-  will to yours, turning it into a loyal companion. The charm
-  requires intense focus and is much harder against creatures
-  already in combat. Stronger creatures resist more fiercely.
+  will to yours. A stubborn mind fights you hardest. Raw
+  strength is no defence at all, so the biggest thing in the
+  room can be the easiest to take, and the worst to lose hold
+  of. A creature already fighting is harder to reach.
+  What you bind will follow you and fight for you, but not for
+  long. There is no warning and no sign of the hold weakening.
+  It simply ends. The more completely you win, the longer you
+  keep it.
+  When it ends, if you are standing beside it, it attacks you.
 cost: 120
 base_folds: 36
 type: harmsingle

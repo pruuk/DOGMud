@@ -223,3 +223,28 @@ func TestInitiateCast_HarmArea_ExcludesProtectedMobs(t *testing.T) {
 	assert.NotContains(t, result.TargetMobInstanceIds, 9010, "attack-immune mobs must be spared")
 	assert.NotContains(t, result.TargetMobInstanceIds, 9011, "non-combatants must be spared")
 }
+
+// A refusal that names its reason must not be followed by the caller's generic
+// "You need a target to cast that spell", which contradicts it: the player DID
+// name a target and was told why it was refused, then gets told they named
+// nobody. A 2026-08-24 playtest hit both paths back to back.
+//
+// The flag is what the command layer reads to stay quiet, so it is the thing
+// worth pinning -- the message suppression itself lives in
+// usercommands/skill.cast.go.
+func TestInitiateCast_ProtectedTargetRefusalIsAlreadyExplained(t *testing.T) {
+	_, cleanupSpell := seedTestSpell("harm-explained-single", spells.HarmSingle, 4)
+	defer cleanupSpell()
+
+	actor, _, room := newPlayerActor()
+	defer seedRoomMob(t, room, 9061, "Barkeep", func(m *mobs.Mob) {
+		m.NonCombatant = true
+	})()
+
+	result := InitiateCast(actor, "harm-explained-single", "barkeep")
+
+	assert.True(t, result.NoTarget)
+	assert.True(t, result.RefusalExplained,
+		"a protected-target refusal already told the player why, so the command "+
+			"layer must not add its generic no-target line on top")
+}

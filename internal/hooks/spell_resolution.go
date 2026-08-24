@@ -344,6 +344,20 @@ func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, 
 
 	// Task 17: the sleeping-victim forced crit reaches the spell channel.
 	side.ForceCrit = combat.SleepingForceCrit(&mob.Character)
+
+	// Charm alone carries an in-combat penalty (spec 4.1). A mind braced for
+	// violence is harder to reach, and one braced against YOU is hardest.
+	//
+	// Normalise Mult FIRST. Zero is the zero value and AttackSide.score() reads
+	// it as "unset, 1.0" (defence_multiplier.go:78-83), so multiplying into an
+	// unset Mult yields 0, which reads back as 1.0 -- the penalty would vanish
+	// silently while producing an entirely plausible number.
+	if spellData.EffectType == "charm" {
+		if side.Mult == 0 {
+			side.Mult = 1.0
+		}
+		side.Mult *= charmInCombatMult(&mob.Character, user.UserId)
+	}
 	out := runSpellChannelAttack(spellAttackChannel(spellData), side, user.Character, &mob.Character)
 
 	round := util.GetRoundCount()
@@ -1646,4 +1660,26 @@ func resolveIdentify(user *users.UserRecord, itemName string, room *rooms.Room) 
 
 	identifyTxt, _ := templates.Process("descriptions/identify", details, user.UserId)
 	user.SendText(messaging.CategorySpellMental, identifyTxt)
+}
+
+// charmInCombatMult is charm's attack-side penalty for reaching into a mind that
+// is already fighting.
+//
+// Restored 2026-08-24. Spec 4.1's mechanics table lists both multipliers as
+// UNCHANGED across the U10c rewrite; slice B deleted them along with
+// resolveCharmSpell and put nothing in their place. Nothing else covered for it:
+// combat.SituationalAttackMult returns a flat 1.0 for every channel except melee
+// and ranged, and the defy defence carries no combat term -- so charm quietly got
+// easier mid-fight while charm.yaml, charm.template and hints.yaml all went on
+// telling players it had got harder.
+//
+// Literals rather than balance knobs by owner ruling 2026-08-24.
+func charmInCombatMult(target *characters.Character, casterUserId int) float64 {
+	if target == nil || !target.IsInCombat() {
+		return 1.0
+	}
+	if target.CurrentCombatTarget().UserId == casterUserId {
+		return 0.75 // fighting the caster -- steepest
+	}
+	return 0.85 // fighting someone else -- moderate
 }

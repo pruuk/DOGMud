@@ -1,0 +1,47 @@
+role: user
+username: template-charmer
+character:
+  name: Bindsong
+  description: >
+    A manifestation specialist built to exercise charm end to end: enough
+    charisma to win the contest, enough conviction to pay the cost and still
+    hold the companion reservation, and a spare weapon to hand a charmed
+    creature.
+  roomid: 462
+  zone: Thornwall City
+  speciesid: 1
+  stats:
+    strength:
+      base: 100
+    dexterity:
+      base: 110
+    perception:
+      base: 115
+    vitality:
+      base: 115
+    willpower:
+      base: 130
+    charisma:
+      base: 150
+  health: 460
+  stamina: 450
+  conviction: 585
+  gold: 400
+  skills:
+    manifestation: 30
+    spellcasting: 15
+    rhetoric: 10
+    weapon-combat: 8
+    search: 10
+  spellbook:
+    charm: 3
+    heal: 2
+  equipment:
+    weapon:
+      itemid: 10018
+    body:
+      itemid: 20008
+    feet:
+      itemid: 20003
+  items:
+    - itemid: 10018

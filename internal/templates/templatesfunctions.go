@@ -79,6 +79,27 @@ var (
 		"lowercase": func(s string) string {
 			return strings.ToLower(s)
 		},
+		// defensename turns a spell's target_defense_type into the defence a
+		// player actually sees in combat. Without it the generic spell helpfile
+		// printed the raw enum: "Resisted by: social defense", which names
+		// nothing the game ever says elsewhere, and "Resisted by: none defense"
+		// for the thirteen spells that declare none.
+		//
+		// Returning "" suppresses the whole line, which is what "none" wants;
+		// the template guards on the result rather than on the raw field.
+		"defensename": func(s string) string {
+			switch strings.ToLower(strings.TrimSpace(s)) {
+			case "social":
+				return "defy"
+			case "mental":
+				return "quell"
+			case "physical":
+				// ChannelSpellPhysical is answered by dodge or block, and which
+				// one wins is decided per swing, so name both.
+				return "dodge or block"
+			}
+			return ""
+		},
 		"mapkeys": func(m map[string]string) []string {
 			keys := make([]string, len(m))
 			i := 0
