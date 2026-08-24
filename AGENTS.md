@@ -238,9 +238,15 @@ re-sleep. Preserve the first-round vulnerability of sleeping targets.
   ceilings. A progression roll happens every use, and the odds are keyed to how
   far the stat or skill has come: **rank is `StatInfo.Training` for a stat and
   the skill level for a skill** (U10b-0 Phase C). Use counters survive as
-  telemetry only and `UsesPerRank` drives nothing. Player
+  telemetry only, and `UsesPerRank` is now read by nothing at all. Player
   `IncreaseStat`/`IncreaseSkill` are uncapped; mob caps are explicit mob-only
-  guards.
+  guards on gains (`MobStatTrainingCap`, `MobSkillTrainingCap`), and the older
+  `MobStatCap`/`MobSkillCap` knobs still exist but enforce nothing.
+- The progression chance expression lives in exactly two functions,
+  `Character.ProgressionChanceForStat` and `ProgressionChanceForSkill`; use
+  `characters.ProgressionRollThreshold` for the roll threshold. Never recompute
+  either — a hand-rolled copy in the admin dashboard silently dropped
+  `StatProgressionRate` and every multiplier for months.
 - For every opposed contest, use `combat.RunContest`. Production must not call
   unfloored `contest.Run` / `AgainstDifficulty` or deprecated
   `dice.OpposedRollStat*` directly. For a single non-contested roll,

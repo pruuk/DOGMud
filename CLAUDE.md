@@ -373,18 +373,32 @@ party markers are web-only — the ASCII `map` command is unaffected.
   secondary (×1) each. Coefficients live in the balance config; note that a knob
   left *absent* from `config.yaml` falls back to its Go default, and `0` is a
   legal shipped value (`StaminaPerStrength: 0`).
-- Skills (10 total) cap softly at 50 (`skillSoftCap`). They progress via
+- Skills (**16** total, not 10 — count them with the `skills` command or
+  `skills.allSkillNames`) cap softly at 50 (`skillSoftCap`). They progress via
   `OnSkillUse()` → `CheckSkillProgression()`, probabilistically.
 - **A progression roll happens on EVERY use**, and the odds depend on how far
   the stat or skill has already come, not on how often it has been used.
   **Rank is `StatInfo.Training` for a stat and the skill level for a skill**
   (U10b-0 Phase C). Use counters are still recorded in saves and shown on the
-  admin dashboard, but they are **telemetry only** and no longer feed the curve;
-  `UsesPerRank` is retained for that display and drives nothing.
+  admin dashboard, but they are **telemetry only** and no longer feed the curve.
+  **`UsesPerRank` is now read by nothing at all** — U10b-0 Phase E removed its
+  last two consumers. The knob and `internal/configs/smoke_test.go`'s assertion
+  that it is positive survive only so an existing `config.yaml` still validates.
+- **The chance expression lives in exactly two functions**, and nothing may
+  recompute it: `Character.ProgressionChanceForStat` and
+  `ProgressionChanceForSkill`. Production rolls them, the tests pin them, and the
+  admin dashboard displays them. The dashboard used to hand-roll bare
+  `CalculateProgressionChance`, which silently dropped `StatProgressionRate` and
+  every per-stat, per-skill, mutation and buff multiplier — that drift is why a
+  truncation bug which sealed two of a live character's stats read as a tuning
+  problem for months. `characters.ProgressionRollThreshold(chance)` is the
+  matching seam for the integer roll threshold; the denominator behind it stays
+  unexported on purpose, so a caller cannot drift from production if the
+  resolution changes again.
 - **Equipment cannot make a stat harder to train.** The retired value floor read
   `GetStatValue`, which includes `Mods`, so wearing a stat item raised your own
   difficulty. Rank now reads `Training` alone.
-- Curve (`CalculateProgressionChance`, `internal/characters/progression.go:44-62`):
+- Curve (`characters.CalculateProgressionChance`, `internal/characters/progression.go`):
   below the soft cap `base × exp(-decayBelow × rank/softCap)`, above it the
   decay continues with `decayAbove` rather than reaching zero. Stat rolls also
   multiply by `StatProgressionRate`. With shipped config a fresh stat is roughly
@@ -393,10 +407,15 @@ party markers are web-only — the ASCII `map` command is unaffected.
   0.12 shipped against a 0.30 default, `StatProgressionRate` 2.25 against 1.0.
   Read `config.yaml`, not the defaults.
 - `IncreaseStat` and `IncreaseSkill` contain **no bound check whatsoever** (there
-  is a `TestIncreaseSkill_NoCap` regression test). The only hard ceilings are
-  `MobStatCap` in `CheckStatProgression` (`progression.go:157`) and
-  `MobSkillCap` in `CheckSkillProgression` (`progression.go:77`), one per
-  function, both gated on `c.IsMob`. Players have none.
+  is a `TestIncreaseSkill_NoCap` regression test). **Players have no hard
+  ceiling at all.** The only hard ceilings are mob-only and gated on `c.IsMob`:
+  `MobStatTrainingCap` and `MobSkillTrainingCap`, enforced inside the two
+  **chance** functions rather than the `Check*` functions, and
+  `MobStatTrainingCap` is checked at more than one site. Both cap **gains**, not
+  value, so a mob authored at base 250 is no harder to train than one at 180.
+  Beware `MobStatCap` / `MobSkillCap`: those still exist as **legacy** config
+  knobs and are still validated, which makes stale references to them read as
+  plausible. They are superseded and enforce nothing.
 
 ## Dice & Rolling System
 - **For an opposed contest, call `combat.RunContest`** in

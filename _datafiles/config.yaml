@@ -1031,13 +1031,13 @@ Balance:
     # perception after Phase D unhooked look/consider. Its feeders are now
     # forage/search, the perception crafts, salvage and ranged-combat.
     perception: 0.41
-    # NOT retuned by Phase D. Vitality's faucets are the regen damper and the
-    # crit-toughen path, neither of which is a uses/hour track, so the solver has
-    # no row for it. Known gap: it reads ~52%/use and needs its own slice.
-    vitality: 2.2            # U10b-0 vitality slice: was 4.5. Solved against the new
-                     # damage-taken faucet (tools/balance/u10b_vitality_solve.py).
-                     # Scales BOTH the regen and crit-toughen paths, whose bases
-                     # differ 13.5x, so it cannot be tuned for one without the other.
+    # Vitality was retuned by the U10b-0 vitality slice, not by the Phase D
+    # solver: its faucets are the regen damper and the crit-toughen path, and
+    # neither is a uses/hour track, so the solver has no row for it.
+    vitality: 2.2    # was 4.5. Solved against the damage-taken faucet added by
+                     # the slice (tools/balance/u10b_vitality_solve.py). Scales
+                     # BOTH the regen and crit-toughen paths, whose bases differ
+                     # 13.5x, so it cannot be tuned for one without the other.
     willpower: 2.21
     # charisma has no direct player faucet; it is the primary stat behind
     # rhetoric, bartering and manifestation.

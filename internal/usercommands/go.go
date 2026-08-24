@@ -42,18 +42,26 @@ import (
 // best way to become a tracker is to pace back and forth.
 //
 // The rarity is in whether the use is RECORDED, not in the odds attached to it.
-// CheckSkillProgression derives its decay from the skill's use count
-// (virtualRank = useCount / UsesPerRank), so recording a use on every step would
-// bury the counter under tens of thousands of walked rooms and leave forage,
-// search and track training almost worthless -- and scaling the odds down
-// instead does not help, because the counter still climbs once per step and
-// outruns the progression it is paying for.
 //
-// At the shipped 1-in-200 gate it takes on the order of 7,700 room moves to see
-// search rank 10 and something like 33,000 to reach rank 35: "you picked up an
-// eye for the road over a very long time", not a training strategy. A 1-in-50
-// gate would get to rank 35 in roughly 8,300 moves and would make walking the
-// dominant route, which is exactly what this is tuned to avoid.
+// NOTE: the original reason no longer holds. CheckSkillProgression derived its
+// decay from the use count (virtualRank = useCount / UsesPerRank), so recording
+// a use per step would have buried the counter and devalued forage, search and
+// track. Since U10b-0 Phase C the rank IS the skill level, so frequency no
+// longer exhausts the curve and UsesPerRank drives nothing.
+//
+// The gate stays anyway, on the simpler ground below: a roll now happens on
+// every recorded use, so recording one per room step would make walking the
+// fastest route to a search rank regardless of how the curve decays. Scaling
+// the odds down instead is not equivalent -- it would still pay out steadily
+// for an activity that costs the player nothing.
+//
+// STALE FIGURES, kept for intent only: at the shipped 1-in-200 gate this was
+// reckoned at roughly 7,700 room moves to search rank 10 and around 33,000 to
+// rank 35, against roughly 8,300 moves to rank 35 at a 1-in-50 gate. Those
+// numbers were computed under the retired useCount/UsesPerRank model and have
+// NOT been recomputed against the level-keyed curve or the Phase D multipliers.
+// The intent they encode still stands -- "an eye for the road picked up over a
+// very long time", not a training strategy -- but do not quote the counts.
 //
 // Second-order effect, and deliberate: search also feeds hidden-creature
 // detection on room entry (Perception + Search against Dex + Skullduggery, later

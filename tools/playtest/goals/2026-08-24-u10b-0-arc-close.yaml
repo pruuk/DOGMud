@@ -1,0 +1,60 @@
+# U10b-0 arc close: adversarial pass over the whole progression re-key.
+#
+# The arc changed how every character in the game improves: rank is now trained
+# points (stats) or the skill level (skills) rather than a use counter, the
+# multipliers were re-solved on measured play data, a new damage-taken faucet
+# trains vitality, and mob and companion stat pools moved from Training into
+# Base with a save migration behind them.
+#
+# A boot-clean check proves none of that FEELS right, and the three systems the
+# pool move touches (companions, assess, raise) are the ones a compile cannot
+# check. Fresh character, bug-finder mandate: read every line of output and
+# report anything confusing, broken, or contradicting its own help text.
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    Fresh character required. The arc's whole subject is how a character
+    improves from nothing, and a pre-seeded kit would hide both the early
+    progression curve and the onboarding text that describes it.
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Progression banners: fight weak creatures until stats and skills start
+    improving. Every advancement message must read cleanly and name
+    something a player understands. Report any banner that shows a raw
+    number, a rank, a percentage, or an internal name. Note roughly how
+    long the first improvement took: it should feel like early progress
+    comes quickly, not like nothing is happening.
+  - >-
+    Toughness from being hit: let something hit you properly and keep
+    fighting. Taking a solid blow is supposed to toughen you over time.
+    Report whether that ever seems to happen, and whether anything about
+    it is announced confusingly or contradicts the help text.
+  - >-
+    Companions across a logout and login. Get a companion however the game
+    offers one, note everything `status` or `companion` reports about it,
+    then quit, log back in, and compare. It must come back the SAME. Any
+    change in how strong it looks, how much health it has, or what it can
+    do is a serious finding. Report the before and after in detail.
+  - >-
+    Assess and raise on a corpse: kill a weak creature, `assess` the
+    corpse, then try `raise`. The forms assess advertises must be the
+    forms raise will actually accept. If assess offers something raise
+    then refuses, that is a bug, and report exactly what it offered and
+    what it said when refused. Costs must be described in words, never
+    as raw numbers.
+  - >-
+    Skills that are not combat: try forage, search, and a craft. They
+    should improve at a pace that feels worth the time spent, and should
+    not feel dramatically slower or faster than fighting for the same
+    effort. Say plainly which felt out of line.
+  - >-
+    Help spot checks against the new model: `help progression` or
+    whichever help topic covers improving, plus `help status`. Anything
+    that still describes improvement as depending on how MANY TIMES you
+    have done something is stale text and is a finding.
+  - >-
+    General adversarial pass: anything else that reads wrong, renders
+    oddly, or contradicts its own help text is a finding.

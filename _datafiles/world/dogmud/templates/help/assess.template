@@ -27,6 +27,19 @@ fielded; higher manifestation skill (and certain mutations)
 shrink that reservation. If you could not spare the
 conviction right now, the assessment says so.
 
+<ansi fg="yellow">━━━ How To Actually Raise It ━━━</ansi>
+
+Raising is a spell, not a command of its own. There is no
+<ansi fg="command">raise</ansi> command. Cast the spell for the form you want at
+the corpse:
+
+  <ansi fg="command">cast raise-skeleton corpse</ansi>
+
+The forms are raise-skeleton, raise-zombie, raise-spectre,
+raise-wraith, raise-golem and raise-vampire. You must know
+the spell, and your manifestation skill must be equal to the
+form, or nothing answers you.
+
 <ansi fg="yellow">━━━ Important Notes ━━━</ansi>
 
 Assessment is purely informational — you don't need to assess
@@ -38,8 +51,9 @@ so factor that into your decisions.
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 
-Using <ansi fg="command">assess</ansi> trains your manifestation skill. The
-more corpses you study, the better you become at gauging
-their potential.
+Using <ansi fg="command">assess</ansi> trains your manifestation skill. Every
+assessment is a chance to improve, and the chance grows rarer
+as the skill advances -- so it is how far you have come that
+sets the pace, not how many corpses you have studied.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help companion</ansi>

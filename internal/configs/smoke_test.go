@@ -89,8 +89,12 @@ func TestSmoke_BalanceConfigValid(t *testing.T) {
 	// Progression
 	assert.Greater(t, float64(bal.BaseProgressionChance), 0.0,
 		"BaseProgressionChance must be positive")
+	// UsesPerRank is READ BY NOTHING since U10b-0 Phase E removed its last two
+	// consumers (the admin progression dashboard's expected-rank and stall
+	// math). The knob and this assertion survive only so a config.yaml that
+	// still lists it keeps validating. Do not build anything new on it.
 	assert.Greater(t, int(bal.UsesPerRank), 0,
-		"UsesPerRank must be positive")
+		"UsesPerRank must be positive (retained for config compatibility only)")
 }
 
 // TestSmoke_GamePlayConfigValid verifies essential GamePlay config values.

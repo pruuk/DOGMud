@@ -864,10 +864,64 @@ species rebalances. Author `base:` only where the mob should differ from its
 species. Note that an explicit `base: 0` is honoured rather than hydrated, via
 `stats.StatInfo.BaseAuthored` — two mobs depend on it.
 
-Phase C of U10b-0 additionally moves the runtime `statpool` distribution from
-`.Training++` to `.Base++`, at which point `Training` means gains-since-spawn
-for mobs exactly as it does for players. Until then the spawn pool still lands
-in `Training`.
+Phase C of U10b-0 **has shipped**: the runtime `statpool` distribution lands in
+`.Base++`, not `.Training++`, so **`Training` means gains-since-spawn for mobs
+exactly as it does for players.** Nothing but progression writes it.
+
+The caps follow from that. `MobStatTrainingCap` and `MobSkillTrainingCap` cap
+**gains**, not value, so a mob authored at base 250 is no harder to train than
+one at 180 — which the older value cap got wrong. They are enforced inside
+`characters.ProgressionChanceForStat` / `ProgressionChanceForSkill`, not in the
+`Check*` functions. The legacy `MobStatCap` / `MobSkillCap` knobs still exist in
+the balance config and are still validated, but they are superseded and enforce
+nothing; a reference to them reads plausible and is wrong.
+
+### Instance saves carry a schema version, and the gate is load-bearing
+
+`MobInstanceData.SchemaVersion` (`instance_save.go`) is `InstanceSchemaVersion`
+(currently **1**) on anything written since Phase C. **Absent, i.e. zero, means
+the file predates Phase C**, when a saved `Training` value was three things
+fused together:
+
+```
+saved = authored + spawnPool + gains
+```
+
+`LegacyTrainingToGains(mobId, saved)` (`migration_legacy_training.go`) separates
+them on load, recovering `authored` as `template.Base - species.Base` (exact,
+because Phase A folded authored `training:` into `base:`) and `spawnPool` as
+`template.StatPool` (exact in total). Two deliberate refusals:
+
+- **It will not guess the per-stat split of the pool evenly.** That split was
+  random and never recorded. An even split would be badly wrong for
+  archetype-weighted mobs, so the subtraction is distributed proportionally to
+  each stat's own saved value, preserving the shape.
+- **It will not migrate at all when the template or species record is missing.**
+  It returns the input unchanged, because refusing beats corrupting a value with
+  a guessed baseline.
+
+**Do not weaken the `SchemaVersion` gate.** Measured over the 266 real legacy
+saves on 2026-08-24, re-running the arithmetic on already-migrated values
+changes **19** of them — exactly the 19 that retain any gains. The gate, not the
+arithmetic, is what makes the load path idempotent; without it every reload
+subtracts the pool again. The same gate exists for companions at
+`internal/hooks/PlayerSpawn_HandleJoin.go`, which matters more because
+companions respawn through `NewMobByIdFresh` and therefore get a *fresh* pool
+rolled into `Base` that the saved value would otherwise stack on top of.
+
+Two known limits, neither a defect:
+
+- **Gold-scaled instance mobs over-attribute.** Instance mobs scale their pool by
+  gold paid (`rooms/instances.go`), but the save records only the outcome, so the
+  migration subtracts the *template's* `StatPool`. The difference is credited as
+  gains. Total stat values still come out right; the split between `Base` and
+  `Training` does not. Instance-zone saves are ephemeral and are not deployed, so
+  this has no production reach.
+- **Legacy companions arrive above the cap.** Real migrated pets landed at 12 to
+  161 trained points per stat against a `MobStatTrainingCap` of 50, so their
+  larger stats are frozen on arrival. This is the cap working on pre-arc
+  accumulation reinterpreted as gains. Unlike instance saves, **user saves with
+  companions do reach production.**
 
 ## File Organization and Persistence
 
