@@ -1,7 +1,8 @@
 # U10c — Charm Redesign (design)
 
 **Status:** APPROVED 2026-08-24, **REVISED after blind adversarial review the same day.**
-**Sections 11 and 12 supersede 1-10 where they conflict — read them FIRST.**
+**Sections 11, 12 and 13 supersede 1-10 where they conflict — read them FIRST.**
+**Section 13 further supersedes 11.3.2.**
 Section 2.5 is known FALSE; section 4.1 would have shipped a double contest.
 **Arc:** U0–U12 unified resolution. Sequenced after U10b-0; depends on U9 and U6b.
 **Roadmap row:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`, U10c.
@@ -602,3 +603,82 @@ headaches, alongside the quest system. Finding 11.3.5 is the third distinct
 instance-save trap this arc has hit, after stale saves shadowing template edits
 and the legacy-training migration. A dedicated audit slice is likely worth more
 than continuing to patch it per-incident. Not scoped here.
+
+---
+
+# 13. REVISION 3 — logout destroys the creature, by design (2026-08-24)
+
+**This section SUPERSEDES 11.3.2.** Owner ruling, same day.
+
+## 13.1 The rule
+
+**On logout, a charmed creature is destroyed. There is no grudge, and nothing
+persists.** This is the existing behaviour
+(`PlayerSpawn_HandleJoin.go:43-63` — `DestroyInstance`, plus the charmed
+`CompanionInfo` being dropped) and it is **kept deliberately**, not by
+accident.
+
+The codebase already states this philosophy at that site:
+
+```go
+// Remove charmed companions — they don't persist through restart.
+// Charmed mobs are temporary by nature (borrowed, not created).
+```
+
+**Borrowed, not created.** A bond that does not survive the owner leaving is
+the correct reading of what charm is, and the rest of this design follows from
+it.
+
+## 13.2 Why this supersedes 11.3.2
+
+11.3.2 ruled that logout must not release the grudge, and accepted the
+resulting griefing path — a hostile creature walked into a town and abandoned
+there — as something to police socially.
+
+Destroying the creature instead is better on every axis:
+
+- **The griefing path closes mechanically.** Nothing is left behind to kill
+  newcomers, so nothing needs policing.
+- **No grudge has to persist.** `Character.Charmed` is `yaml:"-"` and there is
+  no persisted charm clock, so carrying a grudge across a logout would have
+  meant inventing persistence for it. That work disappears.
+- **Item duplication loses its main vector.** Gear on the creature dies with
+  it. (The `EverCharmed` save guard in 11.3.5 is still required for the
+  in-session case, where a bond expires while the owner is online and the
+  ex-companion keeps their equipment.)
+
+## 13.3 What this costs, stated plainly
+
+Quitting still lets a player dodge the betrayal. It is **priced, not closed**:
+they lose the creature, the 120 conviction, and any equipment they gave it.
+
+This is judged acceptable because **the maximum bond is 30 minutes**. Almost
+every charm begins and ends inside a single session, so logout-during-bond is
+an edge case rather than a viable strategy. And since the player is never told
+how long they have (3.3), playing around it means quitting constantly and
+re-buying at 120 conviction each time, with gear never worth giving.
+
+What that degrades charm into — a disposable, per-session borrowed ally — is a
+reasonable thing for charm to be, and it leaves the mid-session betrayal this
+design exists for completely intact. You can still train a creature, gear it,
+and have it turn on you at the worst possible moment. You simply cannot carry
+that bond across a logout.
+
+## 13.4 Implementation wrinkle — do NOT read rounds-at-zero as one thing
+
+`PlayerDespawn_HandleLeave.go:136-142` signals logout by calling
+`Charmed.Expire()`, which sets `RoundsRemaining` to **0** — the identical state
+a natural expiry produces. `users.go:347-352` does the same on link-dead, to
+the **tutorial Guide mob**.
+
+So the expiry path must distinguish *"the clock ran out"* from *"the owner
+left"*. Reading rounds-at-zero as a natural expiry would fire the grudge on a
+player who is mid-logout, and on a newcomer whose connection dropped.
+
+The expiry handler must therefore gate on **both**:
+
+1. `SourceType == characters.CompanionCharmed` — five other systems set
+   `Charmed` (summons, brood spawns, the homunculus, `befriend`, behaviour-tree
+   companions) and none of them should ever produce a grudge; and
+2. an owner who is present and **not leaving** — the logout and link-dead paths
+   must reach destruction, never the grudge.
