@@ -46,6 +46,23 @@ func CompanionCleanup(e events.Event) events.ListenerReturn {
 		user.Character.RemoveCompanion(evt.InstanceId)
 		user.Character.TrackCharmed(evt.InstanceId, false)
 
+		// Releasing the record is not releasing the reservation. A fielded
+		// companion holds a slice of its owner's Conviction, that slice is
+		// DERIVED from the live companion list during RecalculateStats, and
+		// Char.Vitals carries the figure to the web client as a PUSH-ONLY
+		// snapshot -- so without the event the client keeps showing a phantom
+		// reservation for a companion that just died. The prompt bar and
+		// `status` never show it because both read GetPoolReservation live.
+		//
+		// This is a three-site invariant and death was the site that missed it:
+		// dismiss.go has publishReleasedReservation, and the charm-expiry path in
+		// NewRound_MobRoundTick.go makes the same two calls. The regen tick cannot
+		// cover for any of them -- NewRound_AutoHeal republishes only when health
+		// actually moved OR the player still has a companion, so losing your LAST
+		// companion at full health is precisely the case that never self-corrects.
+		user.Character.RecalculateStats()
+		events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
+
 		user.SendText(messaging.CategoryDeath, fmt.Sprintf(
 			`<ansi fg="red">Your %s has fallen.</ansi>`,
 			companionName,
