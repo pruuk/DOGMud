@@ -54,7 +54,7 @@ func validateManifest(m *Manifest) error {
 	return nil
 }
 
-// IsKnownTemplateID reports whether id is one of the six tracked templates.
+// IsKnownTemplateID reports whether id is one of the seven tracked templates.
 func IsKnownTemplateID(id string) bool {
 	for _, known := range KnownTemplateIDs {
 		if id == known {

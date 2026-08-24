@@ -13,6 +13,7 @@ Tracked templates for ephemeral playtest materialization. Runtime never reads
 | `veteran` | user | High-end kit (sanitized from a Meirok-class archive offline) |
 | `specialist-caster` | user | Casting-focused kit |
 | `admin` | admin | Admin-surface tests |
+| `charmer` | user | Manifestation specialist for charm: wins the contest, affords the companion reservation, carries a spare weapon to hand a charmed creature |
 
 ## Authoring rules
 
@@ -24,7 +25,8 @@ Tracked templates for ephemeral playtest materialization. Runtime never reads
 ## Session context (non-`fresh`)
 
 `context.md` in this directory is a short MUD orientation for playtest agents
-on kit profiles (`early`, `mid`, `veteran`, `specialist-caster`, `admin`).
+on kit profiles (`early`, `mid`, `veteran`, `specialist-caster`, `admin`,
+`charmer`).
 Drivers should read it when `ephemeral.profile` is set and is not `fresh`.
 `fresh` / creation-flow runs rely on in-game onboarding instead.
 
