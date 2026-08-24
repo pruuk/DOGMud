@@ -678,12 +678,25 @@ charm anything:**
 - The **second** `itemid: 10018` under `items:` is the weapon to hand a charmed
   creature in goal 5. Without a spare, the tester has to disarm itself first.
 
-Verify the coefficients against `config.yaml` before trusting the arithmetic
-above — they are balance knobs and may have moved:
+Verify the coefficients before trusting the arithmetic above — they are balance
+knobs and may have moved:
 
 ```bash
-grep -nE "ConvictionBase|ConvictionPerCharisma|ConvictionPerWillpower|PoolReservationCapPct|CompanionReserveDefault" _datafiles/config.yaml
+grep -nE "^  (ConvictionBase|ConvictionPerCharisma|ConvictionPerWillpower|PoolReservationCapPct|CompanionReserveDefault):" _datafiles/config.yaml
 ```
+
+**Expect `CompanionReserveDefault` to return NOTHING, and do not treat that as
+zero.** It is absent from `config.yaml` and therefore falls back to its Go
+default of 280 in `internal/configs/config.balance.mobs.go`. Absence is
+meaningful in this project: a missing key means "use the Go default", not
+"unset". The four that do appear are `ConvictionBase: 5` (line 974),
+`ConvictionPerCharisma: 3` (975), `ConvictionPerWillpower: 1` (976) and
+`PoolReservationCapPct: 0.66` (1409), which is where the 585 and the 386 above
+come from.
+
+The cap is `floor(poolMax × pct)` — `reservationCapFor` in
+`internal/characters/reservation.go:47`, reached via `ReservationCap`. It floors,
+so use `floor`, not round, if you recompute this for different stats.
 
 - [ ] **Step 1b: Register and smoke-test the profile**
 
