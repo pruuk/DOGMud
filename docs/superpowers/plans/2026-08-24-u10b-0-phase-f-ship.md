@@ -117,6 +117,83 @@ find "$SCRATCH/u10b-legacy-saves" -name '*.yaml' | wc -l    # expect 270
 If any of this fails, **stop and fix before wiping anything.** The legacy saves
 are the only test data that will ever exist for this code path.
 
+### ✅ EXECUTED 2026-08-24 — results
+
+Snapshot: 270 files (266 mob instances + 4 user saves) copied out of the repo
+before anything ran.
+
+**An idle boot exercises almost none of this.** The server came up clean over
+all 266 legacy saves (`Server Ready` = 1, panic patterns = 0) but migrated
+**zero** files, because instance mobs spawn when their room loads and no player
+connected. A boot test alone would have looked like a pass while proving
+nothing. The migration was therefore driven directly, over the real corpus with
+the real template and species registries loaded.
+
+**Mob instances — 266 files, all sound.**
+
+| Outcome | Count |
+|---|---|
+| Template missing (returns input unchanged) | 0 |
+| Migrate to exactly zero gains | 247 |
+| Retain some gains | 19 |
+| Any negative value in the output | 0 |
+
+The `gainsTotal <= 0` branch lands on **exactly zero**, as required, including
+14 saves carrying negative per-stat values and 3 whose saved total is itself
+negative (-6, -24, -30). Those three trip a naive "total grew" check because
+`0 > -30`; that is the correct answer, not a defect.
+
+**The `SchemaVersion` gate is load-bearing, not decorative.** Re-running the
+arithmetic on already-migrated values changes **19 of 266** — precisely the 19
+that retain gains. The gate, not the arithmetic, is what makes the load path
+idempotent. Anything that weakens it silently re-subtracts the pool.
+
+**Companions — 4 legacy pets across 3 user saves, arithmetic verified exact.**
+
+| Save | Companion | Saved | Migrated gains |
+|---|---|---|---|
+| `3.yaml` | Rocky the flesh golem (305, raised) | 804 | 644 |
+| `3.yaml` | Fleshy the flesh golem (305, raised) | 807 | 647 |
+| `10.yaml` | Steppe Spirit Wolf (243, summoned) | 389 | 219 |
+| `12.yaml` | Steppe Spirit Wolf (243, summoned) | 400 | 230 |
+| `5.yaml` | WAP the Water Elemental (310, conjured) | none | nothing to migrate |
+
+Rocky checks out end to end. Template pool is 120 and authored is 40, so the
+migration subtracts 160. On login `NewMobByIdFresh` re-rolls the 120 into `Base`
+and Phase A already folded the 40 in, so the effective total is
+`species_base + 40 + 120 + 644` — **identical to the pre-arc
+`species_base + 804`.** Without the migration it would have been
+`species_base + 964`, the inflation the arc predicted.
+
+### 🚩 Finding for the owner: every legacy companion arrives progression-frozen
+
+`MobStatTrainingCap` is **50, per stat**, and it gates on
+`GetStatTraining(stat) >= cap` inside `ProgressionChanceForStat`. Migrated
+legacy pets land far above it:
+
+- **Rocky: cha 161, dex 91, per 65, str 94, vit 142, wil 91. All six stats
+  frozen permanently.** Fleshy is the same shape.
+- Steppe Spirit Wolf: dex 67 and str 67 frozen; cha 12, per 18, vit 44, wil 11
+  still progress.
+
+This is the cap working as designed — it caps gains, and these pets are being
+credited with pre-arc accumulation reinterpreted as gains. But **prod user saves
+do carry companions**, so unlike the mob instances this ships. A fresh pet would
+take a long time to reach the cap; a legacy pet is there on arrival.
+
+Options, owner's call:
+
+1. **Accept and document.** These pets are powerful and keep every point they
+   had; they simply stop growing. Nothing is taken away. **Recommended** — the
+   alternatives all either change live pet power or weaken a cap that exists for
+   good reasons.
+2. Raise `MobStatTrainingCap`. Affects every mob in the game, not just pets.
+3. Exempt schema-0 companions from the cap. Adds a permanent special case for a
+   one-time population.
+
+Not fixed in this phase; nothing here is broken, and options 2 and 3 are balance
+changes that need a ruling rather than a patch.
+
 ---
 
 ## Task 2: `CLAUDE.md`
