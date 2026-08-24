@@ -97,6 +97,24 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			} else if pId > 0 {
+				// Charm is mob-only, which the helpfile has always said and
+				// nothing enforced. Refused HERE, at target validation, so the
+				// player is told before spending a 36-fold channel and 120
+				// conviction on it.
+				//
+				// Until U10c this was a silent no-op: charm declared no
+				// target_defense_type, so a player target took resolveSpell's
+				// uncontested shortcut into applyPlayerEffect, which has no
+				// charm arm. Now that charm routes to ChannelSocial, leaving it
+				// unguarded would be worse -- a real contest charging the
+				// victim conviction for a defy and training their rhetoric,
+				// still for no effect. Mind control of another character is a
+				// PvP feature with its own design questions; see spec 14.
+				if spellInfo.EffectType == "charm" {
+					actor.SendText(messaging.CategorySystem,
+						`You cannot bend another person's mind to your will.`)
+					return CastResult{SpellInfo: spellInfo, NoTarget: true}
+				}
 				// Players cannot self-target harmful single spells; mobs can
 				// since they would never target themselves this way in practice.
 				if actor.IsPlayer() && pId == actor.GetUserId() {
