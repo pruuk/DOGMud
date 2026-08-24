@@ -373,7 +373,8 @@ party markers are web-only — the ASCII `map` command is unaffected.
   secondary (×1) each. Coefficients live in the balance config; note that a knob
   left *absent* from `config.yaml` falls back to its Go default, and `0` is a
   legal shipped value (`StaminaPerStrength: 0`).
-- Skills (10 total) cap softly at 50 (`skillSoftCap`). They progress via
+- Skills (**16** total, not 10 — count them with the `skills` command or
+  `skills.allSkillNames`) cap softly at 50 (`skillSoftCap`). They progress via
   `OnSkillUse()` → `CheckSkillProgression()`, probabilistically.
 - **A progression roll happens on EVERY use**, and the odds depend on how far
   the stat or skill has already come, not on how often it has been used.
