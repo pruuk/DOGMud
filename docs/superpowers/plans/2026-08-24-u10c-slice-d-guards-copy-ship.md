@@ -1,617 +1,310 @@
-# U10c Slice D — Guards, Player Copy, Playtest, Ship
+# U10c Slice D — Guards, Player Copy, Playtest, Ship (v2)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close the last U10c guard, replace every player-facing sentence charm
-tells about itself (all of which the redesign made wrong), and put the whole arc
-through an adversarial in-game playtest before it ships.
+**Goal:** Close the arc. Restore a mechanic Slice B deleted by accident, ship the
+owner-ruled duplication guard, fix a companion bug that predates the arc, replace
+every player-facing sentence about charm across five files, sweep the stale docs,
+and put the whole thing through an adversarial playtest before it merges.
 
-**Architecture:** No new mechanics. One regression test over an existing guard,
-one bounded investigation with an explicit drop condition, two rewritten pieces
-of player copy, patch notes for the arc, and the playtest gate.
+**Architecture:** One restored mechanic, one one-line guard, one missing event, a
+data test, a playtest profile that needs a Go registry edit, five content files,
+two `context.md` sweeps, patch notes, and the playtest gate.
 
-**Tech Stack:** Go, `internal/mobs` (instance saves), `internal/actions`
-(harm-target policy), DOGMud content YAML, the `mudagent` playtest harness.
-
----
-
-## What I verified before writing this
-
-Two of Slice D's presumed tasks dissolved when checked. Both are recorded here so
-nobody re-derives the wrong version of them.
-
-**1. Non-combatants are ALREADY charm-proof. No new guard is needed.**
-Charm is `type: harmsingle` (`_datafiles/world/dogmud/spells/charm.yaml`), and
-`internal/actions/cast.go` calls `rejectHarmTarget` on the `HarmSingle`
-named-target path (`cast.go:95`) and on the implicit-aggro path (`cast.go:145`).
-That routes to `mobs.CheckPlayerHarm`, which returns `HarmBlockedNonCombatant`.
-
-I counted 369 mobs with `non_combatant: true`, of which 38 lack
-`charm_immune: true` — including one shopkeeper, `9326-flower_seller.yaml`.
-**That count is a red herring.** Those 38 do not need the flag; the code covers
-them. Do **not** open 38 YAML edits. What is missing is a *test*, and it matters
-because the protection is one `switch` arm away from being lost silently.
-
-**2. The "`EverCharmed` instance-save guard" was aimed at a field that cannot
-carry it.** `Character.EverCharmed` is declared `yaml:"-"`
-(`internal/characters/character.go:138`) — it is **never persisted** — and its
-only production reader is `Death_MobLoot.go:87`, which sets `Corpse.WasCharmed`
-to stop players *raising* an ex-companion. It has nothing to do with items.
-
-The duplication loop it was meant to close is already shut from both ends:
-
-- `mobs.SaveMobInstance` returns `nil` immediately for a charmed mob
-  (`instance_save.go:83-85`), so a live charmed companion never writes a file.
-- `scheduleMobDespawnFromLife` calls `mobs.DeleteMobInstance` on death
-  (`Death_MobInstanceCleanup.go:72`) before destroying the instance, so a killed
-  mob's file does not outlive the loot drop.
-
-What is genuinely true, and is the only remaining window: `MobInstanceData`
-**does** persist `Equipment` (`instance_save.go:50`), and `equipmentDiffers` is
-itself one of the triggers that makes a mob worth saving
-(`instance_save.go:388`). So an **ex**-charmed mob still wearing gear you handed
-it *will* write an instance file containing that gear on the next
-`MobSaveIntervalRounds` boundary (100 rounds).
-
-**I could not construct an actual duplication from that window** — the gear is on
-the mob, not on the player, and killing the mob deletes the file. Task 2 is
-therefore a bounded investigation with a stated drop condition, not a pre-decided
-fix. Slice C set the precedent: its gate 3 was kept only after confirming
-link-dead could reach it, and that plan said in advance to "say so in a comment
-rather than adding a guard against nothing."
-
-**3. Defy is Willpower + rhetoric × SkillWeight**
-(`internal/characters/combat.go:326-329`). The helpfile's "opposed by the
-target's willpower" survives the redesign. Its "Defense: Mental" line does not.
+**Tech Stack:** Go, `internal/hooks`, `internal/mobs`, `internal/combat`, DOGMud
+content YAML and help templates, the `mudagent` playtest harness.
 
 ---
 
-## File structure
+## Why this is v2
 
-| File | Responsibility | Task |
-|---|---|---|
-| `internal/actions/cast_harm_authorization_test.go` | **Modify (append).** Pins that charm is routed by the harm-target policy and that a non-combatant shopkeeper is refused. | 1 |
-| `internal/mobs/instance_save_charm_test.go` | **Create.** Pins the charmed-mob save skip. | 2 |
-| `_datafiles/world/dogmud/spells/charm.yaml` | `description:` — the sentence the spell list shows. | 3 |
-| `_datafiles/world/dogmud/templates/help/charm.template` | The full helpfile. **Owner: REQUIRED for completion.** | 4 |
-| `docs/PATCH_NOTES.md` | One dated entry for the whole U10c arc. | 5 |
-| `tools/playtest/profiles/charmer.yaml` | **Create.** A reusable playtest character that knows charm. Owner ruling: the permanent fix, not a one-off grant. | 6 |
-| `tools/playtest/goals/2026-08-24-u10c-charm-arc.yaml` | **Create.** Goals file for the adversarial gate. | 6 |
+v1 was rejected by three independent blind reviewers. It was wrong in four ways
+that matter, and the corrections are the shape of this plan. Nobody should
+re-derive v1's version of these.
+
+1. **The `EverCharmed` save guard is an OWNER RULING with drafted code**
+   (spec 11.3.5). v1 argued it away on the grounds that `EverCharmed` is
+   `yaml:"-"` and therefore "cannot carry the guard." That is a category error:
+   `SaveMobInstance` receives the **live in-memory** `*Mob`, `Charm()` sets the
+   flag at `charminfo.go:48`, and `RemoveCharm()` never clears it. The flag is
+   present at every save boundary for the mob's whole life. Non-persistence is
+   the *design* — the spec's own comment says "nothing is written to disk, so a
+   reboot clears it." **Implement it. Do not investigate it.**
+
+2. **v1's Task 2 tests already exist.** `internal/mobs/instance_save_test.go:32`
+   `TestSaveMobInstance_CharmedMobSkipsWrite` and `:70`
+   `TestSaveMobInstance_UncharmedMobWritesFile`. v1 proposed writing them again
+   in a new file, under a comment asserting in bold that nothing tested this.
+   That package configures itself with `withMobProgressionEnabled(t)`
+   (`instance_save_test.go:19`, built on `configs.AddOverlayOverrides`), **not**
+   `configs.SetConfigForTest`.
+
+3. **Spec 11.3.3's deliverable is a DATA test**, not what v1 wrote: assert every
+   mob carrying a `shop:` block is `charm_immune` or `non_combatant`, so a
+   *future* shopkeeper authored with neither fails at test time. 97 shop mobs
+   today, 0 unprotected, so it passes on arrival.
+
+4. **Playtest profiles are a hardcoded Go registry**, not file-discovered.
+   `internal/playtestprofiles/types.go:5-13` `KnownTemplateIDs`, enforced at
+   `playtestrun/binding.go:112`, `manifest.go:46`, `sanitize.go:16`. Dropping a
+   YAML on disk fails at binding, before the container starts.
+
+Smaller corrections carried in: the helpfile has **4** em dashes, not 6 (and
+`grep -c` counts lines, not occurrences, so it cannot confirm either number);
+there is **no spec section 16** (headings stop at 15.4); charm does **not**
+reserve 280 — `CalcCompanionReserve` applies a skill reduction and
+`SkillCostMultiplier`, giving **188** at manifestation 30.
 
 ---
 
-### Task 1: Pin the non-combatant charm refusal
+## Task 1: Restore charm's in-combat penalty — OWNER RULING 2026-08-24
 
 **Files:**
-- Modify: `internal/actions/cast_harm_authorization_test.go` (append)
+- Modify: `internal/hooks/spell_resolution.go` (`resolveAgainstMob`, line 343)
+- Test: `internal/hooks/charm_in_combat_test.go` (create)
 
-**Do not create a new file.** `cast_harm_authorization_test.go` already exists and
-already owns this policy — it was written for chunk 5.2 finding 3 and has
-`TestInitiateCast_HarmSingle_RefusesNonCombatant` at line 94. It carries the
-fixtures you need: `newPlayerActor()` (line 40) and `seedRoomMob(t, room,
-instanceId, name, mutate)` (line 48).
+Spec 4.1's mechanics table lists the in-combat penalty as **"unchanged"**:
+`×0.75` when the target is fighting the caster, `×0.85` when it is fighting
+someone else. Slice B (`b567e527e`) deleted both along with `resolveCharmSpell`
+and **replaced them with nothing**. Verified: `SituationalAttackMult`
+(`internal/combat/situational.go:35-51`) returns a flat 1.0 for every channel
+except `ChannelMelee`/`ChannelRanged`, and the defy score is Willpower + rhetoric
+with no combat term. Charm is currently easier to land mid-fight than the spec
+intends, while `charm.yaml`, `charm.template` and `hints.yaml:234` all still
+promise the penalty exists.
 
-**The gap those existing tests leave** is precisely the one that matters here.
-They all use a *synthetic* spell built by `seedTestSpell(id, spells.HarmSingle,
-4)`. They prove the policy protects `HarmSingle`. They say nothing about whether
-**charm** is `HarmSingle` — so if someone changed charm's `type:` in the YAML,
-every one of them would stay green while shopkeepers became charmable.
+Owner ruling: **restore it.** (The owner was offered a config-knob version and
+chose the plain restore, so use literals with a comment. Do not add a knob.)
 
-Two tests close that: one pins the data contract, one pins the effect arm.
-
-- [ ] **Step 1: Write the data-contract test**
-
-Anchor the path on `runtime.Caller`. Test binaries in this repo do **not**
-reliably run with the package directory as CWD — `internal/actions/economy_test.go`
-chdirs to the repo root, and all tests in a package share one binary, so a
-relative path passes or fails depending on test order.
+- [ ] **Step 1: Write the failing tests**
 
 ```go
-// Charm's protection from being cast at shopkeepers, tutorial NPCs and quest
-// givers is not written anywhere in charm's own code. It is inherited: charm is
-// type: harmsingle, so InitiateCast runs it through rejectHarmTarget ->
-// mobs.CheckPlayerHarm exactly like every other harmful spell.
+// Spec 4.1 lists this penalty as "unchanged" across the U10c rewrite. Slice B
+// deleted it with resolveCharmSpell and replaced it with nothing, which is a
+// silent balance change: nothing in the channel path penalises a social attack
+// on a target already fighting, so charm got easier mid-combat while three
+// separate files kept telling players it had got harder.
+func TestCharmInCombat_TargetFightingCasterTakesSteepestPenalty(t *testing.T) {
+	// Build an AttackSide with Mult 1.0, a mob whose CurrentCombatTarget().UserId
+	// is the caster's, and assert charmInCombatMult returns 0.75.
+}
+
+func TestCharmInCombat_TargetFightingSomeoneElseTakesModeratePenalty(t *testing.T) {
+	// Same, but the mob's combat target is a different userId. Want 0.85.
+}
+
+func TestCharmInCombat_IdleTargetIsUnpenalised(t *testing.T) {
+	// Mob not in combat. Want 1.0.
+}
+
+// Mult 0 is the ZERO VALUE and AttackSide.score() reads it as "unset, 1.0"
+// (defence_multiplier.go:78-83). So `side.Mult *= 0.75` on an unset side yields
+// 0, which then reads back as 1.0 and the penalty VANISHES silently. This test
+// exists because that bug is invisible: it produces a plausible number.
+func TestCharmInCombat_UnsetMultIsNormalisedBeforeScaling(t *testing.T) {
+	// side := combat.AttackSide{Stat: 100, Mult: 0}
+	// apply the penalty against a target fighting the caster
+	// assert side.Mult is 0.75, NOT 0
+}
+```
+
+- [ ] **Step 2: Add the helper**
+
+Put it in `internal/hooks/spell_resolution.go` next to its only caller.
+
+```go
+// charmInCombatMult is the attack-side penalty for charming a creature that is
+// already fighting. A mind braced for violence is harder to reach, and a mind
+// braced against YOU is hardest of all.
 //
-// That inheritance is invisible at the call site and would break silently. 369
-// mobs carry non_combatant: true and only 331 of them ALSO carry
-// charm_immune: true. The other 38 -- including the New Plymouth flower seller,
-// a shopkeeper -- rely on this line of YAML and nothing else.
-func TestCharmSpellYAML_IsHarmSingle(t *testing.T) {
-	_, thisFile, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
-	path := filepath.Join(repoRoot, "_datafiles", "world", "dogmud", "spells", "charm.yaml")
-
-	raw, err := os.ReadFile(path)
-	require.NoError(t, err, "charm.yaml must exist at %s", path)
-
-	var sd struct {
-		Type       string `yaml:"type"`
-		EffectType string `yaml:"effect_type"`
+// Restored 2026-08-24. Spec 4.1 lists these two multipliers as unchanged across
+// the U10c rewrite; Slice B deleted them along with resolveCharmSpell and put
+// nothing in their place. Literals rather than balance knobs by owner ruling.
+func charmInCombatMult(target *characters.Character, casterUserId int) float64 {
+	if target == nil || !target.IsInCombat() {
+		return 1.0
 	}
-	require.NoError(t, yaml.Unmarshal(raw, &sd))
-
-	assert.Equal(t, "harmsingle", sd.Type,
-		"charm must stay HarmSingle: it is what routes charm through "+
-			"rejectHarmTarget, and it is the ONLY thing protecting the 38 "+
-			"non-combatant mobs that lack charm_immune")
-	assert.Equal(t, "charm", sd.EffectType)
+	if target.CurrentCombatTarget().UserId == casterUserId {
+		return 0.75 // fighting the caster -- steepest
+	}
+	return 0.85 // fighting someone else -- moderate
 }
 ```
 
-- [ ] **Step 2: Write the effect-arm test**
+- [ ] **Step 3: Apply it in `resolveAgainstMob`**
 
-`seedTestSpell` returns the `*spells.SpellData` it registered, so set
-`EffectType` on it directly rather than adding a parameter.
+`resolveAgainstMob` takes `side` **by value** and already mutates it for
+`ForceCrit` at line 346, so this is the established seam. It is also the only
+place with both the caster and the target — `spellAttackSideFor` has no target
+parameter and is called once per cast before target selection, so the penalty
+cannot live there.
 
 ```go
-// The mirror of the contract test: given a HarmSingle spell whose effect arm is
-// charm, a non-combatant is refused before the charm arm is ever reached. This
-// is the shopkeeper case the owner named.
-//
-// Deliberately NOT using CharmImmune here. Most shop mobs carry both flags, so a
-// CharmImmune fixture would be caught by applyMobEffect_charm's own early return
-// and would keep passing even if the harm-target policy stopped covering charm.
-// The exposure is a non-combatant WITHOUT charm_immune, so that is what this
-// seeds.
-func TestInitiateCast_HarmSingle_RefusesNonCombatantShopkeeperForCharm(t *testing.T) {
-	sd, cleanupSpell := seedTestSpell("charm-policy-probe", spells.HarmSingle, 4)
-	defer cleanupSpell()
-	sd.EffectType = "charm"
+	// Task 17: the sleeping-victim forced crit reaches the spell channel.
+	side.ForceCrit = combat.SleepingForceCrit(&mob.Character)
 
-	actor, _, room := newPlayerActor()
-	defer seedRoomMob(t, room, 9051, "Flower Seller", func(m *mobs.Mob) {
-		m.NonCombatant = true
-		// No CharmImmune on purpose -- see the comment above.
-	})()
-
-	result := InitiateCast(actor, "charm-policy-probe", "flower")
-
-	assert.True(t, result.NoTarget)
-	assert.False(t, result.Initiated)
-	assert.Empty(t, result.TargetMobInstanceIds,
-		"a non-combatant must never reach the charm effect arm")
-}
+	// Charm alone carries an in-combat penalty (spec 4.1). Normalise Mult
+	// FIRST: 0 is the zero value and score() reads it as "unset, 1.0", so
+	// multiplying into an unset Mult yields 0, which reads back as 1.0 and
+	// silently drops the penalty.
+	if spellData.EffectType == "charm" {
+		if side.Mult == 0 {
+			side.Mult = 1.0
+		}
+		side.Mult *= charmInCombatMult(&mob.Character, user.UserId)
+	}
 ```
 
-Add any missing imports (`os`, `path/filepath`, `runtime`, `gopkg.in/yaml.v3`) —
-check which yaml package the repo uses before importing:
+- [ ] **Step 4: Run, then commit**
 
 ```bash
-grep -rn "yaml.v3\|yaml.v2\|ghodss" go.mod
-```
-
-- [ ] **Step 3: Run them and expect PASS immediately**
-
-```bash
-go test ./internal/actions/ -run "Charm" -v
-```
-
-Expected: both PASS. **This is the one place in this plan where green-on-first-run
-is correct**, because the guard already exists. These are regression pins, not
-fixes.
-
-- [ ] **Step 4: Prove they can fail (mutation check)**
-
-A test that has never failed proves nothing. Break the routing and confirm the
-contract test goes red.
-
-```bash
-sed -i 's/^type: harmsingle/type: neutralsingle/' _datafiles/world/dogmud/spells/charm.yaml
-go test ./internal/actions/ -run "TestCharmSpellYAML_IsHarmSingle" -v   # expect FAIL
-sed -i 's/^type: neutralsingle/type: harmsingle/' _datafiles/world/dogmud/spells/charm.yaml
-go test ./internal/actions/ -run "TestCharmSpellYAML_IsHarmSingle" -v   # expect PASS
-git diff --exit-code _datafiles/world/dogmud/spells/charm.yaml         # must be clean
-```
-
-For the effect-arm test, mutate the code instead: temporarily comment out the
-`rejectHarmTarget` call at `cast.go:95` and confirm
-`TestInitiateCast_HarmSingle_RefusesNonCombatantShopkeeperForCharm` fails. Then
-restore it and re-run the whole package, because several existing tests in this
-file depend on that same line.
-
-```bash
-go test ./internal/actions/ -count=1
-git diff --exit-code internal/actions/cast.go
-```
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add internal/actions/cast_harm_authorization_test.go
-git commit -m "test(charm): pin that non-combatants cannot be charmed"
+go test ./internal/hooks/ -run "TestCharmInCombat" -v
+go test ./internal/hooks/ -count=1
+git add internal/hooks/spell_resolution.go internal/hooks/charm_in_combat_test.go
+git commit -m "fix(charm): restore the in-combat penalty Slice B deleted"
 ```
 
 ---
 
-### Task 2: The gear-persistence window — investigate, then decide
+## Task 2: The `EverCharmed` instance-save guard — OWNER RULING, spec 11.3.5
 
 **Files:**
-- Create: `internal/mobs/instance_save_charm_test.go`
-- Possibly modify: `internal/mobs/instance_save.go` (only if Step 2 finds a real defect)
+- Modify: `internal/mobs/instance_save.go:84`
+- Modify: `internal/mobs/instance_save_test.go` (append — **do not create a new file**)
 
-**Do not write a guard before Step 2 finishes.** The owner's concern was real in
-intent; the mechanism it was attached to was not. Establish the fact first.
+The hazard, verified on both sides: `MobInstanceData` persists `Equipment`
+(`instance_save.go:50`), `equipmentDiffers` is itself a save trigger (`:388`),
+and the restore half re-equips it at `internal/mobs/mobs.go:531`
+(`mob.Character.Equipment = *savedInstance.Equipment`). Once bonds expire, an
+ex-companion is uncharmed **while still wearing the player's gear**, and the next
+save pass bakes that gear into a world mob.
 
-- [ ] **Step 1: Pin the existing skip, which is the load-bearing guard**
-
-The path helper is `instancePath(mobId, zone, mobName, homeRoomId)` at
-`internal/mobs/instance_save.go:64`. It is unexported, which is fine — put the
-test in `package mobs` alongside `death_resets_progression_test.go`, which is the
-established pattern for save tests in this package.
-
-Note two preconditions inside `SaveMobInstance` that a naive fixture will trip:
-it returns early unless `Balance.MobProgressionEnabled` is true, and again unless
-`hasPersistableState(mob)` is true. `hasProgression` short-circuits before the
-template lookup, so setting a `Training` value satisfies the second without
-needing a registered template.
+- [ ] **Step 1: Extend the guard**
 
 ```go
-// SaveMobInstance returns early for a charmed mob, and that early return is what
-// keeps a companion's state single-sourced. A charmed companion's gear and
-// progression live on CompanionInfo (saveCompanionState in
-// PlayerDespawn_HandleLeave.go) and NOWHERE else. If this skip were removed the
-// same sword would exist in two places at once -- the companion record AND the
-// instance file -- reconciled by whichever loader happened to run last.
-//
-// Nothing tested this. It is one deleted `if` away from being lost.
-func TestSaveMobInstance_SkipsCharmedMob(t *testing.T) {
-	cfg := configs.GetConfig()
-	cfg.Balance.MobProgressionEnabled = true
-	configs.SetConfigForTest(t, cfg)
-
-	const (
-		mobId      = MobId(9911)
-		homeRoomId = 99110
-		zone       = "TestZone"
-	)
-
-	mob := &Mob{MobId: mobId, InstanceId: 99111, HomeRoomId: homeRoomId, Zone: zone}
-	mob.Character.Name = "Testcharmed"
-	// Progression, so hasPersistableState would otherwise say yes.
-	mob.Character.Stats.Strength.Training = 7
-
-	path := instancePath(mobId, zone, mob.Character.Name, homeRoomId)
-	_ = os.Remove(path)
-	t.Cleanup(func() { _ = os.Remove(path) })
-
-	mob.Character.Charm(1, 100, "")
-	require.NoError(t, SaveMobInstance(mob))
-
-	_, err := os.Stat(path)
-	assert.True(t, os.IsNotExist(err),
-		"a charmed mob must not write an instance file: its state belongs to "+
-			"the owner's CompanionInfo, and a second copy on disk is how the "+
-			"same gear ends up existing twice")
-}
-
-// The mirror. Without it the test above would pass even if SaveMobInstance were
-// broken outright and never wrote anything at all.
-func TestSaveMobInstance_UncharmedMobDoesSave(t *testing.T) {
-	cfg := configs.GetConfig()
-	cfg.Balance.MobProgressionEnabled = true
-	configs.SetConfigForTest(t, cfg)
-
-	const (
-		mobId      = MobId(9912)
-		homeRoomId = 99120
-		zone       = "TestZone"
-	)
-
-	mob := &Mob{MobId: mobId, InstanceId: 99121, HomeRoomId: homeRoomId, Zone: zone}
-	mob.Character.Name = "Testfree"
-	mob.Character.Stats.Strength.Training = 7
-
-	path := instancePath(mobId, zone, mob.Character.Name, homeRoomId)
-	_ = os.Remove(path)
-	t.Cleanup(func() { _ = os.Remove(path) })
-
-	require.NoError(t, SaveMobInstance(mob))
-
-	_, err := os.Stat(path)
-	assert.NoError(t, err, "an uncharmed mob with progression must still save")
-}
+	// EverCharmed, not just IsCharmed: once a bond expires the ex-companion is
+	// uncharmed while still wearing the equipment its owner handed it. Saving it
+	// would bake player gear into a world mob permanently -- kill, loot,
+	// re-charm, repeat. The betrayal stays real in-session (it fights you with
+	// your own gear) but nothing is written to disk, so a reboot clears it.
+	//
+	// EverCharmed is yaml:"-" ON PURPOSE. It is read from the live character
+	// here, never persisted, which is exactly the semantics this needs.
+	if mob.Character.IsCharmed() || mob.Character.EverCharmed {
+		return nil
+	}
 ```
 
-Confirm the field name `MobProgressionEnabled` and the `Mob` struct's `Zone`
-field before running — check with
-`Select-String -Path internal\mobs\mobs.go -Pattern 'Zone'` and
-`grep -n "MobProgressionEnabled" internal/configs/config.balance.go`. If either
-differs, fix the fixture rather than the assertion.
+- [ ] **Step 2: Append the test to the EXISTING file**
 
-- [ ] **Step 2: Try to actually reproduce a duplication. Time-box this.**
+`instance_save_test.go` already owns this. Use its config idiom,
+`withMobProgressionEnabled(t)` (line 19), **not** `configs.SetConfigForTest`.
 
-The one open window: an **ex**-charmed mob still wearing player gear writes an
-instance file on the next 100-round boundary, because `equipmentDiffers` is a
-save trigger.
-
-Walk these four and write down what each produces:
-
-1. Charm, equip, bond expires, **kill the mob** — corpse drops gear, file deleted
-   by `Death_MobInstanceCleanup.go:72`. How many copies of the sword exist?
-2. Charm, equip, bond expires, **do not kill**, force a save, restart the server.
-   Does the mob reload wearing the gear, and does the player still hold one?
-3. Charm, equip, **log out**. `saveCompanionState` copies gear into the record and
-   destroys the instance; `PlayerSpawn_HandleJoin.go:56-63` strips charmed
-   companion records on login. Confirm the gear is destroyed, not restored.
-4. Charm, equip, **`dismiss`**. Mob keeps gear, is uncharmed and hostile, then
-   saves. Same question as 2.
-
-**Exit condition — this is binding.** If none of the four produces two copies of
-one item, **write no guard.** Record the finding in the commit message and in
-spec section 16, and move on. A guard against nothing is worse than no guard: it
-reads as protection and will be maintained forever by people who cannot tell what
-it is for. If one of them *does* duplicate, stop and report the reproduction
-before writing anything — the fix likely belongs to the instance-save system
-generally, which the owner has already flagged as wanting a proper look.
+```go
+// The ex-companion case. TestSaveMobInstance_CharmedMobSkipsWrite covers a mob
+// that is charmed RIGHT NOW; this covers the window that opened when bonds
+// started expiring: uncharmed, but still wearing the gear its owner handed it.
+// Without the EverCharmed half, the next save pass writes that gear into
+// mobs.instances/ and the restore at mobs.go:531 puts it back on a respawned
+// world mob.
+func TestSaveMobInstance_EverCharmedMobSkipsWrite(t *testing.T) {
+	// Build the same fixture shape as TestSaveMobInstance_CharmedMobSkipsWrite,
+	// then: mob.Character.Charm(42, 100, ""); mob.Character.RemoveCharm()
+	// Assert mob.Character.EverCharmed is true and IsCharmed() is false,
+	// then assert SaveMobInstance wrote NO file.
+}
+```
 
 - [ ] **Step 3: Run and commit**
 
 ```bash
 go test ./internal/mobs/ -run "TestSaveMobInstance" -v
-gofmt -l internal/
-git add internal/mobs/instance_save_charm_test.go
-git commit -m "test(charm): pin the charmed-mob instance-save skip"
+git add internal/mobs/instance_save.go internal/mobs/instance_save_test.go
+git commit -m "fix(charm): an ex-charmed mob never writes its owner's gear to disk"
 ```
 
 ---
 
-### Task 3: Rewrite the spell description
+## Task 3: The shop-mob data test — spec 11.3.3
 
 **Files:**
-- Modify: `_datafiles/world/dogmud/spells/charm.yaml`
+- Create: `internal/mobs/shop_charm_safety_test.go`
 
-Current text, verbatim:
+Spec 11.3.3's deliverable, verbatim: *"assert that every mob carrying a `shop:`
+block is `charm_immune` or `non_combatant`, so a future shopkeeper authored
+without either is caught at test time."*
 
-```
-  You reach into the mind of a hostile creature and bend its
-  will to yours, turning it into a loyal companion. The charm
-  requires intense focus and is much harder against creatures
-  already in combat. Stronger creatures resist more fiercely.
-```
+Today: 97 shop mobs, 0 unprotected, so this passes on arrival and its job is
+purely to fail on the *next* one.
 
-Two problems. It never mentions the clock or the betrayal, which are now the
-whole point. And its last sentence, **"Stronger creatures resist more fiercely,"
-is false** — spec 3.6 removed the power term. What resists is a strong *will*,
-not a strong *body*, and spec 10.1 requires the new text to convey exactly that
-distinction.
+- [ ] **Step 1: Write it**
 
-- [ ] **Step 1: Replace `description:`**
+Walk `_datafiles/world/dogmud/mobs/`, anchored on `runtime.Caller` (test CWD in
+this repo is not reliably the package dir — `internal/actions/economy_test.go`
+chdirs to the repo root and all tests in a package share one binary). For each
+YAML with a `shop:` key, require `charm_immune: true` or `non_combatant: true`.
+Report **every** offender in one failure, not just the first, and name the file
+path so the fix is obvious.
 
-```yaml
-description: |
-  You reach into the mind of a hostile creature and bend its
-  will to yours. A stubborn mind fights you hardest; a strong
-  back is no defence at all. What you bind will follow you and
-  fight beside you, but not forever, and it will not warn you
-  when its own mind begins to return. The more completely you
-  overpower it, the longer your hold lasts. When that hold
-  breaks, whatever you bound is standing next to you, and it
-  remembers.
-```
+- [ ] **Step 2: Mutation check**
 
-Sentence two is the spec 10.1 requirement, not decoration: it tells the player
-that a huge brute may be *easy* to charm and a frail scholar hard, which is the
-single most counter-intuitive consequence of dropping the power term.
-
-House rules this obeys, several of which the old text and the helpfile break: no
-raw numbers, no en dashes or em dashes, wrapped under 80 columns, plain words an
-ESL reader can follow.
-
-- [ ] **Step 2: Verify it parses**
-
-A malformed spell YAML panics at startup, not at build, so `go build` proves
-nothing here.
-
-```bash
-go build ./... && echo BUILD_OK
-python -c "import yaml,io; yaml.safe_load(io.open('_datafiles/world/dogmud/spells/charm.yaml',encoding='utf-8')); print('YAML_OK')"
-```
+Temporarily strip both flags from
+`_datafiles/world/dogmud/mobs/new_plymouth_common/9326-flower_seller.yaml`,
+confirm the test names that exact file, then `git checkout` the file and re-run.
 
 - [ ] **Step 3: Commit**
 
-```bash
-git add _datafiles/world/dogmud/spells/charm.yaml
-git commit -m "content(charm): the spell description tells you about the clock"
-```
+---
+
+## Task 4: Companion death must republish vitals
+
+**Files:**
+- Modify: `internal/hooks/MobDeath_CompanionCleanup.go:46`
+- Test: alongside
+
+Pre-existing, affects **every** companion type, not just charm.
+`MobDeath_CompanionCleanup.go` calls `RemoveCompanion` + `TrackCharmed(false)`
+and then sends "Your X has fallen" — with no `RecalculateStats()` and no
+`CharacterVitalsChanged`. Both other exits from a bond have it: `dismiss.go` via
+`publishReleasedReservation`, and the expiry path at
+`NewRound_MobRoundTick.go`. This is precisely the bug
+`internal/usercommands/dismiss_vitals_test.go` documents at length: the live
+readers (`status`, prompt bar) let go immediately, but `Char.Vitals` is
+push-only, so the web client keeps showing a reservation for a companion that no
+longer exists.
+
+- [ ] **Step 1: Write the failing test.** Model it on
+      `dismiss_vitals_test.go:65` — drain the queue, kill the companion, assert
+      `events.DrainQueuedVitalsChangedForTest` is non-empty.
+
+- [ ] **Step 2: Add the two lines** after `RemoveCompanion`, with a comment
+      pointing at the dismiss precedent so the next reader knows it is a
+      three-site invariant, not a local fix.
+
+- [ ] **Step 3: Run, commit.**
 
 ---
 
-### Task 4: Rewrite `help charm` — OWNER-REQUIRED FOR COMPLETION
+## Task 5: The playtest profile — YAML **and** the Go registry
 
 **Files:**
-- Modify: `_datafiles/world/dogmud/templates/help/charm.template`
+- Create: `tools/playtest/profiles/charmer.yaml`
+- Modify: `internal/playtestprofiles/types.go` (`KnownTemplateIDs` + its "six tracked" comment)
+- Modify: `internal/playtestprofiles/manifest.go` (the "six tracked templates" comment at ~line 57)
+- Modify: `tools/playtest/profiles/README.md` and `tools/playtest/profiles/context.md`
 
-**The owner named this a required completion step for U10c.** The slice is not
-done without it.
+**A bare YAML does not work.** `KnownTemplateIDs`
+(`internal/playtestprofiles/types.go:5-13`) is a hardcoded list of six, enforced
+at `playtestrun/binding.go:112` (`unknown profile %q`), `manifest.go:46` and
+`sanitize.go:16`. `templates_repo_test.go:16` iterates it, so the new profile
+picks up sanitize coverage automatically once registered.
 
-The file is wrong in five places and breaks two house rules.
+- [ ] **Step 1: Add `"charmer"` to `KnownTemplateIDs`** and correct both "six
+      tracked" comments to seven.
 
-| Current line | Why it is now wrong |
-|---|---|
-| "Your hold gradually loosens over time." | The re-roll ladder is deleted. The hold does not loosen; it ends. |
-| "The stronger your charisma and the higher your manifestation skill, the longer the charm endures." | **False.** Duration is bought with the margin of the winning contest, not with your stats. |
-| "Defense: Mental (opposed by target's willpower)" | It is answered by **defy** now. The willpower half is still right; "Mental" is not. |
-| "Duration: Scales with charisma and manifestation skill" | The same falsehood as above. |
-| "against the creature's willpower and **mental fortitude**" | The defending skill is **rhetoric** now, not a vague fortitude. |
-| *(absent)* | **Logging out destroys the creature.** A major rule the file never states. |
-
-**Read the current file before writing the new one.** Spec 10.2 makes the point
-that it is the closest thing to a design document the original intent ever had:
-it already describes a duration, a hold that breaks, and a creature that turns
-hostile *only when it is near you*. None of that has ever run. This slice makes
-it true, so the rewrite is mostly a matter of removing the two stat-scaling
-claims and adding the rules that are genuinely new.
-
-**Lines spec 10.2 requires you to PRESERVE, because they are still true:** charm
-cannot target players; charm-immune creatures are beyond reach; creatures already
-in combat resist more strongly; the companion limit and `dismiss`.
-
-House-rule breaks: six em dashes (U+2014) and CRLF line endings. Check before and
-after:
-
-```bash
-grep -c "$(printf '\u2014')" _datafiles/world/dogmud/templates/help/charm.template   # currently 6, must end 0
-file _datafiles/world/dogmud/templates/help/charm.template
-```
-
-- [ ] **Step 1: Read the current file, then a clean exemplar**
-
-```bash
-cat _datafiles/world/dogmud/templates/help/charm.template
-ls _datafiles/world/dogmud/templates/help/ | head -30
-```
-
-Use a recently-written helpfile as the ANSI-and-layout model; `help progression`
-was written 2026-08-24 and is known clean. **Preserve CRLF if every other
-helpfile in that directory uses CRLF** — check first, because a lone LF file in a
-CRLF directory is a new inconsistency, not a repair. The em dashes go regardless.
-
-- [ ] **Step 2: Rewrite, keeping the existing section skeleton**
-
-Keep the header, `Usage:`, the labelled block, `Notes:` and `See also:`. Change
-the prose. Content that must appear:
-
-- It becomes a companion and fights for you.
-- **The hold ends.** You are never told when, and there is no warning sign.
-- **How completely you won the contest decides how long you keep it** — not your
-  charisma, not your skill rank. Say it in plain words, without numbers.
-- **A creature caught asleep is held longest.** A real tactic; the file should
-  reward the player who works it out.
-- When the hold ends and you are standing there, **it turns on you.** If you are
-  elsewhere, it simply goes back to what it was.
-- **Logging out destroys the creature**, along with anything you gave it.
-- It keeps the gear you hand it and grows stronger while it serves you. Both cut
-  both ways.
-- It cannot be used on another player, on a merchant, or on anyone who is not a
-  fighter.
-- **A powerful creature is not harder to charm — it is far more dangerous when
-  the bond breaks.** Spec 10.2 asks for this line, and it is the honest summary
-  of dropping the power term.
-- Corrected label lines: defence is **defy**, answered by the creature's
-  willpower and its skill at arguing back; duration is decided by **how
-  completely you won**.
-
-**Do not state the duration formula or the rounds remaining.** Per spec 3.3 the
-uncertainty *is* the mechanic. The copy must convey that the hold is finite and
-that a decisive win buys a longer one, without ever becoming quantitative.
-
-- [ ] **Step 3: Verify it renders on a booted server, over telnet**
-
-Writing the file is not evidence that it displays. ANSI tags render wrong when
-mis-nested, and the playtest harness strips colour, so use the raw telnet port.
-
-```bash
-# against a running server on the AI port
-printf 'help charm\n' | <telnet to 33333>
-```
-
-Confirm: no stray `<ansi>` text, nothing past column 80, no em dashes.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add _datafiles/world/dogmud/templates/help/charm.template
-git commit -m "docs(charm): help charm describes the spell that now exists"
-```
-
----
-
-### Task 5: Patch notes for the whole arc
-
-**Files:**
-- Modify: `docs/PATCH_NOTES.md`
-
-One entry for U10c entire, not one per slice. Newest entries go at the top,
-directly under `# DOGMud Patch Notes`.
-
-- [ ] **Step 1: Read the two most recent entries for voice**
-
-```bash
-head -40 docs/PATCH_NOTES.md
-```
-
-The register is second person, plain, no numbers, no em dashes, and it explains
-what changed for the player rather than what changed in the code.
-
-- [ ] **Step 2: Add the entry**
-
-Use **the real date on the day you write it**, not the date below. The heading
-here says 2026-08-24 because that is when the plan was written.
-
-```markdown
-## 2026-08-24: Charm is a gamble now, not a purchase
-
-Bending a creature to your will used to be permanent, which made it a
-straightforward trade: pay the conviction, keep the creature. It is not that
-any more.
-
-The hold now ends. How long you keep it depends on how completely you won the
-contest of wills, and nothing tells you how long that is. A creature you barely
-overpowered may turn on you within the hour. One you dominated outright may
-serve you all evening. You will not know which you have until it stops.
-
-Catch something asleep and you will hold it longest.
-
-When the hold breaks and you are standing beside it, it comes for you. If you
-are somewhere else, it simply goes back to being what it was.
-
-This cuts both ways with everything you invest in it. A charmed creature keeps
-the gear you hand it and grows stronger fighting at your side, so the more you
-put into one, the worse the moment it remembers itself.
-
-Size is no longer any protection against you, and no longer any comfort either.
-A stubborn mind is what resists; a big one is simply worse news later. Binding
-something far above your weight is a real bet now rather than a shopping trip.
-
-Logging out destroys anything you have charmed, along with whatever it was
-carrying. Bring it home before you go.
-
-One smaller thing. Charm now refuses to target other players, which the help
-file always claimed it did and which nothing actually enforced.
-```
-
-**Do not write "no longer hunts you across zones" or anything of that shape.**
-Charm was permanent before this arc, so no bond ever lapsed and no creature ever
-came looking. Presenting the absent-caster rule as a fix would be claiming credit
-for repairing something that never happened.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add docs/PATCH_NOTES.md
-git commit -m "docs: patch notes for the U10c charm arc"
-```
-
----
-
-### Task 6: The adversarial playtest gate — DO NOT SKIP
-
-**Files:**
-- Create: `tools/playtest/goals/2026-08-24-u10c-charm-arc.yaml`
-
-**This gate carries more weight than usual.** Nobody has watched a charm resolve
-in a live game since the Slice B rewrite. Slice B's own in-game verification was
-never completed: granting charm needs discovery or a save edit, and the save edit
-hit a forced password-change flow. Everything since then rests on tests and
-reasoning alone.
-
-Boot-clean verifies the system. It has never once verified the experience.
-
-- [ ] **Step 1: Build a reusable charm profile — OWNER RULING 2026-08-24**
-
-Getting charm onto the tester is what defeated Slice B's attempt. The owner
-chose the permanent fix over the quick one: **add a profile, so this and every
-future charm test just works.** Do not attempt a save edit — that is the route
-that hit a forced password-change flow and lost the run.
-
-Profiles carry a `spellbook:` block, which is the whole mechanism. Model the new
-file on `tools/playtest/profiles/specialist-caster.yaml`, which already grants
-six spells this way.
-
-**Create `tools/playtest/profiles/charmer.yaml`:**
+- [ ] **Step 2: Create the profile**
 
 ```yaml
 role: user
@@ -620,7 +313,7 @@ character:
   name: Bindsong
   description: >
     A manifestation specialist built to exercise charm end to end: enough
-    charisma to win the contest, enough conviction to pay the cost AND hold
+    charisma to win the contest, enough conviction to pay the cost and hold
     the companion reservation, and a spare weapon to hand a charmed creature.
   roomid: 462
   zone: Thornwall City
@@ -662,127 +355,368 @@ character:
     - itemid: 10018
 ```
 
-**Why these numbers, so nobody "simplifies" them into a profile that cannot
-charm anything:**
+The arithmetic, so nobody "simplifies" it into a profile that cannot charm:
+`ConvictionMax = ConvictionBase + Cha×3 + Wil×1` = 5 + 450 + 130 = **585**
+(`internal/characters/validate.go:109-111`; `config.yaml:974-976`). The cap is
+`floor(585 × 0.66)` = **386** (`PoolReservationCapPct`, `config.yaml:1409`;
+`reservationCapFor` floors, `reservation.go:47`).
 
-- `ConvictionMax = 5 + Charisma*3 + Willpower*1` = 5 + 450 + 130 = **585**.
-- Charm costs **120** to cast and then reserves `CompanionReserveDefault` = **280**
-  for as long as the bond holds.
-- `WouldBreachReservationCap` refuses the charm if the reservation would exceed
-  `PoolReservationCapPct` (0.66) of the pool. 0.66 × 585 = 386, and 280 < 386, so
-  it passes — **with margin, deliberately.** Drop charisma much below 150 and the
-  reserve starts breaching the cap, at which point every charm is **silently
-  refused** and the run reads as a broken spell rather than an underpowered
-  character. This is the same trap that cost a debugging cycle in Slice C's unit
-  fixtures.
-- The **second** `itemid: 10018` under `items:` is the weapon to hand a charmed
-  creature in goal 5. Without a spare, the tester has to disarm itself first.
+**The reserve is 188, not 280.** `CalcCompanionReserve`
+(`internal/characters/companions.go:270-278`) applies a skill reduction and
+`SkillCostMultiplier`, so at manifestation 30 the flat `CompanionReserveDefault`
+of 280 becomes `round(280 × 0.70 × 0.96)` = 188. (`CompanionReserveDefault` is
+**absent** from `config.yaml` — that means "use the Go default 280", not zero.)
+Either way it clears 386 comfortably. The reason to keep charisma high is the
+contest, not the cap.
 
-Verify the coefficients before trusting the arithmetic above — they are balance
-knobs and may have moved:
+The second `itemid: 10018` under `items:` is the weapon to hand a charmed
+creature, so the tester need not disarm itself.
 
-```bash
-grep -nE "^  (ConvictionBase|ConvictionPerCharisma|ConvictionPerWillpower|PoolReservationCapPct|CompanionReserveDefault):" _datafiles/config.yaml
+- [ ] **Step 3: Prove it boots with charm known.** Log in as the profile and type
+      `spells`. A profile that loads but grants nothing wastes the whole run.
+
+- [ ] **Step 4: `go test ./internal/playtestprofiles/ -count=1`. Commit.**
+
+---
+
+## Task 6: Rewrite `charm.yaml`'s description
+
+**Files:**
+- Modify: `_datafiles/world/dogmud/spells/charm.yaml`
+
+Note where this actually shows: **not** the `spells` command (which lists
+SpellId/Name/Target/Cost only) and **not** `help charm` (which resolves to the
+dedicated template). Its one render path is `help spell charm` via
+`help/spell.template`. Task 8 deals with that template's own problems.
+
+Two current claims are false: *"Stronger creatures resist more fiercely"* (spec
+3.6 removed the power term) and, after Task 1 restores the penalty, *"much
+harder against creatures already in combat"* becomes true again and may stay.
+
+- [ ] **Step 1: Replace `description:`**
+
+```yaml
+description: |
+  You reach into the mind of a hostile creature and bend its
+  will to yours. A stubborn mind fights you hardest. Raw
+  strength is no defence at all, so the biggest thing in the
+  room can be the easiest to take, and the worst to lose hold
+  of. A creature already fighting is harder to reach.
+  What you bind will follow you and fight for you, but not for
+  long. There is no warning and no sign of the hold weakening.
+  It simply ends. The more completely you win, the longer you
+  keep it.
+  When it ends, if you are standing beside it, it attacks you.
 ```
 
-**Expect `CompanionReserveDefault` to return NOTHING, and do not treat that as
-zero.** It is absent from `config.yaml` and therefore falls back to its Go
-default of 280 in `internal/configs/config.balance.mobs.go`. Absence is
-meaningful in this project: a missing key means "use the Go default", not
-"unset". The four that do appear are `ConvictionBase: 5` (line 974),
-`ConvictionPerCharisma: 3` (975), `ConvictionPerWillpower: 1` (976) and
-`PoolReservationCapPct: 0.66` (1409), which is where the 585 and the 386 above
-come from.
+Deliberate choices, do not undo them: sentence two is the spec 10.1
+strength-versus-will requirement; *"There is no warning and no sign of the hold
+weakening"* replaces a v1 draft that said the mind "begins to return", which
+described the re-roll ladder this arc deleted; and the last line states the
+betrayal plainly rather than as *"and it remembers"*, which an ESL reader parses
+as atmosphere rather than as **it attacks you**.
 
-The cap is `floor(poolMax × pct)` — `reservationCapFor` in
-`internal/characters/reservation.go:47`, reached via `ReservationCap`. It floors,
-so use `floor`, not round, if you recompute this for different stats.
-
-- [ ] **Step 1b: Register and smoke-test the profile**
-
-Check how `playtestrun` discovers profiles before assuming a bare file is enough:
+- [ ] **Step 2: Verify it parses** (`go build ./...` proves nothing here — a
+      malformed spell YAML panics at *startup*):
 
 ```bash
-grep -rn "profiles/" internal/playtestrun/*.go | head
-cat tools/playtest/profiles/README.md
+python -c "import yaml,io; yaml.safe_load(io.open('_datafiles/world/dogmud/spells/charm.yaml',encoding='utf-8')); print('YAML_OK')"
 ```
 
-Then confirm the character actually boots with charm known — log in and type
-`spells`. A profile that loads but grants nothing wastes the whole run.
+- [ ] **Step 3: Commit.**
 
-- [ ] **Step 2: Write the goals file**
+---
 
-It must carry a top-level `ephemeral:` block or local `playtestrun` refuses it.
-Copy the block shape from an existing local goals file:
+## Task 7: Rewrite `help charm` — OWNER-REQUIRED FOR COMPLETION
 
-```bash
-sed -n '1,30p' tools/playtest/goals/2026-08-03-prepush-sweep.yaml
+**Files:**
+- Modify: `_datafiles/world/dogmud/templates/help/charm.template`
+
+The owner named this a required completion step. The slice is not done without
+it.
+
+Wrong lines, and why:
+
+| Line | Why |
+|---|---|
+| "Your hold gradually loosens over time." | The ladder is deleted. It does not loosen; it ends. |
+| "The stronger your charisma and the higher your manifestation skill, the longer the charm endures." | False. Duration is bought with the contest margin. |
+| "Defense: Mental (opposed by target's willpower)" | Answered by **defy** now. The willpower half survives. |
+| "Duration: Scales with charisma and manifestation skill" | Same falsehood. |
+| "the creature's willpower and **mental fortitude**" | The defending skill is **rhetoric**. |
+
+House rules: **4** em dashes (U+2014), 0 en dashes — count them with Python, not
+`grep -c`, which counts lines. **Preserve CRLF**: 422 of 453 templates in that
+directory are CRLF, so a lone LF file would be a new inconsistency, not a repair.
+
+Content that must appear:
+- It becomes a companion and fights for you.
+- **The hold ends**, with no warning and no sign of weakening.
+- **How completely you won decides how long you keep it** — not your charisma,
+  not your rank. Plain words, no numbers.
+- **A creature caught asleep is held longest.** A real tactic worth rewarding.
+- When it ends and you are there, **it turns on you**. If you are elsewhere it
+  simply reverts, and your conviction comes back either way.
+- **Logging out destroys the creature** and anything you gave it.
+- **`dismiss` is not a peaceful parting** — it turns on you at once. Free a slot
+  *before* you need one, not mid-fight. (Charm is `base_folds: 36`, the longest
+  channel in the game, so "dismiss then immediately re-charm" is a trap.)
+- It keeps the gear you hand it and grows stronger while it serves you.
+- Not usable on players, merchants, or non-fighters.
+- **A powerful creature is not harder to charm, only far worse to lose hold of.**
+- Corrected labels: defence is **defy** (willpower and its skill at arguing
+  back); duration is **how completely you won**.
+
+**Never state the formula or the rounds remaining.** Spec 3.3: the uncertainty is
+the mechanic.
+
+- [ ] **Steps:** read the current file and a clean recent exemplar
+      (`help/progression.template`, written 2026-08-24), rewrite keeping the
+      section skeleton, verify over raw telnet on port 33333 that no `<ansi>`
+      leaks and nothing passes column 80, commit.
+
+---
+
+## Task 8: The other four charm surfaces
+
+**Files:**
+- Modify: `_datafiles/world/dogmud/templates/help/companion.template`
+- Modify: `_datafiles/world/dogmud/templates/help/dismiss.template`
+- Modify: `_datafiles/world/dogmud/templates/help/manifestation.template` (~line 52)
+- Modify: `_datafiles/world/dogmud/templates/help/spell.template`
+
+Rewriting `charm.template` alone leaves four documents contradicting it.
+
+- [ ] **`companion.template`** says *"Charmed companions persist as long as the
+      magical bond holds"* under Persistence. Spec 13 rules that logout
+      **destroys** them, which Tasks 7 and 9 both make a headline. This is the
+      file `help charm`'s own "See also" points at, so the contradiction is one
+      keystroke away.
+
+- [ ] **`dismiss.template`** — three defects:
+      - *"the charm cannot be reapplied to the same creature"* — **false**, spec
+        3.7 explicitly allows re-charming and `RemoveCharm()` sets nothing that
+        would block it.
+      - *"**ALL** companions present in the same room will immediately turn
+        hostile"* — **false**. `dismiss.go` has exactly one `SetAggro`, on the
+        dismissed mob. Likely pre-existing.
+      - Slice C added a **presence gate** to that line: the betrayal now fires
+        only if you are in the same room. Documented nowhere player-facing.
+      - Also carries 2 em dashes.
+
+- [ ] **`manifestation.template:52`** — *"Charmed — An existing creature bent to
+      your will. Retains its original capabilities."* Silent on the clock and
+      the betrayal, so the school helpfile still teaches the pre-arc model.
+
+- [ ] **`spell.template`** — the generic fallback that renders `help spell charm`.
+      Two problems, both newly live:
+      - It prints **three raw numbers** (Base Folds, Conv. Cost, Wait Time),
+        against the no-hard-numbers rule, on the one screen that shows the
+        description Task 6 rewrote.
+      - Slice B adding `target_defense_type: social` switched on its
+        `Resisted by: {{ .TargetDefenseType }} defense` line. Charm is the
+        **only** `social` spell in the game (survey: mental ×9, none ×13,
+        physical ×11, social ×1), so a player now reads "social defense" here
+        and "defy" in `charm.template`.
+      - **Minimum:** map `TargetDefenseType` to the player-facing defence name so
+        the two screens agree. The raw numbers are a wider problem than charm —
+        if fixing them touches every spell, file it as a follow-up and say so
+        rather than silently leaving three numbers on the page.
+
+- [ ] Verify each over telnet. Commit as one content commit.
+
+---
+
+## Task 9: Patch notes
+
+**Files:**
+- Modify: `docs/PATCH_NOTES.md`
+
+One entry for the arc, newest at the top. Use **the real date on the day you
+write it**.
+
+```markdown
+## 2026-08-24: Charm is a gamble now, not a purchase
+
+Bending a creature to your will used to be permanent, which made it a
+straightforward trade: pay the conviction, keep the creature. It is not that
+any more.
+
+The hold now ends. How long you keep it depends on how completely you won the
+contest of wills, and nothing tells you how long that is. A creature you barely
+overpowered can turn on you almost at once, sometimes before the fight you
+charmed it for is finished. One you dominated outright will stay with you far
+longer. You will not know which you have until it stops.
+
+Catch something asleep and you will hold it longest.
+
+When the hold breaks and you are standing beside it, it comes for you. If you
+are somewhere else, it simply goes back to being what it was, and your
+conviction comes back to you either way.
+
+This cuts both ways with everything you invest in it. A charmed creature keeps
+the gear you hand it and grows stronger fighting at your side, so the more you
+put into one, the worse the moment it remembers itself.
+
+Size is no protection against you and no comfort either. A stubborn mind is
+what resists you; a big one is simply worse news later.
+
+Letting one go is not a peaceful parting. Dismiss a charmed creature and it
+turns on you at once, so free a slot before you need one rather than in the
+middle of a fight.
+
+As before, logging out destroys anything you have charmed along with whatever
+it was carrying. Take back anything you lent it before you go.
+
+One smaller thing. Charm now refuses to target other players, which the help
+file always claimed it did and which nothing actually enforced.
 ```
 
-Goals to drive, in order:
+Three things this deliberately avoids, all of which v1 got wrong:
+- **No "within the hour" / "all evening".** Real time is 2 to 30 minutes at
+  `RoundSeconds: 4`. "Within the hour" reads as *plenty of time* and manufactures
+  the unfair surprise the rest of the arc is trying to prevent.
+- **No "bring it home before you go."** There is no home;
+  `PlayerSpawn_HandleJoin.go:56-63` strips the record wherever the mob stood. The
+  real mitigation is taking your gear back.
+- **No "no longer hunts you across zones."** Charm was permanent before this arc,
+  so no bond ever lapsed and nothing ever hunted anyone. Do not claim credit for
+  repairing something that never happened.
 
-1. Cast charm at a creature and read every line. **One contest, one verdict** — a
-   resist line and a success line for the same cast is the exact double
-   narration Slice B removed, and its return is the first thing to look for.
-2. Cast charm at a **player**. Expect a clean refusal, not a swallowed command.
-3. Cast charm at a **shopkeeper**. Expect the harm-target refusal.
-4. Cast charm at a **sleeping** creature. It should land and hold long.
-5. Hand the charmed creature a weapon; confirm it uses it.
-6. Wait out a short bond and watch the break in the room. Is "breaks free of your
-   control" legible as a threat, or does it scroll past?
-7. `dismiss` a charmed creature and confirm it turns on you.
-8. Confirm the conviction bar returns when the bond ends, on both break and
-   dismiss.
-9. `help charm` and `spells` — read the new copy as a confused human would.
+- [ ] Commit.
 
-- [ ] **Step 3: Run it with an explicitly adversarial mandate**
+---
+
+## Task 10: Sweep the stale docs
+
+**Files:**
+- Modify: `internal/combat/context.md` (~line 888)
+- Modify: `internal/hooks/context.md` (~lines 1067, 1339-1340, 1414-1420)
+- Modify: `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` (~line 185)
+
+Spec 11.4.8 named the two `context.md` files by hand, and CLAUDE.md makes this
+mandatory: *"any work that reshapes an existing package's API, data model, or
+file list MUST update it."* Nothing in slices A–C touched them.
+
+- [ ] `internal/combat/context.md:888` lists `hooks.tickMobCharmState` (charm
+      reroll) and `hooks.resolveCharmSpell` as live direct `RunContest` sites.
+      Both are deleted.
+- [ ] `internal/hooks/context.md:1067` repeats it; `:1339-1340` still says
+      *"charmed companions are permanently Active"*; `:1414-1420` describes
+      `resolveCharmSpell`'s gates as they were before Slice B.
+- [ ] Also record the arc's real API changes: `AttackerNormalizedMargin` on
+      `ChannelDefenceResult`, the deleted `CompanionInfo.CharmDuration` /
+      `CharmRerolls`, and charm's move onto `ChannelSocial`.
+- [ ] `UNIFIED_RESOLUTION_ROADMAP.md:185` still describes the pre-arc state in
+      the present tense (*"scores `Charisma + Manifestation × 25`… the ladder is
+      dead code… charmed for 99999 rounds"*) and still asks *"Also decide charm's
+      DEFENCE stat"*, which was decided as defy. **Verify every symbol you write
+      exists** before committing — a `context.md` describing an invented API is
+      worse than none.
+
+- [ ] Commit.
+
+---
+
+## Task 11: The adversarial playtest gate — DO NOT SKIP
+
+**Files:**
+- Create: `tools/playtest/goals/2026-08-24-u10c-charm-arc.yaml`
+
+Nobody has watched a charm resolve in a live game since the Slice B rewrite.
+Boot-clean verifies the system; it has never verified the experience.
+
+- [ ] **Step 1: Make a bond observable inside the run.** Shipped durations are
+      `CharmDurationMinRounds: 30` / `MaxRounds: 450` at `RoundSeconds: 4`, i.e.
+      **2 to 30 real minutes**, against a 30-minute wall-clock budget — and the
+      charmer profile's high charisma guarantees large margins and therefore long
+      bonds. **As written, the run would almost certainly end before any bond
+      lapsed**, and the grudge, the break message and the conviction release
+      would ship unobserved.
+
+      The goals schema has no config-override mechanism (checked
+      `internal/playtestrun/`; only `MaxAIConnections`). So edit
+      `_datafiles/config.yaml` **inside the ephemeral checkout** to
+      `CharmDurationMinRounds: 3` / `CharmDurationMaxRounds: 8` before the run,
+      and **state in the report that this run cannot validate duration tuning.**
+
+- [ ] **Step 2: Write the goals file** with a top-level `ephemeral:` block
+      (required by local `playtestrun`); copy the block shape from
+      `tools/playtest/goals/2026-08-03-prepush-sweep.yaml`. Use
+      `profile: charmer`.
+
+Goals:
+1. Cast charm and read every line. **One contest, one verdict** — a resist line
+   and a success line for the same cast is the double narration Slice B removed.
+2. Cast at a **player** — clean refusal, not a swallowed command.
+3. Cast at a **shopkeeper** — the harm-target refusal.
+4. Cast at a **sleeping** creature. Assert only that it *lands*; with the
+   shortened durations you cannot verify "holds longest". Most sleepers are
+   `non_combatant` townspeople and therefore charm-proof, so give the tester a
+   route: `106-city_guard.yaml` and `261-farmer_hesta.yaml` are combatant
+   sleepers.
+5. Hand it a weapon; confirm it uses it.
+6. **Wait out a bond in an idle room** and watch the break.
+7. **Wait out a bond mid-fight with a third creature.** This is the case that
+   matters: two enemies and one red line explaining why. Does it scroll past?
+8. `dismiss` and confirm it turns on you.
+9. **Walk two rooms away, wait out the bond, come back.** Then try to `dismiss`
+   it and to charm something else. (This is where the stranded-companion bug
+   lived; the fix is `b0b85bfec` and this goal is its live check.)
+10. Confirm conviction returns on **break, dismiss, and companion death**.
+11. Charm a creature another player already charmed — the refusal says *"You
+    can't target a companion with a harmful spell"* about a wolf that looks
+    wild. Does that read as sensible or as a bug?
+12. **Get interrupted mid-channel.** Conviction is spent incrementally and only
+    the unspent part is refunded, so a knockdown at fold 30 of 36 burns most of
+    120 conviction. Is the player told anything?
+13. Charm at the companion cap, and with the reservation over the cap. Confirm
+    **no conviction is charged** and the messages name the real reason.
+14. A **second player in the room** — can a bystander tell what happened?
+15. `help charm`, `help spell charm`, `help companion`, `help dismiss` and
+    `spells`, read as a confused human.
+
+- [ ] **Step 3: Run adversarially.**
 
 ```text
 /playtest local --checkout C:/Users/Calabe Davis/workspace/DOGMud bug-finder 2026-08-24-u10c-charm-arc.yaml
 ```
 
-Read every line of output. Report every usability problem bluntly. A pass means
-the tester played it and found nothing, not that the harness exited zero.
-
-- [ ] **Step 4: Extract findings to memory before doing anything else**
-
-Playtest reports are gitignored. A finding left in the report is a finding lost.
-
-- [ ] **Step 5: Fix what it finds; re-run if the fixes are behavioural. Commit.**
+- [ ] **Step 4: Extract findings to memory immediately** — reports are gitignored.
+- [ ] **Step 5: Fix what it finds; re-run if the fixes are behavioural.**
 
 ---
 
-### Task 7: Gates, PR, merge
+## Task 12: Gates, PR, merge
 
 - [ ] `gofmt -l internal/ modules/` prints nothing.
 - [ ] `go build ./...`.
-- [ ] `go test ./internal/actions/ ./internal/mobs/ ./internal/hooks/ ./internal/combat/ ./internal/characters/ ./internal/usercommands/ -count=1`.
-- [ ] `golangci-lint run` — no **new** finding on a touched file. The repo carries
-      73 pre-existing findings across these packages; only new ones matter.
-- [ ] Boot in an isolated detached worktree. `Server Ready` = 1, panic patterns = 0.
-      **Exit 124 is the success case.** Never grep the bare word `panic` —
-      `GamePlay.MapConsistencyEnforce` legitimately has the *value* `panic`.
-      This matters more than usual here: Tasks 3 and 4 both edit content files,
-      and content YAML panics at startup rather than at build.
-- [ ] Spec section 16: record Task 2's verdict, whichever way it went.
+- [ ] `go test ./internal/hooks/ ./internal/mobs/ ./internal/combat/ ./internal/characters/ ./internal/actions/ ./internal/usercommands/ ./internal/playtestprofiles/ -count=1`
+      — note `playtestprofiles`, which Task 5 touches and v1 omitted.
+- [ ] `golangci-lint run` — no **new** finding on a touched file (73 pre-existing
+      across these packages).
+- [ ] Boot in an isolated detached worktree. `Server Ready` = 1, panic patterns
+      = 0, **exit 124 is success**, never grep the bare word `panic`. This matters
+      more than usual: Tasks 6, 7 and 8 edit five content files and content YAML
+      panics at *startup*, not at build.
+- [ ] Add a **section 16** to the spec (it does not exist yet; headings stop at
+      15.4) recording the in-combat restore and the `EverCharmed` guard as
+      shipped.
+- [ ] File spec section 12's follow-up: the instance-save audit the owner asked
+      for. It exists only as a spec paragraph today.
 - [ ] PR with `--repo pruuk/DOGMud`. Confirm each job ran with **zero
       annotations** — a green check is not proof.
 - [ ] Merge `--merge`, never `--squash`.
-- [ ] Mark the arc closed in the U10c memory topic file and in the plans index.
+- [ ] Update the U10c memory topic file and mark the arc closed.
 
 ---
 
 ## For whoever executes this
 
-Slice D is where U10c stops being a code change and becomes something a player
-meets. The two tests are small. **The helpfile and the playtest are the slice.**
+The tests are small. **Tasks 7, 8 and 11 are the slice**, and Task 1 is a
+merged balance regression that should land first so the copy written in 6 and 7
+is true when it ships.
 
 If a `grep` or `sed` finds something this document did not predict, **stop and
-report**. Three plans in this arc have been written against facts that were
-wrong, and two were rejected for it. The section at the top of this plan exists
-because the two tasks that looked most obvious were both aimed at the wrong
-thing, and only checking caught it.
-
-In particular: **do not treat the 38 non-combatant mobs without `charm_immune`
-as a bug to fix in YAML.** They are covered by code. Verify that yourself if you
-doubt it, then leave the data alone.
+report**. v1 of this plan was rejected by three reviewers; the "Why this is v2"
+section exists because its four most confident claims were its four wrong ones.
