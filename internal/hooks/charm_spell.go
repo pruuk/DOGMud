@@ -2,136 +2,125 @@ package hooks
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// resolveCharmSpell handles the opposed-roll charm logic that was previously
-// in charm.js's onMagic function. Called after the spell cast completes.
+// applyMobEffect_charm binds a creature whose contest has ALREADY been decided.
 //
-// Attack = charisma + manifestation_skill * 25
-// Defense = target willpower + round(target stat training total * 0.10)
-// Aggro penalties applied to attack score before the roll.
+// Charm used to run its own RunContest here, on hand-built scores, on top of
+// the channel contest the cast had already run and then discarded in
+// applyMobEffect_default. One cast therefore resolved twice, and the player
+// saw both narrations -- a resist line and a success line for the same spell.
+// The contest now happens once, in the seam, on ChannelSocial, and this reads
+// its result.
 //
-// Returns true on success (mob charmed), false on failure.
-func resolveCharmSpell(user *users.UserRecord, targetMob *mobs.Mob, room *rooms.Room) bool {
-
+// Returns 0: charm deals no damage.
+func applyMobEffect_charm(
+	user *users.UserRecord,
+	targetMob *mobs.Mob,
+	room *rooms.Room,
+	spellData *spells.SpellData,
+	out combat.ChannelDefenceResult,
+	mName string,
+) int {
+	// applyMobEffect is reached with a nil user when a MOB casts (see its
+	// docstring and resolveMobSpellAgainstMob). No mob carries charm today --
+	// the behaviour tree skips it -- but every sibling arm guards, and a switch
+	// arm that depends on an exclusion elsewhere is a landmine.
+	if user == nil || targetMob == nil {
+		return 0
+	}
 	ch := user.Character
 
-	// ── 1. Charm immunity ──────────────────────────────────────────────
 	if targetMob.CharmImmune {
 		user.SendText(messaging.CategorySpellMental, `That creature's mind is impervious to charm.`)
-		return false
+		return 0
 	}
 
-	// ── 2. Reservation + budget gate ───────────────────────────────────
-	// A charmed creature isn't an authored summon type, so it has no pet
-	// multiplier and reserves the unscaled default (reduced by the caster's
-	// manifestation and mutation). Its price therefore does not move in U7b.
+	// The defence won. Narrate through the SHARED path every other effect arm
+	// uses, so defy renders its own triad to the caster, the target and the
+	// room. The old code sent a bespoke pair of lines here and the seam sent
+	// another, which is where the double narration came from.
+	if out.Defended {
+		sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), out,
+			spellDefenceIdentity(ch, user, room), mName, spellData.Name, user, nil)
+		return 0
+	}
+
+	// ── Reservation + budget gate ──────────────────────────────────────
+	// The reserve is FLAT and does not scale with what you charmed: a sewer rat
+	// and an Elemental King tie up the same conviction. That is a deliberate
+	// decision (spec 3.8), not an oversight and not a leftover from the
+	// pet-multiplier path. Charm is already a risky game -- the creature trains
+	// while it serves you and keeps the gear you hand it. A power-scaled price
+	// would add bookkeeping without adding tension, so the cost of charming
+	// something enormous is the DANGER, not the invoice.
 	reserve := ch.CalcCompanionReserve(characters.CompanionReserveBase(0))
 	if len(ch.Companions) >= ch.GetMaxCompanions() {
 		user.SendText(messaging.CategorySystem,
 			`You are already sustaining as many companions as your will can hold.`)
-		return false
+		return 0
 	}
 	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
 		user.SendText(messaging.CategorySystem, ch.ReservationRefusal(characters.PoolConviction, reserve))
-		return false
+		return 0
 	}
-
-	// ── 3. Build attack score ──────────────────────────────────────────
-	attackScore := ch.Stats.Charisma.ValueAdj +
-		ch.GetSkillLevel(skills.Manifestation)*25
-
-	// ── 4. Build defense score ─────────────────────────────────────────
-	ts := targetMob.Character.Stats
-	statTrainingTotal := targetMob.Character.StatPoolTotal()
-
-	defenseScore := ts.Willpower.ValueAdj +
-		int(math.Round(float64(statTrainingTotal)*0.10))
-
-	// ── 5. Aggro penalty ───────────────────────────────────────────────
-	if targetMob.Character.IsInCombat() {
-		if targetMob.Character.CurrentCombatTarget().UserId == user.UserId {
-			// Fighting the caster — steepest penalty
-			attackScore = int(math.Round(float64(attackScore) * 0.75))
-		} else {
-			// Fighting someone else — moderate penalty
-			attackScore = int(math.Round(float64(attackScore) * 0.85))
-		}
-	}
-
-	// ── 6. Opposed roll ────────────────────────────────────────────────
-	success := combat.RunContest(float64(attackScore), []contest.Entry{{Score: float64(defenseScore)}}).Success
 
 	targetName := targetMob.Character.Name
 
-	if success {
-		// Charm permanently
-		targetMob.Character.Charm(user.UserId, 99999, "")
-		targetMob.Character.EndAggro()
-		ch.TrackCharmed(targetMob.InstanceId, true)
+	// Slice B keeps charm PERMANENT. The clock is Slice C's; introducing it here
+	// would mean shipping a duration with no expiry path to end it.
+	targetMob.Character.Charm(user.UserId, 99999, "")
+	targetMob.Character.EndAggro()
+	ch.TrackCharmed(targetMob.InstanceId, true)
 
-		// Register as companion
-		info := characters.CompanionInfo{
-			MobId:             int(targetMob.MobId),
-			InstanceId:        targetMob.InstanceId,
-			SourceType:        characters.CompanionCharmed,
-			Name:              targetName,
-			BaseName:          targetName,
-			AutoAssist:        true,
-			ConvictionReserve: reserve,
-		}
-		if !ch.AddCompanion(info) {
-			user.SendText(messaging.CategorySystem, `You cannot maintain any more companions.`)
-			return false
-		}
-		// Apply the new reservation immediately so usable Conviction drops now.
-		ch.RecalculateStats()
+	info := characters.CompanionInfo{
+		MobId:             int(targetMob.MobId),
+		InstanceId:        targetMob.InstanceId,
+		SourceType:        characters.CompanionCharmed,
+		Name:              targetName,
+		BaseName:          targetName,
+		AutoAssist:        true,
+		ConvictionReserve: reserve,
+	}
+	if !ch.AddCompanion(info) {
+		user.SendText(messaging.CategorySystem, `You cannot maintain any more companions.`)
+		return 0
+	}
+	// Apply the new reservation immediately so usable Conviction drops now.
+	ch.RecalculateStats()
 
-		// Clear aggro from existing companions toward the new mob
-		for _, charmId := range ch.GetCharmIds() {
-			if charmId == targetMob.InstanceId {
-				continue
-			}
-			if companion := mobs.GetInstance(charmId); companion != nil {
-				if companion.Character.IsInCombat() &&
-					companion.Character.CurrentCombatTarget().MobInstanceId == targetMob.InstanceId {
-					companion.Character.EndAggro()
-				}
+	// Clear aggro from existing companions toward the new mob
+	for _, charmId := range ch.GetCharmIds() {
+		if charmId == targetMob.InstanceId {
+			continue
+		}
+		if companion := mobs.GetInstance(charmId); companion != nil {
+			if companion.Character.IsInCombat() &&
+				companion.Character.CurrentCombatTarget().MobInstanceId == targetMob.InstanceId {
+				companion.Character.EndAggro()
 			}
 		}
-
-		// Clear the owner's own aggro if targeting the new mob
-		if ch.IsInCombat() && ch.CurrentCombatTarget().MobInstanceId == targetMob.InstanceId {
-			ch.EndAggro()
-		}
-
-		user.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-			`<ansi fg="cyan">%s's eyes glaze as your will takes hold. It is yours.</ansi>`,
-			targetName))
-		sendVisualRoomText(room, messaging.CategorySpellMental, fmt.Sprintf(
-			`<ansi fg="cyan"><ansi fg="username">%s</ansi> bends %s to their will!</ansi>`,
-			user.Character.Name, targetName), user.UserId)
-
-		return true
 	}
 
-	// ── Failure ────────────────────────────────────────────────────────
-	user.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-		`<ansi fg="yellow">You reach for %s's mind, but its will is iron. The spell shatters.</ansi>`,
-		targetName))
-	sendVisualRoomText(room, messaging.CategorySpellMental, fmt.Sprintf(
-		`<ansi fg="yellow"><ansi fg="username">%s</ansi>'s charm spell breaks against %s's resolve!</ansi>`,
-		user.Character.Name, targetName), user.UserId)
+	// Clear the owner's own aggro if targeting the new mob
+	if ch.IsInCombat() && ch.CurrentCombatTarget().MobInstanceId == targetMob.InstanceId {
+		ch.EndAggro()
+	}
 
-	return false
+	user.SendText(messaging.CategorySpellMental, fmt.Sprintf(
+		`<ansi fg="cyan">%s's eyes glaze as your will takes hold. It is yours.</ansi>`,
+		mName))
+	sendVisualRoomText(room, messaging.CategorySpellMental, fmt.Sprintf(
+		`<ansi fg="cyan"><ansi fg="username">%s</ansi> bends %s to their will!</ansi>`,
+		user.Character.Name, mName), user.UserId)
+
+	return 0
 }

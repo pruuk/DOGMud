@@ -171,13 +171,26 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	}
 
 	// --- Empty room / no valid targets feedback ---
-	// Skip for summon/charm spells — they handle their own targeting via Go functions
-	isSummonOrCharm := spellData != nil && (spellData.SummonMobId > 0 || spellData.EffectType == "charm")
-	if targetsResolved == 0 && !isSummonOrCharm {
-		user.SendText(messaging.CategorySpellDisruption, `Your spell erupts outward but finds no targets.`)
-		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-			`<ansi fg="username">%s</ansi>'s spell crackles through the air harmlessly.`,
-			user.Character.Name), user.UserId)
+	// Summons target nothing in the room, so the generic line does not apply.
+	isSummon := spellData != nil && spellData.SummonMobId > 0
+	isCharm := spellData != nil && spellData.EffectType == "charm"
+	if targetsResolved == 0 && !isSummon {
+		if isCharm {
+			// Charm used to resolve AFTER this loop, reading
+			// TargetMobInstanceIds[0] directly, so it did not care whether the
+			// target survived the fold. Now that it resolves inside the loop it
+			// does, and a 36-fold channel that finds nothing must still say so
+			// -- silence after spending 120 conviction reads as a broken
+			// command. The wording is charm's because "erupts outward" suits a
+			// blast, not a held gaze.
+			user.SendText(messaging.CategorySpellDisruption,
+				`Your gaze finds nothing to hold, and the will you gathered scatters.`)
+		} else {
+			user.SendText(messaging.CategorySpellDisruption, `Your spell erupts outward but finds no targets.`)
+			sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
+				`<ansi fg="username">%s</ansi>'s spell crackles through the air harmlessly.`,
+				user.Character.Name), user.UserId)
+		}
 	}
 
 	// --- Run spell script onMagic (if present) ---
@@ -223,14 +236,16 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	if !castFumbled && spellData != nil && spellData.SummonMobId > 0 {
 		resolveCompanionSummon(user, spellData, cs.SpellRest, room)
 	}
-	// Resolve charm spell
-	if !castFumbled && spellData != nil && spellData.EffectType == "charm" {
-		if len(cs.TargetMobInstanceIds) > 0 {
-			if targetMob := mobs.GetInstance(cs.TargetMobInstanceIds[0]); targetMob != nil {
-				resolveCharmSpell(user, targetMob, room)
-			}
-		}
-	}
+	// Charm used to resolve HERE, in a second private contest run after the
+	// loop above had already contested every target and thrown the verdict
+	// away. It now resolves inside the loop, in applyMobEffect's "charm" arm,
+	// off that one contest.
+	//
+	// Removing this block also fixes two live defects. The player no longer
+	// sees a resist line and a success line for the same cast. And charm no
+	// longer succeeds against a mob that died, left the room, or gained harm
+	// protection mid-fold: this block read TargetMobInstanceIds[0] directly and
+	// so ignored every filter the loop applies.
 
 	// --- Go spell hooks — dispatch before JS scripts ---
 	// Fumble aborts the hook body but falls through to the component-consume
@@ -830,6 +845,11 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 		return applyMobEffect_buff(user, casterChar, mob, room, spellData, out, critTag, mName)
 	case "heal":
 		return applyMobEffect_heal(casterChar, mob, room, spellData, magnitude, mName)
+	case "charm":
+		// Charm resolves HERE, off the contest this cast already ran, rather
+		// than in a second private contest after the target loop. See
+		// applyMobEffect_charm.
+		return applyMobEffect_charm(user, mob, room, spellData, out, mName)
 	default:
 		return applyMobEffect_default(user, casterChar, room, spellData, out, mName)
 	}
