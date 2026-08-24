@@ -332,6 +332,8 @@ because the file carries `skip-worktree`.
 - **`AttackerNormalizedMargin`**: zero when the defence won, zero when floored,
   correctly signed and scaled when the attack won.
 - **No behaviour change to existing channels** from the new field.
+- **Helpfile served, not just written**: `help charm` renders and no longer
+  claims the duration scales with charisma and manifestation skill.
 
 ---
 
@@ -344,9 +346,48 @@ because the file carries `skip-worktree`.
 
 ---
 
-## 10. Follow-up filed by this design
+## 10. Player-facing copy — REQUIRED FOR COMPLETION
 
-The spell description in `_datafiles/world/dogmud/spells/charm.yaml` must be
-rewritten: it promises "Stronger creatures resist more fiercely", which 3.6
-makes false. It should instead convey that a strong-willed creature resists and
-a strong-bodied one may not — and that the bond does not last forever.
+Owner ruling 2026-08-24: **the slice is not done until both of these land.** They
+are plan steps, not follow-ups.
+
+### 10.1 `_datafiles/world/dogmud/spells/charm.yaml`
+
+The description promises "Stronger creatures resist more fiercely", which 3.6
+makes false. Rewrite so it conveys that a strong-*willed* creature resists and a
+strong-*bodied* one may not, and that the bond does not last forever.
+
+### 10.2 `_datafiles/world/dogmud/templates/help/charm.template`
+
+**Read this file before writing the new one — it is the closest thing to a
+design document the original intent ever had, and this slice largely makes it
+true.** It already describes behaviour that has never run:
+
+- "The creature will follow you and fight at your side **until the hold on its
+  mind fades**" — a duration. The code ships 99999 rounds.
+- "**Your hold gradually loosens over time. When the charm finally breaks, the
+  creature reverts to its natural state and may turn hostile.**" — the ladder
+  and the grudge. Both dead.
+- "If the charm breaks **while the creature is near you**, expect it to become
+  hostile immediately." — this all but states 3.10's absent-caster rule.
+
+Lines that become WRONG and must change:
+
+| Line | Why |
+|---|---|
+| `Defense: Mental (opposed by target's willpower)` | Now the **social** channel, answered by defy. Still Willpower-based, but "mental" names the wrong channel and the wrong skill. |
+| "your charisma and manifestation skill against the creature's willpower and **mental fortitude**" | The defending skill is now **rhetoric**, not a vague fortitude. |
+| `Duration: Scales with charisma and manifestation skill` | Duration now comes from **how decisively you won**, not from your stats. This is the single most important change for a player to understand, because it is why the same caster gets a different result each cast. |
+| "The stronger your charisma and the higher your manifestation skill, the longer the charm endures." | Same — delete or replace with the margin framing. |
+
+Lines that stay TRUE and must be preserved: charm cannot target players;
+`CharmImmune` creatures are beyond reach; creatures already in combat resist
+more strongly; the companion limit and `dismiss`.
+
+**Do not tell the player the duration formula or the remaining rounds.** Per 3.3
+the uncertainty is the mechanic. The copy should convey that the hold is
+finite and that a decisive victory buys a longer one, without ever being
+quantitative.
+
+Consider adding a line reflecting 3.6 honestly: a powerful creature is not
+harder to charm, but it is far more dangerous when the bond breaks.
