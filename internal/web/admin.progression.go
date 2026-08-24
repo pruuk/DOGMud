@@ -46,6 +46,12 @@ type skillHealthJSON struct {
 
 type statHealthJSON struct {
 	Distribution map[string]int `json:"distribution"`
+	// TrainingDistribution is the histogram that describes progression
+	// DIFFICULTY. Since U10b-0 the curve reads trained points, so a value
+	// histogram (which includes the baseline you started with) no longer says
+	// anything about how hard a stat is to raise. Both series ship: value for
+	// the population view, training for the curve view.
+	TrainingDistribution map[string]int `json:"training_distribution"`
 }
 
 type spellHealthJSON struct {
@@ -77,18 +83,31 @@ type playerJSON struct {
 	RecipesTotal  int                        `json:"recipes_total"`
 }
 
+// playerSkillJSON and playerStatJSON are deliberately the same shape. Before
+// U10b-0 the stat side carried no chance, no expected rank and no alarm at all,
+// which is why the dead-stat class -- entirely a stat phenomenon -- was
+// invisible on this page while it was happening.
+//
+// VirtualRank is gone: it was the expected rank derived from uses, and under
+// U10b-0 it would simply duplicate Rank.
 type playerSkillJSON struct {
 	Rank              int     `json:"rank"`
 	Tier              string  `json:"tier"`
-	UseCount          int     `json:"use_count"`
-	VirtualRank       float64 `json:"virtual_rank"`
-	ProgressionChance float64 `json:"progression_chance"`
+	UseCount          int     `json:"use_count"`          // telemetry only since U10b-0
+	ExpectedRank      int     `json:"expected_rank"`      // curve inverse, not UsesPerRank
+	ProgressionChance float64 `json:"progression_chance"` // 0-1 fraction at a neutral bonus
+	Dead              bool    `json:"dead"`               // roll threshold truncates to 0
+	Fragile           bool    `json:"fragile"`            // threshold under 10; one nudge from dead
 }
 
 type playerStatJSON struct {
-	Value    int `json:"value"`
-	Training int `json:"training"`
-	UseCount int `json:"use_count"`
+	Value             int     `json:"value"`
+	Training          int     `json:"training"` // the curve's rank input since U10b-0
+	UseCount          int     `json:"use_count"`
+	ExpectedRank      int     `json:"expected_rank"`
+	ProgressionChance float64 `json:"progression_chance"`
+	Dead              bool    `json:"dead"`
+	Fragile           bool    `json:"fragile"`
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -103,8 +122,13 @@ func clamp(v, lo, hi float64) float64 {
 	return v
 }
 
-// getStatBaseValue returns Base + Training for a stat, bypassing the
-// computed Value field which may not be populated for disk-loaded users.
+// getStatBaseValue returns Base + Training for a stat, bypassing the computed
+// Value field which may not be populated for disk-loaded users.
+//
+// Kept as a local helper on purpose: there is no `characters` equivalent for
+// Base + Training, and buildStatHealth depends on it to avoid the offline-zero
+// bug. Its sibling getStatTraining was deleted in U10b-0 Phase E in favour of
+// characters.Character.GetStatTraining.
 func getStatBaseValue(c *characters.Character, statName string) int {
 	switch statName {
 	case "strength":
@@ -124,22 +148,46 @@ func getStatBaseValue(c *characters.Character, statName string) int {
 	}
 }
 
-func getStatTraining(c *characters.Character, statName string) int {
-	switch statName {
-	case "strength":
-		return c.Stats.Strength.Training
-	case "dexterity":
-		return c.Stats.Dexterity.Training
-	case "perception":
-		return c.Stats.Perception.Training
-	case "vitality":
-		return c.Stats.Vitality.Training
-	case "willpower":
-		return c.Stats.Willpower.Training
-	case "charisma":
-		return c.Stats.Charisma.Training
-	default:
-		return 0
+// skillChanceProbe returns c's progression chance at a hypothetical skill rank,
+// for the curve-inverse helpers below. It works on a shallow copy with its own
+// Skills map so the caller's record is untouched.
+//
+// Character contains shared pointers, so this is safe ONLY because
+// ProgressionChanceForSkill reads just IsMob, Skills, Mutations and
+// HasBuffFlag, and the copy mutates nothing beyond its own Skills map.
+// Recalculate() is not needed: the curve reads the level, never Value.
+//
+// Called up to softCap times per skill per player, and each call copies the
+// Character struct. If a dashboard render ever becomes slow, memoise per
+// (subject, rank) rather than per player.
+func skillChanceProbe(c *characters.Character, skillName string) func(int) float64 {
+	return func(rank int) float64 {
+		probe := *c
+		probe.Skills = map[string]int{skillName: rank}
+		return probe.ProgressionChanceForSkill(skillName, 1.0)
+	}
+}
+
+// statChanceProbe is the stat-side mirror, varying Training. Since Phase C the
+// curve reads Training alone, so no Recalculate() is needed here either.
+func statChanceProbe(c *characters.Character, statName string) func(int) float64 {
+	return func(rank int) float64 {
+		probe := *c
+		switch statName {
+		case "strength":
+			probe.Stats.Strength.Training = rank
+		case "dexterity":
+			probe.Stats.Dexterity.Training = rank
+		case "perception":
+			probe.Stats.Perception.Training = rank
+		case "vitality":
+			probe.Stats.Vitality.Training = rank
+		case "willpower":
+			probe.Stats.Willpower.Training = rank
+		case "charisma":
+			probe.Stats.Charisma.Training = rank
+		}
+		return probe.ProgressionChanceForStat(statName, 1.0)
 	}
 }
 
@@ -222,19 +270,46 @@ func collectPlayers() []*users.UserRecord {
 
 // ─── Aggregation Logic ────────────────────────────────────────────────────────
 
-// calcExpectedRank simulates the cumulative progression curve for a skill.
-// It returns the expected virtual rank after useCount uses, given the
-// skill's progression multiplier.
-func calcExpectedRank(useCount int, mult float64, bal configs.Balance) float64 {
-	usesPerRank := int(bal.UsesPerRank)
-	if usesPerRank <= 0 {
-		usesPerRank = 25
+// usesToReach returns the expected cumulative recorded uses needed to reach
+// rank r, given a per-rank chance function. Expected uses from rank k to k+1 is
+// 1/chance(k), so the total is the sum below r.
+//
+// This is the inverse of the progression curve, and it replaces the pre-U10b-0
+// uses/UsesPerRank division, which described a model the engine no longer runs.
+// Returns +Inf if any rank below r has zero chance.
+func usesToReach(chanceAt func(rank int) float64, r int) float64 {
+	total := 0.0
+	for k := 0; k < r; k++ {
+		ch := chanceAt(k)
+		if ch <= 0 {
+			return math.Inf(1)
+		}
+		total += 1.0 / ch
 	}
-	if mult <= 0 {
-		mult = 1.0
+	return total
+}
+
+// expectedRankForUses returns the highest rank whose cumulative expected cost
+// is within uses -- the inverse of usesToReach. A zero-chance rank counts as
+// NOT reached, matching usesToReach's +Inf for the same input.
+//
+// CAVEAT: this assumes one progression roll per recorded use. U10b introduces
+// an uncontested class that records a use and rolls at a damped rate, so the
+// figure degrades into a LOWER BOUND as the uncontested mix grows. It is a
+// triage signal, not a measurement, and the panel says so.
+func expectedRankForUses(chanceAt func(rank int) float64, uses int, maxRank int) int {
+	total := 0.0
+	for r := 0; r < maxRank; r++ {
+		ch := chanceAt(r)
+		if ch <= 0 {
+			return r
+		}
+		total += 1.0 / ch
+		if total > float64(uses) {
+			return r
+		}
 	}
-	adjusted := int(float64(useCount) * mult)
-	return float64(adjusted) / float64(usesPerRank)
+	return maxRank
 }
 
 // calcHealthScore combines deviation, stall, and clustering metrics into a
@@ -265,7 +340,6 @@ func buildSkillHealth(playerList []*users.UserRecord) map[string]skillHealthJSON
 
 	for _, sk := range allSkillTags {
 		skillName := string(sk)
-		mult := skills.GetProgressionMultiplier(skillName)
 
 		distribution := map[string]int{
 			"novice": 0, "apprentice": 0, "journeyman": 0,
@@ -297,8 +371,15 @@ func buildSkillHealth(playerList []*users.UserRecord) map[string]skillHealthJSON
 			}
 			totalWithUses++
 
-			expected := calcExpectedRank(useCount, mult, bal)
-			deviation := float64(rank) - expected
+			// Deviation and stall both come from the inverse of the live curve
+			// now. The old uses/UsesPerRank division described a model the
+			// engine no longer runs, and once virtual rank IS rank it collapses
+			// to a structural zero, scoring every skill as perfectly healthy
+			// whatever the truth is.
+			probe := skillChanceProbe(u.Character, skillName)
+
+			expected := expectedRankForUses(probe, useCount, softCap)
+			deviation := float64(rank - expected)
 			deviationSum += deviation
 
 			if deviation < worstDeviation || worstPlayer == "" {
@@ -306,16 +387,18 @@ func buildSkillHealth(playerList []*users.UserRecord) map[string]skillHealthJSON
 				worstPlayer = u.Character.Name
 			}
 
-			// Stall detection: uses since last gain vs expected uses for next
-			approxUsesAtRank := float64(rank) * float64(bal.UsesPerRank) / mult
-			usesSinceGain := float64(useCount) - approxUsesAtRank
-			if usesSinceGain < 0 {
+			// Stall detection: uses since last gain vs expected uses for next.
+			// chanceAtRank comes from the probe -- the full production
+			// expression including StatProgressionRate and every per-skill,
+			// mutation and buff multiplier -- rather than bare
+			// CalculateProgressionChance, which understated it badly.
+			usesAtRank := usesToReach(probe, rank)
+			usesSinceGain := float64(useCount) - usesAtRank
+			if usesSinceGain < 0 || math.IsInf(usesAtRank, 1) {
 				usesSinceGain = 0
 			}
-			chanceAtRank := characters.CalculateProgressionChance(rank, softCap)
-			if chanceAtRank > 0 {
-				expectedUsesForNext := 1.0 / chanceAtRank
-				if expectedUsesForNext > 0 && usesSinceGain/expectedUsesForNext > 2.0 {
+			if chanceAtRank := probe(rank); chanceAtRank > 0 {
+				if usesSinceGain/(1.0/chanceAtRank) > 2.0 {
 					stallCount++
 				}
 			}
@@ -365,11 +448,23 @@ func buildStatHealth(playerList []*users.UserRecord) map[string]statHealthJSON {
 		distribution := map[string]int{
 			"0-50": 0, "51-100": 0, "101-150": 0, "151+": 0,
 		}
+		trainingDist := map[string]int{
+			"0": 0, "1-10": 0, "11-25": 0, "26-50": 0, "51+": 0,
+		}
 		for _, u := range playerList {
 			if u.Character == nil {
 				continue
 			}
-			val := u.Character.GetStatValue(statName)
+			// NOT GetStatValue: StatInfo.Value is yaml:"-" and
+			// loadRecentUserFiles unmarshals raw YAML without ever calling
+			// Recalculate(), so every OFFLINE player reported 0 and landed in
+			// the 0-50 bucket, making this chart garbage for anyone not logged
+			// in. getStatBaseValue reads Base + Training, which is what the save
+			// actually carries.
+			//
+			// This drops equipment Mods for online players too, and that is
+			// correct here: Mods are exactly what U10b-0 removed from the curve.
+			val := getStatBaseValue(u.Character, statName)
 			switch {
 			case val <= 50:
 				distribution["0-50"]++
@@ -380,8 +475,26 @@ func buildStatHealth(playerList []*users.UserRecord) map[string]statHealthJSON {
 			default:
 				distribution["151+"]++
 			}
+
+			// Buckets track the curve, not the value: 50 is
+			// StatProgressionSoftCap, and 51+ is the population past it.
+			switch tr := u.Character.GetStatTraining(statName); {
+			case tr <= 0:
+				trainingDist["0"]++
+			case tr <= 10:
+				trainingDist["1-10"]++
+			case tr <= 25:
+				trainingDist["11-25"]++
+			case tr <= 50:
+				trainingDist["26-50"]++
+			default:
+				trainingDist["51+"]++
+			}
 		}
-		result[statName] = statHealthJSON{Distribution: distribution}
+		result[statName] = statHealthJSON{
+			Distribution:         distribution,
+			TrainingDistribution: trainingDist,
+		}
 	}
 	return result
 }
@@ -612,16 +725,21 @@ func buildPlayerOverview(playerList []*users.UserRecord) []playerJSON {
 				rank = c.Skills[name]
 			}
 			useCount := c.GetSkillUseCount(name)
-			mult := skills.GetProgressionMultiplier(name)
-			virtualRank := math.Round(calcExpectedRank(useCount, mult, bal)*100) / 100
-			progChance := characters.CalculateProgressionChance(int(virtualRank), softCap)
+			// The production expression, not a copy of part of it. Bare
+			// CalculateProgressionChance omitted every multiplier Phase D
+			// solved, which is why this page could never have surfaced the
+			// sealed stats Phase B fixed.
+			progChance := c.ProgressionChanceForSkill(name, 1.0)
+			threshold := characters.ProgressionRollThreshold(progChance)
 
 			skillsMap[name] = playerSkillJSON{
 				Rank:              rank,
 				Tier:              skills.GetSkillRankDescription(rank),
 				UseCount:          useCount,
-				VirtualRank:       virtualRank,
+				ExpectedRank:      expectedRankForUses(skillChanceProbe(c, name), useCount, softCap),
 				ProgressionChance: progChance,
+				Dead:              threshold == 0,
+				Fragile:           threshold > 0 && threshold < 10,
 			}
 		}
 
@@ -629,12 +747,22 @@ func buildPlayerOverview(playerList []*users.UserRecord) []playerJSON {
 		statNames := []string{
 			"strength", "dexterity", "perception", "vitality", "willpower", "charisma",
 		}
+		// The stat side that never existed. The entire dead-stat class lives
+		// here, so this is the half of the page that matters after U10b-0.
 		statsMap := make(map[string]playerStatJSON, len(statNames))
 		for _, statName := range statNames {
+			progChance := c.ProgressionChanceForStat(statName, 1.0)
+			useCount := c.GetStatUseCount(statName)
+			threshold := characters.ProgressionRollThreshold(progChance)
+
 			statsMap[statName] = playerStatJSON{
-				Value:    getStatBaseValue(c, statName),
-				Training: getStatTraining(c, statName),
-				UseCount: c.GetStatUseCount(statName),
+				Value:             getStatBaseValue(c, statName),
+				Training:          c.GetStatTraining(statName),
+				UseCount:          useCount,
+				ExpectedRank:      expectedRankForUses(statChanceProbe(c, statName), useCount, int(bal.StatProgressionSoftCap)),
+				ProgressionChance: progChance,
+				Dead:              threshold == 0,
+				Fragile:           threshold > 0 && threshold < 10,
 			}
 		}
 
