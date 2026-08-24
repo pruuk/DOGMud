@@ -108,6 +108,24 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 		tickMobCooldowns(mob)
 		expireMobCombatMemory(mob)
 		tickMobCharmDuration(mob)
+		// The clock and its expiry belong in the SAME lane. They are one
+		// mechanism, and splitting them left a lapsed bond parked at zero for an
+		// unbounded time in a cold zone: the creature stayed charmed, stayed a
+		// companion, and kept reserving the caster's conviction until a player
+		// happened to walk into that zone.
+		//
+		// This cannot make a grudge fire where it otherwise would not have. The
+		// grudge requires the owner to be in the room, and a zone holding a player
+		// is active by construction (SnapshotActiveZones counts players per zone),
+		// so every grudge-eligible expiry was already reachable from the active
+		// lane. What moves here is the QUIET unwind, which now happens on schedule
+		// everywhere.
+		//
+		// Consequence, deliberately accepted: a charm's ExpiredCommand (befriend's
+		// CharmExpiredRevert, despawns) can now run in an unpopulated zone. Every
+		// other charm setter in the tree uses CharmPermanent or 99999, so in
+		// practice nothing but this spell reaches it.
+		tickMobCharmState(mob)
 		tickMobBuffs(mob, mobInstanceId)
 		tickMobConditions(mob)
 		tickMobRecomputeGoals(mob, roundCount) // chunk 4.2 — strategic-layer selection
@@ -148,7 +166,6 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 		if mob.Character.IsInCombat() && shouldFrenzy(mutations.HasMutationFlag(mob.Character.Mutations, "battle-frenzy"), mob.Character.Health, mob.Character.HealthMax.Value) {
 			mob.AddBuff(bloodFrenzyBuffId, "blood-frenzy")
 		}
-		tickMobCharmState(mob)
 		tickMobCrafting(mob)
 		revalidateMobStats(mob)
 	}
