@@ -1,32 +1,68 @@
-# U10c Charm Redesign Implementation Plan
+# U10c Charm Redesign Implementation Plan (v2)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make charm a companion with a clock — it joins the unified contest seam, its duration is bought with the margin of victory, and when the bond ends the creature turns on the caster.
+**Goal:** Make charm a companion with a clock — it stops running a private contest and instead consumes the seam contest it was already running, its duration is bought with the margin of victory, and when the bond ends mid-session the creature turns on the caster.
 
-**Architecture:** Charm stops calling `combat.RunContest` with hand-built scores and routes through `ResolveChannelAttack(ChannelSocial)`, answered by defy. The seam gains one additive field so an attack-win can report its opposed margin. The ~60-line dead resist ladder is deleted and its break-free branch is promoted to the unconditional expiry outcome.
+**Architecture:** Charm declares `target_defense_type: social`, which routes the cast it *already makes* through `ResolveChannelAttack(ChannelSocial)`. The charm effect moves into `applyMobEffect`'s switch, where that contest's result is already in scope, and the private `RunContest` in `resolveCharmSpell` is deleted. Net: **one fewer contest than today**, not one more.
 
-**Tech Stack:** Go, `internal/combat` (contest seam), `internal/hooks` (spell + round tick), `internal/characters` (companion state), `internal/configs` (balance knobs), YAML data files and ANSI help templates.
+**Tech Stack:** Go — `internal/combat` (seam), `internal/hooks` (spell resolution, round tick), `internal/characters` (companion state), `internal/mobs` (instance saves), `internal/configs` (balance knobs); YAML data files and ANSI help templates.
 
-**Spec:** `docs/superpowers/specs/2026-08-24-u10c-charm-redesign-design.md` — read sections 3 (decisions and their rationale) and 7 (traps) before starting.
+**Spec:** `docs/superpowers/specs/2026-08-24-u10c-charm-redesign-design.md` — **read sections 11, 12 and 13 FIRST.** They supersede 1-10, section 2.5 is known false, and section 13 supersedes 11.3.2.
 
 ---
 
-## Read this before Task 1
+## v1 was reviewed and rejected. Read this before Task 1.
 
-Four facts that are load-bearing and non-obvious. Each was verified in source; do not re-derive them.
+Three blind adversarial reviewers each made the same finding their number one. v1 of this plan was built on a false premise and would have shipped a silent defect. The facts below are all verified; do not re-derive them, and do not revert to v1's shape.
 
-1. **`AttackSide.score()` computes the score for you.**
-   ```go
-   return (float64(s.Stat) + float64(s.SkillRank)*float64(configs.GetBalanceConfig().SkillWeight)) * m
-   ```
-   The uniform skill weight is read *inside* the seam. You supply `Stat`, `Skill`, `SkillRank` and `Mult`. **The old ×25 becomes impossible to express** — that is the point, not an accident.
+1. **Charm ALREADY resolves through the seam.** `spellAttackChannel`
+   (`spell_resolution.go:1076-1081`) maps an **absent** `target_defense_type` to
+   `ChannelSpellMental` — absent is the DEFAULT, not an escape. The mob-target
+   loop (`:129-143`) calls `resolveAgainstMob` unconditionally; only the
+   *player* loop has an effect-type guard. `spellAttackSideFor` already builds
+   `Cha + manifestation × SkillWeight`.
+   **v1 proposed adding a second `ResolveChannelAttack` call. Do not.**
 
-2. **The seam does not surface the opposed margin on an attack win.** `NormalizedDefenceMargin` is assigned *below* `if res.Success { return out }`, so it is zero exactly when the attacker won. Task 1 fixes this.
+2. **`applyMobEffect` already receives the contest result.** Its signature ends
+   `out combat.ChannelDefenceResult` (`spell_resolution.go:811`) and it
+   switches on `spellData.EffectType` (`:822`). Charm currently falls to
+   `default`, which narrates and returns 0 — the verdict is thrown away, and
+   then the post-loop `resolveCharmSpell` (`:226-234`) runs a private contest
+   to decide the real outcome. **That is the actual defect.**
 
-3. **The margin sign is a documented footgun.** `contest.Result.Margin` is ATTACK-positive; `bestDefenseResult.margin` in `internal/combat` is DEFENCE-positive. The contest package's own docs say mixing them "compiles cleanly and silently puts crit on the losing side."
+3. **`AttackSide.score()` computes the score itself** —
+   `(Stat + SkillRank*SkillWeight) * Mult`, reading `SkillWeight` from config.
+   The old ×25 is not corrected so much as made inexpressible.
 
-4. **The conviction reservation is derived, not held.** `GetPoolReservation` sums each live companion's `ConvictionReserve` (`internal/characters/reservation.go:252`). `RemoveCompanion` therefore releases it automatically — **do not add an explicit release step.**
+4. **The seam does not surface the opposed margin on an attack WIN.**
+   `NormalizedDefenceMargin` is assigned *below* `if res.Success { return out }`,
+   so it is zero exactly when charm needs it. Task 1 fixes this.
+
+5. **The margin sign is a documented footgun.** `contest.Result.Margin` is
+   ATTACK-positive; `bestDefenseResult.margin` is DEFENCE-positive. The contest
+   package's docs say mixing them "compiles cleanly and silently puts crit on
+   the losing side."
+
+6. **Rounds-at-zero means two different things.** Logout
+   (`PlayerDespawn_HandleLeave.go:136-142`) and link-dead
+   (`users.go:347-352`, on the **tutorial Guide mob**) both signal by setting
+   `RoundsRemaining = 0` — the same state a natural expiry produces. Spec 13.4.
+
+7. **Five other systems set `Charmed`** — summons
+   (`companion_summon.go:107`), brood spawns
+   (`manifester_companions.go:98`), the homunculus
+   (`chrysifier_homunculus.go:160`), `befriend`
+   (`mobcommands/befriend.go:51`), and behaviour-tree companions
+   (`behaviortree/actions_mob.go:123`). **None may ever produce a grudge.**
+
+8. **The reservation is applied during `RecalculateStats()`**
+   (`validate.go:261-284`). `RemoveCompanion` alone does not release it —
+   v1 said it did, and that was wrong.
+
+9. **`contest_site_guard_test.go` names U10c as the owner of two allowlist
+   rows** (`:76-77`) and asserts both directions. Deleting the contest sites
+   without deleting the rows turns `internal/combat` red.
 
 ---
 
@@ -34,32 +70,45 @@ Four facts that are load-bearing and non-obvious. Each was verified in source; d
 
 | File | Responsibility | Change |
 |---|---|---|
-| `internal/combat/defence_multiplier.go` | The unified contest seam | Modify — add `AttackerNormalizedMargin`, populate on the win path |
-| `internal/combat/channel_attacker_margin_test.go` | Guards the new field's sign, zeroing and scaling | Create |
-| `internal/configs/config.balance.go` | Balance field declarations | Modify — two new `ConfigInt` fields |
-| `internal/configs/config.balance.mobs.go` | Companion/charm defaulting | Modify — defaults beside `CompanionReserveDefault` |
-| `internal/hooks/charm_duration.go` | Pure margin→rounds function | Create |
-| `internal/hooks/charm_duration_test.go` | Monotonicity, clamping, floored-takes-Min | Create |
-| `internal/hooks/charm_spell.go` | The cast: contest, duration, companion registration | Modify — route through the seam |
-| `internal/hooks/charm_spell_test.go` | Cast-path behaviour | Create |
-| `internal/hooks/NewRound_MobRoundTick.go` | Round tick: charm expiry | Modify — delete the ladder, promote the grudge |
-| `internal/hooks/charm_expiry_test.go` | Grudge, absent caster, reservation release | Create |
+| `internal/combat/defence_multiplier.go` | The seam | Modify — add `AttackerNormalizedMargin` |
+| `internal/combat/channel_attacker_margin_test.go` | Sign, zeroing, scaling of the new field | Create |
+| `internal/combat/contest_site_guard_test.go` | Arc-wide contest-site allowlist | Modify — remove two rows, add a legacy-literal entry |
+| `internal/configs/config.balance.go` | Field declarations | Modify — two `ConfigInt` |
+| `internal/configs/config.balance.mobs.go` | Defaulting | Modify |
+| `internal/hooks/charm_duration.go` | Pure margin→rounds | Create |
+| `internal/hooks/charm_duration_test.go` | Monotonic, clamped, floored-takes-Min | Create |
+| `internal/hooks/spell_resolution.go` | Routing + effect dispatch | Modify — `social` channel case, `case "charm":`, delete the post-loop block |
+| `internal/hooks/charm_spell.go` | The charm effect | Modify — delete the private contest; become the effect arm |
+| `internal/hooks/charm_effect_test.go` | Cast-path behaviour, single-contest guard | Create |
+| `internal/hooks/NewRound_MobRoundTick.go` | Expiry | Modify — delete ladder, promote grudge, gate it |
+| `internal/hooks/charm_expiry_test.go` | Grudge, source-type, logout, absent caster | Create |
+| `internal/mobs/instance_save.go` | Instance persistence | Modify — `EverCharmed` guard |
+| `internal/mobs/charm_immune_shops_test.go` | Shopkeeper regression guard | Create |
 | `internal/characters/companions.go` | `CompanionInfo` | Modify — delete `CharmDuration`, `CharmRerolls` |
-| `_datafiles/world/dogmud/spells/charm.yaml` | Spell description | Modify — §10.1 |
-| `_datafiles/world/dogmud/templates/help/charm.template` | Player help | Modify — §10.2 |
-| `_datafiles/config.yaml` | Shipped knob values | Modify — **via the `git show HEAD:` blob** |
+| `_datafiles/world/dogmud/spells/charm.yaml` | Spell data + description | Modify — add `target_defense_type: social`, rewrite description |
+| `_datafiles/world/dogmud/templates/help/charm.template` | Player help | Modify |
+| `_datafiles/config.yaml` | Shipped knobs | Modify — **via the `git show HEAD:` blob** |
+| `internal/combat/context.md`, `internal/hooks/context.md` | Package docs | Modify |
 
 ---
 
 ### Task 1: Surface the attack-win margin on the seam
 
-**Files:**
-- Modify: `internal/combat/defence_multiplier.go`
-- Test: `internal/combat/channel_attacker_margin_test.go` (create)
+**Files:** Modify `internal/combat/defence_multiplier.go`; create `internal/combat/channel_attacker_margin_test.go`.
 
-This is an additive change to shared combat code. It must not alter any existing field's behaviour.
+Additive change to shared combat code. Must not alter any existing field's behaviour.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Find the real test fixture first**
+
+v1 invented a helper that does not exist. The two real fixtures in package `combat` are:
+
+```bash
+grep -n "func defenceFixture\|func defenceAdmissionCharacters" internal/combat/*_test.go
+```
+
+`defenceFixture(defenderStamina int)` (`defense_affordability_test.go:19`) and `defenceAdmissionCharacters()` (`defence_admission_test.go:53`). **Neither takes a `*testing.T`.** Use `defenceAdmissionCharacters()` — it is the only one that gives the defender a rhetoric rank, which `ChannelSocial` needs since defy is the sole entry in that set.
+
+- [ ] **Step 2: Write the failing test**
 
 ```go
 package combat
@@ -73,19 +122,22 @@ import (
 )
 
 // AttackerNormalizedMargin is the attack-positive twin of
-// NormalizedDefenceMargin. The two are populated on OPPOSITE paths and neither
-// is a substitute for the other: mixing them compiles cleanly and inverts the
-// result, which is why contest.Result.Margin carries a warning in its own docs.
+// NormalizedDefenceMargin. They populate on OPPOSITE paths and neither
+// substitutes for the other; contest.Result.Margin's own docs warn that mixing
+// the two conventions compiles cleanly and inverts the outcome.
 func TestAttackerNormalizedMargin_PopulatedOnlyOnAttackWin(t *testing.T) {
-	attacker, defender := newContestPair(t)
+	attacker, defender := defenceAdmissionCharacters()
 
-	// Attack wins decisively.
 	restore := SetChannelAttackContestRunnerForTest(
 		func(atk float64, entries []contest.Entry) contest.Result {
+			name := ""
+			if len(entries) > 0 {
+				name = entries[0].Name
+			}
 			return contest.Result{
-				Success:     true,
-				Contested:   true,
+				Success: true, Contested: true, Winner: name,
 				Margin:      30,
+				AttackRoll:  dice.RollResult{StdDev: 10},
 				DefenseRoll: dice.RollResult{StdDev: 10},
 			}
 		})
@@ -98,7 +150,7 @@ func TestAttackerNormalizedMargin_PopulatedOnlyOnAttackWin(t *testing.T) {
 		t.Errorf("AttackerNormalizedMargin = %v, want %v", out.AttackerNormalizedMargin, want)
 	}
 	if out.AttackerNormalizedMargin <= 0 {
-		t.Error("a decisive ATTACK win must produce a POSITIVE margin; the sign is inverted")
+		t.Error("a decisive ATTACK win must be POSITIVE; the sign is inverted")
 	}
 	if out.NormalizedDefenceMargin != 0 {
 		t.Errorf("NormalizedDefenceMargin = %v, want 0 on an attack win", out.NormalizedDefenceMargin)
@@ -106,21 +158,24 @@ func TestAttackerNormalizedMargin_PopulatedOnlyOnAttackWin(t *testing.T) {
 }
 
 func TestAttackerNormalizedMargin_ZeroWhenDefenceWon(t *testing.T) {
-	attacker, defender := newContestPair(t)
+	attacker, defender := defenceAdmissionCharacters()
 
 	restore := SetChannelAttackContestRunnerForTest(
 		func(atk float64, entries []contest.Entry) contest.Result {
+			name := ""
+			if len(entries) > 0 {
+				name = entries[0].Name
+			}
 			return contest.Result{
-				Success:     false,
-				Contested:   true,
+				Success: false, Contested: true, Winner: name,
 				Margin:      -30,
+				AttackRoll:  dice.RollResult{StdDev: 10},
 				DefenseRoll: dice.RollResult{StdDev: 10},
 			}
 		})
 	defer restore()
 
 	out := ResolveChannelAttack(ChannelSocial, AttackSide{Stat: 100}, attacker, defender)
-
 	if out.AttackerNormalizedMargin != 0 {
 		t.Errorf("AttackerNormalizedMargin = %v, want 0 when the defence won", out.AttackerNormalizedMargin)
 	}
@@ -129,37 +184,31 @@ func TestAttackerNormalizedMargin_ZeroWhenDefenceWon(t *testing.T) {
 // A floored outcome stamps a +-1 SENTINEL margin, not a roll. Reporting it
 // would let a mercy-granted win read as dominance.
 func TestAttackerNormalizedMargin_ZeroWhenFloored(t *testing.T) {
-	attacker, defender := newContestPair(t)
+	attacker, defender := defenceAdmissionCharacters()
 
 	restore := SetChannelAttackContestRunnerForTest(
 		func(atk float64, entries []contest.Entry) contest.Result {
+			name := ""
+			if len(entries) > 0 {
+				name = entries[0].Name
+			}
 			return contest.Result{
-				Success:     true,
-				Contested:   true,
-				Floored:     true,
+				Success: true, Contested: true, Floored: true, Winner: name,
 				Margin:      1,
+				AttackRoll:  dice.RollResult{StdDev: 10},
 				DefenseRoll: dice.RollResult{StdDev: 10},
 			}
 		})
 	defer restore()
 
 	out := ResolveChannelAttack(ChannelSocial, AttackSide{Stat: 100}, attacker, defender)
-
 	if out.AttackerNormalizedMargin != 0 {
 		t.Errorf("AttackerNormalizedMargin = %v, want 0 on a floored win", out.AttackerNormalizedMargin)
 	}
 }
 ```
 
-**Before writing this, find the existing helper that builds a contest pair.** Run:
-
-```bash
-grep -rn "func newContestPair\|func newChannelPair\|attacker, defender :=" internal/combat/*_test.go | head -5
-```
-
-If no such helper exists, write one in the new file that returns two `*characters.Character` with `Validate()` called, mirroring whatever the nearest existing channel test does.
-
-- [ ] **Step 2: Run the test to verify it fails**
+- [ ] **Step 3: Run to verify it fails**
 
 ```bash
 go test ./internal/combat/ -run TestAttackerNormalizedMargin -v
@@ -167,37 +216,36 @@ go test ./internal/combat/ -run TestAttackerNormalizedMargin -v
 
 Expected: FAIL — `out.AttackerNormalizedMargin undefined`.
 
-- [ ] **Step 3: Add the field**
+- [ ] **Step 4: Add the field**
 
-In `ChannelDefenceResult`, directly beneath `NormalizedDefenceMargin`:
+Beneath `NormalizedDefenceMargin` in `ChannelDefenceResult`:
 
 ```go
 	// AttackerNormalizedMargin is the ATTACK-POSITIVE opposed margin, populated
-	// ONLY when the attacker won. NormalizedDefenceMargin is its
-	// defence-positive counterpart and is populated only when the defence won,
-	// so neither is a substitute for the other and neither is meaningful on the
-	// other's path. See contest.Result.Margin's own warning: mixing the two
-	// compiles cleanly and silently puts the outcome on the losing side.
+	// only on the res.Success return. NormalizedDefenceMargin is its
+	// defence-positive counterpart, populated only when the defence won, so
+	// neither substitutes for the other and neither is meaningful on the
+	// other's path. contest.Result.Margin's docs record why that matters:
+	// mixing the conventions compiles cleanly and inverts the outcome.
 	//
-	// Zero on a floored outcome — the margin is then a +-1 sentinel rather than
-	// a roll, and a mercy-granted win must not read as dominance.
+	// Zero on a floored win — the margin is then a +-1 sentinel, not a roll.
 	//
-	// Added by U10c so charm can buy its duration with the margin of victory.
-	// Nothing else consumes it yet; it is a general gap rather than a
-	// charm-specific one, since any effect scaled by how decisively the attack
-	// won hits the same wall.
+	// ALSO ZERO on three other attack-win exits that never reach that return:
+	// an empty defence set, an uncontested roll, and the ForceCrit forced win.
+	// A consumer that must distinguish "no margin" from "zero margin" needs
+	// more than this field.
+	//
+	// Added by U10c for charm's duration; the gap is general, not charm-shaped.
 	AttackerNormalizedMargin float64
 ```
 
-- [ ] **Step 4: Populate it on the win path**
-
-Locate the early return:
+- [ ] **Step 5: Populate it — at line 386, NOT 424**
 
 ```bash
 grep -n "if res.Success {" internal/combat/defence_multiplier.go
 ```
 
-Replace that block so the margin is stamped before returning:
+**This returns TWO matches.** `:386` is inside `resolveChannelAttackWithRunner` and returns `out` — that is the one. `:424` is inside `defenceDamageMultiplier`, returns `1.0`, and has no `out` in scope; patching it is a compile error.
 
 ```go
 	if res.Success {
@@ -208,23 +256,14 @@ Replace that block so the margin is stamped before returning:
 	}
 ```
 
-Note the guards mirror the existing `DefenseRollZScore` treatment three lines above: floored outcomes expose zero, and a zero StdDev (uncontested) is skipped.
-
-- [ ] **Step 5: Run the tests to verify they pass**
+- [ ] **Step 6: Verify, and prove nothing else changed**
 
 ```bash
 go test ./internal/combat/ -run TestAttackerNormalizedMargin -v
-```
-
-Expected: PASS, all three.
-
-- [ ] **Step 6: Prove nothing else changed**
-
-```bash
 go test ./internal/combat/ ./internal/hooks/ ./internal/actions/ -count=1
 ```
 
-Expected: all `ok`. The field is additive; any failure here means the win-path return was altered rather than extended.
+Expected: the three new tests PASS; everything else `ok`. Any other failure means the return was altered rather than extended.
 
 - [ ] **Step 7: Commit**
 
@@ -232,105 +271,89 @@ Expected: all `ok`. The field is additive; any failure here means the win-path r
 git add internal/combat/defence_multiplier.go internal/combat/channel_attacker_margin_test.go
 git commit -m "feat(combat): surface the attack-positive margin on a channel win
 
-ResolveChannelAttack assigned NormalizedDefenceMargin below the
-'if res.Success { return out }' early return, so the opposed margin was zero
-exactly when the ATTACKER won. Any effect that wants to scale with how
-decisively an attack landed had nothing to read.
+NormalizedDefenceMargin is assigned below the 'if res.Success { return out }'
+early return, so the opposed margin was zero exactly when the ATTACKER won.
+Any effect scaling with how decisively an attack landed had nothing to read.
 
-Additive: one field, populated on the win path with the same guards the
-neighbouring DefenseRollZScore already uses -- zero when floored, because the
-margin is then a sentinel rather than a roll, and skipped on a zero StdDev.
-
-U10c consumes it for charm's duration. The gap is general, not charm-specific."
+Additive, with the same guards the neighbouring DefenseRollZScore uses. The
+doc comment names the three other attack-win exits that also leave it zero, so
+a future consumer is not misled by the common case."
 ```
 
 ---
 
 ### Task 2: The duration knobs
 
-**Files:**
-- Modify: `internal/configs/config.balance.go`
-- Modify: `internal/configs/config.balance.mobs.go`
-- Modify: `_datafiles/config.yaml` — **via the `git show HEAD:` blob, see Step 4**
+**Files:** Modify `internal/configs/config.balance.go`, `internal/configs/config.balance.mobs.go`, `_datafiles/config.yaml`.
 
-- [ ] **Step 1: Declare the fields**
-
-In `internal/configs/config.balance.go`, beside `CompanionReserveDefault`:
+- [ ] **Step 1: Declare the fields** — beside `CompanionReserveDefault` in `config.balance.go`:
 
 ```go
 	CharmDurationMinRounds ConfigInt `yaml:"CharmDurationMinRounds"` // Rounds a barely-won charm holds, and what a floored win takes (default 30)
-	CharmDurationMaxRounds ConfigInt `yaml:"CharmDurationMaxRounds"` // Rounds a charm won at or beyond the crit bar holds (default 450)
+	CharmDurationMaxRounds ConfigInt `yaml:"CharmDurationMaxRounds"` // Rounds a charm won by two sigma or better holds (default 450)
 ```
 
-- [ ] **Step 2: Default them**
-
-In `internal/configs/config.balance.mobs.go`, immediately after the
-`CompanionReserveDefault` block:
+- [ ] **Step 2: Default them** — in `config.balance.mobs.go`, after the `CompanionReserveDefault` block:
 
 ```go
 	if b.CharmDurationMinRounds < 1 {
-		// At RoundSeconds 4 this is ~3.4 minutes. It is what a scraped win buys,
-		// and what a FLOORED win buys, since a mercy-granted success is by
-		// definition not a dominant one.
+		// ~3.4 minutes at RoundSeconds 4. What a scraped win buys, and what a
+		// FLOORED win buys, since a mercy-granted success is not a dominant one.
 		b.CharmDurationMinRounds = 30
 	}
 	if b.CharmDurationMaxRounds < 1 {
-		// ~30 minutes. Chosen so a strong (1 sigma) win lands near 240 rounds,
-		// reproducing the dead resist ladder's own 50 + Cha/2 + manifestation*3
-		// (~235 rounds for a veteran) -- the only prior art for what a charm
-		// duration should be.
+		// ~30 minutes. Deliberately short enough that a bond usually begins and
+		// ends inside one session, which is what makes spec 13's
+		// destroy-on-logout rule an edge case rather than a strategy.
 		b.CharmDurationMaxRounds = 450
 	}
 ```
 
-- [ ] **Step 3: Verify the defaults load**
+**Do not** justify 450 by the old ladder's `50 + Cha/2 + manifestation*3`. Review found that number was the *interval between re-rolls*, re-granted on each success — it never meant "how long a charm lasts", and repeating that claim in a code comment would give the tuning a false pedigree.
+
+- [ ] **Step 3: Verify defaults load**
 
 ```bash
 go test ./internal/configs/ -count=1
 ```
 
-Expected: `ok`.
+- [ ] **Step 4: Ship the values via the committed blob**
 
-- [ ] **Step 4: Add the shipped values to `config.yaml` from the committed blob**
-
-`_datafiles/config.yaml` has `skip-worktree` set and the working copy carries dev overrides (HttpPort, LogLevel, an uncommitted `Playtest:` block). Editing it on disk and staging it would ship those. Build the change from the committed blob instead:
+`_datafiles/config.yaml` has `skip-worktree` and the working copy carries dev overrides that must not ship.
 
 ```bash
 git show HEAD:_datafiles/config.yaml > /tmp/cfg.yaml
-# insert the two keys next to CompanionReserveDefault (or the companion block)
+# add next to the companion knobs:
 #   CharmDurationMinRounds: 30
 #   CharmDurationMaxRounds: 450
-python -c "import yaml;yaml.safe_load(open(r'<windows path to /tmp/cfg.yaml>',encoding='utf-8'));print('parses')"
+python -c "import yaml;yaml.safe_load(open(r'C:\Users\CALABE~1\AppData\Local\Temp\cfg.yaml',encoding='utf-8'));print('parses')"
 H=$(git hash-object -w /tmp/cfg.yaml)
 git update-index --cacheinfo 100644,$H,_datafiles/config.yaml
-git diff --cached _datafiles/config.yaml   # MUST show only the two added lines
-git update-index --skip-worktree _datafiles/config.yaml   # cacheinfo CLEARS this flag
-git ls-files -v _datafiles/config.yaml     # MUST print "S"
+git diff --cached _datafiles/config.yaml            # MUST show only the two added lines
+git update-index --skip-worktree _datafiles/config.yaml
+git ls-files -v _datafiles/config.yaml              # MUST print "S"
 ```
 
-The `skip-worktree` restore is not optional — `git update-index --cacheinfo` clears the bit, and leaving it clear makes every later branch switch fail on this file.
+`--cacheinfo` **clears** skip-worktree; restoring it is not optional.
+
+**Also copy the two keys into the on-disk file by hand.** Task 10's boot test copies the working file, so without this the boot exercises the Go defaults rather than the shipped values.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/configs/config.balance.go internal/configs/config.balance.mobs.go
+git add internal/configs/
 git commit -m "feat(balance): charm duration knobs
 
-Min 30 rounds (~3.4 min) is what a scraped or floored win buys. Max 450 (~30
-min) is tuned so a 1-sigma win lands near 240 rounds, reproducing the dead
-resist ladder's own formula -- the only prior art for a charm duration.
-
-config.yaml built from the git show HEAD: blob; the working copy carries dev
-overrides that must not ship."
+Min 30 rounds is a scraped or floored win; Max 450 is a two-sigma win. The
+ceiling is deliberately inside a typical session, which is what makes the
+destroy-on-logout rule an edge case rather than a strategy."
 ```
 
 ---
 
 ### Task 3: The duration function
 
-**Files:**
-- Create: `internal/hooks/charm_duration.go`
-- Test: `internal/hooks/charm_duration_test.go` (create)
+**Files:** Create `internal/hooks/charm_duration.go` and `internal/hooks/charm_duration_test.go`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -351,9 +374,8 @@ func charmDurationTestConfig(t *testing.T) {
 	configs.SetConfigForTest(t, cfg)
 }
 
-// A bigger margin must NEVER buy a shorter bond. If the sign is inverted this
-// test is the one that catches it, so assert the direction explicitly rather
-// than only asserting the endpoints.
+// A bigger margin must NEVER buy a shorter bond. This is the test that catches
+// an inverted margin sign, so assert the direction, not just the endpoints.
 func TestCharmDurationFor_IsMonotonicInMargin(t *testing.T) {
 	charmDurationTestConfig(t)
 
@@ -361,7 +383,7 @@ func TestCharmDurationFor_IsMonotonicInMargin(t *testing.T) {
 	for _, m := range []float64{0, 0.1, 0.25, 0.5, 1.0, 1.5, 1.9} {
 		got := charmDurationFor(m)
 		if got < prev {
-			t.Errorf("margin %v gave %d rounds, less than the %d a smaller margin gave", m, got, prev)
+			t.Errorf("margin %v gave %d rounds, less than a smaller margin's %d", m, got, prev)
 		}
 		prev = got
 	}
@@ -371,52 +393,49 @@ func TestCharmDurationFor_ClampsBothEnds(t *testing.T) {
 	charmDurationTestConfig(t)
 
 	if got := charmDurationFor(0); got != 30 {
-		t.Errorf("margin 0 = %d rounds, want the 30 minimum", got)
+		t.Errorf("margin 0 = %d, want the 30 minimum", got)
 	}
 	// A floored win reports margin 0 and must take exactly Min.
 	if got := charmDurationFor(-5); got != 30 {
-		t.Errorf("negative margin = %d rounds, want the 30 minimum", got)
+		t.Errorf("negative margin = %d, want the 30 minimum", got)
 	}
 	if got := charmDurationFor(2.0); got != 450 {
-		t.Errorf("margin at the crit bar = %d rounds, want the 450 maximum", got)
+		t.Errorf("two sigma = %d, want the 450 maximum", got)
 	}
 	if got := charmDurationFor(50); got != 450 {
-		t.Errorf("absurd margin = %d rounds, want the 450 maximum", got)
+		t.Errorf("absurd margin = %d, want the 450 maximum", got)
 	}
 }
 
-// The shipped tuning must reproduce the dead ladder's ~235 rounds at a strong
-// win. That anchor is why Max is 450 and not something rounder.
-func TestCharmDurationFor_StrongWinMatchesThePriorArt(t *testing.T) {
+// Assert the RELATIONSHIP, not the shipped tuning: a two-sigma-halfway win sits
+// halfway up the range. Hardcoding 240 would break on any retune while
+// testing nothing about the curve.
+func TestCharmDurationFor_MidMarginIsMidRange(t *testing.T) {
 	charmDurationTestConfig(t)
 
-	if got := charmDurationFor(1.0); got != 240 {
-		t.Errorf("a 1-sigma win = %d rounds, want 240 (the ladder's ~235 anchor)", got)
+	min, max := charmDurationFor(0), charmDurationFor(2.0)
+	want := min + (max-min)/2
+	if got := charmDurationFor(1.0); got != want {
+		t.Errorf("margin 1.0 = %d, want the midpoint %d", got, want)
 	}
 }
 
-// CharmPermanent is -1 and means never expires. charmDurationFor must never
-// return it or 0, either of which would make the bond permanent or instant.
+// CharmPermanent is -1 and means never expires. This must never return it, or
+// 0, either of which makes the bond permanent or instant.
 func TestCharmDurationFor_NeverReturnsSentinelOrZero(t *testing.T) {
 	charmDurationTestConfig(t)
 
 	for _, m := range []float64{-100, -1, 0, 0.001, 1, 100} {
 		if got := charmDurationFor(m); got < 1 {
-			t.Errorf("margin %v returned %d; must always be >= 1 round", m, got)
+			t.Errorf("margin %v returned %d; must always be >= 1", m, got)
 		}
 	}
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 2: Run to verify it fails** — `go test ./internal/hooks/ -run TestCharmDurationFor -v`. Expected: `undefined: charmDurationFor`.
 
-```bash
-go test ./internal/hooks/ -run TestCharmDurationFor -v
-```
-
-Expected: FAIL — `undefined: charmDurationFor`.
-
-- [ ] **Step 3: Write the implementation**
+- [ ] **Step 3: Implement**
 
 ```go
 package hooks
@@ -427,331 +446,296 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 )
 
-// charmCritBar is the normalized margin at which a charm buys its full
-// duration. It is the crit bar at parity, so "as decisive as a critical
-// success" and "the longest possible hold" are the same threshold.
-const charmCritBar = 2.0
+// charmMarginCeiling is the normalized margin at which a charm buys its full
+// duration: two sigma.
+//
+// NOT the crit bar, despite the resemblance. combat.CritBarFor subtracts
+// CritBarSkillSlope*(atkRank-defRank) and clamps to [1.5, 3.0], and because no
+// mob in the game carries an authored rhetoric rank the real bar sits at 1.5
+// for any caster past manifestation 10. Calling this "the crit threshold"
+// would be false for exactly the casters who use charm most.
+const charmMarginCeiling = 2.0
 
 // charmDurationFor converts the ATTACK-POSITIVE normalized margin of the
 // winning contest into the rounds a charm holds.
 //
 //	duration = Min + (Max - Min) * clamp(margin / 2.0, 0, 1)
 //
-// The player is never told this number, and never told how long is left. That
-// uncertainty is the mechanic (spec 3.3): a bond you cannot plan around is the
-// whole risk of charming something dangerous.
+// The player is never told this number, nor how long is left. That uncertainty
+// is the mechanic (spec 3.3): a bond you cannot plan around is the whole risk
+// of charming something dangerous.
 //
-// A floored win arrives here as margin 0 and therefore takes Min, which is
-// correct -- a mercy-granted success is not a dominant one.
+// A floored win arrives as margin 0 and takes Min, which is correct — a
+// mercy-granted success is not a dominant one.
 func charmDurationFor(normalizedMargin float64) int {
 	bal := configs.GetBalanceConfig()
 
-	min := int(bal.CharmDurationMinRounds)
-	max := int(bal.CharmDurationMaxRounds)
-	if min < 1 {
-		min = 1
+	lo := int(bal.CharmDurationMinRounds)
+	hi := int(bal.CharmDurationMaxRounds)
+	if lo < 1 {
+		lo = 1
 	}
-	if max < min {
-		max = min
+	if hi < lo {
+		hi = lo
 	}
 
-	ratio := normalizedMargin / charmCritBar
+	ratio := normalizedMargin / charmMarginCeiling
 	if ratio < 0 {
 		ratio = 0
 	}
 	if ratio > 1 {
 		ratio = 1
 	}
-
-	return min + int(math.Round(float64(max-min)*ratio))
+	return lo + int(math.Round(float64(hi-lo)*ratio))
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 4: Run to verify it passes**, then commit.
 
 ```bash
 go test ./internal/hooks/ -run TestCharmDurationFor -v
-```
-
-Expected: PASS, all four.
-
-- [ ] **Step 5: Commit**
-
-```bash
 git add internal/hooks/charm_duration.go internal/hooks/charm_duration_test.go
 git commit -m "feat(charm): duration is bought with the margin of victory
 
-duration = Min + (Max-Min) * clamp(margin/2.0, 0, 1), where 2.0 is the crit bar
-at parity, so 'as decisive as a crit' and 'the longest hold' coincide.
+A floored win arrives as margin 0 and takes Min: a mercy-granted success is not
+a dominant one.
 
-A floored win arrives as margin 0 and takes Min, which is right: a
-mercy-granted success is not a dominant one.
-
-The monotonicity test exists to catch an inverted margin sign, which the
-contest package warns compiles cleanly and silently inverts outcomes."
+The two-sigma ceiling is NOT described as the crit bar. CritBarFor clamps to
+1.5 for any caster past manifestation 10, because no mob carries an authored
+rhetoric rank, so that framing would be false for exactly the casters who use
+charm most."
 ```
 
 ---
 
-### Task 4: Route the cast through the seam
+### Task 4: Route charm through the contest it already runs
 
-**Files:**
-- Modify: `internal/hooks/charm_spell.go`
-- Test: `internal/hooks/charm_spell_test.go` (create)
+This is the task v1 got backwards. **Nothing here adds a contest; this deletes one.**
 
-- [ ] **Step 1: Read the current cast path**
+**Files:** Modify `_datafiles/world/dogmud/spells/charm.yaml`, `internal/hooks/spell_resolution.go`, `internal/hooks/charm_spell.go`; create `internal/hooks/charm_effect_test.go`.
 
-```bash
-sed -n '1,120p' internal/hooks/charm_spell.go
-```
-
-Note what must be **preserved**: the `CharmImmune` gate, the companion-count gate, `WouldBreachReservationCap`, the reservation calculation, `EndAggro`, `TrackCharmed`, and the `CompanionInfo` registration.
-
-- [ ] **Step 2: Write the failing test**
-
-```go
-package hooks
-
-import (
-	"testing"
-
-	"github.com/GoMudEngine/GoMud/internal/combat"
-	"github.com/GoMudEngine/GoMud/internal/contest"
-	"github.com/GoMudEngine/GoMud/internal/dice"
-	"github.com/GoMudEngine/GoMud/internal/skills"
-)
-
-// The attack score must come from the seam, which reads SkillWeight from
-// config. Before U10c charm multiplied manifestation by a hardcoded 25, which
-// is how it survived the U6 flip.
-func TestCharmAttackSide_UsesUniformSkillWeight(t *testing.T) {
-	charmDurationTestConfig(t)
-
-	side := charmAttackSide(charmTestCaster(t), false, false)
-
-	if side.Skill != skills.Manifestation {
-		t.Errorf("Skill = %v, want manifestation", side.Skill)
-	}
-	if side.Mult != 1.0 && side.Mult != 0 {
-		t.Errorf("Mult = %v, want unset/1.0 outside combat", side.Mult)
-	}
-	// The seam multiplies SkillRank by SkillWeight itself. A charm-side
-	// pre-multiplication would show up as an inflated SkillRank.
-	if side.SkillRank != charmTestCaster(t).GetSkillLevel(skills.Manifestation) {
-		t.Errorf("SkillRank = %d, want the raw skill level with no pre-multiplication", side.SkillRank)
-	}
-}
-
-func TestCharmAttackSide_InCombatPenaltiesPreserved(t *testing.T) {
-	charmDurationTestConfig(t)
-	c := charmTestCaster(t)
-
-	if got := charmAttackSide(c, true, true).Mult; got != 0.75 {
-		t.Errorf("Mult vs a creature fighting YOU = %v, want 0.75", got)
-	}
-	if got := charmAttackSide(c, true, false).Mult; got != 0.85 {
-		t.Errorf("Mult vs a creature fighting someone else = %v, want 0.85", got)
-	}
-}
-
-// A fumbled attack aborts even when the roll won -- the seam documents this and
-// every other channel honours it.
-func TestCharmOutcome_FumbleAbortsEvenOnAWinningRoll(t *testing.T) {
-	out := combat.ChannelDefenceResult{Defended: false, AttackerFumble: true}
-	if charmSucceeded(out) {
-		t.Error("a fumbled charm must fail even though the defence did not win")
-	}
-}
-
-func TestCharmOutcome_SuccessIsAnUndefendedNonFumble(t *testing.T) {
-	if !charmSucceeded(combat.ChannelDefenceResult{Defended: false}) {
-		t.Error("an undefended, unfumbled charm must succeed")
-	}
-	if charmSucceeded(combat.ChannelDefenceResult{Defended: true}) {
-		t.Error("a defended charm must fail")
-	}
-}
-
-var _ = contest.Result{}
-var _ = dice.RollResult{}
-```
-
-Write `charmTestCaster(t)` in the same file: a `*characters.Character` with `Validate()` called, a known Charisma, and a known manifestation level.
-
-- [ ] **Step 3: Run to verify it fails**
+- [ ] **Step 1: Read the three sites before editing**
 
 ```bash
-go test ./internal/hooks/ -run "TestCharmAttackSide|TestCharmOutcome" -v
+sed -n '1076,1082p' internal/hooks/spell_resolution.go   # spellAttackChannel
+sed -n '811,836p'   internal/hooks/spell_resolution.go   # applyMobEffect switch
+sed -n '226,234p'   internal/hooks/spell_resolution.go   # the post-loop charm block to DELETE
+sed -n '25,120p'    internal/hooks/charm_spell.go        # resolveCharmSpell
 ```
 
-Expected: FAIL — `undefined: charmAttackSide`, `undefined: charmSucceeded`.
+- [ ] **Step 2: Declare the channel in the spell data**
 
-- [ ] **Step 4: Extract the two helpers**
+In `_datafiles/world/dogmud/spells/charm.yaml`, beside the other top-level keys:
 
-Add to `internal/hooks/charm_spell.go`:
+```yaml
+target_defense_type: social
+```
+
+- [ ] **Step 3: Teach `spellAttackChannel` the social channel**
 
 ```go
-// charmAttackSide builds the attacker's half of the ONE contest.
-//
-// The score itself is the seam's job: AttackSide.score() computes
-// (Stat + SkillRank*SkillWeight) * Mult, reading SkillWeight from config. That
-// is why this returns components rather than a number, and why charm can no
-// longer express the hardcoded x25 it carried through the U6 flip.
-//
-// Mult carries the in-combat penalty, which is preserved unchanged: a creature
-// already fighting is harder to reach, and hardest of all when it is fighting
-// YOU.
-func charmAttackSide(ch *characters.Character, targetInCombat, targetFightingCaster bool) combat.AttackSide {
-	mult := 1.0
-	if targetInCombat {
-		mult = 0.85
-		if targetFightingCaster {
-			mult = 0.75
-		}
+func spellAttackChannel(spellData *spells.SpellData) combat.AttackChannel {
+	if spellData == nil {
+		return combat.ChannelSpellMental
 	}
-	return combat.AttackSide{
-		Stat:      ch.Stats.Charisma.ValueAdj,
-		StatName:  "charisma",
-		Skill:     skills.Manifestation,
-		SkillRank: ch.GetSkillLevel(skills.Manifestation),
-		Mult:      mult,
+	switch spellData.TargetDefenseType {
+	case "physical":
+		return combat.ChannelSpellPhysical
+	case "social":
+		// Charm is an act of social domination whose attack side is already
+		// Charisma, so defy answers it. Declaring the channel in data is what
+		// replaces charm's hand-rolled contest.
+		return combat.ChannelSocial
 	}
-}
-
-// charmSucceeded reads the seam's verdict.
-//
-// Fumble is resolved BEFORE the win: the seam documents that a fumbled attack
-// aborts even when the roll won, uniformly across channels.
-func charmSucceeded(out combat.ChannelDefenceResult) bool {
-	if out.AttackerFumble {
-		return false
-	}
-	return !out.Defended
+	return combat.ChannelSpellMental
 }
 ```
 
-- [ ] **Step 5: Run to verify the helpers pass**
+- [ ] **Step 4: Give charm its own effect arm**
 
-```bash
-go test ./internal/hooks/ -run "TestCharmAttackSide|TestCharmOutcome" -v
-```
-
-Expected: PASS.
-
-- [ ] **Step 6: Replace the hand-rolled contest**
-
-Delete the attack-score, defence-score, aggro-penalty and `RunContest` blocks (spec 2.1, 2.7 — sections 3, 4, 5 and 6 of the current function) and replace with:
+In `applyMobEffect`'s switch, before `default`:
 
 ```go
-	// ── 3. One contest, through the seam ───────────────────────────────
-	// Charm was the one attack channel the U6b flip missed: it built its own
-	// attack and defence scores and called RunContest directly. It now resolves
-	// like every other channel. Defy answers it -- charm is an act of social
-	// domination whose attack side is already Charisma.
-	//
-	// The StatPoolTotal*0.10 defence term is GONE and is not to be restored.
-	// There is deliberately no power gate on what may be charmed: a charmed
-	// elite trains and keeps the gear you give it, then turns on you at a
-	// moment you cannot predict. The risk is the balance (spec 3.6).
-	targetInCombat := targetMob.Character.IsInCombat()
-	targetFightingCaster := targetInCombat &&
-		targetMob.Character.CurrentCombatTarget().UserId == user.UserId
-
-	out := combat.ResolveChannelAttack(
-		combat.ChannelSocial,
-		charmAttackSide(ch, targetInCombat, targetFightingCaster),
-		ch,
-		&targetMob.Character,
-	)
-
-	success := charmSucceeded(out)
+	case "charm":
+		return applyMobEffect_charm(user, mob, room, spellData, out, mName)
 ```
 
-Then replace the permanent charm with a real duration:
+- [ ] **Step 5: Rewrite `resolveCharmSpell` as the effect arm**
+
+In `charm_spell.go`, replace `resolveCharmSpell` with a function that **consumes** `out` instead of rolling:
 
 ```go
-	if success {
-		// The bond has a clock, and the player is never told how long it is.
-		rounds := charmDurationFor(out.AttackerNormalizedMargin)
-		targetMob.Character.Charm(user.UserId, rounds, "")
-```
+// applyMobEffect_charm binds a creature whose contest has ALREADY been decided.
+//
+// Charm used to run its own RunContest here, on hand-built scores, on top of
+// the ChannelSpellMental contest the cast had already run and thrown away. That
+// gave one cast two contests, two defence charges, two progression awards and
+// two verdicts free to disagree — the exact shape U6b was written to delete.
+// The contest now happens once, in the seam, on ChannelSocial, and this reads
+// its result.
+//
+// Returns 0: charm deals no damage.
+func applyMobEffect_charm(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room,
+	spellData *spells.SpellData, out combat.ChannelDefenceResult, mName string) int {
 
-**Delete the `99999`.** Do not substitute `characters.CharmPermanent`: that sentinel means "never expires" and would restore exactly the bug this slice removes.
+	ch := user.Character
 
-- [ ] **Step 7: Record that the flat reservation is deliberate**
+	if mob.CharmImmune {
+		user.SendText(messaging.CategorySpellMental, `That creature's mind is impervious to charm.`)
+		return 0
+	}
 
-Spec 3.8. The reservation call is unchanged, but it now looks like an oversight
-to anyone who reads it after this slice — a rat and an Elemental King reserving
-identically is exactly the shape of a bug. Comment it at the call site so nobody
-"fixes" it:
-
-```go
-	// ── 2. Reservation + budget gate ───────────────────────────────────
+	// ── Reservation + budget gate ──────────────────────────────────────
 	// The reserve is FLAT and does not scale with what you charmed: a sewer rat
 	// and an Elemental King tie up the same conviction. That is a deliberate
-	// decision (U10c, spec 3.8), not an oversight, and not a leftover from the
-	// pet-multiplier path.
-	//
-	// Charm is already a risky game -- the creature trains while it serves you,
-	// keeps the gear you hand it, and turns on you at a moment you cannot
-	// predict. Juggling several charmed NPCs is challenge enough on its own. A
-	// power-scaled price would add bookkeeping without adding tension, so the
-	// cost of charming something enormous is the DANGER, not the invoice.
+	// decision (spec 3.8), not an oversight and not a leftover from the
+	// pet-multiplier path. Charm is already a risky game — the creature trains
+	// while it serves you, keeps the gear you hand it, and turns on you at a
+	// moment you cannot predict. A power-scaled price would add bookkeeping
+	// without adding tension, so the cost of charming something enormous is the
+	// DANGER, not the invoice.
 	reserve := ch.CalcCompanionReserve(characters.CompanionReserveBase(0))
+	if len(ch.Companions) >= ch.GetMaxCompanions() {
+		user.SendText(messaging.CategorySystem,
+			`You are already sustaining as many companions as your will can hold.`)
+		return 0
+	}
+	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
+		user.SendText(messaging.CategorySystem, ch.ReservationRefusal(characters.PoolConviction, reserve))
+		return 0
+	}
+
+	// Fumble is resolved BEFORE success: the seam's contract is that a fumbled
+	// attack aborts even when the roll won.
+	if out.AttackerFumble || out.Defended {
+		user.SendText(messaging.CategorySpellMental, fmt.Sprintf(
+			`You reach for %s's mind, but its will holds.`, mName))
+		return 0
+	}
+
+	// The bond has a clock, and the player is never told how long it is.
+	rounds := charmDurationFor(out.AttackerNormalizedMargin)
+	mob.Character.Charm(user.UserId, rounds, "")
+	mob.Character.EndAggro()
+	ch.TrackCharmed(mob.InstanceId, true)
+
+	// ... retain the existing CompanionInfo registration, ConvictionReserve:
+	// reserve, RecalculateStats() and success messaging from the old
+	// resolveCharmSpell body unchanged ...
+
+	return 0
+}
 ```
 
-- [ ] **Step 8: Build and run the package**
+**Preserve verbatim** from the old body: the `CompanionInfo` construction, `ConvictionReserve: reserve`, the `ch.RecalculateStats()` call, and the success narration.
+
+**Delete entirely**: the attack-score block, the defence-score block, the aggro-penalty block, and the `combat.RunContest` call.
+
+- [ ] **Step 6: Delete the post-loop charm block**
+
+Remove `spell_resolution.go:226-234` (`if !castFumbled && spellData != nil && spellData.EffectType == "charm" { ... }`). The effect now fires inside the target loop.
+
+This also removes the two-contradictory-messages defect: charm no longer falls through `applyMobEffect_default`, so the player stops seeing a resist line and a success line for the same cast.
+
+- [ ] **Step 7: Move the in-combat penalty onto the AttackSide**
+
+The 0.75/0.85 penalties lived in the deleted block. `spellAttackSideFor` builds the side for every spell; charm's penalty composes onto its `Mult` there, alongside `combat.SituationalAttackMult` which every other `ChannelSocial` caller already applies and charm never did.
+
+```bash
+sed -n '282,305p' internal/hooks/spell_resolution.go
+```
+
+Apply the penalty only for `EffectType == "charm"`, so no other spell changes.
+
+- [ ] **Step 8: Write the single-contest test**
+
+```go
+// One cast, ONE contest. v1 of this plan would have run two.
+func TestCharm_RunsExactlyOneChannelContest(t *testing.T) {
+	charmDurationTestConfig(t)
+
+	calls := 0
+	restore := combat.SetChannelAttackContestRunnerForTest(
+		func(atk float64, entries []contest.Entry) contest.Result {
+			calls++
+			name := ""
+			if len(entries) > 0 {
+				name = entries[0].Name
+			}
+			return contest.Result{
+				Success: true, Contested: true, Winner: name,
+				Margin:      20,
+				AttackRoll:  dice.RollResult{StdDev: 10},
+				DefenseRoll: dice.RollResult{StdDev: 10},
+			}
+		})
+	defer restore()
+
+	castCharmAtTestMob(t) // drive a full charm cast; see helper note below
+
+	if calls != 1 {
+		t.Errorf("a charm cast ran %d channel contests, want exactly 1", calls)
+	}
+}
+
+func TestCharm_RoutesToSocialChannel(t *testing.T) {
+	sd := &spells.SpellData{TargetDefenseType: "social"}
+	if got := spellAttackChannel(sd); got != combat.ChannelSocial {
+		t.Errorf("spellAttackChannel = %v, want ChannelSocial", got)
+	}
+}
+```
+
+For `castCharmAtTestMob`, follow the seeding pattern in the nearest existing `internal/hooks` spell test — find it with:
+
+```bash
+grep -rln "resolveSpell\|resolveAgainstMob\|SeedSpellsForTest" internal/hooks/*_test.go | head -5
+```
+
+- [ ] **Step 9: Verify and commit**
 
 ```bash
 gofmt -l internal/ && go build ./... && go test ./internal/hooks/ -count=1
 ```
 
-Expected: no gofmt output, build clean, tests `ok`. Remove any import left unused by the deleted score maths (`math` is a likely casualty — let the compiler tell you).
-
-- [ ] **Step 9: Commit**
+Remove imports the deleted contest orphaned — `math` and `contest` in `charm_spell.go` are both likely casualties; `skills` survives only if something still uses it. Let the compiler decide.
 
 ```bash
-git add internal/hooks/charm_spell.go internal/hooks/charm_spell_test.go
-git commit -m "feat(charm): resolve through the unified seam, not a private contest
+git add internal/hooks/ _datafiles/world/dogmud/spells/charm.yaml
+git commit -m "fix(charm): consume the contest instead of running a second one
 
-Charm was the one attack channel the U6b flip missed. It built its own attack
-and defence scores and called RunContest directly, which is how a x25 skill
-weight survived a project-wide move to a uniform 5.0.
+Charm has resolved through the seam since U6b -- spellAttackChannel maps an
+ABSENT target_defense_type to ChannelSpellMental, and the mob-target loop has
+no effect-type guard. The seam's verdict was then discarded and a private
+RunContest in resolveCharmSpell decided the real outcome.
 
-It now goes through ResolveChannelAttack(ChannelSocial) and is answered by defy.
-The weight is not corrected so much as made inexpressible: AttackSide.score()
-reads SkillWeight from config, so a caller cannot supply its own.
+Charm now declares target_defense_type: social, so the cast it already makes
+routes to ChannelSocial and is answered by defy. The effect moves into
+applyMobEffect's switch, where the result is already in scope, and the private
+contest is deleted. One fewer contest than before, not one more.
 
-The StatPoolTotal*0.10 defence term is deleted with no replacement. There is
-deliberately no power gate -- a charmed elite trains, keeps the gear you hand
-it, and turns on you unpredictably. The risk is the balance.
-
-Duration now comes from the margin of victory. The 99999 magic number is gone."
+This also fixes a live defect: charm printed two contradictory outcome
+messages per cast, because the discarded seam contest still narrated through
+applyMobEffect_default."
 ```
 
 ---
 
-### Task 5: Expiry becomes the grudge; the ladder dies
+### Task 5: Expiry — the grudge, correctly gated
 
-**Files:**
-- Modify: `internal/hooks/NewRound_MobRoundTick.go`
-- Test: `internal/hooks/charm_expiry_test.go` (create)
+**Files:** Modify `internal/hooks/NewRound_MobRoundTick.go`; create `internal/hooks/charm_expiry_test.go`.
 
-- [ ] **Step 1: Write the failing test**
+The grudge must fire for **charmed companions whose clock ran out**, and for nothing else.
+
+- [ ] **Step 1: Write the failing tests**
 
 ```go
 package hooks
 
-import (
-	"testing"
-)
+import "testing"
 
-// When the clock runs out the creature breaks free and turns on the caster.
-// The companion entry goes, which is also what releases the conviction
-// reservation -- GetPoolReservation SUMS live companions, so there is nothing
-// separate to release.
 func TestCharmExpiry_PresentCaster_ProducesTheGrudge(t *testing.T) {
-	owner, mob, room := charmedPairInRoom(t)
+	owner, mob := charmedPairInRoom(t)
 
 	mob.Character.Charmed.RoundsRemaining = 0
 	tickMobCharmState(mob)
@@ -760,89 +744,138 @@ func TestCharmExpiry_PresentCaster_ProducesTheGrudge(t *testing.T) {
 		t.Error("charm must be removed at expiry")
 	}
 	if owner.Character.GetCompanionByInstanceId(mob.InstanceId) != nil {
-		t.Error("companion entry must be removed, which is what frees the reservation")
+		t.Error("companion entry must be removed")
 	}
 	if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != owner.UserId {
 		t.Error("the creature must turn on the caster who was standing there")
 	}
-	_ = room
 }
 
-// Anti-grief: a bond that lapses while you are elsewhere must not create a
-// hunter. Patrols and pathto mean a hostile elite could otherwise follow a
-// player across zones indefinitely.
+// The reservation is applied during RecalculateStats, not by RemoveCompanion.
+// v1 of this plan asserted otherwise and told the implementer not to fix it.
+func TestCharmExpiry_ReleasesTheReservation(t *testing.T) {
+	owner, mob := charmedPairInRoom(t)
+	before := owner.Character.GetPoolReservation("conviction", owner.Character.ConvictionMax.Value)
+	if before <= 0 {
+		t.Fatal("precondition: the charmed companion should be reserving conviction")
+	}
+
+	mob.Character.Charmed.RoundsRemaining = 0
+	tickMobCharmState(mob)
+
+	if after := owner.Character.GetPoolReservation("conviction", owner.Character.ConvictionMax.Value); after != 0 {
+		t.Errorf("reservation still %d after the bond ended, want 0", after)
+	}
+}
+
+// Five other systems set Charmed. None may ever produce a grudge.
+func TestCharmExpiry_NonCharmedCompanionNeverGrudges(t *testing.T) {
+	owner, mob := summonedPairInRoom(t) // SourceType: CompanionSummoned
+
+	mob.Character.Charmed.RoundsRemaining = 0
+	tickMobCharmState(mob)
+
+	if mob.Character.Aggro != nil {
+		t.Error("a SUMMONED companion must never turn on its owner")
+	}
+}
+
+// Logout and link-dead both signal by setting RoundsRemaining to 0 -- the same
+// state a natural expiry produces. Reading rounds-at-zero as one thing fires
+// the grudge on a player mid-logout, and on the tutorial Guide mob when a
+// newcomer's connection drops.
+func TestCharmExpiry_OwnerLeaving_NoGrudge(t *testing.T) {
+	owner, mob := charmedPairInRoom(t)
+	markOwnerLeaving(t, owner) // whatever the despawn path sets; see Step 2
+
+	mob.Character.Charmed.RoundsRemaining = 0
+	tickMobCharmState(mob)
+
+	if mob.Character.Aggro != nil {
+		t.Error("a bond ended by the owner LEAVING must not produce a grudge")
+	}
+}
+
 func TestCharmExpiry_AbsentCaster_NoGrudge(t *testing.T) {
-	owner, mob, _ := charmedPairInRoom(t)
-	owner.Character.RoomId = mob.Character.RoomId + 1 // caster is elsewhere
+	owner, mob := charmedPairInRoom(t)
+	owner.Character.RoomId = mob.Character.RoomId + 1
 
 	mob.Character.Charmed.RoundsRemaining = 0
 	tickMobCharmState(mob)
 
 	if mob.Character.IsCharmed() {
-		t.Error("charm must still be removed at expiry")
+		t.Error("charm must still be removed")
 	}
 	if mob.Character.Aggro != nil {
-		t.Error("a creature whose bond lapsed while the caster was away must NOT hunt them")
+		t.Error("a creature whose bond lapsed while the caster was away must not hunt them")
 	}
 }
 
-// A permanent charm (the -1 sentinel) must never expire. tickMobCharmDuration
-// only decrements above zero, so -1 must stay -1 forever.
 func TestCharmExpiry_PermanentSentinelNeverExpires(t *testing.T) {
-	_, mob, _ := charmedPairInRoom(t)
+	_, mob := charmedPairInRoom(t)
 	mob.Character.Charmed.RoundsRemaining = -1
 
 	for i := 0; i < 50; i++ {
 		tickMobCharmDuration(mob)
 		tickMobCharmState(mob)
 	}
-
 	if !mob.Character.IsCharmed() {
-		t.Error("a permanent charm expired; the -1 sentinel was decremented or compared wrong")
+		t.Error("a permanent charm expired; the -1 sentinel was mishandled")
 	}
 }
 ```
 
-Write `charmedPairInRoom(t)` in the same file: seed a room, a user and a charmed mob whose `CompanionInfo` is registered on the user with `SourceType: characters.CompanionCharmed`, both in the same room. Follow the seeding pattern in the nearest existing `internal/hooks` test.
-
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 2: Determine how "the owner is leaving" is detectable**
 
 ```bash
-go test ./internal/hooks/ -run TestCharmExpiry -v
+sed -n '130,155p' internal/hooks/PlayerDespawn_HandleLeave.go
+sed -n '344,356p' internal/users/users.go
 ```
 
-Expected: FAIL — no companion removal, no aggro.
+Both call `Charmed.Expire()`. Decide the discriminator and write `markOwnerLeaving` to match it. Options, in order of preference:
 
-- [ ] **Step 3: Delete the ladder**
+1. The despawn path removes the charm outright (`RemoveCharm` + `DestroyInstance`) rather than expiring it, so the tick never sees rounds-at-zero for a leaving owner. **Preferred** — it matches spec 13.1, where logout destroys the creature anyway.
+2. Failing that, gate the grudge on the owner being **online and in the room**, so a logging-out or link-dead owner cannot receive one.
 
-Remove the entire `// Re-roll contested Charisma vs Willpower on CharmDuration tick.` block from `tickMobCharmState` — roughly lines 394-450, ending at the closing braces of the `if mob.Character.IsCharmed()` wrapper that follows the expiry-cleanup block.
+- [ ] **Step 3: Run to verify the tests fail** — `go test ./internal/hooks/ -run TestCharmExpiry -v`.
 
-That deletes: the periodic re-roll, the duplicated `Charisma + manifestation*25` scoring, the `CharmRerolls` effectiveness decay, and the "control is slipping" / "eyes flash with defiance" warnings.
+- [ ] **Step 4: Delete the ladder**
 
-- [ ] **Step 4: Promote the grudge into the expiry block**
+Remove the block from `// Re-roll contested Charisma vs Willpower on CharmDuration tick.` at `:394` through **`:455`** — verify the exact end brace; `:456` is `tickMobCharmState`'s own closing brace. v1 said `394-450`, which cuts the block mid-`else`.
 
-Extend the existing expiry cleanup so it reads:
+That deletes: the periodic re-roll, the duplicated `Charisma + manifestation*25`, the `CharmRerolls` decay, and the "control is slipping" warnings.
+
+**The deletion orphans three imports** — `combat`, `contest` and `skills` are used nowhere else in this file. Remove them or the package will not build.
+
+- [ ] **Step 5: Promote the grudge into the expiry block, gated**
 
 ```go
-	// Charm expiry cleanup, and the grudge.
 	if mob.Character.IsCharmed() && mob.Character.Charmed.RoundsRemaining == 0 {
 		cmd := mob.Character.Charmed.ExpiredCommand
 		charmedUserId := mob.Character.RemoveCharm()
 
 		if charmedUserId > 0 {
 			if charmedUser := users.GetByUserId(charmedUserId); charmedUser != nil {
-				charmedUser.Character.TrackCharmed(mob.InstanceId, false)
+				comp := charmedUser.Character.GetCompanionByInstanceId(mob.InstanceId)
 
-				// Removing the companion is ALSO what releases the conviction
-				// reservation: GetPoolReservation sums live companions rather
-				// than holding separate state. Do not add a release call.
+				// ONLY a charmed companion grudges. Summons, brood spawns, the
+				// homunculus, befriended mobs and behaviour-tree companions all
+				// set Charmed too, and a conjured creature turning on its
+				// summoner would be a bug, not a mechanic.
+				wasCharmed := comp != nil && comp.SourceType == characters.CompanionCharmed
+
+				charmedUser.Character.TrackCharmed(mob.InstanceId, false)
 				charmedUser.Character.RemoveCompanion(mob.InstanceId)
 
-				// The grudge only bites if you are there to receive it. A bond
-				// that lapses while the caster is elsewhere must not create a
-				// creature that hunts them -- with patrols and pathto that is
-				// griefing, not risk (spec 3.10).
-				if charmedUser.Character.RoomId == mob.Character.RoomId {
+				// RemoveCompanion alone does NOT free the conviction: the
+				// reservation is applied during RecalculateStats, which sums
+				// live companions. dismiss does both halves for the same reason.
+				charmedUser.Character.RecalculateStats()
+
+				// The grudge only bites if the owner is there to receive it. A
+				// bond lapsing while they are elsewhere -- or while they are
+				// logging out -- must not create a creature that hunts them.
+				if wasCharmed && charmedUser.Character.RoomId == mob.Character.RoomId {
 					charmedUser.SendText(messaging.CategorySpellMental, fmt.Sprintf(
 						`<ansi fg="red-bold">%s breaks free of your control!</ansi>`,
 						mob.Character.Name))
@@ -858,369 +891,295 @@ Extend the existing expiry cleanup so it reads:
 		}
 
 		if cmd != `` {
-			cmds := strings.Split(cmd, `;`)
-			for _, cmd := range cmds {
-				cmd = strings.TrimSpace(cmd)
-				if len(cmd) > 0 {
-					mob.Command(cmd)
+			for _, c := range strings.Split(cmd, `;`) {
+				if c = strings.TrimSpace(c); len(c) > 0 {
+					mob.Command(c)
 				}
 			}
 		}
 	}
 ```
 
-The two messages are carried over verbatim from the deleted ladder — they were written for exactly this moment and never fired.
+Both messages are carried over verbatim from the deleted ladder. They were written for this moment and never fired.
 
-- [ ] **Step 5: Run to verify it passes**
+- [ ] **Step 6: Fix the lane split**
+
+`tickMobCharmDuration` runs in the **idle** lane (`:113`); `tickMobCharmState` runs only for **active** zones (below the `if !active { continue }` gate at `:142`). A bond lapsing in a cold zone therefore parks at zero and fires when a player next enters — inverting the absent-caster rule into an ambush on return.
+
+Move `tickMobCharmState` into the idle lane alongside the decrement, or gate the grudge on the bond having lapsed *this* round. Record which you chose and why in a comment.
+
+- [ ] **Step 7: Verify and commit**
 
 ```bash
 go test ./internal/hooks/ -run TestCharmExpiry -v
-```
-
-Expected: PASS, all three.
-
-- [ ] **Step 6: Commit**
-
-```bash
 git add internal/hooks/NewRound_MobRoundTick.go internal/hooks/charm_expiry_test.go
-git commit -m "feat(charm): expiry is the grudge; delete the dead resist ladder
+git commit -m "feat(charm): expiry is the grudge, gated three ways
 
-The ladder was gated on CompanionInfo.CharmDuration > 0, and the only
-assignment to that field lived INSIDE the ladder, so it could never bootstrap.
-Roughly 60 lines that never ran, including a second copy of the charm scoring
-expression -- the same duplication class that let the progression dashboard
-drift from production for months.
+The ladder was gated on CompanionInfo.CharmDuration > 0 and the only assignment
+to that field lived inside the ladder, so ~60 lines never ran -- including a
+second copy of the charm scoring expression.
 
-Its break-free branch was the one good thing in it, so that is promoted to the
-unconditional expiry outcome, messages and all. They were written for this
-moment and never fired.
+Its break-free branch was the one good thing in it, so that becomes the
+unconditional expiry outcome, messages and all. Three gates keep it honest:
+only a CompanionCharmed source grudges (five other systems set Charmed, and a
+conjured creature turning on its summoner would be a bug), only a present owner
+receives it, and an owner who is leaving never does -- logout and link-dead
+both signal by setting rounds to zero, which is the same state a natural expiry
+produces.
 
-The grudge only bites if the caster is present. A bond lapsing while they are
-elsewhere must not create a creature that hunts them across zones."
+RecalculateStats is called because RemoveCompanion alone does not free the
+reservation; the reservation is applied during recalculation."
 ```
 
 ---
 
-### Task 6: The grudge dies with the player
+### Task 6: Logout destroys the creature — confirm and pin
 
-**Files:**
-- Modify: the player-death cleanup path — locate it first
-- Test: add to `internal/hooks/charm_expiry_test.go`
+Spec 13. This is largely **confirming existing behaviour is preserved**, not building it.
 
-- [ ] **Step 1: Find the death cleanup**
+**Files:** Modify `internal/hooks/PlayerDespawn_HandleLeave.go` if Task 5 Step 2 chose option 1; create tests.
 
-```bash
-grep -rn "func.*Death_PlayerCleanup\|PlayerDeath" --include=*.go internal/hooks/ | head -5
-grep -rn "func.*ClearAggroAgainst\|Aggro.UserId ==" --include=*.go internal/mobs/ internal/rooms/ | head -5
-```
-
-Prefer an existing helper that clears mob aggro against a user. If none exists, write one in `internal/mobs`.
-
-- [ ] **Step 2: Write the failing test**
+- [ ] **Step 1: Write the test**
 
 ```go
-// A player who dies must not be hunted afterwards by something they charmed.
-func TestCharmGrudge_ClearedOnPlayerDeath(t *testing.T) {
-	owner, mob, _ := charmedPairInRoom(t)
+// Spec 13: logging out destroys a charmed creature. No grudge, nothing left
+// behind to grief newcomers, and the gear on it dies with it.
+func TestCharmedCreature_DestroyedOnLogout(t *testing.T) {
+	owner, mob := charmedPairInRoom(t)
+	instId := mob.InstanceId
 
-	mob.Character.Charmed.RoundsRemaining = 0
-	tickMobCharmState(mob)
-	if mob.Character.Aggro == nil {
-		t.Fatal("precondition: the grudge should have been set")
+	simulatePlayerLogout(t, owner)
+
+	if mobs.GetInstance(instId) != nil {
+		t.Error("a charmed creature must not survive its owner logging out")
 	}
-
-	clearCharmGrudgesAgainst(owner.UserId)
-
-	if mob.Character.Aggro != nil && mob.Character.Aggro.UserId == owner.UserId {
-		t.Error("a dead player must not still be hunted by a creature that broke free")
+	if len(owner.Character.Companions) != 0 {
+		t.Error("the charmed companion record must not persist")
 	}
 }
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [ ] **Step 2: Verify the existing path already does this**
 
 ```bash
-go test ./internal/hooks/ -run TestCharmGrudge -v
+sed -n '40,63p' internal/hooks/PlayerSpawn_HandleJoin.go
 ```
 
-Expected: FAIL — `undefined: clearCharmGrudgesAgainst`.
-
-- [ ] **Step 4: Implement and wire it**
+It already destroys charmed mobs and strips charmed `CompanionInfo`, with the comment *"Charmed mobs are temporary by nature (borrowed, not created)."* **Preserve that comment** and extend it to record that this is now load-bearing:
 
 ```go
-// clearCharmGrudgesAgainst drops aggro that charmed creatures took against a
-// player. Called on player death.
-//
-// Without it, a creature that broke free keeps hunting: with patrol and pathto
-// behaviour it can follow the player across zones indefinitely, which is
-// griefing rather than the risk charm is meant to carry (spec 3.9).
-func clearCharmGrudgesAgainst(userId int) {
-	for _, mobInstanceId := range mobs.GetAllMobInstanceIds() {
-		mob := mobs.GetInstance(mobInstanceId)
-		if mob == nil {
-			continue
-		}
-		if mob.Character.Aggro != nil && mob.Character.Aggro.UserId == userId {
-			mob.Character.EndAggro()
-		}
+	// Remove charmed companions — they don't persist through restart.
+	// Charmed mobs are temporary by nature (borrowed, not created).
+	//
+	// U10c makes this load-bearing rather than incidental. Destroying the
+	// creature is what closes the griefing path a surviving grudge would open
+	// (walk something large into a town, log out, leave it killing newcomers)
+	// and it is why no charm clock needs to persist. Quitting still lets a
+	// player dodge the betrayal, but it costs them the creature, the conviction
+	// and any gear they gave it — and with a 30-minute ceiling, a bond rarely
+	// spans a logout at all.
+```
+
+- [ ] **Step 3: Run, then commit.**
+
+---
+
+### Task 7: Guard the item-duplication vector
+
+**Files:** Modify `internal/mobs/instance_save.go`; add a test.
+
+- [ ] **Step 1: Write the failing test**
+
+```go
+// Once a bond expires the ex-companion is uncharmed while still wearing the
+// equipment its owner handed it. Saving it would bake player gear into a world
+// mob permanently: kill, loot, re-charm, repeat.
+func TestSaveMobInstance_SkipsEverCharmedMobs(t *testing.T) {
+	mob := everCharmedButNotCurrentlyCharmedMob(t)
+
+	if err := SaveMobInstance(mob); err != nil {
+		t.Fatalf("SaveMobInstance: %v", err)
+	}
+	if instanceSaveExists(t, mob) {
+		t.Error("an ex-charmed mob must never be written to mobs.instances/")
 	}
 }
 ```
 
-Verify `mobs.GetAllMobInstanceIds` exists before using it:
-
-```bash
-grep -rn "func GetAllMobInstanceIds\|func GetAllMobInstances" internal/mobs/*.go | head -3
-```
-
-Call it from the player-death cleanup found in Step 1.
-
-- [ ] **Step 5: Run to verify it passes, then commit**
-
-```bash
-go test ./internal/hooks/ -run TestCharmGrudge -v
-git add internal/hooks/
-git commit -m "fix(charm): the grudge dies with the player
-
-A creature that broke free keeps its aggro, and with patrol and pathto
-behaviour it can follow the player across zones indefinitely. That is griefing,
-not the risk charm is meant to carry. Cleared on death."
-```
-
----
-
-### Task 7: Delete the dead companion fields
-
-**Files:**
-- Modify: `internal/characters/companions.go`
-
-- [ ] **Step 1: Confirm nothing reads them**
-
-```bash
-grep -rn "CharmDuration\|CharmRerolls" --include=*.go internal/ modules/
-```
-
-Expected after Tasks 4-5: **no hits outside the struct declaration.** If anything else appears, stop and handle it before deleting.
-
-- [ ] **Step 2: Check no save carries them**
-
-```bash
-grep -rl "charm_duration\|charm_rerolls" _datafiles/world/dogmud/users/ 2>/dev/null | head
-```
-
-Expected: no output. They are `omitempty` and were never assigned, so no save should contain them. If any do, confirm the user-save loader ignores unknown keys before proceeding.
-
-- [ ] **Step 3: Delete the fields**
-
-Remove `CharmDuration` and `CharmRerolls` from `CompanionInfo`.
-
-- [ ] **Step 4: Verify and commit**
-
-```bash
-go build ./... && go test ./internal/characters/ ./internal/hooks/ -count=1
-git add internal/characters/companions.go
-git commit -m "chore(charm): delete CharmDuration and CharmRerolls
-
-Both existed only for the resist ladder deleted in the previous commit.
-CharmDuration was never assigned outside it and CharmRerolls counted re-rolls
-that never happened. Both are omitempty and absent from every save."
-```
-
----
-
-### Task 8: Guard that charm cannot leave the seam again
-
-**Files:**
-- Test: `internal/hooks/charm_seam_guard_test.go` (create)
-
-The arc already guards its seams this way; charm needs one because a private contest is exactly how it drifted for so long.
-
-- [ ] **Step 1: Find the existing guard pattern to copy**
-
-```bash
-grep -rln "contest_floor_guard_test\|contest_site_guard_test\|readSource(t," internal/ | head -5
-```
-
-- [ ] **Step 2: Write the guard**
+- [ ] **Step 2: Extend the skip**
 
 ```go
-package hooks
-
-import (
-	"strings"
-	"testing"
-)
-
-// Charm was the one attack channel U6b's flip missed: it called RunContest with
-// hand-built scores, which is how a x25 skill weight outlived a project-wide
-// move to a uniform 5.0, and how the same expression came to exist in two
-// files. It resolves through ResolveChannelAttack now. Keep it there.
-func TestCharmDoesNotRunItsOwnContest(t *testing.T) {
-	src := readSource(t, "charm_spell.go")
-
-	for _, banned := range []string{"RunContest", "OpposedRollStat"} {
-		if strings.Contains(src, banned) {
-			t.Errorf("charm_spell.go calls %s directly; it must resolve through "+
-				"combat.ResolveChannelAttack(ChannelSocial) so the uniform SkillWeight "+
-				"and the defy defence set apply", banned)
-		}
+	// Companions live on CompanionInfo, not in mobs.instances/.
+	//
+	// EverCharmed, not just IsCharmed: once a bond expires the ex-companion is
+	// uncharmed while still wearing the equipment its owner handed it. Saving
+	// it would bake player gear into a world mob permanently -- kill it, loot
+	// it, charm another, repeat. The betrayal stays real in-session (it fights
+	// you with your own gear) but nothing reaches disk, so a reboot clears it.
+	if mob.Character.IsCharmed() || mob.Character.EverCharmed {
+		return nil
 	}
-	if !strings.Contains(src, "ResolveChannelAttack") {
-		t.Error("charm_spell.go no longer routes through the unified seam")
-	}
-	if strings.Contains(src, "* 25") || strings.Contains(src, "*25") {
-		t.Error("charm_spell.go appears to multiply a skill by 25 again")
-	}
+```
+
+- [ ] **Step 3: Run, then commit.**
+
+---
+
+### Task 8: Pin the non-combatant protection
+
+Spec 11.3.3. Already true; the deliverable is a regression guard.
+
+**Files:** Create `internal/mobs/charm_immune_shops_test.go`.
+
+- [ ] **Step 1: Write the test**
+
+```go
+// Shopkeepers must never be charmable. Verified 2026-08-24: all 97 mobs with a
+// shop block carry charm_immune and/or non_combatant, and non_combatant blocks
+// charm before it is reached (playerHarmTargetPermitted -> CheckPlayerHarm ->
+// HarmBlockedNonCombatant). This pins it so a future shopkeeper authored
+// without either flag is caught here rather than by a player charming the
+// blacksmith.
+func TestEveryShopMobIsCharmProtected(t *testing.T) {
+	// Walk the mob data root, parse each YAML, and for every mob with a
+	// non-empty shop block assert CharmImmune || IsNonCombatant().
+	// Follow the walking pattern in template_training_test.go.
 }
 ```
 
-Reuse the existing `readSource` helper if `internal/hooks` has one; otherwise copy the implementation from wherever Step 1 found it.
-
-- [ ] **Step 3: Run, then commit**
-
 ```bash
-go test ./internal/hooks/ -run TestCharmDoesNotRunItsOwnContest -v
-git add internal/hooks/charm_seam_guard_test.go
-git commit -m "test(charm): guard that charm cannot leave the unified seam again"
+grep -n "func TestNoMobTemplateCarriesAuthoredTraining" -A 25 internal/mobs/template_training_test.go
 ```
+
+- [ ] **Step 2: Run — it must PASS immediately** (the property already holds). Verify it can fail by temporarily removing both flags from one shop mob, then restore.
+
+- [ ] **Step 3: Commit.**
 
 ---
 
-### Task 9: Player-facing copy — REQUIRED FOR COMPLETION
+### Task 9: Retire the arc's allowlist rows, and guard the seam
 
-Owner ruling: the slice is not done until both land. Read spec §10 before writing either.
+**Files:** Modify `internal/combat/contest_site_guard_test.go`; create `internal/hooks/charm_seam_guard_test.go`.
 
-**Files:**
-- Modify: `_datafiles/world/dogmud/spells/charm.yaml`
-- Modify: `_datafiles/world/dogmud/templates/help/charm.template`
+- [ ] **Step 1: Delete the two stale rows**
 
-- [ ] **Step 1: Rewrite the spell description**
+```bash
+grep -n "charm" internal/combat/contest_site_guard_test.go
+```
 
-The shipped text promises "Stronger creatures resist more fiercely", which Task 4 makes false. Convey instead that a strong-*willed* creature resists where a strong-*bodied* one may not, and that the bond does not last forever. Keep it to the existing block's length. **No numbers.**
+Remove `"internal/hooks/NewRound_MobRoundTick.go:tickMobCharmState"` and `"internal/hooks/charm_spell.go:resolveCharmSpell"` from `contestSiteOwners`. The guard asserts **both** directions plus a vacuity floor, so leaving them turns `internal/combat` red.
 
-- [ ] **Step 2: Rewrite the helpfile**
+- [ ] **Step 2: Add `charm_spell.go` to `legacyLiteralFiles`**
 
-Read it first — it already describes this design and has been documenting behaviour that never ran. Four lines are now wrong and must change:
+```bash
+grep -n "legacyLiteralFiles" -A 16 internal/combat/contest_site_guard_test.go
+```
+
+Its `×25` is gone, so the literal guard should now cover it and stop it regrowing.
+
+- [ ] **Step 3: Add the hooks-side guard**
+
+`internal/hooks` guards are AST-based, not text greps — copy that pattern:
+
+```bash
+sed -n '20,50p' internal/hooks/channel_defence_routing_test.go
+```
+
+Assert that `charm_spell.go` contains **no** `RunContest` call and no `* 25` literal. Do **not** assert it contains `ResolveChannelAttack` — after Task 4 the contest lives in `spell_resolution.go`, not here, and v1's version of this guard would have certified the double-resolution as correct.
+
+- [ ] **Step 4: Run `go test ./internal/combat/ ./internal/hooks/ -count=1`, then commit.**
+
+---
+
+### Task 10: Player-facing copy — REQUIRED FOR COMPLETION
+
+Owner ruling: the slice is not done until both land. Read spec §10 and §11.3.4 first.
+
+**Files:** Modify `_datafiles/world/dogmud/spells/charm.yaml`, `_datafiles/world/dogmud/templates/help/charm.template`.
+
+- [ ] **Step 1: The spell description**
+
+Drop "Stronger creatures resist more fiercely" — spec 3.6 makes it false. Convey that a strong-*willed* creature resists where a strong-*bodied* one may not, and that the bond does not last forever. No numbers.
+
+- [ ] **Step 2: The helpfile**
+
+Read it first: it already describes behaviour that never ran, and this slice largely makes it true. Four lines are now wrong:
 
 | Line | Fix |
 |---|---|
 | `Defense: Mental (opposed by target's willpower)` | Social channel, answered by defy. Still Willpower-based. |
-| "…against the creature's willpower and **mental fortitude**" | The defending skill is **rhetoric**. |
+| "…willpower and **mental fortitude**" | The defending skill is **rhetoric**. |
 | `Duration: Scales with charisma and manifestation skill` | Duration comes from **how decisively you won**. |
-| "The stronger your charisma and the higher your manifestation skill, the longer the charm endures." | Replace with the margin framing. |
+| "The stronger your charisma… the longer the charm endures." | Replace with the margin framing. |
 
-Preserve, because all remain true: charm cannot target players; immune creatures are beyond reach; creatures already in combat resist more strongly; the companion limit and `dismiss`.
+**One line the spec previously said to preserve is FALSE and must be rewritten:** *"Merchants, powerful named creatures, and certain others are immune."* The 372 `charm_immune` mobs are townsfolk; **no boss carries it.** Say that shopkeepers and their like are beyond reach, without implying the powerful are.
 
-**Never state the formula or the rounds remaining** — the uncertainty is the mechanic (spec 3.3).
+**Add** a line for spec 13: the bond does not survive you leaving the world.
 
-Consider adding one line reflecting spec 3.6 honestly: a powerful creature is no harder to charm, but it is far more dangerous when the bond breaks.
+Still true, preserve: charm cannot target players; creatures already in combat resist more strongly; the companion limit and `dismiss`.
 
-- [ ] **Step 3: Check the mechanics**
+**Never state the formula or the rounds remaining.**
+
+- [ ] **Step 3: Mechanical checks — including dashes, which v1 omitted**
 
 ```bash
-# 80-char wrap on rendered prose
-awk 'length($0)>80 {print FILENAME": "FNR": "length($0)}' _datafiles/world/dogmud/templates/help/charm.template
-# balanced ansi tags
+grep -n "—\|–" _datafiles/world/dogmud/templates/help/charm.template   # MUST be empty
+awk 'length($0)>80 {print FNR": "length($0)}' _datafiles/world/dogmud/templates/help/charm.template
 o=$(grep -o '<ansi ' _datafiles/world/dogmud/templates/help/charm.template | wc -l)
-c=$(grep -o '</ansi>' _datafiles/world/dogmud/templates/help/charm.template | wc -l)
-echo "open=$o close=$c"   # must match
+c=$(grep -o '</ansi>' _datafiles/world/dogmud/templates/help/charm.template | wc -l); echo "open=$o close=$c"
 python -c "import yaml;yaml.safe_load(open(r'_datafiles/world/dogmud/spells/charm.yaml',encoding='utf-8'));print('yaml ok')"
 ```
 
-Long lines are acceptable ONLY where the excess is ansi markup, not rendered text.
+The file currently carries **four em dashes**; project convention forbids them in player copy. Long lines are acceptable only where the excess is ANSI markup.
 
-- [ ] **Step 4: Verify it is SERVED, not just written**
+- [ ] **Step 4: Verify SERVED, not just written**
 
-A boot-clean check does not prove a template reaches the player. Boot an isolated worktree on non-default ports and fetch it over telnet:
+Boot an isolated worktree on non-default ports, connect over telnet, create a throwaway veteran character, and run `help charm`. Confirm the rendered output no longer claims the duration scales with charisma and manifestation skill. Templates parse per request, so a copy-in and re-fetch needs no rebuild.
 
-```bash
-git worktree add --detach C:/tmp/dogmud-boot-check HEAD
-cp _datafiles/config.yaml C:/tmp/dogmud-boot-check/_datafiles/config.yaml
-cd C:/tmp/dogmud-boot-check
-sed -i 's/^  TelnetPort: \[33333, 44444\]/  TelnetPort: [33397, 44497]/; s/^  LocalPort: 9999/  LocalPort: 9997/; s/^  HttpPort: 8090/  HttpPort: 8097/; s/^  AIPort: 55555/  AIPort: 55597/' _datafiles/config.yaml
-go build -o boot-check.exe . && timeout 300 ./boot-check.exe > boot.log 2>&1 &
-```
-
-Wait for `Server Ready`, connect to `127.0.0.1:33397`, create a throwaway character (choose the veteran start), and run `help charm`. Confirm the rendered output no longer says the duration scales with charisma and manifestation skill. **Templates are parsed per request**, so a copy-in and re-fetch needs no rebuild.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add _datafiles/world/dogmud/spells/charm.yaml _datafiles/world/dogmud/templates/help/charm.template
-git commit -m "docs(charm): player copy matches the redesign
-
-The helpfile has been describing this design all along -- 'your hold gradually
-loosens over time', 'when the charm finally breaks, the creature reverts and
-may turn hostile', even 'if the charm breaks while the creature is NEAR you'.
-None of it ran. This slice makes it true, and corrects the four lines that
-became wrong: the Mental defence label, mental fortitude, and both
-duration-scales-with-your-stats claims.
-
-The spell description no longer promises that stronger creatures resist more
-fiercely, which the deleted size term made false.
-
-Neither states the duration formula or the rounds remaining. Not knowing is the
-mechanic."
-```
+- [ ] **Step 5: Commit.**
 
 ---
 
-### Task 10: Gates and ship
+### Task 11: Documentation
 
-- [ ] **Step 1: Full local gates**
+**Files:** `internal/combat/context.md`, `internal/hooks/context.md`.
+
+- [ ] Both enumerate the charm `RunContest` sites this slice deletes
+      (`combat/context.md:886-889`, `hooks/context.md:1065-1069`). Correct them.
+- [ ] `hooks/context.md:1340` says "charmed companions are permanently Active" — false after this slice.
+- [ ] `hooks/context.md:1415-1420` documents charm's flat reserve; keep it and add that the flatness is deliberate.
+- [ ] Record the new `AttackerNormalizedMargin` field in `combat/context.md`.
+- [ ] Commit.
+
+---
+
+### Task 12: Gates and ship
+
+- [ ] **Local gates**
 
 ```bash
-gofmt -l internal/ modules/          # must print nothing
+gofmt -l internal/ modules/
 go build ./...
-go test ./internal/combat/ ./internal/hooks/ ./internal/characters/ ./internal/configs/ ./internal/actions/ ./internal/usercommands/ -count=1
-GOTMPDIR=C:/gotmp golangci-lint run ./internal/hooks/... ./internal/combat/... ./internal/characters/...
+go test ./internal/combat/ ./internal/hooks/ ./internal/characters/ ./internal/configs/ ./internal/mobs/ ./internal/actions/ ./internal/usercommands/ -count=1
+GOTMPDIR=C:/gotmp golangci-lint run ./internal/hooks/... ./internal/combat/... ./internal/mobs/...
 ```
 
-Lint must show **no new** finding on a touched file; the repo carries pre-existing ones that are not this slice's to fix.
+No **new** lint finding on a touched file.
 
-- [ ] **Step 2: Boot test**
+- [ ] **Boot test** — isolated detached worktree, non-default ports, fixed `boot-check.exe`. `Server Ready` = 1, panic patterns = 0. **Exit 124 is success.** Never grep the bare word `panic`.
 
-Isolated detached worktree, non-default ports, fixed `boot-check.exe` path.
+- [ ] **Patch notes** — dated entry, player framing, no raw numbers, no en/em dashes, 80-char wrap. The story: a charmed creature now serves for a time rather than forever; you are never told how long; when the hold breaks it turns on you; and it does not survive you leaving the world.
 
-```bash
-grep -c "Server Ready" boot.log                                          # want 1
-grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log   # want 0
-```
+- [ ] **Adversarial playtest gate** — required. Drive: casting charm and reading every line; keeping a creature until it turns; `help charm` read as a player would; and confirming a summoned companion never grudges.
 
-**Exit code 124 is the success case** — the timeout fired because the server stayed up. Never grep the bare word `panic`: `GamePlay.MapConsistencyEnforce` legitimately has the *value* `panic`.
+- [ ] **PR** — `gh pr create --repo pruuk/DOGMud …`. `--repo` is mandatory; this is a fork and `gh` defaults to the parent. Confirm each job ran with zero annotations, merge with `--merge`.
 
-- [ ] **Step 3: Patch notes**
-
-Add a dated entry to `docs/PATCH_NOTES.md`. Player-facing framing, **no raw numbers**, no en or em dashes, 80-char wrap. The story: a charmed creature now serves for a time rather than forever, you are never told how long, and when the hold breaks it turns on you. Winning the contest more decisively buys a longer hold.
-
-- [ ] **Step 4: Adversarial playtest gate**
-
-Required — this changes player-facing behaviour and copy.
-
-```text
-/playtest local --checkout <abs> bug-finder <goals>.yaml
-```
-
-Write a goals file with an `ephemeral:` block that drives: casting charm and reading every line; keeping a charmed creature until it turns; `help charm` read as a player would; and `consider`/`status` on a charmed companion. Fix what it finds and re-run if needed.
-
-- [ ] **Step 5: PR**
-
-```bash
-git push -u origin feature/u10c-charm-redesign
-gh pr create --repo pruuk/DOGMud --base master --head feature/u10c-charm-redesign --fill
-gh pr checks <n> --repo pruuk/DOGMud --watch
-```
-
-**`--repo pruuk/DOGMud` is mandatory on every `gh` command** — this repo is a fork and `gh` defaults to the parent. Confirm each job actually ran and carries zero annotations before merging with `--merge` (not `--squash`).
-
-- [ ] **Step 6: Update the roadmap**
-
-Mark U10c ✅ in `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` with the merge SHA, and record the two things this slice found that the roadmap did not know: charm never joined the U6b seam, and the seam did not surface an attack-win margin.
+- [ ] **Roadmap** — mark U10c ✅ with the merge SHA, and record what the arc learned: charm was never outside the seam, it was discarding the seam's verdict and running a second contest.
 
 ---
 
 ## Notes for whoever executes this
 
-- **No migration is needed.** The owner confirms no veteran character uses charm.
-- **U10b is still unshipped** and is a different slice — progression firing consistency. Do not fold any of it in here.
-- If a step's grep finds something the plan did not predict, **stop and report** rather than improvising. Three prior slices in this arc were re-planned because reality differed from the roadmap, and every time the discovery was worth more than the guess.
+- **No migration.** The owner confirms no veteran character uses charm.
+- **U10b is a different, still-unshipped slice.** Do not fold any of it in.
+- If a grep finds something this plan did not predict, **stop and report.** v1 of this plan was rejected by blind review for exactly one such unpredicted fact, and every prior slice in this arc was re-planned for the same reason.
