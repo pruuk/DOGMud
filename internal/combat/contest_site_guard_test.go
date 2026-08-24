@@ -73,14 +73,15 @@ var contestSiteOwners = map[string]string{
 
 	// Deliberately unconverted, with the plan's pre-assigned owners.
 	"internal/actions/defuse.go:Defuse": "deliberate: trap-difficulty contest, converted U4",
-	// The charm-cast contest is GONE as of U10c slice B: charm now resolves off
-	// the ChannelSocial contest its cast already runs, in applyMobEffect's charm
-	// arm, instead of a second private RunContest after the target loop.
+	// Charm has no unconverted contest site left. Slice B moved the cast onto
+	// the ChannelSocial contest it was already running and discarding, and
+	// slice C deleted the per-tick resist ladder in tickMobCharmState outright
+	// -- duration is now decided once, by the margin that won.
 	//
-	// tickMobCharmState's row stays. That is the dead resist ladder, and it is
-	// slice C's to delete -- removing this row before the site goes turns this
-	// guard red in the other direction.
-	"internal/hooks/NewRound_MobRoundTick.go:tickMobCharmState": "U10c slice C (the dead charm-refresh ladder; deleted there)",
+	// Both rows are gone rather than reworded. This guard asserts BOTH
+	// directions, so a row kept for a site that no longer exists fails as a
+	// stale allowlist entry, which is how it caught the premature removal of
+	// the first one.
 
 	"internal/combat/skill_moves.go:executeSkillMoveWithRunner": "U10 (knockdown opposed contest after a landed special move)",
 	"internal/hooks/recovery_contest.go:recoveryContest":        "U10 (prone-recovery opposed contest; free stands never contest)",
