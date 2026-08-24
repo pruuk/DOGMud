@@ -98,8 +98,16 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			identities.Defender = targetMob.Character.GetMobNameIndexed(user.UserId,
 				room.GetMobDuplicateIndex(targetMob.InstanceId)).String()
 		}
-		sendChannelDefenceMessages(result.Defence, identities, "taunt",
-			user, targetPlayer, room, result.Target.UserId)
+		// A defended hit that renders no attacker text would otherwise leave the
+		// taunter with nothing at all: the hit line above is skipped precisely
+		// because the target defended. Shipped data covers every defence type,
+		// so this is a backstop against a future type arriving without one --
+		// but silence is the one outcome this command must never produce.
+		if messaged := sendChannelDefenceMessages(result.Defence, identities, "taunt",
+			user, targetPlayer, room, result.Target.UserId); !messaged && result.Defence.Defended {
+			sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
+				"username", targetType, user, targetPlayer, room, result.Target.UserId)
+		}
 
 		if result.AggroPulled {
 			sendAggroPullMessages(user, room, sourceName, targetName)
@@ -123,8 +131,15 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	return true, nil
 }
 
+// sendChannelDefenceMessages reports whether it said anything to the ATTACKER.
+//
+// It can legitimately say nothing: RenderChannelDefenceMessages returns an
+// empty triad for an undefended outcome, and also for a defence type with no
+// entry in the message registry. The caller uses the return value to guarantee
+// that a defended hit still tells the taunter something, because "the target
+// resisted" rendering to silence reads as a broken command rather than a miss.
 func sendChannelDefenceMessages(out combat.ChannelDefenceResult, identities combat.ChannelDefenceIdentities, attack string,
-	attacker, defender *users.UserRecord, room *rooms.Room, defenderUserID int) {
+	attacker, defender *users.UserRecord, room *rooms.Room, defenderUserID int) bool {
 	if defender != nil {
 		if text := combat.ChannelDefenceShortageText(out, defender.Character); text != "" {
 			defender.SendText(messaging.CategorySystem, text)
@@ -132,13 +147,14 @@ func sendChannelDefenceMessages(out combat.ChannelDefenceResult, identities comb
 	}
 	triad := combat.RenderChannelDefenceMessages(out, identities, attack)
 	if triad.ToAttacker == "" {
-		return
+		return false
 	}
 	attacker.SendText(messaging.CategoryTauntResist, string(triad.ToAttacker))
 	if defender != nil {
 		defender.SendText(messaging.CategoryTauntResist, string(triad.ToDefender))
 	}
 	room.SendTextVisual(messaging.CategoryTauntResist, string(triad.ToRoom), attacker.UserId, defenderUserID)
+	return true
 }
 
 // sendAggroPullMessages notifies the taunter and the room that the mob
