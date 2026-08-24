@@ -413,3 +413,54 @@ func TestInstancePath_EmptyZoneRoutesToUnzoned(t *testing.T) {
 	assert.Contains(t, filepath.ToSlash(p), "mobs.instances/unzoned/",
 		"empty-zone instance saves must mirror the template unzoned/ routing")
 }
+
+// TestSaveMobInstance_EverCharmedMobSkipsWrite covers the window that only
+// opened once charm bonds started expiring (U10c). The mob above is charmed
+// RIGHT NOW; this one is not, but it was, and it is still wearing whatever its
+// owner handed it.
+//
+// Without the EverCharmed half of the guard, the next save pass writes that gear
+// into mobs.instances/ -- MobInstanceData persists Equipment and equipmentDiffers
+// is itself one of the triggers that makes a mob worth saving -- and the loader
+// re-equips it onto the respawned world mob. Kill, loot, re-charm, repeat.
+func TestSaveMobInstance_EverCharmedMobSkipsWrite(t *testing.T) {
+	cleanup := seedRegistry()
+	defer cleanup()
+
+	withMobProgressionEnabled(t)
+
+	mob := NewMobById(1, 100)
+	if mob == nil {
+		t.Fatal("NewMobById returned nil")
+	}
+
+	path := instancePath(mob.MobId, mob.Zone, mob.Character.Name, mob.HomeRoomId)
+	_ = os.Remove(path)
+	_ = os.Remove(filepath.Dir(path))
+
+	// Progression, so it WOULD normally persist.
+	mob.Character.Stats.Strength.Training = 10
+
+	// The bond happened, and then it ended.
+	mob.Character.Charm(42, 100, "")
+	mob.Character.RemoveCharm()
+
+	if mob.Character.IsCharmed() {
+		t.Fatal("fixture: the mob should no longer be charmed")
+	}
+	if !mob.Character.EverCharmed {
+		t.Fatal("fixture: RemoveCharm must not clear EverCharmed -- the whole " +
+			"guard depends on the flag surviving the bond")
+	}
+
+	assert.NoError(t, SaveMobInstance(mob))
+
+	_, statErr := os.Stat(path)
+	assert.True(t, os.IsNotExist(statErr),
+		"an ex-charmed mob wrote %s; it is still wearing its former owner's "+
+			"equipment, and persisting that bakes player gear into a world mob",
+		path)
+
+	_ = os.Remove(path)
+	_ = os.Remove(filepath.Dir(path))
+}
