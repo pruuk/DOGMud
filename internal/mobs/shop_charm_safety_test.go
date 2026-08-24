@@ -54,21 +54,33 @@ func TestShopMobsCannotBeCharmed(t *testing.T) {
 		// Line-oriented on purpose: a shop block is a top-level key, and a full
 		// YAML parse would drag the whole MobSpec schema (and its validation)
 		// into a test that only asks one question about three keys.
-		var hasShop, charmImmune, nonCombatant bool
+		var covered, charmImmune, nonCombatant bool
 		for _, line := range strings.Split(string(raw), "\n") {
 			// The shop block is INDENTED under a parent key, so match the
 			// trimmed line rather than a prefix. A prefix match silently found
 			// zero shop mobs, and the empty-set guard below is what caught it.
-			switch strings.TrimSpace(strings.TrimSuffix(line, "\r")) {
+			trimmed := strings.TrimSpace(strings.TrimSuffix(line, "\r"))
+
+			// A noncombat archetype is the second population that must not be
+			// charmable. A 2026-08-24 playtest charmed the Thornwall street
+			// performer in the middle of the city and walked it away: its
+			// archetype is noncombat_questgiver and it is hostile: false, but it
+			// carried neither flag, so nothing stopped it. It and the city
+			// beggar were the only two of 383 that had been missed.
+			if strings.HasPrefix(trimmed, "behavior_archetype: noncombat") {
+				covered = true
+			}
+
+			switch trimmed {
 			case "shop:":
-				hasShop = true
+				covered = true
 			case "charm_immune: true":
 				charmImmune = true
 			case "non_combatant: true":
 				nonCombatant = true
 			}
 		}
-		if !hasShop {
+		if !covered {
 			return nil
 		}
 
@@ -84,15 +96,17 @@ func TestShopMobsCannotBeCharmed(t *testing.T) {
 	}
 
 	if len(shopMobs) == 0 {
-		t.Fatal("found no mobs with a shop block, so this test is not testing " +
-			"anything -- the walk or the key match is wrong")
+		t.Fatal("found no mobs to check, so this test is not testing anything -- " +
+			"the walk or the key match is wrong")
 	}
 
 	if len(unprotected) > 0 {
 		sort.Strings(unprotected)
-		t.Errorf("%d of %d shop mobs can be CHARMED. A merchant that can be "+
-			"charmed can be walked out of its shop.\n\nAdd charm_immune: true "+
-			"(or non_combatant: true if it should not fight at all) to:\n  %s",
+		t.Errorf("%d of %d shop or noncombat-archetype mobs can be CHARMED. A "+
+			"merchant that can be charmed can be walked out of its own shop, and "+
+			"a noncombat townsperson can be marched around the city as a "+
+			"puppet.\n\nAdd charm_immune: true (or non_combatant: true if it "+
+			"should not fight at all) to:\n  %s",
 			len(unprotected), len(shopMobs), strings.Join(unprotected, "\n  "))
 	}
 }

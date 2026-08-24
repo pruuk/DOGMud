@@ -4,6 +4,11 @@ behavior_archetype: noncombat_questgiver
 statpool: 8
 itemdropchance: 0
 hostile: false
+# Charm-proof: a noncombat archetype should not be walkable out of its own
+# scene as a puppet. 381 of the 383 noncombat-archetype mobs already carried
+# a flag; this one and the beggar were the two that did not, found by charming
+# the performer in the middle of Thornwall during the 2026-08-24 playtest.
+charm_immune: true
 maxwander: 3
 groups:
   - humanoid
