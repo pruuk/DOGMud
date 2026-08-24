@@ -2,7 +2,7 @@
 
 **Status:** APPROVED 2026-08-24, **REVISED after blind adversarial review the same day.**
 **Sections 11, 12 and 13 supersede 1-10 where they conflict — read them FIRST.**
-**Section 13 further supersedes 11.3.2. Section 14 is the Slice B design gate.**
+**Section 13 further supersedes 11.3.2. Section 14 is the Slice B design gate; section 15 the Slice C gate.**
 Section 2.5 is known FALSE; section 4.1 would have shipped a double contest.
 **Arc:** U0–U12 unified resolution. Sequenced after U10b-0; depends on U9 and U6b.
 **Roadmap row:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`, U10c.
@@ -736,3 +736,52 @@ this is one more row in an existing guard rather than a new mechanism.
 
 Mob targets are unaffected. `CharmImmune` and `non_combatant` continue to gate
 mob targets exactly as before (11.3.3).
+
+---
+
+# 15. A sleeping creature buys the longest bond — decided 2026-08-24 (Slice C gate)
+
+## 15.1 The decision
+
+**A forced crit reads as maximally decisive for charm's duration.** Charming a
+sleeping creature buys the ceiling, not the floor.
+
+## 15.2 The inversion this avoids
+
+`resolveAgainstMob` sets `side.ForceCrit = combat.SleepingForceCrit(...)`
+(`spell_resolution.go:346`). A forced-crit win returns from
+`resolveChannelAttackWithRunner` **above** the line that assigns
+`AttackerNormalizedMargin`, so the field reads **zero** — and
+`charmDurationFor(0)` returns `CharmDurationMinRounds`.
+
+Left alone, the most decisive charm available in the game would buy the
+**shortest possible bond** (about 3.4 minutes), while a scrappy contested win
+against the same creature awake could buy the longest (30 minutes). NPC
+schedules make sleeping routine (`activity: sleeping`), so this is a common
+case rather than a corner.
+
+Pinned by `TestAttackerNormalizedMargin_ZeroOnForcedCritWin_KNOWN`, which was
+written in Slice A precisely so this would be met as a documented fact.
+
+## 15.3 Why the fix goes at the charm call site
+
+Two options existed:
+
+1. **Read the forced crit as the ceiling, in charm's effect arm.** One branch,
+   no shared-code change, and it cannot affect any other channel.
+2. Populate the margin on the seam's ForceCrit path.
+
+Option 2 is a change to shared combat code that every channel flows through, and
+Slice A deliberately left that path at zero and documented why: a forced crit
+bypasses the contest, so there is no opposed margin to report. Inventing one for
+every consumer to satisfy charm would be the tail wagging the dog.
+
+Option 1 is chosen. The `_KNOWN` test in `internal/combat` **stays as it is** —
+the seam's behaviour is unchanged and still worth pinning.
+
+## 15.4 What this means in play
+
+Catching a creature asleep is the reliable way to secure a long bond. That is a
+real tactical incentive and a good one: it rewards preparation over opportunism,
+and it gives the sleep mechanic a second use beyond the auto-crit it already
+grants.
