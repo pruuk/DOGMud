@@ -28,10 +28,22 @@
           <p class="text-muted small mb-2">
             Progression rank is the skill level (skills) or trained points
             (stats). Use counts are engagement telemetry only and no longer
-            affect how hard anything is to raise. Expected Rank comes from the
-            curve and assumes one progression roll per recorded use, so treat it
-            as a triage signal rather than a measurement. Chances are shown at a
-            neutral bonus; critical successes roll higher.
+            affect how hard anything is to raise. Chances are shown at a neutral
+            bonus; critical successes roll higher.
+          </p>
+          <p class="text-muted small mb-2">
+            <strong>Read Expected Rank with care.</strong> It inverts the
+            current curve over a <em>lifetime</em> use counter, and it does so
+            under two assumptions that weaken it. It assumes one progression
+            roll per recorded use, so it becomes a lower bound as uncontested
+            firing grows. And it saturates: once a subject's lifetime uses
+            exceed the cost of reaching the soft cap, Expected Rank pins at the
+            soft cap and stays there, so a well-played character below the cap
+            reads as permanently behind whether or not anything is wrong.
+            Counters accumulated before a retune were also earned under a
+            different curve and are not comparable to it. Treat deviation and
+            stall as triage that points at what to look at, never as a
+            measurement of what is broken.
           </p>
           <table class="table table-sm table-striped" id="skillHealthTable">
             <thead>

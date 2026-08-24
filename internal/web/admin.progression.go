@@ -293,10 +293,19 @@ func usesToReach(chanceAt func(rank int) float64, r int) float64 {
 // is within uses -- the inverse of usesToReach. A zero-chance rank counts as
 // NOT reached, matching usesToReach's +Inf for the same input.
 //
-// CAVEAT: this assumes one progression roll per recorded use. U10b introduces
-// an uncontested class that records a use and rolls at a damped rate, so the
-// figure degrades into a LOWER BOUND as the uncontested mix grows. It is a
-// triage signal, not a measurement, and the panel says so.
+// TWO CAVEATS, both stated on the panel.
+//
+// It assumes one progression roll per recorded use. U10b introduces an
+// uncontested class that records a use and rolls at a damped rate, so the
+// figure degrades into a LOWER BOUND as the uncontested mix grows.
+//
+// It SATURATES. Once lifetime uses exceed the cost of reaching maxRank this
+// returns maxRank forever, so any subject below the soft cap reads as
+// permanently behind regardless of whether its progression is healthy.
+// Measured against real data (meirok, 2026-08-24): five of six stats pinned at
+// 50 against trained points of 12 to 35. Distinguishing "stalled" from "played
+// a lot at the soft cap" needs a uses-since-last-gain counter, which the save
+// does not carry. Triage signal, not a measurement.
 func expectedRankForUses(chanceAt func(rank int) float64, uses int, maxRank int) int {
 	total := 0.0
 	for r := 0; r < maxRank; r++ {
