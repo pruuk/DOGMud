@@ -1,6 +1,8 @@
 package usercommands
 
 import (
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -17,7 +19,13 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 
-	target, err := actions.ResolveTargetActor(room, args[0],
+	// Resolve against the WHOLE argument, not args[0]. Truncating to the first
+	// word is invisible when that word is distinctive ("bandit" still
+	// prefix-matches "Bandit Scout") but silently considers the wrong creature
+	// when two share it -- `consider bandit archer` reported on the Bandit
+	// Scout. room.FindByName handles multi-word input, and look already passes
+	// its full argument; this brings consider into line.
+	target, err := actions.ResolveTargetActor(room, strings.Join(args, " "),
 		actions.ResolveTargetOptions{ExcludeUserId: user.UserId})
 	if err != nil {
 		// Always give feedback for an unresolved target — dead, absent, or no
