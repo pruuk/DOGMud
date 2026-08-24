@@ -72,9 +72,15 @@ var contestSiteOwners = map[string]string{
 	"internal/usercommands/go.go:Go":                                         "U6b task 16 (hidden detection on room entry, four sites)",
 
 	// Deliberately unconverted, with the plan's pre-assigned owners.
-	"internal/actions/defuse.go:Defuse":                         "deliberate: trap-difficulty contest, converted U4",
-	"internal/hooks/NewRound_MobRoundTick.go:tickMobCharmState": "U10c (charm-refresh; redesigned wholesale there)",
-	"internal/hooks/charm_spell.go:resolveCharmSpell":           "U10c (the charm-cast contest; the charm family is redesigned wholesale there)",
+	"internal/actions/defuse.go:Defuse": "deliberate: trap-difficulty contest, converted U4",
+	// The charm-cast contest is GONE as of U10c slice B: charm now resolves off
+	// the ChannelSocial contest its cast already runs, in applyMobEffect's charm
+	// arm, instead of a second private RunContest after the target loop.
+	//
+	// tickMobCharmState's row stays. That is the dead resist ladder, and it is
+	// slice C's to delete -- removing this row before the site goes turns this
+	// guard red in the other direction.
+	"internal/hooks/NewRound_MobRoundTick.go:tickMobCharmState": "U10c slice C (the dead charm-refresh ladder; deleted there)",
 
 	"internal/combat/skill_moves.go:executeSkillMoveWithRunner": "U10 (knockdown opposed contest after a landed special move)",
 	"internal/hooks/recovery_contest.go:recoveryContest":        "U10 (prone-recovery opposed contest; free stands never contest)",
