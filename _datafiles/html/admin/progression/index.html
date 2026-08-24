@@ -25,6 +25,26 @@
       </div>
       <div class="collapse show" id="skillHealthBody">
         <div class="card-body">
+          <p class="text-muted small mb-2">
+            Progression rank is the skill level (skills) or trained points
+            (stats). Use counts are engagement telemetry only and no longer
+            affect how hard anything is to raise. Chances are shown at a neutral
+            bonus; critical successes roll higher.
+          </p>
+          <p class="text-muted small mb-2">
+            <strong>Read Expected Rank with care.</strong> It inverts the
+            current curve over a <em>lifetime</em> use counter, and it does so
+            under two assumptions that weaken it. It assumes one progression
+            roll per recorded use, so it becomes a lower bound as uncontested
+            firing grows. And it saturates: once a subject's lifetime uses
+            exceed the cost of reaching the soft cap, Expected Rank pins at the
+            soft cap and stays there, so a well-played character below the cap
+            reads as permanently behind whether or not anything is wrong.
+            Counters accumulated before a retune were also earned under a
+            different curve and are not comparable to it. Treat deviation and
+            stall as triage that points at what to look at, never as a
+            measurement of what is broken.
+          </p>
           <table class="table table-sm table-striped" id="skillHealthTable">
             <thead>
               <tr>
@@ -55,11 +75,11 @@
             <thead>
               <tr>
                 <th>Player</th>
-                <th>Skill</th>
+                <th>Kind</th>
+                <th>Skill / Stat</th>
                 <th>Rank</th>
-                <th>Uses Since Gain</th>
-                <th>Expected Uses</th>
-                <th>Staleness</th>
+                <th>Expected Rank</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -88,6 +108,18 @@
             <div class="col-md-6">
               <h6 class="text-muted mb-2">Stat Value Distribution (all players)</h6>
               <canvas id="statDistChart" height="250"></canvas>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <h6 class="text-muted mb-2">Stat Training Distribution (all players)</h6>
+              <p class="text-muted small mb-2">
+                Trained points are what the progression curve reads, so this is
+                the series that describes how hard stats are to raise. The value
+                chart above includes the baseline a character started with, which
+                progression difficulty no longer depends on.
+              </p>
+              <canvas id="statTrainingChart" height="250"></canvas>
             </div>
           </div>
         </div>
@@ -163,6 +195,7 @@
   var data = null;
   var skillDistChart = null;
   var statDistChart = null;
+  var statTrainingChart = null;
 
   var tierColors = {
     'unknown':'#6c757d','novice':'#6c757d','apprentice':'#28a745',
@@ -219,30 +252,45 @@
     tbody.innerHTML = html;
   }
 
+  // Reads the server's expected_rank instead of recomputing staleness here.
+  // The old version duplicated the Go math and got it wrong: it divided
+  // progression_chance by 100, but the server emits an already-0-to-1 fraction,
+  // so expectedForNext was 100x too large and this panel effectively never
+  // fired. It also covered skills only, while the dead-stat class it exists to
+  // catch lives entirely in stats.
   function updateStallTable(d) {
     var tbody = document.querySelector('#stallTable tbody');
     tbody.innerHTML = '';
     var stalls = [];
+
+    function push(p, kind, what, rank, expected, dead, fragile) {
+      // Behind by a single rank is noise. This panel is for progression that is
+      // genuinely stuck, and for anything that cannot advance at all.
+      if (dead || fragile || (expected - rank) >= 2) {
+        stalls.push({player:p, kind:kind, what:what, rank:rank,
+                     expected:expected, behind:expected - rank,
+                     dead:dead, fragile:fragile});
+      }
+    }
+
     d.players.forEach(function(p) {
       Object.entries(p.skills).forEach(function(e) {
-        var sk = e[0], s = e[1];
-        if (s.use_count > 0 && s.progression_chance > 0) {
-          var chanceDecimal = s.progression_chance / 100;
-          var expectedForNext = chanceDecimal > 0 ? 1.0 / chanceDecimal : 9999;
-          var approxUsesAtRank = s.rank * expectedForNext;
-          var usesSince = s.use_count - approxUsesAtRank;
-          if (usesSince < 0) usesSince = 0;
-          var staleness = expectedForNext > 0 ? usesSince / expectedForNext : 0;
-          if (staleness > 1.5) {
-            stalls.push({player:p.name, skill:sk, rank:s.rank, tier:s.tier,
-                        usesSince:Math.round(usesSince),
-                        expected:Math.round(expectedForNext),
-                        staleness:staleness});
-          }
+        if (e[1].use_count > 0) {
+          push(p.name, 'skill', e[0], e[1].rank, e[1].expected_rank, e[1].dead, e[1].fragile);
+        }
+      });
+      Object.entries(p.stats).forEach(function(e) {
+        if (e[1].use_count > 0) {
+          push(p.name, 'stat', e[0], e[1].training, e[1].expected_rank, e[1].dead, e[1].fragile);
         }
       });
     });
-    stalls.sort(function(a,b) { return b.staleness - a.staleness; });
+
+    stalls.sort(function(a,b) {
+      if (a.dead !== b.dead) { return a.dead ? -1 : 1; }
+      return b.behind - a.behind;
+    });
+
     if (stalls.length === 0) {
       document.getElementById('noStalls').style.display = '';
       document.getElementById('stallTable').style.display = 'none';
@@ -252,15 +300,15 @@
     document.getElementById('stallTable').style.display = '';
     var html = '';
     stalls.forEach(function(s) {
-      var cls = s.staleness > 2.0 ? 'danger' : s.staleness > 1.5 ? 'warning' : 'success';
-      html += tr([
-        s.player,
-        s.skill,
-        raw(tierBadge(s.tier)),
-        s.usesSince,
-        s.expected,
-        raw('<span class="badge badge-'+cls+'">'+s.staleness.toFixed(1)+'x</span>')
-      ]);
+      var status;
+      if (s.dead) {
+        status = raw('<span class="badge badge-danger">DEAD - cannot progress</span>');
+      } else if (s.fragile) {
+        status = raw('<span class="badge badge-warning">FRAGILE - near the roll floor</span>');
+      } else {
+        status = raw('<span class="badge badge-warning">behind by ' + esc(s.behind) + '</span>');
+      }
+      html += tr([s.player, s.kind, s.what, s.rank, s.expected, status]);
     });
     tbody.innerHTML = html;
   }
@@ -286,13 +334,14 @@
   }
   window.updateDistChart = updateDistChart;
 
+  var statColors = {
+    strength:'#dc3545',dexterity:'#28a745',perception:'#fd7e14',
+    vitality:'#6f42c1',willpower:'#007bff',charisma:'#ffc107'
+  };
+
   function updateStatDistChart(d) {
     var labels = ['0-50','51-100','101-150','151+'];
     var datasets = [];
-    var statColors = {
-      strength:'#dc3545',dexterity:'#28a745',perception:'#fd7e14',
-      vitality:'#6f42c1',willpower:'#007bff',charisma:'#ffc107'
-    };
     Object.entries(d.stats).forEach(function(e) {
       datasets.push({
         label: e[0],
@@ -302,6 +351,26 @@
     });
     if (statDistChart) statDistChart.destroy();
     statDistChart = new Chart(document.getElementById('statDistChart'), {
+      type: 'bar',
+      data: { labels: labels, datasets: datasets },
+      options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+  }
+
+  // 50 is StatProgressionSoftCap, so the last bucket is the population that has
+  // pushed a stat past the point where the curve flattens.
+  function updateStatTrainingChart(d) {
+    var labels = ['0','1-10','11-25','26-50','51+'];
+    var datasets = [];
+    Object.entries(d.stats).forEach(function(e) {
+      datasets.push({
+        label: e[0],
+        data: labels.map(function(l) { return (e[1].training_distribution || {})[l] || 0; }),
+        backgroundColor: statColors[e[0]] || '#6c757d'
+      });
+    });
+    if (statTrainingChart) statTrainingChart.destroy();
+    statTrainingChart = new Chart(document.getElementById('statTrainingChart'), {
       type: 'bar',
       data: { labels: labels, datasets: datasets },
       options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
@@ -346,7 +415,7 @@
     var allSkills = Object.keys(d.skills).sort();
 
     // Rebuild header row
-    var headers = ['Player', 'Activity'];
+    var headers = ['Player', 'Activity (telemetry)'];
     allSkills.forEach(function(sk) {
       headers.push(String(sk).replace(/-combat$/,''));
     });
@@ -360,7 +429,10 @@
         if (s) {
           cells.push({
             v: raw(esc(s.rank) + ' ' + tierBadge(s.tier)),
-            title: 'uses=' + s.use_count + ' | next=' + s.progression_chance.toFixed(3)
+            title: 'rank=' + s.rank + ' (this IS the progression rank)'
+                 + ' | expected from uses=' + s.expected_rank
+                 + ' | next=' + (s.progression_chance * 100).toFixed(3) + '%'
+                 + ' | uses=' + s.use_count + ' (telemetry only)'
           });
         } else {
           cells.push('-');
@@ -388,9 +460,16 @@
         if (s) {
           var v = s.value;
           var clr = v < 90 ? '#e74c3c' : v < 100 ? '#e67e22' : v < 120 ? '#3498db' : v < 150 ? '#2ecc71' : '#f1c40f';
+          var chancePct = (s.progression_chance * 100).toFixed(3) + '%';
+          var badge = s.dead ? ' <span class="badge badge-danger">DEAD</span>'
+                    : s.fragile ? ' <span class="badge badge-warning">FRAGILE</span>'
+                    : ' <span class="text-muted">(' + esc(chancePct) + ')</span>';
           cells.push({
-            v: v,
-            title: 'training=' + s.training + ' | uses=' + s.use_count,
+            v: raw(esc(v) + badge),
+            title: 'training=' + s.training + ' (this IS the progression rank)'
+                 + ' | expected from uses=' + s.expected_rank
+                 + ' | next=' + chancePct + ' at a neutral bonus'
+                 + ' | uses=' + s.use_count + ' (telemetry only)',
             style: 'color:' + clr
           });
         } else {
@@ -424,6 +503,7 @@
         populateSkillDropdown(d);
         updateDistChart();
         updateStatDistChart(d);
+        updateStatTrainingChart(d);
         updateDiscoveryTables(d);
         updatePlayerTable(d);
         updatePlayerStatTable(d);

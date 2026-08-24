@@ -58,7 +58,7 @@ config, two of that character's six stats were in that state (strength
 3.98e-05, dexterity 9.25e-12).
 
 `Balance.ProgressionChanceFloor` (shipped 1e-5) is applied as the last step of
-`statProgressionChance` and of `CheckSkillProgression`'s chance assembly, after
+`ProgressionChanceForStat` and of `ProgressionChanceForSkill`, after
 every multiplier.
 
 **Both halves are required and each fixed a different stat.** Resolution alone
@@ -1682,8 +1682,8 @@ come**, never to how often it has been used:
 - **stat rank** = `GetStatTraining(stat)`, i.e. `StatInfo.Training`
 - **skill rank** = `c.Skills[name]`, the level itself
 
-Four sites read it, and all four must agree: `statProgressionChance`,
-`skillProgressionChance`, `CheckStatProgression`'s debug log, and
+Four sites read it, and all four must agree: `ProgressionChanceForStat`,
+`ProgressionChanceForSkill`, `CheckStatProgression`'s debug log, and
 `regenDamperFactor`.
 
 Three things this removed, each deliberate:
@@ -1705,6 +1705,17 @@ documented anchors: a fresh stat is ~27% per use and a stat with 50 trained
 points ~1.3%. `SkillSoftCap` stays 50 because skills already keyed on level
 above it.
 
-`skillProgressionChance` was extracted from `CheckSkillProgression` in this
+`ProgressionChanceForSkill` was extracted from `CheckSkillProgression` in this
 phase so the expression has one home. An inline copy is what let the admin
 dashboard's chance display drift from production.
+
+Phase E **exported both**, because the dashboard lives in `internal/web` and
+could not otherwise call them; it now does, at `bonusMultiplier = 1.0`. Do not
+re-introduce a second copy of either expression anywhere.
+
+`ProgressionRollThreshold(chance) int` was exported in the same phase. It is
+the `int(chance * progressionRollDenominator)` arithmetic every roll site
+compares against, and the dashboard's dead-stat alarm asks the same question
+through it rather than hard-coding the resolution. The denominator itself stays
+unexported on purpose: a caller that knows the arithmetic cannot drift from
+production if the resolution moves again.
