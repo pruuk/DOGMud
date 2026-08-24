@@ -730,6 +730,8 @@ type Balance struct {
 	CompanionSoftCap              ConfigInt   `yaml:"CompanionSoftCap"`              // Soft count backstop; real limit is the reservation ceiling (default 5)
 	CompanionSoftCapApex          ConfigInt   `yaml:"CompanionSoftCapApex"`          // Soft count backstop with the Manifester apex (default 7)
 	CompanionReserveDefault       ConfigInt   `yaml:"CompanionReserveDefault"`       // Base reserve a companion costs, scaled by the spell's summon_pet_multiplier (default 280)
+	CharmDurationMinRounds        ConfigInt   `yaml:"CharmDurationMinRounds"`        // Rounds a barely-won charm holds, and what a floored win takes (default 30)
+	CharmDurationMaxRounds        ConfigInt   `yaml:"CharmDurationMaxRounds"`        // Rounds a charm won by two sigma or better holds (default 450)
 	HomunculusCraftScale          ConfigFloat `yaml:"HomunculusCraftScale"`          // Chrysifier: homunculus statpool = (sum of crafting-skill levels) * this (default 4.0)
 	HomunculusConvictionReserve   ConfigInt   `yaml:"HomunculusConvictionReserve"`   // Chrysifier: base Conviction the homunculus reserves before reduction (default 300; was 1000 before the U7b cap made that unfieldable by its own crafter)
 

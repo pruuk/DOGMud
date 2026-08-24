@@ -1460,6 +1460,24 @@ Balance:
   #   than silent precisely so it arrives as a player report instead of a
   #   mystery. This is the lever if it bites.
   HomunculusConvictionReserve: 300
+  # ── CHARM DURATION (U10c) ───────────────────────────────────────────────────
+  # A charm is no longer permanent. The bond lasts a span bought with the MARGIN
+  # of the winning contest: scrape a win and it is brief, dominate and it holds.
+  # When it runs out the creature breaks free and turns on the caster.
+  #
+  # The player is never told the number, nor how long is left. That uncertainty
+  # is the mechanic -- a bond you cannot plan around is the whole risk of
+  # charming something dangerous.
+  #
+  # Rounds are 4 seconds (Timing.RoundSeconds), so 30 is about 3.4 minutes and
+  # 450 about 30. The ceiling is deliberately inside a typical session: a bond
+  # that rarely spans a logout is what makes "logging out destroys the creature"
+  # an edge case rather than a strategy players build around.
+  #
+  # Min is also what a FLOORED win takes. A mercy-granted success is not a
+  # dominant one, so it must not read as dominance.
+  CharmDurationMinRounds: 30
+  CharmDurationMaxRounds: 450
 
   # ── CARAVAN SYSTEM ───────────────────────────────────────────────────────────
   # Zones whose vendors restock on caravan visit only (per-mob
