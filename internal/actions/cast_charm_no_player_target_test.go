@@ -52,6 +52,10 @@ func TestInitiateCast_CharmRefusesAPlayerTarget(t *testing.T) {
 
 	require.True(t, result.NoTarget,
 		"charm at a player must be refused as an invalid target")
+	require.True(t, result.RefusalExplained,
+		"the refusal already told the player why, so the command layer must not "+
+			"add its generic \"You need a target\" line on top -- a 2026-08-24 "+
+			"playtest saw both lines together, the second contradicting the first")
 
 	joined := strings.Join(actor.sent, "\n")
 	require.NotEmpty(t, actor.sent,

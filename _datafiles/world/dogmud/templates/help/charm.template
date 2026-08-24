@@ -27,10 +27,10 @@ the conviction you spent holding it returns to you.
 <ansi fg="yellow">Casting:     </ansi> Long channel, requires deep concentration
 <ansi fg="yellow">Target:      </ansi> Single creature
 <ansi fg="yellow">Defense:     </ansi> Defy (the creature's willpower and its skill at
-               arguing back)
+              arguing back)
 <ansi fg="yellow">Duration:    </ansi> Decided by how completely you won
 <ansi fg="yellow">Conv. Cost:  </ansi> Very high, and more is held for as long as the
-               bond lasts
+              bond lasts
 <ansi fg="yellow">School:      </ansi> Manifestation
 
 <ansi fg="white-bold">Notes:</ansi>
