@@ -4,7 +4,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -98,4 +103,44 @@ func TestAttack_StaleTargetPlayerId_MessagesInsteadOfSilence(t *testing.T) {
 	assert.True(t, strings.Contains(strings.Join(msgs, "\n"), "don't see them"),
 		"expected the not-found family message, got: %q", msgs)
 	assert.Nil(t, user.Character.Aggro, "no engagement may happen on a vanished target")
+}
+
+// A defended taunt must still tell the taunter something, even if the defence
+// message registry has no entry for the defence type that stopped it.
+//
+// This pins the invariant structurally rather than leaving it to data luck.
+// Before the fix, the hit line was skipped because the target defended and
+// sendChannelDefenceMessages returned silently on an empty triad, so the player
+// got nothing at all. Shipped data covers every defence type, so the only way
+// to reach that state deliberately is to empty the registry -- which is exactly
+// the state a future defence type shipped without a message file would create.
+func TestTaunt_DefendedWithNoDefenceMessage_StillMessagesAttacker(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+
+	// Empty the registry AFTER seedAllRegistries has populated it.
+	restoreEmpty := items.SeedDefenseMessagesForTest(nil)
+	defer restoreEmpty()
+
+	user, room := getTestUserAndRoom(t)
+	target := users.GetByUserId(2)
+
+	originalAction := executeTauntAction
+	executeTauntAction = func(actions.Actor) actions.TauntResult {
+		return actions.TauntResult{
+			Executed: true, Hit: true,
+			Target:  actions.AggroTarget{Char: target.Character, Name: target.Character.Name, UserId: target.UserId, Found: true},
+			Defence: combat.ChannelDefenceResult{DefenceType: characters.DefenseDefy, Defended: true, DamageMultiplier: 0},
+		}
+	}
+	t.Cleanup(func() { executeTauntAction = originalAction })
+
+	events.DrainQueuedMessagesForTest(user.UserId)
+
+	handled, err := Taunt(target.Character.Name, user, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+
+	msgs := events.DrainQueuedMessagesForTest(user.UserId)
+	assert.NotEmpty(t, msgs, "a defended taunt must never leave the taunter with no message at all")
 }

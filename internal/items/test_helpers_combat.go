@@ -39,6 +39,43 @@ func SeedDefenseMessagesForTest(msgs map[DefenseType]*DefenseMessageGroup) func(
 	}
 }
 
+// MinimalDefenseMessageFixture returns a defenseMessages map covering every
+// DefenseType across all three intensity bands RenderDefenseMessage can select
+// (Weak, Normal, Heavy), each with a single placeholder variant.
+//
+// Use it in any test binary whose code path can reach a DEFENDED outcome.
+// RenderDefenseMessage returns an empty triad when the map has no entry for the
+// defence type, and callers that only forward non-empty text then send nothing
+// at all — so an unseeded registry does not fail loudly, it makes the tested
+// code silently skip its own messaging. That is what made
+// TestTaunt_StalePlayerIdInRoom_StillMessages flaky: it passed whenever the
+// target failed to defend and failed whenever it succeeded.
+func MinimalDefenseMessageFixture() map[DefenseType]*DefenseMessageGroup {
+	all := []DefenseType{
+		DefenseDodge, DefenseParry, DefenseBlock, DefenseQuell, DefenseDefy,
+		DefenseCounterMelee, DefenseCounterRanged, DefenseCounterQuell, DefenseCounterDefy,
+	}
+	out := make(map[DefenseType]*DefenseMessageGroup, len(all))
+	for _, dt := range all {
+		opts := DefenseOptions{
+			Together: DefenseTogetherMessages{
+				ToDefender: MessageOptions{ItemMessage("you defend")},
+				ToAttacker: MessageOptions{ItemMessage("they defend")},
+				ToRoom:     MessageOptions{ItemMessage("a defence")},
+			},
+		}
+		out[dt] = &DefenseMessageGroup{
+			OptionId: dt,
+			Options: DefenseIntensity{
+				Weak:   opts,
+				Normal: opts,
+				Heavy:  opts,
+			},
+		}
+	}
+	return out
+}
+
 // MinimalCombatMessageFixture returns a minimal attackMessages map keyed
 // on subType=Generic that resolves all five Intensity tiers with a
 // single placeholder phrase. Sufficient to satisfy GetAttackMessage's

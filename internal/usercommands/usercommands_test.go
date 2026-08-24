@@ -286,7 +286,17 @@ func seedAllRegistries() func() {
 		},
 	})
 
+	// Defence messages must be seeded for any test that can reach a DEFENDED
+	// outcome. RenderDefenseMessage returns an empty triad when the registry
+	// has no entry, and sendChannelDefenceMessages then forwards nothing, so an
+	// unseeded registry does not fail loudly -- it makes the code under test
+	// silently skip its own messaging. That is exactly what made
+	// TestTaunt_StalePlayerIdInRoom_StillMessages flaky: it passed whenever the
+	// skeleton failed to defend and failed whenever it succeeded.
+	cleanupDefenseMsgs := items.SeedDefenseMessagesForTest(items.MinimalDefenseMessageFixture())
+
 	return func() {
+		cleanupDefenseMsgs()
 		cleanupSpecies()
 		cleanupItems()
 		cleanupSpells()
