@@ -9,11 +9,17 @@ your companions, releasing them from your service.
 
 <ansi fg="yellow">━━━ WARNING: Betrayal ━━━</ansi>
 
-Dismissing a companion is an act of betrayal in the eyes of
-bound creatures. <ansi fg="red-bold">ALL</ansi> companions present in the same room
-when you issue the command will immediately turn hostile —
-not just the one you dismissed. Choose the time and place
-carefully, or ensure your companions are elsewhere first.
+Dismissing a charmed creature is an act of betrayal. It turns
+on you at once, and it keeps everything you handed it. Your
+other companions are unaffected.
+
+It only turns on you if you are standing beside it. Sever the
+bond from another room and the creature simply goes back to
+what it was.
+
+Choose the time regardless. Charm is the longest channel in the
+game, so freeing a slot in the middle of a fight leaves you
+with a new enemy and no time to replace it.
 
 <ansi fg="yellow">━━━ What Happens After ━━━</ansi>
 
@@ -21,9 +27,9 @@ carefully, or ensure your companions are elsewhere first.
               the world. It does not linger after dismissal.
   <ansi fg="yellow">Raised</ansi>      The reanimated body collapses and crumbles.
               The bond dissolves completely.
-  <ansi fg="yellow">Charmed</ansi>     The creature's will is restored. It reverts
-              to its natural behavior permanently — the charm
-              cannot be reapplied to the same creature.
+  <ansi fg="yellow">Charmed</ansi>     The creature's will is its own again, and it
+              remembers who took it. You may charm it again if
+              you can win the contest a second time.
 
 <ansi fg="yellow">━━━ Gear Is Not Returned ━━━</ansi>
 

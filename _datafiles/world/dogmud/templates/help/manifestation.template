@@ -50,7 +50,8 @@ follow you at once, whatever your will could otherwise hold.
   <ansi fg="yellow">Conjured</ansi>    Similar to summoned, but draws from
               a different magical tradition.
   <ansi fg="yellow">Charmed</ansi>     An existing creature bent to your will.
-              Retains its original capabilities.
+              Retains its original capabilities. The hold
+              ends without warning, and it turns on you.
   <ansi fg="yellow">Raised</ansi>      Necromantic reanimation of the fallen.
               Drawn partly from the remains, so better
               remains make a better servant.
