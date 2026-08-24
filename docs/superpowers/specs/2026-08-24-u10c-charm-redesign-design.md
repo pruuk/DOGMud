@@ -2,7 +2,7 @@
 
 **Status:** APPROVED 2026-08-24, **REVISED after blind adversarial review the same day.**
 **Sections 11, 12 and 13 supersede 1-10 where they conflict — read them FIRST.**
-**Section 13 further supersedes 11.3.2.**
+**Section 13 further supersedes 11.3.2. Section 14 is the Slice B design gate.**
 Section 2.5 is known FALSE; section 4.1 would have shipped a double contest.
 **Arc:** U0–U12 unified resolution. Sequenced after U10b-0; depends on U9 and U6b.
 **Roadmap row:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`, U10c.
@@ -682,3 +682,57 @@ The expiry handler must therefore gate on **both**:
    companions) and none of them should ever produce a grudge; and
 2. an owner who is present and **not leaving** — the logout and link-dead paths
    must reach destruction, never the grudge.
+
+---
+
+# 14. Charm may not target players — decided 2026-08-24 (Slice B gate)
+
+## 14.1 The decision
+
+**Charm refuses a player target, with a message, at cast time.** The helpfile
+has always claimed this (`charm.template:30` — "Charm cannot be used on other
+players") and nothing enforced it.
+
+## 14.2 Why this had to be decided before Slice B could be coded
+
+Declaring `target_defense_type: social` (11.2) changes the player branch, not
+just the mob branch.
+
+Today `spell_resolution.go:161-164` shortcuts any spell with an empty
+`TargetDefenseType` into `applyPlayerEffect` with a fabricated uncontested win.
+`applyPlayerEffect` has no `charm` arm, so a player-targeted charm is a
+**silent no-op that costs the caster 120 conviction**.
+
+Declaring `social` moves it to `resolveAgainstPlayer` (`:166`), which runs a
+real `ChannelSocial` contest. That would have:
+
+- charged the victim conviction for a defy they never chose to mount,
+- awarded them rhetoric and willpower progression,
+- let them defensively crit into a counterattack against the caster,
+- let the caster fumble into a self-damaging backfire,
+
+all for an effect that still does nothing. Shipping that would have been a PvP
+mechanic arriving by accident, as a side effect of a routing change.
+
+## 14.3 Why refusal rather than making it work
+
+Making charm work on players is a real PvP feature — mind control of another
+character, with a duration, a grudge, and a companion slot. It needs its own
+design, its own consent rules, and its own review. It is not U10c's to invent.
+
+Refusal is also **strictly better than today**: the player gets a clear message
+instead of silently losing 120 conviction to nothing.
+
+## 14.4 Where the guard goes
+
+At **cast time**, in target validation, not at resolution. A 36-fold channel
+should not be spent before the refusal arrives.
+
+`internal/actions/cast.go` already refuses player targets for other reasons in
+the same place (self-target on a harm spell, and the `room.CanPvp` check), so
+this is one more row in an existing guard rather than a new mechanism.
+
+## 14.5 What this does NOT change
+
+Mob targets are unaffected. `CharmImmune` and `non_combatant` continue to gate
+mob targets exactly as before (11.3.3).

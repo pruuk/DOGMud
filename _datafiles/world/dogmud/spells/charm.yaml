@@ -12,6 +12,11 @@ schools:
   - manifestation
 difficulty: 60
 primarystat: charisma
+# Charm is answered by DEFY, not quell: it is an act of social domination whose
+# attack side is already Charisma. Declaring the channel here is what lets charm
+# resolve off the contest its cast already runs, instead of running a second
+# private one of its own (U10c slice B).
+target_defense_type: social
 effect_type: charm
 cast_user_text: >-
   You fix your gaze on your target, pressing your will
