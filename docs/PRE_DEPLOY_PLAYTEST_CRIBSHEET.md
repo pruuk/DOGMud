@@ -17,11 +17,58 @@ Findings that must be **fixed**, not merely played around. Distinct from
 section 9, which lists things that are accepted-open and should not be
 re-reported.
 
+An entry here can also be a **required investigation** rather than a required
+fix, when the defect has not been reproduced and the test day is the cheapest
+place to confirm it. Those are marked in their own status line. They are still
+mandatory — the arc does not ship on an unanswered question.
+
 ### 0a. A corpse blocks targeting of the live mob sharing its name
 
-Found 2026-08-22 in the U10b-0 Phase B playtest. Owner ruled it a pre-deploy
-blocker. Section 9's older "corpse targeting can pick the wrong corpse" is the
-milder cousin of this; this one refuses the live actor outright.
+**STATUS 2026-08-24: NOT REPRODUCED. This is now a REQUIRED INVESTIGATION TASK
+for the test day, not a fix-first blocker.** Owner ruled 2026-08-24 that it is
+easier to trigger in the **Ironwind Steppes** than in the city, so drive it
+there: fast respawns plus same-prefix names make the needed coincidence likely.
+
+Found 2026-08-22 in the U10b-0 Phase B playtest. Section 9's older "corpse
+targeting can pick the wrong corpse" is the milder cousin of this; this one
+refuses the live actor outright.
+
+**Do not repeat this work — it has been ruled out:**
+
+- `room.FindByName` is NOT the culprit. A live `Bandit Scout` plus a **real
+  `Corpse`** of the same name in one room resolves `"scout"`, `"bandit scout"`
+  and `"bandit"` all to the live mob, and `FindCorpse` still finds the corpse.
+  (Note `respawn_targeting_test.go` fakes corpses as `Item`s and never
+  populates `r.Corpses`; the throwaway repro used the real field.)
+- Neither command consults corpses before live actors. `look` resolves the live
+  actor at `look.go:81` and only reaches its corpse block at `:418` if that
+  failed — so `look <name>` showing the corpse means **live resolution failed
+  first**. The two repro lines are one bug, not two.
+- No liveness filtering in `ResolveTargetActor` or `FindAll` would hide a live
+  mob.
+- Attempted in a running server: killed a mob and polled for "live mob + its own
+  corpse present together". The respawn never coincided with the corpse inside
+  the window watched. **That coincidence is the whole trigger.**
+
+It may also simply be **fixed** — the stale-id work landed after this was filed.
+Confirm it still reproduces before hunting further.
+
+**What to capture if it does reproduce:** the exact zone and room, the mob name,
+whether the corpse is that same mob's, and whether `look` and `consider` fail
+together or separately.
+
+**Workaround, and it is a real one:** `assess corpse` targets the last thing
+killed, `assess 2.corpse` the one before it, and so on. Corpse interaction is
+always available by index even when name targeting misbehaves.
+
+Related fix already merged (`eda8a958f`, PR #63): `consider` truncated its
+target to the first word, so `consider bandit archer` silently considered a
+Bandit **Scout**. That explains the `consider bandit scout` line of the repro
+below but not the headline symptom.
+
+One stale claim in the original entry: it said this "silently starves
+progression" because look/consider are perception faucets. **Phase D unhooked
+look and consider from perception**, so that reasoning no longer applies.
 
 Reproduction, in a room holding both:
 
