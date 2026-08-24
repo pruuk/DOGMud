@@ -1,0 +1,78 @@
+# U10c charm arc — adversarial gate before the arc ships.
+#
+# Nobody has watched a charm resolve in a live game since the slice B rewrite.
+# Slice B's own in-game verification was never completed: granting charm needs
+# discovery or a save edit, and the save edit hit a forced password-change flow.
+# Everything since rests on tests and reasoning. Boot-clean verifies the system;
+# it has never verified the experience.
+#
+# IMPORTANT — read before judging the results. This run is executed against a
+# checkout whose CharmDurationMinRounds/MaxRounds have been shortened to a few
+# rounds. At shipped values (30 to 450 rounds at four seconds a round) a bond
+# lasts 2 to 30 REAL minutes against a 30 minute budget, and the charmer profile
+# wins by large margins, so the break would almost certainly never fire and the
+# grudge would ship unobserved. Consequence: this run CANNOT validate duration
+# tuning or how the wait FEELS. Say so in the report.
+ephemeral:
+  profile: charmer
+  start_room: 462
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    ONE contest, ONE verdict. Cast charm at a hostile creature and read every
+    line. A resist line and a success line for the same cast is the double
+    narration this arc removed, and its return is the single most important
+    thing to catch. Report the exact text you see either way.
+  - >-
+    Charm refuses players. Try `cast charm <another player or yourself>`. Expect
+    a clear refusal, not a swallowed command and not a wasted cast.
+  - >-
+    Charm refuses shopkeepers. Find a merchant and try to charm it. Expect a
+    refusal that names a sensible reason. Confirm no conviction was spent.
+  - >-
+    Sleeping targets. Find a creature that fights and is asleep, and charm it.
+    It should land. Do NOT try to judge how long it holds, the durations are
+    shortened for this run.
+  - >-
+    Gear it. Give the charmed creature the spare weapon you are carrying and
+    confirm it wields and uses it in a fight.
+  - >-
+    Watch a bond break in a QUIET room. Stand next to your charmed creature and
+    wait. When the hold ends, is the message legible as a threat? Does it
+    obviously connect to the creature now attacking you?
+  - >-
+    Watch a bond break MID-FIGHT with a third creature. This is the case that
+    matters: you now have two enemies and one red line explaining why. Does that
+    line scroll past unnoticed in a busy combat log?
+  - >-
+    Dismiss betrayal. Charm something, then `dismiss` it while standing beside
+    it. It should turn on you at once and keep the gear you gave it.
+  - >-
+    The absent-owner rule. Charm something, walk two rooms away, wait out the
+    bond, then come back. It must NOT be hunting you. Then confirm you can
+    `dismiss` it or charm something else, i.e. that the companion slot and the
+    conviction were actually released while you were away.
+  - >-
+    Conviction returns on all three exits. Check usable conviction before and
+    after: a bond breaking, a `dismiss`, and the charmed creature DYING in a
+    fight. All three must give the reservation back.
+  - >-
+    Someone else's pet. Try to charm a creature that is already someone's
+    companion. The refusal talks about companions; does that read sensibly when
+    the target looks like an ordinary wild animal?
+  - >-
+    Interrupted mid-channel. Charm is the longest channel in the game. Get
+    knocked down or attacked partway through a cast and report what you are told
+    about the conviction you already spent.
+  - >-
+    The refusal paths must be free. Charm while already at your companion limit,
+    and charm when you cannot afford the reservation. Confirm NO conviction is
+    charged and that each message names the real reason rather than a generic
+    failure.
+  - >-
+    Read the copy cold, as a confused newcomer: `help charm`, `help spell charm`,
+    `help companion`, `help dismiss`, and `spells`. Do any two of them contradict
+    each other? Does anything promise a behaviour you did not see? Flag every
+    raw number shown to a player.
