@@ -119,4 +119,5 @@ nothing.
   <ansi fg="command">help grapple</ansi>, <ansi fg="command">help submission</ansi>,
   <ansi fg="command">help surrender</ansi>
   <ansi fg="command">help unarmed-combat</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help conviction</ansi>, <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help conviction</ansi>, <ansi fg="command">help skills</ansi>,
+  <ansi fg="command">help progression</ansi>

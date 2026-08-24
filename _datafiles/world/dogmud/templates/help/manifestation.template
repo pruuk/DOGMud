@@ -73,5 +73,5 @@ toggle assist behavior, or check each companion's condition.
 Use <ansi fg="command">dismiss</ansi> to end a bond, but be warned: dismissing
 a companion can have consequences.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>,
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help progression</ansi>, <ansi fg="command">help companion</ansi>, <ansi fg="command">help dismiss</ansi>,
   <ansi fg="command">help reservation</ansi>, <ansi fg="command">help assess</ansi>

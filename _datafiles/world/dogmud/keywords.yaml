@@ -32,6 +32,7 @@ help:
       - mutations
       - pet
       - pets
+      - progression
       - rep
       - reservation
       - skills
@@ -228,6 +229,10 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  progression:      [progress, advancement, advance, improve, improving, improvement,
+                     train, training, level, levels, levelling, leveling, xp, exp,
+                     experience, gain, gains, grind, grinding, "get better",
+                     "how do i improve", "stat gain", "skill gain"]
   skullduggery:     [stealth, surprise attack, surprise]
   combat:           [fighting, battle, dual-wield, dual wield]
   cooldowns:        [cooldown]

@@ -60,4 +60,5 @@ like are untouched by the Chrysalis entirely.
   <ansi fg="command">mutations</ansi>           List your current mutations and what they do.
   <ansi fg="command">status</ansi>              Shows your mutations in your stat panel.
 
-<ansi fg="yellow">See Also:</ansi> <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help dogmud</ansi>
+<ansi fg="yellow">See Also:</ansi> <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help progression</ansi>,
+  <ansi fg="command">help dogmud</ansi>

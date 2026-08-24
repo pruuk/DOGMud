@@ -374,3 +374,45 @@ contests. Judge whether skill now visibly matters in each of these moments.
       should now test your training against its grip rather than rolling
       a flat coin: a practiced caster should sometimes hold the cast
       together through a throttle that would break a novice.
+
+## U10b-0: progression rank from training (2026-08-24, arc complete)
+
+Rank is now trained points for a stat and the skill level for a skill, never a
+use counter. Mob and companion stat pools moved from `Training` into `Base`
+behind a save migration. Every multiplier was re-solved on measured play data.
+
+**The companion round trip is the one item that was never driven live.** Its
+arithmetic is verified against all four of your real legacy pets, but the
+login path itself was not exercised inside the playtest wall clock, and it is
+the branch most likely to hide a `Base`-assignment bug. Do this one first.
+
+- [ ] **Log in with Meirok and look hard at Rocky and Fleshy before doing
+      anything else.** Note what `companion` and `status` report about each:
+      how strong they look, their health, what they can do. Then log out, log
+      back in, and compare. **They must come back identical.** Any drift in
+      power or health is a serious finding and a deploy blocker. Expected
+      result: unchanged stat values, unchanged HP, and a training figure that
+      no longer includes what they were born with.
+- [ ] **Rocky and Fleshy will never gain another stat point, and that is the
+      accepted design.** Migrated legacy pets carry more trained points than
+      the per-stat gain cap allows, so they arrive already at it. They keep
+      everything they earned and simply stop growing. Confirm they feel no
+      *weaker* than you remember. Weaker is a bug; merely static is not.
+      A pet raised from here on will grow normally.
+- [ ] Summon or raise a **fresh** companion and fight with it a while. It
+      should visibly improve, unlike the two old golems. That contrast is the
+      check that the cap is landing on legacy accumulation rather than on
+      everything.
+- [ ] Fight until stats and skills advance. Early progress should feel quick.
+      Confirm the banners name the right thing and never show a raw number.
+- [ ] Take real hits and keep fighting. Toughness is now built by being hit;
+      a glancing blow should not count. Say whether it ever felt like it
+      happened.
+- [ ] `assess` a corpse, then actually raise it with the spell
+      (`cast raise-skeleton corpse`). The forms assess advertises must be the
+      forms the spells accept.
+- [ ] Spend time on forage, search and a craft. Judge them against combat for
+      the same effort. The retune was solved on measured rates, so anything
+      that feels dramatically out of line is worth reporting.
+- [ ] Read `help progression` as a player would and say whether it actually
+      answers "how do I get better".

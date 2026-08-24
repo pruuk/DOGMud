@@ -1,5 +1,35 @@
 # DOGMud Patch Notes
 
+## 2026-08-24: How you improve, written down at last
+
+Type help progression. There is now a proper explanation of how characters
+get better, which the game has never actually spelled out anywhere.
+
+The short version: there are no levels and no experience points. Every time
+you use an attribute or a skill, you get one chance to improve it. Most of
+those chances come to nothing. The further something has already come, the
+rarer the chance becomes, and that is the entire difficulty curve.
+
+Two things that do not matter, and never did in the way players assumed.
+How many times you have done something does not make the next attempt teach
+you less. And gear that raises an attribute does not make that attribute
+harder to train.
+
+## 2026-08-24: Long-serving companions have gone as far as they go
+
+Companions improve the same way you do, but only up to a point. Any
+companion that has already come a very long way has now reached that point
+and will not grow further.
+
+If you have had a companion at your side for a long time, this most likely
+means it. Nothing has been taken away from it. It keeps every bit of what it
+earned and fights exactly as well as it did yesterday. It has simply arrived
+at the end of its road, which is a thing that was always true of companions
+and is only now visible.
+
+Anything you bind from here on grows normally, and has a long way to travel
+before it gets anywhere near that limit.
+
 ## 2026-08-24: Better eyes on how characters grow
 
 Nothing in the game itself changed here. This is housekeeping on the tools we
