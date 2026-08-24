@@ -1074,9 +1074,26 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 // quell is a single-defence set, so an unclassified spell faces one defence
 // rather than two.
 func spellAttackChannel(spellData *spells.SpellData) combat.AttackChannel {
-	if spellData != nil && spellData.TargetDefenseType == "physical" {
-		return combat.ChannelSpellPhysical
+	if spellData == nil {
+		return combat.ChannelSpellMental
 	}
+	switch spellData.TargetDefenseType {
+	case "physical":
+		return combat.ChannelSpellPhysical
+	case "social":
+		// Charm is an act of social domination whose attack side is already
+		// Charisma, so defy answers it rather than quell. Declaring the channel
+		// in data is what lets charm stop hand-rolling a second contest of its
+		// own on top of this one.
+		//
+		// NOTE if you add another social spell: this channel also reaches
+		// fireSpellCounterTier, and combat/counter.go documents ChannelSocial
+		// as never arriving at ExecuteCounter -- true only because taunt
+		// short-circuits its defy-crit at the call site. See charm's handling.
+		return combat.ChannelSocial
+	}
+	// An absent target_defense_type is the DEFAULT, not an escape from routing.
+	// Every unclassified spell resolves as a mental attack answered by quell.
 	return combat.ChannelSpellMental
 }
 
