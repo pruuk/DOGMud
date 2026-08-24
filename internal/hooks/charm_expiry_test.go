@@ -142,6 +142,11 @@ func TestCharmExpiry_LinkDeadOwner_NoGrudge(t *testing.T) {
 	if mob.Character.Aggro != nil {
 		t.Errorf("a link-dead owner must not be attacked, aggro=%+v", mob.Character.Aggro)
 	}
+	// ...but they must not come back to a permanently reserved pool either.
+	if user.Character.GetCompanionByInstanceId(mob.InstanceId) != nil {
+		t.Error("the companion record survived a bond that lapsed while its owner " +
+			"was link-dead, stranding the reservation and the slot")
+	}
 }
 
 // characters.CharmPermanent is -1, not 0. It must be inert on both the
@@ -167,4 +172,36 @@ func TestCharmExpiry_PermanentSentinelNeverExpires(t *testing.T) {
 		t.Errorf("a permanent bond must never grudge, aggro=%+v", mob.Character.Aggro)
 	}
 	_ = user
+}
+
+// A bond that lapses while its owner is elsewhere still has to do the COMPANION
+// bookkeeping. Only the betrayal is gated on presence -- the record, the
+// reservation and the slot are not.
+//
+// Slice C shipped this branch doing none of it, and the unit tests missed it
+// because TestCharmExpiry_AbsentOwner_NoGrudge asserted only that no aggro was
+// set and the charm was broken. The consequences were all downstream:
+//   - 280 conviction reserved forever, out of a 585 pool.
+//   - The companion slot permanently consumed, so the next charm is refused
+//     with "as many companions as your will can hold".
+//   - TransportCompanions (companion_follow.go:47) iterates Companions with NO
+//     charm check, so the ex-companion keeps teleporting to its owner on every
+//     move, announcing "rejoins you", while no longer being charmed.
+func TestCharmExpiry_AbsentOwner_StillReleasesTheCompanion(t *testing.T) {
+	user, mob, cleanup := expiringBond(t, 8846, 8856, characters.CompanionCharmed)
+	defer cleanup()
+
+	full := user.Character.ConvictionMax.Value
+	user.Character.RoomId = 8899 // walked away
+
+	tickMobCharmState(mob)
+
+	if user.Character.GetCompanionByInstanceId(mob.InstanceId) != nil {
+		t.Error("the companion record survived a lapsed bond, so its conviction " +
+			"reservation and its companion slot are held forever and " +
+			"TransportCompanions keeps dragging the creature along")
+	}
+	if got := user.Character.EffectivePoolMax(characters.PoolConviction); got != full {
+		t.Errorf("usable conviction is %d after the bond lapsed, want the full %d", got, full)
+	}
 }
