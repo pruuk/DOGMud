@@ -1183,3 +1183,27 @@ No **new** lint finding on a touched file.
 - **No migration.** The owner confirms no veteran character uses charm.
 - **U10b is a different, still-unshipped slice.** Do not fold any of it in.
 - If a grep finds something this plan did not predict, **stop and report.** v1 of this plan was rejected by blind review for exactly one such unpredicted fact, and every prior slice in this arc was re-planned for the same reason.
+
+---
+
+# SUPERSEDED 2026-08-24 — do not execute this document
+
+Both v1 and v2 of this plan were rejected by blind adversarial review. v1
+believed charm had never joined the contest seam and would have added a second
+contest per cast. v2 fixed that and introduced three new blockers of the same
+shape: it cited the login hook as the logout destroyer, put a target-dependent
+penalty in a function with no target parameter, and prescribed an
+"online and in the room" grudge gate in prose while writing code that checked
+only the room.
+
+The remaining work is now PHASED, per the lesson this project already recorded
+in `2026-08-21-u10b-0-README.md`: later slices are planned after their
+predecessor lands, not before.
+
+- **Slice A — MERGED** `9b8fa2d51`. `AttackerNormalizedMargin` on the seam.
+- **Slice B** — `2026-08-24-u10c-slice-b-one-contest.md`. One contest, on defy.
+- **Slice C** — the clock and the grudge. Not yet planned.
+- **Slice D** — guards, player copy, ship. Not yet planned.
+
+Kept rather than deleted because its review history is the evidence for why the
+rest is phased.
