@@ -11,6 +11,21 @@ func charmDurationTestConfig(t *testing.T) {
 	cfg := configs.GetConfig()
 	cfg.Balance.CharmDurationMinRounds = 30
 	cfg.Balance.CharmDurationMaxRounds = 450
+
+	// SetConfigForTest replaces the WHOLE config, and a test binary never loads
+	// config.yaml, so anything a charm fixture depends on has to be pinned here
+	// or it arrives as zero. Conviction is the one that bites: the pool is
+	// ConvictionBase + Cha*perCha + Wil*perWil, and with those at zero
+	// ConvictionMax floors to 1, the flat 280 reserve breaches the cap, and
+	// every charm is silently REFUSED -- so duration assertions read 0 and look
+	// like the margin is broken.
+	cfg.Balance.ConvictionBase = 5
+	cfg.Balance.ConvictionPerCharisma = 3
+	cfg.Balance.ConvictionPerWillpower = 1
+	cfg.Balance.PoolReservationCapPct = 0.66
+	cfg.Balance.CompanionReserveDefault = 280
+	cfg.Balance.CompanionSoftCap = 5
+
 	configs.SetConfigForTest(t, cfg)
 }
 
