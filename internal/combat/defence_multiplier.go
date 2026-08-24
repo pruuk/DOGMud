@@ -180,9 +180,39 @@ type ChannelDefenceResult struct {
 	DefenceType             string
 	DefenseRollZScore       float64
 	NormalizedDefenceMargin float64
-	Defended                bool
-	DefensiveCrit           bool
-	Cost                    characters.CostCommitResult
+
+	// AttackerNormalizedMargin is the ATTACK-POSITIVE opposed margin: how
+	// decisively the attacker won, in units of the same normalisation
+	// NormalizedDefenceMargin uses.
+	//
+	// The two are counterparts, NOT alternatives. This one is populated only
+	// when the attacker won; NormalizedDefenceMargin only when the defence did.
+	// Neither is meaningful on the other's path, and the sign conventions are
+	// opposite -- contest.Result.Margin's own docs record that mixing them
+	// compiles cleanly and silently puts the outcome on the losing side.
+	//
+	// ZERO IS NOT "NO ADVANTAGE". Four attack-win exits leave this at zero, and
+	// only one of them means the margin was genuinely nil:
+	//
+	//   - a FLOORED win: the margin is a +-1 sentinel, not a roll, and a
+	//     mercy-granted success must never read as dominance;
+	//   - an empty defence set, and an uncontested roll: no opposed margin exists;
+	//   - a ForceCrit forced win, which returns before this is assigned even
+	//     though it is the MOST decisive outcome the system produces.
+	//
+	// That last one is a live hazard for consumers. A sleeping victim forces
+	// the crit, so a caller scaling an effect by decisiveness will read the
+	// minimum in exactly the case a player expects the maximum. Special-case
+	// ForceCrit at the call site. Pinned by
+	// TestAttackerNormalizedMargin_ZeroOnForcedCritWin_KNOWN.
+	//
+	// Added by U10c, which needs it to price a charm's duration. The gap is
+	// general rather than charm-shaped: any effect scaled by how decisively an
+	// attack landed hits the same wall.
+	AttackerNormalizedMargin float64
+	Defended                 bool
+	DefensiveCrit            bool
+	Cost                     characters.CostCommitResult
 
 	// U6b: the attacker's half of the same contest. Crit is margin-derived
 	// against CritBarFor and NEVER set on a Floored outcome; Fumble is
@@ -384,6 +414,12 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 		out.DefenseRollZScore = res.DefenseRoll.ZScore
 	}
 	if res.Success {
+		// Same guards as DefenseRollZScore directly above: a floored outcome
+		// carries a sentinel rather than a roll, and an uncontested entry has
+		// no spread to normalise against.
+		if !res.Floored && res.DefenseRoll.StdDev > 0 {
+			out.AttackerNormalizedMargin = res.Margin / (res.DefenseRoll.StdDev * math.Sqrt2)
+		}
 		return out
 	}
 
