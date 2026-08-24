@@ -10,9 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/bountyhunter"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/goals"
@@ -23,7 +21,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -111,6 +108,24 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 		tickMobCooldowns(mob)
 		expireMobCombatMemory(mob)
 		tickMobCharmDuration(mob)
+		// The clock and its expiry belong in the SAME lane. They are one
+		// mechanism, and splitting them left a lapsed bond parked at zero for an
+		// unbounded time in a cold zone: the creature stayed charmed, stayed a
+		// companion, and kept reserving the caster's conviction until a player
+		// happened to walk into that zone.
+		//
+		// This cannot make a grudge fire where it otherwise would not have. The
+		// grudge requires the owner to be in the room, and a zone holding a player
+		// is active by construction (SnapshotActiveZones counts players per zone),
+		// so every grudge-eligible expiry was already reachable from the active
+		// lane. What moves here is the QUIET unwind, which now happens on schedule
+		// everywhere.
+		//
+		// Consequence, deliberately accepted: a charm's ExpiredCommand (befriend's
+		// CharmExpiredRevert, despawns) can now run in an unpopulated zone. Every
+		// other charm setter in the tree uses CharmPermanent or 99999, so in
+		// practice nothing but this spell reaches it.
+		tickMobCharmState(mob)
 		tickMobBuffs(mob, mobInstanceId)
 		tickMobConditions(mob)
 		tickMobRecomputeGoals(mob, roundCount) // chunk 4.2 — strategic-layer selection
@@ -151,7 +166,6 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 		if mob.Character.IsInCombat() && shouldFrenzy(mutations.HasMutationFlag(mob.Character.Mutations, "battle-frenzy"), mob.Character.Health, mob.Character.HealthMax.Value) {
 			mob.AddBuff(bloodFrenzyBuffId, "blood-frenzy")
 		}
-		tickMobCharmState(mob)
 		tickMobCrafting(mob)
 		revalidateMobStats(mob)
 	}
@@ -368,89 +382,115 @@ func applyAcquiredMutation(mob *mobs.Mob, mutId string) {
 	behaviortree.ReevaluateArchetypeShift(mob)
 }
 
-// tickMobCharmState — current inline blocks at lines 262–279 (expiry
-// cleanup) + 281–353 (re-roll). Kept together since both depend on
-// Charmed state.
+// tickMobCharmState handles a charm reaching the end of its clock.
+//
+// For a CHARMED COMPANION the expiry is the grudge: the creature breaks free
+// and turns on the caster. That is the whole risk half of charm's risk/reward
+// -- a bond whose length the player was never told is a bond they cannot plan
+// around, and something they geared and trained may be standing next to them
+// when it lapses.
+//
+// The re-roll ladder that used to live here is gone (U10c Slice C). Duration is
+// decided once, by the margin that won the contest.
 func tickMobCharmState(mob *mobs.Mob) {
-	// Charm expiry cleanup.
-	if mob.Character.IsCharmed() && mob.Character.Charmed.RoundsRemaining == 0 {
-		cmd := mob.Character.Charmed.ExpiredCommand
-		if charmedUserId := mob.Character.RemoveCharm(); charmedUserId > 0 {
-			if charmedUser := users.GetByUserId(charmedUserId); charmedUser != nil {
-				charmedUser.Character.TrackCharmed(mob.InstanceId, false)
-			}
-		}
-		if cmd != `` {
-			cmds := strings.Split(cmd, `;`)
-			for _, cmd := range cmds {
-				cmd = strings.TrimSpace(cmd)
-				if len(cmd) > 0 {
-					mob.Command(cmd)
-				}
-			}
+	if !mob.Character.IsCharmed() || mob.Character.Charmed.RoundsRemaining != 0 {
+		// characters.CharmPermanent is -1, not 0, and tickMobCharmDuration only
+		// decrements while RoundsRemaining > 0. A permanent bond therefore never
+		// reaches this branch from either direction.
+		return
+	}
+
+	cmd := mob.Character.Charmed.ExpiredCommand
+
+	charmedUserId := mob.Character.GetCharmedUserId()
+	var owner *users.UserRecord
+	if charmedUserId > 0 {
+		owner = users.GetByUserId(charmedUserId)
+	}
+
+	// ── Gate 1: only a CHARMED companion grudges ────────────────────────────
+	// Five other systems put a creature in Charmed state -- summons, brood
+	// spawns, the homunculus, befriend, and behaviour-tree companions -- and
+	// applyMobEffect_charm is the only producer of CompanionCharmed in the
+	// codebase. A conjured creature turning on the conjurer would be a bug, not
+	// a mechanic.
+	grudge := false
+	if owner != nil {
+		if comp := owner.Character.GetCompanionByInstanceId(mob.InstanceId); comp != nil &&
+			comp.SourceType == characters.CompanionCharmed {
+			grudge = true
 		}
 	}
 
-	// Re-roll contested Charisma vs Willpower on CharmDuration tick.
-	if mob.Character.IsCharmed() {
-		if charmedUserId := mob.Character.GetCharmedUserId(); charmedUserId > 0 {
-			if owner := users.GetByUserId(charmedUserId); owner != nil {
-				if comp := owner.Character.GetCompanionByInstanceId(mob.InstanceId); comp != nil &&
-					comp.SourceType == characters.CompanionCharmed &&
-					comp.CharmDuration > 0 {
+	// ── Gate 2: the owner must be PRESENT to receive it ─────────────────────
+	// A bond lapsing while the caster is elsewhere must not manufacture a
+	// creature that hunts them across zones. Aggro at range is how charm would
+	// become a griefing tool rather than a gamble (spec 3.10).
+	if grudge && owner.Character.RoomId != mob.Character.RoomId {
+		grudge = false
+	}
 
-					comp.CharmDuration--
-					if comp.CharmDuration == 0 {
-						manifestSkill := owner.Character.GetSkillLevel(skills.Manifestation)
-						attackScore := float64(owner.Character.Stats.Charisma.ValueAdj) +
-							float64(manifestSkill)*25.0
+	// ── Gate 3: the owner must not be LEAVING ───────────────────────────────
+	// A clean logout cannot reach this: saveCompanionState destroys every
+	// companion instance before HandleLeave's Expire() loop runs, so the mob is
+	// gone by the time any tick could see it. LINK-DEAD is the live case -- a
+	// zombied player stays in the room while the clock keeps running, and
+	// firing a grudge at someone whose connection just dropped is indefensible.
+	// (users.go's own link-dead cleanup zeroes RoundsRemaining, but only for the
+	// tutorial Guide, which gate 1 already excludes.)
+	if grudge && owner.Character.HasAdjective(`zombie`) {
+		grudge = false
+	}
 
-						targetPool := mob.Character.StatPoolTotal()
-						defenseScore := float64(mob.Character.Stats.Willpower.ValueAdj) +
-							float64(targetPool)*0.10
+	if !grudge {
+		// Not a grudge: unwind quietly, exactly as before.
+		if mob.Character.RemoveCharm() > 0 && owner != nil {
+			owner.Character.TrackCharmed(mob.InstanceId, false)
+		}
+		runCharmExpiredCommand(mob, cmd)
+		return
+	}
 
-						effectiveness := 1.0 - float64(comp.CharmRerolls)*0.01*float64(comp.CharmRerolls)
-						if effectiveness < 0.50 {
-							effectiveness = 0.50
-						}
-						attackScore *= effectiveness
+	room := rooms.LoadRoom(mob.Character.RoomId)
 
-						res := combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})
+	owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
+		`<ansi fg="red-bold">%s breaks free of your control!</ansi>`, mob.Character.Name))
+	if room != nil {
+		sendVisualRoomText(room, messaging.CategoryMobEmote, fmt.Sprintf(
+			`<ansi fg="red">%s snarls and turns on %s!</ansi>`,
+			mob.Character.Name, owner.Character.Name), owner.UserId)
+	}
 
-						if res.Success {
-							newDuration := 50 + owner.Character.Stats.Charisma.ValueAdj/2 +
-								manifestSkill*3
-							comp.CharmDuration = newDuration
-							comp.CharmRerolls++
+	// Bookkeeping order is dismiss.go's, and for dismiss.go's reason: drop the
+	// companion record BEFORE anything that can trigger room-wide combat logic.
+	// Setting aggro first re-enters combat resolution while the pet is half
+	// removed -- still on Companions, no longer charmed.
+	mob.Character.RemoveCharm()
+	owner.Character.TrackCharmed(mob.InstanceId, false)
+	owner.Character.RemoveCompanion(mob.InstanceId)
 
-							owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-								`<ansi fg="cyan">Your hold on %s wavers... but you reassert your will.</ansi>`,
-								comp.Name))
-							if comp.CharmRerolls >= 5 {
-								owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-									`<ansi fg="red">%s's eyes flash with defiance. Your control is slipping...</ansi>`,
-									comp.Name))
-							} else if comp.CharmRerolls >= 3 {
-								owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-									`<ansi fg="yellow">You sense %s's will straining against your bond...</ansi>`,
-									comp.Name))
-							}
-						} else {
-							owner.SendText(messaging.CategorySpellMental, fmt.Sprintf(
-								`<ansi fg="red-bold">%s breaks free of your control!</ansi>`, comp.Name))
-							if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-								sendVisualRoomText(room, messaging.CategoryMobEmote, fmt.Sprintf(
-									`<ansi fg="red">%s snarls and turns on %s!</ansi>`,
-									mob.Character.Name, owner.Character.Name), owner.UserId)
-							}
-							mob.Character.RemoveCharm()
-							owner.Character.TrackCharmed(mob.InstanceId, false)
-							owner.Character.RemoveCompanion(mob.InstanceId)
-							mob.Character.SetAggro(owner.UserId, 0, characters.DefaultAttack)
-						}
-					}
-				}
-			}
+	// RemoveCompanion alone does not give the conviction back. The reservation
+	// is DERIVED from the live companion slice during RecalculateStats, and the
+	// bar the player is staring at is refreshed by the event -- which matters
+	// most at exactly this moment, because they are now being attacked.
+	owner.Character.RecalculateStats()
+	events.AddToQueue(events.CharacterVitalsChanged{UserId: owner.UserId})
+
+	// Only now may aggro be set.
+	mob.Character.SetAggro(owner.UserId, 0, characters.DefaultAttack)
+
+	runCharmExpiredCommand(mob, cmd)
+}
+
+// runCharmExpiredCommand fires the semicolon-separated ExpiredCommand string a
+// charm may carry (befriend uses it to revert the mob).
+func runCharmExpiredCommand(mob *mobs.Mob, cmd string) {
+	if cmd == `` {
+		return
+	}
+	for _, c := range strings.Split(cmd, `;`) {
+		if c = strings.TrimSpace(c); len(c) > 0 {
+			mob.Command(c)
 		}
 	}
 }

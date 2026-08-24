@@ -75,9 +75,29 @@ func applyMobEffect_charm(
 
 	targetName := targetMob.Character.Name
 
-	// Slice B keeps charm PERMANENT. The clock is Slice C's; introducing it here
-	// would mean shipping a duration with no expiry path to end it.
-	targetMob.Character.Charm(user.UserId, 99999, "")
+	// The bond has a clock, and the player is never told how long it is. That
+	// uncertainty is the mechanic: a bond you cannot plan around is the whole
+	// risk of charming something dangerous.
+	//
+	// Do NOT substitute characters.CharmPermanent here. That sentinel means
+	// "never expires" and would restore exactly the permanence this replaces.
+	margin := out.AttackerNormalizedMargin
+	if out.AttackerCrit && margin == 0 {
+		// A FORCED crit -- a sleeping victim -- returns from the seam above its
+		// margin assignment, so it reads zero, which maps to the MINIMUM
+		// duration. That would make the most decisive charm in the game buy the
+		// shortest bond, while a scrappy win against the same creature awake
+		// bought the longest. Read it as the ceiling instead (spec 15).
+		//
+		// Corrected here rather than in the seam on purpose: a forced crit
+		// bypasses the contest, so there genuinely is no opposed margin to
+		// report, and inventing one for every channel to satisfy charm would be
+		// the tail wagging the dog. combat's
+		// TestAttackerNormalizedMargin_ZeroOnForcedCritWin_KNOWN pins the
+		// seam's side of that bargain.
+		margin = charmMarginCeiling
+	}
+	targetMob.Character.Charm(user.UserId, charmDurationFor(margin), "")
 	targetMob.Character.EndAggro()
 	ch.TrackCharmed(targetMob.InstanceId, true)
 

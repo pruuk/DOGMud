@@ -116,16 +116,27 @@ func Dismiss(rest string, user *users.UserRecord,
 	}
 
 	// Charmed wild creature — the bond-break is a betrayal; it turns hostile.
-	mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
-
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(
 		`You sever the bond with <ansi fg="mobname">%s</ansi>.`,
 		compName,
 	))
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`<ansi fg="mobname">%s</ansi> turns on you with fury!`,
-		compName,
-	))
+
+	// The betrayal only lands if the owner is THERE to receive it. A creature
+	// dismissed from another room would otherwise acquire aggro it can carry
+	// across zones via patrol and pathto -- the griefing shape the expiry path
+	// rules out (U10c spec 3.10), violated by the command next door.
+	//
+	// This is very hard to reach in play: companions follow their owner
+	// closely. It is a guard rather than a fix, and it exists so the two exits
+	// from a charmed bond cannot disagree about the same anti-grief rule.
+	present := mob.Character.RoomId == user.Character.RoomId
+	if present {
+		mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi> turns on you with fury!`,
+			compName,
+		))
+	}
 
 	// Room message (exclude the dismissing player — they already saw it).
 	room.SendTextVisual(messaging.CategoryMobEmote,
@@ -136,13 +147,17 @@ func Dismiss(rest string, user *users.UserRecord,
 		),
 		user.UserId,
 	)
-	room.SendTextVisual(messaging.CategoryMobEmote,
-		fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> turns hostile!`,
-			compName,
-		),
-		user.UserId,
-	)
+	// The dismissal itself is always announced; the hostility only when it
+	// actually happened.
+	if present {
+		room.SendTextVisual(messaging.CategoryMobEmote,
+			fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi> turns hostile!`,
+				compName,
+			),
+			user.UserId,
+		)
+	}
 
 	return true, nil
 }

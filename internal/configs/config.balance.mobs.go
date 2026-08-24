@@ -174,6 +174,22 @@ func (b *Balance) validateMobs() {
 		// summon_pet_multiplier scales, so it now sets the whole ladder.
 		b.CompanionReserveDefault = 280
 	}
+	if b.CharmDurationMinRounds < 1 {
+		// ~3.4 minutes at RoundSeconds 4. What a scraped win buys, and what a
+		// FLOORED win buys -- a mercy-granted success is not a dominant one.
+		b.CharmDurationMinRounds = 30
+	}
+	if b.CharmDurationMaxRounds < 1 {
+		// ~30 minutes. Deliberately short enough that a bond usually begins and
+		// ends inside one session, which is what makes the destroy-on-logout
+		// rule (spec 13) an edge case rather than a strategy.
+		b.CharmDurationMaxRounds = 450
+	}
+	if b.CharmDurationMaxRounds < b.CharmDurationMinRounds {
+		// A misconfigured pair must not invert the mechanic. Collapsing to a
+		// fixed duration is strictly better than a curve that runs backwards.
+		b.CharmDurationMaxRounds = b.CharmDurationMinRounds
+	}
 	if b.HomunculusCraftScale <= 0 {
 		b.HomunculusCraftScale = 4.0
 	}
