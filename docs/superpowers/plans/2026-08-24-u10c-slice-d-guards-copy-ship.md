@@ -77,6 +77,7 @@ target's willpower" survives the redesign. Its "Defense: Mental" line does not.
 | `_datafiles/world/dogmud/spells/charm.yaml` | `description:` — the sentence the spell list shows. | 3 |
 | `_datafiles/world/dogmud/templates/help/charm.template` | The full helpfile. **Owner: REQUIRED for completion.** | 4 |
 | `docs/PATCH_NOTES.md` | One dated entry for the whole U10c arc. | 5 |
+| `tools/playtest/profiles/charmer.yaml` | **Create.** A reusable playtest character that knows charm. Owner ruling: the permanent fix, not a one-off grant. | 6 |
 | `tools/playtest/goals/2026-08-24-u10c-charm-arc.yaml` | **Create.** Goals file for the adversarial gate. | 6 |
 
 ---
@@ -599,17 +600,102 @@ reasoning alone.
 
 Boot-clean verifies the system. It has never once verified the experience.
 
-- [ ] **Step 1: Solve "how does the tester get charm" FIRST**
+- [ ] **Step 1: Build a reusable charm profile — OWNER RULING 2026-08-24**
 
-This is what defeated Slice B's attempt. Do not start the harness until it is
-solved. Options, cheapest first:
+Getting charm onto the tester is what defeated Slice B's attempt. The owner
+chose the permanent fix over the quick one: **add a profile, so this and every
+future charm test just works.** Do not attempt a save edit — that is the route
+that hit a forced password-change flow and lost the run.
 
-1. An `ephemeral.profile` character that already knows charm — check
-   `tools/playtest/profiles/` for what exists.
-2. An admin grant from inside the session. Confirm the command name against
-   `internal/usercommands/` before relying on it.
-3. A save edit — **known to hit a forced password-change flow.** If you take this
-   route, solve the password flow first or you will lose the run.
+Profiles carry a `spellbook:` block, which is the whole mechanism. Model the new
+file on `tools/playtest/profiles/specialist-caster.yaml`, which already grants
+six spells this way.
+
+**Create `tools/playtest/profiles/charmer.yaml`:**
+
+```yaml
+role: user
+username: template-charmer
+character:
+  name: Bindsong
+  description: >
+    A manifestation specialist built to exercise charm end to end: enough
+    charisma to win the contest, enough conviction to pay the cost AND hold
+    the companion reservation, and a spare weapon to hand a charmed creature.
+  roomid: 462
+  zone: Thornwall City
+  speciesid: 1
+  stats:
+    strength:
+      base: 100
+    dexterity:
+      base: 110
+    perception:
+      base: 115
+    vitality:
+      base: 115
+    willpower:
+      base: 130
+    charisma:
+      base: 150
+  health: 460
+  stamina: 450
+  conviction: 585
+  gold: 400
+  skills:
+    manifestation: 30
+    spellcasting: 15
+    rhetoric: 10
+    weapon-combat: 8
+    search: 10
+  spellbook:
+    charm: 3
+    heal: 2
+  equipment:
+    weapon:
+      itemid: 10018
+    body:
+      itemid: 20008
+    feet:
+      itemid: 20003
+  items:
+    - itemid: 10018
+```
+
+**Why these numbers, so nobody "simplifies" them into a profile that cannot
+charm anything:**
+
+- `ConvictionMax = 5 + Charisma*3 + Willpower*1` = 5 + 450 + 130 = **585**.
+- Charm costs **120** to cast and then reserves `CompanionReserveDefault` = **280**
+  for as long as the bond holds.
+- `WouldBreachReservationCap` refuses the charm if the reservation would exceed
+  `PoolReservationCapPct` (0.66) of the pool. 0.66 × 585 = 386, and 280 < 386, so
+  it passes — **with margin, deliberately.** Drop charisma much below 150 and the
+  reserve starts breaching the cap, at which point every charm is **silently
+  refused** and the run reads as a broken spell rather than an underpowered
+  character. This is the same trap that cost a debugging cycle in Slice C's unit
+  fixtures.
+- The **second** `itemid: 10018` under `items:` is the weapon to hand a charmed
+  creature in goal 5. Without a spare, the tester has to disarm itself first.
+
+Verify the coefficients against `config.yaml` before trusting the arithmetic
+above — they are balance knobs and may have moved:
+
+```bash
+grep -nE "ConvictionBase|ConvictionPerCharisma|ConvictionPerWillpower|PoolReservationCapPct|CompanionReserveDefault" _datafiles/config.yaml
+```
+
+- [ ] **Step 1b: Register and smoke-test the profile**
+
+Check how `playtestrun` discovers profiles before assuming a bare file is enough:
+
+```bash
+grep -rn "profiles/" internal/playtestrun/*.go | head
+cat tools/playtest/profiles/README.md
+```
+
+Then confirm the character actually boots with charm known — log in and type
+`spells`. A profile that loads but grants nothing wastes the whole run.
 
 - [ ] **Step 2: Write the goals file**
 
