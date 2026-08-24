@@ -1,5 +1,43 @@
 # DOGMud Patch Notes
 
+## 2026-08-24: Charm is a gamble now, not a purchase
+
+Bending a creature to your will used to be permanent, which made it a
+straightforward trade: pay the conviction, keep the creature. It is not that
+any more.
+
+The hold now ends. How long you keep it depends on how completely you won the
+contest of wills, and nothing tells you how long that is. A creature you barely
+overpowered can turn on you almost at once, sometimes before the fight you
+charmed it for is finished. One you dominated outright will stay with you far
+longer. You will not know which you have until it stops.
+
+Catch something asleep and you will hold it longest.
+
+When the hold breaks and you are standing beside it, it comes for you. If you
+are somewhere else it simply goes back to being what it was, and the conviction
+you spent holding it returns to you either way.
+
+This cuts both ways with everything you invest in one. A charmed creature keeps
+the gear you hand it and grows stronger fighting at your side, so the more you
+put into it, the worse the moment it remembers itself.
+
+Size is no protection against you and no comfort either. A stubborn mind is
+what resists; a big one is simply worse news later. A creature already fighting
+is harder to reach, and one already fighting you is hardest of all.
+
+Letting one go is not a peaceful parting. Dismiss a charmed creature while you
+are standing next to it and it turns on you at once, so free a slot before you
+need one rather than in the middle of a fight.
+
+As before, logging out destroys anything you have charmed along with whatever
+it was carrying. Take back anything you lent it before you go.
+
+Two smaller things. Charm now refuses to target other players, which the help
+file always claimed it did and which nothing actually enforced. And when any
+companion dies, the conviction it was holding now visibly returns to you rather
+than appearing stuck until something else happened.
+
 ## 2026-08-24: How you improve, written down at last
 
 Type help progression. There is now a proper explanation of how characters
