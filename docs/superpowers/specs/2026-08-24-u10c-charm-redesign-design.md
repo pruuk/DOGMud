@@ -1,6 +1,8 @@
 # U10c — Charm Redesign (design)
 
-**Status:** APPROVED 2026-08-24.
+**Status:** APPROVED 2026-08-24, **REVISED after blind adversarial review the same day.**
+**Sections 11 and 12 supersede 1-10 where they conflict — read them FIRST.**
+Section 2.5 is known FALSE; section 4.1 would have shipped a double contest.
 **Arc:** U0–U12 unified resolution. Sequenced after U10b-0; depends on U9 and U6b.
 **Roadmap row:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`, U10c.
 
@@ -391,3 +393,212 @@ quantitative.
 
 Consider adding a line reflecting 3.6 honestly: a powerful creature is not
 harder to charm, but it is far more dangerous when the bond breaks.
+
+---
+
+# 11. REVISION 2 — after blind adversarial review (2026-08-24)
+
+**Sections 11 and 12 SUPERSEDE sections 1-10 where they conflict. Read them
+first.** Three independent blind reviewers each made the same finding their
+number one, and it falsifies a premise sections 2.5 and 4.1 both assert.
+
+## 11.1 Section 2.5 is FALSE — charm already resolves through the seam
+
+Section 2.5 claims charm "never joined the unified seam" because `charm.yaml`
+declares no `target_defense_type`. That reasoning is backwards.
+
+Verified in source:
+
+- `spellAttackChannel` (`internal/hooks/spell_resolution.go:1076-1081`) maps an
+  **absent** `target_defense_type` to `ChannelSpellMental`. Absent is the
+  DEFAULT, not an escape.
+- The mob-target loop (`spell_resolution.go:129-143`) calls `resolveAgainstMob`
+  **unconditionally** — there is no effect-type guard. The *player* loop has
+  one, which is what made the false reading look plausible.
+- `resolveAgainstMob` calls `runSpellChannelAttack` =
+  `combat.ResolveChannelAttack`, with `spellAttackSideFor` building
+  `Cha + manifestation × SkillWeight` — **the exact AttackSide section 4.1
+  proposed to add.**
+
+**Charm has been on the seam, on the uniform weight, since U6b.** What escaped
+the flip is not the cast: it is that the seam's verdict is *discarded*
+(`effect_type: "charm"` falls through `applyMobEffect_default`) and
+`resolveCharmSpell` then runs a second, private `RunContest` to decide the
+outcome.
+
+Adding a `ResolveChannelAttack(ChannelSocial)` call as section 4.1 specified
+would therefore give one cast **two** seam contests: two defence quotes and
+charges, two progression awards, two crit/fumble tiers, two narrations, and two
+verdicts free to contradict each other. That is precisely the "second
+independent contest on top of the channel's primary roll" shape U6b was written
+to delete.
+
+## 11.2 The corrected design — consume the contest, do not add one
+
+Owner ruling: **the direction is unification.** Charm therefore:
+
+1. **Declares `target_defense_type: social` in `charm.yaml`.**
+   `spellAttackChannel` gains a `"social"` case returning `ChannelSocial`.
+   One line of routing replaces the whole hand-rolled contest.
+2. **Consumes the existing seam result.** `resolveAgainstMob` threads its
+   `ChannelDefenceResult` into the charm effect — either by giving charm its own
+   `applyMobEffect` arm or by passing `out` to `resolveCharmSpell`. **No new
+   `ResolveChannelAttack` call is added anywhere.**
+3. **Deletes the private contest** in `resolveCharmSpell` entirely: the attack
+   score, the defence score, the aggro multipliers and the `RunContest` call.
+   The in-combat penalty moves onto the AttackSide `Mult` that
+   `spellAttackSideFor` already builds, composed with
+   `combat.SituationalAttackMult` as every other channel caller does.
+
+This is strictly less code than section 4.1 proposed, and it removes a contest
+rather than adding one.
+
+**Note:** with charm on `ChannelSocial`, the `AttackerNormalizedMargin` addition
+from section 4.3 is still required — the seam still does not surface the opposed
+margin on an attack win, and the duration still needs it.
+
+## 11.3 Rulings on the review's other blockers
+
+### 11.3.1 The 12.5% contest floor — ACCEPTED, no change
+
+`ContestFloor: 0.125` means charm succeeds on at least 12.5% of casts against
+any target, so roughly 8 casts will charm anything in the game, and no boss
+carries `charm_immune`.
+
+**Owner ruling: this is fine.** A one-in-eight chance of charming a hostile
+creature that will, in time, become genuinely hostile again is an acceptable
+trade. Section 3.6 stands unchanged: no power gate, no cap.
+
+### 11.3.2 Logout must NOT release the grudge — CLOSE IT
+
+`PlayerSpawn_HandleJoin.go:43-63` destroys every charmed mob on login and strips
+the companion record, so `quit` currently discharges the bond with no
+consequence. Since the player is never told how long they have (3.3), the
+rational play would be to relog after every fight, and the entire risk half of
+the design becomes opt-out.
+
+**Owner ruling: close it.** Logging out must not be an escape from the grudge.
+
+**Known and accepted consequence:** a creature that survives its owner's logout
+can be walked into a town first and abandoned there. **That griefing path is
+accepted and will be policed socially rather than prevented mechanically.**
+Do not add a mechanic for it.
+
+### 11.3.3 Non-combatants and shopkeepers — ALREADY SAFE, pin it
+
+Requirement: shopkeepers and other non-combatants must not be charmable.
+
+Verified already true, by two independent gates:
+
+- **All 97 shop mobs** carry `charm_immune: true` and/or `non_combatant: true`.
+  Zero are unprotected.
+- `non_combatant` blocks charm *before* it is reached:
+  `playerHarmTargetPermitted` → `mobs.CheckPlayerHarm` →
+  `HarmBlockedNonCombatant` (`internal/mobs/harm_authorization.go:48-49`), and
+  the target is skipped from the loop.
+- `charm_immune` is a second gate at `charm_spell.go:30`.
+
+**The deliverable is a regression TEST, not a mechanism**: assert that every mob
+carrying a `shop:` block is `charm_immune` or `non_combatant`, so a future
+shopkeeper authored without either is caught at test time.
+
+### 11.3.4 The margin mechanic is NOT decorative — the reviewer overstated
+
+The reviewer concluded the duration mechanic is decorative because a veteran
+clamps to maximum duration on ~90% of successful casts.
+
+**Owner ruling: that conclusion is drawn from the wrong targets.** It holds
+against common wilderness mobs, where the duration hardly matters. The
+reviewer's own figures contradict it where it counts: against The Core Guardian
+(`statpool: 2800`) a veteran reaches maximum duration on only **13%** of wins,
+with an expected hold around 287 rounds against a 450 ceiling. High-end
+creatures carry enormous stat pools, so even an archetype-slanted share puts
+Willpower high enough to land `D/A` in the band where the margin varies.
+
+The mechanic is legible exactly where the interesting decisions are. **No change
+to 3.4 or 4.2.**
+
+One genuine correction survives from that finding, independent of the above:
+**`charmCritBar = 2.0` is wrong.** `CritBarFor` (`internal/combat/crit_bar.go`)
+subtracts `CritBarSkillSlope × (atkRank - defRank)` and clamps to
+`[CritBarFloor 1.5, CritBarCeiling 3.0]`. Because mob rhetoric is 1, the bar is
+**1.5** for any caster past manifestation 10. Either divide by the real
+`CritBarFor` or drop the "same threshold as a crit" justification and call 2.0
+what it is: an arbitrary two-sigma constant. **Do not ship the claim that they
+coincide.**
+
+### 11.3.5 Item duplication — GUARD IT
+
+`SaveMobInstance` (`internal/mobs/instance_save.go:83-86`) early-returns on
+`mob.Character.IsCharmed()`. That has always held for a charmed mob's whole life
+because charm was permanent. Once bonds expire, the ex-companion is uncharmed
+**while still wearing the player's equipment**, and the next save pass writes it
+to `mobs.instances/`. The gear becomes a persistent world object: kill it, loot
+it, charm another, repeat.
+
+**Owner ruling: guard it.** Extend the skip to any mob that was ever charmed:
+
+```go
+	// EverCharmed, not just IsCharmed: once a bond expires the ex-companion is
+	// uncharmed while still wearing the equipment its owner handed it. Saving
+	// it would bake player gear into a world mob permanently -- kill, loot,
+	// re-charm, repeat. The betrayal stays real in-session (it fights you with
+	// your own gear) but nothing is written to disk, so a reboot clears it.
+	if mob.Character.IsCharmed() || mob.Character.EverCharmed {
+		return nil
+	}
+```
+
+`EverCharmed` (`internal/characters/character.go:138`) already exists and is
+documented as surviving dismiss, which is exactly the semantics needed.
+
+## 11.4 Implementation findings to carry into the re-plan
+
+Not design decisions; all confirmed, and all owed by the slice.
+
+1. **`contest_site_guard_test.go` has two allowlist rows naming U10c as their
+   owner** (`:76-77`). The guard asserts both directions, so deleting the two
+   contest sites without deleting the rows turns `internal/combat` red. Add
+   `internal/hooks/charm_spell.go` to `legacyLiteralFiles` once its `×25` is
+   gone.
+2. **Deleting the ladder drops its `SourceType == CompanionCharmed` guard**
+   (`NewRound_MobRoundTick.go:399`). Five other systems set `Charmed` —
+   summons, brood spawns, the homunculus, `befriend`, and behaviour-tree
+   companions. Two reach `RoundsRemaining == 0` immediately: logout
+   (`PlayerDespawn_HandleLeave.go:136-142`) and link-dead
+   (`users.go:347-352`, which does it to **the tutorial Guide mob**). The
+   expiry path MUST test the source type.
+3. **The reservation is not released by `RemoveCompanion` alone.** It is applied
+   during `RecalculateStats()` (`validate.go:261-284`). Section 4.5's "nothing
+   to release" is wrong: call `RecalculateStats()` and publish the vitals
+   change, as `dismiss` does.
+4. **Expiry runs below the active-zone gate.** `tickMobCharmDuration` is in the
+   idle lane but `tickMobCharmState` is not, so a bond lapsing in a cold zone
+   parks at zero and fires when a player next enters — inverting 3.10 into an
+   ambush on return.
+5. **Charm bypasses `SituationalAttackMult`**, which both other `ChannelSocial`
+   callers compose. Fixed for free by 11.2 step 3.
+6. **`dismiss` sets the grudge unconditionally, with no room check**, while 3.10
+   makes expiry aggro conditional on presence. Reconcile the two exits.
+7. **Charm prints two contradictory outcome messages per cast today**, because
+   the discarded seam contest still narrates. 11.2 fixes this by construction.
+8. **`context.md` for `internal/combat` and `internal/hooks`** both document the
+   charm `RunContest` sites and "charmed companions are permanently Active".
+   Both become false.
+9. **The helpfile carries four em dashes.** Project convention forbids them in
+   player copy, and section 10.2's rewrite list only covers one of the four.
+10. **Section 10.2 lists a line to "preserve" that is false**: "Merchants,
+    powerful named creatures, and certain others are immune". The 372
+    `charm_immune` mobs are townsfolk; no boss carries it. Rewrite rather than
+    preserve.
+
+---
+
+# 12. Follow-up filed by this review
+
+**The instance-save system deserves its own examination.** Owner observation,
+2026-08-24: it has been the source of a large share of this project's
+headaches, alongside the quest system. Finding 11.3.5 is the third distinct
+instance-save trap this arc has hit, after stale saves shadowing template edits
+and the legacy-training migration. A dedicated audit slice is likely worth more
+than continuing to patch it per-incident. Not scoped here.
