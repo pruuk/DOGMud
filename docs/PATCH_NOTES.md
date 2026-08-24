@@ -1,5 +1,26 @@
 # DOGMud Patch Notes
 
+## 2026-08-24: Better eyes on how characters grow
+
+Nothing in the game itself changed here. This is housekeeping on the tools we
+use to watch whether growth feels fair.
+
+The view we read to answer questions like "is anyone stuck?" had fallen behind
+the game. It was still describing the older rules, where how hard something was
+to improve depended on how many times you had done it. That has not been true
+for a while now, so the view could agree that everything looked healthy while
+something was quietly going wrong. It now reads the same numbers the game
+itself uses, so what we see is what you are actually playing.
+
+It also gained a warning for the worst case, where a skill or an attribute
+becomes so slow to improve that it can no longer improve at all. That fault was
+found and fixed earlier in this run of work. The warning is there so it cannot
+come back without us noticing.
+
+One older mistake is fixed along the way. Characters who were not logged in
+were being read as having no attributes at all, which made a whole section of
+that view useless for anyone offline.
+
 ## 2026-08-22: An hour spent on any craft should be worth about an hour
 
 How quickly a skill or an attribute improves has been rebalanced around time
