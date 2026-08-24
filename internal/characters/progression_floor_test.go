@@ -43,10 +43,10 @@ func TestStatProgressionChance_IsFloored(t *testing.T) {
 	c.Stats.Dexterity.Training = 300
 	c.Stats.Dexterity.Recalculate()
 
-	got := c.statProgressionChance("dexterity", 1.0)
+	got := c.ProgressionChanceForStat("dexterity", 1.0)
 	floor := float64(configs.GetBalanceConfig().ProgressionChanceFloor)
 	if got < floor {
-		t.Errorf("statProgressionChance = %v, below the floor %v", got, floor)
+		t.Errorf("ProgressionChanceForStat = %v, below the floor %v", got, floor)
 	}
 	if int(got*progressionRollDenominator) == 0 {
 		t.Errorf("chance %v still quantises to a zero threshold", got)
@@ -62,7 +62,7 @@ func TestStatProgressionChance_HealthyChanceIsUntouched(t *testing.T) {
 	c.Name = "FreshStat"
 	c.StatUseCount["perception"] = 0
 
-	got := c.statProgressionChance("perception", 1.0)
+	got := c.ProgressionChanceForStat("perception", 1.0)
 	b := configs.GetBalanceConfig()
 	floor := float64(b.ProgressionChanceFloor)
 	if got <= floor*10 {
@@ -95,7 +95,7 @@ func TestStatProgressionChance_FloorDoesNotResurrectAHardZero(t *testing.T) {
 	c.Stats.Strength.Training = int(b.MobStatTrainingCap)
 	c.Stats.Strength.Recalculate()
 
-	if got := c.statProgressionChance("strength", 1.0); got != 0 {
+	if got := c.ProgressionChanceForStat("strength", 1.0); got != 0 {
 		t.Errorf("a mob past MobStatTrainingCap has chance %v, want exactly 0", got)
 	}
 }

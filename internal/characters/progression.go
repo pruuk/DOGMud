@@ -29,6 +29,32 @@ import (
 // at 10,000 the shipped floor of 1e-5 would itself quantise to zero.
 const progressionRollDenominator = 1000000
 
+// ProgressionRollThreshold converts a 0.0-1.0 progression chance into the
+// integer threshold every progression roll site compares against --
+// CheckStatProgression, CheckSkillProgression and CheckRegenProgression alike.
+//
+// Note that only the first two are floored by Balance.ProgressionChanceFloor.
+// The regen faucet's chance is deliberately proportional to depletion and is
+// supposed to vanish as the pool fills (spec 14.5), so its threshold reaching
+// zero is correct behaviour there and not the seal described below.
+//
+// Exported so the admin dashboard can flag the failure mode this arithmetic
+// used to cause: at the old resolution of 10,000, any chance below 0.01%
+// truncated to a threshold of zero, and a stat in that state was not slow but
+// SEALED. Balance.ProgressionChanceFloor is what removes the seal; this is how
+// live ops detects it coming back.
+//
+// Exporting the arithmetic rather than progressionRollDenominator is
+// deliberate: the dashboard's alarm then asks exactly the question the roll
+// asks, and cannot drift from it if the resolution ever moves again.
+//
+// A return of 0 for a positive chance means "cannot fire". A caller holding a
+// chance of exactly 0 was already told "may not progress at all" by the mob
+// gates and should not consult this.
+func ProgressionRollThreshold(chance float64) int {
+	return int(chance * progressionRollDenominator)
+}
+
 // skillNameMap maps progression context names to actual skill tags.
 // Can be used to alias legacy names to new skill tags.
 var skillNameMap = map[string]string{}
@@ -76,17 +102,17 @@ func CalculateProgressionChance(currentRank int, softCap int) float64 {
 	return aboveCapFloor * math.Exp(-decayAbove*(ratio-1.0))
 }
 
-// skillProgressionChance computes the probability (0.0-1.0) that a skill
+// ProgressionChanceForSkill computes the probability (0.0-1.0) that a skill
 // progression roll succeeds for skillName, given a bonus multiplier. This is the
 // single source of truth for the chance CheckSkillProgression rolls against,
-// mirroring statProgressionChance.
+// mirroring ProgressionChanceForStat.
 //
-// Extracted from CheckSkillProgression in U10b-0 Phase C. An inline copy is what
-// let the admin dashboard's chance display drift from production, and Phase E
-// needs to call the real expression rather than a duplicate.
+// Extracted from CheckSkillProgression in U10b-0 Phase C and exported in Phase
+// E. An inline copy is what let the admin dashboard's chance display drift from
+// production; the dashboard calls this instead, at bonusMultiplier 1.0.
 //
 // A mob at or past its skill cap, or with mob progression disabled, returns 0.
-func (c *Character) skillProgressionChance(skillName string, bonusMultiplier float64) float64 {
+func (c *Character) ProgressionChanceForSkill(skillName string, bonusMultiplier float64) float64 {
 	b := configs.GetBalanceConfig()
 	actualSkillName := resolveSkillName(skillName)
 
@@ -149,14 +175,14 @@ func (c *Character) skillProgressionChance(skillName string, bonusMultiplier flo
 // progression fired (skill actually gained), false otherwise.
 // bonusMultiplier scales the chance (e.g. 2.0 for critical successes).
 func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMultiplier float64) bool {
-	chance := c.skillProgressionChance(skillName, bonusMultiplier)
+	chance := c.ProgressionChanceForSkill(skillName, bonusMultiplier)
 	if chance <= 0 {
 		return false
 	}
 	virtualRank := c.Skills[resolveSkillName(skillName)]
 
 	// Roll: chance is 0.0–1.0, scaled to the integer roll resolution.
-	threshold := int(chance * progressionRollDenominator)
+	threshold := ProgressionRollThreshold(chance)
 	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
@@ -189,16 +215,17 @@ func (c *Character) CheckSkillProgression(skillName string, userId int, bonusMul
 	return false
 }
 
-// statProgressionChance computes the probability (0.0-1.0) that a stat
+// ProgressionChanceForStat computes the probability (0.0-1.0) that a stat
 // progression roll succeeds for statName, given a bonus multiplier. This is
 // the single source of truth for the chance CheckStatProgression rolls
 // against. The faucet test calls it directly too, so the test pins the exact
 // expression production rolls rather than a hand-rolled duplicate that could
-// silently drift from it.
+// silently drift from it. Exported in Phase E so the admin dashboard reads the
+// same expression, at bonusMultiplier 1.0.
 //
 // A mob at or past MobStatTrainingCap, or with mob progression disabled, returns 0
 // (the hard-cap short-circuit CheckStatProgression used to perform itself).
-func (c *Character) statProgressionChance(statName string, bonusMultiplier float64) float64 {
+func (c *Character) ProgressionChanceForStat(statName string, bonusMultiplier float64) float64 {
 	b := configs.GetBalanceConfig()
 
 	// Mob-specific gating
@@ -255,14 +282,14 @@ func (c *Character) statProgressionChance(statName string, bonusMultiplier float
 // If the roll succeeds, the stat's Training value is increased by 1.
 // Returns true if progression fired (stat actually gained), false otherwise.
 func (c *Character) CheckStatProgression(statName string, userId int, bonusMultiplier float64) bool {
-	chance := c.statProgressionChance(statName, bonusMultiplier)
+	chance := c.ProgressionChanceForStat(statName, bonusMultiplier)
 	if chance <= 0 {
 		return false
 	}
 
 	virtualRank := c.GetStatTraining(statName)
 
-	threshold := int(chance * progressionRollDenominator)
+	threshold := ProgressionRollThreshold(chance)
 	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {
@@ -492,7 +519,7 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 		if !bool(b.MobProgressionEnabled) {
 			return
 		}
-		// Gains cap, same rule as statProgressionChance. Missing this site
+		// Gains cap, same rule as ProgressionChanceForStat. Missing this site
 		// would leave the regen faucet -- which is what actually drives a
 		// mob's vitality -- capped by value while everything else moved.
 		if c.GetStatTraining(statName) >= int(b.MobStatTrainingCap) {
@@ -519,7 +546,7 @@ func (c *Character) CheckRegenProgression(statName string, userId int, chance fl
 	}
 
 	// Roll: chance is 0.0–1.0, scaled to the integer roll resolution.
-	threshold := int(chance * progressionRollDenominator)
+	threshold := ProgressionRollThreshold(chance)
 	roll := util.Rand(progressionRollDenominator)
 
 	if roll < threshold {

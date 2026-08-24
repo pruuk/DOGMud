@@ -10,7 +10,7 @@ import (
 // critReceivedChanceForTest computes the chance OnCritReceived will roll
 // against for statName, without tracking or rolling.
 //
-// It calls statProgressionChance -- the SAME expression CheckStatProgression
+// It calls ProgressionChanceForStat -- the SAME expression CheckStatProgression
 // rolls against, which is what OnCritReceived delegates to -- so this pins
 // production's formula rather than a hand-rolled duplicate that could drift.
 // Only the ObservedCritProgressionBonus gate is restated here, and it is one
@@ -25,7 +25,7 @@ func critReceivedChanceForTest(c *Character, statName string) float64 {
 	if mult <= 0 {
 		return 0
 	}
-	return c.statProgressionChance(statName, mult)
+	return c.ProgressionChanceForStat(statName, mult)
 }
 
 // regenDecayFactorForTest computes the rank-based damping factor

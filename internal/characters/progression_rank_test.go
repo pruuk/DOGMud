@@ -24,8 +24,8 @@ func TestStatRank_IsTrainingNotUseCount(t *testing.T) {
 	fresh := New()
 	fresh.Name = "Fresh"
 
-	got := c.statProgressionChance("dexterity", 1.0)
-	want := fresh.statProgressionChance("dexterity", 1.0)
+	got := c.ProgressionChanceForStat("dexterity", 1.0)
+	want := fresh.ProgressionChanceForStat("dexterity", 1.0)
 	if got != want {
 		t.Errorf("use count still moves the chance: %v vs a fresh character's %v", got, want)
 	}
@@ -41,11 +41,11 @@ func TestStatRank_EquipmentDoesNotRaiseDifficulty(t *testing.T) {
 	c.Stats.Strength.Base = 120
 	c.Stats.Strength.Training = 10
 	c.Stats.Strength.Recalculate()
-	bare := c.statProgressionChance("strength", 1.0)
+	bare := c.ProgressionChanceForStat("strength", 1.0)
 
 	c.Stats.Strength.SetMod(80) // a big stat item
 	c.Stats.Strength.Recalculate()
-	if got := c.statProgressionChance("strength", 1.0); got != bare {
+	if got := c.ProgressionChanceForStat("strength", 1.0); got != bare {
 		t.Errorf("equipment changed training difficulty: %v geared vs %v bare", got, bare)
 	}
 }
@@ -63,8 +63,8 @@ func TestStatRank_BaseDoesNotRaiseDifficulty(t *testing.T) {
 	huge.Stats.Vitality.Base = 600
 	huge.Stats.Vitality.Recalculate()
 
-	a := small.statProgressionChance("vitality", 1.0)
-	b := huge.statProgressionChance("vitality", 1.0)
+	a := small.ProgressionChanceForStat("vitality", 1.0)
+	b := huge.ProgressionChanceForStat("vitality", 1.0)
 	if a != b {
 		t.Errorf("Base moved the chance: %v at base 60 vs %v at base 600", a, b)
 	}
@@ -80,8 +80,8 @@ func TestStatRank_TrainingRaisesDifficulty(t *testing.T) {
 	trained.Stats.Perception.Training = 40
 	trained.Stats.Perception.Recalculate()
 
-	a := fresh.statProgressionChance("perception", 1.0)
-	b := trained.statProgressionChance("perception", 1.0)
+	a := fresh.ProgressionChanceForStat("perception", 1.0)
+	b := trained.ProgressionChanceForStat("perception", 1.0)
 	if !(b < a) {
 		t.Errorf("40 trained points did not make the stat harder: fresh %v, trained %v", a, b)
 	}
@@ -108,14 +108,14 @@ func TestStatChance_ReproducesTheDocumentedAnchors(t *testing.T) {
 	}
 
 	fresh := New()
-	if got := fresh.statProgressionChance("perception", 1.0) / mult; got < 0.26 || got > 0.28 {
+	if got := fresh.ProgressionChanceForStat("perception", 1.0) / mult; got < 0.26 || got > 0.28 {
 		t.Errorf("fresh raw stat chance %v, want ~0.27 (0.12 x 2.25)", got)
 	}
 
 	trained := New()
 	trained.Stats.Perception.Training = 50 // the old "stat at 150"
 	trained.Stats.Perception.Recalculate()
-	if got := trained.statProgressionChance("perception", 1.0) / mult; got < 0.012 || got > 0.015 {
+	if got := trained.ProgressionChanceForStat("perception", 1.0) / mult; got < 0.012 || got > 0.015 {
 		t.Errorf("raw chance at Training 50 is %v, want ~0.0134", got)
 	}
 }
@@ -133,8 +133,8 @@ func TestSkillRank_IsLevelNotUseCount(t *testing.T) {
 	fresh := New()
 	fresh.Skills["weapon-combat"] = 5
 
-	got := c.skillProgressionChance("weapon-combat", 1.0)
-	want := fresh.skillProgressionChance("weapon-combat", 1.0)
+	got := c.ProgressionChanceForSkill("weapon-combat", 1.0)
+	want := fresh.ProgressionChanceForSkill("weapon-combat", 1.0)
 	if got != want {
 		t.Errorf("skill use count still moves the chance: %v vs %v", got, want)
 	}
@@ -149,8 +149,8 @@ func TestSkillRank_LevelRaisesDifficulty(t *testing.T) {
 	high := New()
 	high.Skills["weapon-combat"] = 30
 
-	a := low.skillProgressionChance("weapon-combat", 1.0)
-	b := high.skillProgressionChance("weapon-combat", 1.0)
+	a := low.ProgressionChanceForSkill("weapon-combat", 1.0)
+	b := high.ProgressionChanceForSkill("weapon-combat", 1.0)
 	if !(b < a) {
 		t.Errorf("skill level did not decay the curve: level 1 %v, level 30 %v", a, b)
 	}
@@ -195,7 +195,7 @@ func TestMobStatCap_IsOnGainsNotValue(t *testing.T) {
 	huge.Stats.Strength.Base = int(b.MobStatCap) + 100 // far past the old value cap
 	huge.Stats.Strength.Training = 0
 	huge.Stats.Strength.Recalculate()
-	if got := huge.statProgressionChance("strength", 1.0); got <= 0 {
+	if got := huge.ProgressionChanceForStat("strength", 1.0); got <= 0 {
 		t.Errorf("a mob past the old value cap cannot gain anything: chance %v", got)
 	}
 
@@ -205,7 +205,7 @@ func TestMobStatCap_IsOnGainsNotValue(t *testing.T) {
 	capped.Stats.Strength.Base = 60
 	capped.Stats.Strength.Training = int(b.MobStatTrainingCap)
 	capped.Stats.Strength.Recalculate()
-	if got := capped.statProgressionChance("strength", 1.0); got != 0 {
+	if got := capped.ProgressionChanceForStat("strength", 1.0); got != 0 {
 		t.Errorf("a mob at MobStatTrainingCap still has chance %v, want 0", got)
 	}
 }
