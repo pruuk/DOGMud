@@ -1,0 +1,76 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">progression</ansi>
+
+How your character gets better. There are no levels and no experience
+points in Gaius. You improve the things you actually use.
+
+<ansi fg="yellow">━━━ The One Rule ━━━</ansi>
+
+Every time you use an attribute or a skill, you get one chance to
+improve it. Not a little bit of progress toward a bar. A chance.
+
+Most of those chances come to nothing. Some of them land, and when one
+lands you see a banner naming what improved.
+
+<ansi fg="yellow">━━━ What Makes It Harder ━━━</ansi>
+
+The further something has already come, the rarer that chance becomes.
+
+That is the whole difficulty curve. A skill you have barely touched
+improves quickly and visibly. One you have pushed a long way improves
+rarely, and keeps improving rarely rather than stopping outright. There
+is no ceiling you slam into. There is no point where a thing can no
+longer improve at all.
+
+What does <ansi fg="red">not</ansi> matter:
+
+  <ansi fg="stat">How many times you have done it.</ansi> Swinging a sword ten thousand
+  times does not make the next swing teach you less. Only how far the
+  skill has come counts.
+
+  <ansi fg="stat">Your equipment.</ansi> Gear that raises an attribute does not make that
+  attribute harder to train. Only what you have earned counts.
+
+  <ansi fg="stat">How big or old your character is.</ansi> A fresh attribute is cheap for
+  everyone.
+
+<ansi fg="yellow">━━━ How To Improve Something Specific ━━━</ansi>
+
+Use it. That is genuinely the whole answer, but the useful version is
+knowing what trains what:
+
+  <ansi fg="stat">Strength</ansi>      Hitting things in melee.
+  <ansi fg="stat">Dexterity</ansi>     Attacking, dodging and parrying. It fires constantly,
+                so each chance is deliberately smaller.
+  <ansi fg="stat">Perception</ansi>    Foraging, searching, spotting what is hidden, aimed
+                shots, and the crafts that need a careful eye.
+  <ansi fg="stat">Vitality</ansi>      Taking a solid hit, and recovering afterwards. A
+                glancing blow you mostly turned aside will not do it.
+  <ansi fg="stat">Willpower</ansi>     Casting, and holding a spell together when you are
+                struck.
+  <ansi fg="stat">Charisma</ansi>      Taunting, haggling, and manifestation.
+
+Skills train from the obvious thing: fighting with a weapon trains
+weapon-combat, brewing trains alchemy, studying a corpse trains
+manifestation. See <ansi fg="command">help skills</ansi> for the full list.
+
+<ansi fg="yellow">━━━ Doing Something Exceptional ━━━</ansi>
+
+A critical success teaches you more than a routine one, and so does a
+fumble. Failure is instructive. Being on the receiving end of either
+teaches you something too, though less than causing it.
+
+<ansi fg="yellow">━━━ Where To See It ━━━</ansi>
+
+  <ansi fg="command">status</ansi>   your attributes, described in words
+  <ansi fg="command">skills</ansi>   your skills and their tiers
+
+Both describe where you are rather than printing raw numbers, which is
+deliberate. The feel of a thing is what you play with.
+
+<ansi fg="yellow">━━━ A Note On Companions ━━━</ansi>
+
+Creatures bound to you improve the same way you do, within limits. A
+companion that has already come a very long way may have stopped
+improving. It keeps everything it has earned. See <ansi fg="command">help companion</ansi>.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help skills</ansi>, <ansi fg="command">help status</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help companion</ansi>
