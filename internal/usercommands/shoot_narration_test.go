@@ -4,8 +4,9 @@ package usercommands
 //
 // ExecuteFire already sets Revealed, SurpriseOnCooldown and AimedWhileEngaged;
 // until this task nothing spoke them. These tests pin the copy rules the
-// project applies to every player-facing line, and the once-per-engagement
-// latch behind the engaged-aim cue.
+// project applies to every player-facing line, the branch order of the
+// shot-from-cover narration, and the once-per-engagement latch behind the
+// engaged-aim cue.
 
 import (
 	"strings"
@@ -18,42 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestShootNarrationCopy_ObeysThePlayerCopyRules checks the three rules a
-// reviewer cannot see by reading the diff: no raw numbers, no en/em dashes, and
-// a rendered width that fits an 80-column client. The messaging pipeline's wrap
-// stage is off (shouldWrap returns false for every Category), so an over-long
-// line is handed to the client exactly as authored.
-func TestShootNarrationCopy_ObeysThePlayerCopyRules(t *testing.T) {
-	lines := map[string]string{
-		"revealed": surpriseShotRevealedText,
-		"denied":   surpriseShotDeniedText,
-		"engaged":  aimedWhileEngagedText,
-		// The banner plus the longest surprise-shot line it prefixes, with a
-		// plausible name and damage band substituted, so the composed line is
-		// measured rather than its pieces.
-		"banner+hit": surpriseShotBanner + `Your shot takes <ansi fg="mobname">a tomb skeleton</ansi> unaware! (<ansi fg="damage">serious wounds</ansi>)`,
-	}
-
-	for name, line := range lines {
-		t.Run(name, func(t *testing.T) {
-			for _, r := range line {
-				if r >= '0' && r <= '9' {
-					t.Errorf("copy leaks a raw number: %q", line)
-					break
-				}
-			}
-			if strings.ContainsAny(line, "–—") {
-				t.Errorf("copy contains an en or em dash: %q", line)
-			}
-			if w := renderedWidth(line); w > 80 {
-				t.Errorf("copy renders %d columns wide, want at most 80: %q", w, line)
-			}
-		})
-	}
-}
-
-// renderedWidth counts the characters a client actually prints: ANSI tags are
-// markup and occupy no columns.
+// renderedWidth counts the columns a client actually prints: ANSI tags are
+// markup and occupy none.
 func renderedWidth(line string) int {
 	n, inTag := 0, false
 	for _, r := range line {
@@ -67,6 +34,133 @@ func renderedWidth(line string) int {
 		}
 	}
 	return n
+}
+
+// The worst realistic substitution these lines see.
+//
+// wideName is 20 characters, the p90 of the authored mob names (median 13, max
+// 29); it arrives ANSI-tagged because that is how sendShootMessages builds it.
+// widestBand is the longest string combat.GetDamageDescription returns.
+// Measuring with a 5-character name would pass copy that overflows in play.
+const (
+	wideTargetPlain = "a Carrion Highland-H"
+	wideTargetTag   = `<ansi fg="mobname">a Carrion Highland-H</ansi>`
+	widestBand      = "devastating wounds"
+)
+
+// TestShootNarrationCopy_ObeysThePlayerCopyRules covers EVERY authored constant
+// and EVERY composition the shooter can receive, not a sample of them. The
+// first version of this guard measured one composition and missed two.
+func TestShootNarrationCopy_ObeysThePlayerCopyRules(t *testing.T) {
+	// A plausible defence triad line, the same shape
+	// combat.RenderChannelDefenceMessages produces for an aimed shot.
+	triad := `Your aimed shot is dodged by ` + wideTargetTag + `!`
+
+	lines := map[string]string{
+		"revealed":         surpriseShotRevealedText,
+		"denied":           surpriseShotDeniedText,
+		"engaged":          aimedWhileEngagedText,
+		"from-cover/hit":   surpriseShotShooterLine(true, "", wideTargetTag, widestBand, true),
+		"from-cover/miss":  surpriseShotShooterLine(false, "", wideTargetTag, "", false),
+		"from-cover/triad": surpriseShotShooterLine(false, triad, wideTargetTag, widestBand, true),
+		// The stopped shot: triad alone, no band appended.
+		"from-cover/stopped": surpriseShotShooterLine(false, triad, wideTargetTag, "", false),
+	}
+
+	for name, line := range lines {
+		t.Run(name, func(t *testing.T) {
+			for _, r := range line {
+				if r >= '0' && r <= '9' {
+					t.Errorf("copy leaks a raw number: %q", line)
+					break
+				}
+			}
+			if strings.ContainsAny(line, "–—") {
+				t.Errorf("copy contains an en or em dash: %q", line)
+			}
+			// The triad itself is pre-existing copy owned by another package;
+			// only measure the compositions this task authored.
+			if strings.HasPrefix(name, "from-cover/triad") || strings.HasPrefix(name, "from-cover/stopped") {
+				if w := renderedWidth(line) - renderedWidth(triad); w > 80 {
+					t.Errorf("the band this task appends adds %d columns: %q", w, line)
+				}
+				return
+			}
+			if w := renderedWidth(line); w > 80 {
+				t.Errorf("copy renders %d columns wide, want at most 80: %q", w, line)
+			}
+		})
+	}
+}
+
+// THE REGRESSION TEST for the case-shadowing bug.
+//
+// combat.SkillMoveResult.Hit is `!Defended`, so a defended shot that still drew
+// blood is `hit == false, dealtDamage == true`. The ordinary shot arms test
+// that combination BEFORE the defence triad, deliberately; copying that order
+// onto the ambush path meant the shooter was told "your shot only clips them"
+// and never told what stopped it, on the one shot where that matters most.
+//
+// Built to FAIL if the `hit` and `triad` arms are reordered, or if the triad
+// arm is moved below a damage-carrying one.
+func TestSurpriseShotShooterLine_DefendedPartialNamesTheDefence(t *testing.T) {
+	const triad = `Your aimed shot is parried aside!`
+
+	t.Run("defended and drew blood: the defence is named AND the band is carried", func(t *testing.T) {
+		got := surpriseShotShooterLine(false, triad, "Selka", "light wounds", true)
+		if !strings.Contains(got, triad) {
+			t.Fatalf("a defended-partial ambush must name the defence that stopped it, got %q", got)
+		}
+		if !strings.Contains(got, "light wounds") {
+			t.Errorf("a defended-partial ambush must still carry the damage band, got %q", got)
+		}
+		if strings.Contains(got, "goes wide") || strings.Contains(got, "unaware") {
+			t.Errorf("a defended-partial ambush took a hit-or-miss arm: %q", got)
+		}
+	})
+
+	t.Run("defended and stopped dead: the defence is named, no band", func(t *testing.T) {
+		got := surpriseShotShooterLine(false, triad, "Selka", "negligible damage", false)
+		if got != triad {
+			t.Fatalf("a stopped ambush must be the bare triad, got %q", got)
+		}
+		if strings.Contains(got, "negligible damage") {
+			t.Error("a shot stopped dead must not append a damage band")
+		}
+	})
+
+	t.Run("clean hit outranks everything", func(t *testing.T) {
+		got := surpriseShotShooterLine(true, triad, "Selka", "light wounds", true)
+		if !strings.Contains(got, "unaware") {
+			t.Fatalf("a landed ambush must use the from-cover hit line, got %q", got)
+		}
+		if strings.Contains(got, triad) {
+			t.Error("a landed ambush must not narrate a defence that did not happen")
+		}
+	})
+
+	t.Run("clean miss: no triad, no band", func(t *testing.T) {
+		got := surpriseShotShooterLine(false, "", "Selka", "light wounds", false)
+		if !strings.Contains(got, "goes wide") {
+			t.Fatalf("a missed ambush must use the from-cover miss line, got %q", got)
+		}
+		if strings.Contains(got, "light wounds") {
+			t.Error("a clean miss must not carry a damage band")
+		}
+	})
+}
+
+// Every from-cover line must read as a shot from cover, or the whole point of
+// the branch is lost and it is indistinguishable from an ordinary shot.
+func TestSurpriseShotShooterLine_IsDistinctFromAnOrdinaryShot(t *testing.T) {
+	for _, got := range []string{
+		surpriseShotShooterLine(true, "", "Selka", "light wounds", true),
+		surpriseShotShooterLine(false, "", "Selka", "", false),
+	} {
+		if !strings.Contains(got, "from cover") {
+			t.Errorf("line does not read as a shot from cover: %q", got)
+		}
+	}
 }
 
 // The latch truth table. speak fires on the FIRST engaged shot of a run and

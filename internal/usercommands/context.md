@@ -314,6 +314,34 @@ When a taunt is defended, the coordinated Defy message is the complete result
 for each audience. Do not also emit the ordinary taunt-hit narration; that
 would describe the same resolution twice and can contradict the defence.
 
+**`shoot` narrates three U10d flags, and one of them is an ordering trap.**
+`FireResult.Revealed`, `SurpriseOnCooldown` and `AimedWhileEngaged` are set by
+`actions.ExecuteFire`; `sendShootMessages` is the only thing that speaks them.
+
+- `surpriseShotShooterLine(hit, triad, targetColored, tier, dealtDamage)` picks
+  the shot-from-cover line. **The triad arm must stay ABOVE any damage-carrying
+  arm.** `combat.SkillMoveResult.Hit` is `!Defended`, so a defended shot that
+  still drew blood is `!hit && dealtDamage` — and the ORDINARY shot arms test
+  that combination first, deliberately, to keep their damage-carrying line.
+  Copying that order onto the ambush path shadowed the defence triad on every
+  defended-partial ambush, so the shooter was never told what stopped it.
+- The engaged-aim cue is latched once per engagement on
+  `Character.RangedEngagedCueSpoken`. `shouldSpeakEngagedCue` returns both the
+  speak decision and the value to store; storing `AimedWhileEngaged` verbatim is
+  what re-arms the cue when the shooter gets clear, and it is also what heals
+  the one case `EndAggro` cannot reach (a cross-room shooter who never held
+  `Aggro` of their own).
+- The ambush lines route through `messaging.CategorySurpriseAttack`, which no
+  verbosity level suppresses. The engaged-aim cue does NOT: it fires on ordinary
+  shots and is a mechanical explanation, so it uses `CategorySystem` like the
+  cost refusal and defence shortage lines beside it.
+
+None of these lines carries the melee `*[SURPRISE ATTACK]*` banner. A
+20-column marker plus a target name plus a damage band does not fit in 80
+columns, and these lines name the shot from cover in prose instead.
+`shoot_narration_test.go` measures every composition at the p90 authored
+mob-name length with the widest damage band.
+
 **`throw` is the grenade verb and is untargeted by design** — it takes an item,
 never a target, and resolves as a room AoE. Aimed thrown weapons (darts,
 javelins) belong under `ranged-combat` and `ExecuteFire` instead. Settled

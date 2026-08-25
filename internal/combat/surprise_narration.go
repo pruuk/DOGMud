@@ -12,9 +12,19 @@ import (
 // It used to be computed once per round in calculateCombat and handed to every
 // swing, which meant a four-swing ambush printed four identical banners and the
 // player had no way to tell which line was the opener -- the only swing that
-// crits on a won contest and pays the skullduggery-scaled bonus. The banner
-// wording is unchanged on purpose: "surprise attack" is the term the hints, the
+// crits on a won contest and pays the skullduggery-scaled bonus. The wording is
+// unchanged on purpose: "surprise attack" is the term the hints, the
 // skullduggery keyword list and the help files already teach.
+//
+// WHERE IT IS APPLIED, and why it is not applied everywhere: the banner exists
+// because the swing it marks is narrated by the GENERIC weapon message pool
+// ("You slash the bandit!"), which says nothing about an ambush. Wherever the
+// prose already names the opening blow -- openingStrikeDefendedLines below, and
+// the shoot wrapper's from-cover lines -- the banner is redundant, and it is
+// not free: it costs 20 rendered columns. An 80-column line cannot carry a
+// 20-column marker, two names AND a damage description, so on those lines the
+// marker loses and the meaning stays. Colour is not a substitute (the playtest
+// harness strips it), which is why the landed opener keeps a TEXT marker.
 const surpriseAttackBanner = `<ansi fg="magenta-bold">*[SURPRISE ATTACK]*</ansi> `
 
 // openingStrikeDefendedLines narrates an opening strike the defender ANSWERED,
@@ -25,17 +35,26 @@ const surpriseAttackBanner = `<ansi fg="magenta-bold">*[SURPRISE ATTACK]*</ansi>
 // defended one that says nothing about the defence reads as the feature simply
 // not firing.
 //
+// SCOPE. This covers the DEFLECTION path only, because that is the only path
+// that sets hitResolution.defended (one assignment site; the field's own
+// docstring records that it is false on every clean-win, fumble and
+// defensive-crit path). A defensive crit still narrates through
+// sendDefenseMessages, which keeps its personal lines on that path and already
+// names the defence -- so the "answered ambush" outcome is spoken there too,
+// just by the older seam.
+//
 // Only dodge, parry and block are worded. DefenceSetFor(ChannelMelee) returns
-// exactly those three, so a quell or defy arm here would be an unreachable
-// branch; DefenseNone keeps the same neutral "turns aside" fallback
-// deflectedSwingLines uses, so an empty DefenseUsed cannot print an empty verb.
+// exactly those three, so a quell or defy arm here would be unreachable.
+// DefenseNone keeps a neutral fallback so an empty DefenseUsed cannot print an
+// empty verb; "deflect" rather than deflectedSwingLines' "turn aside" because
+// it is four columns cheaper and these lines are width-critical.
 //
 // dmgDesc is the GetDamageDescription band for the damage that got through, or
-// "" when the defence stopped the swing outright. No raw numbers reach either
+// "" when the deflection let nothing through at all. No raw numbers reach any
 // line on either path.
-func openingStrikeDefendedLines(defense DefenseType, sourceName, targetName, dmgDesc string) (toAttacker, toDefender items.ItemMessage) {
+func openingStrikeDefendedLines(defense DefenseType, sourceName, targetName, dmgDesc string) (toAttacker, toDefender, toRoom items.ItemMessage) {
 
-	verbYou, verbThey := "turn aside", "turns aside"
+	verbYou, verbThey := "deflect", "deflects"
 	switch defense {
 	case DefenseDodge:
 		verbYou, verbThey = "dodge", "dodges"
@@ -47,16 +66,22 @@ func openingStrikeDefendedLines(defense DefenseType, sourceName, targetName, dmg
 
 	if dmgDesc == "" {
 		toAttacker = items.ItemMessage(fmt.Sprintf(
-			`%s %s your surprise attack. Your one clean chance is gone.`, targetName, verbThey))
+			`%s %s your opening blow. You had one chance.`, targetName, verbThey))
 		toDefender = items.ItemMessage(fmt.Sprintf(
-			`You %s %s's surprise attack before it can land!`, verbYou, sourceName))
-		return toAttacker, toDefender
+			`You %s %s's opening blow before it lands!`, verbYou, sourceName))
+		toRoom = items.ItemMessage(fmt.Sprintf(
+			`%s %s %s's opening blow!`, targetName, verbThey, sourceName))
+		return toAttacker, toDefender, toRoom
 	}
 
 	dmg := `(<ansi fg="damage">` + dmgDesc + `</ansi>)`
 	toAttacker = items.ItemMessage(fmt.Sprintf(
-		`%s %s your surprise attack, but part of it lands! %s`, targetName, verbThey, dmg))
+		`%s %s most of your opening blow! %s`, targetName, verbThey, dmg))
 	toDefender = items.ItemMessage(fmt.Sprintf(
-		`You %s %s's surprise attack, but part of it lands! %s`, verbYou, sourceName, dmg))
-	return toAttacker, toDefender
+		`You %s most of %s's opening blow! %s`, verbYou, sourceName, dmg))
+	// Room lines carry no damage description, matching every other room line in
+	// this package.
+	toRoom = items.ItemMessage(fmt.Sprintf(
+		`%s %s most of %s's opening blow!`, targetName, verbThey, sourceName))
+	return toAttacker, toDefender, toRoom
 }

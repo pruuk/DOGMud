@@ -15,6 +15,10 @@ same window.
               initiation.
   <ansi fg="command">reload</ansi>    - Working a ranged weapon's mechanism takes the same
               burst of focus.
+  <ansi fg="command">shoot</ansi>     - Only a shot fired from hiding. An ordinary shot does
+              not spend the cooldown; the ambush does. Note that reload
+              above spends the same window, so reloading and then hiding
+              can leave you with no ambush ready.
   <ansi fg="command">gore</ansi>, <ansi fg="command">maul</ansi>, <ansi fg="command">rake</ansi>, <ansi fg="command">pounce</ansi>, <ansi fg="command">throttle</ansi>, <ansi fg="command">hamstring</ansi>, <ansi fg="command">drain</ansi>
               - Natural-weapon moves for bodies shaped to use them.
   Mutation abilities (<ansi fg="command">venom-coat</ansi>, <ansi fg="command">cocoon</ansi>) share it too.

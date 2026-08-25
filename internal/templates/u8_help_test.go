@@ -238,9 +238,13 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 			if path == "help/shoot" {
 				assert.Contains(t, rendered, "Fire a loaded ranged weapon at a target in your room",
 					"the validator must inspect DOGMud's shoot template, not the registered default")
-				assert.Equal(t, []string{"reload", "ranged-combat", "stamina", "equip"},
+				// U10d added the three stealth/cooldown pointers: shooting from
+				// hiding is an ambush, and `help shoot` was previously the only
+				// place a player could read about aimed fire without ever being
+				// told that.
+				assert.Equal(t, []string{"reload", "ranged-combat", "stamina", "equip", "sneak", "skullduggery", "special"},
 					u8HelpCrossReferenceTopics(rendered),
-					"all four DOGMud shoot cross-references must be enumerated")
+					"every DOGMud shoot cross-reference must be enumerated")
 			}
 			require.NoError(t, validateU8HelpCrossReferences(path, rendered))
 		})

@@ -552,8 +552,17 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 				// printed four identical banners and the player could not tell
 				// which line was the opening strike -- the only swing that
 				// crits on a win and pays the skullduggery-scaled bonus.
+				//
+				// !res.defended because an ANSWERED opener is narrated by
+				// openingStrikeDefendedLines, whose prose already names the
+				// opening blow. The banner exists for the swing narrated by the
+				// GENERIC weapon pool, which says nothing about an ambush; on a
+				// line that names itself it is redundant and costs 20 rendered
+				// columns an 80-column line needs for the damage description.
+				// Either way exactly one swing per round is marked, and it is
+				// the only one carrying CategorySurpriseAttack.
 				swingPrefix := ``
-				if openingStrikeThisSwing {
+				if openingStrikeThisSwing && !res.defended {
 					swingPrefix = surpriseAttackBanner
 				}
 				buildAttackMessages(&attackResult, sourceChar, targetChar, ws, sdp,

@@ -1460,13 +1460,19 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// rolled zero damage narrates like any other zero-damage outcome.
 	deflected := defended && attackTargetDamage > 0
 
-	// U10d: an ANSWERED opening strike. Handled ahead of deflected because it
-	// covers BOTH defensive outcomes -- the partial that still lands and the
-	// defensive crit that stops the swing dead -- and both need to say which
-	// defence beat the ambush. It replaces whatever line this swing would
-	// otherwise have carried (the deflection composite, or the miss-band pool
-	// line on the zero-damage path), so no viewer gains an extra line; the room
-	// keeps the line sendDefenseMessages already sent.
+	// U10d: an ANSWERED opening strike. It replaces whatever line this swing
+	// would otherwise have carried -- the deflection composite, or the miss-band
+	// pool line when the deflection let nothing through -- so no viewer gains an
+	// extra line, and it supplies its own room line so the zero-damage case does
+	// not lose the one it used to get from the pool.
+	//
+	// This is the DEFLECTION path only. `defended` has exactly one assignment
+	// site (the partial-deflection branch of resolveDefenseOutcomeInner) and its
+	// docstring records that it is false on every clean-win, fumble and
+	// defensive-crit path -- so a defensive crit does NOT arrive here. That is
+	// not a gap: sendDefenseMessages keeps its personal AND room lines on the
+	// defensive-crit path and already names the defence, which is what the
+	// answered-ambush outcome needs said.
 	openingStrikeDefended := openingStrike && defended
 
 	// T4 (chunk 4c): compute the display subtype for attack-message selection.
@@ -1564,7 +1570,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		if attackTargetDamage > 0 {
 			openerDmg = tokenReplacements[items.TokenDamage]
 		}
-		toAttackerMsg, toDefenderMsg = openingStrikeDefendedLines(result.DefenseUsed,
+		toAttackerMsg, toDefenderMsg, toAttackerRoomMsg = openingStrikeDefendedLines(result.DefenseUsed,
 			tokenReplacements[items.TokenSource],
 			tokenReplacements[items.TokenTarget],
 			openerDmg)
@@ -1696,8 +1702,13 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 
 	// Send to room. A deflected swing sends none: the defence room line from
 	// sendDefenseMessages already narrated it, and room lines carry no damage.
-	// An answered opening strike is the same case for the same reason.
-	if !deflected && !openingStrikeDefended {
+	//
+	// An answered opener that let NOTHING through is not deflected, so it still
+	// sends one -- the composite's own room line, built above. Restoring that is
+	// deliberate: it is the only room line that case gets from here, and the
+	// sendDefenseMessages line it would otherwise rely on is suppressible at
+	// both medium and light verbosity, while CategorySurpriseAttack is not.
+	if !deflected {
 		result.SendToSourceRoom(hitCat,
 			string(toAttackerRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).
 				SetTokenValue(items.TokenTargetType, string(tgtType))),

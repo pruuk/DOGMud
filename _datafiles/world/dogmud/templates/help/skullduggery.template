@@ -22,4 +22,5 @@ gives your hiding place away. Shooting from cover works the same
 way.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help sneak</ansi>, <ansi fg="command">help steal</ansi>,
-  <ansi fg="command">help shadow</ansi>, <ansi fg="command">help defuse</ansi>, <ansi fg="command">help throw</ansi>
+  <ansi fg="command">help shadow</ansi>, <ansi fg="command">help defuse</ansi>, <ansi fg="command">help throw</ansi>,
+  <ansi fg="command">help shoot</ansi>, <ansi fg="command">help special</ansi>

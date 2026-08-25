@@ -18,13 +18,13 @@ A shot from cover reads as a shot from cover, and you are told plainly that
 firing gave your hiding place away. Losing your cover without being told was
 the sort of thing that sends a player looking for a bug.
 
-If your special move has not come back yet, you are not set for an ambush at
-all, and your shot goes off as an ordinary one. You are told that too. It comes
-up more than you might expect, because reloading uses the same recovery.
+If your special move has not come back yet, you have no ambush ready, and your
+shot goes off as an ordinary one. You are told that too. It comes up more than
+you might expect, because reloading uses the same recovery.
 
-An archer with something already on them cannot steady the shot, and it lands
-weaker for it. That is now said once, the first time it happens in a fight,
-rather than never or every round.
+An archer being attacked cannot steady the shot, and it is weaker for it. That
+is now said once, the first time it happens in a fight, rather than never or
+every round.
 
 ## 2026-08-24: Spell help describes spells instead of measuring them
 
