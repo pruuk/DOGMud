@@ -73,6 +73,13 @@ type AttackSide struct {
 	SkillRank int
 	Mult      float64
 	ForceCrit bool
+
+	// CritOnWin upgrades a WON contest to a crit without deciding it. NOT
+	// ForceCrit: that forces the win and returns before a margin is computed.
+	// Set by the U10d ranged surprise shot. The melee path carries the same
+	// semantics as a parameter on resolveDefenseOutcomeCore; the two are pinned
+	// equivalent by TestCritOnWin_MeleeAndChannelAgree (Task 16).
+	CritOnWin bool
 }
 
 // score is the attack score the side enters the contest with. Mult 0 is the
@@ -312,8 +319,10 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	if len(defences) == 0 {
 		// No defence answers this channel. Uncontested is an attack win, which
 		// is what a full multiplier says. A forced crit (sleeping victim) is
-		// still a crit with nobody defending.
-		out.AttackerCrit = side.ForceCrit
+		// still a crit with nobody defending, and so is the U10d surprise shot:
+		// a defender with NO available defence must not deny the ambush bonus
+		// that a fully-defended one grants.
+		out.AttackerCrit = side.ForceCrit || side.CritOnWin
 		return out
 	}
 
@@ -359,7 +368,9 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 
 	res := runner(atkScore, entries)
 	if !res.Contested {
-		out.AttackerCrit = side.ForceCrit
+		// Uncontested is an attack win too, so CritOnWin applies here for the
+		// same reason it does on the empty-defence exit above.
+		out.AttackerCrit = side.ForceCrit || side.CritOnWin
 		return out
 	}
 	out.AttackRollZScore = res.AttackRoll.ZScore
@@ -387,6 +398,18 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	if side.ForceCrit {
 		out.AttackerCrit = true
 		out.AttackerFumble = false
+	}
+	// U10d: a surprise shot crits on a won contest. Placed HERE, beside
+	// ForceCrit and before awardChannelDefenceBonus, because that function takes
+	// out.AttackerCrit BY VALUE -- a crit set after it is invisible to the
+	// progression tier.
+	//
+	// res.Success is the attack win. !res.Floored mirrors the gate the
+	// AttackerCrit line above already applies: a sentinel margin cannot be a
+	// crit. !out.AttackerFumble because a fumbled attack aborts even a winning
+	// roll.
+	if side.CritOnWin && res.Success && !res.Floored && !out.AttackerFumble {
+		out.AttackerCrit = true
 	}
 
 	out.DefenceType = res.Winner
