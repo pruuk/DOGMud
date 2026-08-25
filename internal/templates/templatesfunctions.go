@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/language"
@@ -79,6 +80,15 @@ var (
 		"lowercase": func(s string) string {
 			return strings.ToLower(s)
 		},
+		// The three spell-reference values a player used to be shown as raw
+		// numbers. Each DELEGATES to internal/combat rather than restating the
+		// bands here: the `spells` command already describes cost with
+		// GetConvictionCostDescription, and a helpfile that invented its own
+		// vocabulary would drift from it silently -- the same failure mode that
+		// let the admin progression dashboard diverge from production for months.
+		"convictioncost": combat.GetConvictionCostDescription,
+		"castlength":     combat.GetCastLengthDescription,
+		"waittime":       combat.GetWaitRoundsDescription,
 		// defensename turns a spell's target_defense_type into the defence a
 		// player actually sees in combat. Without it the generic spell helpfile
 		// printed the raw enum: "Resisted by: social defense", which names

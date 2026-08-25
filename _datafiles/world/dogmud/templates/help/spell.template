@@ -6,9 +6,9 @@
 <ansi fg="yellow">Name:        </ansi> <ansi fg="white-bold">{{ .Name }}</ansi>
 <ansi fg="yellow">Type:        </ansi> <ansi fg="spell-{{ lowercase .Type.HelpOrHarmString }}">{{ .Type.HelpOrHarmString }}</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">{{ .Type.TargetTypeString }}</ansi>
-<ansi fg="yellow">Base Folds:  </ansi> <ansi fg="white-bold">{{ .BaseFolds }}</ansi>
-<ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">{{ .Cost }}</ansi>
-<ansi fg="yellow">Wait Time:   </ansi> <ansi fg="white-bold">{{ .WaitRounds }} rounds</ansi>
+<ansi fg="yellow">Cast Time:   </ansi> <ansi fg="white-bold">{{ castlength .BaseFolds }}</ansi>
+<ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">{{ convictioncost .Cost }}</ansi>
+<ansi fg="yellow">Recovery:    </ansi> <ansi fg="white-bold">{{ waittime .WaitRounds }}</ansi>
 {{ with defensename .TargetDefenseType -}}
 <ansi fg="yellow">Resisted by: </ansi> <ansi fg="white-bold">{{ . }}</ansi>
 {{ end -}}
