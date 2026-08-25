@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-08-24: Spell help describes spells instead of measuring them
+
+Looking up a spell used to hand you three bare numbers for how long it takes to
+cast, what it costs, and how long you wait afterwards. One of them read as a
+placeholder rather than an answer.
+
+They now tell you what they mean. A spell takes a moment or is very long to
+cast, costs anything from trivial to demanding, and leaves you either instant
+or lengthy in recovery. The words match the ones the spell list already used,
+so the two agree with each other now.
+
 ## 2026-08-24: Charm is a gamble now, not a purchase
 
 Bending a creature to your will used to be permanent, which made it a
