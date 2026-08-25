@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/stretchr/testify/require"
 )
 
 // U10d restored the skullduggery faucet that the deleted surprise-attack burst
@@ -22,9 +23,12 @@ import (
 // Two consequences for how these tests are written:
 //
 //  1. Every fixture that expects an award carries WasSurpriseAttack: true, and
-//     NONE of them seed Aggro.Type. Seeding Aggro.Type would lend false
-//     confidence: Phase 5 never reads it, so a fixture that set it would make
-//     these tests pass whether or not the feature exists at all.
+//     none of them seeds SurpriseAttack. The shared newCombatPairForTest (in
+//     progression_duplication_test.go) does seed Aggro.Type -- DefaultAttack --
+//     but that seed is inert here, because Phase 5 never reads Aggro.Type at
+//     all. Seeding SurpriseAttack on a Phase-5-only fixture would lend false
+//     confidence: it would make these tests read as if they were exercising the
+//     firing condition whether or not the feature exists at all.
 //  2. Assertions are on the USE COUNTER (GetSkillUseCount), never on whether a
 //     rank moved. Progression is probabilistic; a rank assertion flakes.
 //     OnSkillUseScaled calls TrackSkillUse unconditionally, before the
@@ -165,7 +169,7 @@ func TestSurpriseFlag_SurvivesTheAggroDemotionToPhase5(t *testing.T) {
 	atk, def := newCombatPairForTest(t)
 	atkChar := atk.GetCharacter()
 
-	// The ONLY place in this file where Aggro.Type is seeded: here it is the
+	// The only place in this file that seeds SurpriseAttack: here it is the
 	// input under test, not a shortcut for the firing condition.
 	atkChar.SetAggro(0, def.GetMobInstanceId(), characters.SurpriseAttack)
 	if atkChar.Aggro == nil || atkChar.Aggro.Type != characters.SurpriseAttack {
@@ -176,7 +180,12 @@ func TestSurpriseFlag_SurvivesTheAggroDemotionToPhase5(t *testing.T) {
 
 	runOneCombatRoundForTest(t, atk, def) // forceCrit: every swing is a clean hit
 
-	if atkChar.Aggro != nil && atkChar.Aggro.Type == characters.SurpriseAttack {
+	// Nil is NOT the demotion. A nil Aggro would satisfy a `!= nil &&` form of
+	// this check without the demotion ever having run, certifying a premise the
+	// test never actually observed -- so assert non-nil first and fail hard on
+	// it.
+	require.NotNil(t, atkChar.Aggro, "the round ended aggro entirely; the demotion premise was never observed")
+	if atkChar.Aggro.Type == characters.SurpriseAttack {
 		t.Error("calculateCombat no longer demotes Aggro.Type; this test's premise needs revisiting")
 	}
 	if got := atkChar.GetSkillUseCount(string(skills.Skullduggery)) - before; got != 1 {
