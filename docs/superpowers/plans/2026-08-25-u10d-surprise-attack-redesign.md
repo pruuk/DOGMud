@@ -58,7 +58,7 @@ Three things that will bite you if you skip them:
 - Modify: `internal/configs/config.balance.go`
 - Modify: `internal/configs/config.balance.combat.go`
 - Modify: `_datafiles/config.yaml`
-- Test: `internal/configs/config_balance_combat_test.go`
+- Test: `internal/configs/config_balance_combat_test.go` (create)
 
 **⚠ `_datafiles/config.yaml` has `skip-worktree` set.** Editing it locally is correct and necessary, but when you commit, build the committed content from `git show HEAD:_datafiles/config.yaml` plus your addition — **never from disk**, which legitimately carries dev-only overrides (HttpPort, LogLevel, an uncommitted `Playtest:` block).
 
@@ -70,26 +70,26 @@ In `internal/configs/config_balance_combat_test.go`:
 func TestSurpriseOpeningStrikeMultiplier_DefaultsAndValidates(t *testing.T) {
 	var b Balance
 	b.SurpriseOpeningStrikeMultiplier = 0
-	b.ValidateConfig()
+	b.Validate()
 	if got := float64(b.SurpriseOpeningStrikeMultiplier); got != 1.0 {
 		t.Fatalf("zero must default to 1.0, got %v", got)
 	}
 
 	b.SurpriseOpeningStrikeMultiplier = -3
-	b.ValidateConfig()
+	b.Validate()
 	if got := float64(b.SurpriseOpeningStrikeMultiplier); got != 1.0 {
 		t.Fatalf("negative must reset to 1.0, got %v", got)
 	}
 
 	b.SurpriseOpeningStrikeMultiplier = 2.5
-	b.ValidateConfig()
+	b.Validate()
 	if got := float64(b.SurpriseOpeningStrikeMultiplier); got != 2.5 {
 		t.Fatalf("a legal value must survive validation, got %v", got)
 	}
 }
 ```
 
-If `ValidateConfig` is not the validator's name on `Balance`, open `internal/configs/config.balance.combat.go` and use whatever function the sibling crit knobs are validated in. Do not invent a name.
+`Validate()` is the real entry point (`internal/configs/config.balance.go:936`); it calls the unexported `validateCombat()` internally, which is where your defaulting block goes.
 
 - [ ] **Step 2: Run it and watch it fail**
 
@@ -160,22 +160,42 @@ Commit `_datafiles/config.yaml` separately, built from the `git show HEAD:` blob
 
 Create `internal/combat/surprise_critonwin_test.go`:
 
+Two fixtures already exist and you MUST reuse them rather than inventing new
+ones: `defenceFixture(defenderStamina int) (*characters.Character, *characters.Character)`
+in `internal/combat/defense_affordability_test.go:19`, and
+`defenceWinBest(rawMargin, defStdDev float64) bestDefenseResult` in
+`internal/combat/defence_multiplier_test.go:97`.
+
+**The margin sign is DEFENCE-POSITIVE.** A *negative* margin is an attack win.
+The established idiom, used verbatim in two existing tests, is
+`defenceWinBest(-15*math.Sqrt2, 15)`. Its `hitRoll.ZScore` is 0, comfortably
+below the 2.0 crit bar, so nothing but `critOnWin` can produce a crit. Get this
+sign backwards and your tests silently exercise a defence win and fail in a
+confusing way.
+
 ```go
 package combat
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
+
+// attackWinBest is a settled ATTACK win below the crit bar. Negative margin ==
+// attack win (defenceWinBest's margin is DEFENCE-positive), and ZScore 0 is far
+// under a 2.0 bar, so only critOnWin can make this crit.
+func attackWinBest() bestDefenseResult { return defenceWinBest(-15*math.Sqrt2, 15) }
 
 // critOnWin must upgrade a WON contest to a crit, and must NOT rescue a lost
 // one. That distinction is the whole point: forceCrit forces the win,
 // critOnWin respects the contest.
 func TestCritOnWin_UpgradesWinButNeverRescuesALoss(t *testing.T) {
-	src, tgt := testAttackerDefender(t)
+	src, tgt := defenceFixture(1000)
 
 	t.Run("attack win becomes a crit", func(t *testing.T) {
-		best := attackWinBest()
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, true)
-		if !res.hit {
-			t.Fatalf("precondition: the attack should have won")
+		res := resolveDefenseOutcomeCore(&AttackResult{}, attackWinBest(), src, tgt, 2.0, false, false, true)
+		if !res.hit || res.defended {
+			t.Fatalf("precondition: the attack should have won cleanly")
 		}
 		if !res.crit {
 			t.Fatalf("critOnWin must upgrade a won contest to a crit")
@@ -183,7 +203,7 @@ func TestCritOnWin_UpgradesWinButNeverRescuesALoss(t *testing.T) {
 	})
 
 	t.Run("defence win stays a defence win", func(t *testing.T) {
-		best := defenceWinBest(100, 10)
+		best := defenceWinBest(15*math.Sqrt2, 15) // positive == defence won
 		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, true)
 		if res.crit {
 			t.Fatalf("critOnWin must never turn a lost contest into a crit")
@@ -191,16 +211,31 @@ func TestCritOnWin_UpgradesWinButNeverRescuesALoss(t *testing.T) {
 	})
 
 	t.Run("critOnWin false is unchanged behaviour", func(t *testing.T) {
-		best := attackWinBest()
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
+		res := resolveDefenseOutcomeCore(&AttackResult{}, attackWinBest(), src, tgt, 2.0, false, false, false)
 		if res.crit {
 			t.Fatalf("an ordinary win must not crit merely from winning")
+		}
+	})
+
+	t.Run("a FLOORED win must not crit", func(t *testing.T) {
+		best := attackWinBest()
+		best.floored = true
+		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, true)
+		if res.crit {
+			t.Fatalf("a floored outcome carries a sentinel margin and must never be promoted")
 		}
 	})
 }
 ```
 
-`defenceWinBest` already exists (`defence_multiplier_test.go:145`). You must add `attackWinBest()` and `testAttackerDefender(t)` helpers if the package has no equivalent — read `internal/combat/defence_multiplier_test.go` first and reuse whatever is already there rather than duplicating it. Build `attackWinBest()` so the attack z-score clearly beats the defence and sits **below** the crit threshold of 2.0, so the only thing that can produce a crit is `critOnWin`.
+That last subtest is not optional. `crit_floor.go:122-130` states the rule
+explicitly: *"A floored outcome carries the +-1 sentinel margin and represents an
+outcome the contest did not actually produce. Promoting it would hand a decisive
+result to the side that lost the roll."* A mercy-granted save must not become a
+maximum-damage ambush crit.
+
+Confirm `floored` is the actual field name on `bestDefenseResult` before writing
+that subtest — read the struct.
 
 - [ ] **Step 2: Run it and watch it fail**
 
@@ -235,15 +270,27 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 Find where `res.crit` is finally settled in `resolveDefenseOutcomeCore` (after the fumble → crit → normal → floors ordering, near the `forceCrit` handling at ~`:962`). Add, as the **last** thing that can set `crit`:
 
 ```go
-	// U10d: a surprise round crits on any won contest. Placed last so it can
-	// only ever upgrade an outcome the ordinary ordering already resolved as a
-	// hit -- it must not rescue a fumble, a floor, or a defence win.
-	if critOnWin && res.hit && !res.defended {
+	// U10d: a surprise round crits on any CLEANLY won contest. Placed last so
+	// it can only upgrade an outcome the ordinary ordering already settled.
+	//
+	// Every term is load-bearing:
+	//   res.hit && !res.defended -- the documented idiom for "the attack won
+	//     the contest" (see hitResolution.defended, combat_helpers.go:798-803).
+	//     hit alone is TRUE for a deflected partial hit, which is a defence
+	//     win and must not be promoted.
+	//   !best.floored -- crit_floor.go:122 declares that a floored outcome
+	//     carries a sentinel margin and must never be promoted. A mercy save
+	//     must not become a maximum-damage ambush crit.
+	//   !res.fumble -- a fumble is the attacker's own blunder and aborts even
+	//     a winning roll (applyCritFloors returns early on it).
+	if critOnWin && res.hit && !res.defended && !best.floored && !res.fumble {
 		res.crit = true
 	}
 ```
 
-Read the surrounding code before inserting: if `res.defended` is not the field name for a deflected-but-landed hit, use whatever the partial-defence signal is actually called. `!res.defended` matters — a deflected hit is not a clean win and must not be upgraded.
+Do not drop any of the four guards to "simplify". Each one corresponds to a rule
+this package states in a comment somewhere, and dropping one produces a bug that
+only shows up as an occasional absurd damage number in play.
 
 - [ ] **Step 5: Fix the existing call sites**
 
@@ -1042,17 +1089,42 @@ Assert `ResolveChannelAttack` with `CritOnWin: true` produces `AttackerCrit` on 
 	CritOnWin bool
 ```
 
-- [ ] **Step 3: Apply it on the contested path only**
+- [ ] **Step 3: Apply it inside the attack-win branch**
 
-In `resolveChannelAttackWithRunner`, after `out.AttackerCrit` is derived from the contest (U6b Task 3's verdict block):
+**Placement matters and is easy to get wrong.** `Defended` is a plain `bool`
+**field** (`defence_multiplier.go:213`), not a method, and it is not assigned
+until `:437` — which is *after* the attack-win branch has already returned. So a
+`!out.Defended` test placed up beside the verdict block reads the zero value and
+filters nothing.
+
+The attack win is `if res.Success { ... return out }` at roughly `:416-424`.
+Put it inside that block, immediately before its `return out`:
 
 ```go
-	if side.CritOnWin && !out.Defended() && out.DamageMultiplier >= 1.0 {
-		out.AttackerCrit = true
+	if res.Success {
+		if !res.Floored && res.DefenseRoll.StdDev > 0 {
+			out.AttackerNormalizedMargin = res.Margin / (res.DefenseRoll.StdDev * math.Sqrt2)
+		}
+		// U10d: a surprise shot crits on a won contest. Inside this branch
+		// because res.Success IS the attack win -- the defended path below
+		// sets out.Defended and returns separately.
+		//
+		// !res.Floored mirrors the gate the AttackerCrit line above already
+		// applies: a floored outcome carries the +-1 sentinel margin and
+		// cannot be a crit. !out.AttackerFumble because "a fumbled attack
+		// aborts even a winning roll" (the verdict block's own comment).
+		if side.CritOnWin && !res.Floored && !out.AttackerFumble {
+			out.AttackerCrit = true
+		}
+		return out
 	}
 ```
 
-Read the surrounding code and use whatever this struct actually exposes for "the attack won cleanly". Do **not** apply it in the two early-return branches at `:316` and `:362` — an empty defence set and an uncontested roll are already attack wins, and `AttackerNormalizedMargin`'s docstring warns those exits are not decisive outcomes. A surprise shot at an undefendable target still crits via `ForceCrit` if it is asleep; otherwise leave those paths alone.
+Do **not** apply it in the two early-return branches at `:316` (empty defence
+set) and `:362` (uncontested roll). Those are already attack wins, and
+`AttackerNormalizedMargin`'s docstring explicitly warns that those exits are not
+decisive outcomes. A surprise shot against an undefendable target still crits via
+`ForceCrit` when it is asleep; otherwise leave those paths alone.
 
 - [ ] **Step 4: Thread the bonus multiplier through `SkillMoveParams`**
 
@@ -1107,7 +1179,9 @@ func TestSurpriseShot_SameRoomCritsAndStacks(t *testing.T) {
 	t.Cleanup(restore)
 
 	shooter, target, room := newArmedShooterAndTarget(t)
-	shooter.Character.SetSkillLevel(string(skills.Skullduggery), 50)
+	// No SetSkillLevel method exists. Every test in this repo seeds a skill
+	// by direct map assignment -- see behaviortree/actions_skullduggery_test.go.
+	shooter.Character.Skills[string(skills.Skullduggery)] = 50
 	hide(t, shooter)
 
 	res := ExecuteFire(NewUserActorInRoom(shooter, room), target.Character.Name)
@@ -1262,7 +1336,7 @@ After the shot resolves, and only for a surprise shot:
 	}
 ```
 
-Add `Revealed bool` to `FireResult` so the wrappers can speak the line (Task 14). Check whether a more apt `awareness.Trigger*` constant exists before reusing `TriggerCombatEntered`; add one if the vocabulary warrants it.
+Add `Revealed bool` to `FireResult` so the wrappers can speak the line (Task 14). Use a NEW constant, `awareness.TriggerRangedSurpriseShot`, added to `internal/state/awareness/transitions.go` beside the existing triggers. Do not reuse `TriggerSurpriseRoundEnd`: a shot is not a round, and the trigger name is what shows up in transition logs. Do not reuse `TriggerCombatEntered` either -- a cross-room shooter never enters combat at all, so that name would be actively misleading for the one case this feature is most likely to be debugged against.
 
 - [ ] **Step 5: Run and commit**
 
