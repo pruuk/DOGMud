@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -11,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -29,6 +32,20 @@ type FireResult struct {
 	CrossRoom  bool
 	ExitName   string
 	IsSneaking bool
+
+	// Revealed reports that this shot was a same-room surprise shot and gave
+	// the shooter's position away (U10d). Distinct from IsSneaking, which is
+	// only "the shooter was hidden when the shot was declared": a cross-room
+	// shot is sneaking and is NOT revealed.
+	Revealed bool
+
+	// SurpriseOnCooldown reports that the shooter WAS hidden in the same room
+	// but the shared special-move timer was already claimed, so the shot
+	// resolved as an ordinary one. The wrapper must speak this: otherwise the
+	// ambush silently does nothing and reads as a bug. It is the common case
+	// rather than a corner — a loaded bow implies a recent reload, and reload
+	// burns the same timer.
+	SurpriseOnCooldown bool
 
 	MoveResult combat.SkillMoveResult
 	Executed   bool
@@ -61,9 +78,11 @@ type FireResult struct {
 
 // ExecuteFire resolves a ranged shot immediately. rest is either "<target>"
 // (same room) or "<target words...> <direction>" (adjacent room). The weapon
-// must be loaded; firing unloads it (even on a miss). Firing does NOT consume
-// the special-move cooldown — reloading does. It DOES consume the attacker's
-// combat round via RecordAndWait.
+// must be loaded; firing unloads it (even on a miss). An ORDINARY shot does not
+// consume the special-move cooldown — reloading does — but the U10d same-room
+// surprise shot does, and is refused (and downgraded to an ordinary shot) when
+// that timer is already claimed. Every shot consumes the attacker's combat
+// round via RecordAndWait.
 //
 // Callers are responsible for: messaging, OnSkillUse/OnStatUse progression,
 // retaliation aggro on the target, crime recording, and combat-initiation
@@ -237,11 +256,54 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		return result
 	}
 
+	// U10d. NOTE the ordering: a same-room shot calls SetAggro below, which
+	// cascades Hidden -> Revealing. result.IsSneaking was captured before that.
+	//
+	// Cross-room is excluded deliberately: it never SetAggro's, is reach-gated
+	// out of counterattacks (the one uncounterable attack), and narrates
+	// anonymously. A stacked crit on top of all three would be a boss killed
+	// from the next room at no risk and with no way to learn who did it.
+	surpriseShot := !crossRoom && result.IsSneaking
+	if surpriseShot && !char.TryCooldown("special-move",
+		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		// DENIED, and the player must be told (Task 14 speaks the line).
+		surpriseShot = false
+		result.SurpriseOnCooldown = true
+	}
+
+	bonusCrit := 1.0
+	if surpriseShot {
+		// The RANGED knob, not the melee one. It ships lower (0.5 against 1.0)
+		// because a shot answers one fewer defence and the opener inherits
+		// RangedUnengagedDamageMultiplier -- it is unengaged by definition.
+		// (That knob is declared and validated but not yet wired to any shot;
+		// the ranged economy rebalance is a later U10d task. The 0.5 here is
+		// sized for the world where it IS wired.) Passing the melee knob here
+		// would put the ambush near 18,000 instead of ~9,080.
+		bonusCrit = combat.OpeningStrikeMultiplier(char,
+			float64(cfg.SurpriseRangedStrikeMultiplier))
+	}
+
 	// A same-room opening shot enters combat only after paid admission. This
 	// gives RecordAndWait an engagement to charge without mutating aggro for a
 	// refused shot. Cross-room shots remain one-shot and aggro-free.
 	if !crossRoom && char.Aggro == nil {
 		char.SetAggro(targetUserId, targetMobInstanceId, characters.DefaultAttack)
+	}
+
+	if surpriseShot {
+		// U10d: firing from stealth gives away your position.
+		//
+		// Belt and braces. A same-room shot with no prior aggro is ALREADY
+		// revealed indirectly, via SetAggro -> TransitionToEngaging -> the
+		// Awareness cascade. But that path does not fire when the shooter is
+		// already engaged (Aggro != nil), which is exactly the case that would
+		// otherwise let a re-hidden archer fire repeated maximum-bonus shots.
+		// This call is a no-op in the first case and load-bearing in the second.
+		_ = char.Awareness.TransitionToRevealing(state.TransitionReason{
+			Trigger: awareness.TriggerRangedSurpriseShot,
+		})
+		result.Revealed = true
 	}
 
 	// The shot: unload first (fires even on a miss), then resolve.
@@ -266,7 +328,9 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 			Skill: skills.RangedCombat, SkillRank: rangedRank,
 			Mult:      combat.SituationalAttackMult(char, combat.ChannelRanged),
 			ForceCrit: combat.SleepingForceCrit(defChar),
+			CritOnWin: surpriseShot,
 		},
+		BonusCritMultiplier:  bonusCrit,
 		DamagePercent:        shotMult,
 		KnockdownFactor:      0,
 		DamageStat:           char.GetEffectivePerception(),

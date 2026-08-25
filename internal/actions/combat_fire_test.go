@@ -483,6 +483,7 @@ func TestFireAdmissionOrdering(t *testing.T) {
 
 	unloads := []token.Pos{}
 	cooldownCalls := []string{}
+	cooldownPos := []token.Pos{}
 	ast.Inspect(body, func(node ast.Node) bool {
 		switch n := node.(type) {
 		case *ast.AssignStmt:
@@ -494,18 +495,37 @@ func TestFireAdmissionOrdering(t *testing.T) {
 		case *ast.CallExpr:
 			if sel, ok := n.Fun.(*ast.SelectorExpr); ok && strings.Contains(sel.Sel.Name, "Cooldown") {
 				cooldownCalls = append(cooldownCalls, formattedASTNode(t, fset, n))
+				cooldownPos = append(cooldownPos, n.Pos())
 			}
 		case *ast.SelectorExpr:
 			if formattedASTNode(t, fset, n) == "char.Cooldowns" {
 				cooldownCalls = append(cooldownCalls, "char.Cooldowns")
+				cooldownPos = append(cooldownPos, n.Pos())
 			}
 		}
 		return true
 	})
 	require.Len(t, unloads, 1)
-	assert.Empty(t, cooldownCalls, "shoot must neither query nor mutate any cooldown")
+
+	// U10d narrowed this from "shoot must neither query nor mutate any
+	// cooldown" to EXACTLY ONE claim, the same-room surprise opener's. An
+	// ORDINARY shot still touches no timer (pinned behaviourally by
+	// TestFire_DoesNotConsumeSpecialMoveCooldown and
+	// TestFireSurprise_OrdinaryShotDoesNotBurnTheCooldown); what this guard
+	// keeps is that there is no SECOND cooldown site and that the one claim
+	// cannot fire before admission, which would let a refused shot burn the
+	// shared special-move timer.
+	require.Len(t, cooldownCalls, 1, "exactly one cooldown site: the U10d surprise opener")
+	assert.True(t, strings.HasPrefix(cooldownCalls[0], `char.TryCooldown("special-move"`),
+		"the surprise opener must CLAIM (not merely read) the shared special-move "+
+			"timer, got %q", cooldownCalls[0])
+	assert.Contains(t, cooldownCalls[0], "cfg.SpecialMoveCooldown",
+		"the claim must be sized by the shared knob, not a literal, got %q", cooldownCalls[0])
 	assert.Less(t, int(roomVisibility[0]), int(admit[0]))
 	assert.Less(t, int(hiddenTarget[0]), int(admit[0]))
+	assert.Less(t, int(admit[0]), int(cooldownPos[0]),
+		"the surprise claim must never precede admission")
+	assert.Less(t, int(cooldownPos[0]), int(resolve[0]))
 	assert.Less(t, int(admit[0]), int(unloads[0]))
 	assert.Less(t, int(unloads[0]), int(resolve[0]))
 	assert.Less(t, int(admit[0]), int(round[0]))
