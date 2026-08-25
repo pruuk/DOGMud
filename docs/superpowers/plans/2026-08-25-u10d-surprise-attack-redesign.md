@@ -176,7 +176,7 @@ Expected: compile failure, fields undefined.
   # and for reload burning the shared special-move cooldown. It replaces the flat
   # inflation the bow damage_multiplier line used to carry. Raising it restores
   # sustained archery but also grows the surprise opener, which compounds with it.
-  RangedUnengagedDamageMultiplier: 2.0
+  RangedUnengagedDamageMultiplier: 1.5
 ```
 
 - [ ] **Step 7: Commit**

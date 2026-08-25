@@ -630,8 +630,25 @@ cooldown — only the combat round."* So the brake chosen for the melee ambush
 (2.5) does not exist here by default.
 
 > **A surprise shot burns the shared `special-move` cooldown**, matching melee.
-> An ordinary shot continues not to. The charge is conditional on the shot being
-> a surprise shot, so the existing ranged rotation is untouched.
+> An ordinary shot continues not to.
+
+**What that actually costs the archer: exactly one shot.** Two earlier drafts of
+this spec both got this wrong, in opposite directions — first "the existing ranged
+rotation is untouched", then "roughly 8 rounds of not shooting". Neither is right.
+
+`reload` reads and writes the same `special-move` timer
+(`combat_reload.go:86,133`) and costs no combat round of its own, and firing
+always unloads (`combat_fire.go:249`). So the rotation is already gated:
+
+```
+ORDINARY:  R1 shoot, reload (cd->R5) | R2 shoot | R3-4 dry | R5 reload+shoot | R6 shoot
+SURPRISE:  R1 shoot (cd->R5)         |          | R2-4 dry | R5 reload+shoot | R6 shoot
+```
+
+The surprise opener consumes the cooldown that reload would have used, so the
+archer loses the **R2 shot** and rejoins the ordinary cadence at R5. One shot, not
+a dead window. That is a fair price for the opener and needs no separate cooldown
+key.
 
 **3. Cross-room shots are aggro-free AND uncounterable by design.** A cross-room
 shot never calls `SetAggro`, and `counterSkillMoveExit` is reach-gated so the
@@ -661,17 +678,19 @@ at least as hard — and in practice considerably harder.
 `shotMult := weapon.DamageMultiplier * RangedShotScale` (`combat_fire.go:253`),
 and ranged `damage_multiplier` values run far above melee's: the Ironhorn Warbow
 (`items/weapons-10000/10046`) is **7.50**, the arbalest 7.00, against roughly 1.5
-for a good one-handed melee weapon. At Perception 110, ranged-combat 50,
-skullduggery 50:
+for a good one-handed melee weapon. At the owner's real **Perception 152**
+(`users/3.yaml:43-45`), with ranged-combat 50 and skullduggery 50, on the
+**undetuned** 7.50 bow:
 
 ```
-raw   = 110 * 3.0 * 7.50 * 0.52 * 0.5   =    643
-crit  * CritDamageMultiplier(50) = 4.50 =  2,896
-stack * CritDamageMultiplier(50) = 4.50 = 13,033
+raw   = 152 * 3.0 * 7.50 * 0.52 * 0.5   =    889
+crit  * CritDamageMultiplier(50) = 4.50 =  4,001
+stack * CritDamageMultiplier(50) = 4.50 = 18,005
 ```
 
-**About 13,000 from one roll**, versus the melee opening strike's ~3,900 — with
-one fewer defence answering it.
+**About 18,000 from one roll**, versus the melee opening strike's ~3,900 with a
+mid-tier sword or ~9,760 with Blackrazor — and with one fewer defence answering
+it. That is what 2.8.3's detune exists to bring down.
 
 **Owner decision, 2026-08-25: ship it and let the playtest speak.** No ranged
 normalisation, no separate knob. The number is written down here so the playtest
@@ -700,7 +719,7 @@ draft failed to do by pitting the top bow against a mid-tier sword:
 | | Ease of landing | Opening strike |
 |---|---|---|
 | Melee, Blackrazor 3.75 | harder — answers dodge, parry and block | **~9,760** |
-| Ranged, Ironhorn 2.75 (detuned) + unengaged 2.0x | easier — answers dodge and block; **no parry** | **~9,560** |
+| Ranged, Ironhorn 2.75 (detuned) + unengaged 1.5x | easier — answers dodge and block; **no parry** | **~9,900** |
 | Melee, typical sword 1.30 | harder | ~3,380 |
 
 So the two top-end openers land at **near parity**, with melee marginally ahead —
@@ -795,13 +814,22 @@ carries it: you cannot aim while someone is hitting you.
 
 ##### The numbers
 
+**All figures below are computed at the owner's REAL Perception of 152**
+(`users/3.yaml:43-45`, base 101 + training 51; `StatInfo.Recalculate` sets
+`Value = Racial + Training + Mods`). An earlier draft computed the melee rows at
+the owner's real Strength but the ranged rows at an unexplained "Perception 110",
+which understated every ranged figure by 38% and made a 1.35x gap look like
+parity. Compute both sides on the same character or the comparison is worthless.
+
 | | Today | Proposed |
 |---|---|---|
 | Top bow multiplier | 7.50 | **2.75** |
-| `RangedUnengagedDamageMultiplier` | — | **2.0** |
-| Unengaged shot, raw | 643 | **472** (~73% of today) |
-| Engaged shot, raw | 643 | **236** |
-| Surprise opener | ~13,030 | **~9,560** |
+| `RangedUnengagedDamageMultiplier` | — | **1.5** |
+| Unengaged shot, raw | 889 | **489** (~55% of today) |
+| Engaged shot, raw | 889 | **326** |
+| Surprise opener | ~13,205 | **~9,900** |
+
+Against a best-melee opener of **~9,756**, that is parity to within 2%.
 
 **The top bow must NOT match Blackrazor** (owner, 2026-08-25). Blackrazor's 3.75
 is earned by a month-long quest chain, party content for materials, and heavy
@@ -813,25 +841,38 @@ At 2.75 the top bow sits at roughly **1.8x the best ordinary melee weapon**
 (Heavy Greatsword 1.50) — a real per-shot advantage for a single-shot weapon —
 and well under Blackrazor.
 
-The resulting surprise opener, **~9,560**, lands just **below** the best-melee
-opener of ~9,760. That is a better outcome than the 3.75 draft, which put ranged
-1.34x ahead: the two openers are now near parity, and the melee one is still the
-largest single hit in the game.
+The resulting surprise opener, **~9,900** at `RangedUnengagedDamageMultiplier`
+1.5, sits within 2% of the best-melee opener of ~9,760 — parity, with ranged a
+whisker ahead and paying for it by being weaker whenever anything is attacking it.
 
-##### The knob is the dial between sustained parity and opener size
+##### Opener size and sustained damage are STRUCTURALLY COUPLED
 
-Worth stating plainly, because the two cannot both be maximised:
+This is the most important tuning fact in the section, and it is not obvious.
 
-| `RangedUnengagedDamageMultiplier` | Unengaged shot vs today | Surprise opener |
+Both the opener and the sustained shot scale with the **product** `bow × knob`.
+They cannot be tuned independently:
+
+| `bow × knob` | Surprise opener | Unengaged shot vs today |
 |---|---|---|
-| 2.0 (**proposed**) | ~73% | ~9,560 (≈ melee parity) |
-| 2.75 | ~101% (restores today) | ~13,140 (ranged clearly ahead) |
+| 2.75 × 2.0 | ~13,200 | 73% |
+| **2.75 × 1.5 (shipped)** | **~9,900** (≈ melee parity) | **55%** |
+| 2.00 × 2.0 | ~9,600 | 53% |
 
-Shipping 2.0 accepts that sustained unengaged archery is somewhat weaker than
-today in exchange for openers at parity. If playtest says free-firing archery
-feels thin, raising this knob is the fix, with the cost that the opener grows
-with it. **No code change is needed to move between those rows**, which is the
-point of it being a knob.
+Pinning the opener to melee parity fixes that product near **4.1**, which puts
+sustained archery at roughly **55% of today** however you split it between the
+bow table and the knob. Shipping 1.5 buys opener parity and accepts that cost.
+
+**The only dial that separates them is `SurpriseOpeningStrikeMultiplier`** —
+because it touches the opener alone. But it applies to the **melee** opener too,
+so turning it down to buy back sustained archery would cut the melee ambush by
+the same fraction and simply move the imbalance. Separating them properly needs a
+ranged-specific ambush knob, which the owner declined in favour of the bow detune
+(2026-08-25). That decision stands; the coupling is recorded so a later retune is
+made with open eyes rather than discovered.
+
+If playtest says free-firing archery feels thin, the honest options are: raise the
+knob and accept a bigger ranged opener, or revisit the ranged-specific ambush
+knob.
 
 ##### Bow detune table
 
@@ -859,11 +900,16 @@ indefensible at any tuning.
 shot is unengaged by definition, so it receives both the stacked skullduggery
 crit and the unengaged bonus.
 
-With the top bow at 2.75 that puts the opener at roughly **9,560**, against a
-best-melee opener of ~9,760 — **near parity, with melee marginally ahead.** The
-compounding decision was taken when the bow was drafted at 3.75, where it would
-have produced ~13,030 and left ranged 1.34x ahead; the subsequent detune to 2.75
-brought it back down. Both decisions stand together and should be read together.
+With the top bow at 2.75 and the knob at 1.5, that puts the opener at roughly
+**9,900** against a best-melee opener of ~9,756 — **parity within 2%.**
+
+Getting there took two corrections worth recording. The compounding decision was
+taken when the bow was drafted at 3.75; the detune to 2.75 was then chosen
+believing it produced parity, but that belief rested on computing the ranged row
+at Perception 110 while the melee row used the owner's real stats. Recomputed on
+one basis, 2.75 with a 2.0x knob leaves ranged **1.35x ahead** — the very ratio
+the detune was meant to remove. Dropping the knob to 1.5 is what actually closes
+it.
 
 The alternative offered was to treat the two as alternatives rather than
 multipliers. It was declined deliberately: the archer's ambush is *meant* to be
@@ -1009,7 +1055,7 @@ party-member path at :189), `internal/mobcommands/attack.go`,
   # cooldown. It replaces the flat inflation the bow damage_multiplier line used
   # to carry, so an archer shooting from safety is as strong as before while an
   # archer in contact is not. Compounds with the surprise opening shot.
-  RangedUnengagedDamageMultiplier: 2.0
+  RangedUnengagedDamageMultiplier: 1.5
 ```
 
 ```yaml
