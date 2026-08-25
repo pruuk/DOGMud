@@ -719,7 +719,7 @@ draft failed to do by pitting the top bow against a mid-tier sword:
 | | Ease of landing | Opening strike |
 |---|---|---|
 | Melee, Blackrazor 3.75 | harder — answers dodge, parry and block | **~9,760** |
-| Ranged, Ironhorn 2.75 (detuned) + unengaged 1.5x | easier — answers dodge and block; **no parry** | **~9,900** |
+| Ranged, Ironhorn 2.75 + unengaged 2.75x + ranged ambush 0.5x | easier — answers dodge and block; **no parry** | **~9,080** |
 | Melee, typical sword 1.30 | harder | ~3,380 |
 
 So the two top-end openers land at **near parity**, with melee marginally ahead —
@@ -824,12 +824,14 @@ parity. Compute both sides on the same character or the comparison is worthless.
 | | Today | Proposed |
 |---|---|---|
 | Top bow multiplier | 7.50 | **2.75** |
-| `RangedUnengagedDamageMultiplier` | — | **1.5** |
-| Unengaged shot, raw | 889 | **489** (~55% of today) |
-| Engaged shot, raw | 889 | **326** |
-| Surprise opener | ~13,205 | **~9,900** |
+| `RangedUnengagedDamageMultiplier` | — | **2.75** |
+| `SurpriseRangedStrikeMultiplier` | — | **0.5** |
+| Unengaged shot, raw | 889 | **897** (~101% of today) |
+| Engaged shot, raw | 889 | **326** (~37%) |
+| Surprise opener | ~18,005 | **~9,080** |
 
-Against a best-melee opener of **~9,756**, that is parity to within 2%.
+Against a best-melee opener of **~9,756**, the ranged ambush lands at about 93% —
+close, but melee keeps the single biggest hit in the game.
 
 **The top bow must NOT match Blackrazor** (owner, 2026-08-25). Blackrazor's 3.75
 is earned by a month-long quest chain, party content for materials, and heavy
@@ -841,38 +843,53 @@ At 2.75 the top bow sits at roughly **1.8x the best ordinary melee weapon**
 (Heavy Greatsword 1.50) — a real per-shot advantage for a single-shot weapon —
 and well under Blackrazor.
 
-The resulting surprise opener, **~9,900** at `RangedUnengagedDamageMultiplier`
-1.5, sits within 2% of the best-melee opener of ~9,760 — parity, with ranged a
-whisker ahead and paying for it by being weaker whenever anything is attacking it.
+The resulting surprise opener, **~9,080**, sits at about 93% of the best-melee
+opener of ~9,760 — close enough to be a real alternative, far enough that melee
+keeps the single biggest hit in the game, and paid for by the archer dropping to
+37% whenever anything is attacking them.
 
-##### Opener size and sustained damage are STRUCTURALLY COUPLED
+##### Opener and sustained were coupled. A third knob decouples them.
 
-This is the most important tuning fact in the section, and it is not obvious.
+Both the opener and the sustained shot scale with the product
+`bow × RangedUnengagedDamageMultiplier`, so with two knobs they could not be tuned
+independently. Pinning the opener to melee parity fixed that product near 4.1 and
+dropped sustained archery to **55% of today with a tank, 37% solo** — a real nerf
+even in the intended playstyle.
 
-Both the opener and the sustained shot scale with the **product** `bow × knob`.
-They cannot be tuned independently:
+**Owner decision, 2026-08-25: add a ranged-specific ambush knob** (reversing an
+earlier preference for handling it with the bow table alone, taken before these
+numbers existed). *"Just make a separate ranged surprise config knob. Turn up the
+non-tanking multiplier, set the ranged surprise strike knob to be lower than
+melee's."*
 
-| `bow × knob` | Surprise opener | Unengaged shot vs today |
+`SurpriseRangedStrikeMultiplier` touches the **ranged opener alone**, so
+`RangedUnengagedDamageMultiplier` is free to restore sustained archery without
+inflating the ambush:
+
+| Knob | Shipped | Touches |
 |---|---|---|
-| 2.75 × 2.0 | ~13,200 | 73% |
-| **2.75 × 1.5 (shipped)** | **~9,900** (≈ melee parity) | **55%** |
-| 2.00 × 2.0 | ~9,600 | 53% |
+| `RangedUnengagedDamageMultiplier` | **2.75** | every unengaged shot |
+| `SurpriseRangedStrikeMultiplier` | **0.5** | the ranged opener only |
+| `SurpriseOpeningStrikeMultiplier` | 1.0 | the melee opener only |
 
-Pinning the opener to melee parity fixes that product near **4.1**, which puts
-sustained archery at roughly **55% of today** however you split it between the
-bow table and the knob. Shipping 1.5 buys opener parity and accepts that cost.
+Result, all computed at the owner's real stats (Str 136, Per 152):
 
-**The only dial that separates them is `SurpriseOpeningStrikeMultiplier`** —
-because it touches the opener alone. But it applies to the **melee** opener too,
-so turning it down to buy back sustained archery would cut the melee ambush by
-the same fraction and simply move the imbalance. Separating them properly needs a
-ranged-specific ambush knob, which the owner declined in favour of the bow detune
-(2026-08-25). That decision stands; the coupling is recorded so a later retune is
-made with open eyes rather than discovered.
+| | Raw / damage | vs today |
+|---|---|---|
+| Unengaged shot | 897 | **101%** |
+| Engaged shot | 326 | **37%** |
+| Ranged opener | **~9,080** | — |
+| Melee opener (Blackrazor) | ~9,756 | — |
 
-If playtest says free-firing archery feels thin, the honest options are: raise the
-knob and accept a bigger ranged opener, or revisit the ranged-specific ambush
-knob.
+So sustained archery with a front-line is restored to today's level, being the
+tank costs roughly two thirds of it, and the ranged ambush lands at about 93% of
+the melee one — big, but no longer the biggest hit in the game.
+
+**Why 0.5 and not 1.0.** The ranged opener inherits `RangedUnengagedDamageMultiplier`
+(it is unengaged by definition), so without a counterweight raising that knob to
+fix sustained would have pushed the opener to ~18,000. The ranged ambush knob
+exists to absorb exactly that. It is **deliberately lower than melee's 1.0**, per
+the owner: a bow already answers one fewer defence.
 
 ##### Bow detune table
 
@@ -900,8 +917,10 @@ indefensible at any tuning.
 shot is unengaged by definition, so it receives both the stacked skullduggery
 crit and the unengaged bonus.
 
-With the top bow at 2.75 and the knob at 1.5, that puts the opener at roughly
-**9,900** against a best-melee opener of ~9,756 — **parity within 2%.**
+With the top bow at 2.75, `RangedUnengagedDamageMultiplier` 2.75 and
+`SurpriseRangedStrikeMultiplier` 0.5, the opener lands at roughly **9,080**
+against a best-melee opener of ~9,756 — about **93%**, with melee keeping the
+biggest single hit.
 
 Getting there took two corrections worth recording. The compounding decision was
 taken when the bow was drafted at 3.75; the detune to 2.75 was then chosen
@@ -1045,17 +1064,28 @@ party-member path at :189), `internal/mobcommands/attack.go`,
 
 ## 5. Config
 
-**Two knobs added, five deleted. Net minus three.**
+**Three knobs added, five deleted. Net minus two.**
+
+All three default to **1.0** in Go — a neutral no-op — with the live values in
+`config.yaml`. Validate with `<= 0`, never the `< 0 || > 1.0` shape that left the
+five deleted knobs inert at zero (section 4).
 
 ```yaml
-  # RangedUnengagedDamageMultiplier: ranged damage multiplier applied when the
-  # shooter has NO inbound attackers (len(Character.Attackers()) == 0). 1.0 = no
-  # change. This is the archer's compensation for firing once where melee swings
-  # up to four times per weapon, and for reload burning the shared special-move
-  # cooldown. It replaces the flat inflation the bow damage_multiplier line used
-  # to carry, so an archer shooting from safety is as strong as before while an
-  # archer in contact is not. Compounds with the surprise opening shot.
-  RangedUnengagedDamageMultiplier: 1.5
+  # RangedUnengagedDamageMultiplier: ranged damage multiplier applied when
+  # nothing in the room is targeting the shooter. 1.0 = no change. This is the
+  # archer's compensation for firing once where melee swings up to four times per
+  # weapon, and for reload sharing the special-move cooldown. It replaces the flat
+  # inflation the bow damage_multiplier line used to carry, so an archer shooting
+  # from safety is as strong as before while an archer in contact is not.
+  RangedUnengagedDamageMultiplier: 2.75
+
+  # SurpriseRangedStrikeMultiplier: the ranged counterpart of
+  # SurpriseOpeningStrikeMultiplier, touching the ranged opening shot ALONE.
+  # Deliberately below the melee value: a shot answers one fewer defence (no
+  # parry), and the opener already inherits RangedUnengagedDamageMultiplier
+  # because it is unengaged by definition. Without this counterweight, raising
+  # that knob to fix sustained archery would push the ambush to roughly 18,000.
+  SurpriseRangedStrikeMultiplier: 0.5
 ```
 
 ```yaml
@@ -1200,7 +1230,11 @@ Required copy work:
     alternatives is caught.
 26. The bonus applies to **ranged only** — a melee swing is unaffected regardless
     of the attacker's inbound list.
-27. Set to 1.0, the knob is a true no-op on every path.
+27. Set to 1.0, each of the three multipliers is a true no-op on its own path.
+27a. `SurpriseRangedStrikeMultiplier` scales the **ranged** opener only, and
+    `SurpriseOpeningStrikeMultiplier` the **melee** opener only. Cross-wiring them
+    is the single most likely implementation slip — the ranged opener would land
+    near 18,000 instead of ~9,080 — so assert each knob moves exactly one number.
 28. The eight detuned bow multipliers match the 2.8.3 table exactly. A cheap
     table-driven test over the YAML beats trusting eight hand edits.
 

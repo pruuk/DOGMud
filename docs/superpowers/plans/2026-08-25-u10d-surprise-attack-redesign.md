@@ -91,6 +91,9 @@ func TestU10dKnobs_DefaultAndValidate(t *testing.T) {
 		{"SurpriseOpeningStrikeMultiplier",
 			func(b *Balance) float64 { return float64(b.SurpriseOpeningStrikeMultiplier) },
 			func(b *Balance, v float64) { b.SurpriseOpeningStrikeMultiplier = ConfigFloat(v) }},
+		{"SurpriseRangedStrikeMultiplier",
+			func(b *Balance) float64 { return float64(b.SurpriseRangedStrikeMultiplier) },
+			func(b *Balance, v float64) { b.SurpriseRangedStrikeMultiplier = ConfigFloat(v) }},
 		{"RangedUnengagedDamageMultiplier",
 			func(b *Balance) float64 { return float64(b.RangedUnengagedDamageMultiplier) },
 			func(b *Balance, v float64) { b.RangedUnengagedDamageMultiplier = ConfigFloat(v) }},
@@ -137,8 +140,9 @@ Expected: compile failure, fields undefined.
 `internal/configs/config.balance.go`, beside the crit knobs:
 
 ```go
-	SurpriseOpeningStrikeMultiplier ConfigFloat `yaml:"SurpriseOpeningStrikeMultiplier"` // Extra multiplier on a surprise opening strike (default 1.0)
-	RangedUnengagedDamageMultiplier ConfigFloat `yaml:"RangedUnengagedDamageMultiplier"` // Ranged damage multiplier when the shooter has no inbound attackers (default 1.0)
+	SurpriseOpeningStrikeMultiplier ConfigFloat `yaml:"SurpriseOpeningStrikeMultiplier"` // Extra multiplier on a MELEE surprise opening strike (default 1.0)
+	SurpriseRangedStrikeMultiplier  ConfigFloat `yaml:"SurpriseRangedStrikeMultiplier"`  // Extra multiplier on a RANGED surprise opening shot (default 1.0)
+	RangedUnengagedDamageMultiplier ConfigFloat `yaml:"RangedUnengagedDamageMultiplier"` // Ranged damage multiplier when nothing in the room targets the shooter (default 1.0)
 ```
 
 - [ ] **Step 4: Default and validate**
@@ -153,6 +157,9 @@ Expected: compile failure, fields undefined.
 	// inert. 0 is nonsense for both of these; disabling is 1.0.
 	if b.SurpriseOpeningStrikeMultiplier <= 0 {
 		b.SurpriseOpeningStrikeMultiplier = 1.0
+	}
+	if b.SurpriseRangedStrikeMultiplier <= 0 {
+		b.SurpriseRangedStrikeMultiplier = 1.0
 	}
 	if b.RangedUnengagedDamageMultiplier <= 0 {
 		b.RangedUnengagedDamageMultiplier = 1.0
@@ -176,7 +183,15 @@ Expected: compile failure, fields undefined.
   # and for reload burning the shared special-move cooldown. It replaces the flat
   # inflation the bow damage_multiplier line used to carry. Raising it restores
   # sustained archery but also grows the surprise opener, which compounds with it.
-  RangedUnengagedDamageMultiplier: 1.5
+  RangedUnengagedDamageMultiplier: 2.75
+
+  # SurpriseRangedStrikeMultiplier: the ranged counterpart of
+  # SurpriseOpeningStrikeMultiplier, touching the ranged opening shot ALONE.
+  # Deliberately below the melee value: a shot answers one fewer defence, and the
+  # opener already inherits RangedUnengagedDamageMultiplier because it is
+  # unengaged by definition. Without this counterweight, raising that knob to
+  # restore sustained archery would push the ambush to roughly 18,000.
+  SurpriseRangedStrikeMultiplier: 0.5
 ```
 
 - [ ] **Step 7: Commit**
@@ -426,17 +441,26 @@ New helper in `crit_damage.go`:
 // same crit-worth curve their combat skill already uses, times the ambush-only
 // tuning knob.
 //
+// channelKnob is the per-channel ambush multiplier, passed by the caller rather
+// than read here: melee uses SurpriseOpeningStrikeMultiplier, ranged uses
+// SurpriseRangedStrikeMultiplier, and the two ship at different values because a
+// shot answers one fewer defence and already inherits the unengaged bonus.
+//
 // Returns 1.0 for a nil attacker so callers can multiply unconditionally.
-func OpeningStrikeMultiplier(attacker *characters.Character) float64 {
+func OpeningStrikeMultiplier(attacker *characters.Character, channelKnob float64) float64 {
 	if attacker == nil {
 		return 1.0
 	}
-	return CritDamageMultiplier(attacker.GetSkillLevel(skills.Skullduggery)) *
-		float64(configs.GetBalanceConfig().SurpriseOpeningStrikeMultiplier)
+	return CritDamageMultiplier(attacker.GetSkillLevel(skills.Skullduggery)) * channelKnob
 }
 ```
 
-In `buildDamageParams`, add `openingStrikeMult: OpeningStrikeMultiplier(sourceChar),`.
+In `buildDamageParams`:
+
+```go
+		openingStrikeMult: OpeningStrikeMultiplier(sourceChar,
+			float64(configs.GetBalanceConfig().SurpriseOpeningStrikeMultiplier)),
+```
 
 - [ ] **Step 4: Rewrite `calcHitDamage`**
 
@@ -1099,7 +1123,13 @@ via the Awareness cascade, so reading `IsHidden()` after it is too late:
 
 	bonusCrit := 1.0
 	if surpriseShot {
-		bonusCrit = combat.OpeningStrikeMultiplier(char)
+		// The RANGED knob, not the melee one. It ships lower (0.5 against 1.0)
+		// because a shot answers one fewer defence and the opener already
+		// inherits RangedUnengagedDamageMultiplier -- it is unengaged by
+		// definition. Passing the melee knob here would put the ambush near
+		// 18,000 instead of ~9,080.
+		bonusCrit = combat.OpeningStrikeMultiplier(char,
+			float64(cfg.SurpriseRangedStrikeMultiplier))
 	}
 ```
 
