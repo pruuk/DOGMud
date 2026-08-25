@@ -308,8 +308,9 @@ occasional absurd damage number in play.
 
 - [ ] **Step 5: Fix call sites**
 
-`combat.go:466` gets `, ctx.critOnWin` (field lands in Task 3 — pass `false` with a
-`// Task 3` comment for now). Update every test caller found by:
+`combat.go:466` gets a **per-swing** value (see the warning in Task 3 Step 6 —
+passing `ctx.critOnWin` bare there is a round-scoped bug). For now pass `false`
+with a `// Task 3` comment. Update every test caller found by:
 
 ```bash
 grep -rn "resolveDefenseOutcomeCore(\|resolveDefenseOutcome(" internal/combat/
@@ -500,8 +501,59 @@ consumed by it, so nothing must persist across the round. This is the same signa
 **Keep the `SetAggro` demotion.** `combat.go:393` documents that it only works
 through the pointer and that reverting it silently disables three separate things.
 
-`:466` → `..., ctx.forceCrit, ctx.critOnWin)`
 `:483` → `attackTargetDamage, openingStrikeLeft = calcHitDamage(&attackResult, res.crit, openingStrikeLeft, sdp)`
+
+**`:466` is the one line in this plan most likely to be got wrong. Read this.**
+
+```go
+			// U10d: critOnWin is gated on openingStrikeLeft so it applies to the
+			// OPENING STRIKE, not the round.
+			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar,
+				critThreshold, isThirdParty, ctx.forceCrit, ctx.critOnWin && openingStrikeLeft)
+```
+
+> **Passing bare `ctx.critOnWin` here is a silent, serious bug.** Line 466 sits
+> inside `for j := 0; j < swingCount; j++`, itself inside `for _, ws := range
+> plan.weapons`. `ctx` is round-scoped, built once in the four `Attack*Vs*` entry
+> points. `ctx.forceCrit` is round-scoped **on purpose** — the sleeping-victim
+> contract is "every swing this round crits", which the comment directly above
+> that line states.
+>
+> Copy that wiring for `critOnWin` and you give it the same scope, so **every
+> winning swing of the round crits** — reinstating exactly the every-swing design
+> spec 2.1 records as retired. It compiles, and the Task 3 unit tests still pass,
+> because they exercise `calcHitDamage` in isolation where the stack really is
+> consumed once. Only a round-level test catches it. At the owner's ranks with
+> Blackrazor the difference is roughly **9,970 intended against 20,600 shipped**.
+>
+> `openingStrikeLeft` is still true at `:466` and is not consumed until
+> `calcHitDamage` at `:483`, so the gate reads correctly on the opening swing and
+> false on every later one.
+
+**Deliberate consequence, worth knowing:** if the opening swing *misses*,
+`calcHitDamage` is never called for it (it runs only under `res.hit`), so
+`openingStrikeLeft` stays true and the **next** swing becomes the opening strike.
+The opening strike is therefore "the first swing that lands", not "the first swing
+thrown". That is the better reading — a parried opener has not spent the ambush —
+but it is a choice, so pin it with a test.
+
+- [ ] **Step 6a: Add the round-level test**
+
+The Task 3 Step 1 tests are necessary but NOT sufficient: they call `calcHitDamage`
+directly and cannot see the scope bug above. Add one that drives a full
+multi-swing round:
+
+```go
+// The scope guard. calcHitDamage-level tests pass even when critOnWin is wired
+// round-scoped, so this must exercise calculateCombat.
+func TestSurpriseRound_ExactlyOneSwingIsUpgraded(t *testing.T) {
+	// Build an attacker with a multi-swing weapon setup and
+	// Aggro.Type == SurpriseAttack, a defender who reliably loses the contest,
+	// then assert across the resolved round that exactly ONE swing carried the
+	// stacked multiplier -- and that later swings rolled around the MITIGATED
+	// mean, not the crit mean.
+}
+```
 
 - [ ] **Step 7: Run and commit**
 
@@ -546,7 +598,20 @@ func EngageAggroType(actor Actor, target Actor) characters.AggroType {
 }
 ```
 
-- [ ] **Step 2:** `git rm internal/actions/surprise_attack.go`
+- [ ] **Step 2: Delete the file AND its two test files**
+
+```bash
+git rm internal/actions/surprise_attack.go \
+       internal/actions/surprise_attack_test.go \
+       internal/actions/surprise_aggro_test.go
+```
+
+Both test files call `SurpriseAttack(...)` / `SurpriseAttackOpts{...}`
+(`surprise_aggro_test.go:42,52`; `surprise_attack_test.go:63,84,108,137`). Leaving
+them breaks `go test ./internal/actions/...` at Step 6 — the commit would not
+compile. Read them first: `surprise_aggro_test.go` asserts the `EngageAggroType`
+contract (hidden-but-on-cooldown opens as an ordinary attack), which **survives**
+this slice. Port that assertion into a new test rather than losing the coverage.
 
 - [ ] **Step 3: `usercommands/attack.go:189`** — delete the direct
 `actions.SurpriseAttack(...)` call *and its enclosing `if targetMob := ...` block*.
@@ -650,7 +715,11 @@ None of it has ever executed in production (spec 1.1 mechanic 3):
 - `combatphase.go` — `EngagedData.SurpriseLeft`, the `advanceToEngaged` line that
   sets it, `OnCombatRoundEnd`, `OnEndOfRoundIfSurprise`,
   `endOfRoundIfSurpriseCallbacks`, and the `=== STUBS ===` banner
-- `awareness.TriggerSurpriseRoundEnd`, if nothing else references it
+- `awareness.TriggerSurpriseRoundEnd` — **`internal/state/awareness/awareness_test.go:221`
+  references it** (`TestAW_018_SurpriseRoundEndReveals`). Delete that test and
+  `TestAW_017` alongside it; both assert the surprise-round preservation contract
+  this task removes. The Step 5 grep will otherwise print "STILL REFERENCED" with
+  nothing to do about it.
 - the `combatphase_test.go` tests exercising the hand-filled `Reason` path
 
 **Do NOT "fix" `TransitionToEngaging` to carry its `TransitionReason`.** It does
@@ -771,7 +840,7 @@ func TestOrdinaryRound_AwardsNoSkullduggery(t *testing.T) {
 `CleanHit: true` and a real `SkillTag`. Read
 `internal/hooks/NewRound_DoCombat_parity_test.go` before writing these.
 
-- [ ] **Step 2: Add the event**, after the per-weapon loop and **outside** it:
+- [ ] **Step 3: Add the event**, after the per-weapon loop and **outside** it:
 
 ```go
 	// U10d: a landed surprise attack trains skullduggery, once for the round.
@@ -803,7 +872,7 @@ func TestOrdinaryRound_AwardsNoSkullduggery(t *testing.T) {
 >
 > The signal must therefore be carried **out** of the attack on `AttackResult`.
 
-- [ ] **Step 1a: Carry the flag out on `AttackResult`**
+- [ ] **Step 2: Carry the flag out on `AttackResult`** (do this BEFORE Step 3, which consumes it)
 
 In `internal/combat/attackresult.go` (or wherever `AttackResult` is declared):
 
@@ -830,7 +899,7 @@ Set it in `calculateCombat` in the same block that arms the strike (Task 3 Step 
 Add a test asserting `WasSurpriseAttack` survives to the progression phase — that
 is the regression guard for this whole class of "the demotion ate my signal" bug.
 
-- [ ] **Step 3: Run and commit**
+- [ ] **Step 4: Run and commit**
 
 ```bash
 go test ./internal/hooks/...
@@ -917,23 +986,47 @@ method, and is not assigned until `:437` — after the attack-win branch has alr
 returned. A `!out.Defended` test placed beside the verdict block reads the zero
 value and filters nothing.
 
-The attack win is `if res.Success { ... return out }` at roughly `:416-424`. Insert
-before its `return`:
+**It must go BESIDE the `ForceCrit` block at `:388`, not inside `if res.Success`
+at `:416`.** The crit/fumble progression tier is paid by
+`awardChannelDefenceBonus` at **`:408`** — eight lines *before* `:416` — and it
+receives `out.AttackerCrit` **by value**. A crit set at `:416` is invisible to it,
+so the ranged surprise shot would earn no crit progression at all, silently.
+`ForceCrit` is set at `:388` for precisely this reason.
 
 ```go
-		// U10d: a surprise shot crits on a won contest. Inside this branch
-		// because res.Success IS the attack win. !res.Floored mirrors the gate
-		// the AttackerCrit line above already applies -- a sentinel margin
-		// cannot be a crit. !out.AttackerFumble because a fumbled attack aborts
-		// even a winning roll.
-		if side.CritOnWin && !res.Floored && !out.AttackerFumble {
-			out.AttackerCrit = true
-		}
+	if side.ForceCrit {
+		out.AttackerCrit = true
+		out.AttackerFumble = false
+	}
+	// U10d: a surprise shot crits on a won contest. Placed HERE, beside
+	// ForceCrit and before awardChannelDefenceBonus at :408, because that
+	// function takes out.AttackerCrit BY VALUE -- a crit set after it is
+	// invisible to the progression tier.
+	//
+	// res.Success is the attack win. !res.Floored mirrors the gate the
+	// AttackerCrit line above already applies: a sentinel margin cannot be a
+	// crit. !out.AttackerFumble because a fumbled attack aborts even a winning
+	// roll.
+	if side.CritOnWin && res.Success && !res.Floored && !out.AttackerFumble {
+		out.AttackerCrit = true
+	}
 ```
 
-Do **not** apply it in the early returns at `:316` (empty defence set) or `:362`
-(uncontested). `AttackerNormalizedMargin`'s docstring warns those exits are not
-decisive outcomes.
+**Also apply it at the two early returns**, at `:316` (empty defence set) and
+`:362` (uncontested roll):
+
+```go
+		out.AttackerCrit = side.ForceCrit || side.CritOnWin
+```
+
+Both paths are attack wins by the code's own comment at `:313-315` — *"Uncontested
+is an attack win, which is what a full multiplier says."* Leaving them out would
+mean a defender with **no available defence** denies the ambush bonus while a
+fully-defended one grants it, which inverts the fiction and reads as a bug in
+play. An earlier draft of this plan excluded them by misreading
+`AttackerNormalizedMargin`'s docstring: that warns the *margin* is not meaningful
+on those exits, which is a statement about decisiveness scaling, not about whether
+the attack won.
 
 - [ ] **Step 4: Thread the bonus through `SkillMoveParams`**
 
@@ -1147,7 +1240,41 @@ or fail by test order.
 Change **only** `damage_multiplier`. Leave value, speed, and everything else alone
 — repricing is not in scope.
 
-- [ ] **Step 4: Run, boot, commit**
+- [ ] **Step 4: Migrate `EnchantBaseline`, or the detune does not reach existing bows**
+
+`SpecBaseline` **persists `damage_multiplier` into player saves**
+(`internal/items/spec_baseline.go:28`, captured at `:39`, restored at `:60`), and
+`enchantments.go:171` calls `item.EnchantBaseline.RestoreInto(&newSpec)`. So **any
+bow that has ever been enchanted keeps 7.50 forever** — in a player's inventory,
+a shop's stock, or a mob's equipment. `_datafiles/world/dogmud/users/3.yaml`
+already carries three `enchantbaseline:` blocks.
+
+Those players would keep a **2.7x damage advantage**, permanently, over anyone who
+buys a bow after the patch — and the Step 1 table test, which reads YAML, cannot
+see it. This is the trap already on record as *"Enchanting resets to
+`item.EnchantBaseline`, NEVER the template."*
+
+Add a load-time migration: for any item whose spec subtype is Shooting, clear
+`EnchantBaseline.DamageMultiplier` (or re-capture it from the template) so the new
+value takes. Cover it with a test that loads a save carrying an enchanted bow at
+7.50 and asserts the effective multiplier is 2.75.
+
+- [ ] **Step 5: Note the two knock-on effects in the patch note**
+
+- **One mob is affected.** Of the eight ids only `10004` (Training Bow) is
+  *equipped* by a mob — `mobs/test_arena/62-sparring_archer.yaml:34` — a 64%
+  damage cut on a test-arena dummy. `10046` and `10049` appear only in loot pools,
+  `10038` only as a dialogue `givesItem`. No quest, recipe or starting-equipment
+  reference.
+- **Item pricing shifts.** `itemvalue/score.go:25` prices
+  `DamageMultiplier x 100 x PhysicalDamageWeight`, which feeds mob gear-up and the
+  shop-upgrade planner. "Leave `value:` alone" does not make pricing static; it
+  just means we are not *re-authoring* it. Say so rather than being surprised.
+
+The melee-with-a-bow path is safe: `combat_helpers.go:393` clamps Shooting
+subtypes to `unloadedMeleeDamageCap` (0.30) regardless of the multiplier.
+
+- [ ] **Step 6: Run, boot, commit**
 
 The boot test matters here: item YAML errors panic at startup, not compile time.
 
@@ -1176,11 +1303,69 @@ func TestUnengagedBonus_KnobAtOneIsANoOp(t *testing.T)              {}
 Fill each with real assertions on sampled means. Test 4 must pin the **product**
 explicitly so a later "simplification" into alternatives is caught.
 
-- [ ] **Step 2: Apply the multiplier**
+- [ ] **Step 2: Write the "is anything targeting me" helper**
 
-`Character.Attackers()` (`internal/characters/character.go:795`) is
-framework-maintained and documented as replacing room-scan loops for "who's
-attacking me?", so no scan is needed:
+> **DO NOT use `Character.Attackers()`.** It always returns empty in production.
+> `RecordInboundAttacker` is reachable only through `lookupMachine`, which reads
+> `machineRegistry`, which is written only by `combatphase.RegisterMachine` —
+> and that has **zero production callers** (verify:
+> `grep -rn "RegisterMachine(" --include=*.go . | grep -v "_test.go"` returns only
+> the five declarations). `recoveryContest` is already silently inert for this
+> reason. Using it would apply the bonus unconditionally and leave the entire
+> situational design dead, with nothing failing.
+
+Add to `internal/actions/combat_fire.go`, modelled on the existing scan in
+`internal/hooks/combat_retarget.go:80-122`:
+
+```go
+// shooterIsUnengaged reports whether nothing in the room currently has the
+// shooter as its aggro target.
+//
+// A room scan rather than Character.Attackers(): that list is never populated
+// in production (combatphase.RegisterMachine has no production callers), so it
+// always reads empty and would hand out the bonus unconditionally.
+//
+// Cross-room shots pass trivially -- the shooter is not in the target's room and
+// nothing there is aggroed on them -- which is the intended sniping case.
+func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
+	if room == nil {
+		return true
+	}
+	uid, mid := char.GetUserId(), char.MobInstanceId
+
+	for _, instId := range room.GetMobs(rooms.FindFighting) {
+		m := mobs.GetInstance(instId)
+		if m == nil || m.Character.Aggro == nil {
+			continue
+		}
+		if (uid > 0 && m.Character.Aggro.UserId == uid) ||
+			(mid > 0 && m.Character.Aggro.MobInstanceId == mid) {
+			return false
+		}
+	}
+	for _, pId := range room.GetPlayers(rooms.FindFighting) {
+		u := users.GetByUserId(pId)
+		if u == nil || u.Character.Aggro == nil || pId == uid {
+			continue
+		}
+		if (uid > 0 && u.Character.Aggro.UserId == uid) ||
+			(mid > 0 && u.Character.Aggro.MobInstanceId == mid) {
+			return false
+		}
+	}
+	return true
+}
+```
+
+Check `rooms.FindFighting` and the `GetMobs`/`GetPlayers` signatures against
+`combat_retarget.go` before writing — match what that file actually does rather
+than this sketch.
+
+- [ ] **Step 3: Apply the multiplier**
+
+`shotMult` is already declared at `combat_fire.go:250`. **Modify that line; do not
+redeclare it** — a second `shotMult :=` is either a compile error or a shadow
+depending on placement.
 
 ```go
 	// U10d: the archer's compensation is situational, not flat. It pays for
@@ -1190,10 +1375,9 @@ attacking me?", so no scan is needed:
 	// archer equally strong whether or not anything was hitting them.
 	//
 	// Compounds with the surprise stack -- owner decision, spec 2.8.3. A
-	// surprise shot is unengaged by definition, so this is deliberate, not an
-	// oversight.
+	// surprise shot is unengaged by definition, so this is deliberate.
 	unengagedMult := 1.0
-	if len(char.Attackers()) == 0 {
+	if shooterIsUnengaged(char, room) {
 		unengagedMult = float64(cfg.RangedUnengagedDamageMultiplier)
 	}
 	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale) * unengagedMult

@@ -742,16 +742,44 @@ take it to about a fifth and end archery as a build.
 
 ##### The rule
 
-A ranged attack is multiplied by `RangedUnengagedDamageMultiplier` when the
-shooter has **no inbound attackers**:
+A ranged attack is multiplied by `RangedUnengagedDamageMultiplier` when **nothing
+in the room is currently targeting the shooter**.
 
-```go
-if len(char.Attackers()) == 0 { /* apply the bonus */ }
-```
+> **Do NOT use `Character.Attackers()`.** An earlier draft of this spec did,
+> reasoning from its docstring — *"Replaces room-scan loops for 'who's attacking
+> me?' The list is updated atomically by the Combat Phase framework on every
+> transition."* **That list is never populated in production.**
+>
+> Its only writer is `RecordInboundAttacker`, called from exactly one place
+> (`combatphase.go:236`) behind `if target := lookupMachine(d.Target); target !=
+> nil`. `lookupMachine` reads `machineRegistry`, written only by
+> `combatphase.RegisterMachine` — which has **zero production callers**; every
+> call is in `combatphase_test.go`. The registry is empty at runtime, so
+> `Attackers()` always returns an empty slice.
+>
+> A second, independent break sits behind it: `SetAggro` passes
+> `Actor: state.ActorRef{UserId: c.userId}` (`combat_state_compat.go:143`), and a
+> mob's `c.userId` is 0, so the ref is zero and `RecordInboundAttacker`
+> early-returns on `a.IsZero()`. Even with a working registry, **no mob attacking
+> a player would ever register.**
+>
+> Had this shipped, the bonus would have applied **unconditionally** — a flat
+> ranged buff on top of a flat bow nerf, with the entire situational design
+> inert. This is the *same failure mode* this spec spends section 1.1 diagnosing
+> for `SurpriseLeft`, arrived at the same way: by trusting a doc comment instead
+> of reading the call sites. `recoveryContest`
+> (`internal/hooks/recovery_contest.go:31`) is already silently inert for exactly
+> this reason.
 
-`Character.Attackers()` (`internal/characters/character.go:795`) is
-framework-maintained and documented as *"Replaces room-scan loops for 'who's
-attacking me?'"*, so this needs no scan and no new bookkeeping.
+Use a room scan instead, which is what the rest of the combat code already does
+(`internal/hooks/combat_retarget.go:80-122` scans `room.GetMobs(rooms.FindFighting)`
+and compares `Aggro.UserId`). The condition is: **no actor in the shooter's room
+has the shooter as its current aggro target.**
+
+**Recorded for U11, not fixed here:** `combatphase.RegisterMachine` /
+`machineRegistry` / `RecordInboundAttacker` / `Character.Attackers()` are dead
+infrastructure with at least one existing inert consumer. Either wire them up or
+delete them, but they should not sit in the tree looking usable.
 
 ##### Why this shape
 
