@@ -432,31 +432,45 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 // mob_idle attack fallback (behaviortree/actions_combat.go) picks a random
 // player in the room with no owner exclusion. All three leave the mob charmed
 // and still listed as a companion. The BETRAYAL cases are deliberately NOT
-// excluded and must not be: charm lapse (NewRound_MobRoundTick.go) and dismiss
-// both RemoveCharm before they SetAggro, so an ex-companion turning on you
-// reads here as the genuine attacker it is. Same charmerKey idiom as the
-// friendly-fire gate on the target above.
+// excluded and must not be: charm lapse (NewRound_MobRoundTick.go:472-491) and
+// dismiss (dismiss.go:85-134) both RemoveCharm BEFORE they SetAggro, so an
+// ex-companion turning on you reads here as the genuine attacker it is.
+//
+// The skip is keyed on uid ALONE, with no mob-instance fallback, and that is
+// deliberate. CharmInfo.UserId (charminfo.go) is always a PLAYER id -- every
+// production Charm() caller passes user.UserId, and the lone exception
+// (behaviortree/actions_mob.go) passes literal 0. So a `charmerKey` that falls
+// back to MobInstanceId would be comparing two different id spaces, and they
+// collide for real: instanceCounter hands out ids from 1 upward and prod user
+// ids are also small. A hostile archer whose InstanceId happened to equal some
+// player's UserId, attacked by THAT player's companion, would silently keep the
+// full multiplier. A mob shooter has no companions to spare, so the fallback
+// should not exist. Note the friendly-fire gate at :198-204 still carries the
+// old conflated idiom -- pre-existing, and it merely refuses an action visibly
+// rather than multiplying damage in silence.
 func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 	if room == nil {
 		return true
 	}
 	uid, mid := char.GetUserId(), char.MobInstanceId
-	charmerKey := uid
-	if charmerKey == 0 {
-		charmerKey = mid
-	}
 
 	for _, instId := range room.GetMobs(rooms.FindFighting) {
 		m := mobs.GetInstance(instId)
-		// IsInCombat() as well as Aggro != nil, matching combat_retarget.go
-		// exactly. Stale non-nil aggro on an out-of-combat actor would
-		// otherwise suppress the bonus.
+		// Both guards, for parity with combat_retarget.go. The IsInCombat()
+		// half is redundant TODAY -- IsInCombat() falls back to `Aggro != nil`
+		// (character.go), which the preceding check has already established --
+		// so do not reason about it as though it screened anything extra.
 		if m == nil || m.Character.Aggro == nil || !m.Character.IsInCombat() {
 			continue
 		}
-		if charmerKey > 0 && m.Character.IsCharmed(charmerKey) {
+		if uid > 0 && m.Character.IsCharmed(uid) {
 			continue
 		}
+		// No `instId == mid` self-skip to mirror the players loop's
+		// `pId == uid`: mob self-aggro is unreachable, not an omission. Every
+		// SetAggro site was walked; the only candidate (actions_party.go) needs
+		// a party leader already aggroed on its own member, which nothing
+		// produces.
 		if (uid > 0 && m.Character.Aggro.UserId == uid) ||
 			(mid > 0 && m.Character.Aggro.MobInstanceId == mid) {
 			return false

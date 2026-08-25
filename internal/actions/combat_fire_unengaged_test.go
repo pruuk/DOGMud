@@ -26,7 +26,7 @@ import (
 // SITUATIONAL: a shot carries the multiplier only while nothing in the
 // SHOOTER's room has the shooter as its aggro target.
 //
-// Seven cases below. Two of them (5 and 6) are controls that would pass with
+// Nine cases below. Two of them (5 and 6) are controls that would pass with
 // the feature absent; that is stated on each. The rest would not:
 //
 //	1. unengaged carries the multiplier                       -- fails at 1.0x
@@ -36,6 +36,8 @@ import (
 //	5. melee is untouched                                     (control)
 //	6. the knob at 1.0 is a true no-op                        (control)
 //	7. your OWN companion aggroed on you is not "someone is hitting me"
+//	8. the TARGET reciprocating ends your own bonus (the headline claim)
+//	9. a mob shooter cannot borrow a player's charm by id collision
 // ---------------------------------------------------------------------------
 
 const (
@@ -61,15 +63,19 @@ const (
 
 	unengagedSamples   = 80
 	unengagedTolerance = 0.10
+
+	// A MOB shooter's instance id, chosen to collide with a plausible PLAYER
+	// user id -- that collision is the whole point of case 9.
+	unengagedMobShooterInstanceId = 3
 )
 
 // unengagedWatcher describes a bystander mob to place in the fixture.
-// charmedByShooter makes it the shooter's own companion.
+// charmedBy, when non-zero, makes it the companion of that PLAYER user id.
 type unengagedWatcher struct {
-	instanceId       int
-	roomId           int
-	aggro            *characters.Aggro
-	charmedByShooter bool
+	instanceId int
+	roomId     int
+	aggro      *characters.Aggro
+	charmedBy  int
 }
 
 // aggroOnShooter and aggroElsewhere are the two states a watcher can be in.
@@ -117,8 +123,8 @@ func seedUnengagedFire(t *testing.T, defenderRoomId int, watchers ...unengagedWa
 		// erase the very state this reproduces. The live holes (steal, plant,
 		// the behaviour-tree mob_idle attack fallback) all set the aggro long
 		// after the charm, and so arrive at exactly this shape.
-		if w.charmedByShooter {
-			wc.Charmed = characters.NewCharm(unengagedShooterUserId, characters.CharmPermanent, "")
+		if w.charmedBy > 0 {
+			wc.Charmed = characters.NewCharm(w.charmedBy, characters.CharmPermanent, "")
 		}
 		wc.Aggro = w.aggro
 		mobInstances[w.instanceId] = &mobs.Mob{
@@ -172,6 +178,13 @@ func setUnengagedKnob(t *testing.T, v float64) {
 func newUnengagedShooter(hidden bool) *characters.Character {
 	char := newSurpriseShooter(hidden)
 	char.SetUserId(unengagedShooterUserId)
+	return char
+}
+
+// newUnengagedMobShooter builds a MOB archer: no user id, a mob instance id.
+func newUnengagedMobShooter() *characters.Character {
+	char := newSurpriseShooter(false)
+	char.MobInstanceId = unengagedMobShooterInstanceId
 	return char
 }
 
@@ -274,7 +287,7 @@ func TestFireUnengaged_BonusDropsWhenSomethingTargetsTheShooter(t *testing.T) {
 	pinRangedSurpriseBalance(t)
 	pinOrdinaryContestWin(t)
 	cleanup := seedUnengagedFire(t, 1,
-		unengagedWatcher{unengagedWatcherHere, 1, aggroElsewhere(), false})
+		unengagedWatcher{unengagedWatcherHere, 1, aggroElsewhere(), 0})
 	defer cleanup()
 	setUnengagedKnob(t, unengagedKnob)
 
@@ -317,8 +330,8 @@ func TestFireUnengaged_CrossRoomReadsTheShootersRoom(t *testing.T) {
 	pinRangedSurpriseBalance(t)
 	pinOrdinaryContestWin(t)
 	cleanup := seedUnengagedFire(t, 2,
-		unengagedWatcher{unengagedWatcherHere, 1, aggroElsewhere(), false},
-		unengagedWatcher{unengagedWatcherThere, 2, aggroElsewhere(), false})
+		unengagedWatcher{unengagedWatcherHere, 1, aggroElsewhere(), 0},
+		unengagedWatcher{unengagedWatcherThere, 2, aggroElsewhere(), 0})
 	defer cleanup()
 	setUnengagedKnob(t, unengagedKnob)
 
@@ -468,7 +481,7 @@ func TestFireUnengaged_KnobAtOneIsANoOp(t *testing.T) {
 			pinRangedSurpriseBalance(t)
 			pinOrdinaryContestWin(t)
 			cleanup := seedUnengagedFire(t, tc.defenderRm,
-				unengagedWatcher{unengagedWatcherHere, tc.watcherRm, aggroElsewhere(), false})
+				unengagedWatcher{unengagedWatcherHere, tc.watcherRm, aggroElsewhere(), 0})
 			defer cleanup()
 			setUnengagedKnob(t, 1.0)
 
@@ -518,7 +531,7 @@ func TestFireUnengaged_OwnCompanionIsNotAnAttacker(t *testing.T) {
 	pinRangedSurpriseBalance(t)
 	pinOrdinaryContestWin(t)
 	cleanup := seedUnengagedFire(t, 1,
-		unengagedWatcher{unengagedWatcherHere, 1, aggroOnShooter(), true})
+		unengagedWatcher{unengagedWatcherHere, 1, aggroOnShooter(), unengagedShooterUserId})
 	defer cleanup()
 	setUnengagedKnob(t, unengagedKnob)
 
@@ -547,4 +560,112 @@ func TestFireUnengaged_OwnCompanionIsNotAnAttacker(t *testing.T) {
 			"turning on you (%.1f) takes away", withPet, betrayed)
 	assert.True(t, betrayedRes.AimedWhileEngaged,
 		"betrayal is a real attack: the shooter is engaged")
+}
+
+// ---------------------------------------------------------------------------
+// 8. The headline case: your own first shot ends your own bonus
+// ---------------------------------------------------------------------------
+
+// "Your first same-room shot makes the target engage you, so you lose the
+// bonus until you break away" is the design claim this whole slice rests on,
+// and cases 1-3 do NOT pin it: they move a BYSTANDER's aggro, while the
+// mechanism that matters is the TARGET reciprocating.
+//
+// The reciprocation itself lives outside this package -- ExecuteFire's own
+// doc comment lists "retaliation aggro on the target" as a caller
+// responsibility, and it is applied in internal/hooks
+// (NewRound_DoCombat_unified.go, PvM and MvP). So it is seeded by hand here
+// rather than driven; what this test pins is that shooterIsUnengaged reads the
+// resulting state correctly. The seeded shape is exactly what those two sites
+// produce: the target's Aggro pointing back at the shooter, in the shooter's
+// room, uncharmed.
+//
+// Would this pass with the feature absent? NO.
+func TestFireUnengaged_TheTargetsReciprocalAggroEndsTheBonus(t *testing.T) {
+	pinRangedSurpriseBalance(t)
+	pinOrdinaryContestWin(t)
+	cleanup := seedUnengagedFire(t, 1)
+	defer cleanup()
+	setUnengagedKnob(t, unengagedKnob)
+
+	char := newUnengagedShooter(false)
+	target := mobs.GetInstance(500)
+	require.NotNil(t, target)
+	require.Nil(t, target.Character.Aggro,
+		"precondition: the target has not noticed anyone yet")
+
+	opener, openerRes := sampleShotsFromOneShooter(t, char, "skeleton", unengagedSamples)
+	require.Greater(t, opener, 0.0, "fixture sanity: the shot must do real damage")
+	assert.False(t, openerRes.AimedWhileEngaged,
+		"the opening shot is taken with nothing on the shooter")
+
+	// What internal/hooks does on the round after a same-room shot lands.
+	target.Character.Aggro = &characters.Aggro{UserId: unengagedShooterUserId}
+
+	followUp, followUpRes := sampleShotsFromOneShooter(t, char, "skeleton", unengagedSamples)
+
+	assert.InEpsilon(t, unengagedKnob, opener/followUp, unengagedTolerance,
+		"once the target is shooting back, the follow-up (%.1f) must drop a full "+
+			"RangedUnengagedDamageMultiplier below the opener (%.1f)", followUp, opener)
+	assert.True(t, followUpRes.AimedWhileEngaged,
+		"the target is now on the shooter, so the shot was taken while engaged")
+}
+
+// ---------------------------------------------------------------------------
+// 9. A mob shooter must not borrow a player's charm by numeric coincidence
+// ---------------------------------------------------------------------------
+
+// CharmInfo.UserId is ALWAYS a player id: every production Charm() caller
+// passes user.UserId, and the one exception (behaviortree/actions_mob.go)
+// passes literal 0. So a charm skip keyed on a `charmerKey` that falls back to
+// MobInstanceId compares two different id spaces -- and they collide for real,
+// because instanceCounter hands out ids from 1 upward and prod user ids are
+// also small (Meirok is 3).
+//
+// The fixture IS the collision: a hostile archer with InstanceId 3, attacked
+// by the companion of PLAYER 3. Under the fallback the archer reads that
+// companion as "charmed by me" and silently keeps the full multiplier. Keyed
+// on uid alone, a mob shooter (uid == 0) can never take the skip, and the
+// archer is engaged like anything else.
+//
+// Would this pass with the feature absent? NO.
+func TestFireUnengaged_MobShooterDoesNotBorrowAPlayersCharm(t *testing.T) {
+	pinRangedSurpriseBalance(t)
+	pinOrdinaryContestWin(t)
+	cleanup := seedUnengagedFire(t, 1,
+		unengagedWatcher{
+			instanceId: unengagedWatcherHere,
+			roomId:     1,
+			// Attacking the ARCHER, and charmed by the PLAYER whose user id
+			// happens to equal the archer's instance id.
+			aggro:     &characters.Aggro{MobInstanceId: unengagedMobShooterInstanceId},
+			charmedBy: unengagedMobShooterInstanceId,
+		})
+	defer cleanup()
+	setUnengagedKnob(t, unengagedKnob)
+
+	char := newUnengagedMobShooter()
+	require.Zero(t, char.GetUserId(), "precondition: a MOB shooter has no user id")
+	require.Equal(t, unengagedMobShooterInstanceId, char.MobInstanceId)
+
+	pet := mobs.GetInstance(unengagedWatcherHere)
+	require.NotNil(t, pet)
+	require.True(t, pet.Character.IsCharmed(unengagedMobShooterInstanceId),
+		"fixture sanity: the id spaces really do collide, so a MobInstanceId "+
+			"fallback would match this charm")
+
+	engaged, engagedRes := sampleShotsFromOneShooter(t, char, "skeleton", unengagedSamples)
+	require.Greater(t, engaged, 0.0, "fixture sanity: the shot must do real damage")
+	assert.True(t, engagedRes.AimedWhileEngaged,
+		"somebody else's companion is a real attacker: the archer is engaged")
+
+	// The control that turns the flag assertion into a damage measurement:
+	// same mob, same room, now fighting someone else entirely.
+	setWatcherAggro(t, unengagedWatcherHere, aggroElsewhere())
+	clear, clearRes := sampleShotsFromOneShooter(t, char, "skeleton", unengagedSamples)
+	assert.False(t, clearRes.AimedWhileEngaged)
+
+	assert.InEpsilon(t, unengagedKnob, clear/engaged, unengagedTolerance,
+		"the archer must LOSE the bonus (%.1f) it keeps when unattacked (%.1f); "+
+			"a MobInstanceId charm fallback would hand it back", engaged, clear)
 }
