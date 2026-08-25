@@ -459,18 +459,32 @@ the target to learn who did it.
 > charge, no reveal. `ExecuteFire` already computes `crossRoom`, so this is a
 > gate on an existing local, not new plumbing.
 
-#### 2.8.2 A noted asymmetry, deliberately left standing
+#### 2.8.2 The ranged opener is easier to land. That is intended.
 
 `ChannelRanged`'s defence set is **narrower than melee's**: dodge for every
 defender, block only for a shielded one. No parry, no quell, no defy. So a
 ranged surprise strike is **easier to land** than a melee one while hitting at
 least as hard.
 
-This is not corrected here. Widening the ranged defence set is a change to every
-shot in the game, not to surprise shots, and it belongs to whatever slice
-revisits ranged defence rather than to this one. It is recorded so the playtest
-compares the two openers directly and so nobody later reads the imbalance as an
-accident of U10d.
+**This is a design decision, not a tolerated imbalance** (owner, 2026-08-25).
+The fiction carries it: shooting someone from cover is genuinely easier than
+crossing open ground to put a knife in them. The melee ambusher takes the harder
+road and is paid in a different currency — the melee surprise round applies its
+crit to **every** swing, so a dual-wielder or an Extra Arms build converts a
+successful approach into several critting hits, where the archer gets exactly
+one shot.
+
+So the two openers are balanced against each other by **hit rate versus volume**:
+
+| | Ease of landing | Payoff if it lands |
+|---|---|---|
+| Melee ambush | harder — answers five defences | every swing of the round crits; opening strike stacks |
+| Ranged shot | easier — answers dodge, and block only if shielded | one shot, stacked |
+
+Do not "fix" the narrow ranged defence set as part of a future surprise-attack
+change. If it is ever revisited, it must be revisited as a property of **every**
+shot in the game, and this trade has to be re-balanced deliberately at the same
+time.
 
 #### 2.8.3 What ranged does NOT get
 
