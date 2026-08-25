@@ -1438,10 +1438,16 @@ func attackMessagePct(pctDamage int, isCrit bool) int {
 // deflected swing exactly one personal line per viewer (deflectedSwingLines),
 // replacing the miss-band-plus-glancing-suffix composite the Phase B playtest
 // flagged as self-contradicting; sendDefenseMessages keeps the room line.
+//
+// openingStrike is the U10d per-swing flag: true on the ONE swing of an ambush
+// round that carried the opener. It does two things here and nothing else --
+// it routes that swing's lines through messaging.CategorySurpriseAttack, and
+// when the defence won it swaps the composite for openingStrikeDefendedLines.
+// Both are narration; no damage number depends on it.
 func buildAttackMessages(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character,
 	ws weaponSetup, sdp swingDamageParams, attackTargetDamage int, attackTargetReduction int,
 	attackSourceDamage int, attackSourceReduction int,
-	srcType, tgtType SourceTarget, prefix string, defended bool) {
+	srcType, tgtType SourceTarget, prefix string, defended bool, openingStrike bool) {
 
 	// Calculate actual damage vs. expected damage pct
 	pctDamage := 0.0
@@ -1453,6 +1459,15 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// treated specially when damage actually landed; a defended swing that
 	// rolled zero damage narrates like any other zero-damage outcome.
 	deflected := defended && attackTargetDamage > 0
+
+	// U10d: an ANSWERED opening strike. Handled ahead of deflected because it
+	// covers BOTH defensive outcomes -- the partial that still lands and the
+	// defensive crit that stops the swing dead -- and both need to say which
+	// defence beat the ambush. It replaces whatever line this swing would
+	// otherwise have carried (the deflection composite, or the miss-band pool
+	// line on the zero-damage path), so no viewer gains an extra line; the room
+	// keeps the line sendDefenseMessages already sent.
+	openingStrikeDefended := openingStrike && defended
 
 	// T4 (chunk 4c): compute the display subtype for attack-message selection.
 	// See meleeDisplaySubtype for the swap rules.
@@ -1487,6 +1502,8 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// After the fumble branch on purpose: flubbing a swing at a falling
 		// target is still a fumble.
 		msgs = items.GetPreAttackMessage(displaySubtype, items.CoupDeGrace)
+	} else if openingStrikeDefended {
+		// No pool messages: openingStrikeDefendedLines below is the whole line.
 	} else if deflected {
 		// Deflected swing (U6 Task 16b): no pool messages at all. The Phase B
 		// playtest caught the previous approach — a miss-band line plus a
@@ -1538,7 +1555,20 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
 	}
 
-	if deflected {
+	if openingStrikeDefended {
+		// DefenseUsed is stamped by the same sendDefenseMessages call described
+		// below. The damage description is passed only when damage actually got
+		// through; "" tells the builder to use its stopped-dead wording rather
+		// than promise a landed fragment that does not exist.
+		openerDmg := ""
+		if attackTargetDamage > 0 {
+			openerDmg = tokenReplacements[items.TokenDamage]
+		}
+		toAttackerMsg, toDefenderMsg = openingStrikeDefendedLines(result.DefenseUsed,
+			tokenReplacements[items.TokenSource],
+			tokenReplacements[items.TokenTarget],
+			openerDmg)
+	} else if deflected {
 		// result.DefenseUsed was set by sendDefenseMessages during THIS
 		// swing's resolution: the swing loop in combat.go calls
 		// resolveDefenseOutcome (which narrates the defence and stamps
@@ -1635,6 +1665,19 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// Per-swing hit-band Category from the weapon subtype.
 	hitCat := CategoryForWeaponSubtype(ws.weaponSubType)
 
+	// U10d DECISION: the opening strike is the producer that
+	// messaging.CategorySurpriseAttack never had. The category already exists,
+	// already has a colour alias ("surprise" in ansi-aliases.yaml), and appears
+	// in NEITHER verbosity suppression allowlist -- so routing the opener here
+	// means the one swing that decides an ambush survives medium and light
+	// verbosity, while the ordinary hit bands around it do not. That is the
+	// behaviour this swing wants: at light verbosity a defended opener routed
+	// as CategoryDodge would vanish and the player would never learn the ambush
+	// was answered.
+	if openingStrike {
+		hitCat = messaging.CategorySurpriseAttack
+	}
+
 	// Send to attacker
 	attackerMsg := string(toAttackerMsg)
 	if attackSourceDamage > 0 && attackSourceReduction > 0 {
@@ -1653,7 +1696,8 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 
 	// Send to room. A deflected swing sends none: the defence room line from
 	// sendDefenseMessages already narrated it, and room lines carry no damage.
-	if !deflected {
+	// An answered opening strike is the same case for the same reason.
+	if !deflected && !openingStrikeDefended {
 		result.SendToSourceRoom(hitCat,
 			string(toAttackerRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).
 				SetTokenValue(items.TokenTargetType, string(tgtType))),

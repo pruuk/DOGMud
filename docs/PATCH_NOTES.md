@@ -1,5 +1,31 @@
 # DOGMud Patch Notes
 
+## 2026-08-25: The ambush says what it did
+
+Striking from hiding has been reworked for a while, and until now the game
+never explained any of it. Several things you could feel happening had no words
+attached, which is a good way to make a working feature look broken.
+
+Your ambush is one blow, not a whole round of them. Only that one blow is
+marked now, so you can see which swing was the big one instead of reading four
+identical lines.
+
+A defender can answer it. If they dodge, parry or block your opening strike,
+the game says so, and it names what they did. That outcome is new, so it needed
+its own words.
+
+A shot from cover reads as a shot from cover, and you are told plainly that
+firing gave your hiding place away. Losing your cover without being told was
+the sort of thing that sends a player looking for a bug.
+
+If your special move has not come back yet, you are not set for an ambush at
+all, and your shot goes off as an ordinary one. You are told that too. It comes
+up more than you might expect, because reloading uses the same recovery.
+
+An archer with something already on them cannot steady the shot, and it lands
+weaker for it. That is now said once, the first time it happens in a fight,
+rather than never or every round.
+
 ## 2026-08-24: Spell help describes spells instead of measuring them
 
 Looking up a spell used to hand you three bare numbers for how long it takes to

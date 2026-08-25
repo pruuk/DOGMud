@@ -90,6 +90,7 @@ func (c *Character) ResetForMobInstance() {
 	c.combatPhaseWired = false
 	c.PerGrappleMessageCooldowns = nil
 	c.PerGrappleMessageCooldownsLastRound = nil
+	c.RangedEngagedCueSpoken = false
 	c.OutsideHitDisruptedRound = 0
 	c.SubInterruptDamageThisRound = 0
 	c.LastTargetFoundRound = 0
@@ -246,6 +247,16 @@ type Character struct {
 	// internal/hooks/Position_GrappleTick.go's emitHoldFlavor to
 	// throttle hold-round messages to once every ~4 rounds.
 	PerGrappleMessageCooldownsLastRound map[string]uint64 `yaml:"-"`
+	// RangedEngagedCueSpoken records that the "you cannot steady your aim"
+	// cue has already been spoken for the CURRENT engagement (U10d). A shot
+	// taken while something in the room is targeting the shooter loses the
+	// unengaged damage bonus, and silent damage loss reads as a bug -- but
+	// repeating the explanation on every round of a fight is worse noise than
+	// the silence it fixes. Cleared by EndAggro (the engagement is over) and by
+	// the shoot wrapper whenever a shot goes off with nothing on the shooter
+	// (they got clear again, so the next time it happens is news). Not
+	// persisted -- combat does not survive logout.
+	RangedEngagedCueSpoken bool `yaml:"-"`
 	// OutsideHitDisruptedRound tracks the last round number at which a
 	// third-party hit caused a ControlLevel disruption (chunk 4e §5).
 	// Used to dedupe multiple hits per round — one disruption per round

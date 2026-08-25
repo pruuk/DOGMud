@@ -217,6 +217,39 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	return true, nil
 }
 
+// U10d shooter-facing copy. Every one of these speaks a flag ExecuteFire
+// already sets; none of them changes a mechanic.
+//
+// All four are authored to render inside 80 columns with a typical target name
+// substituted, since the messaging pipeline's wrap stage is off and the client
+// wraps whatever it is handed.
+const (
+	// surpriseShotBanner deliberately reuses the MELEE opener's wording. A
+	// shot from cover and a swing from cover are the same feature to the
+	// player, and "surprise attack" is the term the hints and the skullduggery
+	// keyword list already teach.
+	surpriseShotBanner = `<ansi fg="magenta-bold">*[SURPRISE ATTACK]*</ansi> `
+
+	// surpriseShotRevealedText speaks FireResult.Revealed. Losing stealth with
+	// no line of text reads as a bug, and the present tense is doing real work:
+	// this shot still narrated anonymously to the room and to the target (the
+	// IsSneaking branches below), and the shooter is exposed from here on.
+	surpriseShotRevealedText = `The shot gives your place away. You are no longer hidden.`
+
+	// surpriseShotDeniedText speaks FireResult.SurpriseOnCooldown. NOT a corner
+	// case: reload burns the same shared special-move timer the opener needs,
+	// so the natural reload-sneak-shoot order denies the ambush whenever the
+	// reload was recent. Without this line the player sees an ordinary shot and
+	// concludes the feature does not work.
+	surpriseShotDeniedText = `You were not set for an ambush. Your special move is still recovering.`
+
+	// aimedWhileEngagedText speaks FireResult.AimedWhileEngaged. Spoken at most
+	// once per engagement (see Character.RangedEngagedCueSpoken) -- damage that
+	// silently drops to a fraction reads as a bug, but repeating the reason
+	// every round is worse noise than the silence it fixes.
+	aimedWhileEngagedText = `You cannot steady your aim while someone is on you, so the shot lands weakly.`
+)
+
 // sendShootMessages emits the shooter line, room broadcasts, and the target's
 // direct line for an executed shot. No raw numbers — damage is described via
 // combat.GetDamageDescription.
@@ -225,6 +258,12 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	hit := result.MoveResult.Hit
 	partial := !hit && result.MoveResult.Damage > 0
 	tier := combat.GetDamageDescription(result.MoveResult.Damage, result.MoveResult.TargetMaxHP)
+
+	// The refusal comes FIRST: it explains why the shot the player set up as an
+	// ambush is about to narrate as an ordinary one.
+	if result.SurpriseOnCooldown {
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotDeniedText)
+	}
 
 	// Color the target name by type.
 	targetColored := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, result.TargetName)
@@ -247,7 +286,20 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 
 	// Shooter's own feedback. A fully stopped shot (a defensive crit) speaks
 	// the triad; a defended partial keeps the damage-carrying line.
+	//
+	// U10d: a shot that carried the opener gets its own bannered wording and
+	// its own Category. CategorySurpriseAttack is in neither verbosity
+	// suppression allowlist, so the one shot that decides an ambush survives
+	// medium and light verbosity while the ordinary ranged band does not.
 	switch {
+	case result.Revealed && hit:
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotBanner+fmt.Sprintf(`Your shot takes %s unaware! (<ansi fg="damage">%s</ansi>)`, targetColored, tier))
+	case result.Revealed && partial:
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotBanner+fmt.Sprintf(`Your shot only clips %s! (<ansi fg="damage">%s</ansi>)`, targetColored, tier))
+	case result.Revealed && triadAtk != "":
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotBanner+triadAtk)
+	case result.Revealed:
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotBanner+fmt.Sprintf(`Your shot from hiding goes wide of %s!`, targetColored))
 	case hit:
 		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot takes %s (<ansi fg="damage">%s</ansi>)!`, targetColored, tier))
 	case partial:
@@ -256,6 +308,23 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		user.SendText(messaging.CategoryDodge, triadAtk)
 	default:
 		user.SendText(messaging.CategoryDodge, fmt.Sprintf(`Your shot goes wide of %s!`, targetColored))
+	}
+
+	// The reveal reads AFTER the shot it was caused by, and after the room and
+	// target lines below still narrate this shot anonymously — that ordering is
+	// the point: the shot itself was unseen, and the shooter is exposed from
+	// here on.
+	if result.Revealed {
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotRevealedText)
+	}
+
+	// The engaged-aim cue, at most once per engagement. A shot taken with
+	// nothing on the shooter clears the latch, so the next time they are pinned
+	// down it is news again.
+	speak, nowSpoken := shouldSpeakEngagedCue(result.AimedWhileEngaged, user.Character.RangedEngagedCueSpoken)
+	user.Character.RangedEngagedCueSpoken = nowSpoken
+	if speak {
+		user.SendText(messaging.CategorySystem, aimedWhileEngagedText)
 	}
 
 	// Direct line to a player target.
@@ -336,6 +405,20 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 				result.TargetUserId)
 		}
 	}
+}
+
+// shouldSpeakEngagedCue is the once-per-engagement latch for the engaged-aim
+// cue, split out as a pure function so the truth table can be pinned without
+// standing up a user, a room and a loaded bow.
+//
+// speak is true only on the FIRST shot of a run of engaged shots. nowSpoken is
+// what the caller must store afterwards, and it is simply aimedWhileEngaged:
+// a shot that went off with nothing on the shooter clears the latch, so being
+// pinned down again later speaks the cue again. The other end of the
+// engagement is Character.EndAggro, which clears the same field when combat
+// finishes.
+func shouldSpeakEngagedCue(aimedWhileEngaged, alreadySpoken bool) (speak bool, nowSpoken bool) {
+	return aimedWhileEngaged && !alreadySpoken, aimedWhileEngaged
 }
 
 // resolveShootTarget mirrors ExecuteFire's target parsing to determine what a

@@ -118,7 +118,7 @@ func TestBuildAttackMessages_DeflectedSwingOneCoherentLinePerViewer(t *testing.T
 	const dmg = 5
 
 	buildAttackMessages(result, src, tgt, ws, sdp,
-		dmg, 0, 0, 0, User, User, "", res.defended)
+		dmg, 0, 0, 0, User, User, "", res.defended, false)
 
 	if len(result.MessagesToSource) != 1 {
 		t.Fatalf("attacker got %d lines for the deflected swing, want exactly 1: %v",

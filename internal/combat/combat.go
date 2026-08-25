@@ -399,7 +399,6 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	// Statmods can add a damage bonus
 	statModDBonus := sourceChar.StatMod(`damage`)
 
-	attackMessagePrefix := ``
 	// U10d: exactly ONE swing of this engagement is the opening strike. The flag
 	// is round-scoped here only because the round is where the engagement opens;
 	// it is consumed per-swing below, on the swing that is THROWN.
@@ -407,7 +406,6 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	if sourceChar.Aggro.Type == characters.SurpriseAttack {
 		openingStrikeLeft = true
 		attackResult.WasSurpriseAttack = true
-		attackMessagePrefix = `<ansi fg="magenta-bold">*[SURPRISE ATTACK]*</ansi> `
 		sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
 	}
 
@@ -548,9 +546,19 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 
 			// Only build attack messages for non-double-fumble (double fumble already sent)
 			if !res.doubleFumble {
+				// U10d narration: the banner marks the ONE swing that carried
+				// the ambush, not the whole round. It used to be computed once
+				// above and handed to every swing, so a four-swing ambush round
+				// printed four identical banners and the player could not tell
+				// which line was the opening strike -- the only swing that
+				// crits on a win and pays the skullduggery-scaled bonus.
+				swingPrefix := ``
+				if openingStrikeThisSwing {
+					swingPrefix = surpriseAttackBanner
+				}
 				buildAttackMessages(&attackResult, sourceChar, targetChar, ws, sdp,
 					attackTargetDamage, attackTargetReduction, attackSourceDamage, attackSourceReduction,
-					sourceType, targetType, attackMessagePrefix, res.defended)
+					sourceType, targetType, swingPrefix, res.defended, openingStrikeThisSwing)
 			}
 
 			attackResult.DamageToTarget += attackTargetDamage

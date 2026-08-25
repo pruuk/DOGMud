@@ -154,6 +154,10 @@ func (c *Character) EndAggro() {
 	c.Aggro = nil
 	c.clearTauntHold()
 	c.ClearGrappleState()
+	// U10d: the engaged-aim cue is once per ENGAGEMENT, and this is where an
+	// engagement ends. Without this a shooter who explains it once would never
+	// hear it again for the rest of the session.
+	c.RangedEngagedCueSpoken = false
 	if c.CombatPhase != nil && c.CombatPhase.IsInCombat() {
 		c.CombatPhase.ForceIdle(state.TransitionReason{
 			Trigger: combatphase.TriggerForceIdle,

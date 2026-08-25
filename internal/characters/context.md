@@ -1087,6 +1087,16 @@ mutation of `Character.Aggro` (bypassing the wrappers) is forbidden.
 Field removal is scheduled for a cleanup chunk after chunks 1-5 land and
 the remaining reads are migrated.
 
+`EndAggro` also clears **`RangedEngagedCueSpoken`** (`yaml:"-"`, U10d). That
+bool is the once-per-engagement latch for the shoot wrapper's "you cannot
+steady your aim" cue: a shot taken while something in the room targets the
+shooter loses its unengaged damage bonus, and the explanation is worth saying
+once per fight and no more. The shoot wrapper owns the other half — it stores
+`AimedWhileEngaged` back into the field on every shot, so going clear re-arms
+the cue — and `EndAggro` owns the engagement boundary. Not persisted; combat
+does not survive logout. `ResetForMobInstance` clears it with the other runtime
+state.
+
 ### OnCharacterCreated callback registry
 
 ```go

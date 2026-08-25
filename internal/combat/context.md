@@ -1170,6 +1170,23 @@ Clearing on the THROW rather than on the first landing swing is deliberate:
 otherwise leave the flag set and hand the ambush one fresh roll per swing.
 Pinned by `TestSurpriseRound_ExactlyOneSwingIsUpgraded`.
 
+**U10d narration (Task 14).** The same per-swing flag drives the copy, and the
+banner is per-SWING for the same reason the bonus is. `surpriseAttackBanner`
+(`surprise_narration.go`) used to be computed once per round and handed to every
+swing, so a four-swing ambush printed four identical banners and nothing told the
+player which line was the opener. It is now applied only on the swing that
+carried it, and that swing's lines route through
+`messaging.CategorySurpriseAttack` — the category's first producer, and one that
+appears in NEITHER verbosity suppression allowlist, so the deciding swing
+survives medium and light verbosity while the ordinary hit bands around it do
+not. An ANSWERED opener (`openingStrike && defended`) swaps its line for
+`openingStrikeDefendedLines`, which names the dodge, parry or block that won and
+covers BOTH defensive outcomes (the partial that still lands and the defensive
+crit that stops it dead); it replaces the line the swing would otherwise have
+carried rather than adding one, and sends no room line, because
+`sendDefenseMessages` already narrated the room. Pinned by
+`surprise_narration_test.go`.
+
 **Step 1: Attack Count** — `calcAttackCount()`
 ```
 attackCount = 1 + floor(Dexterity / 50) + extraAttacks
@@ -1822,6 +1839,7 @@ own identical terms (converging that is not Task 17's mandate).
 | `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only). Admission now prices the pre-resolution plan's `totalSwings`, while this result proves all planned attempts ran. |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |
+| `surprise_narration.go` | U10d narration for the opening strike: the `surpriseAttackBanner` constant (applied to the ONE swing that carried the opener, never to the round) and `openingStrikeDefendedLines` — the composite line an ANSWERED opener gets, naming the dodge/parry/block that won it. Only those three are worded; `DefenceSetFor(ChannelMelee)` returns exactly them, so quell/defy arms would be unreachable. The opener's lines are also the first producer of `messaging.CategorySurpriseAttack`, which is in NEITHER verbosity suppression allowlist, so the swing that decides an ambush survives medium and light verbosity. |
 | `skill_moves.go` | Skill-driven combat moves (bash/trip/kick/...). **U6 Task 13:** `ExecuteSkillMove` scales damage through `defenceDamageMultiplier` instead of gating it on `attackSuccess` alone, so `SkillMoveResult.Hit == false` with `Damage > 0` is a legal pair (a defended attempt still lands partial damage), and `Damage` is the contest-scaled amount actually applied to the defender's health pool, not the unscaled base. `SkillMoveResult` gained `StatusApplied bool`, which stays binary — true only when `Hit == true`. |
 | `grapple.go` / `grapple_move.go` | The grappling state machine and transitions |
 | `submission.go` / `submission_outcome.go` | Submissions and their resolution |
