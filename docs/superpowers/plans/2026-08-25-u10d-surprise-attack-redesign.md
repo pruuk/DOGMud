@@ -783,7 +783,7 @@ func TestOrdinaryRound_AwardsNoSkullduggery(t *testing.T) {
 	// AttackerStat is deliberately empty. ApplyProgression calls
 	// OnSkillUseScaled, which already rolls the skill's primary stat, and only
 	// rolls ev.Stat separately when it names a DIFFERENT one.
-	if atkChar.Aggro.Type == characters.SurpriseAttack && res.CleanHit {
+	if res.WasSurpriseAttack && res.CleanHit {
 		atkChar.ApplyProgression(
 			progression.OrdinaryEvents(progression.Outcome{
 				AttackerSkill: string(skills.Skullduggery),
@@ -792,10 +792,43 @@ func TestOrdinaryRound_AwardsNoSkullduggery(t *testing.T) {
 	}
 ```
 
-**Ordering hazard:** `calculateCombat` demotes `Aggro.Type` to `DefaultAttack` on
-the opening strike. Confirm whether `applyCombatProgression` runs before or after
-that demotion; if after, thread a bool out on `AttackResult` instead of re-reading
-`Aggro.Type`. **Check this — do not assume.**
+> **Do NOT read `atkChar.Aggro.Type` here. It is already gone.** Verified against
+> the code: `applyCombatProgression` is **Phase 5** of `handleCombatRound`
+> (`NewRound_DoCombat_unified.go:189`), which runs *after* the attack resolves —
+> and `calculateCombat` demotes `Aggro.Type` to `DefaultAttack` the moment it
+> arms the opening strike (`combat.go:403-407`). By Phase 5 the attacker always
+> reads `DefaultAttack`, so an `Aggro.Type` condition here would **never fire and
+> nothing would fail**: no compile error, no test failure unless one is written
+> for it, just a surprise attack that silently trains no skullduggery.
+>
+> The signal must therefore be carried **out** of the attack on `AttackResult`.
+
+- [ ] **Step 1a: Carry the flag out on `AttackResult`**
+
+In `internal/combat/attackresult.go` (or wherever `AttackResult` is declared):
+
+```go
+	// WasSurpriseAttack records that this round armed a surprise opening
+	// strike. Carried out because calculateCombat DEMOTES Aggro.Type to
+	// DefaultAttack while resolving, so every consumer running after the attack
+	// -- progression at Phase 5, messaging, analytics -- would otherwise see no
+	// trace that the round was an ambush at all.
+	WasSurpriseAttack bool
+```
+
+Set it in `calculateCombat` in the same block that arms the strike (Task 3 Step 6):
+
+```go
+	if sourceChar.Aggro.Type == characters.SurpriseAttack {
+		openingStrikeLeft = true
+		attackResult.WasSurpriseAttack = true
+		attackMessagePrefix = `<ansi fg="magenta-bold">*[SURPRISE ATTACK]*</ansi> `
+		sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
+	}
+```
+
+Add a test asserting `WasSurpriseAttack` survives to the progression phase — that
+is the regression guard for this whole class of "the demotion ate my signal" bug.
 
 - [ ] **Step 3: Run and commit**
 
