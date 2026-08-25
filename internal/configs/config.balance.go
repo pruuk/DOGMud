@@ -267,20 +267,15 @@ type Balance struct {
 	RangedShotScale       ConfigFloat `yaml:"RangedShotScale"`       // Global multiplier on all ranged shot damage (default 1.0)
 
 	// ── SKULLDUGGERY ─────────────────────────────────────────────────────────
-	SneakBaseStaminaCost           ConfigFloat `yaml:"SneakBaseStaminaCost"`           // Base stamina cost to sneak before shared multipliers (default 2.5)
-	SneakFailCooldown              ConfigInt   `yaml:"SneakFailCooldown"`              // Absent/zero means no failure cooldown; an invalid negative falls back to 3
-	SurpriseAttackOffhandPenalty   ConfigFloat `yaml:"SurpriseAttackOffhandPenalty"`   // Hit penalty for offhand surprise attack (default 0.10)
-	SurpriseAttackExtraArm1Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm1Penalty"` // Hit penalty for extra arm 1 (default 0.25)
-	SurpriseAttackExtraArm2Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm2Penalty"` // Hit penalty for extra arm 2 (default 0.40)
-	SurpriseAttackExtraArm3Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm3Penalty"` // Hit penalty for extra arm 3 (default 0.55)
-	SurpriseAttackExtraArm4Penalty ConfigFloat `yaml:"SurpriseAttackExtraArm4Penalty"` // Hit penalty for extra arm 4 (default 0.70)
-	StealHiddenBonus               ConfigInt   `yaml:"StealHiddenBonus"`               // Bonus to attacker score when hidden (default 25)
-	StealCooldown                  ConfigInt   `yaml:"StealCooldown"`                  // Steal/plant cooldown in real seconds (default 60)
-	ShadowCooldown                 ConfigInt   `yaml:"ShadowCooldown"`                 // Rounds before re-shadowing (default 5)
-	HiddenMoveStaminaMultiplier    ConfigFloat `yaml:"HiddenMoveStaminaMultiplier"`    // Extra stamina cost multiplier for moving while hidden (default 3.0)
-	SneakModEmitsLightDarkRoom     ConfigFloat `yaml:"SneakModEmitsLightDarkRoom"`     // Sneak score multiplier: sneaker emits light, room dark (default 0.5)
-	SneakModEmitsLightLitRoom      ConfigFloat `yaml:"SneakModEmitsLightLitRoom"`      // Sneak score multiplier: sneaker emits light, room lit (default 0.85)
-	SneakModNoLightLitRoom         ConfigFloat `yaml:"SneakModNoLightLitRoom"`         // Sneak score multiplier: sneaker dark, room lit (default 0.9)
+	SneakBaseStaminaCost        ConfigFloat `yaml:"SneakBaseStaminaCost"`        // Base stamina cost to sneak before shared multipliers (default 2.5)
+	SneakFailCooldown           ConfigInt   `yaml:"SneakFailCooldown"`           // Absent/zero means no failure cooldown; an invalid negative falls back to 3
+	StealHiddenBonus            ConfigInt   `yaml:"StealHiddenBonus"`            // Bonus to attacker score when hidden (default 25)
+	StealCooldown               ConfigInt   `yaml:"StealCooldown"`               // Steal/plant cooldown in real seconds (default 60)
+	ShadowCooldown              ConfigInt   `yaml:"ShadowCooldown"`              // Rounds before re-shadowing (default 5)
+	HiddenMoveStaminaMultiplier ConfigFloat `yaml:"HiddenMoveStaminaMultiplier"` // Extra stamina cost multiplier for moving while hidden (default 3.0)
+	SneakModEmitsLightDarkRoom  ConfigFloat `yaml:"SneakModEmitsLightDarkRoom"`  // Sneak score multiplier: sneaker emits light, room dark (default 0.5)
+	SneakModEmitsLightLitRoom   ConfigFloat `yaml:"SneakModEmitsLightLitRoom"`   // Sneak score multiplier: sneaker emits light, room lit (default 0.85)
+	SneakModNoLightLitRoom      ConfigFloat `yaml:"SneakModNoLightLitRoom"`      // Sneak score multiplier: sneaker dark, room lit (default 0.9)
 
 	// ── COMBAT: SPELL COSTS ──────────────────────────────────────────────────
 	SpellConvictionCostMultiplier ConfigFloat `yaml:"SpellConvictionCostMultiplier"` // Global multiplier for spell conviction costs (default 1.0)
