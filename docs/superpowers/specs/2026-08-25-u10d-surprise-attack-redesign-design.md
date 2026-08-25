@@ -311,6 +311,20 @@ term on top of the ordinary combat-skill term.
 >
 > The opening strike is therefore **one roll**, exactly like the ranged shot,
 > which keeps the two openers comparable.
+>
+> **One per WEAPON was considered and rejected** (owner, 2026-08-25): *"You could
+> make the argument that they should get one surprise strike per weapon, but why
+> complicate things?"* It would reintroduce the same probability problem in
+> milder form — a three-weapon build gets three chances — and it would make the
+> melee opener scale with weapon count while the ranged one cannot. One chance,
+> for everyone, regardless of loadout.
+>
+> **Note this flag is NOT the stealth flag.** `Hidden` breaks immediately on
+> engaging (section 3.2) and is not what gates the bonus. `openingStrikeLeft` is
+> a separate local inside `calculateCombat`, derived from `Aggro.Type` at the top
+> of the round. An attacker whose opener missed was already visible; the bonus
+> was simply still looking for a swing to attach to. Anyone debugging this in the
+> stealth code will not find it there.
 
 This lands in `combat.buildDamageParams`, which is already where `critDmgMult`
 is computed as `CritDamageMultiplier(combatSkillLevel)`. For the opening strike
