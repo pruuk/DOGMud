@@ -294,12 +294,24 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	if surpriseShot {
 		// U10d: firing from stealth gives away your position.
 		//
-		// Belt and braces. A same-room shot with no prior aggro is ALREADY
-		// revealed indirectly, via SetAggro -> TransitionToEngaging -> the
-		// Awareness cascade. But that path does not fire when the shooter is
-		// already engaged (Aggro != nil), which is exactly the case that would
-		// otherwise let a re-hidden archer fire repeated maximum-bonus shots.
-		// This call is a no-op in the first case and load-bearing in the second.
+		// Belt and braces. The ordinary same-room shot is ALREADY revealed
+		// indirectly, via SetAggro -> TransitionToEngaging -> the Awareness
+		// cascade, and this call is a no-op there.
+		//
+		// It is load-bearing on the three paths where SetAggro returns before,
+		// or loses, that phase transition (internal/characters/
+		// combat_state_compat.go): the grace-period guard on a protected player
+		// target (:85), the taunt-hold guard (:94), and a VETOED
+		// TransitionToEngaging (:133-148, whose error is deliberately
+		// discarded). In all three no cascade fires, and without this call a
+		// hidden shooter would take the ambush bonus and stay hidden. The
+		// grace-guard case -- hidden shooter, grace-protected player target,
+		// same room -- is plainly reachable.
+		//
+		// NOT justified by "a re-hidden archer who is already engaged": Sneak
+		// (sneak.go:60-62) is the only entry into awareness.Hidden and it
+		// refuses outright while char.Aggro != nil, so that shooter cannot
+		// exist today.
 		_ = char.Awareness.TransitionToRevealing(state.TransitionReason{
 			Trigger: awareness.TriggerRangedSurpriseShot,
 		})
@@ -345,8 +357,9 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// the shot's own outcome via DispatchCounterMessages (Task 11).
 	result.Counter = counterSkillMoveExit(actor, defChar, result.MoveResult, combat.ChannelRanged, !crossRoom)
 
-	// Analytics + round consumption (same pattern as kick). Fire never burns
-	// the special-move cooldown — only the combat round.
+	// Analytics + round consumption (same pattern as kick). Every shot burns
+	// the combat round; only the U10d surprise opener claims the shared
+	// special-move cooldown, and it does so at the decision above.
 	sourceType := combat.User
 	if !actor.IsPlayer() {
 		sourceType = combat.Mob

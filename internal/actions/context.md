@@ -734,7 +734,7 @@ own outcome text. The defy counter-taunt still dispatches from
 | Shadow | actions | self→target | ShadowResult | varies | none |
 | Sneak | actions | self vs room | SneakResult | silent | shared |
 | Steal | actions | self vs mob/player/container | StealResult | varies | shared |
-| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | none |
+| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), surprise shot only |
 | ExecuteReload | actions | self (equip ranged weapon) | ReloadResult | both | shared (special-move) |
 | Sell | actions | self vs merchant | SellResult | player only | none |
 | Sleep | actions | self | SleepResult | varies | none |
@@ -819,6 +819,18 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
 - Tracked in `Character.Cooldowns` map (string → int remaining rounds).
 - Cooldowns decrement each round via combat hooks.
 - Expired cooldowns are cleaned up lazily when checked.
+
+`"special-move"` is ONE shared timer across every special move
+(`SpecialMoveCooldown`, 4 rounds shipped). U10d added `ExecuteFire` to its
+claimants, but only for the **same-room surprise shot**: an ordinary shot and a
+cross-room shot still touch no timer, and `ExecuteReload` burns the same one.
+That last pair matters — a loaded bow implies a recent reload, so the natural
+"reload, sneak, shoot" sequence finds the timer already claimed. `ExecuteFire`
+then reports `FireResult.SurpriseOnCooldown` and resolves an ordinary shot
+rather than failing; the wrapper must speak that, or the ambush silently does
+nothing. `FireResult.Revealed` is the companion flag: a surprise shot gives the
+shooter's position away, which `IsSneaking` (a snapshot taken before any
+reveal) does not tell you.
 
 ---
 

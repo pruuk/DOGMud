@@ -238,11 +238,23 @@ inline literals to ensure stable identifiers across the codebase:
 | Constant | Value |
 |----------|-------|
 | `TriggerSneakCommand` | `"sneak_command"` |
-| `TriggerDetectionSuccess` | `"detection_success"` |
-| `TriggerDetectionFailure` | `"detection_failure"` |
-| `TriggerRoomChange` | `"room_change"` |
-| `TriggerLightSourceChange` | `"light_source_change"` |
+| `TriggerSneakSuccess` | `"sneak_success"` |
+| `TriggerSneakFailed` | `"sneak_failed"` |
+| `TriggerCombatEntered` | `"combat_entered"` |
+| `TriggerMovementDetected` | `"movement_detected"` |
+| `TriggerObserverSearch` | `"observer_search"` |
+| `TriggerLightChange` | `"light_change"` |
+| `TriggerSkullduggeryFailed` | `"skullduggery_failed"` |
+| `TriggerNoisyAction` | `"noisy_action"` |
+| `TriggerRangedSurpriseShot` | `"ranged_surprise_shot"` |
+| `TriggerLogout` | `"logout_safety_valve"` |
+| `TriggerDeath` | `"death_cascade"` |
 | `TriggerForceVisible` | `"force_visible"` |
+
+Verified against `transitions.go` 2026-08-25. Four names this table
+previously carried -- `TriggerDetectionSuccess`, `TriggerDetectionFailure`,
+`TriggerRoomChange`, `TriggerLightSourceChange` -- have never existed in the
+package; the last is `TriggerLightChange`.
 
 ---
 

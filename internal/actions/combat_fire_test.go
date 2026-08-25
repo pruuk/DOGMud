@@ -481,6 +481,22 @@ func TestFireAdmissionOrdering(t *testing.T) {
 	require.Len(t, resolve, 1)
 	require.Len(t, round, 1)
 
+	// U10d: FireResult.IsSneaking must be captured BEFORE SetAggro, whose
+	// TransitionToEngaging cascades Hidden -> Revealing on a same-room shot.
+	// A capture moved below it would read a shooter the engine has just
+	// revealed, and every surprise shot would silently become an ordinary one.
+	//
+	// This has to be an AST guard: internal/hooks registers that cascade and is
+	// not linked into this test binary, so a moved capture is behaviourally
+	// invisible here. char.IsHidden() is unique inside ExecuteFire —
+	// defChar.IsHidden() is a different receiver and does not collide.
+	sneakCapture := exactCallPositions(t, fset, body, "char.IsHidden()", false)
+	setAggro := exactCallPositions(t, fset, body, "char.SetAggro", true)
+	require.Len(t, sneakCapture, 1)
+	require.Len(t, setAggro, 1)
+	assert.Less(t, int(sneakCapture[0]), int(setAggro[0]),
+		"IsSneaking must be captured before SetAggro can reveal the shooter")
+
 	unloads := []token.Pos{}
 	cooldownCalls := []string{}
 	cooldownPos := []token.Pos{}

@@ -177,11 +177,25 @@ func TestFireSurprise_SameRoomStealthShotCritsAndStacks(t *testing.T) {
 // 2. The surprise shot reveals the shooter — EXPLICITLY
 // ---------------------------------------------------------------------------
 
-// FIXTURE IS LOAD-BEARING: char.Aggro is pre-set, so ExecuteFire's
+// FIXTURE: char.Aggro is pre-set, so ExecuteFire's
 // `if !crossRoom && char.Aggro == nil { char.SetAggro(...) }` never runs and
 // the SetAggro -> TransitionToEngaging -> Awareness cascade cannot be what
 // clears Hidden. Delete the explicit TransitionToRevealing call and this test
-// fails. A fixture with no prior aggro would pass either way.
+// fails.
+//
+// Two honest caveats, so nobody over-reads this fixture:
+//
+// A fixture with NO prior aggro would also fail against that mutant HERE, but
+// only because internal/hooks (which registers the Awareness cascade) is not
+// linked into this test binary. The pre-set aggro is what keeps the test
+// honest if it ever is.
+//
+// And the pre-set aggro is NOT the production justification for the explicit
+// call. Sneak (sneak.go:60-62) is the only entry into awareness.Hidden and
+// refuses while Aggro != nil, so an already-engaged hidden shooter cannot
+// exist. The real reachable cases are the paths where SetAggro returns before,
+// or loses, its phase transition: the grace-period guard, the taunt-hold
+// guard, and a vetoed TransitionToEngaging. See the comment on the call site.
 func TestFireSurprise_RevealsAnAlreadyEngagedShooter(t *testing.T) {
 	pinRangedSurpriseBalance(t)
 	pinOrdinaryContestWin(t)
