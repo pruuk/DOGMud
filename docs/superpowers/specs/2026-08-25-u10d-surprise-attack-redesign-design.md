@@ -247,11 +247,103 @@ whose cooldown is unavailable opens as an ordinary attack, not a surprise round.
 
 ### 2.6 Progression
 
-Skullduggery continues to earn a progression event on a surprise round, moved
-from the bare `actor.OnSkillUse(string(skills.Skullduggery))` onto the U9
-progression seam so it obeys the arc's one-event-per-success convention like
-every other channel. Weapon-combat and the defender's defence skill progress via
-the ordinary melee path with no special casing.
+**Today's burst awards no combat progression at all.** It resolves entirely
+outside `calculateCombat`, so `applyCombatProgression` never sees it. Its only
+award is one bare `actor.OnSkillUse(string(skills.Skullduggery))` at
+`surprise_attack.go:360`, off the U9 seam.
+
+#### 2.6.1 What the surprise round inherits for free
+
+Because the surprise round *is* a melee round, it picks up melee's progression
+wholesale via `applyCombatProgression`. Nothing needs building for any of this.
+
+**Attacker:**
+
+| Award | When | Path |
+|---|---|---|
+| `strength` stat use | unconditionally, once per round | `emitAttackerStatGain` |
+| `dexterity` stat use | unconditionally, once per round | `emitAttackerStatGain` |
+| weapon-combat *or* unarmed-combat | per clean weapon hit | `OrdinaryEvents`, keyed on `WeaponHitInfo.SkillTag` |
+| that skill's primary stat (dexterity) | same event | `OnSkillUseScaled` rolls the primary itself |
+| crit bonus tier | once per round | `BonusEvents`, `progression.Classify` |
+
+Note the crit tier: **every landed swing of a surprise round crits**, so
+`res.Crit` is true whenever the ambush connects. A successful ambush therefore
+*always* pays the attacker's once-per-round crit bonus. That is new.
+
+**Defender — all of it new, because there was no contest before:**
+
+- defence skill and defence stat, once per defence type used
+  (`processDefenderProgression`)
+- the crit-received **toughening** stat — vitality for the physical channel —
+  via `BonusEvents` `ClassObserved`
+
+So being ambushed now teaches you to take a hit. Under the current auto-hit
+burst it teaches the victim nothing whatsoever.
+
+#### 2.6.2 Skullduggery: replaced on the seam, not dropped
+
+The bare `OnSkillUse` call dies with the file. It is **replaced**, not removed:
+
+- A **second attacker `progression.Outcome`** carrying
+  `AttackerSkill: "skullduggery"`, applied with
+  `ApplyProgression(..., progression.SideAttacker, ...)`. A second `Outcome` is
+  structurally required: `Outcome` holds exactly one `AttackerSkill`, and the
+  first already carries the weapon or unarmed combat skill.
+- **Fires once per surprise round**, on the same condition the combat skill
+  uses — at least one clean hit. Success-only, matching the convention U10's
+  new sites already adopted.
+- **`AttackerStat` left empty.** `ApplyProgression` calls `OnSkillUseScaled`,
+  which already rolls the skill's primary stat, and only rolls `ev.Stat`
+  separately when it names a *different* stat. Setting it would be a no-op at
+  best and a duplicate at worst.
+
+**Stated consequence, so it is not discovered as a surprise later:** dexterity
+is rolled **three times** in a surprise round — once unconditionally from
+`emitAttackerStatGain`, once as the combat skill's primary, once as
+skullduggery's primary (`SkillPrimaryStats["skullduggery"] == "dexterity"`,
+same as weapon-combat). This is accepted. A surprise round happens once per
+engagement behind a shared 4-round cooldown, and an ambush is genuinely a
+dexterity act.
+
+**Why the award is not simply dropped.**
+`SkillProgressionMultipliers[Skullduggery] = 0.83` was solved on measured
+play-time rates in U10b-0 Phase D (`tools/balance/u10b_solve_v3.py`). Removing a
+firing site changes the basis that figure was fitted against, so dropping the
+award would quietly make skullduggery progress slower than the solve intended.
+That is a retune, and it should not happen as an unexamined side effect of a
+combat redesign.
+
+#### 2.6.3 Out of scope, explicitly handed to U10b
+
+Skullduggery has **17** progression sites and **none** of them is on the U9
+seam. U9 routed melee, channel defences, spells and taunt; U10b's Category C is
+crafting, salvage and forage. The stealth family was claimed by neither.
+
+U10d converts exactly one — its own. The remaining **16** stay bare
+`OnSkillUse` / `CheckSkillProgression` calls and belong to **U10b**
+("progression firing consistency"), which is still open and whose 135-site
+firing audit already enumerates them:
+
+| File | Sites |
+|---|---|
+| `internal/actions/steal.go` | 3 |
+| `internal/actions/plant.go` | 3 |
+| `internal/actions/shadow.go` | 2 |
+| `internal/usercommands/skill.skullduggery.sneak.go` | 2 |
+| `internal/usercommands/picklock.go` | 2 |
+| `internal/actions/defuse.go` | 1 |
+| `internal/usercommands/throw.go` | 1 |
+| `internal/mobcommands/flee.go` | 1 |
+| `internal/hooks/NewRound_DoCombat_helpers.go` | 1 |
+
+Splitting this way keeps U10d's playtest attributable to the combat redesign
+rather than to a 16-site progression sweep landing in the same change.
+
+> **Naming hazard.** **U10b-0** ("progression rank from training", phases A–F)
+> shipped 2026-08-24 as `d29996d4d` / PR #60. **U10b** ("progression firing
+> consistency") is a *different* slice and has never been started. Its roadmap
+> row carries no shipped marker. Do not read one as the other.
 
 ### 2.7 Edge cases: deliberately not special-cased
 
@@ -391,21 +483,35 @@ Required copy work:
 10. The snapshot is stable across the round: a mid-round `Hidden` break does not
     downgrade a later weapon's swing.
 
+**Progression**
+
+11. A landed surprise round awards skullduggery exactly **once**, not once per
+    weapon hit.
+12. A surprise round that lands **no** clean hit awards no skullduggery
+    (success-only).
+13. The attacker's combat skill (weapon-combat or unarmed-combat, whichever the
+    weapon selects) still progresses per clean hit alongside skullduggery.
+14. The defender earns defence-skill progression and the crit-received
+    toughening stat from a surprise round. This is the regression test for
+    "being ambushed teaches the victim nothing", which is today's behaviour.
+15. The attacker's crit bonus tier is paid **once** for the round, not once per
+    critting swing, despite every landed swing critting.
+
 **Parity and guards**
 
-11. Mob and player ambushers resolve identically (mobs reach this through
+16. Mob and player ambushers resolve identically (mobs reach this through
     `behaviortree/actions_combat.go`).
-12. A site guard in the arc's existing `internal/combat/contest_site_guard_test.go`
+17. A site guard in the arc's existing `internal/combat/contest_site_guard_test.go`
     style asserting no production path produces an uncontested surprise hit, so
     the auto-hit cannot be reintroduced.
 
 **Gates**
 
-13. `gofmt -l internal/ modules/` clean; `go build ./...`; tests for every
+18. `gofmt -l internal/ modules/` clean; `go build ./...`; tests for every
     touched package.
-14. Isolated detached-worktree boot test to `boot-check.exe`, `Server Ready`
+19. Isolated detached-worktree boot test to `boot-check.exe`, `Server Ready`
     confirmed, exit 124 expected.
-15. **Adversarial in-game playtest**, mandatory per the content SOP because this
+20. **Adversarial in-game playtest**, mandatory per the content SOP because this
     ships new player-facing copy. Probe specifically: the sleeping-target
     interaction (2.7), mid-fight re-hiding (2.7), multi-weapon and Extra Arms
     configurations, and whether the ambush feels competitive with a companion
