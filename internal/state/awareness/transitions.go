@@ -17,7 +17,6 @@ const (
 	TriggerSneakSuccess       = "sneak_success"
 	TriggerSneakFailed        = "sneak_failed"
 	TriggerCombatEntered      = "combat_entered"
-	TriggerSurpriseRoundEnd   = "surprise_round_end"
 	TriggerMovementDetected   = "movement_detected"
 	TriggerObserverSearch     = "observer_search"
 	TriggerLightChange        = "light_change"

@@ -192,16 +192,12 @@ NoAggroTarget. Neither subsumes the other.
 
 ### Surprise round
 
-```go
-func (m *Machine) OnEndOfRoundIfSurprise(fn func(TransitionReason))
-func (m *Machine) OnCombatRoundEnd()
-```
-
-`OnEndOfRoundIfSurprise` is reserved for the Awareness machine (chunk 1)
-to transition `Hidden → Revealing → Visible` after all weapon swings for
-a surprise round complete. `OnCombatRoundEnd` is called by the round
-driver; it fires the registered callbacks and clears `SurpriseLeft` on
-the first Engaged round of a surprise engagement.
+There is no surprise round. `TriggerSurpriseAttack` still distinguishes an
+ambush from an ordinary attack in the `TransitionReason`, but the machine
+gives it no special treatment: a hidden attacker takes the same
+`Idle → Engaging` cascade as anyone else and is revealed on engaging. The
+ambusher's opening strike is keyed off `Character.Aggro.Type`, not off
+anything on this machine.
 
 ---
 
@@ -242,14 +238,23 @@ const (
 ```go
 type EngagingData struct {
     Target      state.ActorRef
-    Reason      state.TransitionReason
+    Reason      state.TransitionReason  // caller-filled only; see gotcha below
     RoundsUntil int  // weapon WaitRounds before first swing
 }
+```
+
+> `EngagingData.Reason` is read by nothing today, and
+> `TransitionToEngaging(d, r)` does **not** copy its `r` argument into
+> `d.Reason` — it stores `d` verbatim. The one production caller
+> (`Character.SetAggro`) leaves `Reason` zero-valued. If you need the
+> transition reason, take it from the `AfterTransition` callback's `r`
+> argument, which is correct.
+
+```go
 
 type EngagedData struct {
-    Target       state.ActorRef
-    NextSwingAt  int   // round number for next swing
-    SurpriseLeft bool  // true during the first round of a surprise engagement
+    Target      state.ActorRef
+    NextSwingAt int  // round number for next swing
 }
 
 type DisengagingData struct {
@@ -340,7 +345,7 @@ exercises one cell of the state × trigger × veto matrix.
 | CP-001 – CP-008 | Basic state transitions (happy path) |
 | CP-010 – CP-016 | Veto rules (non-combatant, dead, busy, grappled) |
 | CP-017 – CP-022 | ForceIdle + NotifySelfDied cascade |
-| CP-023 – CP-025b | Surprise attack — first-round bonus + SurpriseLeft |
+| CP-024 | Engaged carries the Engaging target |
 | CP-026 – CP-036 | Tick events, attacker list, flee, retarget, edge cases |
 
 All tests use local `Machine` instances with injected veto closures;

@@ -44,9 +44,8 @@ type EngagingData struct {
 
 // EngagedData is the state-data type for the Engaged state.
 type EngagedData struct {
-	Target       state.ActorRef
-	NextSwingAt  int  // round number for next swing
-	SurpriseLeft bool // true during the first round of a SurpriseAttack engagement
+	Target      state.ActorRef
+	NextSwingAt int // round number for next swing
 }
 
 // DisengagingData is the state-data type for the Disengaging state.
@@ -76,16 +75,15 @@ type vetoChain struct {
 // only establishes the type with empty data slots and the basic
 // State() / Inner() accessors.
 type Machine struct {
-	inner                         *state.Machine[State]
-	self                          state.ActorRef // own identity, set by RegisterMachine
-	engaging                      *EngagingData
-	engaged                       *EngagedData
-	disengaging                   *DisengagingData
-	attackers                     []state.ActorRef // inbound attacker list
-	attackersChangeListeners      []func([]state.ActorRef)
-	vetoes                        vetoChain
-	endOfRoundIfSurpriseCallbacks []func(state.TransitionReason)
-	tickEventListeners            []func(name string, r state.TransitionReason)
+	inner                    *state.Machine[State]
+	self                     state.ActorRef // own identity, set by RegisterMachine
+	engaging                 *EngagingData
+	engaged                  *EngagedData
+	disengaging              *DisengagingData
+	attackers                []state.ActorRef // inbound attacker list
+	attackersChangeListeners []func([]state.ActorRef)
+	vetoes                   vetoChain
+	tickEventListeners       []func(name string, r state.TransitionReason)
 }
 
 // NewMachine returns a Combat Phase machine in Idle.
@@ -282,7 +280,7 @@ func (m *Machine) OnRoundTick() {
 }
 
 // advanceToEngaged transitions Engaging → Engaged, carrying
-// EngagingData into EngagedData. Surprise marker persists.
+// EngagingData into EngagedData.
 func (m *Machine) advanceToEngaged() {
 	prevEngaging := m.engaging
 	if prevEngaging == nil {
@@ -294,10 +292,7 @@ func (m *Machine) advanceToEngaged() {
 	}); err != nil {
 		return // shouldn't happen — invariant violation
 	}
-	m.engaged = &EngagedData{
-		Target:       prevEngaging.Target,
-		SurpriseLeft: prevEngaging.Reason.Trigger == TriggerSurpriseAttack,
-	}
+	m.engaged = &EngagedData{Target: prevEngaging.Target}
 	m.engaging = nil
 }
 
@@ -434,40 +429,6 @@ func (m *Machine) notifyAttackersChange() {
 // inbound Attackers list changes (add or remove).
 func (m *Machine) SubscribeAttackersChange(fn func([]state.ActorRef)) {
 	m.attackersChangeListeners = append(m.attackersChangeListeners, fn)
-}
-
-// === STUBS — Implementations land in Tasks 6-8. ===
-
-// OnEndOfRoundIfSurprise registers a callback that fires when
-// the Engaged state's SurpriseLeft flag is consumed (i.e., at
-// the end of the first combat round of a surprise engagement).
-//
-// Awareness machine (chunk 1) registers here to transition
-// Hidden → Revealing → Visible after all weapon swings for the
-// surprise round have resolved. This supports multi-weapon
-// configurations (dual wield, triple, Extra Arms mutations) —
-// every swing in the surprise round gets the bonus before
-// stealth breaks.
-func (m *Machine) OnEndOfRoundIfSurprise(fn func(state.TransitionReason)) {
-	m.endOfRoundIfSurpriseCallbacks = append(m.endOfRoundIfSurpriseCallbacks, fn)
-}
-
-// OnCombatRoundEnd is called by the round driver at the end of
-// each combat round for an Engaged character. If SurpriseLeft is
-// still true, fires the registered surprise-consumed callbacks
-// and clears the flag. Otherwise no-op.
-func (m *Machine) OnCombatRoundEnd() {
-	if m.State() != Engaged || m.engaged == nil {
-		return
-	}
-	if !m.engaged.SurpriseLeft {
-		return
-	}
-	reason := state.TransitionReason{Trigger: "surprise_consumed"}
-	for _, fn := range m.endOfRoundIfSurpriseCallbacks {
-		fn(reason)
-	}
-	m.engaged.SurpriseLeft = false
 }
 
 // RegisterCombatantVeto adds a veto that blocks Engaging when the attacker

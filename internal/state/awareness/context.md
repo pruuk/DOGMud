@@ -237,7 +237,6 @@ inline literals to ensure stable identifiers across the codebase:
 | `TriggerSneakCommand` | `"sneak_command"` |
 | `TriggerDetectionSuccess` | `"detection_success"` |
 | `TriggerDetectionFailure` | `"detection_failure"` |
-| `TriggerSurpriseRoundEnd` | `"surprise_round_end"` |
 | `TriggerRoomChange` | `"room_change"` |
 | `TriggerLightSourceChange` | `"light_source_change"` |
 | `TriggerForceVisible` | `"force_visible"` |
@@ -263,10 +262,10 @@ inline literals to ensure stable identifiers across the codebase:
   detection-check callbacks at character-creation time via
   `OnCharacterCreated`.
 - **`internal/hooks/Awareness_Cascades.go`** — subscribes to `AfterTransition`
-  and `OnCombatRoundEnd` events. Mirrors `Hidden` state to buff #9
-  (apply on Hidden entry, remove on Hidden exit). Subscribes to Combat Phase
-  `OnEndOfRoundIfSurprise` to trigger reveal cascade at end-of-first-round in
-  surprise engagements.
+  on both this machine and Combat Phase. Mirrors `Hidden` state to buff #9
+  (apply on Hidden entry, remove on Hidden exit), and reveals on Combat
+  Phase `Idle → Engaging` — including surprise attacks, which get no
+  stealth grace period.
 - **`internal/hooks/Awareness_LightChange.go`** — subscribes to light-state-change
   events and re-rolls detection when the room's light state changes (scaffolding
   for future-chunk light-source mechanics; today a no-op pending full design).

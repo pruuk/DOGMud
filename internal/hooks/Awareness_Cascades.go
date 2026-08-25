@@ -15,26 +15,23 @@ import (
 // Two cascade directions:
 //
 //  1. Combat Phase → Awareness:
-//     - Idle → Engaging (non-surprise trigger): Hidden → Revealing
-//     - Idle → Engaging (SurpriseAttack trigger): preserve Hidden
-//     - OnEndOfRoundIfSurprise: Hidden → Revealing (surprise round done)
+//     - Idle → Engaging: Hidden → Revealing
 //
 //  2. Awareness → Buff #9:
 //     - Entering Hidden: AddBuff(9, false)
 //     - Leaving Hidden (to Revealing or Visible): CancelBuffsWithFlag(Hidden)
 //
-// This is the chunk-1 piece that closes the chunk-0 surprise
-// handshake. Combat Phase exposed OnEndOfRoundIfSurprise; the
-// surprise-round cascade hook implementation lives here.
+// Stealth breaks the instant the ambusher engages — there is no
+// surprise round to protect any more. The opening strike keys off
+// Aggro.Type, which SetAggro writes before the Combat Phase
+// transition that fires this cascade, so revealing here does not
+// cost the ambusher their opening strike.
 func wireAwarenessFromCombatPhase(c *characters.Character) {
-	// 1a. Combat Phase Idle → Engaging cascade (non-surprise only).
+	// 1a. Combat Phase Idle → Engaging cascade.
 	c.CombatPhase.Inner().AfterTransition("awareness_combat_cascade",
 		func(from, to combatphase.State, r state.TransitionReason) {
 			if from != combatphase.Idle || to != combatphase.Engaging {
 				return
-			}
-			if r.Trigger == combatphase.TriggerSurpriseAttack {
-				return // preserve Hidden through Engaging for surprise
 			}
 			if c.Awareness.State() == awareness.Hidden {
 				_ = c.Awareness.TransitionToRevealing(state.TransitionReason{
@@ -42,15 +39,6 @@ func wireAwarenessFromCombatPhase(c *characters.Character) {
 				})
 			}
 		})
-
-	// 1b. OnEndOfRoundIfSurprise callback (surprise round ends).
-	c.CombatPhase.OnEndOfRoundIfSurprise(func(r state.TransitionReason) {
-		if c.Awareness.State() == awareness.Hidden {
-			_ = c.Awareness.TransitionToRevealing(state.TransitionReason{
-				Trigger: awareness.TriggerSurpriseRoundEnd,
-			})
-		}
-	})
 
 	// 2. Awareness state → buff #9 mirror.
 	c.Awareness.Inner().AfterTransition("awareness_buff_mirror",

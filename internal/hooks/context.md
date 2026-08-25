@@ -692,8 +692,6 @@ The round driver reads Combat Phase state instead of legacy `Aggro`:
   `RoundsUntil` hits zero.
 - `c.CombatPhase.DispatchTickEvent()` fires `mob_combat_round` or
   `mob_idle` btree events per character per round.
-- `c.CombatPhase.OnCombatRoundEnd()` clears the `SurpriseLeft` flag
-  at end-of-round for surprise engagements.
 
 ### Verbosity gating (combat_verbosity.go)
 
@@ -742,15 +740,19 @@ the machine transitions away from or into the `Hidden` state, the hook
 applies or removes buff #9 to keep the visible effect synchronized with
 the invisible state.
 
-Also subscribes to Combat Phase's `OnEndOfRoundIfSurprise` callback. When
-a surprise engagement completes its first round, the hook triggers the
-Awareness reveal cascade (`Hidden → Revealing → Visible`), forcing any
-hidden characters out of hiding.
+Also registers an `AfterTransition` callback on the Combat Phase machine
+that reveals a hidden character on `Idle → Engaging`. A surprise attack is
+**not** exempt: stealth breaks the instant the ambusher engages. The
+ambusher keeps their opening strike anyway, because that bonus reads
+`Character.Aggro.Type`, which `SetAggro` writes *before* the Combat Phase
+transition that fires this cascade. Reversing that order would silently
+disable the opening strike; `internal/hooks/surprise_reveal_test.go` pins
+both halves.
 
 Events and cascades (per state transition, not per round):
 - Awareness `Visible → Hidden`: apply buff #9 + room text "sneaks away"
 - Awareness `Hidden → Visible`: remove buff #9 + room text "emerges from hiding"
-- Combat Phase end-of-surprise round: trigger Awareness reveal cascade
+- Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade
 
 ### Awareness_LightChange.go
 
