@@ -744,10 +744,17 @@ Also registers an `AfterTransition` callback on the Combat Phase machine
 that reveals a hidden character on `Idle → Engaging`. A surprise attack is
 **not** exempt: stealth breaks the instant the ambusher engages. The
 ambusher keeps their opening strike anyway, because that bonus reads
-`Character.Aggro.Type`, which `SetAggro` writes *before* the Combat Phase
-transition that fires this cascade. Reversing that order would silently
-disable the opening strike; `internal/hooks/surprise_reveal_test.go` pins
-both halves.
+`Character.Aggro.Type` (in `combat.calculateCombat`, well after this
+cascade has run), not `IsHidden()`.
+`internal/hooks/surprise_reveal_test.go` pins both halves — the reveal
+fires, and it does not clear `Aggro.Type`.
+
+`SetAggro` writes `c.Aggro` *before* it dual-writes the Combat Phase
+transition. That order matters for anything observing `Idle → Engaging`
+— notably the `mob_engaging` btree event in
+`CombatPhase_BtreeEvents.go`, whose actions can read `Aggro`. It is
+**not** currently covered by a test, and reversing it would not break
+the opening strike, which reads `Aggro.Type` later in the round.
 
 Events and cascades (per state transition, not per round):
 - Awareness `Visible → Hidden`: apply buff #9 + room text "sneaks away"

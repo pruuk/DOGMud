@@ -72,12 +72,18 @@ func TestHiddenAttacker_IsRevealedOnEngage_WithNoRetaliation(t *testing.T) {
 }
 
 // ...and they still get their opening strike in that same round, because the
-// bonus keys off Aggro.Type, not IsHidden(). Get this ordering wrong and the
-// whole feature silently does nothing.
+// bonus keys off Aggro.Type, not IsHidden().
+//
+// The IsHidden guard below is load-bearing: without it this test passes
+// identically in a world where nothing reveals, and would then be pinning
+// "SetAggro sets the type it was given" rather than "the reveal does not
+// clear Aggro.Type".
 func TestRevealedAmbusher_StillGetsTheOpeningStrike(t *testing.T) {
 	atk, def, _ := newHiddenAttackerAndTarget(t)
 	atk.Character.SetAggro(def.UserId, 0, characters.SurpriseAttack)
 
+	require.False(t, atk.Character.IsHidden(),
+		"the reveal must have fired, or this test proves nothing")
 	require.NotNil(t, atk.Character.Aggro,
 		"SetAggro must have taken — otherwise this test proves nothing")
 	if atk.Character.Aggro.Type != characters.SurpriseAttack {

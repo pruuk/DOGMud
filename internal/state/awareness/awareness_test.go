@@ -182,8 +182,10 @@ func TestAW_014_NightVisionDoesNotAutoReveal(t *testing.T) {
 // Framework-level here just verifies TransitionToRevealing with
 // TriggerCombatEntered works.
 
-// AW-015: Combat Phase → Engaging cascades Awareness → Revealing.
-func TestAW_015_NonSurpriseCombatBreaksStealth(t *testing.T) {
+// AW-015: TransitionToRevealing with the combat-entry trigger takes a
+// Hidden machine all the way to Visible — the tail of the cascade that
+// hooks/Awareness_Cascades.go drives on Combat Phase Idle → Engaging.
+func TestAW_015_RevealingOnCombatEntryReachesVisible(t *testing.T) {
 	A, _ := makePair()
 	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
 	A.ResolveConcealment(true, state.TransitionReason{})
@@ -193,15 +195,16 @@ func TestAW_015_NonSurpriseCombatBreaksStealth(t *testing.T) {
 	require.Equal(t, Visible, A.State())
 }
 
-// AW-016: the Awareness machine never breaks stealth by itself on combat
-// entry — the reveal is the cascade subscriber's job (hooks/
-// Awareness_Cascades.go), which fires on Idle → Engaging.
-func TestAW_016_MachineDoesNotSelfRevealOnCombatEntry(t *testing.T) {
+// AW-016: a successful concealment parks the machine in Hidden and leaves
+// it there. Nothing inside this package reveals on its own — every reveal
+// is driven by an external caller (the detection roll, ForceVisible, or the
+// Combat Phase cascade in hooks/Awareness_Cascades.go).
+func TestAW_016_HiddenPersistsUntilAnExternalCallerReveals(t *testing.T) {
 	A, _ := makePair()
 	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
 	A.ResolveConcealment(true, state.TransitionReason{})
 	require.Equal(t, Hidden, A.State(),
-		"combat entry does not auto-break Awareness Hidden state at the machine level")
+		"the machine does not auto-break Hidden without an external caller")
 }
 
 // --- AW-019, AW-020: Stamina cost (framework-level just verifies IsHidden()) ---

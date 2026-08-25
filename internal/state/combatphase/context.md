@@ -251,7 +251,6 @@ type EngagingData struct {
 > argument, which is correct.
 
 ```go
-
 type EngagedData struct {
     Target      state.ActorRef
     NextSwingAt int  // round number for next swing

@@ -139,20 +139,6 @@ func TestCP_008_FleeFailureReturnsEngaged(t *testing.T) {
 	require.Equal(t, Engaged, A.State())
 }
 
-// CP-024: advanceToEngaged carries the Engaging target into EngagedData.
-// (Replaces the old surprise-marker assertion — a surprise engagement no
-// longer differs from any other one, but the target hand-off still has to
-// hold.)
-func TestCP_024_EngagedCarriesTargetFromEngaging(t *testing.T) {
-	A, _ := makePair()
-	require.NoError(t, A.TransitionToEngaging(
-		EngagingData{Target: actor(2)}, state.TransitionReason{}))
-	A.OnRoundTick()
-	d, ok := A.EngagedData()
-	require.True(t, ok)
-	require.Equal(t, actor(2), d.Target, "Engaged data keeps the Engaging target")
-}
-
 // --- Vetoes (CP-010 through CP-016) ---
 
 // CP-010: NonCombatant cannot attack.
@@ -289,6 +275,24 @@ func TestCP_019_AttackersChangeIsObservable(t *testing.T) {
 	require.NoError(t, M1.TransitionToEngaging(EngagingData{Target: actor(1)},
 		state.TransitionReason{Actor: actor(101), Target: actor(1)}))
 	require.Equal(t, 1, observedAttackerCount, "Attackers-change observer fires on inbound add")
+}
+
+// --- Engaged hand-off (CP-024) ---
+
+// CP-024: advanceToEngaged carries the Engaging target into EngagedData.
+// Replaces the old surprise-marker assertion — a surprise engagement no
+// longer differs from any other one, but the target hand-off still has to
+// hold. Kept at its original number (and therefore filed here rather than
+// with the CP-001–CP-008 basics) so it still lines up with the chunk-0
+// design doc's test matrix.
+func TestCP_024_EngagedCarriesTargetFromEngaging(t *testing.T) {
+	A, _ := makePair()
+	require.NoError(t, A.TransitionToEngaging(
+		EngagingData{Target: actor(2)}, state.TransitionReason{}))
+	A.OnRoundTick()
+	d, ok := A.EngagedData()
+	require.True(t, ok)
+	require.Equal(t, actor(2), d.Target, "Engaged data keeps the Engaging target")
 }
 
 // --- Non-combat target picking (CP-026, CP-027) ---

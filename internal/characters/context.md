@@ -1152,12 +1152,12 @@ fractional remainder instead.)
 
 ### Integration with Combat Phase
 
-The Awareness machine subscribes to Combat Phase's `OnEndOfRoundIfSurprise`
-callback (wired in `Awareness_Cascades.go`). When a surprise engagement
-completes its first round of swings, the Awareness machine triggers a
-reveal cascade (`Hidden → Revealing → Visible`), forcing surprise-attacked
-sneakers out of hiding. The full cascade completes before the next round
-begins, ensuring surprised attackers are visible for retaliation.
+`Awareness_Cascades.go` registers an `AfterTransition` callback on the
+Combat Phase machine. On `Idle → Engaging` it triggers the reveal cascade
+(`Hidden → Revealing → Visible`), so an attacker who was hiding is visible
+the moment they engage — no retaliation required, and no grace period for
+a surprise attack. The ambusher still gets their opening strike, which
+keys off `Aggro.Type` rather than `IsHidden()`.
 
 ### Logout cleanup
 

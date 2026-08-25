@@ -15,7 +15,7 @@ Awareness has four states:
 | `Visible` | Not hidden; detectable by normal observation. |
 | `Concealing` | Sneak attempt in flight; transitioning to Hidden. |
 | `Hidden` | Successfully concealed; undetectable by unprepared observers. |
-| `Revealing` | Detection occurred or surprise round ending; transitioning to Visible. |
+| `Revealing` | Detection or combat entry occurred; transitioning to Visible. |
 
 The machine is mob/player symmetric: both player and mob `Character` instances
 carry a `*awareness.Machine` field. The btree event wiring does not fire for
@@ -75,14 +75,16 @@ detection-roll veto (which validates the character is actually Concealing)
 and performs opposed rolls (Perception + Search vs. Dexterity + Skullduggery).
 On success, transitions to `Hidden`. On failure, transitions back to `Visible`.
 
-### Revealing after detection or surprise
+### Revealing after detection or combat entry
 
 ```go
 func (m *Machine) TransitionToRevealing(r TransitionReason) error
 ```
 
-Initiates the reveal cascade, typically triggered by detection or end-of-surprise
-logic in Combat Phase. Stores the `TransitionReason` for subscribers to query
+Initiates the reveal cascade, typically triggered by a detection roll or by
+the Combat Phase `Idle → Engaging` cascade in
+`internal/hooks/Awareness_Cascades.go`. Stores the `TransitionReason` for
+subscribers to query
 why the reveal is happening. Immediately cascades to `Visible` in a single call
 (today); future multi-round revealing will defer this.
 
@@ -222,7 +224,8 @@ current state is non-nil; transitions nil out the previous state's data.
 var validTransitions = state.TransitionTable[State]{
     Visible:    {Concealing},
     Concealing: {Hidden, Visible},     // Visible on detection failure
-    Hidden:     {Revealing},           // Revealing on detection or surprise-end
+    Hidden:     {Revealing, Visible},  // Revealing for the cascade; Visible for
+                                       // force (logout / death)
     Revealing:  {Visible},             // Visible after cascade
 }
 ```
@@ -292,7 +295,7 @@ exercises one cell of the state × trigger × veto matrix.
 | AW-001 – AW-003 | Basic state transitions (happy path) |
 | AW-004 – AW-011 | Detection rolls (observer presence, opposed checks) |
 | AW-012 – AW-014 | Light-state interaction scaffold |
-| AW-015 – AW-018 | Combat Phase subscription + surprise reveal |
+| AW-015, AW-016 | Combat Phase subscription (reveal on combat entry) |
 | AW-019 – AW-020 | Hidden movement stamina cost |
 | AW-021 – AW-022 | Logout cascade |
 | AW-023 | Activity veto (crafting/casting block) |
