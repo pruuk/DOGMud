@@ -836,6 +836,25 @@ Balance:
   CritDamageBase: 2.0
   CritDamagePerSkill: 0.05
   #
+  # SurpriseOpeningStrikeMultiplier: extra multiplier on the opening strike of a
+  # MELEE surprise attack, on top of the stacked combat-skill and skullduggery
+  # crit multipliers. 1.0 = no change. Exists so the ambush can be retuned
+  # WITHOUT moving CritDamageBase / CritDamagePerSkill, which are global.
+  SurpriseOpeningStrikeMultiplier: 1.0
+
+  # SurpriseRangedStrikeMultiplier: the ranged counterpart, touching the ranged
+  # opening shot ALONE. Deliberately below the melee value: a shot answers one
+  # fewer defence, and the opener already inherits RangedUnengagedDamageMultiplier
+  # because it is unengaged by definition.
+  SurpriseRangedStrikeMultiplier: 0.5
+
+  # RangedUnengagedDamageMultiplier: ranged damage multiplier applied when
+  # nothing in the room is targeting the shooter. 1.0 = no change. The archer's
+  # compensation for firing once where melee swings up to four times per weapon,
+  # and for reload sharing the special-move cooldown. Replaces the flat inflation
+  # the bow damage_multiplier line used to carry.
+  RangedUnengagedDamageMultiplier: 2.75
+  #
   # Mitigation caps: maximum % damage reduction from armor for each channel.
   # 0.75 = armor can block at most 75% of incoming damage in that channel.
   PhysicalMitigationCap: 0.75
