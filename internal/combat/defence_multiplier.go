@@ -62,7 +62,7 @@ func DefenceMitigation(normalizedDefenceMargin float64) float64 {
 //	          conviction-depletion factor and Task 17's shared modifiers —
 //	          SituationalAttackMult — land here)
 //	ForceCrit the sleeping-victim auto-crit (Task 17): a decision taken BEFORE
-//	          the roll, mirroring melee's resolveDefenseOutcomeCore semantics
+//	          the roll, mirroring melee's resolveDefenseOutcomeInner semantics
 //	          exactly — the attack crits, cannot fumble, and wins even when
 //	          the defence took the margin. Callers derive it from
 //	          SleepingForceCrit(defender).
@@ -376,7 +376,7 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	out.AttackerFumble = res.AttackRoll.ZScore <= -DefenseCritBar()
 
 	// Task 17: the sleeping-victim forced crit, mirroring melee's
-	// resolveDefenseOutcomeCore exactly. It is a decision taken BEFORE the
+	// resolveDefenseOutcomeInner exactly. It is a decision taken BEFORE the
 	// roll, so it is exempt from the floored gate above (the sentinel margin
 	// says nothing about it), it suppresses the fumble verdict (melee clears
 	// attackFumble so a forced crit cannot resolve as a fumble), and — below,
@@ -424,7 +424,7 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	}
 
 	// Task 17: the forced crit forces the WIN too — melee's
-	// resolveDefenseOutcomeCore sets attackWon under forceCrit for exactly
+	// resolveDefenseOutcomeInner sets attackWon under forceCrit for exactly
 	// this case. The defence above was still quoted, charged and progressed
 	// (the victim's reflexes still moved, exactly as on the melee path); it
 	// just cannot keep the outcome. Restore the attack-win multiplier the

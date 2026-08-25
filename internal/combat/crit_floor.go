@@ -122,7 +122,7 @@ func applyCritFloors(res *hitResolution, result *AttackResult, best bestDefenseR
 	// A floored outcome carries the +-1 sentinel margin and represents an
 	// outcome the contest did not actually produce. Promoting it would hand a
 	// decisive result to the side that lost the roll. This mirrors the gate in
-	// resolveDefenseOutcomeCore, and like it, it is belt-and-braces today (the
+	// resolveDefenseOutcomeInner, and like it, it is belt-and-braces today (the
 	// sentinel normalises to a near-zero z) but it is the DECLARED rule, so a
 	// future retune of the sentinel cannot silently reintroduce floored crits.
 	if best.floored {
@@ -136,7 +136,7 @@ func applyCritFloors(res *hitResolution, result *AttackResult, best bestDefenseR
 	// res.hit == true while the defence is the side that won.
 	//
 	// best.margin is DEFENCE-positive, so `<= 0` means the ATTACK won. Same
-	// expression, same sign convention, as resolveDefenseOutcomeCore's
+	// expression, same sign convention, as resolveDefenseOutcomeInner's
 	// attackWon.
 	//
 	// An UNCONTESTED swing lands here too, and deliberately so: its margin sits

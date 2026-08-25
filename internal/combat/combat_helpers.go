@@ -765,7 +765,7 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 	} else {
 		// Preserve the legacy sentinel exactly. normalizedAttackMargin detects
 		// "no defence attempted" via defenseType == "" and never reads this
-		// value, but resolveDefenseOutcomeCore's `best.margin > 0` check does,
+		// value, but resolveDefenseOutcomeInner's `best.margin > 0` check does,
 		// and -Inf is what makes an uncontested swing fall through to a hit.
 		best.margin = math.Inf(-1)
 	}
