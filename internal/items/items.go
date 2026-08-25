@@ -61,6 +61,7 @@ type Item struct {
 	EnchantBaseline  *SpecBaseline  `yaml:"enchantbaseline,omitempty"` // Numeric spec BEFORE any enchantment; see SpecBaseline
 	ReservePool      string         `yaml:"reservepool,omitempty"`     // "health", "stamina", or "conviction"
 	StashedBy        int            `yaml:"stashedby,omitempty"`       // userid of whoever stashed this item
+	DetuneMigrated   bool           `yaml:"detunemigrated,omitempty"`  // U10d: this ranged weapon is already on the post-detune line; see detune_migration.go
 	tempDataStore    map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
@@ -80,6 +81,12 @@ func New(itemId int) Item {
 		newItm.ItemId = itemId
 		if itemSpec.Uses > 0 {
 			newItm.Uses = itemSpec.Uses
+		}
+		// Anything minted now is already on the post-U10d ranged line, so stamp
+		// it as migrated. Only the eight detuned bow ids carry the flag, to keep
+		// it out of every other item's save footprint. See MigrateDetunedBow.
+		if _, isDetunedBow := preDetuneBowMultipliers[itemId]; isDetunedBow {
+			newItm.DetuneMigrated = true
 		}
 	}
 

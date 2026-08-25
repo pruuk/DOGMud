@@ -10,10 +10,14 @@ import (
 // reaches them. The arithmetic and its safety argument live in
 // items.MigrateDetunedBow.
 //
-// ORDERING: this MUST run before MigrateEnchantments(). enchantments.ApplyTier
-// does an unconditional item.EnchantBaseline.RestoreInto(&newSpec), so an
-// enchantment pass running first would re-install the stale pre-detune value
-// straight back over the fix.
+// ORDERING: run this before MigrateEnchantments(), though the order is
+// defensive rather than load-bearing. enchantments.ApplyTier does an
+// unconditional item.EnchantBaseline.RestoreInto(&newSpec), so an enchantment
+// pass running first would re-install the pre-detune value over a freshly fixed
+// spec. That used to be permanent, back when this sweep left the baseline
+// alone; now that it rescales the baseline too, the wrong order would only
+// leave a transient that the next tier-up corrects. Keep the order anyway --
+// there is no reason to ship a window where a player's damage is briefly wrong.
 //
 // NO RUN-ONCE MARKER, deliberately -- this follows MigrateEnchantments, which
 // is likewise unguarded because it is idempotent. items.MigrateDetunedBow only

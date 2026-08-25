@@ -5,8 +5,9 @@ package items
 //
 // Hardcoded because the templates no longer hold them. The RATIO between the
 // old and the new template value is what lets an affixed or admin-tuned
-// instance keep the scaling it earned; the old value itself is also the
-// threshold that makes the migration safe to re-run (see MigrateDetunedBow).
+// instance keep the scaling it earned. The old value also serves as the
+// legacy-save threshold, and the key set decides which item ids New() stamps
+// as already-migrated (see MigrateDetunedBow).
 var preDetuneBowMultipliers = map[int]float64{
 	10046: 7.50, // Ironhorn Warbow
 	10042: 7.00, // Arbalest
@@ -22,8 +23,7 @@ var preDetuneBowMultipliers = map[int]float64{
 // returns how many were modified.
 //
 // Safe to call on any item set, any number of times -- see MigrateDetunedBow
-// for why. Callers still carry run-once markers, but only to avoid pointless
-// work, never for correctness.
+// for why. There are deliberately no run-once markers on the callers.
 func MigrateDetunedRangedWeapons(ptrs []*Item) int {
 	updated := 0
 	for _, ptr := range ptrs {
@@ -59,28 +59,49 @@ func MigrateDetunedRangedWeapons(ptrs []*Item) int {
 // writes 0 into the spec and ApplyTier then adds only the tier bonus -- an
 // enchanted warbow would land near 0.10, a 96% nerf.
 //
-// IDEMPOTENT BY CONSTRUCTION, which is the important property and the reason
-// this does not rely on a caller's run-once marker. The rescale is a
-// MULTIPLICATION, so a second pass over the same item would detune it again
-// (2.75 -> 1.01, silently and permanently). Markers alone cannot prevent that,
-// because a character can hold an already-correct bow while carrying no marker:
+// IDEMPOTENT, VIA TWO GATES. The rescale is a MULTIPLICATION, so a second pass
+// over the same item would detune it again (2.75 -> 1.01, silently and
+// permanently). No run-once marker on the CHARACTER can prevent that, because a
+// character can hold an already-correct bow while carrying no marker:
 // characters.New() and CreateUser both produce empty MiscData, and a brand-new
 // account plays its entire first session on an in-memory record that has never
-// been through LoadUser. Such a character can enchant a post-detune bow at
-// 2.75, and the first migration afterwards would corrupt a correct item.
+// been through LoadUser.
 //
-// The `>= old` threshold closes that: affix ranks and enchant tiers only ever
-// ADD to the multiplier, so any genuine pre-detune instance is at or above its
-// old template value, while every already-migrated or natively-post-detune item
-// is below it and is skipped.
+// Gate 1, the authority: Item.DetuneMigrated. New() stamps it on every bow
+// minted since the detune, and this function stamps it on every bow it
+// inspects, so identity is recorded on the item rather than inferred from its
+// value.
 //
-// Two edges worth naming:
-//   - An admin who deliberately LOWERED an instance below its old template is
-//     skipped. Fail-safe: it keeps the value the admin chose rather than being
-//     silently rescaled.
-//   - The Sling has the tightest margin (0.75 new against 2.00 old); it would
-//     take 25 affix ranks of +0.05 to lift a post-detune sling back to 2.00 and
-//     produce a false positive.
+// Gate 2, the legacy fallback: `>= old`, for saves written before the stamp
+// existed. Affix ranks and enchant tiers only ever ADD, so a genuine pre-detune
+// instance is at or above its old template value.
+//
+// Gate 2 ALONE HAS A LIVE FALSE POSITIVE, which is why gate 1 exists. Item
+// 10049 (Relic Sidearm) drops from the Core Guardian in Crash Site Interior, an
+// `instanced: true` zone, so it can be affix-scaled. The affix budget is
+// floor(LootBudgetScalar * sqrt(goldPaid)) and goldPaid has NO upper bound
+// (actOpenInstancePortal enforces only a minimum; the 50000 cap applies to
+// ScaleSpawnStatPools, not to the loot budget). A post-detune sidearm needs
+// +3.80 over 2.20 -- 76 ranks of damage_mult_phys -- to reach the old 6.00, and
+// against the real weighted-selection loop that is roughly a 10% outcome at
+// 40k gold and 49% at 100k. Tripping it would multiply a legitimately earned,
+// gold-bought item by 0.367: a 63% loss, the very bug SpecBaseline exists to
+// prevent. The stamp closes that door; the fallback only ever sees saves that
+// predate it, in which no post-detune item can exist.
+//
+// The remaining fallback-only edge is benign: an admin who deliberately LOWERED
+// a legacy instance below its old template is skipped and keeps the value the
+// admin chose.
+//
+// SPEC AND BASELINE ARE ONE QUANTITY and are judged together. Testing them
+// independently lets them desync: ApplyTier sets spec = baseline + tierBonus,
+// where damage_multiplier_bonus reaches +0.30 and DOUBLES on two-handers, so a
+// baseline in [old-0.60, old) would leave the spec tripping the guard while the
+// baseline did not -- cutting the spec to ~0.367x while the baseline kept the
+// old value, until the next tier-up snapped it back. The threshold is therefore
+// evaluated ONCE against the baseline where there is one (it is the item's
+// pre-enchant multiplier, the quantity directly comparable to a template
+// value), else against the spec, and that single decision is applied to both.
 func MigrateDetunedBow(item *Item) bool {
 	if item == nil {
 		return false
@@ -91,19 +112,38 @@ func MigrateDetunedBow(item *Item) bool {
 		return false
 	}
 
+	// Gate 1: already known to be on the post-detune line.
+	if item.DetuneMigrated {
+		return false
+	}
+	// Whatever happens below, this item's line is settled after this pass.
+	item.DetuneMigrated = true
+
 	tmpl := GetItemSpec(item.ItemId)
 	if tmpl == nil || tmpl.DamageMultiplier <= 0 {
+		return false
+	}
+
+	// Gate 2: one threshold test, applied to both fields.
+	reference := 0.0
+	switch {
+	case item.EnchantBaseline != nil && item.EnchantBaseline.DamageMultiplier > 0:
+		reference = item.EnchantBaseline.DamageMultiplier
+	case item.Spec != nil:
+		reference = item.Spec.DamageMultiplier
+	}
+	if reference < old {
 		return false
 	}
 
 	ratio := tmpl.DamageMultiplier / old
 
 	changed := false
-	if item.Spec != nil && item.Spec.DamageMultiplier >= old {
+	if item.Spec != nil && item.Spec.DamageMultiplier > 0 {
 		item.Spec.DamageMultiplier *= ratio
 		changed = true
 	}
-	if item.EnchantBaseline != nil && item.EnchantBaseline.DamageMultiplier >= old {
+	if item.EnchantBaseline != nil && item.EnchantBaseline.DamageMultiplier > 0 {
 		item.EnchantBaseline.DamageMultiplier *= ratio
 		changed = true
 	}

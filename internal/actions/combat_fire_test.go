@@ -663,21 +663,24 @@ func TestFire_NonCombatantMob_NotExecuted(t *testing.T) {
 // CalcRawDamage channel arithmetic
 // ---------------------------------------------------------------------------
 
-// Spec balance target: arbalest (mult 7.0) at stat 100 / rank 0 must produce
-// raw damage in the 180-220 band BEFORE mitigation:
-// 100 × SkillMultiplier(0)=1.0 × 7.0 × ChannelScale(0.30) = 210.
+// Pins the physical-channel arithmetic of CalcRawDamage, NOT any weapon:
+// 100 × SkillMultiplier(0)=1.0 × 7.0 × ChannelScale = the 180-220 band.
 //
-// STALE AS A WEAPON PIN SINCE U10d: the arbalest template is now 2.55, not
-// 7.0. The multiplier below is a hardcoded literal rather than a template
-// read, so this exercises CalcRawDamage's arithmetic and no longer pins
-// anything about the live weapon. Left as-is deliberately: rebanding it is a
-// balance decision that belongs with the U10d shoot-from-outside-the-fight
-// bonus, not with the template detune. The live template values are pinned by
+// The 7.0 below is a hardcoded literal, not a template read. It was originally
+// the Arbalest's multiplier, but U10d moved that template to 2.55, so nothing
+// here describes a live weapon any more. Rebanding is a balance decision that
+// belongs with the shoot-from-outside-the-fight bonus, not with this test. The
+// live template values are pinned by
 // items.TestRangedWeaponMultipliers_MatchTheU10dTable.
+//
+// Pre-existing fragility, worth knowing: the 180-220 band is computed against
+// ChannelScale 0.30, the Go DEFAULT, while config.yaml ships MeleeDamageScale
+// 0.52 with GlobalDamageMultiplier 0.5, giving 182. It passes by two points
+// and would go red on a modest retune.
 func TestCalcRawDamage_PhysicalChannelArithmetic(t *testing.T) {
 	raw := combat.CalcRawDamage(100, 0, 7.0, combat.ChannelPhysical)
 	if raw < 180 || raw > 220 {
-		t.Errorf("arbalest baseline raw %v outside 180-220 spec band", raw)
+		t.Errorf("CalcRawDamage(100, 0, 7.0, physical) = %v, outside the 180-220 band", raw)
 	}
 }
 

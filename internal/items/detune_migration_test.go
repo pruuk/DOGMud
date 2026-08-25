@@ -168,22 +168,6 @@ func TestMigrateDetunedBow_LeavesAPostDetuneItemAlone(t *testing.T) {
 	}
 }
 
-// TestMigrateDetunedBow_SkipsAnAdminLoweredInstance pins the deliberate
-// fail-safe edge: an instance an admin set BELOW its old template value is
-// indistinguishable from an already-migrated one, so it keeps the value the
-// admin chose rather than being rescaled.
-func TestMigrateDetunedBow_SkipsAnAdminLoweredInstance(t *testing.T) {
-	seedWarbowTemplate(t)
-
-	itm := &Item{ItemId: warbowId, Spec: &ItemSpec{DamageMultiplier: 4.00}}
-	if MigrateDetunedBow(itm) {
-		t.Error("rescaled an instance already below its pre-detune template")
-	}
-	if got := itm.Spec.DamageMultiplier; !nearly(got, 4.00) {
-		t.Errorf("admin-set value = %.4f, want 4.0000 preserved", got)
-	}
-}
-
 // TestMigrateDetunedRangedWeapons_CountsAndIgnoresNonBows checks the set
 // wrapper: nil entries and unrelated items are skipped, not counted.
 func TestMigrateDetunedRangedWeapons_CountsAndIgnoresNonBows(t *testing.T) {
@@ -232,6 +216,153 @@ func TestPreDetuneBowTable_MatchesTheRealTemplates(t *testing.T) {
 		if _, ok := preDetuneBowMultipliers[spec.ItemId]; !ok {
 			t.Errorf("shooting weapon %q (id %d) has no preDetuneBowMultipliers entry, "+
 				"so existing instances of it would never be migrated", spec.Name, spec.ItemId)
+		}
+	}
+}
+
+const (
+	sidearmId      = 10049
+	sidearmPreU10d = 6.00
+	sidearmU10d    = 2.20
+)
+
+func seedSidearmTemplate(t *testing.T) {
+	t.Helper()
+	t.Cleanup(SeedItemsForTest(map[int]*ItemSpec{
+		sidearmId: {
+			ItemId:           sidearmId,
+			Name:             "Relic Sidearm",
+			Type:             Weapon,
+			Subtype:          Shooting,
+			DamageMultiplier: sidearmU10d,
+		},
+	}))
+}
+
+// TestMigrateDetunedBow_SpareAHighAffixInstanceSidearm is the regression test
+// for the value guard's live false positive.
+//
+// Item 10049 drops from the Core Guardian in Crash Site Interior, an
+// `instanced: true` zone, so it can be affix-scaled. The affix budget is
+// floor(LootBudgetScalar * sqrt(goldPaid)) and goldPaid has NO upper bound, so
+// a post-detune sidearm can be lifted past its OLD template value of 6.00 by 76
+// ranks of damage_mult_phys -- roughly a 10% outcome at 40k gold and 49% at
+// 100k. On a value-only guard the sweep then multiplies a legitimately earned,
+// gold-bought item by 0.367: a 63% loss, exactly the bug SpecBaseline exists to
+// prevent.
+//
+// The item's own DetuneMigrated stamp settles this: identity is recorded, not
+// inferred from a value that affixes can move.
+func TestMigrateDetunedBow_SparesAHighAffixInstanceSidearm(t *testing.T) {
+	seedSidearmTemplate(t)
+
+	// Minted post-detune (New stamps it), then affixed well past the old 6.00.
+	itm := New(sidearmId)
+	if !itm.DetuneMigrated {
+		t.Fatal("New() did not stamp a detuned-bow id as already migrated")
+	}
+	itm.Affixed = true
+	itm.Spec = &ItemSpec{DamageMultiplier: 6.50}
+
+	if MigrateDetunedBow(&itm) {
+		t.Error("rescaled a post-detune instance that affixes had lifted above the " +
+			"old template value")
+	}
+	if got := itm.Spec.DamageMultiplier; !nearly(got, 6.50) {
+		t.Errorf("high-affix sidearm = %.4f, want 6.5000 untouched. The player paid "+
+			"gold for that scaling; rescaling costs them 63%% of the item.", got)
+	}
+}
+
+// TestMigrateDetunedBow_StillMigratesAnUnstampedLegacySidearm is the other half:
+// the `>= old` fallback must keep working for saves written before the stamp
+// existed, where no post-detune item can exist.
+func TestMigrateDetunedBow_StillMigratesAnUnstampedLegacySidearm(t *testing.T) {
+	seedSidearmTemplate(t)
+
+	itm := &Item{ItemId: sidearmId, Affixed: true, Spec: &ItemSpec{DamageMultiplier: 6.50}}
+
+	if !MigrateDetunedBow(itm) {
+		t.Fatal("legacy unstamped sidearm was not migrated")
+	}
+	want := 6.50 * (sidearmU10d / sidearmPreU10d)
+	if got := itm.Spec.DamageMultiplier; !nearly(got, want) {
+		t.Errorf("legacy sidearm = %.4f, want %.4f", got, want)
+	}
+	if !itm.DetuneMigrated {
+		t.Error("migration did not stamp the item it rescaled, so a later pass has " +
+			"only the value fallback to protect it")
+	}
+}
+
+// TestMigrateDetunedBow_StampsEvenWhenItSkips pins that a bow the fallback
+// declines to touch is still stamped, so the fallback is consulted exactly once
+// per item across the item's whole lifetime.
+func TestMigrateDetunedBow_StampsEvenWhenItSkips(t *testing.T) {
+	seedWarbowTemplate(t)
+
+	itm := &Item{ItemId: warbowId, Spec: &ItemSpec{DamageMultiplier: 4.00}}
+	if MigrateDetunedBow(itm) {
+		t.Error("rescaled an instance already below its pre-detune template")
+	}
+	if !itm.DetuneMigrated {
+		t.Error("a skipped bow was left unstamped")
+	}
+	if got := itm.Spec.DamageMultiplier; !nearly(got, 4.00) {
+		t.Errorf("admin-set value = %.4f, want 4.0000 preserved", got)
+	}
+}
+
+// TestNew_StampsOnlyDetunedBowIds keeps the stamp out of every other item's
+// save footprint.
+func TestNew_StampsOnlyDetunedBowIds(t *testing.T) {
+	t.Cleanup(SeedItemsForTest(map[int]*ItemSpec{
+		warbowId: {ItemId: warbowId, Name: "Ironhorn Warbow", Type: Weapon, Subtype: Shooting, DamageMultiplier: warbowU10d},
+		10026:    {ItemId: 10026, Name: "Bandit's Longsword", Type: Weapon, DamageMultiplier: 1.10},
+	}))
+
+	if bow := New(warbowId); !bow.DetuneMigrated {
+		t.Error("a newly minted bow was not stamped, so the first migration would " +
+			"judge it on value alone")
+	}
+	if sword := New(10026); sword.DetuneMigrated {
+		t.Error("a non-bow was stamped; the flag would then bloat every item in " +
+			"every save")
+	}
+}
+
+// TestMigrateDetunedBow_JudgesSpecAndBaselineTogether pins that the two fields
+// are treated as one quantity.
+//
+// ApplyTier sets spec = baseline + tierBonus, and damage_multiplier_bonus
+// reaches +0.30, DOUBLED on a two-hander. So a baseline just under the
+// threshold can carry a spec just over it. Guarding them independently would
+// cut the spec to ~0.367x while the baseline kept the old value, leaving the
+// item wrong until the next tier-up snapped it back.
+func TestMigrateDetunedBow_JudgesSpecAndBaselineTogether(t *testing.T) {
+	seedWarbowTemplate(t)
+
+	// Baseline below the threshold, spec above it via a doubled 2H tier bonus.
+	itm := &Item{
+		ItemId:          warbowId,
+		EnchantType:     "keen",
+		EnchantTier:     3,
+		Spec:            &ItemSpec{DamageMultiplier: 7.60},
+		EnchantBaseline: &SpecBaseline{DamageMultiplier: 7.00},
+	}
+
+	MigrateDetunedBow(itm)
+
+	spec, baseline := itm.Spec.DamageMultiplier, itm.EnchantBaseline.DamageMultiplier
+	if nearly(baseline, 7.00) && !nearly(spec, 7.60) {
+		t.Errorf("spec was rescaled to %.4f while the baseline kept %.4f -- the two "+
+			"fields desynced; the next tier-up would snap the item back", spec, baseline)
+	}
+	if !nearly(spec, 7.60) && !nearly(baseline, 7.00) {
+		// Both moved: they must have moved by the same ratio.
+		if !nearly(spec/7.60, baseline/7.00) {
+			t.Errorf("spec and baseline rescaled by different ratios: %.6f vs %.6f",
+				spec/7.60, baseline/7.00)
 		}
 	}
 }
