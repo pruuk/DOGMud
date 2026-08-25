@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -373,6 +374,21 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// whether or not the shot landed.
 	dmg := result.MoveResult.Damage
 	RecordAndWait(char, "shoot", sourceType, defChar, targetType, result.MoveResult.Hit, dmg, util.GetRoundCount())
+
+	// U10d: a landed surprise shot trains skullduggery — the ranged
+	// equivalent of the melee ambush award in
+	// internal/hooks/NewRound_DoCombat_unified.go. result.MoveResult.Hit
+	// here means the contest WIN (`!out.Defended`, skill_moves.go), not
+	// "dealt damage": a defended shot can still apply partial damage on the
+	// shared mitigation curve, and that is not the clean landed ambush this
+	// award is for.
+	if surpriseShot && result.MoveResult.Hit {
+		char.ApplyProgression(
+			progression.OrdinaryEvents(progression.Outcome{
+				AttackerSkill: string(skills.Skullduggery),
+			}),
+			progression.SideAttacker, actor.GetUserId(), util.GetRoundCount())
+	}
 
 	return result
 }

@@ -331,3 +331,83 @@ func TestFireSurprise_ClaimedCooldownDeniesTheOpener(t *testing.T) {
 	assert.Equal(t, claimed, char.Cooldowns["special-move"],
 		"a refused claim must not extend the running cooldown")
 }
+
+// ---------------------------------------------------------------------------
+// 7. A landed surprise shot trains skullduggery (ranged equivalent of the
+// melee ambush award in internal/hooks/NewRound_DoCombat_unified.go)
+// ---------------------------------------------------------------------------
+
+// Assertions are on the USE COUNTER (GetSkillUseCount), never on whether a
+// rank moved: progression is probabilistic and pinRangedSurpriseBalance turns
+// live progression off (UseSkillProgression = false) so the ranged damage
+// assertions elsewhere in this file stay stable. TrackSkillUse (called
+// unconditionally by OnSkillUseScaled, live-progression knob or not) is what
+// moves the counter, so it is the correct deterministic signal here.
+func TestFireSurprise_LandedShotTrainsSkullduggery(t *testing.T) {
+	pinRangedSurpriseBalance(t)
+	pinOrdinaryContestWin(t)
+	_, cleanup := seedFireMobInRoom(t, 1, 1)
+	defer cleanup()
+
+	char := newSurpriseShooter(true)
+	before := char.GetSkillUseCount(string(skills.Skullduggery))
+
+	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
+
+	require.True(t, res.Executed)
+	require.True(t, res.MoveResult.Hit, "fixture sanity: the deterministic win must land")
+	assert.Equal(t, before+1, char.GetSkillUseCount(string(skills.Skullduggery)),
+		"a landed surprise shot must train skullduggery exactly once")
+}
+
+// ---------------------------------------------------------------------------
+// 8. Control: a surprise shot that MISSES does not train skullduggery
+// ---------------------------------------------------------------------------
+
+// The defence wins by 1 sigma, cleanly (no defensive crit) — the same
+// deterministic runner TestFireSeam_DefendedShotUsesContestNotAddend uses to
+// pin a defended (non-crit) outcome. The shooter is still hidden and still
+// pays the special-move cooldown; only the contest result differs from case 7.
+func TestFireSurprise_MissedShotDoesNotTrainSkullduggery(t *testing.T) {
+	pinRangedSurpriseBalance(t)
+	restore := combat.SetChannelAttackContestRunnerForTest(
+		tauntDeterministicRunner(t, -1.0, -0.5, 0.5))
+	defer restore()
+	_, cleanup := seedFireMobInRoom(t, 1, 1)
+	defer cleanup()
+
+	char := newSurpriseShooter(true)
+	before := char.GetSkillUseCount(string(skills.Skullduggery))
+
+	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
+
+	require.True(t, res.Executed)
+	require.False(t, res.MoveResult.Hit, "fixture sanity: the deterministic defence must win")
+	assert.Equal(t, before, char.GetSkillUseCount(string(skills.Skullduggery)),
+		"a missed surprise shot must not train skullduggery")
+}
+
+// ---------------------------------------------------------------------------
+// 9. Control: an ordinary (unhidden) shot never trains skullduggery
+// ---------------------------------------------------------------------------
+
+// Distinguishes the award from "any landed shot trains skullduggery" — the
+// shooter here is visible (hidden=false), so surpriseShot is false even
+// though the contest is pinned to the same deterministic win as case 7.
+func TestFireSurprise_OrdinaryShotDoesNotTrainSkullduggery(t *testing.T) {
+	pinRangedSurpriseBalance(t)
+	pinOrdinaryContestWin(t)
+	_, cleanup := seedFireMobInRoom(t, 1, 1)
+	defer cleanup()
+
+	char := newSurpriseShooter(false)
+	require.False(t, char.IsHidden(), "precondition: an ordinary, visible shooter")
+	before := char.GetSkillUseCount(string(skills.Skullduggery))
+
+	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
+
+	require.True(t, res.Executed)
+	require.True(t, res.MoveResult.Hit, "fixture sanity: the deterministic win must land")
+	assert.Equal(t, before, char.GetSkillUseCount(string(skills.Skullduggery)),
+		"an ordinary shot must not train skullduggery")
+}
