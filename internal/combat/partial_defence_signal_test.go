@@ -21,7 +21,7 @@ func TestResolveDefenseOutcome_DefenceWinSetsDefended(t *testing.T) {
 	stdDev := 15.0
 	best := defenceWinBest(stdDev*math.Sqrt2, stdDev)
 
-	res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
 
 	if !res.hit {
 		t.Fatal("a defensive win must land as a partially deflected hit")
@@ -40,7 +40,7 @@ func TestResolveDefenseOutcome_FlooredSaveIsDefended(t *testing.T) {
 	best := defenceWinBest(1, 15.0) // margin +1 == the defence-side sentinel
 	best.floored = true
 
-	res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
 
 	if !res.hit || !res.defended {
 		t.Errorf("a floored save is still a defensive win dealing partial damage, got hit=%v defended=%v",
@@ -56,7 +56,7 @@ func TestResolveDefenseOutcome_DefendedFalseOnEveryOtherPath(t *testing.T) {
 
 	t.Run("attack won normally", func(t *testing.T) {
 		best := defenceWinBest(-15*math.Sqrt2, 15) // negative margin == attack win
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false)
+		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
 		if !res.hit || res.defended {
 			t.Errorf("hit=%v defended=%v, want true/false on a clean attack win", res.hit, res.defended)
 		}
@@ -65,7 +65,7 @@ func TestResolveDefenseOutcome_DefendedFalseOnEveryOtherPath(t *testing.T) {
 	t.Run("attack crit", func(t *testing.T) {
 		best := defenceWinBest(-15*math.Sqrt2*3, 15)
 		best.hitRoll.StdDev = 15
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false)
+		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
 		if !res.crit {
 			t.Fatal("fixture did not produce an attack crit")
 		}
@@ -76,7 +76,7 @@ func TestResolveDefenseOutcome_DefendedFalseOnEveryOtherPath(t *testing.T) {
 
 	t.Run("defence crit", func(t *testing.T) {
 		best := defenceWinBest(15*math.Sqrt2*3, 15)
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false)
+		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
 		if !res.defenseCrit {
 			t.Fatal("fixture did not produce a defence crit")
 		}
@@ -88,7 +88,7 @@ func TestResolveDefenseOutcome_DefendedFalseOnEveryOtherPath(t *testing.T) {
 	t.Run("attack fumble", func(t *testing.T) {
 		best := defenceWinBest(-15*math.Sqrt2, 15)
 		best.hitRoll.ZScore = -2.5
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false)
+		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
 		if !res.fumble || res.defended {
 			t.Errorf("fumble=%v defended=%v, want true/false", res.fumble, res.defended)
 		}
@@ -97,7 +97,7 @@ func TestResolveDefenseOutcome_DefendedFalseOnEveryOtherPath(t *testing.T) {
 	t.Run("defence fumble", func(t *testing.T) {
 		best := defenceWinBest(15*math.Sqrt2, 15)
 		best.defRoll.ZScore = -2.5
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false)
+		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, false, false)
 		if !res.hit || res.defended {
 			t.Errorf("hit=%v defended=%v, want true/false on a defence fumble", res.hit, res.defended)
 		}
@@ -105,7 +105,7 @@ func TestResolveDefenseOutcome_DefendedFalseOnEveryOtherPath(t *testing.T) {
 
 	t.Run("forced crit against a sleeper", func(t *testing.T) {
 		best := defenceWinBest(15*math.Sqrt2, 15) // the defence took the margin...
-		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, true)
+		res := resolveDefenseOutcomeCore(&AttackResult{}, best, src, tgt, 2.0, false, true, false)
 		if !res.crit {
 			t.Fatal("forceCrit must produce a crit")
 		}

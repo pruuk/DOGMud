@@ -792,7 +792,7 @@ type hitResolution struct {
 	// damageMult scales the swing's damage: 0.0 fully negated, 1.0 full damage,
 	// in between = partially deflected. U6 Task 10 — a defensive win is no
 	// longer a clean miss, so a hit that lands is not automatically a full-value
-	// hit. EVERY return path in resolveDefenseOutcomeCore sets this explicitly;
+	// hit. EVERY return path in resolveDefenseOutcomeInner sets this explicitly;
 	// the zero value is 0.0, so a path that forgets silently deals nothing.
 	damageMult float64
 	// defended is true when the DEFENCE won the contest but the swing still
@@ -894,8 +894,17 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // removed rather than left as a silent no-op. One visible consequence:
 // result.AttackZScore now reports the roll that actually happened instead of the
 // bumped value.
-func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
-	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+// critOnWin upgrades a WON contest to a crit. It does NOT decide the contest.
+//
+// Deliberately NOT forceCrit. forceCrit forces the WIN outright and the defender
+// never answers it (the sleeping-victim contract). critOnWin respects the contest
+// in full: the defender rolls and may win, and on a defender win nothing is
+// upgraded because there is no clean hit to upgrade.
+//
+// Both may be true — an ambush against a sleeping target — in which case
+// forceCrit decides the outcome and critOnWin is redundant. Do not merge them.
+func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, critOnWin bool) hitResolution {
+	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, critOnWin)
 
 	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
 	// res.hit, and nowhere earlier. The core resolver treats an attack crit as
@@ -908,10 +917,40 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 	return res
 }
 
-// resolveDefenseOutcomeCore is resolveDefenseOutcome without the crit floors.
-// Split out so the floors have exactly one application point despite the many
-// early returns below.
-func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
+// resolveDefenseOutcomeCore applies the U10d opening-strike upgrade to the
+// verdict the inner resolver produced. Split out because the inner function has
+// seven exits and the upgrade must apply to all of them uniformly.
+func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, critOnWin bool) hitResolution {
+	res := resolveDefenseOutcomeInner(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+
+	// U10d: a surprise opening strike crits on a CLEANLY won contest. Applied
+	// after the inner resolver settles, so it can only upgrade an outcome the
+	// ordinary fumble/crit/normal/floor ordering already produced. Every
+	// condition corresponds to a rule this package states elsewhere:
+	//
+	//   res.hit && !res.defended -- the documented "attack won the contest"
+	//     idiom (hitResolution.defended, above). hit alone is TRUE for a
+	//     deflected partial hit, which is a DEFENCE win.
+	//   !best.floored -- a sentinel margin must never be promoted (the same
+	//     rule applyCritFloors states). A mercy save must not become a
+	//     maximum-damage ambush.
+	//   !res.fumble -- a fumble aborts even a winning roll.
+	//   best.margin <= 0 -- literally "won the margin". The defence-fumble exit
+	//     returns BEFORE attackWon is computed, so without this the guard would
+	//     fire on a swing the attack lost on margin and won only because the
+	//     defender fumbled -- a divergence from the channel seam, whose guard is
+	//     gated on res.Success.
+	if critOnWin && res.hit && !res.defended && !best.floored && !res.fumble &&
+		best.margin <= 0 {
+		res.crit = true
+	}
+	return res
+}
+
+// resolveDefenseOutcomeInner is resolveDefenseOutcome without the crit floors
+// and without the U10d opening-strike upgrade. Split out so the floors have
+// exactly one application point despite the many early returns below.
+func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
 	fumbleThreshold := -2.0
 	defCritThreshold := DefenseCritBar()
 

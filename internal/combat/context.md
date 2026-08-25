@@ -468,13 +468,13 @@ via what is now `ResolveChannelAttack` and deleted both functions.
 Four things that bite:
 
 - **`hitResolution.damageMult` has no safe zero value.** Its zero is 0.0, which
-  deletes the swing's damage. Every return path in `resolveDefenseOutcomeCore`
+  deletes the swing's damage. Every return path in `resolveDefenseOutcomeInner`
   sets it explicitly; a new path that forgets fails silently.
 - **A FLOORED save takes the bare 0.5 and never the curve.** The ±1 sentinel is
   in raw score units, not standard deviations, so normalising it yields
   `1/(stdDev*√2)` — about 0.05 z at typical scores, but **0.71 z** when
   `StdDevFor` clamps at its 1.0 floor for a very weak defender, which would hand
-  the weakest defender the biggest floored save. `resolveDefenseOutcomeCore`
+  the weakest defender the biggest floored save. `resolveDefenseOutcomeInner`
   special-cases `best.floored`; `TestFlooredSentinelDoesNotNormaliseToZero`
   records the actual numbers.
 - **A floor-promoted defence crit must re-negate.** `applyCritFloors` runs after

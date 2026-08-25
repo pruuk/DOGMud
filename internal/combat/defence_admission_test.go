@@ -224,7 +224,7 @@ func TestRunBestOfAllDefense_MixedAffordabilityPairsWinnerWithItsOwnQuote(t *tes
 	// losing and the winning defence must therefore show zero here; this
 	// assertion stays only to guard against progression creeping back into
 	// this function.
-	resolveDefenseOutcome(result, best, attacker, defender, ContestCritThreshold, false, false)
+	resolveDefenseOutcome(result, best, attacker, defender, ContestCritThreshold, false, false, false)
 	if got := defender.SkillUseCount[string(skills.UnarmedCombat)]; got != 0 {
 		t.Fatalf("losing dodge progression = %d, want 0", got)
 	}
@@ -280,7 +280,7 @@ func TestRunBestOfAllDefense_ShortWinnerChargesAndMessagesOnce(t *testing.T) {
 	// sendDefenseMessages no longer rolls skill progression at all (see the
 	// docstring above), so both entries read zero here regardless of which
 	// defence won or was short.
-	resolveDefenseOutcome(result, best, attacker, defender, ContestCritThreshold, false, false)
+	resolveDefenseOutcome(result, best, attacker, defender, ContestCritThreshold, false, false, false)
 	if got := defender.SkillUseCount[string(skills.UnarmedCombat)]; got != 0 {
 		t.Fatalf("short winning dodge progression = %d, want 0 -- sendDefenseMessages no longer progresses skills", got)
 	}

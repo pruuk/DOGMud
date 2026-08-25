@@ -463,7 +463,8 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			// New resolution order: fumbles → crits → normal → floors
 			// Chunk 3.3: ctx.forceCrit is true when the defender was snapshotted
 			// as Sleeping at round start; every swing against them this round crits.
-			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit)
+			// Task 3: becomes the per-swing opening-strike flag
+			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit, false)
 
 			// Momentum builds only on clean wins and resets on deflections,
 			// matching pre-U6 behavior where a deflected swing was a miss.
