@@ -31,8 +31,11 @@ func actAttack(params map[string]any, ctx *EvalContext) Result {
 	// player picker whenever UserId==0, even when MobId was set. That
 	// caused caravan leaders (Ketil) to aggro any player following them
 	// the moment a hostile mob (bandit lookout) ambushed the crew.
+	// Loaded once and shared with the EngageAggroType call below. The
+	// random-player fallback treats a missing room as fatal; the aggro-typing
+	// pass below treats it as merely un-typeable (see its comment).
+	room := rooms.LoadRoom(ctx.RoomId)
 	if targetUserId == 0 && targetMobId == 0 {
-		room := rooms.LoadRoom(ctx.RoomId)
 		if room == nil {
 			return Failure
 		}
@@ -48,8 +51,15 @@ func actAttack(params map[string]any, ctx *EvalContext) Result {
 	// cooldown the other two honoured. The promotion makes the opening strike
 	// of the ordinary combat round resolve as a surprise — there is no
 	// separate backstab crit any more.
+	//
+	// Second behaviour change, deliberate: when the room fails to load or the
+	// target id resolves to nothing, a hidden mob now degrades to
+	// DefaultAttack where the old IsHidden() read would still have said
+	// SurpriseAttack. Aggro at a target that cannot be resolved is already
+	// degenerate, and typing it as a surprise would charge nothing and gate
+	// nothing — but it IS a change, not just the cooldown fix.
 	aggroType := characters.DefaultAttack
-	if room := rooms.LoadRoom(ctx.RoomId); room != nil {
+	if room != nil {
 		var target actions.Actor
 		if targetUserId > 0 {
 			if u := users.GetByUserId(targetUserId); u != nil {

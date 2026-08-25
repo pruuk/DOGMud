@@ -63,11 +63,36 @@ func TestEngageAggroType(t *testing.T) {
 			"an ordinary opener must not be typed as a surprise attack")
 	})
 
+	// The attacker here MUST be hidden with a free cooldown, or the IsHidden
+	// gate short-circuits and the target==nil guard is never reached. The
+	// first cut of this subtest used a plain non-hidden actor and could not
+	// fail: deleting `target == nil ||` from EngageAggroType left it green.
 	t.Run("no_target_is_a_default_attack", func(t *testing.T) {
-		a := newActor()
+		room := newAggroTestRoom()
+		attacker := newAggroAttackerMob(9814)
+		addHiddenBuff(&attacker.Character)
+		require.True(t, attacker.Character.IsHidden(),
+			"precondition: attacker is hidden, so the nil-target guard is reachable")
+		require.Zero(t, attacker.Character.Cooldowns["special-move"],
+			"precondition: the cooldown is free, so only the nil target can refuse")
 
-		assert.Equal(t, characters.DefaultAttack, EngageAggroType(a, nil),
+		got := EngageAggroType(NewMobActorInRoom(attacker, room), nil)
+
+		assert.Equal(t, characters.DefaultAttack, got,
 			"a missing target cannot produce a surprise attack")
+		assert.Zero(t, attacker.Character.Cooldowns["special-move"],
+			"a refused opener must not have claimed the special-move cooldown")
+	})
+
+	// The guard's second half. A nil character reaches IsHidden() on a nil
+	// receiver if the guard is removed, so this subtest fails loudly rather
+	// than silently when the check goes missing.
+	t.Run("nil_character_is_a_default_attack", func(t *testing.T) {
+		a := &recordingActor{char: nil}
+		target := newActor()
+
+		assert.Equal(t, characters.DefaultAttack, EngageAggroType(a, target),
+			"an actor with no character cannot produce a surprise attack")
 	})
 
 	t.Run("hidden_but_on_cooldown_is_a_default_attack", func(t *testing.T) {

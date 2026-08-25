@@ -833,10 +833,11 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
   point). Do not reach `internal/contest` directly; this package
   goes through `internal/combat`. The flat `dice.RollStat` threshold checks in
   `search.go` and `track.go` are NOT contests yet and are unassigned; both are
-  breadcrumbed in place. (`surprise_attack.go` was the third such case — U10d
-  deleted it outright. The uncontested pre-combat burst is gone; the opening
-  strike of the ordinary combat round is the surprise now, and
-  `EngageAggroType` in `combat_attack.go` is all that remains here.)
+  breadcrumbed in place. (A separate case, `surprise_attack.go`, had no hit
+  resolution at all — not a flat threshold but an unconditional auto-hit with
+  no defender term anywhere. U10d deleted it outright rather than giving it a
+  contest: the opening strike of the ordinary combat round is the surprise
+  now, and `EngageAggroType` in `combat_attack.go` is all that remains here.)
 - `internal/users` — Player character management
 - `internal/mobs` — NPC management
 - `internal/rooms` — Room context, containers, exits
