@@ -114,16 +114,32 @@ melee, the burst and round 1 roll *the same contest with the same stat and the
 same skill*. Keeping both would hand a stealth opener two melee rounds in round 1
 and require two code paths to stay in step forever.
 
+**The slice has two halves.** Sections 2.2 to 2.7 describe the **melee** opener,
+which is the bulk of the work. Section 2.8 adds a **single ranged surprise
+shot** so a stealth build can open with a bow rather than only a blade. They
+share the payoff formula and the `SurpriseOpeningStrikeMultiplier` knob, and
+they differ in where they plug in (2.2) and in which brakes they need (2.8.1).
+
 ### 2.2 The contest is ordinary melee
 
 **Note on where this plugs in.** Melee does *not* resolve through
 `combat.ResolveChannelAttack`. U6b deliberately left melee on its own scoring
 loop while making it consume the same defence-set and name builders as every
 other channel ("melee keeps its scoring loop but consumes the same name
-builder"). So U10d plugs into the **melee path**, not into `AttackSide`. This
-matters: an earlier draft of this spec proposed an `AttackSide.CritOnWin` field,
-which would have been dead weight, since no non-melee channel needs it (ranged
-surprise is out of scope, section 8).
+builder"). So the melee half of U10d plugs into the **melee path**.
+
+**Ranged is the opposite**, and this is why the slice covers both (section 2.8).
+`ExecuteFire` already goes through `ExecuteSkillMove` → `ResolveChannelAttack`
+with a real `AttackSide` carrying `ForceCrit`. So "crit if the contest is won"
+has to exist in **two** places, because the arc has two attack paths:
+
+| Path | Used by | Where `critOnWin` lives |
+|---|---|---|
+| melee scoring loop | melee auto-attack | a parameter on `resolveDefenseOutcomeCore`, beside `forceCrit` |
+| channel seam | ranged (and every special move) | a field on `combat.AttackSide`, beside `ForceCrit` |
+
+The two must stay semantically identical. Pin that with a shared test rather
+than trusting the names to drift in step.
 
 The attack side is therefore exactly what round 1 would have rolled anyway —
 `combat.calcAttackScore`, unchanged:
@@ -345,6 +361,28 @@ rather than to a 16-site progression sweep landing in the same change.
 > consistency") is a *different* slice and has never been started. Its roadmap
 > row carries no shipped marker. Do not read one as the other.
 
+#### 2.6.4 The ranged surprise strike
+
+A surprise shot awards:
+
+| Award | Path | Note |
+|---|---|---|
+| `ranged-combat` | `usercommands/shoot.go:199`, a bare `OnSkillUse` | **off the U9 seam.** Pre-existing; see below. |
+| `perception` | rolled as ranged-combat's primary stat | `SkillPrimaryStats["ranged-combat"] == "perception"` |
+| crit bonus tier | the channel seam, `defence_multiplier.go:548-578` | always pays, since a landed surprise shot always crits |
+| `skullduggery` | **added by U10d**, seam-routed, same shape as 2.6.2 | once per surprise shot, on a hit |
+
+No triple-roll problem here, unlike melee (2.6.2): ranged-combat's primary is
+perception and skullduggery's is dexterity, so the two events roll different
+stats.
+
+**Two more off-seam findings, recorded not fixed.** `ranged-combat`'s only
+ordinary progression is that bare `OnSkillUse` in the **player** wrapper, so
+**mob archers earn no ranged-combat progression at all**. Both belong to U10b
+alongside the skullduggery family; U10d does not touch them, because changing
+what an ordinary shot awards is a change to every shot in the game and would
+contaminate this slice's playtest.
+
 ### 2.7 Edge cases: deliberately not special-cased
 
 Decided by the owner on 2026-08-25: **ship as-is and let playtest speak.**
@@ -357,6 +395,88 @@ Decided by the owner on 2026-08-25: **ship as-is and let playtest speak.**
   difficulty of re-hiding in combat are the current brakes.
 
 Both are recorded here so the playtest knows to probe them specifically.
+
+### 2.8 The ranged surprise strike
+
+Added to scope on 2026-08-25 at the owner's request: a stealth build should be
+able to open with a bow, not only a blade.
+
+**One shot, not a round.** `shoot` already fires exactly one shot, so the ranged
+opener is naturally the single "opening strike" and needs no per-weapon logic.
+It gets the same stacked crit as the melee opening strike:
+
+```
+CritDamageMultiplier(rangedCombatRank)
+  * CritDamageMultiplier(skullduggeryRank)
+  * SurpriseOpeningStrikeMultiplier
+```
+
+**It plugs in through `AttackSide.CritOnWin`**, since `ExecuteFire` already
+builds an `AttackSide` and routes through `ExecuteSkillMove` →
+`ResolveChannelAttack`. The attack side is unchanged: Perception +
+ranged-combat, per U6b Assumption 2 (an aimed shot is a deliberate-move action,
+not an auto-attack swing). As with melee, **skullduggery amplifies but does not
+aim.**
+
+#### 2.8.1 Three brakes that melee gets free and ranged does not
+
+These are the reason this is a design addition rather than wiring. Each was
+verified against the code on 2026-08-25.
+
+**1. Firing does not break stealth. At all.** There is no
+`TransitionToRevealing`, no `CancelBuffsWithFlag(buffs.Hidden)` and no
+`ForceVisible` anywhere in `internal/actions/combat_fire.go`,
+`internal/usercommands/shoot.go` or `internal/mobcommands/shoot.go`. `IsHidden()`
+is read once, at `combat_fire.go:153`, and only to set `FireResult.IsSneaking`,
+which drives **narration anonymity** and nothing else. Today that is harmless,
+because a hidden shot is an ordinary shot. Attach a stacked crit to it and a
+hidden archer fires a maximum-bonus shot every round, indefinitely, without ever
+being revealed.
+
+> **U10d therefore makes a surprise shot break stealth.** The shooter
+> transitions `Hidden → Revealing` on firing a surprise shot. This is a
+> behaviour change to the ranged path and must be called out in its own right,
+> not folded silently into the redesign.
+
+**2. Fire deliberately never burns the special-move cooldown.** The comment at
+the `RecordAndWait` call says so explicitly: *"Fire never burns the special-move
+cooldown — only the combat round."* So the brake chosen for the melee ambush
+(2.5) does not exist here by default.
+
+> **A surprise shot burns the shared `special-move` cooldown**, matching melee.
+> An ordinary shot continues not to. The charge is conditional on the shot being
+> a surprise shot, so the existing ranged rotation is untouched.
+
+**3. Cross-room shots are aggro-free AND uncounterable by design.** A cross-room
+shot never calls `SetAggro`, and `counterSkillMoveExit` is reach-gated so the
+cross-room shot is "the ONE uncounterable attack" (owner decision, U6b Task 10).
+Layered onto anonymous narration, a cross-room stacked crit would let a player
+kill a boss from the next room with no retaliation, no counter, and no way for
+the target to learn who did it.
+
+> **The stacked bonus is SAME-ROOM ONLY.** A cross-room shot from stealth
+> remains an ordinary shot: no `CritOnWin`, no skullduggery term, no cooldown
+> charge, no reveal. `ExecuteFire` already computes `crossRoom`, so this is a
+> gate on an existing local, not new plumbing.
+
+#### 2.8.2 A noted asymmetry, deliberately left standing
+
+`ChannelRanged`'s defence set is **narrower than melee's**: dodge for every
+defender, block only for a shielded one. No parry, no quell, no defy. So a
+ranged surprise strike is **easier to land** than a melee one while hitting at
+least as hard.
+
+This is not corrected here. Widening the ranged defence set is a change to every
+shot in the game, not to surprise shots, and it belongs to whatever slice
+revisits ranged defence rather than to this one. It is recorded so the playtest
+compares the two openers directly and so nobody later reads the imbalance as an
+accident of U10d.
+
+#### 2.8.3 What ranged does NOT get
+
+- No multi-shot surprise. One shot is the whole opener.
+- No cross-room bonus (2.8.1, brake 3).
+- No change to ordinary (non-surprise) shots of any kind.
 
 ---
 
@@ -432,8 +552,13 @@ Declared in `internal/configs/config.balance.go` as `ConfigFloat`; defaulted and
 validated in `internal/configs/config.balance.combat.go` next to the other crit
 knobs. Default 1.0, rejected and reset if `<= 0`.
 
+The knob applies to **both** openers — the melee opening strike and the ranged
+surprise shot — so a single dial tunes "how big is an ambush" regardless of
+weapon. If playtest shows the two need to diverge, split it then rather than
+shipping two knobs on a guess.
+
 Everything else reuses existing tuned knobs: `CritDamageBase`,
-`CritDamagePerSkill`, `SkillWeight`, `SpecialMoveCooldown`,
+`CritDamagePerSkill`, `SkillWeight`, `SpecialMoveCooldown`, `RangedShotScale`,
 `SkillMultiplierBase`/`Max`, `SkillSoftCap`.
 
 ---
@@ -454,7 +579,16 @@ Required copy work:
 - Helpfile coverage for the stealth opener, cross-linked from `help sneak`,
   `help hide`, `help skullduggery` and `help combat`, and registered in
   `_datafiles/world/dogmud/keywords.yaml`. An unregistered helpfile never appears
-  in the topic index.
+  in the topic index. The helpfile must cover **both** openers, and must say
+  plainly that a shot from stealth gives away your position and that the big
+  bonus only applies in the same room.
+- **The ranged surprise shot needs its own narration**, distinct from an
+  ordinary shot, plus a line telling the shooter they have been revealed. A
+  player who loses stealth silently will read it as a bug.
+- Existing ranged narration already goes anonymous for a hidden shooter
+  (`FireResult.IsSneaking`). Check that the reveal and the anonymity read
+  coherently together in one round: the shot is anonymous, then the shooter is
+  exposed.
 
 ---
 
@@ -497,21 +631,37 @@ Required copy work:
 15. The attacker's crit bonus tier is paid **once** for the round, not once per
     critting swing, despite every landed swing critting.
 
+**The ranged surprise strike**
+
+16. A same-room surprise shot crits on a won contest and carries the stacked
+    skullduggery multiplier.
+17. A surprise shot **reveals the shooter**: `Hidden → Revealing` on firing.
+    This is the anti-sniping regression test — without it a hidden archer fires
+    a maximum-bonus shot every round forever.
+18. A surprise shot burns the shared `special-move` cooldown; an **ordinary**
+    shot still does not.
+19. A **cross-room** shot from stealth is an ordinary shot: no crit upgrade, no
+    skullduggery term, no cooldown charge, no reveal.
+20. A surprise shot awards skullduggery once, and ranged-combat as before.
+21. `AttackSide.CritOnWin` and the melee `critOnWin` parameter produce the same
+    verdict for the same contest inputs. Shared test — the two paths must not
+    drift.
+
 **Parity and guards**
 
-16. Mob and player ambushers resolve identically (mobs reach this through
+22. Mob and player ambushers resolve identically (mobs reach this through
     `behaviortree/actions_combat.go`).
-17. A site guard in the arc's existing `internal/combat/contest_site_guard_test.go`
+23. A site guard in the arc's existing `internal/combat/contest_site_guard_test.go`
     style asserting no production path produces an uncontested surprise hit, so
     the auto-hit cannot be reintroduced.
 
 **Gates**
 
-18. `gofmt -l internal/ modules/` clean; `go build ./...`; tests for every
+24. `gofmt -l internal/ modules/` clean; `go build ./...`; tests for every
     touched package.
-19. Isolated detached-worktree boot test to `boot-check.exe`, `Server Ready`
+25. Isolated detached-worktree boot test to `boot-check.exe`, `Server Ready`
     confirmed, exit 124 expected.
-20. **Adversarial in-game playtest**, mandatory per the content SOP because this
+26. **Adversarial in-game playtest**, mandatory per the content SOP because this
     ships new player-facing copy. Probe specifically: the sleeping-target
     interaction (2.7), mid-fight re-hiding (2.7), multi-weapon and Extra Arms
     configurations, and whether the ambush feels competitive with a companion
@@ -521,8 +671,16 @@ Required copy work:
 
 ## 8. Out of scope
 
-- **Ranged surprise.** `ExecuteFire` is Perception-driven and has its own path;
-  a stealth opener with a bow is not addressed here.
+- **Cross-room surprise shots.** In scope for the *ranged* opener generally
+  (2.8), but the stacked bonus is same-room only. A cross-room shot from stealth
+  stays an ordinary shot, for the reasons in 2.8.1 brake 3.
+- **Widening the ranged defence set.** `ChannelRanged` answers with dodge, plus
+  block only for a shielded defender. That makes a ranged surprise easier to
+  land than a melee one (2.8.2). Correcting it changes every shot in the game,
+  not just surprise shots.
+- **The off-seam ranged-combat award** at `usercommands/shoot.go:199`, and the
+  fact that mob archers earn no ranged-combat progression at all (2.6.4). Both
+  are U10b's.
 - **The unowned static-difficulty checks** in `actions/search.go`,
   `actions/track.go` and `forager/forage_core.go` remain UNASSIGNED per the
   roadmap.
