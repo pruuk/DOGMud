@@ -306,6 +306,22 @@ func (b *Balance) validateCombat() {
 		b.CritDamagePerSkill = 0.05
 	}
 
+	// ── SURPRISE ATTACK (chunk U10d) ────────────────────────────────────────
+	// All three default to 1.0 on ANY non-positive value, including the zero an
+	// absent YAML key unmarshals to. Deliberately NOT the `< 0 || > 1.0` shape
+	// the deleted SurpriseAttack*Penalty knobs used: that shape leaves an absent
+	// key at 0 forever, which is exactly why those five were silently inert.
+	// 0 is nonsense for these; disabling is 1.0.
+	if b.SurpriseOpeningStrikeMultiplier <= 0 {
+		b.SurpriseOpeningStrikeMultiplier = 1.0
+	}
+	if b.SurpriseRangedStrikeMultiplier <= 0 {
+		b.SurpriseRangedStrikeMultiplier = 1.0
+	}
+	if b.RangedUnengagedDamageMultiplier <= 0 {
+		b.RangedUnengagedDamageMultiplier = 1.0
+	}
+
 	// Crit floors (chunk 5.11e). Unlike the knobs above, 0 IS meaningful here
 	// and must survive: it is the off switch if the mechanic plays badly. So
 	// only a negative value is corrected, and an absent key legitimately reads
