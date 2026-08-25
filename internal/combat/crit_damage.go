@@ -74,22 +74,31 @@ func OpeningStrikeMultiplier(attacker *characters.Character, channelKnob float64
 	return CritDamageMultiplier(attacker.GetSkillLevel(skills.Skullduggery)) * channelKnob
 }
 
-// CritOrMitigatedDamage rolls the damage for one spell or conviction hit.
+// CritOrMitigatedDamageScaled is CritOrMitigatedDamage with an extra crit-only
+// multiplier, used by the U10d ranged surprise shot.
 //
-// On a crit it bypasses mitigation entirely and scales by CritDamageMultiplier;
-// on a normal hit it applies mitigation. Either way the multiplier is applied
-// to the MEAN before the roll, because dice.RollStat derives its spread from
-// the mean it is handed (stdDev = mean * RollSpread) — scaling the rolled
-// result instead would stretch the spread by the multiplier and leave crits
-// wildly swingier at high skill.
+// On a crit it bypasses mitigation entirely and scales by
+// CritDamageMultiplier(skillRank) * bonusCritMult; on a normal hit it applies
+// mitigation and bonusCritMult plays no part at all. Either way the
+// multiplier is applied to the MEAN before the roll, because dice.RollStat
+// derives its spread from the mean it is handed (stdDev = mean * RollSpread)
+// — scaling the rolled result instead would stretch the spread by the
+// multiplier and leave crits wildly swingier at high skill.
+//
+// bonusCritMult 0 reads as "unset" and means 1.0, matching AttackSide.Mult's
+// convention. It applies ONLY on the crit branch: a surprise shot that lands
+// as an ordinary hit is an ordinary hit.
 //
 // The melee channel deliberately does NOT use this. calcHitDamage carries
 // backstab consumption and crit-buff bookkeeping, and floors at 0 rather than
 // 1, so folding it in here would either lose behaviour or bloat the signature.
-func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap float64) int {
+func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap, bonusCritMult float64) int {
 	mean := rawDmg
 	if isCrit {
-		mean *= CritDamageMultiplier(skillRank)
+		if bonusCritMult == 0 {
+			bonusCritMult = 1.0
+		}
+		mean *= CritDamageMultiplier(skillRank) * bonusCritMult
 	} else {
 		mean = ApplyMitigation(rawDmg, mitigPct, mitigCap)
 	}
@@ -100,4 +109,10 @@ func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct,
 		dmg = 1
 	}
 	return dmg
+}
+
+// CritOrMitigatedDamage rolls the damage for one spell or conviction hit, with
+// no bonus multiplier. See CritOrMitigatedDamageScaled.
+func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap float64) int {
+	return CritOrMitigatedDamageScaled(rawDmg, skillRank, isCrit, mitigPct, mitigCap, 1.0)
 }
