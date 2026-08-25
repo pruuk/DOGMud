@@ -75,6 +75,11 @@ func pinRangedSurpriseBalance(t *testing.T) {
 	b.SurpriseRangedStrikeMultiplier = configs.ConfigFloat(surpriseRangedKnob)
 	b.SurpriseOpeningStrikeMultiplier = configs.ConfigFloat(surpriseMeleeKnobUnused)
 	b.RangedShotScale = 1.0
+	// Neutral here on purpose. These fixtures fire into an empty room, so every
+	// shot is unengaged and the factor cancels out of the ratios below -- but
+	// pinning it keeps the surprise arithmetic independent of a knob this file
+	// is not about. combat_fire_unengaged_test.go overrides it deliberately.
+	b.RangedUnengagedDamageMultiplier = 1.0
 	b.MeleeDamageScale = 0.30
 	b.GlobalDamageMultiplier = 1.0
 	b.SkillMultiplierBase = 1.0

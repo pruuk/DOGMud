@@ -48,6 +48,14 @@ type FireResult struct {
 	// burns the same timer.
 	SurpriseOnCooldown bool
 
+	// AimedWhileEngaged reports that this shot was taken while something in the
+	// SHOOTER's room had the shooter as its aggro target, so it did NOT carry
+	// RangedUnengagedDamageMultiplier. The wrapper must be able to say so once
+	// per engagement: damage that silently drops to a fraction reads as a bug.
+	// Set on every such shot, same-room or cross-room, and set independently of
+	// the knob's value -- it reports the SITUATION, not the arithmetic.
+	AimedWhileEngaged bool
+
 	MoveResult combat.SkillMoveResult
 	Executed   bool
 	Cost       characters.CostCommitResult
@@ -276,11 +284,11 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	if surpriseShot {
 		// The RANGED knob, not the melee one. It ships lower (0.5 against 1.0)
 		// because a shot answers one fewer defence and the opener inherits
-		// RangedUnengagedDamageMultiplier -- it is unengaged by definition.
-		// (That knob is declared and validated but not yet wired to any shot;
-		// the ranged economy rebalance is a later U10d task. The 0.5 here is
-		// sized for the world where it IS wired.) Passing the melee knob here
-		// would put the ambush near 18,000 instead of ~9,080.
+		// RangedUnengagedDamageMultiplier -- it is unengaged by definition (a
+		// hidden shooter is not being hit). That knob is now wired, below, and
+		// the two COMPOUND: the 0.5 here was always sized for this world.
+		// Passing the melee knob here would put the ambush near 18,000 instead
+		// of ~9,080.
 		bonusCrit = combat.OpeningStrikeMultiplier(char,
 			float64(cfg.SurpriseRangedStrikeMultiplier))
 	}
@@ -322,7 +330,20 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// The shot: unload first (fires even on a miss), then resolve.
 	weapon.Loaded = false
 
-	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale)
+	// U10d. The bow's flat damage_multiplier came down onto the melee band, and
+	// the compensation it was carrying moved here, where it is situational: a
+	// shot pays for its one-attack-per-round economy only while nothing in the
+	// room is hitting the shooter. You cannot aim while someone is on you.
+	unengagedMult := 1.0
+	if shooterIsUnengaged(char, room) {
+		unengagedMult = float64(cfg.RangedUnengagedDamageMultiplier)
+	} else {
+		// The wrapper speaks this (Task 14). Damage that silently drops to a
+		// fraction with no line of text reads as a bug.
+		result.AimedWhileEngaged = true
+	}
+
+	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale) * unengagedMult
 	rangedRank := char.GetSkillLevel(skills.RangedCombat)
 
 	// U6b Tasks 7+8: fire routes through the channel seam. ChannelRanged
@@ -391,4 +412,65 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	}
 
 	return result
+}
+
+// shooterIsUnengaged reports whether nothing in the room currently has the
+// shooter as its aggro target.
+//
+// A room scan rather than Character.Attackers(): that list is never populated
+// in production (combatphase.RegisterMachine has no production callers), so it
+// always reads empty and would hand out the bonus unconditionally.
+//
+// It scans the SHOOTER's room, never the target's. So a cross-room sniper who
+// is himself in melee IS engaged and loses the bonus -- that is the point of
+// the rule, not an edge case. Pass actor.GetRoom(), NOT targetRoom.
+//
+// The shooter's OWN charmed companion is skipped. A companion aggroed on its
+// owner is not "someone is hitting me", and it is reachable: steal
+// (steal.go, which deliberately opts out of mobs.CheckPlayerHarm) and plant
+// both answer a failed roll with `attack @<owner>`, and the behaviour-tree
+// mob_idle attack fallback (behaviortree/actions_combat.go) picks a random
+// player in the room with no owner exclusion. All three leave the mob charmed
+// and still listed as a companion. The BETRAYAL cases are deliberately NOT
+// excluded and must not be: charm lapse (NewRound_MobRoundTick.go) and dismiss
+// both RemoveCharm before they SetAggro, so an ex-companion turning on you
+// reads here as the genuine attacker it is. Same charmerKey idiom as the
+// friendly-fire gate on the target above.
+func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
+	if room == nil {
+		return true
+	}
+	uid, mid := char.GetUserId(), char.MobInstanceId
+	charmerKey := uid
+	if charmerKey == 0 {
+		charmerKey = mid
+	}
+
+	for _, instId := range room.GetMobs(rooms.FindFighting) {
+		m := mobs.GetInstance(instId)
+		// IsInCombat() as well as Aggro != nil, matching combat_retarget.go
+		// exactly. Stale non-nil aggro on an out-of-combat actor would
+		// otherwise suppress the bonus.
+		if m == nil || m.Character.Aggro == nil || !m.Character.IsInCombat() {
+			continue
+		}
+		if charmerKey > 0 && m.Character.IsCharmed(charmerKey) {
+			continue
+		}
+		if (uid > 0 && m.Character.Aggro.UserId == uid) ||
+			(mid > 0 && m.Character.Aggro.MobInstanceId == mid) {
+			return false
+		}
+	}
+	for _, pId := range room.GetPlayers(rooms.FindFighting) {
+		u := users.GetByUserId(pId)
+		if u == nil || u.Character.Aggro == nil || pId == uid || !u.Character.IsInCombat() {
+			continue
+		}
+		if (uid > 0 && u.Character.Aggro.UserId == uid) ||
+			(mid > 0 && u.Character.Aggro.MobInstanceId == mid) {
+			return false
+		}
+	}
+	return true
 }
