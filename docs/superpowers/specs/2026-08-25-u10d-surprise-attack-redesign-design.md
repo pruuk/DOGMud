@@ -1,0 +1,424 @@
+# U10d — Surprise-Attack Redesign
+
+**Date:** 2026-08-25
+**Arc:** Unified Resolution (U0–U12). Split from U10 on 2026-08-21.
+**Behaviour change:** Yes, deliberately and substantially.
+**Depends on:** U1 (contest core), U6b (`ResolveChannelAttack` seam), U9 (progression layer).
+**Roadmap row:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`, plan table, **U10d**.
+
+---
+
+## 1. Why this slice exists
+
+Surprise attack is the last attack in the game that never joined the unified
+resolution seam. Every other channel — melee, ranged, spell, taunt, the sixteen
+special moves, throw, steal, sneak detection, flee, the grapple family — resolves
+through one contest against a real defender. Surprise attack resolves against
+nothing at all.
+
+The roadmap recorded this as one defect. Investigation on 2026-08-25 found
+**three overlapping mechanics**, two live and one dead, plus a fourth latent
+bug. All four are in scope.
+
+### 1.1 What actually ships today
+
+**Mechanic 1 — the pre-combat burst** (`internal/actions/surprise_attack.go`,
+389 lines). Fires before combat is joined. Iterates every equipped weapon
+(primary, offhand, up to four extra arms from the Extra Arms mutation, falling
+back to fists) and swings each one.
+
+The primary weapon is appended with `hitPenalty: 0.0`. The only hit check in the
+function is `util.Rand(100) < int(hitPenalty*100)`, so for the primary that test
+is `roll < 0`, which never fires. **Every primary surprise swing is an
+unconditional auto-hit.** The roll applies only to offhand and extra-arm swings,
+and even there it is a flat *self*-penalty, not a contest.
+
+There is no defender term anywhere in the function. The target's stats, skills,
+defences and equipment never enter. A surprise attack against a novice and
+against the Elemental Queen resolve identically.
+
+The burst is also incoherent about which stat drives it. It computes raw damage
+from **Strength**, passes **skullduggery** in as the skill-multiplier rank, and
+then scales the result by a **Dexterity**-derived `surpriseMult` of
+`max(1.0, (dex + skullduggeryRank)/100)`. Three different stats, no contest.
+
+It applies half of the target's physical mitigation as a "crit-like bypass".
+
+**Mechanic 2 — the round-1 forced crit** (`internal/combat/combat.go:403`).
+Independently of the burst, an aggro type of `characters.SurpriseAttack` sets
+`backstabCrit = true` in `calculateCombat`, which forces a crit on the first
+swing of the first ordinary combat round. `calcHitDamage` returns
+`false // consume backstab` after that one swing, so **only the first swing
+crits, not the round.**
+
+So a stealth opener currently double-dips: a free uncontested volley, and then a
+forced crit in the round that follows.
+
+**Mechanic 3 — the surprise-round boundary. This is dead code.**
+`combatphase.EngagedData.SurpriseLeft` is set correctly when the
+`Engaging → Engaged` transition carries `TriggerSurpriseAttack`, and
+`internal/hooks/Awareness_Cascades.go` registers an `OnEndOfRoundIfSurprise`
+callback to move the ambusher `Hidden → Revealing` when the surprise round ends.
+
+The only function that fires that callback and clears the flag is
+`(*Machine).OnCombatRoundEnd()`. Its sole caller in the entire repository is
+`internal/state/combatphase/combatphase_test.go:181`. **Production never calls
+it.** The block it lives in is still labelled `=== STUBS — Implementations land
+in Tasks 6-8. ===`.
+
+**Latent bug 4 — the ambusher never stops being hidden by design.** Because
+mechanic 3 is dead, nothing consumes `SurpriseLeft`. `Awareness_Cascades`
+deliberately *preserves* `Hidden` on a surprise trigger and then waits for a
+callback that never arrives. The ambusher's `Hidden` breaks only incidentally,
+via `handleCombatRound`'s `ForceVisible`, which acts on the **defender** — that
+is, only once the ambusher is themselves attacked.
+
+### 1.2 What the redesign is for
+
+Owner intent, stated 2026-08-25:
+
+> "I'm ok with the autocrit for all hits for that round and maybe even a
+> multiplier based upon skullduggery on top since players are forgoing having
+> companions to use surprise strike. However, I think we should still have the
+> player roll for the hit and I'd also like to unify the mechanism in with the
+> rest of the stuff we built as much as possible."
+
+and:
+
+> "I want to make the sneak and surprise strike playstyle a viable option when
+> weighed against having powerful companions."
+
+So: **keep the payoff large, but make it earned against the defender, and run it
+on the machinery the arc already built.**
+
+**A note on the premise.** A search on 2026-08-25 found no mechanical exclusion
+between companions and stealth: nothing breaks `Hidden` for having a companion
+out, and no command gates on it. "Forgoing companions" is a real *opportunity*
+cost (conviction reservation, skill investment, build focus) but not a rule the
+code enforces. The design does not depend on it being one.
+
+---
+
+## 2. The design
+
+### 2.1 Shape: one surprise round, no separate action
+
+`actions.SurpriseAttack` is **deleted**. There is no pre-combat burst.
+
+Being `Hidden` when combat is joined makes **round 1 a surprise round**, resolved
+by the ordinary melee path. Every swing that round is an ordinary contested
+swing with two modifications (2.2, 2.3).
+
+Rationale: once the defender gets a real roll and the attack side is ordinary
+melee, the burst and round 1 roll *the same contest with the same stat and the
+same skill*. Keeping both would hand a stealth opener two melee rounds in round 1
+and require two code paths to stay in step forever.
+
+### 2.2 The contest is ordinary melee
+
+**Note on where this plugs in.** Melee does *not* resolve through
+`combat.ResolveChannelAttack`. U6b deliberately left melee on its own scoring
+loop while making it consume the same defence-set and name builders as every
+other channel ("melee keeps its scoring loop but consumes the same name
+builder"). So U10d plugs into the **melee path**, not into `AttackSide`. This
+matters: an earlier draft of this spec proposed an `AttackSide.CritOnWin` field,
+which would have been dead weight, since no non-melee channel needs it (ranged
+surprise is out of scope, section 8).
+
+The attack side is therefore exactly what round 1 would have rolled anyway —
+`combat.calcAttackScore`, unchanged:
+
+```
+attackScore = GetEffectiveDexterity()
+            + GetCombatSkillLevel() * SkillWeight
+            - penalty, then the usual stamina / prone / grapple / darkness terms
+```
+
+`GetCombatSkillLevel()` is **weapon-appropriate** — weapon-combat for an armed
+attacker, unarmed-combat for fists — so an unarmed ambusher is scored on the
+skill they actually used. Do not hardcode `skills.WeaponCombat`.
+
+The defence is the equipment-gated five-defence best-of-all via
+`DefenceEntriesFor` — dodge, parry, block, quell and defy all answer normally,
+are charged normally, and progress normally.
+
+**Skullduggery does not feed the attack roll.** It amplifies the payoff only
+(2.3). Two reasons: skullduggery already gated entry — the attacker had to win
+the sneak contest to be `Hidden` at all — and keeping the roll ordinary is what
+makes the seam genuinely shared rather than a special case wearing the seam's
+clothes.
+
+**On a lost contest the swing simply misses**, exactly like any other melee
+swing, and is narrated by the winning defence's ordinary vocabulary. There is no
+consolation damage and no partial payoff. Losing the contest is the target
+having sensed the ambush.
+
+### 2.3 `critOnWin`: crit if it lands
+
+`resolveDefenseOutcomeCore` already carries a `forceCrit bool` parameter — that
+is the sleeping-victim case, and it forces the **win**. U10d adds a second,
+distinct parameter beside it:
+
+```go
+// critOnWin upgrades a WON contest to a crit. It does NOT decide the contest.
+//
+// Deliberately NOT forceCrit. forceCrit forces the WIN outright; a defender
+// never gets to answer it. critOnWin respects the contest in full: the
+// defender rolls and may win, and on a defender win nothing is upgraded
+// because there is no hit to upgrade.
+//
+// The two are independent and may both be true (a sleeping ambush target),
+// in which case forceCrit decides the outcome and critOnWin is redundant.
+critOnWin bool
+```
+
+Its value comes from the round snapshot (section 3), not from a live `IsHidden()`
+read. Set for **every swing** of a surprise round. So every landed swing that round
+crits — which is a genuine buff over today, where `calcHitDamage` consumes
+`backstab` after a single swing.
+
+Crit damage already rolls off `sdp.rawDmgForCrit`, the **unmitigated** mean, times
+`critDmgMult`. Therefore the burst's old half-mitigation bypass is **strictly
+weaker than what crit-on-hit already grants** and is deleted rather than
+migrated. Nothing is lost.
+
+### 2.4 The opening strike and the skullduggery stack
+
+One swing per surprise round — the **primary weapon**, or fists when unarmed — is
+the **opening strike**. It multiplies its crit worth by the skullduggery crit
+term on top of the ordinary combat-skill term.
+
+This lands in `combat.buildDamageParams`, which is already where `critDmgMult`
+is computed as `CritDamageMultiplier(combatSkillLevel)`. For the opening strike
+of a surprise round it becomes:
+
+```
+openingStrikeCritMult =
+      CritDamageMultiplier(GetCombatSkillLevel())
+    * CritDamageMultiplier(skullduggeryRank)
+    * SurpriseOpeningStrikeMultiplier
+```
+
+where `CritDamageMultiplier(rank) = CritDamageBase + CritDamagePerSkill × rank`
+(shipped: `2.0 + 0.05 × rank`).
+
+Offhand and extra-arm swings that round keep the ordinary
+`CritDamageMultiplier(GetCombatSkillLevel())`, unchanged.
+
+**Why only the opening strike.** Stacking on every swing multiplies across up to
+six weapons. Modelled against the owner's own character
+(`_datafiles/world/dogmud/users/3.yaml`: Str base 115, weapon-combat 69,
+skullduggery 50, extra-arms 1, health 545), with a 1.5x weapon,
+`MeleeDamageScale` 0.52 and `GlobalDamageMultiplier` 0.5:
+
+```
+SkillMultiplier caps at SkillSoftCap 50 -> 3.0
+raw = 120 * 3.0 * 1.5 * 0.52 * 0.5              = 140
+CritDamageMultiplier(69) = 2.0 + 0.05*69        = 5.45
+CritDamageMultiplier(50) = 2.0 + 0.05*50        = 4.50
+```
+
+| Variant | Per swing | vs a 545 HP veteran |
+|---|---|---|
+| Today, first swing only | 140 x 5.45 = **765** | 1.4x |
+| Stacked, one swing | 140 x 5.45 x 4.50 = **3,443** | 6.3x |
+| Stacked on all three weapons | **~10,300** | 19x |
+
+Even a novice stealth build (both skills 5) reaches `2.25 x 2.25 = 5.06x` and
+one-shots newbie-tier mobs. Bounding the stack to the opening strike preserves
+the assassination fantasy and the "gigantic hit" the owner asked for while
+removing the unbounded multiplication across weapons.
+
+Expected round-1 total at the owner's ranks, all swings landing:
+`3,443 + 765 x 2 ≈ 5,000` into one target — against a defender who genuinely
+got to defend, and zero if the contest is lost.
+
+### 2.5 Cost
+
+**Unchanged: the shared `special-move` cooldown is still consumed.** Opening
+from stealth costs the attacker their special move for `SpecialMoveCooldown`
+(shipped: 4) rounds. Note this is one shared timer across eighteen verbs, so an
+ambush denies bash, trip, kick and the rest for those rounds. That is the
+intended tradeoff.
+
+The cooldown try moves from the deleted `SurpriseAttack` into
+`actions.EngageAggroType`, which keeps the existing contract: a hidden attacker
+whose cooldown is unavailable opens as an ordinary attack, not a surprise round.
+
+### 2.6 Progression
+
+Skullduggery continues to earn a progression event on a surprise round, moved
+from the bare `actor.OnSkillUse(string(skills.Skullduggery))` onto the U9
+progression seam so it obeys the arc's one-event-per-success convention like
+every other channel. Weapon-combat and the defender's defence skill progress via
+the ordinary melee path with no special casing.
+
+### 2.7 Edge cases: deliberately not special-cased
+
+Decided by the owner on 2026-08-25: **ship as-is and let playtest speak.**
+
+- **A sleeping target** already carries `ForceCrit` from
+  `snapshotSleepingVictims`, so a surprise round against a sleeper is an
+  uncontested stacked crit. That is a defensible assassination outcome.
+- **An already-engaged target** is not excluded, so re-hiding mid-fight could in
+  principle produce a second ambush. The shared special-move cooldown and the
+  difficulty of re-hiding in combat are the current brakes.
+
+Both are recorded here so the playtest knows to probe them specifically.
+
+---
+
+## 3. The round boundary — the part that must be built
+
+The design says "every hit **that round**". Today there is no working round
+boundary (1.1, mechanic 3). U10d builds it, mirroring the existing sleeping
+snapshot precisely. `snapshotSleepingVictims` already invites this in its
+docstring:
+
+> "Future first-hit-crit triggers (surprise attack, backstab, etc.) can add
+> parallel snapshot checks at this same site."
+
+**At the top of `DoCombat`** (`internal/hooks/NewRound_DoCombat.go`), alongside
+`snapshotSleepingVictims`: snapshot which users and mob instances are in a
+surprise round this tick, and publish to `internal/combat` in the same shape as
+`combat.PublishSleepingSnapshot`.
+
+**At the end of `DoCombat`**: call `(*Machine).OnCombatRoundEnd()` for engaged
+characters. This fires the already-registered `OnEndOfRoundIfSurprise` callback,
+clears `SurpriseLeft`, and moves the ambusher `Hidden → Revealing`. The stub
+comment block in `combatphase.go` is removed.
+
+**Why a snapshot and not a live read.** The same reason the sleeping snapshot
+exists. `Hidden` breaks mid-round through several paths (the defender's
+`CancelCombatBuffs`, `ForceVisible` on retaliation, cancel-on-damage). A live
+read would let the attacker's own first swing cancel the surprise for their
+second weapon, making multi-weapon behaviour depend on iteration order.
+
+This also fixes latent bug 4: the flag is now consumed, so an ambusher stops
+being `Hidden` after their surprise round whether or not anyone retaliates.
+
+---
+
+## 4. Deletions
+
+| Target | Note |
+|---|---|
+| `internal/actions/surprise_attack.go` | Entire file, 389 lines: `SurpriseAttack`, `SurpriseAttackOpts`, `SurpriseAttackResult`. `EngageAggroType` is preserved and relocated. |
+| `backstabCrit` in `combat.calculateCombat` | Replaced by the snapshot plus `critOnWin`. |
+| the `backstab` parameter and `// consume backstab` return in `calcHitDamage` | Single-swing consumption is exactly the behaviour being replaced. |
+| `SurpriseAttackOffhandPenalty` | Config knob. Absent from `config.yaml`, so it has been running on its Go default 0.10. |
+| `SurpriseAttackExtraArm1Penalty` | As above, default 0.25. |
+| `SurpriseAttackExtraArm2Penalty` | As above, default 0.40. |
+| `SurpriseAttackExtraArm3Penalty` | As above, default 0.55. |
+| `SurpriseAttackExtraArm4Penalty` | As above, default 0.70. |
+| the `=== STUBS ===` comment block in `combatphase.go` | The stubs are implemented by section 3. |
+
+The five penalty knobs die with the per-weapon self-penalty concept: every weapon
+now contests properly, so a flat self-miss chance per limb is redundant. Their
+validators in `internal/configs/config.balance.misc.go` go with them.
+
+**Call sites to update:** `internal/usercommands/attack.go` (PvM, PvP, and the
+party-member path at :189), `internal/mobcommands/attack.go`,
+`internal/behaviortree/actions_combat.go`.
+
+---
+
+## 5. Config
+
+**One knob added, five deleted. Net minus four.**
+
+```yaml
+  # SurpriseOpeningStrikeMultiplier: extra multiplier on the opening strike of
+  # a surprise round, applied on top of the stacked weapon-combat and
+  # skullduggery crit multipliers. 1.0 = no change. Exists so the ambush can be
+  # retuned WITHOUT moving CritDamageBase / CritDamagePerSkill, which are global
+  # and would move every crit in the game.
+  SurpriseOpeningStrikeMultiplier: 1.0
+```
+
+Declared in `internal/configs/config.balance.go` as `ConfigFloat`; defaulted and
+validated in `internal/configs/config.balance.combat.go` next to the other crit
+knobs. Default 1.0, rejected and reset if `<= 0`.
+
+Everything else reuses existing tuned knobs: `CritDamageBase`,
+`CritDamagePerSkill`, `SkillWeight`, `SpecialMoveCooldown`,
+`SkillMultiplierBase`/`Max`, `SkillSoftCap`.
+
+---
+
+## 6. Player-facing copy
+
+The `*[SURPRISE ATTACK]*` prefix already exists in `calculateCombat` and stays.
+Required copy work:
+
+- The **opening strike** needs its own narration, distinct from the other swings
+  of the surprise round, so the player can tell which swing was the big one.
+- A **missed** surprise round must narrate as the defence that won (dodge, parry,
+  block, quell, defy), not as a generic whiff. This is new: the ambush could not
+  previously be defended.
+- **No hard numbers.** Damage is reported through
+  `combat.GetDamageDescription(amount, targetMaxHP)`, never a raw figure.
+- 80-character wrap; no en or em dashes in player copy; ESL-clear phrasing.
+- Helpfile coverage for the stealth opener, cross-linked from `help sneak`,
+  `help hide`, `help skullduggery` and `help combat`, and registered in
+  `_datafiles/world/dogmud/keywords.yaml`. An unregistered helpfile never appears
+  in the topic index.
+
+---
+
+## 7. Testing
+
+**Behaviour**
+
+1. The contest is real: a high-defence target denies the surprise round at a rate
+   matching the ordinary melee contest for the same scores.
+2. `critOnWin` is not `forceCrit`: on a lost contest the result is a miss with
+   zero damage, never a crit.
+3. Every landed swing of round 1 crits; no swing of round 2 does.
+4. The opening strike carries the stacked multiplier; offhand and extra-arm
+   swings carry the weapon term only.
+5. `SurpriseOpeningStrikeMultiplier` scales only the opening strike.
+6. An ambusher who loses the contest still pays the special-move cooldown and
+   still leaves stealth.
+7. A hidden attacker on cooldown opens as an ordinary attack, not a surprise
+   round (preserves `EngageAggroType`'s existing contract).
+
+**The boundary**
+
+8. `SurpriseLeft` is cleared after exactly one round.
+9. The ambusher transitions `Hidden → Revealing` at the end of their surprise
+   round even when nobody retaliates. Regression test for latent bug 4.
+10. The snapshot is stable across the round: a mid-round `Hidden` break does not
+    downgrade a later weapon's swing.
+
+**Parity and guards**
+
+11. Mob and player ambushers resolve identically (mobs reach this through
+    `behaviortree/actions_combat.go`).
+12. A site guard in the arc's existing `internal/combat/contest_site_guard_test.go`
+    style asserting no production path produces an uncontested surprise hit, so
+    the auto-hit cannot be reintroduced.
+
+**Gates**
+
+13. `gofmt -l internal/ modules/` clean; `go build ./...`; tests for every
+    touched package.
+14. Isolated detached-worktree boot test to `boot-check.exe`, `Server Ready`
+    confirmed, exit 124 expected.
+15. **Adversarial in-game playtest**, mandatory per the content SOP because this
+    ships new player-facing copy. Probe specifically: the sleeping-target
+    interaction (2.7), mid-fight re-hiding (2.7), multi-weapon and Extra Arms
+    configurations, and whether the ambush feels competitive with a companion
+    build rather than merely lethal.
+
+---
+
+## 8. Out of scope
+
+- **Ranged surprise.** `ExecuteFire` is Perception-driven and has its own path;
+  a stealth opener with a bow is not addressed here.
+- **The unowned static-difficulty checks** in `actions/search.go`,
+  `actions/track.go` and `forager/forage_core.go` remain UNASSIGNED per the
+  roadmap.
+- **U12** (targeting audit) and **U11** (docs, helpfile sweep, closing playtest
+  gate) follow this slice and are unaffected by it.
