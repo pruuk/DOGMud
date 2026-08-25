@@ -298,9 +298,34 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 }
 ```
 
-- [ ] **Step 4: Apply it LAST, with all four guards**
+- [ ] **Step 4: Split the core so there IS a single exit, then apply the guard**
 
-After the existing fumble → crit → normal → floors ordering settles `res`:
+**There is no "end of the function" to append to.** `resolveDefenseOutcomeCore`
+has **seven** `return res` exits (`:990, :1001, :1014, :1064, :1074, :1083,
+:1112`). Appending after the last one is unreachable code and leaves the function
+without a terminating return. Inlining the guard at the two *obvious* branches
+instead silently misses the **defence-fumble** exit at `:1004-1014`, which carries
+`res.hit = true, res.defended = false` — a clean attack win by the very idiom the
+guard uses.
+
+Rename the existing body and wrap it:
+
+```go
+// resolveDefenseOutcomeCore applies the U10d opening-strike upgrade to the
+// verdict the inner resolver produced. Split out because the inner function has
+// seven exits and the upgrade must apply to all of them uniformly.
+func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar, targetChar *characters.Character, critThreshold float64, isThirdParty, forceCrit, critOnWin bool) hitResolution {
+	res := resolveDefenseOutcomeInner(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+	// ... the guard from below goes here ...
+	return res
+}
+```
+
+Keeping the exported-to-package name on the wrapper matters: the Step 1 tests call
+`resolveDefenseOutcomeCore` directly and assert `res.crit`, so putting the guard in
+the outer `resolveDefenseOutcome` wrapper instead would make them fail.
+
+The guard, with all four conditions:
 
 ```go
 	// U10d: a surprise opening strike crits on a CLEANLY won contest. Placed
@@ -415,14 +440,13 @@ Write `meanOver(n int, f func() int) float64` as a local helper.
 
 - [ ] **Step 3: Add the context field and the multiplier**
 
-`combatContext`, beside `forceCrit`:
-
-```go
-	// U10d: the attacker opened from stealth, so their opening strike crits if
-	// it wins the contest. Distinct from forceCrit: this does not decide the
-	// contest, it upgrades a clean win.
-	critOnWin bool
-```
+**Do NOT add a `critOnWin` field to `combatContext`.** An earlier draft did, and
+it was dead weight: `openingStrikeLeft` (Step 6) is itself derived from
+`sourceChar.Aggro.Type == characters.SurpriseAttack` at `:403`, so
+`ctx.critOnWin && openingStrikeLeft` is identical to `openingStrikeLeft` alone.
+Carrying both creates a second source of truth that someone will later read bare
+— which, being round-scoped, is precisely the every-swing bug the boxed warning in
+Step 6 exists to prevent. One signal, one place.
 
 `swingDamageParams`:
 
@@ -491,17 +515,10 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 }
 ```
 
-- [ ] **Step 5: Populate `critOnWin` in the four entry points**
+- [ ] **Step 5: Nothing to do in the four entry points**
 
-`AttackPlayerVsMob`, `AttackPlayerVsPlayer`, `AttackMobVsPlayer`, `AttackMobVsMob`,
-beside `forceCrit: forceCrit`:
-
-```go
-		critOnWin:    sourceChar.Aggro.Type == characters.SurpriseAttack,
-```
-
-Use each function's own attacker variable — they differ (`user.Character`,
-`&mob.Character`). Read each one.
+They are untouched. The signal is read inside `calculateCombat` at `:403` (Step 6),
+not threaded through `combatContext`.
 
 **Why `Aggro.Type` and not a snapshot:** the bonus applies to one attack and is
 consumed by it, so nothing must persist across the round. This is the same signal
@@ -530,10 +547,20 @@ through the pointer and that reverting it silently disables three separate thing
 **`:466` is the one line in this plan most likely to be got wrong. Read this.**
 
 ```go
-			// U10d: critOnWin is gated on openingStrikeLeft so it applies to the
-			// OPENING STRIKE, not the round.
+			// U10d: the opening strike is ONE swing, consumed by the swing that
+			// is THROWN -- not by the first one that happens to land.
+			openingStrikeThisSwing := openingStrikeLeft
+			openingStrikeLeft = false
+
 			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar,
-				critThreshold, isThirdParty, ctx.forceCrit, ctx.critOnWin && openingStrikeLeft)
+				critThreshold, isThirdParty, ctx.forceCrit, openingStrikeThisSwing)
+```
+
+and at `:483`, pass the per-swing local and **discard** the returned flag (the
+round-level variable is already cleared above):
+
+```go
+			attackTargetDamage, _ = calcHitDamage(&attackResult, res.crit, openingStrikeThisSwing, sdp)
 ```
 
 > **Passing bare `ctx.critOnWin` here is a silent, serious bug.** Line 466 sits
@@ -554,12 +581,31 @@ through the pointer and that reverting it silently disables three separate thing
 > `calcHitDamage` at `:483`, so the gate reads correctly on the opening swing and
 > false on every later one.
 
-**Deliberate consequence, worth knowing:** if the opening swing *misses*,
-`calcHitDamage` is never called for it (it runs only under `res.hit`), so
-`openingStrikeLeft` stays true and the **next** swing becomes the opening strike.
-The opening strike is therefore "the first swing that lands", not "the first swing
-thrown". That is the better reading — a parried opener has not spent the ambush —
-but it is a choice, so pin it with a test.
+> **Why "thrown" and not "the first swing that lands".** An earlier draft of this
+> plan let the flag survive a miss, reasoning that a parried opener has not spent
+> the ambush. That is indefensible once you count the swings.
+>
+> `calcHitDamage` runs only under `res.hit`, and on a non-crit it returns the flag
+> unchanged — so a miss, a fumble *and* a deflection all leave it set
+> (`combat_helpers.go:996`, `:1106-1112`). The gate would then be true for **every
+> remaining swing of the round**, giving the ambush one re-roll per swing.
+>
+> `calcSwingCount` issues up to 4 swings per weapon, so a main-hand + offhand +
+> extra-arm build throws 3 to 12. The probability the ambush lands is
+> `1 - (1-p)^N`, not `p`:
+>
+> | | 1 swing | 6 swings |
+> |---|---|---|
+> | p = 0.50 | 50% | **98.4%** |
+> | p = 0.125 (mercy floor only) | 12.5% | **55.4%** |
+>
+> A defender good enough to win every honest roll would still eat the full stacked
+> ambush more than half the time. That makes spec 2.2's "the defender can deny it"
+> and 2.4's "zero if the contest is lost" false, and it would have invalidated the
+> melee-versus-ranged comparison outright — the archer genuinely gets one roll,
+> the melee ambusher would have got twelve.
+>
+> Consuming on the throw restores the single roll the design is built on.
 
 - [ ] **Step 6a: Add the round-level test**
 
@@ -651,16 +697,38 @@ gate** the player and `mobcommands` paths both respect. Route it through the sea
 	// cooldown exactly as the player and mobcommands paths do. Setting
 	// SurpriseAttack straight from IsHidden() let btree mobs ambush on a
 	// cooldown the other two honoured.
-	aggroType := actions.EngageAggroType(
-		actions.NewMobActorInRoom(mob, room),
-		targetActorFor(targetUserId, targetMobId, room),
-	)
+	aggroType := characters.DefaultAttack
+	if room := rooms.LoadRoom(ctx.RoomId); room != nil {
+		var target actions.Actor
+		if targetUserId > 0 {
+			if u := users.GetByUserId(targetUserId); u != nil {
+				target = actions.NewUserActorInRoom(u, room)
+			}
+		} else if targetMobId > 0 {
+			if m := mobs.GetInstance(targetMobId); m != nil {
+				target = actions.NewMobActorInRoom(m, room)
+			}
+		}
+		if target != nil {
+			aggroType = actions.EngageAggroType(actions.NewMobActorInRoom(mob, room), target)
+		}
+	}
 	mob.Character.SetAggro(targetUserId, targetMobId, aggroType)
 ```
 
-Build the target actor with whatever constructor is in scope. **Watch the import
-graph** — if `behaviortree` importing `actions` creates a cycle, add a small
-accessor rather than duplicating the cooldown logic.
+Two traps here, both from an earlier draft:
+
+- **`room` is not in scope at the aggro assignment.** In `actions_combat.go` the
+  existing `room := rooms.LoadRoom(ctx.RoomId)` is declared **inside** the
+  `if targetUserId == 0 && targetMobId == 0` block at `:34`, while the assignment
+  sits at `:44-50` outside it. Load it locally as above, or hoist the existing one
+  with a nil guard.
+- **Assign `target` only when non-nil.** `EngageAggroType`'s `target == nil` guard
+  does not catch a typed-nil `*mobs.Mob` wrapped in an `Actor` interface.
+
+There is **no import-cycle risk**: `behaviortree` already imports `actions` in six
+files and `actions` imports `behaviortree` nowhere. An earlier draft hedged about
+this unnecessarily.
 
 - [ ] **Step 5:** Rewrite the stale comments in `mobcommands/attack.go` and
 `usercommands/attack.go` that describe "the burst". Do not leave prose documenting
@@ -858,11 +926,28 @@ func TestOrdinaryRound_AwardsNoSkullduggery(t *testing.T) {
 }
 ```
 
-`newSurpriseAttackerPair` builds actors whose attacker has
-`Aggro.Type == characters.SurpriseAttack`; `newOrdinaryAttackerPair` uses
-`DefaultAttack`. `twoCleanWeaponHits` returns two `combat.WeaponHitInfo` with
-`CleanHit: true` and a real `SkillTag`. Read
-`internal/hooks/NewRound_DoCombat_parity_test.go` before writing these.
+**Every `AttackResult` above that expects an award must carry
+`WasSurpriseAttack: true`** — that is what Step 3 reads. Setting only
+`Aggro.Type` on the fixture proves nothing, because Step 3's boxed warning says
+`Aggro.Type` is already demoted by the time `applyCombatProgression` runs. So:
+
+```go
+	res := combat.AttackResult{
+		WasSurpriseAttack: true,          // <- the signal Step 3 actually reads
+		CleanHit:          true,
+		WeaponHits:        twoCleanWeaponHits(),
+	}
+```
+
+and `newOrdinaryAttackerPair`'s case leaves it `false`.
+
+**Do not seed `Aggro.Type` in either fixture.** It lends false confidence: with it
+set, two of these tests pass whether or not the feature exists, which is the exact
+class of dead test this plan keeps warning about.
+
+`twoCleanWeaponHits` returns two `combat.WeaponHitInfo` with `CleanHit: true` and
+a real `SkillTag`. Read `internal/hooks/NewRound_DoCombat_parity_test.go` before
+writing these.
 
 - [ ] **Step 3: Add the event**, after the per-weapon loop and **outside** it:
 
@@ -1115,10 +1200,15 @@ via the Awareness cascade, so reading `IsHidden()` after it is too late:
 	// out of counterattacks (the one uncounterable attack), and narrates
 	// anonymously. A stacked crit on top of all three would be a boss killed
 	// from the next room at no risk and with no way to learn who did it.
-	surpriseShot := !crossRoom && wasHidden
+	surpriseShot := !crossRoom && result.IsSneaking
 	if surpriseShot && !char.TryCooldown("special-move",
 		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		// DENIED, and the player must be told. Reload burns this same timer
+		// (combat_reload.go:133), so "reload, sneak, shoot" -- the ordinary way
+		// an archer sets up an ambush -- silently produces an ordinary shot.
+		// Without a message this reads as the feature being broken.
 		surpriseShot = false
+		result.SurpriseOnCooldown = true
 	}
 
 	bonusCrit := 1.0
@@ -1133,8 +1223,18 @@ via the Awareness cascade, so reading `IsHidden()` after it is too late:
 	}
 ```
 
-`wasHidden` is captured at `:153`, where `IsHidden()` is already read for
-`FireResult.IsSneaking`.
+**Use `result.IsSneaking`, not a new local.** `combat_fire.go:153` is the struct
+field `IsSneaking: char.IsHidden()`, not a variable — an earlier draft referred to
+a `wasHidden` local that does not exist. `result.IsSneaking` is captured at `:153`,
+before `SetAggro` at `:244` reveals a same-room shooter, so it is the correct
+pre-reveal value.
+
+Add `SurpriseOnCooldown bool` to `FireResult` alongside `Revealed`.
+
+**This denial is not rare.** A loaded bow implies a recent reload, and reload burns
+the same `special-move` timer. So the natural setup — reload, sneak, shoot —
+denies the opener whenever the reload was within `SpecialMoveCooldown` rounds.
+That is a legitimate cost, but it must be visible (Task 14) and tested (below).
 
 - [ ] **Step 3: Feed the seam**
 
@@ -1161,7 +1261,9 @@ via the Awareness cascade, so reading `IsHidden()` after it is too late:
 		// already engaged (Aggro != nil), which is exactly the case that would
 		// otherwise let a re-hidden archer fire repeated maximum-bonus shots.
 		// This call is a no-op in the first case and load-bearing in the second.
-		char.Awareness.TransitionToRevealing(state.TransitionReason{
+		// errcheck is enabled (.golangci.yml) and TransitionToRevealing returns
+		// error, so discard it explicitly or the lint gate flags a new issue.
+		_ = char.Awareness.TransitionToRevealing(state.TransitionReason{
 			Trigger: awareness.TriggerRangedSurpriseShot,
 		})
 		result.Revealed = true
@@ -1272,22 +1374,54 @@ Change **only** `damage_multiplier`. Leave value, speed, and everything else alo
 
 - [ ] **Step 4: Migrate `EnchantBaseline`, or the detune does not reach existing bows**
 
-`SpecBaseline` **persists `damage_multiplier` into player saves**
-(`internal/items/spec_baseline.go:28`, captured at `:39`, restored at `:60`), and
-`enchantments.go:171` calls `item.EnchantBaseline.RestoreInto(&newSpec)`. So **any
-bow that has ever been enchanted keeps 7.50 forever** — in a player's inventory,
-a shop's stock, or a mob's equipment. `_datafiles/world/dogmud/users/3.yaml`
-already carries three `enchantbaseline:` blocks.
+**Editing the template YAML does not reach items that already exist.**
+`Item.GetSpec()` returns `*i.Spec` whenever it is non-nil
+(`internal/items/items.go:314-317`), and `Item.Spec` is persisted into player
+saves under the yaml key **`overrides:`** (`items.go:56`).
+`_datafiles/world/dogmud/users/3.yaml` already carries several `overrides:` blocks
+containing `damage_multiplier`. So any existing bow with an override keeps **7.50
+forever**, and the Step 1 table test — which reads templates — cannot see it.
 
-Those players would keep a **2.7x damage advantage**, permanently, over anyone who
-buys a bow after the patch — and the Step 1 table test, which reads YAML, cannot
-see it. This is the trap already on record as *"Enchanting resets to
-`item.EnchantBaseline`, NEVER the template."*
+Two distinct populations, and an earlier draft of this step got both wrong:
 
-Add a load-time migration: for any item whose spec subtype is Shooting, clear
-`EnchantBaseline.DamageMultiplier` (or re-capture it from the template) so the new
-value takes. Cover it with a test that loads a save carrying an enchanted bow at
-7.50 and asserts the effective multiplier is 2.75.
+1. **Enchanted items.** `EnchantBaseline` (`spec_baseline.go:28/39/60`) is restored
+   by `enchantments.go:171`. **Do not "clear" it**: `RestoreInto` does an
+   unconditional `spec.DamageMultiplier = b.DamageMultiplier`, so zeroing the
+   baseline writes **0** into the spec and `ApplyTier` then adds only the tier
+   bonus — an enchanted Ironhorn Warbow would land near **0.10**, a 96% nerf
+   rather than the intended 63%.
+2. **Affixed / renamed / admin-set items**, which carry `Item.Spec` with **no**
+   `EnchantBaseline`. `migrateEnchantedItem` early-returns on `EnchantType == ""`
+   (`migrate_enchantments.go:56-58`), so an enchantment-only migration skips them
+   entirely — and per Step 5, ids 10046 and 10049 exist *only* in loot pools,
+   which is exactly this class.
+
+**Re-seed from the template, both fields, for every Shooting-subtype item:**
+
+```go
+	tmpl := items.GetItemSpec(item.ItemId)
+	if tmpl != nil && tmpl.Subtype == items.Shooting {
+		if item.Spec != nil {
+			item.Spec.DamageMultiplier = tmpl.DamageMultiplier
+		}
+		if item.EnchantBaseline != nil {
+			item.EnchantBaseline.DamageMultiplier = tmpl.DamageMultiplier
+		}
+	}
+```
+
+**There is an established home for this.** `internal/users/users.go:561-565`
+already runs `MigrateLegacyPotions()`, `MigrateEnchantments()` and
+`MigrateNewbieAwakening()` on every load, and `migrate_enchantments.go` is the
+structural precedent to copy. **Run the new migration BEFORE
+`MigrateEnchantments()`** — otherwise `ApplyTier` re-installs the stale baseline
+over your fix.
+
+Confirm `items.Shooting` and the `Subtype` field name against the real ItemSpec
+before writing; the sketch above is shape, not gospel.
+
+Cover it with two tests: a save carrying an **enchanted** bow at 7.50, and one
+carrying an **affixed** bow at 7.50, both asserting an effective 2.75 afterwards.
 
 - [ ] **Step 5: Note the two knock-on effects in the patch note**
 
@@ -1355,8 +1489,9 @@ Add to `internal/actions/combat_fire.go`, modelled on the existing scan in
 // in production (combatphase.RegisterMachine has no production callers), so it
 // always reads empty and would hand out the bonus unconditionally.
 //
-// Cross-room shots pass trivially -- the shooter is not in the target's room and
-// nothing there is aggroed on them -- which is the intended sniping case.
+// It scans the SHOOTER's room, never the target's. So a cross-room sniper who is
+// himself in melee IS engaged and loses the bonus -- that is the point of the
+// rule, not an edge case. Pass actor.GetRoom(), NOT targetRoom.
 func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 	if room == nil {
 		return true
@@ -1413,13 +1548,13 @@ depending on placement.
 	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale) * unengagedMult
 ```
 
-- [ ] **Step 3: The player-facing cue**
+- [ ] **Step 4: The player-facing cue**
 
 Set a flag on `FireResult` when the shot was taken **while engaged**, so the
 wrapper can speak one line the first time it happens per engagement. Damage that
 silently halves reads as a bug. Do not repeat it every round.
 
-- [ ] **Step 4: Run and commit**
+- [ ] **Step 5: Run and commit**
 
 ```bash
 go test ./internal/actions/...

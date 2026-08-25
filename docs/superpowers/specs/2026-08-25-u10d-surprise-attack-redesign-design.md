@@ -289,9 +289,28 @@ Nothing is lost.
 
 ### 2.4 The opening strike and the skullduggery stack
 
-One swing per surprise round — the **primary weapon**, or fists when unarmed — is
-the **opening strike**. It multiplies its crit worth by the skullduggery crit
+One swing per engagement is the **opening strike**: the **first swing thrown**,
+whether or not it lands. It multiplies its crit worth by the skullduggery crit
 term on top of the ordinary combat-skill term.
+
+> **"First swing thrown", not "the primary weapon" and not "the first swing that
+> lands".** Two earlier drafts said each of those and both were wrong.
+>
+> *Not the primary weapon:* `collectAttackWeapons` appends the main-hand fist
+> **after** offhand and extra-arm weapons when the main hand is empty, so weapon
+> index 0 is not reliably the primary. In practice the first swing thrown is the
+> main-hand weapon whenever one is equipped, which is what the fiction wants,
+> without any slot logic.
+>
+> *Not the first swing that lands:* letting the flag survive a miss gives the
+> ambush one re-roll per swing. With `calcSwingCount` issuing up to four swings
+> per weapon, a multi-weapon build throws 3 to 12, so the ambush would land with
+> probability `1 - (1-p)^N` — about **98% at p=0.5 over six swings**, and still
+> **55%** for an attacker who can only ever win on the mercy floor. That would
+> make "the defender can deny it" false and the whole risk/reward story with it.
+>
+> The opening strike is therefore **one roll**, exactly like the ranged shot,
+> which keeps the two openers comparable.
 
 This lands in `combat.buildDamageParams`, which is already where `critDmgMult`
 is computed as `CritDamageMultiplier(combatSkillLevel)`. For the opening strike
@@ -507,12 +526,20 @@ A surprise shot awards:
 |---|---|---|
 | `ranged-combat` | `usercommands/shoot.go:199`, a bare `OnSkillUse` | **off the U9 seam.** Pre-existing; see below. |
 | `perception` | rolled as ranged-combat's primary stat | `SkillPrimaryStats["ranged-combat"] == "perception"` |
-| crit bonus tier | the channel seam, `defence_multiplier.go:548-578` | always pays, since a landed surprise shot always crits |
+| crit bonus tier | the channel seam, `defence_multiplier.go:548-578` | pays on a **contested** win only — see below |
 | `skullduggery` | **added by U10d**, seam-routed, same shape as 2.6.2 | once per surprise shot, on a hit |
 
 No triple-roll problem here, unlike melee (2.6.2): ranged-combat's primary is
 perception and skullduggery's is dexterity, so the two events roll different
 stats.
+
+> **The crit bonus tier does NOT always pay, and an earlier draft said it did.**
+> `awardChannelDefenceBonus` sits at `defence_multiplier.go:408`, and the two
+> uncontested exits (`:316` empty defence set, `:362` contest did not run) return
+> **before** it. So a surprise shot that crits because there was no defence to
+> answer it — the most helpless target in the game — earns no crit progression.
+> Only a contested win pays the tier. Not worth special-casing; worth not
+> claiming the opposite.
 
 **An off-seam finding, recorded not fixed, and narrower than an earlier draft
 claimed.** The only award for the deliberate `shoot` action is a bare
@@ -638,7 +665,7 @@ rotation is untouched", then "roughly 8 rounds of not shooting". Neither is righ
 
 `reload` reads and writes the same `special-move` timer
 (`combat_reload.go:86,133`) and costs no combat round of its own, and firing
-always unloads (`combat_fire.go:249`). So the rotation is already gated:
+always unloads (`combat_fire.go:248`). So the rotation is already gated:
 
 ```
 ORDINARY:  R1 shoot, reload (cd->R5) | R2 shoot | R3-4 dry | R5 reload+shoot | R6 shoot
@@ -675,7 +702,7 @@ So a ranged surprise strike is **easier to land** than a melee one while hitting
 at least as hard — and in practice considerably harder.
 
 **The number, which an earlier draft never computed.** `ExecuteFire` uses
-`shotMult := weapon.DamageMultiplier * RangedShotScale` (`combat_fire.go:253`),
+`shotMult := weapon.DamageMultiplier * RangedShotScale` (`combat_fire.go:250`),
 and ranged `damage_multiplier` values run far above melee's: the Ironhorn Warbow
 (`items/weapons-10000/10046`) is **7.50**, the arbalest 7.00, against roughly 1.5
 for a good one-handed melee weapon. At the owner's real **Perception 152**
@@ -725,8 +752,22 @@ draft failed to do by pitting the top bow against a mid-tier sword:
 So the two top-end openers land at **near parity**, with melee marginally ahead —
 not the 3.3x gap an earlier draft claimed, which came from comparing the best bow
 against a mid-tier sword. The compensation is no longer "melee gets volume" (2.1
-removed that) but **the archer is half-strength whenever anything is attacking
+removed that) but **the archer drops to a third whenever anything is attacking
 them** (2.8.3).
+
+> **A caveat on the comparison: the two rows do not use the same skill rank.**
+> The melee row uses the owner's real `weapon-combat: 69` (crit worth 5.45); the
+> ranged row assumes a hypothetical `ranged-combat: 50` (4.50), because his save
+> reads `ranged-combat: 1`. At **equal rank 50 on both sides** melee falls to
+> `397.8 × 4.50 × 4.50 = 8,056` and ranged is roughly **13% ahead** rather than
+> 7% behind.
+>
+> Which framing is right depends on whether you are comparing *this character's*
+> two options or *two equally-invested builds*. Both are legitimate and they
+> disagree, so the honest summary is: **the two openers are within about 15% of
+> each other in either direction**, which is close enough to ship and let the
+> playtest arbitrate. It is recorded so nobody later reads the 7% as precision it
+> does not have.
 
 The playtest should still treat "is the melee opener worth taking, versus just
 using a bow?" as a primary question. If the answer is no, the lever is
@@ -809,7 +850,11 @@ carries it: you cannot aim while someone is hitting you.
 - Your first same-room shot makes the target engage you, so the bonus drops until
   you break away. **Hit-and-run is rewarded by the same rule that punishes
   standing and trading.**
-- A cross-room shot never engages you, so sniping keeps the bonus.
+- A cross-room shot keeps the bonus **only while nothing in the sniper's own room
+  is on them**. The scan is of the shooter's room, never the target's, so a
+  sniper who has something in melee with them is engaged and loses it like anyone
+  else. An earlier draft said cross-room "never engages you, so sniping keeps the
+  bonus", which would have made distance an unconditional exemption.
 - Fighting behind a tank keeps the bonus. Being the tank does not.
 
 ##### The numbers
@@ -1136,6 +1181,13 @@ Required copy work:
 - **The ranged surprise shot needs its own narration**, distinct from an
   ordinary shot, plus a line telling the shooter they have been revealed. A
   player who loses stealth silently will read it as a bug.
+- **A DENIED opener needs a line too, and it is not an edge case.** The surprise
+  shot burns the `special-move` cooldown — and so does **reload**
+  (`combat_reload.go:133`). So the natural setup, *reload → sneak → shoot*, denies
+  the opener whenever that reload was within `SpecialMoveCooldown` rounds, and the
+  player gets an ordinary shot with no explanation. Say plainly that they were not
+  set for the shot. The helpfile should also mention that reloading and ambushing
+  draw on the same readiness.
 - Existing ranged narration already goes anonymous for a hidden shooter
   (`FireResult.IsSneaking`). Check that the reveal and the anonymity read
   coherently together in one round: the shot is anonymous, then the shooter is
@@ -1188,71 +1240,80 @@ Required copy work:
 
 **Progression**
 
-11. A landed surprise round awards skullduggery exactly **once**, not once per
+12. A landed surprise round awards skullduggery exactly **once**, not once per
     weapon hit.
-12. A surprise round that lands **no** clean hit awards no skullduggery
+13. A surprise round that lands **no** clean hit awards no skullduggery
     (success-only).
-13. The attacker's combat skill (weapon-combat or unarmed-combat, whichever the
+14. The attacker's combat skill (weapon-combat or unarmed-combat, whichever the
     weapon selects) still progresses per clean hit alongside skullduggery.
-14. The defender earns defence-skill progression and the crit-received
+15. The defender earns defence-skill progression and the crit-received
     toughening stat from a surprise round. This is the regression test for
     "being ambushed teaches the victim nothing", which is today's behaviour.
-15. The attacker's crit bonus tier is paid **at most once** for the round. Note
+16. The attacker's crit bonus tier is paid **at most once** for the round. Note
     2.6.1: because `AttackResult.Crit` reflects only the LAST swing, a
     multi-swing ambush usually pays no crit bonus at all. Assert the documented
     behaviour, not the intuitive one.
 
 **The ranged surprise strike**
 
-16. A same-room surprise shot crits on a won contest and carries the stacked
+17. A same-room surprise shot crits on a won contest and carries the stacked
     skullduggery multiplier.
-17. A surprise shot **reveals the shooter**: `Hidden → Revealing` on firing.
+18. A surprise shot **reveals the shooter**: `Hidden → Revealing` on firing.
     This is the anti-sniping regression test — without it a hidden archer fires
     a maximum-bonus shot every round forever.
-18. A surprise shot burns the shared `special-move` cooldown; an **ordinary**
+19. A surprise shot burns the shared `special-move` cooldown; an **ordinary**
     shot still does not.
-19. A **cross-room** shot from stealth is an ordinary shot: no crit upgrade, no
+20. A **cross-room** shot from stealth is an ordinary shot: no crit upgrade, no
     skullduggery term, no cooldown charge, no reveal.
-20. A surprise shot awards skullduggery once, and ranged-combat as before.
-21. `AttackSide.CritOnWin` and the melee `critOnWin` parameter produce the same
+21. A surprise shot awards skullduggery once, and ranged-combat as before.
+22. **A hidden shooter whose `special-move` cooldown is unavailable fires an
+    ORDINARY shot, and is told so.** The ranged twin of test 8, which had no
+    counterpart until the round-3 review. Reload burns the same timer, so this
+    fires on the ordinary *reload → sneak → shoot* setup, not only in contrived
+    cases.
+23. `AttackSide.CritOnWin` and the melee `critOnWin` parameter produce the same
     verdict for the same contest inputs. Shared test — the two paths must not
     drift.
 
 **The ranged economy (2.8.3)**
 
-22. A shot with **no** inbound attackers carries `RangedUnengagedDamageMultiplier`;
+24. A shot with **no** inbound attackers carries `RangedUnengagedDamageMultiplier`;
     a shot with one or more does not.
-23. The transition is live: the same shooter loses the bonus once a target
+25. The transition is live: the same shooter loses the bonus once a target
     engages them, within the same fight, with no reload or re-equip.
-24. A **cross-room** shot keeps the bonus, because it never engages the shooter.
-25. The bonus **compounds** with the surprise opening shot (owner decision,
+26. A cross-room shot keeps the bonus when the shooter's **own** room is clear,
+    and **loses** it when something in the shooter's room is aggroed on them.
+    Both halves are required: written with no attackers present, this test passes
+    under either reading of which room is scanned, and passes with the feature
+    absent entirely.
+27. The bonus **compounds** with the surprise opening shot (owner decision,
     2.8.3). Pin the product explicitly so a later "simplification" into
     alternatives is caught.
-26. The bonus applies to **ranged only** — a melee swing is unaffected regardless
+28. The bonus applies to **ranged only** — a melee swing is unaffected regardless
     of the attacker's inbound list.
-27. Set to 1.0, each of the three multipliers is a true no-op on its own path.
-27a. `SurpriseRangedStrikeMultiplier` scales the **ranged** opener only, and
+29. Set to 1.0, each of the three multipliers is a true no-op on its own path.
+30. `SurpriseRangedStrikeMultiplier` scales the **ranged** opener only, and
     `SurpriseOpeningStrikeMultiplier` the **melee** opener only. Cross-wiring them
     is the single most likely implementation slip — the ranged opener would land
     near 18,000 instead of ~9,080 — so assert each knob moves exactly one number.
-28. The eight detuned bow multipliers match the 2.8.3 table exactly. A cheap
+31. The eight detuned bow multipliers match the 2.8.3 table exactly. A cheap
     table-driven test over the YAML beats trusting eight hand edits.
 
 **Parity and guards**
 
-22. Mob and player ambushers resolve identically (mobs reach this through
+32. Mob and player ambushers resolve identically (mobs reach this through
     `behaviortree/actions_combat.go`).
-23. A site guard in the arc's existing `internal/combat/contest_site_guard_test.go`
+33. A site guard in the arc's existing `internal/combat/contest_site_guard_test.go`
     style asserting no production path produces an uncontested surprise hit, so
     the auto-hit cannot be reintroduced.
 
 **Gates**
 
-24. `gofmt -l internal/ modules/` clean; `go build ./...`; tests for every
+34. `gofmt -l internal/ modules/` clean; `go build ./...`; tests for every
     touched package.
-25. Isolated detached-worktree boot test to `boot-check.exe`, `Server Ready`
+35. Isolated detached-worktree boot test to `boot-check.exe`, `Server Ready`
     confirmed, exit 124 expected.
-26. **Adversarial in-game playtest**, mandatory per the content SOP because this
+36. **Adversarial in-game playtest**, mandatory per the content SOP because this
     ships new player-facing copy. Probe specifically: the sleeping-target
     interaction (2.7), mid-fight re-hiding (2.7), multi-weapon and Extra Arms
     configurations, and whether the ambush feels competitive with a companion
