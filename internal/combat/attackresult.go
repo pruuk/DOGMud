@@ -70,6 +70,12 @@ type AttackResult struct {
 	// inside the swing loop, never on this aggregate.
 	Hit      bool // defaults false
 	CleanHit bool // defaults false
+	// WasSurpriseAttack records that this round armed a surprise opening
+	// strike. Carried out because calculateCombat DEMOTES Aggro.Type to
+	// DefaultAttack while resolving, so every consumer running after the attack
+	// -- progression at Phase 5, messaging, analytics -- would otherwise see no
+	// trace that the round was an ambush at all.
+	WasSurpriseAttack bool
 	// SwingsThrown counts every swing resolved this round, ACROSS ALL WEAPONS,
 	// landed or not. Like Hit and CleanHit it accumulates for the whole round and
 	// is never reset by the per-swing flag reset (which clears Crit, Fumble and

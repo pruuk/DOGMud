@@ -678,6 +678,32 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 		atkChar.OnSkillUse(string(skills.UnarmedCombat), atkUid)
 	}
 
+	// U10d: a landed surprise attack trains skullduggery, once for the round.
+	//
+	// OUTSIDE the weapon loop on purpose: the ambush is a property of the
+	// ROUND, so awarding it inside would pay it once per weapon that landed.
+	//
+	// It keys on res.WasSurpriseAttack rather than atkChar.Aggro.Type because
+	// calculateCombat DEMOTES SurpriseAttack to DefaultAttack the moment it
+	// arms the opening strike, so by this phase the attacker's Aggro.Type is
+	// always DefaultAttack. A condition written against Aggro.Type here would
+	// never fire and nothing would fail.
+	//
+	// A SECOND Outcome is structurally required: progression.Outcome carries
+	// exactly one AttackerSkill and the loop above already spent it on the
+	// combat skill.
+	//
+	// AttackerStat is deliberately empty. ApplyProgression calls
+	// OnSkillUseScaled, which already rolls the skill's primary stat, and only
+	// rolls ev.Stat separately when it names a DIFFERENT one.
+	if res.WasSurpriseAttack && res.CleanHit {
+		atkChar.ApplyProgression(
+			progression.OrdinaryEvents(progression.Outcome{
+				AttackerSkill: string(skills.Skullduggery),
+			}),
+			progression.SideAttacker, atkUid, round)
+	}
+
 	// ── Bonus tier: ONCE per round, OUTSIDE the weapon loop ─────────────
 	// Outside on purpose: the bonus tier is a property of the ROUND, not of a
 	// swing, so evaluating it inside the loop would pay it once per weapon.
