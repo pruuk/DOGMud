@@ -5,6 +5,7 @@ package behaviortree
 // actionCancelActivity
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -41,12 +42,27 @@ func actAttack(params map[string]any, ctx *EvalContext) Result {
 		}
 		targetUserId = players[util.Rand(len(players))]
 	}
-	// Promote to SurpriseAttack when hidden so the combat pipeline
-	// applies the backstab crit + "*[SURPRISE ATTACK]*" prefix.
-	// Mirrors the pattern in mobcommands/attack.go.
+	// U10d: through EngageAggroType so a btree ambush respects the special-move
+	// cooldown exactly as the player and mobcommands paths do. Setting
+	// SurpriseAttack straight from IsHidden() let btree mobs ambush on a
+	// cooldown the other two honoured. The promotion makes the opening strike
+	// of the ordinary combat round resolve as a surprise — there is no
+	// separate backstab crit any more.
 	aggroType := characters.DefaultAttack
-	if mob.Character.IsHidden() {
-		aggroType = characters.SurpriseAttack
+	if room := rooms.LoadRoom(ctx.RoomId); room != nil {
+		var target actions.Actor
+		if targetUserId > 0 {
+			if u := users.GetByUserId(targetUserId); u != nil {
+				target = actions.NewUserActorInRoom(u, room)
+			}
+		} else if targetMobId > 0 {
+			if m := mobs.GetInstance(targetMobId); m != nil {
+				target = actions.NewMobActorInRoom(m, room)
+			}
+		}
+		if target != nil {
+			aggroType = actions.EngageAggroType(actions.NewMobActorInRoom(mob, room), target)
+		}
 	}
 	mob.Character.SetAggro(targetUserId, targetMobId, aggroType)
 	return Success

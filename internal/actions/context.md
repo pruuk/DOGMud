@@ -832,9 +832,11 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
   (U4 routed them to a wrapper, U6 collapsed every wrapper into this one entry
   point). Do not reach `internal/contest` directly; this package
   goes through `internal/combat`. The flat `dice.RollStat` threshold checks in
-  `search.go` and `track.go` are NOT contests yet and are unassigned;
-  `surprise_attack.go` has no hit resolution at all. All three are breadcrumbed
-  in place.
+  `search.go` and `track.go` are NOT contests yet and are unassigned; both are
+  breadcrumbed in place. (`surprise_attack.go` was the third such case — U10d
+  deleted it outright. The uncontested pre-combat burst is gone; the opening
+  strike of the ordinary combat round is the surprise now, and
+  `EngageAggroType` in `combat_attack.go` is all that remains here.)
 - `internal/users` — Player character management
 - `internal/mobs` — NPC management
 - `internal/rooms` — Room context, containers, exits
@@ -860,7 +862,7 @@ the rest are ordinary verbs.
 | Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
 | Casting | `cast.go`, `cast_interrupt.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |
-| Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `scan.go`, `track.go`, `surprise_attack.go`, `steal.go` |
+| Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `scan.go`, `track.go`, `steal.go` |
 | Items & economy | `get.go`, `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `remove_equip.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
 | Movement & state | `go.go`, `sleep.go`, `consider.go` |

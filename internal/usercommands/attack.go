@@ -182,22 +182,20 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 						if partyUser.Character.RoomId == user.Character.RoomId &&
 							partyUser.Character.GetSetting("autoattack") != "off" &&
 							!partyUser.Character.IsInCombat() {
-							// Surprise attack for hidden party members before they join combat
-							if targetMob := mobs.GetInstance(attackMobInstanceId); targetMob != nil {
-								partyActor := actions.NewUserActorInRoom(partyUser, room)
-								targetActor := actions.NewMobActorInRoom(targetMob, room)
-								actions.SurpriseAttack(partyActor, actions.SurpriseAttackOpts{Target: targetActor})
-							}
+							// U10d: no pre-combat burst is fired here. The
+							// party member's own `attack` command runs the
+							// normal path, which reaches EngageAggroType and
+							// types their engagement from stealth correctly.
 							partyUser.Command(fmt.Sprintf(`attack #%d`, attackMobInstanceId))
 						}
 					}
 				}
 			}
 
-			// Surprise attack from stealth — fires before normal combat begins.
-			// SurpriseAttack gates on IsHidden() internally; call unconditionally.
-			// Tag the engagement from the result so a stealth opener is typed
-			// SurpriseAttack, matching the mob path.
+			// Type the engagement from stealth so the opening strike of the
+			// combat round resolves as a surprise. EngageAggroType gates on
+			// hidden state AND the special-move cooldown internally, so call
+			// it unconditionally and do not pre-check IsHidden here.
 			aggroType := characters.DefaultAttack
 			if targetMob := mobs.GetInstance(attackMobInstanceId); targetMob != nil {
 				aggroType = actions.EngageAggroType(
@@ -303,8 +301,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				}
 			}
 
-			// Surprise attack from stealth — fires before normal combat begins.
-			// SurpriseAttack gates on IsHidden() internally; call unconditionally.
+			// Type the engagement from stealth (PvP). EngageAggroType gates on
+			// hidden state AND the special-move cooldown internally, so call
+			// it unconditionally and do not pre-check IsHidden here.
 			pvpAggroType := characters.DefaultAttack
 			if targetUser := users.GetByUserId(attackPlayerId); targetUser != nil {
 				pvpAggroType = actions.EngageAggroType(

@@ -1,6 +1,10 @@
 package actions
 
 import (
+	"fmt"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -23,9 +27,9 @@ type AttackTarget struct {
 // diverges significantly between user and mob sides and must stay in each
 // wrapper. Call this only when rest is non-empty.
 //
-// The mob wrapper MUST handle the Hidden-buff → SurpriseAttack promotion and
-// the immediate CancelBuffsWithFlag(Hidden) call; that fix must never be
-// moved into this shared helper.
+// The Hidden → SurpriseAttack promotion is NOT done here either — call
+// EngageAggroType (below) for that, and leave the Hidden buff for the combat
+// loop's CancelIfCombat pass.
 func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobInstanceId int) AttackTarget {
 
 	result := AttackTarget{}
@@ -118,4 +122,28 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 	}
 
 	return result
+}
+
+// EngageAggroType reports the Aggro type a new engagement should carry, and
+// claims the surprise opener's cost.
+//
+// A hidden attacker whose special-move cooldown is unavailable opens as an
+// ORDINARY attack. That contract predates U10d: callers must not pre-check
+// IsHidden and must not assume hidden implies surprise.
+//
+// U10d: the pre-combat burst this used to fire is gone. The opening strike of
+// the ordinary combat round is the surprise now.
+func EngageAggroType(actor Actor, target Actor) characters.AggroType {
+	if target == nil || actor.GetCharacter() == nil {
+		return characters.DefaultAttack
+	}
+	if !actor.GetCharacter().IsHidden() {
+		return characters.DefaultAttack
+	}
+	cfg := configs.GetBalanceConfig()
+	if !actor.GetCharacter().TryCooldown("special-move",
+		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		return characters.DefaultAttack
+	}
+	return characters.SurpriseAttack
 }
