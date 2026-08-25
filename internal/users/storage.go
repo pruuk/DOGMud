@@ -24,6 +24,36 @@ type Storage struct {
 	// Legacy field — read on load for migration, then cleared.
 	// DO NOT remove until the next release after migration ships.
 	Items []items.Item `yaml:"items,omitempty"`
+
+	// MigrationsDone records one-time migrations already applied to this bank,
+	// keyed by migration name.
+	//
+	// The bank needs its OWN marker rather than borrowing the active
+	// character's: alt characters live in <userId>.alts.yaml with their own
+	// MiscData, but the whole account shares one Storage. SwapToAlt promotes an
+	// alt to u.Character, so a character-scoped marker would let the next
+	// LoadUser re-run a non-idempotent bank migration.
+	MigrationsDone map[string]bool `yaml:"migrationsdone,omitempty"`
+}
+
+// MigrationApplied reports whether the named one-time migration has already
+// run against this bank.
+func (s *Storage) MigrationApplied(key string) bool {
+	if s == nil {
+		return false
+	}
+	return s.MigrationsDone[key]
+}
+
+// MarkMigrationApplied records that the named one-time migration has run.
+func (s *Storage) MarkMigrationApplied(key string) {
+	if s == nil {
+		return
+	}
+	if s.MigrationsDone == nil {
+		s.MigrationsDone = make(map[string]bool, 1)
+	}
+	s.MigrationsDone[key] = true
 }
 
 // SlotCount returns the number of occupied slots (stacks), which is
@@ -141,4 +171,28 @@ func (s *Storage) RemoveSlot(idx int) StorageSlot {
 	slot := s.Slots[idx]
 	s.Slots = append(s.Slots[:idx], s.Slots[idx+1:]...)
 	return slot
+}
+
+// AllItemPtrs returns pointers to every stored item, covering both the
+// canonical Slots list and the legacy Items list (which MigrateStorageSlots
+// folds away later in the load sequence).
+//
+// Mutating through these pointers edits storage in place, which is the point:
+// one-time item migrations need to reach banked items, and Storage's other
+// accessors all hand back copies.
+//
+// A stacked slot yields ONE pointer, not Count pointers -- the stack shares a
+// single Item value, so a migration must apply to it exactly once.
+func (s *Storage) AllItemPtrs() []*items.Item {
+	if s == nil {
+		return nil
+	}
+	out := make([]*items.Item, 0, len(s.Slots)+len(s.Items))
+	for i := range s.Slots {
+		out = append(out, &s.Slots[i].Item)
+	}
+	for i := range s.Items {
+		out = append(out, &s.Items[i])
+	}
+	return out
 }

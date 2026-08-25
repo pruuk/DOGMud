@@ -390,11 +390,15 @@ type Storage struct {
 func (s *Storage) SlotCount() int             // number of occupied slots (stacks)
 func (s *Storage) GetItems() []items.Item     // one Item value per logical unit (a Count-3 slot yields 3 values)
 func (s *Storage) GetSlots() []StorageSlot    // copy of the slot list; use when reasoning about stacks
+func (s *Storage) AllItemPtrs() []*items.Item // in-place pointers to Slots + legacy Items; ONE pointer per stack. For one-time item migrations only -- every other accessor returns copies.
 func (s *Storage) FindItem(itemName string) (items.Item, bool) // fuzzy match via items.FindMatchIn
 func (s *Storage) AddItem(i items.Item) bool  // increments an existing stack (via items.SameStack) or appends a new slot
 func (s *Storage) RemoveItem(i items.Item) bool // decrements/drops a stackable slot, or removes a non-stackable slot by UUID (items.Item.Equals)
 func (s *Storage) RemoveSlot(idx int) StorageSlot // removes and returns the whole slot at idx; panics if out of range
 func (s *Storage) MigrateStorageSlots() bool  // storage_migrate.go: folds legacy Items into Slots
+func (s *Storage) MigrateDetunedRangedWeapons() bool // storage_migrate.go: U10d ranged rescale over banked items
+func (s *Storage) MigrationApplied(key string) bool  // has this one-time bank migration already run?
+func (s *Storage) MarkMigrationApplied(key string)   // record it in the yaml-persisted MigrationsDone map
 ```
 
 ### Inbox Messaging System
@@ -760,7 +764,7 @@ Only `AFK` surfaces to players via the `(afk)` tag.
 | `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`) |
 | `userrecord.go` | The `UserRecord` type |
 | `userrecord.prompt.go` | Prompt rendering and tokens |
-| `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`) and its legacy `Items`-to-`Slots` shape migration |
+| `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and account-scoped one-time bank migrations (`MigrationsDone`) |
 | `index.go` / `index_rebuild.go` / `character_index.go` | Name/character indexes |
 | `migration.go` | Per-user migrations |
 | `validate_actor_name.go` | Name validation |

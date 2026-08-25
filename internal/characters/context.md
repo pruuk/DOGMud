@@ -1658,7 +1658,7 @@ implementation-detail rationale.
 | Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go` |
 | Stats & progression | `progression.go`, `skills.go`, `effective_stats.go`, `statmods`-adjacent helpers, `mobmastery.go`, `kdstats.go` |
 | Resources & conditions | `pools.go`, `reservation.go`, `resources.go`, `conditions.go`, `cooldowns.go`, `buffs.go`, `sight.go` |
-| Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go` |
+| Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go`, `migrate_detuned_bows.go` |
 | Combat | `combat.go`, `combat_state_compat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go` |
 | Casting | `cast_helpers.go`, `spells.go` |
 | Mutation | `intrinsic.go`, `bloom.go`, `bloom_mutation.go`, `chrysifier.go`, `mutation_scour.go` |

@@ -1,5 +1,7 @@
 package users
 
+import "github.com/GoMudEngine/GoMud/internal/characters"
+
 // MigrateStorageSlots converts the legacy Storage.Items flat list into the
 // new Storage.Slots shape. It is idempotent: if Items is already empty (the
 // migration has run before), it returns false without touching Slots.
@@ -21,4 +23,28 @@ func (s *Storage) MigrateStorageSlots() bool {
 	s.Items = nil
 
 	return true
+}
+
+// MigrateDetunedRangedWeapons applies the U10d ranged detune to banked items.
+//
+// The bank is swept separately from the character's own inventory because it is
+// ACCOUNT-scoped while a character migration marker is CHARACTER-scoped. Alt
+// characters (<userId>.alts.yaml) each carry their own MiscData but share this
+// one Storage, and SwapToAlt promotes an alt to u.Character -- so a
+// character-scoped guard would let the next LoadUser rescale every banked bow a
+// second time. The rescale is a multiplication, not an assignment, so a second
+// pass is silently destructive.
+//
+// Returns true if any item was modified (caller should mark the user dirty).
+func (s *Storage) MigrateDetunedRangedWeapons() bool {
+	const migrationKey = "u10d-bow-detune"
+
+	if s == nil || s.MigrationApplied(migrationKey) {
+		return false
+	}
+
+	updated := characters.MigrateDetunedRangedWeaponItems(s.AllItemPtrs())
+	s.MarkMigrationApplied(migrationKey)
+
+	return updated > 0
 }

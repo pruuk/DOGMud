@@ -666,6 +666,14 @@ func TestFire_NonCombatantMob_NotExecuted(t *testing.T) {
 // Spec balance target: arbalest (mult 7.0) at stat 100 / rank 0 must produce
 // raw damage in the 180-220 band BEFORE mitigation:
 // 100 × SkillMultiplier(0)=1.0 × 7.0 × ChannelScale(0.30) = 210.
+//
+// STALE AS A WEAPON PIN SINCE U10d: the arbalest template is now 2.55, not
+// 7.0. The multiplier below is a hardcoded literal rather than a template
+// read, so this exercises CalcRawDamage's arithmetic and no longer pins
+// anything about the live weapon. Left as-is deliberately: rebanding it is a
+// balance decision that belongs with the U10d shoot-from-outside-the-fight
+// bonus, not with the template detune. The live template values are pinned by
+// items.TestRangedWeaponMultipliers_MatchTheU10dTable.
 func TestRangedShotRawDamage_BalanceBand(t *testing.T) {
 	raw := combat.CalcRawDamage(100, 0, 7.0, combat.ChannelPhysical)
 	if raw < 180 || raw > 220 {

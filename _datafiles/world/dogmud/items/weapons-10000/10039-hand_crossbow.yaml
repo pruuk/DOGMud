@@ -14,7 +14,7 @@ ammo_tag: bolts
 damage:
   basedamage: 4
   variance: 2
-damage_multiplier: 3.00
+damage_multiplier: 1.10
 parryrating: 1
 value: 90
 rarity_tier: 30

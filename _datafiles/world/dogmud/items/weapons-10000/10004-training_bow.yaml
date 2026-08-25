@@ -15,7 +15,7 @@ ammo_tag: arrows
 damage:
   basedamage: 5
   variance: 2
-damage_multiplier: 4.00
+damage_multiplier: 1.45
 parryrating: 0
 vendor_categories:
 - blacksmithing
