@@ -214,6 +214,14 @@ func TestSurpriseRound_ExactlyOneSwingIsUpgraded(t *testing.T) {
 		t.Fatalf("plan throws %d swings; this test cannot detect a round-scoped flag with fewer than 3",
 			plan.totalSwings)
 	}
+	// The dual-fist plan is an emergent property of collectAttackWeapons, not
+	// something this fixture states, so assert it. Without this the test would
+	// still pass on a single-weapon plan and would silently stop detecting a
+	// PER-WEAPON flag (capture-and-clear moved inside the weapon loop), which
+	// the preamble above claims it covers.
+	if len(plan.weapons) < 2 {
+		t.Fatalf("plan uses %d weapon(s); this test cannot detect a per-weapon flag with fewer than 2", len(plan.weapons))
+	}
 
 	sdp := buildDamageParams(attacker, defender, plan.weapons[0], 0, User)
 	// CritDamageMultiplier(20) = CritDamageBase 2.0 + CritDamagePerSkill 0.05 × 20.
@@ -240,6 +248,9 @@ func TestSurpriseRound_ExactlyOneSwingIsUpgraded(t *testing.T) {
 	totalStacked := 0
 	laterSurprise := []int{}
 	for i, swings := range surpriseRounds {
+		if len(swings) == 0 {
+			t.Fatalf("round %d resolved zero swings — the fixture stopped throwing, so nothing below is measuring anything", i)
+		}
 		stacked := 0
 		for _, dmg := range swings {
 			if float64(dmg) >= stackedBar {
@@ -247,8 +258,8 @@ func TestSurpriseRound_ExactlyOneSwingIsUpgraded(t *testing.T) {
 			}
 		}
 		if stacked > 1 {
-			t.Fatalf("round %d threw %d swings and %d of them carried the opening-strike stack (damages %v, bar %.1f) — the flag is round-scoped, not per-swing: EVERY winning swing is being upgraded",
-				i, len(swings), stacked, swings, stackedBar)
+			t.Fatalf("round %d threw %d swings across %d weapons and %d of them carried the opening-strike stack (damages %v, bar %.1f) — the flag is not scoped to ONE swing. Two stacked swings spread across the weapons means it is per-WEAPON (capture-and-clear moved inside the weapon loop); more than that means it is round-scoped and every winning swing is being upgraded",
+				i, len(swings), len(plan.weapons), stacked, swings, stackedBar)
 		}
 		totalStacked += stacked
 		laterSurprise = append(laterSurprise, swings[1:]...)
@@ -259,7 +270,10 @@ func TestSurpriseRound_ExactlyOneSwingIsUpgraded(t *testing.T) {
 	}
 
 	laterPlain := []int{}
-	for _, swings := range plainRounds {
+	for i, swings := range plainRounds {
+		if len(swings) == 0 {
+			t.Fatalf("plain round %d resolved zero swings — the fixture stopped throwing", i)
+		}
 		laterPlain = append(laterPlain, swings[1:]...)
 	}
 

@@ -1318,7 +1318,20 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 		// same mean for the same reason.
 		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
 		if openingStrike {
-			critMean *= sdp.openingStrikeMult
+			// Only buildDamageParams constructs swingDamageParams today, so an
+			// unset multiplier means a future literal was built elsewhere.
+			// Multiplying by that zero would land a maximum ambush for NO
+			// damage, silently: the `< 1 -> 1` rescue at the call site fires
+			// only on a DEFLECTED hit, and an opening strike that crits was by
+			// definition never deflected. Skipping the stack instead degrades
+			// the swing to an ordinary crit -- equally invisible on its own,
+			// which is exactly why the log, not the fallback, is the point
+			// here. Do not "simplify" this to a bare floor.
+			if sdp.openingStrikeMult <= 0 {
+				mudlog.Error("CritDamage", "err", "openingStrikeMult unset on a swingDamageParams built outside buildDamageParams")
+			} else {
+				critMean *= sdp.openingStrikeMult
+			}
 		}
 
 		damageResult := dice.RollStat(critMean)
