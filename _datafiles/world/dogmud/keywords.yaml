@@ -67,6 +67,7 @@ help:
       - ask
       - quests
     combat:
+      - ambush
       - assess
       - assist
       - attack
@@ -233,7 +234,10 @@ help-aliases:
                      train, training, level, levels, levelling, leveling, xp, exp,
                      experience, gain, gains, grind, grinding, "get better",
                      "how do i improve", "stat gain", "skill gain"]
-  skullduggery:     [stealth, surprise attack, surprise]
+  skullduggery:     [stealth]
+  ambush:           [surprise attack, surprise, sneak attack, backstab,
+                     ambushing, opening strike, striking from stealth]
+  sneak:            [hide, hiding, hidden, sneaking]
   combat:           [fighting, battle, dual-wield, dual wield]
   cooldowns:        [cooldown]
   defense:          [dodge, parry, block, defenses]

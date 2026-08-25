@@ -19,6 +19,9 @@ same window.
               not spend the cooldown; the ambush does. Note that reload
               above spends the same window, so reloading and then hiding
               can leave you with no ambush ready.
+  <ansi fg="command">attack</ansi>    - Only when you engage from hiding. That opening blow is
+              an ambush and spends the cooldown. Ordinary swings do not.
+              See <ansi fg="command">help ambush</ansi>.
   <ansi fg="command">gore</ansi>, <ansi fg="command">maul</ansi>, <ansi fg="command">rake</ansi>, <ansi fg="command">pounce</ansi>, <ansi fg="command">throttle</ansi>, <ansi fg="command">hamstring</ansi>, <ansi fg="command">drain</ansi>
               - Natural-weapon moves for bodies shaped to use them.
   Mutation abilities (<ansi fg="command">venom-coat</ansi>, <ansi fg="command">cocoon</ansi>) share it too.
@@ -46,4 +49,5 @@ cooldown, item, ammunition, combat round, or effect.
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help bash</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help cast</ansi>, <ansi fg="command">help cooldowns</ansi>,
   <ansi fg="command">help submission</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help conviction</ansi>
+  <ansi fg="command">help conviction</ansi>, <ansi fg="command">help ambush</ansi>,
+  <ansi fg="command">help reload</ansi>

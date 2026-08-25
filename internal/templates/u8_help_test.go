@@ -43,6 +43,13 @@ var u8ActionHelpPaths = []string{
 	"help/throttle",
 	"help/special",
 	"help/conviction",
+	// U10d: the ambush topic is player-facing action help like the rest of this
+	// list, so it earns the same two guards: no em dashes or raw/worded tuning
+	// in its visible text, and every cross-reference it emits must resolve. It
+	// carries no entry in the action-admission expectations map below because
+	// it documents no stamina admission policy of its own; the commands that do
+	// (shoot, reload, sneak) are already listed above and still assert theirs.
+	"help/ambush",
 }
 
 var ansiTagPattern = regexp.MustCompile(`</?ansi(?:\s+[^>]*)?>`)
@@ -242,7 +249,7 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 				// hiding is an ambush, and `help shoot` was previously the only
 				// place a player could read about aimed fire without ever being
 				// told that.
-				assert.Equal(t, []string{"reload", "ranged-combat", "stamina", "equip", "sneak", "skullduggery", "special"},
+				assert.Equal(t, []string{"reload", "ranged-combat", "stamina", "equip", "sneak", "skullduggery", "ambush", "special"},
 					u8HelpCrossReferenceTopics(rendered),
 					"every DOGMud shoot cross-reference must be enumerated")
 			}

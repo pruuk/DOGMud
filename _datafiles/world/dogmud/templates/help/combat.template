@@ -8,6 +8,10 @@ defenses, special moves, and resource management.
 Use <ansi fg="command">attack <target></ansi> to engage. Once started, combat
 continues each round until someone flees or dies.
 
+Engaging while hidden opens with an <ansi fg="magenta-bold">ambush</ansi>: a single
+heavier blow that a ready defender can still answer, and that reveals you
+at once. It spends your special move. See <ansi fg="command">help ambush</ansi>.
+
 <ansi fg="yellow">━━━ Attack Mechanics ━━━</ansi>
 
 Your attack success is based on:
@@ -120,4 +124,5 @@ nothing.
   <ansi fg="command">help surrender</ansi>
   <ansi fg="command">help unarmed-combat</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help conviction</ansi>, <ansi fg="command">help skills</ansi>,
-  <ansi fg="command">help progression</ansi>
+  <ansi fg="command">help progression</ansi>, <ansi fg="command">help ambush</ansi>,
+  <ansi fg="command">help sneak</ansi>

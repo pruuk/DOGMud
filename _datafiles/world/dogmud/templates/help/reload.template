@@ -22,8 +22,19 @@ weapon remains unchanged.
 You need matching ammunition in your pack. When a bundle runs dry you
 will be told it was your last.
 
+<ansi fg="yellow">Reloading costs you an ambush:</ansi>
+
+A shot fired from hiding is an <ansi fg="magenta-bold">ambush</ansi>, and it draws
+on the very same recovery that reloading just spent. If you reload and then
+hide, your special move is usually still coming back when you fire, so you
+loose an ordinary shot instead and are told there was no ambush ready.
+
+Load first, then hide, and give the recovery time to return before you shoot.
+Check it with <ansi fg="command">cooldowns</ansi>. See <ansi fg="command">help ambush</ansi>.
+
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help ranged-combat</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>,
+  <ansi fg="command">help ambush</ansi>, <ansi fg="command">help special</ansi>
 
 <ansi fg="black-bold">─────────────────────────────────────────────────────────────────</ansi>
 

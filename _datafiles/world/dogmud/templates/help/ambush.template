@@ -1,0 +1,77 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">ambush</ansi>
+
+An <ansi fg="magenta-bold">ambush</ansi> is what you get when you attack while hidden. The
+combat text marks it as a <ansi fg="magenta-bold">surprise attack</ansi>. There is no command to
+type. You hide first, then attack or shoot, and your opening blow
+becomes the ambush on its own.
+
+<ansi fg="yellow">━━━ Setting One Up ━━━</ansi>
+
+  1. Use <ansi fg="command">sneak</ansi> to slip out of sight.
+  2. Check that your special move has come back, with <ansi fg="command">cooldowns</ansi>.
+  3. <ansi fg="command">attack <target></ansi> to open in melee, or <ansi fg="command">shoot <target></ansi> to open
+     from cover.
+
+Requires the <ansi fg="skill">skullduggery</ansi> skill, which is what hides you in the first place.
+
+<ansi fg="yellow">━━━ Only the First Blow ━━━</ansi>
+
+An ambush is one strike, not a whole round of them. Anything else you
+swing in that round lands as ordinary fighting. Only the opening blow is
+marked in the combat text, so you can tell which one it was. The opener
+is spent even if it misses, so you get one attempt.
+
+<ansi fg="yellow">━━━ It Can Be Answered ━━━</ansi>
+
+An ambush is not a free hit. A ready defender may dodge, parry or block
+it, just as with any other attack, and the game names what they did. An
+ambushing shot can be dodged or blocked, but not parried, since there is
+no blade coming for them to turn aside.
+
+If they stop it, you lose the advantage, and the blow lands as an
+ordinary one or not at all. If it gets through cleanly it strikes as a
+critical hit, and it bites deeper the better your <ansi fg="skill">skullduggery</ansi>. A
+practised thief opens a fight far more sharply than a beginner does.
+
+<ansi fg="yellow">━━━ You Are Seen ━━━</ansi>
+
+Striking gives your hiding place away at once, whether you hit or miss.
+You cannot fight on from the shadows, and a shot from cover reveals you
+the same way. Plan the rest of the fight as an open one.
+
+<ansi fg="yellow">━━━ It Spends Your Special Move ━━━</ansi>
+
+The ambush uses the shared special move cooldown, so it competes with
+<ansi fg="command">bash</ansi>, <ansi fg="command">trip</ansi>, <ansi fg="command">kick</ansi> and the rest. If the cooldown has not
+recovered you get no ambush. Your attack simply goes in as an ordinary
+one, and you are told so.
+
+Archers should watch this closely. <ansi fg="command">reload</ansi> spends the same recovery.
+Reloading and then hiding often leaves you with nothing ready and an
+ordinary shot instead. Load first, then hide, and let the cooldown
+return before you fire.
+
+<ansi fg="yellow">━━━ Shooting Into the Next Room ━━━</ansi>
+
+Only a shot at something in your own room can be an ambush. Firing into
+an adjacent room is an ordinary shot however well hidden you are. It
+gains nothing from stealth, but it does not give your hiding place away
+either, so you keep your cover.
+
+<ansi fg="yellow">━━━ Shooting Without Being Bothered ━━━</ansi>
+
+This is a separate matter from the ambush, and it matters just as much.
+A ranged weapon is far more dangerous when nothing in the room is
+attacking you. You cannot steady an aimed shot while you are fending
+someone off, and the shot suffers badly for it.
+
+That is the archer's whole problem, and the answer is always the same:
+do not be the one being hit. Bring a companion or a party member to hold
+their attention, or put a room between you and them and fire from there.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>,
+  <ansi fg="command">help shoot</ansi>, <ansi fg="command">help reload</ansi>,
+  <ansi fg="command">help special</ansi>, <ansi fg="command">help cooldowns</ansi>,
+  <ansi fg="command">help ranged-combat</ansi>, <ansi fg="command">help combat</ansi>
