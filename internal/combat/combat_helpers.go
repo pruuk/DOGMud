@@ -86,6 +86,12 @@ type swingDamageParams struct {
 	critDmgMult   float64 // chunk 5.11g: skill-scaled crit worth, applied to rawDmgForCrit only
 	critBuffs     []int
 	msgSeed       int
+
+	// openingStrikeMult is the skullduggery stack for the ONE opening strike of
+	// a surprise attack. 1.0 otherwise. Applied to the crit MEAN before the roll
+	// -- dice.RollStat takes its spread from the mean it is handed, so scaling
+	// the rolled result instead would stretch the variance.
+	openingStrikeMult float64
 }
 
 // bestDefenseResult holds the outcome of best-of-all defense resolution.
@@ -484,6 +490,8 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		rawDmgForCrit: rawDmgForCrit,
 		critDmgMult:   CritDamageMultiplier(combatSkillLevel),
 		msgSeed:       msgSeed,
+		openingStrikeMult: OpeningStrikeMultiplier(sourceChar,
+			float64(configs.GetBalanceConfig().SurpriseOpeningStrikeMultiplier)),
 	}
 }
 
@@ -1284,8 +1292,18 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 
 // calcHitDamage computes the damage for a successful hit, handling crits.
 // The isCrit flag is determined during hitroll resolution, not re-derived here.
-func calcHitDamage(result *AttackResult, isCrit bool, backstab bool, sdp swingDamageParams) (int, bool) {
-	if isCrit || backstab {
+//
+// openingStrike says this swing is the ONE opening strike of a surprise attack
+// (U10d). It only stacks damage; it never decides the crit. The second return
+// value is vestigial -- production discards it and clears its own per-swing flag
+// before the contest runs, so the ambush gets exactly one roll rather than one
+// per swing. It survives only for the older unit tests that read it.
+func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp swingDamageParams) (int, bool) {
+	// U10d: the crit branch is selected by the CRIT VERDICT alone. It used to be
+	// `isCrit || backstab`, which forced the branch from the flag itself -- under
+	// this design that would let a DEFENDED opening strike roll the full stacked
+	// mean and consume the flag, then merely scale the result by damageMult.
+	if isCrit {
 		result.Crit = true
 		result.BuffTarget = sdp.critBuffs
 		// Crits bypass mitigation, so they roll around the UNmitigated mean —
@@ -1296,16 +1314,21 @@ func calcHitDamage(result *AttackResult, isCrit bool, backstab bool, sdp swingDa
 		// Chunk 5.11g: the skill-scaled crit multiplier is applied to the MEAN,
 		// before the roll, for that same reason — scaling the rolled result
 		// instead would stretch the spread by the multiplier and leave crits
-		// wildly swingier at high skill.
+		// wildly swingier at high skill. U10d's opening-strike stack rides the
+		// same mean for the same reason.
 		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+		if openingStrike {
+			critMean *= sdp.openingStrikeMult
+		}
+
 		damageResult := dice.RollStat(critMean)
 		dmg := int(math.Round(math.Max(0, damageResult.Value)))
-		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "critMult", fmt.Sprintf("%.2f", sdp.critDmgMult), "critMean", fmt.Sprintf("%.1f", critMean), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
-		return dmg, false // consume backstab
+		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "critMult", fmt.Sprintf("%.2f", sdp.critDmgMult), "openingStrike", openingStrike, "openingMult", fmt.Sprintf("%.2f", sdp.openingStrikeMult), "critMean", fmt.Sprintf("%.1f", critMean), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
+		return dmg, false
 	}
 	// Normal hit: use mitigated damage
 	damageResult := dice.RollStat(sdp.dmgMean)
-	return int(math.Round(math.Max(0, damageResult.Value))), backstab
+	return int(math.Round(math.Max(0, damageResult.Value))), openingStrike
 }
 
 // swingDamageParamsWithCritBuffs is a type alias to carry critBuffs through calcHitDamage

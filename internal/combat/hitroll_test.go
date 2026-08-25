@@ -397,17 +397,28 @@ func TestCalcHitDamage_CritUsesRawDamage(t *testing.T) {
 	_ = dmg2 // just confirm it doesn't panic
 }
 
-func TestCalcHitDamage_BackstabConsumed(t *testing.T) {
+// U10d replaced the retired every-swing backstab design. The flag no longer
+// FORCES a crit: the opening strike contests normally and Task 2's guard in
+// resolveDefenseOutcomeCore decides the verdict, so calcHitDamage's crit branch
+// is selected by isCrit alone. This test pins the half of the old assertion
+// that survives (a non-crit swing stays a non-crit swing) and inverts the half
+// that was the bug (the flag used to manufacture a crit from nothing).
+//
+// Consumption also moved: production clears its per-swing flag before the
+// contest runs, so calcHitDamage returns it unchanged on the non-crit path.
+// See TestSurpriseRound_ExactlyOneSwingIsUpgraded for the round-level contract.
+func TestCalcHitDamage_OpeningStrikeAloneDoesNotCrit(t *testing.T) {
 	result := &AttackResult{}
 	sdp := swingDamageParams{
-		dmgMean:       10.0,
-		rawDmgForCrit: 50.0,
-		critDmgMult:   1.0,
+		dmgMean:           10.0,
+		rawDmgForCrit:     50.0,
+		critDmgMult:       1.0,
+		openingStrikeMult: 3.0,
 	}
 
-	_, backstab := calcHitDamage(result, false, true, sdp)
-	assert.False(t, backstab, "backstab should be consumed after use")
-	assert.True(t, result.Crit, "backstab should trigger crit")
+	_, openingStrike := calcHitDamage(result, false, true, sdp)
+	assert.False(t, result.Crit, "the opening-strike flag must never manufacture a crit on its own")
+	assert.True(t, openingStrike, "calcHitDamage does not consume the flag on a non-crit swing; the caller already did")
 }
 
 // sampleStdDev returns the sample standard deviation of xs.

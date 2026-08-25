@@ -78,7 +78,7 @@ instead of punches.
 ### Advanced Combat Mechanics
 - Dexterity-based multiple attacks per round
 - Dual wielding with skill-based penalties
-- Backstab mechanics with guaranteed critical hits
+- Surprise attack: one contested opening strike per engagement (U10d)
 - Pet participation in combat (20% chance)
 - Cross-room combat support with directional messaging
 
@@ -98,7 +98,7 @@ instead of punches.
 // - Accuracy buff (doubles crit chance)
 // - Blink buff on target (halves crit chance)
 // - Grapple position: `c.IsController()` + IsStandingGrapple -0.2, IsGroundGrapple -0.4 (chunk 4b R1)
-// - Backstab: guaranteed crit on first pass
+// - U10d surprise opening strike: crits on a clean contest win, ONE swing
 ```
 
 ### Dual Wielding
@@ -1150,8 +1150,25 @@ user.PlaySound("hit-other"/"miss", "combat")  // MSP sound events
 ```
 statModDBonus = sourceChar.StatMod("damage")   // flat bonus to damage
 extraAttacks  = sourceChar.StatMod("attacks")  // extra attack passes
-backstabCrit  = (Aggro.Type == BackStab)        // first pass auto-crits
+openingStrikeLeft = (Aggro.Type == SurpriseAttack)  // U10d: ONE swing, not a
+                                                    // guaranteed crit
 ```
+
+**U10d — the opening strike.** A surprise attack no longer auto-crits and no
+longer re-rolls its chance on every swing. `openingStrikeLeft` is set once per
+round here, then captured into a per-swing local and cleared **immediately,
+before the contest runs**, inside the swing loop. That one swing:
+
+- passes `critOnWin` to `resolveDefenseOutcome`, so it crits if (and only if) it
+  wins the contest cleanly, unfloored and unfumbled (`resolveDefenseOutcomeCore`);
+- multiplies its crit **mean** by `sdp.openingStrikeMult` =
+  `CritDamageMultiplier(skullduggery) × SurpriseOpeningStrikeMultiplier`
+  (`OpeningStrikeMultiplier`, `crit_damage.go`).
+
+Clearing on the THROW rather than on the first landing swing is deliberate:
+`calcHitDamage` runs only under `res.hit`, so a miss, fumble or deflection would
+otherwise leave the flag set and hand the ambush one fresh roll per swing.
+Pinned by `TestSurpriseRound_ExactlyOneSwingIsUpgraded`.
 
 **Step 1: Attack Count** — `calcAttackCount()`
 ```
@@ -1288,9 +1305,12 @@ hits/misses affect stance display text.
 **vi. If HIT** — `calcHitDamage()`
 ```
 The crit flag is decided during hitroll resolution (see margin_crit.go) and
-passed in. calcHitDamage does NOT re-derive it.
+passed in. calcHitDamage does NOT re-derive it. U10d: the opening-strike flag
+does NOT select the crit branch either — only the crit verdict does.
 
-  CRIT: damage = dice.RollStat(rawDmgForCrit * critDmgMult)  // PRE-mitigation!
+  CRIT: mean = rawDmgForCrit * critDmgMult                   // PRE-mitigation!
+        if openingStrike { mean *= openingStrikeMult }        // U10d ambush
+        damage = dice.RollStat(mean)
         Apply crit buffs to target.
 
 Normal hit:
@@ -1755,8 +1775,10 @@ force-crit from the snapshot, but the sleeper is now active and can
 start fighting back next round. A stale snapshot (any other round)
 says nothing; only the live flag answers then.
 
-Other future first-hit-crit triggers (surprise attack, backstab)
-can add parallel snapshot checks at the same start-of-round site.
+Surprise attack does NOT use this seam. `ctx.forceCrit` upgrades every swing of
+the round; U10d's opening strike is deliberately one swing and is contested
+rather than forced, so it rides its own per-swing `critOnWin` parameter. Keep
+the two distinct — see "U10d — the opening strike" above.
 
 ## Shared situational-modifier layer (U6b Task 17)
 

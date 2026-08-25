@@ -3,8 +3,10 @@ package combat
 import (
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // Chunk 5.11g — skill-scaled crit damage.
@@ -51,6 +53,25 @@ func CritDamageMultiplier(skillRank int) float64 {
 	}
 
 	return base + float64(bal.CritDamagePerSkill)*float64(skillRank)
+}
+
+// OpeningStrikeMultiplier is the extra crit worth carried by the single opening
+// strike of a surprise attack: the attacker's skullduggery expressed through the
+// same crit-worth curve their combat skill already uses, times the ambush-only
+// tuning knob.
+//
+// channelKnob is the per-channel ambush multiplier, passed by the caller rather
+// than read here: melee uses SurpriseOpeningStrikeMultiplier, ranged uses
+// SurpriseRangedStrikeMultiplier (Task 10), and the two ship at different values
+// because a shot answers one fewer defence and already inherits the unengaged
+// bonus.
+//
+// Returns 1.0 for a nil attacker so callers can multiply unconditionally.
+func OpeningStrikeMultiplier(attacker *characters.Character, channelKnob float64) float64 {
+	if attacker == nil {
+		return 1.0
+	}
+	return CritDamageMultiplier(attacker.GetSkillLevel(skills.Skullduggery)) * channelKnob
 }
 
 // CritOrMitigatedDamage rolls the damage for one spell or conviction hit.
