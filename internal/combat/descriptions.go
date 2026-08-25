@@ -103,6 +103,32 @@ func GetWaitRoundsDescription(rounds int) string {
 	}
 }
 
+// GetCastLengthDescription returns a qualitative label for how long a spell
+// takes to channel, from its base fold count.
+//
+// Bands follow the shipped spread rather than round numbers: base_folds runs 2
+// to 36 across the spell list and clusters hard at 4 to 8, so a linear scale
+// would call almost everything "medium". Charm at 36 is the longest channel in
+// the game and must read that way.
+//
+// Sibling of GetConvictionCostDescription and GetWaitRoundsDescription, and it
+// lives here with them for the same reason: the helpfile must never invent a
+// second vocabulary for a value the spell list already describes.
+func GetCastLengthDescription(baseFolds int) string {
+	switch {
+	case baseFolds <= 3:
+		return "a moment"
+	case baseFolds <= 6:
+		return "brief"
+	case baseFolds <= 12:
+		return "sustained"
+	case baseFolds <= 20:
+		return "long"
+	default:
+		return "very long"
+	}
+}
+
 // GetCastCountDescription returns a qualitative label for cast count (familiarity).
 func GetCastCountDescription(count int) string {
 	switch {
