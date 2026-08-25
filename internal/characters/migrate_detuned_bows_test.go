@@ -2,209 +2,146 @@ package characters
 
 import (
 	"math"
-	"path/filepath"
-	"runtime"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/pets"
 )
 
 const (
-	warbowId      = 10046
-	warbowPreU10d = 7.50
-	warbowU10d    = 2.75
+	testWarbowId      = 10046
+	testWarbowPreU10d = 7.50
+	testWarbowU10d    = 2.75
 )
 
-// seedWarbowTemplate installs a minimal item table holding the post-U10d
-// Ironhorn Warbow template, and restores the real one afterwards.
-func seedWarbowTemplate(t *testing.T) {
+func seedWarbowTemplateForCharacter(t *testing.T) {
 	t.Helper()
-	cleanup := items.SeedItemsForTest(map[int]*items.ItemSpec{
-		warbowId: {
-			ItemId:           warbowId,
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		testWarbowId: {
+			ItemId:           testWarbowId,
 			Name:             "Ironhorn Warbow",
 			Type:             items.Weapon,
 			Subtype:          items.Shooting,
-			DamageMultiplier: warbowU10d,
+			DamageMultiplier: testWarbowU10d,
 		},
-	})
-	t.Cleanup(cleanup)
+	}))
 }
 
-// Test 1: an ENCHANTED bow carrying the pre-detune value in both its instance
-// override and its enchant baseline lands on the new line in both places.
-//
-// The baseline matters as much as the spec: enchantments.ApplyTier does an
-// unconditional EnchantBaseline.RestoreInto(&newSpec), so a stale baseline
-// re-installs the old multiplier on the very next enchant pass.
-func TestMigrateDetunedRangedWeapons_EnchantedBowLandsOnTheNewLine(t *testing.T) {
-	seedWarbowTemplate(t)
-
-	c := &Character{
-		Name: "TestArcher",
-		Items: []items.Item{{
-			ItemId:          warbowId,
-			EnchantType:     "keen",
-			EnchantTier:     1,
-			Spec:            &items.ItemSpec{DamageMultiplier: warbowPreU10d},
-			EnchantBaseline: &items.SpecBaseline{DamageMultiplier: warbowPreU10d},
-		}},
-	}
-
-	// The bank is swept by users.Storage.MigrateDetunedRangedWeapons under its
-	// own account-scoped marker; here we exercise the shared pure sweep.
-	banked := &items.Item{
-		ItemId: warbowId,
-		Spec:   &items.ItemSpec{DamageMultiplier: warbowPreU10d},
-	}
-
-	c.MigrateDetunedRangedWeapons()
-	MigrateDetunedRangedWeaponItems([]*items.Item{banked})
-
-	if got := c.Items[0].Spec.DamageMultiplier; !nearly(got, warbowU10d) {
-		t.Errorf("carried bow spec = %.4f, want %.4f", got, warbowU10d)
-	}
-	if got := c.Items[0].EnchantBaseline.DamageMultiplier; !nearly(got, warbowU10d) {
-		t.Errorf("carried bow enchant baseline = %.4f, want %.4f", got, warbowU10d)
-	}
-	if got := banked.Spec.DamageMultiplier; !nearly(got, warbowU10d) {
-		t.Errorf("banked bow spec = %.4f, want %.4f", got, warbowU10d)
+func preDetuneBow() items.Item {
+	return items.Item{
+		ItemId: testWarbowId,
+		Spec:   &items.ItemSpec{DamageMultiplier: testWarbowPreU10d},
 	}
 }
 
-// Test 2: an AFFIXED bow keeps the scaling its owner paid gold for.
-//
-// This is the regression test for the bug documented in items.SpecBaseline:
-// resetting an instance to the bare template "silently destroyed everything an
-// instance had earned above it", observed on prod as about a 16% damage drop
-// on a set of affixed claws. affixgen.applyBonus writes +0.05 per rank, so
-// 7.85 is a warbow carrying 0.35 of paid affix budget. Ids 10046 and 10049
-// exist only in loot pools, so this is the population the migration targets.
-//
-// An assignment-based migration (spec.DamageMultiplier = tmpl.DamageMultiplier)
-// flattens this to 2.75 and FAILS here.
-func TestMigrateDetunedRangedWeapons_AffixedBowKeepsItsPaidScaling(t *testing.T) {
-	seedWarbowTemplate(t)
+func nearlyEq(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
-	const affixed = 7.85 // template 7.50 + 0.35 of paid affix scaling
+// TestMigrateDetunedRangedWeapons_ReachesEveryCarriedCollection covers the
+// populations the sweep claims. Pet inventory is the one most easily missed:
+// Pet.StoreItem accepts any item with ItemId >= 1 with NO type filter, and both
+// get.go and give.go route items into it, so a pack pet is first-class player
+// storage that can hold a bow indefinitely.
+func TestMigrateDetunedRangedWeapons_ReachesEveryCarriedCollection(t *testing.T) {
+	seedWarbowTemplateForCharacter(t)
 
 	c := &Character{
-		Name: "TestArcher",
-		Items: []items.Item{{
-			ItemId:  warbowId,
-			Affixed: true,
-			Spec:    &items.ItemSpec{DamageMultiplier: affixed},
-		}},
+		Name:           "TestArcher",
+		Items:          []items.Item{preDetuneBow()},
+		ComponentItems: []items.Item{preDetuneBow()},
+		PotionItems:    []items.Item{preDetuneBow()},
+		Pet:            pets.Pet{Type: "packmule", Capacity: 4, Items: []items.Item{preDetuneBow()}},
 	}
+	weapon := preDetuneBow()
+	c.Equipment.Weapon = weapon
 
 	c.MigrateDetunedRangedWeapons()
 
-	got := c.Items[0].Spec.DamageMultiplier
-
-	// Proportional rescale: 7.85 * (2.75 / 7.50) = 2.878333..., i.e. ~2.88.
-	want := affixed * (warbowU10d / warbowPreU10d)
-	if !nearly(got, want) {
-		t.Errorf("affixed bow = %.4f, want %.4f", got, want)
-	}
-	if math.Abs(got-2.88) > 0.005 {
-		t.Errorf("affixed bow = %.4f, expected it to round to 2.88", got)
-	}
-	if nearly(got, warbowU10d) {
-		t.Errorf("affixed bow was flattened to the bare template %.2f -- the paid "+
-			"affix scaling was deleted with no message and no refund. Rescale by "+
-			"the ratio; never assign the template value.", warbowU10d)
-	}
-
-	// The earned delta must survive IN PROPORTION, not as an absolute.
-	oldDelta := (affixed - warbowPreU10d) / warbowPreU10d
-	newDelta := (got - warbowU10d) / warbowU10d
-	if !nearly(oldDelta, newDelta) {
-		t.Errorf("earned delta drifted: was %.6f above template, now %.6f", oldDelta, newDelta)
+	for _, tc := range []struct {
+		where string
+		got   float64
+	}{
+		{"backpack", c.Items[0].Spec.DamageMultiplier},
+		{"component bag", c.ComponentItems[0].Spec.DamageMultiplier},
+		{"potion bandolier", c.PotionItems[0].Spec.DamageMultiplier},
+		{"pet inventory", c.Pet.Items[0].Spec.DamageMultiplier},
+		{"equipped weapon", c.Equipment.Weapon.Spec.DamageMultiplier},
+	} {
+		if !nearlyEq(tc.got, testWarbowU10d) {
+			t.Errorf("%s bow = %.4f, want %.4f -- this collection is not in the sweep",
+				tc.where, tc.got, testWarbowU10d)
+		}
 	}
 }
 
-// Test 3: the migration is NOT idempotent -- it multiplies by a ratio -- so it
-// must be guarded. Running it twice must leave the value untouched.
+// TestMigrateDetunedRangedWeapons_SurvivesACharacterWithNoMarker is the
+// regression test for the create-path corruption.
 //
-// Keying on ItemId does NOT make this safe; only the run-once marker does.
-func TestMigrateDetunedRangedWeapons_IsGuardedAgainstReRunning(t *testing.T) {
-	seedWarbowTemplate(t)
+// characters.New() seeds an EMPTY MiscData map, so a freshly created alt -- and
+// a brand-new account, which plays its whole first session on an in-memory
+// record that never passes through LoadUser -- reaches its first migration with
+// no marker of any kind. If it acquired a post-detune bow in the meantime
+// (enchanting, an affix roll, a rename and a worn buff all materialise
+// Item.Spec), a marker-guarded migration would rescale a CORRECT item to about
+// 1.01, silently and permanently.
+//
+// The migration is therefore value-guarded, not marker-guarded.
+func TestMigrateDetunedRangedWeapons_SurvivesACharacterWithNoMarker(t *testing.T) {
+	seedWarbowTemplateForCharacter(t)
 
-	c := &Character{
-		Name: "TestArcher",
-		Items: []items.Item{{
-			ItemId: warbowId,
-			Spec:   &items.ItemSpec{DamageMultiplier: warbowPreU10d},
-		}},
+	c := New() // the real alt-creation path
+	c.Name = "FreshAlt"
+
+	if c.GetMiscData("migration-u10d-bow-detune-done") != nil {
+		t.Fatal("premise broken: a new character already carries the bow marker")
 	}
+
+	// A bow acquired and enchanted entirely after the detune shipped.
+	c.Items = []items.Item{{
+		ItemId:          testWarbowId,
+		EnchantType:     "keen",
+		EnchantTier:     1,
+		Spec:            &items.ItemSpec{DamageMultiplier: testWarbowU10d},
+		EnchantBaseline: &items.SpecBaseline{DamageMultiplier: testWarbowU10d},
+	}}
+
+	c.MigrateDetunedRangedWeapons()
+
+	if got := c.Items[0].Spec.DamageMultiplier; !nearlyEq(got, testWarbowU10d) {
+		t.Errorf("post-detune bow on a never-migrated character = %.4f, want %.4f",
+			got, testWarbowU10d)
+	}
+	if got := c.Items[0].EnchantBaseline.DamageMultiplier; !nearlyEq(got, testWarbowU10d) {
+		t.Errorf("post-detune baseline on a never-migrated character = %.4f, want %.4f",
+			got, testWarbowU10d)
+	}
+}
+
+// TestMigrateDetunedRangedWeapons_RunsEveryLoadWithoutCompounding pins the
+// absence of a run-once marker. The sweep runs on every load on purpose, so a
+// pre-detune bow reaching the player LATER (looted from a mob instance, bought
+// from stale shop stock, pulled from a corpse) still migrates rather than being
+// frozen at its old value by a marker set on some earlier login.
+func TestMigrateDetunedRangedWeapons_RunsEveryLoadWithoutCompounding(t *testing.T) {
+	seedWarbowTemplateForCharacter(t)
+
+	c := &Character{Name: "TestArcher", Items: []items.Item{preDetuneBow()}}
 
 	c.MigrateDetunedRangedWeapons()
 	afterFirst := c.Items[0].Spec.DamageMultiplier
-	if !nearly(afterFirst, warbowU10d) {
-		t.Fatalf("first pass = %.4f, want %.4f", afterFirst, warbowU10d)
+	if !nearlyEq(afterFirst, testWarbowU10d) {
+		t.Fatalf("first load = %.4f, want %.4f", afterFirst, testWarbowU10d)
 	}
 
+	// Second login. Also: a pre-detune bow looted in the meantime.
+	c.Items = append(c.Items, preDetuneBow())
 	c.MigrateDetunedRangedWeapons()
-	afterSecond := c.Items[0].Spec.DamageMultiplier
 
-	if !nearly(afterSecond, afterFirst) {
-		t.Errorf("second pass changed the value: %.4f -> %.4f. The run-once guard "+
-			"is missing or broken; a re-detuned bow loses %.0f%% more damage on "+
-			"every load.", afterFirst, afterSecond,
-			(1-warbowU10d/warbowPreU10d)*100)
+	if got := c.Items[0].Spec.DamageMultiplier; !nearlyEq(got, afterFirst) {
+		t.Errorf("already-migrated bow compounded across loads: %.4f -> %.4f",
+			afterFirst, got)
+	}
+	if got := c.Items[1].Spec.DamageMultiplier; !nearlyEq(got, testWarbowU10d) {
+		t.Errorf("later-acquired pre-detune bow = %.4f, want %.4f. A run-once marker "+
+			"would strand this at its old value forever.", got, testWarbowU10d)
 	}
 }
-
-// TestPreDetuneBowTable_MatchesTheRealTemplates keeps the migration table and
-// the shipped YAML from drifting apart. Every id the migration knows about must
-// still resolve to a Shooting weapon, and the whole Shooting set must be
-// covered -- a bow added later without a table entry would migrate as a no-op.
-func TestPreDetuneBowTable_MatchesTheRealTemplates(t *testing.T) {
-	// SeedItemsForTest captures the real table; the cleanup restores it even
-	// though LoadDataFiles reassigns the package var underneath us.
-	t.Cleanup(items.SeedItemsForTest(nil))
-
-	// Data path anchored on runtime.Caller, NOT the working directory: all
-	// tests in a package share one binary and internal/actions' economy_test.go
-	// chdirs to the repo root, so relative paths pass or fail by test ORDER.
-	_, here, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("runtime.Caller failed")
-	}
-	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(here), "..", ".."))
-	cfg := configs.GetConfig()
-	cfg.FilePaths.DataFiles = configs.ConfigString(filepath.Join(repoRoot, "_datafiles", "world", "dogmud"))
-	configs.SetConfigForTest(t, cfg)
-
-	items.LoadDataFiles()
-
-	for id, old := range preDetuneBowMultipliers {
-		spec := items.GetItemSpec(id)
-		if spec == nil {
-			t.Errorf("preDetuneBowMultipliers has id %d but no such item template", id)
-			continue
-		}
-		if spec.Subtype != items.Shooting {
-			t.Errorf("item %d (%s) is in the pre-detune table but is subtype %q, not shooting",
-				id, spec.Name, spec.Subtype)
-		}
-		if spec.DamageMultiplier >= old {
-			t.Errorf("item %d (%s) template multiplier %.2f is not below its pre-detune "+
-				"value %.2f -- the detune was reverted, or the table is stale",
-				id, spec.Name, spec.DamageMultiplier, old)
-		}
-	}
-
-	for _, spec := range items.GetAllItemSpecs() {
-		if spec.Subtype != items.Shooting {
-			continue
-		}
-		if _, ok := preDetuneBowMultipliers[spec.ItemId]; !ok {
-			t.Errorf("shooting weapon %q (id %d) has no preDetuneBowMultipliers entry, "+
-				"so existing instances of it would never be migrated", spec.Name, spec.ItemId)
-		}
-	}
-}
-
-func nearly(a, b float64) bool { return math.Abs(a-b) < 1e-9 }

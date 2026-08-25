@@ -1,6 +1,6 @@
 package users
 
-import "github.com/GoMudEngine/GoMud/internal/characters"
+import "github.com/GoMudEngine/GoMud/internal/items"
 
 // MigrateStorageSlots converts the legacy Storage.Items flat list into the
 // new Storage.Slots shape. It is idempotent: if Items is already empty (the
@@ -27,24 +27,19 @@ func (s *Storage) MigrateStorageSlots() bool {
 
 // MigrateDetunedRangedWeapons applies the U10d ranged detune to banked items.
 //
-// The bank is swept separately from the character's own inventory because it is
-// ACCOUNT-scoped while a character migration marker is CHARACTER-scoped. Alt
-// characters (<userId>.alts.yaml) each carry their own MiscData but share this
-// one Storage, and SwapToAlt promotes an alt to u.Character -- so a
-// character-scoped guard would let the next LoadUser rescale every banked bow a
-// second time. The rescale is a multiplication, not an assignment, so a second
-// pass is silently destructive.
+// The bank is swept separately from a character's own inventory because it is
+// ACCOUNT-scoped: alt characters (<userId>.alts.yaml) each have their own
+// inventory but the whole account shares this one Storage.
 //
-// Returns true if any item was modified (caller should mark the user dirty).
+// Unmarked and run every load, for the same reason as the character sweep --
+// items.MigrateDetunedBow is idempotent by construction. A run-once marker here
+// would permanently strand any pre-detune bow deposited AFTER it was set, which
+// is exactly what an un-migrated alt promoted by SwapToAlt would do.
+//
+// Returns true if any item was modified.
 func (s *Storage) MigrateDetunedRangedWeapons() bool {
-	const migrationKey = "u10d-bow-detune"
-
-	if s == nil || s.MigrationApplied(migrationKey) {
+	if s == nil {
 		return false
 	}
-
-	updated := characters.MigrateDetunedRangedWeaponItems(s.AllItemPtrs())
-	s.MarkMigrationApplied(migrationKey)
-
-	return updated > 0
+	return items.MigrateDetunedRangedWeapons(s.AllItemPtrs()) > 0
 }

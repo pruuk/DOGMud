@@ -563,11 +563,13 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	// unconditional EnchantBaseline.RestoreInto, which would re-install the
 	// stale pre-detune multiplier over the fix.
 	//
-	// Two calls, two separately-scoped run-once markers. The character sweep is
-	// guarded by that character's MiscData; the bank is guarded by its own
-	// account-scoped marker, because alts share one ItemStorage but not one
-	// MiscData and the rescale is not idempotent. Mob, shop, and room instance
-	// state is deliberately out of scope -- see MigrateDetunedRangedWeapons.
+	// Two calls because the bank is account-scoped while an inventory is
+	// character-scoped, and alts share one ItemStorage. Neither carries a
+	// run-once marker: the rescale only touches values still at or above the
+	// pre-detune template, so it is idempotent, and running it every load is
+	// what lets a pre-detune bow arriving later (mob instance, stale shop
+	// stock, corpse, un-migrated alt) still get fixed. Mob, shop, and room
+	// instance state itself is out of scope -- see MigrateDetunedRangedWeapons.
 	loadedUser.Character.MigrateDetunedRangedWeapons()
 	loadedUser.ItemStorage.MigrateDetunedRangedWeapons()
 	loadedUser.Character.MigrateEnchantments()

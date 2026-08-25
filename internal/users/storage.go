@@ -24,36 +24,6 @@ type Storage struct {
 	// Legacy field — read on load for migration, then cleared.
 	// DO NOT remove until the next release after migration ships.
 	Items []items.Item `yaml:"items,omitempty"`
-
-	// MigrationsDone records one-time migrations already applied to this bank,
-	// keyed by migration name.
-	//
-	// The bank needs its OWN marker rather than borrowing the active
-	// character's: alt characters live in <userId>.alts.yaml with their own
-	// MiscData, but the whole account shares one Storage. SwapToAlt promotes an
-	// alt to u.Character, so a character-scoped marker would let the next
-	// LoadUser re-run a non-idempotent bank migration.
-	MigrationsDone map[string]bool `yaml:"migrationsdone,omitempty"`
-}
-
-// MigrationApplied reports whether the named one-time migration has already
-// run against this bank.
-func (s *Storage) MigrationApplied(key string) bool {
-	if s == nil {
-		return false
-	}
-	return s.MigrationsDone[key]
-}
-
-// MarkMigrationApplied records that the named one-time migration has run.
-func (s *Storage) MarkMigrationApplied(key string) {
-	if s == nil {
-		return
-	}
-	if s.MigrationsDone == nil {
-		s.MigrationsDone = make(map[string]bool, 1)
-	}
-	s.MigrationsDone[key] = true
 }
 
 // SlotCount returns the number of occupied slots (stacks), which is

@@ -4,7 +4,9 @@ import (
 	"math"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -32,6 +34,8 @@ func bankedWarbow() items.Item {
 		Spec:   &items.ItemSpec{DamageMultiplier: testWarbowPreU10d},
 	}
 }
+
+func nearlyEq(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
 // TestStorageMigrateDetunedRangedWeapons_ReachesBothSlotsAndLegacyItems checks
 // the sweep covers the canonical Slots list AND the legacy Items list, since
@@ -63,12 +67,9 @@ func TestStorageMigrateDetunedRangedWeapons_ReachesBothSlotsAndLegacyItems(t *te
 //
 // Alt characters live in <userId>.alts.yaml and each carry their OWN MiscData,
 // but the entire account shares ONE ItemStorage. UserRecord.SwapToAlt promotes
-// an alt to u.Character, so the next LoadUser sees a character with no bow
-// migration marker. If the bank were guarded by that character's MiscData, the
-// sweep would run a SECOND time and multiply every banked bow by the detune
-// ratio again -- silently, permanently, and with no message to the player.
-//
-// The bank's marker must therefore live on Storage itself.
+// an alt to u.Character, so the next LoadUser sees a character that has never
+// run this migration. The bank must neither be rescaled twice by that second
+// pass, nor be permanently skipped for bows deposited after some earlier login.
 func TestStorageMigrateDetunedRangedWeapons_SurvivesAnAltSwap(t *testing.T) {
 	seedWarbowTemplateForStorage(t)
 
@@ -81,38 +82,64 @@ func TestStorageMigrateDetunedRangedWeapons_SurvivesAnAltSwap(t *testing.T) {
 		t.Fatalf("first pass = %.4f, want %.4f", afterFirst, testWarbowU10d)
 	}
 
-	// SwapToAlt replaces u.Character wholesale; the alt has never carried a bow
-	// migration marker. The bank, however, is the same object. Next login:
-	if s.MigrateDetunedRangedWeapons() {
-		t.Error("bank migration re-ran after an alt swap")
+	// SwapToAlt replaces u.Character wholesale, and that alt deposits a bow it
+	// still carries at the pre-detune value. Next login sweeps the same bank.
+	s.AddItem(bankedWarbow())
+	s.MigrateDetunedRangedWeapons()
+
+	if got := s.Slots[0].Item.Spec.DamageMultiplier; !nearlyEq(got, afterFirst) {
+		t.Errorf("banked bow re-detuned across an alt swap: %.4f -> %.4f. Every pass "+
+			"multiplies by the ratio; a player with alts would lose damage on every "+
+			"bow in the bank, once per alt.", afterFirst, got)
 	}
 
-	afterSecond := s.Slots[0].Item.Spec.DamageMultiplier
-	if !nearlyEq(afterSecond, afterFirst) {
-		t.Errorf("banked bow re-detuned across an alt swap: %.4f -> %.4f. The bank "+
-			"guard is character-scoped when it must be account-scoped; a player "+
-			"with alts loses damage on every bow in the bank, once per alt.",
-			afterFirst, afterSecond)
+	var found bool
+	for _, slot := range s.Slots {
+		if got := slot.Item.Spec.DamageMultiplier; nearlyEq(got, testWarbowU10d) {
+			found = true
+		} else if !nearlyEq(got, afterFirst) {
+			t.Errorf("banked bow at an unexpected multiplier %.4f", got)
+		}
+	}
+	if !found {
+		t.Error("the bow deposited by the un-migrated alt was never rescaled -- a " +
+			"run-once bank marker strands it at 7.50 forever")
 	}
 }
 
-// TestStorageMigrationMarkerPersistsThroughTheYamlField guards the marker's
-// serialisation: an in-memory-only marker would let the migration re-run on
-// every single login, not just after an alt swap.
-func TestStorageMigrationMarkerPersistsThroughTheYamlField(t *testing.T) {
-	s := &Storage{}
-	s.MarkMigrationApplied("u10d-bow-detune")
+// TestStorageBowMigrationSurvivesAYamlRoundTrip drives the rescaled bank
+// through the real serialisation path, since a migration that does not persist
+// is a migration that silently re-runs forever.
+func TestStorageBowMigrationSurvivesAYamlRoundTrip(t *testing.T) {
+	seedWarbowTemplateForStorage(t)
 
-	if !s.MigrationApplied("u10d-bow-detune") {
-		t.Fatal("marker did not stick")
+	u := &UserRecord{
+		UserId:      1,
+		Username:    "archer",
+		Character:   characters.New(),
+		ItemStorage: Storage{Slots: []StorageSlot{{Item: bankedWarbow(), Count: 1}}},
 	}
-	if s.MigrationsDone == nil || !s.MigrationsDone["u10d-bow-detune"] {
-		t.Error("marker is not in the yaml-tagged MigrationsDone map, so it will " +
-			"not survive SaveUser")
+	u.ItemStorage.MigrateDetunedRangedWeapons()
+
+	blob, err := yaml.Marshal(u)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
 	}
-	if s.MigrationApplied("some-other-migration") {
-		t.Error("unrelated migration key reported as applied")
+
+	var back UserRecord
+	if err := yaml.Unmarshal(blob, &back); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+
+	if len(back.ItemStorage.Slots) != 1 {
+		t.Fatalf("slots after round trip = %d, want 1", len(back.ItemStorage.Slots))
+	}
+	spec := back.ItemStorage.Slots[0].Item.Spec
+	if spec == nil {
+		t.Fatal("the `overrides:` block did not survive the round trip, so the " +
+			"rescaled multiplier was not persisted at all")
+	}
+	if !nearlyEq(spec.DamageMultiplier, testWarbowU10d) {
+		t.Errorf("persisted multiplier = %.4f, want %.4f", spec.DamageMultiplier, testWarbowU10d)
 	}
 }
-
-func nearlyEq(a, b float64) bool { return math.Abs(a-b) < 1e-9 }

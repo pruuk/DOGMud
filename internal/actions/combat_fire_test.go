@@ -660,7 +660,7 @@ func TestFire_NonCombatantMob_NotExecuted(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Balance pin: arbalest baseline raw damage band
+// CalcRawDamage channel arithmetic
 // ---------------------------------------------------------------------------
 
 // Spec balance target: arbalest (mult 7.0) at stat 100 / rank 0 must produce
@@ -674,7 +674,7 @@ func TestFire_NonCombatantMob_NotExecuted(t *testing.T) {
 // balance decision that belongs with the U10d shoot-from-outside-the-fight
 // bonus, not with the template detune. The live template values are pinned by
 // items.TestRangedWeaponMultipliers_MatchTheU10dTable.
-func TestRangedShotRawDamage_BalanceBand(t *testing.T) {
+func TestCalcRawDamage_PhysicalChannelArithmetic(t *testing.T) {
 	raw := combat.CalcRawDamage(100, 0, 7.0, combat.ChannelPhysical)
 	if raw < 180 || raw > 220 {
 		t.Errorf("arbalest baseline raw %v outside 180-220 spec band", raw)

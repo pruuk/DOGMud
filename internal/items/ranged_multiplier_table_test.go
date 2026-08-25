@@ -25,27 +25,32 @@ import (
 // A bow added later must be a deliberate decision against this line, not a
 // silent return to 7.50.
 func TestRangedWeaponMultipliers_MatchTheU10dTable(t *testing.T) {
-	want := map[string]float64{
-		"Ironhorn Warbow":  2.75,
-		"Arbalest":         2.55,
-		"Relic Sidearm":    2.20,
-		"Hunting Bow":      2.00,
-		"Training Bow":     1.45,
-		"Primitive Pistol": 1.30,
-		"Hand Crossbow":    1.10,
-		"Sling":            0.75,
+	// Keyed on ItemId, the stable identity -- a rename must not silently drop a
+	// weapon out of the pinned set.
+	want := map[int]struct {
+		name string
+		mult float64
+	}{
+		10046: {"Ironhorn Warbow", 2.75},
+		10042: {"Arbalest", 2.55},
+		10049: {"Relic Sidearm", 2.20},
+		10041: {"Hunting Bow", 2.00},
+		10004: {"Training Bow", 1.45},
+		10040: {"Primitive Pistol", 1.30},
+		10039: {"Hand Crossbow", 1.10},
+		10038: {"Sling", 0.75},
 	}
 
 	loadRealItemSpecsForTest(t)
 
-	seen := map[string]bool{}
+	seen := map[int]bool{}
 	for _, spec := range GetAllItemSpecs() {
 		if spec.Subtype != Shooting {
 			continue
 		}
-		seen[spec.Name] = true
+		seen[spec.ItemId] = true
 
-		expected, listed := want[spec.Name]
+		expected, listed := want[spec.ItemId]
 		if !listed {
 			t.Errorf("shooting weapon %q (id %d) is not in the U10d ranged table "+
 				"(damage_multiplier %.2f). Add it to the table deliberately -- an "+
@@ -53,16 +58,20 @@ func TestRangedWeaponMultipliers_MatchTheU10dTable(t *testing.T) {
 				spec.Name, spec.ItemId, spec.DamageMultiplier)
 			continue
 		}
-		if math.Abs(spec.DamageMultiplier-expected) > 1e-9 {
+		if math.Abs(spec.DamageMultiplier-expected.mult) > 1e-9 {
 			t.Errorf("%q (id %d) damage_multiplier = %.2f, want %.2f",
-				spec.Name, spec.ItemId, spec.DamageMultiplier, expected)
+				spec.Name, spec.ItemId, spec.DamageMultiplier, expected.mult)
+		}
+		if spec.Name != expected.name {
+			t.Errorf("id %d is named %q, table says %q -- confirm the rename is "+
+				"intended and update the table", spec.ItemId, spec.Name, expected.name)
 		}
 	}
 
-	for name := range want {
-		if !seen[name] {
-			t.Errorf("U10d table lists %q but no Shooting-subtype item with that "+
-				"name loaded -- renamed, retyped, or deleted?", name)
+	for id, entry := range want {
+		if !seen[id] {
+			t.Errorf("U10d table lists %q (id %d) but no Shooting-subtype item with "+
+				"that id loaded -- retyped or deleted?", entry.name, id)
 		}
 	}
 }

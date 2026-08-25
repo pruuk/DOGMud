@@ -909,6 +909,8 @@ actively selected at runtime for basic attacks on ~30 tagged species.
 | `stacking.go` | Display-only inventory stacking |
 | `aging.go` | Potion aging phases and effective aging speed |
 | `affixgen.go` | Affix/name generation |
+| `spec_baseline.go` | `SpecBaseline`: pre-enchant numeric snapshot, so a tier re-apply cannot wipe affix scaling |
+| `detune_migration.go` | U10d ranged-weapon rescale (`MigrateDetunedBow`); idempotent by value threshold, no run-once marker |
 | `proc_accessors.go` | On-hit proc access |
 | `reach.go` | Weapon reach data |
 | `attack_messages.go` / `defensive_messages.go` | Combat message pools |
