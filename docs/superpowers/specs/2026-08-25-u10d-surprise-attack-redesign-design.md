@@ -694,22 +694,162 @@ easier than crossing open ground to put a knife in them.
 > (~13,000 against ~3,900), because ranged weapon multipliers reach 7.5 where
 > melee's reach about 1.5.
 
-| | Ease of landing | Payoff if it lands |
-|---|---|---|
-| Melee opening strike | harder — answers dodge, parry and block | one stacked crit, ~3,900 |
-| Ranged opening shot | easier — answers dodge and block; **no parry** | one stacked crit, ~13,000 |
+Comparing like with like — best weapon against best weapon, which an earlier
+draft failed to do by pitting the top bow against a mid-tier sword:
 
-The owner's decision stands: **ship both and let the playtest speak.** But the
-playtest must treat "is the melee opener worth taking at all, versus just using a
-bow?" as a primary question, not a footnote. If the answer is no, the lever is a
-separate ranged knob or normalising `shotMult` out of the stack — both were
-offered and deliberately deferred, not overlooked.
+| | Ease of landing | Opening strike |
+|---|---|---|
+| Melee, Blackrazor 3.75 | harder — answers dodge, parry and block | **~9,760** |
+| Ranged, Ironhorn 2.75 (detuned) + unengaged 2.0x | easier — answers dodge and block; **no parry** | **~9,560** |
+| Melee, typical sword 1.30 | harder | ~3,380 |
+
+So the two top-end openers land at **near parity**, with melee marginally ahead —
+not the 3.3x gap an earlier draft claimed, which came from comparing the best bow
+against a mid-tier sword. The compensation is no longer "melee gets volume" (2.1
+removed that) but **the archer is half-strength whenever anything is attacking
+them** (2.8.3).
+
+The playtest should still treat "is the melee opener worth taking, versus just
+using a bow?" as a primary question. If the answer is no, the lever is
+`RangedUnengagedDamageMultiplier` or the bow table — both now exist as dials.
 
 Do not "fix" the narrow ranged defence set as part of a future surprise-attack
 change. If it is ever revisited, it must be revisited as a property of **every**
 shot in the game.
 
-#### 2.8.3 What ranged does NOT get
+#### 2.8.3 The ranged economy: a detuned bow line and an unengaged bonus
+
+Added to scope 2026-08-25 after the opener numbers surfaced the real problem.
+**The bow line is not slightly high, it is a different line entirely:**
+
+| | Range | Top |
+|---|---|---|
+| Melee `damage_multiplier` | 0.85 – 1.50 | Blackrazor **3.75** (a deliberate legendary outlier, 2.5x the next weapon) |
+| Ranged `damage_multiplier` | 2.00 – 7.50 | Ironhorn Warbow **7.50** |
+
+A *Training Bow* worth 5 gold is 4.00 — higher than every melee weapon in the
+game except Blackrazor.
+
+**That inflation is not gratuitous, which is why it cannot simply be removed.**
+It compensates for two things melee does not pay: a shot is **one** attack where
+melee gets up to four swings per weapon (`calcSwingCount`), and **reload burns
+the shared 4-round `special-move` cooldown** (`combat_reload.go:86,133`) while
+costing no combat round of its own. Measured at veteran ranks, sustained ranged
+already sits at roughly **half** of melee. Detuning the multipliers alone would
+take it to about a fifth and end archery as a build.
+
+**So the compensation moves from a flat multiplier to a situational one.**
+
+##### The rule
+
+A ranged attack is multiplied by `RangedUnengagedDamageMultiplier` when the
+shooter has **no inbound attackers**:
+
+```go
+if len(char.Attackers()) == 0 { /* apply the bonus */ }
+```
+
+`Character.Attackers()` (`internal/characters/character.go:795`) is
+framework-maintained and documented as *"Replaces room-scan loops for 'who's
+attacking me?'"*, so this needs no scan and no new bookkeeping.
+
+##### Why this shape
+
+It makes the archer's weakness **situational rather than flat**, and the fiction
+carries it: you cannot aim while someone is hitting you.
+
+- Opening from stealth, you are unengaged. Bonus applies.
+- Your first same-room shot makes the target engage you, so the bonus drops until
+  you break away. **Hit-and-run is rewarded by the same rule that punishes
+  standing and trading.**
+- A cross-room shot never engages you, so sniping keeps the bonus.
+- Fighting behind a tank keeps the bonus. Being the tank does not.
+
+##### The numbers
+
+| | Today | Proposed |
+|---|---|---|
+| Top bow multiplier | 7.50 | **2.75** |
+| `RangedUnengagedDamageMultiplier` | — | **2.0** |
+| Unengaged shot, raw | 643 | **472** (~73% of today) |
+| Engaged shot, raw | 643 | **236** |
+| Surprise opener | ~13,030 | **~9,560** |
+
+**The top bow must NOT match Blackrazor** (owner, 2026-08-25). Blackrazor's 3.75
+is earned by a month-long quest chain, party content for materials, and heavy
+crafting; the Ironhorn Warbow is purchasable at 2500 gold. A bought weapon
+matching a legendary crafted one is a content-value error regardless of the
+combat maths.
+
+At 2.75 the top bow sits at roughly **1.8x the best ordinary melee weapon**
+(Heavy Greatsword 1.50) — a real per-shot advantage for a single-shot weapon —
+and well under Blackrazor.
+
+The resulting surprise opener, **~9,560**, lands just **below** the best-melee
+opener of ~9,760. That is a better outcome than the 3.75 draft, which put ranged
+1.34x ahead: the two openers are now near parity, and the melee one is still the
+largest single hit in the game.
+
+##### The knob is the dial between sustained parity and opener size
+
+Worth stating plainly, because the two cannot both be maximised:
+
+| `RangedUnengagedDamageMultiplier` | Unengaged shot vs today | Surprise opener |
+|---|---|---|
+| 2.0 (**proposed**) | ~73% | ~9,560 (≈ melee parity) |
+| 2.75 | ~101% (restores today) | ~13,140 (ranged clearly ahead) |
+
+Shipping 2.0 accepts that sustained unengaged archery is somewhat weaker than
+today in exchange for openers at parity. If playtest says free-firing archery
+feels thin, raising this knob is the fix, with the cost that the opener grows
+with it. **No code change is needed to move between those rows**, which is the
+point of it being a knob.
+
+##### Bow detune table
+
+Scaled so the top bow is 2.75. All eight files under
+`_datafiles/world/dogmud/items/weapons-10000/`:
+
+| Weapon | Now | New |
+|---|---|---|
+| Ironhorn Warbow | 7.50 | **2.75** |
+| Arbalest | 7.00 | **2.55** |
+| Relic Sidearm | 6.00 | **2.20** |
+| Hunting Bow | 5.50 | **2.00** |
+| Training Bow | 4.00 | **1.45** |
+| Primitive Pistol | 3.50 | **1.30** |
+| Hand Crossbow | 3.00 | **1.10** |
+| Sling | 2.00 | **0.75** |
+
+Note the Training Bow drops from 4.00 — which exceeded every melee weapon in the
+game bar Blackrazor — to 1.45, just under a Steel Longsword. That one was
+indefensible at any tuning.
+
+##### It compounds with the surprise stack
+
+**Owner decision, 2026-08-25, taken with the consequence stated.** A surprise
+shot is unengaged by definition, so it receives both the stacked skullduggery
+crit and the unengaged bonus.
+
+With the top bow at 2.75 that puts the opener at roughly **9,560**, against a
+best-melee opener of ~9,760 — **near parity, with melee marginally ahead.** The
+compounding decision was taken when the bow was drafted at 3.75, where it would
+have produced ~13,030 and left ranged 1.34x ahead; the subsequent detune to 2.75
+brought it back down. Both decisions stand together and should be read together.
+
+The alternative offered was to treat the two as alternatives rather than
+multipliers. It was declined deliberately: the archer's ambush is *meant* to be
+one of the largest single hits in the game, paid for by the archer being
+half-strength whenever anything is attacking them.
+
+##### Player-facing consequence
+
+This is a real mechanic a player must be able to discover, not a hidden
+modifier. It needs helpfile coverage and, ideally, a perceptible cue when the
+bonus is lost. A player whose damage silently halves the moment something turns
+on them will read it as a bug. See section 6.
+
+#### 2.8.4 What ranged does NOT get
 
 - No multi-shot surprise. One shot is the whole opener.
 - No cross-room bonus (2.8.1, brake 3).
@@ -831,7 +971,18 @@ party-member path at :189), `internal/mobcommands/attack.go`,
 
 ## 5. Config
 
-**One knob added, five deleted. Net minus four.**
+**Two knobs added, five deleted. Net minus three.**
+
+```yaml
+  # RangedUnengagedDamageMultiplier: ranged damage multiplier applied when the
+  # shooter has NO inbound attackers (len(Character.Attackers()) == 0). 1.0 = no
+  # change. This is the archer's compensation for firing once where melee swings
+  # up to four times per weapon, and for reload burning the shared special-move
+  # cooldown. It replaces the flat inflation the bow damage_multiplier line used
+  # to carry, so an archer shooting from safety is as strong as before while an
+  # archer in contact is not. Compounds with the surprise opening shot.
+  RangedUnengagedDamageMultiplier: 2.0
+```
 
 ```yaml
   # SurpriseOpeningStrikeMultiplier: extra multiplier on the opening strike of
@@ -885,6 +1036,16 @@ Required copy work:
   (`FireResult.IsSneaking`). Check that the reveal and the anonymity read
   coherently together in one round: the shot is anonymous, then the shooter is
   exposed.
+- **The unengaged bonus must be discoverable** (2.8.3). A player whose ranged
+  damage silently halves the moment something turns on them will file it as a
+  bug, and they will be right to. Required:
+  - A **helpfile** statement that shooting is far more effective when nothing is
+    attacking you, and that this is why archers want a companion, a party
+    front-line, or distance.
+  - A **perceptible cue at the transition** — one line the first time a shot is
+    taken while engaged, phrased as the archer being unable to steady the shot.
+    Do not repeat it every round; once per engagement is enough.
+  - No numbers in either. Describe the feel, not the multiplier.
 
 ---
 
@@ -952,6 +1113,22 @@ Required copy work:
 21. `AttackSide.CritOnWin` and the melee `critOnWin` parameter produce the same
     verdict for the same contest inputs. Shared test — the two paths must not
     drift.
+
+**The ranged economy (2.8.3)**
+
+22. A shot with **no** inbound attackers carries `RangedUnengagedDamageMultiplier`;
+    a shot with one or more does not.
+23. The transition is live: the same shooter loses the bonus once a target
+    engages them, within the same fight, with no reload or re-equip.
+24. A **cross-room** shot keeps the bonus, because it never engages the shooter.
+25. The bonus **compounds** with the surprise opening shot (owner decision,
+    2.8.3). Pin the product explicitly so a later "simplification" into
+    alternatives is caught.
+26. The bonus applies to **ranged only** — a melee swing is unaffected regardless
+    of the attacker's inbound list.
+27. Set to 1.0, the knob is a true no-op on every path.
+28. The eight detuned bow multipliers match the 2.8.3 table exactly. A cheap
+    table-driven test over the YAML beats trusting eight hand edits.
 
 **Parity and guards**
 
