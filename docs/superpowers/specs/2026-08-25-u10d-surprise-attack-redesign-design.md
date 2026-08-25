@@ -724,10 +724,17 @@ for a good one-handed melee weapon. At the owner's real **Perception 152**
 **undetuned** 7.50 bow:
 
 ```
-raw   = 152 * 3.0 * 7.50 * 0.52 * 0.5   =    889
-crit  * CritDamageMultiplier(50) = 4.50 =  4,001
-stack * CritDamageMultiplier(50) = 4.50 = 18,005
+                       Per   SkillMult  bow   RangedShotScale  MeleeScale  Global
+raw   = 152 * 3.0 * 7.50 * 1.0 * 0.52 * 0.5   =    889
+crit  * CritDamageMultiplier(rangedRank 50) = 4.50 =  4,001
+stack * CritDamageMultiplier(skulldug 50)   = 4.50 = 18,005
 ```
+
+`RangedShotScale` ships at 1.0 so it drops out today, but it is part of the
+product and belongs in the formula — the point of this section is that the
+product is what gets tuned. Note also that `ChannelPhysical` is the channel for
+ranged (`skill_moves.go:153`), so it is `MeleeDamageScale` 0.52 that applies, not
+a ranged-specific scale.
 
 **About 18,000 from one roll**, versus the melee opening strike's ~3,900 with a
 mid-tier sword or ~9,760 with Blackrazor — and with one fewer defence answering
@@ -750,9 +757,9 @@ easier than crossing open ground to put a knife in them.
 > exactly one upgraded strike.
 >
 > So the openers no longer trade hit-rate against volume. They are the same
-> shape, and the ranged one is **both easier to land and roughly 3.3x larger**
-> (~13,000 against ~3,900), because ranged weapon multipliers reach 7.5 where
-> melee's reach about 1.5.
+> shape — one roll each — and the compensation moved to 2.8.3's unengaged rule
+> instead. **For the shipped figures see the table immediately below; the ones in
+> this paragraph's earlier drafts (13,000 / 3,300 / 9,560) are all superseded.**
 
 Comparing like with like — best weapon against best weapon, which an earlier
 draft failed to do by pitting the top bow against a mid-tier sword:
@@ -981,18 +988,20 @@ With the top bow at 2.75, `RangedUnengagedDamageMultiplier` 2.75 and
 against a best-melee opener of ~9,756 — about **93%**, with melee keeping the
 biggest single hit.
 
-Getting there took two corrections worth recording. The compounding decision was
-taken when the bow was drafted at 3.75; the detune to 2.75 was then chosen
-believing it produced parity, but that belief rested on computing the ranged row
-at Perception 110 while the melee row used the owner's real stats. Recomputed on
-one basis, 2.75 with a 2.0x knob leaves ranged **1.35x ahead** — the very ratio
-the detune was meant to remove. Dropping the knob to 1.5 is what actually closes
-it.
+> **Provenance, superseded — do not tune from this paragraph.** Getting to the
+> shipped numbers took three passes. The compounding decision was taken when the
+> bow was drafted at 3.75. The detune to 2.75 was then chosen believing it
+> produced parity, but that belief rested on computing the ranged row at
+> Perception **110** while the melee row used the owner's real stats; recomputed
+> on one basis it left ranged 1.35x ahead. Dropping `RangedUnengagedDamageMultiplier`
+> to 1.5 closed the opener but cut sustained archery to 55%. The third knob
+> (`SurpriseRangedStrikeMultiplier`) is what finally separated the two. **The live
+> values are 2.75 / 2.75 / 0.5 and the figures are in the tables above.**
 
 The alternative offered was to treat the two as alternatives rather than
 multipliers. It was declined deliberately: the archer's ambush is *meant* to be
-one of the largest single hits in the game, paid for by the archer being
-half-strength whenever anything is attacking them.
+one of the largest single hits in the game, paid for by the archer dropping to a
+third of strength whenever anything is attacking them.
 
 ##### Player-facing consequence
 

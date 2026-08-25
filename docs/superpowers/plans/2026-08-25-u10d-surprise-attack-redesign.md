@@ -47,8 +47,8 @@ Five things that will bite you:
 | `internal/configs/config.balance.go` | declares 2 new knobs; loses 5 `SurpriseAttack*Penalty` |
 | `internal/configs/config.balance.combat.go` | defaults/validates both new knobs |
 | `internal/configs/config.balance.misc.go` | loses the 5 penalty validators |
-| `internal/combat/combat_helpers.go` | `combatContext.critOnWin`; `resolveDefenseOutcome*` guard; `calcHitDamage` opening-strike stack |
-| `internal/combat/combat.go` | 4 entry points thread `critOnWin`; `backstabCrit` → `openingStrikeLeft` |
+| `internal/combat/combat_helpers.go` | `resolveDefenseOutcome*` gains a `critOnWin` **parameter** + the four-condition guard; `calcHitDamage` opening-strike stack. **No `combatContext` field** — see Task 3 Step 3. |
+| `internal/combat/combat.go` | `backstabCrit` → `openingStrikeLeft`, captured and cleared per-swing at `:466`. **The four `Attack*Vs*` entry points are untouched.** |
 | `internal/combat/crit_damage.go` | `OpeningStrikeMultiplier`, `CritOrMitigatedDamageScaled` |
 | `internal/combat/skill_moves.go` | `SkillMoveParams.BonusCritMultiplier` |
 | `internal/combat/defence_multiplier.go` | `AttackSide.CritOnWin` |
@@ -338,13 +338,33 @@ The guard, with all four conditions:
 	//   !best.floored -- crit_floor.go:122: a sentinel margin must never be
 	//     promoted. A mercy save must not become a maximum-damage ambush.
 	//   !res.fumble -- a fumble aborts even a winning roll.
-	if critOnWin && res.hit && !res.defended && !best.floored && !res.fumble {
+	if critOnWin && res.hit && !res.defended && !best.floored && !res.fumble &&
+		best.margin <= 0 {
 		res.crit = true
 	}
 ```
 
 Do not drop a guard to "simplify". Each produces a bug visible only as an
 occasional absurd damage number in play.
+
+> **Why `best.margin <= 0` is the fifth guard.** Of the inner function's seven
+> exits, six are handled by the first four conditions. The seventh — the
+> **defence-fumble** exit at `:1004-1014` — carries
+> `res.hit = true, res.defended = false, res.fumble = false` and returns *before*
+> `attackWon := best.margin <= 0` is ever computed at `:1055`. So without this
+> condition the guard fires on a swing where **the attack may have lost the
+> margin** and only won because the defender fumbled.
+>
+> That would be a genuine semantic divergence from the channel seam, whose guard
+> is gated on `res.Success` (Task 9 Step 3) — on roughly the 2.3% of defended
+> swings that fumble. And `TestCritOnWin_MeleeAndChannelAgree` (Task 16) asserts
+> the two paths agree, so the divergence would sit behind a test that claims it
+> cannot exist, because the sketched cases never construct a defence fumble.
+>
+> Adding `best.margin <= 0` makes the melee guard literally "won the contest",
+> matching the channel path. Confirm `margin` is defence-positive on
+> `bestDefenseResult` before relying on the sign — it is the same convention as
+> `defenceWinBest` in Task 2 Step 1.
 
 - [ ] **Step 5: Fix call sites**
 
@@ -357,6 +377,12 @@ grep -rn "resolveDefenseOutcomeCore(\|resolveDefenseOutcome(" internal/combat/
 ```
 
 with a trailing `, false`.
+
+**Three of those calls wrap onto two lines**, and the argument list closes on the
+*second* one — `defence_multiplier_test.go:143-144`,
+`resolution_order_test.go:76-77` and `:116-117`. Appending blindly to the grep hit
+puts the argument after a trailing comma mid-list and produces three compile
+errors. Append to the **closing** argument line.
 
 - [ ] **Step 6: Run** — `go test ./internal/combat/...` all green.
 
@@ -419,15 +445,15 @@ func TestOpeningStrike_LaterCritsAreOrdinary(t *testing.T) {
 
 // A DEFENDED opening strike must not pay the stack, and must not consume the
 // flag. calcHitDamage is called on every res.hit, deflections included.
-func TestOpeningStrike_DefendedSwingDoesNotPayOrConsume(t *testing.T) {
+func TestOpeningStrike_DefendedSwingDoesNotPayTheStack(t *testing.T) {
 	sdp := swingDamageParams{rawDmgForCrit: 100, critDmgMult: 4.0, openingStrikeMult: 3.0}
 
 	// isCrit false is what a deflected hit carries (the Task 2 guard excludes
-	// res.defended), so the crit branch must not be entered by openingStrike alone.
-	dmg, remaining := calcHitDamage(&AttackResult{}, false, true, sdp)
-	if !remaining {
-		t.Fatalf("a defended swing must NOT consume the opening strike")
-	}
+	// res.defended), so the crit branch must NOT be entered by openingStrike
+	// alone -- otherwise a defended opener rolls the full stacked mean and only
+	// then gets scaled down by damageMult, delivering roughly half a maximum
+	// ambush on a swing the defender won.
+	dmg, _ := calcHitDamage(&AttackResult{}, false, true, sdp)
 	if dmg > 200 {
 		t.Fatalf("a defended swing rolled %d — it took the stacked crit branch", dmg)
 	}
@@ -500,19 +526,27 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 		result.BuffTarget = sdp.critBuffs
 
 		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
-		consumed := false
 		if openingStrike {
 			critMean *= sdp.openingStrikeMult
-			consumed = true
 		}
 
 		damageResult := dice.RollStat(critMean)
 		dmg := int(math.Round(math.Max(0, damageResult.Value)))
-		return dmg, openingStrike && !consumed
+		return dmg, false
 	}
 	damageResult := dice.RollStat(sdp.dmgMean)
 	return int(math.Round(math.Max(0, damageResult.Value))), openingStrike
 }
+```
+
+> **The second return value is now vestigial.** The single production caller
+> (`combat.go:483`) discards it, because Step 6 consumes the flag on the throw.
+> It is kept only so the five existing test call sites in `crit_damage_test.go`
+> and `hitroll_test.go` compile unchanged. An earlier draft computed a `consumed`
+> local here and returned `openingStrike && !consumed`, which is a compile-time
+> constant `false` — no linter in `.golangci.yml` catches that, and it reads as if
+> it encodes a decision it cannot encode. If you prefer, drop the second return
+> entirely and update those five call sites; do not leave a fake one.
 ```
 
 - [ ] **Step 5: Nothing to do in the four entry points**
@@ -577,9 +611,9 @@ round-level variable is already cleared above):
 > consumed once. Only a round-level test catches it. At the owner's ranks with
 > Blackrazor the difference is roughly **9,970 intended against 20,600 shipped**.
 >
-> `openingStrikeLeft` is still true at `:466` and is not consumed until
-> `calcHitDamage` at `:483`, so the gate reads correctly on the opening swing and
-> false on every later one.
+> `openingStrikeThisSwing` captures the flag and `openingStrikeLeft` is cleared
+> **immediately, before the contest runs**, so every later swing reads false
+> regardless of what the opener did — landed, missed, fumbled or was deflected.
 
 > **Why "thrown" and not "the first swing that lands".** An earlier draft of this
 > plan let the flag survive a miss, reasoning that a parried opener has not spent
@@ -726,9 +760,14 @@ Two traps here, both from an earlier draft:
 - **Assign `target` only when non-nil.** `EngageAggroType`'s `target == nil` guard
   does not catch a typed-nil `*mobs.Mob` wrapped in an `Actor` interface.
 
-There is **no import-cycle risk**: `behaviortree` already imports `actions` in six
-files and `actions` imports `behaviortree` nowhere. An earlier draft hedged about
-this unnecessarily.
+**Add the import.** `internal/behaviortree/actions_combat.go:8-16` imports
+`characters`, `combat`, `mobs`, `rooms`, `state`, `state/activity`, `users` and
+`util` — but **not** `actions`. Go imports are per-file, so "the package already
+imports it elsewhere" does not help; the snippet will not compile until
+`"github.com/GoMudEngine/GoMud/internal/actions"` is added to this file's block.
+
+There is **no import-cycle risk**: ten files in `behaviortree` import `actions`,
+and `actions` imports `behaviortree` nowhere.
 
 - [ ] **Step 5:** Rewrite the stale comments in `mobcommands/attack.go` and
 `usercommands/attack.go` that describe "the burst". Do not leave prose documenting
@@ -1396,34 +1435,111 @@ Two distinct populations, and an earlier draft of this step got both wrong:
    entirely — and per Step 5, ids 10046 and 10049 exist *only* in loot pools,
    which is exactly this class.
 
-**Re-seed from the template, both fields, for every Shooting-subtype item:**
+**RESCALE proportionally. Do NOT assign the template value.**
+
+> **Assigning the template value re-lands a documented production regression.**
+> `internal/items/spec_baseline.go:5-24` explains that `SpecBaseline` exists
+> *because* the baseline used to be the bare template, which *"silently destroyed
+> everything an instance had earned above it: affix scaling from instanced loot,
+> whose budget is bought with the gold paid to enter the instance
+> (`items.CalcLootBudget`)… **Observed on prod: about a 16% damage drop on a set
+> of affixed claws.**"*
+>
+> `affixgen.go:262-265` writes `spec.DamageMultiplier += 0.05` per affix rank, so
+> an instanced Ironhorn Warbow might sit at 7.50 + 0.35. An absolute assignment
+> flattens it to 2.75 and deletes the 0.35 the player **paid gold** for, with no
+> message and no refund — on exactly the item class this migration targets, since
+> ids 10046 and 10049 exist only in loot pools.
 
 ```go
-	tmpl := items.GetItemSpec(item.ItemId)
-	if tmpl != nil && tmpl.Subtype == items.Shooting {
-		if item.Spec != nil {
-			item.Spec.DamageMultiplier = tmpl.DamageMultiplier
-		}
-		if item.EnchantBaseline != nil {
-			item.EnchantBaseline.DamageMultiplier = tmpl.DamageMultiplier
-		}
+// preDetuneBowMultipliers are the values the eight Shooting templates carried
+// BEFORE the U10d detune. Hardcoded because the templates no longer hold them,
+// and the ratio is what lets an affixed instance keep the scaling it bought.
+var preDetuneBowMultipliers = map[int]float64{
+	10046: 7.50, 10042: 7.00, 10049: 6.00, 10041: 5.50,
+	10004: 4.00, 10040: 3.50, 10039: 3.00, 10038: 2.00,
+}
+
+func migrateDetunedBow(item *items.Item) bool {
+	old, ok := preDetuneBowMultipliers[item.ItemId]
+	if !ok || old <= 0 {
+		return false
 	}
+	tmpl := items.GetItemSpec(item.ItemId)
+	if tmpl == nil || tmpl.DamageMultiplier <= 0 {
+		return false
+	}
+	ratio := tmpl.DamageMultiplier / old
+	changed := false
+	// Scale, never assign: an affixed instance sitting above template keeps its
+	// earned delta in proportion.
+	if item.Spec != nil && item.Spec.DamageMultiplier > 0 {
+		item.Spec.DamageMultiplier *= ratio
+		changed = true
+	}
+	if item.EnchantBaseline != nil && item.EnchantBaseline.DamageMultiplier > 0 {
+		item.EnchantBaseline.DamageMultiplier *= ratio
+		changed = true
+	}
+	return changed
+}
 ```
 
-**There is an established home for this.** `internal/users/users.go:561-565`
-already runs `MigrateLegacyPotions()`, `MigrateEnchantments()` and
-`MigrateNewbieAwakening()` on every load, and `migrate_enchantments.go` is the
-structural precedent to copy. **Run the new migration BEFORE
-`MigrateEnchantments()`** — otherwise `ApplyTier` re-installs the stale baseline
-over your fix.
+Keying on `ItemId` rather than subtype also makes the migration **idempotent**:
+once rescaled, running it again multiplies by the same ratio, so it must be
+guarded by a save-version bump or a one-shot marker exactly as the other
+migrations are. **Check how `MigrateEnchantments` avoids re-running and copy
+that mechanism** — do not invent a new one.
 
-Confirm `items.Shooting` and the `Subtype` field name against the real ItemSpec
-before writing; the sketch above is shape, not gospel.
+Verified signatures: `items.GetItemSpec(itemId int) *ItemSpec` (`itemspec.go:696`),
+`ItemSpec.DamageMultiplier float64` (`:282`), `ItemSpec.Subtype ItemSubType`
+(`:323`), `items.Shooting ItemSubType = "shooting"` (`:159`).
 
-Cover it with two tests: a save carrying an **enchanted** bow at 7.50, and one
-carrying an **affixed** bow at 7.50, both asserting an effective 2.75 afterwards.
+**Home, and ordering.** `internal/users/users.go:554-566` already runs
+`MigrateLegacyPotions()` `:560`, `MigrateEnchantments()` `:561`,
+`MigrateNewbieAwakening()` `:564` and `ItemStorage.MigrateStorageSlots()` `:565`
+on every load. `migrate_enchantments.go` is the structural precedent. **Run the
+bow migration BEFORE `MigrateEnchantments()`** — `ApplyTier` does an
+unconditional `item.EnchantBaseline.RestoreInto(&newSpec)`
+(`enchantments.go:171`), so a later pass would re-install the stale value over
+your fix.
 
-- [ ] **Step 5: Note the two knock-on effects in the patch note**
+- [ ] **Step 5: Cover the populations a character sweep does NOT reach**
+
+`MigrateEnchantments` walks only `c.Items`, `c.ComponentItems`, `c.PotionItems`
+and `c.Equipment.GetAllItemPtrs()` (`migrate_enchantments.go:17-49`). Copying its
+shape leaves **four** populations holding 7.50 forever:
+
+| Population | Where | Why it matters |
+|---|---|---|
+| **Mob equipment** | `mobs.instances/**`, `instance_save.go:50` persists `Equipment *characters.Worn` with `overrides:` | **A live damage source the player fights.** Worst of the four. |
+| Bank | `loadedUser.ItemStorage` — not a `Character` collection | Player-owned, comes back into circulation |
+| Shop resale stock | `shops/**`, `shopinventory.go:72-75` persists the full instance so "the exact affixes survive" | Buyable at the old value |
+| Room containers / corpses | `rooms.instances/**` | Lootable |
+
+Handle them explicitly rather than by omission:
+
+- **`ItemStorage`** — extend the sweep; it is right there at `users.go:565`.
+- **Mob instances and shops** — add a boot-time pass, or state in the plan and the
+  patch note that they are deliberately not migrated and why. Note that
+  `mobs.instances/` and `rooms.instances/` are wiped by the smoke-test SOP and are
+  not deployed, so the exposure is **prod long-lived instances only** — real, but
+  bounded, and it decays as mobs respawn from templates.
+
+**Do not leave "a user-save migration" implying world coverage.** Whatever is not
+migrated must be named.
+
+- [ ] **Step 6: Tests**
+
+Three, not two:
+
+1. an **enchanted** bow at 7.50 → effective 2.75
+2. an **affixed** bow at 7.85 (template + 0.35 of paid affix) → **2.88**, i.e. it
+   keeps its earned delta in proportion. This is the regression test for the
+   16%-damage-drop bug above; an assignment-based migration fails it.
+3. running the migration **twice** leaves the value unchanged
+
+- [ ] **Step 7: Note the two knock-on effects in the patch note**
 
 - **One mob is affected.** Of the eight ids only `10004` (Training Bow) is
   *equipped* by a mob — `mobs/test_arena/62-sparring_archer.yaml:34` — a 64%
@@ -1438,7 +1554,7 @@ carrying an **affixed** bow at 7.50, both asserting an effective 2.75 afterwards
 The melee-with-a-bow path is safe: `combat_helpers.go:393` clamps Shooting
 subtypes to `unloadedMeleeDamageCap` (0.30) regardless of the multiplier.
 
-- [ ] **Step 6: Run, boot, commit**
+- [ ] **Step 8: Run, boot, commit**
 
 The boot test matters here: item YAML errors panic at startup, not compile time.
 
@@ -1500,7 +1616,10 @@ func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 
 	for _, instId := range room.GetMobs(rooms.FindFighting) {
 		m := mobs.GetInstance(instId)
-		if m == nil || m.Character.Aggro == nil {
+		// IsInCombat() as well as Aggro != nil, matching combat_retarget.go:80-111
+		// exactly. Stale non-nil aggro on an out-of-combat actor would otherwise
+		// suppress the bonus.
+		if m == nil || m.Character.Aggro == nil || !m.Character.IsInCombat() {
 			continue
 		}
 		if (uid > 0 && m.Character.Aggro.UserId == uid) ||
@@ -1510,7 +1629,7 @@ func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 	}
 	for _, pId := range room.GetPlayers(rooms.FindFighting) {
 		u := users.GetByUserId(pId)
-		if u == nil || u.Character.Aggro == nil || pId == uid {
+		if u == nil || u.Character.Aggro == nil || pId == uid || !u.Character.IsInCombat() {
 			continue
 		}
 		if (uid > 0 && u.Character.Aggro.UserId == uid) ||
@@ -1712,7 +1831,7 @@ explicitly adversarial mandate. The goals file must carry `ephemeral:`.
   mobs get the full mechanic; crits bypass mitigation so armour is not a counter.
   Walk it with a NEW character, not an established one.
 - **Is the melee opener worth taking, versus just using a bow?** The two land near
-  parity on paper (~9,760 vs ~9,560); confirm it in play.
+  parity on paper (~9,760 vs ~9,080); confirm it in play.
 - **Does the unengaged bonus read?** Does a player notice their damage halving, and
   does the cue explain it?
 - **Sustained archery at the detuned multipliers** — does free-firing feel thin?
