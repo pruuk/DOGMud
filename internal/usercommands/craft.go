@@ -139,7 +139,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// (mobcommands/craft.go). This one was missed, so instant recipes gave
 		// players no crafting progression while mobs got it.
 		craftBonus := 1.0 + float64(result.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		user.Character.OnSkillUseScaled(result.SkillName, user.UserId, craftBonus)
+		user.Character.OnSkillUseScaled(result.SkillName, user.UserId, craftBonus, false)
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, result.SuccessMsg))
 		return true, nil
 

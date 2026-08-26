@@ -51,7 +51,7 @@ func Craft(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			`<ansi fg="mobname">%s</ansi> works quickly and produces something.`,
 			mob.Character.Name))
 		craftBonus := 1.0 + float64(result.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		mob.Character.OnSkillUseScaled(result.SkillName, 0, craftBonus)
+		mob.Character.OnSkillUseScaled(result.SkillName, 0, craftBonus, false)
 		return true, nil
 
 	case result.Initiated:

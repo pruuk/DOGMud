@@ -296,7 +296,7 @@ func TestOnSkillUseScaled_PassesBonusMultiplier(t *testing.T) {
 		StatUseCount:  map[string]int{},
 	}
 	// Should not panic and should track the skill use
-	c.OnSkillUseScaled(string(skills.Spellcasting), 0, 1.5)
+	c.OnSkillUseScaled(string(skills.Spellcasting), 0, 1.5, false)
 	if c.SkillUseCount[string(skills.Spellcasting)] != 1 {
 		t.Errorf("Expected use count 1 after OnSkillUseScaled, got %d", c.SkillUseCount[string(skills.Spellcasting)])
 	}

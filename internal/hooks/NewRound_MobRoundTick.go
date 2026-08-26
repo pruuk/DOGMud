@@ -540,7 +540,7 @@ func tickMobCrafting(mob *mobs.Mob) {
 		newItem := items.New(recipe.Output.ItemId)
 		mob.Character.StoreItem(newItem)
 		craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		mob.Character.OnSkillUseScaled(recipe.Skill, 0, craftBonus)
+		mob.Character.OnSkillUseScaled(recipe.Skill, 0, craftBonus, false)
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
 			sendVisualRoomText(room, messaging.CategoryMobIdle, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> finishes their work.`,

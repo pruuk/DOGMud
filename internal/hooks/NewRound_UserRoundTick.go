@@ -589,7 +589,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
 									}
 									craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-									user.Character.OnSkillUseScaled(recipe.Skill, user.UserId, craftBonus)
+									user.Character.OnSkillUseScaled(recipe.Skill, user.UserId, craftBonus, false)
 									user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, recipe.SuccessMessage))
 
 									// Stage 31.1: Recipe discovery roll

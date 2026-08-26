@@ -382,7 +382,7 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 			if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 				castSkill = skills.Manifestation
 			}
-			user.Character.OnSkillUseScaled(string(castSkill), userId, spellBonus)
+			user.Character.OnSkillUseScaled(string(castSkill), userId, spellBonus, false)
 
 			// primarystat overrides the skill's default stat. Manifestation
 			// already maps to charisma and spellcasting to willpower, so for
@@ -541,7 +541,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 			castSkill = skills.Manifestation
 		}
-		mob.Character.OnSkillUseScaled(string(castSkill), 0, spellBonus)
+		mob.Character.OnSkillUseScaled(string(castSkill), 0, spellBonus, false)
 
 		// primarystat overrides the skill's default stat -- see the identical
 		// override in handlePlayerFoldCasting above.

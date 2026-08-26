@@ -54,6 +54,24 @@ type Event struct {
 	Stat       string
 	Class      Class
 	Multiplier float64
+
+	// Lost reports that the actor's action was RESOLVED and LOST, so this
+	// event is the consolation award rather than the award for succeeding.
+	// Under U10b-1's Best-of firing convention a resolved action always
+	// produces an event: at full weight on a win, and at
+	// ProgressionFailureFraction on a loss.
+	//
+	// It is a SEPARATE field and NOT inferred from Multiplier < 1.0, and that
+	// distinction is load-bearing. Downstream, mutation cluster drift scales
+	// by Multiplier while the SkillUsed quest event is gated on Lost -- two
+	// different mechanisms on purpose. A sub-1.0 multiplier does NOT imply a
+	// loss: a self-buff cast is a WINNING action that legitimately arrives at
+	// SelfCastProgressionMultiplier (ships 0.5). "Simplifying" this field away
+	// into Multiplier < 1.0 silently stops every self-buff cast from ticking
+	// skill_use quests, with no error message anywhere -- the exact regression
+	// TestOnSkillUseScaled_WinningSubOneMultiplierStillEmitsSkillUsed exists
+	// to catch. Do not do it.
+	Lost bool
 }
 
 // Outcome is everything about a resolved contest that the matrix needs.
@@ -176,27 +194,32 @@ func BonusEvents(o Outcome, b Bonuses) []Event {
 		toughen = o.DefenderStat
 	}
 
+	// Keyed literals, not positional: Event grew a Lost field and positional
+	// literals would either break the build or, worse, quietly bind a new
+	// field to the wrong value. Bonus events leave Lost at its false zero --
+	// they are extra rolls layered on top of an ordinary event, and they never
+	// reach the SkillUsed emit at all (see applyBonusProgression).
 	switch o.Exceptional {
 	case ExcAttackCrit:
 		return []Event{
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassCrit, b.Doing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassCrit, Multiplier: b.Doing},
 			// The one cell that swaps the stat: a crit RECEIVED toughens.
-			{SideDefender, o.DefenderSkill, toughen, ClassObserved, b.Observing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: toughen, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	case ExcAttackFumble:
 		return []Event{
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassFumble, b.Doing},
-			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassObserved, b.Observing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassFumble, Multiplier: b.Doing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: o.DefenderStat, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	case ExcDefenceCrit:
 		return []Event{
-			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassCrit, b.Doing},
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: o.DefenderStat, Class: ClassCrit, Multiplier: b.Doing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	case ExcDefenceFumble:
 		return []Event{
-			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassFumble, b.Doing},
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: o.DefenderStat, Class: ClassFumble, Multiplier: b.Doing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	}
 	return nil
