@@ -897,6 +897,28 @@ in `internal/combat/combat_helpers.go` routes unarmed mob attacks through
 that subtype's message pool. Previously these subtypes were defined and
 used only for reach accounting or special-case weapon items; they are now
 actively selected at runtime for basic attacks on ~30 tagged species.
+## U10d Ranged Detune (`detune_migration.go`)
+
+The eight `shooting` templates were rescaled downward in U10d. Editing a
+template does not reach items that already exist -- `Item.GetSpec()` returns
+`Item.Spec` (persisted as `overrides:`) whenever non-nil and never consults the
+template -- so `MigrateDetunedBow` rescales live instances on every user load.
+
+Two things to know before touching it:
+
+- **It multiplies by `newTemplate/oldTemplate`, never assigns the template
+  value.** Assigning would delete affix scaling the player bought with instance
+  gold, which is the exact bug `SpecBaseline` exists to prevent.
+- **`Item.DetuneMigrated` is the authority, not the item's value.** `New()`
+  stamps it for the eight detuned ids only. A value-only test has a live false
+  positive: an instanced Relic Sidearm (10049) affixed past its old 6.00 would
+  be rescaled and lose 63%. The `>= old` value check is only a fallback for
+  saves written before the stamp existed.
+
+Adding a new `shooting` weapon means adding it to `preDetuneBowMultipliers` (or
+deliberately leaving it out) -- `TestRangedWeaponMultipliers_MatchTheU10dTable`
+and `TestPreDetuneBowTable_MatchesTheRealTemplates` both fail otherwise.
+
 ## Files
 
 | File | Purpose |
@@ -909,6 +931,8 @@ actively selected at runtime for basic attacks on ~30 tagged species.
 | `stacking.go` | Display-only inventory stacking |
 | `aging.go` | Potion aging phases and effective aging speed |
 | `affixgen.go` | Affix/name generation |
+| `spec_baseline.go` | `SpecBaseline`: pre-enchant numeric snapshot, so a tier re-apply cannot wipe affix scaling |
+| `detune_migration.go` | U10d ranged-weapon rescale (`MigrateDetunedBow`); idempotent by value threshold, no run-once marker |
 | `proc_accessors.go` | On-hit proc access |
 | `reach.go` | Weapon reach data |
 | `attack_messages.go` / `defensive_messages.go` | Combat message pools |

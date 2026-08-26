@@ -61,19 +61,19 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// Track that they've attacked this player
 			mob.PlayerAttacked(attackPlayerId)
 
-			// Hidden mobs get a surprise attack on their first strike.
-			// Don't clear the Hidden buff here — leave it for the combat
-			// loop's CancelIfCombat pass so the surprise attack resolves
-			// with the mob still hidden (backstab crit bonus).
-			// Type the engagement from whether the burst actually fired, not
-			// merely from being hidden: SurpriseAttack also gates on the
-			// special-move cooldown, so a hidden-but-on-cooldown opener is an
-			// ordinary attack.
-			// EngageAggroType gates on hidden state internally, so no
-			// IsHidden pre-check here.
+			// Hidden mobs open from stealth: the first strike of the combat
+			// round resolves as a surprise. Don't clear the Hidden buff here
+			// — leave it for the combat loop's CancelIfCombat pass so the
+			// opener resolves with the mob still hidden.
+			// EngageAggroType gates on hidden state AND the special-move
+			// cooldown internally, so no IsHidden pre-check here: a
+			// hidden-but-on-cooldown opener is an ordinary attack.
 			aggroType := characters.DefaultAttack
 			if targetUser := users.GetByUserId(attackPlayerId); targetUser != nil {
-				aggroType = actions.EngageAggroType(
+				// Refusal signal discarded: it is feedback for the ATTACKER,
+				// and the attacker here is a mob. The victim must not learn
+				// that the thing stalking them failed to line up an ambush.
+				aggroType, _ = actions.EngageAggroType(
 					actions.NewMobActorInRoom(mob, room),
 					actions.NewUserActorInRoom(targetUser, room),
 				)
@@ -105,13 +105,14 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		if m != nil {
 
-			// See above: keyed off the result, not IsHidden alone.
+			// See above: EngageAggroType decides, not IsHidden alone.
 			// Validate refreshes buff-derived state before the hidden check
 			// inside EngageAggroType.
 			if mob.Character.IsHidden() {
 				mob.Character.Validate(true)
 			}
-			mobAggroType := actions.EngageAggroType(
+			// Refusal signal discarded: mob against mob has no player to tell.
+			mobAggroType, _ := actions.EngageAggroType(
 				actions.NewMobActorInRoom(mob, room),
 				actions.NewMobActorInRoom(m, room),
 			)

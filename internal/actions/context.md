@@ -734,7 +734,7 @@ own outcome text. The defy counter-taunt still dispatches from
 | Shadow | actions | self→target | ShadowResult | varies | none |
 | Sneak | actions | self vs room | SneakResult | silent | shared |
 | Steal | actions | self vs mob/player/container | StealResult | varies | shared |
-| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | none |
+| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), surprise shot only |
 | ExecuteReload | actions | self (equip ranged weapon) | ReloadResult | both | shared (special-move) |
 | Sell | actions | self vs merchant | SellResult | player only | none |
 | Sleep | actions | self | SleepResult | varies | none |
@@ -820,6 +820,18 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
 - Cooldowns decrement each round via combat hooks.
 - Expired cooldowns are cleaned up lazily when checked.
 
+`"special-move"` is ONE shared timer across every special move
+(`SpecialMoveCooldown`, 4 rounds shipped). U10d added `ExecuteFire` to its
+claimants, but only for the **same-room surprise shot**: an ordinary shot and a
+cross-room shot still touch no timer, and `ExecuteReload` burns the same one.
+That last pair matters — a loaded bow implies a recent reload, so the natural
+"reload, sneak, shoot" sequence finds the timer already claimed. `ExecuteFire`
+then reports `FireResult.SurpriseOnCooldown` and resolves an ordinary shot
+rather than failing; the wrapper must speak that, or the ambush silently does
+nothing. `FireResult.Revealed` is the companion flag: a surprise shot gives the
+shooter's position away, which `IsSneaking` (a snapshot taken before any
+reveal) does not tell you.
+
 ---
 
 ## Dependencies
@@ -832,9 +844,12 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
   (U4 routed them to a wrapper, U6 collapsed every wrapper into this one entry
   point). Do not reach `internal/contest` directly; this package
   goes through `internal/combat`. The flat `dice.RollStat` threshold checks in
-  `search.go` and `track.go` are NOT contests yet and are unassigned;
-  `surprise_attack.go` has no hit resolution at all. All three are breadcrumbed
-  in place.
+  `search.go` and `track.go` are NOT contests yet and are unassigned; both are
+  breadcrumbed in place. (A separate case, `surprise_attack.go`, had no hit
+  resolution at all — not a flat threshold but an unconditional auto-hit with
+  no defender term anywhere. U10d deleted it outright rather than giving it a
+  contest: the opening strike of the ordinary combat round is the surprise
+  now, and `EngageAggroType` in `combat_attack.go` is all that remains here.)
 - `internal/users` — Player character management
 - `internal/mobs` — NPC management
 - `internal/rooms` — Room context, containers, exits
@@ -860,7 +875,7 @@ the rest are ordinary verbs.
 | Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
 | Casting | `cast.go`, `cast_interrupt.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |
-| Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `scan.go`, `track.go`, `surprise_attack.go`, `steal.go` |
+| Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `scan.go`, `track.go`, `steal.go` |
 | Items & economy | `get.go`, `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `remove_equip.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
 | Movement & state | `go.go`, `sleep.go`, `consider.go` |

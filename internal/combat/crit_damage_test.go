@@ -117,6 +117,80 @@ func TestCritOrMitigatedDamage_FloorsAtOne(t *testing.T) {
 	}
 }
 
+// ─── CritOrMitigatedDamageScaled (U10d ranged surprise bonus) ──────────────
+//
+// meanOver is defined in surprise_opening_strike_test.go (package-local); not
+// duplicated here.
+
+func TestCritOrMitigatedDamageScaled_BonusMultipliesTheCrit(t *testing.T) {
+	const (
+		samples = 20000
+		rawDmg  = 60.0
+		rank    = 40
+		bonus   = 2.5
+	)
+
+	plainMean := meanOver(samples, func() int {
+		return CritOrMitigatedDamageScaled(rawDmg, rank, true, 0.0, 0.75, 1.0)
+	})
+	boostedMean := meanOver(samples, func() int {
+		return CritOrMitigatedDamageScaled(rawDmg, rank, true, 0.0, 0.75, bonus)
+	})
+
+	ratio := boostedMean / plainMean
+	if math.Abs(ratio-bonus) > 0.05*bonus {
+		t.Errorf("crit boosted/plain mean ratio = %f, want ~%f (bonusCritMult)", ratio, bonus)
+	}
+}
+
+func TestCritOrMitigatedDamageScaled_BonusDoesNotApplyOnNormalHit(t *testing.T) {
+	const (
+		samples = 20000
+		rawDmg  = 100.0
+		rank    = 10
+	)
+
+	plainMean := meanOver(samples, func() int {
+		return CritOrMitigatedDamageScaled(rawDmg, rank, false, 0.0, 0.75, 1.0)
+	})
+	boostedMean := meanOver(samples, func() int {
+		return CritOrMitigatedDamageScaled(rawDmg, rank, false, 0.0, 0.75, 8.0)
+	})
+
+	ratio := boostedMean / plainMean
+	if math.Abs(ratio-1.0) > 0.05 {
+		t.Errorf("normal-hit mean ratio = %f, want ~1.0; bonusCritMult leaked into the mitigated branch", ratio)
+	}
+}
+
+func TestCritOrMitigatedDamageScaled_ZeroBonusReadsAsUnsetOne(t *testing.T) {
+	// A future caller that forgets the new parameter passes the zero value. If
+	// 0 annihilated the multiply, a maximum-damage crit would silently deal
+	// nothing. It must read as "unset" and behave exactly like 1.0.
+	const (
+		samples = 20000
+		rawDmg  = 60.0
+		rank    = 40
+	)
+
+	zeroMean := meanOver(samples, func() int {
+		return CritOrMitigatedDamageScaled(rawDmg, rank, true, 0.0, 0.75, 0)
+	})
+	oneMean := meanOver(samples, func() int {
+		return CritOrMitigatedDamageScaled(rawDmg, rank, true, 0.0, 0.75, 1.0)
+	})
+
+	ratio := zeroMean / oneMean
+	if math.Abs(ratio-1.0) > 0.05 {
+		t.Errorf("bonusCritMult=0 mean/bonusCritMult=1.0 mean = %f, want ~1.0 (0 must read as unset)", ratio)
+	}
+	// Guard against the degenerate case where BOTH sides collapsed to the
+	// floor of 1 and the ratio above passed by coincidence.
+	if oneMean < 5 {
+		t.Fatalf("bonusCritMult=1.0 mean is %f, too close to the floor for this ratio to be meaningful", oneMean)
+	}
+}
+
 // ─── melee call site ────────────────────────────────────────────────────────
 
 // meanOf returns the arithmetic mean of xs.

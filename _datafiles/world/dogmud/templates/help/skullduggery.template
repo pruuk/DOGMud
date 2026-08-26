@@ -15,8 +15,18 @@ striking from the shadows.
   <ansi fg="command">throw</ansi>       - Hurl grenades at enemies (AoE)
 
 Attacking from stealth triggers a
-<ansi fg="magenta-bold">surprise attack</ansi> automatically if your
-special move cooldown is ready.
+<ansi fg="magenta-bold">surprise attack</ansi> if your special move
+cooldown is ready. Only your first blow is the ambush. A ready
+defender can still dodge, parry or block it, and the attack always
+gives your hiding place away. Shooting from cover at something in
+your own room works the same way.
+
+Rank in this skill is what makes an ambush bite. The opening blow
+lands harder the more <ansi fg="skill">skullduggery</ansi> you have
+behind it. See <ansi fg="command">help ambush</ansi> for the full
+picture.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help sneak</ansi>, <ansi fg="command">help steal</ansi>,
-  <ansi fg="command">help shadow</ansi>, <ansi fg="command">help defuse</ansi>, <ansi fg="command">help throw</ansi>
+  <ansi fg="command">help shadow</ansi>, <ansi fg="command">help defuse</ansi>, <ansi fg="command">help throw</ansi>,
+  <ansi fg="command">help shoot</ansi>, <ansi fg="command">help special</ansi>,
+  <ansi fg="command">help ambush</ansi>

@@ -27,6 +27,19 @@ cooldown is consumed.
       Cross-room fire does not pull you into melee. The target
       must close the distance to engage in melee combat.
 
+<ansi fg="yellow">━━━ A Clear Shot ━━━</ansi>
+
+An archer does far more harm when nothing in the room is attacking
+them. You cannot steady an aimed shot while you are fending someone
+off, and the shot is much the weaker for it. Keep a companion, a party
+member, or a room between you and whatever wants to reach you.
+
+A shot from hiding at something in your own room is an
+<ansi fg="magenta-bold">ambush</ansi>: heavier, answerable, and it costs you your
+special move and your cover. Firing into the next room is never an
+ambush, and it leaves your cover intact. See
+<ansi fg="command">help ambush</ansi>.
+
 <ansi fg="yellow">━━━ Progression ━━━</ansi>
 
 This skill improves through use:
@@ -34,4 +47,5 @@ This skill improves through use:
   - Perception advances from aimed-shot attacks
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help reload</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>,
+  <ansi fg="command">help ambush</ansi>, <ansi fg="command">help sneak</ansi>

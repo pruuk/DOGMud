@@ -217,6 +217,46 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	return true, nil
 }
 
+// U10d shooter-facing copy. Every one of these speaks a flag ExecuteFire
+// already sets; none of them changes a mechanic.
+//
+// All are authored to render inside 80 columns with a p90 target name (20
+// characters, measured across the authored mob set) and the longest damage band
+// substituted, since the messaging pipeline's wrap stage is off (shouldWrap
+// returns false for every Category) and the client is handed the line exactly as
+// written. shoot_narration_test.go pins every composition.
+//
+// None of them carries the melee `*[SURPRISE ATTACK]*` banner. That marker
+// exists for a line narrated by the generic weapon message pool, which says
+// nothing about an ambush; these lines name the shot from cover themselves, and
+// a 20-column marker plus a target name plus a damage band does not fit in 80.
+const (
+	// surpriseShotRevealedText speaks FireResult.Revealed. Losing stealth with
+	// no line of text reads as a bug, and the present tense is doing real work:
+	// this shot still narrated anonymously to the room and to the target (the
+	// IsSneaking branches below), and the shooter is exposed from here on.
+	surpriseShotRevealedText = `The shot gives your place away. You are no longer hidden.`
+
+	// surpriseShotDeniedText speaks FireResult.SurpriseOnCooldown. NOT a corner
+	// case: reload burns the same shared special-move timer the opener needs,
+	// so the natural reload-sneak-shoot order denies the ambush whenever the
+	// reload was recent. Without this line the player sees an ordinary shot and
+	// concludes the feature does not work.
+	//
+	// The second sentence is the engine's established refusal wording ("You need
+	// a moment to recover before attempting another special move." -- throw.go,
+	// mutation_helpers.go), trimmed to fit, so the same cooldown is refused in
+	// the same words wherever a player meets it. "special move" is a taught term
+	// (there is a `help special` topic).
+	surpriseShotDeniedText = `No ambush ready. You need a moment to recover before another special move.`
+
+	// aimedWhileEngagedText speaks FireResult.AimedWhileEngaged. Spoken at most
+	// once per engagement (see Character.RangedEngagedCueSpoken) -- damage that
+	// silently drops to a fraction reads as a bug, but repeating the reason
+	// every round is worse noise than the silence it fixes.
+	aimedWhileEngagedText = `Someone is attacking you. You cannot steady your aim, so the shot is weak.`
+)
+
 // sendShootMessages emits the shooter line, room broadcasts, and the target's
 // direct line for an executed shot. No raw numbers — damage is described via
 // combat.GetDamageDescription.
@@ -225,6 +265,12 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	hit := result.MoveResult.Hit
 	partial := !hit && result.MoveResult.Damage > 0
 	tier := combat.GetDamageDescription(result.MoveResult.Damage, result.MoveResult.TargetMaxHP)
+
+	// The refusal comes FIRST: it explains why the shot the player set up as an
+	// ambush is about to narrate as an ordinary one.
+	if result.SurpriseOnCooldown {
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotDeniedText)
+	}
 
 	// Color the target name by type.
 	targetColored := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, result.TargetName)
@@ -247,7 +293,25 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 
 	// Shooter's own feedback. A fully stopped shot (a defensive crit) speaks
 	// the triad; a defended partial keeps the damage-carrying line.
+	//
+	// U10d: a shot that carried the opener gets its own wording and its own
+	// Category. CategorySurpriseAttack is in neither verbosity suppression
+	// allowlist, so the one shot that decides an ambush survives medium and
+	// light verbosity while the ordinary ranged band does not.
+	//
+	// ORDER: the triad case sits ABOVE partial here, unlike the ordinary arms
+	// below. SkillMoveResult.Hit is `!Defended`, so `partial` (!hit && Damage >
+	// 0) is BY CONSTRUCTION a defended shot, and Revealed implies same-room, so
+	// triadAtk is always populated when it is true. Ordering partial first --
+	// which is what the ordinary arms do, deliberately, to keep their
+	// damage-carrying line -- would therefore shadow the triad on every
+	// defended-partial ambush and never tell the shooter what stopped it. The
+	// melee side names the defence on exactly this outcome; folding the damage
+	// band onto the triad line mirrors that composite.
 	switch {
+	case result.Revealed:
+		user.SendText(messaging.CategorySurpriseAttack,
+			surpriseShotShooterLine(hit, triadAtk, targetColored, tier, result.MoveResult.Damage > 0))
 	case hit:
 		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`Your shot takes %s (<ansi fg="damage">%s</ansi>)!`, targetColored, tier))
 	case partial:
@@ -256,6 +320,29 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		user.SendText(messaging.CategoryDodge, triadAtk)
 	default:
 		user.SendText(messaging.CategoryDodge, fmt.Sprintf(`Your shot goes wide of %s!`, targetColored))
+	}
+
+	// The reveal reads AFTER the shot it was caused by, and after the room and
+	// target lines below still narrate this shot anonymously — that ordering is
+	// the point: the shot itself was unseen, and the shooter is exposed from
+	// here on.
+	if result.Revealed {
+		user.SendText(messaging.CategorySurpriseAttack, surpriseShotRevealedText)
+	}
+
+	// The engaged-aim cue, at most once per engagement. A shot taken with
+	// nothing on the shooter clears the latch, so the next time they are pinned
+	// down it is news again -- which is also what heals the one case EndAggro
+	// cannot reach, a cross-room shooter who never held Aggro of their own.
+	//
+	// CategorySystem, not CategorySurpriseAttack, and the difference is not an
+	// oversight: this fires on ORDINARY shots and has nothing to do with an
+	// ambush. It is a mechanical explanation, like the cost refusal and the
+	// defence shortage text this same function already routes to CategorySystem.
+	speak, nowSpoken := shouldSpeakEngagedCue(result.AimedWhileEngaged, user.Character.RangedEngagedCueSpoken)
+	user.Character.RangedEngagedCueSpoken = nowSpoken
+	if speak {
+		user.SendText(messaging.CategorySystem, aimedWhileEngagedText)
 	}
 
 	// Direct line to a player target.
@@ -336,6 +423,58 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 				result.TargetUserId)
 		}
 	}
+}
+
+// surpriseShotShooterLine composes the shooter's own line for a shot that
+// carried the U10d opener. Pure, so the branch ORDER can be pinned by a truth
+// table instead of by standing up a hidden archer and a defended target.
+//
+// THE ORDER IS THE POINT. combat.SkillMoveResult.Hit is `!Defended`, so
+// "defended but some damage got through" is `!hit && dealtDamage` -- and the
+// ordinary shot arms in sendShootMessages test exactly that combination BEFORE
+// they test the defence triad, deliberately, to keep their damage-carrying
+// line. Copying that order here shadowed the triad on every defended-partial
+// ambush: the shooter was told the shot clipped the target and never told what
+// stopped it, on the one shot where that matters most. The triad goes FIRST,
+// and the damage band is folded onto it, mirroring what the melee composite
+// does for the identical outcome.
+//
+// triad is combat.RenderChannelDefenceMessages' attacker line; it names the
+// dodge or block that answered the shot. It is non-empty whenever the shot was
+// defended and the shooter shares the room, which a revealed shot always does.
+// The empty-triad arm is therefore the clean miss.
+//
+// targetColored and triad arrive already ANSI-tagged; tags render as zero
+// columns, which is what lets these lines stay inside 80.
+func surpriseShotShooterLine(hit bool, triad, targetColored, tier string, dealtDamage bool) string {
+	switch {
+	case hit:
+		return fmt.Sprintf(`Your shot from cover takes %s unaware! (<ansi fg="damage">%s</ansi>)`, targetColored, tier)
+	case triad != "":
+		if !dealtDamage {
+			// A defensive crit deals exactly 0. Appending "(negligible damage)"
+			// to a shot that was stopped dead would be the same
+			// self-contradiction U6 Task 16b removed from the melee side.
+			return triad
+		}
+		return triad + fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`, tier)
+	default:
+		return fmt.Sprintf(`Your shot from cover goes wide of %s!`, targetColored)
+	}
+}
+
+// shouldSpeakEngagedCue is the once-per-engagement latch for the engaged-aim
+// cue, split out as a pure function so the truth table can be pinned without
+// standing up a user, a room and a loaded bow.
+//
+// speak is true only on the FIRST shot of a run of engaged shots. nowSpoken is
+// what the caller must store afterwards, and it is simply aimedWhileEngaged:
+// a shot that went off with nothing on the shooter clears the latch, so being
+// pinned down again later speaks the cue again. The other end of the
+// engagement is Character.EndAggro, which clears the same field when combat
+// finishes.
+func shouldSpeakEngagedCue(aimedWhileEngaged, alreadySpoken bool) (speak bool, nowSpoken bool) {
+	return aimedWhileEngaged && !alreadySpoken, aimedWhileEngaged
 }
 
 // resolveShootTarget mirrors ExecuteFire's target parsing to determine what a

@@ -181,11 +181,131 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U9** | ✅ **DONE 2026-08-19.** Progression layer. Pure `internal/progression` returns events; one applier fires them; melee, channel defences, spells and taunt all routed. Registry moved to `internal/actionspec` with a `Stat` override. `SpellData.PrimaryStat` made load-bearing and the 14 manifestation-school files corrected to charisma. **Five defects fixed**, four of them duplications nobody knew about: melee attack progression fired twice per round (measured 2/2/4 against an intended 1/1/2), melee DEFENCE progression fired once per defended swing on top of once per round, every spell cast double-rolled the caster's stat, and crit-received ran a flat rank-free chance. Faucet closed on both halves: vitality had **zero** use-tracking anywhere, so its rank never moved. Spec: [`2026-08-19-u9-progression-layer-design`](../superpowers/specs/2026-08-19-u9-progression-layer-design.md). | M | U6 | **Yes** |
 | **U6b** | ✅ **DONE 2026-08-19 on `feature/u6b-finish-the-flip` (Tasks 1-19; the Task 21 adversarial playtest gate precedes handoff).** The flip is finished: every attack channel — melee, ranged, spell, taunt/social, all 16 special moves, throw, steal/plant, sneak/shadow detection, flee and the grapple family — resolves through ONE seam. `combat.ResolveChannelAttack` + caller-supplied `AttackSide` run one contest per action against the channel's equipment-gated defence set (`DefenceEntriesFor`; melee keeps its scoring loop but consumes the same name builder). ONE crit mechanism everywhere: `CritBarFor(atkRank, defRank)` pairs the attack skill against the WINNING defence's skill (slope/floor/ceiling knobs), so the 16 attacks that could never crit now can, and the sleeping-victim ForceCrit reaches every channel. The counterattack tier is channel-wide and REACH-gated (`ExecuteCounter` + `CounterDamagePercent`; the cross-room shot stays the one uncounterable attack; defy answers with a counter-taunt), with channel-correct narration pools (`counter-melee/ranged/quell/defy`). `SituationalAttackMult` unifies prone + depletion accuracy modifiers. Deleted for good: `SpellAttackSkillFactor`, `spellDefenseValue`, `rangedDefenseScore`, `RangedShieldDefenseBonus`, `SubSkillWeight`, `SubCritZThreshold`, `StealSkillMultiplier`, the `if !isCrit` defence skip, and the Accuracy/Blink stowaway flags. Guarded by the three Task 18 tests in `internal/combat/contest_site_guard_test.go` (see "Done when" 2) and a Task 19 statistical parity gate (200k live-dice swings within ±0.4% of the analytic anchor). U7/U8 costs and U9 progression ride the seam. Spec: [`2026-08-19-u6b-finish-the-flip-design`](../superpowers/specs/2026-08-19-u6b-finish-the-flip-design.md). | L | U9 | **Yes** |
 | **U10** | ✅ **SHIPPED 2026-08-21.** **Disruption model.** Concentration becomes a proper contest (`combat.RunConcentrationContest`, damage/position/throttle triggers, `ConcentrationFloor` 0.02); knockdown and prone recovery become opposed rolls. Throttle's cast interrupt claimed as a fourth concentration trigger. Knockdown shipped as a named rebalance (old `*KnockdownChance` thresholds delivered ~50/91/2.3% despite the shipped yaml claiming 50/60/35 — bash was accidentally correct, trip and kick were not; the new `*KnockdownFactor` contest delivers the intended rates). Surprise-attack redesign split out as **U10d**. See the "Outcome" annotation under the U10 write-up below. | M | U1, U0 | **Yes** |
-| **U10b** | **Progression firing consistency.** Added 2026-08-19. Progression fires under **8 to 10 different conditions** today with no convention (audit: [`2026-08-19-progression-firing-audit`](../audits/2026-08-19-progression-firing-audit.md), 135 sites across 52 files). Adopt one rule: **one event per success, with crit and critical-failure as a separate bonus on top**. Also routes Category C (crafting, salvage, forage) through the U9 seam, and reconciles the melee-versus-channel defence divergence: melee awards a defence only when one registered, the channel path awards win or lose. U9 changed what events CARRY and deliberately changed none of these firing conditions. **Note (2026-08-21): U10's new/claimed sites (concentration's three original triggers plus throttle, knockdown's defender resist, prone recovery) already ship on the success-only half of this convention; the crit / critical-failure bonus layer for those same sites is still owed here.** | M | U9, U10 | **Yes** |
+| **U10b** | **Progression firing consistency.** Added 2026-08-19. Progression fires under **8 to 10 different conditions** today with no convention (audit: [`2026-08-19-progression-firing-audit`](../audits/2026-08-19-progression-firing-audit.md), 135 sites across 52 files). Adopt one rule: **one event per success, with crit and critical-failure as a separate bonus on top**. Also routes Category C (crafting, salvage, forage) through the U9 seam, and reconciles the melee-versus-channel defence divergence: melee awards a defence only when one registered, the channel path awards win or lose. U9 changed what events CARRY and deliberately changed none of these firing conditions. **Note (2026-08-21): U10's new/claimed sites (concentration's three original triggers plus throttle, knockdown's defender resist, prone recovery) already ship on the success-only half of this convention; the crit / critical-failure bonus layer for those same sites is still owed here.** **Note (2026-08-25, from the U10d spec): the SKULLDUGGERY / stealth family is unclaimed by any slice and belongs here. Skullduggery has 17 progression sites and NONE is on the U9 seam — U9 routed melee, channel defences, spells and taunt; Category C above is crafting/salvage/forage. U10d converts exactly one (its own, in the file it deletes). The remaining **16** are bare `OnSkillUse` / `CheckSkillProgression` calls: `actions/steal.go` x3, `actions/plant.go` x3, `actions/shadow.go` x2, `usercommands/skill.skullduggery.sneak.go` x2, `usercommands/picklock.go` x2, `actions/defuse.go`, `usercommands/throw.go`, `mobcommands/flee.go`, `hooks/NewRound_DoCombat_helpers.go`. Beware the naming collision: **U10b-0** (rank-from-training) shipped 2026-08-24 as `d29996d4d`; THIS row has never been started.** **Also assigned here (owner, 2026-08-25): RANGED-COMBAT progression. Its only ordinary award is a bare `OnSkillUse` in the PLAYER wrapper (`usercommands/shoot.go:199`), so **mob archers earn no ranged-combat progression at all**. Not a free fix: giving it to them makes mob archers scale over an instance's life (gated by `MobSkillTrainingCap`), which is a live difficulty change across every archer mob at once. Deliberately kept out of U10d so that slice's playtest is not disentangling ambush feel from archer-mob scaling.** | M | U9, U10 | **Yes** |
 | **U10c** | ✅ **SHIPPED 2026-08-24.** **Charm redesign.** Delivered in four slices (A `9b8fa2d51`, B `41d50717b`, C `d324507d3`, D). Charm was never outside the seam — the premise this row was written on was wrong. `spellAttackChannel` maps an ABSENT `target_defense_type` to `ChannelSpellMental`, so charm was routed all along; what escaped was that the seam's verdict got **discarded** and a second private `RunContest` in `resolveCharmSpell` decided the outcome, resolving one cast twice and narrating both. Charm now reads the `ChannelSocial` contest its cast already runs. **Defence stat decided: defy** (Willpower + rhetoric), not Charisma — the attack side is Charisma, so the defence must not be. The skill weight of 25 is gone with the hand-built score. The re-roll ladder is deleted and duration is bought once with the MARGIN of the winning contest, between `CharmDurationMinRounds` and `CharmDurationMaxRounds`; the player is never told how long. Expiry is a grudge gated on the owner being present and not link-dead. Slice D also restored the in-combat penalty slice B had deleted against spec 4.1, and added the `EverCharmed` instance-save guard so an ex-companion cannot bake its owner's gear into a world mob. | M | U9 | **Yes** |
-| **U10d** | **Surprise-attack redesign.** Split from U10 2026-08-21 (owner). The primary swing is an unconditional auto-hit with no defender term; redesign requires brainstorm → spec → plan (decided 2026-08-13). Sequenced with U10b/U10c before U12. | M | U1, U0 | **Yes** |
+| **U10d** | ✅ **SHIPPED 2026-08-25.** **Surprise-attack redesign.** Split from U10 2026-08-21 (owner). Delivered in **30 commits** on `feature/u10d-surprise-attack-redesign`. Spec + plan written 2026-08-25 after three blind adversarial review rounds: [`spec`](../superpowers/specs/2026-08-25-u10d-surprise-attack-redesign-design.md) · [`plan`](../superpowers/plans/2026-08-25-u10d-surprise-attack-redesign.md). **Shipped shape: ONE contested opening strike**, flagged by `Aggro.Type == SurpriseAttack` and consumed once (`openingStrikeLeft` in `calculateCombat`); a clean win crits and stacks `CritDamageMultiplier(skullduggery)` × `SurpriseOpeningStrikeMultiplier`. `actions.SurpriseAttack` and its 389-line uncontested multi-weapon volley are **deleted**. Stealth breaks immediately, implemented by **deleting** the `Awareness_Cascades` branch that preserved `Hidden`; the whole `SurpriseLeft` / `OnCombatRoundEnd` / `OnEndOfRoundIfSurprise` surface went with it rather than being repaired. Same-room ranged shot via `AttackSide.CritOnWin` + `SurpriseRangedStrikeMultiplier`, revealing the shooter explicitly and burning the shared `special-move` cooldown; cross-room shots stay ordinary. The two crit-on-win paths are pinned equivalent by `TestCritOnWin_MeleeAndChannelAgree`. Skullduggery moved onto the U9 seam, once per surprise round/shot on a clean hit, carried out on `AttackResult.WasSurpriseAttack` because `Aggro.Type` is demoted before `applyCombatProgression` runs. `EngageAggroType` now returns `(aggroType, surpriseOnCooldown)` so a **refused melee** opener speaks, matching the ranged one. Also folds in a **ranged economy rebalance**: eight bow/crossbow/sling/firearm multipliers detuned onto the melee scale (top bow 7.50 → **2.75**), compensated by `RangedUnengagedDamageMultiplier` **2.75** when nothing in the room targets the shooter, resolved by a **room scan** (see the `Attackers()` finding in U11). Player saves are rescaled by an unmarked, value-guarded per-load migration reaching backpack, component bag, bandolier, pet inventory, equipment (`characters.MigrateDetunedRangedWeapons`) and the account bank (`users.Storage.MigrateDetunedRangedWeapons`); world state (mob instances, shop stock, room containers) is deliberately **not** swept and decays instead. Three knobs added (`SurpriseOpeningStrikeMultiplier` 1.0, `SurpriseRangedStrikeMultiplier` 0.5, `RangedUnengagedDamageMultiplier` 2.75), five deleted (the `SurpriseAttack*Penalty` family, inert at 0.0). New `help ambush` topic, registered in `keywords.yaml` under `combat` with aliases (surprise attack, backstab, sneak attack …) and `help hide` now aliased to `sneak`. **Still owed: the adversarial in-game playtest** required by the content SOP for the new player-facing copy; U11 remains the arc's closing gate. **🔴 Four defects found by review that would have shipped SILENTLY:** `combatphase.SurpriseLeft` has never been true in production (`TransitionToEngaging` drops its `TransitionReason`) so the boundary is DELETED not repaired; `Character.Attackers()` is always empty (`RegisterMachine` has no production callers) so the unengaged bonus needed a room scan instead; a round-scoped `critOnWin` at `combat.go:466` would have reinstated the retired every-swing design; and `applyCombatProgression` runs after `Aggro.Type` is demoted, so the surprise flag is carried out on `AttackResult`. See the spec sections 1.1 and 2.8.3 for the evidence. | M | U1, U0 | **Yes** |
 | **U12** | **Targeting and target-switching audit.** Added 2026-08-14 at the owner's request. This code has been rewritten several times and never re-examined as a whole; the arc has since removed a great deal of the complexity it was written around. Re-read it end to end and simplify what the flip made redundant. Surface: `actions/target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go`, `usercommands/target.go`, and `internal/parser` (~780 lines together). Audit first, then propose — the deliverable is a findings pass, and any simplification is scoped from what it finds rather than assumed up front. | M | U6 | **No** (simplification only; anything behavioural splits out) |
-| **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, **player helpfiles for `quell` and `defy` plus the help-registry and category cleanup**, and the adversarial playtest gate. **Runs LAST, after U12** — the gate is the arc's closer, so no code slice may land after it. **U11 must also ship the "Done when" list below AS A TEST.** U6 was declared done in 2026-08 with two of its criteria false, and because they were prose in a roadmap nothing failed; the gap survived three further slices before U9 tripped over it. U6b already expressed criterion 2 as tests (the Task 18 guards in `contest_site_guard_test.go` — see the annotation under "Done when"); U11 keeps the obligation for the remaining criteria. | M | U6b, U8–U10d, U12 | — |
+| **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, **player helpfiles for `quell` and `defy` plus the help-registry and category cleanup**, and the adversarial playtest gate. **Runs LAST, after U12** — the gate is the arc's closer, so no code slice may land after it. **U11 must also ship the "Done when" list below AS A TEST.** U6 was declared done in 2026-08 with two of its criteria false, and because they were prose in a roadmap nothing failed; the gap survived three further slices before U9 tripped over it. U6b already expressed criterion 2 as tests (the Task 18 guards in `contest_site_guard_test.go` — see the annotation under "Done when"); U11 keeps the obligation for the remaining criteria. **Six defects handed to U11 by U10d's reviews (2026-08-25), none of them about surprise attack — see the "U11 inbox from U10d" list below the plan table.** | M | U6b, U8–U10d, U12 | — |
+
+### U11 inbox from U10d — six findings, five of them NOT about surprise attack
+
+U10d's blind reviews turned up defects in code the slice did not touch. They are
+recorded here so they meet a reader, and each was **re-verified against the
+branch on 2026-08-25** rather than carried over on the review's word. Two of the
+six did **not** survive that check and are written down as corrections, because
+a false entry in a permanent record is worse than a missing one.
+
+1. **`combatphase.RegisterMachine` has ZERO production callers, so
+   `Character.Attackers()` is always empty — and prone recovery has never been
+   contested.** `RegisterMachine` is defined in all five `internal/state/*`
+   machines (`activity.go:154`, `awareness.go:124`, `combatphase.go:182`,
+   `life.go:121`, `position.go:277`) and every call site repo-wide is in a
+   `_test.go`. `internal/characters/validate.go` builds the machines directly
+   and never registers them, so `machineRegistry` is empty, `lookupMachine`
+   always returns nil, and the single `RecordInboundAttacker` call site
+   (`combatphase.go:234`, behind `if target := lookupMachine(d.Target); target
+   != nil`) never runs. `Character.Attackers()`
+   (`internal/characters/character.go:799-805`) nevertheless promises it
+   *"replaces room-scan loops for 'who's attacking me?'"*. **It has an existing
+   silently-inert consumer:** `recoveryContest`
+   (`internal/hooks/recovery_contest.go:23`) iterates `ch.Attackers()`, finds
+   nothing, returns `nil`, and `nil` is documented in that function as *a free
+   stand* — so prone recovery is uncontested for everyone, always, whatever U10
+   intended. `CombatPhase_CompanionAssist.go`'s reactive
+   `SubscribeAttackersChange` path is likewise dead (companion assist runs on
+   the polling fallback), as are `NotifyTargetDied` / `NotifySelfDied`.
+   **A second, independent break sits behind the first:** `SetAggro` passes
+   `Actor: state.ActorRef{UserId: c.userId}`
+   (`internal/characters/combat_state_compat.go:146`) and nothing ever calls
+   `SetUserId` on a mob, so a mob's ref is the zero value and
+   `RecordInboundAttacker` early-returns on `ActorRef.IsZero()`. **Even a
+   repaired registry would never record a mob attacker.** U10d dodged this by
+   resolving its unengaged-ranged rule with a live room scan
+   (`actions/combat_fire.go`, `shooterIsUnengaged`) rather than `Attackers()`.
+   **U11 decision needed: wire it up or delete it.** It must not keep sitting
+   in the tree looking usable. Documented at the code in
+   `internal/state/combatphase/context.md` and
+   `internal/state/awareness/context.md` (the awareness twin has the same gap).
+
+2. **Alt characters are a real hazard for Character-scoped migrations — and
+   U10d's migration deliberately avoids it. NOT a live bug; recorded as the
+   pattern.** The architecture claim checks out: alts persist as
+   `<userId>.alts.yaml` (`internal/users/character_index.go:78-79`), each with
+   its own `MiscData`, while `ItemStorage` lives on `UserRecord`
+   (`internal/users/userrecord.go:46`) — one bank per **account**. A
+   Character-scoped run-once marker would therefore let the shared bank be
+   migrated once per alt. But the review's claim that U10d's bow detune does
+   this is **backwards**: both `Storage.MigrateDetunedRangedWeapons`
+   (`internal/users/storage_migrate.go:40`) and
+   `Character.MigrateDetunedRangedWeapons`
+   (`internal/characters/migrate_detuned_bows.go:64`) carry **no marker at all**,
+   for exactly this reason, and correctness rests on per-item idempotence
+   (`item.DetuneMigrated` plus a value guard) instead. `MigrateEnchantments`
+   (`internal/characters/migrate_enchantments.go`) is likewise unguarded and
+   idempotent by construction through `enchantments.ApplyTier`. **That is the
+   pattern to copy for the next save migration: make it idempotent, not
+   marked.** Recorded as a gotcha in `internal/users/context.md`.
+
+3. **CORRECTION — `SubGoldLossFraction` is NOT pinned at 0.0.** The review
+   reported it inert, reasoning that the validator
+   (`config.balance.combat.go:222-224`, `if x < 0 || x > 1.0 { x = 0.20 }`)
+   cannot fire on the zero an absent key unmarshals to. The validator shape is
+   real, but the premise is not: `sub_gold_loss_fraction: 0.20` **is present**
+   in `_datafiles/config.yaml:925`, under `Balance:`, matching the field's
+   `yaml:"sub_gold_loss_fraction"` tag. The subdue/cripple gold transfer
+   (`internal/combat/submission_outcome.go:201`) runs at the intended 0.20. **Do
+   not "fix" it.** What IS worth keeping is the underlying trap, which has
+   already cost the project once: **a knob with a non-zero advertised default,
+   a `< 0 || > 1.0`-shaped validator, and no key in `config.yaml` is silently
+   inert at zero** — that is precisely how the five `SurpriseAttack*Penalty`
+   knobs U10d deleted came to auto-hit every limb. A sweep of the remaining
+   instances of that validator shape found no other live case
+   (`MinAttackCritChance` / `MinDefenseCritChance` treat 0 as a deliberate
+   off-switch and are written explicitly; `EquipmentDropChance`'s coded default
+   IS 0.0). **U11's config audit should still sweep for the pattern**, since the
+   sweep above covered only that one validator shape.
+
+4. **`u8ActionHelpPaths` is a hand-maintained allowlist, and it is the wrong
+   way round.** `internal/templates/u8_help_test.go:19-53` lists **27** paths
+   (26 before U10d added `help/ambush`) against **454** files in
+   `_datafiles/world/dogmud/templates/help/`. Three tests iterate only that
+   list — `TestU8ActionAdmissionHelpTemplatesProcess`,
+   `TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning`,
+   `TestU8ActionHelpCrossReferencesResolve` — so **427 help templates get no
+   parse check, no numeric-disclosure check and no cross-reference check at
+   all.** Both files U10d edited that fell outside the list were exactly where
+   its surviving copy defects lived. Structurally this is the same failure as
+   `stow` going invisible in the 2026-08-03 helpfile audit. **The fix is to
+   invert it:** walk every `help/*.template` and keep a shrinking, commented
+   exception list instead. Sits naturally with U11's help-registry cleanup.
+
+5. **Two stale special-move cooldown comments that disagree with each other and
+   with the code.** `internal/configs/config.balance.go:246` reads
+   `// Shared cooldown rounds for bash/trip/kick (default 5)`;
+   `_datafiles/config.yaml:660-664` reads *"Bash, trip, and kick all share a
+   cooldown … Spellcasting also shares this cooldown slot … Example: 4 = after a
+   bash, must wait 4 rounds before bash/trip/kick/cast."* Neither is right:
+   **44 non-test `.go` files under `internal/` and `modules/` reference the
+   `special-move` key** (counted as `grep -rl "special-move" internal/ modules/
+   --include=*.go | grep -v _test.go`), and U10d added the melee and ranged
+   ambush openers to that population. The `config.yaml` comment is the worse of
+   the two because it is what a tuner reads. **Left unfixed on purpose:**
+   `config.yaml` has `skip-worktree`, so editing it needs the
+   commit-from-`git show HEAD:` procedure, and fixing only the Go half would
+   leave the pair still disagreeing. Fix both together in U11's config audit.
+
+6. **`TransitionToEngaging` silently drops its `TransitionReason`.**
+   `internal/state/combatphase/combatphase.go:208` takes
+   `(d EngagingData, r state.TransitionReason)` and at `:232` does
+   `m.engaging = &d`, never copying `r` into `d.Reason`. This is what made
+   `SurpriseLeft` false in production for its entire life. U10d deleted the only
+   consumer, so it is now **latent, not live** — `EngagingData.Reason`
+   (`combatphase.go:41`) is read by nothing. Any future consumer will hit it.
+   Deliberately not fixed by U10d: repairing a producer whose sole consumer was
+   being deleted would add a live path nothing uses. Recorded at the code in
+   `internal/state/combatphase/context.md`.
+
+---
 
 ### U5 — why it is three slices, and why it is NOT a no-op
 

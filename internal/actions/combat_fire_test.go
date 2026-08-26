@@ -481,8 +481,25 @@ func TestFireAdmissionOrdering(t *testing.T) {
 	require.Len(t, resolve, 1)
 	require.Len(t, round, 1)
 
+	// U10d: FireResult.IsSneaking must be captured BEFORE SetAggro, whose
+	// TransitionToEngaging cascades Hidden -> Revealing on a same-room shot.
+	// A capture moved below it would read a shooter the engine has just
+	// revealed, and every surprise shot would silently become an ordinary one.
+	//
+	// This has to be an AST guard: internal/hooks registers that cascade and is
+	// not linked into this test binary, so a moved capture is behaviourally
+	// invisible here. char.IsHidden() is unique inside ExecuteFire —
+	// defChar.IsHidden() is a different receiver and does not collide.
+	sneakCapture := exactCallPositions(t, fset, body, "char.IsHidden()", false)
+	setAggro := exactCallPositions(t, fset, body, "char.SetAggro", true)
+	require.Len(t, sneakCapture, 1)
+	require.Len(t, setAggro, 1)
+	assert.Less(t, int(sneakCapture[0]), int(setAggro[0]),
+		"IsSneaking must be captured before SetAggro can reveal the shooter")
+
 	unloads := []token.Pos{}
 	cooldownCalls := []string{}
+	cooldownPos := []token.Pos{}
 	ast.Inspect(body, func(node ast.Node) bool {
 		switch n := node.(type) {
 		case *ast.AssignStmt:
@@ -494,18 +511,37 @@ func TestFireAdmissionOrdering(t *testing.T) {
 		case *ast.CallExpr:
 			if sel, ok := n.Fun.(*ast.SelectorExpr); ok && strings.Contains(sel.Sel.Name, "Cooldown") {
 				cooldownCalls = append(cooldownCalls, formattedASTNode(t, fset, n))
+				cooldownPos = append(cooldownPos, n.Pos())
 			}
 		case *ast.SelectorExpr:
 			if formattedASTNode(t, fset, n) == "char.Cooldowns" {
 				cooldownCalls = append(cooldownCalls, "char.Cooldowns")
+				cooldownPos = append(cooldownPos, n.Pos())
 			}
 		}
 		return true
 	})
 	require.Len(t, unloads, 1)
-	assert.Empty(t, cooldownCalls, "shoot must neither query nor mutate any cooldown")
+
+	// U10d narrowed this from "shoot must neither query nor mutate any
+	// cooldown" to EXACTLY ONE claim, the same-room surprise opener's. An
+	// ORDINARY shot still touches no timer (pinned behaviourally by
+	// TestFire_DoesNotConsumeSpecialMoveCooldown and
+	// TestFireSurprise_OrdinaryShotDoesNotBurnTheCooldown); what this guard
+	// keeps is that there is no SECOND cooldown site and that the one claim
+	// cannot fire before admission, which would let a refused shot burn the
+	// shared special-move timer.
+	require.Len(t, cooldownCalls, 1, "exactly one cooldown site: the U10d surprise opener")
+	assert.True(t, strings.HasPrefix(cooldownCalls[0], `char.TryCooldown("special-move"`),
+		"the surprise opener must CLAIM (not merely read) the shared special-move "+
+			"timer, got %q", cooldownCalls[0])
+	assert.Contains(t, cooldownCalls[0], "cfg.SpecialMoveCooldown",
+		"the claim must be sized by the shared knob, not a literal, got %q", cooldownCalls[0])
 	assert.Less(t, int(roomVisibility[0]), int(admit[0]))
 	assert.Less(t, int(hiddenTarget[0]), int(admit[0]))
+	assert.Less(t, int(admit[0]), int(cooldownPos[0]),
+		"the surprise claim must never precede admission")
+	assert.Less(t, int(cooldownPos[0]), int(resolve[0]))
 	assert.Less(t, int(admit[0]), int(unloads[0]))
 	assert.Less(t, int(unloads[0]), int(resolve[0]))
 	assert.Less(t, int(admit[0]), int(round[0]))
@@ -624,16 +660,27 @@ func TestFire_NonCombatantMob_NotExecuted(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Balance pin: arbalest baseline raw damage band
+// CalcRawDamage channel arithmetic
 // ---------------------------------------------------------------------------
 
-// Spec balance target: arbalest (mult 7.0) at stat 100 / rank 0 must produce
-// raw damage in the 180-220 band BEFORE mitigation:
-// 100 × SkillMultiplier(0)=1.0 × 7.0 × ChannelScale(0.30) = 210.
-func TestRangedShotRawDamage_BalanceBand(t *testing.T) {
+// Pins the physical-channel arithmetic of CalcRawDamage, NOT any weapon:
+// 100 × SkillMultiplier(0)=1.0 × 7.0 × ChannelScale = the 180-220 band.
+//
+// The 7.0 below is a hardcoded literal, not a template read. It was originally
+// the Arbalest's multiplier, but U10d moved that template to 2.55, so nothing
+// here describes a live weapon any more. Rebanding is a balance decision that
+// belongs with the shoot-from-outside-the-fight bonus, not with this test. The
+// live template values are pinned by
+// items.TestRangedWeaponMultipliers_MatchTheU10dTable.
+//
+// Pre-existing fragility, worth knowing: the 180-220 band is computed against
+// ChannelScale 0.30, the Go DEFAULT, while config.yaml ships MeleeDamageScale
+// 0.52 with GlobalDamageMultiplier 0.5, giving 182. It passes by two points
+// and would go red on a modest retune.
+func TestCalcRawDamage_PhysicalChannelArithmetic(t *testing.T) {
 	raw := combat.CalcRawDamage(100, 0, 7.0, combat.ChannelPhysical)
 	if raw < 180 || raw > 220 {
-		t.Errorf("arbalest baseline raw %v outside 180-220 spec band", raw)
+		t.Errorf("CalcRawDamage(100, 0, 7.0, physical) = %v, outside the 180-220 band", raw)
 	}
 }
 

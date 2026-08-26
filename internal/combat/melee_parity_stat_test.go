@@ -18,7 +18,7 @@ package combat
 //     an explanation, before any dice are thrown.
 //  2. PROBABILITY MODEL. Expected damage per swing is computed by numerically
 //     integrating the joint distribution of the two roll z-scores over an
-//     exact transcription of RunWithFloors + resolveDefenseOutcomeCore +
+//     exact transcription of RunWithFloors + resolveDefenseOutcomeInner +
 //     applyCritFloors + calcHitDamage. A Task 1 bar leak or a Task 2 gate
 //     divergence moves the empirical mean; the anchor does not.
 //
@@ -215,7 +215,7 @@ func (a parityAnchor) deflected(mult float64) float64 {
 }
 
 // expectedSwingDamageAt is an exact transcription of the per-swing outcome
-// logic — resolveDefenseOutcomeCore's branch order, applyCritFloors'
+// logic — resolveDefenseOutcomeInner's branch order, applyCritFloors'
 // promotions, and calcHitDamage's two damage means — evaluated at one point
 // (za, zd) of the two roll z-scores, for one floor branch.
 //

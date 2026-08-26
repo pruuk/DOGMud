@@ -142,3 +142,27 @@ func (s *Storage) RemoveSlot(idx int) StorageSlot {
 	s.Slots = append(s.Slots[:idx], s.Slots[idx+1:]...)
 	return slot
 }
+
+// AllItemPtrs returns pointers to every stored item, covering both the
+// canonical Slots list and the legacy Items list (which MigrateStorageSlots
+// folds away later in the load sequence).
+//
+// Mutating through these pointers edits storage in place, which is the point:
+// one-time item migrations need to reach banked items, and Storage's other
+// accessors all hand back copies.
+//
+// A stacked slot yields ONE pointer, not Count pointers -- the stack shares a
+// single Item value, so a migration must apply to it exactly once.
+func (s *Storage) AllItemPtrs() []*items.Item {
+	if s == nil {
+		return nil
+	}
+	out := make([]*items.Item, 0, len(s.Slots)+len(s.Items))
+	for i := range s.Slots {
+		out = append(out, &s.Slots[i].Item)
+	}
+	for i := range s.Items {
+		out = append(out, &s.Items[i])
+	}
+	return out
+}

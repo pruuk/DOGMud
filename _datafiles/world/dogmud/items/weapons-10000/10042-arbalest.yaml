@@ -16,7 +16,7 @@ min_strength: 110
 damage:
   basedamage: 8
   variance: 3
-damage_multiplier: 7.00
+damage_multiplier: 2.55
 parryrating: 2
 value: 900
 rarity_tier: 20

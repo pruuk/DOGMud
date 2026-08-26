@@ -86,6 +86,12 @@ type swingDamageParams struct {
 	critDmgMult   float64 // chunk 5.11g: skill-scaled crit worth, applied to rawDmgForCrit only
 	critBuffs     []int
 	msgSeed       int
+
+	// openingStrikeMult is the skullduggery stack for the ONE opening strike of
+	// a surprise attack. 1.0 otherwise. Applied to the crit MEAN before the roll
+	// -- dice.RollStat takes its spread from the mean it is handed, so scaling
+	// the rolled result instead would stretch the variance.
+	openingStrikeMult float64
 }
 
 // bestDefenseResult holds the outcome of best-of-all defense resolution.
@@ -484,6 +490,8 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		rawDmgForCrit: rawDmgForCrit,
 		critDmgMult:   CritDamageMultiplier(combatSkillLevel),
 		msgSeed:       msgSeed,
+		openingStrikeMult: OpeningStrikeMultiplier(sourceChar,
+			float64(configs.GetBalanceConfig().SurpriseOpeningStrikeMultiplier)),
 	}
 }
 
@@ -765,7 +773,7 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 	} else {
 		// Preserve the legacy sentinel exactly. normalizedAttackMargin detects
 		// "no defence attempted" via defenseType == "" and never reads this
-		// value, but resolveDefenseOutcomeCore's `best.margin > 0` check does,
+		// value, but resolveDefenseOutcomeInner's `best.margin > 0` check does,
 		// and -Inf is what makes an uncontested swing fall through to a hit.
 		best.margin = math.Inf(-1)
 	}
@@ -792,7 +800,7 @@ type hitResolution struct {
 	// damageMult scales the swing's damage: 0.0 fully negated, 1.0 full damage,
 	// in between = partially deflected. U6 Task 10 — a defensive win is no
 	// longer a clean miss, so a hit that lands is not automatically a full-value
-	// hit. EVERY return path in resolveDefenseOutcomeCore sets this explicitly;
+	// hit. EVERY return path in resolveDefenseOutcomeInner sets this explicitly;
 	// the zero value is 0.0, so a path that forgets silently deals nothing.
 	damageMult float64
 	// defended is true when the DEFENCE won the contest but the swing still
@@ -894,8 +902,17 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // removed rather than left as a silent no-op. One visible consequence:
 // result.AttackZScore now reports the roll that actually happened instead of the
 // bumped value.
-func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
-	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+// critOnWin upgrades a WON contest to a crit. It does NOT decide the contest.
+//
+// Deliberately NOT forceCrit. forceCrit forces the WIN outright and the defender
+// never answers it (the sleeping-victim contract). critOnWin respects the contest
+// in full: the defender rolls and may win, and on a defender win nothing is
+// upgraded because there is no clean hit to upgrade.
+//
+// Both may be true — an ambush against a sleeping target — in which case
+// forceCrit decides the outcome and critOnWin is redundant. Do not merge them.
+func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, critOnWin bool) hitResolution {
+	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, critOnWin)
 
 	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
 	// res.hit, and nowhere earlier. The core resolver treats an attack crit as
@@ -908,10 +925,40 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 	return res
 }
 
-// resolveDefenseOutcomeCore is resolveDefenseOutcome without the crit floors.
-// Split out so the floors have exactly one application point despite the many
-// early returns below.
-func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
+// resolveDefenseOutcomeCore applies the U10d opening-strike upgrade to the
+// verdict the inner resolver produced. Split out because the inner function has
+// seven exits and the upgrade must apply to all of them uniformly.
+func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, critOnWin bool) hitResolution {
+	res := resolveDefenseOutcomeInner(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+
+	// U10d: a surprise opening strike crits on a CLEANLY won contest. Applied
+	// after the inner resolver settles, so it can only upgrade an outcome the
+	// ordinary fumble/crit/normal/floor ordering already produced. Every
+	// condition corresponds to a rule this package states elsewhere:
+	//
+	//   res.hit && !res.defended -- the documented "attack won the contest"
+	//     idiom (hitResolution.defended, above). hit alone is TRUE for a
+	//     deflected partial hit, which is a DEFENCE win.
+	//   !best.floored -- a sentinel margin must never be promoted (the same
+	//     rule applyCritFloors states). A mercy save must not become a
+	//     maximum-damage ambush.
+	//   !res.fumble -- a fumble aborts even a winning roll.
+	//   best.margin <= 0 -- literally "won the margin". The defence-fumble exit
+	//     returns BEFORE attackWon is computed, so without this the guard would
+	//     fire on a swing the attack lost on margin and won only because the
+	//     defender fumbled -- a divergence from the channel seam, whose guard is
+	//     gated on res.Success.
+	if critOnWin && res.hit && !res.defended && !best.floored && !res.fumble &&
+		best.margin <= 0 {
+		res.crit = true
+	}
+	return res
+}
+
+// resolveDefenseOutcomeInner is resolveDefenseOutcome without the crit floors
+// and without the U10d opening-strike upgrade. Split out so the floors have
+// exactly one application point despite the many early returns below.
+func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
 	fumbleThreshold := -2.0
 	defCritThreshold := DefenseCritBar()
 
@@ -1245,8 +1292,18 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 
 // calcHitDamage computes the damage for a successful hit, handling crits.
 // The isCrit flag is determined during hitroll resolution, not re-derived here.
-func calcHitDamage(result *AttackResult, isCrit bool, backstab bool, sdp swingDamageParams) (int, bool) {
-	if isCrit || backstab {
+//
+// openingStrike says this swing is the ONE opening strike of a surprise attack
+// (U10d). It only stacks damage; it never decides the crit. The second return
+// value is vestigial -- production discards it and clears its own per-swing flag
+// before the contest runs, so the ambush gets exactly one roll rather than one
+// per swing. It survives only for the older unit tests that read it.
+func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp swingDamageParams) (int, bool) {
+	// U10d: the crit branch is selected by the CRIT VERDICT alone. It used to be
+	// `isCrit || backstab`, which forced the branch from the flag itself -- under
+	// this design that would let a DEFENDED opening strike roll the full stacked
+	// mean and consume the flag, then merely scale the result by damageMult.
+	if isCrit {
 		result.Crit = true
 		result.BuffTarget = sdp.critBuffs
 		// Crits bypass mitigation, so they roll around the UNmitigated mean —
@@ -1257,16 +1314,34 @@ func calcHitDamage(result *AttackResult, isCrit bool, backstab bool, sdp swingDa
 		// Chunk 5.11g: the skill-scaled crit multiplier is applied to the MEAN,
 		// before the roll, for that same reason — scaling the rolled result
 		// instead would stretch the spread by the multiplier and leave crits
-		// wildly swingier at high skill.
+		// wildly swingier at high skill. U10d's opening-strike stack rides the
+		// same mean for the same reason.
 		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+		if openingStrike {
+			// Only buildDamageParams constructs swingDamageParams today, so an
+			// unset multiplier means a future literal was built elsewhere.
+			// Multiplying by that zero would land a maximum ambush for NO
+			// damage, silently: the `< 1 -> 1` rescue at the call site fires
+			// only on a DEFLECTED hit, and an opening strike that crits was by
+			// definition never deflected. Skipping the stack instead degrades
+			// the swing to an ordinary crit -- equally invisible on its own,
+			// which is exactly why the log, not the fallback, is the point
+			// here. Do not "simplify" this to a bare floor.
+			if sdp.openingStrikeMult <= 0 {
+				mudlog.Error("CritDamage", "err", "openingStrikeMult unset on a swingDamageParams built outside buildDamageParams")
+			} else {
+				critMean *= sdp.openingStrikeMult
+			}
+		}
+
 		damageResult := dice.RollStat(critMean)
 		dmg := int(math.Round(math.Max(0, damageResult.Value)))
-		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "critMult", fmt.Sprintf("%.2f", sdp.critDmgMult), "critMean", fmt.Sprintf("%.1f", critMean), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
-		return dmg, false // consume backstab
+		mudlog.Debug("CritDamage", "rawDmg", fmt.Sprintf("%.1f", sdp.rawDmgForCrit), "critMult", fmt.Sprintf("%.2f", sdp.critDmgMult), "openingStrike", openingStrike, "openingMult", fmt.Sprintf("%.2f", sdp.openingStrikeMult), "critMean", fmt.Sprintf("%.1f", critMean), "mitigatedDmg", fmt.Sprintf("%.1f", sdp.dmgMean))
+		return dmg, false
 	}
 	// Normal hit: use mitigated damage
 	damageResult := dice.RollStat(sdp.dmgMean)
-	return int(math.Round(math.Max(0, damageResult.Value))), backstab
+	return int(math.Round(math.Max(0, damageResult.Value))), openingStrike
 }
 
 // swingDamageParamsWithCritBuffs is a type alias to carry critBuffs through calcHitDamage
@@ -1363,10 +1438,16 @@ func attackMessagePct(pctDamage int, isCrit bool) int {
 // deflected swing exactly one personal line per viewer (deflectedSwingLines),
 // replacing the miss-band-plus-glancing-suffix composite the Phase B playtest
 // flagged as self-contradicting; sendDefenseMessages keeps the room line.
+//
+// openingStrike is the U10d per-swing flag: true on the ONE swing of an ambush
+// round that carried the opener. It does two things here and nothing else --
+// it routes that swing's lines through messaging.CategorySurpriseAttack, and
+// when the defence won it swaps the composite for openingStrikeDefendedLines.
+// Both are narration; no damage number depends on it.
 func buildAttackMessages(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character,
 	ws weaponSetup, sdp swingDamageParams, attackTargetDamage int, attackTargetReduction int,
 	attackSourceDamage int, attackSourceReduction int,
-	srcType, tgtType SourceTarget, prefix string, defended bool) {
+	srcType, tgtType SourceTarget, prefix string, defended bool, openingStrike bool) {
 
 	// Calculate actual damage vs. expected damage pct
 	pctDamage := 0.0
@@ -1378,6 +1459,21 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// treated specially when damage actually landed; a defended swing that
 	// rolled zero damage narrates like any other zero-damage outcome.
 	deflected := defended && attackTargetDamage > 0
+
+	// U10d: an ANSWERED opening strike. It replaces whatever line this swing
+	// would otherwise have carried -- the deflection composite, or the miss-band
+	// pool line when the deflection let nothing through -- so no viewer gains an
+	// extra line, and it supplies its own room line so the zero-damage case does
+	// not lose the one it used to get from the pool.
+	//
+	// This is the DEFLECTION path only. `defended` has exactly one assignment
+	// site (the partial-deflection branch of resolveDefenseOutcomeInner) and its
+	// docstring records that it is false on every clean-win, fumble and
+	// defensive-crit path -- so a defensive crit does NOT arrive here. That is
+	// not a gap: sendDefenseMessages keeps its personal AND room lines on the
+	// defensive-crit path and already names the defence, which is what the
+	// answered-ambush outcome needs said.
+	openingStrikeDefended := openingStrike && defended
 
 	// T4 (chunk 4c): compute the display subtype for attack-message selection.
 	// See meleeDisplaySubtype for the swap rules.
@@ -1412,6 +1508,8 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// After the fumble branch on purpose: flubbing a swing at a falling
 		// target is still a fumble.
 		msgs = items.GetPreAttackMessage(displaySubtype, items.CoupDeGrace)
+	} else if openingStrikeDefended {
+		// No pool messages: openingStrikeDefendedLines below is the whole line.
 	} else if deflected {
 		// Deflected swing (U6 Task 16b): no pool messages at all. The Phase B
 		// playtest caught the previous approach — a miss-band line plus a
@@ -1463,7 +1561,20 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
 	}
 
-	if deflected {
+	if openingStrikeDefended {
+		// DefenseUsed is stamped by the same sendDefenseMessages call described
+		// below. The damage description is passed only when damage actually got
+		// through; "" tells the builder to use its stopped-dead wording rather
+		// than promise a landed fragment that does not exist.
+		openerDmg := ""
+		if attackTargetDamage > 0 {
+			openerDmg = tokenReplacements[items.TokenDamage]
+		}
+		toAttackerMsg, toDefenderMsg, toAttackerRoomMsg = openingStrikeDefendedLines(result.DefenseUsed,
+			tokenReplacements[items.TokenSource],
+			tokenReplacements[items.TokenTarget],
+			openerDmg)
+	} else if deflected {
 		// result.DefenseUsed was set by sendDefenseMessages during THIS
 		// swing's resolution: the swing loop in combat.go calls
 		// resolveDefenseOutcome (which narrates the defence and stamps
@@ -1560,6 +1671,19 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// Per-swing hit-band Category from the weapon subtype.
 	hitCat := CategoryForWeaponSubtype(ws.weaponSubType)
 
+	// U10d DECISION: the opening strike is the producer that
+	// messaging.CategorySurpriseAttack never had. The category already exists,
+	// already has a colour alias ("surprise" in ansi-aliases.yaml), and appears
+	// in NEITHER verbosity suppression allowlist -- so routing the opener here
+	// means the one swing that decides an ambush survives medium and light
+	// verbosity, while the ordinary hit bands around it do not. That is the
+	// behaviour this swing wants: at light verbosity a defended opener routed
+	// as CategoryDodge would vanish and the player would never learn the ambush
+	// was answered.
+	if openingStrike {
+		hitCat = messaging.CategorySurpriseAttack
+	}
+
 	// Send to attacker
 	attackerMsg := string(toAttackerMsg)
 	if attackSourceDamage > 0 && attackSourceReduction > 0 {
@@ -1578,6 +1702,12 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 
 	// Send to room. A deflected swing sends none: the defence room line from
 	// sendDefenseMessages already narrated it, and room lines carry no damage.
+	//
+	// An answered opener that let NOTHING through is not deflected, so it still
+	// sends one -- the composite's own room line, built above. Restoring that is
+	// deliberate: it is the only room line that case gets from here, and the
+	// sendDefenseMessages line it would otherwise rely on is suppressible at
+	// both medium and light verbosity, while CategorySurpriseAttack is not.
 	if !deflected {
 		result.SendToSourceRoom(hitCat,
 			string(toAttackerRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).

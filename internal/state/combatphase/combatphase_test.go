@@ -139,52 +139,6 @@ func TestCP_008_FleeFailureReturnsEngaged(t *testing.T) {
 	require.Equal(t, Engaged, A.State())
 }
 
-// --- Surprise attack semantics (CP-009, CP-023 through CP-025b) ---
-
-// CP-009/CP-023: Hidden attacker enters Engaging with surprise marker; Awareness stays Hidden.
-func TestCP_023_SurpriseEngagingPreservesStealth(t *testing.T) {
-	A, _ := makePair()
-	reason := state.TransitionReason{
-		Trigger: TriggerSurpriseAttack,
-		Actor:   actor(1),
-		Target:  actor(2),
-	}
-	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2), Reason: reason}, reason))
-
-	d, _ := A.EngagingData()
-	require.Equal(t, TriggerSurpriseAttack, d.Reason.Trigger,
-		"reason persisted on Engaging data for surprise carry-through")
-}
-
-// CP-024: Engaging → Engaged with surprise marker preserves stealth.
-func TestCP_024_SurpriseEngagedStillPreservesStealth(t *testing.T) {
-	A, _ := makePair()
-	reason := state.TransitionReason{Trigger: TriggerSurpriseAttack}
-	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2), Reason: reason}, reason))
-	A.OnRoundTick()
-	d, _ := A.EngagedData()
-	require.True(t, d.SurpriseLeft, "Engaged data flags surprise as still available")
-}
-
-// CP-025: At end of first combat round, surprise consumed.
-func TestCP_025_SurpriseConsumedAtEndOfFirstRound(t *testing.T) {
-	A, _ := makePair()
-	reason := state.TransitionReason{Trigger: TriggerSurpriseAttack}
-	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2), Reason: reason}, reason))
-	A.OnRoundTick() // Engaging → Engaged
-
-	var stealthBreakFired bool
-	A.OnEndOfRoundIfSurprise(func(_ state.TransitionReason) {
-		stealthBreakFired = true
-	})
-
-	A.OnCombatRoundEnd() // round resolves
-	require.True(t, stealthBreakFired, "end-of-round cascade fires once surprise round ends")
-
-	d, _ := A.EngagedData()
-	require.False(t, d.SurpriseLeft, "surprise flag consumed after first round end")
-}
-
 // --- Vetoes (CP-010 through CP-016) ---
 
 // CP-010: NonCombatant cannot attack.
@@ -321,6 +275,24 @@ func TestCP_019_AttackersChangeIsObservable(t *testing.T) {
 	require.NoError(t, M1.TransitionToEngaging(EngagingData{Target: actor(1)},
 		state.TransitionReason{Actor: actor(101), Target: actor(1)}))
 	require.Equal(t, 1, observedAttackerCount, "Attackers-change observer fires on inbound add")
+}
+
+// --- Engaged hand-off (CP-024) ---
+
+// CP-024: advanceToEngaged carries the Engaging target into EngagedData.
+// Replaces the old surprise-marker assertion — a surprise engagement no
+// longer differs from any other one, but the target hand-off still has to
+// hold. Kept at its original number (and therefore filed here rather than
+// with the CP-001–CP-008 basics) so it still lines up with the chunk-0
+// design doc's test matrix.
+func TestCP_024_EngagedCarriesTargetFromEngaging(t *testing.T) {
+	A, _ := makePair()
+	require.NoError(t, A.TransitionToEngaging(
+		EngagingData{Target: actor(2)}, state.TransitionReason{}))
+	A.OnRoundTick()
+	d, ok := A.EngagedData()
+	require.True(t, ok)
+	require.Equal(t, actor(2), d.Target, "Engaged data keeps the Engaging target")
 }
 
 // --- Non-combat target picking (CP-026, CP-027) ---

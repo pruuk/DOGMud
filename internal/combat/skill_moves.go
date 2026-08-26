@@ -80,6 +80,9 @@ type SkillMoveParams struct {
 	DamageStat           int     // stat for CalcRawDamage (always Strength)
 	MitigationMultiplier float64 // 1.0 = full, 0.5 = half mitigation (stomp)
 
+	// BonusCritMultiplier scales the crit mean only. 0 means 1.0.
+	BonusCritMultiplier float64
+
 	// KnockdownToSupine: false (default) → defender falls face-forward
 	// to Prone (TriggerKnockdownFaceForward). true → defender knocked
 	// backward to Supine (TriggerKnockdownFaceBackward). Bash + charge
@@ -153,7 +156,7 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	// the defence multiplier (1.0 on an attack win by construction, 0.5
 	// on a floored save, 0.0-0.5 on a rolled defensive win).
 	rawDmg := CalcRawDamage(p.DamageStat, p.Attack.SkillRank, p.DamagePercent, ChannelPhysical)
-	dmg := CritOrMitigatedDamage(rawDmg, p.Attack.SkillRank, result.Crit, mitig, cap)
+	dmg := CritOrMitigatedDamageScaled(rawDmg, p.Attack.SkillRank, result.Crit, mitig, cap, p.BonusCritMultiplier)
 	if !result.Crit {
 		dmg = int(float64(dmg) * out.DamageMultiplier)
 		if out.DamageMultiplier > 0 && dmg < 1 {

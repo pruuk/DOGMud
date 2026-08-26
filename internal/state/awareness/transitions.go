@@ -17,12 +17,17 @@ const (
 	TriggerSneakSuccess       = "sneak_success"
 	TriggerSneakFailed        = "sneak_failed"
 	TriggerCombatEntered      = "combat_entered"
-	TriggerSurpriseRoundEnd   = "surprise_round_end"
 	TriggerMovementDetected   = "movement_detected"
 	TriggerObserverSearch     = "observer_search"
 	TriggerLightChange        = "light_change"
 	TriggerSkullduggeryFailed = "skullduggery_failed"
 	TriggerNoisyAction        = "noisy_action"
+	// TriggerRangedSurpriseShot is the U10d same-room surprise shot giving the
+	// shooter's position away. Deliberately NOT TriggerCombatEntered: a
+	// cross-room shooter never enters combat, so that reason would be
+	// misleading in exactly the case this is most likely to be debugged
+	// against.
+	TriggerRangedSurpriseShot = "ranged_surprise_shot"
 	TriggerLogout             = "logout_safety_valve"
 	TriggerDeath              = "death_cascade"
 	TriggerForceVisible       = "force_visible"

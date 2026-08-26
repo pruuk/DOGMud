@@ -16,5 +16,14 @@ Sneaking spends Stamina and requires full payment before concealment begins.
 Carried load raises the price, while <ansi fg="skill">skullduggery</ansi> lowers
 it. If you are too spent, your visibility and cooldown remain unchanged.
 
+<ansi fg="yellow">Attacking from hiding:</ansi>
+
+Striking while hidden turns your first blow into an
+<ansi fg="magenta-bold">ambush</ansi>, in melee or with a shot at something in
+your own room. It needs your special move ready, a defender can still
+answer it, and it always gives your hiding place away. Read
+<ansi fg="command">help ambush</ansi> before you rely on it.
+
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help skullduggery</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help steal</ansi>
+  <ansi fg="command">help steal</ansi>, <ansi fg="command">help ambush</ansi>,
+  <ansi fg="command">help shoot</ansi>

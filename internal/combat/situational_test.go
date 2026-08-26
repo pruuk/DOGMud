@@ -215,7 +215,7 @@ func decisiveDefenceWinRunner(atkScore float64, entries []contest.Entry) contest
 	}
 }
 
-// ForceCrit mirrors melee's resolveDefenseOutcomeCore semantics exactly: the
+// ForceCrit mirrors melee's resolveDefenseOutcomeInner semantics exactly: the
 // attack crits, cannot fumble, wins even when the defence took the margin,
 // and lands at the full damage multiplier. The defence is still mounted —
 // charged and identified — it just cannot change the outcome.

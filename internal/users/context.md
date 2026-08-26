@@ -390,11 +390,13 @@ type Storage struct {
 func (s *Storage) SlotCount() int             // number of occupied slots (stacks)
 func (s *Storage) GetItems() []items.Item     // one Item value per logical unit (a Count-3 slot yields 3 values)
 func (s *Storage) GetSlots() []StorageSlot    // copy of the slot list; use when reasoning about stacks
+func (s *Storage) AllItemPtrs() []*items.Item // in-place pointers to Slots + legacy Items; ONE pointer per stack. For one-time item migrations only -- every other accessor returns copies.
 func (s *Storage) FindItem(itemName string) (items.Item, bool) // fuzzy match via items.FindMatchIn
 func (s *Storage) AddItem(i items.Item) bool  // increments an existing stack (via items.SameStack) or appends a new slot
 func (s *Storage) RemoveItem(i items.Item) bool // decrements/drops a stackable slot, or removes a non-stackable slot by UUID (items.Item.Equals)
 func (s *Storage) RemoveSlot(idx int) StorageSlot // removes and returns the whole slot at idx; panics if out of range
 func (s *Storage) MigrateStorageSlots() bool  // storage_migrate.go: folds legacy Items into Slots
+func (s *Storage) MigrateDetunedRangedWeapons() bool // storage_migrate.go: U10d ranged rescale over banked items; unmarked and idempotent, runs every load
 ```
 
 ### Inbox Messaging System
@@ -727,6 +729,40 @@ identically. The Presence machine is the only thing that changed.
 The `Idle` Presence state is intentionally invisible to the UI in v1.
 Only `AFK` surfaces to players via the `(afk)` tag.
 
+## Gotcha: alts break Character-scoped save migrations
+
+The bank is **account**-scoped and inventories are **character**-scoped, and
+the two do not line up:
+
+- `ItemStorage Storage` lives on `UserRecord` (`userrecord.go:46`). There is
+  one per account.
+- Alt characters persist as `<userId>.alts.yaml` (`character_index.go:78-79`).
+  Each is a separate `characters.Character` with its **own** `MiscData`.
+
+So a run-once marker stored in `Character.MiscData` does **not** protect a
+`UserRecord`-scoped structure: the shared bank can be migrated once per alt.
+The reverse hazard is just as real — `characters.New()` produces empty
+`MiscData`, and a brand-new account plays its whole first session on an
+in-memory record that never passes through `LoadUser`, so a marker can also be
+absent when the data has already been touched.
+
+**The working pattern is idempotence, not marking.** Both halves of the U10d
+ranged detune go unmarked and run on every load, and rely on the operation
+being a no-op the second time:
+
+- `Storage.MigrateDetunedRangedWeapons` (`storage_migrate.go:40`) for the bank
+- `Character.MigrateDetunedRangedWeapons`
+  (`internal/characters/migrate_detuned_bows.go:64`) for inventory, component
+  bag, bandolier, pet inventory and equipment
+
+Idempotence comes from `items.MigrateDetunedBow` itself (the per-item
+`DetuneMigrated` flag plus a value guard), not from a caller-side flag.
+`characters.MigrateEnchantments` is the older instance of the same pattern:
+no guard at all, idempotent by construction because `enchantments.ApplyTier`
+restores a captured baseline before re-deriving the spec. Copy that. Note
+`MigrateStorageSlots` (`storage_migrate.go:13`) IS self-guarded, but on the
+**data** (`len(s.Items) == 0`), not on a marker — which is the same idea.
+
 ## Dependencies
 
 - `internal/characters` - Character system integration for user avatars
@@ -760,7 +796,7 @@ Only `AFK` surfaces to players via the `(afk)` tag.
 | `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`) |
 | `userrecord.go` | The `UserRecord` type |
 | `userrecord.prompt.go` | Prompt rendering and tokens |
-| `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`) and its legacy `Items`-to-`Slots` shape migration |
+| `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and the U10d ranged-weapon rescale over banked items |
 | `index.go` / `index_rebuild.go` / `character_index.go` | Name/character indexes |
 | `migration.go` | Per-user migrations |
 | `validate_actor_name.go` | Name validation |

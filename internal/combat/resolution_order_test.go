@@ -74,7 +74,7 @@ func TestResolveDefenseOutcome_FloorReachesACrittingDefender(t *testing.T) {
 		best := runBestOfAllDefense(result, attacker, defender,
 			[]string{characters.DefenseDodge}, hopelessAttackScore, false, ctx)
 		res := resolveDefenseOutcome(result, best, attacker, defender,
-			critThreshold, false, false)
+			critThreshold, false, false, false)
 		if res.hit && res.damageMult == 1.0 {
 			hits++
 		}
@@ -114,7 +114,7 @@ func TestResolveDefenseOutcome_FlooredOutcomesNeverCrit(t *testing.T) {
 		best := runBestOfAllDefense(result, attacker, defender,
 			[]string{characters.DefenseDodge}, hopelessAttackScore, false, ctx)
 		res := resolveDefenseOutcomeCore(result, best, attacker, defender,
-			critThreshold, false, false)
+			critThreshold, false, false, false)
 
 		if !best.floored {
 			continue

@@ -128,8 +128,8 @@ hints:
     Use <ansi fg="command">sneak</ansi> to enter the shadows. Be
     careful -- sharp-eyed NPCs may notice you trying to hide.
   - >-
-    Hidden and attacking? If your special move cooldown is ready,
-    you'll land a devastating surprise attack automatically.
+    Hidden and attacking? If your special move is ready, your first
+    blow is an ambush. Land it cleanly and it hits very hard.
   - >-
     Use <ansi fg="command">shadow</ansi> to tail someone between
     rooms without being seen. Requires rank 2 skullduggery.

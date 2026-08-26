@@ -177,13 +177,15 @@ func TestAW_014_NightVisionDoesNotAutoReveal(t *testing.T) {
 		"NightVision is a per-roll modifier; doesn't unilaterally break stealth")
 }
 
-// --- AW-015 through AW-018: Combat Phase cascade ---
-// These are integration-tested via the cascade subscription in hooks/
-// (Task 5). Framework-level here just verifies TransitionToRevealing
-// with TriggerCombatEntered works.
+// --- AW-015, AW-016: Combat Phase cascade ---
+// These are integration-tested via the cascade subscription in hooks/.
+// Framework-level here just verifies TransitionToRevealing with
+// TriggerCombatEntered works.
 
-// AW-015: Combat Phase → Engaging (non-surprise) cascades Awareness → Revealing.
-func TestAW_015_NonSurpriseCombatBreaksStealth(t *testing.T) {
+// AW-015: TransitionToRevealing with the combat-entry trigger takes a
+// Hidden machine all the way to Visible — the tail of the cascade that
+// hooks/Awareness_Cascades.go drives on Combat Phase Idle → Engaging.
+func TestAW_015_RevealingOnCombatEntryReachesVisible(t *testing.T) {
 	A, _ := makePair()
 	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
 	A.ResolveConcealment(true, state.TransitionReason{})
@@ -193,34 +195,16 @@ func TestAW_015_NonSurpriseCombatBreaksStealth(t *testing.T) {
 	require.Equal(t, Visible, A.State())
 }
 
-// AW-016: SurpriseAttack reason — no cascade should fire (subscription respects it).
-// Verified via the cascade hook in Task 5; here we verify the Awareness
-// machine doesn't itself trigger on combat entry.
-func TestAW_016_SurpriseAttackPreservesHidden(t *testing.T) {
+// AW-016: a successful concealment parks the machine in Hidden and leaves
+// it there. Nothing inside this package reveals on its own — every reveal
+// is driven by an external caller (the detection roll, ForceVisible, or the
+// Combat Phase cascade in hooks/Awareness_Cascades.go).
+func TestAW_016_HiddenPersistsUntilAnExternalCallerReveals(t *testing.T) {
 	A, _ := makePair()
 	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
 	A.ResolveConcealment(true, state.TransitionReason{})
 	require.Equal(t, Hidden, A.State(),
-		"surprise-attack combat-entry does NOT auto-break Awareness Hidden state (cascade subscriber checks reason)")
-}
-
-// AW-017: Engaging→Engaged with SurpriseLeft preserves Hidden.
-func TestAW_017_SurpriseEngagedPreservesHidden(t *testing.T) {
-	A, _ := makePair()
-	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
-	A.ResolveConcealment(true, state.TransitionReason{})
-	require.Equal(t, Hidden, A.State())
-}
-
-// AW-018: OnEndOfRoundIfSurprise callback fires → Hidden → Revealing.
-func TestAW_018_SurpriseRoundEndReveals(t *testing.T) {
-	A, _ := makePair()
-	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
-	A.ResolveConcealment(true, state.TransitionReason{})
-
-	err := A.TransitionToRevealing(state.TransitionReason{Trigger: TriggerSurpriseRoundEnd})
-	require.NoError(t, err)
-	require.Equal(t, Visible, A.State())
+		"the machine does not auto-break Hidden without an external caller")
 }
 
 // --- AW-019, AW-020: Stamina cost (framework-level just verifies IsHidden()) ---

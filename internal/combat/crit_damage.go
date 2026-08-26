@@ -3,8 +3,10 @@ package combat
 import (
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // Chunk 5.11g — skill-scaled crit damage.
@@ -53,22 +55,50 @@ func CritDamageMultiplier(skillRank int) float64 {
 	return base + float64(bal.CritDamagePerSkill)*float64(skillRank)
 }
 
-// CritOrMitigatedDamage rolls the damage for one spell or conviction hit.
+// OpeningStrikeMultiplier is the extra crit worth carried by the single opening
+// strike of a surprise attack: the attacker's skullduggery expressed through the
+// same crit-worth curve their combat skill already uses, times the ambush-only
+// tuning knob.
 //
-// On a crit it bypasses mitigation entirely and scales by CritDamageMultiplier;
-// on a normal hit it applies mitigation. Either way the multiplier is applied
-// to the MEAN before the roll, because dice.RollStat derives its spread from
-// the mean it is handed (stdDev = mean * RollSpread) — scaling the rolled
-// result instead would stretch the spread by the multiplier and leave crits
-// wildly swingier at high skill.
+// channelKnob is the per-channel ambush multiplier, passed by the caller rather
+// than read here: melee uses SurpriseOpeningStrikeMultiplier, ranged uses
+// SurpriseRangedStrikeMultiplier (Task 10), and the two ship at different values
+// because a shot answers one fewer defence and already inherits the unengaged
+// bonus.
+//
+// Returns 1.0 for a nil attacker so callers can multiply unconditionally.
+func OpeningStrikeMultiplier(attacker *characters.Character, channelKnob float64) float64 {
+	if attacker == nil {
+		return 1.0
+	}
+	return CritDamageMultiplier(attacker.GetSkillLevel(skills.Skullduggery)) * channelKnob
+}
+
+// CritOrMitigatedDamageScaled is CritOrMitigatedDamage with an extra crit-only
+// multiplier, used by the U10d ranged surprise shot.
+//
+// On a crit it bypasses mitigation entirely and scales by
+// CritDamageMultiplier(skillRank) * bonusCritMult; on a normal hit it applies
+// mitigation and bonusCritMult plays no part at all. Either way the
+// multiplier is applied to the MEAN before the roll, because dice.RollStat
+// derives its spread from the mean it is handed (stdDev = mean * RollSpread)
+// — scaling the rolled result instead would stretch the spread by the
+// multiplier and leave crits wildly swingier at high skill.
+//
+// bonusCritMult 0 reads as "unset" and means 1.0, matching AttackSide.Mult's
+// convention. It applies ONLY on the crit branch: a surprise shot that lands
+// as an ordinary hit is an ordinary hit.
 //
 // The melee channel deliberately does NOT use this. calcHitDamage carries
 // backstab consumption and crit-buff bookkeeping, and floors at 0 rather than
 // 1, so folding it in here would either lose behaviour or bloat the signature.
-func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap float64) int {
+func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap, bonusCritMult float64) int {
 	mean := rawDmg
 	if isCrit {
-		mean *= CritDamageMultiplier(skillRank)
+		if bonusCritMult == 0 {
+			bonusCritMult = 1.0
+		}
+		mean *= CritDamageMultiplier(skillRank) * bonusCritMult
 	} else {
 		mean = ApplyMitigation(rawDmg, mitigPct, mitigCap)
 	}
@@ -79,4 +109,10 @@ func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct,
 		dmg = 1
 	}
 	return dmg
+}
+
+// CritOrMitigatedDamage rolls the damage for one spell or conviction hit, with
+// no bonus multiplier. See CritOrMitigatedDamageScaled.
+func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap float64) int {
+	return CritOrMitigatedDamageScaled(rawDmg, skillRank, isCrit, mitigPct, mitigCap, 1.0)
 }

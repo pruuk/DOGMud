@@ -182,25 +182,24 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 						if partyUser.Character.RoomId == user.Character.RoomId &&
 							partyUser.Character.GetSetting("autoattack") != "off" &&
 							!partyUser.Character.IsInCombat() {
-							// Surprise attack for hidden party members before they join combat
-							if targetMob := mobs.GetInstance(attackMobInstanceId); targetMob != nil {
-								partyActor := actions.NewUserActorInRoom(partyUser, room)
-								targetActor := actions.NewMobActorInRoom(targetMob, room)
-								actions.SurpriseAttack(partyActor, actions.SurpriseAttackOpts{Target: targetActor})
-							}
+							// U10d: no pre-combat burst is fired here. The
+							// party member's own `attack` command runs the
+							// normal path, which reaches EngageAggroType and
+							// types their engagement from stealth correctly.
 							partyUser.Command(fmt.Sprintf(`attack #%d`, attackMobInstanceId))
 						}
 					}
 				}
 			}
 
-			// Surprise attack from stealth — fires before normal combat begins.
-			// SurpriseAttack gates on IsHidden() internally; call unconditionally.
-			// Tag the engagement from the result so a stealth opener is typed
-			// SurpriseAttack, matching the mob path.
+			// Type the engagement from stealth so the opening strike of the
+			// combat round resolves as a surprise. EngageAggroType gates on
+			// hidden state AND the special-move cooldown internally, so call
+			// it unconditionally and do not pre-check IsHidden here.
 			aggroType := characters.DefaultAttack
+			ambushDenied := false
 			if targetMob := mobs.GetInstance(attackMobInstanceId); targetMob != nil {
-				aggroType = actions.EngageAggroType(
+				aggroType, ambushDenied = actions.EngageAggroType(
 					actions.NewUserActorInRoom(user, room),
 					actions.NewMobActorInRoom(targetMob, room),
 				)
@@ -238,6 +237,8 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			user.SendText(messaging.CategoryHitMelee,
 				fmt.Sprintf(`You prepare to enter into mortal combat with %s.`, mName),
 			)
+
+			sendMeleeAmbushDenial(user, ambushDenied)
 
 			if !isSneaking {
 				room.SendTextVisual(messaging.CategoryHitMelee,
@@ -303,11 +304,13 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				}
 			}
 
-			// Surprise attack from stealth — fires before normal combat begins.
-			// SurpriseAttack gates on IsHidden() internally; call unconditionally.
+			// Type the engagement from stealth (PvP). EngageAggroType gates on
+			// hidden state AND the special-move cooldown internally, so call
+			// it unconditionally and do not pre-check IsHidden here.
 			pvpAggroType := characters.DefaultAttack
+			pvpAmbushDenied := false
 			if targetUser := users.GetByUserId(attackPlayerId); targetUser != nil {
-				pvpAggroType = actions.EngageAggroType(
+				pvpAggroType, pvpAmbushDenied = actions.EngageAggroType(
 					actions.NewUserActorInRoom(user, room),
 					actions.NewUserActorInRoom(targetUser, room),
 				)
@@ -318,6 +321,8 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			user.SendText(messaging.CategoryHitMelee,
 				fmt.Sprintf(`You prepare to enter into mortal combat with <ansi fg="username">%s</ansi>.`, p.Character.Name),
 			)
+
+			sendMeleeAmbushDenial(user, pvpAmbushDenied)
 
 			if !isSneaking {
 
@@ -346,4 +351,52 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	return true, nil
+}
+
+// U10d, melee half — the VOICE of a refused ambush.
+//
+// The ranged half has spoken its own refusal since Task 14 (shoot.go); the
+// melee half was silent, and silence here is worse than a missing line.
+// SetAggro cascades Hidden -> Revealing whatever the aggro type is
+// (internal/hooks/Awareness_Cascades.go), so a melee ambusher whose shared
+// special-move timer was already claimed spent their cover, took an ordinary
+// swing, and was told neither thing. To the player the ambush simply did not
+// work.
+const (
+	// surpriseMeleeDeniedText is the ranged refusal VERBATIM. One shared
+	// cooldown, one wording, wherever a player meets it. The reasoning behind
+	// the words themselves lives on surpriseShotDeniedText in shoot.go.
+	surpriseMeleeDeniedText = surpriseShotDeniedText
+
+	// surpriseMeleeRevealedText names the consequence the refusal does not,
+	// and it is the more expensive of the two: the ambush is off, the cover is
+	// spent anyway. Shaped after surpriseShotRevealedText ("The shot gives
+	// your place away...") so the two halves read as one feature.
+	surpriseMeleeRevealedText = `Closing in gives your place away. You are no longer hidden.`
+)
+
+// sendMeleeAmbushDenial speaks a refused melee opener to the attacker.
+//
+// Call it AFTER SetAggro. The reveal line is gated on what actually became of
+// the attacker's cover, and the cascade that spends it runs inside SetAggro.
+//
+// The reveal is CHECKED rather than assumed because SetAggro has paths that
+// return before the Combat Phase transition ever happens — the grace-period
+// guard on a protected player target and the taunt-hold guard, both in
+// internal/characters/combat_state_compat.go — plus paths where the transition
+// is vetoed and the error discarded. On those the attacker keeps their cover,
+// and asserting otherwise would be a lie about the one thing this line exists
+// to report.
+//
+// Both lines ride CategorySurpriseAttack, the same category shoot.go uses for
+// its refusal: it sits in neither verbosity suppression allowlist, so the news
+// that an ambush did not happen survives a quiet verbosity setting.
+func sendMeleeAmbushDenial(user *users.UserRecord, denied bool) {
+	if !denied {
+		return
+	}
+	user.SendText(messaging.CategorySurpriseAttack, surpriseMeleeDeniedText)
+	if !user.Character.IsHidden() {
+		user.SendText(messaging.CategorySurpriseAttack, surpriseMeleeRevealedText)
+	}
 }

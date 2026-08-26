@@ -9,7 +9,7 @@
 >
 > The authoritative list of what this package listens to is
 > **`RegisterListeners()` in `hooks.go`**. The listener count below is also
-> historical: the package currently has 116 non-test files.
+> historical: the package currently has 124 non-test files.
 
 ## Overview
 
@@ -692,8 +692,6 @@ The round driver reads Combat Phase state instead of legacy `Aggro`:
   `RoundsUntil` hits zero.
 - `c.CombatPhase.DispatchTickEvent()` fires `mob_combat_round` or
   `mob_idle` btree events per character per round.
-- `c.CombatPhase.OnCombatRoundEnd()` clears the `SurpriseLeft` flag
-  at end-of-round for surprise engagements.
 
 ### Verbosity gating (combat_verbosity.go)
 
@@ -716,6 +714,19 @@ medium / light). Three touch-points (gate in
 - **`flushCombatTallies`** — called once at the end of `DoCombat` after
   all AttackResults for the round are processed. Renders and emits one
   compact summary line per fight pair per viewer.
+
+### Surprise-attack skullduggery progression (U10d)
+
+`NewRound_DoCombat_unified.go`'s per-round progression pass awards a SECOND,
+separate `progression.Outcome` (skill `skullduggery`, stat left empty) when
+`res.WasSurpriseAttack && res.CleanHit` — outside the per-weapon `WeaponHits`
+loop, on purpose, so a multi-swing ambush round pays the ambush bonus once,
+not once per landed swing. It keys on `AttackResult.WasSurpriseAttack`
+(`internal/combat/attackresult.go`), not on `Aggro.Type`: `calculateCombat`
+demotes `SurpriseAttack` to `DefaultAttack` the moment it arms the opening
+strike (see `internal/combat/context.md` "U10d — the opening strike"), so by
+the time this progression pass runs, `Aggro.Type` always reads
+`DefaultAttack` and a condition written against it would never fire.
 
 ## Awareness State Machine Integration (chunk 1)
 
@@ -742,15 +753,26 @@ the machine transitions away from or into the `Hidden` state, the hook
 applies or removes buff #9 to keep the visible effect synchronized with
 the invisible state.
 
-Also subscribes to Combat Phase's `OnEndOfRoundIfSurprise` callback. When
-a surprise engagement completes its first round, the hook triggers the
-Awareness reveal cascade (`Hidden → Revealing → Visible`), forcing any
-hidden characters out of hiding.
+Also registers an `AfterTransition` callback on the Combat Phase machine
+that reveals a hidden character on `Idle → Engaging`. A surprise attack is
+**not** exempt: stealth breaks the instant the ambusher engages. The
+ambusher keeps their opening strike anyway, because that bonus reads
+`Character.Aggro.Type` (in `combat.calculateCombat`, well after this
+cascade has run), not `IsHidden()`.
+`internal/hooks/surprise_reveal_test.go` pins both halves — the reveal
+fires, and it does not clear `Aggro.Type`.
+
+`SetAggro` writes `c.Aggro` *before* it dual-writes the Combat Phase
+transition. That order matters for anything observing `Idle → Engaging`
+— notably the `mob_engaging` btree event in
+`CombatPhase_BtreeEvents.go`, whose actions can read `Aggro`. It is
+**not** currently covered by a test, and reversing it would not break
+the opening strike, which reads `Aggro.Type` later in the round.
 
 Events and cascades (per state transition, not per round):
 - Awareness `Visible → Hidden`: apply buff #9 + room text "sneaks away"
 - Awareness `Hidden → Visible`: remove buff #9 + room text "emerges from hiding"
-- Combat Phase end-of-surprise round: trigger Awareness reveal cascade
+- Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade
 
 ### Awareness_LightChange.go
 
@@ -1487,6 +1509,38 @@ maths); only the cross-channel tier's swing runs through the seam. The
 auto-trip/auto-bash `ExecuteSkillMove` calls carry `IsCounter`, which the
 tier's wiring refuses — counters never recurse.
 
+## Gotcha: `recovery_contest.go` is silently inert, and has always been
+
+`recoveryContest` (`recovery_contest.go:23`) builds the opposed prone-recovery
+roll for `AttemptRecovery` by iterating `ch.Attackers()`, picking the strongest
+same-room living holder, and returning a closure over `combat.RunContest`. It
+returns `nil` — documented in the function itself as *a free stand* — when
+nobody qualifies.
+
+**Nobody ever qualifies.** `Character.Attackers()` reads the Combat Phase
+framework's inbound-attacker list, and that list is never populated in
+production: `RecordInboundAttacker` is reached only through
+`lookupMachine(d.Target)` in `internal/state/combatphase/combatphase.go:234`,
+`lookupMachine` reads `machineRegistry`, and `combatphase.RegisterMachine` has
+**zero production callers** (every call is in `combatphase_test.go`;
+`internal/characters/validate.go` constructs the machine without registering
+it). So the loop body never executes, `best` stays nil, and **prone recovery is
+uncontested for every character, always.**
+
+A second, independent break sits behind the first: `SetAggro` passes
+`Actor: state.ActorRef{UserId: c.userId}`
+(`internal/characters/combat_state_compat.go:146`) and nothing calls
+`SetUserId` on a mob, so a mob's ref is the zero value and
+`RecordInboundAttacker` early-returns on `ActorRef.IsZero()`. Even a repaired
+registry would never record a mob attacker.
+
+Do not write new code against `Character.Attackers()` until this is resolved —
+U10d's unengaged-ranged rule deliberately uses a live room scan
+(`actions/combat_fire.go`, `shooterIsUnengaged`) for exactly this reason.
+Handed to **U11** ("wire it up or delete it"); see the "U11 inbox from U10d"
+section of `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` and the Gotchas in
+`internal/state/combatphase/context.md`.
+
 ## Dependencies
 
 - `internal/events` - Event system for listener registration and event processing
@@ -1508,7 +1562,7 @@ tier's wiring refuses — counters never recurse.
 - `internal/state/presence` - Presence state machine (chunk 5)
 ## Files: one handler per file
 
-120 non-test files. The filename **is** the index. Each is named for the event
+124 non-test files. The filename **is** the index. Each is named for the event
 it handles and the job it does, so `NewRound_IdleMobs.go` is the idle-mob step
 of the new-round event.
 

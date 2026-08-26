@@ -559,6 +559,19 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	loadedUser.Character.MigrateDescriptionWrapping()
 	loadedUser.Character.MigrateQuestFlags()
 	loadedUser.Character.MigrateLegacyPotions()
+	// U10d ranged detune. MUST precede MigrateEnchantments: ApplyTier does an
+	// unconditional EnchantBaseline.RestoreInto, which would re-install the
+	// stale pre-detune multiplier over the fix.
+	//
+	// Two calls because the bank is account-scoped while an inventory is
+	// character-scoped, and alts share one ItemStorage. Neither carries a
+	// run-once marker: the rescale only touches values still at or above the
+	// pre-detune template, so it is idempotent, and running it every load is
+	// what lets a pre-detune bow arriving later (mob instance, stale shop
+	// stock, corpse, un-migrated alt) still get fixed. Mob, shop, and room
+	// instance state itself is out of scope -- see MigrateDetunedRangedWeapons.
+	loadedUser.Character.MigrateDetunedRangedWeapons()
+	loadedUser.ItemStorage.MigrateDetunedRangedWeapons()
 	loadedUser.Character.MigrateEnchantments()
 	loadedUser.Character.MigrateChrysalisAidRemoved()
 	loadedUser.Character.MigrateRecipeDisciplineShuffle()

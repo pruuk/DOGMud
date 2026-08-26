@@ -209,7 +209,13 @@ colors:
   combat-summary: 248   # neutral gray — per-round compact tally (light verbosity)
 
 # Combat — special moves
-  surprise: 9
+  surprise: 201       # magenta family, matching the *[SURPRISE ATTACK]* banner.
+                      # NOT 9: damage is also 9, so a red surprise line rendered
+                      # the damage band identically to the prose around it, and
+                      # the one convention that makes damage scannable was
+                      # switched off on the swing a player most needs to read.
+                      # Free to retune only while U10d is the category's sole
+                      # producer.
   kick: 11
   trip: 214
   bash: 172

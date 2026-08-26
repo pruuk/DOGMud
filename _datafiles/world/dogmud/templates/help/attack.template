@@ -11,6 +11,11 @@ continues each round until someone flees or dies.
   <ansi fg="command">attack archer</ansi> (while already fighting)
   Switch targets to the archer mid-combat
 
+If you are hidden when you engage, your opening blow becomes an
+<ansi fg="magenta-bold">ambush</ansi>. It is one strike, a ready defender can
+still answer it, it spends your special move, and it reveals you at
+once. See <ansi fg="command">help ambush</ansi>.
+
 <ansi fg="yellow">━━━ Attack Mechanics ━━━</ansi>
 
 Your success in combat depends on several factors:
@@ -112,4 +117,5 @@ See individual help topics for details on each special move.
   <ansi fg="command">help trip</ansi>, <ansi fg="command">help kick</ansi>,
   <ansi fg="command">help prone</ansi>, <ansi fg="command">help stamina</ansi>
   <ansi fg="command">help grapple</ansi>, <ansi fg="command">help reach</ansi>,
-  <ansi fg="command">help submission</ansi>
+  <ansi fg="command">help submission</ansi>, <ansi fg="command">help ambush</ansi>,
+  <ansi fg="command">help sneak</ansi>

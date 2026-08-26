@@ -115,6 +115,34 @@ Cached template with metadata for efficient reuse and cache invalidation.
 - **Priority System**: Plugin templates override core templates
 - **Fallback Mechanism**: Graceful fallback to available templates
 
+## Gotcha: the helpfile guards cover 27 of 454 templates
+
+`u8ActionHelpPaths` (`u8_help_test.go:19-53`) is a **hand-maintained
+allowlist**, currently **27** entries. There are **454** files in
+`_datafiles/world/dogmud/templates/help/`. Three tests iterate only that
+allowlist:
+
+- `TestU8ActionAdmissionHelpTemplatesProcess` — the template exists and parses
+- `TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning` — required phrases
+  are present and no raw or worded tuning numbers leak
+- `TestU8ActionHelpCrossReferencesResolve` — `help X` cross-references resolve
+
+So **427 help templates get none of those three checks.** The allowlist has to
+be edited by hand for every new topic, and anything not added is invisible to
+the guards — which is the same failure mode that let `stow` go unreferenced
+(see `docs/audits/HELPFILE_AUDIT_2026-08-03.md`). U10d hit it directly: both
+help files it edited that sat outside the list were exactly where its surviving
+copy defects were found, and `help/ambush` had to be added by hand as the 27th
+entry.
+
+**The fix is to invert it:** walk every `help/*.template` and keep a shrinking,
+commented *exception* list instead of a growing allowlist. Assigned to **U11**'s
+help-registry cleanup; see the "U11 inbox from U10d" section of
+`docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`.
+
+Note the guards also depend on `_datafiles/world/dogmud/keywords.yaml`: an
+unregistered helpfile never appears in the topic index, however well it parses.
+
 ## Dependencies
 
 ### Internal Dependencies

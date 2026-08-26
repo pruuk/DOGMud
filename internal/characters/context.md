@@ -1087,6 +1087,16 @@ mutation of `Character.Aggro` (bypassing the wrappers) is forbidden.
 Field removal is scheduled for a cleanup chunk after chunks 1-5 land and
 the remaining reads are migrated.
 
+`EndAggro` also clears **`RangedEngagedCueSpoken`** (`yaml:"-"`, U10d). That
+bool is the once-per-engagement latch for the shoot wrapper's "you cannot
+steady your aim" cue: a shot taken while something in the room targets the
+shooter loses its unengaged damage bonus, and the explanation is worth saying
+once per fight and no more. The shoot wrapper owns the other half — it stores
+`AimedWhileEngaged` back into the field on every shot, so going clear re-arms
+the cue — and `EndAggro` owns the engagement boundary. Not persisted; combat
+does not survive logout. `ResetForMobInstance` clears it with the other runtime
+state.
+
 ### OnCharacterCreated callback registry
 
 ```go
@@ -1152,12 +1162,12 @@ fractional remainder instead.)
 
 ### Integration with Combat Phase
 
-The Awareness machine subscribes to Combat Phase's `OnEndOfRoundIfSurprise`
-callback (wired in `Awareness_Cascades.go`). When a surprise engagement
-completes its first round of swings, the Awareness machine triggers a
-reveal cascade (`Hidden → Revealing → Visible`), forcing surprise-attacked
-sneakers out of hiding. The full cascade completes before the next round
-begins, ensuring surprised attackers are visible for retaliation.
+`Awareness_Cascades.go` registers an `AfterTransition` callback on the
+Combat Phase machine. On `Idle → Engaging` it triggers the reveal cascade
+(`Hidden → Revealing → Visible`), so an attacker who was hiding is visible
+the moment they engage — no retaliation required, and no grace period for
+a surprise attack. The ambusher still gets their opening strike, which
+keys off `Aggro.Type` rather than `IsHidden()`.
 
 ### Logout cleanup
 
@@ -1658,7 +1668,7 @@ implementation-detail rationale.
 | Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go` |
 | Stats & progression | `progression.go`, `skills.go`, `effective_stats.go`, `statmods`-adjacent helpers, `mobmastery.go`, `kdstats.go` |
 | Resources & conditions | `pools.go`, `reservation.go`, `resources.go`, `conditions.go`, `cooldowns.go`, `buffs.go`, `sight.go` |
-| Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go` |
+| Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go`, `migrate_detuned_bows.go` |
 | Combat | `combat.go`, `combat_state_compat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go` |
 | Casting | `cast_helpers.go`, `spells.go` |
 | Mutation | `intrinsic.go`, `bloom.go`, `bloom_mutation.go`, `chrysifier.go`, `mutation_scour.go` |

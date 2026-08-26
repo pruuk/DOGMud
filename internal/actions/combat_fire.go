@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -9,8 +10,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -29,6 +33,28 @@ type FireResult struct {
 	CrossRoom  bool
 	ExitName   string
 	IsSneaking bool
+
+	// Revealed reports that this shot was a same-room surprise shot and gave
+	// the shooter's position away (U10d). Distinct from IsSneaking, which is
+	// only "the shooter was hidden when the shot was declared": a cross-room
+	// shot is sneaking and is NOT revealed.
+	Revealed bool
+
+	// SurpriseOnCooldown reports that the shooter WAS hidden in the same room
+	// but the shared special-move timer was already claimed, so the shot
+	// resolved as an ordinary one. The wrapper must speak this: otherwise the
+	// ambush silently does nothing and reads as a bug. It is the common case
+	// rather than a corner — a loaded bow implies a recent reload, and reload
+	// burns the same timer.
+	SurpriseOnCooldown bool
+
+	// AimedWhileEngaged reports that this shot was taken while something in the
+	// SHOOTER's room had the shooter as its aggro target, so it did NOT carry
+	// RangedUnengagedDamageMultiplier. The wrapper must be able to say so once
+	// per engagement: damage that silently drops to a fraction reads as a bug.
+	// Set on every such shot, same-room or cross-room, and set independently of
+	// the knob's value -- it reports the SITUATION, not the arithmetic.
+	AimedWhileEngaged bool
 
 	MoveResult combat.SkillMoveResult
 	Executed   bool
@@ -61,9 +87,11 @@ type FireResult struct {
 
 // ExecuteFire resolves a ranged shot immediately. rest is either "<target>"
 // (same room) or "<target words...> <direction>" (adjacent room). The weapon
-// must be loaded; firing unloads it (even on a miss). Firing does NOT consume
-// the special-move cooldown — reloading does. It DOES consume the attacker's
-// combat round via RecordAndWait.
+// must be loaded; firing unloads it (even on a miss). An ORDINARY shot does not
+// consume the special-move cooldown — reloading does — but the U10d same-room
+// surprise shot does, and is refused (and downgraded to an ordinary shot) when
+// that timer is already claimed. Every shot consumes the attacker's combat
+// round via RecordAndWait.
 //
 // Callers are responsible for: messaging, OnSkillUse/OnStatUse progression,
 // retaliation aggro on the target, crime recording, and combat-initiation
@@ -237,6 +265,34 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		return result
 	}
 
+	// U10d. NOTE the ordering: a same-room shot calls SetAggro below, which
+	// cascades Hidden -> Revealing. result.IsSneaking was captured before that.
+	//
+	// Cross-room is excluded deliberately: it never SetAggro's, is reach-gated
+	// out of counterattacks (the one uncounterable attack), and narrates
+	// anonymously. A stacked crit on top of all three would be a boss killed
+	// from the next room at no risk and with no way to learn who did it.
+	surpriseShot := !crossRoom && result.IsSneaking
+	if surpriseShot && !char.TryCooldown("special-move",
+		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		// DENIED, and the player must be told (Task 14 speaks the line).
+		surpriseShot = false
+		result.SurpriseOnCooldown = true
+	}
+
+	bonusCrit := 1.0
+	if surpriseShot {
+		// The RANGED knob, not the melee one. It ships lower (0.5 against 1.0)
+		// because a shot answers one fewer defence and the opener inherits
+		// RangedUnengagedDamageMultiplier -- it is unengaged by definition (a
+		// hidden shooter is not being hit). That knob is now wired, below, and
+		// the two COMPOUND: the 0.5 here was always sized for this world.
+		// Passing the melee knob here would put the ambush near 18,000 instead
+		// of ~9,080.
+		bonusCrit = combat.OpeningStrikeMultiplier(char,
+			float64(cfg.SurpriseRangedStrikeMultiplier))
+	}
+
 	// A same-room opening shot enters combat only after paid admission. This
 	// gives RecordAndWait an engagement to charge without mutating aggro for a
 	// refused shot. Cross-room shots remain one-shot and aggro-free.
@@ -244,10 +300,50 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		char.SetAggro(targetUserId, targetMobInstanceId, characters.DefaultAttack)
 	}
 
+	if surpriseShot {
+		// U10d: firing from stealth gives away your position.
+		//
+		// Belt and braces. The ordinary same-room shot is ALREADY revealed
+		// indirectly, via SetAggro -> TransitionToEngaging -> the Awareness
+		// cascade, and this call is a no-op there.
+		//
+		// It is load-bearing on the three paths where SetAggro returns before,
+		// or loses, that phase transition (internal/characters/
+		// combat_state_compat.go): the grace-period guard on a protected player
+		// target (:85), the taunt-hold guard (:94), and a VETOED
+		// TransitionToEngaging (:133-148, whose error is deliberately
+		// discarded). In all three no cascade fires, and without this call a
+		// hidden shooter would take the ambush bonus and stay hidden. The
+		// grace-guard case -- hidden shooter, grace-protected player target,
+		// same room -- is plainly reachable.
+		//
+		// NOT justified by "a re-hidden archer who is already engaged": Sneak
+		// (sneak.go:60-62) is the only entry into awareness.Hidden and it
+		// refuses outright while char.Aggro != nil, so that shooter cannot
+		// exist today.
+		_ = char.Awareness.TransitionToRevealing(state.TransitionReason{
+			Trigger: awareness.TriggerRangedSurpriseShot,
+		})
+		result.Revealed = true
+	}
+
 	// The shot: unload first (fires even on a miss), then resolve.
 	weapon.Loaded = false
 
-	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale)
+	// U10d. The bow's flat damage_multiplier came down onto the melee band, and
+	// the compensation it was carrying moved here, where it is situational: a
+	// shot pays for its one-attack-per-round economy only while nothing in the
+	// room is hitting the shooter. You cannot aim while someone is on you.
+	unengagedMult := 1.0
+	if shooterIsUnengaged(char, room) {
+		unengagedMult = float64(cfg.RangedUnengagedDamageMultiplier)
+	} else {
+		// The wrapper speaks this (Task 14). Damage that silently drops to a
+		// fraction with no line of text reads as a bug.
+		result.AimedWhileEngaged = true
+	}
+
+	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale) * unengagedMult
 	rangedRank := char.GetSkillLevel(skills.RangedCombat)
 
 	// U6b Tasks 7+8: fire routes through the channel seam. ChannelRanged
@@ -266,7 +362,9 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 			Skill: skills.RangedCombat, SkillRank: rangedRank,
 			Mult:      combat.SituationalAttackMult(char, combat.ChannelRanged),
 			ForceCrit: combat.SleepingForceCrit(defChar),
+			CritOnWin: surpriseShot,
 		},
+		BonusCritMultiplier:  bonusCrit,
 		DamagePercent:        shotMult,
 		KnockdownFactor:      0,
 		DamageStat:           char.GetEffectivePerception(),
@@ -281,8 +379,9 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// the shot's own outcome via DispatchCounterMessages (Task 11).
 	result.Counter = counterSkillMoveExit(actor, defChar, result.MoveResult, combat.ChannelRanged, !crossRoom)
 
-	// Analytics + round consumption (same pattern as kick). Fire never burns
-	// the special-move cooldown — only the combat round.
+	// Analytics + round consumption (same pattern as kick). Every shot burns
+	// the combat round; only the U10d surprise opener claims the shared
+	// special-move cooldown, and it does so at the decision above.
 	sourceType := combat.User
 	if !actor.IsPlayer() {
 		sourceType = combat.Mob
@@ -297,5 +396,95 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	dmg := result.MoveResult.Damage
 	RecordAndWait(char, "shoot", sourceType, defChar, targetType, result.MoveResult.Hit, dmg, util.GetRoundCount())
 
+	// U10d: a landed surprise shot trains skullduggery — the ranged
+	// equivalent of the melee ambush award in
+	// internal/hooks/NewRound_DoCombat_unified.go. result.MoveResult.Hit
+	// here means the contest WIN (`!out.Defended`, skill_moves.go), not
+	// "dealt damage": a defended shot can still apply partial damage on the
+	// shared mitigation curve, and that is not the clean landed ambush this
+	// award is for.
+	if surpriseShot && result.MoveResult.Hit {
+		char.ApplyProgression(
+			progression.OrdinaryEvents(progression.Outcome{
+				AttackerSkill: string(skills.Skullduggery),
+			}),
+			progression.SideAttacker, actor.GetUserId(), util.GetRoundCount())
+	}
+
 	return result
+}
+
+// shooterIsUnengaged reports whether nothing in the room currently has the
+// shooter as its aggro target.
+//
+// A room scan rather than Character.Attackers(): that list is never populated
+// in production (combatphase.RegisterMachine has no production callers), so it
+// always reads empty and would hand out the bonus unconditionally.
+//
+// It scans the SHOOTER's room, never the target's. So a cross-room sniper who
+// is himself in melee IS engaged and loses the bonus -- that is the point of
+// the rule, not an edge case. Pass actor.GetRoom(), NOT targetRoom.
+//
+// The shooter's OWN charmed companion is skipped. A companion aggroed on its
+// owner is not "someone is hitting me", and it is reachable: steal
+// (steal.go, which deliberately opts out of mobs.CheckPlayerHarm) and plant
+// both answer a failed roll with `attack @<owner>`, and the behaviour-tree
+// mob_idle attack fallback (behaviortree/actions_combat.go) picks a random
+// player in the room with no owner exclusion. All three leave the mob charmed
+// and still listed as a companion. The BETRAYAL cases are deliberately NOT
+// excluded and must not be: charm lapse (NewRound_MobRoundTick.go:472-491) and
+// dismiss (dismiss.go:85-134) both RemoveCharm BEFORE they SetAggro, so an
+// ex-companion turning on you reads here as the genuine attacker it is.
+//
+// The skip is keyed on uid ALONE, with no mob-instance fallback, and that is
+// deliberate. CharmInfo.UserId (charminfo.go) is always a PLAYER id -- every
+// production Charm() caller passes user.UserId, and the lone exception
+// (behaviortree/actions_mob.go) passes literal 0. So a `charmerKey` that falls
+// back to MobInstanceId would be comparing two different id spaces, and they
+// collide for real: instanceCounter hands out ids from 1 upward and prod user
+// ids are also small. A hostile archer whose InstanceId happened to equal some
+// player's UserId, attacked by THAT player's companion, would silently keep the
+// full multiplier. A mob shooter has no companions to spare, so the fallback
+// should not exist. Note the friendly-fire gate at :198-204 still carries the
+// old conflated idiom -- pre-existing, and it merely refuses an action visibly
+// rather than multiplying damage in silence.
+func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
+	if room == nil {
+		return true
+	}
+	uid, mid := char.GetUserId(), char.MobInstanceId
+
+	for _, instId := range room.GetMobs(rooms.FindFighting) {
+		m := mobs.GetInstance(instId)
+		// Both guards, for parity with combat_retarget.go. The IsInCombat()
+		// half is redundant TODAY -- IsInCombat() falls back to `Aggro != nil`
+		// (character.go), which the preceding check has already established --
+		// so do not reason about it as though it screened anything extra.
+		if m == nil || m.Character.Aggro == nil || !m.Character.IsInCombat() {
+			continue
+		}
+		if uid > 0 && m.Character.IsCharmed(uid) {
+			continue
+		}
+		// No `instId == mid` self-skip to mirror the players loop's
+		// `pId == uid`: mob self-aggro is unreachable, not an omission. Every
+		// SetAggro site was walked; the only candidate (actions_party.go) needs
+		// a party leader already aggroed on its own member, which nothing
+		// produces.
+		if (uid > 0 && m.Character.Aggro.UserId == uid) ||
+			(mid > 0 && m.Character.Aggro.MobInstanceId == mid) {
+			return false
+		}
+	}
+	for _, pId := range room.GetPlayers(rooms.FindFighting) {
+		u := users.GetByUserId(pId)
+		if u == nil || u.Character.Aggro == nil || pId == uid || !u.Character.IsInCombat() {
+			continue
+		}
+		if (uid > 0 && u.Character.Aggro.UserId == uid) ||
+			(mid > 0 && u.Character.Aggro.MobInstanceId == mid) {
+			return false
+		}
+	}
+	return true
 }

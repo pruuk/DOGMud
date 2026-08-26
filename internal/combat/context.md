@@ -78,7 +78,7 @@ instead of punches.
 ### Advanced Combat Mechanics
 - Dexterity-based multiple attacks per round
 - Dual wielding with skill-based penalties
-- Backstab mechanics with guaranteed critical hits
+- Surprise attack: one contested opening strike per engagement (U10d)
 - Pet participation in combat (20% chance)
 - Cross-room combat support with directional messaging
 
@@ -98,7 +98,7 @@ instead of punches.
 // - Accuracy buff (doubles crit chance)
 // - Blink buff on target (halves crit chance)
 // - Grapple position: `c.IsController()` + IsStandingGrapple -0.2, IsGroundGrapple -0.4 (chunk 4b R1)
-// - Backstab: guaranteed crit on first pass
+// - U10d surprise opening strike: crits on a clean contest win, ONE swing
 ```
 
 ### Dual Wielding
@@ -468,13 +468,13 @@ via what is now `ResolveChannelAttack` and deleted both functions.
 Four things that bite:
 
 - **`hitResolution.damageMult` has no safe zero value.** Its zero is 0.0, which
-  deletes the swing's damage. Every return path in `resolveDefenseOutcomeCore`
+  deletes the swing's damage. Every return path in `resolveDefenseOutcomeInner`
   sets it explicitly; a new path that forgets fails silently.
 - **A FLOORED save takes the bare 0.5 and never the curve.** The ±1 sentinel is
   in raw score units, not standard deviations, so normalising it yields
   `1/(stdDev*√2)` — about 0.05 z at typical scores, but **0.71 z** when
   `StdDevFor` clamps at its 1.0 floor for a very weak defender, which would hand
-  the weakest defender the biggest floored save. `resolveDefenseOutcomeCore`
+  the weakest defender the biggest floored save. `resolveDefenseOutcomeInner`
   special-cases `best.floored`; `TestFlooredSentinelDoesNotNormaliseToZero`
   records the actual numbers.
 - **A floor-promoted defence crit must re-negate.** `applyCritFloors` runs after
@@ -1150,8 +1150,58 @@ user.PlaySound("hit-other"/"miss", "combat")  // MSP sound events
 ```
 statModDBonus = sourceChar.StatMod("damage")   // flat bonus to damage
 extraAttacks  = sourceChar.StatMod("attacks")  // extra attack passes
-backstabCrit  = (Aggro.Type == BackStab)        // first pass auto-crits
+openingStrikeLeft = (Aggro.Type == SurpriseAttack)  // U10d: ONE swing, not a
+                                                    // guaranteed crit
 ```
+
+**U10d — the opening strike.** A surprise attack no longer auto-crits and no
+longer re-rolls its chance on every swing. `openingStrikeLeft` is set once per
+round here, then captured into a per-swing local and cleared **immediately,
+before the contest runs**, inside the swing loop. That one swing:
+
+- passes `critOnWin` to `resolveDefenseOutcome`, so it crits if (and only if) it
+  wins the contest cleanly, unfloored and unfumbled (`resolveDefenseOutcomeCore`);
+- multiplies its crit **mean** by `sdp.openingStrikeMult` =
+  `CritDamageMultiplier(skullduggery) × SurpriseOpeningStrikeMultiplier`
+  (`OpeningStrikeMultiplier`, `crit_damage.go`).
+
+Clearing on the THROW rather than on the first landing swing is deliberate:
+`calcHitDamage` runs only under `res.hit`, so a miss, fumble or deflection would
+otherwise leave the flag set and hand the ambush one fresh roll per swing.
+Pinned by `TestSurpriseRound_ExactlyOneSwingIsUpgraded`.
+
+**U10d narration (Task 14).** The same per-swing flag drives the copy. Exactly
+one line per ambush round is marked as the opener, and the invariant is stated
+on the CATEGORY rather than on the banner text: the opener's lines carry
+`messaging.CategorySurpriseAttack` and nothing else does, whatever the outcome.
+That is the category's first producer, and it appears in NEITHER verbosity
+suppression allowlist (`verbosity.go` — the tables are allowlists of what MAY be
+dropped, so absence means always-shown), so the deciding swing survives medium
+and light verbosity while the ordinary hit bands around it do not.
+
+`surpriseAttackBanner` used to be computed once per round and handed to every
+swing, so a four-swing ambush printed four identical banners and nothing told
+the player which line was the opener. It is now applied to one swing, and only
+when that swing is narrated by the GENERIC weapon message pool. **It is
+deliberately absent from `openingStrikeDefendedLines`**, whose prose names the
+opening blow itself: the banner costs 20 rendered columns, and a 20-column
+marker plus two names plus a damage band cannot fit an 80-column line. Colour is
+not a substitute for it (the playtest harness strips colour), which is why the
+generically-narrated opener keeps a TEXT marker.
+
+An ANSWERED opener (`openingStrike && defended`) swaps its line for
+`openingStrikeDefendedLines`, which names the dodge, parry or block that won.
+**Scope trap:** that is the DEFLECTION path only. `hitResolution.defended` has
+exactly one assignment site and its own docstring records that it is false on
+every clean-win, fumble and defensive-crit path — so a defensive crit does NOT
+arrive here, and `sendDefenseMessages` (which keeps its personal AND room lines
+there) is what narrates that outcome. The composite replaces the line the swing
+would otherwise have carried rather than adding one. It sends no room line when
+the swing was deflected, because `sendDefenseMessages` covered the room; it DOES
+send one when the deflection let nothing through, which is the only case that
+would otherwise lose the room line the pool used to supply. Pinned by
+`surprise_narration_test.go`, including an 80-column width guard at the p90
+authored mob-name length.
 
 **Step 1: Attack Count** — `calcAttackCount()`
 ```
@@ -1288,9 +1338,12 @@ hits/misses affect stance display text.
 **vi. If HIT** — `calcHitDamage()`
 ```
 The crit flag is decided during hitroll resolution (see margin_crit.go) and
-passed in. calcHitDamage does NOT re-derive it.
+passed in. calcHitDamage does NOT re-derive it. U10d: the opening-strike flag
+does NOT select the crit branch either — only the crit verdict does.
 
-  CRIT: damage = dice.RollStat(rawDmgForCrit * critDmgMult)  // PRE-mitigation!
+  CRIT: mean = rawDmgForCrit * critDmgMult                   // PRE-mitigation!
+        if openingStrike { mean *= openingStrikeMult }        // U10d ambush
+        damage = dice.RollStat(mean)
         Apply crit buffs to target.
 
 Normal hit:
@@ -1755,8 +1808,10 @@ force-crit from the snapshot, but the sleeper is now active and can
 start fighting back next round. A stale snapshot (any other round)
 says nothing; only the live flag answers then.
 
-Other future first-hit-crit triggers (surprise attack, backstab)
-can add parallel snapshot checks at the same start-of-round site.
+Surprise attack does NOT use this seam. `ctx.forceCrit` upgrades every swing of
+the round; U10d's opening strike is deliberately one swing and is contested
+rather than forced, so it rides its own per-swing `critOnWin` parameter. Keep
+the two distinct — see "U10d — the opening strike" above.
 
 ## Shared situational-modifier layer (U6b Task 17)
 
@@ -1800,6 +1855,7 @@ own identical terms (converging that is not Task 17's mandate).
 | `attackresult.go` | The result value passed back to callers. **`SwingsThrown`** counts every swing resolved in the round ACROSS ALL WEAPONS and, like `Hit`/`CleanHit`, is never cleared by the per-swing flag reset (which clears `Crit`/`Fumble`/`DoubleFumble` only). Admission now prices the pre-resolution plan's `totalSwings`, while this result proves all planned attempts ran. |
 | `criteffects.go` | Critical and fumble effects |
 | `descriptions.go` | `GetDamageDescription` / `GetHealDescription` — descriptive, never numeric |
+| `surprise_narration.go` | U10d narration for the opening strike: the `surpriseAttackBanner` constant (applied to ONE swing, and only when that swing is narrated by the generic weapon pool) and `openingStrikeDefendedLines` — the attacker/defender/room composite an ANSWERED opener gets, naming the dodge/parry/block that won it. Only those three are worded; `DefenceSetFor(ChannelMelee)` returns exactly them, so quell/defy arms would be unreachable. **Covers the DEFLECTION path only** — `hitResolution.defended` is false on the defensive-crit path, which `sendDefenseMessages` narrates instead. The opener's lines are the first producer of `messaging.CategorySurpriseAttack`. |
 | `skill_moves.go` | Skill-driven combat moves (bash/trip/kick/...). **U6 Task 13:** `ExecuteSkillMove` scales damage through `defenceDamageMultiplier` instead of gating it on `attackSuccess` alone, so `SkillMoveResult.Hit == false` with `Damage > 0` is a legal pair (a defended attempt still lands partial damage), and `Damage` is the contest-scaled amount actually applied to the defender's health pool, not the unscaled base. `SkillMoveResult` gained `StatusApplied bool`, which stays binary — true only when `Hit == true`. |
 | `grapple.go` / `grapple_move.go` | The grappling state machine and transitions |
 | `submission.go` / `submission_outcome.go` | Submissions and their resolution |

@@ -255,23 +255,6 @@ func (b *Balance) validateMisc() {
 		b.KneeDamagePercent = 1.00
 	}
 
-	// ── SURPRISE ATTACK ──────────────────────────────────────────────────────
-	if b.SurpriseAttackOffhandPenalty < 0 || b.SurpriseAttackOffhandPenalty > 1.0 {
-		b.SurpriseAttackOffhandPenalty = 0.10
-	}
-	if b.SurpriseAttackExtraArm1Penalty < 0 || b.SurpriseAttackExtraArm1Penalty > 1.0 {
-		b.SurpriseAttackExtraArm1Penalty = 0.25
-	}
-	if b.SurpriseAttackExtraArm2Penalty < 0 || b.SurpriseAttackExtraArm2Penalty > 1.0 {
-		b.SurpriseAttackExtraArm2Penalty = 0.40
-	}
-	if b.SurpriseAttackExtraArm3Penalty < 0 || b.SurpriseAttackExtraArm3Penalty > 1.0 {
-		b.SurpriseAttackExtraArm3Penalty = 0.55
-	}
-	if b.SurpriseAttackExtraArm4Penalty < 0 || b.SurpriseAttackExtraArm4Penalty > 1.0 {
-		b.SurpriseAttackExtraArm4Penalty = 0.70
-	}
-
 	// ── COUP DE GRACE ────────────────────────────────────────────────────────
 	if b.CoupDeGraceRounds < 0 {
 		b.CoupDeGraceRounds = 1

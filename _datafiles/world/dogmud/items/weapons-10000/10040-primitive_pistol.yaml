@@ -14,7 +14,7 @@ ammo_tag: shot
 damage:
   basedamage: 5
   variance: 2
-damage_multiplier: 3.50
+damage_multiplier: 1.30
 parryrating: 0
 value: 120
 rarity_tier: 30

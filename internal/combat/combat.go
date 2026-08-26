@@ -399,11 +399,13 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	// Statmods can add a damage bonus
 	statModDBonus := sourceChar.StatMod(`damage`)
 
-	attackMessagePrefix := ``
-	backstabCrit := false
+	// U10d: exactly ONE swing of this engagement is the opening strike. The flag
+	// is round-scoped here only because the round is where the engagement opens;
+	// it is consumed per-swing below, on the swing that is THROWN.
+	openingStrikeLeft := false
 	if sourceChar.Aggro.Type == characters.SurpriseAttack {
-		backstabCrit = true
-		attackMessagePrefix = `<ansi fg="magenta-bold">*[SURPRISE ATTACK]*</ansi> `
+		openingStrikeLeft = true
+		attackResult.WasSurpriseAttack = true
 		sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
 	}
 
@@ -463,7 +465,18 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			// New resolution order: fumbles → crits → normal → floors
 			// Chunk 3.3: ctx.forceCrit is true when the defender was snapshotted
 			// as Sleeping at round start; every swing against them this round crits.
-			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit)
+			//
+			// U10d: the opening strike is ONE swing, consumed by the swing that
+			// is THROWN -- not by the first one that happens to land. Capturing
+			// and clearing HERE, inside the per-swing loop and before the
+			// contest runs, is what makes that true. A round-scoped flag passed
+			// bare would upgrade every winning swing of the round, and clearing
+			// on the first LANDING swing instead would hand the ambush a fresh
+			// roll after every miss, fumble and deflection.
+			openingStrikeThisSwing := openingStrikeLeft
+			openingStrikeLeft = false
+
+			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit, openingStrikeThisSwing)
 
 			// Momentum builds only on clean wins and resets on deflections,
 			// matching pre-U6 behavior where a deflected swing was a miss.
@@ -480,7 +493,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 				if res.crit {
 					weaponHit.Crit = true
 				}
-				attackTargetDamage, backstabCrit = calcHitDamage(&attackResult, res.crit, backstabCrit, sdp)
+				attackTargetDamage, _ = calcHitDamage(&attackResult, res.crit, openingStrikeThisSwing, sdp)
 
 				// U6 Task 10: a defensive win is no longer a clean miss, it is
 				// a partially deflected hit. res.damageMult is 1.0 on every
@@ -533,9 +546,28 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 
 			// Only build attack messages for non-double-fumble (double fumble already sent)
 			if !res.doubleFumble {
+				// U10d narration: the banner marks the ONE swing that carried
+				// the ambush, not the whole round. It used to be computed once
+				// above and handed to every swing, so a four-swing ambush round
+				// printed four identical banners and the player could not tell
+				// which line was the opening strike -- the only swing that
+				// crits on a win and pays the skullduggery-scaled bonus.
+				//
+				// !res.defended because an ANSWERED opener is narrated by
+				// openingStrikeDefendedLines, whose prose already names the
+				// opening blow. The banner exists for the swing narrated by the
+				// GENERIC weapon pool, which says nothing about an ambush; on a
+				// line that names itself it is redundant and costs 20 rendered
+				// columns an 80-column line needs for the damage description.
+				// Either way exactly one swing per round is marked, and it is
+				// the only one carrying CategorySurpriseAttack.
+				swingPrefix := ``
+				if openingStrikeThisSwing && !res.defended {
+					swingPrefix = surpriseAttackBanner
+				}
 				buildAttackMessages(&attackResult, sourceChar, targetChar, ws, sdp,
 					attackTargetDamage, attackTargetReduction, attackSourceDamage, attackSourceReduction,
-					sourceType, targetType, attackMessagePrefix, res.defended)
+					sourceType, targetType, swingPrefix, res.defended, openingStrikeThisSwing)
 			}
 
 			attackResult.DamageToTarget += attackTargetDamage

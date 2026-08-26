@@ -179,7 +179,7 @@ func TestResolveDefenseOutcome_AttackFumbleAlwaysMiss(t *testing.T) {
 
 	// Attack fumble (z <= -2.0), normal defense
 	best := mockBestDefense(-2.5, 0.5, 50, 60, characters.DefenseDodge)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.False(t, res.hit, "attack fumble should always miss")
 	assert.True(t, res.fumble, "should flag as fumble")
@@ -194,7 +194,7 @@ func TestResolveDefenseOutcome_DefenseFumbleAlwaysHit(t *testing.T) {
 	// Normal attack, defense fumble (z <= -2.0)
 	// Defense margin > 0 (defense roll value higher) but defense fumbled
 	best := mockBestDefense(0.5, -2.5, 50, 80, characters.DefenseDodge)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.True(t, res.hit, "defense fumble should always hit")
 	assert.False(t, res.fumble, "should not flag as attack fumble")
@@ -209,7 +209,7 @@ func TestResolveDefenseOutcome_DoubleFumble(t *testing.T) {
 
 	// Both fumble
 	best := mockBestDefense(-2.5, -2.5, 50, 50, characters.DefenseDodge)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.False(t, res.hit, "double fumble should be a miss")
 	assert.True(t, res.fumble, "should flag fumble")
@@ -234,7 +234,7 @@ func TestResolveDefenseOutcome_AttackCritAlwaysHits(t *testing.T) {
 	// the winning side, so the values are flipped to 90 vs 80 and the test says
 	// what it always meant: an attack crit beats an ordinary defence.
 	best := mockBestDefense(2.5, 1.0, 90, 80, characters.DefenseParry)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.True(t, res.hit, "attack crit should always hit vs normal defense")
 	assert.True(t, res.crit, "should flag as crit")
@@ -252,7 +252,7 @@ func TestResolveDefenseOutcome_DefenseCritAlwaysAvoids(t *testing.T) {
 	// from the margin makes impossible in production. Flipped to 80 vs 100 so the
 	// critting side is the side that won.
 	best := mockBestDefense(1.0, 2.5, 80, 100, characters.DefenseParry)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.False(t, res.hit, "defense crit should always avoid vs normal attack")
 	assert.True(t, res.defenseCrit, "should flag defense crit")
@@ -272,14 +272,14 @@ func TestResolveDefenseOutcome_CritVsCrit_HigherValueWins(t *testing.T) {
 
 	// Both crit, attack has higher raw value
 	best := mockBestDefense(2.5, 2.5, 120, 100, characters.DefenseDodge)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 	assert.True(t, res.hit, "crit vs crit: higher value (attack) should win")
 	assert.True(t, res.crit, "should be a crit hit")
 
 	// Both crit, defense has higher raw value
 	result2 := &AttackResult{}
 	best2 := mockBestDefense(2.5, 2.5, 100, 120, characters.DefenseDodge)
-	res2 := resolveDefenseOutcome(result2, best2, src, tgt, 2.0, false, false)
+	res2 := resolveDefenseOutcome(result2, best2, src, tgt, 2.0, false, false, false)
 	assert.False(t, res2.hit, "crit vs crit: higher value (defense) should win")
 	assert.True(t, res2.defenseCrit, "should be a defense crit")
 }
@@ -291,7 +291,7 @@ func TestResolveDefenseOutcome_NormalResolution(t *testing.T) {
 
 	// Normal attack wins (margin < 0 means attack > defense)
 	best := mockBestDefense(1.0, 0.5, 100, 80, characters.DefenseDodge)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.True(t, res.hit, "normal attack winning on margin should hit")
 	assert.False(t, res.crit, "normal hit should not be crit")
@@ -305,7 +305,7 @@ func TestResolveDefenseOutcome_DefenseFumbleDoesNotAutoCrit(t *testing.T) {
 
 	// Defense fumble, attack roll is normal (not a crit)
 	best := mockBestDefense(0.5, -2.5, 60, 80, characters.DefenseDodge)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.True(t, res.hit, "defense fumble should guarantee hit")
 	assert.False(t, res.crit, "defense fumble should NOT auto-crit the attack")
@@ -318,7 +318,7 @@ func TestResolveDefenseOutcome_DefenseFumbleWithAttackCrit(t *testing.T) {
 
 	// Defense fumble AND attack crit
 	best := mockBestDefense(2.5, -2.5, 60, 80, characters.DefenseDodge)
-	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false)
+	res := resolveDefenseOutcome(result, best, src, tgt, 2.0, false, false, false)
 
 	assert.True(t, res.hit, "should hit")
 	assert.True(t, res.crit, "attack crit should still apply even with defense fumble")
@@ -341,7 +341,7 @@ func TestForceCrit_BypassesZScoreCheck(t *testing.T) {
 	// Without forceCrit: normal roll, should NOT be a crit.
 	result1 := &AttackResult{}
 	best1 := mockBestDefense(subThresholdZ, -3.0, 80, 50, characters.DefenseDodge)
-	res1 := resolveDefenseOutcome(result1, best1, src, tgt, critThreshold, false, false)
+	res1 := resolveDefenseOutcome(result1, best1, src, tgt, critThreshold, false, false, false)
 
 	assert.True(t, res1.hit, "defense fumble should guarantee a hit")
 	assert.False(t, res1.crit, "sub-threshold Z-score should NOT crit with forceCrit=false")
@@ -349,7 +349,7 @@ func TestForceCrit_BypassesZScoreCheck(t *testing.T) {
 	// With forceCrit: same sub-threshold roll, should be a crit.
 	result2 := &AttackResult{}
 	best2 := mockBestDefense(subThresholdZ, -3.0, 80, 50, characters.DefenseDodge)
-	res2 := resolveDefenseOutcome(result2, best2, src, tgt, critThreshold, false, true)
+	res2 := resolveDefenseOutcome(result2, best2, src, tgt, critThreshold, false, true, false)
 
 	assert.True(t, res2.hit, "forceCrit should still hit")
 	assert.True(t, res2.crit, "forceCrit=true should produce a crit regardless of Z-score")
@@ -369,7 +369,7 @@ func TestForceCrit_BypassesZScoreCheck(t *testing.T) {
 	// so without this a forced crit on a terrible roll would resolve as a fumble.
 	result3 := &AttackResult{}
 	best3 := mockBestDefense(-3.0, 0.5, 80, 50, characters.DefenseDodge)
-	res3 := resolveDefenseOutcome(result3, best3, src, tgt, critThreshold, false, true)
+	res3 := resolveDefenseOutcome(result3, best3, src, tgt, critThreshold, false, true, false)
 	assert.True(t, res3.crit, "forceCrit must win over a fumble-range attack roll")
 	assert.False(t, res3.fumble, "forceCrit must suppress the fumble branch")
 }
@@ -397,17 +397,28 @@ func TestCalcHitDamage_CritUsesRawDamage(t *testing.T) {
 	_ = dmg2 // just confirm it doesn't panic
 }
 
-func TestCalcHitDamage_BackstabConsumed(t *testing.T) {
+// U10d replaced the retired every-swing backstab design. The flag no longer
+// FORCES a crit: the opening strike contests normally and Task 2's guard in
+// resolveDefenseOutcomeCore decides the verdict, so calcHitDamage's crit branch
+// is selected by isCrit alone. This test pins the half of the old assertion
+// that survives (a non-crit swing stays a non-crit swing) and inverts the half
+// that was the bug (the flag used to manufacture a crit from nothing).
+//
+// Consumption also moved: production clears its per-swing flag before the
+// contest runs, so calcHitDamage returns it unchanged on the non-crit path.
+// See TestSurpriseRound_ExactlyOneSwingIsUpgraded for the round-level contract.
+func TestCalcHitDamage_OpeningStrikeAloneDoesNotCrit(t *testing.T) {
 	result := &AttackResult{}
 	sdp := swingDamageParams{
-		dmgMean:       10.0,
-		rawDmgForCrit: 50.0,
-		critDmgMult:   1.0,
+		dmgMean:           10.0,
+		rawDmgForCrit:     50.0,
+		critDmgMult:       1.0,
+		openingStrikeMult: 3.0,
 	}
 
-	_, backstab := calcHitDamage(result, false, true, sdp)
-	assert.False(t, backstab, "backstab should be consumed after use")
-	assert.True(t, result.Crit, "backstab should trigger crit")
+	_, openingStrike := calcHitDamage(result, false, true, sdp)
+	assert.False(t, result.Crit, "the opening-strike flag must never manufacture a crit on its own")
+	assert.True(t, openingStrike, "calcHitDamage does not consume the flag on a non-crit swing; the caller already did")
 }
 
 // sampleStdDev returns the sample standard deviation of xs.
