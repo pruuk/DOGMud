@@ -474,7 +474,49 @@ Remove `OnFirstMobKill`, both call sites, and the message. **Keep `KD.AddMobKill
 
 # Phase E: guard, docs, verify
 
-## Task 22: The seam guard
+## Task 22: The seam guard, and DELETE the stray stat rolls
+
+**Owner ruling 2026-08-26: delete the bare stat rolls that sit beside a
+progression award. They do not fit the design and are leftovers.** A stat roll
+IS progression, so a full-weight one that ignores the action's outcome is a
+firing-rule violation exactly like a skill roll would be.
+
+### Step 0: delete `emitAttackerStatGain`'s rolls
+
+`internal/hooks/NewRound_DoCombat_unified.go:739`. Called twice per melee round
+(`:659-660`, strength then dexterity) and calls `OnStatUse(statName, uid)` --
+**full weight, unconditional, win or lose**, on top of the award
+`processAttackerProgression` already makes. Consequences today:
+
+- **dexterity is rolled TWICE** every round: once here, once as
+  weapon-combat's primary inside the award.
+- **strength is rolled once but unconditionally**, so a round in which every
+  swing whiffed trains strength exactly as much as a round that landed.
+
+This is the same defect Task 11 deleted on the ranged side, where an explicit
+`OnStatUse("perception")` sat beside a ranged-combat award whose primary is
+perception.
+
+⚠️ The function ALSO emits the mob stat-gain flavour text
+(`characters.MobStatGainMessages`) on a gain. That is player-visible and must
+survive. Either keep the emote path and drive it from the award, or move it;
+do not delete the emote with the roll.
+
+### Step 0b: the sweep the ruling asked for
+
+Verified 2026-08-26. Every direct `OnStatUse` / `OnSkillUse` in production:
+
+| Site | Shape | Verdict |
+|---|---|---|
+| `unified.go:740` (`emitAttackerStatGain`) | unconditional stat roll beside an award | **DELETE** (Step 0) |
+| `NewRound_DoCombat_helpers.go:655` (player cast), `:812` (mob twin) | stat roll **gated** on `spellData.PrimaryStat != "" && != skill's primary` | **NOT the same defect.** It is a declared-override hook, not a double-roll -- and it is currently dead, because no shipped spell sets `PrimaryStat`. Deleting it closes the separately-filed inert-`PrimaryStat` item. **Decide explicitly; do not sweep it away silently.** |
+| `actions/buy.go:800`, `actions/sell.go:385` | `OnStatUse("charisma", 0)` on a shop mob trade | **Check before touching.** `buy.go:796` awards `bartering` whose primary IS charisma, so this looks like the same double-roll -- but confirm the mob path actually reaches the bartering award first. |
+| `actions/combat_{bash,drain,gore,grapple,hamstring,kick,maul,pounce,rake,taunt,throttle,trip}.go`, `defuse.go` | `actor.OnSkillUse(...)`, success-only | **NOT strays.** These are the special-move seam conversions the earlier tasks own; they become `AwardResolved` calls, they do not get deleted. |
+
+**Special attacks carry no stray stat rolls at all** -- the grep is clean. Only
+the melee round and (conditionally) the shop path have them.
+
+### Then the guard
 
 - [ ] **Step 1:** add `OnStatUseScaled` and `AwardResolved` to `progressionCalls`, so a new raw call is caught
 - [ ] **Step 2:** extend the guard so every production progression call routes through `AwardResolved` or `AwardDefenceProgression`, with a file-keyed allow-list carrying a reason: `actions_progression.go` (authored tutorial grant), `NewRound_AutoHeal.go` (regen, U10b-2)
