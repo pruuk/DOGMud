@@ -1,0 +1,122 @@
+# U10d surprise-attack redesign — adversarial gate before the slice ships.
+#
+# This branch rebuilt what happens when you attack out of hiding. It ships
+# green: gofmt, build, full test suite, lint, and a clean boot. None of that
+# has watched a single ambush land in a live game. Your mandate is to play it
+# as a confused human and report every usability problem bluntly.
+#
+# WHAT CHANGED, so you can tell "working as designed" from a defect:
+#   - An ambush is ONE blow, not a whole round of them. Everything else you
+#     swing that round is ordinary fighting.
+#   - It is spent whether it lands or not. You get ONE attempt.
+#   - The target may dodge, parry or block it like any other attack. If they
+#     turn it aside, something still gets through, but less.
+#   - If it lands cleanly it is a critical hit, and it bites deeper the better
+#     your skullduggery.
+#   - You are revealed the moment you strike, hit or miss, melee or ranged.
+#   - It spends the SHARED special-move recovery that bash, trip and kick draw
+#     on. Reload draws on it too.
+#   - Ranged weapons were detuned hard, and shooting while something else
+#     holds the enemy's attention now hits harder.
+#
+# START ROOM 5227 IS "THE DRILL YARD", with a TRAINING DUMMY that does not
+# wander, hide or flee. Use it for repeatable, comparable swings. For anything
+# needing an opponent that FIGHTS BACK (a defended ambush, a mob ambushing
+# YOU), find a weak live mob nearby; room 462 (Thornwall City) is the
+# known-good fallback hub.
+#
+# YOUR KIT: skullduggery 50, weapon-combat 69, ranged-combat granted at 30,
+# an Ironhorn Warbow and quivers in your pack. The warbow is two-handed, so
+# wielding it puts your melee weapon away. You also know summoning spells.
+#
+# LIMITS OF THIS RUN, state them in the report: your character is newly
+# created, so you CANNOT observe the migration that rescales bows people
+# already own. Do not try. Judge the bow by how it feels now, not by what it
+# used to do.
+#
+# NO RAW NUMBERS may appear in combat or spell text outside the `status`
+# sheet. Quote any you find. Em dashes and en dashes are banned in player
+# copy; quote any you see. Rendered lines must fit 80 columns.
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  overlays:
+    grant_skills:
+      ranged-combat: 30
+    grant_items: [10046, 30062, 30062, 30062]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Baseline first, before you hide from anything. Attack the training dummy
+    normally for several rounds and read the combat text closely. You need to
+    know exactly what an ORDINARY swing looks like, because every later
+    judgement is a comparison against it. Quote a typical line.
+  - >-
+    The melee ambush. Hide, then attack the dummy. Report the exact text of
+    the opening blow. Is it obviously different from the ordinary swing you
+    just read? Can you tell WHICH line was the ambush without counting lines?
+    Does it read as a big hit, or does it read like any other critical?
+  - >-
+    ONE blow, not a round. In that same ambush, look at every line after the
+    opening one. They should read as ordinary fighting. If several lines all
+    look like ambushes, that is the single most important defect to catch.
+  - >-
+    Spent on a miss. Ambush something until you MISS, or until a defender
+    turns it aside. Then immediately attack again in the same fight. You must
+    NOT get a second ambush. If you do, say so loudly.
+  - >-
+    The reveal. After any ambush, hit or miss, are you told plainly that you
+    have been seen? Check with `look` or whatever the game offers that you are
+    genuinely no longer hidden. Being dropped from hiding WITHOUT being told
+    is the kind of thing that sends a player hunting for a bug.
+  - >-
+    A defended ambush. Go find a live mob that fights back and ambush it until
+    one is dodged, parried or blocked. Does the game NAME what the defender
+    did? You should still do some damage. Does the text make it clear you were
+    partly stopped rather than fully stopped, or does it read like a miss?
+  - >-
+    The ranged ambush. Wield the warbow, hide, and shoot something in your own
+    room. Same questions: is the opening shot called out, are you revealed,
+    and is it spent on a miss? It should hit hard but NOT as hard as the melee
+    ambush. Does that difference come through in the text at all?
+  - >-
+    The shared recovery, melee. Use `bash`, `trip` or `kick` first, then
+    immediately hide and attack. Your ambush should NOT be ready. Are you told
+    why, in words that connect to the move you just used? Does your attack
+    still go in as an ordinary one rather than being swallowed?
+  - >-
+    The shared recovery, ranged, and the trap in it. `reload` draws on the
+    same recovery. Load the bow, then hide, then shoot. Report what you are
+    told. This is the case most likely to feel broken to an archer, because
+    the natural thing to do before hiding is exactly the thing that empties
+    your recovery.
+  - >-
+    Cover spent for nothing. In both cases above, you should lose your hiding
+    even though the ambush was not ready. Are you told that clearly? Losing
+    stealth for no benefit and no explanation is a bug report waiting to
+    happen.
+  - >-
+    How the bow feels now. Shoot the dummy repeatedly with the warbow, which
+    is the best bow in the game. Compare it against your melee weapon over the
+    same number of rounds. Is a bow still worth carrying, or does it feel
+    pointless? Give a blunt opinion, this is a tuning question and your read
+    is the evidence.
+  - >-
+    Shooting from behind someone. Summon an undead servant, let it take the
+    enemy's attention, and shoot past it. Then shoot the same kind of enemy
+    while it is attacking YOU. Shots from the back should be noticeably
+    stronger. Can you tell the difference from the text alone, without doing
+    arithmetic? Should the game say something about it?
+  - >-
+    On the receiving end. Mobs ambush too. Get jumped by something hidden, or
+    fight in an area where things hide, and read the text from the victim's
+    side. Do you understand what just happened to you and why it hurt so much?
+  - >-
+    Read the copy cold, as a confused newcomer: `help ambush`, `help sneak`,
+    `help hide`, `help attack`, `help shoot`, `help reload`, `help special`,
+    `help skullduggery`, `help combat`, `help ranged-combat`. Try the obvious
+    words a player would guess for ambush and see if any of them dead-end. Do
+    any two topics contradict each other? Does anything promise a behaviour
+    you did NOT see in play? Flag every raw number shown to a player.
