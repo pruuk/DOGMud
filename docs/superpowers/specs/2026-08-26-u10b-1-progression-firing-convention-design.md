@@ -26,25 +26,57 @@ deliberately deferred when it fires, in as many words:
 
 That deferred decision is this slice.
 
+## 1.5 THIS SPEC IS THE DECISION RECORD FOR BOTH SLICES
+
+**Split 2026-08-26 (owner).** The work is delivered as two slices. **This spec
+covers both** and is the durable record: nothing below is to be relitigated when
+the second slice is planned.
+
+| Slice | Delivers | Playtest signal |
+|---|---|---|
+| **U10b-1** — the firing convention | Best-of, `AwardResolved`, the fraction, `Outcome.Defended`, the defence unification, and the rule wired to **every** site that resolves: melee attacker and defender, both channel defences, concentration, the spell attacker, search, track, forage, craft, salvage, the sixteen skullduggery sites, mob crafters. **Each site keeps its CURRENT resolution.** | One: does failing at something teach you a little? |
+| **U10b-1b** — resolution onto the core | The Category B conversions (search x4, track, forage to `AgainstDifficulty`; craft and salvage to `RunWithFloors`), the craft difficulty formula, the authored material tier, the salvage difficulty basis, the two floors, and the hidden-detection fix | Craft feel, search and track odds, the economy |
+
+**Why the line falls there.** The firing rule does not need the conversion.
+Craft already resolves (`util.Rand(100) < chance`), so won-or-lost is known and
+`AwardResolved(won)` works on today's roll. The same holds for salvage, search,
+track and forage. The conversion changes **how** a site resolves; the convention
+changes **when** it awards. Splitting on that line keeps each slice's playtest
+readable: U10b-1 has one signal, U10b-1b has the balance signals.
+
+⚠️ **Craft, salvage, search, track and forage ARE progression-firing sites and
+are in U10b-1.** Only their *difficulty design* moves to U10b-1b. An earlier
+sentence in this session said otherwise and was wrong.
+
+Sections below are marked **[1]** or **[1b]** where they belong to one slice.
+
 ## 2. Decisions taken
 
-| # | Decision | Rejected alternative |
-|---|---|---|
-| 1 | Split U10b into U10b-1 (convention) and U10b-2 (faucets) | One slice covering all eight axes; the playtest could not have separated the signals |
-| 2 | One event per RESOLVED attempt; a loss pays a fraction | Strict success-only, which leaves fumble paying more than an ordinary miss |
-| 3 | A single global `ProgressionFailureFraction` | Per-channel knobs; cost-scaled fractions |
-| 4 | Convert all 15 off-core rolled sites AND fix hidden detection now | Deferring the hidden-detection fix to U10b-2 |
-| 5 | Delete the stranded mob-follow roll; pursuit becomes authored behavior | Fixing or keeping the roll |
-| 6 | Item procs stay off-core, breadcrumbed | Claiming them in this slice |
-| 7 | First-kill progression is DELETED | Keeping it as a named exception |
-| 8 | Convert all 15, designing a craft/salvage difficulty basis | Converting only the 8 RollStat sites; converting nothing |
-| 9 | Craft difficulty comes from an AUTHORED material tier, 5 buckets; absent means 1.0, and a guard blocks new untiered materials | Gold value (measured as noise against recipe tier); `rarity_tier` (an inverted stock cap with 26% gaps) |
-| 10 | Craft score is `stat + skill * SkillWeight`, composed like every other roll; `recipe.SkillMinimum` drives the DIFFICULTY | A bespoke anchored formula, which cancelled the recipe term, ignored the crafter's stat, and left material tier as the only signal |
-| 11 | Craft and salvage keep today's extremes via `contest.RunWithFloors` | Deleting the clamps, which would have left no mercy band at all |
-| 12 | **UNIFY the defence divergence HERE**, win or lose on both paths | Deferring it to U10b-2, leaving the arc's stated goal unmet at its closing gate |
-| 13 | **BEST-OF selection** (owner, 08-26): one event per resolved action, for the single highest-rolling candidate skill | Awarding every candidate, which double-rolls a shared stat and pays a three-defence round three times |
-| 14 | Progression follows the FINAL outcome, so a floored win pays full | Reading the pre-floor dice, which would make a floor-granted success teach less than an ordinary one |
-| 15 | Concentration comes under the rule | Leaving it success-only, closing the arc with a broken concentration teaching nothing |
+| # | Decision | Slice | Rejected alternative |
+|---|---|---|---|
+| 1 | U10b splits into the convention and the faucets (U10b-2: mob archers, tick-regen) | both | One slice covering every axis; the playtest could not separate the signals |
+| 2 | One event per RESOLVED attempt; a loss pays a fraction | **1** | Strict success-only, which leaves a fumble paying more than an ordinary miss |
+| 3 | A single global `ProgressionFailureFraction`, 0.35, sentinel-defaulted | **1** | Per-channel knobs; cost-scaled fractions |
+| 4 | Both SKILL and STAT take the fraction | **1** | Scaling the skill only, so a loss paid a full-rate stat roll |
+| 5 | **BEST-OF selection**: one event per resolved action, for the single highest-rolling candidate; tiebreak highest skill level, then fixed slice order | **1** | Awarding every candidate, which double-rolls a shared stat and pays a three-defence round three times |
+| 6 | **Every candidate is rolled the same way**, `dice.RollStat(stat + skill * SkillWeight)` | **1** | Admitting a candidate with no roll, which ties at zero and lets the tiebreak delete it |
+| 7 | Best-of is **self-damping**; do not guard against rich-get-richer | **1** | Adding a corrective, when the winner is already the skill least able to use the event |
+| 8 | Progression follows the **FINAL** outcome, so a floored win pays full | **1** | Reading the pre-floor dice |
+| 9 | **UNIFY the defence divergence**, win or lose on both paths, awarding the best-quoted defence | **1** | Deferring it, leaving the arc's stated goal unmet at its closing gate |
+| 10 | Concentration comes under the rule (**three** sites, including throttle) | **1** | Leaving it success-only, so a broken concentration teaches nothing |
+| 11 | The spell attacker comes under the rule: one cast, one event, won if ANY target was hit | **1** | Leaving it on `CastComplete`, where a defended cast pays a full event |
+| 12 | Mob crafters award on the same rule as players | **1** | Success-only, reintroducing the inconsistency the slice removes |
+| 13 | `picklock` is win-only; it is a pin minigame, not a contest | **1** | Treating it as a resolved contest with a loss branch |
+| 14 | First-kill progression is **DELETED**; keep `KD.AddMobKill` | **1** | Keeping it as a named exception |
+| 15 | Item procs stay off-core, breadcrumbed | **1** | Claiming them |
+| 16 | Delete the stranded mob-follow roll; pursuit becomes authored behavior | **1** | Fixing or keeping the roll |
+| 17 | Convert the off-core rolled sites to the contest core | **1b** | Leaving Category B off-core with the arc closing around it |
+| 18 | Craft score is `stat + skill * SkillWeight`; `recipe.SkillMinimum` drives the DIFFICULTY | **1b** | A bespoke anchored formula, which cancelled the recipe term and ignored the crafter's stat |
+| 19 | Craft difficulty uses an **AUTHORED material tier**, 5 buckets, absent means 1.0, guarded for new materials, backfill owed before U11 | **1b** | Gold value (measured as noise against recipe tier); `rarity_tier` (an inverted stock cap) |
+| 20 | **Salvage difficulty IS the item's craft difficulty**, fallback gold value | **1b** | Inventing a base, which no single value satisfies |
+| 21 | Craft and salvage keep today's extremes via `contest.RunWithFloors` | **1b** | Deleting the clamps, leaving no mercy band |
+| 22 | Fix hidden detection so a hider's score counts in both paths | **1b** | Leaving a flat threshold that ignores the hider |
+| 23 | Accepted: `skill_minimum` 50/65 recipes need substantial mastery; mob crafter throughput RISES | **1b** | Retuning to avoid them |
 
 ### 2.1 This spec supersedes the 2026-08-21 U10b spec
 
