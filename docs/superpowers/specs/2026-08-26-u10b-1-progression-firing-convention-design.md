@@ -445,8 +445,20 @@ make a recipe easy.
 **A guard fails any NEW material authored without an explicit tier.** Pin the
 set of item files currently missing it, in the same style as this slice's other
 guards; a new file missing the field then fails, while existing ones are
-grandfathered. Backfilling the grandfathered materials is a recorded follow-up,
-not part of this slice.
+grandfathered.
+
+🔴 **The backfill is OWED BEFORE THE ARC CLOSES** (owner, 2026-08-26). It is not
+part of this slice, but it is not open-ended either: **it must land before
+U11**, which is the arc's closing gate and runs last. Until it does, the
+material half of craft difficulty is inert and the crafting playtest cannot
+answer signal 3.
+
+Concretely, U11 must not be declared done while any material in the
+grandfathered list still lacks a tier. Express that as a **test**, not as prose
+in a roadmap: U11's own row already carries the obligation to ship its "Done
+when" list as tests, precisely because U6 was declared done with two criteria
+false and nothing failed. Shrink the grandfathered set to empty and the guard
+written in this slice becomes the backfill's completion check for free.
 
 ### 5.2 Fix hidden detection
 

@@ -1198,6 +1198,19 @@ owns 2; 3 stay off-core deliberately; and that `contest.AgainstDifficulty`
 having no callers was never a gap to close for its own sake, since
 static-difficulty rolls are deliberately unfloored.
 
+- [ ] **Step 4: Record the material-tier backfill as OWED BEFORE U11**
+
+Add it to U11's roadmap row, not as a loose follow-up. Wording to the effect
+of: *"U11 may not be declared done while any material in U10b-1's grandfathered
+list still lacks a `material_tier`. Until the backfill lands, the material half
+of craft difficulty is inert."*
+
+⚠️ Express it as a **test**, not as prose. U11's row already carries the
+obligation to ship its "Done when" list as tests, because U6 was declared done
+with two criteria false and nothing failed since they were only prose. The
+guard written in Task 16 becomes the backfill's completion check for free:
+shrink its grandfathered set to empty and the guard turns green on its own.
+
 ---
 
 ## Task 28: Re-solve every fitted multiplier
