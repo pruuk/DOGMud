@@ -18,6 +18,23 @@ TWO THINGS THAT WILL BURN YOU IF YOU AGGREGATE NAIVELY:
    defence was best", not "which defence worked" -- which is why they can and
    do exceed the miss count. Do NOT read them as an avoidance rate.
 
+3. **HIT and CLEAN-HIT are different populations, and this script used to
+   conflate them.** Until 2026-08-26 it printed hits/(hits+misses) under the
+   label "CLEAN-HIT RATE <- the Phase D input". That is the HIT rate.
+
+   CleanHit is assigned inside `if res.hit` as `!res.defended`
+   (internal/combat/combat.go:491), so it means HIT **AND NOT DEFENDED**. A
+   DEFLECTED swing -- the defence won and partial damage landed anyway, the U6
+   Task 16b case -- is a Hit that is NOT a CleanHit.
+
+   On the 96,723-event sample the difference is large: hit rate 0.5752 against
+   a real clean-hit rate of 0.3856 (37,297 clean, 18,341 deflected).
+
+   **U10b-0 Phase D solved the SHIPPED SkillProgressionMultipliers on the
+   mislabelled number**, so anything fitted before this date needs re-deriving
+   -- see internal/skills/skills.go, whose "P(entry clean) is 0.967 against
+   0.820" figures are 1-0.4248^2 and 1-0.4248^4, i.e. built from the miss rate.
+
 Usage:  python tools/balance/read_combat_analytics.py [path]
 """
 import io
@@ -74,8 +91,29 @@ def main():
     print("crits           %d" % tot("crits"))
     print("fumbles         %d" % tot("fumbles"))
     print()
+    defended = dg + pr + bl
     if hits + miss:
-        print("CLEAN-HIT RATE  %.4f      <- the Phase D input" % (hits / float(hits + miss)))
+        total = float(hits + miss)
+        print("HIT RATE        %.4f      hits / total, INCLUDING deflected hits"
+              % (hits / total))
+        # CleanHit is assigned inside `if res.hit` as `!res.defended`
+        # (internal/combat/combat.go:491), so it means HIT AND NOT DEFENDED.
+        # A deflected swing is a Hit that is NOT a CleanHit.
+        #
+        # Every miss is a defence win, so:  deflected = defended - misses
+        # and                               clean     = hits - deflected
+        deflected = defended - miss
+        if 0 <= deflected <= hits:
+            clean = hits - deflected
+            print("CLEAN-HIT RATE  %.4f      clean / total  <- the Phase D input"
+                  % (clean / total))
+            print("  clean %d + deflected %d = hits %d" % (clean, deflected, hits))
+        else:
+            print("CLEAN-HIT RATE  unavailable: defended %d and misses %d do not"
+                  % (defended, miss))
+            print("  decompose (deflected would be %d). Check whether every miss"
+                  % deflected)
+            print("  is still a defence win before trusting any derived rate.")
     if ev:
         print("crit rate       %.4f  of all events" % (tot("crits") / float(ev)))
         print("fumble rate     %.4f  of all events" % (tot("fumbles") / float(ev)))
