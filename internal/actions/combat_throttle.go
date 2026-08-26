@@ -170,6 +170,17 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 				hold := float64(target.Char.Stats.Willpower.ValueAdj) +
 					float64(target.Char.GetSkillLevel(skills.Spellcasting))*w
 				res := combat.RunConcentrationContest(hold, grip)
+				// U10b-1 Task 12: the DEFENDER's concentration award, win or
+				// lose, fired before the branch because the loss arm has its
+				// own work to do. It was previously success-only and sat in
+				// the else. res.Success is the caster's win -- hold is passed
+				// as the attack side of the contest.
+				//
+				// The throttler's own progression came from the move's hit
+				// resolution; this is not a second attacker event.
+				target.Char.AwardResolved(
+					target.Char.GetUserId(), res.Success,
+					target.Char.CandidateFor(string(skills.Spellcasting)))
 				if !res.Success {
 					var attackerRef state.ActorRef
 					if actor.IsPlayer() {
@@ -178,11 +189,6 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 						attackerRef = state.ActorRef{MobInstanceId: actor.GetMobInstanceId()}
 					}
 					interrupted = InterruptTargetCast(target.Char, attackerRef)
-				} else {
-					// Held: success-only progression for the defence. The
-					// throttler's own progression came from the move's hit
-					// resolution; no new attacker event.
-					target.Char.OnSkillUse(string(skills.Spellcasting), target.Char.GetUserId())
 				}
 			}
 		}

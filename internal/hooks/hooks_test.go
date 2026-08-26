@@ -436,21 +436,45 @@ func TestCheckConcentrationBreak_BelowThresholdNeverRolls(t *testing.T) {
 	}
 }
 
-// TestCheckConcentrationBreak_ProgressionFiresOnlyOnHolds pins the U10
-// success-only progression convention: a spellcasting event fires exactly
-// once per HELD contest and never on a lost one.
-func TestCheckConcentrationBreak_ProgressionFiresOnlyOnHolds(t *testing.T) {
+// TestCheckConcentrationBreak_ProgressionFiresOnEveryResolvedContest pins
+// U10b-1 Task 12: a spellcasting event fires once per RESOLVED contest, win or
+// lose, not once per HELD contest.
+//
+// This test previously asserted the opposite and is inverted deliberately. The
+// success-only rule it pinned is the convention the slice replaces: failing to
+// hold a spell against a blow is a resolved contest and the case a caster most
+// obviously learns from, so it now pays Balance.ProgressionFailureFraction
+// rather than nothing.
+//
+// ⚠️ THE RATE CHANGE ON THIS PATH IS THE LARGEST IN THE SLICE, and this
+// fixture is where it is visible: at 30% damage (difficulty 300) a fresh
+// caster holds only about 10 contests in 200. Events therefore go from ~10 to
+// 200 -- a 20x increase in COUNT, or roughly 7.6x in full-weight equivalents
+// once the 0.35 fraction is applied. Concentration also fires PER DAMAGE
+// INSTANCE, so a caster taking four swings resolves up to four of these in one
+// round. Carry both facts into the SkillProgressionMultipliers re-solve;
+// spellcasting is fitted at 3.90 on the premise that casting is rare.
+func TestCheckConcentrationBreak_ProgressionFiresOnEveryResolvedContest(t *testing.T) {
 	ch := newCastingChar("mind-spike")
 	ch.HealthMax.Value = 100
 	before := ch.GetSkillUseCount(string(skills.Spellcasting))
+	const contests = 200
 	holds := 0
-	for i := 0; i < 200; i++ {
+	for i := 0; i < contests; i++ {
 		if !checkConcentrationBreak(ch, 30) { // 30% hit, difficulty 300
 			holds++
 		}
 	}
-	if got := ch.GetSkillUseCount(string(skills.Spellcasting)) - before; got != holds {
-		t.Fatalf("progression events %d != holds %d (success-only rule)", got, holds)
+	if got := ch.GetSkillUseCount(string(skills.Spellcasting)) - before; got != contests {
+		t.Fatalf("progression events %d != resolved contests %d; every resolved contest must award, win or lose", got, contests)
+	}
+	// The fixture must actually produce BOTH outcomes, or "fires on every
+	// contest" would be indistinguishable from the old success-only rule.
+	if holds == 0 {
+		t.Fatal("fixture never held: the win half of the assertion was never exercised")
+	}
+	if holds == contests {
+		t.Fatal("fixture never broke: the LOSS half was never exercised, so this cannot tell the new rule from the old one")
 	}
 }
 
@@ -2833,5 +2857,47 @@ func dummyAttackResult(hit, crit bool) combat.AttackResult {
 		Hit:      hit,
 		CleanHit: hit,
 		Crit:     crit,
+	}
+}
+
+// TestProcessFoldRound_PositionBreakStillAwards pins U10b-1 Task 12 on the
+// POSITION trigger, the second of concentration's three.
+//
+// newProneCastingChar is built with Willpower 1 against a prone disruption of
+// 300, so it breaks nearly every time. Under the old success-only rule that
+// caster learned nothing at all from being knocked down mid-cast, round after
+// round. It now awards at Balance.ProgressionFailureFraction.
+//
+// The award is placed BEFORE the win/lose branch in processFoldRound
+// deliberately: the loss arm returns, so an award written inside it would never
+// run. This test is what catches that if anyone moves it back.
+func TestProcessFoldRound_PositionBreakStillAwards(t *testing.T) {
+	cleanup := spells.SeedSpellsForTest(map[string]*spells.SpellData{
+		"mind-spike": {SpellId: "mind-spike", BaseFolds: 4},
+	})
+	defer cleanup()
+
+	ch := newProneCastingChar("mind-spike")
+	before := ch.GetSkillUseCount(string(skills.Spellcasting))
+
+	const rounds = 50
+	breaks := 0
+	for i := 0; i < rounds; i++ {
+		if ch.Activity == nil || !ch.Activity.IsCasting() {
+			_ = ch.Activity.TransitionToCasting(
+				activity.CastingData{SpellId: "mind-spike"},
+				state.TransitionReason{Trigger: activity.TriggerCastBegin},
+			)
+		}
+		if processFoldRound(ch).ProneBroke {
+			breaks++
+		}
+	}
+
+	if breaks == 0 {
+		t.Fatal("fixture never broke: this test exists to prove a BROKEN concentration awards, and it never exercised one")
+	}
+	if got := ch.GetSkillUseCount(string(skills.Spellcasting)) - before; got < breaks {
+		t.Errorf("spellcasting use count rose by %d across %d breaks; every resolved position contest must award, including the ones that broke", got, breaks)
 	}
 }

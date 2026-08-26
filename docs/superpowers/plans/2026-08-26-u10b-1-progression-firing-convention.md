@@ -373,13 +373,27 @@ Within one skill the max is exactly right.
 
 ## Task 12: Concentration, all three sites
 
-- [ ] **Step 1:** failing test at each of the three triggers: a broken concentration awards spellcasting at the fraction
-- [ ] **Step 2:** route all three through `AwardResolved`, won on `res.Success`
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing test at each of the three triggers: a broken concentration awards spellcasting at the fraction
+- [x] **Step 2:** route all three through `AwardResolved`, won on `res.Success`
+- [x] **Step 3:** run, commit
+
+**Shipped** as the shared `hooks.awardConcentration` for the two hooks-side
+triggers (damage and position); the throttle site calls
+`Character.AwardResolved` directly because it lives in `internal/actions`.
 
 ⚠️ Concentration fires per damage instance, so up to ~4/round, and `spellcasting`
-is fitted at 3.90 on the premise that casting is rare. Record the rate in the
-commit.
+is fitted at 3.90 on the premise that casting is rare.
+
+**MEASURED, and it is the largest rate change in the slice.** At 30% damage
+(difficulty 300) a fresh caster holds only about **10 of 200** contests, so
+events go from ~10 to 200: **20x in COUNT**, or roughly **7.6x in full-weight
+equivalents** once the 0.35 fraction is applied. Multiply by up to four damage
+instances a round. Carry both into the re-solve.
+
+The position trigger's award sits BEFORE the win/lose branch on purpose --
+the loss arm returns, so an award written inside it would never fire.
+`TestProcessFoldRound_PositionBreakStillAwards` is sabotage-proven against
+exactly that mistake.
 
 ---
 
