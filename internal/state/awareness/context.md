@@ -48,37 +48,43 @@ stamina scaling).
 func NewMachine() *Machine
 ```
 
-Returns a `Machine` in `Visible`. The machine must be paired with a
-`Character` via `SetSelf()` so that detection rolls and cascading updates
-can reference the character's stats and inventory.
+Returns a `Machine` in `Visible`. The machine is meant to be paired with
+a `Character` via `SetSelf()`/`RegisterMachine()` so detection rolls and
+cascading updates can reference the character's stats and inventory —
+**but see Gotchas: no production code actually calls either one.**
 
 ### Entry into concealment
 
 ```go
-func (m *Machine) TransitionToConcealing(r TransitionReason) error
+func (m *Machine) TransitionToConcealing(d ConcealingData, r state.TransitionReason) error
 ```
 
 Initiates a sneak attempt. Runs the activity veto before delegating to
-the inner framework. On success:
-- Stores `ConcealingData` on the machine.
-- Calls `ResolveConcealment()` to immediately compute detection outcome
-  (today synchronous; future multi-round concealment will change this).
+the inner framework. On success stores `ConcealingData` (`d`) on the
+machine. The caller (`actions.Sneak`, `internal/actions/sneak.go`) is
+responsible for then rolling the opposed checks against every observer
+in the room and calling `ResolveConcealment` with the outcome — the
+machine itself does not roll or self-resolve.
 
 ### Detection resolution
 
 ```go
-func (m *Machine) ResolveConcealment() error
+func (m *Machine) ResolveConcealment(success bool, r state.TransitionReason)
 ```
 
-Executes the sneak check against all observers in the room. Runs the
-detection-roll veto (which validates the character is actually Concealing)
-and performs opposed rolls (Perception + Search vs. Dexterity + Skullduggery).
-On success, transitions to `Hidden`. On failure, transitions back to `Visible`.
+Finalizes an in-flight sneak attempt with an outcome already decided by
+the caller. No return value. `success=true` transitions `Concealing →
+Hidden`; `success=false` transitions `Concealing → Visible`. Idempotent:
+no-op if the machine is not currently `Concealing`. The actual opposed
+rolls (Perception + Search vs. Dexterity + Skullduggery, via
+`actions.CalcSneakScoreVsObserver` / `combat.RunContest`) happen in
+`internal/actions/sneak.go`, looping over every player and mob observer
+in the room; this method only records the already-computed result.
 
 ### Revealing after detection or combat entry
 
 ```go
-func (m *Machine) TransitionToRevealing(r TransitionReason) error
+func (m *Machine) TransitionToRevealing(r state.TransitionReason) error
 ```
 
 Initiates the reveal cascade, typically triggered by a detection roll or by
@@ -91,17 +97,24 @@ why the reveal is happening. Immediately cascades to `Visible` in a single call
 ### Room change notification
 
 ```go
-func (m *Machine) NotifyRoomChanged(oldRoomId int, newRoomId int)
+func (m *Machine) NotifyRoomChanged(detected bool, r state.TransitionReason)
 ```
 
-Called when the character moves between rooms. Resets to `Visible` and schedules
-a light-source awareness re-roll in the new room (via the `Awareness_LightChange`
-hook). Prevents hiding from "following" a character across zone boundaries.
+Receives an already-computed detection outcome for a room move (the
+caller has run the per-observer detection rolls beforehand). If
+`detected` is true and the machine is currently `Hidden`, transitions
+`Hidden → Revealing` via `TransitionToRevealing`. If `detected` is
+false, or the machine isn't `Hidden`, it's a no-op. It does **not**
+take room IDs and does **not** unconditionally reset to `Visible`.
+In production, `internal/usercommands/go.go`'s room-entry detection
+calls `TransitionToRevealing` directly rather than going through this
+method — `NotifyRoomChanged` today is exercised only by
+`awareness_test.go`.
 
 ### Force visible
 
 ```go
-func (m *Machine) ForceVisible(r TransitionReason)
+func (m *Machine) ForceVisible(r state.TransitionReason)
 ```
 
 Transitions to `Visible` from any state, clearing all state-data. Used for
@@ -119,16 +132,6 @@ character is not engaged in crafting or casting before allowing the sneak
 transition. The closure reads `c.IsActing()` (negated) to check whether
 the character is free — querying the Activity machine internally.
 
-### Detection check registration
-
-```go
-func (m *Machine) RegisterDetectionCheck(check func() bool)
-```
-
-Wired at character-creation time by `Awareness_Vetoes.go` to validate the
-sneak attempt is proceeding (character is actually in Concealing state).
-Unused pending implementation; included for API symmetry.
-
 ### Self reference
 
 ```go
@@ -138,29 +141,33 @@ func (m *Machine) Self() state.ActorRef
 
 `SetSelf()` stores the character's `ActorRef` on the machine so detection
 rolls and cascading updates can reference the character by identity without
-creating a dependency cycle. Called at character-creation time by the
-`RegisterMachine` flow in hooks.
+creating a dependency cycle. Designed to be called at character-creation
+time via the `RegisterMachine` flow — but per Gotchas below, nothing in
+production actually calls `RegisterMachine`, so `self` is left zero-valued
+on every real character today.
 
 ### Predicate methods
 
 ```go
 func (m *Machine) IsHidden() bool       // State == Hidden
-func (m *Machine) IsConcealing() bool   // State == Concealing
-func (m *Machine) IsRevealing() bool    // State == Revealing
 ```
+
+There is no `IsConcealing()` or `IsRevealing()` — check `State() ==
+Concealing` / `State() == Revealing` directly if needed.
 
 ### Registry helpers
 
 ```go
-func RegisterMachine(c state.ActorRef, m *Machine)
-func UnregisterMachine(c state.ActorRef)
-func GetMachine(c state.ActorRef) *Machine
+func RegisterMachine(ref state.ActorRef, m *Machine)
+func UnregisterMachine(ref state.ActorRef)
+func lookupMachine(ref state.ActorRef) *Machine // unexported, package-internal
 ```
 
 Framework-maintained registry of active machines, keyed by `ActorRef`.
-Populated at character creation; cleared on logout / despawn. Allows the
-framework to look up a character's awareness machine by identity without
-the caller holding a pointer.
+Populated at character creation (`RegisterMachine` also stamps `m.self =
+ref`, making a separate `SetSelf` call redundant when going through the
+registry); cleared on logout / despawn. There is no exported `GetMachine`
+— `lookupMachine` is unexported and used only inside this package.
 
 ---
 
@@ -172,13 +179,19 @@ the caller holding a pointer.
 var machineRegistry = map[state.ActorRef]*Machine{}
 ```
 
-Guarded by `registryMu`. Populated by `RegisterMachine` at character
-creation; cleared by `UnregisterMachine` on logout / despawn.
+Guarded by `registryMu`. Meant to be populated by `RegisterMachine` at
+character creation and cleared by `UnregisterMachine` on logout / despawn
+— **in production, neither is ever called (see Gotchas)**, so
+`machineRegistry` stays empty and `lookupMachine` always returns nil.
+`lookupMachine` itself is currently unreferenced even within this
+package (dead code, kept for the intended cross-character lookup use
+case described here).
 
-The registry is the bridge between `ActorRef` (the identity type used
-in `TransitionReason`) and the live `Machine` pointer. It allows the
-framework to call `NotifyRoomChanged` and other notifications on a
-character's awareness machine without the caller knowing its memory address.
+The registry is designed as the bridge between `ActorRef` (the identity
+type used in `TransitionReason`) and the live `Machine` pointer, so the
+framework could call notifications on a character's awareness machine
+without the caller knowing its memory address. Today nothing exercises
+that path outside `awareness_test.go`.
 
 ---
 
@@ -295,6 +308,35 @@ machine is the source of truth; the Cascades hook ensures buff #9 stays in sync.
 
 ---
 
+## Gotchas
+
+**`RegisterMachine` / `SetSelf` have no production caller.**
+`internal/characters/validate.go` constructs `c.Awareness =
+awareness.NewMachine()` directly and never registers it in
+`machineRegistry` or calls `SetSelf`. Verified: `awareness.RegisterMachine`
+and `awareness.SetSelf` appear only in this package's own definitions and
+in `awareness_test.go` — grep across the whole repo turns up no other
+caller. Consequences:
+
+- `Machine.self` (`Self()`) is zero-valued on every real character.
+- `machineRegistry` never gains an entry, so `lookupMachine` — itself
+  dead code, called from nowhere even inside this package — would
+  always return nil if it were called.
+- `NotifyRoomChanged`, despite being fully implemented, is not wired
+  into any production call site; the actual room-move reveal path
+  (`internal/usercommands/go.go`) calls `TransitionToRevealing` directly
+  on the machine it already holds a pointer to, sidestepping the
+  registry entirely.
+
+This mirrors the same gap documented in
+`internal/state/combatphase/context.md` for `combatphase.RegisterMachine`
+— both were pre-wired for cross-character lookups that no caller ended
+up needing, because every real call site already holds the target's
+`*Machine` pointer directly (via the `Character` struct) rather than
+going through an `ActorRef` lookup.
+
+---
+
 ## Testing Notes
 
 ### awareness_test.go — Behavior Matrix
@@ -326,34 +368,45 @@ exercise the scaffold scaffolding but do not yet test light-source re-roll logic
 
 ## Veto Chain
 
-The awareness machine maintains a veto chain (`vetoChain`) with two registered
-checks:
+`vetoChain` (`rules.go`) holds exactly one registered check today:
 
-1. **Activity Veto** — blocks `Visible → Concealing` if the character is
-   crafting or casting. Prevents hidden state during resource-consuming
-   activities.
-2. **Detection Veto** — blocks `Concealing → Hidden` if detection succeeds.
-   (Today integrated into `ResolveConcealment`; kept for API symmetry.)
+1. **Activity Veto** (`activitySelf`, registered via
+   `RegisterActivityCheck`) — blocks `Visible → Concealing` if the
+   character is crafting or casting.
+
+There is no separate "Detection Veto." Detection is not resolved
+internally by the machine at all — see Detection Roll Mechanics below.
+`ResolveConcealment` takes the outcome as a `success bool` parameter
+already decided by the caller; it does not roll anything itself.
 
 ---
 
 ## Detection Roll Mechanics
 
+**The awareness package does not perform detection rolls.** The rolls
+live in `internal/actions/sneak.go` (`actions.Sneak`), which loops over
+every player and mob observer in the room, computes both sides of the
+contest, and only then calls `ResolveConcealment(success, reason)` with
+the aggregate outcome.
+
 ### Formula
 
 ```
-sneaker_roll = Dexterity × SkillMultiplier(Skullduggery) + equipment_bonus
-observer_roll = Perception × SkillMultiplier(Search) + equipment_bonus
+sneaker_roll  = actions.CalcSneakScoreVsObserver(sneaker, observer, room)
+              = Dexterity + Skullduggery_rank × SkillWeight (+ light modifier, + stealth mutation bonus)
+observer_roll = actions.CalcDetectionScore(observer)
 ```
 
-Calculation is performed in `actions/skill_helpers.go:CalcSneakScore()` and
-exposed via the `ResolveConcealment()` method. Each observer in the room
-performs an independent opposed roll.
+Both live in `internal/actions/skill_helpers.go`. The opposed check
+itself runs through `combat.RunContest(sneakScore, []contest.Entry{{Score:
+observerScore}})` — the shared opposed-contest entry point, and the only
+place `Balance.ContestFloor` is applied (`contest.Run` itself is
+unfloored) — not a
+bespoke roll inside this package.
 
-### Example
+### Behavior
 
-A character with Dex 120 and Skullduggery rank 25 sneaking past an observer
-with Perception 110 and Search rank 10:
-- Sneaker roll: 120 × 1.44 + mods ≈ 173
-- Observer roll: 110 × 1.10 + mods ≈ 121
-- Success: sneaker wins the opposed check
+Any single observer beating the sneaker's score fails the whole attempt
+(`ResolveConcealment(false, ...)`, `TriggerSneakFailed`). If no observer
+wins, the actor transitions to `Hidden`
+(`ResolveConcealment(true, ...)`, `TriggerSneakSuccess`).

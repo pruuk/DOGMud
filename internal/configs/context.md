@@ -557,6 +557,76 @@ The flat ranged shield-bonus knob was deleted by U6b Task 8: a shielded
 defender now answers a shot with a real block CONTEST entry via the channel
 defence seam (`combat.DefenceEntriesFor`), not a score addend.
 
+### Surprise-attack and ranged damage multipliers (U10d)
+
+Three `Balance` knobs, added by the U10d surprise-attack redesign
+(`config.balance.go`; defaults enforced in `config.balance.combat.go`).
+The redesign also **deleted** five now-nonexistent knobs that may still
+turn up in stale notes or old branches:
+`SurpriseAttackOffhandPenalty` and `SurpriseAttackExtraArm1Penalty`
+through `...ExtraArm4Penalty` — none of the five exist in the config
+struct any more.
+
+| Knob | Go default | Shipped in `config.yaml` | Effect |
+|------|-----------|---------------------------|--------|
+| `SurpriseOpeningStrikeMultiplier` | 1.0 | 1.0 | Extra multiplier on a MELEE surprise opening strike. |
+| `SurpriseRangedStrikeMultiplier` | 1.0 | 0.5 | The ranged counterpart — deliberately lower, since the ranged opener also inherits `RangedUnengagedDamageMultiplier`. |
+| `RangedUnengagedDamageMultiplier` | 1.0 | 2.75 | Ranged damage multiplier applied when nothing in the room currently targets the shooter. |
+
+All three validate to their Go default (1.0) when shipped at or below
+zero (`b.SurpriseOpeningStrikeMultiplier <= 0`, etc., in
+`config.balance.combat.go`). The `<= 0` shape is deliberate — see the
+validator-shape gotcha below.
+
+### Gotcha: a `< 0 || > 1.0` validator can never apply its own default
+
+Balance validators are written in two shapes, and only one of them works
+for a knob whose legitimate range includes zero:
+
+```go
+if b.X <= 0        { b.X = <default> }   // safe
+if b.X < 0 || b.X > 1.0 { b.X = <default> }   // TRAP
+```
+
+`yaml.Unmarshal` is non-strict, so a key **absent** from
+`_datafiles/config.yaml` leaves the field at Go's zero value. Zero is
+neither negative nor above 1.0, so the second shape's branch never runs
+and the knob stays **inert at 0.0** — not at the default its own comment
+advertises. This is not hypothetical: it is exactly how the five
+`SurpriseAttack*Penalty` knobs deleted by U10d came to be 0.0, which made
+every limb of the old surprise volley an unconditional auto-hit for the
+whole life of the feature. The dangerous combination to grep for is
+**non-zero advertised default + `< 0 || > 1.0` validator + no key in
+`config.yaml`.**
+
+A sweep on 2026-08-25 found no live instance remaining. Both surviving
+users of that shape are safe for reasons specific to them:
+`MinAttackCritChance` / `MinDefenseCritChance`
+(`config.balance.combat.go:330,333`) treat 0 as a deliberate off-switch
+and are written explicitly in `config.yaml`; `EquipmentDropChance`
+(`config.gameplay.go:65`) has a coded default of 0.0. **Correction on
+record:** a U10d review reported `SubGoldLossFraction` as a live instance.
+It is not — `sub_gold_loss_fraction: 0.20` is present at
+`_datafiles/config.yaml:925` under `Balance:`, matching the field's yaml
+tag, so the subdue/cripple gold transfer
+(`internal/combat/submission_outcome.go:201`) runs at the intended value.
+Do not "fix" it.
+
+### Gotcha: the special-move cooldown comments are stale in two places
+
+`SpecialMoveCooldown` (`config.balance.go:246`) is commented
+`// Shared cooldown rounds for bash/trip/kick (default 5)`, and
+`_datafiles/config.yaml:660-664` says bash, trip, kick and cast. Neither
+is accurate: **44 non-test `.go` files under `internal/` and `modules/`
+claim the `special-move` key**, and U10d added the melee and ranged
+ambush openers to that population. The `config.yaml` comment is the worse
+of the two, because it is what a tuner reads. Both are deliberately left
+as-is for now — `config.yaml` carries `skip-worktree` and needs the
+commit-from-`git show HEAD:` procedure, and correcting only the Go half
+would leave the pair still disagreeing. Handed to **U11**'s config audit;
+see the "U11 inbox from U10d" section of
+`docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`.
+
 ### Unified action-cost admission (U8)
 
 These are raw config inputs before `costs.Calc`; they are not final charges.

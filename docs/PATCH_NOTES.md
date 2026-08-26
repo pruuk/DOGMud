@@ -1,36 +1,58 @@
 # DOGMud Patch Notes
 
-## 2026-08-25: The ambush says what it did
+## 2026-08-25: Striking from hiding, remade
 
-Striking from hiding has been reworked for a while, and until now the game
-never explained any of it. Several things you could feel happening had no words
-attached, which is a good way to make a working feature look broken.
+Attacking out of hiding used to be a sure thing. It is not one any more, and
+a good deal else has changed along with it.
 
-Your ambush is one blow, not a whole round of them. Only that one blow is
-marked now, so you can see which swing was the big one instead of reading four
-identical lines.
+Your ambush is one blow, not a whole round of them. Anything else you swing
+that round is ordinary fighting. That one blow is called out in the combat
+text, so you can see which it was instead of reading several identical lines,
+and it is spent whether it lands or not. You get one attempt.
 
-A defender can answer it. If they dodge, parry or block your opening strike,
-the game says so, and it names what they did. That outcome is new, so it needed
-its own words.
+The target now gets to answer. A ready defender may dodge, parry or block
+your opening strike, just as with any other attack, and the game names what
+they did. If they turn it aside, something still gets through, but less than
+an ordinary blow would have done. If it lands cleanly it strikes as a
+critical hit, and it bites deeper the better your skullduggery, so a skilled
+thief opens a fight far harder than a beginner does. That outcome is new, so
+it needed its own words.
 
-A shot from cover reads as a shot from cover, and you are told plainly that
-firing gave your hiding place away. Losing your cover without being told was
-the sort of thing that sends a player looking for a bug.
+You are seen the moment you strike. Hitting or missing makes no difference,
+and a shot from cover at something in your own room gives you away the same
+way. There is no fighting on from the shadows. Losing your cover without
+being told was the sort of thing that sends a player looking for a bug, so
+the game says it plainly now.
 
-If your special move has not come back yet, you have no ambush ready, and your
-shot goes off as an ordinary one. You are told that too. It comes up more than
-you might expect, because reloading uses the same recovery.
+An ambush spends your shared special move recovery, the one bash, trip and
+kick all draw on. If it has not come back you have no ambush ready and your
+attack goes in as an ordinary one. You are told so now whether you closed in
+with a weapon or fired from cover, and you are told when the attempt cost you
+your cover for nothing, because striking from hiding gives your position away
+whether the ambush was ready or not. Archers should read that twice, since
+reloading draws on the same recovery, so loading and then hiding often leaves
+you with nothing ready.
 
-An archer being attacked cannot steady the shot, and it is weaker for it. That
-is now said once, the first time it happens in a fight, rather than never or
-every round.
+Ranged weapons have come down onto the same scale as everything else you can
+carry. Bows, crossbows, slings and firearms all strike for a good deal less
+per shot than they used to. This reaches weapons you already own, in your
+hands, your pack and your bank alike, so a bow you have carried for weeks
+will feel different the next time you draw it.
 
-All of it is written down as well. Type help ambush. It covers setting one up,
-what a defender can do about it, why reloading and then hiding so often leaves
-you with nothing ready, and why a shot into the next room is not an ambush at
-all. Typing help surprise, help backstab or help sneak attack will find it too,
-and help hide now answers instead of shrugging.
+They are paid back somewhere better. A ranged weapon is far more dangerous
+when nothing in the room is attacking you, and much weaker when something is,
+because you cannot steady an aimed shot while you are fending someone off. An
+archer who keeps a companion or a party member between themselves and the
+enemy, or who puts a room between them, now shoots harder than before. An
+archer standing in the middle of it does not. The game says this once, the
+first time it happens in a fight, rather than never or every round.
+
+All of it is written down as well. Type help ambush. It covers setting one
+up, what a defender can do about it, why reloading and then hiding so often
+leaves you with nothing ready, why a shot into the next room is not an ambush
+at all, and why an archer wants to be left alone. Typing help surprise, help
+backstab or help sneak attack will find it too, and help hide now answers
+instead of shrugging.
 
 ## 2026-08-24: Spell help describes spells instead of measuring them
 

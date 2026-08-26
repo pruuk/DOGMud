@@ -729,6 +729,40 @@ identically. The Presence machine is the only thing that changed.
 The `Idle` Presence state is intentionally invisible to the UI in v1.
 Only `AFK` surfaces to players via the `(afk)` tag.
 
+## Gotcha: alts break Character-scoped save migrations
+
+The bank is **account**-scoped and inventories are **character**-scoped, and
+the two do not line up:
+
+- `ItemStorage Storage` lives on `UserRecord` (`userrecord.go:46`). There is
+  one per account.
+- Alt characters persist as `<userId>.alts.yaml` (`character_index.go:78-79`).
+  Each is a separate `characters.Character` with its **own** `MiscData`.
+
+So a run-once marker stored in `Character.MiscData` does **not** protect a
+`UserRecord`-scoped structure: the shared bank can be migrated once per alt.
+The reverse hazard is just as real — `characters.New()` produces empty
+`MiscData`, and a brand-new account plays its whole first session on an
+in-memory record that never passes through `LoadUser`, so a marker can also be
+absent when the data has already been touched.
+
+**The working pattern is idempotence, not marking.** Both halves of the U10d
+ranged detune go unmarked and run on every load, and rely on the operation
+being a no-op the second time:
+
+- `Storage.MigrateDetunedRangedWeapons` (`storage_migrate.go:40`) for the bank
+- `Character.MigrateDetunedRangedWeapons`
+  (`internal/characters/migrate_detuned_bows.go:64`) for inventory, component
+  bag, bandolier, pet inventory and equipment
+
+Idempotence comes from `items.MigrateDetunedBow` itself (the per-item
+`DetuneMigrated` flag plus a value guard), not from a caller-side flag.
+`characters.MigrateEnchantments` is the older instance of the same pattern:
+no guard at all, idempotent by construction because `enchantments.ApplyTier`
+restores a captured baseline before re-deriving the spec. Copy that. Note
+`MigrateStorageSlots` (`storage_migrate.go:13`) IS self-guarded, but on the
+**data** (`len(s.Items) == 0`), not on a marker — which is the same idea.
+
 ## Dependencies
 
 - `internal/characters` - Character system integration for user avatars

@@ -111,6 +111,26 @@ Next: chunk 1 — Awareness machine (`Visible` / `Concealing` /
 
 ## Chunk 1 — Shipped (2026-05-15)
 
+> **⚠️ Partly SUPERSEDED by U10d (2026-08-25).** The record below is left
+> as written — it is what shipped on 2026-05-15 — but the surprise-round
+> handshake it describes **no longer exists**. U10d deleted
+> `EngagedData.SurpriseLeft`, `(*Machine).OnCombatRoundEnd`,
+> `(*Machine).OnEndOfRoundIfSurprise` and its registration in
+> `internal/hooks/Awareness_Cascades.go`, along with the
+> `TriggerSurpriseAttack` branch that preserved `Hidden` through
+> `Engaging`. It was deleted rather than repaired because it had **never
+> been live**: `TransitionToEngaging` never copied its `TransitionReason`
+> into `EngagingData.Reason`, so `advanceToEngaged` computed `SurpriseLeft`
+> from a zero value and it was never true in production, and the only
+> caller of `OnCombatRoundEnd` was a test. Under U10d a stealth attacker
+> gets **one** contested opening strike and stealth breaks immediately, so
+> nothing needs a round-scoped flag. Everything else in this chunk (the
+> `Visible/Concealing/Hidden/Revealing` machine, buff #9 mirroring, the
+> marquee mechanics below) is unchanged and still live. See
+> `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`, row **U10d**, and
+> `docs/superpowers/specs/2026-08-25-u10d-surprise-attack-redesign-design.md`
+> sections 1.1 and 3.
+
 Built the `internal/state/awareness/` machine
 (`Visible/Concealing/Hidden/Revealing`) on the chunk-0 framework.
 Subscribed to Combat Phase's `OnEndOfRoundIfSurprise` callback to

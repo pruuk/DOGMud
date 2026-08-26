@@ -45,15 +45,16 @@ an open one.
 The ambush uses the shared special move cooldown, so it competes with
 <ansi fg="command">bash</ansi>, <ansi fg="command">trip</ansi>, <ansi fg="command">kick</ansi> and the rest. If the cooldown has not
 recovered you get no ambush, and your attack goes in as an ordinary one.
+The game tells you when that happens, whether you closed in with a weapon
+or fired from cover.
 
 Take care, because this is the expensive mistake. Striking from hiding
 gives your position away whether the ambush was ready or not. A denied
 opener costs you your cover and returns nothing for it.
 
 Archers should watch this closely. <ansi fg="command">reload</ansi> spends the same recovery.
-Reloading and then hiding often leaves you with nothing ready, and you
-are told your shot went off as an ordinary one. Load first, then hide,
-and let the cooldown return before you fire.
+Reloading and then hiding often leaves you with nothing ready. Load
+first, then hide, and let the cooldown return before you fire.
 
 <ansi fg="yellow">━━━ Shooting Into the Next Room ━━━</ansi>
 

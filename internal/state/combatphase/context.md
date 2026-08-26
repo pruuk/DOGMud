@@ -44,9 +44,10 @@ same predicates for both.
 func NewMachine() *Machine
 ```
 
-Returns a `Machine` in `Idle`. Always call `RegisterMachine` immediately
-after creating a character so inbound-attacker tracking and
-cross-character target-death notifications work correctly.
+Returns a `Machine` in `Idle`. `RegisterMachine` is meant to be called
+immediately after creating a character so inbound-attacker tracking and
+cross-character target-death notifications work correctly — **but see
+the Gotchas section below: in production today, nothing calls it.**
 
 ### Entry into combat
 
@@ -107,8 +108,10 @@ removing self from the target's inbound list. Used for death cascade,
 func (m *Machine) NotifyTargetDied(target ActorRef)
 ```
 
-Called by the dying target's `NotifySelfDied`. If my current target
-matches, transitions to `Idle`.
+Designed to be called by the dying target's `NotifySelfDied`. If my
+current target matches, transitions to `Idle`. **Not called from
+production** — see Gotchas. Death cleanup goes through `ForceIdle`
+directly instead (`internal/hooks/Life_Cascades.go`).
 
 ### Self-died notification
 
@@ -116,9 +119,15 @@ matches, transitions to `Idle`.
 func (m *Machine) NotifySelfDied()
 ```
 
-Called when this character dies. Clears own outbound state, clears all
-inbound attackers, and notifies each inbound attacker that their target
-is gone (causing them to force-idle too).
+Designed to be called when this character dies: clears own outbound
+state, clears all inbound attackers, and notifies each inbound attacker
+that their target is gone (causing them to force-idle too). **Not called
+from production** — see Gotchas. Only exercised by
+`combatphase_test.go`. Actual death handling in
+`internal/hooks/Life_Cascades.go` calls `ForceIdle` on the dying
+character's own machine only; it does not cascade to attackers via this
+method (unsurprising, since `Attackers()` is always empty in production
+regardless).
 
 ### Tick-event dispatch
 
@@ -155,7 +164,10 @@ Framework-maintained inbound attacker list. `TransitionToEngaging` calls
 `RecordInboundAttacker` on the target; `ForceIdle` calls
 `RemoveInboundAttacker`. `SubscribeAttackersChange` is used by
 `CombatPhase_CompanionAssist.go` to trigger reactive companion auto-assist
-the moment a new attacker is recorded.
+the moment a new attacker is recorded. **See Gotchas: none of this fires
+in production** — `TransitionToEngaging` looks the target machine up via
+the (never-populated) registry, so `RecordInboundAttacker` is never
+actually called on a real target and `Attackers()` always reads empty.
 
 ### Veto registration
 
@@ -329,6 +341,80 @@ inline literals to ensure stable identifiers across the codebase:
 the ~200 direct field reads across the codebase that were not migrated
 in chunk 0. All writes dual-write to `CombatPhase`. Full field removal
 is scheduled for a cleanup chunk after chunks 1-5 land.
+
+---
+
+## Gotchas
+
+**`RegisterMachine` has no production caller, for either this package or
+`internal/state/awareness`.** `internal/characters/validate.go` constructs
+`c.CombatPhase = combatphase.NewMachine()` directly and never registers
+it in `machineRegistry`. Confirmed by grep (`combatphase.RegisterMachine`
+and `awareness.RegisterMachine` appear only in this package's/awareness's
+own tests, and in an explanatory comment in
+`internal/actions/combat_fire.go:421`). Consequences, verified against
+`TransitionToEngaging` (`lookupMachine(d.Target)` — always nil for a real
+character):
+
+- `RecordInboundAttacker` is never invoked on a real target's machine, so
+  **`Attackers()` always reads empty in production.** The Attackers
+  section below describes the intended mechanism, not what happens today.
+- `internal/hooks/CombatPhase_CompanionAssist.go`'s reactive
+  `SubscribeAttackersChange` handler therefore never fires in production —
+  companion auto-assist runs only through the polling fallback
+  (`CompanionAutoTarget` in `combat_retarget.go`, called from
+  `NewRound_DoCombat`), not reactively.
+- `internal/actions/combat_fire.go`'s `shooterIsUnengaged` deliberately
+  does NOT use `Character.Attackers()` for this reason — it does a live
+  room scan instead, with a comment explaining why.
+- `NotifyTargetDied` / `NotifySelfDied` are likewise never called from
+  production (only from `combatphase_test.go`). Real death cleanup
+  (`internal/hooks/Life_Cascades.go`, `Alive → Dead`) calls `ForceIdle`
+  directly on the dying character's own machine and does not cascade to
+  attackers via `NotifySelfDied` — which would have nothing to iterate
+  over anyway, since `Attackers()` is always empty.
+
+**A second, independent break sits behind the first.** `SetAggro` builds the
+attacker ref as `Actor: state.ActorRef{UserId: c.userId}`
+(`internal/characters/combat_state_compat.go:146`), and nothing ever calls
+`SetUserId` on a mob, so a mob's `userId` stays 0 and the ref is
+`{UserId:0, MobInstanceId:0}` — which `ActorRef.IsZero()`
+(`internal/state/transition.go:12-14`) reports true, and
+`RecordInboundAttacker` early-returns on. **Even with a working registry, no
+mob attacking a player would ever be recorded.** Anyone repairing this must fix
+both halves; fixing only the registry silently leaves mobs invisible.
+
+**An existing consumer is already inert because of this:** `recoveryContest`
+(`internal/hooks/recovery_contest.go:23`) iterates `ch.Attackers()`, finds
+nothing, and returns `nil` — which that function documents as *a free stand*.
+Prone recovery has therefore never actually been contested, whatever U10
+intended. See `internal/hooks/context.md`.
+
+Handed to **U11** as a wire-it-up-or-delete-it decision; see the "U11 inbox
+from U10d" section of `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`.
+
+**`TransitionToEngaging` silently drops its `TransitionReason`.** The signature
+is `TransitionToEngaging(d EngagingData, r state.TransitionReason) error`
+(`combatphase.go:208`), and at `:232` it does `m.engaging = &d` — storing the
+caller's struct verbatim and **never copying `r` into `d.Reason`**. So
+`EngagingData.Reason` (`combatphase.go:41`) is the zero value on every real
+character. This is what made `EngagedData.SurpriseLeft` false in production for
+its entire life: `advanceToEngaged` computed it from `prevEngaging.Reason.Trigger`,
+which was never set, while `Awareness_Cascades.go` read the correctly-passed `r`
+and so appeared to work. U10d deleted `SurpriseLeft`, which removed the only
+consumer, so the trap is now **latent rather than live** — `EngagingData.Reason`
+is read by nothing today. It was deliberately not repaired: fixing a producer
+whose sole consumer was being deleted would add a live code path nothing uses.
+**Any future consumer of `EngagingData.Reason` must fix the producer first.**
+
+This is a pre-existing gap (not introduced by U10d) but it means any
+claim elsewhere in this doc about "the round driver wires this at
+character-creation time" describes the designed data flow, not a
+currently-exercised one, for the registry-dependent pieces specifically
+(`Attackers`/`RecordInboundAttacker`/`RemoveInboundAttacker`/
+`SubscribeAttackersChange`/`NotifyTargetDied` cross-character lookups).
+Machine-local behavior (state transitions, vetoes, tick dispatch) is
+unaffected and works normally without registration.
 
 ---
 
