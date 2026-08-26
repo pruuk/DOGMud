@@ -324,12 +324,40 @@ func (c *Character) TrackStatUse(statName string) {
 // OnStatUse is called whenever a character uses a stat in gameplay.
 // Tracks usage and, if progression is enabled, rolls for stat advancement.
 // Returns true if the stat actually increased.
+//
+// This is OnStatUseScaled at a full-weight multiplier of 1.0, exactly as
+// OnSkillUse is OnSkillUseScaled at 1.0. Keep it a delegation: a parallel copy
+// of the body is free to drift from the scaled form, and the whole point of the
+// scaled form is that every stat progression in the game passes through one
+// expression.
 func (c *Character) OnStatUse(statName string, userId int) bool {
+	return c.OnStatUseScaled(statName, userId, 1.0)
+}
+
+// OnStatUseScaled is like OnStatUse but accepts a bonus multiplier that scales
+// the progression chance, mirroring OnSkillUseScaled on the skill side.
+//
+// It exists for the U10b-1 Best-of firing convention: one resolved action fires
+// one progression event for the single highest-rolling candidate, at full weight
+// when that action WON and at Balance.ProgressionFailureFraction (0.35) when it
+// LOST. Awarding a fraction needs a scaled entry point, and the skill side
+// already had one while the stat side did not -- closing that asymmetry is all
+// this function is.
+//
+// No production call site passes anything but 1.0 yet; the sites that award a
+// losing fraction are converted in the later tasks of U10b-1. Until then this is
+// behaviourally identical to the old OnStatUse.
+//
+// A multiplier of 0.0 progresses nothing: CheckStatProgression returns false as
+// soon as ProgressionChanceForStat yields a chance <= 0, before any roll. The
+// use counter is still tracked either way -- it is telemetry (U10b-0 Phase C)
+// and no longer feeds the curve, so recording a use costs the character nothing.
+func (c *Character) OnStatUseScaled(statName string, userId int, bonusMultiplier float64) bool {
 	c.TrackStatUse(statName)
-	mudlog.Debug("Progression", "event", "stat_use", "stat", statName, "character", c.Name)
+	mudlog.Debug("Progression", "event", "stat_use", "stat", statName, "bonus", fmt.Sprintf("%.2f", bonusMultiplier), "character", c.Name)
 
 	if configs.GetGamePlayConfig().UseSkillProgression {
-		return c.CheckStatProgression(statName, userId, 1.0)
+		return c.CheckStatProgression(statName, userId, bonusMultiplier)
 	}
 	return false
 }
