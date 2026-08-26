@@ -192,16 +192,9 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 	}
 
-	// Progression is awarded by actions.awardFireProgression inside ExecuteFire,
-	// for both the player and mob paths. U10b-1 Task 11 moved it there: one
-	// resolved shot is one progression event, contested Best-of between
-	// ranged-combat and (on a landed ambush) skullduggery, instead of the two
-	// separate awards this file and combat_fire.go used to make between them.
-	//
-	// The explicit perception roll that stood here is gone rather than moved.
-	// Perception is ranged-combat's primary stat, so the award already rolls it
-	// through OnSkillUseScaled; rolling it here as well paid it TWICE on every
-	// landed shot.
+	// Progression for a shot is awarded by actions.awardFireProgression inside
+	// ExecuteFire. The explicit perception roll that stood here was a second
+	// roll of ranged-combat's own primary stat.
 
 	// Notify the quest engine of the `shoot` command so quests can gate a step
 	// on the act of shooting (Spoke G's "shoot the practice butt" / "shoot the

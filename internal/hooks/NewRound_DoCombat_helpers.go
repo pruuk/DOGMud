@@ -90,38 +90,69 @@ func processAttackerProgression(c *characters.Character, userId int, result comb
 	if c == nil {
 		return
 	}
-	cands := attackerCandidates(c, result)
+	cands, cleanBySkill := attackerCandidates(c, result)
 	if sc, ok := surpriseCandidate(c, result); ok {
 		cands = append(cands, sc)
+		// A surprise candidate is only built for a round that CLEAN-HIT, so
+		// its own outcome is a win by construction.
+		cleanBySkill[sc.Skill] = true
 	}
-	if len(cands) == 0 {
+	best, ok := progression.BestOf(cands)
+	if !ok {
 		return
 	}
-	// won is the ROUND's outcome, not the selected skill's own. One round is
-	// one resolved action here, and AttackResult.CleanHit means at least one
-	// swing won its contest outright. The two almost always agree -- the
-	// highest-rolling skill is the likeliest to be the one that landed -- and
-	// where they diverge, a round in which something landed cleanly is a round
-	// the attacker won.
-	c.AwardResolved(userId, result.CleanHit, cands...)
+	// won is the WINNING SKILL's own outcome, not the round aggregate.
+	//
+	// This deliberately matches processDefenderProgression, which passes the
+	// selected defence's own best.Won. An earlier draft passed
+	// AttackResult.CleanHit -- "did anything land this round" -- and that is a
+	// materially different rule, not a rephrasing. For a one-handed weapon
+	// beside an empty hand the two skills are different, weapon-combat almost
+	// always wins selection, and P(the fist landed cleanly while the weapon
+	// did not) is roughly 0.24 at the measured rates. About one round in four
+	// would have paid weapon-combat FULL weight for a round in which the sword
+	// never won a contest.
+	//
+	// Full weight has to mean "you succeeded with THIS skill", or the fraction
+	// stops being a statement about the skill being trained.
+	c.AwardResolved(userId, cleanBySkill[best.Skill], best)
 }
 
 // attackerCandidates folds the round's weapon entries into ONE candidate per
-// SKILL, carrying that skill's best actual attack roll.
+// SKILL, carrying that skill's best actual attack roll, and reports whether
+// each skill landed a clean hit anywhere in the round.
 //
 // Deterministic order, which BestOf's full-tie rule requires: candidates come
 // out in first-appearance order of WeaponHits, never in map order. Two skills
 // tying on both Roll and Level is vanishingly unlikely with real float rolls,
 // but "vanishingly unlikely" is not "never", and a map here would rotate the
-// winner between rounds for no visible reason.
+// winner between rounds for no visible reason. That determinism is the WHOLE
+// reason to dedup by skill: an earlier draft claimed entry-keying would
+// "rebuild per-hand payment", which is false -- payment count is fixed at one
+// by the single AwardResolved call regardless of how many candidates BestOf is
+// handed. Entry-keying and skill-keying pick the same winner in every case
+// except an exact float tie between two different skills.
 //
 // An unrecognised SkillTag is dropped rather than carried: characters.
 // CandidateFor returns the zero Candidate for one, and a zero candidate that
 // happened to out-roll the real ones would make BestOf report false and the
 // whole round train nothing. Dropping it costs only the unknown skill.
-func attackerCandidates(c *characters.Character, result combat.AttackResult) []progression.Candidate {
+//
+// ⚠️ THE ROLL DOES NOT DISCRIMINATE BY SKILL, and this is a known limit rather
+// than an accident. calcAttackScore builds every swing's score from
+// characters.GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag for
+// every entry in the plan -- so an offhand fist's attack roll is centred on a
+// score containing WEAPON-combat's rank, not unarmed-combat's. Across a round's
+// entries the only things that actually vary are the per-weapon penalty and the
+// swing count, so which of two DIFFERENT skills trains is decided by the
+// dual-wield penalty rather than by either skill's own rank. Within one skill
+// (the common case, and every same-skill dual-wield) the max is exactly right.
+// Recorded for U10b-1b beside the melee/channel fumble divergence; the fix is
+// the same one, giving each candidate a roll built on its own skill.
+func attackerCandidates(c *characters.Character, result combat.AttackResult) ([]progression.Candidate, map[string]bool) {
 	order := make([]string, 0, len(result.WeaponHits))
 	bestRoll := make(map[string]float64, len(result.WeaponHits))
+	clean := make(map[string]bool, len(result.WeaponHits))
 
 	for _, wh := range result.WeaponHits {
 		// Drop unknown skills, not merely empty ones. GetSkillPrimaryStat
@@ -135,6 +166,12 @@ func attackerCandidates(c *characters.Character, result combat.AttackResult) []p
 		if skills.GetSkillPrimaryStat(wh.SkillTag) == "" {
 			continue
 		}
+		// A skill counts as having won the round if ANY of its entries clean-hit,
+		// mirroring how AttackResult.CleanHit aggregates across a weapon's
+		// swings. Two fists are one skill, so either landing is that skill
+		// landing.
+		clean[wh.SkillTag] = clean[wh.SkillTag] || wh.CleanHit
+
 		if _, seen := bestRoll[wh.SkillTag]; !seen {
 			order = append(order, wh.SkillTag)
 			bestRoll[wh.SkillTag] = wh.BestRoll
@@ -160,7 +197,7 @@ func attackerCandidates(c *characters.Character, result combat.AttackResult) []p
 			Level: c.GetSkillLevel(skills.SkillTag(skill)),
 		})
 	}
-	return cands
+	return cands, clean
 }
 
 // processDefenderProgression fires ONE skill-and-stat progression award for the
@@ -1266,6 +1303,16 @@ func handlePartyAutoAttack(mob *mobs.Mob, defUser *users.UserRecord) {
 // the round's candidate set is narrower on a loss than on a win, and it is why
 // a fully-defended surprise round still trains the weapon skill at the failure
 // fraction rather than training skullduggery.
+//
+// ⚠️ IT IS ALSO OUT-DRAWN BY CONSTRUCTION, which matters more than the scale
+// caveat below and was missing from an earlier draft. A weapon candidate's roll
+// is the MAX across that weapon's swings (1 to 4), while this is a single draw.
+// At equal scores that order statistic alone gives the weapon roughly 65% at
+// two swings and 80% at four. Measured against the scale effects together,
+// skullduggery needs to sit about four skill levels above the combat skill to
+// reach a coin flip. A dedicated ambusher clears that; a fighter who happened to
+// open from stealth does not, which is roughly the intended shape -- but it is a
+// property of the arithmetic rather than a decision anyone made.
 //
 // ⚠️ ITS ROLL IS SYNTHESISED, and it is the only one in the set that is.
 // Skullduggery is never rolled during a surprise attack -- crit_damage.go reads

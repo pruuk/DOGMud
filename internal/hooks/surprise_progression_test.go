@@ -35,9 +35,6 @@ import (
 //     UseSkillProgression gate, so the counter is a reliable "an ordinary
 //     event fired" observable.
 
-// surpriseWeaponHits builds N clean weapon-combat hits. Two entries are the
-// minimum needed to tell "awarded once per landed weapon" apart from "awarded
-// once for the round".
 // forceSkullduggeryToWinBestOf makes the surprise candidate beat any weapon
 // candidate with certainty.
 //
@@ -53,11 +50,26 @@ import (
 //
 // Skills is lazily allocated, so GetSkillLevel runs first to create the map --
 // assigning into it directly panics on a fresh character.
+//
+// This is RANK-RIGGING, not a plausible character. It is load-bearing only in
+// TestSurpriseFlag_SurvivesTheAggroDemotionToPhase5, which drives a real round;
+// elsewhere the hand-built fixtures leave WeaponHitInfo.BestRoll at 0 and
+// skullduggery wins unforced.
+//
+// ⚠️ It also inflates that round's ambush DAMAGE by about 100x, because
+// combat.OpeningStrikeMultiplier reads skullduggery as a LEVEL
+// (internal/combat/crit_damage.go:74). The test survives only because its
+// fixture mob has 100000 HP. Anyone lowering that HP will see this test die for
+// a reason that has nothing to do with progression.
 func forceSkullduggeryToWinBestOf(t *testing.T, c *characters.Character) {
 	t.Helper()
 	_ = c.GetSkillLevel(skills.Skullduggery)
 	c.Skills[string(skills.Skullduggery)] = 5000
 }
+
+// surpriseWeaponHits builds N clean weapon-combat hits. Two entries are the
+// minimum needed to tell "awarded once per landed weapon" apart from "awarded
+// once for the round".
 
 func surpriseWeaponHits(n int, clean bool) []combat.WeaponHitInfo {
 	hits := make([]combat.WeaponHitInfo, 0, n)

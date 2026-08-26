@@ -146,3 +146,47 @@ func TestSwingDefences_EmptyWhenTheDefenderHasNoDefence(t *testing.T) {
 		t.Errorf("%d SwingDefences on an UNCONTESTED round, want 0; an empty defence name is being appended and would displace a real candidate in the Best-of", len(res.SwingDefences))
 	}
 }
+
+// U10b-1 Task 11: calculateCombat must populate WeaponHitInfo.BestRoll.
+//
+// Without this test the whole combat.go half of Task 11 is unpinned: delete the
+// three lines that record BestRoll and every other test in the repo still
+// passes, because every roll silently becomes 0, every attacker Best-of falls
+// back to slice order, and the first hand slot wins every round. "The selector
+// is a roll that actually happened" is the load-bearing claim of that task, so
+// it needs a test that fails when it stops being true.
+//
+// Asserted as an INVARIANT rather than a pinned value. calculateCombat calls the
+// non-runner runBestOfAllDefense, so forcing a specific roll would need a new
+// package-level seam; but a real dice.Roll is a float centred on a positive
+// attack score and is essentially never exactly 0, so "non-zero on every entry"
+// holds for every outcome and needs no pin.
+func TestWeaponHits_BestRollIsPopulated(t *testing.T) {
+	atk, def := swingDefencePopulationCombatants()
+
+	sawRound := false
+	for i := 0; i < 20; i++ {
+		plan := buildAttackPlan(atk, def)
+		res := calculateCombat(atk, def, User, Mob, plan, combatContext{
+			sourceCanSee: true, targetCanSee: true,
+		})
+		if res.SwingsThrown == 0 {
+			continue
+		}
+		sawRound = true
+
+		if len(res.WeaponHits) == 0 {
+			t.Fatalf("round %d threw %d swings and recorded no WeaponHits", i, res.SwingsThrown)
+		}
+		for j, wh := range res.WeaponHits {
+			if wh.BestRoll == 0 {
+				t.Fatalf("round %d weapon %d (%s): BestRoll is 0 after %d swings; the attack roll is not being recorded, so the attacker Best-of would select on slice order",
+					i, j, wh.SkillTag, res.SwingsThrown)
+			}
+		}
+	}
+
+	if !sawRound {
+		t.Fatal("fixture never threw a swing; the assertions above never ran")
+	}
+}

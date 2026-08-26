@@ -15,8 +15,14 @@ const (
 	DefenseBlock DefenseType = "block"
 )
 
-// WeaponHitInfo tracks whether a specific weapon landed at least one hit
-// during a combat round, for per-weapon skill progression.
+// WeaponHitInfo tracks how a specific weapon fared across a combat round:
+// whether it landed, and how well it rolled.
+//
+// It carries one entry per HAND SLOT, not per swing, and not per skill --
+// collectAttackWeapons synthesises a fist for every empty hand and the
+// extra-arms mutation adds up to four more. U10b-1 Task 11 stopped treating an
+// entry as a unit of progression for exactly that reason; hooks.
+// attackerCandidates folds these into one candidate per SKILL.
 //
 // U6 Task 14: Hit means the weapon dealt damage on at least one swing, a
 // deflected swing included. CleanHit means at least one swing actually WON
@@ -44,9 +50,18 @@ type WeaponHitInfo struct {
 	// Comparability across weapons is the same qualified story as
 	// AttackResult.SwingDefences: each swing rolls with dice.StdDevFor of its
 	// OWN attack score, and calcAttackScore subtracts a per-weapon penalty, so
-	// two weapons' rolls are drawn with different spreads. Every roll is still
-	// centred on its own weapon's score, so no weapon is systematically
-	// favoured, which is all the selection needs.
+	// two weapons' rolls are drawn with different spreads. No weapon is
+	// systematically favoured BY THE CHOICE OF SCALE -- that qualifier is
+	// load-bearing and an earlier draft dropped it, leaving a sentence that was
+	// simply false. A lower-penalty weapon rolls with a higher MEAN and is
+	// favoured, which is intended: it is the weapon that swung better.
+	//
+	// ⚠️ What this canNOT do is discriminate between two different SKILLS on
+	// their own merits. calcAttackScore takes its skill term from
+	// characters.GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag
+	// for every entry in the plan, so an offhand fist rolls on a score built
+	// from WEAPON-combat's rank. See hooks.attackerCandidates; the fix is a
+	// U10b-1b item.
 	BestRoll float64
 }
 

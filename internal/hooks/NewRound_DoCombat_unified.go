@@ -645,9 +645,10 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 
 	// U9 made melee build a progression.Outcome and hand it to the seam, leaving
 	// the pre-U9 firing conditions alone. U10b-1 changed the firing conditions
-	// themselves: BOTH ordinary tiers now fire win or lose, the attacker's per
-	// weapon (Task 10) and the defender's once per round (Task 9). The BONUS
-	// tier below still fires only on an exceptional result.
+	// themselves: BOTH ordinary tiers now fire win or lose, and BOTH fire ONCE
+	// PER ROUND for a single Best-of winner -- the attacker's across the round's
+	// skills (Tasks 10 and 11), the defender's across its quoted defences
+	// (Task 9). The BONUS tier below still fires only on an exceptional result.
 	round := util.GetRoundCount()
 	bonuses := progression.Bonuses{
 		Doing:     float64(configs.GetBalanceConfig().CritProgressionBonus),
@@ -676,9 +677,11 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	// processDefenderProgression below.
 	processAttackerProgression(atkChar, atkUid, *res)
 
-	// ── Bonus tier: ONCE per round, OUTSIDE the weapon loop ─────────────
-	// Outside on purpose: the bonus tier is a property of the ROUND, not of a
-	// swing, so evaluating it inside the loop would pay it once per weapon.
+	// ── Bonus tier: ONCE per round ──────────────────────────────────────
+	// The bonus tier is a property of the ROUND, not of a swing. It used to sit
+	// outside a per-weapon loop for that reason; U10b-1 Task 11 removed the
+	// loop, so the hazard is now historical rather than structural. It is
+	// recorded because the reasoning still governs any future change here.
 	// An unarmed attacker is the worst case rather than an exempt one --
 	// collectAttackWeapons unconditionally supplies a fist for an empty main
 	// hand plus an offhand fist, so unarmed produces TWO entries and would

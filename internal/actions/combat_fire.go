@@ -493,13 +493,21 @@ func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 // a loss, which now pays ProgressionFailureFraction rather than nothing.
 //
 // ⚠️ BOTH ROLLS ARE SYNTHESISED, unlike the melee attacker contest, which
-// selects on the attack roll that actually happened. combat.SkillMoveResult
-// exposes margins but not its AttackRoll, and plumbing one out of the shared
-// ExecuteSkillMove seam -- used by bash, kick, trip, hamstring and the rest --
-// is wider than this task. Synthesising BOTH keeps the comparison internally
-// fair, which is what the selection needs, and is strictly better than mixing
-// one real roll with one synthetic one. Revisit if that seam ever exposes the
-// roll.
+// selects on the attack roll that actually happened.
+//
+// The reason is NOT that exposing the real roll would be a wide change -- an
+// earlier draft claimed that and it is false. combat.ChannelDefenceResult
+// already carries AttackRollZScore and is already returned to callers through
+// SkillMoveResult.Defence, so adding the raw value beside it would be one
+// struct field and one assignment, touching no signature and no other caller.
+//
+// The real reason is that with only TWO candidates, mixing one real roll
+// against one synthetic one is worse than two synthetic ones. Skullduggery is
+// never rolled during a surprise shot, so it can only ever be synthetic; a real
+// ranged-combat roll would then be compared against a bare stat-plus-skill draw
+// carrying none of the position, stamina or penalty modifiers a real attack
+// score does. Two draws of the same shape compare fairly, which is all the
+// SELECTION needs. Revisit if skullduggery ever gets a roll of its own.
 //
 // MOB ARCHERS TRAIN THIS TOO, and deliberately so. An earlier draft gated the
 // ranged-combat candidate on actor.IsPlayer() to preserve the gap left by
@@ -528,9 +536,6 @@ func awardFireProgression(actor Actor, surpriseShot, hit bool) {
 	// means "the approach worked", not "the approach was attempted".
 	if surpriseShot && hit {
 		cands = append(cands, char.CandidateFor(string(skills.Skullduggery)))
-	}
-	if len(cands) == 0 {
-		return
 	}
 	actor.AwardResolved(hit, cands...)
 }

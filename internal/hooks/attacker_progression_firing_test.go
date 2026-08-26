@@ -441,3 +441,100 @@ func TestAttackerAwardFixtureNamesRealSkills(t *testing.T) {
 		t.Errorf("%s primary stat = %q, want %q", attackerAwardSkill, got, attackerAwardStat)
 	}
 }
+
+// The award's weight follows the WINNING SKILL's own outcome, not the round's.
+//
+// This is the divergence the first draft of Task 11 had wrong. It passed
+// AttackResult.CleanHit -- "did anything land this round" -- so a one-handed
+// fighter whose empty offhand fist happened to land, while the sword itself
+// never won a contest, was paid FULL weight for weapon-combat. At the measured
+// rates that is roughly one round in four for that build.
+//
+// The weapon wins SELECTION here (a far higher roll) but did NOT clean-hit,
+// while the fist did. Full weight has to mean "you succeeded with THIS skill",
+// so the award must land at the fraction. Bracketed at fraction 0, where a
+// losing award advances nothing while still being MADE -- the use counter
+// proves it fired.
+func TestProcessAttackerProgression_WeightFollowsTheWinningSkillNotTheRound(t *testing.T) {
+	pinCertainAttackerProgressionForTest(t, 0.0)
+
+	c := characters.New()
+	requireCertainAttackerAward(t, c)
+
+	weapon := weaponSwing(attackerAwardSkill, true, false) // rolled best, did NOT clean-hit
+	weapon.BestRoll = 900
+	fist := weaponSwing(attackerUnarmedSkill, true, true) // clean-hit, but out-rolled
+	fist.BestRoll = 100
+
+	before := c.Skills[attackerAwardSkill]
+	processAttackerProgression(c, 89, combat.AttackResult{
+		Hit:          true,
+		CleanHit:     true, // the ROUND landed, via the fist
+		SwingsThrown: 4,
+		WeaponHits:   []combat.WeaponHitInfo{weapon, fist},
+	})
+
+	if got := c.GetSkillUseCount(attackerAwardSkill); got != 1 {
+		t.Fatalf("%s use count = %d, want 1; it out-rolled and must take the round's award", attackerAwardSkill, got)
+	}
+	if got := c.Skills[attackerAwardSkill] - before; got != 0 {
+		t.Errorf("%s advanced by %d at failure fraction 0, want 0; the winning skill never clean-hit, so its award is a LOSS even though the round landed", attackerAwardSkill, got)
+	}
+}
+
+// The mirror: when the winning skill DID clean-hit, the award is full weight.
+// Without this, an implementation that always reported a loss would pass the
+// test above.
+func TestProcessAttackerProgression_TheWinningSkillsOwnCleanHitPaysFull(t *testing.T) {
+	pinCertainAttackerProgressionForTest(t, 0.0)
+
+	c := characters.New()
+	requireCertainAttackerAward(t, c)
+
+	weapon := weaponSwing(attackerAwardSkill, true, true) // rolled best AND clean-hit
+	weapon.BestRoll = 900
+	fist := weaponSwing(attackerUnarmedSkill, true, false)
+	fist.BestRoll = 100
+
+	before := c.Skills[attackerAwardSkill]
+	processAttackerProgression(c, 90, combat.AttackResult{
+		Hit:          true,
+		CleanHit:     true,
+		SwingsThrown: 4,
+		WeaponHits:   []combat.WeaponHitInfo{weapon, fist},
+	})
+
+	if got := c.Skills[attackerAwardSkill] - before; got != 1 {
+		t.Errorf("%s advanced by %d, want 1; the winning skill clean-hit, so the award is full weight and certain", attackerAwardSkill, got)
+	}
+}
+
+// Two entries of the SAME skill: either landing counts as that skill landing.
+//
+// Pins the `clean[tag] || wh.CleanHit` aggregation. A dual-wielder whose
+// offhand landed while the mainhand missed has still succeeded with
+// weapon-combat, exactly as AttackResult.CleanHit aggregates across one
+// weapon's swings.
+func TestProcessAttackerProgression_EitherEntryOfASkillCountsAsThatSkillLanding(t *testing.T) {
+	pinCertainAttackerProgressionForTest(t, 0.0)
+
+	c := characters.New()
+	requireCertainAttackerAward(t, c)
+
+	main := weaponSwing(attackerAwardSkill, true, false) // rolled best, missed
+	main.BestRoll = 900
+	off := weaponSwing(attackerAwardSkill, true, true) // same skill, landed
+	off.BestRoll = 100
+
+	before := c.Skills[attackerAwardSkill]
+	processAttackerProgression(c, 91, combat.AttackResult{
+		Hit:          true,
+		CleanHit:     true,
+		SwingsThrown: 4,
+		WeaponHits:   []combat.WeaponHitInfo{main, off},
+	})
+
+	if got := c.Skills[attackerAwardSkill] - before; got != 1 {
+		t.Errorf("%s advanced by %d, want 1; one entry of the skill clean-hit, so the skill landed", attackerAwardSkill, got)
+	}
+}
