@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give progression one firing rule (one event per resolved roll, a loss pays a fraction, crit and fumble stay a bonus layer), move the last 15 uncertain outcomes onto the contest core, and delete three pieces of dead progression machinery.
+**Goal:** Give progression one firing rule (one event per resolved command, a loss pays a fraction, crit and fumble stay a bonus layer), wire that rule into every path that awards, move the last uncertain outcomes onto the contest core, and delete three pieces of dead progression machinery.
 
-**Architecture:** The U9 seam (`internal/progression`) already carries per-side ordinary events plus a single `Exceptional` bonus enum. It deliberately deferred WHEN an event fires to each call site. This plan replaces "the call site's existing rules" with one rule, expressed as a `Multiplier` on the ordinary event, and gives `contest.AgainstDifficulty` its first production callers. Craft and salvage need a difficulty basis designed rather than migrated, because they are flat percentages today.
+**Architecture:** The U9 seam (`internal/progression`) already carries per-side ordinary events plus a single `Exceptional` bonus enum, and deliberately deferred WHEN an event fires to each call site. This plan replaces "the call site's existing rules" with one rule, expressed as a `Multiplier` on the ordinary event. Craft and salvage get a designed difficulty basis; everything else keeps its numbers except where the spec says otherwise.
 
-**Tech Stack:** Go 1.x, `internal/contest`, `internal/combat`, `internal/progression`, `internal/characters`, `internal/configs`, YAML data under `_datafiles/`.
+**Tech Stack:** Go, `internal/contest`, `internal/combat`, `internal/progression`, `internal/characters`, `internal/crafting`, `internal/configs`, YAML under `_datafiles/`.
 
 **Spec:** `docs/superpowers/specs/2026-08-26-u10b-1-progression-firing-convention-design.md`
 
@@ -14,69 +14,94 @@
 
 ## Read this before Task 1
 
-Three facts that will otherwise cost you a day each.
+This plan is a rewrite. The previous version failed a three-lens blind adversarial review. These are the findings that killed it; do not reintroduce them.
 
-1. **`contest.Result.Success` means the ATTACKER won.** It is NOT safe to read
-   `!res.Success` as "the defender won": under `side.ForceCrit` (a sleeping
-   victim) the attack wins with `Success == false`. Always gate on
-   `out.Defended`. A mirrored test fake will pass either way, so this bug does
-   not surface in tests.
-2. **`contest.Run` rolls the difficulty side too**, using a `stdDev` derived
-   from the ATTACKER's score. Success therefore depends on the RATIO of
-   difficulty to score, never on the gap. Every formula in this plan is a ratio
-   for that reason.
-3. **`OnSkillUseScaled` rolls the skill's primary stat at an unscaled 1.0.**
-   Passing a fraction through it damps the skill and leaves the stat at full
-   rate. Task 4 exists to fix this; do not skip it and thread a multiplier
-   through the existing call.
+1. **The seam is not the feature.** The previous plan converted fifteen roll sites and never applied the firing rule to any of them, and added `Outcome.Defended` without populating it in production. Phase B and the "award under the rule" steps in Phase C are the actual deliverable. If a failed craft still teaches nothing at the end, the slice failed no matter how green the build is.
+2. **`contest.Result.Success` means the ATTACKER won.** `!res.Success` is NOT "the defender won": under `side.ForceCrit` (a sleeping victim) the attack wins with `Success == false`. Gate on `Defended`. A mirrored test fake passes either way, so this bug does not surface in tests.
+3. **`contest.AgainstDifficulty` and `contest.Run` apply NO floor.** `combat.RunContest` is the only place `ContestFloor` is read, and its doc comment forbids routing static-difficulty rolls through it. Craft and salvage therefore call `contest.RunWithFloors` directly with their own floor.
+4. **Both `AgainstDifficulty` and `RunWithFloors` are on the root guard's watch list**, and every contest site must be owned. Each conversion adds its `guardedRollExemptions` and `contestSiteOwners` entries **in the same step**, or the build breaks several commits later.
+5. **`repoRootForTest` is package-local.** It exists only in `internal/combat`. Go has no cross-package test helpers. Task 1 creates one per package that needs it.
+6. **`OnSkillUseScaled` rolls the primary stat at an unscaled 1.0**, and separately grants mutation cluster drift and emits the `SkillUsed` quest event at full weight. Tasks 4 and 5 fix all three.
+
+### Floor semantics, exactly
+
+`RunWithFloors` flips the outcome with probability `f` on **every** call, not only at the extremes:
+
+```
+P' = P(1-f) + (1-P)f = P + f(1 - 2P)
+```
+
+So `P'` spans `[f, 1-f]`, and `P' == P` at `P = 0.5`. With `CraftFloor 0.05` the extremes land exactly on today's `[5%, 95%]` clamp. The mid-range additionally compresses by `(1 - 2f)`: a true 80% reads as 77%. **Do not describe this as identical to the old clamp.** The extremes match; the interior is smoothed.
+
+A floored result sets `res.Floored`, and `BonusEvents` returns nothing when `Floored` is set, so a floored craft awards its ordinary event and no crit or fumble bonus. That is correct and intended.
 
 ## File structure
 
 | File | Responsibility | Task |
 |---|---|---|
-| `internal/configs/config.balance.go` | Declare `ProgressionFailureFraction`, the craft difficulty knobs, and the material tier thresholds | 3, 10, 11 |
-| `internal/configs/config.balance.progression.go` | Default and validate the progression knob with a sentinel | 3 |
-| `internal/configs/config.balance.shops.go` | Default and validate the craft/material knobs | 10, 11 |
-| `internal/characters/progression.go` | Add `OnStatUseScaled`; make the stat half of an ordinary event honour `Multiplier`; delete `OnFirstMobKill` | 4, 16 |
-| `internal/progression/event.go` | `Outcome` gains `Defended`; `OrdinaryEvents` scales the losing side | 5 |
-| `internal/actions/search.go` | Six threshold checks onto the core; hidden detection reads the hider's score | 6, 7 |
-| `internal/actions/track.go` | One threshold check onto the core | 8 |
-| `internal/forager/forage_core.go` | One threshold check onto the core | 9 |
-| `internal/items/tier.go` (new) | Map an item's gold value to a material tier multiplier | 10 |
-| `internal/crafting/crafting.go` | Craft difficulty and score, replacing `CalcSuccessChance` | 11 |
-| `internal/crafting/salvage.go` | Salvage difficulty per ingredient unit | 12 |
-| `internal/usercommands/go.go` | Delete the stranded mob-follow roll | 15 |
-| `internal/progression/seam_guard_test.go` | The guard that keeps new sites on the seam | 2, 18 |
+| `internal/*/testsupport_test.go` (several) | Package-local `repoRootForTest` | 1 |
+| `internal/combat/contest_site_guard_test.go` | The AST walker, fixed | 2 |
+| `internal/configs/config.balance.go` + siblings | `ProgressionFailureFraction`, `CraftFloor`, `SalvageFloor`, craft and material knobs | 3, 12, 14, 16 |
+| `internal/characters/progression.go` | `OnStatUseScaled`, scaled side effects, delete `OnFirstMobKill` | 4, 5, 20 |
+| `internal/progression/event.go` | `Outcome.Defended`, `OrdinaryEventsScaled` | 6 |
+| `internal/combat/defence_multiplier.go` | Populate `Defended` on the channel path; stale comments | 7, 21 |
+| `internal/hooks/NewRound_DoCombat_unified.go` | Populate `Defended` on the melee path | 7 |
+| `internal/actions/search.go` | Four difficulty checks, two opposed checks, one award | 8, 9, 10 |
+| `internal/actions/track.go`, `internal/forager/forage_core.go` | Convert and award | 11 |
+| `internal/items/material_tier.go` (new) | Authored tier to multiplier | 12 |
+| `internal/crafting/crafting.go` | Deterministic ingredient selection, craft score and difficulty | 13, 14 |
+| `internal/crafting/salvage.go` | Salvage difficulty and floor | 16 |
+| `internal/usercommands/go.go` | Delete the stranded mob-follow roll | 19 |
+| `internal/progression/seam_guard_test.go` | The standing guard | 22 |
 
 ---
 
-## Task 1: Freeze the site census as a test fixture
+# Phase A: foundations
 
-Everything after this depends on the site list being right. The 2026-08-19
-audit is stale and the 2026-08-21 plan under-counted. Establish the truth once,
-in a form that fails when it drifts.
+## Task 1: Package-local `repoRootForTest`, and the census fixture
+
+`repoRootForTest` exists once, unexported, in `internal/combat`. Eight other packages need it. Go has no cross-package test helpers, so each gets its own copy.
 
 **Files:**
+- Create: `internal/progression/testsupport_test.go`
+- Create: `internal/actions/testsupport_test.go`
+- Create: `internal/forager/testsupport_test.go`
+- Create: `internal/hooks/testsupport_test.go`
+- Create: `internal/usercommands/testsupport_test.go`
+- Create: `internal/crafting/testsupport_test.go`
+- Create: `internal/configs/testsupport_test.go`
+- Create: `internal/items/testsupport_test.go`
 - Create: `internal/progression/census_test.go`
 
-- [ ] **Step 1: Write the failing test**
+**Use the same name, `repoRootForTest`, in every package.** They are separate
+package-local helpers, so the name cannot collide across packages, and one name
+means later tasks never have to remember which variant a package has.
+`internal/combat` already has one; do not add a second there.
+
+- [ ] **Step 1: Write the helper, once per package**
+
+Identical body in each file, with the package clause changed to match. For
+`internal/progression/testsupport_test.go`:
 
 ```go
 package progression_test
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
-// repoRoot resolves the repository root from this file's own location.
-// Test binaries do NOT reliably start in the package directory: all tests
-// share one binary, so a relative path passes or fails depending on which
-// package ran first. Anchor on runtime.Caller instead.
-func repoRoot(t *testing.T) string {
+// repoRootForTest resolves the repository root from this file's own location.
+//
+// Test binaries do NOT reliably start in the package directory: all tests share
+// one binary, so a relative path passes or fails depending on which package ran
+// first. Anchor on runtime.Caller instead.
+//
+// Duplicated per package on purpose. Go test helpers are not visible across
+// packages, and the alternative (an exported helper in a non-test file) would
+// ship test-only code in the binary.
+func repoRootForTest(t *testing.T) string {
 	t.Helper()
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
@@ -84,13 +109,35 @@ func repoRoot(t *testing.T) string {
 	}
 	return filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..", ".."))
 }
+```
+
+For the other five files use `package actions`, `package forager`, `package hooks`,
+`package usercommands`, `package crafting` respectively. **Check each package's
+existing `_test.go` files first** and match whatever clause they already use
+(`x` or `x_test`), or the file will not compile alongside them.
+
+- [ ] **Step 2: Write the census test**
+
+```go
+package progression_test
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
 
 // TestProgressionEntryPointCensus pins how many production call sites reach
-// progression, so that adding one without classifying it fails here.
+// progression, so adding one without classifying it against spec section 3.1
+// fails here.
+//
+// This number MOVES during this slice. Tasks that change it say so and update
+// it in the same commit.
 func TestProgressionEntryPointCensus(t *testing.T) {
-	root := repoRoot(t)
+	root := repoRootForTest(t)
 	entryPoints := []string{
-		"OnSkillUseScaled(", "OnSkillUse(", "OnStatUse(",
+		"OnSkillUseScaled(", "OnSkillUse(", "OnStatUse(", "OnStatUseScaled(",
 		"CheckSkillProgression(", "CheckStatProgression(",
 		"OnCritReceived(", "TrackSkillUse(", "TrackStatUse(",
 		"OnRegenTick(", "CheckRegenProgression(",
@@ -112,8 +159,7 @@ func TestProgressionEntryPointCensus(t *testing.T) {
 					return err
 				}
 				for _, line := range strings.Split(string(b), "\n") {
-					trimmed := strings.TrimSpace(line)
-					if strings.HasPrefix(trimmed, "//") {
+					if strings.HasPrefix(strings.TrimSpace(line), "//") {
 						continue
 					}
 					for _, ep := range entryPoints {
@@ -127,41 +173,44 @@ func TestProgressionEntryPointCensus(t *testing.T) {
 		}
 	}
 
-	const want = 0 // replaced in Step 3 with the measured number
+	const want = 0 // replaced in Step 4 with the measured number
 	if count != want {
 		t.Fatalf("progression entry-point call sites = %d, want %d.\n"+
-			"If you added a site deliberately, classify it in the spec's "+
-			"section 3.1 table and update this number in the same commit.",
+			"If you added a site deliberately, classify it against spec "+
+			"section 3.1 and update this number in the same commit.",
 			count, want)
 	}
 }
 ```
 
-- [ ] **Step 2: Run it to see the real number**
+- [ ] **Step 3: Run it to learn the real number**
 
 Run: `go test ./internal/progression/ -run TestProgressionEntryPointCensus -v`
-Expected: FAIL, reporting the actual count. Record that number.
+Expected: FAIL, reporting the actual count. Record it.
 
-- [ ] **Step 3: Set `want` to the measured number and re-run**
-
-Replace `const want = 0` with the count from Step 2.
+- [ ] **Step 4: Set `want` and re-run**
 
 Run: `go test ./internal/progression/ -run TestProgressionEntryPointCensus -v`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Verify every new helper compiles**
+
+Run: `go test ./internal/progression/ ./internal/actions/ ./internal/forager/ ./internal/hooks/ ./internal/usercommands/ ./internal/crafting/ ./internal/configs/ ./internal/items/ 2>&1 | grep -v "^ok"`
+Expected: no output. A redeclaration error here means that package already had
+a `repoRootForTest`; delete your copy rather than renaming it.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add internal/progression/census_test.go
-git commit -m "test(u10b-1): pin the progression entry-point census"
+git add internal/progression/ internal/actions/testsupport_test.go internal/forager/testsupport_test.go internal/hooks/testsupport_test.go internal/usercommands/testsupport_test.go internal/crafting/testsupport_test.go
+git commit -m "test(u10b-1): package-local repoRootForTest and the progression census"
 ```
 
 ---
 
-## Task 2: Fix the guard's AST helper before trusting any guard
+## Task 2: Make the contest-site guard walker see chained calls
 
-**The existing helper cannot fail for the bug it names.** In
-`internal/combat/contest_site_guard_test.go` the walker does:
+`internal/combat/contest_site_guard_test.go`'s walker does:
 
 ```go
 case *ast.SelectorExpr:
@@ -172,27 +221,33 @@ case *ast.SelectorExpr:
 	}
 ```
 
-`x.Character.OnStatUse(...)` is a **selector on a selector**, so `v.X` is an
-`*ast.SelectorExpr`, not an `*ast.Ident`, and the walker bails. That is the
-dominant call shape in this codebase. A guard built on this helper ships green
-and enforces nothing.
+It records **package-qualified** calls, where `v.X` is an `*ast.Ident`. That is
+correct for `contest.AgainstDifficulty`. It is blind to
+`x.Character.OnStatUse(...)`, a selector on a selector, which is the dominant
+progression call shape and which Task 22's guard must see.
+
+⚠️ **Do not make the walker match on tail name alone.** That would turn every
+`foo.Run(...)` under `internal/` into a "contest site" and bury the engineer in
+false positives. Add a *separate* recogniser for the chained shape and leave the
+package-qualified path exactly as it is.
 
 **Files:**
 - Modify: `internal/combat/contest_site_guard_test.go`
 
-- [ ] **Step 1: Write a test that proves the helper is blind**
+- [ ] **Step 1: Write a test that proves the blindness, on the REAL walker**
 
 ```go
-// TestSelectorWalkerSeesChainedCalls pins the bug fixed in U10b-1: the walker
-// used to bail on x.Character.OnStatUse(...) because v.X is a SelectorExpr
-// rather than an Ident, which is the dominant call shape in this repo. A guard
-// built on the old helper passed while enforcing nothing.
-func TestSelectorWalkerSeesChainedCalls(t *testing.T) {
+// TestWalkerSeesChainedMethodCalls pins the gap fixed in U10b-1. The
+// package-qualified path (contest.AgainstDifficulty) was always recorded; a
+// method reached through a field (x.Character.OnStatUse) was not, because the
+// walker asserted v.X was an *ast.Ident and bailed otherwise. Task 22's guard
+// needs the chained shape.
+func TestWalkerSeesChainedMethodCalls(t *testing.T) {
 	src := `package p
-type c struct{}
-func (c) OnStatUse(s string, i int) bool { return false }
-type x struct{ Character c }
-func f(v x) { v.Character.OnStatUse("dexterity", 1) }
+func f(v x) {
+	contest.AgainstDifficulty(1, 2)
+	v.Character.OnStatUse("dexterity", 1)
+}
 `
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "p.go", src, 0)
@@ -200,98 +255,137 @@ func f(v x) { v.Character.OnStatUse("dexterity", 1) }
 		t.Fatal(err)
 	}
 
-	found := false
-	ast.Inspect(file, func(n ast.Node) bool {
-		sel, ok := n.(*ast.SelectorExpr)
-		if !ok {
-			return true
-		}
-		if selectorTail(sel) == "OnStatUse" {
-			found = true
-		}
-		return true
-	})
+	got := map[string]bool{}
+	for _, name := range collectQualifiedCalls(file) {
+		got[name] = true
+	}
+	for _, name := range collectChainedMethodCalls(file) {
+		got[name] = true
+	}
 
-	if !found {
-		t.Fatal("walker did not see v.Character.OnStatUse; the guard is blind " +
-			"to chained selectors and enforces nothing")
+	if !got["contest.AgainstDifficulty"] {
+		t.Error("lost the package-qualified shape; that path must not change")
+	}
+	if !got["OnStatUse"] {
+		t.Error("walker is blind to v.Character.OnStatUse: a guard built on it " +
+			"ships green while enforcing nothing")
 	}
 }
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [ ] **Step 2: Run to verify it fails**
 
-Run: `go test ./internal/combat/ -run TestSelectorWalkerSeesChainedCalls -v`
-Expected: FAIL with "undefined: selectorTail"
+Run: `go test ./internal/combat/ -run TestWalkerSeesChainedMethodCalls -v`
+Expected: FAIL with "undefined: collectQualifiedCalls" (and `collectChainedMethodCalls`)
 
-- [ ] **Step 3: Add the helper**
+- [ ] **Step 3: Add the two recognisers**
 
 ```go
-// selectorTail returns the final selector name in a chain, so that both
-// pkg.Fn(...) and a.b.c.Fn(...) report "Fn". The previous code asserted
-// v.X was an *ast.Ident and gave up otherwise, which silently excluded
-// every method call reached through a field.
-func selectorTail(sel *ast.SelectorExpr) string {
-	if sel == nil || sel.Sel == nil {
-		return ""
-	}
-	return sel.Sel.Name
+// collectQualifiedCalls returns pkg.Fn names for package-qualified calls only.
+// This is the existing behaviour, extracted so the chained recogniser below can
+// sit beside it without changing it.
+func collectQualifiedCalls(node ast.Node) []string {
+	var out []string
+	ast.Inspect(node, func(n ast.Node) bool {
+		sel, ok := n.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		pkg, ok := sel.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		out = append(out, pkg.Name+"."+sel.Sel.Name)
+		return true
+	})
+	return out
+}
+
+// collectChainedMethodCalls returns the tail name of calls reached through a
+// field, such as v.Character.OnStatUse -> "OnStatUse".
+//
+// Deliberately separate from collectQualifiedCalls: matching on tail name alone
+// across the whole tree would classify every foo.Run(...) as a contest site.
+// Callers pair this with an explicit name set of what they are looking for.
+func collectChainedMethodCalls(node ast.Node) []string {
+	var out []string
+	ast.Inspect(node, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		if _, isIdent := sel.X.(*ast.Ident); isIdent {
+			return true // package-qualified; the other collector owns it
+		}
+		out = append(out, sel.Sel.Name)
+		return true
+	})
+	return out
 }
 ```
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `go test ./internal/combat/ -run TestSelectorWalkerSeesChainedCalls -v`
+Run: `go test ./internal/combat/ -run TestWalkerSeesChainedMethodCalls -v`
 Expected: PASS
 
-- [ ] **Step 5: Rewrite the existing walker to use it**
+- [ ] **Step 5: Confirm the existing guards are untouched**
 
-Replace the `pkg, ok := v.X.(*ast.Ident); if !ok { return true }` bail in the
-existing `inspect` closure so that the chained shape is recorded. Keep the
-`consumed[v.Sel] = true` line: it still prevents an ident consumed as a
-selector tail from also counting as a bare reference.
+Run: `go test ./internal/combat/ -run "TestEveryContestSiteIsOwned|TestEveryChannelUsesUniformDefenceSkillWeight|TestNoLegacySkillWeightLiteralSurvives" -v`
+Expected: PASS, all three, unchanged.
 
-- [ ] **Step 6: Run the whole guard package**
+⚠️ Use these exact names. `-run Guard` matches none of them and prints
+`no tests to run`, which reads as success.
 
-Run: `go test ./internal/combat/ -run Guard -v`
-Expected: PASS. If a previously-green guard now FAILS, that is the point of
-this task: it was blind. Record which sites it newly sees, and do not silence
-it; those sites are real work for Task 18.
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add internal/combat/contest_site_guard_test.go
-git commit -m "test(u10b-1): guard walker must see chained selector calls"
+git commit -m "test(u10b-1): recognise chained method calls without breaking qualified ones"
 ```
 
 ---
 
-## Task 3: The `ProgressionFailureFraction` knob, with a sentinel default
+## Task 3: `ProgressionFailureFraction`, with a pre-unmarshal sentinel
 
-An absent YAML key unmarshals to `0`, which is a legal value for a fraction. The
-usual idiom in this file therefore cannot default it, and the knob would ship at
-zero with failure paying nothing and the whole slice looking inert.
+An absent YAML key unmarshals to `0`, which is a **legal** value for this knob
+(an explicit off-switch). The usual `if x < 0 || x > 1.0` guard can therefore
+never distinguish "unset" from "deliberately zero", and the knob would ship at
+zero with failure paying nothing.
 
 **Files:**
 - Modify: `internal/configs/config.balance.go`
 - Modify: `internal/configs/config.balance.progression.go`
+- Modify: `internal/configs/configs.go` (the pre-unmarshal construction point)
 - Modify: `_datafiles/config.yaml`
-- Test: `internal/configs/progression_failure_fraction_test.go` (create)
+- Create: `internal/configs/progression_failure_fraction_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Find the pre-unmarshal construction point**
+
+Run: `grep -n "tmpConfigData\|Config{}" internal/configs/configs.go | head`
+
+`ReloadConfig` builds a fresh `Config{}` before unmarshalling. That is where the
+sentinel is seeded. Note its line number; Step 4 edits it.
+
+- [ ] **Step 2: Write the failing tests**
 
 ```go
 package configs
 
-import "testing"
+import (
+	"testing"
 
-// loadBalanceYAML seeds the sentinel exactly as production loading must, then
-// unmarshals. The seeding is the whole mechanism: after unmarshal, -1 means the
-// key was ABSENT and any value in [0,1] means it was PRESENT. Without it, an
-// absent key and an explicit 0 are indistinguishable and the two tests below
-// cannot both pass.
-func loadBalanceYAML(t *testing.T, doc string) Balance {
+	"gopkg.in/yaml.v2"
+)
+
+// seedAndLoad mirrors what ReloadConfig must do: seed the sentinel BEFORE
+// unmarshal, so that afterwards -1 means the key was absent and any value in
+// [0,1] means it was present.
+func seedAndLoad(t *testing.T, doc string) Balance {
 	t.Helper()
 	b := Balance{ProgressionFailureFraction: -1}
 	if err := yaml.Unmarshal([]byte(doc), &b); err != nil {
@@ -301,35 +395,46 @@ func loadBalanceYAML(t *testing.T, doc string) Balance {
 	return b
 }
 
-// TestProgressionFailureFractionDefaultsWhenAbsent pins the trap: an absent
-// YAML key unmarshals to 0, which is a LEGAL value for this knob, so the
-// codebase's usual `if x < 0 || x > 1.0 { x = default }` guard can never fire.
 func TestProgressionFailureFractionDefaultsWhenAbsent(t *testing.T) {
-	b := loadBalanceYAML(t, "RollSpread: 0.15\n") // key deliberately absent
-
+	b := seedAndLoad(t, "RollSpread: 0.15\n")
 	if got := float64(b.ProgressionFailureFraction); got != 0.35 {
-		t.Fatalf("ProgressionFailureFraction with the key ABSENT = %v, want 0.35", got)
+		t.Fatalf("with the key ABSENT = %v, want 0.35", got)
 	}
 }
 
-// TestProgressionFailureFractionZeroIsHonoured pins the other half: an
-// EXPLICIT 0 must survive validation, because turning the failure award off is
-// a legitimate configuration. The sentinel is what makes this expressible.
 func TestProgressionFailureFractionZeroIsHonoured(t *testing.T) {
-	b := loadBalanceYAML(t, "ProgressionFailureFraction: 0\n")
-
+	b := seedAndLoad(t, "ProgressionFailureFraction: 0\n")
 	if got := float64(b.ProgressionFailureFraction); got != 0 {
-		t.Fatalf("explicit 0 became %v; an explicit off-switch must be honoured", got)
+		t.Fatalf("explicit 0 became %v; the off-switch must be honoured", got)
+	}
+}
+
+// TestReloadConfigSeedsTheSentinel is the one that actually proves production
+// is wired. The two tests above only prove Validate() behaves correctly given a
+// seeded struct; without this, both pass while ReloadConfig never seeds and the
+// knob ships inert.
+func TestReloadConfigSeedsTheSentinel(t *testing.T) {
+	root := repoRootForTest(t)
+	b, err := os.ReadFile(filepath.Join(root, "internal", "configs", "configs.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), "ProgressionFailureFraction: -1") {
+		t.Fatal("ReloadConfig does not seed the ProgressionFailureFraction " +
+			"sentinel before unmarshal, so an absent key is indistinguishable " +
+			"from an explicit 0 and the knob ships inert")
 	}
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+Task 1 created this package's copy.
 
-Run: `go test ./internal/configs/ -run ProgressionFailureFraction -v`
-Expected: FAIL with "b.ProgressionFailureFraction undefined"
+- [ ] **Step 3: Run to verify all three fail**
 
-- [ ] **Step 3: Declare the field with a sentinel**
+Run: `go test ./internal/configs/ -run ProgressionFailureFraction -v; go test ./internal/configs/ -run TestReloadConfigSeedsTheSentinel -v`
+Expected: FAIL, "b.ProgressionFailureFraction undefined"
+
+- [ ] **Step 4: Declare, seed, default**
 
 In `config.balance.go`, beside `CritProgressionBonus`:
 
@@ -337,109 +442,112 @@ In `config.balance.go`, beside `CritProgressionBonus`:
 // ProgressionFailureFraction is the share of an ordinary progression event a
 // RESOLVED LOSS earns. A win pays 1.0.
 //
-// Declared with a sentinel default of -1 rather than defaulted in place,
-// because 0 is a legal value here (an explicit off-switch) and an ABSENT yaml
-// key also unmarshals to 0. The usual `if x < 0 || x > 1.0` guard in this
-// package therefore cannot tell "unset" from "deliberately zero", and the knob
-// would ship inert. See the U10b-1 spec section 5.6.
+// Uses a -1 "unset" sentinel seeded before unmarshal, because 0 is a legal
+// value here (an explicit off-switch) and an ABSENT yaml key also unmarshals to
+// 0. The usual `if x < 0 || x > 1.0` guard cannot tell them apart, so without
+// the sentinel this knob ships inert. See the U10b-1 spec section 5.6.
 ProgressionFailureFraction ConfigFloat `yaml:"ProgressionFailureFraction"`
 ```
 
-- [ ] **Step 4: Default it in `validateProgression()`**
+In `configs.go`, at the construction point from Step 1:
 
 ```go
-// -1 is the "unset" sentinel; see the field's doc comment. Anything in
-// [0, 1] is taken at face value, including an explicit 0.
+tmpConfigData := Config{}
+// U10b-1: 0 is a legal value for this knob, so an absent key must arrive as
+// something else. See the field's doc comment.
+tmpConfigData.GamePlay.Balance.ProgressionFailureFraction = -1
+```
+
+Adjust the field path to match the real struct nesting.
+
+In `validateProgression()`:
+
+```go
+// -1 is the "unset" sentinel seeded by ReloadConfig. Anything in [0,1] is
+// taken at face value, including an explicit 0.
 if b.ProgressionFailureFraction < 0 || b.ProgressionFailureFraction > 1.0 {
 	b.ProgressionFailureFraction = 0.35
 }
 ```
 
-**Seed the sentinel before unmarshal, or none of this works.** Find where the
-package constructs a `Balance` prior to `yaml.Unmarshal` and set
-`ProgressionFailureFraction: -1` there. After unmarshal, `-1` means the key was
-absent and anything in `[0,1]` means it was present, which is the only way an
-explicit `0` can be told apart from a missing key.
+- [ ] **Step 5: Run to verify all three pass**
 
-If the package has no pre-unmarshal construction point, add one; do not settle
-for defaulting a zero value, because that silently discards the off-switch. The
-two tests in Step 1 fail if you get this wrong: they are written so that they
-cannot both pass without a real sentinel.
-
-- [ ] **Step 5: Run to verify it passes**
-
-Run: `go test ./internal/configs/ -run ProgressionFailureFraction -v`
-Expected: PASS (both tests)
+Run: `go test ./internal/configs/ -v`
+Expected: PASS
 
 - [ ] **Step 6: Add the knob to `_datafiles/config.yaml`**
-
-Next to `CritProgressionBonus`:
 
 ```yaml
   ProgressionFailureFraction: 0.35   # Share of an event a resolved LOSS earns
 ```
 
+⚠️ `_datafiles/config.yaml` has `skip-worktree` set. Do not `git add` it from
+disk in this or any later task; build the committed version from the
+`git show HEAD:` blob per CLAUDE.md, or the commit will carry unrelated local
+drift.
+
 - [ ] **Step 7: Commit**
 
 ```bash
-git add internal/configs/config.balance.go internal/configs/config.balance.progression.go internal/configs/progression_failure_fraction_test.go _datafiles/config.yaml
+git add internal/configs/
 git commit -m "feat(u10b-1): ProgressionFailureFraction, defaulted past the zero-key trap"
 ```
 
 ---
 
-## Task 4: A scaled stat entry point
-
-`OnSkillUseScaled` rolls the skill's primary stat at a hardcoded `1.0`, and
-`OnStatUse` hardcodes `1.0` into `CheckStatProgression`. The owner ruled that
-skill and stat both take the failure fraction, so both need a scaled path.
+## Task 4: `OnStatUseScaled`, so the stat half honours the multiplier
 
 **Files:**
 - Modify: `internal/characters/progression.go`
-- Test: `internal/characters/progression_scaled_test.go` (create)
+- Create: `internal/characters/progression_scaled_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
 package characters
 
-import "testing"
+import (
+	"testing"
 
-// TestOnStatUseScaledPassesMultiplier pins that the stat half of an ordinary
+	"github.com/GoMudEngine/GoMud/internal/configs"
+)
+
+// TestOnStatUseScaledRespectsMultiplier pins that the stat half of an ordinary
 // progression event honours the event's Multiplier. Before U10b-1 a resolved
-// LOSS paid a fractional skill roll and a FULL stat roll, because both
-// OnStatUse and OnSkillUseScaled's internal stat call hardcoded 1.0.
-func TestOnStatUseScaledPassesMultiplier(t *testing.T) {
-	c := newProgressionTestCharacter(t)
+// LOSS paid a fractional skill roll and a FULL stat roll, because OnStatUse
+// hardcoded 1.0 into CheckStatProgression.
+func TestOnStatUseScaledRespectsMultiplier(t *testing.T) {
+	configs.SetConfigForTest(t)
 
-	var gotMultiplier float64
-	restore := stubCheckStatProgression(func(_ string, _ int, m float64) bool {
-		gotMultiplier = m
-		return false
-	})
-	defer restore()
+	const trials = 600
 
-	c.OnStatUseScaled("dexterity", 0, 0.35)
+	zero := newProgressionTestCharacter(t)
+	full := newProgressionTestCharacter(t)
+	for i := 0; i < trials; i++ {
+		zero.OnStatUseScaled("dexterity", 0, 0.0)
+		full.OnStatUseScaled("dexterity", 0, 1.0)
+	}
 
-	if gotMultiplier != 0.35 {
-		t.Fatalf("CheckStatProgression got multiplier %v, want 0.35", gotMultiplier)
+	if got := zero.Stats.Dexterity.Training; got != 0 {
+		t.Fatalf("multiplier 0.0 advanced dexterity training to %d; the "+
+			"multiplier is being ignored", got)
+	}
+	if got := full.Stats.Dexterity.Training; got == 0 {
+		t.Fatal("multiplier 1.0 never advanced dexterity training over 600 " +
+			"trials; the test fixture is not exercising progression")
 	}
 }
 ```
 
-If the package has no seam for stubbing `CheckStatProgression`, assert instead
-on the observable outcome: call `OnStatUseScaled` with a multiplier of `0` and
-assert the stat's training does not advance over many trials, then with `1.0`
-and assert it does. Use `configs.SetConfigForTest` to pin the curve. Do NOT
-invent a fixture; `newProgressionTestCharacter` is the real helper in this
-package.
+⚠️ Both assertions matter. The first alone would pass against a function that
+never progresses anything.
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `go test ./internal/characters/ -run TestOnStatUseScaledPassesMultiplier -v`
-Expected: FAIL with "c.OnStatUseScaled undefined"
+Run: `go test ./internal/characters/ -run TestOnStatUseScaledRespectsMultiplier -v`
+Expected: FAIL with "zero.OnStatUseScaled undefined"
 
-- [ ] **Step 3: Add `OnStatUseScaled` and route `OnStatUse` through it**
+- [ ] **Step 3: Add `OnStatUseScaled`, route `OnStatUse` through it**
 
 ```go
 // OnStatUseScaled is OnStatUse with an explicit progression multiplier.
@@ -464,9 +572,7 @@ func (c *Character) OnStatUse(statName string, userId int) bool {
 }
 ```
 
-- [ ] **Step 4: Make `OnSkillUseScaled`'s internal stat call honour the multiplier**
-
-Replace its trailing primary-stat block:
+- [ ] **Step 4: Make `OnSkillUseScaled`'s primary-stat call honour the multiplier**
 
 ```go
 	// Auto-track and progress the skill's primary governing stat, at the SAME
@@ -477,95 +583,235 @@ Replace its trailing primary-stat block:
 	}
 ```
 
-- [ ] **Step 5: Run to verify it passes**
+⚠️ Existing callers pass multipliers **above** 1.0: crit bonus events pass
+`CritProgressionBonus` (2.0 shipped) and `actGrantProgression` passes **1000.0**.
+After this change those scale the stat too. That is consistent with "both halves
+take the fraction", but it is a behaviour change on the bonus path. Note it in
+the commit body and re-check `TestCritReceivedProgression_DecaysWithRank` still
+passes.
+
+- [ ] **Step 5: Run the package**
 
 Run: `go test ./internal/characters/ -v`
 Expected: PASS
 
-⚠️ Existing tests may now fail because a scaled skill award no longer pays a
-full stat roll. That is the intended change. Read each failure and update the
-assertion only where it was pinning the old asymmetry; a failure anywhere else
-is a real regression.
+If a test fails because a scaled skill award no longer pays a full stat roll,
+that is the intended change; update the assertion only where it pinned the old
+asymmetry.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Update the census**
+
+Task 1's count changed. Re-run, record, update `want` in the same commit.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add internal/characters/progression.go internal/characters/progression_scaled_test.go
+git add internal/characters/ internal/progression/census_test.go
 git commit -m "feat(u10b-1): scale the stat half of an ordinary progression event"
 ```
 
 ---
 
-## Task 5: `Outcome` learns who lost, and `OrdinaryEvents` scales them
+## Task 5: Scale the two unscaled side effects
+
+`OnSkillUseScaled` also grants **mutation cluster drift** at a full
+`MutationAffinityPerSkillUse` and emits the **`SkillUsed` quest event**, both
+unconditionally. Awarding on losses roughly doubles how often it is called, so
+untouched this roughly doubles mutation acquisition and turns every "use this
+skill N times" quest into "fail at it N times".
 
 **Files:**
-- Modify: `internal/progression/event.go`
-- Test: `internal/progression/event_test.go`
+- Modify: `internal/characters/progression.go`
+- Create: `internal/characters/progression_side_effects_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
-// TestOrdinaryEventsScalesTheLoser pins the U10b-1 rule: one event per resolved
-// roll, with the losing side paying ProgressionFailureFraction.
-func TestOrdinaryEventsScalesTheLoser(t *testing.T) {
-	o := progression.Outcome{
-		AttackerSkill: "weapon-combat",
-		DefenderSkill: "dodge",
-		Defended:      true, // the DEFENDER won, so the attacker is the loser
-	}
+// TestFractionalAwardScalesMutationDrift pins that a fractional progression
+// event grants a fractional share of mutation cluster affinity. Without this a
+// resolved loss pays a full affinity tick, roughly doubling mutation
+// acquisition across the game.
+func TestFractionalAwardScalesMutationDrift(t *testing.T) {
+	configs.SetConfigForTest(t)
 
-	evs := progression.OrdinaryEventsScaled(o, 0.35)
+	full := newProgressionTestCharacter(t)
+	frac := newProgressionTestCharacter(t)
 
-	byside := map[progression.Side]float64{}
-	for _, e := range evs {
-		byside[e.Side] = e.Multiplier
-	}
+	full.OnSkillUseScaled("weapon-combat", 0, 1.0)
+	frac.OnSkillUseScaled("weapon-combat", 0, 0.35)
 
-	if byside[progression.SideAttacker] != 0.35 {
-		t.Fatalf("attacker (loser) multiplier = %v, want 0.35",
-			byside[progression.SideAttacker])
-	}
-	if byside[progression.SideDefender] != 1.0 {
-		t.Fatalf("defender (winner) multiplier = %v, want 1.0",
-			byside[progression.SideDefender])
-	}
-}
+	fullAff := totalClusterAffinityForTest(full)
+	fracAff := totalClusterAffinityForTest(frac)
 
-// TestOrdinaryEventsNeverReconstructsTheLoserFromSuccess pins the polarity
-// trap. contest.Result.Success means the ATTACKER won, but under ForceCrit the
-// attack wins with Success == false, so !Success is NOT "the defender won".
-// Outcome carries Defended precisely so no caller re-derives this.
-func TestOrdinaryEventsNeverReconstructsTheLoserFromSuccess(t *testing.T) {
-	o := progression.Outcome{
-		AttackerSkill: "weapon-combat",
-		DefenderSkill: "dodge",
-		Defended:      false, // attacker won, even though a ForceCrit sets Success false
+	if fullAff == 0 {
+		t.Fatal("full award granted no cluster affinity; fixture is not " +
+			"exercising the drift path")
 	}
-
-	evs := progression.OrdinaryEventsScaled(o, 0.35)
-	for _, e := range evs {
-		if e.Side == progression.SideAttacker && e.Multiplier != 1.0 {
-			t.Fatalf("attacker multiplier = %v, want 1.0: an undefended attack WON",
-				e.Multiplier)
-		}
+	if fracAff >= fullAff {
+		t.Fatalf("fractional award granted %v affinity vs %v for a full "+
+			"award; the multiplier is being ignored", fracAff, fullAff)
 	}
 }
 ```
 
+Write `totalClusterAffinityForTest` in the same file, summing whatever the
+character exposes for cluster affinity. Confirm the field name first:
+
+Run: `grep -n "AddClusterAffinity" -A 4 internal/characters/*.go | head -20`
+
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `go test ./internal/progression/ -run OrdinaryEvents -v`
-Expected: FAIL with "undefined: progression.OrdinaryEventsScaled"
+Run: `go test ./internal/characters/ -run TestFractionalAwardScalesMutationDrift -v`
+Expected: FAIL, fractional affinity equals full affinity
 
-- [ ] **Step 3: Add `Defended` to `Outcome` and add `OrdinaryEventsScaled`**
+- [ ] **Step 3: Scale the drift**
 
-Add to the `Outcome` struct, beside `Floored`:
+```go
+	// Mutation-graph drift: cluster-relevant skill use nudges affinity, at the
+	// SAME weight as the event. A resolved loss must not buy a full tick, or
+	// the U10b-1 failure fraction roughly doubles mutation acquisition.
+	if clusters := mutations.ClustersForSkill(skillName); clusters != nil {
+		amt := float64(configs.GetBalanceConfig().MutationAffinityPerSkillUse) * bonusMultiplier
+		for _, cl := range clusters {
+			c.AddClusterAffinity(cl, amt)
+		}
+	}
+```
+
+- [ ] **Step 4: Decide and implement the quest-event rule**
+
+The `SkillUsed` event feeds quest `skill_use` counters, which are integers. A
+fractional counter is meaningless, so scaling the magnitude is not available.
+**Emit it only for a full-weight event:**
+
+```go
+	// Quest skill_use counters are integers, so a fractional award cannot pay a
+	// fractional tick. A resolved LOSS does not advance a "use this skill N
+	// times" quest -- otherwise such a quest becomes "fail at it N times".
+	if bonusMultiplier >= 1.0 {
+		events.AddToQueue(events.SkillUsed{UserId: userId, Skill: skillName})
+	}
+```
+
+Confirm the real event construction before editing:
+
+Run: `grep -n "SkillUsed{" internal/characters/progression.go`
+
+- [ ] **Step 5: Add a test for the quest gate**
+
+```go
+// TestFractionalAwardDoesNotAdvanceSkillUseQuests pins that a resolved loss
+// does not tick an integer quest counter. "Use this skill N times" must not
+// become "fail at it N times".
+func TestFractionalAwardDoesNotAdvanceSkillUseQuests(t *testing.T) {
+	configs.SetConfigForTest(t)
+
+	before := drainSkillUsedEventsForTest(t)
+	newProgressionTestCharacter(t).OnSkillUseScaled("weapon-combat", 1, 0.35)
+	after := drainSkillUsedEventsForTest(t)
+
+	if after != before {
+		t.Fatalf("a fractional award emitted %d SkillUsed events", after-before)
+	}
+}
+```
+
+Implement `drainSkillUsedEventsForTest` against the real event queue API; check
+how existing tests in this repo observe queued events before inventing one.
+
+- [ ] **Step 6: Run**
+
+Run: `go test ./internal/characters/ ./internal/quests/ -v`
+Expected: PASS
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add internal/characters/
+git commit -m "feat(u10b-1): scale mutation drift and gate quest ticks on full-weight events"
+```
+
+---
+
+## Task 6: `Outcome.Defended` and `OrdinaryEventsScaled`
+
+**Files:**
+- Modify: `internal/progression/event.go`
+- Create: `internal/progression/event_scaled_test.go`
+
+⚠️ `internal/progression/event_test.go` is `package progression`. Put this in a
+new file declared `package progression_test` so the qualified references below
+compile, or drop the qualifiers.
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package progression_test
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/progression"
+)
+
+func TestOrdinaryEventsScalesTheLoser(t *testing.T) {
+	o := progression.Outcome{
+		AttackerSkill: "weapon-combat",
+		DefenderSkill: "dodge",
+		Defended:      true, // the DEFENDER won, so the attacker lost
+	}
+
+	got := map[progression.Side]float64{}
+	for _, e := range progression.OrdinaryEventsScaled(o, 0.35) {
+		got[e.Side] = e.Multiplier
+	}
+
+	if got[progression.SideAttacker] != 0.35 {
+		t.Errorf("attacker (loser) multiplier = %v, want 0.35", got[progression.SideAttacker])
+	}
+	if got[progression.SideDefender] != 1.0 {
+		t.Errorf("defender (winner) multiplier = %v, want 1.0", got[progression.SideDefender])
+	}
+}
+
+// TestOrdinaryEventsScalesTheDefenderWhenTheAttackWon is the mirror. Without
+// it, a stub that returns OrdinaryEvents unchanged passes the test above's
+// defender assertion by accident, since OrdinaryEvents hardcodes 1.0.
+func TestOrdinaryEventsScalesTheDefenderWhenTheAttackWon(t *testing.T) {
+	o := progression.Outcome{
+		AttackerSkill: "weapon-combat",
+		DefenderSkill: "dodge",
+		Defended:      false, // the ATTACKER won
+	}
+
+	got := map[progression.Side]float64{}
+	for _, e := range progression.OrdinaryEventsScaled(o, 0.35) {
+		got[e.Side] = e.Multiplier
+	}
+
+	if got[progression.SideAttacker] != 1.0 {
+		t.Errorf("attacker (winner) multiplier = %v, want 1.0", got[progression.SideAttacker])
+	}
+	if got[progression.SideDefender] != 0.35 {
+		t.Errorf("defender (loser) multiplier = %v, want 0.35", got[progression.SideDefender])
+	}
+}
+```
+
+- [ ] **Step 2: Run to verify both fail**
+
+Run: `go test ./internal/progression/ -run OrdinaryEventsScale -v`
+Expected: FAIL, "undefined: progression.OrdinaryEventsScaled"
+
+- [ ] **Step 3: Add the field and the function**
+
+Add to `Outcome`, beside `Floored`:
 
 ```go
 	// Defended reports that the DEFENDER won this contest.
 	//
-	// It is carried rather than derived because contest.Result.Success means
-	// the ATTACKER won, and !Success is NOT "the defender won": under
+	// Carried rather than derived because contest.Result.Success means the
+	// ATTACKER won, and !Success is NOT "the defender won": under
 	// side.ForceCrit the attack wins with Success == false. Every attempt to
 	// reconstruct this predicate at a call site has been a bug, and a mirrored
 	// test fake passes either way. Set it from combat's out.Defended.
@@ -577,8 +823,7 @@ Add to the `Outcome` struct, beside `Floored`:
 // the side that LOST a resolved contest earns failureFraction of an event
 // rather than nothing.
 //
-// The winner is decided by o.Defended alone. See that field's doc comment for
-// why Success is not consulted.
+// The winner is decided by o.Defended alone. See that field's doc comment.
 func OrdinaryEventsScaled(o Outcome, failureFraction float64) []Event {
 	evs := OrdinaryEvents(o)
 	for i := range evs {
@@ -592,7 +837,7 @@ func OrdinaryEventsScaled(o Outcome, failureFraction float64) []Event {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 4: Run to verify both pass**
 
 Run: `go test ./internal/progression/ -v`
 Expected: PASS
@@ -600,29 +845,129 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/progression/event.go internal/progression/event_test.go
+git add internal/progression/
 git commit -m "feat(u10b-1): a resolved loss earns a fraction of an ordinary event"
 ```
 
 ---
 
-## Task 6: `search.go`, six threshold checks onto the contest core
+# Phase B: wire the rule into combat
 
-Each site currently reads `roll := dice.RollStat(searchScore)` then
-`if roll.Value >= N`. Replace each with a contest against `N`. The odds change
-as tabled in spec section 5.1; that is accepted.
+## Task 7: Populate `Defended` in production
+
+Without this the fraction reaches only hand-converted sites, and the melee,
+channel and spell paths keep awarding win-only. This is the task the previous
+plan omitted entirely.
+
+**Files:**
+- Modify: `internal/combat/defence_multiplier.go`
+- Modify: `internal/hooks/NewRound_DoCombat_unified.go`
+- Create: `internal/hooks/defended_wiring_test.go`
+
+- [ ] **Step 1: Find every `Outcome` construction in production**
+
+Run: `grep -rn "progression.Outcome{" internal/ --include=*.go | grep -v _test.go`
+
+Every one of these must either set `Defended` or be justified in the commit as
+a site with no defender.
+
+- [ ] **Step 2: Write the failing test**
+
+```go
+// TestEveryProductionOutcomeSetsDefended pins that no production Outcome is
+// built without deciding who won. Outcome.Defended drives the U10b-1 failure
+// fraction, and an unset field silently means "the attacker won", which awards
+// a full event to a side that lost.
+func TestEveryProductionOutcomeSetsDefended(t *testing.T) {
+	root := repoRootForTest(t)
+
+	// Sites with genuinely no defender. Each needs a written reason.
+	exempt := map[string]string{
+		"internal/actions/combat_fire.go":        "self-targeted, no defender",
+		"internal/combat/skill_moves.go":         "defender-only award, no contest side",
+		"internal/hooks/combat_shared_helpers.go": "spellcasting practice award, no defender",
+	}
+
+	for _, hit := range findOutcomeLiteralsForTest(t, root) {
+		if _, ok := exempt[hit.File]; ok {
+			continue
+		}
+		if !hit.SetsDefended {
+			t.Errorf("%s:%d builds a progression.Outcome without setting "+
+				"Defended; the failure fraction cannot be applied and the "+
+				"losing side is paid as a winner", hit.File, hit.Line)
+		}
+	}
+}
+```
+
+Implement `findOutcomeLiteralsForTest` with `go/parser`, using
+`collectQualifiedCalls`'s style from Task 2: find `progression.Outcome`
+composite literals and report whether a `Defended` key appears. Verify the
+exemption list against Step 1's grep before trusting the three entries above.
+
+- [ ] **Step 3: Run to verify it fails**
+
+Run: `go test ./internal/hooks/ -run TestEveryProductionOutcomeSetsDefended -v`
+Expected: FAIL, naming the melee and channel sites
+
+- [ ] **Step 4: Set `Defended` on the channel path**
+
+`defence_multiplier.go` already computes `out.Defended`. Carry it into the
+`Outcome` it builds, and switch the award from `OrdinaryEvents` to
+`OrdinaryEventsScaled` with the configured fraction.
+
+- [ ] **Step 5: Set `Defended` on the melee path**
+
+In `NewRound_DoCombat_unified.go`, the attacker and defender `Outcome`s are
+built from `AttackResult`. Derive `Defended` from the same swing data
+`defenceTypesUsed` reads, never from `!Success`.
+
+- [ ] **Step 6: Run**
+
+Run: `go test ./internal/hooks/ ./internal/combat/ ./internal/progression/ -v`
+Expected: PASS
+
+- [ ] **Step 7: Verify the rule actually reaches a losing swing**
+
+```go
+// TestLosingSwingAwardsTheFraction is the end-to-end proof that the slice's
+// headline rule is wired, not merely available.
+func TestLosingSwingAwardsTheFraction(t *testing.T) {
+	// Drive a defended swing and assert the attacker's ordinary event carries
+	// ProgressionFailureFraction, not 1.0 and not absent.
+}
+```
+
+Fill this in against the real combat fixtures in `internal/hooks`. Do not skip
+it: without it, Tasks 4 through 7 are provably wired only in unit isolation.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add internal/combat/defence_multiplier.go internal/hooks/
+git commit -m "feat(u10b-1): populate Defended and award the fraction on losing sides"
+```
+
+---
+
+# Phase C: convert and wire the static-difficulty sites
+
+## Task 8: `search.go`'s four difficulty checks
 
 **Files:**
 - Modify: `internal/actions/search.go`
-- Test: `internal/actions/search_test.go`
+- Modify: `contest_floor_guard_test.go` (repo root)
+- Modify: `internal/combat/contest_site_guard_test.go`
+- Create: `internal/actions/search_contest_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
-// TestSearchUsesTheContestCore pins that search resolves through
-// contest.AgainstDifficulty rather than a bare dice.RollStat threshold, so it
-// gets the same crit, fumble and margin semantics as every other contest.
-func TestSearchUsesTheContestCore(t *testing.T) {
+// TestSearchDifficultyChecksUseTheCore pins that search's four
+// non-actor checks resolve through the contest core. The two hidden-ACTOR
+// checks become opposed contests in Task 9 and are not counted here.
+func TestSearchDifficultyChecksUseTheCore(t *testing.T) {
 	root := repoRootForTest(t)
 	b, err := os.ReadFile(filepath.Join(root, "internal", "actions", "search.go"))
 	if err != nil {
@@ -630,226 +975,209 @@ func TestSearchUsesTheContestCore(t *testing.T) {
 	}
 	src := string(b)
 
-	// Four difficulty checks here. The two hidden-actor checks become OPPOSED
-	// contests in Task 7, not difficulty checks, so they are neither counted
-	// here nor asserted away here; Task 7's test owns them.
 	if got := strings.Count(src, "contest.AgainstDifficulty("); got != 4 {
-		t.Errorf("contest.AgainstDifficulty call count = %d, want 4", got)
+		t.Errorf("contest.AgainstDifficulty count = %d, want 4", got)
 	}
-	// The four converted sites must no longer compare a bare roll to a
-	// threshold. Two dice.RollStat calls legitimately remain until Task 7.
 	if got := strings.Count(src, "dice.RollStat(searchScore)"); got != 2 {
 		t.Errorf("dice.RollStat(searchScore) count = %d, want 2 "+
-			"(the two hidden-actor sites, converted in Task 7)", got)
+			"(the hidden-actor sites, converted in Task 9)", got)
 	}
 }
 ```
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `go test ./internal/actions/ -run TestSearchUsesTheContestCore -v`
-Expected: FAIL, reporting the bare `dice.RollStat` and a count of 0
+Run: `go test ./internal/actions/ -run TestSearchDifficultyChecksUseTheCore -v`
+Expected: FAIL, counts 0 and 6
 
-- [ ] **Step 3: Convert all six sites**
+- [ ] **Step 3: Convert the four**
 
-Secret exits (threshold 125):
-
-```go
-		rolledAgainstSomething = true
-		if contest.AgainstDifficulty(searchScore, 125.0).Success {
-			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
-```
-
-Hidden containers (threshold 125):
+Secret exits and hidden containers (125), stashed items (135), hidden nouns
+(175). Each becomes:
 
 ```go
 		rolledAgainstSomething = true
 		if contest.AgainstDifficulty(searchScore, 125.0).Success {
-			char.AddDiscovery(room.RoomId, containerName)
 ```
 
-Stashed items (threshold 135):
+with the threshold per site: `125.0`, `125.0`, `135.0`, `175.0`.
+
+- [ ] **Step 4: Add the guard entries IN THIS STEP**
+
+In `contest_floor_guard_test.go`, under `guardedRollExemptions["contest"]`:
 
 ```go
-		rolledAgainstSomething = true
-		if contest.AgainstDifficulty(searchScore, 135.0).Success {
-			result.StashedItemsFound = append(result.StashedItemsFound, SearchStashedItem{
+"internal/actions/search.go": "U10b-1: static-difficulty checks, deliberately unfloored per RunContest's scope comment",
 ```
 
-Hidden nouns (threshold 175):
+In `internal/combat/contest_site_guard_test.go`, under `contestSiteOwners`, add
+one entry per `file:func` the guard reports. Run the guard to learn the exact
+keys rather than guessing them:
 
-```go
-		rolledAgainstSomething = true
-		if contest.AgainstDifficulty(searchScore, 175.0).Success {
-			char.AddDiscovery(room.RoomId, nounKey)
-```
+Run: `go test . ./internal/combat/ -run "Floored|Owned" -v`
 
-**Leave the two hidden-actor sites (players and mobs) alone in this task.** They
-become opposed contests in Task 7, not difficulty checks, so converting them
-here would rewrite the same lines twice. The test above accounts for this: it
-expects exactly two surviving `dice.RollStat(searchScore)` calls, and Task 7's
-test drives those to zero.
+- [ ] **Step 5: Run both guards and the package**
 
-- [ ] **Step 4: Run to verify it passes**
-
-Run: `go test ./internal/actions/ -v`
+Run: `go test . ./internal/combat/ ./internal/actions/ -run "Floored|Owned|Search" -v`
 Expected: PASS
-
-- [ ] **Step 5: Build**
-
-Run: `go build ./...`
-Expected: no output
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add internal/actions/search.go internal/actions/search_test.go
-git commit -m "refactor(u10b-1): search resolves on the contest core"
+git add internal/actions/search.go internal/actions/search_contest_test.go contest_floor_guard_test.go internal/combat/contest_site_guard_test.go
+git commit -m "refactor(u10b-1): search's difficulty checks resolve on the contest core"
 ```
 
 ---
 
-## Task 7: A hider's skill counts in both detection paths
+## Task 9: A hider's skill counts when someone searches for them
 
-Two of `search.go`'s checks answer "does the observer spot the hider?" against a
-flat 135 that never reads the hider's sneak score, while `usercommands/go.go`
-resolves the same question as an opposed contest. Mobs reach the broken path via
-`behaviortree/actions_scout.go`'s `actTrySearch`.
+The two hidden-actor checks use a flat threshold that never reads the hider's
+score, while `usercommands/go.go` resolves the same question as an opposed
+contest. Mobs reach the broken path via `behaviortree/actions_scout.go`'s
+`actTrySearch`.
 
 **This is the slice's deliberate behaviour change.**
 
 **Files:**
 - Modify: `internal/actions/search.go`
-- Test: `internal/actions/search_hidden_test.go` (create)
+- Modify: `internal/actions/skill_helpers.go` (or wherever the shared score lands)
+- Create: `internal/actions/search_hidden_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Read `go.go`'s existing composition and decide where it lives**
+
+Run: `grep -n "hiddenScore\|observerScore" internal/usercommands/go.go`
+
+`go.go` has **four** hidden-detection sites. Read them, confirm they share one
+score composition, and **lift that composition into a shared exported helper**
+that both `go.go` and `search.go` call. Do not write a second copy in
+`internal/actions`: two implementations disagreeing is the bug this task
+exists to fix, and duplicating it would merely move the disagreement.
+
+Record in the commit which package the helper landed in and why.
+
+- [ ] **Step 2: Write the failing test**
 
 ```go
-// TestSearchHiddenDetectionReadsTheHidersScore pins the U10b-1 fix. search.go
-// used to answer "does the observer spot the hider?" against a flat 135 that
-// ignored the hider entirely, while usercommands/go.go resolved the SAME
-// question as an opposed contest. A hider's skill decided the outcome in one
-// path and was ignored in the other.
+// TestSearchHiddenDetectionReadsTheHidersScore pins the U10b-1 fix: search used
+// to answer "does the observer spot the hider?" against a flat threshold that
+// ignored the hider, while go.go resolved the same question as an opposed
+// contest.
 func TestSearchHiddenDetectionReadsTheHidersScore(t *testing.T) {
-	const trials = 400
+	configs.SetConfigForTest(t)
+	const trials = 500
 
-	weakHiderSpotted := 0
-	strongHiderSpotted := 0
+	weakSpotted, strongSpotted := 0, 0
 	for i := 0; i < trials; i++ {
-		if resolveHiddenDetectionForTest(150, 50) { // observerScore, hiddenScore
-			weakHiderSpotted++
+		if combat.RunContest(150, []contest.Entry{{Score: 50}}).Success {
+			weakSpotted++
 		}
-		if resolveHiddenDetectionForTest(150, 250) {
-			strongHiderSpotted++
+		if combat.RunContest(150, []contest.Entry{{Score: 250}}).Success {
+			strongSpotted++
 		}
 	}
 
-	if strongHiderSpotted >= weakHiderSpotted {
-		t.Fatalf("a skilled hider (%d/%d spotted) fared no better than an "+
-			"unskilled one (%d/%d): the hider's score is being ignored",
-			strongHiderSpotted, trials, weakHiderSpotted, trials)
+	if strongSpotted >= weakSpotted {
+		t.Fatalf("skilled hider spotted %d/%d vs unskilled %d/%d: the hider's "+
+			"score is not being read", strongSpotted, trials, weakSpotted, trials)
 	}
 }
 ```
 
-Name the extracted helper to match whatever `search.go` ends up exporting; the
-assertion is what matters, not the helper's name.
+Then add a second test asserting `search.go` no longer contains
+`dice.RollStat(searchScore)` at all, so the source-level change is pinned too.
 
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 3: Run to verify it fails**
 
 Run: `go test ./internal/actions/ -run TestSearchHiddenDetectionReadsTheHidersScore -v`
-Expected: FAIL, either to compile or because the two counts are equal
+Expected: FAIL on the source-level assertion
 
-- [ ] **Step 3: Resolve both sites as opposed contests**
-
-Hidden players:
+- [ ] **Step 4: Convert both sites**
 
 ```go
 		rolledAgainstSomething = true
-		hiddenScore := hiddenActorScore(&p.Character)
-		if combat.RunContest(searchScore, []contest.Entry{{Score: hiddenScore}}).Success {
-			result.HiddenPlayersFound = append(result.HiddenPlayersFound, pId)
+		if combat.RunContest(searchScore,
+			[]contest.Entry{{Score: HiddenActorScore(&p.Character)}}).Success {
 ```
 
-Hidden mobs:
+and the same for the mob loop with `&m.Character`.
 
-```go
-		rolledAgainstSomething = true
-		hiddenScore := hiddenActorScore(&m.Character)
-		if combat.RunContest(searchScore, []contest.Entry{{Score: hiddenScore}}).Success {
-			result.HiddenMobsFound = append(result.HiddenMobsFound, mId)
-```
+⚠️ These are **opposed** contests, so `combat.RunContest` is correct here and
+they need no `guardedRollExemptions` entry. They do need `contestSiteOwners`
+entries.
 
-Build `hiddenActorScore` to match the score `usercommands/go.go` already
-composes for its hidden-detection contest. Read that site and reuse its
-composition rather than inventing a second one; the whole point of this task is
-that two implementations disagreed.
+- [ ] **Step 5: Run everything that touches this path**
 
-- [ ] **Step 4: Run to verify it passes**
-
-Run: `go test ./internal/actions/ -v`
+Run: `go test ./internal/actions/ ./internal/usercommands/ ./internal/behaviortree/ ./internal/combat/ -v`
 Expected: PASS
-
-- [ ] **Step 5: Confirm the mob path benefits too**
-
-Run: `go test ./internal/behaviortree/ -v`
-Expected: PASS. `actTrySearch` reaches the same function, so no separate change
-is needed; confirm by reading `actions_scout.go` and noting it in the commit.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add internal/actions/search.go internal/actions/search_hidden_test.go
+git add internal/actions/ internal/usercommands/ internal/combat/contest_site_guard_test.go
 git commit -m "fix(u10b-1): a hider's skill counts when someone searches for them"
 ```
 
 ---
 
-## Task 8: `track.go` onto the contest core
+## Task 10: `search` awards under the rule, ONE event per command
+
+`search.go` fires **one** `OnSkillUse(Search)` per invocation today, gated on
+`rolledAgainstSomething`. Six rolls must still pay one event, or a rich room
+pays five times a bare one.
 
 **Files:**
-- Modify: `internal/actions/track.go`
-- Test: `internal/actions/track_test.go`
+- Modify: `internal/actions/search.go`
+- Create: `internal/actions/search_award_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
-// TestTrackUsesTheContestCore pins that following a trail resolves through the
-// contest core rather than a bare static threshold.
-func TestTrackUsesTheContestCore(t *testing.T) {
-	root := repoRootForTest(t)
-	b, err := os.ReadFile(filepath.Join(root, "internal", "actions", "track.go"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	src := string(b)
+// TestSearchAwardsOneEventPerCommand pins spec section 5.5.2: a command that
+// runs several rolls awards ONE event, not one per roll. A room with five
+// hidden things must not pay five times a room with one.
+func TestSearchAwardsOneEventPerCommand(t *testing.T) {
+	// Drive Search against a room with several hidden things and assert
+	// exactly one Search award, then against a room with one and assert the
+	// same count.
+}
 
-	if strings.Contains(src, "dice.RollStat(searchScore)") {
-		t.Error("track.go still resolves with a bare dice.RollStat threshold")
-	}
-	if !strings.Contains(src, "contest.AgainstDifficulty(") {
-		t.Error("track.go does not reach contest.AgainstDifficulty")
-	}
-	if strings.Contains(src, `NOTE(unassigned`) {
-		t.Error("the Category B breadcrumb should be removed once the site is converted")
-	}
+// TestSearchThatFindsNothingStillAwardsTheFraction pins the firing rule: a
+// command that resolved at least one roll and won none pays
+// ProgressionFailureFraction, not nothing.
+func TestSearchThatFindsNothingStillAwardsTheFraction(t *testing.T) {
+	// Drive Search against a room with a hidden thing far above the searcher's
+	// score and assert the award carries the fraction.
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+Fill both in against the real fixtures in `internal/actions`; `search_test.go`
+already builds rooms and actors, so follow its setup rather than inventing one.
 
-Run: `go test ./internal/actions/ -run TestTrackUsesTheContestCore -v`
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `go test ./internal/actions/ -run TestSearch.*Award -v`
 Expected: FAIL
 
-- [ ] **Step 3: Convert the site and delete its breadcrumb**
+- [ ] **Step 3: Replace the award**
 
-`track.go` grades a trail against two thresholds (125 and 175). Resolve the
-lower one first as `contest.AgainstDifficulty(searchScore, 125.0)`; if it
-succeeds, resolve the upper as `contest.AgainstDifficulty(searchScore, 175.0)`
-for the better tier. Delete the `NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP
-"Category B")` comment, since the site is no longer unassigned.
+```go
+	// U10b-1: ONE event per resolved COMMAND, not per internal roll. search
+	// runs up to six checks; a rich room must not pay six times a bare one.
+	// A command that rolled and won nothing pays the failure fraction.
+	if rolledAgainstSomething {
+		mult := 1.0
+		if !foundAnything {
+			mult = float64(configs.GetBalanceConfig().ProgressionFailureFraction)
+		}
+		actor.OnSkillUseScaled(string(skills.Search), actor.GetUserId(), mult)
+	}
+```
 
-- [ ] **Step 4: Run to verify it passes**
+Set `foundAnything` where each check succeeds, alongside the existing
+`result.*Found` appends.
+
+- [ ] **Step 4: Run**
 
 Run: `go test ./internal/actions/ -v`
 Expected: PASS
@@ -857,423 +1185,593 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/actions/track.go internal/actions/track_test.go
-git commit -m "refactor(u10b-1): track resolves on the contest core"
+git add internal/actions/search.go internal/actions/search_award_test.go
+git commit -m "feat(u10b-1): search awards one event per command, fraction on a fruitless search"
 ```
 
 ---
 
-## Task 9: `forage_core.go` onto the contest core
+## Task 11: `track` and `forage` convert and award
 
 **Files:**
+- Modify: `internal/actions/track.go`
 - Modify: `internal/forager/forage_core.go`
-- Test: `internal/forager/forage_core_test.go`
+- Modify: `contest_floor_guard_test.go`, `internal/combat/contest_site_guard_test.go`
+- Create: `internal/actions/track_contest_test.go`, `internal/forager/forage_contest_test.go`
+
+- [ ] **Step 1: Write the failing tests**
+
+For each file, assert the bare `dice.RollStat` threshold is gone, that
+`contest.AgainstDifficulty` is reached, that the `NOTE(unassigned` breadcrumb is
+removed, and that a resolved failure awards the fraction rather than nothing.
+
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `go test ./internal/actions/ ./internal/forager/ -run "Track|Forage" -v`
+Expected: FAIL
+
+- [ ] **Step 3: Convert `track.go`**
+
+⚠️ `track.go` grades a trail against **two** thresholds (125 and 175) from a
+**single** roll, and stores it in `result.RollValue` for tier introspection.
+Preserve that shape: take **one** `contest.AgainstDifficulty(searchScore, 125.0)`
+and grade the tier from its `Margin`, rather than rolling twice. Two rolls would
+change the tier distribution silently. Update `RollValue`'s doc comment to say
+what it now holds, or remove it if nothing reads it:
+
+Run: `grep -rn "RollValue" internal/ --include=*.go | grep -v _test.go`
+
+- [ ] **Step 4: Convert `forage_core.go`**
+
+Replace the threshold comparison with
+`contest.AgainstDifficulty(a.SearchScore, biomeDifficulty).Success`, keeping the
+existing per-biome difficulty unchanged.
+
+- [ ] **Step 5: Award under the rule in both**
+
+Both currently award unconditionally or on a find. Make each award once per
+command, at full weight on a find and `ProgressionFailureFraction` otherwise.
+
+- [ ] **Step 6: Guard entries, then run**
+
+Add both files to `guardedRollExemptions["contest"]` with reasons and their
+`file:func` keys to `contestSiteOwners`.
+
+Run: `go test . ./internal/combat/ ./internal/actions/ ./internal/forager/ -v`
+Expected: PASS
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add internal/actions/track.go internal/forager/ contest_floor_guard_test.go internal/combat/contest_site_guard_test.go
+git commit -m "refactor(u10b-1): track and forage on the core, awarding under the rule"
+```
+
+---
+
+## Task 12: The authored material tier
+
+**Files:**
+- Modify: `internal/items/itemspec.go`
+- Create: `internal/items/material_tier.go`
+- Create: `internal/items/material_tier_test.go`
+- Modify: `internal/configs/config.balance.go`, `config.balance.shops.go`
+- Modify: `_datafiles/config.yaml`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+// TestMaterialTierMultiplierBand pins the owner's design: five buckets mapping
+// onto 0.75 for the lowest tier through 1.25 for the highest.
+func TestMaterialTierMultiplierBand(t *testing.T) {
+	configs.SetConfigForTest(t)
+
+	if got := MaterialTierMultiplier(1); got != 0.75 {
+		t.Errorf("tier 1 = %v, want 0.75", got)
+	}
+	if got := MaterialTierMultiplier(5); got != 1.25 {
+		t.Errorf("tier 5 = %v, want 1.25", got)
+	}
+	if got := MaterialTierMultiplier(3); got != 1.0 {
+		t.Errorf("tier 3 = %v, want 1.0", got)
+	}
+}
+
+// TestUntieredMaterialIsNeutral pins the owner's ruling: a material with no
+// authored tier is NEUTRAL, not cheapest. Partial coverage must never silently
+// make a recipe easy.
+func TestUntieredMaterialIsNeutral(t *testing.T) {
+	configs.SetConfigForTest(t)
+
+	if got := MaterialTierMultiplier(0); got != 1.0 {
+		t.Fatalf("untiered material = %v, want 1.0 (neutral)", got)
+	}
+}
+```
+
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `go test ./internal/items/ -run MaterialTier -v`
+Expected: FAIL, "undefined: MaterialTierMultiplier"
+
+- [ ] **Step 3: Add the field and the function**
+
+On `ItemSpec`:
+
+```go
+MaterialTier int `yaml:"material_tier,omitempty"` // 1 (common) to 5 (rarest). Drives craft difficulty. 0 = untiered, treated as neutral. NOT RarityTier, which is a vendor stock cap.
+```
+
+```go
+// MaterialTierMultiplier maps an authored material tier onto the craft
+// difficulty band, 0.75 for the commonest through 1.25 for the rarest.
+//
+// Tier 0 means UNTIERED and returns the neutral 1.0, never the cheapest tier:
+// partial coverage must not silently make a recipe easy. A guard blocks NEW
+// materials from being authored without a tier; see material_tier_guard_test.go.
+//
+// Deliberately not ItemSpec.RarityTier, which is a vendor stock cap where a
+// higher number means MORE common, and deliberately not gold value, which was
+// measured across all 126 recipes and found uncorrelated with recipe tier.
+func MaterialTierMultiplier(tier int) float64 {
+	b := configs.GetBalanceConfig()
+	lo := float64(b.MaterialTierMultiplierMin)
+	hi := float64(b.MaterialTierMultiplierMax)
+	const tiers = 5
+
+	if tier < 1 || tier > tiers {
+		return lo + (hi-lo)/2.0 // untiered: neutral
+	}
+	return lo + (hi-lo)*float64(tier-1)/float64(tiers-1)
+}
+```
+
+Declare `MaterialTierMultiplierMin` (0.75) and `MaterialTierMultiplierMax`
+(1.25), defaulted in `config.balance.shops.go`. Guard each with `<= 0`, not
+`< 0`, per Task 3's trap.
+
+- [ ] **Step 4: Add the guard that blocks NEW untiered materials**
+
+```go
+// TestNewMaterialsDeclareATier grandfathers the materials that predate U10b-1
+// and fails any NEW one authored without material_tier. Backfilling the
+// grandfathered list is a recorded follow-up, not part of this slice.
+func TestNewMaterialsDeclareATier(t *testing.T) {
+	root := repoRootForTest(t)
+	dir := filepath.Join(root, "_datafiles", "world", "dogmud", "items", "materials-40000")
+
+	grandfathered := map[string]bool{
+		// populated in Step 5 from the real scan
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(b), "material_tier:") {
+			continue
+		}
+		if grandfathered[e.Name()] {
+			continue
+		}
+		t.Errorf("%s has no material_tier. New materials must declare one "+
+			"(1 common to 5 rarest); it drives craft difficulty. If this file "+
+			"predates U10b-1, add it to the grandfathered list with the others.",
+			e.Name())
+	}
+}
+```
+
+- [ ] **Step 5: Populate the grandfathered list from the real scan**
+
+Run:
+
+```bash
+grep -L "material_tier:" _datafiles/world/dogmud/items/materials-40000/*.yaml \
+  | xargs -n1 basename | sort
+```
+
+Paste the result into `grandfathered`. Every entry is a deliberate debt, not a
+pass.
+
+- [ ] **Step 6: Run**
+
+Run: `go test ./internal/items/ -v`
+Expected: PASS
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add internal/items/ internal/configs/
+git commit -m "feat(u10b-1): authored material tier, neutral when absent, guarded for new materials"
+```
+
+---
+
+## Task 13: Deterministic ingredient resolution
+
+`items.FindSpecByComponentTag` iterates a **Go map**. Four items share
+`component_tag: bottle`, so resolving a recipe's tag through it would re-roll
+craft difficulty on every attempt, swinging an alchemy craft between roughly 50%
+and 88% with no observable cause.
+
+**Files:**
+- Modify: `internal/crafting/crafting.go`
+- Create: `internal/crafting/ingredient_selection_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
-// TestForageUsesTheContestCore pins that a forage attempt resolves through the
-// contest core against its per-biome difficulty.
-func TestForageUsesTheContestCore(t *testing.T) {
-	root := repoRootForTest(t)
-	b, err := os.ReadFile(filepath.Join(root, "internal", "forager", "forage_core.go"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	src := string(b)
+// TestIngredientSelectionIsDeterministic pins that repeated resolution of the
+// same recipe against the same inventory yields the same items. Four items
+// share component_tag "bottle", and FindSpecByComponentTag iterates a Go map,
+// so a naive lookup re-rolls craft difficulty on every attempt.
+func TestIngredientSelectionIsDeterministic(t *testing.T) {
+	recipe := testRecipeWithBottleForTest(t)
+	inv := testInventoryWithAllBottlesForTest(t)
 
-	if strings.Contains(src, "dice.RollStat(a.SearchScore)") {
-		t.Error("forage_core.go still resolves with a bare dice.RollStat threshold")
-	}
-	if !strings.Contains(src, "contest.AgainstDifficulty(") {
-		t.Error("forage_core.go does not reach contest.AgainstDifficulty")
-	}
-	if strings.Contains(src, `NOTE(unassigned`) {
-		t.Error("the Category B breadcrumb should be removed once the site is converted")
+	first := SelectIngredientItems(recipe, inv)
+	for i := 0; i < 50; i++ {
+		got := SelectIngredientItems(recipe, inv)
+		if !sameItemIdsForTest(first, got) {
+			t.Fatalf("selection %d differs from the first: %v vs %v",
+				i, itemIdsForTest(first), itemIdsForTest(got))
+		}
 	}
 }
 ```
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `go test ./internal/forager/ -run TestForageUsesTheContestCore -v`
-Expected: FAIL
+Run: `go test ./internal/crafting/ -run TestIngredientSelectionIsDeterministic -v`
+Expected: FAIL, "undefined: SelectIngredientItems"
 
-- [ ] **Step 3: Convert the site**
+- [ ] **Step 3: Implement deterministic selection**
 
-Replace the `dice.RollStat(a.SearchScore)` threshold comparison with
-`contest.AgainstDifficulty(a.SearchScore, biomeDifficulty).Success`, keeping
-the existing per-biome difficulty value unchanged. Delete the breadcrumb.
+```go
+// SelectIngredientItems resolves a recipe's ingredient tags to the CONCRETE
+// items that will be consumed, deterministically.
+//
+// Determinism matters twice. items.FindSpecByComponentTag iterates a Go map, so
+// tag lookup is order-randomised and four items share component_tag "bottle" --
+// a naive lookup re-rolls craft difficulty every attempt. And difficulty must
+// ride on what the player actually consumes, not on the recipe's declared tag,
+// or the player-facing claim that materials set difficulty is false.
+//
+// Ties break on the lowest ItemId so the choice is stable across runs.
+func SelectIngredientItems(recipe *Recipe, inv Inventory) []*items.Item {
+	// ...
+}
+```
 
-- [ ] **Step 4: Run to verify it passes**
+Sort candidates by `ItemId` before choosing, and have `ConsumeIngredients` take
+this function's output so the roll and the consumption cannot disagree.
 
-Run: `go test ./internal/forager/ -v`
+- [ ] **Step 4: Run**
+
+Run: `go test ./internal/crafting/ -v`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/forager/forage_core.go internal/forager/forage_core_test.go
-git commit -m "refactor(u10b-1): forage resolves on the contest core"
+git add internal/crafting/
+git commit -m "fix(u10b-1): deterministic ingredient selection for craft difficulty"
 ```
 
 ---
 
-## Task 10: Material tier from gold value
-
-`ItemSpec.RarityTier` cannot be used: it is a vendor stock cap, so a higher
-value means MORE common; its doc comment claims five values while the data holds
-nineteen; and 55 of 208 material files omit it. `ItemSpec.Value` is guaranteed
-present because `itemspec.go` runs `if i.Value < 1 { i.AutoCalculateValue() }`.
-
-**Files:**
-- Create: `internal/items/tier.go`
-- Create: `internal/items/tier_test.go`
-- Modify: `internal/configs/config.balance.go`
-- Modify: `internal/configs/config.balance.shops.go`
-- Modify: `_datafiles/config.yaml`
-
-- [ ] **Step 1: Write the failing test**
-
-```go
-package items
-
-import "testing"
-
-// TestMaterialTierMultiplierBand pins the owner's design: the multiplier runs
-// 0.75 for bottom-tier materials to 1.25 for top-tier ones, monotonically in
-// gold value.
-func TestMaterialTierMultiplierBand(t *testing.T) {
-	cheap := MaterialTierMultiplier(1)
-	mid := MaterialTierMultiplier(25)
-	dear := MaterialTierMultiplier(5000)
-
-	if cheap != 0.75 {
-		t.Errorf("bottom-tier multiplier = %v, want 0.75", cheap)
-	}
-	if dear != 1.25 {
-		t.Errorf("top-tier multiplier = %v, want 1.25", dear)
-	}
-	if !(cheap < mid && mid < dear) {
-		t.Errorf("multiplier must rise with value: %v, %v, %v", cheap, mid, dear)
-	}
-}
-
-// TestMaterialTierMultiplierHandlesZeroValue pins that a value of 0, which
-// AutoCalculateValue should prevent but which a hand-authored spec could still
-// reach, lands on the cheapest tier rather than panicking or reading as top.
-func TestMaterialTierMultiplierHandlesZeroValue(t *testing.T) {
-	if got := MaterialTierMultiplier(0); got != 0.75 {
-		t.Fatalf("MaterialTierMultiplier(0) = %v, want 0.75", got)
-	}
-}
-```
-
-- [ ] **Step 2: Run to verify it fails**
-
-Run: `go test ./internal/items/ -run MaterialTier -v`
-Expected: FAIL with "undefined: MaterialTierMultiplier"
-
-- [ ] **Step 3: Implement**
-
-```go
-// MaterialTierMultiplier maps an item's gold value onto the craft-difficulty
-// band, 0.75 for the cheapest materials up to 1.25 for the dearest.
-//
-// Gold value, not ItemSpec.RarityTier: RarityTier is a VENDOR STOCK CAP, so a
-// higher number means a more common item, inverting the name. Its doc comment
-// claims the set is 50/40/30/20/10 while the data holds nineteen distinct
-// values, and 55 of 208 material files omit it entirely. Value is guaranteed
-// present by AutoCalculateValue.
-func MaterialTierMultiplier(goldValue int) float64 {
-	b := configs.GetBalanceConfig()
-	thresholds := b.MaterialTierGoldThresholds // ascending, len == steps-1
-	lo := float64(b.MaterialTierMultiplierMin)
-	hi := float64(b.MaterialTierMultiplierMax)
-
-	if len(thresholds) == 0 {
-		return lo
-	}
-
-	step := 0
-	for _, t := range thresholds {
-		if goldValue >= t {
-			step++
-			continue
-		}
-		break
-	}
-
-	return lo + (hi-lo)*float64(step)/float64(len(thresholds))
-}
-```
-
-- [ ] **Step 4: Declare the knobs**
-
-In `config.balance.go`:
-
-```go
-MaterialTierGoldThresholds []int       `yaml:"MaterialTierGoldThresholds"` // Ascending gold values separating material tiers
-MaterialTierMultiplierMin  ConfigFloat `yaml:"MaterialTierMultiplierMin"`  // Craft-difficulty multiplier for the cheapest tier (default 0.75)
-MaterialTierMultiplierMax  ConfigFloat `yaml:"MaterialTierMultiplierMax"`  // Craft-difficulty multiplier for the dearest tier (default 1.25)
-```
-
-Default them in `config.balance.shops.go`, with thresholds
-`[]int{5, 15, 40, 120}` giving five tiers. Note the same zero-key trap as Task
-3: guard `MaterialTierMultiplierMin` with `<= 0`, not `< 0`.
-
-- [ ] **Step 5: Run to verify it passes**
-
-Run: `go test ./internal/items/ -v`
-Expected: PASS
-
-- [ ] **Step 6: Sanity-check the thresholds against real data**
-
-Run:
-
-```bash
-grep -rh "^value:" _datafiles/world/dogmud/items/materials-40000/ \
-  | awk '{print $2}' | sort -n | uniq -c
-```
-
-Confirm the five buckets are populated and that no bucket is empty or holds
-almost every material. Adjust the thresholds and re-run before committing. This
-is the one failure mode of the gold-value approach: an oddly priced material
-lands in the wrong tier.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add internal/items/tier.go internal/items/tier_test.go internal/configs/config.balance.go internal/configs/config.balance.shops.go _datafiles/config.yaml
-git commit -m "feat(u10b-1): material tier multiplier from gold value"
-```
-
----
-
-## Task 11: Craft resolves as a contest
+## Task 14: Craft resolves as a floored contest, and awards under the rule
 
 **Files:**
 - Modify: `internal/crafting/crafting.go`
-- Modify: `internal/hooks/NewRound_UserRoundTick.go`
-- Modify: `internal/hooks/NewRound_MobRoundTick.go`
+- Modify: `internal/hooks/NewRound_UserRoundTick.go`, `NewRound_MobRoundTick.go`
 - Modify: `internal/mobs/crafter.go`
-- Test: `internal/crafting/crafting_contest_test.go` (create)
+- Modify: `internal/crafting/crafting_test.go`, `integration_crafting_test.go`, `internal/mobs/crafter_test.go`
+- Modify: `contest_floor_guard_test.go`, `internal/combat/contest_site_guard_test.go`
+- Create: `internal/crafting/craft_contest_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing tests**
 
 ```go
-// TestCraftAtRecipeMinimumIsFiftyFifty pins the anchor. At skillLevel equal to
-// the recipe minimum with mid-tier materials, score equals difficulty, so the
-// contest is 50% - which is exactly the shipped CraftingBaseSuccessChance of 50
-// that this replaces.
+// TestCraftAtRecipeMinimumIsFiftyFifty pins the anchor: at the recipe minimum
+// with a neutral material tier, score equals difficulty, so the contest is 50%.
+// That is exactly the shipped CraftingBaseSuccessChance of 50 this replaces.
 func TestCraftAtRecipeMinimumIsFiftyFifty(t *testing.T) {
-	score := CraftScore(10, 10)              // skillLevel, recipeSkillMinimum
-	difficulty := CraftDifficulty(10, 1.0)   // recipeSkillMinimum, materialTierMult
+	configs.SetConfigForTest(t)
 
+	score := CraftScore(10, 10)
+	difficulty := CraftDifficulty(1.0)
+
+	if score == 0 || difficulty == 0 {
+		t.Fatal("score or difficulty is zero; the config knobs are not wired")
+	}
 	if score != difficulty {
-		t.Fatalf("at the recipe minimum score = %v and difficulty = %v; "+
-			"they must be equal so the contest is 50%%", score, difficulty)
+		t.Fatalf("score %v != difficulty %v at the recipe minimum", score, difficulty)
 	}
 }
 
 // TestCraftMasteryReadsTheSameAtEveryTier pins that the per-level bonus is a
-// PERCENTAGE, not an addend. Because stdDev derives from the attacker's score,
-// success depends on the RATIO of difficulty to score. A flat +5 per level
-// would pay 92.8% nine levels above a skill_minimum 0 recipe but only 73% nine
-// levels above a skill_minimum 40 one.
+// PERCENTAGE. Success depends on the RATIO of difficulty to score, so a flat
+// addend would pay 92.8% nine levels above a skill_minimum 0 recipe and 73%
+// nine levels above a skill_minimum 40 one.
 func TestCraftMasteryReadsTheSameAtEveryTier(t *testing.T) {
-	lowRatio := CraftDifficulty(0, 1.0) / CraftScore(9, 0)
-	highRatio := CraftDifficulty(40, 1.0) / CraftScore(49, 40)
+	configs.SetConfigForTest(t)
 
-	if math.Abs(lowRatio-highRatio) > 0.001 {
-		t.Fatalf("difficulty/score ratio nine levels above the minimum is %v on "+
-			"a novice recipe and %v on an advanced one; mastery must read the "+
-			"same at every tier", lowRatio, highRatio)
+	low := CraftDifficulty(1.0) / CraftScore(9, 0)
+	high := CraftDifficulty(1.0) / CraftScore(49, 40)
+
+	if math.IsNaN(low) || math.IsNaN(high) || low == 0 {
+		t.Fatal("ratio is NaN or zero; the config knobs are not wired")
 	}
+	if math.Abs(low-high) > 0.001 {
+		t.Fatalf("ratio nine levels above the minimum is %v on a novice "+
+			"recipe and %v on an advanced one", low, high)
+	}
+}
+
+// TestFailedCraftAwardsTheFraction is the case the whole slice is justified by.
+// A failed craft consumes the materials; before U10b-1 it also taught nothing.
+func TestFailedCraftAwardsTheFraction(t *testing.T) {
+	// Drive a craft that fails and assert the recipe skill received an award
+	// carrying ProgressionFailureFraction.
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+⚠️ The zero and NaN guards are load-bearing. Without them both formula tests
+pass against unwired knobs, since `0 == 0` and `NaN != NaN` is not `> 0.001`.
+
+- [ ] **Step 2: Run to verify they fail**
 
 Run: `go test ./internal/crafting/ -run Craft -v`
-Expected: FAIL with "undefined: CraftScore"
+Expected: FAIL, "undefined: CraftScore"
 
-- [ ] **Step 3: Implement the two formulas**
+- [ ] **Step 3: Implement the formulas**
 
 ```go
 // CraftDifficulty is the number a craft attempt is contested against.
 //
-// Difficulty comes from the MATERIALS: the recipe's skill minimum sets the
-// anchor and the dearest ingredient's tier scales it. See the U10b-1 spec
-// section 5.1.1.
-func CraftDifficulty(recipeSkillMinimum int, materialTierMult float64) float64 {
-	b := configs.GetBalanceConfig()
-	anchor := float64(b.CraftBaseDifficulty) +
-		float64(recipeSkillMinimum)*float64(b.CraftSkillMinWeight)
-	return anchor * materialTierMult
+// Difficulty comes from the MATERIALS. recipe.SkillMinimum is deliberately
+// absent: requiring 50% at every recipe's minimum AND equal mastery at every
+// tier forces any SkillMinimum term to appear on both sides and cancel. It
+// still gates discovery and attempts. See spec section 5.1.1.1.
+func CraftDifficulty(materialTierMult float64) float64 {
+	return float64(configs.GetBalanceConfig().CraftBaseDifficulty) * materialTierMult
 }
 
 // CraftScore is the crafter's side of that contest.
 //
-// The per-level term is a PERCENTAGE of the anchor, not an addend. contest.Run
-// derives stdDev from the attacker's score, so success depends on the ratio of
-// difficulty to score and never on the gap: a flat addend would make the same
-// number of levels above the minimum worth far less on an advanced recipe.
+// The per-level term is a PERCENTAGE of the base, not an addend, because
+// contest.Run derives stdDev from the attacker's score and success therefore
+// depends on the ratio of difficulty to score, never on the gap.
 func CraftScore(skillLevel, recipeSkillMinimum int) float64 {
 	b := configs.GetBalanceConfig()
-	anchor := float64(b.CraftBaseDifficulty) +
-		float64(recipeSkillMinimum)*float64(b.CraftSkillMinWeight)
 	levels := float64(skillLevel - recipeSkillMinimum)
-	return anchor * (1.0 + levels*float64(b.CraftSkillWeightPct))
+	return float64(b.CraftBaseDifficulty) * (1.0 + levels*float64(b.CraftSkillWeightPct))
 }
 ```
 
-Declare `CraftBaseDifficulty` (100), `CraftSkillMinWeight` (5) and
-`CraftSkillWeightPct` (0.05) in `config.balance.go`, defaulted in
-`config.balance.shops.go`, and add them to `_datafiles/config.yaml`.
+Declare `CraftBaseDifficulty` (100), `CraftSkillWeightPct` (0.05) and
+`CraftFloor` (0.05). `CraftBaseDifficulty`'s doc comment must say it cancels out
+of the odds and exists only to keep both numbers in stat range so
+`dice.StdDevFor` does not hit its `mean < 1.0` floor, so the pending config
+audit does not flag it as orphaned.
 
-- [ ] **Step 4: Route the four call sites through the contest**
-
-At each of `NewRound_UserRoundTick.go`, `NewRound_MobRoundTick.go` and both
-sites in `mobs/crafter.go`, replace:
-
-```go
-chance := crafting.CalcSuccessChance(sl, recipe.SkillMinimum)
-roll := util.Rand(100)
-util.LogRoll("Craft", roll, chance)
-if roll < chance {
-```
-
-with:
+- [ ] **Step 4: Route the four call sites**
 
 ```go
-tierMult := crafting.DearestIngredientTier(recipe)
-res := contest.AgainstDifficulty(
+tierMult := crafting.DearestIngredientTier(selected)   // from Task 13's items
+res := contest.RunWithFloors(
 	crafting.CraftScore(sl, recipe.SkillMinimum),
-	crafting.CraftDifficulty(recipe.SkillMinimum, tierMult),
+	[]contest.Entry{{Score: crafting.CraftDifficulty(tierMult)}},
+	float64(configs.GetBalanceConfig().CraftFloor),
 )
 if res.Success {
 ```
 
-Add `DearestIngredientTier(recipe)` to `internal/crafting`, returning
-`items.MaterialTierMultiplier` of the highest-`Value` ingredient in the recipe.
+⚠️ `RunWithFloors`, not `AgainstDifficulty`: craft needs the mercy band its
+`[5%, 95%]` clamp provides today. Extremes match exactly; the interior
+compresses by `(1 - 2f)`.
 
-- [ ] **Step 5: Retire `CalcSuccessChance` and its clamps**
+- [ ] **Step 5: Award on BOTH branches**
 
-Delete `CalcSuccessChance` once no caller remains, and remove
-`CraftingBaseSuccessChance`, `CraftingSkillBonusPerLevel`,
-`CraftingMinSuccessChance` and `CraftingMaxSuccessChance` from
-`config.balance.go`, their validators, and `_datafiles/config.yaml`. The
-contest floor now provides the mercy band the clamps used to.
+The success branch keeps its difficulty-scaled award. The failure branch gains
+one at `ProgressionFailureFraction`. This is the deliverable, not a detail.
 
-- [ ] **Step 6: Run to verify it passes**
+- [ ] **Step 6: Retire `CalcSuccessChance` and fix its test callers**
 
-Run: `go test ./internal/crafting/ ./internal/hooks/ ./internal/mobs/ -v`
+Delete `CalcSuccessChance` and the four `Crafting*SuccessChance` knobs. Three
+test files break and must be updated in this task:
+
+- `internal/crafting/crafting_test.go` (`TestCalcSuccessChance`)
+- `internal/crafting/integration_crafting_test.go` (four calls)
+- `internal/mobs/crafter_test.go`, where `forceCraftSuccess`/`forceCraftFailure`
+  drive the deleted knobs by name through `configs.AddOverlayOverrides`. **Map
+  keys are strings, so this will compile and silently stop working.** Replace
+  the determinism lever with `CraftFloor` and an extreme `CraftBaseDifficulty`,
+  and assert the forced outcome actually occurs.
+
+- [ ] **Step 7: Guard entries, then run**
+
+Run: `go test . ./internal/combat/ ./internal/crafting/ ./internal/hooks/ ./internal/mobs/ -v`
 Expected: PASS
-
-- [ ] **Step 7: Build**
-
-Run: `go build ./...`
-Expected: no output
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add internal/crafting/ internal/hooks/NewRound_UserRoundTick.go internal/hooks/NewRound_MobRoundTick.go internal/mobs/crafter.go internal/configs/ _datafiles/config.yaml
-git commit -m "feat(u10b-1): craft difficulty comes from the materials"
+git add internal/crafting/ internal/hooks/ internal/mobs/ internal/configs/ contest_floor_guard_test.go internal/combat/contest_site_guard_test.go
+git commit -m "feat(u10b-1): craft difficulty from materials, floored, awarding on failure"
 ```
 
 ---
 
-## Task 12: Salvage resolves as a contest
+## Task 15: Mob crafters award on the same rule
+
+`mobs/crafter.go` awards `OnSkillUse` inside its success branch only, at two
+sites. Leaving it reintroduces exactly the inconsistency this slice removes.
 
 **Files:**
-- Modify: `internal/crafting/salvage.go`
-- Modify: `internal/actions/salvage.go`
-- Test: `internal/crafting/salvage_contest_test.go` (create)
+- Modify: `internal/mobs/crafter.go`
+- Create: `internal/mobs/crafter_progression_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
-// TestSalvageDearMaterialsAreHarderToReclaim pins the design: difficulty rides
-// on the tier of the ingredient being recovered, so a top-tier material comes
-// back less often than a bottom-tier one at the same skill.
-func TestSalvageDearMaterialsAreHarderToReclaim(t *testing.T) {
-	cheap := SalvageDifficulty(items.MaterialTierMultiplier(1))
-	dear := SalvageDifficulty(items.MaterialTierMultiplier(5000))
-
-	if !(dear > cheap) {
-		t.Fatalf("dear material difficulty %v is not above cheap %v", dear, cheap)
-	}
+// TestMobCrafterAwardsOnFailure pins that mob crafters fire under the same rule
+// as players. Awarding only on success is the firing-condition inconsistency
+// U10b-1 exists to remove.
+func TestMobCrafterAwardsOnFailure(t *testing.T) {
+	// Force a failed mob craft and assert the recipe skill received an award
+	// carrying ProgressionFailureFraction.
 }
 ```
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `go test ./internal/crafting/ -run Salvage -v`
-Expected: FAIL with "undefined: SalvageDifficulty"
+Run: `go test ./internal/mobs/ -run TestMobCrafterAwardsOnFailure -v`
+Expected: FAIL
 
-- [ ] **Step 3: Implement and convert both roll sites**
+- [ ] **Step 3: Award on both branches at both sites**
+
+- [ ] **Step 4: Run, and check the economy effect**
+
+Run: `go test ./internal/mobs/ ./internal/shops/ -v`
+Expected: PASS
+
+⚠️ Mob crafters ship at skill 1 and restock shops. Note in the commit what the
+new success rate is at skill 1 against a neutral tier, since dynamic pricing
+keys on the stock-to-restock ratio and a throughput drop pins goods near the
+price ceiling.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add internal/mobs/
+git commit -m "feat(u10b-1): mob crafters award under the same firing rule as players"
+```
+
+---
+
+## Task 16: Salvage resolves as a floored contest
+
+**Files:**
+- Modify: `internal/crafting/salvage.go`
+- Modify: `internal/actions/salvage.go`
+- Modify: `internal/configs/config.balance.go`, `config.balance.misc.go`
+- Create: `internal/crafting/salvage_contest_test.go`
+
+⚠️ `SalvageMinChance`/`SalvageMaxChance` default in `config.balance.misc.go`,
+not `shops.go`, and `internal/actions/salvage.go` reads both.
+
+- [ ] **Step 1: Write the failing tests**
 
 ```go
-// SalvageDifficulty is the number a per-unit salvage recovery is contested
-// against, scaled by the tier of the material being reclaimed.
-func SalvageDifficulty(materialTierMult float64) float64 {
-	b := configs.GetBalanceConfig()
-	return float64(b.CraftBaseDifficulty) * materialTierMult
+// TestSalvageDearMaterialsAreHarderToReclaim pins that difficulty rides on the
+// tier of the material being recovered.
+func TestSalvageDearMaterialsAreHarderToReclaim(t *testing.T) {
+	configs.SetConfigForTest(t)
+
+	cheap := SalvageDifficulty(items.MaterialTierMultiplier(1))
+	dear := SalvageDifficulty(items.MaterialTierMultiplier(5))
+
+	if cheap == 0 || dear == 0 {
+		t.Fatal("difficulty is zero; the config knobs are not wired")
+	}
+	if dear <= cheap {
+		t.Fatalf("dear %v is not above cheap %v", dear, cheap)
+	}
+}
+
+// TestSalvageKeepsItsCeiling pins the economy guard. Uncapped salvage at high
+// skill would retain ~99.9% of materials against 80.75% today, roughly a 250x
+// reduction in the crafting material sink, on the exact loop that farms
+// crafting skill. SalvageFloor 0.15 reproduces today's 85% ceiling.
+func TestSalvageKeepsItsCeiling(t *testing.T) {
+	configs.SetConfigForTest(t)
+	const trials = 4000
+
+	won := 0
+	for i := 0; i < trials; i++ {
+		if RollSalvageUnit(SalvageScore(50), SalvageDifficulty(1.0)).Success {
+			won++
+		}
+	}
+
+	if rate := float64(won) / trials; rate > 0.90 {
+		t.Fatalf("per-unit recovery at skill 50 is %.3f; the floor is not "+
+			"capping it and the material sink is gone", rate)
+	}
 }
 ```
 
-Replace `util.Rand(10000) < int(chance*10000)` in `RollSalvageReturns` and
-`RollSalvageReturnsFromSpec` with
-`contest.AgainstDifficulty(salvageScore, SalvageDifficulty(tierMult)).Success`,
-where `salvageScore` is composed the same way `CraftScore` is, from the
-salvage skill level.
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `go test ./internal/crafting/ -run Salvage -v`
+Expected: FAIL
+
+- [ ] **Step 3: Implement, mirroring craft**
+
+Add `SalvageScore`, `SalvageDifficulty` and a `RollSalvageUnit` that calls
+`contest.RunWithFloors` with `SalvageFloor` (0.15).
+
+⚠️ `RollSalvageReturns(ingredients []RecipeIngredient, chance float64)` and
+`RollSalvageReturnsFromSpec(returns []items.SalvageReturn, chance float64)`
+currently take a precomputed chance, and `RecipeIngredient` carries no item
+data. **Both signatures change** to take the salvage skill level and resolve
+each ingredient's tier. Update both callers in `internal/actions/salvage.go`.
 
 - [ ] **Step 4: Retire the clamps**
 
 Remove `SalvageMinChance` and `SalvageMaxChance` from `config.balance.go`,
-their validators, and `_datafiles/config.yaml`. `ContestFloor` supplies the
-mercy band. Keep `SalvageSoftCap`, `SalvageGoldPerRound` and
-`SalvageMaxRounds`, which govern skill scaling and duration, not the roll.
+`config.balance.misc.go`, `_datafiles/config.yaml`, and the two reads in
+`internal/actions/salvage.go`. Keep `SalvageSoftCap`, `SalvageGoldPerRound` and
+`SalvageMaxRounds`, which govern skill scaling and duration.
 
-- [ ] **Step 5: Run to verify it passes**
+- [ ] **Step 5: Guard entries, then run**
 
-Run: `go test ./internal/crafting/ ./internal/actions/ -v`
+Run: `go test . ./internal/combat/ ./internal/crafting/ ./internal/actions/ -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add internal/crafting/salvage.go internal/actions/salvage.go internal/configs/ _datafiles/config.yaml
-git commit -m "feat(u10b-1): salvage resolves on the contest core"
+git add internal/crafting/salvage.go internal/actions/salvage.go internal/configs/ contest_floor_guard_test.go internal/combat/contest_site_guard_test.go
+git commit -m "feat(u10b-1): salvage on the core, floored to keep the material sink"
 ```
 
 ---
 
-## Task 13: The sixteen skullduggery sites onto the seam
+# Phase D: skullduggery and spell parity
 
-Sites: `actions/steal.go` x3, `actions/plant.go` x3, `actions/shadow.go` x2,
+## Task 17: The sixteen skullduggery sites
+
+`actions/steal.go` x3, `actions/plant.go` x3, `actions/shadow.go` x2,
 `usercommands/skill.skullduggery.sneak.go` x2, `usercommands/picklock.go` x2,
 `actions/defuse.go`, `usercommands/throw.go`, `mobcommands/flee.go`,
 `hooks/NewRound_DoCombat_helpers.go`.
 
-Four of these (**both** sneak sites, **both** picklock sites) call
-`CheckSkillProgression` directly, bypassing every entry point. The 2026-08-21
-plan found only `mobcommands/sneak.go` and would have left the player's sneak
-untouched. One of the sneak sites is the **failure** branch.
+Four bypass every entry point by calling `CheckSkillProgression` directly: both
+sneak sites (one is the **failure** branch) and both picklock sites.
 
 **Files:**
-- Modify: the twelve files listed above
-- Test: `internal/progression/skullduggery_seam_test.go` (create)
+- Modify: the twelve files above
+- Create: `internal/progression/skullduggery_seam_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
 // TestSkullduggerySitesRouteThroughTheSeam pins that no skullduggery award
-// reaches progression without passing an entry point the guard can see. Four
-// sites used to call CheckSkillProgression directly, including the FAILURE
-// branch of player sneak, so they touched no entry point and no guard.
+// reaches progression without an entry point the guard can see. Four sites
+// called CheckSkillProgression directly, including the FAILURE branch of player
+// sneak, so they touched no entry point and no guard.
 func TestSkullduggerySitesRouteThroughTheSeam(t *testing.T) {
 	root := repoRootForTest(t)
 	files := []string{
@@ -1290,92 +1788,95 @@ func TestSkullduggerySitesRouteThroughTheSeam(t *testing.T) {
 		}
 	}
 }
+
+// TestSkullduggerySitesAwardOnFailure pins the rule at a representative site.
+// The source assertion above proves routing; this proves the fraction is
+// actually applied, which routing alone does not.
+func TestSkullduggerySitesAwardOnFailure(t *testing.T) {
+	// Drive a failed steal and assert the skullduggery award carries
+	// ProgressionFailureFraction.
+}
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 2: Run to verify they fail**
 
 Run: `go test ./internal/progression/ -run Skullduggery -v`
-Expected: FAIL, naming both files
+Expected: FAIL
 
-- [ ] **Step 3: Convert each site to an `Outcome`**
+- [ ] **Step 3: Convert each site**
 
-Replace each bare award with an `Outcome` carrying `Defended` and applied via
-`ApplyProgression(progression.OrdinaryEventsScaled(o, failureFraction), ...)`.
+Build an `Outcome` per site, set `Defended` from the real contest result, and
+apply via `ApplyProgression(progression.OrdinaryEventsScaled(o, fraction), ...)`.
 
 ⚠️ **Two traps:**
 
-1. **`Outcome` holds exactly one `AttackerSkill`.** A site awarding both a
-   combat skill and skullduggery needs TWO `Outcome` values, not one with two
-   skills.
-2. **`SkillPrimaryStats["skullduggery"] == "dexterity"`, the same as
-   weapon-combat.** Awarding both rolls dexterity twice, on top of the
-   unconditional attacker stat gain. Check each site for this collision and
-   suppress the duplicate stat by leaving the second `Outcome`'s `Stat` empty.
+1. `Outcome` holds exactly one `AttackerSkill`. A site awarding both a combat
+   skill and skullduggery needs **two** `Outcome` values.
+2. `SkillPrimaryStats["skullduggery"] == "dexterity"`, the same as
+   weapon-combat, so awarding both rolls dexterity twice on top of the
+   unconditional attacker stat gain. Leave the second `Outcome`'s `Stat` empty.
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 4: Run everything**
 
 Run: `go test ./... 2>&1 | grep -v "^ok" | head -40`
 Expected: no failures
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Update the census, then commit**
 
 ```bash
-git add internal/actions/ internal/usercommands/ internal/mobcommands/ internal/hooks/ internal/progression/
+git add internal/actions/steal.go internal/actions/plant.go internal/actions/shadow.go internal/actions/defuse.go internal/usercommands/skill.skullduggery.sneak.go internal/usercommands/picklock.go internal/usercommands/throw.go internal/mobcommands/flee.go internal/hooks/NewRound_DoCombat_helpers.go internal/progression/
 git commit -m "refactor(u10b-1): skullduggery progression routes through the seam"
 ```
 
+⚠️ Explicit paths, never `git add internal/`. Eleven code-touching tasks precede
+this one and a directory add would sweep their strays into this commit.
+
 ---
 
-## Task 14: The mob spell path adopts the player path's gates
+## Task 18: The mob spell path adopts the player path's gates
 
-The player spell path applies a self-cast progression penalty, zeroes
-progression for an area cast that found no targets, and gates on
-`spellBonus > 0`. The mob path has none of the three and fires unconditionally
-on `CastComplete`.
+The player path applies a self-cast penalty, zeroes progression for an area cast
+that found no targets, and gates on `spellBonus > 0`. The mob path has none.
 
 **Files:**
 - Modify: `internal/hooks/NewRound_DoCombat_helpers.go`
-- Test: `internal/hooks/spell_progression_parity_test.go` (create)
+- Create: `internal/hooks/spell_progression_parity_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
-```go
-// TestMobSpellProgressionHasThePlayerGates pins that the mob cast path applies
-// the same three gates as the player path: the self-cast penalty, zero
-// progression for an area cast that found no targets, and spellBonus > 0.
-func TestMobSpellProgressionHasThePlayerGates(t *testing.T) {
-	root := repoRootForTest(t)
-	b, err := os.ReadFile(filepath.Join(root, "internal", "hooks",
-		"NewRound_DoCombat_helpers.go"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	src := string(b)
+⚠️ Do **not** assert that the mob block contains the gate literals. Step 3
+extracts them into a shared helper, after which the mob block contains a call,
+not the literals, so such a test fails after a correct implementation. Assert on
+**behaviour**:
 
-	mobBlock := extractMobCastProgressionBlock(t, src)
-	for _, gate := range []string{
-		"SelfCastProgressionMultiplier",
-		"spellBonus > 0",
-	} {
-		if !strings.Contains(mobBlock, gate) {
-			t.Errorf("the mob cast progression block is missing the %q gate "+
-				"that the player path applies", gate)
-		}
-	}
+```go
+// TestMobSelfCastIsPenalisedLikePlayers pins parity on gate one.
+func TestMobSelfCastIsPenalisedLikePlayers(t *testing.T) {
+	// Drive a mob self-cast and a player self-cast; assert both awards carry
+	// SelfCastProgressionMultiplier.
+}
+
+// TestMobAreaCastWithNoTargetsAwardsNothing pins parity on gate two.
+func TestMobAreaCastWithNoTargetsAwardsNothing(t *testing.T) {
+	// Drive a mob area cast that finds no targets; assert no award.
+}
+
+// TestMobCastWithZeroBonusAwardsNothing pins parity on gate three.
+func TestMobCastWithZeroBonusAwardsNothing(t *testing.T) {
+	// Drive a mob cast with spellBonus 0; assert no award.
 }
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 2: Run to verify all three fail**
 
-Run: `go test ./internal/hooks/ -run TestMobSpellProgressionHasThePlayerGates -v`
-Expected: FAIL, naming the missing gates
+Run: `go test ./internal/hooks/ -run TestMob.*Cast -v`
+Expected: FAIL
 
-- [ ] **Step 3: Extract the player path's gating into a shared helper and call it from both**
+- [ ] **Step 3: Extract one helper, call it from both paths**
 
-Do not copy the three gates into the mob path. Extract them into one function
-that both paths call, so a future change cannot reintroduce the divergence.
+Do not copy the gates into the mob path; a future change would diverge again.
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 4: Run**
 
 Run: `go test ./internal/hooks/ -v`
 Expected: PASS
@@ -1383,40 +1884,45 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/hooks/NewRound_DoCombat_helpers.go internal/hooks/spell_progression_parity_test.go
+git add internal/hooks/
 git commit -m "fix(u10b-1): mob spell progression adopts the player path's gates"
 ```
 
 ---
 
-## Task 15: Delete the stranded mob-follow roll
+# Phase E: deletions
 
-`go.go:668-698` is the only hostile-pursuit code on the ordinary movement path,
-which `go.go:125` refuses outright while the player is in combat. A successful
-flee calls `EndAggro` then `MoveToRoom` and commands only charmed mobs to
-follow. Pursuit is being redesigned as authored mob behavior in the behavior
-unification arc.
+## Task 19: Delete the stranded mob-follow roll
 
 **Files:**
 - Modify: `internal/usercommands/go.go`
-- Test: `internal/usercommands/go_test.go`
+- Create: `internal/usercommands/go_mobfollow_test.go`
+
+⚠️ `internal/usercommands/go_test.go` does **not** exist; create the file above.
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
-// TestNoHostileMobFollowRoll pins that the stranded hostile-follow roll is
-// gone. It sat on the ordinary movement path, which refuses movement entirely
-// while the player is in combat, so its only reachable window was a stale-aggro
-// edge case. Pursuit becomes authored mob behavior; see the behavior
-// unification arc.
+// TestNoHostileMobFollowRoll pins that the stranded hostile-follow roll is gone.
+// It sat on the ordinary movement path, which refuses movement entirely while
+// the player is in combat, so its only reachable window was a stale-aggro edge
+// case. Pursuit becomes authored mob behavior in the behavior unification arc.
 func TestNoHostileMobFollowRoll(t *testing.T) {
 	root := repoRootForTest(t)
 	b, err := os.ReadFile(filepath.Join(root, "internal", "usercommands", "go.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(b), "Mob Follow") {
-		t.Fatal("go.go still contains the stranded hostile mob-follow roll")
+	src := string(b)
+
+	if strings.Contains(src, "Mob Follow") {
+		t.Error("go.go still contains the stranded hostile mob-follow roll")
+	}
+	// The pursuit loop sat INSIDE the !isSneaking block, which also fires
+	// room_enter behaviors. Deleting the wrapper would silently kill those.
+	if !strings.Contains(src, "TryRoomBehavior") {
+		t.Error("room_enter behavior firing was deleted along with the pursuit " +
+			"loop; only the GetMobs(FindFightingPlayer) loop should go")
 	}
 }
 ```
@@ -1424,40 +1930,40 @@ func TestNoHostileMobFollowRoll(t *testing.T) {
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `go test ./internal/usercommands/ -run TestNoHostileMobFollowRoll -v`
-Expected: FAIL
+Expected: FAIL on the first assertion
 
-- [ ] **Step 3: Delete the block**
+- [ ] **Step 3: Delete ONLY the pursuit loop**
 
-Remove the whole `if !isSneaking { ... mobInstanceIds := room.GetMobs(rooms.FindFightingPlayer) ... }`
-pursuit block. **Keep** the charmed-mob follow block above it, which is a
-different mechanism and is live.
+Remove the `mobInstanceIds := room.GetMobs(rooms.FindFightingPlayer)` loop and
+its body. **Keep** the `if !isSneaking {` wrapper, the charmed-mob follow above
+it, and the `behaviortree.TryRoomBehavior(destRoom.RoomId, ...)` call after it.
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 4: Run**
 
-Run: `go test ./internal/usercommands/ -v && go build ./...`
+Run: `go test ./internal/usercommands/ ./internal/behaviortree/ -v && go build ./...`
 Expected: PASS, no build output
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add internal/usercommands/go.go internal/usercommands/go_test.go
+git add internal/usercommands/go.go internal/usercommands/go_mobfollow_test.go
 git commit -m "refactor(u10b-1): delete the stranded hostile mob-follow roll"
 ```
 
 ---
 
-## Task 16: Delete first-kill progression
+## Task 20: Delete first-kill progression
 
 **Files:**
 - Modify: `internal/characters/progression.go`
 - Modify: `internal/hooks/Death_MobKillCredit.go`
-- Test: `internal/hooks/death_mobkillcredit_test.go`
+- Create: `internal/hooks/first_kill_progression_test.go`
 
 - [ ] **Step 1: Write the failing test**
 
 ```go
 // TestFirstKillAwardsNoProgression pins the owner's ruling, made 2026-08-21 and
-// reaffirmed 2026-08-26. Kill TRACKING stays: KD.AddMobKill feeds the kill and
+// reaffirmed 2026-08-26. Kill TRACKING stays: AddMobKill feeds the kill and
 // bestiary displays and is not progression.
 func TestFirstKillAwardsNoProgression(t *testing.T) {
 	root := repoRootForTest(t)
@@ -1474,14 +1980,14 @@ func TestFirstKillAwardsNoProgression(t *testing.T) {
 		}
 	}
 
-	b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(
-		"internal/hooks/Death_MobKillCredit.go")))
+	b, err := os.ReadFile(filepath.Join(root,
+		filepath.FromSlash("internal/hooks/Death_MobKillCredit.go")))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(string(b), "AddMobKill") {
-		t.Error("kill TRACKING was deleted along with the progression award; " +
-			"AddMobKill feeds the bestiary and must stay")
+		t.Error("kill TRACKING was deleted with the award; AddMobKill feeds " +
+			"the bestiary and must stay")
 	}
 }
 ```
@@ -1493,232 +1999,219 @@ Expected: FAIL
 
 - [ ] **Step 3: Delete**
 
-Remove `Character.OnFirstMobKill`, both call sites in
-`Death_MobKillCredit.go` (killer and party members), and the player-facing
-message "Defeating a new foe hones your combat instincts!". Keep
-`KD.AddMobKill` and the surrounding kill bookkeeping.
+Remove `Character.OnFirstMobKill`, both call sites (killer and party members),
+and the message "Defeating a new foe hones your combat instincts!". Keep
+`KD.AddMobKill`.
 
-- [ ] **Step 4: Run to verify it passes**
-
-Run: `go test ./internal/hooks/ ./internal/characters/ -v && go build ./...`
-Expected: PASS, no build output
-
-- [ ] **Step 5: Update the census in Task 1**
-
-The count in `census_test.go` drops. Re-run, record the new number, and update
-it in this same commit so the census stays honest.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 4: Run, update the census, commit**
 
 ```bash
-git add internal/characters/progression.go internal/hooks/Death_MobKillCredit.go internal/hooks/death_mobkillcredit_test.go internal/progression/census_test.go
+git add internal/characters/progression.go internal/hooks/ internal/progression/census_test.go
 git commit -m "refactor(u10b-1): delete first-kill progression, keep kill tracking"
 ```
 
 ---
 
-## Task 17: Delete the dead crit stubs, re-anchor the decay test, fix stale comments
-
-**Files:**
-- Modify: five `_test.go` files carrying `OnCriticalSuccess`/`OnCriticalFailure` stubs
-- Modify: `internal/progression/seam_guard_test.go`
-- Modify: `internal/combat/defence_multiplier.go`
-- Modify: the file holding `TestCritReceivedProgression_DecaysWithRank`
+## Task 21: Dead crit stubs, the decay pin, and stale comments
 
 - [ ] **Step 1: Re-anchor the decay test FIRST**
 
-`TestCritReceivedProgression_DecaysWithRank` is load-bearing: it pins the
-owner's condition that the bonus roll decays toward the soft cap, via the real
-`statProgressionChance`. But it is named and documented after `OnCritReceived`,
-a symbol this slice removes. Rename it and rewrite its doc comment to describe
-`Outcome.ToughenStat`, keeping the assertion identical. If you delete first, the
-next cleanup sweep silently un-pins the condition.
+`TestCritReceivedProgression_DecaysWithRank` (`internal/characters/progression_faucet_test.go`)
+pins the owner's decay condition through the real chance function, reached via
+its local `critReceivedChanceForTest` wrapper. It is named and documented after
+`OnCritReceived`, which this task removes. Rename it and rewrite its doc comment
+to describe `Outcome.ToughenStat`, keeping the assertion identical.
+
+⚠️ The spec's earlier reference to a symbol named `statProgressionChance` was
+wrong; the real production entry point is `Character.ProgressionChanceForStat`.
 
 Run: `go test ./internal/characters/ -run DecaysWithRank -v`
 Expected: PASS, unchanged behaviour under the new name
 
-- [ ] **Step 2: Delete the stubs**
+- [ ] **Step 2: Delete the stubs from ALL NINE files**
 
-Remove the `OnCriticalSuccess` and `OnCriticalFailure` no-op methods from the
-fake actors in the five `_test.go` files that define them. They implement no
-interface: the methods do not exist on `Character` and have zero production
-references.
+```
+internal/actions/consider_test.go     internal/actions/salvage_test.go
+internal/actions/economy_test.go      internal/actions/scan_test.go
+internal/actions/forage_test.go       internal/actions/search_test.go
+internal/actions/sleep_test.go        internal/actions/track_test.go
+internal/hooks/spell_foldanchor_test.go
+```
 
-- [ ] **Step 3: Drop them from the allow-list**
+⚠️ **Nine, not five.** An earlier draft of this plan said five. The methods
+implement no interface, so deleting only some leaves the rest compiling and
+invisible.
 
-In `internal/progression/seam_guard_test.go`, remove `"OnCriticalSuccess"` and
-`"OnCriticalFailure"` from the allow-list map. The guard currently vouches for
-two symbols that do not exist, which weakens it.
+Verify none remain: `grep -rl "func.*OnCritical" internal/` → no output.
+
+- [ ] **Step 3: Fix the DENY-list, not the allow-list**
+
+`internal/progression/seam_guard_test.go` has two maps:
+`allowedDirectProgression` (allow-list, keyed by file) and `progressionCalls`
+(the **deny**-list of guarded method names). `"OnCriticalSuccess"` and
+`"OnCriticalFailure"` sit in **`progressionCalls`**. Remove them from there.
+
+⚠️ Removing rows from `allowedDirectProgression` instead would silently break
+the U9 guard.
 
 - [ ] **Step 4: Fix the two stale comments in `defence_multiplier.go`**
 
-1. A comment claims a forced-crit defence "was still progressed exactly as on
-   the melee path". It is **not** progressed on the melee path. Correct it.
-2. A comment cites a `Margin` negation at one line number; the real negations
-   are elsewhere in the file. Re-derive the list and correct it, or drop the
-   line numbers and describe the behaviour instead, which will not rot.
+1. The comment claiming a forced-crit defence "was still progressed exactly as
+   on the melee path" is wrong: the melee path returns early on `forceCrit`
+   before `DefenseUsed` is stamped, so it is not progressed there, while the
+   channel path's `AwardDefenceProgression` fires unconditionally including
+   under `ForceCrit`.
+2. The comment citing a `Margin` negation at line 307 points at an unrelated
+   function. The real negations are at 506 and 564. Prefer describing the
+   behaviour to citing line numbers, which rot.
 
-- [ ] **Step 5: Run everything**
-
-Run: `go test ./... 2>&1 | grep -v "^ok" | head -40`
-Expected: no failures
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Run and commit**
 
 ```bash
-git add internal/ 
+git add internal/actions/ internal/hooks/ internal/characters/ internal/progression/ internal/combat/defence_multiplier.go
 git commit -m "chore(u10b-1): delete dead crit stubs, re-anchor the decay pin, fix stale comments"
 ```
 
 ---
 
-## Task 18: The guard that keeps new sites on the convention
+# Phase F: guard, docs, verify
+
+## Task 22: The standing guard
 
 **Files:**
 - Modify: `internal/progression/seam_guard_test.go`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Define what the scanner looks for, narrowly**
+
+⚠️ `util.Rand(` has **210** production call sites and `dice.RollStat(` has 14. A
+scanner that flags every `util.Rand` turns Step 3 into a multi-day triage of
+loot tables, spawn rolls and weather. Scope it to the shape this slice cares
+about: a roll whose result is **compared against a threshold to decide an
+action's success**, which in practice means `dice.RollStat(x)` followed by a
+comparison, and `util.Rand(n)` compared against a computed chance variable.
+
+Write the recogniser to report `file:line:mechanism`, and accept that it will
+have false positives. The allow-list is how they are dispositioned.
+
+- [ ] **Step 2: Write the guard**
 
 ```go
 // TestEveryRolledSiteRoutesThroughTheSeam is U10b-1's standing guard: a new
-// uncertain-outcome roll must resolve on the contest core and award through the
-// seam, not with a bare util.Rand or dice.RollStat threshold.
+// uncertain-outcome roll must resolve on the contest core, not with a bare
+// util.Rand or dice.RollStat threshold.
 //
-// The allow-list holds the DELIBERATE exceptions from spec section 3.1. Adding
-// an entry is a decision, so it needs a comment saying which exception it is.
+// The allow-list holds DELIBERATE exceptions from spec section 3.1 and 7. Each
+// entry needs a reason; adding one is a decision, not a formality.
 func TestEveryRolledSiteRoutesThroughTheSeam(t *testing.T) {
 	allowed := map[string]string{
 		"internal/behaviortree/actions_progression.go": "authored tutorial grant, spec 3.1",
-		"internal/hooks/item_procs.go":                 "item procs stay off-core, spec 7",
+		"internal/hooks/item_procs.go":                 "item procs stay off-core, spec 7 (owner, 2026-08-26)",
 		"internal/hooks/NewRound_AutoHeal.go":          "regen ticks, deferred to U10b-2",
+		"internal/hooks/NewRound_DoCombat_helpers.go":  "mob weapon pickup and target switch; the latter is U12's surface",
+		"internal/usercommands/target.go":              "target switch, assigned to U12",
 	}
 
-	offenders := scanForBareUncertaintyRolls(t, repoRootForTest(t))
-	for _, o := range offenders {
+	for _, o := range scanForBareUncertaintyRolls(t, repoRootForTest(t)) {
 		if _, ok := allowed[o.File]; !ok {
 			t.Errorf("%s:%d resolves an uncertain outcome with %s, off the "+
-				"contest core. Route it through contest.AgainstDifficulty or "+
-				"combat.RunContest, or add it to the allow-list with a reason.",
-				o.File, o.Line, o.Mechanism)
+				"contest core. Route it through contest.AgainstDifficulty, "+
+				"contest.RunWithFloors or combat.RunContest, or add it to the "+
+				"allow-list with a reason.", o.File, o.Line, o.Mechanism)
 		}
 	}
 }
 ```
 
-- [ ] **Step 2: Run it and read the output carefully**
+- [ ] **Step 3: Prove the scanner is not blind before trusting a pass**
 
-Run: `go test ./internal/progression/ -run TestEveryRolledSiteRoutesThroughTheSeam -v`
-Expected: FAIL initially, listing whatever remains.
+Add a unit test that feeds the scanner a source string containing a known bare
+threshold roll and asserts it is reported. **If the guard passes on its first
+run before this test exists, assume the scanner is blind, not the tree clean.**
 
-⚠️ Build `scanForBareUncertaintyRolls` on the **fixed** walker from Task 2. If
-this test passes on the first run before you have written the scanner, the
-scanner is blind, not the codebase clean.
-
-- [ ] **Step 3: Fix or allow-list each offender, then re-run**
-
-Expected: PASS
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Run, disposition each offender, commit**
 
 ```bash
 git add internal/progression/seam_guard_test.go
-git commit -m "test(u10b-1): guard that new rolled sites stay on the seam"
+git commit -m "test(u10b-1): guard that new rolled sites stay on the contest core"
 ```
 
 ---
 
-## Task 19: Breadcrumbs and roadmap correction
-
-**Files:**
-- Modify: `internal/hooks/item_procs.go`, `internal/hooks/NewRound_DoCombat_helpers.go`, `internal/usercommands/target.go`
-- Modify: `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`
+## Task 23: Breadcrumbs and the roadmap
 
 - [ ] **Step 1: Breadcrumb what stays off-core**
 
-Add to `item_procs.go` above the proc gate:
-
-```go
-// NOTE(unassigned): this flat util.Rand(100) against an author-set percentage
-// decides whether EVERY equipped item's proc fires - lifesteal, stun, drain,
-// bleed. It is an uncertain outcome off the contest core. U10b-1 deliberately
-// left it (owner, 2026-08-26) because a proc is not a skill use and routing it
-// would change how all proc gear feels. Recorded so it is not invisible.
-```
-
-Add a matching note to `handleMobWeaponPickup`.
+Add a `NOTE(unassigned)` to `item_procs.go`'s proc gate explaining that one flat
+`util.Rand(100)` decides whether every equipped item's lifesteal, stun, drain
+and bleed fires, that it is off the contest core, and that U10b-1 left it
+deliberately (owner, 2026-08-26). Add a matching note to
+`handleMobWeaponPickup`.
 
 - [ ] **Step 2: Hand the two target-switch sites to U12**
 
-Add to both `ChanceToSwitchTarget` roll sites:
-
-```go
-// NOTE(U12): this hand-rolled threshold around combat.ChanceToSwitchTarget is
-// an uncertain outcome off the contest core. ChanceToSwitchTarget is a pure
-// self-stat formula, so contest.AgainstDifficulty fits it exactly. Assigned to
-// U12, whose declared surface is targeting and target-switching.
-```
+Add a `NOTE(U12)` at both `ChanceToSwitchTarget` roll sites saying the formula
+is a pure self-stat check that `contest.AgainstDifficulty` fits exactly, and
+that targeting is U12's declared surface.
 
 - [ ] **Step 3: Correct the roadmap**
 
-In `UNIFIED_RESOLUTION_ROADMAP.md`, update the Category B row: the real census
-is **20 sites, not 8**; name the twelve that carried no breadcrumb; record that
-U10b-1 converted 15, U12 owns 2, and 3 stay off-core deliberately.
+Update the Category B row in `UNIFIED_RESOLUTION_ROADMAP.md`: the real census is
+**20 sites, not 8**; name the twelve that carried no breadcrumb; record that
+U10b-1 converted 15, U12 owns 2, and 3 stay off-core deliberately. Note that
+`contest.AgainstDifficulty` being callerless was **not** a gap to close for its
+own sake, since static-difficulty rolls are deliberately unfloored.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add internal/hooks/ internal/usercommands/target.go docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md
+git add internal/hooks/item_procs.go internal/hooks/NewRound_DoCombat_helpers.go internal/usercommands/target.go docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md
 git commit -m "docs(u10b-1): breadcrumb what stays off-core; correct the Category B census"
 ```
 
 ---
 
-## Task 20: Re-solve the skullduggery multiplier
+## Task 24: Re-solve every fitted multiplier
 
-`SkillProgressionMultipliers[Skullduggery] = 0.83` was solved on measured
-play-time rates in U10b-0 Phase D. Adding a failure award to steal, plant and
-sneak changes the basis it was fitted against.
+Awarding on losses raises attacker events per swing by roughly **26%** and
+defender events by roughly **47%**. Every fitted multiplier is invalidated, not
+just skullduggery.
 
 - [ ] **Step 1: Record the BEFORE rates**
 
 Run: `python tools/balance/read_combat_analytics.py`
 
 ⚠️ The buffer is **cumulative**. Never sum flush lines; read the latest
-cumulative figure. Record the skullduggery award rate.
+cumulative figure.
 
 - [ ] **Step 2: Re-solve**
 
 Run: `python tools/balance/u10b_solve_v3.py`
 
-Feed it the new firing conditions (steal, plant and sneak now award on a
-resolved loss at `ProgressionFailureFraction`). Record the new multiplier.
+Feed it the new firing conditions. Re-solve weapon-combat, dodge, parry, block,
+spellcasting, rhetoric and skullduggery, or record why a given one is exempt.
 
-- [ ] **Step 3: Apply the new multiplier**
-
-Update `SkillProgressionMultipliers` in `_datafiles/config.yaml`.
-
-- [ ] **Step 4: Commit with the numbers in the message**
+- [ ] **Step 3: Apply and commit with the numbers in the body**
 
 ```bash
-git add _datafiles/config.yaml
-git commit -m "balance(u10b-1): re-solve the skullduggery multiplier for the failure award"
+git commit -m "balance(u10b-1): re-solve skill multipliers for the failure award"
 ```
 
-The commit body must record the before and after rates and the solved value, so
-the next person can tell a retune from a regression.
+The body must record before and after per skill, so the next reader can tell a
+retune from a regression.
 
 ---
 
-## Task 21: Docs, patch notes, and `context.md`
+## Task 25: Docs, `context.md`, patch notes
 
 - [ ] **Step 1: Update the affected `context.md` files**
 
-`internal/progression/context.md` gains `OrdinaryEventsScaled` and the
-`Defended` field. `internal/crafting/context.md` gains `CraftScore`,
-`CraftDifficulty`, `SalvageDifficulty` and loses `CalcSuccessChance`.
-`internal/items/context.md` gains `MaterialTierMultiplier`.
+`internal/progression` gains `OrdinaryEventsScaled` and `Outcome.Defended`.
+`internal/crafting` gains `CraftScore`, `CraftDifficulty`, `SalvageDifficulty`,
+`SelectIngredientItems`, and loses `CalcSuccessChance`. `internal/items` gains
+`MaterialTierMultiplier` and `ItemSpec.MaterialTier`. `internal/characters`
+gains `OnStatUseScaled`.
 
-⚠️ Verify every symbol you name exists:
+⚠️ Verify every symbol exists before naming it:
 
 ```powershell
 Select-String -Path internal\crafting\*.go -Pattern '^(func|type|const|var)\s'
@@ -1726,24 +2219,21 @@ Select-String -Path internal\crafting\*.go -Pattern '^(func|type|const|var)\s'
 
 - [ ] **Step 2: Add a dated `docs/PATCH_NOTES.md` entry**
 
-Player-facing framing. No raw numbers, no em dashes. Cover: failing at something
-now teaches you a little; searching, tracking, foraging, crafting and salvaging
-are resolved the same way as everything else; how hard a craft is now depends on
-the materials you are working with; someone hiding from you is harder to find if
-they are good at hiding.
+Player-facing framing, no raw numbers, no em dashes, wrapped at 80. Cover:
+failing at something now teaches you a little; searching, tracking and foraging
+resolve like everything else; how hard a craft is depends on the materials you
+work with; someone good at hiding is harder to find.
+
+⚠️ Do **not** promise that mobs will now chase you. Task 19 deletes a roll; it
+adds no pursuit.
 
 - [ ] **Step 3: Commit**
 
-```bash
-git add internal/*/context.md docs/PATCH_NOTES.md
-git commit -m "docs(u10b-1): context.md updates and patch notes"
-```
-
 ---
 
-## Task 22: Pre-push verification and the adversarial playtest
+## Task 26: Pre-push verification and the adversarial playtest
 
-- [ ] **Step 1: Formatting gate**
+- [ ] **Step 1: Formatting**
 
 Run: `gofmt -l internal/ modules/`
 Expected: no output
@@ -1753,10 +2243,10 @@ Expected: no output
 Run: `go build ./... && go test ./... 2>&1 | grep -v "^ok" | head -40`
 Expected: no failures
 
-- [ ] **Step 3: Confirm `LogToFile: false`**
+- [ ] **Step 3: Confirm `Logging.LogToFile: false`**
 
-Check `_datafiles/config.yaml`. Note this file has `skip-worktree` set, so build
-any commit from the `git show HEAD:` blob, never from disk.
+⚠️ `_datafiles/config.yaml` has `skip-worktree`. Build the commit from the
+`git show HEAD:` blob, never from disk.
 
 - [ ] **Step 4: Boot test in an isolated detached worktree**
 
@@ -1769,30 +2259,31 @@ grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log   # want 
 grep -c "Server Ready" boot.log                                          # want 1
 ```
 
-⚠️ **Exit code 124 is the success case**: the timeout fired because the server
-stayed up. Do not grep for the bare word `panic`; `GamePlay.MapConsistencyEnforce`
-legitimately has the value `panic`. Clean up with `git worktree remove --force`.
+⚠️ **Exit code 124 is the success case.** Do not grep for the bare word
+`panic`; `GamePlay.MapConsistencyEnforce` legitimately has the value `panic`.
+Clean up with `git worktree remove --force`.
 
-- [ ] **Step 5: Adversarial playtest**
+- [ ] **Step 5: Adversarial playtest, reporting FOUR signals separately**
 
 Run: `/playtest local --checkout <abs> bug-finder <goals>.yaml`
 
-The goals file must separate **three signals**, because this slice is not a
-no-op in three independent ways:
-
-1. **The convention move.** Does failing at something now visibly teach you a
-   little? Does a fumble still feel better than an ordinary miss?
-2. **The stealth change.** Is a skilled hider now meaningfully harder to find
-   than an unskilled one, from both sides?
+1. **The convention move.** Does failing at something visibly teach a little?
+2. **The stealth change.** Is a skilled hider meaningfully harder to find, from
+   both sides?
 3. **Crafting feel.** Does difficulty track the materials? Does mastery read the
-   same on a novice recipe and an advanced one? This is the biggest surface and
-   the likeliest source of complaints.
+   same on a novice recipe and an advanced one? Biggest surface, likeliest
+   source of complaints.
+4. **Search, track and forage odds.** Weak searchers improve sharply; experts
+   lose near-certainty.
+
+Also watch the economy: the craft-then-salvage material sink, and whether shop
+restock throughput holds up with mob crafters at skill 1.
 
 ⚠️ **The AI port caps 3 commands per round and silently discards the overflow
-after echoing it.** A dropped command is indistinguishable from a broken one.
-Send one command per batch and verify output before concluding anything.
+after echoing it.** A dropped command looks exactly like a broken one. Send one
+command per batch and verify output before concluding anything.
 
-- [ ] **Step 6: Fix what the playtest finds, then extract findings to memory**
+- [ ] **Step 6: Fix findings, extract them to memory**
 
 Playtest reports are gitignored. Extract every finding to a memory topic file
 before the session ends.
@@ -1805,6 +2296,6 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/u10b-1-progression
 gh pr checks <n> --repo pruuk/DOGMud --watch
 ```
 
-⚠️ Always pass `--repo pruuk/DOGMud`. This repo is a fork and `gh` defaults to
-the **parent**. A green check is not proof: confirm with
+⚠️ Always pass `--repo pruuk/DOGMud`; this repo is a fork and `gh` defaults to
+the parent. A green check is not proof: confirm with
 `gh run view <id> --repo pruuk/DOGMud --log-failed`.
