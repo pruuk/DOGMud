@@ -20,9 +20,9 @@ it needed its own words.
 
 You are seen the moment you strike. Hitting or missing makes no difference,
 and a shot from cover at something in your own room gives you away the same
-way. There is no fighting on from the shadows. Losing your cover without
-being told was the sort of thing that sends a player looking for a bug, so
-the game says it plainly now.
+way. There is no fighting on from the shadows. A shot from cover tells you so
+in plain words. A blow you close in with is marked in the combat text as the
+surprise it was, so either way you can see that your cover is spent.
 
 An ambush spends your shared special move recovery, the one bash, trip and
 kick all draw on. If it has not come back you have no ambush ready and your
