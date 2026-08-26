@@ -381,19 +381,21 @@ func TestFireSurprise_LandedShotTrainsSkullduggery(t *testing.T) {
 	_, n := actor.awardedCandidate(string(skills.Skullduggery))
 	assert.Equal(t, 1, n, "a landed surprise shot must offer skullduggery as a candidate exactly once")
 
-	// ranged-combat is NOT offered here, and that is deliberate rather than a
-	// gap in this test. stubActor.IsPlayer() is false, and awardFireProgression
-	// gates the ranged-combat candidate on IsPlayer to preserve an existing
-	// production gap: internal/mobcommands/shoot.go has never awarded any
-	// progression, so a mob archer trains nothing today. Closing that is the
-	// "mob archer ranged-combat progression" faucet U10b-1 defers to U10b-2.
+	// ranged-combat contests the SAME award rather than taking its own, and it
+	// is offered to a NON-PLAYER shooter too.
 	//
-	// Pinned rather than ignored, so the day that gate is removed this fails
-	// and says why, instead of the rate changing silently.
+	// That second half is the point of the assertion. An earlier draft gated
+	// this candidate on actor.IsPlayer() to preserve the gap left by
+	// mobcommands/shoot.go awarding no progression, which made the firing rule
+	// depend on what kind of thing was acting. Whether a mob progresses is
+	// already decided centrally by MobProgressionEnabled and MobProgressionRate
+	// inside the chance functions, so the gate was a second, invisible copy of
+	// an existing policy. This stub reports IsPlayer() false, so it fails the
+	// moment such a gate comes back.
 	require.False(t, actor.IsPlayer(), "fixture premise: this stub is not a player")
 	_, nRanged := actor.awardedCandidate(string(skills.RangedCombat))
-	assert.Equal(t, 0, nRanged,
-		"a non-player shooter must not train ranged-combat yet; removing the IsPlayer gate is U10b-2")
+	assert.Equal(t, 1, nRanged,
+		"ranged-combat must contest the same award, for a non-player shooter as much as a player")
 }
 
 // ---------------------------------------------------------------------------

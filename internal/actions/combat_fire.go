@@ -501,12 +501,21 @@ func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 // one real roll with one synthetic one. Revisit if that seam ever exposes the
 // roll.
 //
-// ⚠️ RANGED-COMBAT IS GATED ON IsPlayer TO PRESERVE AN EXISTING GAP, not
-// because mobs should not train it. mobcommands/shoot.go has never awarded any
-// progression, so a mob archer trains nothing today; closing that is the
-// "mob archer ranged-combat progression" faucet the U10b-1 design explicitly
-// defers to U10b-2. Removing this gate is that task, and it should be removed
-// deliberately with the rate change measured, not as a side effect here.
+// MOB ARCHERS TRAIN THIS TOO, and deliberately so. An earlier draft gated the
+// ranged-combat candidate on actor.IsPlayer() to preserve the gap left by
+// mobcommands/shoot.go never awarding any progression. That gate was wrong on
+// principle, not merely ugly: the player/mob difference in progression is
+// ALREADY policy, expressed once in config and applied centrally by
+// MobProgressionEnabled (an off-switch) and MobProgressionRate (a multiplier)
+// inside the chance functions at internal/characters/progression.go:121, :233
+// and :574. A second copy of that policy at one call site duplicates it
+// somewhere no operator can see or tune, and makes this the only progression
+// award in the game whose FIRING depends on what kind of thing is acting.
+//
+// Consequence, recorded rather than buried: this closes part of the "mob archer
+// ranged-combat progression" faucet U10b-1 had deferred to U10b-2. Mob archers
+// previously trained nothing at all from shooting; they now take one award per
+// resolved shot on the same terms as anyone else, scaled by MobProgressionRate.
 func awardFireProgression(actor Actor, surpriseShot, hit bool) {
 	char := actor.GetCharacter()
 	if char == nil {
@@ -514,9 +523,7 @@ func awardFireProgression(actor Actor, surpriseShot, hit bool) {
 	}
 
 	cands := make([]progression.Candidate, 0, 2)
-	if actor.IsPlayer() {
-		cands = append(cands, char.CandidateFor(string(skills.RangedCombat)))
-	}
+	cands = append(cands, char.CandidateFor(string(skills.RangedCombat)))
 	// Gated on the shot LANDING, matching the melee ambush: skullduggery here
 	// means "the approach worked", not "the approach was attempted".
 	if surpriseShot && hit {
