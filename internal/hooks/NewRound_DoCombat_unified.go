@@ -644,10 +644,11 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 		defChar.TrackPlayerDamage(atkUid, res.DamageToTarget)
 	}
 
-	// U9: melee builds a progression.Outcome and hands it to the seam. The
-	// FIRING CONDITIONS below are unchanged from pre-U9 -- CleanHit for the
-	// attacker's skill, the defence-used set for the defender. What changed is
-	// what the events carry. Changing when they fire is U10b.
+	// U9 made melee build a progression.Outcome and hand it to the seam, leaving
+	// the pre-U9 firing conditions alone. U10b-1 changed the firing conditions
+	// themselves: BOTH ordinary tiers now fire win or lose, the attacker's per
+	// weapon (Task 10) and the defender's once per round (Task 9). The BONUS
+	// tier below still fires only on an exceptional result.
 	round := util.GetRoundCount()
 	bonuses := progression.Bonuses{
 		Doing:     float64(configs.GetBalanceConfig().CritProgressionBonus),
@@ -659,24 +660,13 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	emitAttackerStatGain(atk, "strength", atkUid)
 	emitAttackerStatGain(atk, "dexterity", atkUid)
 
-	// ── Ordinary attacker events: per weapon hit, gated on CleanHit ──────
-	// Firing condition unchanged from pre-U9. ORDINARY ONLY: the defender's
-	// ordinary event is awarded once per round by processDefenderProgression
-	// below, so asking for it here as well would award it per weapon hit.
-	for _, wh := range res.WeaponHits {
-		if !wh.CleanHit {
-			continue
-		}
-		atkChar.ApplyProgression(
-			progression.OrdinaryEvents(progression.Outcome{
-				AttackerSkill: wh.SkillTag,
-				AttackerStat:  skills.GetSkillPrimaryStat(wh.SkillTag),
-			}),
-			progression.SideAttacker, atkUid, round)
-	}
-	if len(res.WeaponHits) == 0 && res.CleanHit {
-		atkChar.OnSkillUse(string(skills.UnarmedCombat), atkUid)
-	}
+	// ── Ordinary attacker events: ONE per weapon that SWUNG, win or lose ──
+	// U10b-1 Task 10 replaced the CleanHit gate with a scaled award; see
+	// processAttackerProgression for the rate change and the unarmed
+	// consequence. ORDINARY ONLY: the defender's ordinary event is awarded once
+	// per round by processDefenderProgression below, so asking for it here as
+	// well would award it per weapon.
+	processAttackerProgression(atkChar, atkUid, *res)
 
 	// U10d: a landed surprise attack trains skullduggery, once for the round.
 	//
@@ -712,8 +702,8 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	// hand plus an offhand fist, so unarmed produces TWO entries and would
 	// have been double-paid. Measured 2026-08-19; an earlier draft of this
 	// comment claimed unarmed produced none, which is false. The
-	// len(WeaponHits) == 0 fallback above is therefore defensive rather than
-	// the unarmed path.
+	// len(WeaponHits) == 0 fallback that used to sit above was therefore DEAD,
+	// not defensive, and U10b-1 Task 10 deleted it.
 	//
 	// The once-per-round dedupe in ApplyProgression would have caught the
 	// duplicate anyway, but only by accident, and only for events sharing a

@@ -25,6 +25,70 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// processAttackerProgression fires the round's ORDINARY attacker awards: ONE
+// per weapon that SWUNG, at full weight when that weapon landed a clean hit and
+// at Balance.ProgressionFailureFraction when it did not.
+//
+// U10b-1 Task 10 changed the firing condition. Before it the loop body sat
+// inside `if !wh.CleanHit { continue }`, so a weapon whose every swing was
+// deflected or missed built no progression.Outcome at all and trained nothing.
+// The convention for this slice is that a RESOLVED action always produces one
+// event; a swing that missed is a contest that resolved and lost, not a contest
+// that never happened.
+//
+// THE RATE CHANGE IS LARGE AND DELIBERATE. Awards per weapon per round go from
+// P(clean hit) to 1.0. Measured over 96,723 analytics events the clean-hit rate
+// is 0.3856, so this is roughly a 2.6x increase in the attacker faucet -- not
+// the "+26%" the design spec's risk table quotes, which was computed from
+// 0.5752, the HIT rate mislabelled as the clean-hit rate. The owed re-solve of
+// SkillProgressionMultipliers must use 0.3856.
+//
+// ONE AWARD PER WEAPON, NOT ONE PER ROUND. Each weapon is its own resolved
+// action and the pre-U9 firing condition was per weapon, so a dual-wielder
+// still takes two events. Best-of applies WITHIN one resolved action -- the
+// weapon-plus-skullduggery case, which is a separate call site -- never across
+// a round's weapons.
+//
+// THE UNARMED CONSEQUENCE IS SHARPER, and is recorded rather than fixed here.
+// collectAttackWeapons contributes a fist for EACH empty hand slot and
+// CombatSkillTagForItem maps ItemId 0 to unarmed-combat, so a bare-handed
+// attacker produces TWO unarmed-combat entries and now takes TWO certain awards
+// a round where a two-handed weapon user takes one. A one-handed wielder gets
+// one weapon-combat award AND one unarmed-combat award from the empty offhand.
+// Whether unarmed should be Best-of'd across fists, or paid once per round --
+// and the same question for dual-wielders -- is a design decision for the
+// re-solve, not a cleanup.
+//
+// NOTE: there is no `len(WeaponHits) == 0` fallback. One was deleted here, and
+// it was DEAD: collectAttackWeapons cannot return empty (every hand slot
+// contributes, and a final fallback appends a bare fist when nothing else did),
+// buildAttackPlan filters none of it, calcSwingCount has a minimum of 1, and
+// calculateCombat appends exactly one entry per plan weapon unconditionally. Its
+// second condition made it doubly unreachable: result.CleanHit can only be set
+// inside the swing loop, which cannot run without a plan weapon. Do not
+// reintroduce a round-level consolation award beside the loop -- everything this
+// function pays comes from WeaponHits.
+func processAttackerProgression(c *characters.Character, userId int, result combat.AttackResult) {
+	if c == nil {
+		return
+	}
+	for _, wh := range result.WeaponHits {
+		// CandidateFor leaves Candidate.Stat empty, meaning "the skill's
+		// primary". That is EQUIVALENT to the explicit
+		// AttackerStat: skills.GetSkillPrimaryStat(wh.SkillTag) the pre-task
+		// code passed: ApplyProgression only pays a separate stat roll when an
+		// ordinary event names a stat DIFFERENT from the skill's primary, which
+		// neither form does. It is also safer, since a populated Stat that did
+		// differ would silently double-roll.
+		//
+		// An unknown SkillTag comes back as the zero Candidate, BestOf reports
+		// false on it and nothing is awarded. The pre-task code instead reached
+		// CheckSkillProgression with the unrecognised name, which banners it to
+		// the player verbatim.
+		c.AwardResolved(userId, wh.CleanHit, c.CandidateFor(wh.SkillTag))
+	}
+}
+
 // processDefenderProgression fires ONE skill-and-stat progression award for the
 // defender per melee round: the defence that ROLLED BEST across the round's
 // swings, at full weight if that defence won and at

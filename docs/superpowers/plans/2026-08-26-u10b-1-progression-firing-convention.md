@@ -22,21 +22,22 @@
 | `Balance.SkillWeight` | exists, ships **5.0** |
 | `contest.Result.Success` | the **ATTACKER** won. `!Success` is NOT "the defender won" (`ForceCrit`). |
 | `out.Defended` | assigned at `defence_multiplier.go:487`, **34 lines AFTER** the award at `:453`. At the award site the predicate is `!res.Success && !side.ForceCrit`. |
-| `AwardDefenceProgression` | **Task 8 shipped** `(c, userId, defenceType string, won bool)` — an OUTCOME, not a bare multiplier; it reads `ProgressionFailureFraction` itself. It makes **THREE** progression calls, not two (parry adds a strength roll) and all three scale. 2 production callers, both passing `true` until Task 9: `defence_multiplier.go:453`, `NewRound_DoCombat_helpers.go:46` |
+| `AwardDefenceProgression` | **Task 8 shipped** `(c, userId, defenceType string, won bool)`, an OUTCOME rather than a bare multiplier; it reads `ProgressionFailureFraction` itself. It makes **THREE** progression calls, not two (parry adds a strength roll) and all three scale. 2 production callers, both passing `true` until Task 9: `defence_multiplier.go:453`, `NewRound_DoCombat_helpers.go:127` (was `:46`, Task 9 and Task 10 both grew that file above it) |
 | `DefenceSkillAndStat` | dodge→**unarmed-combat**/dex, parry→**weapon-combat**/dex, block→**weapon-combat**/str, quell→spellcasting/wil, defy→rhetoric/wil |
 | melee defender award | `processDefenderProgression` loops `defenceTypesUsed`, awarding once **per defence TYPE** (up to 3/round) |
 | channel defender award | `defence_multiplier.go:453`, fires **win or lose** already |
 | `runBestOfAllDefense` | sets `best.defenseType = res.Winner` whenever `res.Contested`, so a quoted defence **exists on a loss** |
 | `DefenseUsed` | stamped only in `sendDefenseMessages`, i.e. only on a **won** defence |
-| attacker gate | `NewRound_DoCombat_unified.go:666-667`, `if !wh.CleanHit { continue }` |
+| attacker gate | **Task 10 removed it.** Was `NewRound_DoCombat_unified.go:666-667`, `if !wh.CleanHit { continue }`; the loop now lives in `processAttackerProgression` (`NewRound_DoCombat_helpers.go:71`) and awards win or lose |
+| `WeaponHits` | **NEVER empty in production.** `collectAttackWeapons` contributes a fist per empty hand slot and ends with a `len == 0` fallback appending a bare fist; `buildAttackPlan` filters none of it; `calcSwingCount` has a minimum of 1; `calculateCombat:600` appends one entry per plan weapon unconditionally. So a bare-handed attacker produces **TWO** unarmed-combat entries, a 1H wielder produces weapon-combat **plus** an offhand unarmed-combat entry, and a 2H wielder produces one. The `len(WeaponHits) == 0 && res.CleanHit` fallback was **dead** and Task 10 deleted it |
 | `CleanHit` | assigned inside `if res.hit` as `!res.defended`: **hit AND not defended**. A deflected swing is a Hit that is not a CleanHit. |
 | clean-hit rate | **0.3856**, not 0.5752 (which is the hit rate). Fixed in `read_combat_analytics.py`, `987e7e872`. |
 | `Actor` | **12 methods** after Task 7 (11 before it). 2 production implementers; field paths are `a.User.Character` / `a.Mob.Character`. **9 test fakes declare the interface in full** and need any new method added by hand: `internal/actions/{consider,economy,forage,salvage,scan,search,sleep,track}_test.go` + `internal/hooks/spell_foldanchor_test.go`. **A further 8 test types satisfy `Actor` by EMBEDDING and inherit new methods for free** -- `steal_test.go`'s `stubActorWithId` (embeds `stubActor`), and 7 that embed the `Actor` interface itself: `rhetoric_progression_test.go`'s `recordingActor` / `staleRhetoricTargetActor` / `rhetoricAdmissionRaceActor`, `combat_test.go`'s `staleCooldownActor`, `combat_reload_test.go`'s `staleRangedSecondaryActor`, and (in `internal/usercommands`) `shoot_test.go`'s `staleReloadPlayerActor` + `special_move_admission_side_effect_test.go`'s `staleWrapperCooldownActor`. **NOT `Actor` despite having `GetMobInstanceId`:** `internal/hooks/predator_hooks_test.go`'s `helpCallerActor` (local `partyActor`) and `internal/parties/actorkey_test.go`'s `fakeActor` (local `actorIdentity`) -- adding to those would be wrong. Verified by the compiler in Task 7: add to the interface, then `go test -run TestNothingZZZ ./...` and fix exactly what fails. |
 | `events.SkillUsed` | `{UserId int, Skill skills.SkillTag, Details string}` |
 | `OnSkillUseScaled` | also grants mutation cluster drift and emits `SkillUsed`, both unscaled |
 | concentration | **THREE** sites: `combat_shared_helpers.go:141`/`:577` and `actions/combat_throttle.go:172` (award `:185`) |
-| spell attacker award | `NewRound_DoCombat_helpers.go:454` (`:385` before Task 9 grew that file by 69 lines), on `CastComplete`, gated only on `spellBonus > 0`, in no win/lose branch. The mob twin is `:613` |
-| multi-candidate sites | `NewRound_DoCombat_unified.go:699` and `actions/combat_fire.go:406`, both commented "A SECOND Outcome is structurally required" |
+| spell attacker award | `NewRound_DoCombat_helpers.go:536`, gate at `:527` (`:385` before Task 9, `:454` before Task 10; both grew that file above it), on `CastComplete`, gated only on `spellBonus > 0`, in no win/lose branch. The mob twin is `:695` |
+| multi-candidate sites | `NewRound_DoCombat_unified.go:689` (was `:699` before Task 10) and `actions/combat_fire.go:406`, both commented "A SECOND Outcome is structurally required" |
 | skullduggery in a surprise attack | **never rolled**; read as a LEVEL at `crit_damage.go:74` |
 | `search.go` | award at `:243` gated on `rolledAgainstSomething`, **full weight win or lose today** |
 | `track.go` | award at `:128`, unconditional, full weight |
@@ -306,15 +307,34 @@ defence.
 no `Outcome` is built for a defended swing at all. **Missed by three previous
 plan versions.**
 
-- [ ] **Step 1:** failing test: a round whose swings are all defended awards the attacker's weapon skill at the fraction
-- [ ] **Step 2:** replace the `continue` with a scaled award, clean hit at 1.0 and defended at the fraction
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing test: a round whose swings are all defended awards the attacker's weapon skill at the fraction
+- [x] **Step 2:** replace the `continue` with a scaled award, clean hit at 1.0 and defended at the fraction. A MISS awards too, on the same terms: `!CleanHit` covers both a deflection and an outright miss, and a missed swing is a contest that resolved and lost
+- [x] **Step 3:** run, commit
+
+**Shipped as `processAttackerProgression`** (`NewRound_DoCombat_helpers.go:71`),
+extracted from `applyCombatProgression` so the firing condition has a seam the
+tests can drive without the rest of Phase 5.
+
+**Rate change to carry into the `SkillProgressionMultipliers` re-solve:**
+awards per weapon per round go from `P(clean hit)` = **0.3856** to **1.0**,
+roughly **2.6x**. The design spec's risk table says "+26%"; that was computed
+from 0.5752, the **hit** rate mislabelled as the clean-hit rate, and is wrong.
+
+⚠️ **Unarmed now trains at twice a two-hander's rate, and this task did not fix
+it.** Awards per round equal the number of hand slots that swung, so bare hands
+take **two** certain unarmed-combat awards, a 1H wielder takes one
+weapon-combat **and** one unarmed-combat, and a 2H wielder takes one. Under the
+old gate those were chances, not certainties, so the gap was smaller. Whether
+unarmed should be Best-of'd across fists or paid once per round (the same
+question as dual-wielding, which Task 10's ruling deliberately leaves as two
+awards) is a decision for the re-solve. Pinned by
+`TestProcessAttackerProgression_BothFistsOfAnUnarmedRoundAwardSeparately`.
 
 ---
 
 ## Task 11: The two multi-candidate sites
 
-`NewRound_DoCombat_unified.go:699` and `actions/combat_fire.go:406`, both
+`NewRound_DoCombat_unified.go:689` and `actions/combat_fire.go:406`, both
 carrying "A SECOND Outcome is structurally required".
 
 ⚠️ **Skullduggery is never rolled in a surprise attack.** Build its candidate
@@ -346,7 +366,7 @@ One cast is one resolved action: **one event, won if ANY target was hit.** Not a
 per-target award.
 
 - [ ] **Step 1:** failing tests: a cast every target defended awards the fraction; a cast that hit one of three awards full, once
-- [ ] **Step 2:** route `NewRound_DoCombat_helpers.go:454` through `AwardResolved`
+- [ ] **Step 2:** route `NewRound_DoCombat_helpers.go:536` through `AwardResolved`
 - [ ] **Step 3:** run, commit
 
 ---
