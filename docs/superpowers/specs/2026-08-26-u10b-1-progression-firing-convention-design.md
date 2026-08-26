@@ -115,6 +115,32 @@ that otherwise need bespoke handling at every site:
    salvage rolls per ingredient unit. Best-of over the candidates is the same
    rule, not a special case bolted on.
 
+### 3.0.1a EVERY candidate is rolled the same way
+
+🔴 **A candidate without a roll is a defect, not a special case.** Every
+candidate carries `dice.RollStat(primaryStat + skillLevel * SkillWeight)`,
+composed exactly as any other score in the game. No candidate is admitted with a
+score built a different way, and none is admitted with no roll at all.
+
+An earlier draft left this unstated, and the consequence was concrete: in a
+surprise attack, **skullduggery is never rolled**. It is read as a LEVEL at
+`internal/combat/crit_damage.go:74` to scale the crit multiplier
+(`CritDamageMultiplier(attacker.GetSkillLevel(skills.Skullduggery))`). So its
+candidate had no roll, tied with weapon-combat at zero, and the level tiebreak
+handed the award to weapon-combat **deterministically, every time**, silently
+deleting the faucet U10d shipped on 2026-08-25.
+
+Rolling every candidate identically also makes the selection behave. Skullduggery
+and weapon-combat share **dexterity** as their primary stat, so the comparison
+reduces to the two skill levels plus proportional variance: the higher skill
+usually wins, sometimes does not, and by 3.0.2 gains least when it does.
+
+Note the roll used for **selection** need not be a roll that decided the action.
+Where a contest already produced one for a candidate, reuse it. Where a skill
+contributed without being contested, roll it for selection. The rule is that all
+candidates in one selection are commensurable, not that each traces to a
+resolution.
+
 ### 3.0.2 Best-of is self-damping. Do not add a guard against it.
 
 The obvious objection is rich-get-richer: if only the top roll trains, a
@@ -160,7 +186,7 @@ suppression leaking into the ordinary event.
 | Opposed contest (`combat.RunContest`) | Yes |
 | Roll vs static difficulty (`contest.AgainstDifficulty`) | Yes |
 | Floored static difficulty (`contest.RunWithFloors`) | Yes, on the FINAL outcome (3.0.1) |
-| Concentration (`combat.RunConcentrationContest`) | **Yes.** Its two sites award spellcasting only `if res.Success` today, so a broken concentration teaches nothing. It is a contest; it comes under the rule. UNIFY |
+| Concentration (`combat.RunConcentrationContest`) | **Yes.** Its THREE sites award spellcasting only on success today, so a broken concentration teaches nothing. It is a contest; it comes under the rule. UNIFY |
 | Regen tick (`OnRegenTick`) | **No.** No roll against anything; passive. Goes to U10b-2 |
 | Crit / critical-failure | **No.** These are the bonus layer on top of a base event, not base events. No fraction, no separate gate |
 | Non-rolled deliberate actions | **No.** Fire once on completion, unscaled. "Success" is vacuous |

@@ -510,13 +510,29 @@ Run: `grep -rn "progression.Outcome{" internal/ --include=*.go | grep -v _test.g
 
 ## Task 12: Concentration comes under the rule
 
-Its two sites award spellcasting only `if res.Success`, so a broken
+Its THREE sites award spellcasting only on success, so a broken
 concentration teaches nothing.
 
-**Files:** `internal/hooks/combat_shared_helpers.go` (~:141 and ~:577), create `internal/hooks/concentration_progression_test.go`
+⚠️ **THREE sites, not two.** An earlier draft said two and missed the throttle
+trigger, which the roadmap already names ("concentration's three original
+triggers plus throttle"):
 
-- [ ] **Step 1: Write the failing test**: a broken concentration awards spellcasting at the fraction
-- [ ] **Step 2: Route both sites through `AwardResolved`**, won on `res.Success`
+| Site | Award |
+|---|---|
+| `internal/hooks/combat_shared_helpers.go:141` | `:149` |
+| `internal/hooks/combat_shared_helpers.go:577` | `:584` |
+| **`internal/actions/combat_throttle.go:172`** | **`:185`**, `OnSkillUse(Spellcasting)` inside the success branch |
+
+**Files:** the three above, create `internal/hooks/concentration_progression_test.go`
+
+- [ ] **Step 1: Write the failing test**: a broken concentration awards spellcasting at the fraction, driven at **each** of the three triggers
+- [ ] **Step 2: Route all three through `AwardResolved`**, won on `res.Success`
+
+⚠️ Concentration fires **per damage instance**, so up to roughly four times a
+round. `spellcasting` is fitted at 3.90 on the premise that casting is rare and
+cooldown-gated. Record the resulting rate in the commit; this is the densest new
+spellcasting faucet in the slice.
+
 - [ ] **Step 3: Run, update the census, commit**
 
 ---
@@ -751,10 +767,31 @@ exists to forbid. Resolve concretely at the call site.
 Four bypass every entry point via direct `CheckSkillProgression`: both sneak
 sites (one is the **failure** branch) and both picklock sites.
 
-✅ **Best-of removes the trap an earlier draft could not express.** A site
-awarding both a combat skill and skullduggery passes **both as candidates** to
-one `AwardResolved` call. Only one wins, so the shared dexterity primary stat is
-rolled once. No two-`Outcome` pattern, no suppression flag.
+🔴 **The two MULTI-CANDIDATE sites are not in the list above, and without them
+Best-of ships inert.** Every site named above awards exactly one skill, as do
+search, track, forage, craft, salvage, concentration and both defence paths. If
+this task only converts those, **every production `AwardResolved` call passes a
+single candidate** and `BestOf` is exercised only by Task 6's unit tests, while
+the double-dexterity roll the architecture exists to fix survives untouched.
+
+Add both, and treat them as the point of the task:
+
+| Site | Today |
+|---|---|
+| `internal/hooks/NewRound_DoCombat_unified.go:699` | a **second** `Outcome` awarding skullduggery, alongside the weapon-skill award at `:670`. The source comment at `:692` says "A SECOND Outcome is structurally required" |
+| `internal/actions/combat_fire.go:406` | the ranged twin, same shape |
+
+✅ **Best-of removes the trap those two comments describe.** Each passes **both
+skills as candidates** to one `AwardResolved` call. Only one wins, so the shared
+dexterity primary stat is rolled once. No two-`Outcome` pattern, no suppression
+flag.
+
+⚠️ **Skullduggery is never rolled in a surprise attack.** It is read as a LEVEL
+at `internal/combat/crit_damage.go:74` to scale the crit multiplier. Per spec
+3.0.1a, **roll it for selection** as
+`dice.RollStat(dexterity + skullduggeryLevel * SkillWeight)`, the same shape as
+the weapon candidate. A candidate with no roll ties at zero and the level
+tiebreak deletes it deterministically.
 
 ⚠️ **`picklock` is not a contest**: both sites fire on success of a pin minigame,
 so there is no resolved loss. Pass `won: true` and say so in the commit.
