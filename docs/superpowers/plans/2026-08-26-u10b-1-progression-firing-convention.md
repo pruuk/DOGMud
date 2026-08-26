@@ -31,7 +31,7 @@
 | attacker gate | `NewRound_DoCombat_unified.go:666-667`, `if !wh.CleanHit { continue }` |
 | `CleanHit` | assigned inside `if res.hit` as `!res.defended`: **hit AND not defended**. A deflected swing is a Hit that is not a CleanHit. |
 | clean-hit rate | **0.3856**, not 0.5752 (which is the hit rate). Fixed in `read_combat_analytics.py`, `987e7e872`. |
-| `Actor` | **11 methods**, 2 production implementers, **9 test fakes** implementing it in full: `internal/actions/{consider,economy,forage,salvage,scan,search,sleep,track}_test.go` + `internal/hooks/spell_foldanchor_test.go`. Field paths are `a.User.Character` / `a.Mob.Character`. |
+| `Actor` | **12 methods** after Task 7 (11 before it). 2 production implementers; field paths are `a.User.Character` / `a.Mob.Character`. **9 test fakes declare the interface in full** and need any new method added by hand: `internal/actions/{consider,economy,forage,salvage,scan,search,sleep,track}_test.go` + `internal/hooks/spell_foldanchor_test.go`. **A further 8 test types satisfy `Actor` by EMBEDDING and inherit new methods for free** -- `steal_test.go`'s `stubActorWithId` (embeds `stubActor`), and 7 that embed the `Actor` interface itself: `rhetoric_progression_test.go`'s `recordingActor` / `staleRhetoricTargetActor` / `rhetoricAdmissionRaceActor`, `combat_test.go`'s `staleCooldownActor`, `combat_reload_test.go`'s `staleRangedSecondaryActor`, and (in `internal/usercommands`) `shoot_test.go`'s `staleReloadPlayerActor` + `special_move_admission_side_effect_test.go`'s `staleWrapperCooldownActor`. **NOT `Actor` despite having `GetMobInstanceId`:** `internal/hooks/predator_hooks_test.go`'s `helpCallerActor` (local `partyActor`) and `internal/parties/actorkey_test.go`'s `fakeActor` (local `actorIdentity`) -- adding to those would be wrong. Verified by the compiler in Task 7: add to the interface, then `go test -run TestNothingZZZ ./...` and fix exactly what fails. |
 | `events.SkillUsed` | `{UserId int, Skill skills.SkillTag, Details string}` |
 | `OnSkillUseScaled` | also grants mutation cluster drift and emits `SkillUsed`, both unscaled |
 | concentration | **THREE** sites: `combat_shared_helpers.go:141`/`:577` and `actions/combat_throttle.go:172` (award `:185`) |
@@ -194,12 +194,18 @@ lets the skill's primary stat apply, which is what every current caller does.
 
 ---
 
-## Task 7: `Actor.AwardResolved`, and the nine fakes
+## Task 7: `Actor.AwardResolved`, and the nine declaring fakes
 
 - [ ] **Step 1:** failing test that both production actors satisfy an interface including `AwardResolved(won bool, cands ...progression.Candidate)`
 - [ ] **Step 2:** add to the interface and both implementations, using `a.User.Character` / `a.Mob.Character`
-- [ ] **Step 3:** add the method to **all nine** fakes, recording the award where later tests need to observe it
+- [ ] **Step 3:** add the method to the **nine fakes that DECLARE the interface in full** (see the `Actor` row above), recording the award where later tests need to observe it. The 8 embedding types inherit it and must not be edited; the 2 lookalikes in `internal/hooks/predator_hooks_test.go` and `internal/parties/` implement different local interfaces and must not be touched. **Let the compiler enumerate** -- `go test -run TestNothingZZZ ./...` -- rather than working from a list
 - [ ] **Step 4:** `go build ./... && go test ./internal/actions/ ./internal/hooks/`, commit
+
+**Landed as `awardRecorder`** in `internal/actions/testsupport_test.go`: an
+embeddable recorder with an `awards []recordedAward` slice and an
+`awardedCandidate(skill)` helper, so Tasks 8-14 can assert what a converted
+site offered without re-editing eight fakes. `internal/hooks` is a separate
+package and carries its own copy on `fakeActor`.
 
 ---
 
@@ -391,9 +397,10 @@ on the mislabelled rate. Re-derive them here or record why not.
 ## Task 24: Docs
 
 `context.md` for `internal/progression`, `internal/characters`,
-`internal/actions`, `internal/combat`. ⚠️ `internal/actions/context.md:42-43`
-currently documents `OnCriticalSuccess`/`OnCriticalFailure` as `Actor` members,
-which is already false.
+`internal/actions`, `internal/combat`. ⚠️ `internal/actions/context.md`'s
+`Actor` block was **already corrected in Task 7** -- it listed
+`OnCriticalSuccess`/`OnCriticalFailure`, deleted in U9, and omitted
+`AwardResolved`. Do not re-file that as an open defect here.
 
 Patch notes: failing at something now teaches you a little. No raw numbers, no em
 dashes, 80 columns. **Do not promise that mobs will chase you.**

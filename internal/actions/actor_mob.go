@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -77,4 +78,11 @@ func (a *MobActor) OnSkillUse(skillName string) bool {
 
 func (a *MobActor) OnStatUse(statName string) bool {
 	return a.Mob.Character.OnStatUse(statName, 0)
+}
+
+// AwardResolved fires the Best-of progression event for one resolved action on
+// the mob's own character. User id 0: a mob has no user record, and a non-zero
+// id here would queue a SkillUsed quest event against an unrelated player.
+func (a *MobActor) AwardResolved(won bool, cands ...progression.Candidate) {
+	a.Mob.Character.AwardResolved(0, won, cands...)
 }

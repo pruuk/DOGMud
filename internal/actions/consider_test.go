@@ -13,11 +13,12 @@ import (
 // fakeActor is a minimal Actor implementation for unit tests. It
 // records SendText messages and tracks OnStatUse/OnSkillUse calls.
 type fakeActor struct {
-	char     *characters.Character
-	name     string
-	isPlayer bool
-	sent     []string
-	statUses map[string]int
+	awardRecorder // records Actor.AwardResolved calls
+	char          *characters.Character
+	name          string
+	isPlayer      bool
+	sent          []string
+	statUses      map[string]int
 }
 
 // newFakeActor builds a fakeActor with the given ValueAdj for

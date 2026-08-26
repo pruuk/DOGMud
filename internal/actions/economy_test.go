@@ -38,8 +38,9 @@ func init() {
 // It discards all messages — this is sufficient for the economy action tests
 // which only care about inventory and gold state.
 type stubActor struct {
-	char *characters.Character
-	room *rooms.Room
+	awardRecorder // records Actor.AwardResolved calls
+	char          *characters.Character
+	room          *rooms.Room
 }
 
 func newStubActor(char *characters.Character, room *rooms.Room) *stubActor {

@@ -17,13 +17,14 @@ import (
 // scanFakeActor is a minimal Actor with a configurable room. It records
 // SendText messages for assertion. It satisfies the full Actor interface.
 type scanFakeActor struct {
-	char      *characters.Character
-	room      *rooms.Room
-	name      string
-	isPlayer  bool
-	userId    int
-	mobInstId int
-	sent      []string
+	awardRecorder // records Actor.AwardResolved calls
+	char          *characters.Character
+	room          *rooms.Room
+	name          string
+	isPlayer      bool
+	userId        int
+	mobInstId     int
+	sent          []string
 }
 
 func newScanFakeActor(name string, room *rooms.Room, isPlayer bool, userId int) *scanFakeActor {

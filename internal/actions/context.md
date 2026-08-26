@@ -37,12 +37,22 @@ type Actor interface {
 	GetUserId() int                 // 0 for mobs
 	GetMobInstanceId() int          // 0 for players
 	AddBuff(buffId int, source string)
-	OnStatUse(stat string) bool
 	OnSkillUse(skill string) bool
-	OnCriticalSuccess(skill string)
-	OnCriticalFailure(skill string)
+	OnStatUse(stat string) bool
+	AwardResolved(won bool, cands ...progression.Candidate)
 }
 ```
+
+`OnCriticalSuccess` / `OnCriticalFailure` were on this interface before U9 and
+are gone; crit and fumble progression flows through `progression.BonusEvents`
+plus `ApplyProgression` now. A few test fakes still carry the two methods
+harmlessly.
+
+`AwardResolved` (U10b-1) is the Best-of firing seam: candidates arrive already
+rolled, the highest-rolling one earns a single event, paid at full weight on a
+win and at `Balance.ProgressionFailureFraction` on a loss. Like `OnSkillUse` it
+takes no userId -- `UserActor` supplies its own, `MobActor` supplies 0. Build
+candidates with `Character.CandidateFor`.
 
 ### Action-cost admission
 

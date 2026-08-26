@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,6 +24,19 @@ type fakeActor struct {
 	userId    int
 	mobInstId int
 	selfTexts []string
+
+	// awards records Actor.AwardResolved calls. Recorded rather than
+	// no-opped so U10b-1's call-site conversions can assert which
+	// candidates a site offered and whether it reported a win. The
+	// candidate slice is copied because AwardResolved is variadic and a
+	// caller may reuse its backing array.
+	awards []recordedFoldAward
+}
+
+// recordedFoldAward is one observed Actor.AwardResolved call.
+type recordedFoldAward struct {
+	won   bool
+	cands []progression.Candidate
 }
 
 func (f *fakeActor) GetCharacter() *characters.Character { return f.char }
@@ -38,8 +52,14 @@ func (f *fakeActor) GetMobInstanceId() int                              { return
 func (f *fakeActor) AddBuff(buffId int, source string)                  {}
 func (f *fakeActor) OnSkillUse(skillName string) bool                   { return false }
 func (f *fakeActor) OnStatUse(statName string) bool                     { return false }
-func (f *fakeActor) OnCriticalSuccess(skillName string)                 {}
-func (f *fakeActor) OnCriticalFailure(skillName string)                 {}
+func (f *fakeActor) AwardResolved(won bool, cands ...progression.Candidate) {
+	f.awards = append(f.awards, recordedFoldAward{
+		won:   won,
+		cands: append([]progression.Candidate(nil), cands...),
+	})
+}
+func (f *fakeActor) OnCriticalSuccess(skillName string) {}
+func (f *fakeActor) OnCriticalFailure(skillName string) {}
 
 // compile-time check
 var _ actions.Actor = (*fakeActor)(nil)
