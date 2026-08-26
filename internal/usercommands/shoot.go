@@ -16,7 +16,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -193,11 +192,16 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 	}
 
-	// --- Progression: perception always, ranged-combat on hit (mirror melee) ---
-	user.Character.OnStatUse("perception", user.UserId)
-	if hit {
-		user.Character.OnSkillUse(string(skills.RangedCombat), user.UserId)
-	}
+	// Progression is awarded by actions.awardFireProgression inside ExecuteFire,
+	// for both the player and mob paths. U10b-1 Task 11 moved it there: one
+	// resolved shot is one progression event, contested Best-of between
+	// ranged-combat and (on a landed ambush) skullduggery, instead of the two
+	// separate awards this file and combat_fire.go used to make between them.
+	//
+	// The explicit perception roll that stood here is gone rather than moved.
+	// Perception is ranged-combat's primary stat, so the award already rolls it
+	// through OnSkillUseScaled; rolling it here as well paid it TWICE on every
+	// landed shot.
 
 	// Notify the quest engine of the `shoot` command so quests can gate a step
 	// on the act of shooting (Spoke G's "shoot the practice butt" / "shoot the

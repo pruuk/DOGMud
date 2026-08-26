@@ -211,17 +211,22 @@ func TestProcessAttackerProgression_ACleanHitStillAwardsFullWeight(t *testing.T)
 	}
 }
 
-// A two-weapon round awards TWICE, once per weapon.
+// A two-weapon round awards ONCE for the round, not once per weapon.
 //
-// This pins the decision NOT to collapse the loop into one Best-of across
-// weapons. Each weapon is its own resolved action, and the pre-U9 firing
-// condition was per weapon; Best-of applies WITHIN one resolved action (the
-// weapon-plus-skullduggery case is Task 11), not across a round's weapons.
+// U10b-1 Task 11 inverted this test. It previously pinned the opposite -- two
+// entries, two awards -- on the reasoning that each weapon is its own resolved
+// action. That reasoning did not survive contact with what WeaponHits actually
+// contains: one entry per HAND SLOT, including a synthesised fist for every
+// empty hand and up to four more from the extra-arms mutation. Paying per entry
+// paid per hand, so a two-handed weapon (one entry) trained at a sixth the rate
+// of a six-armed attacker, and weapon SPEED -- the thing a player would call
+// "more swings" -- contributed nothing at all, because every swing of one
+// weapon folds into that weapon's single entry.
 //
-// Both entries are losses at fraction 0, so nothing advances and the counter is
-// the whole assertion -- which is the point: a collapse to Best-of would leave
-// the count at 1.
-func TestProcessAttackerProgression_ATwoWeaponRoundAwardsOncePerWeapon(t *testing.T) {
+// Both entries are losses at fraction 0, so nothing advances and the use
+// counter is the whole assertion -- which is the point: the per-weapon model
+// would leave the count at 2.
+func TestProcessAttackerProgression_ATwoWeaponRoundAwardsOnceForTheRound(t *testing.T) {
 	pinCertainAttackerProgressionForTest(t, 0.0)
 
 	c := characters.New()
@@ -238,29 +243,26 @@ func TestProcessAttackerProgression_ATwoWeaponRoundAwardsOncePerWeapon(t *testin
 
 	processAttackerProgression(c, 85, result)
 
-	if got := c.GetSkillUseCount(attackerAwardSkill); got != 2 {
-		t.Errorf("%s use count = %d, want 2; a two-weapon round awards once per weapon, not once for the round", attackerAwardSkill, got)
+	if got := c.GetSkillUseCount(attackerAwardSkill); got != 1 {
+		t.Errorf("%s use count = %d, want 1; two weapons of the same skill collapse to ONE candidate and one award", attackerAwardSkill, got)
 	}
-	if got := c.GetStatUseCount(attackerAwardStat); got != 2 {
-		t.Errorf("%s use count = %d, want 2; each weapon's award rolls the skill's primary once", attackerAwardStat, got)
+	if got := c.GetStatUseCount(attackerAwardStat); got != 1 {
+		t.Errorf("%s use count = %d, want 1; the round's single award rolls the skill's primary once", attackerAwardStat, got)
 	}
 }
 
-// The UNARMED consequence, pinned so the design decision it raises has a test
-// to change.
+// The UNARMED case, which is why the per-weapon model had to go.
 //
 // collectAttackWeapons (internal/combat/combat_helpers.go) contributes a fist
 // for EACH empty hand slot, and CombatSkillTagForItem maps ItemId 0 to
 // unarmed-combat -- so a both-hands-empty attacker produces TWO unarmed-combat
-// WeaponHits entries and therefore TWO awards per round, where a two-handed
-// weapon user produces one. Under the pre-task CleanHit gate those two entries
-// were two CHANCES at an award; they are now two certainties.
+// WeaponHits entries. Paying per entry gave a bare-handed fighter two certain
+// awards a round against a two-handed weapon user's one, for no reason a player
+// could see.
 //
-// Whether unarmed should instead be Best-of'd across fists, or paid once per
-// round -- and the same question for dual-wielders -- is a design decision, not
-// a cleanup. This test records what the code does today so that decision has
-// something to break.
-func TestProcessAttackerProgression_BothFistsOfAnUnarmedRoundAwardSeparately(t *testing.T) {
+// Both fists now collapse into ONE unarmed-combat candidate carrying the better
+// of their two rolls, so the bare-handed rate matches everyone else's.
+func TestProcessAttackerProgression_BothFistsOfAnUnarmedRoundCollapseToOne(t *testing.T) {
 	pinCertainAttackerProgressionForTest(t, 0.0)
 
 	c := characters.New()
@@ -278,44 +280,93 @@ func TestProcessAttackerProgression_BothFistsOfAnUnarmedRoundAwardSeparately(t *
 
 	processAttackerProgression(c, 86, result)
 
-	if got := c.GetSkillUseCount(attackerUnarmedSkill); got != 2 {
-		t.Errorf("%s use count = %d, want 2; both fists of a bare-handed round award separately", attackerUnarmedSkill, got)
+	if got := c.GetSkillUseCount(attackerUnarmedSkill); got != 1 {
+		t.Errorf("%s use count = %d, want 1; both fists are one skill and collapse to one award", attackerUnarmedSkill, got)
 	}
 }
 
-// A one-handed weapon plus an empty offhand trains BOTH skills in the same
-// round: the weapon entry awards weapon-combat and the offhand fist entry
-// awards unarmed-combat. Under the old gate the fist only trained on the rounds
-// it happened to land.
+// Six entries -- the extra-arms L4 worst case -- still award ONCE.
 //
-// Fraction 1.0 so both awards advance with certainty, which pins that the two
-// entries really are awarded independently rather than one displacing the
-// other -- a progression.Outcome carries exactly one AttackerSkill, so a
-// round-level collapse would silently drop whichever skill lost.
-func TestProcessAttackerProgression_AWeaponAndAnEmptyOffhandTrainBothSkills(t *testing.T) {
-	pinCertainAttackerProgressionForTest(t, 1.0)
+// This is the shape the per-weapon model priced at six awards a round. It is
+// the strongest single guard against a regression to per-entry payment, because
+// no plausible wrong implementation lands on 1 by accident.
+func TestProcessAttackerProgression_SixArmsStillAwardOnce(t *testing.T) {
+	pinCertainAttackerProgressionForTest(t, 0.0)
 
 	c := characters.New()
 	requireCertainAttackerAward(t, c)
 
-	result := combat.AttackResult{
+	hits := make([]combat.WeaponHitInfo, 0, 6)
+	for i := 0; i < 6; i++ {
+		hits = append(hits, weaponSwing(attackerAwardSkill, true, false))
+	}
+
+	processAttackerProgression(c, 88, combat.AttackResult{
 		Hit:          true,
-		SwingsThrown: 3,
-		WeaponHits: []combat.WeaponHitInfo{
-			weaponSwing(attackerAwardSkill, true, false),
-			weaponSwing(attackerUnarmedSkill, false, false),
-		},
-	}
+		SwingsThrown: 12,
+		WeaponHits:   hits,
+	})
 
-	beforeWeapon := c.Skills[attackerAwardSkill]
-	beforeUnarmed := c.Skills[attackerUnarmedSkill]
-	processAttackerProgression(c, 87, result)
-
-	if got := c.Skills[attackerAwardSkill] - beforeWeapon; got != 1 {
-		t.Errorf("%s advanced by %d, want 1", attackerAwardSkill, got)
+	if got := c.GetSkillUseCount(attackerAwardSkill); got != 1 {
+		t.Errorf("%s use count = %d, want 1; six arms are still one resolved round", attackerAwardSkill, got)
 	}
-	if got := c.Skills[attackerUnarmedSkill] - beforeUnarmed; got != 1 {
-		t.Errorf("%s advanced by %d, want 1; the offhand fist is its own resolved action", attackerUnarmedSkill, got)
+}
+
+// A one-handed weapon plus an empty offhand trains exactly ONE skill: whichever
+// ROLLED BEST. The other trains nothing.
+//
+// U10b-1 Task 11 inverted this test too. It used to assert both trained, which
+// meant a sword-and-nothing fighter silently trained unarmed-combat every round
+// off the hand they were not using. The selector is the roll that ACTUALLY
+// HAPPENED (WeaponHitInfo.BestRoll), the same principle bestSwingDefence
+// applies on the defender's side.
+//
+// Run twice with the rolls swapped. One direction alone would pass against an
+// implementation that always picks the first entry, or always picks the weapon
+// skill.
+func TestProcessAttackerProgression_TheBestRollTakesTheRound(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		weaponRoll        float64
+		fistRoll          float64
+		wantWeaponTrained bool
+	}{
+		{"the weapon out-rolls the fist", 900, 100, true},
+		{"the fist out-rolls the weapon", 100, 900, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pinCertainAttackerProgressionForTest(t, 1.0)
+
+			c := characters.New()
+			requireCertainAttackerAward(t, c)
+
+			weapon := weaponSwing(attackerAwardSkill, true, false)
+			weapon.BestRoll = tc.weaponRoll
+			fist := weaponSwing(attackerUnarmedSkill, false, false)
+			fist.BestRoll = tc.fistRoll
+
+			processAttackerProgression(c, 87, combat.AttackResult{
+				Hit:          true,
+				SwingsThrown: 3,
+				WeaponHits:   []combat.WeaponHitInfo{weapon, fist},
+			})
+
+			gotWeapon := c.GetSkillUseCount(attackerAwardSkill)
+			gotFist := c.GetSkillUseCount(attackerUnarmedSkill)
+
+			if total := gotWeapon + gotFist; total != 1 {
+				t.Fatalf("the round awarded %d events (%s %d, %s %d), want exactly 1",
+					total, attackerAwardSkill, gotWeapon, attackerUnarmedSkill, gotFist)
+			}
+			if tc.wantWeaponTrained && gotWeapon != 1 {
+				t.Errorf("%s use count = %d, want 1; it rolled %.0f against the fist's %.0f",
+					attackerAwardSkill, gotWeapon, tc.weaponRoll, tc.fistRoll)
+			}
+			if !tc.wantWeaponTrained && gotFist != 1 {
+				t.Errorf("%s use count = %d, want 1; it rolled %.0f against the weapon's %.0f",
+					attackerUnarmedSkill, gotFist, tc.fistRoll, tc.weaponRoll)
+			}
+		})
 	}
 }
 

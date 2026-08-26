@@ -17,7 +17,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
@@ -660,39 +659,22 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	emitAttackerStatGain(atk, "strength", atkUid)
 	emitAttackerStatGain(atk, "dexterity", atkUid)
 
-	// ── Ordinary attacker events: ONE per weapon that SWUNG, win or lose ──
-	// U10b-1 Task 10 replaced the CleanHit gate with a scaled award; see
-	// processAttackerProgression for the rate change and the unarmed
-	// consequence. ORDINARY ONLY: the defender's ordinary event is awarded once
-	// per round by processDefenderProgression below, so asking for it here as
-	// well would award it per weapon.
+	// ── The ordinary attacker event: ONE for the round, win or lose ───────
+	// U10b-1 Task 10 replaced the CleanHit gate with a scaled award; Task 11
+	// then collapsed the per-weapon loop into one Best-of across skills and
+	// folded the surprise-attack skullduggery award into the SAME contest.
+	// See processAttackerProgression for why per-weapon paid per HAND, and
+	// surpriseCandidate for the one synthesised roll.
+	//
+	// The skullduggery candidate keys on res.WasSurpriseAttack rather than
+	// atkChar.Aggro.Type because calculateCombat DEMOTES SurpriseAttack to
+	// DefaultAttack the moment it arms the opening strike, so by this phase
+	// Aggro.Type is always DefaultAttack. A condition written against
+	// Aggro.Type here would never fire and nothing would fail.
+	//
+	// ORDINARY ONLY: the defender's ordinary event is awarded once per round by
+	// processDefenderProgression below.
 	processAttackerProgression(atkChar, atkUid, *res)
-
-	// U10d: a landed surprise attack trains skullduggery, once for the round.
-	//
-	// OUTSIDE the weapon loop on purpose: the ambush is a property of the
-	// ROUND, so awarding it inside would pay it once per weapon that landed.
-	//
-	// It keys on res.WasSurpriseAttack rather than atkChar.Aggro.Type because
-	// calculateCombat DEMOTES SurpriseAttack to DefaultAttack the moment it
-	// arms the opening strike, so by this phase the attacker's Aggro.Type is
-	// always DefaultAttack. A condition written against Aggro.Type here would
-	// never fire and nothing would fail.
-	//
-	// A SECOND Outcome is structurally required: progression.Outcome carries
-	// exactly one AttackerSkill and the loop above already spent it on the
-	// combat skill.
-	//
-	// AttackerStat is deliberately empty. ApplyProgression calls
-	// OnSkillUseScaled, which already rolls the skill's primary stat, and only
-	// rolls ev.Stat separately when it names a DIFFERENT one.
-	if res.WasSurpriseAttack && res.CleanHit {
-		atkChar.ApplyProgression(
-			progression.OrdinaryEvents(progression.Outcome{
-				AttackerSkill: string(skills.Skullduggery),
-			}),
-			progression.SideAttacker, atkUid, round)
-	}
 
 	// ── Bonus tier: ONCE per round, OUTSIDE the weapon loop ─────────────
 	// Outside on purpose: the bonus tier is a property of the ROUND, not of a

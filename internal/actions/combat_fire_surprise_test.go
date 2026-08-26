@@ -355,14 +355,45 @@ func TestFireSurprise_LandedShotTrainsSkullduggery(t *testing.T) {
 	defer cleanup()
 
 	char := newSurpriseShooter(true)
-	before := char.GetSkillUseCount(string(skills.Skullduggery))
+	actor := newStubActor(char, rooms.LoadRoom(1))
 
-	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
+	res := ExecuteFire(actor, "skeleton")
 
 	require.True(t, res.Executed)
 	require.True(t, res.MoveResult.Hit, "fixture sanity: the deterministic win must land")
-	assert.Equal(t, before+1, char.GetSkillUseCount(string(skills.Skullduggery)),
-		"a landed surprise shot must train skullduggery exactly once")
+
+	// U10b-1 Task 11 changed what this test can observe, and improved it.
+	//
+	// A landed ambush no longer takes a skullduggery award of its own: it
+	// CONTESTS the shot's single progression event against ranged-combat, so
+	// counting skill uses would be counting a coin flip. What the ambush
+	// actually guarantees is that skullduggery is OFFERED as a candidate, and
+	// that is what this now asserts -- through the Actor seam's recorder, which
+	// is deterministic and needs no rank-rigging fixture.
+	//
+	// It is also a stronger assertion than the old one. The counter could be
+	// satisfied by any code path that happened to train skullduggery; this
+	// pins that the shot produced exactly ONE award and that the ambush put
+	// skullduggery into it.
+	require.Len(t, actor.awards, 1, "a resolved shot must produce exactly one progression award")
+	require.True(t, actor.awards[0].won, "a landed shot is a win")
+
+	_, n := actor.awardedCandidate(string(skills.Skullduggery))
+	assert.Equal(t, 1, n, "a landed surprise shot must offer skullduggery as a candidate exactly once")
+
+	// ranged-combat is NOT offered here, and that is deliberate rather than a
+	// gap in this test. stubActor.IsPlayer() is false, and awardFireProgression
+	// gates the ranged-combat candidate on IsPlayer to preserve an existing
+	// production gap: internal/mobcommands/shoot.go has never awarded any
+	// progression, so a mob archer trains nothing today. Closing that is the
+	// "mob archer ranged-combat progression" faucet U10b-1 defers to U10b-2.
+	//
+	// Pinned rather than ignored, so the day that gate is removed this fails
+	// and says why, instead of the rate changing silently.
+	require.False(t, actor.IsPlayer(), "fixture premise: this stub is not a player")
+	_, nRanged := actor.awardedCandidate(string(skills.RangedCombat))
+	assert.Equal(t, 0, nRanged,
+		"a non-player shooter must not train ranged-combat yet; removing the IsPlayer gate is U10b-2")
 }
 
 // ---------------------------------------------------------------------------

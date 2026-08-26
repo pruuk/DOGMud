@@ -28,6 +28,26 @@ type WeaponHitInfo struct {
 	CleanHit bool
 	Crit     bool
 	Fumble   bool
+
+	// BestRoll is the highest ATTACK roll this weapon threw across the round,
+	// contest.Result.AttackRoll.Value from the swing that rolled best.
+	//
+	// It exists so U10b-1's attacker award can select which SKILL earns the
+	// round's one progression event using a roll that ACTUALLY HAPPENED, the
+	// same way hooks.bestSwingDefence selects the defender's. Re-rolling with
+	// characters.CandidateFor would stack a second randomness source on top of
+	// the roll that already decided the swing.
+	//
+	// Always populated: contest.Run rolls the attack before it looks at any
+	// defence, so an UNCONTESTED swing carries a real roll too.
+	//
+	// Comparability across weapons is the same qualified story as
+	// AttackResult.SwingDefences: each swing rolls with dice.StdDevFor of its
+	// OWN attack score, and calcAttackScore subtracts a per-weapon penalty, so
+	// two weapons' rolls are drawn with different spreads. Every roll is still
+	// centred on its own weapon's score, so no weapon is systematically
+	// favoured, which is all the selection needs.
+	BestRoll float64
 }
 
 // SwingEvent captures per-swing analytics data for accurate hit rate tracking.

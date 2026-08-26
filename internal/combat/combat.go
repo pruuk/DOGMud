@@ -476,6 +476,17 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			openingStrikeThisSwing := openingStrikeLeft
 			openingStrikeLeft = false
 
+			// U10b-1 Task 11: keep this weapon's best ATTACK roll for the
+			// round's one progression award. Recorded here, before any
+			// outcome branch, because the selector must exist for a swing
+			// that missed as much as for one that landed -- the award fires
+			// win or lose and still has to name a skill. best.hitRoll is
+			// contest.Result.AttackRoll, which contest.Run populates before it
+			// looks at a single defence, so an uncontested swing has one too.
+			if j == 0 || best.hitRoll.Value > weaponHit.BestRoll {
+				weaponHit.BestRoll = best.hitRoll.Value
+			}
+
 			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit, openingStrikeThisSwing)
 
 			// Momentum builds only on clean wins and resets on deflections,

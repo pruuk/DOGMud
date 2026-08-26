@@ -25,39 +25,57 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// processAttackerProgression fires the round's ORDINARY attacker awards: ONE
-// per weapon that SWUNG, at full weight when that weapon landed a clean hit and
-// at Balance.ProgressionFailureFraction when it did not.
+// processAttackerProgression fires the round's ONE ordinary attacker award: the
+// SKILL that rolled best across every swing the attacker threw, at full weight
+// when the round landed a clean hit and at Balance.ProgressionFailureFraction
+// when it did not.
 //
-// U10b-1 Task 10 changed the firing condition. Before it the loop body sat
-// inside `if !wh.CleanHit { continue }`, so a weapon whose every swing was
-// deflected or missed built no progression.Outcome at all and trained nothing.
-// The convention for this slice is that a RESOLVED action always produces one
-// event; a swing that missed is a contest that resolved and lost, not a contest
-// that never happened.
+// One award per ROUND, mirroring processDefenderProgression. U10b-1 Task 10
+// first removed the `if !wh.CleanHit { continue }` gate so a missed swing
+// trained something, then Task 11 collapsed the per-weapon loop that gate sat
+// in. Both halves matter and the second is the one that fixes a real
+// distortion.
 //
-// THE RATE CHANGE IS LARGE AND DELIBERATE. Awards per weapon per round go from
-// P(clean hit) to 1.0. Measured over 96,723 analytics events the clean-hit rate
-// is 0.3856, so this is roughly a 2.6x increase in the attacker faucet -- not
-// the "+26%" the design spec's risk table quotes, which was computed from
-// 0.5752, the HIT rate mislabelled as the clean-hit rate. The owed re-solve of
-// SkillProgressionMultipliers must use 0.3856.
+// WHY NOT PER WEAPON. AttackResult.WeaponHits carries one entry per HAND SLOT,
+// not per swing: collectAttackWeapons contributes a fist for every empty hand
+// (CombatSkillTagForItem maps ItemId 0 to unarmed-combat) and the extra-arms
+// mutation adds up to four more slots. Paying per entry therefore paid per
+// hand, which produced a six-to-one spread that tracked nothing a player would
+// recognise as effort:
 //
-// ONE AWARD PER WEAPON, NOT ONE PER ROUND. Each weapon is its own resolved
-// action and the pre-U9 firing condition was per weapon, so a dual-wielder
-// still takes two events. Best-of applies WITHIN one resolved action -- the
-// weapon-plus-skullduggery case, which is a separate call site -- never across
-// a round's weapons.
+//	two-handed weapon      1 entry   -> 1 award
+//	one-handed + empty off 2 entries -> 2 awards (one of them unarmed-combat)
+//	dual wield             2 entries -> 2 awards
+//	bare hands             2 entries -> 2 awards
+//	extra arms L4          6 entries -> 6 awards
 //
-// THE UNARMED CONSEQUENCE IS SHARPER, and is recorded rather than fixed here.
-// collectAttackWeapons contributes a fist for EACH empty hand slot and
-// CombatSkillTagForItem maps ItemId 0 to unarmed-combat, so a bare-handed
-// attacker produces TWO unarmed-combat entries and now takes TWO certain awards
-// a round where a two-handed weapon user takes one. A one-handed wielder gets
-// one weapon-combat award AND one unarmed-combat award from the empty offhand.
-// Whether unarmed should be Best-of'd across fists, or paid once per round --
-// and the same question for dual-wielders -- is a design decision for the
-// re-solve, not a cleanup.
+// The most committed weapon in the game came last, a sword-and-nothing fighter
+// silently trained unarmed-combat every round off the empty hand, and
+// weapon SPEED -- ws.swingCount, the thing a player would actually call "more
+// swings" -- contributed nothing at all, because every swing of one weapon
+// folds into that weapon's single entry.
+//
+// CANDIDATES ARE KEYED BY SKILL, NOT BY WEAPON. Three weapon-combat weapons
+// collapse to ONE weapon-combat candidate carrying the best roll among them.
+// Keying by entry would rebuild per-hand payment inside the Best-of and put the
+// spread straight back.
+//
+// MORE ARMS STILL HELP, through the WIN RATE rather than the award count.
+// progression.Candidate.Roll only SELECTS which skill earns the event; what
+// sizes the event is won/lost. A six-armed attacker has six chances for one of
+// them to clean-hit, so they take full weight far more often than a two-handed
+// attacker does. At the measured 0.3856 per-entry clean-hit rate that is an
+// expected award of roughly 0.60 at one entry against 0.97 at six -- about
+// 1.6x, tapering, rather than 6x flat.
+//
+// THE RATE CHANGE IS STILL AN INCREASE. Per round the attacker goes from
+// P(clean hit) = 0.3856 awards to exactly 1. The owed re-solve of
+// SkillProgressionMultipliers must use 0.3856 and NOT the 0.5752 in the design
+// spec's risk table, which is the HIT rate mislabelled as the clean-hit rate.
+//
+// SKULLDUGGERY JOINS THE SAME CONTEST on a surprise attack rather than taking a
+// second award beside it. See surpriseCandidate for the one caveat there: it is
+// the only candidate whose roll did not actually happen.
 //
 // NOTE: there is no `len(WeaponHits) == 0` fallback. One was deleted here, and
 // it was DEAD: collectAttackWeapons cannot return empty (every hand slot
@@ -72,21 +90,77 @@ func processAttackerProgression(c *characters.Character, userId int, result comb
 	if c == nil {
 		return
 	}
-	for _, wh := range result.WeaponHits {
-		// CandidateFor leaves Candidate.Stat empty, meaning "the skill's
-		// primary". That is EQUIVALENT to the explicit
-		// AttackerStat: skills.GetSkillPrimaryStat(wh.SkillTag) the pre-task
-		// code passed: ApplyProgression only pays a separate stat roll when an
-		// ordinary event names a stat DIFFERENT from the skill's primary, which
-		// neither form does. It is also safer, since a populated Stat that did
-		// differ would silently double-roll.
-		//
-		// An unknown SkillTag comes back as the zero Candidate, BestOf reports
-		// false on it and nothing is awarded. The pre-task code instead reached
-		// CheckSkillProgression with the unrecognised name, which banners it to
-		// the player verbatim.
-		c.AwardResolved(userId, wh.CleanHit, c.CandidateFor(wh.SkillTag))
+	cands := attackerCandidates(c, result)
+	if sc, ok := surpriseCandidate(c, result); ok {
+		cands = append(cands, sc)
 	}
+	if len(cands) == 0 {
+		return
+	}
+	// won is the ROUND's outcome, not the selected skill's own. One round is
+	// one resolved action here, and AttackResult.CleanHit means at least one
+	// swing won its contest outright. The two almost always agree -- the
+	// highest-rolling skill is the likeliest to be the one that landed -- and
+	// where they diverge, a round in which something landed cleanly is a round
+	// the attacker won.
+	c.AwardResolved(userId, result.CleanHit, cands...)
+}
+
+// attackerCandidates folds the round's weapon entries into ONE candidate per
+// SKILL, carrying that skill's best actual attack roll.
+//
+// Deterministic order, which BestOf's full-tie rule requires: candidates come
+// out in first-appearance order of WeaponHits, never in map order. Two skills
+// tying on both Roll and Level is vanishingly unlikely with real float rolls,
+// but "vanishingly unlikely" is not "never", and a map here would rotate the
+// winner between rounds for no visible reason.
+//
+// An unrecognised SkillTag is dropped rather than carried: characters.
+// CandidateFor returns the zero Candidate for one, and a zero candidate that
+// happened to out-roll the real ones would make BestOf report false and the
+// whole round train nothing. Dropping it costs only the unknown skill.
+func attackerCandidates(c *characters.Character, result combat.AttackResult) []progression.Candidate {
+	order := make([]string, 0, len(result.WeaponHits))
+	bestRoll := make(map[string]float64, len(result.WeaponHits))
+
+	for _, wh := range result.WeaponHits {
+		// Drop unknown skills, not merely empty ones. GetSkillPrimaryStat
+		// returns "" for anything not in skills.SkillPrimaryStats, which is the
+		// same test characters.CandidateFor applies before it returns the zero
+		// Candidate. Carrying one would be worse than dropping it: it arrives
+		// with a REAL attack roll, so it can out-roll the genuine candidates,
+		// and BestOf then reports false on a winner that awards nothing -- the
+		// whole round would train nothing because one hand held something
+		// unrecognised.
+		if skills.GetSkillPrimaryStat(wh.SkillTag) == "" {
+			continue
+		}
+		if _, seen := bestRoll[wh.SkillTag]; !seen {
+			order = append(order, wh.SkillTag)
+			bestRoll[wh.SkillTag] = wh.BestRoll
+			continue
+		}
+		if wh.BestRoll > bestRoll[wh.SkillTag] {
+			bestRoll[wh.SkillTag] = wh.BestRoll
+		}
+	}
+
+	cands := make([]progression.Candidate, 0, len(order)+1)
+	for _, skill := range order {
+		// Stat stays empty, meaning "the skill's primary". That is EQUIVALENT
+		// to the explicit AttackerStat: skills.GetSkillPrimaryStat(...) the
+		// pre-U10b-1 code passed, because ApplyProgression only pays a separate
+		// stat roll when an ordinary event names a stat DIFFERENT from the
+		// skill's primary. It is also safer: a populated Stat that DID differ
+		// would silently double-roll, which is the block/defy shape that
+		// U10b-1 Task 4 had to fix elsewhere.
+		cands = append(cands, progression.Candidate{
+			Skill: skill,
+			Roll:  bestRoll[skill],
+			Level: c.GetSkillLevel(skills.SkillTag(skill)),
+		})
+	}
+	return cands
 }
 
 // processDefenderProgression fires ONE skill-and-stat progression award for the
@@ -1176,4 +1250,38 @@ func handlePartyAutoAttack(mob *mobs.Mob, defUser *users.UserRecord) {
 			}
 		}
 	}
+}
+
+// surpriseCandidate builds the skullduggery candidate a landed surprise attack
+// contributes to the round's attacker contest, or reports false.
+//
+// U10d gave the ambush its own award beside the weapon one, which under the
+// Best-of convention would be a second event for a single resolved action. It
+// now competes in the SAME contest: an ambush that rolled better than the blade
+// trains skullduggery, otherwise the blade takes it.
+//
+// Gated on CleanHit, not merely on WasSurpriseAttack. An ambush that was seen
+// and answered is not an ambush that worked, and skullduggery here means "the
+// approach succeeded", not "the approach was attempted". This is the one place
+// the round's candidate set is narrower on a loss than on a win, and it is why
+// a fully-defended surprise round still trains the weapon skill at the failure
+// fraction rather than training skullduggery.
+//
+// ⚠️ ITS ROLL IS SYNTHESISED, and it is the only one in the set that is.
+// Skullduggery is never rolled during a surprise attack -- crit_damage.go reads
+// it as a LEVEL, not a contest -- so there is no roll that already happened to
+// carry. characters.CandidateFor rolls dice.RollStat(dexterity +
+// skullduggeryLevel*SkillWeight), which is the same SHAPE as an attack roll and
+// shares dexterity with the melee weapon skills, but NOT the same scale: a real
+// attack score also carries weapon, position, encumbrance and third-party
+// modifiers that a bare stat-plus-skill roll does not. So the comparison is
+// approximate, and which side it favours depends on how those modifiers happen
+// to sit. Recorded as an open item for U10b-1b alongside the melee/channel
+// fumble divergence; do not read this function as evidence the two rolls are
+// commensurable.
+func surpriseCandidate(c *characters.Character, result combat.AttackResult) (progression.Candidate, bool) {
+	if c == nil || !result.WasSurpriseAttack || !result.CleanHit {
+		return progression.Candidate{}, false
+	}
+	return c.CandidateFor(string(skills.Skullduggery)), true
 }
