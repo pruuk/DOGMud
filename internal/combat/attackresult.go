@@ -45,6 +45,40 @@ type SwingEvent struct {
 	AttackType    string // "weapon", "unarmed", "ranged" — per-swing weapon type for analytics
 }
 
+// SwingDefence is ONE swing's defence record for the round's defender
+// progression award: which defence ROLLED BEST in that swing's best-of-all
+// contest, what it rolled, and whether it beat the attack.
+//
+// THREE defence records on AttackResult mean three different things and none
+// substitutes for another:
+//
+//   - DefenseUsed     -- a defence that WON. Stamped by sendDefenseMessages,
+//     which runs only on a defensive win.
+//   - DefenseAttempts -- every defence that was TRIED, in sequence.
+//   - SwingDefences   -- the one defence per swing that ROLLED BEST, win or
+//     lose. It is the only one of the three populated on a defence that lost,
+//     which is what lets U10b-1 award a lost defence at
+//     ProgressionFailureFraction instead of awarding nothing.
+//
+// It is NOT index-parallel to SwingEvents. An UNCONTESTED swing -- the defender
+// had no defence available at all -- quotes nothing and appends no entry here,
+// because an empty defence name awards nothing (AwardDefenceProgression returns
+// early on it) and an empty entry could only displace a real candidate in the
+// Best-of.
+type SwingDefence struct {
+	// Defence is contest.Result.Winner for that swing: the entry that defended
+	// best, whether or not it beat the attack roll. Never empty -- an
+	// uncontested swing appends no SwingDefence at all.
+	Defence DefenseType
+	// Roll is that entry's rolled value, the roll that ALREADY happened.
+	// Nothing re-rolls to compare swings against each other.
+	Roll float64
+	// Won is the DEFENCE's win, not the swing's hit: true on a deflection and
+	// on a defensive crit, false on every attack win, on both fumble paths, and
+	// on a forced crit against a sleeping victim.
+	Won bool
+}
+
 // TaggedMessage pairs a combat narration line with the messaging
 // Category that should color it. Multi-weapon characters (e.g., the
 // 6-arm test character) produce heterogeneous batches — some swings
@@ -108,6 +142,11 @@ type AttackResult struct {
 	MessagesToSourceRoom    []TaggedMessage
 	MessagesToTargetRoom    []TaggedMessage
 	MessagesToRoomOld       []TaggedMessage
+
+	// SwingDefences carries the per-swing defence that the round's SINGLE
+	// defender progression award is chosen from. See the SwingDefence doc
+	// comment for how it differs from DefenseUsed and DefenseAttempts.
+	SwingDefences []SwingDefence
 }
 
 func (a *AttackResult) SendToSource(cat messaging.Category, msg string) {

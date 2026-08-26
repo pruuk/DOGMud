@@ -35,7 +35,7 @@
 | `events.SkillUsed` | `{UserId int, Skill skills.SkillTag, Details string}` |
 | `OnSkillUseScaled` | also grants mutation cluster drift and emits `SkillUsed`, both unscaled |
 | concentration | **THREE** sites: `combat_shared_helpers.go:141`/`:577` and `actions/combat_throttle.go:172` (award `:185`) |
-| spell attacker award | `NewRound_DoCombat_helpers.go:385`, on `CastComplete`, gated only on `spellBonus > 0`, in no win/lose branch |
+| spell attacker award | `NewRound_DoCombat_helpers.go:454` (`:385` before Task 9 grew that file by 69 lines), on `CastComplete`, gated only on `spellBonus > 0`, in no win/lose branch. The mob twin is `:613` |
 | multi-candidate sites | `NewRound_DoCombat_unified.go:699` and `actions/combat_fire.go:406`, both commented "A SECOND Outcome is structurally required" |
 | skullduggery in a surprise attack | **never rolled**; read as a LEVEL at `crit_damage.go:74` |
 | `search.go` | award at `:243` gated on `rolledAgainstSomething`, **full weight win or lose today** |
@@ -239,7 +239,25 @@ loss path (`SkillUsed` suppressed) is exact at 0.35 and is asserted there.
 
 # Phase B: wire combat
 
-## Task 9: Both defence paths, Best-of, win or lose
+## Task 9: Both defence paths, Best-of, win or lose ✅
+
+Shipped. The melee half needed a new per-swing record, because the field it used
+to key on cannot carry a loss and is not reliably per-swing either:
+`AttackResult.DefenseUsed` is stamped only by `sendDefenseMessages` (a WON
+defence) and is never reset between swings, so `SwingEvent.DefenseUsed` copies
+the ROUND-level value and over-reports once any swing has been defended. That
+bug is pre-existing, is left alone, and is now moot for progression.
+
+What landed instead: `combat.SwingDefence{Defence, Roll, Won}` and
+`AttackResult.SwingDefences`, appended once per CONTESTED swing in
+`calculateCombat` from `best.defenseType` / `best.defRoll.Value` /
+`res.defenceWon()` (a new `hitResolution` method: `defended || defenseCrit`,
+the union the crit floor can promote between).
+`hooks.processDefenderProgression` builds one `progression.Candidate` per entry
+with the roll that ALREADY happened -- no re-roll -- and hands the choice to
+`progression.BestOf`, recovering the winning entry by value (each defence type
+has a distinct Skill/Stat pair, so equal candidates can only name the same
+defence).
 
 ⚠️ **The channel path has NO lost branch.** `defence_multiplier.go:453` awards
 the winning candidate regardless of `res.Success`. Do **not** add a second call;
@@ -253,10 +271,10 @@ above the loop. Do not reach for bare `!res.Success`.
 **cut** for a defender with several defences and a **gain** for one with a single
 defence.
 
-- [ ] **Step 1:** read both paths (`helpers.go:30-70`, `defence_multiplier.go:442-459`)
-- [ ] **Step 2:** failing tests: a melee round where nothing lands awards the best-quoted defence at the fraction; a melee round with three defence types awards **once**; a lost channel defence awards the fraction and is **not** awarded twice
-- [ ] **Step 3:** melee, expose the quoted defence from `runBestOfAllDefense` (a new field on `SwingEvent` or `AttackResult`) and replace `processDefenderProgression`'s loop with a single award. When `getAvailableDefenses` is empty the contest is uncontested, `defenseType` is `""`, and nothing is awarded; note that in the commit
-- [ ] **Step 4:** channel, replace the `true` literal on the one existing `AwardDefenceProgression` call with the real outcome. `won` here is the DEFENCE's win, i.e. `!res.Success && !side.ForceCrit` — not bare `!res.Success`. Do not touch the `BonusEvents` line
+- [x] **Step 1:** read both paths (`helpers.go:30-70`, `defence_multiplier.go:442-459`)
+- [x] **Step 2:** failing tests: a melee round where nothing lands awards the best-quoted defence at the fraction; a melee round with three defence types awards **once**; a lost channel defence awards the fraction and is **not** awarded twice
+- [x] **Step 3:** melee, expose the quoted defence from `runBestOfAllDefense` (a new field on `SwingEvent` or `AttackResult`) and replace `processDefenderProgression`'s loop with a single award. When `getAvailableDefenses` is empty the contest is uncontested, `defenseType` is `""`, and nothing is awarded; note that in the commit
+- [x] **Step 4:** channel, replace the `true` literal on the one existing `AwardDefenceProgression` call with the real outcome. `won` here is the DEFENCE's win, i.e. `!res.Success && !side.ForceCrit` — not bare `!res.Success`. Do not touch the `BonusEvents` line
 - [ ] **Step 5:** run, commit
 
 ---
@@ -307,7 +325,7 @@ One cast is one resolved action: **one event, won if ANY target was hit.** Not a
 per-target award.
 
 - [ ] **Step 1:** failing tests: a cast every target defended awards the fraction; a cast that hit one of three awards full, once
-- [ ] **Step 2:** route `NewRound_DoCombat_helpers.go:385` through `AwardResolved`
+- [ ] **Step 2:** route `NewRound_DoCombat_helpers.go:454` through `AwardResolved`
 - [ ] **Step 3:** run, commit
 
 ---

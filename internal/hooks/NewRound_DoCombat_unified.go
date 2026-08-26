@@ -746,8 +746,11 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	atkChar.ApplyProgression(bonusEvs, progression.SideAttacker, atkUid, round)
 	defChar.ApplyProgression(bonusEvs, progression.SideDefender, defUid, round)
 
-	// Defender dodge/parry/block ordinary events, unchanged: once per defence
-	// type per round.
+	// Defender dodge/parry/block ordinary event: U10b-1 Task 9 collapsed this
+	// from once per WINNING defence type to ONE Best-of award per round, fired
+	// win or lose. Note defencesUsed above still feeds the BONUS tier and still
+	// means "defences that won" -- the two tiers deliberately read different
+	// records now.
 	processDefenderProgression(defChar, defUid, *res)
 }
 

@@ -442,15 +442,29 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	out.DefenceType = res.Winner
 	out.Cost = commitDefenceWinner(defender, candidates, res)
 	// U9: the ordinary defence award is unchanged in WHEN it fires -- whenever
-	// the contest ran, win or lose, which is what this path has always done and
-	// is deliberately different from melee's defence-used gate. That divergence
-	// is recorded in the firing audit and is U10b's to reconcile.
+	// the contest ran, win or lose, which is what this path has always done.
+	// U10b-1 Task 9 made melee agree, so the divergence recorded in the firing
+	// audit is closed; what this task changes here is the WEIGHT, which used to
+	// be a literal true and is now the real outcome.
 	//
-	// What is new is the bonus tier: a defensive crit or fumble now pays the
-	// defender, and the attacker observes it.
+	// The predicate is the DEFENCE's win and it cannot be a bare !res.Success.
+	// contest.Result.Success means the ATTACKER won, and ForceCrit (the
+	// sleeping-victim contract) forces the attack win even when the defence took
+	// the margin -- see the DamageMultiplier restore below, which puts the
+	// attack-win multiplier back. Such a defence was quoted, charged and
+	// progressed, but it did not win, so it is paid at
+	// ProgressionFailureFraction.
+	//
+	// out.Defended is NOT usable here: it is not assigned until after two
+	// `return out` exits further down.
+	//
+	// CritOnWin is deliberately absent from the predicate. Unlike ForceCrit it
+	// only upgrades a contest the attacker already won, so res.Success already
+	// carries it.
+	defenceWon := !res.Success && !side.ForceCrit
 	for _, candidate := range candidates {
 		if candidate.entry.Name == res.Winner {
-			AwardDefenceProgression(defender, defender.GetUserId(), res.Winner, true)
+			AwardDefenceProgression(defender, defender.GetUserId(), res.Winner, defenceWon)
 			break
 		}
 	}

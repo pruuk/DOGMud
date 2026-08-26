@@ -811,6 +811,23 @@ type hitResolution struct {
 	defended bool
 }
 
+// defenceWon reports whether the DEFENCE won this swing's contest.
+//
+// It is the union of the two defensive-win shapes, and it must be: the Task 10
+// deflection sets defended, a defensive crit sets defenseCrit and explicitly
+// clears defended, and applyCritFloors can PROMOTE the first into the second
+// (clearing defended as it goes). Reading either flag alone would drop one of
+// the two.
+//
+// It is false on every attack-win path, on all three fumble paths (a fumble is
+// nobody's contest win), and on a forced crit against a sleeping victim -- the
+// same verdicts the channel seam reaches through !res.Success && !side.ForceCrit.
+//
+// This is exactly the condition under which sendDefenseMessages runs, which is
+// what stamped AttackResult.DefenseUsed before U10b-1; the difference is that
+// this is per-SWING and reliable, while DefenseUsed is round-scoped.
+func (r hitResolution) defenceWon() bool { return r.defended || r.defenseCrit }
+
 // doubleFumbleMessages are comedy flavor text for when both combatants fumble.
 var doubleFumbleMessages = []struct {
 	toAttacker string

@@ -290,6 +290,30 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    verbatim from pre-U9 behaviour. An unrecognised defence returns two empty
    strings from `DefenceSkillAndStat` rather than guessing -- passing an empty
    skill on is not inert, `CheckSkillProgression("")` still takes the roll.
+
+   **U10b-1 Task 9** gave `AwardDefenceProgression` the OUTCOME (`won bool`,
+   Task 8) and then made both callers pass the real one, so a LOST defence is
+   awarded at `Balance.ProgressionFailureFraction` instead of nothing (melee) or
+   full weight (channel). Two things follow that a reader of either call site
+   needs.
+
+   The channel predicate is `!res.Success && !side.ForceCrit`, never bare
+   `!res.Success`: `contest.Result.Success` means the ATTACKER won, and
+   `ForceCrit` forces the attack win even when the defence took the margin.
+   `out.Defended` is not assigned until well after the award and cannot be used.
+
+   Melee no longer keys on `AttackResult.DefenseUsed`. It reads
+   `AttackResult.SwingDefences` — one entry per CONTESTED swing carrying the
+   defence that rolled best (`contest.Result.Winner`, populated win or lose),
+   that roll, and whether the defence won — and `hooks.processDefenderProgression`
+   picks ONE with `progression.BestOf`. Three defence records on `AttackResult`
+   now mean three different things: `DefenseUsed` is a defence that WON (and is
+   round-scoped, not per-swing), `DefenseAttempts` is everything TRIED, and
+   `SwingDefences` is the per-swing best ROLL. Consequences: an uncontested
+   round awards nothing, and the round's single award replaces the old
+   once-per-winning-defence-type loop, which is a cut for a shielded defender
+   (parry and block both train weapon-combat) and a gain for a defender with one
+   defence.
 2. **`sendDefenseMessages` progresses the WRONG skill and prints broken
    grammar.** **FIXED defensively, still unreachable.** Its switch
    (`combat_helpers.go`) can still leave `skillToProgress` and `defenseVerb`
@@ -1524,7 +1548,7 @@ values directly.
 | `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage` |
 | `combat/margin_crit.go` | `ContestCrit`, `ContestCritThreshold` |
 | `combat/crit_floor.go` | `ApplyCritFloor`, `AttackContestCrit`, `DefenseContestCrit`, `AttackCritFloor`, `DefenseCritFloor` |
-| `combat/attackresult.go` | `AttackResult` struct (includes `Hit`/`CleanHit` — dealt damage vs. won the contest, see the Task 10/14 section — `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`) and message helpers |
+| `combat/attackresult.go` | `AttackResult` struct (includes `Hit`/`CleanHit` — dealt damage vs. won the contest, see the Task 10/14 section — `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`), `SwingEvent`, `SwingDefence`/`SwingDefences` (U10b-1; see "Defender progression" below) and message helpers |
 | `combat/ai.go` | `ChooseSpecialMove`, `ChooseCastAction`, `GetAIProfile`, AI profiles, viability checks (`CanUseBash`, `CanUseKick`, etc.), scoring functions |
 | `combat/criteffects.go` | `AttemptCritDisarm`, `SetGrappleOpportunity`, `HasGrappleOpportunity`, `GetGrappleOpportunityBonus`, `ClearGrappleOpportunity` |
 | `combat/grapple.go` | `AttemptGrapple`, `ApplyGrappleResult`, `CheckClinchProgression`, `CheckGroundedEscape`, `ApplyPositionProgression`, `IsThirdPartyAttack` |

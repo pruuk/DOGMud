@@ -529,6 +529,27 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 				swingAtkType = "weapon"
 			}
 
+			// U10b-1: record what the DEFENDER put up on this swing, for the
+			// round's single defender progression award.
+			//
+			// best.defenseType is contest.Result.Winner -- the entry that
+			// defended best -- and runBestOfAllDefense sets it whenever the
+			// contest ran, so it is populated on a defence that LOST. That is
+			// the whole point: the per-type loop this feeds keyed on
+			// AttackResult.DefenseUsed, which only a WINNING defence stamps, so
+			// a round in which every defence lost trained nothing.
+			//
+			// An UNCONTESTED swing (empty defence set) appends nothing. An empty
+			// defence name awards nothing downstream, and an empty entry in the
+			// Best-of could only displace a real candidate from another swing.
+			if best.defenseType != "" {
+				attackResult.SwingDefences = append(attackResult.SwingDefences, SwingDefence{
+					Defence: DefenseType(best.defenseType),
+					Roll:    best.defRoll.Value,
+					Won:     res.defenceWon(),
+				})
+			}
+
 			// Record per-swing analytics
 			attackResult.SwingEvents = append(attackResult.SwingEvents, SwingEvent{
 				Hit:           res.hit,

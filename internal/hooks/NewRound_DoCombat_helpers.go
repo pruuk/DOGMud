@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -24,27 +25,95 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// processDefenderProgression fires skill and stat progression for a defender
-// based on which defense types were used across all swings in the round.
+// processDefenderProgression fires ONE skill-and-stat progression award for the
+// defender per melee round: the defence that ROLLED BEST across the round's
+// swings, at full weight if that defence won and at
+// Balance.ProgressionFailureFraction if it lost.
 //
-// It awards ONCE PER DEFENCE TYPE per round, not once per swing: a defender who
-// dodges four times gets one dodge award. That de-duplication is the only thing
-// this function does that combat.AwardDefenceProgression does not, and it is why
-// the per-type rows themselves live over there rather than in a switch here.
+// U10b-1 Task 9 changed both halves of that sentence. Before it this looped
+// combat.AwardDefenceProgression once per defence TYPE that had WON -- keyed on
+// AttackResult.SwingEvents' DefenseUsed, which sendDefenseMessages stamps only
+// on a defensive win -- so a round in which every defence lost trained nothing
+// at all, and a defender with dodge, parry and block took up to three rolls
+// where a bare-handed one took one. The firing convention is now Best-of: one
+// resolved action, one event, for the single highest-rolling candidate.
 //
-// U6 Task 12 moved those rows. Before it, this switch covered dodge / parry /
-// block with no default arm while avoidance.go awarded the two non-physical
-// rows itself. Deleting avoidance.go without a single shared mapping would have
-// silently deleted defender progression on both non-physical channels.
+// The REDISTRIBUTION is deliberate and is not a uniform gain. A defender with
+// one defence gains (a lost round now trains at the fraction). A shield user
+// loses: parry and block both train weapon-combat, so a round that quoted both
+// used to be able to take two weapon-combat rolls and now takes one.
 //
-// Quell and defy cannot reach this function today -- SwingEvent.DefenseUsed is
-// populated only by the melee path, which never emits either. They are covered
-// by AwardDefenceProgression regardless, so wiring either into melee later is a
-// row in DefenceSetFor and nothing else.
+// An UNCONTESTED round awards nothing. runBestOfAllDefense leaves the defence
+// name empty when the defender had no defence available, the swing loop appends
+// no SwingDefence for it, and BestOf on an empty slice reports false.
+//
+// The de-duplication that used to be this function's only job beyond
+// AwardDefenceProgression is now BestOf's: a defender who dodges four swings
+// still gets one dodge award, because four dodge candidates collapse to the one
+// that rolled highest.
+//
+// Quell and defy still cannot reach this function -- neither is in melee's
+// defence set -- but AwardDefenceProgression covers both, so wiring either into
+// melee stays a row in DefenceSetFor and nothing else.
 func processDefenderProgression(c *characters.Character, userId int, result combat.AttackResult) {
-	for _, d := range defenceTypesUsed(result) {
-		combat.AwardDefenceProgression(c, userId, string(d), true)
+	best, ok := bestSwingDefence(c, result.SwingDefences)
+	if !ok {
+		return
 	}
+	combat.AwardDefenceProgression(c, userId, string(best.Defence), best.Won)
+}
+
+// bestSwingDefence picks the ONE swing defence that earns the round's defender
+// award, and reports false when there is nothing to award.
+//
+// The choice is DELEGATED to progression.BestOf rather than reimplemented here:
+// that function is the arc's single definition of "which candidate earns the
+// event", down to the tiebreaks (highest roll, then highest level, then slice
+// order), and a second copy would drift from it the first time the rule
+// changed.
+//
+// Two things are worth stating about the mapping.
+//
+// The Roll handed to BestOf is the defence's ACTUAL contest roll, already made
+// during the swing, not a fresh characters.CandidateFor roll. Re-rolling would
+// add a second source of randomness on top of the one that already decided the
+// swing, and these candidates are directly comparable: contest.Run rolls every
+// defence with the ATTACKER's standard deviation, so all of a round's defence
+// rolls share one scale.
+//
+// The winner is recovered by VALUE rather than by index because BestOf returns
+// the Candidate, not its position. That is sound here: each defence type
+// produces a distinct (Skill, Stat) pair -- dodge is unarmed-combat/dexterity,
+// parry weapon-combat/dexterity, block weapon-combat/strength -- so two
+// candidates can only compare equal when they name the same defence, and the
+// walk below takes the first match in the same slice order BestOf's full-tie
+// rule uses.
+func bestSwingDefence(c *characters.Character, quoted []combat.SwingDefence) (combat.SwingDefence, bool) {
+	if c == nil || len(quoted) == 0 {
+		return combat.SwingDefence{}, false
+	}
+
+	cands := make([]progression.Candidate, 0, len(quoted))
+	for _, q := range quoted {
+		skill, stat := combat.DefenceSkillAndStat(string(q.Defence))
+		cands = append(cands, progression.Candidate{
+			Skill: skill,
+			Stat:  stat,
+			Roll:  q.Roll,
+			Level: c.GetSkillLevel(skills.SkillTag(skill)),
+		})
+	}
+
+	winner, ok := progression.BestOf(cands)
+	if !ok {
+		return combat.SwingDefence{}, false
+	}
+	for i, cand := range cands {
+		if cand == winner {
+			return quoted[i], true
+		}
+	}
+	return combat.SwingDefence{}, false
 }
 
 // defenceTypesUsed returns the set of defences that registered this round, in
