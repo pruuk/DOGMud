@@ -463,3 +463,45 @@ the branch most likely to hide a `Base`-assignment bug. Do this one first.
       that feels dramatically out of line is worth reporting.
 - [ ] Read `help progression` as a player would and say whether it actually
       answers "how do I get better".
+
+## U10d: surprise attack redesign (2026-08-25)
+
+Surprise attack is now **one contested opening blow**, not a free multi-weapon
+volley. Stealth breaks the moment you strike. A same-room bow shot from cover
+gets its own smaller version and burns the shared special-move recovery. Bows
+were detuned hard and given a large bonus for shooting something that is not
+already fighting you.
+
+The adversarial playtest passed every mechanical check, but **four things could
+not be reached** because the fixture mob died in a single round. Every item
+below needs **a target that survives at least one full round against you**, so
+do these against something real (a North Road bandit, an Ironwind Steppes mob,
+or the Queen's escort), never against a training dummy.
+
+- [ ] **Get an opening strike DEFENDED.** Ambush something skilled enough to
+      turn it. The line should name which defence stopped you (dodge, parry,
+      block, quell or defy) and you should still do reduced damage rather
+      than nothing. Neither half of that has ever been seen in play.
+- [ ] **Try to ambush while the recovery is still spent** (ambush, then
+      immediately try again, in melee and with a bow). You should get a clear
+      refusal sentence in both cases. That copy has never rendered on screen.
+- [ ] **Does an ambush actually feel harder-hitting?** 🔴 This is the known
+      open finding. Against a one-round target, an ordinary shot and an ambush
+      shot print the **same damage words**, so the deliberate ordering of the
+      three new multipliers is invisible. Against a target that survives, the
+      wording should separate. Tell me whether it does. If it still does not,
+      the fix is the damage vocabulary, not the multipliers.
+- [ ] **Shoot something that is not fighting anyone, then shoot something
+      already swinging at you.** The first should feel clearly better. This is
+      the whole compensation for the bow detune, so if it is not felt, archery
+      is now simply worse than it was.
+- [ ] **Fire a bow you already owned before this arc.** Your saved bows are
+      rescaled on login (backpack, component bag, bandolier, pet inventory,
+      worn gear and the account bank). Confirm an old bow still feels like a
+      bow and not like a club. Bows sitting in shops, containers or on mob
+      instances were deliberately left alone and will age out, so a
+      briefly overpowered shop bow is expected, not a bug.
+- [ ] A successful melee ambush sends **no** reveal sentence, by design. The
+      marker on the blow and your hidden status quietly dropping are the whole
+      feedback. Only the refusal path speaks. Say whether that reads as
+      intentional or as a missing message.
