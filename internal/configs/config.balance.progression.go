@@ -39,6 +39,21 @@ func (b *Balance) validateProgression() {
 	if b.ObservedCritProgressionBonus < 0 {
 		b.ObservedCritProgressionBonus = 0.5
 	}
+	// A THIRD idiom, because neither of the two above fits. This knob is an
+	// off-switch (0 means "a lost action teaches nothing"), so the `<= 0` idiom
+	// would make disabling it impossible -- but unlike the crit knobs it also
+	// needs an ABSENT key to reach the default rather than reading as 0, so the
+	// `< 0` idiom alone would leave an unmentioning config.yaml silently off.
+	// The two cases are separated BEFORE the unmarshal instead: newUnloadedConfig
+	// seeds -1, so a negative value here means "absent" and nothing else.
+	//
+	// Above 1.0 is not a gentle overshoot, it is an INVERSION: failing would be
+	// worth more than succeeding. Corrected to the default rather than clamped
+	// to 1.0, since parity between success and failure is almost certainly not
+	// what the author meant either.
+	if b.ProgressionFailureFraction < 0 || b.ProgressionFailureFraction > 1.0 {
+		b.ProgressionFailureFraction = 0.35
+	}
 	// `<= 0`, not `< 0`: this is a safety floor, not an off-switch. A config
 	// that omits the key must get the floor, not lose it. Contrast the `< 0`
 	// idiom two lines above: it makes 0 a usable off-switch, at the cost that

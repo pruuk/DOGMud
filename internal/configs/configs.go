@@ -384,6 +384,28 @@ func overridePath() string {
 	return overridePath
 }
 
+// newUnloadedConfig returns the Config a load unmarshals INTO, with the
+// "unset" sentinels pre-seeded.
+//
+// Most knobs can tell "absent" from "explicitly set" because their zero value
+// is illegal, so a `<= 0` guard in Validate() can safely restore the default.
+// ProgressionFailureFraction cannot: 0 is a legal explicit off-switch ("a lost
+// action teaches nothing"), and an absent YAML key also unmarshals to 0, so no
+// predicate applied AFTER the unmarshal can separate the two cases. Seeding a
+// negative sentinel BEFORE the unmarshal makes "still negative" mean "absent"
+// and nothing else.
+//
+// This works because yaml.v2 decodes into an addressable struct in place and
+// leaves fields whose keys are absent from the document untouched. ReloadConfig
+// is the only path that unmarshals _datafiles/config.yaml, and the overlay and
+// env-assignment passes that follow only write keys they were given, so nothing
+// between here and Validate() can clobber the sentinel.
+func newUnloadedConfig() Config {
+	c := Config{}
+	c.Balance.ProgressionFailureFraction = -1
+	return c
+}
+
 func ReloadConfig() error {
 
 	configPath := util.FilePath(`_datafiles/config.yaml`)
@@ -393,7 +415,7 @@ func ReloadConfig() error {
 		return err
 	}
 
-	tmpConfigData := Config{}
+	tmpConfigData := newUnloadedConfig()
 	err = yaml.Unmarshal(bytes, &tmpConfigData)
 	if err != nil {
 		return err
