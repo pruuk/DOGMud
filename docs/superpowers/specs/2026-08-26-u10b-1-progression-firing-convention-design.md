@@ -39,8 +39,9 @@ That deferred decision is this slice.
 | 7 | First-kill progression is DELETED | Keeping it as a named exception |
 | 8 | Convert all 15, designing a craft/salvage difficulty basis | Converting only the 8 RollStat sites; converting nothing |
 | 9 | Craft difficulty comes from an AUTHORED material tier, 5 buckets; absent means 1.0, and a guard blocks new untiered materials | Gold value (measured as noise against recipe tier); `rarity_tier` (an inverted stock cap with 26% gaps) |
-| 10 | `recipe.SkillMinimum` is deliberately absent from the odds; it gates discovery and attempts | Adding it back, which a blind review wrongly demanded |
+| 10 | Craft score is `stat + skill * SkillWeight`, composed like every other roll; `recipe.SkillMinimum` drives the DIFFICULTY | A bespoke anchored formula, which cancelled the recipe term, ignored the crafter's stat, and left material tier as the only signal |
 | 11 | Craft and salvage keep today's extremes via `contest.RunWithFloors` | Deleting the clamps, which would have left no mercy band at all |
+| 12 | **UNIFY the melee-vs-channel defence divergence HERE**: award the best-quoted defence, win or lose, on both paths | Deferring it to U10b-2, which would leave the arc's own stated goal unmet at its closing gate |
 
 ### 2.1 This spec supersedes the 2026-08-21 U10b spec
 
@@ -57,7 +58,7 @@ What changed, decided 2026-08-26:
 | Does losing train? | No, "losing no longer trains", accepted twice | **Yes, at a fraction** |
 | First-kill progression | Deleted | **Deleted** (unchanged) |
 | Regen | Merged into an "uncontested" class | **Deferred to U10b-2** |
-| Defence timing | Success only, everywhere | **Deferred to U10b-2** |
+| Defence timing | Success only, everywhere | **UNIFIED HERE** (owner, 08-26): best-quoted defence, win or lose, on both paths |
 | Class model | Three classes plus a bonus layer | One rule plus a fraction |
 
 The 08-21 argument for success-only was that the contest floors guarantee
@@ -278,53 +279,64 @@ roll := util.Rand(100)
 if roll < chance {
 ```
 
-**Craft difficulty comes from the materials** (owner, 2026-08-26):
+**Craft is an ordinary contest** (owner, 2026-08-26). The crafter's score is
+composed the way every other score in the game is composed, and the recipe
+supplies the difficulty:
 
 ```
-craftDifficulty = CraftBaseDifficulty * materialTierMult
-craftScore      = CraftBaseDifficulty * (1 + levelsAboveMinimum * CraftSkillWeightPct)
+craftScore      = primaryStat + craftSkill * SkillWeight          // SkillWeight 5, as everywhere
+craftDifficulty = (CraftBaseDifficulty + recipe.SkillMinimum * CraftSkillMinWeight)
+                  * materialTierMult
 ```
 
-with `CraftBaseDifficulty` 100, `CraftSkillWeightPct` 0.05, and
+with `CraftBaseDifficulty` **100**, `CraftSkillMinWeight` **5**, and
 `materialTierMult` running **0.75 to 1.25** over the tier of the dearest
-ingredient. `levelsAboveMinimum` is `skillLevel - recipe.SkillMinimum`.
+ingredient.
 
-Two properties this buys:
+**`CraftBaseDifficulty` is 100 because 100 is the human stat baseline.** The
+difficulty therefore reads as "a baseline human holding exactly the recipe's
+minimum skill", and a crafter who is exactly that scores
+`100 + min*5` against a difficulty of `100 + min*5`, which is 50%. That is
+today's shipped `CraftingBaseSuccessChance: 50`, reproduced without a special
+case.
 
-1. At `skillLevel == recipe.SkillMinimum` with mid-tier materials, score equals
-   difficulty, so the contest is 50%. That is exactly today's shipped
-   `CraftingBaseSuccessChance: 50`.
-2. `CraftSkillWeightPct` is a PERCENTAGE, not an addend, so nine levels above
-   the minimum reads the same on every recipe. A flat `+5` would pay 92.8% on a
-   `skill_minimum: 0` recipe and 73% on a `skill_minimum: 40` one, because
-   success depends on the ratio (5.1).
+What this buys, all four at once:
 
-### 5.1.1.1 `recipe.SkillMinimum` is deliberately absent from the odds
+| Property | |
+|---|---|
+| 50/50 at the minimum for a baseline crafter | yes |
+| `recipe.SkillMinimum` genuinely drives difficulty | yes |
+| Advanced recipes take more mastery to become routine | yes |
+| The crafter's **stat** matters, as in every other contest | yes |
 
-It is **not** an oversight that `SkillMinimum` does not appear above, and it
-must not be added back.
+Mastery at neutral tier, stat 100:
 
-Requiring both properties in 5.1.1 forces it out. Property 1 says
-`difficulty(min) == score(min)` for every recipe, so any `SkillMinimum` term
-must appear identically on both sides, and property 2 then makes it cancel
-everywhere. An earlier draft of this spec wrote the anchor
-`(CraftBaseDifficulty + SkillMinimum * CraftSkillMinWeight)` into both sides;
-it cancelled exactly, which made `CraftSkillMinWeight` a knob that could never
-change an outcome. Removing it is the correction.
+| Levels above minimum | `skill_minimum: 0` | `skill_minimum: 40` |
+|---|---|---|
+| 0 | 50% | 50% |
+| 5 | 83% | 64% |
+| 9 | 93% | 73% |
+| 20 | 99% | 88% |
+| 30 | 99% | 94% |
 
-This is the intended curve, and a blind review that flagged it as a defect was
-wrong: **50/50 at the recipe's minimum and near-certain by your fifteenth
-masterwork helm** is realistic, and it holding for every recipe means
-`SkillMinimum` reads consistently to a player across the whole crafting tree.
+A masterwork recipe needs roughly thirty levels above its minimum to become
+routine where a simple one needs nine. That is the intent: you rarely spoil the
+fifteenth masterwork helm you have ever made, and you are a coin flip on your
+first.
 
-`SkillMinimum` keeps three real jobs: the hard gate on **discovery**, the hard
-gate on **attempting**, and the progression reward via
-`CraftDifficultyProgressionScale`. Difficulty is carried by the materials.
+### 5.1.1.1 Do not invent a bespoke score formula
 
-`CraftBaseDifficulty` also cancels. It stays only to keep both numbers in
-stat-scale range so `dice.StdDevFor` does not hit its `mean < 1.0` floor, and
-its doc comment must say it deliberately does not affect odds, so the pending
-`config.yaml` audit does not flag it as orphaned.
+🔴 An earlier draft of this spec composed the score as
+`(CraftBaseDifficulty + SkillMinimum * CraftSkillMinWeight) * (1 + levels * 0.05)`,
+putting the recipe's anchor on **both** sides. That cancelled exactly, which
+made `CraftSkillMinWeight` a knob that could never change an outcome, removed
+`SkillMinimum` from the odds entirely, and **ignored the crafter's stat
+altogether**. It also left material tier as the only difficulty signal, so with
+no materials tiered yet every recipe in the game would have had identical odds.
+
+The correction is not a cleverer formula. It is to compose the score the way
+the rest of the game composes scores: `stat + skill * SkillWeight`. Anything
+else is a special case that has to justify itself, and this one could not.
 
 ### 5.1.1.2 The mercy band: floors, not deleted clamps
 
@@ -382,12 +394,21 @@ recover than cheap ones.
 
 ### 5.1.2 Material tier is AUTHORED, not derived from gold value
 
-Material tier is the **only** signal carrying craft difficulty (5.1.1.1), so it
-has to be real.
+Material tier is a **modifier** on a difficulty that `recipe.SkillMinimum`
+already carries (5.1.1). That matters twice: an authoring error moves a recipe
+by one bucket rather than defining it outright, and the slice can ship before
+any material is tiered without every recipe collapsing to identical odds.
+
+**On day one no material carries a tier**, so every multiplier is the neutral
+1.0 and difficulty is `100 + SkillMinimum * 5`. That is a coherent shipping
+state, not a broken one. Say so in the playtest goals: signal 3 asks whether
+difficulty tracks the recipe, and the material half only comes alive as the
+backfill lands.
 
 **Gold value was tried and rejected** (owner, 2026-08-26). Measured across all
 126 recipes, the 0.75 to 1.25 band appears inside almost every `skill_minimum`
-bucket: it is noise, not signal. Named offenders:
+bucket: it is noise, not signal. Named offenders, computed under the retired
+formula where tier was the ONLY signal:
 
 | Recipe | `skill_minimum` | Dearest ingredient | Odds at the minimum |
 |---|---|---|---|
@@ -466,7 +487,7 @@ Two traps:
   redesigned as authored mob behavior in the behavior unification arc, so this
   is dead weight, not a feature to preserve.
 - **`OnCriticalSuccess` and `OnCriticalFailure`**, which have zero production
-  references and survive only as stub methods on fake actors in five test
+  references and survive only as stub methods on fake actors in NINE test
   files. Remove both from the `progression/seam_guard_test.go` allow-list,
   which currently vouches for two symbols that do not exist.
 - **First-kill-of-a-type progression** (owner, ruled 2026-08-21 and reaffirmed
@@ -501,6 +522,46 @@ progression penalty, zeroes progression for an area cast that found no targets,
 and gates on `spellBonus > 0`. The mob path has **none of the three** and fires
 unconditionally on `CastComplete`. That is a firing-condition inconsistency and
 belongs here: the mob path adopts the player path's gates.
+
+### 5.5.0 UNIFY the defence divergence (owner, 2026-08-26)
+
+The melee and channel defence paths disagree today, and the source says so:
+
+> U9: the ordinary defence award is unchanged in WHEN it fires, whenever the
+> contest ran, win or lose, which is what this path has always done and is
+> deliberately different from melee's defence-used gate. That divergence is
+> recorded in the firing audit and is U10b's to reconcile.
+
+An earlier draft deferred this to U10b-2. **The owner ruled 2026-08-26 to unify
+it here.** That is the point of the arc.
+
+**The unified rule: award the defence that was QUOTED, win or lose.** The
+channel path already does this. Melee awards only a defence that *won*
+(`defenceTypesUsed` collects `DefenseUsed != DefenseNone`, which is stamped
+only in the defended-win branches), so melee moves to the channel's shape:
+`runBestOfAllDefense` already rolls every available defence and picks a best,
+so a best-quoted defence exists even in a round where nothing landed.
+
+This resolves a problem that has no other answer: under a win-only reading, a
+round in which the defender was hit by everything has **no skill to name**, and
+`progression.Event` forbids an empty `Skill`. Awarding the best-quoted defence
+gives the fraction a target on every resolved round.
+
+🔴 **Know the direction of travel on each path**, because they are opposite and
+the re-solve depends on it:
+
+| Path | Today | After | Change |
+|---|---|---|---|
+| Channel defence (dodge, parry, block, quell, defy) | full event win or lose | full on a win, fraction on a loss | **a cut** |
+| Melee defence | award only when a defence won | best-quoted defence, win or lose | **a gain** |
+| Melee attacker (per clean hit) | 0.5752 events/swing | 0.7239 | **+26%** |
+
+The +26% attacker figure is sound. **Any defender-side figure computed as a
+uniform +47% is wrong**: it assumes today's defender award is win-only, which is
+false on the channel path. Melee's defender award also fires **once per round**,
+not per swing, so its inflation shrinks as swing count rises (roughly +17% at
+two swings, +8% at three). Re-solve each defence skill against its own
+measured rate, not against a single headline number.
 
 ### 5.5.1 WIRE THE RULE. The seam is not the feature.
 
@@ -648,8 +709,9 @@ keys on the stock-to-restock ratio.
 
 ## 7. Explicitly out of scope
 
-- The three faucets: melee-vs-channel defence divergence, mob archer
-  ranged-combat progression, and the tick-regen route. All U10b-2.
+- Two faucets: mob archer
+  ranged-combat progression and the tick-regen route. Both U10b-2. The defence
+  divergence was the third; the owner moved it INTO this slice (5.5.0).
 - Item proc gating (`hooks/item_procs.go:71`). Breadcrumbed, not converted.
 - Target switching. U12's surface.
 - Mob pursuit as a feature. The behavior unification arc.
