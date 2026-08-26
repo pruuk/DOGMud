@@ -34,8 +34,8 @@ the second slice is planned.
 
 | Slice | Delivers | Playtest signal |
 |---|---|---|
-| **U10b-1** — the firing convention | Best-of, `AwardResolved`, the fraction, `Outcome.Defended`, the defence unification, and the rule wired to **every** site that resolves: melee attacker and defender, both channel defences, concentration, the spell attacker, search, track, forage, craft, salvage, the sixteen skullduggery sites, mob crafters. **Each site keeps its CURRENT resolution.** | One: does failing at something teach you a little? |
-| **U10b-1b** — resolution onto the core | The Category B conversions (search x4, track, forage to `AgainstDifficulty`; craft and salvage to `RunWithFloors`), the craft difficulty formula, the authored material tier, the salvage difficulty basis, the two floors, and the hidden-detection fix | Craft feel, search and track odds, the economy |
+| **U10b-1**, the firing convention | Best-of, `AwardResolved`, the fraction, `Outcome.Defended`, the defence unification, and the rule wired to **every** site that resolves: melee attacker and defender, both channel defences, concentration, the spell attacker, search, track, forage, craft, salvage, the sixteen skullduggery sites, mob crafters. **Each site keeps its CURRENT resolution.** | One: does failing at something teach you a little? |
+| **U10b-1b**, resolution onto the core | The Category B conversions (search x4, track, forage to `AgainstDifficulty`; craft and salvage to `RunWithFloors`), the craft difficulty formula, the authored material tier, the salvage difficulty basis, the two floors, and the hidden-detection fix | Craft feel, search and track odds, the economy |
 
 **Why the line falls there.** The firing rule does not need the conversion.
 Craft already resolves (`util.Rand(100) < chance`), so won-or-lost is known and
