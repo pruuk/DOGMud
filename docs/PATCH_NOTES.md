@@ -26,6 +26,12 @@ An archer being attacked cannot steady the shot, and it is weaker for it. That
 is now said once, the first time it happens in a fight, rather than never or
 every round.
 
+All of it is written down as well. Type help ambush. It covers setting one up,
+what a defender can do about it, why reloading and then hiding so often leaves
+you with nothing ready, and why a shot into the next room is not an ambush at
+all. Typing help surprise, help backstab or help sneak attack will find it too,
+and help hide now answers instead of shrugging.
+
 ## 2026-08-24: Spell help describes spells instead of measuring them
 
 Looking up a spell used to hand you three bare numbers for how long it takes to

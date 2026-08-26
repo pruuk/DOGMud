@@ -27,7 +27,11 @@ will be told it was your last.
 A shot fired from hiding is an <ansi fg="magenta-bold">ambush</ansi>, and it draws
 on the very same recovery that reloading just spent. If you reload and then
 hide, your special move is usually still coming back when you fire, so you
-loose an ordinary shot instead and are told there was no ambush ready.
+fire an ordinary shot instead and are told there was no ambush ready.
+
+That shot still gives your position away. Firing from hiding reveals you
+whether the ambush was ready or not, so a wasted opener costs you your cover
+and returns nothing for it.
 
 Load first, then hide, and give the recovery time to return before you shoot.
 Check it with <ansi fg="command">cooldowns</ansi>. See <ansi fg="command">help ambush</ansi>.
