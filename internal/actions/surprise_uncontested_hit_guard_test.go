@@ -66,7 +66,7 @@ func TestEngageAggroTypeLandsNoDamage(t *testing.T) {
 	require.Zero(t, attacker.Character.Cooldowns["special-move"],
 		"precondition: the special-move cooldown is free, so nothing refuses the opener")
 
-	got := EngageAggroType(
+	got, onCooldown := EngageAggroType(
 		NewMobActorInRoom(attacker, room),
 		NewMobActorInRoom(victim, room),
 	)
@@ -75,6 +75,8 @@ func TestEngageAggroTypeLandsNoDamage(t *testing.T) {
 	// would be true for an uninteresting reason.
 	require.Equal(t, characters.SurpriseAttack, got,
 		"precondition: this is the exact situation the deleted burst fired in")
+	require.False(t, onCooldown,
+		"precondition: nothing refused the opener, so no refusal may be reported")
 
 	require.Equal(t, 500, victim.Character.Health,
 		"typing an engagement as a surprise attack must not damage the target. The pre-combat "+

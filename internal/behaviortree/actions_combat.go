@@ -71,7 +71,9 @@ func actAttack(params map[string]any, ctx *EvalContext) Result {
 			}
 		}
 		if target != nil {
-			aggroType = actions.EngageAggroType(actions.NewMobActorInRoom(mob, room), target)
+			// The refusal signal is discarded on purpose: a behaviour-tree mob
+			// has no one to tell. Only the player-facing paths speak it.
+			aggroType, _ = actions.EngageAggroType(actions.NewMobActorInRoom(mob, room), target)
 		}
 	}
 	mob.Character.SetAggro(targetUserId, targetMobId, aggroType)

@@ -25,6 +25,14 @@ import (
 //  4. a hidden attacker with a free cooldown opens as a surprise, and paying
 //     for it claims the cooldown.
 //
+// U10d follow-up: the second return value is pinned in BOTH directions in every
+// case. It is what tells a caller WHICH of the two DefaultAttack reasons it
+// got, and the player-facing melee path speaks it (sendMeleeAmbushDenial in
+// internal/usercommands/attack.go). A version of it that were true whenever the
+// opener was merely absent would announce a refused ambush to every ordinary
+// attacker in the game, so "false when nobody asked for an opener" is the
+// assertion doing the most work here.
+//
 // Dropped with the burst: the SurpriseAttackResult.BlockReason strings and the
 // per-weapon StrikeCount assertions — both described a type and a code path
 // that no longer exist.
@@ -59,8 +67,14 @@ func TestEngageAggroType(t *testing.T) {
 		a, target := newActor(), newActor()
 		require.False(t, a.char.IsHidden(), "precondition: attacker is not hidden")
 
-		assert.Equal(t, characters.DefaultAttack, EngageAggroType(a, target),
+		got, onCooldown := EngageAggroType(a, target)
+
+		assert.Equal(t, characters.DefaultAttack, got,
 			"an ordinary opener must not be typed as a surprise attack")
+		assert.False(t, onCooldown,
+			"an attacker who was never hidden asked for no opener, so none was refused: "+
+				"reporting one here would tell every ordinary attacker in the game that "+
+				"their ambush failed")
 	})
 
 	// The attacker here MUST be hidden with a free cooldown, or the IsHidden
@@ -76,10 +90,12 @@ func TestEngageAggroType(t *testing.T) {
 		require.Zero(t, attacker.Character.Cooldowns["special-move"],
 			"precondition: the cooldown is free, so only the nil target can refuse")
 
-		got := EngageAggroType(NewMobActorInRoom(attacker, room), nil)
+		got, onCooldown := EngageAggroType(NewMobActorInRoom(attacker, room), nil)
 
 		assert.Equal(t, characters.DefaultAttack, got,
 			"a missing target cannot produce a surprise attack")
+		assert.False(t, onCooldown,
+			"a missing target is not a cooldown refusal: the timer was never asked")
 		assert.Zero(t, attacker.Character.Cooldowns["special-move"],
 			"a refused opener must not have claimed the special-move cooldown")
 	})
@@ -91,8 +107,12 @@ func TestEngageAggroType(t *testing.T) {
 		a := &recordingActor{char: nil}
 		target := newActor()
 
-		assert.Equal(t, characters.DefaultAttack, EngageAggroType(a, target),
+		got, onCooldown := EngageAggroType(a, target)
+
+		assert.Equal(t, characters.DefaultAttack, got,
 			"an actor with no character cannot produce a surprise attack")
+		assert.False(t, onCooldown,
+			"an actor with no character is not a cooldown refusal")
 	})
 
 	t.Run("hidden_but_on_cooldown_is_a_default_attack", func(t *testing.T) {
@@ -104,13 +124,16 @@ func TestEngageAggroType(t *testing.T) {
 		victim := newAggroAttackerMob(9811)
 		require.True(t, attacker.Character.IsHidden(), "precondition: attacker is hidden")
 
-		got := EngageAggroType(
+		got, onCooldown := EngageAggroType(
 			NewMobActorInRoom(attacker, room),
 			NewMobActorInRoom(victim, room),
 		)
 
 		assert.Equal(t, characters.DefaultAttack, got,
 			"a hidden attacker who cannot pay the special-move cooldown opens as an ordinary attack")
+		assert.True(t, onCooldown,
+			"the ONE case a caller has to be able to see: the attacker wanted an ambush, the "+
+				"shared timer refused it, and SetAggro will reveal them anyway")
 	})
 
 	t.Run("hidden_with_free_cooldown_is_a_surprise_and_claims_it", func(t *testing.T) {
@@ -122,13 +145,16 @@ func TestEngageAggroType(t *testing.T) {
 		require.Zero(t, attacker.Character.Cooldowns["special-move"],
 			"precondition: the special-move cooldown is free")
 
-		got := EngageAggroType(
+		got, onCooldown := EngageAggroType(
 			NewMobActorInRoom(attacker, room),
 			NewMobActorInRoom(victim, room),
 		)
 
 		assert.Equal(t, characters.SurpriseAttack, got,
 			"a hidden attacker with a free cooldown opens as a surprise attack")
+		assert.False(t, onCooldown,
+			"the opener was GRANTED: telling the player it was refused would contradict the "+
+				"crit they are about to land")
 		assert.NotZero(t, attacker.Character.Cooldowns["special-move"],
 			"the surprise opener must claim the special-move cooldown")
 	})

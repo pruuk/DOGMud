@@ -133,17 +133,36 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 //
 // U10d: the pre-combat burst this used to fire is gone. The opening strike of
 // the ordinary combat round is the surprise now.
-func EngageAggroType(actor Actor, target Actor) characters.AggroType {
+//
+// surpriseOnCooldown separates the TWO reasons aggroType can come back as
+// DefaultAttack. Without it a caller cannot tell "this attacker was never
+// hidden" from "this attacker WAS hidden and the shared special-move timer
+// refused the opener" — and the second has to be spoken. SetAggro cascades
+// Hidden -> Revealing whatever the aggro type is (internal/hooks/
+// Awareness_Cascades.go), so a refused melee ambusher spends their cover and
+// gains nothing; silence there reads as a broken feature rather than a
+// cooldown. This is the same signal FireResult.SurpriseOnCooldown carries on
+// the ranged half (combat_fire.go), deliberately named the same so both halves
+// of the ambush grep as one feature.
+//
+// It is returned as a second value rather than folded into a result struct so
+// that the SetAggro argument at every call site stays a plain variable assigned
+// straight from this call — which is exactly the shape ambush_parity_guard_test
+// enforces across all three engagement paths.
+//
+// surpriseOnCooldown is true ONLY when the attacker was hidden. An ordinary
+// attacker asked for no opener and must not be told one was refused.
+func EngageAggroType(actor Actor, target Actor) (aggroType characters.AggroType, surpriseOnCooldown bool) {
 	if target == nil || actor.GetCharacter() == nil {
-		return characters.DefaultAttack
+		return characters.DefaultAttack, false
 	}
 	if !actor.GetCharacter().IsHidden() {
-		return characters.DefaultAttack
+		return characters.DefaultAttack, false
 	}
 	cfg := configs.GetBalanceConfig()
 	if !actor.GetCharacter().TryCooldown("special-move",
 		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		return characters.DefaultAttack
+		return characters.DefaultAttack, true
 	}
-	return characters.SurpriseAttack
+	return characters.SurpriseAttack, false
 }

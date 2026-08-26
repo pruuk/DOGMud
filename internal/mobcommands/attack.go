@@ -70,7 +70,10 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// hidden-but-on-cooldown opener is an ordinary attack.
 			aggroType := characters.DefaultAttack
 			if targetUser := users.GetByUserId(attackPlayerId); targetUser != nil {
-				aggroType = actions.EngageAggroType(
+				// Refusal signal discarded: it is feedback for the ATTACKER,
+				// and the attacker here is a mob. The victim must not learn
+				// that the thing stalking them failed to line up an ambush.
+				aggroType, _ = actions.EngageAggroType(
 					actions.NewMobActorInRoom(mob, room),
 					actions.NewUserActorInRoom(targetUser, room),
 				)
@@ -108,7 +111,8 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			if mob.Character.IsHidden() {
 				mob.Character.Validate(true)
 			}
-			mobAggroType := actions.EngageAggroType(
+			// Refusal signal discarded: mob against mob has no player to tell.
+			mobAggroType, _ := actions.EngageAggroType(
 				actions.NewMobActorInRoom(mob, room),
 				actions.NewMobActorInRoom(m, room),
 			)
