@@ -484,9 +484,47 @@ Resolve the **concrete items that will be consumed**, deterministically, before
 the roll, and use those both for the tier and for consumption, so the roll and
 the consumption cannot disagree.
 
-**Salvage** mirrors the craft shape per ingredient unit, with difficulty driven
-by the tier of the ingredient being reclaimed, so dear materials are harder to
-recover than cheap ones.
+### 5.1.1.4 Salvage difficulty IS the item's craft difficulty
+
+**As hard to unmake as it was to make** (owner, 2026-08-26).
+
+```
+salvageScore      = perception + salvageSkill * SkillWeight
+salvageDifficulty = CraftDifficulty(recipe.SkillMinimum, recipeTierMult)
+                    where recipe = crafting.GetRecipeByOutputItemId(item.ItemId)
+```
+
+Fallback to a gold-value-derived difficulty when the item has no recipe.
+**That path is unreachable today**: zero items in
+`_datafiles/world/dogmud/items/` carry `salvage_returns`, so only crafted items
+are salvageable. Build the fallback anyway, but do not tune it.
+
+This resolves two problems an earlier draft could not:
+
+1. **No invented base.** A draft asked the implementer to pick a
+   `SalvageDifficulty` base and a blind review proved **no single value works**:
+   reproducing today's rate at skill 0 needs 123, at skill 15 needs ~172, at
+   skill 25 needs ~199. Today's curve is `0.15 + 0.70*sqrt(s/50)` and a contest
+   is a normal CDF of a ratio, which saturates earlier; the shapes cannot be
+   reconciled. Deriving difficulty from the recipe stops trying: the curve is
+   replaced deliberately rather than approximated badly.
+2. **No tag-to-tier resolver.** A draft needed the tier of a material that does
+   not exist yet (it is being *created* by the salvage), and the only tag
+   resolver is `items.FindSpecByComponentTag`, which iterates a Go map and is
+   forbidden by 5.1.1.3. Reading the recipe of the item **being consumed** needs
+   no such lookup, and `GetRecipeByOutputItemId` is already indexed.
+
+Behaviour, with both floors applied:
+
+| Salvager | Item | Retention per craft-then-salvage cycle |
+|---|---|---|
+| Master, nine levels above a `skill_minimum: 0` recipe | its own work | ~0.78 (today ~0.81) |
+| Novice, `skill_minimum: 0` | its own work | ~0.25 (today ~0.12) |
+| Novice salvager | a `skill_minimum: 65` item | near-total loss |
+
+The master case lands close to today. **Novices retain roughly twice as much**,
+which is the gentler direction but should be watched in the playtest as a
+material-sink signal.
 
 ### 5.1.2 Material tier is AUTHORED, not derived from gold value
 
@@ -691,6 +729,17 @@ Each of these is a required deliverable, not an implication:
 3. **Mob crafters award on the same rule as players.** `mobs/crafter.go` awards
    inside its success branch only. Leaving it there reintroduces exactly the
    firing-condition inconsistency this slice exists to remove.
+4. **The spell attacker comes under the rule.** Today
+   `NewRound_DoCombat_helpers.go:385` awards `OnSkillUseScaled(castSkill, ...)`
+   on `CastComplete` gated only on `spellBonus > 0`, so a **defended cast still
+   pays a full event**. It builds no `Outcome` at all.
+
+   ⚠️ **A multi-target cast is not a special case.** The apparent obstacle is
+   that several targets give several outcomes and therefore no single
+   `Defended`. The per-command rule (5.5.2) already answers it: **one cast is
+   one resolved action, so one event, won if ANY target was hit.** That is the
+   same collapse `search` gets for its six rolls. Do not invent a per-target
+   award or a second rule.
 
 ### 5.5.2 One command, many rolls: collapse to ONE event
 

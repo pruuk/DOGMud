@@ -735,20 +735,42 @@ commit.
 ⚠️ Award sites `salvage.go:166` and `:252`; clamps read at `:83-84` and defaulted
 in **`config.balance.misc.go`**. **No previous plan version touched the awards.**
 
-⚠️ **`SalvageDifficulty` needs a base and nobody has picked one.** Mirroring
-`CraftBaseDifficulty` at 100 triples the material sink's leakage at skill 0
-(retention 14% today versus 44%). Set the base so that per-unit recovery at
-skill 0 lands near today's 15% and at skill 50 near today's 85%, and **record the
-retention figures at skill 0, 15, 25 and 50 in the commit.** Endpoints matching
-is not sufficient: the old curve was `sqrt` in skill and the new one is a normal
-CDF of a ratio, which saturates earlier.
+✅ **Salvage difficulty IS the item's craft difficulty** (owner, 2026-08-26): as
+hard to unmake as it was to make. **No new base knob, and no tag-to-tier
+resolver.**
 
-- [ ] **Step 1: Write the failing tests**: dear materials are harder to reclaim; per-unit recovery at high skill sits in a **band** around 0.80 to 0.88 (not merely `<= 0.90`, which passes against no ceiling logic at all); a salvage recovering nothing awards the fraction
+```go
+recipe := crafting.GetRecipeByOutputItemId(item.ItemId)   // already exists and is indexed
+difficulty := crafting.CraftDifficulty(recipe.SkillMinimum, recipeTierMult)
+score := crafting.SalvageScore(perception, salvageSkill)  // perception + skill * SkillWeight
+```
+
+That retires two blockers an earlier draft could not answer. There is **no base
+value that reproduces today's curve** (skill 0 needs 123, skill 15 needs ~172,
+skill 25 needs ~199, because `sqrt` and a normal CDF of a ratio cannot be
+reconciled), and the tier of a material **that is being created** cannot be
+resolved without `FindSpecByComponentTag`, which Task 18 forbids. Reading the
+recipe of the item being **consumed** needs neither.
+
+⚠️ **Fallback for an item with no recipe:** derive difficulty from gold value.
+**Verify first that this path is still unreachable** — today zero items carry
+`salvage_returns`, so only crafted items are salvageable:
+
+Run: `grep -rl "salvage_returns:" _datafiles/world/dogmud/items/ | wc -l`
+
+Build the fallback, do not tune it, and say in the commit that it is untested by
+construction.
+
+- [ ] **Step 1: Write the failing tests**: a harder-to-craft item is harder to salvage; a novice salvager recovers almost nothing from a `skill_minimum: 65` item; a salvage recovering nothing awards the fraction; and the fallback returns a sane difficulty for an item with no recipe
 - [ ] **Step 2: Implement** `SalvageScore`, `SalvageDifficulty`, `RollSalvageUnit` on `contest.RunWithFloors` with `SalvageFloor`
 
-⚠️ Both `RollSalvageReturns` signatures change. **Do not resolve tiers from a tag
-inside them**. That is `FindSpecByComponentTag`, the map-order function Task 18
-exists to forbid. Resolve concretely at the call site.
+⚠️ Both `RollSalvageReturns` signatures change: they take the item being
+salvaged (for its recipe) and the salvager's score, not a precomputed chance.
+
+⚠️ **Record the retention figures** at salvage skill 0, 15, 25 and 50 in the
+commit. Expected: a master salvaging their own work lands near today's ~0.81,
+while a **novice retains roughly twice** what they do today (~0.25 against
+~0.12). The gentler direction, but it is the material-sink signal to watch.
 
 - [ ] **Step 3: Award ONCE per salvage command via `AwardResolved`**, won if anything was recovered
 - [ ] **Step 4: Retire the two clamps**, keeping `SalvageSoftCap`, `SalvageGoldPerRound`, `SalvageMaxRounds`
@@ -804,6 +826,26 @@ sneak failure branch), so the rule is a **cut** on failure there.
 - [ ] **Step 3: Run everything, update the census, commit with EXPLICIT paths**
 
 ⚠️ Never `git add internal/`.
+
+---
+
+## Task 22b: The spell attacker comes under the rule
+
+`NewRound_DoCombat_helpers.go:385` awards
+`OnSkillUseScaled(castSkill, userId, spellBonus)` on `CastComplete`, gated only
+on `spellBonus > 0`. It is in **no** win/lose branch and builds no `Outcome`, so
+**a defended cast pays a full event today** and would keep doing so after every
+other task in this plan.
+
+⚠️ **A multi-target cast is not a special case.** Several targets give several
+outcomes and therefore no single `Defended`, but the per-command rule already
+answers that: **one cast is one resolved action, so one event, won if ANY target
+was hit.** Same collapse `search` gets for its six rolls. Do not invent a
+per-target award or a second rule.
+
+- [ ] **Step 1: Write the failing test**: a cast every target defended awards the fraction, not a full event; a cast that hit one of three targets awards full, once
+- [ ] **Step 2: Route the award through `AwardResolved`**, won if any target was hit
+- [ ] **Step 3: Run, update the census, commit**
 
 ---
 
