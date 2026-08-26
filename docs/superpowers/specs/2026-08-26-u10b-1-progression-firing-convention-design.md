@@ -37,6 +37,8 @@ That deferred decision is this slice.
 | 5 | Delete the stranded mob-follow roll; pursuit becomes authored behavior | Fixing or keeping the roll |
 | 6 | Item procs stay off-core, breadcrumbed | Claiming them in this slice |
 | 7 | First-kill progression is DELETED | Keeping it as a named exception |
+| 8 | Convert all 15, designing a craft/salvage difficulty basis | Converting only the 8 RollStat sites; converting nothing |
+| 9 | Craft difficulty comes from MATERIAL TIER, keyed on gold value | `rarity_tier` (an inverted stock cap with 26% gaps); a new authored field |
 
 ### 2.1 This spec supersedes the 2026-08-21 U10b spec
 
@@ -190,10 +192,101 @@ pattern around it at both call sites.
 
 ### 5.1 Convert the 15 sites onto `contest.AgainstDifficulty`
 
-Numbers preserved exactly, in the provable-no-op style of U1 through U5, with
-the single exception in 5.2. This gives the static-difficulty channel its first
-production callers and lets the rule in section 3 actually reach search, track,
-forage, craft and salvage.
+This gives the static-difficulty channel its first production callers and lets
+the rule in section 3 reach search, track, forage, craft and salvage.
+
+**These conversions are NOT no-ops.** An earlier draft of this spec claimed they
+were, in the style of U1 through U5. That was wrong. `contest.Run` rolls the
+difficulty side as well as the attacker:
+
+```go
+stdDev := dice.StdDevFor(atkScore)
+attackRoll := dice.Roll(atkScore, stdDev)
+for _, e := range entries {
+    defenseRoll := dice.Roll(e.Score, stdDev)   // the threshold is rolled too
+```
+
+Today `search.go` compares one roll against a FIXED number. Adding a second
+roll widens the distribution and compresses outcomes toward 50%. At the shipped
+`RollSpread: 0.15`, against the 125 threshold:
+
+| Search score | Today | Converted |
+|---|---|---|
+| 100 | 4.8% | 11.9% |
+| 125 | 50% | 50% |
+| 150 | 86.7% | 78.4% |
+| 175 | 97.2% | 91.1% |
+
+Accepted deliberately: a weak searcher improves and an expert loses their
+near-certainty, which is the same crit, fumble and margin treatment every other
+contest gets, and is what `AgainstDifficulty`'s own doc comment argues for.
+
+Note also that `stdDev` derives from the ATTACKER's score and is reused for the
+difficulty roll, so success depends on the RATIO of difficulty to score, never
+on the gap. Every formula below is built as a ratio for that reason.
+
+### 5.1.1 Craft and salvage need a difficulty basis designed, not migrated
+
+Craft and salvage are not `RollStat`-vs-threshold. They are flat uniform
+percentages, so there is nothing to contest against:
+
+```go
+chance := crafting.CalcSuccessChance(sl, recipe.SkillMinimum)  // a PERCENT
+roll := util.Rand(100)
+if roll < chance {
+```
+
+**Craft difficulty comes from the materials** (owner, 2026-08-26):
+
+```
+craftDifficulty = (CraftBaseDifficulty + recipe.SkillMinimum * CraftSkillMinWeight)
+                  * materialTierMult
+craftScore      = (CraftBaseDifficulty + recipe.SkillMinimum * CraftSkillMinWeight)
+                  * (1 + (skillLevel - recipe.SkillMinimum) * CraftSkillWeightPct)
+```
+
+with `CraftBaseDifficulty` 100, `CraftSkillMinWeight` 5, `CraftSkillWeightPct`
+0.05, and `materialTierMult` running **0.75 to 1.25** over the tier of the
+DEAREST ingredient.
+
+Two properties this buys:
+
+1. At `skillLevel == recipe.SkillMinimum` with mid-tier materials, score equals
+   difficulty, so the contest is 50%. That is exactly today's shipped
+   `CraftingBaseSuccessChance: 50`, so the anchor is preserved rather than
+   invented.
+2. `CraftSkillWeightPct` is a PERCENTAGE, not an addend. A flat `+5` per level
+   would make nine levels above the minimum worth 92.8% on a
+   `skill_minimum: 0` recipe but only 73% on a `skill_minimum: 40` one, because
+   the ratio is what matters. As a percentage it is ~93% on both, so mastery
+   reads the same at every tier.
+
+`recipe.SkillMinimum` keeps two jobs: a **hard gate** on discovery and on
+crafting, and the difficulty anchor above. `CraftDifficultyProgressionScale` is
+unaffected; it already keys progression bonus off `SkillMinimum`.
+
+**Salvage** mirrors the same shape per ingredient unit, with difficulty driven
+by the tier of the ingredient being recovered, so dear materials are harder to
+reclaim than cheap ones. The `SalvageMinChance` / `SalvageMaxChance` clamps
+retire in favour of `ContestFloor`, which already provides the mercy band.
+
+### 5.1.2 Material tier comes from gold value, not `rarity_tier`
+
+`ItemSpec.RarityTier` **cannot be used**. It is a vendor stock cap
+(`shops.EffectiveMaxStock`), so a HIGHER value means MORE common, inverting the
+name. Its doc comment claims the set is 50/40/30/20/10 while the data holds 19
+distinct values including 78, 82, 84, 86, 88 and 90, and only 153 of 208
+material files carry it at all.
+
+Use `ItemSpec.Value` instead. `itemspec.go` runs
+`if i.Value < 1 { i.AutoCalculateValue() }`, so **every item has a gold value**,
+authored or derived. Salvage already measures ingredient worth this way via
+`SalvageGoldPerRound`.
+
+Bucket gold value into tiers with configurable thresholds, mapping to the 0.75
+to 1.25 multiplier. Sanity-check the thresholds against the 208 material files
+before shipping: gold value and intended rarity can disagree for an oddly
+priced item, and that is the one failure mode of this approach.
 
 ### 5.2 Fix hidden detection
 
