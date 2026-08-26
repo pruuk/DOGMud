@@ -899,19 +899,34 @@ func (c *Character) ApplyProgression(events []progression.Event, side progressio
 			c.OnSkillUseScaled(ev.Skill, userId, ev.Multiplier, ev.Lost)
 		}
 		// OnSkillUseScaled already rolled the skill's primary stat. Roll again
-		// only when the event names a DIFFERENT stat, which is the spell
-		// primarystat override and the crit-received toughening stat.
+		// only when this ORDINARY event names a DIFFERENT stat -- the spell
+		// primarystat override, and the two defences whose awarded stat is not
+		// their skill's primary. Per DefenceSkillAndStat
+		// (internal/combat/defence_multiplier.go) against
+		// skills.SkillPrimaryStats, those two are live in production today:
 		//
-		// NOTE: deliberately still OnStatUse (full weight), NOT
-		// OnStatUseScaled(ev.Multiplier), while the primary-stat call above
-		// now scales. Whether a LOST action's override stat should also be
-		// scaled down is a scope decision that has not been taken, not a
-		// cleanup -- the crit-received toughening stat in particular is the
-		// only thing in the game that ever moves e.g. vitality's rank, so
-		// scaling it has consequences beyond this call site. Left unscaled
-		// pending that decision.
+		//	block  weapon-combat / strength  vs primary dexterity -- fires
+		//	defy   rhetoric      / willpower vs primary charisma  -- fires
+		//
+		// (dodge, parry and quell each award their own skill's primary stat,
+		// so they never reach this line.)
+		//
+		// Scaled by the event multiplier, for the same reason the primary-stat
+		// roll inside OnSkillUseScaled is: once a resolved action can award on
+		// a LOSS, an unscaled roll here would mean a lost block pays a REDUCED
+		// weapon-combat roll beside a FULL-WEIGHT strength roll.
+		//
+		// ev.Lost is deliberately NOT threaded through. OnStatUseScaled emits
+		// no SkillUsed event and grants no mutation cluster drift, so the
+		// multiplier is the only thing that carries any weight here and a
+		// fourth parameter would have nothing to gate. That is a decision, not
+		// an oversight.
+		//
+		// This is the ordinary-event path only. The crit-received toughening
+		// stat travels on a BONUS event, which takes the ev.Class.IsBonus()
+		// branch above and never arrives here.
 		if ev.Stat != "" && ev.Stat != skills.GetSkillPrimaryStat(ev.Skill) {
-			c.OnStatUse(ev.Stat, userId)
+			c.OnStatUseScaled(ev.Stat, userId, ev.Multiplier)
 		}
 	}
 }

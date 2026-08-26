@@ -100,3 +100,79 @@ func TestApplyProgression_ThreadsEventLostThroughToTheSkillPath(t *testing.T) {
 		t.Fatalf("a lost ordinary event emitted %d SkillUsed events, want 0", len(got))
 	}
 }
+
+// The override-stat roll -- ApplyProgression's SECOND stat call, taken when an
+// ordinary event names a stat that differs from its skill's primary -- must
+// scale with the event multiplier, exactly as the primary-stat roll does.
+//
+// This line is live in production TODAY, on two of the five defences.
+// DefenceSkillAndStat (internal/combat/defence_multiplier.go) against
+// skills.SkillPrimaryStats:
+//
+//	dodge  unarmed-combat / dexterity  vs primary dexterity  -- same, no
+//	parry  weapon-combat  / dexterity  vs primary dexterity  -- same, no
+//	block  weapon-combat  / STRENGTH   vs primary dexterity  -- DIFFERS, fires
+//	quell  spellcasting   / willpower  vs primary willpower  -- same, no
+//	defy   rhetoric       / WILLPOWER  vs primary charisma   -- DIFFERS, fires
+//
+// So the case modelled here (weapon-combat + strength) is literally a block.
+// Once Task 7 routes a failed defence through with Lost: true, an unscaled
+// override roll would mean a lost block pays a REDUCED weapon-combat roll
+// beside a FULL-WEIGHT strength roll -- the exact double standard this slice
+// exists to remove, shipping silently because nothing asserted on it.
+//
+// Exact, not statistical. Under pinCertainStatProgressionForTest a rank 0 roll
+// at multiplier 1.0 succeeds with probability 1, and a multiplier of 0.0
+// short-circuits inside CheckStatProgression before any roll. Both halves are
+// required: the 1.0 half proves the override roll happens at all (delete the
+// call entirely and the 0.0 half still passes), the 0.0 half proves the
+// multiplier reaches it.
+func TestApplyProgression_OverrideStatRollScalesWithTheEventMultiplier(t *testing.T) {
+	pinCertainStatProgressionForTest(t)
+
+	// Full weight: the override roll fires and is certain.
+	full := newProgressionTestCharacter(t)
+	full.ApplyProgression([]progression.Event{{
+		Side: progression.SideAttacker, Skill: "weapon-combat", Stat: "strength",
+		Class: progression.ClassOrdinary, Multiplier: 1.0,
+	}}, progression.SideAttacker, 0, 1)
+
+	if got := full.GetStatTraining("strength"); got != 1 {
+		t.Fatalf("at multiplier 1.0 the override stat roll left strength training at %d, want 1 -- the override roll is not firing, which makes the scaled half below vacuous", got)
+	}
+
+	// Scaled to nothing: the override roll must honour the multiplier.
+	scaled := newProgressionTestCharacter(t)
+	scaled.ApplyProgression([]progression.Event{{
+		Side: progression.SideAttacker, Skill: "weapon-combat", Stat: "strength",
+		Class: progression.ClassOrdinary, Multiplier: 0.0, Lost: true,
+	}}, progression.SideAttacker, 0, 1)
+
+	if got := scaled.GetStatTraining("strength"); got != 0 {
+		t.Fatalf("at multiplier 0.0 the override stat roll advanced strength training to %d, want 0 -- a lost block would pay a full-weight strength roll beside its reduced weapon-combat roll", got)
+	}
+}
+
+// Step 5's guard: OnSkillUseScaled must pass ITS multiplier to the primary-stat
+// roll, not a bare 1.0.
+//
+// This was a real observed leak before Task 4 -- the debug trace read
+// "skill_use bonus=0.35" immediately followed by "stat_use bonus=1.00" -- and
+// nothing would have caught its return. blacksmithing's primary stat is
+// strength (skills.SkillPrimaryStats), so the stat asserted on here is the one
+// the skill call reaches on its own.
+func TestOnSkillUseScaled_PassesItsMultiplierToThePrimaryStatRoll(t *testing.T) {
+	pinCertainStatProgressionForTest(t)
+
+	full := newProgressionTestCharacter(t)
+	full.OnSkillUseScaled("blacksmithing", 0, 1.0, false)
+	if got := full.GetStatTraining("strength"); got != 1 {
+		t.Fatalf("at multiplier 1.0 the primary-stat roll left strength training at %d, want 1 -- the primary-stat roll is not firing", got)
+	}
+
+	scaled := newProgressionTestCharacter(t)
+	scaled.OnSkillUseScaled("blacksmithing", 0, 0.0, false)
+	if got := scaled.GetStatTraining("strength"); got != 0 {
+		t.Fatalf("at multiplier 0.0 the primary-stat roll advanced strength training to %d, want 0 -- OnSkillUseScaled is passing a bare 1.0 to the stat roll instead of its own multiplier", got)
+	}
+}
