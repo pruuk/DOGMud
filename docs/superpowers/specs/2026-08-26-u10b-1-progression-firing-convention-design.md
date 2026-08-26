@@ -41,7 +41,10 @@ That deferred decision is this slice.
 | 9 | Craft difficulty comes from an AUTHORED material tier, 5 buckets; absent means 1.0, and a guard blocks new untiered materials | Gold value (measured as noise against recipe tier); `rarity_tier` (an inverted stock cap with 26% gaps) |
 | 10 | Craft score is `stat + skill * SkillWeight`, composed like every other roll; `recipe.SkillMinimum` drives the DIFFICULTY | A bespoke anchored formula, which cancelled the recipe term, ignored the crafter's stat, and left material tier as the only signal |
 | 11 | Craft and salvage keep today's extremes via `contest.RunWithFloors` | Deleting the clamps, which would have left no mercy band at all |
-| 12 | **UNIFY the melee-vs-channel defence divergence HERE**: award the best-quoted defence, win or lose, on both paths | Deferring it to U10b-2, which would leave the arc's own stated goal unmet at its closing gate |
+| 12 | **UNIFY the defence divergence HERE**, win or lose on both paths | Deferring it to U10b-2, leaving the arc's stated goal unmet at its closing gate |
+| 13 | **BEST-OF selection** (owner, 08-26): one event per resolved action, for the single highest-rolling candidate skill | Awarding every candidate, which double-rolls a shared stat and pays a three-defence round three times |
+| 14 | Progression follows the FINAL outcome, so a floored win pays full | Reading the pre-floor dice, which would make a floor-granted success teach less than an ordinary one |
+| 15 | Concentration comes under the rule | Leaving it success-only, closing the arc with a broken concentration teaching nothing |
 
 ### 2.1 This spec supersedes the 2026-08-21 U10b spec
 
@@ -74,16 +77,60 @@ What is **carried forward unchanged**: the `Defended` polarity ruling (3.1.1),
 floor-granted saves training the defender (3.1.1), the mob-spell gate asymmetry
 (5.5), and the toughen path staying crit-only with no damage-magnitude gate.
 
-## 3. The rule
+## 3. The rule (owner, 2026-08-26)
 
-**One `progression.Outcome` per resolved roll.**
+**Progression resolves BEST-OF, exactly like the defensive rolls.**
 
-- A win populates that side's `Skill`/`Stat` at `Multiplier: 1.0`.
-- A loss populates them at `Multiplier: ProgressionFailureFraction`.
-- `Exceptional` remains the bonus layer on top, unchanged.
-- `Floored` still suppresses bonuses, unchanged.
+> One resolved action produces **one** progression event, for the single
+> highest-rolling candidate skill. Tiebreak: highest skill level, then a fixed
+> arbitrary order. **Full on success, partial on failure.** Crits and critical
+> failures are a **separate channel** and never take part in the selection.
+> Progression follows the **final** outcome: a floor that turns a loss into a
+> success pays **full**, like any other success; a ceiling that turns a win into
+> a failure pays **partial**.
+
+- A win awards `Multiplier: 1.0`; a loss awards
+  `Multiplier: ProgressionFailureFraction`.
+- `Exceptional` remains the bonus layer, unchanged and unselected.
 - Per-skill tuning uses the existing `SkillProgressionMultipliers` map. No
   second fraction is introduced.
+
+### 3.0 Why Best-of settles the hard cases
+
+The game already resolves defence Best-of-all. Progression adopting the same
+shape is not an analogy, it is the same mechanism, and it removes three problems
+that otherwise need bespoke handling at every site:
+
+1. **Two skills that share a stat cannot double-roll it.** Skullduggery and
+   weapon-combat both have dexterity as their primary stat, so a surprise strike
+   awarding both would roll dexterity twice. Best-of picks **one** skill, so the
+   collision cannot arise. No per-site suppression flag, no two-`Outcome`
+   pattern, no rule for an implementer to remember.
+2. **Melee defence stops awarding once per defence TYPE.**
+   `processDefenderProgression` loops `defenceTypesUsed` and awards each, so a
+   defender with dodge, parry and block can take three events in one round (and
+   two of those train the same skill, since parry and block both map to
+   weapon-combat). Best-of makes it one.
+3. **A command that runs several rolls awards once.** `search` runs six checks;
+   salvage rolls per ingredient unit. Best-of over the candidates is the same
+   rule, not a special case bolted on.
+
+### 3.0.1 Floors follow the FINAL outcome
+
+`contest.RunWithFloors` flips an outcome with probability `f`. Progression reads
+the flipped result, not the underlying roll:
+
+| Situation | Award |
+|---|---|
+| Won on the dice | full |
+| Lost on the dice, **floor flipped it to a win** | **full**, like any other success |
+| Won on the dice, **ceiling flipped it to a loss** | **partial**, like any other failure |
+| Lost on the dice | partial |
+
+This keeps one sentence true everywhere: *you get full progression for a
+success*. It also means `Floored` continues to suppress the **bonus** channel
+(a floor overrode the dice, so no crit or fumble happened) without that
+suppression leaking into the ordinary event.
 
 ### 3.1 Scope of the rule, by channel
 
@@ -91,6 +138,8 @@ floor-granted saves training the defender (3.1.1), the mob-spell gate asymmetry
 |---|---|
 | Opposed contest (`combat.RunContest`) | Yes |
 | Roll vs static difficulty (`contest.AgainstDifficulty`) | Yes |
+| Floored static difficulty (`contest.RunWithFloors`) | Yes, on the FINAL outcome (3.0.1) |
+| Concentration (`combat.RunConcentrationContest`) | **Yes.** Its two sites award spellcasting only `if res.Success` today, so a broken concentration teaches nothing. It is a contest; it comes under the rule. UNIFY |
 | Regen tick (`OnRegenTick`) | **No.** No roll against anything; passive. Goes to U10b-2 |
 | Crit / critical-failure | **No.** These are the bonus layer on top of a base event, not base events. No fraction, no separate gate |
 | Non-rolled deliberate actions | **No.** Fire once on completion, unscaled. "Success" is vacuous |
@@ -604,10 +653,18 @@ naive reading of "one event per resolved roll" a room holding a hidden exit, a
 hidden container, a stashed item, a hidden noun and a hidden mob would pay
 **five** events where it pays one.
 
-The rule is **one event per resolved COMMAND**, not per internal roll. Where a
-command runs several rolls (search's six, track's two grades, salvage's
-per-unit rolls), it awards once. A command that resolved at least one roll and
-won none pays the fraction; a command that won any pays full weight.
+This is not a special case: it is Best-of (3.0) applied to a command's own
+rolls. Where a command runs several (search's six, track's grades, salvage's
+per-unit rolls), the candidates are those rolls and Best-of picks one. A command
+that resolved at least one roll and won none pays the fraction; a command that
+won any pays full weight.
+
+Today's sites are already close to this. `search.go:242` awards once per
+invocation gated on `rolledAgainstSomething`; `track.go:128` and
+`salvage.go:166`/`:252` award once unconditionally. **They award a FULL event
+today, win or lose**, so moving them under the rule pays them full on a win and
+the fraction on a loss. Record that direction honestly in 6; it is a
+redistribution, not a universal gain.
 
 ### 5.5.3 Unscaled side effects of `OnSkillUseScaled`
 
@@ -686,15 +743,38 @@ silently un-pins the condition.
 
 ## 6. Risk
 
-**EVERY fitted multiplier is invalidated, not just skullduggery.** An earlier
-draft re-solved only `SkillProgressionMultipliers[Skullduggery] = 0.83`, which
-was fitted on measured play-time rates in U10b-0 Phase D
-(`tools/balance/u10b_solve_v3.py`). The reasoning that justified re-solving it
-applies identically to weapon-combat, dodge, parry, block, spellcasting and
-rhetoric: awarding on a resolved loss raises attacker events per swing by
-roughly **26%** and defender events by roughly **47%**, computed from the
-clean-hit rate of 0.5752 in the analytics log. Re-solve them all, or record in
-the commit why a given one is exempt.
+**This slice is a REDISTRIBUTION, not a universal gain.** The owner has ruled
+that the classification does not change the work, and it does not, but it
+changes every number fed to the re-solve, so it is recorded here rather than
+assumed.
+
+Direction of travel, computed from the clean-hit rate 0.5752 in the analytics
+log. **Do not quote a single headline figure**: three of these have the
+opposite sign to the first.
+
+| Path | Today | Direction |
+|---|---|---|
+| Melee attacker | awards per clean hit only | **+26%** (0.5752 to 0.7239 per swing) |
+| Melee defender, 1 defence type | awards only a defence that WON | **+47%** |
+| Melee defender, 3 types, 3 swings | awards once **per TYPE**, so up to three events | **a cut**, roughly −21% |
+| Channel defender (quell, defy) | awards a FULL event win or lose | **a cut**, roughly −26% to −58% |
+| search, track, steal, sneak, salvage | award a FULL event win or lose | **a cut**, roughly −32% to −57% |
+
+Two consequences of that table:
+
+- **The melee defender's sign depends on gear.** A defender with one defence
+  type gains; one with dodge, parry and block loses, because Best-of collapses
+  three events into one. Note parry and block **both** map to weapon-combat, so
+  today a shield user can take two weapon-combat rolls in a single round.
+- **Every fitted multiplier is invalidated**, not just
+  `SkillProgressionMultipliers[Skullduggery] = 0.83`. Re-solve weapon-combat,
+  unarmed-combat (which is what **dodge** trains), spellcasting (**quell**),
+  rhetoric (**defy**), salvage and search too, or record why one is exempt.
+
+⚠️ **`combat-analytics.jsonl` is combat-only.** Search, track, forage, salvage
+and skullduggery have **no measurement basis**, so their multipliers are set by
+judgement and confirmed in the playtest, not solved. Say so in the commit rather
+than implying they were fitted.
 
 Measure before and after against `_datafiles/logs/combat-analytics.jsonl`
 (96,723 events) via `tools/balance/read_combat_analytics.py`. The buffer is
@@ -707,17 +787,34 @@ report on each separately rather than as one impression:
    little?
 2. **The stealth change** (5.2). Is a skilled hider now meaningfully harder to
    find, judged from both sides?
-3. **Crafting feel** (5.1.1). Does difficulty track the materials? Does mastery
-   read the same on a novice recipe and an advanced one?
+3. **Crafting feel** (5.1.1). Does difficulty track the recipe? Does an advanced
+   recipe need more mastery than a simple one? **No material is tiered at
+   ship**, so the material half is neutral until the backfill (5.1.2).
 4. **Search, track and forage odds** (5.1). Weak searchers improve sharply and
    experts lose their near-certainty. Hidden exits and containers are permanent
    one-shot unlocks (`AddDiscovery`), so this is a pacing change rather than an
-   ongoing faucet, but it should be checked against any quest that assumes
-   searching is hard.
+   ongoing faucet, but check it against any quest that assumes searching is hard.
 
-**Economy risks to watch** (5.1.1.2): the craft-then-salvage material sink, and
-shop restock throughput, since mob crafters ship at skill 1 and dynamic pricing
-keys on the stock-to-restock ratio.
+### 6.1 Accepted consequences (owner, 2026-08-26)
+
+Both were found by review, both are ruled acceptable, and both belong in the
+playtest goals so a tester reports rather than re-discovers them.
+
+- **The 26 recipes at `skill_minimum` 50 or 65 need a lot of mastery.** Success
+  is a ratio, so the skill needed above the minimum scales with
+  `100 + 5*min`. At stat 100 a `skill_minimum: 65` recipe reads about 66% nine
+  levels above its minimum where a `skill_minimum: 0` recipe reads about 89%.
+  Stat carries real weight here, so a high-stat crafter closes much of that gap.
+- **Mob crafter throughput goes UP, not down.** Crafter mobs are authored at
+  stat 104 to 115 with `blacksmithing: 1`, so their score is comfortably
+  positive and their success rate rises roughly 1.4x to 3x in the
+  `skill_minimum` 3 to 10 band. Dynamic pricing keys on the stock-to-restock
+  ratio, so the risk is crafted goods drifting toward the **0.25x floor**, not
+  the ceiling. An earlier draft recorded this backwards.
+
+**Also watch:** the craft-then-salvage material sink, and passive defence
+training, which becomes the cheapest repeatable losing action now that a lost
+round pays.
 
 ## 7. Explicitly out of scope
 
