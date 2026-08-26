@@ -43,7 +43,7 @@ import (
 // row in DefenceSetFor and nothing else.
 func processDefenderProgression(c *characters.Character, userId int, result combat.AttackResult) {
 	for _, d := range defenceTypesUsed(result) {
-		combat.AwardDefenceProgression(c, userId, string(d))
+		combat.AwardDefenceProgression(c, userId, string(d), true)
 	}
 }
 

@@ -21,11 +21,11 @@
 | Test-binary config | **NOT all zeroes.** `ensureConfigValidated` applies `<=0`-idiom defaults on first read. Only `<0`-idiom knobs and `ConfigBool`s stay zero, notably `UseSkillProgression` and `MobProgressionEnabled`. |
 | `Balance.SkillWeight` | exists, ships **5.0** |
 | `contest.Result.Success` | the **ATTACKER** won. `!Success` is NOT "the defender won" (`ForceCrit`). |
-| `out.Defended` | assigned at `defence_multiplier.go:460`, **34 lines AFTER** the award at `:426`. At the award site the predicate is `!res.Success && !side.ForceCrit`. |
-| `AwardDefenceProgression` | `(c, userId, defenceType string)`; 2 production callers: `defence_multiplier.go:426`, `NewRound_DoCombat_helpers.go:46` |
+| `out.Defended` | assigned at `defence_multiplier.go:487`, **34 lines AFTER** the award at `:453`. At the award site the predicate is `!res.Success && !side.ForceCrit`. |
+| `AwardDefenceProgression` | **Task 8 shipped** `(c, userId, defenceType string, won bool)` — an OUTCOME, not a bare multiplier; it reads `ProgressionFailureFraction` itself. It makes **THREE** progression calls, not two (parry adds a strength roll) and all three scale. 2 production callers, both passing `true` until Task 9: `defence_multiplier.go:453`, `NewRound_DoCombat_helpers.go:46` |
 | `DefenceSkillAndStat` | dodge→**unarmed-combat**/dex, parry→**weapon-combat**/dex, block→**weapon-combat**/str, quell→spellcasting/wil, defy→rhetoric/wil |
 | melee defender award | `processDefenderProgression` loops `defenceTypesUsed`, awarding once **per defence TYPE** (up to 3/round) |
-| channel defender award | `defence_multiplier.go:426`, fires **win or lose** already |
+| channel defender award | `defence_multiplier.go:453`, fires **win or lose** already |
 | `runBestOfAllDefense` | sets `best.defenseType = res.Winner` whenever `res.Contested`, so a quoted defence **exists on a loss** |
 | `DefenseUsed` | stamped only in `sendDefenseMessages`, i.e. only on a **won** defence |
 | attacker gate | `NewRound_DoCombat_unified.go:666-667`, `if !wh.CleanHit { continue }` |
@@ -209,11 +209,31 @@ package and carries its own copy on `fakeActor`.
 
 ---
 
-## Task 8: `AwardDefenceProgression` gains a multiplier
+## Task 8: `AwardDefenceProgression` takes the outcome ✅
 
-- [ ] **Step 1:** failing test: 0.35 advances strictly less than 1.0, with a non-zero guard
-- [ ] **Step 2:** add the parameter, scaling both the skill and stat calls; update **both** production callers to pass `1.0` so the task is a provable no-op
-- [ ] **Step 3:** run, commit
+Shipped as `won bool`, **not** a bare multiplier. `OnSkillUseScaled` needs a
+multiplier *and* an `isLoss` flag, and they mean different things — a WINNING
+action can carry a sub-1.0 multiplier (self-buff casts ship 0.5), so a caller
+holding a bare multiplier would have to keep a second flag in agreement and a
+mismatch would award a reduced roll that still ticked `skill_use` quests. The
+function reads `Balance.ProgressionFailureFraction` itself; `internal/combat`
+already reads balance config freely, so no purity constraint is broken
+(`internal/progression` stays untouched).
+
+Note it makes **three** progression calls, not two: parry is the one two-stat
+defence and its strength roll scales too.
+
+- [x] **Step 1:** failing tests (`internal/combat/defence_progression_award_test.go`), assertion-level RED against a stub that ignored `won`
+- [x] **Step 2:** add `won bool`, scaling all **three** calls; both production callers pass `true` so the task is a provable no-op
+- [x] **Step 3:** run, commit
+
+The loss weight is pinned by a **deterministic bracket** rather than a trial
+count: at `ProgressionFailureFraction` 0 a lost defence advances nothing (the
+chance short-circuits before any roll) and at 1.0 it advances with certainty,
+which proves the multiplier is the knob rather than a hardcoded constant. The
+shipped 0.35 sits strictly between by construction. Asserting on 0.35's
+*outcome* directly could only ever be statistical; the quest-event half of the
+loss path (`SkillUsed` suppressed) is exact at 0.35 and is asserted there.
 
 ---
 
@@ -221,11 +241,11 @@ package and carries its own copy on `fakeActor`.
 
 ## Task 9: Both defence paths, Best-of, win or lose
 
-⚠️ **The channel path has NO lost branch.** `defence_multiplier.go:426` awards
+⚠️ **The channel path has NO lost branch.** `defence_multiplier.go:453` awards
 the winning candidate regardless of `res.Success`. Do **not** add a second call;
-make the existing one's multiplier conditional.
+make the existing one's `won` argument conditional.
 
-⚠️ **`out.Defended` is not assigned until `:460`**, after two `return out` exits.
+⚠️ **`out.Defended` is not assigned until `:487`**, after two `return out` exits.
 At the award site use `!res.Success && !side.ForceCrit`, or hoist the assignment
 above the loop. Do not reach for bare `!res.Success`.
 
@@ -233,10 +253,10 @@ above the loop. Do not reach for bare `!res.Success`.
 **cut** for a defender with several defences and a **gain** for one with a single
 defence.
 
-- [ ] **Step 1:** read both paths (`helpers.go:30-70`, `defence_multiplier.go:415-432`)
+- [ ] **Step 1:** read both paths (`helpers.go:30-70`, `defence_multiplier.go:442-459`)
 - [ ] **Step 2:** failing tests: a melee round where nothing lands awards the best-quoted defence at the fraction; a melee round with three defence types awards **once**; a lost channel defence awards the fraction and is **not** awarded twice
 - [ ] **Step 3:** melee, expose the quoted defence from `runBestOfAllDefense` (a new field on `SwingEvent` or `AttackResult`) and replace `processDefenderProgression`'s loop with a single award. When `getAvailableDefenses` is empty the contest is uncontested, `defenseType` is `""`, and nothing is awarded; note that in the commit
-- [ ] **Step 4:** channel, conditional multiplier on the one existing call. Do not touch the `BonusEvents` line
+- [ ] **Step 4:** channel, replace the `true` literal on the one existing `AwardDefenceProgression` call with the real outcome. `won` here is the DEFENCE's win, i.e. `!res.Success && !side.ForceCrit` — not bare `!res.Success`. Do not touch the `BonusEvents` line
 - [ ] **Step 5:** run, commit
 
 ---
