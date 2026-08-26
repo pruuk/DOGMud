@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	configData Config         = Config{}
+	configData Config         = newUnloadedConfig()
 	overrides  map[string]any = make(map[string]any)
 
 	keyLookups  map[string]string = map[string]string{}
@@ -396,14 +396,34 @@ func overridePath() string {
 // and nothing else.
 //
 // This works because yaml.v2 decodes into an addressable struct in place and
-// leaves fields whose keys are absent from the document untouched. ReloadConfig
-// is the only path that unmarshals _datafiles/config.yaml, and the overlay and
+// leaves fields whose keys are absent from the document untouched. loadConfig
+// is the only path that decodes _datafiles/config.yaml, and the overlay and
 // env-assignment passes that follow only write keys they were given, so nothing
 // between here and Validate() can clobber the sentinel.
+//
+// It also seeds the package-level configData, so a GetConfig() read that lands
+// before ReloadConfig() completes resolves to the default via
+// ensureConfigValidated rather than reading a bare 0. Every neighbouring
+// `<= 0`-idiom knob already gets its default in that window; without this the
+// sentinel knobs would be the sole asymmetry.
 func newUnloadedConfig() Config {
 	c := Config{}
 	c.Balance.ProgressionFailureFraction = -1
 	return c
+}
+
+// loadConfig decodes a config document the way ReloadConfig does: into the
+// sentinel-seeded struct, so an absent key stays distinguishable from an
+// explicit zero. Tests exercise the real load path through here, which is the
+// point: asserting on a hand-seeded struct would leave the WIRING untested, and
+// asserting on the shipped config.yaml (which now names the key) would be a
+// gate that cannot fail.
+func loadConfig(document []byte) (Config, error) {
+	c := newUnloadedConfig()
+	if err := yaml.Unmarshal(document, &c); err != nil {
+		return Config{}, err
+	}
+	return c, nil
 }
 
 func ReloadConfig() error {
@@ -415,8 +435,7 @@ func ReloadConfig() error {
 		return err
 	}
 
-	tmpConfigData := newUnloadedConfig()
-	err = yaml.Unmarshal(bytes, &tmpConfigData)
+	tmpConfigData, err := loadConfig(bytes)
 	if err != nil {
 		return err
 	}

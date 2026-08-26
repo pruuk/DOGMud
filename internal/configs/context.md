@@ -612,6 +612,29 @@ tag, so the subdue/cripple gold transfer
 (`internal/combat/submission_outcome.go:201`) runs at the intended value.
 Do not "fix" it.
 
+**Third shape, and a deliberate exemption:**
+`ProgressionFailureFraction` (`config.balance.progression.go:46`) is written
+`< 0 || > 1.0` with a non-zero default of 0.35 and looks like a live instance
+of exactly the trap above. It is not, and **it must not be "fixed" to `<= 0`.**
+0 is a legal explicit off-switch there ("a lost resolved action teaches
+nothing"), so a `<= 0` guard would make that setting unreachable. What saves
+the absent-key case is that the two are separated *before* the unmarshal
+instead of after it: `newUnloadedConfig` (`configs.go:411`) pre-seeds `-1`, and
+`loadConfig` is the only path that decodes a config document, so a value still
+negative at validation time means "absent" and nothing else. `newUnloadedConfig`
+is also the initializer for the package-level `configData`, so a `GetConfig()`
+read landing before `ReloadConfig()` finishes resolves to the default rather
+than to a bare 0.
+`TestProgressionFailureFraction_AbsentKeyLoadsTheDefault` goes red if that
+wiring is removed.
+
+**The general rule this establishes:** the guard shape alone is not enough
+information to judge a knob. Any knob whose legitimate range **includes zero**
+AND whose absent-key default is **non-zero** needs the pre-unmarshal sentinel,
+because no predicate applied after the unmarshal can tell an explicit 0 from an
+absent key. Before flagging a `< 0 || > 1.0` validator, check whether the field
+is seeded in `newUnloadedConfig`; if it is, the shape is correct and load-bearing.
+
 ### Gotcha: the special-move cooldown comments are stale in two places
 
 `SpecialMoveCooldown` (`config.balance.go:246`) is commented

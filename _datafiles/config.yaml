@@ -1040,12 +1040,8 @@ Balance:
   # action wins and at this fraction when it loses. Raise it toward 1.0 to make
   # losing almost as good a teacher as winning; lower it toward 0 to make only
   # success train you.
-  # 0 is a legal off-switch and restores the older "failure teaches nothing"
-  # behaviour. Because 0 is legal, this key cannot use the usual "absent means
-  # default" trick, since an absent key would decode to 0 as well. The loader
-  # seeds a negative sentinel before it reads this file instead, so leaving the
-  # key out still gets the 0.35 default rather than silently turning the
-  # mechanism off.
+  # 0 is a legal off-switch: a lost action then teaches nothing at all.
+  # Omitting the key entirely still gets 0.35, not 0.
   ProgressionFailureFraction: 0.35
 
   # ── PER-STAT PROGRESSION MULTIPLIERS ────────────────────────────────────────

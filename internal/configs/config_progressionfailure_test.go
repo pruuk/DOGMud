@@ -1,28 +1,12 @@
 package configs
 
-import (
-	"testing"
-
-	"gopkg.in/yaml.v2"
-)
+import "testing"
 
 // ProgressionFailureFraction is the fraction of a full progression event that a
-// LOST resolved action awards under the U10b-1 best-of firing convention.
-//
-// It is the one knob in the balance config whose zero value is BOTH a legal
-// explicit setting ("failure teaches nothing", i.e. the pre-U10b-1 behaviour)
-// AND what an absent YAML key unmarshals to. That collision is why neither of
-// the two idioms used by its neighbours works here:
-//
-//   - `<= 0` (the common idiom) would silently restore the default whenever an
-//     author deliberately set 0, making the off-switch impossible to reach.
-//   - `< 0` (the CritProgressionBonus idiom) preserves an explicit 0, but then
-//     an ABSENT key also reads as 0 -- so a config.yaml that never mentions the
-//     knob would get "off" instead of the intended default.
-//
-// The fix is a pre-unmarshal sentinel: newUnloadedConfig() seeds -1 before the
-// document is decoded, so "still negative after the unmarshal" means "absent"
-// and nothing else. These tests pin both halves of that behaviour.
+// LOST resolved action awards. It is the one balance knob whose zero value is
+// both a legal explicit setting and what an absent YAML key decodes to, so it
+// is defaulted by a pre-unmarshal sentinel rather than by a guard predicate.
+// The reasoning lives on newUnloadedConfig in configs.go.
 
 func TestProgressionFailureFraction_SentinelGetsTheDefault(t *testing.T) {
 	b := Balance{ProgressionFailureFraction: -1}
@@ -34,20 +18,12 @@ func TestProgressionFailureFraction_SentinelGetsTheDefault(t *testing.T) {
 
 // An explicit 0 is the documented off-switch: "a lost action teaches nothing".
 // A `<= 0` guard here would make that configuration unreachable, which is
-// exactly the bug this knob's sentinel exists to avoid.
+// exactly the bug the sentinel exists to avoid.
 func TestProgressionFailureFraction_ExplicitZeroSurvives(t *testing.T) {
 	b := Balance{ProgressionFailureFraction: 0}
 	b.Validate()
 	if b.ProgressionFailureFraction != 0 {
 		t.Fatalf("an explicit 0 is the off-switch and must survive validation, got %v", b.ProgressionFailureFraction)
-	}
-}
-
-func TestProgressionFailureFraction_LegalValueSurvives(t *testing.T) {
-	b := Balance{ProgressionFailureFraction: 0.5}
-	b.Validate()
-	if b.ProgressionFailureFraction != 0.5 {
-		t.Fatalf("a legal fraction must survive validation, got %v", b.ProgressionFailureFraction)
 	}
 }
 
@@ -63,13 +39,13 @@ func TestProgressionFailureFraction_AboveOneIsRejected(t *testing.T) {
 	}
 }
 
-// ── BEHAVIOURAL: through the real unmarshal ─────────────────────────────────
+// ── BEHAVIOURAL: through the real load path ─────────────────────────────────
 //
-// The two tests below decode YAML into the SAME seeded struct production uses
-// (newUnloadedConfig, called by ReloadConfig) rather than hand-setting the
-// field. Hand-setting -1 only proves validateProgression reads a sentinel; it
-// does not prove anything ever WRITES one, nor that yaml.v2 leaves an absent
-// key untouched instead of zeroing it. Both facts are load-bearing.
+// These go through loadConfig, the function ReloadConfig itself calls, so the
+// WIRING is under test and not just the guard. Hand-seeding a struct would
+// prove validateProgression reads a sentinel without proving anything ever
+// writes one; asserting against the shipped config.yaml (which now names the
+// key) would be a gate that cannot fail.
 //
 // They come as a pair on purpose: without the explicit-zero half, an
 // implementation that simply always defaulted would still pass the absent-key
@@ -86,9 +62,9 @@ Balance:
   CritProgressionBonus: 2.0
   ObservedCritProgressionBonus: 0.5
 `
-	cfg := newUnloadedConfig()
-	if err := yaml.Unmarshal([]byte(doc), &cfg); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+	cfg, err := loadConfig([]byte(doc))
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
 	}
 	cfg.Validate()
 	if cfg.Balance.ProgressionFailureFraction != 0.35 {
@@ -103,9 +79,9 @@ Balance:
   CritProgressionBonus: 2.0
   ProgressionFailureFraction: 0
 `
-	cfg := newUnloadedConfig()
-	if err := yaml.Unmarshal([]byte(doc), &cfg); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+	cfg, err := loadConfig([]byte(doc))
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
 	}
 	cfg.Validate()
 	if cfg.Balance.ProgressionFailureFraction != 0 {
@@ -120,9 +96,9 @@ func TestProgressionFailureFraction_ExplicitValueLoadsAsAuthored(t *testing.T) {
 Balance:
   ProgressionFailureFraction: 0.2
 `
-	cfg := newUnloadedConfig()
-	if err := yaml.Unmarshal([]byte(doc), &cfg); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+	cfg, err := loadConfig([]byte(doc))
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
 	}
 	cfg.Validate()
 	if cfg.Balance.ProgressionFailureFraction != 0.2 {
@@ -132,7 +108,7 @@ Balance:
 }
 
 // The seeding itself, stated once: newUnloadedConfig must hand back a struct
-// whose ProgressionFailureFraction is already negative, or the two behavioural
+// whose ProgressionFailureFraction is already negative, or the behavioural
 // tests above are testing a coincidence.
 func TestNewUnloadedConfig_SeedsTheAbsenceSentinel(t *testing.T) {
 	cfg := newUnloadedConfig()
