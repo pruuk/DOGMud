@@ -753,7 +753,7 @@ resolved without `FindSpecByComponentTag`, which Task 18 forbids. Reading the
 recipe of the item being **consumed** needs neither.
 
 ⚠️ **Fallback for an item with no recipe:** derive difficulty from gold value.
-**Verify first that this path is still unreachable** — today zero items carry
+**Verify first that this path is still unreachable**: today zero items carry
 `salvage_returns`, so only crafted items are salvageable:
 
 Run: `grep -rl "salvage_returns:" _datafiles/world/dogmud/items/ | wc -l`
