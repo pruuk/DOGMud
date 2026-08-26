@@ -42,11 +42,37 @@ into all downstream consumers (stat values, mitigation, recovery, skills, spells
   ranged (subtype `shooting`) → `ranged-combat`
 
 ### Difficulty-Scaled Progression
-`OnSkillUseScaled(skillName, userId, bonusMultiplier)` accepts a difficulty
-bonus that flows into `CheckSkillProgression`. `OnSkillUse` delegates with
-1.0 for backwards compatibility. Spell resolution passes
+`OnSkillUseScaled(skillName, userId, bonusMultiplier, isLoss)` accepts a
+difficulty bonus that flows into `CheckSkillProgression`. `OnSkillUse` delegates
+with 1.0 and `isLoss` false for backwards compatibility. Spell resolution passes
 `1.0 + difficulty * SpellDifficultyProgressionScale`, craft completion passes
 `1.0 + skillMinimum * CraftDifficultyProgressionScale`.
+
+### The Best-of firing convention (U10b-1, `progression_award_resolved.go`)
+
+`AwardResolved(userId int, won bool, candidates ...progression.Candidate)` is
+**the** entry point for progression on a resolved action. One action produces
+**one** event, for the single highest-rolling candidate (`progression.BestOf`),
+at full weight on a win and at `Balance.ProgressionFailureFraction` on a loss.
+The actor is always the attacker side, so `won == false` becomes
+`Outcome.Defended: true`.
+
+It is the **only** place `ProgressionFailureFraction` is read. `internal/
+progression` is deliberately dependency-free and reads no config, so the knob
+has to enter at this boundary; keeping the boundary one function is what stops
+call sites from each fetching it and drifting.
+
+`CandidateFor(skill string) progression.Candidate` builds the standard
+candidate: the skill's level, and one `dice.RollStat` against
+`primaryStatValue + level*SkillWeight`. It leaves `Candidate.Stat` empty, which
+means "the skill's primary". An unknown skill returns the zero `Candidate` --
+inert, and logged, rather than a named candidate rolling `GetStatValue("") == 0`.
+
+**Gotcha for the defences.** `combat.DefenceSkillAndStat` awards block as
+weapon-combat/**strength** and defy as rhetoric/**willpower**, while those
+skills' primaries are dexterity and charisma. A future explicit-stat variant of
+`CandidateFor` must roll the **explicit** stat, not the primary, or a block
+candidate competes on dexterity and then trains strength with nothing to flag it.
 
 ### The roll resolution and `ProgressionChanceFloor` (U10b-0 Phase B)
 

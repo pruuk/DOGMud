@@ -189,7 +189,7 @@ func (c *Character) AwardResolved(userId int, won bool, candidates ...progressio
 `:151`, so passing the candidate's `Stat` through is correct. Leaving it empty
 lets the skill's primary stat apply, which is what every current caller does.
 
-- [ ] **Step 3:** add a `CandidateFor(c *Character, skill string) progression.Candidate` helper that builds a candidate with the standard roll, so no site hand-rolls one
+- [ ] **Step 3:** add a `func (c *Character) CandidateFor(skill string) progression.Candidate` helper that builds a candidate with the standard roll, so no site hand-rolls one (shipped as a METHOD, not a free function, to match `AwardResolved` and the package's own style)
 - [ ] **Step 4:** run, commit
 
 ---
@@ -295,7 +295,7 @@ No conversions here. Each site already resolves; read its existing outcome.
 ⚠️ Awards a **FULL** event today, win or lose, so this is a **cut** on failure.
 
 - [ ] **Step 1:** failing tests: a room with five hidden things awards the same as a room with one; a fruitless-but-resolved search awards the fraction
-- [ ] **Step 2:** replace `:243` with `actor.AwardResolved(foundAnything, CandidateFor(char, skills.Search))`, setting `foundAnything` alongside each `result.*Found` append
+- [ ] **Step 2:** replace `:243` with `actor.AwardResolved(userId, foundAnything, char.CandidateFor(string(skills.Search)))`, setting `foundAnything` alongside each `result.*Found` append
 - [ ] **Step 3:** run, commit
 
 ## Task 15: `track` and `forage`
