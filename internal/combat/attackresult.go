@@ -74,8 +74,11 @@ type SwingDefence struct {
 	// Nothing re-rolls to compare swings against each other.
 	Roll float64
 	// Won is the DEFENCE's win, not the swing's hit: true on a deflection and
-	// on a defensive crit, false on every attack win, on both fumble paths, and
-	// on a forced crit against a sleeping victim.
+	// on a defensive crit, false on every attack win, on a forced crit against
+	// a sleeping victim, and on all THREE fumble paths (double fumble, attack
+	// fumble, defence fumble). That last row diverges from the channel seam,
+	// which has no fumble branch before its award -- see hitResolution.defenceWon,
+	// which records the divergence and why U10b-1b owns it.
 	Won bool
 }
 

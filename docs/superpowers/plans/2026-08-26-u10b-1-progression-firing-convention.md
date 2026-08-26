@@ -259,6 +259,27 @@ with the roll that ALREADY happened -- no re-roll -- and hands the choice to
 has a distinct Skill/Stat pair, so equal candidates can only name the same
 defence).
 
+🔴 **OPEN DIVERGENCE, CARRY TO U10b-1b: the two paths disagree on FUMBLES.**
+Task 9 closed the win/lose divergence but NOT this one, and an earlier draft of
+the `defenceWon` docstring wrongly claimed parity. Probe both paths with one
+situation -- attacker rolls z = -3.0, defence takes the margin:
+
+| | verdict | award |
+|---|---|---|
+| melee | `hit=false fumble=true defended=false` | `ProgressionFailureFraction` |
+| channel | `AttackerFumble=true Defended=true` | **full weight** |
+
+Cause: melee's three fumble branches (`combat_helpers.go:1042`, `:1057`,
+`:1068`) all `return res` BEFORE `attackWon := best.margin <= 0` at `:1103`, so
+`defended` is never set whatever the margin said. The channel path has no fumble
+branch before its award at `defence_multiplier.go:464-470`; it derives
+`out.AttackerFumble` but the predicate never reads it.
+
+Deliberately NOT fixed here. Whether a fumble is nobody's contest win or the
+margin still decides is a RESOLUTION question, and resolution is 1b's whole
+remit. Blast radius is roughly the 2.3% attacker-fumble rate, and both paths
+already beat pre-U10b-1, which paid such a swing nothing.
+
 ⚠️ **The channel path has NO lost branch.** `defence_multiplier.go:453` awards
 the winning candidate regardless of `res.Success`. Do **not** add a second call;
 make the existing one's `won` argument conditional.
@@ -274,7 +295,7 @@ defence.
 - [x] **Step 1:** read both paths (`helpers.go:30-70`, `defence_multiplier.go:442-459`)
 - [x] **Step 2:** failing tests: a melee round where nothing lands awards the best-quoted defence at the fraction; a melee round with three defence types awards **once**; a lost channel defence awards the fraction and is **not** awarded twice
 - [x] **Step 3:** melee, expose the quoted defence from `runBestOfAllDefense` (a new field on `SwingEvent` or `AttackResult`) and replace `processDefenderProgression`'s loop with a single award. When `getAvailableDefenses` is empty the contest is uncontested, `defenseType` is `""`, and nothing is awarded; note that in the commit
-- [x] **Step 4:** channel, replace the `true` literal on the one existing `AwardDefenceProgression` call with the real outcome. `won` here is the DEFENCE's win, i.e. `!res.Success && !side.ForceCrit` — not bare `!res.Success`. Do not touch the `BonusEvents` line
+- [x] **Step 4:** channel, replace the `true` literal on the one existing `AwardDefenceProgression` call with the real outcome. `won` here is the DEFENCE's win, i.e. `!res.Success && !side.ForceCrit`, not bare `!res.Success`. Do not touch the `BonusEvents` line
 - [ ] **Step 5:** run, commit
 
 ---

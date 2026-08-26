@@ -34,11 +34,20 @@ const (
 // reaches every consumer of that channel, subject to the equipment gate below
 // (dodge, quell and defy are ungated; parry and block are equipment-gated).
 //
-// Two things a new row must carry with it. It needs an arm in
+// THREE things a new row must carry with it. It needs an arm in
 // characters.GetDefenseScore, or it enters every contest at 0 and always loses
-// (TestDefenceSetForReturnsKnownDefenceNames is the guard). And it needs a row
+// (TestDefenceSetForReturnsKnownDefenceNames is the guard). It needs a row
 // in characters.DefensePool if it is not paid in stamina, or the pair charges
 // the wrong pool.
+//
+// And it needs a row in DefenceSkillAndStat, which is the one whose absence
+// fails SILENTLY and WIDELY. Without it that defence maps to ("", ""), so
+// hooks.bestSwingDefence builds an award-nothing Candidate for it -- and if
+// that candidate happens to roll highest, progression.BestOf reports false and
+// the defender's ENTIRE ROUND trains nothing, the real dodge and parry
+// candidates in the same slice included. Not a compile error, not a panic, and
+// invisible in combat text. Unreachable today only because every shipped row
+// here has a mapping.
 func DefenceSetFor(channel AttackChannel) []string {
 	switch channel {
 	case ChannelMelee:

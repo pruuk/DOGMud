@@ -68,6 +68,14 @@ func (c *Character) AwardResolved(userId int, won bool, candidates ...progressio
 // their own skill's primary and are served correctly by this function as it
 // stands. Deliberately not built yet -- it has no caller until Task 7.
 //
+// ONE DELIBERATE EXCEPTION, shipped by Task 9: hooks.bestSwingDefence does not
+// call this function at all. It builds its Candidates from the defence rolls
+// the melee contest ALREADY made that round, because re-rolling would stack a
+// second source of randomness on top of the roll that already decided the
+// swing. Those Candidates are selection-only -- they never reach
+// ApplyProgression, so the populated-Stat hazard above does not apply to them.
+// Any OTHER site that needs a Candidate must still come through here.
+//
 // An unknown skill has no primary stat and therefore no stat value to roll, so
 // it comes back as the zero Candidate: inert, awarding nothing, and losing
 // every contest it enters. Returning a named candidate rolled against

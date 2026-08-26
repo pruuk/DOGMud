@@ -250,12 +250,19 @@ func EventsForContest(o Outcome, b Bonuses) []Event {
 
 // Candidate is one skill that could earn a resolved action's event.
 //
-// EVERY candidate is rolled the same way, dice.RollStat(stat + skill*SkillWeight).
+// Candidates in ONE Best-of must be rolled comparably: the standard shape is
+// dice.RollStat(stat + skill*SkillWeight), which characters.CandidateFor builds.
 // A candidate with no roll ties at zero and the tiebreak deletes it.
 //
-// The ROLLING HAPPENS OUTSIDE THIS PACKAGE. Roll is pre-computed by the caller
-// (characters.CandidateFor), because dice.RollStat needs Balance.SkillWeight
-// and this package reads no config -- see the package doc. BestOf only PICKS.
+// The requirement is that no candidate in a given slice be systematically
+// favoured, NOT that every Candidate anywhere share one distribution. A caller
+// holding rolls a contest already made may reuse them rather than re-rolling --
+// hooks.bestSwingDefence does, from the round's own defence rolls -- provided
+// every candidate in that slice is centred on its own score.
+//
+// The ROLLING HAPPENS OUTSIDE THIS PACKAGE. Roll is pre-computed by the caller,
+// because dice.RollStat needs Balance.SkillWeight and this package reads no
+// config -- see the package doc. BestOf only PICKS.
 type Candidate struct {
 	Skill string
 	Stat  string // empty means the skill's primary

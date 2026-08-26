@@ -294,7 +294,7 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    **U10b-1 Task 9** gave `AwardDefenceProgression` the OUTCOME (`won bool`,
    Task 8) and then made both callers pass the real one, so a LOST defence is
    awarded at `Balance.ProgressionFailureFraction` instead of nothing (melee) or
-   full weight (channel). Two things follow that a reader of either call site
+   full weight (channel). Three things follow that a reader of either call site
    needs.
 
    The channel predicate is `!res.Success && !side.ForceCrit`, never bare
@@ -302,10 +302,20 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    `ForceCrit` forces the attack win even when the defence took the margin.
    `out.Defended` is not assigned until well after the award and cannot be used.
 
+   **The two paths still disagree on FUMBLES, and that divergence is OPEN.**
+   Melee treats a fumble as absolute: all three fumble branches in
+   `resolveDefenseOutcomeInner` return before `attackWon` is computed, so a
+   fumbled swing is a loss for the defence whatever the margin said. The channel
+   seam has no fumble branch before its award, so the same situation (attacker
+   fumbles, defence takes the margin) is paid there as a WIN. Do not "fix" it
+   inside U10b-1: which reading is right is a resolution question and belongs to
+   **U10b-1b**. Blast radius is roughly the 2.3% attacker-fumble rate, and both
+   paths are a gain over pre-U10b-1, which paid such a swing nothing.
+
    Melee no longer keys on `AttackResult.DefenseUsed`. It reads
-   `AttackResult.SwingDefences` — one entry per CONTESTED swing carrying the
+   `AttackResult.SwingDefences` -- one entry per CONTESTED swing carrying the
    defence that rolled best (`contest.Result.Winner`, populated win or lose),
-   that roll, and whether the defence won — and `hooks.processDefenderProgression`
+   that roll, and whether the defence won -- and `hooks.processDefenderProgression`
    picks ONE with `progression.BestOf`. Three defence records on `AttackResult`
    now mean three different things: `DefenseUsed` is a defence that WON (and is
    round-scoped, not per-swing), `DefenseAttempts` is everything TRIED, and

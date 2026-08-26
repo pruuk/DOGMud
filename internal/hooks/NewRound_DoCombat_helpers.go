@@ -72,14 +72,32 @@ func processDefenderProgression(c *characters.Character, userId int, result comb
 // order), and a second copy would drift from it the first time the rule
 // changed.
 //
-// Two things are worth stating about the mapping.
+// Three things are worth stating about the mapping.
 //
 // The Roll handed to BestOf is the defence's ACTUAL contest roll, already made
 // during the swing, not a fresh characters.CandidateFor roll. Re-rolling would
 // add a second source of randomness on top of the one that already decided the
-// swing, and these candidates are directly comparable: contest.Run rolls every
-// defence with the ATTACKER's standard deviation, so all of a round's defence
-// rolls share one scale.
+// swing.
+//
+// These rolls do NOT all share one scale, and the comparison does not need them
+// to. contest.Run rolls every defence with dice.StdDevFor(atkScore), but
+// atkScore is recomputed PER SWING (combat.go, calcAttackScore) and subtracts
+// ws.penalty, which differs per weapon -- so a dual-wielder's mainhand and
+// offhand swings roll their defences with different spreads. Two more sources
+// drift within a round: a defence's own governing-skill addend is dropped when
+// its immutable quote stops being affordable as stamina drains
+// (includeSkill in runBestOfAllDefense), and the prone/clinch/grounded
+// penalties are per-defence. What survives all of that is the only property
+// this selection needs: every roll is centred on its OWN defence's score, so no
+// defence is systematically favoured by the choice of scale.
+//
+// The Candidates built here are SELECTION-ONLY. None of them reaches
+// ApplyProgression -- BestOf's winner is thrown away except for the index it
+// identifies, and the award goes out through combat.AwardDefenceProgression,
+// which re-derives skill and stat from the defence type. That is why populating
+// Stat here is safe: it sharpens the by-value recovery below without incurring
+// the double stat roll characters.CandidateFor warns a caller about. Handing
+// one of these to AwardResolved instead WOULD incur it.
 //
 // The winner is recovered by VALUE rather than by index because BestOf returns
 // the Candidate, not its position. That is sound here: each defence type
