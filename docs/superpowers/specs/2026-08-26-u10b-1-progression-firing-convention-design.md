@@ -115,6 +115,27 @@ that otherwise need bespoke handling at every site:
    salvage rolls per ingredient unit. Best-of over the candidates is the same
    rule, not a special case bolted on.
 
+### 3.0.2 Best-of is self-damping. Do not add a guard against it.
+
+The obvious objection is rich-get-richer: if only the top roll trains, a
+character's strongest skill wins every selection and the weaker one never
+progresses.
+
+**It damps itself** (owner, 2026-08-26). The highest roll correlates with the
+higher skill, and `CalculateProgressionChance` is monotonically **decreasing**
+in rank, so the skill that wins Best-of is the one with the **lowest** chance of
+converting that event into a point. Winning the selection with your best skill
+buys you the least. The mechanism therefore spends most of its awards on the
+skill that can least use them, which is the opposite of a runaway loop.
+
+The second-order worry, that a secondary skill is starved on a multi-candidate
+site, is also not serious in practice. Skullduggery is the only skill in that
+position and it has **sixteen** other firing sites; being outrolled on a
+once-per-combat conditional opener costs it almost nothing.
+
+Worth noting, not worth engineering around. **A blind review may raise this as a
+finding; it is dispositioned here, not open.**
+
 ### 3.0.1 Floors follow the FINAL outcome
 
 `contest.RunWithFloors` flips an outcome with probability `f`. Progression reads
