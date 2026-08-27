@@ -865,11 +865,30 @@ own corpse is a recurring hazard in this slice.
 
 ## Task 21: Dead crit stubs
 
-- [ ] Delete from **all nine** files; verify `grep -rl "func.*OnCritical" internal/` is empty
-- [ ] Remove them from `progressionCalls`, the **DENY**-list, not `allowedDirectProgression`
-- [ ] **`OnCritReceived` is NOT touched.** Leave `TestCritReceivedProgression_DecaysWithRank` alone
+- [x] Delete from **all nine** files; verify `grep -rl "func.*OnCritical" internal/` is empty
+- [x] Remove them from `progressionCalls`, the **DENY**-list, not `allowedDirectProgression`
+- [x] **`OnCritReceived` is NOT touched.** Leave `TestCritReceivedProgression_DecaysWithRank` alone
 
 ---
+
+**Shipped.** `grep -rl "func.*OnCritical" internal/` is now empty. The nine
+were all test fakes -- the `Actor` interface dropped these back in U9, so they
+were vestigial methods satisfying nothing.
+
+⚠️ **Three other files mention `OnCritical` and were correctly LEFT ALONE:**
+`NewRound_DoCombat_helpers.go:363` and `NewRound_DoCombat_parity_test.go:144`
+are historical COMMENTS describing what U9 replaced, and the third was the
+deny-list itself. The plan's "nine" counts `func` DEFINITIONS, not mentions --
+worth stating because a naive `grep -rl OnCritical` returns twelve.
+
+Removing the two names from `progressionCalls` is not just tidiness: a
+deny-list naming a method that exists nowhere reads as though the guard covers
+more than it does.
+
+`OnCritReceived` stays in the map and
+`TestCritReceivedProgression_DecaysWithRank` is untouched and still passing.
+
+
 
 # Phase E: guard, docs, verify
 

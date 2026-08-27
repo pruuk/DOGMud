@@ -71,8 +71,6 @@ func (a *salvageFakeActor) GetMobInstanceId() int                  { return a.mo
 func (a *salvageFakeActor) AddBuff(_ int, _ string)                {}
 func (a *salvageFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *salvageFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *salvageFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *salvageFakeActor) OnCriticalFailure(_ string)             {}
 func (a *salvageFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *salvageFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)

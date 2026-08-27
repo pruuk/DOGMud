@@ -65,8 +65,14 @@ var allowedDirectProgression = map[string]bool{
 var progressionCalls = map[string]bool{
 	"OnSkillUse": true, "OnSkillUseScaled": true, "OnStatUse": true,
 	"CheckSkillProgression": true, "CheckStatProgression": true,
-	"OnCritReceived": true, "OnCriticalSuccess": true, "OnCriticalFailure": true,
-	"TrackSkillUse": true, "TrackStatUse": true,
+	// OnCriticalSuccess / OnCriticalFailure are NOT listed: U10b-1 Task 21
+	// deleted the last nine definitions of them, all test fakes, and the
+	// Actor interface dropped them back in U9. Naming a method that exists
+	// nowhere makes this map read as though the guard covers more than it
+	// does. OnCritReceived STAYS -- it is a real method and the plan is
+	// explicit that this task does not touch it.
+	"OnCritReceived": true,
+	"TrackSkillUse":  true, "TrackStatUse": true,
 	"CheckRegenProgression": true,
 }
 

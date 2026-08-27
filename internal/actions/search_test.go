@@ -67,8 +67,6 @@ func (a *searchFakeActor) GetMobInstanceId() int                  { return a.mob
 func (a *searchFakeActor) AddBuff(_ int, _ string)                {}
 func (a *searchFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *searchFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *searchFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *searchFakeActor) OnCriticalFailure(_ string)             {}
 func (a *searchFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *searchFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)

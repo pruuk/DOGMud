@@ -70,8 +70,6 @@ func (a *forageFakeActor) GetMobInstanceId() int                  { return a.mob
 func (a *forageFakeActor) AddBuff(_ int, _ string)                {}
 func (a *forageFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *forageFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *forageFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *forageFakeActor) OnCriticalFailure(_ string)             {}
 func (a *forageFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *forageFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)

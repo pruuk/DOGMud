@@ -58,8 +58,6 @@ func (f *fakeActor) AwardResolved(won bool, cands ...progression.Candidate) {
 		cands: append([]progression.Candidate(nil), cands...),
 	})
 }
-func (f *fakeActor) OnCriticalSuccess(skillName string) {}
-func (f *fakeActor) OnCriticalFailure(skillName string) {}
 
 // compile-time check
 var _ actions.Actor = (*fakeActor)(nil)

@@ -58,8 +58,6 @@ func (a *stubActor) GetMobInstanceId() int                   { return 0 }
 func (a *stubActor) AddBuff(_ int, _ string)                 {}
 func (a *stubActor) OnSkillUse(_ string) bool                { return false }
 func (a *stubActor) OnStatUse(_ string) bool                 { return false }
-func (a *stubActor) OnCriticalSuccess(_ string)              {}
-func (a *stubActor) OnCriticalFailure(_ string)              {}
 
 // ---------------------------------------------------------------------------
 // Item constructors for equip/remove tests

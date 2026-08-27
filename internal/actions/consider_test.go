@@ -65,8 +65,6 @@ func (a *fakeActor) OnStatUse(statName string) bool {
 	a.statUses[statName]++
 	return false
 }
-func (a *fakeActor) OnCriticalSuccess(skillName string) {}
-func (a *fakeActor) OnCriticalFailure(skillName string) {}
 
 // Consider must NOT train perception. Inverted by U10b-0 Phase D Task 1: look
 // and consider were the only stat faucets with no cooldown and no gate, worth

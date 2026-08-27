@@ -66,8 +66,6 @@ func (a *trackFakeActor) GetMobInstanceId() int                  { return a.mobI
 func (a *trackFakeActor) AddBuff(_ int, _ string)                {}
 func (a *trackFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *trackFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *trackFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *trackFakeActor) OnCriticalFailure(_ string)             {}
 func (a *trackFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *trackFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)

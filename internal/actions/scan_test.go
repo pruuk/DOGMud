@@ -65,8 +65,6 @@ func (a *scanFakeActor) GetMobInstanceId() int                  { return a.mobIn
 func (a *scanFakeActor) AddBuff(_ int, _ string)                {}
 func (a *scanFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *scanFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *scanFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *scanFakeActor) OnCriticalFailure(_ string)             {}
 func (a *scanFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *scanFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
