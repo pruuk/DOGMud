@@ -70,9 +70,17 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			`You try to blend into the shadows but <ansi fg="mobname">%s</ansi> notices you.`,
 			result.SpottedByName))
 
-		// Progress the skill only when a roll actually happened
+		// U10b-1 Task 18: the SPOTTED branch, so won is false -- this is the
+		// loss half of the sneak contest and now pays
+		// ProgressionFailureFraction rather than a full event.
+		//
+		// Still gated on RollHappened: a sneak with nothing in the room to
+		// notice you resolved no contest, so there is no loss to pay a
+		// fraction on. Converted off the direct CheckSkillProgression call,
+		// which bypassed every entry point.
 		if result.RollHappened {
-			user.Character.CheckSkillProgression(string(skills.Skullduggery), user.UserId, 1.0)
+			user.Character.AwardResolved(user.UserId, false,
+				user.Character.CandidateFor(string(skills.Skullduggery)))
 		}
 		return true, nil
 	}
@@ -80,16 +88,17 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Success
 	user.SendText(messaging.CategorySystem, `You slip into the shadows.`)
 
-	// Progress the skill only when a roll actually happened
+	// U10b-1 Task 18: the SUCCESS branch, won: true.
+	//
+	// The explicit events.SkillUsed emission that stood here is GONE rather
+	// than kept: AwardResolved reaches OnSkillUseScaled, which emits it, so
+	// keeping both would fire the quest event twice for one sneak. Its Details
+	// field ("sneak") is not lost in any meaningful sense -- SkillUseQuestNotify
+	// reads only UserId and Skill, and nothing in the repo reads Details.
 	if result.RollHappened {
-		user.Character.CheckSkillProgression(string(skills.Skullduggery), user.UserId, 1.0)
+		user.Character.AwardResolved(user.UserId, true,
+			user.Character.CandidateFor(string(skills.Skullduggery)))
 	}
-
-	events.AddToQueue(events.SkillUsed{
-		UserId:  user.UserId,
-		Skill:   skills.Skullduggery,
-		Details: `sneak`,
-	})
 
 	return true, nil
 }

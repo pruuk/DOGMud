@@ -946,8 +946,14 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// therefore never brought the skill to the contest (practising a skill you
 	// did not use is not practice), and contested is false when nothing in the
 	// room was targeting the fleer, so there was no contest to learn from.
+	// U10b-1 Task 18: won is "got away". blocker != nil means the flee was
+	// intercepted. Both existing gates are unchanged and neither is the firing
+	// rule -- includeSkill false means the fleer never brought the skill to the
+	// contest, and contested false means there was no contest at all, so in
+	// both cases nothing resolved and nothing is awarded.
 	if contested && includeSkill {
-		user.Character.OnSkillUse(string(skills.Skullduggery), user.UserId)
+		user.Character.AwardResolved(user.UserId, blocker == nil,
+			user.Character.CandidateFor(string(skills.Skullduggery)))
 	}
 	if blocker != nil {
 		var targetTag string

@@ -50,8 +50,13 @@ func Flee(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Parity with the player path in handlePlayerFlee: practice for breaking
 	// off is awarded by the wrapper, and only when a contest actually occurred.
 	// MobSkillCap in CheckSkillProgression bounds what a mob can reach.
+	// U10b-1 Task 18: won is "got away". blocker != nil means something
+	// intercepted the flee, which is the loss. The `contested` gate is
+	// unchanged and is not the firing rule: an uncontested flee resolved no
+	// contest, so there is no loss to pay a fraction on.
 	if contested {
-		mob.Character.OnSkillUse(string(skills.Skullduggery), 0)
+		mob.Character.AwardResolved(0, blocker == nil,
+			mob.Character.CandidateFor(string(skills.Skullduggery)))
 	}
 	if blocker != nil {
 		room.SendTextVisual(messaging.CategoryRoomExit,

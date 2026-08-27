@@ -6,7 +6,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/contest"
-	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -126,14 +125,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 	// actor.OnSkillUse handles CheckSkillProgression. The SkillUsed event is
 	// added for player actors (mirrors the source's defer + events pattern).
 
-	actor.OnSkillUse(string(skills.Skullduggery))
-
 	if actor.IsPlayer() {
-		events.AddToQueue(events.SkillUsed{
-			UserId:  actor.GetUserId(),
-			Skill:   skills.Skullduggery,
-			Details: `defuse`,
-		})
 	}
 
 	// ── Contest: (Per + skillLevel*25 + kitBonus) vs (difficulty*10) ──
@@ -147,6 +139,10 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 	trapDifficulty := float64(tgt.lockDifficulty) * 10.0
 
 	success := combat.RunContest(defuseScore, []contest.Entry{{Score: trapDifficulty}}).Success
+	// U10b-1 Task 18: moved DOWN below the contest and given its outcome. It
+	// fired before the roll, at full weight, so a trap that blew up in your
+	// face taught the same as one you defused. A CUT on failure.
+	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	displayName := trapTargetDisplayName(tgt)
 

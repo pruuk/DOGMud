@@ -450,8 +450,16 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 	}
 
-	// Progress skullduggery skill (also advances dexterity as primary stat)
-	user.Character.OnSkillUse(string(skills.Skullduggery), user.UserId)
+	// U10b-1 Task 18. `throw` is untargeted -- it resolves as a room AoE
+	// against every hostile present -- so there is no single defender to have
+	// beaten and "did it hit" has no one answer. The one unambiguous LOSS is a
+	// fumble: the throw went wrong and hurt only the thrower.
+	//
+	// Decided explicitly rather than left implicit, per the plan. The
+	// alternative, awarding full weight always, is what this site did before
+	// and is the shape the slice is removing.
+	user.Character.AwardResolved(user.UserId, !fumbled,
+		user.Character.CandidateFor(string(skills.Skullduggery)))
 
 	// A throw that connected starts the fight if one was not already running.
 	// A fumble hurts only the thrower, so it engages nobody.

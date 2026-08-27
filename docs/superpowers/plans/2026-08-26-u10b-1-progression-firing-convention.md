@@ -619,7 +619,7 @@ removing the pin fails on the precondition instead of silently asserting
 against a path that returns 0.
 
 
-## Task 18: The sixteen skullduggery sites
+## Task 18: The ~~sixteen~~ SEVENTEEN skullduggery sites
 
 `steal.go` x3, `plant.go` x3, `shadow.go` x2, `sneak.go` x2, `picklock.go` x2,
 `defuse.go`, `throw.go`, `mobcommands/flee.go`, `NewRound_DoCombat_helpers.go`.
@@ -635,11 +635,45 @@ the reasoning in the commit; do not leave one implicit.
 ⚠️ `sneak.go:88` and `shadow.go:114` **emit `SkillUsed` explicitly**; routing
 through `OnSkillUseScaled` would emit it twice. Remove the explicit emission.
 
-- [ ] **Step 1:** failing tests: the two files no longer call `CheckSkillProgression`; a failed steal awards the fraction
-- [ ] **Step 2:** convert each site
-- [ ] **Step 3:** run everything, commit with **explicit paths**, never `git add internal/`
+- [x] **Step 1:** failing tests: the two files no longer call `CheckSkillProgression`; a failed steal awards the fraction
+- [x] **Step 2:** convert each site
+- [x] **Step 3:** run everything, commit with **explicit paths**, never `git add internal/`
 
 ---
+
+**Shipped. Two corrections to this task's own text, both found by sweeping
+every production progression call rather than trusting the enumeration:**
+
+1. 🔴 **SEVENTEEN sites, not sixteen.** `internal/mobcommands/sneak.go:19` is
+   absent from the list above. It was success-only.
+2. 🔴 **FOUR explicit `SkillUsed` emissions, not two.** The task names
+   `sneak.go:88` and `shadow.go:114`; it misses **`shadow.go:163`** and
+   **`defuse.go:132`**. All four are removed -- routing through
+   `OnSkillUseScaled` emits the quest event, so keeping them would fire it
+   twice per action.
+
+⚠️ **`SkillUsed.Details` is DEAD.** Those four emissions set it (`"sneak"`,
+`"shadow"`, `"defuse"`), and **nothing reads it**: `SkillUseQuestNotify` passes
+only `UserId` and `Skill` to the quest engine, and a repo-wide grep finds no
+other consumer. Removing the explicit emissions loses nothing.
+
+**Rulings on the four sites with no obvious `won`, each verified against
+source rather than guessed:**
+
+| Site | Ruling | Why |
+|---|---|---|
+| `shadow.go:101` (mob target) | `true` | runs NO contest -- the buff applies and the shadow begins. Nothing to lose. |
+| `shadow.go:150` (player target) | `!detected` | the plan called this "informational only". True of the `ShadowResult` FLAG, false of the CONTEST: `RunContest` is called with the target's search score as attacker, so `detected` means the shadower was spotted. |
+| `throw.go:454` | `!fumbled` | untargeted room AoE, so "did it hit" has no single answer. A fumble is the one unambiguous loss. |
+| `defuse.go:129` | `success` | it has a real contest 20 lines below; the award simply fired before it. |
+
+Plus: **picklock x2 = `true`** (pin minigame, no opposing score), **both flee
+sites = `blocker == nil`** ("got away"), **sneak = per branch**.
+
+Every existing gate was preserved and none of them is the firing rule:
+`result.RollHappened` (sneak), `contested` / `includeSkill` (flee). An action
+that resolved no contest still awards nothing.
+
 
 ## Task 18b: The thirteen special-move sites
 

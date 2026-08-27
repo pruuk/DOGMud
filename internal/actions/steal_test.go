@@ -164,10 +164,14 @@ func TestSteal_MobTarget_GoldSuccess(t *testing.T) {
 
 	// Skill progression must fire on every steal attempt (win or lose).
 	// Over 20 trials the counter must be at least 20.
-	require.Greater(t, actor.skillUsesByName[string(skills.Skullduggery)], 0,
-		"Steal should call OnSkillUse('skullduggery') on every attempt")
-	assert.GreaterOrEqual(t, actor.skillUsesByName[string(skills.Skullduggery)], trials,
-		"OnSkillUse should have been called once per trial")
+	// U10b-1 Task 18 routed this site through Actor.AwardResolved, so the
+	// observable moved from the OnSkillUse counter to the award recorder.
+	// The COUNT assertion is unchanged in meaning: one award per attempt,
+	// win or lose.
+	require.Greater(t, len(actor.awards), 0,
+		"Steal should award skullduggery progression on every attempt")
+	assert.GreaterOrEqual(t, len(actor.awards), trials,
+		"one progression award per trial, win or lose")
 }
 
 // ---------------------------------------------------------------------------
@@ -332,4 +336,62 @@ func TestSteal_InCombat(t *testing.T) {
 
 	assert.False(t, result.Succeeded)
 	assert.Equal(t, "in combat", result.Reason)
+}
+
+// U10b-1 Task 18: the steal award reports the CONTEST'S OUTCOME, and the site
+// no longer bypasses the progression seam.
+//
+// Two properties in one test, because they were one bug:
+//
+//   - The award fired BEFORE the contest, unconditionally, at full weight --
+//     the comment it replaced literally read "always fire regardless of roll
+//     outcome". A thief who was caught trained exactly as much as one who got
+//     away. This site is a CUT.
+//   - It now routes through Actor.AwardResolved, so the outcome is observable
+//     at all. Before, nothing outside the character could see it.
+//
+// ⚠️ "Engineer a victim who wins every contest" does NOT work and an earlier
+// draft tried it: combat.RunContest applies Balance.ContestFloor (0.125), so
+// even a hopeless thief wins about one attempt in eight by design. The assertion
+// is therefore that each award AGREES with its own trial's result, which is the
+// property that actually matters and holds for either outcome.
+func TestSteal_AwardsFollowTheContestOutcome(t *testing.T) {
+	pinConfigForTest(t)
+
+	target := newStealTestMob(testMobInstId, 50, 5000) // effectively all-seeing
+	mobs.SetInstanceForTest(testMobInstId, target)
+	defer mobs.SetInstanceForTest(testMobInstId, nil)
+
+	// Rank 8 clears the "not advanced enough" gate that guards the contest --
+	// below it Steal returns before rolling, so nothing resolves and nothing is
+	// awarded, which is correct.
+	actor := newStealPlayerActor(10, 8)
+
+	const trials = 12
+	sawLoss := false
+	for i := 0; i < trials; i++ {
+		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
+		target.Character.Gold = 50
+		mobs.SetInstanceForTest(testMobInstId, target)
+
+		before := len(actor.awards)
+		result := Steal(actor, StealOptions{TargetMobInstanceId: testMobInstId})
+
+		if got := len(actor.awards) - before; got != 1 {
+			t.Fatalf("trial %d produced %d awards, want exactly 1 per resolved steal", i, got)
+		}
+		if won := actor.awards[before].won; won != result.Succeeded {
+			t.Fatalf("trial %d: award reported won=%v but the steal Succeeded=%v", i, won, result.Succeeded)
+		}
+		if !result.Succeeded {
+			sawLoss = true
+		}
+	}
+
+	if !sawLoss {
+		t.Fatal("every trial succeeded against an all-seeing victim; the loss half was never exercised")
+	}
+	if _, n := actor.awardedCandidate(string(skills.Skullduggery)); n != len(actor.awards) {
+		t.Errorf("skullduggery named in %d of %d awards, want all", n, len(actor.awards))
+	}
 }
