@@ -487,7 +487,23 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 		Zone:         mob.Character.Zone,
 	}
 
-	if util.Rand(100) < chance {
+	// U10b-1 Task 17: awarded above the branch, so a FAILED mob craft trains at
+	// ProgressionFailureFraction instead of nothing. Ingredients are consumed
+	// either way (see the persistence note below), so a failure already cost
+	// the crafter something and taught them nothing.
+	//
+	// ⚠️ NO DIFFICULTY BONUS HERE, and that is PRE-EXISTING rather than a
+	// regression: this path used bare OnSkillUse while the other four craft
+	// sites use OnSkillUseScaled with
+	// 1 + SkillMinimum*CraftDifficultyProgressionScale. Mob crafters have never
+	// had recipe difficulty scale their progression. Left as-is because adding
+	// it would be a rate change wearing a firing-convention change's clothes,
+	// and U10b-3 may remove difficulty scaling from progression entirely.
+	// Recorded so the re-solve knows the two paths differ.
+	craftWon := util.Rand(100) < chance
+	mob.Character.AwardResolved(0, craftWon, mob.Character.CandidateFor(recipe.Skill))
+
+	if craftWon {
 		result.Success = true
 		if recipe.Output.ItemId > 0 {
 			// All crafts land in shop stock — including gear-upgrade
@@ -502,7 +518,6 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 				shopInv.AddStockAtRound(recipe.Output.ItemId, 1, round)
 			}
 		}
-		mob.Character.OnSkillUse(recipe.Skill, 0)
 	}
 
 	// Persist shop state after any craft attempt (success or failure both
@@ -536,14 +551,20 @@ func executeCraftLegacy(mob *Mob, recipe *crafting.RecipeSpec) *CraftResult {
 	remaining, _ := crafting.ConsumeIngredients(backpack, []items.Item{}, recipe)
 	mob.Character.Items = remaining
 
-	if util.Rand(100) < chance {
+	// U10b-1 Task 17: above the branch, win or lose. See the identical note in
+	// executeCraft above, including why no difficulty bonus is applied here.
+	// Ingredients are consumed regardless of success (just above), so a failed
+	// craft already cost the crafter materials.
+	craftWon := util.Rand(100) < chance
+	mob.Character.AwardResolved(0, craftWon, mob.Character.CandidateFor(recipe.Skill))
+
+	if craftWon {
 		result.Success = true
 		if recipe.Output.ItemId > 0 {
 			for i := 0; i < recipe.Output.Quantity; i++ {
 				mob.Character.Shop.StockItem(recipe.Output.ItemId)
 			}
 		}
-		mob.Character.OnSkillUse(recipe.Skill, 0)
 	}
 
 	return result

@@ -757,3 +757,76 @@ func TestTickMobShopBaselineRestock_RefillsCommonTiersOnCadence(t *testing.T) {
 		t.Fatalf("tier-30 entry should stay caravan-gated: Current = %d, want 0", got)
 	}
 }
+
+// U10b-1 Task 17: a FAILED mob craft trains at ProgressionFailureFraction.
+//
+// The mob-crafter path was success-only, exactly as the player paths were
+// before Task 16. Ingredients are consumed regardless of the roll, so a failure
+// already cost the crafter materials and taught them nothing.
+//
+// ⚠️ pinConfigForTest MUST set MobProgressionEnabled -- it is a ConfigBool, so
+// it stays FALSE in a test binary, and every mob-side progression assertion
+// would otherwise be checking a path that returns 0 without ever reaching the
+// award. The plan calls this out for exactly this task.
+//
+// The verdict is pinned by collapsing CalcSuccessChance's clamp range onto one
+// value, so the roll is exact rather than statistical.
+func pinMobCraftChance(t *testing.T, pct int) {
+	t.Helper()
+	pinConfigForTest(t)
+	cfg := configs.GetConfig()
+	cfg.Balance.CraftingMinSuccessChance = configs.ConfigInt(pct)
+	cfg.Balance.CraftingMaxSuccessChance = configs.ConfigInt(pct)
+	configs.SetConfigForTest(t, cfg)
+}
+
+func mobCrafterForProgressionTest(skill string) *Mob {
+	m := &Mob{MobId: MobId(9302), Zone: "test_zone", Crafter: true}
+	m.Character.Name = "Progression Crafter"
+	m.Character.Skills = map[string]int{skill: 1}
+	return m
+}
+
+func TestExecuteCraftLegacy_AFailedCraftStillAwards(t *testing.T) {
+	const skill = "blacksmithing"
+
+	// Precondition, asserted rather than assumed: without MobProgressionEnabled
+	// this test would pass against an award that never fires.
+	pinMobCraftChance(t, 0) // util.Rand(100) is never < 0: the craft ALWAYS fails
+	if !bool(configs.GetBalanceConfig().MobProgressionEnabled) {
+		t.Fatal("precondition: MobProgressionEnabled must be true or every mob award returns 0")
+	}
+
+	mob := mobCrafterForProgressionTest(skill)
+	before := mob.Character.GetSkillUseCount(skill)
+
+	executeCraftLegacy(mob, &crafting.RecipeSpec{
+		RecipeId: "u10b1-mobcraft-fail", Skill: skill, SkillMinimum: 0,
+	})
+
+	if got := mob.Character.GetSkillUseCount(skill) - before; got != 1 {
+		t.Fatalf("%s use count rose by %d after a FAILED mob craft, want 1", skill, got)
+	}
+}
+
+// The mirror, so the test above cannot pass against an implementation that
+// awards on failure only or awards twice.
+func TestExecuteCraftLegacy_ASucceedingCraftAwardsOnce(t *testing.T) {
+	const skill = "blacksmithing"
+
+	pinMobCraftChance(t, 100) // always succeeds
+
+	mob := mobCrafterForProgressionTest(skill)
+	before := mob.Character.GetSkillUseCount(skill)
+
+	result := executeCraftLegacy(mob, &crafting.RecipeSpec{
+		RecipeId: "u10b1-mobcraft-win", Skill: skill, SkillMinimum: 0,
+	})
+
+	if !result.Success {
+		t.Fatal("fixture premise: a chance of 100 must succeed")
+	}
+	if got := mob.Character.GetSkillUseCount(skill) - before; got != 1 {
+		t.Fatalf("%s use count rose by %d after a successful mob craft, want exactly 1", skill, got)
+	}
+}

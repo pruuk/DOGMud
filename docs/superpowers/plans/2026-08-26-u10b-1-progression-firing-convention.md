@@ -570,9 +570,28 @@ salvage half is closed.
 
 ## Task 17: Mob crafters
 
-- [ ] **Step 1:** failing test forcing a failed mob craft. **`pinConfigForTest` must set `MobProgressionEnabled`** or this asserts against a path that returns 0
-- [ ] **Step 2:** award on both branches at `:505` and `:546`
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing test forcing a failed mob craft. **`pinConfigForTest` must set `MobProgressionEnabled`** or this asserts against a path that returns 0
+- [x] **Step 2:** award on both branches at `:505` and `:546`
+- [x] **Step 3:** run, commit
+
+**Shipped.** Both sites are `executeCraft` (shop-inventory path) and
+`executeCraftLegacy` (backpack path); both were success-only and now award
+above the branch. Ingredients are consumed regardless of the roll, so a failed
+mob craft already cost materials and taught nothing.
+
+⚠️ **NO DIFFICULTY BONUS on either, and that is PRE-EXISTING.** These used bare
+`OnSkillUse` while the other four craft sites use `OnSkillUseScaled` with
+`1 + SkillMinimum*CraftDifficultyProgressionScale`. **Mob crafters have never
+had recipe difficulty scale their progression.** Left as-is: adding it would be
+a rate change wearing a firing-convention change's clothes, and U10b-3 may
+remove difficulty scaling from progression entirely. **The re-solve must know
+the two paths differ.**
+
+The plan's `MobProgressionEnabled` warning is now an explicit `t.Fatal`
+precondition in the test rather than a comment, and it is sabotage-proven:
+removing the pin fails on the precondition instead of silently asserting
+against a path that returns 0.
+
 
 ## Task 18: The sixteen skullduggery sites
 
