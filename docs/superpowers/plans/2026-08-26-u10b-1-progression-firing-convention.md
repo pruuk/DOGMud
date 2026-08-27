@@ -439,9 +439,25 @@ No conversions here. Each site already resolves; read its existing outcome.
 
 ⚠️ Awards a **FULL** event today, win or lose, so this is a **cut** on failure.
 
-- [ ] **Step 1:** failing tests: a room with five hidden things awards the same as a room with one; a fruitless-but-resolved search awards the fraction
-- [ ] **Step 2:** replace `:243` with `actor.AwardResolved(userId, foundAnything, char.CandidateFor(string(skills.Search)))`, setting `foundAnything` alongside each `result.*Found` append
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing tests: a room with five hidden things awards the same as a room with one; a fruitless-but-resolved search awards the fraction
+- [x] **Step 2:** replace `:243` with `actor.AwardResolved(userId, foundAnything, char.CandidateFor(string(skills.Search)))`, setting `foundAnything` alongside each `result.*Found` append
+- [x] **Step 3:** run, commit
+
+**Shipped.** ⚠️ The plan's Step 2 signature was stale: `Actor.AwardResolved`
+takes `(won bool, cands ...Candidate)` with **no userId** -- the actor supplies
+its own (Task 7). Shipped as
+`actor.AwardResolved(result.FoundAnything(), char.CandidateFor(string(skills.Search)))`.
+
+`foundAnything` is DERIVED as `SearchResult.FoundAnything()` rather than tracked
+by a flag set beside each of the six append sites: one predicate in one place
+cannot fall out of step with five of its six siblings. ⚠️ **A new tier must add
+its slice to that method**, or its finds read as failures.
+
+The `rolledAgainstSomething` anti-botting gate is UNCHANGED and is deliberately
+not the firing rule: an empty room resolved no contest, so there is no loss to
+pay a fraction on. Without it, `search` in a bare corridor would have become a
+free progression tick the moment losing started paying.
+
 
 ## Task 15: `track` and `forage`
 
