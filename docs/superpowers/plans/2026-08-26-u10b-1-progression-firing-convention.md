@@ -811,6 +811,31 @@ the `TryRoomBehavior` at `:700`. A bare string assertion passes even if the
 destination call is deleted, because of the unrelated one at `:357`; pin the
 destination call specifically. Create `go_test.go`.
 
+- [x] **Shipped.** Deleted the loop only; the `if !isSneaking` wrapper and the
+  destination `TryRoomBehavior` are kept, both pinned by the new `go_test.go`.
+
+⚠️ **This is a BALANCE CHANGE, not a cleanup.** The roll decided whether an
+engaged mob chased a leaving player. With it gone and pursuit not yet authored
+anywhere, **walking out of a fight is strictly safer than it was.** That is the
+arc's ruling (mob pursuit is authored behaviour, no roll) but the authoring is
+the behavior unification arc's work, so there is a window where nothing chases.
+
+⚠️ **One compile fallout worth knowing:** the deleted loop DECLARED
+`mobInstanceIds`, and the ambush block further down reused it with `=`. It now
+declares its own.
+
+The plan's warning about the bare string assertion was exactly right and is now
+pinned in both directions: `TestGo_TheDestinationRoomEnterBehaviourSurvives`
+matches on `TryRoomBehavior(destRoom.RoomId` and additionally asserts the file
+carries **two or more** such calls, so the reason the weaker assertion would
+have been useless is itself part of the test.
+
+⚠️ **My own tombstone comment broke the guard first.** It quoted the deleted
+formula verbatim, so the "the roll is gone" test grepped for `speedDelta` and
+found my explanation of it. Reworded rather than weakening the test.
+
+
+
 ## Task 20: First-kill progression
 
 Remove `OnFirstMobKill`, both call sites, and the message. **Keep `KD.AddMobKill`.**
