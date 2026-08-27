@@ -830,3 +830,56 @@ func TestExecuteCraftLegacy_ASucceedingCraftAwardsOnce(t *testing.T) {
 		t.Fatalf("%s use count rose by %d after a successful mob craft, want exactly 1", skill, got)
 	}
 }
+
+// The mob-crafter award scales with recipe difficulty, like every other craft
+// site.
+//
+// This path used bare OnSkillUse and had NEVER applied
+// 1 + SkillMinimum*CraftDifficultyProgressionScale, so a shopkeeper crafting a
+// demanding recipe trained exactly as fast as one crafting a trivial one -- a
+// firing-rule inconsistency, since the bonus is part of the AWARD rather than
+// the resolution.
+//
+// Exact, not statistical: at ProgressionFailureFraction 0 a LOSING award
+// short-circuits before any roll whatever the bonus, so a bonus of 0 must
+// suppress a WINNING award too. If the bonus were being dropped, the win would
+// advance regardless and this fails.
+func TestExecuteCraftLegacy_TheAwardScalesWithRecipeDifficulty(t *testing.T) {
+	const skill = "blacksmithing"
+
+	pinMobCraftChance(t, 100) // always succeeds, so only the BONUS can suppress it
+	cfg := configs.GetConfig()
+	cfg.Balance.CraftDifficultyProgressionScale = 0
+	cfg.Balance.BaseProgressionChance = 1.0
+	cfg.Balance.StatProgressionRate = 1.0
+	cfg.Balance.SkillProgressionMultipliers = nil
+	configs.SetConfigForTest(t, cfg)
+
+	// SkillMinimum 0 with scale 0 gives craftBonus exactly 1.0 -- the control.
+	control := mobCrafterForProgressionTest(skill)
+	beforeControl := control.Character.Skills[skill]
+	executeCraftLegacy(control, &crafting.RecipeSpec{
+		RecipeId: "u10b1-bonus-control", Skill: skill, SkillMinimum: 0,
+	})
+	if got := control.Character.Skills[skill] - beforeControl; got != 1 {
+		t.Fatalf("control: %s advanced by %d at bonus 1.0, want 1; the fixture is not pinned to certainty", skill, got)
+	}
+
+	// A NEGATIVE scale drives craftBonus to zero at SkillMinimum 100, which can
+	// only reach the award if the bonus is actually applied.
+	cfg = configs.GetConfig()
+	cfg.Balance.CraftDifficultyProgressionScale = configs.ConfigFloat(-0.01)
+	configs.SetConfigForTest(t, cfg)
+
+	suppressed := mobCrafterForProgressionTest(skill)
+	beforeSuppressed := suppressed.Character.Skills[skill]
+	executeCraftLegacy(suppressed, &crafting.RecipeSpec{
+		RecipeId: "u10b1-bonus-zero", Skill: skill, SkillMinimum: 100,
+	})
+	if got := suppressed.Character.Skills[skill] - beforeSuppressed; got != 0 {
+		t.Errorf("%s advanced by %d on a WON craft whose difficulty bonus is 0; the bonus is not reaching the award", skill, got)
+	}
+	if got := suppressed.Character.GetSkillUseCount(skill); got == 0 {
+		t.Error("the award did not fire at all; the bonus must scale the weight, not skip the award")
+	}
+}

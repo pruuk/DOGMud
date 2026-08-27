@@ -579,13 +579,35 @@ salvage half is closed.
 above the branch. Ingredients are consumed regardless of the roll, so a failed
 mob craft already cost materials and taught nothing.
 
-⚠️ **NO DIFFICULTY BONUS on either, and that is PRE-EXISTING.** These used bare
-`OnSkillUse` while the other four craft sites use `OnSkillUseScaled` with
-`1 + SkillMinimum*CraftDifficultyProgressionScale`. **Mob crafters have never
-had recipe difficulty scale their progression.** Left as-is: adding it would be
-a rate change wearing a firing-convention change's clothes, and U10b-3 may
-remove difficulty scaling from progression entirely. **The re-solve must know
-the two paths differ.**
+✅ **THE DIFFICULTY BONUS NOW APPLIES HERE TOO.** These used bare `OnSkillUse`
+and had NEVER scaled by `1 + SkillMinimum*CraftDifficultyProgressionScale`, so
+a shopkeeper crafting a demanding recipe trained exactly as fast as one
+crafting a trivial one.
+
+A first pass left that alone, reasoning that closing it was "a rate change
+wearing a firing-convention change's clothes". **That was wrong.** The bonus is
+part of the AWARD, not the resolution, so an award dropping a multiplier every
+sibling applies is a firing-rule inconsistency -- which is what the tin says
+this slice is: *"the firing rule only, wired to **every** site that resolves."*
+The resolution (`crafting.CalcSuccessChance`) is untouched, so "every site
+keeps its CURRENT resolution" still holds.
+
+⚠️ **RATE CHANGE for shopkeeper crafters**, on top of the loss award: their
+progression now scales with recipe `SkillMinimum` where it never did. The
+re-solve must price both.
+
+**All six craft sites are now identical in shape:**
+`AwardResolvedScaled(uid, won, craftBonus, CandidateFor(recipe.Skill))`.
+
+🔴 **What is NOT unified, and is not this slice's axis: there are THREE
+crafting DRIVERS.** `actions.InitiateCraft` (immediate, both actor kinds), the
+Activity multi-round tick (`NewRound_{User,Mob}RoundTick`), and
+**`mobs.TickMobCraft`** -- a parallel shopkeeper-economy implementation fired
+from `MobIdle_HandleIdleMobs.go:97` that shares only the `crafting` library.
+Progression and resolution now agree across all three; what remains is
+duplicated drivers, which is the **behavior unification arc's** territory (mob
+behavior split across `aiprofile`, behavior trees, `idlecommands`, schedules,
+patrols -- a third crafting driver is the same species).
 
 The plan's `MobProgressionEnabled` warning is now an explicit `t.Fatal`
 precondition in the test rather than a comment, and it is sabotage-proven:
