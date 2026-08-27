@@ -1085,8 +1085,8 @@ dashes, 80 columns. **Do not promise that mobs will chase you.**
 ### Playtest outcome (2026-08-26)
 
 **Confirmed working.** Combat progression fires and the stat that fired is the
-one the model predicts: two `STATISTIC INCREASED / dexterity` and no
-`SKILL ADVANCEMENT` in the same window, which is right because dexterity is the
+one the model predicts: FOUR `STATISTIC INCREASED / dexterity` across 43 idle cycles
+and ZERO `SKILL ADVANCEMENT`, which is right because dexterity is the
 primary of BOTH combat skills and so rolls on the attacker award and again on
 the defender award, while a skill only rolls when it wins its side's Best-of.
 Defence resolved and narrated every round with no errors, no raw numbers, no
@@ -1101,7 +1101,7 @@ byte-identical to the player. This slice's headline is invisible at the site
 that fires most often. Pre-existing gap; this slice is what makes it matter.
 
 ⚠️ **WHAT THE PLAYTEST DID NOT ANSWER, and must not be recorded as answered.**
-The PACE is unverified by play. Banners are probabilistic per use, so two of
+The PACE is unverified by play. Banners are probabilistic per use, so four of
 them is not a rate measurement. Both exploits the goals file was written to hunt
 are still open: the passive-defence faucet's RATE (it fires every round at zero
 resource cost -- confirmed firing, never measured) and the empty-room gate.
