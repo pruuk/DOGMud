@@ -136,11 +136,35 @@ def weight(p_win):
 P_DEF_WIN = 1.0 - CLEAN_HIT      # D: the defence carried a swing the attack
 def_award = weight(P_DEF_WIN)    #    did not cleanly land
 
-# D: which SKILL wins the attacker Best-of in a 1H + fist build. Both hands take
-# their SKILL TERM from the same place today -- calcAttackScore reads
-# GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag for every entry
-# in the plan, so an offhand fist rolls on a score built from WEAPON-combat's
-# rank. That is the known defect owed the moment this slice closes.
+# D: which SKILL wins the attacker Best-of in a 1H + fist build.
+#
+# 🔴 STALE AS OF THE OFFHAND FIX (2026-08-27). This whole block assumed
+# both hands took their SKILL TERM from the same place, because calcAttackScore
+# read GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag for every
+# entry in the plan -- so an offhand fist rolled on a score built from
+# WEAPON-combat's rank. That defect is now FIXED: calcAttackScore and
+# buildDamageParams both take the weapon being swung and call
+# GetCombatSkillLevelFor.
+#
+# MEASURED consequence, simulated over 400k rounds at the shipped RollSpread
+# 0.15, using the real gap on the four veteran saves (weapon-combat 69,
+# unarmed-combat 57, so 12 ranks x SkillWeight 5.0 = 60 attack score):
+#
+#   P(fist wins the attacker Best-of):  0.667  ->  0.296
+#   P(a fist swing beats a parity defence): 0.502 -> 0.253
+#
+# A character whose unarmed EXCEEDS their weapon rank moves the other way
+# (quester9, wc 38 / uc 51): the fist wins 0.965 of Best-ofs. The fix corrects
+# in BOTH directions; it is not a blanket nerf.
+#
+# WHAT THIS DOES AND DOES NOT INVALIDATE:
+#   weapon-combat is solved at 1H+SHIELD, which has no fist, so its 1.34 is
+#   UNAFFECTED.
+#   unarmed-combat is solved at 1H+fist and IS affected -- but the deeper point
+#   is that 1H+fist was never the right concentrating build for it. A player
+#   grinding unarmed fights BARE-HANDED, and no fully bare-handed build appears
+#   in BUILDS_NEW at all. Adding it is the correct fix, not re-deriving the
+#   share below. See the owed followup.
 #
 # Treating the swings as iid then gives the overall maximum to the fist's 4
 # draws with probability 4/6.

@@ -44,6 +44,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
@@ -374,7 +375,7 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 			if len(entries) != 1 || entries[0] != characters.DefenseDodge {
 				t.Fatalf("bare-handed melee defence set = %v, want [dodge] — the Task 2 equipment gate moved", entries)
 			}
-			atkScore := calcAttackScore(attacker, defender, 0, ctx)
+			atkScore := calcAttackScore(attacker, defender, items.Item{}, 0, ctx)
 			if math.Abs(atkScore-wantScore) > 1e-9 {
 				t.Fatalf("attack score = %.4f, want %.4f (stat %d + rank %d × SkillWeight %.1f)",
 					atkScore, wantScore, parityStatValue, paritySkillRank, skillWeight)

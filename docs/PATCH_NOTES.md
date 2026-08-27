@@ -1,5 +1,22 @@
 # DOGMud Patch Notes
 
+## 2026-08-27: Your fists fight at your own skill with them
+
+If you held a weapon in one hand and nothing in the other, the empty hand was
+quietly borrowing the weapon's training. A swordsman's punch landed as often,
+and hit as hard, as their sword skill said it should, no matter how little they
+had ever practised fighting bare-handed.
+
+Each hand now fights at its own skill. If you are a fine swordsman and a poor
+brawler, your punches will land less often than they used to and hurt less when
+they do. If you are the other way about, and some of you are, your punches just
+got better. Bows and unarmed strikes are sorted the same way.
+
+This is a correction rather than a change of direction. Nothing was rebalanced
+to make your fists weaker; they were being scored as something they were not.
+If you fight with a free hand a lot, it is worth putting some real practice into
+fighting unarmed.
+
 ## 2026-08-26: Learning from what goes wrong
 
 Until now most skills only improved when you succeeded. A forage that turned

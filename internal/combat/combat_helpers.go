@@ -425,7 +425,11 @@ func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.C
 
 // buildDamageParams computes the damage pipeline values for a weapon swing.
 func buildDamageParams(sourceChar *characters.Character, targetChar *characters.Character, ws weaponSetup, statModBonus int, srcType SourceTarget) swingDamageParams {
-	combatSkillLevel := sourceChar.GetCombatSkillLevel()
+	// ws.weapon, for the same reason calcAttackScore takes it: this runs once
+	// per weapon in the plan, and GetCombatSkillLevel resolves its tag from the
+	// MAIN HAND alone. Reading it here meant an offhand fist did damage scaled
+	// by your sword rank. Hit chance and damage were the same defect twice.
+	combatSkillLevel := sourceChar.GetCombatSkillLevelFor(ws.weapon)
 	rawDmg := CalcRawDamage(sourceChar.Stats.Strength.ValueAdj, combatSkillLevel, ws.weaponDmgMult, ChannelPhysical)
 
 	// Apply mob damage multiplier
@@ -495,11 +499,15 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 }
 
 // calcAttackScore computes the attack roll score with all modifiers.
-func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Character, penalty int, ctx combatContext) float64 {
+// weapon is the weapon ACTUALLY BEING SWUNG, not whatever is in the main hand.
+// A zero Item means bare hands. Passing it is what stops an offhand fist being
+// scored at your sword rank: GetCombatSkillLevel resolves its tag from
+// c.Equipment.Weapon alone, and every weapon in the plan comes through here.
+func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Character, weapon items.Item, penalty int, ctx combatContext) float64 {
 	bal := configs.GetBalanceConfig()
 	attackScore := float64(sourceChar.GetEffectiveDexterity())
 	if !ctx.omitAttackSkill {
-		attackScore += float64(sourceChar.GetCombatSkillLevel()) * float64(bal.SkillWeight)
+		attackScore += float64(sourceChar.GetCombatSkillLevelFor(weapon)) * float64(bal.SkillWeight)
 	}
 	attackScore -= float64(penalty)
 

@@ -446,7 +446,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			attackSourceDamage := 0
 			attackSourceReduction := 0
 
-			attackScore := calcAttackScore(sourceChar, targetChar, ws.penalty, ctx)
+			attackScore := calcAttackScore(sourceChar, targetChar, ws.weapon, ws.penalty, ctx)
 
 			// Chunk 4e: position-tiered hit modifiers. Multiplies attackScore by
 			// the attacker's self-position modifier and the target's position
