@@ -239,7 +239,11 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		attempt := task6OnlyCall(t, fset, fn, "actions.Sneak(&actions.UserActor{User: user, Room: room})", false)
 		refusal := task6OnlyCall(t, fset, fn, "actions.CostRefusalText(result.Cost)", false)
 		failureCooldown := task6OnlyCall(t, fset, fn, "user.Character.TryCooldown", true)
-		progression := exactCallPositions(t, fset, fn.Body, "user.Character.CheckSkillProgression", true)
+		// U10b-1 Task 18 converted both sneak sites off the direct
+		// CheckSkillProgression call -- which bypassed every entry point -- and
+		// onto Character.AwardResolved. The ORDERING this test pins is
+		// unchanged: progression must still come after the cost refusal.
+		progression := exactCallPositions(t, fset, fn.Body, "user.Character.AwardResolved", true)
 		require.Len(t, progression, 2)
 		require.Less(t, int(ready), int(attempt))
 		require.Less(t, int(attempt), int(refusal))
@@ -253,7 +257,10 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		path := filepath.Join(actionsDir, "..", "mobcommands", "sneak.go")
 		fset, fn := task6FunctionAST(t, path, "Sneak")
 		attempt := task6OnlyCall(t, fset, fn, "actions.Sneak(&actions.MobActor{Mob: mob, Room: room})", false)
-		progression := task6OnlyCall(t, fset, fn, `mob.Character.OnSkillUse("skullduggery", 0)`, false)
+		// U10b-1 Task 18 routed this through Character.AwardResolved. The
+		// ORDERING pinned here -- progression after the attempt -- is unchanged.
+		progression := task6OnlyCall(t, fset, fn,
+			`mob.Character.AwardResolved(0, result.Success, mob.Character.CandidateFor("skullduggery"))`, false)
 		require.Less(t, int(attempt), int(progression))
 		require.False(t, nodeHasCall(fn.Body, "CooldownReady"))
 		require.False(t, nodeHasCall(fn.Body, "TryCooldown"))
@@ -278,7 +285,9 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		// The ordering contract this test guards is unchanged: no contest
 		// may run before the cooldown is consumed.
 		contests := exactCallPositions(t, fset, fn.Body, "combat.ResolveChannelAttack", true)
-		progression := task6OnlyCall(t, fset, fn, "user.Character.OnSkillUse", true)
+		// U10b-1 Task 18 routed this through Character.AwardResolved. The
+		// ordering contract is unchanged: progression after the cooldown.
+		progression := task6OnlyCall(t, fset, fn, "user.Character.AwardResolved", true)
 
 		require.Less(t, int(item), int(admit))
 		require.Less(t, int(targets), int(admit))

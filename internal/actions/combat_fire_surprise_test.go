@@ -355,14 +355,47 @@ func TestFireSurprise_LandedShotTrainsSkullduggery(t *testing.T) {
 	defer cleanup()
 
 	char := newSurpriseShooter(true)
-	before := char.GetSkillUseCount(string(skills.Skullduggery))
+	actor := newStubActor(char, rooms.LoadRoom(1))
 
-	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
+	res := ExecuteFire(actor, "skeleton")
 
 	require.True(t, res.Executed)
 	require.True(t, res.MoveResult.Hit, "fixture sanity: the deterministic win must land")
-	assert.Equal(t, before+1, char.GetSkillUseCount(string(skills.Skullduggery)),
-		"a landed surprise shot must train skullduggery exactly once")
+
+	// U10b-1 Task 11 changed what this test can observe, and improved it.
+	//
+	// A landed ambush no longer takes a skullduggery award of its own: it
+	// CONTESTS the shot's single progression event against ranged-combat, so
+	// counting skill uses would be counting a coin flip. What the ambush
+	// actually guarantees is that skullduggery is OFFERED as a candidate, and
+	// that is what this now asserts -- through the Actor seam's recorder, which
+	// is deterministic and needs no rank-rigging fixture.
+	//
+	// It is also a stronger assertion than the old one. The counter could be
+	// satisfied by any code path that happened to train skullduggery; this
+	// pins that the shot produced exactly ONE award and that the ambush put
+	// skullduggery into it.
+	require.Len(t, actor.awards, 1, "a resolved shot must produce exactly one progression award")
+	require.True(t, actor.awards[0].won, "a landed shot is a win")
+
+	_, n := actor.awardedCandidate(string(skills.Skullduggery))
+	assert.Equal(t, 1, n, "a landed surprise shot must offer skullduggery as a candidate exactly once")
+
+	// ranged-combat contests the SAME award rather than taking its own, and it
+	// is offered to a NON-PLAYER shooter too.
+	//
+	// That second half is the point of the assertion. An earlier draft gated
+	// this candidate on actor.IsPlayer() to preserve the gap left by
+	// mobcommands/shoot.go awarding no progression, which made the firing rule
+	// depend on what kind of thing was acting. Whether a mob progresses is
+	// already decided centrally by MobProgressionEnabled and MobProgressionRate
+	// inside the chance functions, so the gate was a second, invisible copy of
+	// an existing policy. This stub reports IsPlayer() false, so it fails the
+	// moment such a gate comes back.
+	require.False(t, actor.IsPlayer(), "fixture premise: this stub is not a player")
+	_, nRanged := actor.awardedCandidate(string(skills.RangedCombat))
+	assert.Equal(t, 1, nRanged,
+		"ranged-combat must contest the same award, for a non-player shooter as much as a player")
 }
 
 // ---------------------------------------------------------------------------

@@ -19,11 +19,12 @@ import (
 // Character.AddBuff / Character.HasBuffFlag work correctly without a real
 // server event queue. SendText messages are captured for assertion.
 type sleepFakeActor struct {
-	char     *characters.Character
-	room     *rooms.Room
-	isPlayer bool
-	userId   int
-	sent     []string
+	awardRecorder // records Actor.AwardResolved calls
+	char          *characters.Character
+	room          *rooms.Room
+	isPlayer      bool
+	userId        int
+	sent          []string
 }
 
 func (a *sleepFakeActor) GetCharacter() *characters.Character    { return a.char }
@@ -35,8 +36,6 @@ func (a *sleepFakeActor) GetMobInstanceId() int                  { return 0 }
 func (a *sleepFakeActor) AddBuff(_ int, _ string)                {} // no-op: Sleep calls c.AddBuff directly
 func (a *sleepFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *sleepFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *sleepFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *sleepFakeActor) OnCriticalFailure(_ string)             {}
 func (a *sleepFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *sleepFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)

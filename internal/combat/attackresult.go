@@ -15,8 +15,14 @@ const (
 	DefenseBlock DefenseType = "block"
 )
 
-// WeaponHitInfo tracks whether a specific weapon landed at least one hit
-// during a combat round, for per-weapon skill progression.
+// WeaponHitInfo tracks how a specific weapon fared across a combat round:
+// whether it landed, and how well it rolled.
+//
+// It carries one entry per HAND SLOT, not per swing, and not per skill --
+// collectAttackWeapons synthesises a fist for every empty hand and the
+// extra-arms mutation adds up to four more. U10b-1 Task 11 stopped treating an
+// entry as a unit of progression for exactly that reason; hooks.
+// attackerCandidates folds these into one candidate per SKILL.
 //
 // U6 Task 14: Hit means the weapon dealt damage on at least one swing, a
 // deflected swing included. CleanHit means at least one swing actually WON
@@ -28,6 +34,35 @@ type WeaponHitInfo struct {
 	CleanHit bool
 	Crit     bool
 	Fumble   bool
+
+	// BestRoll is the highest ATTACK roll this weapon threw across the round,
+	// contest.Result.AttackRoll.Value from the swing that rolled best.
+	//
+	// It exists so U10b-1's attacker award can select which SKILL earns the
+	// round's one progression event using a roll that ACTUALLY HAPPENED, the
+	// same way hooks.bestSwingDefence selects the defender's. Re-rolling with
+	// characters.CandidateFor would stack a second randomness source on top of
+	// the roll that already decided the swing.
+	//
+	// Always populated: contest.Run rolls the attack before it looks at any
+	// defence, so an UNCONTESTED swing carries a real roll too.
+	//
+	// Comparability across weapons is the same qualified story as
+	// AttackResult.SwingDefences: each swing rolls with dice.StdDevFor of its
+	// OWN attack score, and calcAttackScore subtracts a per-weapon penalty, so
+	// two weapons' rolls are drawn with different spreads. No weapon is
+	// systematically favoured BY THE CHOICE OF SCALE -- that qualifier is
+	// load-bearing and an earlier draft dropped it, leaving a sentence that was
+	// simply false. A lower-penalty weapon rolls with a higher MEAN and is
+	// favoured, which is intended: it is the weapon that swung better.
+	//
+	// ⚠️ What this canNOT do is discriminate between two different SKILLS on
+	// their own merits. calcAttackScore takes its skill term from
+	// characters.GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag
+	// for every entry in the plan, so an offhand fist rolls on a score built
+	// from WEAPON-combat's rank. See hooks.attackerCandidates; the fix is a
+	// U10b-1b item.
+	BestRoll float64
 }
 
 // SwingEvent captures per-swing analytics data for accurate hit rate tracking.
@@ -43,6 +78,43 @@ type SwingEvent struct {
 	AttackZScore  float64
 	DefenseZScore float64
 	AttackType    string // "weapon", "unarmed", "ranged" — per-swing weapon type for analytics
+}
+
+// SwingDefence is ONE swing's defence record for the round's defender
+// progression award: which defence ROLLED BEST in that swing's best-of-all
+// contest, what it rolled, and whether it beat the attack.
+//
+// THREE defence records on AttackResult mean three different things and none
+// substitutes for another:
+//
+//   - DefenseUsed     -- a defence that WON. Stamped by sendDefenseMessages,
+//     which runs only on a defensive win.
+//   - DefenseAttempts -- every defence that was TRIED, in sequence.
+//   - SwingDefences   -- the one defence per swing that ROLLED BEST, win or
+//     lose. It is the only one of the three populated on a defence that lost,
+//     which is what lets U10b-1 award a lost defence at
+//     ProgressionFailureFraction instead of awarding nothing.
+//
+// It is NOT index-parallel to SwingEvents. An UNCONTESTED swing -- the defender
+// had no defence available at all -- quotes nothing and appends no entry here,
+// because an empty defence name awards nothing (AwardDefenceProgression returns
+// early on it) and an empty entry could only displace a real candidate in the
+// Best-of.
+type SwingDefence struct {
+	// Defence is contest.Result.Winner for that swing: the entry that defended
+	// best, whether or not it beat the attack roll. Never empty -- an
+	// uncontested swing appends no SwingDefence at all.
+	Defence DefenseType
+	// Roll is that entry's rolled value, the roll that ALREADY happened.
+	// Nothing re-rolls to compare swings against each other.
+	Roll float64
+	// Won is the DEFENCE's win, not the swing's hit: true on a deflection and
+	// on a defensive crit, false on every attack win, on a forced crit against
+	// a sleeping victim, and on all THREE fumble paths (double fumble, attack
+	// fumble, defence fumble). That last row diverges from the channel seam,
+	// which has no fumble branch before its award -- see hitResolution.defenceWon,
+	// which records the divergence and why U10b-1b owns it.
+	Won bool
 }
 
 // TaggedMessage pairs a combat narration line with the messaging
@@ -108,6 +180,11 @@ type AttackResult struct {
 	MessagesToSourceRoom    []TaggedMessage
 	MessagesToTargetRoom    []TaggedMessage
 	MessagesToRoomOld       []TaggedMessage
+
+	// SwingDefences carries the per-swing defence that the round's SINGLE
+	// defender progression award is chosen from. See the SwingDefence doc
+	// comment for how it differs from DefenseUsed and DefenseAttempts.
+	SwingDefences []SwingDefence
 }
 
 func (a *AttackResult) SendToSource(cat messaging.Category, msg string) {

@@ -38,6 +38,24 @@ type SearchResult struct {
 	Reason     string
 }
 
+// FoundAnything reports whether the search turned up ANY of its six kinds of
+// discovery. It is the win/lose input to U10b-1's progression award.
+//
+// Derived from the result rather than tracked by a flag set beside each of the
+// six append sites: one predicate in one place cannot fall out of step with
+// five of its six siblings. ⚠️ A NEW TIER MUST ADD ITS SLICE HERE. That is the
+// one thing this shape does not make automatic, and forgetting it makes the new
+// tier's finds read as failures -- the search would award the loss fraction
+// while telling the player it found something.
+func (r SearchResult) FoundAnything() bool {
+	return len(r.HiddenExitsFound) > 0 ||
+		len(r.HiddenContainersFound) > 0 ||
+		len(r.StashedItemsFound) > 0 ||
+		len(r.HiddenPlayersFound) > 0 ||
+		len(r.HiddenMobsFound) > 0 ||
+		len(r.HiddenNounsFound) > 0
+}
+
 // Search rolls Perception+Search per discovery candidate in the room.
 // UserActor receives template-rendered output; MobActor is silent
 // (no broadcast, no template). Cooldown is shared with the player path
@@ -137,7 +155,9 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.SendText(messaging.CategorySystem, text)
 	}
 
-	// NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP "Category B"): the six
+	// NOTE(ASSIGNED TO U10b-1b, Category B; the breadcrumb used to read
+	// "unassigned" and it is not -- the U10b-1b design spec names "search x4"
+	// explicitly, as settled decision 17): the six
 	// dice.RollStat threshold checks in this file are the LAST uncertain
 	// outcomes off the contest core. The two below are the sharpest problem:
 	// they answer "does the observer spot the hider?" with a flat 135 threshold
@@ -239,8 +259,45 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	}
 
 	// ── Skill progression (anti-botting gate) ───────────────────
+	//
+	// The gate is unchanged and is NOT the firing rule: a search of an empty
+	// room rolled against nothing, so no contest resolved and nothing is
+	// awarded. That is what stops `search` in a bare corridor from being a
+	// free progression tick. What U10b-1 Task 14 changed is the WEIGHT of the
+	// award that does fire.
+	//
+	// ⚠️ THIS SITE IS A CUT, not a gain, and it is the first in the slice.
+	// A resolved search paid a FULL event win or lose; a fruitless search now
+	// pays ProgressionFailureFraction. Searching is a high-frequency action
+	// against mostly-empty rooms, so most searches resolve and find nothing --
+	// the common case is the one being reduced. Carry it into the re-solve.
+	//
+	// ONE AWARD PER SEARCH, unchanged. A room with five hidden things rolls
+	// five times and still pays once: the six tiers are one resolved action,
+	// not six. That was already true and is now pinned by test.
 	if rolledAgainstSomething {
-		actor.OnSkillUse(string(skills.Search))
+		actor.AwardResolved(result.FoundAnything(), char.CandidateFor(string(skills.Search)))
+	}
+
+	// Close the loop for the player. Without this a search that finds nothing
+	// prints "You snoop around for a bit..." and then NOTHING, which reads as a
+	// broken or ignored command rather than a completed one. Found things
+	// announce themselves individually above; this is the only path with no
+	// output at all.
+	//
+	// ⚠️ DELIBERATELY IDENTICAL for both "there was nothing here" and "there was
+	// something here and you failed to find it", and it must stay that way.
+	// Splitting the two would turn `search` into an oracle for the EXISTENCE of
+	// hidden content: a player could stand in a room, read the different line,
+	// and know a secret exit or stash is present without ever passing the roll.
+	// That would defeat every hidden thing in the world.
+	//
+	// The consequence is accepted and is NOT a defect to "fix" later: U10b-1
+	// made a fruitless-but-resolved search pay ProgressionFailureFraction, and
+	// that award is INVISIBLE here on purpose. Progression must not leak level
+	// design.
+	if actor.IsPlayer() && !result.FoundAnything() {
+		actor.SendText(messaging.CategorySystem, "You find nothing of interest.\n")
 	}
 
 	return result

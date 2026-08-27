@@ -225,8 +225,15 @@ func TestShadow_SkillProgressionFires(t *testing.T) {
 	result := Shadow(actor, ShadowOptions{TargetUserId: 7004})
 	require.True(t, result.Succeeded)
 
-	assert.Greater(t, actor.skillUsesByName[string(skills.Skullduggery)], 0,
-		"Shadow should call OnSkillUse('skullduggery') on success")
+	// U10b-1 Task 18 routed this site through Actor.AwardResolved, so the
+	// observable moved from the OnSkillUse counter to the award recorder.
+	// The COUNT assertion is unchanged in meaning: one award per attempt,
+	// win or lose.
+	assert.Greater(t, len(actor.awards), 0,
+		"Shadow should award skullduggery progression")
+	if _, n := actor.awardedCandidate(string(skills.Skullduggery)); n == 0 {
+		t.Error("the award did not name skullduggery")
+	}
 }
 
 // ---------------------------------------------------------------------------

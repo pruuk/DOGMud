@@ -6,7 +6,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
-	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
@@ -97,8 +96,11 @@ func shadowMob(actor Actor, mobInstanceId int, cfg configs.Balance) ShadowResult
 			`moving silently in their wake.`,
 		m.Character.Name))
 
-	// Skill-use and progression.
-	actor.OnSkillUse(string(skills.Skullduggery))
+	// U10b-1 Task 18: the MOB-target shadow runs no contest at all -- the buff
+	// is applied and the shadow simply begins -- so there is nothing to lose
+	// and won is unconditionally true. Contrast shadowPlayer below, which does
+	// roll against the target and passes !detected.
+	actor.AwardResolved(true, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
@@ -111,11 +113,6 @@ func shadowMob(actor Actor, mobInstanceId int, cfg configs.Balance) ShadowResult
 				Command: "shadow",
 			}, bridge, bridge)
 
-			events.AddToQueue(events.SkillUsed{
-				UserId:  actor.GetUserId(),
-				Skill:   skills.Skullduggery,
-				Details: `shadow`,
-			})
 		}
 	}
 
@@ -146,9 +143,6 @@ func shadowPlayer(actor Actor, targetUserId int, cfg configs.Balance) ShadowResu
 			`watching their every move.`,
 		targetUser.Character.Name))
 
-	// Skill-use and progression.
-	actor.OnSkillUse(string(skills.Skullduggery))
-
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
@@ -160,11 +154,6 @@ func shadowPlayer(actor Actor, targetUserId int, cfg configs.Balance) ShadowResu
 				Command: "shadow",
 			}, bridge, bridge)
 
-			events.AddToQueue(events.SkillUsed{
-				UserId:  actor.GetUserId(),
-				Skill:   skills.Skullduggery,
-				Details: `shadow`,
-			})
 		}
 	}
 
@@ -175,6 +164,16 @@ func shadowPlayer(actor Actor, targetUserId int, cfg configs.Balance) ShadowResu
 	sneakScore := CalcSneakScoreVsObserver(char, targetUser.Character, actor.GetRoom())
 	searchScore := CalcDetectionScore(targetUser.Character)
 	detected := combat.RunContest(searchScore, []contest.Entry{{Score: sneakScore}}).Success
+	// U10b-1 Task 18: moved DOWN below the detection contest and given its
+	// outcome. detected means the TARGET spotted the shadower -- RunContest is
+	// called with the target's search score as the ATTACKER -- so the
+	// shadower's win is !detected.
+	//
+	// The plan called this roll "informational only" because the shadow begins
+	// either way. That is true of the ShadowResult flag and false of the
+	// CONTEST: skullduggery really was rolled against a real opposing score,
+	// which is exactly what a resolved action is.
+	actor.AwardResolved(!detected, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 	if detected {
 		targetUser.SendText(messaging.CategorySystem, "You sense someone following close behind you.")
 	}

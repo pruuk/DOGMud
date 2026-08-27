@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -24,27 +25,288 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// processDefenderProgression fires skill and stat progression for a defender
-// based on which defense types were used across all swings in the round.
+// processAttackerProgression fires the round's ONE ordinary attacker award: the
+// SKILL that rolled best across every swing the attacker threw, at full weight
+// when the round landed a clean hit and at Balance.ProgressionFailureFraction
+// when it did not.
 //
-// It awards ONCE PER DEFENCE TYPE per round, not once per swing: a defender who
-// dodges four times gets one dodge award. That de-duplication is the only thing
-// this function does that combat.AwardDefenceProgression does not, and it is why
-// the per-type rows themselves live over there rather than in a switch here.
+// One award per ROUND, mirroring processDefenderProgression. U10b-1 Task 10
+// first removed the `if !wh.CleanHit { continue }` gate so a missed swing
+// trained something, then Task 11 collapsed the per-weapon loop that gate sat
+// in. Both halves matter and the second is the one that fixes a real
+// distortion.
 //
-// U6 Task 12 moved those rows. Before it, this switch covered dodge / parry /
-// block with no default arm while avoidance.go awarded the two non-physical
-// rows itself. Deleting avoidance.go without a single shared mapping would have
-// silently deleted defender progression on both non-physical channels.
+// WHY NOT PER WEAPON. AttackResult.WeaponHits carries one entry per HAND SLOT,
+// not per swing: collectAttackWeapons contributes a fist for every empty hand
+// (CombatSkillTagForItem maps ItemId 0 to unarmed-combat) and the extra-arms
+// mutation adds up to four more slots. Paying per entry therefore paid per
+// hand, which produced a six-to-one spread that tracked nothing a player would
+// recognise as effort:
 //
-// Quell and defy cannot reach this function today -- SwingEvent.DefenseUsed is
-// populated only by the melee path, which never emits either. They are covered
-// by AwardDefenceProgression regardless, so wiring either into melee later is a
-// row in DefenceSetFor and nothing else.
-func processDefenderProgression(c *characters.Character, userId int, result combat.AttackResult) {
-	for _, d := range defenceTypesUsed(result) {
-		combat.AwardDefenceProgression(c, userId, string(d))
+//	two-handed weapon      1 entry   -> 1 award
+//	one-handed + empty off 2 entries -> 2 awards (one of them unarmed-combat)
+//	dual wield             2 entries -> 2 awards
+//	bare hands             2 entries -> 2 awards
+//	extra arms L4          6 entries -> 6 awards
+//
+// The most committed weapon in the game came last, a sword-and-nothing fighter
+// silently trained unarmed-combat every round off the empty hand, and
+// weapon SPEED -- ws.swingCount, the thing a player would actually call "more
+// swings" -- contributed nothing at all, because every swing of one weapon
+// folds into that weapon's single entry.
+//
+// CANDIDATES ARE KEYED BY SKILL, NOT BY WEAPON. Three weapon-combat weapons
+// collapse to ONE weapon-combat candidate carrying the best roll among them.
+// Keying by entry would rebuild per-hand payment inside the Best-of and put the
+// spread straight back.
+//
+// MORE ARMS STILL HELP, through the WIN RATE rather than the award count.
+// progression.Candidate.Roll only SELECTS which skill earns the event; what
+// sizes the event is won/lost. A six-armed attacker has six chances for one of
+// them to clean-hit, so they take full weight far more often than a two-handed
+// attacker does. At the measured 0.3856 per-entry clean-hit rate that is an
+// expected award of roughly 0.60 at one entry against 0.97 at six -- about
+// 1.6x, tapering, rather than 6x flat.
+//
+// THE RATE CHANGE IS STILL AN INCREASE. Per round the attacker goes from
+// P(clean hit) = 0.3856 awards to exactly 1. The owed re-solve of
+// SkillProgressionMultipliers must use 0.3856 and NOT the 0.5752 in the design
+// spec's risk table, which is the HIT rate mislabelled as the clean-hit rate.
+//
+// SKULLDUGGERY JOINS THE SAME CONTEST on a surprise attack rather than taking a
+// second award beside it. See surpriseCandidate for the one caveat there: it is
+// the only candidate whose roll did not actually happen.
+//
+// NOTE: there is no `len(WeaponHits) == 0` fallback. One was deleted here, and
+// it was DEAD: collectAttackWeapons cannot return empty (every hand slot
+// contributes, and a final fallback appends a bare fist when nothing else did),
+// buildAttackPlan filters none of it, calcSwingCount has a minimum of 1, and
+// calculateCombat appends exactly one entry per plan weapon unconditionally. Its
+// second condition made it doubly unreachable: result.CleanHit can only be set
+// inside the swing loop, which cannot run without a plan weapon. Do not
+// reintroduce a round-level consolation award beside the loop -- everything this
+// function pays comes from WeaponHits.
+func processAttackerProgression(c *characters.Character, userId int, result combat.AttackResult) {
+	if c == nil {
+		return
 	}
+	cands, cleanBySkill := attackerCandidates(c, result)
+	if sc, ok := surpriseCandidate(c, result); ok {
+		cands = append(cands, sc)
+		// A surprise candidate is only built for a round that CLEAN-HIT, so
+		// its own outcome is a win by construction.
+		cleanBySkill[sc.Skill] = true
+	}
+	best, ok := progression.BestOf(cands)
+	if !ok {
+		return
+	}
+	// won is the WINNING SKILL's own outcome, not the round aggregate.
+	//
+	// This deliberately matches processDefenderProgression, which passes the
+	// selected defence's own best.Won. An earlier draft passed
+	// AttackResult.CleanHit -- "did anything land this round" -- and that is a
+	// materially different rule, not a rephrasing. For a one-handed weapon
+	// beside an empty hand the two skills are different, weapon-combat almost
+	// always wins selection, and P(the fist landed cleanly while the weapon
+	// did not) is roughly 0.24 at the measured rates. About one round in four
+	// would have paid weapon-combat FULL weight for a round in which the sword
+	// never won a contest.
+	//
+	// Full weight has to mean "you succeeded with THIS skill", or the fraction
+	// stops being a statement about the skill being trained.
+	c.AwardResolved(userId, cleanBySkill[best.Skill], best)
+}
+
+// attackerCandidates folds the round's weapon entries into ONE candidate per
+// SKILL, carrying that skill's best actual attack roll, and reports whether
+// each skill landed a clean hit anywhere in the round.
+//
+// Deterministic order, which BestOf's full-tie rule requires: candidates come
+// out in first-appearance order of WeaponHits, never in map order. Two skills
+// tying on both Roll and Level is vanishingly unlikely with real float rolls,
+// but "vanishingly unlikely" is not "never", and a map here would rotate the
+// winner between rounds for no visible reason. That determinism is the WHOLE
+// reason to dedup by skill: an earlier draft claimed entry-keying would
+// "rebuild per-hand payment", which is false -- payment count is fixed at one
+// by the single AwardResolved call regardless of how many candidates BestOf is
+// handed. Entry-keying and skill-keying pick the same winner in every case
+// except an exact float tie between two different skills.
+//
+// An unrecognised SkillTag is dropped rather than carried: characters.
+// CandidateFor returns the zero Candidate for one, and a zero candidate that
+// happened to out-roll the real ones would make BestOf report false and the
+// whole round train nothing. Dropping it costs only the unknown skill.
+//
+// ⚠️ THE ROLL DOES NOT DISCRIMINATE BY SKILL, and this is a known limit rather
+// than an accident. calcAttackScore builds every swing's score from
+// characters.GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag for
+// every entry in the plan -- so an offhand fist's attack roll is centred on a
+// score containing WEAPON-combat's rank, not unarmed-combat's. Across a round's
+// entries the only things that actually vary are the per-weapon penalty and the
+// swing count, so which of two DIFFERENT skills trains is decided by the
+// dual-wield penalty rather than by either skill's own rank. Within one skill
+// (the common case, and every same-skill dual-wield) the max is exactly right.
+// Recorded for U10b-1b beside the melee/channel fumble divergence; the fix is
+// the same one, giving each candidate a roll built on its own skill.
+func attackerCandidates(c *characters.Character, result combat.AttackResult) ([]progression.Candidate, map[string]bool) {
+	order := make([]string, 0, len(result.WeaponHits))
+	bestRoll := make(map[string]float64, len(result.WeaponHits))
+	clean := make(map[string]bool, len(result.WeaponHits))
+
+	for _, wh := range result.WeaponHits {
+		// Drop unknown skills, not merely empty ones. GetSkillPrimaryStat
+		// returns "" for anything not in skills.SkillPrimaryStats, which is the
+		// same test characters.CandidateFor applies before it returns the zero
+		// Candidate. Carrying one would be worse than dropping it: it arrives
+		// with a REAL attack roll, so it can out-roll the genuine candidates,
+		// and BestOf then reports false on a winner that awards nothing -- the
+		// whole round would train nothing because one hand held something
+		// unrecognised.
+		if skills.GetSkillPrimaryStat(wh.SkillTag) == "" {
+			continue
+		}
+		// A skill counts as having won the round if ANY of its entries clean-hit,
+		// mirroring how AttackResult.CleanHit aggregates across a weapon's
+		// swings. Two fists are one skill, so either landing is that skill
+		// landing.
+		clean[wh.SkillTag] = clean[wh.SkillTag] || wh.CleanHit
+
+		if _, seen := bestRoll[wh.SkillTag]; !seen {
+			order = append(order, wh.SkillTag)
+			bestRoll[wh.SkillTag] = wh.BestRoll
+			continue
+		}
+		if wh.BestRoll > bestRoll[wh.SkillTag] {
+			bestRoll[wh.SkillTag] = wh.BestRoll
+		}
+	}
+
+	cands := make([]progression.Candidate, 0, len(order)+1)
+	for _, skill := range order {
+		// Stat stays empty, meaning "the skill's primary". That is EQUIVALENT
+		// to the explicit AttackerStat: skills.GetSkillPrimaryStat(...) the
+		// pre-U10b-1 code passed, because ApplyProgression only pays a separate
+		// stat roll when an ordinary event names a stat DIFFERENT from the
+		// skill's primary. It is also safer: a populated Stat that DID differ
+		// would silently double-roll, which is the block/defy shape that
+		// U10b-1 Task 4 had to fix elsewhere.
+		cands = append(cands, progression.Candidate{
+			Skill: skill,
+			Roll:  bestRoll[skill],
+			Level: c.GetSkillLevel(skills.SkillTag(skill)),
+		})
+	}
+	return cands, clean
+}
+
+// processDefenderProgression fires ONE skill-and-stat progression award for the
+// defender per melee round: the defence that ROLLED BEST across the round's
+// swings, at full weight if that defence won and at
+// Balance.ProgressionFailureFraction if it lost.
+//
+// U10b-1 Task 9 changed both halves of that sentence. Before it this looped
+// combat.AwardDefenceProgression once per defence TYPE that had WON -- keyed on
+// AttackResult.SwingEvents' DefenseUsed, which sendDefenseMessages stamps only
+// on a defensive win -- so a round in which every defence lost trained nothing
+// at all, and a defender with dodge, parry and block took up to three rolls
+// where a bare-handed one took one. The firing convention is now Best-of: one
+// resolved action, one event, for the single highest-rolling candidate.
+//
+// The REDISTRIBUTION is deliberate and is not a uniform gain. A defender with
+// one defence gains (a lost round now trains at the fraction). A shield user
+// loses: parry and block both train weapon-combat, so a round that quoted both
+// used to be able to take two weapon-combat rolls and now takes one.
+//
+// An UNCONTESTED round awards nothing. runBestOfAllDefense leaves the defence
+// name empty when the defender had no defence available, the swing loop appends
+// no SwingDefence for it, and BestOf on an empty slice reports false.
+//
+// The de-duplication that used to be this function's only job beyond
+// AwardDefenceProgression is now BestOf's: a defender who dodges four swings
+// still gets one dodge award, because four dodge candidates collapse to the one
+// that rolled highest.
+//
+// Quell and defy still cannot reach this function -- neither is in melee's
+// defence set -- but AwardDefenceProgression covers both, so wiring either into
+// melee stays a row in DefenceSetFor and nothing else.
+func processDefenderProgression(c *characters.Character, userId int, result combat.AttackResult) {
+	best, ok := bestSwingDefence(c, result.SwingDefences)
+	if !ok {
+		return
+	}
+	combat.AwardDefenceProgression(c, userId, string(best.Defence), best.Won)
+}
+
+// bestSwingDefence picks the ONE swing defence that earns the round's defender
+// award, and reports false when there is nothing to award.
+//
+// The choice is DELEGATED to progression.BestOf rather than reimplemented here:
+// that function is the arc's single definition of "which candidate earns the
+// event", down to the tiebreaks (highest roll, then highest level, then slice
+// order), and a second copy would drift from it the first time the rule
+// changed.
+//
+// Three things are worth stating about the mapping.
+//
+// The Roll handed to BestOf is the defence's ACTUAL contest roll, already made
+// during the swing, not a fresh characters.CandidateFor roll. Re-rolling would
+// add a second source of randomness on top of the one that already decided the
+// swing.
+//
+// These rolls do NOT all share one scale, and the comparison does not need them
+// to. contest.Run rolls every defence with dice.StdDevFor(atkScore), but
+// atkScore is recomputed PER SWING (combat.go, calcAttackScore) and subtracts
+// ws.penalty, which differs per weapon -- so a dual-wielder's mainhand and
+// offhand swings roll their defences with different spreads. Two more sources
+// drift within a round: a defence's own governing-skill addend is dropped when
+// its immutable quote stops being affordable as stamina drains
+// (includeSkill in runBestOfAllDefense), and the prone/clinch/grounded
+// penalties are per-defence. What survives all of that is the only property
+// this selection needs: every roll is centred on its OWN defence's score, so no
+// defence is systematically favoured by the choice of scale.
+//
+// The Candidates built here are SELECTION-ONLY. None of them reaches
+// ApplyProgression -- BestOf's winner is thrown away except for the index it
+// identifies, and the award goes out through combat.AwardDefenceProgression,
+// which re-derives skill and stat from the defence type. That is why populating
+// Stat here is safe: it sharpens the by-value recovery below without incurring
+// the double stat roll characters.CandidateFor warns a caller about. Handing
+// one of these to AwardResolved instead WOULD incur it.
+//
+// The winner is recovered by VALUE rather than by index because BestOf returns
+// the Candidate, not its position. That is sound here: each defence type
+// produces a distinct (Skill, Stat) pair -- dodge is unarmed-combat/dexterity,
+// parry weapon-combat/dexterity, block weapon-combat/strength -- so two
+// candidates can only compare equal when they name the same defence, and the
+// walk below takes the first match in the same slice order BestOf's full-tie
+// rule uses.
+func bestSwingDefence(c *characters.Character, quoted []combat.SwingDefence) (combat.SwingDefence, bool) {
+	if c == nil || len(quoted) == 0 {
+		return combat.SwingDefence{}, false
+	}
+
+	cands := make([]progression.Candidate, 0, len(quoted))
+	for _, q := range quoted {
+		skill, stat := combat.DefenceSkillAndStat(string(q.Defence))
+		cands = append(cands, progression.Candidate{
+			Skill: skill,
+			Stat:  stat,
+			Roll:  q.Roll,
+			Level: c.GetSkillLevel(skills.SkillTag(skill)),
+		})
+	}
+
+	winner, ok := progression.BestOf(cands)
+	if !ok {
+		return combat.SwingDefence{}, false
+	}
+	for i, cand := range cands {
+		if cand == winner {
+			return quoted[i], true
+		}
+	}
+	return combat.SwingDefence{}, false
 }
 
 // defenceTypesUsed returns the set of defences that registered this round, in
@@ -348,8 +610,9 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		}
 
 		resolveRoom := rooms.LoadRoom(user.Character.RoomId)
+		castLanded := false
 		if resolveRoom != nil {
-			resolveSpell(user, cs, spellData, resolveRoom)
+			castLanded = resolveSpell(user, cs, spellData, resolveRoom)
 		}
 		user.Character.TrackSpellCast(cs.SpellId)
 		// Fire progression for the correct skill based on spell school.
@@ -374,15 +637,25 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		}
 
 		if spellBonus > 0 {
-			// OnSkillUseScaled already rolls the skill's primary stat --
-			// manifestation maps to charisma, spellcasting to willpower -- so an
-			// explicit OnStatUse beside it double-rolled every cast. The stat a
-			// spell trains now comes from its primarystat (Task 13).
+			// U10b-1 Task 13: ONE CAST IS ONE RESOLVED ACTION. This already
+			// fired once per cast rather than once per target; what it lacked
+			// was an outcome. It now pays full weight when ANY target's contest
+			// was won and ProgressionFailureFraction when every one of them was
+			// defended -- a caster who watched three enemies all shrug off the
+			// same spell learned something, and used to be paid as if the cast
+			// had never resolved.
+			//
+			// spellBonus is the DIFFICULTY multiplier and is a separate axis
+			// from the win/lose weight. It still scales the whole award, and
+			// the self-cast reduction inside it is a WINNING multiplier below
+			// 1.0 -- which is exactly why AwardResolved takes `won` rather than
+			// inferring a loss from a small multiplier.
 			castSkill := skills.Spellcasting
 			if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 				castSkill = skills.Manifestation
 			}
-			user.Character.OnSkillUseScaled(string(castSkill), userId, spellBonus)
+			user.Character.AwardResolvedScaled(userId, castLanded, spellBonus,
+				user.Character.CandidateFor(string(castSkill)))
 
 			// primarystat overrides the skill's default stat. Manifestation
 			// already maps to charisma and spellcasting to willpower, so for
@@ -525,8 +798,9 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 	case result.CastComplete:
 		cs := result.CastingData
 		spellData := result.SpellData
+		castLanded := false
 		if resolveRoom := rooms.LoadRoom(mob.Character.RoomId); resolveRoom != nil {
-			resolveMobSpell(mob, cs, spellData, resolveRoom)
+			castLanded = resolveMobSpell(mob, cs, spellData, resolveRoom)
 		}
 		// Stage 38.3: Mob spellcasting progression — difficulty-scaled
 		spellBonus := 1.0
@@ -534,14 +808,18 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 			bal := configs.GetBalanceConfig()
 			spellBonus = 1.0 + float64(spellData.Difficulty)*float64(bal.SpellDifficultyProgressionScale)
 		}
-		// OnSkillUseScaled already rolls the skill's primary stat -- see the
-		// identical fix in handlePlayerFoldCasting above for why the explicit
-		// OnStatUse calls here double-rolled every mob cast.
+		// U10b-1 Task 13: one cast is one resolved action, paid at full weight
+		// when ANY target's contest was won and at ProgressionFailureFraction
+		// when every one was defended. See the identical conversion in
+		// handlePlayerFoldCasting above, including why the difficulty bonus
+		// goes through AwardResolvedScaled rather than being folded into the
+		// win/lose weight.
 		castSkill := skills.Spellcasting
 		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 			castSkill = skills.Manifestation
 		}
-		mob.Character.OnSkillUseScaled(string(castSkill), 0, spellBonus)
+		mob.Character.AwardResolvedScaled(0, castLanded, spellBonus,
+			mob.Character.CandidateFor(string(castSkill)))
 
 		// primarystat overrides the skill's default stat -- see the identical
 		// override in handlePlayerFoldCasting above.
@@ -668,8 +946,14 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// therefore never brought the skill to the contest (practising a skill you
 	// did not use is not practice), and contested is false when nothing in the
 	// room was targeting the fleer, so there was no contest to learn from.
+	// U10b-1 Task 18: won is "got away". blocker != nil means the flee was
+	// intercepted. Both existing gates are unchanged and neither is the firing
+	// rule -- includeSkill false means the fleer never brought the skill to the
+	// contest, and contested false means there was no contest at all, so in
+	// both cases nothing resolved and nothing is awarded.
 	if contested && includeSkill {
-		user.Character.OnSkillUse(string(skills.Skullduggery), user.UserId)
+		user.Character.AwardResolved(user.UserId, blocker == nil,
+			user.Character.CandidateFor(string(skills.Skullduggery)))
 	}
 	if blocker != nil {
 		var targetTag string
@@ -1025,4 +1309,48 @@ func handlePartyAutoAttack(mob *mobs.Mob, defUser *users.UserRecord) {
 			}
 		}
 	}
+}
+
+// surpriseCandidate builds the skullduggery candidate a landed surprise attack
+// contributes to the round's attacker contest, or reports false.
+//
+// U10d gave the ambush its own award beside the weapon one, which under the
+// Best-of convention would be a second event for a single resolved action. It
+// now competes in the SAME contest: an ambush that rolled better than the blade
+// trains skullduggery, otherwise the blade takes it.
+//
+// Gated on CleanHit, not merely on WasSurpriseAttack. An ambush that was seen
+// and answered is not an ambush that worked, and skullduggery here means "the
+// approach succeeded", not "the approach was attempted". This is the one place
+// the round's candidate set is narrower on a loss than on a win, and it is why
+// a fully-defended surprise round still trains the weapon skill at the failure
+// fraction rather than training skullduggery.
+//
+// ⚠️ IT IS ALSO OUT-DRAWN BY CONSTRUCTION, which matters more than the scale
+// caveat below and was missing from an earlier draft. A weapon candidate's roll
+// is the MAX across that weapon's swings (1 to 4), while this is a single draw.
+// At equal scores that order statistic alone gives the weapon roughly 65% at
+// two swings and 80% at four. Measured against the scale effects together,
+// skullduggery needs to sit about four skill levels above the combat skill to
+// reach a coin flip. A dedicated ambusher clears that; a fighter who happened to
+// open from stealth does not, which is roughly the intended shape -- but it is a
+// property of the arithmetic rather than a decision anyone made.
+//
+// ⚠️ ITS ROLL IS SYNTHESISED, and it is the only one in the set that is.
+// Skullduggery is never rolled during a surprise attack -- crit_damage.go reads
+// it as a LEVEL, not a contest -- so there is no roll that already happened to
+// carry. characters.CandidateFor rolls dice.RollStat(dexterity +
+// skullduggeryLevel*SkillWeight), which is the same SHAPE as an attack roll and
+// shares dexterity with the melee weapon skills, but NOT the same scale: a real
+// attack score also carries weapon, position, encumbrance and third-party
+// modifiers that a bare stat-plus-skill roll does not. So the comparison is
+// approximate, and which side it favours depends on how those modifiers happen
+// to sit. Recorded as an open item for U10b-1b alongside the melee/channel
+// fumble divergence; do not read this function as evidence the two rolls are
+// commensurable.
+func surpriseCandidate(c *characters.Character, result combat.AttackResult) (progression.Candidate, bool) {
+	if c == nil || !result.WasSurpriseAttack || !result.CleanHit {
+		return progression.Candidate{}, false
+	}
+	return c.CandidateFor(string(skills.Skullduggery)), true
 }

@@ -487,7 +487,30 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 		Zone:         mob.Character.Zone,
 	}
 
-	if util.Rand(100) < chance {
+	// U10b-1 Task 17: awarded above the branch, so a FAILED mob craft trains at
+	// ProgressionFailureFraction instead of nothing. Ingredients are consumed
+	// either way (see the persistence note below), so a failure already cost
+	// the crafter something and taught them nothing.
+	//
+	// The difficulty bonus applies here too, matching every other craft site.
+	//
+	// This path used bare OnSkillUse and had NEVER scaled by recipe difficulty,
+	// while the other four sites use 1 + SkillMinimum *
+	// CraftDifficultyProgressionScale. A first pass at this task left the
+	// divergence alone on the grounds that closing it was "a rate change
+	// wearing a firing-convention change's clothes". That was wrong: the
+	// difficulty bonus is part of the AWARD, not the resolution, so an award
+	// that drops a multiplier every sibling applies is a firing-rule
+	// inconsistency -- which is exactly what this slice is for. The resolution
+	// itself (crafting.CalcSuccessChance) is untouched.
+	//
+	// ⚠️ RATE CHANGE for shopkeeper crafters: their progression now scales with
+	// recipe SkillMinimum where it never did. The re-solve must price it.
+	craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
+	craftWon := util.Rand(100) < chance
+	mob.Character.AwardResolvedScaled(0, craftWon, craftBonus, mob.Character.CandidateFor(recipe.Skill))
+
+	if craftWon {
 		result.Success = true
 		if recipe.Output.ItemId > 0 {
 			// All crafts land in shop stock — including gear-upgrade
@@ -502,7 +525,6 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 				shopInv.AddStockAtRound(recipe.Output.ItemId, 1, round)
 			}
 		}
-		mob.Character.OnSkillUse(recipe.Skill, 0)
 	}
 
 	// Persist shop state after any craft attempt (success or failure both
@@ -536,14 +558,21 @@ func executeCraftLegacy(mob *Mob, recipe *crafting.RecipeSpec) *CraftResult {
 	remaining, _ := crafting.ConsumeIngredients(backpack, []items.Item{}, recipe)
 	mob.Character.Items = remaining
 
-	if util.Rand(100) < chance {
+	// U10b-1 Task 17: above the branch, win or lose, and scaled by recipe
+	// difficulty like every other craft site. See the note in executeCraft
+	// above. Ingredients are consumed regardless of success (just above), so a
+	// failed craft already cost the crafter materials.
+	craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
+	craftWon := util.Rand(100) < chance
+	mob.Character.AwardResolvedScaled(0, craftWon, craftBonus, mob.Character.CandidateFor(recipe.Skill))
+
+	if craftWon {
 		result.Success = true
 		if recipe.Output.ItemId > 0 {
 			for i := 0; i < recipe.Output.Quantity; i++ {
 				mob.Character.Shop.StockItem(recipe.Output.ItemId)
 			}
 		}
-		mob.Character.OnSkillUse(recipe.Skill, 0)
 	}
 
 	return result

@@ -271,7 +271,17 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		user.Character.OnRegenTick(characters.PoolHealth,
 			[]string{"vitality", "willpower"}, user.UserId)
 		user.Character.OnRegenTick(characters.PoolStamina,
-			[]string{"strength", "vitality"}, user.UserId)
+			// U10b-1 Task 22: STRENGTH ONLY. Vitality was dropped from the
+			// stamina row because health regen already trains it, so vitality
+			// was drawing from two pools while strength drew from one -- and
+			// strength lost its attack-side faucet when emitAttackerStatGain's
+			// bare rolls were deleted this task.
+			//
+			// Owner ruling 2026-08-26. Sustaining exertion is what strength
+			// IS, so the stamina pool is the honest home for it; bolting a
+			// second roll onto the swing was the alternative and would have
+			// re-created the defect the deletion removed.
+			[]string{"strength"}, user.UserId)
 		user.Character.OnRegenTick(characters.PoolConviction,
 			[]string{"willpower", "charisma"}, user.UserId)
 
@@ -361,7 +371,17 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		mob.Character.OnRegenTick(characters.PoolHealth,
 			[]string{"vitality", "willpower"}, 0)
 		mob.Character.OnRegenTick(characters.PoolStamina,
-			[]string{"strength", "vitality"}, 0)
+			// U10b-1 Task 22: STRENGTH ONLY. Vitality was dropped from the
+			// stamina row because health regen already trains it, so vitality
+			// was drawing from two pools while strength drew from one -- and
+			// strength lost its attack-side faucet when emitAttackerStatGain's
+			// bare rolls were deleted this task.
+			//
+			// Owner ruling 2026-08-26. Sustaining exertion is what strength
+			// IS, so the stamina pool is the honest home for it; bolting a
+			// second roll onto the swing was the alternative and would have
+			// re-created the defect the deletion removed.
+			[]string{"strength"}, 0)
 		mob.Character.OnRegenTick(characters.PoolConviction,
 			[]string{"willpower", "charisma"}, 0)
 

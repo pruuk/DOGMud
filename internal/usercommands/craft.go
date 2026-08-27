@@ -138,8 +138,18 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// (NewRound_MobRoundTick.go), and the mob immediate path
 		// (mobcommands/craft.go). This one was missed, so instant recipes gave
 		// players no crafting progression while mobs got it.
+		// U10b-1 Task 16. won is unconditionally TRUE here, and that is not a
+		// shortcut: ImmediateComplete means the recipe had TimeRounds <= 0, and
+		// InitiateCraft completes those without ever calling
+		// crafting.CalcSuccessChance. An instant recipe cannot fail, so there is
+		// no loss branch to pay a fraction on. Only the two MULTI-ROUND sites
+		// roll (NewRound_UserRoundTick, NewRound_MobRoundTick).
+		//
+		// AwardResolvedScaled, not AwardResolved: the plain form drops
+		// craftBonus silently (see Task 13).
 		craftBonus := 1.0 + float64(result.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		user.Character.OnSkillUseScaled(result.SkillName, user.UserId, craftBonus)
+		user.Character.AwardResolvedScaled(user.UserId, true, craftBonus,
+			user.Character.CandidateFor(result.SkillName))
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, result.SuccessMsg))
 		return true, nil
 

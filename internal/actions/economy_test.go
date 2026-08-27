@@ -38,8 +38,9 @@ func init() {
 // It discards all messages — this is sufficient for the economy action tests
 // which only care about inventory and gold state.
 type stubActor struct {
-	char *characters.Character
-	room *rooms.Room
+	awardRecorder // records Actor.AwardResolved calls
+	char          *characters.Character
+	room          *rooms.Room
 }
 
 func newStubActor(char *characters.Character, room *rooms.Room) *stubActor {
@@ -57,8 +58,6 @@ func (a *stubActor) GetMobInstanceId() int                   { return 0 }
 func (a *stubActor) AddBuff(_ int, _ string)                 {}
 func (a *stubActor) OnSkillUse(_ string) bool                { return false }
 func (a *stubActor) OnStatUse(_ string) bool                 { return false }
-func (a *stubActor) OnCriticalSuccess(_ string)              {}
-func (a *stubActor) OnCriticalFailure(_ string)              {}
 
 // ---------------------------------------------------------------------------
 // Item constructors for equip/remove tests

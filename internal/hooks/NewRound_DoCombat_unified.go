@@ -17,7 +17,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
@@ -644,76 +643,68 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 		defChar.TrackPlayerDamage(atkUid, res.DamageToTarget)
 	}
 
-	// U9: melee builds a progression.Outcome and hands it to the seam. The
-	// FIRING CONDITIONS below are unchanged from pre-U9 -- CleanHit for the
-	// attacker's skill, the defence-used set for the defender. What changed is
-	// what the events carry. Changing when they fire is U10b.
+	// U9 made melee build a progression.Outcome and hand it to the seam, leaving
+	// the pre-U9 firing conditions alone. U10b-1 changed the firing conditions
+	// themselves: BOTH ordinary tiers now fire win or lose, and BOTH fire ONCE
+	// PER ROUND for a single Best-of winner -- the attacker's across the round's
+	// skills (Tasks 10 and 11), the defender's across its quoted defences
+	// (Task 9). The BONUS tier below still fires only on an exceptional result.
 	round := util.GetRoundCount()
 	bonuses := progression.Bonuses{
 		Doing:     float64(configs.GetBalanceConfig().CritProgressionBonus),
 		Observing: float64(configs.GetBalanceConfig().ObservedCritProgressionBonus),
 	}
 
-	// Attacker stat progression keeps its quadrant-flavoured room messages, so
-	// it stays on its own helper rather than becoming an event.
-	emitAttackerStatGain(atk, "strength", atkUid)
-	emitAttackerStatGain(atk, "dexterity", atkUid)
+	// U10b-1 Task 22 DELETED the two bare stat rolls that stood here.
+	//
+	// emitAttackerStatGain called OnStatUse directly, once for strength and
+	// once for dexterity, at FULL weight and UNCONDITIONALLY -- every round,
+	// win or lose, on top of the award below. Two consequences:
+	//
+	//   - DEXTERITY WAS ROLLED TWICE a round: once here and once as
+	//     weapon-combat's primary inside the award.
+	//   - STRENGTH trained as much on a round where every swing whiffed as on
+	//     one that landed, because nothing gated it.
+	//
+	// A stat roll IS progression, so a full-weight one that ignores the
+	// outcome is a firing-rule violation exactly like a skill roll would be.
+	// It is the same defect Task 11 deleted on the ranged side, where an
+	// explicit perception roll sat beside a ranged-combat award whose primary
+	// is perception.
+	//
+	// The mob stat-gain EMOTE survives, and is now driven by a real gain
+	// rather than by a roll of its own -- see emitMobStatGains below.
+	statsBefore := mobStatSnapshot(atkChar)
 
-	// ── Ordinary attacker events: per weapon hit, gated on CleanHit ──────
-	// Firing condition unchanged from pre-U9. ORDINARY ONLY: the defender's
-	// ordinary event is awarded once per round by processDefenderProgression
-	// below, so asking for it here as well would award it per weapon hit.
-	for _, wh := range res.WeaponHits {
-		if !wh.CleanHit {
-			continue
-		}
-		atkChar.ApplyProgression(
-			progression.OrdinaryEvents(progression.Outcome{
-				AttackerSkill: wh.SkillTag,
-				AttackerStat:  skills.GetSkillPrimaryStat(wh.SkillTag),
-			}),
-			progression.SideAttacker, atkUid, round)
-	}
-	if len(res.WeaponHits) == 0 && res.CleanHit {
-		atkChar.OnSkillUse(string(skills.UnarmedCombat), atkUid)
-	}
+	// ── The ordinary attacker event: ONE for the round, win or lose ───────
+	// U10b-1 Task 10 replaced the CleanHit gate with a scaled award; Task 11
+	// then collapsed the per-weapon loop into one Best-of across skills and
+	// folded the surprise-attack skullduggery award into the SAME contest.
+	// See processAttackerProgression for why per-weapon paid per HAND, and
+	// surpriseCandidate for the one synthesised roll.
+	//
+	// The skullduggery candidate keys on res.WasSurpriseAttack rather than
+	// atkChar.Aggro.Type because calculateCombat DEMOTES SurpriseAttack to
+	// DefaultAttack the moment it arms the opening strike, so by this phase
+	// Aggro.Type is always DefaultAttack. A condition written against
+	// Aggro.Type here would never fire and nothing would fail.
+	//
+	// ORDINARY ONLY: the defender's ordinary event is awarded once per round by
+	// processDefenderProgression below.
+	processAttackerProgression(atkChar, atkUid, *res)
 
-	// U10d: a landed surprise attack trains skullduggery, once for the round.
-	//
-	// OUTSIDE the weapon loop on purpose: the ambush is a property of the
-	// ROUND, so awarding it inside would pay it once per weapon that landed.
-	//
-	// It keys on res.WasSurpriseAttack rather than atkChar.Aggro.Type because
-	// calculateCombat DEMOTES SurpriseAttack to DefaultAttack the moment it
-	// arms the opening strike, so by this phase the attacker's Aggro.Type is
-	// always DefaultAttack. A condition written against Aggro.Type here would
-	// never fire and nothing would fail.
-	//
-	// A SECOND Outcome is structurally required: progression.Outcome carries
-	// exactly one AttackerSkill and the loop above already spent it on the
-	// combat skill.
-	//
-	// AttackerStat is deliberately empty. ApplyProgression calls
-	// OnSkillUseScaled, which already rolls the skill's primary stat, and only
-	// rolls ev.Stat separately when it names a DIFFERENT one.
-	if res.WasSurpriseAttack && res.CleanHit {
-		atkChar.ApplyProgression(
-			progression.OrdinaryEvents(progression.Outcome{
-				AttackerSkill: string(skills.Skullduggery),
-			}),
-			progression.SideAttacker, atkUid, round)
-	}
-
-	// ── Bonus tier: ONCE per round, OUTSIDE the weapon loop ─────────────
-	// Outside on purpose: the bonus tier is a property of the ROUND, not of a
-	// swing, so evaluating it inside the loop would pay it once per weapon.
+	// ── Bonus tier: ONCE per round ──────────────────────────────────────
+	// The bonus tier is a property of the ROUND, not of a swing. It used to sit
+	// outside a per-weapon loop for that reason; U10b-1 Task 11 removed the
+	// loop, so the hazard is now historical rather than structural. It is
+	// recorded because the reasoning still governs any future change here.
 	// An unarmed attacker is the worst case rather than an exempt one --
 	// collectAttackWeapons unconditionally supplies a fist for an empty main
 	// hand plus an offhand fist, so unarmed produces TWO entries and would
 	// have been double-paid. Measured 2026-08-19; an earlier draft of this
 	// comment claimed unarmed produced none, which is false. The
-	// len(WeaponHits) == 0 fallback above is therefore defensive rather than
-	// the unarmed path.
+	// len(WeaponHits) == 0 fallback that used to sit above was therefore DEAD,
+	// not defensive, and U10b-1 Task 10 deleted it.
 	//
 	// The once-per-round dedupe in ApplyProgression would have caught the
 	// duplicate anyway, but only by accident, and only for events sharing a
@@ -746,9 +737,17 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	atkChar.ApplyProgression(bonusEvs, progression.SideAttacker, atkUid, round)
 	defChar.ApplyProgression(bonusEvs, progression.SideDefender, defUid, round)
 
-	// Defender dodge/parry/block ordinary events, unchanged: once per defence
-	// type per round.
+	// Defender dodge/parry/block ordinary event: U10b-1 Task 9 collapsed this
+	// from once per WINNING defence type to ONE Best-of award per round, fired
+	// win or lose. Note defencesUsed above still feeds the BONUS tier and still
+	// means "defences that won" -- the two tiers deliberately read different
+	// records now.
 	processDefenderProgression(defChar, defUid, *res)
+
+	// Speak the mob stat-gain flavour for any stat the round's awards actually
+	// moved. Placed AFTER both awards so it sees every gain, and driven by a
+	// real change rather than by a roll of its own -- see mobStatSnapshot.
+	emitMobStatGains(atk, statsBefore)
 }
 
 // emitAttackerStatGain calls OnStatUse on the attacker and, if the stat
@@ -758,9 +757,33 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 // player attackers (matches legacy PvP/PvM behavior).
 //
 // Divergence #8: room broadcast only for mob attackers.
-func emitAttackerStatGain(atk actions.Actor, statName string, uid int) {
-	gained := atk.GetCharacter().OnStatUse(statName, uid)
-	if !gained || atk.IsPlayer() {
+// mobStatSnapshot records the trained points of the stats the mob stat-gain
+// emote can speak, so emitMobStatGains can tell an ACTUAL gain from a roll.
+//
+// U10b-1 Task 22 replaced a pair of bare OnStatUse calls with this. The emote
+// used to ride on the return value of its own redundant roll; it now rides on
+// whether the round's progression award actually moved the stat, which is both
+// truthful and one fewer roll.
+func mobStatSnapshot(c *characters.Character) map[string]int {
+	if c == nil {
+		return nil
+	}
+	snap := make(map[string]int, len(characters.MobStatGainMessages))
+	for statName := range characters.MobStatGainMessages {
+		snap[statName] = c.GetStatTraining(statName)
+	}
+	return snap
+}
+
+// emitMobStatGains speaks the room-visible flavour line for every stat that
+// actually rose this round. Mob actors only: a player gets the STATISTIC
+// INCREASED banner from the applier instead.
+//
+// Iterates the SNAPSHOT rather than MobStatGainMessages so the ordering is the
+// snapshot's and a stat added to the message map without a snapshot entry
+// cannot panic on a missing key.
+func emitMobStatGains(atk actions.Actor, before map[string]int) {
+	if before == nil || atk.IsPlayer() {
 		return
 	}
 	atkRoom := atk.GetRoom()
@@ -771,9 +794,18 @@ func emitAttackerStatGain(atk actions.Actor, statName string, uid int) {
 	if mob == nil {
 		return
 	}
-	if tmpl, ok := characters.MobStatGainMessages[statName]; ok {
-		// Mob-side stat-gain flavor text — visible mob emote.
-		atkRoom.SendText(messaging.CategoryMobEmote, fmt.Sprintf(tmpl, mobDisplayName(mob, atkRoom, 0)))
+	c := atk.GetCharacter()
+	if c == nil {
+		return
+	}
+	for statName, was := range before {
+		if c.GetStatTraining(statName) <= was {
+			continue
+		}
+		if tmpl, ok := characters.MobStatGainMessages[statName]; ok {
+			// Mob-side stat-gain flavor text: a visible mob emote.
+			atkRoom.SendText(messaging.CategoryMobEmote, fmt.Sprintf(tmpl, mobDisplayName(mob, atkRoom, 0)))
+		}
 	}
 }
 

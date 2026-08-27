@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -123,9 +124,31 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 	RecordAndWait(char, "grapple", sourceType, target.Char, targetType, result.Success, 0, util.GetRoundCount())
 
 	// Progression: unarmed-combat on executed grapple (moved from user/mob wrappers)
-	if result.Success {
-		actor.OnSkillUse(string(skills.UnarmedCombat))
-	}
+	// U10b-1 Task 18b: win OR lose. This was gated on the hit, so a special
+	// move that missed trained nothing -- the same defect a failed craft had
+	// before Task 16. The gate is now the AWARD WEIGHT rather than a
+	// precondition; a thrown move is a resolved contest either way.
+	// GRAPPLING TRAINS STRENGTH, not unarmed-combat's usual dexterity.
+	// Owner ruling 2026-08-26: a grapple is a contest of leverage and hold,
+	// which is what strength is for, and it is one of the two replacements for
+	// the attack-side strength faucet this task deleted (the other is the
+	// stamina regen tick).
+	//
+	// Expressed by naming Candidate.Stat explicitly rather than by changing
+	// the skill: the move is still unarmed-combat, it just trains a different
+	// stat. This is the same shape combat.DefenceSkillAndStat already uses for
+	// BLOCK (weapon-combat / strength) and DEFY (rhetoric / willpower), so it
+	// is an established pattern rather than a new one.
+	//
+	// ⚠️ Built by hand rather than through CandidateFor, which always uses the
+	// skill's PRIMARY stat. The Roll is unused here -- a single candidate wins
+	// its Best-of whatever it rolled -- so nothing is lost by not rolling one.
+	c := actor.GetCharacter()
+	actor.AwardResolved(result.Success, progression.Candidate{
+		Skill: string(skills.UnarmedCombat),
+		Stat:  "strength",
+		Level: c.GetSkillLevel(skills.UnarmedCombat),
+	})
 
 	return GrappleResult{
 		Cost:       cost,

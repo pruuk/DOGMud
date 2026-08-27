@@ -476,6 +476,17 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			openingStrikeThisSwing := openingStrikeLeft
 			openingStrikeLeft = false
 
+			// U10b-1 Task 11: keep this weapon's best ATTACK roll for the
+			// round's one progression award. Recorded here, before any
+			// outcome branch, because the selector must exist for a swing
+			// that missed as much as for one that landed -- the award fires
+			// win or lose and still has to name a skill. best.hitRoll is
+			// contest.Result.AttackRoll, which contest.Run populates before it
+			// looks at a single defence, so an uncontested swing has one too.
+			if j == 0 || best.hitRoll.Value > weaponHit.BestRoll {
+				weaponHit.BestRoll = best.hitRoll.Value
+			}
+
 			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit, openingStrikeThisSwing)
 
 			// Momentum builds only on clean wins and resets on deflections,
@@ -527,6 +538,27 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			swingAtkType := "unarmed"
 			if weaponHit.SkillTag == string(skills.WeaponCombat) {
 				swingAtkType = "weapon"
+			}
+
+			// U10b-1: record what the DEFENDER put up on this swing, for the
+			// round's single defender progression award.
+			//
+			// best.defenseType is contest.Result.Winner -- the entry that
+			// defended best -- and runBestOfAllDefense sets it whenever the
+			// contest ran, so it is populated on a defence that LOST. That is
+			// the whole point: the per-type loop this feeds keyed on
+			// AttackResult.DefenseUsed, which only a WINNING defence stamps, so
+			// a round in which every defence lost trained nothing.
+			//
+			// An UNCONTESTED swing (empty defence set) appends nothing. An empty
+			// defence name awards nothing downstream, and an empty entry in the
+			// Best-of could only displace a real candidate from another swing.
+			if best.defenseType != "" {
+				attackResult.SwingDefences = append(attackResult.SwingDefences, SwingDefence{
+					Defence: DefenseType(best.defenseType),
+					Roll:    best.defRoll.Value,
+					Won:     res.defenceWon(),
+				})
 			}
 
 			// Record per-swing analytics

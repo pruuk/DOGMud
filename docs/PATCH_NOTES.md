@@ -1,5 +1,51 @@
 # DOGMud Patch Notes
 
+## 2026-08-26: Learning from what goes wrong
+
+Until now most skills only improved when you succeeded. A forage that turned
+up nothing, a craft that came out wrong, a special move that missed, a search
+that found nothing: none of them taught you anything at all. That has changed.
+Failing at something now teaches you a little. Succeeding still teaches you
+more, so there is never a reason to fail on purpose, but an honest attempt is
+no longer wasted effort.
+
+There is one limit worth knowing. You have to have actually tried yourself
+against something. Searching a bare room where nothing is hidden still teaches
+you nothing, because there was nothing there to test yourself against.
+
+Searching also tells you when it comes up empty now, instead of going quiet on
+you. It says the same thing whether the room was bare or whether something was
+there and you walked past it, and that is deliberate. If the two read
+differently you could stand in a room and learn there was something hidden in it
+without ever finding it.
+
+Fighting teaches at a steadier pace now. A round used to reward you once for
+every weapon you swung and once for every way you defended yourself, which
+quietly meant that how you armed yourself mattered more to how fast you
+learned than how hard you fought. A round now teaches you once for attacking
+and once for defending, and each goes to whichever skill you did best with
+that round. Defending teaches you whether or not you turned the blow aside.
+
+One result is that fighting with a weapon in one hand and nothing in the
+other no longer trains you faster than any other way of arming yourself. It
+was the quickest way to improve for a long time, without ever looking like
+one. Everything now learns at much the same pace, and what changes is which
+skill gets the credit.
+
+Strength has moved to where it belongs. It no longer improves simply from
+swinging a weapon. It improves from grappling, from bearing a shield against
+blows, and from working your way back up after hard exertion has drained you.
+
+Spellcasters get something back as well. Being struck while holding a spell
+together now teaches you even when the spell slips away from you, where
+before only keeping hold of it counted for anything.
+
+Because so many of these change how often you learn, the difficulty of
+improving every skill and stat has been re-worked to match. The intent is
+that a determined effort at any one of them gets you along at roughly the
+same rate as before. Some will not be quite right yet. Tell us which ones
+feel wrong and we will tune them.
+
 ## 2026-08-25: Striking from hiding, remade
 
 Attacking out of hiding used to be a sure thing. It is not one any more, and

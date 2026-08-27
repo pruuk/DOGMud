@@ -463,3 +463,142 @@ the branch most likely to hide a `Base`-assignment bug. Do this one first.
       that feels dramatically out of line is worth reporting.
 - [ ] Read `help progression` as a player would and say whether it actually
       answers "how do I get better".
+
+## U10d: surprise attack redesign (2026-08-25)
+
+Surprise attack is now **one contested opening blow**, not a free multi-weapon
+volley. Stealth breaks the moment you strike. A same-room bow shot from cover
+gets its own smaller version and burns the shared special-move recovery. Bows
+were detuned hard and given a large bonus for shooting something that is not
+already fighting you.
+
+The adversarial playtest passed every mechanical check, but **four things could
+not be reached** because the fixture mob died in a single round. Every item
+below needs **a target that survives at least one full round against you**, so
+do these against something real (a North Road bandit, an Ironwind Steppes mob,
+or the Queen's escort), never against a training dummy.
+
+- [ ] **Get an opening strike DEFENDED.** Ambush something skilled enough to
+      turn it. The line should name which defence stopped you (dodge, parry,
+      block, quell or defy) and you should still do reduced damage rather
+      than nothing. Neither half of that has ever been seen in play.
+- [ ] **Try to ambush while the recovery is still spent** (ambush, then
+      immediately try again, in melee and with a bow). You should get a clear
+      refusal sentence in both cases. That copy has never rendered on screen.
+- [ ] **Does an ambush actually feel harder-hitting?** 🔴 This is the known
+      open finding. Against a one-round target, an ordinary shot and an ambush
+      shot print the **same damage words**, so the deliberate ordering of the
+      three new multipliers is invisible. Against a target that survives, the
+      wording should separate. Tell me whether it does. If it still does not,
+      the fix is the damage vocabulary, not the multipliers.
+- [ ] **Shoot something that is not fighting anyone, then shoot something
+      already swinging at you.** The first should feel clearly better. This is
+      the whole compensation for the bow detune, so if it is not felt, archery
+      is now simply worse than it was.
+- [ ] **Fire a bow you already owned before this arc.** Your saved bows are
+      rescaled on login (backpack, component bag, bandolier, pet inventory,
+      worn gear and the account bank). Confirm an old bow still feels like a
+      bow and not like a club. Bows sitting in shops, containers or on mob
+      instances were deliberately left alone and will age out, so a
+      briefly overpowered shop bow is expected, not a bug.
+- [ ] A successful melee ambush sends **no** reveal sentence, by design. The
+      marker on the blow and your hidden status quietly dropping are the whole
+      feedback. Only the refusal path speaks. Say whether that reads as
+      intentional or as a missing message.
+
+## U10b-1: the progression firing convention (2026-08-26)
+
+One resolved action now produces **one** progression event, for the single
+highest-rolling candidate skill, at full weight when you win and a fraction of
+it when you lose. Before this, failing at something usually taught you nothing
+at all, and a combat round paid once per weapon swung plus once per defence won.
+
+The adversarial playtest confirmed the mechanism fires and fires in the shape
+the model predicts, but it reached only 3 of 8 goals in its half hour. **The
+PACE is unverified by play** and the two items below are the ones that matter.
+Both are things I could reason about from the code but could not measure.
+
+### The one thing to keep in mind while you judge all of this
+
+The re-solved multipliers assume the owner's **10% combat engagement** ruling:
+that a player fighting hard still only spends about a tenth of an hour actually
+in combat rounds. That ruling is what makes the numbers come out right. Anything
+that lets a character accrue progression **while unattended** runs at 100%
+engagement instead, which is roughly **ten times** the modelled rate. Neither
+check below is really about the firing rule. Both are about whether that
+engagement assumption still holds.
+
+- [ ] **EXPLOIT 1, the likelier of the two: park and be hit.** Find something
+      that can hurt you but plainly cannot kill you, let it attack you, and then
+      **do nothing at all** for a good fifteen minutes. Do not fight back beyond
+      whatever swings happen on their own. Come back and count what improved.
+
+      Why it is a risk: defending now earns an award **every round, win or
+      lose**, where before it only paid when you actually turned the blow
+      aside. For a character with one defence that is about a **22% increase**;
+      for a shield user who used to win with parry and block in the same round
+      it is actually a cut. Defending does cost stamina, so this is not free,
+      **but running out does not stop it**: an unaffordable defence still gets
+      rolled, just without its skill contribution, and the progression award is
+      not gated on affordability at all.
+
+      It also compounds in a way no single faucet shows. While you sit there
+      exhausted and wounded, the stamina regen tick is training **strength**
+      (new in this slice) and the health regen tick is training **vitality**, on
+      top of the defence skill and dexterity you are already earning. Four
+      things at once, for no attention.
+
+      What I need from you: roughly how many advancement banners in fifteen
+      unattended minutes, and which stats and skills they were. If that is
+      comparable to fifteen minutes of real fighting, the engagement assumption
+      is broken and the defence side needs a throttle rather than a retune.
+
+- [ ] **EXPLOIT 2: grind `search` in a room with a secret exit.** Go somewhere
+      you already know has a secret exit, and `search` over and over for ten
+      minutes. Then spend ten minutes foraging for comparison and tell me which
+      moved `search` faster.
+
+      Why it is a risk, and this one is specific: the award is gated on having
+      rolled against *something*, which is what stops searching a bare corridor
+      from paying. That gate works and is pinned by test. But of the six things
+      a search can roll against, hidden containers and hidden nouns are
+      **skipped once you have discovered them**, while **secret exits are
+      not**. So a room with a secret exit is a candidate that never gets used
+      up, and `search` is on a two-round cooldown, about **450 uses an hour**.
+
+      That matters because the multiplier for `search` was solved on the
+      explicit assumption that the `search` command "cannot be ground" and that
+      foraging's six-round cooldown sets the real ceiling, about 150 an hour. If
+      a secret-exit room can be ground, that assumption is wrong by roughly
+      three times.
+
+      Mitigating, and worth saying plainly: this slice made this **better**, not
+      worse. A resolved search used to pay a full event whether or not it found
+      anything; a fruitless one now pays only the failure fraction. So if this
+      is a problem now, it was a bigger problem before.
+
+- [ ] **Does failing at something feel like it counts?** This is the headline of
+      the whole slice. Fail at things on purpose: forage somewhere poor, botch a
+      craft, throw a special move that misses. Then tell me whether the game
+      feels like it is rewarding the attempt or whether failure still feels
+      wasted. There is no message for this by design, so it is purely a feel
+      question.
+
+- [ ] **A search that finds nothing now says so.** It should print "You find
+      nothing of interest." Confirm it reads the same whether the room was
+      genuinely bare or whether you walked past something. That is deliberate:
+      if the two differed you could stand in a room and learn a secret was
+      there without ever finding it. If you can tell the two apart, that is a
+      bug and an important one.
+
+- [ ] **Weapon skills by build.** Fight a stretch with a weapon and an empty
+      hand, then with a two-hander or a weapon and shield. Total progression
+      should feel about the same either way; what changes is which skill gets
+      the credit. Before this slice the empty hand quietly out-trained
+      everything, so if it still plainly does, the correction did not land.
+
+- [ ] **Strength.** Grapple things, take blows on a shield, and let your stamina
+      run down and recover. Strength no longer improves from simply swinging, so
+      if you fight normally for a long stretch and strength never moves, tell me
+      which of those three you were actually doing.
+

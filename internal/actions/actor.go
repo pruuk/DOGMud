@@ -3,6 +3,7 @@ package actions
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -53,6 +54,18 @@ type Actor interface {
 
 	// OnStatUse triggers stat progression.
 	OnStatUse(statName string) bool
+
+	// AwardResolved fires progression for ONE resolved action, under U10b-1's
+	// Best-of rule: every candidate arrives already rolled, the single
+	// highest-rolling one earns the event, and that event is paid at full
+	// weight when won is true or at Balance.ProgressionFailureFraction when it
+	// is false. A losing action still trains -- less. Build candidates with
+	// Character.CandidateFor rather than filling the struct by hand.
+	//
+	// Like OnSkillUse, the interface deliberately takes no userId: UserActor
+	// passes a.User.UserId (so the SkillUsed quest event still fires) and
+	// MobActor passes 0.
+	AwardResolved(won bool, cands ...progression.Candidate)
 }
 
 // FunctionExporter mirrors usercommands.FunctionExporter — a decoupling

@@ -324,12 +324,40 @@ func (c *Character) TrackStatUse(statName string) {
 // OnStatUse is called whenever a character uses a stat in gameplay.
 // Tracks usage and, if progression is enabled, rolls for stat advancement.
 // Returns true if the stat actually increased.
+//
+// This is OnStatUseScaled at a full-weight multiplier of 1.0, exactly as
+// OnSkillUse is OnSkillUseScaled at 1.0. Keep it a delegation: a parallel copy
+// of the body is free to drift from the scaled form, and the whole point of the
+// scaled form is that every stat progression in the game passes through one
+// expression.
 func (c *Character) OnStatUse(statName string, userId int) bool {
+	return c.OnStatUseScaled(statName, userId, 1.0)
+}
+
+// OnStatUseScaled is like OnStatUse but accepts a bonus multiplier that scales
+// the progression chance, mirroring OnSkillUseScaled on the skill side.
+//
+// It exists for the U10b-1 Best-of firing convention: one resolved action fires
+// one progression event for the single highest-rolling candidate, at full weight
+// when that action WON and at Balance.ProgressionFailureFraction (0.35) when it
+// LOST. Awarding a fraction needs a scaled entry point, and the skill side
+// already had one while the stat side did not -- closing that asymmetry is all
+// this function is.
+//
+// No production call site passes anything but 1.0 yet; the sites that award a
+// losing fraction are converted in the later tasks of U10b-1. Until then this is
+// behaviourally identical to the old OnStatUse.
+//
+// A multiplier of 0.0 progresses nothing: CheckStatProgression returns false as
+// soon as ProgressionChanceForStat yields a chance <= 0, before any roll. The
+// use counter is still tracked either way -- it is telemetry (U10b-0 Phase C)
+// and no longer feeds the curve, so recording a use costs the character nothing.
+func (c *Character) OnStatUseScaled(statName string, userId int, bonusMultiplier float64) bool {
 	c.TrackStatUse(statName)
-	mudlog.Debug("Progression", "event", "stat_use", "stat", statName, "character", c.Name)
+	mudlog.Debug("Progression", "event", "stat_use", "stat", statName, "bonus", fmt.Sprintf("%.2f", bonusMultiplier), "character", c.Name)
 
 	if configs.GetGamePlayConfig().UseSkillProgression {
-		return c.CheckStatProgression(statName, userId, 1.0)
+		return c.CheckStatProgression(statName, userId, bonusMultiplier)
 	}
 	return false
 }
@@ -339,19 +367,34 @@ func (c *Character) OnStatUse(statName string, userId int) bool {
 // Also auto-tracks and progresses the skill's primary governing stat.
 // Returns true if the skill actually increased.
 func (c *Character) OnSkillUse(skillName string, userId int) bool {
-	return c.OnSkillUseScaled(skillName, userId, 1.0)
+	return c.OnSkillUseScaled(skillName, userId, 1.0, false)
 }
 
 // OnSkillUseScaled is like OnSkillUse but accepts a bonus multiplier that
 // scales the progression chance. Used for difficulty-scaled progression
 // where harder spells/crafts reward proportionally more skill growth.
-func (c *Character) OnSkillUseScaled(skillName string, userId int, bonusMultiplier float64) bool {
+//
+// isLoss says the action was RESOLVED and LOST, so this call is U10b-1's
+// consolation award rather than an award for succeeding. It is a SEPARATE
+// argument from bonusMultiplier and must not be inferred from it: the two
+// drive different things below (drift scales by the multiplier, the quest
+// event gates on the loss) and a winning action can legitimately carry a
+// sub-1.0 multiplier. See progression.Event.Lost.
+func (c *Character) OnSkillUseScaled(skillName string, userId int, bonusMultiplier float64, isLoss bool) bool {
 	c.TrackSkillUse(skillName)
-	mudlog.Debug("Progression", "event", "skill_use", "skill", skillName, "bonus", fmt.Sprintf("%.2f", bonusMultiplier), "character", c.Name)
+	mudlog.Debug("Progression", "event", "skill_use", "skill", skillName, "bonus", fmt.Sprintf("%.2f", bonusMultiplier), "lost", isLoss, "character", c.Name)
 
 	// Mutation-graph drift: cluster-relevant skill use nudges affinity.
+	//
+	// SCALED by bonusMultiplier. Under U10b-1's Best-of firing convention a
+	// resolved action awards on a loss too, which roughly DOUBLES how often
+	// this function is called. Mutations are a major character-identity system
+	// tuned for sustained play rather than one fight, so a flat per-call grant
+	// would make them arrive roughly twice as fast for no design reason.
+	// Scaling by the multiplier keeps drift proportional to what the action
+	// was actually worth.
 	if clusters := mutations.ClustersForSkill(skillName); clusters != nil {
-		amt := float64(configs.GetBalanceConfig().MutationAffinityPerSkillUse)
+		amt := float64(configs.GetBalanceConfig().MutationAffinityPerSkillUse) * bonusMultiplier
 		for _, cl := range clusters {
 			c.AddClusterAffinity(cl, amt)
 		}
@@ -362,13 +405,25 @@ func (c *Character) OnSkillUseScaled(skillName string, userId int, bonusMultipli
 		gained = c.CheckSkillProgression(skillName, userId, bonusMultiplier)
 	}
 
-	// Auto-track and progress the skill's primary governing stat
+	// Auto-track and progress the skill's primary governing stat, at the SAME
+	// weight as the skill roll itself. A half-weight action should not buy a
+	// full-weight stat roll.
 	if primaryStat := skills.GetSkillPrimaryStat(skillName); primaryStat != "" {
-		c.OnStatUse(primaryStat, userId)
+		c.OnStatUseScaled(primaryStat, userId, bonusMultiplier)
 	}
 
-	// Emit SkillUsed event for quest engine and other listeners
-	if userId > 0 {
+	// Emit SkillUsed event for quest engine and other listeners.
+	//
+	// GATED ON THE LOSS, never on bonusMultiplier < 1.0. Awarding progression
+	// on losses would otherwise turn every "use this skill N times" quest into
+	// "fail at it N times". But a sub-1.0 multiplier does NOT mean a loss: a
+	// self-buff cast is a WINNING action arriving at
+	// SelfCastProgressionMultiplier (ships 0.5), and gating on the multiplier
+	// would silently stop self-buff casts from ticking skill_use quests, with
+	// no error message anywhere. That is why Lost is its own field rather than
+	// something inferred from Multiplier. See
+	// TestOnSkillUseScaled_WinningSubOneMultiplierStillEmitsSkillUsed.
+	if userId > 0 && !isLoss {
 		events.AddToQueue(events.SkillUsed{
 			UserId: userId,
 			Skill:  skills.SkillTag(skillName),
@@ -401,20 +456,6 @@ func (c *Character) DriftFromCombat(cluster string, round uint64) {
 	}
 	c.combatDriftRound[cluster] = round
 	c.AddClusterAffinity(cluster, float64(configs.GetBalanceConfig().MutationAffinityPerCombatEvent))
-}
-
-// OnFirstMobKill is called when a player kills a mob type for the first time.
-// Triggers a bonus combat skill progression check.
-func (c *Character) OnFirstMobKill(userId int) {
-	mudlog.Debug("Progression", "event", "first_mob_kill", "character", c.Name)
-
-	if configs.GetGamePlayConfig().UseSkillProgression {
-		bonus := float64(configs.GetBalanceConfig().CritProgressionBonus)
-		if c.CheckSkillProgression("combat", userId, bonus) {
-			msg := `<ansi fg="magenta">***</ansi> Defeating a new foe hones your combat instincts! <ansi fg="magenta">***</ansi>`
-			events.AddToQueue(events.Message{UserId: userId, Text: msg + "\n"})
-		}
-	}
 }
 
 // OnCritReceived is called when a character takes a critical hit.
@@ -624,8 +665,14 @@ func (c *Character) regenTickChance(p Pool) float64 {
 // Resource→stat mappings:
 //
 //	Health    → vitality, willpower
-//	Stamina   → strength, vitality
+//	Stamina   → strength                (U10b-1 Task 22: was strength, vitality)
 //	Conviction→ willpower, charisma
+//
+// Stamina is STRENGTH ONLY as of U10b-1 Task 22. Vitality already draws from
+// health regen, so it was fed by two pools while strength was fed by one -- and
+// strength lost its attack-side faucet when that task deleted
+// emitAttackerStatGain's unconditional rolls. Sustaining exertion is what
+// strength is.
 func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 	chance := c.regenTickChance(p)
 	if chance <= 0 {
@@ -841,13 +888,37 @@ func (c *Character) ApplyProgression(events []progression.Event, side progressio
 		}
 
 		if ev.Skill != "" {
-			c.OnSkillUseScaled(ev.Skill, userId, ev.Multiplier)
+			c.OnSkillUseScaled(ev.Skill, userId, ev.Multiplier, ev.Lost)
 		}
 		// OnSkillUseScaled already rolled the skill's primary stat. Roll again
-		// only when the event names a DIFFERENT stat, which is the spell
-		// primarystat override and the crit-received toughening stat.
+		// only when this ORDINARY event names a DIFFERENT stat -- the spell
+		// primarystat override, and the two defences whose awarded stat is not
+		// their skill's primary. Per DefenceSkillAndStat
+		// (internal/combat/defence_multiplier.go) against
+		// skills.SkillPrimaryStats, those two are live in production today:
+		//
+		//	block  weapon-combat / strength  vs primary dexterity -- fires
+		//	defy   rhetoric      / willpower vs primary charisma  -- fires
+		//
+		// (dodge, parry and quell each award their own skill's primary stat,
+		// so they never reach this line.)
+		//
+		// Scaled by the event multiplier, for the same reason the primary-stat
+		// roll inside OnSkillUseScaled is: once a resolved action can award on
+		// a LOSS, an unscaled roll here would mean a lost block pays a REDUCED
+		// weapon-combat roll beside a FULL-WEIGHT strength roll.
+		//
+		// ev.Lost is deliberately NOT threaded through. OnStatUseScaled emits
+		// no SkillUsed event and grants no mutation cluster drift, so the
+		// multiplier is the only thing that carries any weight here and a
+		// fourth parameter would have nothing to gate. That is a decision, not
+		// an oversight.
+		//
+		// This is the ordinary-event path only. The crit-received toughening
+		// stat travels on a BONUS event, which takes the ev.Class.IsBonus()
+		// branch above and never arrives here.
 		if ev.Stat != "" && ev.Stat != skills.GetSkillPrimaryStat(ev.Skill) {
-			c.OnStatUse(ev.Stat, userId)
+			c.OnStatUseScaled(ev.Stat, userId, ev.Multiplier)
 		}
 	}
 }

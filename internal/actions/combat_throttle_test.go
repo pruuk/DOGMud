@@ -394,8 +394,16 @@ func TestThrottle_CastInterrupt_OverwhelmingCaster(t *testing.T) {
 
 	endProgression := targetMob.Character.GetSkillUseCount(string(skills.Spellcasting))
 
-	assert.Equal(t, heldCount, endProgression-startProgression,
-		"spellcasting progression should fire exactly once per held contest (success-only, no event on interrupt)")
+	// U10b-1 Task 12: once per RESOLVED contest, win or lose -- not once per
+	// HELD contest. This assertion used to read `heldCount` and the old rule it
+	// pinned was success-only.
+	//
+	// It was also VACUOUS under the new rule as written: this fixture's caster
+	// is deliberately overwhelming, so interruptCount is normally 0 and
+	// heldCount equals the total. Summing both makes the assertion say what it
+	// means regardless of how the contests fall.
+	assert.Equal(t, heldCount+interruptCount, endProgression-startProgression,
+		"spellcasting progression fires once per resolved concentration contest, on an interrupt as well as a hold")
 	assert.GreaterOrEqual(t, heldCount, 1,
 		"an overwhelming caster should hold at least once across 20 landed hits (odds of zero holds is ~0.02^20)")
 	assert.Less(t, interruptCount, heldCount,

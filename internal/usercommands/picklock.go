@@ -150,7 +150,14 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">***</ansi> <ansi fg="green-bold">You can automatically pick this lock any time as long as you carry <ansi fg="item">lockpicks</ansi>!</ansi> <ansi fg="yellow-bold">***</ansi>`)
 		user.SendText(messaging.CategorySystem, ``)
 
-		user.Character.CheckSkillProgression(string(skills.Skullduggery), user.UserId, 1.0)
+		// U10b-1 Task 18: WIN-ONLY, deliberately. Picking a lock is a pin
+		// minigame rather than a contest -- there is no opposing score and no
+		// losing roll to pay a fraction on; a failed pin simply is not this
+		// branch. Also converted off the direct CheckSkillProgression call,
+		// which bypassed every entry point and so never tracked the use,
+		// granted mutation drift, or emitted SkillUsed.
+		user.Character.AwardResolved(user.UserId, true,
+			user.Character.CandidateFor(string(skills.Skullduggery)))
 
 		room.PlaySound(`change`, `other`)
 
@@ -259,7 +266,14 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">***</ansi> <ansi fg="green-bold">You can automatically pick this lock any time as long as you carry <ansi fg="item">lockpicks</ansi>!</ansi> <ansi fg="yellow-bold">***</ansi>`)
 		user.SendText(messaging.CategorySystem, ``)
 
-		user.Character.CheckSkillProgression(string(skills.Skullduggery), user.UserId, 1.0)
+		// U10b-1 Task 18: WIN-ONLY, deliberately. Picking a lock is a pin
+		// minigame rather than a contest -- there is no opposing score and no
+		// losing roll to pay a fraction on; a failed pin simply is not this
+		// branch. Also converted off the direct CheckSkillProgression call,
+		// which bypassed every entry point and so never tracked the use,
+		// granted mutation drift, or emitted SkillUsed.
+		user.Character.AwardResolved(user.UserId, true,
+			user.Character.CandidateFor(string(skills.Skullduggery)))
 
 		room.PlaySound(`change`, `other`)
 

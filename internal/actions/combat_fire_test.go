@@ -722,3 +722,63 @@ func TestFire_DarkRoomIsRejectedAsLightingNotAsMissingTarget(t *testing.T) {
 	assert.True(t, char.Equipment.Weapon.Loaded)
 	assert.Nil(t, char.Aggro)
 }
+
+// U10b-1 Task 11: the ORDINARY shot's progression award.
+//
+// TestFireSurprise_LandedShotTrainsSkullduggery covers exactly one shape --
+// surprise plus hit -- and nothing covered the path every other shot takes.
+// These two pin it: one award per resolved shot, naming ranged-combat, with the
+// weight following the contest outcome. The missed case is the one that matters
+// most, because "a resolved action always pays something" is the whole firing
+// convention and a miss used to pay nothing at all.
+func TestFire_AnOrdinaryLandedShotAwardsRangedCombatOnce(t *testing.T) {
+	pinRangedSurpriseBalance(t)
+	pinOrdinaryContestWin(t)
+	_, cleanup := seedFireMobInRoom(t, 1, 1)
+	defer cleanup()
+
+	char := newSurpriseShooter(false) // not hidden: an ordinary shot, no ambush
+	actor := newStubActor(char, rooms.LoadRoom(1))
+
+	res := ExecuteFire(actor, "skeleton")
+
+	require.True(t, res.Executed)
+	require.True(t, res.MoveResult.Hit, "fixture sanity: the deterministic win must land")
+
+	require.Len(t, actor.awards, 1, "a resolved shot must produce exactly one progression award")
+	assert.True(t, actor.awards[0].won, "a landed shot is a win")
+
+	_, nRanged := actor.awardedCandidate(string(skills.RangedCombat))
+	assert.Equal(t, 1, nRanged, "an ordinary shot must offer ranged-combat exactly once")
+
+	_, nSkull := actor.awardedCandidate(string(skills.Skullduggery))
+	assert.Equal(t, 0, nSkull, "an ordinary shot is not an ambush and must not offer skullduggery")
+}
+
+// A MISSED shot still awards, at the loss weight. Before U10b-1 it trained
+// nothing: ranged-combat was gated on the hit and the separate perception roll
+// was the only thing a miss paid.
+func TestFire_AMissedShotStillAwardsAtTheLossWeight(t *testing.T) {
+	pinRangedSurpriseBalance(t)
+	// The defence wins by 1 sigma, cleanly -- the same deterministic runner the
+	// missed-ambush control uses.
+	restore := combat.SetChannelAttackContestRunnerForTest(
+		tauntDeterministicRunner(t, -1.0, -0.5, 0.5))
+	defer restore()
+	_, cleanup := seedFireMobInRoom(t, 1, 1)
+	defer cleanup()
+
+	char := newSurpriseShooter(false)
+	actor := newStubActor(char, rooms.LoadRoom(1))
+
+	res := ExecuteFire(actor, "skeleton")
+
+	require.True(t, res.Executed)
+	require.False(t, res.MoveResult.Hit, "fixture sanity: the deterministic defence must win")
+
+	require.Len(t, actor.awards, 1, "a MISSED shot is still a resolved action and must award exactly once")
+	assert.False(t, actor.awards[0].won, "a missed shot is a loss, so the award carries the failure fraction")
+
+	_, nRanged := actor.awardedCandidate(string(skills.RangedCombat))
+	assert.Equal(t, 1, nRanged, "a missed shot must still offer ranged-combat")
+}

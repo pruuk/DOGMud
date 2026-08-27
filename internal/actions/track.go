@@ -118,14 +118,40 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 
 	// Roll the Perception+Search score.
 	searchScore := CalcSearchScore(char)
-	// NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP "Category B"): a static
-	// difficulty check still off the contest core. contest.AgainstDifficulty was
-	// built for exactly this and currently has zero production callers.
+	// NOTE(ASSIGNED TO U10b-1b, Category B): a static difficulty check still off
+	// the contest core. contest.AgainstDifficulty was built for exactly this and
+	// currently has zero production callers. The breadcrumb used to read
+	// "unassigned"; it is not. The U10b-1b design spec names this site
+	// explicitly -- "the Category B conversions (search x4, track, forage to
+	// AgainstDifficulty)" -- as settled decision 17.
+	//
+	// ⚠️ THE 125/175 THRESHOLDS ARE STATIC WHILE THE SCORE IS NOT, and that is
+	// the substance of the conversion, not tidiness. CalcSearchScore is
+	// Perception + SkillMultiplier(rank)*25, so at Perception 100 the 125 tier
+	// goes 50% -> 93% -> 97% across search ranks 0/25/50, and a Perception 150
+	// tracker at rank 25 clears it 99.7% of the time. U10b-1 made a failed track
+	// award ProgressionFailureFraction, but for a developed character that
+	// branch almost never fires -- the cut is real only for beginners.
 	roll := dice.RollStat(searchScore)
 	result.RollValue = roll.Value
 
-	// Skill progression on every fired roll.
-	actor.OnSkillUse(string(skills.Search))
+	// awardTrack fires the round's ONE progression award, at a weight that
+	// follows the outcome (U10b-1 Task 15). This used to be a FULL event on
+	// every fired roll, so a tracker who read nothing trained exactly as much
+	// as one who picked up a trail -- this site is a CUT on failure.
+	//
+	// CALLED AT EACH RESOLVED EXIT RATHER THAN ONCE UP HERE, and that placement
+	// is the point. The cooldown checks below run AFTER the roll, so an award
+	// made here would pay a track that was then REFUSED for cooldown -- a free
+	// progression tick for spamming the verb, and one that got worse the moment
+	// losing started paying. A cooldown refusal is not a resolved contest and
+	// awards nothing.
+	//
+	// Note a sub-threshold roll returns WITHOUT consuming the cooldown, so the
+	// failure paths below are genuinely resolved actions rather than refusals.
+	awardTrack := func(won bool) {
+		actor.AwardResolved(won, char.CandidateFor(string(skills.Search)))
+	}
 
 	// Roll < 125.0: no tracks visible at all.
 	if roll.Value < 125.0 {
@@ -133,6 +159,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 			actor.SendText(messaging.CategorySystem, "You don't see any tracks.")
 		}
 		result.Reason = "roll below detection threshold"
+		awardTrack(false)
 		return result
 	}
 
@@ -148,6 +175,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 			return result
 		}
 
+		awardTrack(true)
 		result.Visitors = readRoomTrail(room, roll.Value, actor.GetUserId(), actor.GetMobInstanceId())
 		if actor.IsPlayer() {
 			renderTrailToPlayer(actor, result.Visitors)
@@ -161,6 +189,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 			actor.SendText(messaging.CategorySystem, "Your tracking skills aren't sharp enough right now.")
 		}
 		result.Reason = "active-track requires roll >= 175"
+		awardTrack(false)
 		return result
 	}
 
@@ -173,6 +202,9 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		}
 		return result
 	}
+
+	// Past the cooldown: this active track has resolved as a win.
+	awardTrack(true)
 
 	// Find target in current room first (just reports "they are here").
 	if targetUser := findUserInRoomByName(room, targetNoun, actor.GetUserId()); targetUser != nil {

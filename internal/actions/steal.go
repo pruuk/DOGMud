@@ -179,9 +179,6 @@ func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
 		}
 	}
 
-	// Skill-use and progression — always fire regardless of roll outcome.
-	actor.OnSkillUse(string(skills.Skullduggery))
-
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
@@ -197,6 +194,12 @@ func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
 
 	defenderScore := stealVictimScore(&m.Character)
 	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
+	// U10b-1 Task 18: moved DOWN from before the contest, and it now carries
+	// the outcome. This fired unconditionally at full weight -- the comment
+	// it replaced said "always fire regardless of roll outcome" -- so a
+	// thief who was caught trained exactly as much as one who got away.
+	// This site is a CUT on failure.
+	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	room := actor.GetRoom()
 
@@ -370,11 +373,14 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 		}
 	}
 
-	// Skill-use and progression.
-	actor.OnSkillUse(string(skills.Skullduggery))
-
 	defenderScore := stealVictimScore(targetUser.Character)
 	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
+	// U10b-1 Task 18: moved DOWN from before the contest, and it now carries
+	// the outcome. This fired unconditionally at full weight -- the comment
+	// it replaced said "always fire regardless of roll outcome" -- so a
+	// thief who was caught trained exactly as much as one who got away.
+	// This site is a CUT on failure.
+	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
 		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
@@ -468,9 +474,6 @@ func stealFromContainer(actor Actor, containerName string,
 		return StealResult{Reason: "empty"}
 	}
 
-	// Skill-use and progression — always fire regardless of roll outcome.
-	actor.OnSkillUse(string(skills.Skullduggery))
-
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
@@ -540,6 +543,12 @@ func stealFromContainer(actor Actor, containerName string,
 	if hasObserver {
 		success = combat.RunContest(attackerScore, []contest.Entry{{Score: highestObserverScore}}).Success
 	}
+	// U10b-1 Task 18: moved DOWN from before the contest. success here means
+	// NOT SPOTTED: it starts true (no observer present is an uncontested
+	// win) and only a lost observer contest clears it. Previously this
+	// fired unconditionally at full weight, so being caught trained as
+	// much as slipping away. A CUT on failure.
+	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
 		actor.SendText(messaging.CategorySystem, fmt.Sprintf(

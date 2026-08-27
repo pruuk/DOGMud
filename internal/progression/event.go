@@ -54,6 +54,24 @@ type Event struct {
 	Stat       string
 	Class      Class
 	Multiplier float64
+
+	// Lost reports that the actor's action was RESOLVED and LOST, so this
+	// event is the consolation award rather than the award for succeeding.
+	// Under U10b-1's Best-of firing convention a resolved action always
+	// produces an event: at full weight on a win, and at
+	// ProgressionFailureFraction on a loss.
+	//
+	// It is a SEPARATE field and NOT inferred from Multiplier < 1.0, and that
+	// distinction is load-bearing. Downstream, mutation cluster drift scales
+	// by Multiplier while the SkillUsed quest event is gated on Lost -- two
+	// different mechanisms on purpose. A sub-1.0 multiplier does NOT imply a
+	// loss: a self-buff cast is a WINNING action that legitimately arrives at
+	// SelfCastProgressionMultiplier (ships 0.5). "Simplifying" this field away
+	// into Multiplier < 1.0 silently stops every self-buff cast from ticking
+	// skill_use quests, with no error message anywhere -- the exact regression
+	// TestOnSkillUseScaled_WinningSubOneMultiplierStillEmitsSkillUsed exists
+	// to catch. Do not do it.
+	Lost bool
 }
 
 // Outcome is everything about a resolved contest that the matrix needs.
@@ -87,6 +105,22 @@ type Outcome struct {
 	// Floored reports that a contest floor CHANGED the outcome. Floored
 	// contests award ordinary events but never bonuses.
 	Floored bool
+
+	// Defended reports that the ACTOR -- the attacker side -- LOST the
+	// resolved action. It is the only input OrdinaryEventsScaled consults to
+	// decide which side gets the consolation award: true scales the attacker,
+	// false scales the defender.
+	//
+	// It is a PLAIN BOOL SET BY THE CALL SITE and must NOT be derived from
+	// contest.Result.Success. !Success is not "the defender won": ForceCrit
+	// can hand back an unsuccessful result for an action the game narrated as
+	// landing, so inferring the loser from Success pays the consolation award
+	// to the wrong side with nothing anywhere to flag it. The call site knows
+	// who won; it passes that in. Task 6's AwardResolved constructs this as
+	// Defended: !won, and that is the contract.
+	//
+	// It has no effect on OrdinaryEvents or BonusEvents.
+	Defended bool
 }
 
 // Exceptional names which single row of the spec's matrix a contest landed on.
@@ -176,27 +210,32 @@ func BonusEvents(o Outcome, b Bonuses) []Event {
 		toughen = o.DefenderStat
 	}
 
+	// Keyed literals, not positional: Event grew a Lost field and positional
+	// literals would either break the build or, worse, quietly bind a new
+	// field to the wrong value. Bonus events leave Lost at its false zero --
+	// they are extra rolls layered on top of an ordinary event, and they never
+	// reach the SkillUsed emit at all (see applyBonusProgression).
 	switch o.Exceptional {
 	case ExcAttackCrit:
 		return []Event{
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassCrit, b.Doing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassCrit, Multiplier: b.Doing},
 			// The one cell that swaps the stat: a crit RECEIVED toughens.
-			{SideDefender, o.DefenderSkill, toughen, ClassObserved, b.Observing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: toughen, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	case ExcAttackFumble:
 		return []Event{
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassFumble, b.Doing},
-			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassObserved, b.Observing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassFumble, Multiplier: b.Doing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: o.DefenderStat, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	case ExcDefenceCrit:
 		return []Event{
-			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassCrit, b.Doing},
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: o.DefenderStat, Class: ClassCrit, Multiplier: b.Doing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	case ExcDefenceFumble:
 		return []Event{
-			{SideDefender, o.DefenderSkill, o.DefenderStat, ClassFumble, b.Doing},
-			{SideAttacker, o.AttackerSkill, o.AttackerStat, ClassObserved, b.Observing},
+			{Side: SideDefender, Skill: o.DefenderSkill, Stat: o.DefenderStat, Class: ClassFumble, Multiplier: b.Doing},
+			{Side: SideAttacker, Skill: o.AttackerSkill, Stat: o.AttackerStat, Class: ClassObserved, Multiplier: b.Observing},
 		}
 	}
 	return nil
@@ -207,4 +246,101 @@ func BonusEvents(o Outcome, b Bonuses) []Event {
 // tracks the use before rolling the bonus.
 func EventsForContest(o Outcome, b Bonuses) []Event {
 	return append(OrdinaryEvents(o), BonusEvents(o, b)...)
+}
+
+// Candidate is one skill that could earn a resolved action's event.
+//
+// Candidates in ONE Best-of must be rolled comparably: the standard shape is
+// dice.RollStat(stat + skill*SkillWeight), which characters.CandidateFor builds.
+// A candidate with no roll ties at zero and the tiebreak deletes it.
+//
+// The requirement is that no candidate in a given slice be systematically
+// favoured, NOT that every Candidate anywhere share one distribution. A caller
+// holding rolls a contest already made may reuse them rather than re-rolling --
+// hooks.bestSwingDefence does, from the round's own defence rolls -- provided
+// every candidate in that slice is centred on its own score.
+//
+// The ROLLING HAPPENS OUTSIDE THIS PACKAGE. Roll is pre-computed by the caller,
+// because dice.RollStat needs Balance.SkillWeight and this package reads no
+// config -- see the package doc. BestOf only PICKS.
+type Candidate struct {
+	Skill string
+	Stat  string // empty means the skill's primary
+	Roll  float64
+	Level int
+}
+
+// awards reports whether this Candidate names anything worth firing.
+//
+// A Candidate that names neither a skill nor a stat awards nothing: downstream,
+// CheckSkillProgression("") still takes a roll and banners no skill at all, so
+// firing it would burn a roll and show the player nothing. A candidate with an
+// empty Skill but a populated Stat is NOT filtered -- that is a legitimate
+// stat-only award, a shape OrdinaryEvents already supports.
+func (c Candidate) awards() bool { return c.Skill != "" || c.Stat != "" }
+
+// BestOf picks the single Candidate that earns the event, as the defensive
+// rolls pick a single defence. Highest Roll; ties on highest Level; a full tie
+// on slice order, so callers keep that order fixed. Reports false when there is
+// nothing to award: an empty Skill is not inert, CheckSkillProgression("")
+// takes a roll and banners no skill.
+//
+// The slice-order tiebreak is why this walks a SLICE and never a map. One of
+// the pinned tests calls BestOf repeatedly on a fully tied slice and demands
+// the same winner every time; Go's randomized map iteration would flake it,
+// and in production it would silently rotate which skill a tie trains.
+//
+// Reports false for an empty slice, and also when the winning candidate awards
+// nothing (neither Skill nor Stat). It does NOT filter award-nothing candidates
+// out of the contest first: a candidate that rolled highest has won, and
+// promoting the runner-up would hand the event to a skill that lost its roll.
+func BestOf(cands []Candidate) (Candidate, bool) {
+	if len(cands) == 0 {
+		return Candidate{}, false
+	}
+	best := cands[0]
+	for _, c := range cands[1:] {
+		// Strictly greater on both keys: equality keeps the incumbent, which
+		// is what makes a full tie resolve on slice order.
+		if c.Roll > best.Roll || (c.Roll == best.Roll && c.Level > best.Level) {
+			best = c
+		}
+	}
+	if !best.awards() {
+		return Candidate{}, false
+	}
+	return best, true
+}
+
+// OrdinaryEventsScaled is OrdinaryEvents with the LOSING side's event marked
+// Lost and scaled to frac. Which side lost is decided by o.Defended ALONE:
+// true scales the attacker, false scales the defender.
+//
+// This is U10b-1's Best-of firing convention: a resolved action always produces
+// an event, at full weight on a win and at ProgressionFailureFraction on a
+// loss. That knob is read by the CALLER and arrives here as frac, because this
+// package reads no config.
+//
+// frac is not validated and neither boundary is an error. frac == 0 is the
+// shipped off-switch that makes losing teach nothing, which is today's
+// behaviour; frac == 1.0 makes a loss worth exactly as much as a win. Both
+// still mark the loser Lost, because Lost and Multiplier drive two different
+// mechanisms downstream (see Event.Lost).
+//
+// It DELEGATES to OrdinaryEvents rather than rebuilding the events. Deciding
+// which sides are populated is subtle -- either Skill or Stat populates a side
+// -- and a second copy of that rule would drift from the first.
+func OrdinaryEventsScaled(o Outcome, frac float64) []Event {
+	loser := SideDefender
+	if o.Defended {
+		loser = SideAttacker
+	}
+	evs := OrdinaryEvents(o)
+	for i := range evs {
+		if evs[i].Side == loser {
+			evs[i].Multiplier = frac
+			evs[i].Lost = true
+		}
+	}
+	return evs
 }

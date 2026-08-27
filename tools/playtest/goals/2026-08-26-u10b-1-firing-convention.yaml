@@ -1,0 +1,91 @@
+# U10b-1 adversarial feel check: the progression firing convention.
+#
+# ONE SIGNAL above all others: does failing at something visibly teach you a
+# little? Until now most skills only improved when you SUCCEEDED. Now a genuine
+# attempt that fails still teaches, just less. Your job is to say whether that
+# reads to a player, and whether it opened an exploit.
+#
+# You start in open country outside the city walls with enemies close at hand.
+# That is deliberate. Do not wander back into town looking for something to do.
+#
+# WHAT CHANGED, in plain terms. Do not quote these back as findings.
+#   * Failing now teaches a little: a forage that finds nothing, a craft that
+#     comes out wrong, a special move that misses, a search that finds nothing.
+#   * BUT you must have actually tried yourself against something. Searching a
+#     bare room with nothing hidden in it should still teach nothing at all.
+#   * A round of fighting teaches you once for attacking and once for
+#     defending, rather than once per weapon and once per defence used.
+#   * Defending teaches you whether or not you turned the blow aside.
+#   * Strength no longer improves from simply swinging. It comes from
+#     grappling, from bearing a shield, and from recovering drained stamina.
+#   * Being struck while holding a spell together now teaches even when the
+#     spell slips away from you.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Improvement banners appear often enough to feel rewarding but not
+#     constantly, and a failed attempt should feel like it still counted for
+#     something rather than being wasted.
+#   * No activity should feel completely dead. If you work hard at something
+#     for a long stretch and NOTHING improves, report that loudly.
+#   * Nothing should improve so fast it feels absurd or exploitable.
+#   * No raw numbers anywhere, no unreplaced tokens, no doubled messages.
+#
+# KNOWN NON-BUGS, do not refile: hidden creatures answer "You attack the
+# darkness!"; corpses persist; damage is described in words not numbers; a
+# corpse can shadow a live creature of the same name when you target it; three
+# commands per round on this connection; one opening strike per fight that is
+# spent whether it lands or not.
+
+ephemeral:
+  profile: mid
+  start_room: 444
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    HEADLINE, FAILURE TEACHES: forage repeatedly in the open country until you
+    have clearly failed several times, and record verbatim what you saw on the
+    failures versus the successes. Then do the same with a special move that
+    misses in combat. State plainly whether failing appeared to teach you
+    anything. If sustained failing NEVER produces an improvement across many
+    attempts, that is the single most important finding in this run.
+  - >-
+    THE EMPTY-ROOM GATE: find a plain room with nothing hidden in it and search
+    it over and over, many times. This should teach you NOTHING, because you
+    tried yourself against nothing. Then search somewhere that actually has
+    something hidden and confirm that DOES teach, whether or not you find it.
+    If searching a bare room repeatedly improves you, that is a serious exploit
+    and you should say so loudly and describe exactly what you did.
+  - >-
+    PASSIVE DEFENCE, the exploit most likely to exist: let something attack you
+    for a long stretch while you do as little as possible. Do not fight back
+    any harder than you must to survive. Defending now teaches every round
+    whether or not you turn the blow aside, and it costs you nothing to be
+    attacked. Report how often you improved while essentially standing there.
+    If simply being hit trains you steadily for no cost or risk, that is the
+    headline finding and needs exact detail.
+  - >-
+    ARMED HOW: fight a stretch with a weapon in one hand and nothing in the
+    other, then a stretch with a two-handed weapon or a weapon and shield.
+    Record improvement counts for each. Neither way should clearly out-train
+    the other overall. If one plainly does, report which and by how much.
+  - >-
+    STRENGTH: try to improve strength deliberately. Grapple things, take blows
+    on a shield if you have one, and exhaust your stamina and let it recover.
+    Report whether strength ever improved and by what route. If strength never
+    improves across real effort, that is a finding.
+  - >-
+    SPELLCASTING UNDER FIRE, only if you can cast: start casting something with
+    a real casting time and let something hit you while you do it, repeatedly,
+    including times when you LOSE the spell. Report whether losing the spell
+    still seemed to teach you. Say whether the messages make sense.
+  - >-
+    EXPLOIT HUNT: actively look for the cheapest possible way to make something
+    improve, now that failing counts. Repeat a single cheap failing action many
+    times and watch. If any action improves you repeatedly for almost no cost,
+    time, or risk, describe it precisely and say how fast it went.
+  - >-
+    GENERAL adversarial pass: anything that reads wrong, prints a raw number
+    where it should print words, shows an unreplaced token, double-prints, dead
+    ends, or contradicts help text is a finding. Quote everything verbatim.

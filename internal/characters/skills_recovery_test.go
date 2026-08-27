@@ -47,14 +47,20 @@ func TestAttemptRecovery_ContestOutcomesAndProgression(t *testing.T) {
 	if c.IsStanding() {
 		t.Fatal("must stay down on a lost contest")
 	}
-	if c.GetSkillUseCount(string(skills.UnarmedCombat)) != before {
-		t.Fatal("a LOST recovery fires nothing (success-only rule)")
+	// U10b-1 Task 18c inverted this assertion. A LOST recovery used to fire
+	// nothing at all, so a character who failed to scramble to their feet
+	// learned nothing from the attempt -- and failing to stand is exactly the
+	// situation that teaches you to. It now awards at
+	// ProgressionFailureFraction, which the use counter records like any other
+	// award.
+	if got := c.GetSkillUseCount(string(skills.UnarmedCombat)); got != before+1 {
+		t.Fatalf("a LOST recovery must still fire ONE unarmed event, at the failure fraction: %d -> %d", before, got)
 	}
 	if attempted, success := c.AttemptRecovery(func() bool { return true }); !attempted || !success {
 		t.Fatalf("won contest: attempted=%v success=%v, want true/true", attempted, success)
 	}
-	if got := c.GetSkillUseCount(string(skills.UnarmedCombat)); got != before+1 {
-		t.Fatalf("a WON recovery fires exactly one unarmed event: %d -> %d", before, got)
+	if got := c.GetSkillUseCount(string(skills.UnarmedCombat)); got != before+2 {
+		t.Fatalf("a WON recovery fires exactly one more unarmed event: %d -> %d", before+1, got)
 	}
 }
 

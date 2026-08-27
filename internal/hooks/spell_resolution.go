@@ -78,7 +78,7 @@ func playerHarmTargetPermitted(spellType spells.SpellType, mob *mobs.Mob) bool {
 	return true
 }
 
-func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) {
+func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) (anyLanded bool) {
 
 	side := spellAttackSideFor(spellData, user.Character)
 	magnitude := spellData.EffectMagnitude
@@ -86,7 +86,8 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	// --- Identify: resolve against caster's item, no targets ---
 	if spellData.EffectType == "identify" {
 		resolveIdentify(user, cs.SpellRest, room)
-		return
+		// Uncontested: there is no defence to beat, so it landed.
+		return true
 	}
 
 	// --- Populate area targets for HarmArea ---
@@ -125,6 +126,11 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	// A fumble gates the post-target effects (summon, charm, Go hooks) below
 	// so a summon-spell caster who fumbles doesn't still get the companion.
 	castFumbled := false
+	// anyLanded (the NAMED RETURN) drives U10b-1 Task 13's ONE progression
+	// award for the cast. ONE CAST IS ONE RESOLVED ACTION: a three-target spell
+	// that beat one defence pays a single full-weight event, not three events
+	// and not one per target hit. A cast every target defended pays the failure
+	// fraction.
 	targetsResolved := 0
 	for _, mobInstId := range cs.TargetMobInstanceIds {
 		mob := mobs.GetInstance(mobInstId)
@@ -137,9 +143,9 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		if !playerHarmTargetPermitted(spellData.Type, mob) {
 			continue // gained protection while the spell was folding
 		}
-		if resolveAgainstMob(user, mob, room, spellData, side, magnitude) {
-			castFumbled = true
-		}
+		fumbled, landed := resolveAgainstMob(user, mob, room, spellData, side, magnitude)
+		castFumbled = castFumbled || fumbled
+		anyLanded = anyLanded || landed
 		targetsResolved++
 	}
 
@@ -161,11 +167,13 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		if spellData.TargetDefenseType == "" {
 			// Help spell with no defense — always applies, as an uncontested
 			// attack win (full multiplier, no crit, no defence to narrate).
+			// Uncontested means it LANDED: there was no defence to beat.
 			applyPlayerEffect(user, targetUser, room, spellData, magnitude, combat.ChannelDefenceResult{DamageMultiplier: 1})
+			anyLanded = true
 		} else {
-			if resolveAgainstPlayer(user, targetUser, room, spellData, side, magnitude) {
-				castFumbled = true
-			}
+			fumbled, landed := resolveAgainstPlayer(user, targetUser, room, spellData, side, magnitude)
+			castFumbled = castFumbled || fumbled
+			anyLanded = anyLanded || landed
 		}
 		targetsResolved++
 	}
@@ -254,10 +262,12 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		switch cs.SpellId {
 		case "fold-anchor":
 			resolveFoldAnchor(actions.NewUserActorInRoom(user, room))
-			return
+			// Uncontested utility cast: no defence to beat.
+			return true
 		case "fold-recall":
 			resolveFoldRecall(actions.NewUserActorInRoom(user, room))
-			return
+			// Uncontested utility cast: no defence to beat.
+			return true
 		case "purge-affliction":
 			if len(cs.TargetUserIds) > 0 {
 				if targetUser := users.GetByUserId(cs.TargetUserIds[0]); targetUser != nil {
@@ -266,7 +276,8 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 			} else {
 				resolvePurgeAffliction(user, user) // self-cast
 			}
-			return
+			// Uncontested utility cast: no defence to beat.
+			return true
 		}
 	}
 
@@ -274,6 +285,8 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	if spellData.ComponentTag != "" {
 		consumeSpellComponent(user, spellData.ComponentTag)
 	}
+
+	return anyLanded
 }
 
 // runSpellChannelAttack is THE spell-contest seam (U6b Task 4): every spell
@@ -340,7 +353,15 @@ func scaleSpellDamageByDefence(dmg int, out combat.ChannelDefenceResult) int {
 // AttackerFumble). A fumble aborts any post-target spell effects (summon,
 // charm, Go hooks) in the caller's main flow; component consumption still
 // fires (the failed binding uses up the catalyst regardless).
-func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, side combat.AttackSide, magnitude int) (fumbled bool) {
+// landed reports that this target's contest was WON outright -- the caster's
+// roll beat the defence. It is the spell channel's equivalent of melee's
+// CleanHit, and U10b-1 Task 13 uses it to decide whether the cast's ONE
+// progression award pays full weight or the failure fraction.
+//
+// A DEFENDED cast is not landed even though it still deals partial damage on
+// the shared mitigation curve, matching SkillMoveResult.Hit's contract. A
+// fumble is not landed either: it aborts before success.
+func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData, side combat.AttackSide, magnitude int) (fumbled bool, landed bool) {
 
 	// Task 17: the sleeping-victim forced crit reaches the spell channel.
 	side.ForceCrit = combat.SleepingForceCrit(&mob.Character)
@@ -375,7 +396,7 @@ func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, 
 			`<ansi fg="red"><ansi fg="username">%s</ansi>'s spell backfires!</ansi>`, user.Character.Name), user.UserId)
 		// Stage 30.1: Record backfire
 		combat.RecordSpell(combat.User, combat.Mob, false, false, true, false, 0, out.AttackRollZScore, user.Character, &mob.Character, round)
-		return true
+		return true, false
 	}
 
 	// Boss-interrupt: a disruption spell cast at a mid-fold-cast mob cancels the
@@ -400,7 +421,7 @@ func resolveAgainstMob(user *users.UserRecord, mob *mobs.Mob, room *rooms.Room, 
 	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
 		&mob.Character, user.Character, nil, user)
 
-	return false
+	return false, !out.Defended
 }
 
 // maybeInterruptSpellOnMob cancels a mob's in-progress fold-cast if spellId
@@ -880,7 +901,7 @@ func applyMobEffect(user *users.UserRecord, casterChar *characters.Character, mo
 // this function used to carry became a duplicate the moment the seam saw the
 // crit, and the once-per-round dedupe would have masked the double-fire
 // rather than prevented it.
-func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, side combat.AttackSide, magnitude int) (fumbled bool) {
+func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, side combat.AttackSide, magnitude int) (fumbled bool, landed bool) {
 
 	// Task 17: the sleeping-victim forced crit reaches the spell channel.
 	side.ForceCrit = combat.SleepingForceCrit(target.Character)
@@ -896,7 +917,7 @@ func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your spell backfires violently, wounding you!</ansi>`)
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 			`<ansi fg="red"><ansi fg="username">%s</ansi>'s spell backfires!</ansi>`, user.Character.Name), user.UserId)
-		return true
+		return true, false
 	}
 
 	applyPlayerEffect(user, target, room, spellData, magnitude, out)
@@ -915,7 +936,7 @@ func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room
 	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
 		target.Character, user.Character, target, user)
 
-	return false
+	return false, !out.Defended
 }
 
 // applyPlayerEffect applies the spell effect to a player target.
@@ -1157,21 +1178,23 @@ func consumeSpellComponent(user *users.UserRecord, tag string) {
 //     spells; player casters never self-target via this dispatcher.
 //   - No onMagic script, no component consumption.
 //   - Per-target helpers are entirely separate from the player equivalents.
-func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) {
+func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) (anyLanded bool) {
 	// Go spell hooks — dispatch position-mutating / non-target spells before
 	// the type-based effect routing below. Mirrors the player path in
 	// resolveSpell. Stage 3.0d.
 	switch cs.SpellId {
 	case "fold-anchor":
 		resolveFoldAnchor(actions.NewMobActorInRoom(mob, room))
-		return
+		return true // uncontested utility cast: no defence to beat
 	case "fold-recall":
 		actor := actions.NewMobActorInRoom(mob, room)
 		if !validateFoldRecall(actor) {
-			return
+			// The recall could not be validated. Nothing resolved, so the
+			// cast did not land.
+			return false
 		}
 		resolveFoldRecall(actor)
-		return
+		return true
 	}
 
 	// drain_area is a boss-ability effect type: it drains every living
@@ -1187,7 +1210,7 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 	// free — this function never runs until the cast finishes.
 	if spellData.EffectType == "drain_area" {
 		resolveMobDrainArea(mob, room, spellData)
-		return
+		return true // uncontested area drain
 	}
 
 	side := spellAttackSideFor(spellData, &mob.Character)
@@ -1234,14 +1257,16 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 			continue
 		}
 		if target := mobs.GetInstance(mobInstId); target != nil && target.Character.Health > 0 && target.Character.RoomId == room.RoomId {
-			resolveMobSpellAgainstMob(mob, target, room, spellData, side, magnitude)
+			anyLanded = resolveMobSpellAgainstMob(mob, target, room, spellData, side, magnitude) || anyLanded
 		}
 	}
 	for _, userId := range cs.TargetUserIds {
 		if target := users.GetByUserId(userId); target != nil && target.Character.RoomId == room.RoomId {
-			resolveMobSpellAgainstPlayer(mob, target, room, spellData, side, magnitude)
+			anyLanded = resolveMobSpellAgainstPlayer(mob, target, room, spellData, side, magnitude) || anyLanded
 		}
 	}
+
+	return anyLanded
 }
 
 // resolveMobDrainArea is the resolution handler for a mob-cast spell whose
@@ -1397,8 +1422,10 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 	}
 }
 
+// landed carries the same meaning as on the player path: the contest was WON
+// outright. See resolveAgainstMob.
 func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.Room,
-	spellData *spells.SpellData, side combat.AttackSide, magnitude int) {
+	spellData *spells.SpellData, side combat.AttackSide, magnitude int) (landed bool) {
 	// Help-type effects (e.g. a construct add healing an ally boss) are a
 	// cooperative cast, not an attack — the target should not roll defense
 	// against a friendly heal, and a "fumble" backfire makes no sense for
@@ -1408,7 +1435,8 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 	// this way.)
 	if spellData.EffectType == "heal" {
 		applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, combat.ChannelDefenceResult{DamageMultiplier: 1})
-		return
+		// Uncontested cooperative cast: no defence to beat, so it landed.
+		return true
 	}
 	// Task 17: the sleeping-victim forced crit reaches the spell channel.
 	side.ForceCrit = combat.SleepingForceCrit(&target.Character)
@@ -1420,13 +1448,15 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 		}
 		caster.Character.ApplyHarm(characters.PoolHealth, dmg, charActorRef(&caster.Character))
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell backfires!`, caster.Character.Name))
-		return
+		return false
 	}
 	applyMobEffect(nil, &caster.Character, target, room, spellData, magnitude, out)
 
 	// U6b Task 10: the defending mob's crit defence counters the mob caster.
 	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
 		&target.Character, &caster.Character, nil, nil)
+
+	return !out.Defended
 }
 
 // resolveMobSpellAgainstPlayer runs the ONE channel contest for a mob-cast
@@ -1435,8 +1465,10 @@ func resolveMobSpellAgainstMob(caster *mobs.Mob, target *mobs.Mob, room *rooms.R
 // for the defender fires inside the seam's bonus tier — the U9-era direct
 // block this function used to carry became a duplicate and was deleted with
 // the collapse (U6b Task 4).
+// landed carries the same meaning as on the player path: the contest was WON
+// outright. See resolveAgainstMob.
 func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, room *rooms.Room,
-	spellData *spells.SpellData, side combat.AttackSide, magnitude int) {
+	spellData *spells.SpellData, side combat.AttackSide, magnitude int) (landed bool) {
 	// Task 17: the sleeping-victim forced crit reaches the spell channel.
 	side.ForceCrit = combat.SleepingForceCrit(target.Character)
 	out := runSpellChannelAttack(spellAttackChannel(spellData), side, &caster.Character, target.Character)
@@ -1450,7 +1482,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell backfires!`, caster.Character.Name))
 		// Stage 30.1: Record backfire
 		combat.RecordSpell(combat.Mob, combat.User, false, false, true, false, 0, out.AttackRollZScore, &caster.Character, target.Character, round)
-		return
+		return false
 	}
 	isCrit := out.AttackerCrit
 	mobSpellDmg := 0
@@ -1616,6 +1648,8 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 	// U6b Task 10: the PLAYER defender's crit defence counters the mob caster.
 	fireSpellCounterTier(room, out, spellAttackChannel(spellData),
 		target.Character, &caster.Character, target, nil)
+
+	return !out.Defended
 }
 
 // resolveIdentify finds the named item on the caster and renders

@@ -240,11 +240,18 @@ func TestDefuse_Success(t *testing.T) {
 		"high-Per actor vs difficulty-1 trap should succeed most of the time")
 
 	// Skill progression must fire on every attempt.
-	require.Greater(t, actor.skillUsesByName[string(skills.Skullduggery)], 0,
-		"Defuse should call OnSkillUse('skullduggery') on every kit-present attempt")
-	assert.GreaterOrEqual(t, actor.skillUsesByName[string(skills.Skullduggery)],
-		trials,
-		"OnSkillUse should have been called once per trial")
+	//
+	// U10b-1 Task 18 routed this site through Actor.AwardResolved, so the
+	// observable moved from the OnSkillUse counter to the award recorder. The
+	// COUNT assertion is unchanged in meaning: one award per kit-present
+	// attempt, win or lose.
+	require.Greater(t, len(actor.awards), 0,
+		"Defuse should award skullduggery progression on every kit-present attempt")
+	assert.GreaterOrEqual(t, len(actor.awards), trials,
+		"one progression award per trial, win or lose")
+	if _, n := actor.awardedCandidate(string(skills.Skullduggery)); n < trials {
+		t.Errorf("skullduggery was named in %d awards, want at least %d", n, trials)
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -365,9 +372,10 @@ func TestDefuse_SkillProgressionFires(t *testing.T) {
 		Defuse(actor, DefuseOptions{TargetNoun: defuseTestContainerName})
 	}
 
-	assert.GreaterOrEqual(t, actor.skillUsesByName[string(skills.Skullduggery)],
-		trials,
-		"OnSkillUse('skullduggery') should be called once per kit-present attempt")
+	// See the note in TestDefuse_Success: the observable is the award recorder
+	// since U10b-1 Task 18 routed this site through Actor.AwardResolved.
+	assert.GreaterOrEqual(t, len(actor.awards), trials,
+		"one progression award per kit-present attempt, win or lose")
 }
 
 // ---------------------------------------------------------------------------

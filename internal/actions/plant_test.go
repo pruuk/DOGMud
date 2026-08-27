@@ -183,11 +183,14 @@ func TestPlant_MobTarget_Success(t *testing.T) {
 		"high-stat attacker should succeed majority of plant attempts")
 
 	// Skill progression must fire on every attempt.
-	require.Greater(t, actor.skillUsesByName[string(skills.Skullduggery)], 0,
-		"Plant should call OnSkillUse('skullduggery') on every attempt")
-	assert.GreaterOrEqual(t, actor.skillUsesByName[string(skills.Skullduggery)],
-		trials,
-		"OnSkillUse should have been called once per trial")
+	// U10b-1 Task 18 routed this site through Actor.AwardResolved, so the
+	// observable moved from the OnSkillUse counter to the award recorder.
+	// The COUNT assertion is unchanged in meaning: one award per attempt,
+	// win or lose.
+	require.Greater(t, len(actor.awards), 0,
+		"Plant should award skullduggery progression on every attempt")
+	assert.GreaterOrEqual(t, len(actor.awards), trials,
+		"one progression award per trial, win or lose")
 }
 
 // ---------------------------------------------------------------------------

@@ -517,6 +517,23 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								chance := crafting.CalcSuccessChance(sl, recipe.SkillMinimum)
 								roll := util.Rand(100)
 								util.LogRoll("Craft", roll, chance)
+
+								// U10b-1 Task 16: awarded HERE, above the branch,
+								// so a FAILED craft trains at
+								// ProgressionFailureFraction instead of nothing.
+								// This is the case the whole slice is justified
+								// by: burning materials on a botched attempt and
+								// learning literally nothing from it.
+								//
+								// AwardResolvedScaled, NOT AwardResolved -- the
+								// plain form silently drops craftBonus, the
+								// recipe-difficulty scaling. See Task 13, where
+								// that regression was nearly shipped on the spell
+								// path.
+								craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
+								user.Character.AwardResolvedScaled(user.UserId, roll < chance, craftBonus,
+									user.Character.CandidateFor(recipe.Skill))
+
 								if roll < chance {
 									// Before consuming, find bottle aging multiplier if recipe uses a bottle
 									var bottleAgingMult float64
@@ -588,8 +605,6 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										user.Character.StoreItem(newItem)
 										events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
 									}
-									craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-									user.Character.OnSkillUseScaled(recipe.Skill, user.UserId, craftBonus)
 									user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, recipe.SuccessMessage))
 
 									// Stage 31.1: Recipe discovery roll

@@ -16,7 +16,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -193,11 +192,9 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 	}
 
-	// --- Progression: perception always, ranged-combat on hit (mirror melee) ---
-	user.Character.OnStatUse("perception", user.UserId)
-	if hit {
-		user.Character.OnSkillUse(string(skills.RangedCombat), user.UserId)
-	}
+	// Progression for a shot is awarded by actions.awardFireProgression inside
+	// ExecuteFire. The explicit perception roll that stood here was a second
+	// roll of ranged-combat's own primary stat.
 
 	// Notify the quest engine of the `shoot` command so quests can gate a step
 	// on the act of shooting (Spoke G's "shoot the practice butt" / "shoot the

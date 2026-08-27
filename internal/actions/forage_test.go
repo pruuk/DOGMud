@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // ---------------------------------------------------------------------------
@@ -19,13 +20,14 @@ import (
 // forageFakeActor is a minimal Actor with a configurable room. It records
 // SendText messages for assertion. It satisfies the full Actor interface.
 type forageFakeActor struct {
-	char      *characters.Character
-	room      *rooms.Room
-	name      string
-	isPlayer  bool
-	userId    int
-	mobInstId int
-	sent      []string
+	awardRecorder // records Actor.AwardResolved calls
+	char          *characters.Character
+	room          *rooms.Room
+	name          string
+	isPlayer      bool
+	userId        int
+	mobInstId     int
+	sent          []string
 }
 
 func newForageFakeActor(t *testing.T, name string, room *rooms.Room, isPlayer bool, userId int) *forageFakeActor {
@@ -68,8 +70,6 @@ func (a *forageFakeActor) GetMobInstanceId() int                  { return a.mob
 func (a *forageFakeActor) AddBuff(_ int, _ string)                {}
 func (a *forageFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *forageFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *forageFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *forageFakeActor) OnCriticalFailure(_ string)             {}
 func (a *forageFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *forageFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
@@ -255,5 +255,81 @@ func TestForage_MobActorSilent(t *testing.T) {
 
 	if len(actor.sent) != 0 {
 		t.Errorf("MobActor should be silent; got %d messages", len(actor.sent))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// U10b-1 Task 15: the forage award
+// ---------------------------------------------------------------------------
+
+// A resolved forage awards exactly once, whatever it turned up, and the weight
+// follows the find.
+//
+// ⚠️ THIS SITE IS A GAIN, and it is the only one in Phase C that is. Forage was
+// SUCCESS-ONLY -- the award sat inside the found-an-item path, so a forager who
+// turned up nothing trained nothing at all. A fruitless forage is a resolved
+// contest and now pays ProgressionFailureFraction.
+//
+// Both outcomes are asserted through one run rather than forced, because
+// ForageCore's find odds are not pinnable from here without reaching into the
+// forager package. The award count and the won/Found agreement hold for either
+// outcome, so nothing flakes.
+func TestForage_AwardsOncePerResolvedForageAndFollowsTheFind(t *testing.T) {
+	pinConfigForTest(t)
+	cleanup := seedForageBiomes(t)
+	defer cleanup()
+
+	room := newForageTestRoom(t, 9401, "forest")
+	actor := newForageFakeActor(t, "ForageAward", room, true, 41)
+
+	result := Forage(actor, ForageOptions{})
+
+	if !result.RollHappened {
+		t.Fatal("fixture did not resolve a forage; nothing to assert")
+	}
+	if got := len(actor.awards); got != 1 {
+		t.Fatalf("a resolved forage produced %d awards, want exactly 1", got)
+	}
+
+	// won follows the CONTEST, not whether an item reached the backpack.
+	//
+	// The "crumbles in your hands" branch is a found item that failed to
+	// construct -- items.New returned an invalid item -- and it leaves
+	// result.Found false while Reason is "item invalid". That is a data
+	// problem, not a contest the forager lost, so it counts as a win.
+	//
+	// This distinction is not academic here: a test binary seeds no item
+	// registry, so in THIS fixture the crumbles path is the common outcome,
+	// not a corner. An earlier draft asserted won == result.Found and failed
+	// for exactly that reason.
+	wonTheContest := result.Found || result.Reason == "item invalid"
+	if actor.awards[0].won != wonTheContest {
+		t.Errorf("forage reported won=%v but the contest outcome was %v (Found=%v, Reason=%q)",
+			actor.awards[0].won, wonTheContest, result.Found, result.Reason)
+	}
+	if _, n := actor.awardedCandidate(string(skills.Search)); n != 1 {
+		t.Errorf("the award named the search skill %d times, want 1", n)
+	}
+}
+
+// A forage that never ROLLED awards nothing.
+//
+// The biome gate returns before RollHappened is set, so there is no contest and
+// no loss to pay a fraction on. Without this, foraging a paved street would
+// have become a free progression tick the moment losing started paying -- the
+// same hazard Search's rolledAgainstSomething gate guards.
+func TestForage_ANonForagableBiomeAwardsNothing(t *testing.T) {
+	pinConfigForTest(t)
+
+	room := newForageTestRoom(t, 9402, "") // falls back to "default", not foragable
+	actor := newForageFakeActor(t, "ForageNoBiome", room, true, 42)
+
+	result := Forage(actor, ForageOptions{})
+
+	if result.RollHappened {
+		t.Fatal("fixture premise: the biome gate must stop this before any roll")
+	}
+	if got := len(actor.awards); got != 0 {
+		t.Errorf("a forage that never rolled produced %d awards, want 0", got)
 	}
 }

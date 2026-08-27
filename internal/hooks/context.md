@@ -715,6 +715,27 @@ medium / light). Three touch-points (gate in
   all AttackResults for the round are processed. Renders and emits one
   compact summary line per fight pair per viewer.
 
+### Attacker progression firing (U10b-1 Task 10)
+
+`processAttackerProgression` (`NewRound_DoCombat_helpers.go`) fires the round's
+ordinary attacker awards: ONE per weapon that SWUNG, routed through
+`Character.AwardResolved` with a single `CandidateFor` candidate. Full weight on
+a clean hit, `Balance.ProgressionFailureFraction` otherwise. It replaced an
+`if !wh.CleanHit { continue }` gate, so a weapon whose swings were all deflected
+or missed used to train nothing at all.
+
+Two consequences worth knowing before touching it:
+
+- **Awards per weapon per round went from `P(clean hit)` (measured 0.3856) to
+  1.0**, roughly 2.6x. Any retune of `skills.SkillProgressionMultipliers` has to
+  be fitted against 1.0, not against a hit rate.
+- **The count of awards is the count of hand slots that swung.**
+  `collectAttackWeapons` contributes a fist per empty hand slot, so bare hands
+  take two unarmed-combat awards, a one-handed wielder takes one weapon-combat
+  plus one unarmed-combat from the empty offhand, and a two-handed wielder takes
+  one. `AttackResult.WeaponHits` is therefore never empty in production and no
+  round-level fallback belongs beside the loop.
+
 ### Surprise-attack skullduggery progression (U10d)
 
 `NewRound_DoCombat_unified.go`'s per-round progression pass awards a SECOND,

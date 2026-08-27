@@ -29,8 +29,16 @@ pool-mutation guard.
 ## Files
 
 - `event.go` -- `Side`, `Class`, `Event`, `Outcome`, `Exceptional`,
-  `Classify`, `Bonuses`, `OrdinaryEvents`, `BonusEvents`, `EventsForContest`.
+  `Classify`, `Bonuses`, `OrdinaryEvents`, `BonusEvents`, `EventsForContest`,
+  `Candidate`, `BestOf`, `OrdinaryEventsScaled`.
 - `event_test.go` -- table tests over the matrix.
+- `bestof_test.go` -- `BestOf`'s ordering rules: highest roll, ties on level,
+  full ties on slice order (asserted stable across repeated calls), and the
+  award-nothing cases.
+- `event_scaled_test.go` -- `OrdinaryEventsScaled`: which side gets scaled and
+  marked `Lost`, that the winning side stays untouched, and that `frac` 0 and
+  1.0 are both legal.
+- `testsupport_test.go` -- `repoRootForTest`, `pinConfigForTest`.
 - `seam_guard_test.go` -- AST guard: fails if `internal/combat` or
   `internal/hooks` (outside an explicit allow-list) calls a progression
   primitive (`OnSkillUse`, `CheckStatProgression`, `OnCritReceived`, ...)
@@ -63,6 +71,21 @@ type Event struct {
 	Stat       string
 	Class      Class
 	Multiplier float64
+
+	// Lost: the actor's action RESOLVED and LOST, so this is the consolation
+	// award. A SEPARATE field, NOT `Multiplier < 1.0` -- a winning self-buff
+	// cast legitimately arrives at SelfCastProgressionMultiplier (0.5).
+	Lost bool
+}
+
+// Candidate is one skill that could earn a resolved action's event. Roll is
+// PRE-COMPUTED by the caller as dice.RollStat(stat + skill*SkillWeight);
+// BestOf never rolls.
+type Candidate struct {
+	Skill string
+	Stat  string // empty means the skill's primary
+	Roll  float64
+	Level int
 }
 
 type Outcome struct {
@@ -81,6 +104,12 @@ type Outcome struct {
 	// Floored: a contest floor changed the outcome. Floored contests award
 	// ordinary events but never bonuses.
 	Floored bool
+
+	// Defended: the ACTOR (attacker side) LOST the resolved action. Read by
+	// OrdinaryEventsScaled ALONE to pick which side gets the consolation
+	// award. Set by the call site as `!won`; never derived from
+	// contest.Result.Success.
+	Defended bool
 }
 
 type Exceptional uint8
@@ -121,6 +150,21 @@ func BonusEvents(o Outcome, b Bonuses) []Event
 func EventsForContest(o Outcome, b Bonuses) []Event
 ```
 
+U10b-1's Best-of firing convention -- one resolved action produces ONE event,
+for the single highest-rolling candidate skill:
+
+```go
+// Picks the one Candidate that earns the event. Highest Roll; ties on highest
+// Level; a full tie on SLICE ORDER. Reports false for an empty slice, and when
+// the winner names neither a Skill nor a Stat (it would award nothing).
+func BestOf(cands []Candidate) (Candidate, bool)
+
+// OrdinaryEvents with the LOSING side's event marked Lost and scaled to frac.
+// Which side lost is decided by o.Defended ALONE. frac is the caller's read of
+// Balance.ProgressionFailureFraction (ships 0.35).
+func OrdinaryEventsScaled(o Outcome, frac float64) []Event
+```
+
 ## Gotchas
 
 - **Bonus events must not track a use count, EXCEPT `ClassObserved`.** The use
@@ -158,6 +202,25 @@ func EventsForContest(o Outcome, b Bonuses) []Event
 - **A floored `Outcome` never pays a bonus**, even if `Exceptional` is set. A
   floor overrode the dice; an exceptional event that did not really happen
   teaches nobody.
+- **`BestOf` does NOT roll.** `Candidate.Roll` is pre-computed by the caller,
+  because `dice.RollStat(stat + skill*SkillWeight)` needs `Balance.SkillWeight`
+  and this package reads no config. If you find yourself wanting `dice` or
+  `configs` in here, the design is wrong, not the constraint.
+- **`BestOf` walks a slice and must NEVER iterate a map.** A full tie resolves
+  on slice order; Go's randomized map iteration would make the winner flake in
+  tests and silently rotate which skill a tie trains in production.
+- **`BestOf` does not promote a runner-up.** If the highest-rolling candidate
+  awards nothing (no `Skill` AND no `Stat`) it reports `false` rather than
+  handing the event to a candidate that lost its roll. A candidate with an
+  empty `Skill` but a populated `Stat` is a legitimate stat-only award and is
+  not filtered.
+- **`Outcome.Defended` must not be derived from `contest.Result.Success`.**
+  `!Success` is not "the defender won" -- `ForceCrit` makes that inference
+  wrong. The call site knows who won and passes a plain bool.
+- **Neither `frac` boundary is an error.** `0` is the off-switch that makes
+  losing teach nothing (pre-U10b-1 behaviour); `1.0` makes a loss worth as much
+  as a win. Both still set `Lost`, because `Lost` and `Multiplier` drive two
+  different mechanisms downstream.
 
 ## Dependencies
 

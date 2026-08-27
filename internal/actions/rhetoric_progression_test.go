@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -527,6 +528,20 @@ func (r *recordingActor) GetCharacter() *characters.Character { return r.char }
 func (r *recordingActor) OnSkillUse(skillName string) bool {
 	r.skillsUsed = append(r.skillsUsed, skillName)
 	return true
+}
+
+// AwardResolved records the same way OnSkillUse does, so every skillsUsed
+// assertion in this file keeps working after U10b-1 Task 18b routed the
+// rhetoric sites through the Best-of seam.
+//
+// The recorded value is the CANDIDATE'S skill, which is what those assertions
+// were ever about; the win/lose weight is asserted separately where it matters.
+func (r *recordingActor) AwardResolved(won bool, cands ...progression.Candidate) {
+	for _, c := range cands {
+		if c.Skill != "" {
+			r.skillsUsed = append(r.skillsUsed, c.Skill)
+		}
+	}
 }
 
 // TestRegression_WarcryRallyAwardRhetoric locks the fix for the 2026-07-20

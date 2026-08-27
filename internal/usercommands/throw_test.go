@@ -308,8 +308,16 @@ func TestSneakUserCostAffordableFailurePaysProgressesAndKeepsZeroCooldown(t *tes
 	assert.Equal(t, 98, user.Character.Stamina)
 	assert.Equal(t, awareness.Visible, user.Character.Awareness.State())
 	assert.False(t, user.Character.IsHidden())
-	assert.Equal(t, 2, user.Character.GetSkillLevel(skills.Skullduggery),
-		"a real failed opposed attempt must retain player progression")
+	// U10b-1 Task 18: a FAILED sneak still awards, but at
+	// ProgressionFailureFraction rather than full weight, so whether the level
+	// actually ADVANCES is now a 0.35-weighted roll. Asserting the level here
+	// would be asserting a coin flip.
+	//
+	// The property this test cares about -- "a real failed opposed attempt must
+	// retain player progression" -- is intact and is now read off the use
+	// counter, which OnSkillUseScaled tracks unconditionally.
+	assert.Positive(t, user.Character.GetSkillUseCount(string(skills.Skullduggery)),
+		"a real failed opposed attempt must still fire a progression award")
 	assert.True(t, user.Character.CooldownReady(skills.Skullduggery.String("sneak")),
 		"shipped zero SneakFailCooldown must remain effective zero")
 	assert.Zero(t, user.Character.GetCooldown(skills.Skullduggery.String("sneak")))
@@ -349,7 +357,10 @@ func TestSneakUserCostAffordableFailureAppliesConfiguredCooldownAfterSpotting(t 
 	assert.Equal(t, 98, user.Character.Stamina)
 	assert.Equal(t, 3, user.Character.Cooldowns[key])
 	assert.Equal(t, awareness.Visible, user.Character.Awareness.State())
-	assert.Equal(t, 2, user.Character.GetSkillLevel(skills.Skullduggery))
+	// See the note in the sibling test above: a failed sneak's award is
+	// fraction-weighted since U10b-1 Task 18, so the use counter is the stable
+	// observable rather than the level.
+	assert.Positive(t, user.Character.GetSkillUseCount(string(skills.Skullduggery)))
 }
 
 // setMobCastingForTest puts a mob's Character into the Casting activity

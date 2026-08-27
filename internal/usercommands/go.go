@@ -392,8 +392,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			// move (no action points, unaffordable stamina), a locked exit the
 			// actor could not open, and a MoveToRoom error all return or
 			// message out above and never reach here.
+			// U10b-1 Task 22: won is unconditionally true. Walking is not a
+			// contest -- movementTrainsSearch is a rarity gate, not a roll
+			// against anything -- so there is no losing branch. The gate is
+			// unchanged and is not the firing rule.
 			if movementTrainsSearch() {
-				user.Character.OnSkillUse(string(skills.Search), user.UserId)
+				user.Character.AwardResolved(user.UserId, true,
+					user.Character.CandidateFor(string(skills.Search)))
 			}
 
 			// Tell the player they are moving
@@ -662,39 +667,24 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			}
 
 			if !isSneaking {
+				// U10b-1 Task 19 DELETED the mob-follow roll that stood here.
 				//
-				// When leaving a room, mobs who were attacking may follow
+				// It was a bare util.Rand(100) against
+				// 20 + Charisma + a dexterity delta, entirely off the contest core,
+				// deciding whether an engaged mob chased a leaving player. The
+				// arc's ruling is that MOB PURSUIT IS AUTHORED BEHAVIOUR, not a
+				// roll: a mob pursues because its behaviour tree says to, and a
+				// mob with no such behaviour does not pursue at all.
 				//
-				mobInstanceIds := room.GetMobs(rooms.FindFightingPlayer)
-				for _, mobInstanceId := range mobInstanceIds {
-					mob := mobs.GetInstance(mobInstanceId)
-					if mob == nil {
-						continue
-					}
-
-					if !mob.Character.IsInCombat() || mob.Character.EngagedTarget().UserId != user.UserId {
-						continue
-					}
-
-					speedDelta := mob.Character.Stats.Dexterity.ValueAdj - user.Character.Stats.Dexterity.ValueAdj
-					if speedDelta < 1 {
-						speedDelta = 1
-					}
-
-					// Chance that a mob follows the player
-					targetVal := 20 + mob.Character.Stats.Charisma.ValueAdj + speedDelta
-
-					roll := util.Rand(100)
-
-					util.LogRoll(`Mob Follow`, roll, targetVal)
-
-					if roll >= targetVal {
-						continue
-					}
-
-					mob.Command(rest)
-
-				}
+				// ⚠️ CONSEQUENCE, and it is a real balance change rather than a
+				// cleanup: a player who walks out of a fight is no longer
+				// chased by default. Until pursuit behaviour is authored (the
+				// behavior unification arc), fleeing by walking is strictly
+				// safer than it was.
+				//
+				// Deliberately NOT deleted with it: this `if !isSneaking`
+				// wrapper and the destination TryRoomBehavior below, which are
+				// unrelated to the roll and are what actually fires room_enter.
 
 				// Room behavior tree: fire room_enter for the destination room
 				behaviortree.TryRoomBehavior(destRoom.RoomId, behaviortree.EventContext{
@@ -722,7 +712,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				//
 				// When entering a room, mobs might be waiting to attack
 				//
-				mobInstanceIds = destRoom.GetMobs(rooms.FindAll)
+				// Declared here now rather than reused: the mob-follow loop that
+				// used to declare mobInstanceIds was deleted by U10b-1 Task 19.
+				mobInstanceIds := destRoom.GetMobs(rooms.FindAll)
 				for _, mobInstanceId := range mobInstanceIds {
 					mob := mobs.GetInstance(mobInstanceId)
 					if mob == nil {

@@ -98,7 +98,15 @@ func CalcSearchScore(c *characters.Character) float64 {
 // it and the mob wrappers did not, so mobs never built Rhetoric from either
 // verb.
 func awardRhetoricUse(actor Actor, c *characters.Character) {
+	// U10b-1 Task 22: won is unconditionally true. A shout is not a contest --
+	// warcry and rally roll against nothing and cannot fail -- so there is no
+	// losing branch to pay a fraction on. Same treatment venom coat, assess and
+	// an instant recipe get.
+	//
+	// The in-combat / 50% gate is UNCHANGED and is not the firing rule: it is
+	// the anti-spam incentive described above, deciding whether the shout
+	// counts as practice at all.
 	if c.IsInCombat() || util.Rand(100) < 50 {
-		actor.OnSkillUse(string(skills.Rhetoric))
+		actor.AwardResolved(true, c.CandidateFor(string(skills.Rhetoric)))
 	}
 }

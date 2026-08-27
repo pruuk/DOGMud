@@ -13,11 +13,11 @@ func TestAddClusterAffinity_Accumulates(t *testing.T) {
 
 func TestOnSkillUseScaled_FeedsClusterAffinity(t *testing.T) {
 	c := &Character{Name: "T"}
-	c.OnSkillUseScaled("spellcasting", 0, 1.0)
+	c.OnSkillUseScaled("spellcasting", 0, 1.0, false)
 	if c.ClusterAffinity["ethereal"] <= 0 {
 		t.Fatalf("expected ethereal affinity > 0, got %v", c.ClusterAffinity["ethereal"])
 	}
-	c.OnSkillUseScaled("cooking", 0, 1.0) // no mapping -> no new clusters
+	c.OnSkillUseScaled("cooking", 0, 1.0, false) // no mapping -> no new clusters
 	if _, ok := c.ClusterAffinity["colossus"]; ok {
 		t.Fatal("cooking should not add cluster affinity")
 	}

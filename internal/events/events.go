@@ -483,6 +483,33 @@ func DrainQueuedVitalsChangedForTest(userId int) []CharacterVitalsChanged {
 	return found
 }
 
+// DrainQueuedSkillUsedForTest removes all SkillUsed events from the global
+// queue for the given userId and returns them. Pass 0 to drain every SkillUsed
+// event regardless of user.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedSkillUsedForTest(userId int) []SkillUsed {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []SkillUsed
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		su, ok := pe.event.(SkillUsed)
+		if !ok {
+			remaining = append(remaining, pe)
+			continue
+		}
+		if userId == 0 || su.UserId == userId {
+			found = append(found, su)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // Initialize the priority queue.
 func init() {
 	heap.Init(&globalQueue)

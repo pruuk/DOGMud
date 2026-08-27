@@ -290,6 +290,65 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    verbatim from pre-U9 behaviour. An unrecognised defence returns two empty
    strings from `DefenceSkillAndStat` rather than guessing -- passing an empty
    skill on is not inert, `CheckSkillProgression("")` still takes the roll.
+
+   **U10b-1 Task 9** gave `AwardDefenceProgression` the OUTCOME (`won bool`,
+   Task 8) and then made both callers pass the real one, so a LOST defence is
+   awarded at `Balance.ProgressionFailureFraction` instead of nothing (melee) or
+   full weight (channel). Three things follow that a reader of either call site
+   needs.
+
+   The channel predicate is `!res.Success && !side.ForceCrit`, never bare
+   `!res.Success`: `contest.Result.Success` means the ATTACKER won, and
+   `ForceCrit` forces the attack win even when the defence took the margin.
+   `out.Defended` is not assigned until well after the award and cannot be used.
+
+   **The two paths still disagree on FUMBLES, and that divergence is OPEN.**
+   Melee treats a fumble as absolute: all three fumble branches in
+   `resolveDefenseOutcomeInner` return before `attackWon` is computed, so a
+   fumbled swing is a loss for the defence whatever the margin said. The channel
+   seam has no fumble branch before its award, so the same situation (attacker
+   fumbles, defence takes the margin) is paid there as a WIN. Do not "fix" it
+   inside U10b-1: which reading is right is a resolution question and belongs to
+   **U10b-1b**. Blast radius is roughly the 2.3% attacker-fumble rate, and both
+   paths are a gain over pre-U10b-1, which paid such a swing nothing.
+
+   Melee no longer keys on `AttackResult.DefenseUsed`. It reads
+   `AttackResult.SwingDefences` -- one entry per CONTESTED swing carrying the
+   defence that rolled best (`contest.Result.Winner`, populated win or lose),
+   that roll, and whether the defence won -- and `hooks.processDefenderProgression`
+   picks ONE with `progression.BestOf`. Three defence records on `AttackResult`
+   now mean three different things: `DefenseUsed` is a defence that WON (and is
+   round-scoped, not per-swing), `DefenseAttempts` is everything TRIED, and
+   `SwingDefences` is the per-swing best ROLL. Consequences: an uncontested
+   round awards nothing, and the round's single award replaces the old
+   once-per-winning-defence-type loop, which is a cut for a shielded defender
+   (parry and block both train weapon-combat) and a gain for a defender with one
+   defence.
+
+   **The ATTACKER side mirrors this, through `WeaponHitInfo.BestRoll`.** Each
+   entry in `AttackResult.WeaponHits` carries the highest attack roll that
+   weapon threw across the round (`contest.Result.AttackRoll.Value` from its
+   best swing), and `hooks.attackerCandidates` keys candidates by SKILL rather
+   than by weapon, OR-aggregating `CleanHit` across a skill's weapons. So two
+   fists are one candidate, and `hooks.processAttackerProgression` awards the
+   round's single event to whichever SKILL rolled best. Selecting on a roll that
+   ACTUALLY HAPPENED is the point: re-rolling with `characters.CandidateFor`
+   would stack a second randomness source on top of the roll that already
+   decided the swing. `BestRoll` is always populated, because `contest.Run`
+   rolls the attack before it looks at any defence, so an uncontested swing
+   carries a real roll too.
+
+   ⚠️ What `BestRoll` canNOT do is discriminate between two different SKILLS on
+   their own merits. `calcAttackScore` takes its skill term from
+   `characters.GetCombatSkillLevel`, which resolves the MAIN-HAND weapon's tag
+   for every entry in the plan, so an offhand fist rolls on a score built from
+   WEAPON-combat's rank. The fix is a **U10b-1b** item. Until then the two hands
+   are effectively iid, which is what lets the offhand fist take the round's
+   award about two rounds in three (4 fist swings against a longsword's 2, so
+   the overall maximum falls in the fist's draws 4 times in 6). That share is
+   load-bearing for the multipliers solved in
+   `tools/balance/u10b1_solve_v4.py`, and it is the line to re-derive when each
+   hand starts rolling its own skill.
 2. **`sendDefenseMessages` progresses the WRONG skill and prints broken
    grammar.** **FIXED defensively, still unreachable.** Its switch
    (`combat_helpers.go`) can still leave `skillToProgress` and `defenseVerb`
@@ -366,7 +425,7 @@ special moves via `ExecuteSkillMove`).
 ```go
 func ResolveChannelAttack(channel AttackChannel, side AttackSide, attacker, defender *characters.Character) ChannelDefenceResult
 func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad
-func AwardDefenceProgression(c *characters.Character, userId int, defenceType string)
+func AwardDefenceProgression(c *characters.Character, userId int, defenceType string, won bool)
 
 // U9: THE skill/stat mapping for all five defences. AwardDefenceProgression
 // and the channel crit/fumble bonus tier both read it so the mapping exists
@@ -1524,7 +1583,7 @@ values directly.
 | `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage` |
 | `combat/margin_crit.go` | `ContestCrit`, `ContestCritThreshold` |
 | `combat/crit_floor.go` | `ApplyCritFloor`, `AttackContestCrit`, `DefenseContestCrit`, `AttackCritFloor`, `DefenseCritFloor` |
-| `combat/attackresult.go` | `AttackResult` struct (includes `Hit`/`CleanHit` — dealt damage vs. won the contest, see the Task 10/14 section — `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`) and message helpers |
+| `combat/attackresult.go` | `AttackResult` struct (includes `Hit`/`CleanHit` — dealt damage vs. won the contest, see the Task 10/14 section — `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`), `SwingEvent`, `SwingDefence`/`SwingDefences` (U10b-1; see "Defender progression" below) and message helpers |
 | `combat/ai.go` | `ChooseSpecialMove`, `ChooseCastAction`, `GetAIProfile`, AI profiles, viability checks (`CanUseBash`, `CanUseKick`, etc.), scoring functions |
 | `combat/criteffects.go` | `AttemptCritDisarm`, `SetGrappleOpportunity`, `HasGrappleOpportunity`, `GetGrappleOpportunityBonus`, `ClearGrappleOpportunity` |
 | `combat/grapple.go` | `AttemptGrapple`, `ApplyGrappleResult`, `CheckClinchProgression`, `CheckGroundedEscape`, `ApplyPositionProgression`, `IsThirdPartyAttack` |

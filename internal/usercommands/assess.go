@@ -83,7 +83,13 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if corpse.UserId != 0 {
 		user.SendText(messaging.CategorySystem,
 			`Whatever this was in life cannot be called back. The dead of your own kind are beyond your craft.`)
-		user.Character.OnSkillUse(string(skills.Manifestation), user.UserId)
+		// U10b-1 Task 18c: won unconditionally true. `assess` runs NO contest
+		// at all -- there is no dice roll anywhere in this command, only a
+		// reading -- so nothing can be lost and there is no losing branch to
+		// pay a fraction on. Same treatment venom coat and an instant recipe
+		// get.
+		user.Character.AwardResolved(user.UserId, true,
+			user.Character.CandidateFor(string(skills.Manifestation)))
 		return true, nil
 	}
 
@@ -143,8 +149,10 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 	}
 
-	// Trigger manifestation skill progression.
-	user.Character.OnSkillUse(string(skills.Manifestation), user.UserId)
+	// Trigger manifestation skill progression. Uncontested -- see the note on
+	// the player-corpse path above.
+	user.Character.AwardResolved(user.UserId, true,
+		user.Character.CandidateFor(string(skills.Manifestation)))
 
 	return true, nil
 }

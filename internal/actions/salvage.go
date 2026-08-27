@@ -163,7 +163,22 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, chance fl
 	recovered := crafting.RollSalvageReturnsFromSpec(returns, chance)
 
 	room.RemoveCorpse(target)
-	actor.OnSkillUse(string(skills.Salvage))
+
+	// U10b-1 Task 16: ONE award per salvage command, win or lose. This site is
+	// a CUT -- it paid a FULL event whether or not anything was recovered, so a
+	// salvage that returned nothing trained exactly as much as one that
+	// returned everything.
+	//
+	// won is "did anything come back", not "was the corpse consumed". The
+	// corpse is always destroyed; that is the COST of the attempt, not its
+	// outcome.
+	//
+	// Once per COMMAND, not per unit. RollSalvageReturnsFromSpec rolls each
+	// ingredient independently, so a rich corpse rolls many times and still
+	// pays one event -- the same one-resolved-action rule Search follows across
+	// its six tiers.
+	actor.AwardResolved(len(recovered) > 0,
+		actor.GetCharacter().CandidateFor(string(skills.Salvage)))
 
 	storeRecovered(actor, recovered, &result)
 
@@ -196,20 +211,42 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, chance float64) S
 	result := SalvageResult{}
 	char := actor.GetCharacter()
 
-	// Find item in inventory by UUID.
+	// Find the item by UUID across every carried container, not just the
+	// backpack.
+	//
+	// The backpack is NOT where a salvage target necessarily lives. StoreItem
+	// AUTO-ROUTES potions and throwables into an equipped bandolier
+	// (inventory.go:196) and is_component items into a component bag, so
+	// scanning char.Items alone made carried items invisible to the code that
+	// salvages them.
+	//
+	// ⚠️ NOT the spoiled-potion case, which is the obvious guess and is wrong:
+	// NewRound_AutoHeal auto-ejects PhaseSpoiled potions to the backpack, so
+	// those arrive here by the front door. The live cases are a DECLINING
+	// potion -- salvage accepts PhaseDeclining as well as PhaseSpoiled, and
+	// only Spoiled is ejected -- and a THROWABLE, which is bandolier-routed and
+	// never age-ejected at all.
+	//
+	// RemoveItem below already handles all three slices, so only the LOOKUP
+	// was narrow.
 	var targetItem items.Item
 	found := false
-	for _, itm := range char.Items {
-		if itm.UUID.String() == uuid {
-			targetItem = itm
-			found = true
+	for _, pool := range [][]items.Item{char.Items, char.PotionItems, char.ComponentItems} {
+		for _, itm := range pool {
+			if itm.UUID.String() == uuid {
+				targetItem = itm
+				found = true
+				break
+			}
+		}
+		if found {
 			break
 		}
 	}
 	if !found {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategoryError,
-				`<ansi fg="red">The item you were salvaging is no longer in your backpack.</ansi>`)
+				`<ansi fg="red">The item you were salvaging is no longer in your possession.</ansi>`)
 		}
 		result.Reason = "item not found"
 		return result
@@ -249,7 +286,11 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, chance float64) S
 
 	// Always destroy the item (matches existing behavior).
 	char.RemoveItem(targetItem)
-	actor.OnSkillUse(string(skills.Salvage))
+
+	// U10b-1 Task 16: see the corpse path above. One award per command, win or
+	// lose, won on whether anything was recovered. The item is destroyed either
+	// way -- that is the cost, not the outcome.
+	actor.AwardResolved(len(recovered) > 0, char.CandidateFor(string(skills.Salvage)))
 
 	storeRecovered(actor, recovered, &result)
 

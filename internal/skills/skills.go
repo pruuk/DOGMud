@@ -351,47 +351,68 @@ func GetSkillPrimaryStat(skillName string) string {
 // SkillProgressionMultipliers controls how fast each skill progresses.
 // Combat skills fire many times per round, so they get a low multiplier.
 // Utility skills are used less often, so they get a high multiplier.
-// Solved on measured play-time rates, U10b-0 Phase D revision 3. Regenerate with
-// `python tools/balance/u10b_solve_v3.py`; do not hand-edit these to taste.
+// Solved on measured play-time rates, U10b-1 Task 23. Regenerate with
+// `python tools/balance/u10b1_solve_v4.py`; do not hand-edit these to taste.
+//
+// v3 is superseded on two counts: it read the HIT rate (0.5752) as the
+// CLEAN-HIT rate, which is 0.3856, and it predates the Best-of firing
+// convention, under which one resolved action pays ONE event rather than one
+// per weapon entry and one per defence type.
 //
 // MUST stay in sync with Balance.SkillProgressionMultipliers in
 // _datafiles/config.yaml. GetSkillProgressionMultiplier returns (0, false) on a
 // config miss, meaning "use the hardcoded default", so THIS map is what every
 // test binary sees -- tests never load config.yaml.
 var SkillProgressionMultipliers = map[SkillTag]float64{
-	// Melee. unarmed sits BELOW weapon deliberately: measured, the offhand fist
-	// takes 4 swings to a longsword's 2 (so P(entry clean) is 0.967 against
-	// 0.820, since CleanHit is OR-aggregated across a weapon's swings) and it
-	// collects the dodge award, which is 83.6% of all defences. It therefore
-	// earns 1.83x the uses, and equal values make an empty offhand dominant.
-	WeaponCombat:  1.27,
-	UnarmedCombat: 0.69,
+	// Melee. unarmed sits BELOW weapon deliberately, and the gap WIDENED under
+	// the firing convention. Only ONE skill is awarded per round now, so the
+	// question stopped being "how many entries cleanly hit" and became "which
+	// skill rolled highest". The fist takes 4 swings to a longsword's 2 and both
+	// hands roll off the same attack score, so the fist wins that Best-of about
+	// two rounds in three. It also still collects the dodge award, 83.6% of all
+	// defences. Net: ~3.3x the weapon's effective uses, up from 1.83x, and equal
+	// values still make an empty offhand dominant.
+	//
+	// At the corrected clean-hit rate, P(entry clean) is 0.858 for the fist over
+	// 4 swings against 0.623 for the weapon over 2 -- the figures the superseded
+	// comment gave as 0.967 and 0.820 were computed off the hit rate.
+	WeaponCombat:  1.34,
+	UnarmedCombat: 1.01,
 	// These three share ONE 4-round "special-move" key with 15 other verbs, so a
 	// concerted grinder gets only ~22.5 uses/hour between them, not each.
 	// ranged-combat joins indirectly: firing is ungated but reload is, and a
 	// weapon must be loaded to fire.
-	RangedCombat: 4.98,
-	Spellcasting: 3.90,
-	Rhetoric:     4.98,
+	RangedCombat: 6.88,
+	// spellcasting is the one combat skill whose multiplier FELL. It gained a
+	// second faucet: the concentration contest was success-only, so a caster who
+	// lost the hold trained nothing, and it now pays on a loss too. Damage under
+	// ConcentrationDamageThresholdPct still never rolls, which is what keeps
+	// that faucet from swamping deliberate casting.
+	Spellcasting: 2.99,
+	Rhetoric:     6.88,
 	// Assumes the Phase D conjure cooldown is in place. Without it manifestation
 	// runs at 225/hr standing still and this over-rewards it ~9x.
-	Manifestation: 4.46,
+	Manifestation: 5.13,
 	// Utility. bartering assumes the Phase D per-transaction fix; awarding per
 	// unit made it unbounded in time and unfittable. search is anchored on
 	// forage's 6-round cooldown at 100% engagement, NOT on the `search` command,
 	// which is anti-botting-gated and cannot be ground.
-	Search:       1.00,
+	//
+	// bartering is the control row: buy and sell award with won=true, so the
+	// firing convention changed its rate by exactly nothing and its multiplier
+	// is unmoved. Any future solve that shifts it has a bug in it.
+	Search:       1.02,
 	Bartering:    2.07,
-	Skullduggery: 0.83,
-	Salvage:      2.07,
+	Skullduggery: 1.23,
+	Salvage:      2.80,
 	// Crafts, at the owner's 40% engagement: an hour of crafting is gather THEN
 	// craft, so only part of it is spent at the station.
-	Blacksmithing: 1.41,
-	Alchemy:       1.41,
-	Tailoring:     1.41,
-	Cooking:       1.41,
-	Jewelcrafting: 1.41,
-	Enchanting:    1.41,
+	Blacksmithing: 1.56,
+	Alchemy:       1.56,
+	Tailoring:     1.56,
+	Cooking:       1.56,
+	Jewelcrafting: 1.56,
+	Enchanting:    1.56,
 }
 
 // GetSkillRankDescription converts a numeric skill level to a qualitative

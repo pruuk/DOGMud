@@ -162,7 +162,28 @@ func DefenceSkillAndStat(defenceType string) (skill, stat string) {
 // An unrecognised defence awards nothing rather than guessing a skill. An empty
 // skill name is not inert: TrackSkillUse("") and CheckSkillProgression("", ...)
 // take the roll and a success sends a levelup banner naming no skill at all.
-func AwardDefenceProgression(c *characters.Character, userId int, defenceType string) {
+//
+// U10b-1 Task 8: `won` says whether the defence actually kept the outcome. A won
+// defence awards at full weight; a lost one awards at
+// Balance.ProgressionFailureFraction, which is read HERE so no call site has to
+// fetch the knob and drift from the others.
+//
+// It is an OUTCOME and not a bare multiplier on purpose. OnSkillUseScaled needs
+// two things that mean different things -- a multiplier, which scales the
+// progression chance and the mutation drift, and isLoss, which gates the
+// SkillUsed quest event. A bare multiplier would force every caller to supply
+// isLoss separately and keep the pair in agreement, and a caller that passed the
+// failure fraction with isLoss false would award a reduced roll that still
+// ticked skill_use quests -- the exact desync the two-argument split exists to
+// prevent, and invisible in production. One bool makes that unrepresentable, and
+// it matches the shape Character.AwardResolved already takes. The pair must not
+// be collapsed the other way either: a WINNING action can legitimately carry a
+// sub-1.0 multiplier (a self-buff cast ships SelfCastProgressionMultiplier 0.5),
+// so "multiplier < 1.0" is not a synonym for "lost".
+//
+// BOTH production callers pass true today, which makes Task 8 a provable no-op;
+// Task 9 replaces those literals with the real contest outcome.
+func AwardDefenceProgression(c *characters.Character, userId int, defenceType string, won bool) {
 	if c == nil {
 		return
 	}
@@ -170,12 +191,18 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 	if skill == "" {
 		return // unrecognised defence awards nothing rather than guessing
 	}
-	c.OnSkillUse(skill, userId)
-	c.OnStatUse(stat, userId)
+	mult := 1.0
+	if !won {
+		mult = float64(configs.GetBalanceConfig().ProgressionFailureFraction)
+	}
+	c.OnSkillUseScaled(skill, userId, mult, !won)
+	c.OnStatUseScaled(stat, userId, mult)
 	// Parry is the one two-stat defence: it takes both the timing and the
-	// force to turn a blade. Preserved from pre-U9 behaviour verbatim.
+	// force to turn a blade. Preserved from pre-U9 behaviour verbatim -- and it
+	// scales with the outcome exactly like the other two rolls, so a lost parry
+	// cannot quietly keep paying full weight on strength.
 	if defenceType == characters.DefenseParry {
-		c.OnStatUse("strength", userId)
+		c.OnStatUseScaled("strength", userId, mult)
 	}
 }
 
@@ -415,15 +442,29 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	out.DefenceType = res.Winner
 	out.Cost = commitDefenceWinner(defender, candidates, res)
 	// U9: the ordinary defence award is unchanged in WHEN it fires -- whenever
-	// the contest ran, win or lose, which is what this path has always done and
-	// is deliberately different from melee's defence-used gate. That divergence
-	// is recorded in the firing audit and is U10b's to reconcile.
+	// the contest ran, win or lose, which is what this path has always done.
+	// U10b-1 Task 9 made melee agree, so the divergence recorded in the firing
+	// audit is closed; what this task changes here is the WEIGHT, which used to
+	// be a literal true and is now the real outcome.
 	//
-	// What is new is the bonus tier: a defensive crit or fumble now pays the
-	// defender, and the attacker observes it.
+	// The predicate is the DEFENCE's win and it cannot be a bare !res.Success.
+	// contest.Result.Success means the ATTACKER won, and ForceCrit (the
+	// sleeping-victim contract) forces the attack win even when the defence took
+	// the margin -- see the DamageMultiplier restore below, which puts the
+	// attack-win multiplier back. Such a defence was quoted, charged and
+	// progressed, but it did not win, so it is paid at
+	// ProgressionFailureFraction.
+	//
+	// out.Defended is NOT usable here: it is not assigned until after two
+	// `return out` exits further down.
+	//
+	// CritOnWin is deliberately absent from the predicate. Unlike ForceCrit it
+	// only upgrades a contest the attacker already won, so res.Success already
+	// carries it.
+	defenceWon := !res.Success && !side.ForceCrit
 	for _, candidate := range candidates {
 		if candidate.entry.Name == res.Winner {
-			AwardDefenceProgression(defender, defender.GetUserId(), res.Winner)
+			AwardDefenceProgression(defender, defender.GetUserId(), res.Winner, defenceWon)
 			break
 		}
 	}

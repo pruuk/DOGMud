@@ -39,13 +39,21 @@ func (b *Balance) validateProgression() {
 	if b.ObservedCritProgressionBonus < 0 {
 		b.ObservedCritProgressionBonus = 0.5
 	}
+	// A THIRD idiom: 0 is a legal off-switch here (so not `<= 0`) and an absent
+	// key must still reach 0.35 (so not `< 0` alone). The absent case is
+	// separated before the unmarshal; see newUnloadedConfig in configs.go.
+	// Above 1.0 inverts the convention, so it defaults rather than clamping.
+	if b.ProgressionFailureFraction < 0 || b.ProgressionFailureFraction > 1.0 {
+		b.ProgressionFailureFraction = 0.35
+	}
 	// `<= 0`, not `< 0`: this is a safety floor, not an off-switch. A config
 	// that omits the key must get the floor, not lose it. Contrast the `< 0`
-	// idiom two lines above: it makes 0 a usable off-switch, at the cost that
-	// an ABSENT key also reads as 0. Both crit knobs were absent — and so
-	// inert — until 81061c6b4 (2026-08-19) added them; they now ship at 2.0
-	// and 0.5. A Go test binary still sees the zero-valued struct, so tests
-	// that exercise the crit faucet must inject a value explicitly.
+	// idiom on the two CritProgressionBonus guards above: it makes 0 a usable
+	// off-switch, at the cost that an ABSENT key also reads as 0. Both crit
+	// knobs were absent, and so inert, until 81061c6b4 (2026-08-19) added them;
+	// they now ship at 2.0 and 0.5. A Go test binary still sees the zero-valued
+	// struct, so tests that exercise the crit faucet must inject a value
+	// explicitly.
 	if b.ProgressionChanceFloor <= 0 {
 		b.ProgressionChanceFloor = 1e-5
 	}

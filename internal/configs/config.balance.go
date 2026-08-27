@@ -399,6 +399,10 @@ type Balance struct {
 	CritProgressionBonus         ConfigFloat `yaml:"CritProgressionBonus"`         // Progression multiplier for the party who DID a crit or fumble (default 2.0; 0 disables)
 	ObservedCritProgressionBonus ConfigFloat `yaml:"ObservedCritProgressionBonus"` // Progression multiplier for the party who RECEIVED one (default 0.5; 0 disables)
 
+	// 0 is a legal off-switch here AND what an absent key decodes to; the two are
+	// separated by a pre-unmarshal sentinel. See newUnloadedConfig in configs.go.
+	ProgressionFailureFraction ConfigFloat `yaml:"ProgressionFailureFraction"` // Fraction of a full progression event a LOST resolved action awards (default 0.35; 0 disables, absent key still defaults via the -1 sentinel)
+
 	MobProgressionEnabled ConfigBool  `yaml:"MobProgressionEnabled"` // Enable mob stat/skill progression (default true)
 	MobProgressionRate    ConfigFloat `yaml:"MobProgressionRate"`    // Multiplier on progression chance vs players (default 0.5)
 	MobStatCap            ConfigInt   `yaml:"MobStatCap"`            // Legacy VALUE cap on mob stats. Superseded by MobStatTrainingCap; see config.yaml.

@@ -396,20 +396,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	dmg := result.MoveResult.Damage
 	RecordAndWait(char, "shoot", sourceType, defChar, targetType, result.MoveResult.Hit, dmg, util.GetRoundCount())
 
-	// U10d: a landed surprise shot trains skullduggery — the ranged
-	// equivalent of the melee ambush award in
-	// internal/hooks/NewRound_DoCombat_unified.go. result.MoveResult.Hit
-	// here means the contest WIN (`!out.Defended`, skill_moves.go), not
-	// "dealt damage": a defended shot can still apply partial damage on the
-	// shared mitigation curve, and that is not the clean landed ambush this
-	// award is for.
-	if surpriseShot && result.MoveResult.Hit {
-		char.ApplyProgression(
-			progression.OrdinaryEvents(progression.Outcome{
-				AttackerSkill: string(skills.Skullduggery),
-			}),
-			progression.SideAttacker, actor.GetUserId(), util.GetRoundCount())
-	}
+	awardFireProgression(actor, surpriseShot, result.MoveResult.Hit)
 
 	return result
 }
@@ -487,4 +474,68 @@ func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 		}
 	}
 	return true
+}
+
+// awardFireProgression fires the ONE ordinary progression award a resolved shot
+// earns: ranged-combat and, on a landed ambush, skullduggery, contesting in a
+// single Best-of rather than taking an award each.
+//
+// U10b-1 Task 11. Before it these were two awards in two different files --
+// ranged-combat plus an unconditional perception roll in
+// usercommands/shoot.go, and skullduggery here -- so one resolved shot could
+// pay three progression events. Perception is no longer rolled separately: it
+// is ranged-combat's primary stat, so the award rolls it once via
+// OnSkillUseScaled. On a landed shot that is a CUT, since perception used to be
+// rolled twice (once explicitly, once through the skill).
+//
+// won is the contest WIN (SkillMoveResult.Hit), not "dealt damage". A defended
+// shot still applies partial damage on the shared mitigation curve and that is
+// a loss, which now pays ProgressionFailureFraction rather than nothing.
+//
+// ⚠️ BOTH ROLLS ARE SYNTHESISED, unlike the melee attacker contest, which
+// selects on the attack roll that actually happened.
+//
+// The reason is NOT that exposing the real roll would be a wide change -- an
+// earlier draft claimed that and it is false. combat.ChannelDefenceResult
+// already carries AttackRollZScore and is already returned to callers through
+// SkillMoveResult.Defence, so adding the raw value beside it would be one
+// struct field and one assignment, touching no signature and no other caller.
+//
+// The real reason is that with only TWO candidates, mixing one real roll
+// against one synthetic one is worse than two synthetic ones. Skullduggery is
+// never rolled during a surprise shot, so it can only ever be synthetic; a real
+// ranged-combat roll would then be compared against a bare stat-plus-skill draw
+// carrying none of the position, stamina or penalty modifiers a real attack
+// score does. Two draws of the same shape compare fairly, which is all the
+// SELECTION needs. Revisit if skullduggery ever gets a roll of its own.
+//
+// MOB ARCHERS TRAIN THIS TOO, and deliberately so. An earlier draft gated the
+// ranged-combat candidate on actor.IsPlayer() to preserve the gap left by
+// mobcommands/shoot.go never awarding any progression. That gate was wrong on
+// principle, not merely ugly: the player/mob difference in progression is
+// ALREADY policy, expressed once in config and applied centrally by
+// MobProgressionEnabled (an off-switch) and MobProgressionRate (a multiplier)
+// inside the chance functions at internal/characters/progression.go:121, :233
+// and :574. A second copy of that policy at one call site duplicates it
+// somewhere no operator can see or tune, and makes this the only progression
+// award in the game whose FIRING depends on what kind of thing is acting.
+//
+// Consequence, recorded rather than buried: this closes part of the "mob archer
+// ranged-combat progression" faucet U10b-1 had deferred to U10b-2. Mob archers
+// previously trained nothing at all from shooting; they now take one award per
+// resolved shot on the same terms as anyone else, scaled by MobProgressionRate.
+func awardFireProgression(actor Actor, surpriseShot, hit bool) {
+	char := actor.GetCharacter()
+	if char == nil {
+		return
+	}
+
+	cands := make([]progression.Candidate, 0, 2)
+	cands = append(cands, char.CandidateFor(string(skills.RangedCombat)))
+	// Gated on the shot LANDING, matching the melee ambush: skullduggery here
+	// means "the approach worked", not "the approach was attempted".
+	if surpriseShot && hit {
+		cands = append(cands, char.CandidateFor(string(skills.Skullduggery)))
+	}
+	actor.AwardResolved(hit, cands...)
 }

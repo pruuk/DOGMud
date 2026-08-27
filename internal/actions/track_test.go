@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // ---------------------------------------------------------------------------
@@ -17,13 +18,14 @@ import (
 // trackFakeActor is a minimal Actor with a configurable room. It records
 // SendText messages for assertion. It satisfies the full Actor interface.
 type trackFakeActor struct {
-	char      *characters.Character
-	room      *rooms.Room
-	name      string
-	isPlayer  bool
-	userId    int
-	mobInstId int
-	sent      []string
+	awardRecorder // records Actor.AwardResolved calls
+	char          *characters.Character
+	room          *rooms.Room
+	name          string
+	isPlayer      bool
+	userId        int
+	mobInstId     int
+	sent          []string
 }
 
 func newTrackFakeActor(name string, room *rooms.Room, isPlayer bool, userId int) *trackFakeActor {
@@ -64,8 +66,6 @@ func (a *trackFakeActor) GetMobInstanceId() int                  { return a.mobI
 func (a *trackFakeActor) AddBuff(_ int, _ string)                {}
 func (a *trackFakeActor) OnSkillUse(_ string) bool               { return false }
 func (a *trackFakeActor) OnStatUse(_ string) bool                { return false }
-func (a *trackFakeActor) OnCriticalSuccess(_ string)             {}
-func (a *trackFakeActor) OnCriticalFailure(_ string)             {}
 func (a *trackFakeActor) SendRoomCommunication(_ string, _ bool) {}
 func (a *trackFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
@@ -161,5 +161,101 @@ func TestTrack_CancelTracking(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("expected 'You stop tracking.' in sent messages, got: %v", actor.sent)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// U10b-1 Task 15: the track award
+// ---------------------------------------------------------------------------
+
+// A track that reads nothing still awards, at the LOSS weight.
+//
+// This site was a full unconditional event: a tracker who saw nothing trained
+// exactly as much as one who picked up a trail. It is a CUT.
+//
+// Deterministic without pinning the dice: CalcSearchScore on this fixture is
+// centred on Perception 100 with search rank 0, and a trail-scan needs 125 --
+// well over a sigma out at the 0.15 spread, and the assertion skips rather than
+// flakes on the rare pass.
+func TestTrack_AFruitlessScanAwardsAtTheLossWeight(t *testing.T) {
+	pinConfigForTest(t)
+
+	actor := newTrackFakeActor("TrackFruitless", newTrackTestRoom(9401), false, 0)
+
+	result := Track(actor, TrackOptions{})
+
+	if result.RollValue >= 125.0 {
+		t.Skip("fixture beat the 125 threshold; nothing to assert about a failed read")
+	}
+	if got := len(actor.awards); got != 1 {
+		t.Fatalf("a resolved track produced %d awards, want 1", got)
+	}
+	if actor.awards[0].won {
+		t.Error("a track that read nothing reported won=true; it must pay the failure fraction")
+	}
+	if _, n := actor.awardedCandidate(string(skills.Search)); n != 1 {
+		t.Errorf("the award named the search skill %d times, want 1", n)
+	}
+}
+
+// The active-track mode grades against 175, not 125, and the award must use
+// the SAME threshold the branch below it gates on.
+//
+// Without this, a roll between 125 and 175 on a named target would report a WIN
+// while the player is told their tracking "isn't sharp enough" -- the award and
+// the narration disagreeing about what happened.
+func TestTrack_ActiveTrackGradesAgainstItsOwnThreshold(t *testing.T) {
+	pinConfigForTest(t)
+
+	actor := newTrackFakeActor("TrackActive", newTrackTestRoom(9402), false, 0)
+
+	result := Track(actor, TrackOptions{TargetNoun: "quarry"})
+
+	if got := len(actor.awards); got != 1 {
+		t.Fatalf("a resolved active track produced %d awards, want 1", got)
+	}
+	if want := result.RollValue >= 175.0; actor.awards[0].won != want {
+		t.Errorf("active track rolled %.1f and reported won=%v, want %v; the award must grade against 175, the same number the branch uses",
+			result.RollValue, actor.awards[0].won, want)
+	}
+}
+
+// A track REFUSED for cooldown awards nothing, even though the roll already
+// happened.
+//
+// This was a pre-existing free progression tick: the cooldown checks run AFTER
+// the roll, and the award used to fire before either of them, so spamming
+// `track` paid every time. It got worse under U10b-1, because once losing pays
+// there is no roll outcome that fails to award.
+//
+// A cooldown refusal is not a resolved contest. The award now fires at each
+// resolved EXIT rather than once beside the roll, which is what makes this
+// assertable.
+func TestTrack_ACooldownRefusalAwardsNothing(t *testing.T) {
+	pinConfigForTest(t)
+
+	room := newTrackTestRoom(9403)
+	actor := newTrackFakeActor("TrackCooldown", room, false, 0)
+
+	// Drive until one call actually gets past the roll gate and consumes the
+	// cooldown; the next call inside the window is the refusal under test.
+	consumed := false
+	for i := 0; i < 200 && !consumed; i++ {
+		if r := Track(actor, TrackOptions{}); r.RollValue >= 125.0 && !r.OnCooldown {
+			consumed = true
+		}
+	}
+	if !consumed {
+		t.Skip("fixture never cleared the 125 gate, so no cooldown was ever consumed")
+	}
+
+	before := len(actor.awards)
+	result := Track(actor, TrackOptions{})
+
+	if !result.OnCooldown {
+		t.Skip("the follow-up call was not refused for cooldown; nothing to assert")
+	}
+	if got := len(actor.awards) - before; got != 0 {
+		t.Errorf("a cooldown-refused track produced %d awards, want 0; a refusal is not a resolved contest", got)
 	}
 }

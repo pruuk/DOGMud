@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"maps"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -140,50 +141,55 @@ func exactCallPositions(t *testing.T, fset *token.FileSet, body *ast.BlockStmt, 
 // expressions and their immediate typed early returns, checks every occurrence
 // of the ordering calls, and proves resolution/effect/round/progression nodes
 // remain after the consuming cooldown. Selector-name presence cannot satisfy it.
+// U10b-1 Task 18b: the identity these tables pin moved from actor.OnSkillUse to
+// actor.AwardResolved. The ORDERING contract is unchanged -- progression still
+// comes after the move resolves and after the cost is admitted. What changed is
+// that the award now fires win or lose rather than only on a hit, so the call
+// is no longer wrapped in an `if result.Hit` gate.
 func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 	guards := []specialMoveOrderGuard{
 		{"combat_bash.go", "ExecuteBash", "BashResult", "costs.ActionBash", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"!char.HasShield() && !naturalBash", "NoShield"}, {"!char.HasBodyPart(\"arms\") && !naturalBash", "NoShield"},
-		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.AwardResolved"}, false},
 		{"combat_trip.go", "ExecuteTrip", "TripResult", "costs.ActionTrip", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoTarget"},
 			{"target.Char.IsOnFloor()", "TargetOnFloor"},
-		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.AwardResolved"}, false},
 		{"combat_kick.go", "ExecuteKick", "KickResult", "costs.ActionKick", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoTarget"},
-		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		}, []string{"combat.ExecuteSkillMove", "RecordAndWait", "actor.AwardResolved"}, false},
 		{"combat_grapple.go", "ExecuteGrapple", "GrappleResult", "costs.ActionGrapple", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!char.HasBodyPart(\"arms\")", "GrappleImmune"}, {"!target.Found", "NoTarget"},
 			{"target.Char.IsGrappling()", "TargetGrappling"},
-		}, []string{"combat.ExecuteGrappleMove", "RecordAndWait", "actor.OnSkillUse"}, false},
+		}, []string{"combat.ExecuteGrappleMove", "RecordAndWait", "actor.AwardResolved"}, false},
 		{"combat_hamstring.go", "ExecuteHamstring", "HamstringResult", "costs.ActionHamstring", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoLegs"},
 			{"sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart(\"hands\")", "NotBeast"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_rake.go", "ExecuteRake", "RakeResult", "costs.ActionRake", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsClawed(char)", "NotClawed"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_maul.go", "ExecuteMaul", "MaulResult", "costs.ActionMaul", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_pounce.go", "ExecutePounce", "PounceResult", "costs.ActionPounce", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"char.IsGrappling()", "Grappling"},
 			{"!combat.SpeciesIsQuadrupedPredator(char)", "NotPredator"},
-		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_gore.go", "ExecuteGore", "GoreResult", "costs.ActionGore", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsHorned(char)", "NotHorned"},
-		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_drain.go", "ExecuteDrain", "DrainResult", "costs.ActionDrain", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!combat.SpeciesHasLifeDrain(char)", "NotLifeDrainer"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "char.Heal", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "char.Heal", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_throttle.go", "ExecuteThrottle", "ThrottleResult", "costs.ActionThrottle", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "target.Char.AddBuff", "InterruptTargetCast", "combat.RecordSpecialMove", "actor.OnSkillUse"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "target.Char.AddBuff", "InterruptTargetCast", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)
@@ -375,7 +381,7 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 				`char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, false)
 			reveal := exactCallPositions(t, fset, fn.Body, "char.Awareness.TransitionToRevealing", true)
 			effects := exactCallPositions(t, fset, fn.Body, guard.effect, true)
-			progression := exactCallPositions(t, fset, fn.Body, "actor.OnSkillUse", true)
+			progression := exactCallPositions(t, fset, fn.Body, "actor.AwardResolved", true)
 			if guard.function != "ExecuteTaunt" {
 				progression = exactCallPositions(t, fset, fn.Body, "awardRhetoricUse", true)
 			}
@@ -1590,4 +1596,49 @@ func setCraftingForTest(m *mobs.Mob) {
 		activity.CraftingData{RecipeId: "test-recipe", RoundsTotal: 5},
 		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
 	)
+}
+
+// U10b-1 Task 18b: a special move that MISSED still awards, at the loss weight.
+//
+// Eleven of the fourteen sites were `if result.Hit { OnSkillUse(...) }`, so a
+// bash that missed trained nothing -- the same defect a failed craft had before
+// Task 16, and the reason these sites needed a task at all after the sweep
+// found them unowned.
+//
+// Driven through the AST rather than through combat, because these are call
+// sites in fourteen files and the property is structural: no progression award
+// may sit inside a hit gate. A behavioural test would cover one verb; this
+// covers every one of them and fails the moment somebody re-wraps a call.
+func TestSpecialMoves_NoProgressionAwardSitsInsideAHitGate(t *testing.T) {
+	files := []string{
+		"combat_bash.go", "combat_drain.go", "combat_gore.go", "combat_grapple.go",
+		"combat_hamstring.go", "combat_kick.go", "combat_maul.go", "combat_pounce.go",
+		"combat_rake.go", "combat_throttle.go", "combat_trip.go",
+	}
+
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok, "runtime.Caller(0) failed")
+	dir := filepath.Dir(thisFile)
+
+	for _, name := range files {
+		t.Run(name, func(t *testing.T) {
+			src, err := os.ReadFile(filepath.Join(dir, name))
+			require.NoError(t, err)
+			text := string(src)
+
+			require.Contains(t, text, "actor.AwardResolved(",
+				"%s must award through the Best-of seam", name)
+			require.NotContains(t, text, "actor.OnSkillUse(",
+				"%s still calls OnSkillUse directly, bypassing the win/lose weight", name)
+
+			// The specific regression: an award wrapped in a hit gate.
+			for _, gate := range []string{
+				"if result.Hit {\n\t\tactor.AwardResolved(",
+				"if result.Success {\n\t\tactor.AwardResolved(",
+			} {
+				require.NotContains(t, text, gate,
+					"%s wraps its progression award in a hit gate; the gate is the WEIGHT now, not a precondition", name)
+			}
+		})
+	}
 }

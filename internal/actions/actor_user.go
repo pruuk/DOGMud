@@ -3,6 +3,7 @@ package actions
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -76,4 +77,11 @@ func (a *UserActor) OnSkillUse(skillName string) bool {
 
 func (a *UserActor) OnStatUse(statName string) bool {
 	return a.User.Character.OnStatUse(statName, a.User.UserId)
+}
+
+// AwardResolved fires the Best-of progression event for one resolved action on
+// the player's own character, carrying the user id so the SkillUsed quest event
+// still reaches the quest engine.
+func (a *UserActor) AwardResolved(won bool, cands ...progression.Candidate) {
+	a.User.Character.AwardResolved(a.User.UserId, won, cands...)
 }

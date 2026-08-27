@@ -13,7 +13,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
-	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -139,18 +138,50 @@ func checkConcentrationBreak(ch *characters.Character, damage int) bool {
 		return false
 	}
 	res := combat.RunConcentrationContest(concentrationScore(ch), float64(damagePct*10))
-	if res.Success {
-		// Success-only progression (U10b's success half, adopted from
-		// birth): one spellcasting event per HELD contest. Routed through
-		// the shared applier, not a direct OnSkillUse call, so this contest
-		// path stays covered by the U9 seam guard
-		// (internal/progression/seam_guard_test.go) the same as every other
-		// contest site.
-		ch.ApplyProgression(
-			progression.OrdinaryEvents(progression.Outcome{AttackerSkill: string(skills.Spellcasting)}),
-			progression.SideAttacker, ch.GetUserId(), 0)
-	}
+	// U10b-1 Task 12: win OR lose. This was success-only -- one spellcasting
+	// event per HELD contest, nothing at all for a broken one -- which is the
+	// convention this slice replaces. Holding against a blow and failing to
+	// hold are both resolved contests; the second is exactly the case a caster
+	// learns from.
+	//
+	// res.Success is the CASTER's win: RunConcentrationContest takes the
+	// caster's score as the attack side, so Success means the hold beat the
+	// disruption.
+	//
+	// Still gated by the chip-damage floor above, which returns before the
+	// contest runs. Damage under ConcentrationDamageThresholdPct generates no
+	// contest, so it awards nothing -- a caster does not learn from being
+	// scratched.
+	awardConcentration(ch, res.Success)
 	return !res.Success
+}
+
+// awardConcentration fires the one progression event a resolved concentration
+// contest earns, at full weight when the caster held and at
+// Balance.ProgressionFailureFraction when the spell broke.
+//
+// One place for all three concentration triggers -- damage
+// (checkConcentrationBreak), position (processFoldRound) and the throttle
+// maneuver -- so the firing rule cannot drift between them. The throttle site
+// lives in internal/actions and calls Character.AwardResolved directly for the
+// same reason; only the two hooks-side callers share this helper.
+//
+// ⚠️ RATE. Concentration fires PER DAMAGE INSTANCE, so a caster taking four
+// swings in a round resolves up to four contests, and every one of them now
+// awards where previously only the held ones did. skills
+// .SkillProgressionMultipliers fits spellcasting at 3.90 on the premise that
+// casting is rare; that premise is now weaker on the concentration path than
+// on the cast path. Carry it into the re-solve.
+//
+// The Candidate's Roll is unused: with a single candidate BestOf returns it
+// whatever it rolled. CandidateFor is still the right constructor, because it
+// is the one place that knows how to build a valid candidate and it refuses an
+// unknown skill.
+func awardConcentration(ch *characters.Character, held bool) {
+	if ch == nil {
+		return
+	}
+	ch.AwardResolved(ch.GetUserId(), held, ch.CandidateFor(string(skills.Spellcasting)))
 }
 
 // concentrationScore is the caster's side of every concentration contest:
@@ -575,14 +606,12 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 			// conversion is the design (owner 2026-08-21, re-ratified over
 			// the corrected table — prone 300, deep holds 600-700).
 			res := combat.RunConcentrationContest(concentrationScore(char), float64(dmgPctEquiv*10))
+			// U10b-1 Task 12: awarded BEFORE the branch, so it fires win or
+			// lose. It used to sit inside the success arm only. Note the loss
+			// arm returns, so an award placed there would never run.
+			awardConcentration(char, res.Success)
 			if res.Success {
-				// Success-only progression: one spellcasting event per HELD
-				// round (melee fires per combat round on the same basis;
-				// farming requires a live aggressor). Routed through the
-				// U9 applier — the progression seam guard forbids direct
-				// OnSkillUse calls from this package.
-				char.ApplyProgression(progression.OrdinaryEvents(progression.Outcome{AttackerSkill: string(skills.Spellcasting)}),
-					progression.SideAttacker, char.GetUserId(), 0)
+				// Held: nothing further. The award above already fired.
 			} else {
 				// Concentration broke. Route messaging by which break
 				// flag the caller expects for this position. Default

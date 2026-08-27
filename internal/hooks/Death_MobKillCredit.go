@@ -56,10 +56,12 @@ func wireMobKillCredit(c *characters.Character) {
 				}
 
 				if !inTraining {
+					// U10b-1 Task 20 deleted the first-kill progression call
+					// that stood here: it was not a resolved action, and it
+					// progressed a skill named "combat" that does not exist.
+					// KD.AddMobKill stays -- it is the kill-count stat, not
+					// progression.
 					user.Character.KD.AddMobKill(int(m.MobId))
-					if user.Character.KD.GetMobKills(int(m.MobId)) == 1 {
-						user.Character.OnFirstMobKill(user.UserId)
-					}
 				}
 			}
 
@@ -81,10 +83,8 @@ func wireMobKillCredit(c *characters.Character) {
 						continue
 					}
 					if !inTraining {
+						// See the note on the killer's branch above.
 						partyUser.Character.KD.AddMobKill(int(m.MobId))
-						if partyUser.Character.KD.GetMobKills(int(m.MobId)) == 1 {
-							partyUser.Character.OnFirstMobKill(partyUser.UserId)
-						}
 					}
 				}
 			}
