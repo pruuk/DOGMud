@@ -67,6 +67,18 @@ var allowedDirectProgression = map[string]bool{
 	// that is expected to be temporary.
 	filepath.Join("internal", "usercommands", "go.go"): true,
 
+	// The AUTHORED TUTORIAL GRANT. actGrantProgression forces exactly one
+	// guaranteed skill advancement for a scripted tutorial beat, by calling
+	// CheckSkillProgression with a bonus large enough that the chance clamps
+	// to 1.0. It is not a contest and has no outcome to weight, so it is
+	// correctly outside the firing convention.
+	//
+	// It was already exempt before U10b-1 Task 22 -- but only because the walk
+	// did not cover internal/behaviortree at all. That is an exemption by
+	// ACCIDENT, which is exactly what this list exists to prevent, so the
+	// package is now walked and the file is listed with its reason.
+	filepath.Join("internal", "behaviortree", "actions_progression.go"): true,
+
 	// internal/combat/combat_helpers.go is DELIBERATELY ABSENT. An earlier
 	// task deleted the per-swing defender roll that used to live there. If
 	// this guard flags it, something reintroduced the duplication -- do NOT
@@ -157,7 +169,7 @@ func TestContestPathsFireProgressionOnlyThroughTheApplier(t *testing.T) {
 	for _, pkg := range []string{
 		"internal/combat", "internal/hooks",
 		"internal/actions", "internal/usercommands", "internal/mobcommands",
-		"internal/mobs",
+		"internal/mobs", "internal/behaviortree",
 	} {
 		fset := token.NewFileSet()
 		dir := filepath.Join("..", "..", pkg)
