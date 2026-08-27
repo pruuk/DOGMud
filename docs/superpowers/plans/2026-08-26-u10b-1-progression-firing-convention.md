@@ -1063,8 +1063,52 @@ dashes, 80 columns. **Do not promise that mobs will chase you.**
 
 ## Task 25: Verify and playtest
 
-- [ ] `gofmt -l internal/ modules/` prints nothing
-- [ ] `go build ./... && go test ./...`
-- [ ] Boot test in an isolated detached worktree. **Exit 124 is success.** Never grep the bare word `panic`
-- [ ] Adversarial playtest, **one signal**: does failing at something visibly teach you a little? Watch defence pacing (channel and geared-melee defenders took a cut) and passive defence training, which now pays every round at zero resource cost
+- [x] `gofmt -l internal/ modules/` prints nothing
+- [x] `go build ./... && go test ./...` -- green, no FAIL lines across the whole
+      tree. `internal/combat` carries a KNOWN PRE-EXISTING flake
+      (`TestSurpriseRound_ExactlyOneSwingIsMarkedAsTheOpener`, double-fumbled
+      opener) that fired on one run of three and not on the full-tree run. Not
+      this slice's; do not chase it here
+- [x] Boot test in an isolated detached worktree at `C:/tmp/dogmud-boot-check`.
+      **exit 124**, 0 crash matches, 1 `Server Ready`. The copied disk config was
+      the right choice for a second reason this time: HEAD's config sets
+      `HttpPort: 80`, which is already bound on this machine, while the disk
+      config's 8090 was free
+- [x] Adversarial playtest run. Goals:
+      `tools/playtest/goals/2026-08-26-u10b-1-firing-convention.yaml`. Report:
+      `tools/playtest/reports/2026-08-26-local-bug-finder-u10b-1-firing-convention.md`
+      (reports are gitignored, so the findings are summarised below and in
+      memory). **Outcome INCOMPLETE, 3 of 8 goals** -- read it as "nothing is
+      obviously broken", NOT as a pass
 - [ ] PR with `--repo pruuk/DOGMud` on every `gh` call
+
+### Playtest outcome (2026-08-26)
+
+**Confirmed working.** Combat progression fires and the stat that fired is the
+one the model predicts: two `STATISTIC INCREASED / dexterity` and no
+`SKILL ADVANCEMENT` in the same window, which is right because dexterity is the
+primary of BOTH combat skills and so rolls on the attacker award and again on
+the defender award, while a skill only rolls when it wins its side's Best-of.
+Defence resolved and narrated every round with no errors, no raw numbers, no
+unreplaced tokens and no double-prints.
+
+**Finding worth acting on.** A fruitless `search` tells the player NOTHING: it
+prints "You snoop around for a bit..." and stops. `FoundAnything()` has exactly
+one non-test consumer, the award at `internal/actions/search.go:279`. So the
+rewarded case (a resolved fruitless search, which now pays the failure fraction)
+and the unrewarded one (a bare room, held off by `rolledAgainstSomething`) are
+byte-identical to the player. This slice's headline is invisible at the site
+that fires most often. Pre-existing gap; this slice is what makes it matter.
+
+⚠️ **WHAT THE PLAYTEST DID NOT ANSWER, and must not be recorded as answered.**
+The PACE is unverified by play. Banners are probabilistic per use, so two of
+them is not a rate measurement. Both exploits the goals file was written to hunt
+are still open: the passive-defence faucet's RATE (it fires every round at zero
+resource cost -- confirmed firing, never measured) and the empty-room gate.
+Build comparison, strength via grapple and concentration under fire were all
+blocked because the local mob (`Thornwall Highwayman`) both patrols and hides,
+so `attack` returned "You attack the darkness!" while it was damaging me.
+
+These belong in the owner's pre-deploy session, which has the time budget and a
+real character. `Crop Pest` is the non-hiding mob to name in a follow-up goals
+file.
