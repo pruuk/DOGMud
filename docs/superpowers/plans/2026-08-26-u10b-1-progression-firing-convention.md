@@ -486,9 +486,32 @@ data problem, not a lost contest. **This is not academic -- a test binary
 seeds no item registry, so in tests that branch is the COMMON outcome**, and a
 first draft asserting `won == result.Found` failed for exactly that reason.
 
-⚠️ PRE-EXISTING, recorded not fixed: `track`'s cooldown checks run AFTER its
-award, so a track that rolls well but is refused for cooldown still trains. It
-was a free tick before this task too.
+✅ **FIXED, not deferred (owner ruling 2026-08-26).** `track`'s cooldown checks
+run AFTER the roll, and the award used to fire before both -- so spamming
+`track` paid every time, and it got WORSE under this slice because once losing
+pays there is no roll outcome that fails to award. The award now fires at each
+resolved EXIT rather than once beside the roll; a cooldown refusal is not a
+resolved contest and awards nothing. Pinned by
+`TestTrack_ACooldownRefusalAwardsNothing`, sabotage-proven.
+
+🔴 **STILL OPEN, and it makes this task's loss branch nearly dead for a
+developed character: `track`'s 125/175 thresholds are STATIC while the score
+is not.** `CalcSearchScore` is `Perception + SkillMultiplier(rank)*25`, so:
+
+| Perception | search rank | score | P(>=125) | P(>=175) |
+|---|---|---|---|---|
+| 100 | 0 | 125 | 50% | 0.4% |
+| 100 | 25 | 160 | 93% | 27% |
+| 100 | 50 | 175 | 97% | 50% |
+| 150 | 25 | 210 | **99.7%** | 87% |
+
+The trail-scan tier is a formality for anyone competent, so the failure
+fraction this task added almost never fires there. `track.go` already carries
+a NOTE that this is "a static difficulty check still off the contest core" and
+that `contest.AgainstDifficulty` was built for it and has ZERO production
+callers. **Converting it is U10b-1b's charter** (this slice keeps every site's
+current resolution), and it is not a mechanical call swap -- it needs a
+difficulty MODEL decision (static? scaled by trail age? by target?).
 
 
 ## Task 16: `craft` and `salvage`

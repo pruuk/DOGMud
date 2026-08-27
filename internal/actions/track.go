@@ -124,25 +124,23 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	roll := dice.RollStat(searchScore)
 	result.RollValue = roll.Value
 
-	// Skill progression on every fired roll, at a weight that follows the
-	// outcome (U10b-1 Task 15). This used to be a FULL event unconditionally,
-	// so a tracker who read nothing trained exactly as much as one who picked
-	// up a trail -- this site is a CUT on failure.
+	// awardTrack fires the round's ONE progression award, at a weight that
+	// follows the outcome (U10b-1 Task 15). This used to be a FULL event on
+	// every fired roll, so a tracker who read nothing trained exactly as much
+	// as one who picked up a trail -- this site is a CUT on failure.
 	//
-	// The threshold is mode-dependent and both are the SAME numbers the
-	// branches below gate on: a trail-scan needs 125, an active track on a
-	// named target needs 175. Reading them from one place here keeps the award
-	// honest if either is retuned.
+	// CALLED AT EACH RESOLVED EXIT RATHER THAN ONCE UP HERE, and that placement
+	// is the point. The cooldown checks below run AFTER the roll, so an award
+	// made here would pay a track that was then REFUSED for cooldown -- a free
+	// progression tick for spamming the verb, and one that got worse the moment
+	// losing started paying. A cooldown refusal is not a resolved contest and
+	// awards nothing.
 	//
-	// ⚠️ PRE-EXISTING, not introduced here: the cooldown checks below run AFTER
-	// this award, so a track that rolls well but is refused for cooldown still
-	// trains. It was a free tick before this task too. Left alone rather than
-	// silently folded into a firing-convention change.
-	trackTarget := 125.0
-	if targetNoun != "" {
-		trackTarget = 175.0
+	// Note a sub-threshold roll returns WITHOUT consuming the cooldown, so the
+	// failure paths below are genuinely resolved actions rather than refusals.
+	awardTrack := func(won bool) {
+		actor.AwardResolved(won, char.CandidateFor(string(skills.Search)))
 	}
-	actor.AwardResolved(roll.Value >= trackTarget, char.CandidateFor(string(skills.Search)))
 
 	// Roll < 125.0: no tracks visible at all.
 	if roll.Value < 125.0 {
@@ -150,6 +148,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 			actor.SendText(messaging.CategorySystem, "You don't see any tracks.")
 		}
 		result.Reason = "roll below detection threshold"
+		awardTrack(false)
 		return result
 	}
 
@@ -165,6 +164,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 			return result
 		}
 
+		awardTrack(true)
 		result.Visitors = readRoomTrail(room, roll.Value, actor.GetUserId(), actor.GetMobInstanceId())
 		if actor.IsPlayer() {
 			renderTrailToPlayer(actor, result.Visitors)
@@ -178,6 +178,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 			actor.SendText(messaging.CategorySystem, "Your tracking skills aren't sharp enough right now.")
 		}
 		result.Reason = "active-track requires roll >= 175"
+		awardTrack(false)
 		return result
 	}
 
@@ -190,6 +191,9 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		}
 		return result
 	}
+
+	// Past the cooldown: this active track has resolved as a win.
+	awardTrack(true)
 
 	// Find target in current room first (just reports "they are here").
 	if targetUser := findUserInRoomByName(room, targetNoun, actor.GetUserId()); targetUser != nil {

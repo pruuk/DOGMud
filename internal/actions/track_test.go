@@ -221,3 +221,43 @@ func TestTrack_ActiveTrackGradesAgainstItsOwnThreshold(t *testing.T) {
 			result.RollValue, actor.awards[0].won, want)
 	}
 }
+
+// A track REFUSED for cooldown awards nothing, even though the roll already
+// happened.
+//
+// This was a pre-existing free progression tick: the cooldown checks run AFTER
+// the roll, and the award used to fire before either of them, so spamming
+// `track` paid every time. It got worse under U10b-1, because once losing pays
+// there is no roll outcome that fails to award.
+//
+// A cooldown refusal is not a resolved contest. The award now fires at each
+// resolved EXIT rather than once beside the roll, which is what makes this
+// assertable.
+func TestTrack_ACooldownRefusalAwardsNothing(t *testing.T) {
+	pinConfigForTest(t)
+
+	room := newTrackTestRoom(9403)
+	actor := newTrackFakeActor("TrackCooldown", room, false, 0)
+
+	// Drive until one call actually gets past the roll gate and consumes the
+	// cooldown; the next call inside the window is the refusal under test.
+	consumed := false
+	for i := 0; i < 200 && !consumed; i++ {
+		if r := Track(actor, TrackOptions{}); r.RollValue >= 125.0 && !r.OnCooldown {
+			consumed = true
+		}
+	}
+	if !consumed {
+		t.Skip("fixture never cleared the 125 gate, so no cooldown was ever consumed")
+	}
+
+	before := len(actor.awards)
+	result := Track(actor, TrackOptions{})
+
+	if !result.OnCooldown {
+		t.Skip("the follow-up call was not refused for cooldown; nothing to assert")
+	}
+	if got := len(actor.awards) - before; got != 0 {
+		t.Errorf("a cooldown-refused track produced %d awards, want 0; a refusal is not a resolved contest", got)
+	}
+}
