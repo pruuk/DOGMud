@@ -113,6 +113,24 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 
 	result.RollHappened = true
 
+	// U10b-1 Task 15. Awarded HERE, on the resolved forage, rather than inside
+	// the success path further down where it used to sit.
+	//
+	// This site is a GAIN, unlike its siblings in this phase: forage was
+	// SUCCESS-ONLY, so a forager who turned up nothing trained nothing at all.
+	// A fruitless forage is a resolved contest and now pays
+	// ProgressionFailureFraction.
+	//
+	// Placed after RollHappened deliberately: every early exit above -- wrong
+	// biome, cooldown -- returns before this line, so a forage that never
+	// rolled still awards nothing. That marker is the honest "a contest
+	// resolved" signal, the same role rolledAgainstSomething plays in Search.
+	//
+	// won is coreResult.Found, NOT "an item reached the backpack". The
+	// crumbles-in-your-hands branch below is a found item that failed to
+	// construct -- a data problem, not a contest the forager lost.
+	actor.AwardResolved(coreResult.Found, char.CandidateFor(string(skills.Search)))
+
 	if !coreResult.Found {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem,
@@ -139,8 +157,6 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 			Gained: true,
 		})
 	}
-	actor.OnSkillUse(string(skills.Search))
-
 	if actor.IsPlayer() {
 		actor.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`You find a <ansi fg="itemname">%s</ansi>.`, newItem.DisplayName()))

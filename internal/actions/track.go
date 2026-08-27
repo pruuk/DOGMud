@@ -124,8 +124,25 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	roll := dice.RollStat(searchScore)
 	result.RollValue = roll.Value
 
-	// Skill progression on every fired roll.
-	actor.OnSkillUse(string(skills.Search))
+	// Skill progression on every fired roll, at a weight that follows the
+	// outcome (U10b-1 Task 15). This used to be a FULL event unconditionally,
+	// so a tracker who read nothing trained exactly as much as one who picked
+	// up a trail -- this site is a CUT on failure.
+	//
+	// The threshold is mode-dependent and both are the SAME numbers the
+	// branches below gate on: a trail-scan needs 125, an active track on a
+	// named target needs 175. Reading them from one place here keeps the award
+	// honest if either is retuned.
+	//
+	// ⚠️ PRE-EXISTING, not introduced here: the cooldown checks below run AFTER
+	// this award, so a track that rolls well but is refused for cooldown still
+	// trains. It was a free tick before this task too. Left alone rather than
+	// silently folded into a firing-convention change.
+	trackTarget := 125.0
+	if targetNoun != "" {
+		trackTarget = 175.0
+	}
+	actor.AwardResolved(roll.Value >= trackTarget, char.CandidateFor(string(skills.Search)))
 
 	// Roll < 125.0: no tracks visible at all.
 	if roll.Value < 125.0 {

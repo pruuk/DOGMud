@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // ---------------------------------------------------------------------------
@@ -162,5 +163,61 @@ func TestTrack_CancelTracking(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("expected 'You stop tracking.' in sent messages, got: %v", actor.sent)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// U10b-1 Task 15: the track award
+// ---------------------------------------------------------------------------
+
+// A track that reads nothing still awards, at the LOSS weight.
+//
+// This site was a full unconditional event: a tracker who saw nothing trained
+// exactly as much as one who picked up a trail. It is a CUT.
+//
+// Deterministic without pinning the dice: CalcSearchScore on this fixture is
+// centred on Perception 100 with search rank 0, and a trail-scan needs 125 --
+// well over a sigma out at the 0.15 spread, and the assertion skips rather than
+// flakes on the rare pass.
+func TestTrack_AFruitlessScanAwardsAtTheLossWeight(t *testing.T) {
+	pinConfigForTest(t)
+
+	actor := newTrackFakeActor("TrackFruitless", newTrackTestRoom(9401), false, 0)
+
+	result := Track(actor, TrackOptions{})
+
+	if result.RollValue >= 125.0 {
+		t.Skip("fixture beat the 125 threshold; nothing to assert about a failed read")
+	}
+	if got := len(actor.awards); got != 1 {
+		t.Fatalf("a resolved track produced %d awards, want 1", got)
+	}
+	if actor.awards[0].won {
+		t.Error("a track that read nothing reported won=true; it must pay the failure fraction")
+	}
+	if _, n := actor.awardedCandidate(string(skills.Search)); n != 1 {
+		t.Errorf("the award named the search skill %d times, want 1", n)
+	}
+}
+
+// The active-track mode grades against 175, not 125, and the award must use
+// the SAME threshold the branch below it gates on.
+//
+// Without this, a roll between 125 and 175 on a named target would report a WIN
+// while the player is told their tracking "isn't sharp enough" -- the award and
+// the narration disagreeing about what happened.
+func TestTrack_ActiveTrackGradesAgainstItsOwnThreshold(t *testing.T) {
+	pinConfigForTest(t)
+
+	actor := newTrackFakeActor("TrackActive", newTrackTestRoom(9402), false, 0)
+
+	result := Track(actor, TrackOptions{TargetNoun: "quarry"})
+
+	if got := len(actor.awards); got != 1 {
+		t.Fatalf("a resolved active track produced %d awards, want 1", got)
+	}
+	if want := result.RollValue >= 175.0; actor.awards[0].won != want {
+		t.Errorf("active track rolled %.1f and reported won=%v, want %v; the award must grade against 175, the same number the branch uses",
+			result.RollValue, actor.awards[0].won, want)
 	}
 }

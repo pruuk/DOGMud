@@ -463,9 +463,33 @@ free progression tick the moment losing started paying.
 
 ⚠️ Forage's award is at **`internal/actions/forage.go:142`**, not in `internal/forager`.
 
-- [ ] **Step 1:** failing tests for both: a resolved failure awards the fraction
-- [ ] **Step 2:** route both through `AwardResolved`, won on the existing find/grade condition
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing tests for both: a resolved failure awards the fraction
+- [x] **Step 2:** route both through `AwardResolved`, won on the existing find/grade condition
+- [x] **Step 3:** run, commit
+
+**Shipped, and the two sites move in OPPOSITE directions.**
+
+- **`track` is a CUT.** It awarded a FULL event on every fired roll, so a
+  tracker who read nothing trained as much as one who picked up a trail. The
+  threshold is MODE-DEPENDENT and the award now uses the same numbers the
+  branches gate on: **125** for a trail-scan, **175** for an active track on a
+  named target. A single threshold would have reported a WIN on a 125-174 roll
+  while telling the player their tracking "isn't sharp enough".
+- **`forage` is a GAIN, and the only one in Phase C.** It was SUCCESS-ONLY --
+  the award sat inside the found-an-item path -- so a fruitless forage trained
+  nothing at all. The award moved up to just after `result.RollHappened`, so
+  every early exit (wrong biome, cooldown) still awards nothing.
+
+⚠️ `won` for forage is **`coreResult.Found`**, not `result.Found`. The
+"crumbles in your hands" branch is a found item that failed to construct: a
+data problem, not a lost contest. **This is not academic -- a test binary
+seeds no item registry, so in tests that branch is the COMMON outcome**, and a
+first draft asserting `won == result.Found` failed for exactly that reason.
+
+⚠️ PRE-EXISTING, recorded not fixed: `track`'s cooldown checks run AFTER its
+award, so a track that rolls well but is refused for cooldown still trains. It
+was a free tick before this task too.
+
 
 ## Task 16: `craft` and `salvage`
 
