@@ -279,5 +279,26 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.AwardResolved(result.FoundAnything(), char.CandidateFor(string(skills.Search)))
 	}
 
+	// Close the loop for the player. Without this a search that finds nothing
+	// prints "You snoop around for a bit..." and then NOTHING, which reads as a
+	// broken or ignored command rather than a completed one. Found things
+	// announce themselves individually above; this is the only path with no
+	// output at all.
+	//
+	// ⚠️ DELIBERATELY IDENTICAL for both "there was nothing here" and "there was
+	// something here and you failed to find it", and it must stay that way.
+	// Splitting the two would turn `search` into an oracle for the EXISTENCE of
+	// hidden content: a player could stand in a room, read the different line,
+	// and know a secret exit or stash is present without ever passing the roll.
+	// That would defeat every hidden thing in the world.
+	//
+	// The consequence is accepted and is NOT a defect to "fix" later: U10b-1
+	// made a fruitless-but-resolved search pay ProgressionFailureFraction, and
+	// that award is INVISIBLE here on purpose. Progression must not leak level
+	// design.
+	if actor.IsPlayer() && !result.FoundAnything() {
+		actor.SendText(messaging.CategorySystem, "You find nothing of interest.\n")
+	}
+
 	return result
 }

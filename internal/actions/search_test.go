@@ -2,6 +2,8 @@ package actions
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -221,4 +223,77 @@ func TestSearch_AnEmptyRoomAwardsNothing(t *testing.T) {
 	if got := len(actor.awards); got != 0 {
 		t.Errorf("a search of an empty room produced %d awards, want 0; nothing was rolled against, so nothing resolved", got)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// U10b-1 review followup: the fruitless-search message
+// ---------------------------------------------------------------------------
+
+// A search that finds nothing TELLS the player so.
+//
+// Before this, a fruitless search printed "You snoop around for a bit..." and
+// then nothing at all, so the most common outcome of the most common search
+// looked like an ignored command.
+func TestSearch_AFruitlessSearchTellsThePlayer(t *testing.T) {
+	pinConfigForTest(t)
+
+	actor := newSearchFakeActor("SearchTalker", searchRoomWithHiddenNouns(9401, 3), true, 7001)
+
+	result := Search(actor, SearchOptions{})
+	if result.FoundAnything() {
+		t.Skip("fixture beat a five-sigma roll and found something; nothing to assert")
+	}
+
+	if !searchSaid(actor, "You find nothing of interest.") {
+		t.Errorf("a fruitless search sent %q, none of which tells the player the search finished", actor.sent)
+	}
+}
+
+// THE ANTI-LEAK PROPERTY, and the reason the two cases share one message.
+//
+// A room with hidden things that you FAILED to find, and a room with nothing in
+// it at all, must be indistinguishable from the player's side. If they differed,
+// `search` would become an oracle for the EXISTENCE of hidden content: stand in
+// a room, read the line, and learn a secret exit is there without ever passing
+// the roll.
+//
+// This is the test that stops a well-meaning future change from "helpfully"
+// splitting the message into "you sense something eludes you" and "there is
+// nothing here". That change would defeat every hidden thing in the world.
+func TestSearch_EmptyAndFruitlessRoomsAreIndistinguishable(t *testing.T) {
+	pinConfigForTest(t)
+
+	fruitless := newSearchFakeActor("SearchFruit", searchRoomWithHiddenNouns(9402, 3), true, 7002)
+	empty := newSearchFakeActor("SearchBare", newSearchTestRoom(9403), true, 7003)
+
+	rf := Search(fruitless, SearchOptions{})
+	_ = Search(empty, SearchOptions{})
+	if rf.FoundAnything() {
+		t.Skip("fixture beat a five-sigma roll and found something; nothing to compare")
+	}
+
+	if !reflect.DeepEqual(fruitless.sent, empty.sent) {
+		t.Errorf("a failed search and a bare-room search must read IDENTICALLY "+
+			"or search becomes a hidden-content detector.\n failed: %q\n bare:   %q",
+			fruitless.sent, empty.sent)
+	}
+
+	// And the award still differs, which is the whole point: only one of them
+	// resolved a contest.
+	if len(fruitless.awards) != 1 {
+		t.Errorf("the fruitless search produced %d awards, want 1", len(fruitless.awards))
+	}
+	if len(empty.awards) != 0 {
+		t.Errorf("the bare-room search produced %d awards, want 0", len(empty.awards))
+	}
+}
+
+// searchSaid reports whether any message the actor received contains want.
+func searchSaid(a *searchFakeActor, want string) bool {
+	for _, m := range a.sent {
+		if strings.Contains(m, want) {
+			return true
+		}
+	}
+	return false
 }

@@ -13,6 +13,12 @@ There is one limit worth knowing. You have to have actually tried yourself
 against something. Searching a bare room where nothing is hidden still teaches
 you nothing, because there was nothing there to test yourself against.
 
+Searching also tells you when it comes up empty now, instead of going quiet on
+you. It says the same thing whether the room was bare or whether something was
+there and you walked past it, and that is deliberate. If the two read
+differently you could stand in a room and learn there was something hidden in it
+without ever finding it.
+
 Fighting teaches at a steadier pace now. A round used to reward you once for
 every weapon you swung and once for every way you defended yourself, which
 quietly meant that how you armed yourself mattered more to how fast you
