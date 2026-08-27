@@ -769,11 +769,38 @@ reasoning. Do not leave it implicit.
 ⚠️ `characters/skills.go:87` is in the `characters` package, which cannot import
 `actions`. It has a `*Character`, so use `AwardResolved` directly.
 
-- [ ] **Step 1:** failing tests per decision above
-- [ ] **Step 2:** convert
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing tests per decision above
+- [x] **Step 2:** convert
+- [x] **Step 3:** run, commit
 
 ---
+
+**Shipped. Four of the five are UNCONTESTED and pass `won: true`; only one had
+a real contest.**
+
+- **bartering x2** -- the question this task raised ("is a refused haggle a
+  resolved contest?") resolves to NO. Both awards sit inside
+  `postSuccessBookkeeping` / the post-sale block, and every refusal path (no
+  stock, cannot afford, carry capacity) returns before them. **Haggling is not
+  a contest in this economy; it is a price lookup.** The `awardProgression`
+  gate is untouched and is not the firing rule -- it exists so `buy 200 x`
+  fires ONE award rather than 200.
+- **assess x2** -- ⚠️ **`assess` contains no dice roll at all.** Verified:
+  `grep RollStat|RunContest|AgainstDifficulty|util.Rand` over the file returns
+  only the two progression lines. It is a reading, not a contest, so nothing
+  can be lost. Same treatment `venom_coat` and an instant recipe get.
+- **`characters/skills.go:87`** -- the ONE real contest here, and a CUT. A lost
+  recovery roll fired nothing, so a character who failed to scramble to their
+  feet learned nothing from the attempt -- which is exactly the situation that
+  teaches you to. Still inside the `contestWin != nil` guard: a FREE stand ran
+  no contest and awards nothing.
+
+⚠️ **The shop mob's `OnStatUse("charisma", 0)` in `buy.go`/`sell.go` is NOT the
+stray-stat-roll pattern Task 22 deletes.** It belongs to a DIFFERENT character
+(the merchant), not to the actor receiving the bartering award, and it is the
+merchant's only progression from trading. Checked here so Task 22 does not have
+to rediscover it.
+
 
 # Phase D: deletions
 

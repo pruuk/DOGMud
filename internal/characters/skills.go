@@ -78,14 +78,15 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
 	success := true
 	if contestWin != nil {
 		success = contestWin()
-		if success {
-			// Success-only progression (U10b's success half): one
-			// unarmed-combat event per WON recovery contest. Free stands
-			// and lost contests fire nothing. Direct OnSkillUse is fine
-			// here: this package is the applier's home and outside the
-			// progression seam guard's walk.
-			c.OnSkillUse(string(skills.UnarmedCombat), c.GetUserId())
-		}
+		// U10b-1 Task 18c: win OR lose. This was success-only, so a character
+		// who failed to scramble back to their feet learned nothing from the
+		// attempt -- and failing to stand is exactly the situation that
+		// teaches you to.
+		//
+		// Still inside the contestWin != nil guard: a FREE stand ran no
+		// contest, so there is nothing to award. That guard is not the firing
+		// rule, it is the "did a contest happen" test.
+		c.AwardResolved(c.GetUserId(), success, c.CandidateFor(string(skills.UnarmedCombat)))
 	}
 
 	if success {

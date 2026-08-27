@@ -380,8 +380,16 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 	}
 
 	// Progression. FIRST sale of the command only -- see the doc comment.
+	// U10b-1 Task 18c: won unconditionally true -- see the identical note in
+	// actions/buy.go. A completed sale is a success by construction; the
+	// refusal paths return earlier.
+	//
+	// ⚠️ The shop mob's charisma roll below is NOT a stray stat roll beside
+	// this award: it belongs to a DIFFERENT character (the merchant), and it is
+	// the merchant's only progression from trading. It is not the
+	// emitAttackerStatGain pattern Task 22 deletes.
 	if awardProgression {
-		seller.OnSkillUse(string(skills.Bartering))
+		seller.AwardResolved(true, seller.GetCharacter().CandidateFor(string(skills.Bartering)))
 		mob.Character.OnStatUse("charisma", 0)
 	}
 

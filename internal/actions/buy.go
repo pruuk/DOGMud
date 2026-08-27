@@ -792,8 +792,17 @@ func executePurchaseBuff(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 // items, so collapsing them would break "buy N of X" objectives.
 func postSuccessBookkeeping(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRecord,
 	awardProgression bool) {
+	// U10b-1 Task 18c: won is unconditionally true. This runs inside
+	// postSuccessBookkeeping -- every refusal path (no stock, cannot afford,
+	// carry capacity) returns before it -- so a completed trade is a success by
+	// construction and there is no losing branch to pay a fraction on. Haggling
+	// is not a contest in this economy; it is a price lookup.
+	//
+	// The awardProgression gate is UNCHANGED and is not the firing rule: it is
+	// true only for the FIRST unit of a multi-buy, so `buy 200 x` fires one
+	// award rather than 200. See the doc comment above.
 	if awardProgression {
-		buyer.OnSkillUse("bartering")
+		buyer.AwardResolved(true, buyer.GetCharacter().CandidateFor("bartering"))
 	}
 
 	if shopMob != nil {
