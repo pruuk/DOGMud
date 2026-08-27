@@ -52,7 +52,19 @@ harmlessly.
 rolled, the highest-rolling one earns a single event, paid at full weight on a
 win and at `Balance.ProgressionFailureFraction` on a loss. Like `OnSkillUse` it
 takes no userId -- `UserActor` supplies its own, `MobActor` supplies 0. Build
-candidates with `Character.CandidateFor`.
+candidates with `Character.CandidateFor` in almost every case: it leaves
+`Candidate.Stat` empty, which means "the skill's primary" and pays one roll.
+
+The exception is a site that deliberately trains a stat OTHER than the skill's
+primary. `ExecuteGrapple` is the one in this package: it hand-builds a
+`progression.Candidate` naming `unarmed-combat` with `Stat: "strength"`, which
+is what gives strength a faucet now that the old bare attack-side stat roll is
+gone. ⚠️ A populated `Stat` that DIFFERS from the primary makes
+`ApplyProgression` pay a SEPARATE stat roll on top of the skill's. That is
+intended here and is the whole point, but it is also why you should not
+populate `Stat` "for clarity" when it merely repeats the primary: doing so
+would silently double-roll. `combat.DefenceSkillAndStat` follows the same rule
+for block (weapon-combat/strength) and defy (rhetoric/willpower).
 
 ### Action-cost admission
 

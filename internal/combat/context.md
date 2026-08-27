@@ -324,6 +324,31 @@ compile error**. Audited 2026-08-15; Task 12 status against each, worst first.
    once-per-winning-defence-type loop, which is a cut for a shielded defender
    (parry and block both train weapon-combat) and a gain for a defender with one
    defence.
+
+   **The ATTACKER side mirrors this, through `WeaponHitInfo.BestRoll`.** Each
+   entry in `AttackResult.WeaponHits` carries the highest attack roll that
+   weapon threw across the round (`contest.Result.AttackRoll.Value` from its
+   best swing), and `hooks.attackerCandidates` keys candidates by SKILL rather
+   than by weapon, OR-aggregating `CleanHit` across a skill's weapons. So two
+   fists are one candidate, and `hooks.processAttackerProgression` awards the
+   round's single event to whichever SKILL rolled best. Selecting on a roll that
+   ACTUALLY HAPPENED is the point: re-rolling with `characters.CandidateFor`
+   would stack a second randomness source on top of the roll that already
+   decided the swing. `BestRoll` is always populated, because `contest.Run`
+   rolls the attack before it looks at any defence, so an uncontested swing
+   carries a real roll too.
+
+   ⚠️ What `BestRoll` canNOT do is discriminate between two different SKILLS on
+   their own merits. `calcAttackScore` takes its skill term from
+   `characters.GetCombatSkillLevel`, which resolves the MAIN-HAND weapon's tag
+   for every entry in the plan, so an offhand fist rolls on a score built from
+   WEAPON-combat's rank. The fix is a **U10b-1b** item. Until then the two hands
+   are effectively iid, which is what lets the offhand fist take the round's
+   award about two rounds in three (4 fist swings against a longsword's 2, so
+   the overall maximum falls in the fist's draws 4 times in 6). That share is
+   load-bearing for the multipliers solved in
+   `tools/balance/u10b1_solve_v4.py`, and it is the line to re-derive when each
+   hand starts rolling its own skill.
 2. **`sendDefenseMessages` progresses the WRONG skill and prints broken
    grammar.** **FIXED defensively, still unreachable.** Its switch
    (`combat_helpers.go`) can still leave `skillToProgress` and `defenseVerb`
@@ -400,7 +425,7 @@ special moves via `ExecuteSkillMove`).
 ```go
 func ResolveChannelAttack(channel AttackChannel, side AttackSide, attacker, defender *characters.Character) ChannelDefenceResult
 func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad
-func AwardDefenceProgression(c *characters.Character, userId int, defenceType string)
+func AwardDefenceProgression(c *characters.Character, userId int, defenceType string, won bool)
 
 // U9: THE skill/stat mapping for all five defences. AwardDefenceProgression
 // and the channel crit/fumble bonus tier both read it so the mapping exists

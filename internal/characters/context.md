@@ -62,6 +62,26 @@ progression` is deliberately dependency-free and reads no config, so the knob
 has to enter at this boundary; keeping the boundary one function is what stops
 call sites from each fetching it and drifting.
 
+`AwardResolvedScaled(userId int, won bool, bonus float64, candidates ...)` is
+the same seam with a difficulty multiplier. `AwardResolved` is exactly
+`AwardResolvedScaled(..., 1.0, ...)`. Spell casts and craft completions carry a
+difficulty bonus (the two expressions at the top of this section) and MUST use
+the scaled form.
+
+⚠️ **Two ways to get this wrong, both of which compile and pass:**
+
+1. Routing a bonus-carrying site through plain `AwardResolved` **silently drops
+   the bonus**. There is no error and no log line; difficulty simply stops
+   mattering.
+2. Folding the bonus into the failure fraction instead does nothing **on a
+   win**, because `progression.OrdinaryEventsScaled` only touches the LOSING
+   side. A caster who lands the spell would get no difficulty credit at all.
+
+The bonus is therefore applied to the event's `Multiplier` after the events are
+built, not to `frac` and not inside `progression`. Anything that reads like "the
+bonus and the fraction are the same dial" is the bug above wearing a
+simplification's clothes.
+
 `CandidateFor(skill string) progression.Candidate` builds the standard
 candidate: the skill's level, and one `dice.RollStat` against
 `primaryStatValue + level*SkillWeight`. It leaves `Candidate.Stat` empty, which
