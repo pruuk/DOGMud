@@ -30,6 +30,29 @@ import (
 // Candidates are rolled BEFORE they arrive here, by CandidateFor. Pass every
 // skill the action could plausibly train; BestOf picks exactly one.
 func (c *Character) AwardResolved(userId int, won bool, candidates ...progression.Candidate) {
+	c.AwardResolvedScaled(userId, won, 1.0, candidates...)
+}
+
+// AwardResolvedScaled is AwardResolved with an additional DIFFICULTY multiplier
+// applied on top of the win/lose weight.
+//
+// The two multipliers are separate axes and must not be conflated. `won`
+// decides whether the action earned full weight or
+// Balance.ProgressionFailureFraction; `bonus` says how much this particular
+// action was worth in the first place -- a harder spell or a harder recipe
+// teaches more, win or lose.
+//
+// It exists because the spell cast site scales by
+// 1 + Difficulty*SpellDifficultyProgressionScale, and routing that site through
+// the plain AwardResolved would have silently DROPPED that scaling: harder
+// spells would quietly have started training exactly like trivial ones.
+//
+// ⚠️ A `bonus` below 1.0 is NOT a loss. The self-cast reduction
+// (SelfCastProgressionMultiplier, shipped 0.5) is a winning multiplier, and
+// inferring a loss from a small multiplier is precisely the mistake
+// Event.Lost exists to prevent -- it would stop self-buff casts ticking
+// skill_use quests.
+func (c *Character) AwardResolvedScaled(userId int, won bool, bonus float64, candidates ...progression.Candidate) {
 	if c == nil {
 		return
 	}
@@ -43,8 +66,20 @@ func (c *Character) AwardResolved(userId int, won bool, candidates ...progressio
 		AttackerStat:  best.Stat,
 		Defended:      !won,
 	}
-	c.ApplyProgression(progression.OrdinaryEventsScaled(o, frac),
-		progression.SideAttacker, userId, util.GetRoundCount())
+	evs := progression.OrdinaryEventsScaled(o, frac)
+
+	// The bonus is applied to the EVENT, not folded into frac.
+	// OrdinaryEventsScaled only touches the LOSING side's Multiplier and leaves
+	// the winner's at 1.0, so passing frac*bonus would drop the difficulty
+	// scaling entirely on every winning cast -- silently, and in the direction
+	// that makes hard spells train like trivial ones.
+	if bonus != 1.0 {
+		for i := range evs {
+			evs[i].Multiplier *= bonus
+		}
+	}
+
+	c.ApplyProgression(evs, progression.SideAttacker, userId, util.GetRoundCount())
 }
 
 // CandidateFor builds the standard progression Candidate for one skill: the

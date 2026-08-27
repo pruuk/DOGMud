@@ -239,3 +239,87 @@ func TestCandidateFor_FeedsAwardResolved(t *testing.T) {
 		t.Errorf("weapon-combat tracked %d uses, want exactly 1", got)
 	}
 }
+
+// AwardResolvedScaled must apply the difficulty bonus on a WIN as well as a
+// loss.
+//
+// This test exists because the first draft of U10b-1 Task 13 got it wrong in a
+// way that built, passed every existing test, and would have shipped: it folded
+// the bonus into the failure fraction and handed the product to
+// OrdinaryEventsScaled. That function only touches the LOSING side's
+// Multiplier -- the winner's stays at the 1.0 OrdinaryEvents hardcodes -- so
+// every WINNING cast would have silently dropped its difficulty scaling, and
+// hard spells would have trained exactly like trivial ones.
+//
+// Exact, not statistical: at ProgressionFailureFraction 0 a losing award
+// short-circuits before any roll whatever the bonus, so the win case is the
+// only one that can advance, and the bonus is what decides whether it clears
+// the pinned certainty.
+func TestAwardResolvedScaled_BonusAppliesOnAWinNotJustALoss(t *testing.T) {
+	pinCertainStatProgressionForTest(t)
+
+	const skill = "weapon-combat"
+
+	// A bonus of 0 must suppress a WIN entirely. If the bonus were only
+	// reaching the losing side, this would advance regardless.
+	zero := newProgressionTestCharacter(t)
+	beforeZero := zero.Skills[skill]
+	for i := 0; i < 50; i++ {
+		zero.AwardResolvedScaled(0, true, 0.0, zero.CandidateFor(skill))
+	}
+	if got := zero.Skills[skill] - beforeZero; got != 0 {
+		t.Errorf("a WON award at bonus 0 advanced %s by %d, want 0; the difficulty bonus is not reaching the winning side", skill, got)
+	}
+	if got := zero.GetSkillUseCount(skill); got != 50 {
+		t.Errorf("%s use count = %d, want 50; the award must still FIRE at bonus 0, just at zero weight", skill, got)
+	}
+
+	// The mirror at bonus 1.0, so the assertion above cannot pass against an
+	// implementation that awards nothing at all.
+	one := newProgressionTestCharacter(t)
+	beforeOne := one.Skills[skill]
+	one.AwardResolvedScaled(0, true, 1.0, one.CandidateFor(skill))
+	if got := one.Skills[skill] - beforeOne; got != 1 {
+		t.Errorf("a WON award at bonus 1.0 advanced %s by %d, want 1", skill, got)
+	}
+}
+
+// AwardResolved is AwardResolvedScaled at bonus 1.0. Keep it a delegation: a
+// parallel copy of the body is free to drift, and the whole point of the scaled
+// form is that one expression decides every resolved award's weight.
+func TestAwardResolved_DelegatesToScaledAtBonusOne(t *testing.T) {
+	pinCertainStatProgressionForTest(t)
+
+	const skill = "weapon-combat"
+	for i := 0; i < 20; i++ {
+		plain := newProgressionTestCharacter(t)
+		scaled := newProgressionTestCharacter(t)
+
+		plain.AwardResolved(0, true, plain.CandidateFor(skill))
+		scaled.AwardResolvedScaled(0, true, 1.0, scaled.CandidateFor(skill))
+
+		if plain.Skills[skill] != scaled.Skills[skill] {
+			t.Fatalf("AwardResolved advanced %s to %d but AwardResolvedScaled at 1.0 reached %d on iteration %d",
+				skill, plain.Skills[skill], scaled.Skills[skill], i)
+		}
+	}
+}
+
+// A sub-1.0 bonus is a WINNING multiplier, not a loss.
+//
+// SelfCastProgressionMultiplier ships at 0.5 and rides in on the spell path's
+// spellBonus, so a self-buff cast arrives here with bonus 0.5 and won = true.
+// If that were read as a loss it would stop ticking skill_use quests, which is
+// the exact regression progression.Event.Lost exists to prevent.
+func TestAwardResolvedScaled_ASubOneBonusIsStillAWin(t *testing.T) {
+	pinCertainStatProgressionForTest(t)
+
+	c := newProgressionTestCharacter(t)
+	events.DrainQueuedSkillUsedForTest(31)
+
+	c.AwardResolvedScaled(31, true, 0.5, c.CandidateFor("weapon-combat"))
+
+	if got := len(events.DrainQueuedSkillUsedForTest(31)); got != 1 {
+		t.Errorf("a WON award at bonus 0.5 emitted %d SkillUsed events, want 1; a small multiplier is not a loss", got)
+	}
+}

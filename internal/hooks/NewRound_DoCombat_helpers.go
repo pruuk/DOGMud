@@ -610,8 +610,9 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		}
 
 		resolveRoom := rooms.LoadRoom(user.Character.RoomId)
+		castLanded := false
 		if resolveRoom != nil {
-			resolveSpell(user, cs, spellData, resolveRoom)
+			castLanded = resolveSpell(user, cs, spellData, resolveRoom)
 		}
 		user.Character.TrackSpellCast(cs.SpellId)
 		// Fire progression for the correct skill based on spell school.
@@ -636,15 +637,25 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		}
 
 		if spellBonus > 0 {
-			// OnSkillUseScaled already rolls the skill's primary stat --
-			// manifestation maps to charisma, spellcasting to willpower -- so an
-			// explicit OnStatUse beside it double-rolled every cast. The stat a
-			// spell trains now comes from its primarystat (Task 13).
+			// U10b-1 Task 13: ONE CAST IS ONE RESOLVED ACTION. This already
+			// fired once per cast rather than once per target; what it lacked
+			// was an outcome. It now pays full weight when ANY target's contest
+			// was won and ProgressionFailureFraction when every one of them was
+			// defended -- a caster who watched three enemies all shrug off the
+			// same spell learned something, and used to be paid as if the cast
+			// had never resolved.
+			//
+			// spellBonus is the DIFFICULTY multiplier and is a separate axis
+			// from the win/lose weight. It still scales the whole award, and
+			// the self-cast reduction inside it is a WINNING multiplier below
+			// 1.0 -- which is exactly why AwardResolved takes `won` rather than
+			// inferring a loss from a small multiplier.
 			castSkill := skills.Spellcasting
 			if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 				castSkill = skills.Manifestation
 			}
-			user.Character.OnSkillUseScaled(string(castSkill), userId, spellBonus, false)
+			user.Character.AwardResolvedScaled(userId, castLanded, spellBonus,
+				user.Character.CandidateFor(string(castSkill)))
 
 			// primarystat overrides the skill's default stat. Manifestation
 			// already maps to charisma and spellcasting to willpower, so for
@@ -787,8 +798,9 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 	case result.CastComplete:
 		cs := result.CastingData
 		spellData := result.SpellData
+		castLanded := false
 		if resolveRoom := rooms.LoadRoom(mob.Character.RoomId); resolveRoom != nil {
-			resolveMobSpell(mob, cs, spellData, resolveRoom)
+			castLanded = resolveMobSpell(mob, cs, spellData, resolveRoom)
 		}
 		// Stage 38.3: Mob spellcasting progression — difficulty-scaled
 		spellBonus := 1.0
@@ -796,14 +808,18 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 			bal := configs.GetBalanceConfig()
 			spellBonus = 1.0 + float64(spellData.Difficulty)*float64(bal.SpellDifficultyProgressionScale)
 		}
-		// OnSkillUseScaled already rolls the skill's primary stat -- see the
-		// identical fix in handlePlayerFoldCasting above for why the explicit
-		// OnStatUse calls here double-rolled every mob cast.
+		// U10b-1 Task 13: one cast is one resolved action, paid at full weight
+		// when ANY target's contest was won and at ProgressionFailureFraction
+		// when every one was defended. See the identical conversion in
+		// handlePlayerFoldCasting above, including why the difficulty bonus
+		// goes through AwardResolvedScaled rather than being folded into the
+		// win/lose weight.
 		castSkill := skills.Spellcasting
 		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 			castSkill = skills.Manifestation
 		}
-		mob.Character.OnSkillUseScaled(string(castSkill), 0, spellBonus, false)
+		mob.Character.AwardResolvedScaled(0, castLanded, spellBonus,
+			mob.Character.CandidateFor(string(castSkill)))
 
 		// primarystat overrides the skill's default stat -- see the identical
 		// override in handlePlayerFoldCasting above.

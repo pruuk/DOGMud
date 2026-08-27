@@ -402,9 +402,32 @@ exactly that mistake.
 One cast is one resolved action: **one event, won if ANY target was hit.** Not a
 per-target award.
 
-- [ ] **Step 1:** failing tests: a cast every target defended awards the fraction; a cast that hit one of three awards full, once
-- [ ] **Step 2:** route `NewRound_DoCombat_helpers.go:647` (mob twin `:806`) through `AwardResolved`
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing tests: a cast every target defended awards the fraction; a cast that hit one of three awards full, once
+- [x] **Step 2:** route `NewRound_DoCombat_helpers.go:647` (mob twin `:806`) through `AwardResolved`
+
+**Shipped.** The award already fired once per cast, not per target; what it
+lacked was an OUTCOME. `resolveSpell` / `resolveMobSpell` now return
+`anyLanded`, plumbed out of the four per-target resolvers (which gained a
+`landed` return beside their existing `fumbled` one). `landed` means the
+contest was WON OUTRIGHT -- a defended cast is not landed even though it
+still deals partial damage, matching `SkillMoveResult.Hit`. Uncontested
+casts (identify, fold-anchor, fold-recall, purge-affliction, a no-defence
+help spell, a cooperative mob heal) count as landed: there was no defence to
+beat. A failed `validateFoldRecall` does not.
+
+🔴 **A REGRESSION WAS NEARLY SHIPPED HERE, and the guard against it is
+`TestAwardResolvedScaled_BonusAppliesOnAWinNotJustALoss`.** Routing this site
+through the plain `AwardResolved` silently DROPS `spellBonus`, the
+`1 + Difficulty*SpellDifficultyProgressionScale` scaling -- so hard spells
+would have started training exactly like trivial ones. The first fix was also
+wrong: folding the bonus into `frac` and passing `frac*bonus` to
+`OrdinaryEventsScaled` does nothing on a WIN, because that function only
+touches the LOSING side's `Multiplier` and leaves the winner's at the 1.0
+`OrdinaryEvents` hardcodes. New `Character.AwardResolvedScaled` applies the
+bonus to the EVENT instead. **Any later task converting a site that carries a
+difficulty or cost multiplier -- craft especially -- must use
+`AwardResolvedScaled`, not `AwardResolved`.**
+- [x] **Step 3:** run, commit
 
 ---
 

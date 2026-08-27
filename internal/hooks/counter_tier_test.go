@@ -195,7 +195,7 @@ func TestSpellCounter_MobDefenderCountersPlayerCaster(t *testing.T) {
 
 	spell := physicalHarmSpellForCollapseTest()
 	side := spellAttackSideFor(spell, caster.Character)
-	fumbled := resolveAgainstMob(caster, mob, room, spell, side, spell.EffectMagnitude)
+	fumbled, _ := resolveAgainstMob(caster, mob, room, spell, side, spell.EffectMagnitude)
 	require.False(t, fumbled)
 
 	require.Equal(t, 2, calls,
@@ -325,7 +325,7 @@ func TestSpellCounter_NarrationReachesCasterFromCounterQuellPool(t *testing.T) {
 	spell := physicalHarmSpellForCollapseTest()
 	side := spellAttackSideFor(spell, caster.Character)
 	events.DrainQueuedMessagesForTest(caster.UserId)
-	fumbled := resolveAgainstMob(caster, mob, room, spell, side, spell.EffectMagnitude)
+	fumbled, _ := resolveAgainstMob(caster, mob, room, spell, side, spell.EffectMagnitude)
 	require.False(t, fumbled)
 	require.Equal(t, 2, calls, "the cast and the counter-swing")
 
@@ -365,4 +365,51 @@ func counterQuellNarrationFixture() *items.DefenseMessageGroup {
 	return &items.DefenseMessageGroup{OptionId: items.DefenseCounterQuell, Options: items.DefenseIntensity{
 		items.Weak: mk("weak"), items.Normal: mk("normal"), items.Heavy: mk("heavy"),
 	}}
+}
+
+// U10b-1 Task 13: resolveAgainstMob reports whether the cast LANDED, which is
+// what decides the round's single progression award's weight.
+//
+// landed means the contest was WON OUTRIGHT. A defended cast is NOT landed even
+// though it still deals partial damage on the shared mitigation curve -- the
+// same contract SkillMoveResult.Hit carries. Without this the spell award's
+// win/lose input is unpinned, and the plumbing that carries it out of
+// resolveSpell would be free to invert with nothing turning red.
+func TestResolveAgainstMob_ReportsWhetherTheCastLanded(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		runner     func(*testing.T) func(float64, []contest.Entry) contest.Result
+		wantLanded bool
+	}{
+		{"a clean attack win landed", attackWinContest, true},
+		{"a crit-defended cast did not land", alwaysDefensiveCritContest, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pinCounterTierKnobs(t, 0.5)
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			restoreMessages := seedChannelRoutingMessages(t)
+			defer restoreMessages()
+
+			caster := users.GetByUserId(1)
+			mob := mobInstanceForCollapseTest(t)
+			room := roomForCollapseTest(t)
+			caster.Character.Health = 100000
+			caster.Character.HealthMax.Value = 100000
+			caster.Character.Stamina = 500
+			caster.Character.StaminaMax.Value = 500
+
+			restore := combat.SetChannelAttackContestRunnerForTest(tc.runner(t))
+			t.Cleanup(restore)
+
+			spell := physicalHarmSpellForCollapseTest()
+			side := spellAttackSideFor(spell, caster.Character)
+			fumbled, landed := resolveAgainstMob(caster, mob, room, spell, side, spell.EffectMagnitude)
+
+			require.False(t, fumbled, "fixture sanity: neither runner fumbles")
+			if landed != tc.wantLanded {
+				t.Errorf("landed = %v, want %v", landed, tc.wantLanded)
+			}
+		})
+	}
 }
