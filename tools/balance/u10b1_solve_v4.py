@@ -136,12 +136,21 @@ def weight(p_win):
 P_DEF_WIN = 1.0 - CLEAN_HIT      # D: the defence carried a swing the attack
 def_award = weight(P_DEF_WIN)    #    did not cleanly land
 
-# D: which SKILL wins the attacker Best-of in a 1H + fist build. Both hands roll
-# off the same attack score today (calcAttackScore reads the main-hand slot for
-# every weapon -- the known defect owed the moment this slice closes), so the
-# swings are iid and the overall maximum falls in the fist's 4 draws with
-# probability 4/6. Once each hand rolls its own skill, this line is the one to
-# re-derive.
+# D: which SKILL wins the attacker Best-of in a 1H + fist build. Both hands take
+# their SKILL TERM from the same place today -- calcAttackScore reads
+# GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag for every entry
+# in the plan, so an offhand fist rolls on a score built from WEAPON-combat's
+# rank. That is the known defect owed the moment this slice closes.
+#
+# Treating the swings as iid then gives the overall maximum to the fist's 4
+# draws with probability 4/6.
+#
+# APPROXIMATION, stated rather than hidden: the hands are not perfectly iid,
+# because calcAttackScore subtracts a per-hand dual-wield penalty (ws.penalty)
+# that DOES differ between main and offhand. So the fist's draws are centred a
+# little lower and 4/6 slightly overstates its share. The shared skill term is
+# by far the larger effect, and both go away together when each hand rolls its
+# own skill -- at which point this line is the one to re-derive.
 SHARE_FIST = SWINGS_FIST / (SWINGS_MAIN + SWINGS_FIST)
 SHARE_MAIN = 1.0 - SHARE_FIST
 

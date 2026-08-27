@@ -22,9 +22,12 @@ import (
 // CERTAIN. At the 0.35 failure fraction the same product is 0.68, which is not.
 // The two preconditions below assert exactly that, so if a multiplier ever
 // moves the test fails loudly on the precondition instead of flaking on the
-// counts. That is not hypothetical: this test was written against
-// weapon-combat, and U10b-1 Task 23's re-solve raised that from 1.27 to 3.33,
-// which pushed the LOSS past the clamp too and tripped the precondition.
+// counts. That is not hypothetical. This test was written against
+// weapon-combat at 1.27, and an INTERMEDIATE step of U10b-1 Task 23's re-solve
+// put it at 3.33, which pushed the LOSS past the clamp too and tripped the
+// precondition rather than flaking. Weapon-combat shipped at 1.34, which would
+// still fit the window, so the probe did not HAVE to move -- it moved because
+// a value that wandered outside the window once can wander again.
 //
 // Second, bartering is the one skill the firing convention provably did not
 // move: buy and sell award with won=true, so their rate is unchanged and Task

@@ -46,10 +46,12 @@ const (
 //
 // BaseProgressionChance is 2.0, not the 1.0 its defender-side twin uses,
 // because skills.SkillProgressionMultipliers is a per-skill PACE dial applied
-// after the curve and unarmed-combat ships at 0.69. At base 1.0 an unarmed
-// full-weight roll would sit at 0.69 and every unarmed assertion below would be
-// a coin flip. 2.0 x 0.69 clamps to 1.0; weapon-combat's 1.27 was already
-// clamping. Nulling Balance.SkillProgressionMultipliers does NOT remove the
+// after the curve and unarmed-combat ships at 1.01 (0.69 before U10b-1 Task
+// 23's re-solve). At base 1.0 a pre-re-solve unarmed full-weight roll sat at
+// 0.69 and every unarmed assertion below would have been a coin flip. Base 2.0
+// clamps it to 1.0 with room to spare either way, which is why this pin is
+// deliberately NOT tuned to the exact shipped multiplier: it has to survive a
+// retune, and it has now survived one. Nulling Balance.SkillProgressionMultipliers does NOT remove the
 // pace dial -- GetSkillProgressionMultiplier falls back to the hardcoded map on
 // a config miss, and a test binary never loads config.yaml at all.
 func pinCertainAttackerProgressionForTest(t *testing.T, failureFraction float64) {

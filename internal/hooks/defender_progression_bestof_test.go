@@ -20,9 +20,9 @@ import (
 // dodge, parry and block took three rolls where a bare-handed one took one.
 //
 // PARRY is the fixture defence for the same three reasons the internal/combat
-// twin of this file gives: weapon-combat's hardcoded 1.27 progression
-// multiplier clamps a rank-0 chance to CERTAINTY (unarmed-combat's 0.69 would
-// not), it is the one two-stat defence, and its stat is dexterity, which is
+// twin of this file gives: weapon-combat's hardcoded progression multiplier
+// (1.34 since U10b-1 Task 23's re-solve, 1.27 before it) clamps a rank-0 chance
+// to CERTAINTY under this file's pin, where unarmed-combat's does not, it is the one two-stat defence, and its stat is dexterity, which is
 // also weapon-combat's primary, so parry rolls dexterity twice.
 const (
 	defenderAwardSkill      = "weapon-combat"
