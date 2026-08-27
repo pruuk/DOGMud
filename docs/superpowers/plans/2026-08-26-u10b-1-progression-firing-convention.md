@@ -2,6 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use `- [ ]` for tracking.
 
+> ⚠️ **The task list grew on 2026-08-26.** Tasks **18b** and **18c** were added
+> after a sweep found ~18 production progression sites that no task owned --
+> the thirteen combat special moves, bartering x2, assess x2, and the unarmed
+> fallback in `characters/skills.go`. Eleven of the thirteen special moves are
+> SUCCESS-ONLY (`if result.Hit`), i.e. carrying the exact defect this slice
+> exists to remove. **Task 22's guard would have gone red on all of them with
+> nothing assigned to fix them**, so the plan as originally written could not
+> reach its own "done when" item 1. Count the sites, not the tasks.
+
 **Goal:** Progression resolves **Best-of**. One resolved action produces one event, for the single highest-rolling candidate skill. Full on success, partial on failure. Crits stay a separate channel. Progression follows the final outcome.
 
 **Scope:** the firing rule only, wired to **every** site that resolves. **Every site keeps its CURRENT resolution.** The contest-core conversions, craft difficulty, material tier, salvage difficulty and the floors are **U10b-1b** and are not in this plan.
@@ -584,6 +593,85 @@ through `OnSkillUseScaled` would emit it twice. Remove the explicit emission.
 - [ ] **Step 1:** failing tests: the two files no longer call `CheckSkillProgression`; a failed steal awards the fraction
 - [ ] **Step 2:** convert each site
 - [ ] **Step 3:** run everything, commit with **explicit paths**, never `git add internal/`
+
+---
+
+## Task 18b: The thirteen special-move sites
+
+**Added 2026-08-26 (owner). These were in NO task, and the slice could not have
+reached its own "done when" without them** -- Task 22's guard requires every
+production progression call to route through `AwardResolved` or
+`AwardDefenceProgression`, and these eighteen (18b + 18c) would have turned it
+red with no task assigned to convert them. Allow-listing them instead would gut
+the guard.
+
+They are also the EASIEST conversions in the slice: every one already has a
+clean `won` sitting on the line above it.
+
+**Eleven are success-only today** -- a failed bash trains nothing, exactly the
+defect this slice exists to remove:
+
+| File | Gate | `won` |
+|---|---|---|
+| `combat_bash.go:142` | `if result.Hit` | `result.Hit` |
+| `combat_drain.go:189` | `if result.Hit` | `result.Hit` |
+| `combat_gore.go:144` | `if result.Hit` | `result.Hit` |
+| `combat_hamstring.go:162` | `if result.Hit` | `result.Hit` |
+| `combat_kick.go:205` | `if result.Hit` | `result.Hit` |
+| `combat_maul.go:160` | `if result.Hit` | `result.Hit` |
+| `combat_pounce.go:159` | `if result.Hit` | `result.Hit` |
+| `combat_rake.go:159` | `if result.Hit` | `result.Hit` |
+| `combat_throttle.go:220` | `if result.Hit` | `result.Hit` |
+| `combat_trip.go:183` | `if result.Hit` | `result.Hit` |
+| `combat_grapple.go:127` | `if result.Success` | `result.Success` |
+
+⚠️ `combat_throttle.go:220` is the MOVE's own award. Do not confuse it with the
+CONCENTRATION award at `:176`, which Task 12 already converted.
+
+**Three are ungated and need an explicit decision each:**
+
+- **`combat_taunt.go:200`** is the BACKFIRE branch -- it already fires on a
+  FAILED taunt, at full weight. Pass `won: false`. This one is a **cut**.
+- **`combat_taunt.go:277`** is the resolved path; `out` is in scope, so
+  `won: !out.Defended`, matching the `RecordSpecialMove` call directly below it.
+- **`mutation_venom_coat.go:34`** is a mutation TRIGGER, not a contest. Nothing
+  can be lost, so `won: true` -- the same treatment `ImmediateComplete` gets in
+  Task 16.
+
+- [ ] **Step 1:** failing tests: a MISSED bash awards the fraction; a backfired taunt awards the fraction; a landed move still awards full
+- [ ] **Step 2:** convert all thirteen to `actor.AwardResolved(won, char.CandidateFor(skill))`
+- [ ] **Step 3:** run, commit
+
+⚠️ These share ONE shared special-move cooldown across 18 verbs. Check whether
+any site awards on a COOLDOWN-REFUSED attempt, as `track` did (Task 15's
+follow-up); a refusal is not a resolved contest.
+
+---
+
+## Task 18c: bartering, assess, and the unarmed fallback
+
+**Added 2026-08-26 (owner), same reason as 18b.**
+
+| Site | Skill | Notes |
+|---|---|---|
+| `actions/buy.go:796` | bartering | inside `postSuccessBookkeeping`, gated on an `awardProgression` parameter |
+| `actions/sell.go:384` | bartering | same shape |
+| `usercommands/assess.go:86` | manifestation | |
+| `usercommands/assess.go:147` | manifestation | |
+| `characters/skills.go:87` | unarmed-combat | |
+
+⚠️ **Bartering has no obvious loser.** A completed trade is a success by
+construction -- the refusal paths return before the award. Decide explicitly
+whether a REFUSED haggle is a resolved contest that should pay the fraction, or
+whether bartering is uncontested like an instant craft, and record the
+reasoning. Do not leave it implicit.
+
+⚠️ `characters/skills.go:87` is in the `characters` package, which cannot import
+`actions`. It has a `*Character`, so use `AwardResolved` directly.
+
+- [ ] **Step 1:** failing tests per decision above
+- [ ] **Step 2:** convert
+- [ ] **Step 3:** run, commit
 
 ---
 
