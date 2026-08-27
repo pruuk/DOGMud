@@ -1103,8 +1103,17 @@ that fires most often. Pre-existing gap; this slice is what makes it matter.
 ⚠️ **WHAT THE PLAYTEST DID NOT ANSWER, and must not be recorded as answered.**
 The PACE is unverified by play. Banners are probabilistic per use, so four of
 them is not a rate measurement. Both exploits the goals file was written to hunt
-are still open: the passive-defence faucet's RATE (it fires every round at zero
-resource cost -- confirmed firing, never measured) and the empty-room gate.
+are still open. (1) The **passive-defence RATE**: confirmed firing every
+round, never measured. NOT zero-cost -- defending charges stamina -- but
+running out does not close it, because an unaffordable defence is still
+rolled minus its skill term and the award is not gated on affordability. It
+compounds too: sitting exhausted and wounded trains strength (stamina regen)
+and vitality (health regen) at the same time. (2) The **search farm**: the
+empty-room gate itself is FINE and pinned by test; the hole is that SECRET
+EXITS are never skipped once found, unlike hidden containers and hidden
+nouns, so a room with one is a permanent candidate at a two-round cooldown,
+which contradicts the stated basis for search's own multiplier. Both are now
+on `docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md` with procedures.
 Build comparison, strength via grapple and concentration under fire were all
 blocked because the local mob (`Thornwall Highwayman`) both patrols and hides,
 so `attack` returned "You attack the darkness!" while it was damaging me.
