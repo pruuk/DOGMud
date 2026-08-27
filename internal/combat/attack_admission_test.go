@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -148,7 +149,7 @@ func TestAutoattackShortCostPlansBeforePaymentAndAttemptsEverySwing(t *testing.T
 			t.Fatalf("pre-payment weapon %d planned %d swings, want 2", i, ws.swingCount)
 		}
 	}
-	if got := calcAttackScore(attacker, target, 0, ctx); math.Abs(got-150) > 1e-9 {
+	if got := calcAttackScore(attacker, target, items.Item{}, 0, ctx); math.Abs(got-150) > 1e-9 {
 		t.Fatalf("pre-payment score = %.3f, want literal 150", got)
 	}
 	if got := buildDamageParams(attacker, target, plan.weapons[0], 0, User).dmgMean; math.Abs(got-150) > 1e-9 {
@@ -173,7 +174,7 @@ func TestAutoattackShortCostPlansBeforePaymentAndAttemptsEverySwing(t *testing.T
 
 	shortCtx := ctx
 	shortCtx.omitAttackSkill = true
-	if got := calcAttackScore(attacker, target, 0, shortCtx); math.Abs(got-75) > 1e-9 {
+	if got := calcAttackScore(attacker, target, items.Item{}, 0, shortCtx); math.Abs(got-75) > 1e-9 {
 		t.Fatalf("post-commit short score = %.3f, want literal 75", got)
 	}
 	if got := buildDamageParams(attacker, target, plan.weapons[0], 0, User).dmgMean; math.Abs(got-150) > 1e-9 {
@@ -220,10 +221,10 @@ func TestAutoattackAffordableCostPreservesSkillSwingCountAndDamage(t *testing.T)
 		t.Fatalf("affordable round emitted %d shortage messages, want none", got)
 	}
 
-	withSkill := calcAttackScore(attacker, target, 0, ctx)
+	withSkill := calcAttackScore(attacker, target, items.Item{}, 0, ctx)
 	withoutSkillCtx := ctx
 	withoutSkillCtx.omitAttackSkill = true
-	withoutSkill := calcAttackScore(attacker, target, 0, withoutSkillCtx)
+	withoutSkill := calcAttackScore(attacker, target, items.Item{}, 0, withoutSkillCtx)
 	if math.Abs(withSkill-112.5) > 1e-9 || math.Abs(withoutSkill-75) > 1e-9 {
 		t.Fatalf("post-commit scores with/without skill = %.3f/%.3f, want 112.5/75",
 			withSkill, withoutSkill)
@@ -520,8 +521,13 @@ func TestAttackCostAdmissionStructurePlansAndCommitsRawQuoteOnce(t *testing.T) {
 			t.Errorf("calculateCombat still calls %s; it must consume the pre-payment plan and never charge", name)
 		}
 	}
+	// ws.weapon, not the main-hand weapon. calcAttackScore resolves the attack
+	// SKILL from whatever it is handed, and calculateCombat swings every weapon
+	// in the plan through this one call. Passing anything that is not the weapon
+	// being swung reintroduces the offhand-fist bug: punch alongside a sword and
+	// the punch is scored at your weapon-combat rank.
 	requireLocalCombatCall(t, combatFset, calculate.Body, "calcAttackScore",
-		"sourceChar", "targetChar", "ws.penalty", "ctx")
+		"sourceChar", "targetChar", "ws.weapon", "ws.penalty", "ctx")
 
 	wrapperCalls := []struct {
 		name string

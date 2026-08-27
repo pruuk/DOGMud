@@ -194,8 +194,8 @@ func TestAttackScoreUsesTheReachableStaminaPool(t *testing.T) {
 	target.Validate()
 	setCombatPositionParallel(target, position.Standing)
 
-	full := calcAttackScore(reserved, target, 0, ctx)
-	worn := calcAttackScore(depleted, target, 0, ctx)
+	full := calcAttackScore(reserved, target, items.Item{}, 0, ctx)
+	worn := calcAttackScore(depleted, target, items.Item{}, 0, ctx)
 
 	if full <= worn {
 		t.Errorf("attack score for a fully rested 90%%-reserved attacker is %.3f against "+
@@ -217,7 +217,7 @@ func TestAttackScoreUsesTheReachableStaminaPool(t *testing.T) {
 	unreserved.StaminaMax.Value = 100
 	unreserved.Stamina = 100
 
-	if clean := calcAttackScore(unreserved, target, 0, ctx); math.Abs(full-clean) > 0.0001 {
+	if clean := calcAttackScore(unreserved, target, items.Item{}, 0, ctx); math.Abs(full-clean) > 0.0001 {
 		t.Errorf("attack score at a FULL reachable pool is %.4f but %.4f for an "+
 			"unreserved character at a full raw pool; a reserved character must reach "+
 			"multiplier 1.0 when rested", full, clean)

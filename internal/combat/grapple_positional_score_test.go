@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
@@ -83,11 +84,11 @@ func TestGrapple_GroundControllerGainsAttackScore(t *testing.T) {
 	ctx := combatContext{sourceCanSee: true, targetCanSee: true}
 
 	plainA, plainB := newGrappleChar(1), newGrappleChar(2)
-	base := calcAttackScore(plainA, plainB, 0, ctx)
+	base := calcAttackScore(plainA, plainB, items.Item{}, 0, ctx)
 
 	a, b := newGrappleChar(1), newGrappleChar(2)
 	mount(t, a, b)
-	grappled := calcAttackScore(a, b, 0, ctx)
+	grappled := calcAttackScore(a, b, items.Item{}, 0, ctx)
 
 	assert.Greater(t, grappled, base,
 		"a ground-grapple controller should attack at a higher score than standing")
@@ -97,11 +98,11 @@ func TestGrapple_StandingControllerGainsAttackScore(t *testing.T) {
 	ctx := combatContext{sourceCanSee: true, targetCanSee: true}
 
 	plainA, plainB := newGrappleChar(1), newGrappleChar(2)
-	base := calcAttackScore(plainA, plainB, 0, ctx)
+	base := calcAttackScore(plainA, plainB, items.Item{}, 0, ctx)
 
 	a, b := newGrappleChar(1), newGrappleChar(2)
 	clinch(t, a, b)
-	grappled := calcAttackScore(a, b, 0, ctx)
+	grappled := calcAttackScore(a, b, items.Item{}, 0, ctx)
 
 	assert.Greater(t, grappled, base,
 		"a standing-grapple controller should attack at a higher score than standing free")
@@ -116,11 +117,11 @@ func TestGrapple_GroundBeatsStanding_NoSelfCancellation(t *testing.T) {
 
 	sa, sb := newGrappleChar(1), newGrappleChar(2)
 	clinch(t, sa, sb)
-	standing := calcAttackScore(sa, sb, 0, ctx)
+	standing := calcAttackScore(sa, sb, items.Item{}, 0, ctx)
 
 	ga, gb := newGrappleChar(1), newGrappleChar(2)
 	mount(t, ga, gb)
-	ground := calcAttackScore(ga, gb, 0, ctx)
+	ground := calcAttackScore(ga, gb, items.Item{}, 0, ctx)
 
 	assert.Greater(t, ground, standing,
 		"ground control must beat standing control; the old crit-threshold form cancelled ground to net zero")

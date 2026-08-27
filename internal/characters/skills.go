@@ -335,7 +335,23 @@ func CombatSkillTagForItem(weapon items.Item) skills.SkillTag {
 // combat formulas. Checks the weapon-appropriate DOG skill first, then
 // falls back to legacy Brawling, then minimum 1.
 func (c *Character) GetCombatSkillLevel() int {
-	if level := c.GetSkillLevel(c.GetCombatSkillTag()); level > 0 {
+	return c.GetCombatSkillLevelFor(c.Equipment.Weapon)
+}
+
+// GetCombatSkillLevelFor is the same thing for a SPECIFIC weapon rather than
+// whatever happens to be in the main hand.
+//
+// It exists because GetCombatSkillLevel resolves its tag from
+// c.Equipment.Weapon alone, and combat swings every weapon in the plan through
+// one attack-score helper. That meant an offhand fist was scored with the
+// MAIN-HAND weapon's skill: punch alongside a sword and the punch rolled at
+// your weapon-combat rank. Pass the weapon actually being swung.
+//
+// A zero Item is bare hands and resolves to unarmed-combat, which is what
+// CombatSkillTagForItem already does, so callers with nothing equipped can pass
+// items.Item{} and get the honest answer.
+func (c *Character) GetCombatSkillLevelFor(weapon items.Item) int {
+	if level := c.GetSkillLevel(CombatSkillTagForItem(weapon)); level > 0 {
 		return level
 	}
 	return 1
