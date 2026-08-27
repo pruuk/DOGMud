@@ -840,6 +840,29 @@ found my explanation of it. Reworded rather than weakening the test.
 
 Remove `OnFirstMobKill`, both call sites, and the message. **Keep `KD.AddMobKill`.**
 
+- [x] **Shipped.** Function, both call sites and the message deleted;
+  `KD.AddMobKill` kept at both sites.
+
+⚠️ **It progressed a skill named `"combat"` THAT DOES NOT EXIST.** There is no
+`Combat` SkillTag, `"combat"` is absent from `skills.SkillPrimaryStats`, and
+`skillNameMap` is empty so nothing aliased it. **Verified against the archived
+prod saves: none of the 34 carrying a skills block has a `combat:` entry**, so
+the phantom skill never reached player data and **no save cleanup is owed.**
+That check was the point of looking -- deleting the code would not have cleaned
+the saves if it had been writing to them.
+
+The deletion has a two-layer guard, and the first layer is the compiler:
+re-adding the call no longer COMPILES, because the function is gone.
+`TestFirstMobKillProgression_StaysDeleted` catches the case where someone
+re-adds both, and separately pins that `KD.AddMobKill` survived.
+
+⚠️ **My tombstone comment tripped the guard, exactly as in Task 19** -- it named
+the deleted symbol, so the "it stays deleted" walk found my explanation of it.
+Reworded rather than weakening the test. Two for two; a tombstone naming its
+own corpse is a recurring hazard in this slice.
+
+
+
 ## Task 21: Dead crit stubs
 
 - [ ] Delete from **all nine** files; verify `grep -rl "func.*OnCritical" internal/` is empty

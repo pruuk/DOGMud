@@ -458,20 +458,6 @@ func (c *Character) DriftFromCombat(cluster string, round uint64) {
 	c.AddClusterAffinity(cluster, float64(configs.GetBalanceConfig().MutationAffinityPerCombatEvent))
 }
 
-// OnFirstMobKill is called when a player kills a mob type for the first time.
-// Triggers a bonus combat skill progression check.
-func (c *Character) OnFirstMobKill(userId int) {
-	mudlog.Debug("Progression", "event", "first_mob_kill", "character", c.Name)
-
-	if configs.GetGamePlayConfig().UseSkillProgression {
-		bonus := float64(configs.GetBalanceConfig().CritProgressionBonus)
-		if c.CheckSkillProgression("combat", userId, bonus) {
-			msg := `<ansi fg="magenta">***</ansi> Defeating a new foe hones your combat instincts! <ansi fg="magenta">***</ansi>`
-			events.AddToQueue(events.Message{UserId: userId, Text: msg + "\n"})
-		}
-	}
-}
-
 // OnCritReceived is called when a character takes a critical hit.
 // Triggers stat progression for the stat related to the damage channel:
 //

@@ -1,6 +1,12 @@
 package hooks
 
 import (
+	"github.com/stretchr/testify/require"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -91,4 +97,53 @@ func TestTickMobCrafting_ASucceedingCraftAwardsOnce(t *testing.T) {
 	if got := mob.Character.GetSkillUseCount(skill) - before; got != 1 {
 		t.Fatalf("%s use count rose by %d after a successful craft, want exactly 1", skill, got)
 	}
+}
+
+// U10b-1 Task 20: first-kill progression is deleted and must stay deleted.
+//
+// OnFirstMobKill fired a bonus progression check on the first kill of each mob
+// type, at CritProgressionBonus weight. It went for two reasons:
+//
+//  1. It is not a resolved action. Killing a mob type you have not killed
+//     before is a milestone, not a contest, so it has no place in a firing
+//     convention built on win/lose.
+//  2. ⚠️ It progressed a skill literally named "combat", which DOES NOT EXIST.
+//     There is no Combat SkillTag, "combat" is absent from
+//     skills.SkillPrimaryStats, and skillNameMap is empty so nothing aliased
+//     it. Verified against the archived prod saves: none of the 34 carrying a
+//     skills block has a `combat:` entry, so the phantom skill never reached
+//     player data and no save cleanup is owed.
+//
+// KD.AddMobKill is deliberately KEPT -- it is the kill-count statistic, not
+// progression, and the leaderboard reads it.
+func TestFirstMobKillProgression_StaysDeleted(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	require.True(t, ok, "runtime.Caller(0) failed")
+	internalDir := filepath.Dir(filepath.Dir(thisFile))
+
+	var offenders []string
+	err := filepath.WalkDir(internalDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") {
+			return err
+		}
+		if strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		src, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		if strings.Contains(string(src), "OnFirstMobKill") {
+			offenders = append(offenders, path)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	require.Empty(t, offenders, "OnFirstMobKill is back; it progressed a skill named \"combat\" that does not exist")
+
+	// The kill-count statistic must survive the deletion.
+	credit, err := os.ReadFile(filepath.Join(internalDir, "hooks", "Death_MobKillCredit.go"))
+	require.NoError(t, err)
+	require.Contains(t, string(credit), "KD.AddMobKill(",
+		"KD.AddMobKill was deleted along with the progression call; it is the kill-count stat, not progression")
 }
