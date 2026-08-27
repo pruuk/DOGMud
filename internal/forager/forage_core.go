@@ -123,9 +123,12 @@ func ForageCore(a ForageAttempt) ForageResult {
 	if difficulty == 0 {
 		difficulty = 130
 	}
-	// NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP "Category B"): a static
-	// difficulty check still off the contest core. contest.AgainstDifficulty was
-	// built for exactly this and currently has zero production callers.
+	// NOTE(ASSIGNED TO U10b-1b, Category B): a static difficulty check still off
+	// the contest core. contest.AgainstDifficulty was built for exactly this and
+	// currently has zero production callers. The breadcrumb used to read
+	// "unassigned"; it is not. The U10b-1b design spec names this site
+	// explicitly -- "the Category B conversions (search x4, track, forage to
+	// AgainstDifficulty)" -- as settled decision 17.
 	roll := dice.RollStat(a.SearchScore)
 	if roll.Value < difficulty {
 		return ForageResult{}

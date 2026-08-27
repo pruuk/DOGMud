@@ -155,7 +155,9 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.SendText(messaging.CategorySystem, text)
 	}
 
-	// NOTE(unassigned, see UNIFIED_RESOLUTION_ROADMAP "Category B"): the six
+	// NOTE(ASSIGNED TO U10b-1b, Category B; the breadcrumb used to read
+	// "unassigned" and it is not -- the U10b-1b design spec names "search x4"
+	// explicitly, as settled decision 17): the six
 	// dice.RollStat threshold checks in this file are the LAST uncertain
 	// outcomes off the contest core. The two below are the sharpest problem:
 	// they answer "does the observer spot the hider?" with a flat 135 threshold
