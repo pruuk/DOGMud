@@ -1004,6 +1004,52 @@ playtest, and say so in the commit.
 ⚠️ The shipped multipliers in `internal/skills/skills.go` were themselves fitted
 on the mislabelled rate. Re-derive them here or record why not.
 
+### DONE. `tools/balance/u10b1_solve_v4.py` supersedes v3.
+
+Re-derived all 16 skill and 5 stat multipliers in `config.yaml` **and** the Go
+map in `internal/skills/skills.go` (which is what test binaries see).
+
+Three findings worth carrying forward:
+
+1. **The correction SORTS the two rates rather than just lowering one.** A melee
+   attacker award's `won` is `CleanHit` (**0.3856**); a special move's `won` is
+   `result.Hit` (**0.5752**). v3 used one number for both, so the special-move
+   family was solved on the right number by accident and melee on the wrong one.
+
+2. **The build now matters and it did not before.** Under per-entry awards
+   weapon-combat's rate spanned only 1.09x across 1H+fist / 2H / 1H+shield.
+   Under Best-of the offhand fist steals the single award about two rounds in
+   three, so the spread is now **2.48x**. Each combat skill is therefore solved
+   at its own **concentrating build**, matching the owner's "concerted effort to
+   grind X or Y" framing that already governs every other track. Solving
+   weapon-combat on the fist build (its *minimum*) gave 3.33 and would have made
+   a two-hander train ~2.5x too fast.
+
+3. **The convention removed the empty-offhand advantage structurally.** Total
+   events per round were 2.480 (1H+fist) against 1.623 (2H) and are now 1.606 /
+   1.504 / 1.505. No per-skill multiplier could have done that, which is why
+   v3's "unarmed sits BELOW weapon" asymmetry was compensation for a problem
+   that no longer exists.
+
+**Control row:** `bartering` is unchanged at 2.07. Buy and sell award with
+`won=true`, so the convention could not move its rate, and the solve reproduces
+its shipped value exactly. `perception` (1.03x rate, 1.06x multiplier) and
+`charisma` (1.04x / 1.07x) agree the same way. Any future solve that shifts
+bartering has a bug in it.
+
+**Vitality is deliberately NOT retuned** even though Task 22 took it off the
+stamina regen tick: `tools/balance/u10b_vitality_solve.py` puts regen at 0.33/hr
+against crit-toughen's 2.67/hr, *before* the U10b-0 damage-taken faucet grew its
+event count further. Losing one of two regen pools is low single digits of its
+rate, and that file's own conclusion is that the multiplier is the wrong lever
+for vitality.
+
+⚠️ **Judgement, not measurement:** `combat-analytics.jsonl` is combat-only, so
+every `p_win` for search, track, salvage, barter, craft and skullduggery is set
+by judgement, as is the concentration model and the shield-carry fraction. The
+solver labels every input M / D / R / J. These are what Task 25's playtest is
+for.
+
 ## Task 24: Docs
 
 `context.md` for `internal/progression`, `internal/characters`,

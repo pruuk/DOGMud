@@ -256,27 +256,32 @@ func TestCalculateProgressionChance_SampleValues(t *testing.T) {
 }
 
 func TestGetProgressionMultiplier(t *testing.T) {
-	// Solved, not chosen: `python tools/balance/u10b_solve_v3.py`. If this fails
-	// after a retune, REGENERATE these rather than editing them to fit.
-	// unarmed sits below weapon on purpose -- the offhand fist earns 1.83x the
-	// uses, so equal values would make an empty offhand dominant.
+	// Solved, not chosen: `python tools/balance/u10b1_solve_v4.py`. If this
+	// fails after a retune, REGENERATE these rather than editing them to fit.
+	// unarmed sits below weapon on purpose -- under the firing convention the
+	// fist wins the one-per-round Best-of about two rounds in three and still
+	// collects the dodge award, so it earns ~3.3x the uses and equal values
+	// would make an empty offhand dominant.
+	//
+	// bartering is unchanged from v3 on purpose: buy and sell award with
+	// won=true, so the convention did not touch its rate. It is the control.
 	tests := []struct {
 		skill    string
 		expected float64
 	}{
-		{"weapon-combat", 1.27},
-		{"unarmed-combat", 0.69},
-		{"spellcasting", 3.90},
-		{"search", 1.00},
+		{"weapon-combat", 1.34},
+		{"unarmed-combat", 1.01},
+		{"spellcasting", 2.99},
+		{"search", 1.02},
 		{"bartering", 2.07},
-		{"skullduggery", 0.83},
+		{"skullduggery", 1.23},
 		{"unknown-skill", 1.0},
 	}
 
 	for _, tt := range tests {
 		got := skills.GetProgressionMultiplier(tt.skill)
 		if got != tt.expected {
-			t.Errorf("GetProgressionMultiplier(%q) = %.1f, want %.1f", tt.skill, got, tt.expected)
+			t.Errorf("GetProgressionMultiplier(%q) = %.2f, want %.2f", tt.skill, got, tt.expected)
 		}
 	}
 }

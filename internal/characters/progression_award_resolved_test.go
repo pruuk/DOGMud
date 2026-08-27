@@ -13,14 +13,25 @@ import (
 // win advances the skill, a loss advances it STRICTLY LESS, and a two-candidate
 // call advances ONLY the Best-of winner.
 //
-// weapon-combat is the probe skill because it is the one that makes the win
-// half EXACT rather than statistical. Under pinCertainStatProgressionForTest,
-// BaseProgressionChance is 1.0, so at a fresh character's rank 1 the curve
-// yields exp(-3.0/50) = 0.9418, and weapon-combat's 1.27 progression multiplier
-// pushes that past the 1.0 clamp -- a win is CERTAIN. At the 0.35 failure
-// fraction the same product is 0.42, which is not. The two preconditions below
-// assert exactly that, so if a default ever moves the test fails loudly on the
-// precondition instead of flaking on the counts.
+// bartering is the probe skill, for two reasons.
+//
+// First, it makes the win half EXACT rather than statistical. Under
+// pinCertainStatProgressionForTest, BaseProgressionChance is 1.0, so at a fresh
+// character's rank 1 the curve yields exp(-3.0/50) = 0.9418, and bartering's
+// 2.07 progression multiplier pushes that past the 1.0 clamp -- a win is
+// CERTAIN. At the 0.35 failure fraction the same product is 0.68, which is not.
+// The two preconditions below assert exactly that, so if a multiplier ever
+// moves the test fails loudly on the precondition instead of flaking on the
+// counts. That is not hypothetical: this test was written against
+// weapon-combat, and U10b-1 Task 23's re-solve raised that from 1.27 to 3.33,
+// which pushed the LOSS past the clamp too and tripped the precondition.
+//
+// Second, bartering is the one skill the firing convention provably did not
+// move: buy and sell award with won=true, so their rate is unchanged and Task
+// 23 re-solved its multiplier to the same 2.07 it already shipped. A probe that
+// needs its multiplier to sit inside a window should be the row least likely to
+// be retuned out of it. The window is [1.06, 3.03): below that a win stops
+// being certain, at or above it a loss becomes certain too.
 //
 // The loss half cannot be made exact and that is inherent, not laziness: a
 // fraction strictly between "never" and "always" IS a probability. Only
@@ -31,7 +42,7 @@ import (
 func TestAwardResolved_FiresOnceForTheBestOfWinner(t *testing.T) {
 	pinCertainStatProgressionForTest(t)
 
-	const winner = "weapon-combat"
+	const winner = "bartering"
 	const loser = "search"
 	const trials = 200
 
