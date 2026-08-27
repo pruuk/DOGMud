@@ -123,9 +123,11 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 	RecordAndWait(char, "grapple", sourceType, target.Char, targetType, result.Success, 0, util.GetRoundCount())
 
 	// Progression: unarmed-combat on executed grapple (moved from user/mob wrappers)
-	if result.Success {
-		actor.OnSkillUse(string(skills.UnarmedCombat))
-	}
+	// U10b-1 Task 18b: win OR lose. This was gated on the hit, so a special
+	// move that missed trained nothing -- the same defect a failed craft had
+	// before Task 16. The gate is now the AWARD WEIGHT rather than a
+	// precondition; a thrown move is a resolved contest either way.
+	actor.AwardResolved(result.Success, actor.GetCharacter().CandidateFor(string(skills.UnarmedCombat)))
 
 	return GrappleResult{
 		Cost:       cost,

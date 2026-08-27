@@ -197,7 +197,11 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		char.ApplyHarm(characters.PoolConviction, selfDmg,
 			state.ActorRef{UserId: char.GetUserId(), MobInstanceId: char.MobInstanceId})
 
-		actor.OnSkillUse(string(skills.Rhetoric))
+		// U10b-1 Task 18b: this is the BACKFIRE branch -- the taunt went wrong
+		// and cost the taunter conviction -- so won is false. It already fired
+		// here, at FULL weight, which made a botched taunt worth exactly as much
+		// as a landed one. This site is a CUT.
+		actor.AwardResolved(false, actor.GetCharacter().CandidateFor(string(skills.Rhetoric)))
 
 		combat.RecordSpecialMove(sourceType, targetType, "taunt", false, 0,
 			char, target.Char, util.GetRoundCount())
@@ -274,7 +278,11 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	// the direct block this call site carried was a duplicate of it, deleted
 	// with the collapse like Task 4's spell-side twins.
 
-	actor.OnSkillUse(string(skills.Rhetoric))
+	// U10b-1 Task 18b: the RESOLVED branch. won is !out.Defended -- the same
+	// expression RecordSpecialMove is handed on the very next line, so the
+	// award and the analytics record agree by construction rather than by
+	// coincidence.
+	actor.AwardResolved(!out.Defended, actor.GetCharacter().CandidateFor(string(skills.Rhetoric)))
 
 	combat.RecordSpecialMove(sourceType, targetType, "taunt", !out.Defended, dmg,
 		char, target.Char, util.GetRoundCount())

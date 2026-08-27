@@ -155,9 +155,11 @@ func ExecuteRake(actor Actor) RakeResult {
 	}
 
 	// Progression: unarmed-combat on hit.
-	if result.Hit {
-		actor.OnSkillUse(string(skills.UnarmedCombat))
-	}
+	// U10b-1 Task 18b: win OR lose. This was gated on the hit, so a special
+	// move that missed trained nothing -- the same defect a failed craft had
+	// before Task 16. The gate is now the AWARD WEIGHT rather than a
+	// precondition; a thrown move is a resolved contest either way.
+	actor.AwardResolved(result.Hit, actor.GetCharacter().CandidateFor(string(skills.UnarmedCombat)))
 
 	return RakeResult{
 		Cost:       cost,

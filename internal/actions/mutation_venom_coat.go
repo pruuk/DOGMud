@@ -31,7 +31,11 @@ func TriggerVenomCoat(actor Actor, opts MutationOpts) MutationResult {
 			actor.GetUserId())
 	}
 
-	actor.OnSkillUse(string(skills.WeaponCombat))
+	// U10b-1 Task 18b: won is unconditionally true. Venom coat is a mutation
+	// TRIGGER, not a contest -- there is no opposing score and nothing to lose,
+	// so there is no losing branch to pay a fraction on. Same treatment an
+	// instant recipe gets in Task 16.
+	actor.AwardResolved(true, actor.GetCharacter().CandidateFor(string(skills.WeaponCombat)))
 
 	return MutationResult{Triggered: true, AffectedCount: 1}
 }

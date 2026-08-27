@@ -675,7 +675,7 @@ Every existing gate was preserved and none of them is the firing rule:
 that resolved no contest still awards nothing.
 
 
-## Task 18b: The thirteen special-move sites
+## Task 18b: The ~~thirteen~~ FOURTEEN special-move sites
 
 **Added 2026-08-26 (owner). These were in NO task, and the slice could not have
 reached its own "done when" without them** -- Task 22's guard requires every
@@ -717,15 +717,36 @@ CONCENTRATION award at `:176`, which Task 12 already converted.
   can be lost, so `won: true` -- the same treatment `ImmediateComplete` gets in
   Task 16.
 
-- [ ] **Step 1:** failing tests: a MISSED bash awards the fraction; a backfired taunt awards the fraction; a landed move still awards full
-- [ ] **Step 2:** convert all thirteen to `actor.AwardResolved(won, char.CandidateFor(skill))`
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing tests: a MISSED bash awards the fraction; a backfired taunt awards the fraction; a landed move still awards full
+- [x] **Step 2:** convert all thirteen to `actor.AwardResolved(won, char.CandidateFor(skill))`
+- [x] **Step 3:** run, commit
 
 ⚠️ These share ONE shared special-move cooldown across 18 verbs. Check whether
 any site awards on a COOLDOWN-REFUSED attempt, as `track` did (Task 15's
 follow-up); a refusal is not a resolved contest.
 
 ---
+
+**Shipped.** ⚠️ **FOURTEEN, not thirteen** -- the table above lists eleven
+gated sites and three ungated, which I mis-totalled when writing this task two
+days after making the same error on Task 18's "sixteen". Count the rows.
+
+The eleven gated sites went from `if result.Hit { OnSkillUse }` to
+`AwardResolved(result.Hit, ...)`: the gate became the WEIGHT rather than a
+precondition.
+
+**Cooldown-refusal hazard checked and CLEAN.** Every one of these returns
+`OnCooldown` from `ExecuteX` *before* reaching the award, so a refused move
+never resolved and never awards. That is the trap `track` fell into (Task 15's
+follow-up); it does not exist here.
+
+**Guarded structurally, not behaviourally.** These are call sites in eleven
+files and the property is structural -- no progression award may sit inside a
+hit gate -- so
+`TestSpecialMoves_NoProgressionAwardSitsInsideAHitGate` asserts it across all
+eleven at once and fails the moment one is re-wrapped. A behavioural test would
+have covered one verb. Sabotage-proven by re-wrapping `combat_bash.go`.
+
 
 ## Task 18c: bartering, assess, and the unarmed fallback
 
