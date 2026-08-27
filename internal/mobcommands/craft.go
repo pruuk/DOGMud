@@ -50,8 +50,12 @@ func Craft(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		room.SendTextVisual(messaging.CategoryMobIdle, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> works quickly and produces something.`,
 			mob.Character.Name))
+		// U10b-1 Task 16. won is unconditionally TRUE: ImmediateComplete is a
+		// TimeRounds <= 0 recipe, which InitiateCraft finishes without rolling.
+		// See the identical note in internal/usercommands/craft.go.
 		craftBonus := 1.0 + float64(result.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		mob.Character.OnSkillUseScaled(result.SkillName, 0, craftBonus, false)
+		mob.Character.AwardResolvedScaled(0, true, craftBonus,
+			mob.Character.CandidateFor(result.SkillName))
 		return true, nil
 
 	case result.Initiated:

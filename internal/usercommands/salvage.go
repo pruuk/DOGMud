@@ -46,8 +46,21 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		return startCorpseSalvage(user, corpse)
 	}
 
-	// Require item to be in backpack, not equipped
-	if source != "in your backpack" {
+	// Require the item to be CARRIED rather than worn or wielded.
+	//
+	// Carried means any container the character is holding it in, not the
+	// backpack specifically. StoreItem auto-routes potions and throwables into
+	// an equipped bandolier, so gating on "in your backpack" refused carried
+	// items and told the player to "remove" something they were not wearing.
+	//
+	// ⚠️ The live case is a DECLINING potion or a THROWABLE, not a spoiled
+	// potion: NewRound_AutoHeal ejects PhaseSpoiled potions to the backpack,
+	// but this command accepts PhaseDeclining too, and throwables are never
+	// age-ejected.
+	//
+	// Equipped items are still refused: taking a sword apart while holding it
+	// is the case this guard is actually for.
+	if !salvageableSource(source) {
 		user.SendText(messaging.CategorySystem, `<ansi fg="red">You need to remove that before you can salvage it.</ansi>`)
 		return true, nil
 	}
@@ -189,3 +202,24 @@ func startCorpseSalvage(user *users.UserRecord, corpse rooms.Corpse) (bool, erro
 }
 
 // NOTE: Salvage resolution happens in hooks/NewRound_UserRoundTick.go resolveSalvage()
+
+// salvageableSource reports whether Character.FindItem's source label describes
+// an item the character is CARRYING rather than wearing or wielding.
+//
+// The labels come from Character.FindItem: "in your backpack", "in your
+// bandolier", and the equipment-slot names ("wielded", "offhand", "extra arm",
+// and the wearable slots). Anything carried can be salvaged; anything equipped
+// must be removed first.
+//
+// ⚠️ The component bag is absent from this list because Character.FindItem does
+// not search c.ComponentItems at all -- a crafted is_component item auto-routed
+// there cannot even be NAMED by this command. That is a FindItem gap rather
+// than a salvage one, and it is filed separately; actions.salvageItem already
+// searches all three containers, so closing it there is enough.
+func salvageableSource(source string) bool {
+	switch source {
+	case "in your backpack", "in your bandolier":
+		return true
+	}
+	return false
+}

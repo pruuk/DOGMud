@@ -519,9 +519,45 @@ difficulty MODEL decision (static? scaled by trail age? by target?).
 Craft already resolves as `util.Rand(100) < chance`; salvage rolls per unit.
 **Do not touch either roll.**
 
-- [ ] **Step 1:** failing tests: a failed craft awards the fraction (**the case the slice is justified by**); a salvage recovering nothing awards the fraction; a salvage awards **once** per command, not per unit
-- [ ] **Step 2:** award on both branches at all four craft sites and both salvage sites, via `AwardResolved`
-- [ ] **Step 3:** run, commit
+- [x] **Step 1:** failing tests: a failed craft awards the fraction (**the case the slice is justified by**); a salvage recovering nothing awards the fraction; a salvage awards **once** per command, not per unit
+- [x] **Step 2:** award on both branches at all four craft sites and both salvage sites, via `AwardResolved`
+- [x] **Step 3:** run, commit
+
+**Shipped.** ⚠️ The plan said "all four craft sites"; they are not equivalent.
+Only **TWO** call `crafting.CalcSuccessChance` and can therefore FAIL --
+`NewRound_UserRoundTick` and `NewRound_MobRoundTick`, the multi-round paths.
+The two immediate sites (`usercommands/craft.go`, `mobcommands/craft.go`) reach
+`ImmediateComplete`, which means `TimeRounds <= 0` and `InitiateCraft` finished
+without rolling. **An instant recipe cannot fail**, so those pass `won: true`.
+
+All four use **`AwardResolvedScaled`**, never plain `AwardResolved` -- the
+plain form silently drops `craftBonus` (Task 13's near-miss).
+
+`salvage` is a CUT: both sites paid a FULL event whether or not anything came
+back. One award per COMMAND, not per unit.
+
+### 🐛 Two lookup bugs found while in the file, fixed here (owner, mid-task)
+
+**Salvage could only find targets in the BACKPACK.** `StoreItem` auto-routes
+potions and throwables into an equipped bandolier and `is_component` items into
+a component bag, but `salvageItem` scanned `char.Items` alone and
+`usercommands/salvage.go` refused any source that was not literally
+`"in your backpack"` -- telling the player to "remove" something they were not
+wearing. `RemoveItem` already handled all three slices; only the LOOKUPS were
+narrow.
+
+⚠️ **NOT the spoiled-potion case**, which is the obvious guess and is wrong:
+`NewRound_AutoHeal` auto-ejects `PhaseSpoiled` potions to the backpack. The
+live cases are a **DECLINING** potion (salvage accepts `PhaseDeclining` too,
+and only Spoiled is ejected) and a **THROWABLE** (bandolier-routed, never
+age-ejected).
+
+🔴 **STILL OPEN:** `Character.FindItem` does not search `c.ComponentItems` at
+all, so a crafted `is_component` item auto-routed to the component bag cannot
+be NAMED by any command using that helper. That is a FindItem gap, wider than
+salvage; `actions.salvageItem` now searches all three containers, so the
+salvage half is closed.
+
 
 ## Task 17: Mob crafters
 

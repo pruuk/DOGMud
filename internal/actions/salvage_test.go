@@ -6,9 +6,12 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // ---------------------------------------------------------------------------
@@ -186,5 +189,126 @@ func TestSalvage_MobActorSilent(t *testing.T) {
 
 	if len(actor.sent) != 0 {
 		t.Errorf("MobActor should be silent; got %d messages", len(actor.sent))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// U10b-1 Task 16: the salvage award
+// ---------------------------------------------------------------------------
+
+// A salvage that recovers NOTHING still awards, at the loss weight, and awards
+// exactly ONCE per command.
+//
+// Both halves matter and neither was pinned before:
+//
+//   - This site is a CUT. It paid a FULL event whether or not anything came
+//     back, so a salvage that returned nothing trained as much as one that
+//     returned everything.
+//   - ONCE PER COMMAND, NOT PER UNIT. RollSalvageReturnsFromSpec rolls each
+//     salvage_returns entry independently, so a rich item rolls many times.
+//     They are one resolved action, the same rule Search follows across its six
+//     tiers. THREE entries here, so a per-unit implementation reports 3.
+//
+// Driven through the ITEM path rather than the corpse path. A corpse is only
+// eligible when crafting.LookupCorpseSalvage finds a group for it, so "recovers
+// nothing" is unreachable there without a seam into that package's private
+// table -- an earlier draft of this test aimed at the corpse path and silently
+// SKIPPED, which is worse than no test.
+//
+// Determinism: SalvageMinChance and SalvageMaxChance are both pinned to 0, so
+// CalcSalvageChance returns 0 and every per-entry roll fails. No dice pinning.
+func TestSalvage_ARecoveryOfNothingAwardsOnceAtTheLossWeight(t *testing.T) {
+	pinConfigForTest(t)
+	cfg := configs.GetConfig()
+	cfg.Balance.SalvageMinChance = 0
+	cfg.Balance.SalvageMaxChance = 0
+	configs.SetConfigForTest(t, cfg)
+
+	const salvageItemId = 77401
+	restoreItems := items.SeedItemsForTest(map[int]*items.ItemSpec{
+		salvageItemId: {
+			ItemId: salvageItemId,
+			Name:   "test scrap",
+			SalvageReturns: []items.SalvageReturn{
+				{ItemTag: "scrap-a", Quantity: 1},
+				{ItemTag: "scrap-b", Quantity: 1},
+				{ItemTag: "scrap-c", Quantity: 1},
+			},
+		},
+	})
+	defer restoreItems()
+
+	room := newSalvageTestRoom(t, 9410)
+	actor := newSalvageFakeActor(t, "SalvageTester", room, true, 61)
+
+	target := items.New(salvageItemId)
+	actor.char.StoreItem(target)
+
+	result := Salvage(actor, SalvageOptions{TargetItemUuid: target.UUID.String()})
+
+	if !result.RollHappened {
+		t.Fatalf("fixture did not reach the salvage roll (Reason=%q); this test must not skip", result.Reason)
+	}
+	if len(result.MaterialIds) > 0 {
+		t.Fatalf("chance was pinned to 0 but %d materials came back", len(result.MaterialIds))
+	}
+	if got := len(actor.awards); got != 1 {
+		t.Fatalf("a resolved salvage produced %d awards, want exactly 1 per command (3 salvage_returns entries rolled)", got)
+	}
+	if actor.awards[0].won {
+		t.Error("a salvage that recovered nothing reported won=true; it must pay the failure fraction")
+	}
+	if _, n := actor.awardedCandidate(string(skills.Salvage)); n != 1 {
+		t.Errorf("the award named the salvage skill %d times, want 1", n)
+	}
+}
+
+// A salvage target in the BANDOLIER is found, not just one in the backpack.
+//
+// Character.StoreItem auto-routes potions and throwables into an equipped
+// bandolier, and salvageItem used to scan char.Items alone -- so a carried item
+// was invisible to the code meant to salvage it and the player got "no longer
+// in your backpack" about something they were carrying.
+//
+// ⚠️ The live case is a DECLINING potion or a THROWABLE, not a spoiled one:
+// NewRound_AutoHeal ejects PhaseSpoiled potions back to the backpack, but
+// salvage accepts PhaseDeclining too and throwables are never age-ejected.
+// This fixture uses a plain bandolier-routed item because the routing, not the
+// aging phase, is what the lookup was blind to.
+func TestSalvage_FindsATargetInTheBandolier(t *testing.T) {
+	pinConfigForTest(t)
+	cfg := configs.GetConfig()
+	cfg.Balance.SalvageMinChance = 0
+	cfg.Balance.SalvageMaxChance = 0
+	configs.SetConfigForTest(t, cfg)
+
+	const bandolierItemId = 77402
+	restoreItems := items.SeedItemsForTest(map[int]*items.ItemSpec{
+		bandolierItemId: {
+			ItemId:         bandolierItemId,
+			Name:           "bandolier scrap",
+			SalvageReturns: []items.SalvageReturn{{ItemTag: "scrap-a", Quantity: 1}},
+		},
+	})
+	defer restoreItems()
+
+	room := newSalvageTestRoom(t, 9411)
+	actor := newSalvageFakeActor(t, "SalvageBandolier", room, true, 62)
+
+	target := items.New(bandolierItemId)
+	// Placed directly in the bandolier slice: StoreItem's routing needs an
+	// equipped bandolier belt, and the lookup is what is under test here.
+	actor.char.PotionItems = append(actor.char.PotionItems, target)
+
+	result := Salvage(actor, SalvageOptions{TargetItemUuid: target.UUID.String()})
+
+	if result.Reason == "item not found" {
+		t.Fatal("salvage could not find an item in the bandolier; the lookup is still backpack-only")
+	}
+	if !result.RollHappened {
+		t.Fatalf("salvage found the bandolier item but did not resolve (Reason=%q)", result.Reason)
+	}
+	if got := len(actor.awards); got != 1 {
+		t.Errorf("a resolved bandolier salvage produced %d awards, want 1", got)
 	}
 }

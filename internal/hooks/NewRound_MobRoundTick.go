@@ -531,6 +531,14 @@ func tickMobCrafting(mob *mobs.Mob) {
 	chance := crafting.CalcSuccessChance(sl, recipe.SkillMinimum)
 	roll := util.Rand(100)
 	util.LogRoll("MobCraft", roll, chance)
+
+	// U10b-1 Task 16: above the branch, so a failed mob craft trains at
+	// ProgressionFailureFraction rather than nothing. AwardResolvedScaled,
+	// not AwardResolved: the plain form drops craftBonus silently.
+	craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
+	mob.Character.AwardResolvedScaled(0, roll < chance, craftBonus,
+		mob.Character.CandidateFor(recipe.Skill))
+
 	if roll < chance {
 		mob.Character.Items, mob.Character.ComponentItems =
 			crafting.ConsumeIngredients(
@@ -539,8 +547,6 @@ func tickMobCrafting(mob *mobs.Mob) {
 				recipe)
 		newItem := items.New(recipe.Output.ItemId)
 		mob.Character.StoreItem(newItem)
-		craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		mob.Character.OnSkillUseScaled(recipe.Skill, 0, craftBonus, false)
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
 			sendVisualRoomText(room, messaging.CategoryMobIdle, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> finishes their work.`,
