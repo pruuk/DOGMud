@@ -655,10 +655,26 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 		Observing: float64(configs.GetBalanceConfig().ObservedCritProgressionBonus),
 	}
 
-	// Attacker stat progression keeps its quadrant-flavoured room messages, so
-	// it stays on its own helper rather than becoming an event.
-	emitAttackerStatGain(atk, "strength", atkUid)
-	emitAttackerStatGain(atk, "dexterity", atkUid)
+	// U10b-1 Task 22 DELETED the two bare stat rolls that stood here.
+	//
+	// emitAttackerStatGain called OnStatUse directly, once for strength and
+	// once for dexterity, at FULL weight and UNCONDITIONALLY -- every round,
+	// win or lose, on top of the award below. Two consequences:
+	//
+	//   - DEXTERITY WAS ROLLED TWICE a round: once here and once as
+	//     weapon-combat's primary inside the award.
+	//   - STRENGTH trained as much on a round where every swing whiffed as on
+	//     one that landed, because nothing gated it.
+	//
+	// A stat roll IS progression, so a full-weight one that ignores the
+	// outcome is a firing-rule violation exactly like a skill roll would be.
+	// It is the same defect Task 11 deleted on the ranged side, where an
+	// explicit perception roll sat beside a ranged-combat award whose primary
+	// is perception.
+	//
+	// The mob stat-gain EMOTE survives, and is now driven by a real gain
+	// rather than by a roll of its own -- see emitMobStatGains below.
+	statsBefore := mobStatSnapshot(atkChar)
 
 	// ── The ordinary attacker event: ONE for the round, win or lose ───────
 	// U10b-1 Task 10 replaced the CleanHit gate with a scaled award; Task 11
@@ -727,6 +743,11 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	// means "defences that won" -- the two tiers deliberately read different
 	// records now.
 	processDefenderProgression(defChar, defUid, *res)
+
+	// Speak the mob stat-gain flavour for any stat the round's awards actually
+	// moved. Placed AFTER both awards so it sees every gain, and driven by a
+	// real change rather than by a roll of its own -- see mobStatSnapshot.
+	emitMobStatGains(atk, statsBefore)
 }
 
 // emitAttackerStatGain calls OnStatUse on the attacker and, if the stat
@@ -736,9 +757,33 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 // player attackers (matches legacy PvP/PvM behavior).
 //
 // Divergence #8: room broadcast only for mob attackers.
-func emitAttackerStatGain(atk actions.Actor, statName string, uid int) {
-	gained := atk.GetCharacter().OnStatUse(statName, uid)
-	if !gained || atk.IsPlayer() {
+// mobStatSnapshot records the trained points of the stats the mob stat-gain
+// emote can speak, so emitMobStatGains can tell an ACTUAL gain from a roll.
+//
+// U10b-1 Task 22 replaced a pair of bare OnStatUse calls with this. The emote
+// used to ride on the return value of its own redundant roll; it now rides on
+// whether the round's progression award actually moved the stat, which is both
+// truthful and one fewer roll.
+func mobStatSnapshot(c *characters.Character) map[string]int {
+	if c == nil {
+		return nil
+	}
+	snap := make(map[string]int, len(characters.MobStatGainMessages))
+	for statName := range characters.MobStatGainMessages {
+		snap[statName] = c.GetStatTraining(statName)
+	}
+	return snap
+}
+
+// emitMobStatGains speaks the room-visible flavour line for every stat that
+// actually rose this round. Mob actors only: a player gets the STATISTIC
+// INCREASED banner from the applier instead.
+//
+// Iterates the SNAPSHOT rather than MobStatGainMessages so the ordering is the
+// snapshot's and a stat added to the message map without a snapshot entry
+// cannot panic on a missing key.
+func emitMobStatGains(atk actions.Actor, before map[string]int) {
+	if before == nil || atk.IsPlayer() {
 		return
 	}
 	atkRoom := atk.GetRoom()
@@ -749,9 +794,18 @@ func emitAttackerStatGain(atk actions.Actor, statName string, uid int) {
 	if mob == nil {
 		return
 	}
-	if tmpl, ok := characters.MobStatGainMessages[statName]; ok {
-		// Mob-side stat-gain flavor text — visible mob emote.
-		atkRoom.SendText(messaging.CategoryMobEmote, fmt.Sprintf(tmpl, mobDisplayName(mob, atkRoom, 0)))
+	c := atk.GetCharacter()
+	if c == nil {
+		return
+	}
+	for statName, was := range before {
+		if c.GetStatTraining(statName) <= was {
+			continue
+		}
+		if tmpl, ok := characters.MobStatGainMessages[statName]; ok {
+			// Mob-side stat-gain flavor text: a visible mob emote.
+			atkRoom.SendText(messaging.CategoryMobEmote, fmt.Sprintf(tmpl, mobDisplayName(mob, atkRoom, 0)))
+		}
 	}
 }
 

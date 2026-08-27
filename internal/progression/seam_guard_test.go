@@ -34,6 +34,39 @@ var allowedDirectProgression = map[string]bool{
 	filepath.Join("internal", "hooks", "NewRound_MobRoundTick.go"):  true,
 	filepath.Join("internal", "hooks", "NewRound_UserRoundTick.go"): true,
 
+	// ── Added by U10b-1 Task 22, when this walk widened past combat+hooks ──
+	//
+	// The two Actor ADAPTERS. actor_user.go and actor_mob.go implement the
+	// Actor interface's OnSkillUse/OnStatUse by delegating to the Character.
+	// They ARE the seam's plumbing; flagging them would be flagging the
+	// interface for existing.
+	filepath.Join("internal", "actions", "actor_user.go"): true,
+	filepath.Join("internal", "actions", "actor_mob.go"):  true,
+
+	// The shop MERCHANT's charisma roll on a completed trade. Checked in Task
+	// 18c rather than assumed: it belongs to a DIFFERENT character from the
+	// one receiving the bartering award -- the merchant, not the buyer or
+	// seller -- so it is not the stray-stat-roll-beside-an-award shape Task 22
+	// deleted from emitAttackerStatGain. It is the merchant's ONLY progression
+	// from trading. Listed so the exemption is a decision on the record.
+	filepath.Join("internal", "actions", "buy.go"):  true,
+	filepath.Join("internal", "actions", "sell.go"): true,
+
+	// HIDDEN DETECTION, and this one is a genuine OPEN ITEM rather than a
+	// permanent exemption.
+	//
+	// go.go's two hidden-detection sites award Search to the observer who WINS
+	// the contest and nothing to the one who loses, which is the firing defect
+	// this slice removes everywhere else. They are NOT converted here because
+	// the same two sites are the "hidden-detection fix" that the settled U10b
+	// decisions assign to U10b-1b BY NAME: the flat 135 threshold never reads
+	// the hider's sneak score, so the contest itself is wrong, and rewriting
+	// its firing before its resolution would mean touching them twice.
+	//
+	// ⚠️ REMOVE THIS ROW when U10b-1b converts them. It is the only entry here
+	// that is expected to be temporary.
+	filepath.Join("internal", "usercommands", "go.go"): true,
+
 	// internal/combat/combat_helpers.go is DELIBERATELY ABSENT. An earlier
 	// task deleted the per-swing defender roll that used to live there. If
 	// this guard flags it, something reintroduced the duplication -- do NOT
@@ -62,8 +95,18 @@ var allowedDirectProgression = map[string]bool{
 // the newer names without tripping this guard. TrackSkillUse/TrackStatUse in
 // particular matter because a bonus event that tracks without a matching
 // applier is a curve-decay bug no rate test would catch.
+// ⚠️ AwardResolved / AwardResolvedScaled / AwardDefenceProgression are
+// DELIBERATELY ABSENT, and the U10b-1 plan's Task 22 Step 1 was wrong to ask
+// for AwardResolved here. They are the SEAM every converted site is supposed
+// to route THROUGH; listing them would flag exactly the code this slice spent
+// twenty commits producing, and the only way to keep the guard green would be
+// to allow-list every converted file, which is the same as deleting the guard.
+//
+// The map holds RAW primitives: the things that fire progression while
+// bypassing the seam.
 var progressionCalls = map[string]bool{
-	"OnSkillUse": true, "OnSkillUseScaled": true, "OnStatUse": true,
+	"OnSkillUse": true, "OnSkillUseScaled": true,
+	"OnStatUse": true, "OnStatUseScaled": true,
 	"CheckSkillProgression": true, "CheckStatProgression": true,
 	// OnCriticalSuccess / OnCriticalFailure are NOT listed: U10b-1 Task 21
 	// deleted the last nine definitions of them, all test fakes, and the
@@ -101,7 +144,21 @@ var progressionCalls = map[string]bool{
 // this guard is meant to catch exactly this shape of regression, and the note
 // records what it caught once.
 func TestContestPathsFireProgressionOnlyThroughTheApplier(t *testing.T) {
-	for _, pkg := range []string{"internal/combat", "internal/hooks"} {
+	// U10b-1 Task 22 WIDENED this walk. It covered only internal/combat and
+	// internal/hooks, which was right when the arc's subject was the contest
+	// paths -- but U10b-1 converted roughly fifty sites across five more
+	// packages, and a guard that cannot see them is not the guard the slice's
+	// "done when" item 1 asks for ("every rolled site routes through the seam,
+	// and a guard test fails a new one that does not").
+	//
+	// internal/characters is DELIBERATELY ABSENT: it is the applier's own home,
+	// so every primitive is defined and legitimately called there.
+	totalScanned := 0
+	for _, pkg := range []string{
+		"internal/combat", "internal/hooks",
+		"internal/actions", "internal/usercommands", "internal/mobcommands",
+		"internal/mobs",
+	} {
 		fset := token.NewFileSet()
 		dir := filepath.Join("..", "..", pkg)
 
@@ -152,9 +209,25 @@ func TestContestPathsFireProgressionOnlyThroughTheApplier(t *testing.T) {
 			})
 		}
 
-		if scanned < 20 {
+		// A guard that silently scans zero files passes forever and protects
+		// nothing, which is what a path change or a bad filter produces.
+		//
+		// The floor was 20, calibrated when this walked only combat and hooks.
+		// U10b-1 Task 22 widened it to six packages and internal/mobs has 19
+		// non-test files, so a flat 20 failed on a package it was scanning
+		// perfectly well. Lowered to 5 per package -- still far above zero,
+		// which is the failure this actually guards -- and backed by a TOTAL
+		// floor, which is what would catch a filter bug that quietly gutted
+		// every package at once.
+		if scanned < 5 {
 			t.Errorf("guard inspected only %d files in %s; it is not actually scanning the package and would pass no matter what the code did",
 				scanned, pkg)
 		}
+		totalScanned += scanned
+	}
+
+	if totalScanned < 150 {
+		t.Errorf("guard inspected only %d files across all packages; the walk is not reaching the codebase it claims to cover",
+			totalScanned)
 	}
 }

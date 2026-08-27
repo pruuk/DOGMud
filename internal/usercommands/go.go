@@ -392,8 +392,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			// move (no action points, unaffordable stamina), a locked exit the
 			// actor could not open, and a MoveToRoom error all return or
 			// message out above and never reach here.
+			// U10b-1 Task 22: won is unconditionally true. Walking is not a
+			// contest -- movementTrainsSearch is a rarity gate, not a roll
+			// against anything -- so there is no losing branch. The gate is
+			// unchanged and is not the firing rule.
 			if movementTrainsSearch() {
-				user.Character.OnSkillUse(string(skills.Search), user.UserId)
+				user.Character.AwardResolved(user.UserId, true,
+					user.Character.CandidateFor(string(skills.Search)))
 			}
 
 			// Tell the player they are moving

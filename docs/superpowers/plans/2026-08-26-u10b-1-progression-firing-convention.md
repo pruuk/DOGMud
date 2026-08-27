@@ -936,11 +936,59 @@ the melee round and (conditionally) the shop path have them.
 
 ### Then the guard
 
-- [ ] **Step 1:** add `OnStatUseScaled` and `AwardResolved` to `progressionCalls`, so a new raw call is caught
-- [ ] **Step 2:** extend the guard so every production progression call routes through `AwardResolved` or `AwardDefenceProgression`, with a file-keyed allow-list carrying a reason: `actions_progression.go` (authored tutorial grant), `NewRound_AutoHeal.go` (regen, U10b-2)
-- [ ] **Step 3:** prove the scanner is not blind before trusting a pass
-- [ ] **Step 4:** run, commit
+- [x] **Step 1:** add `OnStatUseScaled` and `AwardResolved` to `progressionCalls`, so a new raw call is caught
+- [x] **Step 2:** extend the guard so every production progression call routes through `AwardResolved` or `AwardDefenceProgression`, with a file-keyed allow-list carrying a reason: `actions_progression.go` (authored tutorial grant), `NewRound_AutoHeal.go` (regen, U10b-2)
+- [x] **Step 3:** prove the scanner is not blind before trusting a pass
+- [x] **Step 4:** run, commit
 
+**Shipped.**
+
+🔴 **Step 1 asked for `AwardResolved` in `progressionCalls` and that was WRONG.**
+That map is the DENY-list of raw primitives; `AwardResolved` is the SEAM every
+converted site routes through. Listing it would flag the code this slice spent
+twenty commits producing. `OnStatUseScaled` was added; `AwardResolved` was not,
+and the map now records why.
+
+**The walk WIDENED from 2 packages to 6** (`combat`, `hooks`, `actions`,
+`usercommands`, `mobcommands`, `mobs`). `internal/characters` stays out: it is
+the applier's home.
+
+🔴 **Widening immediately found FOUR sites no sweep had caught** --
+`skill_helpers.go`'s warcry/rally award and three in `go.go`. Two converted here;
+the two hidden-detection sites are allow-listed with an explicit
+**"remove this row in U10b-1b"** marker, because the settled decisions assign the
+hidden-detection FIX to that slice by name.
+
+**Step 3, proven not assumed:** a probe of `a.GetCharacter().OnStatUse(...)` --
+selector-on-selector, the shape the plan warns a naive helper misses -- IS caught.
+That warning applies to `contest_site_guard_test.go`, which bails on
+`v.X.(*ast.Ident)`; this walker matches `sel.Sel.Name`.
+
+⚠️ The `scanned < 20` floor was calibrated on two large packages and failed on
+`internal/mobs` (19 files) while scanning it fine. Now 5 per package plus a
+**total floor of 150**.
+
+### Step 0: the stray stat rolls, and what replaced the faucet
+
+`emitAttackerStatGain`'s two bare `OnStatUse` calls are deleted. They fired every
+round, full weight, win or lose, on top of the award: **dexterity was rolled
+TWICE a round** and **strength trained as much on a whiffed round as a landed
+one**. The mob stat-gain EMOTE survives, now driven by a real gain
+(`mobStatSnapshot` before, `emitMobStatGains` after).
+
+🔴 **CONSEQUENCE, ruled on rather than shipped quietly:** strength's only
+skill-primary is `blacksmithing`, and **strength is the melee DAMAGE stat**
+(`combat_helpers.go:429`). Owner ruling 2026-08-26, two replacements, both landed:
+
+1. **Stamina regen trains STRENGTH ONLY** (was `strength, vitality`). Vitality
+   already draws from health regen.
+2. **Grappling trains strength** via `Candidate.Stat: "strength"` -- the same
+   shape `DefenceSkillAndStat` uses for block and defy.
+
+Rejected: a second strength roll alongside the swing, which would re-create the
+defect the deletion removed. Also considered and not taken: strength as the
+two-hander primary, strength-based bash knockdown defence, folding strength into
+dexterity/vitality.
 ## Task 23: Re-solve
 
 ⚠️ Use the **corrected** clean-hit rate **0.3856** (`987e7e872`), never 0.5752.

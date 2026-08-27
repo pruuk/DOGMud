@@ -665,8 +665,14 @@ func (c *Character) regenTickChance(p Pool) float64 {
 // Resource→stat mappings:
 //
 //	Health    → vitality, willpower
-//	Stamina   → strength, vitality
+//	Stamina   → strength                (U10b-1 Task 22: was strength, vitality)
 //	Conviction→ willpower, charisma
+//
+// Stamina is STRENGTH ONLY as of U10b-1 Task 22. Vitality already draws from
+// health regen, so it was fed by two pools while strength was fed by one -- and
+// strength lost its attack-side faucet when that task deleted
+// emitAttackerStatGain's unconditional rolls. Sustaining exertion is what
+// strength is.
 func (c *Character) OnRegenTick(p Pool, relatedStats []string, userId int) {
 	chance := c.regenTickChance(p)
 	if chance <= 0 {

@@ -39,17 +39,32 @@ func TestMeleeProgressionFiresOncePerRound(t *testing.T) {
 
 	afterStr, afterDex, afterWeapon := countUses(atk.GetCharacter())
 
-	if got := afterStr - beforeStr; got != 1 {
-		t.Errorf("strength tracked %d times in one round, want 1", got)
-	}
 	if got := afterWeapon - beforeWeapon; got != 1 {
 		t.Errorf("weapon-combat tracked %d times in one round, want 1", got)
 	}
-	// Dexterity is tracked directly AND as weapon-combat's primary stat, so the
-	// intended count is exactly 2. Asserting only "at most 2" would not catch
-	// under-counting (e.g. a regression dropping it to 0 or 1), so pin it exactly.
-	if got := afterDex - beforeDex; got != 2 {
-		t.Errorf("dexterity tracked %d times in one round, want exactly 2", got)
+
+	// U10b-1 Task 22 INVERTED the two assertions below, and this test now
+	// guards the opposite of what it used to.
+	//
+	// It previously required strength == 1 and dexterity == EXACTLY 2, and its
+	// own comment said dexterity was "tracked directly AND as weapon-combat's
+	// primary stat, so the intended count is exactly 2". That double-roll came
+	// from emitAttackerStatGain, which called OnStatUse directly for strength
+	// and dexterity every round, at full weight, win or lose, on top of the
+	// round's award.
+	//
+	// Owner ruling: a stat roll IS progression, so a full-weight one that
+	// ignores the outcome is a firing-rule violation exactly like a skill roll
+	// would be. Both bare rolls are deleted.
+	//
+	// What remains is ONE dexterity track, as weapon-combat's primary inside
+	// the award, and NO strength track at all -- strength is not any melee
+	// skill's primary, so an attacker no longer trains it merely by swinging.
+	if got := afterDex - beforeDex; got != 1 {
+		t.Errorf("dexterity tracked %d times in one round, want exactly 1 (the award's primary-stat roll); a second means emitAttackerStatGain's bare roll is back", got)
+	}
+	if got := afterStr - beforeStr; got != 0 {
+		t.Errorf("strength tracked %d times in one round, want 0; swinging no longer trains strength directly", got)
 	}
 }
 
