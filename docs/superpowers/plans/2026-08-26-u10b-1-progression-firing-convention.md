@@ -599,15 +599,19 @@ re-solve must price both.
 **All six craft sites are now identical in shape:**
 `AwardResolvedScaled(uid, won, craftBonus, CandidateFor(recipe.Skill))`.
 
-🔴 **What is NOT unified, and is not this slice's axis: there are THREE
-crafting DRIVERS.** `actions.InitiateCraft` (immediate, both actor kinds), the
-Activity multi-round tick (`NewRound_{User,Mob}RoundTick`), and
-**`mobs.TickMobCraft`** -- a parallel shopkeeper-economy implementation fired
-from `MobIdle_HandleIdleMobs.go:97` that shares only the `crafting` library.
-Progression and resolution now agree across all three; what remains is
-duplicated drivers, which is the **behavior unification arc's** territory (mob
-behavior split across `aiprofile`, behavior trees, `idlecommands`, schedules,
-patrols -- a third crafting driver is the same species).
+**Three BEHAVIOR PATHS call the one crafting mechanism**, and owner ruling
+2026-08-26 is that this shape is fine: `actions.InitiateCraft` (immediate, both
+actor kinds), the Activity multi-round tick (`NewRound_{User,Mob}RoundTick`),
+and `mobs.TickMobCraft` (shopkeeper idle economy). One mechanism --
+`crafting.GetRecipe` / `CalcSuccessChance` / `ConsumeIngredients` -- with three
+triggers is normal, not duplication.
+
+🔴 **The finding worth carrying forward is about AUDIT COVERAGE.** The
+least-travelled of those paths diverged in TWO independent ways at once and
+nobody noticed: `TickMobCraft` awarded success-only AND without the difficulty
+bonus. When several behavior paths call one mechanism, audit every CALL SITE,
+not the mechanism -- a grep of the shared code finds the library and misses
+exactly this.
 
 The plan's `MobProgressionEnabled` warning is now an explicit `t.Fatal`
 precondition in the test rather than a comment, and it is sabotage-proven:
