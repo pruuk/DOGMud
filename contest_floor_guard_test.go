@@ -82,6 +82,9 @@ var guardedRollExemptions = map[string]map[string]string{
 		// The finer 135/175 quality bands still read the attacker's own roll --
 		// see the ruling in track.go for why they are not separate contests.
 		"internal/actions/track.go": "U10b-1b: static-difficulty track detection gate, deliberately unfloored (category B)",
+		// U10b-1b Phase A. Forage's per-biome difficulty, same category B
+		// reasoning. ForageCore is pure, so this is the whole of its uncertainty.
+		"internal/forager/forage_core.go": "U10b-1b: static-difficulty forage check, deliberately unfloored (category B)",
 	},
 }
 
