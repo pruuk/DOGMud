@@ -117,6 +117,17 @@ func SalvageDifficulty(itemId int, materialTierMult float64) (float64, bool) {
 	return CraftDifficulty(r.SkillMinimum, materialTierMult), true
 }
 
+// FallbackSalvageDifficulty prices something with no recipe: a corpse, or an
+// item carrying salvage_returns.
+//
+// ⚠️ DELIBERATELY UNTUNED, and deliberately just the base anchor. The
+// salvage_returns path is UNREACHABLE today (zero items carry the field), and
+// tuning an unreachable path invents a balance claim nobody can verify. The
+// corpse path IS reachable, and is the reason this exists at all.
+func FallbackSalvageDifficulty() float64 {
+	return float64(configs.GetBalanceConfig().CraftBaseDifficulty)
+}
+
 // RunCraftContest is THE entry point for every craft resolution, and the ONE
 // place Balance.CraftFloor is read.
 //

@@ -2,11 +2,9 @@ package actions
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -19,9 +17,16 @@ import (
 
 // salvageChanceWithMutations applies the Chrysifier salvage-yield bonus
 // (Provident Hands — a more thorough breakdown recovers more), capping at 1.0.
-func salvageChanceWithMutations(char *characters.Character, base float64) float64 {
+// salvageScoreWithMutations applies the salvage-yield mutation to the SCORE.
+//
+// U10b-1b: it used to multiply a probability and clamp at 1.0. Salvage is a
+// contest now, so the same bonus scales the contest score instead — which is
+// also better behaved, because a score has no ceiling to saturate against and
+// the mutation keeps helping a master salvager instead of vanishing into a
+// clamp.
+func salvageScoreWithMutations(char *characters.Character, base float64) float64 {
 	if bonus := mutations.GetSalvageYieldBonus(char.Mutations); bonus > 0 {
-		return math.Min(1.0, base*(1.0+bonus))
+		return base * (1.0 + bonus)
 	}
 	return base
 }
@@ -77,24 +82,25 @@ func Salvage(actor Actor, opts SalvageOptions) SalvageResult {
 		return result
 	}
 
-	bal := configs.GetBalanceConfig()
+	// U10b-1b: salvage is a contest. The salvager scores
+	// perception + salvageSkill*SkillWeight (salvage's primary stat is
+	// perception, per skills.SkillPrimaryStats); the DIFFICULTY is the item's
+	// own craft difficulty and is resolved per item, further down, because it
+	// depends on what is being taken apart rather than on who is doing it.
 	salvageSkill := char.GetSkillLevel(skills.Salvage)
-	chance := crafting.CalcSalvageChance(salvageSkill,
-		float64(bal.SalvageMinChance),
-		float64(bal.SalvageMaxChance),
-		int(bal.SalvageSoftCap))
-	chance = salvageChanceWithMutations(char, chance)
+	score := crafting.CraftScore(float64(char.GetStatValue("perception")), salvageSkill)
+	score = salvageScoreWithMutations(char, score)
 
 	if opts.TargetCorpse {
-		return salvageCorpse(actor, room, opts, chance)
+		return salvageCorpse(actor, room, opts, score)
 	}
-	return salvageItem(actor, opts.TargetItemUuid, opts.SpoiledPotion, chance)
+	return salvageItem(actor, opts.TargetItemUuid, opts.SpoiledPotion, score)
 }
 
 // salvageCorpse handles the corpse-target path. Finds the target
 // corpse (specific by MobId+RoundCreated, or first eligible),
 // rolls returns, removes the corpse, stores materials.
-func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, chance float64) SalvageResult {
+func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score float64) SalvageResult {
 	result := SalvageResult{}
 
 	var target rooms.Corpse
@@ -160,7 +166,9 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, chance fl
 
 	mobSpec := mobs.GetMobSpec(mobs.MobId(target.MobId))
 	returns := crafting.LookupCorpseSalvage(mobSpec.Groups)
-	recovered := crafting.RollSalvageReturnsFromSpec(returns, chance)
+	// A corpse was never crafted, so there is no recipe to derive a difficulty
+	// from. Uses the documented fallback, which is deliberately untuned.
+	recovered := crafting.RollSalvageReturnsFromSpec(returns, score, crafting.FallbackSalvageDifficulty())
 
 	room.RemoveCorpse(target)
 
@@ -207,7 +215,7 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, chance fl
 // salvageItem handles the item-target path (by UUID). Mirrors the
 // logic of the prior resolveSalvageFromData in
 // hooks/NewRound_UserRoundTick.go, adapted for the actor interface.
-func salvageItem(actor Actor, uuid string, spoiledPotion bool, chance float64) SalvageResult {
+func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) SalvageResult {
 	result := SalvageResult{}
 	char := actor.GetCharacter()
 
@@ -268,17 +276,34 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, chance float64) S
 	var recovered []crafting.RecipeIngredient
 	if spoiledPotion {
 		qtyBonus := 0
-		if chance > 0.5 {
-			qtyBonus = 1 // preserve the existing salvage-skill bump
+		// Preserves the existing salvage-skill bump. It used to read
+		// "chance > 0.5", a probability that no longer exists; the equivalent
+		// under the contest is "would this salvager beat a neutral-difficulty
+		// item more often than not", which is exactly score > difficulty.
+		if score > crafting.CraftDifficulty(0, 1.0) {
+			qtyBonus = 1
 		}
 		roll := func() float64 { return float64(util.Rand(10000)) / 10000.0 }
 		recovered = crafting.EnchantSalvageYield(itemId, roll, qtyBonus)
 	} else {
+		// AS HARD TO UNMAKE AS IT WAS TO MAKE: difficulty is the item's own
+		// craft difficulty, read from the recipe that produced it.
+		//
+		// 🔴 At the NEUTRAL material tier, deliberately. The tier would have to
+		// come from the recipe's ingredients, which do not exist yet — the
+		// salvage is what CREATES them — and the only tag-to-tier resolver is
+		// items.FindSpecByComponentTag, forbidden by spec 5.1.1.3 because it
+		// iterates a Go map. Reading the recipe's SkillMinimum needs no such
+		// lookup, which is exactly why the spec chose it.
+		salvageDiff, ok := crafting.SalvageDifficulty(itemId, 1.0)
+		if !ok {
+			salvageDiff = crafting.FallbackSalvageDifficulty()
+		}
 		recipe := crafting.GetRecipeByOutputItemId(itemId)
 		if recipe != nil {
-			recovered = crafting.RollSalvageReturns(recipe.Ingredients, chance)
+			recovered = crafting.RollSalvageReturns(recipe.Ingredients, score, salvageDiff)
 		} else if len(spec.SalvageReturns) > 0 {
-			recovered = crafting.RollSalvageReturnsFromSpec(spec.SalvageReturns, chance)
+			recovered = crafting.RollSalvageReturnsFromSpec(spec.SalvageReturns, score, salvageDiff)
 		}
 	}
 

@@ -218,8 +218,15 @@ func TestSalvage_MobActorSilent(t *testing.T) {
 func TestSalvage_ARecoveryOfNothingAwardsOnceAtTheLossWeight(t *testing.T) {
 	pinConfigForTest(t)
 	cfg := configs.GetConfig()
-	cfg.Balance.SalvageMinChance = 0
-	cfg.Balance.SalvageMaxChance = 0
+	// U10b-1b: SalvageMin/MaxChance no longer decide anything — salvage is a
+	// contest. Force a certain loss by inflating the difficulty and suppressing
+	// the mercy floor, which otherwise rescues 15% of losses.
+	//
+	// SalvageFloor takes a tiny POSITIVE value, not 0: the validator corrects
+	// <=0 back to 0.15 because a 0 floor is not a legal shipped value.
+	cfg.Balance.CraftBaseDifficulty = 1000000
+	cfg.Balance.CraftSkillMinWeight = 0
+	cfg.Balance.SalvageFloor = configs.ConfigFloat(1e-12)
 	configs.SetConfigForTest(t, cfg)
 
 	const salvageItemId = 77401
