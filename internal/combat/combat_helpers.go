@@ -156,10 +156,13 @@ func sendDefenceShortageOnce(result *AttackResult, defender *characters.Characte
 // Merges dex + weapon speed + skill into one formula, replacing the old
 // outer-loop calcAttackCount × inner-loop ws.attacks double multiplication.
 //
+// weapon is the weapon ACTUALLY BEING SWUNG, not whatever is in the main hand,
+// for the same reason calcAttackScore takes it. A zero Item means bare hands.
+//
 // Formula: swings = max(1, round(1 + (dex - 50) / 100 × weaponSpeed × (1 + skill / softCap)))
 // Then apply stamina, encumbrance, position, and recovery modifiers.
 // Hard cap: 4 per weapon.
-func calcSwingCount(sourceChar *characters.Character, weaponSpeed float64, extraAttacks int, isOffhand bool) int {
+func calcSwingCount(sourceChar *characters.Character, weapon items.Item, weaponSpeed float64, extraAttacks int, isOffhand bool) int {
 	bal := configs.GetBalanceConfig()
 	softCap := float64(bal.SkillSoftCap)
 	if softCap <= 0 {
@@ -167,13 +170,22 @@ func calcSwingCount(sourceChar *characters.Character, weaponSpeed float64, extra
 	}
 
 	dex := float64(sourceChar.GetEffectiveDexterity())
-	skillLevel := float64(sourceChar.GetCombatSkillLevel()) * float64(bal.SkillWeight)
+	skillLevel := float64(sourceChar.GetCombatSkillLevelFor(weapon)) * float64(bal.SkillWeight)
 
 	// Core swing count formula
 	swings := 1.0 + (dex-50.0)/100.0*weaponSpeed*(1.0+skillLevel/softCap)
 	swings += float64(extraAttacks)
 
-	// Offhand penalty: skill governs dual-wield speed
+	// Offhand penalty: skill governs dual-wield speed.
+	//
+	// This one is deliberately NOT per-weapon. Dual-wield coordination is a
+	// property of the FIGHTER working two hands at once, not of the item in the
+	// off hand, which is why it is keyed on IsUnarmedStyle (the whole stance)
+	// and why calcDualWieldPenalty reads weapon-combat unconditionally for the
+	// matching hit penalty. Whether that should instead key on the offhand
+	// weapon is a live design question, not a leftover of the per-weapon-skill
+	// defect fixed above; changing it would move a mixed sword-and-fist build's
+	// offhand speed as well as its swing count.
 	if isOffhand {
 		dualSkill := float64(sourceChar.GetSkillLevel(skills.WeaponCombat))
 		if sourceChar.IsUnarmedStyle() {
@@ -239,7 +251,7 @@ func buildAttackPlan(sourceChar *characters.Character, targetChar *characters.Ch
 
 	for weaponIdx, weapon := range attackWeapons {
 		ws := buildWeaponSetup(sourceChar, targetChar, weapon, weaponIdx, len(attackWeapons))
-		ws.swingCount = calcSwingCount(sourceChar, ws.weaponSpeed, extraAttacks, ws.isOffhand)
+		ws.swingCount = calcSwingCount(sourceChar, ws.weapon, ws.weaponSpeed, extraAttacks, ws.isOffhand)
 		plan.totalSwings += ws.swingCount
 		plan.weapons = append(plan.weapons, ws)
 	}

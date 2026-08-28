@@ -65,32 +65,51 @@ CLEAN_HIT = 0.3856      # M. THE CORRECTED RATE. Used where `won` is CleanHit.
 HIT = 0.5752            # M. Used where `won` is result.Hit (every special move).
 DODGE_SHARE, PARRY_SHARE, BLOCK_SHARE = 0.770, 0.151, 0.080   # M, of DefenseUsed
 
-# D: mid-profile swing counts from calcSwingCount (dex 118, wc 18, SkillWeight
-# 5.0, longsword speed 0.7 -> 2 swings; fist at UnarmedSpeed 1.8 x dualWield 1.4
-# -> capped 4).
-SWINGS_MAIN, SWINGS_FIST = 2, 4
-
-# D: the BARE-HANDED build, added 2026-08-27. Both hands empty means
-# collectAttackWeapons appends TWO fist entries (combat_helpers.go:283-291:
-# main-hand-empty and offhand-empty are separate appends), so the round swings
-# 4 + 4 = 8 times, not 4.
+# D: mid-profile swing counts from calcSwingCount, at dex 118, SkillWeight 5.0,
+# softCap 50, full stamina, standing. The profile character concentrates on
+# weapon-combat: wc 18, unarmed-combat at the untrained floor of 1.
 #
-# Both entries hit the swing cap, and they do so with room to spare, which is
-# what makes this figure robust: at the file's rank-18 profile the main fist
-# computes 1 + 0.68 x 1.8 x (1 + 90/50) = 4.43 -> capped 4, and the offhand
-# fist multiplies that by dualWieldMod 0.5 + (90/50) x 0.5 = 1.4 -> 6.20,
-# capped 4. At REF_RANK 25 both are further past the cap. 8 is stable over the
-# whole band this file reasons about.
-SWINGS_BARE = 8
+# Longsword, speed 0.7, main hand: 1 + 0.68 x 0.7 x (1 + 90/50) = 2.33 -> 2.
+SWINGS_MAIN = 2
+
+# A FIST BESIDE THAT SWORD. Updated 2026-08-27, and the update is a consequence
+# of the calcSwingCount fix landing in this same batch: the fist now takes its
+# skill term from unarmed-combat (rank 1) instead of the main hand's
+# weapon-combat (rank 18).
+#
+#   base at uc 1  = 1 + 0.68 x 1.8 x (1 + 5/50)  = 2.35
+#   dualWieldMod  = 0.5 + (18 x 5 / 50) x 0.5    = 1.40   <- reads WEAPON-combat,
+#                                                            and is unchanged by
+#                                                            the fix by design
+#   3.29 -> 3 swings   (was 4.43 x 1.40 = 6.20, capped to 4)
+SWINGS_FIST = 3
+
+# D: THE BARE-HANDED build. Both hands empty means collectAttackWeapons appends
+# TWO fist entries (combat_helpers.go:283-291: main-hand-empty and
+# offhand-empty are separate appends), so the round swings 4 + 4 = 8.
+#
+# This one is NOT touched by the calcSwingCount fix, because bare hands always
+# resolved correctly: GetCombatSkillLevel reads Equipment.Weapon, and a zero
+# Item already maps to unarmed-combat. The concentrating unarmed player is at
+# uc 18 here, mirroring the weapon profile:
+#
+#   base          = 1 + 0.68 x 1.8 x (1 + 90/50)  = 4.43 -> capped 4
+#   offhand fist  = 4.43 x 1.40                   = 6.20 -> capped 4
+#
+# Both entries clear the cap with room to spare, and clear it by more at
+# REF_RANK 25, so 8 is stable across the whole band this file reasons about.
+SWINGS_FIST_BARE = 4
 
 # D: WeaponHits.CleanHit is OR-aggregated across a weapon's swings, and
 # attackerCandidates OR-aggregates again across a SKILL's weapons.
 P_CLEAN_MAIN = 1 - (1 - CLEAN_HIT) ** SWINGS_MAIN
 P_CLEAN_FIST = 1 - (1 - CLEAN_HIT) ** SWINGS_FIST
+# ONE fist ENTRY bare-handed, which is what v3's per-entry shape paid on.
+P_CLEAN_FIST_BARE = 1 - (1 - CLEAN_HIT) ** SWINGS_FIST_BARE
 # Two fist entries are ONE skill, so attackerCandidates folds them into a single
 # unarmed-combat candidate whose `clean` is the OR across all 8 swings
 # (NewRound_DoCombat_helpers.go:172). Not two candidates, and not two awards.
-P_CLEAN_BARE = 1 - (1 - CLEAN_HIT) ** SWINGS_BARE
+P_CLEAN_BARE = 1 - (1 - CLEAN_HIT) ** (2 * SWINGS_FIST_BARE)
 
 # ── R: owner engagement rulings (unchanged from v3) ─────────────────────────
 ENG_COMBAT, ENG_GATHER, ENG_CRAFT = 0.10, 1.00, 0.40
@@ -188,14 +207,12 @@ def_award = weight(P_DEF_WIN)    #    did not cleanly land
 # DOES differ between main and offhand, so the fist's draws are centred a
 # little lower and 4/6 slightly overstates its share even at equal skill.
 #
-# ⚠️ ONE PIECE IS STILL STALE, DELIBERATELY: SWINGS_FIST = 4 above is computed
-# from calcSwingCount, which STILL reads main-hand-only GetCombatSkillLevel
-# (combat_helpers.go:170). So a 1H+fist build's fist swing COUNT is still
-# derived from weapon-combat's rank. That is the next followup in the batch,
-# and it moves SWINGS_FIST, not this share. It does not touch the bare-handed
-# row: bare hands resolve GetCombatSkillLevel to unarmed-combat already
-# (CombatSkillTagForItem returns UnarmedCombat for a zero Item), and both
-# entries are capped regardless.
+# ✅ The share is built from the POST-FIX swing counts as of 2026-08-27:
+# SWINGS_FIST is 3, not 4, because the companion calcSwingCount fix landed in
+# the same batch and a fist beside a sword is now counted at unarmed-combat
+# rank in its SWING COUNT as well as in its score. The bare-handed row is
+# unaffected either way -- bare hands always resolved to unarmed-combat, since
+# CombatSkillTagForItem maps a zero Item there.
 SHARE_FIST = SWINGS_FIST / (SWINGS_MAIN + SWINGS_FIST)
 SHARE_MAIN = 1.0 - SHARE_FIST
 
@@ -263,8 +280,8 @@ BUILDS_OLD = {
     "2H": (P_CLEAN_MAIN + PARRY_NS, DODGE_NS, 1.0 + P_CLEAN_MAIN + 2.0),
     "1H+shield": (P_CLEAN_MAIN + PARRY_SHARE + BLOCK_SHARE, DODGE_SHARE,
                   1.0 + P_CLEAN_MAIN + 2.0),
-    "bare": (0.0, 2 * P_CLEAN_FIST + P_DEF_WIN,
-             1.0 + 2 * P_CLEAN_FIST + 2.0),
+    "bare": (0.0, 2 * P_CLEAN_FIST_BARE + P_DEF_WIN,
+             1.0 + 2 * P_CLEAN_FIST_BARE + 2.0),
 }
 
 
@@ -424,13 +441,13 @@ TRACKS = [
 # Self-check when re-running: every track whose inputs did not change must print
 # adjust 1.00x. Anything else moving is a bug in the edit, not a finding.
 SHIPPED = {
-    "weapon-combat": 1.34, "unarmed-combat": 1.01, "ranged-combat": 6.88,
+    "weapon-combat": 1.34, "unarmed-combat": 0.72, "ranged-combat": 6.88,
     "spellcasting": 2.99, "rhetoric": 6.88, "manifestation": 5.13,
     "skullduggery": 1.23, "search": 1.02, "bartering": 2.07, "salvage": 2.80,
     "blacksmithing": 1.56, "alchemy": 1.56, "tailoring": 1.56,
     "cooking": 1.56, "jewelcrafting": 1.56, "enchanting": 1.56,
     # STATS live ONLY in config.yaml (there is no Go-side stat map).
-    "strength": 1.11, "dexterity": 0.34, "perception": 0.43,
+    "strength": 1.11, "dexterity": 0.32, "perception": 0.43,
     "willpower": 1.70, "charisma": 0.75,
 }
 COMBAT_TRACKS = {"weapon-combat", "unarmed-combat", "ranged-combat",
@@ -445,8 +462,10 @@ def main():
     print("U10b-1 Task 23 -- re-solved on the FIRING CONVENTION (supersedes v3)")
     print("clean-hit %.4f CORRECTED (v3 used 0.5752, which is the HIT rate) | "
           "hit %.4f | failure fraction %.2f" % (CLEAN_HIT, HIT, FRACTION))
-    print("attacker Best-of share: fist %.3f / weapon %.3f  (iid, 4 vs 2 swings)"
-          % (SHARE_FIST, SHARE_MAIN))
+    print("attacker Best-of share in 1H+fist: fist %.3f / weapon %.3f "
+          "(iid, %d fist swings vs %d weapon;\n  EQUAL-SKILL case, an upper bound "
+          "on the fist for a weapon concentrator)"
+          % (SHARE_FIST, SHARE_MAIN, SWINGS_FIST, SWINGS_MAIN))
     print("labels: M measured  D derived  R owner ruling  J JUDGEMENT (playtest)\n")
 
     print("%-16s %8s %8s %7s %8s %8s %7s  %s" %
@@ -467,10 +486,11 @@ def main():
           % (wc_pr, v3_wc_pr, wc_pr / v3_wc_pr))
     print("  unarmed-combat %.3f  (old shape at the corrected rate %.3f -> %.2fx)"
           % (uc_pr, v3_uc_pr, uc_pr / v3_uc_pr))
-    print("  P(clean | weapon entry) %.3f over %d swings; P(clean | fist) %.3f over %d"
-          % (P_CLEAN_MAIN, SWINGS_MAIN, P_CLEAN_FIST, SWINGS_FIST))
-    print("  P(clean | BARE, both fists as ONE candidate) %.3f over %d swings"
-          % (P_CLEAN_BARE, SWINGS_BARE))
+    print("  P(clean | weapon entry) %.3f over %d swings; P(clean | fist beside a"
+          "\n  weapon) %.3f over %d" % (P_CLEAN_MAIN, SWINGS_MAIN, P_CLEAN_FIST, SWINGS_FIST))
+    print("  P(clean | BARE, both fists folded into ONE candidate) %.3f over %d"
+          "\n  swings, %d per hand"
+          % (P_CLEAN_BARE, 2 * SWINGS_FIST_BARE, SWINGS_FIST_BARE))
 
     print("\nStrength faucets, standard-channel-equivalent uses/hr:")
     print("  block (SHIELD build) %.1f | grapple %.1f | SP regen tick %.2f"

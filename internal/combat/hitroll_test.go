@@ -6,8 +6,11 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
@@ -86,7 +89,7 @@ func TestCalcSwingCount_Baseline(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := calcSwingCount(ch, tt.weaponSpeed, 0, false)
+			got := calcSwingCount(ch, items.Item{}, tt.weaponSpeed, 0, false)
 			assert.Equal(t, tt.wantSwings, got, "dex=100, skill=0, speed=%.1f", tt.weaponSpeed)
 		})
 	}
@@ -100,8 +103,8 @@ func TestCalcSwingCount_HighDexUnarmedPullsAhead(t *testing.T) {
 	ch.Stamina = 100
 	setCombatPositionParallel(ch, position.Standing)
 
-	unarmed := calcSwingCount(ch, 1.4, 0, false)
-	light := calcSwingCount(ch, 1.2, 0, false)
+	unarmed := calcSwingCount(ch, items.Item{}, 1.4, 0, false)
+	light := calcSwingCount(ch, items.Item{}, 1.2, 0, false)
 	assert.GreaterOrEqual(t, unarmed, light,
 		"unarmed (1.4) should get >= swings as light weapon (1.2) at high dex")
 }
@@ -113,7 +116,7 @@ func TestCalcSwingCount_HardCap(t *testing.T) {
 	ch.Stamina = 100
 	setCombatPositionParallel(ch, position.Standing)
 
-	got := calcSwingCount(ch, 1.4, 5, false)
+	got := calcSwingCount(ch, items.Item{}, 1.4, 5, false)
 	assert.LessOrEqual(t, got, 4, "swing count should never exceed hard cap of 4")
 }
 
@@ -125,7 +128,7 @@ func TestCalcSwingCount_RecoveryForcesOne(t *testing.T) {
 	setCombatPositionParallel(ch, position.Standing)
 	ch.AddCondition(characters.ConditionRecoveryPenalty, 1, 1.0, "test")
 
-	got := calcSwingCount(ch, 1.4, 0, false)
+	got := calcSwingCount(ch, items.Item{}, 1.4, 0, false)
 	assert.Equal(t, 1, got, "recovery penalty should force swings to 1")
 }
 
@@ -140,10 +143,10 @@ func TestCalcSwingCount_ProneReduces(t *testing.T) {
 	ch.Stamina = 100
 
 	setCombatPositionParallel(ch, position.Standing)
-	standing := calcSwingCount(ch, 1.4, 0, false)
+	standing := calcSwingCount(ch, items.Item{}, 1.4, 0, false)
 
 	setCombatPositionParallel(ch, position.Prone)
-	prone := calcSwingCount(ch, 1.4, 0, false)
+	prone := calcSwingCount(ch, items.Item{}, 1.4, 0, false)
 
 	assert.Less(t, prone, standing,
 		"prone should reduce swing count vs standing")
@@ -156,7 +159,7 @@ func TestCalcSwingCount_MinimumOne(t *testing.T) {
 	ch.Stamina = 1 // nearly depleted
 	setCombatPositionParallel(ch, position.Prone)
 
-	got := calcSwingCount(ch, 0.5, 0, false)
+	got := calcSwingCount(ch, items.Item{}, 0.5, 0, false)
 	assert.GreaterOrEqual(t, got, 1, "swing count should never go below 1")
 }
 
@@ -517,4 +520,109 @@ func TestSwingCountFormula_Math(t *testing.T) {
 		}
 		t.Logf("dex=%.0f speed=%.1f → raw=%.2f → swings=%d", tt.dex, tt.speed, raw, rounded)
 	}
+}
+
+// pinSkillWeightForTest sets Balance.SkillWeight for the duration of one test.
+//
+// It exists because the Go default (2.0) and the shipped value (5.0) differ by
+// enough to change how many swings a skill gap is worth, and a test binary
+// never reads config.yaml. Any assertion whose subject is the SKILL TERM of the
+// swing formula has to say which of the two it means.
+func pinSkillWeightForTest(t *testing.T, weight float64) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Balance.SkillWeight = configs.ConfigFloat(weight)
+	configs.SetConfigForTest(t, cfg)
+}
+
+// TestCalcSwingCount_FistSwingsAtFistSkill pins the surviving half of the
+// per-weapon-skill defect: a weapon's SWING COUNT must come from that weapon's
+// own combat skill, not from whatever the main hand happens to hold.
+//
+// The invariant is stated without magic numbers on purpose. A bare fist and a
+// fist thrown beside a sword are the same fist: the sword in the other hand
+// cannot make it faster. Before this fix calcSwingCount read
+// GetCombatSkillLevel, which resolves the MAIN-HAND tag for every entry in the
+// plan, so the fist was counted at the swordsman's weapon-combat rank.
+//
+// isOffhand is FALSE here deliberately, and that is what makes the equality
+// hold. The offhand dual-wield modifier reads IsUnarmedStyle, so it genuinely
+// DOES differ between a bare-handed stance and a sword-and-fist one -- by
+// design, and untouched by this fix. Passing true would compare the skill term
+// and the dual-wield modifier at once and the assertion would be false for a
+// correct reason. This isolates the term under test.
+//
+// For the production consequence with the modifier included, run
+// tools/balance/swingcount_per_weapon_skill.py. Its headline is worth knowing
+// before reading these numbers as a nerf: the 4-swing cap absorbs the change
+// for a swordsman at almost any dex, and the population that actually MOVES is
+// brawlers holding a weapon, upward.
+//
+// This is the same defect calcAttackScore and buildDamageParams were fixed for
+// on 2026-08-27; it survived there because calcSwingCount never took a weapon.
+//
+// ⚠️ SkillWeight is PINNED, and the pin is load-bearing rather than tidiness.
+// A test binary never loads config.yaml, so Balance.SkillWeight arrives at its
+// Go default of 2.0 (config.balance.misc.go:317) while the game ships 5.0. At
+// 2.0 the skill term is compressed enough that weapon-combat 40 and
+// unarmed-combat 1 BOTH round to 2 swings at this dex and speed, and the first
+// draft of this test passed against the unfixed code for exactly that reason.
+// Pin the shipped value or the assertion silently stops testing anything.
+func TestCalcSwingCount_FistSwingsAtFistSkill(t *testing.T) {
+	pinSkillWeightForTest(t, 5.0)
+
+	ch := &characters.Character{}
+	ch.Stats.Dexterity.ValueAdj = 80
+	ch.StaminaMax.Value = 100
+	ch.Stamina = 100
+	ch.Skills = map[string]int{
+		string(skills.WeaponCombat):  40,
+		string(skills.UnarmedCombat): 1,
+	}
+	setCombatPositionParallel(ch, position.Standing)
+
+	// A fist thrown beside a sword. items.Item{} IS the fist: collectAttackWeapons
+	// synthesises exactly that zero Item for an empty hand.
+	ch.Equipment.Weapon = makeSword()
+	besideSword := calcSwingCount(ch, items.Item{}, 1.8, 0, false)
+
+	// The same fist, same character, nothing in the other hand.
+	ch.Equipment.Weapon = items.Item{}
+	bareHanded := calcSwingCount(ch, items.Item{}, 1.8, 0, false)
+
+	assert.Equal(t, bareHanded, besideSword,
+		"a fist must swing at unarmed-combat whether or not the other hand "+
+			"holds a sword; got %d beside a sword against %d bare-handed",
+		besideSword, bareHanded)
+}
+
+// TestCalcSwingCount_WeaponSwingsAtWeaponSkill is the other direction of the
+// same invariant, and it is the regression guard rather than the fix: a high
+// unarmed rank must not accelerate the sword. Without it the fix above could
+// be "corrected" into reading unarmed-combat for everything and still pass.
+func TestCalcSwingCount_WeaponSwingsAtWeaponSkill(t *testing.T) {
+	pinSkillWeightForTest(t, 5.0)
+
+	ch := &characters.Character{}
+	ch.Stats.Dexterity.ValueAdj = 80
+	ch.StaminaMax.Value = 100
+	ch.Stamina = 100
+	setCombatPositionParallel(ch, position.Standing)
+	sword := makeSword()
+	ch.Equipment.Weapon = sword
+
+	ch.Skills = map[string]int{
+		string(skills.WeaponCombat):  10,
+		string(skills.UnarmedCombat): 1,
+	}
+	lowUnarmed := calcSwingCount(ch, sword, 0.7, 0, false)
+
+	ch.Skills = map[string]int{
+		string(skills.WeaponCombat):  10,
+		string(skills.UnarmedCombat): 45,
+	}
+	highUnarmed := calcSwingCount(ch, sword, 0.7, 0, false)
+
+	assert.Equal(t, lowUnarmed, highUnarmed,
+		"unarmed-combat rank must not change how fast a SWORD swings")
 }

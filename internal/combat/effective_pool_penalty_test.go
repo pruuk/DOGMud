@@ -173,8 +173,8 @@ func TestSwingCountUsesTheReachableStaminaPool(t *testing.T) {
 	// NOT work: 2.1 and 1.62 both round to 2 and the test passes on a revert.
 	const weaponSpeed = 6.0
 
-	full := calcSwingCount(reserved, weaponSpeed, 0, false)
-	worn := calcSwingCount(depleted, weaponSpeed, 0, false)
+	full := calcSwingCount(reserved, items.Item{}, weaponSpeed, 0, false)
+	worn := calcSwingCount(depleted, items.Item{}, weaponSpeed, 0, false)
 
 	if full <= worn {
 		t.Errorf("a fully rested 90%%-reserved attacker throws %d swings and a genuinely "+
