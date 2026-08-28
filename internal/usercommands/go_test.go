@@ -68,3 +68,30 @@ func TestGo_TheSneakingWrapperSurvives(t *testing.T) {
 	require.Contains(t, goSource(t), "if !isSneaking {",
 		"the !isSneaking wrapper was deleted with the mob-follow roll; the ambush and player_enter blocks need it")
 }
+
+// U10b-2: the two hidden-detection sites fire through the progression seam, on
+// BOTH outcomes, instead of calling OnSkillUse only when the observer won.
+//
+// U10b-1b gave this contest a real opposed roll against the hider's sneak score
+// but left its FIRING alone, so the award stayed inside the `if success` branch
+// -- the exact win-only shape the firing convention exists to remove. The seam
+// guard carried a row exempting this file, printed with a reason that had
+// stopped being true. That row is gone and must not come back.
+//
+// Both assertions are proven to flip: against the pre-change file the first
+// counts 2 and the second counts 0.
+func TestGo_HiddenDetectionFiresThroughTheSeamOnBothOutcomes(t *testing.T) {
+	src := goSource(t)
+
+	require.NotContains(t, src, "OnSkillUse(string(skills.Search)",
+		"go.go calls the OnSkillUse primitive directly again; hidden detection must fire through AwardResolved (the seam guard no longer exempts this file)")
+
+	// Pinned on `success` as the won argument, not merely on AwardResolved
+	// being present: moving the award back inside the `if success` block would
+	// pass a literal true, which is the win-only regression this guards.
+	// go.go has a THIRD AwardResolved call (the movement-trains-search one,
+	// which correctly passes true because walking is not a contest), so
+	// counting bare "AwardResolved(" would not distinguish them.
+	require.Equal(t, 2, strings.Count(src, "AwardResolved(user.UserId, success,"),
+		"expected both hidden-detection sites (players and mobs) to pass the contest result as the won argument; a literal true here means the award moved back inside the success branch")
+}

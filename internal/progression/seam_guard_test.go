@@ -52,20 +52,14 @@ var allowedDirectProgression = map[string]bool{
 	filepath.Join("internal", "actions", "buy.go"):  true,
 	filepath.Join("internal", "actions", "sell.go"): true,
 
-	// HIDDEN DETECTION, and this one is a genuine OPEN ITEM rather than a
-	// permanent exemption.
-	//
-	// go.go's two hidden-detection sites award Search to the observer who WINS
-	// the contest and nothing to the one who loses, which is the firing defect
-	// this slice removes everywhere else. They are NOT converted here because
-	// the same two sites are the "hidden-detection fix" that the settled U10b
-	// decisions assign to U10b-1b BY NAME: the flat 135 threshold never reads
-	// the hider's sneak score, so the contest itself is wrong, and rewriting
-	// its firing before its resolution would mean touching them twice.
-	//
-	// ⚠️ REMOVE THIS ROW when U10b-1b converts them. It is the only entry here
-	// that is expected to be temporary.
-	filepath.Join("internal", "usercommands", "go.go"): true,
+	// internal/usercommands/go.go WAS listed here, as the list's one openly
+	// temporary row: its two hidden-detection sites awarded Search to the
+	// observer who WON and nothing to the one who lost. U10b-1b converted
+	// their RESOLUTION (a real opposed roll against the hider's sneak score,
+	// replacing a flat 135 threshold that never read it) but left the FIRING,
+	// so the row outlived the reason printed on it. U10b-2 routed both sites
+	// through AwardResolved and the row is gone. Do NOT re-add it: go.go
+	// calling a primitive directly again is a regression, not an exemption.
 
 	// The AUTHORED TUTORIAL GRANT. actGrantProgression forces exactly one
 	// guaranteed skill advancement for a scripted tutorial beat, by calling
