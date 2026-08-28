@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -132,7 +132,31 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	// tracker at rank 25 clears it 99.7% of the time. U10b-1 made a failed track
 	// award ProgressionFailureFraction, but for a developed character that
 	// branch almost never fires -- the cut is real only for beginners.
-	roll := dice.RollStat(searchScore)
+	// U10b-1b Phase A. The 125 DETECTION GATE is the success decision and is now
+	// a contest, so the difficulty is rolled too and outcomes compress toward
+	// 50% (spec 5.1).
+	//
+	// 🔴 IMPLEMENTER RULING, because the spec did not settle it. Track is not a
+	// single pass/fail: ONE roll is compared against a LADDER — 125 here, 175
+	// for active-track below, and 135/175 again inside readRoomTrail. The spec
+	// says only "track to AgainstDifficulty" and does not say what becomes of
+	// the finer bands.
+	//
+	// Converting each band to its own contest would be WRONG: independent rolls
+	// per tier mean a tracker could fail the 125 band and pass the 175 one,
+	// which is incoherent for a nested ladder.
+	//
+	// So the SUCCESS DECISION is contested and the QUALITY LADDER stays a read
+	// of the attacker's own roll. `Success` gates whether you read anything;
+	// RollValue still says how well. AttackRoll is always populated, contested
+	// or not, so this is a faithful read rather than a reconstruction.
+	//
+	// The bands are therefore still self-relative. Whether they should key off
+	// the contest MARGIN instead is a real question and a deliberate follow-up,
+	// not an oversight — margin is stat-scale and unnormalised, so re-deriving
+	// 135 and 175 against it is a retune, not a refactor.
+	det := contest.AgainstDifficulty(searchScore, 125.0)
+	roll := det.AttackRoll
 	result.RollValue = roll.Value
 
 	// awardTrack fires the round's ONE progression award, at a weight that
@@ -153,8 +177,9 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		actor.AwardResolved(won, char.CandidateFor(string(skills.Search)))
 	}
 
-	// Roll < 125.0: no tracks visible at all.
-	if roll.Value < 125.0 {
+	// Lost the detection contest: no tracks visible at all. Gated on the
+	// CONTEST, not on roll.Value, so the rolled difficulty actually counts.
+	if !det.Success {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem, "You don't see any tracks.")
 		}
