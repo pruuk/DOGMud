@@ -16,3 +16,4 @@ rarity_tier: 30
 is_component: true
 vendor_categories:
 - cooking
+material_tier: 2

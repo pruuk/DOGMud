@@ -76,18 +76,27 @@ func materialsDirForTest(t *testing.T) string {
 	return dir
 }
 
-// TestNewMaterialsDeclareATier fails any NEW material authored without
-// material_tier, while grandfathering the files that predate the field.
+// TestEveryCraftingComponentDeclaresATier requires material_tier on every item
+// a recipe can actually name as an ingredient, and it has NO EXEMPTION LIST.
 //
-// 🎯 THIS TEST IS THE BACKFILL'S COMPLETION CHECK. Every file removed from
-// materialTierBackfillOwed below must gain a real `material_tier:`. When the set
-// is empty, the backfill is done and this test enforces total coverage on its
-// own -- no roadmap prose, no checklist. U11 must not be declared done while the
-// set is non-empty.
+// 🎯 THIS IS THE BACKFILL'S COMPLETION CHECK, and it is already green: all 138
+// component-tagged materials carry a tier. It ships with no grandfathered set
+// at all, so there is nothing left to shrink and no way for coverage to regress
+// quietly. U11's obligation is discharged by this test rather than by roadmap
+// prose -- U6 was declared done with two criteria false, and nothing failed,
+// because they were prose.
 //
-// That framing is deliberate: U6 was declared done with two criteria false,
-// and nothing failed, because they were prose in a roadmap rather than a test.
-func TestNewMaterialsDeclareATier(t *testing.T) {
+// SCOPE IS component_tag, NOT the folder. materials-40000/ holds 208 files but
+// only 138 are crafting components; the rest are boss gear (40232 is a
+// `type: neck` with never_drops), keys and potions, where a craft-difficulty
+// tier would mean nothing. A recipe names ingredients by `item_tag`, matched
+// against `component_tag`, so an item without one can never BE an ingredient.
+//
+// The narrower scope has no hole. An item authored with no component_tag needs
+// no tier, and the moment a later commit gives it one, this test starts
+// requiring the tier. Verified at authoring time that the split is clean: every
+// `is_component: true` file also carries a `component_tag`.
+func TestEveryCraftingComponentDeclaresATier(t *testing.T) {
 	dir := materialsDirForTest(t)
 
 	entries, err := os.ReadDir(dir)
@@ -95,43 +104,32 @@ func TestNewMaterialsDeclareATier(t *testing.T) {
 		t.Fatalf("reading %s: %v", dir, err)
 	}
 
-	var missing []string
-	seen := map[string]bool{}
-
+	components := 0
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
-			continue
-		}
-		seen[e.Name()] = true
-		if materialTierBackfillOwed[e.Name()] {
 			continue
 		}
 		b, err := os.ReadFile(filepath.Join(dir, e.Name()))
 		if err != nil {
 			t.Fatalf("reading %s: %v", e.Name(), err)
 		}
-		if !strings.Contains(string(b), "material_tier:") {
-			missing = append(missing, e.Name())
+		body := string(b)
+		if !strings.Contains(body, "\ncomponent_tag:") && !strings.HasPrefix(body, "component_tag:") {
+			continue // not nameable by a recipe; a tier would do nothing
+		}
+		components++
+		if !strings.Contains(body, "material_tier:") {
+			t.Errorf("%s is a crafting component with no material_tier. Declare "+
+				"one, 1 (common) to 5 (rarest). It is NOT rarity_tier -- that is "+
+				"a vendor stock cap whose scale runs the OTHER WAY.", e.Name())
 		}
 	}
 
-	for _, f := range missing {
-		t.Errorf("%s has no material_tier. New materials MUST declare one "+
-			"(1 common to 5 rarest). It is NOT rarity_tier -- that is a vendor "+
-			"stock cap whose scale runs the other way.", f)
+	// If this ever reads 0 the scope test has silently stopped testing anything,
+	// which is the failure mode a coverage guard is least able to notice.
+	if components == 0 {
+		t.Fatal("found no component-tagged materials at all; the scan is broken, " +
+			"not the data")
 	}
-
-	// A stale grandfather entry is its own bug: it silently exempts nothing, and
-	// worse, it makes the backfill look incomplete when it is not.
-	for name := range materialTierBackfillOwed {
-		if !seen[name] {
-			t.Errorf("materialTierBackfillOwed lists %q, which no longer exists. "+
-				"Remove it -- a stale entry hides the true remaining count.", name)
-		}
-	}
-
-	if len(materialTierBackfillOwed) == 0 {
-		t.Log("BACKFILL COMPLETE: every material carries a tier and this test " +
-			"now enforces total coverage.")
-	}
+	t.Logf("%d crafting components, all tiered", components)
 }
