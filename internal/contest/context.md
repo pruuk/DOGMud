@@ -56,10 +56,12 @@ type Result struct {
 - **`AgainstDifficulty` has production callers as of U10b-1b Phase A** (it had
   ZERO from U4 until then). The static-check sites it was built for are being
   converted: `actions/search.go` (four non-stealth tiers) and
-  `forager/forage_core.go` are done; `actions/track.go` is DEFERRED with a
-  written reason (its one roll feeds a 125/135/175 LADDER, and contesting only
-  the gate decouples the bands from it); `search.go`'s two hidden-entity checks
-  go to `combat.RunContest` in Phase C because they are genuinely opposed.
+  `forager/forage_core.go` are done; `actions/track.go`'s three trail-read
+  bands go through `resolveTrailDetail`, a NESTED ladder — contesting only the
+  coarse gate while finer bands read the raw roll DECOUPLES them, which is a
+  real defect that shipped once and was reverted. The opposed checks in both
+  files (`search.go`'s hidden-entity pair, `track.go`'s named-target contest)
+  use `combat.RunContest` instead, because they have an opponent.
   Each caller carries a `guardedRollExemptions` row explaining why it is
   legitimately unfloored.
 - **`Run` leaves both `RollResult`s' `.Success` and `.Margin` at zero.** It uses

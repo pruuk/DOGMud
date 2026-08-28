@@ -49,9 +49,10 @@ func giveCraftScore(mob *Mob) {
 // the mercy floor, which otherwise flips 5% of ALL outcomes in either direction
 // — including a guaranteed win.
 //
-// CraftFloor is set to a tiny POSITIVE value rather than 0 on purpose: the
-// validator corrects <=0 back to 0.05, because a 0 floor is not a legal shipped
-// value. 1e-12 survives validation and never fires.
+// A tiny POSITIVE floor rather than 0, for HONESTY rather than necessity:
+// 0 would in fact stick here (Config.Validate runs ONCE, at boot, and
+// SetConfigForTest/AddOverlayOverrides never re-validate), but 0 is not a
+// legal SHIPPED value and a test should not pin a state production forbids.
 func forceCraftSuccess(t *testing.T) {
 	t.Helper()
 	prev := configs.GetBalanceConfig()
@@ -815,7 +816,7 @@ func TestTickMobShopBaselineRestock_RefillsCommonTiersOnCadence(t *testing.T) {
 // would otherwise be checking a path that returns 0 without ever reaching the
 // award. The plan calls this out for exactly this task.
 //
-// The verdict is pinned by collapsing CalcSuccessChance's clamp range onto one
+// The verdict is pinned by collapsing the craft CONTEST's difficulty onto one
 // value, so the roll is exact rather than statistical.
 // pinMobCraftChance pins the craft outcome to certain success (pct >= 100) or
 // certain failure (pct <= 0).
@@ -857,7 +858,7 @@ func TestExecuteCraftLegacy_AFailedCraftStillAwards(t *testing.T) {
 
 	// Precondition, asserted rather than assumed: without MobProgressionEnabled
 	// this test would pass against an award that never fires.
-	pinMobCraftChance(t, 0) // util.Rand(100) is never < 0: the craft ALWAYS fails
+	pinMobCraftChance(t, 0) // difficulty inflated + floor suppressed: ALWAYS fails
 	if !bool(configs.GetBalanceConfig().MobProgressionEnabled) {
 		t.Fatal("precondition: MobProgressionEnabled must be true or every mob award returns 0")
 	}

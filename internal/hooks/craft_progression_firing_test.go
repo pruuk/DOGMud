@@ -29,15 +29,23 @@ import (
 // code buried eight levels deep inside NewRound_UserRoundTick and is not
 // reachable without standing up a user session.
 //
-// The craft chance is pinned by config rather than by rank arithmetic:
-// CalcSuccessChance clamps to [CraftingMinSuccessChance, CraftingMaxSuccessChance],
-// so setting both ends to the same value makes the outcome exact.
+// The craft verdict is pinned by pinCraftChance; see its doc for why that had
+// to change with U10b-1b.
 func craftProgressionMob(t *testing.T, recipeId, skill string) *mobs.Mob {
 	t.Helper()
 	m := &mobs.Mob{InstanceId: 7701}
 	m.Character.Name = "CraftFailer"
 	m.Character.Activity = activity.NewMachine()
 	m.Character.Skills = map[string]int{skill: 1}
+	// Craft is a CONTEST since U10b-1b, and a bare Mob has no stats. At score 0
+	// dice.StdDevFor(0) is 0, so the attacker rolls a deterministic 0 and can
+	// never win no matter how low the difficulty is set.
+	m.Character.Stats.Strength.Base = 500
+	m.Character.Stats.Perception.Base = 500
+	m.Character.Stats.Dexterity.Base = 500
+	m.Character.Stats.Strength.Recalculate()
+	m.Character.Stats.Perception.Recalculate()
+	m.Character.Stats.Dexterity.Recalculate()
 	_ = m.Character.Activity.TransitionToCrafting(
 		activity.CraftingData{RecipeId: recipeId, RoundsTotal: 1},
 		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
@@ -45,14 +53,31 @@ func craftProgressionMob(t *testing.T, recipeId, skill string) *mobs.Mob {
 	return m
 }
 
-// pinCraftChance forces every craft roll to the same verdict by collapsing the
-// clamp range onto one value.
+// pinCraftChance forces every craft to the same verdict: success for pct >= 100,
+// failure otherwise.
+//
+// 🔴 IT NO LONGER PINS CraftingMin/MaxSuccessChance. U10b-1b retired
+// CalcSuccessChance as the craft decision, so those knobs decide nothing and a
+// test setting them was asserting against an unpinned contest. Measured before
+// this fix: pinCraftChance(t, 100) produced a 4.95% success rate — the
+// CraftFloor and nothing else — so the "succeeding craft" test was running the
+// FAILURE branch about 95% of the time and passing only because the award fires
+// above the branch. It had stopped disambiguating itself from its own mirror,
+// which is the single thing it was written to do.
+//
+// Pins the CONTEST instead: collapse or inflate the difficulty, and suppress the
+// mercy floor, which otherwise flips outcomes in both directions.
 func pinCraftChance(t *testing.T, pct int) {
 	t.Helper()
 	pinConfigForTest(t)
 	cfg := configs.GetConfig()
-	cfg.Balance.CraftingMinSuccessChance = configs.ConfigInt(pct)
-	cfg.Balance.CraftingMaxSuccessChance = configs.ConfigInt(pct)
+	if pct >= 100 {
+		cfg.Balance.CraftBaseDifficulty = 1
+	} else {
+		cfg.Balance.CraftBaseDifficulty = 1000000
+	}
+	cfg.Balance.CraftSkillMinWeight = 0
+	cfg.Balance.CraftFloor = configs.ConfigFloat(1e-12)
 	configs.SetConfigForTest(t, cfg)
 }
 

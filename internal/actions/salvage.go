@@ -31,6 +31,12 @@ func salvageScoreWithMutations(char *characters.Character, base float64) float64
 	return base
 }
 
+// spoiledPotionBonusSkill is the salvage rank at which a spoiled potion yields
+// one extra unit. It is 13 because the retired curve
+// (0.15 + 0.70*sqrt(skill/50)) crossed 0.5 there, and this bump was gated on
+// that crossing. Named so the provenance is not lost again.
+const spoiledPotionBonusSkill = 13
+
 // SalvageOptions identifies the salvage target.
 //
 //   - TargetCorpse: salvage an eligible corpse in the room. Default
@@ -88,7 +94,8 @@ func Salvage(actor Actor, opts SalvageOptions) SalvageResult {
 	// own craft difficulty and is resolved per item, further down, because it
 	// depends on what is being taken apart rather than on who is doing it.
 	salvageSkill := char.GetSkillLevel(skills.Salvage)
-	score := crafting.CraftScore(float64(char.GetStatValue("perception")), salvageSkill)
+	score := crafting.CraftScore(
+		float64(char.GetStatValue(skills.GetSkillPrimaryStat(string(skills.Salvage)))), salvageSkill)
 	score = salvageScoreWithMutations(char, score)
 
 	if opts.TargetCorpse {
@@ -276,11 +283,17 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 	var recovered []crafting.RecipeIngredient
 	if spoiledPotion {
 		qtyBonus := 0
-		// Preserves the existing salvage-skill bump. It used to read
-		// "chance > 0.5", a probability that no longer exists; the equivalent
-		// under the contest is "would this salvager beat a neutral-difficulty
-		// item more often than not", which is exactly score > difficulty.
-		if score > crafting.CraftDifficulty(0, 1.0) {
+		// The old gate was "chance > 0.5" on the retired sqrt curve, which is
+		// exactly SALVAGE SKILL >= 13. Preserved as a skill threshold.
+		//
+		// 🔴 An earlier version of this translated it to
+		// "score > CraftDifficulty(0, 1.0)" and called that equivalent. It was
+		// not: score is perception + skill*SkillWeight, so at baseline
+		// perception that gate opens at salvage skill 1, and for anyone with
+		// perception >= 101 — or the Provident Hands mutation alone — at skill
+		// ZERO. A mid-skill milestone had become always-on, and gated on a stat
+		// rather than the skill it is named after.
+		if char.GetSkillLevel(skills.Salvage) >= spoiledPotionBonusSkill {
 			qtyBonus = 1
 		}
 		roll := func() float64 { return float64(util.Rand(10000)) / 10000.0 }

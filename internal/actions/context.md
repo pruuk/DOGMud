@@ -872,10 +872,15 @@ reveal) does not tell you.
   wrapper for them and deliberately never will be — `combat.RunContest`'s doc
   comment reserves itself for opposed contests and says static-difficulty rolls
   stay unfloored ("Do not route them here to 'unify' them"). `search.go`'s four
-  non-stealth tiers take that path. `search.go`'s two hidden-entity checks do
-  NOT: they have a real opponent, so they are opposed and go to
-  `combat.RunContest` in Phase C. `track.go` is still on `dice.RollStat` and is
-  DEFERRED with a written reason in the file. (A separate case, `surprise_attack.go`, had no hit
+  non-stealth tiers take that path, as do `track.go`'s three trail-read bands
+  (`resolveTrailDetail`, a NESTED ladder so a finer band cannot be won without
+  the coarser one).
+
+  The OPPOSED checks in the same two files go to `combat.RunContest` instead,
+  because they have a real opponent and take `ContestFloor`: `search.go`'s two
+  hidden-entity checks (`spotsHider`, U10b-1b Phase C — reconciled onto the form
+  `usercommands/go.go` already used) and `track.go`'s named-target contest,
+  where the quarry defends with its own sneak score. (A separate case, `surprise_attack.go`, had no hit
   resolution at all — not a flat threshold but an unconditional auto-hit with
   no defender term anywhere. U10d deleted it outright rather than giving it a
   contest: the opening strike of the ordinary combat round is the surprise
