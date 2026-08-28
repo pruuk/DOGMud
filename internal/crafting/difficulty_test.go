@@ -133,9 +133,9 @@ func TestCraftMasteryCurveMatchesTheSpecTable(t *testing.T) {
 func TestMaterialTierMovesDifficulty(t *testing.T) {
 	pinCraftBalanceForTest(t)
 
-	common := CraftDifficulty(20, 0.75)
+	common := CraftDifficulty(20, 0.95)
 	neutral := CraftDifficulty(20, 1.0)
-	rarest := CraftDifficulty(20, 1.25)
+	rarest := CraftDifficulty(20, 1.05)
 
 	if !(common < neutral && neutral < rarest) {
 		t.Fatalf("material tier must raise difficulty monotonically: "+
@@ -273,10 +273,10 @@ func TestSelectIngredientsTakesTheCheapestMaterial(t *testing.T) {
 			"earlier in the component bag.", sel[0].ItemId)
 	}
 
-	if got := DearestMaterialTier(sel); got != 0.75 {
-		t.Errorf("difficulty multiplier = %v, want 0.75. Reading 1.125 means the "+
-			"decanter was selected and the craft is priced against a material "+
-			"the player did not spend.", got)
+	if got := DearestMaterialTier(sel); got != 0.95 {
+		t.Errorf("difficulty multiplier = %v, want 0.95 (tier 1). Reading 1.025 "+
+			"means the tier-4 decanter was selected and the craft is priced "+
+			"against a material the player did not spend.", got)
 	}
 }
 

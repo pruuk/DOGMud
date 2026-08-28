@@ -116,15 +116,15 @@ func (b *Balance) validateShops() {
 	// correct here: 0 is not a meaningful multiplier for either end of the band,
 	// unlike knobs where 0 is a legal off-switch and needs a -1 sentinel.
 	if b.MaterialTierMultiplierMin <= 0 {
-		b.MaterialTierMultiplierMin = 0.75
+		b.MaterialTierMultiplierMin = 0.95
 	}
 	if b.MaterialTierMultiplierMax <= 0 {
-		b.MaterialTierMultiplierMax = 1.25
+		b.MaterialTierMultiplierMax = 1.05
 	}
 	// An inverted band would make rarer materials EASIER, silently. Cheaper to
 	// catch here than to explain from a playtest report.
 	if b.MaterialTierMultiplierMax < b.MaterialTierMultiplierMin {
-		b.MaterialTierMultiplierMin, b.MaterialTierMultiplierMax = 0.75, 1.25
+		b.MaterialTierMultiplierMin, b.MaterialTierMultiplierMax = 0.95, 1.05
 	}
 
 	// ── CRAFT DIFFICULTY ─────────────────────────────────────────────────────

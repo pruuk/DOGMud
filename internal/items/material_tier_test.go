@@ -8,23 +8,25 @@ import (
 	"testing"
 )
 
-// TestMaterialTierMultiplierBand pins the owner's design (spec 5.1.2): five
-// authored buckets mapping onto a 0.75 to 1.25 band, with tier 3 neutral.
+// TestMaterialTierMultiplierBand pins the five authored buckets onto the
+// 0.95 to 1.05 band, tier 3 neutral.
 //
-// The band is deliberately narrow. Material tier is a MODIFIER on a difficulty
-// that recipe.SkillMinimum already carries, so an authoring slip moves a recipe
-// by one bucket rather than defining its odds outright. That is what makes a
-// 208-file backfill safe to land incrementally.
+// 🔴 NARROWED FROM 0.75-1.25 (owner, 2026-08-28). The tier term is
+// SCALE-INVARIANT — it moves every recipe by a fixed z regardless of skill or
+// stat — so at the old width it was a bigger lever than nine levels of mastery,
+// and on a skill_minimum 65 recipe it pushed the 50/50 point out to 86, past
+// the skill soft cap of 50. At this band the shift is about a level, which is
+// what a MODIFIER on a difficulty SkillMinimum already carries should be.
 func TestMaterialTierMultiplierBand(t *testing.T) {
 	tests := []struct {
 		tier int
 		want float64
 	}{
-		{1, 0.75},
-		{2, 0.875},
+		{1, 0.95},
+		{2, 0.975},
 		{3, 1.0},
-		{4, 1.125},
-		{5, 1.25},
+		{4, 1.025},
+		{5, 1.05},
 	}
 	for _, tt := range tests {
 		if got := MaterialTierMultiplier(tt.tier); got != tt.want {
@@ -49,8 +51,8 @@ func TestUntieredMaterialIsNeutral(t *testing.T) {
 // produce a nonsense multiplier. The authoring guard rejects new files without
 // a tier, but nothing stops a typo writing 7, and the loader is lenient.
 func TestMaterialTierMultiplierClampsOutOfRange(t *testing.T) {
-	if got := MaterialTierMultiplier(9); got != 1.25 {
-		t.Errorf("MaterialTierMultiplier(9) = %v, want 1.25 (clamped to the top bucket)", got)
+	if got := MaterialTierMultiplier(9); got != 1.05 {
+		t.Errorf("MaterialTierMultiplier(9) = %v, want 1.05 (clamped to the top bucket)", got)
 	}
 	if got := MaterialTierMultiplier(-3); got != 1.0 {
 		t.Errorf("MaterialTierMultiplier(-3) = %v, want 1.0 (negative is not a tier; treat as untiered)", got)

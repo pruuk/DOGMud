@@ -1385,6 +1385,18 @@ Balance:
   # nicety, and uncapped salvage is the dangerous half: at salvage skill 50 the
   # craft-then-salvage loop would retain about 99.9% of materials against 80.75%
   # today, roughly a 250x cut to the crafting material sink.
+  # Material tier band. items.MaterialTierMultiplier spreads the five authored
+  # buckets evenly between these: 0.95 / 0.975 / 1.0 / 1.025 / 1.05.
+  #
+  # Narrowed from 0.75-1.25 on 2026-08-28. The tier term is SCALE-INVARIANT, so
+  # it shifts every recipe by the same amount regardless of skill or stat. At the
+  # old width it outweighed nine levels of mastery, and on a skill_minimum 65
+  # recipe it pushed the 50/50 point out to 86 -- past the skill soft cap of 50.
+  # At this band the worst case is about four levels, which is what a modifier on
+  # a difficulty SkillMinimum already carries should be.
+  MaterialTierMultiplierMin: 0.95
+  MaterialTierMultiplierMax: 1.05
+
   CraftFloor: 0.05
   SalvageFloor: 0.15
 
