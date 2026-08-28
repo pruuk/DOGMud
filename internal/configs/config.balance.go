@@ -566,6 +566,24 @@ type Balance struct {
 	SpellDifficultyProgressionScale ConfigFloat `yaml:"SpellDifficultyProgressionScale"` // Per-point spell difficulty bonus to skill progression (default 0.01)
 	CraftDifficultyProgressionScale ConfigFloat `yaml:"CraftDifficultyProgressionScale"` // Per-point recipe skill_minimum bonus to skill progression (default 0.02)
 	SelfCastProgressionMultiplier   ConfigFloat `yaml:"SelfCastProgressionMultiplier"`   // Progression multiplier when spell only targets self (default 0.5)
+	// U10b-3: spell difficulty expressed as a DISCOVERY skill minimum, the
+	// spell-side equivalent of a recipe's skill_minimum. Required skill =
+	// ceil(difficulty * this). At 1.0 a spell's authored difficulty IS the
+	// spellcasting (or manifestation) rank needed to discover it.
+	//
+	// ⚠️ NEITHER of these two has a 0 off-switch, deliberately. Both are
+	// guarded `<= 0`, so an ABSENT key gets the default rather than reading as
+	// 0. The `< 0` idiom that makes 0 usable would mean a config.yaml omitting
+	// SpellDiscoverySkillPerDifficulty silently ungates spell discovery
+	// entirely -- the same absent-key hazard CritProgressionBonus carries. To
+	// effectively disable the gate, set a very small ratio (0.01 puts a
+	// difficulty-75 spell at skill 1) rather than 0.
+	SpellDiscoverySkillPerDifficulty ConfigFloat `yaml:"SpellDiscoverySkillPerDifficulty"` // Required discovery skill per point of spell difficulty (default 1.0)
+	// U10b-3: how strongly difficulty biases WHICH candidate a successful
+	// discovery roll picks. Weight = 1 / (1 + difficulty * this), so harder
+	// candidates surface less often without being excluded. Deliberately mild:
+	// skill decides what you CAN find, this only shades what you find first.
+	DiscoveryDifficultyWeightScale ConfigFloat `yaml:"DiscoveryDifficultyWeightScale"` // Per-point difficulty bias on discovery candidate choice (default 0.02)
 
 	// ── POOL RESERVATION ─────────────────────────────────────────────────────
 	PoolReservationCapPct ConfigFloat `yaml:"PoolReservationCapPct"` // Ceiling on TOTAL reservation per pool, as a fraction of that pool's max (default 0.66)

@@ -36,6 +36,15 @@ func (b *Balance) validateSpells() {
 	if b.SpellDiscoveryBaseChance <= 0 {
 		b.SpellDiscoveryBaseChance = 5.0
 	}
+	// `<= 0`, NOT `< 0`. See the field comments: an absent key must not read as
+	// 0 and silently ungate spell discovery. There is no 0 off-switch here on
+	// purpose; a very small ratio is the way to relax the gate.
+	if b.SpellDiscoverySkillPerDifficulty <= 0 {
+		b.SpellDiscoverySkillPerDifficulty = 1.0
+	}
+	if b.DiscoveryDifficultyWeightScale <= 0 {
+		b.DiscoveryDifficultyWeightScale = 0.02
+	}
 	if b.SpellDiscoveryDecayRate <= 0 {
 		b.SpellDiscoveryDecayRate = 0.1
 	}

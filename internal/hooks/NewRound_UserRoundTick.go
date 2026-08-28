@@ -637,7 +637,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 											user.Character.Skills,
 											recipe.Skill)
 										if len(eligible) > 0 {
-											pick := eligible[util.Rand(len(eligible))]
+											pick := eligible[configs.WeightedDiscoveryPick(crafting.SkillMinimumsFor(eligible), util.Rand)]
 											if user.Character.LearnRecipe(pick) {
 												if newRecipe := crafting.GetRecipe(pick); newRecipe != nil {
 													user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(

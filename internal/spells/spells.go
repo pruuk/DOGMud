@@ -2,6 +2,7 @@ package spells
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -354,30 +355,39 @@ func (s *SpellData) GetTotalHealthCost(multiplier float64) int {
 	return int(float64(s.HealthCost) * multiplier)
 }
 
-// MaxFoldsForSkill returns the highest base_folds a player can discover at a given casting skill level.
-func MaxFoldsForSkill(skillLevel int) int {
-	switch {
-	case skillLevel >= 80:
-		return 32
-	case skillLevel >= 70:
-		return 28
-	case skillLevel >= 60:
-		return 24
-	case skillLevel >= 50:
-		return 20
-	case skillLevel >= 40:
-		return 16
-	case skillLevel >= 30:
-		return 12
-	case skillLevel >= 20:
-		return 10
-	case skillLevel >= 10:
-		return 8
-	case skillLevel >= 5:
-		return 6
-	default:
-		return 4
+// RequiredSkillFor is a spell's skill minimum for DISCOVERY, derived from its
+// authored difficulty. It is the spell-side equivalent of a recipe's
+// skill_minimum, which crafting has gated on all along
+// (crafting.GetEligibleRecipes).
+//
+// U10b-3 REPLACED A FOLD GATE WITH THIS. Discovery used to compare a spell's
+// base_folds against a MaxFoldsForSkill ladder, which conflated two unrelated
+// things: folds measure how long and involved a cast is, not how hard the spell
+// is to learn. The two only loosely correlate in the authored content, and
+// where they diverged the gate did the wrong thing in both directions:
+//
+//	Core Discharge / Core Drain -- difficulty 45, base_folds 2, so the old
+//	ladder let a spellcasting-0 NOVICE discover both.
+//	Charm -- difficulty 60, base_folds 36, against a ladder that topped out at
+//	32, so it was UNDISCOVERABLE at any skill by anyone. No quest grants it and
+//	no item teaches it, which made it unobtainable outright.
+//
+// base_folds still does its real jobs elsewhere (cast duration via
+// calcSpellDuration, AI spell scoring, telegraph/interruptibility). It just no
+// longer decides what you are allowed to learn.
+//
+// The ratio is a config knob so this stays a tuning edit. At the shipped 1.0 a
+// spell's difficulty IS its required skill, which is the whole point: the
+// number authors already write is the number that gates it.
+func RequiredSkillFor(difficulty int) int {
+	if difficulty <= 0 {
+		return 0
 	}
+	ratio := float64(configs.GetBalanceConfig().SpellDiscoverySkillPerDifficulty)
+	if ratio <= 0 {
+		return 0 // off-switch: difficulty gates nothing
+	}
+	return int(math.Ceil(float64(difficulty) * ratio))
 }
 
 // GetEligibleSpells returns spell IDs the player could discover (not in spellBook, within fold threshold).
@@ -385,7 +395,6 @@ func MaxFoldsForSkill(skillLevel int) int {
 // When schools is empty, all non-manifestation spells are returned (backward compat).
 // Spells with QuestRequired set are never returned by discovery.
 func GetEligibleSpells(spellBook map[string]int, skillLevel int, schools ...string) []string {
-	maxFolds := MaxFoldsForSkill(skillLevel)
 	var eligible []string
 	for id, sp := range allSpells {
 		if _, known := spellBook[id]; known {
@@ -413,11 +422,9 @@ func GetEligibleSpells(spellBook map[string]int, skillLevel int, schools ...stri
 				continue
 			}
 		}
-		folds := sp.BaseFolds
-		if folds == 0 {
-			folds = 4
-		}
-		if folds <= maxFolds {
+		// The skill gate, mirroring crafting's skill_minimum check. base_folds
+		// used to decide this; see RequiredSkillFor for why it no longer does.
+		if skillLevel >= RequiredSkillFor(sp.Difficulty) {
 			eligible = append(eligible, id)
 		}
 	}
@@ -446,4 +453,19 @@ func LoadSpellFiles() {
 
 	mudlog.Info("spells.loadAllSpells()", "loadedCount", len(allSpells), "Time Taken", time.Since(start))
 
+}
+
+// DifficultiesFor returns the authored difficulty of each spell id, parallel to
+// the input slice, for configs.WeightedDiscoveryPick. An unknown id contributes
+// 0 (treated as easiest) rather than dropping out, so the returned slice always
+// lines up with the caller's candidate slice -- a length mismatch there would
+// silently pick the wrong spell.
+func DifficultiesFor(spellIds []string) []int {
+	out := make([]int, len(spellIds))
+	for i, id := range spellIds {
+		if sp := GetSpell(id); sp != nil {
+			out[i] = sp.Difficulty
+		}
+	}
+	return out
 }

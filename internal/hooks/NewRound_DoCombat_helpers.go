@@ -688,7 +688,7 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 			eligible := spells.GetEligibleSpells(user.Character.SpellBook, castSkillLevel,
 				spells.SchoolElemental, spells.SchoolEnhancement, spells.SchoolMental, spells.SchoolVital)
 			if len(eligible) > 0 {
-				pick := eligible[util.Rand(len(eligible))]
+				pick := eligible[configs.WeightedDiscoveryPick(spells.DifficultiesFor(eligible), util.Rand)]
 				if user.Character.LearnSpell(pick) {
 					if newSpell := spells.GetSpell(pick); newSpell != nil {
 						user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(
@@ -713,7 +713,7 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 				eligible := spells.GetEligibleSpells(user.Character.SpellBook, manifestSkillLevel,
 					spells.SchoolManifestation)
 				if len(eligible) > 0 {
-					pick := eligible[util.Rand(len(eligible))]
+					pick := eligible[configs.WeightedDiscoveryPick(spells.DifficultiesFor(eligible), util.Rand)]
 					if user.Character.LearnSpell(pick) {
 						if newSpell := spells.GetSpell(pick); newSpell != nil {
 							user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(
@@ -853,7 +853,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 				eligible := spells.GetEligibleSpells(mob.Character.SpellBook, castSkillLevel,
 					spells.SchoolElemental, spells.SchoolEnhancement, spells.SchoolMental, spells.SchoolVital)
 				if len(eligible) > 0 {
-					pick := eligible[util.Rand(len(eligible))]
+					pick := eligible[configs.WeightedDiscoveryPick(spells.DifficultiesFor(eligible), util.Rand)]
 					mob.Character.LearnSpell(pick)
 				}
 			}
@@ -871,7 +871,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 					eligible := spells.GetEligibleSpells(mob.Character.SpellBook, manifestSkillLevel,
 						spells.SchoolManifestation)
 					if len(eligible) > 0 {
-						pick := eligible[util.Rand(len(eligible))]
+						pick := eligible[configs.WeightedDiscoveryPick(spells.DifficultiesFor(eligible), util.Rand)]
 						mob.Character.LearnSpell(pick)
 					}
 				}
