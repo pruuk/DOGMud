@@ -532,9 +532,18 @@ func ToughenStatFor(damageChannel string) string {
 // hardest because regen is its DOMINANT source of progression. Not its only
 // one: ToughenStatFor("physical") routes taken-crit progression to vitality
 // via CritProgressionBonus / ObservedCritProgressionBonus, both live since
-// 81061c6b4 (2026-08-19). Vitality also takes TWO regen rolls per tick, not
-// one, because it appears in both the Health and the Stamina stat lists in
-// NewRound_AutoHeal.go.
+// 81061c6b4 (2026-08-19).
+//
+// U10b-2 correction: vitality takes ONE regen roll per tick, not two. This
+// comment claimed two, on the grounds that vitality appeared in both the Health
+// and the Stamina stat lists -- true when it was written, but U10b-1 Task 22
+// dropped vitality from the stamina row (stamina is STRENGTH ONLY now), and the
+// claim was left behind. The stat that actually takes two rolls per tick is
+// WILLPOWER, which appears in both the Health and the Conviction lists in
+// NewRound_AutoHeal.go, on both the player and the mob path. Nothing else does:
+// vitality (Health), strength (Stamina) and charisma (Conviction) each appear
+// once. Verify against the six OnRegenTick call sites (three player, three mob)
+// before trusting this.
 //
 // A BaseProgressionChance of 0 (progression fully disabled) returns 0 rather
 // than dividing by zero.
