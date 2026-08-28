@@ -1,5 +1,48 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: Skill decides more, and luck decides less
+
+A batch of things that were settled by a fixed number now get resolved properly,
+the way combat already was. The short version is that being good at something
+matters more, and being unlucky matters less at the bottom and more at the top.
+
+Searching, tracking and foraging used to compare your roll against a fixed
+target. Now the target pushes back. If you were hopeless at something you are no
+longer nearly hopeless, and if you were near-certain you are no longer quite
+certain. A weak searcher who almost never found anything will start finding
+things. A very skilled one will miss occasionally. Nothing about your character
+changed; what changed is that these now behave like every other contest.
+
+Hiding from someone who is searching for you finally works. Until now a searcher
+rolled against a fixed number that never once looked at how well you were
+hidden, so practising stealth did nothing against them, even though it worked
+perfectly well against someone walking into the room. Those two are now the same
+thing. If you have put real work into moving unseen, a searcher will usually
+walk past you.
+
+Tracking splits into the two things it always was. Reading the trail in a room
+is a question about the room, and is treated like searching. Following a
+specific creature is now a contest against that creature, so something careful
+is genuinely harder to follow than something careless. Before, the quarry had no
+say in it at all.
+
+Crafting has a real difficulty for the first time. It used to be a flat chance
+based only on how your skill compared to the recipe. Now your aptitude counts
+too, and so do the materials you are working with. A smith's strength, an
+alchemist's eye and a tailor's hands each drive their own craft. A recipe made
+from rarer stuff asks a little more of you, and a recipe made from common stuff
+asks a little less. Working at a recipe's stated minimum is still roughly a coin
+flip, and advanced recipes take considerably more practice than simple ones
+before they become routine.
+
+Taking something apart is now as hard as making it was. A masterwork item
+resists being unmade; a simple one gives up its materials easily. Salvage is
+kinder than it used to be for anyone still learning, and lands about where it
+did for those who have mastered it.
+
+When a recipe can take several kinds of the same material, the cheapest is used
+first. So if you want a particular flask used for a potion, carry that one.
+
 ## 2026-08-28: How fast you swing, and how fast unarmed fighting improves
 
 Two loose ends from yesterday's change, where each hand started fighting at its
