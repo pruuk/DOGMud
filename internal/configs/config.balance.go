@@ -557,15 +557,20 @@ type Balance struct {
 	SpellDiscoveryDecayRate  ConfigFloat `yaml:"SpellDiscoveryDecayRate"`  // Decay per known spell: chance = base / (1 + known*this) (default 0.1)
 
 	// ── DISCOVERY OFFSET (shared: spells + recipes) ──────────────────────────
-	DiscoveryPerceptionScale        ConfigFloat `yaml:"DiscoveryPerceptionScale"`        // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
-	DiscoverySkillScale             ConfigFloat `yaml:"DiscoverySkillScale"`             // Raw skill contribution reaches 1.0 at rank / this (default 100)
-	DiscoveryMaxDecayOffset         ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`         // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
-	SpellFoldsSkillFactor           ConfigInt   `yaml:"SpellFoldsSkillFactor"`           // Skill * this in folds-per-round calc (default 25)
-	SpellProficiencyCastsPerPoint   ConfigInt   `yaml:"SpellProficiencyCastsPerPoint"`   // Casts needed per 1 proficiency point (default 50)
-	ConjureCooldown                 ConfigInt   `yaml:"ConjureCooldown"`                 // Rounds between corpse-free conjure/summon casts, on their own key (default 36)
-	SpellDifficultyProgressionScale ConfigFloat `yaml:"SpellDifficultyProgressionScale"` // Per-point spell difficulty bonus to skill progression (default 0.01)
-	CraftDifficultyProgressionScale ConfigFloat `yaml:"CraftDifficultyProgressionScale"` // Per-point recipe skill_minimum bonus to skill progression (default 0.02)
-	SelfCastProgressionMultiplier   ConfigFloat `yaml:"SelfCastProgressionMultiplier"`   // Progression multiplier when spell only targets self (default 0.5)
+	DiscoveryPerceptionScale      ConfigFloat `yaml:"DiscoveryPerceptionScale"`      // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
+	DiscoverySkillScale           ConfigFloat `yaml:"DiscoverySkillScale"`           // Raw skill contribution reaches 1.0 at rank / this (default 100)
+	DiscoveryMaxDecayOffset       ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`       // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
+	SpellFoldsSkillFactor         ConfigInt   `yaml:"SpellFoldsSkillFactor"`         // Skill * this in folds-per-round calc (default 25)
+	SpellProficiencyCastsPerPoint ConfigInt   `yaml:"SpellProficiencyCastsPerPoint"` // Casts needed per 1 proficiency point (default 50)
+	ConjureCooldown               ConfigInt   `yaml:"ConjureCooldown"`               // Rounds between corpse-free conjure/summon casts, on their own key (default 36)
+	// SpellDifficultyProgressionScale and CraftDifficultyProgressionScale were
+	// DELETED by U10b-3, which moved difficulty off progression and onto
+	// discovery. Nothing read them afterwards, and a knob that tunes nothing is
+	// worse than no knob: it reads as a live dial to the next person retuning
+	// balance. Their replacements are SpellDiscoverySkillPerDifficulty and
+	// DiscoveryDifficultyWeightScale below. Config parsing is not strict, so an
+	// old config.yaml still naming them loads fine and simply ignores them.
+	SelfCastProgressionMultiplier ConfigFloat `yaml:"SelfCastProgressionMultiplier"` // Progression multiplier when spell only targets self (default 0.5)
 	// U10b-3: spell difficulty expressed as a DISCOVERY skill minimum, the
 	// spell-side equivalent of a recipe's skill_minimum. Required skill =
 	// ceil(difficulty * this). At 1.0 a spell's authored difficulty IS the

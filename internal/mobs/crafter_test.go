@@ -897,55 +897,61 @@ func TestExecuteCraftLegacy_ASucceedingCraftAwardsOnce(t *testing.T) {
 	}
 }
 
-// The mob-crafter award scales with recipe difficulty, like every other craft
-// site.
+// U10b-3 INVERTED THIS TEST. It used to assert the mob-crafter award scales
+// with recipe difficulty (1 + SkillMinimum*CraftDifficultyProgressionScale),
+// which U10b-1 had just added to this path to match its siblings. U10b-3 then
+// removed that bonus from all six craft sites and deleted the knob: recipe
+// skill_minimum now decides what a crafter can DISCOVER, not how fast a hard
+// recipe trains to make.
 //
-// This path used bare OnSkillUse and had NEVER applied
-// 1 + SkillMinimum*CraftDifficultyProgressionScale, so a shopkeeper crafting a
-// demanding recipe trained exactly as fast as one crafting a trivial one -- a
-// firing-rule inconsistency, since the bonus is part of the AWARD rather than
-// the resolution.
+// So the assertion is now the opposite one -- a demanding recipe and a trivial
+// one must train at the SAME rate.
 //
-// Exact, not statistical: at ProgressionFailureFraction 0 a LOSING award
-// short-circuits before any roll whatever the bonus, so a bonus of 0 must
-// suppress a WINNING award too. If the bonus were being dropped, the win would
-// advance regardless and this fails.
-func TestExecuteCraftLegacy_TheAwardScalesWithRecipeDifficulty(t *testing.T) {
+// Statistical rather than exact, deliberately. The old exact test worked by
+// driving the bonus to zero with a negative scale, and there is no knob left to
+// do that with. Instead it leans on MAGNITUDE: at BaseProgressionChance 0.30 a
+// SkillMinimum-100 recipe used to carry a 3.0x bonus, giving 0.90 against the
+// control's 0.30 -- a gap so wide that any surviving difficulty scaling shows
+// up far outside sampling noise. A tolerance test on two rates that used to
+// differ threefold is not a weak test.
+func TestExecuteCraftLegacy_TheAwardIgnoresRecipeDifficulty(t *testing.T) {
 	const skill = "blacksmithing"
+	const trials = 4000
 
-	pinMobCraftChance(t, 100) // always succeeds, so only the BONUS can suppress it
+	pinMobCraftChance(t, 100) // always succeeds, so only the award rate varies
 	cfg := configs.GetConfig()
-	cfg.Balance.CraftDifficultyProgressionScale = 0
-	cfg.Balance.BaseProgressionChance = 1.0
+	cfg.Balance.BaseProgressionChance = 0.30
 	cfg.Balance.StatProgressionRate = 1.0
 	cfg.Balance.SkillProgressionMultipliers = nil
 	configs.SetConfigForTest(t, cfg)
 
-	// SkillMinimum 0 with scale 0 gives craftBonus exactly 1.0 -- the control.
-	control := mobCrafterForProgressionTest(skill)
-	beforeControl := control.Character.Skills[skill]
-	executeCraftLegacy(control, &crafting.RecipeSpec{
-		RecipeId: "u10b1-bonus-control", Skill: skill, SkillMinimum: 0,
-	})
-	if got := control.Character.Skills[skill] - beforeControl; got != 1 {
-		t.Fatalf("control: %s advanced by %d at bonus 1.0, want 1; the fixture is not pinned to certainty", skill, got)
+	advancesFor := func(recipeId string, skillMinimum int) int {
+		advanced := 0
+		for i := 0; i < trials; i++ {
+			m := mobCrafterForProgressionTest(skill)
+			before := m.Character.Skills[skill]
+			executeCraftLegacy(m, &crafting.RecipeSpec{
+				RecipeId: recipeId, Skill: skill, SkillMinimum: skillMinimum,
+			})
+			if m.Character.Skills[skill] > before {
+				advanced++
+			}
+		}
+		return advanced
 	}
 
-	// A NEGATIVE scale drives craftBonus to zero at SkillMinimum 100, which can
-	// only reach the award if the bonus is actually applied.
-	cfg = configs.GetConfig()
-	cfg.Balance.CraftDifficultyProgressionScale = configs.ConfigFloat(-0.01)
-	configs.SetConfigForTest(t, cfg)
+	trivial := advancesFor("u10b3-trivial", 0)
+	demanding := advancesFor("u10b3-demanding", 100)
 
-	suppressed := mobCrafterForProgressionTest(skill)
-	beforeSuppressed := suppressed.Character.Skills[skill]
-	executeCraftLegacy(suppressed, &crafting.RecipeSpec{
-		RecipeId: "u10b1-bonus-zero", Skill: skill, SkillMinimum: 100,
-	})
-	if got := suppressed.Character.Skills[skill] - beforeSuppressed; got != 0 {
-		t.Errorf("%s advanced by %d on a WON craft whose difficulty bonus is 0; the bonus is not reaching the award", skill, got)
+	// Premise: the fixture must actually be advancing sometimes, or two zeros
+	// would "agree" and pass vacuously.
+	if trivial == 0 || demanding == 0 {
+		t.Fatalf("fixture premise broken: no advancement at all (trivial=%d demanding=%d of %d)", trivial, demanding, trials)
 	}
-	if got := suppressed.Character.GetSkillUseCount(skill); got == 0 {
-		t.Error("the award did not fire at all; the bonus must scale the weight, not skip the award")
+
+	ratio := float64(demanding) / float64(trivial)
+	if ratio < 0.90 || ratio > 1.10 {
+		t.Errorf("a SkillMinimum-100 recipe advanced %d/%d and a SkillMinimum-0 recipe %d/%d (ratio %.3f); difficulty must no longer scale the craft award. Before U10b-3 this ratio was about 3.0",
+			demanding, trials, trivial, trials, ratio)
 	}
 }

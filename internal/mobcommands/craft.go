@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -53,8 +52,8 @@ func Craft(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// U10b-1 Task 16. won is unconditionally TRUE: ImmediateComplete is a
 		// TimeRounds <= 0 recipe, which InitiateCraft finishes without rolling.
 		// See the identical note in internal/usercommands/craft.go.
-		craftBonus := 1.0 + float64(result.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		mob.Character.AwardResolvedScaled(0, true, craftBonus,
+		// U10b-3: recipe difficulty moved to discovery; no bonus rides here now.
+		mob.Character.AwardResolved(0, true,
 			mob.Character.CandidateFor(result.SkillName))
 		return true, nil
 

@@ -541,13 +541,13 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								// by: burning materials on a botched attempt and
 								// learning literally nothing from it.
 								//
-								// AwardResolvedScaled, NOT AwardResolved -- the
-								// plain form silently drops craftBonus, the
-								// recipe-difficulty scaling. See Task 13, where
-								// that regression was nearly shipped on the spell
-								// path.
-								craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-								user.Character.AwardResolvedScaled(user.UserId, won, craftBonus,
+								// U10b-3: the recipe-difficulty multiplier that
+								// used to ride here is gone. skill_minimum now
+								// decides what you can DISCOVER and shades which
+								// recipe a discovery roll draws, rather than
+								// making hard recipes train faster to make. With
+								// no bonus left, plain AwardResolved is correct.
+								user.Character.AwardResolved(user.UserId, won,
 									user.Character.CandidateFor(recipe.Skill))
 
 								if won {

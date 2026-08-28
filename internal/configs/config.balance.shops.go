@@ -127,11 +127,6 @@ func (b *Balance) validateShops() {
 		b.MaterialTierMultiplierMin, b.MaterialTierMultiplierMax = 0.95, 1.05
 	}
 
-	// ── CRAFT DIFFICULTY ─────────────────────────────────────────────────────
-	if b.CraftDifficultyProgressionScale <= 0 {
-		b.CraftDifficultyProgressionScale = 0.02
-	}
-
 	// ── RECIPE DISCOVERY ─────────────────────────────────────────────────────
 	if b.RecipeDiscoveryBaseChance <= 0 {
 		b.RecipeDiscoveryBaseChance = 8.0

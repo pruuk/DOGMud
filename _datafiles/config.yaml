@@ -1480,12 +1480,13 @@ Balance:
   #   with a specific spell. Higher proficiency reduces fizzle chance.
   SpellProficiencyCastsPerPoint: 50
 
-  # ── DIFFICULTY-SCALED PROGRESSION ──────────────────────────────────────────
-  # Harder spells and recipes give proportionally more skill progression.
-  # Formula (spells):  bonusMultiplier = 1.0 + difficulty * Scale
-  # Formula (crafts):  bonusMultiplier = 1.0 + skill_minimum * Scale
-  SpellDifficultyProgressionScale: 0.01   # difficulty 75 → 1.75x progression
-  CraftDifficultyProgressionScale: 0.02   # skill_minimum 50 → 2.0x progression
+  # ── DIFFICULTY ─────────────────────────────────────────────────────────────
+  # SpellDifficultyProgressionScale and CraftDifficultyProgressionScale were
+  # REMOVED by U10b-3. Harder spells and recipes used to train faster to use;
+  # now difficulty decides what you can DISCOVER instead, via
+  # SpellDiscoverySkillPerDifficulty and DiscoveryDifficultyWeightScale above.
+  # Practising a hard spell no longer trains faster than practising an easy one
+  # -- earning access to it is the reward.
   SelfCastProgressionMultiplier: 0.5      # self-only buffs get half progression
 
   # ── ENCHANTMENTS ────────────────────────────────────────────────────────────

@@ -620,11 +620,22 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		}
 		user.Character.TrackSpellCast(cs.SpellId)
 		// Fire progression for the correct skill based on spell school.
-		// Difficulty scaling: harder spells give proportionally more progression.
+		//
+		// U10b-3: the DIFFICULTY multiplier that used to open this expression
+		// (1 + Difficulty * SpellDifficultyProgressionScale) is gone. Difficulty
+		// now decides what you can DISCOVER -- it is a spell's discovery skill
+		// minimum, and it biases which candidate a discovery roll draws -- not
+		// how fast casting trains. Practising a hard spell no longer trains
+		// faster than practising an easy one; earning access to it is the
+		// reward instead.
+		//
+		// ⚠️ spellBonus SURVIVES, and the two riders below are why. Deleting it
+		// wholesale would take the self-cast reduction AND the AoE guard with
+		// it, and the AoE guard is what stops a caster farming progression by
+		// casting area spells at an empty room.
 		spellBonus := 1.0
 		if spellData != nil {
 			bal := configs.GetBalanceConfig()
-			spellBonus = 1.0 + float64(spellData.Difficulty)*float64(bal.SpellDifficultyProgressionScale)
 
 			// Self-cast penalty: HelpSingle targeting only self gets reduced progression
 			if spellData.Type == spells.HelpSingle &&
@@ -649,11 +660,11 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 			// same spell learned something, and used to be paid as if the cast
 			// had never resolved.
 			//
-			// spellBonus is the DIFFICULTY multiplier and is a separate axis
-			// from the win/lose weight. It still scales the whole award, and
-			// the self-cast reduction inside it is a WINNING multiplier below
-			// 1.0 -- which is exactly why AwardResolved takes `won` rather than
-			// inferring a loss from a small multiplier.
+			// spellBonus is a separate axis from the win/lose weight. Since
+			// U10b-3 it carries only the self-cast reduction (the difficulty
+			// multiplier moved to discovery), and that reduction is a WINNING
+			// multiplier below 1.0 -- which is exactly why AwardResolved takes
+			// `won` rather than inferring a loss from a small multiplier.
 			castSkill := skills.Spellcasting
 			if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 				castSkill = skills.Manifestation
@@ -806,23 +817,21 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		if resolveRoom := rooms.LoadRoom(mob.Character.RoomId); resolveRoom != nil {
 			castLanded = resolveMobSpell(mob, cs, spellData, resolveRoom)
 		}
-		// Stage 38.3: Mob spellcasting progression — difficulty-scaled
-		spellBonus := 1.0
-		if spellData != nil {
-			bal := configs.GetBalanceConfig()
-			spellBonus = 1.0 + float64(spellData.Difficulty)*float64(bal.SpellDifficultyProgressionScale)
-		}
+		// Stage 38.3: Mob spellcasting progression.
+		//
+		// U10b-3 removed the difficulty multiplier that was this block's only
+		// content. Unlike the player path above, the mob path never carried the
+		// self-cast reduction or the AoE guard, so there is no bonus left to
+		// compute and the plain AwardResolved is now the honest call.
 		// U10b-1 Task 13: one cast is one resolved action, paid at full weight
 		// when ANY target's contest was won and at ProgressionFailureFraction
 		// when every one was defended. See the identical conversion in
-		// handlePlayerFoldCasting above, including why the difficulty bonus
-		// goes through AwardResolvedScaled rather than being folded into the
-		// win/lose weight.
+		// handlePlayerFoldCasting above.
 		castSkill := skills.Spellcasting
 		if spellData != nil && spellData.HasSchool(spells.SchoolManifestation) {
 			castSkill = skills.Manifestation
 		}
-		mob.Character.AwardResolvedScaled(0, castLanded, spellBonus,
+		mob.Character.AwardResolved(0, castLanded,
 			mob.Character.CandidateFor(string(castSkill)))
 
 		// primarystat overrides the skill's default stat -- see the identical

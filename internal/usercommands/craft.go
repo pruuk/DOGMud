@@ -7,7 +7,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -145,10 +144,9 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// fraction on. Only the two MULTI-ROUND sites roll
 		// (NewRound_UserRoundTick, NewRound_MobRoundTick).
 		//
-		// AwardResolvedScaled, not AwardResolved: the plain form drops
-		// craftBonus silently (see Task 13).
-		craftBonus := 1.0 + float64(result.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-		user.Character.AwardResolvedScaled(user.UserId, true, craftBonus,
+		// U10b-3: recipe difficulty moved to discovery, so there is no bonus
+		// left to carry and plain AwardResolved is correct.
+		user.Character.AwardResolved(user.UserId, true,
 			user.Character.CandidateFor(result.SkillName))
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, result.SuccessMsg))
 		return true, nil
