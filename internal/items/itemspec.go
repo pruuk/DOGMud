@@ -337,11 +337,22 @@ type ItemSpec struct {
 	IsBandolier           bool              `yaml:"is_bandolier,omitempty"`            // Belt item that holds potions
 	BandolierCapacity     int               `yaml:"bandolier_capacity,omitempty"`      // Max potions storable in bandolier
 	SalvageReturns        []SalvageReturn   `yaml:"salvage_returns,omitempty"`         // Custom salvage returns for non-crafted items
-	RarityTier            int               `yaml:"rarity_tier,omitempty"`             // Vendor stock cap tier (50/40/30/20/10). Used by shops.EffectiveMaxStock with mob.StockMultiplier. 0 = untiered (quest items, defer-to-3.0e items).
-	VendorCategories      []string          `yaml:"vendor_categories,omitempty"`       // Disciplines that buy/sell this item; mirrors shops.ValidCraftSupports minus "general"
-	NotSalable            bool              `yaml:"not_salable,omitempty"`             // True for lore / flavor / legacy items excluded from vendor economy validation
-	NeverDrops            bool              `yaml:"never_drops,omitempty"`             // Equipped-only: this item is skipped entirely by mob death-loot drops (boss-only gear that must never reach players). Does not affect carried Character.Items — use a separate mechanism (loot_pool / character.items) for guaranteed loot on the same mob.
-	Restricted            bool              `yaml:"restricted,omitempty"`              // Contraband: bid on by the auction Official (The Crown Assessor, econ #2.5). Interest tag only — no other mechanics.
+	RarityTier            int               `yaml:"rarity_tier,omitempty"`             // Vendor stock cap tier (50/40/30/20/10). Used by shops.EffectiveMaxStock with mob.StockMultiplier. 0 = untiered (quest items, defer-to-3.0e items). NOT a difficulty signal — see MaterialTier.
+	// MaterialTier is how RARE/DEMANDING a crafting material is, 1 (common) to
+	// 5 (rarest). It scales craft difficulty via items.MaterialTierMultiplier.
+	// 0 means untiered and is NEUTRAL (multiplier 1.0), not "cheapest" — so
+	// partial coverage during the backfill cannot silently make a recipe easy.
+	//
+	// ⚠️ DO NOT CONFUSE WITH RarityTier ABOVE. RarityTier is a vendor stock cap
+	// where a HIGHER value means MORE common, inverting its own name, and its
+	// doc comment claims five values while the data holds seventeen. The two
+	// fields are deliberately separate: renormalising RarityTier would move
+	// vendor stock levels world-wide at the same time as craft difficulty.
+	MaterialTier     int      `yaml:"material_tier,omitempty"`
+	VendorCategories []string `yaml:"vendor_categories,omitempty"` // Disciplines that buy/sell this item; mirrors shops.ValidCraftSupports minus "general"
+	NotSalable       bool     `yaml:"not_salable,omitempty"`       // True for lore / flavor / legacy items excluded from vendor economy validation
+	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Equipped-only: this item is skipped entirely by mob death-loot drops (boss-only gear that must never reach players). Does not affect carried Character.Items — use a separate mechanism (loot_pool / character.items) for guaranteed loot on the same mob.
+	Restricted       bool     `yaml:"restricted,omitempty"`        // Contraband: bid on by the auction Official (The Crown Assessor, econ #2.5). Interest tag only — no other mechanics.
 
 	// YAML-driven use effects — replaces JS onUse/onCommand_use
 	OnUseTrainSkill  string `yaml:"on_use_train_skill,omitempty"`
