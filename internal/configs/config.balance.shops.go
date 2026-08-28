@@ -97,6 +97,20 @@ func (b *Balance) validateShops() {
 	if b.CraftingMaxSuccessChance <= 0 || b.CraftingMaxSuccessChance > 100 {
 		b.CraftingMaxSuccessChance = 95
 	}
+	// Both use the <=0 idiom, so an absent key self-heals to the default. That is
+	// correct here: 0 is not a meaningful multiplier for either end of the band,
+	// unlike knobs where 0 is a legal off-switch and needs a -1 sentinel.
+	if b.MaterialTierMultiplierMin <= 0 {
+		b.MaterialTierMultiplierMin = 0.75
+	}
+	if b.MaterialTierMultiplierMax <= 0 {
+		b.MaterialTierMultiplierMax = 1.25
+	}
+	// An inverted band would make rarer materials EASIER, silently. Cheaper to
+	// catch here than to explain from a playtest report.
+	if b.MaterialTierMultiplierMax < b.MaterialTierMultiplierMin {
+		b.MaterialTierMultiplierMin, b.MaterialTierMultiplierMax = 0.75, 1.25
+	}
 
 	// ── CRAFT DIFFICULTY ─────────────────────────────────────────────────────
 	if b.CraftDifficultyProgressionScale <= 0 {

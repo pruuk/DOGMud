@@ -15,3 +15,4 @@ vendor_categories:
 - alchemy
 - jewelcrafting
 bottle_aging_multiplier: 1.0
+material_tier: 1

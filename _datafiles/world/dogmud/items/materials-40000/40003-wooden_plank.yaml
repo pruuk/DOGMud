@@ -11,3 +11,4 @@ rarity_tier: 50
 is_component: true
 vendor_categories:
 - blacksmithing
+material_tier: 1

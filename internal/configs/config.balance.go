@@ -478,6 +478,15 @@ type Balance struct {
 	CraftingMinSuccessChance   ConfigInt `yaml:"CraftingMinSuccessChance"`   // Floor (default 5)
 	CraftingMaxSuccessChance   ConfigInt `yaml:"CraftingMaxSuccessChance"`   // Ceiling (default 95)
 
+	// Material tier band. items.MaterialTierMultiplier spreads the five authored
+	// buckets evenly between these, so tier 1 sits at Min and tier 5 at Max.
+	// Deliberately narrow: tier MODIFIES a difficulty that recipe.SkillMinimum
+	// already carries, so an authoring slip moves a recipe one bucket rather
+	// than defining its odds. Widening this makes the pending 208-file backfill
+	// proportionally more dangerous.
+	MaterialTierMultiplierMin ConfigFloat `yaml:"MaterialTierMultiplierMin"` // Craft-difficulty multiplier for the commonest tier (default 0.75)
+	MaterialTierMultiplierMax ConfigFloat `yaml:"MaterialTierMultiplierMax"` // Craft-difficulty multiplier for the rarest tier (default 1.25)
+
 	// ── RECIPE DISCOVERY ─────────────────────────────────────────────────────
 	RecipeDiscoveryBaseChance ConfigFloat `yaml:"RecipeDiscoveryBaseChance"` // Base % to discover a new recipe per successful craft (default 8.0)
 	RecipeDiscoveryDecayRate  ConfigFloat `yaml:"RecipeDiscoveryDecayRate"`  // Decay per known recipe: chance = base / (1 + known*this) (default 0.1)

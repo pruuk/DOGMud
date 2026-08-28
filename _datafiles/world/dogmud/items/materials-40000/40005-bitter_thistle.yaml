@@ -11,3 +11,4 @@ rarity_tier: 40
 is_component: true
 vendor_categories:
 - alchemy
+material_tier: 2
