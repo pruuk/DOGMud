@@ -5,8 +5,8 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/contest"
-	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -15,6 +15,23 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// spotsHider resolves "does the observer spot this hider?" as an OPPOSED
+// contest, the same way usercommands/go.go does on room entry.
+//
+// Deliberately mirrors go.go rather than inventing a variant: the two paths
+// answer the identical question and disagreed for four slices, which is the
+// defect Phase C exists to close.
+//
+// Scores follow the convention U6b Task 16 set — CalcDetectionScore for the
+// opposed observer side, CalcSneakScoreVsObserver for the hider, which folds in
+// per-observer lighting (NightVision counts as lit for that observer alone).
+func spotsHider(observer *characters.Character, hider *characters.Character, room *rooms.Room) bool {
+	return combat.RunContest(
+		CalcDetectionScore(observer),
+		[]contest.Entry{{Score: CalcSneakScoreVsObserver(hider, observer, room)}},
+	).Success
+}
 
 // SearchOptions is intentionally empty v1 — in-room search is the only
 // mode. Reserved for future "search container" path.
@@ -153,27 +170,25 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.SendText(messaging.CategorySystem, text)
 	}
 
-	// 🔴 STILL OWED TO U10b-1b PHASE C -- the two dice.RollStat checks below are
-	// the LAST uncertain outcomes in this file off the contest core. Phase A
-	// converted the other four tiers to contest.AgainstDifficulty; these two are
-	// deliberately NOT that conversion.
+	// U10b-1b PHASE C: hidden detection is an OPPOSED contest, reconciled onto
+	// the form usercommands/go.go already used.
 	//
-	// They answer "does the observer spot the hider?" with a flat 135 threshold
-	// that NEVER READS THE HIDER'S SNEAK SCORE, while usercommands/go.go
-	// resolves the SAME question as an opposed contest (observerScore vs
-	// hiddenScore). A hider's skill decides the outcome in one path and is
-	// ignored in the other. Mobs reach this path too, via
-	// behaviortree/actions_scout.go's actTrySearch, gated by the cheap
-	// condRoomHasHiddenEntity pre-check in conditions_scout.go.
+	// It answered "does the observer spot the hider?" with a flat 135 threshold
+	// that NEVER READ THE HIDER'S SNEAK SCORE, while go.go resolved the identical
+	// question as observerScore vs hiddenScore. A hider's skill decided the
+	// outcome in one path and was ignored in the other. Mobs reached the broken
+	// path too, via behaviortree/actions_scout.go's actTrySearch, gated by the
+	// cheap condRoomHasHiddenEntity pre-check in conditions_scout.go.
 	//
-	// They belong on combat.RunContest, NOT AgainstDifficulty: there is a real
-	// opponent, so this is an opposed contest and wants the ContestFloor the
-	// rest of the opposed family gets.
+	// ⚠️ THIS IS THE SLICE'S ONE DELIBERATE BEHAVIOUR CHANGE. Investing in
+	// stealth now works against a searcher, where before it did nothing at all.
+	// U4 declined it precisely because converting a flat threshold into a contest
+	// is a behaviour change and U1-U5 are contracted as provable no-ops.
 	//
-	// U4 migrated go.go's opposed version and deliberately did NOT touch these,
-	// because converting a flat threshold into a contest is a BEHAVIOUR CHANGE
-	// and U1-U5 are provable no-ops. Phase C claims them, and must reconcile the
-	// two implementations rather than just moving one.
+	// It uses combat.RunContest, NOT contest.AgainstDifficulty: there is a real
+	// opponent, so it belongs on the opposed seam and takes ContestFloor like
+	// every other opposed contest. The four static tiers in this file are the
+	// other kind and stay on AgainstDifficulty.
 
 	// ── Tier 2 (target 135): Hidden players ─────────────────────
 	hiddenPlayerNames := []string{}
@@ -186,8 +201,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 135.0 {
+		if spotsHider(char, p.Character, room) {
 			result.HiddenPlayersFound = append(result.HiddenPlayersFound, pId)
 			if actor.IsPlayer() {
 				hiddenPlayerNames = append(hiddenPlayerNames,
@@ -214,8 +228,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 135.0 {
+		if spotsHider(char, &m.Character, room) {
 			result.HiddenMobsFound = append(result.HiddenMobsFound, mId)
 			if actor.IsPlayer() {
 				hiddenMobNames = append(hiddenMobNames,
