@@ -1,5 +1,30 @@
 # DOGMud Patch Notes
 
+## 2026-08-28: How fast you swing, and how fast unarmed fighting improves
+
+Two loose ends from yesterday's change, where each hand started fighting at its
+own skill.
+
+Your empty hand was still throwing punches at the SPEED your weapon skill
+allowed. So a swordsman with an untrained off hand threw quick, frequent
+punches on the strength of their sword training. That is fixed the same way the
+rest of it was: how often a hand strikes now follows how well you fight with
+what is in it.
+
+Most fighters will not notice. A well trained swordsman was already swinging as
+fast as anyone can, so nothing changes for them. The people this reaches are
+brawlers who carry a weapon and punch with the other hand, and for them it is a
+clear gain, in some cases twice the punches they were getting.
+
+Unarmed fighting also improves more slowly than it did. This is not a
+punishment. When we worked out how fast each skill should improve, we measured
+unarmed fighting on someone holding a weapon, which is not how anyone who cares
+about it actually fights. Someone who fights with both hands free throws far
+more strikes per fight and defends every round with the same skill, so unarmed
+was improving much faster than intended. Its pace is now set from how a real
+bare-handed fighter fights. Fighting with both hands empty is still the fastest
+way to train it. Reflexes improve slightly more slowly for the same reason.
+
 ## 2026-08-27: Your fists fight at your own skill with them
 
 If you held a weapon in one hand and nothing in the other, the empty hand was

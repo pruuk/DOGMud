@@ -367,17 +367,33 @@ var SkillProgressionMultipliers = map[SkillTag]float64{
 	// Melee. unarmed sits BELOW weapon deliberately, and the gap WIDENED under
 	// the firing convention. Only ONE skill is awarded per round now, so the
 	// question stopped being "how many entries cleanly hit" and became "which
-	// skill rolled highest". The fist takes 4 swings to a longsword's 2 and both
-	// hands roll off the same attack score, so the fist wins that Best-of about
-	// two rounds in three. It also still collects the dodge award, 83.6% of all
-	// defences. Net: ~3.3x the weapon's effective uses, up from 1.83x, and equal
-	// values still make an empty offhand dominant.
+	// skill rolled highest".
 	//
-	// At the corrected clean-hit rate, P(entry clean) is 0.858 for the fist over
-	// 4 swings against 0.623 for the weapon over 2 -- the figures the superseded
-	// comment gave as 0.967 and 0.820 were computed off the hit rate.
+	// Each is solved at its OWN concentrating build. For weapon-combat that is
+	// 1H+shield. For unarmed-combat it is BARE HANDS, and that build was absent
+	// from the solver until 2026-08-27: unarmed was being solved at 1H+fist, a
+	// build nobody grinding unarmed would choose.
+	//
+	// Bare hands are a different SHAPE, not a faster version of 1H+fist. Two
+	// empty hands put TWO fist entries in the plan, but attackerCandidates keys
+	// on SKILL, so they fold into ONE unarmed-combat candidate with nothing to
+	// out-roll it -- it wins the attacker Best-of every round rather than two in
+	// three. Its clean hit is the OR across all 8 swings (0.980, against 0.858
+	// for a lone fist over 4 and 0.623 for a longsword over 2). And
+	// equipmentGatedMeleeDefences tests IsUnarmedStyle FIRST, so a bare-handed
+	// defender gets dodge and nothing else: no parry, no block even holding a
+	// shield. Dodge maps to unarmed-combat, so it takes the WHOLE defence award
+	// instead of dodge's 83.6% share.
+	//
+	// That totals 1.74 events per engaged round against 0.93 for a shield build.
+	// It is paid for in damage (UnarmedDamageMultiplier 0.30) and in having no
+	// parry or block at all, which is a trade the multiplier is now solved
+	// against rather than one it was silently ignoring.
+	//
+	// The offhand fix (each weapon rolls its OWN skill) contributed to the move
+	// but was the smaller half of it; the missing build was the larger.
 	WeaponCombat:  1.34,
-	UnarmedCombat: 1.01,
+	UnarmedCombat: 0.72,
 	// These three share ONE 4-round "special-move" key with 15 other verbs, so a
 	// concerted grinder gets only ~22.5 uses/hour between them, not each.
 	// ranged-combat joins indirectly: firing is ungated but reload is, and a

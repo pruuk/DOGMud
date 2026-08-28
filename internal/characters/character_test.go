@@ -2190,110 +2190,12 @@ func TestCharacter_GetMovementStaminaCost(t *testing.T) {
 // priced per swing by combat.ChargeAttackCost and covered by
 // internal/combat/attack_cost_test.go.
 
-func TestCharacter_GetModifiedAttackCount(t *testing.T) {
-	tests := []struct {
-		name           string
-		baseAttacks    int
-		weaponSpeed    float64
-		isOffhand      bool
-		combatSkill    int
-		dualWieldSkill int
-		expected       int
-	}{
-		{
-			name:           "Unarmed, no skills",
-			baseAttacks:    3,
-			weaponSpeed:    1.0,
-			isOffhand:      false,
-			combatSkill:    1,
-			dualWieldSkill: 0,
-			expected:       3, // 3 * 1.0 * 1.02 ≈ 3
-		},
-		{
-			name:           "Unarmed, high combat skill",
-			baseAttacks:    3,
-			weaponSpeed:    1.0,
-			isOffhand:      false,
-			combatSkill:    50,
-			dualWieldSkill: 0,
-			expected:       3, // 3 * 1.0 * 1.1 = 3.3 ≈ 3
-		},
-		{
-			name:           "Slow weapon (0.6x), no skills",
-			baseAttacks:    3,
-			weaponSpeed:    0.6,
-			isOffhand:      false,
-			combatSkill:    1,
-			dualWieldSkill: 0,
-			expected:       2, // 3 * 0.6 * 1.02 ≈ 1.8 ≈ 2
-		},
-		{
-			name:           "Slow weapon (0.6x), high combat skill",
-			baseAttacks:    3,
-			weaponSpeed:    0.6,
-			isOffhand:      false,
-			combatSkill:    50,
-			dualWieldSkill: 0,
-			expected:       2, // 3 * 0.6 * 1.1 = 1.98 ≈ 2
-		},
-		{
-			name:           "Fast weapon (1.2x), no skills",
-			baseAttacks:    3,
-			weaponSpeed:    1.2,
-			isOffhand:      false,
-			combatSkill:    1,
-			dualWieldSkill: 0,
-			expected:       4, // 3 * 1.2 * 1.02 ≈ 3.7 ≈ 4
-		},
-		{
-			name:           "Offhand weapon, no dual wield skill",
-			baseAttacks:    3,
-			weaponSpeed:    0.8,
-			isOffhand:      true,
-			combatSkill:    1,
-			dualWieldSkill: 0,
-			expected:       1, // 3 * 0.8 * 1.02 * 0.5 ≈ 1.2 ≈ 1
-		},
-		{
-			name:           "Offhand weapon, moderate dual wield skill",
-			baseAttacks:    3,
-			weaponSpeed:    0.8,
-			isOffhand:      true,
-			combatSkill:    1,
-			dualWieldSkill: 25,
-			expected:       2, // 3 * 0.8 * 1.02 * 0.85 ≈ 2.1 ≈ 2
-		},
-		{
-			name:           "Offhand weapon, high dual wield skill",
-			baseAttacks:    3,
-			weaponSpeed:    0.8,
-			isOffhand:      true,
-			combatSkill:    1,
-			dualWieldSkill: 50,
-			expected:       3, // 3 * 0.8 * 1.02 * 1.2 ≈ 2.9 ≈ 3
-		},
-		{
-			name:           "Minimum 1 attack",
-			baseAttacks:    1,
-			weaponSpeed:    0.3,
-			isOffhand:      true,
-			combatSkill:    1,
-			dualWieldSkill: 0,
-			expected:       1, // 1 * 0.3 * 1.02 * 0.5 < 1, min is 1
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := New()
-			c.Skills[string(skills.UnarmedCombat)] = tt.combatSkill
-			c.Skills[string(skills.WeaponCombat)] = tt.dualWieldSkill
-
-			result := c.GetModifiedAttackCount(tt.baseAttacks, tt.weaponSpeed, tt.isOffhand)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
+// TestCharacter_GetModifiedAttackCount went the same way on 2026-08-27, with
+// Character.GetModifiedAttackCount itself. Swing counts have been computed by
+// combat.calcSwingCount since it replaced the old outer-loop calcAttackCount x
+// inner-loop ws.attacks double multiplication; the method survived that with
+// no production caller and a test that was the only thing referencing it. It
+// is covered by internal/combat/hitroll_test.go now.
 
 // ─── Stage 40.2: Mitigation & Defense tests ─────────────────────────────────
 

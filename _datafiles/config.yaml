@@ -1058,9 +1058,16 @@ Balance:
     # dexterity is still the fastest-firing stat, but far less so than it was:
     # the firing convention caps it at TWO rolls per round (one attacker award,
     # one defender award) where it used to collect the attacker gain, both
-    # weapon entries and a flat +2 from defence. Its rate fell to ~0.34x, so the
+    # weapon entries and a flat +2 from defence. Its rate fell to ~0.36x, so the
     # multiplier rises to hold the same points per hour.
-    dexterity: 0.34
+    #
+    # Solved at BARE HANDS as of 2026-08-27. Dexterity is the primary stat on
+    # BOTH sides of a bare-handed round (unarmed-combat attacking, dodge
+    # defending), so the build that maximises unarmed-combat maximises dexterity
+    # too. Adding that build moved this from 0.34; it is a 6% trim and well
+    # inside the J inputs' noise, kept only because every other track in the
+    # solver is solved at concentration and this one now can be.
+    dexterity: 0.32
     # perception after Phase D unhooked look/consider. Its feeders are now
     # forage/search, the perception crafts, salvage and ranged-combat. Barely
     # moved by U10b-1 (~1.03x): its feeders were success-only and now pay a
@@ -1091,14 +1098,22 @@ Balance:
     # -- that Go map is what every test binary sees, since tests never load this file.
     #
     # unarmed sits BELOW weapon deliberately, and the gap WIDENED under the
-    # firing convention. Only one skill is awarded per round now, and the fist
-    # wins that Best-of about two rounds in three (4 swings against a
-    # longsword's 2, all rolling off the same score). It also still collects the
-    # dodge award, 83.6% of all defences. Net: the fist earns ~3.3x the weapon's
-    # effective uses, up from 1.83x. Equal values make an empty offhand
-    # dominant.
+    # firing convention. Each is solved at its OWN concentrating build, and for
+    # unarmed-combat that build is BARE HANDS, which was missing from the solver
+    # until 2026-08-27. Two empty hands swing two fist entries; those fold into
+    # ONE unarmed-combat candidate, so it wins the attacker Best-of every single
+    # round. Eight swings make its clean hit near-certain (0.98), and the
+    # dodge-only equipment gate on unarmed style hands it the WHOLE defence
+    # award rather than dodge's 83.6% share. That is 1.74 events per engaged
+    # round against a shield build's 0.93.
+    #
+    # It was previously solved at 1H+fist, a build an unarmed grinder would
+    # never choose, and on a share (the fist winning two rounds in three) that
+    # assumed both hands rolled off the SAME skill term. The offhand fix ended
+    # that assumption; the missing bare-handed build was the larger error, and
+    # together they moved this from 1.01 to 0.72.
     weapon-combat: 1.34
-    unarmed-combat: 1.01
+    unarmed-combat: 0.72
     # These share ONE 4-round "special-move" key with 15 other verbs, so a
     # concerted grinder gets ~22.5 uses/hour between them, not each. ranged-combat
     # joins indirectly: firing is ungated but reload is, and a weapon must be

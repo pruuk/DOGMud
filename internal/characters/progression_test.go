@@ -258,19 +258,22 @@ func TestCalculateProgressionChance_SampleValues(t *testing.T) {
 func TestGetProgressionMultiplier(t *testing.T) {
 	// Solved, not chosen: `python tools/balance/u10b1_solve_v4.py`. If this
 	// fails after a retune, REGENERATE these rather than editing them to fit.
-	// unarmed sits below weapon on purpose -- under the firing convention the
-	// fist wins the one-per-round Best-of about two rounds in three and still
-	// collects the dodge award, so it earns ~3.3x the uses and equal values
-	// would make an empty offhand dominant.
+	// unarmed sits below weapon on purpose. Each is solved at its OWN
+	// concentrating build, and unarmed's is BARE HANDS: two fist entries fold
+	// into one candidate that wins the round's Best-of outright, 8 swings make
+	// its clean hit near-certain, and the unarmed-style equipment gate gives it
+	// dodge alone, so it takes the whole defence award. 1.74 events per engaged
+	// round against a shield build's 0.93.
 	//
 	// bartering is unchanged from v3 on purpose: buy and sell award with
 	// won=true, so the convention did not touch its rate. It is the control.
+	// A future solve that moves bartering has a bug in it.
 	tests := []struct {
 		skill    string
 		expected float64
 	}{
 		{"weapon-combat", 1.34},
-		{"unarmed-combat", 1.01},
+		{"unarmed-combat", 0.72},
 		{"spellcasting", 2.99},
 		{"search", 1.02},
 		{"bartering", 2.07},
