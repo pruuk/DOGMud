@@ -528,18 +528,26 @@ func tickMobCrafting(mob *mobs.Mob) {
 		return
 	}
 	sl := mob.Character.Skills[recipe.Skill]
-	chance := crafting.CalcSuccessChance(sl, recipe.SkillMinimum)
-	roll := util.Rand(100)
-	util.LogRoll("MobCraft", roll, chance)
+
+	// U10b-1b: the same contest players get. SelectIngredients names the
+	// concrete items ConsumeIngredients will take below, so difficulty rides on
+	// the materials actually spent rather than on the recipe's declared tags.
+	consumed := crafting.SelectIngredients(
+		mob.Character.Items, mob.Character.ComponentItems, recipe)
+	craftScore := crafting.CraftScore(
+		float64(mob.Character.GetStatValue(crafting.CraftPrimaryStat(recipe))), sl)
+	craftDiff := crafting.CraftDifficulty(
+		recipe.SkillMinimum, crafting.DearestMaterialTier(consumed))
+	won := crafting.RunCraftContest(craftScore, craftDiff).Success
 
 	// U10b-1 Task 16: above the branch, so a failed mob craft trains at
 	// ProgressionFailureFraction rather than nothing. AwardResolvedScaled,
 	// not AwardResolved: the plain form drops craftBonus silently.
 	craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-	mob.Character.AwardResolvedScaled(0, roll < chance, craftBonus,
+	mob.Character.AwardResolvedScaled(0, won, craftBonus,
 		mob.Character.CandidateFor(recipe.Skill))
 
-	if roll < chance {
+	if won {
 		mob.Character.Items, mob.Character.ComponentItems =
 			crafting.ConsumeIngredients(
 				mob.Character.Items,

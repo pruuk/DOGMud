@@ -71,6 +71,22 @@ var contestSiteOwners = map[string]string{
 	"internal/usercommands/skill.skullduggery.shadow.go:shadowDetectionRoll": "U6b task 16",
 	"internal/usercommands/go.go:Go":                                         "U6b task 16 (hidden detection on room entry, four sites)",
 
+	// U10b-1b Phase A: the static-difficulty (category B) conversions. These are
+	// NOT channel attacks — there is no defender, only a fixed target number —
+	// so ResolveChannelAttack does not apply. They use contest.AgainstDifficulty,
+	// which is deliberately unfloored per combat.RunContest's scope note.
+	"internal/actions/search.go:Search":            "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175)",
+	"internal/actions/search.go:spotsHider":        "U10b-1b Phase C: hidden detection reconciled onto the OPPOSED form usercommands/go.go already used — the flat 135 threshold never read the hider's score",
+	"internal/forager/forage_core.go:ForageCore":   "U10b-1b Phase A: the per-biome forage difficulty. ForageCore is pure, so this is the whole of its uncertainty",
+	"internal/actions/track.go:resolveTrailDetail": "U10b-1b: the nested 125/135/175 trail-read ladder, static difficulty like search and forage",
+	"internal/actions/track.go:Track":              "U10b-1b: the OPPOSED contest against a named quarry (owner ruling) — a careful mover is genuinely harder to follow",
+
+	// U10b-1b Phase B: the craft and salvage floor seams. Not channel attacks —
+	// the difficulty is a recipe, not a defender — so ResolveChannelAttack does
+	// not apply. One named reader per floor, mirroring RunContest.
+	"internal/crafting/difficulty.go:RunCraftContest":   "U10b-1b Phase B: the craft floor seam — the ONE place Balance.CraftFloor is read",
+	"internal/crafting/difficulty.go:RunSalvageContest": "U10b-1b Phase B: the salvage floor seam — the ONE place Balance.SalvageFloor is read",
+
 	// Deliberately unconverted, with the plan's pre-assigned owners.
 	"internal/actions/defuse.go:Defuse": "deliberate: trap-difficulty contest, converted U4",
 	// Charm has no unconverted contest site left. Slice B moved the cast onto

@@ -714,15 +714,51 @@ func GetItemSpec(itemId int) *ItemSpec {
 	return nil
 }
 
-// FindSpecByComponentTag returns the first ItemSpec with a matching ComponentTag,
-// or nil if none is found.
+// FindSpecByComponentTag returns the CHEAPEST ItemSpec carrying a matching
+// ComponentTag, or nil if none is found. Lowest MaterialTier wins; ties break
+// on lowest ItemId.
+//
+// 🔴 IT USED TO RETURN THE FIRST MATCH FROM A MAP RANGE, and that was a BUG
+// FOUND IN PLAYTEST on 2026-08-29. Go randomises map iteration, and FOUR items
+// share component_tag "bottle" — Clay Flask and Glass Vial (tier 1), Sealed
+// Phial (tier 3), Crystalline Decanter (tier 4). So this function had no
+// defined answer, and its callers include actions.storeRecovered, which CREATES
+// the item a player receives from salvage.
+//
+// The consequence was a material UPGRADE LOOP: craft a potion with the cheapest
+// flask, salvage it, and the bottle handed back could be any of the four. A
+// Crystalline Decanter is the most valuable bottle in the game (0.25x potion
+// aging) and could be farmed out of Clay Flasks by repeating a craft-salvage
+// cycle. Nothing about that was visible to a player or a reviewer; it only
+// surfaced when someone actually ran the loop.
+//
+// THE FIX IS HERE RATHER THAN AT THE CALL SITES on purpose. There are seven
+// callers across salvage, mob crafting, idle mobs, planners and shop pricing;
+// converting them one at a time is how the last audit MISSED this one, having
+// removed the same resolver from craft difficulty and from shop stock in the
+// same slice. Nothing wants an arbitrary answer, so the primitive is the right
+// place to make it defined.
+//
+// CHEAPEST, not merely deterministic: a tag must never be redeemable for
+// something better than the commonest form of that material, or the loop above
+// reopens with a fixed destination instead of a random one.
+//
+// ⚠️ Shop stock has its own resolver, shops.FindStockedIngredient, which
+// additionally restricts to what a shop actually carries. Use that on any path
+// that deducts from or checks a shop's inventory.
 func FindSpecByComponentTag(tag string) *ItemSpec {
+	var best *ItemSpec
 	for _, spec := range items {
-		if spec.ComponentTag == tag {
-			return spec
+		if spec.ComponentTag != tag {
+			continue
+		}
+		if best == nil ||
+			spec.MaterialTier < best.MaterialTier ||
+			(spec.MaterialTier == best.MaterialTier && spec.ItemId < best.ItemId) {
+			best = spec
 		}
 	}
-	return nil
+	return best
 }
 
 // file self loads due to init()

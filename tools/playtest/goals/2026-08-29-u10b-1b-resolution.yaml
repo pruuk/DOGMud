@@ -1,0 +1,96 @@
+# U10b-1b adversarial feel check: searching, tracking, hiding, crafting and
+# salvage now RESOLVE as contests instead of comparing a roll to a fixed number.
+#
+# ONE SIGNAL above all others: does being GOOD at something now visibly matter,
+# and does being BAD at it stop feeling hopeless? Your job is to say whether
+# that reads to a player, and whether it opened an exploit.
+#
+# You start in open country with things to search, forage and fight. That is
+# deliberate. Do not wander back to town looking for something else to do.
+#
+# WHAT CHANGED, in plain terms. Do NOT quote these back as findings.
+#   * Searching, tracking and foraging used to compare your roll to a fixed
+#     target. The target now pushes back, so the hopeless are less hopeless and
+#     the near-certain are less certain.
+#   * Hiding from a searcher finally works. It used to ignore your stealth
+#     entirely, even though it worked against someone walking in.
+#   * Tracking split in two: reading a room's trail is like searching, but
+#     following a NAMED creature is a contest against that creature.
+#   * Crafting has a real difficulty for the first time. Your aptitude counts
+#     (a smith's strength, an alchemist's eye) and so do the materials.
+#   * Taking something apart is now about as hard as making it was.
+#   * When a recipe can take several kinds of the same material, the CHEAPEST is
+#     used first.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * A weak searcher finds things sometimes rather than never.
+#   * A strong one still misses occasionally, and that should feel like bad
+#     luck rather than like the skill not working.
+#   * Working at a recipe's stated minimum is roughly a coin flip.
+#   * Nothing should be farmable. If you find a way to repeat one action
+#     forever for steady improvement, report it LOUDLY with the exact steps.
+#
+# BE ADVERSARIAL. Prefer reporting a suspicion with evidence over reporting
+# nothing. If something reads confusingly to a player, that is a finding even
+# when the mechanic underneath is correct.
+
+ephemeral:
+  profile: mid
+  start_room: 444
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    HEADLINE, DOES SKILL SHOW: search the same area repeatedly and record
+    verbatim what you see. Then forage repeatedly. State plainly whether the
+    outcomes feel like they respond to your character rather than to a coin.
+    Quote the exact lines. If searching or foraging feels completely flat, or
+    completely random, say so.
+  - >-
+    THE SECRET-EXIT FARM, a specific exploit that was just closed: find a room
+    with a secret exit. Search until you find it. Then search that same room
+    MANY more times. You should stop being able to gain anything from that exit,
+    though the game may still remind you it is there. If repeated searching in
+    that room keeps producing improvement, that is a SERIOUS finding: report the
+    room, the exit, and how many times you repeated it.
+  - >-
+    A FRUITLESS SEARCH SHOULD STILL SAY SOMETHING: search a bare room with
+    nothing hidden in it, and search a room where you fail to find something
+    that IS there. Report what each printed. Say whether you could tell the
+    difference, and whether either left you confused about what happened.
+  - >-
+    CRAFTING AT THE MINIMUM: find a recipe you have exactly the skill for and
+    make it several times. Roughly half should succeed. Report the counts. Then
+    try a recipe well above your skill and one well below. State whether the
+    difficulty tracked the recipe in a way that made sense, and whether the
+    failures felt fair or arbitrary.
+  - >-
+    CRAFTING MATERIALS: if you can, craft the same recipe twice while carrying
+    different qualities of the same material (potion bottles are the clearest
+    case). Report whether anything differed. Then say whether the game gave you
+    ANY way to know which material it was about to use. If it did not, say so
+    plainly, because that is the thing most likely to confuse a player.
+  - >-
+    SALVAGE: break down several items you made yourself and several you did not.
+    Report roughly how much you recovered from each. Say whether taking apart a
+    hard-to-make item felt harder than an easy one, and whether salvage feels
+    too generous now. Watch specifically for whether making and then unmaking
+    the same item in a loop leaves you with MORE material than you started with.
+  - >-
+    HIDING FROM A SEARCHER, the deliberate change: hide, then have something
+    search for you if you can arrange it, or observe hidden creatures while
+    searching yourself. Report whether stealth appeared to matter. This one is
+    expected to have changed, so describe what you actually saw rather than
+    judging it against what you expected.
+  - >-
+    TRACKING: use track with no target to read a room's trail, and then track a
+    NAMED creature. Report both verbatim. Say whether the two felt like
+    different actions, and whether the messages made clear which one you had
+    done. Report any case where the game told you something that contradicted
+    what happened.
+  - >-
+    ANY EXPLOIT AT ALL: spend the last stretch actively hunting for a repeatable
+    action that produces steady improvement for little cost or risk. Report the
+    exact steps for anything you find, even if you are unsure it is a real
+    problem.

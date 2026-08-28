@@ -23,8 +23,14 @@ func MaterialCost(recipe *crafting.RecipeSpec, shopInv *ShopInventory, cfg Prici
 		return 0
 	}
 	total := 0.0
+	// 🔴 All three shop-stock lookups in this file resolve through
+	// FindStockedIngredient, never items.FindSpecByComponentTag. The latter
+	// ranges a Go map, so these gates and mobs.executeCraft's deduction drew
+	// INDEPENDENTLY and could name different items for the same tag — verifying
+	// one bottle's stock while the craft deducted another, and deducting nothing
+	// at all when the drawn item was unstocked.
 	for _, ing := range recipe.Ingredients {
-		spec := items.FindSpecByComponentTag(ing.ItemTag)
+		spec := FindStockedIngredient(shopInv, ing.ItemTag)
 		if spec == nil {
 			continue
 		}
@@ -66,7 +72,7 @@ func HasMaterialsWithReserve(recipe *crafting.RecipeSpec, shopInv *ShopInventory
 		return false
 	}
 	for _, ing := range recipe.Ingredients {
-		spec := items.FindSpecByComponentTag(ing.ItemTag)
+		spec := FindStockedIngredient(shopInv, ing.ItemTag)
 		if spec == nil {
 			return false
 		}
@@ -92,7 +98,7 @@ func HasMaterialsWithReservePct(recipe *crafting.RecipeSpec, shopInv *ShopInvent
 		return false
 	}
 	for _, ing := range recipe.Ingredients {
-		spec := items.FindSpecByComponentTag(ing.ItemTag)
+		spec := FindStockedIngredient(shopInv, ing.ItemTag)
 		if spec == nil {
 			return false
 		}
@@ -197,6 +203,13 @@ func EvaluateSalvageOptions(shopInv *ShopInventory, cfg PricingConfig) *CraftDec
 		// Value of materials recovered
 		returnValue := 0.0
 		for _, ret := range spec.SalvageReturns {
+			// ⚠️ Still the map-order resolver, and deliberately so: this values a
+			// salvage RETURN, which is not scoped to any shop's stock, so
+			// FindStockedIngredient has nothing to resolve against. It can
+			// therefore still price a tag inconsistently between calls when the
+			// tag is shared. Lower stakes than the stock path (it moves a
+			// decision heuristic, not an inventory), but it is the same latent
+			// hazard and is recorded rather than assumed harmless.
 			matSpec := items.FindSpecByComponentTag(ret.ItemTag)
 			if matSpec == nil {
 				continue

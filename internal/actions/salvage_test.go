@@ -213,13 +213,23 @@ func TestSalvage_MobActorSilent(t *testing.T) {
 // table -- an earlier draft of this test aimed at the corpse path and silently
 // SKIPPED, which is worse than no test.
 //
-// Determinism: SalvageMinChance and SalvageMaxChance are both pinned to 0, so
-// CalcSalvageChance returns 0 and every per-entry roll fails. No dice pinning.
+// Determinism: the salvage CONTEST is pinned to a certain loss (huge difficulty,
+// suppressed floor), so every per-entry roll fails. SalvageMin/MaxChance are
+// retired and pinning them would assert nothing.
 func TestSalvage_ARecoveryOfNothingAwardsOnceAtTheLossWeight(t *testing.T) {
 	pinConfigForTest(t)
 	cfg := configs.GetConfig()
-	cfg.Balance.SalvageMinChance = 0
-	cfg.Balance.SalvageMaxChance = 0
+	// U10b-1b: SalvageMin/MaxChance no longer decide anything — salvage is a
+	// contest. Force a certain loss by inflating the difficulty and suppressing
+	// the mercy floor, which otherwise rescues 15% of losses.
+	//
+	// A tiny POSITIVE floor rather than 0, for HONESTY rather than necessity:
+	// 0 would in fact stick here (Config.Validate runs ONCE, at boot, and
+	// SetConfigForTest/AddOverlayOverrides never re-validate), but 0 is not a
+	// legal SHIPPED value and a test should not pin a state production forbids.
+	cfg.Balance.CraftBaseDifficulty = 1000000
+	cfg.Balance.CraftSkillMinWeight = 0
+	cfg.Balance.SalvageFloor = configs.ConfigFloat(1e-12)
 	configs.SetConfigForTest(t, cfg)
 
 	const salvageItemId = 77401
@@ -276,8 +286,12 @@ func TestSalvage_ARecoveryOfNothingAwardsOnceAtTheLossWeight(t *testing.T) {
 func TestSalvage_FindsATargetInTheBandolier(t *testing.T) {
 	pinConfigForTest(t)
 	cfg := configs.GetConfig()
-	cfg.Balance.SalvageMinChance = 0
-	cfg.Balance.SalvageMaxChance = 0
+	// U10b-1b: SalvageMin/MaxChance decide nothing now. This test is about the
+	// bandolier LOOKUP, not the roll, so the outcome is pinned to a certain loss
+	// to keep it deterministic.
+	cfg.Balance.CraftBaseDifficulty = 1000000
+	cfg.Balance.CraftSkillMinWeight = 0
+	cfg.Balance.SalvageFloor = configs.ConfigFloat(1e-12)
 	configs.SetConfigForTest(t, cfg)
 
 	const bandolierItemId = 77402

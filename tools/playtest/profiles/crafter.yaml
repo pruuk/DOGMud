@@ -1,0 +1,95 @@
+role: user
+username: template-crafter
+character:
+  name: Bench Tester
+  description: >
+    An alchemist parked at a working bench with materials in hand. Built for
+    testing the U10b-1b craft contest, where the interesting questions all need
+    a station, a known recipe, and a choice of materials — none of which a
+    field-spawned tester can reach.
+  # The Apothecary's Hut: station alchemy_bench. Standing AT the station is the
+  # whole point; the previous run failed its craft goals because it spawned in
+  # open country and the goals told the tester not to walk to town.
+  roomid: 6456
+  zone: Thornwall City
+  speciesid: 1
+  stats:
+    # 🔴 PERCEPTION 100 IS LOAD-BEARING, not a round number. Alchemy's primary
+    # stat is perception (skills.SkillPrimaryStats), so with alchemy at 0 the
+    # craft score is exactly 100. healing-salve has skill_minimum 0, so its
+    # difficulty is 100 x the bottle's material tier:
+    #
+    #   glass vial / clay flask (tier 1, x0.95)  -> 95    player favoured
+    #   sealed phial            (tier 3, x1.0)   -> 100   EXACTLY 50/50
+    #   crystalline decanter    (tier 4, x1.025) -> 102.5 slightly against
+    #
+    # That makes the anchor claim directly observable by carrying one kind of
+    # bottle and counting successes, which is the thing unit tests cannot prove
+    # about the real game.
+    strength:
+      base: 100
+    dexterity:
+      base: 100
+    perception:
+      base: 100
+    vitality:
+      base: 130
+    willpower:
+      base: 100
+    charisma:
+      base: 100
+  health: 600
+  stamina: 600
+  conviction: 500
+  gold: 500
+  skills:
+    # alchemy 0 against a skill_minimum 0 recipe puts the tester EXACTLY at the
+    # recipe's stated minimum, which is where the 50/50 claim lives.
+    alchemy: 0
+    # blacksmithing 7 matches chain-links' skill_minimum exactly, for the same
+    # test at a non-zero minimum (its only ingredient, iron-ingot, is tier 1).
+    blacksmithing: 7
+    # A mid salvage rank so the craft-then-salvage loop is worth measuring.
+    salvage: 10
+    search: 15
+  knownrecipes:
+    healing-salve: 1
+    chain-links: 1
+  items:
+    # Healers root x40 — 2 per salve, so 20 attempts before restocking.
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    - itemid: 40004
+    # 🔴 ALL FOUR BOTTLE QUALITIES, deliberately, and this is the point of the
+    # profile. They share component_tag "bottle" at tiers 1/1/3/4, so they are
+    # the only place a player has a genuine MATERIAL CHOICE — and the only way
+    # to see whether the game tells them which one it is about to spend.
+    # Cheapest-first means the clay flask should go before the decanter.
+    - itemid: 40043 # clay flask, tier 1, aging x3.0
+    - itemid: 40006 # glass vial, tier 1, aging x1.0
+    - itemid: 40044 # sealed phial, tier 3, aging x0.5
+    - itemid: 40045 # crystalline decanter, tier 4, aging x0.25
+    # Iron ingots x6 for chain-links (2 each, 3 attempts).
+    - itemid: 40001
+    - itemid: 40001
+    - itemid: 40001
+    - itemid: 40001
+    - itemid: 40001
+    - itemid: 40001

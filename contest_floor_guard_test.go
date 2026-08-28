@@ -68,6 +68,39 @@ var guardedRollExemptions = map[string]map[string]string{
 		// Defines combat.RunConcentrationContest — the one ConcentrationFloor
 		// reader (U10).
 		"internal/combat/run_concentration_contest.go": "defines combat.RunConcentrationContest — the one ConcentrationFloor reader (U10)",
+		// U10b-1b Phase A. Search's non-stealth tiers are STATIC-DIFFICULTY
+		// (roadmap category B), and combat.RunContest's own doc comment reserves
+		// itself for opposed contests and says these are deliberately unfloored:
+		// "Do not route them here to 'unify' them." AgainstDifficulty is the
+		// seam built for them, and it applies no floor by design.
+		//
+		// Two dice.RollStat sites remain in that file -- the hidden PLAYER and
+		// MOB checks. ⚠️ They are NOT covered by this guard: guardedRollFuncs
+		// watches contest.* and the dice OPPOSED pair, never RollStat. They are
+		// mentioned only so a reader knows the file is not yet fully converted.
+		// They are genuinely opposed and go to combat.RunContest in Phase C.
+		"internal/actions/search.go": "U10b-1b: static-difficulty search tiers, deliberately unfloored (category B)",
+		// U10b-1b Phase A. Forage's per-biome difficulty, same category B
+		// reasoning. ForageCore is pure, so this is the whole of its uncertainty.
+		"internal/forager/forage_core.go": "U10b-1b: static-difficulty forage check, deliberately unfloored (category B)",
+		// U10b-1b. Track resolves TWO kinds of question. resolveTrailDetail's
+		// three bands are static-difficulty READS of the room, so they belong here
+		// with search and forage. The OPPOSED contest against a named quarry does
+		// NOT use contest.* at all -- it goes through combat.RunContest and takes
+		// ContestFloor like every other opposed contest, so the guard never sees it.
+		"internal/actions/track.go": "U10b-1b: static-difficulty trail-read bands, deliberately unfloored (category B). The named-target contest uses combat.RunContest instead",
+		// U10b-1b Phase B. Defines crafting.RunCraftContest and RunSalvageContest,
+		// the ONE readers of CraftFloor and SalvageFloor -- exactly the role
+		// combat/run_contest.go plays for ContestFloor.
+		//
+		// ⚠️ THIS ENTRY MUST STAY THE ONLY CRAFT/SALVAGE ONE. If the guard ever
+		// names a craft or salvage SITE, that site is calling contest.* directly
+		// and has been handed a floor it should not be able to name. CraftFloor
+		// 0.05 and SalvageFloor 0.15 are close enough that the wrong one is
+		// invisible in every test and surfaces only after a retune -- which is the
+		// precise failure U6 deleted by collapsing three wrapper pairs into one.
+		// Fix the call; do not add a second exemption.
+		"internal/crafting/difficulty.go": "defines crafting.RunCraftContest and RunSalvageContest — the ONE CraftFloor/SalvageFloor readers",
 	},
 }
 

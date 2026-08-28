@@ -42,6 +42,35 @@ HONESTY ABOUT THE INPUTS. Every row is labelled in the output:
   combat-analytics.jsonl is COMBAT-ONLY. Every p_win for search, track,
   forage, salvage, barter, craft and skullduggery is therefore J, not M.
   The single exception is forage, which has its own measurement.
+
+DOES U10b-1b INVALIDATE THIS SOLVE? NO, and the reasoning is worth keeping
+because a reviewer raised it and the answer is not obvious.
+
+U10b-1b moved search, track, forage, craft and salvage onto the contest core,
+which changes their success rates. That matters to this file only through the
+p_win inputs. Sorting them:
+
+  * FORAGE's 0.97 is the one genuinely MEASURED input, and it was measured under
+    the threshold form. Under a contest the same score/difficulty ratio gives
+    0.908, so weight() moves 0.9805 -> 0.9403 and the search and perception
+    multipliers would rise about 4.3%. That is smaller than the spread between
+    the J inputs sitting beside it.
+
+  * CRAFT (0.85) and SALVAGE (0.60) are J. They were judgement calls before the
+    conversion and would be judgement calls after it. Re-solving a J input
+    against a NEW guess is not an improvement -- it just launders a guess
+    through arithmetic and makes the result look measured.
+
+So: do NOT re-solve now. The correct move is the one this file already names in
+its own labelling -- confirm the J inputs at playtest, then solve against
+MEASURED contest-form rates. A re-solve before that measurement would have to be
+redone immediately afterwards.
+
+⚠️ OWED AFTER THE U10b-1b PLAYTEST: re-derive p_win for search, forage, craft
+and salvage from observed contest-form rates, then re-run this file. Salvage is
+the one to watch -- its per-unit rate moved most (roughly 0.46 -> 0.81 at
+salvage skill 10 against a skill_minimum-0 item), so its 0.60 is the J input
+most likely to be wrong now.
 """
 import math
 

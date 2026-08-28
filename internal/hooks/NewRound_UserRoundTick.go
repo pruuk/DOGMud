@@ -514,9 +514,25 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 							})
 							if recipe != nil {
 								sl := user.Character.Skills[recipe.Skill]
-								chance := crafting.CalcSuccessChance(sl, recipe.SkillMinimum)
-								roll := util.Rand(100)
-								util.LogRoll("Craft", roll, chance)
+
+								// U10b-1b: craft is an ordinary contest. The
+								// crafter scores stat + skill*SkillWeight; the
+								// recipe supplies a difficulty built from its
+								// SkillMinimum and the DEAREST MATERIAL ACTUALLY
+								// BEING SPENT.
+								//
+								// SelectIngredients (not the recipe's declared
+								// tags) is what makes that honest: it names the
+								// concrete items ConsumeIngredients will take,
+								// in the same order, so the roll and the
+								// consumption cannot disagree.
+								consumed := crafting.SelectIngredients(
+									user.Character.Items, user.Character.ComponentItems, recipe)
+								craftScore := crafting.CraftScore(
+									float64(user.Character.GetStatValue(crafting.CraftPrimaryStat(recipe))), sl)
+								craftDiff := crafting.CraftDifficulty(
+									recipe.SkillMinimum, crafting.DearestMaterialTier(consumed))
+								won := crafting.RunCraftContest(craftScore, craftDiff).Success
 
 								// U10b-1 Task 16: awarded HERE, above the branch,
 								// so a FAILED craft trains at
@@ -531,28 +547,25 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								// that regression was nearly shipped on the spell
 								// path.
 								craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-								user.Character.AwardResolvedScaled(user.UserId, roll < chance, craftBonus,
+								user.Character.AwardResolvedScaled(user.UserId, won, craftBonus,
 									user.Character.CandidateFor(recipe.Skill))
 
-								if roll < chance {
-									// Before consuming, find bottle aging multiplier if recipe uses a bottle
+								if won {
+									// The bottle's aging multiplier comes from the bottle ACTUALLY
+									// BEING CONSUMED, read off the same selection that priced the
+									// craft.
+									//
+									// 🔴 This was a real bug before U10b-1b, not a tidy-up. The old
+									// code scanned Character.Items and THEN ComponentItems for the
+									// first bottle with a multiplier, while ConsumeIngredients drew
+									// from the component bag FIRST — so the potion could inherit the
+									// aging speed of a bottle that was never spent, while the bottle
+									// that WAS spent contributed nothing. Four bottles ship with
+									// multipliers from 3.0 down to 0.25, so the two could differ by 12x.
 									var bottleAgingMult float64
-									for _, ing := range recipe.Ingredients {
-										if ing.ItemTag == "bottle" {
-											for _, itm := range user.Character.Items {
-												if itm.GetSpec().ComponentTag == "bottle" && itm.GetSpec().BottleAgingMultiplier > 0 {
-													bottleAgingMult = itm.GetSpec().BottleAgingMultiplier
-													break
-												}
-											}
-											if bottleAgingMult == 0 {
-												for _, itm := range user.Character.ComponentItems {
-													if itm.GetSpec().ComponentTag == "bottle" && itm.GetSpec().BottleAgingMultiplier > 0 {
-														bottleAgingMult = itm.GetSpec().BottleAgingMultiplier
-														break
-													}
-												}
-											}
+									for _, itm := range consumed {
+										if spec := itm.GetSpec(); spec.ComponentTag == "bottle" && spec.BottleAgingMultiplier > 0 {
+											bottleAgingMult = spec.BottleAgingMultiplier
 											break
 										}
 									}

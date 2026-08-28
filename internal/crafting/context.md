@@ -35,18 +35,23 @@ drains those chests into cook-vendor stock.
   ingredient/output access helpers.
 - **validation.go** — `ValidateRecipe` checks ingredient tags against
   the item registry; called at load time and by integration tests.
-- **salvage.go** — pure math helpers: `CalcSalvageChance` (sqrt-curve
-  per-ingredient recovery probability), `CalcSalvageRounds` (duration
-  from ingredient gold value), `RollSalvageReturns` (per-unit
-  Bernoulli roll over an ingredient list).
+- **difficulty.go** — the craft/salvage CONTEST (U10b-1b): `CraftScore`,
+  `CraftDifficulty`, `CraftPrimaryStat`, `DearestMaterialTier`,
+  `SalvageDifficulty`, `FallbackSalvageDifficulty`, and the two floor
+  seams `RunCraftContest` / `RunSalvageContest`.
+- **salvage.go** — `CalcSalvageRounds` (duration from ingredient gold
+  value), `RollSalvageReturns` / `RollSalvageReturnsFromSpec` (per-unit
+  CONTEST over an ingredient list).
 - **corpse_salvage.go** — static `corpseSalvageTable` + public
   `LookupCorpseSalvage(groups []string) []items.SalvageReturn`.
 - **enchant_salvage_map.go** — `EnchantSalvageYield` /
   `EnchantSalvageYieldWith`; tiered potion→enchanting-mat mapping
   keyed by recipe `skill_minimum` (see below).
 - **crafting_test.go** — recipe-load + GetRecipe unit tests.
-- **salvage_test.go** — CalcSalvageChance / CalcSalvageRounds /
-  RollSalvageReturns unit tests.
+- **salvage_test.go** — CalcSalvageRounds / RollSalvageReturns unit tests.
+- **difficulty_test.go** — the anchor, the mastery curve against the
+  spec's table, tier determinism, and the SkillWeight/CraftSkillMinWeight
+  coupling guard.
 - **corpse_salvage_test.go** — LookupCorpseSalvage unit tests
   covering each table entry + no-match + first-entry-wins ordering.
 - **enchant_salvage_map_test.go** — `EnchantSalvageYieldWith` table-
@@ -73,15 +78,38 @@ drains those chests into cook-vendor stock.
 
 ### Salvage Math
 
-- **`CalcSalvageChance(skill, minChance, maxChance, softCap)`** —
-  returns a probability in `[minChance, maxChance]` via
-  `min + (max - min) × sqrt(clamp(skill,1,softCap) / softCap)`.
-  Config knobs: `SalvageMinChance` (0.15), `SalvageMaxChance`
-  (0.85), `SalvageSoftCap` (50).
+🔴 **`CalcSalvageChance` and `CalcSuccessChance` were DELETED by U10b-1b.**
+Craft and salvage are contests now, not flat percentages. The knobs that
+fed them (`SalvageMinChance`, `SalvageMaxChance`, `SalvageSoftCap`,
+`CraftingBaseSuccessChance`, `CraftingSkillBonusPerLevel`,
+`CraftingMin/MaxSuccessChance`) still exist in config and are still
+validated, but **decide nothing** — do not pin them in a test expecting
+an outcome.
+
+- **`CraftScore(stat, skillLevel)`** — `stat + skill × SkillWeight`, the
+  standard composition. `stat` is the DISCIPLINE'S primary, which varies:
+  blacksmithing STRENGTH, alchemy/cooking/enchanting PERCEPTION,
+  tailoring/jewelcrafting DEXTERITY. Use `CraftPrimaryStat(recipe)`.
+- **`CraftDifficulty(skillMinimum, materialTierMult)`** —
+  `(CraftBaseDifficulty + skillMinimum × CraftSkillMinWeight) × tierMult`.
+  ⚠️ The 50/50 anchor holds only while `SkillWeight == CraftSkillMinWeight`;
+  there is a guard test for that coupling.
+- **`DearestMaterialTier(consumed []items.Item)`** — max `MaterialTier`
+  over the CONCRETE items being spent. 🔴 Never resolve by
+  `component_tag`: `items.FindSpecByComponentTag` iterates a Go map and
+  four items share the tag `bottle`.
+- **`SelectIngredients(inv, componentInv, recipe)`** (crafting.go) — the
+  items `ConsumeIngredients` would take, in the same order (component bag
+  first). That ordering IS the bottle tiebreak.
+- **`RunCraftContest` / `RunSalvageContest`** — the ONLY readers of
+  `CraftFloor` / `SalvageFloor`. Call these, never `contest.RunWithFloors`
+  directly, so a site cannot be handed the wrong floor.
+- **`SalvageDifficulty(itemId, tierMult)`** — the item's own craft
+  difficulty; `ok=false` when it has no recipe.
 - **`CalcSalvageRounds(totalGoldValue, goldPerRound, maxRounds)`** —
   duration = `max(1, min(maxRounds, goldValue / goldPerRound))`.
-- **`RollSalvageReturns(ingredients, chance)`** — per-unit Bernoulli
-  roll; returns only recovered items (non-zero quantity).
+- **`RollSalvageReturns(ingredients, score, difficulty)`** — one contest
+  per unit; returns only recovered items.
 
 ### Enchant Salvage Mapping
 
@@ -228,7 +256,7 @@ type corpseSalvageEntry struct {
 
 ## Testing Notes
 
-- All pure-math functions (`CalcSalvageChance`, `CalcSalvageRounds`,
+- All pure-math functions (`CalcSalvageRounds`, the difficulty.go helpers,
   `RollSalvageReturns`) are covered by table-driven unit tests in
   `salvage_test.go`.
 - `LookupCorpseSalvage` tests in `corpse_salvage_test.go` cover each

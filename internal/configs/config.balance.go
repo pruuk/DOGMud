@@ -478,14 +478,44 @@ type Balance struct {
 	CraftingMinSuccessChance   ConfigInt `yaml:"CraftingMinSuccessChance"`   // Floor (default 5)
 	CraftingMaxSuccessChance   ConfigInt `yaml:"CraftingMaxSuccessChance"`   // Ceiling (default 95)
 
+	// U10b-1b: craft is an ordinary contest. The crafter scores
+	// primaryStat + craftSkill*SkillWeight, and the recipe supplies
+	// (CraftBaseDifficulty + SkillMinimum*CraftSkillMinWeight) * materialTierMult.
+	//
+	// CraftBaseDifficulty is 100 because 100 is the HUMAN STAT BASELINE, so a
+	// baseline crafter at exactly the recipe minimum sits at 50% with no special
+	// case -- reproducing the shipped CraftingBaseSuccessChance of 50.
+	CraftBaseDifficulty ConfigInt `yaml:"CraftBaseDifficulty"` // Difficulty anchor; the human stat baseline (default 100)
+	CraftSkillMinWeight ConfigInt `yaml:"CraftSkillMinWeight"` // Difficulty added per point of recipe SkillMinimum (default 5)
+
+	// The MERCY BAND. These replace the CraftingMin/MaxSuccessChance and
+	// SalvageMin/MaxChance clamps, which are symmetric about 50% and are
+	// therefore exactly contest floors.
+	//
+	// 🔴 A floor of 0 DELETES the band rather than disabling a nicety. Uncapped
+	// salvage is the dangerous half: at salvage skill 50 the craft-then-salvage
+	// loop would retain ~99.9% of materials against 80.75% today, roughly a 250x
+	// cut to the crafting material sink, on the exact loop that farms crafting
+	// skill. Both validate with the <=0 idiom for that reason.
+	CraftFloor   ConfigFloat `yaml:"CraftFloor"`   // Mercy band for craft contests; reproduces the 5/95 clamp (default 0.05)
+	SalvageFloor ConfigFloat `yaml:"SalvageFloor"` // Mercy band for salvage contests; reproduces the 15/85 clamp (default 0.15)
+
 	// Material tier band. items.MaterialTierMultiplier spreads the five authored
-	// buckets evenly between these, so tier 1 sits at Min and tier 5 at Max.
-	// Deliberately narrow: tier MODIFIES a difficulty that recipe.SkillMinimum
-	// already carries, so an authoring slip moves a recipe one bucket rather
-	// than defining its odds. Widening this makes the pending 208-file backfill
-	// proportionally more dangerous.
-	MaterialTierMultiplierMin ConfigFloat `yaml:"MaterialTierMultiplierMin"` // Craft-difficulty multiplier for the commonest tier (default 0.75)
-	MaterialTierMultiplierMax ConfigFloat `yaml:"MaterialTierMultiplierMax"` // Craft-difficulty multiplier for the rarest tier (default 1.25)
+	// buckets evenly between these, so tier 1 sits at Min and tier 5 at Max:
+	// 0.95 / 0.975 / 1.0 / 1.025 / 1.05.
+	//
+	// 🔴 NARROWED FROM 0.75-1.25 (owner, 2026-08-28) after measuring what the
+	// wider band actually did. The tier term is SCALE-INVARIANT, so it moved
+	// every recipe by a fixed z regardless of skill or stat, and at 1.25 it was
+	// a bigger lever than nine levels of mastery. On a skill_minimum 65 recipe
+	// it pushed the 50/50 point from 65 out to 86 — past the skill soft cap of
+	// 50, which stops reading as "slightly harder" and starts reading as a
+	// different recipe.
+	//
+	// At this band the same recipe shifts by about a level, which is what a
+	// MODIFIER on a difficulty recipe.SkillMinimum already carries should do.
+	MaterialTierMultiplierMin ConfigFloat `yaml:"MaterialTierMultiplierMin"` // Craft-difficulty multiplier for the commonest tier (default 0.95)
+	MaterialTierMultiplierMax ConfigFloat `yaml:"MaterialTierMultiplierMax"` // Craft-difficulty multiplier for the rarest tier (default 1.05)
 
 	// ── RECIPE DISCOVERY ─────────────────────────────────────────────────────
 	RecipeDiscoveryBaseChance ConfigFloat `yaml:"RecipeDiscoveryBaseChance"` // Base % to discover a new recipe per successful craft (default 8.0)

@@ -613,7 +613,7 @@ func TickMobCraft(mob *Mob) *CraftResult
 3. Restock materials: add items from `CrafterRestockMaterials` to mob's backpack
 4. Pick eligible recipe: filter `CrafterRecipeIds` by skill match, skill minimum,
    and available ingredients; pick one at random
-5. Roll success via `crafting.CalcSuccessChance(skillLevel, recipe.SkillMinimum)`
+5. Roll success via `crafting.RunCraftContest(skillLevel, recipe.SkillMinimum)`
 6. Consume ingredients regardless of outcome
 7. On success: `Shop.StockItem(output.ItemId)` + `OnSkillUse()` for progression
 8. Return `CraftResult` struct for the caller (hook) to emit room messages and

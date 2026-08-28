@@ -5,26 +5,23 @@ import "github.com/GoMudEngine/GoMud/internal/configs"
 // MaterialTierMultiplier maps an authored material tier onto the craft
 // difficulty band. Five buckets, evenly spaced, tier 3 neutral:
 //
-//	1 -> 0.75   common
-//	2 -> 0.875
+//	1 -> 0.95   common
+//	2 -> 0.975
 //	3 -> 1.0    neutral
-//	4 -> 1.125
-//	5 -> 1.25   rarest
+//	4 -> 1.025
+//	5 -> 1.05   rarest
 //
-// WHY THIS EXISTS. Crafting has no difficulty model today: CalcSuccessChance is
-// a flat percentage of skill against recipe.SkillMinimum, with nothing to
-// contest against. U10b-1b gives craft a real difficulty, and the material tier
-// is the half of it that comes from WHAT YOU ARE WORKING WITH rather than which
-// recipe you picked. Until materials are tiered, that half is inert.
+// WHY THIS EXISTS. Crafting had no difficulty model at all: a flat percentage
+// of skill against recipe.SkillMinimum, with nothing to contest against.
+// U10b-1b gave craft a real difficulty, and the material tier is the half of it
+// that comes from WHAT YOU ARE WORKING WITH rather than which recipe you picked.
 //
-// ⚠️ NOTHING READS THIS YET. The craft difficulty formula is U10b-1b. This ships
-// ahead of it so the 208-file backfill can proceed independently -- and it has
-// to ship first, because fileloader's strict-decode probe (installed by
-// boot_smoke_test.go) fails any YAML key that maps to no Go field. That guard
-// exists because the `hostile:` incident cost two months on production with an
-// authored value that silently did nothing.
+// ✅ READ BY crafting.DearestMaterialTier as of U10b-1b Phase B. It shipped
+// ahead of that consumer so the 138-file backfill could proceed independently,
+// and it had to ship first, because fileloader's strict-decode probe (installed
+// by boot_smoke_test.go) fails any YAML key that maps to no Go field.
 //
-// 🔴 AN ABSENT TIER IS NEUTRAL, NOT CHEAP. Tier 0 returns 1.0, not 0.75. If an
+// 🔴 AN ABSENT TIER IS NEUTRAL, NOT CHEAP. Tier 0 returns 1.0, not the Min. If an
 // untiered material returned the cheapest multiplier, every file still awaiting
 // the backfill would be quietly making its recipes EASIER, and completing the
 // backfill would read as a difficulty increase rather than as the model coming

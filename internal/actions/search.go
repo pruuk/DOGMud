@@ -5,7 +5,8 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -14,6 +15,33 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// secretExitDiscoveryKey namespaces a secret exit's discovery record.
+//
+// Discoveries share one key space per room (Character.Discoveries is
+// map[roomId][]string), and container names and hidden-noun keys are authored
+// strings that could collide with a direction. The prefix keeps an exit named
+// "gate" from being confused with a hidden container of the same name.
+func secretExitDiscoveryKey(exitName string) string {
+	return "exit:" + exitName
+}
+
+// spotsHider resolves "does the observer spot this hider?" as an OPPOSED
+// contest, the same way usercommands/go.go does on room entry.
+//
+// Deliberately mirrors go.go rather than inventing a variant: the two paths
+// answer the identical question and disagreed for four slices, which is the
+// defect Phase C exists to close.
+//
+// Scores follow the convention U6b Task 16 set — CalcDetectionScore for the
+// opposed observer side, CalcSneakScoreVsObserver for the hider, which folds in
+// per-observer lighting (NightVision counts as lit for that observer alone).
+func spotsHider(observer *characters.Character, hider *characters.Character, room *rooms.Room) bool {
+	return combat.RunContest(
+		CalcDetectionScore(observer),
+		[]contest.Entry{{Score: CalcSneakScoreVsObserver(hider, observer, room)}},
+	).Success
+}
 
 // SearchOptions is intentionally empty v1 — in-room search is the only
 // mode. Reserved for future "search container" path.
@@ -95,9 +123,32 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		if !exitInfo.Secret {
 			continue
 		}
+		// 🔴 A FOUND SECRET EXIT IS NOT ROLLED AGAIN. Until 2026-08-29 this tier
+		// set rolledAgainstSomething for every secret exit in the room and never
+		// skipped one already found, because secret exits recorded no discovery
+		// at all — hidden containers below and hidden nouns in tier 6 both guard
+		// with HasDiscovery and record on a find. A room with a secret exit was
+		// therefore a PERMANENT progression candidate on a 2-round cooldown,
+		// roughly 450 uses an hour, against the ~150/hr that `search`'s own
+		// multiplier was solved on (the assumption is written into config.yaml
+		// and skills.go).
+		//
+		// ⚠️ It is still REPORTED, which is where this deliberately differs from
+		// the container and noun tiers that `continue` outright. A found
+		// container is reachable afterwards through `get`, but a secret exit
+		// stays out of the room's exit list until the player VISITS the room
+		// beyond it (roomdetails.go gates on HasVisited, not on a discovery). So
+		// skipping it silently would leave someone who found it and did not walk
+		// through with no way to be reminded of the name. Reporting costs
+		// nothing they have not already earned; the roll and the award are what
+		// close the farm.
+		if char.HasDiscovery(room.RoomId, secretExitDiscoveryKey(exitName)) {
+			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
+			continue
+		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 125.0 {
+		if contest.AgainstDifficulty(searchScore, 125.0).Success {
+			char.AddDiscovery(room.RoomId, secretExitDiscoveryKey(exitName))
 			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
 			if actor.IsPlayer() {
 				actor.SendText(messaging.CategorySystem,
@@ -115,8 +166,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 125.0 {
+		if contest.AgainstDifficulty(searchScore, 125.0).Success {
 			char.AddDiscovery(room.RoomId, containerName)
 			result.HiddenContainersFound = append(result.HiddenContainersFound, containerName)
 			if actor.IsPlayer() {
@@ -134,8 +184,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 135.0 {
+		if contest.AgainstDifficulty(searchScore, 135.0).Success {
 			result.StashedItemsFound = append(result.StashedItemsFound, SearchStashedItem{
 				ItemId:      item.ItemId,
 				DisplayName: item.DisplayName(),
@@ -155,23 +204,25 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.SendText(messaging.CategorySystem, text)
 	}
 
-	// NOTE(ASSIGNED TO U10b-1b, Category B; the breadcrumb used to read
-	// "unassigned" and it is not -- the U10b-1b design spec names "search x4"
-	// explicitly, as settled decision 17): the six
-	// dice.RollStat threshold checks in this file are the LAST uncertain
-	// outcomes off the contest core. The two below are the sharpest problem:
-	// they answer "does the observer spot the hider?" with a flat 135 threshold
-	// that never reads the hider's sneak score, while
-	// usercommands/go.go resolves the SAME question as an opposed contest
-	// (observerScore vs hiddenScore). A hider's skill decides the outcome in one
-	// path and is ignored in the other. Mobs reach this path too, via
-	// behaviortree/actions_scout.go's actTrySearch, gated by the cheap
-	// condRoomHasHiddenEntity pre-check in conditions_scout.go.
+	// U10b-1b PHASE C: hidden detection is an OPPOSED contest, reconciled onto
+	// the form usercommands/go.go already used.
 	//
-	// U4 migrated go.go's opposed version and deliberately did NOT touch these:
-	// converting a flat threshold into a contest is a behaviour change, and
-	// U1-U5 are provable no-ops. Whichever chunk claims them must reconcile the
-	// two implementations, not just move one.
+	// It answered "does the observer spot the hider?" with a flat 135 threshold
+	// that NEVER READ THE HIDER'S SNEAK SCORE, while go.go resolved the identical
+	// question as observerScore vs hiddenScore. A hider's skill decided the
+	// outcome in one path and was ignored in the other. Mobs reached the broken
+	// path too, via behaviortree/actions_scout.go's actTrySearch, gated by the
+	// cheap condRoomHasHiddenEntity pre-check in conditions_scout.go.
+	//
+	// ⚠️ THIS IS THE SLICE'S ONE DELIBERATE BEHAVIOUR CHANGE. Investing in
+	// stealth now works against a searcher, where before it did nothing at all.
+	// U4 declined it precisely because converting a flat threshold into a contest
+	// is a behaviour change and U1-U5 are contracted as provable no-ops.
+	//
+	// It uses combat.RunContest, NOT contest.AgainstDifficulty: there is a real
+	// opponent, so it belongs on the opposed seam and takes ContestFloor like
+	// every other opposed contest. The four static tiers in this file are the
+	// other kind and stay on AgainstDifficulty.
 
 	// ── Tier 2 (target 135): Hidden players ─────────────────────
 	hiddenPlayerNames := []string{}
@@ -184,8 +235,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 135.0 {
+		if spotsHider(char, p.Character, room) {
 			result.HiddenPlayersFound = append(result.HiddenPlayersFound, pId)
 			if actor.IsPlayer() {
 				hiddenPlayerNames = append(hiddenPlayerNames,
@@ -212,8 +262,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 135.0 {
+		if spotsHider(char, &m.Character, room) {
 			result.HiddenMobsFound = append(result.HiddenMobsFound, mId)
 			if actor.IsPlayer() {
 				hiddenMobNames = append(hiddenMobNames,
@@ -246,8 +295,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		}
 		hiddenNoun := room.HiddenNouns[nounKey]
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 175.0 {
+		if contest.AgainstDifficulty(searchScore, 175.0).Success {
 			char.AddDiscovery(room.RoomId, nounKey)
 			result.HiddenNounsFound = append(result.HiddenNounsFound, nounKey)
 			if actor.IsPlayer() {

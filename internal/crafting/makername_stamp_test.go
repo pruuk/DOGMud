@@ -10,7 +10,7 @@ import (
 // craft-completion (async round tick in hooks.UserRoundTick + the
 // immediate-complete branch of actions.InitiateCraft). The async completion
 // path sits behind a non-deterministic success roll (util.Rand vs
-// CalcSuccessChance, capped below 100%), so the condition is tested here as
+// the craft contest, which the mercy floor caps below 100%), so the condition is tested here as
 // a pure function; the call sites are trivial wiring.
 func TestShouldStampMakerName(t *testing.T) {
 	tests := []struct {

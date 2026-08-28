@@ -6,7 +6,7 @@ package forager
 // can use the same data without an import cycle.
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -123,14 +123,22 @@ func ForageCore(a ForageAttempt) ForageResult {
 	if difficulty == 0 {
 		difficulty = 130
 	}
-	// NOTE(ASSIGNED TO U10b-1b, Category B): a static difficulty check still off
-	// the contest core. contest.AgainstDifficulty was built for exactly this and
-	// currently has zero production callers. The breadcrumb used to read
-	// "unassigned"; it is not. The U10b-1b design spec names this site
-	// explicitly -- "the Category B conversions (search x4, track, forage to
-	// AgainstDifficulty)" -- as settled decision 17.
-	roll := dice.RollStat(a.SearchScore)
-	if roll.Value < difficulty {
+	// U10b-1b Phase A: a static-difficulty check, resolved on the contest core.
+	// contest.AgainstDifficulty rolls the DIFFICULTY as well as the forager,
+	// which WIDENS the distribution and compresses outcomes toward 50%: against
+	// a 125 difficulty a score of 100 goes from 4.8% to ~11.9%, and a score of
+	// 175 from 97.2% down to ~91.1%.
+	//
+	// ⚠️ It does NOT make success "depend on the ratio rather than the gap" --
+	// an earlier version of this comment said so and was wrong. dice.RollStat
+	// already drew at stdDev = RollSpread * score, so the old z was
+	// (1 - difficulty/score)/RollSpread, which is ratio-only too. The whole
+	// change is a sqrt(2) widening: P_new = phi(z_old / sqrt(2)).
+	//
+	// Deliberately UNFLOORED. combat.RunContest's doc comment reserves itself
+	// for opposed contests and says static-difficulty rolls stay unfloored, so
+	// routing this there to "unify" it would be against the arc's design.
+	if !contest.AgainstDifficulty(a.SearchScore, difficulty).Success {
 		return ForageResult{}
 	}
 	return ForageResult{Found: true, ItemId: pool[util.Rand(len(pool))]}

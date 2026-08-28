@@ -17,36 +17,75 @@ import (
 
 // ── Crafter test helpers ──────────────────────────────────────────────────────
 
-// forceCraftSuccess overrides crafting config so CalcSuccessChance returns
-// 100, guaranteeing util.Rand(100) < 100 is always true. Restores on cleanup.
+// craftContestStat is the perception a test crafter is given so its craft
+// SCORE is nonzero.
+//
+// 🔴 Load-bearing since U10b-1b. Craft is now a CONTEST of
+// stat + skill*SkillWeight against a recipe difficulty, and a bare test Mob has
+// no stats at all. At score 0, dice.StdDevFor(0) is 0 and the attacker rolls a
+// deterministic 0, so NO difficulty setting can force a win — the old helpers
+// could not be repaired by tuning knobs alone.
+const craftContestStat = 500
+
+// giveCraftScore makes a test crafter capable of winning a craft contest.
+// Call it on any mob passed to executeCraft / executeCraftLegacy.
+func giveCraftScore(mob *Mob) {
+	// ⚠️ Set .Base then Recalculate(), NOT .ValueAdj. crafting reads the stat
+	// through characters.GetStatValue, which returns .Value — setting ValueAdj
+	// leaves Value at 0 and the whole contest collapses to the skill term.
+	mob.Character.Stats.Perception.Base = craftContestStat
+	mob.Character.Stats.Strength.Base = craftContestStat
+	mob.Character.Stats.Dexterity.Base = craftContestStat
+	mob.Character.Stats.Perception.Recalculate()
+	mob.Character.Stats.Strength.Recalculate()
+	mob.Character.Stats.Dexterity.Recalculate()
+}
+
+// forceCraftSuccess makes the craft contest a near-certainty.
+//
+// It no longer touches CraftingBaseSuccessChance: that knob fed
+// CalcSuccessChance, which U10b-1b retired as the craft decision. Forcing the
+// contest instead means collapsing the difficulty to its floor AND suppressing
+// the mercy floor, which otherwise flips 5% of ALL outcomes in either direction
+// — including a guaranteed win.
+//
+// A tiny POSITIVE floor rather than 0, for HONESTY rather than necessity:
+// 0 would in fact stick here (Config.Validate runs ONCE, at boot, and
+// SetConfigForTest/AddOverlayOverrides never re-validate), but 0 is not a
+// legal SHIPPED value and a test should not pin a state production forbids.
 func forceCraftSuccess(t *testing.T) {
 	t.Helper()
 	prev := configs.GetBalanceConfig()
 	configs.AddOverlayOverrides(map[string]any{
-		"Balance.CraftingBaseSuccessChance": 100,
-		"Balance.CraftingMaxSuccessChance":  100,
+		"Balance.CraftBaseDifficulty": 1,
+		"Balance.CraftSkillMinWeight": 0,
+		"Balance.CraftFloor":          1e-12,
 	})
 	t.Cleanup(func() {
 		configs.AddOverlayOverrides(map[string]any{
-			"Balance.CraftingBaseSuccessChance": int(prev.CraftingBaseSuccessChance),
-			"Balance.CraftingMaxSuccessChance":  int(prev.CraftingMaxSuccessChance),
+			"Balance.CraftBaseDifficulty": int(prev.CraftBaseDifficulty),
+			"Balance.CraftSkillMinWeight": int(prev.CraftSkillMinWeight),
+			"Balance.CraftFloor":          float64(prev.CraftFloor),
 		})
 	})
 }
 
-// forceCraftFailure overrides crafting config so CalcSuccessChance returns 0,
-// guaranteeing util.Rand(100) < 0 is always false. Restores on cleanup.
+// forceCraftFailure makes the craft contest a near-impossibility, by the same
+// mechanism in reverse: an enormous difficulty, with the mercy floor suppressed
+// so it cannot rescue the attempt.
 func forceCraftFailure(t *testing.T) {
 	t.Helper()
 	prev := configs.GetBalanceConfig()
 	configs.AddOverlayOverrides(map[string]any{
-		"Balance.CraftingMinSuccessChance": 0,
-		"Balance.CraftingMaxSuccessChance": 0,
+		"Balance.CraftBaseDifficulty": 1000000,
+		"Balance.CraftSkillMinWeight": 0,
+		"Balance.CraftFloor":          1e-12,
 	})
 	t.Cleanup(func() {
 		configs.AddOverlayOverrides(map[string]any{
-			"Balance.CraftingMinSuccessChance": int(prev.CraftingMinSuccessChance),
-			"Balance.CraftingMaxSuccessChance": int(prev.CraftingMaxSuccessChance),
+			"Balance.CraftBaseDifficulty": int(prev.CraftBaseDifficulty),
+			"Balance.CraftSkillMinWeight": int(prev.CraftSkillMinWeight),
+			"Balance.CraftFloor":          float64(prev.CraftFloor),
 		})
 	})
 }
@@ -409,6 +448,7 @@ func TestExecuteCraft_ConsumesIngredientsViaRoundAwareRemove(t *testing.T) {
 	_ = stubSaveShop(t)
 
 	mob := makeCrafterMob()
+	giveCraftScore(mob)
 
 	// Run executeCraft (success or failure doesn't matter for ingredient consumption).
 	executeCraft(mob, recipe, shopInv)
@@ -460,6 +500,7 @@ func TestExecuteCraft_SuccessAddsOutputViaRoundAwareAdd(t *testing.T) {
 	shopInv.CurrentDepletion[crafterTestOutputID] = 500
 
 	mob := makeCrafterMob()
+	giveCraftScore(mob)
 	executeCraft(mob, recipe, shopInv)
 
 	// Output must be present.
@@ -493,6 +534,7 @@ func TestExecuteCraft_SuccessCallsSaveShop(t *testing.T) {
 	saveCount := stubSaveShop(t)
 
 	mob := makeCrafterMob()
+	giveCraftScore(mob)
 	executeCraft(mob, recipe, shopInv)
 
 	assert.Equal(t, 1, *saveCount,
@@ -509,6 +551,7 @@ func TestExecuteCraft_FailureStillConsumesIngredients(t *testing.T) {
 	forceCraftFailure(t)
 
 	mob := makeCrafterMob()
+	giveCraftScore(mob)
 	result := executeCraft(mob, recipe, shopInv)
 
 	assert.False(t, result.Success, "craft must have failed with forced-failure config")
@@ -547,6 +590,7 @@ func TestExecuteCraft_OutputItemFreshlyCreated(t *testing.T) {
 		"pre-condition: output item must not be in stock before craft")
 
 	mob := makeCrafterMob()
+	giveCraftScore(mob)
 	result := executeCraft(mob, recipe, shopInv)
 
 	require.True(t, result.Success, "craft must succeed with forced-success config")
@@ -630,6 +674,7 @@ func minimalCrafterMobForTest(t *testing.T) *Mob {
 // "craft" (the tavern segment in the Kerra fixture, hour 19).
 func TestTickMobCraft_ScheduleGate_BlocksWhenActivityNotCraft(t *testing.T) {
 	mob := minimalCrafterMobForTest(t)
+	giveCraftScore(mob)
 	mob.ScheduleId = "thornwall_smith"
 	mob.Character.RoomId = 9012 // tavern room — activity="" in fixture
 
@@ -652,6 +697,7 @@ func TestTickMobCraft_ScheduleGate_BlocksWhenActivityNotCraft(t *testing.T) {
 // cleanly — we don't assert the result value.
 func TestTickMobCraft_ScheduleGate_NoScheduleIsUnaffected(t *testing.T) {
 	mob := minimalCrafterMobForTest(t)
+	giveCraftScore(mob)
 	mob.ScheduleId = "" // no schedule — gate must be a no-op
 
 	// Should complete without panic regardless of result.
@@ -674,6 +720,7 @@ func TestExecuteCraft_SuccessAlwaysRoutesToShop(t *testing.T) {
 	forceCraftSuccess(t)
 
 	mob := makeCrafterMob()
+	giveCraftScore(mob)
 	preInventoryCount := len(mob.Character.Items)
 
 	result := executeCraft(mob, recipe, shopInv)
@@ -769,14 +816,30 @@ func TestTickMobShopBaselineRestock_RefillsCommonTiersOnCadence(t *testing.T) {
 // would otherwise be checking a path that returns 0 without ever reaching the
 // award. The plan calls this out for exactly this task.
 //
-// The verdict is pinned by collapsing CalcSuccessChance's clamp range onto one
+// The verdict is pinned by collapsing the craft CONTEST's difficulty onto one
 // value, so the roll is exact rather than statistical.
+// pinMobCraftChance pins the craft outcome to certain success (pct >= 100) or
+// certain failure (pct <= 0).
+//
+// It no longer pins CraftingMin/MaxSuccessChance: U10b-1b retired
+// CalcSuccessChance as the craft decision, so those knobs no longer affect the
+// outcome and a test pinning them would pass or fail at random. It now collapses
+// or inflates the CONTEST difficulty, and suppresses the mercy floor, which
+// otherwise flips 5% of outcomes in both directions.
+//
+// CraftFloor takes a tiny POSITIVE value, not 0: the validator corrects <=0 back
+// to 0.05 because a 0 floor is not a legal shipped value.
 func pinMobCraftChance(t *testing.T, pct int) {
 	t.Helper()
 	pinConfigForTest(t)
 	cfg := configs.GetConfig()
-	cfg.Balance.CraftingMinSuccessChance = configs.ConfigInt(pct)
-	cfg.Balance.CraftingMaxSuccessChance = configs.ConfigInt(pct)
+	if pct >= 100 {
+		cfg.Balance.CraftBaseDifficulty = 1
+	} else {
+		cfg.Balance.CraftBaseDifficulty = 1000000
+	}
+	cfg.Balance.CraftSkillMinWeight = 0
+	cfg.Balance.CraftFloor = configs.ConfigFloat(1e-12)
 	configs.SetConfigForTest(t, cfg)
 }
 
@@ -784,6 +847,9 @@ func mobCrafterForProgressionTest(skill string) *Mob {
 	m := &Mob{MobId: MobId(9302), Zone: "test_zone", Crafter: true}
 	m.Character.Name = "Progression Crafter"
 	m.Character.Skills = map[string]int{skill: 1}
+	// Craft is a contest since U10b-1b, so a crafter with no stats scores 0 and
+	// can never win regardless of difficulty.
+	giveCraftScore(m)
 	return m
 }
 
@@ -792,7 +858,7 @@ func TestExecuteCraftLegacy_AFailedCraftStillAwards(t *testing.T) {
 
 	// Precondition, asserted rather than assumed: without MobProgressionEnabled
 	// this test would pass against an award that never fires.
-	pinMobCraftChance(t, 0) // util.Rand(100) is never < 0: the craft ALWAYS fails
+	pinMobCraftChance(t, 0) // difficulty inflated + floor suppressed: ALWAYS fails
 	if !bool(configs.GetBalanceConfig().MobProgressionEnabled) {
 		t.Fatal("precondition: MobProgressionEnabled must be true or every mob award returns 0")
 	}
