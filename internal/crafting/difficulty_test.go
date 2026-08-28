@@ -248,32 +248,88 @@ func TestSelectIngredientsMatchesConsumeIngredients(t *testing.T) {
 	}
 }
 
-// TestSelectIngredientsPrefersComponentBagOrder pins the bottle tiebreak
-// (settled decision 8). The component bag is walked FIRST, so the Clay Flask
-// there is taken over the Crystalline Decanter in the backpack.
+// TestSelectIngredientsTakesTheCheapestMaterial pins the selection rule
+// (owner, 2026-08-28): within a tag, the LOWEST MaterialTier is spent first.
 //
-// 🔴 Resolving by lowest ItemId instead would always pick the Glass Vial (40006)
-// and order the rest inverse to quality, which deletes the potion aging axis.
-// This test is what stops that "simplification".
-func TestSelectIngredientsPrefersComponentBagOrder(t *testing.T) {
+// 🔴 THE DISCRIMINATING CASE IS THE EXPENSIVE ITEM IN THE COMPONENT BAG. Under
+// the previous rule — component bag first, then inventory order — the decanter
+// would win here purely for sitting in the bag, and the craft would be priced
+// against a tier-4 material the player never chose to spend. If this test is
+// ever "simplified" back to pool order, that is the behaviour returning.
+func TestSelectIngredientsTakesTheCheapestMaterial(t *testing.T) {
 	recipe := &RecipeSpec{
 		Ingredients: []RecipeIngredient{{ItemTag: "bottle", Quantity: 1}},
 	}
-	componentInv := []items.Item{makeTieredItem(40043, "bottle", 1)} // clay flask
-	inv := []items.Item{makeTieredItem(40045, "bottle", 4)}          // decanter
+	componentInv := []items.Item{makeTieredItem(40045, "bottle", 4)} // decanter
+	inv := []items.Item{makeTieredItem(40043, "bottle", 1)}          // clay flask
 
 	sel := SelectIngredients(inv, componentInv, recipe)
 	if len(sel) != 1 {
 		t.Fatalf("expected exactly 1 selected item, got %d", len(sel))
 	}
 	if sel[0].ItemId != 40043 {
-		t.Fatalf("selected item %d, want the component-bag clay flask 40043. "+
-			"Component bag is consumed FIRST, so it must be selected first.", sel[0].ItemId)
+		t.Fatalf("selected item %d, want the tier-1 clay flask 40043. The "+
+			"cheapest material is spent first, even when a dearer one sits "+
+			"earlier in the component bag.", sel[0].ItemId)
 	}
 
-	if got := DearestMaterialTier(SelectIngredients(inv, componentInv, recipe)); got != 0.75 {
-		t.Errorf("dearest tier multiplier = %v, want 0.75 (tier 1 clay flask). "+
-			"Picking the decanter would give 1.125 and make the craft harder "+
-			"than the materials the player actually spent.", got)
+	if got := DearestMaterialTier(sel); got != 0.75 {
+		t.Errorf("difficulty multiplier = %v, want 0.75. Reading 1.125 means the "+
+			"decanter was selected and the craft is priced against a material "+
+			"the player did not spend.", got)
+	}
+}
+
+// TestConsumeIngredientsRemovesExactlyWhatSelectionNamed is the agreement guard.
+//
+// It is now structural rather than statistical: both functions call
+// selectIngredientPicks, so they cannot drift. This asserts the property that
+// matters anyway, because "they share a helper" is a claim about today's code
+// and this is a claim about behaviour.
+//
+// Uses the same discriminating fixture: if consumption fell back to pool order
+// it would destroy the decanter while selection priced the clay flask.
+func TestConsumeIngredientsRemovesExactlyWhatSelectionNamed(t *testing.T) {
+	recipe := &RecipeSpec{
+		Ingredients: []RecipeIngredient{
+			{ItemTag: "bottle", Quantity: 1},
+			{ItemTag: "herb", Quantity: 2},
+		},
+	}
+	componentInv := []items.Item{
+		makeTieredItem(40045, "bottle", 4), // dearer bottle, earlier pool
+		makeTieredItem(40004, "herb", 2),
+	}
+	inv := []items.Item{
+		makeTieredItem(40043, "bottle", 1), // cheaper bottle, later pool
+		makeTieredItem(40005, "herb", 2),
+		makeTieredItem(40001, "ingot", 1),
+	}
+
+	selected := SelectIngredients(inv, componentInv, recipe)
+	newInv, newComponent := ConsumeIngredients(inv, componentInv, recipe)
+
+	survived := map[int]int{}
+	for _, it := range append(append([]items.Item{}, newInv...), newComponent...) {
+		survived[it.ItemId]++
+	}
+	expected := map[int]int{}
+	for _, it := range append(append([]items.Item{}, inv...), componentInv...) {
+		expected[it.ItemId]++
+	}
+	for _, it := range selected {
+		expected[it.ItemId]--
+	}
+	for id, want := range expected {
+		if survived[id] != want {
+			t.Errorf("item %d: %d survived, selection implies %d — selection and "+
+				"consumption disagree", id, survived[id], want)
+		}
+	}
+
+	// And the cheap bottle specifically is the one that went.
+	if survived[40043] != 0 || survived[40045] != 1 {
+		t.Errorf("clay flask survived=%d decanter survived=%d; want 0 and 1 "+
+			"(cheapest spent, dearest kept)", survived[40043], survived[40045])
 	}
 }

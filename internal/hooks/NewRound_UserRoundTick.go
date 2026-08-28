@@ -551,24 +551,21 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									user.Character.CandidateFor(recipe.Skill))
 
 								if won {
-									// Before consuming, find bottle aging multiplier if recipe uses a bottle
+									// The bottle's aging multiplier comes from the bottle ACTUALLY
+									// BEING CONSUMED, read off the same selection that priced the
+									// craft.
+									//
+									// 🔴 This was a real bug before U10b-1b, not a tidy-up. The old
+									// code scanned Character.Items and THEN ComponentItems for the
+									// first bottle with a multiplier, while ConsumeIngredients drew
+									// from the component bag FIRST — so the potion could inherit the
+									// aging speed of a bottle that was never spent, while the bottle
+									// that WAS spent contributed nothing. Four bottles ship with
+									// multipliers from 3.0 down to 0.25, so the two could differ by 12x.
 									var bottleAgingMult float64
-									for _, ing := range recipe.Ingredients {
-										if ing.ItemTag == "bottle" {
-											for _, itm := range user.Character.Items {
-												if itm.GetSpec().ComponentTag == "bottle" && itm.GetSpec().BottleAgingMultiplier > 0 {
-													bottleAgingMult = itm.GetSpec().BottleAgingMultiplier
-													break
-												}
-											}
-											if bottleAgingMult == 0 {
-												for _, itm := range user.Character.ComponentItems {
-													if itm.GetSpec().ComponentTag == "bottle" && itm.GetSpec().BottleAgingMultiplier > 0 {
-														bottleAgingMult = itm.GetSpec().BottleAgingMultiplier
-														break
-													}
-												}
-											}
+									for _, itm := range consumed {
+										if spec := itm.GetSpec(); spec.ComponentTag == "bottle" && spec.BottleAgingMultiplier > 0 {
+											bottleAgingMult = spec.BottleAgingMultiplier
 											break
 										}
 									}

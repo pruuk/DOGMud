@@ -256,80 +256,119 @@ func HasIngredients(inv []items.Item, componentInv []items.Item, recipe *RecipeS
 	return true, ""
 }
 
-// SelectIngredients reports the CONCRETE items ConsumeIngredients would take,
-// in the order it would take them, WITHOUT taking them.
-//
-// It exists because craft difficulty depends on the DEAREST MATERIAL ACTUALLY
-// SPENT (spec 5.1.1.3), and that has to be known before the roll while the same
-// items must then be the ones consumed. Resolving the recipe's declared
-// component_tag instead would be wrong twice over: items.FindSpecByComponentTag
-// iterates a Go map and four items share the tag "bottle", so the tier would
-// re-roll every attempt; and difficulty would ride on the recipe rather than on
-// what the player actually put in.
-//
-// 🔴 THE ORDER IS LOAD-BEARING, NOT INCIDENTAL. Component bag first, then
-// backpack, each in inventory order — mirroring ConsumeIngredients exactly.
-// That ordering IS the bottle tiebreak (settled decision 8): resolving by
-// lowest ItemId instead would always pick the Glass Vial at 40006 and order the
-// rest inverse to quality, deleting the potion aging axis.
-//
-// ⚠️ This deliberately DUPLICATES ConsumeIngredients' traversal rather than
-// sharing it. Consumption removes items by decrementing a per-tag counter while
-// rebuilding both pools, and an identity-based filter over value-type items
-// with equal-valued duplicates is a worse hazard than the duplication. The two
-// are held in agreement by TestSelectIngredientsMatchesConsumeIngredients,
-// which fails if either traversal is edited alone.
-func SelectIngredients(inv []items.Item, componentInv []items.Item, recipe *RecipeSpec) []items.Item {
-	needed := make(map[string]int)
-	for _, ing := range recipe.Ingredients {
-		needed[ing.ItemTag] = ing.Quantity
-	}
-
-	selected := make([]items.Item, 0, len(recipe.Ingredients))
-	for _, pool := range [][]items.Item{componentInv, inv} {
-		for _, item := range pool {
-			if tag := componentTagOf(item); tag != "" && needed[tag] > 0 {
-				needed[tag]--
-				selected = append(selected, item)
-			}
-		}
-	}
-	return selected
+// ingredientPick is one concrete position chosen to satisfy a recipe.
+type ingredientPick struct {
+	fromComponent bool
+	index         int
 }
 
-// ConsumeIngredients removes the required items from componentInv first, then
-// inv, and returns the remainders of both pools.
-// Items are matched by ComponentTag; exactly the needed quantity is consumed.
-func ConsumeIngredients(inv []items.Item, componentInv []items.Item, recipe *RecipeSpec) ([]items.Item, []items.Item) {
-	needed := make(map[string]int)
+// selectIngredientPicks is THE single traversal behind both SelectIngredients
+// and ConsumeIngredients. They must agree exactly — difficulty is computed from
+// what selection names and materials are destroyed by what consumption removes,
+// so any divergence prices a craft against items the player did not spend.
+//
+// 🔴 CHEAPEST MATERIAL FIRST, and this is the rule that matters (owner,
+// 2026-08-28). Within a tag, candidates are ordered by MaterialTier ASCENDING,
+// then component bag before backpack, then inventory order.
+//
+// It replaces plain inventory order, which made craft difficulty depend on
+// which physical item happened to sit first in the bag. Four items share
+// component_tag "bottle" at tiers 1/1/3/4, so the same alchemy recipe swung
+// between a 0.75 and a 1.125 difficulty multiplier for reasons the player could
+// neither see nor control — and picking up materials in a different order, or
+// running `sort`, silently changed their odds.
+//
+// Cheapest-first is also the safe default in the other direction: it spends the
+// clay flask before the crystalline decanter, so a careless craft cannot burn
+// the expensive bottle.
+//
+// ⚠️ Craft difficulty is therefore STABLE for the 94 recipes whose every tag
+// resolves to one tier, and legitimately VARIABLE for alchemy, where the bottle
+// is a real choice. Letting a player deliberately spend a better bottle needs an
+// explicit selection verb; that is a follow-up, not something bag order should
+// have been deciding by accident.
+func selectIngredientPicks(inv []items.Item, componentInv []items.Item, recipe *RecipeSpec) []ingredientPick {
+	type candidate struct {
+		pick ingredientPick
+		tier int
+	}
+
+	byTag := map[string][]candidate{}
+	add := func(pool []items.Item, fromComponent bool) {
+		for idx, item := range pool {
+			tag := componentTagOf(item)
+			if tag == "" {
+				continue
+			}
+			byTag[tag] = append(byTag[tag], candidate{
+				pick: ingredientPick{fromComponent: fromComponent, index: idx},
+				tier: item.GetSpec().MaterialTier,
+			})
+		}
+	}
+	add(componentInv, true)
+	add(inv, false)
+
+	picks := make([]ingredientPick, 0, len(recipe.Ingredients))
 	for _, ing := range recipe.Ingredients {
-		needed[ing.ItemTag] = ing.Quantity
+		cands := byTag[ing.ItemTag]
+		// Stable sort: preserves the component-bag-then-backpack, inventory-order
+		// sequence built above for everything the tier does not separate.
+		sort.SliceStable(cands, func(a, b int) bool { return cands[a].tier < cands[b].tier })
+		for n := 0; n < ing.Quantity && n < len(cands); n++ {
+			picks = append(picks, cands[n].pick)
+		}
+	}
+	return picks
+}
+
+// SelectIngredients reports the CONCRETE items ConsumeIngredients will take,
+// without taking them.
+//
+// Craft difficulty depends on the DEAREST MATERIAL ACTUALLY SPENT (spec
+// 5.1.1.3), which has to be known before the roll while the same items are then
+// the ones consumed. Both call selectIngredientPicks, so they cannot drift.
+func SelectIngredients(inv []items.Item, componentInv []items.Item, recipe *RecipeSpec) []items.Item {
+	picks := selectIngredientPicks(inv, componentInv, recipe)
+	out := make([]items.Item, 0, len(picks))
+	for _, p := range picks {
+		if p.fromComponent {
+			out = append(out, componentInv[p.index])
+		} else {
+			out = append(out, inv[p.index])
+		}
+	}
+	return out
+}
+
+// ConsumeIngredients removes the selected items and returns the remainders of
+// both pools. Items are matched by ComponentTag; exactly the needed quantity is
+// consumed, cheapest material first.
+func ConsumeIngredients(inv []items.Item, componentInv []items.Item, recipe *RecipeSpec) ([]items.Item, []items.Item) {
+	picks := selectIngredientPicks(inv, componentInv, recipe)
+
+	dropComponent := map[int]bool{}
+	dropInv := map[int]bool{}
+	for _, p := range picks {
+		if p.fromComponent {
+			dropComponent[p.index] = true
+		} else {
+			dropInv[p.index] = true
+		}
 	}
 
-	// Consume from component bag first
 	newComponent := make([]items.Item, 0, len(componentInv))
-	for _, item := range componentInv {
-		if tag := componentTagOf(item); tag != "" {
-			if remaining := needed[tag]; remaining > 0 {
-				needed[tag]--
-				continue // consume this item
-			}
+	for idx, item := range componentInv {
+		if !dropComponent[idx] {
+			newComponent = append(newComponent, item)
 		}
-		newComponent = append(newComponent, item)
 	}
-
-	// Then from backpack
 	newInv := make([]items.Item, 0, len(inv))
-	for _, item := range inv {
-		if tag := componentTagOf(item); tag != "" {
-			if remaining := needed[tag]; remaining > 0 {
-				needed[tag]--
-				continue // consume this item
-			}
+	for idx, item := range inv {
+		if !dropInv[idx] {
+			newInv = append(newInv, item)
 		}
-		newInv = append(newInv, item)
 	}
-
 	return newInv, newComponent
 }
 
