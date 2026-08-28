@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -131,31 +131,38 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	// contested that branch now fires meaningfully more often for developed
 	// characters than it used to -- previously the cut was real only for
 	// beginners.
-	// U10b-1b Phase A. The 125 DETECTION GATE is the success decision and is now
-	// a contest, so the difficulty is rolled too and outcomes compress toward
-	// 50% (spec 5.1).
+	// 🔴 DEFERRED FROM U10b-1b PHASE A, DELIBERATELY, after the conversion was
+	// written and REVERTED. Do not convert this to contest.AgainstDifficulty
+	// without reading this first.
 	//
-	// 🔴 IMPLEMENTER RULING, because the spec did not settle it. Track is not a
-	// single pass/fail: ONE roll is compared against a LADDER — 125 here, 175
-	// for active-track below, and 135/175 again inside readRoomTrail. The spec
-	// says only "track to AgainstDifficulty" and does not say what becomes of
-	// the finer bands.
+	// Track is not a pass/fail. ONE roll is compared against a LADDER: 125 here,
+	// 175 for active-track below, and 135/175 again inside readRoomTrail. The
+	// U10b-1b spec says only "track to AgainstDifficulty" and never grappled with
+	// that shape.
 	//
-	// Converting each band to its own contest would be WRONG: independent rolls
-	// per tier mean a tracker could fail the 125 band and pass the 175 one,
-	// which is incoherent for a nested ladder.
+	// Contesting ONLY the 125 gate and leaving the bands reading the raw roll
+	// DECOUPLES them, because a contest is won by out-rolling a ROLLED difficulty
+	// rather than by clearing a fixed number. Measured over 400k trials at
+	// RollSpread 0.15:
 	//
-	// So the SUCCESS DECISION is contested and the QUALITY LADDER stays a read
-	// of the attacker's own roll. `Success` gates whether you read anything;
-	// RollValue still says how well. AttackRoll is always populated, contested
-	// or not, so this is a faithful read rather than a reconstruction.
+	//   score 100: 73.8% of SUCCESSFUL reads carry RollValue < 125 -- the number
+	//              every surviving band comparison still treats as "no tracks".
+	//   score 210: 0.70% of tracks roll >= 175 yet LOSE the gate, and are told
+	//              "You don't see any tracks" with Reason "roll below detection
+	//              threshold", which is false about the roll that happened.
+	//              Structurally impossible under the threshold form.
 	//
-	// The bands are therefore still self-relative. Whether they should key off
-	// the contest MARGIN instead is a real question and a deliberate follow-up,
-	// not an oversight — margin is stat-scale and unnormalised, so re-deriving
-	// 135 and 175 against it is a retune, not a refactor.
-	det := contest.AgainstDifficulty(searchScore, 125.0)
-	roll := det.AttackRoll
+	// Contesting each band separately is no better: independent rolls let a
+	// tracker fail 125 and pass 175, which is the same incoherence by another
+	// route.
+	//
+	// A correct conversion needs a DESIGN DECISION about what the ladder means
+	// once the bar itself is rolled -- nested contests, or a single roll
+	// re-expressed against the rolled difficulty, or margin bands. All three
+	// change the 135/175 odds and want measuring, so none of them is a refactor.
+	// Search and forage ARE converted; they are single-threshold and have no
+	// ladder to decouple.
+	roll := dice.RollStat(searchScore)
 	result.RollValue = roll.Value
 
 	// awardTrack fires the round's ONE progression award, at a weight that
@@ -176,9 +183,8 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		actor.AwardResolved(won, char.CandidateFor(string(skills.Search)))
 	}
 
-	// Lost the detection contest: no tracks visible at all. Gated on the
-	// CONTEST, not on roll.Value, so the rolled difficulty actually counts.
-	if !det.Success {
+	// Roll < 125.0: no tracks visible at all.
+	if roll.Value < 125.0 {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem, "You don't see any tracks.")
 		}

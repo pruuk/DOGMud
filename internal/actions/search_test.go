@@ -74,6 +74,17 @@ func (a *searchFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+// suppressSearchFinds drops an actor's search score far enough below the
+// tier thresholds that finding anything is negligible.
+//
+// Needed because U10b-1b Phase A made search a CONTEST: the difficulty is rolled
+// too, which compresses outcomes toward 50% and made long-odds finds roughly 8x
+// more likely. Tests that assert on the FRUITLESS path must suppress the find,
+// or they silently degrade into skips.
+func suppressSearchFinds(a *searchFakeActor) {
+	a.char.Stats.Perception.ValueAdj = 20
+}
+
 // newSearchTestRoom builds a minimal Room with no exits.
 func newSearchTestRoom(roomId int) *rooms.Room {
 	return &rooms.Room{RoomId: roomId}
@@ -183,13 +194,21 @@ func TestSearch_AwardsOncePerSearchRegardlessOfCandidateCount(t *testing.T) {
 //
 // Determinism without pinning the dice: the hidden-noun tier needs a roll of
 // 175 against a searchScore built from Perception + search*SkillWeight. The
-// fixture's Perception is 100 and its search rank 0, so the roll is centred on
-// 100 with a 0.15 spread -- 175 is five sigma away and is not going to happen.
-// The assertion below fails loudly rather than flaking if it ever does.
+// fixture is suppressed to a search score far below the 175 hidden-noun target
+// (see suppressSearchFinds), so a find is negligible and the skip below is a
+// last-resort guard rather than a routine outcome.
+//
+// ⚠️ The previous comment here claimed "Perception is 100 ... 175 is five sigma
+// away". That was ALREADY WRONG before U10b-1b: CalcSearchScore is
+// Perception + SkillMultiplier(rank)*25, so the score was 125, not 100, and 175
+// was 2.7 sigma. Phase A's contest conversion then took the per-noun find from
+// 0.38% to 2.96%, which over three nouns is an ~8.6% skip rate -- these three
+// tests would have quietly stopped asserting anything one run in twelve.
 func TestSearch_AFruitlessSearchAwardsAtTheLossWeight(t *testing.T) {
 	pinConfigForTest(t)
 
 	actor := newSearchFakeActor("SearchFruitless", searchRoomWithHiddenNouns(9303, 3), false, 0)
+	suppressSearchFinds(actor)
 
 	result := Search(actor, SearchOptions{})
 
@@ -238,6 +257,7 @@ func TestSearch_AFruitlessSearchTellsThePlayer(t *testing.T) {
 	pinConfigForTest(t)
 
 	actor := newSearchFakeActor("SearchTalker", searchRoomWithHiddenNouns(9401, 3), true, 7001)
+	suppressSearchFinds(actor)
 
 	result := Search(actor, SearchOptions{})
 	if result.FoundAnything() {
@@ -264,6 +284,7 @@ func TestSearch_EmptyAndFruitlessRoomsAreIndistinguishable(t *testing.T) {
 	pinConfigForTest(t)
 
 	fruitless := newSearchFakeActor("SearchFruit", searchRoomWithHiddenNouns(9402, 3), true, 7002)
+	suppressSearchFinds(fruitless)
 	empty := newSearchFakeActor("SearchBare", newSearchTestRoom(9403), true, 7003)
 
 	rf := Search(fruitless, SearchOptions{})

@@ -15,8 +15,11 @@ func forageFindRate(score float64, trials int) float64 {
 }
 
 // TestForageResolvesAsAContest pins spec 5.1 for forage: the DIFFICULTY is now
-// rolled too, so success depends on the RATIO of difficulty to score rather
-// than the gap, and outcomes compress toward 50%.
+// rolled too, which WIDENS the distribution and compresses outcomes toward 50%.
+//
+// ⚠️ Not "ratio rather than gap" -- dice.RollStat already drew at
+// stdDev = RollSpread * score, so the old form was ratio-only as well. The
+// change is exactly a sqrt(2) widening.
 //
 // Biome "land" has ForageDifficulty 125, the same target as search's tier 1, so
 // the spec's published table applies directly: a score of 100 goes from 4.8%

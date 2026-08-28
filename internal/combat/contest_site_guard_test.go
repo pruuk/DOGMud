@@ -76,7 +76,6 @@ var contestSiteOwners = map[string]string{
 	// so ResolveChannelAttack does not apply. They use contest.AgainstDifficulty,
 	// which is deliberately unfloored per combat.RunContest's scope note.
 	"internal/actions/search.go:Search":          "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175). The hidden player and mob checks in the same func are opposed and go to RunContest in Phase C",
-	"internal/actions/track.go:Track":            "U10b-1b Phase A: the 125 detection gate. The 135/175 quality bands stay a read of the attacker's own roll — one ladder, one roll",
 	"internal/forager/forage_core.go:ForageCore": "U10b-1b Phase A: the per-biome forage difficulty. ForageCore is pure, so this is the whole of its uncertainty",
 
 	// U10b-1b Phase B: the craft and salvage floor seams. Not channel attacks —

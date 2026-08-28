@@ -124,10 +124,16 @@ func ForageCore(a ForageAttempt) ForageResult {
 		difficulty = 130
 	}
 	// U10b-1b Phase A: a static-difficulty check, resolved on the contest core.
-	// contest.AgainstDifficulty rolls the DIFFICULTY as well as the forager, so
-	// success depends on the RATIO of the two rather than the gap, and outcomes
-	// compress toward 50%: against this biome's 125 a score of 100 goes from
-	// 4.8% to ~11.9%, and a score of 175 from 97.2% down to ~91.1%.
+	// contest.AgainstDifficulty rolls the DIFFICULTY as well as the forager,
+	// which WIDENS the distribution and compresses outcomes toward 50%: against
+	// a 125 difficulty a score of 100 goes from 4.8% to ~11.9%, and a score of
+	// 175 from 97.2% down to ~91.1%.
+	//
+	// ⚠️ It does NOT make success "depend on the ratio rather than the gap" --
+	// an earlier version of this comment said so and was wrong. dice.RollStat
+	// already drew at stdDev = RollSpread * score, so the old z was
+	// (1 - difficulty/score)/RollSpread, which is ratio-only too. The whole
+	// change is a sqrt(2) widening: P_new = phi(z_old / sqrt(2)).
 	//
 	// Deliberately UNFLOORED. combat.RunContest's doc comment reserves itself
 	// for opposed contests and says static-difficulty rolls stay unfloored, so

@@ -53,12 +53,15 @@ type Result struct {
 - **`Run` and `AgainstDifficulty` are UNFLOORED.** Migrating a floored caller
   onto either silently deletes its floor. `contest_floor_guard_test.go` fails any
   new production caller outside `internal/combat/combat_helpers.go`.
-- **`AgainstDifficulty` has zero production callers** as of U4. The static-check
-  sites it was built for (`actions/search.go` x6, `actions/track.go`,
-  `forager/forage_core.go`) are still off the core and unassigned; see the
-  roadmap's Category B. It is therefore guarded-and-unused: Task 9 added it to
-  the floor guard's watch list, so it is protected against misuse but nothing
-  calls it yet.
+- **`AgainstDifficulty` has production callers as of U10b-1b Phase A** (it had
+  ZERO from U4 until then). The static-check sites it was built for are being
+  converted: `actions/search.go` (four non-stealth tiers) and
+  `forager/forage_core.go` are done; `actions/track.go` is DEFERRED with a
+  written reason (its one roll feeds a 125/135/175 LADDER, and contesting only
+  the gate decouples the bands from it); `search.go`'s two hidden-entity checks
+  go to `combat.RunContest` in Phase C because they are genuinely opposed.
+  Each caller carries a `guardedRollExemptions` row explaining why it is
+  legitimately unfloored.
 - **`Run` leaves both `RollResult`s' `.Success` and `.Margin` at zero.** It uses
   `dice.Roll`, not `dice.OpposedRoll`. Read `Result.Margin`, never
   `Result.DefenseRoll.Margin`.

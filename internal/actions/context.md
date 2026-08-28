@@ -864,10 +864,18 @@ reveal) does not tell you.
   `steal.go`, `plant.go` and `defuse.go` resolve through
   `combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})`
   (U4 routed them to a wrapper, U6 collapsed every wrapper into this one entry
-  point). Do not reach `internal/contest` directly; this package
-  goes through `internal/combat`. The flat `dice.RollStat` threshold checks in
-  `search.go` and `track.go` are NOT contests yet and are unassigned; both are
-  breadcrumbed in place. (A separate case, `surprise_attack.go`, had no hit
+  point). For OPPOSED contests, do not reach `internal/contest` directly; this
+  package goes through `internal/combat`.
+
+  **The one exception, added by U10b-1b Phase A: STATIC-DIFFICULTY checks call
+  `contest.AgainstDifficulty` directly**, because there is no `internal/combat`
+  wrapper for them and deliberately never will be — `combat.RunContest`'s doc
+  comment reserves itself for opposed contests and says static-difficulty rolls
+  stay unfloored ("Do not route them here to 'unify' them"). `search.go`'s four
+  non-stealth tiers take that path. `search.go`'s two hidden-entity checks do
+  NOT: they have a real opponent, so they are opposed and go to
+  `combat.RunContest` in Phase C. `track.go` is still on `dice.RollStat` and is
+  DEFERRED with a written reason in the file. (A separate case, `surprise_attack.go`, had no hit
   resolution at all — not a flat threshold but an unconditional auto-hit with
   no defender term anywhere. U10d deleted it outright rather than giving it a
   contest: the opening strike of the ordinary combat round is the surprise

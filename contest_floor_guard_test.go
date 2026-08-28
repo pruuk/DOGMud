@@ -74,14 +74,12 @@ var guardedRollExemptions = map[string]map[string]string{
 		// "Do not route them here to 'unify' them." AgainstDifficulty is the
 		// seam built for them, and it applies no floor by design.
 		//
-		// The two remaining dice.RollStat sites in this file are the hidden
-		// PLAYER and MOB checks. Those are genuinely opposed and go to
-		// combat.RunContest in Phase C, not here.
+		// Two dice.RollStat sites remain in that file -- the hidden PLAYER and
+		// MOB checks. ⚠️ They are NOT covered by this guard: guardedRollFuncs
+		// watches contest.* and the dice OPPOSED pair, never RollStat. They are
+		// mentioned only so a reader knows the file is not yet fully converted.
+		// They are genuinely opposed and go to combat.RunContest in Phase C.
 		"internal/actions/search.go": "U10b-1b: static-difficulty search tiers, deliberately unfloored (category B)",
-		// U10b-1b Phase A. Track's 125 DETECTION GATE, same category B reasoning.
-		// The finer 135/175 quality bands still read the attacker's own roll --
-		// see the ruling in track.go for why they are not separate contests.
-		"internal/actions/track.go": "U10b-1b: static-difficulty track detection gate, deliberately unfloored (category B)",
 		// U10b-1b Phase A. Forage's per-biome difficulty, same category B
 		// reasoning. ForageCore is pure, so this is the whole of its uncertainty.
 		"internal/forager/forage_core.go": "U10b-1b: static-difficulty forage check, deliberately unfloored (category B)",
