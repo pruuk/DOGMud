@@ -79,6 +79,12 @@ var contestSiteOwners = map[string]string{
 	"internal/actions/track.go:Track":            "U10b-1b Phase A: the 125 detection gate. The 135/175 quality bands stay a read of the attacker's own roll — one ladder, one roll",
 	"internal/forager/forage_core.go:ForageCore": "U10b-1b Phase A: the per-biome forage difficulty. ForageCore is pure, so this is the whole of its uncertainty",
 
+	// U10b-1b Phase B: the craft and salvage floor seams. Not channel attacks —
+	// the difficulty is a recipe, not a defender — so ResolveChannelAttack does
+	// not apply. One named reader per floor, mirroring RunContest.
+	"internal/crafting/difficulty.go:RunCraftContest":   "U10b-1b Phase B: the craft floor seam — the ONE place Balance.CraftFloor is read",
+	"internal/crafting/difficulty.go:RunSalvageContest": "U10b-1b Phase B: the salvage floor seam — the ONE place Balance.SalvageFloor is read",
+
 	// Deliberately unconverted, with the plan's pre-assigned owners.
 	"internal/actions/defuse.go:Defuse": "deliberate: trap-difficulty contest, converted U4",
 	// Charm has no unconverted contest site left. Slice B moved the cast onto

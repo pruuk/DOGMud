@@ -85,6 +85,18 @@ var guardedRollExemptions = map[string]map[string]string{
 		// U10b-1b Phase A. Forage's per-biome difficulty, same category B
 		// reasoning. ForageCore is pure, so this is the whole of its uncertainty.
 		"internal/forager/forage_core.go": "U10b-1b: static-difficulty forage check, deliberately unfloored (category B)",
+		// U10b-1b Phase B. Defines crafting.RunCraftContest and RunSalvageContest,
+		// the ONE readers of CraftFloor and SalvageFloor -- exactly the role
+		// combat/run_contest.go plays for ContestFloor.
+		//
+		// ⚠️ THIS ENTRY MUST STAY THE ONLY CRAFT/SALVAGE ONE. If the guard ever
+		// names a craft or salvage SITE, that site is calling contest.* directly
+		// and has been handed a floor it should not be able to name. CraftFloor
+		// 0.05 and SalvageFloor 0.15 are close enough that the wrong one is
+		// invisible in every test and surfaces only after a retune -- which is the
+		// precise failure U6 deleted by collapsing three wrapper pairs into one.
+		// Fix the call; do not add a second exemption.
+		"internal/crafting/difficulty.go": "defines crafting.RunCraftContest and RunSalvageContest — the ONE CraftFloor/SalvageFloor readers",
 	},
 }
 
