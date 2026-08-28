@@ -83,3 +83,52 @@ func TestSearchTier1CompressesAtTheTop(t *testing.T) {
 			"threshold form's near-certainty survived.", rate*100)
 	}
 }
+
+// TestSearch_AFoundSecretExitIsNotRolledAgain closes the secret-exit search
+// farm.
+//
+// 🔴 THE FARM: tier 1 set rolledAgainstSomething for every secret exit in the
+// room and NEVER skipped one already found, because secret exits called
+// AddDiscovery nowhere — hidden containers (tier 2) and hidden nouns (tier 6)
+// both guard with HasDiscovery and record on a find. So a room with a secret
+// exit was a PERMANENT progression candidate at a 2-round cooldown, roughly
+// 450 uses an hour, against the ~150/hr that `search`'s own multiplier was
+// solved on. The comment stating that assumption is in config.yaml and
+// skills.go.
+//
+// The observable is the AWARD, not the message: progression is gated on
+// rolledAgainstSomething, so in a room whose only feature is a found exit the
+// second search must resolve against nothing and train nothing.
+func TestSearch_AFoundSecretExitIsNotRolledAgain(t *testing.T) {
+	room := newSecretExitRoom(9600)
+	actor := newSearchFakeActor("FarmSearcher", room, false, 0)
+	actor.char.Stats.Perception.ValueAdj = 400 // find it on the first attempt
+
+	first := Search(actor, SearchOptions{})
+	if len(first.HiddenExitsFound) == 0 {
+		t.Fatal("fixture failed to find the exit at perception 400; the rest of " +
+			"this test asserts nothing")
+	}
+	if len(actor.awards) != 1 {
+		t.Fatalf("first search produced %d awards, want 1", len(actor.awards))
+	}
+
+	// Second search, same character, same room.
+	actor.awards = nil
+	actor.char.Cooldowns = nil // clear the search cooldown; a second search must actually run
+	second := Search(actor, SearchOptions{})
+
+	if len(actor.awards) != 0 {
+		t.Errorf("a re-search of an already-found secret exit produced %d awards, "+
+			"want 0. The exit is still a live progression candidate and the farm "+
+			"is open.", len(actor.awards))
+	}
+	// It is still REPORTED, deliberately: unlike a hidden container, a found
+	// secret exit has no other way to be seen until the player walks through it,
+	// so search stays a way to be reminded of the name. It just cannot be
+	// farmed for progression.
+	if len(second.HiddenExitsFound) == 0 {
+		t.Error("a re-search should still REPORT the known exit; only the roll " +
+			"and the award are suppressed")
+	}
+}

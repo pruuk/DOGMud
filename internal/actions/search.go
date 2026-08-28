@@ -16,6 +16,16 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// secretExitDiscoveryKey namespaces a secret exit's discovery record.
+//
+// Discoveries share one key space per room (Character.Discoveries is
+// map[roomId][]string), and container names and hidden-noun keys are authored
+// strings that could collide with a direction. The prefix keeps an exit named
+// "gate" from being confused with a hidden container of the same name.
+func secretExitDiscoveryKey(exitName string) string {
+	return "exit:" + exitName
+}
+
 // spotsHider resolves "does the observer spot this hider?" as an OPPOSED
 // contest, the same way usercommands/go.go does on room entry.
 //
@@ -113,8 +123,32 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		if !exitInfo.Secret {
 			continue
 		}
+		// 🔴 A FOUND SECRET EXIT IS NOT ROLLED AGAIN. Until 2026-08-29 this tier
+		// set rolledAgainstSomething for every secret exit in the room and never
+		// skipped one already found, because secret exits recorded no discovery
+		// at all — hidden containers below and hidden nouns in tier 6 both guard
+		// with HasDiscovery and record on a find. A room with a secret exit was
+		// therefore a PERMANENT progression candidate on a 2-round cooldown,
+		// roughly 450 uses an hour, against the ~150/hr that `search`'s own
+		// multiplier was solved on (the assumption is written into config.yaml
+		// and skills.go).
+		//
+		// ⚠️ It is still REPORTED, which is where this deliberately differs from
+		// the container and noun tiers that `continue` outright. A found
+		// container is reachable afterwards through `get`, but a secret exit
+		// stays out of the room's exit list until the player VISITS the room
+		// beyond it (roomdetails.go gates on HasVisited, not on a discovery). So
+		// skipping it silently would leave someone who found it and did not walk
+		// through with no way to be reminded of the name. Reporting costs
+		// nothing they have not already earned; the roll and the award are what
+		// close the farm.
+		if char.HasDiscovery(room.RoomId, secretExitDiscoveryKey(exitName)) {
+			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
+			continue
+		}
 		rolledAgainstSomething = true
 		if contest.AgainstDifficulty(searchScore, 125.0).Success {
+			char.AddDiscovery(room.RoomId, secretExitDiscoveryKey(exitName))
 			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
 			if actor.IsPlayer() {
 				actor.SendText(messaging.CategorySystem,

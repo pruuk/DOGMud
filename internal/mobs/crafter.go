@@ -468,32 +468,44 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 
 	// Consume ingredients from shop stock (round-aware so depletion events
 	// fire and the dashboard's throughput scoring can see crafter demand).
+	//
+	// 🔴 Resolved through shops.FindStockedIngredient, NOT
+	// items.FindSpecByComponentTag. The latter ranges a Go map, so this loop and
+	// the HasMaterialsWithReservePct gate that admits the craft drew
+	// INDEPENDENTLY and could name different items — the gate verifying glass
+	// vial stock while this deducted a crystalline decanter. Worse,
+	// RemoveStockAtRound returns 0 for an item the shop does not stock, so the
+	// mismatch could deduct NOTHING and the shop crafted for free.
+	//
+	// Both now ask the same question of the same slice, and only stocked items
+	// can be named. The consumed tiers are collected so difficulty can read the
+	// materials actually spent rather than assuming neutral.
+	consumed := make([]items.Item, 0, len(recipe.Ingredients))
 	for _, ing := range recipe.Ingredients {
-		spec := items.FindSpecByComponentTag(ing.ItemTag)
-		if spec != nil {
-			removed := shopInv.RemoveStockAtRound(spec.ItemId, ing.Quantity, round)
-			shopInv.ConsumedByCrafterCount += removed
+		spec := shops.FindStockedIngredient(shopInv, ing.ItemTag)
+		if spec == nil {
+			continue
+		}
+		removed := shopInv.RemoveStockAtRound(spec.ItemId, ing.Quantity, round)
+		shopInv.ConsumedByCrafterCount += removed
+		for i := 0; i < removed; i++ {
+			consumed = append(consumed, items.Item{ItemId: spec.ItemId, Spec: spec})
 		}
 	}
 
 	skillLevel := mob.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))
 
-	// U10b-1b: the craft contest, at the NEUTRAL material tier.
+	// U10b-1b: the craft contest, priced on the materials ACTUALLY DEDUCTED.
 	//
-	// 🔴 Deliberately neutral, and this is the one craft site that cannot do
-	// better. The only ingredient resolution available here is the
-	// items.FindSpecByComponentTag loop above, which is the map-order resolver
-	// spec 5.1.1.3 forbids: four items share component_tag "bottle", so it
-	// answers differently between calls. Feeding that into difficulty would make
-	// a shop crafter's odds swing with nothing a player could observe.
-	//
-	// ⚠️ That loop is a PRE-EXISTING BUG in its own right, independent of this
-	// slice: it decides which item id to REMOVE FROM SHOP STOCK, so a recipe
-	// calling for a bottle already deducts a random one of the four. Recorded,
-	// not fixed here — changing it moves shop stock behaviour.
+	// This used to pass the neutral 1.0 tier, because the only resolution
+	// available was the map-order one and feeding that into difficulty would
+	// have made a shop's odds swing unobservably. Now that stock resolution is
+	// deterministic, the shop is priced the same way a player is — otherwise the
+	// same recipe would have different odds depending on who crafted it.
 	craftScore := crafting.CraftScore(
 		float64(mob.Character.GetStatValue(crafting.CraftPrimaryStat(recipe))), skillLevel)
-	craftDiff := crafting.CraftDifficulty(recipe.SkillMinimum, 1.0)
+	craftDiff := crafting.CraftDifficulty(
+		recipe.SkillMinimum, crafting.DearestMaterialTier(consumed))
 
 	result := &CraftResult{
 		RecipeName:   recipe.Name,
