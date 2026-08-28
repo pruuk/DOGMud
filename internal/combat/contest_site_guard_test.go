@@ -75,8 +75,10 @@ var contestSiteOwners = map[string]string{
 	// NOT channel attacks — there is no defender, only a fixed target number —
 	// so ResolveChannelAttack does not apply. They use contest.AgainstDifficulty,
 	// which is deliberately unfloored per combat.RunContest's scope note.
-	"internal/actions/search.go:Search":          "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175). The hidden player and mob checks in the same func are opposed and go to RunContest in Phase C",
-	"internal/forager/forage_core.go:ForageCore": "U10b-1b Phase A: the per-biome forage difficulty. ForageCore is pure, so this is the whole of its uncertainty",
+	"internal/actions/search.go:Search":            "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175). The hidden player and mob checks in the same func are opposed and go to RunContest in Phase C",
+	"internal/forager/forage_core.go:ForageCore":   "U10b-1b Phase A: the per-biome forage difficulty. ForageCore is pure, so this is the whole of its uncertainty",
+	"internal/actions/track.go:resolveTrailDetail": "U10b-1b: the nested 125/135/175 trail-read ladder, static difficulty like search and forage",
+	"internal/actions/track.go:Track":              "U10b-1b: the OPPOSED contest against a named quarry (owner ruling) — a careful mover is genuinely harder to follow",
 
 	// U10b-1b Phase B: the craft and salvage floor seams. Not channel attacks —
 	// the difficulty is a recipe, not a defender — so ResolveChannelAttack does

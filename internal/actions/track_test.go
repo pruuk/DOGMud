@@ -184,8 +184,8 @@ func TestTrack_AFruitlessScanAwardsAtTheLossWeight(t *testing.T) {
 
 	result := Track(actor, TrackOptions{})
 
-	if result.RollValue >= 125.0 {
-		t.Skip("fixture beat the 125 threshold; nothing to assert about a failed read")
+	if result.Detail.SeesAnything {
+		t.Skip("fixture won the detection contest; nothing to assert about a failed read")
 	}
 	if got := len(actor.awards); got != 1 {
 		t.Fatalf("a resolved track produced %d awards, want 1", got)
@@ -198,25 +198,31 @@ func TestTrack_AFruitlessScanAwardsAtTheLossWeight(t *testing.T) {
 	}
 }
 
-// The active-track mode grades against 175, not 125, and the award must use
-// the SAME threshold the branch below it gates on.
+// The active-track award must follow the OPPOSED CONTEST against the quarry,
+// not a static threshold (owner ruling 2026-08-28).
 //
-// Without this, a roll between 125 and 175 on a named target would report a WIN
-// while the player is told their tracking "isn't sharp enough" -- the award and
-// the narration disagreeing about what happened.
-func TestTrack_ActiveTrackGradesAgainstItsOwnThreshold(t *testing.T) {
+// The old form graded against a flat 175 that never read the target's side, so
+// a careful mover was no harder to follow than a careless one. It also awarded
+// unconditionally the moment the cooldown was consumed, which would now pay a
+// WIN for a track that goes on to lose the contest.
+//
+// This fixture names a quarry with no trail in the room, so it resolves down
+// the "no trail found" path: one award, at the LOSS weight.
+func TestTrack_ActiveTrackAwardFollowsTheContest(t *testing.T) {
 	pinConfigForTest(t)
 
 	actor := newTrackFakeActor("TrackActive", newTrackTestRoom(9402), false, 0)
 
-	result := Track(actor, TrackOptions{TargetNoun: "quarry"})
+	if r := Track(actor, TrackOptions{TargetNoun: "quarry"}); r.Reason == "" {
+		t.Fatalf("expected the active track to resolve with a reason, got %+v", r)
+	}
 
 	if got := len(actor.awards); got != 1 {
 		t.Fatalf("a resolved active track produced %d awards, want 1", got)
 	}
-	if want := result.RollValue >= 175.0; actor.awards[0].won != want {
-		t.Errorf("active track rolled %.1f and reported won=%v, want %v; the award must grade against 175, the same number the branch uses",
-			result.RollValue, actor.awards[0].won, want)
+	if actor.awards[0].won {
+		t.Errorf("an active track that found no trail reported won=true; a " +
+			"resolved-but-fruitless track must pay the failure fraction")
 	}
 }
 
@@ -241,7 +247,7 @@ func TestTrack_ACooldownRefusalAwardsNothing(t *testing.T) {
 	// cooldown; the next call inside the window is the refusal under test.
 	consumed := false
 	for i := 0; i < 200 && !consumed; i++ {
-		if r := Track(actor, TrackOptions{}); r.RollValue >= 125.0 && !r.OnCooldown {
+		if r := Track(actor, TrackOptions{}); r.Detail.SeesAnything && !r.OnCooldown {
 			consumed = true
 		}
 	}

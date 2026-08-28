@@ -5,7 +5,9 @@ import (
 	"math"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -56,9 +58,13 @@ type TrackResult struct {
 	BuffApplied           bool   // true when buff 86 applied
 
 	// Common.
-	RollValue  float64 // roll.Value for tier-band introspection
-	OnCooldown bool    // 1-round cooldown collision
-	Reason     string  // human-readable reason on failure
+	// Detail is the resolved read quality. It REPLACES the old RollValue float:
+	// once each band is its own contest there is no single roll whose magnitude
+	// means anything, and exposing one invited exactly the decoupling that the
+	// first attempt at this conversion shipped.
+	Detail     trailDetail
+	OnCooldown bool   // 1-round cooldown collision
+	Reason     string // human-readable reason on failure
 }
 
 // activeTrackingBuffId is the buff applied when active tracking starts.
@@ -131,39 +137,28 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	// contested that branch now fires meaningfully more often for developed
 	// characters than it used to -- previously the cut was real only for
 	// beginners.
-	// 🔴 DEFERRED FROM U10b-1b PHASE A, DELIBERATELY, after the conversion was
-	// written and REVERTED. Do not convert this to contest.AgainstDifficulty
-	// without reading this first.
+	// U10b-1b: track resolves as TWO DIFFERENT KINDS of question, because it
+	// asks two different things (owner ruling, 2026-08-28).
 	//
-	// Track is not a pass/fail. ONE roll is compared against a LADDER: 125 here,
-	// 175 for active-track below, and 135/175 again inside readRoomTrail. The
-	// U10b-1b spec says only "track to AgainstDifficulty" and never grappled with
-	// that shape.
+	//   READING THE ROOM'S TRAIL is a static-difficulty read, aligned with
+	//   search and forage: contest.AgainstDifficulty against 125/135/175.
 	//
-	// Contesting ONLY the 125 gate and leaving the bands reading the raw roll
-	// DECOUPLES them, because a contest is won by out-rolling a ROLLED difficulty
-	// rather than by clearing a fixed number. Measured over 400k trials at
-	// RollSpread 0.15:
+	//   TRACKING A NAMED TARGET is an OPPOSED contest against that target, the
+	//   way go.go already resolves hidden detection.
 	//
-	//   score 100: 73.8% of SUCCESSFUL reads carry RollValue < 125 -- the number
-	//              every surviving band comparison still treats as "no tracks".
-	//   score 210: 0.70% of tracks roll >= 175 yet LOSE the gate, and are told
-	//              "You don't see any tracks" with Reason "roll below detection
-	//              threshold", which is false about the roll that happened.
-	//              Structurally impossible under the threshold form.
+	// That split is what makes the ladder coherent. An earlier attempt contested
+	// only the 125 gate and left the 135/175 bands reading the raw roll, which
+	// DECOUPLED them -- a contest is won by out-rolling a ROLLED difficulty, not
+	// by clearing a fixed number, so at score 100 fully 73.8% of successful reads
+	// carried a roll below 125, and 0.70% of high rolls lost the gate outright.
+	// Resolving the bands as a NESTED ladder of contests removes that by
+	// construction: you cannot reach a finer band without winning the coarser one.
 	//
-	// Contesting each band separately is no better: independent rolls let a
-	// tracker fail 125 and pass 175, which is the same incoherence by another
-	// route.
-	//
-	// A correct conversion needs a DESIGN DECISION about what the ladder means
-	// once the bar itself is rolled -- nested contests, or a single roll
-	// re-expressed against the rolled difficulty, or margin bands. All three
-	// change the 135/175 odds and want measuring, so none of them is a refactor.
-	// Search and forage ARE converted; they are single-threshold and have no
-	// ladder to decouple.
-	roll := dice.RollStat(searchScore)
-	result.RollValue = roll.Value
+	// The score split follows the convention U6b Task 16 already set:
+	// CalcSearchScore for static-difficulty reads, CalcDetectionScore for opposed
+	// contests.
+	detail := resolveTrailDetail(searchScore)
+	result.Detail = detail
 
 	// awardTrack fires the round's ONE progression award, at a weight that
 	// follows the outcome (U10b-1 Task 15). This used to be a FULL event on
@@ -183,12 +178,12 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		actor.AwardResolved(won, char.CandidateFor(string(skills.Search)))
 	}
 
-	// Roll < 125.0: no tracks visible at all.
-	if roll.Value < 125.0 {
+	// Saw nothing at all: the coarsest band was lost.
+	if !detail.SeesAnything {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem, "You don't see any tracks.")
 		}
-		result.Reason = "roll below detection threshold"
+		result.Reason = "lost the trail-detection contest"
 		awardTrack(false)
 		return result
 	}
@@ -206,22 +201,17 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		}
 
 		awardTrack(true)
-		result.Visitors = readRoomTrail(room, roll.Value, actor.GetUserId(), actor.GetMobInstanceId())
+		result.Visitors = readRoomTrail(room, detail, actor.GetUserId(), actor.GetMobInstanceId())
 		if actor.IsPlayer() {
 			renderTrailToPlayer(actor, result.Visitors)
 		}
 		return result
 	}
 
-	// Active-track mode.
-	if roll.Value < 175.0 {
-		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem, "Your tracking skills aren't sharp enough right now.")
-		}
-		result.Reason = "active-track requires roll >= 175"
-		awardTrack(false)
-		return result
-	}
+	// Active-track mode. The 175 STATIC gate that used to sit here is gone: a
+	// named target now defends the contest itself (owner ruling). The contest
+	// runs after the target is identified, because there is nothing to contest
+	// against until then.
 
 	if !char.TryCooldown(skills.Search.String(), "1 round") {
 		result.OnCooldown = true
@@ -233,11 +223,19 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		return result
 	}
 
-	// Past the cooldown: this active track has resolved as a win.
-	awardTrack(true)
+	// ⚠️ NO AWARD HERE ANY MORE. It used to fire unconditionally the moment the
+	// cooldown was consumed, because the 175 static gate above had already
+	// decided the outcome. Now the outcome is the OPPOSED CONTEST further down,
+	// so the award must follow it — awarding here as well would pay twice for
+	// one action and would pay a WIN for a track that then loses the contest.
 
 	// Find target in current room first (just reports "they are here").
+	//
+	// No contest: the quarry is standing in front of you, so there is no trail
+	// to read and nothing to out-roll. Awarded as a win because the verb
+	// resolved and told the player something true.
 	if targetUser := findUserInRoomByName(room, targetNoun, actor.GetUserId()); targetUser != nil {
+		awardTrack(true)
 		result.ActiveTargetUserId = targetUser.UserId
 		result.ActiveTargetName = targetUser.Character.Name
 		if actor.IsPlayer() {
@@ -247,6 +245,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		return result
 	}
 	if targetMob := findMobInRoomByName(room, targetNoun); targetMob != nil {
+		awardTrack(true)
 		result.ActiveTargetMobInstId = targetMob.InstanceId
 		result.ActiveTargetName = targetMob.Character.Name
 		if actor.IsPlayer() {
@@ -257,9 +256,40 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	}
 
 	// Search visitor log of current room for a trail matching targetNoun;
-	// if found, apply buff 86 + store misc data + populate DirectionExit.
+	// if found, CONTEST against that target, and only then apply buff 86 +
+	// store misc data + populate DirectionExit.
 	if applied, miscKey, miscVal, dirExit, targetUserId, targetMobId, targetName :=
 		lookupAdjacentTrail(room, targetNoun, actor.GetUserId()); applied {
+
+		// 🔴 THE OPPOSED CONTEST. A named quarry defends with its own ability to
+		// leave no trail, so a careful mover is genuinely harder to follow than
+		// a careless one — which the old flat 175 threshold could not express at
+		// all, since it never read the target's side.
+		//
+		// Uses combat.RunContest, NOT contest.AgainstDifficulty: there is a real
+		// opponent, so this belongs on the opposed seam and takes ContestFloor
+		// like every other opposed contest. Mirrors usercommands/go.go's hidden
+		// detection, which resolves the same shape of question.
+		if tgt := trackTargetCharacter(targetUserId, targetMobId); tgt != nil {
+			won := combat.RunContest(
+				CalcDetectionScore(char),
+				[]contest.Entry{{Score: CalcSneakScoreVsObserver(tgt, char, room)}},
+			).Success
+			awardTrack(won)
+			if !won {
+				if actor.IsPlayer() {
+					actor.SendText(messaging.CategorySystem,
+						"You cast about for the trail, but lose it.")
+				}
+				result.Reason = "lost the opposed tracking contest"
+				return result
+			}
+		} else {
+			// No character behind the trail (logged out, despawned). Nothing to
+			// contest against, so the read stands on the trail alone.
+			awardTrack(true)
+		}
+
 		char.SetMiscData(miscKey, miscVal)
 		char.SetMiscData("tracking-display-count", nil)
 		actor.AddBuff(activeTrackingBuffId, "skill")
@@ -271,18 +301,83 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		return result
 	}
 
+	// No trail matched the name at all. A resolved attempt that found nothing,
+	// so it trains at the loss weight — the same treatment a fruitless search
+	// gets.
 	if actor.IsPlayer() {
 		actor.SendText(messaging.CategorySystem, "You don't see any tracks.")
 	}
+	awardTrack(false)
 	result.Reason = "no trail found in adjacent rooms"
 	return result
 }
 
+// Trail-read difficulty targets. Static, because reading a room's trail is a
+// read of the ROOM, not a contest with anybody.
+const (
+	trailDetectTarget      = 125.0 // see that there are tracks at all
+	trailAllVisitorsTarget = 135.0 // see every visitor, not just the strongest
+	trailExitsTarget       = 175.0 // see which way they went
+)
+
+// trailDetail is the resolved quality of one trail read.
+//
+// The three bands are NESTED BY CONSTRUCTION: SeesExits implies SeesAll implies
+// SeesAnything. That is the whole point of resolving them here rather than
+// comparing a raw roll at three separate sites, which is what decoupled them in
+// the reverted first attempt.
+type trailDetail struct {
+	SeesAnything bool
+	SeesAll      bool
+	SeesExits    bool
+}
+
+// resolveTrailDetail runs the nested static-difficulty ladder, aligned with
+// search and forage (owner ruling 2026-08-28).
+//
+// Each band is its own contest.AgainstDifficulty, and a finer band is only
+// attempted once the coarser one is won. So a tracker can never know which exit
+// a visitor took while failing to see that anyone passed at all — an outcome
+// that independent per-band contests would produce roughly 1 time in 140 at
+// high scores.
+func resolveTrailDetail(searchScore float64) trailDetail {
+	d := trailDetail{}
+	if !contest.AgainstDifficulty(searchScore, trailDetectTarget).Success {
+		return d
+	}
+	d.SeesAnything = true
+	if !contest.AgainstDifficulty(searchScore, trailAllVisitorsTarget).Success {
+		return d
+	}
+	d.SeesAll = true
+	d.SeesExits = contest.AgainstDifficulty(searchScore, trailExitsTarget).Success
+	return d
+}
+
+// trackTargetCharacter resolves the character behind a trail so the active
+// track has something to contest against. Returns nil when the quarry is gone
+// (logged out, despawned), which the caller treats as an uncontested read.
+func trackTargetCharacter(targetUserId, targetMobId int) *characters.Character {
+	if targetUserId > 0 {
+		if u := users.GetByUserId(targetUserId); u != nil {
+			return u.Character
+		}
+	}
+	if targetMobId > 0 {
+		if m := mobs.GetInstance(targetMobId); m != nil {
+			return &m.Character
+		}
+	}
+	return nil
+}
+
 // readRoomTrail returns the visitor list for the current room, filtered
-// by detection tier. roll < 135 returns at most one (strongest) visitor;
-// roll >= 135 returns all; roll >= 175 also populates ExitName via
-// adjacent-room scan.
-func readRoomTrail(room *rooms.Room, rollValue float64, excludeUserId int, excludeMobInstId int) []TrackingInfo {
+// by the resolved detail: without SeesAll only the strongest visitor is
+// returned; with it, all of them; SeesExits additionally populates ExitName via
+// an adjacent-room scan.
+//
+// Takes the RESOLVED bands rather than a roll value on purpose — see trailDetail.
+func readRoomTrail(room *rooms.Room, detail trailDetail, excludeUserId int, excludeMobInstId int) []TrackingInfo {
 	out := []TrackingInfo{}
 	currentMobs := room.GetMobs()
 	currentUsers := room.GetPlayers()
@@ -312,10 +407,10 @@ func readRoomTrail(room *rooms.Room, rollValue float64, excludeUserId int, exclu
 			Strength:        trailStrengthToString(timeLeft),
 			NumericStrength: timeLeft,
 		}
-		if rollValue >= 175.0 {
+		if detail.SeesExits {
 			info.ExitName = findExitedTrack(room, mId, rooms.VisitorMob)
 		}
-		if rollValue < 135.0 {
+		if !detail.SeesAll {
 			if len(out) == 0 {
 				out = append(out, info)
 			} else if out[0].NumericStrength < timeLeft {
@@ -351,10 +446,10 @@ func readRoomTrail(room *rooms.Room, rollValue float64, excludeUserId int, exclu
 			Strength:        trailStrengthToString(timeLeft),
 			NumericStrength: timeLeft,
 		}
-		if rollValue >= 175.0 {
+		if detail.SeesExits {
 			info.ExitName = findExitedTrack(room, uId, rooms.VisitorUser)
 		}
-		if rollValue < 135.0 {
+		if !detail.SeesAll {
 			if len(out) == 0 {
 				out = append(out, info)
 			} else if out[0].NumericStrength < timeLeft {

@@ -83,6 +83,12 @@ var guardedRollExemptions = map[string]map[string]string{
 		// U10b-1b Phase A. Forage's per-biome difficulty, same category B
 		// reasoning. ForageCore is pure, so this is the whole of its uncertainty.
 		"internal/forager/forage_core.go": "U10b-1b: static-difficulty forage check, deliberately unfloored (category B)",
+		// U10b-1b. Track resolves TWO kinds of question. resolveTrailDetail's
+		// three bands are static-difficulty READS of the room, so they belong here
+		// with search and forage. The OPPOSED contest against a named quarry does
+		// NOT use contest.* at all -- it goes through combat.RunContest and takes
+		// ContestFloor like every other opposed contest, so the guard never sees it.
+		"internal/actions/track.go": "U10b-1b: static-difficulty trail-read bands, deliberately unfloored (category B). The named-target contest uses combat.RunContest instead",
 		// U10b-1b Phase B. Defines crafting.RunCraftContest and RunSalvageContest,
 		// the ONE readers of CraftFloor and SalvageFloor -- exactly the role
 		// combat/run_contest.go plays for ContestFloor.
