@@ -62,6 +62,50 @@ func equipBow(c *characters.Character, loaded bool) {
 	}
 }
 
+// shootUntilItLands fires repeatedly until the target loses health, and fails
+// the test if it never does within a generous cap.
+//
+// 🔴 WHY A SINGLE SHOT IS NOT A SAFE ASSERTION, even at Perception 300 against
+// a skeleton with ContestFloor pinned to 0: an ATTACK FUMBLE is
+// `hitRoll.ZScore <= -2.0` on the attacker's OWN distribution, so it fires at
+// roughly 2.3% no matter how badly the defender is outclassed, and a fumble
+// always misses. That is deliberate. resolveDefenseOutcomeInner says so:
+//
+//	"Fumbles deliberately REMAIN on the self-relative z-score. They share the
+//	 architectural quirk crits had, but moving them would change failure rates
+//	 nobody asked to change. Explicitly out of scope for chunk 5.11d -- do not
+//	 'fix' them in passing."
+//
+// So "one loaded shot must damage the mob" asserts something the combat model
+// does not promise. Diagnosed 2026-08-28 after this reddened CI on two
+// consecutive PRs; measured at 1 failure in 120 runs on unmodified master and 2
+// in 120 on a branch, and reproduced on a detached master worktree, which is
+// what ruled out either PR as the cause.
+//
+// The retry is the honest fix rather than a workaround: what the test means is
+// "a loaded shot CAN damage the mob", and every other assertion (the weapon
+// unloading, aggro on both sides, combat memory) holds on a fumble too, so
+// those stay exact and are checked by the caller afterwards.
+//
+// 12 attempts puts a spurious failure at roughly 0.023^12, which is never.
+func shootUntilItLands(t *testing.T, user *users.UserRecord, room *rooms.Room, cmd string, healthOf func() int) {
+	t.Helper()
+	const attempts = 12
+	start := healthOf()
+	for i := 0; i < attempts; i++ {
+		equipBow(user.Character, true) // firing unloads the bow; reload each try
+		handled, err := Shoot(cmd, user, room, 0)
+		if !handled || err != nil {
+			t.Fatalf("Shoot(%q) attempt %d: handled=%v err=%v", cmd, i+1, handled, err)
+		}
+		if healthOf() < start {
+			return
+		}
+	}
+	t.Fatalf("%d shots all failed to damage the target. A ~2.3%% fumble rate "+
+		"cannot explain this; the shot is not landing at all.", attempts)
+}
+
 func prepareRangedCostCycle(c *characters.Character, loaded bool, stamina int) {
 	c.Stats.Strength.ValueAdj = 100
 	c.Stats.Perception.ValueAdj = 1
@@ -157,9 +201,10 @@ func TestShoot_SameRoomLoaded_DamageAndAggro(t *testing.T) {
 	mob.Character.Aggro = nil
 	user.Character.Aggro = nil
 
-	handled, err := Shoot("skeleton", user, room, 0)
-	assert.True(t, handled)
-	assert.NoError(t, err)
+	// Retried: a single shot can fumble (~2.3%, self-relative). See
+	// shootUntilItLands. Every OTHER assertion below is exact and holds on a
+	// fumble too, so only the damage check needed the retry.
+	shootUntilItLands(t, user, room, "skeleton", func() int { return mob.Character.Health })
 
 	assert.Less(t, mob.Character.Health, 100000, "a loaded same-room shot must damage the mob")
 	assert.False(t, user.Character.Equipment.Weapon.Loaded, "firing must unload the weapon")
@@ -209,9 +254,8 @@ func TestShoot_CrossRoomLoaded_NoShooterAggro_MobPursues(t *testing.T) {
 	room2.AddMob(400)
 	defer room2.RemoveMob(400)
 
-	handled, err := Shoot("skeleton north", user, room, 0)
-	assert.True(t, handled)
-	assert.NoError(t, err)
+	// Retried for the same self-relative fumble reason as the same-room test.
+	shootUntilItLands(t, user, room, "skeleton north", func() int { return target.Character.Health })
 
 	assert.Less(t, target.Character.Health, 100000, "cross-room shot must damage the adjacent-room mob")
 	assert.Nil(t, user.Character.Aggro, "cross-room shot must NOT set shooter aggro (one-shot model)")
