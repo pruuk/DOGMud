@@ -1573,6 +1573,16 @@ load-bearing and wrong on first pass:
    not live combat. Live combat uses `GetModifiedAttackCount`, where the skill
    term is 10% per 50 ranks and rounds away.
 
+   > **Correction, 2026-08-27.** Correction 2 named the wrong function, and it
+   > was already wrong when written: live combat used `combat.calcSwingCount`,
+   > not `Character.GetModifiedAttackCount`, which by then had no production
+   > caller at all and has since been deleted. The conclusion the correction
+   > drew is unaffected in direction but wrong in magnitude — `calcSwingCount`'s
+   > skill term is `1 + skill*SkillWeight/softCap`, which at the shipped
+   > `SkillWeight: 5.0` is a **6x** span from rank 0 to 50, not 10%. Skill buys
+   > a great many more swings than this table says. The `SkillWeight: 2.0` in
+   > the row above is likewise the Go default, not the shipped value.
+
 **Approved philosophy (user, 2026-08-11):** priority is Skill > Gear (close) >
 Stats, with mutations affecting all. The split is by *axis*, not by amount:
 

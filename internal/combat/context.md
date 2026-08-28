@@ -1285,16 +1285,36 @@ For each pass, for each weapon (just the sword):
 
 **Step 3a: Build Weapon Setup** — `buildWeaponSetup()`
 ```
-ws.attacks     = weapon.GetDistributionDamage() attacks (e.g. 2)
+ws.weapon      = the item being swung (zero Item = bare hands / a fist)
+ws.attacks     = weapon.GetDistributionDamage() attacks (damage distribution,
+                 NOT the swing count)
 ws.baseDmg     = weapon base damage
 ws.weaponDmgMult = item's damage_multiplier (e.g. 1.2)
-ws.weaponSpeed = item's speed multiplier (e.g. 1.0)
-ws.attacks     = GetModifiedAttackCount(attacks, speed)  // skill-modified
-ws.attacks    *= c.GetPositionSpeedMultiplier()         // position modifier (Position FSM, chunk 4b R1)
-// ConditionRecoveryPenalty: forces attacks = 1
+ws.weaponSpeed = item's speed multiplier, or UnarmedSpeedMultiplier for a fist
+ws.isOffhand   = idx > 0
+ws.penalty     = calcDualWieldPenalty(...)
 // Racial bonus: weapon.StatMod(RacialBonusPrefix + targetSpecies)
-// Hard cap: max 4 swings per weapon per pass
 ```
+
+**Swing count is NOT computed here.** `buildAttackPlan` calls `calcSwingCount`
+separately, per weapon:
+```
+ws.swingCount = calcSwingCount(sourceChar, ws.weapon, ws.weaponSpeed,
+                               extraAttacks, ws.isOffhand)
+// 1 + (dex-50)/100 * speed * (1 + skill*SkillWeight/softCap)
+//   skill = GetCombatSkillLevelFor(ws.weapon) — THAT weapon's skill, not the
+//   main hand's (fixed 2026-08-27; a fist beside a sword used to count at
+//   weapon-combat)
+// offhand: *= 0.5 + (dualSkill*SkillWeight/50)*0.5, dualSkill keyed on
+//   IsUnarmedStyle (the STANCE) and deliberately not per-weapon
+// then *= stamina, encumbrance, haste, position multipliers
+// ConditionRecoveryPenalty: forces swingCount = 1
+// Hard cap: max 4 swings per weapon
+```
+`Character.GetModifiedAttackCount` was the pre-`calcSwingCount` version of this
+and was **deleted on 2026-08-27**; it had had no production caller since
+`calcSwingCount` replaced the old outer-loop `calcAttackCount` × inner-loop
+`ws.attacks` double multiplication.
 
 **Step 3b: Build Damage Params** — `buildDamageParams()`
 ```
