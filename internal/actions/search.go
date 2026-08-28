@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -96,8 +97,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 125.0 {
+		if contest.AgainstDifficulty(searchScore, 125.0).Success {
 			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
 			if actor.IsPlayer() {
 				actor.SendText(messaging.CategorySystem,
@@ -115,8 +115,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 125.0 {
+		if contest.AgainstDifficulty(searchScore, 125.0).Success {
 			char.AddDiscovery(room.RoomId, containerName)
 			result.HiddenContainersFound = append(result.HiddenContainersFound, containerName)
 			if actor.IsPlayer() {
@@ -134,8 +133,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 			continue
 		}
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 135.0 {
+		if contest.AgainstDifficulty(searchScore, 135.0).Success {
 			result.StashedItemsFound = append(result.StashedItemsFound, SearchStashedItem{
 				ItemId:      item.ItemId,
 				DisplayName: item.DisplayName(),
@@ -246,8 +244,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		}
 		hiddenNoun := room.HiddenNouns[nounKey]
 		rolledAgainstSomething = true
-		roll := dice.RollStat(searchScore)
-		if roll.Value >= 175.0 {
+		if contest.AgainstDifficulty(searchScore, 175.0).Success {
 			char.AddDiscovery(room.RoomId, nounKey)
 			result.HiddenNounsFound = append(result.HiddenNounsFound, nounKey)
 			if actor.IsPlayer() {

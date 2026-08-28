@@ -71,6 +71,12 @@ var contestSiteOwners = map[string]string{
 	"internal/usercommands/skill.skullduggery.shadow.go:shadowDetectionRoll": "U6b task 16",
 	"internal/usercommands/go.go:Go":                                         "U6b task 16 (hidden detection on room entry, four sites)",
 
+	// U10b-1b Phase A: the static-difficulty (category B) conversions. These are
+	// NOT channel attacks — there is no defender, only a fixed target number —
+	// so ResolveChannelAttack does not apply. They use contest.AgainstDifficulty,
+	// which is deliberately unfloored per combat.RunContest's scope note.
+	"internal/actions/search.go:Search": "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175). The hidden player and mob checks in the same func are opposed and go to RunContest in Phase C",
+
 	// Deliberately unconverted, with the plan's pre-assigned owners.
 	"internal/actions/defuse.go:Defuse": "deliberate: trap-difficulty contest, converted U4",
 	// Charm has no unconverted contest site left. Slice B moved the cast onto

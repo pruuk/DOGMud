@@ -68,6 +68,16 @@ var guardedRollExemptions = map[string]map[string]string{
 		// Defines combat.RunConcentrationContest — the one ConcentrationFloor
 		// reader (U10).
 		"internal/combat/run_concentration_contest.go": "defines combat.RunConcentrationContest — the one ConcentrationFloor reader (U10)",
+		// U10b-1b Phase A. Search's non-stealth tiers are STATIC-DIFFICULTY
+		// (roadmap category B), and combat.RunContest's own doc comment reserves
+		// itself for opposed contests and says these are deliberately unfloored:
+		// "Do not route them here to 'unify' them." AgainstDifficulty is the
+		// seam built for them, and it applies no floor by design.
+		//
+		// The two remaining dice.RollStat sites in this file are the hidden
+		// PLAYER and MOB checks. Those are genuinely opposed and go to
+		// combat.RunContest in Phase C, not here.
+		"internal/actions/search.go": "U10b-1b: static-difficulty search tiers, deliberately unfloored (category B)",
 	},
 }
 
