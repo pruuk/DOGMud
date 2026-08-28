@@ -478,6 +478,28 @@ type Balance struct {
 	CraftingMinSuccessChance   ConfigInt `yaml:"CraftingMinSuccessChance"`   // Floor (default 5)
 	CraftingMaxSuccessChance   ConfigInt `yaml:"CraftingMaxSuccessChance"`   // Ceiling (default 95)
 
+	// U10b-1b: craft is an ordinary contest. The crafter scores
+	// primaryStat + craftSkill*SkillWeight, and the recipe supplies
+	// (CraftBaseDifficulty + SkillMinimum*CraftSkillMinWeight) * materialTierMult.
+	//
+	// CraftBaseDifficulty is 100 because 100 is the HUMAN STAT BASELINE, so a
+	// baseline crafter at exactly the recipe minimum sits at 50% with no special
+	// case -- reproducing the shipped CraftingBaseSuccessChance of 50.
+	CraftBaseDifficulty ConfigInt `yaml:"CraftBaseDifficulty"` // Difficulty anchor; the human stat baseline (default 100)
+	CraftSkillMinWeight ConfigInt `yaml:"CraftSkillMinWeight"` // Difficulty added per point of recipe SkillMinimum (default 5)
+
+	// The MERCY BAND. These replace the CraftingMin/MaxSuccessChance and
+	// SalvageMin/MaxChance clamps, which are symmetric about 50% and are
+	// therefore exactly contest floors.
+	//
+	// 🔴 A floor of 0 DELETES the band rather than disabling a nicety. Uncapped
+	// salvage is the dangerous half: at salvage skill 50 the craft-then-salvage
+	// loop would retain ~99.9% of materials against 80.75% today, roughly a 250x
+	// cut to the crafting material sink, on the exact loop that farms crafting
+	// skill. Both validate with the <=0 idiom for that reason.
+	CraftFloor   ConfigFloat `yaml:"CraftFloor"`   // Mercy band for craft contests; reproduces the 5/95 clamp (default 0.05)
+	SalvageFloor ConfigFloat `yaml:"SalvageFloor"` // Mercy band for salvage contests; reproduces the 15/85 clamp (default 0.15)
+
 	// Material tier band. items.MaterialTierMultiplier spreads the five authored
 	// buckets evenly between these, so tier 1 sits at Min and tier 5 at Max.
 	// Deliberately narrow: tier MODIFIES a difficulty that recipe.SkillMinimum

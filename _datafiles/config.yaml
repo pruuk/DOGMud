@@ -1363,6 +1363,31 @@ Balance:
   CraftingMinSuccessChance: 5    # Floor — never below this %
   CraftingMaxSuccessChance: 95   # Ceiling — never above this %
 
+  # ── CRAFT DIFFICULTY (U10b-1b) ────────────────────────────────────────────
+  # Craft is an ordinary contest. The crafter scores
+  #   primaryStat + craftSkill × SkillWeight
+  # against a difficulty of
+  #   (CraftBaseDifficulty + recipe.SkillMinimum × CraftSkillMinWeight) × materialTierMult
+  #
+  # The primary stat differs by discipline: blacksmithing reads strength,
+  # alchemy/cooking/enchanting perception, tailoring/jewelcrafting dexterity.
+  #
+  # CraftBaseDifficulty is 100 because 100 is the human stat baseline, so a
+  # baseline crafter holding exactly the recipe minimum is a coin flip. That
+  # reproduces CraftingBaseSuccessChance above with no special case.
+  CraftBaseDifficulty: 100
+  CraftSkillMinWeight: 5
+
+  # The mercy band, replacing the Min/Max clamps above and the salvage pair.
+  # Both clamps are symmetric about 50%, so each is exactly a contest floor.
+  #
+  # Do NOT set either to 0. A 0 floor deletes the band rather than disabling a
+  # nicety, and uncapped salvage is the dangerous half: at salvage skill 50 the
+  # craft-then-salvage loop would retain about 99.9% of materials against 80.75%
+  # today, roughly a 250x cut to the crafting material sink.
+  CraftFloor: 0.05
+  SalvageFloor: 0.15
+
   # ── RECIPE DISCOVERY ──────────────────────────────────────────────────────
   # Chance to learn a new recipe on a successful craft.
   # Formula: chance = BaseChance / (1 + knownRecipes × DecayRate)
