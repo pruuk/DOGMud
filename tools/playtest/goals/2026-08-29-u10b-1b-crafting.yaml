@@ -1,0 +1,72 @@
+# U10b-1b craft/salvage feel check — the half the first run could not reach.
+#
+# The previous attempt spawned in open country and its craft goals were
+# unreachable, because crafting needs a station. You start AT an alchemy bench,
+# with materials, with two recipes known, and with your skill set to exactly the
+# minimum those recipes ask for. Everything you need is in your hands.
+#
+# ONE SIGNAL above all others: when a recipe says you need a certain skill and
+# you have exactly that skill, does it feel like a coin flip? And can you tell
+# WHY you failed when you fail?
+#
+# WHAT CHANGED, in plain terms. Do NOT quote these back as findings.
+#   * Crafting used to be a flat chance from your skill against the recipe's
+#     minimum. It is now a contest: your own aptitude counts, and so do the
+#     materials you are working with.
+#   * Rarer materials make a recipe slightly harder; commoner ones slightly
+#     easier.
+#   * When a recipe can take several kinds of the same material, the CHEAPEST
+#     is used first.
+#   * Taking something apart is now about as hard as making it was.
+#
+# YOU ARE CARRYING FOUR KINDS OF BOTTLE on purpose: a clay flask, a glass vial,
+# a sealed phial and a crystalline decanter. A healing salve needs one bottle
+# and does not say which. That is the sharpest usability question in this batch.
+#
+# BE ADVERSARIAL. A mechanic that is correct but reads confusingly is still a
+# finding. Report suspicions with evidence rather than reporting nothing.
+
+ephemeral:
+  profile: crafter
+  start_room: 6456
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    HEADLINE, THE COIN FLIP: craft healing salve repeatedly and keep an exact
+    tally of successes and failures. Your alchemy is exactly the minimum the
+    recipe asks for, so it should land near half and half. Report the raw counts,
+    not an impression. If it is wildly off half, that is the single most
+    important thing in your report.
+  - >-
+    WHICH BOTTLE DID IT TAKE: before crafting, check your inventory and write
+    down every bottle you are carrying. Craft one healing salve. Check your
+    inventory again and state exactly WHICH bottle disappeared. Then say whether
+    the game told you, at any point, which one it was going to use. If it did
+    not, say so plainly and say whether that would bother you as a player.
+  - >-
+    DOES THE BOTTLE CHANGE THE ODDS: keep crafting salves and watch which bottle
+    goes each time. If the game works through your bottles in a particular
+    order, describe the order. Report whether your success rate seemed to shift
+    as the bottles changed, and be honest if you cannot tell from the sample.
+  - >-
+    A FAILED CRAFT: when a craft fails, quote the message verbatim. Say whether
+    it told you anything about WHY, whether you lost your materials, and whether
+    the loss felt fair. A player who loses materials and cannot tell why is the
+    problem to look for here.
+  - >-
+    A HARDER RECIPE AT ITS OWN MINIMUM: craft chain links at the forge if you
+    can reach one, or report that you could not. Your blacksmithing is exactly
+    its minimum too, so it should also feel like a coin flip. If it feels
+    markedly harder or easier than the salves did, say so with counts.
+  - >-
+    SALVAGE, AND THE LOOP THAT MATTERS: salvage some healing salves you made
+    yourself and report roughly how much came back. Then do this carefully:
+    craft a salve, salvage it, and repeat several times, tracking your material
+    total. State plainly whether you ended with MORE, LESS, or about the same
+    materials than you started with. Ending with more is a serious finding.
+  - >-
+    ANY EXPLOIT: spend your last stretch hunting for a repeatable action that
+    gains you materials or skill for little cost. Report exact steps for
+    anything you find, even if unsure it is a real problem.

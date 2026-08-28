@@ -2,7 +2,12 @@
 // from tracked templates and an optional per-run manifest.
 package playtestprofiles
 
-// KnownTemplateIDs are the seven tracked synthetic profiles.
+// KnownTemplateIDs are the tracked synthetic profiles.
+//
+// The list is an allowlist so a TYPO in a goals file fails loudly instead of
+// silently spawning the wrong character; it is not a cap. Add an entry here and
+// a matching tools/playtest/profiles/<id>.yaml, and TestRepoTemplatesSanitize
+// will start checking it.
 var KnownTemplateIDs = []string{
 	"fresh",
 	"early",
@@ -11,6 +16,12 @@ var KnownTemplateIDs = []string{
 	"specialist-caster",
 	"admin",
 	"charmer",
+	// Parked AT a crafting station with materials, known recipes, and skills
+	// set to exactly the recipes' minimums. Added because the craft goals are
+	// unreachable from any field spawn — crafting requires a station, so a
+	// tester who starts in open country cannot test it at all, which is
+	// precisely how the 2026-08-29 run lost three of its goals.
+	"crafter",
 }
 
 // Manifest is the ephemeral per-run materialization request.

@@ -355,6 +355,11 @@ func storeRecovered(actor Actor, recovered []crafting.RecipeIngredient, result *
 	char := actor.GetCharacter()
 	for _, ing := range recovered {
 		for i := 0; i < ing.Quantity; i++ {
+			// Resolves to the CHEAPEST item carrying the tag, deterministically.
+			// This line used to hand back an arbitrary one of the four bottles,
+			// which let a craft-then-salvage loop farm Crystalline Decanters out
+			// of Clay Flasks. Found in playtest 2026-08-29; fixed in
+			// items.FindSpecByComponentTag itself so no caller can miss it.
 			matSpec := items.FindSpecByComponentTag(ing.ItemTag)
 			if matSpec == nil {
 				continue
