@@ -524,22 +524,3 @@ func UnregisterRecipeForTest(recipeId string) {
 	delete(allRecipes, recipeId)
 	recipeByOutputId = nil
 }
-
-// CalcSuccessChance returns the crafting success percentage clamped to
-// [CraftingMinSuccessChance, CraftingMaxSuccessChance].
-// Formula: clamp(base + (skillLevel - skillMinimum) * bonusPerLevel, min, max)
-func CalcSuccessChance(skillLevel, skillMinimum int) int {
-	b := configs.GetBalanceConfig()
-	base := int(b.CraftingBaseSuccessChance)
-	bonusPerLevel := int(b.CraftingSkillBonusPerLevel)
-	minChance := int(b.CraftingMinSuccessChance)
-	maxChance := int(b.CraftingMaxSuccessChance)
-	chance := base + (skillLevel-skillMinimum)*bonusPerLevel
-	if chance < minChance {
-		return minChance
-	}
-	if chance > maxChance {
-		return maxChance
-	}
-	return chance
-}

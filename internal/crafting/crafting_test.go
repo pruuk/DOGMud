@@ -101,29 +101,6 @@ func TestGetRecipeByOutputItemId(t *testing.T) {
 
 // ─── CalcSuccessChance ────────────────────────────────────────────────────────
 
-func TestCalcSuccessChance(t *testing.T) {
-	tests := []struct {
-		skillLevel   int
-		skillMinimum int
-		want         int
-	}{
-		{0, 0, 50},  // skill == min → 50%
-		{9, 0, 95},  // min+9 → 50+45 = 95% (cap)
-		{10, 0, 95}, // above cap → still 95%
-		{-10, 0, 5}, // far below min → 5% floor
-		{-2, 0, 40}, // below min → 50-10 = 40%
-		{5, 5, 50},  // skill == min (non-zero) → 50%
-		{6, 5, 55},  // one above min → 55%
-	}
-	for _, tt := range tests {
-		got := CalcSuccessChance(tt.skillLevel, tt.skillMinimum)
-		if got != tt.want {
-			t.Errorf("CalcSuccessChance(%d, %d) = %d, want %d",
-				tt.skillLevel, tt.skillMinimum, got, tt.want)
-		}
-	}
-}
-
 // ─── HasIngredients ───────────────────────────────────────────────────────────
 
 func TestHasIngredients(t *testing.T) {

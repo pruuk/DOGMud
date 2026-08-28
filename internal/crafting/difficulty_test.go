@@ -45,6 +45,29 @@ func TestCraftDifficultyAnchor(t *testing.T) {
 	}
 }
 
+// TestCraftAnchorRequiresSkillWeightToMatchCraftSkillMinWeight pins the
+// invariant the 50/50 anchor silently depends on.
+//
+// 🔴 The anchor works because the crafter gains SkillWeight per skill point
+// while the recipe gains CraftSkillMinWeight per point of SkillMinimum. They
+// cancel ONLY while the two are equal. Retune SkillWeight alone — a plausible
+// global combat change — and every recipe's 50/50 point drifts silently, with
+// no test failing and nothing in the config hinting the two are coupled.
+//
+// This is the guard for that. If it fails, the fix is to move both knobs
+// together, not to loosen the assertion.
+func TestCraftAnchorRequiresSkillWeightToMatchCraftSkillMinWeight(t *testing.T) {
+	pinCraftBalanceForTest(t)
+
+	b := configs.GetBalanceConfig()
+	if float64(b.SkillWeight) != float64(b.CraftSkillMinWeight) {
+		t.Fatalf("SkillWeight %v != CraftSkillMinWeight %v. The craft anchor "+
+			"cancels only while these are equal; with them apart, a crafter at "+
+			"the recipe minimum is no longer 50/50.",
+			float64(b.SkillWeight), float64(b.CraftSkillMinWeight))
+	}
+}
+
 // TestCraftMasteryCurveMatchesTheSpecTable pins spec 5.1.1's published table
 // and, more importantly, the INTENT behind it: an advanced recipe takes far
 // more mastery to become routine than a simple one.

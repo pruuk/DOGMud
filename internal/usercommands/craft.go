@@ -140,10 +140,10 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// players no crafting progression while mobs got it.
 		// U10b-1 Task 16. won is unconditionally TRUE here, and that is not a
 		// shortcut: ImmediateComplete means the recipe had TimeRounds <= 0, and
-		// InitiateCraft completes those without ever calling
-		// crafting.CalcSuccessChance. An instant recipe cannot fail, so there is
-		// no loss branch to pay a fraction on. Only the two MULTI-ROUND sites
-		// roll (NewRound_UserRoundTick, NewRound_MobRoundTick).
+		// InitiateCraft completes those without ever running the craft contest.
+		// An instant recipe cannot fail, so there is no loss branch to pay a
+		// fraction on. Only the two MULTI-ROUND sites roll
+		// (NewRound_UserRoundTick, NewRound_MobRoundTick).
 		//
 		// AwardResolvedScaled, not AwardResolved: the plain form drops
 		// craftBonus silently (see Task 13).

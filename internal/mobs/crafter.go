@@ -518,7 +518,7 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 	// difficulty bonus is part of the AWARD, not the resolution, so an award
 	// that drops a multiplier every sibling applies is a firing-rule
 	// inconsistency -- which is exactly what this slice is for. The resolution
-	// itself (crafting.CalcSuccessChance) is untouched.
+	// itself (the craft contest) is untouched.
 	//
 	// ⚠️ RATE CHANGE for shopkeeper crafters: their progression now scales with
 	// recipe SkillMinimum where it never did. The re-solve must price it.

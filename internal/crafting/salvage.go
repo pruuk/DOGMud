@@ -1,25 +1,8 @@
 package crafting
 
 import (
-	"math"
-
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
-
-// CalcSalvageChance returns the per-ingredient recovery probability for
-// a given salvage skill level. Uses a sqrt curve:
-//
-//	chance = min + (max - min) * sqrt(clamp(skill, 1, softCap) / softCap)
-func CalcSalvageChance(skill int, minChance, maxChance float64, softCap int) float64 {
-	if skill < 1 {
-		skill = 1
-	}
-	ratio := float64(skill) / float64(softCap)
-	if ratio > 1.0 {
-		ratio = 1.0
-	}
-	return minChance + (maxChance-minChance)*math.Sqrt(ratio)
-}
 
 // CalcSalvageRounds determines how many rounds a salvage attempt takes
 // based on the total gold value of ingredients.

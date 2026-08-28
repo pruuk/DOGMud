@@ -3,13 +3,14 @@ package crafting
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
 )
 
 // ─── Integration: Full Crafting Loop ─────────────────────────────────────────
 // Exercises: seedRegistry, HasIngredients(), ConsumeIngredients(),
-// CalcSuccessChance(), GetStarterRecipes(), GetEligibleRecipes()
+// CraftScore()/CraftDifficulty(), GetStarterRecipes(), GetEligibleRecipes()
 
 func TestIntegration_CraftingFullLoop(t *testing.T) {
 	seedRegistry()
@@ -30,13 +31,12 @@ func TestIntegration_CraftingFullLoop(t *testing.T) {
 	assert.True(t, ok, "Should have all ingredients")
 	assert.Empty(t, missing, "No missing ingredients")
 
-	// Step 2: Calculate success chance
-	chance := CalcSuccessChance(skillLevel, recipe.SkillMinimum)
-	assert.GreaterOrEqual(t, chance, 50, "Skill at or above min should give >= 50%%")
-	assert.LessOrEqual(t, chance, 95, "Chance should not exceed 95%% cap")
-
-	// With skill 5 above minimum 0: base 50 + 5*5 = 75%
-	assert.Equal(t, 75, chance, "Skill 5 above min should give 75%%")
+	// Step 2: the craft CONTEST (U10b-1b replaced the flat percentage).
+	// A crafter ABOVE the recipe minimum out-scores its difficulty.
+	score := CraftScore(100, skillLevel)
+	difficulty := CraftDifficulty(recipe.SkillMinimum, 1.0)
+	assert.Greater(t, score, difficulty,
+		"a crafter above the recipe minimum must out-score its difficulty")
 
 	// Step 3: Consume ingredients
 	remaining, _ := ConsumeIngredients(inv, []items.Item{}, recipe)
@@ -57,15 +57,16 @@ func TestIntegration_CraftingInsufficientSkill(t *testing.T) {
 	// Character with low skill
 	skillLevel := 1
 
-	// Success chance with skill well below minimum
-	chance := CalcSuccessChance(skillLevel, recipe.SkillMinimum)
-	assert.Less(t, chance, 50,
-		"Skill below minimum should give < 50%% chance")
+	// A crafter BELOW the minimum is out-scored by the difficulty.
+	score := CraftScore(100, skillLevel)
+	difficulty := CraftDifficulty(recipe.SkillMinimum, 1.0)
+	assert.Less(t, score, difficulty,
+		"a crafter below the recipe minimum must be out-scored by its difficulty")
 
-	// Minimum floor is 5%
-	veryLowChance := CalcSuccessChance(-10, recipe.SkillMinimum)
-	assert.Equal(t, 5, veryLowChance,
-		"Very low skill should hit the 5%% floor")
+	// The old 5%% floor is now CraftFloor, applied inside RunCraftContest as a
+	// symmetric mercy band rather than a clamp on a percentage.
+	assert.Greater(t, float64(configs.GetBalanceConfig().CraftFloor), 0.0,
+		"the mercy band must exist; a 0 floor would delete it")
 }
 
 func TestIntegration_CraftingIngredientsNotConsumedOnCheck(t *testing.T) {
@@ -160,27 +161,47 @@ func TestIntegration_RecipeDiscovery(t *testing.T) {
 	}
 }
 
-func TestIntegration_CraftingSuccessChanceRange(t *testing.T) {
-	// Verify the full range of success chances
+// TestIntegration_CraftScoreTracksSkillAgainstTheMinimum replaces the old
+// success-chance range table. U10b-1b retired the flat percentage, so the
+// meaningful assertion is no longer "skill 6 vs min 5 gives 55%" but the
+// ORDERING: at the minimum a crafter ties the difficulty, above it they lead,
+// below it they trail.
+//
+// A tie is the anchor that matters — it is what makes a baseline crafter at the
+// recipe minimum exactly 50/50, reproducing the old CraftingBaseSuccessChance
+// with no special case.
+func TestIntegration_CraftScoreTracksSkillAgainstTheMinimum(t *testing.T) {
+	pinCraftBalanceForTest(t) // SkillWeight 5.0; a test binary defaults it to 2.0
+
+	const stat = 100.0
+
 	tests := []struct {
 		name  string
 		skill int
 		min   int
-		want  int
+		cmp   string // "tie", "above", "below"
 	}{
-		{"at minimum", 5, 5, 50},
-		{"1 above", 6, 5, 55},
-		{"max cap", 20, 5, 95},
-		{"way above max", 100, 5, 95},
-		{"below minimum", 3, 5, 40},
-		{"way below", -10, 5, 5},
-		{"zero skill zero min", 0, 0, 50},
+		{"at minimum", 5, 5, "tie"},
+		{"1 above", 6, 5, "above"},
+		{"far above", 20, 5, "above"},
+		{"below minimum", 3, 5, "below"},
+		{"far below", 0, 5, "below"},
+		{"zero skill zero min", 0, 0, "tie"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CalcSuccessChance(tt.skill, tt.min)
-			assert.Equal(t, tt.want, got)
+			score := CraftScore(stat, tt.skill)
+			difficulty := CraftDifficulty(tt.min, 1.0)
+			switch tt.cmp {
+			case "tie":
+				assert.InDelta(t, difficulty, score, 0.0001,
+					"a crafter exactly at the minimum must tie the difficulty (50/50)")
+			case "above":
+				assert.Greater(t, score, difficulty)
+			case "below":
+				assert.Less(t, score, difficulty)
+			}
 		})
 	}
 }
