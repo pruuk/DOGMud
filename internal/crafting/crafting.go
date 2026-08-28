@@ -563,3 +563,21 @@ func UnregisterRecipeForTest(recipeId string) {
 	delete(allRecipes, recipeId)
 	recipeByOutputId = nil
 }
+
+// SkillMinimumsFor returns each recipe's skill_minimum, parallel to the input
+// slice, for configs.WeightedDiscoveryPick. It is the recipe-side counterpart
+// of spells.DifficultiesFor: skill_minimum IS a recipe's difficulty, and
+// crafting has gated discovery on it all along (GetEligibleRecipes).
+//
+// An unknown id contributes 0 (treated as easiest) rather than dropping out, so
+// the result always lines up with the caller's candidate slice -- a length
+// mismatch there would silently learn the wrong recipe.
+func SkillMinimumsFor(recipeIds []string) []int {
+	out := make([]int, len(recipeIds))
+	for i, id := range recipeIds {
+		if r := GetRecipe(id); r != nil {
+			out[i] = r.SkillMinimum
+		}
+	}
+	return out
+}

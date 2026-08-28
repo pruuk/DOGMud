@@ -1441,6 +1441,28 @@ Balance:
   DiscoveryPerceptionScale: 200.0
   DiscoverySkillScale: 100.0
   DiscoveryMaxDecayOffset: 0.8
+  # U10b-3: a spell's difficulty IS its discovery skill minimum, the spell-side
+  # equivalent of a recipe's skill_minimum. Required skill = ceil(difficulty x
+  # this), so at 1.0 a difficulty-45 spell needs spellcasting (or, for
+  # manifestation spells, manifestation) 45.
+  #
+  # This REPLACED a base_folds ladder. Folds measure how long and involved a
+  # cast is, not how hard a spell is to learn, and the two diverge in the
+  # authored content: Core Discharge and Core Drain are difficulty 45 at 2
+  # folds, so a spellcasting-0 novice could discover both, while Charm at 36
+  # folds sat above the ladder's ceiling of 32 and was undiscoverable by anyone.
+  #
+  # There is deliberately NO 0 off-switch (the guard is `<= 0`), because an
+  # absent key reading as 0 would silently ungate spell discovery entirely. To
+  # relax the gate, set a small ratio: 0.01 puts a difficulty-75 spell at skill 1.
+  SpellDiscoverySkillPerDifficulty: 1.0
+  # U10b-3: how strongly difficulty biases WHICH candidate a successful
+  # discovery roll draws. Weight = 1 / (1 + difficulty x this), so at 0.02 a
+  # difficulty-50 candidate surfaces about half as often as a difficulty-0 one
+  # sharing its pool. Nothing is excluded: the skill gate above decides what you
+  # can find at all, and this only shades what you find first. Kept mild on
+  # purpose, because skill should dominate discovery.
+  DiscoveryDifficultyWeightScale: 0.02
   #
   # The spell-initiation gate was DELETED (roadmap U0, 2026-08-12), along with
   # SpellInitiationBase and SpellInitiationSkillFactor. It clamped at 95 while a
@@ -1458,12 +1480,13 @@ Balance:
   #   with a specific spell. Higher proficiency reduces fizzle chance.
   SpellProficiencyCastsPerPoint: 50
 
-  # ── DIFFICULTY-SCALED PROGRESSION ──────────────────────────────────────────
-  # Harder spells and recipes give proportionally more skill progression.
-  # Formula (spells):  bonusMultiplier = 1.0 + difficulty * Scale
-  # Formula (crafts):  bonusMultiplier = 1.0 + skill_minimum * Scale
-  SpellDifficultyProgressionScale: 0.01   # difficulty 75 → 1.75x progression
-  CraftDifficultyProgressionScale: 0.02   # skill_minimum 50 → 2.0x progression
+  # ── DIFFICULTY ─────────────────────────────────────────────────────────────
+  # SpellDifficultyProgressionScale and CraftDifficultyProgressionScale were
+  # REMOVED by U10b-3. Harder spells and recipes used to train faster to use;
+  # now difficulty decides what you can DISCOVER instead, via
+  # SpellDiscoverySkillPerDifficulty and DiscoveryDifficultyWeightScale above.
+  # Practising a hard spell no longer trains faster than practising an easy one
+  # -- earning access to it is the reward.
   SelfCastProgressionMultiplier: 0.5      # self-only buffs get half progression
 
   # ── ENCHANTMENTS ────────────────────────────────────────────────────────────

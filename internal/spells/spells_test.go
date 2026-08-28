@@ -152,34 +152,35 @@ func TestGetAllSpells(t *testing.T) {
 	assert.Equal(t, 4, len(allSpells), "GetAllSpells should return a copy")
 }
 
-// ─── MaxFoldsForSkill ───────────────────────────────────────────────────────
-
-func TestMaxFoldsForSkill(t *testing.T) {
+// ─── RequiredSkillFor ───────────────────────────────────────────────────────
+//
+// Replaces TestMaxFoldsForSkill. U10b-3 deleted the fold ladder that gated
+// discovery: base_folds measures how long and involved a cast is, not how hard
+// a spell is to learn, and using it as the gate let a spellcasting-0 novice
+// discover difficulty-45 spells (Core Discharge, Core Drain) while making
+// Charm, at base_folds 36 against a ceiling of 32, undiscoverable by anyone.
+//
+// ⚠️ A test binary does not load config.yaml, so the ratio here is the Go
+// DEFAULT of 1.0 rather than whatever config.yaml ships. At 1.0 a spell's
+// difficulty IS its required skill.
+func TestRequiredSkillFor(t *testing.T) {
 	tests := []struct {
 		name       string
-		skillLevel int
+		difficulty int
 		want       int
 	}{
-		{"level 0", 0, 4},
-		{"level 4", 4, 4},
-		{"level 5", 5, 6},
-		{"level 9", 9, 6},
-		{"level 10", 10, 8},
-		{"level 19", 19, 8},
-		{"level 20", 20, 10},
-		{"level 30", 30, 12},
-		{"level 40", 40, 16},
-		{"level 50", 50, 20},
-		{"level 60", 60, 24},
-		{"level 70", 70, 28},
-		{"level 80", 80, 32},
-		{"level 100", 100, 32},
+		{"difficulty 0 gates nothing", 0, 0},
+		{"negative clamps to 0", -5, 0},
+		{"difficulty 5", 5, 5},
+		{"difficulty 25", 25, 25},
+		{"Core Discharge / Core Drain", 45, 45},
+		{"Charm", 60, 60},
+		{"hardest authored spell", 75, 75},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MaxFoldsForSkill(tt.skillLevel)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, RequiredSkillFor(tt.difficulty))
 		})
 	}
 }
@@ -273,19 +274,60 @@ func TestGetSchoolsString(t *testing.T) {
 func TestGetEligibleSpells(t *testing.T) {
 	seedRegistry()
 
-	// Player knows sparks, skill level 20 → maxFolds = 10
+	// Player knows sparks; spellcasting 20 admits difficulty <= 20.
 	known := map[string]int{"sparks": 1}
 	eligible := GetEligibleSpells(known, 20)
 
-	// Should include heal (folds=6), conviction-ward (folds=8), NOT pyretic-surge (folds=12)
 	found := map[string]bool{}
 	for _, id := range eligible {
 		found[id] = true
 	}
-	assert.True(t, found["heal"], "heal (folds=6) should be eligible at skill 20")
-	assert.True(t, found["conviction-ward"], "conviction-ward (folds=8) should be eligible at skill 20")
-	assert.False(t, found["pyretic-surge"], "pyretic-surge (folds=12) should NOT be eligible at skill 20")
+	assert.True(t, found["heal"], "heal (difficulty 15) should be eligible at skill 20")
+	assert.True(t, found["conviction-ward"], "conviction-ward (difficulty 20) is exactly at the bar and should be eligible")
+	assert.False(t, found["pyretic-surge"], "pyretic-surge (difficulty 25) should NOT be eligible at skill 20")
 	assert.False(t, found["sparks"], "known spell should not appear")
+}
+
+// 🔴 THE TEST THAT ACTUALLY DISTINGUISHES THE TWO GATES.
+//
+// The case above passes under EITHER rule, because difficulty and base_folds
+// happen to rank the fixture spells the same way -- it was written for the fold
+// ladder and kept passing unchanged when U10b-3 replaced it. Agreeing for the
+// wrong reason is not evidence, so this pins the difference directly.
+//
+// The fixture is the real Core Discharge shape: trivial to CAST (2 folds, well
+// under the old ladder's floor of 4 at any skill) but genuinely hard to LEARN
+// (difficulty 45). The old gate let a spellcasting-0 novice discover it. The
+// difficulty gate does not.
+func TestGetEligibleSpells_DifficultyGatesNotFolds(t *testing.T) {
+	allSpells = map[string]*SpellData{
+		"core-discharge": {
+			SpellId:    "core-discharge",
+			Name:       "Core Discharge",
+			Type:       HarmArea,
+			Difficulty: 45,
+			BaseFolds:  2, // <= MaxFoldsForSkill(0), which was 4: the old gate ADMITTED this
+			Schools:    []string{SchoolElemental},
+		},
+		"long-but-easy": {
+			SpellId:    "long-but-easy",
+			Name:       "Long But Easy",
+			Type:       HarmSingle,
+			Difficulty: 5,
+			BaseFolds:  24, // > MaxFoldsForSkill(20), which was 10: the old gate REFUSED this
+			Schools:    []string{SchoolElemental},
+		},
+	}
+
+	found := map[string]bool{}
+	for _, id := range GetEligibleSpells(map[string]int{}, 20) {
+		found[id] = true
+	}
+
+	assert.False(t, found["core-discharge"],
+		"difficulty 45 must not be discoverable at spellcasting 20; the old fold ladder admitted it at skill 0, which is the bug this replaced")
+	assert.True(t, found["long-but-easy"],
+		"difficulty 5 must be discoverable at spellcasting 20 despite 24 folds; folds measure cast length, not how hard a spell is to learn")
 }
 
 // ─── GetEligibleSpells quest-gated exclusion ─────────────────────────────────

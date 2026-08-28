@@ -1,5 +1,26 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: What a hard spell is worth
+
+A spell's difficulty now decides whether you can learn it, rather than how
+quickly casting it trains you. Practising a demanding spell no longer teaches
+you faster than practising a simple one. Earning your way to it is the reward.
+
+The rule for learning new spells is now the one crafting has always used: you
+cannot discover a spell you are not skilled enough to have earned. Until now
+that was judged by how long and involved the casting was, which is a different
+question, and it went wrong in both directions. Two of the harshest spells in
+the game were short to cast and could turn up for someone who had barely begun,
+while Charm was long enough that nobody could ever have found it at all. Both
+are fixed. Charm is now learnable by a dedicated manifestation practitioner.
+
+When you do discover something, easier spells and recipes surface a little more
+readily than punishing ones. The effect is mild on purpose. Your skill is still
+what decides what is within reach.
+
+Recipes work the same way, and their side of this is unchanged in practice: the
+skill a recipe asks for has always governed what you could learn.
+
 ## 2026-08-29: Looking carefully and finding nothing
 
 Searching a room that has someone hidden in it now teaches you something whether

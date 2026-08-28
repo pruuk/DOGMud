@@ -541,10 +541,14 @@ func tickMobCrafting(mob *mobs.Mob) {
 	won := crafting.RunCraftContest(craftScore, craftDiff).Success
 
 	// U10b-1 Task 16: above the branch, so a failed mob craft trains at
-	// ProgressionFailureFraction rather than nothing. AwardResolvedScaled,
-	// not AwardResolved: the plain form drops craftBonus silently.
-	craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-	mob.Character.AwardResolvedScaled(0, won, craftBonus,
+	// ProgressionFailureFraction rather than nothing.
+	//
+	// U10b-3: the recipe-difficulty multiplier is gone. skill_minimum decides
+	// what a crafter can DISCOVER (crafting.GetEligibleRecipes has gated on it
+	// all along) and biases which recipe a discovery roll draws; it no longer
+	// makes hard recipes train faster to make. With no bonus left, plain
+	// AwardResolved is correct here.
+	mob.Character.AwardResolved(0, won,
 		mob.Character.CandidateFor(recipe.Skill))
 
 	if won {
