@@ -118,20 +118,19 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 
 	// Roll the Perception+Search score.
 	searchScore := CalcSearchScore(char)
-	// NOTE(ASSIGNED TO U10b-1b, Category B): a static difficulty check still off
-	// the contest core. contest.AgainstDifficulty was built for exactly this and
-	// currently has zero production callers. The breadcrumb used to read
-	// "unassigned"; it is not. The U10b-1b design spec names this site
-	// explicitly -- "the Category B conversions (search x4, track, forage to
-	// AgainstDifficulty)" -- as settled decision 17.
+	// ⚠️ THE QUALITY BANDS ARE STILL STATIC WHILE THE SCORE IS NOT. Phase A
+	// converted the 125 DETECTION GATE to a contest, so that one now compresses
+	// toward 50% and a developed tracker no longer clears it almost always. The
+	// 175 band here, and the 135/175 bands inside readRoomTrail, are unchanged
+	// and remain flat targets read off the attacker's own roll.
 	//
-	// ⚠️ THE 125/175 THRESHOLDS ARE STATIC WHILE THE SCORE IS NOT, and that is
-	// the substance of the conversion, not tidiness. CalcSearchScore is
-	// Perception + SkillMultiplier(rank)*25, so at Perception 100 the 125 tier
-	// goes 50% -> 93% -> 97% across search ranks 0/25/50, and a Perception 150
-	// tracker at rank 25 clears it 99.7% of the time. U10b-1 made a failed track
-	// award ProgressionFailureFraction, but for a developed character that
-	// branch almost never fires -- the cut is real only for beginners.
+	// What that means in practice: CalcSearchScore is
+	// Perception + SkillMultiplier(rank)*25, so a high-Perception tracker still
+	// saturates the UPPER bands even though the entry gate now contests. U10b-1
+	// made a failed track award ProgressionFailureFraction, and with the gate
+	// contested that branch now fires meaningfully more often for developed
+	// characters than it used to -- previously the cut was real only for
+	// beginners.
 	// U10b-1b Phase A. The 125 DETECTION GATE is the success decision and is now
 	// a contest, so the difficulty is rolled too and outcomes compress toward
 	// 50% (spec 5.1).

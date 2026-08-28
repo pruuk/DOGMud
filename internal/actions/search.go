@@ -153,23 +153,27 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.SendText(messaging.CategorySystem, text)
 	}
 
-	// NOTE(ASSIGNED TO U10b-1b, Category B; the breadcrumb used to read
-	// "unassigned" and it is not -- the U10b-1b design spec names "search x4"
-	// explicitly, as settled decision 17): the six
-	// dice.RollStat threshold checks in this file are the LAST uncertain
-	// outcomes off the contest core. The two below are the sharpest problem:
-	// they answer "does the observer spot the hider?" with a flat 135 threshold
-	// that never reads the hider's sneak score, while
-	// usercommands/go.go resolves the SAME question as an opposed contest
-	// (observerScore vs hiddenScore). A hider's skill decides the outcome in one
-	// path and is ignored in the other. Mobs reach this path too, via
+	// 🔴 STILL OWED TO U10b-1b PHASE C -- the two dice.RollStat checks below are
+	// the LAST uncertain outcomes in this file off the contest core. Phase A
+	// converted the other four tiers to contest.AgainstDifficulty; these two are
+	// deliberately NOT that conversion.
+	//
+	// They answer "does the observer spot the hider?" with a flat 135 threshold
+	// that NEVER READS THE HIDER'S SNEAK SCORE, while usercommands/go.go
+	// resolves the SAME question as an opposed contest (observerScore vs
+	// hiddenScore). A hider's skill decides the outcome in one path and is
+	// ignored in the other. Mobs reach this path too, via
 	// behaviortree/actions_scout.go's actTrySearch, gated by the cheap
 	// condRoomHasHiddenEntity pre-check in conditions_scout.go.
 	//
-	// U4 migrated go.go's opposed version and deliberately did NOT touch these:
-	// converting a flat threshold into a contest is a behaviour change, and
-	// U1-U5 are provable no-ops. Whichever chunk claims them must reconcile the
-	// two implementations, not just move one.
+	// They belong on combat.RunContest, NOT AgainstDifficulty: there is a real
+	// opponent, so this is an opposed contest and wants the ContestFloor the
+	// rest of the opposed family gets.
+	//
+	// U4 migrated go.go's opposed version and deliberately did NOT touch these,
+	// because converting a flat threshold into a contest is a BEHAVIOUR CHANGE
+	// and U1-U5 are provable no-ops. Phase C claims them, and must reconcile the
+	// two implementations rather than just moving one.
 
 	// ── Tier 2 (target 135): Hidden players ─────────────────────
 	hiddenPlayerNames := []string{}
