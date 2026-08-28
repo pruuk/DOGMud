@@ -4,6 +4,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // CraftScore composes the crafter's side the way EVERY score in this game is
@@ -24,6 +26,27 @@ import (
 func CraftScore(stat float64, skillLevel int) float64 {
 	w := float64(configs.GetBalanceConfig().SkillWeight)
 	return stat + float64(skillLevel)*w
+}
+
+// CraftPrimaryStat names the stat that drives a recipe's discipline.
+//
+// 🔴 IT IS NOT THE SAME FOR EVERY CRAFT, which the spec's "primaryStat"
+// shorthand hides. blacksmithing reads STRENGTH, alchemy/cooking/enchanting
+// PERCEPTION, tailoring/jewelcrafting DEXTERITY (skills.SkillPrimaryStats). A
+// smith's arm and an alchemist's eye are different things and the contest says
+// so.
+//
+// Falls back to perception for a skill with no mapping rather than returning
+// "": characters.GetStatValue returns 0 for an unrecognised name, which would
+// silently collapse the crafter's score to the skill term alone and make every
+// craft of that discipline much harder for no visible reason.
+func CraftPrimaryStat(recipe *RecipeSpec) string {
+	if stat := skills.GetSkillPrimaryStat(recipe.Skill); stat != "" {
+		return stat
+	}
+	mudlog.Warn("CraftPrimaryStat", "recipe", recipe.RecipeId, "skill", recipe.Skill,
+		"msg", "no SkillPrimaryStats row; falling back to perception")
+	return "perception"
 }
 
 // CraftDifficulty is the recipe's side of the contest.

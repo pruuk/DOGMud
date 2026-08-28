@@ -477,7 +477,23 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 	}
 
 	skillLevel := mob.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))
-	chance := crafting.CalcSuccessChance(skillLevel, recipe.SkillMinimum)
+
+	// U10b-1b: the craft contest, at the NEUTRAL material tier.
+	//
+	// 🔴 Deliberately neutral, and this is the one craft site that cannot do
+	// better. The only ingredient resolution available here is the
+	// items.FindSpecByComponentTag loop above, which is the map-order resolver
+	// spec 5.1.1.3 forbids: four items share component_tag "bottle", so it
+	// answers differently between calls. Feeding that into difficulty would make
+	// a shop crafter's odds swing with nothing a player could observe.
+	//
+	// ⚠️ That loop is a PRE-EXISTING BUG in its own right, independent of this
+	// slice: it decides which item id to REMOVE FROM SHOP STOCK, so a recipe
+	// calling for a bottle already deducts a random one of the four. Recorded,
+	// not fixed here — changing it moves shop stock behaviour.
+	craftScore := crafting.CraftScore(
+		float64(mob.Character.GetStatValue(crafting.CraftPrimaryStat(recipe))), skillLevel)
+	craftDiff := crafting.CraftDifficulty(recipe.SkillMinimum, 1.0)
 
 	result := &CraftResult{
 		RecipeName:   recipe.Name,
@@ -507,7 +523,7 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 	// ⚠️ RATE CHANGE for shopkeeper crafters: their progression now scales with
 	// recipe SkillMinimum where it never did. The re-solve must price it.
 	craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-	craftWon := util.Rand(100) < chance
+	craftWon := crafting.RunCraftContest(craftScore, craftDiff).Success
 	mob.Character.AwardResolvedScaled(0, craftWon, craftBonus, mob.Character.CandidateFor(recipe.Skill))
 
 	if craftWon {
@@ -543,7 +559,6 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 // ingredient tracking. Used when no ShopInventory is registered.
 func executeCraftLegacy(mob *Mob, recipe *crafting.RecipeSpec) *CraftResult {
 	skillLevel := mob.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))
-	chance := crafting.CalcSuccessChance(skillLevel, recipe.SkillMinimum)
 
 	result := &CraftResult{
 		RecipeName:   recipe.Name,
@@ -553,8 +568,18 @@ func executeCraftLegacy(mob *Mob, recipe *crafting.RecipeSpec) *CraftResult {
 		Zone:         mob.Character.Zone,
 	}
 
-	// Consume ingredients regardless of success
+	// U10b-1b: unlike the shop path above, this one consumes from a real
+	// backpack, so SelectIngredients can name the concrete items and difficulty
+	// rides on the materials actually spent. Selected BEFORE consumption, from
+	// the same pool and traversal, so the two cannot disagree.
 	backpack := mob.Character.GetAllBackpackItems()
+	consumed := crafting.SelectIngredients(backpack, []items.Item{}, recipe)
+	craftScore := crafting.CraftScore(
+		float64(mob.Character.GetStatValue(crafting.CraftPrimaryStat(recipe))), skillLevel)
+	craftDiff := crafting.CraftDifficulty(
+		recipe.SkillMinimum, crafting.DearestMaterialTier(consumed))
+
+	// Consume ingredients regardless of success
 	remaining, _ := crafting.ConsumeIngredients(backpack, []items.Item{}, recipe)
 	mob.Character.Items = remaining
 
@@ -563,7 +588,7 @@ func executeCraftLegacy(mob *Mob, recipe *crafting.RecipeSpec) *CraftResult {
 	// above. Ingredients are consumed regardless of success (just above), so a
 	// failed craft already cost the crafter materials.
 	craftBonus := 1.0 + float64(recipe.SkillMinimum)*float64(configs.GetBalanceConfig().CraftDifficultyProgressionScale)
-	craftWon := util.Rand(100) < chance
+	craftWon := crafting.RunCraftContest(craftScore, craftDiff).Success
 	mob.Character.AwardResolvedScaled(0, craftWon, craftBonus, mob.Character.CandidateFor(recipe.Skill))
 
 	if craftWon {
