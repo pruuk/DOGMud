@@ -256,6 +256,47 @@ func HasIngredients(inv []items.Item, componentInv []items.Item, recipe *RecipeS
 	return true, ""
 }
 
+// SelectIngredients reports the CONCRETE items ConsumeIngredients would take,
+// in the order it would take them, WITHOUT taking them.
+//
+// It exists because craft difficulty depends on the DEAREST MATERIAL ACTUALLY
+// SPENT (spec 5.1.1.3), and that has to be known before the roll while the same
+// items must then be the ones consumed. Resolving the recipe's declared
+// component_tag instead would be wrong twice over: items.FindSpecByComponentTag
+// iterates a Go map and four items share the tag "bottle", so the tier would
+// re-roll every attempt; and difficulty would ride on the recipe rather than on
+// what the player actually put in.
+//
+// 🔴 THE ORDER IS LOAD-BEARING, NOT INCIDENTAL. Component bag first, then
+// backpack, each in inventory order — mirroring ConsumeIngredients exactly.
+// That ordering IS the bottle tiebreak (settled decision 8): resolving by
+// lowest ItemId instead would always pick the Glass Vial at 40006 and order the
+// rest inverse to quality, deleting the potion aging axis.
+//
+// ⚠️ This deliberately DUPLICATES ConsumeIngredients' traversal rather than
+// sharing it. Consumption removes items by decrementing a per-tag counter while
+// rebuilding both pools, and an identity-based filter over value-type items
+// with equal-valued duplicates is a worse hazard than the duplication. The two
+// are held in agreement by TestSelectIngredientsMatchesConsumeIngredients,
+// which fails if either traversal is edited alone.
+func SelectIngredients(inv []items.Item, componentInv []items.Item, recipe *RecipeSpec) []items.Item {
+	needed := make(map[string]int)
+	for _, ing := range recipe.Ingredients {
+		needed[ing.ItemTag] = ing.Quantity
+	}
+
+	selected := make([]items.Item, 0, len(recipe.Ingredients))
+	for _, pool := range [][]items.Item{componentInv, inv} {
+		for _, item := range pool {
+			if tag := componentTagOf(item); tag != "" && needed[tag] > 0 {
+				needed[tag]--
+				selected = append(selected, item)
+			}
+		}
+	}
+	return selected
+}
+
 // ConsumeIngredients removes the required items from componentInv first, then
 // inv, and returns the remainders of both pools.
 // Items are matched by ComponentTag; exactly the needed quantity is consumed.

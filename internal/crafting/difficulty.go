@@ -46,26 +46,30 @@ func CraftDifficulty(skillMinimum int, materialTierMult float64) float64 {
 // DearestMaterialTier returns the multiplier for the highest MaterialTier among
 // the items that will actually be consumed.
 //
-// 🔴 TAKES CONCRETE ITEM IDS, NEVER COMPONENT TAGS. Spec 5.1.1.3:
+// 🔴 TAKES THE ITEMS THEMSELVES, not ids, and reads each item's OWN spec. An
+// earlier draft took []int and looked each id up in the global registry, which
+// was wrong twice: it re-derives data SelectIngredients already has, and a
+// registry lookup answers for the TEMPLATE rather than for the instance the
+// player is actually spending.
+//
+// 🔴 NEVER RESOLVE BY component_tag. Spec 5.1.1.3:
 // items.FindSpecByComponentTag iterates a Go map, and FOUR items share
 // component_tag "bottle" (Clay Flask 1, Glass Vial 1, Sealed Phial 3,
 // Crystalline Decanter 4). Resolving a recipe's tag through it would re-roll
 // the tier on every attempt, swinging an alchemy craft's odds with no cause a
-// player could observe. It is also wrong in principle: difficulty must ride on
-// the item the player actually spent.
+// player could observe.
 //
 // An empty list, or items that are all untiered, yields the neutral 1.0 —
 // MaterialTierMultiplier(0) is 1.0, not the cheapest bucket, so partial
 // backfill coverage cannot silently make a recipe easy.
-func DearestMaterialTier(consumedItemIds []int) float64 {
+func DearestMaterialTier(consumed []items.Item) float64 {
 	best := 0
-	for _, id := range consumedItemIds {
-		spec := items.GetItemSpec(id)
-		if spec == nil {
-			continue
-		}
-		if spec.MaterialTier > best {
-			best = spec.MaterialTier
+	for _, it := range consumed {
+		// GetSpec returns a VALUE, not a pointer, so there is nothing to
+		// nil-check: an unknown item yields the zero spec, whose MaterialTier
+		// is 0, which is exactly the neutral path we want for it.
+		if tier := it.GetSpec().MaterialTier; tier > best {
+			best = tier
 		}
 	}
 	return items.MaterialTierMultiplier(best)

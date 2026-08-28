@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
 // pinCraftBalanceForTest pins the knobs this file reasons about to their
@@ -126,7 +127,12 @@ func TestMaterialTierMovesDifficulty(t *testing.T) {
 // Uses concrete ids (clay flask, glass vial, sealed phial, crystalline
 // decanter) precisely because resolving them by TAG is the forbidden path.
 func TestDearestMaterialTierIsDeterministic(t *testing.T) {
-	consumed := []int{40043, 40006, 40044, 40045}
+	consumed := []items.Item{
+		makeTieredItem(40043, "bottle", 1), // clay flask
+		makeTieredItem(40006, "bottle", 1), // glass vial
+		makeTieredItem(40044, "bottle", 3), // sealed phial
+		makeTieredItem(40045, "bottle", 4), // crystalline decanter
+	}
 
 	first := DearestMaterialTier(consumed)
 	for i := 0; i < 200; i++ {
@@ -144,8 +150,8 @@ func TestDearestMaterialTierIsNeutralWhenUntiered(t *testing.T) {
 	if got := DearestMaterialTier(nil); got != 1.0 {
 		t.Errorf("nil ingredient list = %v, want 1.0 (neutral)", got)
 	}
-	if got := DearestMaterialTier([]int{999999}); got != 1.0 {
-		t.Errorf("unknown item = %v, want 1.0 (neutral)", got)
+	if got := DearestMaterialTier([]items.Item{makeTieredItem(1, "untiered", 0)}); got != 1.0 {
+		t.Errorf("untiered item = %v, want 1.0 (neutral, NOT the cheapest bucket)", got)
 	}
 }
 
@@ -156,5 +162,95 @@ func TestDearestMaterialTierIsNeutralWhenUntiered(t *testing.T) {
 func TestSalvageDifficultyReportsMissingRecipe(t *testing.T) {
 	if _, ok := SalvageDifficulty(999999, 1.0); ok {
 		t.Fatal("an item with no recipe must report ok=false, not a difficulty")
+	}
+}
+
+// makeTieredItem creates a test item carrying both a component tag and a
+// material tier, without touching the global registry.
+func makeTieredItem(id int, tag string, tier int) items.Item {
+	return items.Item{ItemId: id, Spec: &items.ItemSpec{ComponentTag: tag, MaterialTier: tier}}
+}
+
+// TestSelectIngredientsMatchesConsumeIngredients is the agreement guard that
+// lets SelectIngredients duplicate ConsumeIngredients' traversal safely.
+//
+// If either loop is edited alone the two disagree, and difficulty would then be
+// computed from items the craft does not actually spend — the exact
+// roll/consumption divergence spec 5.1.1.3 exists to prevent. Compares the
+// MULTISET of selected items against the multiset the consumption removed.
+func TestSelectIngredientsMatchesConsumeIngredients(t *testing.T) {
+	recipe := &RecipeSpec{
+		Ingredients: []RecipeIngredient{
+			{ItemTag: "bottle", Quantity: 1},
+			{ItemTag: "herb", Quantity: 2},
+		},
+	}
+	componentInv := []items.Item{
+		makeTieredItem(40043, "bottle", 1),
+		makeTieredItem(40004, "herb", 2),
+	}
+	inv := []items.Item{
+		makeTieredItem(40045, "bottle", 4),
+		makeTieredItem(40005, "herb", 2),
+		makeTieredItem(40001, "ingot", 1),
+	}
+
+	selected := SelectIngredients(inv, componentInv, recipe)
+
+	before := len(inv) + len(componentInv)
+	newInv, newComponent := ConsumeIngredients(inv, componentInv, recipe)
+	consumedCount := before - (len(newInv) + len(newComponent))
+
+	if len(selected) != consumedCount {
+		t.Fatalf("SelectIngredients named %d items but ConsumeIngredients removed %d; "+
+			"the two traversals have drifted", len(selected), consumedCount)
+	}
+
+	remaining := map[int]int{}
+	for _, it := range append(append([]items.Item{}, newInv...), newComponent...) {
+		remaining[it.ItemId]++
+	}
+	original := map[int]int{}
+	for _, it := range append(append([]items.Item{}, inv...), componentInv...) {
+		original[it.ItemId]++
+	}
+	for _, it := range selected {
+		original[it.ItemId]--
+	}
+	for id, want := range original {
+		if remaining[id] != want {
+			t.Errorf("item %d: %d left after consumption but selection implies %d",
+				id, remaining[id], want)
+		}
+	}
+}
+
+// TestSelectIngredientsPrefersComponentBagOrder pins the bottle tiebreak
+// (settled decision 8). The component bag is walked FIRST, so the Clay Flask
+// there is taken over the Crystalline Decanter in the backpack.
+//
+// 🔴 Resolving by lowest ItemId instead would always pick the Glass Vial (40006)
+// and order the rest inverse to quality, which deletes the potion aging axis.
+// This test is what stops that "simplification".
+func TestSelectIngredientsPrefersComponentBagOrder(t *testing.T) {
+	recipe := &RecipeSpec{
+		Ingredients: []RecipeIngredient{{ItemTag: "bottle", Quantity: 1}},
+	}
+	componentInv := []items.Item{makeTieredItem(40043, "bottle", 1)} // clay flask
+	inv := []items.Item{makeTieredItem(40045, "bottle", 4)}          // decanter
+
+	sel := SelectIngredients(inv, componentInv, recipe)
+	if len(sel) != 1 {
+		t.Fatalf("expected exactly 1 selected item, got %d", len(sel))
+	}
+	if sel[0].ItemId != 40043 {
+		t.Fatalf("selected item %d, want the component-bag clay flask 40043. "+
+			"Component bag is consumed FIRST, so it must be selected first.", sel[0].ItemId)
+	}
+
+	if got := DearestMaterialTier(SelectIngredients(inv, componentInv, recipe)); got != 0.75 {
+		t.Errorf("dearest tier multiplier = %v, want 0.75 (tier 1 clay flask). "+
+			"Picking the decanter would give 1.125 and make the craft harder "+
+			"than the materials the player actually spent.", got)
 	}
 }
