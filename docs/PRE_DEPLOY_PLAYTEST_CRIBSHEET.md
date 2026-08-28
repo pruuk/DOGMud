@@ -602,3 +602,39 @@ engagement assumption still holds.
       if you fight normally for a long stretch and strength never moves, tell me
       which of those three you were actually doing.
 
+
+## U10b-2: deferred progression faucets (2026-08-29)
+
+- [ ] **Mob archers, and whether they are training too fast.** Owner parked the
+      measurement for this playtest rather than guessing at it beforehand.
+
+      Mob archers used to train NOTHING at all from shooting. They now take one
+      progression award per resolved shot, on the same terms as anyone else and
+      scaled by the mob progression rate, because the alternative was a single
+      call site quietly holding a second copy of the player-versus-mob policy
+      that already lives in config.
+
+      What to look for: fight the same archer type repeatedly over a long
+      stretch and see whether its shooting visibly sharpens within a session.
+      A slow drift is expected and fine. What is NOT fine is an archer that
+      noticeably outclasses its own kind after one extended fight, or a
+      long-lived instance archer that becomes markedly deadlier than a freshly
+      spawned one of the same template. If you can feel the difference in a
+      single sitting, the rate is too high.
+
+- [ ] **A fumble should feel like a lesson.** Owner ruling: you learn from your
+      mistakes unless you are a fool. Fumbling now pays roughly two and a third
+      times what an ordinary success pays, and unlike a success it does not
+      count against the rank that slows future gains.
+
+      What to look for: the line "You learn from your mistake!" should turn up
+      often enough to read as a real consolation after a bad swing, and not so
+      often that deliberately flailing looks like a training strategy. If you
+      ever catch yourself thinking you would advance faster by fighting badly
+      on purpose, say so immediately; that is the failure mode.
+
+- [ ] **Hidden detection now pays whether or not you spot anything.** Walking
+      into a room with someone hidden in it trains your searching either way,
+      fully if you spot them and partly if you do not. Nothing should be
+      visible here except that sneaking around a populated area no longer feels
+      like it teaches the searcher nothing.

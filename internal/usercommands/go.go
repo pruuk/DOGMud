@@ -629,13 +629,26 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						user.SendText(messaging.CategorySystem, fmt.Sprintf(
 							`You notice <ansi fg="username">%s</ansi> lurking in the shadows.`,
 							hiddenP.Character.Name))
-						// Winning the observer side of a hidden-detection contest trains
-						// Search, whose primary stat is perception. Opportunity-gated:
-						// it needs a hidden actor present and fires at most once per
-						// room entry per hidden actor. Added by U10b-0 Phase D Task 2 --
-						// this contest ran and awarded nothing at all before.
-						user.Character.OnSkillUse(string(skills.Search), user.UserId)
 					}
+					// U10b-2: the observer's Search award now fires on BOTH
+					// outcomes, full on a win and partial on a loss, instead of
+					// only when the observer spotted someone.
+					//
+					// It sits outside the `if success` block on purpose. This is
+					// a resolved contest -- U10b-1b gave it a real opposed roll
+					// against the hider's sneak score -- and the settled firing
+					// convention pays a resolved loss at the partial fraction.
+					// Leaving the award inside the success branch was the exact
+					// win-only defect the convention exists to remove; it stayed
+					// behind because U10b-1b converted this site's RESOLUTION and
+					// left its FIRING, which is why the seam guard carried a row
+					// for this file marked temporary.
+					//
+					// Still opportunity-gated: no hidden actor in the room means
+					// no contest and no award, and it fires at most once per room
+					// entry per hidden actor.
+					user.Character.AwardResolved(user.UserId, success,
+						user.Character.CandidateFor(string(skills.Search)))
 				}
 
 				// Check hidden mobs
@@ -656,13 +669,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 							`<ansi fg="username">%s</ansi> spots <ansi fg="mobname">%s</ansi> hiding in the shadows!`,
 							user.Character.Name, mob.Character.Name),
 							user.UserId)
-						// Winning the observer side of a hidden-detection contest trains
-						// Search, whose primary stat is perception. Opportunity-gated:
-						// it needs a hidden actor present and fires at most once per
-						// room entry per hidden actor. Added by U10b-0 Phase D Task 2 --
-						// this contest ran and awarded nothing at all before.
-						user.Character.OnSkillUse(string(skills.Search), user.UserId)
 					}
+					// U10b-2: same conversion as the hidden-PLAYER loop above --
+					// full on a win, partial on a resolved loss. See that comment
+					// for why this sits outside the `if success` block.
+					user.Character.AwardResolved(user.UserId, success,
+						user.Character.CandidateFor(string(skills.Search)))
 				}
 			}
 

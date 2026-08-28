@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: Looking carefully and finding nothing
+
+Searching a room that has someone hidden in it now teaches you something whether
+or not you actually spot them, fully when you do and partly when you do not.
+Before, only a successful spot counted, so the near misses that make up most of
+searching were worth nothing at all. Looking carefully and finding nothing is
+still looking carefully. This brings the last stray corner of stealth and
+searching in line with how everything else already paid out.
+
 ## 2026-08-29: Skill decides more, and luck decides less
 
 A batch of things that were settled by a fixed number now get resolved properly,
