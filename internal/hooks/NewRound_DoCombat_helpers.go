@@ -138,17 +138,21 @@ func processAttackerProgression(c *characters.Character, userId int, result comb
 // happened to out-roll the real ones would make BestOf report false and the
 // whole round train nothing. Dropping it costs only the unknown skill.
 //
-// ⚠️ THE ROLL DOES NOT DISCRIMINATE BY SKILL, and this is a known limit rather
-// than an accident. calcAttackScore builds every swing's score from
+// ✅ THE ROLL DISCRIMINATES BY SKILL as of the 2026-08-27 offhand fix.
+// calcAttackScore used to build every swing's score from
 // characters.GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag for
-// every entry in the plan -- so an offhand fist's attack roll is centred on a
-// score containing WEAPON-combat's rank, not unarmed-combat's. Across a round's
-// entries the only things that actually vary are the per-weapon penalty and the
-// swing count, so which of two DIFFERENT skills trains is decided by the
-// dual-wield penalty rather than by either skill's own rank. Within one skill
-// (the common case, and every same-skill dual-wield) the max is exactly right.
-// Recorded for U10b-1b beside the melee/channel fumble divergence; the fix is
-// the same one, giving each candidate a roll built on its own skill.
+// every entry in the plan -- so an offhand fist's attack roll was centred on a
+// score containing WEAPON-combat's rank, not unarmed-combat's, and which of two
+// DIFFERENT skills trained was decided by the dual-wield penalty rather than by
+// either skill's own rank. calcAttackScore now calls GetCombatSkillLevelFor
+// with the weapon being swung, so each candidate's roll carries its own skill.
+//
+// ⚠️ ONE PIECE OF THE SAME DEFECT IS STILL LIVE, and it is a SWING COUNT rather
+// than a score: calcSwingCount (combat_helpers.go:170) still reads main-hand-
+// only GetCombatSkillLevel, so an offhand fist beside a sword gets a swing
+// count derived from weapon-combat's rank. More swings means more chances to
+// set BestRoll, so it still tilts selection toward the offhand, just far less
+// than the score term did.
 func attackerCandidates(c *characters.Character, result combat.AttackResult) ([]progression.Candidate, map[string]bool) {
 	order := make([]string, 0, len(result.WeaponHits))
 	bestRoll := make(map[string]float64, len(result.WeaponHits))

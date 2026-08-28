@@ -56,12 +56,13 @@ type WeaponHitInfo struct {
 	// simply false. A lower-penalty weapon rolls with a higher MEAN and is
 	// favoured, which is intended: it is the weapon that swung better.
 	//
-	// ⚠️ What this canNOT do is discriminate between two different SKILLS on
-	// their own merits. calcAttackScore takes its skill term from
-	// characters.GetCombatSkillLevel, which resolves the MAIN-HAND weapon's tag
-	// for every entry in the plan, so an offhand fist rolls on a score built
-	// from WEAPON-combat's rank. See hooks.attackerCandidates; the fix is a
-	// U10b-1b item.
+	// ✅ It DOES discriminate between two different SKILLS on their own merits,
+	// as of the 2026-08-27 offhand fix. calcAttackScore used to take its skill
+	// term from characters.GetCombatSkillLevel, which resolves the MAIN-HAND
+	// weapon's tag for every entry in the plan, so an offhand fist rolled on a
+	// score built from WEAPON-combat's rank and this field could not tell two
+	// skills apart. It now calls GetCombatSkillLevelFor with the weapon actually
+	// being swung, so each entry's roll carries its own skill.
 	BestRoll float64
 }
 
