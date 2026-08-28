@@ -190,8 +190,8 @@ Templates load first; mob/room instance saves can then shadow template fields.
 Before local smoke tests, clear only:
 
 ```text
-_datafiles/world/dogmud/mobs.instances/*
-_datafiles/world/dogmud/rooms.instances/*
+_datafiles/world/dogmud/mobs.instances
+_datafiles/world/dogmud/rooms.instances
 ```
 
 Never clear `shops/`, `guilds/`, or `moderation/`; these are persistent living

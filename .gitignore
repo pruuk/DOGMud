@@ -152,3 +152,6 @@ _datafiles/world/dogmud/moderation/
 # Test-run artifacts: some package tests write relative _datafiles/ paths
 # before chdir'ing (e.g. behaviortree crate persistence) — never commit them.
 internal/**/_datafiles/
+
+# Codex CLI local config: holds live MCP provider API keys, never commit
+.codex/config.toml

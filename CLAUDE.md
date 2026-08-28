@@ -180,9 +180,15 @@ a field is shadowed.
 the prod policy where these directories are not deployed. Run:
 
 ```bash
-rm -rf _datafiles/world/dogmud/mobs.instances/* \
-       _datafiles/world/dogmud/rooms.instances/*
+rm -rf _datafiles/world/dogmud/mobs.instances \
+       _datafiles/world/dogmud/rooms.instances
 ```
+
+This removes the two directories themselves, not just their contents — the
+loaders recreate them (`internal/rooms/save_and_load.go:522` builds each zone
+folder at load; `internal/mobs/instance_save.go:171` builds it before every
+write). Because the rooms side only does this at zone load, wipe with the
+server **down**.
 
 Then restart the server. The engine will re-spawn mobs and re-build
 rooms from the (updated) templates. **Do NOT also wipe
