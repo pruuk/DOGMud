@@ -229,7 +229,34 @@ func (m *Machine) TransitionToEngaging(d EngagingData, r state.TransitionReason)
 	if err := m.inner.TransitionTo(Engaging, r); err != nil {
 		return err
 	}
+
+	// U12c-0: this transition is now reachable from Engaged (a retarget), so
+	// the superseded state data must go. The public accessors are state-gated
+	// and would hide a stale value, which is exactly why leaving it would be a
+	// trap for the next accessor that is not.
+	//
+	// prevTarget is captured BEFORE the clear, because CurrentTarget() reads
+	// the state data.
+	prevTarget := m.CurrentTarget()
+	m.engaged = nil
+	m.disengaging = nil
+
 	m.engaging = &d
+
+	// Move our inbound-attacker entry off the previous target. Inert today —
+	// lookupMachine returns nil because combatphase.RegisterMachine has no
+	// production callers — but without it a retarget would leak an entry on
+	// the old target the day that registry is wired up.
+	selfRef := r.Actor
+	if selfRef.IsZero() {
+		selfRef = m.self
+	}
+	if !prevTarget.IsZero() && prevTarget != d.Target {
+		if prev := lookupMachine(prevTarget); prev != nil && !selfRef.IsZero() {
+			prev.RemoveInboundAttacker(selfRef)
+		}
+	}
+
 	if target := lookupMachine(d.Target); target != nil {
 		target.RecordInboundAttacker(r.Actor)
 	}

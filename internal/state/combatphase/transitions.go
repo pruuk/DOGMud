@@ -5,10 +5,15 @@ import "github.com/GoMudEngine/GoMud/internal/state"
 // validTransitions enforces the Combat Phase invariant matrix.
 // Vetoes layer additional rules on top.
 var validTransitions = state.TransitionTable[State]{
-	Idle:        {Engaging},
-	Engaging:    {Engaged, Idle},     // Idle on cancel/target-died
-	Engaged:     {Disengaging, Idle}, // Idle direct on death/despawn
-	Disengaging: {Idle, Engaged},     // Engaged on flee failure
+	Idle:     {Engaging},
+	Engaging: {Engaged, Idle}, // Idle on cancel/target-died
+	// Engaging on RETARGET (U12c-0). Switching targets mid-fight is a fresh
+	// engagement: new target, fresh wind-up, then back to Engaged. Without
+	// this, TransitionToEngaging failed on every retarget and SetAggro
+	// discarded the error, so CurrentTarget kept returning the PREVIOUS
+	// enemy — which the {target} and {targethealth} prompt tokens render.
+	Engaged:     {Disengaging, Idle, Engaging}, // Idle direct on death/despawn
+	Disengaging: {Idle, Engaged},               // Engaged on flee failure
 }
 
 // Trigger reason constants. Use these in TransitionReason.Trigger
