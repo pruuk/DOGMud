@@ -147,14 +147,26 @@ func TestReasonRoundTrip(t *testing.T) {
 // TestCommit_ShootReasonPreservesShootingWithoutAWeapon is the concrete
 // regression: with no Shooting-subtype weapon equipped there is nothing for
 // SetAggro to re-infer from, so only a faithful Reason keeps the type.
-func TestCommit_ShootReasonPreservesShootingWithoutAWeapon(t *testing.T) {
+// ⚠️ U12c-2 CHANGED WHAT THIS CAN ASSERT, and the change is worth knowing.
+//
+// This pinned that a Shooting engagement SURVIVED a re-commit with no bow in
+// hand, because "shooting-ness" was stored on the engagement. It is derived
+// from the equipped weapon now (Engagement.Ranged), so it cannot outlive the
+// bow: unequip mid-fight and the engagement stops being ranged immediately.
+//
+// That is the intended direction -- stored and derived state cannot disagree
+// if only one exists -- but it means an engagement can no longer be ranged
+// without a ranged weapon. Its one consumer is ordinaryMeleeEngagement, which
+// gates mob melee AI, so the effect is that a disarmed archer now runs melee
+// AI rather than staying flagged as a shooter forever.
+func TestCommit_ShootReasonEngagesAndRangedFollowsTheWeapon(t *testing.T) {
 	c := characters.New()
 
 	Commit(c, state.ActorRef{MobInstanceId: 42}, ReasonShoot)
 
 	require.True(t, c.IsInCombat())
-	assert.Equal(t, characters.Shooting, c.Aggro.Type,
-		"a Shooting engagement must survive a re-commit even with no bow in hand")
+	assert.False(t, EngagementOf(c).Ranged,
+		"with no bow in hand the engagement is not ranged, however it was committed")
 }
 
 // TestCommit_ReportsWhetherItLanded pins the U12c-0b return value. It exists

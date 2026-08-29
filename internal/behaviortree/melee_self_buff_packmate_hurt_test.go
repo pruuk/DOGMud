@@ -32,7 +32,7 @@ func TestMeleeSelfBuff_PackmateHurt_SetsAggroOnAttacker(t *testing.T) {
 
 	// Assert aggro set on the attacker (via the attack action).
 	if !mob.Character.IsInCombat() {
-		t.Fatalf("packmate_hurt handler should set mob.Aggro; got nil")
+		t.Fatalf("packmate_hurt handler should engage the mob; it is not in combat")
 	}
 	if mob.Character.CurrentCombatTarget().UserId != 42 {
 		t.Fatalf("expected Aggro.UserId=42, got %d", mob.Character.CurrentCombatTarget().UserId)

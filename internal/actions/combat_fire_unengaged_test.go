@@ -544,7 +544,7 @@ func TestFireUnengaged_OwnCompanionIsNotAnAttacker(t *testing.T) {
 	require.NotNil(t, pet)
 	require.True(t, pet.Character.IsCharmed(unengagedShooterUserId),
 		"precondition: the mob is the shooter's own companion")
-	require.Equal(t, unengagedShooterUserId, pet.Character.Aggro.UserId,
+	require.Equal(t, unengagedShooterUserId, pet.Character.CurrentCombatTarget().UserId,
 		"precondition: and it is nonetheless aggroed on its owner")
 
 	withPet, petRes := sampleShotsFromOneShooter(t, char, "skeleton", unengagedSamples)
@@ -594,7 +594,7 @@ func TestFireUnengaged_TheTargetsReciprocalAggroEndsTheBonus(t *testing.T) {
 	char := newUnengagedShooter(false)
 	target := mobs.GetInstance(500)
 	require.NotNil(t, target)
-	require.Nil(t, target.Character.Aggro,
+	require.False(t, target.Character.IsInCombat(),
 		"precondition: the target has not noticed anyone yet")
 
 	opener, openerRes := sampleShotsFromOneShooter(t, char, "skeleton", unengagedSamples)
@@ -603,7 +603,7 @@ func TestFireUnengaged_TheTargetsReciprocalAggroEndsTheBonus(t *testing.T) {
 		"the opening shot is taken with nothing on the shooter")
 
 	// What internal/hooks does on the round after a same-room shot lands.
-	target.Character.Aggro = &characters.Aggro{UserId: unengagedShooterUserId}
+	target.Character.SetAggro(unengagedShooterUserId, 0, characters.DefaultAttack)
 
 	followUp, followUpRes := sampleShotsFromOneShooter(t, char, "skeleton", unengagedSamples)
 

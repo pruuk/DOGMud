@@ -55,7 +55,7 @@ func TestEngagementOf_IsPure(t *testing.T) {
 		assert.True(t, EngagementOf(c).OpeningUnspent,
 			"EngagementOf must not consume the opening strike (call %d)", i+1)
 	}
-	assert.Equal(t, characters.SurpriseAttack, c.Aggro.Type)
+	assert.True(t, c.CombatPhase.OpeningUnspent())
 }
 
 func TestEngagementOf_NilCharacterIsZero(t *testing.T) {

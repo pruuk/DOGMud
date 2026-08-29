@@ -133,7 +133,7 @@ func TestLookForTrouble_TargetsMobByGroupHate(t *testing.T) {
 	_, err = Attack("#302", bandit, room)
 	require.NoError(t, err)
 
-	require.NotNil(t, bandit.Character.Aggro,
+	require.True(t, bandit.Character.IsInCombat(),
 		"Attack('#302') must set aggro on the bandit")
 	require.Equal(t, 302, bandit.Character.CurrentCombatTarget().MobInstanceId,
 		"bandit aggro target must be the caravan mob (instance 302)")
@@ -180,7 +180,7 @@ func TestLookForTrouble_NoAggroWhenGroupHateMissing(t *testing.T) {
 
 	// No target was found, so no attack command was issued.
 	// Verify Aggro is still nil (no attack was called by the event loop).
-	require.Nil(t, neutralBandit.Character.Aggro,
+	require.False(t, neutralBandit.Character.IsInCombat(),
 		"neutral mob with no hates must not aggro on caravan mob")
 }
 

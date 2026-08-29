@@ -104,7 +104,7 @@ func TestEngageAfterThrow_MixedFreshnessPerMob(t *testing.T) {
 	require.True(t, alreadyFighting.Character.IsInCombat())
 	assert.Equal(t, throwerUserId, alreadyFighting.Character.CurrentCombatTarget().UserId)
 
-	require.NotNil(t, bystander.Character.Aggro,
+	require.True(t, bystander.Character.IsInCombat(),
 		"a mob newly caught in the blast must be pulled into the fight")
 	assert.Equal(t, throwerUserId, bystander.Character.CurrentCombatTarget().UserId)
 }

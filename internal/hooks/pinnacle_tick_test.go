@@ -399,22 +399,26 @@ func TestApplyTauntPull(t *testing.T) {
 	// No-op 1: bearer has no aggro at all → nothing to pull.
 	u2 := users.NewTestUser(711, "idle", "Idler", 7711)
 	mob2 := addTestMob(211, false)
-	sentinel := &characters.Aggro{UserId: 2, Type: characters.DefaultAttack}
-	mob2.Character.Aggro = sentinel
-	applyTauntPull(u2) // u2.Character.Aggro is nil
-	if mob2.Character.Aggro != sentinel {
+	// U12c-2: the no-op used to be proved by POINTER IDENTITY on the Aggro
+	// struct. With the field gone the equivalent is that the engagement's
+	// target is unchanged, which is what the pointer check was standing in for.
+	mob2.Character.SetAggro(2, 0, characters.DefaultAttack)
+	sentinel := mob2.Character.CurrentCombatTarget()
+	applyTauntPull(u2) // u2 is not in combat, so there is nothing to pull
+	if mob2.Character.CurrentCombatTarget() != sentinel {
 		t.Fatalf("no bearer aggro must not touch any mob, got %+v", mob2.Character.CurrentCombatTarget())
 	}
 
-	// No-op 2: the mob is ALREADY fighting the bearer → no re-force (the Aggro
-	// pointer is left untouched, proving ForceTauntAggro never fired).
+	// No-op 2: the mob is ALREADY fighting the bearer → no re-force. The
+	// original proved this by pointer identity on the Aggro struct; the target
+	// ref is the equivalent now.
 	u3 := users.NewTestUser(712, "tank", "Tanker", 7712)
 	mob3 := addTestMob(212, false)
 	u3.Character.SetAggro(0, mob3.InstanceId, characters.DefaultAttack)
-	already := &characters.Aggro{UserId: u3.UserId, Type: characters.DefaultAttack}
-	mob3.Character.Aggro = already
+	mob3.Character.SetAggro(u3.UserId, 0, characters.DefaultAttack)
+	already := mob3.Character.CurrentCombatTarget()
 	applyTauntPull(u3)
-	if mob3.Character.Aggro != already {
+	if mob3.Character.CurrentCombatTarget() != already {
 		t.Fatalf("a mob already on the bearer must not be re-forced, got %+v", mob3.Character.CurrentCombatTarget())
 	}
 

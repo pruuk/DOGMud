@@ -155,7 +155,7 @@ func TestCounterTaunt_BypassesCooldownCostAndAggro(t *testing.T) {
 		"the counter-taunt must not charge the counterer any admission cost")
 
 	// BYPASS 3 asserted: no aggro mutation on either side.
-	require.Nil(t, counterer.Character.Aggro,
+	require.False(t, counterer.Character.IsInCombat(),
 		"the counter-taunt must not seed aggro on the counterer")
 	require.Equal(t, taunterAggroBefore.UserId, taunter.Character.CurrentCombatTarget().UserId)
 	require.Equal(t, taunterAggroBefore.MobInstanceId, taunter.Character.CurrentCombatTarget().MobInstanceId,

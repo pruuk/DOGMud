@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -100,18 +101,16 @@ func newBlockerMob(id int, name string, dex int, unarmed int, targetUid, targetM
 		InstanceId: id,
 		HomeRoomId: 1,
 		Character: characters.Character{
-			Name:      name,
-			RoomId:    1,
-			Buffs:     buffs.New(),
-			Cooldowns: map[string]int{},
-			Skills:    map[string]int{string(skills.UnarmedCombat): unarmed},
-			Aggro: &characters.Aggro{
-				Type:          characters.DefaultAttack,
-				UserId:        targetUid,
-				MobInstanceId: targetMid,
-			},
+			Name:        name,
+			RoomId:      1,
+			Buffs:       buffs.New(),
+			Cooldowns:   map[string]int{},
+			Skills:      map[string]int{string(skills.UnarmedCombat): unarmed},
+			CombatPhase: combatphase.NewMachine(),
 		},
 	}
+	// U12c-2: the engagement is applied through the seam, after the literal.
+	m.Character.SetAggro(targetUid, targetMid, characters.DefaultAttack)
 	m.Character.MobInstanceId = id
 	m.Character.Stats.Dexterity.ValueAdj = dex
 	m.Character.HealthMax.Value = 100

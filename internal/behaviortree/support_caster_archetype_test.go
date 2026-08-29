@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"strings"
 	"testing"
 
@@ -39,11 +40,13 @@ func TestSupportCaster_PackmateHurt_ShieldsTankingPackmate(t *testing.T) {
 		InstanceId: 90602,
 		Routine:    "bandit_camp_guard",
 		Character: characters.Character{
-			RoomId: caster.Character.RoomId,
-			Health: 100,
-			Aggro:  &characters.Aggro{UserId: 42, Type: characters.DefaultAttack},
+			RoomId:      caster.Character.RoomId,
+			Health:      100,
+			CombatPhase: combatphase.NewMachine(),
 		},
 	}
+	// U12c-2: "is tanking" is an engagement, applied through the seam.
+	tanking.Character.SetAggro(42, 0, characters.DefaultAttack)
 	tanking.Character.HealthMax.Value = 100
 
 	// Also a lightly-wounded packmate to prove tank-priority wins.

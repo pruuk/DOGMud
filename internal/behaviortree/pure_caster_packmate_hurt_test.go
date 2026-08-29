@@ -117,7 +117,7 @@ func TestPureCaster_PackmateHurt_NoWoundedPackmate_EngagesAttacker(t *testing.T)
 	}
 	// Attack should have been triggered (sets Aggro).
 	if !caster.Character.IsInCombat() {
-		t.Fatalf("expected mob.Aggro to be set on attacker; got nil")
+		t.Fatalf("expected the mob to be engaged with the attacker; it is not in combat")
 	}
 	if caster.Character.CurrentCombatTarget().UserId != 42 {
 		t.Fatalf("expected Aggro.UserId=42, got %d", caster.Character.CurrentCombatTarget().UserId)

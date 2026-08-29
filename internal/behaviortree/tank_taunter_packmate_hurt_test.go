@@ -63,7 +63,7 @@ func TestTankTaunter_PackmateHurt_TauntsAndSetsAggro(t *testing.T) {
 
 	// Assert aggro set on the attacker (via the attack action).
 	if !m.Character.IsInCombat() {
-		t.Fatalf("packmate_hurt handler should set mob.Aggro; got nil")
+		t.Fatalf("packmate_hurt handler should engage the mob; it is not in combat")
 	}
 	if m.Character.CurrentCombatTarget().UserId != 42 {
 		t.Fatalf("expected Aggro.UserId=42, got %d", m.Character.CurrentCombatTarget().UserId)

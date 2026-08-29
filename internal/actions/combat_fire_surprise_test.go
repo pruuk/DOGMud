@@ -210,7 +210,7 @@ func TestFireSurprise_RevealsAnAlreadyEngagedShooter(t *testing.T) {
 	char := newSurpriseShooter(true)
 	char.SetAggro(0, 500, characters.DefaultAttack)
 	require.True(t, char.IsHidden(), "precondition: the shooter starts hidden")
-	require.NotNil(t, char.Aggro,
+	require.True(t, char.IsInCombat(),
 		"precondition: already engaged, so ExecuteFire must NOT call SetAggro")
 
 	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")

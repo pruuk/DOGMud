@@ -759,7 +759,7 @@ func TestLookForTrouble_SkipsGraceProtectedPlayer(t *testing.T) {
 	handled, err := LookForTrouble("", mob, room)
 	require.NoError(t, err)
 	require.True(t, handled)
-	require.Nil(t, mob.Character.Aggro,
+	require.False(t, mob.Character.IsInCombat(),
 		"grace-protected player must not cause aggro acquisition")
 }
 

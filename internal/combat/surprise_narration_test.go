@@ -369,7 +369,7 @@ func TestSurpriseRound_ExactlyOneSwingIsMarkedAsTheOpener(t *testing.T) {
 		}
 
 		attacker.SetAggro(0, 1, characters.SurpriseAttack)
-		if !attacker.IsInCombat() || attacker.Aggro.Type != characters.SurpriseAttack {
+		if !attacker.IsInCombat() || !attacker.CombatPhase.OpeningUnspent() {
 			t.Fatalf("round %d: SetAggro did not take; got %+v", i, attacker.CurrentCombatTarget())
 		}
 

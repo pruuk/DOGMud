@@ -41,7 +41,7 @@ func TestLeader_PackmateHurt_RallyOrWarcryThenEngage(t *testing.T) {
 
 	// Attack should set Aggro.
 	if !mob.Character.IsInCombat() {
-		t.Fatalf("expected mob.Aggro to be set; got nil")
+		t.Fatalf("expected the mob to be engaged; it is not in combat")
 	}
 	if mob.Character.CurrentCombatTarget().UserId != 42 {
 		t.Fatalf("expected Aggro.UserId=42, got %d", mob.Character.CurrentCombatTarget().UserId)

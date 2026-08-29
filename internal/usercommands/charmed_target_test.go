@@ -86,7 +86,7 @@ func TestRegression_MeleeSpecialsRefuseCharmedTargets(t *testing.T) {
 			assert.True(t, handled)
 			assert.NoError(t, err)
 
-			assert.Nil(t, user.Character.Aggro,
+			assert.False(t, user.Character.IsInCombat(),
 				"%s must not engage a charmed mob — a player's companion is not a valid target", c.name)
 		})
 	}

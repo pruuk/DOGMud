@@ -122,7 +122,7 @@ func TestAttack_HiddenOnCooldown_TellsThePlayerTheAmbushWasRefused(t *testing.T)
 		"a hidden attacker whose special-move timer was already claimed gets an ORDINARY "+
 			"swing and loses their cover for it. Saying nothing makes the ambush read as broken")
 	require.True(t, user.Character.IsInCombat(), "the attack itself still happens")
-	assert.Equal(t, characters.DefaultAttack, user.Character.Aggro.Type,
+	assert.False(t, user.Character.CombatPhase.OpeningUnspent(),
 		"precondition: the opener really was refused, so the line is not a false alarm")
 }
 
@@ -187,7 +187,7 @@ func TestAttack_HiddenWithFreeTimer_SaysNothingAboutARefusal(t *testing.T) {
 	out := attackAndCollect(t, user, room, "skeleton")
 
 	require.True(t, user.Character.IsInCombat())
-	require.Equal(t, characters.SurpriseAttack, user.Character.Aggro.Type,
+	require.True(t, user.Character.CombatPhase.OpeningUnspent(),
 		"precondition: the opener was GRANTED, so any refusal line would be a lie")
 	assert.NotContains(t, out, surpriseMeleeDeniedText,
 		"a granted ambush must not be reported as refused")

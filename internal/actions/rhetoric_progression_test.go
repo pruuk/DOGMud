@@ -560,12 +560,11 @@ func (r *recordingActor) AwardResolved(won bool, cands ...progression.Candidate)
 // pin (the out-of-combat path is a 50% roll and is deliberately not asserted).
 func TestRegression_WarcryRallyAwardRhetoric(t *testing.T) {
 	newInCombatActor := func() *recordingActor {
-		c := &characters.Character{
-			Name:  "Test Subject",
-			Aggro: &characters.Aggro{}, // non-nil Aggro => IsInCombat()
-		}
+		c := &characters.Character{Name: "Test Subject"}
 		c.ConvictionMax.Base = 100
-		c.Validate()
+		c.Validate() // builds the state machines
+		// U12c-2: in-combat is a machine state now, not a non-nil field.
+		c.SetAggro(0, 1, characters.DefaultAttack)
 		c.Conviction = 100
 		return &recordingActor{char: c}
 	}

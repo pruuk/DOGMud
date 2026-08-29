@@ -170,7 +170,7 @@ func runOpeningStrikeRounds(t *testing.T, n int, surprise bool) [][]int {
 			aggro = characters.SurpriseAttack
 		}
 		attacker.SetAggro(0, 1, aggro)
-		if !attacker.IsInCombat() || attacker.Aggro.Type != aggro {
+		if !attacker.IsInCombat() || attacker.CombatPhase.OpeningUnspent() != surprise {
 			t.Fatalf("round %d: SetAggro did not take; got %+v", i, attacker.CurrentCombatTarget())
 		}
 
