@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -220,4 +221,54 @@ func TestAddOverlayOverridesAllowsModuleReRegistration(t *testing.T) {
 	flat := Flatten(map[string]any(configData.Modules))
 	require.Equal(t, 90, flat[`weather.CycleSeconds`], `module re-registration of its own default was ignored`)
 	require.Equal(t, 90, Flatten(overrides)[`Modules.weather.CycleSeconds`])
+}
+
+// TestAddOverlayOverrides_OperatorValueSurvives_PublicAPI is the same guarantee
+// as TestAddOverlayOverridesPreservesOperatorOverrides, expressed WITHOUT
+// touching the moduleOverlayKeys ledger.
+//
+// That distinction is the point. The other two tests reset the private ledger,
+// so against the unfixed code they fail to COMPILE rather than fail an
+// assertion -- which proves the fix is absent but never demonstrates the bug.
+// This one touches no private ledger, so it compiles fine against the old code
+// and fails on the ASSERTION, showing the actual defect: a module default
+// overwriting a value the operator set in config-overrides.yaml.
+//
+// Verified RED by reverting only configs.go to the pre-fix version (which did
+// an unconditional `overrides[k] = v`): CycleSeconds came back 60, not 120.
+func TestAddOverlayOverrides_OperatorValueSurvives_PublicAPI(t *testing.T) {
+	origConfigData := configData
+	origOverrides := overrides
+	origKeyLookups := keyLookups
+	origTypeLookups := typeLookups
+	t.Cleanup(func() {
+		configData = origConfigData
+		overrides = origOverrides
+		keyLookups = origKeyLookups
+		typeLookups = origTypeLookups
+	})
+
+	configData = Config{}
+	keyLookups = map[string]string{}
+	typeLookups = map[string]string{}
+
+	// The operator pinned CycleSeconds to 120 in config-overrides.yaml, applied
+	// onto the live config the way ReloadConfig does at boot.
+	operatorYAML := []byte("Modules:\n  weather:\n    CycleSeconds: 120\n")
+	loaded := map[string]any{}
+	require.NoError(t, yaml.Unmarshal(operatorYAML, &loaded))
+	overrides = loaded
+	require.NoError(t, configData.OverlayOverrides(overrides))
+
+	// The module then registers its shipped default of 60 for the same key.
+	if err := AddOverlayOverrides(map[string]any{
+		"Modules.weather.CycleSeconds": 60,
+	}); err != nil {
+		t.Fatalf("AddOverlayOverrides: %v", err)
+	}
+
+	got := Flatten(overrides)["Modules.weather.CycleSeconds"]
+	if fmt.Sprintf("%v", got) != "120" {
+		t.Errorf("the operator's CycleSeconds=120 was overwritten by the module default; got %v. A module may fill in keys the operator did not set, never replace ones they did", got)
+	}
 }
