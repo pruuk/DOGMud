@@ -350,9 +350,13 @@ then back to `Engaged`.
 
 Why this and not the alternatives:
 
-- **It matches what already happens.** `SetAggro` already reseeds
-  `RoundsWaiting` on every retarget, so a fresh wind-up on retarget is existing
-  behaviour. As a bonus the two counters (§6.3) stop diverging on retarget.
+- **A fresh wind-up on retarget is right on its own terms**, not merely
+  tolerable: switching targets mid-fight takes a moment, and the engagement
+  genuinely restarts against someone new. Owner's call, 2026-08-29.
+- **It also matches what already happens.** `SetAggro` already reseeds
+  `RoundsWaiting` on every retarget, so that moment is already being paid — it
+  was just tracked in the one counter that works. As a bonus the two counters
+  (§6.3) stop diverging on retarget.
 - **It re-runs the target vetoes**, so a retarget onto a dead or non-combatant
   target is correctly refused. An in-place `Retarget(ref)` mutator would skip
   them and could leave the machine pointing at a corpse.
