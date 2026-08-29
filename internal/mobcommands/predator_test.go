@@ -264,7 +264,7 @@ func TestHamstring_InCombat(t *testing.T) {
 
 	// Should cost the round
 	if mob.Character.Aggro != nil {
-		assert.Equal(t, 1, mob.Character.Aggro.RoundsWaiting)
+		assert.Equal(t, 1, mob.Character.RoundsWaiting())
 	}
 
 	mob.Character.Aggro = nil
@@ -323,7 +323,7 @@ func TestCharge_InCombat(t *testing.T) {
 	assert.NoError(t, err)
 
 	if mob.Character.Aggro != nil {
-		assert.Equal(t, 1, mob.Character.Aggro.RoundsWaiting)
+		assert.Equal(t, 1, mob.Character.RoundsWaiting())
 	}
 
 	mob.Character.Aggro = nil
@@ -359,7 +359,7 @@ func TestHowl_InCombat(t *testing.T) {
 	assert.NoError(t, err)
 
 	if mob.Character.Aggro != nil {
-		assert.Equal(t, 1, mob.Character.Aggro.RoundsWaiting)
+		assert.Equal(t, 1, mob.Character.RoundsWaiting())
 	}
 
 	mob.Character.Aggro = nil
@@ -417,7 +417,7 @@ func TestHowlAliasChargesOnlyThroughTaunt(t *testing.T) {
 		if spend == admission {
 			cleanSeen = true
 			require.Greater(t, mob.Character.Cooldowns["special-move"], 0)
-			require.Equal(t, 1, mob.Character.Aggro.RoundsWaiting)
+			require.Equal(t, 1, mob.Character.RoundsWaiting())
 		}
 	}
 	require.True(t, cleanSeen,

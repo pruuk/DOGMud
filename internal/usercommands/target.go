@@ -207,8 +207,10 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// FAILURE: Keep attacking current target this round
 		user.SendText(messaging.CategorySystem, "You try to reposition but can't break away from your current opponent!")
 
-		// Still costs a round (set RoundsWaiting to 1)
-		user.Character.Aggro.RoundsWaiting = 1
+		// Still costs a round (set the round budget to 1)
+		if user.Character.CombatPhase != nil {
+			user.Character.SetRoundsWaiting(1)
+		}
 	}
 
 	return true, nil

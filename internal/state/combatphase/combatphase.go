@@ -67,6 +67,39 @@ type vetoChain struct {
 	targetPresence  func(state.ActorRef) bool // target.Presence available
 }
 
+// TWO round counters live on this machine, and they are NOT the same thing.
+// Nothing said so before U12c-2, so each one read like the only one.
+//
+//	RoundsUntil    (EngagingData.RoundsUntil) is the ENGAGEMENT WIND-UP: how
+//	               many rounds before the engagement becomes active.
+//	               OnRoundTick decrements it and calls advanceToEngaged() at
+//	               zero, which is also what fires the mob_engaged
+//	               behaviour-tree event. It exists ONLY in Engaging.
+//
+//	roundsWaiting  (the Machine field) is the ACTOR'S ROUND BUDGET: how many
+//	               rounds before this actor may act again.
+//	               handleCombatWaitRound decrements it LATER IN THE SAME
+//	               ROUND, and emits the wait messages.
+//
+// They are seeded identically by the commit path, so during wind-up they march
+// in lockstep. That is a coincidence of seeding, not shared identity.
+//
+// They diverge in Engaged ON PURPOSE: RoundsUntil does not exist there, while
+// the ~20 special-move `= 1` writes need a counter that still works once
+// engaged. That is why roundsWaiting is a MACHINE field and not state data.
+//
+// OnRoundTick's Engaged branch is a DELIBERATE no-op. Making it decrement is
+// the first step of unifying the two counters, not a bug fix.
+//
+// ⚠️ Unifying them is DEFERRED with a written reason (U12 spec §6.3.1): the two
+// decrements happen at different moments in the round (OnRoundTick fires FIRST,
+// from the round driver; handleCombatWaitRound runs later during resolution),
+// so one counter shortens every weapon wind-up and every special-move recovery
+// by one round unless compensated by seeding 2 where the code says 1. That is a
+// balance change wearing a refactor's clothes. It is its own post-arc slice,
+// and it must also relocate advanceToEngaged() and verify mob_engaged still
+// fires at the same point.
+
 // Machine wraps state.Machine[State] with Combat-Phase-specific
 // API including per-state data storage and Attackers tracking.
 //
@@ -84,6 +117,33 @@ type Machine struct {
 	attackersChangeListeners []func([]state.ActorRef)
 	vetoes                   vetoChain
 	tickEventListeners       []func(name string, r state.TransitionReason)
+	roundsWaiting            int // see the two-counter note above
+}
+
+// RoundsWaiting reports the actor's remaining round budget.
+func (m *Machine) RoundsWaiting() int { return m.roundsWaiting }
+
+// SetRoundsWaiting sets the actor's round budget. Negative values clamp to
+// zero; every caller means "wait at least this long", never "act early".
+func (m *Machine) SetRoundsWaiting(n int) {
+	if n < 0 {
+		n = 0
+	}
+	m.roundsWaiting = n
+}
+
+// ConsumeRoundWaiting decrements the budget by one and reports whether this
+// round was consumed by the wait. False means the actor is free to act.
+//
+// Replaces the `if Aggro.RoundsWaiting <= 0 { return false }; RoundsWaiting--`
+// pair in handleCombatWaitRound, so the guard and the decrement can no longer
+// drift apart.
+func (m *Machine) ConsumeRoundWaiting() bool {
+	if m.roundsWaiting <= 0 {
+		return false
+	}
+	m.roundsWaiting--
+	return true
 }
 
 // NewMachine returns a Combat Phase machine in Idle.
@@ -402,6 +462,9 @@ func (m *Machine) ForceIdle(r state.TransitionReason) {
 	m.engaging = nil
 	m.engaged = nil
 	m.disengaging = nil
+	// EndAggro used to nil the whole Aggro struct, so the round budget died
+	// with the engagement. Idle preserves that exactly.
+	m.roundsWaiting = 0
 
 	// Remove self from target's inbound list. Use r.Actor if set,
 	// otherwise fall back to the machine's own registered identity.

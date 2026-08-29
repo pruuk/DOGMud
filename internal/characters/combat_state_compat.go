@@ -139,6 +139,10 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 		}); err != nil {
 			return
 		}
+		// U12c-2: the actor's round budget lives on the machine now. Seeded
+		// here, beside the wind-up it happens to match, so the two counters
+		// stay visibly distinct. See the two-counter note in combatphase.
+		c.SetRoundsWaiting(combatAddlWaitRounds)
 	}
 
 	// Clear grapple state if switching targets. AFTER the transition, so a

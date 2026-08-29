@@ -289,16 +289,20 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 				}
 			}
 			if guard.roundAssignment {
+				// U12c-2: the round budget moved off the Aggro struct onto the
+				// combat phase machine, so consuming a round is a CALL now
+				// (char.SetRoundsWaiting(1)) where it used to be an assignment
+				// (char.Aggro.RoundsWaiting = 1). The guard's job is unchanged:
+				// every special move must consume a round, after the consuming
+				// TryCooldown.
 				roundPositions := []token.Pos{}
 				ast.Inspect(body, func(node ast.Node) bool {
-					assign, ok := node.(*ast.AssignStmt)
+					call, ok := node.(*ast.CallExpr)
 					if !ok {
 						return true
 					}
-					if assign.Tok == token.ASSIGN && len(assign.Lhs) == 1 && len(assign.Rhs) == 1 &&
-						formattedASTNode(t, fset, assign.Lhs[0]) == "char.Aggro.RoundsWaiting" &&
-						formattedASTNode(t, fset, assign.Rhs[0]) == "1" {
-						roundPositions = append(roundPositions, assign.Pos())
+					if formattedASTNode(t, fset, call) == "char.SetRoundsWaiting(1)" {
+						roundPositions = append(roundPositions, call.Pos())
 					}
 					return true
 				})
@@ -429,17 +433,18 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 				require.True(t, found, "%s must keep exact read-only guard %s", guard.function, expected.condition)
 			}
 
+			// U12c-2: a CALL now, not an assignment. See the matching note in
+			// TestSpecialMoveAdmissionOrdering above.
 			roundPositions := []token.Pos{}
 			ast.Inspect(fn.Body, func(node ast.Node) bool {
-				assign, ok := node.(*ast.AssignStmt)
-				if ok && assign.Tok == token.ASSIGN && len(assign.Lhs) == 1 && len(assign.Rhs) == 1 &&
-					formattedASTNode(t, fset, assign.Lhs[0]) == "char.Aggro.RoundsWaiting" &&
-					formattedASTNode(t, fset, assign.Rhs[0]) == "1" {
-					roundPositions = append(roundPositions, assign.Pos())
+				call, ok := node.(*ast.CallExpr)
+				if ok && formattedASTNode(t, fset, call) == "char.SetRoundsWaiting(1)" {
+					roundPositions = append(roundPositions, call.Pos())
 				}
 				return true
 			})
-			require.NotEmpty(t, roundPositions)
+			require.NotEmpty(t, roundPositions,
+				"%s must consume a combat round", guard.function)
 			for _, pos := range roundPositions {
 				require.Less(t, int(consume[0]), int(pos))
 			}
@@ -1383,7 +1388,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			cooldownsBefore := maps.Clone(mob.Character.Cooldowns)
 			roundsBefore := 0
 			if mob.Character.Aggro != nil {
-				roundsBefore = mob.Character.Aggro.RoundsWaiting
+				roundsBefore = mob.Character.RoundsWaiting()
 			}
 			gotFlag := runExecuteAndReadFlag(tc.cmd, actor, tc.wantReason)
 			assert.True(t, gotFlag,
@@ -1398,7 +1403,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 				assert.Equal(t, cooldownsBefore, mob.Character.Cooldowns,
 					"readiness rejection %q must not consume or rewrite cooldown", tc.name)
 				if mob.Character.Aggro != nil {
-					assert.Equal(t, roundsBefore, mob.Character.Aggro.RoundsWaiting,
+					assert.Equal(t, roundsBefore, mob.Character.RoundsWaiting(),
 						"readiness rejection %q must not consume a round", tc.name)
 				}
 			}
@@ -1409,7 +1414,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 				assert.Equal(t, cooldownsBefore, mob.Character.Cooldowns,
 					"readiness rejection %q must not consume or rewrite cooldown", tc.name)
 				if mob.Character.Aggro != nil {
-					assert.Equal(t, roundsBefore, mob.Character.Aggro.RoundsWaiting,
+					assert.Equal(t, roundsBefore, mob.Character.RoundsWaiting(),
 						"readiness rejection %q must not consume a round", tc.name)
 				}
 			}

@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
@@ -62,6 +63,13 @@ func NewTestUser(userId int, username string, charName string, connId uint64) *U
 		Cooldowns: map[string]int{},
 		Awareness: awareness.NewMachine(),
 		Position:  position.NewMachine(),
+		// U12c-2: the combat phase machine is no longer optional for a
+		// fixture. It was already the source of truth for "am I fighting and
+		// who"; it now also holds the actor's round budget, which used to live
+		// on the Aggro struct and needed no machine. A fixture without one
+		// silently drops every round-budget write and the test measures
+		// nothing.
+		CombatPhase: combatphase.NewMachine(),
 	}
 	ch.HealthMax.Value = 100
 	ch.StaminaMax.Value = 100

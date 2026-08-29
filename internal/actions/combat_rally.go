@@ -71,8 +71,8 @@ func ExecuteRally(actor Actor) RallyResult {
 	bonus, duration := ApplyRallyEffect(char)
 
 	// Set combat wait if in combat (matches player + mob behavior).
-	if char.Aggro != nil {
-		char.Aggro.RoundsWaiting = 1
+	if char.CombatPhase != nil {
+		char.SetRoundsWaiting(1)
 	}
 
 	// See ExecuteWarcry: progression is owned here, not by the callers, so both

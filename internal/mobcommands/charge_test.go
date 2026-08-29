@@ -100,7 +100,7 @@ func TestCharge_IsRegistered(t *testing.T) {
 }
 
 // TestCharge_AggroRoundsWaiting_HighStats verifies that after a successful
-// Charge execution with a high-stat attacker, mob.Character.Aggro.RoundsWaiting
+// Charge execution with a high-stat attacker, mob.Character.RoundsWaiting()
 // is set to 1 (consumed round). Tests the refactored delegation path under
 // near-guaranteed hit conditions.
 func TestCharge_AggroRoundsWaiting_HighStats(t *testing.T) {
@@ -125,6 +125,6 @@ func TestCharge_AggroRoundsWaiting_HighStats(t *testing.T) {
 	// After charge fires, aggro.RoundsWaiting must be 1 (round consumed
 	// by the special move via actions.ExecuteTrip → RecordAndWait).
 	require.NotNil(t, mob.Character.Aggro)
-	assert.Equal(t, 1, mob.Character.Aggro.RoundsWaiting,
+	assert.Equal(t, 1, mob.Character.RoundsWaiting(),
 		"Charge must consume the combat round (RoundsWaiting=1)")
 }

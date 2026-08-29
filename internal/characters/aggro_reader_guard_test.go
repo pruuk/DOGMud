@@ -33,28 +33,12 @@ import (
 // grep matches comments, the AST parser (mode 0) drops them, so a grep-derived
 // list carries phantom entries that then fail the stale check below.
 var notYetMigrated = map[string]bool{
-	"actions/combat_drain.go":               true,
-	"actions/combat_gore.go":                true,
-	"actions/combat_helpers.go":             true,
-	"actions/combat_hamstring.go":           true,
-	"actions/combat_maul.go":                true,
-	"actions/combat_pounce.go":              true,
-	"actions/combat_rake.go":                true,
-	"actions/combat_rally.go":               true,
-	"actions/combat_taunt.go":               true,
-	"actions/combat_throttle.go":            true,
-	"actions/combat_warcry.go":              true,
-	"combat/combat.go":                      true,
-	"hooks/combat_retarget.go":              true,
-	"hooks/Death_InboundAggroCleanup.go":    true,
-	"hooks/NewRound_DoCombat_helpers.go":    true,
-	"hooks/NewRound_DoCombat_resolution.go": true,
-	"hooks/NewRound_DoCombat_unified.go":    true,
-	"usercommands/attack.go":                true,
-	"usercommands/stand.go":                 true,
-	"usercommands/target.go":                true,
-	"usercommands/throw.go":                 true,
-	"users/userrecord.prompt.go":            true,
+	"combat/combat.go":                   true,
+	"hooks/combat_retarget.go":           true,
+	"hooks/Death_InboundAggroCleanup.go": true,
+	"hooks/NewRound_DoCombat_helpers.go": true,
+	"usercommands/attack.go":             true,
+	"usercommands/target.go":             true,
 }
 
 func internalDirForReaderGuard(t *testing.T) string {

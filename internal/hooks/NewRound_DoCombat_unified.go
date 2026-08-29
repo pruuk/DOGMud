@@ -281,7 +281,7 @@ func resolveCombatTarget(atk, def actions.Actor, roundNumber uint64) bool {
 // Returns true if the attacker was waiting and the round was consumed.
 func phase1WaitRound(atk, def actions.Actor) bool {
 	atkChar := atk.GetCharacter()
-	if atkChar.Aggro == nil || atkChar.Aggro.RoundsWaiting <= 0 {
+	if atkChar.CombatPhase == nil || atkChar.RoundsWaiting() <= 0 {
 		return false
 	}
 	defChar := def.GetCharacter()
