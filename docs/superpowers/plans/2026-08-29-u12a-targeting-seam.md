@@ -1458,3 +1458,5 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/u12a-targeting-sea
 5. `EngagementOf`'s cost is measured and written into the spec.
 6. Boot is clean and the PR is green.
 7. The remaining ~86 `SetAggro` / `EndAggro` sites are **untouched**. That is correct, not unfinished: U12b sweeps them.
+
+> **Correction, added 2026-08-29 during U12b:** an earlier version of this plan and of spec §5 said U12b would DELETE `SetAggro` and `EndAggro`. It cannot. `(*Character).Charm` calls `EndAggro` from inside `internal/characters`, which can never import `internal/targeting`. They survive as the package-internal storage primitives, and U12b enforces a caller restriction instead. See the U12b plan §0.1.
