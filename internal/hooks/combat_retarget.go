@@ -23,12 +23,12 @@ func ValidateAggro(char *characters.Character) bool {
 	ref := char.CurrentCombatTarget()
 
 	// An engagement with no target is invalid (can happen from stale state).
-	// SpellCast and Flee intentionally have no target — they act on self
-	// or the room, not another character — so they are valid no-target
-	// states.
-	if ref.IsZero() &&
-		char.Aggro.Type != characters.SpellCast &&
-		char.Aggro.Type != characters.Flee {
+	// SpellCast and Disengaging intentionally have no target — they act on
+	// self or the room, not another character — so they are valid no-target
+	// states. (U12c-2 dissolved the Flee aggro type into Disengaging;
+	// SpellCast follows.)
+	if ref.IsZero() && !char.IsDisengaging() &&
+		char.Aggro.Type != characters.SpellCast {
 		targeting.Release(char, targeting.ReasonDisengage)
 		return false
 	}

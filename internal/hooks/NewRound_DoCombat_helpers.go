@@ -900,42 +900,33 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 // handlePlayerFlee processes a player's flee attempt.
 // Returns true if the player is fleeing and should skip combat.
 func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) bool {
-	// Task 15: IsDisengaging() reads CombatPhase.State() == Disengaging,
-	// set by TransitionToDisengaging in flee.go. This replaces the legacy
-	// Aggro.Type == Flee sentinel check.
-	// TODO Task 18: remove legacy Aggro.Type fallback once Aggro is gone.
-	phaseFleeing := user.Character.IsDisengaging()
-	isFleeing := phaseFleeing
-	if !phaseFleeing && user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
-		// Legacy path: Aggro-only set (no CombatPhase wired). Still handled.
-		isFleeing = true
-	}
-	if !isFleeing {
+	// U12c-2: this closes the standing `TODO Task 18`. The legacy
+	// `Aggro.Type == Flee` sentinel is gone, and IsDisengaging() -- which reads
+	// CombatPhase.State() == Disengaging, set by TransitionToDisengaging in
+	// flee.go -- is now the only way a flee is expressed.
+	//
+	// BEHAVIOUR CHANGE, and the intended one: the legacy branch granted
+	// includeSkill = true WITHOUT consuming admission. Nothing can reach it any
+	// more, because becoming Disengaging requires TransitionToDisengaging and
+	// that only happens through the flee command, which always leaves a
+	// handoff. So the admission consume is now unconditional.
+	if !user.Character.IsDisengaging() {
 		// A terminal transition can cancel Disengaging before this asynchronous
 		// round runs. Atomically retract that orphan; an absent handoff is a
 		// harmless no-op for ordinary non-flee combat rounds.
 		usercommands.TakeFleeAdmission(user)
 		return false
 	}
-	// Consume admission before any resolution branch. A phase-based flee can
-	// only come from the command, so missing admission means another/reentrant
-	// resolver already owns it. A true legacy Aggro sentinel has no handoff and
-	// retains historical full-skill behavior.
-	includeSkill := true
-	if phaseFleeing {
-		var admitted bool
-		includeSkill, admitted = usercommands.TakeFleeAdmission(user)
-		if !admitted {
-			return true
-		}
+	// Consume admission before any resolution branch. A flee can only come from
+	// the command now, so missing admission means another/reentrant resolver
+	// already owns it.
+	includeSkill, admitted := usercommands.TakeFleeAdmission(user)
+	if !admitted {
+		return true
 	}
 
-	// Revert to Default combat regardless of outcome (legacy path only).
-	// When CombatPhase is wired, ResolveFlee(false) handles the revert.
-	if user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
-		targeting.Commit(user.Character, user.Character.CurrentCombatTarget(),
-			targeting.ReasonAttack)
-	}
+	// The legacy "revert to Default combat" re-Commit that stood here is gone
+	// with the sentinel it undid. ResolveFlee(false) handles the revert.
 
 	// Can't flee while in any grapple state. CombatPhase position veto
 	// also blocks TransitionToDisengaging, but the message still needs
