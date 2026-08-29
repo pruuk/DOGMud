@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: An ambush that trips over itself still reads as an ambush
+
+Rarely, an opening strike from hiding goes wrong for both fighters at once and
+the two of you end up on the floor together. That moment was being reported as
+an ordinary stumble rather than as the ambush it was, so players running with
+reduced combat detail saw no sign the surprise attack had happened at all.
+
+It is reported as the opening strike now. The line itself is unchanged, and it
+still only lands on the one swing that carried the ambush.
+
 ## 2026-08-29: Groundwork, with nothing to see
 
 Internal only. Every part of the game that needed to know whether you were
