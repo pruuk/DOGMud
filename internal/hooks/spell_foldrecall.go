@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -67,7 +68,7 @@ func resolveFoldRecall(actor actions.Actor) {
 	}
 
 	// Clear combat state before teleporting.
-	char.EndAggro()
+	targeting.Release(char, targeting.ReasonDisengage)
 
 	// Move the actor first; only broadcast on success so a failed teleport
 	// doesn't leave the departure room thinking the actor vanished.

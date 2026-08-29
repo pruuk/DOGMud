@@ -46,8 +46,6 @@ var notYetSwept = map[string]bool{
 	"hooks/companion_follow.go":          true,
 	"hooks/companion_summon.go":          true,
 	"hooks/manifester_companions.go":     true,
-	"hooks/spell_foldrecall.go":          true,
-	"hooks/spell_resolution.go":          true,
 }
 
 func internalDirForSweepGuard(t *testing.T) string {
