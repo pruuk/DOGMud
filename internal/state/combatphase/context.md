@@ -282,11 +282,32 @@ current state is non-nil; transitions nil out the previous state's data.
 ```go
 var validTransitions = state.TransitionTable[State]{
     Idle:        {Engaging},
-    Engaging:    {Engaged, Idle},     // Idle on cancel / target-died
-    Engaged:     {Disengaging, Idle}, // Idle direct on death / despawn
-    Disengaging: {Idle, Engaged},     // Engaged on flee failure
+    Engaging:    {Engaged, Idle, Engaging},     // Idle on cancel / target-died; Engaging on RETARGET
+    Engaged:     {Disengaging, Idle, Engaging}, // Idle direct on death / despawn; Engaging on RETARGET
+    Disengaging: {Idle, Engaged},               // Engaged on flee failure
 }
 ```
+
+**Retarget is a fresh engagement.** Both `Engaging → Engaging` and
+`Engaged → Engaging` exist so that switching targets mid-fight lands: new
+target, fresh `RoundsUntil` wind-up, then back to `Engaged`. Before U12c-0 the
+transition was refused and `SetAggro` discarded the error, so `CurrentTarget()`
+kept returning the PREVIOUS enemy — which the `{target}` and `{targethealth}`
+prompt tokens render.
+
+**`Disengaging → Engaging` is deliberately absent.** Fleeing is a commitment;
+the only way back into combat is `Disengaging → Engaged` on flee failure. Do
+not add it without reading `handlePlayerFlee`, which reads `IsDisengaging()`
+first and authoritatively.
+
+⚠️ **A refused transition now refuses the whole commit.** Since U12c-0b,
+`characters.SetAggro` attempts this transition FIRST and writes nothing if it
+fails, so the six registered vetoes (`hooks/CombatPhase_Vetoes.go`) are
+load-bearing rather than advisory. Any caller that needs to know whether an
+engagement actually started must re-check state afterwards — `targeting.Commit`
+is void. `hooks.RetargetOrEnd` is the worked example: it returns
+`char.Aggro != nil`, not a bare `true`, because its callers dereference
+`char.Aggro` on the strength of that return.
 
 ### Trigger constants
 

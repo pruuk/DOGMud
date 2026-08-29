@@ -55,7 +55,16 @@ func ValidateAggro(char *characters.Character) bool {
 // RetargetOrEnd clears the character's current aggro and scans the room for a
 // new target that is already attacking us (by userId or mobInstanceId). For
 // charmed companions the scan also considers mobs attacking the charm owner.
-// Returns true if a new target was found and SetAggro was called.
+//
+// Returns true only if a new target was found AND THE COMMIT LANDED.
+//
+// U12c-0b: "the commit landed" is a real question now. targeting.Commit is
+// void and can be refused by a combat-phase veto (dead target, non-combatant,
+// despawning, respawn grace). This function releases FIRST, so a refused
+// commit leaves Aggro nil -- and both callers in NewRound_DoCombat.go
+// dereference char.Aggro on the strength of a true return. Returning a bare
+// true was a nil-pointer panic that aborted the whole round's combat
+// processing for every actor, caught only by the listener recover().
 func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 	userId int, mobInstanceId int) bool {
 
@@ -91,7 +100,7 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 		if (userId > 0 && aggro.UserId == userId) ||
 			(mobInstanceId > 0 && aggro.MobInstanceId == mobInstanceId) {
 			targeting.Commit(char, state.ActorRef{UserId: attackingPlayer.UserId}, targeting.ReasonAttack)
-			return true
+			return char.Aggro != nil
 		}
 	}
 
@@ -108,7 +117,7 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 		if (userId > 0 && aggro.UserId == userId) ||
 			(aggro.MobInstanceId > 0 && myMobIds[aggro.MobInstanceId]) {
 			targeting.Commit(char, state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
-			return true
+			return char.Aggro != nil
 		}
 	}
 
@@ -123,7 +132,7 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 				}
 				if attackingMob.Character.Aggro.UserId == ownerId {
 					targeting.Commit(char, state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
-					return true
+					return char.Aggro != nil
 				}
 			}
 		}
