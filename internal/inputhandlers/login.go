@@ -66,7 +66,14 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 					connections.SendTo([]byte(templates.AnsiParse(tplTxt)), existingConnectionId)
 
 					users.SetZombieUser(userid)
-					connections.Kick(existingConnectionId, fmt.Sprintf(`Duplicate login (ip: %s)`, connDetails.RemoteAddr()))
+					// Error deliberately discarded, and made explicit because
+					// the lint gate is only-new-issues and re-indenting this
+					// line into the nil guard above made errcheck treat it as
+					// new. Kick fails only when the connection is already gone,
+					// which is precisely the outcome being asked for -- and the
+					// user is a zombie either way. Every other Kick call site
+					// (systemcommands, ban, boot) discards it the same way.
+					_ = connections.Kick(existingConnectionId, fmt.Sprintf(`Duplicate login (ip: %s)`, connDetails.RemoteAddr()))
 
 				}
 
