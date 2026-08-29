@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -297,7 +298,9 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// gives RecordAndWait an engagement to charge without mutating aggro for a
 	// refused shot. Cross-room shots remain one-shot and aggro-free.
 	if !crossRoom && char.Aggro == nil {
-		char.SetAggro(targetUserId, targetMobInstanceId, characters.DefaultAttack)
+		targeting.Commit(char,
+			state.ActorRef{UserId: targetUserId, MobInstanceId: targetMobInstanceId},
+			targeting.ReasonAttack)
 	}
 
 	if surpriseShot {

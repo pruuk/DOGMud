@@ -3,6 +3,7 @@ package actions
 import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 )
 
 // TriggerCocoon fires the cocoon mutation for any Actor. Self-buff: encases the
@@ -31,7 +32,7 @@ func TriggerCocoon(actor Actor, opts MutationOpts) MutationResult {
 				continue
 			}
 			if m.Character.IsInCombat() && m.Character.CurrentCombatTarget().UserId == actorUserId {
-				m.Character.EndAggro()
+				targeting.Release(&m.Character, targeting.ReasonDisengage)
 				dropped++
 			}
 		}
