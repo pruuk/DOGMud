@@ -94,13 +94,7 @@ func EngagementOf(c *characters.Character) Engagement {
 	if c.CombatPhase != nil {
 		e.Phase = c.CombatPhase.State()
 		e.OpeningUnspent = c.CombatPhase.OpeningUnspent()
-	}
-	if c.Aggro != nil {
-		e.Target = state.ActorRef{
-			UserId:        c.Aggro.UserId,
-			MobInstanceId: c.Aggro.MobInstanceId,
-		}
-
+		e.Target = c.CombatPhase.CurrentTarget()
 	}
 
 	// A pending cast's aim does NOT live in Target. U12c-2 moved it from

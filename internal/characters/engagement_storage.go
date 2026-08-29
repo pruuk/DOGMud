@@ -1,3 +1,17 @@
+// engagement_storage.go holds the engagement storage primitives: SetAggro,
+// EndAggro and IsAggro.
+//
+// It was combat_state_compat.go, named for the Character.Aggro struct it
+// existed to keep compatible. U12c-2 deleted that struct, so the file is named
+// for what it now does. Renamed rather than deleted because SetAggro and
+// EndAggro SURVIVE the collapse -- they are the storage primitives, writing
+// CombatPhase alone. (The U12 spec's section 5 said to delete them; that was
+// wrong, and section 6.3.7 records the correction.)
+//
+// The rule these enforce is a CALLER restriction, not a deletion: everything
+// outside internal/characters and internal/targeting goes through the seam.
+// aggro_writer_guard_test.go is what holds that.
+
 package characters
 
 import (
@@ -6,9 +20,23 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// AggroType enumerates the kinds of combat engagement.
-// Kept for backward compatibility; callers should prefer Combat Phase
-// trigger constants for new code.
+// AggroType names the KIND of engagement a commit is starting. U12c-2 reduced
+// it to that one job: it is a parameter now, never stored state.
+//
+// The Character.Aggro struct it used to live on is gone, and with it the four
+// jobs it was quietly doing. Each moved to the machine that models it:
+//
+//	Flee           -> the Disengaging combat phase
+//	SpellCast      -> the Casting activity, whose CastingData carries the aim
+//	Shooting       -> derived from the equipped weapon (Engagement.Ranged)
+//	SurpriseAttack -> CombatPhase.OpeningUnspent
+//	RoundsWaiting  -> CombatPhase.RoundsWaiting (see its two-counter note)
+//
+// ⚠️ Flee and SpellCast are no longer REACHABLE as arguments: nothing calls
+// SetAggro with either, because becoming Disengaging goes through
+// TransitionToDisengaging and casting goes through SetCast. They survive as
+// enum values only so the switch in TauntHoldBlocks keeps a correct default.
+// Do not add a new caller for them; add a machine state instead.
 type AggroType int
 
 const (
@@ -20,25 +48,14 @@ const (
 	Flee
 )
 
-// SpellAggroInfo carries spell target metadata when Type == SpellCast.
+// SpellAggroInfo carries a cast's target metadata into SetCast, which records
+// it as activity.CastingData. U12c-2: it is a call parameter now, not stored
+// state -- the Aggro struct that used to hold it is gone.
 type SpellAggroInfo struct {
 	SpellId              string
 	SpellRest            string
 	TargetUserIds        []int
 	TargetMobInstanceIds []int
-}
-
-// Aggro holds the current combat target and mode for a Character.
-// All write paths go through SetAggro / EndAggro, which dual-write
-// to both this struct and CombatPhase. Direct field reads (.Aggro.UserId,
-// .Aggro.MobInstanceId, etc.) remain valid across the codebase.
-type Aggro struct {
-	Type          AggroType
-	MobInstanceId int
-	UserId        int
-	SpellInfo     SpellAggroInfo // If Type is SpellCast, this is the spell info
-	ExitName      string         // For example, firing a weapon in a direction
-	RoundsWaiting int            // How many rounds must pass before this triggers
 }
 
 // userUntargetableFn is registered from hooks at boot. Returns true if
@@ -109,6 +126,21 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 	// while targeting.Engagement.Ranged derives the same fact live. Stored and
 	// derived state cannot disagree if only one of them exists.
 
+	// U12c-2: the combat phase machine IS the storage now, so this primitive
+	// has to be total. Handed a Character whose machine was never built -- a
+	// bare struct literal, which no production load path produces but many
+	// fixtures do -- its only two options are to drop the write silently or to
+	// build the storage. Dropping is the failure mode U12c-2 Task 2 named: the
+	// write goes nowhere and the test measures nothing.
+	//
+	// The lazily built machine carries no registered vetoes and no self ref,
+	// so it is NOT equivalent to a Validated one. That is acceptable precisely
+	// because production never reaches here: every load path Validates, and
+	// Validate builds the machine.
+	if c.CombatPhase == nil {
+		c.CombatPhase = combatphase.NewMachine()
+	}
+
 	// U12c-0b: the transition DECIDES. It used to run after the Aggro write
 	// with its error discarded, so a vetoed commit left Aggro holding a target
 	// the machine had rejected and the two stores disagreed by construction.
@@ -147,23 +179,15 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 	// commit that was refused does not clear grapple for a switch that never
 	// happened. ClearGrappleState is currently a no-op, so this ordering is
 	// defensive rather than observable — which is also why it has no test.
-	if c.Aggro != nil {
-		if c.Aggro.UserId != userId || c.Aggro.MobInstanceId != mobInstanceId {
+	if prev := c.CurrentCombatTarget(); !prev.IsZero() {
+		if prev.UserId != userId || prev.MobInstanceId != mobInstanceId {
 			c.ClearGrappleState()
 		}
-	}
-
-	c.Aggro = &Aggro{
-		UserId:        userId,
-		MobInstanceId: mobInstanceId,
-		Type:          aggroType,
-		RoundsWaiting: combatAddlWaitRounds,
 	}
 }
 
 // EndAggro clears the character's combat target and forces Combat Phase to Idle.
 func (c *Character) EndAggro() {
-	c.Aggro = nil
 	c.ClearTauntHold()
 	c.ClearGrappleState()
 	// U10d: the engaged-aim cue is once per ENGAGEMENT, and this is where an
@@ -190,16 +214,13 @@ func (c *Character) ClearGrappleState() {
 // given target (by userId or mobInstanceId).
 func (c *Character) IsAggro(targetUserId int, targetMobInstanceId int) bool {
 
-	if c.Aggro != nil {
-
-		if c.Aggro.MobInstanceId > 0 && c.Aggro.MobInstanceId == targetMobInstanceId {
+	if target := c.CurrentCombatTarget(); !target.IsZero() {
+		if target.MobInstanceId > 0 && target.MobInstanceId == targetMobInstanceId {
 			return true
 		}
-
-		if c.Aggro.UserId > 0 && c.Aggro.UserId == targetUserId {
+		if target.UserId > 0 && target.UserId == targetUserId {
 			return true
 		}
-
 	}
 
 	// U12c-2: a pending cast's aim lives on the Activity machine now, not in

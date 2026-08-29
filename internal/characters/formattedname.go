@@ -196,7 +196,7 @@ func (c *Character) getFormattedName(viewingUserId int, uType string, renderFlag
 
 	if c.Health < 1 {
 		f.Suffix = `dead`
-	} else if c.Aggro != nil && c.Aggro.UserId == viewingUserId {
+	} else if c.CurrentCombatTarget().UserId == viewingUserId {
 		f.Suffix = `aggro`
 	}
 

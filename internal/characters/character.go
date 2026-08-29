@@ -147,7 +147,6 @@ type Character struct {
 	StaminaMax      stats.StatInfo `yaml:"-"`                        // The maximum stamina of the character. Don't write to yaml since is dynamically calculated.
 	ConvictionMax   stats.StatInfo `yaml:"-"`                        // The maximum conviction of the character. Don't write to yaml since is dynamically calculated.
 	ActionPointsMax stats.StatInfo `yaml:"-"`                        // The maximum actions of character. Don't write to yaml since is dynamically calculated.
-	Aggro           *Aggro         `yaml:"-"`                        // Runtime combat target. All writes go through SetAggro/EndAggro (dual-write to CombatPhase).
 	// Taunt-hold lock (transient, not serialized): a successful taunt pins
 	// this character's aggro onto the taunter until tauntHoldUntilRound, so
 	// reactive basic-attack re-aggro can't flip the target back. Set via
@@ -741,13 +740,12 @@ func (c *Character) IsEngaged() bool {
 }
 
 // IsInCombat returns true if the character is in any non-Idle combat state.
-// CombatPhase is the primary source of truth; Aggro is checked as a fallback
-// so that test fixtures which set the field directly continue to work.
+//
+// U12c-2 deleted the `Aggro != nil` fallback that used to sit under this. A nil
+// CombatPhase now means "not in combat" with no second opinion, which is safe
+// because every production load path Validates and Validate builds the machine.
 func (c *Character) IsInCombat() bool {
-	if c.CombatPhase != nil && c.CombatPhase.IsInCombat() {
-		return true
-	}
-	return c.Aggro != nil
+	return c.CombatPhase != nil && c.CombatPhase.IsInCombat()
 }
 
 // CastingData returns the in-flight cast's data, and whether there is one.
@@ -822,23 +820,12 @@ func (c *Character) EngagedTarget() state.ActorRef {
 // states (Engaging.Target, Engaged.Target, or Disengaging.LastTarget).
 // Returns zero ActorRef when Idle.
 //
-// CombatPhase is the primary source of truth. The Aggro field is checked as a
-// fallback so that test fixtures and any site that writes Aggro directly
-// continue to return valid targets.
+// U12c-2 deleted the Aggro fallback that used to sit under this.
 func (c *Character) CurrentCombatTarget() state.ActorRef {
-	if c.CombatPhase != nil {
-		if ref := c.CombatPhase.CurrentTarget(); !ref.IsZero() {
-			return ref
-		}
+	if c.CombatPhase == nil {
+		return state.ActorRef{}
 	}
-	// Aggro fallback.
-	if c.Aggro != nil {
-		return state.ActorRef{
-			UserId:        c.Aggro.UserId,
-			MobInstanceId: c.Aggro.MobInstanceId,
-		}
-	}
-	return state.ActorRef{}
+	return c.CombatPhase.CurrentTarget()
 }
 
 // Attackers returns the framework-maintained inbound attacker
