@@ -6,12 +6,13 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -35,7 +36,7 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 				}
 				// Is this mob attacking us or one of our companions?
 				if m.Character.CurrentCombatTarget().UserId == uid {
-					u.Character.SetAggro(0, mId, characters.DefaultAttack)
+					targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
 					u.SendText(messaging.CategorySystem, fmt.Sprintf(
 						"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",
 						m.Character.Name))
@@ -45,7 +46,7 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 				// Check if attacking one of our companions
 				for _, comp := range u.Character.Companions {
 					if comp.InstanceId > 0 && m.Character.CurrentCombatTarget().MobInstanceId == comp.InstanceId {
-						u.Character.SetAggro(0, mId, characters.DefaultAttack)
+						targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
 						u.SendText(messaging.CategorySystem, fmt.Sprintf(
 							"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",
 							m.Character.Name))
@@ -58,7 +59,7 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 				}
 			}
 			if !retargeted {
-				u.Character.EndAggro()
+				targeting.Release(u.Character, targeting.ReasonDisengage)
 			}
 		}
 	}
@@ -70,7 +71,7 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 			continue
 		}
 		if m.Character.CurrentCombatTarget().MobInstanceId == departingInstanceId {
-			m.Character.EndAggro()
+			targeting.Release(&m.Character, targeting.ReasonDisengage)
 		}
 	}
 }

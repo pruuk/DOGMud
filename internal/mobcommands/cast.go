@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -180,7 +181,8 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	switch spellInfo.Type {
 	case spells.HarmSingle, spells.HarmMulti, spells.HarmArea:
 		if !mob.Character.IsInCombat() && len(result.TargetUserIds) > 0 {
-			mob.Character.SetAggro(result.TargetUserIds[0], 0, characters.DefaultAttack)
+			targeting.Commit(&mob.Character,
+				state.ActorRef{UserId: result.TargetUserIds[0]}, targeting.ReasonAttack)
 		}
 	}
 
