@@ -42,7 +42,7 @@ func CommandIsReady(actor Actor, cmd string) bool {
 
 	switch cmd {
 	case "taunt":
-		return char.Aggro != nil
+		return char.IsInCombat()
 
 	case "rally":
 		return !char.HasBuff(80)
@@ -51,10 +51,10 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		return !char.HasBuff(79)
 
 	case "trip":
-		if char.Aggro == nil {
+		if !char.IsInCombat() {
 			return false
 		}
-		target := ResolveAggroTarget(char.Aggro)
+		target := ResolveAggroTarget(char.CurrentCombatTarget())
 		if !target.Found {
 			return false
 		}
@@ -64,7 +64,7 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		return !target.Char.IsOnFloor()
 
 	case "bash":
-		if char.Aggro == nil {
+		if !char.IsInCombat() {
 			return false
 		}
 		naturalBash := false
@@ -80,10 +80,10 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		return true
 
 	case "grapple":
-		if char.Aggro == nil {
+		if !char.IsInCombat() {
 			return false
 		}
-		target := ResolveAggroTarget(char.Aggro)
+		target := ResolveAggroTarget(char.CurrentCombatTarget())
 		if !target.Found {
 			return false
 		}
@@ -93,29 +93,29 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		return !target.Char.IsGrappling()
 
 	case "kick":
-		if char.Aggro == nil {
+		if !char.IsInCombat() {
 			return false
 		}
 		return char.HasBodyPart("legs")
 
 	case "rake":
-		return char.Aggro != nil && !char.HasBodyPart("hands") && combat.SpeciesIsClawed(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsClawed(char)
 
 	case "maul":
-		return char.Aggro != nil && !char.HasBodyPart("hands") && combat.SpeciesIsFanged(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsFanged(char)
 
 	case "throttle":
-		return char.Aggro != nil && !char.HasBodyPart("hands") && combat.SpeciesIsFanged(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsFanged(char)
 
 	case "pounce":
 		// SpeciesIsQuadrupedPredator already incorporates the !hands gate.
-		return char.Aggro != nil && !char.IsGrappling() && combat.SpeciesIsQuadrupedPredator(char)
+		return char.IsInCombat() && !char.IsGrappling() && combat.SpeciesIsQuadrupedPredator(char)
 
 	case "gore":
-		return char.Aggro != nil && !char.HasBodyPart("hands") && combat.SpeciesIsHorned(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsHorned(char)
 
 	case "hamstring":
-		if char.Aggro == nil {
+		if !char.IsInCombat() {
 			return false
 		}
 		if !char.HasBodyPart("legs") {
@@ -127,7 +127,7 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		return combat.SpeciesIsFanged(char) || combat.SpeciesIsClawed(char)
 
 	case "drain":
-		return char.Aggro != nil && combat.SpeciesHasLifeDrain(char)
+		return char.IsInCombat() && combat.SpeciesHasLifeDrain(char)
 	}
 
 	return false

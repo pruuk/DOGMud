@@ -35,7 +35,8 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 					continue
 				}
 				// Is this mob attacking us or one of our companions?
-				if m.Character.CurrentCombatTarget().UserId == uid {
+				theirTarget := m.Character.CurrentCombatTarget()
+				if theirTarget.UserId == uid {
 					targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
 					u.SendText(messaging.CategorySystem, fmt.Sprintf(
 						"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",
@@ -45,7 +46,7 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 				}
 				// Check if attacking one of our companions
 				for _, comp := range u.Character.Companions {
-					if comp.InstanceId > 0 && m.Character.CurrentCombatTarget().MobInstanceId == comp.InstanceId {
+					if comp.InstanceId > 0 && theirTarget.MobInstanceId == comp.InstanceId {
 						targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
 						u.SendText(messaging.CategorySystem, fmt.Sprintf(
 							"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",

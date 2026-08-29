@@ -21,7 +21,7 @@ func TestHandleDoubleFumble_NilPosition(t *testing.T) {
 	src := &characters.Character{Name: "Src"} // Position intentionally nil
 	tgt := &characters.Character{Name: "Tgt"} // Position intentionally nil
 	require.NotPanics(t, func() {
-		handleDoubleFumble(&AttackResult{}, src, tgt)
+		handleDoubleFumble(&AttackResult{}, src, tgt, false)
 	})
 }
 
@@ -29,7 +29,7 @@ func TestHandleDoubleFumble_BothGoProne(t *testing.T) {
 	src := &characters.Character{Name: "Src", Position: position.NewMachine()}
 	tgt := &characters.Character{Name: "Tgt", Position: position.NewMachine()}
 
-	handleDoubleFumble(&AttackResult{}, src, tgt)
+	handleDoubleFumble(&AttackResult{}, src, tgt, false)
 
 	assert.True(t, src.IsProne(), "source should be knocked prone by the double fumble")
 	assert.True(t, tgt.IsProne(), "target should be knocked prone by the double fumble")

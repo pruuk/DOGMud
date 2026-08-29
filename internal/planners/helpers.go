@@ -79,7 +79,7 @@ func findFactionMemberInZone(mob *mobs.Mob, factionId string, mustBeInCombat boo
 		if inst.InstanceId == mob.InstanceId {
 			continue
 		}
-		if mustBeInCombat && inst.Character.Aggro == nil {
+		if mustBeInCombat && !inst.Character.IsInCombat() {
 			continue
 		}
 		for _, fid := range factions.FactionsForMob(inst) {

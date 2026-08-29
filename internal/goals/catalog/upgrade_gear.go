@@ -50,7 +50,7 @@ func upgradeGearContextScore(g *goals.Goal, mob *mobs.Mob) float64 {
 	if mob == nil {
 		return 0
 	}
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		return upgradeGearFloorScore
 	}
 	spendable := mob.Character.Gold - upgradeGearReserve(g)

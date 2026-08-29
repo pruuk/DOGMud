@@ -3,10 +3,10 @@ package planners
 import (
 	"strconv"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -71,26 +71,30 @@ func targetAggressorName(kind string, id int) string {
 			if inst == nil || int(inst.MobId) != id {
 				continue
 			}
-			if inst.Character.Aggro == nil {
+			if !inst.Character.IsInCombat() {
 				return ""
 			}
-			return aggroToName(inst.Character.Aggro)
+			return aggroToName(inst.Character.CurrentCombatTarget())
 		}
 	case "player":
 		u := users.GetByUserId(id)
-		if u == nil || u.Character.Aggro == nil {
+		if u == nil || !u.Character.IsInCombat() {
 			return ""
 		}
-		return aggroToName(u.Character.Aggro)
+		return aggroToName(u.Character.CurrentCombatTarget())
 	}
 	return ""
 }
 
 // aggroToName resolves an Aggro pointer to a command-targetable name.
-// Returns "" if aggro is nil. Checks UserId first (player aggressor),
+// Returns "" for a zero ref. Checks UserId first (player aggressor),
 // then MobInstanceId (mob aggressor).
-func aggroToName(a *characters.Aggro) string {
-	if a == nil {
+//
+// U12c-1: takes a state.ActorRef rather than a *characters.Aggro, so callers
+// pass CurrentCombatTarget() and internal/planners never holds the Aggro
+// struct. A zero ref returns "", which is what a nil Aggro used to mean.
+func aggroToName(a state.ActorRef) string {
+	if a.IsZero() {
 		return ""
 	}
 	if a.UserId > 0 {

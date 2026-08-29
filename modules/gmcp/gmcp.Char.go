@@ -433,12 +433,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 		payload.Enemies = []GMCPCharModule_Enemy{}
 
-		aggroMobInstanceId := 0
-		if user.Character.Aggro != nil {
-			if user.Character.Aggro.MobInstanceId > 0 {
-				aggroMobInstanceId = user.Character.Aggro.MobInstanceId
-			}
-		}
+		aggroMobInstanceId := user.Character.CurrentCombatTarget().MobInstanceId
 
 		if roomInfo := rooms.LoadRoom(user.Character.RoomId); roomInfo != nil {
 

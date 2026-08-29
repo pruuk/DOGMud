@@ -105,25 +105,25 @@ func clearAggroIfTargetAbsent(mob *mobs.Mob, destRoom *rooms.Room) {
 	if !mob.Character.IsInCombat() {
 		return
 	}
-	aggro := mob.Character.Aggro
+	target := mob.Character.CurrentCombatTarget()
 	// Only strip aggro when it has a concrete target to check for;
-	// an Aggro struct with both IDs zero is mid-setup state and
+	// an engagement with both IDs zero is mid-setup state and
 	// must not be clobbered by the move (see code review d6b9fc19).
-	if aggro.UserId == 0 && aggro.MobInstanceId == 0 {
+	if target.IsZero() {
 		return
 	}
 	targetStillPresent := false
-	if aggro.UserId != 0 {
+	if target.UserId != 0 {
 		for _, pId := range destRoom.GetPlayers() {
-			if pId == aggro.UserId {
+			if pId == target.UserId {
 				targetStillPresent = true
 				break
 			}
 		}
 	}
-	if !targetStillPresent && aggro.MobInstanceId != 0 {
+	if !targetStillPresent && target.MobInstanceId != 0 {
 		for _, mId := range destRoom.GetMobs() {
-			if mId == aggro.MobInstanceId {
+			if mId == target.MobInstanceId {
 				targetStillPresent = true
 				break
 			}

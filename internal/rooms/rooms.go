@@ -1506,12 +1506,12 @@ func (r *Room) GetMobs(findTypes ...FindFlag) []int {
 			continue
 		}
 
-		if mob.Character.Aggro != nil {
-			if typeFlag&FindFightingPlayer == FindFightingPlayer && mob.Character.Aggro.UserId != 0 {
+		if tgt := mob.Character.CurrentCombatTarget(); mob.Character.IsInCombat() {
+			if typeFlag&FindFightingPlayer == FindFightingPlayer && tgt.UserId != 0 {
 				mobMatches = append(mobMatches, mobId)
 				continue
 			}
-			if typeFlag&FindFightingMob == FindFightingMob && mob.Character.Aggro.MobInstanceId != 0 {
+			if typeFlag&FindFightingMob == FindFightingMob && tgt.MobInstanceId != 0 {
 				mobMatches = append(mobMatches, mobId)
 				continue
 			}
@@ -1549,7 +1549,7 @@ func (r *Room) GetMobs(findTypes ...FindFlag) []int {
 		// If not allied with players
 		// and not current aggressive to anything
 		// and won't automatically attack players
-		if typeFlag&FindNeutral == FindNeutral && !isCharmed && mob.Character.Aggro == nil && !mob.AutoAggro {
+		if typeFlag&FindNeutral == FindNeutral && !isCharmed && !mob.Character.IsInCombat() && !mob.AutoAggro {
 			mobMatches = append(mobMatches, mobId)
 			continue
 		}
@@ -1613,12 +1613,12 @@ func (r *Room) GetPlayers(findTypes ...FindFlag) []int {
 			continue
 		}
 
-		if user.Character.Aggro != nil {
-			if typeFlag&FindFightingPlayer == FindFightingPlayer && user.Character.Aggro.UserId != 0 {
+		if tgt := user.Character.CurrentCombatTarget(); user.Character.IsInCombat() {
+			if typeFlag&FindFightingPlayer == FindFightingPlayer && tgt.UserId != 0 {
 				playerMatches = append(playerMatches, userId)
 				continue
 			}
-			if typeFlag&FindFightingMob == FindFightingMob && user.Character.Aggro.MobInstanceId != 0 {
+			if typeFlag&FindFightingMob == FindFightingMob && tgt.MobInstanceId != 0 {
 				playerMatches = append(playerMatches, userId)
 				continue
 			}
@@ -1639,7 +1639,7 @@ func (r *Room) GetPlayers(findTypes ...FindFlag) []int {
 		// If not allied with players
 		// and not current aggressive to anything
 		// and won't automatically attack players
-		if typeFlag&FindNeutral == FindNeutral && !isCharmed && user.Character.Aggro == nil {
+		if typeFlag&FindNeutral == FindNeutral && !isCharmed && !user.Character.IsInCombat() {
 			playerMatches = append(playerMatches, userId)
 			continue
 		}
@@ -1679,7 +1679,7 @@ func (r *Room) ArePlayersAttacking(userId int) bool {
 			continue
 		}
 		if u := users.GetByUserId(playerId); u != nil {
-			if u.Character.Aggro != nil && (userId == 0 || u.Character.Aggro.UserId == userId) {
+			if u.Character.IsInCombat() && (userId == 0 || u.Character.CurrentCombatTarget().UserId == userId) {
 				return true
 			}
 		}
@@ -1695,7 +1695,7 @@ func (r *Room) AreMobsAttacking(userId int) bool {
 		if mob == nil {
 			continue
 		}
-		if mob.Character.Aggro != nil && (userId == 0 || mob.Character.Aggro.UserId == userId) {
+		if mob.Character.IsInCombat() && (userId == 0 || mob.Character.CurrentCombatTarget().UserId == userId) {
 			return true
 		}
 	}

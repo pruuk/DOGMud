@@ -144,13 +144,14 @@ func fleeBlockScore(blocker *characters.Character) float64 {
 // mobTargetsFleer reports whether mob m's aggro points at the fleer
 // (player or mob).
 func mobTargetsFleer(m *mobs.Mob, fleerUid, fleerMid int) bool {
-	if m == nil || m.Character.Aggro == nil {
+	if m == nil || !m.Character.IsInCombat() {
 		return false
 	}
-	if fleerUid > 0 && m.Character.Aggro.UserId == fleerUid {
+	target := m.Character.CurrentCombatTarget()
+	if fleerUid > 0 && target.UserId == fleerUid {
 		return true
 	}
-	if fleerMid > 0 && m.Character.Aggro.MobInstanceId == fleerMid {
+	if fleerMid > 0 && target.MobInstanceId == fleerMid {
 		return true
 	}
 	return false

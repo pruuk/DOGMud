@@ -79,17 +79,18 @@ func hasMatchingAmmo(char *characters.Character, ammoTag string) bool {
 // archerTarget resolves the mob's current aggro target into a display name and
 // the room it is currently in. ok=false when there is no resolvable target.
 func archerTarget(char *characters.Character) (name string, roomId int, ok bool) {
-	if char.Aggro == nil {
+	tgt := char.CurrentCombatTarget()
+	if tgt.IsZero() {
 		return "", 0, false
 	}
 	// Mob target before player target, matching actions.ResolveAggroTarget.
-	if char.Aggro.MobInstanceId > 0 {
-		if m := mobs.GetInstance(char.Aggro.MobInstanceId); m != nil {
+	if tgt.MobInstanceId > 0 {
+		if m := mobs.GetInstance(tgt.MobInstanceId); m != nil {
 			return m.Character.Name, m.Character.RoomId, true
 		}
 	}
-	if char.Aggro.UserId > 0 {
-		if u := users.GetByUserId(char.Aggro.UserId); u != nil {
+	if tgt.UserId > 0 {
+		if u := users.GetByUserId(tgt.UserId); u != nil {
 			return u.Character.Name, u.Character.RoomId, true
 		}
 	}
@@ -163,8 +164,8 @@ func archerMeleeEngaged(mob *mobs.Mob) bool {
 		return false
 	}
 	for _, uid := range room.GetPlayers() {
-		if u := users.GetByUserId(uid); u != nil && u.Character.Aggro != nil &&
-			u.Character.Aggro.MobInstanceId == mob.InstanceId {
+		if u := users.GetByUserId(uid); u != nil &&
+			u.Character.CurrentCombatTarget().MobInstanceId == mob.InstanceId {
 			return true
 		}
 	}
@@ -172,8 +173,8 @@ func archerMeleeEngaged(mob *mobs.Mob) bool {
 		if iid == mob.InstanceId {
 			continue
 		}
-		if m := mobs.GetInstance(iid); m != nil && m.Character.Aggro != nil &&
-			m.Character.Aggro.MobInstanceId == mob.InstanceId {
+		if m := mobs.GetInstance(iid); m != nil &&
+			m.Character.CurrentCombatTarget().MobInstanceId == mob.InstanceId {
 			return true
 		}
 	}
@@ -318,19 +319,19 @@ func actKeepDistance(params map[string]any, ctx *EvalContext) Result {
 	// Refresh CombatMemory pointing at the current target, last seen in the
 	// room we're retreating FROM, so the engagement survives the imminent
 	// aggro loss (see doc comment above).
-	if mob.Character.Aggro != nil {
+	if tgt := mob.Character.CurrentCombatTarget(); !tgt.IsZero() {
 		fromRoomId := mob.Character.RoomId
 		round := util.GetRoundCount()
 		if mob.CombatMemory == nil {
 			mob.CombatMemory = mobs.SetCombatMemory(
-				mob.Character.Aggro.UserId,
-				mob.Character.Aggro.MobInstanceId,
+				tgt.UserId,
+				tgt.MobInstanceId,
 				fromRoomId,
 				round,
 			)
 		} else {
-			mob.CombatMemory.TargetUserId = mob.Character.Aggro.UserId
-			mob.CombatMemory.TargetMobId = mob.Character.Aggro.MobInstanceId
+			mob.CombatMemory.TargetUserId = tgt.UserId
+			mob.CombatMemory.TargetMobId = tgt.MobInstanceId
 			mob.CombatMemory.Grudge = true
 			mobs.UpdateCombatMemoryLocation(mob.CombatMemory, fromRoomId, round)
 		}

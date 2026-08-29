@@ -410,11 +410,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 		// U12b: routed through the seam, deliberately NOT replaced with
 		// targeting.ConsumeOpeningStrike. That swap is U12c's behavioural
 		// change; doing it here would make this sweep behavioural.
-		targeting.Commit(sourceChar,
-			state.ActorRef{
-				UserId:        sourceChar.Aggro.UserId,
-				MobInstanceId: sourceChar.Aggro.MobInstanceId,
-			}, targeting.ReasonAttack)
+		targeting.Commit(sourceChar, sourceChar.CurrentCombatTarget(), targeting.ReasonAttack)
 	}
 
 	attackResult.DefenderWasAttacked = len(plan.weapons) > 0

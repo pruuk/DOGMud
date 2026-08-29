@@ -91,7 +91,7 @@ func condTargetIsStanding(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
@@ -106,7 +106,7 @@ func condTargetIsProne(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
@@ -121,7 +121,7 @@ func condTargetIsGrappled(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
@@ -171,7 +171,7 @@ func condTargetIsInControl(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
@@ -186,7 +186,7 @@ func condTargetIsBeingControlled(params map[string]any, ctx *EvalContext) Result
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}

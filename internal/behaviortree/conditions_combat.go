@@ -61,8 +61,8 @@ func targetPowerRatioCompare(params map[string]any, ctx *EvalContext, above bool
 // resolveTargetPower returns the PowerScore of the contextual
 // target, with fallback chain:
 //  1. ctx.Event.UserId → player
-//  2. mob.Character.Aggro.MobInstanceId → mob
-//  3. mob.Character.Aggro.UserId → player
+//  2. the mob's current combat target, mob side → mob
+//  3. the mob's current combat target, player side → player
 //
 // Returns (0, false) when no target resolvable.
 func resolveTargetPower(mob *mobs.Mob, ctx *EvalContext) (float64, bool) {
@@ -71,16 +71,17 @@ func resolveTargetPower(mob *mobs.Mob, ctx *EvalContext) (float64, bool) {
 			return combat.PowerScore(*u.Character), true
 		}
 	}
-	// Aggro fallback: matches actions.ResolveAggroTarget priority —
+	// Combat-target fallback: matches actions.ResolveAggroTarget priority —
 	// mob target before player target when both fields are set.
 	if mob.Character.IsInCombat() {
-		if mob.Character.CurrentCombatTarget().MobInstanceId > 0 {
-			if m := mobs.GetInstance(mob.Character.CurrentCombatTarget().MobInstanceId); m != nil {
+		target := mob.Character.CurrentCombatTarget()
+		if target.MobInstanceId > 0 {
+			if m := mobs.GetInstance(target.MobInstanceId); m != nil {
 				return combat.PowerScore(m.Character), true
 			}
 		}
-		if mob.Character.CurrentCombatTarget().UserId > 0 {
-			if u := users.GetByUserId(mob.Character.CurrentCombatTarget().UserId); u != nil {
+		if target.UserId > 0 {
+			if u := users.GetByUserId(target.UserId); u != nil {
 				return combat.PowerScore(*u.Character), true
 			}
 		}

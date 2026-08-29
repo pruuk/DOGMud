@@ -1,9 +1,9 @@
 package seeders
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 )
 
@@ -75,14 +75,16 @@ func TestCombatAssistToOpinion_BothRulesRegisteredForSameEvent(t *testing.T) {
 	}
 }
 
-func TestResolveAttackerMobTarget_NilAggro_ReturnsZero(t *testing.T) {
-	if got := resolveAttackerMobTarget(nil); got != 0 {
-		t.Errorf("nil Aggro: got %d, want 0", got)
+// U12c-1: the helper takes a state.ActorRef now. A zero ref is what a nil
+// Aggro used to be, and must still return 0.
+func TestResolveAttackerMobTarget_ZeroRef_ReturnsZero(t *testing.T) {
+	if got := resolveAttackerMobTarget(state.ActorRef{}); got != 0 {
+		t.Errorf("zero ref: got %d, want 0", got)
 	}
 }
 
 func TestResolveAttackerMobTarget_MobTarget_ReturnsInstanceId(t *testing.T) {
-	a := &characters.Aggro{MobInstanceId: 42, UserId: 0}
+	a := state.ActorRef{MobInstanceId: 42, UserId: 0}
 	if got := resolveAttackerMobTarget(a); got != 42 {
 		t.Errorf("mob target: got %d, want 42", got)
 	}
@@ -91,17 +93,17 @@ func TestResolveAttackerMobTarget_MobTarget_ReturnsInstanceId(t *testing.T) {
 func TestResolveAttackerMobTarget_PlayerTarget_ReturnsZero(t *testing.T) {
 	// UserId != 0 means the target is a player — combat-assist should
 	// not fire (player is helping nothing in a mob-vs-mob fight).
-	a := &characters.Aggro{MobInstanceId: 0, UserId: 7}
+	a := state.ActorRef{MobInstanceId: 0, UserId: 7}
 	if got := resolveAttackerMobTarget(a); got != 0 {
 		t.Errorf("player target: got %d, want 0", got)
 	}
 }
 
-func TestResolveAttackerMobTarget_ZeroAggro_ReturnsZero(t *testing.T) {
-	// Empty aggro (no current target) — should return 0.
-	a := &characters.Aggro{}
+func TestResolveAttackerMobTarget_EmptyRef_ReturnsZero(t *testing.T) {
+	// Zero ref (no current target) — should return 0.
+	a := state.ActorRef{}
 	if got := resolveAttackerMobTarget(a); got != 0 {
-		t.Errorf("zero Aggro: got %d, want 0", got)
+		t.Errorf("zero ref: got %d, want 0", got)
 	}
 }
 

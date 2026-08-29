@@ -207,13 +207,11 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				)
 			}
 
-			// Detect "fresh aggression" before SetAggro overwrites prior state:
-			// either no prior aggro, or aggro on a different target.
-			// NOTE: Keep Aggro read here for Task 12 — CombatPhase is not
-			// populated by writers until Task 15; EngagedTarget() would
-			// return zero and cause double-bumps until the sunset in Task 18.
-			isFreshAggro := user.Character.Aggro == nil ||
-				user.Character.Aggro.MobInstanceId != attackMobInstanceId
+			// Detect "fresh aggression" before the commit overwrites prior
+			// state: either no prior target, or a target other than this mob.
+			// A zero ref (not in combat) has MobInstanceId 0, which never
+			// matches a real instance id, so the old nil-check collapses.
+			isFreshAggro := user.Character.CurrentCombatTarget().MobInstanceId != attackMobInstanceId
 
 			// U12c-0b: a commit can be REFUSED by a combat-phase veto (dead
 			// target, despawning, non-combatant). CheckPlayerHarm above screens

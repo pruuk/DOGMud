@@ -62,7 +62,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// but the player's retarget scan in handlePlayerCombat ran too early.
 	for _, userId := range users.GetOnlineUserIds() {
 		user := users.GetByUserId(userId)
-		if user == nil || user.Character.Aggro != nil {
+		if user == nil || user.Character.IsInCombat() {
 			continue
 		}
 		uRoom := rooms.LoadRoom(user.Character.RoomId)
@@ -71,12 +71,13 @@ func DoCombat(e events.Event) events.ListenerReturn {
 		}
 		if RetargetOrEnd(user.Character, uRoom, user.UserId, 0) {
 			targetName := "something"
-			if user.Character.Aggro.MobInstanceId > 0 {
-				if m := mobs.GetInstance(user.Character.Aggro.MobInstanceId); m != nil {
+			newTarget := user.Character.CurrentCombatTarget()
+			if newTarget.MobInstanceId > 0 {
+				if m := mobs.GetInstance(newTarget.MobInstanceId); m != nil {
 					targetName = m.Character.Name
 				}
-			} else if user.Character.Aggro.UserId > 0 {
-				if u := users.GetByUserId(user.Character.Aggro.UserId); u != nil {
+			} else if newTarget.UserId > 0 {
+				if u := users.GetByUserId(newTarget.UserId); u != nil {
 					targetName = u.Character.Name
 				}
 			}
@@ -122,7 +123,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			continue
 		}
 
-		if user.Character.Aggro == nil {
+		if !user.Character.IsInCombat() {
 			continue
 		}
 
@@ -131,14 +132,15 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			uRoom := rooms.LoadRoom(user.Character.RoomId)
 			if uRoom != nil {
 				if RetargetOrEnd(user.Character, uRoom, user.UserId, 0) {
-					if mob := mobs.GetInstance(user.Character.Aggro.MobInstanceId); mob != nil {
+					retargeted := user.Character.CurrentCombatTarget()
+					if mob := mobs.GetInstance(retargeted.MobInstanceId); mob != nil {
 						user.SendText(messaging.CategorySystem, fmt.Sprintf("You turn your attention to <ansi fg=\"mobname\">%s</ansi>!", mob.Character.Name))
-					} else if defUser := users.GetByUserId(user.Character.Aggro.UserId); defUser != nil {
+					} else if defUser := users.GetByUserId(retargeted.UserId); defUser != nil {
 						user.SendText(messaging.CategorySystem, fmt.Sprintf("You turn your attention to <ansi fg=\"username\">%s</ansi>!", defUser.Character.Name))
 					}
 				}
 			}
-			if user.Character.Aggro == nil {
+			if !user.Character.IsInCombat() {
 				continue
 			}
 		}
@@ -155,17 +157,18 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 		}
 
 		// Unified combat dispatch (replaces PvP/PvM branch).
-		if user.Character.Aggro != nil {
+		if user.Character.IsInCombat() {
 			var def actions.Actor
 			var defForceCrit bool
-			if user.Character.Aggro.UserId > 0 {
-				if defUser := users.GetByUserId(user.Character.Aggro.UserId); defUser != nil {
+			atkTarget := user.Character.CurrentCombatTarget()
+			if atkTarget.UserId > 0 {
+				if defUser := users.GetByUserId(atkTarget.UserId); defUser != nil {
 					defRoom := rooms.LoadRoom(defUser.Character.RoomId)
 					def = actions.NewUserActorInRoom(defUser, defRoom)
 					defForceCrit = combat.SleepingForceCrit(defUser.Character)
 				}
-			} else if user.Character.Aggro.MobInstanceId > 0 {
-				if defMob := mobs.GetInstance(user.Character.Aggro.MobInstanceId); defMob != nil {
+			} else if atkTarget.MobInstanceId > 0 {
+				if defMob := mobs.GetInstance(atkTarget.MobInstanceId); defMob != nil {
 					defRoom := rooms.LoadRoom(defMob.Character.RoomId)
 					def = actions.NewMobActorInRoom(defMob, defRoom)
 					defForceCrit = combat.SleepingForceCrit(&defMob.Character)
@@ -256,7 +259,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		// Non-combatant mobs (merchants, quest NPCs) should never fight.
 		// If they somehow got aggro (e.g., from pack scatter), clear it.
 		if mob.IsNonCombatant() {
-			if mob.Character.Aggro != nil {
+			if mob.Character.IsInCombat() {
 				targeting.Release(&mob.Character, targeting.ReasonDisengage)
 			}
 			continue
@@ -267,8 +270,8 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		// Without this, a guard that held aggro from the pre-arrest fight keeps
 		// pursuing the prisoner into the cell and re-declaring combat each round
 		// even though its swings are already suppressed (5.1c smoke BUG-04).
-		if mob.Character.Aggro != nil && mob.Character.Aggro.UserId > 0 {
-			if tgt := users.GetByUserId(mob.Character.Aggro.UserId); tgt != nil &&
+		if targetUserId := mob.Character.CurrentCombatTarget().UserId; targetUserId > 0 {
+			if tgt := users.GetByUserId(targetUserId); tgt != nil &&
 				tgt.Character.HasBuffFlag(buffs.NoAggroTarget) {
 				targeting.Release(&mob.Character, targeting.ReasonDisengage)
 				continue
@@ -284,7 +287,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		mobRoom := rooms.LoadRoom(mob.Character.RoomId)
 		if mobRoom == nil {
-			if mob.Character.Aggro != nil {
+			if mob.Character.IsInCombat() {
 				targeting.Release(&mob.Character, targeting.ReasonDisengage)
 			}
 			continue
@@ -299,7 +302,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// Only run the full combat prep (buff stripping, shield decay, etc.) when
 		// actually fighting or when the mob might enter combat this round.
-		if mob.Character.Aggro != nil {
+		if mob.Character.IsInCombat() {
 			// Strip combat-cancelling buffs (Hidden, etc.) and remove
 			// their permabuff entries so Validate() doesn't re-apply them.
 			mob.Character.CancelCombatBuffs()
@@ -329,12 +332,12 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		}
 
 		// Idle companions with autoassist scan for threats to owner
-		if mob.Character.Aggro == nil && mob.Character.IsCharmed() {
+		if !mob.Character.IsInCombat() && mob.Character.IsCharmed() {
 			CompanionAutoTarget(mob, mobRoom)
-			if mob.Character.Aggro == nil {
+			if !mob.Character.IsInCombat() {
 				continue
 			}
-		} else if mob.Character.Aggro == nil {
+		} else if !mob.Character.IsInCombat() {
 			// Ranged-mob bounded re-engagement window. A kiting archer ends
 			// each round having retreated one exit (keep_distance), which
 			// trips ValidateAggro's same-room check above and ENDS its aggro.
@@ -351,8 +354,8 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			// `shoot` command + reload cooldowns, and the window closes as soon
 			// as CombatMemory expires or the target moves >1 exit from the mob.
 			//
-			// Note: aggro is already nil here, so ValidateAggro (run only in
-			// the Aggro != nil block above) does not apply to this path.
+			// Note: the mob is not in combat here, so ValidateAggro (run only
+			// in the in-combat block above) does not apply to this path.
 			if !archerReengageable(mob, mobRoom, evt.RoundNumber) {
 				continue
 			}
@@ -361,10 +364,11 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// Initialize CombatMemory on the first round of engagement so
 		// the mob can track its aggro target across flee/re-engage cycles.
-		if mob.CombatMemory == nil && mob.Character.Aggro != nil {
+		if mob.CombatMemory == nil && mob.Character.IsInCombat() {
+			memTarget := mob.Character.CurrentCombatTarget()
 			mob.CombatMemory = mobs.SetCombatMemory(
-				mob.Character.Aggro.UserId,
-				mob.Character.Aggro.MobInstanceId,
+				memTarget.UserId,
+				memTarget.MobInstanceId,
 				mob.Character.RoomId,
 				evt.RoundNumber,
 			)
@@ -395,17 +399,18 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		affectedMobInstanceIds = append(affectedMobInstanceIds, mob.InstanceId)
 
 		// Unified combat dispatch (replaces MvP/MvM branch).
-		if mob.Character.Aggro != nil {
+		if mob.Character.IsInCombat() {
 			var def actions.Actor
 			var defForceCrit bool
-			if mob.Character.Aggro.UserId > 0 {
-				if defUser := users.GetByUserId(mob.Character.Aggro.UserId); defUser != nil {
+			atkTarget := mob.Character.CurrentCombatTarget()
+			if atkTarget.UserId > 0 {
+				if defUser := users.GetByUserId(atkTarget.UserId); defUser != nil {
 					defRoom := rooms.LoadRoom(defUser.Character.RoomId)
 					def = actions.NewUserActorInRoom(defUser, defRoom)
 					defForceCrit = combat.SleepingForceCrit(defUser.Character)
 				}
-			} else if mob.Character.Aggro.MobInstanceId > 0 {
-				if defMob := mobs.GetInstance(mob.Character.Aggro.MobInstanceId); defMob != nil {
+			} else if atkTarget.MobInstanceId > 0 {
+				if defMob := mobs.GetInstance(atkTarget.MobInstanceId); defMob != nil {
 					defRoom := rooms.LoadRoom(defMob.Character.RoomId)
 					def = actions.NewMobActorInRoom(defMob, defRoom)
 					defForceCrit = combat.SleepingForceCrit(&defMob.Character)

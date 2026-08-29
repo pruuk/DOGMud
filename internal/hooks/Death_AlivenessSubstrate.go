@@ -45,10 +45,7 @@ func wireAlivenessSubstrate(c *characters.Character) {
 			// target ≠ necessarily last-hit), but workable for 4.5 seeder
 			// rules. 0 when killer was a player or aggro is unset.
 			// Chunk 4.5.
-			killerMobInstanceId := 0
-			if m.Character.Aggro != nil {
-				killerMobInstanceId = m.Character.Aggro.MobInstanceId
-			}
+			killerMobInstanceId := m.Character.CurrentCombatTarget().MobInstanceId
 
 			events.AddToQueue(events.MobDeath{
 				MobId:               int(m.MobId),

@@ -28,7 +28,7 @@ func protectionFactionPlanner(mob *mobs.Mob, goal *goals.Goal) PlanResult {
 
 	// Find a faction member currently in combat in zone.
 	if member, ok := findFactionMemberInZone(mob, factionId, true); ok {
-		aggressor := aggroToName(member.Character.Aggro)
+		aggressor := aggroToName(member.Character.CurrentCombatTarget())
 		if member.Character.RoomId == mob.Character.RoomId && aggressor != "" {
 			return PlanResult{Command: "attack " + aggressor, Status: StatusRunning}
 		}

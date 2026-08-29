@@ -896,7 +896,16 @@ var doubleFumbleMessages = []struct {
 }
 
 // handleDoubleFumble applies prone to both combatants and sends comedy text.
-func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character) {
+//
+// openingStrike is the U10d per-swing flag, threaded down here for one reason:
+// this is the ONLY outcome whose lines the swing loop does not route through
+// buildAttackMessages (it skips on res.doubleFumble, because these lines are
+// already sent). buildAttackMessages is where CategorySurpriseAttack is
+// applied, so without the flag an ambush whose opening swing double-fumbled
+// consumed the opener and marked NOTHING -- and since CategorySurpriseAttack
+// is the category that survives medium and light verbosity, a player at
+// reduced verbosity saw no sign the ambush had happened at all.
+func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character, openingStrike bool) {
 	// Both go prone via FSM. Position can be nil on a pre-Validate()
 	// Character (mirrors the guard in HandleGrappleCritFailure); prod
 	// combatants are always Validated, so this only shields the
@@ -920,6 +929,13 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 	// weapon category to pick. Use CategoryHitMelee as the combat-
 	// neutral hit-band default.
 	fumbleCat := messaging.CategoryHitMelee
+	// Mirrors buildAttackMessages' opener routing exactly. The prose is NOT
+	// changed to match: the surpriseAttackBanner prefix is for lines from the
+	// generic weapon pool, which say nothing about an ambush, and this comedy
+	// line already opens and closes with !!! markers.
+	if openingStrike {
+		fumbleCat = messaging.CategorySurpriseAttack
+	}
 	result.SendToSource(fumbleCat, fmt.Sprintf(`<ansi fg="fumble-text">!!!</ansi> `+
 		`<ansi fg="yellow">`+msg.toAttacker+`</ansi>`+
 		` <ansi fg="fumble-text">!!!</ansi>`, targetChar.Name))
@@ -953,17 +969,25 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // removed rather than left as a silent no-op. One visible consequence:
 // result.AttackZScore now reports the roll that actually happened instead of the
 // bumped value.
-// critOnWin upgrades a WON contest to a crit. It does NOT decide the contest.
+// openingStrike is the U10d per-swing ambush flag, and it does two things:
+// it upgrades a WON contest to a crit, and it routes the swing's narration
+// through messaging.CategorySurpriseAttack. It does NOT decide the contest.
+// (It was named critOnWin while the crit was its only job.)
 //
 // Deliberately NOT forceCrit. forceCrit forces the WIN outright and the defender
-// never answers it (the sleeping-victim contract). critOnWin respects the contest
-// in full: the defender rolls and may win, and on a defender win nothing is
-// upgraded because there is no clean hit to upgrade.
+// never answers it (the sleeping-victim contract). openingStrike respects the
+// contest in full: the defender rolls and may win, and on a defender win nothing
+// is upgraded because there is no clean hit to upgrade.
 //
 // Both may be true — an ambush against a sleeping target — in which case
-// forceCrit decides the outcome and critOnWin is redundant. Do not merge them.
-func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, critOnWin bool) hitResolution {
-	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, critOnWin)
+// forceCrit decides the outcome and the crit half of openingStrike is
+// redundant. Do not merge them.
+//
+// The narration half must reach EVERY outcome, including the ones that never
+// call buildAttackMessages. Today that is exactly one: the double fumble. See
+// handleDoubleFumble.
+func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool) hitResolution {
+	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, openingStrike)
 
 	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
 	// res.hit, and nowhere earlier. The core resolver treats an attack crit as
@@ -979,8 +1003,8 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 // resolveDefenseOutcomeCore applies the U10d opening-strike upgrade to the
 // verdict the inner resolver produced. Split out because the inner function has
 // seven exits and the upgrade must apply to all of them uniformly.
-func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, critOnWin bool) hitResolution {
-	res := resolveDefenseOutcomeInner(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit)
+func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool) hitResolution {
+	res := resolveDefenseOutcomeInner(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, openingStrike)
 
 	// U10d: a surprise opening strike crits on a CLEANLY won contest. Applied
 	// after the inner resolver settles, so it can only upgrade an outcome the
@@ -999,7 +1023,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 	//     fire on a swing the attack lost on margin and won only because the
 	//     defender fumbled -- a divergence from the channel seam, whose guard is
 	//     gated on res.Success.
-	if critOnWin && res.hit && !res.defended && !best.floored && !res.fumble &&
+	if openingStrike && res.hit && !res.defended && !best.floored && !res.fumble &&
 		best.margin <= 0 {
 		res.crit = true
 	}
@@ -1009,7 +1033,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 // resolveDefenseOutcomeInner is resolveDefenseOutcome without the crit floors
 // and without the U10d opening-strike upgrade. Split out so the floors have
 // exactly one application point despite the many early returns below.
-func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool) hitResolution {
+func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool) hitResolution {
 	fumbleThreshold := -2.0
 	defCritThreshold := DefenseCritBar()
 
@@ -1081,7 +1105,7 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 		res.damageMult = 0.0
 		result.Fumble = true
 		result.DoubleFumble = true
-		handleDoubleFumble(result, sourceChar, targetChar)
+		handleDoubleFumble(result, sourceChar, targetChar, openingStrike)
 		mudlog.Debug("DoubleFumble", "atkZ", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
 			"defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
 			"source", sourceChar.Name, "target", targetChar.Name)

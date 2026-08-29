@@ -30,7 +30,7 @@ func survivalPredicate(g *goals.Goal, mob *mobs.Mob) bool {
 	}
 	safe := paramIntOr(g, "safe_threshold_pct", survivalDefaultSafeThresholdPct)
 	hpPct := (mob.Character.Health * 100) / mob.Character.HealthMax.Value
-	return hpPct >= safe && mob.Character.Aggro == nil
+	return hpPct >= safe && !mob.Character.IsInCombat()
 }
 
 // survivalContextScore:

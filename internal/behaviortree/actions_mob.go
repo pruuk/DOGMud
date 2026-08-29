@@ -254,18 +254,19 @@ var beastMoves = map[string]bool{
 // costs a map lookup.
 func actTrySpecialMove(params map[string]any, ctx *EvalContext) Result {
 	mob := mobs.GetInstance(ctx.InstanceId)
-	if mob == nil || mob.Character.Aggro == nil {
+	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
 
 	// Resolve the aggro target's Character.
+	tgt := mob.Character.CurrentCombatTarget()
 	var target *characters.Character
-	if mob.Character.Aggro.UserId > 0 {
-		if u := users.GetByUserId(mob.Character.Aggro.UserId); u != nil {
+	if tgt.UserId > 0 {
+		if u := users.GetByUserId(tgt.UserId); u != nil {
 			target = u.Character
 		}
-	} else if mob.Character.Aggro.MobInstanceId > 0 {
-		if tm := mobs.GetInstance(mob.Character.Aggro.MobInstanceId); tm != nil {
+	} else if tgt.MobInstanceId > 0 {
+		if tm := mobs.GetInstance(tgt.MobInstanceId); tm != nil {
 			target = &tm.Character
 		}
 	}

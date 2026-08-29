@@ -4,9 +4,9 @@ package combat
 //
 // crit-on-win exists TWICE, because the arc has two attack paths:
 //
-//   melee    resolveDefenseOutcomeCore's critOnWin parameter
-//            (combat_helpers.go), guarded by
-//            critOnWin && res.hit && !res.defended && !best.floored &&
+//   melee    resolveDefenseOutcomeCore's openingStrike parameter (named
+//            critOnWin when this file was written), guarded by
+//            openingStrike && res.hit && !res.defended && !best.floored &&
 //            !res.fumble && best.margin <= 0
 //
 //   channel  AttackSide.CritOnWin in resolveChannelAttackWithRunner

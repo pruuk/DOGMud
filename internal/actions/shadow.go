@@ -47,7 +47,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 	}
 
 	// Combat gate.
-	if char.Aggro != nil {
+	if char.IsInCombat() {
 		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
 		return ShadowResult{Reason: "in combat"}
 	}

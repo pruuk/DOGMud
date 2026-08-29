@@ -81,7 +81,7 @@ func condTargetIsCasting(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
@@ -100,16 +100,17 @@ func condTargetAggroNotOnMe(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
 	if !target.Char.IsInCombat() {
 		return Success
 	}
-	// Target's aggro is on me (mob) iff Aggro.MobInstanceId == mob.InstanceId
-	// AND Aggro.UserId == 0 (mob target, not player target).
-	if target.Char.CurrentCombatTarget().MobInstanceId == mob.InstanceId && target.Char.CurrentCombatTarget().UserId == 0 {
+	// The target is on me (mob) iff its combat target's MobInstanceId is
+	// mine AND its UserId is 0 (a mob target, not a player target).
+	theirTarget := target.Char.CurrentCombatTarget()
+	if theirTarget.MobInstanceId == mob.InstanceId && theirTarget.UserId == 0 {
 		return Failure
 	}
 	return Success
@@ -175,7 +176,7 @@ func condTargetNotStanding(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}

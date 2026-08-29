@@ -46,8 +46,9 @@ func (a *mobAdapter) ConvHasBuffFlag(f buffs.Flag) bool {
 }
 
 // ConvAggro returns true when the mob has an active aggro target.
-// mob.Character.Aggro is a *characters.Aggro; non-nil means combat is pending.
-func (a *mobAdapter) ConvAggro() bool { return a.mob.Character.Aggro != nil }
+// In combat (or with a pending engagement), an NPC has no attention to spare
+// for small talk.
+func (a *mobAdapter) ConvAggro() bool { return a.mob.Character.IsInCombat() }
 
 func (a *mobAdapter) ConvPathLen() int            { return a.mob.Path.Len() }
 func (a *mobAdapter) ConvPathCurrentNonNil() bool { return a.mob.Path.Current() != nil }
