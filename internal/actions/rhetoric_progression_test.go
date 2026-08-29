@@ -104,7 +104,7 @@ func newRhetoricActor(t *testing.T, player bool, conviction, rhetoric int) (*rec
 	char.Stats.Charisma.ValueAdj = 1
 	char.Skills[string(skills.Rhetoric)] = rhetoric
 	char.Buffs = buffs.New()
-	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 	room := &rooms.Room{RoomId: 1}
 
 	var base Actor
@@ -153,8 +153,9 @@ func TestTauntRallyWarcryRefusalIsAtomicForPlayerAndMob(t *testing.T) {
 				hideRhetoricActor(t, char)
 				char.Cooldowns = characters.Cooldowns{"expired": -2, "other": 7}
 				cooldownsBefore := char.GetAllCooldowns()
-				target.Aggro = &characters.Aggro{UserId: 404, RoundsWaiting: 6}
-				targetAggroBefore := *target.Aggro
+				target.SetAggro(404, 0, characters.DefaultAttack)
+				target.SetRoundsWaiting(6)
+				targetAggroBefore := target.CurrentCombatTarget()
 				targetConviction := target.Conviction
 				targetBuffs := len(target.Buffs.GetBuffs())
 
@@ -169,7 +170,7 @@ func TestTauntRallyWarcryRefusalIsAtomicForPlayerAndMob(t *testing.T) {
 				require.Equal(t, cooldownsBefore, char.GetAllCooldowns())
 				require.Zero(t, char.RoundsWaiting())
 				require.Equal(t, targetConviction, target.Conviction)
-				require.Equal(t, targetAggroBefore, *target.Aggro)
+				require.Equal(t, targetAggroBefore, target.CurrentCombatTarget())
 				require.Len(t, target.Buffs.GetBuffs(), targetBuffs)
 				require.Empty(t, actor.skillsUsed)
 				if result.selfBuffID != 0 {
@@ -324,8 +325,8 @@ func TestTauntRefusalDoesNotCommitStagedAggression(t *testing.T) {
 
 	require.Equal(t, characters.CostRefused, result.Cost.Status)
 	require.Zero(t, commits)
-	require.Nil(t, char.Aggro)
-	require.Nil(t, target.Aggro)
+	require.False(t, char.IsInCombat())
+	require.False(t, target.IsInCombat())
 }
 
 type staleRhetoricTargetActor struct {
@@ -346,9 +347,10 @@ func (a *staleRhetoricTargetActor) GetCharacter() *characters.Character {
 func TestTauntPaidStaleTargetPreservesEffectsAndEngagement(t *testing.T) {
 	actor, char, target := newRhetoricActor(t, false, 10, 0)
 	hideRhetoricActor(t, char)
-	targetID := char.Aggro.MobInstanceId
-	target.Aggro = &characters.Aggro{UserId: 505, RoundsWaiting: 9}
-	targetAggro := *target.Aggro
+	targetID := char.CurrentCombatTarget().MobInstanceId
+	target.SetAggro(505, 0, characters.DefaultAttack)
+	target.SetRoundsWaiting(9)
+	targetAggro := target.CurrentCombatTarget()
 	targetConviction := target.Conviction
 	stale := &staleRhetoricTargetActor{Actor: actor, targetID: targetID}
 
@@ -363,7 +365,7 @@ func TestTauntPaidStaleTargetPreservesEffectsAndEngagement(t *testing.T) {
 	require.Empty(t, char.Cooldowns)
 	require.Zero(t, char.RoundsWaiting())
 	require.Equal(t, targetConviction, target.Conviction)
-	require.Equal(t, targetAggro, *target.Aggro)
+	require.Equal(t, targetAggro, target.CurrentCombatTarget())
 	require.Empty(t, actor.skillsUsed)
 }
 
@@ -385,8 +387,9 @@ func (a *rhetoricAdmissionRaceActor) GetCharacter() *characters.Character {
 func TestTauntPaidMovedTargetPreservesEffectsAndEngagement(t *testing.T) {
 	actor, char, target := newRhetoricActor(t, false, 10, 0)
 	hideRhetoricActor(t, char)
-	target.Aggro = &characters.Aggro{UserId: 606, RoundsWaiting: 8}
-	targetAggro := *target.Aggro
+	target.SetAggro(606, 0, characters.DefaultAttack)
+	target.SetRoundsWaiting(8)
+	targetAggro := target.CurrentCombatTarget()
 	targetConviction := target.Conviction
 	targetConditions := len(target.Conditions)
 	targetBuffs := len(target.Buffs.GetBuffs())
@@ -406,7 +409,7 @@ func TestTauntPaidMovedTargetPreservesEffectsAndEngagement(t *testing.T) {
 	require.Equal(t, 2, target.RoomId)
 	require.Zero(t, char.RoundsWaiting())
 	require.Equal(t, targetConviction, target.Conviction)
-	require.Equal(t, targetAggro, *target.Aggro)
+	require.Equal(t, targetAggro, target.CurrentCombatTarget())
 	require.Len(t, target.Conditions, targetConditions)
 	require.Len(t, target.Buffs.GetBuffs(), targetBuffs)
 	require.Empty(t, actor.skillsUsed)
@@ -415,8 +418,9 @@ func TestTauntPaidMovedTargetPreservesEffectsAndEngagement(t *testing.T) {
 func TestTauntPaidSwappedAggroPreservesBothTargetsAndRound(t *testing.T) {
 	actor, char, original := newRhetoricActor(t, false, 10, 0)
 	hideRhetoricActor(t, char)
-	original.Aggro = &characters.Aggro{UserId: 707, RoundsWaiting: 7}
-	originalAggro := *original.Aggro
+	original.SetAggro(707, 0, characters.DefaultAttack)
+	original.SetRoundsWaiting(7)
+	originalAggro := original.CurrentCombatTarget()
 	originalConviction := original.Conviction
 	originalConditions := len(original.Conditions)
 	originalBuffs := len(original.Buffs.GetBuffs())
@@ -431,17 +435,18 @@ func TestTauntPaidSwappedAggroPreservesBothTargetsAndRound(t *testing.T) {
 	replacement.Conviction = 1_000_000
 	replacement.Stats.Willpower.ValueAdj = 1_000_000
 	replacement.Buffs = buffs.New()
-	replacement.Aggro = &characters.Aggro{UserId: 808, RoundsWaiting: 6}
+	replacement.SetAggro(808, 0, characters.DefaultAttack)
+	replacement.SetRoundsWaiting(6)
 	replacementMob := &mobs.Mob{InstanceId: rhetoricTargetID, Character: *replacement}
 	mobs.SetInstanceForTest(replacementMob.InstanceId, replacementMob)
 	t.Cleanup(func() { mobs.SetInstanceForTest(replacementMob.InstanceId, nil) })
 	replacement = &replacementMob.Character
-	replacementAggro := *replacement.Aggro
+	replacementAggro := replacement.CurrentCombatTarget()
 	replacementConviction := replacement.Conviction
 	replacementConditions := len(replacement.Conditions)
 	replacementBuffs := len(replacement.Buffs.GetBuffs())
 	race := &rhetoricAdmissionRaceActor{Actor: actor, onAdmission: func() {
-		char.Aggro = &characters.Aggro{MobInstanceId: replacementMob.InstanceId}
+		char.SetAggro(0, replacementMob.InstanceId, characters.DefaultAttack)
 	}}
 
 	result := ExecuteTaunt(race)
@@ -453,14 +458,14 @@ func TestTauntPaidSwappedAggroPreservesBothTargetsAndRound(t *testing.T) {
 	require.Equal(t, 6, char.Conviction)
 	require.Equal(t, awareness.Hidden, char.Awareness.State())
 	require.Empty(t, char.Cooldowns)
-	require.Equal(t, replacementMob.InstanceId, char.Aggro.MobInstanceId)
+	require.Equal(t, replacementMob.InstanceId, char.CurrentCombatTarget().MobInstanceId)
 	require.Zero(t, char.RoundsWaiting())
 	require.Equal(t, originalConviction, original.Conviction)
-	require.Equal(t, originalAggro, *original.Aggro)
+	require.Equal(t, originalAggro, original.CurrentCombatTarget())
 	require.Len(t, original.Conditions, originalConditions)
 	require.Len(t, original.Buffs.GetBuffs(), originalBuffs)
 	require.Equal(t, replacementConviction, replacement.Conviction)
-	require.Equal(t, replacementAggro, *replacement.Aggro)
+	require.Equal(t, replacementAggro, replacement.CurrentCombatTarget())
 	require.Len(t, replacement.Conditions, replacementConditions)
 	require.Len(t, replacement.Buffs.GetBuffs(), replacementBuffs)
 	require.Empty(t, actor.skillsUsed)

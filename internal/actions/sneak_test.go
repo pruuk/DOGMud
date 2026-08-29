@@ -330,11 +330,7 @@ func TestSneak_InCombat(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	// Simulate combat by setting Aggro (any non-nil value indicates combat)
-	char.Aggro = &characters.Aggro{
-		Type:          characters.DefaultAttack,
-		MobInstanceId: 1,
-		UserId:        0,
-	}
+	char.SetAggro(0, 1, characters.DefaultAttack)
 
 	result := Sneak(actor)
 

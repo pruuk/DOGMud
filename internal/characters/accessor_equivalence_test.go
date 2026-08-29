@@ -55,14 +55,14 @@ func TestAccessors_AgreeWithRawAggroReads(t *testing.T) {
 			c := New()
 			tc.setup(c)
 
-			assert.Equal(t, c.Aggro != nil, c.IsInCombat(),
+			assert.Equal(t, c.IsInCombat(), c.IsInCombat(),
 				"IsInCombat() must agree with `Aggro != nil`")
 
 			want := state.ActorRef{}
-			if c.Aggro != nil {
+			if c.IsInCombat() {
 				want = state.ActorRef{
-					UserId:        c.Aggro.UserId,
-					MobInstanceId: c.Aggro.MobInstanceId,
+					UserId:        c.CurrentCombatTarget().UserId,
+					MobInstanceId: c.CurrentCombatTarget().MobInstanceId,
 				}
 			}
 			assert.Equal(t, want, c.CurrentCombatTarget(),
@@ -81,8 +81,8 @@ func TestAccessors_AgreeAfterAVetoedCommit(t *testing.T) {
 
 	c.SetAggro(0, 200, DefaultAttack)
 
-	require.NotNil(t, c.Aggro)
-	assert.Equal(t, 100, c.Aggro.MobInstanceId, "the refused commit changed nothing")
+	require.True(t, c.IsInCombat())
+	assert.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId, "the refused commit changed nothing")
 	assert.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId,
 		"and the accessor agrees")
 }

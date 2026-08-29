@@ -255,7 +255,7 @@ func TestSurpriseFlag_SurvivesTheAggroDemotionToPhase5(t *testing.T) {
 	// The only place in this file that seeds SurpriseAttack: here it is the
 	// input under test, not a shortcut for the firing condition.
 	atkChar.SetAggro(0, def.GetMobInstanceId(), characters.SurpriseAttack)
-	if atkChar.Aggro == nil || atkChar.Aggro.Type != characters.SurpriseAttack {
+	if !atkChar.IsInCombat() || atkChar.Aggro.Type != characters.SurpriseAttack {
 		t.Fatal("fixture failed to arm a surprise attack")
 	}
 
@@ -277,7 +277,7 @@ func TestSurpriseFlag_SurvivesTheAggroDemotionToPhase5(t *testing.T) {
 	// this check without the demotion ever having run, certifying a premise the
 	// test never actually observed -- so assert non-nil first and fail hard on
 	// it.
-	require.NotNil(t, atkChar.Aggro, "the round ended aggro entirely; the demotion premise was never observed")
+	require.True(t, atkChar.IsInCombat(), "the round ended aggro entirely; the demotion premise was never observed")
 	if atkChar.Aggro.Type == characters.SurpriseAttack {
 		t.Error("calculateCombat no longer demotes Aggro.Type; this test's premise needs revisiting")
 	}

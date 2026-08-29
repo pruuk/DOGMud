@@ -40,11 +40,11 @@ func TestLeader_PackmateHurt_RallyOrWarcryThenEngage(t *testing.T) {
 	}
 
 	// Attack should set Aggro.
-	if mob.Character.Aggro == nil {
+	if !mob.Character.IsInCombat() {
 		t.Fatalf("expected mob.Aggro to be set; got nil")
 	}
-	if mob.Character.Aggro.UserId != 42 {
-		t.Fatalf("expected Aggro.UserId=42, got %d", mob.Character.Aggro.UserId)
+	if mob.Character.CurrentCombatTarget().UserId != 42 {
+		t.Fatalf("expected Aggro.UserId=42, got %d", mob.Character.CurrentCombatTarget().UserId)
 	}
 }
 
@@ -73,8 +73,8 @@ func TestLeader_MobHurt_RallyOrWarcryThenEngage(t *testing.T) {
 	if rally == "" && warcry == "" {
 		t.Fatalf("expected rally or warcry to be queued on mob_hurt; got neither")
 	}
-	if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != 99 {
-		t.Fatalf("expected Aggro.UserId=99; got %+v", mob.Character.Aggro)
+	if !mob.Character.IsInCombat() || mob.Character.CurrentCombatTarget().UserId != 99 {
+		t.Fatalf("expected Aggro.UserId=99; got %+v", mob.Character.CurrentCombatTarget())
 	}
 }
 

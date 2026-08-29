@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"math"
 	"testing"
 
@@ -74,17 +75,19 @@ const (
 type unengagedWatcher struct {
 	instanceId int
 	roomId     int
-	aggro      *characters.Aggro
+	aggro      state.ActorRef
 	charmedBy  int
 }
 
 // aggroOnShooter and aggroElsewhere are the two states a watcher can be in.
-func aggroOnShooter() *characters.Aggro {
-	return &characters.Aggro{UserId: unengagedShooterUserId}
+// U12c-2: these are target REFERENCES now, applied through SetAggro, rather
+// than Aggro structs assigned into the field.
+func aggroOnShooter() state.ActorRef {
+	return state.ActorRef{UserId: unengagedShooterUserId}
 }
 
-func aggroElsewhere() *characters.Aggro {
-	return &characters.Aggro{MobInstanceId: unengagedOtherVictim}
+func aggroElsewhere() state.ActorRef {
+	return state.ActorRef{MobInstanceId: unengagedOtherVictim}
 }
 
 // seedUnengagedFire seeds room 1 (the shooter's room) with a north exit to
@@ -126,7 +129,7 @@ func seedUnengagedFire(t *testing.T, defenderRoomId int, watchers ...unengagedWa
 		if w.charmedBy > 0 {
 			wc.Charmed = characters.NewCharm(w.charmedBy, characters.CharmPermanent, "")
 		}
-		wc.Aggro = w.aggro
+		wc.SetAggro(w.aggro.UserId, w.aggro.MobInstanceId, characters.DefaultAttack)
 		mobInstances[w.instanceId] = &mobs.Mob{
 			MobId: 2, InstanceId: w.instanceId, HomeRoomId: w.roomId, Character: wc,
 		}
@@ -189,11 +192,11 @@ func newUnengagedMobShooter() *characters.Character {
 }
 
 // setWatcherAggro re-points a seeded watcher without disturbing anything else.
-func setWatcherAggro(t *testing.T, instanceId int, aggro *characters.Aggro) {
+func setWatcherAggro(t *testing.T, instanceId int, aggro state.ActorRef) {
 	t.Helper()
 	w := mobs.GetInstance(instanceId)
 	require.NotNil(t, w, "watcher %d must be seeded", instanceId)
-	w.Character.Aggro = aggro
+	w.Character.SetAggro(aggro.UserId, aggro.MobInstanceId, characters.DefaultAttack)
 }
 
 // sampleShotsFromOneShooter fires n shots from the SAME shooter object,
@@ -638,7 +641,7 @@ func TestFireUnengaged_MobShooterDoesNotBorrowAPlayersCharm(t *testing.T) {
 			roomId:     1,
 			// Attacking the ARCHER, and charmed by the PLAYER whose user id
 			// happens to equal the archer's instance id.
-			aggro:     &characters.Aggro{MobInstanceId: unengagedMobShooterInstanceId},
+			aggro:     state.ActorRef{MobInstanceId: unengagedMobShooterInstanceId},
 			charmedBy: unengagedMobShooterInstanceId,
 		})
 	defer cleanup()

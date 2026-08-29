@@ -678,11 +678,11 @@ func TestActSummonCompanion_HostileSetsAggroAndEngages(t *testing.T) {
 	if companion == nil {
 		t.Fatalf("mobs.GetInstance(%d) returned nil after summon", newInstanceId)
 	}
-	if companion.Character.Aggro == nil {
-		t.Fatalf("expected companion.Character.Aggro != nil, got nil")
+	if !companion.Character.IsInCombat() {
+		t.Fatalf("expected companion.Character.IsInCombat(), got nil")
 	}
-	if companion.Character.Aggro.UserId != 1 {
-		t.Errorf("expected Aggro.UserId=1, got %d", companion.Character.Aggro.UserId)
+	if companion.Character.CurrentCombatTarget().UserId != 1 {
+		t.Errorf("expected Aggro.UserId=1, got %d", companion.Character.CurrentCombatTarget().UserId)
 	}
 
 	// ── Assert 3: "lookfortrouble" was queued on the new instance. ────
@@ -799,11 +799,11 @@ func TestActSummonCompanion_HostileFallsBackWithoutEventUserId(t *testing.T) {
 	if companion == nil {
 		t.Fatalf("mobs.GetInstance(%d) returned nil after summon", newInstanceId)
 	}
-	if companion.Character.Aggro == nil {
-		t.Fatalf("expected companion.Character.Aggro != nil (fallback target), got nil")
+	if !companion.Character.IsInCombat() {
+		t.Fatalf("expected companion.Character.IsInCombat() (fallback target), got nil")
 	}
-	if companion.Character.Aggro.UserId != 1 {
-		t.Errorf("expected Aggro.UserId=1 (the only eligible player in the room), got %d", companion.Character.Aggro.UserId)
+	if companion.Character.CurrentCombatTarget().UserId != 1 {
+		t.Errorf("expected Aggro.UserId=1 (the only eligible player in the room), got %d", companion.Character.CurrentCombatTarget().UserId)
 	}
 }
 
@@ -1064,7 +1064,7 @@ func TestActTrySpecialMove_HumanoidMobReturnsFailure(t *testing.T) {
 // aggro target returns Failure immediately.
 func TestActTrySpecialMove_NoAggroReturnsFailure(t *testing.T) {
 	mob := newTestMob(t)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	ctx := &EvalContext{InstanceId: mob.InstanceId}
 

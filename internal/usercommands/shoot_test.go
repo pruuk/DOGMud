@@ -176,7 +176,7 @@ func TestShoot_UnloadedWeapon_NoDamage(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 50, mob.Character.Health, "unloaded bow must deal no damage")
-	assert.Nil(t, user.Character.Aggro, "an unfired shot must not set shooter aggro")
+	assert.False(t, user.Character.IsInCombat(), "an unfired shot must not set shooter aggro")
 }
 
 // TestShoot_SameRoomLoaded_DamageAndAggro: a loaded same-room shot drops the
@@ -198,8 +198,8 @@ func TestShoot_SameRoomLoaded_DamageAndAggro(t *testing.T) {
 	require.NotNil(t, mob)
 	mob.Character.Health = 100000
 	mob.Character.HealthMax.Value = 100000
-	mob.Character.Aggro = nil
-	user.Character.Aggro = nil
+	mob.Character.EndAggro()
+	user.Character.EndAggro()
 
 	// Retried: a single shot can fumble (~2.3%, self-relative). See
 	// shootUntilItLands. Every OTHER assertion below is exact and holds on a
@@ -209,11 +209,11 @@ func TestShoot_SameRoomLoaded_DamageAndAggro(t *testing.T) {
 	assert.Less(t, mob.Character.Health, 100000, "a loaded same-room shot must damage the mob")
 	assert.False(t, user.Character.Equipment.Weapon.Loaded, "firing must unload the weapon")
 
-	require.NotNil(t, user.Character.Aggro, "same-room shot must set shooter aggro")
-	assert.Equal(t, 100, user.Character.Aggro.MobInstanceId)
+	require.True(t, user.Character.IsInCombat(), "same-room shot must set shooter aggro")
+	assert.Equal(t, 100, user.Character.CurrentCombatTarget().MobInstanceId)
 
-	require.NotNil(t, mob.Character.Aggro, "mob must retaliate with aggro on the shooter")
-	assert.Equal(t, user.UserId, mob.Character.Aggro.UserId)
+	require.True(t, mob.Character.IsInCombat(), "mob must retaliate with aggro on the shooter")
+	assert.Equal(t, user.UserId, mob.Character.CurrentCombatTarget().UserId)
 }
 
 // TestShoot_CrossRoomLoaded_NoShooterAggro_MobPursues: a loaded cross-room shot
@@ -229,7 +229,7 @@ func TestShoot_CrossRoomLoaded_NoShooterAggro_MobPursues(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 	user.Character.Stats.Perception.ValueAdj = 300
 	user.Character.Stats.Strength.ValueAdj = 1
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
 	// A fresh mob in the adjacent room (room 2).
@@ -258,7 +258,7 @@ func TestShoot_CrossRoomLoaded_NoShooterAggro_MobPursues(t *testing.T) {
 	shootUntilItLands(t, user, room, "skeleton north", func() int { return target.Character.Health })
 
 	assert.Less(t, target.Character.Health, 100000, "cross-room shot must damage the adjacent-room mob")
-	assert.Nil(t, user.Character.Aggro, "cross-room shot must NOT set shooter aggro (one-shot model)")
+	assert.False(t, user.Character.IsInCombat(), "cross-room shot must NOT set shooter aggro (one-shot model)")
 
 	require.NotNil(t, target.CombatMemory, "cross-room shot must seed CombatMemory for revenge pursuit")
 	assert.Equal(t, user.UserId, target.CombatMemory.TargetUserId, "memory must target the shooter")
@@ -349,21 +349,21 @@ func TestShoot_PvpDisabled_PreFireGate(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 	user.Character.Stats.Perception.ValueAdj = 300
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
 	victim := users.GetByUserId(2)
 	require.NotNil(t, victim)
 	victim.Character.Health = 500
 	victim.Character.HealthMax.Value = 500
-	victim.Character.Aggro = nil
+	victim.Character.EndAggro()
 
 	handled, err := Shoot("Bobrick", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 500, victim.Character.Health, "a no-PvP shot must not damage the victim")
-	assert.Nil(t, user.Character.Aggro, "a blocked PvP shot must not set shooter aggro")
+	assert.False(t, user.Character.IsInCombat(), "a blocked PvP shot must not set shooter aggro")
 	assert.True(t, user.Character.Equipment.Weapon.Loaded, "a blocked shot must not unload the weapon")
 }
 
@@ -380,20 +380,20 @@ func TestShoot_OpeningShot_ChargesCombatRound(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 	user.Character.Stats.Perception.ValueAdj = 300
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
 	mob := mobs.GetInstance(100)
 	require.NotNil(t, mob)
 	mob.Character.Health = 100000
 	mob.Character.HealthMax.Value = 100000
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	handled, err := Shoot("skeleton", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
-	require.NotNil(t, user.Character.Aggro, "opening same-room shot must set shooter aggro before firing")
+	require.True(t, user.Character.IsInCombat(), "opening same-room shot must set shooter aggro before firing")
 	assert.Equal(t, 1, user.Character.RoundsWaiting(), "opening shot must consume the attacker's combat round")
 }
 
@@ -407,7 +407,7 @@ func TestShoot_RefusedNonCombatant_NoAggro(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 	user.Character.Stats.Perception.ValueAdj = 300
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
 	target := &mobs.Mob{
@@ -434,7 +434,7 @@ func TestShoot_RefusedNonCombatant_NoAggro(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 500, target.Character.Health, "a non-combatant must take no damage")
-	assert.Nil(t, user.Character.Aggro, "a refused shot must roll back the speculative opening-shot aggro")
+	assert.False(t, user.Character.IsInCombat(), "a refused shot must roll back the speculative opening-shot aggro")
 	assert.True(t, user.Character.Equipment.Weapon.Loaded, "a refused shot must not unload the weapon")
 }
 
@@ -447,14 +447,14 @@ func TestShoot_SelfTarget_Blocked(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 	user.Character.Stats.Perception.ValueAdj = 300
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
 	handled, err := Shoot("Aliceia", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
-	assert.Nil(t, user.Character.Aggro, "shooting yourself must not start combat")
+	assert.False(t, user.Character.IsInCombat(), "shooting yourself must not start combat")
 	assert.True(t, user.Character.Equipment.Weapon.Loaded, "a self-target shot must not fire")
 }
 
@@ -470,7 +470,7 @@ func TestShoot_NoWeapon(t *testing.T) {
 	handled, err := Shoot("skeleton", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
-	assert.Nil(t, user.Character.Aggro)
+	assert.False(t, user.Character.IsInCombat())
 }
 
 type rangedWrapperCycleDelta struct {
@@ -498,7 +498,7 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 
 		user, room := getTestUserAndRoom(t)
 		prepareRangedCostCycle(user.Character, true, 50)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 		user.Character.Cooldowns = nil
 		target := mobs.GetInstance(100)
 		require.NotNil(t, target)
@@ -507,7 +507,7 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 		target.Character.HealthMax.Value = 100_000
 
 		require.NoError(t, func() error { _, err := Shoot("skeleton", user, room, 0); return err }())
-		require.NotNil(t, user.Character.Aggro)
+		require.True(t, user.Character.IsInCombat())
 		afterShoot := user.Character.Stamina
 		delta := rangedWrapperCycleDelta{
 			shootDebit:        50 - afterShoot,
@@ -532,7 +532,7 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 
 		mob, room := getRangedTestMobAndRoom(t)
 		prepareRangedCostCycle(&mob.Character, true, 50)
-		mob.Character.Aggro = &characters.Aggro{UserId: 1}
+		mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 		mob.Character.Cooldowns = nil
 		target := users.GetByUserId(1)
 		require.NotNil(t, target)
@@ -585,7 +585,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 
 		user, room := getTestUserAndRoom(t)
 		prepareRangedCostCycle(user.Character, true, 0)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 		user.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
 		target := mobs.GetInstance(100)
 		require.NotNil(t, target)
@@ -598,7 +598,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		assert.Equal(t, 0, user.Character.Stamina)
 		assert.True(t, user.Character.Equipment.Weapon.Loaded)
 		assert.Equal(t, 20, user.Character.Items[1].Uses)
-		assert.Nil(t, user.Character.Aggro)
+		assert.False(t, user.Character.IsInCombat())
 		assert.Equal(t, 3, user.Character.Cooldowns["special-move"])
 		assert.Equal(t, 500, target.Character.Health)
 		assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)
@@ -611,7 +611,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 
 		mob, room := getRangedTestMobAndRoom(t)
 		prepareRangedCostCycle(&mob.Character, true, 0)
-		mob.Character.Aggro = &characters.Aggro{UserId: 1}
+		mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 		mob.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
 		target := users.GetByUserId(1)
 		require.NotNil(t, target)

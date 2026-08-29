@@ -47,14 +47,14 @@ func TestAttack_PlayerAttackImmune_RebuffsAttack(t *testing.T) {
 	defer room.RemoveMob(200)
 
 	// Ensure no aggro before the attack.
-	assert.Nil(t, user.Character.Aggro, "user should start with no aggro")
+	assert.False(t, user.Character.IsInCombat(), "user should start with no aggro")
 
 	handled, err := Attack("caravan guard", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
 	// The attack must be rebuffed — aggro must NOT be set.
-	assert.Nil(t, user.Character.Aggro, "attack on PlayerAttackImmune mob must not set aggro")
+	assert.False(t, user.Character.IsInCombat(), "attack on PlayerAttackImmune mob must not set aggro")
 }
 
 func TestAttack_NonCombatantFiresEventOnce_ThenDedupes(t *testing.T) {

@@ -73,7 +73,7 @@ func TestThrottle_NotFanged(t *testing.T) {
 	t.Run("non-fanged actor returns NotFanged", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 7001 // feline — clawed, not fanged
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecuteThrottle(newStubActor(char, newTestRoom()))
 
@@ -85,7 +85,7 @@ func TestThrottle_NotFanged(t *testing.T) {
 	t.Run("fanged actor passes the gate and executes", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 7002 // wolf — fanged
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		fundSpecialMove(char)
 
 		result := ExecuteThrottle(newStubActor(char, newTestRoom()))
@@ -133,7 +133,7 @@ func TestThrottle_Executed_BleedAndBuff(t *testing.T) {
 	hitSeen := false
 	var res ThrottleResult
 	for i := 0; i < 100; i++ {
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{}
 
 		res = ExecuteThrottle(newStubActor(char, newTestRoom()))
@@ -257,7 +257,7 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 				ConvictionSpent:     10,
 			})
 		}
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{}
 
 		res = ExecuteThrottle(newStubActor(char, newTestRoom()))
@@ -373,7 +373,7 @@ func TestThrottle_CastInterrupt_OverwhelmingCaster(t *testing.T) {
 		if !targetMob.Character.IsCasting() {
 			setCastingForTest(&targetMob.Character, castData)
 		}
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{}
 
 		res := ExecuteThrottle(newStubActor(char, newTestRoom()))
@@ -418,7 +418,7 @@ func TestThrottle_TargetGone(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	// Aggro pointing at a nonexistent mob instance — target resolution fails.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
+	char.SetAggro(0, 999999, characters.DefaultAttack)
 
 	result := ExecuteThrottle(actor)
 

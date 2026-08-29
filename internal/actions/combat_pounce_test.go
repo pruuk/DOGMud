@@ -71,7 +71,7 @@ func TestPounce_NotPredator(t *testing.T) {
 	t.Run("legless fanged actor returns NotPredator", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 6001 // serpent — fanged but no legs
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecutePounce(newStubActor(char, newTestRoom()))
 
@@ -83,7 +83,7 @@ func TestPounce_NotPredator(t *testing.T) {
 	t.Run("legged no-attack actor returns NotPredator", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 6002 // human — legged but no claws or fangs
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecutePounce(newStubActor(char, newTestRoom()))
 
@@ -94,7 +94,7 @@ func TestPounce_NotPredator(t *testing.T) {
 	t.Run("legged fanged actor passes the gate and executes", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 6003 // wolf — legged + fanged
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		fundSpecialMove(char)
 
 		result := ExecutePounce(newStubActor(char, newTestRoom()))
@@ -124,7 +124,7 @@ func TestPounce_Grappling(t *testing.T) {
 
 	char := characters.New()
 	char.SpeciesId = 6201 // wolf — legged + fanged → predator
-	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 	// Put the attacker into a Clinch grapple so IsGrappling() is true.
 	setCombatPositionParallel(char, position.Clinch)
 
@@ -153,7 +153,7 @@ func TestPounce_Executed(t *testing.T) {
 
 	char := characters.New()
 	char.SpeciesId = 6101 // feline — legged + clawed
-	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 	fundSpecialMove(char)
 
 	result := ExecutePounce(newStubActor(char, newTestRoom()))

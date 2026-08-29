@@ -670,11 +670,11 @@ func TestGo(t *testing.T) {
 	})
 
 	t.Run("in_combat", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Go("north", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -829,10 +829,10 @@ func TestAttack(t *testing.T) {
 		handled, err := Attack("skeleton", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		assert.NotNil(t, user.Character.Aggro)
-		assert.Equal(t, 100, user.Character.Aggro.MobInstanceId)
+		assert.True(t, user.Character.IsInCombat())
+		assert.Equal(t, 100, user.Character.CurrentCombatTarget().MobInstanceId)
 		// Cleanup
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 
 	t.Run("no_target", func(t *testing.T) {
@@ -1280,11 +1280,11 @@ func TestFlee(t *testing.T) {
 	})
 
 	t.Run("in_combat", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Flee("", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -1647,11 +1647,11 @@ func TestTarget(t *testing.T) {
 	})
 
 	t.Run("in_combat_switch_to_mob", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Target("skeleton", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -2845,15 +2845,15 @@ func TestAttackPlayerTarget(t *testing.T) {
 		assert.True(t, handled)
 		assert.NoError(t, err)
 		// Cleanup aggro
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 
 	t.Run("already_in_combat", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Attack("skeleton", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -3136,7 +3136,7 @@ func TestFleeInCombatWithExits(t *testing.T) {
 	defer cleanup()
 
 	user, room := getTestUserAndRoom(t)
-	user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+	user.Character.SetAggro(0, 100, characters.DefaultAttack)
 	user.Character.ActionPoints = 100
 
 	handled, err := Flee("north", user, room, 0)
@@ -3144,7 +3144,7 @@ func TestFleeInCombatWithExits(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Restore
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	user.Character.RoomId = 1
 	room.AddPlayer(1)
 	user.Character.ActionPoints = 5
@@ -3687,19 +3687,19 @@ func TestTargetBranches(t *testing.T) {
 	})
 
 	t.Run("target_player", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Target("bobrick", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 
 	t.Run("target_nonexistent", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Target("zzz_nobody", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -3712,19 +3712,19 @@ func TestTauntInCombat(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 
 	t.Run("taunt_mob_target", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Taunt("skeleton", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 
 	t.Run("taunt_player_target", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{UserId: 2}
+		user.Character.SetAggro(2, 0, characters.DefaultAttack)
 		handled, err := Taunt("bobrick", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -3937,7 +3937,7 @@ func TestCombatCommandsInCombat(t *testing.T) {
 	defer cleanup()
 
 	user, room := getTestUserAndRoom(t)
-	user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+	user.Character.SetAggro(0, 100, characters.DefaultAttack)
 
 	t.Run("kick_in_combat", func(t *testing.T) {
 		handled, err := Kick("skeleton", user, room, 0)
@@ -3963,7 +3963,7 @@ func TestCombatCommandsInCombat(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 }
 
 // ─── TryCommand Tests ───────────────────────────────────────────────────────
@@ -4040,11 +4040,11 @@ func TestTryCommand(t *testing.T) {
 
 	t.Run("in_combat_blocks_equip", func(t *testing.T) {
 		user := users.GetByUserId(1)
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := TryCommand("equip", "iron sword", 1, events.CmdSkipScripts)
 		assert.True(t, handled) // Blocked by combat guard
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 
 	t.Run("admin_command_as_admin", func(t *testing.T) {
@@ -4105,7 +4105,7 @@ func TestTryCommand(t *testing.T) {
 
 	t.Run("casting_flee_outside_combat_preserves_cast", func(t *testing.T) {
 		user := users.GetByUserId(1)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 		if user.Character.Activity == nil {
 			user.Character.Activity = activity.NewMachine()
 		}
@@ -4123,7 +4123,7 @@ func TestTryCommand(t *testing.T) {
 
 	t.Run("casting_flee_clears_cast", func(t *testing.T) {
 		user := users.GetByUserId(1)
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		if user.Character.Activity == nil {
 			user.Character.Activity = activity.NewMachine()
 		}
@@ -4136,7 +4136,7 @@ func TestTryCommand(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, user.Character.Activity == nil || user.Character.Activity.IsFree(),
 			"Activity must be Free after flee")
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 		user.Character.RoomId = 1
 		rooms.LoadRoom(1).AddPlayer(1)
 	})
@@ -4458,7 +4458,7 @@ func TestAttackEdgeCases(t *testing.T) {
 		handled, err := Attack("", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -4717,7 +4717,7 @@ func TestAttackMoreBranches(t *testing.T) {
 		assert.True(t, handled)
 		// May error depending on PvP config, just test it doesn't panic
 		_ = err
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 		room.Pvp = false
 	})
 
@@ -4727,7 +4727,7 @@ func TestAttackMoreBranches(t *testing.T) {
 		assert.True(t, handled)
 		// May error with "PVP is disabled" etc.
 		_ = err
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -4856,13 +4856,13 @@ func TestFleeMoreBranches(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 
 	t.Run("flee_prone", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		setCombatPositionParallel(user.Character, position.Prone)
 		user.Character.ActionPoints = 100
 		handled, err := Flee("", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 		setCombatPositionParallel(user.Character, position.Standing)
 		user.Character.RoomId = 1
 		room.AddPlayer(1)
@@ -4918,21 +4918,21 @@ func TestCombatSkillsDeep(t *testing.T) {
 	})
 
 	t.Run("kick_with_mob_target_in_combat", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		user.Character.Stamina = 100
 		handled, err := Kick("skeleton", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 
 	t.Run("trip_with_mob_target_in_combat", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		user.Character.Stamina = 100
 		handled, err := Trip("skeleton", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -5333,11 +5333,11 @@ func TestBreakDeep(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 
 	t.Run("break_in_combat", func(t *testing.T) {
-		user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+		user.Character.SetAggro(0, 100, characters.DefaultAttack)
 		handled, err := Break("", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
-		user.Character.Aggro = nil
+		user.Character.EndAggro()
 	})
 }
 
@@ -7286,11 +7286,11 @@ func TestAttackMobInCombat(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 
 	// Set up combat with a mob
-	user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+	user.Character.SetAggro(0, 100, characters.DefaultAttack)
 	handled, err := Attack("skeleton", user, room, 0)
 	assert.True(t, handled)
 	_ = err
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 }
 
 // ─── Bash command with no shield ────────────────────────────────────────────
@@ -7302,11 +7302,11 @@ func TestBashNoShield(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 
 	// Set aggro so it passes the first check
-	user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+	user.Character.SetAggro(0, 100, characters.DefaultAttack)
 	handled, err := Bash("", user, room, 0)
 	assert.True(t, handled)
 	_ = err
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 }
 
 // ─── Grapple/Kick/Trip deeper ───────────────────────────────────────────────
@@ -7316,7 +7316,7 @@ func TestCombatSkillsInCombat(t *testing.T) {
 	defer cleanup()
 
 	user, room := getTestUserAndRoom(t)
-	user.Character.Aggro = &characters.Aggro{MobInstanceId: 100}
+	user.Character.SetAggro(0, 100, characters.DefaultAttack)
 
 	t.Run("grapple_in_combat", func(t *testing.T) {
 		handled, err := Grapple("", user, room, 0)
@@ -7336,7 +7336,7 @@ func TestCombatSkillsInCombat(t *testing.T) {
 		_ = err
 	})
 
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 }
 
 // ── T19: Behavior Matrix PB-340 ───────────────────────────────────────────────

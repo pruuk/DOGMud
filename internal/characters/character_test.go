@@ -2034,17 +2034,13 @@ func TestCharacter_EndAggro(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New()
 			if tt.setupAggro {
-				c.Aggro = &Aggro{
-					UserId:        1,
-					MobInstanceId: 2,
-					Type:          DefaultAttack,
-					RoundsWaiting: 3,
-				}
+				c.SetAggro(1, 2, DefaultAttack)
+				c.SetRoundsWaiting(3)
 			} else {
-				c.Aggro = nil
+				c.EndAggro()
 			}
 			c.EndAggro()
-			assert.Nil(t, c.Aggro)
+			assert.False(t, c.IsInCombat())
 		})
 	}
 }

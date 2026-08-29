@@ -1387,7 +1387,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			convictionBefore := mob.Character.Conviction
 			cooldownsBefore := maps.Clone(mob.Character.Cooldowns)
 			roundsBefore := 0
-			if mob.Character.Aggro != nil {
+			if mob.Character.IsInCombat() {
 				roundsBefore = mob.Character.RoundsWaiting()
 			}
 			gotFlag := runExecuteAndReadFlag(tc.cmd, actor, tc.wantReason)
@@ -1402,7 +1402,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 					"readiness rejection %q must precede cost admission", tc.name)
 				assert.Equal(t, cooldownsBefore, mob.Character.Cooldowns,
 					"readiness rejection %q must not consume or rewrite cooldown", tc.name)
-				if mob.Character.Aggro != nil {
+				if mob.Character.IsInCombat() {
 					assert.Equal(t, roundsBefore, mob.Character.RoundsWaiting(),
 						"readiness rejection %q must not consume a round", tc.name)
 				}
@@ -1413,7 +1413,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 					"readiness rejection %q must precede Conviction admission", tc.name)
 				assert.Equal(t, cooldownsBefore, mob.Character.Cooldowns,
 					"readiness rejection %q must not consume or rewrite cooldown", tc.name)
-				if mob.Character.Aggro != nil {
+				if mob.Character.IsInCombat() {
 					assert.Equal(t, roundsBefore, mob.Character.RoundsWaiting(),
 						"readiness rejection %q must not consume a round", tc.name)
 				}

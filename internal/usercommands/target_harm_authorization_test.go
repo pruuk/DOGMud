@@ -68,8 +68,8 @@ func TestTarget_RefusesAttackImmuneMob(t *testing.T) {
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
-	require.NotNil(t, user.Character.Aggro)
-	assert.Equal(t, 310, user.Character.Aggro.MobInstanceId,
+	require.True(t, user.Character.IsInCombat())
+	assert.Equal(t, 310, user.Character.CurrentCombatTarget().MobInstanceId,
 		"target switch onto an attack-immune mob must be refused")
 }
 
@@ -91,7 +91,7 @@ func TestTarget_RefusesNonCombatant(t *testing.T) {
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
-	require.NotNil(t, user.Character.Aggro)
-	assert.Equal(t, 312, user.Character.Aggro.MobInstanceId,
+	require.True(t, user.Character.IsInCombat())
+	assert.Equal(t, 312, user.Character.CurrentCombatTarget().MobInstanceId,
 		"target switch onto a non-combatant must be refused")
 }

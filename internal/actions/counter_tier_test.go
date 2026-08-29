@@ -125,8 +125,8 @@ func TestCounterTaunt_BypassesCooldownCostAndAggro(t *testing.T) {
 
 	// BYPASS 3 (aggro): snapshot both sides' aggro. newTestMob seeds a default
 	// aggro on the counterer; clear it so any mutation is visible.
-	counterer.Character.Aggro = nil
-	taunterAggroBefore := *taunter.Character.Aggro // newTauntCollapsePair sets it
+	counterer.Character.EndAggro()
+	taunterAggroBefore := taunter.Character.CurrentCombatTarget() // newTauntCollapsePair sets it
 
 	convBefore := counterer.Character.Conviction
 	targetConvBefore := taunter.Character.Conviction
@@ -157,8 +157,8 @@ func TestCounterTaunt_BypassesCooldownCostAndAggro(t *testing.T) {
 	// BYPASS 3 asserted: no aggro mutation on either side.
 	require.Nil(t, counterer.Character.Aggro,
 		"the counter-taunt must not seed aggro on the counterer")
-	require.Equal(t, taunterAggroBefore.UserId, taunter.Character.Aggro.UserId)
-	require.Equal(t, taunterAggroBefore.MobInstanceId, taunter.Character.Aggro.MobInstanceId,
+	require.Equal(t, taunterAggroBefore.UserId, taunter.Character.CurrentCombatTarget().UserId)
+	require.Equal(t, taunterAggroBefore.MobInstanceId, taunter.Character.CurrentCombatTarget().MobInstanceId,
 		"the counter-taunt must not re-point the original taunter's aggro")
 }
 

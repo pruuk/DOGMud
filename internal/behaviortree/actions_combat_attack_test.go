@@ -55,14 +55,14 @@ func TestActAttack_MobAttacker_TargetsAttackerNotRandomPlayer(t *testing.T) {
 	if result != Success {
 		t.Fatalf("actAttack returned %v, want Success when Event.MobId is set", result)
 	}
-	if defender.Character.Aggro == nil {
+	if !defender.Character.IsInCombat() {
 		t.Fatal("expected Aggro to be set; got nil")
 	}
-	if defender.Character.Aggro.UserId != 0 {
-		t.Errorf("Aggro.UserId = %d, want 0 (no player should be targeted)", defender.Character.Aggro.UserId)
+	if defender.Character.CurrentCombatTarget().UserId != 0 {
+		t.Errorf("Aggro.UserId = %d, want 0 (no player should be targeted)", defender.Character.CurrentCombatTarget().UserId)
 	}
-	if defender.Character.Aggro.MobInstanceId != attackerInstanceId {
+	if defender.Character.CurrentCombatTarget().MobInstanceId != attackerInstanceId {
 		t.Errorf("Aggro.MobInstanceId = %d, want %d (the attacking mob)",
-			defender.Character.Aggro.MobInstanceId, attackerInstanceId)
+			defender.Character.CurrentCombatTarget().MobInstanceId, attackerInstanceId)
 	}
 }

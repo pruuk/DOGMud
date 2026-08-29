@@ -327,10 +327,7 @@ func TestSteal_MobOnPlayer_DetectionWin(t *testing.T) {
 // TestSteal_InCombat verifies that a character with active Aggro cannot steal.
 func TestSteal_InCombat(t *testing.T) {
 	actor := newStealPlayerActor(100, 5)
-	actor.char.Aggro = &characters.Aggro{
-		Type:          characters.DefaultAttack,
-		MobInstanceId: 1,
-	}
+	actor.char.SetAggro(0, 1, characters.DefaultAttack)
 
 	result := Steal(actor, StealOptions{TargetMobInstanceId: testMobInstId})
 

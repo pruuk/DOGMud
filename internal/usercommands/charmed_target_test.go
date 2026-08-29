@@ -80,7 +80,7 @@ func TestRegression_MeleeSpecialsRefuseCharmedTargets(t *testing.T) {
 			newCompanion()
 			defer dropCompanion()
 
-			user.Character.Aggro = nil
+			user.Character.EndAggro()
 
 			handled, err := c.call()
 			assert.True(t, handled)

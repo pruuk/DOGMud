@@ -28,7 +28,7 @@ func TestActionReadiness_NilActor_Rejected(t *testing.T) {
 
 // TestActionReadiness_SpecialMove_Ready verifies that a special-move verb
 // where CommandIsReady returns true yields ActionReady.
-// taunt requires char.Aggro != nil — newTestMob sets default aggro to user 1.
+// taunt requires char.IsInCombat() — newTestMob sets default aggro to user 1.
 func TestActionReadiness_SpecialMove_Ready(t *testing.T) {
 	m := newTestMob(t, nil)
 	actor := &MobActor{Mob: m, Room: nil}
@@ -53,7 +53,7 @@ func TestActionReadiness_SpecialMove_OnCooldown_Deferred(t *testing.T) {
 // TestActionReadiness_SpecialMove_StructurallyBlocked_Rejected verifies that
 // a special-move verb where CommandIsReady is false for structural reasons
 // (no cooldown, not acting) yields ActionRejected.
-// taunt with EndAggro() → char.Aggro == nil → structural block.
+// taunt with EndAggro() → !char.IsInCombat() → structural block.
 func TestActionReadiness_SpecialMove_StructurallyBlocked_Rejected(t *testing.T) {
 	m := newTestMob(t, nil)
 	m.Character.EndAggro() // removes the aggro set by newTestMob

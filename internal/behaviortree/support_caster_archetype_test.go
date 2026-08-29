@@ -178,11 +178,11 @@ func TestSupportCaster_PackmateHurt_EngagesAttackerWhenNoSupportNeeded(t *testin
 	if cmd != "" {
 		t.Fatalf("no cast should be queued; got: %q", cmd)
 	}
-	if caster.Character.Aggro == nil {
+	if !caster.Character.IsInCombat() {
 		t.Fatalf("expected Aggro to be set on attacker; got nil")
 	}
-	if caster.Character.Aggro.UserId != 42 {
-		t.Fatalf("expected Aggro.UserId=42, got %d", caster.Character.Aggro.UserId)
+	if caster.Character.CurrentCombatTarget().UserId != 42 {
+		t.Fatalf("expected Aggro.UserId=42, got %d", caster.Character.CurrentCombatTarget().UserId)
 	}
 }
 

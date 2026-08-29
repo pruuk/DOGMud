@@ -496,7 +496,7 @@ func TestAttackMob(t *testing.T) {
 		handled, err := Attack("alice", mob, room)
 		assert.True(t, handled)
 		_ = err
-		mob.Character.Aggro = nil
+		mob.Character.EndAggro()
 	})
 
 	t.Run("attack_nobody", func(t *testing.T) {
@@ -509,14 +509,14 @@ func TestAttackMob(t *testing.T) {
 		handled, err := Attack("", mob, room)
 		_ = handled
 		_ = err
-		mob.Character.Aggro = nil
+		mob.Character.EndAggro()
 	})
 
 	t.Run("attack_star", func(t *testing.T) {
 		handled, err := Attack("*", mob, room)
 		_ = handled
 		_ = err
-		mob.Character.Aggro = nil
+		mob.Character.EndAggro()
 	})
 }
 
@@ -1064,7 +1064,7 @@ func TestAttackInCombat(t *testing.T) {
 	mob, room := getTestMobAndRoom(t)
 
 	// Set mob in combat
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 
 	// These drive each combat verb end-to-end against a live mob. The
 	// outcome varies with the dice, but no verb should error or panic — in
@@ -1097,7 +1097,7 @@ func TestAttackInCombat(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 }
 
 // ─── Deeper branch tests ────────────────────────────────────────────────────
@@ -1190,11 +1190,11 @@ func TestShootInCombat(t *testing.T) {
 
 	mob, room := getTestMobAndRoom(t)
 
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 	handled, err := Shoot("", mob, room)
 	_ = handled
 	_ = err
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 }
 
 func TestCallForHelpInCombat(t *testing.T) {
@@ -1203,11 +1203,11 @@ func TestCallForHelpInCombat(t *testing.T) {
 
 	mob, room := getTestMobAndRoom(t)
 
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 	handled, err := CallForHelp("", mob, room)
 	_ = handled
 	_ = err
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 }
 
 func TestSayEmpty(t *testing.T) {

@@ -14,8 +14,8 @@ func TestCommit_SetsTheTarget(t *testing.T) {
 
 	Commit(c, state.ActorRef{MobInstanceId: 42}, ReasonAttack)
 
-	require.NotNil(t, c.Aggro)
-	assert.Equal(t, 42, c.Aggro.MobInstanceId)
+	require.True(t, c.IsInCombat())
+	assert.Equal(t, 42, c.CurrentCombatTarget().MobInstanceId)
 	assert.Equal(t, 42, EngagementOf(c).Target.MobInstanceId)
 }
 
@@ -36,7 +36,7 @@ func TestCommit_DualWriteAgrees(t *testing.T) {
 
 	Commit(c, state.ActorRef{MobInstanceId: 42}, ReasonAttack)
 
-	require.NotNil(t, c.Aggro)
+	require.True(t, c.IsInCombat())
 	require.NotNil(t, c.CombatPhase)
 	assert.True(t, c.CombatPhase.IsInCombat(),
 		"CombatPhase must agree that a commit started a fight")
@@ -48,7 +48,7 @@ func TestRelease_ClearsTheTarget(t *testing.T) {
 
 	Release(c, ReasonDisengage)
 
-	assert.Nil(t, c.Aggro)
+	assert.False(t, c.IsInCombat())
 	assert.True(t, EngagementOf(c).Target.IsZero())
 }
 
@@ -65,7 +65,7 @@ func TestCommit_ZeroRefIsRefused(t *testing.T) {
 
 	Commit(c, state.ActorRef{}, ReasonAttack)
 
-	assert.Nil(t, c.Aggro)
+	assert.False(t, c.IsInCombat())
 }
 
 // TestCommitAfter_PassesTheExplicitWait proves CommitAfter is not just Commit
@@ -76,7 +76,7 @@ func TestCommitAfter_PassesTheExplicitWait(t *testing.T) {
 
 	CommitAfter(c, state.ActorRef{MobInstanceId: 42}, ReasonAttack, 3)
 
-	require.NotNil(t, c.Aggro)
+	require.True(t, c.IsInCombat())
 	assert.Equal(t, 3, c.RoundsWaiting())
 }
 
@@ -119,7 +119,7 @@ func TestCommitTaunt_NilAndZeroAreSafe(t *testing.T) {
 
 	c := characters.New()
 	CommitTaunt(c, state.ActorRef{}, 4)
-	assert.Nil(t, c.Aggro, "a taunt with no taunter must not engage anybody")
+	assert.False(t, c.IsInCombat(), "a taunt with no taunter must not engage anybody")
 }
 
 // TestReasonRoundTrip pins the transform a blind review caught being lossy.
@@ -152,7 +152,7 @@ func TestCommit_ShootReasonPreservesShootingWithoutAWeapon(t *testing.T) {
 
 	Commit(c, state.ActorRef{MobInstanceId: 42}, ReasonShoot)
 
-	require.NotNil(t, c.Aggro)
+	require.True(t, c.IsInCombat())
 	assert.Equal(t, characters.Shooting, c.Aggro.Type,
 		"a Shooting engagement must survive a re-commit even with no bow in hand")
 }
@@ -172,7 +172,7 @@ func TestCommit_ReportsWhetherItLanded(t *testing.T) {
 
 	require.False(t, Commit(c, state.ActorRef{MobInstanceId: 99}, ReasonAttack),
 		"a vetoed commit must report failure, not silence")
-	assert.Equal(t, 42, c.Aggro.MobInstanceId,
+	assert.Equal(t, 42, c.CurrentCombatTarget().MobInstanceId,
 		"and must leave the previous engagement intact")
 }
 

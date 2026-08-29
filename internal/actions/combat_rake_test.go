@@ -69,7 +69,7 @@ func TestRake_NotClawed(t *testing.T) {
 	t.Run("non-clawed actor returns NotClawed", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 5001 // wolf — fanged, not clawed
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecuteRake(newStubActor(char, newTestRoom()))
 
@@ -81,7 +81,7 @@ func TestRake_NotClawed(t *testing.T) {
 	t.Run("clawed actor passes the gate and executes", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 5002 // feline — clawed
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		fundSpecialMove(char)
 
 		result := ExecuteRake(newStubActor(char, newTestRoom()))
@@ -100,7 +100,7 @@ func TestRake_TargetGone(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	// Aggro pointing at a nonexistent mob instance — target resolution fails.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
+	char.SetAggro(0, 999999, characters.DefaultAttack)
 
 	result := ExecuteRake(actor)
 

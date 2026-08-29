@@ -30,7 +30,7 @@ func TestExecuteTauntDefensiveCritPreservesAggroPullForPlayerAndMobActors(t *tes
 			t.Cleanup(restore)
 
 			actor, _, target := newRhetoricActor(t, player, 100, 0)
-			target.Aggro = &characters.Aggro{UserId: 4242}
+			target.SetAggro(4242, 0, characters.DefaultAttack)
 			startingConviction := target.Conviction
 
 			result := ExecuteTaunt(actor)
@@ -43,9 +43,9 @@ func TestExecuteTauntDefensiveCritPreservesAggroPullForPlayerAndMobActors(t *tes
 				"only the admitted defy cost may reduce conviction on a zero-injury defensive crit")
 			require.True(t, result.AggroPulled)
 			if player {
-				require.Equal(t, actor.GetUserId(), target.Aggro.UserId)
+				require.Equal(t, actor.GetUserId(), target.CurrentCombatTarget().UserId)
 			} else {
-				require.Equal(t, actor.GetMobInstanceId(), target.Aggro.MobInstanceId)
+				require.Equal(t, actor.GetMobInstanceId(), target.CurrentCombatTarget().MobInstanceId)
 			}
 		})
 	}

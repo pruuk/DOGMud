@@ -49,7 +49,7 @@ func TestCommitAndRelease_KeepTheStoresInAgreement(t *testing.T) {
 
 			assert.Equal(t, tc.inCombat, c.CombatPhase.IsInCombat(),
 				"CombatPhase must agree with the Aggro write")
-			assert.Equal(t, tc.inCombat, c.Aggro != nil,
+			assert.Equal(t, tc.inCombat, c.IsInCombat(),
 				"Aggro must agree with the CombatPhase transition")
 			if tc.inCombat {
 				e := EngagementOf(c)

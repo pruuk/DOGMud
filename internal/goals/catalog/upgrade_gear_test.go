@@ -43,7 +43,7 @@ func TestUpgradeGear_ContextScore_ElevatedWhenGold(t *testing.T) {
 func TestUpgradeGear_ContextScore_FloorInCombat(t *testing.T) {
 	mob := &mobs.Mob{}
 	mob.Character.Gold = 1000
-	mob.Character.Aggro = &characters.Aggro{} // in combat
+	mob.Character.SetAggro(0, 0, characters.DefaultAttack) // in combat
 	g := &goals.Goal{Type: "upgrade-gear"}
 	if got := upgradeGearContextScore(g, mob); got != 1.0 {
 		t.Errorf("context score = %v, want floor 1.0 while in combat", got)

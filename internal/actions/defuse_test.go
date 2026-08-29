@@ -167,10 +167,7 @@ func TestDefuse_NotAdvancedEnough(t *testing.T) {
 
 func TestDefuse_InCombat(t *testing.T) {
 	actor := newDefuseActor(100, 5)
-	actor.char.Aggro = &characters.Aggro{
-		Type:          characters.DefaultAttack,
-		MobInstanceId: 1,
-	}
+	actor.char.SetAggro(0, 1, characters.DefaultAttack)
 	seedDisarmKit(actor, 9902, 0)
 
 	result := Defuse(actor, DefuseOptions{TargetNoun: defuseTestContainerName})

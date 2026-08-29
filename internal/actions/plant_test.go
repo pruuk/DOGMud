@@ -118,10 +118,7 @@ func TestPlant_NoTarget(t *testing.T) {
 // TestPlant_InCombat verifies that a character with active Aggro cannot plant.
 func TestPlant_InCombat(t *testing.T) {
 	actor := newPlantPlayerActor(100, 5)
-	actor.char.Aggro = &characters.Aggro{
-		Type:          characters.DefaultAttack,
-		MobInstanceId: 1,
-	}
+	actor.char.SetAggro(0, 1, characters.DefaultAttack)
 	seedPlantItem(actor)
 
 	result := Plant(actor, PlantOptions{

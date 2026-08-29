@@ -82,7 +82,7 @@ func TestValidateAggro_CastingWithNoTarget_IsValid(t *testing.T) {
 	// Drop the plain target, leaving only the cast: the shape the exemption
 	// exists for.
 	c.CombatPhase.ForceIdle(state.TransitionReason{Trigger: combatphase.TriggerForceIdle})
-	c.Aggro = &characters.Aggro{}
+	c.SetAggro(0, 0, characters.DefaultAttack)
 	require.True(t, c.CurrentCombatTarget().IsZero(), "precondition: no plain target")
 	require.True(t, c.IsCasting(), "precondition: still casting")
 
@@ -95,23 +95,19 @@ func TestValidateAggro_CastingWithNoTarget_IsValid(t *testing.T) {
 // invalidate it.
 func TestValidateAggro_DefaultAttackWithNoTarget_IsInvalid(t *testing.T) {
 	c := characters.New()
-	c.Aggro = &characters.Aggro{
-		UserId:        0,
-		MobInstanceId: 0,
-		Type:          characters.DefaultAttack,
-	}
+	c.SetAggro(0, 0, characters.DefaultAttack)
 
 	ok := ValidateAggro(c)
 	assert.False(t, ok, "DefaultAttack with no target is stale, should be invalid")
-	assert.Nil(t, c.Aggro, "EndAggro must have cleared aggro")
+	assert.False(t, c.IsInCombat(), "EndAggro must have cleared aggro")
 }
 
 // Nil aggro returns false without side effects.
 func TestValidateAggro_NilAggro(t *testing.T) {
 	c := characters.New()
-	c.Aggro = nil
+	c.EndAggro()
 
 	ok := ValidateAggro(c)
 	assert.False(t, ok)
-	assert.Nil(t, c.Aggro)
+	assert.False(t, c.IsInCombat())
 }

@@ -108,7 +108,7 @@ func TestStagedSpecialMoveStaleCooldownDoesNotCommitEngagement(t *testing.T) {
 			require.Equal(t, 4, got.cost.Charged)
 			require.Equal(t, 96, user.Character.Stamina)
 			require.Equal(t, 3, user.Character.Cooldowns["special-move"])
-			assert.Nil(t, user.Character.Aggro, "stale cooldown must not commit staged aggro or a round")
+			assert.False(t, user.Character.IsInCombat(), "stale cooldown must not commit staged aggro or a round")
 			assert.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId))
 			assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId))
 			assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false))

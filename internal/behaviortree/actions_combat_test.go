@@ -108,8 +108,8 @@ func TestTargetWeakestMobInRoom_HatedWeakerMob_Success(t *testing.T) {
 	if r := actTargetWeakestMobInRoom(map[string]any{}, ctx); r != Success {
 		t.Errorf("expected Success picking the rat, got %v", r)
 	}
-	if wolf.Character.Aggro == nil || wolf.Character.Aggro.MobInstanceId != 110 {
-		t.Errorf("expected Aggro set to rat (110), got %+v", wolf.Character.Aggro)
+	if !wolf.Character.IsInCombat() || wolf.Character.CurrentCombatTarget().MobInstanceId != 110 {
+		t.Errorf("expected Aggro set to rat (110), got %+v", wolf.Character.CurrentCombatTarget())
 	}
 }
 
@@ -139,8 +139,8 @@ func TestTargetWeakestMobInRoom_HatedButStronger_Failure(t *testing.T) {
 	if r := actTargetWeakestMobInRoom(map[string]any{}, ctx); r != Failure {
 		t.Errorf("expected Failure (target is stronger), got %v", r)
 	}
-	if wolf.Character.Aggro != nil {
-		t.Errorf("expected no Aggro set, got %+v", wolf.Character.Aggro)
+	if wolf.Character.IsInCombat() {
+		t.Errorf("expected no Aggro set, got %+v", wolf.Character.CurrentCombatTarget())
 	}
 }
 
@@ -254,8 +254,8 @@ func TestActTargetRandomPlayerInRoom_PicksAPlayer(t *testing.T) {
 		t.Errorf("expected SoftTarget.UserId to be 1 or 2, got %d", pickedId)
 	}
 	// Combat must NOT be engaged — Aggro must remain nil.
-	if thief.Character.Aggro != nil {
-		t.Errorf("expected Aggro to remain nil (no combat engagement), got %+v", thief.Character.Aggro)
+	if thief.Character.IsInCombat() {
+		t.Errorf("expected Aggro to remain nil (no combat engagement), got %+v", thief.Character.CurrentCombatTarget())
 	}
 }
 
@@ -280,7 +280,7 @@ func TestActTargetRandomPlayerInRoom_EmptyRoom(t *testing.T) {
 	if !ctx.SoftTarget.IsZero() {
 		t.Errorf("expected SoftTarget to remain zero, got %+v", ctx.SoftTarget)
 	}
-	if thief.Character.Aggro != nil {
-		t.Errorf("expected Aggro to remain nil, got %+v", thief.Character.Aggro)
+	if thief.Character.IsInCombat() {
+		t.Errorf("expected Aggro to remain nil, got %+v", thief.Character.CurrentCombatTarget())
 	}
 }

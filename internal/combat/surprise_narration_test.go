@@ -369,8 +369,8 @@ func TestSurpriseRound_ExactlyOneSwingIsMarkedAsTheOpener(t *testing.T) {
 		}
 
 		attacker.SetAggro(0, 1, characters.SurpriseAttack)
-		if attacker.Aggro == nil || attacker.Aggro.Type != characters.SurpriseAttack {
-			t.Fatalf("round %d: SetAggro did not take; got %+v", i, attacker.Aggro)
+		if !attacker.IsInCombat() || attacker.Aggro.Type != characters.SurpriseAttack {
+			t.Fatalf("round %d: SetAggro did not take; got %+v", i, attacker.CurrentCombatTarget())
 		}
 
 		result, cost := resolveCombatRound(attacker, defender, User, Mob, ctx)

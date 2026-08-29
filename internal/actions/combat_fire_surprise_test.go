@@ -183,7 +183,7 @@ func TestFireSurprise_SameRoomStealthShotCritsAndStacks(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // FIXTURE: char.Aggro is pre-set, so ExecuteFire's
-// `if !crossRoom && char.Aggro == nil { char.SetAggro(...) }` never runs and
+// `if !crossRoom && !char.IsInCombat() { char.SetAggro(...) }` never runs and
 // the SetAggro -> TransitionToEngaging -> Awareness cascade cannot be what
 // clears Hidden. Delete the explicit TransitionToRevealing call and this test
 // fails.
@@ -208,7 +208,7 @@ func TestFireSurprise_RevealsAnAlreadyEngagedShooter(t *testing.T) {
 	defer cleanup()
 
 	char := newSurpriseShooter(true)
-	char.Aggro = &characters.Aggro{MobInstanceId: 500}
+	char.SetAggro(0, 500, characters.DefaultAttack)
 	require.True(t, char.IsHidden(), "precondition: the shooter starts hidden")
 	require.NotNil(t, char.Aggro,
 		"precondition: already engaged, so ExecuteFire must NOT call SetAggro")
@@ -302,7 +302,7 @@ func TestFireSurprise_CrossRoomShotGetsNothing(t *testing.T) {
 		"a cross-room shot must not claim the special-move cooldown")
 	assert.False(t, res.SurpriseOnCooldown,
 		"nothing was refused: a cross-room shot never asks for the opener")
-	assert.Nil(t, char.Aggro, "a cross-room shot stays one-shot and aggro-free")
+	assert.False(t, char.IsInCombat(), "a cross-room shot stays one-shot and aggro-free")
 }
 
 // ---------------------------------------------------------------------------

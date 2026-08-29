@@ -40,20 +40,20 @@ func TestEngageAfterThrow_OpenerEngagesBothSides(t *testing.T) {
 	mobA := newTestMob(101)
 	mobB := newTestMob(102)
 
-	require.Nil(t, user.Character.Aggro, "precondition: thrower is out of combat")
-	require.Nil(t, mobA.Character.Aggro, "precondition: mob A is out of combat")
+	require.False(t, user.Character.IsInCombat(), "precondition: thrower is out of combat")
+	require.False(t, mobA.Character.IsInCombat(), "precondition: mob A is out of combat")
 
 	engageAfterThrow(user, newTestThrowRoom(), []*mobs.Mob{mobA, mobB})
 
-	require.NotNil(t, user.Character.Aggro, "thrower did not enter combat after a hit")
-	assert.Equal(t, 101, user.Character.Aggro.MobInstanceId,
+	require.True(t, user.Character.IsInCombat(), "thrower did not enter combat after a hit")
+	assert.Equal(t, 101, user.Character.CurrentCombatTarget().MobInstanceId,
 		"thrower should engage the first mob the throw hit")
 
-	require.NotNil(t, mobA.Character.Aggro, "mob A did not retaliate")
-	assert.Equal(t, throwerUserId, mobA.Character.Aggro.UserId)
+	require.True(t, mobA.Character.IsInCombat(), "mob A did not retaliate")
+	assert.Equal(t, throwerUserId, mobA.Character.CurrentCombatTarget().UserId)
 
-	require.NotNil(t, mobB.Character.Aggro, "mob B did not retaliate")
-	assert.Equal(t, throwerUserId, mobB.Character.Aggro.UserId,
+	require.True(t, mobB.Character.IsInCombat(), "mob B did not retaliate")
+	assert.Equal(t, throwerUserId, mobB.Character.CurrentCombatTarget().UserId,
 		"every mob caught in the blast must retaliate, not just the first")
 }
 
@@ -69,12 +69,12 @@ func TestEngageAfterThrow_DoesNotOverwriteExistingAggro(t *testing.T) {
 
 	engageAfterThrow(user, newTestThrowRoom(), []*mobs.Mob{mobA})
 
-	require.NotNil(t, user.Character.Aggro)
-	assert.Equal(t, 999, user.Character.Aggro.MobInstanceId,
+	require.True(t, user.Character.IsInCombat())
+	assert.Equal(t, 999, user.Character.CurrentCombatTarget().MobInstanceId,
 		"throw re-pointed the thrower at a different target")
 
-	require.NotNil(t, mobA.Character.Aggro)
-	assert.Equal(t, 42, mobA.Character.Aggro.UserId,
+	require.True(t, mobA.Character.IsInCombat())
+	assert.Equal(t, 42, mobA.Character.CurrentCombatTarget().UserId,
 		"throw pulled the mob off the player it was already fighting")
 }
 
@@ -85,7 +85,7 @@ func TestEngageAfterThrow_NoHitsLeavesThrowerOutOfCombat(t *testing.T) {
 
 	engageAfterThrow(user, newTestThrowRoom(), nil)
 
-	assert.Nil(t, user.Character.Aggro, "a throw that hit nothing started a fight anyway")
+	assert.False(t, user.Character.IsInCombat(), "a throw that hit nothing started a fight anyway")
 }
 
 // Mixed blast: one mob already fighting the thrower, one not. The already
@@ -101,12 +101,12 @@ func TestEngageAfterThrow_MixedFreshnessPerMob(t *testing.T) {
 
 	engageAfterThrow(user, newTestThrowRoom(), []*mobs.Mob{alreadyFighting, bystander})
 
-	require.NotNil(t, alreadyFighting.Character.Aggro)
-	assert.Equal(t, throwerUserId, alreadyFighting.Character.Aggro.UserId)
+	require.True(t, alreadyFighting.Character.IsInCombat())
+	assert.Equal(t, throwerUserId, alreadyFighting.Character.CurrentCombatTarget().UserId)
 
 	require.NotNil(t, bystander.Character.Aggro,
 		"a mob newly caught in the blast must be pulled into the fight")
-	assert.Equal(t, throwerUserId, bystander.Character.Aggro.UserId)
+	assert.Equal(t, throwerUserId, bystander.Character.CurrentCombatTarget().UserId)
 }
 
 func TestEngageAfterThrow_NilUserDoesNotPanic(t *testing.T) {

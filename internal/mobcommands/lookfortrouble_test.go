@@ -112,7 +112,7 @@ func TestLookForTrouble_TargetsMobByGroupHate(t *testing.T) {
 	defer mobCleanup()
 
 	// Pre-condition: no aggro, no queued commands.
-	require.Nil(t, bandit.Character.Aggro)
+	require.False(t, bandit.Character.IsInCombat())
 
 	// Call LookForTrouble. Internally this calls:
 	//   mob.HatesMob(caravanMob) → hatesAnyGroup(["caravan"]) → true
@@ -135,7 +135,7 @@ func TestLookForTrouble_TargetsMobByGroupHate(t *testing.T) {
 
 	require.NotNil(t, bandit.Character.Aggro,
 		"Attack('#302') must set aggro on the bandit")
-	require.Equal(t, 302, bandit.Character.Aggro.MobInstanceId,
+	require.Equal(t, 302, bandit.Character.CurrentCombatTarget().MobInstanceId,
 		"bandit aggro target must be the caravan mob (instance 302)")
 }
 
@@ -172,7 +172,7 @@ func TestLookForTrouble_NoAggroWhenGroupHateMissing(t *testing.T) {
 	neutralBandit.Character.HealthMax.Value = 100
 	mobs.SetInstanceForTest(301, neutralBandit)
 
-	require.Nil(t, neutralBandit.Character.Aggro)
+	require.False(t, neutralBandit.Character.IsInCombat())
 
 	handled, err := LookForTrouble("", neutralBandit, room)
 	require.NoError(t, err)
