@@ -399,6 +399,34 @@ runs: a crafting character today both keeps crafting **and** fights, and
 
 **The fix.**
 
+0. **First, finish the transition table.** U12c-0 added `Engaged → Engaging`
+   but a probe shows a commit still lands from only two of four states:
+
+   ```
+   from Idle:        ok
+   from Engaging:    REFUSED (transition not allowed by table)
+   from Engaged:     ok          <- what U12c-0 fixed
+   from Disengaging: REFUSED
+   ```
+
+   Harmless today because the error is discarded; **fatal once step 1 makes
+   refusals real.** So:
+
+   - **Add `Engaging → Engaging`.** Retargeting during the wind-up is the same
+     "switching targets takes a moment" case one state earlier, and refusing it
+     would lock a mistyped target in until the wind-up finished. U12c-0's
+     regression test covered only the `Engaged` case, which is why this was
+     missed — the fix was correct but incomplete.
+   - **Leave `Disengaging` out, deliberately.** Fleeing becomes a real
+     commitment. This is a bug fix, not a behaviour change: `handlePlayerFlee`
+     (`NewRound_DoCombat_helpers.go:903-910`) reads `IsDisengaging()` FIRST and
+     authoritatively, and its `Aggro.Type == Flee` branch is explicitly the
+     *"legacy path: Aggro-only set (no CombatPhase wired)"* fixture fallback.
+     A re-aggro mid-flee therefore never affected whether you escaped; it only
+     overwrote `Aggro`. Refusing that write is strictly better, because
+     `combat_retarget.go:27` guards on `Aggro.Type != Flee` and today's
+     overwrite silently defeats that guard.
+
 1. **`SetAggro` writes `Aggro` only if the transition succeeds.** When
    `CombatPhase == nil` (test fixtures, legacy) it writes as today. This is
    consistent with the function's own shape: it already refuses to write for
