@@ -319,9 +319,39 @@ shrinks to empty and fails on stale entries. No playtest.
 1. **`RoundsWaiting` moves to the combat phase machine** as its own field,
    cleared on Idle. That preserves today's behaviour exactly: `EndAggro` nils
    `Aggro`, so the counter dies with the engagement. It stays DISTINCT from
-   `RoundsUntil` — unifying them would change every special move's round cost,
-   which is a balance change and belongs in its own slice with its own
-   playtest, not inside a store collapse.
+   `RoundsUntil`.
+
+   **A comment block naming both counters is a REQUIRED deliverable of this
+   slice, not a nicety.** The real defect today is not that there are two — it
+   is that nothing anywhere says so, so each looks like the only one. The
+   comment must state all five of these:
+
+   - `RoundsUntil` is the **Engaging wind-up**: how many rounds before the
+     engagement becomes active. `OnRoundTick` decrements it and calls
+     `advanceToEngaged()` at zero, which is also what fires the `mob_engaged`
+     behaviour-tree event.
+   - `RoundsWaiting` is the **actor's round budget**: how many rounds before
+     this actor may act again. `handleCombatWaitRound` decrements it *later in
+     the same round*, and emits the wait messages.
+   - They are seeded identically by the commit path, so during wind-up they
+     march in lockstep. That is coincidence of seeding, not shared identity.
+   - They **diverge in `Engaged` on purpose**: `RoundsUntil` exists only in
+     `Engaging`, while the ~20 special-move `= 1` writes need a counter that
+     still works once engaged.
+   - `OnRoundTick`'s `Engaged` branch is a **deliberate no-op**. Making it
+     decrement is the first step of unification, not a bug fix.
+
+   ⚠️ **Deferred, deliberately: unifying them into one counter.** It is
+   achievable and the end state is simpler, but it is a balance change wearing
+   a refactor's clothes. One counter means one decrement point, and the two
+   decrements happen at different moments in the round (`OnRoundTick` fires
+   FIRST, at `NewRound_DoCombat.go:115`/`:281`; `handleCombatWaitRound` runs
+   later during resolution). Collapsing them shortens every weapon wind-up and
+   every special-move recovery by one round, unless compensated by seeding 2
+   where the code says 1 — precisely the sort of invisible `+1` that becomes
+   folklore. If it is wanted, it is its own post-arc slice with its own
+   playtest, and it must also relocate `advanceToEngaged()` and verify
+   `mob_engaged` still fires at the same point.
 2. **`AggroType` dissolves** per the table in 2.2: `Flee`→`Disengaging`
    (finishing the standing `// TODO Task 18` at
    `NewRound_DoCombat_helpers.go:904`), `SpellCast`→`activity.Casting`,
