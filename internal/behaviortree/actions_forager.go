@@ -504,7 +504,7 @@ func tickForagerRecalling(
 
 	// Teleport directly to anchor rather than issuing "cast fold-recall".
 	// The fold-cast system only advances casts inside the combat loop
-	// (gated on mob.Character.Aggro != nil), so foragers recalling
+	// (gated on the mob being in combat), so foragers recalling
 	// outside combat would be permanently stuck with IsCasting()=true
 	// and never actually move. Direct room manipulation mirrors exactly
 	// what resolveFoldRecall does internally for mobs.

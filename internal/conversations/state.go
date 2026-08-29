@@ -70,7 +70,7 @@ type MobConversant interface {
 	// Character state checks
 	ConvIsInCombat() bool
 	ConvHasBuffFlag(flag buffs.Flag) bool
-	ConvAggro() bool // true when character.Aggro != nil
+	ConvAggro() bool // true when the character is in combat
 
 	// Path state
 	ConvPathLen() int
