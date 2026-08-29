@@ -1,6 +1,6 @@
 # DOGMud Current Backlog
 
-Last reviewed: 2026-08-18 against the Task 14 validated U8 feature branch.
+Last reviewed: 2026-08-29, after U10b-3 merged.
 
 This is the compact cross-roadmap memory for planning. It is an index, not a
 second requirements document. Follow the linked canonical roadmap/spec/plan for
@@ -11,35 +11,32 @@ tracker status outrank filenames and unchecked boxes in old plans.
 
 Source: [Unified Resolution Roadmap](UNIFIED_RESOLUTION_ROADMAP.md)
 
-U7b (reservation ceiling) shipped in PR #49. U8 has now passed its final
-verification, isolated boot, and adversarial gameplay gate. The sequence is:
+**Everything through U10d is MERGED.** U8 integrated as `15a5fc94d` (PR #51) on
+2026-08-18, the same day this file last claimed it was pending. U9 (2026-08-19),
+U10 (2026-08-21), U10c (2026-08-24), U10d (2026-08-25), and all five U10b
+sub-slices (U10b-0 PRs #55-#60, U10b-1 #70, U10b-1b #74, U10b-2 #75, U10b-3 #76)
+have followed. Per-stage merge evidence lives in the roadmap's Plans table.
 
-1. **U8 - implementation and validation complete; integration pending.** The
-   feature branch's unified action-cost surface, admission policy, data-backed
-   quell/defy narration, and behavior-specific documentation passed Task 14's
-   full verification, isolated boot, and adversarial playtest gate. It has not
-   yet been integrated into `master`. Source:
-   [U8 design](../superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md).
-2. **U9 - progression events.** Replace progression side effects with explicit
-   events for both participants and decide how spell `primarystat` becomes the
-   authoritative resolution stat.
-3. **U10 - disruption model. SHIPPED 2026-08-21.** Concentration is now a
-   contest (`combat.RunConcentrationContest`) across three original triggers
-   (damage, position, and now throttle's cast interrupt, claimed from the
-   unowned-sites sweep) plus knockdown and prone recovery as opposed rolls.
-   The surprise-attack redesign originally scoped into U10 was split out as
-   **U10d** (owner, 2026-08-21) since it needs its own brainstorm/spec/plan
-   cycle rather than a mechanical migration.
-4. **U10d - surprise-attack redesign.** Split from U10. Sequenced alongside
-   U10b/U10c, before U12.
-5. **U12 - targeting audit.** Re-read and simplify target resolution and target
-   switching after the resolution flip. Behavioral changes must split out.
-6. **U11 - arc closer.** Documentation, `context.md` sweep, config organization,
-   help registry/category cleanup, and the final adversarial playtest. It runs
-   after U8-U10d and U12; no code slice lands after this closer.
+**Two stages remain, in this order:**
 
-U9, U10d, and the U12 audit may be planned independently where their file sets
-and decisions do not overlap. Recheck the canonical dependency table first.
+1. **U12 - targeting audit.** Re-read and simplify target resolution and target
+   switching after the resolution flip. Behavioural changes must split out.
+2. **U11 - arc closer.** Documentation, `context.md` sweep, config organisation,
+   help registry/category cleanup, and the final adversarial playtest. No code
+   slice lands after this closer.
+
+🚫 **Nothing is deployed.** Prod is still `7c64c228c`. Merging to master is not a
+deploy trigger; the gate is the whole arc plus a playtest.
+
+**Owed to that playtest, not to a slice:** mob-archer progression rate, regen
+tuning, and the progression re-solve (salvage's 0.60 is the least trustworthy
+input). All three are measurement questions and are on
+`docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`.
+
+**One disclosed gap owned by no stage:** buff applier attribution — `buffs.Buff`
+has no applier actor, so DoT and toxicity deaths name no killer. Verified
+2026-08-29 to have no live consequence; latent until a bounty guard gets a
+poison attack. Recorded on the U5c row.
 
 ## Adversarial Review Remediation
 
