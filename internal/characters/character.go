@@ -750,6 +750,17 @@ func (c *Character) IsInCombat() bool {
 	return c.Aggro != nil
 }
 
+// CastingData returns the in-flight cast's data, and whether there is one.
+//
+// U12c-2: this is where Aggro.SpellInfo's readers moved. Nil-guards Activity in
+// the same shape as IsCasting.
+func (c *Character) CastingData() (activity.CastingData, bool) {
+	if c.Activity == nil {
+		return activity.CastingData{}, false
+	}
+	return c.Activity.CastingData()
+}
+
 // RoundsWaiting reports the actor's remaining round budget: how many rounds
 // before this actor may act again. Zero means free to act.
 //

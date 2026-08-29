@@ -65,19 +65,30 @@ func TestValidateAggro_DisengagingWithLiveTarget_IsValid(t *testing.T) {
 	assert.True(t, c.IsDisengaging(), "ValidateAggro must not end a disengagement")
 }
 
-// Parity check: SpellCast-type aggro with no target is already treated as
-// valid (existing behavior). Locking it in.
-func TestValidateAggro_SpellCastTypeWithNoTarget_IsValid(t *testing.T) {
+// U12c-2: the SpellCast AggroType is dissolved into the Casting activity, so
+// this drives SetCast rather than constructing the sentinel. The contract is
+// unchanged and, unlike the Disengaging case above, it is genuinely REACHABLE:
+// a cast records its aim on the Activity machine and sets no combat target, so
+// a caster really can be mid-action with a zero ref. ValidateAggro must not
+// release it for that.
+func TestValidateAggro_CastingWithNoTarget_IsValid(t *testing.T) {
 	c := characters.New()
-	c.Aggro = &characters.Aggro{
-		UserId:        0,
-		MobInstanceId: 0,
-		Type:          characters.SpellCast,
-	}
+	c.SetAggro(0, 700, characters.DefaultAttack) // an engagement to validate
+	require.True(t, c.SetCast(2, characters.SpellAggroInfo{
+		SpellId:       "aidskill",
+		TargetUserIds: []int{7},
+	}), "precondition: the cast was recorded")
+
+	// Drop the plain target, leaving only the cast: the shape the exemption
+	// exists for.
+	c.CombatPhase.ForceIdle(state.TransitionReason{Trigger: combatphase.TriggerForceIdle})
+	c.Aggro = &characters.Aggro{}
+	require.True(t, c.CurrentCombatTarget().IsZero(), "precondition: no plain target")
+	require.True(t, c.IsCasting(), "precondition: still casting")
 
 	ok := ValidateAggro(c)
-	assert.True(t, ok, "SpellCast aggro with no target should be valid")
-	assert.NotNil(t, c.Aggro, "ValidateAggro must not end a SpellCast aggro")
+	assert.True(t, ok, "a caster with no plain target should be valid")
+	assert.True(t, c.IsCasting(), "ValidateAggro must not abort a cast")
 }
 
 // DefaultAttack with no target is stale state — ValidateAggro should

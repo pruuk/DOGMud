@@ -87,48 +87,36 @@ func TestAccessors_AgreeAfterAVetoedCommit(t *testing.T) {
 		"and the accessor agrees")
 }
 
-// SetCast is the ONE writer that does not go through the targeting seam: it
-// assigns Character.Aggro directly (spells.go:208) and never touches
-// CombatPhase. So calling it while an engagement is live leaves the two stores
-// disagreeing -- Aggro drops to zero ids, CombatPhase keeps the old target --
-// and CurrentCombatTarget() reports the stale one.
+// U12c-2 landed: SetCast now records the cast on the Activity machine and no
+// longer assigns Aggro, so the disagreement this used to pin is GONE.
 //
-// This is pinned as a KNOWN DISAGREEMENT rather than added to the table above,
-// which it would fail. U12c-1 migrated ~241 reads onto the accessors on the
-// strength of that table, so the exception has to be visible.
+// It was pinned as TestAccessors_KnownDisagreement_SetCastOverALiveEngagement,
+// whose comment said: "If this test starts FAILING, that work happened and the
+// assertion below should be inverted into an equivalence assertion, not
+// deleted." This is that inversion.
 //
-// It is not reachable in production today, but only because of a gate, not
-// because the accessor is right:
-//
-//   - SetCast has exactly ONE production caller, mobcommands/aid.go:81.
-//   - Aid requires room.IsCalm() -- no player and no mob in the room is
-//     attacking -- so the caster cannot be mid-engagement when it fires.
-//   - Nothing resolves a SetCast aggro into a spell effect. Aggro.SpellInfo is
-//     read only by IsAggro, targeting.EngagementOf and
-//     Death_InboundAggroCleanup; none of them apply the spell.
-//
-// U12c-2 owns the fix. Either SetCast moves onto the seam so both stores
-// agree, or the SpellCast aggro type goes away with the field. If this test
-// starts FAILING, that work happened and the assertion below should be
-// inverted into an equivalence assertion, not deleted.
-func TestAccessors_KnownDisagreement_SetCastOverALiveEngagement(t *testing.T) {
+// What used to happen: SetCast assigned c.Aggro directly and never touched
+// CombatPhase, so calling it over a live engagement dropped Aggro to zero ids
+// while CombatPhase kept the old target, and CurrentCombatTarget() reported the
+// stale one.
+func TestAccessors_AgreeAfterSetCastOverALiveEngagement(t *testing.T) {
 	c := New()
 	c.SetAggro(0, 100, DefaultAttack)
 	require.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId)
 
-	c.SetCast(2, SpellAggroInfo{SpellId: "aidskill", TargetUserIds: []int{7}})
-
-	require.NotNil(t, c.Aggro)
-	assert.Equal(t, SpellCast, c.Aggro.Type)
-	assert.Zero(t, c.Aggro.MobInstanceId, "SetCast writes a targetless Aggro")
-	assert.Zero(t, c.Aggro.UserId, "SetCast writes a targetless Aggro")
+	require.True(t, c.SetCast(2, SpellAggroInfo{SpellId: "aidskill", TargetUserIds: []int{7}}),
+		"precondition: the cast was recorded")
 
 	assert.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId,
-		"KNOWN: CombatPhase still holds the pre-cast target, so the accessor "+
-			"and the raw ids disagree. See this test's comment before changing it.")
+		"the engagement is untouched by starting a cast; both stores agree")
+	assert.True(t, c.IsInCombat())
+	assert.True(t, c.IsCasting(), "and the cast is recorded on the Activity machine")
 
-	// The two accessors do not disagree about in-combat-ness, only about who.
-	assert.Equal(t, c.Aggro != nil, c.IsInCombat())
+	// The aim lives in CastingData, never in the combat target.
+	cd, ok := c.CastingData()
+	require.True(t, ok)
+	assert.Equal(t, []int{7}, cd.TargetUserIds)
+	assert.True(t, c.IsAggro(7, 0), "IsAggro still sees the spell target")
 }
 
 // A cast from idle has nothing to go stale, so the accessors agree. Pinned as
@@ -136,14 +124,21 @@ func TestAccessors_KnownDisagreement_SetCastOverALiveEngagement(t *testing.T) {
 // engagement, it is not inherent to SetCast.
 func TestAccessors_AgreeWhenSetCastComesFromIdle(t *testing.T) {
 	c := New()
-	c.SetCast(2, SpellAggroInfo{SpellId: "aidskill", TargetUserIds: []int{7}})
+	require.True(t, c.SetCast(2, SpellAggroInfo{SpellId: "aidskill", TargetUserIds: []int{7}}))
 
-	require.NotNil(t, c.Aggro)
-	assert.True(t, c.IsInCombat(), "a pending cast counts as in combat")
+	assert.True(t, c.IsCasting(), "the cast is recorded")
 	assert.Equal(t, state.ActorRef{}, c.CurrentCombatTarget(),
-		"and the accessor agrees the plain target is empty")
+		"a cast from idle sets no combat target")
 
-	// The aimed target lives in SpellInfo, which only IsAggro and
+	// ⚠️ U12c-2 BEHAVIOUR CHANGE, deliberate: a pending cast no longer counts
+	// as "in combat". It used to, only because SetCast assigned Aggro and
+	// IsInCombat fell back to `Aggro != nil`. Casting is an Activity, not a
+	// combat phase, and conflating them is what let a cast look like an
+	// engagement with no target -- the stale state ValidateAggro had a special
+	// exemption for.
+	assert.False(t, c.IsInCombat(), "casting is an activity, not an engagement")
+
+	// The aim lives in CastingData, which only IsAggro and
 	// targeting.EngagementOf consult -- NOT CurrentCombatTarget.
 	assert.True(t, c.IsAggro(7, 0), "IsAggro still sees the spell target")
 }

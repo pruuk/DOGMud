@@ -27,12 +27,12 @@ type Engagement struct {
 	// SpellTargets carries the aimed targets of a spell-cast aggro, which do
 	// NOT live in Target.
 	//
-	// characters.SetCast (spells.go:208) builds Aggro{Type: SpellCast,
-	// SpellInfo: ...} and never writes UserId or MobInstanceId, so they stay
-	// zero for the whole cast. Reading only Target would report "no target"
-	// for a mob mid-cast that IsAggro (combat_state_compat.go:191) happily
+	// characters.SetCast records a cast on the Activity machine and writes no
+	// combat target, so Target stays zero for the whole cast. Reading only
+	// Target would report "no target" for a mob mid-cast that IsAggro happily
 	// reports as aggro'd, which is a live disagreement with production, not a
-	// theoretical one.
+	// theoretical one. (Before U12c-2 the aim lived in Aggro.SpellInfo; the
+	// shape of the problem is unchanged, only its storage.)
 	//
 	// Target and SpellTargets are therefore both consulted by IsAimedAt.
 	// Callers that only look at Target will be wrong about casters.
@@ -101,15 +101,18 @@ func EngagementOf(c *characters.Character) Engagement {
 		}
 		e.OpeningUnspent = c.Aggro.Type == characters.SurpriseAttack
 
-		// A spell-cast aggro carries its targets in SpellInfo and leaves the
-		// plain ids zero. Mirrors the SpellCast branch of IsAggro.
-		if c.Aggro.Type == characters.SpellCast {
-			for _, uId := range c.Aggro.SpellInfo.TargetUserIds {
-				e.SpellTargets = append(e.SpellTargets, state.ActorRef{UserId: uId})
-			}
-			for _, mId := range c.Aggro.SpellInfo.TargetMobInstanceIds {
-				e.SpellTargets = append(e.SpellTargets, state.ActorRef{MobInstanceId: mId})
-			}
+	}
+
+	// A pending cast's aim does NOT live in Target. U12c-2 moved it from
+	// Aggro.SpellInfo to the Activity machine's CastingData; mirrors the
+	// casting branch of IsAggro, and is read outside the Aggro block for the
+	// same reason it is there.
+	if cd, ok := c.CastingData(); ok {
+		for _, uId := range cd.TargetUserIds {
+			e.SpellTargets = append(e.SpellTargets, state.ActorRef{UserId: uId})
+		}
+		for _, mId := range cd.TargetMobInstanceIds {
+			e.SpellTargets = append(e.SpellTargets, state.ActorRef{MobInstanceId: mId})
 		}
 	}
 	if c.Activity != nil {

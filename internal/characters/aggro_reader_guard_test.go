@@ -34,8 +34,6 @@ import (
 // list carries phantom entries that then fail the stale check below.
 var notYetMigrated = map[string]bool{
 	"combat/combat.go":                   true,
-	"hooks/combat_retarget.go":           true,
-	"hooks/Death_InboundAggroCleanup.go": true,
 	"hooks/NewRound_DoCombat_helpers.go": true,
 	"usercommands/attack.go":             true,
 	"usercommands/target.go":             true,

@@ -202,24 +202,22 @@ func (c *Character) IsAggro(targetUserId int, targetMobInstanceId int) bool {
 			return true
 		}
 
-		if c.Aggro.Type == SpellCast {
-			if len(c.Aggro.SpellInfo.TargetUserIds) > 0 {
-				for _, uId := range c.Aggro.SpellInfo.TargetUserIds {
-					if uId == targetUserId {
-						return true
-					}
-				}
-			}
+	}
 
-			if len(c.Aggro.SpellInfo.TargetMobInstanceIds) > 0 {
-				for _, mId := range c.Aggro.SpellInfo.TargetMobInstanceIds {
-					if mId == targetMobInstanceId {
-						return true
-					}
-				}
+	// U12c-2: a pending cast's aim lives on the Activity machine now, not in
+	// Aggro.SpellInfo. Checked outside the Aggro block on purpose: a caster's
+	// aim counts as aggro whether or not it also holds a plain target.
+	if cd, ok := c.CastingData(); ok {
+		for _, uId := range cd.TargetUserIds {
+			if uId == targetUserId && targetUserId > 0 {
+				return true
 			}
 		}
-
+		for _, mId := range cd.TargetMobInstanceIds {
+			if mId == targetMobInstanceId && targetMobInstanceId > 0 {
+				return true
+			}
+		}
 	}
 	return false
 }
