@@ -9,6 +9,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -210,7 +212,8 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 		// U8: deferred into commit so a REFUSED action does not seed aggression
 		// or start a fight the actor could not afford to start.
 		return &stagedMeleeActor{Actor: base, target: stagedTarget, commit: func() {
-			user.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+			targeting.Commit(user.Character,
+				state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 			SeedAggression(user, mob, room, freshAggro)
 		}}, false
 	}
@@ -233,7 +236,8 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 
 	stagedTarget := AggroTarget{Char: p.Character, Name: p.Character.Name, UserId: p.UserId, Found: true}
 	return &stagedMeleeActor{Actor: base, target: stagedTarget, commit: func() {
-		user.Character.SetAggro(p.UserId, 0, characters.DefaultAttack)
+		targeting.Commit(user.Character,
+			state.ActorRef{UserId: p.UserId}, targeting.ReasonAttack)
 	}}, false
 }
 
