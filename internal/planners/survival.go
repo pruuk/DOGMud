@@ -32,12 +32,12 @@ func survivalPlanner(mob *mobs.Mob, goal *goals.Goal) PlanResult {
 	hpPct := (mob.Character.Health * 100) / mob.Character.HealthMax.Value
 
 	// Recovered: HP at safe threshold and not in combat → goal satisfied.
-	if hpPct >= safePct && mob.Character.Aggro == nil {
+	if hpPct >= safePct && !mob.Character.IsInCombat() {
 		return PlanResult{Status: StatusSuccess}
 	}
 
 	// In combat → flee via a random exit.
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		exit := pickRandomExit(mob)
 		if exit == "" {
 			return PlanResult{Status: StatusFailure}

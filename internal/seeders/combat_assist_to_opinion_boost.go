@@ -1,11 +1,11 @@
 package seeders
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
+	"github.com/GoMudEngine/GoMud/internal/state"
 )
 
 const ruleNameCombatAssistToOpinion = "combat_assist_to_opinion_boost"
@@ -46,7 +46,7 @@ func combatAssistToOpinion(event events.Event) {
 
 	// Resolve the mob being attacked by the attackerMob. If nil or pointing
 	// at a player (UserId != 0), this is not a mob-vs-mob fight; skip.
-	beneficiaryId := resolveAttackerMobTarget(attackerMob.Character.Aggro)
+	beneficiaryId := resolveAttackerMobTarget(attackerMob.Character.CurrentCombatTarget())
 	if beneficiaryId == 0 {
 		return // not currently fighting a mob
 	}
@@ -76,11 +76,10 @@ func combatAssistToOpinion(event events.Event) {
 // resolveAttackerMobTarget returns the MobInstanceId from an Aggro
 // pointer when the aggro target is a mob (MobInstanceId > 0 and UserId
 // == 0). Returns 0 if the aggro is nil, unset, or pointing at a player.
-func resolveAttackerMobTarget(a *characters.Aggro) int {
-	if a == nil {
-		return 0
-	}
-	// Aggro.UserId > 0 means the target is a player, not a mob.
+// U12c-1: takes a state.ActorRef rather than a *characters.Aggro, so callers
+// pass CurrentCombatTarget(). A zero ref returns 0, as a nil Aggro used to.
+func resolveAttackerMobTarget(a state.ActorRef) int {
+	// A non-zero UserId means the target is a player, not a mob.
 	if a.UserId != 0 {
 		return 0
 	}

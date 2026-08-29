@@ -77,13 +77,13 @@ func targetInCombat(kind string, id int) bool {
 		for _, instId := range mobs.GetAllMobInstanceIds() {
 			inst := mobs.GetInstance(instId)
 			if inst != nil && inst.MobId == mobs.MobId(id) {
-				return inst.Character.Aggro != nil
+				return inst.Character.IsInCombat()
 			}
 		}
 		return false
 	case "player":
 		u := users.GetByUserId(id)
-		return u != nil && u.Character.Aggro != nil
+		return u != nil && u.Character.IsInCombat()
 	}
 	return false
 }
