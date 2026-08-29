@@ -139,11 +139,11 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// hit does; only a zero-damage miss from stealth does not.
 	if !result.CrossRoom && (dealt || !result.IsSneaking) {
 		if result.IsTargetMob {
-			if target := mobs.GetInstance(result.TargetMobInstanceId); target != nil && target.Character.Aggro == nil {
+			if target := mobs.GetInstance(result.TargetMobInstanceId); target != nil && !target.Character.IsInCombat() {
 				targeting.Commit(&target.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 			}
 		} else if result.TargetUserId > 0 {
-			if u := users.GetByUserId(result.TargetUserId); u != nil && u.Character.Aggro == nil {
+			if u := users.GetByUserId(result.TargetUserId); u != nil && !u.Character.IsInCombat() {
 				targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 			}
 		}

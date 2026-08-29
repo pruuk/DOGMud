@@ -177,7 +177,7 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				// context score see the shooter as "recently seen" so the
 				// goal planner emits `pathto` toward the shooter's room.
 				m.CombatMemory = mobs.SetCombatMemory(user.UserId, 0, user.Character.RoomId, util.GetRoundCount())
-			} else if m.Character.Aggro == nil {
+			} else if !m.Character.IsInCombat() {
 				targeting.Commit(&m.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 			}
 

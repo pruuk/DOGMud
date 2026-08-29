@@ -244,7 +244,7 @@ func TickMobCraft(mob *Mob) *CraftResult {
 	if !bool(b.CrafterEnabled) {
 		return nil
 	}
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		return nil
 	}
 

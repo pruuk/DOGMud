@@ -135,14 +135,14 @@ func engageAfterThrow(user *users.UserRecord, room *rooms.Room, hitMobs []*mobs.
 		if mob == nil {
 			continue
 		}
-		freshAggro := mob.Character.Aggro == nil
+		freshAggro := !mob.Character.IsInCombat()
 		if freshAggro {
 			targeting.Commit(&mob.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 		}
 		actions.SeedAggression(user, mob, room, freshAggro)
 	}
 
-	if thrower == nil || thrower.Aggro != nil {
+	if thrower == nil || thrower.IsInCombat() {
 		return
 	}
 	for _, mob := range hitMobs {

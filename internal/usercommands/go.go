@@ -918,7 +918,7 @@ func findRelateableEligiblePairsInRoom(room *rooms.Room) []relateableMobPair {
 		if m == nil {
 			continue
 		}
-		if m.Character.Aggro != nil || m.Character.IsInCombat() {
+		if m.Character.IsInCombat() {
 			continue
 		}
 		if m.Character.HasBuffFlag(buffs.Sleeping) {
