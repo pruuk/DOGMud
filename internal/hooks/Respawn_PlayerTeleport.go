@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -35,7 +36,7 @@ func wireRespawnTeleport(c *characters.Character) {
 			// Belt-and-suspenders: re-clear aggro after MoveToRoom in
 			// case any code path reassigned aggro during the room
 			// transition (e.g., mob combat round processed mid-move).
-			c.EndAggro()
+			targeting.Release(c, targeting.ReasonDisengage)
 		})
 }
 

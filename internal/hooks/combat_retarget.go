@@ -2,6 +2,8 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -11,7 +13,7 @@ import (
 )
 
 // ValidateAggro checks if a character's aggro target still exists and is
-// alive. If the target is gone or dead, EndAggro() is called and false is
+// alive. If the target is gone or dead, targeting.Release is called and false is
 // returned. Returns false (without calling EndAggro) when Aggro is already nil.
 func ValidateAggro(char *characters.Character) bool {
 	if char.Aggro == nil {
@@ -25,7 +27,7 @@ func ValidateAggro(char *characters.Character) bool {
 	if char.Aggro.MobInstanceId == 0 && char.Aggro.UserId == 0 &&
 		char.Aggro.Type != characters.SpellCast &&
 		char.Aggro.Type != characters.Flee {
-		char.EndAggro()
+		targeting.Release(char, targeting.ReasonDisengage)
 		return false
 	}
 
@@ -33,7 +35,7 @@ func ValidateAggro(char *characters.Character) bool {
 		target := mobs.GetInstance(char.Aggro.MobInstanceId)
 		if target == nil || target.Character.Health < 1 ||
 			target.Character.RoomId != char.RoomId {
-			char.EndAggro()
+			targeting.Release(char, targeting.ReasonDisengage)
 			return false
 		}
 	}
@@ -42,7 +44,7 @@ func ValidateAggro(char *characters.Character) bool {
 		target := users.GetByUserId(char.Aggro.UserId)
 		if target == nil || target.Character.Health < 1 ||
 			target.Character.RoomId != char.RoomId {
-			char.EndAggro()
+			targeting.Release(char, targeting.ReasonDisengage)
 			return false
 		}
 	}
@@ -57,7 +59,7 @@ func ValidateAggro(char *characters.Character) bool {
 func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 	userId int, mobInstanceId int) bool {
 
-	char.EndAggro()
+	targeting.Release(char, targeting.ReasonDisengage)
 
 	// Build a set of "our side" instance IDs for companion-aware scanning.
 	// If we're a player, include our companions' instance IDs so we retarget
@@ -88,7 +90,7 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 		// Is this player attacking us?
 		if (userId > 0 && aggro.UserId == userId) ||
 			(mobInstanceId > 0 && aggro.MobInstanceId == mobInstanceId) {
-			char.SetAggro(attackingPlayer.UserId, 0, characters.DefaultAttack)
+			targeting.Commit(char, state.ActorRef{UserId: attackingPlayer.UserId}, targeting.ReasonAttack)
 			return true
 		}
 	}
@@ -105,7 +107,7 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 		// Is this mob attacking us, or any of our companions?
 		if (userId > 0 && aggro.UserId == userId) ||
 			(aggro.MobInstanceId > 0 && myMobIds[aggro.MobInstanceId]) {
-			char.SetAggro(0, attackingMob.InstanceId, characters.DefaultAttack)
+			targeting.Commit(char, state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
 			return true
 		}
 	}
@@ -120,7 +122,7 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 					continue
 				}
 				if attackingMob.Character.Aggro.UserId == ownerId {
-					char.SetAggro(0, attackingMob.InstanceId, characters.DefaultAttack)
+					targeting.Commit(char, state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
 					return true
 				}
 			}

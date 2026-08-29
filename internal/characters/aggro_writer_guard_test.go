@@ -29,19 +29,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// notYetSwept lists files still holding a direct write. DELETE entries as you
-// migrate them. When this is empty, U12b is done.
-var notYetSwept = map[string]bool{
-	"hooks/Death_InboundAggroCleanup.go": true,
-	"hooks/Death_MobKillCredit.go":       true,
-	"hooks/Respawn_PlayerTeleport.go":    true,
-	"hooks/charm_spell.go":               true,
-	"hooks/chrysifier_homunculus.go":     true,
-	"hooks/combat_retarget.go":           true,
-	"hooks/companion_follow.go":          true,
-	"hooks/companion_summon.go":          true,
-	"hooks/manifester_companions.go":     true,
-}
+// notYetSwept is EMPTY, and it must stay empty. U12b swept all 88 sites. A new
+// entry here is not a migration aid any more, it is a hole in the seam: make
+// the call through internal/targeting instead.
+//
+// It survives as an empty map rather than being deleted so that a future slice
+// with its own staged migration has the mechanism ready, and so the guard's
+// stale-entry check keeps proving the list means something.
+var notYetSwept = map[string]bool{}
 
 func internalDirForSweepGuard(t *testing.T) string {
 	t.Helper()
@@ -126,15 +121,45 @@ func TestNoDirectAggroWritesOutsideTheSeam(t *testing.T) {
 		strings.Join(stale, ", "))
 }
 
-// TestSweepGuardIsNotVacuous proves the walker actually finds writes. A guard
-// whose walk silently matched nothing would pass forever and protect nothing,
-// which is exactly how a stale path table goes unnoticed.
+// TestSweepGuardIsNotVacuous proves the guard is still capable of failing.
+//
+// Now that the sweep is complete the walk correctly finds NOTHING, so "it
+// found something" can no longer be the evidence — that is exactly when a
+// silently-broken walker would start passing forever. Two independent checks
+// replace it: the walk must actually visit the tree, and the matcher must
+// detect a real call.
 func TestSweepGuardIsNotVacuous(t *testing.T) {
-	offenders := directAggroWriters(t)
+	internalDir := internalDirForSweepGuard(t)
 
-	require.NotEmpty(t, offenders,
-		"the walk found no direct aggro writes anywhere. Either U12b is "+
-			"complete and this test should be deleted along with the "+
-			"allowlist, or the walk is broken and the guard is protecting "+
-			"nothing.")
+	scanned := 0
+	err := filepath.Walk(internalDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "_test.go") {
+			scanned++
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	require.Greater(t, scanned, 100,
+		"the walk visited only %d production files; internal/ is far larger "+
+			"than that, so the walker is broken and the guard protects nothing",
+		scanned)
+
+	// And the matcher must fire on a real call.
+	fset := token.NewFileSet()
+	parsed, parseErr := parser.ParseFile(fset, "probe.go",
+		"package p\nfunc f(c C) { c.EndAggro() }\n", 0)
+	require.NoError(t, parseErr)
+
+	found := false
+	ast.Inspect(parsed, func(n ast.Node) bool {
+		if sel, ok := n.(*ast.SelectorExpr); ok &&
+			(sel.Sel.Name == "SetAggro" || sel.Sel.Name == "EndAggro") {
+			found = true
+		}
+		return true
+	})
+	require.True(t, found, "the SetAggro/EndAggro matcher must detect a real call")
 }

@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -98,7 +99,7 @@ func applyMobEffect_charm(
 		margin = charmMarginCeiling
 	}
 	targetMob.Character.Charm(user.UserId, charmDurationFor(margin), "")
-	targetMob.Character.EndAggro()
+	targeting.Release(&targetMob.Character, targeting.ReasonDisengage)
 	ch.TrackCharmed(targetMob.InstanceId, true)
 
 	info := characters.CompanionInfo{
@@ -125,14 +126,14 @@ func applyMobEffect_charm(
 		if companion := mobs.GetInstance(charmId); companion != nil {
 			if companion.Character.IsInCombat() &&
 				companion.Character.CurrentCombatTarget().MobInstanceId == targetMob.InstanceId {
-				companion.Character.EndAggro()
+				targeting.Release(&companion.Character, targeting.ReasonDisengage)
 			}
 		}
 	}
 
 	// Clear the owner's own aggro if targeting the new mob
 	if ch.IsInCombat() && ch.CurrentCombatTarget().MobInstanceId == targetMob.InstanceId {
-		ch.EndAggro()
+		targeting.Release(ch, targeting.ReasonDisengage)
 	}
 
 	user.SendText(messaging.CategorySpellMental, fmt.Sprintf(

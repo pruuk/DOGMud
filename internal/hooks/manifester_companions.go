@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -96,7 +97,7 @@ func spawnBroodFloor(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 	}
 	room.AddMob(mob.InstanceId)
 	mob.Character.Charm(user.UserId, 99999, "")
-	mob.Character.EndAggro()
+	targeting.Release(&mob.Character, targeting.ReasonDisengage)
 	ch.TrackCharmed(mob.InstanceId, true)
 
 	info := characters.CompanionInfo{

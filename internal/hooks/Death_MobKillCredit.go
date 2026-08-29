@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -51,7 +52,7 @@ func wireMobKillCredit(c *characters.Character) {
 				// End combat aggro if the player is still targeting this mob.
 				if user.Character.IsInCombat() {
 					if user.Character.CurrentCombatTarget().MobInstanceId == m.InstanceId {
-						user.Character.EndAggro()
+						targeting.Release(user.Character, targeting.ReasonDisengage)
 					}
 				}
 
