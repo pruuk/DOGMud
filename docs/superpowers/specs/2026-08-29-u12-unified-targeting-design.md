@@ -3,7 +3,8 @@
 **Date:** 2026-08-29
 **Arc:** Unified Contest Resolution (`docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`)
 **Status:** design approved, plan not yet written
-**Ships as:** two slices, **U12a** (the seam) then **U12b** (the collapse)
+**Ships as:** three slices, **U12a** (the seam, proven on four call sites),
+**U12b** (the mechanical sweep), **U12c** (the collapse)
 
 ---
 
@@ -143,28 +144,72 @@ dead.
 
 ---
 
-## 3. U12a — the seam
+## 3. Why three slices
 
-**Behaviour change: none.** `Commit` and `Release` continue to dual-write, so
-this slice is independently playtestable and independently revertable.
+The obvious split is two: build the seam and migrate onto it, then collapse.
+That was rejected because it bundles a **90-site mechanical sweep with a
+brand-new API**, so every design decision in section 2 would be reviewed at the
+bottom of a diff touching 45 files. That is the exact condition under which
+U10d's four silent defects nearly shipped.
 
-1. Build `internal/targeting` with the five members above, plus a `context.md`.
+The obvious fix, mechanical first and design second, is worse and is recorded
+here so it is not proposed again: if `Commit` and `Release` land across 90 sites
+before `Select` exists, and designing `Select` then shows `Commit` needs a
+different shape, all 90 sites are re-touched.
+
+So the order is inverted. **U12a designs the whole package and proves it on four
+real call sites, two on each side of the player/mob divide.** If the API is
+wrong, that is discovered at four sites instead of ninety.
+
+## 4. U12a — the seam, proven on a small set
+
+**Behaviour change: none.** **Size: S.** All of the design, almost none of the
+diff.
+
+1. Build `internal/targeting` with the five members from section 2, plus a
+   `context.md`.
 2. `Commit` absorbs what `SetAggro` already does: grace-period guard,
    taunt-hold guard, grapple clearing on target change, wait-round computation,
    ranged inference. It takes a `state.ActorRef` and a typed `Reason` in place
    of the int pair and the overloaded `roundsWaitTime ...int` variadic, which
    means "sum these" at two call sites and "use weapon speed" at the other 45.
-3. Migrate the **90** write sites (47 `SetAggro`, 43 `EndAggro`).
-4. Convert the behaviortree target actions to adapters (section 5).
-5. AST guard, following U5b's no-direct-pool-mutation precedent: no production
-   code writes `Aggro` or `CombatPhase` outside `internal/targeting`.
-6. Divergence test: after any `Commit` or `Release`, the two stores agree.
-7. Extend `internal/actions/ambush_parity_guard_test.go` so the player path and
+   `Commit` and `Release` keep dual-writing, so nothing observable changes.
+3. Convert the **proof set** and nothing else:
+   - `behaviortree` `target_random_player_in_room` (Select, no Commit)
+   - `behaviortree` `target_weakest_mob_in_room` (Select then Commit)
+   - `behaviortree` `attack`, whose **inline** third copy of the random-player
+     picker (`actions_combat.go:38-46`) folds into `Select`
+   - `actions.StageMeleeTarget`, the player equivalent
+   Two mob sites and two player sites, covering Select-without-Commit,
+   Select-with-Commit, and both sides of the parity guard.
+4. Extend `internal/actions/ambush_parity_guard_test.go` so the player path and
    the behaviortree path are asserted to reach the same seam.
+5. Measure `EngagementOf` on the combat hot path (risk 1) before anything else
+   depends on it.
 
-## 4. U12b — the collapse
+The remaining ~86 write sites still call `SetAggro` and `EndAggro` at the end of
+this slice. That is intentional: two conventions coexist for exactly one slice,
+which is the price of reviewing the API on its merits.
 
-**Behaviour change: yes, at named sites.**
+## 5. U12b — the mechanical sweep
+
+**Behaviour change: none.** **Size: L.** Almost none of the design, all of the
+diff.
+
+1. Migrate the remaining write sites onto `Commit` and `Release`, for a total of
+   **90** (47 `SetAggro`, 43 `EndAggro`).
+2. AST guard, following U5b's no-direct-pool-mutation precedent: no production
+   code writes `Aggro` or `CombatPhase` outside `internal/targeting`.
+3. Divergence test: after any `Commit` or `Release`, the two stores agree.
+4. Delete `SetAggro` and `EndAggro`.
+
+Reviewable as "did each site translate correctly?" with no design judgment
+involved. The AST guard, not human attention, is what proves the sweep is
+complete.
+
+## 6. U12c — the collapse
+
+**Behaviour change: yes, at named sites.** **Size: L.**
 
 1. `combatphase` becomes the single store. Delete `Aggro`, `AggroType`,
    `SpellAggroInfo`, and `combat_state_compat.go` (211 lines) entire.
@@ -184,7 +229,11 @@ this slice is independently playtestable and independently revertable.
 
 ---
 
-## 5. Plugging into mob behaviors
+## 7. Plugging into mob behaviors
+
+All of this lands in **U12a**: the proof set in 4.3 is the complete list of
+target-touching behaviortree actions, so mob behaviors are fully on the seam at
+the end of the first slice. U12b and U12c touch no behavior code.
 
 **The authored surface does not change.** Behavior trees reference actions by
 string name through `actionRegistry`. Every registered name and parameter stays
@@ -210,11 +259,11 @@ Two gates pinned by test rather than trusted:
 - **`delayedActions` membership must not move.** `actions.go:87-91` deliberately
   excludes the target-setters from perception-scaled delay, because a delay
   would open a window where idle ticks re-fire before the target takes effect.
-- **Player/mob parity**, via the extended ambush parity guard (3.7).
+- **Player/mob parity**, via the extended ambush parity guard (4.4).
 
 ---
 
-## 6. Scope boundaries and handoffs
+## 8. Scope boundaries and handoffs
 
 - **The behavior unification arc does not rebuild this.** U12 owns *how* a
   target is chosen and committed. That arc still owns *when and why* a mob
@@ -228,26 +277,25 @@ Two gates pinned by test rather than trusted:
 
 ---
 
-## 7. Risks
+## 9. Risks
 
 1. **`EngagementOf` is on the combat hot path**, called per actor per round. It
    is field reads plus one equipment spec lookup, which should be cheap, but
-   U12a **measures** it rather than assuming.
+   U12a **measures** it rather than assuming, before anything depends on it.
 2. **90 write sites and ~290 read sites** is the largest mechanical migration in
-   the arc. This is why it is two slices: the seam makes the collapse a
-   one-package change instead of a codebase-wide sweep.
-3. **U12b changes behaviour immediately before U11's closing playtest.** U11 is
-   the arc's gate and no code slice may land after it, so U12b's own adversarial
+   the arc. This is why it is three slices: see section 3.
+3. **U12c changes behaviour immediately before U11's closing playtest.** U11 is
+   the arc's gate and no code slice may land after it, so U12c's own adversarial
    playtest is mandatory, not optional.
 4. **`Reason` versus `AggroType` could recreate the enum problem.** If the
-   `TransitionReason` fix in 4.5 turns into "store the engagement kind on the
+   `TransitionReason` fix in 6.5 turns into "store the engagement kind on the
    transition", the demotion bug moves house rather than dying. `Reason`
    describes *why a transition happened*, never *what kind of engagement this
    is*.
 
 ---
 
-## 8. Done when
+## 10. Done when
 
 1. `internal/targeting` exists with `Select`, `Commit`, `Release`,
    `EngagementOf`, `ConsumeOpeningStrike`, and a `context.md`.
@@ -262,4 +310,5 @@ Two gates pinned by test rather than trusted:
    unchanged, both asserted by test.
 6. The ambush parity guard covers targeting, not only ambush.
 7. `EngagementOf`'s hot-path cost is measured and recorded.
-8. U12b passes an adversarial playtest before handoff, per the content SOP.
+8. U12c passes an adversarial playtest before handoff, per the content SOP.
+9. `SetAggro` and `EndAggro` no longer exist.
