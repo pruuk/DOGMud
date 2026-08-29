@@ -403,15 +403,18 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	// U10d: exactly ONE swing of this engagement is the opening strike. The flag
 	// is round-scoped here only because the round is where the engagement opens;
 	// it is consumed per-swing below, on the swing that is THROWN.
-	openingStrikeLeft := false
-	if sourceChar.Aggro.Type == characters.SurpriseAttack {
-		openingStrikeLeft = true
-		attackResult.WasSurpriseAttack = true
-		// U12b: routed through the seam, deliberately NOT replaced with
-		// targeting.ConsumeOpeningStrike. That swap is U12c's behavioural
-		// change; doing it here would make this sweep behavioural.
-		targeting.Commit(sourceChar, sourceChar.CurrentCombatTarget(), targeting.ReasonAttack)
-	}
+	// U12c-2: the opening is engagement state, and this is the production caller
+	// targeting.ConsumeOpeningStrike was written for in U12a.
+	//
+	// What stood here read Aggro.Type and DEMOTED it in the same breath, via a
+	// re-Commit that also reset the engagement's wind-up. Splitting the query
+	// from the consumption removes the demotion entirely.
+	//
+	// ⚠️ AttackResult.WasSurpriseAttack STAYS. applyCombatProgression runs after
+	// this point and cannot ask the engagement any more, because the opening is
+	// already spent. See U10d spec 2.8.3.
+	openingStrikeLeft := targeting.ConsumeOpeningStrike(sourceChar)
+	attackResult.WasSurpriseAttack = openingStrikeLeft
 
 	attackResult.DefenderWasAttacked = len(plan.weapons) > 0
 

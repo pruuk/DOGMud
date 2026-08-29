@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
@@ -1157,6 +1158,26 @@ func handlePlayerConcentrationBreak(defUser *users.UserRecord, roundResult comba
 	}
 }
 
+// ordinaryMeleeEngagement reports whether the actor is in the plain
+// toe-to-toe attack state the two mob-AI passes below were written for.
+//
+// U12c-2: this was `Aggro.Type == characters.DefaultAttack`, and it is a
+// COMPOUND question, not a simple one. DefaultAttack was the odd one out of
+// five types, so the test excluded all four others at once: a ranged
+// engagement, an unspent ambush opening, a cast, and a flee. Each of those now
+// lives on the machine that models it, and Engagement composes them, so the
+// question is asked in one place rather than reconstructed at each site.
+//
+// Getting this wrong is silent: dropping the ranged half alone would let kiting
+// archers start running melee target-switch AI, and nothing would fail.
+func ordinaryMeleeEngagement(c *characters.Character) bool {
+	e := targeting.EngagementOf(c)
+	if e.Phase != combatphase.Engaging && e.Phase != combatphase.Engaged {
+		return false // Idle, or Disengaging (the old Flee type)
+	}
+	return !e.Ranged && !e.OpeningUnspent && !e.Casting
+}
+
 // handleMobAIDecision processes mob AI decisions (spell casting, special moves, combat commands).
 // Returns true if the mob executed an AI action and should skip normal combat.
 func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
@@ -1168,7 +1189,7 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 	if !mob.Character.IsInCombat() {
 		return false
 	}
-	if mob.Character.Aggro.Type != characters.DefaultAttack {
+	if !ordinaryMeleeEngagement(&mob.Character) {
 		return false
 	}
 
@@ -1230,7 +1251,7 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 // handleMobTargetSwitch processes mob target switching AI.
 // Returns true if the mob switched targets and should skip this round.
 func handleMobTargetSwitch(mob *mobs.Mob, mobRoom *rooms.Room) bool {
-	if util.Rand(100) >= 10 || mob.Character.Aggro.Type != characters.DefaultAttack {
+	if util.Rand(100) >= 10 || !ordinaryMeleeEngagement(&mob.Character) {
 		return false
 	}
 
@@ -1263,13 +1284,13 @@ func handleMobTargetSwitch(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 
 	if roll < switchChance {
 		newTargetId := potentialTargets[util.Rand(len(potentialTargets))]
-		// Read the current type BEFORE committing: the commit overwrites
-		// Aggro. Go evaluates arguments first so an inline read would also be
-		// correct, but the hoist makes the ordering obvious to the next reader.
-		prevType := mob.Character.Aggro.Type
+		// U12c-2: the prevType hoist is gone. ordinaryMeleeEngagement above
+		// already refused every non-DefaultAttack engagement, so the type it
+		// carried was ALWAYS DefaultAttack and ReasonAttack is exact. Commit
+		// re-derives the ranged flavour from the equipped weapon anyway.
 		targeting.CommitAfter(&mob.Character,
 			state.ActorRef{UserId: newTargetId},
-			targeting.ReasonForAggroType(prevType), 1)
+			targeting.ReasonAttack, 1)
 
 		if newTarget := users.GetByUserId(newTargetId); newTarget != nil {
 			mobRoom.SendText(messaging.CategoryMobEmote,

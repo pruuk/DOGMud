@@ -93,13 +93,13 @@ func EngagementOf(c *characters.Character) Engagement {
 
 	if c.CombatPhase != nil {
 		e.Phase = c.CombatPhase.State()
+		e.OpeningUnspent = c.CombatPhase.OpeningUnspent()
 	}
 	if c.Aggro != nil {
 		e.Target = state.ActorRef{
 			UserId:        c.Aggro.UserId,
 			MobInstanceId: c.Aggro.MobInstanceId,
 		}
-		e.OpeningUnspent = c.Aggro.Type == characters.SurpriseAttack
 
 	}
 
@@ -135,14 +135,13 @@ func EngagementOf(c *characters.Character) Engagement {
 //
 // The engagement itself survives: only the opening is spent.
 //
-// U12a NOTE: this has NO production caller yet. calculateCombat keeps doing
-// its own read-and-demote until U12c, which is a behavioural site and out of
-// this slice's scope. It is built and tested here so the whole API can be
-// reviewed as one thing.
+// U12c-2: it HAS its production caller now -- calculateCombat, which until this
+// slice did its own read-and-demote of Aggro.Type. That demotion is what forced
+// AttackResult.WasSurpriseAttack to exist, because applyCombatProgression runs
+// after the read and would otherwise see an ordinary attack.
 func ConsumeOpeningStrike(c *characters.Character) bool {
-	if c == nil || c.Aggro == nil || c.Aggro.Type != characters.SurpriseAttack {
+	if c == nil || c.CombatPhase == nil {
 		return false
 	}
-	c.SetAggro(c.Aggro.UserId, c.Aggro.MobInstanceId, characters.DefaultAttack)
-	return true
+	return c.CombatPhase.SpendOpening()
 }

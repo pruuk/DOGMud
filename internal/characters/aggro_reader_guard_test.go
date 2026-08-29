@@ -32,10 +32,7 @@ import (
 // guaranteed to match what the matcher sees. Do NOT regenerate it from a grep:
 // grep matches comments, the AST parser (mode 0) drops them, so a grep-derived
 // list carries phantom entries that then fail the stale check below.
-var notYetMigrated = map[string]bool{
-	"combat/combat.go":                   true,
-	"hooks/NewRound_DoCombat_helpers.go": true,
-}
+var notYetMigrated = map[string]bool{}
 
 func internalDirForReaderGuard(t *testing.T) string {
 	t.Helper()

@@ -118,6 +118,28 @@ type Machine struct {
 	vetoes                   vetoChain
 	tickEventListeners       []func(name string, r state.TransitionReason)
 	roundsWaiting            int // see the two-counter note above
+	openingUnspent           bool
+}
+
+// OpeningUnspent reports whether this engagement still carries its ambush
+// opening -- the ONE swing of a surprise attack that crits on a clean win.
+//
+// U12c-2: this was Aggro.Type == SurpriseAttack, a value calculateCombat read
+// and DEMOTED in the same breath. Splitting the query (here) from the
+// consumption (SpendOpening) is what stops a casual reader spending an ambush
+// by asking about it, and is why AttackResult.WasSurpriseAttack had to exist.
+func (m *Machine) OpeningUnspent() bool { return m.openingUnspent }
+
+// SpendOpening consumes the ambush opening and reports whether it was there to
+// spend. Exactly ONE caller: the swing loop, on the swing that is THROWN.
+//
+// The engagement itself survives; only the opening is spent.
+func (m *Machine) SpendOpening() bool {
+	if !m.openingUnspent {
+		return false
+	}
+	m.openingUnspent = false
+	return true
 }
 
 // RoundsWaiting reports the actor's remaining round budget.
@@ -289,6 +311,12 @@ func (m *Machine) TransitionToEngaging(d EngagingData, r state.TransitionReason)
 	if err := m.inner.TransitionTo(Engaging, r); err != nil {
 		return err
 	}
+
+	// U12c-2: an ambush arms its opening here, on the transition that starts
+	// the engagement. Keyed on the TRIGGER, not on a stored kind: a retarget
+	// into an ordinary attack disarms it, which is what dropping the surprise
+	// aggro type used to do.
+	m.openingUnspent = r.Trigger == TriggerSurpriseAttack
 
 	// U12c-0: this transition is now reachable from Engaged (a retarget), so
 	// the superseded state data must go. The public accessors are state-gated
@@ -462,9 +490,10 @@ func (m *Machine) ForceIdle(r state.TransitionReason) {
 	m.engaging = nil
 	m.engaged = nil
 	m.disengaging = nil
-	// EndAggro used to nil the whole Aggro struct, so the round budget died
-	// with the engagement. Idle preserves that exactly.
+	// EndAggro used to nil the whole Aggro struct, so the round budget and the
+	// ambush opening died with the engagement. Idle preserves that exactly.
 	m.roundsWaiting = 0
+	m.openingUnspent = false
 
 	// Remove self from target's inbound list. Use r.Actor if set,
 	// otherwise fall back to the machine's own registered identity.
