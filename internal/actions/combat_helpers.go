@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -16,36 +17,42 @@ type AggroTarget struct {
 	Found         bool                  // True if target was successfully resolved
 }
 
-// ResolveAggroTarget resolves a character's current aggro target.
+// ResolveAggroTarget resolves a combat target reference into the concrete
+// actor behind it.
 // Returns an AggroTarget struct with Found=true only if the target still exists.
 // For players: Char is a pointer, UserId is set.
 // For mobs: Char is a pointer (address of mob.Character), MobInstanceId is set.
-func ResolveAggroTarget(aggro *characters.Aggro) AggroTarget {
-	if aggro == nil {
+//
+// U12c-1: takes a state.ActorRef rather than a *characters.Aggro, so callers
+// pass CurrentCombatTarget() and nothing outside internal/characters needs to
+// hold the Aggro struct. A zero ref returns Found: false, which is exactly what
+// a nil Aggro used to mean.
+func ResolveAggroTarget(ref state.ActorRef) AggroTarget {
+	if ref.IsZero() {
 		return AggroTarget{Found: false}
 	}
 
 	// Try mob target first
-	if aggro.MobInstanceId > 0 {
-		m := mobs.GetInstance(aggro.MobInstanceId)
+	if ref.MobInstanceId > 0 {
+		m := mobs.GetInstance(ref.MobInstanceId)
 		if m != nil {
 			return AggroTarget{
 				Char:          &m.Character,
 				Name:          m.Character.Name,
-				MobInstanceId: aggro.MobInstanceId,
+				MobInstanceId: ref.MobInstanceId,
 				Found:         true,
 			}
 		}
 	}
 
 	// Then try player target
-	if aggro.UserId > 0 {
-		u := users.GetByUserId(aggro.UserId)
+	if ref.UserId > 0 {
+		u := users.GetByUserId(ref.UserId)
 		if u != nil {
 			return AggroTarget{
 				Char:   u.Character,
 				Name:   u.Character.Name,
-				UserId: aggro.UserId,
+				UserId: ref.UserId,
 				Found:  true,
 			}
 		}

@@ -235,16 +235,15 @@ func resolveTrackTargetName(mob *mobs.Mob, ctx *EvalContext, source string) stri
 			}
 		}
 	default: // "aggro"
-		if mob.Character.Aggro != nil {
-			if mob.Character.Aggro.UserId > 0 {
-				if u := users.GetByUserId(mob.Character.Aggro.UserId); u != nil {
-					return u.Character.Name
-				}
+		tgt := mob.Character.CurrentCombatTarget()
+		if tgt.UserId > 0 {
+			if u := users.GetByUserId(tgt.UserId); u != nil {
+				return u.Character.Name
 			}
-			if mob.Character.Aggro.MobInstanceId > 0 {
-				if m := mobs.GetInstance(mob.Character.Aggro.MobInstanceId); m != nil {
-					return m.Character.Name
-				}
+		}
+		if tgt.MobInstanceId > 0 {
+			if m := mobs.GetInstance(tgt.MobInstanceId); m != nil {
+				return m.Character.Name
 			}
 		}
 	}

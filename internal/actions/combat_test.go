@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"reflect"
 	"testing"
 
@@ -467,23 +468,26 @@ func TestSpecialMoveActingAdmission(t *testing.T) {
 // ResolveAggroTarget tests
 // ---------------------------------------------------------------------------
 
-// TestResolveAggroTarget_Nil verifies that a nil aggro pointer returns
+// TestResolveAggroTarget_ZeroRef verifies that a zero ActorRef returns
 // Found=false without panicking.
-func TestResolveAggroTarget_Nil(t *testing.T) {
-	result := ResolveAggroTarget(nil)
-	assert.False(t, result.Found, "nil aggro should return Found=false")
-	assert.Equal(t, 0, result.UserId, "UserId should be zero for nil aggro")
-	assert.Equal(t, 0, result.MobInstanceId, "MobInstanceId should be zero for nil aggro")
-	assert.Nil(t, result.Char, "Char should be nil for nil aggro")
+//
+// U12c-1: the function takes a state.ActorRef now. A zero ref is what a nil
+// *characters.Aggro used to be, and must behave identically.
+func TestResolveAggroTarget_ZeroRef(t *testing.T) {
+	result := ResolveAggroTarget(state.ActorRef{})
+	assert.False(t, result.Found, "zero ref should return Found=false")
+	assert.Equal(t, 0, result.UserId, "UserId should be zero for a zero ref")
+	assert.Equal(t, 0, result.MobInstanceId, "MobInstanceId should be zero for a zero ref")
+	assert.Nil(t, result.Char, "Char should be nil for a zero ref")
 }
 
 // TestResolveAggroTarget_InvalidMobId verifies that an aggro pointing at a
 // mob instance ID that doesn't exist in the mobs registry returns Found=false.
 func TestResolveAggroTarget_InvalidMobId(t *testing.T) {
-	aggro := &characters.Aggro{
+	ref := state.ActorRef{
 		MobInstanceId: 999999, // highly unlikely to exist
 	}
-	result := ResolveAggroTarget(aggro)
+	result := ResolveAggroTarget(ref)
 	assert.False(t, result.Found, "nonexistent mob instance ID should return Found=false")
 }
 
@@ -492,23 +496,23 @@ func TestResolveAggroTarget_InvalidMobId(t *testing.T) {
 // Note: MobInstanceId must be 0 (or invalid) so the code falls through to the
 // UserId branch.
 func TestResolveAggroTarget_InvalidUserId(t *testing.T) {
-	aggro := &characters.Aggro{
+	ref := state.ActorRef{
 		MobInstanceId: 0,
 		UserId:        999999, // highly unlikely to exist
 	}
-	result := ResolveAggroTarget(aggro)
+	result := ResolveAggroTarget(ref)
 	assert.False(t, result.Found, "nonexistent user ID should return Found=false")
 }
 
 // TestResolveAggroTarget_ZeroIds verifies that an aggro with both IDs at zero
 // (valid aggro struct but no target set) returns Found=false.
 func TestResolveAggroTarget_ZeroIds(t *testing.T) {
-	aggro := &characters.Aggro{
+	ref := state.ActorRef{
 		MobInstanceId: 0,
 		UserId:        0,
 	}
-	result := ResolveAggroTarget(aggro)
-	assert.False(t, result.Found, "aggro with zero IDs should return Found=false")
+	result := ResolveAggroTarget(ref)
+	assert.False(t, result.Found, "a ref with zero IDs should return Found=false")
 }
 
 // ---------------------------------------------------------------------------

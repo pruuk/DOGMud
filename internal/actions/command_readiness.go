@@ -54,7 +54,7 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		if char.Aggro == nil {
 			return false
 		}
-		target := ResolveAggroTarget(char.Aggro)
+		target := ResolveAggroTarget(char.CurrentCombatTarget())
 		if !target.Found {
 			return false
 		}
@@ -83,7 +83,7 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		if char.Aggro == nil {
 			return false
 		}
-		target := ResolveAggroTarget(char.Aggro)
+		target := ResolveAggroTarget(char.CurrentCombatTarget())
 		if !target.Found {
 			return false
 		}

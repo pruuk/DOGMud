@@ -81,7 +81,7 @@ func condTargetIsCasting(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
@@ -100,7 +100,7 @@ func condTargetAggroNotOnMe(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}
@@ -175,7 +175,7 @@ func condTargetNotStanding(params map[string]any, ctx *EvalContext) Result {
 	if mob == nil || !mob.Character.IsInCombat() {
 		return Failure
 	}
-	target := actions.ResolveAggroTarget(mob.Character.Aggro)
+	target := actions.ResolveAggroTarget(mob.Character.CurrentCombatTarget())
 	if !target.Found {
 		return Failure
 	}

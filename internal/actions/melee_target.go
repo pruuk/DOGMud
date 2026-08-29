@@ -91,8 +91,14 @@ type stagedMeleeActor struct {
 // through resolveActionTarget so their target lookup works identically before
 // and after engagement.
 func (a *stagedMeleeActor) actionTarget() AggroTarget {
-	aggro := &characters.Aggro{UserId: a.target.UserId, MobInstanceId: a.target.MobInstanceId}
-	return ResolveAggroTarget(aggro)
+	// U12c-1: this built a synthetic characters.Aggro purely to satisfy the old
+	// signature. ResolveAggroTarget takes a state.ActorRef now, which removes
+	// the last reason for anything outside internal/characters to construct
+	// one.
+	return ResolveAggroTarget(state.ActorRef{
+		UserId:        a.target.UserId,
+		MobInstanceId: a.target.MobInstanceId,
+	})
 }
 
 func (a *stagedMeleeActor) commitMeleeEngagement() {
@@ -112,7 +118,7 @@ func resolveActionTarget(actor Actor, char *characters.Character) AggroTarget {
 	if staged, ok := actor.(interface{ actionTarget() AggroTarget }); ok {
 		return staged.actionTarget()
 	}
-	return ResolveAggroTarget(char.Aggro)
+	return ResolveAggroTarget(char.CurrentCombatTarget())
 }
 
 // commitMeleeEngagement fires the deferred engagement, if this actor has one.
