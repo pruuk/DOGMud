@@ -46,19 +46,34 @@ type Engagement struct {
 // It exists so consumers cannot accidentally reimplement the half of that
 // check that only looks at Target -- which is exactly the bug an adversarial
 // review caught in the first draft of this package.
+// It compares the two id fields INDEPENDENTLY rather than comparing the
+// structs, because that is what characters.IsAggro does. The two are only
+// equivalent while every ActorRef is a discriminated union with exactly one
+// field set, which is the convention but is not enforced by the type. Struct
+// equality would quietly start requiring BOTH fields to match the day
+// something constructs a dual-set ref.
 func (e Engagement) IsAimedAt(ref state.ActorRef) bool {
 	if ref.IsZero() {
 		return false
 	}
-	if e.Target == ref {
+	if matchesRef(e.Target, ref) {
 		return true
 	}
 	for _, t := range e.SpellTargets {
-		if t == ref {
+		if matchesRef(t, ref) {
 			return true
 		}
 	}
 	return false
+}
+
+// matchesRef mirrors characters.IsAggro's comparison: a nonzero id on either
+// axis matching the corresponding id is a hit.
+func matchesRef(have, want state.ActorRef) bool {
+	if have.MobInstanceId > 0 && have.MobInstanceId == want.MobInstanceId {
+		return true
+	}
+	return have.UserId > 0 && have.UserId == want.UserId
 }
 
 // EngagementOf composes the authoritative sources at read time.

@@ -116,6 +116,24 @@ func ConsumeOpeningStrike(c *characters.Character) bool
   a normal outcome. Picking arbitrarily would silently change which mob gets
   eaten.
 
+- **`Criteria.RatioBelow` is used RAW and is not defaulted here.** The
+  behaviour tree resolves the default itself with
+  `getFloatParam(params, "ratio_below", 1.0)`. Defaulting a second time in this
+  package would flip an authored `ratio_below: 0` from "predation disabled"
+  (nothing is strictly below zero) to "engage anyone weaker". A Go caller
+  constructing `Criteria{Kind: WeakestHatedMob}` without setting it therefore
+  selects nobody, which is the safe direction and matches the code this
+  replaced.
+
+- **`internal/behaviortree`'s predation tests depend on a sibling file's
+  import.** `actions_combat.go` no longer imports `internal/combat`, so the
+  `init()` that registers the score function only runs because *other* files in
+  that package (`actions_mob.go`, `conditions_combat.go`) still import it. This
+  fails loudly rather than silently — the weakest-mob tests flip to `Failure` —
+  but it is easy to break unknowingly while refactoring those files. If it
+  breaks, register explicitly in the test rather than re-adding a `combat`
+  import to `actions_combat.go`.
+
 - **`CommitTaunt` sets the hold BEFORE committing.** Reversing those two lines
   makes every taunt silently no-op against an existing hold, because the
   taunt-hold gate would still be pointing at the previous taunter. Relatedly,

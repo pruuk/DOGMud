@@ -21,8 +21,16 @@ type Criteria struct {
 	Kind Kind
 
 	// RatioBelow caps WeakestHatedMob: only candidates whose power ratio
-	// against Self is strictly below this are eligible. Zero means 1.0,
-	// matching the behaviour tree's ratio_below default.
+	// against Self is strictly below this are eligible.
+	//
+	// REQUIRED for WeakestHatedMob, and used RAW. It is NOT defaulted here.
+	// The behaviour tree resolves the default itself with
+	// getFloatParam(params, "ratio_below", 1.0), and defaulting a second time
+	// in this package would silently flip an authored `ratio_below: 0` from
+	// "predation disabled" (nothing can be strictly below zero) to "engage
+	// anyone weaker". That inversion was caught in review before it shipped;
+	// no live content sets zero today, but the seam must not invent semantics
+	// the code it replaced did not have.
 	RatioBelow float64
 }
 
@@ -65,13 +73,6 @@ func selectRandomPlayer(s Scope) (state.ActorRef, bool) {
 	return state.ActorRef{UserId: playerIds[util.Rand(len(playerIds))]}, true
 }
 
-func effectiveRatio(c Criteria) float64 {
-	if c.RatioBelow <= 0 {
-		return 1.0
-	}
-	return c.RatioBelow
-}
-
 // selectWeakestHatedMob mirrors actTargetWeakestMobInRoom's rules exactly:
 // skip self, dead mobs, non-combatants, mobs HatesMob rejects, and (when the
 // caller is itself charmed) fellow companions of the same owner. Players are
@@ -94,7 +95,7 @@ func selectWeakestHatedMob(c Criteria, s Scope) (state.ActorRef, bool) {
 
 	callerCharmedBy := s.Self.GetCharmedUserId()
 	bestId := 0
-	bestRatio := effectiveRatio(c)
+	bestRatio := c.RatioBelow
 
 	for _, otherId := range s.Room.GetMobs() {
 		if otherId == s.SelfMobInstanceId {

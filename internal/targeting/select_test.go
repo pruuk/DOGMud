@@ -74,7 +74,12 @@ func TestSelect_WeakestHatedMobDoesNotScoreAnEmptyRoom(t *testing.T) {
 // injection. If boot forgets to register the score function, selection must
 // fail closed (pick nobody) rather than pick arbitrarily.
 func TestSelect_WeakestHatedMobFailsWithoutAScorer(t *testing.T) {
+	// powerScoreFn is a package-level var and internal/combat's init() sets it
+	// in any binary that links combat. Restore on the way out so this test
+	// cannot leak "no scorer" into a later test in the same binary.
 	SetPowerScoreFn(nil)
+	t.Cleanup(func() { SetPowerScoreFn(nil) })
+
 	room := &rooms.Room{RoomId: 1}
 
 	_, ok := Select(Criteria{Kind: WeakestHatedMob},
@@ -83,9 +88,30 @@ func TestSelect_WeakestHatedMobFailsWithoutAScorer(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestCriteria_RatioBelowDefaultsToOne(t *testing.T) {
-	assert.Equal(t, 1.0, effectiveRatio(Criteria{}))
-	assert.Equal(t, 0.5, effectiveRatio(Criteria{RatioBelow: 0.5}))
+// TestSelect_RatioBelowIsUsedRawNotDefaulted pins the behaviour-preservation
+// rule a review caught being broken. The behaviour tree resolves the default
+// itself via getFloatParam(params, "ratio_below", 1.0); master then used that
+// ceiling RAW, so an authored `ratio_below: 0` disabled predation entirely
+// (no positive power ratio is strictly below zero). An earlier draft of this
+// package re-defaulted a zero to 1.0, which INVERTED that into "engage anyone
+// weaker".
+func TestSelect_RatioBelowIsUsedRawNotDefaulted(t *testing.T) {
+	scored := false
+	SetPowerScoreFn(func(c characters.Character) float64 {
+		scored = true
+		return 10
+	})
+	t.Cleanup(func() { SetPowerScoreFn(nil) })
+
+	room := &rooms.Room{RoomId: 1}
+	room.AddMob(4242)
+
+	// A zero ceiling must select nobody, matching master.
+	_, ok := Select(Criteria{Kind: WeakestHatedMob, RatioBelow: 0},
+		Scope{Room: room, Self: characters.New(), SelfMobInstanceId: 1})
+
+	assert.False(t, ok, "a zero ceiling disables predation, as it did before the seam")
+	_ = scored
 }
 
 // TestSelect_UnknownKindFailsClosed: a zero-value Criteria is RandomPlayer by

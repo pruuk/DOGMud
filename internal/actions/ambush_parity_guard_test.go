@@ -159,22 +159,42 @@ func setAggroCallsIn(t *testing.T, fset *token.FileSet, body *ast.BlockStmt) []*
 	return calls
 }
 
-// identsIn returns every identifier appearing anywhere inside expr.
+// tracedAggroTypeIdent unwraps the aggro-type argument down to the single bare
+// identifier it must be, or returns "" if it is anything else.
 //
-// The aggro-type argument used to be a bare variable. Through the seam it is
-// targeting.ReasonForAggroType(aggroType), so the check walks the expression
-// rather than requiring the argument to BE the identifier. What matters is
-// unchanged: the value handed to the engagement call must trace back to
-// actions.EngageAggroType and not be conjured locally.
-func identsIn(expr ast.Expr) []string {
-	names := []string{}
-	ast.Inspect(expr, func(n ast.Node) bool {
-		if id, ok := n.(*ast.Ident); ok {
-			names = append(names, id.Name)
+// The argument used to be a bare variable. Through the seam it is
+// targeting.ReasonForAggroType(aggroType), so exactly ONE wrapper is unwrapped:
+// a call to targeting.ReasonForAggroType with exactly one argument, which must
+// itself be a bare identifier.
+//
+// This is deliberately narrow. An earlier version walked the whole expression
+// and passed if the traced name appeared ANYWHERE inside it, which a review
+// showed is not a data-flow check at all but a name co-occurrence check:
+//
+//	targeting.Commit(&mob.Character, ref,
+//	    targeting.ReasonForAggroType(pickBadType(aggroType, char.IsHidden())))
+//
+// passed that version, because "aggroType" occurred in the expression, even
+// though pickBadType could ignore it entirely and derive SurpriseAttack from
+// IsHidden(). That is precisely the U10d bug this guard exists to catch, and
+// rule 3's ban on naming characters.SurpriseAttack would not have seen it
+// either, because rule 3 only scans the ONE file in the path table row and the
+// helper could live in a sibling file of the same package.
+func tracedAggroTypeIdent(t *testing.T, fset *token.FileSet, expr ast.Expr) string {
+	t.Helper()
+	if call, ok := expr.(*ast.CallExpr); ok {
+		if formattedASTNode(t, fset, call.Fun) != "targeting.ReasonForAggroType" {
+			return ""
 		}
-		return true
-	})
-	return names
+		if len(call.Args) != 1 {
+			return ""
+		}
+		expr = call.Args[0]
+	}
+	if ident, ok := expr.(*ast.Ident); ok {
+		return ident.Name
+	}
+	return ""
 }
 
 func TestAmbushParityAcrossEngagementPaths(t *testing.T) {
@@ -215,22 +235,22 @@ func TestAmbushParityAcrossEngagementPaths(t *testing.T) {
 				require.NotEmpty(t, call.Args, "engagement call made with no arguments")
 				last := call.Args[len(call.Args)-1]
 
-				traced := false
-				for _, name := range identsIn(last) {
-					if fromEngage[name] {
-						traced = true
-						break
-					}
-				}
-				if !traced {
-					t.Fatalf("%s:%s at %s passes %q as the aggro type, and nothing in that "+
-						"expression is assigned from actions.EngageAggroType. Every engagement "+
-						"path must type itself through that seam: it is the ONE place the hidden "+
-						"check and the shared special-move cooldown claim live together. Deriving "+
-						"the type locally is how the behaviortree path came to ambush on a "+
-						"cooldown it never paid.",
+				name := tracedAggroTypeIdent(t, fset, last)
+				if name == "" {
+					t.Fatalf("%s:%s at %s passes %q as the aggro type. It must be a bare "+
+						"variable assigned from actions.EngageAggroType, optionally wrapped in "+
+						"exactly one targeting.ReasonForAggroType(...) call — nothing else. Any "+
+						"other expression can hide a locally-derived type, which is how the "+
+						"behaviortree path came to ambush on a cooldown it never paid.",
 						path.file, path.function, fset.Position(call.Pos()),
 						formattedASTNode(t, fset, last))
+				}
+				if !fromEngage[name] {
+					t.Fatalf("%s:%s at %s passes %q as the aggro type, which is never assigned "+
+						"from actions.EngageAggroType in this function. Every engagement path "+
+						"must type itself through that seam: it is the ONE place the hidden "+
+						"check and the shared special-move cooldown claim live together.",
+						path.file, path.function, fset.Position(call.Pos()), name)
 				}
 			}
 
@@ -357,4 +377,37 @@ func TestTargetingSeamGuardIsNotVacuous(t *testing.T) {
 		return true
 	})
 	require.True(t, found, "the SetAggro matcher must detect a real call")
+}
+
+// TestTracedAggroTypeIdentRejectsTheDecoyBypass pins the exact hole an
+// adversarial review found in the first seam-compatible version of rule 2.
+//
+// That version walked the whole argument expression and passed if the traced
+// name occurred anywhere inside it. A helper could then take the traced
+// variable as a decoy argument, ignore it, and derive the surprise type from
+// IsHidden() — the U10d bug, reintroduced, with the guard green.
+func TestTracedAggroTypeIdentRejectsTheDecoyBypass(t *testing.T) {
+	cases := []struct {
+		name string
+		expr string
+		want string
+	}{
+		{"bare identifier", "aggroType", "aggroType"},
+		{"the one allowed wrapper", "targeting.ReasonForAggroType(aggroType)", "aggroType"},
+		{"decoy argument to a helper", "targeting.ReasonForAggroType(pickBadType(aggroType, c.IsHidden()))", ""},
+		{"unrelated wrapper", "someOtherFunc(aggroType)", ""},
+		{"inline constant", "characters.SurpriseAttack", ""},
+		{"wrapper with two args", "targeting.ReasonForAggroType(aggroType, x)", ""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			expr, err := parser.ParseExpr(tc.expr)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want, tracedAggroTypeIdent(t, fset, expr),
+				"expression %q", tc.expr)
+		})
+	}
 }
