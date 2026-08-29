@@ -3,8 +3,9 @@
 **Date:** 2026-08-29
 **Arc:** Unified Contest Resolution (`docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`)
 **Status:** design approved, plan not yet written
-**Ships as:** four slices, **U12a** (the seam, proven on the migrated call sites),
-**U12b** (the write sweep), **U12c-1** (the read migration), **U12c-2** (the collapse)
+**Ships as:** five slices, **U12a** (the seam), **U12b** (the write sweep),
+**U12c-0** (make the machine retargetable), **U12c-1** (the read migration),
+**U12c-2** (the collapse)
 
 ---
 
@@ -129,7 +130,7 @@ run after the state is spent.
 
 Every `AggroType` member already has a home elsewhere. None of them moves into
 `combatphase`. `combatphase` gains exactly **two** new fields, and neither is an
-`AggroType` in disguise: `OpeningUnspent` (§2.1) and `RoundsWaiting` (§6.2,
+`AggroType` in disguise: `OpeningUnspent` (§2.1) and `RoundsWaiting` (§6.3,
 added after the U12c design found it was a live counter with no other home).
 
 | `AggroType` | Home |
@@ -188,7 +189,17 @@ Two traps in that move, both cheap to get wrong and silent when wrong:
 
 ---
 
-## 3. Why three slices
+## 3. Why it slices this way
+
+Five slices, and every split has the same justification: **keep the part that
+can break the game out of the diff that cannot.** U12a/U12b separate a new API
+from a 90-site sweep; U12c-0/U12c-1/U12c-2 separate a bug fix, a 250-site
+migration, and a store deletion. The slice count grew twice, both times because
+verification found something — `EndAggro` as a second writer, then the stale
+retarget bug — and neither was visible from the roadmap row.
+
+The rest of this section records the U12a/U12b reasoning, so the rejected
+orderings are not re-proposed.
 
 The obvious split is two: build the seam and migrate onto it, then collapse.
 That was rejected because it bundles a **90-site mechanical sweep with a
@@ -266,7 +277,7 @@ Reviewable as "did each site translate correctly?" with no design judgment
 involved. The AST guard, not human attention, is what proves the sweep is
 complete.
 
-## 6. U12c — the collapse, in TWO slices
+## 6. U12c — the collapse, in THREE slices
 
 **Refined 2026-08-29 after U12b merged.** U12c splits the same way U12a/U12b
 did, and for the same reason: the mechanical bulk must not drown the ~30 lines
@@ -298,7 +309,66 @@ decremented by different code under different conditions — and the 20
 Deleting the former without rehoming its semantics makes every special move
 free.
 
-### 6.1 U12c-1 — point the reads at the accessors
+### 6.1 U12c-0 — make the machine retargetable
+
+**Behaviour change: yes, and it is a BUG FIX. Size: S. Must land FIRST.**
+
+**The bug, proven by probe, not inferred.** `validTransitions`
+(`combatphase/transitions.go`) declares `Engaged: {Disengaging, Idle}`, so
+**`Engaged → Engaging` is illegal**. `SetAggro` calls `TransitionToEngaging`
+unconditionally and discards the error, and the machine has **no other retarget
+path** — every method was checked. So a retarget while `Engaged` updates
+`Aggro` and leaves `CombatPhase` holding the OLD target:
+
+```
+after first commit: phase=Engaging  aggro=100  current={0 100}
+after ticks:        phase=Engaged   aggro=100  current={0 100}
+after retarget:     phase=Engaged   aggro=200  current={0 100}   <-- stale
+```
+
+`CurrentCombatTarget()` falls back to `Aggro` only when CombatPhase's target is
+ZERO. Here it is non-zero and wrong, so the fallback never fires.
+
+**Live, player-visible impact.** ~40 production sites already call
+`CurrentCombatTarget()`, including:
+
+- `users/userrecord.prompt.go:541`, `:557` — the `{target}` and `{targethealth}`
+  prompt tokens. After `target <newmob>` prints "You turn your attention to X!",
+  the prompt still names and health-bars the PREVIOUS enemy.
+- `mobcommands/attack.go:84` — the "already fighting this player?" check.
+- `behaviortree/actions_party.go:302` — NPC party members mirror a stale target.
+- **Every taunt.** `CommitTaunt` goes through the same path, and taunt is the
+  game's most frequent retargeting mechanic.
+
+This also explains why 306 sites read `.Aggro` directly: `Aggro` is the store
+that actually works. §1.1's "CombatPhase is the primary source of truth" is an
+aspiration, not a description.
+
+**The fix: allow `Engaged → Engaging`.** One entry in `validTransitions`. A
+retarget becomes a fresh engagement — new target, fresh `RoundsUntil` wind-up,
+then back to `Engaged`.
+
+Why this and not the alternatives:
+
+- **It matches what already happens.** `SetAggro` already reseeds
+  `RoundsWaiting` on every retarget, so a fresh wind-up on retarget is existing
+  behaviour. As a bonus the two counters (§6.3) stop diverging on retarget.
+- **It re-runs the target vetoes**, so a retarget onto a dead or non-combatant
+  target is correctly refused. An in-place `Retarget(ref)` mutator would skip
+  them and could leave the machine pointing at a corpse.
+- **Its two theoretical costs have no consumers.** `advanceToEngaged()` re-fires
+  `mob_engaged`, which **no authored behaviour tree listens to** (verified
+  against `_datafiles/world/dogmud/behaviors/`, where 14 other event names do
+  appear). And the actor is briefly `Engaging` rather than `Engaged`, where
+  `IsEngaged()` has **zero** production consumers.
+- Rejected: release-then-engage inside `SetAggro`. It passes through `Idle`,
+  which clears all phase data and fires Idle-entry observers — a real risk of
+  "you are no longer in combat" side effects mid-fight.
+
+**Regression test:** the probe above, as a permanent test — after a retarget
+while Engaged, `CurrentCombatTarget()` must equal the committed target.
+
+### 6.2 U12c-1 — point the reads at the accessors
 
 **Behaviour change: NONE. Size: L (the bulk).**
 
@@ -308,11 +378,16 @@ free.
 | `c.Aggro.UserId` / `.MobInstanceId` | `c.CurrentCombatTarget()`, returning `state.ActorRef` | 124 |
 | `ResolveAggroTarget(c.Aggro)` | `ResolveAggroTarget(ref state.ActorRef)` | 18 |
 
-The accessors already prefer `CombatPhase`, so this migrates reads onto seams
-that are already correct. Guard-driven exactly like U12b: an allowlist that
-shrinks to empty and fails on stale entries. No playtest.
+⚠️ **This slice is only safe AFTER U12c-0.** The accessors prefer `CombatPhase`,
+which is stale after a retarget until §6.1 lands. Migrating first would
+propagate that staleness to 124 more sites — the precise opposite of a
+no-behaviour-change slice. Once U12c-0 has landed, the accessors are correct and
+this becomes the mechanical migration it is meant to be.
 
-### 6.2 U12c-2 — the actual collapse
+Guard-driven exactly like U12b: an allowlist that shrinks to empty and fails on
+stale entries. No playtest of its own.
+
+### 6.3 U12c-2 — the actual collapse
 
 **Behaviour change: yes. Size: M. Owns the arc's adversarial playtest.**
 
