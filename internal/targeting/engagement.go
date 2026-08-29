@@ -57,3 +57,27 @@ func EngagementOf(c *characters.Character) Engagement {
 
 	return e
 }
+
+// ConsumeOpeningStrike spends the ambush opening and reports whether it was
+// there to spend. It is the ONE deliberate side effect in this package and
+// must have exactly one caller: the swing loop, on the swing that is THROWN.
+//
+// It exists as a separate call precisely because EngagementOf is pure. Today
+// calculateCombat reads Aggro.Type and demotes it in the same breath, which is
+// why U10d had to add AttackResult.WasSurpriseAttack to carry the fact past
+// the read. Splitting the query from the consumption is what stops a casual
+// reader spending an ambush by asking about it.
+//
+// The engagement itself survives: only the opening is spent.
+//
+// U12a NOTE: this has NO production caller yet. calculateCombat keeps doing
+// its own read-and-demote until U12c, which is a behavioural site and out of
+// this slice's scope. It is built and tested here so the whole API can be
+// reviewed as one thing.
+func ConsumeOpeningStrike(c *characters.Character) bool {
+	if c == nil || c.Aggro == nil || c.Aggro.Type != characters.SurpriseAttack {
+		return false
+	}
+	c.SetAggro(c.Aggro.UserId, c.Aggro.MobInstanceId, characters.DefaultAttack)
+	return true
+}

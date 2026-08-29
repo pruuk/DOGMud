@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/stretchr/testify/assert"
 )
@@ -60,4 +61,31 @@ func TestEngagementOf_NilCharacterIsZero(t *testing.T) {
 
 	assert.Equal(t, combatphase.Idle, e.Phase)
 	assert.True(t, e.Target.IsZero())
+}
+
+func TestConsumeOpeningStrike_SpendsExactlyOnce(t *testing.T) {
+	c := characters.New()
+	Commit(c, state.ActorRef{MobInstanceId: 9}, ReasonSurprise)
+
+	assert.True(t, ConsumeOpeningStrike(c), "first call spends the opening")
+	assert.False(t, ConsumeOpeningStrike(c), "second call must find it spent")
+	assert.False(t, EngagementOf(c).OpeningUnspent)
+}
+
+func TestConsumeOpeningStrike_KeepsTheTarget(t *testing.T) {
+	c := characters.New()
+	Commit(c, state.ActorRef{MobInstanceId: 9}, ReasonSurprise)
+
+	ConsumeOpeningStrike(c)
+
+	assert.Equal(t, 9, EngagementOf(c).Target.MobInstanceId,
+		"spending the opening must not end the engagement")
+}
+
+func TestConsumeOpeningStrike_FalseWhenNothingArmed(t *testing.T) {
+	c := characters.New()
+	Commit(c, state.ActorRef{MobInstanceId: 9}, ReasonAttack)
+
+	assert.False(t, ConsumeOpeningStrike(c))
+	assert.False(t, ConsumeOpeningStrike(nil))
 }
