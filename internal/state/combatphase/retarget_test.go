@@ -100,3 +100,45 @@ func TestRetarget_StillHonoursTargetVetoes(t *testing.T) {
 	require.Equal(t, retargetTestActor(100), m.CurrentTarget(),
 		"a refused retarget leaves the existing engagement intact")
 }
+
+// TestRetarget_WhileStillWindingUp closes the gap U12c-0 left. That slice made
+// Engaged -> Engaging legal and tested only that case; a retarget during the
+// WIND-UP is the same situation one state earlier and was still refused.
+//
+// It is harmless while SetAggro discards the error, and fatal the moment
+// U12c-0b makes refusals real: a mistyped target would lock the actor in until
+// the wind-up finished.
+func TestRetarget_WhileStillWindingUp(t *testing.T) {
+	m := NewMachine()
+	require.NoError(t, m.TransitionToEngaging(
+		EngagingData{Target: retargetTestActor(100), RoundsUntil: 5},
+		state.TransitionReason{Trigger: TriggerAttackCommand}))
+	require.Equal(t, Engaging, m.State(), "fixture must still be winding up")
+
+	err := m.TransitionToEngaging(
+		EngagingData{Target: retargetTestActor(200), RoundsUntil: 5},
+		state.TransitionReason{Trigger: TriggerAttackCommand})
+
+	require.NoError(t, err, "a retarget during the wind-up must be legal")
+	require.Equal(t, retargetTestActor(200), m.CurrentTarget())
+}
+
+// Fleeing stays a commitment: Disengaging -> Engaging is deliberately NOT in
+// the table. This is a bug fix rather than a behaviour change, because
+// handlePlayerFlee reads IsDisengaging() first and authoritatively -- a
+// re-aggro mid-flee never affected whether the flee succeeded, it only
+// overwrote Aggro, which silently defeats combat_retarget.go's
+// `Aggro.Type != Flee` guard.
+func TestRetarget_WhileDisengagingIsRefused(t *testing.T) {
+	m := NewMachine()
+	engageFully(t, m, retargetTestActor(100), 1)
+	require.NoError(t, m.TransitionToDisengaging(
+		state.TransitionReason{Trigger: TriggerFleeCommand}))
+	require.Equal(t, Disengaging, m.State())
+
+	err := m.TransitionToEngaging(
+		EngagingData{Target: retargetTestActor(200), RoundsUntil: 1},
+		state.TransitionReason{Trigger: TriggerAttackCommand})
+
+	require.Error(t, err, "fleeing is a commitment; re-engaging must be refused")
+}
