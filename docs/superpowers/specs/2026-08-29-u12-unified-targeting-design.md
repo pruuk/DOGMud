@@ -3,8 +3,9 @@
 **Date:** 2026-08-29
 **Arc:** Unified Contest Resolution (`docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`)
 **Status:** design approved, plan not yet written
-**Ships as:** five slices, **U12a** (the seam), **U12b** (the write sweep),
-**U12c-0** (make the machine retargetable), **U12c-1** (the read migration),
+**Ships as:** six slices, **U12a** (the seam), **U12b** (the write sweep),
+**U12c-0** (make the machine retargetable), **U12c-0b** (load-bearing vetoes),
+**U12c-1** (the read migration),
 **U12c-2** (the collapse)
 
 ---
@@ -372,6 +373,62 @@ Why this and not the alternatives:
 **Regression test:** the probe above, as a permanent test — after a retarget
 while Engaged, `CurrentCombatTarget()` must equal the committed target.
 
+### 6.1b U12c-0b — make the vetoes load-bearing
+
+**Behaviour change: yes. Size: S. Must land after U12c-0, before U12c-1.**
+
+**The problem U12c-0 did not fix.** `SetAggro` writes `Aggro` **before**
+attempting the transition and discards the result, so a **vetoed** commit still
+leaves the stores disagreeing. Probed after U12c-0 landed:
+
+```
+engaged:        phase=Engaged  aggro=100  current={0 100}
+after vetoed:   phase=Engaged  aggro=200  current={0 100}
+```
+
+Migrating the 124 target reads (§6.2) onto `CurrentCombatTarget()` while this
+is true would change behaviour at vetoed-commit sites, spread thinly across 124
+places where nobody would review it as a behaviour decision.
+
+**Underneath it is a circular assumption.** `Activity_Cascades.go:14-19` deleted
+its combat-entry cancel because *"the veto handles it — a separate
+AfterTransition cascade for combat-entry is therefore unreachable"*. But the
+veto only blocks a transition whose failure is discarded. So neither mechanism
+runs: a crafting character today both keeps crafting **and** fights, and
+`activity.TriggerCombatInterrupt` sits defined with **zero production uses**.
+
+**The fix.**
+
+1. **`SetAggro` writes `Aggro` only if the transition succeeds.** When
+   `CombatPhase == nil` (test fixtures, legacy) it writes as today. This is
+   consistent with the function's own shape: it already refuses to write for
+   the grace-period guard and the taunt-hold guard.
+2. **All six vetoes become load-bearing as they are.** Each duplicates a rule
+   the game already enforces elsewhere, so in the common path none fires.
+3. **`_datafiles/world/dogmud/mobs/.../259-delia.yaml` gains
+   `non_combatant: true`.** She is the ONLY one of 24 craft-schedule NPCs
+   without it, and she is what made the activity veto risky: an attackable
+   crafting NPC whose retaliation would be refused. The owner's rule is that
+   crafting NPCs are not attackable; the data has one exception and it is a
+   content defect, fixed here because it is what makes the veto safe.
+4. **`Commit` stays void.** It can already silently no-op for two guards, and
+   the established pattern is that callers who care re-check state afterwards
+   (`behaviortree/actions_party.go:243` does exactly that). A return value
+   would touch 90 sites to be ignored at most of them.
+
+**Why the activity veto is safe once Delia is fixed.**
+`cancelCraftOrSalvageOnDamage` is already wired into the damage path
+(`NewRound_DoCombat_helpers.go:1158`), so damage frees the activity. With every
+crafting NPC non-combatant, the residual case is a crafting PLAYER who is
+attacked: their retaliation is refused only until the first damage lands, which
+then frees them. A one-round edge, not a deadlock.
+
+**Deliberately NOT collapsing the six vetoes into two.** Structurally they are
+two questions (self, target) wearing six registrations, but restructuring a
+mechanism in the same slice that makes it load-bearing means a failure could be
+either the policy or the plumbing. See §8 for the collapse that is actually
+worth doing.
+
 ### 6.2 U12c-1 — point the reads at the accessors
 
 **Behaviour change: NONE. Size: L (the bulk).**
@@ -498,6 +555,32 @@ Two gates pinned by test rather than trusted:
   the behavior arc.
 - **`combatphase.RegisterMachine` and the always-empty `Attackers()`** are
   already on U11's inbox. The audit confirms them; it does not reclaim them.
+
+### 8.1 Follow-up: two partial target-legality policies
+
+Found while deciding whether the six vetoes could collapse (§6.1b). They can,
+structurally — but the collapse worth doing is a different one. There are
+**two incomplete answers to "is this a legal target"**, and neither subsumes
+the other:
+
+| Check | `combatphase` target vetoes | `mobs.CheckPlayerHarm` |
+|---|---|---|
+| non-combatant | ✅ | ✅ |
+| target dead | ✅ | ❌ |
+| disconnected / despawning | ✅ | ❌ |
+| respawn grace (`NoAggroTarget`) | ✅ | ❌ |
+| **charmed companion** | ❌ | ✅ |
+| **`PlayerAttackImmune`** | ❌ | ✅ |
+
+So the machine would let you engage a charmed companion or a
+`PlayerAttackImmune` mob, while `CheckPlayerHarm` — the documented player-harm
+policy — blocks both. They differ in scope too: `CheckPlayerHarm` is
+player→mob only, the vetoes are symmetric.
+
+Unifying them is **not** in this arc. It requires deciding whether companions
+and attack-immune mobs should be un-engageable at the machine level, which is a
+gameplay call rather than a refactor. Recorded here with its evidence so it does
+not have to be rediscovered.
 
 ---
 
