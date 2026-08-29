@@ -36,7 +36,11 @@ Read at merged HEAD `89d67ff2e` on 2026-08-29. Re-verify before depending on any
 
 They instead become what they already are in practice: **the package-internal storage primitives**, which `targeting` drives from outside and `characters` may call from inside. What U12b enforces is the *caller* restriction — no package other than `internal/characters` and `internal/targeting` may call them. That is a stronger and more honest statement than "deleted", because it survives U12c, where the two methods are exactly where the dual-write collapse happens.
 
-**2. No new `Reason` values are needed.** The existing `aggroTypeFor` maps `ReasonSurprise` to `SurpriseAttack` and everything else to `DefaultAttack`. That is sufficient because no production site passes `Flee` or `SpellCast`. Do not add `ReasonFlee`: `Aggro.Type == Flee` is *read* in three places but written only by tests, and inventing a writer would be a behaviour change.
+**2. `Flee` and `SpellCast` need no `Reason` values; `Shooting` DOES.** No production site passes `Flee` or `SpellCast`, so do not add a `ReasonFlee`: `Aggro.Type == Flee` is *read* in three places but written only by tests, and inventing a writer would be a behaviour change.
+
+⚠️ **`Shooting` is different, and an earlier version of this section got it wrong.** `usercommands/target.go:154` and `:181` read `Aggro.Type` directly and pass it straight back, and that file's own gate (`:50`) explicitly permits `Shooting`. Collapsing it to `DefaultAttack` is identical **only** while a Shooting-subtype weapon is still equipped, because `SetAggro` re-infers the type from the weapon (`combat_state_compat.go:115-118`). Swap the weapon between the shot and the target switch and the engagement silently becomes `DefaultAttack`. `ReasonShoot` exists solely so `ReasonForAggroType` round-trips losslessly; no call site should choose it directly. `TestReasonRoundTrip` pins it.
+
+The general lesson, which cost a blind review to find: a census of the *literal* third arguments is not enough. Where a site passes a **variable**, you must also establish which values that variable can hold.
 
 ### 0.2 The five call-site shapes, and nothing else
 

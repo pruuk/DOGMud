@@ -14,7 +14,7 @@ import (
 
 // ValidateAggro checks if a character's aggro target still exists and is
 // alive. If the target is gone or dead, targeting.Release is called and false is
-// returned. Returns false (without calling EndAggro) when Aggro is already nil.
+// returned. Returns false (without releasing) when Aggro is already nil.
 func ValidateAggro(char *characters.Character) bool {
 	if char.Aggro == nil {
 		return false
