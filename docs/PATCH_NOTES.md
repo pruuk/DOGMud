@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: Groundwork, with nothing to see
+
+Internal only. Every part of the game that needed to know whether you were
+fighting, or who you were fighting, used to ask that question in its own way.
+They all ask the same way now.
+
+Nothing about combat changes. No number moved, no rule changed, no message
+reads differently. This is a step toward retiring some very old plumbing, and
+it was done deliberately so that the step itself is invisible.
+
 ## 2026-08-29: Fights start only when they are allowed to
 
 The rules about who can be drawn into a fight are now actually enforced.

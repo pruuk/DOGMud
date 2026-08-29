@@ -14,63 +14,59 @@
 
 ---
 
-## ⏸ PROGRESS — RESUME HERE (2026-08-29)
+## ✅ COMPLETE (2026-08-29)
 
-**8 commits on the branch. `go build ./...` and `go test ./internal/...` are
-GREEN at the last commit (`365b26240`). Nothing is half-edited.**
+All groups migrated. `gofmt -l`, `go build ./...` and `go test ./internal/...`
+green. Remaining `.Aggro` references outside `internal/characters` and
+`internal/targeting` are U12c-2's: `.Type`, `.RoundsWaiting`, `.SpellInfo`,
+and one raw construction (below).
 
 | Task / Group | State |
 |---|---|
-| Task 1 — accessor equivalence gate | ✅ **PASSED**, 9 cases. This is what makes the rest mechanical |
-| Task 2 — migration guard + allowlist | ✅ done, allowlist **58 → 33** files |
-| Task 4 — `ResolveAggroTarget` re-signature | ✅ **done early** (Group C was blocked on it) |
-| Group A — rooms/goals/planners/seeders | ✅ done |
-| Group B — modules/gmcp | ✅ done |
-| Group C — behaviortree | ✅ done |
-| Group D — actions | ✅ done |
-| **Group E — combat/usercommands/mobcommands** | ⬜ **NEXT**, ~12 sites |
-| **Group F — hooks** | ⬜ the bulk, ~70 sites |
-| Task 5 — verify, patch notes, boot, PR | ⬜ |
+| Task 1 — accessor equivalence gate | ✅ PASSED, 9 cases |
+| Task 2 — migration guard + allowlist | ✅ allowlist **58 → 22** files |
+| Task 4 — `ResolveAggroTarget` re-signature | ✅ |
+| Groups A–F | ✅ |
+| Task 5 — verify, patch notes, boot, PR | ✅ |
 
-**How to see exactly what is left:**
+### Three things U12c-2 inherits
 
-```bash
-go test ./internal/characters/ -run TestNoDirectAggroReads -v
-grep -rn "\.Aggro" --include=*.go internal/combat/ internal/usercommands/ internal/mobcommands/ internal/hooks/ \
-  | grep -v "_test\.go" | grep -vE "\.Aggro\.(Type|RoundsWaiting|SpellInfo)"
-```
+1. 🔴 **`NewRound_DoCombat_unified.go:929` constructs a raw
+   `&characters.Aggro{Type: DefaultAttack}`** for an MvM defender — a WRITE
+   U12b did not land on the seam. It sets a **targetless** engagement, and
+   `targeting.Commit` with a zero ref is not the same thing, so no mechanical
+   swap exists. **The field cannot be deleted while this stands.**
+2. **`IsAggro()` was deliberately NOT adopted** in `hooks/combat_retarget.go`,
+   against the plan's Group F note. It also matches the SpellCast target
+   LISTS, which those two scans do not consider today, so adopting it widens
+   what counts as an incoming attacker. The mob scan could not use it anyway —
+   it tests membership in the caller's companion set, which `IsAggro` cannot
+   express. If U12c-2 wants that widening, it is a behavioural decision to
+   make on purpose.
+3. **Nine `internal/actions` files plus `stand.go`, `throw.go`, `target.go`
+   and `userrecord.prompt.go` keep an `Aggro != nil` guard** solely to protect
+   a `RoundsWaiting` read or write. They stay on the allowlist.
 
-The **allowlist IS the progress record.** Delete a file's entry as you migrate
-it; the guard fails on stale entries, so it cannot drift from reality.
+### Things learned during the migration, not in the original plan
 
-### Three things learned during the migration, not in the original plan
-
-1. **⚠️ `if char.Aggro != nil { char.Aggro.RoundsWaiting = 1 }` is NOT this
-   slice's.** Nine `internal/actions` files match the nil-check pattern but the
-   guard exists solely to protect a `RoundsWaiting` write, which U12c-2 owns.
-   **Leave them and leave their allowlist entries.** Classify before editing:
-   ```bash
-   ln=$(grep -n "if char.Aggro != nil {" internal/<pkg>/<file>.go | head -1 | cut -d: -f1)
-   sed -n "$((ln+1))p" internal/<pkg>/<file>.go   # RoundsWaiting write => skip
-   ```
-2. **Local helpers taking `*characters.Aggro` need re-signaturing too.** Three
-   found so far — `planners.aggroToName`, `seeders.resolveAttackerMobTarget`,
-   `actions.ResolveAggroTarget`. All now take `state.ActorRef`; a zero ref means
-   what a nil Aggro meant. Their tests were rewritten, not deleted. Expect more
-   in `hooks`.
-3. **Use the `Edit` tool, not `sed`/`python`, on Go files.** A `sed` loop with
-   unescaped `/` corrupted the guard file mid-slice. Bulk `sed` is fine only for
-   a single unambiguous literal across files.
-
-### Adding an import when a file needs `state`
-
-```bash
-grep -q '"github.com/GoMudEngine/GoMud/internal/state"' <file> || \
-  sed -i '0,/^import (/{s|^import (|import (\n\t"github.com/GoMudEngine/GoMud/internal/state"|}' <file>
-gofmt -w <file>
-```
-
-Then let the compiler find any now-unused `characters` import.
+- **Three files were in no group at all**: `conversationadapter/adapter.go`,
+  `mobs/crafter.go`, `users/userrecord.prompt.go`. The group table was built
+  from the big-file list and missed the long tail. Sweep by allowlist, not by
+  the table.
+- **A nil-check that gates an append does NOT collapse.**
+  `appendPreAttackAffected` uses it to decide whether an id is appended at all;
+  collapsing it would append a zero id four times per round.
+- **Local helpers taking `*characters.Aggro` need re-signaturing too** —
+  `planners.aggroToName`, `seeders.resolveAttackerMobTarget`,
+  `actions.ResolveAggroTarget`. All take `state.ActorRef`; a zero ref means
+  what a nil Aggro meant.
+- **Sweep every `CurrentCombatTarget()` call site at the end, not just the
+  files you touched.** Earlier groups left four double-calls and four comments
+  describing the raw field under migrated code.
+- **Use `Edit`/anchored Python, not `sed`, on Go files.** A `sed` loop with an
+  unescaped `/` corrupted the guard file mid-slice. Note `docs/PATCH_NOTES.md`
+  is CRLF — a `
+`-assuming edit fails on it.
 
 ---
 
