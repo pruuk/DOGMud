@@ -86,3 +86,64 @@ func TestAccessors_AgreeAfterAVetoedCommit(t *testing.T) {
 	assert.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId,
 		"and the accessor agrees")
 }
+
+// SetCast is the ONE writer that does not go through the targeting seam: it
+// assigns Character.Aggro directly (spells.go:208) and never touches
+// CombatPhase. So calling it while an engagement is live leaves the two stores
+// disagreeing -- Aggro drops to zero ids, CombatPhase keeps the old target --
+// and CurrentCombatTarget() reports the stale one.
+//
+// This is pinned as a KNOWN DISAGREEMENT rather than added to the table above,
+// which it would fail. U12c-1 migrated ~241 reads onto the accessors on the
+// strength of that table, so the exception has to be visible.
+//
+// It is not reachable in production today, but only because of a gate, not
+// because the accessor is right:
+//
+//   - SetCast has exactly ONE production caller, mobcommands/aid.go:81.
+//   - Aid requires room.IsCalm() -- no player and no mob in the room is
+//     attacking -- so the caster cannot be mid-engagement when it fires.
+//   - Nothing resolves a SetCast aggro into a spell effect. Aggro.SpellInfo is
+//     read only by IsAggro, targeting.EngagementOf and
+//     Death_InboundAggroCleanup; none of them apply the spell.
+//
+// U12c-2 owns the fix. Either SetCast moves onto the seam so both stores
+// agree, or the SpellCast aggro type goes away with the field. If this test
+// starts FAILING, that work happened and the assertion below should be
+// inverted into an equivalence assertion, not deleted.
+func TestAccessors_KnownDisagreement_SetCastOverALiveEngagement(t *testing.T) {
+	c := New()
+	c.SetAggro(0, 100, DefaultAttack)
+	require.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId)
+
+	c.SetCast(2, SpellAggroInfo{SpellId: "aidskill", TargetUserIds: []int{7}})
+
+	require.NotNil(t, c.Aggro)
+	assert.Equal(t, SpellCast, c.Aggro.Type)
+	assert.Zero(t, c.Aggro.MobInstanceId, "SetCast writes a targetless Aggro")
+	assert.Zero(t, c.Aggro.UserId, "SetCast writes a targetless Aggro")
+
+	assert.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId,
+		"KNOWN: CombatPhase still holds the pre-cast target, so the accessor "+
+			"and the raw ids disagree. See this test's comment before changing it.")
+
+	// The two accessors do not disagree about in-combat-ness, only about who.
+	assert.Equal(t, c.Aggro != nil, c.IsInCombat())
+}
+
+// A cast from idle has nothing to go stale, so the accessors agree. Pinned as
+// the boundary of the exception above: the disagreement needs a PRIOR
+// engagement, it is not inherent to SetCast.
+func TestAccessors_AgreeWhenSetCastComesFromIdle(t *testing.T) {
+	c := New()
+	c.SetCast(2, SpellAggroInfo{SpellId: "aidskill", TargetUserIds: []int{7}})
+
+	require.NotNil(t, c.Aggro)
+	assert.True(t, c.IsInCombat(), "a pending cast counts as in combat")
+	assert.Equal(t, state.ActorRef{}, c.CurrentCombatTarget(),
+		"and the accessor agrees the plain target is empty")
+
+	// The aimed target lives in SpellInfo, which only IsAggro and
+	// targeting.EngagementOf consult -- NOT CurrentCombatTarget.
+	assert.True(t, c.IsAggro(7, 0), "IsAggro still sees the spell target")
+}
