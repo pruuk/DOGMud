@@ -12,7 +12,7 @@ package behaviortree
 // mob's walk loop follows the path over subsequent ticks. This is consistent
 // with how MobIdle_HandleIdleMobs.go and go.go do mob navigation.
 //
-// Aggro mirroring: mob.Character.SetAggro copies both UserId and
+// Aggro mirroring: targeting.Commit copies both UserId and
 // MobInstanceId from the leader's Aggro struct, keeping combat target parity.
 
 import (
@@ -24,6 +24,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -239,8 +241,8 @@ func engageHostilePlayerInRoom(mobInstanceId int, roomId int) bool {
 		if factions.IsPeacefulToward(mob, u.UserId) {
 			continue
 		}
-		mob.Character.SetAggro(uid, 0, characters.DefaultAttack)
-		// SetAggro silently no-ops on grace-protected players; verify it stuck.
+		targeting.Commit(&mob.Character, state.ActorRef{UserId: uid}, targeting.ReasonAttack)
+		// Commit silently no-ops on grace-protected players; verify it stuck.
 		if mob.Character.IsInCombat() {
 			return true
 		}
@@ -296,11 +298,10 @@ func actPartyAssistTarget(params map[string]any, ctx *EvalContext) Result {
 	if self == nil {
 		return Failure
 	}
-	self.Character.SetAggro(
-		leaderChar.CurrentCombatTarget().UserId,
-		leaderChar.CurrentCombatTarget().MobInstanceId,
-		characters.DefaultAttack,
-	)
+	targeting.Commit(&self.Character, state.ActorRef{
+		UserId:        leaderChar.CurrentCombatTarget().UserId,
+		MobInstanceId: leaderChar.CurrentCombatTarget().MobInstanceId,
+	}, targeting.ReasonAttack)
 	return Success
 }
 

@@ -32,9 +32,6 @@ import (
 // notYetSwept lists files still holding a direct write. DELETE entries as you
 // migrate them. When this is empty, U12b is done.
 var notYetSwept = map[string]bool{
-	"behaviortree/actions_forager.go":    true,
-	"behaviortree/actions_mob.go":        true,
-	"behaviortree/actions_party.go":      true,
 	"hooks/Death_InboundAggroCleanup.go": true,
 	"hooks/Death_MobKillCredit.go":       true,
 	"hooks/NewRound_DoCombat.go":         true,
@@ -51,7 +48,6 @@ var notYetSwept = map[string]bool{
 	"hooks/manifester_companions.go":     true,
 	"hooks/spell_foldrecall.go":          true,
 	"hooks/spell_resolution.go":          true,
-	"justice/arrest.go":                  true,
 	"mobcommands/attack.go":              true,
 	"mobcommands/break.go":               true,
 	"mobcommands/cast.go":                true,
