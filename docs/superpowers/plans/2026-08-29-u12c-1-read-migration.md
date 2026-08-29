@@ -14,6 +14,66 @@
 
 ---
 
+## ⏸ PROGRESS — RESUME HERE (2026-08-29)
+
+**8 commits on the branch. `go build ./...` and `go test ./internal/...` are
+GREEN at the last commit (`365b26240`). Nothing is half-edited.**
+
+| Task / Group | State |
+|---|---|
+| Task 1 — accessor equivalence gate | ✅ **PASSED**, 9 cases. This is what makes the rest mechanical |
+| Task 2 — migration guard + allowlist | ✅ done, allowlist **58 → 33** files |
+| Task 4 — `ResolveAggroTarget` re-signature | ✅ **done early** (Group C was blocked on it) |
+| Group A — rooms/goals/planners/seeders | ✅ done |
+| Group B — modules/gmcp | ✅ done |
+| Group C — behaviortree | ✅ done |
+| Group D — actions | ✅ done |
+| **Group E — combat/usercommands/mobcommands** | ⬜ **NEXT**, ~12 sites |
+| **Group F — hooks** | ⬜ the bulk, ~70 sites |
+| Task 5 — verify, patch notes, boot, PR | ⬜ |
+
+**How to see exactly what is left:**
+
+```bash
+go test ./internal/characters/ -run TestNoDirectAggroReads -v
+grep -rn "\.Aggro" --include=*.go internal/combat/ internal/usercommands/ internal/mobcommands/ internal/hooks/ \
+  | grep -v "_test\.go" | grep -vE "\.Aggro\.(Type|RoundsWaiting|SpellInfo)"
+```
+
+The **allowlist IS the progress record.** Delete a file's entry as you migrate
+it; the guard fails on stale entries, so it cannot drift from reality.
+
+### Three things learned during the migration, not in the original plan
+
+1. **⚠️ `if char.Aggro != nil { char.Aggro.RoundsWaiting = 1 }` is NOT this
+   slice's.** Nine `internal/actions` files match the nil-check pattern but the
+   guard exists solely to protect a `RoundsWaiting` write, which U12c-2 owns.
+   **Leave them and leave their allowlist entries.** Classify before editing:
+   ```bash
+   ln=$(grep -n "if char.Aggro != nil {" internal/<pkg>/<file>.go | head -1 | cut -d: -f1)
+   sed -n "$((ln+1))p" internal/<pkg>/<file>.go   # RoundsWaiting write => skip
+   ```
+2. **Local helpers taking `*characters.Aggro` need re-signaturing too.** Three
+   found so far — `planners.aggroToName`, `seeders.resolveAttackerMobTarget`,
+   `actions.ResolveAggroTarget`. All now take `state.ActorRef`; a zero ref means
+   what a nil Aggro meant. Their tests were rewritten, not deleted. Expect more
+   in `hooks`.
+3. **Use the `Edit` tool, not `sed`/`python`, on Go files.** A `sed` loop with
+   unescaped `/` corrupted the guard file mid-slice. Bulk `sed` is fine only for
+   a single unambiguous literal across files.
+
+### Adding an import when a file needs `state`
+
+```bash
+grep -q '"github.com/GoMudEngine/GoMud/internal/state"' <file> || \
+  sed -i '0,/^import (/{s|^import (|import (\n\t"github.com/GoMudEngine/GoMud/internal/state"|}' <file>
+gofmt -w <file>
+```
+
+Then let the compiler find any now-unused `characters` import.
+
+---
+
 ## 0. Facts verified against source
 
 Read at master `e44b77d48` on 2026-08-29, AFTER U12c-0 and U12c-0b merged.
