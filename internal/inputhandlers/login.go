@@ -54,14 +54,28 @@ func FinalizeLoginOrCreate(results map[string]string, sharedState map[string]any
 				userid := users.FindUserId(results["username"])
 				user := users.GetByUserId(userid)
 
-				existingConnectionId := user.ConnectionId()
+				// The session may have disappeared since the kick prompt (e.g. link-dead
+				// cleanup), in which case there's nothing to kick. This also covers
+				// FindUserId returning 0, since GetByUserId(0) returns nil.
+				if user != nil {
 
-				// Send a goodbye message to the currently connected user
-				tplTxt, _ := templates.Process("goodbye", nil)
-				connections.SendTo([]byte(templates.AnsiParse(tplTxt)), existingConnectionId)
+					existingConnectionId := user.ConnectionId()
 
-				users.SetZombieUser(userid)
-				connections.Kick(existingConnectionId, fmt.Sprintf(`Duplicate login (ip: %s)`, connDetails.RemoteAddr()))
+					// Send a goodbye message to the currently connected user
+					tplTxt, _ := templates.Process("goodbye", nil)
+					connections.SendTo([]byte(templates.AnsiParse(tplTxt)), existingConnectionId)
+
+					users.SetZombieUser(userid)
+					// Error deliberately discarded, and made explicit because
+					// the lint gate is only-new-issues and re-indenting this
+					// line into the nil guard above made errcheck treat it as
+					// new. Kick fails only when the connection is already gone,
+					// which is precisely the outcome being asked for -- and the
+					// user is a zombie either way. Every other Kick call site
+					// (systemcommands, ban, boot) discards it the same way.
+					_ = connections.Kick(existingConnectionId, fmt.Sprintf(`Duplicate login (ip: %s)`, connDetails.RemoteAddr()))
+
+				}
 
 			}
 

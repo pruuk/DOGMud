@@ -27,6 +27,14 @@ var (
 	keyLookups  map[string]string = map[string]string{}
 	typeLookups map[string]string = map[string]string{}
 
+	// moduleOverlayKeys tracks which keys in the overrides union were written
+	// by AddOverlayOverrides (module data-overlay defaults) rather than by the
+	// operator (config-overrides.yaml load or SetVal). Module defaults may
+	// freely overwrite their own previous registrations, but never an
+	// operator-supplied value. SetVal unmarks a key (operator now owns it) and
+	// SetOverrides resets the ledger (the union was replaced from file).
+	moduleOverlayKeys = map[string]struct{}{}
+
 	configDataLock       sync.RWMutex
 	ErrInvalidConfigName = errors.New("invalid config name")
 	ErrLockedConfig      = errors.New("config name is locked")
@@ -75,6 +83,18 @@ func AddOverlayOverrides(dotMap map[string]any) error {
 	configDataLock.Lock()
 	defer configDataLock.Unlock()
 
+	// Register type/key lookups for every key in the overlay, but only
+	// write values for keys that have not already been set by a user override
+	// (e.g. config-overrides.yaml). This ensures module defaults never clobber
+	// operator-supplied values.
+	//
+	// DOGMud divergence from upstream GoMud (which skips ANY already-set key):
+	// keys whose current value came from a previous AddOverlayOverrides call
+	// (tracked in moduleOverlayKeys) may still be overwritten here, so modules
+	// and tests can re-register/update their own defaults. Only operator
+	// values are protected.
+	newKeys := map[string]any{}
+	flatOverrides := Flatten(overrides)
 	for k, v := range dotMap {
 
 		if strings.Index(k, `.`) != -1 {
@@ -96,10 +116,27 @@ func AddOverlayOverrides(dotMap map[string]any) error {
 
 		typeLookups[k] = reflect.TypeOf(v).String()
 
-		overrides[k] = v
+		_, alreadySet := flatOverrides[k]
+		_, moduleOwned := moduleOverlayKeys[k]
+		if !alreadySet || moduleOwned {
+			overrides[k] = v
+			newKeys[k] = v
+			moduleOverlayKeys[k] = struct{}{}
+		}
 	}
 
-	return configData.OverlayOverrides(dotMap)
+	if len(newKeys) == 0 {
+		return nil
+	}
+
+	// Overlay the full override set rather than just the new keys. Overlaying
+	// only the new keys would unmarshal a partial Modules block into the live
+	// config, replacing the inner Modules[<name>] map wholesale and discarding
+	// every operator-supplied value for that module. Flatten first: at this
+	// point `overrides` is mixed-shape (nested maps loaded from
+	// config-overrides.yaml plus the flat dotted keys added above), and
+	// OverlayOverrides re-nests it internally.
+	return configData.OverlayOverrides(Flatten(overrides))
 }
 
 // OverlayDotMap overlays values from a dot-syntax map onto the Config.
@@ -189,6 +226,10 @@ func GetOverrides() map[string]any {
 func (c *Config) SetOverrides(newOverrides map[string]any) error {
 
 	overrides = newOverrides
+	// The union was replaced wholesale (operator file load); any module
+	// ownership marks are stale and must not let a later module overlay
+	// clobber operator values.
+	moduleOverlayKeys = map[string]struct{}{}
 	c.OverlayOverrides(overrides)
 
 	return nil
@@ -343,6 +384,9 @@ func SetVal(propertyPath string, newVal string) error {
 
 	for k, v := range flatQuickmap {
 		flatOverrides[k] = v
+		// The operator now owns this key; a later module overlay
+		// (AddOverlayOverrides) must not overwrite it.
+		delete(moduleOverlayKeys, k)
 	}
 
 	overrides = unflattenMap(flatOverrides)
