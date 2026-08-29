@@ -1,5 +1,26 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: Fights start only when they are allowed to
+
+The rules about who can be drawn into a fight are now actually enforced.
+
+The game has always had a list of reasons a fight should not start: the target
+is already dead, one of you is not a fighter, someone just respawned and is
+still protected. Those rules were written down but never consulted, so a fight
+could begin anyway and then behave oddly, because half the game thought it had
+started and half did not.
+
+They are consulted now. In almost every case you will notice nothing, because
+the situations they cover are ones the game already refused for other reasons.
+
+Two related changes come with it. Switching targets while you are still winding
+up a blow now works, where before it quietly did nothing until the blow landed.
+And fleeing is now a commitment: you cannot be dragged back into a fight you are
+running from, though a failed escape still puts you back in it.
+
+One villager in Ashwick was mistakenly marked as a valid target despite being a
+crafter and no fighter. She is not any more.
+
 ## 2026-08-29: Switching targets now sticks
 
 Change who you are fighting and the game now agrees with you about it.
