@@ -42,7 +42,11 @@ Both follow from the import facts above and **must not be quietly reversed later
 
 1. **`internal/targeting` must NOT import `internal/combat`.** `Select`'s weakest-mob strategy needs `combat.PowerScore`, but `internal/combat/combat.go:409` is itself a `SetAggro` site that U12b has to migrate onto `targeting`. Importing `combat` would make that migration a cycle. The score function is therefore **injected**, following the `userUntargetableFn` precedent already in `characters`.
 
-2. **`internal/characters/taunt_hold.go:22` is a permanent, documented exemption.** `targeting` imports `characters`, so `characters` can never import `targeting`. That one `SetAggro` call (inside `ForceTauntAggro`) stays a direct write forever. It lives in the same package as the storage, which is why it is legitimate rather than a leak. U12b's AST guard must whitelist exactly this file and no other.
+2. **There is NO exemption.** An earlier draft of this plan carved out `internal/characters/taunt_hold.go:22` as permanent, reasoning that `targeting` imports `characters` so `characters` can never import `targeting`. That was wrong, and it mattered: **taunt is the most frequent retargeting mechanic in the game**, so the exemption would have put the hole in the seam exactly where the traffic is.
+
+   `ForceTauntAggro` has **zero callers inside `internal/characters`**. Its three production callers are `actions/combat_taunt.go:311`, `:317` and `hooks/pinnacle_tick.go:481`, all in packages that import `targeting` freely. The `SetAggro` at `taunt_hold.go:22` is not an independent call site; it is the body of a **targeting operation that lives in the storage package**.
+
+   Task 7b splits it: `characters` keeps the three lock fields and gains exported accessors; `targeting` gains `CommitTaunt`; `ForceTauntAggro` is deleted. `characters/taunt_hold.go` then holds no commit at all, and **U12b's AST guard needs no whitelist**.
 
 ---
 
@@ -133,8 +137,10 @@ Expected: FAIL — the package does not exist yet (`no Go files in .../internal/
 //     itself a Commit call site, so importing it creates a cycle. The
 //     weakest-mob score arrives through RegisterPowerScoreFn instead.
 //   - internal/characters can never import this package, because this
-//     package imports it. characters/taunt_hold.go keeps a direct write and
-//     is the one permanent exemption.
+//     package imports it. That is a constraint on where targeting LOGIC may
+//     live, not a licence for characters to keep committing: ForceTauntAggro
+//     moved here as CommitTaunt, and characters kept only the lock state.
+//     There are no exemptions from this seam.
 //
 // In U12a, Commit and Release delegate to characters.SetAggro and
 // characters.EndAggro, so the Aggro/CombatPhase dual-write and every guard
@@ -1052,6 +1058,193 @@ git commit -m "refactor(behaviortree): three target actions onto the targeting s
 
 ---
 
+## Task 7b: Move taunt onto the seam
+
+Taunt is the highest-frequency retargeting mechanic in the game, so it is the best available proof of the API, and leaving it off the seam would put the hole where the traffic is.
+
+**Files:**
+- Modify: `internal/characters/taunt_hold.go` (delete `ForceTauntAggro`, export three accessors)
+- Modify: `internal/characters/combat_state_compat.go:94` (call site of the renamed gate)
+- Modify: `internal/characters/taunt_hold_test.go` (five existing tests call `ForceTauntAggro`)
+- Modify: `internal/targeting/commit.go` (add `ReasonTaunt` and `CommitTaunt`)
+- Modify: `internal/targeting/commit_test.go`
+- Modify: `internal/actions/combat_taunt.go:311,317`
+- Modify: `internal/hooks/pinnacle_tick.go:481`
+
+- [ ] **Step 1: Write the failing tests in `internal/targeting/commit_test.go`**
+
+```go
+func TestCommitTaunt_PinsTheTargetOntoTheTaunter(t *testing.T) {
+	c := characters.New()
+	Commit(c, state.ActorRef{MobInstanceId: 50}, ReasonAttack)
+
+	CommitTaunt(c, state.ActorRef{UserId: 7}, 4)
+
+	assert.Equal(t, 7, EngagementOf(c).Target.UserId)
+	assert.Equal(t, 0, EngagementOf(c).Target.MobInstanceId)
+}
+
+// TestCommitTaunt_HoldSurvivesReaggro is the whole point of the mechanic: an
+// ally swinging at the taunted mob must not flip it back off the taunter.
+func TestCommitTaunt_HoldSurvivesReaggro(t *testing.T) {
+	c := characters.New()
+	CommitTaunt(c, state.ActorRef{UserId: 7}, 4)
+
+	Commit(c, state.ActorRef{MobInstanceId: 50}, ReasonAttack)
+
+	assert.Equal(t, 7, EngagementOf(c).Target.UserId,
+		"a basic re-aggro must not break an active taunt hold")
+}
+
+// TestCommitTaunt_OrderIsLoadBearing: the hold is set BEFORE the commit so
+// the gate sees the new taunter as the locked target and lets this very set
+// through. If the two lines are reversed, a taunt cannot override an existing
+// hold and silently no-ops.
+func TestCommitTaunt_NewerTauntOverridesActiveHold(t *testing.T) {
+	c := characters.New()
+	CommitTaunt(c, state.ActorRef{MobInstanceId: 50}, 4)
+
+	CommitTaunt(c, state.ActorRef{MobInstanceId: 60}, 4)
+
+	assert.Equal(t, 60, EngagementOf(c).Target.MobInstanceId)
+}
+
+func TestCommitTaunt_NilAndZeroAreSafe(t *testing.T) {
+	assert.NotPanics(t, func() { CommitTaunt(nil, state.ActorRef{UserId: 7}, 4) })
+
+	c := characters.New()
+	CommitTaunt(c, state.ActorRef{}, 4)
+	assert.Nil(t, c.Aggro, "a taunt with no taunter must not engage anybody")
+}
+```
+
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `go test ./internal/targeting/ -run TestCommitTaunt -v`
+Expected: FAIL — `undefined: CommitTaunt`.
+
+- [ ] **Step 3: Export the lock accessors in `internal/characters/taunt_hold.go`**
+
+Delete `ForceTauntAggro` entirely and replace the three unexported helpers with exported ones. The lock fields at `character.go:155-157` stay exactly as they are.
+
+```go
+// SetTauntHold applies a taunt-hold lock onto the given taunter for
+// holdRounds. It does NOT engage: committing is targeting.CommitTaunt's job,
+// and the split is what keeps internal/characters free of targeting logic.
+func (c *Character) SetTauntHold(userId, mobInstanceId, holdRounds int) {
+	if holdRounds < 1 {
+		holdRounds = 1
+	}
+	c.tauntHoldUserId = userId
+	c.tauntHoldMobInstanceId = mobInstanceId
+	c.tauntHoldUntilRound = util.GetRoundCount() + uint64(holdRounds)
+}
+
+// TauntHoldBlocks reports whether an incoming target set should be ignored
+// because a taunt hold pins this character onto a different taunter. Only
+// basic attack-type aggro (DefaultAttack/Shooting/SurpriseAttack) is pinned;
+// SpellCast and Flee always pass, as does a set matching the locked taunter.
+//
+// Exported so targeting.Commit can consult it once U12c deletes SetAggro and
+// the guard bodies move out of this package.
+func (c *Character) TauntHoldBlocks(userId, mobInstanceId int, aggroType AggroType) bool {
+	if !c.tauntHoldActive() {
+		return false
+	}
+	switch aggroType {
+	case DefaultAttack, Shooting, SurpriseAttack:
+		return userId != c.tauntHoldUserId || mobInstanceId != c.tauntHoldMobInstanceId
+	default:
+		return false
+	}
+}
+
+// ClearTauntHold drops any active lock. Called from EndAggro so a dead or
+// fled taunter doesn't leave the enemy pinned and unable to re-acquire.
+func (c *Character) ClearTauntHold() {
+	c.tauntHoldUntilRound = 0
+	c.tauntHoldUserId = 0
+	c.tauntHoldMobInstanceId = 0
+}
+```
+
+Keep `tauntHoldActive` unexported. Update the two internal callers: `combat_state_compat.go:94` becomes `c.TauntHoldBlocks(...)` and `:155` becomes `c.ClearTauntHold()`.
+
+- [ ] **Step 4: Add `ReasonTaunt` and `CommitTaunt` to `internal/targeting/commit.go`**
+
+Add `ReasonTaunt` to the `Reason` const block, after `ReasonRetaliate`.
+
+```go
+// CommitTaunt pins c onto ref for holdRounds, then commits.
+//
+// ORDER IS LOAD-BEARING. The hold is set BEFORE the commit so the taunt-hold
+// gate sees the new taunter as the locked target and lets this very set
+// through. It is also why a newer taunt cleanly overrides an older hold.
+// Reversing the two lines makes every taunt silently no-op against an
+// existing hold, and nothing would fail loudly.
+func CommitTaunt(c *characters.Character, ref state.ActorRef, holdRounds int) {
+	if c == nil || ref.IsZero() {
+		return
+	}
+	c.SetTauntHold(ref.UserId, ref.MobInstanceId, holdRounds)
+	Commit(c, ref, ReasonTaunt)
+}
+```
+
+In `aggroTypeFor`, `ReasonTaunt` must fall through to `DefaultAttack`. Do **not** give it a case of its own: the hold gate pins exactly `DefaultAttack`/`Shooting`/`SurpriseAttack`, so any other value would make a taunt unable to hold itself. Add this comment to the `default` branch:
+
+```go
+	// ReasonTaunt lands here deliberately. The taunt-hold gate pins only
+	// DefaultAttack/Shooting/SurpriseAttack, so a taunt that committed as
+	// anything else could not hold its own target.
+```
+
+- [ ] **Step 5: Migrate the three call sites**
+
+`internal/actions/combat_taunt.go:311` and `:317`, preserving the surrounding conditionals exactly:
+
+```go
+					targeting.CommitTaunt(&targetMob.Character,
+						state.ActorRef{UserId: attackerUserId}, holdRounds)
+```
+
+```go
+					targeting.CommitTaunt(&targetMob.Character,
+						state.ActorRef{MobInstanceId: attackerMobId}, holdRounds)
+```
+
+`internal/hooks/pinnacle_tick.go:481`:
+
+```go
+	targeting.CommitTaunt(&mob.Character, state.ActorRef{UserId: user.UserId}, holdRounds)
+```
+
+- [ ] **Step 6: Update the five existing taunt-hold tests**
+
+`internal/characters/taunt_hold_test.go` calls `ForceTauntAggro` at `:26`, `:44`, `:59`, `:62`, `:73` and `:89`. Those tests live in `characters`, which cannot import `targeting`, so rewrite each to the two-line equivalent:
+
+```go
+	c.SetTauntHold(0, 50, 4)
+	c.SetAggro(0, 50, characters.DefaultAttack)
+```
+
+They keep testing the gate, which is what they were always about. Do not delete any of the five.
+
+- [ ] **Step 7: Verify nothing still calls the deleted method**
+
+Run: `grep -rn "ForceTauntAggro" --include=*.go internal/`
+Expected: no hits. Then `go build ./... && go test ./internal/characters/ ./internal/targeting/ ./internal/actions/ ./internal/hooks/ -v`
+Expected: PASS, including all five pre-existing taunt-hold tests.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add internal/characters/ internal/targeting/ internal/actions/combat_taunt.go internal/hooks/pinnacle_tick.go
+git commit -m "refactor(targeting): taunt commits through CommitTaunt, no seam exemption"
+```
+
+---
+
 ## Task 8: Convert `StageMeleeTarget`
 
 `StageMeleeTarget` already separates selection from commitment — it resolves a target and defers the engagement to `commitMeleeEngagement` after the action is paid for. That makes it the player-side proof that the two verbs are right.
@@ -1122,12 +1315,17 @@ git commit -m "refactor(actions): StageMeleeTarget commits through the targeting
 func TestTargetingParity_BothSidesUseTheSeam(t *testing.T) {
 	for _, f := range []string{
 		"melee_target.go",
+		"combat_taunt.go",
 		"../behaviortree/actions_combat.go",
+		"../hooks/pinnacle_tick.go",
+		"../characters/taunt_hold.go",
 	} {
 		src, err := os.ReadFile(f)
 		require.NoError(t, err)
 		assert.NotContains(t, string(src), ".SetAggro(",
 			"%s is on the U12a proof set and must commit through internal/targeting", f)
+		assert.NotContains(t, string(src), "ForceTauntAggro",
+			"%s must use targeting.CommitTaunt; ForceTauntAggro is deleted", f)
 	}
 }
 ```
@@ -1209,7 +1407,7 @@ The Gotchas section must carry all four of these:
 
 1. `EngagementOf` is pure; `ConsumeOpeningStrike` is the only side effect, and it has exactly one intended caller.
 2. This package must never import `internal/combat`; the score arrives by injection. There is a test that fails if this is violated.
-3. `internal/characters/taunt_hold.go` is a permanent exemption from the seam, because `characters` cannot import this package.
+3. `CommitTaunt` sets the hold BEFORE committing, and reversing those two lines makes every taunt silently no-op against an existing hold. `ReasonTaunt` maps to `DefaultAttack`, not to a value of its own, because that is what the hold gate pins.
 4. `Engagement.Ranged` is derived and `Engagement.OpeningUnspent` is stored, and neither may swap.
 
 - [ ] **Step 2: Add a dated patch-notes entry**
@@ -1252,8 +1450,9 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/u12a-targeting-sea
 
 ## Done when
 
-1. `internal/targeting` exists with `Select`, `Commit`, `CommitAfter`, `Release`, `EngagementOf`, `ConsumeOpeningStrike` and a `context.md`.
-2. `grep -n "SetAggro(" internal/behaviortree/actions_combat.go internal/actions/melee_target.go` returns nothing.
+1. `internal/targeting` exists with `Select`, `Commit`, `CommitAfter`, `CommitTaunt`, `Release`, `EngagementOf`, `ConsumeOpeningStrike` and a `context.md`.
+2. `grep -n "SetAggro(" internal/behaviortree/actions_combat.go internal/actions/melee_target.go internal/actions/combat_taunt.go internal/characters/taunt_hold.go internal/hooks/pinnacle_tick.go` returns nothing.
+2b. `grep -rn "ForceTauntAggro" --include=*.go internal/` returns nothing, and all five pre-existing taunt-hold tests still pass. **There are no seam exemptions**, so U12b's AST guard will need no whitelist.
 3. Registry names, action parameters and `delayedActions` membership are unchanged, asserted by test.
 4. The no-combat-import guard passes.
 5. `EngagementOf`'s cost is measured and written into the spec.

@@ -142,6 +142,48 @@ Every `AggroType` member already has a home elsewhere. None of them moves into
 already holds all four of its fields verbatim. `Aggro.ExitName` is deleted as
 dead.
 
+### 2.3 Layering, and why there are no exemptions
+
+Two constraints follow from the import graph and must not be quietly reversed.
+
+**`internal/targeting` must NOT import `internal/combat`.** `Select`'s
+weakest-mob strategy needs `combat.PowerScore`, but `internal/combat/combat.go:409`
+is itself a `Commit` call site that U12b migrates. Importing `combat` would make
+that migration an import cycle. The score is **injected** instead, following the
+`userUntargetableFn` precedent already in `characters`
+(`combat_state_compat.go:49`). A guard test fails if this is ever violated.
+
+**Taunt is on the seam like everything else.** `targeting` imports `characters`,
+so `characters` can never import `targeting` — but that is a constraint on where
+targeting *logic* may live, not a licence for `characters` to keep committing.
+An earlier draft exempted `characters/taunt_hold.go:22`, which would have put the
+hole in the seam exactly where the traffic is: **taunt is the most frequent
+retargeting mechanic in the game.**
+
+It splits cleanly, because `ForceTauntAggro` has **zero callers inside
+`internal/characters`** — its three production callers are
+`actions/combat_taunt.go:311`, `:317` and `hooks/pinnacle_tick.go:481`, all in
+packages that import `targeting` freely. The `SetAggro` at `taunt_hold.go:22` is
+not an independent call site; it is the body of a targeting operation that
+happens to live in the storage package.
+
+| Concern | Lands in |
+|---|---|
+| The three lock fields (`character.go:155-157`) and `SetTauntHold` / `TauntHoldBlocks` / `ClearTauntHold` | `characters` — it is state, and the commit gate reads it |
+| "Pin this actor onto that one, then engage" (`CommitTaunt`) | `targeting` — it is a commit with a hold |
+
+`ForceTauntAggro` is deleted. `characters/taunt_hold.go` then contains no commit
+at all, and **U12b's AST guard needs no whitelist**.
+
+Two traps in that move, both cheap to get wrong and silent when wrong:
+
+1. `CommitTaunt` must set the hold **before** committing, so the gate sees the
+   new taunter as the locked target and lets that very set through. Reversed,
+   every taunt no-ops against an existing hold.
+2. `ReasonTaunt` must map to `DefaultAttack`. The hold gate pins only
+   `DefaultAttack`/`Shooting`/`SurpriseAttack`, so a taunt committing as
+   anything else could not hold its own target.
+
 ---
 
 ## 3. Why three slices
@@ -180,8 +222,14 @@ diff.
    - `behaviortree` `attack`, whose **inline** third copy of the random-player
      picker (`actions_combat.go:38-46`) folds into `Select`
    - `actions.StageMeleeTarget`, the player equivalent
-   Two mob sites and two player sites, covering Select-without-Commit,
-   Select-with-Commit, and both sides of the parity guard.
+   - **taunt**: `actions/combat_taunt.go:311`, `:317` and
+     `hooks/pinnacle_tick.go:481`, via `CommitTaunt` (see 2.3)
+   Covering Select-without-Commit, Select-with-Commit, deferred commit, and
+   commit-with-a-hold, on both sides of the player/mob divide.
+
+   Taunt was added to the proof set after the first draft. It is the most
+   frequent retargeting mechanic in the game, which makes it both the best
+   available test of the API and the worst possible thing to leave off it.
 4. Extend `internal/actions/ambush_parity_guard_test.go` so the player path and
    the behaviortree path are asserted to reach the same seam.
 5. Measure `EngagementOf` on the combat hot path (risk 1) before anything else
