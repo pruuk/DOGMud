@@ -373,19 +373,56 @@ func TestHowlAliasChargesOnlyThroughTaunt(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 
-	mob, room := getTestMobAndRoom(t)
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
-	mob.Character.Stats.Charisma.ValueAdj = 100
-	mob.Character.ConvictionMax.Value = 50
-	mob.Character.Conviction = 50
-	mob.Character.Skills = map[string]int{"rhetoric": 0}
+	// The taunt contest can FUMBLE (~2.3%, self-relative), and a fumble adds
+	// self-conviction damage on top of the admission — which made an exact
+	// `Conviction == 46` assertion flaky. It failed 9 times in 400 runs and
+	// went red on master after PR #83, having passed that PR's own checks.
+	//
+	// Retried rather than seeded, matching
+	// actions/rhetoric_progression_test.go: rand.Seed has been a no-op since
+	// Go 1.20 unless GODEBUG=randseednop=0 is set, which this file does not
+	// set, so each iteration is an independent draw.
+	//
+	// The guard is also STRONGER than the exact figure it replaces. What this
+	// test exists to catch is a SECOND quote/commit inside Howl, which charges
+	// eight or nine at rank zero. That is now asserted on EVERY attempt,
+	// fumble or not, instead of being inferred from one clean number.
+	const admission = 4
+	cleanSeen := false
 
-	handled, err := Howl("", mob, room)
-	require.NoError(t, err)
-	require.True(t, handled)
-	require.Equal(t, 46, mob.Character.Conviction)
-	require.Greater(t, mob.Character.Cooldowns["special-move"], 0)
-	require.Equal(t, 1, mob.Character.Aggro.RoundsWaiting)
+	for attempt := 0; attempt < 20 && !cleanSeen; attempt++ {
+		// getTestMobAndRoom returns the SHARED instance 100, not a fresh mob,
+		// so every retry has to reset the state the previous attempt moved.
+		// Without clearing the cooldown, attempt two is refused by the
+		// special-move timer attempt one claimed and spends nothing at all.
+		mob, room := getTestMobAndRoom(t)
+		delete(mob.Character.Cooldowns, "special-move")
+		mob.Character.Aggro = &characters.Aggro{UserId: 1}
+		mob.Character.Stats.Charisma.ValueAdj = 100
+		mob.Character.ConvictionMax.Value = 50
+		mob.Character.Conviction = 50
+		mob.Character.Skills = map[string]int{"rhetoric": 0}
+
+		handled, err := Howl("", mob, room)
+		require.NoError(t, err)
+		require.True(t, handled)
+
+		spend := 50 - mob.Character.Conviction
+		require.NotContains(t, []int{8, 9}, spend,
+			"Howl spent %d conviction, the signature of a SECOND quote/commit "+
+				"on top of the one four-point taunt admission", spend)
+		require.GreaterOrEqual(t, spend, admission,
+			"Howl must always pay the taunt admission")
+
+		if spend == admission {
+			cleanSeen = true
+			require.Greater(t, mob.Character.Cooldowns["special-move"], 0)
+			require.Equal(t, 1, mob.Character.Aggro.RoundsWaiting)
+		}
+	}
+	require.True(t, cleanSeen,
+		"no attempt in 20 charged exactly the %d-point admission; Howl is not "+
+			"routing through the single taunt quote/commit", admission)
 
 	_, thisFile, _, ok := runtime.Caller(0)
 	require.True(t, ok)
