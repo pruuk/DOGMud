@@ -3,8 +3,9 @@
 **Date:** 2026-08-29
 **Arc:** Unified Contest Resolution (`docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`)
 **Status:** design approved, plan not yet written
-**Ships as:** three slices, **U12a** (the seam, proven on four call sites),
-**U12b** (the mechanical sweep), **U12c** (the collapse)
+**Ships as:** five slices, **U12a** (the seam), **U12b** (the write sweep),
+**U12c-0** (make the machine retargetable), **U12c-1** (the read migration),
+**U12c-2** (the collapse)
 
 ---
 
@@ -128,7 +129,9 @@ run after the state is spent.
 ### 2.2 What dissolves
 
 Every `AggroType` member already has a home elsewhere. None of them moves into
-`combatphase`; `combatphase` gains exactly one new field, `OpeningUnspent`.
+`combatphase`. `combatphase` gains exactly **two** new fields, and neither is an
+`AggroType` in disguise: `OpeningUnspent` (§2.1) and `RoundsWaiting` (§6.3,
+added after the U12c design found it was a live counter with no other home).
 
 | `AggroType` | Home |
 |---|---|
@@ -186,7 +189,17 @@ Two traps in that move, both cheap to get wrong and silent when wrong:
 
 ---
 
-## 3. Why three slices
+## 3. Why it slices this way
+
+Five slices, and every split has the same justification: **keep the part that
+can break the game out of the diff that cannot.** U12a/U12b separate a new API
+from a 90-site sweep; U12c-0/U12c-1/U12c-2 separate a bug fix, a 250-site
+migration, and a store deletion. The slice count grew twice, both times because
+verification found something — `EndAggro` as a second writer, then the stale
+retarget bug — and neither was visible from the roadmap row.
+
+The rest of this section records the U12a/U12b reasoning, so the rejected
+orderings are not re-proposed.
 
 The obvious split is two: build the seam and migrate onto it, then collapse.
 That was rejected because it bundles a **90-site mechanical sweep with a
@@ -264,25 +277,179 @@ Reviewable as "did each site translate correctly?" with no design judgment
 involved. The AST guard, not human attention, is what proves the sweep is
 complete.
 
-## 6. U12c — the collapse
+## 6. U12c — the collapse, in THREE slices
 
-**Behaviour change: yes, at named sites.** **Size: L.**
+**Refined 2026-08-29 after U12b merged.** U12c splits the same way U12a/U12b
+did, and for the same reason: the mechanical bulk must not drown the ~30 lines
+that can actually break the game.
 
-1. `combatphase` becomes the single store. Delete `Aggro`, `AggroType`,
-   `SpellAggroInfo`, and `combat_state_compat.go` (211 lines) entire.
-2. Route each dissolved member per the table in 2.2.
-3. Migrate the ~290 read sites to `EngagementOf` and the targeting accessors.
-   The reads that actually mean "am I in combat" go to `Phase`, where they
-   always belonged.
-4. Promote `openingStrikeLeft` from a local in `calculateCombat`
-   (`combat.go:405`) to `Engagement.OpeningUnspent`. The comment there concedes
-   the flag is "round-scoped here only because the round is where the engagement
-   opens"; storing it on the engagement makes the implementation match the
-   stated intent, and any other path that resolves a swing inherits the
-   invariant instead of quietly missing it.
-5. Decide `TransitionToEngaging` dropping its `TransitionReason` (U10d's
-   finding). With `AggroType` dissolved, either `Reason` becomes load-bearing
-   and must be fixed, or it is dead and goes. Do not leave it as-is.
+### 6.0 Facts that shaped the split
+
+Verified at merged HEAD `5f1ca6b99`.
+
+| Fact | Value |
+|---|---|
+| Non-test `.Aggro` references | **306** (hooks 97 · actions 73 · behaviortree 35 · characters 26 · usercommands 15 · rooms 12 · targeting 10 · others) |
+| …that mean "am I in combat" (`!= nil` / `== nil`) | **127** |
+| …that read the target (`UserId` / `MobInstanceId`) | **124** |
+| …`RoundsWaiting` | 20 (17 of them the WRITE `= 1`) |
+| …`Type` / `SpellInfo` | 21 / 7 |
+| …passing the whole struct to `ResolveAggroTarget(*Aggro)` | 18 |
+| `IsInCombat()` / `CurrentCombatTarget()` | **Already exist**, already prefer `CombatPhase` with an `Aggro` fallback (`character.go:746`, `:783`) |
+| `EngagingData.Reason` | **DEAD** — never written, never read. The only `EngagingData{...}` literal (`combat_state_compat.go:138`) sets `Target` and `RoundsUntil` only |
+| `combatphase.OnRoundTick()` | **Driven in production** (`NewRound_DoCombat.go:115`, `:281`) |
+
+⚠️ **`RoundsWaiting` and `RoundsUntil` are NOT duplicates, and they are already
+out of sync by construction.** Both are seeded identically by `SetAggro`, then
+decremented by different code under different conditions — and the 20
+`RoundsWaiting = 1` writes after special moves never touch `RoundsUntil`.
+`Aggro.RoundsWaiting` is the live combat-pacing counter: it gates the swing
+(`NewRound_DoCombat_unified.go:283`) and renders in the player's prompt
+(`userrecord.prompt.go:708`). `RoundsUntil` only drives Engaging→Engaged.
+Deleting the former without rehoming its semantics makes every special move
+free.
+
+### 6.1 U12c-0 — make the machine retargetable
+
+**Behaviour change: yes, and it is a BUG FIX. Size: S. Must land FIRST.**
+
+**The bug, proven by probe, not inferred.** `validTransitions`
+(`combatphase/transitions.go`) declares `Engaged: {Disengaging, Idle}`, so
+**`Engaged → Engaging` is illegal**. `SetAggro` calls `TransitionToEngaging`
+unconditionally and discards the error, and the machine has **no other retarget
+path** — every method was checked. So a retarget while `Engaged` updates
+`Aggro` and leaves `CombatPhase` holding the OLD target:
+
+```
+after first commit: phase=Engaging  aggro=100  current={0 100}
+after ticks:        phase=Engaged   aggro=100  current={0 100}
+after retarget:     phase=Engaged   aggro=200  current={0 100}   <-- stale
+```
+
+`CurrentCombatTarget()` falls back to `Aggro` only when CombatPhase's target is
+ZERO. Here it is non-zero and wrong, so the fallback never fires.
+
+**Live, player-visible impact.** ~40 production sites already call
+`CurrentCombatTarget()`, including:
+
+- `users/userrecord.prompt.go:541`, `:557` — the `{target}` and `{targethealth}`
+  prompt tokens. After `target <newmob>` prints "You turn your attention to X!",
+  the prompt still names and health-bars the PREVIOUS enemy.
+- `mobcommands/attack.go:84` — the "already fighting this player?" check.
+- `behaviortree/actions_party.go:302` — NPC party members mirror a stale target.
+- **Every taunt.** `CommitTaunt` goes through the same path, and taunt is the
+  game's most frequent retargeting mechanic.
+
+This also explains why 306 sites read `.Aggro` directly: `Aggro` is the store
+that actually works. §1.1's "CombatPhase is the primary source of truth" is an
+aspiration, not a description.
+
+**The fix: allow `Engaged → Engaging`.** One entry in `validTransitions`. A
+retarget becomes a fresh engagement — new target, fresh `RoundsUntil` wind-up,
+then back to `Engaged`.
+
+Why this and not the alternatives:
+
+- **A fresh wind-up on retarget is right on its own terms**, not merely
+  tolerable: switching targets mid-fight takes a moment, and the engagement
+  genuinely restarts against someone new. Owner's call, 2026-08-29.
+- **It also matches what already happens.** `SetAggro` already reseeds
+  `RoundsWaiting` on every retarget, so that moment is already being paid — it
+  was just tracked in the one counter that works. As a bonus the two counters
+  (§6.3) stop diverging on retarget.
+- **It re-runs the target vetoes**, so a retarget onto a dead or non-combatant
+  target is correctly refused. An in-place `Retarget(ref)` mutator would skip
+  them and could leave the machine pointing at a corpse.
+- **Its two theoretical costs have no consumers.** `advanceToEngaged()` re-fires
+  `mob_engaged`, which **no authored behaviour tree listens to** (verified
+  against `_datafiles/world/dogmud/behaviors/`, where 14 other event names do
+  appear). And the actor is briefly `Engaging` rather than `Engaged`, where
+  `IsEngaged()` has **zero** production consumers.
+- Rejected: release-then-engage inside `SetAggro`. It passes through `Idle`,
+  which clears all phase data and fires Idle-entry observers — a real risk of
+  "you are no longer in combat" side effects mid-fight.
+
+**Regression test:** the probe above, as a permanent test — after a retarget
+while Engaged, `CurrentCombatTarget()` must equal the committed target.
+
+### 6.2 U12c-1 — point the reads at the accessors
+
+**Behaviour change: NONE. Size: L (the bulk).**
+
+| Read | Becomes | Count |
+|---|---|---|
+| `c.Aggro != nil` / `== nil` | `c.IsInCombat()` / `!c.IsInCombat()` | 127 |
+| `c.Aggro.UserId` / `.MobInstanceId` | `c.CurrentCombatTarget()`, returning `state.ActorRef` | 124 |
+| `ResolveAggroTarget(c.Aggro)` | `ResolveAggroTarget(ref state.ActorRef)` | 18 |
+
+⚠️ **This slice is only safe AFTER U12c-0.** The accessors prefer `CombatPhase`,
+which is stale after a retarget until §6.1 lands. Migrating first would
+propagate that staleness to 124 more sites — the precise opposite of a
+no-behaviour-change slice. Once U12c-0 has landed, the accessors are correct and
+this becomes the mechanical migration it is meant to be.
+
+Guard-driven exactly like U12b: an allowlist that shrinks to empty and fails on
+stale entries. No playtest of its own.
+
+### 6.3 U12c-2 — the actual collapse
+
+**Behaviour change: yes. Size: M. Owns the arc's adversarial playtest.**
+
+1. **`RoundsWaiting` moves to the combat phase machine** as its own field,
+   cleared on Idle. That preserves today's behaviour exactly: `EndAggro` nils
+   `Aggro`, so the counter dies with the engagement. It stays DISTINCT from
+   `RoundsUntil`.
+
+   **A comment block naming both counters is a REQUIRED deliverable of this
+   slice, not a nicety.** The real defect today is not that there are two — it
+   is that nothing anywhere says so, so each looks like the only one. The
+   comment must state all five of these:
+
+   - `RoundsUntil` is the **Engaging wind-up**: how many rounds before the
+     engagement becomes active. `OnRoundTick` decrements it and calls
+     `advanceToEngaged()` at zero, which is also what fires the `mob_engaged`
+     behaviour-tree event.
+   - `RoundsWaiting` is the **actor's round budget**: how many rounds before
+     this actor may act again. `handleCombatWaitRound` decrements it *later in
+     the same round*, and emits the wait messages.
+   - They are seeded identically by the commit path, so during wind-up they
+     march in lockstep. That is coincidence of seeding, not shared identity.
+   - They **diverge in `Engaged` on purpose**: `RoundsUntil` exists only in
+     `Engaging`, while the ~20 special-move `= 1` writes need a counter that
+     still works once engaged.
+   - `OnRoundTick`'s `Engaged` branch is a **deliberate no-op**. Making it
+     decrement is the first step of unification, not a bug fix.
+
+   ⚠️ **Deferred, deliberately: unifying them into one counter.** It is
+   achievable and the end state is simpler, but it is a balance change wearing
+   a refactor's clothes. One counter means one decrement point, and the two
+   decrements happen at different moments in the round (`OnRoundTick` fires
+   FIRST, at `NewRound_DoCombat.go:115`/`:281`; `handleCombatWaitRound` runs
+   later during resolution). Collapsing them shortens every weapon wind-up and
+   every special-move recovery by one round, unless compensated by seeding 2
+   where the code says 1 — precisely the sort of invisible `+1` that becomes
+   folklore. If it is wanted, it is its own post-arc slice with its own
+   playtest, and it must also relocate `advanceToEngaged()` and verify
+   `mob_engaged` still fires at the same point.
+2. **`AggroType` dissolves** per the table in 2.2: `Flee`→`Disengaging`
+   (finishing the standing `// TODO Task 18` at
+   `NewRound_DoCombat_helpers.go:904`), `SpellCast`→`activity.Casting`,
+   `Shooting`→derived, `SurpriseAttack`→`OpeningUnspent`.
+3. **`SpellInfo`'s 7 reads** move to `activity.CastingData`, already a strict
+   superset of `SpellAggroInfo`.
+4. **`openingStrikeLeft`** graduates from a local in `calculateCombat` to
+   engagement state, and `combat.go`'s demotion becomes `ConsumeOpeningStrike`
+   — giving it the production caller it has deliberately lacked since U12a.
+5. **Delete `EngagingData.Reason`.** This settles U10d's deferred question with
+   the second branch of the either/or: it is dead, so it goes. The `r
+   state.TransitionReason` PARAMETER is live (it reaches
+   `m.inner.TransitionTo`) and stays. ⚠️ Do NOT repurpose either as a home for
+   an engagement-kind enum: that moves the demotion bug rather than killing it.
+6. **Delete the `Aggro` fallback branches** in `IsInCombat` and
+   `CurrentCombatTarget`, then `Aggro`, `AggroType`, `SpellAggroInfo` and
+   `combat_state_compat.go`.
+7. `SetAggro`/`EndAggro` survive as the storage primitives (see §5 step 4),
+   now writing `CombatPhase` alone.
 
 ---
 
@@ -346,14 +513,14 @@ Two gates pinned by test rather than trusted:
 
    The melee case is allocation-free and cheap enough to ignore. The spell-cast
    case allocates because `SpellTargets` is built per call, and that is the one
-   number U12c should watch: if the collapse ends up calling `EngagementOf`
+   number U12c-2 should watch: if the collapse ends up calling `EngagementOf`
    several times per actor per round, consider populating `SpellTargets` lazily
    or hoisting the call, rather than letting a mid-cast actor allocate on every
    read. It is not a problem at one call per actor per round.
 2. **90 write sites and ~290 read sites** is the largest mechanical migration in
    the arc. This is why it is three slices: see section 3.
-3. **U12c changes behaviour immediately before U11's closing playtest.** U11 is
-   the arc's gate and no code slice may land after it, so U12c's own adversarial
+3. **U12c-2 changes behaviour immediately before U11's closing playtest.** U11 is
+   the arc's gate and no code slice may land after it, so U12c-2's own adversarial
    playtest is mandatory, not optional.
 4. **`Reason` versus `AggroType` could recreate the enum problem.** If the
    `TransitionReason` fix in 6.5 turns into "store the engagement kind on the
@@ -378,5 +545,5 @@ Two gates pinned by test rather than trusted:
    unchanged, both asserted by test.
 6. The ambush parity guard covers targeting, not only ambush.
 7. `EngagementOf`'s hot-path cost is measured and recorded.
-8. U12c passes an adversarial playtest before handoff, per the content SOP.
+8. U12c-2 passes an adversarial playtest before handoff, per the content SOP.
 9. `SetAggro` and `EndAggro` no longer exist.
