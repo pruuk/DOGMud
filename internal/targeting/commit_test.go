@@ -79,3 +79,45 @@ func TestCommitAfter_PassesTheExplicitWait(t *testing.T) {
 	require.NotNil(t, c.Aggro)
 	assert.Equal(t, 3, c.Aggro.RoundsWaiting)
 }
+
+func TestCommitTaunt_PinsTheTargetOntoTheTaunter(t *testing.T) {
+	c := characters.New()
+	Commit(c, state.ActorRef{MobInstanceId: 50}, ReasonAttack)
+
+	CommitTaunt(c, state.ActorRef{UserId: 7}, 4)
+
+	assert.Equal(t, 7, EngagementOf(c).Target.UserId)
+	assert.Equal(t, 0, EngagementOf(c).Target.MobInstanceId)
+}
+
+// TestCommitTaunt_HoldSurvivesReaggro is the whole point of the mechanic: an
+// ally swinging at the taunted mob must not flip it back off the taunter.
+func TestCommitTaunt_HoldSurvivesReaggro(t *testing.T) {
+	c := characters.New()
+	CommitTaunt(c, state.ActorRef{UserId: 7}, 4)
+
+	Commit(c, state.ActorRef{MobInstanceId: 50}, ReasonAttack)
+
+	assert.Equal(t, 7, EngagementOf(c).Target.UserId,
+		"a basic re-aggro must not break an active taunt hold")
+}
+
+// The hold is set BEFORE the commit so the gate sees the new taunter as the
+// locked target and lets this very set through. If the two lines are reversed,
+// a taunt cannot override an existing hold and silently no-ops.
+func TestCommitTaunt_NewerTauntOverridesActiveHold(t *testing.T) {
+	c := characters.New()
+	CommitTaunt(c, state.ActorRef{MobInstanceId: 50}, 4)
+
+	CommitTaunt(c, state.ActorRef{MobInstanceId: 60}, 4)
+
+	assert.Equal(t, 60, EngagementOf(c).Target.MobInstanceId)
+}
+
+func TestCommitTaunt_NilAndZeroAreSafe(t *testing.T) {
+	assert.NotPanics(t, func() { CommitTaunt(nil, state.ActorRef{UserId: 7}, 4) })
+
+	c := characters.New()
+	CommitTaunt(c, state.ActorRef{}, 4)
+	assert.Nil(t, c.Aggro, "a taunt with no taunter must not engage anybody")
+}

@@ -70,3 +70,40 @@ func aggroTypeFor(r Reason) characters.AggroType {
 		return characters.DefaultAttack
 	}
 }
+
+// CommitTaunt pins c onto ref for holdRounds, then commits.
+//
+// ORDER IS LOAD-BEARING. The hold is set BEFORE the commit so the taunt-hold
+// gate sees the new taunter as the locked target and lets this very set
+// through. It is also why a newer taunt cleanly overrides an older hold.
+// Reversing the two lines makes every taunt silently no-op against an
+// existing hold, and nothing would fail loudly.
+//
+// This was characters.ForceTauntAggro. It moved here because it is a
+// targeting operation, not storage: leaving it in internal/characters would
+// have exempted the game's most frequent retargeting mechanic from the seam.
+func CommitTaunt(c *characters.Character, ref state.ActorRef, holdRounds int) {
+	if c == nil || ref.IsZero() {
+		return
+	}
+	c.SetTauntHold(ref.UserId, ref.MobInstanceId, holdRounds)
+	Commit(c, ref, ReasonTaunt)
+}
+
+// ReasonForAggroType is the inverse of aggroTypeFor: it maps a legacy
+// AggroType, as produced by actions.EngageAggroType, onto the Reason a caller
+// should Commit with.
+//
+// It exists so callers never have to name characters.SurpriseAttack
+// themselves. The ambush parity guard bans that reference outright, because
+// deriving the surprise type locally (from IsHidden(), say) skips the shared
+// special-move cooldown the other engagement paths pay -- the exact bug U10d
+// fixed. Callers pass EngageAggroType's verdict straight through here instead.
+func ReasonForAggroType(t characters.AggroType) Reason {
+	switch t {
+	case characters.SurpriseAttack:
+		return ReasonSurprise
+	default:
+		return ReasonAttack
+	}
+}

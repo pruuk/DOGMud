@@ -23,6 +23,42 @@ type Engagement struct {
 	OpeningUnspent bool              // STORED  ambush opening not yet thrown
 	Casting        bool              // DERIVED from the activity machine
 	Ranged         bool              // DERIVED from the equipped weapon subtype
+
+	// SpellTargets carries the aimed targets of a spell-cast aggro, which do
+	// NOT live in Target.
+	//
+	// characters.SetCast (spells.go:208) builds Aggro{Type: SpellCast,
+	// SpellInfo: ...} and never writes UserId or MobInstanceId, so they stay
+	// zero for the whole cast. Reading only Target would report "no target"
+	// for a mob mid-cast that IsAggro (combat_state_compat.go:191) happily
+	// reports as aggro'd, which is a live disagreement with production, not a
+	// theoretical one.
+	//
+	// Target and SpellTargets are therefore both consulted by IsAimedAt.
+	// Callers that only look at Target will be wrong about casters.
+	SpellTargets []state.ActorRef
+}
+
+// IsAimedAt reports whether this engagement is directed at ref, mirroring
+// characters.IsAggro's semantics: the plain target first, then the spell-cast
+// target lists.
+//
+// It exists so consumers cannot accidentally reimplement the half of that
+// check that only looks at Target -- which is exactly the bug an adversarial
+// review caught in the first draft of this package.
+func (e Engagement) IsAimedAt(ref state.ActorRef) bool {
+	if ref.IsZero() {
+		return false
+	}
+	if e.Target == ref {
+		return true
+	}
+	for _, t := range e.SpellTargets {
+		if t == ref {
+			return true
+		}
+	}
+	return false
 }
 
 // EngagementOf composes the authoritative sources at read time.
@@ -49,6 +85,17 @@ func EngagementOf(c *characters.Character) Engagement {
 			MobInstanceId: c.Aggro.MobInstanceId,
 		}
 		e.OpeningUnspent = c.Aggro.Type == characters.SurpriseAttack
+
+		// A spell-cast aggro carries its targets in SpellInfo and leaves the
+		// plain ids zero. Mirrors the SpellCast branch of IsAggro.
+		if c.Aggro.Type == characters.SpellCast {
+			for _, uId := range c.Aggro.SpellInfo.TargetUserIds {
+				e.SpellTargets = append(e.SpellTargets, state.ActorRef{UserId: uId})
+			}
+			for _, mId := range c.Aggro.SpellInfo.TargetMobInstanceIds {
+				e.SpellTargets = append(e.SpellTargets, state.ActorRef{MobInstanceId: mId})
+			}
+		}
 	}
 	if c.Activity != nil {
 		e.Casting = c.Activity.IsCasting()

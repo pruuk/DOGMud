@@ -47,7 +47,10 @@ func TestTargetingDoesNotImportCombat(t *testing.T) {
 				continue
 			}
 			next := append(append([]string{}, trail...), imp)
-			if imp == forbiddenPkg {
+			// Prefix match, not equality: internal/combat has no sub-packages
+			// today, but one added later would slip past an exact-string
+			// check and reintroduce the cycle silently.
+			if imp == forbiddenPkg || strings.HasPrefix(imp, forbiddenPkg+"/") {
 				return next
 			}
 			if found := walk(imp, next); found != nil {

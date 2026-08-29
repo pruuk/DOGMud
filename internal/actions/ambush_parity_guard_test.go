@@ -121,7 +121,17 @@ func aggroVarsFromEngage(t *testing.T, fset *token.FileSet, body *ast.BlockStmt)
 	return names
 }
 
-// setAggroCallsIn returns every SetAggro call in the body, in source order.
+// setAggroCallsIn returns every ENGAGEMENT call in the body, in source order.
+//
+// An engagement is either the legacy characters.SetAggro or the U12a seam's
+// targeting.Commit. Both are accepted because U12a migrates call sites one
+// slice at a time: behaviortree and the melee/taunt paths are on Commit, while
+// the ~86 sites U12b sweeps still call SetAggro. Recognising both is what lets
+// this guard keep watching every path throughout the migration instead of
+// going quiet on whichever half moved first.
+//
+// It deliberately does NOT accept any other name. A path that invents a third
+// way to engage is what this guard exists to catch.
 func setAggroCallsIn(t *testing.T, fset *token.FileSet, body *ast.BlockStmt) []*ast.CallExpr {
 	t.Helper()
 	calls := []*ast.CallExpr{}
@@ -131,12 +141,39 @@ func setAggroCallsIn(t *testing.T, fset *token.FileSet, body *ast.BlockStmt) []*
 			return true
 		}
 		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if ok && sel.Sel.Name == "SetAggro" {
+		if !ok {
+			return true
+		}
+		if sel.Sel.Name == "SetAggro" {
+			calls = append(calls, call)
+			return true
+		}
+		// targeting.Commit, but not CommitTaunt/CommitAfter, which are their
+		// own verbs and are not part of the ambush path.
+		if pkg, ok := sel.X.(*ast.Ident); ok && pkg.Name == "targeting" && sel.Sel.Name == "Commit" {
 			calls = append(calls, call)
 		}
 		return true
 	})
 	return calls
+}
+
+// identsIn returns every identifier appearing anywhere inside expr.
+//
+// The aggro-type argument used to be a bare variable. Through the seam it is
+// targeting.ReasonForAggroType(aggroType), so the check walks the expression
+// rather than requiring the argument to BE the identifier. What matters is
+// unchanged: the value handed to the engagement call must trace back to
+// actions.EngageAggroType and not be conjured locally.
+func identsIn(expr ast.Expr) []string {
+	names := []string{}
+	ast.Inspect(expr, func(n ast.Node) bool {
+		if id, ok := n.(*ast.Ident); ok {
+			names = append(names, id.Name)
+		}
+		return true
+	})
+	return names
 }
 
 func TestAmbushParityAcrossEngagementPaths(t *testing.T) {
@@ -174,21 +211,25 @@ func TestAmbushParityAcrossEngagementPaths(t *testing.T) {
 				path.file, path.function, len(setAggro), path.setAggroCalls, path.why)
 
 			for _, call := range setAggro {
-				require.NotEmpty(t, call.Args, "SetAggro called with no arguments")
+				require.NotEmpty(t, call.Args, "engagement call made with no arguments")
 				last := call.Args[len(call.Args)-1]
-				ident, ok := last.(*ast.Ident)
-				if !ok {
-					t.Fatalf("%s:%s at %s passes %q as the aggro type: it must be a variable "+
-						"assigned from actions.EngageAggroType, not an inline expression — that is "+
-						"how the behaviortree path came to ambush on a cooldown it never paid",
-						path.file, path.function, fset.Position(call.Pos()), formattedASTNode(t, fset, last))
+
+				traced := false
+				for _, name := range identsIn(last) {
+					if fromEngage[name] {
+						traced = true
+						break
+					}
 				}
-				if !fromEngage[ident.Name] {
-					t.Fatalf("%s:%s at %s passes %q to SetAggro, which is never assigned from "+
-						"actions.EngageAggroType in this function. Every engagement path must type "+
-						"itself through that seam: it is the ONE place the hidden check and the "+
-						"shared special-move cooldown claim live together.",
-						path.file, path.function, fset.Position(call.Pos()), ident.Name)
+				if !traced {
+					t.Fatalf("%s:%s at %s passes %q as the aggro type, and nothing in that "+
+						"expression is assigned from actions.EngageAggroType. Every engagement "+
+						"path must type itself through that seam: it is the ONE place the hidden "+
+						"check and the shared special-move cooldown claim live together. Deriving "+
+						"the type locally is how the behaviortree path came to ambush on a "+
+						"cooldown it never paid.",
+						path.file, path.function, fset.Position(call.Pos()),
+						formattedASTNode(t, fset, last))
 				}
 			}
 

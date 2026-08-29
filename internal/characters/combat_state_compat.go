@@ -91,7 +91,7 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 	// away (reactive `attack` re-aggro, per-round reciprocal, target-switch).
 	// ForceTauntAggro sets the lock to the taunter first, so its own set
 	// passes through. SpellCast/Flee and same-target sets are never blocked.
-	if c.tauntHoldBlocks(userId, mobInstanceId, aggroType) {
+	if c.TauntHoldBlocks(userId, mobInstanceId, aggroType) {
 		return
 	}
 
@@ -152,7 +152,7 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 // EndAggro clears the character's combat target and forces Combat Phase to Idle.
 func (c *Character) EndAggro() {
 	c.Aggro = nil
-	c.clearTauntHold()
+	c.ClearTauntHold()
 	c.ClearGrappleState()
 	// U10d: the engaged-aim cue is once per ENGAGEMENT, and this is where an
 	// engagement ends. Without this a shooter who explains it once would never

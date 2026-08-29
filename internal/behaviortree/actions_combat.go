@@ -80,12 +80,9 @@ func actAttack(params map[string]any, ctx *EvalContext) Result {
 			aggroType, _ = actions.EngageAggroType(actions.NewMobActorInRoom(mob, room), target)
 		}
 	}
-	reason := targeting.ReasonAttack
-	if aggroType == characters.SurpriseAttack {
-		reason = targeting.ReasonSurprise
-	}
 	targeting.Commit(&mob.Character,
-		state.ActorRef{UserId: targetUserId, MobInstanceId: targetMobId}, reason)
+		state.ActorRef{UserId: targetUserId, MobInstanceId: targetMobId},
+		targeting.ReasonForAggroType(aggroType))
 	return Success
 }
 

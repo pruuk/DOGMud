@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -460,7 +461,7 @@ func tickVoices(user *users.UserRecord, room *rooms.Room, worn []items.Item, now
 
 // applyTauntPull forces the bearer's current combat target (a mob) to aggro
 // the bearer, if it isn't already fighting them. The Aegis's tank loop: taunt
-// the mob off your ally. Uses the taunt-hold plumbing (ForceTauntAggro) so
+// the mob off your ally. Uses the taunt-hold plumbing (targeting.CommitTaunt) so
 // reactive per-round re-aggro can't immediately flip the target back. No-ops
 // when the bearer isn't fighting a mob, the mob is gone/non-combatant, or the
 // mob is already fighting the bearer. The TauntPull gate lives at the call
@@ -478,7 +479,7 @@ func applyTauntPull(user *users.UserRecord) {
 		return // already fighting the bearer — nothing to force
 	}
 	holdRounds := int(configs.GetBalanceConfig().TauntHoldRounds)
-	mob.Character.ForceTauntAggro(user.UserId, 0, holdRounds)
+	targeting.CommitTaunt(&mob.Character, state.ActorRef{UserId: user.UserId}, holdRounds)
 }
 
 // tryEmitVoice emits an authored voice line for `event` from `spec` when the
