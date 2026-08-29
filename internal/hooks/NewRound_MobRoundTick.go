@@ -25,6 +25,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/worldevents"
@@ -488,7 +489,7 @@ func tickMobCharmState(mob *mobs.Mob) {
 
 	// Only now may aggro be set.
 	if grudge {
-		mob.Character.SetAggro(owner.UserId, 0, characters.DefaultAttack)
+		targeting.Commit(&mob.Character, state.ActorRef{UserId: owner.UserId}, targeting.ReasonAttack)
 	}
 
 	runCharmExpiredCommand(mob, cmd)

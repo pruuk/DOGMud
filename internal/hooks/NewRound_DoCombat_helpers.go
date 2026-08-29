@@ -18,7 +18,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -931,7 +933,11 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// Revert to Default combat regardless of outcome (legacy path only).
 	// When CombatPhase is wired, ResolveFlee(false) handles the revert.
 	if user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
-		user.Character.SetAggro(user.Character.Aggro.UserId, user.Character.Aggro.MobInstanceId, characters.DefaultAttack)
+		targeting.Commit(user.Character,
+			state.ActorRef{
+				UserId:        user.Character.Aggro.UserId,
+				MobInstanceId: user.Character.Aggro.MobInstanceId,
+			}, targeting.ReasonAttack)
 	}
 
 	// Can't flee while in any grapple state. CombatPhase position veto
@@ -1005,7 +1011,7 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 
 	// Task 15: flee success — EndAggro clears legacy Aggro; ResolveFlee
 	// transitions CombatPhase Disengaging → Idle.
-	user.Character.EndAggro()
+	targeting.Release(user.Character, targeting.ReasonDisengage)
 	if user.Character.CombatPhase != nil {
 		user.Character.CombatPhase.ResolveFlee(true)
 	}
@@ -1268,7 +1274,13 @@ func handleMobTargetSwitch(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 
 	if roll < switchChance {
 		newTargetId := potentialTargets[util.Rand(len(potentialTargets))]
-		mob.Character.SetAggro(newTargetId, 0, mob.Character.Aggro.Type, 1)
+		// Read the current type BEFORE committing: the commit overwrites
+		// Aggro. Go evaluates arguments first so an inline read would also be
+		// correct, but the hoist makes the ordering obvious to the next reader.
+		prevType := mob.Character.Aggro.Type
+		targeting.CommitAfter(&mob.Character,
+			state.ActorRef{UserId: newTargetId},
+			targeting.ReasonForAggroType(prevType), 1)
 
 		if newTarget := users.GetByUserId(newTargetId); newTarget != nil {
 			mobRoom.SendText(messaging.CategoryMobEmote,

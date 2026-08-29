@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -256,7 +257,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		// If they somehow got aggro (e.g., from pack scatter), clear it.
 		if mob.IsNonCombatant() {
 			if mob.Character.Aggro != nil {
-				mob.Character.EndAggro()
+				targeting.Release(&mob.Character, targeting.ReasonDisengage)
 			}
 			continue
 		}
@@ -269,7 +270,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		if mob.Character.Aggro != nil && mob.Character.Aggro.UserId > 0 {
 			if tgt := users.GetByUserId(mob.Character.Aggro.UserId); tgt != nil &&
 				tgt.Character.HasBuffFlag(buffs.NoAggroTarget) {
-				mob.Character.EndAggro()
+				targeting.Release(&mob.Character, targeting.ReasonDisengage)
 				continue
 			}
 		}
@@ -284,7 +285,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		mobRoom := rooms.LoadRoom(mob.Character.RoomId)
 		if mobRoom == nil {
 			if mob.Character.Aggro != nil {
-				mob.Character.EndAggro()
+				targeting.Release(&mob.Character, targeting.ReasonDisengage)
 			}
 			continue
 		}

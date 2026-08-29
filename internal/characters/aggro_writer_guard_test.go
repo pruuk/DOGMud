@@ -34,11 +34,6 @@ import (
 var notYetSwept = map[string]bool{
 	"hooks/Death_InboundAggroCleanup.go": true,
 	"hooks/Death_MobKillCredit.go":       true,
-	"hooks/NewRound_DoCombat.go":         true,
-	"hooks/NewRound_DoCombat_helpers.go": true,
-	"hooks/NewRound_DoCombat_unified.go": true,
-	"hooks/NewRound_IdleMobs.go":         true,
-	"hooks/NewRound_MobRoundTick.go":     true,
 	"hooks/Respawn_PlayerTeleport.go":    true,
 	"hooks/charm_spell.go":               true,
 	"hooks/chrysifier_homunculus.go":     true,
