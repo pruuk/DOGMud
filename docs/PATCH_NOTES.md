@@ -1,5 +1,22 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: Switching targets now sticks
+
+Change who you are fighting and the game now agrees with you about it.
+
+Until now, switching targets updated the fight itself but not the part of the
+game that answers the question "who am I fighting?". Your prompt would keep
+naming the previous enemy, and showing that enemy's health, even though your
+blows were landing on the new one. Anything else that asked the same question
+got the same stale answer, which included creatures deciding whether they were
+already fighting you, and companions choosing who to help.
+
+Taunts were affected too, and they are the most common way a fight changes
+target, so this was easiest to notice in a group.
+
+Nothing about how quickly you switch has changed. There is still a moment of
+repositioning when you turn on someone new, exactly as before.
+
 ## 2026-08-29: The rest of the targeting groundwork
 
 The second half of the change described below. Every remaining place in the
