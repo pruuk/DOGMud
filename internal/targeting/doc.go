@@ -15,7 +15,7 @@
 //
 //   - This package MUST NOT import internal/combat. internal/combat is
 //     itself a Commit call site, so importing it creates a cycle. The
-//     weakest-mob score arrives through RegisterPowerScoreFn instead, and
+//     weakest-mob score arrives through SetPowerScoreFn instead, and
 //     TestTargetingDoesNotImportCombat fails if this is ever violated.
 //   - internal/characters can never import this package, because this
 //     package imports it. That is a constraint on where targeting LOGIC may

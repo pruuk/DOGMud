@@ -51,6 +51,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/planners" // chunk 4.4 — fire planner init()s + expose ClearPlanState
 	"github.com/GoMudEngine/GoMud/internal/seeders"  // chunk 4.5 — rule init()s + Dispatch listener
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/version"
 	"github.com/gorilla/websocket"
@@ -311,6 +312,12 @@ func main() {
 		}
 		return user.Character.HasBuffFlag(buffs.NoAggroTarget)
 	})
+
+	// Wire the weakest-mob power score into internal/targeting. Injected
+	// rather than imported: internal/combat is itself a targeting.Commit
+	// call site, so targeting importing combat would be a cycle once U12b
+	// migrates it. TestTargetingDoesNotImportCombat guards this.
+	targeting.SetPowerScoreFn(combat.PowerScore)
 
 	// Register the prompt visibility check so the fight prompt can hide
 	// the combat target's identity/health/position from blind or

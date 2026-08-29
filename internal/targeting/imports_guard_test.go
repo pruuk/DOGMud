@@ -21,7 +21,7 @@ const (
 // and U12b stalls.
 //
 // The weakest-mob strategy gets its score function by injection instead; see
-// RegisterPowerScoreFn.
+// SetPowerScoreFn.
 //
 // Implemented on stdlib go/build rather than golang.org/x/tools/go/packages so
 // this guard costs the module no new dependency. It walks internal/ packages
