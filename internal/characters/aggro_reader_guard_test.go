@@ -33,12 +33,10 @@ import (
 // grep matches comments, the AST parser (mode 0) drops them, so a grep-derived
 // list carries phantom entries that then fail the stale check below.
 var notYetMigrated = map[string]bool{
-	"actions/cast.go":                       true,
 	"actions/combat_drain.go":               true,
-	"actions/combat_fire.go":                true,
 	"actions/combat_gore.go":                true,
-	"actions/combat_hamstring.go":           true,
 	"actions/combat_helpers.go":             true,
+	"actions/combat_hamstring.go":           true,
 	"actions/combat_maul.go":                true,
 	"actions/combat_pounce.go":              true,
 	"actions/combat_rake.go":                true,
@@ -46,13 +44,6 @@ var notYetMigrated = map[string]bool{
 	"actions/combat_taunt.go":               true,
 	"actions/combat_throttle.go":            true,
 	"actions/combat_warcry.go":              true,
-	"actions/command_readiness.go":          true,
-	"actions/defuse.go":                     true,
-	"actions/melee_target.go":               true,
-	"actions/plant.go":                      true,
-	"actions/shadow.go":                     true,
-	"actions/sneak.go":                      true,
-	"actions/steal.go":                      true,
 	"combat/combat.go":                      true,
 	"combat/flee.go":                        true,
 	"conversationadapter/adapter.go":        true,

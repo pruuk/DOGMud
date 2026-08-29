@@ -297,7 +297,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	agroPulled := false
 	if target.MobInstanceId > 0 {
 		targetMob := mobs.GetInstance(target.MobInstanceId)
-		if targetMob != nil && targetMob.Character.Aggro != nil {
+		if targetMob != nil && targetMob.Character.IsInCombat() {
+			targetTgt := targetMob.Character.CurrentCombatTarget()
 			attackerUserId := actor.GetUserId()
 			attackerMobId := actor.GetMobInstanceId()
 			// CommitTaunt pins the target onto the taunter for
@@ -308,7 +309,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 			holdRounds := int(cfg.TauntHoldRounds)
 			if attackerUserId > 0 {
 				// Player taunter.
-				if targetMob.Character.Aggro.UserId != attackerUserId {
+				if targetTgt.UserId != attackerUserId {
 					// U12c-0b: report the PULL, not the attempt. CommitTaunt can
 					// be refused by a combat-phase veto, and agroPulled drives the
 					// player-facing "you pull its attention" line.
@@ -317,7 +318,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 				}
 			} else if attackerMobId > 0 {
 				// Mob taunter.
-				if targetMob.Character.Aggro.MobInstanceId != attackerMobId || targetMob.Character.Aggro.UserId != 0 {
+				if targetTgt.MobInstanceId != attackerMobId || targetTgt.UserId != 0 {
 					// U12c-0b: report the PULL, not the attempt. See above.
 					agroPulled = targeting.CommitTaunt(&targetMob.Character,
 						state.ActorRef{MobInstanceId: attackerMobId}, holdRounds)

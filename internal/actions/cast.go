@@ -406,23 +406,24 @@ func rejectHarmTarget(actor Actor, mobInstanceId int) bool {
 // own. Returns (userId, mobInstanceId) with at most one non-zero.
 func resolvePlayerAggroTarget(actor Actor, room *rooms.Room) (int, int) {
 	char := actor.GetCharacter()
-	if char.Aggro != nil {
-		if char.Aggro.MobInstanceId > 0 {
-			return 0, char.Aggro.MobInstanceId
+	if tgt := char.CurrentCombatTarget(); !tgt.IsZero() {
+		if tgt.MobInstanceId > 0 {
+			return 0, tgt.MobInstanceId
 		}
-		if char.Aggro.UserId > 0 {
-			return char.Aggro.UserId, 0
+		if tgt.UserId > 0 {
+			return tgt.UserId, 0
 		}
 	}
 	// Party leader fallback.
 	if p := parties.Get(actor.GetUserId()); p != nil {
 		if leaderUser := users.GetByUserId(p.LeaderUserId); leaderUser != nil {
-			if leaderUser.Character.RoomId == char.RoomId && leaderUser.Character.Aggro != nil {
-				if leaderUser.Character.Aggro.MobInstanceId > 0 {
-					return 0, leaderUser.Character.Aggro.MobInstanceId
+			leaderTgt := leaderUser.Character.CurrentCombatTarget()
+			if leaderUser.Character.RoomId == char.RoomId && !leaderTgt.IsZero() {
+				if leaderTgt.MobInstanceId > 0 {
+					return 0, leaderTgt.MobInstanceId
 				}
-				if leaderUser.Character.Aggro.UserId > 0 {
-					return leaderUser.Character.Aggro.UserId, 0
+				if leaderTgt.UserId > 0 {
+					return leaderTgt.UserId, 0
 				}
 			}
 		}
@@ -436,12 +437,12 @@ func resolveMobAggroTarget(actor Actor, room *rooms.Room) (int, int) {
 	char := actor.GetCharacter()
 	mobId := actor.GetMobInstanceId()
 
-	if char.Aggro != nil {
-		if char.Aggro.UserId > 0 {
-			return char.Aggro.UserId, 0
+	if tgt := char.CurrentCombatTarget(); !tgt.IsZero() {
+		if tgt.UserId > 0 {
+			return tgt.UserId, 0
 		}
-		if char.Aggro.MobInstanceId > 0 {
-			return 0, char.Aggro.MobInstanceId
+		if tgt.MobInstanceId > 0 {
+			return 0, tgt.MobInstanceId
 		}
 	}
 

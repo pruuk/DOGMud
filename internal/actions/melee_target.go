@@ -202,7 +202,7 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 		// Staging makes the ordering easier to get wrong, not harder: the
 		// closure runs after admission, by which time Aggro may have been set by
 		// something else, so the answer has to be frozen at this line.
-		freshAggro := user.Character.Aggro == nil || user.Character.Aggro.MobInstanceId != mob.InstanceId
+		freshAggro := user.Character.CurrentCombatTarget().MobInstanceId != mob.InstanceId
 		stagedTarget := AggroTarget{Char: &mob.Character, Name: mob.Character.Name, MobInstanceId: mob.InstanceId, Found: true}
 		// Every melee special move engages through here: kick, bash, trip,
 		// grapple, taunt, and the mutation attacks (gore, maul, pounce, rake,

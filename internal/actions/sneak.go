@@ -58,7 +58,7 @@ func Sneak(actor Actor) SneakResult {
 	}
 
 	// Can't hide while fighting.
-	if char.Aggro != nil {
+	if char.IsInCombat() {
 		return SneakResult{InCombat: true}
 	}
 	if !char.IsFree() || char.Awareness == nil || char.Awareness.State() != awareness.Visible {

@@ -67,7 +67,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 	}
 
 	// Combat gate.
-	if char.Aggro != nil {
+	if char.IsInCombat() {
 		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
 		return DefuseResult{Reason: "in combat"}
 	}

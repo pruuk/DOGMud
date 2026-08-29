@@ -297,7 +297,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// A same-room opening shot enters combat only after paid admission. This
 	// gives RecordAndWait an engagement to charge without mutating aggro for a
 	// refused shot. Cross-room shots remain one-shot and aggro-free.
-	if !crossRoom && char.Aggro == nil {
+	if !crossRoom && !char.IsInCombat() {
 		targeting.Commit(char,
 			state.ActorRef{UserId: targetUserId, MobInstanceId: targetMobInstanceId},
 			targeting.ReasonAttack)
@@ -446,11 +446,11 @@ func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 
 	for _, instId := range room.GetMobs(rooms.FindFighting) {
 		m := mobs.GetInstance(instId)
-		// Both guards, for parity with combat_retarget.go. The IsInCombat()
-		// half is redundant TODAY -- IsInCombat() falls back to `Aggro != nil`
-		// (character.go), which the preceding check has already established --
-		// so do not reason about it as though it screened anything extra.
-		if m == nil || m.Character.Aggro == nil || !m.Character.IsInCombat() {
+		// U12c-1: the paired `Aggro == nil` guard is gone. Its own comment
+		// said it was redundant with IsInCombat(), which falls back to
+		// `Aggro != nil`, so the two always agreed; keeping both after the
+		// read migration would just be the same question asked twice.
+		if m == nil || !m.Character.IsInCombat() {
 			continue
 		}
 		if uid > 0 && m.Character.IsCharmed(uid) {
@@ -461,18 +461,20 @@ func shooterIsUnengaged(char *characters.Character, room *rooms.Room) bool {
 		// SetAggro site was walked; the only candidate (actions_party.go) needs
 		// a party leader already aggroed on its own member, which nothing
 		// produces.
-		if (uid > 0 && m.Character.Aggro.UserId == uid) ||
-			(mid > 0 && m.Character.Aggro.MobInstanceId == mid) {
+		mTgt := m.Character.CurrentCombatTarget()
+		if (uid > 0 && mTgt.UserId == uid) ||
+			(mid > 0 && mTgt.MobInstanceId == mid) {
 			return false
 		}
 	}
 	for _, pId := range room.GetPlayers(rooms.FindFighting) {
 		u := users.GetByUserId(pId)
-		if u == nil || u.Character.Aggro == nil || pId == uid || !u.Character.IsInCombat() {
+		if u == nil || pId == uid || !u.Character.IsInCombat() {
 			continue
 		}
-		if (uid > 0 && u.Character.Aggro.UserId == uid) ||
-			(mid > 0 && u.Character.Aggro.MobInstanceId == mid) {
+		uTgt := u.Character.CurrentCombatTarget()
+		if (uid > 0 && uTgt.UserId == uid) ||
+			(mid > 0 && uTgt.MobInstanceId == mid) {
 			return false
 		}
 	}
