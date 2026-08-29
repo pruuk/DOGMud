@@ -16,23 +16,25 @@ import (
 // alive. If the target is gone or dead, targeting.Release is called and false is
 // returned. Returns false (without releasing) when Aggro is already nil.
 func ValidateAggro(char *characters.Character) bool {
-	if char.Aggro == nil {
+	if !char.IsInCombat() {
 		return false
 	}
 
-	// Aggro with no target is invalid (can happen from stale state).
+	ref := char.CurrentCombatTarget()
+
+	// An engagement with no target is invalid (can happen from stale state).
 	// SpellCast and Flee intentionally have no target — they act on self
 	// or the room, not another character — so they are valid no-target
 	// states.
-	if char.Aggro.MobInstanceId == 0 && char.Aggro.UserId == 0 &&
+	if ref.IsZero() &&
 		char.Aggro.Type != characters.SpellCast &&
 		char.Aggro.Type != characters.Flee {
 		targeting.Release(char, targeting.ReasonDisengage)
 		return false
 	}
 
-	if char.Aggro.MobInstanceId > 0 {
-		target := mobs.GetInstance(char.Aggro.MobInstanceId)
+	if ref.MobInstanceId > 0 {
+		target := mobs.GetInstance(ref.MobInstanceId)
 		if target == nil || target.Character.Health < 1 ||
 			target.Character.RoomId != char.RoomId {
 			targeting.Release(char, targeting.ReasonDisengage)
@@ -40,8 +42,8 @@ func ValidateAggro(char *characters.Character) bool {
 		}
 	}
 
-	if char.Aggro.UserId > 0 {
-		target := users.GetByUserId(char.Aggro.UserId)
+	if ref.UserId > 0 {
+		target := users.GetByUserId(ref.UserId)
 		if target == nil || target.Character.Health < 1 ||
 			target.Character.RoomId != char.RoomId {
 			targeting.Release(char, targeting.ReasonDisengage)
@@ -94,11 +96,11 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 			continue
 		}
 
-		aggro := attackingPlayer.Character.Aggro
+		theirTarget := attackingPlayer.Character.CurrentCombatTarget()
 
 		// Is this player attacking us?
-		if (userId > 0 && aggro.UserId == userId) ||
-			(mobInstanceId > 0 && aggro.MobInstanceId == mobInstanceId) {
+		if (userId > 0 && theirTarget.UserId == userId) ||
+			(mobInstanceId > 0 && theirTarget.MobInstanceId == mobInstanceId) {
 			return targeting.Commit(char,
 				state.ActorRef{UserId: attackingPlayer.UserId}, targeting.ReasonAttack)
 		}
@@ -111,11 +113,11 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 			continue
 		}
 
-		aggro := attackingMob.Character.Aggro
+		theirTarget := attackingMob.Character.CurrentCombatTarget()
 
 		// Is this mob attacking us, or any of our companions?
-		if (userId > 0 && aggro.UserId == userId) ||
-			(aggro.MobInstanceId > 0 && myMobIds[aggro.MobInstanceId]) {
+		if (userId > 0 && theirTarget.UserId == userId) ||
+			(theirTarget.MobInstanceId > 0 && myMobIds[theirTarget.MobInstanceId]) {
 			return targeting.Commit(char,
 				state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
 		}
@@ -130,7 +132,7 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 				if attackingMob == nil || !attackingMob.Character.IsInCombat() {
 					continue
 				}
-				if attackingMob.Character.Aggro.UserId == ownerId {
+				if attackingMob.Character.CurrentCombatTarget().UserId == ownerId {
 					return targeting.Commit(char,
 						state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
 				}
@@ -184,13 +186,13 @@ func CompanionAutoTarget(mob *mobs.Mob, room *rooms.Room) {
 
 	// If owner is fighting, join their fight immediately.
 	if owner.Character.IsInCombat() {
-		ownerAggro := owner.Character.Aggro
-		if ownerAggro.UserId > 0 {
-			mob.Command(fmt.Sprintf("attack @%d", ownerAggro.UserId))
+		ownerTarget := owner.Character.CurrentCombatTarget()
+		if ownerTarget.UserId > 0 {
+			mob.Command(fmt.Sprintf("attack @%d", ownerTarget.UserId))
 			return
 		}
-		if ownerAggro.MobInstanceId > 0 {
-			mob.Command(fmt.Sprintf("attack #%d", ownerAggro.MobInstanceId))
+		if ownerTarget.MobInstanceId > 0 {
+			mob.Command(fmt.Sprintf("attack #%d", ownerTarget.MobInstanceId))
 			return
 		}
 	}
@@ -201,7 +203,7 @@ func CompanionAutoTarget(mob *mobs.Mob, room *rooms.Room) {
 		if attackingMob == nil || !attackingMob.Character.IsInCombat() {
 			continue
 		}
-		if attackingMob.Character.Aggro.UserId == ownerId {
+		if attackingMob.Character.CurrentCombatTarget().UserId == ownerId {
 			mob.Command(fmt.Sprintf("attack #%d", attackingMob.InstanceId))
 			return
 		}

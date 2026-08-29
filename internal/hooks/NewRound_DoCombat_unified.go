@@ -249,10 +249,11 @@ func resolveCombatTarget(atk, def actions.Actor, roundNumber uint64) bool {
 	// its first round in combat so grudge tracking works across flee/re-engage.
 	if atk.IsPlayer() && !def.IsPlayer() {
 		if defMob := asMobOrNil(def); defMob != nil {
-			if defMob.CombatMemory == nil && defChar.Aggro != nil {
+			if defMob.CombatMemory == nil && defChar.IsInCombat() {
+				defTarget := defChar.CurrentCombatTarget()
 				defMob.CombatMemory = mobs.SetCombatMemory(
-					defChar.Aggro.UserId,
-					defChar.Aggro.MobInstanceId,
+					defTarget.UserId,
+					defTarget.MobInstanceId,
 					defChar.RoomId,
 					roundNumber,
 				)
@@ -873,7 +874,7 @@ func handleAggroAndAssist(atk, def actions.Actor, cfg *configs.Config) {
 		// the defender belonged to, causing priests to aggro on
 		// respawning players who had attacked bandits).
 		dispatchPackmateHurt(defMob, atk.GetUserId(), 0)
-		if defChar.Aggro == nil {
+		if !defChar.IsInCombat() {
 			if atkChar.RoomId != defChar.RoomId {
 				if mobRoom := rooms.LoadRoom(defChar.RoomId); mobRoom != nil {
 					for exitName, exitInfo := range mobRoom.Exits {
@@ -898,7 +899,7 @@ func handleAggroAndAssist(atk, def actions.Actor, cfg *configs.Config) {
 		//   - Reciprocal aggro on the player defender (skip if dead/disabled).
 		//   - Party auto-assist (Divergence #5) gated on PartyId.
 		//   - Charmed-mob assist for the defender player.
-		if defChar.Health > 0 && defChar.Aggro == nil {
+		if defChar.Health > 0 && !defChar.IsInCombat() {
 			targeting.Commit(defChar, state.ActorRef{MobInstanceId: atk.GetMobInstanceId()}, targeting.ReasonAttack)
 		}
 		// Divergence #5: party-assist gate keys on party-membership
@@ -918,7 +919,13 @@ func handleAggroAndAssist(atk, def actions.Actor, cfg *configs.Config) {
 		//   - Defender mob gets aggro and issues its own attack command.
 		//   - Companion-owner assist if defender mob is charmed.
 		defMob := asMob(def)
-		if defChar.Aggro == nil {
+		if !defChar.IsInCombat() {
+			// U12c-1: a raw Aggro construction, deliberately LEFT as-is. It
+			// sets a targetless placeholder that no seam call reproduces —
+			// targeting.Commit with a zero ref is not the same thing — so
+			// replacing it here would be a behaviour change in a mechanical
+			// slice. U12c-2 owns it, and must resolve it before the field
+			// can be deleted.
 			defChar.Aggro = &characters.Aggro{
 				Type: characters.DefaultAttack,
 			}
@@ -994,14 +1001,15 @@ func emitRetargetMessage(atk actions.Actor) {
 		return
 	}
 	atkChar := atk.GetCharacter()
-	if atkChar.Aggro == nil {
+	if !atkChar.IsInCombat() {
 		return
 	}
-	if mob := mobs.GetInstance(atkChar.Aggro.MobInstanceId); mob != nil {
+	newTarget := atkChar.CurrentCombatTarget()
+	if mob := mobs.GetInstance(newTarget.MobInstanceId); mob != nil {
 		atk.SendText(messaging.CategorySystem, fmt.Sprintf(
 			"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",
 			mob.Character.Name))
-	} else if newDef := users.GetByUserId(atkChar.Aggro.UserId); newDef != nil {
+	} else if newDef := users.GetByUserId(newTarget.UserId); newDef != nil {
 		atk.SendText(messaging.CategorySystem, fmt.Sprintf(
 			"You turn your attention to <ansi fg=\"username\">%s</ansi>!",
 			newDef.Character.Name))
@@ -1029,29 +1037,30 @@ func appendPreAttackAffected(
 	atkChar := atk.GetCharacter()
 	switch {
 	case atk.IsPlayer() && def.IsPlayer():
-		// Legacy PvP: append defender userId (atkChar.Aggro.UserId).
-		if atkChar.Aggro != nil {
-			*affectedPlayerIds = append(*affectedPlayerIds, atkChar.Aggro.UserId)
+		// Legacy PvP: append the defender userId.
+		if atkChar.IsInCombat() {
+			*affectedPlayerIds = append(*affectedPlayerIds, atkChar.CurrentCombatTarget().UserId)
 		}
 
 	case atk.IsPlayer() && !def.IsPlayer():
 		// Legacy PvM: appendsmobInstanceId (line 1070) + AggroUserId (line
 		// 1092). The latter is 0 in PvM; preserved verbatim.
-		if atkChar.Aggro != nil {
-			*affectedMobInstanceIds = append(*affectedMobInstanceIds, atkChar.Aggro.MobInstanceId)
-			*affectedPlayerIds = append(*affectedPlayerIds, atkChar.Aggro.UserId)
+		if atkChar.IsInCombat() {
+			atkTarget := atkChar.CurrentCombatTarget()
+			*affectedMobInstanceIds = append(*affectedMobInstanceIds, atkTarget.MobInstanceId)
+			*affectedPlayerIds = append(*affectedPlayerIds, atkTarget.UserId)
 		}
 
 	case !atk.IsPlayer() && def.IsPlayer():
-		// Legacy MvP: append defender userId (mob.Aggro.UserId).
-		if atkChar.Aggro != nil {
-			*affectedPlayerIds = append(*affectedPlayerIds, atkChar.Aggro.UserId)
+		// Legacy MvP: append the defender userId.
+		if atkChar.IsInCombat() {
+			*affectedPlayerIds = append(*affectedPlayerIds, atkChar.CurrentCombatTarget().UserId)
 		}
 
 	default: // MvM
-		// Legacy MvM: append defender mobInstanceId (mob.Aggro.MobInstanceId).
-		if atkChar.Aggro != nil {
-			*affectedMobInstanceIds = append(*affectedMobInstanceIds, atkChar.Aggro.MobInstanceId)
+		// Legacy MvM: append the defender mobInstanceId.
+		if atkChar.IsInCombat() {
+			*affectedMobInstanceIds = append(*affectedMobInstanceIds, atkChar.CurrentCombatTarget().MobInstanceId)
 		}
 	}
 }

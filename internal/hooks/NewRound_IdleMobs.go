@@ -223,7 +223,7 @@ func conversationsTriggerEligible(mob *mobs.Mob) bool {
 		return false
 	}
 	// Combat or pending aggro.
-	if mob.Character.Aggro != nil || mob.Character.IsInCombat() {
+	if mob.Character.IsInCombat() {
 		return false
 	}
 	// Sleeping mob shouldn't start chatting.

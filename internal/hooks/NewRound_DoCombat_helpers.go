@@ -933,11 +933,8 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 	// Revert to Default combat regardless of outcome (legacy path only).
 	// When CombatPhase is wired, ResolveFlee(false) handles the revert.
 	if user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
-		targeting.Commit(user.Character,
-			state.ActorRef{
-				UserId:        user.Character.Aggro.UserId,
-				MobInstanceId: user.Character.Aggro.MobInstanceId,
-			}, targeting.ReasonAttack)
+		targeting.Commit(user.Character, user.Character.CurrentCombatTarget(),
+			targeting.ReasonAttack)
 	}
 
 	// Can't flee while in any grapple state. CombatPhase position veto
@@ -1067,7 +1064,7 @@ func handleCompanionOwnerAssist(defMob *mobs.Mob, attackerDesc string) {
 	}
 
 	// Owner fights back if not already in combat.
-	if owner.Character.Aggro == nil {
+	if !owner.Character.IsInCombat() {
 		owner.Command(fmt.Sprintf("attack %s", attackerDesc))
 	}
 
@@ -1087,7 +1084,7 @@ func handleCharmedMobAssist(room *rooms.Room, defId int, targetDesc string) {
 	}
 	for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
 		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
-			if charmedMob.Character.IsCharmed(defId) && charmedMob.Character.Aggro == nil {
+			if charmedMob.Character.IsCharmed(defId) && !charmedMob.Character.IsInCombat() {
 				comp := defUser.Character.GetCompanionByInstanceId(instanceId)
 				if comp != nil && comp.AutoAssist {
 					charmedMob.Command(fmt.Sprintf("attack %s", targetDesc))
@@ -1177,7 +1174,7 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 	// unified combat handler drops a mob's aggro when its target isn't present).
 	// The unified dispatch below guards on Aggro != nil; mirror that here so we
 	// never deref a nil Aggro (was a server-crashing nil-pointer panic).
-	if mob.Character.Aggro == nil {
+	if !mob.Character.IsInCombat() {
 		return false
 	}
 	if mob.Character.Aggro.Type != characters.DefaultAttack {
@@ -1188,12 +1185,13 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 	var chosenMove string
 	if util.Rand(100) < mob.ActivityLevel {
 		var targetChar *characters.Character
-		if mob.Character.Aggro.UserId > 0 {
-			if u := users.GetByUserId(mob.Character.Aggro.UserId); u != nil {
+		aiTarget := mob.Character.CurrentCombatTarget()
+		if aiTarget.UserId > 0 {
+			if u := users.GetByUserId(aiTarget.UserId); u != nil {
 				targetChar = u.Character
 			}
-		} else if mob.Character.Aggro.MobInstanceId > 0 {
-			if tm := mobs.GetInstance(mob.Character.Aggro.MobInstanceId); tm != nil {
+		} else if aiTarget.MobInstanceId > 0 {
+			if tm := mobs.GetInstance(aiTarget.MobInstanceId); tm != nil {
 				targetChar = &tm.Character
 			}
 		}
@@ -1252,12 +1250,12 @@ func handleMobTargetSwitch(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 
 	potentialTargets := []int{}
 	for _, userId := range mobRoom.GetPlayers() {
-		if userId == mob.Character.Aggro.UserId {
+		if userId == mob.Character.CurrentCombatTarget().UserId {
 			continue
 		}
 		if u := users.GetByUserId(userId); u != nil {
 			if u.Character.Health > 0 && !u.Character.IsHidden() {
-				if u.Character.Aggro != nil && u.Character.Aggro.MobInstanceId == mob.InstanceId {
+				if u.Character.CurrentCombatTarget().MobInstanceId == mob.InstanceId {
 					potentialTargets = append(potentialTargets, userId)
 				}
 			}
@@ -1328,7 +1326,7 @@ func handlePartyAutoAttack(mob *mobs.Mob, defUser *users.UserRecord) {
 			if memberUser := users.GetByUserId(memberId); memberUser != nil {
 				if memberUser.Character.RoomId == defUser.Character.RoomId &&
 					memberUser.Character.GetSetting("autoattack") != "off" &&
-					memberUser.Character.Aggro == nil {
+					!memberUser.Character.IsInCombat() {
 					memberUser.Command(fmt.Sprintf(`attack #%d`, mob.InstanceId))
 				}
 			}

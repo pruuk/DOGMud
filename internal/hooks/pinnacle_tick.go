@@ -395,7 +395,7 @@ func revokeAmbient(c *characters.Character, applied []int) {
 // combat → taunt; a hungry weapon past 3/4 of its hunger window → hunger
 // warning; otherwise idle.
 func pickVoiceEvent(c *characters.Character, spec items.ItemSpec, now uint64) string {
-	if c.Aggro != nil {
+	if c.IsInCombat() {
 		return "on_taunt"
 	}
 	if spec.HungerRounds > 0 {
@@ -468,14 +468,15 @@ func tickVoices(user *users.UserRecord, room *rooms.Room, worn []items.Item, now
 // site — this helper only performs the pull.
 func applyTauntPull(user *users.UserRecord) {
 	c := user.Character
-	if c.Aggro == nil || c.Aggro.MobInstanceId <= 0 {
+	target := c.CurrentCombatTarget()
+	if target.MobInstanceId <= 0 {
 		return
 	}
-	mob := mobs.GetInstance(c.Aggro.MobInstanceId)
+	mob := mobs.GetInstance(target.MobInstanceId)
 	if mob == nil || mob.IsNonCombatant() {
 		return
 	}
-	if mob.Character.Aggro != nil && mob.Character.Aggro.UserId == user.UserId {
+	if mob.Character.CurrentCombatTarget().UserId == user.UserId {
 		return // already fighting the bearer — nothing to force
 	}
 	holdRounds := int(configs.GetBalanceConfig().TauntHoldRounds)
