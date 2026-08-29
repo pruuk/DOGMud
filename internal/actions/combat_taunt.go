@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -299,7 +300,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		if targetMob != nil && targetMob.Character.Aggro != nil {
 			attackerUserId := actor.GetUserId()
 			attackerMobId := actor.GetMobInstanceId()
-			// ForceTauntAggro pins the target onto the taunter for
+			// CommitTaunt pins the target onto the taunter for
 			// TauntHoldRounds so the reactive per-round `attack` re-aggro
 			// can't immediately flip the target back to whoever is hitting
 			// it. Without the hold, a single taunt is overwritten the next
@@ -308,13 +309,15 @@ func ExecuteTaunt(actor Actor) TauntResult {
 			if attackerUserId > 0 {
 				// Player taunter.
 				if targetMob.Character.Aggro.UserId != attackerUserId {
-					targetMob.Character.ForceTauntAggro(attackerUserId, 0, holdRounds)
+					targeting.CommitTaunt(&targetMob.Character,
+						state.ActorRef{UserId: attackerUserId}, holdRounds)
 					agroPulled = true
 				}
 			} else if attackerMobId > 0 {
 				// Mob taunter.
 				if targetMob.Character.Aggro.MobInstanceId != attackerMobId || targetMob.Character.Aggro.UserId != 0 {
-					targetMob.Character.ForceTauntAggro(0, attackerMobId, holdRounds)
+					targeting.CommitTaunt(&targetMob.Character,
+						state.ActorRef{MobInstanceId: attackerMobId}, holdRounds)
 					agroPulled = true
 				}
 			}

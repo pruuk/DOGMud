@@ -23,7 +23,8 @@ func TestTauntHold_BlocksReaggroToDifferentTargetWhileActive(t *testing.T) {
 	}
 
 	// A companion golem (mob instance 50) taunts: force aggro + 4-round hold.
-	c.ForceTauntAggro(0, 50, 4)
+	c.SetTauntHold(0, 50, 4)
+	c.SetAggro(0, 50, DefaultAttack)
 	if c.Aggro == nil || c.Aggro.MobInstanceId != 50 || c.Aggro.UserId != 0 {
 		t.Fatalf("taunt: expected aggro forced to mob 50, got %+v", c.Aggro)
 	}
@@ -41,7 +42,8 @@ func TestTauntHold_ExpiresAfterHoldRounds(t *testing.T) {
 	defer util.ResetRoundCountForTest()
 
 	c := &Character{}
-	c.ForceTauntAggro(0, 50, 4) // hold until round 104
+	c.SetTauntHold(0, 50, 4)
+	c.SetAggro(0, 50, DefaultAttack) // hold until round 104
 
 	// Advance to the expiry round; the hold should no longer block.
 	util.SetRoundCountForTest(104)
@@ -56,10 +58,12 @@ func TestTauntHold_NewerTauntOverridesActiveHold(t *testing.T) {
 	defer util.ResetRoundCountForTest()
 
 	c := &Character{}
-	c.ForceTauntAggro(0, 50, 4)
+	c.SetTauntHold(0, 50, 4)
+	c.SetAggro(0, 50, DefaultAttack)
 	// A second taunter (mob 60) taunts while the first hold is still active —
 	// the newer taunt must win.
-	c.ForceTauntAggro(0, 60, 4)
+	c.SetTauntHold(0, 60, 4)
+	c.SetAggro(0, 60, DefaultAttack)
 	if c.Aggro == nil || c.Aggro.MobInstanceId != 60 {
 		t.Fatalf("re-taunt: expected aggro on mob 60, got %+v", c.Aggro)
 	}
@@ -70,7 +74,8 @@ func TestTauntHold_ClearedByEndAggro(t *testing.T) {
 	defer util.ResetRoundCountForTest()
 
 	c := &Character{}
-	c.ForceTauntAggro(0, 50, 4)
+	c.SetTauntHold(0, 50, 4)
+	c.SetAggro(0, 50, DefaultAttack)
 	// Taunter dies / leaves the room → ValidateAggro calls EndAggro, which
 	// must clear the hold so the enemy can re-acquire a target instead of
 	// standing locked onto a gone taunter.
@@ -86,7 +91,8 @@ func TestTauntHold_SpellcastReaggroNotBlocked(t *testing.T) {
 	defer util.ResetRoundCountForTest()
 
 	c := &Character{}
-	c.ForceTauntAggro(0, 50, 4)
+	c.SetTauntHold(0, 50, 4)
+	c.SetAggro(0, 50, DefaultAttack)
 	// A SpellCast aggro (self/room-directed, no target) must not be blocked
 	// by the hold — the hold only pins basic-attack re-targets.
 	c.SetAggro(0, 0, SpellCast, 0)

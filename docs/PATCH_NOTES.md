@@ -1,5 +1,24 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: Groundwork under how fights find their target
+
+Nothing in this change is meant to be visible while you play, and that is the
+point of mentioning it at all.
+
+How the game decides who you are fighting, and who a creature has decided to
+fight, had grown into several separate pieces of machinery that had to be kept
+in step by hand. Taunts, ambushes, spell casting, a predator sizing up the
+weakest thing in the room, and a thief picking a mark without starting a brawl
+all took slightly different routes to the same place. When those routes drift
+apart, the symptoms are the kind that are painful to track down: a taunt that
+quietly fails to hold, or a creature that forgets what it was aiming at.
+
+They now share one route. Behaviour should be identical in every case, and the
+work is covered by checks that fail loudly if any path wanders off on its own
+again. If you notice any change in who a creature attacks, or in a taunt not
+holding the way it used to, that is a bug worth reporting rather than a
+deliberate adjustment.
+
 ## 2026-08-29: What a hard spell is worth
 
 A spell's difficulty now decides whether you can learn it, rather than how

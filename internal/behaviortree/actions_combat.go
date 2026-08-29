@@ -7,13 +7,12 @@ package behaviortree
 import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func actAttack(params map[string]any, ctx *EvalContext) Result {
@@ -39,11 +38,16 @@ func actAttack(params map[string]any, ctx *EvalContext) Result {
 		if room == nil {
 			return Failure
 		}
-		players := room.GetPlayers()
-		if len(players) == 0 {
+		// This was a third inline copy of the random-player picker, beside
+		// target_random_player_in_room and (until U12a) nothing that knew the
+		// two were the same thing.
+		ref, ok := targeting.Select(
+			targeting.Criteria{Kind: targeting.RandomPlayer},
+			targeting.Scope{Room: room, Self: &mob.Character, SelfMobInstanceId: ctx.InstanceId})
+		if !ok {
 			return Failure
 		}
-		targetUserId = players[util.Rand(len(players))]
+		targetUserId = ref.UserId
 	}
 	// U10d: through EngageAggroType so a btree ambush respects the special-move
 	// cooldown exactly as the player and mobcommands paths do. Setting
@@ -76,7 +80,9 @@ func actAttack(params map[string]any, ctx *EvalContext) Result {
 			aggroType, _ = actions.EngageAggroType(actions.NewMobActorInRoom(mob, room), target)
 		}
 	}
-	mob.Character.SetAggro(targetUserId, targetMobId, aggroType)
+	targeting.Commit(&mob.Character,
+		state.ActorRef{UserId: targetUserId, MobInstanceId: targetMobId},
+		targeting.ReasonForAggroType(aggroType))
 	return Success
 }
 
@@ -165,16 +171,17 @@ func actTargetRandomPlayerInRoom(params map[string]any, ctx *EvalContext) Result
 	if room == nil {
 		return Failure
 	}
-	playerIds := room.GetPlayers()
-	if len(playerIds) == 0 {
+	// Select, never Commit. This archetype picks a victim for skullduggery
+	// WITHOUT entering combat; committing here is the chunk-2.7 bug class
+	// that ctx.SoftTarget exists to prevent. The seam makes the distinction
+	// explicit rather than a comment nobody can enforce.
+	ref, ok := targeting.Select(
+		targeting.Criteria{Kind: targeting.RandomPlayer},
+		targeting.Scope{Room: room, Self: &mob.Character, SelfMobInstanceId: ctx.InstanceId})
+	if !ok {
 		return Failure
 	}
-	idx := util.Rand(len(playerIds))
-	pickedId := playerIds[idx]
-
-	// CRITICAL: Stash in SoftTarget. Do NOT call SetAggro.
-	// Combat target lives on Combat Phase's Engaged state ONLY.
-	ctx.SoftTarget = state.ActorRef{UserId: pickedId}
+	ctx.SoftTarget = ref
 	return Success
 }
 
@@ -201,51 +208,23 @@ func actTargetWeakestMobInRoom(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
-	selfPower := combat.PowerScore(mob.Character)
-	if selfPower <= 0 {
+	// The scan (self-skip, dead, non-combatant, HatesMob, the
+	// companion-allegiance skip and the power-ratio ceiling) moved verbatim
+	// into targeting.selectWeakestHatedMob. ratio_below still defaults to 1.0,
+	// meaning "engage anyone strictly weaker".
+	ref, ok := targeting.Select(
+		targeting.Criteria{
+			Kind:       targeting.WeakestHatedMob,
+			RatioBelow: getFloatParam(params, "ratio_below", 1.0),
+		},
+		targeting.Scope{Room: room, Self: &mob.Character, SelfMobInstanceId: ctx.InstanceId})
+	if !ok {
 		return Failure
 	}
-	// ratio_below defaults to 1.0 (engage anyone strictly weaker).
-	ceiling := getFloatParam(params, "ratio_below", 1.0)
 
-	callerCharmedBy := mob.Character.GetCharmedUserId()
-	var bestId int
-	bestRatio := ceiling
-	for _, otherId := range room.GetMobs() {
-		if otherId == mob.InstanceId {
-			continue
-		}
-		other := mobs.GetInstance(otherId)
-		if other == nil || other.IsNonCombatant() {
-			continue
-		}
-		if other.Character.Health <= 0 {
-			continue
-		}
-		// Companion-allegiance skip: if caller is itself charmed,
-		// skip fellow companions of the same owner. A wild caller
-		// can still prey on a player's companion if HatesMob says
-		// so — companions of an enemy are still enemies.
-		if callerCharmedBy > 0 && other.Character.IsCharmed(callerCharmedBy) {
-			continue
-		}
-		if !mob.HatesMob(other) {
-			continue
-		}
-		targetPower := combat.PowerScore(other.Character)
-		if targetPower <= 0 {
-			continue
-		}
-		ratio := targetPower / selfPower
-		if ratio < bestRatio {
-			bestRatio = ratio
-			bestId = otherId
-		}
-	}
-	if bestId == 0 {
-		return Failure
-	}
-	mob.Character.SetAggro(0, bestId, characters.DefaultAttack)
+	// Predation DOES commit: unlike the skullduggery picker above, this
+	// archetype wants the fight.
+	targeting.Commit(&mob.Character, ref, targeting.ReasonAttack)
 	return Success
 }
 

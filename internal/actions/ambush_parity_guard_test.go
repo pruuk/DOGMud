@@ -41,6 +41,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -121,7 +122,17 @@ func aggroVarsFromEngage(t *testing.T, fset *token.FileSet, body *ast.BlockStmt)
 	return names
 }
 
-// setAggroCallsIn returns every SetAggro call in the body, in source order.
+// setAggroCallsIn returns every ENGAGEMENT call in the body, in source order.
+//
+// An engagement is either the legacy characters.SetAggro or the U12a seam's
+// targeting.Commit. Both are accepted because U12a migrates call sites one
+// slice at a time: behaviortree and the melee/taunt paths are on Commit, while
+// the ~86 sites U12b sweeps still call SetAggro. Recognising both is what lets
+// this guard keep watching every path throughout the migration instead of
+// going quiet on whichever half moved first.
+//
+// It deliberately does NOT accept any other name. A path that invents a third
+// way to engage is what this guard exists to catch.
 func setAggroCallsIn(t *testing.T, fset *token.FileSet, body *ast.BlockStmt) []*ast.CallExpr {
 	t.Helper()
 	calls := []*ast.CallExpr{}
@@ -131,12 +142,59 @@ func setAggroCallsIn(t *testing.T, fset *token.FileSet, body *ast.BlockStmt) []*
 			return true
 		}
 		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if ok && sel.Sel.Name == "SetAggro" {
+		if !ok {
+			return true
+		}
+		if sel.Sel.Name == "SetAggro" {
+			calls = append(calls, call)
+			return true
+		}
+		// targeting.Commit, but not CommitTaunt/CommitAfter, which are their
+		// own verbs and are not part of the ambush path.
+		if pkg, ok := sel.X.(*ast.Ident); ok && pkg.Name == "targeting" && sel.Sel.Name == "Commit" {
 			calls = append(calls, call)
 		}
 		return true
 	})
 	return calls
+}
+
+// tracedAggroTypeIdent unwraps the aggro-type argument down to the single bare
+// identifier it must be, or returns "" if it is anything else.
+//
+// The argument used to be a bare variable. Through the seam it is
+// targeting.ReasonForAggroType(aggroType), so exactly ONE wrapper is unwrapped:
+// a call to targeting.ReasonForAggroType with exactly one argument, which must
+// itself be a bare identifier.
+//
+// This is deliberately narrow. An earlier version walked the whole expression
+// and passed if the traced name appeared ANYWHERE inside it, which a review
+// showed is not a data-flow check at all but a name co-occurrence check:
+//
+//	targeting.Commit(&mob.Character, ref,
+//	    targeting.ReasonForAggroType(pickBadType(aggroType, char.IsHidden())))
+//
+// passed that version, because "aggroType" occurred in the expression, even
+// though pickBadType could ignore it entirely and derive SurpriseAttack from
+// IsHidden(). That is precisely the U10d bug this guard exists to catch, and
+// rule 3's ban on naming characters.SurpriseAttack would not have seen it
+// either, because rule 3 only scans the ONE file in the path table row and the
+// helper could live in a sibling file of the same package.
+func tracedAggroTypeIdent(t *testing.T, fset *token.FileSet, expr ast.Expr) string {
+	t.Helper()
+	if call, ok := expr.(*ast.CallExpr); ok {
+		if formattedASTNode(t, fset, call.Fun) != "targeting.ReasonForAggroType" {
+			return ""
+		}
+		if len(call.Args) != 1 {
+			return ""
+		}
+		expr = call.Args[0]
+	}
+	if ident, ok := expr.(*ast.Ident); ok {
+		return ident.Name
+	}
+	return ""
 }
 
 func TestAmbushParityAcrossEngagementPaths(t *testing.T) {
@@ -174,21 +232,25 @@ func TestAmbushParityAcrossEngagementPaths(t *testing.T) {
 				path.file, path.function, len(setAggro), path.setAggroCalls, path.why)
 
 			for _, call := range setAggro {
-				require.NotEmpty(t, call.Args, "SetAggro called with no arguments")
+				require.NotEmpty(t, call.Args, "engagement call made with no arguments")
 				last := call.Args[len(call.Args)-1]
-				ident, ok := last.(*ast.Ident)
-				if !ok {
-					t.Fatalf("%s:%s at %s passes %q as the aggro type: it must be a variable "+
-						"assigned from actions.EngageAggroType, not an inline expression — that is "+
-						"how the behaviortree path came to ambush on a cooldown it never paid",
-						path.file, path.function, fset.Position(call.Pos()), formattedASTNode(t, fset, last))
+
+				name := tracedAggroTypeIdent(t, fset, last)
+				if name == "" {
+					t.Fatalf("%s:%s at %s passes %q as the aggro type. It must be a bare "+
+						"variable assigned from actions.EngageAggroType, optionally wrapped in "+
+						"exactly one targeting.ReasonForAggroType(...) call — nothing else. Any "+
+						"other expression can hide a locally-derived type, which is how the "+
+						"behaviortree path came to ambush on a cooldown it never paid.",
+						path.file, path.function, fset.Position(call.Pos()),
+						formattedASTNode(t, fset, last))
 				}
-				if !fromEngage[ident.Name] {
-					t.Fatalf("%s:%s at %s passes %q to SetAggro, which is never assigned from "+
-						"actions.EngageAggroType in this function. Every engagement path must type "+
-						"itself through that seam: it is the ONE place the hidden check and the "+
-						"shared special-move cooldown claim live together.",
-						path.file, path.function, fset.Position(call.Pos()), ident.Name)
+				if !fromEngage[name] {
+					t.Fatalf("%s:%s at %s passes %q as the aggro type, which is never assigned "+
+						"from actions.EngageAggroType in this function. Every engagement path "+
+						"must type itself through that seam: it is the ONE place the hidden "+
+						"check and the shared special-move cooldown claim live together.",
+						path.file, path.function, fset.Position(call.Pos()), name)
 				}
 			}
 
@@ -225,5 +287,127 @@ func TestAmbushParityGuardIsNotVacuous(t *testing.T) {
 		full := filepath.Join(internalDir, filepath.FromSlash(path.file))
 		require.True(t, strings.HasSuffix(filepath.ToSlash(full), path.file),
 			"path resolution is broken for %s", path.file)
+	}
+}
+
+// TestTargetingSeamCoversTheProofSet asserts that every file U12a migrated
+// commits through internal/targeting rather than writing aggro itself.
+//
+// The player and behaviour-tree paths drifted before: U10d had to route the
+// btree ambush through EngageAggroType after it had been setting
+// SurpriseAttack straight from IsHidden(). A divergence here is invisible at
+// runtime, so it is pinned at the source level.
+//
+// These five files are U12a's proof set. The ~86 sites U12b sweeps are
+// deliberately NOT listed: they still call SetAggro, and that is the correct
+// state until that slice runs.
+func TestTargetingSeamCoversTheProofSet(t *testing.T) {
+	internalDir := internalDirForGuard(t)
+
+	proofSet := []string{
+		"actions/melee_target.go",
+		"actions/combat_taunt.go",
+		"behaviortree/actions_combat.go",
+		"hooks/pinnacle_tick.go",
+		"characters/taunt_hold.go",
+	}
+
+	for _, rel := range proofSet {
+		t.Run(rel, func(t *testing.T) {
+			path := filepath.Join(internalDir, filepath.FromSlash(rel))
+			// Mode 0 drops comments so an explanatory mention of the old API
+			// in prose does not trip the check.
+			fset := token.NewFileSet()
+			parsed, err := parser.ParseFile(fset, path, nil, 0)
+			require.NoError(t, err, "the guard must be able to parse %s", rel)
+
+			ast.Inspect(parsed, func(n ast.Node) bool {
+				sel, ok := n.(*ast.SelectorExpr)
+				if !ok {
+					return true
+				}
+				switch sel.Sel.Name {
+				case "SetAggro", "EndAggro":
+					t.Errorf("%s at %s calls %s directly. Every file in the U12a "+
+						"proof set must go through internal/targeting: Commit, "+
+						"CommitTaunt or Release.",
+						rel, fset.Position(sel.Pos()), sel.Sel.Name)
+				case "ForceTauntAggro":
+					t.Errorf("%s at %s calls ForceTauntAggro, which U12a deleted. "+
+						"Use targeting.CommitTaunt, which sets the hold BEFORE "+
+						"committing so the taunt's own set passes the hold gate.",
+						rel, fset.Position(sel.Pos()))
+				}
+				return true
+			})
+		})
+	}
+}
+
+// TestTargetingSeamGuardIsNotVacuous proves the guard above reads real files
+// and would actually fire. A proof set pointing at missing files would pass
+// silently and protect nothing.
+func TestTargetingSeamGuardIsNotVacuous(t *testing.T) {
+	internalDir := internalDirForGuard(t)
+
+	for _, rel := range []string{
+		"actions/melee_target.go",
+		"actions/combat_taunt.go",
+		"behaviortree/actions_combat.go",
+		"hooks/pinnacle_tick.go",
+		"characters/taunt_hold.go",
+	} {
+		path := filepath.Join(internalDir, filepath.FromSlash(rel))
+		_, err := os.Stat(path)
+		require.NoError(t, err, "proof-set file %s must exist for the guard to mean anything", rel)
+	}
+
+	// And the detector must actually detect: a synthetic source containing a
+	// banned call has to be caught by the same matcher the guard uses.
+	fset := token.NewFileSet()
+	parsed, err := parser.ParseFile(fset, "probe.go",
+		"package p\nfunc f(c C) { c.SetAggro(1, 0, 0) }\n", 0)
+	require.NoError(t, err)
+
+	found := false
+	ast.Inspect(parsed, func(n ast.Node) bool {
+		if sel, ok := n.(*ast.SelectorExpr); ok && sel.Sel.Name == "SetAggro" {
+			found = true
+		}
+		return true
+	})
+	require.True(t, found, "the SetAggro matcher must detect a real call")
+}
+
+// TestTracedAggroTypeIdentRejectsTheDecoyBypass pins the exact hole an
+// adversarial review found in the first seam-compatible version of rule 2.
+//
+// That version walked the whole argument expression and passed if the traced
+// name occurred anywhere inside it. A helper could then take the traced
+// variable as a decoy argument, ignore it, and derive the surprise type from
+// IsHidden() — the U10d bug, reintroduced, with the guard green.
+func TestTracedAggroTypeIdentRejectsTheDecoyBypass(t *testing.T) {
+	cases := []struct {
+		name string
+		expr string
+		want string
+	}{
+		{"bare identifier", "aggroType", "aggroType"},
+		{"the one allowed wrapper", "targeting.ReasonForAggroType(aggroType)", "aggroType"},
+		{"decoy argument to a helper", "targeting.ReasonForAggroType(pickBadType(aggroType, c.IsHidden()))", ""},
+		{"unrelated wrapper", "someOtherFunc(aggroType)", ""},
+		{"inline constant", "characters.SurpriseAttack", ""},
+		{"wrapper with two args", "targeting.ReasonForAggroType(aggroType, x)", ""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			expr, err := parser.ParseExpr(tc.expr)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want, tracedAggroTypeIdent(t, fset, expr),
+				"expression %q", tc.expr)
+		})
 	}
 }
