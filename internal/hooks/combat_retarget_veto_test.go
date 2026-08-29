@@ -11,21 +11,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestRetargetOrEnd_ReportsWhetherTheCommitLanded is the U12c-0b regression.
+// TestRetargetOrEnd_NeverClaimsSuccessWithoutEvidence is the U12c-0b
+// regression.
 //
 // RetargetOrEnd releases FIRST and then commits. Once U12c-0b made a vetoed
 // transition refuse the write, a refused commit left Aggro nil while the
 // function still returned a bare `true`. Both callers in NewRound_DoCombat.go
-// dereference char.Aggro on the strength of that true, so a vetoed retarget
-// was a nil-pointer panic — one that aborts the ENTIRE round's combat
-// processing for every actor, surviving only because the event listener
-// recovers.
+// (`:74` and `:134`) dereference char.Aggro on the strength of that return, so
+// a vetoed retarget was a nil-pointer panic — one that aborts the ENTIRE
+// round's combat processing for every actor, surviving only because the event
+// listener recovers.
 //
-// This is a source-level guard rather than a behavioural one on purpose:
-// driving a veto through RetargetOrEnd needs a loaded room, a mob registry, a
-// live event queue and a wired veto set, while the regression itself is the
-// literal token `return true` sitting after a targeting.Commit call.
-func TestRetargetOrEnd_ReportsWhetherTheCommitLanded(t *testing.T) {
+// The guard is source-level rather than behavioural on purpose: driving a veto
+// through RetargetOrEnd needs a loaded room, a mob registry, a live event queue
+// and a wired veto set, while the regression itself is the literal token
+// `return true`.
+//
+// It asserts the SHAPE-INDEPENDENT rule — no bare `true` may be returned from
+// this function at all — so it keeps holding whether the result comes from
+// `return targeting.Commit(...)`, from a local, or from anything else.
+func TestRetargetOrEnd_NeverClaimsSuccessWithoutEvidence(t *testing.T) {
 	_, thisFile, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 
@@ -43,57 +48,35 @@ func TestRetargetOrEnd_ReportsWhetherTheCommitLanded(t *testing.T) {
 	}
 	require.NotNil(t, fn, "RetargetOrEnd must exist for this guard to mean anything")
 
-	// Every return statement that FOLLOWS a targeting.Commit call must report
-	// whether the commit landed, never a bare `true`.
 	commits := 0
+	bareTrues := 0
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
-		block, ok := n.(*ast.BlockStmt)
-		if !ok {
-			return true
-		}
-		for i, stmt := range block.List {
-			expr, ok := stmt.(*ast.ExprStmt)
-			if !ok {
-				continue
+		switch node := n.(type) {
+		case *ast.CallExpr:
+			if sel, ok := node.Fun.(*ast.SelectorExpr); ok {
+				if pkg, ok := sel.X.(*ast.Ident); ok &&
+					pkg.Name == "targeting" && sel.Sel.Name == "Commit" {
+					commits++
+				}
 			}
-			call, ok := expr.X.(*ast.CallExpr)
-			if !ok {
-				continue
+		case *ast.ReturnStmt:
+			if len(node.Results) != 1 {
+				return true
 			}
-			sel, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok {
-				continue
-			}
-			pkg, ok := sel.X.(*ast.Ident)
-			if !ok || pkg.Name != "targeting" || sel.Sel.Name != "Commit" {
-				continue
-			}
-			commits++
-
-			require.Less(t, i+1, len(block.List),
-				"a targeting.Commit at %s is the last statement in its block; "+
-					"it must be followed by a return reporting whether it landed",
-				fset.Position(call.Pos()))
-
-			ret, ok := block.List[i+1].(*ast.ReturnStmt)
-			require.True(t, ok,
-				"the statement after targeting.Commit at %s must be a return",
-				fset.Position(call.Pos()))
-			require.Len(t, ret.Results, 1)
-
-			if lit, isIdent := ret.Results[0].(*ast.Ident); isIdent {
-				require.NotEqual(t, "true", lit.Name,
-					"RetargetOrEnd returns a bare `true` after targeting.Commit at %s. "+
-						"Commit is void and can be REFUSED by a combat-phase veto, and "+
-						"this function released first — so a refused commit leaves Aggro "+
-						"nil and both callers in NewRound_DoCombat.go panic dereferencing "+
-						"it. Return `char.Aggro != nil` instead.",
-					fset.Position(call.Pos()))
+			if id, ok := node.Results[0].(*ast.Ident); ok && id.Name == "true" {
+				bareTrues++
+				t.Errorf("RetargetOrEnd returns a bare `true` at %s. It releases "+
+					"aggro BEFORE committing, and targeting.Commit can be REFUSED "+
+					"by a combat-phase veto, so a bare true leaves Aggro nil while "+
+					"claiming success — and both callers in NewRound_DoCombat.go "+
+					"dereference it. Return the Commit result instead.",
+					fset.Position(node.Pos()))
 			}
 		}
 		return true
 	})
 
+	require.Zero(t, bareTrues)
 	require.Equal(t, 3, commits,
 		"expected 3 targeting.Commit sites in RetargetOrEnd (player scan, mob "+
 			"scan, charmed-owner scan); found %d — the guard's shape has drifted "+

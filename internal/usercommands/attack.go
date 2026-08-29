@@ -215,7 +215,12 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			isFreshAggro := user.Character.Aggro == nil ||
 				user.Character.Aggro.MobInstanceId != attackMobInstanceId
 
-			targeting.Commit(user.Character,
+			// U12c-0b: a commit can be REFUSED by a combat-phase veto (dead
+			// target, despawning, non-combatant). CheckPlayerHarm above screens
+			// companion/non-combatant/attack-immune but NOT target life or
+			// presence, so a target mid-despawn reaches here. Do not announce a
+			// fight that did not start.
+			engaged := targeting.Commit(user.Character,
 				state.ActorRef{MobInstanceId: attackMobInstanceId},
 				targeting.ReasonForAggroType(aggroType))
 
@@ -238,9 +243,11 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				}
 			}
 
-			user.SendText(messaging.CategoryHitMelee,
-				fmt.Sprintf(`You prepare to enter into mortal combat with %s.`, mName),
-			)
+			if engaged {
+				user.SendText(messaging.CategoryHitMelee,
+					fmt.Sprintf(`You prepare to enter into mortal combat with %s.`, mName),
+				)
+			}
 
 			sendMeleeAmbushDenial(user, ambushDenied)
 

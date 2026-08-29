@@ -37,27 +37,47 @@ const (
 	ReasonShoot
 )
 
-// Commit enters combat with ref.
+// Commit enters combat with ref, and reports whether the engagement actually
+// STARTED.
+//
+// ⚠️ A commit CAN be refused. Since U12c-0b the combat-phase vetoes are
+// load-bearing (dead target, non-combatant, despawning, respawn grace, and the
+// actor's own state), and SetAggro writes nothing when the transition is
+// refused. The grace-period and taunt-hold guards refuse too, and always have.
+//
+// The return value exists because the alternative cost us a nil-pointer panic:
+// hooks.RetargetOrEnd released aggro, committed, and returned a bare true, so
+// a refused commit left Aggro nil while its callers dereferenced it. Anything
+// that acts on "we are now fighting" -- messaging especially -- must consult
+// this rather than assume.
+//
+// Ignoring the result is legal Go and is correct for the many sites that only
+// want best-effort engagement. It is NOT correct for anything that then speaks
+// to a player about the fight.
 //
 // U12a: delegates to characters.SetAggro, so every guard (grace period,
 // taunt-hold, grapple clearing, wait rounds, ranged inference) and the
-// Aggro/CombatPhase dual-write are untouched. U12b migrates the remaining
-// callers here; U12c moves the guard bodies in and deletes SetAggro.
-func Commit(c *characters.Character, ref state.ActorRef, r Reason) {
+// Aggro/CombatPhase dual-write are untouched. U12c-2 moves the guard bodies in
+// and deletes SetAggro.
+func Commit(c *characters.Character, ref state.ActorRef, r Reason) bool {
 	if c == nil || ref.IsZero() {
-		return
+		return false
 	}
 	c.SetAggro(ref.UserId, ref.MobInstanceId, aggroTypeFor(r))
+	return committedTo(c, ref)
 }
 
 // CommitAfter is Commit with an explicit extra wait, replacing SetAggro's
 // overloaded roundsWaitTime variadic. Only two production sites pass one;
 // everything else takes weapon speed, which is what Commit does.
-func CommitAfter(c *characters.Character, ref state.ActorRef, r Reason, waitRounds int) {
+//
+// Returns whether the engagement started, for the reasons on Commit.
+func CommitAfter(c *characters.Character, ref state.ActorRef, r Reason, waitRounds int) bool {
 	if c == nil || ref.IsZero() {
-		return
+		return false
 	}
 	c.SetAggro(ref.UserId, ref.MobInstanceId, aggroTypeFor(r), waitRounds)
+	return committedTo(c, ref)
 }
 
 // Release leaves combat.
@@ -99,12 +119,14 @@ func aggroTypeFor(r Reason) characters.AggroType {
 // This was characters.ForceTauntAggro. It moved here because it is a
 // targeting operation, not storage: leaving it in internal/characters would
 // have exempted the game's most frequent retargeting mechanic from the seam.
-func CommitTaunt(c *characters.Character, ref state.ActorRef, holdRounds int) {
+// Returns whether the engagement started, for the reasons on Commit. A taunt
+// that reports false pulled nobody, and must not be narrated as if it had.
+func CommitTaunt(c *characters.Character, ref state.ActorRef, holdRounds int) bool {
 	if c == nil || ref.IsZero() {
-		return
+		return false
 	}
 	c.SetTauntHold(ref.UserId, ref.MobInstanceId, holdRounds)
-	Commit(c, ref, ReasonTaunt)
+	return Commit(c, ref, ReasonTaunt)
 }
 
 // ReasonForAggroType is the inverse of aggroTypeFor: it maps a legacy
@@ -127,4 +149,18 @@ func ReasonForAggroType(t characters.AggroType) Reason {
 	default:
 		return ReasonAttack
 	}
+}
+
+// committedTo reports whether THIS commit landed, by checking that the target
+// now on record is the one that was asked for.
+//
+// `c.Aggro != nil` is NOT sufficient and was the first version of this: a
+// refused commit leaves the PREVIOUS engagement in place, which is non-nil, so
+// every refusal reported success. The ids are compared rather than the whole
+// struct because SetAggro legitimately rewrites the aggro TYPE (it re-infers
+// Shooting from the equipped weapon); it never rewrites the ids.
+func committedTo(c *characters.Character, ref state.ActorRef) bool {
+	return c.Aggro != nil &&
+		c.Aggro.UserId == ref.UserId &&
+		c.Aggro.MobInstanceId == ref.MobInstanceId
 }

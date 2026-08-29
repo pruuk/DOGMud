@@ -309,16 +309,18 @@ func ExecuteTaunt(actor Actor) TauntResult {
 			if attackerUserId > 0 {
 				// Player taunter.
 				if targetMob.Character.Aggro.UserId != attackerUserId {
-					targeting.CommitTaunt(&targetMob.Character,
+					// U12c-0b: report the PULL, not the attempt. CommitTaunt can
+					// be refused by a combat-phase veto, and agroPulled drives the
+					// player-facing "you pull its attention" line.
+					agroPulled = targeting.CommitTaunt(&targetMob.Character,
 						state.ActorRef{UserId: attackerUserId}, holdRounds)
-					agroPulled = true
 				}
 			} else if attackerMobId > 0 {
 				// Mob taunter.
 				if targetMob.Character.Aggro.MobInstanceId != attackerMobId || targetMob.Character.Aggro.UserId != 0 {
-					targeting.CommitTaunt(&targetMob.Character,
+					// U12c-0b: report the PULL, not the attempt. See above.
+					agroPulled = targeting.CommitTaunt(&targetMob.Character,
 						state.ActorRef{MobInstanceId: attackerMobId}, holdRounds)
-					agroPulled = true
 				}
 			}
 		}

@@ -99,8 +99,8 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 		// Is this player attacking us?
 		if (userId > 0 && aggro.UserId == userId) ||
 			(mobInstanceId > 0 && aggro.MobInstanceId == mobInstanceId) {
-			targeting.Commit(char, state.ActorRef{UserId: attackingPlayer.UserId}, targeting.ReasonAttack)
-			return char.Aggro != nil
+			return targeting.Commit(char,
+				state.ActorRef{UserId: attackingPlayer.UserId}, targeting.ReasonAttack)
 		}
 	}
 
@@ -116,8 +116,8 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 		// Is this mob attacking us, or any of our companions?
 		if (userId > 0 && aggro.UserId == userId) ||
 			(aggro.MobInstanceId > 0 && myMobIds[aggro.MobInstanceId]) {
-			targeting.Commit(char, state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
-			return char.Aggro != nil
+			return targeting.Commit(char,
+				state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
 		}
 	}
 
@@ -131,8 +131,8 @@ func RetargetOrEnd(char *characters.Character, room *rooms.Room,
 					continue
 				}
 				if attackingMob.Character.Aggro.UserId == ownerId {
-					targeting.Commit(char, state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
-					return char.Aggro != nil
+					return targeting.Commit(char,
+						state.ActorRef{MobInstanceId: attackingMob.InstanceId}, targeting.ReasonAttack)
 				}
 			}
 		}
