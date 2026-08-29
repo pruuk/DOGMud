@@ -126,8 +126,14 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			isDifferentTarget = true
 		}
 
-		// If switching targets, use the Target command logic instead
-		if isDifferentTarget && (user.Character.Aggro.Type == characters.DefaultAttack || user.Character.Aggro.Type == characters.Shooting) {
+		// If switching targets, use the Target command logic instead.
+		//
+		// U12c-2: DefaultAttack and Shooting were the two ordinary-attack aggro
+		// types, and Shooting was only ever DERIVED from the weapon subtype at
+		// commit time. With Flee and SpellCast dissolved into the Disengaging
+		// phase and the Casting activity, "an ordinary attack" is exactly
+		// "engaged, not fleeing, not casting".
+		if isDifferentTarget && !user.Character.IsDisengaging() && !user.Character.IsCasting() {
 			// Build target name for the Target command
 			targetName := rest
 			if targetName == "" || targetName[0] == '*' {

@@ -1,7 +1,6 @@
 package characters
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -105,11 +104,10 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 		combatAddlWaitRounds = c.Equipment.Weapon.GetSpec().WaitRounds + c.Equipment.Offhand.GetSpec().WaitRounds
 	}
 
-	if aggroType == DefaultAttack {
-		if c.Equipment.Weapon.GetSpec().Subtype == items.Shooting {
-			aggroType = Shooting
-		}
-	}
+	// U12c-2: the DefaultAttack -> Shooting derivation that stood here is gone.
+	// It was stored state computed from the equipped weapon at commit time,
+	// while targeting.Engagement.Ranged derives the same fact live. Stored and
+	// derived state cannot disagree if only one of them exists.
 
 	// U12c-0b: the transition DECIDES. It used to run after the Aggro write
 	// with its error discarded, so a vetoed commit left Aggro holding a target

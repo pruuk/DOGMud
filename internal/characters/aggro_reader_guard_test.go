@@ -35,8 +35,6 @@ import (
 var notYetMigrated = map[string]bool{
 	"combat/combat.go":                   true,
 	"hooks/NewRound_DoCombat_helpers.go": true,
-	"usercommands/attack.go":             true,
-	"usercommands/target.go":             true,
 }
 
 func internalDirForReaderGuard(t *testing.T) string {
