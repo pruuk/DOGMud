@@ -289,7 +289,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				Id:         u.ShorthandId(),
 				Name:       u.Character.Name,
 				Adjectives: u.Character.GetAdjectives(),
-				Aggro:      u.Character.Aggro != nil,
+				Aggro:      u.Character.IsInCombat(),
 			})
 		}
 
@@ -317,7 +317,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				Id:         mob.ShorthandId(),
 				Name:       mob.Character.Name,
 				Adjectives: mob.Character.GetAdjectives(),
-				Aggro:      mob.Character.Aggro != nil,
+				Aggro:      mob.Character.IsInCombat(),
 			}
 
 			if len(mob.QuestFlags) > 0 {
