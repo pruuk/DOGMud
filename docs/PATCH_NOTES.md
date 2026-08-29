@@ -1,5 +1,21 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: The rest of the targeting groundwork
+
+The second half of the change described below. Every remaining place in the
+game that decides who a fight is aimed at now goes through the same one route,
+rather than most of them going through it and a long tail going their own way.
+
+As before, nothing here is meant to be visible while you play. Creatures should
+choose the same targets, taunts should hold the same way, companions should
+fight the same things, and fleeing, arrest, charm and summoning should all
+behave exactly as they did. The value is that a future change to any of it now
+happens in one place instead of many, and the game now refuses to build if
+anyone adds a new route around it.
+
+If you do notice a creature attacking someone unexpected, or a taunt failing to
+hold, please report it. That would be a bug rather than an intended tweak.
+
 ## 2026-08-29: Groundwork under how fights find their target
 
 Nothing in this change is meant to be visible while you play, and that is the

@@ -16,6 +16,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -176,7 +178,7 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				// goal planner emits `pathto` toward the shooter's room.
 				m.CombatMemory = mobs.SetCombatMemory(user.UserId, 0, user.Character.RoomId, util.GetRoundCount())
 			} else if m.Character.Aggro == nil {
-				m.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+				targeting.Commit(&m.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 			}
 
 			// Seed revenge + disposition + faction crime — mirrors the melee

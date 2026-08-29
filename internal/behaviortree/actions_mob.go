@@ -22,6 +22,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -109,7 +111,8 @@ func actSummonCompanion(params map[string]any, ctx *EvalContext) Result {
 				targetUserId = pickEligibleRoomPlayer(room)
 			}
 			if targetUserId > 0 {
-				companion.Character.SetAggro(targetUserId, 0, characters.DefaultAttack)
+				targeting.Commit(&companion.Character,
+					state.ActorRef{UserId: targetUserId}, targeting.ReasonAttack)
 			}
 			// Still queued as a fallback/safety net — a no-op if Aggro is
 			// already set (LookForTrouble returns immediately when
@@ -121,7 +124,7 @@ func actSummonCompanion(params map[string]any, ctx *EvalContext) Result {
 		} else {
 			// Charmed companion of the summoning mob
 			companion.Character.Charm(0, 99999, "")
-			companion.Character.EndAggro()
+			targeting.Release(&companion.Character, targeting.ReasonDisengage)
 			info := characters.CompanionInfo{
 				MobId:      int(companion.MobId),
 				InstanceId: companion.InstanceId,

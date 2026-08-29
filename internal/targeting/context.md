@@ -151,6 +151,16 @@ func ConsumeOpeningStrike(c *characters.Character) bool
   `CommitTaunt` and `characters` kept only the lock state, so the seam has **no
   exemptions**.
 
+- **`characters.SetAggro` and `EndAggro` still exist, and that is deliberate.**
+  They are the storage primitives this package is implemented in terms of. U12b
+  did not delete them, because `(*Character).Charm`
+  (`characters/charminfo.go:51`) releases aggro internally and `characters`
+  cannot import this package. What U12b enforces is the *caller* restriction:
+  outside `internal/characters` and `internal/targeting`, nothing may call
+  them. `TestNoDirectAggroWritesOutsideTheSeam`
+  (`internal/characters/aggro_writer_guard_test.go`) fails on any new direct
+  write, and its allowlist is empty and must stay empty.
+
 - **`Reason` is a fact about a moment, not about a state.** It says why a
   commit happened. What kind of engagement resulted is `Engagement`'s job.
   Conflating them is how `Aggro.Type` ended up being demoted mid-round.

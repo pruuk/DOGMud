@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -406,7 +407,14 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	if sourceChar.Aggro.Type == characters.SurpriseAttack {
 		openingStrikeLeft = true
 		attackResult.WasSurpriseAttack = true
-		sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
+		// U12b: routed through the seam, deliberately NOT replaced with
+		// targeting.ConsumeOpeningStrike. That swap is U12c's behavioural
+		// change; doing it here would make this sweep behavioural.
+		targeting.Commit(sourceChar,
+			state.ActorRef{
+				UserId:        sourceChar.Aggro.UserId,
+				MobInstanceId: sourceChar.Aggro.MobInstanceId,
+			}, targeting.ReasonAttack)
 	}
 
 	attackResult.DefenderWasAttacked = len(plan.weapons) > 0

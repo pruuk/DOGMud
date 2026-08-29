@@ -121,3 +121,38 @@ func TestCommitTaunt_NilAndZeroAreSafe(t *testing.T) {
 	CommitTaunt(c, state.ActorRef{}, 4)
 	assert.Nil(t, c.Aggro, "a taunt with no taunter must not engage anybody")
 }
+
+// TestReasonRoundTrip pins the transform a blind review caught being lossy.
+//
+// usercommands/target.go reads Aggro.Type and hands it straight back through
+// ReasonForAggroType. Its own gate permits Shooting, so collapsing Shooting to
+// DefaultAttack was identical ONLY while the weapon was still a Shooting
+// subtype (SetAggro re-infers it); swap the weapon between the shot and the
+// target switch and the engagement quietly changed type.
+//
+// Flee and SpellCast are deliberately NOT round-tripped: no production site
+// commits them, they are written only by SetCast and by tests, and inventing a
+// writer for them would be a behaviour change of its own.
+func TestReasonRoundTrip(t *testing.T) {
+	for _, at := range []characters.AggroType{
+		characters.DefaultAttack,
+		characters.SurpriseAttack,
+		characters.Shooting,
+	} {
+		assert.Equal(t, at, aggroTypeFor(ReasonForAggroType(at)),
+			"AggroType %v must survive the round trip through Reason", at)
+	}
+}
+
+// TestCommit_ShootReasonPreservesShootingWithoutAWeapon is the concrete
+// regression: with no Shooting-subtype weapon equipped there is nothing for
+// SetAggro to re-infer from, so only a faithful Reason keeps the type.
+func TestCommit_ShootReasonPreservesShootingWithoutAWeapon(t *testing.T) {
+	c := characters.New()
+
+	Commit(c, state.ActorRef{MobInstanceId: 42}, ReasonShoot)
+
+	require.NotNil(t, c.Aggro)
+	assert.Equal(t, characters.Shooting, c.Aggro.Type,
+		"a Shooting engagement must survive a re-commit even with no bow in hand")
+}

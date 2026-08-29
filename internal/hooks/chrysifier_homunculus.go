@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -158,7 +159,7 @@ func spawnHomunculus(user *users.UserRecord, room *rooms.Room) *mobs.Mob {
 
 	// Bind as a permanent companion of the owner.
 	mob.Character.Charm(user.UserId, 99999, "")
-	mob.Character.EndAggro()
+	targeting.Release(&mob.Character, targeting.ReasonDisengage)
 	ch.TrackCharmed(mob.InstanceId, true)
 
 	info := characters.CompanionInfo{

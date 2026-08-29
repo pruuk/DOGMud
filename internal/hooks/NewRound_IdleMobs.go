@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -65,7 +66,7 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 				user := users.GetByUserId(mob.Character.CurrentCombatTarget().UserId)
 				if user == nil || user.Character.RoomId != mob.Character.RoomId {
 					mob.Command(`emote mumbles about losing their quarry.`)
-					mob.Character.EndAggro()
+					targeting.Release(&mob.Character, targeting.ReasonDisengage)
 				}
 			}
 			continue

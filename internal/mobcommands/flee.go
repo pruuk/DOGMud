@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 )
 
 // Flee makes a mob disengage from combat and move to a random adjacent room.
@@ -66,7 +67,7 @@ func Flee(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	// If in combat, clear aggro
 	if mob.Character.IsInCombat() {
-		mob.Character.EndAggro()
+		targeting.Release(&mob.Character, targeting.ReasonDisengage)
 	}
 
 	// Get a random exit (skips secret and locked exits)

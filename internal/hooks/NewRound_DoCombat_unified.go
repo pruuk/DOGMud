@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -215,7 +216,7 @@ func resolveCombatTarget(atk, def actions.Actor, roundNumber uint64) bool {
 		return false
 	}
 	if atk.GetRoom() == nil {
-		atkChar.EndAggro()
+		targeting.Release(atkChar, targeting.ReasonDisengage)
 		return false
 	}
 	if def == nil || def.GetCharacter() == nil {
@@ -224,7 +225,7 @@ func resolveCombatTarget(atk, def actions.Actor, roundNumber uint64) bool {
 		if atk.IsPlayer() {
 			atk.SendText(messaging.CategorySystem, `Your target can't be found.`)
 		}
-		atkChar.EndAggro()
+		targeting.Release(atkChar, targeting.ReasonDisengage)
 		return false
 	}
 	defChar := def.GetCharacter()
@@ -240,7 +241,7 @@ func resolveCombatTarget(atk, def actions.Actor, roundNumber uint64) bool {
 		if atk.IsPlayer() {
 			atk.SendText(messaging.CategorySystem, `Your target can't be found.`)
 		}
-		atkChar.EndAggro()
+		targeting.Release(atkChar, targeting.ReasonDisengage)
 		return false
 	}
 
@@ -265,7 +266,7 @@ func resolveCombatTarget(atk, def actions.Actor, roundNumber uint64) bool {
 	// Health <= 0). All other quadrants check Health < 1 directly. Both
 	// reduce to the same condition today, so we use the simpler form.
 	if defChar.Health < 1 {
-		atkChar.EndAggro()
+		targeting.Release(atkChar, targeting.ReasonDisengage)
 		return false
 	}
 	return true
@@ -898,7 +899,7 @@ func handleAggroAndAssist(atk, def actions.Actor, cfg *configs.Config) {
 		//   - Party auto-assist (Divergence #5) gated on PartyId.
 		//   - Charmed-mob assist for the defender player.
 		if defChar.Health > 0 && defChar.Aggro == nil {
-			defChar.SetAggro(0, atk.GetMobInstanceId(), characters.DefaultAttack)
+			targeting.Commit(defChar, state.ActorRef{MobInstanceId: atk.GetMobInstanceId()}, targeting.ReasonAttack)
 		}
 		// Divergence #5: party-assist gate keys on party-membership
 		// (parties.Get(userId)) — the engine's equivalent of a PartyId
@@ -959,7 +960,7 @@ func resolveCombatRound(atk, def actions.Actor) {
 	defChar := def.GetCharacter()
 
 	if atkChar.Health <= 0 || defChar.Health <= 0 {
-		defChar.EndAggro()
+		targeting.Release(defChar, targeting.ReasonDisengage)
 		if atkChar.Health > 0 {
 			atkRoom := atk.GetRoom()
 			if atk.IsPlayer() {
@@ -971,7 +972,7 @@ func resolveCombatRound(atk, def actions.Actor) {
 				RetargetOrEnd(atkChar, atkRoom, 0, atk.GetMobInstanceId())
 			}
 		} else {
-			atkChar.EndAggro()
+			targeting.Release(atkChar, targeting.ReasonDisengage)
 		}
 		return
 	}
@@ -980,9 +981,9 @@ func resolveCombatRound(atk, def actions.Actor) {
 	// PvP does this implicitly via SetAggro on the user; PvM/MvP/MvM
 	// explicitly re-set aggro at end of round.
 	if def.IsPlayer() {
-		atkChar.SetAggro(def.GetUserId(), 0, characters.DefaultAttack)
+		targeting.Commit(atkChar, state.ActorRef{UserId: def.GetUserId()}, targeting.ReasonAttack)
 	} else {
-		atkChar.SetAggro(0, def.GetMobInstanceId(), characters.DefaultAttack)
+		targeting.Commit(atkChar, state.ActorRef{MobInstanceId: def.GetMobInstanceId()}, targeting.ReasonAttack)
 	}
 }
 

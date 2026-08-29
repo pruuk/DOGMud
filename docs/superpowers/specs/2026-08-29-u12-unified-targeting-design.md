@@ -249,7 +249,16 @@ diff.
 2. AST guard, following U5b's no-direct-pool-mutation precedent: no production
    code writes `Aggro` or `CombatPhase` outside `internal/targeting`.
 3. Divergence test: after any `Commit` or `Release`, the two stores agree.
-4. Delete `SetAggro` and `EndAggro`.
+4. ~~Delete `SetAggro` and `EndAggro`.~~ **CORRECTED during U12b.** They cannot
+   be deleted: `(*Character).Charm` (`characters/charminfo.go:51`) releases
+   aggro when the charmer was the current target, and `internal/characters` can
+   never import `internal/targeting`. They instead remain what they already
+   were in practice — the **package-internal storage primitives** — and U12b
+   enforces the *caller* restriction instead: nothing outside
+   `internal/characters` and `internal/targeting` may call them, pinned by
+   `TestNoDirectAggroWritesOutsideTheSeam`. That is the stronger statement, and
+   it survives into U12c, where those two methods are exactly where the
+   dual-write collapse happens.
 
 Reviewable as "did each site translate correctly?" with no design judgment
 involved. The AST guard, not human attention, is what proves the sweep is

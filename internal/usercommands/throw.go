@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -136,7 +137,7 @@ func engageAfterThrow(user *users.UserRecord, room *rooms.Room, hitMobs []*mobs.
 		}
 		freshAggro := mob.Character.Aggro == nil
 		if freshAggro {
-			mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+			targeting.Commit(&mob.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 		}
 		actions.SeedAggression(user, mob, room, freshAggro)
 	}
@@ -146,7 +147,7 @@ func engageAfterThrow(user *users.UserRecord, room *rooms.Room, hitMobs []*mobs.
 	}
 	for _, mob := range hitMobs {
 		if mob != nil {
-			thrower.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+			targeting.Commit(thrower, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 			return
 		}
 	}

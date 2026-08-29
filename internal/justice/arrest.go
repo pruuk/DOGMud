@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -376,7 +377,7 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 	_ = player.AddBuffScaled(jailedBuffId, float64(rounds))
 
 	// Drop any combat the player was in — they're in custody now, not fighting.
-	player.EndAggro()
+	targeting.Release(player, targeting.ReasonDisengage)
 
 	// Haul the player to the holding cell.
 	_ = aMoveFn(userId, cell)

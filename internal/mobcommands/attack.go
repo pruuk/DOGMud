@@ -8,6 +8,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -80,7 +82,9 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 			// Only announce if not already fighting this target
 			alreadyFighting := mob.Character.IsInCombat() && mob.Character.CurrentCombatTarget().UserId == attackPlayerId
-			mob.Character.SetAggro(attackPlayerId, 0, aggroType)
+			targeting.Commit(&mob.Character,
+				state.ActorRef{UserId: attackPlayerId},
+				targeting.ReasonForAggroType(aggroType))
 
 			if !isSneaking && !alreadyFighting {
 
@@ -116,7 +120,9 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				actions.NewMobActorInRoom(mob, room),
 				actions.NewMobActorInRoom(m, room),
 			)
-			mob.Character.SetAggro(0, attackMobInstanceId, mobAggroType)
+			targeting.Commit(&mob.Character,
+				state.ActorRef{MobInstanceId: attackMobInstanceId},
+				targeting.ReasonForAggroType(mobAggroType))
 
 			if !isSneaking {
 				room.SendTextVisual(messaging.CategoryHitMelee,

@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -105,7 +106,7 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 
 	// Charm permanently (effectively infinite duration)
 	mob.Character.Charm(user.UserId, 99999, "")
-	mob.Character.EndAggro()
+	targeting.Release(&mob.Character, targeting.ReasonDisengage)
 	user.Character.TrackCharmed(mob.InstanceId, true)
 
 	// Determine source type based on whether a corpse was consumed
@@ -140,14 +141,14 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 		if companion := mobs.GetInstance(charmId); companion != nil {
 			if companion.Character.IsInCombat() &&
 				companion.Character.CurrentCombatTarget().MobInstanceId == mob.InstanceId {
-				companion.Character.EndAggro()
+				targeting.Release(&companion.Character, targeting.ReasonDisengage)
 			}
 		}
 	}
 
 	// Clear the owner's own aggro if targeting the new mob
 	if ch.IsInCombat() && ch.CurrentCombatTarget().MobInstanceId == mob.InstanceId {
-		ch.EndAggro()
+		targeting.Release(ch, targeting.ReasonDisengage)
 	}
 
 	return true

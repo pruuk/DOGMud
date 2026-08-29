@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 )
 
 // wireInboundAggroCleanup subscribes to Life Alive→Dead transitions
@@ -43,7 +44,7 @@ func wireInboundAggroCleanup(c *characters.Character) {
 				if isPlayer {
 					// Standard aggro targeting this player (UserId shape).
 					if mob.Character.EngagedTarget().UserId == c.GetUserId() {
-						mob.Character.EndAggro()
+						targeting.Release(&mob.Character, targeting.ReasonDisengage)
 						continue
 					}
 					// Spell-cast-shape aggro: abort in-flight cast targeting
@@ -51,7 +52,7 @@ func wireInboundAggroCleanup(c *characters.Character) {
 					if mob.Character.Aggro != nil && mob.Character.Aggro.Type == characters.SpellCast {
 						for _, tid := range mob.Character.Aggro.SpellInfo.TargetUserIds {
 							if tid == c.GetUserId() {
-								mob.Character.EndAggro()
+								targeting.Release(&mob.Character, targeting.ReasonDisengage)
 								break
 							}
 						}
@@ -60,7 +61,7 @@ func wireInboundAggroCleanup(c *characters.Character) {
 					// Mob death: clear any mob targeting the dying mob
 					// instance by MobInstanceId.
 					if mob.Character.EngagedTarget().MobInstanceId == c.MobInstanceId {
-						mob.Character.EndAggro()
+						targeting.Release(&mob.Character, targeting.ReasonDisengage)
 					}
 				}
 			}
@@ -73,7 +74,7 @@ func wireInboundAggroCleanup(c *characters.Character) {
 					if comp == nil {
 						continue
 					}
-					comp.Character.EndAggro()
+					targeting.Release(&comp.Character, targeting.ReasonDisengage)
 				}
 			}
 		})

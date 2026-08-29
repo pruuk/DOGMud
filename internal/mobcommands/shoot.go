@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -139,11 +140,11 @@ func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if !result.CrossRoom && (dealt || !result.IsSneaking) {
 		if result.IsTargetMob {
 			if target := mobs.GetInstance(result.TargetMobInstanceId); target != nil && target.Character.Aggro == nil {
-				target.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+				targeting.Commit(&target.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 			}
 		} else if result.TargetUserId > 0 {
 			if u := users.GetByUserId(result.TargetUserId); u != nil && u.Character.Aggro == nil {
-				u.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+				targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -129,7 +130,7 @@ func clearAggroIfTargetAbsent(mob *mobs.Mob, destRoom *rooms.Room) {
 		}
 	}
 	if !targetStillPresent {
-		mob.Character.EndAggro()
+		targeting.Release(&mob.Character, targeting.ReasonDisengage)
 	}
 }
 

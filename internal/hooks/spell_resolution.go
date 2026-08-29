@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -533,11 +534,11 @@ func spellDefenceIdentity(char *characters.Character, user *users.UserRecord, ro
 func setMobSpellAggro(user *users.UserRecord, mob *mobs.Mob) {
 	if !mob.Character.IsInCombat() {
 		if user != nil {
-			mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+			targeting.Commit(&mob.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 		}
 	}
 	if user != nil && !user.Character.IsInCombat() {
-		user.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+		targeting.Commit(user.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 	}
 }
 
@@ -771,11 +772,11 @@ func applyMobEffect_buff(
 	if spellData.Type == spells.HarmSingle || spellData.Type == spells.HarmArea || spellData.Type == spells.HarmMulti {
 		if !mob.Character.IsInCombat() {
 			if user != nil {
-				mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+				targeting.Commit(&mob.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 			}
 		}
 		if user != nil && !user.Character.IsInCombat() {
-			user.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+			targeting.Commit(user.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 		}
 	}
 	if user != nil {
@@ -925,10 +926,10 @@ func resolveAgainstPlayer(user *users.UserRecord, target *users.UserRecord, room
 	// Set reciprocal aggro for harm spells
 	if spellData.Type == spells.HarmSingle || spellData.Type == spells.HarmArea || spellData.Type == spells.HarmMulti {
 		if !user.Character.IsInCombat() {
-			user.Character.SetAggro(target.UserId, 0, characters.DefaultAttack)
+			targeting.Commit(user.Character, state.ActorRef{UserId: target.UserId}, targeting.ReasonAttack)
 		}
 		if !target.Character.IsInCombat() {
-			target.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+			targeting.Commit(target.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 		}
 	}
 
@@ -1341,7 +1342,7 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 				mob.Character.Name, spellData.Name,
 				combat.GetDamageDescription(pr.MoveResult.Damage, target.Character.HealthMax.Value)))
 			if !target.Character.IsInCombat() {
-				target.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
+				targeting.Commit(target.Character, state.ActorRef{MobInstanceId: mob.InstanceId}, targeting.ReasonAttack)
 			}
 		} else {
 			// Defended, but the drain still landed a partial pull. Since
@@ -1520,7 +1521,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 				caster.Character.Name, spellData.Name, target.Character.Name), target.UserId)
 		}
 		if !target.Character.IsInCombat() {
-			target.Character.SetAggro(0, caster.InstanceId, characters.DefaultAttack)
+			targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 		}
 	case "dot":
 		// The affliction is a binary status: it lands only on an attack win.
@@ -1531,7 +1532,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 				spellDefenceIdentity(&caster.Character, nil, room),
 				spellDefenceIdentity(target.Character, target, room), spellData.Name, nil, target)
 			if !target.Character.IsInCombat() {
-				target.Character.SetAggro(0, caster.InstanceId, characters.DefaultAttack)
+				targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 			}
 			break
 		}
@@ -1551,7 +1552,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts <ansi fg="username">%s</ansi>!`,
 			caster.Character.Name, spellData.Name, target.Character.Name), target.UserId)
 		if !target.Character.IsInCombat() {
-			target.Character.SetAggro(0, caster.InstanceId, characters.DefaultAttack)
+			targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 		}
 	case "knockdown":
 		// Defence scales the DAMAGE (partial hit); the knockdown is a binary
@@ -1600,7 +1601,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 				combat.GetDamageDescription(dmg, target.Character.HealthMax.Value), critTag))
 		}
 		if !target.Character.IsInCombat() {
-			target.Character.SetAggro(0, caster.InstanceId, characters.DefaultAttack)
+			targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 		}
 	case "buff":
 		// Binary status: a defended cast narrates the triad and applies nothing.
@@ -1610,7 +1611,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 				spellDefenceIdentity(target.Character, target, room), spellData.Name, nil, target)
 			if spellData.Type == spells.HarmSingle || spellData.Type == spells.HarmArea || spellData.Type == spells.HarmMulti {
 				if !target.Character.IsInCombat() {
-					target.Character.SetAggro(0, caster.InstanceId, characters.DefaultAttack)
+					targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 				}
 			}
 			break
@@ -1621,7 +1622,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		// Set aggro for harmful buff spells
 		if spellData.Type == spells.HarmSingle || spellData.Type == spells.HarmArea || spellData.Type == spells.HarmMulti {
 			if !target.Character.IsInCombat() {
-				target.Character.SetAggro(0, caster.InstanceId, characters.DefaultAttack)
+				targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 			}
 		}
 		target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(

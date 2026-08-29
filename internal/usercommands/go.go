@@ -28,6 +28,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -134,7 +135,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			return true, nil
 		}
 		// Force-clear the stale aggro so it doesn't follow them out.
-		user.Character.EndAggro()
+		targeting.Release(user.Character, targeting.ReasonDisengage)
 	}
 
 	// Block movement during quest sequences (e.g., Awakening Rite ceremony)

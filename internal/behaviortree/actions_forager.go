@@ -24,6 +24,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/sealedcrate"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -516,7 +517,7 @@ func tickForagerRecalling(
 		fromRoom := rooms.LoadRoom(ctx.RoomId)
 		toRoom := rooms.LoadRoom(anchorRoomId)
 		if toRoom != nil {
-			mob.Character.EndAggro()
+			targeting.Release(&mob.Character, targeting.ReasonDisengage)
 			// Clear any stale cast via Activity machine.
 			if mob.Character.Activity != nil && mob.Character.Activity.IsCasting() {
 				mob.Character.Activity.ForceFree(state.TransitionReason{

@@ -20,6 +20,21 @@ const (
 	ReasonRetaliate               // answering an incoming attack
 	ReasonTaunt                   // pulled by a taunt; see CommitTaunt
 	ReasonDisengage               // leaving combat
+
+	// ReasonShoot preserves an existing Shooting engagement across a re-commit.
+	//
+	// It exists ONLY so ReasonForAggroType can round-trip losslessly, and no
+	// call site should choose it directly: SetAggro infers Shooting from the
+	// equipped weapon on any DefaultAttack commit, which is how a shooting
+	// engagement is normally established.
+	//
+	// Without it, usercommands/target.go silently changed behaviour. That gate
+	// explicitly permits switching targets while Aggro.Type is Shooting, and
+	// passed the existing type straight back through. Collapsing it to
+	// DefaultAttack and relying on re-inference is identical ONLY while the
+	// weapon is still a Shooting subtype; swap the weapon between the shot and
+	// the target switch and the engagement quietly became DefaultAttack.
+	ReasonShoot
 )
 
 // Commit enters combat with ref.
@@ -63,6 +78,8 @@ func aggroTypeFor(r Reason) characters.AggroType {
 	switch r {
 	case ReasonSurprise:
 		return characters.SurpriseAttack
+	case ReasonShoot:
+		return characters.Shooting
 	default:
 		// ReasonTaunt lands here deliberately. The taunt-hold gate pins only
 		// DefaultAttack/Shooting/SurpriseAttack, so a taunt that committed as
@@ -99,10 +116,14 @@ func CommitTaunt(c *characters.Character, ref state.ActorRef, holdRounds int) {
 // deriving the surprise type locally (from IsHidden(), say) skips the shared
 // special-move cooldown the other engagement paths pay -- the exact bug U10d
 // fixed. Callers pass EngageAggroType's verdict straight through here instead.
+// It round-trips every type a production site can actually be holding.
+// TestReasonRoundTrip pins that.
 func ReasonForAggroType(t characters.AggroType) Reason {
 	switch t {
 	case characters.SurpriseAttack:
 		return ReasonSurprise
+	case characters.Shooting:
+		return ReasonShoot
 	default:
 		return ReasonAttack
 	}
