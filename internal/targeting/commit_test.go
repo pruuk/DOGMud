@@ -156,3 +156,40 @@ func TestCommit_ShootReasonPreservesShootingWithoutAWeapon(t *testing.T) {
 	assert.Equal(t, characters.Shooting, c.Aggro.Type,
 		"a Shooting engagement must survive a re-commit even with no bow in hand")
 }
+
+// TestCommit_ReportsWhetherItLanded pins the U12c-0b return value. It exists
+// because a bare "assume it worked" cost a nil-pointer panic in
+// hooks.RetargetOrEnd, and because anything that narrates a fight to a player
+// must be able to tell whether one started.
+func TestCommit_ReportsWhetherItLanded(t *testing.T) {
+	c := characters.New()
+
+	require.True(t, Commit(c, state.ActorRef{MobInstanceId: 42}, ReasonAttack),
+		"an unvetoed commit must report success")
+
+	// Veto every subsequent target, as a dead or despawning one would.
+	c.CombatPhase.RegisterTargetLifeCheck(func(state.ActorRef) bool { return false })
+
+	require.False(t, Commit(c, state.ActorRef{MobInstanceId: 99}, ReasonAttack),
+		"a vetoed commit must report failure, not silence")
+	assert.Equal(t, 42, c.Aggro.MobInstanceId,
+		"and must leave the previous engagement intact")
+}
+
+func TestCommit_ReportsFalseForNilAndZeroRef(t *testing.T) {
+	assert.False(t, Commit(nil, state.ActorRef{MobInstanceId: 1}, ReasonAttack))
+	assert.False(t, Commit(characters.New(), state.ActorRef{}, ReasonAttack))
+	assert.False(t, CommitAfter(nil, state.ActorRef{MobInstanceId: 1}, ReasonAttack, 1))
+	assert.False(t, CommitTaunt(nil, state.ActorRef{UserId: 7}, 4))
+}
+
+func TestCommitAfterAndTaunt_ReportWhetherTheyLanded(t *testing.T) {
+	c := characters.New()
+	require.True(t, CommitAfter(c, state.ActorRef{MobInstanceId: 42}, ReasonAttack, 1))
+
+	c.CombatPhase.RegisterTargetLifeCheck(func(state.ActorRef) bool { return false })
+
+	assert.False(t, CommitAfter(c, state.ActorRef{MobInstanceId: 99}, ReasonAttack, 1))
+	assert.False(t, CommitTaunt(c, state.ActorRef{UserId: 7}, 4),
+		"a refused taunt pulled nobody and must say so")
+}

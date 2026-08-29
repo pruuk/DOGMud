@@ -82,11 +82,14 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 			// Only announce if not already fighting this target
 			alreadyFighting := mob.Character.IsInCombat() && mob.Character.CurrentCombatTarget().UserId == attackPlayerId
-			targeting.Commit(&mob.Character,
+			// U12c-0b: report the engagement, not the attempt. A vetoed commit
+			// must not announce "prepares to fight you!" to a victim nobody is
+			// actually fighting.
+			engaged := targeting.Commit(&mob.Character,
 				state.ActorRef{UserId: attackPlayerId},
 				targeting.ReasonForAggroType(aggroType))
 
-			if !isSneaking && !alreadyFighting {
+			if engaged && !isSneaking && !alreadyFighting {
 
 				if canSeeInDark(u, room) {
 					u.SendText(messaging.CategoryHitMelee, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight you!`, mob.Character.Name))

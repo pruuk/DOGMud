@@ -5,6 +5,7 @@ schedule_id: ashwick_delia
 statpool: 36
 hostile: false
 charm_immune: true
+non_combatant: true
 maxwander: 0
 groups:
   - humanoid

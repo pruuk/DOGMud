@@ -95,13 +95,6 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 		return
 	}
 
-	// Clear grapple state if switching targets
-	if c.Aggro != nil {
-		if c.Aggro.UserId != userId || c.Aggro.MobInstanceId != mobInstanceId {
-			c.ClearGrappleState()
-		}
-	}
-
 	var combatAddlWaitRounds int = 0
 
 	if len(roundsWaitTime) > 0 {
@@ -118,24 +111,22 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 		}
 	}
 
-	c.Aggro = &Aggro{
-		UserId:        userId,
-		MobInstanceId: mobInstanceId,
-		Type:          aggroType,
-		RoundsWaiting: combatAddlWaitRounds,
-	}
-
-	// Dual-write: also transition Combat Phase so predicate methods
-	// (IsInCombat, CurrentCombatTarget, etc.) stay correct.
-	// Errors are intentionally ignored: vetoes may legitimately reject
-	// the transition (non-combatant, dead target, etc.) while the
-	// legacy Aggro write has already done its job.
+	// U12c-0b: the transition DECIDES. It used to run after the Aggro write
+	// with its error discarded, so a vetoed commit left Aggro holding a target
+	// the machine had rejected and the two stores disagreed by construction.
+	//
+	// Refusing to write here is consistent with this function's own shape: it
+	// already returns without writing for the grace-period guard and the
+	// taunt-hold guard above.
+	//
+	// A nil CombatPhase is the legacy/fixture path — there is nothing to
+	// refuse, so the write proceeds as it always did.
 	if c.CombatPhase != nil {
 		trigger := combatphase.TriggerAttackCommand
 		if aggroType == SurpriseAttack {
 			trigger = combatphase.TriggerSurpriseAttack
 		}
-		_ = c.CombatPhase.TransitionToEngaging(combatphase.EngagingData{
+		if err := c.CombatPhase.TransitionToEngaging(combatphase.EngagingData{
 			Target: state.ActorRef{
 				UserId:        userId,
 				MobInstanceId: mobInstanceId,
@@ -145,7 +136,26 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 			Trigger: trigger,
 			Actor:   state.ActorRef{UserId: c.userId},
 			Target:  state.ActorRef{UserId: userId, MobInstanceId: mobInstanceId},
-		})
+		}); err != nil {
+			return
+		}
+	}
+
+	// Clear grapple state if switching targets. AFTER the transition, so a
+	// commit that was refused does not clear grapple for a switch that never
+	// happened. ClearGrappleState is currently a no-op, so this ordering is
+	// defensive rather than observable — which is also why it has no test.
+	if c.Aggro != nil {
+		if c.Aggro.UserId != userId || c.Aggro.MobInstanceId != mobInstanceId {
+			c.ClearGrappleState()
+		}
+	}
+
+	c.Aggro = &Aggro{
+		UserId:        userId,
+		MobInstanceId: mobInstanceId,
+		Type:          aggroType,
+		RoundsWaiting: combatAddlWaitRounds,
 	}
 }
 
