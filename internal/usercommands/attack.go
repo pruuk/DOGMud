@@ -12,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -213,7 +215,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			isFreshAggro := user.Character.Aggro == nil ||
 				user.Character.Aggro.MobInstanceId != attackMobInstanceId
 
-			user.Character.SetAggro(0, attackMobInstanceId, aggroType)
+			targeting.Commit(user.Character,
+				state.ActorRef{MobInstanceId: attackMobInstanceId},
+				targeting.ReasonForAggroType(aggroType))
 
 			// Chunk 4.5: notify seeders that a player engaged a mob.
 			// Fires on every attack commitment, not just fresh aggro,
@@ -316,7 +320,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				)
 			}
 
-			user.Character.SetAggro(attackPlayerId, 0, pvpAggroType)
+			targeting.Commit(user.Character,
+				state.ActorRef{UserId: attackPlayerId},
+				targeting.ReasonForAggroType(pvpAggroType))
 
 			user.SendText(messaging.CategoryHitMelee,
 				fmt.Sprintf(`You prepare to enter into mortal combat with <ansi fg="username">%s</ansi>.`, p.Character.Name),

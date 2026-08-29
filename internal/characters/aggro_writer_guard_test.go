@@ -54,13 +54,6 @@ var notYetSwept = map[string]bool{
 	"mobcommands/flee.go":                true,
 	"mobcommands/go.go":                  true,
 	"mobcommands/shoot.go":               true,
-	"usercommands/attack.go":             true,
-	"usercommands/break.go":              true,
-	"usercommands/dismiss.go":            true,
-	"usercommands/go.go":                 true,
-	"usercommands/shoot.go":              true,
-	"usercommands/target.go":             true,
-	"usercommands/throw.go":              true,
 }
 
 func internalDirForSweepGuard(t *testing.T) string {

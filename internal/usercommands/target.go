@@ -13,6 +13,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -151,7 +153,9 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if currentTargetGone {
 		aggroType := user.Character.Aggro.Type
 		bumpOpinionOnTargetSwitch(user, room, newTargetMobInstanceId, currentTargetMobId)
-		user.Character.SetAggro(newTargetPlayerId, newTargetMobInstanceId, aggroType)
+		targeting.Commit(user.Character,
+			state.ActorRef{UserId: newTargetPlayerId, MobInstanceId: newTargetMobInstanceId},
+			targeting.ReasonForAggroType(aggroType))
 
 		if newTargetMobInstanceId > 0 {
 			if m := mobs.GetInstance(newTargetMobInstanceId); m != nil {
@@ -178,7 +182,9 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		// Switch to new target with 1 round wait (cost of repositioning)
 		bumpOpinionOnTargetSwitch(user, room, newTargetMobInstanceId, currentTargetMobId)
-		user.Character.SetAggro(newTargetPlayerId, newTargetMobInstanceId, aggroType, 1)
+		targeting.CommitAfter(user.Character,
+			state.ActorRef{UserId: newTargetPlayerId, MobInstanceId: newTargetMobInstanceId},
+			targeting.ReasonForAggroType(aggroType), 1)
 
 		if newTargetMobInstanceId > 0 {
 			m := mobs.GetInstance(newTargetMobInstanceId)

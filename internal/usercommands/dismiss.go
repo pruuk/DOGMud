@@ -9,6 +9,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -131,7 +133,7 @@ func Dismiss(rest string, user *users.UserRecord,
 	// from a charmed bond cannot disagree about the same anti-grief rule.
 	present := mob.Character.RoomId == user.Character.RoomId
 	if present {
-		mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
+		targeting.Commit(&mob.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> turns on you with fury!`,
 			compName,
