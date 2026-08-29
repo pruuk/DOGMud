@@ -36,9 +36,19 @@ func (s State) String() string {
 }
 
 // EngagingData is the state-data type for the Engaging state.
+//
+// U12c-2 deleted a `Reason state.TransitionReason` field from here. It had
+// ZERO readers anywhere and was never set by the one production construction
+// site, so it settled U10d's deferred either/or with the second branch: it was
+// dead, so it went.
+//
+// ⚠️ The `r state.TransitionReason` PARAMETER on TransitionToEngaging is LIVE
+// (it reaches m.inner.TransitionTo, and OpeningUnspent is keyed on its
+// Trigger). Do not confuse the two, and do NOT repurpose either as a home for
+// an engagement-kind enum: that moves the demotion bug this slice removed
+// rather than killing it.
 type EngagingData struct {
 	Target      state.ActorRef
-	Reason      state.TransitionReason
 	RoundsUntil int // weapon WaitRounds before swing
 }
 
