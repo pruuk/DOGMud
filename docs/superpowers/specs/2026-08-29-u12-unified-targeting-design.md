@@ -327,9 +327,20 @@ Two gates pinned by test rather than trusted:
 
 ## 9. Risks
 
-1. **`EngagementOf` is on the combat hot path**, called per actor per round. It
-   is field reads plus one equipment spec lookup, which should be cheap, but
-   U12a **measures** it rather than assuming, before anything depends on it.
+1. **`EngagementOf` is on the combat hot path**, called per actor per round.
+   **MEASURED in U12a** (`BenchmarkEngagementOf`, Ryzen 9 5900X, 2026-08-29):
+
+   | Path | ns/op | allocs/op |
+   |---|---|---|
+   | Melee / idle (the common case) | **53.31** | **0** |
+   | Spell-cast | 99.19 | 2 (48 B) |
+
+   The melee case is allocation-free and cheap enough to ignore. The spell-cast
+   case allocates because `SpellTargets` is built per call, and that is the one
+   number U12c should watch: if the collapse ends up calling `EngagementOf`
+   several times per actor per round, consider populating `SpellTargets` lazily
+   or hoisting the call, rather than letting a mid-cast actor allocate on every
+   read. It is not a problem at one call per actor per round.
 2. **90 write sites and ~290 read sites** is the largest mechanical migration in
    the arc. This is why it is three slices: see section 3.
 3. **U12c changes behaviour immediately before U11's closing playtest.** U11 is

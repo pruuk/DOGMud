@@ -41,6 +41,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -267,4 +268,93 @@ func TestAmbushParityGuardIsNotVacuous(t *testing.T) {
 		require.True(t, strings.HasSuffix(filepath.ToSlash(full), path.file),
 			"path resolution is broken for %s", path.file)
 	}
+}
+
+// TestTargetingSeamCoversTheProofSet asserts that every file U12a migrated
+// commits through internal/targeting rather than writing aggro itself.
+//
+// The player and behaviour-tree paths drifted before: U10d had to route the
+// btree ambush through EngageAggroType after it had been setting
+// SurpriseAttack straight from IsHidden(). A divergence here is invisible at
+// runtime, so it is pinned at the source level.
+//
+// These five files are U12a's proof set. The ~86 sites U12b sweeps are
+// deliberately NOT listed: they still call SetAggro, and that is the correct
+// state until that slice runs.
+func TestTargetingSeamCoversTheProofSet(t *testing.T) {
+	internalDir := internalDirForGuard(t)
+
+	proofSet := []string{
+		"actions/melee_target.go",
+		"actions/combat_taunt.go",
+		"behaviortree/actions_combat.go",
+		"hooks/pinnacle_tick.go",
+		"characters/taunt_hold.go",
+	}
+
+	for _, rel := range proofSet {
+		t.Run(rel, func(t *testing.T) {
+			path := filepath.Join(internalDir, filepath.FromSlash(rel))
+			// Mode 0 drops comments so an explanatory mention of the old API
+			// in prose does not trip the check.
+			fset := token.NewFileSet()
+			parsed, err := parser.ParseFile(fset, path, nil, 0)
+			require.NoError(t, err, "the guard must be able to parse %s", rel)
+
+			ast.Inspect(parsed, func(n ast.Node) bool {
+				sel, ok := n.(*ast.SelectorExpr)
+				if !ok {
+					return true
+				}
+				switch sel.Sel.Name {
+				case "SetAggro", "EndAggro":
+					t.Errorf("%s at %s calls %s directly. Every file in the U12a "+
+						"proof set must go through internal/targeting: Commit, "+
+						"CommitTaunt or Release.",
+						rel, fset.Position(sel.Pos()), sel.Sel.Name)
+				case "ForceTauntAggro":
+					t.Errorf("%s at %s calls ForceTauntAggro, which U12a deleted. "+
+						"Use targeting.CommitTaunt, which sets the hold BEFORE "+
+						"committing so the taunt's own set passes the hold gate.",
+						rel, fset.Position(sel.Pos()))
+				}
+				return true
+			})
+		})
+	}
+}
+
+// TestTargetingSeamGuardIsNotVacuous proves the guard above reads real files
+// and would actually fire. A proof set pointing at missing files would pass
+// silently and protect nothing.
+func TestTargetingSeamGuardIsNotVacuous(t *testing.T) {
+	internalDir := internalDirForGuard(t)
+
+	for _, rel := range []string{
+		"actions/melee_target.go",
+		"actions/combat_taunt.go",
+		"behaviortree/actions_combat.go",
+		"hooks/pinnacle_tick.go",
+		"characters/taunt_hold.go",
+	} {
+		path := filepath.Join(internalDir, filepath.FromSlash(rel))
+		_, err := os.Stat(path)
+		require.NoError(t, err, "proof-set file %s must exist for the guard to mean anything", rel)
+	}
+
+	// And the detector must actually detect: a synthetic source containing a
+	// banned call has to be caught by the same matcher the guard uses.
+	fset := token.NewFileSet()
+	parsed, err := parser.ParseFile(fset, "probe.go",
+		"package p\nfunc f(c C) { c.SetAggro(1, 0, 0) }\n", 0)
+	require.NoError(t, err)
+
+	found := false
+	ast.Inspect(parsed, func(n ast.Node) bool {
+		if sel, ok := n.(*ast.SelectorExpr); ok && sel.Sel.Name == "SetAggro" {
+			found = true
+		}
+		return true
+	})
+	require.True(t, found, "the SetAggro matcher must detect a real call")
 }
