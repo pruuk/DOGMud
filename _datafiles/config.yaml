@@ -620,9 +620,35 @@ Balance:
   # Raising the ceiling makes skill protect harder against boss crits;
   # CritBarCeiling: 0 is LEGAL and means uncapped (bosses then almost
   # never crit skilled defenders, on any channel).
+  #
+  # ⚠️ THE CEILING IS THE MOB CRIT DIAL, and it had to come down when
+  # ContestGapSaturation shipped. Every mob is combat skill 1, so against a
+  # skilled player the bar always clamps HERE, while the player attacking that
+  # same mob always sits at the FLOOR. Compression then pulls the mean margin
+  # down, and at a bar of 3.0 that is deep in the tail: mob crit against a
+  # defence of 523 collapsed to 1.8-3.2% and, worse, GOLD STOPPED BUYING CRITS
+  # (attack 1000 -> 5000 moved crit only 1.8% -> 3.2%), which is the exact
+  # property the paragraph above says the ceiling exists to provide.
+  #
+  # MEASURED, mob crit at k=2.8 against defence 523:
+  #   ceiling   atk1000   atk2000   atk5000
+  #     3.00     0.018     0.027     0.032     <- collapsed
+  #     2.40     0.066     0.090     0.101
+  #     2.20     0.095     0.125     0.141
+  #     2.00     0.131     0.169     0.187     <- shipped
+  #     1.80     0.177     0.222     0.241
+  #   (k=0 at ceiling 3.00 was 0.198 / 0.598 / 0.777)
+  #
+  # 2.00 restores roughly the old rate at a modest gold investment while NOT
+  # restoring the old runaway, where a heavily funded boss crit 78% of its
+  # swings. That runaway is the same defect compression exists to fix, just
+  # pointed at the player.
+  #
+  # ⚠️ Lowering this does NOT touch player-vs-mob crit. A skilled attacker
+  # against a skill-1 mob is pinned to CritBarFloor and never reads the ceiling.
   CritBarSkillSlope: 0.05
   CritBarFloor: 1.5
-  CritBarCeiling: 3.0
+  CritBarCeiling: 2.0
   #
   # CounterDamagePercent: a defensive crit earns the defender a free counter
   # (U6b): one answering swing at this fraction of normal weapon damage.
