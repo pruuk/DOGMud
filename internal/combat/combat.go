@@ -407,8 +407,16 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	// targeting.ConsumeOpeningStrike was written for in U12a.
 	//
 	// What stood here read Aggro.Type and DEMOTED it in the same breath, via a
-	// re-Commit that also reset the engagement's wind-up. Splitting the query
-	// from the consumption removes the demotion entirely.
+	// re-Commit. Splitting the query from the consumption removes the demotion
+	// entirely.
+	//
+	// That re-Commit did NOT change pacing, though it looks like it should:
+	// SetAggro seeds the round budget from the weapon's WaitRounds, no DOGMud
+	// weapon sets waitrounds (so it is 0), and phase1WaitRound has already
+	// returned early unless the budget is 0 by the time this runs. What it DID
+	// do is drive Engaged -> Engaging -> Engaged mid-round, re-running the
+	// taunt-hold and untargetable gates and re-firing anything listening for
+	// the engagement becoming active. That churn is what is gone.
 	//
 	// ⚠️ AttackResult.WasSurpriseAttack STAYS. applyCombatProgression runs after
 	// this point and cannot ask the engagement any more, because the opening is
