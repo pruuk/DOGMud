@@ -408,8 +408,9 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 // shooter as its aggro target.
 //
 // A room scan rather than Character.Attackers(). Originally because that list
-// was never populated in production; U11 wired the registry
-// (characters.syncMachineRegistry), so it reads real data now. The room scan is
+// was never populated in production. combatphase now resolves an ActorRef on
+// demand (combatphase.SetMachineResolver, wired in internal/hooks), so it reads
+// real data. The room scan is
 // kept DELIBERATELY: it answers "is anything in this room targeting the
 // shooter", which is a wider question than "who has engaged me", and it does
 // not depend on registration lifecycle.

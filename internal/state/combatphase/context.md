@@ -44,10 +44,11 @@ same predicates for both.
 func NewMachine() *Machine
 ```
 
-Returns a `Machine` in `Idle`. `RegisterMachine` is meant to be called
-immediately after creating a character so inbound-attacker tracking and
-cross-character target-death notifications work correctly — **but see
-the Gotchas section below: in production today, nothing calls it.**
+Returns a `Machine` in `Idle`. Nothing needs to register it: cross-character
+lookups resolve an `ActorRef` on demand against `internal/users` /
+`internal/mobs` (see "Machine resolution" in the Gotchas below). Set the
+machine's own identity with `SetSelf`, which `Character.SyncMachineSelf` does
+from `Validate()` and `SetUserId()`.
 
 ### Entry into combat
 
@@ -166,7 +167,7 @@ Framework-maintained inbound attacker list. `TransitionToEngaging` calls
 `CombatPhase_CompanionAssist.go` to trigger reactive companion auto-assist
 the moment a new attacker is recorded. **LIVE as of U11** —
 `TransitionToEngaging` looks the target machine up via the registry, which
-`characters.syncMachineRegistry` now populates, so `RecordInboundAttacker` runs
+the injected resolver answers, so `RecordInboundAttacker` runs
 on a real target and `Attackers()` returns real data. Before U11 none of this
 fired in production; see Gotchas for what that had been silently costing.
 
@@ -219,16 +220,14 @@ anything on this machine.
 ### machineRegistry
 
 ```go
-var machineRegistry = map[state.ActorRef]*Machine{}
+var machineResolver atomic.Pointer[func(state.ActorRef) *Machine]
 ```
 
-Guarded by `registryMu`. Populated by `RegisterMachine` at character
-creation; cleared by `UnregisterMachine` on logout / despawn.
-
-The registry is the bridge between `ActorRef` (the identity type used
-in `TransitionReason.Target`) and the live `Machine` pointer. It allows
-the framework to call `NotifyTargetDied` and `RecordInboundAttacker` on
-a target's machine without the caller knowing its memory address.
+Installed once by `SetMachineResolver` from `internal/hooks`. There is **no
+registry map** -- it was deleted on 2026-08-30 after producing five
+cache-coherence bugs. `lookupMachine` asks the resolver, which asks
+`users.GetByUserId` / `mobs.GetInstance`: the packages that authoritatively
+know whether an actor is in the world.
 
 ---
 

@@ -316,12 +316,12 @@ machine is the source of truth; the Cascades hook ensures buff #9 stays in sync.
 
 ## Gotchas
 
-**`RegisterMachine` IS called as of U11 (2026-08-30); `SetSelf` still is not,
-but no longer needs to be.** `(*characters.Character).syncMachineRegistry`
-registers this machine under the Character's `ActorRef()`, and
-`awareness.RegisterMachine` assigns `m.self = ref` itself
-(`awareness.go:127`), so `Self()` is populated as a side effect. The separate
-`SetSelf` setter remains uncalled in production.
+**`RegisterMachine` and `SetSelf` still have NO production caller**, so
+`Machine.self` is zero-valued on every real character and `machineRegistry`
+stays empty. U11 (2026-08-30) considered wiring all five state machines and
+deliberately wired only `combatphase`, which is the sole package with a real
+lookup consumer -- and wired it as an on-demand resolver rather than a map.
+Populating anything here would be retention cost with no reader.
 
 What is still true:
 

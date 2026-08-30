@@ -532,9 +532,9 @@ plugin API instead (see `internal/plugins`).
 
 The handler shape is:
 
-```go
-func handleSomething(e events.Event) events.ListenerReturn {
-    evt, ok := e.(events.SomeEvent)
+```text
+func <HandlerName>(e events.Event) events.ListenerReturn {
+    evt, ok := e.(events.<EventType>)
     if !ok {
         return events.Continue
     }
@@ -542,6 +542,9 @@ func handleSomething(e events.Event) events.ListenerReturn {
     return events.Continue
 }
 ```
+
+(Illustrative shape, not a real symbol. Real handlers in this package follow
+it: see `wireCombatPhaseVetoes`, `wireInboundAggroCleanup`.)
 
 **Returning the wrong `ListenerReturn` swallows the event** for every listener
 behind you. `events.Continue` is almost always what you want.
@@ -566,28 +569,6 @@ func DoCombat(e events.Event) events.ListenerReturn {
             MobInstanceId: mobInstanceId,
             KillerId:      userId,
         })
-    }
-    
-    return events.Continue
-}
-```
-
-### System Maintenance
-```go
-// Hooks handle automatic system maintenance
-func SystemMaintenance(e events.Event) events.ListenerReturn {
-    evt := e.(events.NewTurn)
-    
-    // Periodic maintenance tasks
-    if evt.TurnNumber%100 == 0 {
-        // Clean up resources
-        cleanupExpiredData()
-        
-        // Optimize performance
-        optimizeMemoryUsage()
-        
-        // Update statistics
-        updateSystemStats()
     }
     
     return events.Continue

@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -100,4 +101,62 @@ func TestRecoveryContestFreeStandWhenAttackerDespawned(t *testing.T) {
 
 	assert.Nil(t, recoveryContest(&defender.Character),
 		"an unresolvable holder must be a free stand")
+}
+
+// The resolver's PLAYER branch. All the tests above are mob-vs-mob, so
+// deleting `if ref.UserId > 0 { ... }` from resolveCombatPhaseMachine used to
+// pass the whole suite -- while player-vs-anything is the majority of real
+// combat.
+func TestResolverResolvesPlayers(t *testing.T) {
+	u := users.NewTestUser(4242, "resolvertester", "Resolvertester", 1)
+	u.Character.RoomId = 4242
+	u.Character.SetUserId(4242)
+	restore := users.SeedUsersForTest(map[int]*users.UserRecord{4242: u})
+	t.Cleanup(restore)
+
+	got := resolveCombatPhaseMachine(state.ActorRef{UserId: 4242})
+	require.NotNil(t, got, "a logged-in player must resolve")
+	assert.Same(t, u.Character.CombatPhase, got)
+
+	assert.Nil(t, resolveCombatPhaseMachine(state.ActorRef{UserId: 999999}),
+		"an absent player must resolve to nil, not panic")
+}
+
+// A PLAYER holding a mob down must contest its stand, end to end. This is the
+// common case and it runs through the resolver branch above, not the mob one.
+func TestRecoveryContestWithAPlayerAttacker(t *testing.T) {
+	defender := newLiveMob(t, 7301, 4242, 40)
+
+	u := users.NewTestUser(4243, "holder", "Holder", 2)
+	u.Character.RoomId = 4242
+	u.Character.Health = 90
+	u.Character.SetUserId(4243)
+	restore := users.SeedUsersForTest(map[int]*users.UserRecord{4243: u})
+	t.Cleanup(restore)
+
+	u.Character.SetAggro(0, defender.InstanceId, characters.DefaultAttack)
+
+	require.Equal(t, []state.ActorRef{{UserId: 4243}}, defender.Character.Attackers(),
+		"a player attacker must be recorded on the mob it engaged")
+	assert.NotNil(t, recoveryContest(&defender.Character),
+		"a living same-room PLAYER holder must contest the stand")
+}
+
+// Retargeting must move the inbound entry off the previous target. Without it
+// the old target keeps a phantom attacker forever -- and because refs resolve
+// by id, that phantom stays resolvable rather than going nil.
+func TestRetargetMovesTheInboundEntry(t *testing.T) {
+	first := newLiveMob(t, 7401, 4242, 40)
+	second := newLiveMob(t, 7402, 4242, 40)
+	attacker := newLiveMob(t, 7403, 4242, 50)
+
+	attacker.Character.SetAggro(0, first.InstanceId, characters.DefaultAttack)
+	require.Len(t, first.Character.Attackers(), 1, "precondition: engaged the first target")
+
+	attacker.Character.SetAggro(0, second.InstanceId, characters.DefaultAttack)
+
+	assert.Empty(t, first.Character.Attackers(),
+		"retarget must REMOVE the attacker from the previous target")
+	assert.Equal(t, []state.ActorRef{{MobInstanceId: 7403}}, second.Character.Attackers(),
+		"and record it on the new one")
 }

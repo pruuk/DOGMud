@@ -424,6 +424,22 @@ func LogOutUserByConnectionId(connectionId connections.ConnectionId) error {
 			_ = u.Character.Presence.TransitionTo(presence.Disconnected,
 				state.TransitionReason{Trigger: presence.TriggerTCPClosed})
 		}
+
+		// Release the engagement so this character is removed from its
+		// target's inbound-attacker list.
+		//
+		// ⚠️ Required since combatphase resolves an ActorRef on demand instead
+		// of holding a registry. A UserId is stable across sessions, so a
+		// leftover {UserId: N} entry does NOT go stale-and-nil on logout the
+		// way a registry pointer did -- it resolves again, to the NEW Machine
+		// of the same player when they log back in. recoveryContest would then
+		// contest a prone mob against a player who is not attacking it.
+		//
+		// `quit` is refused in combat, but link-death and the AFK Disconnected
+		// timeout are not, so this path is reachable.
+		if u.Character != nil {
+			u.Character.EndAggro()
+		}
 	}
 
 	userManager.mu.Lock()
