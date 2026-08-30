@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`modules/cleanup` provides `trash` and `bury` — the two ways to remove clutter
+`modules/cleanup` provides `trash` — the way to remove clutter
 from a room. Each is implemented twice, once for players and once for mobs, so
 NPCs can tidy up after themselves without a separate mechanism.
 
@@ -11,8 +11,6 @@ NPCs can tidy up after themselves without a separate mechanism.
 ```go
 func (c *CleanupModule) userTrashCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error)
 func (c *CleanupModule) mobTrashCommand(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error)
-func (c *CleanupModule) userBuryCommand(...) (bool, error)
-func (c *CleanupModule) mobBuryCommand(...) (bool, error)
 ```
 
 The paired user/mob signatures are the plugin API's shape: `AddUserCommand` and
@@ -27,7 +25,9 @@ is registered twice.
   the other produces NPCs that can do something players cannot, or vice versa —
   the project tracks this as command parity and warns about unpaired commands
   at boot.
-- **`bury` is corpse-oriented, `trash` is item-oriented.** They read similarly
+- **`trash` is item-oriented.** `bury` was its corpse-oriented sibling and was
+  removed on 2026-08-30 as a GoMud holdover; corpses are handled by the decay
+  and cleanup timers, not by a player verb. They read similarly
   and are not interchangeable.
 
 ## Dependencies

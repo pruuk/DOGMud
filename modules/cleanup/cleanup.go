@@ -3,7 +3,6 @@ package cleanup
 import (
 	"embed"
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -12,7 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 var (
@@ -53,10 +51,8 @@ func init() {
 	// Register any user/mob commands
 	//
 	c.plug.AddUserCommand("trash", c.userTrashCommand, false, false)
-	c.plug.AddUserCommand("bury", c.userBuryCommand, false, false)
 
 	c.plug.AddMobCommand("trash", c.mobTrashCommand, false)
-	c.plug.AddMobCommand("bury", c.mobBuryCommand, false)
 
 }
 
@@ -113,76 +109,6 @@ func (c *CleanupModule) mobTrashCommand(rest string, mob *mobs.Mob, room *rooms.
 			Gained:        false,
 		})
 
-	}
-
-	return true, nil
-}
-
-func (c *CleanupModule) userBuryCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-
-	args := util.SplitButRespectQuotes(strings.ToLower(rest))
-
-	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, "Bury what?")
-		return true, nil
-	}
-
-	if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
-
-		if corpse.HasLoot() {
-			user.SendText(messaging.CategorySystem, `That corpse still has loot on it.`)
-			return true, nil
-		}
-
-		if room.RemoveCorpse(corpse) {
-
-			corpseColor := `mob-corpse`
-			if corpse.UserId > 0 {
-				corpseColor = `user-corpse`
-			}
-
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You bury the <ansi fg="%s">%s corpse</ansi>.`, corpseColor, corpse.Character.Name))
-			room.SendText(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> buries the <ansi fg="%s">%s corpse</ansi>.`, user.Character.Name, corpseColor, corpse.Character.Name), user.UserId)
-			return true, nil
-
-		}
-
-		return true, nil
-	}
-
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s around for burying.", rest))
-
-	return true, nil
-}
-
-func (c *CleanupModule) mobBuryCommand(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
-
-	args := util.SplitButRespectQuotes(strings.ToLower(rest))
-
-	if len(args) == 0 {
-		return true, nil
-	}
-
-	if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
-
-		if corpse.HasLoot() {
-			// No player to message; silently skip so unlooted loot survives.
-			return true, nil
-		}
-
-		if room.RemoveCorpse(corpse) {
-
-			corpseColor := `mob-corpse`
-			if corpse.UserId > 0 {
-				corpseColor = `user-corpse`
-			}
-
-			room.SendText(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> buries the <ansi fg="%s">%s corpse</ansi>.`, mob.Character.Name, corpseColor, corpse.Character.Name))
-			return true, nil
-
-		}
-
-		return true, nil
 	}
 
 	return true, nil

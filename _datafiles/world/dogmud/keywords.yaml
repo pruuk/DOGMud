@@ -18,7 +18,6 @@ help:
       - sethome
     character:
       - achievements
-      - bury
       - character
       - companion
       - conditions

@@ -1,10 +1,11 @@
-# NOTE: categories must match the main keywords.yaml, which files `bury` under
-# `character` and `trash` under `items`. Overlays merge last-write-wins onto ONE
-# flat map, so filing them under `information` here did not add a second entry,
-# it OVERRODE the main file's placements and left those entries dead.
+# NOTE: the category key must match the main keywords.yaml, which files `trash`
+# under `items`. Overlays merge last-write-wins onto ONE flat map, so a
+# mismatched name does not add a second entry, it OVERRIDES the main file's
+# placement and leaves that entry dead. This file used `information` and did
+# exactly that.
+#
+# `bury` was removed entirely on 2026-08-30 (owner: a GoMud holdover).
 help:
   command:
-    character:
-      - bury
     items:
       - trash
