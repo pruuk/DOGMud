@@ -1,0 +1,93 @@
+# GAP COMPRESSION gate, VETERAN pass. You are the OVERDOG. Your job is to
+# find out whether crushing something now feels like skill, or still feels
+# like a slot machine paying out on every pull.
+#
+# WHAT CHANGED, two things that ship together.
+#   1. When one fighter outclasses another, the gap between them is
+#      COMPRESSED before the dice are rolled. A big advantage still wins
+#      most exchanges, but it no longer produces an unbroken run of
+#      devastating blows. Devastating blows ignore armour entirely, which
+#      is why a constant stream of them was making armour meaningless.
+#   2. Specialist monsters (brawlers, spellcasters) now spread their
+#      talents more evenly. A spellcaster used to be so single minded it
+#      could barely dodge a punch. They keep their speciality; they are
+#      just no longer helpless outside it.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Against something far below you: you land most swings, but the
+#     DEVASTATING ones are now occasional, not routine. Ordinary hits and
+#     glancing blows should be the bulk of what you read.
+#   * An even fight should feel EXACTLY as it did before. Compression only
+#     touches mismatches. If a fight against something your own size feels
+#     different, that is a finding.
+#   * Being outclassed yourself should be survivable for longer than it
+#     was. Go find something that outclasses YOU and see.
+#   * Damage and durations are words, never numbers.
+#
+# WHAT TO WATCH FOR AS A DEFECT.
+#   * Fights against weak things dragging on so long they are boring. The
+#     fix would be a different exponent, but we need to know.
+#   * Devastating blows that have become so rare you never see one.
+#   * Anything that reads as a whiff-fest: lots of misses against something
+#     obviously beneath you.
+#
+# FIXTURE WARNING. A veteran one-shots most things, and you cannot judge a
+# hit-rate curve from a single round. Deliberately pick fights that LAST:
+# several enemies at once, or tougher things. Count rounds and outcomes
+# explicitly rather than giving an impression.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the
+# darkness!"; corpses persist and can shadow a live mob of the same name;
+# consider calls walkovers even; behaviour and AI gaps are a separate
+# scheduled arc. 3 commands per round on the AI port and the overflow is
+# silently dropped after being echoed. Read every line.
+
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    CRUSHING A WEAKLING (headline). Find the weakest thing that will fight
+    back and fight it repeatedly. Tally, explicitly and by count: swings
+    landed, swings missed or turned aside, and swings described as
+    devastating or critical. You want at least thirty swings before you
+    report. Devastating blows should be a minority of your hits, not most
+    of them. If nearly every hit still reads as devastating, the headline
+    change is not working and that is the finding.
+  - >-
+    AN EVEN FIGHT IS UNCHANGED. Find something that is a genuine match for
+    you and fight it. This must feel the same as it always has. Report the
+    round by round texture and say plainly whether anything reads as
+    altered. A changed even fight would mean compression is leaking where
+    it must not.
+  - >-
+    BEING THE UNDERDOG. Go pick a fight you should lose, against the
+    strongest thing you can reach. Do you survive noticeably longer than
+    you would expect? Does the enemy still land devastating blows on you,
+    and how often? Count rounds until you must flee. This is the same
+    change seen from the other side and it matters as much.
+  - >-
+    STEALING FROM A WEAK MARK. Steal is decided by the same contest that
+    combat uses, so compression reaches it. Steal repeatedly from the
+    weakest thing you can find and count successes against failures. A
+    skilled thief robbing a helpless mark should still usually succeed. If
+    stealing from something pathetic now fails often, that is a real
+    finding, quote the lines.
+  - >-
+    SNEAKING PAST WEAK EYES. Sneak repeatedly through rooms holding weak
+    creatures and count how often you are spotted. Same reasoning as steal.
+    If sneaking past something oblivious now fails frequently, report it.
+  - >-
+    FLEEING FROM SOMETHING WEAK. Start a fight with something feeble and
+    then flee. Fleeing from a weak enemy should be near certain. Count
+    attempts against escapes. If you get stuck in a fight you could win
+    trivially, that is a finding.
+  - >-
+    SPECIALIST MONSTERS. Fight a spellcaster type and a brawler type and
+    describe how each behaves. The caster should still cast and still hurt,
+    but should no longer be trivially easy to hit. The brawler should still
+    hit hard. If either has lost its identity and now feels generic, say
+    so. Note anything that seems unable to do its job at all.

@@ -1,0 +1,71 @@
+# GAP COMPRESSION gate, NEWBIE pass. You are the UNDERDOG. Your job is to
+# find out whether being outmatched is now survivable for long enough to
+# react, or whether it has swung too far and nothing threatens you.
+#
+# WHAT CHANGED. When one fighter badly outclasses another, the gap between
+# them is COMPRESSED before the dice are rolled. This applies to monsters
+# attacking YOU exactly as it applies to you attacking them. A powerful
+# monster should still beat you, but it should no longer land an unbroken
+# run of devastating blows. Devastating blows ignore armour entirely.
+#
+# Separately, specialist monsters spread their talents more evenly than
+# they used to, so some of them will feel different from how they read
+# before.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Something far above you still kills you. It should just take enough
+#     rounds that you get a chance to run.
+#   * You should still be able to hurt things your own size normally.
+#   * Damage and durations are words, never numbers.
+#
+# WHAT TO WATCH FOR AS A DEFECT.
+#   * Danger that has evaporated: if nothing in the world can threaten a
+#     brand new character any more, that is as bad as the original problem.
+#   * A fight where you neither die nor win for many rounds.
+#
+# Play as a genuinely naive new player. Type what a confused human would
+# type. Read every line of output and report anything that confuses you,
+# not only things that are mechanically wrong.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the
+# darkness!"; corpses persist and can shadow a live mob of the same name;
+# consider calls walkovers even; behaviour and AI gaps are a separate
+# scheduled arc. 3 commands per round on the AI port and the overflow is
+# silently dropped after being echoed.
+
+ephemeral:
+  creation_flow: true
+  rationale: >-
+    Compression changes what it feels like to be outmatched, and only a
+    genuinely fresh character is outmatched by ordinary content. A veteran
+    cannot test this direction because nothing it meets outclasses it.
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    BEING OUTMATCHED (headline). Get through character creation, then
+    deliberately find something clearly too strong for you and fight it.
+    Count the rounds you survive and tally how many of its hits read as
+    devastating or critical. You should die, but you should get several
+    rounds first. If it still deletes you in one or two rounds with
+    devastating blows, the headline change is not reaching monster attacks
+    and that is the finding.
+  - >-
+    THE WORLD IS STILL DANGEROUS. After the above, judge honestly: does
+    anything out there feel threatening to you? If you can wander into
+    obviously dangerous territory and shrug it off, say so plainly. That
+    would be the change having gone too far, and it matters as much as the
+    original problem.
+  - >-
+    A FAIR FIGHT STILL WORKS. Fight things appropriate to a beginner and
+    confirm combat feels normal: you land some, you miss some, you win
+    with effort. Report the texture round by round.
+  - >-
+    RUNNING AWAY. When a fight is going badly, flee. Does it work? How
+    many attempts? Fleeing from something much stronger than you is the
+    one escape a new player has, and compression touches it.
+  - >-
+    CONFUSION LOG. Anything you read that a new player would not
+    understand, quote it and say what you expected instead. Combat message
+    wording especially.
