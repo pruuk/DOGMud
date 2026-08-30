@@ -1,9 +1,16 @@
-# Contest gap compression
+# Contest gap compression, and archetype stat distribution
 
 **Date:** 2026-08-30
 **Status:** approved in outline, ready for planning
-**Owner decisions:** compress the score gap with a configurable exponent; ship
-at **0.75**; apply only when the attacker is ahead.
+**Owner decisions:** compress the score gap with a configurable exponent, ship
+at **0.75**, apply only when the attacker is ahead (§2); and flatten the
+archetype stat split toward 0.25 primary / 0.15 non-primary (§2b).
+
+⚠️ **These are two changes in one spec on purpose. Neither is shippable alone:**
+compression leaves the Elemental Queen at 97.5% crit, and redistribution ALONE
+makes the royal fighters markedly worse (31.5% to 66.7% crit) by taking 76
+Dexterity off them. Together they land the roster in a sane band. Any plan built
+from this must deliver both before the playtest judges either.
 
 ---
 
@@ -81,7 +88,9 @@ Recorded because a reader will otherwise think this slice fixes them.
    physical defence as a sand elemental (325 pool): 92 either way. A four-fold
    tier increase buys her nothing against a melee attacker.
 
-This slice does not fix either. It makes the contest tolerate them.
+Cause 1 is out of scope. **Cause 2 is IN scope as of the owner's decision on
+2026-08-30** and is specified in §2b; the two changes must be evaluated together
+because neither is sufficient alone.
 
 ---
 
@@ -140,6 +149,85 @@ this safe to ship behind a knob.
 `p = 0.5` (true square root) is also modelled and available; it drops Meirok to
 55% hit against royal fighters, which is likely to read as whiffing at content
 he should beat. Start at 0.75.
+
+---
+
+## 2b. Archetype stat distribution
+
+**Owner decision, 2026-08-30:** *"we should make a change there and have the
+archetypes spread stats a bit more evenly like .25 to primary and .15 to
+non-primary or similar."*
+
+### Today
+
+`mobs/mobs.go:546-560`, per point of pool:
+
+| archetype | primary group | per stat | non-primary group | per stat |
+|---|---|---|---|---|
+| `fighting` | Str/Dex/Vit **80%** | 26.7% | Per/Wil/Cha 20% | **6.7%** |
+| `casting` | Per/Wil/Cha **80%** | 26.7% | Str/Dex/Vit 20% | **6.7%** |
+| `""` | uniform | 16.7% | uniform | 16.7% |
+
+A casting mob's Dexterity therefore receives **one fifteenth** of its pool, and
+Dexterity is the whole physical defence term.
+
+### Proposed
+
+Author the weights as the owner stated them and **normalise**, since
+`3 × 0.25 + 3 × 0.15 = 1.2`:
+
+```yaml
+ArchetypePrimaryStatWeight:   0.25   # per primary stat, before normalisation
+ArchetypeSecondaryStatWeight: 0.15   # per non-primary stat
+```
+
+Normalised: **0.2083 per primary, 0.1250 per non-primary** — a 62.5 / 37.5
+group split against today's 80 / 20. Keeping the raw weights in config and
+normalising in code means the author writes the ratio they mean and cannot
+create a distribution that does not sum to 1.
+
+`ArchetypeSecondaryStatWeight` equal to the primary weight reproduces the
+uniform `""` archetype, so the knob spans the full range from today's
+specialisation to no archetype at all.
+
+### ⚠️ The tension, measured
+
+The pool is fixed, so **raising the non-primary share necessarily lowers the
+primary share.** Casters gain physical defence; fighters lose it.
+
+Against Meirok's melee attack score of 455:
+
+| mob | Dex now | Dex new | crit now | crit new | new + `p=0.75` |
+|---|---|---|---|---|---|
+| Elemental Queen (casting, 1300) | 87 | **162** | 99.9% | 97.5% | **44.8%** |
+| Royal fighter (1300) | 347 | **271** | 31.5% | **66.7%** | **19.7%** |
+| Sand Elemental (fighting, 325) | 87 | 68 | 99.9% | 100% | 91.4% |
+| Storm Elemental (casting, 325) | 22 | 41 | 100% | 100% | 98.6% |
+
+**Read the fighter row carefully: redistribution ALONE makes the royal fighters
+markedly worse**, from 31.5% to 66.7% crit, because they surrender 76 points of
+Dexterity. Only the two changes together land the roster in a sane band.
+
+**Neither change is shippable without the other.** Compression alone leaves the
+Queen at 97.5%; redistribution alone regresses the fighters. That is the whole
+reason they share a spec.
+
+### What it does not fix
+
+The **Storm Elemental stays at ~99% crit even with both changes.** A 325 pool
+under a casting archetype yields Dexterity 41 against an attack score of 455;
+no redistribution of a pool that small closes a gap that large. Trash remaining
+highly crittable is arguably correct, and the owner's stated preference is to
+address it on the damage side (ordinary hits plus glancing blows) rather than by
+pushing the exponent lower.
+
+### Second-order effect
+
+Flattening the distribution also flattens mob **offence**: a casting mob's
+Willpower drops from 26.7% to 20.8% of pool, so its spells hit slightly softer,
+and a fighting mob's Strength drops likewise. Archetypes become less distinct in
+both directions. That is inherent to the change rather than a defect, but it
+should be felt for in the playtest rather than discovered later.
 
 ---
 
@@ -219,6 +307,10 @@ the exponent lower.
 | Out of range | negative, zero and `> 1.0` all clamp to 1.0 |
 | Distribution | a large-sample run reproduces the modelled table within tolerance |
 | Guard | `RunContest` remains the only site applying compression |
+| Weights normalise | any positive primary/secondary pair produces a distribution summing to 1 |
+| Weight identity | equal primary and secondary weights reproduce the uniform `""` archetype exactly |
+| Distribution shape | a large spawn sample lands each stat within tolerance of its intended share, per archetype |
+| Absent weights | empty `Balance{}` validates to today's 80/20, not to 0/0 |
 
 The modelled tables in §1 and §2 are single-defence approximations. Melee rolls
 best-of-all defences and takes the widest margin, so **absolute** shipped rates
@@ -240,3 +332,11 @@ against the model.
    playtest looks for them rather than being surprised.
 4. **Interaction with `ContestFloor` (0.125) is untested.** A compressed gap
    sits closer to the floor, so the floor may bind more often. Worth measuring.
+5. **Shipping half of this is worse than shipping none.** Redistribution without
+   compression regresses every `fighting` mob's physical defence, and the royal
+   fighters were the one tier already behaving reasonably. If the plan is split
+   across PRs, they must land together or behind a single switch.
+6. **Existing mob instances keep their rolled stats.** Distribution happens once
+   at spawn (`mobs.go:546`), so already-spawned instances are unaffected until
+   they despawn. An instance-save wipe is needed to see the change on existing
+   content, per the standing smoke-test SOP.
