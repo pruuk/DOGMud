@@ -730,6 +730,22 @@ Balance:
   SneakModEmitsLightLitRoom: 0.85   # Blend-in modifier: emitting light in a lit room
   SneakModNoLightLitRoom: 0.9       # Alert-observer modifier: dark sneaker in lit room
 
+  # ── SKULLDUGGERY: COOLDOWNS AND THE HIDDEN BONUS ──────────────────────────
+  # ⚠️ These four were ABSENT from this file until 2026-08-30, and absence did
+  # NOT mean "use the Go default" -- it meant ZERO. An absent key unmarshals to
+  # the zero value, and each validator is shaped `if x < 0 { x = default }`,
+  # which cannot repair a zero. So steal had NO cooldown at all, stealing or
+  # planting from hiding gave NO bonus, and shadow and failed sneaks had no
+  # cooldown either. Exactly the trap that left the five SurpriseAttack*Penalty
+  # knobs inert until U10d deleted them.
+  #
+  # KEEP THESE KEYS PRESENT even when set to their default values. Deleting a
+  # line here does not restore a default, it silently zeroes the knob.
+  StealCooldown: 60      # Real seconds before another steal may be attempted
+  ShadowCooldown: 5      # Rounds before shadow may be used again
+  SneakFailCooldown: 3   # Rounds to wait after a failed sneak attempt
+  StealHiddenBonus: 25   # Score added to steal AND plant attempts made while hidden
+
   # ── COMBAT: DARKNESS ───────────────────────────────────────────────────────
   # Multiplier on attack AND defense scores when fighting in a dark room
   # without nightvision. 0.80 = 20% penalty to hit and defend while blind.
