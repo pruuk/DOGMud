@@ -39,12 +39,47 @@ type GrappleResult struct {
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
-	// GrappleImmune is true when the target cannot be grappled (ethereal, fire, etc.)
+	// GrappleImmune is true when the grapple was refused for a body reason --
+	// either the actor cannot grapple at all or the target cannot be grappled.
+	// Read ImmuneReason to tell those apart; they need different messages.
 	GrappleImmune bool
+
+	// ImmuneReason explains WHY GrappleImmune is set.
+	//
+	// ⚠️ Two of the four reasons are about the ACTOR, not the target, and
+	// those results deliberately carry NO Target. A caller that prints the
+	// target's name unconditionally renders an empty name for them -- which is
+	// exactly the defect this field exists to make impossible to write.
+	ImmuneReason GrappleImmunityReason
 
 	// TargetGrappling is true when the target is already in a grapple.
 	TargetGrappling bool
 }
+
+// GrappleImmunityReason explains a refused grapple precisely enough for the
+// caller to say something true about it.
+//
+// It exists because one message served all four cases: "You reach for X but
+// your hands pass right through!" That is right for something INCORPOREAL and
+// actively misleading for everything else. The Arena Champion is refused
+// because colossus-form makes it immovable -- the opposite of intangible -- and
+// the player was told their hands went through a creature that is in fact too
+// solid to shift.
+type GrappleImmunityReason int
+
+const (
+	// GrappleImmuneNone means no immunity applied.
+	GrappleImmuneNone GrappleImmunityReason = iota
+	// GrappleImmuneSelfSpecies: the ACTOR's species cannot grapple. No Target.
+	GrappleImmuneSelfSpecies
+	// GrappleImmuneSelfNoArms: the ACTOR has no arms to seize with. No Target.
+	GrappleImmuneSelfNoArms
+	// GrappleImmuneTargetIncorporeal: the target has no solid body to hold.
+	GrappleImmuneTargetIncorporeal
+	// GrappleImmuneTargetImmovable: the target is control-immune -- colossus-form
+	// or Ironhide's Living Carapace. Solid, and simply cannot be moved.
+	GrappleImmuneTargetImmovable
+)
 
 // ExecuteGrapple performs the core grapple resolution shared between player
 // and mob callers. It handles:
@@ -72,12 +107,12 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 
 	// Grapple-immune species can't initiate grapple either (ethereal, fire, etc.)
 	if sp := species.GetSpecies(char.SpeciesId); sp != nil && sp.GrappleImmune {
-		return GrappleResult{GrappleImmune: true}
+		return GrappleResult{GrappleImmune: true, ImmuneReason: GrappleImmuneSelfSpecies}
 	}
 
 	// Grappling is a humanoid technique — requires arms to seize/hold.
 	if !char.HasBodyPart("arms") {
-		return GrappleResult{GrappleImmune: true}
+		return GrappleResult{GrappleImmune: true, ImmuneReason: GrappleImmuneSelfNoArms}
 	}
 	if target.Char.IsGrappling() {
 		return GrappleResult{Target: target, TargetGrappling: true}
@@ -85,12 +120,12 @@ func ExecuteGrapple(actor Actor) GrappleResult {
 
 	// Grapple immunity (ethereal creatures, fire elementals, etc.)
 	if sp := species.GetSpecies(target.Char.SpeciesId); sp != nil && sp.GrappleImmune {
-		return GrappleResult{Target: target, GrappleImmune: true}
+		return GrappleResult{Target: target, GrappleImmune: true, ImmuneReason: GrappleImmuneTargetIncorporeal}
 	}
 	// Control-immune (immovable) targets cannot be grappled — Ironhide's Living
 	// Carapace, Colossus's Ossified Frame.
 	if mutations.IsControlImmune(target.Char.Mutations) {
-		return GrappleResult{Target: target, GrappleImmune: true}
+		return GrappleResult{Target: target, GrappleImmune: true, ImmuneReason: GrappleImmuneTargetImmovable}
 	}
 
 	cfg := configs.GetBalanceConfig()

@@ -46,7 +46,34 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 
 	if res.GrappleImmune {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You reach for %s but your hands pass right through!", res.Target.Name))
+		// ⚠️ FOUR different refusals reach here and they are NOT the same
+		// thing. Two are about the player's own body and carry NO Target, so the
+		// old single message printed an EMPTY name for them. The other two are
+		// opposites: incorporeal (nothing to hold) versus immovable (too solid to
+		// shift). The Arena Champion is the immovable case -- colossus-form -- and
+		// telling that player their hands passed through it was simply false.
+		switch res.ImmuneReason {
+		case actions.GrappleImmuneSelfSpecies:
+			user.SendText(messaging.CategorySystem,
+				"Your body has nothing that can take hold. Grappling is not a thing you can do.")
+		case actions.GrappleImmuneSelfNoArms:
+			user.SendText(messaging.CategorySystem,
+				"Grappling means seizing and holding, and you have no arms to do it with.")
+		case actions.GrappleImmuneTargetImmovable:
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				"You get both hands on %s and heave. It might as well be a boulder. Nothing shifts.",
+				res.Target.Name))
+		default:
+			// Incorporeal, and the safe landing spot for any reason added later.
+			// Guarded on the name because a future no-Target reason must not
+			// reintroduce the empty-name bug.
+			if res.Target.Name == "" {
+				user.SendText(messaging.CategorySystem, "You cannot get a grip on that.")
+			} else {
+				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+					"You reach for %s but your hands pass right through!", res.Target.Name))
+			}
+		}
 		return true, nil
 	}
 

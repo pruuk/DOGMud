@@ -1,5 +1,18 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: Grappling tells you the truth about why it failed
+
+Every failed grapple gave the same answer: your hands passed right through the
+target. That is a fine description of reaching for a ghost. It was nonsense for
+the Arena Champion, which refuses grapples because it is far too solid and
+heavy to move, which is the opposite problem. You now get told that you took
+hold and could not budge it.
+
+Two other cases were being described wrongly too. If your own body is the
+reason you cannot grapple, because you have no arms to seize with or your kind
+simply does not work that way, the game now says so plainly instead of blaming
+the creature in front of you.
+
 ## 2026-08-30: Queued trigger actions now actually queue
 
 Setting a trigger to queue an action was not pacing anything unless the action
