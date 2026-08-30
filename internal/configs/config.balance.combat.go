@@ -173,6 +173,14 @@ func (b *Balance) validateCombat() {
 	if b.SneakFailCooldown < 0 {
 		b.SneakFailCooldown = 3
 	}
+	// ⚠️ `<= 0`, NOT `< 0`. An absent key unmarshals to 0 and |gap|^0 == 1,
+	// which would collapse every mismatched contest in the game to a one-point
+	// gap. Same trap that pinned StealCooldown and four others at zero. Above
+	// 1.0 is refused because this knob compresses; it must not expand.
+	if b.ContestGapCompression <= 0 || b.ContestGapCompression > 1.0 {
+		b.ContestGapCompression = 1.0
+	}
+
 	if b.StealHiddenBonus < 0 {
 		b.StealHiddenBonus = 25
 	}
