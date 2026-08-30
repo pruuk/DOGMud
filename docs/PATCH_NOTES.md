@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: Queued trigger actions now actually queue
+
+Setting a trigger to queue an action was not pacing anything unless the action
+was a spell or one of the special combat moves. For everything else, a queue of
+five actions fired all five at once, which looks exactly like no queue at all.
+The queue now releases one action per round, whatever the action is, so putting
+something at the back of the queue means it waits its turn.
+
 ## 2026-08-30: Queued trigger actions no longer get stuck forever
 
 If you set a trigger to queue an action, the web client asks the server whether

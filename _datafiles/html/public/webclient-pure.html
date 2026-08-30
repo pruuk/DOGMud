@@ -758,6 +758,8 @@
                 // player state is loaded; release the queue's login-burst hold.
                 queueLoginSettled = true;
                 if (queueSettleTimer) { clearTimeout(queueSettleTimer); queueSettleTimer = null; }
+                // New round: the queue may release one more action.
+                queueFiredThisRound = false;
                 // Smart action queue: retry a deferred head once per round, and
                 // expire a stale interruption-rearm candidate.
                 if (queueRearm) { queueRearmAge++; if (queueRearmAge >= QUEUE_STALENESS_ROUNDS) { queueRearm = null; } }
@@ -771,6 +773,9 @@
                 var entry = queueInFlight;
                 queueInFlight = null;
                 if (r.status === "fired") {
+                    // Pace the NEXT release to the next round (see drainQueue).
+                    queueFiredThisRound = true;
+                    queueFiredAt = Date.now();
                     actionQueue.shift();
                     if (entry.isCast) {
                         queueRearm = { triggerId: entry.triggerId, spell: entry.spell, attempts: entry.attempts };
@@ -783,6 +788,12 @@
                     renderAutomation();
                     drainQueue();
                 } else {                          // "deferred" — transiently blocked, retry next round
+                    // A deferral consumes this round's attempt too, which is what the
+                    // line below always claimed but never enforced: the 500ms drain
+                    // interval re-fired the Try immediately because queueInFlight was
+                    // already null, so a blocked head re-sent ~8 Trys per round.
+                    queueFiredThisRound = true;
+                    queueFiredAt = Date.now();
                     entry.attempts++;
                     if (entry.attempts >= QUEUE_STALENESS_ROUNDS) {
                         actionQueue.shift();      // give up quietly after staleness window
@@ -1452,6 +1463,9 @@
         var QUEUE_STALENESS_ROUNDS = 6; // give up on a blocked queued action after this many rounds
         var queueInFlight = null;       // entry awaiting a Char.Action.Result
         var queueInFlightAt = 0;        // when that Try was sent (see the timeout in drainQueue)
+        var queueFiredAt = 0;           // when the queue last released an action (round pacing)
+        var queueFiredThisRound = false; // cleared by the per-round Commands.State push
+        var QUEUE_ROUND_FALLBACK_MS = 6000; // ~1.5 rounds at RoundSeconds 4, if no round push arrives
         var QUEUE_INFLIGHT_TIMEOUT_MS = 5000; // release a Try that never got answered
         var queueRearm = null;          // { triggerId, spell, attempts } — fired cast eligible for interruption re-arm
         var queueRearmAge = 0;          // rounds since the rearm candidate fired (cleared when stale)
@@ -1502,6 +1516,25 @@
                 }
                 return;
             }
+            // ⚠️ ONE ACTION PER ROUND. Without this the queue is indistinguishable
+            // from no queue at all. The server's ActionReadiness only gates `cast` and
+            // the 14 special-move verbs; its final line returns ActionReady for
+            // EVERYTHING else ("Commands it does not specifically gate return
+            // ActionReady and execute verbatim"). So a queue of ordinary commands --
+            // drink, wear, sneak, an alias -- got "fired" back instantly for every
+            // entry, and the fired branch re-drained immediately, emptying the whole
+            // queue in a single burst. That is the owner-reported "stuff queued in the
+            // back fires right away".
+            //
+            // Pacing belongs here rather than in ActionReadiness: the server answers
+            // "can this run?", which for an ungated command is honestly yes. "How fast
+            // may the QUEUE release them?" is a client-side policy question.
+            //
+            // Released by the per-round Commands.State push. The time fallback covers
+            // the case where that push stops arriving, so the queue slows down but
+            // never stalls.
+            if (queueFiredThisRound && (Date.now() - queueFiredAt) < QUEUE_ROUND_FALLBACK_MS) return;
+
             if (queueInFlight) {
                 // ⚠️ WITHOUT THIS THE QUEUE WEDGES PERMANENTLY. queueInFlight is
                 // cleared in exactly two other places: the Char.Action.Result handler
@@ -1548,6 +1581,7 @@
             actionQueue = [];
             queueInFlight = null;
             queueInFlightAt = 0;
+            queueFiredThisRound = false;
             queueRearm = null;
             renderAutomation();
         }
