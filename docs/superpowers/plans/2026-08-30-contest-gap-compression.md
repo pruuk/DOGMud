@@ -10,7 +10,7 @@
 
 **Spec:** [`2026-08-30-contest-gap-compression-design.md`](../specs/2026-08-30-contest-gap-compression-design.md)
 
-**Branch:** `feature/contest-gap-compression` (already exists, three spec commits on it).
+**Branch:** `feature/contest-gap-compression` (already exists: three spec commits plus the oasis tier fix).
 
 ---
 
@@ -478,12 +478,15 @@ Expected: PASS (2 tests)
 HEAD blob, not from disk:
 
 ```bash
-SP=$(mktemp -d)
-cp _datafiles/config.yaml "$SP/disk.pre"
-git show HEAD:_datafiles/config.yaml > "$SP/head.pre"
+SP=$(mktemp -d) && echo "$SP"
+cp _datafiles/config.yaml "$SP/disk.new"
+git show HEAD:_datafiles/config.yaml > "$SP/head.new"
 ```
 
-Insert this block into BOTH files, immediately after the `ContestFloor` entry:
+Now edit **both** `$SP/disk.new` and `$SP/head.new`, inserting the block below
+immediately after the `ContestFloor` entry. `disk.new` becomes the copy that
+goes back on disk (it carries the owner's local settings); `head.new` becomes
+the copy that is committed. They must receive the SAME edit.
 
 ```yaml
   #
@@ -800,6 +803,10 @@ func archetypeStatShares(primaryWeight, secondaryWeight float64) (primary, secon
 
 - [ ] **Step 4: Use it in the distribution loop**
 
+> The loop is extracted into its own function in **Task 7 Step 1**. Do the
+> minimal in-place edit here and let Task 7 move it; doing both at once makes
+> the "pure move" check in Task 7 Step 2 meaningless.
+
 In `internal/mobs/mobs.go`, replace the `case "fighting":` and `case "casting":`
 arms of the `switch mob.Archetype` (currently lines 548-560) with:
 
@@ -893,64 +900,167 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 ---
 
-## Task 7: Measured distribution shape
+## Task 7: Extract the distribution loop, then measure its shape
 
-A normalisation unit test does not prove the loop actually distributes that way.
+A normalisation unit test proves the arithmetic, not the loop. The loop is
+currently buried inside `newMobByIdInternal` and cannot be called directly, so
+extract it first as a pure move.
 
 **Files:**
+- Modify: `internal/mobs/mobs.go`
 - Modify: `internal/mobs/archetype_distribution_test.go`
 
-- [ ] **Step 1: Write the test**
+- [ ] **Step 1: Extract the loop, no behaviour change**
+
+In `internal/mobs/mobs.go`, move the whole `for i := 0; i < statPool; i++ {...}`
+body out of `newMobByIdInternal` into:
+
+```go
+// distributeStatPool spreads statPool points across the six stats according to
+// the mob's archetype. Extracted from newMobByIdInternal so the resulting
+// distribution can be measured directly; behaviour is unchanged by the move.
+//
+// primaryShare is the per-stat probability for one PRIMARY stat, already
+// normalised by archetypeStatShares.
+func distributeStatPool(mob *Mob, statPool int, primaryShare float64) {
+	for i := 0; i < statPool; i++ {
+		var statIdx int
+		switch mob.Archetype {
+		case "fighting":
+			if util.Rand(1000) < int(primaryShare*3*1000) {
+				statIdx = util.Rand(3)
+			} else {
+				statIdx = 3 + util.Rand(3)
+			}
+		case "casting":
+			if util.Rand(1000) < int(primaryShare*3*1000) {
+				statIdx = 3 + util.Rand(3)
+			} else {
+				statIdx = util.Rand(3)
+			}
+		case "tank":
+			// Bespoke six-way split, deliberately NOT a primary/secondary
+			// distribution and out of scope for the archetype weights.
+			r := util.Rand(100)
+			switch {
+			case r < 25:
+				statIdx = 5
+			case r < 45:
+				statIdx = 2
+			case r < 60:
+				statIdx = 0
+			case r < 75:
+				statIdx = 1
+			case r < 90:
+				statIdx = 4
+			default:
+				statIdx = 3
+			}
+		default:
+			statIdx = util.Rand(6)
+		}
+
+		switch statIdx {
+		case 0:
+			mob.Character.Stats.Strength.Base++
+		case 1:
+			mob.Character.Stats.Dexterity.Base++
+		case 2:
+			mob.Character.Stats.Vitality.Base++
+		case 3:
+			mob.Character.Stats.Perception.Base++
+		case 4:
+			mob.Character.Stats.Willpower.Base++
+		case 5:
+			mob.Character.Stats.Charisma.Base++
+		}
+	}
+}
+```
+
+Replace the removed block in `newMobByIdInternal` with:
+
+```go
+			bal := configs.GetBalanceConfig()
+			primaryShare, _ := archetypeStatShares(
+				float64(bal.ArchetypePrimaryStatWeight),
+				float64(bal.ArchetypeSecondaryStatWeight))
+			distributeStatPool(&mob, statPool, primaryShare)
+```
+
+- [ ] **Step 2: Verify the move changed nothing**
+
+Run: `go test ./internal/mobs/`
+Expected: `ok`. If anything fails, the move was not pure — fix it before
+continuing rather than adjusting a test.
+
+- [ ] **Step 3: Write the measurement test**
+
+Append to `internal/mobs/archetype_distribution_test.go`:
 
 ```go
 // The unit tests above prove the ARITHMETIC. This proves the LOOP: that a
 // spawned mob's stats actually land in the intended proportions.
 func TestArchetypeDistribution_MatchesIntendedShares(t *testing.T) {
-	const pool = 60000 // large enough that sampling noise is under a percent
+	const pool = 60000 // large enough that sampling noise is well under a percent
+
+	primaryShare, secondaryShare := archetypeStatShares(0.25, 0.15)
 
 	m := &Mob{}
 	m.Archetype = "casting"
-	m.StatPool = pool
-	m.Character.MobInstanceId = 8801
-	require.NoError(t, m.Character.Validate())
 
-	distributeStatPoolForTest(m, pool)
+	before := m.Character.Stats.Strength.Base + m.Character.Stats.Dexterity.Base +
+		m.Character.Stats.Vitality.Base + m.Character.Stats.Perception.Base +
+		m.Character.Stats.Willpower.Base + m.Character.Stats.Charisma.Base
+
+	distributeStatPool(m, pool, primaryShare)
 
 	s := m.Character.Stats
 	physical := s.Strength.Base + s.Dexterity.Base + s.Vitality.Base
 	mental := s.Perception.Base + s.Willpower.Base + s.Charisma.Base
-	total := physical + mental
-	require.Equal(t, pool, total-baselineStatTotal(m), "every point must land somewhere")
+	require.Equal(t, pool, physical+mental-before, "every point must land somewhere")
 
-	primaryShare, secondaryShare := archetypeStatShares(0.25, 0.15)
-	assert.InDelta(t, 3*secondaryShare, float64(physical)/float64(total), 0.02,
-		"a casting mob's PHYSICAL share must match the non-primary weight")
-	assert.InDelta(t, 3*primaryShare, float64(mental)/float64(total), 0.02)
+	// A casting mob's PHYSICAL stats are the NON-primary group.
+	assert.InDelta(t, 3*secondaryShare, float64(physical)/float64(pool), 0.02,
+		"casting mob physical share")
+	assert.InDelta(t, 3*primaryShare, float64(mental)/float64(pool), 0.02,
+		"casting mob mental share")
+}
+
+// The mirror: a fighting mob's physical stats are the PRIMARY group.
+func TestArchetypeDistribution_FightingMirrorsCasting(t *testing.T) {
+	const pool = 60000
+	primaryShare, _ := archetypeStatShares(0.25, 0.15)
+
+	m := &Mob{}
+	m.Archetype = "fighting"
+	distributeStatPool(m, pool, primaryShare)
+
+	s := m.Character.Stats
+	physical := s.Strength.Base + s.Dexterity.Base + s.Vitality.Base
+	assert.InDelta(t, 3*primaryShare, float64(physical)/float64(pool), 0.02)
 }
 ```
 
-> **If `distributeStatPoolForTest` and `baselineStatTotal` do not exist**, the
-> distribution loop is buried inside `newMobByIdInternal` and cannot be tested
-> directly. Extract the loop into an unexported
-> `func distributeStatPool(mob *Mob, statPool int, primaryShare float64)` and
-> call it from both `newMobByIdInternal` and the test. Do the extraction as a
-> pure move with no behaviour change, and run the full `internal/mobs` suite
-> before and after to confirm nothing shifts.
+Add `"github.com/stretchr/testify/require"` to that file's imports.
 
-- [ ] **Step 2: Run, extracting the loop if needed**
+- [ ] **Step 4: Run**
 
 Run: `go test ./internal/mobs/ -run TestArchetypeDistribution -v`
-Expected: PASS
+Expected: PASS (2 tests)
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add internal/mobs/
-git commit -m "test(mobs): pin the measured archetype distribution shape
+git commit -m "test(mobs): extract the stat-pool loop and pin its measured shape
 
 Normalisation arithmetic and the distribution LOOP are different claims.
-This spawns a large pool and asserts the stats actually land in the
-intended proportions.
+The loop was buried in newMobByIdInternal and could not be called, so it is
+extracted as a pure move first, verified by running the mobs suite before
+and after.
+
+The tank archetype keeps its bespoke six-way split unchanged.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ```
