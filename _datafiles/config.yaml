@@ -787,7 +787,7 @@ Balance:
   #     0.05 →   5 raw damage per swing (current — low, needs MobDamageMultiplier)
   #     0.15 →  15 raw damage per swing
   #     0.30 →  30 raw damage per swing (original default)
-  MeleeDamageScale: 0.52       # 2026-08-03: +20% (from 0.43) — player melee up to offset the 08-02 mitigation/crit fixes
+  MeleeDamageScale: 0.26       # 2026-08-30: HALVED (from 0.52) — owner playtest: melee damage too high for players AND mobs. Spell and rhetoric scales deliberately unchanged. Note this knob governs the WHOLE physical channel (melee, ranged, all special moves, throw, pets), so U10d's bow-to-melee ratio is preserved.
   #
   # MobDamageMultiplier: extra multiplier applied ONLY to NPC melee
   #   damage. Lets you keep player damage low while making NPCs threatening.
