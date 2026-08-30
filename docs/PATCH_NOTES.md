@@ -1,5 +1,30 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: Outmatched fights are less of a slaughter, both ways
+
+When one fighter badly outclassed another, almost every swing was landing, and
+far too many of those swings were landing as devastating blows that armour did
+nothing to stop. A veteran walking into a beginner zone was flattening things
+instantly, and a powerful monster meeting an unprepared player was doing the
+same thing in reverse. Neither fight was interesting to be in.
+
+Skill still decides fights. It just no longer decides them on the first swing.
+A big advantage now shows up as landing more often and hurting more, rather than
+as an unbroken run of critical hits. Armour matters again in those fights,
+because it only gets skipped on a genuine critical, and genuine criticals are
+now rare enough to feel like something happened.
+
+Alongside that, monsters that specialise (the brawlers and the spellcasters)
+spread their talents a little more evenly. A spellcaster was previously so
+single minded that it could barely get out of the way of a punch, which made
+some of them oddly easy to hit and others oddly hard, with no relation to how
+dangerous they were meant to be. They keep their specialities and still lean
+hard into them. They are simply no longer helpless outside them.
+
+You will notice this most in the harder zones, where the gaps between you and
+what lives there are widest. Monsters already wandering the world keep the
+talents they were born with until they are replaced.
+
 ## 2026-08-30: A brand new character who dies now comes back
 
 If you made a fresh character with the character command and then died during

@@ -390,8 +390,22 @@ against the model.
    exponent, not abandoning the approach.
 3. **Non-combat contests move too** — steal, sneak, flee. Named in §4 so the
    playtest looks for them rather than being surprised.
-4. **Interaction with `ContestFloor` (0.125) is untested.** A compressed gap
-   sits closer to the floor, so the floor may bind more often. Worth measuring.
+4. ~~**Interaction with `ContestFloor` (0.125) is untested.**~~ **MEASURED
+   during implementation, and it changes the tables above.** `ContestFloor` does
+   not "bind more often" as this risk guessed. It flips a flat 12.5% of ALL
+   contested outcomes regardless of the gap, and a floored result cannot crit
+   (`!res.Floored` gates the crit branch). Two consequences:
+
+   - **0.875 is the hard ceiling on any win rate.** An early draft of
+     `TestOasisCritRatesAfterCompression` asserted a win rate above 0.99 and was
+     arithmetically impossible.
+   - **Every crit figure in §1 and §3 is an overestimate**, by roughly the floor
+     fraction in relative terms. The 0.80 column's 37% against a defence of 86 is
+     nearer 32% in play.
+
+   The exponent choice is unaffected: the floor scales all columns alike, so the
+   comparison between exponents still holds. Pinned by
+   `TestOasisCritRatesAfterCompression` in `internal/combat/oasis_regression_test.go`.
 5. **Shipping half of this is worse than shipping none.** Redistribution without
    compression regresses every `fighting` mob's physical defence, and the royal
    fighters were the one tier already behaving reasonably. If the plan is split
