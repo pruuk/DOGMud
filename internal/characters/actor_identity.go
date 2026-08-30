@@ -40,3 +40,18 @@ func (c *Character) SyncMachineSelf() {
 	}
 	c.CombatPhase.SetSelf(ref)
 }
+
+// TryClaimAssistCommand reports whether an auto-assist `attack` command may be
+// enqueued for this character this round, claiming the slot if so.
+//
+// Returns false when one was already claimed this round, which is what stops
+// the reactive and polling companion-assist paths both commanding the same
+// actor. See the AssistCommandedRound field comment for why !IsInCombat() is
+// not a sufficient guard on its own.
+func (c *Character) TryClaimAssistCommand(round uint64) bool {
+	if c.AssistCommandedRound == round {
+		return false
+	}
+	c.AssistCommandedRound = round
+	return true
+}

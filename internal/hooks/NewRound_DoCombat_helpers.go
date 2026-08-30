@@ -1055,8 +1055,11 @@ func handleCompanionOwnerAssist(defMob *mobs.Mob, attackerDesc string) {
 		return
 	}
 
-	// Owner fights back if not already in combat.
-	if !owner.Character.IsInCombat() {
+	// Owner fights back if not already in combat. The round claim stops this
+	// duplicating the reactive path in CombatPhase_CompanionAssist.go, which
+	// fires a round earlier and leaves IsInCombat() still false.
+	if !owner.Character.IsInCombat() &&
+		owner.Character.TryClaimAssistCommand(util.GetRoundCount()) {
 		owner.Command(fmt.Sprintf("attack %s", attackerDesc))
 	}
 
@@ -1078,7 +1081,8 @@ func handleCharmedMobAssist(room *rooms.Room, defId int, targetDesc string) {
 		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
 			if charmedMob.Character.IsCharmed(defId) && !charmedMob.Character.IsInCombat() {
 				comp := defUser.Character.GetCompanionByInstanceId(instanceId)
-				if comp != nil && comp.AutoAssist {
+				if comp != nil && comp.AutoAssist &&
+					charmedMob.Character.TryClaimAssistCommand(util.GetRoundCount()) {
 					charmedMob.Command(fmt.Sprintf("attack %s", targetDesc))
 				}
 			}

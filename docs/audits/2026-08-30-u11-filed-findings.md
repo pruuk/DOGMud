@@ -402,3 +402,96 @@ The free `! SWEEP!` re-fires every round, so the tester saw **five consecutive
 failed stands**. Contested recovery is working as designed, but a knockdown
 attack that repeats every round against a floored target is close to a lock.
 Worth feeling on the manual pass.
+
+---
+
+## 8. 🔴 CONTENT GAP: almost nothing in the game can knock a player down
+
+Found by the veteran playtest (run `881a07a678dcbe39`, 2026-08-30) and
+**re-verified independently**. This is the most consequential finding of the
+U11 gate, because it bounds how much the slice's behaviour change is worth.
+
+A player goes prone by exactly two routes:
+
+1. **A mob's bash / trip / kick special**, which requires `specialmovechance`
+   or `movepreferences` on the mob. Verified count across the whole world:
+
+   ```
+   grep -rln "specialmovechance\|movepreferences" _datafiles/world/dogmud/mobs/
+   ```
+
+   **10 files. 8 are under `mobs/test*/`.** The only two live ones are
+   `labyrinth_of_low_tunnels/73-warren_warrior.yaml` and
+   `75-warren_chieftain.yaml`, and the tester's BFS over every room file found
+   **no walkable path there within 60 moves** of the starting area. Zero of the
+   70 Pothole Coulee mobs set either field.
+
+2. **The counter-sweep**, gated on `DodgeCritDetected`
+   (`combat_shared_helpers.go:328`) -- a DEFENCE crit, which a low-statpool mob
+   will essentially never land on a competent player.
+
+**Consequence for U11.** Contested prone recovery is verified working and was
+observed repeatedly, but almost entirely **from the attacker's side**: a player
+holds a mob down. The player-as-victim half is close to structurally
+unreachable in shipped content. The patch note was rewritten to lead with the
+half players will actually meet, and to say plainly that the other half is rare.
+
+**This cannot be closed by playing harder.** It needs authored content: mobs
+that set `specialmovechance`, or a purpose-built fixture. Note that a related
+defect is already filed separately -- 114 mobs' `aiprofile` is inert -- so the
+special-move gap may be one symptom of a wider "authored mob behaviour does not
+fire" problem. Worth investigating together.
+
+**Fixture consequence for every future combat playtest:** there is currently no
+way to test player-side knockdown, prone penalties, or recovery narration
+without building a mob for it. Both U11 runs lost goals to this.
+
+---
+
+## 9. Veteran playtest, other findings (run `881a07a678dcbe39`)
+
+Report: `tools/playtest/reports/2026-08-30-local-bug-finder-u11-vet-combat.md`.
+
+### ✅ Verified
+
+- **Mob-side contested recovery PASSES**, both outcomes seen verbatim,
+  repeatedly, across two independent fights.
+- **All combat helpfiles pass.** `help stand` correctly documents both the new
+  contest and that the paid escape stays guaranteed. All 10 cross-references
+  resolve.
+- Actor and observer text correctly differ: the failing character reads
+  *"You attempt to stand, but slip back down in the chaos of battle!"* while the
+  room reads *"...slips and falls..."*. Both are correct; only the room form was
+  quoted in the goals file.
+
+### 🔴 Fixed in response
+
+- **Companion engagement message doubled**, reproduced in two independent
+  fights: both companions announced `prepares to fight Bandit Scout.` in two
+  consecutive rounds. **A U11 regression.** The reactive assist path and the
+  polling `handleCharmedMobAssist` both guard on `!IsInCombat()`, and that guard
+  is insufficient because `Command()` only ENQUEUES -- the flag stays false
+  until the command runs, so both passed in the same window. The reactive path
+  was inert before this slice, so only one system ever ran. Fixed with a
+  per-character, per-round claim (`TryClaimAssistCommand`).
+
+### FILED
+
+- `consider` calls the deliberately harmless Straw Effigy "severely
+  outmatched", weighting its 100,200 HP pool. Same defect as finding 7.6, and
+  `consider` was already known to call walkovers even.
+- **The Drill Yard's three NPCs are all incapable of hitting back**, so a
+  combat goals file bound to room 5227 starts where nothing can test defence.
+- `look <unknown-noun>` replies "Look at what???" as though no argument was
+  given.
+- `Your fists flies wide but somehow lands...` (grammar, and the sentence
+  contradicts itself).
+
+### 🪤 Harness note, recorded to stop the next run losing time
+
+**Movement must be sent ONE command per round.** A batch of nine moves advanced
+the tester zero rooms with no error text at all. The AI port caps at 3
+commands/round and silently drops the overflow AFTER echoing it, so a dropped
+command is indistinguishable from a broken one. The tester initially filed two
+"silent no-op" defects that were their own rate-limit overflow, and correctly
+retracted both.

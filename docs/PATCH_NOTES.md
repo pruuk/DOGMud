@@ -15,22 +15,25 @@ moment you make one now.
 The same gap could also stop you grappling for that first session. That is
 fixed with it.
 
-## 2026-08-30: Getting back to your feet is no longer a certainty
+## 2026-08-30: Put something on the ground and it stays there
 
-When you are knocked down, you try to get up on your own after a moment. Until
-now that always worked. If something was standing over you it made no
-difference at all, which was never the intent.
+Knock an enemy down and stand over it, and it will struggle to get back up.
+Until now anything you floored simply rose again on its next breath, however
+hard you were pressing it. Holding a downed opponent down is a real advantage
+for the first time.
 
-Now an enemy that has you on the ground can keep you there. It is a contest
-between you and whoever is holding you down, so a stronger opponent will pin
-you longer, and nobody can hold you forever. Fighting your way back up teaches
-you something about grappling, win or lose, which it never did before.
+The same rule applies to you, and to your companions. Whoever is on the ground
+contests the scramble to their feet against whoever is standing over them, so a
+stronger opponent keeps you there longer. Nobody is held forever, and the stand
+command still works whenever you ask it, at the usual cost. If you are down and
+want out now, stand is the answer.
 
-You always have the other option. The stand command still works whenever you
-ask it to, at the usual cost. If you are being held down and want out now,
-stand is the answer.
+Fighting your way back up also teaches you something about the struggle, win or
+lose, which it never did before.
 
-Being knocked down was always meant to be dangerous. It finally is.
+In practice you will meet this most often from the winning side, because very
+little out there can knock you off your feet to begin with. We know. That is a
+gap in the world rather than in the rules, and it is on the list.
 
 ## 2026-08-30: Companions stop waiting their turn
 

@@ -81,3 +81,26 @@ func TestSyncMachineSelf_RefusesZeroRef(t *testing.T) {
 	assert.Equal(t, state.ActorRef{UserId: 99}, c.CombatPhase.Self(),
 		"a zero ref must not overwrite a recorded identity")
 }
+
+// Two systems tell a companion to join a fight: the reactive
+// SubscribeAttackersChange handler and the polling handleCharmedMobAssist.
+// Both guard on !IsInCombat(), which is NOT sufficient -- Command() only
+// enqueues, so the flag stays false until the command runs, and both paths
+// passed the guard in the same window. A playtest saw the result: the same
+// companion announcing "prepares to fight X" in two consecutive rounds.
+func TestTryClaimAssistCommand_OnePerRound(t *testing.T) {
+	c := &Character{}
+
+	assert.True(t, c.TryClaimAssistCommand(100), "first claim in a round wins")
+	assert.False(t, c.TryClaimAssistCommand(100), "second claim in the SAME round must be refused")
+	assert.True(t, c.TryClaimAssistCommand(101), "a new round claims again")
+}
+
+// The claim is per-character: one companion claiming must not silence another.
+func TestTryClaimAssistCommand_IsPerCharacter(t *testing.T) {
+	a, b := &Character{}, &Character{}
+
+	require.True(t, a.TryClaimAssistCommand(7))
+	assert.True(t, b.TryClaimAssistCommand(7),
+		"a different companion must still be able to be commanded this round")
+}

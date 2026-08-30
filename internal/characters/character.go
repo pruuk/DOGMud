@@ -94,6 +94,7 @@ func (c *Character) ResetForMobInstance() {
 	c.OutsideHitDisruptedRound = 0
 	c.SubInterruptDamageThisRound = 0
 	c.LastTargetFoundRound = 0
+	c.AssistCommandedRound = 0
 	c.LastDormantEntryRound = 0
 }
 
@@ -274,6 +275,24 @@ type Character struct {
 	// last found a combat target. Used by Presence.PresenceTick to
 	// determine when a mob is "bored". Replaces Mob.BoredomCounter.
 	LastTargetFoundRound uint64 `yaml:"-"`
+	// AssistCommandedRound is the round in which an auto-assist `attack`
+	// command was last ENQUEUED for this character.
+	//
+	// ⚠️ Deduplicates two systems that both tell a companion (and its owner) to
+	// join a fight: the reactive SubscribeAttackersChange handler in
+	// CombatPhase_CompanionAssist.go, which fires the moment an attacker is
+	// recorded, and the polling handleCompanionOwnerAssist /
+	// handleCharmedMobAssist pair, which runs later during hit resolution.
+	//
+	// Both guard on !IsInCombat(), and that guard is NOT sufficient: Command()
+	// only ENQUEUES an events.Input, so IsInCombat() stays false until the
+	// command actually executes. Both paths therefore passed the guard in the
+	// same window and both enqueued, which a playtest saw as the same companion
+	// announcing "prepares to fight X" in two consecutive rounds.
+	//
+	// The reactive path was inert before 2026-08-30, so only one system ever
+	// ran and the gap did not show.
+	AssistCommandedRound uint64 `yaml:"-"`
 	// LastDormantEntryRound tracks when this character entered
 	// Presence.Dormant. Used by Presence.PresenceTick to determine
 	// when to transition to Despawning.

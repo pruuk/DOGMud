@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // wireCompanionAssist registers an Attackers-change subscription on
@@ -107,7 +108,8 @@ func wireCompanionAssist(c *characters.Character) {
 
 		// Owner: if Idle, direct them to attack. Use CombatPhase predicate
 		// (IsInCombat) so we read from the state machine, not legacy Aggro.
-		if !owner.Character.IsInCombat() {
+		if !owner.Character.IsInCombat() &&
+			owner.Character.TryClaimAssistCommand(util.GetRoundCount()) {
 			owner.Command(fmt.Sprintf("attack %s", attackCmd))
 		}
 
@@ -133,6 +135,9 @@ func wireCompanionAssist(c *characters.Character) {
 			}
 			sibComp := owner.Character.GetCompanionByInstanceId(sibling.InstanceId)
 			if sibComp == nil || !sibComp.AutoAssist {
+				continue
+			}
+			if !sibling.Character.TryClaimAssistCommand(util.GetRoundCount()) {
 				continue
 			}
 			sibling.Command(fmt.Sprintf("attack %s", attackCmd))
