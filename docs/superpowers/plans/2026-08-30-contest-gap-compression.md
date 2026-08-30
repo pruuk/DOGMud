@@ -534,7 +534,7 @@ the copy that is committed. They must receive the SAME edit.
   # ⚠️ 0 is NOT an off-switch. It reads as unset and becomes 1.0, so deleting
   # this line cannot silently collapse every mismatch to a one-point gap.
   # Lower = flatter. 1.0 = off.
-  ContestGapCompression: 0.85
+  ContestGapCompression: 0.80
 ```
 
 Then commit from the HEAD-derived copy and restore the disk copy:
@@ -549,7 +549,7 @@ git commit -m "feat(combat): compress the attacker's score lead before rolling
 Applied in RunContest, the single entry point for all 25 opposed-contest
 call sites, so no contest can opt out silently.
 
-Ships at 0.85. Parity is invariant at every exponent, which is the property
+Ships at 0.80. Parity is invariant at every exponent, which is the property
 that makes this safe behind a knob.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
@@ -1269,7 +1269,7 @@ Merge with `--merge` (no-ff), never `--squash`.
 
 ## Definition of Done
 
-- [ ] `ContestGapCompression` ships at 0.85; `p=1.0` is a proven exact identity
+- [ ] `ContestGapCompression` ships at 0.80; `p=1.0` is a proven exact identity
 - [ ] Parity win rate is 50% at every exponent, measured on live dice
 - [ ] Underdog outcomes are unchanged at every exponent
 - [ ] Compression has exactly one call site, guarded, and the guard is proven to fail

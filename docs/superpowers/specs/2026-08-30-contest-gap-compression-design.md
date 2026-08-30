@@ -119,7 +119,7 @@ effectiveDefence = attack - (attack - defence) ^ p        when attack > defence
 effectiveDefence = defence                                otherwise
 ```
 
-with `p` a config knob, shipped **0.85**. `p = 1.0` telescopes to
+with `p` a config knob, shipped **0.80**. `p = 1.0` telescopes to
 `attack - (attack - defence) = defence`, an exact identity, so the knob is a
 true no-op at its default.
 
@@ -178,22 +178,23 @@ may want to try it.
 ### Choosing the exponent
 
 With the corrected formula, compression is far more effective than the earlier
-draft implied, so the shipped value moves from 0.75 to **0.85**. Measured
+draft implied, so the shipped value moves from 0.75 to **0.80**. Measured
 against Meirok (455), post-redistribution defences, as `hit% / crit%`:
 
-| defence | p=1.0 | p=0.95 | p=0.90 | **p=0.85** | p=0.80 | p=0.75 |
+| defence | p=1.0 | p=0.95 | p=0.90 | p=0.85 | **p=0.80** | p=0.75 |
 |---|---|---|---|---|---|---|
-| Storm + redistrib (86) | 100/99 | 100/91 | 98/73 | **94/53** | 88/37 | 81/27 |
-| Sand + redistrib (140) | 100/96 | 99/83 | 97/63 | **92/45** | 85/32 | 78/23 |
-| Queen + redistrib (168) | 100/93 | 99/77 | 95/57 | **90/41** | 83/29 | 76/22 |
-| Royal + redistrib (276) | 97/64 | 92/47 | 87/35 | **80/26** | 74/20 | 69/16 |
+| Storm + redistrib (86) | 100/99 | 100/91 | 98/73 | 94/53 | **88/37** | 81/27 |
+| Sand + redistrib (140) | 100/96 | 99/83 | 97/63 | 92/45 | **85/32** | 78/23 |
+| Queen + redistrib (168) | 100/93 | 99/77 | 95/57 | 90/41 | **83/29** | 76/22 |
+| Royal + redistrib (276) | 97/64 | 92/47 | 87/35 | 80/26 | **74/20** | 69/16 |
 | parity (455) | 50/7 | 50/7 | 50/7 | 50/7 | 50/7 | 50/7 |
 
-**0.85 is the recommendation, not a certainty.** It keeps a strong character
-clearly dominant on hit rate (80-94%) while pulling crit off the ceiling into a
-26-53% band. At 0.75 crit lands at 16-27% but hit rate against royal fighters
-falls to 69%, which is likely to read as whiffing at content you should beat.
-Dial in play; parity is invariant at every value.
+**Shipped at 0.80 (owner, splitting the difference between 0.75 and 0.85).**
+It keeps a strong character clearly dominant on hit rate (74-88%) while pulling
+crit off the ceiling into a 20-37% band. 0.85 is gentler (80-94% hit, 26-53%
+crit); 0.75 is stronger on crit (16-27%) but drops hit against royal fighters to
+69%, which is likely to read as whiffing at content you should beat. Dial in
+play; parity is invariant at every value.
 
 **Parity is invariant at every exponent.** Compression only ever touches
 mismatches, so it cannot disturb an even fight. That is the property that makes
@@ -293,7 +294,7 @@ should be felt for in the playtest rather than discovered later.
 ## 3. Configuration
 
 ```yaml
-ContestGapCompression: 0.85   # exponent on the score gap; 1.0 = no compression
+ContestGapCompression: 0.80   # exponent on the score gap; 1.0 = no compression
 ContestGapCompressBothWays: false
 ```
 
