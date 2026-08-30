@@ -3,6 +3,7 @@ package mobs
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -96,4 +97,43 @@ func TestArchetypeDistribution_TankIgnoresWeights(t *testing.T) {
 	// primary/secondary weights say.
 	assert.InDelta(t, 0.25, shares(0.2083), 0.02)
 	assert.InDelta(t, 0.25, shares(0.80/3), 0.02)
+}
+
+// ⚠️ THE WIRING TEST. Everything else in this file calls distributeStatPool
+// directly with a hand-supplied share, which means the config knob could be
+// disconnected entirely and the whole file would stay green -- verified by
+// replacing the production call with a hardcoded 80/20 split and watching
+// `go test ./internal/mobs/` pass.
+//
+// This drives the same function production drives and asserts the distribution
+// actually MOVES when the knob moves.
+func TestDistributeStatPoolFromConfig_ReadsTheKnob(t *testing.T) {
+	const pool = 60000
+
+	mentalShare := func(primary, secondary float64) float64 {
+		cfg := configs.GetConfig()
+		cfg.Balance.ArchetypePrimaryStatWeight = configs.ConfigFloat(primary)
+		cfg.Balance.ArchetypeSecondaryStatWeight = configs.ConfigFloat(secondary)
+		configs.SetConfigForTest(t, cfg)
+
+		m := Mob{}
+		m.Archetype = "fighting"
+		distributeStatPoolFromConfig(&m, pool)
+		mental := m.Character.Stats.Perception.Base +
+			m.Character.Stats.Willpower.Base +
+			m.Character.Stats.Charisma.Base
+		return float64(mental) / float64(pool)
+	}
+
+	// The historical hardcoded split: 20% of a fighting mob's pool went mental.
+	assert.InDelta(t, 0.20, mentalShare(0.80/3, 0.20/3), 0.01,
+		"the old 80/20 weights must still reproduce the old split exactly")
+
+	// The shipped split: 0.25/0.15 normalises to 62.5/37.5.
+	assert.InDelta(t, 0.375, mentalShare(0.25, 0.15), 0.01,
+		"the shipped weights must put 37.5% of a fighting mob's pool into mental stats")
+
+	// Equal weights must collapse the archetype to uniform.
+	assert.InDelta(t, 0.50, mentalShare(0.20, 0.20), 0.01,
+		"equal weights must reproduce the uniform archetype")
 }

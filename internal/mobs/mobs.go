@@ -354,6 +354,22 @@ func archetypeStatShares(primaryWeight, secondaryWeight float64) (primary, secon
 	return primaryWeight / total, secondaryWeight / total
 }
 
+// distributeStatPoolFromConfig is the production wiring: it reads the archetype
+// weights from balance config and applies them.
+//
+// ⚠️ It exists as a named function purely so the wiring is TESTABLE. When these
+// four lines sat inline in newMobByIdInternal, replacing them with a hardcoded
+// 80/20 split left `go test ./internal/mobs/` completely green -- every test
+// called distributeStatPool directly with a hand-supplied share, so the one line
+// that made the knob reach a spawned mob had zero coverage.
+func distributeStatPoolFromConfig(mob *Mob, statPool int) {
+	bal := configs.GetBalanceConfig()
+	primaryShare, _ := archetypeStatShares(
+		float64(bal.ArchetypePrimaryStatWeight),
+		float64(bal.ArchetypeSecondaryStatWeight))
+	distributeStatPool(mob, statPool, primaryShare)
+}
+
 // distributeStatPool spreads statPool points across the six stats according to
 // the mob's archetype. Extracted from newMobByIdInternal so the resulting
 // distribution can be measured directly.
@@ -638,11 +654,7 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 				statPool = forceStatPool[0]
 			}
 			// Distribute stat pool across training stats using archetype weighting
-			bal := configs.GetBalanceConfig()
-			primaryShare, _ := archetypeStatShares(
-				float64(bal.ArchetypePrimaryStatWeight),
-				float64(bal.ArchetypeSecondaryStatWeight))
-			distributeStatPool(&mob, statPool, primaryShare)
+			distributeStatPoolFromConfig(&mob, statPool)
 		}
 		mob.Character.Validate()
 		// Stage 3.4: apply override fields from mob YAML if set.

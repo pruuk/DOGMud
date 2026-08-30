@@ -173,12 +173,19 @@ func (b *Balance) validateCombat() {
 	if b.SneakFailCooldown < 0 {
 		b.SneakFailCooldown = 3
 	}
-	// ⚠️ `<= 0`, NOT `< 0`. An absent key unmarshals to 0 and |gap|^0 == 1,
-	// which would collapse every mismatched contest in the game to a one-point
-	// gap. Same trap that pinned StealCooldown and four others at zero. Above
-	// 1.0 is refused because this knob compresses; it must not expand.
-	if b.ContestGapCompression <= 0 || b.ContestGapCompression > 1.0 {
-		b.ContestGapCompression = 1.0
+	// ⚠️ Written `!(k > 0)`, NOT `k < 0`, and the difference is not style.
+	// NaN fails EVERY ordinary comparison, so `if k < 0` and `if k <= 0` are
+	// both false for NaN and would let it through -- and ConfigFloat is a bare
+	// float64 alias with no unmarshaller, so YAML `.nan` reaches this struct.
+	// A NaN here makes every defence score NaN, `Margin > 0` false, and the
+	// attacker silently never wins a contest anywhere in the game.
+	//
+	// 0 is the OFF value and is also what an absent key unmarshals to, so
+	// absence is safe here by construction rather than by the usual guard. There
+	// is deliberately no upper bound: k is a saturation scale, not a
+	// probability, and larger simply means flatter.
+	if !(b.ContestGapSaturation > 0) {
+		b.ContestGapSaturation = 0
 	}
 
 	if b.StealHiddenBonus < 0 {

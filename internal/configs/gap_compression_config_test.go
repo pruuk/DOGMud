@@ -1,37 +1,60 @@
 package configs
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-// ⚠️ An absent key unmarshals to 0, and |gap|^0 == 1 -- every mismatch in the
-// game would collapse to a one-point gap. So this validator must key on <= 0,
-// never < 0. That exact trap left StealCooldown, StealHiddenBonus,
-// ShadowCooldown, SneakFailCooldown and PackScatterRounds pinned at zero.
-func TestContestGapCompression_AbsentKeyIsIdentity(t *testing.T) {
+// 0 is the OFF value for this knob and is also what an absent key unmarshals
+// to, so absence is safe by construction rather than by the usual guard.
+//
+// ⚠️ This is the OPPOSITE of the trap that pinned StealCooldown,
+// StealHiddenBonus, ShadowCooldown, SneakFailCooldown and PackScatterRounds at
+// zero. Those knobs have a nonzero intended default, so `if x < 0` could never
+// repair an absent key. Here 0 IS the intended default, so the same shape is
+// correct. Check which case you are in before copying either.
+func TestContestGapSaturation_AbsentKeyIsIdentity(t *testing.T) {
 	b := Balance{}
 	b.Validate()
-	assert.Equal(t, ConfigFloat(1.0), b.ContestGapCompression,
-		"an absent exponent must be 1.0 (no compression). If this is ever 0, "+
-			"deleting the line from config.yaml collapses every mismatched "+
-			"contest in the game to a one-point gap, with no error anywhere.")
+	assert.Equal(t, ConfigFloat(0), b.ContestGapSaturation,
+		"an absent saturation must be 0 (no compression), so deleting the line "+
+			"from config.yaml turns the feature off rather than doing something "+
+			"unpredictable")
 }
 
-func TestContestGapCompression_Clamped(t *testing.T) {
-	for _, tc := range []struct{ in, want float64 }{
-		{-1.0, 1.0}, // nonsense
-		{0.0, 1.0},  // reads as unset
-		{1.5, 1.0},  // this knob only compresses, never expands
-		{0.80, 0.80},
-		{0.5, 0.5},
-		{1.0, 1.0},
+func TestContestGapSaturation_Clamped(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		in, want float64
+	}{
+		{"negative is nonsense", -1.0, 0},
+		{"zero is off", 0.0, 0},
+		{"shipped", 2.80, 2.80},
+		{"mild", 1.0, 1.0},
+		// ⚠️ NO upper bound on purpose: k is a saturation scale, not a
+		// probability. Larger simply means flatter, and clamping it would
+		// silently cap how hard the owner can dial the knob.
+		{"large is legal", 50.0, 50.0},
 	} {
-		b := Balance{ContestGapCompression: ConfigFloat(tc.in)}
+		b := Balance{ContestGapSaturation: ConfigFloat(tc.in)}
 		b.Validate()
-		assert.Equal(t, ConfigFloat(tc.want), b.ContestGapCompression, "input %v", tc.in)
+		assert.Equal(t, ConfigFloat(tc.want), b.ContestGapSaturation, tc.name)
 	}
+}
+
+// ⚠️ NaN fails EVERY ordinary comparison, so `if k < 0` and `if k <= 0` are
+// both false for NaN and would let it through. ConfigFloat is a bare float64
+// alias with no custom unmarshaller, so YAML `.nan` really does reach this
+// struct. A NaN here makes every defence score NaN, `Margin > 0` false, and the
+// attacker silently never wins a contest anywhere in the game.
+func TestContestGapSaturation_RejectsNaN(t *testing.T) {
+	b := Balance{ContestGapSaturation: ConfigFloat(math.NaN())}
+	b.Validate()
+	assert.False(t, math.IsNaN(float64(b.ContestGapSaturation)),
+		"a NaN saturation must not survive validation")
+	assert.Equal(t, ConfigFloat(0), b.ContestGapSaturation)
 }
 
 // Absent weights must reproduce TODAY's 80/20 archetype split, not 0/0. A zero
