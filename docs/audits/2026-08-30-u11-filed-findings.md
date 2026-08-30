@@ -236,3 +236,84 @@ find modules -path "*files/datafiles/templates/help/*.template" -exec basename {
 
 A guard that reports working links as broken makes help worse, because the
 cheapest way to satisfy it is to delete the link.
+
+---
+
+## 4. 🔴 FIVE balance knobs are silently inert at zero (FILED, not fixed)
+
+The trap: **a knob with a non-zero advertised default, a validator whose
+condition is FALSE at zero, and no key in `config.yaml` is permanently stuck at
+0.** An absent key unmarshals to the zero value, `Balance.Validate()` applies no
+defaults before unmarshal (it only calls the six sub-validators), and a
+`if x < 0 { x = default }` check cannot repair a zero. This is exactly how the
+five `SurpriseAttack*Penalty` knobs U10d deleted came to auto-hit every limb.
+
+The earlier sweep covered only the `< 0 || > 1.0` shape and found nothing. This
+one generalises it: **every** validator whose condition is false at zero, cross
+referenced against key presence in `config.yaml`. 35 such validators; 5 have no
+key.
+
+| Knob | Advertised default | Actual live value | Consequence |
+|---|---|---|---|
+| `StealCooldown` | 60 | **0** | steal has no cooldown; spammable every round |
+| `ShadowCooldown` | 5 | **0** | shadow has no cooldown |
+| `SneakFailCooldown` | 3 | **0** | no cooldown after a failed sneak (guarded by `> 0`, so it simply never applies) |
+| `StealHiddenBonus` | 25 | **0** | stealing or planting while hidden gets NO bonus |
+| `PackScatterRounds` | 2 | **0** | a pack does not scatter when its alpha dies |
+
+Verified: consumers are `actions/steal.go:111,130`, `actions/plant.go:95,112`,
+`actions/shadow.go:66`, `usercommands/skill.skullduggery.sneak.go:65`,
+`mobs/pack_roaming.go:210`. All read the config value directly with no second
+default.
+
+**NOT FIXED, deliberately.** Adding these keys restores documented intent but
+changes live behaviour in five places at once, three of them skullduggery
+economy. A config edit inside a documentation slice is how an unreviewed balance
+change ships. This wants its own slice with a playtest.
+
+Note also a copy inconsistency at `actions/steal.go:108-114`: the cooldown is
+formatted as `"%d real seconds"` but the refusal reports `"%d rounds
+remaining"`.
+
+**Two false positives from the same sweep, recorded so nobody re-reports them:**
+`DrainHealRatio`'s validator is `<= 0`, which DOES fire at zero;
+`ShopMaterialReserve` IS present in `config.yaml` (its `,omitempty` tag suffix
+made a naive tag match miss it).
+
+---
+
+## 5. Six orphaned `config.yaml` keys removed (FIXED in U11)
+
+Keys with **zero** Go readers anywhere in `internal/` or `modules/`. Removing a
+key nothing reads is provably not a behaviour change, which is why this was in
+scope where item 4 was not.
+
+| Key | Why it is dead |
+|---|---|
+| `MobConverseChance: 3` | no reader; superseded by the conversations system |
+| `GlobalDefenseMultiplier: 1.0` | no reader |
+| `SpellAvoidanceDamageMultiplier: 0.50` | deleted by U6 Task 12 (see `config.balance.go:317`) |
+| `RhetoricAvoidanceDamageMultiplier: 0.50` | deleted by U6 Task 12 |
+| `sub_skill_weight: 1.5` | `SubSkillWeight` deleted by U6b |
+| `sub_crit_z_threshold: 2.0` | `SubCritZThreshold` deleted by U6b |
+
+`SpellAttackSkillFactor` was already absent; U6b removed it cleanly.
+
+---
+
+## 6. CORRECTION: the roadmap's floor-pair warning is obsolete
+
+`UNIFIED_RESOLUTION_ROADMAP.md` warns U11's config audit that *"the three floor
+pairs all ship at 0.05, which makes a wrong-pair wiring invisible in production
+-- do not 'simplify' them into one knob during a tidy-up; they are one value by
+coincidence, not by rule."*
+
+**Those knobs no longer exist.** U6 already collapsed all eight per-channel
+floors into a single `ContestFloor` (shipped **0.125**), with `ConcentrationFloor`
+(0.02) as a deliberately separate, smaller mercy band. `MinContestSuccessChance`,
+`MinSpellHitChance` and `MinManeuverHitChance` appear in `config.yaml` only
+inside comments explaining what was deleted.
+
+The warning was correct when written and is now a description of a hazard that
+was already designed out. Kept here rather than silently dropped so a reader who
+remembers it can see how it closed.
