@@ -10,6 +10,7 @@ setting, or [`schemas/`](schemas/) if you want to author content.
 | [`world.md`](world.md) | The world-design document — lore, factions, zones, species |
 | [`PATCH_NOTES.md`](PATCH_NOTES.md) | Dated shipping log of every change |
 | [`PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`](PRE_DEPLOY_PLAYTEST_CRIBSHEET.md) | The owner's manual checklist before deploying the unified-resolution arc; the Elemental Queen fight is mandatory |
+| [`U11_OWNER_PUNCHLIST.md`](U11_OWNER_PUNCHLIST.md) | Short companion to the crib sheet: only what U11 changed and did NOT verify, plus the decisions the owner has to make. Point-in-time, 2026-08-30 |
 | [`PATH_TO_1.0.md`](PATH_TO_1.0.md) | Remaining work before the 1.0 tag |
 
 ## Reference

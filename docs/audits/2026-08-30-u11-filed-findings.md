@@ -437,14 +437,27 @@ unreachable in shipped content. The patch note was rewritten to lead with the
 half players will actually meet, and to say plainly that the other half is rare.
 
 **This cannot be closed by playing harder.** It needs authored content: mobs
-that set `specialmovechance`, or a purpose-built fixture. Note that a related
-defect is already filed separately -- 114 mobs' `aiprofile` is inert -- so the
-special-move gap may be one symptom of a wider "authored mob behaviour does not
-fire" problem. Worth investigating together.
+that set `specialmovechance`, or a purpose-built fixture.
+
+⚠️ **NOT A NEW FINDING — owner, 2026-08-30: "the behavior gaps are known, we
+have a scheduled behavior unification arc later."** Recorded here only because
+it BOUNDS what U11's change is worth in practice, and because it explains why
+the player-side checks are UNVERIFIED rather than failed. It belongs to that
+arc, alongside the already-filed "114 mobs' `aiprofile` is inert", which looks
+like the same underlying problem: authored mob behaviour not firing. Do not
+file it separately.
 
 **Fixture consequence for every future combat playtest:** there is currently no
 way to test player-side knockdown, prone penalties, or recovery narration
-without building a mob for it. Both U11 runs lost goals to this.
+without building a mob for it.
+
+🪤 **AND A FIXTURE MISTAKE THAT WAS MINE, not the world's.** Both U11 goals
+files were written with `start_room: 5227` (the Drill Yard), so **both agents
+played starter-area content — the veteran included**, whose own profile home is
+5455 Kilnreach Works. A veteran fighting newbie mobs proves very little about a
+veteran. Future combat goals must place the agent where its profile actually
+belongs, and must not assume the starting area can supply the mechanic under
+test.
 
 ---
 
