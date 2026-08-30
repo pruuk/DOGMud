@@ -1,5 +1,20 @@
 # DOGMud Patch Notes
 
+## 2026-08-29: You can run away again
+
+Fleeing was refusing to work. If anything pulled your attention onto a new
+foe, and in a busy fight something usually does, the game would tell you it
+was not the moment to break away, and it would keep telling you that for as
+long as the fight lasted. Running was the one thing you could not do. That is
+fixed. You can always try to run.
+
+Being knocked off your feet still stops you from fleeing, which is intended,
+but the game used to say the same unhelpful thing there too. Now it tells you
+plainly to get up first.
+
+Our apologies. This one was ours, it was recent, and it went out because every
+practice fight in testing ended too quickly for anyone to notice.
+
 ## 2026-08-29: An ambush that trips over itself still reads as an ambush
 
 Rarely, an opening strike from hiding goes wrong for both fighters at once and
