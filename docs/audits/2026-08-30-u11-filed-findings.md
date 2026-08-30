@@ -317,3 +317,88 @@ inside comments explaining what was deleted.
 The warning was correct when written and is now a description of a hazard that
 was already designed out. Kept here rather than silently dropped so a reader who
 remembers it can see how it closed.
+
+---
+
+## 7. Newbie playtest findings, 2026-08-30 (run `9828eedc9fdaf7db`)
+
+Report: `tools/playtest/reports/2026-08-30-local-feel-tester-u11-newbie-help.md`
+(gitignored). Extracted here because reports are not committed.
+
+### ✅ What the run VERIFIED about U11
+
+- **Contested prone recovery WORKS**, observed from the attacker's side: five
+  consecutive `Straw Effigy attempts to stand, but slips and falls in the chaos
+  of battle.` followed by `Straw Effigy clambers to their feet in a rushed
+  panic.` That failure line had not printed for any player since U10.
+- **All three restored links resolve**: `help time`, `help dual-wield`,
+  `help wimpy`.
+- **Link rot is gone.** 24 topics opened, every followed link resolved, zero
+  errors -- including 13 topics reachable only by following a page link.
+- **No duplicate headings.** 14 distinct; `auction` sits under Shops with seven
+  siblings.
+- `help prone`, `help stand`, `help armor`, `help quell`, `help defy` all
+  explain mechanics with no numbers.
+
+### 🔴 Fixed in response
+
+- `Integration` held `discord` alone -- a stranded one-entry heading, the exact
+  shape the goal forbids. Moved to `communication`. The tester also read
+  Configuration / Interface / Integration as "three names for the same thing".
+- `help defense` had three orphaned line fragments (`on dodge` alone on a line).
+  **Self-inflicted:** U11 split four over-80-column lines without re-flowing the
+  paragraphs. Re-flowed.
+
+### FILED, not fixed
+
+1. **`help submission` prints raw HTML entities**:
+   `set submission &amp;lt;mercy|subdue|cripple|lethal&amp;gt;`. Pre-existing; a
+   double-escape somewhere in that template's pipeline.
+2. **`kick` produced NO output at all** -- echoed, then silence, verified
+   against the raw event log as the only command that round. Needs its own
+   investigation; a command that answers nothing is indistinguishable from a
+   dropped one.
+3. **`help health` is a bare column of twelve percentage ranges** with no words
+   attached. U11 exempted it from the numeric guard as a "resource-bar legend",
+   reasoning the bands ARE the display. The tester's evidence argues the
+   exemption was too generous for a *help page* as opposed to the bar itself.
+   Revisit the exemption, or give the page prose.
+4. **`bury` is filed under `character` and a newcomer could not find it** --
+   they looked under Items, then Combat, then gave up. U11 restored `character`
+   because that is what the main `keywords.yaml` says; the finding is that the
+   main file's placement is unintuitive, not that the restore was wrong.
+   `bury`/`trash` are also the only two pages using a different header format
+   (`.: Help for the bury command.`).
+5. **Ragged short-line wrapping is pervasive** across the help corpus. Inferred
+   cause: the wrapper measures invisible markup, so lines carrying `<ansi>` tags
+   break early. Worth one fix at the wrapper rather than 454 by hand.
+6. **`consider straw effigy` says "You are severely outmatched"** against a
+   target described as "A safe thing to learn a fight against" that dealt 3
+   damage out of 406 health in fifteen rounds. `consider` was already known to
+   call walkovers even; this is the same defect in the other direction.
+7. **Combat vocabulary saturates**: three identical crit sentences in one round,
+   a near-100% crit rate against the effigy, and `DEVASTATING BLOW!` paired with
+   `(negligible damage)`. Consistent with the U10d saturation finding.
+8. **Grammar: "Your fists flies wide"**, repeated 8+ times.
+9. **`set charset` claims a conversion it does not perform** -- it says
+   "Box-drawing characters will be converted to ASCII equivalents" and then
+   leaves U+2501, em dashes, arrows and emoji in place. The toggle itself is
+   known not to be a bug; the MESSAGE is what is wrong.
+10. **`tools/playtest/engine-profile.yaml` is stale**: says spawn is Sanctum
+    Basin (it is Pothole Coulee) and "ten skills" (the index lists 21).
+
+### 🪤 Fixture note for the next combat playtest
+
+**Nothing in the starting area can knock a player down.** Seven rooms explored
+and scanned: Vorn is unattackable, the Training Dummy "poses no threat", the
+Straw Effigy cannot hurt you, everything else is a healer, cleric or banker. No
+hostile within five rooms of spawn. Combat is gated behind
+`ask vorn train` after the Awakening rite. **Budget the tutorial into any run
+that needs to be hit.**
+
+### ⚠️ Tuning question for the owner
+
+The free `! SWEEP!` re-fires every round, so the tester saw **five consecutive
+failed stands**. Contested recovery is working as designed, but a knockdown
+attack that repeats every round against a floored target is close to a lock.
+Worth feeling on the manual pass.
