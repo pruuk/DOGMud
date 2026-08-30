@@ -179,13 +179,18 @@ registry); cleared on logout / despawn. There is no exported `GetMachine`
 var machineRegistry = map[state.ActorRef]*Machine{}
 ```
 
-Guarded by `registryMu`. Meant to be populated by `RegisterMachine` at
-character creation and cleared by `UnregisterMachine` on logout / despawn
-— **in production, neither is ever called (see Gotchas)**, so
-`machineRegistry` stays empty and `lookupMachine` always returns nil.
-`lookupMachine` itself is currently unreferenced even within this
-package (dead code, kept for the intended cross-character lookup use
-case described here).
+Guarded by `registryMu`. Populated by `RegisterMachine` and cleared by
+`UnregisterMachine`. **As of U11 (2026-08-30) this IS wired in production**:
+`(*characters.Character).syncMachineRegistry` registers all five state machines
+under the Character's `ActorRef()` from both `Validate()` and `SetUserId()`, and
+`UnregisterMachines()` tears them down from `mobs.DestroyInstance` and
+`users.LogOutUserByConnectionId`. See `internal/state/combatphase/context.md`
+for the three invariants (never admit a zero ref; registration cannot live at
+one seam; teardown is mandatory).
+
+`lookupMachine` is still unreferenced within THIS package — awareness has no
+cross-character notification of its own yet. The registry is populated for it
+regardless, so a future consumer does not have to re-derive the wiring.
 
 The registry is designed as the bridge between `ActorRef` (the identity
 type used in `TransitionReason`) and the live `Machine` pointer, so the
@@ -310,23 +315,24 @@ machine is the source of truth; the Cascades hook ensures buff #9 stays in sync.
 
 ## Gotchas
 
-**`RegisterMachine` / `SetSelf` have no production caller.**
-`internal/characters/validate.go` constructs `c.Awareness =
-awareness.NewMachine()` directly and never registers it in
-`machineRegistry` or calls `SetSelf`. Verified: `awareness.RegisterMachine`
-and `awareness.SetSelf` appear only in this package's own definitions and
-in `awareness_test.go` — grep across the whole repo turns up no other
-caller. Consequences:
+**`RegisterMachine` IS called as of U11 (2026-08-30); `SetSelf` still is not,
+but no longer needs to be.** `(*characters.Character).syncMachineRegistry`
+registers this machine under the Character's `ActorRef()`, and
+`awareness.RegisterMachine` assigns `m.self = ref` itself
+(`awareness.go:127`), so `Self()` is populated as a side effect. The separate
+`SetSelf` setter remains uncalled in production.
 
-- `Machine.self` (`Self()`) is zero-valued on every real character.
-- `machineRegistry` never gains an entry, so `lookupMachine` — itself
-  dead code, called from nowhere even inside this package — would
-  always return nil if it were called.
-- `NotifyRoomChanged`, despite being fully implemented, is not wired
-  into any production call site; the actual room-move reveal path
-  (`internal/usercommands/go.go`) calls `TransitionToRevealing` directly
-  on the machine it already holds a pointer to, sidestepping the
-  registry entirely.
+What is still true:
+
+- `lookupMachine` is called from nowhere inside this package. The registry is
+  populated for it, but awareness has no cross-character notification of its
+  own yet, so nothing reads it here.
+- `NotifyRoomChanged`, despite being fully implemented, is **still not wired
+  into any production call site**. The actual room-move reveal path
+  (`internal/usercommands/go.go`) calls `TransitionToRevealing` directly on the
+  machine it already holds a pointer to, sidestepping the registry entirely.
+  U11 wired registration, not this consumer; do not assume the two changed
+  together.
 
 This mirrors the same gap documented in
 `internal/state/combatphase/context.md` for `combatphase.RegisterMachine`
