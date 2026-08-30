@@ -3,7 +3,7 @@ zone: Instance Planar Oasis
 archetype: casting
 behavior_archetype: pure_caster
 routine: planar_oasis_pack
-statpool: 1
+statpool: 2
 hostile: true
 groups:
   - elemental

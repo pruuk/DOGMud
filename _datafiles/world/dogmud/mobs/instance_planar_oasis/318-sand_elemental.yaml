@@ -3,7 +3,7 @@ zone: Instance Planar Oasis
 archetype: fighting
 behavior_archetype: generic_fighter
 routine: planar_oasis_pack
-statpool: 1
+statpool: 2
 hostile: true
 groups:
   - elemental

@@ -79,12 +79,17 @@ all legitimately rolled. The model is behaving as designed; the design is wrong.
 
 Predicted rates for that instance against Meirok's melee attack score of 455:
 
-| mob | pool | def score | ratio | crit |
-|---|---|---|---|---|
-| Storm Elemental | 325 | 27 | 17.1× | ~100% |
-| Sand Elemental | 325 | 92 | 4.96× | ~100% |
-| Elemental Queen | 1300 | 92 | 4.96× | ~100% |
-| King / Prince / Princess | 1300 | 352 | 1.29× | ~32% |
+| mob | pool | def score | crit today |
+|---|---|---|---|
+| Sand Elemental (tough) | 650 | 178 | 91.4% |
+| Storm Elemental (tough) | 650 | 48 | 99.7% |
+| Elemental Queen | 1300 | 92 | 98.8% |
+| King / Prince / Princess | 1300 | 352 | 33.4% |
+
+> **Tier correction, owner 2026-08-30.** Sand and storm elementals carry gear
+> and were always intended as **tough** (`statpool: 2`). Both were authored
+> `statpool: 1` and were therefore spawning at trash tier. Fixed on this branch;
+> every oasis figure in this spec uses the corrected pools.
 
 ### Two structural causes, both out of scope here
 
@@ -210,12 +215,17 @@ primary share.** Casters gain physical defence; fighters lose it.
 
 Against Meirok's melee attack score of 455:
 
-| mob | Dex now | Dex new | crit now | crit new | new + `p=0.75` |
+| mob | def now | def new | crit today | + compression only | + both |
 |---|---|---|---|---|---|
-| Elemental Queen (casting, 1300) | 87 | **162** | 99.9% | 97.5% | **44.8%** |
-| Royal fighter (1300) | 347 | **271** | 31.5% | **66.7%** | **19.7%** |
-| Sand Elemental (fighting, 325) | 87 | 68 | 99.9% | 100% | 91.4% |
-| Storm Elemental (casting, 325) | 22 | 41 | 100% | 100% | 98.6% |
+| Sand Elemental (fighting, 650) | 178 | **140** | 91.4% | 42.0% | **55.4%** |
+| Storm Elemental (casting, 650) | 48 | **86** | 99.7% | 94.2% | **79.6%** |
+| Royal fighter (1300) | 352 | **276** | 33.4% | 13.5% | **21.5%** |
+| Elemental Queen (casting, 1300) | 92 | **168** | 98.8% | 77.1% | **45.5%** |
+
+Read the two middle columns together. **Redistribution helps the casters and
+hurts the fighters**, exactly as the fixed pool requires: the Queen falls from
+98.8% to 45.5% while the sand elemental rises from 42.0% to 55.4% and the royal
+fighter from 13.5% to 21.5%.
 
 **Read the fighter row carefully: redistribution ALONE makes the royal fighters
 markedly worse**, from 31.5% to 66.7% crit, because they surrender 76 points of
@@ -227,11 +237,12 @@ reason they share a spec.
 
 ### What it does not fix
 
-The **Storm Elemental stays at ~99% crit even with both changes.** A 325 pool
-under a casting archetype yields Dexterity 41 against an attack score of 455;
-no redistribution of a pool that small closes a gap that large. Trash remaining
-highly crittable is arguably correct, and the owner's stated preference is to
-address it on the damage side (ordinary hits plus glancing blows) rather than by
+The **Storm Elemental is still crit ~80% of the time with both changes.** A
+casting archetype on a 650 pool yields a defence score of 86 against an attack
+score of 455; redistribution nearly doubles its defence (48 to 86) and
+compression takes it from 99.7% to 79.6%, but a gap that large cannot be closed
+from the contest side alone. The owner's stated preference is to address the
+residue on the damage side (ordinary hits plus glancing blows) rather than by
 pushing the exponent lower.
 
 ### Second-order effect
