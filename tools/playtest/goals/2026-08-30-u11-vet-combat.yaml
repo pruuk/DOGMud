@@ -1,0 +1,83 @@
+# U11 arc-closer gate, VETERAN pass. Combat mechanics first, then the
+# combat helpfiles a veteran actually reads.
+#
+# WHAT CHANGED, and it is exactly one thing with two faces. A dead lookup
+# was wired up. Because of it:
+#   1. When you are knocked down, the automatic scramble back to your feet
+#      is now a CONTEST against whoever is standing over you. Before this
+#      it always succeeded, for everyone, always. Failing should print
+#      "attempts to stand, but slips and falls in the chaos of battle" --
+#      a line no player has seen in months.
+#   2. A companion answers a NEW attacker in the same round instead of
+#      waiting for the next one.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * Knocked down with nobody on you: you rise on your own after a moment,
+#     every time. That is unchanged and must stay that way.
+#   * Knocked down WITH a living enemy in the room fighting you: the rise
+#     sometimes fails. Nobody is pinned forever; there is always a mercy
+#     chance. Repeated failure against a much stronger holder is correct.
+#   * Typing `stand` ALWAYS works, at its usual cost, no matter who is on
+#     you. This is the paid escape and it must never be contested.
+#   * Scrambling up teaches you something about unarmed combat, win OR
+#     lose. Watch for progression banners after failed stands.
+#   * Damage and durations are words, never numbers.
+#
+# FIXTURE WARNING, READ THIS. A veteran one-shots almost everything, and
+# contested recovery is INVISIBLE against a target that dies in one round.
+# Two previous slices shipped unverified checks for exactly this reason.
+# You MUST find something that survives several rounds AND can knock you
+# down. Try the North Road bandits, or deliberately fight several at once,
+# or pick a fight well above your weight. If after a genuine effort you
+# cannot get held down, SAY SO PLAINLY as an UNVERIFIED result rather than
+# reporting a pass you did not observe.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the
+# darkness!"; corpses persist and can shadow a live mob of the same name;
+# `consider` calls walkovers even. 3 commands per round on the AI port and
+# the overflow is silently dropped after being echoed. Read every line.
+
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    CONTESTED RECOVERY (headline). Get knocked to the ground while a living
+    enemy is fighting you, and do NOT type stand. Wait. Log every round
+    verbatim: did the automatic rise ever fail, and what exact line printed?
+    Repeat until you have seen both a success and a failure, or until you
+    are confident one of them never happens. If every automatic rise
+    succeeds against live opposition, that is a finding and the headline
+    change is not working.
+  - >-
+    THE PAID ESCAPE. While held down and failing to rise, type `stand`.
+    It must work immediately, every single time, regardless of who is on
+    you. If `stand` is ever refused or contested while you are merely
+    prone, that is a serious finding. Quote the line.
+  - >-
+    NOBODY IS PINNED FOREVER. Deliberately get floored by the strongest
+    thing that will fight you and count how many consecutive automatic
+    rises fail. If you cannot get up across many rounds and stand is your
+    only exit, report the exact count. That is a tuning finding.
+  - >-
+    FREE STAND STILL FREE. Get knocked down with NOTHING attacking you (a
+    trap, a fall, or kill your attacker while prone). The rise must succeed
+    on its own. If a solo prone character ever fails to stand, that is a
+    regression.
+  - >-
+    PROGRESSION FROM SCRAMBLING. Watch for skill advancement banners around
+    failed and successful stands. The banners read "SKILL ADVANCEMENT" and
+    "STATISTIC INCREASED". Note whether anything fires; this never used to.
+  - >-
+    COMPANION REACTION. Get a companion, then let something attack THE
+    COMPANION rather than you. Does it answer in the same round? Watch for
+    any doubled attack line, duplicated message, or visible stutter, which
+    would mean two systems both told it to fight.
+  - >-
+    COMBAT HELPFILES. Read `help combat`, `help defense`, `help stand`,
+    `help quell` and `help defy`. Every cross reference they offer must
+    work: try each `help <topic>` they mention and report any that errors.
+    Flag anything that reads as wrong now that getting up can fail.
