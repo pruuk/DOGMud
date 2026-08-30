@@ -64,30 +64,45 @@ func TestHandlePlayerFlee_ShortCommandDoesNotProgressSkullduggery(t *testing.T) 
 		t.Fatal("short hook resolution did not produce the mob blocker outcome")
 	}
 
-	// The prior admission is consumed. A legacy sentinel with no new command
-	// therefore defaults to full skill, and because the blocker is STILL
-	// targeting the fleer an opposed roll happens, so the wrapper awards
-	// exactly one skullduggery use.
+	// U12c-2: the legacy `Aggro{Type: Flee}` sentinel this half used to poke in
+	// is gone -- becoming Disengaging now requires the real transition, and the
+	// admission consume is unconditional. A SECOND flee command is the faithful
+	// translation: it re-enters Disengaging with a fresh, full-skill admission.
 	//
 	// The blocker deliberately keeps its aggro here. An earlier version of this
 	// test called blocker.Character.EndAggro() first, which left nothing to
 	// contest -- and still expected an award, because the award used to fire
 	// unconditionally inside ResolveFleeBlockers before any roll. It is now
 	// gated on a contest having happened, so the fixture has to supply one.
-	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
+	// A real pool, so this attempt pays in FULL and admits with skill. The
+	// fixture's Dexterity of 1 leaves StaminaMax at 1, which is what forced the
+	// short payment above; restoring to that max would short-pay again.
+	u.Character.StaminaMax.Value = 1000
+	u.Character.Stamina = 1000
+	if _, err := usercommands.Flee("", u, room, 0); err != nil {
+		t.Fatalf("second Flee returned %v", err)
+	}
+	if !u.Character.IsDisengaging() {
+		t.Fatal("fixture did not re-enter Disengaging")
+	}
 	if !handlePlayerFlee(u, room, u.UserId) {
-		t.Fatal("legacy/default flee was not resolved")
+		t.Fatal("full-skill flee was not resolved")
 	}
 	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
 		t.Errorf("legacy resolution after consumed short attempt progressed skill %d times, want 1", got)
 	}
 
-	// And with nothing left targeting the fleer, a further legacy resolution
-	// runs no contest and therefore must not award anything more.
+	// And with nothing left targeting the fleer, a further resolution runs no
+	// contest and therefore must not award anything more.
 	blocker.Character.EndAggro()
-	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
+	u.Character.Stamina = 1000
+	u.Character.SetAggro(0, blocker.InstanceId, characters.DefaultAttack)
+	u.Character.CombatPhase.OnRoundTick()
+	if _, err := usercommands.Flee("", u, room, 0); err != nil {
+		t.Fatalf("third Flee returned %v", err)
+	}
 	if !handlePlayerFlee(u, room, u.UserId) {
-		t.Fatal("uncontested legacy flee was not resolved")
+		t.Fatal("uncontested flee was not resolved")
 	}
 	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
 		t.Errorf("uncontested flee progressed skill to %d, want it to stay at 1", got)
@@ -182,8 +197,11 @@ func TestHandlePlayerFlee_ReentrantConsumptionDoesNotResolveTwice(t *testing.T) 
 // Catches a target-death cascade canceling Disengaging before the next combat
 // round. The paid attempt needs one terminal line at cancellation time because
 // EndAggro can remove the player from handlePlayerFlee's later round path.
-// The subsequent true legacy sentinel must keep its full-skill default and
-// cannot leave the canceled short admission reusable.
+// U12c-2: the tail used to poke in a legacy `Aggro{Type: Flee}` sentinel, which
+// is deleted along with the type. What it was really pinning survives and is
+// pinned here against the real seam: a later, fully-paid flee resolves and
+// awards exactly one skullduggery use for the contest that took place, and the
+// canceled short admission is NOT left reusable.
 func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -224,18 +242,24 @@ func TestHandlePlayerFlee_TerminalCancellationRetractsAdmission(t *testing.T) {
 		t.Fatal("terminally canceled flee was resolved again")
 	}
 
-	// A subsequent legacy-only flee has no cost admission and therefore defaults
-	// to full skill. Point the mob at the player so an opposed roll actually
-	// happens: skullduggery practice is awarded by the wrapper for a contest
-	// that took place, not for the act of typing flee. The fixture above only
-	// ever set the PLAYER's aggro, which is not what ResolveFleeBlockers reads.
+	// A subsequent fully-paid flee admits WITH skill. Point the mob at the
+	// player so an opposed roll actually happens: skullduggery practice is
+	// awarded by the wrapper for a contest that took place, not for the act of
+	// typing flee. The fixture above only ever set the PLAYER's aggro, which is
+	// not what ResolveFleeBlockers reads.
 	mobs.GetInstance(100).Character.SetAggro(u.UserId, 0, characters.DefaultAttack)
-	u.Character.Aggro = &characters.Aggro{Type: characters.Flee}
+	u.Character.StaminaMax.Value = 1000
+	u.Character.Stamina = 1000
+	u.Character.SetAggro(0, 100, characters.DefaultAttack)
+	u.Character.CombatPhase.OnRoundTick()
+	if _, err := usercommands.Flee("", u, room, 0); err != nil {
+		t.Fatalf("second Flee returned %v", err)
+	}
 	if !handlePlayerFlee(u, room, u.UserId) {
-		t.Fatal("legacy/default flee was not resolved")
+		t.Fatal("fully-paid flee was not resolved")
 	}
 	if got := u.Character.GetSkillUseCount(string(skills.Skullduggery)); got != 1 {
-		t.Fatalf("legacy flee after terminal cancellation progressed skill %d times, want 1", got)
+		t.Fatalf("flee after terminal cancellation progressed skill %d times, want 1", got)
 	}
 	mobs.GetInstance(100).Character.EndAggro()
 	if _, admitted := usercommands.TakeFleeAdmission(u); admitted {

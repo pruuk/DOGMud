@@ -180,8 +180,8 @@ func ExecuteDrain(actor Actor) DrainResult {
 	combat.RecordSpecialMove(sourceType, targetType, "drain", result.Hit, dmgRecorded, char, target.Char, util.GetRoundCount())
 
 	// Consume the combat round.
-	if char.Aggro != nil {
-		char.Aggro.RoundsWaiting = 1
+	if char.CombatPhase != nil {
+		char.SetRoundsWaiting(1)
 	}
 
 	// Progression: unarmed-combat on hit.

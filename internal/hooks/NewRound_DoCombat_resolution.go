@@ -39,11 +39,14 @@ func handleCombatWaitRound(
 	defenderRoom *rooms.Room,
 	viewerUserId int,
 ) bool {
-	if attackerChar.Aggro.RoundsWaiting <= 0 {
+	// U12c-2: the guard and the decrement are ONE call now, so they cannot
+	// drift apart. Note the debug line logs the value AFTER the decrement,
+	// where it used to log before.
+	if attackerChar.CombatPhase == nil || !attackerChar.ConsumeRoundWaiting() {
 		return false
 	}
-	mudlog.Debug(`RoundsWaiting`, `User`, attackerChar.Name, `Rounds`, attackerChar.Aggro.RoundsWaiting)
-	attackerChar.Aggro.RoundsWaiting--
+	mudlog.Debug(`RoundsWaiting`, `User`, attackerChar.Name,
+		`Rounds`, attackerChar.RoundsWaiting())
 
 	roundResult := combat.GetWaitMessages(items.Wait, attackerChar, defenderChar, roleSource, roleTarget)
 

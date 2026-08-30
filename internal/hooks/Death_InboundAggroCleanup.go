@@ -49,8 +49,10 @@ func wireInboundAggroCleanup(c *characters.Character) {
 					}
 					// Spell-cast-shape aggro: abort in-flight cast targeting
 					// this player.
-					if mob.Character.Aggro != nil && mob.Character.Aggro.Type == characters.SpellCast {
-						for _, tid := range mob.Character.Aggro.SpellInfo.TargetUserIds {
+					// U12c-2: an in-flight cast's aim is on the Activity
+					// machine now, not in Aggro.SpellInfo.
+					if cd, ok := mob.Character.CastingData(); ok {
+						for _, tid := range cd.TargetUserIds {
 							if tid == c.GetUserId() {
 								targeting.Release(&mob.Character, targeting.ReasonDisengage)
 								break

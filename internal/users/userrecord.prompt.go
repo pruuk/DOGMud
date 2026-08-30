@@ -704,8 +704,8 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				promptOut.WriteString(strconv.Itoa(int(u.Character.CarryCapacity())))
 
 			case `{w}`:
-				if u.Character.Aggro != nil {
-					promptOut.WriteString(strconv.Itoa(u.Character.Aggro.RoundsWaiting))
+				if u.Character.CombatPhase != nil {
+					promptOut.WriteString(strconv.Itoa(u.Character.RoundsWaiting()))
 				} else {
 					promptOut.WriteString(`0`)
 				}

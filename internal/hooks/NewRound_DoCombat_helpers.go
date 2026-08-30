@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
@@ -900,42 +901,33 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 // handlePlayerFlee processes a player's flee attempt.
 // Returns true if the player is fleeing and should skip combat.
 func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) bool {
-	// Task 15: IsDisengaging() reads CombatPhase.State() == Disengaging,
-	// set by TransitionToDisengaging in flee.go. This replaces the legacy
-	// Aggro.Type == Flee sentinel check.
-	// TODO Task 18: remove legacy Aggro.Type fallback once Aggro is gone.
-	phaseFleeing := user.Character.IsDisengaging()
-	isFleeing := phaseFleeing
-	if !phaseFleeing && user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
-		// Legacy path: Aggro-only set (no CombatPhase wired). Still handled.
-		isFleeing = true
-	}
-	if !isFleeing {
+	// U12c-2: this closes the standing `TODO Task 18`. The legacy
+	// `Aggro.Type == Flee` sentinel is gone, and IsDisengaging() -- which reads
+	// CombatPhase.State() == Disengaging, set by TransitionToDisengaging in
+	// flee.go -- is now the only way a flee is expressed.
+	//
+	// BEHAVIOUR CHANGE, and the intended one: the legacy branch granted
+	// includeSkill = true WITHOUT consuming admission. Nothing can reach it any
+	// more, because becoming Disengaging requires TransitionToDisengaging and
+	// that only happens through the flee command, which always leaves a
+	// handoff. So the admission consume is now unconditional.
+	if !user.Character.IsDisengaging() {
 		// A terminal transition can cancel Disengaging before this asynchronous
 		// round runs. Atomically retract that orphan; an absent handoff is a
 		// harmless no-op for ordinary non-flee combat rounds.
 		usercommands.TakeFleeAdmission(user)
 		return false
 	}
-	// Consume admission before any resolution branch. A phase-based flee can
-	// only come from the command, so missing admission means another/reentrant
-	// resolver already owns it. A true legacy Aggro sentinel has no handoff and
-	// retains historical full-skill behavior.
-	includeSkill := true
-	if phaseFleeing {
-		var admitted bool
-		includeSkill, admitted = usercommands.TakeFleeAdmission(user)
-		if !admitted {
-			return true
-		}
+	// Consume admission before any resolution branch. A flee can only come from
+	// the command now, so missing admission means another/reentrant resolver
+	// already owns it.
+	includeSkill, admitted := usercommands.TakeFleeAdmission(user)
+	if !admitted {
+		return true
 	}
 
-	// Revert to Default combat regardless of outcome (legacy path only).
-	// When CombatPhase is wired, ResolveFlee(false) handles the revert.
-	if user.Character.Aggro != nil && user.Character.Aggro.Type == characters.Flee {
-		targeting.Commit(user.Character, user.Character.CurrentCombatTarget(),
-			targeting.ReasonAttack)
-	}
+	// The legacy "revert to Default combat" re-Commit that stood here is gone
+	// with the sentinel it undid. ResolveFlee(false) handles the revert.
 
 	// Can't flee while in any grapple state. CombatPhase position veto
 	// also blocks TransitionToDisengaging, but the message still needs
@@ -1166,6 +1158,26 @@ func handlePlayerConcentrationBreak(defUser *users.UserRecord, roundResult comba
 	}
 }
 
+// ordinaryMeleeEngagement reports whether the actor is in the plain
+// toe-to-toe attack state the two mob-AI passes below were written for.
+//
+// U12c-2: this was `Aggro.Type == characters.DefaultAttack`, and it is a
+// COMPOUND question, not a simple one. DefaultAttack was the odd one out of
+// five types, so the test excluded all four others at once: a ranged
+// engagement, an unspent ambush opening, a cast, and a flee. Each of those now
+// lives on the machine that models it, and Engagement composes them, so the
+// question is asked in one place rather than reconstructed at each site.
+//
+// Getting this wrong is silent: dropping the ranged half alone would let kiting
+// archers start running melee target-switch AI, and nothing would fail.
+func ordinaryMeleeEngagement(c *characters.Character) bool {
+	e := targeting.EngagementOf(c)
+	if e.Phase != combatphase.Engaging && e.Phase != combatphase.Engaged {
+		return false // Idle, or Disengaging (the old Flee type)
+	}
+	return !e.Ranged && !e.OpeningUnspent && !e.Casting
+}
+
 // handleMobAIDecision processes mob AI decisions (spell casting, special moves, combat commands).
 // Returns true if the mob executed an AI action and should skip normal combat.
 func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
@@ -1177,7 +1189,7 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 	if !mob.Character.IsInCombat() {
 		return false
 	}
-	if mob.Character.Aggro.Type != characters.DefaultAttack {
+	if !ordinaryMeleeEngagement(&mob.Character) {
 		return false
 	}
 
@@ -1239,7 +1251,7 @@ func handleMobAIDecision(mob *mobs.Mob, c configs.Config) bool {
 // handleMobTargetSwitch processes mob target switching AI.
 // Returns true if the mob switched targets and should skip this round.
 func handleMobTargetSwitch(mob *mobs.Mob, mobRoom *rooms.Room) bool {
-	if util.Rand(100) >= 10 || mob.Character.Aggro.Type != characters.DefaultAttack {
+	if util.Rand(100) >= 10 || !ordinaryMeleeEngagement(&mob.Character) {
 		return false
 	}
 
@@ -1272,13 +1284,13 @@ func handleMobTargetSwitch(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 
 	if roll < switchChance {
 		newTargetId := potentialTargets[util.Rand(len(potentialTargets))]
-		// Read the current type BEFORE committing: the commit overwrites
-		// Aggro. Go evaluates arguments first so an inline read would also be
-		// correct, but the hoist makes the ordering obvious to the next reader.
-		prevType := mob.Character.Aggro.Type
+		// U12c-2: the prevType hoist is gone. ordinaryMeleeEngagement above
+		// already refused every non-DefaultAttack engagement, so the type it
+		// carried was ALWAYS DefaultAttack and ReasonAttack is exact. Commit
+		// re-derives the ranged flavour from the equipped weapon anyway.
 		targeting.CommitAfter(&mob.Character,
 			state.ActorRef{UserId: newTargetId},
-			targeting.ReasonForAggroType(prevType), 1)
+			targeting.ReasonAttack, 1)
 
 		if newTarget := users.GetByUserId(newTargetId); newTarget != nil {
 			mobRoom.SendText(messaging.CategoryMobEmote,

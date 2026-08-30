@@ -83,7 +83,7 @@ func TestThrowCostRefusalPreservesExactItemAndCombatState(t *testing.T) {
 	user, room, target, first, selected := seedThrowCostFixture(t)
 	user.Character.Stamina = 0
 	user.Character.SetAggro(0, target.InstanceId, characters.DefaultAttack)
-	user.Character.Aggro.RoundsWaiting = 0
+	user.Character.SetRoundsWaiting(0)
 	events.DrainQueuedMessagesForTest(user.UserId)
 
 	itemsBefore := append([]items.Item(nil), user.Character.Items...)
@@ -104,7 +104,7 @@ func TestThrowCostRefusalPreservesExactItemAndCombatState(t *testing.T) {
 	assert.Equal(t, targetHealthBefore, target.Character.Health)
 	assert.Nil(t, target.Character.Aggro, "refusal must not seed target aggression")
 	require.NotNil(t, user.Character.Aggro)
-	assert.Equal(t, 0, user.Character.Aggro.RoundsWaiting, "refusal must not consume the combat round")
+	assert.Equal(t, 0, user.Character.RoundsWaiting(), "refusal must not consume the combat round")
 	assert.Equal(t, progressionBefore, user.Character.GetSkillUseCount(string(skills.Skullduggery)))
 	assert.Equal(t, 0, user.Character.Stamina)
 	assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)

@@ -1,6 +1,8 @@
 package characters
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -205,12 +207,37 @@ func (c *Character) LearnRecipe(recipeId string) bool {
 	return false
 }
 
-func (c *Character) SetCast(roundsWaitTime int, sInfo SpellAggroInfo) {
-
-	c.Aggro = &Aggro{
-		Type:          SpellCast,
-		RoundsWaiting: roundsWaitTime,
-		SpellInfo:     sInfo,
+// SetCast records a pending spell cast.
+//
+// U12c-2: this was the LAST writer outside the targeting seam. It assigned
+// c.Aggro directly and never touched any state machine, so calling it over a
+// live engagement left the two stores disagreeing -- Aggro dropped to zero ids
+// while CombatPhase kept the old target. It now records the cast on the
+// Activity machine, which is where every other cast in the game is recorded,
+// and sets the round budget on the combat phase machine.
+//
+// Its one production caller is mobcommands.Aid, a heal on a downed player in a
+// calm room. Nothing resolves this cast into a spell effect; the record exists
+// so Death_InboundAggroCleanup can abort an in-flight aid when its target dies,
+// and so IsAggro reports the caster as engaged with its aim.
+//
+// Returns whether the cast was recorded. A refused transition (the actor is
+// already busy) records nothing, which is what a caller should check before
+// narrating a cast that did not start.
+func (c *Character) SetCast(roundsWaitTime int, sInfo SpellAggroInfo) bool {
+	if c.Activity == nil {
+		return false
 	}
-
+	if err := c.Activity.TransitionToCasting(activity.CastingData{
+		SpellId:              sInfo.SpellId,
+		SpellRest:            sInfo.SpellRest,
+		TargetUserIds:        sInfo.TargetUserIds,
+		TargetMobInstanceIds: sInfo.TargetMobInstanceIds,
+	}, state.TransitionReason{
+		Trigger: activity.TriggerCastBegin,
+	}); err != nil {
+		return false
+	}
+	c.SetRoundsWaiting(roundsWaitTime)
+	return true
 }

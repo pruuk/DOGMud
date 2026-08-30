@@ -71,8 +71,8 @@ func ExecuteWarcry(actor Actor) WarcryResult {
 	bonus, duration := ApplyWarcryEffect(char)
 
 	// Set combat wait if in combat (matches player + mob behavior).
-	if char.Aggro != nil {
-		char.Aggro.RoundsWaiting = 1
+	if char.CombatPhase != nil {
+		char.SetRoundsWaiting(1)
 	}
 
 	// Rhetoric progression lives here rather than in the callers, matching the

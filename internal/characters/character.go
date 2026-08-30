@@ -750,6 +750,51 @@ func (c *Character) IsInCombat() bool {
 	return c.Aggro != nil
 }
 
+// CastingData returns the in-flight cast's data, and whether there is one.
+//
+// U12c-2: this is where Aggro.SpellInfo's readers moved. Nil-guards Activity in
+// the same shape as IsCasting.
+func (c *Character) CastingData() (activity.CastingData, bool) {
+	if c.Activity == nil {
+		return activity.CastingData{}, false
+	}
+	return c.Activity.CastingData()
+}
+
+// RoundsWaiting reports the actor's remaining round budget: how many rounds
+// before this actor may act again. Zero means free to act.
+//
+// U12c-2: this was Aggro.RoundsWaiting. It lives on the combat phase machine
+// now; see the two-counter note in internal/state/combatphase, which explains
+// why it is NOT the same thing as EngagingData.RoundsUntil.
+//
+// Nil-guards CombatPhase in the same shape as IsCasting/IsInCombat, so an
+// unvalidated fixture reads zero rather than panicking.
+func (c *Character) RoundsWaiting() int {
+	if c.CombatPhase == nil {
+		return 0
+	}
+	return c.CombatPhase.RoundsWaiting()
+}
+
+// SetRoundsWaiting sets the actor's round budget. No-op without a combat phase
+// machine.
+func (c *Character) SetRoundsWaiting(n int) {
+	if c.CombatPhase == nil {
+		return
+	}
+	c.CombatPhase.SetRoundsWaiting(n)
+}
+
+// ConsumeRoundWaiting decrements the round budget and reports whether this
+// round was consumed by the wait. False means the actor is free to act.
+func (c *Character) ConsumeRoundWaiting() bool {
+	if c.CombatPhase == nil {
+		return false
+	}
+	return c.CombatPhase.ConsumeRoundWaiting()
+}
+
 // IsDisengaging returns true if Combat Phase is Disengaging (flee in
 // progress). Replacement for `c.Aggro != nil && c.Aggro.Type == characters.Flee`.
 func (c *Character) IsDisengaging() bool {

@@ -468,8 +468,8 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		engageAfterThrow(user, room, hitMobs)
 	}
 
-	if user.Character.Aggro != nil {
-		user.Character.Aggro.RoundsWaiting = 1
+	if user.Character.CombatPhase != nil {
+		user.Character.SetRoundsWaiting(1)
 	}
 
 	return true, nil
