@@ -205,6 +205,21 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	// the defence multiplier (1.0 on an attack win by construction, 0.5
 	// on a floored save, 0.0-0.5 on a rolled defensive win).
 	rawDmg := CalcRawDamage(p.DamageStat, p.Attack.SkillRank, p.DamagePercent, ChannelPhysical)
+
+	// NPC-only physical multiplier.
+	//
+	// ⚠️ This used to be applied at ONE site, the mob melee auto-attack in
+	// combat_helpers.go, despite being documented as the NPC physical dial. So
+	// every mob special move (all 16), the dodge-crit counter-sweep and every
+	// mob ranged shot -- all of which route through here -- silently ignored
+	// it, and a mob's bash was scaled differently from its own punch.
+	//
+	// Applied here too as of 2026-08-30, so the knob means what its name says:
+	// ALL NPC physical damage. That is what makes MeleeDamageScale usable as a
+	// player-side dial, since the two channels share it.
+	if p.Attacker != nil && p.Attacker.IsMob {
+		rawDmg *= float64(configs.GetBalanceConfig().MobDamageMultiplier)
+	}
 	dmg := CritOrMitigatedDamageScaled(rawDmg, p.Attack.SkillRank, result.Crit, mitig, cap, p.BonusCritMultiplier)
 	if !result.Crit {
 		dmg = int(float64(dmg) * out.DamageMultiplier)

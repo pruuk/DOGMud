@@ -720,7 +720,7 @@ Balance:
   # DELETING this line cannot silently disable every knockdown in the game --
   # the trap that left StealCooldown and four others pinned at zero. To
   # suppress knockdowns, use a very small value such as 0.001.
-  KnockdownFrequencyScale: 1.0     # 1.0 = unchanged; lower to soften knockdowns
+  KnockdownFrequencyScale: 0.75    # 2026-08-30: owner — a quarter fewer knockdowns than the contest rolls
   #
   # CoupDeGraceRounds: rounds a mob waits before finishing a downed player.
   #   0 = disabled (mob disengages when player is downed).
@@ -817,14 +817,24 @@ Balance:
   #     0.05 →   5 raw damage per swing (current — low, needs MobDamageMultiplier)
   #     0.15 →  15 raw damage per swing
   #     0.30 →  30 raw damage per swing (original default)
-  MeleeDamageScale: 0.26       # 2026-08-30: HALVED (from 0.52) — owner playtest: melee damage too high for players AND mobs. Spell and rhetoric scales deliberately unchanged. Note this knob governs the WHOLE physical channel (melee, ranged, all special moves, throw, pets), so U10d's bow-to-melee ratio is preserved.
+  MeleeDamageScale: 0.52       # 2026-08-30 (2nd pass): RESTORED to 0.52 — owner retest: NPC damage landed right but PLAYER physical was too low. Player-side is now back where it was; NPCs are held down by MobDamageMultiplier below instead. Governs the WHOLE physical channel (melee, ranged, specials, throw, pets).
   #
   # MobDamageMultiplier: extra multiplier applied ONLY to NPC melee
   #   damage. Lets you keep player damage low while making NPCs threatening.
   #   Example: MeleeDamageScale 0.05, MobDamageMultiplier 4.0:
   #     Player Str 100 → 100 × 1.0 × 1.0 × 0.05 = 5 raw (unchanged)
   #     Mob Str 100    → 100 × 1.0 × 1.0 × 0.05 × 4.0 = 20 raw
-  MobDamageMultiplier: 0.83     # 2026-08-03: from 2.0 — nets mob melee to HALF its old value (0.52×0.83=0.43 vs old 0.43×2.0=0.86) after the 08-02 fixes made mobs hit much harder in practice
+  # MobDamageMultiplier is the NPC-ONLY physical dial. As of 2026-08-30 it is
+  # applied to ALL NPC physical damage: melee auto-attacks (combat_helpers.go)
+  # AND every special move, the dodge-crit counter-sweep and ranged shots
+  # (skill_moves.go). Before that it hit auto-attacks only, so a mob's bash was
+  # scaled differently from its own punch.
+  #
+  # This is what lets MeleeDamageScale act as the PLAYER dial: the two share
+  # the physical channel, so NPCs are pulled back down here.
+  #   player physical  = MeleeDamageScale                    = 0.52
+  #   NPC physical     = MeleeDamageScale x this             = 0.2158
+  MobDamageMultiplier: 0.415    # 2026-08-30: from 0.83 — holds NPC physical at exactly its post-halving level (0.52x0.415 = 0.26x0.83) while player physical returns to 0.52
   #
   # SpellDamageScale: multiplier on ALL spell damage output (players + NPCs).
   #   1.0 = no scaling. Example at Wil 100, skill 0, spell mult 1.0:
