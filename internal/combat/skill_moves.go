@@ -16,6 +16,7 @@ import (
 // SkillMoveResult holds the outcome of a bash/kick/trip execution.
 // Callers use these fields to dispatch messaging and analytics.
 type SkillMoveResult struct {
+	CritSource string // "rolled"|"sleeping"|"crit_on_win"; diagnostic only
 	// Hit is the contest WIN, exactly as it has always been. Defended-partial
 	// damage lands with Hit == false; do NOT widen this to "dealt damage"
 	// (`!Defended || DamageMultiplier > 0`) — that formula would make nearly
@@ -188,6 +189,7 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	out := resolveChannelAttackWithRunner(p.Channel, p.Attack, p.Attacker, p.Defender, runner)
 	result.Defence = out
 	result.Crit = out.AttackerCrit
+	result.CritSource = out.CritSource
 	result.Fumble = out.AttackerFumble
 
 	// Fumble aborts BEFORE success (Assumption 11): no damage, no status,
