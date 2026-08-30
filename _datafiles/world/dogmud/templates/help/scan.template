@@ -19,4 +19,4 @@ Secret exits are not revealed by scanning.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help look</ansi>, <ansi fg="command">help peek</ansi>
+  <ansi fg="command">help look</ansi>

@@ -1062,9 +1062,36 @@ CombatPhase *combatphase.Machine `yaml:"-"`
 ```
 
 Initialized in `New()` and lazily in `Validate()` (for characters loaded
-from YAML without a direct `New()` path). `RegisterMachine` is called
-immediately after allocation so inbound-attacker tracking is active from
-the first combat action.
+from YAML without a direct `New()` path). **Nothing registers it.**
+Cross-character lookups resolve an `ActorRef` on demand against
+`internal/users` / `internal/mobs`; the machine's own identity is set by
+`SyncMachineSelf` (below). See `internal/state/combatphase/context.md`.
+
+### Actor identity: `ActorRef()` and `SyncMachineSelf()`
+
+`internal/characters/actor_identity.go`
+
+```go
+func (c *Character) ActorRef() state.ActorRef   // {UserId, MobInstanceId}
+func (c *Character) SyncMachineSelf()           // records it on CombatPhase
+```
+
+**`ActorRef()` is the ONLY correct way to build an actor ref.** Hand-building
+one as `state.ActorRef{UserId: c.userId}` drops `MobInstanceId`, and a mob's
+`userId` is always 0, so the ref comes out zero and
+`combatphase.RecordInboundAttacker` silently discards it. That bug meant no mob
+was ever recorded as anyone's attacker.
+
+`SyncMachineSelf` records the ref on the CombatPhase machine, used as the
+fallback actor when a `TransitionReason` carries none. It is called from
+`Validate()` and from `SetUserId()`, because identity arrives at different
+moments for the two actor types: a mob has `MobInstanceId` **before**
+`Validate()` runs, while every player path assigns `userId` **after** it.
+
+⚠️ **A path that installs a Character without calling `SetUserId` leaves it
+with a zero ref for the whole session**, which makes it invisible to combat
+targeting. `usercommands/character.go` (`character new`, `view`, `hire`) each
+had to be fixed for exactly this.
 
 ### New flag: NonCombatant
 
@@ -1269,9 +1296,10 @@ Life *life.Machine `yaml:"-"`
 ```
 
 Initialized in `New()` and lazily in `Validate()` (for characters
-loaded from YAML without a direct `New()` path). `RegisterMachine`
-is called immediately after allocation. The Life machine is the
-canonical source of truth for "is this character alive?".
+loaded from YAML without a direct `New()` path). `life.RegisterMachine`
+has **no production caller** and `life.lookupMachine` is never called, so
+nothing depends on registration. The Life machine is the canonical source
+of truth for "is this character alive?".
 
 ### Predicate methods
 
@@ -1398,8 +1426,9 @@ command's own re-entrancy check).
 The `OnCharacterCreated` registry gains the Activity machine wire
 callback. New registration (in `internal/hooks/`):
 - `wireActivityCrossMachineCascades` — subscribes `activity_life_dead`
-  observer to the Life machine; wires the Activity machine's identity
-  via `RegisterMachine`.
+  observer to the Life machine. (It does **not** call
+  `activity.RegisterMachine`; that has no production caller, and
+  `internal/state/activity` has no `lookupMachine` at all.)
 
 ### Sunset notes (chunk 3)
 

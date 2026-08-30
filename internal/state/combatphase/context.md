@@ -44,10 +44,11 @@ same predicates for both.
 func NewMachine() *Machine
 ```
 
-Returns a `Machine` in `Idle`. `RegisterMachine` is meant to be called
-immediately after creating a character so inbound-attacker tracking and
-cross-character target-death notifications work correctly — **but see
-the Gotchas section below: in production today, nothing calls it.**
+Returns a `Machine` in `Idle`. Nothing needs to register it: cross-character
+lookups resolve an `ActorRef` on demand against `internal/users` /
+`internal/mobs` (see "Machine resolution" in the Gotchas below). Set the
+machine's own identity with `SetSelf`, which `Character.SyncMachineSelf` does
+from `Validate()` and `SetUserId()`.
 
 ### Entry into combat
 
@@ -126,8 +127,8 @@ from production** — see Gotchas. Only exercised by
 `combatphase_test.go`. Actual death handling in
 `internal/hooks/Life_Cascades.go` calls `ForceIdle` on the dying
 character's own machine only; it does not cascade to attackers via this
-method (unsurprising, since `Attackers()` is always empty in production
-regardless).
+method. (Before U11 this was doubly moot, since `Attackers()` was always
+empty; the registry is wired now, but the cascade is still not called.)
 
 ### Tick-event dispatch
 
@@ -164,10 +165,11 @@ Framework-maintained inbound attacker list. `TransitionToEngaging` calls
 `RecordInboundAttacker` on the target; `ForceIdle` calls
 `RemoveInboundAttacker`. `SubscribeAttackersChange` is used by
 `CombatPhase_CompanionAssist.go` to trigger reactive companion auto-assist
-the moment a new attacker is recorded. **See Gotchas: none of this fires
-in production** — `TransitionToEngaging` looks the target machine up via
-the (never-populated) registry, so `RecordInboundAttacker` is never
-actually called on a real target and `Attackers()` always reads empty.
+the moment a new attacker is recorded. **LIVE as of U11** —
+`TransitionToEngaging` looks the target machine up via the registry, which
+the injected resolver answers, so `RecordInboundAttacker` runs
+on a real target and `Attackers()` returns real data. Before U11 none of this
+fired in production; see Gotchas for what that had been silently costing.
 
 ### Veto registration
 
@@ -218,16 +220,14 @@ anything on this machine.
 ### machineRegistry
 
 ```go
-var machineRegistry = map[state.ActorRef]*Machine{}
+var machineResolver atomic.Pointer[func(state.ActorRef) *Machine]
 ```
 
-Guarded by `registryMu`. Populated by `RegisterMachine` at character
-creation; cleared by `UnregisterMachine` on logout / despawn.
-
-The registry is the bridge between `ActorRef` (the identity type used
-in `TransitionReason.Target`) and the live `Machine` pointer. It allows
-the framework to call `NotifyTargetDied` and `RecordInboundAttacker` on
-a target's machine without the caller knowing its memory address.
+Installed once by `SetMachineResolver` from `internal/hooks`. There is **no
+registry map** -- it was deleted on 2026-08-30 after producing five
+cache-coherence bugs. `lookupMachine` asks the resolver, which asks
+`users.GetByUserId` / `mobs.GetInstance`: the packages that authoritatively
+know whether an actor is in the world.
 
 ---
 
@@ -367,52 +367,94 @@ is scheduled for a cleanup chunk after chunks 1-5 land.
 
 ## Gotchas
 
-**`RegisterMachine` has no production caller, for either this package or
-`internal/state/awareness`.** `internal/characters/validate.go` constructs
-`c.CombatPhase = combatphase.NewMachine()` directly and never registers
-it in `machineRegistry`. Confirmed by grep (`combatphase.RegisterMachine`
-and `awareness.RegisterMachine` appear only in this package's/awareness's
-own tests, and in an explanatory comment in
-`internal/actions/combat_fire.go:421`). Consequences, verified against
-`TransitionToEngaging` (`lookupMachine(d.Target)` — always nil for a real
-character):
+**There is no machine registry any more. `lookupMachine` resolves on demand.**
 
-- `RecordInboundAttacker` is never invoked on a real target's machine, so
-  **`Attackers()` always reads empty in production.** The Attackers
-  section below describes the intended mechanism, not what happens today.
+Until 2026-08-30 this package kept a process-global
+`machineRegistry map[state.ActorRef]*Machine` populated by `RegisterMachine`.
+**Nothing in production ever called it**, so `lookupMachine` always returned nil
+and every cross-character consumer was silently inert for its entire life --
+most importantly `recoveryContest`, which meant prone auto-recovery was never
+contested for anyone.
+
+U11 was going to wire the map up. Adversarial review killed that: a
+hand-maintained `ActorRef -> Machine` map is a **cache** of a mapping that
+`internal/users` and `internal/mobs` already own authoritatively, and every way
+it can drift is a bug. Five were found in one afternoon, all in production paths
+that assign a Character to an identity without passing through the registration
+seam:
+
+- `LoadUser` runs before the password check, so a throwaway disk snapshot
+  evicted a live player's entry -- griefable by anyone knowing a username.
+- `character new` left the RETIRED character bound under the player's ref
+  forever, unreclaimable.
+- `character view` / `hire` replace a registered mob's `Character` wholesale.
+- Copyover restore registered nobody, so a hot reboot silently reverted
+  everything world-wide.
+- `registeredRef` was a read-modify-write racing the round loop.
+
+**The registry is therefore deleted, not repaired.** `lookupMachine` calls an
+injected resolver:
+
+```go
+func SetMachineResolver(fn func(state.ActorRef) *Machine)
+```
+
+wired once from `internal/hooks/machine_resolver.go`, which asks
+`users.GetByUserId` and `mobs.GetInstance`. Injection is required because
+`internal/state` must not import those packages (they depend on
+`internal/characters`, which depends on this one).
+
+Consequences worth knowing:
+
+- **A nil return is normal.** The actor logged out, despawned, or never
+  existed. Every caller handles it; keep it that way.
+- **Adding a new way to enter the world needs no change here**, provided the
+  actor ends up in `userManager` or `mobInstances` -- which is what "in the
+  world" means.
+- **There is nothing to tear down.** No teardown call on despawn or logout, and
+  no leak: `DestroyInstance` and `LogOutUserByConnectionId` remove the actor
+  from the authoritative map, which is the same act as deregistering it.
+- **Tests** install a fixed map via the local `useTestResolver` helper rather
+  than poking a registry. Cross-package tests should exercise the real path
+  (`SetAggro`) instead of reaching for internals.
+
+`Machine.self` survives as a plain field, set by `SetSelf` from
+`Character.SyncMachineSelf` (called from `Validate` and `SetUserId`, because a
+mob has its `MobInstanceId` before `Validate` while a player gets its `userId`
+after). It is only the fallback actor ref when a `TransitionReason` carries
+none. Being per-machine, a stale value cannot leak or alias another character.
+
+**What this turned on.** `RecordInboundAttacker` now runs, so `Attackers()`
+returns real data, and two consumers that were silently inert came alive:
+
+- `recoveryContest` (`internal/hooks/recovery_contest.go`) returns a real
+  contest instead of `nil`, which that function documents as *a free stand*.
+  Pinned by `internal/hooks/recovery_contest_live_test.go`, which drives
+  `SetAggro` rather than calling `RecordInboundAttacker` directly -- the latter
+  bypasses the resolver and proves nothing.
 - `internal/hooks/CombatPhase_CompanionAssist.go`'s reactive
-  `SubscribeAttackersChange` handler therefore never fires in production —
-  companion auto-assist runs only through the polling fallback
-  (`CompanionAutoTarget` in `combat_retarget.go`, called from
-  `NewRound_DoCombat`), not reactively.
-- `internal/actions/combat_fire.go`'s `shooterIsUnengaged` deliberately
-  does NOT use `Character.Attackers()` for this reason — it does a live
-  room scan instead, with a comment explaining why.
-- `NotifyTargetDied` / `NotifySelfDied` are likewise never called from
-  production (only from `combatphase_test.go`). Real death cleanup
-  (`internal/hooks/Life_Cascades.go`, `Alive → Dead`) calls `ForceIdle`
-  directly on the dying character's own machine and does not cascade to
-  attackers via `NotifySelfDied` — which would have nothing to iterate
-  over anyway, since `Attackers()` is always empty.
+  `SubscribeAttackersChange` handler now fires, so companions answer a new
+  attacker in the same round instead of on the next tick.
 
-**A second, independent break sits behind the first.** `SetAggro` builds the
-attacker ref as `Actor: state.ActorRef{UserId: c.userId}`
-(`internal/characters/combat_state_compat.go:146`), and nothing ever calls
-`SetUserId` on a mob, so a mob's `userId` stays 0 and the ref is
-`{UserId:0, MobInstanceId:0}` — which `ActorRef.IsZero()`
-(`internal/state/transition.go:12-14`) reports true, and
-`RecordInboundAttacker` early-returns on. **Even with a working registry, no
-mob attacking a player would ever be recorded.** Anyone repairing this must fix
-both halves; fixing only the registry silently leaves mobs invisible.
+**What this did NOT turn on:**
 
-**An existing consumer is already inert because of this:** `recoveryContest`
-(`internal/hooks/recovery_contest.go:23`) iterates `ch.Attackers()`, finds
-nothing, and returns `nil` — which that function documents as *a free stand*.
-Prone recovery has therefore never actually been contested, whatever U10
-intended. See `internal/hooks/context.md`.
+- `NotifyTargetDied` / `NotifySelfDied` still have **zero production callers**.
+  They are uncalled methods, not resolver-gated ones. Real death cleanup
+  (`internal/hooks/Life_Cascades.go`) calls `ForceIdle` and does not cascade.
+- `awareness`, `life`, `position` and `activity` still have no working lookup,
+  and that is deliberate: `lookupMachine` is **defined but never called** in the
+  first three, and `activity` has none at all. Only this package consumes one,
+  so only this package has a resolver.
+- `internal/actions/combat_fire.go`'s `shooterIsUnengaged` still does a live
+  room scan. Now a deliberate choice: it answers "is anything in this room
+  targeting the shooter", a wider question than "who has engaged me".
 
-Handed to **U11** as a wire-it-up-or-delete-it decision; see the "U11 inbox
-from U10d" section of `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`.
+**The second break behind the first is also fixed.** `SetAggro` used to build
+the attacker ref as `Actor: state.ActorRef{UserId: c.userId}`, and nothing calls
+`SetUserId` on a mob, so a mob's ref was `{0,0}` and `RecordInboundAttacker`
+early-returned on `ActorRef.IsZero()`. Even a working registry would never have
+recorded a mob attacker. `engagement_storage.go` now uses `c.ActorRef()`, which
+carries both id fields. **Build refs with that method, never by hand.**
 
 **`TransitionToEngaging` silently drops its `TransitionReason`.** The signature
 is `TransitionToEngaging(d EngagingData, r state.TransitionReason) error`

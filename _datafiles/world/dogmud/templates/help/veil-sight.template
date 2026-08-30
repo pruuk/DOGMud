@@ -27,5 +27,5 @@ where ambushers lurk.
   - Refreshing the spell before it expires is cheaper than fighting from
     a surprised state.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help skulduggery</ansi>,
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help skullduggery</ansi>,
           <ansi fg="command">help perception</ansi>

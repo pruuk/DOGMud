@@ -29,6 +29,3 @@ content. It is intended for use during zone construction and world maintenance.
 
 Type <ansi fg="command">devtool</ansi> with no arguments to see full usage and JSON API examples.
 
-<ansi fg="yellow">See Also:</ansi>
-
-  <ansi fg="command">help build</ansi>, <ansi fg="command">help room</ansi>, <ansi fg="command">help zone</ansi>

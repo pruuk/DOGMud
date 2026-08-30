@@ -340,9 +340,6 @@ GamePlay:
   # - PVPMinimumSkillRanks -
   #   Total skill ranks required to engage in PVP combat.
   PVPMinimumSkillRanks: 15
-  # - MobConverseChance -
-  #   Chance in 100 that the mob will attempt to converse when idle.
-  MobConverseChance: 3
   # - UseSkillProgression -
   #   If true, skill and stat usage will trigger progression chance checks.
   UseSkillProgression: true
@@ -742,7 +739,6 @@ Balance:
   # Global panic buttons. 1.0 = no change. GlobalDamageMultiplier is
   # applied to ALL damage channels in CalcRawDamage().
   GlobalDamageMultiplier: 0.5  # Halved for chunk-4b-fixup smoke — let grapples develop before TTK
-  GlobalDefenseMultiplier: 1.0
   #
   # Legacy unarmed knobs — still used by GetDefaultDistributionDamage()
   # for attack count and crit buff calculation. Actual unarmed damage is
@@ -861,11 +857,6 @@ Balance:
   MagicalMitigationCap: 0.75
   ConvictionMitigationCap: 0.75
   #
-  # Avoidance damage multipliers: damage taken when successfully avoiding a spell or taunt.
-  # 0.50 = take 50% damage on successful avoidance (half damage).
-  SpellAvoidanceDamageMultiplier: 0.50     # Damage multiplier on successful spell deflection
-  RhetoricAvoidanceDamageMultiplier: 0.50  # Damage multiplier on successful stoic resolve
-  #
   # ── Resource Depletion Penalties ──
   # As HP/SP/CP drain, combat effectiveness gradually decreases.
   # Formula: mult = 1 - maxPenalty × (1 - ratio)^curve
@@ -919,9 +910,7 @@ Balance:
   # docs/superpowers/specs/2026-05-18-state-chunk-4d-submission-rework-design.md
   submission_attempt_alpha: 1.0          # Drift margin (std devs) that opens a sub window for the winning side
   submission_attempt_crit_z: 2.0         # Defender-crit shortcut for bottom-sub windows
-  sub_skill_weight: 1.5                  # Unarmed-combat skill weight in the sub roll
   sub_bad_z_threshold: -1.0              # Sub roll z < this → attempter falls prone, pair breaks
-  sub_crit_z_threshold: 2.0              # Sub roll z >= this → recipient stunned next round
   sub_gold_loss_fraction: 0.20           # Fraction of carried gold transferred on subdue/cripple
   broken_limb_buff_duration: 900         # Rounds (~60 min of play at 4s rounds); expires naturally
 

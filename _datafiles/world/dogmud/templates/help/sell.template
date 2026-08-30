@@ -12,7 +12,7 @@ then your component bag. Quest items cannot be sold.
 
 The price offered depends on the merchant's current stock and
 gold reserves. Your <ansi fg="skill">Bartering</ansi> skill can increase
-the sale price by up to 15%.
+the sale price meaningfully.
 
 Find out more about referring to items by name by typing
 <ansi fg="command">help item-names</ansi>.

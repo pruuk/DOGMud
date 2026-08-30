@@ -1,0 +1,77 @@
+# U11 arc-closer gate, NEWBIE pass. Helpfiles and discoverability first,
+# then the combat a beginner actually stumbles into.
+#
+# You are new. You do not know this game's vocabulary. Type what a confused
+# human would type, not what an implementer would type. If you have to
+# guess a command name, say so, and say what you guessed and why.
+#
+# WHAT CHANGED HERE.
+#   * The help index was fragmenting: `auction` had wandered into a heading
+#     of its own, and `bury` and `trash` had been moved out of the sections
+#     they belong to. All three were tidied.
+#   * Several help pages pointed at topics that did not exist and answered
+#     with an error. Those were fixed. Three OTHER links were wrongly
+#     deleted during the fix and have been put back: `help time`,
+#     `help dual-wield`, `help wimpy`. All three should work.
+#   * A few pages quoted exact figures and now use plain words instead.
+#
+# WHAT CORRECT LOOKS LIKE.
+#   * `help` lists topics under headings with NO duplicates and no heading
+#     holding a single stranded entry.
+#   * Every `help <topic>` a page offers you actually opens something.
+#   * Nothing quotes raw percentages or round counts at you.
+#   * Nothing runs past 80 columns or wraps raggedly.
+#
+# FIXTURE NOTE. As a beginner you will genuinely be knocked down and
+# genuinely struggle to get up, which is exactly the situation a veteran
+# cannot easily reach. That makes you the better witness for the combat
+# change below. Do not skip it.
+#
+# KNOWN NON-BUGS, do not refile: hidden mobs answer "You attack the
+# darkness!"; corpses persist; `consider` calls walkovers even. 3 commands
+# per round on the AI port and the overflow is silently dropped after being
+# echoed. Read every line of output.
+
+ephemeral:
+  profile: fresh
+  start_room: 5227
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    THE HELP INDEX (headline). Type `help` with no argument and read the
+    whole thing. Report the exact list of headings. Is any heading a near
+    duplicate of another? Does any heading contain only one entry? Are
+    `bury` and `trash` under headings that make sense to you as a newcomer?
+    Quote anything that looks wrong.
+  - >-
+    FOLLOW EVERY THREAD. Pick at least twelve topics across different
+    headings and open each one. For every `help <something>` a page offers
+    you, TRY IT. Report every single one that errors or opens nothing. Pay
+    particular attention to `help time`, `help dual-wield` and
+    `help wimpy`, which are expected to work.
+  - >-
+    READ AS A BEGINNER. In the pages you open, flag anything you cannot
+    understand, anything that assumes knowledge you do not have, any raw
+    number or percentage, any line that runs off the edge or wraps badly,
+    and any sentence that ends oddly or has a stray comma with nothing
+    after it.
+  - >-
+    DISCOVERABILITY. Try to find out how to defend yourself using ONLY the
+    help system, starting from `help`. Can you reach an explanation of
+    dodging, parrying and blocking? Can you find out what `quell` and
+    `defy` are? Record the exact path you took and where you got stuck.
+  - >-
+    GETTING KNOCKED DOWN. Pick a fight you can survive but not dominate.
+    When you are knocked to the ground, do NOT immediately type stand.
+    Wait, and log every round verbatim. Does the game tell you clearly
+    that you are on the ground? Does it tell you what to do about it? If
+    you fail to get up, is the reason understandable, or does it just feel
+    like the game is ignoring you? This is a FEEL judgement and your
+    confusion is the finding.
+  - >-
+    THE WAY OUT. Once you have been down for a round or two, type `stand`.
+    Did anything tell you that was an option? If you only found it by
+    guessing, say so plainly: a way out that a beginner cannot discover is
+    the same as no way out.

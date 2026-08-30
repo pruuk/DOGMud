@@ -1443,3 +1443,24 @@ func AuditMobNameCollisions(playerNameLookup func(name string) (userId int, ok b
 		mudlog.Warn("mob name collision audit complete", "collisions", collisions)
 	}
 }
+
+// AdoptCharacter replaces this mob instance's Character wholesale and repairs
+// the identity the copy destroys.
+//
+// ⚠️ Use this instead of a bare `m.Character = c`. `Character.MobInstanceId` is
+// `yaml:"-"`, so a Character loaded from disk carries 0. Assigning it over a
+// live instance therefore drops the instance id that spawning had just given
+// it, and a mob with a zero ActorRef cannot be recorded as anyone's attacker:
+// SetAggro builds `Actor: c.ActorRef()` and RecordInboundAttacker discards a
+// zero ref. `IsMob` is lost the same way, which silently disables the mob-only
+// training caps.
+//
+// This existed as two verbatim copies in usercommands/character.go (the
+// `view` and `hire` paths). A third assignment site would have reintroduced the
+// bug silently, which is why it lives here with the type that owns the field.
+func (m *Mob) AdoptCharacter(c characters.Character) {
+	m.Character = c
+	m.Character.MobInstanceId = m.InstanceId
+	m.Character.IsMob = true
+	m.Character.SyncMachineSelf()
+}

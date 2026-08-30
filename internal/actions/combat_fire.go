@@ -407,9 +407,13 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 // shooterIsUnengaged reports whether nothing in the room currently has the
 // shooter as its aggro target.
 //
-// A room scan rather than Character.Attackers(): that list is never populated
-// in production (combatphase.RegisterMachine has no production callers), so it
-// always reads empty and would hand out the bonus unconditionally.
+// A room scan rather than Character.Attackers(). Originally because that list
+// was never populated in production. combatphase now resolves an ActorRef on
+// demand (combatphase.SetMachineResolver, wired in internal/hooks), so it reads
+// real data. The room scan is
+// kept DELIBERATELY: it answers "is anything in this room targeting the
+// shooter", which is a wider question than "who has engaged me", and it does
+// not depend on registration lifecycle.
 //
 // It scans the SHOOTER's room, never the target's. So a cross-room sniper who
 // is himself in melee IS engaged and loses the bonus -- that is the point of

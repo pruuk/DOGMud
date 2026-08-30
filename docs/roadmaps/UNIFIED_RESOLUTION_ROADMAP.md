@@ -170,9 +170,22 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 
 ## Plans
 
-> **Status as of 2026-08-29: everything through U10d is MERGED. Only U12 then
-> U11 remain, in that order. Nothing is deployed — prod is still `7c64c228c`,
-> and the deploy gate is the whole arc plus a playtest.**
+> **Status as of 2026-08-30: the arc is CODE-COMPLETE. Every stage U0–U12 plus
+> U11 is merged or on `feature/u11-arc-closer` awaiting its playtest gate.
+> Nothing is deployed — prod is still `7c64c228c`, and the deploy gate is the
+> whole arc plus the owner's manual pass with Meirok
+> (`docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`).**
+>
+> ⚠️ **U11 shipped two behaviour changes, both from wiring one dead seam:**
+> prone auto-recovery is contested for the first time, and companions answer a
+> new attacker a round earlier. Everything else in U11 is docs and tests.
+>
+> 🔴 **Three findings are FILED, NOT FIXED**, in
+> [`2026-08-30-u11-filed-findings`](../audits/2026-08-30-u11-filed-findings.md):
+> five balance knobs silently inert at zero (three of them skullduggery
+> economy), 154 help templates with em dashes, and the `gmcp` module's two
+> extra help categories. Each wants its own slice; none belongs in a docs
+> chunk.
 >
 > ⚠️ **Every ✅ here now carries its merge evidence — a PR number, a commit, or
 > a named reason there is no single one. Trust the evidence, not the tick.**
@@ -207,7 +220,7 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U10c** | ✅ **SHIPPED 2026-08-24.** **Charm redesign.** Delivered in four slices (A `9b8fa2d51`, B `41d50717b`, C `d324507d3`, D). Charm was never outside the seam — the premise this row was written on was wrong. `spellAttackChannel` maps an ABSENT `target_defense_type` to `ChannelSpellMental`, so charm was routed all along; what escaped was that the seam's verdict got **discarded** and a second private `RunContest` in `resolveCharmSpell` decided the outcome, resolving one cast twice and narrating both. Charm now reads the `ChannelSocial` contest its cast already runs. **Defence stat decided: defy** (Willpower + rhetoric), not Charisma — the attack side is Charisma, so the defence must not be. The skill weight of 25 is gone with the hand-built score. The re-roll ladder is deleted and duration is bought once with the MARGIN of the winning contest, between `CharmDurationMinRounds` and `CharmDurationMaxRounds`; the player is never told how long. Expiry is a grudge gated on the owner being present and not link-dead. Slice D also restored the in-combat penalty slice B had deleted against spec 4.1, and added the `EverCharmed` instance-save guard so an ex-companion cannot bake its owner's gear into a world mob. | M | U9 | **Yes** |
 | **U10d** | ✅ **SHIPPED 2026-08-25.** **Surprise-attack redesign.** Split from U10 2026-08-21 (owner). Delivered in **49 commits** on `feature/u10d-surprise-attack-redesign`, merged as **PR #69** (`067c26b60`). Spec + plan written 2026-08-25 after three blind adversarial review rounds: [`spec`](../superpowers/specs/2026-08-25-u10d-surprise-attack-redesign-design.md) · [`plan`](../superpowers/plans/2026-08-25-u10d-surprise-attack-redesign.md). **Shipped shape: ONE contested opening strike**, flagged by `Aggro.Type == SurpriseAttack` and consumed once (`openingStrikeLeft` in `calculateCombat`); a clean win crits and stacks `CritDamageMultiplier(skullduggery)` × `SurpriseOpeningStrikeMultiplier`. `actions.SurpriseAttack` and its 389-line uncontested multi-weapon volley are **deleted**. Stealth breaks immediately, implemented by **deleting** the `Awareness_Cascades` branch that preserved `Hidden`; the whole `SurpriseLeft` / `OnCombatRoundEnd` / `OnEndOfRoundIfSurprise` surface went with it rather than being repaired. Same-room ranged shot via `AttackSide.CritOnWin` + `SurpriseRangedStrikeMultiplier`, revealing the shooter explicitly and burning the shared `special-move` cooldown; cross-room shots stay ordinary. The two crit-on-win paths are pinned equivalent by `TestCritOnWin_MeleeAndChannelAgree`. Skullduggery moved onto the U9 seam, once per surprise round/shot on a clean hit, carried out on `AttackResult.WasSurpriseAttack` because `Aggro.Type` is demoted before `applyCombatProgression` runs. `EngageAggroType` now returns `(aggroType, surpriseOnCooldown)` so a **refused melee** opener speaks, matching the ranged one. Also folds in a **ranged economy rebalance**: eight bow/crossbow/sling/firearm multipliers detuned onto the melee scale (top bow 7.50 → **2.75**), compensated by `RangedUnengagedDamageMultiplier` **2.75** when nothing in the room targets the shooter, resolved by a **room scan** (see the `Attackers()` finding in U11). Player saves are rescaled by an unmarked, value-guarded per-load migration reaching backpack, component bag, bandolier, pet inventory, equipment (`characters.MigrateDetunedRangedWeapons`) and the account bank (`users.Storage.MigrateDetunedRangedWeapons`); world state (mob instances, shop stock, room containers) is deliberately **not** swept and decays instead. Three knobs added (`SurpriseOpeningStrikeMultiplier` 1.0, `SurpriseRangedStrikeMultiplier` 0.5, `RangedUnengagedDamageMultiplier` 2.75), five deleted (the `SurpriseAttack*Penalty` family, inert at 0.0). New `help ambush` topic, registered in `keywords.yaml` under `combat` with aliases (surprise attack, backstab, sneak attack …) and `help hide` now aliased to `sneak`. **Adversarial playtest DONE 2026-08-25** (bug-finder, ephemeral local run `68affe820bb1164e`), satisfying the content SOP. Mechanics all PASS: ONE `*[SURPRISE ATTACK]*` line per round verified on a **three-weapon-slot** character (the hardest case for the one-blow scope decision), the ranged reveal fires, `reload` genuinely spends the shared recovery (confirmed from the cooldown table, not by timing), and the `ambush` help renders 83 lines with zero over 80 columns, zero dashes and no raw numbers. 🔴 **The damage-band vocabulary SATURATES: an ordinary shot and an ambush shot both print `(devastating wounds)`, so the deliberate ordering of the three new multipliers is imperceptible to a player.** Tuning follow-up, not a correctness bug, and measured only against a target that dies in one round. **Four checks went UNVERIFIED** because that fixture mob was far too weak for the `veteran` profile — a **defended** opening strike, the in-game denial copy, whether the unengaged bonus is felt, and the migration on an already-owned bow — all recorded on the owner punch list for test day; each needs a mob that survives a round. One copy defect was found and fixed (`16300f7bf`): the patch notes promised a melee reveal sentence that `sendMeleeAmbushDenial` deliberately never sends on the success path. U11 remains the arc's closing gate. **🔴 Four defects found by review that would have shipped SILENTLY:** `combatphase.SurpriseLeft` has never been true in production (`TransitionToEngaging` drops its `TransitionReason`) so the boundary is DELETED not repaired; `Character.Attackers()` is always empty (`RegisterMachine` has no production callers) so the unengaged bonus needed a room scan instead; a round-scoped `critOnWin` at `combat.go:466` would have reinstated the retired every-swing design; and `applyCombatProgression` runs after `Aggro.Type` is demoted, so the surprise flag is carried out on `AttackResult`. See the spec sections 1.1 and 2.8.3 for the evidence. | M | U1, U0 | **Yes** |
 | **U12** | ✅ **DONE 2026-08-29, across SIX slices.** U12a (PR #83) · U12b (#84/#85) · U12c-0 + U12c-0b (`8f6ce50c0`, `7b041f995`) · **U12c-1 (#86)** · **U12c-2 part one (#87)** · **U12c-2 part two (#89)**. There is no single U12 merge; this row is the parent. **`Character.Aggro` is DELETED**, along with the `Aggro` struct, both accessor fallbacks and `combat_state_compat.go` (renamed `engagement_storage.go`). Everything `AggroType` was doing moved to the machine that models it: `Flee`→`Disengaging`, `SpellCast`→`activity.CastingData`, `Shooting`→derived from the equipped weapon, `SurpriseAttack`→`CombatPhase.OpeningUnspent`, `RoundsWaiting`→`CombatPhase` with the required two-counter note. `ConsumeOpeningStrike` finally has its production caller. ⚠️ **DEVIATION from spec §6.3.6: `AggroType` and `SpellAggroInfo` SURVIVE** as call PARAMETERS (the kind of engagement a commit is starting; a cast's aim into `SetCast`). Neither is stored state any more, which was the actual problem; eliminating them means replacing `AggroType` with a combatphase trigger at every `SetAggro` call site, which is its own slice. ⚠️ **`SetAggro`/`EndAggro` also SURVIVE** as the storage primitives — spec §5 said to delete them and was WRONG; §6.3.7 records the correction. The enforced rule is a CALLER restriction. 🔴 **The adversarial playtest found a false patch-note claim I had already written** (ambush follow-up pacing; no DOGMud weapon sets `waitrounds` and `phase1WaitRound` guarantees the budget is 0, so there was no change — retracted in `4edde2443`) **and a one-day-old flee regression on master** from U12c-0/0b (a retarget lands in `Engaging`, which had no edge to `Disengaging`, so anything retargeting you every round blocked `flee` forever; shipped separately as **#88**). It also cleared a U10d UNVERIFIED check (the defended ambush). 🪤 **Both hid because every practice target in the game died in ONE round**; the Drill Yard now carries the tutorial's unkillable Straw Effigy (`227e96088`). 📌 **A site NO GUARD COULD SEE:** `world.go` at the repo ROOT — the U12c-1 and U12c-2 guards walk `internal/` only. Found by the compiler. |
-| **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, **player helpfiles for `quell` and `defy` plus the help-registry and category cleanup**, and the adversarial playtest gate. **Runs LAST, after U12** — the gate is the arc's closer, so no code slice may land after it. **U11 must also ship the "Done when" list below AS A TEST.** U6 was declared done in 2026-08 with two of its criteria false, and because they were prose in a roadmap nothing failed; the gap survived three further slices before U9 tripped over it. U6b already expressed criterion 2 as tests (the Task 18 guards in `contest_site_guard_test.go` — see the annotation under "Done when"); U11 keeps the obligation for the remaining criteria. **Six defects handed to U11 by U10d's reviews (2026-08-25), none of them about surprise attack — see the "U11 inbox from U10d" list below the plan table.** | M | U6b, U8–U10d, U12 | — |
+| **U11** | ✅ **DONE 2026-08-30** on `feature/u11-arc-closer` (14 commits; the Task 21 adversarial playtest gate precedes handoff). **The arc closer.** ⚠️ **FOUR CLAIMS IN THIS ROW WERE STALE and are corrected here: U8 had already shipped the entire "player helpfiles for quell and defy" section.** `quell.template` and `defy.template` exist, are registered in `keywords.yaml` (lines 81, 91, 244, 245), are cross-linked from `combat`/`conviction`/`defense`/`taunt`, and were already inside `u8ActionHelpPaths`. What remained of the help work was the category cleanup and the allowlist inversion. **Done-when 1 and 3 were also already TRUE but UNGUARDED** — both former guard files died when U6 collapsed the floor pairs — and now have a source-walk guard (`internal/combat/done_when_guard_test.go`); criterion 4 is recorded on `TestEveryContestSiteIsOwned`; **criterion 5 is closed NOT-APPLICABLE** (U6 deliberately retuned damage and no uncontaminated pre-arc baseline survives — owner decision, see the spec §5.1); criterion 6 is met, verified by `tools/context_md_audit.py` reporting **zero phantoms in all six arc packages**. **Inbox #1 resolved by WIRING, but not as specced.** The plan was to populate `combatphase.machineRegistry`; blind adversarial review found five cache-coherence bugs in that approach, because the map duplicates a mapping `internal/users` and `internal/mobs` already own — including a **griefable** one where `LoadUser` runs before the password check and a throwaway record evicted a live player's entry. **The registry is therefore DELETED, not repaired:** `lookupMachine` calls an injected resolver (`combatphase.SetMachineResolver`, wired in `internal/hooks/machine_resolver.go`) that asks `users.GetByUserId` / `mobs.GetInstance`. Only `combatphase` gets one — `awareness`, `life` and `position` define `lookupMachine` and never call it, and `activity` has none. **Behaviour change: prone auto-recovery is now contested** (it never was, for anyone) **and reactive companion assist now fires**, a round earlier than the polling fallback. Also fixed: `character new` never called `SetUserId`, so a fresh alt had a zero `ActorRef` all session — which via `die.go:71` meant **it could not respawn**; logout never released engagement, which the resolver made worse rather than better because a `UserId` is stable across sessions; and `character view`/`hire` dropped `MobInstanceId` and `IsMob` (now `mobs.(*Mob).AdoptCharacter`). **Inbox #4 resolved**, and its own count corrected: **three tests across four iteration sites**, not four tests. The inversion found **nine broken `help <topic>` cross-references** (real: `config.yaml:232` sets `DataFiles` to the dogmud root with no fallback). 🔴 **It also DELETED three links that worked** — `help time` (module-provided) and `help dual-wield` / `help wimpy` (keywords aliases) — because the guard consulted neither modules nor the alias table. All restored; the guard now checks both, and a **link-graph ratchet** makes deletion fail as loudly as breakage. **Inbox #5 resolved** (both cooldown comments). **config.yaml audit:** six orphaned keys removed (zero readers, so provably no behaviour change), and 🔴 **five knobs found SILENTLY INERT at zero** — `StealCooldown`, `StealHiddenBonus`, `ShadowCooldown`, `SneakFailCooldown`, `PackScatterRounds` — **FILED not fixed** in [`2026-08-30-u11-filed-findings`](../audits/2026-08-30-u11-filed-findings.md), because adding the keys is a live balance change. **CORRECTION: this row's own "three floor pairs all ship at 0.05" warning is obsolete** — U6 collapsed all eight into one `ContestFloor` (0.125). ⚠️ **Two commits (`f5dd61c44`, `385bf8f58`) contain a review agent's mutation experiment** that was swept up by `git add -A`; HEAD is correct and the merge result is unaffected, but a bisect landing there shows the resolver dead. Guarded against recurrence by `TestResolverIsInstalledByInit`. Spec: [`2026-08-30-u11-arc-closer-design`](../superpowers/specs/2026-08-30-u11-arc-closer-design.md) · plan: [`2026-08-30-u11-arc-closer`](../superpowers/plans/2026-08-30-u11-arc-closer.md). | M | U6b, U8–U10d, U12 | **Yes** (prone recovery, companion assist) |
 
 ### U11 inbox from U10d — six findings, FIVE still open
 
@@ -257,8 +270,19 @@ the source of most of the drift.
    repaired registry would never record a mob attacker.** U10d dodged this by
    resolving its unengaged-ranged rule with a live room scan
    (`actions/combat_fire.go`, `shooterIsUnengaged`) rather than `Attackers()`.
-   **U11 decision needed: wire it up or delete it.** It must not keep sitting
-   in the tree looking usable. Documented at the code in
+   ✅ **RESOLVED 2026-08-30 by U11 — wired up, but the registry was DELETED
+   rather than populated.** The owner chose "wire it up" after confirming this
+   is the round-tick auto-stand, not the manual `stand` command (which is
+   uncontested by design and unchanged). Blind adversarial review then killed
+   the populate-the-map approach: a hand-maintained `ActorRef -> Machine` map
+   duplicates a mapping `internal/users` and `internal/mobs` already own, and
+   five production paths assign a Character to an identity without passing
+   through any registration seam — including `LoadUser`, which runs BEFORE the
+   password check, so a throwaway record evicted a live player's entry
+   (griefable by anyone knowing a username). `lookupMachine` now calls an
+   injected resolver instead. **Prone auto-recovery is contested for the first
+   time, and `AwardResolved` now fires for it too** — that sat inside the
+   `contestWin != nil` guard, so scrambles never taught unarmed combat either. Documented at the code in
    `internal/state/combatphase/context.md` and
    `internal/state/awareness/context.md` (the awareness twin has the same gap).
 
@@ -314,6 +338,17 @@ the source of most of the drift.
    invert it:** walk every `help/*.template` and keep a shrinking, commented
    exception list instead. Sits naturally with U11's help-registry cleanup.
 
+   ✅ **RESOLVED 2026-08-30.** Inverted. **Count corrected: THREE tests across
+   FOUR iteration sites** (lines 171, 214, 223, 242; two share a test), not
+   four tests. Found **nine genuinely broken cross-references**.
+   🔴 **But it also deleted three links that WORKED** — `help time`
+   (module-provided) and `help dual-wield` / `help wimpy` (keywords aliases) —
+   because the guard consulted neither the module filesystems nor
+   `TryHelpAlias`. All restored; the guard now checks both, and a link-graph
+   ratchet makes deletion fail as loudly as breakage. Exceptions are
+   numeric-only: they were silently exempting 33 templates from the parse and
+   cross-reference guards as well.
+
 5. **Two stale special-move cooldown comments that disagree with each other and
    with the code.** `internal/configs/config.balance.go:246` reads
    `// Shared cooldown rounds for bash/trip/kick (default 5)`;
@@ -328,6 +363,9 @@ the source of most of the drift.
    `config.yaml` has `skip-worktree`, so editing it needs the
    commit-from-`git show HEAD:` procedure, and fixing only the Go half would
    leave the pair still disagreeing. Fix both together in U11's config audit.
+
+   ✅ **RESOLVED 2026-08-30.** Both corrected together. The re-count held at
+   **46** non-test files.
 
 6. ✅ **RESOLVED by U12c-2 (PR #89) — `TransitionToEngaging` no longer drops its
    `TransitionReason`, and the field it failed to populate is gone.**
@@ -1072,6 +1110,19 @@ Full list in spec section 7. The two that compile cleanly and silently:
 4. Adding a new contest requires declaring scores, a defence set and a channel —
    no new resolution code.
 5. Parity damage-per-swing within ±10% of today at light, mid and BIS armour.
+
+   > ❌ **CLOSED AS NOT-APPLICABLE, 2026-08-30 (owner decision).** "Today" means
+   > the pre-arc model, and U6 was THE FLIP: it deliberately retuned damage,
+   > defence and mitigation, and U6b deleted the legacy per-channel parameters
+   > outright. No uncontaminated pre-arc baseline survives — the one candidate
+   > source, `_datafiles/logs/combat-analytics.jsonl`, spans the arc's own
+   > retunes, so any baseline rebuilt from it is contaminated by the very
+   > changes it would be measuring.
+   >
+   > A criterion that cannot be evaluated must not be silently dropped, and
+   > must not be discharged by a test that measures something else while
+   > wearing its name. It is recorded here as superseded by U6, with the
+   > reasoning, and closed. See the U11 spec §5.1.
 6. **Documentation is current, and this is a completion gate, not a slice.**
    - `context.md` is accurate for every package touched: `internal/combat`,
      `internal/actions`, `internal/hooks`, `internal/characters`, `internal/dice`,

@@ -5,7 +5,7 @@
 package combatphase
 
 import (
-	"sync"
+	"sync/atomic"
 
 	"github.com/GoMudEngine/GoMud/internal/state"
 )
@@ -119,7 +119,7 @@ type vetoChain struct {
 // State() / Inner() accessors.
 type Machine struct {
 	inner                    *state.Machine[State]
-	self                     state.ActorRef // own identity, set by RegisterMachine
+	self                     state.ActorRef // own identity, set by SetSelf from Character.SyncMachineSelf
 	engaging                 *EngagingData
 	engaged                  *EngagedData
 	disengaging              *DisengagingData
@@ -260,36 +260,75 @@ func (m *Machine) Inner() *state.Machine[State] {
 	return m.inner
 }
 
-// === Machine registry ===
-// Cross-character lookups for inbound attacker tracking, target-death
-// cascades, etc. Real engine integration (Task 10) wires this from
-// Character setup.
+// === Machine resolution ===
+//
+// Cross-character lookups (inbound attacker tracking, target-death cascades)
+// need to turn a state.ActorRef into the live *Machine for that actor.
+//
+// ⚠️ This is deliberately NOT a registry. It was one until 2026-08-30, and the
+// map was never populated in production, so every consumer was silently inert
+// for its whole life. Wiring the map up turned out to be the wrong repair: a
+// hand-maintained ActorRef -> Machine map is a CACHE of a mapping that
+// internal/users and internal/mobs already own authoritatively, and every way
+// it can go wrong is a cache-coherence bug. Adversarial review found five in
+// one afternoon -- a throwaway record loaded for a password check evicting a
+// live player's entry, `character new` leaving the retired character bound
+// forever, a mob whose Character was replaced wholesale after registration,
+// copyover restoring nobody, and an unsynchronised read-modify-write between
+// the connection goroutine and the round loop.
+//
+// Resolving on demand against the authoritative maps removes that entire bug
+// class by construction: there is no second copy to fall out of date, nothing
+// to leak, and no teardown to forget.
+//
+// The resolver is injected because internal/state must not import
+// internal/users or internal/mobs (they depend on internal/characters, which
+// depends on this package). internal/hooks wires it at init.
 
-var (
-	registryMu      sync.Mutex
-	machineRegistry = map[state.ActorRef]*Machine{}
-)
+var machineResolver atomic.Pointer[func(state.ActorRef) *Machine]
 
-// RegisterMachine binds an ActorRef to its Machine.
-func RegisterMachine(ref state.ActorRef, m *Machine) {
-	registryMu.Lock()
-	defer registryMu.Unlock()
-	m.self = ref
-	machineRegistry[ref] = m
+// SetMachineResolver installs the ActorRef -> Machine resolution function.
+// Called once from internal/hooks at init. Passing nil restores the
+// unresolvable default, which is what tests that want isolation should do.
+func SetMachineResolver(fn func(state.ActorRef) *Machine) {
+	if fn == nil {
+		machineResolver.Store(nil)
+		return
+	}
+	machineResolver.Store(&fn)
 }
 
-// UnregisterMachine removes a binding (e.g. on logout or despawn).
-func UnregisterMachine(ref state.ActorRef) {
-	registryMu.Lock()
-	defer registryMu.Unlock()
-	delete(machineRegistry, ref)
-}
-
-// lookupMachine returns the registered Machine for ref, or nil.
+// lookupMachine returns the live Machine for ref, or nil when the actor is not
+// in the world (logged out, despawned, never existed) or no resolver is wired.
+// A nil return is always a legitimate answer -- every caller must handle it.
 func lookupMachine(ref state.ActorRef) *Machine {
-	registryMu.Lock()
-	defer registryMu.Unlock()
-	return machineRegistry[ref]
+	if ref.IsZero() {
+		return nil
+	}
+	fn := machineResolver.Load()
+	if fn == nil {
+		return nil
+	}
+	return (*fn)(ref)
+}
+
+// LookupForTest exposes the package's own resolution path so another package
+// can assert that a resolver is actually installed. Production code must never
+// call it: use the transitions, which resolve internally.
+func LookupForTest(ref state.ActorRef) *Machine {
+	return lookupMachine(ref)
+}
+
+// SetSelf records this machine's own identity, used as the fallback actor ref
+// when a TransitionReason carries none. Set from Character.Validate; it is a
+// plain field on this machine, not shared state.
+func (m *Machine) SetSelf(ref state.ActorRef) {
+	m.self = ref
+}
+
+// Self returns the identity recorded by SetSelf, or the zero ref if none.
+func (m *Machine) Self() state.ActorRef {
+	return m.self
 }
 
 // === Task 5 implementations ===
@@ -341,10 +380,9 @@ func (m *Machine) TransitionToEngaging(d EngagingData, r state.TransitionReason)
 
 	m.engaging = &d
 
-	// Move our inbound-attacker entry off the previous target. Inert today —
-	// lookupMachine returns nil because combatphase.RegisterMachine has no
-	// production callers — but without it a retarget would leak an entry on
-	// the old target the day that registry is wired up.
+	// Move our inbound-attacker entry off the previous target. LIVE since
+	// 2026-08-30: lookupMachine resolves against users/mobs, so without this a
+	// retarget would leave a stale entry on the old target.
 	selfRef := r.Actor
 	if selfRef.IsZero() {
 		selfRef = m.self

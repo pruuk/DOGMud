@@ -256,8 +256,8 @@ What matters is the shape, not the list:
   admin-only flag. Modules register their own through
   `plugins.AddUserCommand` instead.
 - **Handler signature:**
-  ```go
-  func Foo(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error)
+  ```text
+  func <CommandName>(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error)
   ```
   `rest` is everything after the verb — parse it, do not re-split the whole
   line.

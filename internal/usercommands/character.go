@@ -165,6 +165,12 @@ func cmdCharacterNew(user *users.UserRecord, room *rooms.Room, cmdPrompt *prompt
 
 	// Send them back to start with a fresh/empty character
 	user.Character = characters.New()
+	// characters.New() validates with userId 0, so without this the new
+	// Character's ActorRef() is zero for the WHOLE session: SetAggro would
+	// record no attacker against it, combatphase could not resolve it, and
+	// prone auto-recovery would silently hand out free stands. SwapToAlt does
+	// the same thing at users/userrecord.go:835.
+	user.Character.SetUserId(user.UserId)
 	user.Character.Name = user.TempName()
 
 	room.RemovePlayer(user.UserId)
@@ -328,7 +334,7 @@ func cmdCharacterView(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 		user.Character = tmpChar
 
 		m := mobs.NewMobByIdFresh(59, user.Character.RoomId)
-		m.Character = char
+		m.AdoptCharacter(char)
 		room.AddMob(m.InstanceId)
 		m.Character.Charm(user.UserId, -1, `suicide vanish`)
 
@@ -396,7 +402,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 		user.Character.Gold -= charValue
 
 		m := mobs.NewMobByIdFresh(59, user.Character.RoomId)
-		m.Character = char
+		m.AdoptCharacter(char)
 
 		// To prevent dupes/exploits, clear vulnerable copied data
 		m.Character.Items = []items.Item{}   // Clear items

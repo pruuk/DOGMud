@@ -1,6 +1,17 @@
 # Help keywords for Mudlet and client-related commands
 # These will be merged with the main keywords.yaml by the help system
 
+# NOTE: category keys must match the main keywords.yaml, which is the whole
+# set of headings the `help` index renders. Overlays merge last-write-wins onto
+# ONE flat map, so a name the main file does not use silently becomes a NEW
+# heading.
+#
+# `interface` is a deliberate new heading: four client-facing topics that have
+# no home in the main set. `integration` was a second new heading holding
+# `discord` alone -- a stranded one-entry section, confirmed as such by the
+# 2026-08-30 newbie playtest, which also reported that Configuration /
+# Interface / Integration read to a newcomer as three names for one thing.
+# Discord is a chat bridge, so it belongs with the other channels.
 help:
   command:
     interface:
@@ -8,7 +19,7 @@ help:
       - checkclient
       - mudletmap
       - mudletui
-    integration:
+    communication:
       - discord
 
 # Aliases for keywords when typing: help <keyword>

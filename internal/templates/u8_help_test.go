@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,6 +53,163 @@ var u8ActionHelpPaths = []string{
 	"help/ambush",
 }
 
+// u8HelpExceptions lists help templates deliberately exempt from the
+// whole-tree guards below. It is a SHRINKING list: every entry needs a written
+// reason, and an entry without one is the old allowlist growing back.
+//
+// This replaced an allowlist. u8ActionHelpPaths named 28 files out of 454, so
+// 426 templates had no parse check, no numeric-disclosure check and no
+// cross-reference check at all -- and both files U10d edited that fell outside
+// it were exactly where its surviving copy defects lived. Same failure shape as
+// `stow` going invisible in the 2026-08-03 helpfile audit.
+// u8DataDrivenHelpTemplates cannot render with a nil payload at all, so they
+// are exempt from EVERY whole-tree guard. Keep this list at two.
+var u8DataDrivenHelpTemplates = map[string]string{
+	"help/help":  "data-driven: ranges over .Commands, needs a payload to render",
+	"help/spell": "data-driven: reads .Name/.Description/.SpellId from a payload",
+}
+
+// u8HelpExceptions exempts a template from the NUMERIC guard only. Reference
+// pages legitimately show figures; structural correctness is not negotiable.
+var u8HelpExceptions = map[string]string{
+	// DATA-DRIVEN templates, not static help pages. They are rendered with a
+	// payload by the help command (help/help ranges over .Commands; help/spell
+	// reads .Name/.Description/.SpellId), so processing them with no data
+	// context fails inside text/template rather than revealing a copy defect.
+	"help/help":  "data-driven: ranges over .Commands, needs a payload to render",
+	"help/spell": "data-driven: reads .Name/.Description/.SpellId from a payload",
+
+	// RESOURCE-BAR LEGENDS. These document a fixed display, not a tunable: the
+	// bands ARE the interface. Same class as the `status` stat sheet, which is
+	// the standing exception to "no hard numbers".
+	"help/health": "resource-bar legend: the percentage bands are the display itself",
+	"help/mana":   "resource-bar legend: the percentage bands are the display itself",
+
+	// PLAYER-SUPPLIED COMMAND ARGUMENTS. The number is what the player types.
+	// Removing it does not protect a balance value, it breaks the documentation.
+	"help/set-wimpy": "documents the numeric argument the player types (set wimpy 10)",
+	"help/triggers":  "worked example of a player-authored trigger threshold",
+
+	// RECIPE TABLES. Craft time and skill requirement are the reference a player
+	// consults before spending materials; a recipe book without them is useless.
+	// NOTE: these mirror the recipe YAML and WILL drift if it changes. Generating
+	// them from the data is a filed follow-up, not a U11 change.
+	"help/blacksmithing": "recipe table: skill, ingredients and craft rounds are the reference",
+	"help/jewelcrafting": "recipe table: skill, ingredients and craft rounds are the reference",
+
+	// SPELL AND BUFF REFERENCE CARDS ("Time: 4 rounds", "Reserve: 1% at tier 0").
+	// The no-hard-numbers rule targets combat and spell MESSAGES, where a raw
+	// number breaks immersion mid-fight. A reference card a player deliberately
+	// looks up is the documented exception, like the status sheet.
+	"help/carapace-ward":      "spell/buff reference card: cast time and reserve are its content",
+	"help/chitin-brace":       "spell/buff reference card: cast time and reserve are its content",
+	"help/chrysalis-bond":     "spell/buff reference card: cast time and reserve are its content",
+	"help/chrysalis-sight":    "spell/buff reference card: cast time and reserve are its content",
+	"help/chrysalis-stride":   "spell/buff reference card: cast time and reserve are its content",
+	"help/firebomb":           "spell/buff reference card: cast time and reserve are its content",
+	"help/flashbang":          "spell/buff reference card: cast time and reserve are its content",
+	"help/honed-edge":         "spell/buff reference card: cast time and reserve are its content",
+	"help/hungering-touch":    "spell/buff reference card: cast time and reserve are its content",
+	"help/ironblood":          "spell/buff reference card: cast time and reserve are its content",
+	"help/mindweave":          "spell/buff reference card: cast time and reserve are its content",
+	"help/predators-instinct": "spell/buff reference card: cast time and reserve are its content",
+	"help/rootbind":           "spell/buff reference card: cast time and reserve are its content",
+	"help/rootwalker":         "spell/buff reference card: cast time and reserve are its content",
+	"help/serpents-edge":      "spell/buff reference card: cast time and reserve are its content",
+	"help/shadowweave":        "spell/buff reference card: cast time and reserve are its content",
+	"help/spore-mantle":       "spell/buff reference card: cast time and reserve are its content",
+	"help/sporeweave":         "spell/buff reference card: cast time and reserve are its content",
+	"help/thornguard":         "spell/buff reference card: cast time and reserve are its content",
+	"help/toxic-flask":        "spell/buff reference card: cast time and reserve are its content",
+	"help/venomgrip":          "spell/buff reference card: cast time and reserve are its content",
+
+	// ITEM STAT BLOCKS. Weight reduction is the reason to buy the item.
+	"help/artisans-satchel":       "item stat block: weight reduction is the item's whole point",
+	"help/component-bag":          "item stat block: weight reduction is the item's whole point",
+	"help/leather-backpack":       "item stat block: weight reduction is the item's whole point",
+	"help/masters-component-case": "item stat block: weight reduction is the item's whole point",
+	"help/reinforced-travel-pack": "item stat block: weight reduction is the item's whole point",
+}
+
+// helpGuardKind selects which whole-tree guard a walk is feeding.
+type helpGuardKind int
+
+const (
+	// guardStructural: does the template parse, and do its cross-references
+	// resolve? EVERY template must pass this. Only the two data-driven ones
+	// are exempt, because they cannot render without a payload.
+	guardStructural helpGuardKind = iota
+	// guardNumeric: does the visible text disclose tuning values? Reference
+	// pages legitimately show figures, so this one honours u8HelpExceptions.
+	guardNumeric
+)
+
+// allHelpTemplatePaths walks every help template and returns them as
+// "help/<name>" paths.
+//
+// ⚠️ Exceptions apply to the NUMERIC guard only. They used to be filtered here
+// for every caller, so a file exempted for showing a recipe table was also
+// silently dropped from the parse check and the cross-reference check -- a
+// broken link or a render error in any of those 33 files was invisible.
+// Structural correctness is not negotiable for any template.
+func allHelpTemplatePaths(t *testing.T, kind helpGuardKind) []string {
+	t.Helper()
+
+	dir := filepath.Join(u8DataFilesRoot, "templates", "help")
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err, "help template directory must be readable")
+
+	var paths []string
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".template") {
+			continue
+		}
+		name := strings.TrimSuffix(e.Name(), ".template")
+		p := "help/" + name
+
+		// Unrenderable without a payload: exempt from everything.
+		if _, dataDriven := u8DataDrivenHelpTemplates[p]; dataDriven {
+			continue
+		}
+		if kind == guardNumeric {
+			if reason, skip := u8HelpExceptions[p]; skip {
+				t.Logf("numeric guard skips %s: %s", p, reason)
+				continue
+			}
+		}
+		paths = append(paths, p)
+	}
+
+	require.Greater(t, len(paths), 400,
+		"expected the whole help tree; a short list means the walk broke and "+
+			"the guards silently stopped covering anything")
+	return paths
+}
+
+// loadHelpAliasesOnce loads the real DOGMud alias table exactly once per test
+// binary. The cross-reference guard resolves aliases the way the help command
+// does (keywords.TryHelpAlias), and a test binary loads nothing by default --
+// an unloaded table panics on first use.
+//
+// It loads from the REAL data root, not from whatever root the calling test has
+// configured: aliases are global and independent of the template root, and some
+// tests point the root at an empty temp directory with no keywords.yaml.
+var helpAliasesLoaded bool
+
+func loadHelpAliasesOnce(t *testing.T) {
+	t.Helper()
+	if helpAliasesLoaded {
+		return
+	}
+	saved := configs.GetConfig()
+	real := saved
+	real.FilePaths.DataFiles = configs.ConfigString(u8DataFilesRoot)
+	configs.SetConfigForTest(t, real)
+	keywords.LoadAliases()
+	configs.SetConfigForTest(t, saved)
+	helpAliasesLoaded = true
+}
+
 var ansiTagPattern = regexp.MustCompile(`</?ansi(?:\s+[^>]*)?>`)
 var helpCrossReferencePattern = regexp.MustCompile(`(?i)<ansi\s+fg="command"[^>]*>\s*help\s+([a-z0-9-]+)\s*</ansi>`)
 var forbiddenU8NumericTuningPattern = regexp.MustCompile(`(?i)(?:\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?[- ]rounds?\b|\b\d+(?:\.\d+)?\s+(?:points?|ranks?|modifiers?)\b)`)
@@ -75,6 +233,8 @@ func useU8DataFilesAt(t *testing.T, dataRoot string) {
 	originalFileSystems := fileSystems
 	fileSystems = []fs.ReadFileFS{emptyFS{}}
 	t.Cleanup(func() { fileSystems = originalFileSystems })
+
+	loadHelpAliasesOnce(t)
 }
 
 func processU8Help(t *testing.T, path string) string {
@@ -97,6 +257,23 @@ func findForbiddenU8HelpDisclosures(rendered string) []string {
 	if strings.Contains(visible, "—") {
 		disclosures = append(disclosures, "—")
 	}
+	disclosures = append(disclosures, findForbiddenU8TuningNumbers(rendered)...)
+	return disclosures
+}
+
+// findForbiddenU8TuningNumbers is the half of the disclosure guard that runs
+// over the WHOLE help tree: raw or worded tuning values leak internal balance
+// numbers to players, which is a standing project rule and not specific to the
+// U8 action helpfiles.
+//
+// The em-dash half deliberately stays scoped to u8ActionHelpPaths (see
+// findForbiddenU8HelpDisclosures). Applying it tree-wide would be a new house-
+// style decision affecting 154 templates, not a coverage fix, and a mechanical
+// substitution across that much prose would damage sentences. Those files are
+// filed in docs/audits/2026-08-30-u11-filed-findings.md.
+func findForbiddenU8TuningNumbers(rendered string) []string {
+	visible := normalizedHelpText(rendered)
+	disclosures := make([]string, 0)
 	disclosures = append(disclosures, forbiddenU8NumericTuningPattern.FindAllString(visible, -1)...)
 	disclosures = append(disclosures, forbiddenU8WordedTuningPattern.FindAllString(visible, -1)...)
 	return disclosures
@@ -111,8 +288,54 @@ func u8HelpCrossReferenceTopics(rendered string) []string {
 	return topics
 }
 
+// moduleProvidedHelpTopics are help templates shipped by a module under
+// modules/<m>/files/datafiles/templates/help/ rather than by the world data.
+//
+// ⚠️ These resolve AT RUNTIME and `help <topic>` works for every one of them:
+// templates.readFile searches the registered module filesystems BEFORE the
+// datafiles root. The test harness points Process() at the dogmud world root
+// only, so without this list the guard reports all of them as broken links.
+//
+// That is not hypothetical. Inverting this guard to the whole tree flagged
+// `help time` in sleep.template, and it was "fixed" by deleting the reference
+// before anyone checked modules/time/files/datafiles/templates/help/time.template,
+// which exists and works. A guard that reports working links as broken makes
+// help WORSE. Discovered and reverted 2026-08-30.
+//
+// Regenerate with:
+//
+//	find modules -path "*files/datafiles/templates/help/*.template" -exec basename {} .template \;
+var moduleProvidedHelpTopics = map[string]string{
+	"auction":     "modules/auctions",
+	"bury":        "modules/cleanup",
+	"trash":       "modules/cleanup",
+	"follow":      "modules/follow",
+	"checkclient": "modules/gmcp",
+	"client":      "modules/gmcp",
+	"discord":     "modules/gmcp",
+	"mudletmap":   "modules/gmcp",
+	"mudletui":    "modules/gmcp",
+	"leaderboard": "modules/leaderboards",
+	"time":        "modules/time",
+}
+
 func validateU8HelpCrossReferences(sourcePath, rendered string) error {
 	for _, topic := range u8HelpCrossReferenceTopics(rendered) {
+		if _, fromModule := moduleProvidedHelpTopics[topic]; fromModule {
+			// Resolves at runtime from the module filesystem, which this
+			// harness does not mount. Not a broken link.
+			continue
+		}
+		// ⚠️ Resolve the alias FIRST, exactly as the help command does
+		// (usercommands/help.go:161,165 -> keywords.TryHelpAlias). Most help
+		// aliases have no same-named template: `help dual-wield` serves
+		// help/combat, `help wimpy` serves help/set-wimpy. Skipping this step
+		// makes the guard report ~175 WORKING topics as broken -- and the
+		// cheapest way to satisfy it is to delete the link, which is exactly
+		// what happened to `help dual-wield` and `help wimpy` before this was
+		// caught. Same failure as the module-topic case above, on a second
+		// axis.
+		topic = keywords.TryHelpAlias(topic)
 		result, err := Process("help/"+topic, nil)
 		if err != nil {
 			return fmt.Errorf("%s emits broken cross-reference %q: %w", sourcePath, "help "+topic, err)
@@ -168,7 +391,7 @@ func TestU8CrossReferenceValidationRejectsMissingDOGMudOnlyTopic(t *testing.T) {
 func TestU8ActionAdmissionHelpTemplatesProcess(t *testing.T) {
 	useU8DataFiles(t)
 
-	for _, path := range u8ActionHelpPaths {
+	for _, path := range allHelpTemplatePaths(t, guardStructural) {
 		t.Run(path, func(t *testing.T) {
 			processU8Help(t, path)
 		})
@@ -211,7 +434,12 @@ func TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning(t *testing.T) {
 		"help/conviction":     {"rhetoric actions require full payment", "quell and defy remain possible"},
 	}
 
-	for _, path := range u8ActionHelpPaths {
+	// Iterates the EXPECTATIONS, not the tree. Every authored expectation must
+	// be checked; the previous form ranged over u8ActionHelpPaths and looked
+	// expectations up, so an expectation whose path was missing from that list
+	// was silently never asserted. Widening this one to all 454 templates would
+	// add nothing -- 426 of them have no expectations -- while hiding that bug.
+	for path := range expectations {
 		t.Run(path, func(t *testing.T) {
 			rendered := normalizedHelpText(processU8Help(t, path))
 			for _, phrase := range expectations[path] {
@@ -220,11 +448,22 @@ func TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning(t *testing.T) {
 		})
 	}
 
-	for _, path := range u8ActionHelpPaths {
+	// Tree-wide: no help template may leak a raw or worded tuning value.
+	for _, path := range allHelpTemplatePaths(t, guardNumeric) {
 		t.Run(path+"/no-raw-tuning", func(t *testing.T) {
 			rendered := processU8Help(t, path)
+			assert.Empty(t, findForbiddenU8TuningNumbers(rendered),
+				"visible player help must not disclose raw or worded tuning values")
+		})
+	}
+
+	// Action help additionally bans em dashes. Scoped on purpose -- see
+	// findForbiddenU8TuningNumbers for why this half is not yet tree-wide.
+	for _, path := range u8ActionHelpPaths {
+		t.Run(path+"/no-em-dash", func(t *testing.T) {
+			rendered := processU8Help(t, path)
 			assert.Empty(t, findForbiddenU8HelpDisclosures(rendered),
-				"visible player help must not use em dashes or disclose raw or worded tuning")
+				"visible action help must not use em dashes or disclose tuning")
 		})
 	}
 }
@@ -239,7 +478,7 @@ func TestU8StaminaHelpDistinguishesFleeFromGrappleCadence(t *testing.T) {
 func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 	useU8DataFiles(t)
 
-	for _, path := range u8ActionHelpPaths {
+	for _, path := range allHelpTemplatePaths(t, guardStructural) {
 		t.Run(path, func(t *testing.T) {
 			rendered := processU8Help(t, path)
 			if path == "help/shoot" {
@@ -256,4 +495,34 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 			require.NoError(t, validateU8HelpCrossReferences(path, rendered))
 		})
 	}
+}
+
+// helpCrossReferenceFloor is a RATCHET on the size of the help link graph.
+//
+// ⚠️ Why this exists. The cross-reference guard's cheapest remedy is to DELETE
+// the offending link, which makes help worse while turning the suite green.
+// That is not hypothetical: widening the guard to the whole tree in U11 deleted
+// nine links, and three of them (`help time`, `help dual-wield`, `help wimpy`)
+// pointed at topics that resolve perfectly well at runtime -- via a module
+// filesystem or the keywords alias table, neither of which the guard consulted.
+//
+// So shrinking the graph now fails as loudly as breaking it. If you delete a
+// link deliberately, lower this number in the same commit and say why. If you
+// add links, raise it.
+const helpCrossReferenceFloor = 1083
+
+func TestHelpCrossReferenceGraphDoesNotShrinkSilently(t *testing.T) {
+	useU8DataFiles(t)
+
+	total := 0
+	for _, path := range allHelpTemplatePaths(t, guardStructural) {
+		total += len(u8HelpCrossReferenceTopics(processU8Help(t, path)))
+	}
+
+	assert.GreaterOrEqual(t, total, helpCrossReferenceFloor,
+		"the help link graph shrank. Deleting a cross-reference is the cheapest "+
+			"way to silence the resolve guard and it makes help WORSE -- check "+
+			"first whether the topic resolves via a module template or a "+
+			"keywords alias. If the removal is deliberate, lower "+
+			"helpCrossReferenceFloor in this commit and say why.")
 }
