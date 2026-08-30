@@ -118,25 +118,52 @@ Also dead, and in scope for the same fix:
 at `engagement_storage.go:167`. This is the only production site building a ref
 from `userId` alone, so the accessor is the fix rather than a convenience.
 
-**Registration.** Register from the existing once-per-Character seam in
-`Validate()` (`internal/characters/validate.go:625-631`, guarded by
-`combatPhaseWired`), which already exists precisely to run per-Character setup
-exactly once and is already re-fired for mob instances after
-`ResetForMobInstance`.
+**Registration — resolved by investigation 2026-08-30, and NOT at a single
+seam.** The obvious home, the once-per-Character `fireCharacterCreated` hook in
+`Validate()`, is **wrong and actively dangerous**. Verified orderings:
 
-**Ordering risk, and it gates the task.** On the mob path the ordering is
-verified safe: `mobs.go:358` sets `MobInstanceId` before the spawn-path
-`Validate()`. On the player path `SetUserId` is called from `users.go:308`,
-`users.go:461`, `users.go:551` and `userrecord.go:835`, and it is **not yet
-verified** that any of those precede the `Validate()` that fires
-`fireCharacterCreated`. If they do not, players would register under a zero ref
-— the exact bug being fixed, in the other direction.
+| Path | Order | Source |
+|---|---|---|
+| Player login | `Validate(true)` **then** `SetUserId` | `users/users.go:516` → `:551` |
+| Alt switch | `Validate()` **then** `SetUserId` | `users/userrecord.go:832` → `:835` |
+| New character | `SetUserId` with **no preceding `Validate()` in that function** | `users/users.go:443` (`CreateUser`) → `:461` |
+| Mob spawn | `MobInstanceId` set **then** `Validate()` | `mobs/mobs.go:358` → spawn-path `Validate()` |
 
-> **Task one of implementation is to determine this empirically**, by
-> instrumenting or reading the login path end to end. If `SetUserId` lands after
-> `Validate()`, registration moves to `SetUserId` for players (re-registering
-> under the correct ref, and unregistering any zero-ref binding) rather than
-> living in `Validate()` for both actor types.
+Registering from `Validate()` would therefore key **every player** as
+`ActorRef{UserId: 0}`. Because `machineRegistry` is a
+`map[state.ActorRef]*Machine`, the zero ref is a **single key**: this is not a
+harmless no-op but **cross-character aliasing**, where each login overwrites the
+previous player's binding and `lookupMachine` hands combat another character's
+state machines. That is strictly worse than the dead registry it replaces.
+
+**Design: one idempotent sync, called from both identity points.**
+
+Add an unexported `func (c *Character) syncMachineRegistry()` on `Character`
+that is safe to call any number of times, in any order:
+
+1. `ref := c.ActorRef()`. **If `ref.IsZero()`, do nothing and return.** A zero
+   ref must never enter the map — that invariant is the whole defect above.
+2. If a previously-registered ref is recorded on the Character and differs from
+   `ref`, unregister the old ref from all five machines first, so an identity
+   change re-keys rather than leaks.
+3. If any machine pointer is nil, skip it. `CreateUser` can reach `SetUserId`
+   before machines exist, and the later `Validate()` call re-syncs.
+4. Register all five machines under `ref` and record it.
+
+Call it from exactly two places: the end of `Validate()` (machines now exist)
+and the end of `SetUserId` (identity now known). Between them every ordering in
+the table above converges on a correct binding, and mobs — whose identity
+precedes `Validate()` — are covered by the same code rather than a second
+mechanism.
+
+**Residual ordering risk on the mob path is low but must be tested:**
+`ResetForMobInstance` nils all five machine pointers on a shallow-copied
+template, and `Validate()` rebuilds them. A sync that ran between those two
+moments would register nil machines; step 3 above makes that harmless, but the
+spawn path must still be covered by a test asserting a spawned instance is
+resolvable by `lookupMachine` under its own non-zero ref — the template's
+`MobInstanceId` is 0, so a leaked template binding would land on the zero key
+and reproduce the aliasing bug from the mob side.
 
 **Teardown.** `machineRegistry` is a process-global `map[state.ActorRef]*Machine`
 guarded by `registryMu`. Nothing in the finding mentions teardown, but without
