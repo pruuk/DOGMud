@@ -692,7 +692,7 @@ Balance:
   TripKnockdownFactor: 1.057     # intended strong-favorite at parity
   KickKnockdownFactor: 0.924     # intended underdog at parity
   #
-  # GlobalKnockdownChance: the ONE dial for how often anybody gets knocked
+  # KnockdownFrequencyScale: the ONE dial for how often anybody gets knocked
   # down, players and mobs alike. Applied to the OUTCOME of the knockdown
   # contest, not to the score, so it is exact and linear: 0.5 gives precisely
   # half as many knockdowns as 1.0, and every move is scaled by the same
@@ -711,11 +711,14 @@ Balance:
   # and saturates them all at the ceiling above 1.5, flattening the per-move
   # distinctions at both ends.
   #
+  # ⚠️ NOT named *KnockdownChance: U10 retired the per-move threshold knobs of
+  # that name and a guard forbids the substring here, so they cannot return.
+  #
   # ⚠️ 0 is NOT an off-switch. It reads as "unset" and becomes 1.0, so that
   # DELETING this line cannot silently disable every knockdown in the game --
   # the trap that left StealCooldown and four others pinned at zero. To
   # suppress knockdowns, use a very small value such as 0.001.
-  GlobalKnockdownChance: 1.0     # 1.0 = unchanged; lower to soften knockdowns
+  KnockdownFrequencyScale: 1.0     # 1.0 = unchanged; lower to soften knockdowns
   #
   # CoupDeGraceRounds: rounds a mob waits before finishing a downed player.
   #   0 = disabled (mob disengages when player is downed).

@@ -239,7 +239,12 @@ func (b *Balance) validateMisc() {
 	if b.KickDamagePercent <= 0 || b.KickDamagePercent > 2.0 {
 		b.KickDamagePercent = 0.80
 	}
-	// GlobalKnockdownChance uses `<= 0`, NOT `< 0`, and that is deliberate.
+	// KnockdownFrequencyScale is deliberately NOT called *KnockdownChance: U10
+	// retired the per-move threshold knobs of that name, and
+	// combat.TestU10DoneWhen_DeadPathsStayDead forbids the substring in
+	// config.yaml so they cannot return. This is a different mechanism.
+	//
+	// It uses `<= 0`, NOT `< 0`, and that is deliberate.
 	//
 	// ⚠️ A `< 0` check here would be the exact trap that left StealCooldown,
 	// StealHiddenBonus, ShadowCooldown, SneakFailCooldown and PackScatterRounds
@@ -251,8 +256,8 @@ func (b *Balance) validateMisc() {
 	// The price is that 0 is NOT an off-switch for this knob: it reads as
 	// "unset" and becomes 1.0. To suppress knockdowns entirely, set a very
 	// small value such as 0.001, or zero the per-move *KnockdownFactor knobs.
-	if b.GlobalKnockdownChance <= 0 || b.GlobalKnockdownChance > 1.0 {
-		b.GlobalKnockdownChance = 1.0
+	if b.KnockdownFrequencyScale <= 0 || b.KnockdownFrequencyScale > 1.0 {
+		b.KnockdownFrequencyScale = 1.0
 	}
 
 	if b.KickKnockdownFactor <= 0 {

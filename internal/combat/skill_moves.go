@@ -92,7 +92,7 @@ type SkillMoveParams struct {
 	KnockdownToSupine bool
 }
 
-// knockdownSurvivesGlobalDamper applies GlobalKnockdownChance, the single dial
+// knockdownSurvivesGlobalDamper applies KnockdownFrequencyScale, the single dial
 // for how often ANY contested knockdown actually lands. Returns true to keep a
 // knockdown the contest already won.
 //
@@ -124,7 +124,7 @@ type SkillMoveParams struct {
 // 1.0 (unchanged) rather than as "disable all knockdowns". The guards below are
 // defensive only.
 func knockdownSurvivesGlobalDamper() bool {
-	return rollKnockdownDamper(float64(configs.GetBalanceConfig().GlobalKnockdownChance))
+	return rollKnockdownDamper(float64(configs.GetBalanceConfig().KnockdownFrequencyScale))
 }
 
 // rollKnockdownDamper is the pure half, split out so the linearity that
