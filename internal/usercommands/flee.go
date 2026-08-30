@@ -118,6 +118,15 @@ func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			user.SendText(messaging.CategorySystem, `You're not in combat; there's nothing to flee from.`)
 		} else if user.Character.IsStandingGrapple() || user.Character.IsGroundGrapple() {
 			user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't flee while grappled!</ansi>`)
+		} else if !user.Character.IsStanding() {
+			// The flee veto is IsStanding(), NOT grapple. Being knocked down
+			// refuses a flee exactly as a grapple does, and until now it fell
+			// through to the generic line below, which reads like a timing
+			// problem. Knockdown is common (trips, bashes, sweeps, kicks and
+			// double fumbles all cause it) and it is precisely when a player
+			// most wants to run, so the one thing they need to know is that
+			// standing up is what unblocks it.
+			user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't flee from the ground. Stand up first!</ansi>`)
 		} else {
 			user.SendText(messaging.CategorySystem, `You can't break away just yet.`)
 		}
