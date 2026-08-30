@@ -166,9 +166,34 @@ day is now; the code needs no change, but the retarget case needs a test.
 - The owner's prior finding that there is **no prone/stand death spiral** was
   measured against the *uncontested* auto-stand and does not carry over
   unexamined. Re-checking it is an explicit goal of the Phase C playtest.
-- Adjacent open bug: the companion prone lock. The companion-assist
-  `SubscribeAttackersChange` path going live may interact with it. Watch for it;
-  do not attempt to fix it in this slice.
+
+### 2.5 The failure branch has been unreachable, and A1 restores it
+
+`AttemptRecovery` defaults `success = true` and overrides it only when
+`contestWin` is non-nil. It never is. So the failure emotes at
+`NewRound_MobRoundTick.go:203` and `NewRound_UserRoundTick.go:255` — *"attempts
+to stand, but slips and falls in the chaos of battle"* — are strings **no player
+has seen since U10**. A1 makes them reachable again, for every actor type.
+
+This is also the real status of the **companion prone lock** report
+(2026-08-16), which is **closed as not-a-defect** by the owner on 2026-08-30:
+
+> *"The companions are going to act in the same way as an NPC would, just on the
+> player's side."*
+
+Verified: `tickMobProneRecovery` has no companion special-casing, and the prone
+gating in `combat_helpers.go` (:232, :471, :535) keys on `sourceChar` generically
+— player, mob and companion run identical code, and `ConditionRecoveryPenalty`
+caps attacks at 1 for all of them. Knockdown recovery is a cost, not a bug, and
+there is no asymmetry to fix. **Do not add a companion-specific cue or rescue
+verb to this slice.**
+
+That report's DEX-curve diagnosis (`25 + 20*ln(DEX/25)`) is **stale**: U10
+deleted the formula, and there is no `math.Log` in `characters/skills.go`. Its
+one unexplained residual — rounds with **zero** attacks, where
+`ConditionRecoveryPenalty` allows **one** — predates the U6b/U8/U12 round
+rewrites and may not reproduce. Look at it during Phase C as a general prone
+question, not a companion one.
 
 ---
 
@@ -398,5 +423,7 @@ which is why the boot test and the Phase C gate both matter.
 - `SubGoldLossFraction`. Inbox #3 is a correction; the knob is live and correct.
 - Restoring `EngagingData.Reason`. Inbox #6 closed by U12c-2, and the struct
   comment warns explicitly against reinstating it.
-- The companion prone lock. Adjacent, may be perturbed by A1, filed separately.
+- A companion-specific prone cue or rescue verb. The companion prone lock is
+  **closed as not-a-defect** (owner, 2026-08-30): companions run the identical
+  prone path to every other NPC. See §2.5.
 - Any balance retune surfaced by the config audit. Filed, not applied.
