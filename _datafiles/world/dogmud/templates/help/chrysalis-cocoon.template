@@ -17,7 +17,7 @@ skill. It costs more than lighter wards but lasts considerably longer.
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Single ally (or self)</ansi>
 <ansi fg="yellow">Defense:     </ansi> <ansi fg="white-bold">None — help spells always apply</ansi>
 <ansi fg="yellow">Duration:    </ansi> <ansi fg="white-bold">Scales with spellcasting skill (long)</ansi>
-<ansi fg="yellow">Strength:    </ansi> <ansi fg="white-bold">125% of baseline shield — strongest available</ansi>
+<ansi fg="yellow">Strength:    </ansi> <ansi fg="white-bold">The strongest ward available</ansi>
 <ansi fg="yellow">Mitigation:  </ansi> <ansi fg="white-bold">Physical, magical, and conviction damage</ansi>
 <ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">8</ansi>
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Enhancement</ansi>
@@ -30,4 +30,3 @@ skill. It costs more than lighter wards but lasts considerably longer.
   - Casting again while a cocoon is active overwrites the existing one.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help conviction-ward</ansi>,
-          <ansi fg="command">help minor-shield</ansi>
