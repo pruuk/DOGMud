@@ -26,6 +26,8 @@ recalled.
 | The crit test | `margin/(roll.StdDev*√2) >= bar` | `combat/margin_crit.go:132-139` |
 | The crit bar | `2.0 - 0.05*(atkRank-defRank)`, clamped `[1.5, 3.0]` | `combat/crit_bar.go:34-44`, `config.yaml:568-570` |
 | Roll spread | `RollSpread: 0.15` | `config.yaml` |
+| **Both rolls share ONE stdDev, derived from the ATTACK score** | `stdDev := dice.StdDevFor(atkScore)` then `dice.Roll(e.Score, stdDev)` | `contest/contest.go:97,103` |
+| Best defence = smallest attack-positive margin | `if !res.Contested \|\| margin < res.Margin` | `contest/contest.go:109` |
 | Skill weight | `SkillWeight: 5.0` | `config.yaml:868` |
 | Crits skip mitigation | `if isCrit {...} else { ApplyMitigation(...) }` | `combat/crit_damage.go:96-104` |
 | Mob combat skill | 1 for every mob | project notes, consistent with observed data |
@@ -41,14 +43,22 @@ recalled.
 Crit rate is decided by the **normalized score gap**, and it saturates at a
 modest power advantage. Measured against the shipped curve, bar floored at 1.5:
 
-| score ratio | crit rate |
-|---|---|
-| 1.00 (parity) | 6.7% |
-| 1.20 | 21.9% |
-| 1.40 | 43.0% |
-| 1.50 | **53.3%** |
-| 2.00 | 86.1% |
-| 3.00 | 98.6% |
+| score ratio | hit rate | crit rate |
+|---|---|---|
+| 1.00 (parity) | 50.0% | 6.7% |
+| 1.20 | 78.4% | 23.8% |
+| 1.40 | 91.1% | 43.9% |
+| 1.50 | 94.2% | **52.8%** |
+| 2.00 | 99.1% | 80.4% |
+| 3.00 | 99.9% | 95.0% |
+| 5.00 | 100.0% | 98.8% |
+
+> **Model note.** Both rolls draw from ONE standard deviation, taken from the
+> attacker's score (`contest.go:97,103`). The normalized margin is therefore
+> exactly `N(mean, 1)` with `mean = (A-D)/(0.15·A·√2)`, which is why these
+> numbers are clean. An earlier draft of this spec assumed each side rolled with
+> its own spread and quoted slightly different figures; the table above is the
+> corrected one.
 
 A **50% power edge produces a majority-crit outcome.** That matters more than it
 sounds, because a crit is not a bonus but a branch: `crit_damage.go:96-104`
@@ -136,11 +146,14 @@ may want to try it.
 
 | matchup | hit% now → then | crit% now → then |
 |---|---|---|
-| Meirok vs Sand ellie | 100 → 100 | **100 → 82** |
-| Meirok vs royal fighter | 88 → 66 | 31 → 12 |
-| mid vs trash | 99 → 86 | **75 → 27** |
-| parity | 50 → 50 | 2.3 → 2.3 |
-| underdog | 0.6 → 0.6 | 0 → 0 |
+| Meirok vs any 92-defence elemental | 100 → 99 | **98.8 → 77.0** |
+| Meirok vs royal fighter (352) | 86 → 65 | **33.3 → 13.5** |
+| parity | 50 → 50 | 6.7 → 6.7 |
+| underdog | unchanged | unchanged |
+
+Note every 92-defence mob collapses to one row: sand elemental, storm elemental
+and the Queen all defend identically against melee, which is §2b's problem, not
+this one.
 
 **Parity is invariant at every exponent.** Compression only ever touches
 mismatches, so it cannot disturb an even fight. That is the property that makes
