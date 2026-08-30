@@ -1451,6 +1451,8 @@
         var QUEUE_CAP = 10;
         var QUEUE_STALENESS_ROUNDS = 6; // give up on a blocked queued action after this many rounds
         var queueInFlight = null;       // entry awaiting a Char.Action.Result
+        var queueInFlightAt = 0;        // when that Try was sent (see the timeout in drainQueue)
+        var QUEUE_INFLIGHT_TIMEOUT_MS = 5000; // release a Try that never got answered
         var queueRearm = null;          // { triggerId, spell, attempts } — fired cast eligible for interruption re-arm
         var queueRearmAge = 0;          // rounds since the rearm candidate fired (cleared when stale)
         var queueLoginSettled = false;  // hold draining until the login burst settles (see drainQueue)
@@ -1500,7 +1502,35 @@
                 }
                 return;
             }
-            if (queueInFlight) return;      // awaiting a Char.Action.Result
+            if (queueInFlight) {
+                // ⚠️ WITHOUT THIS THE QUEUE WEDGES PERMANENTLY. queueInFlight is
+                // cleared in exactly two other places: the Char.Action.Result handler
+                // and clearActionQueue (the manual Clear button / death). So a SINGLE
+                // unanswered Try parks the queue forever -- the 500ms drain interval
+                // returns here every time, entries pile up in the panel, and nothing
+                // fires until the player notices and hits Clear.
+                //
+                // A Try really can go unanswered: the server's Char.Action.Try handler
+                // breaks without replying when the payload fails to unmarshal, when the
+                // connection maps to no user, or when the user record is gone, and
+                // sendActionResult itself returns early if GMCP is no longer enabled on
+                // that connection (a reconnect between Try and Result does this).
+                //
+                // The pre-Try/Result implementation had a 4s fallback for exactly this
+                // reason; the protocol rewrite dropped it. Treat a timeout as a deferral
+                // so the entry retries and eventually ages out on the normal staleness
+                // path rather than hanging.
+                if (Date.now() - queueInFlightAt < QUEUE_INFLIGHT_TIMEOUT_MS) return;
+                var stalled = queueInFlight;
+                queueInFlight = null;
+                stalled.attempts = (stalled.attempts || 0) + 1;
+                console.log("[queue] no reply within " + QUEUE_INFLIGHT_TIMEOUT_MS + "ms, retrying:", stalled.name);
+                if (stalled.attempts >= QUEUE_STALENESS_ROUNDS) {
+                    if (actionQueue.length && actionQueue[0] === stalled) actionQueue.shift();
+                    console.log("[queue] dropped (no reply):", stalled.name);
+                }
+                renderAutomation();
+            }
             if (!actionQueue.length) return;
             var entry = actionQueue[0];
             entry.attempts = entry.attempts || 0;
@@ -1508,6 +1538,7 @@
             entry.isCast = /^cast\b/i.test(cmd);
             entry.spell  = entry.isCast ? cmd.replace(/^cast\s+/i, "").split(" ")[0].toLowerCase() : "";
             queueInFlight = entry;
+            queueInFlightAt = Date.now();
             SendGMCP("Char.Action.Try", { id: entry.triggerId, cmd: cmd });
         }
 
@@ -1516,6 +1547,7 @@
         function clearActionQueue() {
             actionQueue = [];
             queueInFlight = null;
+            queueInFlightAt = 0;
             queueRearm = null;
             renderAutomation();
         }

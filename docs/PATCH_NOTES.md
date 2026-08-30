@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: Queued trigger actions no longer get stuck forever
+
+If you set a trigger to queue an action, the web client asks the server whether
+that action can run right now and waits for the answer before releasing the next
+one. If that answer ever went missing, the client waited for it forever. Queued
+actions piled up in the Triggers panel and none of them ever fired again, for
+the rest of the session, with no way out except pressing Clear.
+
+The client now gives up waiting after a few seconds and tries again, and the
+server is stricter about always answering. A queue that gets stuck now
+un-sticks itself.
+
 ## 2026-08-30: Your companion stops announcing itself twice
 
 When a companion joined a fight, the line saying so printed twice. Two separate
