@@ -20,7 +20,7 @@ A wolf will probably eat your face regardless.
   <ansi fg="command">always</ansi>                   — Tap immediately on any successful sub.
                              Useful for civilian / non-combatant characters.
 
-  <ansi fg="command">auto-tap-below &lt;N&gt;</ansi>      <ansi fg="white">(default: 15)</ansi> Tap when your HP is
+  <ansi fg="command">auto-tap-below <N></ansi>      <ansi fg="white">(default: 15)</ansi> Tap when your HP is
                              below N%. Best of both worlds — fight on while
                              you can, surrender when you're done for.
 

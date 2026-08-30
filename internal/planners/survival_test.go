@@ -49,7 +49,16 @@ func TestSurvival_InCombat_FleesOrFails(t *testing.T) {
 }
 
 // TestSurvival_LowHP_NotInCombat_RestsByDefault verifies that a mob at
-// low HP and not in combat (no potion available) falls back to "rest".
+// low HP and not in combat (no potion available) falls back to a do-nothing
+// verb and lets out-of-combat regeneration work.
+//
+// ⚠️ This test asserted "rest" until 2026-08-30, which PINNED A LIVE BUG:
+// "rest" is not a registered mob command, so every hurt out-of-combat mob
+// emoted "looks a little confused (rest )" to the whole room. The suite was
+// green throughout. A test that asserts the wrong constant is worse than no
+// test, because it defends the defect. See
+// mobcommands.TestEveryPlannerCommandIsRegistered, which now checks the verb
+// against the real registry instead of against a hand-typed literal.
 func TestSurvival_LowHP_NotInCombat_RestsByDefault(t *testing.T) {
 	fn := LookupPlanner("survival")
 	mob := &mobs.Mob{}
@@ -57,8 +66,8 @@ func TestSurvival_LowHP_NotInCombat_RestsByDefault(t *testing.T) {
 	mob.Character.HealthMax.Value = 100
 	// Items is empty — pickHealingPotion returns "".
 	res := fn(mob, &goals.Goal{Type: "survival"})
-	if res.Command != "rest" {
-		t.Errorf("command=%q, want rest", res.Command)
+	if res.Command != "noop" {
+		t.Errorf("command=%q, want noop", res.Command)
 	}
 	if res.Status != StatusRunning {
 		t.Errorf("status=%v, want StatusRunning", res.Status)
@@ -83,7 +92,7 @@ func TestSurvival_CustomParams_Respected(t *testing.T) {
 	}
 	res := fn(mob, g)
 	// HP 70% < safe 80%, not in combat, HP 70% >= flee 20% → rest.
-	if res.Command != "rest" {
+	if res.Command != "noop" {
 		t.Errorf("command=%q, want rest (70%% HP below custom safe_threshold 80%%)", res.Command)
 	}
 	if res.Status != StatusRunning {

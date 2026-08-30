@@ -7,7 +7,7 @@ has passed (default: 7 days).
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">rename</ansi> <ansi fg="cyan">&lt;newname&gt;</ansi>     Change your character's name.
+  <ansi fg="command">rename</ansi> <ansi fg="cyan"><newname></ansi>     Change your character's name.
 
 You will be asked to confirm before the rename takes effect.
 Type <ansi fg="51">yes</ansi> to proceed, anything else to abort.

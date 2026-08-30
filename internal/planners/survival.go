@@ -52,8 +52,21 @@ func survivalPlanner(mob *mobs.Mob, goal *goals.Goal) PlanResult {
 		}
 	}
 
-	// Default: rest to recover.
-	return PlanResult{Command: "rest", Status: StatusRunning}
+	// Default: hold still and let out-of-combat regeneration do the work.
+	//
+	// ⚠️ This used to return "rest", which is NOT a registered mob command --
+	// not in mobcommands, not in usercommands, nowhere. Every hurt
+	// out-of-combat mob running this planner therefore fell through to
+	// world.go's unhandled-command path and emitted
+	//   <name> looks a little confused (rest ).
+	// to the whole room, every tick. Reported from live play 2026-08-30.
+	//
+	// "noop" is the honest expression of the intent: mobs already regenerate
+	// out of combat (MobHealthRegenPct), so recovering IS standing still.
+	// "sleep" is a registered mob command and would give 5x regen, but it also
+	// makes the sleeper auto-crittable for a full round, which is a balance
+	// change rather than a bug fix. Deliberately not chosen here.
+	return PlanResult{Command: "noop", Status: StatusRunning}
 }
 
 // pickHealingPotion returns the name of a healing potion in the mob's
@@ -65,7 +78,7 @@ func survivalPlanner(mob *mobs.Mob, goal *goals.Goal) PlanResult {
 //
 // Verify via codegraph (`codegraph_node ItemSpec` for the effect field
 // shape). Conservative stub: returns empty string so the planner falls
-// through to "rest", which is the correct safe default.
+// through to "noop", which is the correct safe default.
 func pickHealingPotion(mob *mobs.Mob) string {
 	if mob == nil || len(mob.Character.Items) == 0 {
 		return ""

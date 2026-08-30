@@ -18,7 +18,7 @@ connected through the web client.
 <ansi fg="yellow">Managing ticks:</ansi>
 
   Ticks are created and managed in the
-  <ansi fg="command">Triggers &amp; Timers</ansi> panel — there is no typed
+  <ansi fg="command">Triggers & Timers</ansi> panel — there is no typed
   command for them.
 
   <ansi fg="command">+ New</ansi>         Open the editor to create a tick.
@@ -28,7 +28,7 @@ connected through the web client.
   <ansi fg="command">Right-click</ansi>   Open the context menu to Edit, Duplicate,
                  or Remove a tick.
 
-<ansi fg="yellow">Commands &amp; intervals:</ansi>
+<ansi fg="yellow">Commands & intervals:</ansi>
 
   A tick can run more than one command. Separate them with
   a semicolon — the same way macros work:

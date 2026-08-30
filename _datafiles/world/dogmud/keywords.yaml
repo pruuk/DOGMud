@@ -98,6 +98,7 @@ help:
       - stamina
       - stand
       - steal
+      - plant
       - stomp
       - surrender
       - target
@@ -112,7 +113,6 @@ help:
       - craft
       - disenchant
       - forage
-      - plant
       - salvage
     information:
       - biome
@@ -141,6 +141,7 @@ help:
       - sort
       - stash
       - storage
+      - stow
       - trash
       - use
     general:
@@ -308,6 +309,7 @@ command-aliases:
   go:                 ['enter']
   map:                ['m']
   conditions:         ['c', 'cond', 'conds']
+  cooldowns:          ['cooldown']
   skills:             ['sk', 'skill', 'exp', 'xp', 'progression']
   equip:              ['wear', 'wield', 'hold']
   remove:             ['rem', 'unequip', 'unwear', 'unwield']
