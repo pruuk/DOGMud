@@ -1530,37 +1530,58 @@ maths); only the cross-channel tier's swing runs through the seam. The
 auto-trip/auto-bash `ExecuteSkillMove` calls carry `IsCounter`, which the
 tier's wiring refuses — counters never recurse.
 
-## Gotcha: `recovery_contest.go` is silently inert, and has always been
+## Gotcha: prone auto-recovery became contested on 2026-08-30. It never was before.
 
-`recoveryContest` (`recovery_contest.go:23`) builds the opposed prone-recovery
-roll for `AttemptRecovery` by iterating `ch.Attackers()`, picking the strongest
+`recoveryContest` (`recovery_contest.go`) builds the opposed prone-recovery roll
+for `AttemptRecovery` by iterating `ch.Attackers()`, picking the strongest
 same-room living holder, and returning a closure over `combat.RunContest`. It
-returns `nil` — documented in the function itself as *a free stand* — when
+returns `nil` -- documented in the function itself as *a free stand* -- when
 nobody qualifies.
 
-**Nobody ever qualifies.** `Character.Attackers()` reads the Combat Phase
-framework's inbound-attacker list, and that list is never populated in
-production: `RecordInboundAttacker` is reached only through
-`lookupMachine(d.Target)` in `internal/state/combatphase/combatphase.go:234`,
-`lookupMachine` reads `machineRegistry`, and `combatphase.RegisterMachine` has
-**zero production callers** (every call is in `combatphase_test.go`;
-`internal/characters/validate.go` constructs the machine without registering
-it). So the loop body never executes, `best` stays nil, and **prone recovery is
-uncontested for every character, always.**
+**For its whole life before U11, nobody ever qualified.** `Character.Attackers()`
+reads the Combat Phase inbound-attacker list; that list is populated only
+through `lookupMachine(d.Target)` in `TransitionToEngaging`, and `lookupMachine`
+read a `machineRegistry` map that **no production code ever wrote to**. So the
+loop body never executed, `best` stayed nil, and prone recovery was uncontested
+for every character, always -- whatever U10 intended. Two consequences that
+outlived the cause:
 
-A second, independent break sits behind the first: `SetAggro` passes
-`Actor: state.ActorRef{UserId: c.userId}`
-(`internal/characters/combat_state_compat.go:146`) and nothing calls
-`SetUserId` on a mob, so a mob's ref is the zero value and
-`RecordInboundAttacker` early-returns on `ActorRef.IsZero()`. Even a repaired
-registry would never record a mob attacker.
+- The failure emotes (`NewRound_MobRoundTick.go:203`,
+  `NewRound_UserRoundTick.go:255`, *"attempts to stand, but slips and falls in
+  the chaos of battle"*) were unreachable strings.
+- `AwardResolved` sits INSIDE the `if contestWin != nil` guard
+  (`characters/skills.go`), so auto-recovery also never awarded unarmed-combat
+  progression.
 
-Do not write new code against `Character.Attackers()` until this is resolved —
-U10d's unengaged-ranged rule deliberately uses a live room scan
-(`actions/combat_fire.go`, `shooterIsUnengaged`) for exactly this reason.
-Handed to **U11** ("wire it up or delete it"); see the "U11 inbox from U10d"
-section of `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` and the Gotchas in
-`internal/state/combatphase/context.md`.
+**Both are live now.** Do write code against `Character.Attackers()`.
+
+### How it was fixed, and why not the obvious way
+
+The registry map was **not** repaired -- it was deleted. A hand-maintained
+`ActorRef -> Machine` map is a cache of a mapping `internal/users` and
+`internal/mobs` already own, and adversarial review found five cache-coherence
+bugs in a single afternoon: a throwaway record loaded for a password check
+(`LoadUser`) evicting a live player's entry, `character new` leaving the retired
+character bound forever, `character view`/`hire` replacing a registered mob's
+Character wholesale, copyover restoring nobody, and an unsynchronised
+read-modify-write between the connection goroutine and the round loop.
+
+`combatphase.lookupMachine` now resolves on demand through an injected function
+(`combatphase.SetMachineResolver`, wired in `machine_resolver.go` in THIS
+package) that asks `users.GetByUserId` / `mobs.GetInstance`. There is no second
+copy to drift, nothing to leak, and no teardown to forget. **If you add a new
+way for an actor to enter the world, you need do nothing** -- provided it ends
+up in `userManager` or `mobInstances`, which is what "in the world" means.
+
+A second, independent break was fixed with it: `SetAggro` passed
+`Actor: state.ActorRef{UserId: c.userId}` and nothing calls `SetUserId` on a
+mob, so a mob's ref was the zero value and `RecordInboundAttacker` early-returned
+on `ActorRef.IsZero()`. It now uses `c.ActorRef()`, which carries both id
+fields. **Build actor refs with that method, never by hand.**
+
+`actions/combat_fire.go`'s `shooterIsUnengaged` still uses a live room scan.
+That is now deliberate rather than a workaround: it answers "is anything in this
+room targeting the shooter", a wider question than "who has engaged me".
 
 ## Dependencies
 

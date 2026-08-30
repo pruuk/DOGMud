@@ -329,6 +329,14 @@ func cmdCharacterView(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 		m := mobs.NewMobByIdFresh(59, user.Character.RoomId)
 		m.Character = char
+		// Character.MobInstanceId is yaml:"-", so the alt loaded from disk
+		// carries 0. Replacing the whole Character wholesale therefore drops the
+		// instance identity that NewMobByIdFresh had just assigned, and a mob
+		// with a zero ActorRef cannot be recorded as anyone's attacker (SetAggro
+		// builds Actor: c.ActorRef(), and RecordInboundAttacker drops a zero
+		// ref). Re-stamp it, and re-record it on the state machine.
+		m.Character.MobInstanceId = m.InstanceId
+		m.Character.SyncMachineSelf()
 		room.AddMob(m.InstanceId)
 		m.Character.Charm(user.UserId, -1, `suicide vanish`)
 
@@ -397,6 +405,14 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 		m := mobs.NewMobByIdFresh(59, user.Character.RoomId)
 		m.Character = char
+		// Character.MobInstanceId is yaml:"-", so the alt loaded from disk
+		// carries 0. Replacing the whole Character wholesale therefore drops the
+		// instance identity that NewMobByIdFresh had just assigned, and a mob
+		// with a zero ActorRef cannot be recorded as anyone's attacker (SetAggro
+		// builds Actor: c.ActorRef(), and RecordInboundAttacker drops a zero
+		// ref). Re-stamp it, and re-record it on the state machine.
+		m.Character.MobInstanceId = m.InstanceId
+		m.Character.SyncMachineSelf()
 
 		// To prevent dupes/exploits, clear vulnerable copied data
 		m.Character.Items = []items.Item{}   // Clear items

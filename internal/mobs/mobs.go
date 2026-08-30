@@ -797,12 +797,6 @@ func FindLiveInstanceByHomeAndId(roomId int, mobId MobId) *Mob {
 
 func DestroyInstance(instanceId int) {
 	mobInstancesMu.Lock()
-	// Drop the state-machine registry binding while we still have the
-	// instance. The registry is process-global, so skipping this retains every
-	// mob instance ever spawned for the life of the server.
-	if m, ok := mobInstances[instanceId]; ok && m != nil {
-		m.Character.UnregisterMachines()
-	}
 	delete(mobInstances, instanceId)
 	mobInstancesMu.Unlock()
 }

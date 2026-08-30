@@ -368,73 +368,94 @@ is scheduled for a cleanup chunk after chunks 1-5 land.
 
 ## Gotchas
 
-**`RegisterMachine` IS wired as of U11 (2026-08-30). It was not before, and a
-great deal of surviving prose assumes it was not.**
+**There is no machine registry any more. `lookupMachine` resolves on demand.**
 
-Registration lives in `internal/characters/machine_registry.go`:
-`(*Character).syncMachineRegistry()` binds all five state machines
-(`activity`, `awareness`, `combatphase`, `life`, `position`) under the
-Character's `ActorRef()`. It is called from BOTH `Validate()` and
-`SetUserId()`, and teardown is `(*Character).UnregisterMachines()`, called from
-`mobs.DestroyInstance` and `users.LogOutUserByConnectionId`.
+Until 2026-08-30 this package kept a process-global
+`machineRegistry map[state.ActorRef]*Machine` populated by `RegisterMachine`.
+**Nothing in production ever called it**, so `lookupMachine` always returned nil
+and every cross-character consumer was silently inert for its entire life --
+most importantly `recoveryContest`, which meant prone auto-recovery was never
+contested for anyone.
 
-**Three invariants you must not break if you touch this:**
+U11 was going to wire the map up. Adversarial review killed that: a
+hand-maintained `ActorRef -> Machine` map is a **cache** of a mapping that
+`internal/users` and `internal/mobs` already own authoritatively, and every way
+it can drift is a bug. Five were found in one afternoon, all in production paths
+that assign a Character to an identity without passing through the registration
+seam:
 
-1. **A zero `ActorRef` is NEVER admitted to the registry.** The registry is a
-   `map[state.ActorRef]*Machine`, so the zero ref is a SINGLE key: admitting it
-   aliases every unidentified character onto one entry and `lookupMachine` hands
-   combat another character's machines. `syncMachineRegistry` returns early on
-   `ref.IsZero()` for exactly this reason.
-2. **Registration cannot live at one seam.** `Validate()` runs BEFORE
-   `SetUserId` on every player path (`users/users.go:516` → `:551`;
-   `users/userrecord.go:832` → `:835`), while `CreateUser` reaches `SetUserId`
-   with no `Validate()` at all, and mob spawn sets `MobInstanceId` BEFORE
-   `Validate()` (`mobs/mobs.go:358`). Calling from both points is what makes
-   every ordering converge. Registering only from the once-per-Character
-   `fireCharacterCreated` hook would key every player as `{UserId: 0}`.
-3. **Teardown is mandatory.** The registry is process-global and lives for the
-   life of the server. Without `UnregisterMachines`, every mob instance ever
-   spawned is retained forever.
+- `LoadUser` runs before the password check, so a throwaway disk snapshot
+  evicted a live player's entry -- griefable by anyone knowing a username.
+- `character new` left the RETIRED character bound under the player's ref
+  forever, unreclaimable.
+- `character view` / `hire` replace a registered mob's `Character` wholesale.
+- Copyover restore registered nobody, so a hot reboot silently reverted
+  everything world-wide.
+- `registeredRef` was a read-modify-write racing the round loop.
 
-`ResetForMobInstance` clears `registeredRef`, because it runs on a shallow copy
-of the template; without that an instance would inherit the template's binding
-and unregister it out from under the template on despawn. A template carries
-`MobInstanceId` 0, so a leaked template binding would land on the zero key.
+**The registry is therefore deleted, not repaired.** `lookupMachine` calls an
+injected resolver:
+
+```go
+func SetMachineResolver(fn func(state.ActorRef) *Machine)
+```
+
+wired once from `internal/hooks/machine_resolver.go`, which asks
+`users.GetByUserId` and `mobs.GetInstance`. Injection is required because
+`internal/state` must not import those packages (they depend on
+`internal/characters`, which depends on this one).
+
+Consequences worth knowing:
+
+- **A nil return is normal.** The actor logged out, despawned, or never
+  existed. Every caller handles it; keep it that way.
+- **Adding a new way to enter the world needs no change here**, provided the
+  actor ends up in `userManager` or `mobInstances` -- which is what "in the
+  world" means.
+- **There is nothing to tear down.** No teardown call on despawn or logout, and
+  no leak: `DestroyInstance` and `LogOutUserByConnectionId` remove the actor
+  from the authoritative map, which is the same act as deregistering it.
+- **Tests** install a fixed map via the local `useTestResolver` helper rather
+  than poking a registry. Cross-package tests should exercise the real path
+  (`SetAggro`) instead of reaching for internals.
+
+`Machine.self` survives as a plain field, set by `SetSelf` from
+`Character.SyncMachineSelf` (called from `Validate` and `SetUserId`, because a
+mob has its `MobInstanceId` before `Validate` while a player gets its `userId`
+after). It is only the fallback actor ref when a `TransitionReason` carries
+none. Being per-machine, a stale value cannot leak or alias another character.
 
 **What this turned on.** `RecordInboundAttacker` now runs, so `Attackers()`
 returns real data, and two consumers that were silently inert came alive:
 
-- `recoveryContest` (`internal/hooks/recovery_contest.go`) now returns a real
+- `recoveryContest` (`internal/hooks/recovery_contest.go`) returns a real
   contest instead of `nil`, which that function documents as *a free stand*.
-  **Prone auto-recovery had never been contested for anyone** before U11,
-  whatever U10 intended. Pinned by
-  `internal/hooks/recovery_contest_live_test.go`.
+  Pinned by `internal/hooks/recovery_contest_live_test.go`, which drives
+  `SetAggro` rather than calling `RecordInboundAttacker` directly -- the latter
+  bypasses the resolver and proves nothing.
 - `internal/hooks/CombatPhase_CompanionAssist.go`'s reactive
   `SubscribeAttackersChange` handler now fires, so companions answer a new
-  attacker in the same round instead of on the next tick. The polling fallback
-  (`CompanionAutoTarget` in `combat_retarget.go`) still runs; that file
-  documents dual-firing as intended and the duplicate command as benign.
+  attacker in the same round instead of on the next tick.
 
 **What this did NOT turn on:**
 
 - `NotifyTargetDied` / `NotifySelfDied` still have **zero production callers**.
-  They are uncalled methods, not registry-gated ones, so wiring the registry
-  does not revive them. Real death cleanup (`internal/hooks/Life_Cascades.go`,
-  `Alive → Dead`) calls `ForceIdle` on the dying character's own machine and
-  does not cascade. Unchanged by U11 and unclaimed.
+  They are uncalled methods, not resolver-gated ones. Real death cleanup
+  (`internal/hooks/Life_Cascades.go`) calls `ForceIdle` and does not cascade.
+- `awareness`, `life`, `position` and `activity` still have no working lookup,
+  and that is deliberate: `lookupMachine` is **defined but never called** in the
+  first three, and `activity` has none at all. Only this package consumes one,
+  so only this package has a resolver.
 - `internal/actions/combat_fire.go`'s `shooterIsUnengaged` still does a live
-  room scan rather than reading `Attackers()`. That is now a DELIBERATE choice
-  rather than a workaround: it answers "is anything in this room targeting the
-  shooter", which is a wider question than "who has engaged me", and it does not
-  depend on registration lifecycle.
+  room scan. Now a deliberate choice: it answers "is anything in this room
+  targeting the shooter", a wider question than "who has engaged me".
 
 **The second break behind the first is also fixed.** `SetAggro` used to build
 the attacker ref as `Actor: state.ActorRef{UserId: c.userId}`, and nothing calls
 `SetUserId` on a mob, so a mob's ref was `{0,0}` and `RecordInboundAttacker`
 early-returned on `ActorRef.IsZero()`. Even a working registry would never have
-recorded a mob attacker. `internal/characters/engagement_storage.go` now uses
-`c.ActorRef()`, which carries both id fields. **Build refs with that method,
-never by hand.**
+recorded a mob attacker. `engagement_storage.go` now uses `c.ActorRef()`, which
+carries both id fields. **Build refs with that method, never by hand.**
 
 **`TransitionToEngaging` silently drops its `TransitionReason`.** The signature
 is `TransitionToEngaging(d EngagingData, r state.TransitionReason) error`

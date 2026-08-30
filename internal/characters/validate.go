@@ -701,12 +701,11 @@ func (c *Character) Validate(recalcPermaBuffs ...bool) error {
 		c.reapplyPermabuffs()
 	}
 
-	// Bind the state machines to this Character's ActorRef. Safe to call on
-	// every re-validation: syncMachineRegistry is idempotent and refuses a zero
-	// ref, so a player validated before SetUserId simply registers nothing here
-	// and gets bound when SetUserId runs. Mobs, whose MobInstanceId is set
-	// before this call, are bound here.
-	c.syncMachineRegistry()
+	// Record identity on the CombatPhase machine. Idempotent and zero-ref safe,
+	// so a player validated before SetUserId simply records nothing here and is
+	// covered when SetUserId runs. Mobs, whose MobInstanceId is set before this
+	// call, are covered here.
+	c.SyncMachineSelf()
 
 	return nil
 }

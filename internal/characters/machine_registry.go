@@ -2,11 +2,6 @@ package characters
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/state"
-	"github.com/GoMudEngine/GoMud/internal/state/activity"
-	"github.com/GoMudEngine/GoMud/internal/state/awareness"
-	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
-	"github.com/GoMudEngine/GoMud/internal/state/life"
-	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
 // ActorRef returns this Character's identity as a state.ActorRef, carrying
@@ -15,9 +10,8 @@ import (
 // This exists because engagement_storage.go built its actor ref as
 // state.ActorRef{UserId: c.userId} alone. Nothing calls SetUserId on a mob, so
 // a mob's ref was the zero value and combatphase.RecordInboundAttacker
-// early-returned on ActorRef.IsZero() -- a second, independent break sitting
-// behind the empty machine registry. Build refs with this method, never by
-// hand.
+// early-returned on ActorRef.IsZero() -- which meant no mob attacking anyone
+// was ever recorded. Build refs with this method, never by hand.
 func (c *Character) ActorRef() state.ActorRef {
 	return state.ActorRef{
 		UserId:        c.userId,
@@ -25,75 +19,24 @@ func (c *Character) ActorRef() state.ActorRef {
 	}
 }
 
-// syncMachineRegistry binds this Character's five state machines to its
-// ActorRef in the per-package registries. It is idempotent and safe to call in
-// any order, which it has to be:
+// SyncMachineSelf records this Character's identity on its CombatPhase machine,
+// which uses it as the fallback actor ref when a TransitionReason carries none.
 //
-//	player login   Validate(true) THEN SetUserId   users.go:516 -> :551
-//	alt switch     Validate()     THEN SetUserId   userrecord.go:832 -> :835
-//	new character  SetUserId with NO Validate()    users.go:443 -> :461
-//	mob spawn      MobInstanceId  THEN Validate()  mobs.go:358
+// Called from Validate() and SetUserId(), because identity arrives at different
+// moments for the two actor types: a mob has its MobInstanceId before Validate()
+// runs (mobs.go:358), while every player path assigns userId AFTER Validate()
+// (users.go:520 -> :558; userrecord.go:832 -> :835), and CreateUser reaches
+// SetUserId with no Validate() at all.
 //
-// so it is called from BOTH Validate() and SetUserId() and converges on one
-// correct binding whichever runs first.
-//
-// A ZERO REF IS NEVER ADMITTED. The registry is a map keyed by ActorRef, so
-// the zero ref is a SINGLE key: admitting it would alias every unidentified
-// character onto one entry, and lookupMachine would hand combat another
-// character's machines. That is strictly worse than the empty registry this
-// replaces, and it is exactly what registering from fireCharacterCreated alone
-// would have done to every player.
-func (c *Character) syncMachineRegistry() {
+// ⚠️ There is deliberately NO registry to populate here. An earlier version of
+// this file maintained an ActorRef -> Machine map; see the "Machine resolution"
+// comment in internal/state/combatphase/combatphase.go for why that was wrong
+// and what replaced it. This writes one plain field on this Character's own
+// machine, so it cannot leak, alias another character, or go stale globally.
+func (c *Character) SyncMachineSelf() {
 	ref := c.ActorRef()
-	if ref.IsZero() {
+	if ref.IsZero() || c.CombatPhase == nil {
 		return
 	}
-
-	// Identity changed (alt switch, or a late SetUserId after a mob-shaped
-	// load): drop the stale binding before creating the new one.
-	if !c.registeredRef.IsZero() && c.registeredRef != ref {
-		c.unregisterMachinesAt(c.registeredRef)
-	}
-
-	// Nil machines are legitimate here -- CreateUser reaches SetUserId before
-	// any Validate() has built them. The later Validate() re-syncs.
-	if c.CombatPhase != nil {
-		combatphase.RegisterMachine(ref, c.CombatPhase)
-	}
-	if c.Awareness != nil {
-		awareness.RegisterMachine(ref, c.Awareness)
-	}
-	if c.Life != nil {
-		life.RegisterMachine(ref, c.Life)
-	}
-	if c.Activity != nil {
-		activity.RegisterMachine(ref, c.Activity)
-	}
-	if c.Position != nil {
-		position.RegisterMachine(ref, c.Position)
-	}
-
-	c.registeredRef = ref
-}
-
-// UnregisterMachines drops this Character's registry bindings. Call it on
-// logout and on mob despawn.
-//
-// The registry is process-global and lives for the life of the server, so
-// without this every mob instance ever spawned is retained forever. Wiring
-// registration without teardown trades a dead feature for a slow leak.
-func (c *Character) UnregisterMachines() {
-	c.unregisterMachinesAt(c.registeredRef)
-	c.registeredRef = state.ActorRef{}
-}
-
-func (c *Character) unregisterMachinesAt(ref state.ActorRef) {
-	if ref.IsZero() {
-		return
-	}
-	combatphase.UnregisterMachine(ref)
-	awareness.UnregisterMachine(ref)
-	life.UnregisterMachine(ref)
-	activity.UnregisterMachine(ref)
-	position.UnregisterMachine(ref)
+	c.CombatPhase.SetSelf(ref)
 }

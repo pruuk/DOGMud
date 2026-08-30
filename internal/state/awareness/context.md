@@ -179,18 +179,19 @@ registry); cleared on logout / despawn. There is no exported `GetMachine`
 var machineRegistry = map[state.ActorRef]*Machine{}
 ```
 
-Guarded by `registryMu`. Populated by `RegisterMachine` and cleared by
-`UnregisterMachine`. **As of U11 (2026-08-30) this IS wired in production**:
-`(*characters.Character).syncMachineRegistry` registers all five state machines
-under the Character's `ActorRef()` from both `Validate()` and `SetUserId()`, and
-`UnregisterMachines()` tears them down from `mobs.DestroyInstance` and
-`users.LogOutUserByConnectionId`. See `internal/state/combatphase/context.md`
-for the three invariants (never admit a zero ref; registration cannot live at
-one seam; teardown is mandatory).
+Guarded by `registryMu`. **Still never populated in production, and that is
+now deliberate.** `lookupMachine` is defined in this package and called from
+nowhere -- not even inside it -- so there is nothing for a registration to
+serve.
 
-`lookupMachine` is still unreferenced within THIS package — awareness has no
-cross-character notification of its own yet. The registry is populated for it
-regardless, so a future consumer does not have to re-derive the wiring.
+U11 (2026-08-30) considered wiring all five state-machine registries and
+concluded the opposite: `internal/state/combatphase` is the only package with a
+real lookup consumer, and it replaced its map with an on-demand resolver
+(`combatphase.SetMachineResolver`, wired in `internal/hooks`). Populating a map
+here would have been pure retention cost with no reader. If awareness ever grows
+a cross-character notification, copy the resolver pattern rather than reviving
+`RegisterMachine`; see the Gotchas in `internal/state/combatphase/context.md`
+for why the map form kept producing cache-coherence bugs.
 
 The registry is designed as the bridge between `ActorRef` (the identity
 type used in `TransitionReason`) and the live `Machine` pointer, so the

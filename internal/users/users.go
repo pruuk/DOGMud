@@ -424,13 +424,6 @@ func LogOutUserByConnectionId(connectionId connections.ConnectionId) error {
 			_ = u.Character.Presence.TransitionTo(presence.Disconnected,
 				state.TransitionReason{Trigger: presence.TriggerTCPClosed})
 		}
-
-		// AFTER the Disconnected transition, which needs the observer to still
-		// resolve this character, and after the Validate() above -- which would
-		// otherwise re-register what we just dropped.
-		if u.Character != nil {
-			u.Character.UnregisterMachines()
-		}
 	}
 
 	userManager.mu.Lock()

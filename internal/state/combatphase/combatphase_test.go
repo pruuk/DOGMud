@@ -11,14 +11,19 @@ import (
 // (no Character — those come in integration tests in later tasks).
 
 func makePair() (attacker, defender *Machine) {
-	registryMu.Lock()
-	machineRegistry = map[state.ActorRef]*Machine{}
-	registryMu.Unlock()
 	A := NewMachine()
 	B := NewMachine()
-	RegisterMachine(actor(1), A)
-	RegisterMachine(actor(2), B)
+	A.SetSelf(actor(1))
+	B.SetSelf(actor(2))
+	useTestResolver(map[state.ActorRef]*Machine{actor(1): A, actor(2): B})
 	return A, B
+}
+
+// useTestResolver installs a fixed ActorRef -> Machine map as the resolver for
+// the duration of one test. Production resolves against internal/users and
+// internal/mobs (wired in internal/hooks); there is no registry to poke.
+func useTestResolver(m map[state.ActorRef]*Machine) {
+	SetMachineResolver(func(ref state.ActorRef) *Machine { return m[ref] })
 }
 
 func actor(userId int) state.ActorRef {
@@ -214,16 +219,10 @@ func TestCP_016_GrappledCannotFlee(t *testing.T) {
 
 // CP-017: Three attackers track inbound on victim.
 func TestCP_017_MultipleAttackersTracked(t *testing.T) {
-	registryMu.Lock()
-	machineRegistry = map[state.ActorRef]*Machine{}
-	registryMu.Unlock()
 
 	M1, M2, M3, P := NewMachine(), NewMachine(), NewMachine(), NewMachine()
 	p := actor(1)
-	RegisterMachine(p, P)
-	RegisterMachine(actor(101), M1)
-	RegisterMachine(actor(102), M2)
-	RegisterMachine(actor(103), M3)
+	useTestResolver(map[state.ActorRef]*Machine{p: P})
 
 	for i, m := range []*Machine{M1, M2, M3} {
 		require.NoError(t, m.TransitionToEngaging(EngagingData{Target: p},
@@ -235,16 +234,15 @@ func TestCP_017_MultipleAttackersTracked(t *testing.T) {
 
 // CP-018: When attacker dies, inbound list shrinks.
 func TestCP_018_DeadAttackerRemovedFromInbound(t *testing.T) {
-	registryMu.Lock()
-	machineRegistry = map[state.ActorRef]*Machine{}
-	registryMu.Unlock()
 
 	M1, M2 := NewMachine(), NewMachine()
 	P := NewMachine()
 	p := actor(1)
-	RegisterMachine(p, P)
-	RegisterMachine(actor(101), M1)
-	RegisterMachine(actor(102), M2)
+	// Production sets self from Character.Validate; ForceIdle needs it to find
+	// its own entry on the target's inbound list.
+	M1.SetSelf(actor(101))
+	M2.SetSelf(actor(102))
+	useTestResolver(map[state.ActorRef]*Machine{p: P, actor(101): M1, actor(102): M2})
 
 	require.NoError(t, M1.TransitionToEngaging(EngagingData{Target: p},
 		state.TransitionReason{Actor: actor(101), Target: p}))
@@ -259,14 +257,10 @@ func TestCP_018_DeadAttackerRemovedFromInbound(t *testing.T) {
 
 // CP-019: Combat Phase exposes Attackers as observable change.
 func TestCP_019_AttackersChangeIsObservable(t *testing.T) {
-	registryMu.Lock()
-	machineRegistry = map[state.ActorRef]*Machine{}
-	registryMu.Unlock()
 
 	M1 := NewMachine()
 	P := NewMachine()
-	RegisterMachine(actor(1), P)
-	RegisterMachine(actor(101), M1)
+	useTestResolver(map[state.ActorRef]*Machine{actor(1): P})
 
 	var observedAttackerCount int
 	P.SubscribeAttackersChange(func(_ []state.ActorRef) {
