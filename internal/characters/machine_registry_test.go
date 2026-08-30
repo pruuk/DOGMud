@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestActorRef_Player(t *testing.T) {
@@ -84,4 +85,42 @@ func TestUnregisterMachines_RemovesBinding(t *testing.T) {
 	c.UnregisterMachines()
 
 	assert.Nil(t, combatphase.LookupMachineForTest(state.ActorRef{UserId: 41}))
+}
+
+// Mobs get their identity BEFORE Validate(), so Validate() is where a mob's
+// machines become registerable.
+func TestValidateRegistersMobInstance(t *testing.T) {
+	c := &Character{MobInstanceId: 5150}
+	c.IsMob = true
+	require.NoError(t, c.Validate())
+
+	assert.Same(t, c.CombatPhase,
+		combatphase.LookupMachineForTest(state.ActorRef{MobInstanceId: 5150}))
+
+	c.UnregisterMachines()
+}
+
+// A mob TEMPLATE has MobInstanceId 0, so a binding leaked from a template
+// would land on the zero key -- the mob-side twin of the player aliasing bug.
+func TestValidateDoesNotRegisterMobTemplate(t *testing.T) {
+	tmpl := &Character{}
+	tmpl.IsMob = true
+	require.NoError(t, tmpl.Validate())
+
+	assert.Nil(t, combatphase.LookupMachineForTest(state.ActorRef{}))
+}
+
+// ResetForMobInstance runs on a shallow copy of the template. If it did not
+// clear registeredRef, an instance would inherit the template's binding and
+// unregister it out from under the template on despawn.
+func TestResetForMobInstanceClearsRegisteredRef(t *testing.T) {
+	c := &Character{}
+	c.CombatPhase = combatphase.NewMachine()
+	c.SetUserId(61)
+	require.False(t, c.registeredRef.IsZero())
+
+	c.ResetForMobInstance()
+	assert.True(t, c.registeredRef.IsZero())
+
+	combatphase.UnregisterMachine(state.ActorRef{UserId: 61})
 }

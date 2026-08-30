@@ -88,6 +88,10 @@ func (c *Character) ResetForMobInstance() {
 	c.Presence = nil
 	c.Perception = nil
 	c.combatPhaseWired = false
+	// The shallow copy inherited the template's binding. Clearing it stops the
+	// instance unregistering the template's entry on despawn, and forces a
+	// fresh sync under the instance's own MobInstanceId.
+	c.registeredRef = state.ActorRef{}
 	c.PerGrappleMessageCooldowns = nil
 	c.PerGrappleMessageCooldownsLastRound = nil
 	c.RangedEngagedCueSpoken = false
