@@ -164,7 +164,7 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 			RoundsUntil: combatAddlWaitRounds,
 		}, state.TransitionReason{
 			Trigger: trigger,
-			Actor:   state.ActorRef{UserId: c.userId},
+			Actor:   c.ActorRef(),
 			Target:  state.ActorRef{UserId: userId, MobInstanceId: mobInstanceId},
 		}); err != nil {
 			return
