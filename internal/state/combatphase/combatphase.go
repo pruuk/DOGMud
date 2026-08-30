@@ -119,7 +119,7 @@ type vetoChain struct {
 // State() / Inner() accessors.
 type Machine struct {
 	inner                    *state.Machine[State]
-	self                     state.ActorRef // own identity, set by RegisterMachine
+	self                     state.ActorRef // own identity, set by SetSelf from Character.SyncMachineSelf
 	engaging                 *EngagingData
 	engaged                  *EngagedData
 	disengaging              *DisengagingData
@@ -373,10 +373,9 @@ func (m *Machine) TransitionToEngaging(d EngagingData, r state.TransitionReason)
 
 	m.engaging = &d
 
-	// Move our inbound-attacker entry off the previous target. Inert today —
-	// lookupMachine returns nil because combatphase.RegisterMachine has no
-	// production callers — but without it a retarget would leak an entry on
-	// the old target the day that registry is wired up.
+	// Move our inbound-attacker entry off the previous target. LIVE since
+	// 2026-08-30: lookupMachine resolves against users/mobs, so without this a
+	// retarget would leave a stale entry on the old target.
 	selfRef := r.Actor
 	if selfRef.IsZero() {
 		selfRef = m.self
