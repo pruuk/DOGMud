@@ -226,8 +226,44 @@ func u8HelpCrossReferenceTopics(rendered string) []string {
 	return topics
 }
 
+// moduleProvidedHelpTopics are help templates shipped by a module under
+// modules/<m>/files/datafiles/templates/help/ rather than by the world data.
+//
+// ⚠️ These resolve AT RUNTIME and `help <topic>` works for every one of them:
+// templates.readFile searches the registered module filesystems BEFORE the
+// datafiles root. The test harness points Process() at the dogmud world root
+// only, so without this list the guard reports all of them as broken links.
+//
+// That is not hypothetical. Inverting this guard to the whole tree flagged
+// `help time` in sleep.template, and it was "fixed" by deleting the reference
+// before anyone checked modules/time/files/datafiles/templates/help/time.template,
+// which exists and works. A guard that reports working links as broken makes
+// help WORSE. Discovered and reverted 2026-08-30.
+//
+// Regenerate with:
+//
+//	find modules -path "*files/datafiles/templates/help/*.template" -exec basename {} .template \;
+var moduleProvidedHelpTopics = map[string]string{
+	"auction":     "modules/auctions",
+	"bury":        "modules/cleanup",
+	"trash":       "modules/cleanup",
+	"follow":      "modules/follow",
+	"checkclient": "modules/gmcp",
+	"client":      "modules/gmcp",
+	"discord":     "modules/gmcp",
+	"mudletmap":   "modules/gmcp",
+	"mudletui":    "modules/gmcp",
+	"leaderboard": "modules/leaderboards",
+	"time":        "modules/time",
+}
+
 func validateU8HelpCrossReferences(sourcePath, rendered string) error {
 	for _, topic := range u8HelpCrossReferenceTopics(rendered) {
+		if _, fromModule := moduleProvidedHelpTopics[topic]; fromModule {
+			// Resolves at runtime from the module filesystem, which this
+			// harness does not mount. Not a broken link.
+			continue
+		}
 		result, err := Process("help/"+topic, nil)
 		if err != nil {
 			return fmt.Errorf("%s emits broken cross-reference %q: %w", sourcePath, "help "+topic, err)

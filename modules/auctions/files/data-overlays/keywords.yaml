@@ -1,6 +1,10 @@
+# NOTE: the category key must match the main keywords.yaml exactly. Overlays
+# merge last-write-wins onto ONE flat category map, so a near-miss does not
+# fail, it silently renders a SECOND heading in `help`. This file said `shop`
+# against the main file's `shops` and produced a stray one-entry heading.
 help:
   command:
-    shop:
+    shops:
       - auction
 help-aliases:
   auction: [bid]

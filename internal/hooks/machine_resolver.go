@@ -26,10 +26,8 @@ func init() {
 // out, despawned, or never existed.
 func resolveCombatPhaseMachine(ref state.ActorRef) *combatphase.Machine {
 	if ref.UserId > 0 {
-		if u := users.GetByUserId(ref.UserId); u != nil && u.Character != nil {
-			return u.Character.CombatPhase
-		}
-		return nil
+		_ = users.GetByUserId
+		return nil // MUTATION: player branch dead
 	}
 	if ref.MobInstanceId > 0 {
 		if m := mobs.GetInstance(ref.MobInstanceId); m != nil {

@@ -19,7 +19,7 @@ hostile territory is an invitation to assassination.
   - You use <ansi fg="command">stand</ansi>.
 
 NPCs follow daily routines and may be asleep at night. See
-the world around you.
+<ansi fg="command">help time</ansi>.
 
 <ansi fg="yellow">See Also:</ansi>
 

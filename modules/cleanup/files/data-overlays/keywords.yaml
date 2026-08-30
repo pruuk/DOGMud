@@ -1,5 +1,10 @@
+# NOTE: categories must match the main keywords.yaml, which files `bury` under
+# `character` and `trash` under `items`. Overlays merge last-write-wins onto ONE
+# flat map, so filing them under `information` here did not add a second entry,
+# it OVERRODE the main file's placements and left those entries dead.
 help:
   command:
-    information:
+    character:
       - bury
+    items:
       - trash

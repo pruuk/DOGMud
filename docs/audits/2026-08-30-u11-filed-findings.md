@@ -177,3 +177,62 @@ Owner decision 2026-08-30: fix the numbers now, file the dashes.
 | `weather` | 1 |
 | `wool-cloak` | 1 |
 | `zealous-conviction` | 2 |
+
+---
+
+## 2. `gmcp` module introduces two help categories not in the main index
+
+Found by the U11 Task 12 category sweep. `help` groups topics by category, and
+module overlays merge last-write-wins onto ONE flat map, so any category name a
+module uses that the main file does not becomes a NEW heading in the rendered
+index.
+
+Main categories (13): `all`, `character`, `combat`, `communication`,
+`configuration`, `crafting`, `general`, `information`, `items`, `locks`,
+`parties`, `quests`, `shops`.
+
+`modules/gmcp/files/data-overlays/keywords.yaml` adds:
+
+| Category | Entries |
+|---|---|
+| `interface` | client, checkclient, mudletmap, mudletui |
+| `integration` | discord |
+
+**Not fixed, and not obviously wrong.** Unlike the auctions (`shop` vs `shops`)
+and cleanup (`information` overriding `character`/`items`) defects that U11 did
+fix, these are not near-duplicates of an existing category. `interface` is a
+real grouping of four client topics. `integration` holding a single entry is
+thin and `communication` already exists, but folding it in is a user-visible
+reorganisation nobody asked for, and `modules/` is upstream-facing.
+
+Decide deliberately rather than by drift.
+
+---
+
+## 3. ⚠️ TRAP: eleven help topics are provided by MODULES, not world data
+
+`templates.readFile` searches the registered module filesystems **before** the
+datafiles root, so these resolve at runtime and `help <topic>` works for all of
+them -- but they do **not** exist under
+`_datafiles/world/dogmud/templates/help/`:
+
+`auction` (auctions) · `bury`, `trash` (cleanup) · `follow` (follow) ·
+`checkclient`, `client`, `discord`, `mudletmap`, `mudletui` (gmcp) ·
+`leaderboard` (leaderboards) · `time` (time)
+
+**This already caused a defect during U11.** The cross-reference guard resolves
+against the dogmud world root only, so when it was widened to the whole help
+tree it reported `help time` in `sleep.template` as a broken link. It was
+"fixed" by deleting the reference -- removing a link that worked -- before
+anyone checked `modules/time/files/datafiles/templates/help/time.template`.
+Caught and reverted the same day.
+
+`internal/templates/u8_help_test.go` now carries `moduleProvidedHelpTopics` to
+skip these. **Regenerate that list when a module adds a help topic:**
+
+```
+find modules -path "*files/datafiles/templates/help/*.template" -exec basename {} .template \;
+```
+
+A guard that reports working links as broken makes help worse, because the
+cheapest way to satisfy it is to delete the link.
