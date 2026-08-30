@@ -711,8 +711,10 @@ Balance:
   # and saturates them all at the ceiling above 1.5, flattening the per-move
   # distinctions at both ends.
   #
-  # ⚠️ NOT named *KnockdownChance: U10 retired the per-move threshold knobs of
-  # that name and a guard forbids the substring here, so they cannot return.
+  # ⚠️ Named "FrequencyScale" on purpose. U10 retired a family of per-move
+  # knockdown THRESHOLD knobs, and a guard forbids their old name appearing in
+  # this file at all so they cannot quietly return. Do not rename this knob
+  # toward that vocabulary; see combat.TestU10DoneWhen_DeadPathsStayDead.
   #
   # ⚠️ 0 is NOT an off-switch. It reads as "unset" and becomes 1.0, so that
   # DELETING this line cannot silently disable every knockdown in the game --
