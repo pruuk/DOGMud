@@ -628,3 +628,11 @@ func (m *Machine) DispatchTickEvent() {
 		fn(name, r)
 	}
 }
+
+// LookupMachineForTest exposes the unexported registry lookup so packages
+// outside combatphase can assert registration lifecycle. Production code must
+// never call this -- it exists so internal/characters can prove that
+// syncMachineRegistry admits no zero ref and leaks no stale binding.
+func LookupMachineForTest(ref state.ActorRef) *Machine {
+	return lookupMachine(ref)
+}

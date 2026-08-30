@@ -319,6 +319,7 @@ type Character struct {
 	LastAttackRejectedRound uint64                         `yaml:"-"` // runtime only — round of last player_attack_rejected event fire, for dedupe
 	permaBuffIds            []int                          // Buff Id's that are always present for this character
 	userId                  int                            // User ID of the character if any
+	registeredRef           state.ActorRef                 `yaml:"-"` // ref this Character's machines are registered under; zero when unregistered
 	combatPhaseWired        bool                           `yaml:"-"` // true after OnCharacterCreated callbacks have fired once
 	// Stage 3.4: spawn-time override for carry capacity. Set via
 	// ApplyMobOverrides for special mobs (wagons). Zero falls through
@@ -468,8 +469,13 @@ func RollCharacterStats() stats.Statistics {
 }
 
 // Sometimes it's useful for a character to know what user it belongs to.
+//
+// Also re-syncs the state-machine registry: on every player path this runs
+// AFTER Validate(), so this is where a player's identity first becomes known
+// and where its machines first become registerable under a non-zero ref.
 func (c *Character) SetUserId(userId int) {
 	c.userId = userId
+	c.syncMachineRegistry()
 }
 
 func (c *Character) GetUserId() int {
