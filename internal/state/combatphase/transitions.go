@@ -9,7 +9,25 @@ var validTransitions = state.TransitionTable[State]{
 	// Engaging on RETARGET during the wind-up (U12c-0b). U12c-0 added the
 	// Engaged case and missed this one; both are "switching targets takes a
 	// moment", one state apart.
-	Engaging: {Engaged, Idle, Engaging}, // Idle on cancel/target-died
+	// Disengaging is a REGRESSION FIX, and the regression was one day old.
+	//
+	// The original table (2026-05-13) had Engaging: {Engaged, Idle}, and that
+	// was harmless because nothing could park an actor in Engaging: it was a
+	// brief wind-up you always left. Then U12c-0 and U12c-0b made a RETARGET
+	// land, and a retarget goes Engaged -> Engaging. Anything that retargets
+	// you every round -- reciprocal aggro, a companion taunting your target
+	// away, your own `target` command -- now holds you in Engaging
+	// indefinitely, and without this edge `flee` is refused EVERY round with a
+	// generic "You can't break away just yet."
+	//
+	// Verified in play: refused across ~15 consecutive rounds of a live fight
+	// while standing and un-grappled (U12c-2 adversarial playtest, run
+	// 1dba21d1b7994159), and reproduced in one test below.
+	//
+	// Fleeing during a wind-up is also just correct: you have not thrown the
+	// blow yet. A failed flee returns you to Engaged via the Disengaging row,
+	// which is where a retarget would have landed you anyway.
+	Engaging: {Engaged, Idle, Engaging, Disengaging}, // Idle on cancel/target-died
 	// Engaging on RETARGET (U12c-0). Switching targets mid-fight is a fresh
 	// engagement: new target, fresh wind-up, then back to Engaged. Without
 	// this, TransitionToEngaging failed on every retarget and SetAggro
