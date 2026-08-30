@@ -78,3 +78,72 @@ func TestCompressContestGap_HandlesDegenerateInput(t *testing.T) {
 	assert.Empty(t, compressContestGap(100, []contest.Entry{}, 0.75))
 	assert.Equal(t, 0.0, compressContestGap(0, []contest.Entry{{Score: 0}}, 0.75)[0].Score)
 }
+
+// Parity must be invariant at EVERY exponent. Compression only ever touches
+// mismatches, and that property is what makes this safe to ship behind a knob:
+// it structurally cannot disturb an even fight.
+func TestRunContest_ParityUnaffectedByCompression(t *testing.T) {
+	const trials = 40000
+	const score = 200.0
+
+	rate := func(p float64) float64 {
+		SetContestGapCompressionForTest(t, p)
+		wins := 0
+		for i := 0; i < trials; i++ {
+			if RunContest(score, []contest.Entry{{Score: score}}).Success {
+				wins++
+			}
+		}
+		return float64(wins) / trials
+	}
+
+	for _, p := range []float64{1.0, 0.8, 0.5} {
+		assert.InDelta(t, 0.50, rate(p), 0.02, "parity win rate at p=%v", p)
+	}
+}
+
+// The headline: a large lead wins less overwhelmingly once compressed.
+func TestRunContest_CompressionReducesLopsidedWins(t *testing.T) {
+	const trials = 40000
+
+	rate := func(p float64) float64 {
+		SetContestGapCompressionForTest(t, p)
+		wins := 0
+		for i := 0; i < trials; i++ {
+			if RunContest(455, []contest.Entry{{Score: 92}}).Success {
+				wins++
+			}
+		}
+		return float64(wins) / trials
+	}
+
+	full := rate(1.0)
+	compressed := rate(0.8)
+
+	// ⚠️ ContestFloor is 0.125 and flips that fraction of ALL contested
+	// outcomes, so 0.875 is the CEILING on any win rate, not 1.0. An earlier
+	// draft of this test asserted > 0.99 and was arithmetically impossible.
+	assert.Greater(t, full, 0.85, "uncompressed, a 455-vs-92 attacker should sit near the 0.875 floor ceiling")
+	assert.Less(t, compressed, full, "compression must reduce a lopsided win rate")
+	assert.Greater(t, compressed, 0.60, "but 0.8 should still leave a strong attacker clearly dominant")
+}
+
+// An underdog's outcome must be untouched at every exponent -- the ahead-only
+// rule is what keeps this a crit fix rather than a buff to weak attackers.
+func TestRunContest_UnderdogUnaffected(t *testing.T) {
+	const trials = 40000
+
+	rate := func(p float64) float64 {
+		SetContestGapCompressionForTest(t, p)
+		wins := 0
+		for i := 0; i < trials; i++ {
+			if RunContest(105, []contest.Entry{{Score: 185}}).Success {
+				wins++
+			}
+		}
+		return float64(wins) / trials
+	}
+
+	assert.InDelta(t, rate(1.0), rate(0.5), 0.01,
+		"an attacker behind on score must be unaffected at any exponent")
+}

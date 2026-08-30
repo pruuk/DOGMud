@@ -2,6 +2,7 @@ package combat
 
 import (
 	"math"
+	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
@@ -23,7 +24,37 @@ import (
 // forage, concentration -- are roadmap categories B and C and are deliberately
 // unfloored. Do not route them here to "unify" them.
 func RunContest(atkScore float64, entries []contest.Entry) contest.Result {
+	// Compresses the DEFENCE entries, never atkScore: contest.Run derives the
+	// roll spread from the attack score, so lowering it would shrink the spread
+	// and cancel most of the compression. Applied HERE and nowhere else -- see
+	// gap_compression_guard_test.go.
+	entries = compressContestGap(atkScore, entries, contestGapCompression())
 	return contest.RunWithFloors(atkScore, entries, float64(configs.GetBalanceConfig().ContestFloor))
+}
+
+// SetContestGapCompressionForTest overrides the configured exponent for one
+// test and restores it afterwards. Tests cannot use config.yaml: a Go test
+// binary never loads it, so the knob reads its struct zero value.
+func SetContestGapCompressionForTest(t *testing.T, p float64) {
+	t.Helper()
+	prev := contestGapCompressionOverride
+	contestGapCompressionOverride = &p
+	t.Cleanup(func() { contestGapCompressionOverride = prev })
+}
+
+var contestGapCompressionOverride *float64
+
+func contestGapCompression() float64 {
+	if contestGapCompressionOverride != nil {
+		return *contestGapCompressionOverride
+	}
+	p := float64(configs.GetBalanceConfig().ContestGapCompression)
+	if p <= 0 || p > 1.0 {
+		// A test binary never loads config.yaml, so the field reads 0 here.
+		// Identity is the only safe reading of "unset".
+		return 1.0
+	}
+	return p
 }
 
 // compressContestGap narrows how far an attacker's score sits above each

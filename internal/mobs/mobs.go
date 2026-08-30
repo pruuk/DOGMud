@@ -336,6 +336,101 @@ func NewMobByIdFresh(mobId MobId, homeRoomId int, forceStatPool ...int) *Mob {
 	return newMobByIdInternal(mobId, homeRoomId, true, forceStatPool...)
 }
 
+// archetypeStatShares normalises the two relative archetype weights into
+// per-stat probabilities. There are three primary stats and three non-primary.
+//
+// The weights are RELATIVE on purpose: the shipped values, 0.25 and 0.15, sum
+// to 1.2 across six stats and are not a distribution. Normalising here means an
+// author writes the ratio they mean and cannot express something that fails to
+// sum to 1.
+//
+// Equal weights reproduce the uniform ("") archetype exactly, so the knob spans
+// the full range from the old 80/20 specialisation to no archetype at all.
+func archetypeStatShares(primaryWeight, secondaryWeight float64) (primary, secondary float64) {
+	total := 3*primaryWeight + 3*secondaryWeight
+	if total <= 0 {
+		return 1.0 / 6, 1.0 / 6
+	}
+	return primaryWeight / total, secondaryWeight / total
+}
+
+// distributeStatPool spreads statPool points across the six stats according to
+// the mob's archetype. Extracted from newMobByIdInternal so the resulting
+// distribution can be measured directly.
+//
+// primaryShare is the per-stat probability for ONE primary stat, already
+// normalised by archetypeStatShares. The fighting and casting arms were a
+// hardcoded 80/20 until 2026-08-30, which gave a casting mob's Dexterity one
+// fifteenth of its pool -- and Dexterity is the whole physical defence term.
+//
+// The `tank` arm keeps its own bespoke six-way split and is deliberately NOT a
+// primary/secondary distribution.
+func distributeStatPool(mob *Mob, statPool int, primaryShare float64) {
+	primaryPermille := int(primaryShare * 3 * 1000)
+	for i := 0; i < statPool; i++ {
+		var statIdx int
+		switch mob.Archetype {
+		case "fighting":
+			// Primary = physical (Str/Dex/Vit), non-primary = mental.
+			// Was a hardcoded 80/20 until 2026-08-30.
+			if util.Rand(1000) < primaryPermille {
+				statIdx = util.Rand(3) // 0=Str, 1=Dex, 2=Vit
+			} else {
+				statIdx = 3 + util.Rand(3) // 3=Per, 4=Wil, 5=Cha
+			}
+		case "casting":
+			// Primary = mental (Per/Wil/Cha), non-primary = physical.
+			if util.Rand(1000) < primaryPermille {
+				statIdx = 3 + util.Rand(3)
+			} else {
+				statIdx = util.Rand(3)
+			}
+		case "tank":
+			// Tank/taunter: 25% Cha (taunt), 20% Vit (HP buffer),
+			// 15% each Str/Dex/Wil, 10% Per.
+			r := util.Rand(100)
+			switch {
+			case r < 25:
+				statIdx = 5 // Charisma
+			case r < 45:
+				statIdx = 2 // Vitality
+			case r < 60:
+				statIdx = 0 // Strength
+			case r < 75:
+				statIdx = 1 // Dexterity
+			case r < 90:
+				statIdx = 4 // Willpower
+			default:
+				statIdx = 3 // Perception
+			}
+		default:
+			// Even distribution across all 6 stats
+			statIdx = util.Rand(6)
+		}
+		// Pool points land in Base, not Training. Training is gains-since-spawn
+		// for players, and U10b-0 makes the progression curve read it as the
+		// difficulty rank -- a mob whose authored pool sat there would start
+		// partway down the decay curve and could be frozen outright by its gain
+		// cap. Safe with respect to species hydration: this runs on a copy of a
+		// template already Validated at load, so Base already carries species +
+		// authored, and Validate skips a nonzero Base.
+		switch statIdx {
+		case 0:
+			mob.Character.Stats.Strength.Base++
+		case 1:
+			mob.Character.Stats.Dexterity.Base++
+		case 2:
+			mob.Character.Stats.Vitality.Base++
+		case 3:
+			mob.Character.Stats.Perception.Base++
+		case 4:
+			mob.Character.Stats.Willpower.Base++
+		case 5:
+			mob.Character.Stats.Charisma.Base++
+		}
+	}
+}
+
 func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forceStatPool ...int) *Mob {
 
 	mobsMu.RLock()
@@ -543,67 +638,11 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 				statPool = forceStatPool[0]
 			}
 			// Distribute stat pool across training stats using archetype weighting
-			for i := 0; i < statPool; i++ {
-				var statIdx int
-				switch mob.Archetype {
-				case "fighting":
-					// 80% physical (Str/Dex/Vit), 20% mental (Per/Wil/Cha)
-					if util.Rand(100) < 80 {
-						statIdx = util.Rand(3) // 0=Str, 1=Dex, 2=Vit
-					} else {
-						statIdx = 3 + util.Rand(3) // 3=Per, 4=Wil, 5=Cha
-					}
-				case "casting":
-					// 20% physical (Str/Dex/Vit), 80% mental (Per/Wil/Cha)
-					if util.Rand(100) < 20 {
-						statIdx = util.Rand(3)
-					} else {
-						statIdx = 3 + util.Rand(3)
-					}
-				case "tank":
-					// Tank/taunter: 25% Cha (taunt), 20% Vit (HP buffer),
-					// 15% each Str/Dex/Wil, 10% Per.
-					r := util.Rand(100)
-					switch {
-					case r < 25:
-						statIdx = 5 // Charisma
-					case r < 45:
-						statIdx = 2 // Vitality
-					case r < 60:
-						statIdx = 0 // Strength
-					case r < 75:
-						statIdx = 1 // Dexterity
-					case r < 90:
-						statIdx = 4 // Willpower
-					default:
-						statIdx = 3 // Perception
-					}
-				default:
-					// Even distribution across all 6 stats
-					statIdx = util.Rand(6)
-				}
-				// Pool points land in Base, not Training. Training is gains-since-spawn
-				// for players, and U10b-0 makes the progression curve read it as the
-				// difficulty rank -- a mob whose authored pool sat there would start
-				// partway down the decay curve and could be frozen outright by its gain
-				// cap. Safe with respect to species hydration: this runs on a copy of a
-				// template already Validated at load, so Base already carries species +
-				// authored, and Validate skips a nonzero Base.
-				switch statIdx {
-				case 0:
-					mob.Character.Stats.Strength.Base++
-				case 1:
-					mob.Character.Stats.Dexterity.Base++
-				case 2:
-					mob.Character.Stats.Vitality.Base++
-				case 3:
-					mob.Character.Stats.Perception.Base++
-				case 4:
-					mob.Character.Stats.Willpower.Base++
-				case 5:
-					mob.Character.Stats.Charisma.Base++
-				}
-			}
+			bal := configs.GetBalanceConfig()
+			primaryShare, _ := archetypeStatShares(
+				float64(bal.ArchetypePrimaryStatWeight),
+				float64(bal.ArchetypeSecondaryStatWeight))
+			distributeStatPool(&mob, statPool, primaryShare)
 		}
 		mob.Character.Validate()
 		// Stage 3.4: apply override fields from mob YAML if set.

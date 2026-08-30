@@ -543,6 +543,36 @@ Balance:
   #   and reverts to 0.125, because a zero here would silently disable the
   #   mechanism everywhere including in every Go test.
   ContestFloor: 0.125
+  #
+  # ContestGapCompression: exponent applied to an attacker's score LEAD before
+  # either side rolls.  effectiveDefence = attack - (attack-defence)^p
+  #
+  # Both rolls in a contest share ONE standard deviation taken from the attack
+  # score, so the normalized margin is N((A-D)/(0.15*A*sqrt2), 1) and crit fires
+  # when it clears a bar that floors at 1.5. Uncompressed that makes a 50% score
+  # edge a ~53% crit rate, and a crit SKIPS MITIGATION entirely.
+  #
+  # Measured against Meirok (attack 455), hit% / crit%:
+  #   defence   p=1.0     p=0.90    p=0.85    p=0.80    p=0.75
+  #        86   100/99     98/73     94/53     88/37     81/27
+  #       140   100/96     97/63     92/45     85/32     78/23
+  #       276    97/64     87/35     80/26     74/20     69/16
+  #       455    50/7      50/7      50/7      50/7      50/7
+  #
+  # ⚠️ Parity is INVARIANT at every exponent -- compression only touches
+  # mismatches, so it cannot disturb an even fight.
+  # ⚠️ Raises the DEFENCE, never lowers the attack. Lowering the attack would
+  # shrink the roll spread too (it is derived from the attack score) and cancel
+  # most of the compression: against a defence of 48 that leaves crit at 94%
+  # instead of 29%.
+  # ⚠️ Applies only when the attacker is AHEAD. Symmetric compression would
+  # take an underdog from a 0.6% hit rate to 40.8%, a separate decision.
+  # ⚠️ Reaches EVERY opposed contest, not just melee: steal, sneak, flee and
+  # the grapple family all resolve through combat.RunContest.
+  # ⚠️ 0 is NOT an off-switch. It reads as unset and becomes 1.0, so deleting
+  # this line cannot silently collapse every mismatch to a one-point gap.
+  # Lower = flatter. 1.0 = off.
+  ContestGapCompression: 0.80
   # ConcentrationFloor: the symmetric mercy band for concentration
   #   contests only (damage, position, and throttle triggers). The
   #   standard ContestFloor would break a master one-in-eight per
@@ -835,6 +865,30 @@ Balance:
   #   player physical  = MeleeDamageScale                    = 0.52
   #   NPC physical     = MeleeDamageScale x this             = 0.2158
   MobDamageMultiplier: 0.415    # 2026-08-30: from 0.83 — holds NPC physical at exactly its post-halving level (0.52x0.415 = 0.26x0.83) while player physical returns to 0.52
+  #
+  # Archetype stat distribution. RELATIVE weights, normalised in code, so they
+  # need not sum to anything. Three primary stats and three non-primary.
+  #
+  # Today's shipped behaviour was a hardcoded 80/20 group split, i.e. 0.2667 and
+  # 0.0667 here. That gave a CASTING mob's Dexterity one fifteenth of its pool,
+  # and Dexterity is the whole physical defence term -- so the 1300-pool
+  # Elemental Queen defended at 92 while a 650-pool sand elemental defended at
+  # 178. Half the budget, nearly twice the defence, purely from archetype.
+  #
+  # 0.25 / 0.15 normalises to 0.2083 and 0.1250, a 62.5/37.5 group split.
+  #
+  # ⚠️ The pool is FIXED, so raising the non-primary share necessarily lowers
+  # the primary share. Casters gain physical defence; FIGHTERS LOSE IT. On this
+  # change ALONE a royal fighter's crit-taken rate rises; it is only acceptable
+  # alongside ContestGapCompression.
+  # ⚠️ Equal weights reproduce the uniform archetype exactly.
+  # ⚠️ Flattening also flattens mob OFFENCE: a caster's Willpower share falls
+  # from 26.7% to 20.8%, so its spells soften too.
+  # ⚠️ Distribution happens ONCE at spawn. Existing instances keep their rolled
+  # stats until they despawn; wipe instance saves to see this on live content.
+  # ⚠️ The `tank` archetype keeps its own bespoke six-way split, untouched.
+  ArchetypePrimaryStatWeight: 0.25
+  ArchetypeSecondaryStatWeight: 0.15
   #
   # SpellDamageScale: multiplier on ALL spell damage output (players + NPCs).
   #   1.0 = no scaling. Example at Wil 100, skill 0, spell mult 1.0:
