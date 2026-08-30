@@ -6,18 +6,22 @@ primarily on your Vitality stat.
 
 Health will change color to reflect your condition:
 
-<ansi fg="health-100">100%</ansi>
-<ansi fg="health-90">90%-99%</ansi>
-<ansi fg="health-80">80%-89%</ansi>
-<ansi fg="health-70">70%-79%</ansi>
-<ansi fg="health-60">60%-69%</ansi>
-<ansi fg="health-50">50%-59%</ansi>
-<ansi fg="health-40">40%-49%</ansi>
-<ansi fg="health-30">30%-39%</ansi>
-<ansi fg="health-20">20%-29%</ansi>
-<ansi fg="health-10">10%-19%</ansi>
-<ansi fg="health-0">0%-9%</ansi>
+<ansi fg="health-100">untouched</ansi>
+<ansi fg="health-90">barely marked</ansi>
+<ansi fg="health-80">scratched</ansi>
+<ansi fg="health-70">bruised</ansi>
+<ansi fg="health-60">bloodied</ansi>
+<ansi fg="health-50">wounded</ansi>
+<ansi fg="health-40">badly wounded</ansi>
+<ansi fg="health-30">gravely hurt</ansi>
+<ansi fg="health-20">failing</ansi>
+<ansi fg="health-10">near death</ansi>
+<ansi fg="health-0">at the edge</ansi>
 <ansi fg="health-dead">dead</ansi>
+
+The colors run from the first of those to the last as you
+take punishment. Judge a fight by the color, not by counting:
+that is the whole point of showing it this way.
 
 When your Health drops to zero, you collapse and begin
 bleeding out. If you are not aided in time, you will die --

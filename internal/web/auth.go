@@ -279,6 +279,11 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 		if locked, retryIn := authThrottled(sourceIP, now); locked {
 			secs := int(retryIn.Seconds()) + 1
 			w.Header().Set("Retry-After", strconv.Itoa(secs))
+			// Send the challenge even while throttled. Without it a browser that
+			// has not yet been prompted never learns to send credentials, so it
+			// keeps issuing credential-less requests and re-locks the moment the
+			// window expires -- a self-sustaining outage rather than a lockout.
+			w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 			http.Error(w, "Too many failed authentication attempts", http.StatusTooManyRequests)
 			return
 		}
@@ -319,10 +324,25 @@ func doBasicAuth(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		// Anything that reaches here presented no credential, a malformed one,
-		// a wrong password, or a non-admin account. All of those count toward
-		// the per-source lockout.
-		noteAuthFailure(sourceIP, now)
+		// Only a PRESENTED credential can be a failed attempt.
+		//
+		// ⚠️ A request with NO Authorization header is not a failure, it is the
+		// first half of the standard HTTP Basic handshake: the client asks, gets
+		// a 401 with a challenge, and only then retries with credentials. This
+		// used to call noteAuthFailure unconditionally, so ordinary page loads
+		// manufactured "failures" -- and an admin page pulling several resources
+		// tripped the five-strike lockout entirely on its own.
+		//
+		// That is what broke the combat, economy and progression dashboards:
+		// their JSON endpoints answered 429 with a plain-text body, surfacing in
+		// the browser as
+		//   SyntaxError: Unexpected token 'T', "Too many f"... is not valid JSON
+		//
+		// A wrong password, a malformed credential and a non-admin account all
+		// still count, so brute-force protection is unchanged.
+		if ok {
+			noteAuthFailure(sourceIP, now)
+		}
 
 		// If the Authentication header is not present, is invalid, or the
 		// username or password is wrong, then set a WWW-Authenticate

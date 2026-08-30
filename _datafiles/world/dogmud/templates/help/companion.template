@@ -6,13 +6,13 @@ creatures bound to you through manifestation magic.
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
   <ansi fg="command">companion</ansi>            List all your active companions.
-  <ansi fg="command">companion &lt;name&gt;</ansi>     Show detailed info for one companion.
-  <ansi fg="command">companion &lt;name&gt; assist on/off</ansi>
+  <ansi fg="command">companion <name></ansi>     Show detailed info for one companion.
+  <ansi fg="command">companion <name> assist on/off</ansi>
                        Toggle auto-assist on or off for that
                        companion. When assist is on, the
                        companion joins combat alongside you
                        automatically.
-  <ansi fg="command">companion &lt;name&gt; name &lt;nickname&gt;</ansi>
+  <ansi fg="command">companion <name> name <nickname></ansi>
                        Give your companion a personal name.
                        It will be known as "Nickname the Type"
                        (e.g., "Fred the Spirit Wolf"). Names

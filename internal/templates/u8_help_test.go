@@ -307,7 +307,6 @@ func u8HelpCrossReferenceTopics(rendered string) []string {
 //	find modules -path "*files/datafiles/templates/help/*.template" -exec basename {} .template \;
 var moduleProvidedHelpTopics = map[string]string{
 	"auction":     "modules/auctions",
-	"bury":        "modules/cleanup",
 	"trash":       "modules/cleanup",
 	"follow":      "modules/follow",
 	"checkclient": "modules/gmcp",
@@ -509,7 +508,11 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 // So shrinking the graph now fails as loudly as breaking it. If you delete a
 // link deliberately, lower this number in the same commit and say why. If you
 // add links, raise it.
-const helpCrossReferenceFloor = 1083
+// Lowered 1083 -> 1081 on 2026-08-30: the `bury` command was removed (owner:
+// a GoMud holdover), taking bury.template and its two cross-references with it.
+// A DELIBERATE removal, lowered in the same commit with the reason, which is
+// the process this ratchet exists to force.
+const helpCrossReferenceFloor = 1081
 
 func TestHelpCrossReferenceGraphDoesNotShrinkSilently(t *testing.T) {
 	useU8DataFiles(t)

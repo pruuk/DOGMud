@@ -96,8 +96,35 @@ excellent protection when your other defenses fail.
   - Two-handed weapon: Moderate attacks, strong parry, no block
 
   <ansi fg="stat">While Prone:</ansi>
-  All defenses are severely reduced when knocked down. Use <ansi fg="command">stand</ansi> to recover
-  quickly, or rely on auto-recovery to save stamina.
+  All defenses are severely reduced when knocked down, and attacks against
+  you land harder. Getting up matters more than anything else you could be
+  doing.
+
+  You try to rise on your own after a moment, but that is no longer a
+  certainty: if an enemy is standing over you, the two of you contest it,
+  and a stronger opponent can keep you down. Nobody is held forever, and
+  fighting your way back up teaches you something either way.
+
+  <ansi fg="command">stand</ansi> is the guaranteed way out. It costs stamina and it always
+  works, however badly you are being held. If you are down and want out
+  now, use it rather than waiting.
+
+<ansi fg="yellow">━━━ Counterattacks ━━━</ansi>
+
+A defense does not only spare you damage. Defend decisively enough and
+your opponent leaves an opening, and you take it: a free answering swing
+they must then defend in turn, at reduced damage.
+
+You do not choose this and it costs you no action. It falls out of
+defending well, which is another reason to carry defenses you can
+actually use.
+
+Two things worth knowing:
+
+  - Every attack channel can be answered, not just weapons. A quelled
+    spell or a defied taunt earns the same opening.
+  - Reach decides it. Someone shooting you from another room is the one
+    attack you cannot answer, because you cannot reach them.
 
 <ansi fg="yellow">━━━ Defense Skills ━━━</ansi>
 

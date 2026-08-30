@@ -17,7 +17,7 @@ an optional condition to decide what to do.
 <ansi fg="yellow">Managing triggers:</ansi>
 
   Triggers are created and managed in the
-  <ansi fg="command">Triggers &amp; Timers</ansi> panel — there is no typed
+  <ansi fg="command">Triggers & Timers</ansi> panel — there is no typed
   command for them.
 
   <ansi fg="command">+ New</ansi>         Open the editor to create a trigger.
@@ -28,7 +28,7 @@ an optional condition to decide what to do.
   <ansi fg="command">Right-click</ansi>   Open the context menu to Edit, Duplicate,
                  or Remove a trigger.
 
-<ansi fg="yellow">Patterns &amp; wildcards:</ansi>
+<ansi fg="yellow">Patterns & wildcards:</ansi>
 
   A pattern is plain text with optional <ansi fg="command">*</ansi> wildcards.
   Each <ansi fg="command">*</ansi> matches any run of characters and captures

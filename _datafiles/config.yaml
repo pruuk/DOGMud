@@ -730,6 +730,22 @@ Balance:
   SneakModEmitsLightLitRoom: 0.85   # Blend-in modifier: emitting light in a lit room
   SneakModNoLightLitRoom: 0.9       # Alert-observer modifier: dark sneaker in lit room
 
+  # ── SKULLDUGGERY: COOLDOWNS AND THE HIDDEN BONUS ──────────────────────────
+  # ⚠️ These four were ABSENT from this file until 2026-08-30, and absence did
+  # NOT mean "use the Go default" -- it meant ZERO. An absent key unmarshals to
+  # the zero value, and each validator is shaped `if x < 0 { x = default }`,
+  # which cannot repair a zero. So steal had NO cooldown at all, stealing or
+  # planting from hiding gave NO bonus, and shadow and failed sneaks had no
+  # cooldown either. Exactly the trap that left the five SurpriseAttack*Penalty
+  # knobs inert until U10d deleted them.
+  #
+  # KEEP THESE KEYS PRESENT even when set to their default values. Deleting a
+  # line here does not restore a default, it silently zeroes the knob.
+  StealCooldown: 60      # Real seconds before another steal may be attempted
+  ShadowCooldown: 5      # Rounds before shadow may be used again
+  SneakFailCooldown: 3   # Rounds to wait after a failed sneak attempt
+  StealHiddenBonus: 25   # Score added to steal AND plant attempts made while hidden
+
   # ── COMBAT: DARKNESS ───────────────────────────────────────────────────────
   # Multiplier on attack AND defense scores when fighting in a dark room
   # without nightvision. 0.80 = 20% penalty to hit and defend while blind.
@@ -771,7 +787,7 @@ Balance:
   #     0.05 →   5 raw damage per swing (current — low, needs MobDamageMultiplier)
   #     0.15 →  15 raw damage per swing
   #     0.30 →  30 raw damage per swing (original default)
-  MeleeDamageScale: 0.52       # 2026-08-03: +20% (from 0.43) — player melee up to offset the 08-02 mitigation/crit fixes
+  MeleeDamageScale: 0.26       # 2026-08-30: HALVED (from 0.52) — owner playtest: melee damage too high for players AND mobs. Spell and rhetoric scales deliberately unchanged. Note this knob governs the WHOLE physical channel (melee, ranged, all special moves, throw, pets), so U10d's bow-to-melee ratio is preserved.
   #
   # MobDamageMultiplier: extra multiplier applied ONLY to NPC melee
   #   damage. Lets you keep player damage low while making NPCs threatening.

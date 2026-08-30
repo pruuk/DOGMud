@@ -5,7 +5,7 @@ your companions, releasing them from your service.
 
 <ansi fg="yellow">━━━ Usage ━━━</ansi>
 
-  <ansi fg="command">dismiss &lt;name&gt;</ansi>    Release the named companion.
+  <ansi fg="command">dismiss <name></ansi>    Release the named companion.
 
 <ansi fg="yellow">━━━ WARNING: Betrayal ━━━</ansi>
 
@@ -41,7 +41,7 @@ Take back what you want to keep BEFORE you dismiss.
 <ansi fg="yellow">━━━ Alternative ━━━</ansi>
 
 If you simply want a companion to stop fighting alongside you
-without releasing it, use <ansi fg="command">companion assist &lt;name&gt;</ansi> to
+without releasing it, use <ansi fg="command">companion assist <name></ansi> to
 toggle auto-assist off instead.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help companion</ansi>

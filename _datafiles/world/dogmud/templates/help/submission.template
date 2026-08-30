@@ -42,7 +42,7 @@ interacts with grapples.
   <ansi fg="command">set submission</ansi>
     Show current policy.
 
-  <ansi fg="command">set submission &lt;mercy|subdue|cripple|lethal&gt;</ansi>
+  <ansi fg="command">set submission <mercy|subdue|cripple|lethal></ansi>
     Set policy. Lethal requires two-step confirmation.
 
 Your policy applies to ALL submissions you successfully lock in,
