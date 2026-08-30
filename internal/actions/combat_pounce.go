@@ -150,8 +150,8 @@ func ExecutePounce(actor Actor) PounceResult {
 	combat.RecordSpecialMove(sourceType, targetType, "pounce", result.Hit, dmgRecorded, char, target.Char, util.GetRoundCount())
 
 	// Consume the combat round.
-	if char.Aggro != nil {
-		char.Aggro.RoundsWaiting = 1
+	if char.CombatPhase != nil {
+		char.SetRoundsWaiting(1)
 	}
 
 	// Progression: unarmed-combat on hit.

@@ -88,7 +88,7 @@ func RecordAndWait(char *characters.Character, moveName string, sourceType comba
 	combat.RecordSpecialMove(sourceType, targetType, moveName, hit, damage, char, targetChar, round)
 
 	// Mark that this character consumed their combat round
-	if char.Aggro != nil {
-		char.Aggro.RoundsWaiting = 1
+	if char.CombatPhase != nil {
+		char.SetRoundsWaiting(1)
 	}
 }

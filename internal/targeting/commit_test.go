@@ -77,7 +77,7 @@ func TestCommitAfter_PassesTheExplicitWait(t *testing.T) {
 	CommitAfter(c, state.ActorRef{MobInstanceId: 42}, ReasonAttack, 3)
 
 	require.NotNil(t, c.Aggro)
-	assert.Equal(t, 3, c.Aggro.RoundsWaiting)
+	assert.Equal(t, 3, c.RoundsWaiting())
 }
 
 func TestCommitTaunt_PinsTheTargetOntoTheTaunter(t *testing.T) {

@@ -461,5 +461,5 @@ func specialMoveRoundsWaiting(char *characters.Character) int {
 	if char.Aggro == nil {
 		return 0
 	}
-	return char.Aggro.RoundsWaiting
+	return char.RoundsWaiting()
 }

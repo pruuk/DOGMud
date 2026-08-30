@@ -394,7 +394,7 @@ func TestShoot_OpeningShot_ChargesCombatRound(t *testing.T) {
 	assert.NoError(t, err)
 
 	require.NotNil(t, user.Character.Aggro, "opening same-room shot must set shooter aggro before firing")
-	assert.Equal(t, 1, user.Character.Aggro.RoundsWaiting, "opening shot must consume the attacker's combat round")
+	assert.Equal(t, 1, user.Character.RoundsWaiting(), "opening shot must consume the attacker's combat round")
 }
 
 // TestShoot_RefusedNonCombatant_NoAggro: a refused shot (non-combatant target)
@@ -512,7 +512,7 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 		delta := rangedWrapperCycleDelta{
 			shootDebit:        50 - afterShoot,
 			ammoAfterShoot:    user.Character.Items[1].Uses,
-			roundsAfterShoot:  user.Character.Aggro.RoundsWaiting,
+			roundsAfterShoot:  user.Character.RoundsWaiting(),
 			loadedAfterShoot:  user.Character.Equipment.Weapon.Loaded,
 			cooldownAfterFire: user.Character.Cooldowns["special-move"],
 		}
@@ -545,7 +545,7 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 		delta := rangedWrapperCycleDelta{
 			shootDebit:        50 - afterShoot,
 			ammoAfterShoot:    mob.Character.Items[1].Uses,
-			roundsAfterShoot:  mob.Character.Aggro.RoundsWaiting,
+			roundsAfterShoot:  mob.Character.RoundsWaiting(),
 			loadedAfterShoot:  mob.Character.Equipment.Weapon.Loaded,
 			cooldownAfterFire: mob.Character.Cooldowns["special-move"],
 		}
@@ -624,7 +624,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		assert.Equal(t, 0, mob.Character.Stamina)
 		assert.True(t, mob.Character.Equipment.Weapon.Loaded)
 		assert.Equal(t, 20, mob.Character.Items[1].Uses)
-		assert.Equal(t, 0, mob.Character.Aggro.RoundsWaiting)
+		assert.Equal(t, 0, mob.Character.RoundsWaiting())
 		assert.Equal(t, 3, mob.Character.Cooldowns["special-move"])
 		assert.Equal(t, 500, target.Character.Health)
 		assert.Empty(t, events.DrainQueuedMessagesForTest(target.UserId), "mob refusal must stay silent")

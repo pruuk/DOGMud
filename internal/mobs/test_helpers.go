@@ -1,5 +1,7 @@
 package mobs
 
+import "github.com/GoMudEngine/GoMud/internal/state/combatphase"
+
 // SeedMobsForTest replaces all global mob registries with the supplied test
 // data and returns a cleanup function that restores the originals.
 // Intended for cross-package integration tests (hooks, commands).
@@ -23,6 +25,27 @@ func SeedMobsForTest(specs map[int]*Mob, instances map[int]*Mob) func() {
 	}
 	allMobNames = names
 	mobNameCache = cache
+
+	// U12c-2: seeded fixtures are bare characters.Character{Name:...} literals,
+	// so their state machines are nil -- a shape no production character has,
+	// because every load path Validates. Survivable while combat state lived on
+	// the Aggro struct, which needs no machine; NOT survivable now the round
+	// budget lives on CombatPhase, where a nil machine silently drops writes.
+	//
+	// Only the combat phase machine is created, deliberately. Calling the full
+	// Validate() here also seeds skills, stats and equipment, which reshapes
+	// these fixtures and breaks the behaviour-tree tests that depend on their
+	// bare shape.
+	for _, m := range specs {
+		if m != nil && m.Character.CombatPhase == nil {
+			m.Character.CombatPhase = combatphase.NewMachine()
+		}
+	}
+	for _, m := range instances {
+		if m != nil && m.Character.CombatPhase == nil {
+			m.Character.CombatPhase = combatphase.NewMachine()
+		}
+	}
 
 	recentlyDied = map[int]int{}
 	instanceCounter = 200

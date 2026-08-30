@@ -403,15 +403,26 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	// U10d: exactly ONE swing of this engagement is the opening strike. The flag
 	// is round-scoped here only because the round is where the engagement opens;
 	// it is consumed per-swing below, on the swing that is THROWN.
-	openingStrikeLeft := false
-	if sourceChar.Aggro.Type == characters.SurpriseAttack {
-		openingStrikeLeft = true
-		attackResult.WasSurpriseAttack = true
-		// U12b: routed through the seam, deliberately NOT replaced with
-		// targeting.ConsumeOpeningStrike. That swap is U12c's behavioural
-		// change; doing it here would make this sweep behavioural.
-		targeting.Commit(sourceChar, sourceChar.CurrentCombatTarget(), targeting.ReasonAttack)
-	}
+	// U12c-2: the opening is engagement state, and this is the production caller
+	// targeting.ConsumeOpeningStrike was written for in U12a.
+	//
+	// What stood here read Aggro.Type and DEMOTED it in the same breath, via a
+	// re-Commit. Splitting the query from the consumption removes the demotion
+	// entirely.
+	//
+	// That re-Commit did NOT change pacing, though it looks like it should:
+	// SetAggro seeds the round budget from the weapon's WaitRounds, no DOGMud
+	// weapon sets waitrounds (so it is 0), and phase1WaitRound has already
+	// returned early unless the budget is 0 by the time this runs. What it DID
+	// do is drive Engaged -> Engaging -> Engaged mid-round, re-running the
+	// taunt-hold and untargetable gates and re-firing anything listening for
+	// the engagement becoming active. That churn is what is gone.
+	//
+	// ⚠️ AttackResult.WasSurpriseAttack STAYS. applyCombatProgression runs after
+	// this point and cannot ask the engagement any more, because the opening is
+	// already spent. See U10d spec 2.8.3.
+	openingStrikeLeft := targeting.ConsumeOpeningStrike(sourceChar)
+	attackResult.WasSurpriseAttack = openingStrikeLeft
 
 	attackResult.DefenderWasAttacked = len(plan.weapons) > 0
 

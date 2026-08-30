@@ -135,8 +135,8 @@ func ExecuteGore(actor Actor) GoreResult {
 	combat.RecordSpecialMove(sourceType, targetType, "gore", result.Hit, dmgRecorded, char, target.Char, util.GetRoundCount())
 
 	// Consume the combat round.
-	if char.Aggro != nil {
-		char.Aggro.RoundsWaiting = 1
+	if char.CombatPhase != nil {
+		char.SetRoundsWaiting(1)
 	}
 
 	// Progression: unarmed-combat on hit.

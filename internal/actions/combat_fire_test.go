@@ -376,7 +376,7 @@ func TestFire_RefusedCostIsAtomic(t *testing.T) {
 	assert.True(t, char.Equipment.Weapon.Loaded)
 	require.Len(t, char.Items, 1)
 	assert.Equal(t, 20, char.Items[0].Uses)
-	assert.Equal(t, 0, char.Aggro.RoundsWaiting)
+	assert.Equal(t, 0, char.RoundsWaiting())
 	assert.Equal(t, healthBefore, targetMob.Character.Health)
 	assert.Equal(t, cooldownsBefore, char.Cooldowns)
 }
@@ -414,7 +414,7 @@ func TestFire_AffordableMissPaysUnloadsAndConsumesRound(t *testing.T) {
 	assert.Equal(t, healthBefore, targetMob.Character.Health)
 	assert.False(t, char.Equipment.Weapon.Loaded)
 	assert.Equal(t, 20, char.Items[0].Uses)
-	assert.Equal(t, 1, char.Aggro.RoundsWaiting)
+	assert.Equal(t, 1, char.RoundsWaiting())
 	assert.Equal(t, characters.Cooldowns{"special-move": 3}, char.Cooldowns)
 }
 
@@ -446,7 +446,7 @@ func TestFire_StaleWeaponAfterAdmissionDoesNotUnloadReplacement(t *testing.T) {
 	assert.False(t, res.Executed)
 	assert.Equal(t, 2, char.Equipment.Weapon.ItemId)
 	assert.True(t, char.Equipment.Weapon.Loaded)
-	assert.Equal(t, 0, char.Aggro.RoundsWaiting)
+	assert.Equal(t, 0, char.RoundsWaiting())
 	assert.Equal(t, healthBefore, target.Character.Health)
 }
 

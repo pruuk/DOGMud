@@ -207,8 +207,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		combat.RecordSpecialMove(sourceType, targetType, "taunt", false, 0,
 			char, target.Char, util.GetRoundCount())
 
-		if char.Aggro != nil {
-			char.Aggro.RoundsWaiting = 1
+		if char.CombatPhase != nil {
+			char.SetRoundsWaiting(1)
 		}
 
 		return TauntResult{
@@ -327,8 +327,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		}
 	}
 
-	if char.Aggro != nil {
-		char.Aggro.RoundsWaiting = 1
+	if char.CombatPhase != nil {
+		char.SetRoundsWaiting(1)
 	}
 
 	// U6b Task 10, the defy carve-out: a defy CRIT counter-taunts, replacing

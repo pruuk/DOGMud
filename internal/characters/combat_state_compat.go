@@ -1,7 +1,6 @@
 package characters
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -105,11 +104,10 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 		combatAddlWaitRounds = c.Equipment.Weapon.GetSpec().WaitRounds + c.Equipment.Offhand.GetSpec().WaitRounds
 	}
 
-	if aggroType == DefaultAttack {
-		if c.Equipment.Weapon.GetSpec().Subtype == items.Shooting {
-			aggroType = Shooting
-		}
-	}
+	// U12c-2: the DefaultAttack -> Shooting derivation that stood here is gone.
+	// It was stored state computed from the equipped weapon at commit time,
+	// while targeting.Engagement.Ranged derives the same fact live. Stored and
+	// derived state cannot disagree if only one of them exists.
 
 	// U12c-0b: the transition DECIDES. It used to run after the Aggro write
 	// with its error discarded, so a vetoed commit left Aggro holding a target
@@ -139,6 +137,10 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 		}); err != nil {
 			return
 		}
+		// U12c-2: the actor's round budget lives on the machine now. Seeded
+		// here, beside the wind-up it happens to match, so the two counters
+		// stay visibly distinct. See the two-counter note in combatphase.
+		c.SetRoundsWaiting(combatAddlWaitRounds)
 	}
 
 	// Clear grapple state if switching targets. AFTER the transition, so a
@@ -198,24 +200,22 @@ func (c *Character) IsAggro(targetUserId int, targetMobInstanceId int) bool {
 			return true
 		}
 
-		if c.Aggro.Type == SpellCast {
-			if len(c.Aggro.SpellInfo.TargetUserIds) > 0 {
-				for _, uId := range c.Aggro.SpellInfo.TargetUserIds {
-					if uId == targetUserId {
-						return true
-					}
-				}
-			}
+	}
 
-			if len(c.Aggro.SpellInfo.TargetMobInstanceIds) > 0 {
-				for _, mId := range c.Aggro.SpellInfo.TargetMobInstanceIds {
-					if mId == targetMobInstanceId {
-						return true
-					}
-				}
+	// U12c-2: a pending cast's aim lives on the Activity machine now, not in
+	// Aggro.SpellInfo. Checked outside the Aggro block on purpose: a caster's
+	// aim counts as aggro whether or not it also holds a plain target.
+	if cd, ok := c.CastingData(); ok {
+		for _, uId := range cd.TargetUserIds {
+			if uId == targetUserId && targetUserId > 0 {
+				return true
 			}
 		}
-
+		for _, mId := range cd.TargetMobInstanceIds {
+			if mId == targetMobInstanceId && targetMobInstanceId > 0 {
+				return true
+			}
+		}
 	}
 	return false
 }

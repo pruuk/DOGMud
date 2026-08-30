@@ -281,7 +281,7 @@ func resolveCombatTarget(atk, def actions.Actor, roundNumber uint64) bool {
 // Returns true if the attacker was waiting and the round was consumed.
 func phase1WaitRound(atk, def actions.Actor) bool {
 	atkChar := atk.GetCharacter()
-	if atkChar.Aggro == nil || atkChar.Aggro.RoundsWaiting <= 0 {
+	if atkChar.CombatPhase == nil || atkChar.RoundsWaiting() <= 0 {
 		return false
 	}
 	defChar := def.GetCharacter()
@@ -920,15 +920,14 @@ func handleAggroAndAssist(atk, def actions.Actor, cfg *configs.Config) {
 		//   - Companion-owner assist if defender mob is charmed.
 		defMob := asMob(def)
 		if !defChar.IsInCombat() {
-			// U12c-1: a raw Aggro construction, deliberately LEFT as-is. It
-			// sets a targetless placeholder that no seam call reproduces —
-			// targeting.Commit with a zero ref is not the same thing — so
-			// replacing it here would be a behaviour change in a mechanical
-			// slice. U12c-2 owns it, and must resolve it before the field
-			// can be deleted.
-			defChar.Aggro = &characters.Aggro{
-				Type: characters.DefaultAttack,
-			}
+			// U12c-2: the targetless &Aggro{} placeholder that used to sit
+			// here is gone. It was the last production construction of an
+			// Aggro outside internal/characters, and no seam call reproduces
+			// it — targeting.Commit refuses a zero ref outright.
+			//
+			// It was never load-bearing. The PvM branch above issues the same
+			// kind of command with no placeholder, and in both branches it is
+			// the queued attack command that actually commits the engagement.
 			defMob.Command(fmt.Sprintf("attack #%d", atk.GetMobInstanceId()))
 		}
 		handleCompanionOwnerAssist(defMob, fmt.Sprintf("#%d", atk.GetMobInstanceId()))

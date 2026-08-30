@@ -223,7 +223,7 @@ func assertSpecialMoveUnchanged(t *testing.T, char, target *characters.Character
 	t.Helper()
 	require.Equal(t, stamina, char.Stamina, "refusal must preserve stamina")
 	require.Empty(t, char.Cooldowns, "refusal must preserve cooldown state")
-	require.Equal(t, 0, char.Aggro.RoundsWaiting, "refusal must not consume the combat round")
+	require.Equal(t, 0, char.RoundsWaiting(), "refusal must not consume the combat round")
 	require.Equal(t, health, target.Health, "refusal must not damage the target")
 	require.Equal(t, targetStamina, target.Stamina, "refusal must not drain target stamina")
 	require.Len(t, target.Conditions, conditions, "refusal must not add a condition")
@@ -274,7 +274,7 @@ func TestSpecialMoveFamilyAdmission(t *testing.T) {
 				require.Len(t, target.Buffs.GetBuffs(), targetBuffs)
 				require.Equal(t, actorState, char.Position.State())
 				require.Equal(t, targetState, target.Position.State())
-				require.Equal(t, 0, char.Aggro.RoundsWaiting)
+				require.Equal(t, 0, char.RoundsWaiting())
 			})
 
 			t.Run("unaffordable_refusal_is_atomic", func(t *testing.T) {
@@ -320,7 +320,7 @@ func TestSpecialMoveFamilyAdmission(t *testing.T) {
 					require.Equal(t, 4, got.cost.Charged, "base 4 x rank-zero 1.10 floors to one four-point charge")
 					require.Equal(t, 46, char.Stamina)
 					require.Greater(t, char.Cooldowns["special-move"], 0)
-					require.Equal(t, 1, char.Aggro.RoundsWaiting)
+					require.Equal(t, 1, char.RoundsWaiting())
 					return
 				}
 				t.Fatal("configured contest floor rescued twenty overwhelming misses")
@@ -371,7 +371,7 @@ func TestSpecialMoveStaleCooldownAdmission(t *testing.T) {
 			require.Equal(t, 4, got.cost.Charged)
 			require.Equal(t, 46, char.Stamina, "stale path must retain exactly one committed admission")
 			require.Equal(t, 3, char.Cooldowns["special-move"])
-			require.Equal(t, 0, char.Aggro.RoundsWaiting)
+			require.Equal(t, 0, char.RoundsWaiting())
 			require.Equal(t, health, target.Health)
 			require.Equal(t, targetStamina, target.Stamina)
 			require.Len(t, target.Conditions, conditions)
@@ -397,7 +397,7 @@ func TestSpecialMoveMissingReadinessGatesAdmission(t *testing.T) {
 		assertRawSpecialMoveRejected(t, result, "TargetOnFloor")
 		require.Equal(t, 50, char.Stamina)
 		require.Empty(t, char.Cooldowns)
-		require.Equal(t, 0, char.Aggro.RoundsWaiting)
+		require.Equal(t, 0, char.RoundsWaiting())
 		require.Equal(t, position.Prone, target.Position.State())
 	})
 
@@ -408,7 +408,7 @@ func TestSpecialMoveMissingReadinessGatesAdmission(t *testing.T) {
 		assertRawSpecialMoveRejected(t, result, "TargetGrappling")
 		require.Equal(t, 50, char.Stamina)
 		require.Empty(t, char.Cooldowns)
-		require.Equal(t, 0, char.Aggro.RoundsWaiting)
+		require.Equal(t, 0, char.RoundsWaiting())
 		require.Equal(t, position.Standing, char.Position.State())
 		require.Equal(t, position.Clinch, target.Position.State())
 	})
@@ -420,7 +420,7 @@ func TestSpecialMoveMissingReadinessGatesAdmission(t *testing.T) {
 		assertRawSpecialMoveRejected(t, result, "NoLegs")
 		require.Equal(t, 50, char.Stamina)
 		require.Empty(t, char.Cooldowns)
-		require.Equal(t, 0, char.Aggro.RoundsWaiting)
+		require.Equal(t, 0, char.RoundsWaiting())
 		require.Equal(t, target.HealthMax.Value, target.Health)
 	})
 }
@@ -455,7 +455,7 @@ func TestSpecialMoveActingAdmission(t *testing.T) {
 			assertRawSpecialMoveRejected(t, result, "Crafting")
 			require.Equal(t, 50, char.Stamina)
 			require.Empty(t, char.Cooldowns)
-			require.Equal(t, 0, char.Aggro.RoundsWaiting)
+			require.Equal(t, 0, char.RoundsWaiting())
 			require.Equal(t, targetHealth, target.Health)
 			require.Equal(t, targetStamina, target.Stamina)
 			require.Empty(t, target.Conditions)

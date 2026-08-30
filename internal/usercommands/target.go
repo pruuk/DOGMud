@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -46,8 +45,10 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
-	// Can't switch during spell casting or other special aggro types
-	if user.Character.Aggro.Type != characters.DefaultAttack && user.Character.Aggro.Type != characters.Shooting {
+	// Can't switch while casting or fleeing. U12c-2: this used to test the
+	// aggro type against DefaultAttack/Shooting; those were the two ORDINARY
+	// attack types, so the question it was really asking is the one asked here.
+	if user.Character.IsCasting() || user.Character.IsDisengaging() {
 		user.SendText(messaging.CategorySystem, "You can't switch targets right now.")
 		return true, nil
 	}
@@ -151,11 +152,13 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if currentTargetGone {
-		aggroType := user.Character.Aggro.Type
+		// U12c-2: the aggro-type hoist is gone. It existed to "preserve
+		// shooting/melee" across the switch, but Commit re-derives Shooting
+		// from the equipped weapon anyway, so carrying it was a no-op.
 		bumpOpinionOnTargetSwitch(user, room, newTargetMobInstanceId, currentTargetMobId)
 		targeting.Commit(user.Character,
 			state.ActorRef{UserId: newTargetPlayerId, MobInstanceId: newTargetMobInstanceId},
-			targeting.ReasonForAggroType(aggroType))
+			targeting.ReasonAttack)
 
 		if newTargetMobInstanceId > 0 {
 			if m := mobs.GetInstance(newTargetMobInstanceId); m != nil {
@@ -176,15 +179,12 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	util.LogRoll("Target Switch", roll, switchChance)
 
 	if roll < switchChance {
-		// SUCCESS: Switch targets
-		// Store the aggro type to preserve shooting/melee
-		aggroType := user.Character.Aggro.Type
-
-		// Switch to new target with 1 round wait (cost of repositioning)
+		// SUCCESS: Switch targets, with 1 round wait (cost of repositioning).
+		// U12c-2: see the note above -- Commit re-derives Shooting itself.
 		bumpOpinionOnTargetSwitch(user, room, newTargetMobInstanceId, currentTargetMobId)
 		targeting.CommitAfter(user.Character,
 			state.ActorRef{UserId: newTargetPlayerId, MobInstanceId: newTargetMobInstanceId},
-			targeting.ReasonForAggroType(aggroType), 1)
+			targeting.ReasonAttack, 1)
 
 		if newTargetMobInstanceId > 0 {
 			m := mobs.GetInstance(newTargetMobInstanceId)
@@ -207,8 +207,10 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// FAILURE: Keep attacking current target this round
 		user.SendText(messaging.CategorySystem, "You try to reposition but can't break away from your current opponent!")
 
-		// Still costs a round (set RoundsWaiting to 1)
-		user.Character.Aggro.RoundsWaiting = 1
+		// Still costs a round (set the round budget to 1)
+		if user.Character.CombatPhase != nil {
+			user.Character.SetRoundsWaiting(1)
+		}
 	}
 
 	return true, nil
