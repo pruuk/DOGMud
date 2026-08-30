@@ -239,7 +239,7 @@ cheapest way to satisfy it is to delete the link.
 
 ---
 
-## 4. 🔴 FIVE balance knobs are silently inert at zero (FILED, not fixed)
+## 4. ✅ FIVE balance knobs were silently inert at zero — FOUR NOW SET
 
 The trap: **a knob with a non-zero advertised default, a validator whose
 condition is FALSE at zero, and no key in `config.yaml` is permanently stuck at
@@ -266,10 +266,19 @@ Verified: consumers are `actions/steal.go:111,130`, `actions/plant.go:95,112`,
 `mobs/pack_roaming.go:210`. All read the config value directly with no second
 default.
 
-**NOT FIXED, deliberately.** Adding these keys restores documented intent but
-changes live behaviour in five places at once, three of them skullduggery
-economy. A config edit inside a documentation slice is how an unreviewed balance
-change ships. This wants its own slice with a playtest.
+**UPDATE 2026-08-30, owner request: the FOUR skullduggery knobs are now SET**
+(`f32d38b48`), at the values the code already advertised. `StealCooldown` 60,
+`StealHiddenBonus` 25, `ShadowCooldown` 5, `SneakFailCooldown` 3. The config
+block carries a warning that deleting a line here does not restore a default,
+it silently zeroes the knob.
+
+⚠️ **Unproven in play.** These are the intended values, but nobody has ever
+played with them switched on, so skullduggery pacing is effectively untested at
+these settings. Worth a look on the manual pass.
+
+**`PackScatterRounds` (default 2) remains UNSET** — same defect, but it is mob
+pack behaviour rather than skullduggery and was outside the request. A pack
+still does not scatter when its alpha dies.
 
 Note also a copy inconsistency at `actions/steal.go:108-114`: the cooldown is
 formatted as `"%d real seconds"` but the refusal reports `"%d rounds
