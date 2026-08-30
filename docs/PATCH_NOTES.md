@@ -1,23 +1,32 @@
 # DOGMud Patch Notes
 
-## 2026-08-29: Ambush follow-up, and quieter plumbing behind it
+## 2026-08-29: You can run away again
 
-Striking from hiding used to leave you resetting your stance afterward, as
-though you had just started the fight from scratch. That pause was never
-meant to be there. Land an ambush now and your next blow comes when your
-weapon is ready, not a full wind-up later. Heavy weapons feel this most.
+Fleeing was refusing to work. If anything pulled your attention onto a new
+foe, and in a busy fight something usually does, the game would tell you it
+was not the moment to break away, and it would keep telling you that for as
+long as the fight lasted. Running was the one thing you could not do. That is
+fixed. You can always try to run.
 
-Two smaller corrections come with it. Breaking away from a fight now always
-costs you what it should, where one rare path let it go free. And an NPC
-part way through a spell is treated as busy casting rather than as a fighter
-with nobody to fight, which is what it always was.
+Being knocked off your feet still stops you from fleeing, which is intended,
+but the game used to say the same unhelpful thing there too. Now it tells you
+plainly to get up first.
+
+Our apologies. This one was ours, it was recent, and it went out because every
+practice fight in testing ended too quickly for anyone to notice.
+
+## 2026-08-29: Quieter plumbing behind your fights
+
+Two small corrections you may notice. Breaking away from a fight now always
+costs you what it should, where one rare path let it go free. And an NPC part
+way through a spell is treated as busy casting rather than as a fighter with
+nobody to fight, which is what it always was.
 
 Everything else here is groundwork you cannot see. The game used to track
 who you were fighting, whether you were fleeing, whether you were casting,
 and whether your ambush was still coming, all in one place that knew about
 none of them properly. Each of those now lives with the part of the game
 that actually understands it.
-
 ## 2026-08-29: An ambush that trips over itself still reads as an ambush
 
 Rarely, an opening strike from hiding goes wrong for both fighters at once and
