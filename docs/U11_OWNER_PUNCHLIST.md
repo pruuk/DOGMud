@@ -1,7 +1,7 @@
 # U11 owner punchlist
 
 **Date:** 2026-08-30
-**Branch:** `feature/u11-arc-closer` (18 commits, not yet merged)
+**Branch:** `feature/u11-arc-closer` (19 commits, not yet merged)
 **Companion to:** [`PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`](PRE_DEPLOY_PLAYTEST_CRIBSHEET.md)
 **Findings detail:** [`audits/2026-08-30-u11-filed-findings.md`](audits/2026-08-30-u11-filed-findings.md)
 
