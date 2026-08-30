@@ -692,6 +692,31 @@ Balance:
   TripKnockdownFactor: 1.057     # intended strong-favorite at parity
   KickKnockdownFactor: 0.924     # intended underdog at parity
   #
+  # GlobalKnockdownChance: the ONE dial for how often anybody gets knocked
+  # down, players and mobs alike. Applied to the OUTCOME of the knockdown
+  # contest, not to the score, so it is exact and linear: 0.5 gives precisely
+  # half as many knockdowns as 1.0, and every move is scaled by the same
+  # factor, so the bash/trip/kick ordering above is preserved at every
+  # setting.
+  #
+  # Covers every contested knockdown through one choke point
+  # (combat/skill_moves.go): bash, trip, kick, gore, charge, and the dodge-crit
+  # auto-trip counter-sweep, in both directions. It does NOT cover falling over
+  # from your own failure (double fumble, grapple crit failure) -- those are
+  # outcomes, not attacks.
+  #
+  # ⚠️ It can only REDUCE. To make knockdowns MORE common, raise the per-move
+  # factors above. Scaling the SCORE was measured and rejected: at parity a
+  # score multiplier collapses every move onto the contest floor below 0.75
+  # and saturates them all at the ceiling above 1.5, flattening the per-move
+  # distinctions at both ends.
+  #
+  # ⚠️ 0 is NOT an off-switch. It reads as "unset" and becomes 1.0, so that
+  # DELETING this line cannot silently disable every knockdown in the game --
+  # the trap that left StealCooldown and four others pinned at zero. To
+  # suppress knockdowns, use a very small value such as 0.001.
+  GlobalKnockdownChance: 1.0     # 1.0 = unchanged; lower to soften knockdowns
+  #
   # CoupDeGraceRounds: rounds a mob waits before finishing a downed player.
   #   0 = disabled (mob disengages when player is downed).
   #   1 = mob finishes the player after 1 grace round of lying helpless.

@@ -256,6 +256,7 @@ type Balance struct {
 	TripKnockdownFactor              ConfigFloat `yaml:"TripKnockdownFactor"`              // Knockdown score factor; intended-rate anchor 60% at parity (default 1.057)
 	KickDamagePercent                ConfigFloat `yaml:"KickDamagePercent"`                // Fraction of normal melee damage (default 0.80)
 	KickKnockdownFactor              ConfigFloat `yaml:"KickKnockdownFactor"`              // Knockdown score factor; intended-rate anchor 35% at parity (default 0.924)
+	GlobalKnockdownChance            ConfigFloat `yaml:"GlobalKnockdownChance"`            // Master damper on how often ANY contested knockdown lands, applied to the OUTCOME not the score. 1.0 = unchanged, 0.5 = exactly half as many. Reduces only (default 1.0)
 	StompDamagePercent               ConfigFloat `yaml:"StompDamagePercent"`               // Stomp damage when target is prone (default 1.20)
 	KneeDamagePercent                ConfigFloat `yaml:"KneeDamagePercent"`                // Knee damage in grapple (default 1.00)
 	CoupDeGraceRounds                ConfigInt   `yaml:"CoupDeGraceRounds"`                // Rounds before mob finishes downed player (default 1; 0=disabled)

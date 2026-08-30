@@ -239,6 +239,22 @@ func (b *Balance) validateMisc() {
 	if b.KickDamagePercent <= 0 || b.KickDamagePercent > 2.0 {
 		b.KickDamagePercent = 0.80
 	}
+	// GlobalKnockdownChance uses `<= 0`, NOT `< 0`, and that is deliberate.
+	//
+	// ⚠️ A `< 0` check here would be the exact trap that left StealCooldown,
+	// StealHiddenBonus, ShadowCooldown, SneakFailCooldown and PackScatterRounds
+	// silently pinned at zero: an absent key unmarshals to 0, and `< 0` cannot
+	// repair a 0. For those knobs the cost was a dead cooldown. Here it would
+	// be worse -- 0 means "no contested knockdown ever lands", so deleting the
+	// line from config.yaml would silently disable every knockdown in the game.
+	//
+	// The price is that 0 is NOT an off-switch for this knob: it reads as
+	// "unset" and becomes 1.0. To suppress knockdowns entirely, set a very
+	// small value such as 0.001, or zero the per-move *KnockdownFactor knobs.
+	if b.GlobalKnockdownChance <= 0 || b.GlobalKnockdownChance > 1.0 {
+		b.GlobalKnockdownChance = 1.0
+	}
+
 	if b.KickKnockdownFactor <= 0 {
 		b.KickKnockdownFactor = 0.924
 	}

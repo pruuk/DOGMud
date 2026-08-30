@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // SkillMoveResult holds the outcome of a bash/kick/trip execution.
@@ -89,6 +90,54 @@ type SkillMoveParams struct {
 	// opt into the Supine path; trip / kick / hamstring / bite stay
 	// face-forward.
 	KnockdownToSupine bool
+}
+
+// knockdownSurvivesGlobalDamper applies GlobalKnockdownChance, the single dial
+// for how often ANY contested knockdown actually lands. Returns true to keep a
+// knockdown the contest already won.
+//
+// ⚠️ It deliberately scales the OUTCOME, not the attacker's score. Measured at
+// score parity, 40k trials per cell, a score multiplier behaves like this:
+//
+//	factor   bash    trip    kick
+//	 0.25    12.5%   12.6%   12.6%   <- all collapsed onto ContestFloor
+//	 0.50    12.5%   12.4%   12.1%   <- still on the floor: no resolution
+//	 0.75    16.8%   20.6%   14.0%
+//	 1.00    50.1%   57.4%   38.4%   <- the intended per-move rates
+//	 1.50    83.1%   84.4%   80.2%
+//	 2.00    86.8%   86.9%   86.3%   <- all saturated at the ceiling
+//
+// So a score multiplier is unusable below ~0.75, saturated above ~1.5, and at
+// both ends it FLATTENS the bash/trip/kick ordering that U10 tuned. The
+// steepness is intrinsic: RollSpread is 0.15, so a 25% score edge is already
+// about 1.6 standard deviations.
+//
+// Scaling the outcome instead is exact and linear: 0.5 means precisely half as
+// many knockdowns, and every move is scaled by the same factor, so their
+// relative ordering is untouched at every setting.
+//
+// The trade is that it can only REDUCE. To make knockdowns MORE common, raise
+// the per-move *KnockdownFactor knobs; there is no way to promote a contest
+// the attacker lost without knowing the probability it lost by.
+//
+// The validator forces the value into (0, 1], so an absent or zero key reads as
+// 1.0 (unchanged) rather than as "disable all knockdowns". The guards below are
+// defensive only.
+func knockdownSurvivesGlobalDamper() bool {
+	return rollKnockdownDamper(float64(configs.GetBalanceConfig().GlobalKnockdownChance))
+}
+
+// rollKnockdownDamper is the pure half, split out so the linearity that
+// justified this design over a score multiplier is directly testable without
+// standing up a whole contest.
+func rollKnockdownDamper(chance float64) bool {
+	if chance >= 1.0 {
+		return true
+	}
+	if chance <= 0 {
+		return false
+	}
+	return util.Rand(10000) < int(chance*10000)
 }
 
 // ExecuteSkillMove performs the core combat resolution for bash/kick/trip.
@@ -185,7 +234,7 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 			defScore := float64(p.Defender.Stats.Dexterity.ValueAdj) +
 				float64(p.Defender.GetSkillLevel(skills.UnarmedCombat))*float64(configs.GetBalanceConfig().SkillWeight)
 			kd := RunContest(p.Attack.score()*p.KnockdownFactor, []contest.Entry{{Score: defScore}})
-			if kd.Success {
+			if kd.Success && knockdownSurvivesGlobalDamper() {
 				result.KnockedDown = true
 			} else {
 				// Success-only progression: the defender fires one
