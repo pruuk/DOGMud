@@ -111,15 +111,45 @@ because neither is sufficient alone.
 
 ## 2. The change
 
-Compress the score gap before it is rolled:
+Compress the score gap before it is rolled, by raising the DEFENCE toward the
+attacker:
 
 ```
-effectiveAttack = defence + (attack - defence) ^ p        when attack > defence
-effectiveAttack = attack                                  otherwise
+effectiveDefence = attack - (attack - defence) ^ p        when attack > defence
+effectiveDefence = defence                                otherwise
 ```
 
-with `p` a config knob, shipped **0.75**. `p = 1.0` is exactly today's
-behaviour, so the knob is a true identity at its default.
+with `p` a config knob, shipped **0.85**. `p = 1.0` telescopes to
+`attack - (attack - defence) = defence`, an exact identity, so the knob is a
+true no-op at its default.
+
+### ⚠️ Why the DEFENCE moves and not the attack
+
+An earlier draft compressed the attacker instead
+(`effectiveAttack = defence + (attack-defence)^p`). That is algebraically the
+same gap, and it is **wrong here**, because `contest.Run:97` derives the roll
+spread from whatever attack score it is handed:
+
+```go
+stdDev := dice.StdDevFor(atkScore)   // and the DEFENDER rolls with it too, :103
+```
+
+Lowering the attack score therefore shrinks the spread as well, and since crit
+is measured in units of that spread, the compression largely cancels itself:
+
+| defence | crit, compressing the ATTACK | crit, compressing the DEFENCE |
+|---|---|---|
+| 48 | **94.3%** | **28.7%** |
+| 140 | 55.6% | 23.4% |
+| 276 | 21.5% | 16.0% |
+
+Against a weak defender the attacker-side form barely works at all. Moving the
+defence leaves `atkScore` untouched, so the spread stays `0.15 x attack` exactly
+as today and only the mean moves — which is the whole intent.
+
+It also removes a side effect nobody wanted: under the attacker-side form, a
+strong character's rolls became *more consistent* simply because they were
+fighting something weak.
 
 ### Why the gap and not the scores
 
@@ -145,20 +175,25 @@ unannounced. **Ahead-only delivers every benefit against crit with none of it.**
 Left as a knob anyway (see §3) because it is a one-line difference and the owner
 may want to try it.
 
-### Measured effect at the shipped value
+### Choosing the exponent
 
-`p = 0.75`, ahead-only:
+With the corrected formula, compression is far more effective than the earlier
+draft implied, so the shipped value moves from 0.75 to **0.85**. Measured
+against Meirok (455), post-redistribution defences, as `hit% / crit%`:
 
-| matchup | hit% now → then | crit% now → then |
-|---|---|---|
-| Meirok vs any 92-defence elemental | 100 → 99 | **98.8 → 77.0** |
-| Meirok vs royal fighter (352) | 86 → 65 | **33.3 → 13.5** |
-| parity | 50 → 50 | 6.7 → 6.7 |
-| underdog | unchanged | unchanged |
+| defence | p=1.0 | p=0.95 | p=0.90 | **p=0.85** | p=0.80 | p=0.75 |
+|---|---|---|---|---|---|---|
+| Storm + redistrib (86) | 100/99 | 100/91 | 98/73 | **94/53** | 88/37 | 81/27 |
+| Sand + redistrib (140) | 100/96 | 99/83 | 97/63 | **92/45** | 85/32 | 78/23 |
+| Queen + redistrib (168) | 100/93 | 99/77 | 95/57 | **90/41** | 83/29 | 76/22 |
+| Royal + redistrib (276) | 97/64 | 92/47 | 87/35 | **80/26** | 74/20 | 69/16 |
+| parity (455) | 50/7 | 50/7 | 50/7 | 50/7 | 50/7 | 50/7 |
 
-Note every 92-defence mob collapses to one row: sand elemental, storm elemental
-and the Queen all defend identically against melee, which is §2b's problem, not
-this one.
+**0.85 is the recommendation, not a certainty.** It keeps a strong character
+clearly dominant on hit rate (80-94%) while pulling crit off the ceiling into a
+26-53% band. At 0.75 crit lands at 16-27% but hit rate against royal fighters
+falls to 69%, which is likely to read as whiffing at content you should beat.
+Dial in play; parity is invariant at every value.
 
 **Parity is invariant at every exponent.** Compression only ever touches
 mismatches, so it cannot disturb an even fight. That is the property that makes
@@ -258,7 +293,7 @@ should be felt for in the playtest rather than discovered later.
 ## 3. Configuration
 
 ```yaml
-ContestGapCompression: 0.75   # exponent on the score gap; 1.0 = no compression
+ContestGapCompression: 0.85   # exponent on the score gap; 1.0 = no compression
 ContestGapCompressBothWays: false
 ```
 

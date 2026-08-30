@@ -122,7 +122,7 @@ func TestCompressContestGap_IdentityAtOne(t *testing.T) {
 		{455, 92}, {105, 185}, {200, 200}, {1, 1},
 	} {
 		got := compressContestGap(tc.atk, []contest.Entry{{Score: tc.def}}, 1.0)
-		assert.Equal(t, tc.atk, got, "atk=%v def=%v", tc.atk, tc.def)
+		assert.Equal(t, tc.def, got[0].Score, "atk=%v def=%v", tc.atk, tc.def)
 	}
 }
 
@@ -130,51 +130,61 @@ func TestCompressContestGap_IdentityAtOne(t *testing.T) {
 // what stops it buffing underdogs, which is a separate design decision.
 func TestCompressContestGap_LeavesUnderdogsAlone(t *testing.T) {
 	got := compressContestGap(105, []contest.Entry{{Score: 185}}, 0.5)
-	assert.Equal(t, 105.0, got, "an attacker behind on score must be unchanged")
+	assert.Equal(t, 185.0, got[0].Score, "an attacker behind on score must be unchanged")
 
 	got = compressContestGap(200, []contest.Entry{{Score: 200}}, 0.5)
-	assert.Equal(t, 200.0, got, "an exactly even contest must be unchanged")
+	assert.Equal(t, 200.0, got[0].Score, "an exactly even contest must be unchanged")
 }
 
 // The headline behaviour: a lead is compressed toward the defender.
 func TestCompressContestGap_CompressesALead(t *testing.T) {
-	// gap 363, p=0.5 -> sqrt(363) = 19.05 -> 92 + 19.05
+	// gap 363, p=0.5 -> sqrt(363) = 19.05 -> defence rises to 455 - 19.05
 	got := compressContestGap(455, []contest.Entry{{Score: 92}}, 0.5)
-	assert.InDelta(t, 111.05, got, 0.01)
+	assert.InDelta(t, 435.95, got[0].Score, 0.01)
 
-	// gap 363, p=0.75 -> 363^0.75 = 83.09 -> 92 + 83.09
+	// gap 363, p=0.75 -> 363^0.75 = 83.09 -> defence rises to 455 - 83.09
 	got = compressContestGap(455, []contest.Entry{{Score: 92}}, 0.75)
-	assert.InDelta(t, 175.09, got, 0.01)
+	assert.InDelta(t, 371.91, got[0].Score, 0.01)
 }
 
 // A lower exponent must never produce a LARGER effective score. Monotonicity is
 // what makes the knob dialable in play without surprises.
 func TestCompressContestGap_MonotonicInExponent(t *testing.T) {
-	prev := compressContestGap(455, []contest.Entry{{Score: 92}}, 1.0)
-	for _, p := range []float64{0.9, 0.8, 0.75, 0.6, 0.5, 0.25} {
-		got := compressContestGap(455, []contest.Entry{{Score: 92}}, p)
-		assert.Less(t, got, prev, "p=%v must compress at least as hard as the step above", p)
+	prev := compressContestGap(455, []contest.Entry{{Score: 92}}, 1.0)[0].Score
+	for _, p := range []float64{0.9, 0.85, 0.8, 0.75, 0.6, 0.5} {
+		got := compressContestGap(455, []contest.Entry{{Score: 92}}, p)[0].Score
+		assert.Greater(t, got, prev, "p=%v must raise the defence at least as far as the step above", p)
 		prev = got
 	}
 }
 
-// With several defences, the gap is measured against the STRONGEST, so adding a
-// weak defence to a set can never increase compression and hand that weak
-// defence the win.
-func TestCompressContestGap_UsesStrongestDefender(t *testing.T) {
-	strongOnly := compressContestGap(455, []contest.Entry{{Score: 352}}, 0.75)
-	mixed := compressContestGap(455, []contest.Entry{
-		{Score: 92}, {Score: 352}, {Score: 27},
+// Each defence is compressed independently, and the ordering must survive: a
+// stronger defence must stay stronger, or a mixed set could have its best
+// defence overtaken by a worse one.
+func TestCompressContestGap_PreservesDefenceOrdering(t *testing.T) {
+	out := compressContestGap(455, []contest.Entry{
+		{Score: 27}, {Score: 92}, {Score: 352},
 	}, 0.75)
-	assert.Equal(t, strongOnly, mixed)
+
+	assert.Less(t, out[0].Score, out[1].Score)
+	assert.Less(t, out[1].Score, out[2].Score)
+	for i, e := range out {
+		assert.Less(t, e.Score, 455.0, "entry %d must stay below the attack score", i)
+	}
+}
+
+// It must not mutate the caller's slice.
+func TestCompressContestGap_DoesNotMutateInput(t *testing.T) {
+	in := []contest.Entry{{Score: 92}}
+	_ = compressContestGap(455, in, 0.75)
+	assert.Equal(t, 92.0, in[0].Score, "the caller's entries must be untouched")
 }
 
 // Degenerate inputs must not produce NaN or a negative score.
 func TestCompressContestGap_HandlesDegenerateInput(t *testing.T) {
-	assert.Equal(t, 100.0, compressContestGap(100, nil, 0.75),
-		"no defenders means no gap to compress")
-	assert.Equal(t, 100.0, compressContestGap(100, []contest.Entry{}, 0.75))
-	assert.Equal(t, 0.0, compressContestGap(0, []contest.Entry{{Score: 0}}, 0.75))
+	assert.Empty(t, compressContestGap(100, nil, 0.75), "no defenders, nothing to compress")
+	assert.Empty(t, compressContestGap(100, []contest.Entry{}, 0.75))
+	assert.Equal(t, 0.0, compressContestGap(0, []contest.Entry{{Score: 0}}, 0.75)[0].Score)
 }
 ```
 
@@ -191,8 +201,8 @@ In `internal/combat/run_contest.go`, add `"math"` to the imports and append:
 // compressContestGap narrows how far an attacker's score sits above the
 // defence it is being rolled against, before either side is rolled.
 //
-//	effective = defence + (attack - defence) ^ p     when attack > defence
-//	effective = attack                               otherwise
+//	effectiveDefence = attack - (attack - defence) ^ p   when attack > defence
+//	effectiveDefence = defence                            otherwise
 //
 // WHY. Both rolls in a contest draw from ONE standard deviation taken from the
 // attack score (contest.go:97,103), so the normalized margin is exactly
@@ -206,28 +216,34 @@ In `internal/combat/run_contest.go`, add `"math"` to the imports and append:
 // about whether weak things can threaten strong ones and must not ride along
 // with a crit fix.
 //
-// ⚠️ Measured against the STRONGEST defence in the set, so adding a weak
-// defence can never increase compression and thereby hand that weak defence the
-// win. All but one of the 25 production call sites pass a single entry.
+// ⚠️ It raises the DEFENCE rather than lowering the attack, and that is
+// load-bearing. contest.Run derives the roll spread from the attack score it is
+// handed (contest.go:97) and rolls the defender with it too (:103). Lowering the
+// attack would shrink the spread as well, and since crit is measured in units of
+// that spread the compression would largely cancel itself: against a defence of
+// 48, compressing the attack leaves crit at 94.3% where compressing the defence
+// gives 28.7%. Moving the defence leaves atkScore, and the spread, as they are.
 //
-// p == 1.0 is an exact identity and is the default.
-func compressContestGap(atkScore float64, entries []contest.Entry, p float64) float64 {
+// ⚠️ Each entry is compressed independently, so a mixed defence set keeps its
+// internal ordering: a stronger defence stays stronger.
+//
+// p == 1.0 telescopes to attack - (attack - defence) = defence, an exact
+// identity, and is the default.
+func compressContestGap(atkScore float64, entries []contest.Entry, p float64) []contest.Entry {
 	if p >= 1.0 || len(entries) == 0 {
-		return atkScore
+		return entries
 	}
 
-	strongest := entries[0].Score
-	for _, e := range entries[1:] {
-		if e.Score > strongest {
-			strongest = e.Score
+	out := make([]contest.Entry, len(entries))
+	copy(out, entries)
+	for i := range out {
+		gap := atkScore - out[i].Score
+		if gap <= 0 {
+			continue // attacker is not ahead of THIS defence; leave it alone
 		}
+		out[i].Score = atkScore - math.Pow(gap, p)
 	}
-
-	gap := atkScore - strongest
-	if gap <= 0 {
-		return atkScore
-	}
-	return strongest + math.Pow(gap, p)
+	return out
 }
 ```
 
@@ -246,8 +262,8 @@ feat(combat): add the contest gap compression function
 Pure function, not yet wired. Narrows how far an attacker sits above the
 defence before either side rolls:
 
-  effective = defence + (attack-defence)^p   when ahead
-  effective = attack                          otherwise
+  effectiveDefence = attack - (attack-defence)^p   when ahead
+  effectiveDefence = defence                        otherwise
 
 p = 1.0 is an exact identity, pinned by test, because it is the default and
 any drift is a silent balance change across all 25 contest call sites.
@@ -462,7 +478,10 @@ func RunContest(atkScore float64, entries []contest.Entry) contest.Result {
 	// Compression happens HERE, before the roll, and nowhere else. Putting it
 	// at the single entry point is what makes it impossible for a contest to
 	// opt out silently -- see gap_compression_guard_test.go.
-	atkScore = compressContestGap(atkScore, entries, contestGapCompression())
+	// Compresses the DEFENCE entries, never atkScore: contest.Run derives the
+	// roll spread from the attack score, so lowering it would shrink the spread
+	// and cancel most of the compression.
+	entries = compressContestGap(atkScore, entries, contestGapCompression())
 	return contest.RunWithFloors(atkScore, entries, float64(configs.GetBalanceConfig().ContestFloor))
 }
 ```
@@ -491,7 +510,7 @@ the copy that is committed. They must receive the SAME edit.
 ```yaml
   #
   # ContestGapCompression: exponent applied to an attacker's score LEAD before
-  # either side rolls.  effective = defence + (attack-defence)^p
+  # either side rolls.  effectiveDefence = attack - (attack-defence)^p
   #
   # Both rolls in a contest share one standard deviation taken from the attack
   # score, so the normalized margin is N((A-D)/(0.15*A*sqrt2), 1) and crit
@@ -515,7 +534,7 @@ the copy that is committed. They must receive the SAME edit.
   # ⚠️ 0 is NOT an off-switch. It reads as unset and becomes 1.0, so deleting
   # this line cannot silently collapse every mismatch to a one-point gap.
   # Lower = flatter. 1.0 = off.
-  ContestGapCompression: 0.75
+  ContestGapCompression: 0.85
 ```
 
 Then commit from the HEAD-derived copy and restore the disk copy:
@@ -530,7 +549,7 @@ git commit -m "feat(combat): compress the attacker's score lead before rolling
 Applied in RunContest, the single entry point for all 25 opposed-contest
 call sites, so no contest can opt out silently.
 
-Ships at 0.75. Parity is invariant at every exponent, which is the property
+Ships at 0.85. Parity is invariant at every exponent, which is the property
 that makes this safe behind a knob.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
@@ -1250,7 +1269,7 @@ Merge with `--merge` (no-ff), never `--squash`.
 
 ## Definition of Done
 
-- [ ] `ContestGapCompression` ships at 0.75; `p=1.0` is a proven exact identity
+- [ ] `ContestGapCompression` ships at 0.85; `p=1.0` is a proven exact identity
 - [ ] Parity win rate is 50% at every exponent, measured on live dice
 - [ ] Underdog outcomes are unchanged at every exponent
 - [ ] Compression has exactly one call site, guarded, and the guard is proven to fail
