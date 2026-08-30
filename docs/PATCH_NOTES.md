@@ -1,5 +1,75 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: Grappling tells you the truth about why it failed
+
+Every failed grapple gave the same answer: your hands passed right through the
+target. That is a fine description of reaching for a ghost. It was nonsense for
+the Arena Champion, which refuses grapples because it is far too solid and
+heavy to move, which is the opposite problem. You now get told that you took
+hold and could not budge it.
+
+Two other cases were being described wrongly too. If your own body is the
+reason you cannot grapple, because you have no arms to seize with or your kind
+simply does not work that way, the game now says so plainly instead of blaming
+the creature in front of you.
+
+## 2026-08-30: Queued trigger actions now actually queue
+
+Setting a trigger to queue an action was not pacing anything unless the action
+was a spell or one of the special combat moves. For everything else, a queue of
+five actions fired all five at once, which looks exactly like no queue at all.
+The queue now releases one action per round, whatever the action is, so putting
+something at the back of the queue means it waits its turn.
+
+## 2026-08-30: Queued trigger actions no longer get stuck forever
+
+If you set a trigger to queue an action, the web client asks the server whether
+that action can run right now and waits for the answer before releasing the next
+one. If that answer ever went missing, the client waited for it forever. Queued
+actions piled up in the Triggers panel and none of them ever fired again, for
+the rest of the session, with no way out except pressing Clear.
+
+The client now gives up waiting after a few seconds and tries again, and the
+server is stricter about always answering. A queue that gets stuck now
+un-sticks itself.
+
+## 2026-08-30: Your companion stops announcing itself twice
+
+When a companion joined a fight, the line saying so printed twice. Two separate
+systems both tell a companion to help, one of them a beat earlier than the
+other, and while the game was correctly ignoring the second order, it was still
+announcing it. The order was harmless. The echo was not, because it made every
+fight your companion joined look like it had stuttered.
+
+The same echo could come from any creature told to attack something it was
+already fighting, so wild animals squabbling with each other were doing it too.
+It is quiet now, and a fight only announces itself when it actually begins.
+
+## 2026-08-30: Outmatched fights are less of a slaughter, both ways
+
+When one fighter badly outclassed another, almost every swing was landing, and
+far too many of those swings were landing as devastating blows that armour did
+nothing to stop. A veteran walking into a beginner zone was flattening things
+instantly, and a powerful monster meeting an unprepared player was doing the
+same thing in reverse. Neither fight was interesting to be in.
+
+Skill still decides fights. It just no longer decides them on the first swing.
+A big advantage now shows up as landing more often and hurting more, rather than
+as an unbroken run of critical hits. Armour matters again in those fights,
+because it only gets skipped on a genuine critical, and genuine criticals are
+now rare enough to feel like something happened.
+
+Alongside that, monsters that specialise (the brawlers and the spellcasters)
+spread their talents a little more evenly. A spellcaster was previously so
+single minded that it could barely get out of the way of a punch, which made
+some of them oddly easy to hit and others oddly hard, with no relation to how
+dangerous they were meant to be. They keep their specialities and still lean
+hard into them. They are simply no longer helpless outside them.
+
+You will notice this most in the harder zones, where the gaps between you and
+what lives there are widest. Monsters already wandering the world keep the
+talents they were born with until they are replaced.
+
 ## 2026-08-30: A brand new character who dies now comes back
 
 If you made a fresh character with the character command and then died during

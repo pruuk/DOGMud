@@ -61,6 +61,21 @@ func (b *Balance) validateMobs() {
 	clampPct(&b.MobConvictionRegenPct, 0.02)
 
 	// ── MOB DAMAGE ───────────────────────────────────────────────────────────
+	// Absent keys must reproduce TODAY's split, not zero: a zero pair makes
+	// every archetype distribution degenerate. Weights are RELATIVE and are
+	// normalised at the point of use, so they need not sum to anything.
+	if b.ArchetypePrimaryStatWeight <= 0 {
+		b.ArchetypePrimaryStatWeight = ConfigFloat(0.80 / 3)
+	}
+	if b.ArchetypeSecondaryStatWeight <= 0 {
+		b.ArchetypeSecondaryStatWeight = ConfigFloat(0.20 / 3)
+	}
+	// A secondary weight above the primary would invert the archetype, making a
+	// "fighting" mob favour mental stats. Clamp rather than honour it.
+	if b.ArchetypeSecondaryStatWeight > b.ArchetypePrimaryStatWeight {
+		b.ArchetypeSecondaryStatWeight = b.ArchetypePrimaryStatWeight
+	}
+
 	if b.MobDamageMultiplier <= 0 {
 		b.MobDamageMultiplier = 1.0
 	}

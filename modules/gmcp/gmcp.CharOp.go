@@ -97,12 +97,18 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 		if err := json.Unmarshal(evt.Payload, &req); err != nil {
 			break
 		}
+		// ⚠️ EVERY exit from here MUST reply. The web client parks the action
+		// queue on `queueInFlight` until a Char.Action.Result arrives for this id,
+		// and a silent break leaves it parked -- entries visibly pile up in the
+		// Triggers panel and nothing fires again until the player hits Clear. The
+		// client now also times out, but the queue should not depend on that.
 		uid := userIdForConnection(evt.ConnectionId)
 		if uid <= 0 {
-			break
+			break // no user to reply TO; the client timeout is the only recourse
 		}
 		u := users.GetByUserId(uid)
 		if u == nil {
+			sendActionResult(uid, req.Id, "rejected", "no character")
 			break
 		}
 		room := rooms.LoadRoom(u.Character.RoomId)

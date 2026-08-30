@@ -15,10 +15,21 @@ exits:
     roomid: 5005
     mapdirection: north
 spawninfo:
+  # statpool here is the GOLD MULTIPLIER for an instance spawn, not a stat
+  # count: rooms.ScaleSpawnStatPools sets StatPool = goldPaid * this, and
+  # rooms.go:840 passes it as forceStatPool, which OVERRIDES the mob file's own
+  # statpool entirely. Royalty in room 5005 is 4. These two are the tough tier
+  # at 2; ordinary trash is 1.
+  #
+  # ⚠️ Setting `statpool: 2` in 318-sand_elemental.yaml / 319-storm_elemental.yaml
+  # does NOT do this. Those files are the only other place the number appears and
+  # they are ignored for every oasis spawn, because this is the sole spawn site
+  # for both mobs and it forces the value. The mob-file value still applies to an
+  # admin spawn, which passes no multiplier.
   - mobid: 318
-    statpool: 1
+    statpool: 2
     respawnrate: "1h"
   - mobid: 319
-    statpool: 1
+    statpool: 2
     respawnrate: "1h"
 plane: 13

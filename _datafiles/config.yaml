@@ -543,6 +543,61 @@ Balance:
   #   and reverts to 0.125, because a zero here would silently disable the
   #   mechanism everywhere including in every Go test.
   ContestFloor: 0.125
+  #
+  # ContestGapSaturation: saturating compression of an attacker's score LEAD,
+  # applied before either side rolls.
+  #
+  #   compressedGap    = gap * A / (A + k*gap)      (gap = attack - defence)
+  #   effectiveDefence = A - compressedGap
+  #
+  # Both rolls in a contest share ONE standard deviation taken from the attack
+  # score, so the normalized margin is N(gap/(0.15*A*sqrt2), 1) and crit fires
+  # when it clears a bar that floors at 1.5. Uncompressed that makes a 50% score
+  # edge a ~53% crit rate, and a crit SKIPS MITIGATION entirely.
+  #
+  # 0 = OFF, and 0 is also what an absent key unmarshals to, so deleting this
+  # line turns the feature off cleanly. Higher = flatter blowouts. No upper
+  # bound: k is a saturation scale, not a probability.
+  #
+  # MEASURED on live dice at attack 455, POST-FLOOR hit% / crit%:
+  #   defence   k=0      k=1.5    k=2.0    k=2.8    k=4.0
+  #        86   87/87    84/52    82/42    78/32    74/24
+  #       140   87/84    83/47    81/39    77/30    73/23
+  #       276   85/56    78/32    76/28    73/23    70/19
+  #       455   50/6     50/6     50/6     50/6     50/6
+  #
+  # ⚠️ SCALE-FREE, and that is the whole reason for the odd algebra. Divide
+  # through by A and compressedGap/A = u/(1+k*u) with u = gap/A, so the outcome
+  # depends ONLY on the RATIO defence/attack. The obvious `attack - gap^p` form
+  # does not: it raises a dimensional quantity to a fractional power, which made
+  # the knob's strength depend on the absolute score scale AND made the win rate
+  # turn over at attack = defence/(1-p). At p=0.8 that was attack = 5*defence,
+  # so a character at 455 against a defence of 86 was already past the peak --
+  # measured, training Strength took the win rate DOWN from 0.784 to 0.725 by
+  # attack 5000, and crit from 17.8% to 10.9%. Getting stronger made you worse.
+  # Do not reintroduce an exponent form.
+  #
+  # ⚠️ Parity is INVARIANT at every k (the 455 row above) -- compression only
+  # touches mismatches, so it cannot disturb an even fight.
+  # ⚠️ SATURATING, so it barely touches near-even fights and bites hardest on
+  # blowouts. At attack 455 a defence of 432 keeps a normalized margin of 0.209
+  # against an uncompressed 0.238, while a defence of 86 falls from 3.824 to
+  # 1.169.
+  # ⚠️ Raises the DEFENCE, never lowers the attack. Lowering the attack would
+  # shrink the roll spread too (it is derived from the attack score) and cancel
+  # most of the compression.
+  # ⚠️ Applies only when the attacker is AHEAD. Symmetric compression would
+  # take an underdog from a 0.6% hit rate to 40.8%, a separate decision.
+  # ⚠️ Reaches EVERY opposed contest, not just melee: steal, sneak, flee,
+  # defuse, grapple drift and prone recovery all resolve through
+  # combat.RunContest. Multi-entry loops roll once PER blocker or observer and
+  # COMPOUND, so the favoured side loses far more there than this single-contest
+  # table suggests (a veteran fleeing four trash mobs, or a thief sneaking past
+  # five watchers, is the case to watch).
+  # ⚠️ The table above ALREADY includes ContestFloor 0.125, which flips that
+  # fraction of all contested outcomes and caps any win rate at 0.875. A floored
+  # result cannot crit.
+  ContestGapSaturation: 2.80
   # ConcentrationFloor: the symmetric mercy band for concentration
   #   contests only (damage, position, and throttle triggers). The
   #   standard ContestFloor would break a master one-in-eight per
@@ -565,9 +620,35 @@ Balance:
   # Raising the ceiling makes skill protect harder against boss crits;
   # CritBarCeiling: 0 is LEGAL and means uncapped (bosses then almost
   # never crit skilled defenders, on any channel).
+  #
+  # ⚠️ THE CEILING IS THE MOB CRIT DIAL, and it had to come down when
+  # ContestGapSaturation shipped. Every mob is combat skill 1, so against a
+  # skilled player the bar always clamps HERE, while the player attacking that
+  # same mob always sits at the FLOOR. Compression then pulls the mean margin
+  # down, and at a bar of 3.0 that is deep in the tail: mob crit against a
+  # defence of 523 collapsed to 1.8-3.2% and, worse, GOLD STOPPED BUYING CRITS
+  # (attack 1000 -> 5000 moved crit only 1.8% -> 3.2%), which is the exact
+  # property the paragraph above says the ceiling exists to provide.
+  #
+  # MEASURED, mob crit at k=2.8 against defence 523:
+  #   ceiling   atk1000   atk2000   atk5000
+  #     3.00     0.018     0.027     0.032     <- collapsed
+  #     2.40     0.066     0.090     0.101
+  #     2.20     0.095     0.125     0.141
+  #     2.00     0.131     0.169     0.187     <- shipped
+  #     1.80     0.177     0.222     0.241
+  #   (k=0 at ceiling 3.00 was 0.198 / 0.598 / 0.777)
+  #
+  # 2.00 restores roughly the old rate at a modest gold investment while NOT
+  # restoring the old runaway, where a heavily funded boss crit 78% of its
+  # swings. That runaway is the same defect compression exists to fix, just
+  # pointed at the player.
+  #
+  # ⚠️ Lowering this does NOT touch player-vs-mob crit. A skilled attacker
+  # against a skill-1 mob is pinned to CritBarFloor and never reads the ceiling.
   CritBarSkillSlope: 0.05
   CritBarFloor: 1.5
-  CritBarCeiling: 3.0
+  CritBarCeiling: 2.0
   #
   # CounterDamagePercent: a defensive crit earns the defender a free counter
   # (U6b): one answering swing at this fraction of normal weapon damage.
@@ -835,6 +916,30 @@ Balance:
   #   player physical  = MeleeDamageScale                    = 0.52
   #   NPC physical     = MeleeDamageScale x this             = 0.2158
   MobDamageMultiplier: 0.415    # 2026-08-30: from 0.83 — holds NPC physical at exactly its post-halving level (0.52x0.415 = 0.26x0.83) while player physical returns to 0.52
+  #
+  # Archetype stat distribution. RELATIVE weights, normalised in code, so they
+  # need not sum to anything. Three primary stats and three non-primary.
+  #
+  # Today's shipped behaviour was a hardcoded 80/20 group split, i.e. 0.2667 and
+  # 0.0667 here. That gave a CASTING mob's Dexterity one fifteenth of its pool,
+  # and Dexterity is the whole physical defence term -- so the 1300-pool
+  # Elemental Queen defended at 92 while a 650-pool sand elemental defended at
+  # 178. Half the budget, nearly twice the defence, purely from archetype.
+  #
+  # 0.25 / 0.15 normalises to 0.2083 and 0.1250, a 62.5/37.5 group split.
+  #
+  # ⚠️ The pool is FIXED, so raising the non-primary share necessarily lowers
+  # the primary share. Casters gain physical defence; FIGHTERS LOSE IT. On this
+  # change ALONE a royal fighter's crit-taken rate rises; it is only acceptable
+  # alongside ContestGapSaturation.
+  # ⚠️ Equal weights reproduce the uniform archetype exactly.
+  # ⚠️ Flattening also flattens mob OFFENCE: a caster's Willpower share falls
+  # from 26.7% to 20.8%, so its spells soften too.
+  # ⚠️ Distribution happens ONCE at spawn. Existing instances keep their rolled
+  # stats until they despawn; wipe instance saves to see this on live content.
+  # ⚠️ The `tank` archetype keeps its own bespoke six-way split, untouched.
+  ArchetypePrimaryStatWeight: 0.25
+  ArchetypeSecondaryStatWeight: 0.15
   #
   # SpellDamageScale: multiplier on ALL spell damage output (players + NPCs).
   #   1.0 = no scaling. Example at Wil 100, skill 0, spell mult 1.0:

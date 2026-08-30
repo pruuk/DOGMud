@@ -15,14 +15,14 @@ loot_pool:
   - 10028
   - 20069
 idlecommands:
-  - 'emote plants the warhammer head-down in the dirt and stares at the gate'
+  - 'emote sets the mace head-down in the dirt and stares at the gate'
   - ''
-  - 'emote rolls the warhammer haft between both hands and waits'
+  - 'emote turns the mace in a slow circle at his wrist and waits'
   - ''
 combatcommands:
-  - 'emote brings the warhammer overhead in a crushing arc'
+  - 'emote brings the mace over in a short crushing arc'
   - ''
-  - 'emote shoves forward with the shield and follows with the hammer'
+  - 'emote shoves forward with the shield and follows with the mace'
   - ''
   - 'emote absorbs the blow on the tower shield without flinching'
   - ''
@@ -34,7 +34,7 @@ character:
     best and worst: a fighter of terrible skill, shaped into
     something barely human by years of surviving what killed
     everyone else. Towering, unhurried. The tower shield on
-    one arm is as much a weapon as the dark-iron warhammer
+    one arm is as much a weapon as the blackened-iron mace
     in the other hand. There are no wasted movements, no
     theatrics. Just the absolute certainty of a creature
     that has never been beaten in this room.

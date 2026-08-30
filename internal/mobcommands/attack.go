@@ -123,11 +123,30 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				actions.NewMobActorInRoom(mob, room),
 				actions.NewMobActorInRoom(m, room),
 			)
-			targeting.Commit(&mob.Character,
+			// Must be read BEFORE Commit, which is what changes the target.
+			//
+			// ⚠️ This guard mirrors the player-target branch above and was
+			// MISSING here, which is the companion-assist double the player
+			// actually sees. A companion assists by attacking the enemy MOB, so
+			// it comes down this branch, and two systems command it: the
+			// reactive CombatPhase_CompanionAssist.go and the polling
+			// handleCompanionOwnerAssist. TryClaimAssistCommand dedupes them
+			// within a round, but the reactive path fires a round earlier, so
+			// the second command lands next round with a fresh claim. The
+			// command itself is harmless -- it re-commits the same target --
+			// but the unguarded announce printed "prepares to fight" twice.
+			// lookfortrouble.go describes the same shape for grace-protected
+			// players: commands that bounce while the message fires each time.
+			alreadyFighting := mob.Character.IsInCombat() &&
+				mob.Character.CurrentCombatTarget().MobInstanceId == attackMobInstanceId
+
+			// U12c-0b: report the engagement, not the attempt. A vetoed commit
+			// must not announce a fight nobody is having.
+			engaged := targeting.Commit(&mob.Character,
 				state.ActorRef{MobInstanceId: attackMobInstanceId},
 				targeting.ReasonForAggroType(mobAggroType))
 
-			if !isSneaking {
+			if engaged && !isSneaking && !alreadyFighting {
 				room.SendTextVisual(messaging.CategoryHitMelee,
 					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>`, mob.Character.Name, m.Character.Name))
 			}

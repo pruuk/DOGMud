@@ -257,6 +257,7 @@ type Balance struct {
 	KickDamagePercent                ConfigFloat `yaml:"KickDamagePercent"`                // Fraction of normal melee damage (default 0.80)
 	KickKnockdownFactor              ConfigFloat `yaml:"KickKnockdownFactor"`              // Knockdown score factor; intended-rate anchor 35% at parity (default 0.924)
 	KnockdownFrequencyScale          ConfigFloat `yaml:"KnockdownFrequencyScale"`          // Master damper on how often ANY contested knockdown lands, applied to the OUTCOME not the score. 1.0 = unchanged, 0.5 = exactly half as many. Reduces only. NOT named *KnockdownChance: that substring is reserved for U10 dead threshold knobs and guarded (default 1.0)
+	ContestGapSaturation             ConfigFloat `yaml:"ContestGapSaturation"`             // Saturation on an attacker's score lead: gap*A/(A+k*gap). 0 = off (default). 2.80 shipped. Higher = flatter blowouts
 	StompDamagePercent               ConfigFloat `yaml:"StompDamagePercent"`               // Stomp damage when target is prone (default 1.20)
 	KneeDamagePercent                ConfigFloat `yaml:"KneeDamagePercent"`                // Knee damage in grapple (default 1.00)
 	CoupDeGraceRounds                ConfigInt   `yaml:"CoupDeGraceRounds"`                // Rounds before mob finishes downed player (default 1; 0=disabled)
@@ -311,6 +312,8 @@ type Balance struct {
 	SpellDamageScale                ConfigFloat `yaml:"SpellDamageScale"`                // Flat multiplier on spell damage output (default 1.0 = no change)
 	RhetoricDamageScale             ConfigFloat `yaml:"RhetoricDamageScale"`             // Flat multiplier on conviction/taunt damage output (default 1.0 = no change)
 	MobDamageMultiplier             ConfigFloat `yaml:"MobDamageMultiplier"`             // Extra multiplier applied to NPC melee damage only (default 1.0 = same as players)
+	ArchetypePrimaryStatWeight      ConfigFloat `yaml:"ArchetypePrimaryStatWeight"`      // Relative weight per PRIMARY stat when distributing a mob's stat pool. Normalised in code (default 0.2667 = today's 80%/3)
+	ArchetypeSecondaryStatWeight    ConfigFloat `yaml:"ArchetypeSecondaryStatWeight"`    // Relative weight per NON-PRIMARY stat. Equal to primary reproduces the uniform archetype (default 0.0667 = today's 20%/3)
 	GlobalDamageMultiplier          ConfigFloat `yaml:"GlobalDamageMultiplier"`          // Master multiplier applied to ALL damage channels (default 1.0)
 	PhysicalMitigationCap           ConfigFloat `yaml:"PhysicalMitigationCap"`           // Max physical mitigation % (default 0.75)
 	MagicalMitigationCap            ConfigFloat `yaml:"MagicalMitigationCap"`            // Max magical mitigation % (default 0.75)
