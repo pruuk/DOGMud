@@ -46,6 +46,7 @@ verify against the code before acting on one.
 | [`audits/ADVERSARIAL_CODE_REVIEW_2026-08-07.md`](audits/ADVERSARIAL_CODE_REVIEW_2026-08-07.md) | Fresh-eyes review of server, commands, persistence, loaders, CI and client: 9 high, 18 medium, 5 low findings |
 | [`audits/2026-08-19-progression-firing-audit.md`](audits/2026-08-19-progression-firing-audit.md) | Every progression call site with its firing condition. Ten different conventions found (the plan estimated seven); input to U10b |
 | [`audits/2026-08-30-kinetic-backlash-reflect.md`](audits/2026-08-30-kinetic-backlash-reflect.md) | Where "An unseen force slams into you" comes from: buff 109 via the Kinetic Backlash mutation. Two defects, both open: the reflect has no death guard so a corpse hits back, and the copy names no source |
+| [`audits/2026-08-30-shield-spells-converge-at-the-cap.md`](audits/2026-08-30-shield-spells-converge-at-the-cap.md) | Why Chrysalis Cocoon and Conviction Ward feel identical: shield magnitude is an unbounded percentage feeding a 75% cap, so every shield saturates past ~Wil 100 / skill 25. For the spell scaling arc |
 | [`perf/`](perf/) | Performance baselines and profiling notes |
 
 Two of these are **live scripts**, not point-in-time reports — run them rather
