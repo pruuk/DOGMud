@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: Your companion stops announcing itself twice
+
+When a companion joined a fight, the line saying so printed twice. Two separate
+systems both tell a companion to help, one of them a beat earlier than the
+other, and while the game was correctly ignoring the second order, it was still
+announcing it. The order was harmless. The echo was not, because it made every
+fight your companion joined look like it had stuttered.
+
+The same echo could come from any creature told to attack something it was
+already fighting, so wild animals squabbling with each other were doing it too.
+It is quiet now, and a fight only announces itself when it actually begins.
+
 ## 2026-08-30: Outmatched fights are less of a slaughter, both ways
 
 When one fighter badly outclassed another, almost every swing was landing, and
