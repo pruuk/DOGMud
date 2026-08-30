@@ -20,6 +20,7 @@ type CombatEvent struct {
 	AttackType                string       `json:"attack_type"`
 	Hit                       bool         `json:"hit"`
 	Crit                      bool         `json:"crit"`
+	CritSource                string       `json:"crit_source,omitempty"`
 	Fumble                    bool         `json:"fumble"`
 	Backfire                  bool         `json:"backfire"`
 	Fizzle                    bool         `json:"fizzle"`
@@ -42,10 +43,20 @@ type AnalyticsSummary struct {
 	Hits        int `json:"hits"`
 	Misses      int `json:"misses"`
 	Crits       int `json:"crits"`
-	Fumbles     int `json:"fumbles"`
-	Backfires   int `json:"backfires"`
-	Fizzles     int `json:"fizzles"`
-	TotalDamage int `json:"total_damage"`
+	// CritsBySource attributes each crit to how it was decided:
+	// "rolled" (margin cleared CritBarFor), "sleeping" (ForceCrit against a
+	// sleeping defender), "crit_on_win" (U10d surprise attack).
+	//
+	// ⚠️ Added 2026-08-30 to answer a question this log could NOT answer: crit
+	// rate jumped from ~5% to ~50% between runs while avg_attack_z_score stayed
+	// flat at ~0. Forced crits bypass the margin entirely, so counts alone
+	// cannot distinguish "the player is outclassing everything" from "something
+	// is forcing crits". This field is the discriminator.
+	CritsBySource map[string]int `json:"crits_by_source,omitempty"`
+	Fumbles       int            `json:"fumbles"`
+	Backfires     int            `json:"backfires"`
+	Fizzles       int            `json:"fizzles"`
+	TotalDamage   int            `json:"total_damage"`
 
 	// By attack type
 	ByAttackType map[string]*AttackTypeStats `json:"by_attack_type"`
@@ -220,6 +231,7 @@ func RecordAttack(result AttackResult, src, tgt SourceTarget, atkType string,
 		AttackType:                atkType,
 		Hit:                       result.Hit,
 		Crit:                      result.Crit,
+		CritSource:                result.CritSource,
 		Fumble:                    result.Fumble,
 		DamageDealt:               result.DamageToTarget,
 		DamageReduced:             result.DamageToTargetReduction,
@@ -260,6 +272,7 @@ func RecordSwings(result AttackResult, src, tgt SourceTarget, atkType string,
 			AttackType:                swingType,
 			Hit:                       swing.Hit,
 			Crit:                      swing.Crit,
+			CritSource:                swing.CritSource,
 			Fumble:                    swing.Fumble,
 			DamageDealt:               swing.Damage,
 			DamageReduced:             swing.DamageReduced,
@@ -496,6 +509,17 @@ func computeSummary(events []CombatEvent) AnalyticsSummary {
 		}
 		if e.Crit {
 			s.Crits++
+			if s.CritsBySource == nil {
+				s.CritsBySource = map[string]int{}
+			}
+			src := e.CritSource
+			if src == "" {
+				// A crit with no label means a path sets Crit without going
+				// through a labelled site. That is itself worth seeing rather
+				// than silently folding into "rolled".
+				src = "unlabelled"
+			}
+			s.CritsBySource[src]++
 		}
 		if e.Fumble {
 			s.Fumbles++

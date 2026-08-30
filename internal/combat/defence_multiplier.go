@@ -209,6 +209,13 @@ func AwardDefenceProgression(c *characters.Character, userId int, defenceType st
 // ChannelDefenceResult is the canonical mechanical outcome of one channel
 // defence. Damage callers consume DamageMultiplier; later narration consumes
 // the defence identity, normalized opposed margin, and crit flag.
+// Crit-source labels for analytics. Diagnostic only; nothing branches on them.
+const (
+	CritSourceRolled   = "rolled"      // normalized margin cleared CritBarFor
+	CritSourceSleeping = "sleeping"    // ForceCrit: defender was asleep
+	CritSourceOnWin    = "crit_on_win" // U10d surprise attack: any clean win crits
+)
+
 type ChannelDefenceResult struct {
 	DamageMultiplier        float64
 	DefenceType             string
@@ -256,6 +263,7 @@ type ChannelDefenceResult struct {
 	// minus the fumble rate, which is the pre-U6b spell/taunt behaviour made
 	// universal and documented).
 	AttackerCrit   bool
+	CritSource     string // "rolled" | "sleeping" | "crit_on_win"; diagnostic only
 	AttackerFumble bool
 
 	// AttackRollZScore is the attacker's own roll quality from the ONE contest,
@@ -411,6 +419,9 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	// resolve it BEFORE success — a fumbled attack aborts even a winning roll.
 	bar := CritBarFor(side.SkillRank, defenderRankOf(defender, res.Winner))
 	out.AttackerCrit = !res.Floored && AttackContestCritAt(res.Margin, res.AttackRoll, bar)
+	if out.AttackerCrit {
+		out.CritSource = CritSourceRolled
+	}
 	out.AttackerFumble = res.AttackRoll.ZScore <= -DefenseCritBar()
 
 	// Task 17: the sleeping-victim forced crit, mirroring melee's
@@ -425,6 +436,7 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	if side.ForceCrit {
 		out.AttackerCrit = true
 		out.AttackerFumble = false
+		out.CritSource = CritSourceSleeping
 	}
 	// U10d: a surprise shot crits on a won contest. Placed HERE, beside
 	// ForceCrit and before awardChannelDefenceBonus, because that function takes
@@ -437,6 +449,9 @@ func resolveChannelAttackWithRunner(channel AttackChannel, side AttackSide, atta
 	// roll.
 	if side.CritOnWin && res.Success && !res.Floored && !out.AttackerFumble {
 		out.AttackerCrit = true
+		if out.CritSource == "" {
+			out.CritSource = CritSourceOnWin
+		}
 	}
 
 	out.DefenceType = res.Winner

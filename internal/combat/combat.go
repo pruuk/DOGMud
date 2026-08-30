@@ -580,6 +580,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			attackResult.SwingEvents = append(attackResult.SwingEvents, SwingEvent{
 				Hit:           res.hit,
 				Crit:          res.crit,
+				CritSource:    res.critSource,
 				Fumble:        res.fumble,
 				DoubleFumble:  res.doubleFumble,
 				DefenseCrit:   res.defenseCrit,

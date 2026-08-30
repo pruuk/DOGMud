@@ -68,8 +68,18 @@ type WeaponHitInfo struct {
 
 // SwingEvent captures per-swing analytics data for accurate hit rate tracking.
 type SwingEvent struct {
-	Hit           bool
-	Crit          bool
+	Hit  bool
+	Crit bool
+	// CritSource records HOW a crit was decided: "rolled" (the normalized
+	// margin cleared CritBarFor), "sleeping" (ForceCrit against a sleeping
+	// defender), or "crit_on_win" (U10d surprise attack). Empty when no crit.
+	//
+	// Diagnostic only -- nothing branches on it. Added 2026-08-30 because the
+	// analytics log recorded crit COUNTS but not their origin, and a crit-rate
+	// regime change from ~5% to ~50% could not be attributed: forced crits
+	// bypass the margin entirely, so a flat avg_attack_z_score cannot rule
+	// them in or out.
+	CritSource    string
 	Fumble        bool
 	DoubleFumble  bool
 	DefenseCrit   bool
@@ -158,6 +168,7 @@ type AttackResult struct {
 	// free-offence bug this field exists to fix.
 	SwingsThrown            int             // defaults 0
 	Crit                    bool            // defaults false
+	CritSource              string          // "rolled"|"sleeping"|"crit_on_win"; diagnostic only, see SwingEvent.CritSource
 	Fumble                  bool            // defaults false
 	DoubleFumble            bool            // defaults false
 	BuffSource              []int           // defaults 0

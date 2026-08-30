@@ -808,10 +808,23 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 	return best
 }
 
+// meleeCritSourceFor labels a melee crit that followed the attackCrit verdict.
+// forceCrit is the sleeping-defender override, which bypasses the margin.
+func meleeCritSourceFor(forceCrit bool) string {
+	if forceCrit {
+		return CritSourceSleeping
+	}
+	return CritSourceRolled
+}
+
 // hitResolution holds the outcome of the full hitroll pipeline.
 type hitResolution struct {
-	hit          bool
-	crit         bool
+	hit  bool
+	crit bool
+	// critSource labels HOW crit was decided, for analytics only. See
+	// AttackResult.CritSource. Melee has three crit sites and they are NOT
+	// equivalent: two follow the roll, one (the ambush opening) bypasses it.
+	critSource   string
 	fumble       bool
 	doubleFumble bool
 	defenseCrit  bool
@@ -1026,6 +1039,7 @@ func resolveDefenseOutcomeCore(result *AttackResult, best bestDefenseResult, sou
 	if openingStrike && res.hit && !res.defended && !best.floored && !res.fumble &&
 		best.margin <= 0 {
 		res.crit = true
+		res.critSource = CritSourceOnWin
 	}
 	return res
 }
@@ -1094,6 +1108,12 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 		attackCrit = true
 		attackFumble = false
 	}
+	// Diagnostic label only; see AttackResult.CritSource. Recorded where the
+	// verdict is DECIDED, because the whole point is to separate a crit that won
+	// its roll from one that bypassed it.
+	if attackCrit && result != nil {
+		result.CritSource = meleeCritSourceFor(forceCrit)
+	}
 
 	// ── Step 1: Fumble resolution (absolute) ────────────────────────────────
 
@@ -1132,6 +1152,7 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 		// Still check if the attack roll was also a crit
 		if attackCrit {
 			res.crit = true
+			res.critSource = meleeCritSourceFor(forceCrit)
 		}
 		return res
 	}
@@ -1179,6 +1200,7 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 		if attackWon && attackCrit {
 			res.hit = true
 			res.crit = true
+			res.critSource = meleeCritSourceFor(forceCrit)
 			res.damageMult = 1.0
 			mudlog.Debug("AttackCrit", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
 				"threshold", fmt.Sprintf("%.2f", critThreshold),
