@@ -19,7 +19,7 @@ func TestSneakMobCostRefusalIsSilentAndPreservesState(t *testing.T) {
 
 	mob, room := getTestMobAndRoom(t)
 	mob.Character.Stamina = 0
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 	mob.Character.Cooldowns = characters.Cooldowns{
 		skills.Skullduggery.String("sneak"): 4,
 		"other":                             -2,

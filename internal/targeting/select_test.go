@@ -45,7 +45,7 @@ func TestSelect_HasNoCombatConsequence(t *testing.T) {
 
 	Select(Criteria{Kind: RandomPlayer}, Scope{Room: room, Self: c})
 
-	assert.Nil(t, c.Aggro, "Select must not commit")
+	assert.False(t, c.IsInCombat(), "Select must not commit")
 	assert.Equal(t, combatphase.Idle, EngagementOf(c).Phase)
 }
 

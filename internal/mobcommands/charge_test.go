@@ -16,7 +16,7 @@ func TestChargeAliasChargesOnlyThroughTrip(t *testing.T) {
 	defer cleanup()
 
 	mob, room := getTestMobAndRoom(t)
-	mob.Character.Aggro = &characters.Aggro{MobInstanceId: 200}
+	mob.Character.SetAggro(0, 200, characters.DefaultAttack)
 	mob.Character.Cooldowns = characters.Cooldowns{}
 	mob.Character.Items = nil
 	mob.Character.Skills = map[string]int{string(skills.UnarmedCombat): 0}
@@ -38,8 +38,8 @@ func TestCharge_Decoration_MobTarget(t *testing.T) {
 	mob, room := getTestMobAndRoom(t)
 
 	// Point attacker (mob 100) at mob instance 200 (Merchant, seeded in room 1).
-	mob.Character.Aggro = &characters.Aggro{MobInstanceId: 200}
-	defer func() { mob.Character.Aggro = nil }()
+	mob.Character.SetAggro(0, 200, characters.DefaultAttack)
+	defer func() { mob.Character.EndAggro() }()
 
 	mob.Character.Cooldowns = map[string]int{}
 
@@ -55,8 +55,8 @@ func TestCharge_Cooldown_Blocks(t *testing.T) {
 	defer cleanup()
 
 	mob, room := getTestMobAndRoom(t)
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
-	defer func() { mob.Character.Aggro = nil }()
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
+	defer func() { mob.Character.EndAggro() }()
 
 	// Mark the cooldown as already active.
 	mob.Character.Cooldowns["special-move"] = 5
@@ -75,8 +75,8 @@ func TestCharge_VanishedTarget(t *testing.T) {
 	mob, room := getTestMobAndRoom(t)
 
 	// Point aggro at a non-existent mob instance.
-	mob.Character.Aggro = &characters.Aggro{MobInstanceId: 9999}
-	defer func() { mob.Character.Aggro = nil }()
+	mob.Character.SetAggro(0, 9999, characters.DefaultAttack)
+	defer func() { mob.Character.EndAggro() }()
 
 	mob.Character.Cooldowns = map[string]int{}
 
@@ -114,8 +114,8 @@ func TestCharge_AggroRoundsWaiting_HighStats(t *testing.T) {
 	mob.Character.Stats.Strength.ValueAdj = 200
 	mob.Character.Stats.Dexterity.ValueAdj = 200
 
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
-	defer func() { mob.Character.Aggro = nil }()
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
+	defer func() { mob.Character.EndAggro() }()
 
 	mob.Character.Cooldowns = map[string]int{}
 
@@ -124,7 +124,7 @@ func TestCharge_AggroRoundsWaiting_HighStats(t *testing.T) {
 
 	// After charge fires, aggro.RoundsWaiting must be 1 (round consumed
 	// by the special move via actions.ExecuteTrip → RecordAndWait).
-	require.NotNil(t, mob.Character.Aggro)
+	require.True(t, mob.Character.IsInCombat())
 	assert.Equal(t, 1, mob.Character.RoundsWaiting(),
 		"Charge must consume the combat round (RoundsWaiting=1)")
 }

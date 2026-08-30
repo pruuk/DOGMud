@@ -160,7 +160,5 @@ func ReasonForAggroType(t characters.AggroType) Reason {
 // struct because SetAggro legitimately rewrites the aggro TYPE (it re-infers
 // Shooting from the equipped weapon); it never rewrites the ids.
 func committedTo(c *characters.Character, ref state.ActorRef) bool {
-	return c.Aggro != nil &&
-		c.Aggro.UserId == ref.UserId &&
-		c.Aggro.MobInstanceId == ref.MobInstanceId
+	return c.IsInCombat() && c.CurrentCombatTarget() == ref
 }

@@ -69,8 +69,8 @@ func TestCharmExpiry_PresentOwner_ProducesTheGrudge(t *testing.T) {
 	if user.Character.GetCompanionByInstanceId(mob.InstanceId) != nil {
 		t.Error("the companion record should be gone after expiry")
 	}
-	if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != user.UserId {
-		t.Fatalf("the creature should be attacking its former owner, aggro=%+v", mob.Character.Aggro)
+	if !mob.Character.IsInCombat() || mob.Character.CurrentCombatTarget().UserId != user.UserId {
+		t.Fatalf("the creature should be attacking its former owner, aggro=%+v", mob.Character.CurrentCombatTarget())
 	}
 }
 
@@ -105,9 +105,9 @@ func TestCharmExpiry_SummonedCompanionNeverGrudges(t *testing.T) {
 
 	tickMobCharmState(mob)
 
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		t.Errorf("a summoned companion must never turn on its summoner, aggro=%+v",
-			mob.Character.Aggro)
+			mob.Character.CurrentCombatTarget())
 	}
 	_ = user
 }
@@ -122,8 +122,8 @@ func TestCharmExpiry_AbsentOwner_NoGrudge(t *testing.T) {
 
 	tickMobCharmState(mob)
 
-	if mob.Character.Aggro != nil {
-		t.Errorf("an absent owner must not be hunted, aggro=%+v", mob.Character.Aggro)
+	if mob.Character.IsInCombat() {
+		t.Errorf("an absent owner must not be hunted, aggro=%+v", mob.Character.CurrentCombatTarget())
 	}
 	if mob.Character.IsCharmed() {
 		t.Error("the bond should still be broken even with no grudge")
@@ -139,8 +139,8 @@ func TestCharmExpiry_LinkDeadOwner_NoGrudge(t *testing.T) {
 
 	tickMobCharmState(mob)
 
-	if mob.Character.Aggro != nil {
-		t.Errorf("a link-dead owner must not be attacked, aggro=%+v", mob.Character.Aggro)
+	if mob.Character.IsInCombat() {
+		t.Errorf("a link-dead owner must not be attacked, aggro=%+v", mob.Character.CurrentCombatTarget())
 	}
 	// ...but they must not come back to a permanently reserved pool either.
 	if user.Character.GetCompanionByInstanceId(mob.InstanceId) != nil {
@@ -168,8 +168,8 @@ func TestCharmExpiry_PermanentSentinelNeverExpires(t *testing.T) {
 	if !mob.Character.IsCharmed() {
 		t.Error("a permanent bond must never expire")
 	}
-	if mob.Character.Aggro != nil {
-		t.Errorf("a permanent bond must never grudge, aggro=%+v", mob.Character.Aggro)
+	if mob.Character.IsInCombat() {
+		t.Errorf("a permanent bond must never grudge, aggro=%+v", mob.Character.CurrentCombatTarget())
 	}
 	_ = user
 }

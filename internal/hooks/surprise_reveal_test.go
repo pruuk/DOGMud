@@ -84,9 +84,9 @@ func TestRevealedAmbusher_StillGetsTheOpeningStrike(t *testing.T) {
 
 	require.False(t, atk.Character.IsHidden(),
 		"the reveal must have fired, or this test proves nothing")
-	require.NotNil(t, atk.Character.Aggro,
+	require.True(t, atk.Character.IsInCombat(),
 		"SetAggro must have taken — otherwise this test proves nothing")
-	if atk.Character.Aggro.Type != characters.SurpriseAttack {
+	if !atk.Character.CombatPhase.OpeningUnspent() {
 		t.Fatalf("revealing must not clear the SurpriseAttack aggro type")
 	}
 }

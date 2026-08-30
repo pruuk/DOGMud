@@ -138,14 +138,14 @@ func resetSpecialMoveWrapperFixture(t *testing.T, user *users.UserRecord, target
 	target.Character.HealthMax.Value = 1_000_000
 	target.Character.Stamina = 1_000_000
 	target.Character.StaminaMax.Value = 1_000_000
-	target.Character.Aggro = nil
+	target.Character.EndAggro()
 	events.DrainQueuedMessagesForTest(user.UserId)
 	events.DrainQueuedPlayerAttackedMobsForTest(0)
 }
 
 func assertNoSpecialMoveEngagement(t *testing.T, user *users.UserRecord, target *mobs.Mob) {
 	t.Helper()
-	assert.Nil(t, user.Character.Aggro, "refused action must not set aggro")
+	assert.False(t, user.Character.IsInCombat(), "refused action must not set aggro")
 	assert.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId), "refused action must not queue aggression")
 	assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId), "refused action must not change opinion")
 	assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false), "refused action must not record assault")
@@ -223,7 +223,7 @@ func TestMobSpecialMoveWrappersRefuseSilentlyWithoutMutation(t *testing.T) {
 			mob.Character.Stamina = 0
 			mob.Character.Cooldowns = characters.Cooldowns{}
 			mob.Character.SetAggro(1, 0, characters.DefaultAttack)
-			beforeAggro := *mob.Character.Aggro
+			beforeAggro := mob.Character.CurrentCombatTarget()
 			beforeHealth := mob.Character.Health
 			for _, userID := range []int{1, 2} {
 				events.DrainQueuedMessagesForTest(userID)
@@ -234,7 +234,7 @@ func TestMobSpecialMoveWrappersRefuseSilentlyWithoutMutation(t *testing.T) {
 			require.True(t, handled)
 			require.Zero(t, mob.Character.Stamina)
 			require.Equal(t, beforeHealth, mob.Character.Health)
-			require.Equal(t, beforeAggro, *mob.Character.Aggro)
+			require.Equal(t, beforeAggro, mob.Character.CurrentCombatTarget())
 			require.Empty(t, mob.Character.Cooldowns)
 			require.Zero(t, mob.Character.AttacksThisRound)
 			for _, userID := range []int{1, 2} {
@@ -311,8 +311,8 @@ func TestStagedSpecialMovePaidMissCommitsEngagement(t *testing.T) {
 	require.True(t, res.Executed)
 	require.False(t, res.MoveResult.Hit, "fixture must exercise the paid-miss path")
 	require.Less(t, user.Character.Stamina, 100)
-	require.NotNil(t, user.Character.Aggro)
-	require.Equal(t, 100, user.Character.Aggro.MobInstanceId)
+	require.True(t, user.Character.IsInCombat())
+	require.Equal(t, 100, user.Character.CurrentCombatTarget().MobInstanceId)
 	require.Len(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId), 1)
 	require.Equal(t, -15, opinions.Get(int(target.MobId), user.UserId))
 	require.Len(t, crimes.AllForFaction("thornwall_citizens", false), 1)
@@ -343,7 +343,7 @@ func TestStagedSpecialMoveTargetGoneBeforeAdmissionHasNoSideEffects(t *testing.T
 	require.True(t, res.NoTarget)
 	require.Equal(t, 100, user.Character.Stamina)
 	require.Empty(t, user.Character.Cooldowns)
-	assert.Nil(t, user.Character.Aggro)
+	assert.False(t, user.Character.IsInCombat())
 	assert.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId))
 	assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId))
 	assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false))
@@ -437,7 +437,7 @@ func TestSpecialMoveWrappersStagedRacesHaveNoEngagementSideEffects(t *testing.T)
 					require.Equal(t, scenario.wantCooldown, user.Character.Cooldowns["special-move"])
 				}
 
-				assert.Nil(t, user.Character.Aggro, "staged race must not commit aggro")
+				assert.False(t, user.Character.IsInCombat(), "staged race must not commit aggro")
 				assert.Equal(t, 0, specialMoveRoundsWaiting(user.Character), "staged race must not consume a combat round")
 				assert.Empty(t, events.DrainQueuedPlayerAttackedMobsForTest(user.UserId))
 				assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId))
@@ -449,7 +449,7 @@ func TestSpecialMoveWrappersStagedRacesHaveNoEngagementSideEffects(t *testing.T)
 				require.Equal(t, targetStamina, target.Character.Stamina)
 				require.Len(t, target.Character.Conditions, targetConditions)
 				require.Len(t, target.Character.Buffs.GetBuffs(), targetBuffs)
-				require.Nil(t, target.Character.Aggro)
+				require.False(t, target.Character.IsInCombat())
 				require.Equal(t, actorPosition, user.Character.Position.State())
 				require.Equal(t, targetPosition, target.Character.Position.State())
 			})
@@ -458,7 +458,7 @@ func TestSpecialMoveWrappersStagedRacesHaveNoEngagementSideEffects(t *testing.T)
 }
 
 func specialMoveRoundsWaiting(char *characters.Character) int {
-	if char.Aggro == nil {
+	if !char.IsInCombat() {
 		return 0
 	}
 	return char.RoundsWaiting()

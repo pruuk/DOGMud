@@ -24,7 +24,7 @@ func TestCommit_RetargetKeepsTheStoresInAgreement(t *testing.T) {
 
 	Commit(c, state.ActorRef{MobInstanceId: 200}, ReasonAttack)
 
-	require.Equal(t, 200, c.Aggro.MobInstanceId, "Aggro holds the new target")
+	require.Equal(t, 200, c.CurrentCombatTarget().MobInstanceId, "Aggro holds the new target")
 	require.Equal(t, 200, c.CurrentCombatTarget().MobInstanceId,
 		"CurrentCombatTarget must follow the retarget; this is the prompt bug")
 	require.Equal(t, 200, EngagementOf(c).Target.MobInstanceId,
@@ -45,7 +45,7 @@ func TestCommitTaunt_RetargetKeepsTheStoresInAgreement(t *testing.T) {
 
 	CommitTaunt(c, state.ActorRef{UserId: 9}, 4)
 
-	require.Equal(t, 9, c.Aggro.UserId)
+	require.Equal(t, 9, c.CurrentCombatTarget().UserId)
 	require.Equal(t, 9, c.CurrentCombatTarget().UserId,
 		"a taunt must pull the CombatPhase target too, not just Aggro")
 }

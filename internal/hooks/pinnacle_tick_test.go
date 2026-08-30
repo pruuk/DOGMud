@@ -285,7 +285,7 @@ func TestPinnaclePickVoiceEvent(t *testing.T) {
 
 	// In combat → taunt (takes precedence over everything).
 	c := characters.New()
-	c.Aggro = &characters.Aggro{UserId: 1, Type: characters.DefaultAttack}
+	c.SetAggro(1, 0, characters.DefaultAttack)
 	if ev := pickVoiceEvent(c, hungerSpec, 100); ev != "on_taunt" {
 		t.Fatalf("in combat should pick on_taunt, got %q", ev)
 	}
@@ -390,32 +390,36 @@ func TestApplyTauntPull(t *testing.T) {
 	u := users.NewTestUser(710, "aegis", "Aegisbearer", 7710)
 	mob := addTestMob(210, false)
 	u.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
-	mob.Character.Aggro = &characters.Aggro{UserId: 2, Type: characters.DefaultAttack}
+	mob.Character.SetAggro(2, 0, characters.DefaultAttack)
 	applyTauntPull(u)
-	if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != u.UserId {
-		t.Fatalf("taunt pull should force the mob onto the bearer (%d), got %+v", u.UserId, mob.Character.Aggro)
+	if !mob.Character.IsInCombat() || mob.Character.CurrentCombatTarget().UserId != u.UserId {
+		t.Fatalf("taunt pull should force the mob onto the bearer (%d), got %+v", u.UserId, mob.Character.CurrentCombatTarget())
 	}
 
 	// No-op 1: bearer has no aggro at all → nothing to pull.
 	u2 := users.NewTestUser(711, "idle", "Idler", 7711)
 	mob2 := addTestMob(211, false)
-	sentinel := &characters.Aggro{UserId: 2, Type: characters.DefaultAttack}
-	mob2.Character.Aggro = sentinel
-	applyTauntPull(u2) // u2.Character.Aggro is nil
-	if mob2.Character.Aggro != sentinel {
-		t.Fatalf("no bearer aggro must not touch any mob, got %+v", mob2.Character.Aggro)
+	// U12c-2: the no-op used to be proved by POINTER IDENTITY on the Aggro
+	// struct. With the field gone the equivalent is that the engagement's
+	// target is unchanged, which is what the pointer check was standing in for.
+	mob2.Character.SetAggro(2, 0, characters.DefaultAttack)
+	sentinel := mob2.Character.CurrentCombatTarget()
+	applyTauntPull(u2) // u2 is not in combat, so there is nothing to pull
+	if mob2.Character.CurrentCombatTarget() != sentinel {
+		t.Fatalf("no bearer aggro must not touch any mob, got %+v", mob2.Character.CurrentCombatTarget())
 	}
 
-	// No-op 2: the mob is ALREADY fighting the bearer → no re-force (the Aggro
-	// pointer is left untouched, proving ForceTauntAggro never fired).
+	// No-op 2: the mob is ALREADY fighting the bearer → no re-force. The
+	// original proved this by pointer identity on the Aggro struct; the target
+	// ref is the equivalent now.
 	u3 := users.NewTestUser(712, "tank", "Tanker", 7712)
 	mob3 := addTestMob(212, false)
 	u3.Character.SetAggro(0, mob3.InstanceId, characters.DefaultAttack)
-	already := &characters.Aggro{UserId: u3.UserId, Type: characters.DefaultAttack}
-	mob3.Character.Aggro = already
+	mob3.Character.SetAggro(u3.UserId, 0, characters.DefaultAttack)
+	already := mob3.Character.CurrentCombatTarget()
 	applyTauntPull(u3)
-	if mob3.Character.Aggro != already {
-		t.Fatalf("a mob already on the bearer must not be re-forced, got %+v", mob3.Character.Aggro)
+	if mob3.Character.CurrentCombatTarget() != already {
+		t.Fatalf("a mob already on the bearer must not be re-forced, got %+v", mob3.Character.CurrentCombatTarget())
 	}
 
 	// No-op 3: a non-combatant mob is never pulled.
@@ -423,8 +427,8 @@ func TestApplyTauntPull(t *testing.T) {
 	nonCombatant := addTestMob(213, true)
 	u4.Character.SetAggro(0, nonCombatant.InstanceId, characters.DefaultAttack)
 	applyTauntPull(u4)
-	if nonCombatant.Character.Aggro != nil {
-		t.Fatalf("non-combatant mob must not be pulled, got %+v", nonCombatant.Character.Aggro)
+	if nonCombatant.Character.IsInCombat() {
+		t.Fatalf("non-combatant mob must not be pulled, got %+v", nonCombatant.Character.CurrentCombatTarget())
 	}
 }
 

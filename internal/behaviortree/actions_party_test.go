@@ -363,7 +363,7 @@ func TestActPartyAssistTarget_LeaderNotInCombatReturnsFailure(t *testing.T) {
 	_, p := makePartyMob(t, 5009, 57)
 	// Leader's Aggro is nil (not in combat).
 	if p.Leader.GetCharacter() != nil {
-		p.Leader.GetCharacter().Aggro = nil
+		p.Leader.GetCharacter().EndAggro()
 	}
 
 	ctx := &EvalContext{InstanceId: 5009, RoomId: 57}
@@ -388,10 +388,7 @@ func TestActPartyAssistTarget_CopiesLeaderAggro(t *testing.T) {
 	leaderMob.Character.RoomId = 58
 	leaderMob.Character.Buffs = buffs.New()
 	// Leader is attacking user 7.
-	leaderMob.Character.Aggro = &characters.Aggro{
-		UserId: 7,
-		Type:   characters.DefaultAttack,
-	}
+	leaderMob.Character.SetAggro(7, 0, characters.DefaultAttack)
 	mobs.SetInstanceForTest(5200, leaderMob)
 	t.Cleanup(func() { mobs.SetInstanceForTest(5200, nil) })
 
@@ -422,11 +419,11 @@ func TestActPartyAssistTarget_CopiesLeaderAggro(t *testing.T) {
 	if result := fn(nil, ctx); result != Success {
 		t.Fatalf("expected Success, got %v", result)
 	}
-	if memberMob.Character.Aggro == nil {
+	if !memberMob.Character.IsInCombat() {
 		t.Fatal("expected member Aggro to be set, got nil")
 	}
-	if memberMob.Character.Aggro.UserId != 7 {
-		t.Errorf("expected member Aggro.UserId=7, got %d", memberMob.Character.Aggro.UserId)
+	if memberMob.Character.CurrentCombatTarget().UserId != 7 {
+		t.Errorf("expected member Aggro.UserId=7, got %d", memberMob.Character.CurrentCombatTarget().UserId)
 	}
 }
 

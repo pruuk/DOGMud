@@ -115,7 +115,7 @@ func TestActTryFire_NoAggro_Fails(t *testing.T) {
 	mob := newTestMob(t)
 	mob.Character.RoomId = 10
 	mob.Character.Equipment.Weapon = rangedBow(true)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: 10}
 	if got := LookupAction("try_fire")(nil, ctx); got != Failure {
@@ -159,7 +159,7 @@ func TestActTryFire_NoAggroSameRoomMemory_FiresViaFallback(t *testing.T) {
 	mob := newTestMob(t)
 	mob.Character.RoomId = room
 	mob.Character.Equipment.Weapon = rangedBow(true)
-	mob.Character.Aggro = nil // aggro ended by the round driver after a retreat
+	mob.Character.EndAggro() // aggro ended by the round driver after a retreat
 	mob.CombatMemory = mobs.SetCombatMemory(0, target.InstanceId, room, 1)
 	queuedCmds(mob.InstanceId) // clear
 
@@ -189,7 +189,7 @@ func TestActTryFire_NoAggroCrossRoomMemory_FiresDirectional(t *testing.T) {
 	mob := newTestMob(t)
 	mob.Character.RoomId = here
 	mob.Character.Equipment.Weapon = rangedBow(true)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 	// Memory's LastSeenRoomId is `there` (live room is authoritative anyway).
 	mob.CombatMemory = mobs.SetCombatMemory(0, target.InstanceId, there, 1)
 	queuedCmds(mob.InstanceId)
@@ -207,7 +207,7 @@ func TestActTryFire_NoAggroNoMemory_Fails(t *testing.T) {
 	mob := newTestMob(t)
 	mob.Character.RoomId = 10
 	mob.Character.Equipment.Weapon = rangedBow(true)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 	mob.CombatMemory = nil
 
 	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: 10}
@@ -221,7 +221,7 @@ func TestActTryFire_NoAggroMemoryTargetGone_Fails(t *testing.T) {
 	mob := newTestMob(t)
 	mob.Character.RoomId = 10
 	mob.Character.Equipment.Weapon = rangedBow(true)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 	mob.CombatMemory = mobs.SetCombatMemory(0, 9999 /* not seeded */, 10, 1)
 
 	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: 10}
@@ -243,7 +243,7 @@ func TestActTryReload_UnloadedWithAmmoNotEngaged_ReloadsAndSucceeds(t *testing.T
 	mob.Character.RoomId = here
 	mob.Character.Equipment.Weapon = rangedBow(false)
 	mob.Character.Items = []items.Item{arrowBundle()}
-	mob.Character.Aggro = nil // not engaged
+	mob.Character.EndAggro() // not engaged
 	queuedCmds(mob.InstanceId)
 
 	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: here}
@@ -311,7 +311,7 @@ func TestActTryReload_Skullduggery_SneaksBeforeReload(t *testing.T) {
 	mob.Character.RoomId = here
 	mob.Character.Equipment.Weapon = rangedBow(false)
 	mob.Character.Items = []items.Item{arrowBundle()}
-	mob.Character.Aggro = nil // not engaged
+	mob.Character.EndAggro() // not engaged
 	mob.Character.SetSkill(string(skills.Skullduggery), 10)
 	queuedCmds(mob.InstanceId)
 
@@ -352,7 +352,7 @@ func TestActTryReload_NoSkullduggery_NoSneak(t *testing.T) {
 	mob.Character.RoomId = here
 	mob.Character.Equipment.Weapon = rangedBow(false)
 	mob.Character.Items = []items.Item{arrowBundle()}
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 	// No skullduggery skill (level 0) — should reload without sneaking.
 	queuedCmds(mob.InstanceId)
 
@@ -429,7 +429,7 @@ func TestActKeepDistance_NotEngaged_Fails(t *testing.T) {
 	mob.Character.RoomId = here
 	mob.Character.HealthMax.Value = 100
 	mob.Character.Health = 100
-	mob.Character.Aggro = nil // no one closed on us
+	mob.Character.EndAggro() // no one closed on us
 
 	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: here}
 	if got := LookupAction("keep_distance")(nil, ctx); got != Failure {

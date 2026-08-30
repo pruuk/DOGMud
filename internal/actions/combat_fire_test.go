@@ -323,7 +323,7 @@ func TestFire_UnseenTargetIsRejectedBeforeAdmission(t *testing.T) {
 			assert.Equal(t, characters.CostCommitResult{}, res.Cost)
 			assert.Equal(t, 10, char.Stamina)
 			assert.True(t, char.Equipment.Weapon.Loaded)
-			assert.Nil(t, char.Aggro)
+			assert.False(t, char.IsInCombat())
 			assert.Equal(t, healthBefore, target.Character.Health)
 			assert.Equal(t, 0, char.Cooldowns["special-move"])
 		})
@@ -361,7 +361,7 @@ func TestFire_RefusedCostIsAtomic(t *testing.T) {
 	char.StaminaMax.Value = 100
 	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
 	char.Items = []items.Item{reloadAmmoBundle(3, "arrows", 20)}
-	char.Aggro = &characters.Aggro{MobInstanceId: 500}
+	char.SetAggro(0, 500, characters.DefaultAttack)
 	char.Cooldowns = characters.Cooldowns{"special-move": 3, "other": 7}
 	targetMob := mobs.GetInstance(500)
 	require.NotNil(t, targetMob)
@@ -397,7 +397,7 @@ func TestFire_AffordableMissPaysUnloadsAndConsumesRound(t *testing.T) {
 	char.StaminaMax.Value = 100
 	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
 	char.Items = []items.Item{reloadAmmoBundle(3, "arrows", 20)}
-	char.Aggro = &characters.Aggro{MobInstanceId: 500}
+	char.SetAggro(0, 500, characters.DefaultAttack)
 	char.Cooldowns = characters.Cooldowns{"special-move": 3}
 	targetMob := mobs.GetInstance(500)
 	require.NotNil(t, targetMob)
@@ -429,7 +429,7 @@ func TestFire_StaleWeaponAfterAdmissionDoesNotUnloadReplacement(t *testing.T) {
 	char.Skills[string(skills.RangedCombat)] = 25
 	char.Stamina = 10
 	char.Equipment.Weapon = fireRangedWeapon(1, 1, true)
-	char.Aggro = &characters.Aggro{MobInstanceId: 500}
+	char.SetAggro(0, 500, characters.DefaultAttack)
 	target := mobs.GetInstance(500)
 	require.NotNil(t, target)
 	healthBefore := target.Character.Health
@@ -584,7 +584,7 @@ func TestFireReload_NoviceEvidenceCycle(t *testing.T) {
 			{ItemId: 9, Spec: &items.ItemSpec{ItemId: 9, Name: "ballast", Weight: 32.5}},
 			reloadAmmoBundle(3, "arrows", 20),
 		}
-		char.Aggro = &characters.Aggro{MobInstanceId: 500}
+		char.SetAggro(0, 500, characters.DefaultAttack)
 		return char
 	}
 
@@ -726,7 +726,7 @@ func TestFire_DarkRoomIsRejectedAsLightingNotAsMissingTarget(t *testing.T) {
 	assert.Equal(t, characters.CostCommitResult{}, res.Cost)
 	assert.Equal(t, 10, char.Stamina)
 	assert.True(t, char.Equipment.Weapon.Loaded)
-	assert.Nil(t, char.Aggro)
+	assert.False(t, char.IsInCombat())
 }
 
 // U10b-1 Task 11: the ORDINARY shot's progression award.

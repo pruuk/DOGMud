@@ -67,7 +67,7 @@ func prepareSpecialMoveCooldown(t *testing.T, char *characters.Character, target
 	t.Cleanup(func() { mobs.SetInstanceForTest(targetID, nil) })
 
 	char.SpeciesId = speciesID
-	char.Aggro = &characters.Aggro{MobInstanceId: targetID}
+	char.SetAggro(0, targetID, characters.DefaultAttack)
 	char.Cooldowns = characters.Cooldowns{"special-move": 3}
 	fundSpecialMove(char)
 }
@@ -209,7 +209,7 @@ func newSpecialMoveAdmissionActor(t *testing.T, speciesID, stamina, skillRank in
 	char.Skills[string(skills.UnarmedCombat)] = skillRank
 	char.Skills[string(skills.WeaponCombat)] = skillRank
 	setCombatPositionParallel(char, position.Standing)
-	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 	if laden {
 		char.Items = []items.Item{{
 			ItemId: 9911,
@@ -472,7 +472,7 @@ func TestSpecialMoveActingAdmission(t *testing.T) {
 // Found=false without panicking.
 //
 // U12c-1: the function takes a state.ActorRef now. A zero ref is what a nil
-// *characters.Aggro used to be, and must behave identically.
+// characters.CurrentCombatTarget() used to be, and must behave identically.
 func TestResolveAggroTarget_ZeroRef(t *testing.T) {
 	result := ResolveAggroTarget(state.ActorRef{})
 	assert.False(t, result.Found, "zero ref should return Found=false")

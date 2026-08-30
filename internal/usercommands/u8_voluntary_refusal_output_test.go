@@ -108,14 +108,14 @@ func TestMobRhetoricWrappersKeepPrivateRefusalSilent(t *testing.T) {
 			mob.Character.Conviction = 0
 			mob.Character.Cooldowns = characters.Cooldowns{}
 			mob.Character.SetAggro(1, 0, characters.DefaultAttack)
-			beforeAggro := *mob.Character.Aggro
+			beforeAggro := mob.Character.CurrentCombatTarget()
 			for _, userID := range []int{1, 2} {
 				events.DrainQueuedMessagesForTest(userID)
 			}
 			handled, err := tc.run("", mob, room)
 			require.NoError(t, err)
 			require.True(t, handled)
-			require.Equal(t, beforeAggro, *mob.Character.Aggro)
+			require.Equal(t, beforeAggro, mob.Character.CurrentCombatTarget())
 			require.Zero(t, mob.Character.Conviction)
 			require.Empty(t, mob.Character.Cooldowns)
 			require.Zero(t, mob.Character.GetSkillUseCount("rhetoric"))

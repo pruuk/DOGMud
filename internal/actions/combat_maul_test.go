@@ -69,7 +69,7 @@ func TestMaul_NotFanged(t *testing.T) {
 	t.Run("non-fanged actor returns NotFanged", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 5001 // feline — clawed, not fanged
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecuteMaul(newStubActor(char, newTestRoom()))
 
@@ -81,7 +81,7 @@ func TestMaul_NotFanged(t *testing.T) {
 	t.Run("fanged actor passes the gate and executes", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 5002 // wolf — fanged
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		fundSpecialMove(char)
 
 		result := ExecuteMaul(newStubActor(char, newTestRoom()))
@@ -99,7 +99,7 @@ func TestMaul_TargetGone(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	// Aggro pointing at a nonexistent mob instance — target resolution fails.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
+	char.SetAggro(0, 999999, characters.DefaultAttack)
 
 	result := ExecuteMaul(actor)
 

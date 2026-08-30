@@ -62,10 +62,10 @@ func TestGenericFighter_PackmateHurt_SetsAggroOnAttacker(t *testing.T) {
 	DrainAllDelayedActionsForTest(t)
 
 	// actAttack sets Aggro directly — verify via mob state.
-	if m.Character.Aggro == nil {
-		t.Fatalf("packmate_hurt handler should set mob.Aggro; got nil")
+	if !m.Character.IsInCombat() {
+		t.Fatalf("packmate_hurt handler should engage the mob; it is not in combat")
 	}
-	if m.Character.Aggro.UserId != 42 {
-		t.Fatalf("expected Aggro.UserId=42, got %d", m.Character.Aggro.UserId)
+	if m.Character.CurrentCombatTarget().UserId != 42 {
+		t.Fatalf("expected Aggro.UserId=42, got %d", m.Character.CurrentCombatTarget().UserId)
 	}
 }

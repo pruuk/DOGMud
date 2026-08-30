@@ -70,7 +70,7 @@ func TestDrain_NotLifeDrainer(t *testing.T) {
 	t.Run("normal species returns NotLifeDrainer", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 6001 // human — no LifeDrain
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecuteDrain(newStubActor(char, newTestRoom()))
 
@@ -82,7 +82,7 @@ func TestDrain_NotLifeDrainer(t *testing.T) {
 	t.Run("LifeDrain species passes the gate and executes", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 6002 // vampire — LifeDrain
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		fundSpecialMove(char)
 
 		result := ExecuteDrain(newStubActor(char, newTestRoom()))
@@ -127,7 +127,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	hitSeen := false
 	for i := 0; i < 100; i++ {
 		// Reset state for each attempt: re-arm aggro + cooldowns.
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{} // clear cooldown from previous attempt
 		char.Health = 150                       // reset HP so the heal delta is visible
 
@@ -204,7 +204,7 @@ func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 		// Reset state for each attempt: re-arm aggro + cooldowns, and reset
 		// health/bleed on both sides so a stale condition from a prior
 		// iteration can't taint the assertions below.
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{}
 		char.Health = char.HealthMax.Value - 1000 // below max so the heal is observable
 		targetMob.Character.Health = targetMob.Character.HealthMax.Value
@@ -239,7 +239,7 @@ func TestDrain_TargetGone(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	// Aggro pointing at a nonexistent mob instance — target resolution fails.
-	char.Aggro = &characters.Aggro{MobInstanceId: 999999}
+	char.SetAggro(0, 999999, characters.DefaultAttack)
 
 	result := ExecuteDrain(actor)
 

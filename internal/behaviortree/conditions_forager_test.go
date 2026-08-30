@@ -119,9 +119,7 @@ func TestCondMobCanSafelyEngage_NonPreyTargetFails(t *testing.T) {
 	targetMob := buildForagerCondMob(t, 8506, 999, 100, 100)
 	_ = targetMob
 
-	foragerMob.Character.Aggro = &characters.Aggro{
-		MobInstanceId: 8506,
-	}
+	foragerMob.Character.SetAggro(0, 8506, characters.DefaultAttack)
 
 	ctx := &EvalContext{InstanceId: 8505}
 	assert.Equal(t, Failure, condMobCanSafelyEngage(nil, ctx))

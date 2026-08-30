@@ -41,7 +41,7 @@ func TestEquipBestFloorItem_InCombatSkips(t *testing.T) {
 	m := &mobs.Mob{BehaviorArchetype: "generic_fighter"}
 	m.Character = characters.Character{}
 	// Set up an aggro to indicate in-combat state.
-	m.Character.Aggro = &characters.Aggro{UserId: 1}
+	m.Character.SetAggro(1, 0, characters.DefaultAttack)
 	r := &rooms.Room{RoomId: 99999}
 	r.Items = []items.Item{{ItemId: 1}}
 	if EquipBestFloorItem(m, r) {

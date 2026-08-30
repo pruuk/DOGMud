@@ -37,11 +37,11 @@ func TestLookout_PackmateHurt_CallsForHelpAndEngages(t *testing.T) {
 	}
 
 	// Aggro should be set on the attacker.
-	if mob.Character.Aggro == nil {
-		t.Fatalf("lookout should set mob.Aggro on attacker; got nil")
+	if !mob.Character.IsInCombat() {
+		t.Fatalf("lookout should engage the attacker; the mob is not in combat")
 	}
-	if mob.Character.Aggro.UserId != 42 {
-		t.Fatalf("expected Aggro.UserId=42, got %d", mob.Character.Aggro.UserId)
+	if mob.Character.CurrentCombatTarget().UserId != 42 {
+		t.Fatalf("expected Aggro.UserId=42, got %d", mob.Character.CurrentCombatTarget().UserId)
 	}
 }
 
@@ -69,8 +69,8 @@ func TestLookout_MobHurt_CallsForHelpAndEngages(t *testing.T) {
 	if callCmd == "" {
 		t.Fatalf("lookout should callforhelp on mob_hurt; nothing queued")
 	}
-	if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != 99 {
-		t.Fatalf("expected Aggro.UserId=99; got %+v", mob.Character.Aggro)
+	if !mob.Character.IsInCombat() || mob.Character.CurrentCombatTarget().UserId != 99 {
+		t.Fatalf("expected Aggro.UserId=99; got %+v", mob.Character.CurrentCombatTarget())
 	}
 }
 

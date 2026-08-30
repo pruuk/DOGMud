@@ -1,6 +1,7 @@
 package users
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -1554,12 +1555,13 @@ func TestPromptTargetVisibilityGating(t *testing.T) {
 	u := &UserRecord{
 		UserId: 7001,
 		Character: &characters.Character{
-			Name: "seer",
-			// Combat target is a mob; CurrentCombatTarget reads Aggro
-			// when CombatPhase is unset.
-			Aggro: &characters.Aggro{MobInstanceId: 999999},
+			Name:        "seer",
+			CombatPhase: combatphase.NewMachine(),
 		},
 	}
+	// U12c-2: the combat target lives on the machine, so the fixture commits
+	// through the seam rather than assigning the field.
+	u.Character.SetAggro(0, 999999, characters.DefaultAttack)
 
 	// Blind / dark room: the {target} token must NOT expose any name and
 	// must render the neutral placeholder instead.

@@ -30,7 +30,7 @@ func TestHandleMobAIDecision_NilAggro_NoPanic(t *testing.T) {
 			Buffs: buffs.New(),
 		},
 	}
-	mob.Character.Aggro = nil // target left the room; aggro cleared mid-round
+	mob.Character.EndAggro() // target left the room; aggro cleared mid-round
 
 	require.NotPanics(t, func() {
 		got := handleMobAIDecision(mob, configs.Config{})
@@ -95,7 +95,7 @@ func TestHandleMobCombat_ArcherKitesAndFiresAfterAggroLoss(t *testing.T) {
 	archer.Character.Position = position.NewMachine()
 	// Post-retreat state: aggro already ended by ValidateAggro; only the
 	// CombatMemory survives, pointing at player 1 last seen in room A.
-	archer.Character.Aggro = nil
+	archer.Character.EndAggro()
 	archer.CombatMemory = mobs.SetCombatMemory(1, 0, roomA, 5)
 
 	mobs.SetInstanceForTest(archer.InstanceId, archer)

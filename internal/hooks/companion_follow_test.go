@@ -232,7 +232,7 @@ func TestTransportCompanions_MovesCompanionAndClearsAggro(t *testing.T) {
 
 	assert.Equal(t, 2, mob.Character.RoomId,
 		"companion must be in destination room")
-	assert.Nil(t, mob.Character.Aggro,
+	assert.False(t, mob.Character.IsInCombat(),
 		"aggro must be cleared because target (99) is not in dest room")
 }
 

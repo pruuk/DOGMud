@@ -182,9 +182,9 @@ func TestThrowSeam_PerTargetContests_OneGrenadeManyContests(t *testing.T) {
 		// physical scale; a full (undefended, non-crit) hit rolls around it.
 		assert.GreaterOrEqual(t, dmg, 10, "target %d must take a full hit", i)
 		assert.LessOrEqual(t, dmg, 55, "target %d damage must stay in the non-crit band", i)
-		assert.NotNil(t, m.Character.Aggro, "hit target %d must engage", i)
+		assert.True(t, m.Character.IsInCombat(), "hit target %d must engage", i)
 	}
-	require.NotNil(t, user.Character.Aggro, "an out-of-combat thrower who connects must engage")
+	require.True(t, user.Character.IsInCombat(), "an out-of-combat thrower who connects must engage")
 }
 
 // TestThrowSeam_AttackSideAndDefenceSets: the attack side the seam receives is
@@ -269,7 +269,7 @@ func TestThrowSeam_DefendedTargetTakesPartialSplashDamage(t *testing.T) {
 	// the ~30-mean roll ≈ 11.
 	assert.GreaterOrEqual(t, dmg, 1, "a bare defensive win must still be clipped by the splash")
 	assert.LessOrEqual(t, dmg, 22, "a defended throw must not land full damage")
-	assert.NotNil(t, targets[0].Character.Aggro, "a clipped target engages")
+	assert.True(t, targets[0].Character.IsInCombat(), "a clipped target engages")
 }
 
 // TestThrowSeam_DefensiveCritFullyNegatesAndDoesNotEngage: a defensive crit
@@ -287,8 +287,8 @@ func TestThrowSeam_DefensiveCritFullyNegatesAndDoesNotEngage(t *testing.T) {
 	require.True(t, handled)
 
 	assert.Equal(t, 500, targets[0].Character.Health, "a defensive crit fully negates the splash")
-	assert.Nil(t, targets[0].Character.Aggro, "an untouched target does not engage")
-	assert.Nil(t, user.Character.Aggro, "a throw that touched nothing starts no fight")
+	assert.False(t, targets[0].Character.IsInCombat(), "an untouched target does not engage")
+	assert.False(t, user.Character.IsInCombat(), "a throw that touched nothing starts no fight")
 }
 
 // TestThrowSeam_AttackerCritBypassesMitigationAndScales: throw gains the crit
@@ -351,7 +351,7 @@ func TestThrowSeam_FumbleDetonatesInHandAndEndsTheLoop(t *testing.T) {
 	assert.Equal(t, 170, user.Character.Health, "the thrower eats the un-mitigated blast")
 	for i, m := range targets {
 		assert.Equal(t, 500, m.Character.Health, "target %d must be untouched by a fumble", i)
-		assert.Nil(t, m.Character.Aggro, "target %d must not engage on a fumble", i)
+		assert.False(t, m.Character.IsInCombat(), "target %d must not engage on a fumble", i)
 	}
-	assert.Nil(t, user.Character.Aggro, "a fumble engages nobody")
+	assert.False(t, user.Character.IsInCombat(), "a fumble engages nobody")
 }

@@ -67,7 +67,7 @@ func TestGore_NotHorned(t *testing.T) {
 	t.Run("fanged non-horned actor returns NotHorned", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 7401 // wolf — fanged but not horned
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecuteGore(newStubActor(char, newTestRoom()))
 
@@ -79,7 +79,7 @@ func TestGore_NotHorned(t *testing.T) {
 	t.Run("humanoid without natural attack returns NotHorned", func(t *testing.T) {
 		char := characters.New()
 		char.SpeciesId = 7402 // human — no natural attack
-		char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 
 		result := ExecuteGore(newStubActor(char, newTestRoom()))
 
@@ -106,7 +106,7 @@ func TestGore_Executed(t *testing.T) {
 
 	char := characters.New()
 	char.SpeciesId = 7501 // boar — horned
-	char.Aggro = &characters.Aggro{MobInstanceId: targetMob.InstanceId}
+	char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 	fundSpecialMove(char)
 
 	result := ExecuteGore(newStubActor(char, newTestRoom()))

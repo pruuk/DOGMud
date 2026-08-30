@@ -82,9 +82,9 @@ func TestDismiss_AbsentCharmedCreatureDoesNotGetAggro(t *testing.T) {
 		t.Errorf("reservation after dismiss = %d, want 0", res)
 	}
 
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		t.Errorf("a creature dismissed from another room acquired aggro it can carry "+
-			"across zones: %+v", mob.Character.Aggro)
+			"across zones: %+v", mob.Character.CurrentCombatTarget())
 	}
 }
 
@@ -99,7 +99,7 @@ func TestDismiss_PresentCharmedCreatureStillTurnsOnYou(t *testing.T) {
 		t.Fatalf("dismiss errored: handled=%v err=%v", handled, err)
 	}
 
-	if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != dismissCharmUserId {
-		t.Fatalf("the betrayal did not land: aggro=%+v", mob.Character.Aggro)
+	if !mob.Character.IsInCombat() || mob.Character.CurrentCombatTarget().UserId != dismissCharmUserId {
+		t.Fatalf("the betrayal did not land: aggro=%+v", mob.Character.CurrentCombatTarget())
 	}
 }

@@ -1,0 +1,109 @@
+# U12c-2 targeting collapse — adversarial gate before the slice ships.
+#
+# This branch deleted the field the game used to keep "who am I fighting" in,
+# and moved four separate jobs it was quietly doing onto the state machines
+# that actually model them. It ships green: gofmt, build, the full test suite,
+# and a clean boot. None of that has watched a single fight. Your mandate is to
+# play it as a confused human and report every usability problem bluntly.
+#
+# MOST OF THIS SHOULD BE INVISIBLE. That is the point, and it is also the trap:
+# a slice like this fails by making something subtly wrong that no test asked
+# about. Read every combat line. If your prompt, your target, or your recovery
+# time ever disagrees with what the text just told you, that is the report.
+#
+# WHAT CHANGED, so you can tell "working as designed" from a defect:
+#   - Breaking away from a fight now always costs what it should. One rare
+#     path used to let it go free.
+#   - An NPC part way through a spell counts as busy casting, not as a fighter
+#     with nobody to fight.
+#   - Whether an engagement is "ranged" now follows the weapon in your hands
+#     rather than being decided when the fight started. Put a bow away
+#     mid-fight and you are a melee fighter from that moment.
+#
+# START ROOM 5227 IS "THE DRILL YARD", and it holds TWO practice targets. The
+# difference matters for almost every goal below:
+#
+#   STRAW EFFIGY   -- effectively unkillable. `attack effigy`. Use this for
+#                     anything needing a fight that lasts more than one round,
+#                     which is most of this file. It deals no damage back, so
+#                     you are never in danger.
+#   TRAINING DUMMY -- dies in about one round. `attack dummy`. Use it only
+#                     when you want a fight to END.
+#
+# A previous run of this file was largely BLOCKED because only the fragile
+# dummy existed and every fight ended before anything could be observed. If
+# you cannot watch a fight, you are probably hitting the dummy; use the effigy.
+#
+# ⚠️ TIMING IS THE POINT OF SEVERAL GOALS BELOW. Count ROUNDS between your
+# blows, not seconds. If you cannot tell rounds apart, say so plainly and stop
+# guessing — a wrong timing report is worse than no timing report.
+#
+# LIMITS OF THIS RUN, state them in the report: a companion casting first aid
+# on a downed player needs a calm room, a downed player, and a companion that
+# knows first aid. If you cannot assemble that, say so and skip it rather than
+# inventing a result.
+#
+# NO RAW NUMBERS may appear in combat or spell text outside the `status` sheet.
+# Quote any you find. Em dashes and en dashes are banned in player copy; quote
+# any you see. Rendered lines must fit 80 columns.
+ephemeral:
+  profile: veteran
+  start_room: 5227
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Baseline first. Attack the EFFIGY for several rounds with whatever
+    you are holding and read the combat text closely. You need to know what an
+    ordinary exchange looks and PACES like, because most later judgements are
+    a comparison against it. Quote a typical line and say roughly how many
+    rounds pass between your blows.
+  - >-
+    The prompt must never lie about who you are fighting. Engage the EFFIGY,
+    then find a second target and switch to it MID WIND-UP, before your next
+    blow lands. Your prompt and anything else naming your target must follow
+    the switch immediately. If the game still names the old target anywhere,
+    that is the single most important defect on this branch, because the whole
+    slice is about there being one answer to that question.
+  - >-
+    Ambush something that SURVIVES it. Hide, ambush the EFFIGY, then keep
+    fighting for several more rounds. This is the case a one-round fight can
+    never show: the opening blow, the ordinary swings after it, and the fact
+    that no second ambush ever arrives however long you fight. Quote the
+    opening line and the line immediately after it.
+  - >-
+    Still ONE ambush per fight. In that same fight, keep attacking. Only the
+    opening blow should read as an ambush; everything after it is ordinary
+    fighting. If several lines look like ambushes, report it loudly.
+  - >-
+    Breaking away. Get into a real fight with something that fights back, then
+    flee successfully. Then get into another and fail a flee. A failed escape
+    must put you back in the fight and say so. Neither outcome should be
+    silent, and neither should be free.
+  - >-
+    A special move still costs you the round. Use bash, trip or kick against
+    the EFFIGY and watch what happens next. The move should cost you your turn
+    in a way you can see in the text, not just in the numbers. If nothing tells
+    you why you are not swinging, say so.
+  - >-
+    Putting a bow away mid-fight. Start a fight while wielding a bow, then
+    stow it and continue with a melee weapon. Nothing should get stuck
+    behaving as though you were still shooting. Watch especially for a mob
+    that keeps its distance from you after you have closed to melee.
+  - >-
+    Mob against mob. Find or provoke a fight between two mobs where the
+    defender was not already fighting anyone. It should fight back promptly
+    and the room text should make the fight legible. A defender that stands
+    there for a round doing nothing before it wakes up is the defect to catch.
+  - >-
+    A companion casting first aid. If you can get a companion that knows first
+    aid, a calm room, and a downed player, watch the cast. The caster should
+    read as busy casting rather than as someone in a fight, and the cast
+    should not be interrupted by nothing. If you cannot assemble this
+    situation, SAY SO and skip it. Do not invent a result.
+  - >-
+    Free-form adversarial sweep of ordinary combat, which is where a slice
+    like this actually breaks. Fight several different things. Read every
+    line. Report anything that contradicts itself, any raw number outside
+    `status`, any dash in player copy, and any line that runs past 80 columns.

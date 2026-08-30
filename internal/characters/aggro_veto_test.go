@@ -14,15 +14,15 @@ import (
 func TestSetAggro_RefusedTransitionWritesNothing(t *testing.T) {
 	c := New()
 	c.SetAggro(0, 100, DefaultAttack)
-	require.NotNil(t, c.Aggro, "the first commit must land")
-	require.Equal(t, 100, c.Aggro.MobInstanceId)
+	require.True(t, c.IsInCombat(), "the first commit must land")
+	require.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId)
 
 	// Veto every subsequent target, as a dead or non-combatant target would.
 	c.CombatPhase.RegisterTargetLifeCheck(func(state.ActorRef) bool { return false })
 
 	c.SetAggro(0, 200, DefaultAttack)
 
-	require.Equal(t, 100, c.Aggro.MobInstanceId,
+	require.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId,
 		"a refused commit must leave the previous target intact, not overwrite it")
 	require.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId,
 		"and the two stores must still agree")
@@ -36,6 +36,6 @@ func TestSetAggro_NilCombatPhaseStillWrites(t *testing.T) {
 
 	c.SetAggro(0, 100, DefaultAttack)
 
-	require.NotNil(t, c.Aggro, "with no machine there is nothing to refuse")
-	require.Equal(t, 100, c.Aggro.MobInstanceId)
+	require.True(t, c.IsInCombat(), "with no machine there is nothing to refuse")
+	require.Equal(t, 100, c.CurrentCombatTarget().MobInstanceId)
 }

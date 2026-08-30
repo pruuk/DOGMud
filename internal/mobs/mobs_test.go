@@ -1,6 +1,7 @@
 package mobs
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"os"
 	"testing"
 
@@ -1086,11 +1087,11 @@ func TestMobIdByNameFullCoverage(t *testing.T) {
 
 func TestTickMobCraftInCombat(t *testing.T) {
 	mob := &Mob{
-		Crafter: true,
-		Character: characters.Character{
-			Aggro: &characters.Aggro{},
-		},
+		Crafter:   true,
+		Character: characters.Character{CombatPhase: combatphase.NewMachine()},
 	}
+	// U12c-2: in combat is a machine state now, not a non-nil field.
+	mob.Character.SetAggro(0, 1, characters.DefaultAttack)
 	// Mob in combat → skip (but configs not loaded, may return nil earlier)
 	defer func() { recover() }()
 	result := TickMobCraft(mob)

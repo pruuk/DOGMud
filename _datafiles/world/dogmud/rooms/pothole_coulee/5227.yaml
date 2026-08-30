@@ -43,6 +43,20 @@ spawninfo:
 - mobid: 9109
   message: A fresh straw dummy is hauled out and set on the pivot, ready for work.
   respawnrate: 1 real minute
+# The tutorial's Straw Effigy, ADDED alongside the fragile Training Dummy
+# rather than replacing it. 9109 has ~15 vitality on purpose so quest 32's
+# "first blood" is a quick kill, and quest 32 also gates its kick and trip
+# steps on THIS room, so it has to stay. The effigy has 100200 vitality and is
+# effectively unkillable, which is what a sparring partner needs to be.
+#
+# Why the yard needs one: every combat playtest here ends in a single round,
+# because a synthetic veteran one-shots a 15-vitality target even unarmed with
+# companions turned off. That cost U10d four unverified checks and U12c-2 five
+# blocked goals. `attack effigy` now gives a fight that lasts; `attack dummy`
+# still gives a kill. The two names do not collide.
+- mobid: 9614
+  message: A straw effigy is lashed to the far post, faceless and patient.
+  respawnrate: 1 real minute
 idlemessages:
 - A breath of wind sets the <ansi fg="itemname">dummy</ansi> turning slow on its pivot, then stills it again.
 x: 48

@@ -94,7 +94,7 @@ func wireRevealCascadeForTest(c *characters.Character) {
 // attackAndCollect runs Attack and returns everything the attacker was told.
 func attackAndCollect(t *testing.T, user *users.UserRecord, room *rooms.Room, target string) string {
 	t.Helper()
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	events.DrainQueuedMessagesForTest(user.UserId) // discard fixture noise
 
 	handled, err := Attack(target, user, room, 0)
@@ -121,8 +121,8 @@ func TestAttack_HiddenOnCooldown_TellsThePlayerTheAmbushWasRefused(t *testing.T)
 	assert.Contains(t, out, surpriseMeleeDeniedText,
 		"a hidden attacker whose special-move timer was already claimed gets an ORDINARY "+
 			"swing and loses their cover for it. Saying nothing makes the ambush read as broken")
-	require.NotNil(t, user.Character.Aggro, "the attack itself still happens")
-	assert.Equal(t, characters.DefaultAttack, user.Character.Aggro.Type,
+	require.True(t, user.Character.IsInCombat(), "the attack itself still happens")
+	assert.False(t, user.Character.CombatPhase.OpeningUnspent(),
 		"precondition: the opener really was refused, so the line is not a false alarm")
 }
 
@@ -140,8 +140,8 @@ func TestAttack_HiddenOnCooldownAgainstAPlayer_TellsThePlayerToo(t *testing.T) {
 
 	assert.Contains(t, out, surpriseMeleeDeniedText,
 		"the player-versus-player engagement path must speak the refusal too")
-	require.NotNil(t, user.Character.Aggro)
-	assert.Equal(t, 2, user.Character.Aggro.UserId,
+	require.True(t, user.Character.IsInCombat())
+	assert.Equal(t, 2, user.Character.CurrentCombatTarget().UserId,
 		"precondition: the PvP branch is what ran")
 }
 
@@ -186,8 +186,8 @@ func TestAttack_HiddenWithFreeTimer_SaysNothingAboutARefusal(t *testing.T) {
 
 	out := attackAndCollect(t, user, room, "skeleton")
 
-	require.NotNil(t, user.Character.Aggro)
-	require.Equal(t, characters.SurpriseAttack, user.Character.Aggro.Type,
+	require.True(t, user.Character.IsInCombat())
+	require.True(t, user.Character.CombatPhase.OpeningUnspent(),
 		"precondition: the opener was GRANTED, so any refusal line would be a lie")
 	assert.NotContains(t, out, surpriseMeleeDeniedText,
 		"a granted ambush must not be reported as refused")

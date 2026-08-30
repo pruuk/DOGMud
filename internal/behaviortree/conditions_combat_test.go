@@ -94,7 +94,7 @@ func TestTargetPowerRatio_AggroFallback(t *testing.T) {
 	mob.Character.HealthMax.Value = 5000
 	mob.Character.Stats.Strength.ValueAdj = 500
 	// Aggro on user 42 — no Event.UserId set; condition must fall back.
-	mob.Character.Aggro = &characters.Aggro{UserId: 42}
+	mob.Character.SetAggro(42, 0, characters.DefaultAttack)
 
 	ctx := &EvalContext{InstanceId: 105, RoomId: 1} // no Event.UserId
 	if r := condTargetPowerRatioAbove(map[string]any{"value": 1.0}, ctx); r != Success {
@@ -125,7 +125,7 @@ func TestTargetPowerRatio_AggroMobFallback(t *testing.T) {
 	strong.Character.Stats.Strength.ValueAdj = 500
 
 	// Aggro on mob 110 — no Event.UserId, no Aggro.UserId.
-	strong.Character.Aggro = &characters.Aggro{MobInstanceId: 110}
+	strong.Character.SetAggro(0, 110, characters.DefaultAttack)
 
 	ctx := &EvalContext{InstanceId: 105, RoomId: 1} // no Event.UserId
 	if r := condTargetPowerRatioAbove(map[string]any{"value": 1.0}, ctx); r != Success {

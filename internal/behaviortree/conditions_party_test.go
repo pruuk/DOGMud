@@ -257,7 +257,7 @@ func TestCondPartyInCombat_MemberInCombat_Success(t *testing.T) {
 	}
 	mob.Character.Name = "CombatMob"
 	mob.Character.Buffs = buffs.New()
-	mob.Character.Aggro = &characters.Aggro{UserId: 5, Type: characters.DefaultAttack}
+	mob.Character.SetAggro(5, 0, characters.DefaultAttack)
 	mobs.SetInstanceForTest(8010, mob)
 	t.Cleanup(func() { mobs.SetInstanceForTest(8010, nil) })
 
@@ -313,7 +313,7 @@ func TestCondPartyLeaderInCombat_LeaderInCombat_Success(t *testing.T) {
 	}
 	leaderMob.Character.Name = "LeaderCombat"
 	leaderMob.Character.Buffs = buffs.New()
-	leaderMob.Character.Aggro = &characters.Aggro{UserId: 3, Type: characters.DefaultAttack}
+	leaderMob.Character.SetAggro(3, 0, characters.DefaultAttack)
 	mobs.SetInstanceForTest(8020, leaderMob)
 	t.Cleanup(func() { mobs.SetInstanceForTest(8020, nil) })
 

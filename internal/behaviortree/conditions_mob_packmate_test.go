@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -76,11 +77,13 @@ func TestCondition_PackmateIsTanking_PackmateWithAggroReturnsSuccess(t *testing.
 		InstanceId: 9707,
 		Routine:    "bandit_camp_guard",
 		Character: characters.Character{
-			RoomId: 1,
-			Health: 50,
-			Aggro:  &characters.Aggro{UserId: 42, Type: characters.DefaultAttack},
+			RoomId:      1,
+			Health:      50,
+			CombatPhase: combatphase.NewMachine(),
 		},
 	}
+	// U12c-2: "is tanking" is an engagement, applied through the seam.
+	tanking.Character.SetAggro(42, 0, characters.DefaultAttack)
 	cleanup := mobs.SeedMobsForTest(nil, map[int]*mobs.Mob{9706: self, 9707: tanking})
 	defer cleanup()
 

@@ -792,7 +792,7 @@ func TestAutoHeal_StaminaRegenOutOfCombat(t *testing.T) {
 
 	u1 := users.GetByUserId(1)
 	u1.Character.Stamina = 80
-	u1.Character.Aggro = nil // out of combat
+	u1.Character.EndAggro() // out of combat
 
 	evt := events.NewRound{RoundNumber: 9}
 	AutoHeal(evt)
@@ -807,7 +807,7 @@ func TestAutoHeal_StaminaRegenSlowerInCombat(t *testing.T) {
 	u1 := users.GetByUserId(1)
 	u1.Character.Stamina = 80
 	u1.Character.StaminaMax.Value = 100
-	u1.Character.Aggro = &characters.Aggro{MobInstanceId: 100, Type: characters.DefaultAttack}
+	u1.Character.SetAggro(0, 100, characters.DefaultAttack)
 
 	staminaBefore := u1.Character.Stamina
 	evt := events.NewRound{RoundNumber: 12}
@@ -838,7 +838,7 @@ func TestAutoHeal_MobHealthRegen(t *testing.T) {
 
 	mob := mobs.GetInstance(100)
 	mob.Character.Health = 40
-	mob.Character.Aggro = nil // out of combat
+	mob.Character.EndAggro() // out of combat
 
 	evt := events.NewRound{RoundNumber: 18}
 	AutoHeal(evt)
@@ -853,7 +853,7 @@ func TestAutoHeal_MobStaminaRegen(t *testing.T) {
 	mob := mobs.GetInstance(100)
 	mob.Character.Stamina = 20
 	mob.Character.StaminaMax.Value = 50
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	evt := events.NewRound{RoundNumber: 21}
 	AutoHeal(evt)
@@ -868,7 +868,7 @@ func TestAutoHeal_MobConvictionRegen(t *testing.T) {
 	mob := mobs.GetInstance(100)
 	mob.Character.Conviction = 10
 	mob.Character.ConvictionMax.Value = 30
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	evt := events.NewRound{RoundNumber: 24}
 	AutoHeal(evt)
@@ -1105,10 +1105,7 @@ func TestHandleMobAIDecision_NonDefaultAttack(t *testing.T) {
 	defer cleanup()
 
 	mob := mobs.GetInstance(100)
-	mob.Character.Aggro = &characters.Aggro{
-		UserId: 1,
-		Type:   characters.Flee,
-	}
+	mob.Character.SetAggro(1, 0, characters.Flee)
 
 	// Non-default aggro type → should return false (no AI action taken)
 	result := handleMobAIDecision(mob, configs.GetConfig())
@@ -1120,10 +1117,7 @@ func TestHandleMobAIDecision_DefaultAttack(t *testing.T) {
 	defer cleanup()
 
 	mob := mobs.GetInstance(100)
-	mob.Character.Aggro = &characters.Aggro{
-		UserId: 1,
-		Type:   characters.DefaultAttack,
-	}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 	mob.ActivityLevel = 0 // 0% chance to do anything
 
 	result := handleMobAIDecision(mob, configs.GetConfig())
@@ -1563,7 +1557,7 @@ func TestDoCombat_PlayerWithNoAggro(t *testing.T) {
 	defer cleanup()
 
 	u := users.GetByUserId(1)
-	u.Character.Aggro = nil
+	u.Character.EndAggro()
 
 	evt := events.NewRound{RoundNumber: 2}
 	result := DoCombat(evt)
@@ -1575,7 +1569,7 @@ func TestDoCombat_MobWithNoAggro(t *testing.T) {
 	defer cleanup()
 
 	mob := mobs.GetInstance(100)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	evt := events.NewRound{RoundNumber: 3}
 	result := DoCombat(evt)

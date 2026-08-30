@@ -530,7 +530,7 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 				for _, mobInstId := range room.GetMobs() {
 					if mob := mobs.GetInstance(mobInstId); mob != nil {
 
-						if mob.Character.IsCharmed() && (mob.Character.Aggro == nil || mob.Character.Aggro.UserId != userId) {
+						if mob.Character.IsCharmed() && mob.Character.CurrentCombatTarget().UserId != userId {
 							continue
 						}
 

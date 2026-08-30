@@ -47,7 +47,7 @@ func (c *Character) Charm(userId int, rounds int, expireCommand string) {
 	c.SetAdjective(`charmed`, true)
 	c.EverCharmed = true
 	c.Charmed = NewCharm(userId, rounds, expireCommand)
-	if c.Aggro != nil && c.Aggro.UserId == userId {
+	if c.CurrentCombatTarget().UserId == userId {
 		c.EndAggro()
 	}
 }

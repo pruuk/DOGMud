@@ -227,7 +227,7 @@ func TestShoot_EngagedCueLatchesThroughTheRealCommand(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 	user.Character.Stats.Perception.ValueAdj = 300
 	user.Character.Stats.Strength.ValueAdj = 1
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	user.Character.RangedEngagedCueSpoken = false
 	equipBow(user.Character, true)
 
@@ -239,7 +239,7 @@ func TestShoot_EngagedCueLatchesThroughTheRealCommand(t *testing.T) {
 	// Something in the room is on the shooter: no unengaged bonus, so the cue
 	// must be spoken and latched.
 	mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
-	require.NotNil(t, mob.Character.Aggro, "fixture precondition: the mob must be aggroed on the shooter")
+	require.True(t, mob.Character.IsInCombat(), "fixture precondition: the mob must be aggroed on the shooter")
 
 	handled, err := Shoot("skeleton", user, room, 0)
 	require.True(t, handled)
@@ -250,7 +250,7 @@ func TestShoot_EngagedCueLatchesThroughTheRealCommand(t *testing.T) {
 	// Now clear the room and shoot again: the latch must release so the next
 	// time the shooter is pinned down the cue is news again.
 	clearRoomAggro(t, room)
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
 	handled, err = Shoot("skeleton", user, room, 0)

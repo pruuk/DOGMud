@@ -36,7 +36,7 @@ func TestAttack_StalePlayerIdInRoom_StillEngagesNamedMob(t *testing.T) {
 
 	room.AddPlayer(999) // no user record behind this id
 	defer room.RemovePlayer(999)
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 
 	defer func() {
 		if rec := recover(); rec != nil {
@@ -48,8 +48,8 @@ func TestAttack_StalePlayerIdInRoom_StillEngagesNamedMob(t *testing.T) {
 	require.True(t, handled)
 	require.NoError(t, err)
 
-	require.NotNil(t, user.Character.Aggro, "attack must engage the named mob despite the stale player id")
-	assert.Equal(t, 100, user.Character.Aggro.MobInstanceId)
+	require.True(t, user.Character.IsInCombat(), "attack must engage the named mob despite the stale player id")
+	assert.Equal(t, 100, user.Character.CurrentCombatTarget().MobInstanceId)
 }
 
 // The same stale-player-id poison silenced EVERY command that resolves names
@@ -63,7 +63,7 @@ func TestTaunt_StalePlayerIdInRoom_StillMessages(t *testing.T) {
 
 	room.AddPlayer(999)
 	defer room.RemovePlayer(999)
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 
 	defer func() {
 		if rec := recover(); rec != nil {
@@ -90,7 +90,7 @@ func TestAttack_StaleTargetPlayerId_MessagesInsteadOfSilence(t *testing.T) {
 
 	room.AddPlayer(999) // resolvable via @999, but users.GetByUserId(999) is nil
 	defer room.RemovePlayer(999)
-	user.Character.Aggro = nil
+	user.Character.EndAggro()
 
 	events.DrainQueuedMessagesForTest(user.UserId) // discard fixture noise
 
@@ -102,7 +102,7 @@ func TestAttack_StaleTargetPlayerId_MessagesInsteadOfSilence(t *testing.T) {
 	require.NotEmpty(t, msgs, "a failed resolution must always message the player")
 	assert.True(t, strings.Contains(strings.Join(msgs, "\n"), "don't see them"),
 		"expected the not-found family message, got: %q", msgs)
-	assert.Nil(t, user.Character.Aggro, "no engagement may happen on a vanished target")
+	assert.False(t, user.Character.IsInCombat(), "no engagement may happen on a vanished target")
 }
 
 // A defended taunt must still tell the taunter something, even if the defence

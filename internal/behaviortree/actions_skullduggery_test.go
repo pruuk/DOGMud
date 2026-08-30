@@ -42,7 +42,7 @@ func TestActTrySneak_SuccessWhenNoObservers(t *testing.T) {
 	mob.Character.StaminaMax.Value = 100
 	mob.Character.Stamina = 100
 	mob.Character.Stats.Dexterity.ValueAdj = 200 // very high sneak score
-	mob.Character.Aggro = nil                    // not in combat
+	mob.Character.EndAggro()                     // not in combat
 
 	room := rooms.LoadRoom(1)
 	room.AddMob(105)
@@ -75,7 +75,7 @@ func TestActTrySneak_AlreadyHiddenReturnsSuccess(t *testing.T) {
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
 	mob.Character.Stamina = 0
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	room := rooms.LoadRoom(1)
 	room.AddMob(105)
@@ -122,7 +122,7 @@ func seedStealScenario(t *testing.T) (*mobs.Mob, *users.UserRecord, *EvalContext
 	mob.Character.Health = 500
 	mob.Character.Stats.Dexterity.ValueAdj = 300 // very high steal score
 	mob.Character.Skills = map[string]int{"skullduggery": 5}
-	mob.Character.Aggro = nil // steal.go blocks outright when Aggro != nil
+	mob.Character.EndAggro() // steal.go blocks outright when Aggro != nil
 
 	user := users.GetByUserId(42)
 	user.Character.Gold = 1000
@@ -211,7 +211,7 @@ func TestActTrySteal_FailureNoTarget(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	room := rooms.LoadRoom(1)
 	room.AddMob(105)
@@ -237,7 +237,7 @@ func TestActTryPlant_RequiresItemTag(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	room := rooms.LoadRoom(1)
 	room.AddMob(105)
@@ -268,7 +268,7 @@ func TestActTryPlant_FailureNoItemInBackpack(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 	mob.Character.Items = nil // empty backpack
 
 	room := rooms.LoadRoom(1)
@@ -300,7 +300,7 @@ func TestActTryShadow_FailureWhenNotHidden(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 	// No Hidden buff.
 
 	room := rooms.LoadRoom(1)
@@ -331,7 +331,7 @@ func TestActTryShadow_FailureNoTarget(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	room := rooms.LoadRoom(1)
 	room.AddMob(105)
@@ -359,7 +359,7 @@ func TestActTryDefuse_FailureNoTraps(t *testing.T) {
 	mob := mobs.GetInstance(105)
 	mob.Character.HealthMax.Value = 500
 	mob.Character.Health = 500
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	room := rooms.LoadRoom(1)
 	room.AddMob(105)

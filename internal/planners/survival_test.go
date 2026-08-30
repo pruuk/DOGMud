@@ -38,7 +38,7 @@ func TestSurvival_InCombat_FleesOrFails(t *testing.T) {
 	mob := &mobs.Mob{}
 	mob.Character.Health = 30
 	mob.Character.HealthMax.Value = 100
-	mob.Character.Aggro = &characters.Aggro{}
+	mob.Character.SetAggro(0, 0, characters.DefaultAttack)
 	res := fn(mob, &goals.Goal{Type: "survival"})
 	// pickRandomExit returns "" (no live room available in unit tests) →
 	// StatusFailure. When the helper is fully wired, StatusRunning + a

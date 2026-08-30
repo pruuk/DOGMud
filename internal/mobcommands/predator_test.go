@@ -166,15 +166,15 @@ func TestFlee_ClearsAggro(t *testing.T) {
 	mob, room := getTestMobAndRoom(t)
 
 	// Put mob in combat
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
-	require.NotNil(t, mob.Character.Aggro)
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
+	require.True(t, mob.Character.IsInCombat())
 
 	handled, err := Flee("", mob, room)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
 	// Aggro should be cleared
-	assert.Nil(t, mob.Character.Aggro)
+	assert.False(t, mob.Character.IsInCombat())
 
 	// Reset mob position for other tests
 	mob.Character.RoomId = 1
@@ -196,14 +196,14 @@ func TestFlee_NoExits(t *testing.T) {
 		Exits:       map[string]exit.RoomExit{},
 	}
 	// Move mob to dead end room (just test the function directly)
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 
 	handled, err := Flee("", mob, deadEnd)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
 	// Aggro still cleared even if cornered
-	assert.Nil(t, mob.Character.Aggro)
+	assert.False(t, mob.Character.IsInCombat())
 }
 
 func TestFlee_OutOfCombat(t *testing.T) {
@@ -213,7 +213,7 @@ func TestFlee_OutOfCombat(t *testing.T) {
 	mob, room := getTestMobAndRoom(t)
 
 	// Not in combat
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	handled, err := Flee("", mob, room)
 	assert.True(t, handled)
@@ -231,7 +231,7 @@ func TestHamstring_NotInCombat(t *testing.T) {
 	defer cleanup()
 
 	mob, room := getTestMobAndRoom(t)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	handled, err := Hamstring("", mob, room)
 	assert.True(t, handled)
@@ -254,7 +254,7 @@ func TestHamstring_InCombat(t *testing.T) {
 	mob.Character.SpeciesId = 2
 
 	// Set up combat against player
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 	mob.Character.Stats.Strength.ValueAdj = 80
 	mob.Character.Stats.Dexterity.ValueAdj = 80
 
@@ -263,11 +263,11 @@ func TestHamstring_InCombat(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Should cost the round
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		assert.Equal(t, 1, mob.Character.RoundsWaiting())
 	}
 
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 }
 
 func TestHamstring_BleedMagnitude(t *testing.T) {
@@ -301,7 +301,7 @@ func TestCharge_NotInCombat(t *testing.T) {
 	defer cleanup()
 
 	mob, room := getTestMobAndRoom(t)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	handled, err := Charge("", mob, room)
 	assert.True(t, handled)
@@ -314,7 +314,7 @@ func TestCharge_InCombat(t *testing.T) {
 
 	mob, room := getTestMobAndRoom(t)
 
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 	mob.Character.Stats.Strength.ValueAdj = 80
 	mob.Character.Stats.Dexterity.ValueAdj = 80
 
@@ -322,11 +322,11 @@ func TestCharge_InCombat(t *testing.T) {
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		assert.Equal(t, 1, mob.Character.RoundsWaiting())
 	}
 
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 }
 
 // ─── Howl ───────────────────────────────────────────────────────────────────
@@ -336,7 +336,7 @@ func TestHowl_NotInCombat(t *testing.T) {
 	defer cleanup()
 
 	mob, room := getTestMobAndRoom(t)
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 
 	handled, err := Howl("", mob, room)
 	assert.True(t, handled)
@@ -349,7 +349,7 @@ func TestHowl_InCombat(t *testing.T) {
 
 	mob, room := getTestMobAndRoom(t)
 
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 	mob.Character.Stats.Charisma.ValueAdj = 80
 	mob.Character.ConvictionMax.Value = 50
 	mob.Character.Conviction = 50
@@ -358,11 +358,11 @@ func TestHowl_InCombat(t *testing.T) {
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
-	if mob.Character.Aggro != nil {
+	if mob.Character.IsInCombat() {
 		assert.Equal(t, 1, mob.Character.RoundsWaiting())
 	}
 
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 }
 
 // TestHowlAliasChargesOnlyThroughTaunt executes the real wrapper and guards
@@ -397,7 +397,7 @@ func TestHowlAliasChargesOnlyThroughTaunt(t *testing.T) {
 		// special-move timer attempt one claimed and spends nothing at all.
 		mob, room := getTestMobAndRoom(t)
 		delete(mob.Character.Cooldowns, "special-move")
-		mob.Character.Aggro = &characters.Aggro{UserId: 1}
+		mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 		mob.Character.Stats.Charisma.ValueAdj = 100
 		mob.Character.ConvictionMax.Value = 50
 		mob.Character.Conviction = 50
@@ -597,7 +597,7 @@ func TestMobTauntAndHowlRuntimeHideIndexedActorAndExcludeDefender(t *testing.T) 
 			actor.Character.RoomId = darkRoom.RoomId
 			actor.Character.Name = first.Character.Name
 			actor.Character.MobInstanceId = actor.InstanceId
-			actor.Character.Aggro = &characters.Aggro{UserId: target.UserId}
+			actor.Character.SetAggro(target.UserId, 0, characters.DefaultAttack)
 			originalAction := executeTauntAction
 			called := false
 			executeTauntAction = func(actions.Actor) actions.TauntResult {
@@ -647,7 +647,7 @@ func TestMobTauntShortDefyNotifiesOnlyPlayerDefenderOnce(t *testing.T) {
 	mob := mobs.GetInstance(100)
 	defender, observer := users.GetByUserId(1), users.GetByUserId(2)
 	room := rooms.LoadRoom(1)
-	mob.Character.Aggro = &characters.Aggro{UserId: defender.UserId}
+	mob.Character.SetAggro(defender.UserId, 0, characters.DefaultAttack)
 	originalAction := executeTauntAction
 	executeTauntAction = func(actions.Actor) actions.TauntResult {
 		return actions.TauntResult{
@@ -685,9 +685,9 @@ func TestMobTauntRuntimeRoutesMobToMobDefyAndPreservesAggroPull(t *testing.T) {
 	actor := mobs.GetInstance(100)
 	target := mobs.GetInstance(200)
 	room := rooms.LoadRoom(1)
-	actor.Character.Aggro = &characters.Aggro{MobInstanceId: target.InstanceId}
+	actor.Character.SetAggro(0, target.InstanceId, characters.DefaultAttack)
 	target.Character.MobInstanceId = target.InstanceId
-	target.Character.Aggro = &characters.Aggro{UserId: 1}
+	target.Character.SetAggro(1, 0, characters.DefaultAttack)
 	originalAction := executeTauntAction
 	executeTauntAction = func(actions.Actor) actions.TauntResult {
 		return actions.TauntResult{
@@ -719,7 +719,7 @@ func TestSpecialMoveCooldown_SharedAcrossCommands(t *testing.T) {
 	defer cleanup()
 
 	mob, room := getTestMobAndRoom(t)
-	mob.Character.Aggro = &characters.Aggro{UserId: 1}
+	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
 	mob.Character.Stats.Strength.ValueAdj = 80
 	mob.Character.Stats.Dexterity.ValueAdj = 80
 	mob.Character.Stats.Charisma.ValueAdj = 80
@@ -740,7 +740,7 @@ func TestSpecialMoveCooldown_SharedAcrossCommands(t *testing.T) {
 	// Conviction shouldn't change because cooldown blocked the howl
 	assert.Equal(t, startConviction, mob.Character.Conviction)
 
-	mob.Character.Aggro = nil
+	mob.Character.EndAggro()
 }
 
 // ─── Command Registration ───────────────────────────────────────────────────
