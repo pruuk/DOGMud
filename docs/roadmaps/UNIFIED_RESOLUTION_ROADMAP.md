@@ -209,13 +209,25 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 | **U12** | ✅ **DONE 2026-08-29, across SIX slices.** U12a (PR #83) · U12b (#84/#85) · U12c-0 + U12c-0b (`8f6ce50c0`, `7b041f995`) · **U12c-1 (#86)** · **U12c-2 part one (#87)** · **U12c-2 part two (#89)**. There is no single U12 merge; this row is the parent. **`Character.Aggro` is DELETED**, along with the `Aggro` struct, both accessor fallbacks and `combat_state_compat.go` (renamed `engagement_storage.go`). Everything `AggroType` was doing moved to the machine that models it: `Flee`→`Disengaging`, `SpellCast`→`activity.CastingData`, `Shooting`→derived from the equipped weapon, `SurpriseAttack`→`CombatPhase.OpeningUnspent`, `RoundsWaiting`→`CombatPhase` with the required two-counter note. `ConsumeOpeningStrike` finally has its production caller. ⚠️ **DEVIATION from spec §6.3.6: `AggroType` and `SpellAggroInfo` SURVIVE** as call PARAMETERS (the kind of engagement a commit is starting; a cast's aim into `SetCast`). Neither is stored state any more, which was the actual problem; eliminating them means replacing `AggroType` with a combatphase trigger at every `SetAggro` call site, which is its own slice. ⚠️ **`SetAggro`/`EndAggro` also SURVIVE** as the storage primitives — spec §5 said to delete them and was WRONG; §6.3.7 records the correction. The enforced rule is a CALLER restriction. 🔴 **The adversarial playtest found a false patch-note claim I had already written** (ambush follow-up pacing; no DOGMud weapon sets `waitrounds` and `phase1WaitRound` guarantees the budget is 0, so there was no change — retracted in `4edde2443`) **and a one-day-old flee regression on master** from U12c-0/0b (a retarget lands in `Engaging`, which had no edge to `Disengaging`, so anything retargeting you every round blocked `flee` forever; shipped separately as **#88**). It also cleared a U10d UNVERIFIED check (the defended ambush). 🪤 **Both hid because every practice target in the game died in ONE round**; the Drill Yard now carries the tutorial's unkillable Straw Effigy (`227e96088`). 📌 **A site NO GUARD COULD SEE:** `world.go` at the repo ROOT — the U12c-1 and U12c-2 guards walk `internal/` only. Found by the compiler. |
 | **U11** | Docs, `context.md` sweep, **`config.yaml` organisation audit**, **player helpfiles for `quell` and `defy` plus the help-registry and category cleanup**, and the adversarial playtest gate. **Runs LAST, after U12** — the gate is the arc's closer, so no code slice may land after it. **U11 must also ship the "Done when" list below AS A TEST.** U6 was declared done in 2026-08 with two of its criteria false, and because they were prose in a roadmap nothing failed; the gap survived three further slices before U9 tripped over it. U6b already expressed criterion 2 as tests (the Task 18 guards in `contest_site_guard_test.go` — see the annotation under "Done when"); U11 keeps the obligation for the remaining criteria. **Six defects handed to U11 by U10d's reviews (2026-08-25), none of them about surprise attack — see the "U11 inbox from U10d" list below the plan table.** | M | U6b, U8–U10d, U12 | — |
 
-### U11 inbox from U10d — six findings, five of them NOT about surprise attack
+### U11 inbox from U10d — six findings, FIVE still open
+
+Five of the six are not about surprise attack, and **one (#6) is now RESOLVED by
+U12c-2**. Of the five that remain, #3 is a correction (do NOT act on it) and #2 is
+a recorded pattern rather than a bug, so **U11 has THREE things to actually do
+here: #1, #4 and #5.**
 
 U10d's blind reviews turned up defects in code the slice did not touch. They are
-recorded here so they meet a reader, and each was **re-verified against the
-branch on 2026-08-25** rather than carried over on the review's word. Two of the
-six did **not** survive that check and are written down as corrections, because
-a false entry in a permanent record is worse than a missing one.
+recorded here so they meet a reader, and each was re-verified rather than carried
+over on the review's word. Two of the six did **not** survive that check and are
+written down as corrections, because a false entry in a permanent record is worse
+than a missing one.
+
+**RE-VERIFIED AGAINST MASTER 2026-08-29, after U12 closed.** Every path, line
+number and count below was re-checked at that point. Four entries needed
+correcting and one is now RESOLVED; the corrections are marked inline so a reader
+can see what moved rather than trusting a five-day-old list. U12c-2 renamed
+`internal/characters/combat_state_compat.go` to `engagement_storage.go`, which is
+the source of most of the drift.
 
 1. **`combatphase.RegisterMachine` has ZERO production callers, so
    `Character.Attackers()` is always empty — and prone recovery has never been
@@ -238,7 +250,8 @@ a false entry in a permanent record is worse than a missing one.
    the polling fallback), as are `NotifyTargetDied` / `NotifySelfDied`.
    **A second, independent break sits behind the first:** `SetAggro` passes
    `Actor: state.ActorRef{UserId: c.userId}`
-   (`internal/characters/combat_state_compat.go:146`) and nothing ever calls
+   (**`internal/characters/engagement_storage.go:167`** — the file was
+   `combat_state_compat.go:146` until U12c-2 renamed it) and nothing ever calls
    `SetUserId` on a mob, so a mob's ref is the zero value and
    `RecordInboundAttacker` early-returns on `ActorRef.IsZero()`. **Even a
    repaired registry would never record a mob attacker.** U10d dodged this by
@@ -288,12 +301,12 @@ a false entry in a permanent record is worse than a missing one.
    sweep above covered only that one validator shape.
 
 4. **`u8ActionHelpPaths` is a hand-maintained allowlist, and it is the wrong
-   way round.** `internal/templates/u8_help_test.go:19-53` lists **27** paths
-   (26 before U10d added `help/ambush`) against **454** files in
-   `_datafiles/world/dogmud/templates/help/`. Three tests iterate only that
-   list — `TestU8ActionAdmissionHelpTemplatesProcess`,
+   way round.** `internal/templates/u8_help_test.go` lists **28** paths (re-counted
+   2026-08-29; was 27 at U10d, 26 before it added `help/ambush`) against **454**
+   files in `_datafiles/world/dogmud/templates/help/`. **FOUR** tests iterate only
+   that list, not three — `TestU8ActionAdmissionHelpTemplatesProcess`,
    `TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning`,
-   `TestU8ActionHelpCrossReferencesResolve` — so **427 help templates get no
+   `TestU8ActionHelpCrossReferencesResolve` — so **426 help templates get no
    parse check, no numeric-disclosure check and no cross-reference check at
    all.** Both files U10d edited that fell outside the list were exactly where
    its surviving copy defects lived. Structurally this is the same failure as
@@ -307,26 +320,42 @@ a false entry in a permanent record is worse than a missing one.
    `_datafiles/config.yaml:660-664` reads *"Bash, trip, and kick all share a
    cooldown … Spellcasting also shares this cooldown slot … Example: 4 = after a
    bash, must wait 4 rounds before bash/trip/kick/cast."* Neither is right:
-   **44 non-test `.go` files under `internal/` and `modules/` reference the
-   `special-move` key** (counted as `grep -rl "special-move" internal/ modules/
-   --include=*.go | grep -v _test.go`), and U10d added the melee and ranged
+   **46 non-test `.go` files under `internal/` and `modules/` reference the
+   `special-move` key** (re-counted 2026-08-29; was 44 at U10d. `grep -rl
+   "special-move" internal/ modules/ --include=*.go | grep -v _test.go`), and U10d added the melee and ranged
    ambush openers to that population. The `config.yaml` comment is the worse of
    the two because it is what a tuner reads. **Left unfixed on purpose:**
    `config.yaml` has `skip-worktree`, so editing it needs the
    commit-from-`git show HEAD:` procedure, and fixing only the Go half would
    leave the pair still disagreeing. Fix both together in U11's config audit.
 
-6. **`TransitionToEngaging` silently drops its `TransitionReason`.**
-   `internal/state/combatphase/combatphase.go:208` takes
-   `(d EngagingData, r state.TransitionReason)` and at `:232` does
-   `m.engaging = &d`, never copying `r` into `d.Reason`. This is what made
-   `SurpriseLeft` false in production for its entire life. U10d deleted the only
-   consumer, so it is now **latent, not live** — `EngagingData.Reason`
-   (`combatphase.go:41`) is read by nothing. Any future consumer will hit it.
-   Deliberately not fixed by U10d: repairing a producer whose sole consumer was
-   being deleted would add a live path nothing uses. Recorded at the code in
-   `internal/state/combatphase/context.md`.
+6. ✅ **RESOLVED by U12c-2 (PR #89) — `TransitionToEngaging` no longer drops its
+   `TransitionReason`, and the field it failed to populate is gone.**
 
+   The original finding: `TransitionToEngaging` took `(d EngagingData, r
+   state.TransitionReason)` and did `m.engaging = &d`, never copying `r` into
+   `d.Reason`. That is what made `SurpriseLeft` false in production for its
+   entire life. U10d deleted the only consumer, leaving it latent, and recorded
+   that any future consumer would hit it.
+
+   Both halves are now closed, and NOT by repairing the copy:
+
+   - **`EngagingData.Reason` is DELETED.** It had zero readers and the one
+     production construction site never set it, so U12c-2 settled U10d's
+     deferred either/or with the second branch: it was dead, so it went. There
+     is no longer a field for a future consumer to hit.
+   - **The `r` PARAMETER is now genuinely live.** `combatphase.go:329` reads
+     `r.Trigger == TriggerSurpriseAttack` to arm the ambush opening, and
+     `:368` reads it to gate the flee veto. Keying on the trigger rather than
+     on stored state is what let the opening survive a retarget correctly.
+
+   ⚠️ **Do not "restore" the Reason copy.** The struct comment at
+   `EngagingData` warns against repurposing either the deleted field or the
+   live parameter as a home for an engagement-kind enum: that moves the
+   demotion bug U12c-2 removed rather than killing it.
+
+   **No U11 action required.** Kept here rather than deleted so a reader who
+   remembers the finding can see how it closed.
 ---
 
 ### U5 — why it is three slices, and why it is NOT a no-op
