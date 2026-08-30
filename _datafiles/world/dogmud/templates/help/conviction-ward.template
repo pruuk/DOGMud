@@ -27,4 +27,4 @@ spellcasting skill. It provides physical damage mitigation only.
   - Casting again while a ward is active overwrites the existing one.
   - Crits boost the barrier's strength by roughly half again.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help chrysalis-cocoon</ansi>,
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help chrysalis-cocoon</ansi>

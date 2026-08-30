@@ -312,6 +312,13 @@ func lookupMachine(ref state.ActorRef) *Machine {
 	return (*fn)(ref)
 }
 
+// LookupForTest exposes the package's own resolution path so another package
+// can assert that a resolver is actually installed. Production code must never
+// call it: use the transitions, which resolve internally.
+func LookupForTest(ref state.ActorRef) *Machine {
+	return lookupMachine(ref)
+}
+
 // SetSelf records this machine's own identity, used as the fallback actor ref
 // when a TransitionReason carries none. Set from Character.Validate; it is a
 // plain field on this machine, not shared state.

@@ -17,7 +17,8 @@ There are a handful of settings you can adjust with this command, including:
   can also look at yourself to see your current description.
 
   <ansi fg="command">set auction</ansi>
-  This toggles the auction system on or off. If off, you will not receive notifications about system-wide auctions.
+  This toggles the auction system on or off. If off, you will not receive
+  notifications about system-wide auctions.
 
   <ansi fg="command">set shortadjectives</ansi>
   This toggles short adjective displayes on or off. See <ansi fg="command">help adjectives</ansi>
@@ -35,7 +36,7 @@ There are a handful of settings you can adjust with this command, including:
   Type <ansi fg="command">set fprompt</ansi> alone to see all toggle options.
 
   <ansi fg="command">set wimpy</ansi>
-  Set your wimpy percentage
+  Set your wimpy threshold (See <ansi fg="command">help set-wimpy</ansi>)
 
   <ansi fg="command">set submission &lt;mercy|subdue|cripple|lethal&gt;</ansi>
   Sets what happens when you lock a submission on an opponent.

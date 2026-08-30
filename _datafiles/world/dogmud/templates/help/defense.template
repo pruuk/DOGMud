@@ -43,7 +43,8 @@ Your first line of defense, available to everyone.
   - High encumbrance (too much weight)
   - Being prone (severely reduced)
 
-Dodge is your bread-and-butter defense. Even heavily armored fighters rely on dodge
+Dodge is your bread-and-butter defense. Even heavily armored fighters rely
+on dodge
 as their first chance to take the force out of a blow.
 
 <ansi fg="yellow">━━━ Parry Defense ━━━</ansi>
@@ -61,7 +62,8 @@ Use your weapon to deflect incoming attacks.
   <ansi fg="stat">Penalties:</ansi>
   - Being prone (noticeably reduced)
 
-Parry is more stamina-intensive than dodge but can be very effective with the right
+Parry is more stamina-intensive than dodge but can be very effective with
+the right
 weapon. Two-handed weapons excel at parrying.
 
 <ansi fg="yellow">━━━ Block Defense ━━━</ansi>
@@ -80,7 +82,8 @@ Use your shield to absorb the blow.
   - Highest stamina cost
   - Cannot dual wield weapons (shield takes offhand slot)
 
-Block is your final defense layer. Shields are stamina-hungry but provide excellent
+Block is your final defense layer. Shields are stamina-hungry but provide
+excellent
 protection when your other defenses fail.
 
 <ansi fg="yellow">━━━ Defense Strategy ━━━</ansi>
@@ -107,9 +110,10 @@ Improve your defenses by progressing these skills:
   <ansi fg="stat">Weapon Combat:</ansi> Improves parry and block effectiveness
   <ansi fg="stat">Dexterity Stat:</ansi> Improves dodge chance (use-based progression)
 
-Train these skills through combat and see your survivability increase dramatically.
+Train these skills through combat and see your survivability increase
+dramatically.
 
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help combat</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help stamina</ansi>, <ansi fg="command">help prone</ansi>
-  <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help skills</ansi>, <ansi fg="command">help dual-wield</ansi>

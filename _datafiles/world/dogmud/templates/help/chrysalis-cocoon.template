@@ -29,4 +29,4 @@ skill. It costs more than lighter wards but lasts considerably longer.
   - Crits boost the cocoon's strength by roughly half again.
   - Casting again while a cocoon is active overwrites the existing one.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help conviction-ward</ansi>,
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help conviction-ward</ansi>

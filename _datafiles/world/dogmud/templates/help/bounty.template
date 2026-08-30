@@ -26,7 +26,6 @@ reputation with the issuing faction.
 Notice boards in guard barracks and constabulary offices also
 display current postings in-fiction.
 
-
 <ansi fg="black-bold">Note:</ansi> A faction posts at most one open bounty on a given
 offender at a time. Committing further crimes against that faction
 while a bounty is already open does not stack additional bounties.

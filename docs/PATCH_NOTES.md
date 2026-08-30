@@ -1,5 +1,56 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: A brand new character who dies now comes back
+
+If you made a fresh character with the character command and then died during
+that same session, you stayed down. No respawn, no way back, until you logged
+out and in again. The game was failing to connect the new character to your
+account until your next login, and the part that brings you back to life was
+quietly deciding you were not a player at all.
+
+This was old, it was easy to hit, and it was worst for exactly the people least
+able to work around it. Sorry. A new character is connected to your account the
+moment you make one now.
+
+The same gap could also stop you grappling for that first session. That is
+fixed with it.
+
+## 2026-08-30: Getting back to your feet is no longer a certainty
+
+When you are knocked down, you try to get up on your own after a moment. Until
+now that always worked. If something was standing over you it made no
+difference at all, which was never the intent.
+
+Now an enemy that has you on the ground can keep you there. It is a contest
+between you and whoever is holding you down, so a stronger opponent will pin
+you longer, and nobody can hold you forever. Fighting your way back up teaches
+you something about grappling, win or lose, which it never did before.
+
+You always have the other option. The stand command still works whenever you
+ask it to, at the usual cost. If you are being held down and want out now,
+stand is the answer.
+
+Being knocked down was always meant to be dangerous. It finally is.
+
+## 2026-08-30: Companions stop waiting their turn
+
+When something new attacks your companion, it answers straight away instead of
+waiting for the fight to come back around to it. You will notice this most when
+a second enemy joins a fight already in progress.
+
+## 2026-08-30: The help pages point where they say they point
+
+Several help pages offered to send you somewhere that did not exist. Asking for
+one of those topics gave you an error instead of an answer. Every cross
+reference in help now leads somewhere real.
+
+The help list itself was showing a duplicate heading for shops, with a single
+lonely entry stranded under it, and bury and trash had wandered away from the
+sections they belong in. All tidied.
+
+A few pages also quoted exact figures at you. Those are gone, described in
+plain words instead, which is how the rest of the game talks about them.
+
 ## 2026-08-29: You can run away again
 
 Fleeing was refusing to work. If anything pulled your attention onto a new

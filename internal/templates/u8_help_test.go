@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -150,6 +151,30 @@ func allHelpTemplatePaths(t *testing.T) []string {
 	return paths
 }
 
+// loadHelpAliasesOnce loads the real DOGMud alias table exactly once per test
+// binary. The cross-reference guard resolves aliases the way the help command
+// does (keywords.TryHelpAlias), and a test binary loads nothing by default --
+// an unloaded table panics on first use.
+//
+// It loads from the REAL data root, not from whatever root the calling test has
+// configured: aliases are global and independent of the template root, and some
+// tests point the root at an empty temp directory that has no keywords.yaml.
+var helpAliasesLoaded bool
+
+func loadHelpAliasesOnce(t *testing.T) {
+	t.Helper()
+	if helpAliasesLoaded {
+		return
+	}
+	saved := configs.GetConfig()
+	real := saved
+	real.FilePaths.DataFiles = configs.ConfigString(u8DataFilesRoot)
+	configs.SetConfigForTest(t, real)
+	keywords.LoadAliases()
+	configs.SetConfigForTest(t, saved)
+	helpAliasesLoaded = true
+}
+
 var ansiTagPattern = regexp.MustCompile(`</?ansi(?:\s+[^>]*)?>`)
 var helpCrossReferencePattern = regexp.MustCompile(`(?i)<ansi\s+fg="command"[^>]*>\s*help\s+([a-z0-9-]+)\s*</ansi>`)
 var forbiddenU8NumericTuningPattern = regexp.MustCompile(`(?i)(?:\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?[- ]rounds?\b|\b\d+(?:\.\d+)?\s+(?:points?|ranks?|modifiers?)\b)`)
@@ -173,6 +198,8 @@ func useU8DataFilesAt(t *testing.T, dataRoot string) {
 	originalFileSystems := fileSystems
 	fileSystems = []fs.ReadFileFS{emptyFS{}}
 	t.Cleanup(func() { fileSystems = originalFileSystems })
+
+	loadHelpAliasesOnce(t)
 }
 
 func processU8Help(t *testing.T, path string) string {
@@ -264,6 +291,16 @@ func validateU8HelpCrossReferences(sourcePath, rendered string) error {
 			// harness does not mount. Not a broken link.
 			continue
 		}
+		// ⚠️ Resolve the alias FIRST, exactly as the help command does
+		// (usercommands/help.go:161,165 -> keywords.TryHelpAlias). Most help
+		// aliases have no same-named template: `help dual-wield` serves
+		// help/combat, `help wimpy` serves help/set-wimpy. Skipping this step
+		// makes the guard report ~175 WORKING topics as broken -- and the
+		// cheapest way to satisfy it is to delete the link, which is exactly
+		// what happened to `help dual-wield` and `help wimpy` before this was
+		// caught. Same failure as the module-topic case above, on a second
+		// axis.
+		topic = keywords.TryHelpAlias(topic)
 		result, err := Process("help/"+topic, nil)
 		if err != nil {
 			return fmt.Errorf("%s emits broken cross-reference %q: %w", sourcePath, "help "+topic, err)

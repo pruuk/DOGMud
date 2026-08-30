@@ -48,6 +48,21 @@ func wireCompanionAssist(c *characters.Character) {
 		}
 		prevLen = cur
 
+		// Cheap rejections BEFORE the expensive scan.
+		//
+		// findMobOwningCharacter walks EVERY live mob instance (allocating the
+		// id slice and taking mobInstancesMu once per id). This subscriber is
+		// wired on every Character and now fires on every engagement in the
+		// game, so running that scan for a player -- where the answer is always
+		// nil -- was pure waste on the round loop's hot path. It cost nothing
+		// before 2026-08-30 only because the callback was unreachable.
+		if !c.IsMob {
+			return
+		}
+		if !c.IsCharmed() {
+			return // only companions assist; skips the scan for ordinary mobs
+		}
+
 		// Identify the companion mob owning this character.
 		mob := findMobOwningCharacter(c)
 		if mob == nil {
