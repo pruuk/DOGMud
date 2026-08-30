@@ -25,6 +25,18 @@ func newLiveMob(t *testing.T, instanceId, roomId, health int) *mobs.Mob {
 	require.NoError(t, m.Character.Validate())
 	m.Character.Health = health
 
+	// Fixture precondition, not decoration. Validate() is what carries a mob's
+	// identity onto its machine, and that only works because MobInstanceId is
+	// set BEFORE Validate() runs (mobs.go:358 precedes the spawn-path
+	// Validate()). If that ordering ever regresses, every spawned mob has a
+	// zero self, ForceIdle under TriggerSelfDied/TriggerTargetDied cannot find
+	// its own entry (those pass no r.Actor), and inbound lists fill with
+	// ghosts. Asserting it here means the fixture cannot quietly diverge from
+	// the real spawn path the way an earlier version of this file did.
+	require.Equal(t, state.ActorRef{MobInstanceId: instanceId}, m.Character.CombatPhase.Self(),
+		"Validate() must carry MobInstanceId onto the machine; check the "+
+			"set-id-then-Validate ordering in mobs.newMobByIdInternal")
+
 	mobs.SetInstanceForTest(instanceId, m)
 	t.Cleanup(func() { mobs.DestroyInstance(instanceId) })
 

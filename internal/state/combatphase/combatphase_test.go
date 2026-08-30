@@ -10,20 +10,27 @@ import (
 // Test helpers. Each test constructs Machine instances directly
 // (no Character — those come in integration tests in later tasks).
 
-func makePair() (attacker, defender *Machine) {
+func makePair(t *testing.T) (attacker, defender *Machine) {
 	A := NewMachine()
 	B := NewMachine()
+	t.Helper()
 	A.SetSelf(actor(1))
 	B.SetSelf(actor(2))
-	useTestResolver(map[state.ActorRef]*Machine{actor(1): A, actor(2): B})
+	useTestResolver(t, map[state.ActorRef]*Machine{actor(1): A, actor(2): B})
 	return A, B
 }
 
 // useTestResolver installs a fixed ActorRef -> Machine map as the resolver for
 // the duration of one test. Production resolves against internal/users and
 // internal/mobs (wired in internal/hooks); there is no registry to poke.
-func useTestResolver(m map[state.ActorRef]*Machine) {
+func useTestResolver(t *testing.T, m map[state.ActorRef]*Machine) {
+	t.Helper()
 	SetMachineResolver(func(ref state.ActorRef) *Machine { return m[ref] })
+	// Restore the unresolvable default. Without this every later test in the
+	// package inherits whichever map ran last; today the mob/user id namespaces
+	// happen not to collide, which is luck rather than design. This is also the
+	// only caller of SetMachineResolver's documented nil escape hatch.
+	t.Cleanup(func() { SetMachineResolver(nil) })
 }
 
 func actor(userId int) state.ActorRef {
@@ -44,7 +51,7 @@ func attackReason(attacker, target state.ActorRef) state.TransitionReason {
 // gains attacker in its Attackers list; defender's Combat Phase
 // unchanged (defenders don't auto-engage).
 func TestCP_001_BasicAttackInitiation(t *testing.T) {
-	A, B := makePair()
+	A, B := makePair(t)
 	a, b := actor(1), actor(2)
 
 	err := A.TransitionToEngaging(EngagingData{Target: b, RoundsUntil: 0},
@@ -59,7 +66,7 @@ func TestCP_001_BasicAttackInitiation(t *testing.T) {
 
 // CP-002: Engaging counts down each round until ready.
 func TestCP_002_EngagingCountdown(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	require.NoError(t, A.TransitionToEngaging(
 		EngagingData{Target: actor(2), RoundsUntil: 2}, state.TransitionReason{}))
 
@@ -73,7 +80,7 @@ func TestCP_002_EngagingCountdown(t *testing.T) {
 
 // CP-003: Engaging → Engaged fires cascade.
 func TestCP_003_EngagingToEngagedFiresCascade(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	var firedTransitions []State
 	A.Inner().AfterTransition("test_cascade", func(from, to State, _ state.TransitionReason) {
 		firedTransitions = append(firedTransitions, to)
@@ -86,7 +93,7 @@ func TestCP_003_EngagingToEngagedFiresCascade(t *testing.T) {
 
 // CP-004: Target dies → attacker auto-transitions Engaged → Idle.
 func TestCP_004_TargetDiesEndsEngagement(t *testing.T) {
-	A, B := makePair()
+	A, B := makePair(t)
 	require.NoError(t, A.TransitionToEngaging(
 		EngagingData{Target: actor(2), RoundsUntil: 0}, state.TransitionReason{}))
 	A.OnRoundTick() // Engaging → Engaged
@@ -99,7 +106,7 @@ func TestCP_004_TargetDiesEndsEngagement(t *testing.T) {
 
 // CP-005: Self dies → outbound combat ends + inbound attackers cleared.
 func TestCP_005_SelfDeathClearsBoth(t *testing.T) {
-	A, B := makePair()
+	A, B := makePair(t)
 	a, b := actor(1), actor(2)
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: b}, attackReason(a, b)))
 	require.NoError(t, B.TransitionToEngaging(EngagingData{Target: a}, attackReason(b, a)))
@@ -112,7 +119,7 @@ func TestCP_005_SelfDeathClearsBoth(t *testing.T) {
 
 // CP-006: Flee command initiates Disengaging.
 func TestCP_006_FleeInitiatesDisengaging(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2)},
 		state.TransitionReason{}))
 	A.OnRoundTick() // Engaging → Engaged
@@ -123,7 +130,7 @@ func TestCP_006_FleeInitiatesDisengaging(t *testing.T) {
 
 // CP-007: Flee success → Idle.
 func TestCP_007_FleeSuccess(t *testing.T) {
-	A, B := makePair()
+	A, B := makePair(t)
 	a, b := actor(1), actor(2)
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: b}, attackReason(a, b)))
 	A.OnRoundTick()
@@ -135,7 +142,7 @@ func TestCP_007_FleeSuccess(t *testing.T) {
 
 // CP-008: Flee failure → back to Engaged.
 func TestCP_008_FleeFailureReturnsEngaged(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2)},
 		state.TransitionReason{}))
 	A.OnRoundTick()
@@ -148,7 +155,7 @@ func TestCP_008_FleeFailureReturnsEngaged(t *testing.T) {
 
 // CP-010: NonCombatant cannot attack.
 func TestCP_010_NonCombatantCannotInitiate(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	A.RegisterCombatantVeto(func() bool { return false /* NonCombatant */ })
 	err := A.TransitionToEngaging(EngagingData{Target: actor(2)}, state.TransitionReason{})
 	require.ErrorIs(t, err, state.ErrVetoed)
@@ -157,7 +164,7 @@ func TestCP_010_NonCombatantCannotInitiate(t *testing.T) {
 
 // CP-011: NonCombatant target cannot be attacked.
 func TestCP_011_NonCombatantTargetVetoed(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	A.RegisterTargetCombatantCheck(func(target state.ActorRef) bool {
 		return false // target is NonCombatant
 	})
@@ -168,7 +175,7 @@ func TestCP_011_NonCombatantTargetVetoed(t *testing.T) {
 
 // CP-012: Activity != Free blocks Engaging.
 func TestCP_012_ActivityBlocksEngaging(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	A.RegisterActivityCheck(func() bool { return false /* not Free */ })
 	err := A.TransitionToEngaging(EngagingData{Target: actor(2)}, state.TransitionReason{})
 	require.ErrorIs(t, err, state.ErrVetoed)
@@ -176,7 +183,7 @@ func TestCP_012_ActivityBlocksEngaging(t *testing.T) {
 
 // CP-013: Dead character cannot attack.
 func TestCP_013_DeadCannotAttack(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	A.RegisterLifeCheck(func() bool { return false /* not Alive */ })
 	err := A.TransitionToEngaging(EngagingData{Target: actor(2)}, state.TransitionReason{})
 	require.ErrorIs(t, err, state.ErrVetoed)
@@ -184,7 +191,7 @@ func TestCP_013_DeadCannotAttack(t *testing.T) {
 
 // CP-014: Cannot attack a dead target.
 func TestCP_014_CannotAttackDeadTarget(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	A.RegisterTargetLifeCheck(func(_ state.ActorRef) bool {
 		return false // target dead
 	})
@@ -195,7 +202,7 @@ func TestCP_014_CannotAttackDeadTarget(t *testing.T) {
 
 // CP-015: AFK/Disconnected player target vetoed.
 func TestCP_015_AFKTargetVetoed(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	A.RegisterTargetPresenceCheck(func(_ state.ActorRef) bool {
 		return false // target AFK/Disconnected
 	})
@@ -206,7 +213,7 @@ func TestCP_015_AFKTargetVetoed(t *testing.T) {
 
 // CP-016: Cannot flee while grappled.
 func TestCP_016_GrappledCannotFlee(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	A.RegisterPositionCheck(func() bool { return false /* Clinched/Grounded */ })
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2)},
 		state.TransitionReason{}))
@@ -222,7 +229,7 @@ func TestCP_017_MultipleAttackersTracked(t *testing.T) {
 
 	M1, M2, M3, P := NewMachine(), NewMachine(), NewMachine(), NewMachine()
 	p := actor(1)
-	useTestResolver(map[state.ActorRef]*Machine{p: P})
+	useTestResolver(t, map[state.ActorRef]*Machine{p: P})
 
 	for i, m := range []*Machine{M1, M2, M3} {
 		require.NoError(t, m.TransitionToEngaging(EngagingData{Target: p},
@@ -242,7 +249,7 @@ func TestCP_018_DeadAttackerRemovedFromInbound(t *testing.T) {
 	// its own entry on the target's inbound list.
 	M1.SetSelf(actor(101))
 	M2.SetSelf(actor(102))
-	useTestResolver(map[state.ActorRef]*Machine{p: P, actor(101): M1, actor(102): M2})
+	useTestResolver(t, map[state.ActorRef]*Machine{p: P, actor(101): M1, actor(102): M2})
 
 	require.NoError(t, M1.TransitionToEngaging(EngagingData{Target: p},
 		state.TransitionReason{Actor: actor(101), Target: p}))
@@ -260,7 +267,7 @@ func TestCP_019_AttackersChangeIsObservable(t *testing.T) {
 
 	M1 := NewMachine()
 	P := NewMachine()
-	useTestResolver(map[state.ActorRef]*Machine{actor(1): P})
+	useTestResolver(t, map[state.ActorRef]*Machine{actor(1): P})
 
 	var observedAttackerCount int
 	P.SubscribeAttackersChange(func(_ []state.ActorRef) {
@@ -280,7 +287,7 @@ func TestCP_019_AttackersChangeIsObservable(t *testing.T) {
 // with the CP-001–CP-008 basics) so it still lines up with the chunk-0
 // design doc's test matrix.
 func TestCP_024_EngagedCarriesTargetFromEngaging(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	require.NoError(t, A.TransitionToEngaging(
 		EngagingData{Target: actor(2)}, state.TransitionReason{}))
 	A.OnRoundTick()
@@ -294,14 +301,14 @@ func TestCP_024_EngagedCarriesTargetFromEngaging(t *testing.T) {
 // CP-026: Soft-target (skullduggery) does NOT transition Combat Phase.
 // This is the chunk-2.7 regression test.
 func TestCP_026_SoftTargetDoesNotTransition(t *testing.T) {
-	T, _ := makePair()
+	T, _ := makePair(t)
 	require.Equal(t, Idle, T.State(), "thief stays Idle when picking a soft target")
 	// We deliberately do not call any TransitionTo — that's the point.
 }
 
 // CP-027: A failed steal does NOT auto-transition the mob to combat.
 func TestCP_027_FailedStealNoAutoCombat(t *testing.T) {
-	T, _ := makePair()
+	T, _ := makePair(t)
 	require.Equal(t, Idle, T.State(),
 		"failed non-combat action does not silently engage combat")
 }
@@ -310,7 +317,7 @@ func TestCP_027_FailedStealNoAutoCombat(t *testing.T) {
 
 // CP-028: Death cascades to Idle outbound + clears inbound list.
 func TestCP_028_DeathCascadeClearsAll(t *testing.T) {
-	A, B := makePair()
+	A, B := makePair(t)
 	a, b := actor(1), actor(2)
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: b}, attackReason(a, b)))
 	require.NoError(t, B.TransitionToEngaging(EngagingData{Target: a}, attackReason(b, a)))
@@ -323,7 +330,7 @@ func TestCP_028_DeathCascadeClearsAll(t *testing.T) {
 
 // CP-029: Inbound-only death still cleans both sides.
 func TestCP_029_InboundOnlyDeathCleansAttackers(t *testing.T) {
-	A, B := makePair() // A is defender, never attacked back
+	A, B := makePair(t) // A is defender, never attacked back
 	require.NoError(t, B.TransitionToEngaging(EngagingData{Target: actor(1)},
 		state.TransitionReason{Actor: actor(2), Target: actor(1)}))
 	require.Len(t, A.Attackers(), 1)
@@ -351,7 +358,7 @@ func TestCP_031_ScheduledTransitionsDoNotPersist(t *testing.T) {
 
 // CP-032: Combatant flag toggle forces Idle.
 func TestCP_032_CombatantOffForcesIdle(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2)},
 		state.TransitionReason{}))
 	A.OnRoundTick() // → Engaged
@@ -365,7 +372,7 @@ func TestCP_032_CombatantOffForcesIdle(t *testing.T) {
 
 // CP-033: Engaged state dispatches mob_combat_round.
 func TestCP_033_EngagedDispatchesCombatRoundEvent(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	var event string
 	A.OnTickEvent(func(name string, _ state.TransitionReason) {
 		event = name
@@ -379,7 +386,7 @@ func TestCP_033_EngagedDispatchesCombatRoundEvent(t *testing.T) {
 
 // CP-034: Idle state dispatches mob_idle.
 func TestCP_034_IdleDispatchesIdleEvent(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	var event string
 	A.OnTickEvent(func(name string, _ state.TransitionReason) {
 		event = name
@@ -390,7 +397,7 @@ func TestCP_034_IdleDispatchesIdleEvent(t *testing.T) {
 
 // CP-035: Engaging state dispatches no tick event.
 func TestCP_035_EngagingDispatchesNoTickEvent(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	var event string
 	A.OnTickEvent(func(name string, _ state.TransitionReason) {
 		event = name
@@ -403,7 +410,7 @@ func TestCP_035_EngagingDispatchesNoTickEvent(t *testing.T) {
 
 // CP-036: Disengaging state dispatches no tick event.
 func TestCP_036_DisengagingDispatchesNoTickEvent(t *testing.T) {
-	A, _ := makePair()
+	A, _ := makePair(t)
 	require.NoError(t, A.TransitionToEngaging(EngagingData{Target: actor(2)},
 		state.TransitionReason{}))
 	A.OnRoundTick() // → Engaged

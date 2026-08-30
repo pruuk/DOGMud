@@ -62,6 +62,15 @@ var u8ActionHelpPaths = []string{
 // cross-reference check at all -- and both files U10d edited that fell outside
 // it were exactly where its surviving copy defects lived. Same failure shape as
 // `stow` going invisible in the 2026-08-03 helpfile audit.
+// u8DataDrivenHelpTemplates cannot render with a nil payload at all, so they
+// are exempt from EVERY whole-tree guard. Keep this list at two.
+var u8DataDrivenHelpTemplates = map[string]string{
+	"help/help":  "data-driven: ranges over .Commands, needs a payload to render",
+	"help/spell": "data-driven: reads .Name/.Description/.SpellId from a payload",
+}
+
+// u8HelpExceptions exempts a template from the NUMERIC guard only. Reference
+// pages legitimately show figures; structural correctness is not negotiable.
 var u8HelpExceptions = map[string]string{
 	// DATA-DRIVEN templates, not static help pages. They are rendered with a
 	// payload by the help command (help/help ranges over .Commands; help/spell
@@ -122,9 +131,28 @@ var u8HelpExceptions = map[string]string{
 	"help/reinforced-travel-pack": "item stat block: weight reduction is the item's whole point",
 }
 
+// helpGuardKind selects which whole-tree guard a walk is feeding.
+type helpGuardKind int
+
+const (
+	// guardStructural: does the template parse, and do its cross-references
+	// resolve? EVERY template must pass this. Only the two data-driven ones
+	// are exempt, because they cannot render without a payload.
+	guardStructural helpGuardKind = iota
+	// guardNumeric: does the visible text disclose tuning values? Reference
+	// pages legitimately show figures, so this one honours u8HelpExceptions.
+	guardNumeric
+)
+
 // allHelpTemplatePaths walks every help template and returns them as
-// "help/<name>" paths, minus anything in u8HelpExceptions.
-func allHelpTemplatePaths(t *testing.T) []string {
+// "help/<name>" paths.
+//
+// ⚠️ Exceptions apply to the NUMERIC guard only. They used to be filtered here
+// for every caller, so a file exempted for showing a recipe table was also
+// silently dropped from the parse check and the cross-reference check -- a
+// broken link or a render error in any of those 33 files was invisible.
+// Structural correctness is not negotiable for any template.
+func allHelpTemplatePaths(t *testing.T, kind helpGuardKind) []string {
 	t.Helper()
 
 	dir := filepath.Join(u8DataFilesRoot, "templates", "help")
@@ -138,9 +166,16 @@ func allHelpTemplatePaths(t *testing.T) []string {
 		}
 		name := strings.TrimSuffix(e.Name(), ".template")
 		p := "help/" + name
-		if reason, skip := u8HelpExceptions[p]; skip {
-			t.Logf("skipping %s: %s", p, reason)
+
+		// Unrenderable without a payload: exempt from everything.
+		if _, dataDriven := u8DataDrivenHelpTemplates[p]; dataDriven {
 			continue
+		}
+		if kind == guardNumeric {
+			if reason, skip := u8HelpExceptions[p]; skip {
+				t.Logf("numeric guard skips %s: %s", p, reason)
+				continue
+			}
 		}
 		paths = append(paths, p)
 	}
@@ -158,7 +193,7 @@ func allHelpTemplatePaths(t *testing.T) []string {
 //
 // It loads from the REAL data root, not from whatever root the calling test has
 // configured: aliases are global and independent of the template root, and some
-// tests point the root at an empty temp directory that has no keywords.yaml.
+// tests point the root at an empty temp directory with no keywords.yaml.
 var helpAliasesLoaded bool
 
 func loadHelpAliasesOnce(t *testing.T) {
@@ -356,7 +391,7 @@ func TestU8CrossReferenceValidationRejectsMissingDOGMudOnlyTopic(t *testing.T) {
 func TestU8ActionAdmissionHelpTemplatesProcess(t *testing.T) {
 	useU8DataFiles(t)
 
-	for _, path := range allHelpTemplatePaths(t) {
+	for _, path := range allHelpTemplatePaths(t, guardStructural) {
 		t.Run(path, func(t *testing.T) {
 			processU8Help(t, path)
 		})
@@ -414,7 +449,7 @@ func TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning(t *testing.T) {
 	}
 
 	// Tree-wide: no help template may leak a raw or worded tuning value.
-	for _, path := range allHelpTemplatePaths(t) {
+	for _, path := range allHelpTemplatePaths(t, guardNumeric) {
 		t.Run(path+"/no-raw-tuning", func(t *testing.T) {
 			rendered := processU8Help(t, path)
 			assert.Empty(t, findForbiddenU8TuningNumbers(rendered),
@@ -443,7 +478,7 @@ func TestU8StaminaHelpDistinguishesFleeFromGrappleCadence(t *testing.T) {
 func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 	useU8DataFiles(t)
 
-	for _, path := range allHelpTemplatePaths(t) {
+	for _, path := range allHelpTemplatePaths(t, guardStructural) {
 		t.Run(path, func(t *testing.T) {
 			rendered := processU8Help(t, path)
 			if path == "help/shoot" {
@@ -460,4 +495,34 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 			require.NoError(t, validateU8HelpCrossReferences(path, rendered))
 		})
 	}
+}
+
+// helpCrossReferenceFloor is a RATCHET on the size of the help link graph.
+//
+// ⚠️ Why this exists. The cross-reference guard's cheapest remedy is to DELETE
+// the offending link, which makes help worse while turning the suite green.
+// That is not hypothetical: widening the guard to the whole tree in U11 deleted
+// nine links, and three of them (`help time`, `help dual-wield`, `help wimpy`)
+// pointed at topics that resolve perfectly well at runtime -- via a module
+// filesystem or the keywords alias table, neither of which the guard consulted.
+//
+// So shrinking the graph now fails as loudly as breaking it. If you delete a
+// link deliberately, lower this number in the same commit and say why. If you
+// add links, raise it.
+const helpCrossReferenceFloor = 1083
+
+func TestHelpCrossReferenceGraphDoesNotShrinkSilently(t *testing.T) {
+	useU8DataFiles(t)
+
+	total := 0
+	for _, path := range allHelpTemplatePaths(t, guardStructural) {
+		total += len(u8HelpCrossReferenceTopics(processU8Help(t, path)))
+	}
+
+	assert.GreaterOrEqual(t, total, helpCrossReferenceFloor,
+		"the help link graph shrank. Deleting a cross-reference is the cheapest "+
+			"way to silence the resolve guard and it makes help WORSE -- check "+
+			"first whether the topic resolves via a module template or a "+
+			"keywords alias. If the removal is deliberate, lower "+
+			"helpCrossReferenceFloor in this commit and say why.")
 }

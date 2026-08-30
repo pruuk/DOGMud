@@ -67,9 +67,17 @@ func TestSyncMachineSelf_NilMachineDoesNotPanic(t *testing.T) {
 }
 
 // A zero ref must never be recorded as an identity.
+//
+// Uses a SENTINEL rather than asserting IsZero(): Self() starts zero, so
+// `assert.True(Self().IsZero())` cannot tell "the guard returned early" from
+// "SetSelf(zero) ran and wrote a zero". It passed with the guard deleted.
 func TestSyncMachineSelf_RefusesZeroRef(t *testing.T) {
 	c := &Character{}
 	c.CombatPhase = combatphase.NewMachine()
-	c.SyncMachineSelf()
-	assert.True(t, c.CombatPhase.Self().IsZero())
+	c.CombatPhase.SetSelf(state.ActorRef{UserId: 99})
+
+	c.SyncMachineSelf() // c has no identity of its own
+
+	assert.Equal(t, state.ActorRef{UserId: 99}, c.CombatPhase.Self(),
+		"a zero ref must not overwrite a recorded identity")
 }
