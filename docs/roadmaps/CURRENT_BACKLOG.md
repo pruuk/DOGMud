@@ -116,10 +116,11 @@ builder) comes after behavior and quest mechanisms.
    field name** — a `SubGoldLossFraction` claim was retracted for exactly that
    mistake.
 
-## Owner Playtest, 2026-08-30 — feel-checks resolved
+## Owner Playtest, 2026-08-30 — ALL feel-checks resolved
 
-Four of the five owed feel-checks are now closed by the owner playing, not by
-reasoning. Recorded here so none of them is re-run.
+✅ **The owed feel-check list is now EMPTY.** All of them were closed by the
+owner playing, not by reasoning. Recorded here so none is re-run, and so nobody
+re-derives a "concern" that play has already answered.
 
 - ✅ **Weather tempo — FINE.** The slowed cadence from weather polish sub-project
   A reads correctly in play. Closed.
@@ -151,8 +152,43 @@ reasoning. Recorded here so none of them is re-run.
   `spiderweb` are one room and zero rooms, so they can ride the default.
   Content work, so it ends with the adversarial playtest gate.
 
-The fifth, **newbie aggression**, is still open — see the note under Deferred
-Follow-ons.
+- ✅ **Newbie aggression — FINE in game (owner, 2026-08-31).** Closed. Context
+  for anyone tempted to reopen it: the 2026-07-10 `LegacyHostile` fix restored
+  attack-on-entry for 158 mobs after two months dead, and the open question was
+  whether the newbie zones had become too punishing. Play says no.
+- ✅ **Q34 bandit pacing — FINE (owner, 2026-08-31).** *"I killed them
+  yesterday."* Closed. It was filed from the 2026-07-13 feel test as a roughly
+  90-round grapple slog against the Bandit Scout in room 5232; the intervening
+  combat work has evidently resolved it.
+
+🔴 **One bug came out of the same playtest and is NOT closed — toxicity.** See
+Queued Fixes below.
+
+## Queued Fixes
+
+- **Toxicity does nothing observable (owner, 2026-08-31).** Deferred by the
+  owner to be picked up later, not dropped. Three independent causes, all
+  verified; the wiring itself is fine and this is NOT the unexported-yaml-field
+  trap.
+  1. **Nine of the 34 drinkable items carry no `toxicity:` field at all**, so
+     `drink.go:167`'s `if itemSpec.Toxicity > 0` is false and `AddToxicity`
+     never fires. All nine are pre-alchemy legacy potions, including `30001`
+     small red potion, the basic heal. The alchemy system authored toxicity on
+     its own 21 new potions (30036-30056) and never backfilled the rest.
+  2. **Two duplicate potion NAMES where one twin is toxic and one is not** —
+     Conviction Draught (`30012` none / `30038` tox 8) and Berserker Elixir
+     (`30032` none / `30049` tox 25). Same typed name, different cost.
+  3. **Nothing is visible below 50% of max.** Max is
+     `ToxicityBaseMax + Vitality/ToxicityVitalityScale` = `100 + Vit/5`, so a
+     Vitality-104 character sits at about 121 and stays "clear" until roughly 61
+     points, while potions cost 8 to 22. `{tox}` is deliberately omitted at band
+     0, `status` shows nothing, and there is no numeric readout anywhere.
+  4. Related: **all five toxicity knobs are absent from `config.yaml`** and run
+     on Go defaults. The subsystem has never been tuned.
+
+  Backfilling nine potions and moving a band threshold are balance changes, so
+  they want the owner's numbers. The cheapest real improvement is the readout:
+  the mechanic is invisible even when it is working correctly.
 
 ## Adversarial Review Remediation
 
@@ -248,21 +284,10 @@ it now sits behind two arcs as well.
 - **NPC maintenance routines (Mob Aliveness 3.5):** the only deferred item in an
   otherwise complete 45-chunk roadmap. Source:
   [Mob Aliveness Roadmap](MOB_ALIVENESS_ROADMAP.md).
-- **Newbie aggression feel-check (the last unrun one).** Context the owner did
-  not have: on 2026-07-10 the `LegacyHostile` export fix **restored
-  attack-on-entry aggression world-wide after it had been dead for two months**,
-  because a refactor lowercased a yaml-tagged field and silently severed it. 158
-  mobs got their aggression back at once, plus 21 deliberate ambusher/lookout
-  hostile flips. The mechanic was confirmed working in-game; what was never done
-  is **playing a fresh character through the newbie zones to see whether they
-  are now too punishing.** That is the whole check. It is a feel question, so it
-  wants a naive-newbie playtest persona rather than a code read.
-- **Q34 bandit pacing cliff (the other unrun one).** From the 2026-07-13 feel
-  test: the **Bandit Scout in room 5232 turned into a roughly 90-round grapple
-  slog**. Logged as a difficulty-tune item and deferred ever since. It is a
-  pacing problem in the newbie zone, not a correctness bug, and it sits
-  naturally with the newbie-aggression check above since both are "how does the
-  early game feel now".
+- ~~Newbie aggression feel-check~~ and ~~Q34 bandit pacing cliff~~ — **both
+  CLOSED by the owner in play, 2026-08-31.** Struck rather than deleted so they
+  are not re-derived from the old feel-test reports that filed them. See the
+  playtest section above.
 - **Unify fragmented combat/action messaging — PROMOTED 2026-08-26.** No longer
   deferred; it is queued arc 2 above. Detail kept here because it is the fuller
   statement of scope: combat-state Perception shipped dormant and has no
