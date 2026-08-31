@@ -625,11 +625,28 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						_ = hiddenP.Character.Awareness.TransitionToRevealing(
 							state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
 						hiddenP.Character.SetMiscData(`sneaking`, nil)
-						hiddenP.SendText(messaging.CategorySystem, fmt.Sprintf(
-							"%s enters the room and notices you!", user.Character.Name))
-						user.SendText(messaging.CategorySystem, fmt.Sprintf(
-							`You notice <ansi fg="username">%s</ansi> lurking in the shadows.`,
-							hiddenP.Character.Name))
+						// Neither side may learn a name they cannot see. Both
+						// lines used to name the other party unconditionally,
+						// so a player standing in an unlit room with no
+						// nightvision was told exactly who was there. The
+						// "notices you as you enter" line further down this
+						// same function already gets this right.
+						if messaging.CanSeeClearly(hiddenP.Character, destRoom) {
+							hiddenP.SendText(messaging.CategorySystem, fmt.Sprintf(
+								`<ansi fg="username">%s</ansi> enters the room and notices you!`,
+								user.Character.Name))
+						} else {
+							hiddenP.SendText(messaging.CategorySystem,
+								`Someone enters the room and notices you!`)
+						}
+						if messaging.CanSeeClearly(user.Character, destRoom) {
+							user.SendText(messaging.CategorySystem, fmt.Sprintf(
+								`You notice <ansi fg="username">%s</ansi> lurking in the shadows.`,
+								hiddenP.Character.Name))
+						} else {
+							user.SendText(messaging.CategorySystem,
+								`You notice someone lurking in the shadows.`)
+						}
 					}
 					// U10b-2: the observer's Search award now fires on BOTH
 					// outcomes, full on a win and partial on a loss, instead of
@@ -663,10 +680,22 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					if success {
 						_ = mob.Character.Awareness.TransitionToRevealing(
 							state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
-						user.SendText(messaging.CategorySystem, fmt.Sprintf(
-							`You notice <ansi fg="mobname">%s</ansi> lurking in the shadows!`,
-							mob.Character.Name))
-						destRoom.SendText(messaging.CategorySystem, fmt.Sprintf(
+						// Spotting something is not the same as identifying it.
+						// In an unlit room with no nightvision the spotter
+						// learns that something is there, not what it is.
+						if messaging.CanSeeClearly(user.Character, destRoom) {
+							user.SendText(messaging.CategorySystem, fmt.Sprintf(
+								`You notice <ansi fg="mobname">%s</ansi> lurking in the shadows!`,
+								mob.Character.Name))
+						} else {
+							user.SendText(messaging.CategorySystem,
+								`You notice something lurking in the shadows!`)
+						}
+						// SendTextVisual, not SendText: this is a sight event,
+						// and the audio channel bypasses the sight gate and the
+						// anonymizer by design. Visual gets each bystander the
+						// right version, or nothing at all if they cannot see.
+						destRoom.SendTextVisual(messaging.CategorySystem, fmt.Sprintf(
 							`<ansi fg="username">%s</ansi> spots <ansi fg="mobname">%s</ansi> hiding in the shadows!`,
 							user.Character.Name, mob.Character.Name),
 							user.UserId)
@@ -752,7 +781,11 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					// Hidden mobs attack silently — no "notices you" message.
 					// They still trigger lookfortrouble for the surprise attack.
 					if !mob.Character.IsHidden() {
-						if destRoom.GetVisibility() >= 1 || user.Character.HasFlagFromAnySource(buffs.NightVision) {
+						// Was an inline lit-or-nightvision check. Now the same
+						// predicate the message pipeline itself uses, so this
+						// site cannot drift from SendTextVisual and a blinded
+						// player in a lit room stops reading names too.
+						if messaging.CanSeeClearly(user.Character, destRoom) {
 							user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notices you as you enter!`, mob.Character.Name))
 						} else {
 							user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Something notices you in the darkness!</ansi>`)

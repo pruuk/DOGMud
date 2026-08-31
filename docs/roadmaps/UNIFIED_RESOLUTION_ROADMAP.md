@@ -5,6 +5,22 @@
 · [`unified-cost-and-harm-design`](../superpowers/specs/2026-08-12-unified-cost-and-harm-design.md)
 **Model:** `tools/balance/unified_resolution_model.py`
 **Foundation:** PR #30 (chunks 5.11g + 5.11e), merged as `63f21e8ee`
+**Status:** ✅ **CLOSED — shipped to production 2026-08-30**
+
+> **This roadmap is closed.** Every stage U0–U12 is merged, and the arc went
+> live on **2026-08-30** (962 commits, +160k/−11k). The `7c64c228c` prod pin
+> quoted in several places below is **dead** and is left only where it is part
+> of a historical note; prod moved on again the next day with PRs #98–#101 and
+> was `a1af7269a` on 2026-08-31.
+>
+> **Do not add stages here.** Work that came out of the arc but is not part of
+> it belongs in [`CURRENT_BACKLOG.md`](CURRENT_BACKLOG.md). The three findings
+> U11 filed rather than fixed are in
+> [`2026-08-30-u11-filed-findings`](../audits/2026-08-30-u11-filed-findings.md).
+>
+> **What this file is still for: the merge-evidence record.** Answer "did stage
+> X actually ship?" from the Plans table's evidence column, never from memory
+> and never from a tick alone. U8 was nearly lost in both directions that way.
 
 ---
 
@@ -170,11 +186,11 @@ forage stay static — there is genuinely no opponent and inventing one is worse
 
 ## Plans
 
-> **Status as of 2026-08-30: the arc is CODE-COMPLETE. Every stage U0–U12 plus
-> U11 is merged or on `feature/u11-arc-closer` awaiting its playtest gate.
-> Nothing is deployed — prod is still `7c64c228c`, and the deploy gate is the
-> whole arc plus the owner's manual pass with Meirok
-> (`docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`).**
+> **Status: ✅ SHIPPED 2026-08-30. Every stage U0–U12 is merged, U11 included,
+> and the whole arc is live in production.** The deploy gate — the arc plus the
+> owner's manual pass with Meirok (`docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`) —
+> is satisfied and the arc is closed. This paragraph previously claimed nothing
+> was deployed and pinned prod at `7c64c228c`; both are obsolete.
 >
 > ⚠️ **U11 shipped two behaviour changes, both from wiring one dead seam:**
 > prone auto-recovery is contested for the first time, and companions answer a
@@ -1142,6 +1158,21 @@ Full list in spec section 7. The two that compile cleanly and silently:
 7. The adversarial playtest gate passes.
 
 ## Pre-deploy manual playtest (owner, blocking deploy)
+
+> ✅ **Gate discharged — the arc deployed 2026-08-30.** Kept as the record of
+> what the gate asked for, not as live work. The cribsheet outlived it: any
+> unticked box in `docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md` is now an ordinary
+> post-deploy feel-check, not a blocker.
+>
+> Confirmed by the owner in play: NPC crits, the `CritBarCeiling: 2.0` bar
+> (validated, not merely modelled), crafting anywhere, and the enchanting
+> storage pull.
+>
+> ⚠️ **No record exists of item 1, the Elemental Queen fight, actually being
+> run.** Quell's live verification is therefore still owed unless the owner ran
+> it unrecorded. It is the designated instrument for quell and for observing
+> the arc's floor and ceiling at veteran power, so it is worth doing even now
+> that it blocks nothing.
 
 The AI-harness gate above is necessary but not sufficient: the owner runs a
 manual pass with Meirok on the local server before anything deploys. The full
