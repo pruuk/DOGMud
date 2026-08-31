@@ -82,11 +82,12 @@ because a "verified" claim about quell survived two weeks past its own fix.
 | **A config-driven decoration layer** wraps enter/exit messages from `config.yaml` | `EnterRoomMessageWrapper`, `ExitRoomMessageWrapper`, `internal/configs/config.textformats.go` |
 | 54 Go files carry in-code text pools | — |
 
-### Two live defects this audit found
+### Three live defects this audit found
 
 | Defect | Evidence |
 |---|---|
 | **`{source_plain}` / `{target_plain}` produce deliberately untagged names, which `Anonymize` is structurally unable to strip.** **14 buff files** use `{source_plain}` in `*_room_text`, so an infrared-only observer in a dark room reads the actor's real name in full while every correctly-tagged message renders "a figure" | `internal/textutil/tokens.go:12-13`; `_datafiles/world/dogmud/buffs/` |
+| 🔴 **An empty room line silences the event for EVERYONE — six sites.** Channel-defence narration is gated on `if triad.ToRoom == "" { return }` at `internal/hooks/spell_resolution.go:487`, `internal/combat/counter.go:190` and `:249`, `internal/mobcommands/taunt.go:112`, and both copies of `skill_move_defence.go`. `RenderDefenseMessage` returns a wholly empty triad on a missing pool, a missing intensity band, or audience lists of unequal length — and the lookup is the raw string cast `items.DefenseType(out.DefenceType)`, which compiles for any string and yields nil for one with no pool. So a single naming or authoring gap produces **no message at all** to the caster, the target, or the room, while the mechanics resolve normally. **Owner-reported symptom, 2026-08-31: "a lot of spells early on seem to just stop happening from the player's point of view."** The attacker and defender lines may well exist; they are discarded because the *room* line is missing. This is the strongest single argument for the coordinated-pick invariant becoming universal | six sites listed above |
 | **The Observer role exists twice with contradictory rules.** Text observers get a per-recipient sight gate. Knowledge observers — `crimes.WitnessesInRoom` (`internal/crimes/crimes.go:198`) — filter on **faction membership only**, with no sight, darkness, blindness or hidden check, and `IdentifiedPerp` names the perpetrator the moment that list is non-empty | — |
 
 ### The Actee gap
