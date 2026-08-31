@@ -100,7 +100,7 @@ mind.
 
 ## See also
 
-- Spec: `docs/superpowers/specs/2026-05-25-mob-aliveness-3.4-waypoint-patrols-design.md`
+- Spec: `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.4-waypoint-patrols-design.md`
 - Mob spec field: `internal/mobs/mobs.go` (`Mob.PatrolId`)
 - Loader: `internal/mobs/patrol_loader.go`
 - Executor: `internal/hooks/NewRound_IdleMobs_patrol.go`

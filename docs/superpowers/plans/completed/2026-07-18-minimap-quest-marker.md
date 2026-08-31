@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud engine), YAML quest data, vanilla-JS web client (SVG minimap), GMCP over telnet/websocket.
 
-**Spec:** `docs/superpowers/specs/2026-07-18-minimap-quest-marker-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-18-minimap-quest-marker-design.md`
 
 ---
 

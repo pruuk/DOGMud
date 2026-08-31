@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `internal/actions` actor abstraction (chunks 2.1, 2.4), existing `internal/dice.OpposedRollStat`, existing `internal/buffs` Hidden flag (buff 9), existing crime/knowledge substrate (chunks 1.3, 1.4).
 
-**Spec:** `docs/superpowers/specs/2026-05-13-mob-aliveness-2.7-skullduggery-suite-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-13-mob-aliveness-2.7-skullduggery-suite-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 
@@ -1312,7 +1312,7 @@ Modeled on `predator.yaml` (chunk 2.4). Selector with priority-ordered children:
 # players, flees on detection or aggression. Engages directly
 # only when target is vastly outclassed (power ratio > 1.5).
 #
-# Spec: docs/superpowers/specs/2026-05-13-mob-aliveness-2.7-skullduggery-suite-design.md
+# Spec: docs/superpowers/specs/completed/2026-05-13-mob-aliveness-2.7-skullduggery-suite-design.md
 
 tree:
   type: selector

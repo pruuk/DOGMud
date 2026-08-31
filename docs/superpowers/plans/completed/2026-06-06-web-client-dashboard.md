@@ -8,7 +8,7 @@
 
 **Tech Stack:** vanilla JS + CSS Grid, xterm.js (existing), WinBox (existing, pop-out only), GMCP handlers (existing). No build step; no new dependencies. No Go changes in this sub-project.
 
-**Spec:** `docs/superpowers/specs/2026-06-06-web-client-dashboard-design.md`. Visual source of truth: `docs/superpowers/specs/2026-06-06-web-client-dashboard-mockups/`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-06-web-client-dashboard-design.md`. Visual source of truth: `docs/superpowers/specs/2026-06-06-web-client-dashboard-mockups/`.
 
 **Branch:** `feature/web-client-dashboard` (created; spec committed).
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-27
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (§3 row 4, §10 build-order step 4)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (§3 row 4, §10 build-order step 4)
 **Predecessor:** Scholars' Quarter + Q73, merged 2026-06-26. This is the next district.
 **Scope note:** The city-wide build-order step 4 covers two room blocks (Processional
 6154–6167 + Temple public 6168–6183). **This spec is the Processional half only**

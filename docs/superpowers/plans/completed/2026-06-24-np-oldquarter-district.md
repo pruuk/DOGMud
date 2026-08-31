@@ -19,7 +19,7 @@ this env.
 **Tech Stack:** GoMud engine (run locally), DOGMud world YAML (`docs/schemas/`),
 `tools/id_inventory.py`, `cartcheck`, the `/playtest` harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-24-np-oldquarter-district-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-24-np-oldquarter-district-design.md`.
 
 ---
 

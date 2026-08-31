@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go. Packages touched: `internal/characters`, `internal/mutations`, `internal/spells`, `internal/configs`, `internal/hooks`, plus spell YAML data files. Verify symbols with the codegraph MCP, not grep.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-companion-conviction-economy-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-companion-conviction-economy-design.md`
 
 ---
 

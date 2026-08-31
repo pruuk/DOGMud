@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-22
 **Status:** measured. Supersedes every uses/hour figure in
-`docs/superpowers/plans/2026-08-22-u10b-0-phase-d-balance.md` revisions 1 and 2.
+`docs/superpowers/plans/completed/2026-08-22-u10b-0-phase-d-balance.md` revisions 1 and 2.
 
 ## Why this exists
 

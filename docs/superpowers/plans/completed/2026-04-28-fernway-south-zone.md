@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files. Existing engine systems: room loader, mob loader, species registry, behavior_archetype dispatcher, spawn timer, coord/map renderer. No new code.
 
-**Sketch (the durable design):** `docs/superpowers/plans/2026-04-28-fernway-south-zone.md` (this file is both the plan and the sketch — there's no separate spec doc for this stage).
+**Sketch (the durable design):** `docs/superpowers/plans/completed/2026-04-28-fernway-south-zone.md` (this file is both the plan and the sketch — there's no separate spec doc for this stage).
 
 ---
 

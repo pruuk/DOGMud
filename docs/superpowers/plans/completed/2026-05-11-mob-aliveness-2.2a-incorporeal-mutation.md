@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `internal/mutations` effect plumbing, existing `internal/combat` damage pipeline + best-of-all defense resolution, existing `internal/itemvalue` scoring (chunk 2.2).
 
-**Spec:** `docs/superpowers/specs/2026-05-11-mob-aliveness-2.2a-incorporeal-mutation-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-11-mob-aliveness-2.2a-incorporeal-mutation-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 
@@ -1228,9 +1228,9 @@ In `MOB_ALIVENESS_ROADMAP.md`, find the section for Phase 2 chunks. Insert a new
   totals). Five mob categories tagged with
   `mutations: { incorporeal: 4 }`. Helpfile + three context.md
   files updated. Spec at
-  `docs/superpowers/specs/2026-05-11-mob-aliveness-2.2a-incorporeal-mutation-design.md`,
+  `docs/superpowers/specs/completed/2026-05-11-mob-aliveness-2.2a-incorporeal-mutation-design.md`,
   plan at
-  `docs/superpowers/plans/2026-05-11-mob-aliveness-2.2a-incorporeal-mutation.md`.
+  `docs/superpowers/plans/completed/2026-05-11-mob-aliveness-2.2a-incorporeal-mutation.md`.
 ```
 
 - [ ] **Step 5: Bump the roll-up**

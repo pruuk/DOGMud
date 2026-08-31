@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML data files, JS mob scripts
 
-**Spec:** `docs/superpowers/specs/2026-04-04-mob-player-parity-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-04-mob-player-parity-design.md`
 
 ---
 

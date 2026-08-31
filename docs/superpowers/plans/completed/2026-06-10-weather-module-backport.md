@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Backport the standalone GoMud weather module into DOGMud as a full DOGMud-native, presentation-only weather system per `docs/superpowers/specs/2026-06-10-weather-module-backport-design.md`.
+**Goal:** Backport the standalone GoMud weather module into DOGMud as a full DOGMud-native, presentation-only weather system per `docs/superpowers/specs/completed/2026-06-10-weather-module-backport-design.md`.
 
 **Architecture:** The five Go packages from `C:/Users/Calabe Davis/workspace/weather-module` vendor into `modules/weather/` (pure packages byte-identical; adapter layer gets DOGMud edits). All data files live in `_datafiles/world/dogmud/` (mutators in the engine's existing flat dir, climate/emotes under a new `weather/` subtree). Weather applies as zone-level mutators; indoor rooms are filtered at render time via two new generic engine flags (`BiomeInfo.Indoor`, `MutatorSpec.OutdoorOnly`). Indoor ambient emotes are intensity-banded (mild = silence, strong = muted lines).
 

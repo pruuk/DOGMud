@@ -14,7 +14,7 @@ the item into the bound shop's `AffixedStock`.
 **Tech Stack:** Go, `modules/auctions` (plugin module), `internal/shops`, `internal/items`,
 `internal/configs`. Tests are table/unit style (`go test`), no network.
 
-**Spec:** `docs/superpowers/specs/2026-07-14-npc-buyer-shopkeeper-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-14-npc-buyer-shopkeeper-design.md`
 
 ---
 

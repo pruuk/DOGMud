@@ -16,7 +16,7 @@ controller (main loop) drives all shell — subagents are shell-denied in this e
 **Tech Stack:** GoMud engine (run locally), DOGMud world YAML (`docs/schemas/`),
 `tools/id_inventory.py`, `cartcheck`, the `/playtest` harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-22-np-noble-district-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-22-np-noble-district-design.md`.
 
 ---
 

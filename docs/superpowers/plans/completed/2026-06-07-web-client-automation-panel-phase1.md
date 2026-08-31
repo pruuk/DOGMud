@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GMCP module + events), vanilla JS/CSS web client (xterm dashboard), GMCP event bus.
 
-**Spec:** `docs/superpowers/specs/2026-06-07-web-client-automation-panel-design.md` (this implements Phase 1 of its phasing section).
+**Spec:** `docs/superpowers/specs/completed/2026-06-07-web-client-automation-panel-design.md` (this implements Phase 1 of its phasing section).
 
 ---
 

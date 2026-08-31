@@ -8,7 +8,7 @@
 
 **Tech Stack:** Claude Code slash commands (markdown), YAML config, existing Python bridge script
 
-**Spec:** `docs/superpowers/specs/2026-04-11-ai-testing-framework-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-11-ai-testing-framework-design.md`
 
 ---
 

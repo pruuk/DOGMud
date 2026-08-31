@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files; `go run .` boot test; `cartcheck`/`ValidateZoneConsistency`; the mudagent playtest harness + `questtoken` admin.
 
-**Spec:** `docs/superpowers/specs/2026-06-27-confluence-cloisters-archive-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-27-confluence-cloisters-archive-design.md`
 
 **Reserved IDs (verified clean 2026-06-27):** rooms **6184–6199**, mobs/dialogue **9464–9470**, quest **74**, no new items, no new buffs.
 

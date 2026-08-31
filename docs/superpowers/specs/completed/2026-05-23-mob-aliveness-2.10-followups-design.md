@@ -480,9 +480,9 @@ scope locked.
 
 ## References
 
-- Originating chunk: `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`
+- Originating chunk: `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`
 - Deferred-gap review (where these followups were triaged):
-  `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md`
+  `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md`
 - Actions-lift precedent: chunk 2.1 (`actions.Buy`), chunk 2.9
   (`actions.Forage`, `actions.Salvage`), chunk 2.10 mutation lifts
 - Unified damage pipeline: CLAUDE.md "Unified Damage & Mitigation

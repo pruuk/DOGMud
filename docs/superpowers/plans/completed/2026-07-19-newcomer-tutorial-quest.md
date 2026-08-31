@@ -16,7 +16,7 @@ unkillable. No change to the existing `command` event or any existing quest.
 **Tech Stack:** Go (quest engine + command dispatch); YAML quest/mob/behavior
 data files; `go test`; the `mudagent` playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-07-19-newcomer-tutorial-quest-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-19-newcomer-tutorial-quest-design.md`
 
 ---
 

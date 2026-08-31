@@ -6,7 +6,7 @@
 > salvage), and 3.4 (real item transfer).
 >
 > Classification per spec
-> `docs/superpowers/specs/2026-04-28-mat-region-split-design.md`.
+> `docs/superpowers/specs/completed/2026-04-28-mat-region-split-design.md`.
 >
 > **Implementation note:** This matrix is mirrored in
 > `internal/economy/buckets.go`. Drift between the two is caught at

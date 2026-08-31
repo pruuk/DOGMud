@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud engine), YAML data files, `fileloader` generic loader, `events` listener bus, behavior trees, gametime clock.
 
-**Spec:** `docs/superpowers/specs/2026-07-03-ferry-system-design.md` (Stage 1 scope only — no trade factors, no warehouses).
+**Spec:** `docs/superpowers/specs/completed/2026-07-03-ferry-system-design.md` (Stage 1 scope only — no trade factors, no warehouses).
 
 ---
 
@@ -182,7 +182,7 @@ Expected: FAIL (package doesn't exist yet / undefined: Route).
 ```go
 // Package ferry implements the scheduled ferry vessels: clock-derived
 // vessel state, gangplank reconciliation, and agent-paid boarding.
-// Stage 1 of docs/superpowers/specs/2026-07-03-ferry-system-design.md.
+// Stage 1 of docs/superpowers/specs/completed/2026-07-03-ferry-system-design.md.
 package ferry
 
 import (

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; reuses 5.1b `bountyGold` (same package), 5.1a guard tick + `guardSayFn` seam; `crimes`/`bounties`/`factions`/`buffs`/`rooms`; seam-based tests.
 
-**Spec:** `docs/superpowers/specs/2026-05-29-town-justice-5.1c-arrest-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-29-town-justice-5.1c-arrest-design.md`
 
 **Branch:** `feature/town-justice-5.1c-arrest` (forked off 5.1b — `bountyGold` present).
 

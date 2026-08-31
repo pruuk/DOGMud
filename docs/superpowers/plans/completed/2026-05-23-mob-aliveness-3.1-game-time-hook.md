@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24, existing `internal/gametime/` package, existing `internal/behaviortree/` condition registry, `internal/util/SetRoundCountForTest` for deterministic test time.
 
-**Spec:** `docs/superpowers/specs/2026-05-23-mob-aliveness-3.1-game-time-hook-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-3.1-game-time-hook-design.md`
 
 **Branch:** `feature/mob-aliveness-3.1-game-time-hook` (already created; spec committed as `af0e5dfa`).
 
@@ -539,7 +539,7 @@ Change to:
 After the existing `- **Why:** ...` line in the 3.1 section, add:
 
 ```markdown
-- **Shipped:** Extended the existing `time_of_day` btree condition (`internal/behaviortree/conditions_state.go:64`) with a `range:` parameter for hour-precise time gating that chunk 3.2 schedules will use. Most of the roadmap requirements were already in place: `util.GetRoundCount()` provides the time tick, `gametime.IsNight()` + `GameDate.Night` provide the day/night flag, `configs.GetTimingConfig().RoundsPerDay` provides configurable day length, and `modules/time/time.go` already gives players a `time` command. The only new code is the `range:` parser + wrap-around comparator + tests. Single-task chunk; net ~80 LoC + ~180 LoC tests. Spec at `docs/superpowers/specs/2026-05-23-mob-aliveness-3.1-game-time-hook-design.md`, plan at `docs/superpowers/plans/2026-05-23-mob-aliveness-3.1-game-time-hook.md`. No in-game smoke required — pure condition primitive exercised only by tests in this chunk; chunk 3.2's schedule consumers will exercise it in-context.
+- **Shipped:** Extended the existing `time_of_day` btree condition (`internal/behaviortree/conditions_state.go:64`) with a `range:` parameter for hour-precise time gating that chunk 3.2 schedules will use. Most of the roadmap requirements were already in place: `util.GetRoundCount()` provides the time tick, `gametime.IsNight()` + `GameDate.Night` provide the day/night flag, `configs.GetTimingConfig().RoundsPerDay` provides configurable day length, and `modules/time/time.go` already gives players a `time` command. The only new code is the `range:` parser + wrap-around comparator + tests. Single-task chunk; net ~80 LoC + ~180 LoC tests. Spec at `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-3.1-game-time-hook-design.md`, plan at `docs/superpowers/plans/completed/2026-05-23-mob-aliveness-3.1-game-time-hook.md`. No in-game smoke required — pure condition primitive exercised only by tests in this chunk; chunk 3.2's schedule consumers will exercise it in-context.
 ```
 
 - [ ] **Step 4: Update the roll-up line**
@@ -602,7 +602,7 @@ Issues found inline: none.
 
 ## Execution handoff
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-23-mob-aliveness-3.1-game-time-hook.md`.** Two execution options:
+**Plan complete and saved to `docs/superpowers/plans/completed/2026-05-23-mob-aliveness-3.1-game-time-hook.md`.** Two execution options:
 
 **1. Subagent-Driven (recommended)** — fresh subagent per task, review between tasks. Even for a 3-task chunk this gives the spec-compliance check, code-quality check, and isolated test execution.
 

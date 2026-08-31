@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, YAML (gopkg.in/yaml.v2), Go standard testing library.
 
-**Spec reference:** `docs/superpowers/specs/2026-04-20-companion-caster-archetype-design.md`
+**Spec reference:** `docs/superpowers/specs/completed/2026-04-20-companion-caster-archetype-design.md`
 
 **Branch:** `feature/companion-caster-archetype` (already created from `development`, spec committed as `d360ba98` + `96e5b4e4`).
 

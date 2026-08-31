@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud engine), existing caravan visit/throughput helpers, `internal/ferry` Stage 1 controller, YAML mob content.
 
-**Spec:** `docs/superpowers/specs/2026-07-03-ferry-system-design.md` (Stage 2 scope). Stage 1 is merged (`86d10731b`).
+**Spec:** `docs/superpowers/specs/completed/2026-07-03-ferry-system-design.md` (Stage 2 scope). Stage 1 is merged (`86d10731b`).
 
 ---
 

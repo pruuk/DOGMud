@@ -2,7 +2,7 @@
 
 > **Side quest from mob aliveness chunk 2.7.** Chunk 3 of the
 > combat-state-machines redesign (master spec:
-> `docs/superpowers/specs/2026-05-13-combat-state-machines-design.md`).
+> `docs/superpowers/specs/completed/2026-05-13-combat-state-machines-design.md`).
 > Builds the Activity state machine on the chunk-0 framework.
 > Consolidates `CastingState` + `CraftingState` pointer fields,
 > formalizes per-activity interrupt rules, normalizes mob/player

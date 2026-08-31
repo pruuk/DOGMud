@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24, `internal/mobs/` (new `schedule.go` + `schedule_loader.go`), `internal/hooks/NewRound_IdleMobs.go` (executor hook), `internal/behaviortree/conditions_state.go` (new `mob_at_target_room`), `internal/configs/config.balance.go` (new `ScheduleMaxPathRetries` knob), `internal/usercommands/admin.mob.go` (new `mob schedule` subcommand), existing `mapper.GetPath` for pathfinding sanity, existing `mob.Character.SetMiscData/GetMiscData` for per-instance state, existing `fileloader.LoadAllFlatFiles` for loading.
 
-**Spec:** `docs/superpowers/specs/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`
 
 **Branch:** `feature/mob-aliveness-3.2-npc-schedules` (already created; spec committed as `0854655f`).
 
@@ -2314,7 +2314,7 @@ schedule `id` is the stable reference; mob YAMLs do not move.
 
 ## See also
 
-- Spec: `docs/superpowers/specs/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`
+- Spec: `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`
 - Mob spec field: `internal/mobs/mobs.go` (`Mob.ScheduleId`)
 - Loader: `internal/mobs/schedule_loader.go`
 - Executor: `internal/hooks/NewRound_IdleMobs_schedule.go`
@@ -2557,7 +2557,7 @@ Change to:
 Add a "Shipped:" line under the 3.2 section header (around line 420):
 
 ```markdown
-- **Shipped:** Schedule loader + 24h-coverage validator + pathfinding sanity in `internal/mobs/schedule.go` and `internal/mobs/schedule_loader.go`. Go-side executor in `internal/hooks/NewRound_IdleMobs_schedule.go` steers scheduled mobs via existing `pathto` plumbing, swaps per-segment `IdleCommands`, falls back to home after `ScheduleMaxPathRetries` failures. Spawn override in `newMobByIdInternal` places scheduled mobs at the current segment's target room. `TickMobCraft` respects per-segment `activity: craft` so Blacksmith Kerra only forges at the forge. New `mob_at_target_room` btree condition. New `mob schedule <instId>` admin inspector. Three Thornwall pilots: Blacksmith Kerra, Tavern Keeper Marek, Temple Priest Olen, each with a new above-shop home room. Spec at `docs/superpowers/specs/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`, plan at `docs/superpowers/plans/2026-05-25-mob-aliveness-3.2-npc-schedules.md`.
+- **Shipped:** Schedule loader + 24h-coverage validator + pathfinding sanity in `internal/mobs/schedule.go` and `internal/mobs/schedule_loader.go`. Go-side executor in `internal/hooks/NewRound_IdleMobs_schedule.go` steers scheduled mobs via existing `pathto` plumbing, swaps per-segment `IdleCommands`, falls back to home after `ScheduleMaxPathRetries` failures. Spawn override in `newMobByIdInternal` places scheduled mobs at the current segment's target room. `TickMobCraft` respects per-segment `activity: craft` so Blacksmith Kerra only forges at the forge. New `mob_at_target_room` btree condition. New `mob schedule <instId>` admin inspector. Three Thornwall pilots: Blacksmith Kerra, Tavern Keeper Marek, Temple Priest Olen, each with a new above-shop home room. Spec at `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`, plan at `docs/superpowers/plans/completed/2026-05-25-mob-aliveness-3.2-npc-schedules.md`.
 ```
 
 Also update chunk 3.5 (Maintenance routines) to mention the new dependency on 3.2's `activity:` field. Find:

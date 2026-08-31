@@ -21,13 +21,13 @@ in Fernway South.
 
 This spec is **Stage 3.1** of the multi-stage caravan/economy effort.
 
-1. ✅ **Stage 1 — NPC parties** — shipped 2026-04-27. Spec: `docs/superpowers/specs/2026-04-27-npc-party-system-design.md`.
-2. ✅ **Stage 2 — Basic caravan** — shipped 2026-04-27. Spec: `docs/superpowers/specs/2026-04-27-caravan-system-design.md`.
+1. ✅ **Stage 1 — NPC parties** — shipped 2026-04-27. Spec: `docs/superpowers/specs/completed/2026-04-27-npc-party-system-design.md`.
+2. ✅ **Stage 2 — Basic caravan** — shipped 2026-04-27. Spec: `docs/superpowers/specs/completed/2026-04-27-caravan-system-design.md`.
 3. ✅ **Stage 3.0a — Stillwater Marsh zone** — shipped 2026-04-28.
-4. ✅ **Stage 3.0b — Mat region split** — shipped 2026-04-28. Spec: `docs/superpowers/specs/2026-04-28-mat-region-split-design.md`. Audit matrix: `docs/economy/mat-audit-matrix.md`.
+4. ✅ **Stage 3.0b — Mat region split** — shipped 2026-04-28. Spec: `docs/superpowers/specs/completed/2026-04-28-mat-region-split-design.md`. Audit matrix: `docs/economy/mat-audit-matrix.md`.
 5. ✅ **Stage 3.0c — Fernway South zone** — shipped 2026-04-28.
-6. ✅ **Stage 3.0d — NPC fold-recall** — shipped 2026-04-28. Spec: `docs/superpowers/specs/2026-04-28-npc-fold-recall-design.md`.
-7. ✅ **Stage 3.0e — Corpse salvage** — shipped 2026-04-28. Spec: `docs/superpowers/specs/2026-04-28-corpse-salvage-design.md`.
+6. ✅ **Stage 3.0d — NPC fold-recall** — shipped 2026-04-28. Spec: `docs/superpowers/specs/completed/2026-04-28-npc-fold-recall-design.md`.
+7. ✅ **Stage 3.0e — Corpse salvage** — shipped 2026-04-28. Spec: `docs/superpowers/specs/completed/2026-04-28-corpse-salvage-design.md`.
 8. **Stage 3.1 — Forager NPCs** (THIS SPEC).
 9. ⏳ **Stage 3.4 — Real item transfer** — caravan + foragers move actual items between inventories instead of triggering bucket-aware top-off.
 

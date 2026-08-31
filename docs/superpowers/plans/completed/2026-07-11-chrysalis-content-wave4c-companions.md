@@ -1,7 +1,7 @@
 # Chrysalis Content — Wave 4c: companion subsystem (Brood Sac)
 
 > **⚠ SUPERSEDED (2026-07-11)** by the Companion Conviction Economy design
-> (`docs/superpowers/specs/2026-07-11-companion-conviction-economy-design.md`).
+> (`docs/superpowers/specs/completed/2026-07-11-companion-conviction-economy-design.md`).
 > The "Brood Sac = passively respawn one weak pet" approach below is scrapped:
 > companions now reserve Conviction (powerful pets cost more; manifestation skill
 > + a Manifester mutation reduce the cost), and the Manifester mutations become
@@ -16,7 +16,7 @@
 
 **Tech Stack:** Go — `internal/hooks` (spawn helper + tick), `internal/mutations` (flag + describe), `internal/characters` (companions); a brood-spawn mob + the mutation + help YAML; testify.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysalis-cluster-content-design.md` (Wave 4c — P8, the companion half of §9 Wave 4). Builds on Waves 1–4b.
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysalis-cluster-content-design.md` (Wave 4c — P8, the companion half of §9 Wave 4). Builds on Waves 1–4b.
 
 **Scope — Brood Sac only (one always-on companion).** Hive Mind (extra slots) and Brood Mother (apex swarm) are deferred to Wave 6 per-cluster authoring; they layer on the same helper (more slots / more spawns). Symbiotic Bond (buffs bleed to companions) is a later passive.
 

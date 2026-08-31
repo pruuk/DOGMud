@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files; `go run .` boot test; `python tools/id_inventory.py`; `cartcheck` admin command / `ValidateZoneConsistency`; the mudagent playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-27-confluence-processional-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-27-confluence-processional-design.md`
 
 **Reserved IDs (verified clean 2026-06-27):** rooms **6154–6167**, mobs/dialogue **9449–9456**, items **40139–40141**, no new quest, no new buffs.
 

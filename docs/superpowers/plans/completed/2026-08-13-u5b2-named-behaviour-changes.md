@@ -1575,7 +1575,7 @@ Mark U5b complete.
 ```bash
 git add internal/characters/context.md internal/combat/context.md \
         docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md \
-        docs/superpowers/plans/2026-08-13-u5b2-named-behaviour-changes.md
+        docs/superpowers/plans/completed/2026-08-13-u5b2-named-behaviour-changes.md
 git commit -m "$(cat <<'EOF'
 docs: record the U5b-2 behaviour changes in context.md and the roadmap
 
@@ -1991,7 +1991,7 @@ git ls-remote --tags origin | grep master
 - Add: `config.yaml`'s working copy carries four permanent local overrides, so any commit touching it needs the checkout-then-restore dance in Task 1 Step 6
 - Replace the "▶ START HERE FOR U5b-2" section with a U5c equivalent; keep the traps section verbatim
 
-**Back-correct** `docs/superpowers/plans/2026-08-13-u5a-cost-harm-foundation.md:1177-1182`, the origin of the death-spiral claim.
+**Back-correct** `docs/superpowers/plans/completed/2026-08-13-u5a-cost-harm-foundation.md:1177-1182`, the origin of the death-spiral claim.
 
 **File for a future chunk:**
 - The U8 exhaustion gap closes the loop opened here — flag it as a hard dependency, not a nice-to-have

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go — `internal/buffs`, `internal/usercommands` (flee), `internal/hooks` (round ticks), `internal/mutations` (describe); YAML buff + mutation + help data; testify.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysalis-cluster-content-design.md` (Wave 3 of §9). Builds on Waves 1–2 (merged).
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysalis-cluster-content-design.md` (Wave 3 of §9). Builds on Waves 1–2 (merged).
 
 **Scope — this wave is P5 only.** Blood Frenzy's richer effects (faster attacks, taunt/fear immunity, lifesteal, terror-on-kill) are deepening/bespoke work deferred to the balance pass — the exemplar proves the state mechanic with a clean upside (damage) + drawback (no flee).
 

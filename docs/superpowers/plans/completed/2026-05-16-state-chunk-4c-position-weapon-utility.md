@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing damage pipeline (`internal/combat/damage_pipeline.go`), existing item subtype taxonomy (`internal/items/itemspec.go`), existing attack-message vocabulary system (`internal/items/attack_messages.go`).
 
-**Spec:** `docs/superpowers/specs/2026-05-16-state-chunk-4c-position-weapon-utility-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-16-state-chunk-4c-position-weapon-utility-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP.
 
@@ -85,7 +85,7 @@ package items
 // Subtypes not in this map return 0 — typically non-weapon subtypes
 // (BlobContent, etc.) where reach is meaningless.
 //
-// See docs/superpowers/specs/2026-05-16-state-chunk-4c-position-weapon-utility-design.md
+// See docs/superpowers/specs/completed/2026-05-16-state-chunk-4c-position-weapon-utility-design.md
 // for the full taxonomy table and reasoning.
 func DefaultReachForSubtype(s ItemSubType) float64 {
     switch s {

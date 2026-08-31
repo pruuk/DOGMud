@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-26
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (district 1 of 10)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (district 1 of 10)
 **Seam:** River Road **6105 "The Confluence Gates"** — the barred south stub this district opens.
 
 ## Purpose

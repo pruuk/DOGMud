@@ -20,7 +20,7 @@ Ysolde's detox effect. Reuse buff statmods/flags + the mutation-progression rail
 **Tech Stack:** Go (GoMud engine), `go test ./...`, DOGMud world YAML (buffs/items),
 codegraph MCP for symbol verification, the `/playtest` harness for the loop smoke.
 
-**Spec:** `docs/superpowers/specs/2026-06-24-toxicity-and-bloom-mechanic-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-24-toxicity-and-bloom-mechanic-design.md`.
 
 ---
 

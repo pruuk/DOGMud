@@ -22,7 +22,7 @@ and mudagent remain 0.3c.
 Docker playtestenv (0.3a), testify.
 
 **Approved design:**
-`docs/superpowers/specs/2026-08-08-synthetic-playtest-profiles-design.md`
+`docs/superpowers/specs/completed/2026-08-08-synthetic-playtest-profiles-design.md`
 (revised after adversarial review 2026-08-08).
 
 ---
@@ -140,11 +140,11 @@ git switch master
 git pull --ff-only origin master
 git switch -c feature/stage-0.3b-synthetic-playtest-profiles-v2
 git checkout $docsTip -- `
-  docs/superpowers/specs/2026-08-08-synthetic-playtest-profiles-design.md `
-  docs/superpowers/plans/2026-08-08-synthetic-playtest-profiles.md
+  docs/superpowers/specs/completed/2026-08-08-synthetic-playtest-profiles-design.md `
+  docs/superpowers/plans/completed/2026-08-08-synthetic-playtest-profiles.md
 git add `
-  docs/superpowers/specs/2026-08-08-synthetic-playtest-profiles-design.md `
-  docs/superpowers/plans/2026-08-08-synthetic-playtest-profiles.md
+  docs/superpowers/specs/completed/2026-08-08-synthetic-playtest-profiles-design.md `
+  docs/superpowers/plans/completed/2026-08-08-synthetic-playtest-profiles.md
 git commit -m "docs(playtest): approve 0.3b profiles spec and plan baseline"
 ```
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-27
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (§3 row 5)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (§3 row 5)
 **Predecessor:** District 5a — The Processional, merged `6db34753` (2026-06-27). This
 is the second half of city-wide build-order step 4.
 **Successor:** District 6 — Cloisters & Archive + the Undercroft (Q74). This district

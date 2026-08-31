@@ -12,7 +12,7 @@
 
 **Tech Stack:** Go 1.21+, testify for assertions, YAML file-based persistence, existing `mudlog` package.
 
-**Related spec:** `docs/superpowers/specs/2026-04-21-summons-dont-persist-design.md`
+**Related spec:** `docs/superpowers/specs/completed/2026-04-21-summons-dont-persist-design.md`
 
 **Branch:** `feature/fix-summons-persistence` (already created; spec committed as `aa1366e6`).
 
@@ -135,7 +135,7 @@ In `internal/mobs/instance_save.go`, modify the start of `SaveMobInstance` (curr
 // responsibility (CompanionInfo on the owner's user YAML). The file
 // layer would otherwise be a redundant, room-keyed second persistence
 // that leaks across player-summon cycles. See
-// docs/superpowers/specs/2026-04-21-summons-dont-persist-design.md.
+// docs/superpowers/specs/completed/2026-04-21-summons-dont-persist-design.md.
 func SaveMobInstance(mob *Mob) error {
 	// Companions live on CompanionInfo, not in mobs.instances/.
 	if mob.Character.IsCharmed() {

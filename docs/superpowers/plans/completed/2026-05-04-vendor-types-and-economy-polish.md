@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Convert the buy rule to single-tag-overlap, audit and re-baseline every shopkeeper, layer tier-50/40 baseline restock under foragers/caravan, add forager-stuck watchdog + diagnostics, and rework the economy dashboard to show stock-score deltas + per-tier throughput bars. Spec: `docs/superpowers/specs/2026-05-04-vendor-types-and-economy-polish-design.md`.
+**Goal:** Convert the buy rule to single-tag-overlap, audit and re-baseline every shopkeeper, layer tier-50/40 baseline restock under foragers/caravan, add forager-stuck watchdog + diagnostics, and rework the economy dashboard to show stock-score deltas + per-tier throughput bars. Spec: `docs/superpowers/specs/completed/2026-05-04-vendor-types-and-economy-polish-design.md`.
 
 **Architecture:** ItemSpec gains `vendor_categories []string`. `EvaluateBuyRules` becomes a single tag-overlap + overstock + gold-reserve gate. `RestockBaselineTiers()` covers tier-50/40 mats on the existing crafter tick. New `forager.Throughput` and `caravan.Throughput` types persist delivery counters, captured into snapshots and rendered as per-rarity-tier colored bars on the dashboard. A boot-time wipe of `_datafiles/world/dogmud/shops/` flushes legacy shop state.
 

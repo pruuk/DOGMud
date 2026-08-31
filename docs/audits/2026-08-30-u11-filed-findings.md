@@ -1,7 +1,7 @@
 # U11 filed findings: help copy, config and context.md
 
 **Date:** 2026-08-30  
-**Source:** U11 arc closer, `docs/superpowers/plans/2026-08-30-u11-arc-closer.md`
+**Source:** U11 arc closer, `docs/superpowers/plans/completed/2026-08-30-u11-arc-closer.md`
 
 Filed, not fixed. Each item is real; each was out of scope for a closing
 docs slice. Verify against source before acting -- this is a point-in-time

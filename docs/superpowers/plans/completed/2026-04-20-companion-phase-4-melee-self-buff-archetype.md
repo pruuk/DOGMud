@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, YAML (gopkg.in/yaml.v2), Go standard testing library.
 
-**Spec reference:** `docs/superpowers/specs/2026-04-20-companion-melee-self-buff-archetype-design.md`
+**Spec reference:** `docs/superpowers/specs/completed/2026-04-20-companion-melee-self-buff-archetype-design.md`
 
 **Branch:** `feature/companion-phase-4-melee-self-buff` (already created from development, spec committed as `f1f0c5a6`)
 

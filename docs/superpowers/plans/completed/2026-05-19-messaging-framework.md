@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24, GoMud engine, existing `<ansi fg="alias">…</ansi>` template system, YAML data files, standard `testing` package.
 
-**Spec:** `docs/superpowers/specs/2026-05-19-messaging-framework-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-19-messaging-framework-design.md`
 
 **Predecessor:** chunk 6 (Perception FSM, shipped dormant 2026-05-19). The FSM is at `internal/state/perception/`; `Character.Perception *perception.Machine` is already wired (`internal/characters/character.go:198`) and transitions fire from buff/condition observers — but no consumer reads the state yet. This chunk is that consumer.
 
@@ -93,7 +93,7 @@ Create `internal/messaging/messaging.go`:
 // normalization, sight-gates visual content using the Perception FSM,
 // and wraps to each recipient's LineWidth preference.
 //
-// See docs/superpowers/specs/2026-05-19-messaging-framework-design.md
+// See docs/superpowers/specs/completed/2026-05-19-messaging-framework-design.md
 // for the design and rationale.
 package messaging
 
@@ -359,7 +359,7 @@ Centralized player-facing-text pipeline.
 
 ## See Also
 
-- `docs/superpowers/specs/2026-05-19-messaging-framework-design.md` —
+- `docs/superpowers/specs/completed/2026-05-19-messaging-framework-design.md` —
   full design.
 - `internal/state/perception/context.md` — the FSM whose state the
   sight gate reads.
@@ -899,7 +899,7 @@ Append (after the last existing alias):
 ```yaml
 
 # === Messaging Framework Categories ===
-# Spec: docs/superpowers/specs/2026-05-19-messaging-framework-design.md
+# Spec: docs/superpowers/specs/completed/2026-05-19-messaging-framework-design.md
 # Test these in-game; values are first-pass approximations.
 
 # Combat — damage bands
@@ -2820,7 +2820,7 @@ Dispatch a thorough exploration with the Explore subagent. Prompt:
 ```
 I'm closing out a messaging-framework migration in DOGMud. Before I
 delete the sunset candidates listed in
-docs/superpowers/specs/2026-05-19-messaging-framework-design.md §14,
+docs/superpowers/specs/completed/2026-05-19-messaging-framework-design.md §14,
 I need a complete inventory of what's actually dead.
 
 Report each finding as `path:line` with a one-line note. Don't fix

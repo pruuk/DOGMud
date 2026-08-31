@@ -17,7 +17,7 @@ today.
 
 **Tech Stack:** Go. `internal/items`, `internal/actions/sell.go`, `internal/shops`.
 
-**Spec:** `docs/superpowers/specs/2026-07-08-shops-trade-affixed-gear-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-08-shops-trade-affixed-gear-design.md`
 (Stage 2 row + "Pricing model for unique affixed items").
 
 **Depends on:** Stage 1 (merged) — `spec.Value` on affixed items is already the

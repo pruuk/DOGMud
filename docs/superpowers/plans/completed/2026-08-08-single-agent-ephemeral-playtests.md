@@ -20,7 +20,7 @@ reports. Go owns binding parse, wall-clock, sidecar, cleanup.
 testify, Docker opt-in integration.
 
 **Approved design:**
-`docs/superpowers/specs/2026-08-08-single-agent-ephemeral-playtests-design.md`
+`docs/superpowers/specs/completed/2026-08-08-single-agent-ephemeral-playtests-design.md`
 (revised after adversarial spec review 2026-08-08).
 
 **Plan review:** Amended 2026-08-08 after adversarial plan review

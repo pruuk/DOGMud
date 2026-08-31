@@ -269,7 +269,7 @@ After the audit + quick-patch + mutation\_\* lift land, a review doc is
 written to:
 
 ```
-docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md
+docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md
 ```
 
 Per-entry template:
@@ -354,7 +354,7 @@ locked.
 ## References
 
 - Roadmap: `MOB_ALIVENESS_ROADMAP.md` chunk 2.10
-- Precedent specs: `docs/superpowers/specs/2026-05-22-mob-aliveness-2.9-mob-forage-salvage-design.md`,
+- Precedent specs: `docs/superpowers/specs/completed/2026-05-22-mob-aliveness-2.9-mob-forage-salvage-design.md`,
   `docs/superpowers/specs/completed/2026-04-04-mob-player-parity-design.md`
 - Combat-quadrant parity log: `project_pvm_mvp_parity_gaps.md` (largely
   closed by April 2026 combat unification)

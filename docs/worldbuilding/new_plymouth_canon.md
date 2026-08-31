@@ -5,7 +5,7 @@
 > protagonists (Maren, Davan, Vane, Aldric) and the core cooperage group
 > have left east; the city bears their traces. Use this for location,
 > faction, mutation, voice, and sensory fidelity. Master plan:
-> `docs/superpowers/specs/2026-06-20-new-plymouth-design.md`.
+> `docs/superpowers/specs/completed/2026-06-20-new-plymouth-design.md`.
 
 ---
 

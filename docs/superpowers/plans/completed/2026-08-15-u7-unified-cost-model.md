@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `internal/characters` (pools, progression), `internal/combat` (melee resolution), `internal/configs` (balance knobs), `_datafiles/config.yaml`, `_datafiles/world/dogmud/biomes/`.
 
-**Design authority:** `docs/superpowers/specs/2026-08-12-unified-cost-and-harm-design.md` as corrected by `docs/superpowers/specs/2026-08-15-u7-cost-model-prebuild-findings.md`. **Where the two disagree, the 2026-08-15 document wins.**
+**Design authority:** `docs/superpowers/specs/completed/2026-08-12-unified-cost-and-harm-design.md` as corrected by `docs/superpowers/specs/completed/2026-08-15-u7-cost-model-prebuild-findings.md`. **Where the two disagree, the 2026-08-15 document wins.**
 
 > ⚠️ **The numbers table below is authoritative, not the inline code blocks.** The
 > owner retuned every curve at the bench after this plan's task bodies were

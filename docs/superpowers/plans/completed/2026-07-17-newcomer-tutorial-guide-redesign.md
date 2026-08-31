@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (behavior-tree action), YAML data files (rooms, room behavior trees, mobs, dialogue, goals), the GoMud room-behavior-tree runtime (`internal/behaviortree`).
 
-**Design spec:** `docs/superpowers/specs/2026-07-17-newcomer-tutorial-guide-redesign-design.md`
+**Design spec:** `docs/superpowers/specs/completed/2026-07-17-newcomer-tutorial-guide-redesign-design.md`
 
 ---
 

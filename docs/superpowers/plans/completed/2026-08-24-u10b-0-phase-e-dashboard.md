@@ -1,7 +1,7 @@
 # U10b-0 Phase E — Dashboard re-key
 
-**Index:** `docs/superpowers/plans/2026-08-21-u10b-0-README.md`
-**Spec:** `docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md`
+**Index:** `docs/superpowers/plans/completed/2026-08-21-u10b-0-README.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-21-u10b-0-progression-rank-from-training-design.md`
 — section **10** is this phase's requirements document. Sections 13–15 supersede
 1–12 where they conflict.
 

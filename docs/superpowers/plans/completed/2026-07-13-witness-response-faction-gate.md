@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go. Packages: `internal/seeders`, `internal/crimes`, `internal/factions`, `internal/mobs`, `internal/rooms`.
 
-Spec: `docs/superpowers/specs/2026-07-13-witness-response-faction-gate-design.md`
+Spec: `docs/superpowers/specs/completed/2026-07-13-witness-response-faction-gate-design.md`
 
 ---
 

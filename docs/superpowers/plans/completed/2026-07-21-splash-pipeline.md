@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, testify, the `events`/`hooks`/`connections`/`users`/`rooms`/`templates`/`gmcp` packages; vanilla JS + inline SVG in `webclient-pure.html`.
 
-**Spec:** `docs/superpowers/specs/2026-07-21-splash-pipeline-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-21-splash-pipeline-design.md`
 
 > **Design change (2026-07-21, mid-execution):** the web client is xterm.js (no
 > DOM feed) → inline SVG isn't feasible. We render the refined **ASCII on all

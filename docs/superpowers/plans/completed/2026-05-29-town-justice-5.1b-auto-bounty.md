@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; reads `factions`/`crimes`/`bounties`/`knowledge`/`opinions`/`state/life`; seam-based tests.
 
-**Spec:** `docs/superpowers/specs/2026-05-29-town-justice-5.1b-auto-bounty-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-29-town-justice-5.1b-auto-bounty-design.md`
 
 **Verified facts (use; the env was flaky during plan-prep — confirm any file:line by reading before editing):**
 - `state.ActorRef{ UserId int; MobInstanceId int }` with helpers `IsZero()`, `IsPlayer()`, `IsMob()` (NO `Kind`/`InstanceId`/`Name` fields).

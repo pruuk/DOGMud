@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files only. GoMud engine (no engine changes). Existing dialogue/mob/room schemas in `docs/schemas/`.
 
-**Spec:** `docs/superpowers/specs/2026-04-25-stillwater-town-flavor-pass-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-25-stillwater-town-flavor-pass-design.md`
 
 ---
 
@@ -531,7 +531,7 @@ the 6 existing dialogue files (Drunn, Arn, Brindle, Seren, Vella, Ulla).
 MEDIUM and LIGHT tier dialogues for the remaining 15 NPCs follow in
 the next commit, dispatched to a subagent.
 
-Spec: docs/superpowers/specs/2026-04-25-stillwater-town-flavor-pass-design.md
+Spec: docs/superpowers/specs/completed/2026-04-25-stillwater-town-flavor-pass-design.md
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -707,8 +707,8 @@ aftermath (Gyda/Edda gated on 20-end), Maren-in-Thornwall thread
 (Edda/Fenwick), caravan foreshadowing without commitment
 (Wulf/Hodder).
 
-Spec: docs/superpowers/specs/2026-04-25-stillwater-town-flavor-pass-design.md
-Plan: docs/superpowers/plans/2026-04-25-stillwater-town-flavor-pass.md
+Spec: docs/superpowers/specs/completed/2026-04-25-stillwater-town-flavor-pass-design.md
+Plan: docs/superpowers/plans/completed/2026-04-25-stillwater-town-flavor-pass.md
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF

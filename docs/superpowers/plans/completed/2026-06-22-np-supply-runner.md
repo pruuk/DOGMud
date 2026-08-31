@@ -17,7 +17,7 @@ vendor stock) depends on the Crafting district content existing (Plan 1).
 **Tech Stack:** Go (`internal/caravan`, `internal/economy`), `go test`, the patrol
 system (`patrol_id:` always-on patrols), DOGMud world YAML, local server boot.
 
-**Spec:** `docs/superpowers/specs/2026-06-22-np-crafting-district-design.md` §5
+**Spec:** `docs/superpowers/specs/completed/2026-06-22-np-crafting-district-design.md` §5
 (verified architecture + symbols). **Depends on:** Plan 1
 (`2026-06-22-np-crafting-district.md`) — the Crafting vendor rooms/shops must exist
 before Tasks 6–7.

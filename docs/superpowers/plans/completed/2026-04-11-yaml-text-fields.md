@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (structs, string replacement), YAML (data files), existing colorpatterns package
 
-**Spec:** `docs/superpowers/specs/2026-04-11-yaml-text-fields-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-11-yaml-text-fields-design.md`
 
 ---
 

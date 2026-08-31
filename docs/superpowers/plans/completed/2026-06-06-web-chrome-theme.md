@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go `html/template`, vanilla CSS. No build step — templates are parsed at server start (a template syntax error panics at boot, which is the verification gate).
 
-**Spec:** `docs/superpowers/specs/2026-06-06-web-chrome-theme-design.md`. Visual source of truth: `docs/superpowers/specs/2026-06-06-web-chrome-mockups/`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-06-web-chrome-theme-design.md`. Visual source of truth: `docs/superpowers/specs/2026-06-06-web-chrome-mockups/`.
 
 **Branch:** `feature/web-chrome-theme` (already created; spec committed).
 

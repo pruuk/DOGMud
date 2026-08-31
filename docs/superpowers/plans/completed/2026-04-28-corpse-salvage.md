@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (server). YAML data files. Existing systems: `crafting`, `items`, `mobs`, `rooms`, `characters.CraftingState`, `skills.Salvage`.
 
-**Spec:** `docs/superpowers/specs/2026-04-28-corpse-salvage-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-28-corpse-salvage-design.md`
 
 ---
 

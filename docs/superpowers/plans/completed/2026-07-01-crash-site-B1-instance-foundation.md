@@ -8,7 +8,7 @@
 
 **Tech Stack:** GoMud YAML (zone-config/rooms/mobs/behaviors); local boot; the mudagent harness for the entry test. This is **B1 of the #22 finale**; **B2** = the full 20-room content + suppression + traps + wardens + revelation + loot + scour potion, built on this.
 
-**Reference spec:** `docs/superpowers/specs/2026-07-01-crash-site-interior-design.md` §1–2. The Attuned Disc (40168) comes from the disc questline (Quest 76, built).
+**Reference spec:** `docs/superpowers/specs/completed/2026-07-01-crash-site-interior-design.md` §1–2. The Attuned Disc (40168) comes from the disc questline (Quest 76, built).
 
 **Verified mechanism (do not re-derive):**
 - **Instanced zone-config** (`rooms/instance_planar_oasis/zone-config.yaml`): `instanced: true`, `entry_room: <id>`, `death_policy: rejoin|ejected`, `portal_duration: "30 real minutes"`, `allow_recall: true|false`, optional `non_cartesian: true`.

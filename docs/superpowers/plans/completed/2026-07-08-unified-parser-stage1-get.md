@@ -18,7 +18,7 @@ existing branch bodies that apply gates and transfer items run unchanged.
 **Tech Stack:** Go, `testify`, the `internal/parser` package (Stage 0), the
 existing `internal/usercommands` test harness (`seedAllRegistries`).
 
-**Spec:** `docs/superpowers/specs/2026-07-08-unified-parser-seam-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-08-unified-parser-seam-design.md`
 (see "Divergences Discovered During Implementation" — this stage is C/bug-
 prevention, NOT a multi-word feature; single-token multi-word already works).
 

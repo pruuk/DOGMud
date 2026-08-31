@@ -16,7 +16,7 @@
 - **Filename:** `{mobid}-{ConvertForFilename(name)}.yaml` in `_datafiles/world/dogmud/mobs/pothole_coulee/`.
 - **Spawning:** `spawninfo:` list on the ROOM yaml (`- mobid: N`, bare entry = default behavior) — ashwick townsfolk use bare entries.
 - **Dialogue is keyed by MOB ID** (`dialogue/<zone>/<mobid>.yaml`) — NOT by the sub-spec's d-400 numbers. No dialogue field exists on mob YAML; Phase D creates `dialogue/pothole_coulee/9100.yaml`–`9107.yaml`. Nothing dialogue-related lands in Phase M.
-- **Sub-spec manifest (the design of record):** `docs/superpowers/specs/2026-06-12-newbie-chunk1-hub-subspec.md` §4 — ids, names, roles, rooms, mutation flavors.
+- **Sub-spec manifest (the design of record):** `docs/superpowers/specs/completed/2026-06-12-newbie-chunk1-hub-subspec.md` §4 — ids, names, roles, rooms, mutation flavors.
 - `schedule_id` / `knows_facts` / `relationships`: chunk-9 polish — OMIT in Phase M.
 - Existing starter-goods item ids for Onna's stock: verify live ids by reading the Sanctum Basin store mob (find it: grep `shop:` in mobs/sanctum_basin/) and the ranged items 10038 (Sling) / 30064 (Pouch of Shot). Choose ~8-12 stock entries: torches/rations/waterskin-tier basics + 1-2 cheapest melee weapons + the sling + pouch of shot (quiet Spoke-G preview). NO new item specs.
 - **No-numbers rule, ≤80-char source lines, scablands voice, mutation-is-normal** all apply to mob descriptions exactly as to rooms.

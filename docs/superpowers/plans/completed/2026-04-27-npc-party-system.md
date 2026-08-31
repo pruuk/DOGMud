@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.x, standard `testing` package. No new dependencies.
 
-**Spec:** `docs/superpowers/specs/2026-04-27-npc-party-system-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-27-npc-party-system-design.md`
 
 ---
 
@@ -1822,8 +1822,8 @@ as the smoke-test consumer:
 Stage 1 of multi-stage caravan effort. Stage 2 (basic caravan) consumes
 these primitives.
 
-Spec: docs/superpowers/specs/2026-04-27-npc-party-system-design.md
-Plan: docs/superpowers/plans/2026-04-27-npc-party-system.md
+Spec: docs/superpowers/specs/completed/2026-04-27-npc-party-system-design.md
+Plan: docs/superpowers/plans/completed/2026-04-27-npc-party-system.md
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF

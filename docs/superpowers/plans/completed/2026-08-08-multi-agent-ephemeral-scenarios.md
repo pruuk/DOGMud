@@ -22,7 +22,7 @@ combined report. Soft per-actor tokens; hard cut = scenario wall-clock.
 testify, Docker opt-in + live smoke.
 
 **Approved design:**
-`docs/superpowers/specs/2026-08-08-multi-agent-ephemeral-scenarios-design.md`
+`docs/superpowers/specs/completed/2026-08-08-multi-agent-ephemeral-scenarios-design.md`
 (revised after adversarial spec review 2026-08-08).
 
 ---

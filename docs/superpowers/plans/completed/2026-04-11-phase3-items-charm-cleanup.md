@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML, existing combat/dice packages
 
-**Spec:** `docs/superpowers/specs/2026-04-11-phase3-items-charm-cleanup-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-11-phase3-items-charm-cleanup-design.md`
 
 ---
 

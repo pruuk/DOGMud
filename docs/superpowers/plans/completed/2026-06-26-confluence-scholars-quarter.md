@@ -8,8 +8,8 @@
 
 **Tech Stack:** GoMud engine; YAML under `_datafiles/world/dogmud/`; quest engine (`quests/*.yaml`); `cartcheck`; `questtoken` admin command.
 
-**Spec:** `docs/superpowers/specs/2026-06-26-confluence-scholars-quarter-design.md`
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-26-confluence-scholars-quarter-design.md`
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md`
 
 ---
 

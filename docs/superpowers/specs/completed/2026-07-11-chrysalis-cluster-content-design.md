@@ -3,7 +3,7 @@
 **Date:** 2026-07-11
 **Status:** Approved (design); implementation is a multi-wave follow-on
 **Depends on:** the engine (merged `7d7afa57a`) —
-`docs/superpowers/specs/2026-07-10-chrysalis-mutation-graph-design.md` and its
+`docs/superpowers/specs/completed/2026-07-10-chrysalis-mutation-graph-design.md` and its
 plan. This spec fills that engine with real content: every cluster's keystone
 roster, the shared bridges, the Center hub, and the **mechanic primitives** the
 keystones require.

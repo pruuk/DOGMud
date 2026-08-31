@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; `internal/mobs`, `internal/shops`, `internal/hooks`.
 
-**Spec:** `docs/superpowers/specs/2026-06-05-general-store-restock-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-05-general-store-restock-design.md`
 
 ---
 

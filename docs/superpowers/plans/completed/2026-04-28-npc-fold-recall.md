@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (server). YAML data files. Existing systems: `characters.MiscData`, `actions.Actor` adapters, `mobs.NewMobByIdFresh`, the mob tactics dispatcher (which already routes `cast <spell>` through `mob.Command(...)` to `resolveMobSpell`).
 
-**Spec:** `docs/superpowers/specs/2026-04-28-npc-fold-recall-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-28-npc-fold-recall-design.md`
 
 ---
 

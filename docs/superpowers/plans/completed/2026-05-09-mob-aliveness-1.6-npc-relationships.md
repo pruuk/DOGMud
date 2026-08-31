@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, YAML via `gopkg.in/yaml.v3` (already used by mob loader), no new external dependencies.
 
-**Spec:** `docs/superpowers/specs/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 
@@ -45,7 +45,7 @@
 **Files:**
 - Create: `internal/opinions/context.md`
 
-The opinions package was the chunk-1.1 ship. Its public API is captured in `internal/opinions/opinions.go`; persistence in `persistence.go`; decay in `decay.go`. The 1.1 spec is at `docs/superpowers/specs/2026-05-06-mob-aliveness-1.1-opinion-store-design.md`.
+The opinions package was the chunk-1.1 ship. Its public API is captured in `internal/opinions/opinions.go`; persistence in `persistence.go`; decay in `decay.go`. The 1.1 spec is at `docs/superpowers/specs/completed/2026-05-06-mob-aliveness-1.1-opinion-store-design.md`.
 
 - [ ] **Step 1: Read the package**
 
@@ -88,7 +88,7 @@ git commit -m "docs(opinions): context.md backfill (chunk 1.1)"
 **Files:**
 - Create: `internal/factions/context.md`
 
-The factions package was the chunk-1.2 ship. Read `internal/factions/*.go` first. Spec is at `docs/superpowers/specs/2026-05-06-mob-aliveness-1.2-faction-system-design.md`.
+The factions package was the chunk-1.2 ship. Read `internal/factions/*.go` first. Spec is at `docs/superpowers/specs/completed/2026-05-06-mob-aliveness-1.2-faction-system-design.md`.
 
 - [ ] **Step 1: Read the package**
 
@@ -124,7 +124,7 @@ git commit -m "docs(factions): context.md backfill (chunk 1.2)"
 **Files:**
 - Create: `internal/crimes/context.md`
 
-Cover the chunk-1.3 substrate (assault/murder/theft, witness model, 4-case upgrade with rep refund). Read `internal/crimes/*.go`. Spec at `docs/superpowers/specs/2026-05-06-mob-aliveness-1.3-crime-wanted-design.md`.
+Cover the chunk-1.3 substrate (assault/murder/theft, witness model, 4-case upgrade with rep refund). Read `internal/crimes/*.go`. Spec at `docs/superpowers/specs/completed/2026-05-06-mob-aliveness-1.3-crime-wanted-design.md`.
 
 - [ ] **Step 1: Read the package**
 
@@ -154,7 +154,7 @@ git commit -m "docs(crimes): context.md backfill (chunk 1.3)"
 **Files:**
 - Create: `internal/knowledge/context.md`
 
-Cover the chunk-1.4 substrate. Read `internal/knowledge/*.go`. Spec at `docs/superpowers/specs/2026-05-09-mob-aliveness-1.4-knowledge-model-design.md`.
+Cover the chunk-1.4 substrate. Read `internal/knowledge/*.go`. Spec at `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.4-knowledge-model-design.md`.
 
 - [ ] **Step 1: Read the package**
 
@@ -186,7 +186,7 @@ git commit -m "docs(knowledge): context.md backfill (chunk 1.4)"
 **Files:**
 - Create: `internal/bounties/context.md`
 
-Cover the chunk-1.5 substrate (just shipped). Read `internal/bounties/*.go`. Spec at `docs/superpowers/specs/2026-05-09-mob-aliveness-1.5-bounty-state-design.md`.
+Cover the chunk-1.5 substrate (just shipped). Read `internal/bounties/*.go`. Spec at `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.5-bounty-state-design.md`.
 
 - [ ] **Step 1: Read the package**
 
@@ -1558,7 +1558,7 @@ Locate the `### 1.6 NPC-to-NPC relationships` section. Change `**Status:** Not s
 Suggested template:
 
 ```markdown
-- **Shipped:** `internal/relationships/` package storing the in-memory mob-to-mob relationship graph. Source of truth: each mob template's YAML gains an optional `relationships:` field with `to`, `type`, `subtype`. Six types (family, friend, rival, lover, employer, employee); engine auto-mirrors symmetric (same-type reverse) and asymmetric (employer ↔ employee) at load time. Subtype is per-side flavor. Permissive validation — unknown ids, self-edges, unknown types, conflicts all warn-not-panic. Public API: RelationsOf, RelationsOfType, KinOf, AlliesOf, RivalsOf, RelationsBetween, AreRelated, EmployerOf, EmployedBy, AllRelations, plus mutation Add/Remove/ChangeType (in-memory only v1; persistence overlay deferred). Loader hook in `mobs.LoadDataFiles` flattens mob templates into `LoadFromMobs(edges, validateMobId)` post-load. Admin command `relationship show/between/add/remove/list` + helpfile. **Backfilled `context.md` for chunks 1.1–1.5** plus authored fresh one for 1.6, per the new aliveness roadmap maintenance rule. Spec at `docs/superpowers/specs/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`, plan at `docs/superpowers/plans/2026-05-09-mob-aliveness-1.6-npc-relationships.md`.
+- **Shipped:** `internal/relationships/` package storing the in-memory mob-to-mob relationship graph. Source of truth: each mob template's YAML gains an optional `relationships:` field with `to`, `type`, `subtype`. Six types (family, friend, rival, lover, employer, employee); engine auto-mirrors symmetric (same-type reverse) and asymmetric (employer ↔ employee) at load time. Subtype is per-side flavor. Permissive validation — unknown ids, self-edges, unknown types, conflicts all warn-not-panic. Public API: RelationsOf, RelationsOfType, KinOf, AlliesOf, RivalsOf, RelationsBetween, AreRelated, EmployerOf, EmployedBy, AllRelations, plus mutation Add/Remove/ChangeType (in-memory only v1; persistence overlay deferred). Loader hook in `mobs.LoadDataFiles` flattens mob templates into `LoadFromMobs(edges, validateMobId)` post-load. Admin command `relationship show/between/add/remove/list` + helpfile. **Backfilled `context.md` for chunks 1.1–1.5** plus authored fresh one for 1.6, per the new aliveness roadmap maintenance rule. Spec at `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`, plan at `docs/superpowers/plans/completed/2026-05-09-mob-aliveness-1.6-npc-relationships.md`.
 ```
 
 - [ ] **Step 3: Commit**

@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-27
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (§3 row 7, §5, §6)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (§3 row 7, §5, §6)
 **Predecessor:** District 6a — Cloisters & Archive, merged `be0aa8d3`. Q74 sits
 in-progress at the `74-descent` step; the descent stairhead (6199) has a described
 `down` stub this build wires.

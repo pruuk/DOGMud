@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; builds solely on Stage 2/3 seams (`warehouse.Deposit` gains a `Withdraw` sibling; the two load sites and the two deliver sites gain calls).
 
-**Spec:** Stage 4 of `docs/superpowers/specs/2026-07-03-ferry-system-design.md`, with one amendment locked below.
+**Spec:** Stage 4 of `docs/superpowers/specs/completed/2026-07-03-ferry-system-design.md`, with one amendment locked below.
 
 ---
 
@@ -43,7 +43,7 @@ internal/caravan/import_load_test.go    (modify: drawdown test)
 internal/caravan/import_arrival.go      (modify: local release at importDeliver)
 internal/configs/config.gameplay.go     (modify: WarehouseDrawdownEnabled)
 _datafiles/config.yaml                  (modify: knob)
-docs/superpowers/specs/2026-07-03-ferry-system-design.md  (modify: 1-line amendment)
+docs/superpowers/specs/completed/2026-07-03-ferry-system-design.md  (modify: 1-line amendment)
 ```
 
 ---

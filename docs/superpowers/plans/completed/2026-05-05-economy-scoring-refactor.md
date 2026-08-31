@@ -18,7 +18,7 @@ known-broken entities (Halix despawn, Kessa stuck).
 **Tech Stack:** Go (engine + scoring), YAML (config + persistence),
 HTML/JS (dashboard).
 
-**Spec:** `docs/superpowers/specs/2026-05-05-economy-scoring-refactor-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-05-economy-scoring-refactor-design.md`
 
 ---
 

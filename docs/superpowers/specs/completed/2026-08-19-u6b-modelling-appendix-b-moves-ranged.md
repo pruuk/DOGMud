@@ -1,6 +1,6 @@
 # U6b modelling gate — fragment B: special moves ×5, new crit tier, ranged, defence-set width
 
-Spec: `docs/superpowers/specs/2026-08-19-u6b-finish-the-flip-design.md` §7 items 3–6.
+Spec: `docs/superpowers/specs/completed/2026-08-19-u6b-finish-the-flip-design.md` §7 items 3–6.
 Script: `tools/balance/u6b_model_moves_ranged.py` (self-contained; Monte Carlo,
 numpy, seed 42, **2,000,000 samples per cell**). Every number below is from a
 run of that script on 2026-08-19, branch `feature/u9-progression-layer`.

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML data files, Go templates
 
-**Spec:** `docs/superpowers/specs/2026-03-30-alchemy-rework-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-03-30-alchemy-rework-design.md`
 
 ---
 

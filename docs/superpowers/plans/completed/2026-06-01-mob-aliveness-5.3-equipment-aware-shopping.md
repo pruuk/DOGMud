@@ -18,7 +18,7 @@ machine. Two balance knobs and two archetype wirings. No behavior-tree edits —
 **Tech Stack:** Go. Packages: `internal/planners`, `internal/goals/catalog`,
 `internal/configs`, `internal/shops`, `internal/itemvalue`. YAML archetype data.
 
-**Spec:** `docs/superpowers/specs/2026-06-01-mob-aliveness-5.3-equipment-aware-shopping-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-01-mob-aliveness-5.3-equipment-aware-shopping-design.md`
 
 ---
 

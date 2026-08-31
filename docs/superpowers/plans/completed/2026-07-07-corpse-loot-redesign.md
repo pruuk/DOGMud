@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud engine). Unit tests via `go test` (packages `internal/rooms`, `internal/parties`, `internal/hooks`, `internal/actions` already have `_test.go` files). Boot-validation via `go build -o gomud_smoke.exe .` + local run. Multi-party behavior via the `/playtest` harness.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-corpse-loot-redesign-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-07-corpse-loot-redesign-design.md`
 
 ---
 

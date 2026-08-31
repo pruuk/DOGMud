@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25 · `gopkg.in/yaml.v3` (goals) + `gopkg.in/yaml.v2` (archetype loader, matching existing) · existing `mudlog`, `configs`, `util`, `mobs`, `behaviortree`, `events` packages.
 
-**Spec:** `docs/superpowers/specs/2026-05-27-mob-aliveness-4.2-goal-selection-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-27-mob-aliveness-4.2-goal-selection-design.md`
 
 ---
 

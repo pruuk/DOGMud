@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Spec:** `docs/superpowers/specs/2026-05-19-grapple-drift-formula-rework-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-19-grapple-drift-formula-rework-design.md`
 
 **Goal:** Fix the per-round grapple drift formula in `internal/hooks/Position_GrappleTick.go` so that grapples no longer auto-escape on round 1: use `UnarmedCombat` (the documented grappling skill) instead of `WeaponCombat`, drop the oversized defender Dex bonus, and apply a small aggressor edge tied to skill.
 
@@ -572,7 +572,7 @@ grappling"). Earlier versions of this formula read `WeaponCombat`
 by mistake; that bug auto-escaped every grapple for any unarmed-
 trained player.
 
-See `docs/superpowers/specs/2026-05-19-grapple-drift-formula-rework-design.md`
+See `docs/superpowers/specs/completed/2026-05-19-grapple-drift-formula-rework-design.md`
 for the design rationale and sample z-score table.
 ```
 

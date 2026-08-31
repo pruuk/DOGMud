@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (internal/usercommands, internal/characters, internal/behaviortree, internal/questengine), YAML data (rooms/behaviors/mobs/dialogue/quests/config), the GoMud playtest harness for in-game verification.
 
-**Spec:** `docs/superpowers/specs/2026-06-29-character-creation-onboarding-tiers-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-29-character-creation-onboarding-tiers-design.md`
 
 **Marker refinement (vs spec §5):** the spec suggested a MiscData marker. Dialogue nodes can only gate on quest tokens/flags/items, so the plan implements the tier marker as a **hidden quest token** ("Newcomer's Path") — strictly better, as it composes with existing dialogue + quest-engine gating. Set at Tier-A creation, gates the stage-2/3 beats, granted-end at arc completion.
 

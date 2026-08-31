@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Spec:** `docs/superpowers/specs/2026-05-18-state-chunk-4b-fixup-position-advancement-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-18-state-chunk-4b-fixup-position-advancement-design.md`
 
 **Goal:** Replace chunk 4b's incoherent ControlLevel drift needle with a position-advancement system where each round's drift roll resolves directly into Advance / Hold / Degrade / Reverse / Escape outcomes, backed by ~227+ flavor templates.
 
@@ -3328,7 +3328,7 @@ Plan complete.
 
 ---
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-18-state-chunk-4b-fixup-position-advancement.md`. Two execution options:**
+**Plan complete and saved to `docs/superpowers/plans/completed/2026-05-18-state-chunk-4b-fixup-position-advancement.md`. Two execution options:**
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 

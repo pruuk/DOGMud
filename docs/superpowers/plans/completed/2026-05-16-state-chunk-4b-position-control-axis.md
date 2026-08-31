@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+ with generics, existing `internal/state/` framework, existing `internal/state/position/` machine from chunk 4a.
 
-**Spec:** `docs/superpowers/specs/2026-05-16-state-chunk-4b-position-control-axis-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-16-state-chunk-4b-position-control-axis-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP.
 
@@ -1066,7 +1066,7 @@ All ~80 Behavior Matrix tests for 4b authored as failing skeletons where the und
 - [ ] **Step 1: Read the spec section "Behavior Matrix preview"**
 
 ```
-docs/superpowers/specs/2026-05-16-state-chunk-4b-position-control-axis-design.md
+docs/superpowers/specs/completed/2026-05-16-state-chunk-4b-position-control-axis-design.md
 ```
 
 The matrix has 6 groups (PB-001-015 drift mechanics, PB-016-027 initial-state, PB-028-042 thresholds, PB-043-052 invariants, PB-053-070 cutover smoke, PB-071-080 messaging).
@@ -1476,7 +1476,7 @@ Find the existing `Balance:` block and add (after the existing combat-axis confi
 
 ```yaml
   # Chunk 4b — Position control axis (grapple per-round drift mechanics)
-  # See docs/superpowers/specs/2026-05-16-state-chunk-4b-position-control-axis-design.md
+  # See docs/superpowers/specs/completed/2026-05-16-state-chunk-4b-position-control-axis-design.md
   GrappleStaminaPenaltyMax: 0.60        # Max roll-mult reduction at 0% stamina (vs chunk-3 ResourcePenaltyMax 0.28)
   GrappleStaminaPenaltyCurve: 1.5       # Exponent — higher = steeper near 0% stamina
   GrappleEncumbrancePenaltyMax: 0.80    # Max roll-mult reduction at "crushed" encumbrance

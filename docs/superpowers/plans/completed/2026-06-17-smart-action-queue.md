@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (engine: `internal/actions`, `internal/events`, `modules/gmcp`), vanilla JS (`_datafiles/html/public/webclient-pure.html`). Tests: `testify` (`go test`).
 
-**Spec:** `docs/superpowers/specs/2026-06-17-smart-action-queue-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-17-smart-action-queue-design.md`
 
 **Pre-req:** The 2026-06-17 session reverts (casting Vitals field + state conditions) are already done; this branch (`feature/smart-action-queue`) builds on top. Do NOT re-add them.
 

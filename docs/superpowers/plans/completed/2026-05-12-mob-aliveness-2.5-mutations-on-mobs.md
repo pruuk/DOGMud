@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `internal/species`, `internal/mutations`, `internal/characters`, `internal/mobs` packages, existing actor/character abstractions.
 
-**Spec:** `docs/superpowers/specs/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP.
 
@@ -1317,7 +1317,7 @@ respected.
 Boot-time validation (`ValidateBodyPartTags`) panics on unknown tags
 or unknown mutation ids in intrinsic_mutations.
 
-Design: `docs/superpowers/specs/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
+Design: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
 ```
 
 - [ ] **Step 2: Update `internal/mutations/context.md`**
@@ -1353,7 +1353,7 @@ mutations at character init via `Character.ApplyIntrinsicMutations`.
 Cap-aware: combined rank clamped to the mutation's max rank
 (default 4).
 
-Design: `docs/superpowers/specs/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
+Design: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
 ```
 
 - [ ] **Step 3: Update `internal/characters/context.md`**
@@ -1378,7 +1378,7 @@ Stacks ADDITIVELY: a wolf species with `intrinsic_mutations: { tail: 1 }`
 that also rolls `tail` rank 1 ends up with effective rank 2 in
 `Character.Mutations`.
 
-Design: `docs/superpowers/specs/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
+Design: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`
 ```
 
 - [ ] **Step 4: Commit**
@@ -1507,7 +1507,7 @@ Change to:
 Locate the chunk 2.5 mini-brief in the body of the document. Replace its `Status:` line with `**Status:** Done (2026-05-12) • **Size:** L` and append a Shipped section:
 
 ```markdown
-- **Shipped:** Body-plan gating model — `Species.BodyParts []string` from a canonical seven-tag set (`arms, hands, legs, eyes, mouth, skin, tail`); `MutationSpec.RequiresBodyParts []string` replaces the old `RequiresArms bool`. Three gating sites updated: random-roll pool (`GetWeightedPool`), curated `SpawnMutations` path (latent bug fix — was applying unconditionally), and mid-game mutation grants. `Character.ApplyIntrinsicMutations(species)` merges species intrinsics additively into the character's mutation map at init time, cap-aware. Migration covered all 35 existing species + 4 new elemental species (sand, storm, ice, smoke). 17 mutation YAMLs gained `requires_body_parts:` declarations. 5 mob YAMLs in `instance_planar_oasis/` repointed: king kept on magma + added `mutations: { large: 1 }` override, queen moved to new ice species (dropping her chunk-2.2a `incorporeal: 4` override since her crystal/water form is corporeal), prince moved to new smoke species. Redundant `mutations: { incorporeal: 4 }` overrides on wraith/spectre/fire/air mobs cleaned up — incorporeal is now intrinsic on the species. Boot-time validation panics on unknown body-part tags or unknown mutation ids in intrinsic_mutations. Helpfiles updated to document body-plan gating in player-facing terms. Spec at `docs/superpowers/specs/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`, plan at `docs/superpowers/plans/2026-05-12-mob-aliveness-2.5-mutations-on-mobs.md`.
+- **Shipped:** Body-plan gating model — `Species.BodyParts []string` from a canonical seven-tag set (`arms, hands, legs, eyes, mouth, skin, tail`); `MutationSpec.RequiresBodyParts []string` replaces the old `RequiresArms bool`. Three gating sites updated: random-roll pool (`GetWeightedPool`), curated `SpawnMutations` path (latent bug fix — was applying unconditionally), and mid-game mutation grants. `Character.ApplyIntrinsicMutations(species)` merges species intrinsics additively into the character's mutation map at init time, cap-aware. Migration covered all 35 existing species + 4 new elemental species (sand, storm, ice, smoke). 17 mutation YAMLs gained `requires_body_parts:` declarations. 5 mob YAMLs in `instance_planar_oasis/` repointed: king kept on magma + added `mutations: { large: 1 }` override, queen moved to new ice species (dropping her chunk-2.2a `incorporeal: 4` override since her crystal/water form is corporeal), prince moved to new smoke species. Redundant `mutations: { incorporeal: 4 }` overrides on wraith/spectre/fire/air mobs cleaned up — incorporeal is now intrinsic on the species. Boot-time validation panics on unknown body-part tags or unknown mutation ids in intrinsic_mutations. Helpfiles updated to document body-plan gating in player-facing terms. Spec at `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`, plan at `docs/superpowers/plans/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs.md`.
 ```
 
 - [ ] **Step 4: Commit**

@@ -6,7 +6,7 @@
 
 **Architecture:** Guild chat is a targeted broadcast (party-chat pattern) over `internal/guilds` members; the recipient set is a pure, tested helper. The who-tag is a one-line prepend in `rooms.GetDetails` (rooms→guilds is cycle-safe).
 
-**Spec:** `docs/superpowers/specs/2026-07-15-guild-chat-whotag-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-15-guild-chat-whotag-design.md`
 
 ---
 

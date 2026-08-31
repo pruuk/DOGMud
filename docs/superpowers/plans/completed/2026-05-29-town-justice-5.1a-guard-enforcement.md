@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; reads `factions`/`crimes`/`bounties`/`opinions`; plain `t.Error` tests with package function-seams (the established Phase-1 pattern).
 
-**Spec:** `docs/superpowers/specs/2026-05-29-town-justice-5.1a-guard-enforcement-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-29-town-justice-5.1a-guard-enforcement-design.md`
 
 **Verified facts (use, don't re-derive):**
 - `factions.TierFor(faction string, userId int) opinions.Tier`; `factions.FactionsForMob(mob *mobs.Mob) []string`; `factions.GetDefinition(f) *Definition` with `.Allies []string`.

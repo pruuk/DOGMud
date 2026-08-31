@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25. No new dependencies. Verification via `go build`/`go vet`/`go test ./...` after every commit, plus a `-race` pass on `internal/rooms/...` after the final commit (environment-aware: skip with a documented note if gcc isn't available).
 
-**Spec:** `docs/superpowers/specs/2026-04-18-rooms-package-pass-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-18-rooms-package-pass-design.md`
 
 **Branch:** `fix/rooms-package-pass` off `development`.
 

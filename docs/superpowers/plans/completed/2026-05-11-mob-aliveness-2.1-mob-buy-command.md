@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `internal/actions` Actor abstraction, existing `internal/shops` pricing/persistence layer, existing `internal/events` bus.
 
-**Spec:** `docs/superpowers/specs/2026-05-11-mob-aliveness-2.1-mob-buy-command-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-11-mob-aliveness-2.1-mob-buy-command-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 

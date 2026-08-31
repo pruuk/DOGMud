@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud fork), YAML room templates, `go test`, the `internal/migration` framework.
 
-**Spec:** `docs/superpowers/specs/2026-07-22-authored-coordinate-model-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-22-authored-coordinate-model-design.md`
 
 **Key anchors (verified):** `Room` struct `internal/rooms/rooms.go:76`; `ZoneConfig` `internal/rooms/zoneconfig.go:8` (`NonCartesian` :21); `mapNode` `internal/mapper/mapper.node.go:4`; `positionDelta`/`Combine` `internal/mapper/mapper.go:163-176`; `RoomGrid`/`addNode` `mapper.go:178-212`; crawl `mapper.Start` `mapper.go:249-339`; `findCollisions` `mapper.consistency.go:50`; `CheckConsistency` `:104`; `longSpanCrossesRoom` `:160`; `ValidateZoneConsistency` `:206`; `roomCrawlable` `:97`; instance creation `internal/rooms/instances.go:297` → `CreateEphemeralZone` `ephemeral.go:141`; migration pattern `internal/migration/0.14.0.go`.
 

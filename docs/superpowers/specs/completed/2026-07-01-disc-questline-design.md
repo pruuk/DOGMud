@@ -1,7 +1,7 @@
 # The Disc Questline (Quest 76) — design
 
 *Date: 2026-07-01. Sub-project 1 of #22 (the Crash Site Interior). The on-ramp: how a player obtains the usable disc key that opens the crash-site door.*
-*Reference: `docs/superpowers/specs/2026-07-01-crash-site-interior-design.md` (the finale this gates).*
+*Reference: `docs/superpowers/specs/completed/2026-07-01-crash-site-interior-design.md` (the finale this gates).*
 
 ## Purpose
 

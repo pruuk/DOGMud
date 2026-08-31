@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud engine, GMCP module, characters/items packages), vanilla-JS/SVG web client. No new deps.
 
-**Spec:** `docs/superpowers/specs/2026-06-07-web-client-inventory-panel-design.md`. Mockups: `docs/superpowers/specs/2026-06-07-web-client-inventory-mockups/`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-07-web-client-inventory-panel-design.md`. Mockups: `docs/superpowers/specs/2026-06-07-web-client-inventory-mockups/`.
 
 **Branch:** `feature/web-client-inventory-panel` (created; spec committed).
 

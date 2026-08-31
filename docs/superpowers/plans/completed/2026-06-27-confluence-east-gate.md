@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML; `go run .` boot; `cartcheck`; mudagent harness (walkability + the inn vendor + the gate captain; no quest).
 
-**Spec:** `docs/superpowers/specs/2026-06-27-confluence-east-gate-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-27-confluence-east-gate-design.md`
 
 **Reserved IDs:** rooms **6246–6257**, mobs/dialogue **9484–9490**, items **40146+**, no quest.
 

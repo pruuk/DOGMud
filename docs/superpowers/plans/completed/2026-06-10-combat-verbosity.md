@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Per-user `combatverbosity` setting (full/medium/light) gating auto-attack round narration, with spectated fights one step lower and a light-mode compact per-round tally — per `docs/superpowers/specs/2026-06-10-combat-verbosity-design.md`.
+**Goal:** Per-user `combatverbosity` setting (full/medium/light) gating auto-attack round narration, with spectated fights one step lower and a light-mode compact per-round tally — per `docs/superpowers/specs/completed/2026-06-10-combat-verbosity-design.md`.
 
 **Architecture:** Verbosity primitives live in `internal/messaging` (types + suppression table + a new `CategoryCombatSummary`). The gate is applied at the combat round's message drain (`dispatchCritAndMessaging` in `internal/hooks/NewRound_DoCombat_unified.go`), where recipient role, line category, and the full `AttackResult` are all in hand. A per-round tally aggregator in a new `internal/hooks/combat_verbosity.go` accumulates suppressed-to-aggregate fights and flushes one compact line per fight pair at the end of `DoCombat`. The messaging pipeline itself is untouched.
 
@@ -631,7 +631,7 @@ import (
 // File: combat_verbosity.go
 //
 // Light-verbosity round tally for combat narration (spec:
-// docs/superpowers/specs/2026-06-10-combat-verbosity-design.md).
+// docs/superpowers/specs/completed/2026-06-10-combat-verbosity-design.md).
 // When a viewer's effective verbosity is Light, the per-swing combat
 // lines are suppressed at the drain (dispatchCritAndMessaging) and the
 // AttackResult's swing data is recorded here instead. flushCombatTallies

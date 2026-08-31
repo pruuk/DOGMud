@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; `internal/combat`, `internal/characters`, `internal/species`, `internal/actions`, `internal/mobcommands`.
 
-**Spec:** `docs/superpowers/specs/2026-06-09-nonhuman-attacks-and-beast-moveset-design.md` (this plan implements **Layer 2a + the hamstring/bite parts of 2b**). Phase 3 = the new beast moves (throttle/pounce/maul/rake/gore); Phase 4 = AI profiles + per-mob override + data audit.
+**Spec:** `docs/superpowers/specs/completed/2026-06-09-nonhuman-attacks-and-beast-moveset-design.md` (this plan implements **Layer 2a + the hamstring/bite parts of 2b**). Phase 3 = the new beast moves (throttle/pounce/maul/rake/gore); Phase 4 = AI profiles + per-mob override + data audit.
 
 **Verified facts (2026-06-09):**
 - `bite` & `hamstring` are MOB-ONLY commands (`internal/mobcommands/mobcommands.go:29,57`); no player handlers; not in `command_readiness.go`; not in the parity `supported` list. `toxic-bite` is separate (keep).

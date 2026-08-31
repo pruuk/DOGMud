@@ -18,7 +18,7 @@ The per-category split is bisect-friendly: each commit has a bounded blast radiu
 
 **Tech Stack:** Go 1.25. No new dependencies. Verification via `go build ./...`, `go vet ./...`, `go test ./...` after every commit.
 
-**Spec:** `docs/superpowers/specs/2026-04-18-target-resolution-refactor-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-18-target-resolution-refactor-design.md`
 
 **Branch:** `feature/target-resolution-refactor` off `development`.
 
@@ -136,8 +136,8 @@ One commit. Creates the helper, exports two constructors, adds 7 unit tests, mig
 - Modify: `internal/actions/actor_mob.go` (add exported `NewMobActor`)
 - Modify: `internal/hooks/NewRound_DoCombat.go` (5 inline-literal migrations: lines 129, 134, 138, 288, 293, 297 — verify exact line numbers post-merge)
 - Modify: `internal/hooks/NewRound_DoCombat_routing_test.go` (4 inline-literal migrations: lines 212, 217, 223, 233)
-- Add: `docs/superpowers/specs/2026-04-18-target-resolution-refactor-design.md` (spec file, already on disk)
-- Add: `docs/superpowers/plans/2026-04-18-target-resolution-refactor.md` (this plan, already on disk)
+- Add: `docs/superpowers/specs/completed/2026-04-18-target-resolution-refactor-design.md` (spec file, already on disk)
+- Add: `docs/superpowers/plans/completed/2026-04-18-target-resolution-refactor.md` (this plan, already on disk)
 
 **Estimated commit size:** ~120 lines new helper + ~250 lines new test file + 2× ~5 line constructor additions + ~10 inline-literal migrations + spec + plan. Medium commit. ADDITIVE.
 
@@ -701,13 +701,13 @@ git add \
   internal/actions/actor_mob.go \
   internal/hooks/NewRound_DoCombat.go \
   internal/hooks/NewRound_DoCombat_routing_test.go \
-  docs/superpowers/specs/2026-04-18-target-resolution-refactor-design.md \
-  docs/superpowers/plans/2026-04-18-target-resolution-refactor.md
+  docs/superpowers/specs/completed/2026-04-18-target-resolution-refactor-design.md \
+  docs/superpowers/plans/completed/2026-04-18-target-resolution-refactor.md
 git commit -m "$(cat <<'EOF'
 feat(actions): add ResolveTargetActor helper + Actor constructors
 
 Foundation for the target-resolution refactor (see spec
-docs/superpowers/specs/2026-04-18-target-resolution-refactor-design.md).
+docs/superpowers/specs/completed/2026-04-18-target-resolution-refactor-design.md).
 
 New:
   - actions.ResolveTargetActor(room, name, opts...) — consolidates
@@ -3135,7 +3135,7 @@ The project file is now done. Two acceptable approaches; pick one:
   ```markdown
   ---
   name: target resolution refactor
-  description: Completed 2026-04-18. See spec docs/superpowers/specs/2026-04-18-target-resolution-refactor-design.md and plan docs/superpowers/plans/2026-04-18-target-resolution-refactor.md. Merge commit on development.
+  description: Completed 2026-04-18. See spec docs/superpowers/specs/completed/2026-04-18-target-resolution-refactor-design.md and plan docs/superpowers/plans/completed/2026-04-18-target-resolution-refactor.md. Merge commit on development.
   type: completed
   ---
   ```
@@ -3284,8 +3284,8 @@ decision; same convention applies here).
 
 **See also:**
 
-- Spec: `docs/superpowers/specs/2026-04-18-target-resolution-refactor-design.md`
-- Plan: `docs/superpowers/plans/2026-04-18-target-resolution-refactor.md`
+- Spec: `docs/superpowers/specs/completed/2026-04-18-target-resolution-refactor-design.md`
+- Plan: `docs/superpowers/plans/completed/2026-04-18-target-resolution-refactor.md`
 - Sister convention: `feedback_combat_logic_goes_in_handleCombatRound.md`
 - Future work: `project_name_collision_prevention.md` (player-mob name
   collision is a known limitation; helper picks player-precedence as a
@@ -3386,8 +3386,8 @@ Expected files changed (verify exhaustive list):
 - `internal/usercommands/skill.skullduggery.{steal,plant,shadow}.go` — modified (commit 6)
 - `internal/usercommands/target.go` — modified (commit 6)
 - `internal/mobcommands/aid.go`, `givequest.go` — modified (commit 6)
-- `docs/superpowers/specs/2026-04-18-target-resolution-refactor-design.md` — NEW (commit 1)
-- `docs/superpowers/plans/2026-04-18-target-resolution-refactor.md` — NEW (commit 1)
+- `docs/superpowers/specs/completed/2026-04-18-target-resolution-refactor-design.md` — NEW (commit 1)
+- `docs/superpowers/plans/completed/2026-04-18-target-resolution-refactor.md` — NEW (commit 1)
 
 **NO other files.** If you see `.claude/settings.local.json`, `feedback/*.txt`, `Screenshot*.png`, or any memory file, STOP — you accidentally staged noise.
 

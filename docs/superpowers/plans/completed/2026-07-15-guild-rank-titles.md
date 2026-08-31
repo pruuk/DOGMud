@@ -6,7 +6,7 @@
 
 **Architecture:** `RankTitles map[GuildRank]string` on `Guild` + `RankTitle` helper + `validRankTitle` + registry `SetRankTitle` + a `title` subcommand. Display swaps raw rank for `g.RankTitle(rank)`.
 
-**Spec:** `docs/superpowers/specs/2026-07-15-guild-rank-titles-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-15-guild-rank-titles-design.md`
 
 ---
 

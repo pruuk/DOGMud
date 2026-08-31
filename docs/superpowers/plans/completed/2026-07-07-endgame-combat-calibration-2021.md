@@ -8,7 +8,7 @@
 
 **Tech Stack:** GoMud YAML data files (mobs, items, behaviors); the `/playtest-scenario` multi-agent harness; `id_inventory.py`; local server boot-validation.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-endgame-combat-calibration-2021-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-07-endgame-combat-calibration-2021-design.md`
 
 ---
 
@@ -497,7 +497,7 @@ git commit -m "tune(#21): Sentinel calibrated tough-but-winnable for 2 Meiroks+c
 ## Task 11: Final verification, docs, and SOP memory
 
 **Files:**
-- Modify: `docs/superpowers/specs/2026-07-07-endgame-combat-calibration-2021-design.md`
+- Modify: `docs/superpowers/specs/completed/2026-07-07-endgame-combat-calibration-2021-design.md`
   (record the final settled numbers).
 - Modify: `PATCH_NOTES.md` (only when the user later pushes — flag, don't push here).
 
@@ -513,7 +513,7 @@ Expected: clean.
   turning them from "empirical" into the shipped record.
 
 ```bash
-git add docs/superpowers/specs/2026-07-07-endgame-combat-calibration-2021-design.md
+git add docs/superpowers/specs/completed/2026-07-07-endgame-combat-calibration-2021-design.md
 git commit -m "docs(calibration): record settled #20/#21 tuning values"
 ```
 

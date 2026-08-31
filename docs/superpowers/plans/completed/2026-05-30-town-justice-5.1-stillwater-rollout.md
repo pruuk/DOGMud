@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (packages `internal/justice`, `internal/factions`), YAML data files under `_datafiles/world/dogmud/`, Go `testing`.
 
-**Spec:** `docs/superpowers/specs/2026-05-30-town-justice-5.1-stillwater-rollout-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-30-town-justice-5.1-stillwater-rollout-design.md`
 
 **Conventions for every task:**
 - Build check: `go build ./...`

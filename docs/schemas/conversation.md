@@ -185,7 +185,7 @@ Exchanges drawn from:
 
 ## See also
 
-- Spec: `docs/superpowers/specs/2026-05-25-mob-aliveness-3.6-npc-conversations-design.md`
+- Spec: `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.6-npc-conversations-design.md`
 - Loader: `internal/conversations/loader.go`
 - Trigger: `internal/hooks/NewRound_IdleMobs.go` (TryStart call)
 - Executor: `internal/hooks/NewRound_IdleMobs_conversations.go`

@@ -3,7 +3,7 @@
 **Date:** 2026-07-11
 **Status:** Approved (design); implementation is a follow-on plan
 **Supersedes:** the Wave 4c Brood-Sac respawn approach
-(`docs/superpowers/plans/2026-07-11-chrysalis-content-wave4c-companions.md` — scrap/reshape).
+(`docs/superpowers/plans/completed/2026-07-11-chrysalis-content-wave4c-companions.md` — scrap/reshape).
 **Relates to:** the Chrysalis mutation graph (the Manifester cluster) and the
 Body↔Belief pole opposition.
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, YAML persistence (`gopkg.in/yaml.v3`), existing `internal/events` event bus, existing `internal/configs/Balance` config surface.
 
-**Spec:** `docs/superpowers/specs/2026-05-09-mob-aliveness-1.4-knowledge-model-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.4-knowledge-model-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort. (Branch name predates 1.4; that's fine — it's the long-running aliveness branch.)
 
@@ -2346,7 +2346,7 @@ Locate the `### 1.4 NPC knowledge model` section. Change `**Status:** Not starte
 Suggested template:
 
 ```markdown
-- **Shipped:** `internal/knowledge/` package storing per-observer-NPC YAML at `_datafiles/world/dogmud/knowledge/{mobId}-{namesimple}.yaml` (gitignored). Polymorphic subject (`{type, id}` for player or mob template), source/confidence tier on every record, per-fact decay rules, NPC-on-NPC supported. v1 fact types: identity (HasMet + NameLearned), location (LastSeen + bounded observation log capped at `KnowledgeObservationLogMax = 32`), routine (FrequentedRooms top-K query), deeds-witnessed (crime row IDs, lazy-filtered against 1.3 on read via WitnessedCrimes). Auto-write triggers v1: forager/caravan room change (new hook listener `MobRoomChange_KnowledgeObservers` wraps `knowledge.RecordRoutineObservers`) and 1.3 crime witnessing (three call-site additions in attack.go, MobDeath_FactionRep.go, skullduggery steal). Explicit Forget / ForgetFact API for amnesia consumers. New admin command `knowledge show/forget/frequented` + helpfile. No cross-substrate cascade in v1 (documented as a deferred decision pending amnesia spell consumer). Spec at `docs/superpowers/specs/2026-05-09-mob-aliveness-1.4-knowledge-model-design.md`, plan at `docs/superpowers/plans/2026-05-09-mob-aliveness-1.4-knowledge-model.md`.
+- **Shipped:** `internal/knowledge/` package storing per-observer-NPC YAML at `_datafiles/world/dogmud/knowledge/{mobId}-{namesimple}.yaml` (gitignored). Polymorphic subject (`{type, id}` for player or mob template), source/confidence tier on every record, per-fact decay rules, NPC-on-NPC supported. v1 fact types: identity (HasMet + NameLearned), location (LastSeen + bounded observation log capped at `KnowledgeObservationLogMax = 32`), routine (FrequentedRooms top-K query), deeds-witnessed (crime row IDs, lazy-filtered against 1.3 on read via WitnessedCrimes). Auto-write triggers v1: forager/caravan room change (new hook listener `MobRoomChange_KnowledgeObservers` wraps `knowledge.RecordRoutineObservers`) and 1.3 crime witnessing (three call-site additions in attack.go, MobDeath_FactionRep.go, skullduggery steal). Explicit Forget / ForgetFact API for amnesia consumers. New admin command `knowledge show/forget/frequented` + helpfile. No cross-substrate cascade in v1 (documented as a deferred decision pending amnesia spell consumer). Spec at `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.4-knowledge-model-design.md`, plan at `docs/superpowers/plans/completed/2026-05-09-mob-aliveness-1.4-knowledge-model.md`.
 ```
 
 - [ ] **Step 3: Commit**

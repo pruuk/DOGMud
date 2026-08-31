@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, testify `assert` in `internal/rooms`, plain `testing` in `modules/gmcp`, vanilla JS in `builder.js`/`build.html`.
 
-**Spec:** `docs/superpowers/specs/2026-07-25-spawn-list-editor-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-25-spawn-list-editor-design.md`
 
 ---
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go. Packages: `internal/actions`, `internal/usercommands`, `internal/mobcommands`, `internal/mutations`, `internal/combat`, `internal/configs`, plus mutation/buff/help YAML + templates.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysalis-cluster-content-design.md` (§5 items: Venom Coat line 102, Cocoon line 171, Winged Flight line 203; primitives P4 line 217, P9 line 222).
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysalis-cluster-content-design.md` (§5 items: Venom Coat line 102, Cocoon line 171, Winged Flight line 203; primitives P4 line 217, P9 line 222).
 
 **Design decisions (user-approved 2026-07-11):** Flight is **always-on passive** (not toggled); **no terrain restriction** (applies everywhere for MVP); Cocoon has **no attack-lock** (mitigation + aggro-drop only). Per-rank magnitude curves are **deferred to the Wave 6 playtest** (spec §7) — this wave ships a fixed effect per active and tunable config edges for flight; deepening-per-rank is a follow-on.
 

@@ -1,6 +1,6 @@
 # Newbie Rework — Chunk 5 Sub-Spec: Spoke D (Wilderness & Tracking)
 
-> Parent spec: `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+> Parent spec: `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 > (§6.3 spoke roster, §6.4 rings, §7.2 reward table, §5 Tier-2 forage/track/hunt/
 > sleep lessons). Hub (C1), Spoke A Martial (C2), Spoke B Forge (C3), Spoke C
 > Alchemy (C4) are built + verified + committed. This is the **fourth spoke**.

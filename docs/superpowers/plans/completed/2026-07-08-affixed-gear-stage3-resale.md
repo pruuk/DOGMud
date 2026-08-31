@@ -19,7 +19,7 @@ Stage-2 melt behavior (out of scope — they lack persistence).
 **Tech Stack:** Go. `internal/shops`, `internal/actions/{sell,buy}.go`.
 Test seeding via `shops.RegisterShop` (in-memory, no data files needed).
 
-**Spec:** `docs/superpowers/specs/2026-07-08-shops-trade-affixed-gear-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-08-shops-trade-affixed-gear-design.md`
 (Stage 3 row + pricing model).
 
 **Depends on:** Stages 1–2 (merged) — `Item.Affixed`, stamped `spec.Value`,

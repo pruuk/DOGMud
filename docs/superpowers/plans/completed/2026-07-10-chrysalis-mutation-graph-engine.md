@@ -10,7 +10,7 @@
 
 **Scope note:** This plan is the **engine only**. Deferred to follow-on plans (see end): the ~9 phial recipes + strip/re-bloom, clean-break migration + skill-seeded re-bloom, mob archetype affinity-seeding + `archetype_pull`→cluster-tag re-curation, the damage-absorbed→Ironhide signal, the full per-cluster keystone content, and helpfile copy. The engine is unit-testable against synthetic fixtures via `mutations.SeedMutationsForTest`; it does not require the real content to exist.
 
-**Spec:** `docs/superpowers/specs/2026-07-10-chrysalis-mutation-graph-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-10-chrysalis-mutation-graph-design.md`
 
 ---
 

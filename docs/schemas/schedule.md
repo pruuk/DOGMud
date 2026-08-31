@@ -110,7 +110,7 @@ schedule `id` is the stable reference; mob YAMLs do not move.
 
 ## See also
 
-- Spec: `docs/superpowers/specs/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`
+- Spec: `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.2-npc-schedules-design.md`
 - Mob spec field: `internal/mobs/mobs.go` (`Mob.ScheduleId`)
 - Loader: `internal/mobs/schedule_loader.go`
 - Executor: `internal/hooks/NewRound_IdleMobs_schedule.go`

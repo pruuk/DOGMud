@@ -15,7 +15,7 @@ detection to room movement, gate picklock behind the new skill.
 
 **Tech Stack:** Go, Go templates, JS (goja scripting), YAML data files
 
-**Spec:** `docs/superpowers/specs/2026-03-18-skullduggery-skill-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-03-18-skullduggery-skill-design.md`
 
 ---
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24, new package `internal/conversations/`, new YAML directories under `_datafiles/world/dogmud/conversations/`, integration points in `internal/hooks/NewRound_IdleMobs.go` + `internal/usercommands/go.go`, three new config knobs in `internal/configs/config.balance.go`. Reuses the chunk 1.6 `relationships` package (Type constants, `RelationsBetween`, `AreRelated`) and the chunk 3.2 MiscData / IdleMobs patterns.
 
-**Spec:** `docs/superpowers/specs/2026-05-25-mob-aliveness-3.6-npc-conversations-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.6-npc-conversations-design.md`
 
 **Branch:** `feature/mob-aliveness-3.6-npc-conversations` (already created; spec committed as `b0615a11`).
 

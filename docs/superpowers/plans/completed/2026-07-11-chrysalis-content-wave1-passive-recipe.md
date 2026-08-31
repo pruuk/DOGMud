@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `internal/mutations`, `internal/hooks` (spell damage), YAML mutation data files, testify.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysalis-cluster-content-design.md` (this is Wave 1 of §9).
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysalis-cluster-content-design.md` (this is Wave 1 of §9).
 
 **Scope note — deferred to later waves (same recipe):** the multi-site consumers — control-immunity (trip/grapple/knockback gates), typed reflect-damage (on-hit-taken), crit-resist, detection/stealth scores, shout-amp/stacking, and the aura sources (Dissonance/Presence) — are NOT in Wave 1. Wave 1 proves the recipe with one clean single-site numeric consumer and ships observable drift. On-hit buffs, verb-enhance, states, transformations, auras, companions, actives, and flight are Waves 2–5.
 

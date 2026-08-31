@@ -20,7 +20,7 @@ boot tests, `cartcheck`, commits — since subagents are shell-denied in this en
 (`docs/schemas/`), `tools/id_inventory.py`, the `cartcheck` admin command, the
 `/playtest` harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-22-np-merchant-district-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-22-np-merchant-district-design.md`.
 
 ---
 

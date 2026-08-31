@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud fork), GMCP over WebSocket, vanilla JS (matching `builder.js`/`build.html`), `go test`.
 
-**Spec:** `docs/superpowers/specs/2026-07-23-item-authoring-2-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-23-item-authoring-2-design.md`
 
 **Verified seams:**
 - `ItemSpec` struct `internal/items/itemspec.go:254`; weapon damage = `DamageMultiplier` float (Damage dice struct is legacy); `RarityTier`, `PhysicalMitigation`/`MagicalMitigation`/`ConvictionMitigation`, `SpellDamageMultiplier`, `StatMods` (`statmods.StatMods = map[string]int`), `AgingThresholds` (`aging.go:15`: FermentRounds/PeakRounds/DecayRounds/SpoilRounds), `SalvageReturn` (`itemspec.go:339`: ItemTag/Quantity).

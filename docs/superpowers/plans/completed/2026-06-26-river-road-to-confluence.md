@@ -8,7 +8,7 @@
 
 **Tech Stack:** GoMud engine; YAML data files under `_datafiles/world/dogmud/`; Go (`internal/forager`); `go test`; `cartcheck` admin command.
 
-**Spec:** `docs/superpowers/specs/2026-06-26-river-road-to-confluence-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-26-river-road-to-confluence-design.md`
 
 ---
 

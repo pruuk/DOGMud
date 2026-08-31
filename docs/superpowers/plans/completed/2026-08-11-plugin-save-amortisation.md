@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `internal/plugins`, `internal/savequeue`, `internal/hooks`, `gopkg.in/yaml.v2`, standard `testing`.
 
-**Spec:** `docs/superpowers/specs/2026-08-11-plugin-save-amortisation-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-11-plugin-save-amortisation-design.md`
 
 ---
 

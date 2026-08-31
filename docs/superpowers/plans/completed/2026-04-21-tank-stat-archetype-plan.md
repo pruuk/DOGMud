@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `util.Rand` + mob stat-roll logic, YAML content.
 
-**Related spec:** `docs/superpowers/specs/2026-04-21-tank-stat-archetype-design.md`
+**Related spec:** `docs/superpowers/specs/completed/2026-04-21-tank-stat-archetype-design.md`
 **Branch:** `feature/tank-stat-archetype` (created; spec committed as `ad2f562b`).
 
 ---
@@ -289,7 +289,7 @@ In `C:\Users\Calabe Davis\.claude\projects\C--Users-Calabe-Davis-workspace-DOGMu
 (b) Add to `## Completed (2026-04-21)`:
 
 ```markdown
-- **Tank stat archetype + rhetoric bump** — new `tank` stat-distribution case in `internal/mobs/mobs.go` alongside `fighting` / `casting` — allocates 25% Cha / 20% Vit / 15% each Str/Dex/Wil / 10% Per. Three tank companion templates (305 flesh_golem, 311 earth_elemental, 314 magma_elemental) flipped from `archetype: fighting` to `archetype: tank` plus `skills: { rhetoric: 10 }` added per mob. Closes the "tank_taunter archetype fires taunt but it never lands" issue surfaced during T7 smoke of the archetype landing (Cha was ~7% of stat pool under `fighting`; now ~25%). Expected taunt success ~65-75% against typical players. 2 code commits + spec + plan. Branch: `feature/tank-stat-archetype`. Design in `docs/superpowers/specs/2026-04-21-tank-stat-archetype-design.md`, plan in `docs/superpowers/plans/2026-04-21-tank-stat-archetype-plan.md`.
+- **Tank stat archetype + rhetoric bump** — new `tank` stat-distribution case in `internal/mobs/mobs.go` alongside `fighting` / `casting` — allocates 25% Cha / 20% Vit / 15% each Str/Dex/Wil / 10% Per. Three tank companion templates (305 flesh_golem, 311 earth_elemental, 314 magma_elemental) flipped from `archetype: fighting` to `archetype: tank` plus `skills: { rhetoric: 10 }` added per mob. Closes the "tank_taunter archetype fires taunt but it never lands" issue surfaced during T7 smoke of the archetype landing (Cha was ~7% of stat pool under `fighting`; now ~25%). Expected taunt success ~65-75% against typical players. 2 code commits + spec + plan. Branch: `feature/tank-stat-archetype`. Design in `docs/superpowers/specs/completed/2026-04-21-tank-stat-archetype-design.md`, plan in `docs/superpowers/plans/completed/2026-04-21-tank-stat-archetype-plan.md`.
 ```
 
 - [ ] **Step 3: Prompt user about merge**

@@ -10,7 +10,7 @@
 
 **Tech Stack:** Go, GoMud loader/event/command layers, testify, YAML.
 
-**Spec:** `docs/superpowers/specs/2026-07-15-achievements-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-15-achievements-design.md`
 
 ---
 

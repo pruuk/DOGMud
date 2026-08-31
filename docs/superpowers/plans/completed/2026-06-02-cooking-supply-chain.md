@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (tests: `testing` + `testify/assert`). Data: YAML. Build `go build ./...`; test `go test ./internal/<pkg>/...`. Boot smoke per CLAUDE.md SOP (wipe instance saves, `go run .`, watch for `InputWorker ... Started` and no panic).
 
-**Spec:** `docs/superpowers/specs/2026-06-02-cooking-supply-chain-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-02-cooking-supply-chain-design.md`
 
 ---
 

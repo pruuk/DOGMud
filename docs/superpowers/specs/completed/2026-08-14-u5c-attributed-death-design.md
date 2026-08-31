@@ -3,7 +3,7 @@
 **Date:** 2026-08-14
 **Arc:** unified contest resolution (U0–U11)
 **Roadmap:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`
-**Parent spec:** `docs/superpowers/specs/2026-08-12-unified-contest-resolution-design.md`
+**Parent spec:** `docs/superpowers/specs/completed/2026-08-12-unified-contest-resolution-design.md`
 **Depends on:** U5b-2 (merged, `7e506d53a`)
 **Status:** approved, ready for planning
 

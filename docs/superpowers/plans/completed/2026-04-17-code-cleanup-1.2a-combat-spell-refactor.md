@@ -21,7 +21,7 @@ parent first. One commit per extraction step (independently revertable).
 `TestApplyMobEffect_*` tests (spell batch) + manual smoke + 5-min
 test-mud AI run (combat batch — the PvM/MvP handlers have no unit tests).
 
-**Spec:** `docs/superpowers/specs/2026-04-17-code-cleanup-1.2a-combat-spell-refactor-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-17-code-cleanup-1.2a-combat-spell-refactor-design.md`
 
 **Branch:** `feature/stage-1.2a-combat-spell-refactor` off `development`.
 

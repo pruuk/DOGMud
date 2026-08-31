@@ -19,7 +19,7 @@ existing accessors). Two config kill switches gate everything.
 **Tech Stack:** Go, YAML data files, existing test scaffolding
 (`seedRegistry` per package, `seedAllRegistries` in hooks/usercommands).
 
-**Spec:** `docs/superpowers/specs/2026-07-04-pinnacle-chase-items-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-04-pinnacle-chase-items-design.md`
 
 **Verified integration points** (all file:line refs checked 2026-07-04):
 

@@ -20,7 +20,7 @@ slice.
 (`internal/combat/contest_site_guard_test.go` allowlist + root
 `contest_floor_guard_test.go` exemptions); playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-08-21-u10-disruption-model-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-21-u10-disruption-model-design.md`
 rev 3 (§7 owner decisions binding). Branch: `feature/u10-disruption-model`.
 
 **Verified facts (all checked 2026-08-21 against source; do not re-derive):**

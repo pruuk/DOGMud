@@ -8,7 +8,7 @@
 
 **Tech Stack:** GoMud YAML (items/quests/dialogue/rooms); `python -c "import yaml"`; local boot (`ValidateAllFlags`); the mudagent harness for the end-to-end quest test.
 
-**Reference spec:** `docs/superpowers/specs/2026-07-01-disc-questline-design.md`
+**Reference spec:** `docs/superpowers/specs/completed/2026-07-01-disc-questline-design.md`
 
 **Verified engine facts (do not re-derive):**
 - Quest `room_interact` trigger shape (from `quests/75-the_surveyors_report.yaml`): `- event: room_interact` / `room: <id>` / `noun: <noun>` / `conditions: {has: [...], missing: [...], has_item: N, missing_item: N}` / `actions: [...]`.

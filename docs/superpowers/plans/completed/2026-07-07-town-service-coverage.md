@@ -19,7 +19,7 @@ via `go run .` boot test, the `cartcheck` admin command, and
 ---
 
 ## Reference spec
-`docs/superpowers/specs/2026-07-07-town-service-coverage-design.md` — read for the
+`docs/superpowers/specs/completed/2026-07-07-town-service-coverage-design.md` — read for the
 gap matrix rationale and scope boundaries.
 
 ## Global ID allocation (PINNED — do not deviate)

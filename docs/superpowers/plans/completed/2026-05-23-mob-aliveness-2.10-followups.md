@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24, existing `internal/actions/` Actor abstraction, existing `internal/behaviortree/actions_*.go` registry pattern, unified damage pipeline (`internal/combat/damage_pipeline.go`), `internal/gamelock/` for lock state, YAML content.
 
-**Spec:** `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-followups-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-followups-design.md`
 
 **Branch:** `feature/mob-aliveness-2.10-followups` (already created; spec committed as `31049971`).
 
@@ -2172,7 +2172,7 @@ damage pipeline routing for sonic-shout (Conviction channel) and
 toxic-bite bite damage (Physical channel), forager locked-chest
 workflow (new Tova dwelling, lock/unlock mob verbs, `try_store_excess`
 btree primitive, `StateStoring` forager state). Plan at
-`docs/superpowers/plans/2026-05-23-mob-aliveness-2.10-followups.md`.
+`docs/superpowers/plans/completed/2026-05-23-mob-aliveness-2.10-followups.md`.
 ```
 
 - [ ] **Step 4: Commit**
@@ -2250,7 +2250,7 @@ Issues found inline: none.
 
 ## Execution handoff
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-23-mob-aliveness-2.10-followups.md`.** Two execution options:
+**Plan complete and saved to `docs/superpowers/plans/completed/2026-05-23-mob-aliveness-2.10-followups.md`.** Two execution options:
 
 **1. Subagent-Driven (recommended)** — fresh subagent per task, review between tasks, fast iteration. Especially well-suited here because the 12 tasks are well-isolated and the spec has detailed enough per-item designs that each subagent gets full context upfront.
 

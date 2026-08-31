@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `internal/actions` actor abstraction (chunk 2.1), existing `internal/combat.PowerScore`, existing `mob.HatesMob` predicate for faction/pack awareness.
 
-**Spec:** `docs/superpowers/specs/2026-05-12-mob-aliveness-2.4-mob-consider-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.4-mob-consider-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 
@@ -1176,7 +1176,7 @@ git commit -m "feat(behaviors): lookout ambushes only when stronger than enterin
 # young wolf. Distinguished from `generic_fighter` by the
 # leading mob_idle predation branch.
 #
-# Spec: docs/superpowers/specs/2026-05-12-mob-aliveness-2.4-mob-consider-design.md
+# Spec: docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.4-mob-consider-design.md
 
 tree:
   type: selector
@@ -1322,7 +1322,7 @@ Locate the chunk 2.4 mini-brief (search for `### 2.4 Mob \`appraise\` / \`assess
 - **Out:** Player gear-coveting (players don't drop gear so no use case); `appraise` mobcommand (player command is obsoleted by identify spell); `combat.PowerScore` math changes (audit confirmed gear is already reflected through `ValueAdj`/`Get*Mitigation` pipes; the audit deliverable is a documentation section in `internal/combat/context.md`).
 - **Depends on:** 2.2 (item-comparison primitive contributed conceptually but PowerScore-based assessment uses existing combat infrastructure).
 - **Why:** Reactive lookouts that don't suicide-ambush strong players. Opportunistic predators that go after weaker prey. Foundation for chunk 2.6 (tactics-cast preemption — power-ratio gating offensive vs. defensive cast selection) and 5.2 (bounty hunting — bounty hunters need to assess wanted targets).
-- **Shipped:** `internal/actions/consider.go` — `Consider(actor, target) ConsiderResult` with prediction text emission via `actor.SendText` (MobActor no-op preserves silent compute path). Player + mob wrappers each ~15 lines. Btree primitives in `conditions_combat.go` and `actions_combat.go` (new function alongside existing entries). Target resolution chain: `Event.UserId` → `Aggro.UserId` → `Aggro.MobInstanceId`. `mob.HatesMob(other)` predicate gates predation — covers faction/pack-awareness without coupling to 1.2 substrate. Lookout `player_enter` branch with `target_power_ratio_above: 1.0` ambush gate. Predator archetype `ratio_below: 0.85` predation ceiling. PowerScore audit section added to `internal/combat/context.md`. Spec at `docs/superpowers/specs/2026-05-12-mob-aliveness-2.4-mob-consider-design.md`, plan at `docs/superpowers/plans/2026-05-12-mob-aliveness-2.4-mob-consider.md`.
+- **Shipped:** `internal/actions/consider.go` — `Consider(actor, target) ConsiderResult` with prediction text emission via `actor.SendText` (MobActor no-op preserves silent compute path). Player + mob wrappers each ~15 lines. Btree primitives in `conditions_combat.go` and `actions_combat.go` (new function alongside existing entries). Target resolution chain: `Event.UserId` → `Aggro.UserId` → `Aggro.MobInstanceId`. `mob.HatesMob(other)` predicate gates predation — covers faction/pack-awareness without coupling to 1.2 substrate. Lookout `player_enter` branch with `target_power_ratio_above: 1.0` ambush gate. Predator archetype `ratio_below: 0.85` predation ceiling. PowerScore audit section added to `internal/combat/context.md`. Spec at `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.4-mob-consider-design.md`, plan at `docs/superpowers/plans/completed/2026-05-12-mob-aliveness-2.4-mob-consider.md`.
 ```
 
 - [ ] **Step 4: Commit**

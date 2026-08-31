@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (stdlib only — `strings`, `unicode`); existing YAML loaders; `mudlog`/`panic` startup-validator pattern.
 
-**Spec:** `docs/superpowers/specs/2026-06-09-naming-casing-convention-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-09-naming-casing-convention-design.md`
 
 ---
 

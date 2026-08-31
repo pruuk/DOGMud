@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML data files, JS mob scripts, testify for tests
 
-**Spec:** `docs/superpowers/specs/2026-04-09-instanced-zones-framework-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-09-instanced-zones-framework-design.md`
 
 ---
 

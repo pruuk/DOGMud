@@ -6,7 +6,7 @@
 
 **Depends on Slice B** (PR #65). Charm must already resolve off one `ChannelSocial` contest before a duration can be read from that contest's margin.
 
-**Spec:** `docs/superpowers/specs/2026-08-24-u10c-charm-redesign-design.md` — sections 11-14 supersede 1-10; 13 supersedes 11.3.2.
+**Spec:** `docs/superpowers/specs/completed/2026-08-24-u10c-charm-redesign-design.md` — sections 11-14 supersede 1-10; 13 supersedes 11.3.2.
 
 **Also folded in:** `dismiss` gains the same presence gate the expiry path uses (Task 8), so the two exits from a charmed bond cannot disagree about the anti-grief rule.
 

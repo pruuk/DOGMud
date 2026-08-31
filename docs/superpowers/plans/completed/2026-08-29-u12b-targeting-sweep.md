@@ -434,7 +434,7 @@ At this point only `combat_retarget.go` (8), `Death_InboundAggroCleanup.go` (4),
 **Files:**
 - Modify: `internal/characters/aggro_writer_guard_test.go`
 - Modify: `internal/targeting/context.md`
-- Modify: `docs/superpowers/specs/2026-08-29-u12-unified-targeting-design.md`
+- Modify: `docs/superpowers/specs/completed/2026-08-29-u12-unified-targeting-design.md`
 
 - [ ] **Step 1: Assert the allowlist is empty**
 

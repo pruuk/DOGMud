@@ -5767,8 +5767,8 @@ command writers/readers untouched. 4b cuts over.
 - Behavior Matrix PO-001 through PO-045 PASS or SKIP per
   chunks-0-3 convention.
 
-Spec at `docs/superpowers/specs/2026-05-16-state-chunk-4a-position-fsm-design.md`,
-plan at `docs/superpowers/plans/2026-05-16-state-chunk-4a-position-fsm.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-16-state-chunk-4a-position-fsm-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-16-state-chunk-4a-position-fsm.md`.
 
 ### 4b — Position control axis + writer/reader cutover
 
@@ -5852,8 +5852,8 @@ Sunset the legacy `CombatPosition` enum + `PositionRoundsMin` +
   of PASS / SKIP. Chunks 0-4a regression clean. 176-test
   position package suite green.
 
-Spec at `docs/superpowers/specs/2026-05-16-state-chunk-4b-position-control-axis-design.md`,
-plan at `docs/superpowers/plans/2026-05-16-state-chunk-4b-position-control-axis.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-16-state-chunk-4b-position-control-axis-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-16-state-chunk-4b-position-control-axis.md`.
 
 ### 4c — Position × Weapon Utility (reach model)
 
@@ -5917,8 +5917,8 @@ touches, ~400 LOC production code.
   - Staff in Clinch: "crash your oak staff" (caster
     exemption, staff channel preserved)
 
-Spec at `docs/superpowers/specs/2026-05-16-state-chunk-4c-position-weapon-utility-design.md`,
-plan at `docs/superpowers/plans/2026-05-16-state-chunk-4c-position-weapon-utility.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-16-state-chunk-4c-position-weapon-utility-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-16-state-chunk-4c-position-weapon-utility.md`.
 
 ### Smoke followups (post-chunk-4c)
 
@@ -6000,8 +6000,8 @@ lookout and opportunistic predator patterns.
   documenting how equipment flows through the existing
   `ValueAdj` / mitigation pipes (no math changes).
 
-Spec at `docs/superpowers/specs/2026-05-12-mob-aliveness-2.4-mob-consider-design.md`,
-plan at `docs/superpowers/plans/2026-05-12-mob-aliveness-2.4-mob-consider.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.4-mob-consider-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-12-mob-aliveness-2.4-mob-consider.md`.
 
 ### 2.5 — Mutations on mobs (body-plan gating + intrinsic mutations)
 
@@ -6038,8 +6038,8 @@ with acquired mutations at character init.
   removed from 4 `summons` mobs (wraith/spectre/fire/air) —
   incorporeal is now intrinsic on the species.
 
-Spec at `docs/superpowers/specs/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`,
-plan at `docs/superpowers/plans/2026-05-12-mob-aliveness-2.5-mutations-on-mobs.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-12-mob-aliveness-2.5-mutations-on-mobs.md`.
 
 ### 2.6 — Sunset legacy tactics engine
 
@@ -6086,8 +6086,8 @@ queue racing `InitiateCast`).
   the shield expires — behavior is not broken, just wasteful.
   Polish item for a future tuning pass.
 
-Spec at `docs/superpowers/specs/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`,
-plan at `docs/superpowers/plans/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine.md`.
 
 ---
 
@@ -6115,8 +6115,8 @@ Permissive validation: bad edges warn-not-panic.
 - Future consumers: 4.5 reactive goal seeding (revenge), 3.6 NPC↔NPC
   idle conversation.
 
-Spec at `docs/superpowers/specs/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`,
-plan at `docs/superpowers/plans/2026-05-09-mob-aliveness-1.6-npc-relationships.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-09-mob-aliveness-1.6-npc-relationships.md`.
 
 ### 1.7 — World-Model Facts
 
@@ -6145,8 +6145,8 @@ preserved, and known facts now mix into the gossip candidate pool
 - New `fact-default` gossip template family ("I heard {description}"
   / "Word is, {description}" / "They say {description}").
 
-Spec at `docs/superpowers/specs/2026-05-09-mob-aliveness-1.7-world-facts-design.md`,
-plan at `docs/superpowers/plans/2026-05-09-mob-aliveness-1.7-world-facts.md`.
+Spec at `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.7-world-facts-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-09-mob-aliveness-1.7-world-facts.md`.
 
 ### Backfilled `context.md` for chunks 1.1–1.6
 
@@ -6186,8 +6186,8 @@ still triggers gear-grade crafts even when narrowly unprofitable
 
 Five-axis economy health scoring replacing the single weighted-fill score
 on the admin dashboard. Spec at
-`docs/superpowers/specs/2026-05-05-economy-scoring-refactor-design.md`,
-plan at `docs/superpowers/plans/2026-05-05-economy-scoring-refactor.md`.
+`docs/superpowers/specs/completed/2026-05-05-economy-scoring-refactor-design.md`,
+plan at `docs/superpowers/plans/completed/2026-05-05-economy-scoring-refactor.md`.
 
 ### What changed
 

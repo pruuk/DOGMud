@@ -6,7 +6,7 @@
 
 **Architecture:** New `Guild` fields + `CanWithdraw` helper + registry ops (deposit/withdraw/donate/take/delegate), all tested; command handlers are thin and route through the registry. Gold moves member-bank↔treasury; item `take` is loss-guarded via `StoreItem`.
 
-**Spec:** `docs/superpowers/specs/2026-07-15-guild-treasury-vault-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-15-guild-treasury-vault-design.md`
 
 ---
 

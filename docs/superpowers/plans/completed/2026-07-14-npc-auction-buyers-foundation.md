@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; `modules/auctions`; `items.ItemType`/`GetSpec().Value`; `util.Rand`; the module plugin save/load.
 
-**Spec:** `docs/superpowers/specs/2026-07-14-npc-auction-buyers-foundation-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-14-npc-auction-buyers-foundation-design.md`
 
 > **Test seam:** reuse the `fakeUsers(...)` helper from `auctions_test.go` (econ #1) for user bidders. NPC buyers are constructed directly in tests (no global lookup needed).
 

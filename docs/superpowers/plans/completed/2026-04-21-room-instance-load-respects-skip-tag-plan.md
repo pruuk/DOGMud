@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, `reflect` (already imported), `gopkg.in/yaml.v2`, `testify` for assertions.
 
-**Related spec:** `docs/superpowers/specs/2026-04-21-room-instance-load-respects-skip-tag-design.md`
+**Related spec:** `docs/superpowers/specs/completed/2026-04-21-room-instance-load-respects-skip-tag-design.md`
 
 **Branch:** `feature/fix-room-instance-load` (created; spec committed as `cd44df29`).
 
@@ -159,7 +159,7 @@ Replace the `if bytes, err := os.ReadFile(filepath); err == nil {` block with:
 		// restore every skip-tagged field so template-owned state
 		// (title/description/exits/nouns/zone/etc.) cannot be corrupted
 		// by stale data in pre-fix instance files. See
-		// docs/superpowers/specs/2026-04-21-room-instance-load-respects-skip-tag-design.md.
+		// docs/superpowers/specs/completed/2026-04-21-room-instance-load-respects-skip-tag-design.md.
 		if freshTemplate := LoadRoomTemplate(roomId); freshTemplate != nil {
 			restoreSkipTaggedFields(room, freshTemplate)
 		}

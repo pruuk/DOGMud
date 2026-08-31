@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files; `go run .` boot; `cartcheck`/`ValidateZoneConsistency`; mudagent harness + `questtoken` admin.
 
-**Spec:** `docs/superpowers/specs/2026-06-27-confluence-undercroft-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-27-confluence-undercroft-design.md`
 
 **Reserved IDs (verify with `python tools/id_inventory.py` at build):** rooms **6200–6217**, mobs/dialogue **9471+**, item **40142**, quest **74** (extend), buffs **94+** (only if the guardian debuffs).
 

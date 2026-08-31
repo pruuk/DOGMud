@@ -2,7 +2,7 @@
 
 > **Side quest from mob aliveness chunk 2.7.** Sub-chunk 4a of the
 > combat-state-machines redesign (master spec:
-> `docs/superpowers/specs/2026-05-13-combat-state-machines-design.md`).
+> `docs/superpowers/specs/completed/2026-05-13-combat-state-machines-design.md`).
 > First of six sub-chunks in the rich-grapple expansion of chunk 4
 > (see master-spec section "3a. Position rich-grapple expansion"):
 >

@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the chunk-1.1 substrate from
-`docs/superpowers/specs/2026-05-06-mob-aliveness-1.1-opinion-store-design.md`:
+`docs/superpowers/specs/completed/2026-05-06-mob-aliveness-1.1-opinion-store-design.md`:
 a per-`(mobId, userId)` signed-scalar disposition store with
 per-NPC YAML persistence, lazy decay toward a per-NPC default, an
 admin debug command, and a single combat hookup (player-initiated

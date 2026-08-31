@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML world/config data, Python balance model, Go table-driven tests, DOGMud playtest harness.
 
-**Spec:** [`docs/superpowers/specs/2026-08-17-u8-unified-action-cost-admission-design.md`](../specs/2026-08-17-u8-unified-action-cost-admission-design.md)
+**Spec:** [`docs/superpowers/specs/completed/2026-08-17-u8-unified-action-cost-admission-design.md`](../specs/2026-08-17-u8-unified-action-cost-admission-design.md)
 
 ## Global Constraints
 
@@ -134,7 +134,7 @@ Sharing the special-move and rhetoric bases is deliberate: these actions share c
 
 **Files:**
 - Modify: `tools/balance/unified_resolution_model.py`
-- Create: `docs/superpowers/plans/2026-08-17-u8-cost-model-evidence.md`
+- Create: `docs/superpowers/plans/completed/2026-08-17-u8-cost-model-evidence.md`
 - Test: `tools/balance/unified_resolution_model.py` (its built-in assertions and exit status)
 
 - [ ] **Step 1: Add the failing U8 acceptance assertions**
@@ -246,7 +246,7 @@ include the retune and its behavioral effect in every candidate package.
 
 - [ ] **Step 4: Record the evidence and chosen values**
 
-Create `docs/superpowers/plans/2026-08-17-u8-cost-model-evidence.md` containing:
+Create `docs/superpowers/plans/completed/2026-08-17-u8-cost-model-evidence.md` containing:
 
 - the exact shipped value for all six knobs in the table above;
 - per-fixture cost in ordinary-swing equivalents;
@@ -268,7 +268,7 @@ Expected: exit 0, all existing U6 and new U8 assertions pass, and the printed nu
 Commit:
 
 ```bash
-git add tools/balance/unified_resolution_model.py docs/superpowers/plans/2026-08-17-u8-cost-model-evidence.md
+git add tools/balance/unified_resolution_model.py docs/superpowers/plans/completed/2026-08-17-u8-cost-model-evidence.md
 git commit -m "test: model U8 action cost pressure"
 ```
 

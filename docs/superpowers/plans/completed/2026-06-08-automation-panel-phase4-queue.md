@@ -6,7 +6,7 @@
 
 **Architecture:** Mostly client-side (queue + processor + UI), reusing the shipped trigger engine + the `special-move` cooldown already in `GMCPStructs["Commands"].State.cooldowns`. Small server bits: a `QueueMode` field on `UserTrigger` (storage + GMCP payload; inbound already unmarshals the whole trigger) and `expireMessage` on two buffs. Parked locally.
 
-**Spec:** `docs/superpowers/specs/2026-06-08-automation-panel-phase4-queue-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-08-automation-panel-phase4-queue-design.md`.
 
 **Verified grounding:**
 - `users.UserTrigger` + `GMCPAutomation_Trigger` + `buildAutomationPayload(...)` are the Phase-3 structures to extend. Inbound `Char.Automation.Set` unmarshals the full `UserTrigger`, so a new field round-trips with NO `gmcp.go` change.

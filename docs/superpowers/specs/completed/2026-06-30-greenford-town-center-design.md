@@ -1,7 +1,7 @@
 # Greenford — District 2: Town Center — Design
 
 *Spec date: 2026-06-30. District 2 of 5 (city-wide layer:
-`docs/superpowers/specs/2026-06-30-greenford-citywide-design.md`; District 1
+`docs/superpowers/specs/completed/2026-06-30-greenford-citywide-design.md`; District 1
 River District merged `6b162857`). The civic hub of the university town — small
 and quiet (a deliberate contrast to the Confluence's grand plaza). Seeds ONE
 Q75 breadcrumb (the bookseller's "surveyor who retired early"); the quest itself

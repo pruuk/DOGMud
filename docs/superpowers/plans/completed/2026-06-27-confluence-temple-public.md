@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files; `go run .` boot test; `cartcheck` / `ValidateZoneConsistency`; the mudagent playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-27-confluence-temple-public-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-27-confluence-temple-public-design.md`
 
 **Reserved IDs (verified clean 2026-06-27):** rooms **6168–6183**, mobs/dialogue **9457–9463**, no new items (reuse), no new quest/buffs.
 

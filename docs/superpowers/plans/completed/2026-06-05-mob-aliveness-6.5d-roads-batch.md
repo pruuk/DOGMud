@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files; relationships + facts loaders.
 
-**Spec:** `docs/superpowers/specs/2026-06-05-mob-aliveness-6.5d-roads-batch-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-05-mob-aliveness-6.5d-roads-batch-design.md`
 
 ---
 

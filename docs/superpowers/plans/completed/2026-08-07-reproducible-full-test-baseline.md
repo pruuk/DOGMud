@@ -19,7 +19,7 @@ layer.
 PowerShell or a POSIX shell for verification.
 
 **Specification:**
-`docs/superpowers/specs/2026-08-07-reproducible-full-test-baseline-design.md`
+`docs/superpowers/specs/completed/2026-08-07-reproducible-full-test-baseline-design.md`
 
 **Status:** Implemented and verified 2026-08-07
 
@@ -650,7 +650,7 @@ Do not change Chunk 0.3 beyond the separately captured roadmap entry.
 If and only if the user explicitly authorizes commits:
 
 ```powershell
-git add provisioning/Dockerfile provisioning/Dockerfile.dockerignore compose.test.yml docs/guides/TESTING_GUIDE.md docs/roadmaps/ADVERSARIAL_REVIEW_REMEDIATION_ROADMAP.md docs/superpowers/specs/2026-08-07-reproducible-full-test-baseline-design.md docs/superpowers/plans/2026-08-07-reproducible-full-test-baseline.md
+git add provisioning/Dockerfile provisioning/Dockerfile.dockerignore compose.test.yml docs/guides/TESTING_GUIDE.md docs/roadmaps/ADVERSARIAL_REVIEW_REMEDIATION_ROADMAP.md docs/superpowers/specs/completed/2026-08-07-reproducible-full-test-baseline-design.md docs/superpowers/plans/completed/2026-08-07-reproducible-full-test-baseline.md
 git commit -m "build: add reproducible Linux race-test baseline"
 ```
 

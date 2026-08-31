@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (server: `internal/mapper`, `internal/exit`, `modules/gmcp`), vanilla JS + SVG (client: `_datafiles/html/public/static/js/gmcp.js`), Go `testing`.
 
-**Spec:** `docs/superpowers/specs/2026-06-06-mapper-leather-style-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-06-mapper-leather-style-design.md`
 **Visual source of truth (committed):** `docs/superpowers/specs/2026-06-06-mapper-leather-mockups/` — `01-surface-and-rooms.html`, `02-connection-types.html`, `03-emboss-craquelure.html`. These are runnable mockups; the client tasks **port their drawing code** (adapting the mock's flat `px(x)`/`py(y)` to the renderer's `room.x * this.spacing`).
 
 ---

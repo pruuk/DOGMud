@@ -17,7 +17,7 @@ a harness playtest. Controller drives all shell; content subagents Write/Edit YA
 **Tech Stack:** GoMud quest engine, DOGMud world YAML (`docs/schemas/dialogue.md`,
 quest examples), `tools/id_inventory.py`, the `/playtest` harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-24-bloom-trail-questline-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-24-bloom-trail-questline-design.md`.
 
 ---
 

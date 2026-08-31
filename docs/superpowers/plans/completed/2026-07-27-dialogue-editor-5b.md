@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, yaml.v2, in-package dialogue tests (plain `testing`, testify where already used), vanilla JS panel.
 
-**Spec:** `docs/superpowers/specs/2026-07-27-dialogue-editor-5b-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-27-dialogue-editor-5b-design.md`
 
 ---
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24. Files touched in `internal/buffs/`, `internal/actions/`, `internal/usercommands/`, `internal/mobcommands/`, `internal/hooks/`, `internal/characters/`, `internal/combat/`, `internal/rooms/`, `internal/mobs/`, `internal/configs/`. Content YAMLs in `_datafiles/world/default/buffs/`, `_datafiles/world/dogmud/schedules/thornwall_city/`. Helpfile templates in `_datafiles/world/dogmud/templates/help/`.
 
-**Spec:** `docs/superpowers/specs/2026-05-25-mob-aliveness-3.3-sleeping-wake-states-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.3-sleeping-wake-states-design.md`
 
 **Branch:** `feature/mob-aliveness-3.3-sleeping-wake-states` (already created; spec committed as `2a69d6de`).
 

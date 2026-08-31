@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, existing configs package
 
-**Spec:** `docs/superpowers/specs/2026-04-16-code-cleanup-1.3-config-balance-split-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-16-code-cleanup-1.3-config-balance-split-design.md`
 
 ---
 

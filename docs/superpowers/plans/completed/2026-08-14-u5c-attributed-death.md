@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25, `internal/characters` (pools, Life machine), `internal/events` (queue + listeners), `internal/hooks` (listeners and Life observers), YAML message pools under `_datafiles/world/dogmud/`.
 
-**Spec:** `docs/superpowers/specs/2026-08-14-u5c-attributed-death-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-14-u5c-attributed-death-design.md`
 **Roadmap:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` (slice U5c)
 
 ---
@@ -1011,7 +1011,7 @@ git commit -m "test(hooks): pin killer attribution and the PvP-stays-off invaria
 **Files:**
 - Modify: `internal/characters/die.go:19-21`
 - Modify: `internal/characters/context.md`, `internal/hooks/context.md`
-- Modify: `docs/superpowers/specs/2026-08-14-u5c-attributed-death-design.md`
+- Modify: `docs/superpowers/specs/completed/2026-08-14-u5c-attributed-death-design.md`
 
 - [ ] **Step 1: Fix `Die`'s doc comment**
 
@@ -1042,7 +1042,7 @@ The spec says the listener is registered "alongside the existing `Death_*` famil
 - [ ] **Step 4: Commit**
 
 ```bash
-git add internal/characters/die.go internal/characters/context.md internal/hooks/context.md docs/superpowers/specs/2026-08-14-u5c-attributed-death-design.md
+git add internal/characters/die.go internal/characters/context.md internal/hooks/context.md docs/superpowers/specs/completed/2026-08-14-u5c-attributed-death-design.md
 git commit -m "docs: record the centralised death path and drop the phantom precondition (U5c)"
 ```
 

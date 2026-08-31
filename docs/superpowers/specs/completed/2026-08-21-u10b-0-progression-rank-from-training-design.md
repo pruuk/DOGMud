@@ -988,7 +988,7 @@ rested on a claim about 641 data files that nothing had checked.
 
 The work now ships in phases, each independently shippable and reviewable, with
 later phases planned only after their predecessor lands. Index:
-`docs/superpowers/plans/2026-08-21-u10b-0-README.md`.
+`docs/superpowers/plans/completed/2026-08-21-u10b-0-README.md`.
 
 Phase A (15.1's fold plus the two accessors) is **value-neutral by
 construction** and changes no progression rate. That is both its safety property

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML
 
-**Spec:** `docs/superpowers/specs/2026-04-16-code-cleanup-1.4-dead-code-sweep-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-16-code-cleanup-1.4-dead-code-sweep-design.md`
 
 ---
 

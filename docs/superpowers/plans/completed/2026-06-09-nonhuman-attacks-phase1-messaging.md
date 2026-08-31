@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; existing `internal/species`, `internal/combat`, `internal/items` packages; YAML species + combat-message data files.
 
-**Spec:** `docs/superpowers/specs/2026-06-09-nonhuman-attacks-and-beast-moveset-design.md` (this plan implements **Layer 1** only).
+**Spec:** `docs/superpowers/specs/completed/2026-06-09-nonhuman-attacks-and-beast-moveset-design.md` (this plan implements **Layer 1** only).
 
 **Phase sequence (each its own plan):** **Phase 1 — natural-attack messaging (THIS PLAN)** → Phase 2 — anatomy gating of human technique moves + wake `hamstring` + retire `bite` special → Phase 3 — new beast moves (`throttle`, `pounce`, `maul`, `rake`, `gore`) → Phase 4 — AI profiles + per-mob override + full data audit. Phase 1 is independently ship-able.
 

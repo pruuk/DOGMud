@@ -26,7 +26,7 @@ tests + `go build`/`go vet`/`go test ./...` + targeted smoke tests
 (Sable portal refund, mudlog fatal exit, dashboard load, 5-min test-mud
 AI autonomous run).
 
-**Spec:** `docs/superpowers/specs/2026-04-17-code-cleanup-1.5-error-handling-audit-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-17-code-cleanup-1.5-error-handling-audit-design.md`
 
 **Branch:** `feature/stage-1.5-error-handling-audit` off `development`.
 
@@ -50,7 +50,7 @@ following known unrelated working-tree noise:
 - `.claude/settings.local.json` — dirty
 - `internal/usercommands/_datafiles/feedback/bugs.txt`, `suggestions.txt` — dirty
 - `"Screenshot 2026-04-17 084513.png"` — untracked
-- `docs/superpowers/specs/2026-04-17-code-cleanup-1.5-error-handling-audit-design.md` — untracked (the spec itself; will be added in Task 1 or equivalent; see note)
+- `docs/superpowers/specs/completed/2026-04-17-code-cleanup-1.5-error-handling-audit-design.md` — untracked (the spec itself; will be added in Task 1 or equivalent; see note)
 
 These are **out of scope** for 1.5. Do NOT stage or commit them at any
 point in this plan. If `git status` shows anything else dirty,

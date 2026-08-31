@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `internal/fileloader`, testify `assert` in `internal/rooms`, plain `testing` in `modules/gmcp`, vanilla JS in `zones.js`.
 
-**Spec:** `docs/superpowers/specs/2026-07-25-zone-lifecycle-config-design.md` §4
+**Spec:** `docs/superpowers/specs/completed/2026-07-25-zone-lifecycle-config-design.md` §4
 
 **Phase 1 is merged (`a245a63d2`).** This builds on it.
 

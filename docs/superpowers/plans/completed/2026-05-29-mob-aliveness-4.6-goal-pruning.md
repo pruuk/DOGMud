@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, testify-free table tests (this package uses plain `t.Error`), YAML persistence.
 
-**Spec:** `docs/superpowers/specs/2026-05-29-mob-aliveness-4.6-goal-pruning-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-29-mob-aliveness-4.6-goal-pruning-design.md`
 
 ---
 

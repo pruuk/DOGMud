@@ -1,6 +1,6 @@
 # Newbie Rework — Chunk 2 Sub-Spec: Spoke A (Martial)
 
-> Parent spec: `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+> Parent spec: `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 > (§6.3 spoke roster, §6.4 ring structure, §7.2 reward table). Chunk 1
 > (the hub) is complete and user-approved. This is the first spoke.
 

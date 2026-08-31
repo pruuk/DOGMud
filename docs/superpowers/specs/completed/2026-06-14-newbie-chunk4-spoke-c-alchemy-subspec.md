@@ -1,6 +1,6 @@
 # Newbie Rework — Chunk 4 Sub-Spec: Spoke C (Herbalism & Alchemy)
 
-> Parent spec: `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+> Parent spec: `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 > (§6.3 spoke roster, §6.4 ring structure, §7.2 reward table, §5 Tier-2
 > "shared cooldown" + "consumables" + "skullduggery/throw" lessons). Hub
 > (chunk 1), Spoke A Martial (chunk 2), and Spoke B Forge (chunk 3) are built +

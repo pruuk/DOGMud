@@ -1,7 +1,7 @@
 # Mob Aliveness 2.10 — Deferred Parity Gaps for Review
 
 Surfaced by the chunk 2.10 audit
-(`docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`).
+(`docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`).
 This doc holds every row classified as **Gap: defer** during the audit
 walk. Each entry below lists a proposed verdict; user triage picks one
 of:

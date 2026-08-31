@@ -18,7 +18,7 @@ controller (main loop) drives all shell — subagents are shell-denied in this e
 `tools/id_inventory.py`, `cartcheck`, `go test ./internal/characters/...`, the
 `/playtest` harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-22-np-temple-district-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-22-np-temple-district-design.md`.
 
 ---
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, YAML archetype trees, `reflect` / `testify` as in neighboring packages.
 
-**Related spec:** `docs/superpowers/specs/2026-04-21-tank-and-generic-archetypes-design.md`
+**Related spec:** `docs/superpowers/specs/completed/2026-04-21-tank-and-generic-archetypes-design.md`
 **Branch:** `feature/tank-and-generic-archetypes` (created; spec committed as `5d02a64d`).
 
 ---
@@ -1416,7 +1416,7 @@ In `C:\Users\Calabe Davis\.claude\projects\C--Users-Calabe-Davis-workspace-DOGMu
 (b) Add to `## Completed (2026-04-21)`:
 
 ```markdown
-- **tank_taunter + generic_fighter archetypes** — two new btree archetypes on the Phase 4 framework. Tank: interrupt → taunt-if-not-holding-aggro → bonus-kick → rally → warcry → bash/grapple/trip cascade; wired to flesh golem (305), earth (311), magma (314) elementals. Generic: interrupt → bonus-kick → bash/grapple/trip; wired to wolf (243) and zombie (301). New engine: `command_best_of` btree action (self-gates via new `actions.CommandIsReady` helper), 3 new conditions (`target_is_casting`, `target_aggro_not_on_me`, `target_not_standing`), shared `actions.Execute{Rally,Warcry}` + mob command wrappers (mob/player parity). Branch: `feature/tank-and-generic-archetypes`. Smoke-verified in game. Design in `docs/superpowers/specs/2026-04-21-tank-and-generic-archetypes-design.md`, plan in `docs/superpowers/plans/2026-04-21-tank-and-generic-archetypes-plan.md`. Follow-up `project_command_readiness_drift.md` flags the refactor to make CommandIsReady the single source of truth for command gating (user committed to next session).
+- **tank_taunter + generic_fighter archetypes** — two new btree archetypes on the Phase 4 framework. Tank: interrupt → taunt-if-not-holding-aggro → bonus-kick → rally → warcry → bash/grapple/trip cascade; wired to flesh golem (305), earth (311), magma (314) elementals. Generic: interrupt → bonus-kick → bash/grapple/trip; wired to wolf (243) and zombie (301). New engine: `command_best_of` btree action (self-gates via new `actions.CommandIsReady` helper), 3 new conditions (`target_is_casting`, `target_aggro_not_on_me`, `target_not_standing`), shared `actions.Execute{Rally,Warcry}` + mob command wrappers (mob/player parity). Branch: `feature/tank-and-generic-archetypes`. Smoke-verified in game. Design in `docs/superpowers/specs/completed/2026-04-21-tank-and-generic-archetypes-design.md`, plan in `docs/superpowers/plans/completed/2026-04-21-tank-and-generic-archetypes-plan.md`. Follow-up `project_command_readiness_drift.md` flags the refactor to make CommandIsReady the single source of truth for command gating (user committed to next session).
 ```
 
 (c) Under `## Future Work`, add (or confirm already present from this plan):

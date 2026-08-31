@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud fork), GMCP over WebSocket, vanilla JS + inline SVG (matching `gmcp.js`), `go test`.
 
-**Spec:** `docs/superpowers/specs/2026-07-22-admin-builder-page-1b-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-22-admin-builder-page-1b-design.md`
 
 **Verified seams:** `HandleIAC` switch `modules/gmcp/gmcp.go:216` (client→server cases; `userIdForConnection` `:517`); `dispatchGMCP` `gmcp.go:527`; `ConnectRoom(from,to,exitName,mapDirection...) error` `roommanager.go:833` (one-way — call twice for reciprocal); `NewRoom(zone) *Room` `rooms.go:126`; `GetNextRoomId() int` `roommanager.go:129`; `SaveRoomTemplate(Room)` `save_and_load.go:177`; `ValidatePlacement(plane,x,y,z,exclude) error` `internal/rooms/placement.go`; `/admin/*` route + `doBasicAuth` `internal/web/web.go:292`,`auth.go`; mapper crawl `Start` `internal/mapper/mapper.go:249`; `Zone.Map` snapshot `mapper.snapshot.go`,`gmcp.Zone.go`.
 

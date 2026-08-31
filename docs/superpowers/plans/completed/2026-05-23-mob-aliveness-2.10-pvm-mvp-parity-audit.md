@@ -19,7 +19,7 @@ review doc for user triage before any memory entries land.
 existing `internal/behaviortree/actions_*.go` registry pattern, YAML
 btree archetypes, Go standard testing.
 
-**Spec:** `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`
 
 **Branch:** `feature/mob-aliveness-2.10-parity-audit` (already created;
 spec committed as `b8b7f90e`).
@@ -50,7 +50,7 @@ spec committed as `b8b7f90e`).
 ### Task A1: Player-side audit
 
 **Files:**
-- Modify: `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md` (append "Player-side audit table" section)
+- Modify: `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md` (append "Player-side audit table" section)
 
 **This task can be run by a research subagent.** No Go changes.
 
@@ -108,7 +108,7 @@ the fix would be.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md
+git add docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md
 git commit -m "$(cat <<'EOF'
 docs(2.10): player-side parity audit table
 
@@ -126,7 +126,7 @@ EOF
 ### Task A2: Mob-side audit
 
 **Files:**
-- Modify: `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md` (append "Mob-side audit table" section)
+- Modify: `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md` (append "Mob-side audit table" section)
 
 **This task can run in parallel with A1.** Different file rows.
 
@@ -167,7 +167,7 @@ format as A1, with the "counterpart" column showing the player side.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md
+git add docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md
 git commit -m "$(cat <<'EOF'
 docs(2.10): mob-side parity audit table
 
@@ -1440,7 +1440,7 @@ inline" and we should re-triage.
 ### Task E1: Write the deferred-gap review doc
 
 **Files:**
-- Create: `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md`
+- Create: `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md`
 
 - [ ] **Step 1: Iterate over the audit tables**
 
@@ -1482,7 +1482,7 @@ After triage, the F-stage tasks write per-verdict memory entries.
 - [ ] **Step 3: Commit the doc**
 
 ```bash
-git add docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md
+git add docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md
 git commit -m "$(cat <<'EOF'
 docs(2.10): deferred parity gaps for review
 
@@ -1499,7 +1499,7 @@ EOF
 
 Post to the user:
 
-> "Deferred-gap review doc written and committed (`docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md`). Please go through it and tell me one of {accept-proposed-verdict, change-verdict, drop-entirely, fix-now-anyway} for each entry. Inline annotations or in-thread responses both work."
+> "Deferred-gap review doc written and committed (`docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-deferred-gaps-review.md`). Please go through it and tell me one of {accept-proposed-verdict, change-verdict, drop-entirely, fix-now-anyway} for each entry. Inline annotations or in-thread responses both work."
 
 **Wait for the user's response before proceeding to Stage F.**
 
@@ -1728,8 +1728,8 @@ style of the other shipped chunks (2.7, 2.8, 2.9). Cover:
 - Quick-patch count (one line listing the verbs patched inline)
 - Deferred-gap count + review doc location
 - Memory entries created
-- Spec at `docs/superpowers/specs/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`
-- Plan at `docs/superpowers/plans/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit.md`
+- Spec at `docs/superpowers/specs/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit-design.md`
+- Plan at `docs/superpowers/plans/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit.md`
 - Note: **Manual in-game smoke testing deferred to user** (per chunk
   2.9 precedent)
 
@@ -1819,7 +1819,7 @@ Issues fixed inline. No re-review needed.
 
 ## Execution handoff
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit.md`.** Two execution options:
+**Plan complete and saved to `docs/superpowers/plans/completed/2026-05-23-mob-aliveness-2.10-pvm-mvp-parity-audit.md`.** Two execution options:
 
 **1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration. Particularly well-suited here because A1 and A2 are parallelizable, B2–B7 are six near-identical TDD cycles ideal for parallel subagents (after B1 lands), and D's per-gap micro-template is naturally subagent-shaped.
 

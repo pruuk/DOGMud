@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing chunk-0 state framework, existing `internal/state/position/` (4a) + control axis (4b) + reach utility (4c), existing buff system, existing Life cascade (chunk 2).
 
-**Spec:** `docs/superpowers/specs/2026-05-18-state-chunk-4d-submission-rework-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-18-state-chunk-4d-submission-rework-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP.
 
@@ -703,7 +703,7 @@ Find the existing `Balance` struct (search for `ReachStandingGrappleRadius` to a
 
 ```go
 // Chunk 4d: submission tick knobs. See
-// docs/superpowers/specs/2026-05-18-state-chunk-4d-submission-rework-design.md
+// docs/superpowers/specs/completed/2026-05-18-state-chunk-4d-submission-rework-design.md
 SubmissionAttemptAlpha   ConfigFloat `yaml:"submission_attempt_alpha"`     // Min drift-margin (std devs) that opens a sub window (either side)
 SubmissionAttemptCritZ   ConfigFloat `yaml:"submission_attempt_crit_z"`    // Defender-side shortcut: drift z >= this opens a bottom-sub window regardless of margin
 SubSkillWeight           ConfigFloat `yaml:"sub_skill_weight"`             // Unarmed-combat skill contribution multiplier in the sub roll
@@ -735,7 +735,7 @@ Find the Balance section (search for `ReachUtilityFloor` to anchor — chunk-4c'
 # ── Chunk 4d: Submission tick ─────────────────────────────────
 # Per-round opportunistic submission attempts gated on the chunk-4b
 # control-axis drift roll. See spec
-# docs/superpowers/specs/2026-05-18-state-chunk-4d-submission-rework-design.md
+# docs/superpowers/specs/completed/2026-05-18-state-chunk-4d-submission-rework-design.md
 submission_attempt_alpha: 1.0          # Drift margin (std devs) that opens a sub window for the winning side
 submission_attempt_crit_z: 2.0         # Defender-crit shortcut for bottom-sub windows
 sub_skill_weight: 1.5                  # Unarmed-combat skill weight in the sub roll

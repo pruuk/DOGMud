@@ -15,7 +15,7 @@ ex-owner; an unsold seized lot is disposed (breaking the seize→unsold→re-sei
 
 **Tech Stack:** Go, GoMud event bus (`internal/events`), plugin config, testify, YAML persistence.
 
-**Spec:** `docs/superpowers/specs/2026-07-15-storage-seizure-auction-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-15-storage-seizure-auction-design.md`
 
 ---
 

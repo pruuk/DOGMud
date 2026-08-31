@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (internal/characters, internal/mutations), `go test`; a YAML item + buff. This is Plan A of the #22 sequence (then: the Crash Site Interior zone plan, which wires this in as a drop reward + the data-only suppression aura).
 
-**Reference spec:** `docs/superpowers/specs/2026-07-01-crash-site-interior-design.md` §6.
+**Reference spec:** `docs/superpowers/specs/completed/2026-07-01-crash-site-interior-design.md` §6.
 
 **Verified APIs (do not re-derive):**
 - `Character.Mutations map[string]int` (mutationId→level), `character.go:258`.

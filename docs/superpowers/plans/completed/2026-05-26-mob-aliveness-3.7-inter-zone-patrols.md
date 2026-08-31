@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24+, YAML config files, GoMud event system (`events.RegisterListener`), patrol primitive from chunk 3.4 (`internal/mobs/patrol.go`, `internal/hooks/NewRound_IdleMobs_patrol.go`).
 
-**Spec:** `docs/superpowers/specs/2026-05-26-mob-aliveness-3.7-inter-zone-patrols-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-26-mob-aliveness-3.7-inter-zone-patrols-design.md`
 
 **Branch:** `feature/mob-aliveness-3.7-inter-zone-patrols`
 
@@ -1807,7 +1807,7 @@ This plan was self-reviewed against the spec on 2026-05-26. Key checks:
 
 ## Execution handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-05-26-mob-aliveness-3.7-inter-zone-patrols.md`.
+Plan complete and saved to `docs/superpowers/plans/completed/2026-05-26-mob-aliveness-3.7-inter-zone-patrols.md`.
 
 Two execution options:
 

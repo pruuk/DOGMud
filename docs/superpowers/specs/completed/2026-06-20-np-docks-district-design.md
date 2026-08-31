@@ -3,11 +3,11 @@
 *Date: 2026-06-20 · District 1 of 7 (built first). Carries the supply-engine
 wiring + the Bloom Trail opening.*
 
-> **Parent designs:** master plan `docs/superpowers/specs/2026-06-20-new-plymouth-design.md`;
-> city-wide layer `docs/superpowers/specs/2026-06-20-new-plymouth-citywide-design.md`
+> **Parent designs:** master plan `docs/superpowers/specs/completed/2026-06-20-new-plymouth-design.md`;
+> city-wide layer `docs/superpowers/specs/completed/2026-06-20-new-plymouth-citywide-design.md`
 > (pull anchors §6, civic §4, supply §5, geometry §2); canon
 > `docs/new_plymouth_canon.md`. Pricing-fix wiring recipe:
-> `docs/superpowers/specs/2026-06-20-np-supply-pricing-fix-design.md` §2.
+> `docs/superpowers/specs/completed/2026-06-20-np-supply-pricing-fix-design.md` §2.
 >
 > **Scope:** ~30 rooms, the 7 Docks anchors (full life-sheets), the ambient/
 > transient dock crowd, the supply-engine wiring, two questlines (Dock Rat +

@@ -16,7 +16,7 @@ saves and gain-based mob caps replacing the value-based ones.
 **Tech Stack:** Go (`internal/characters`, `internal/configs`, `internal/mobs`,
 `internal/hooks`), plus `_datafiles/config.yaml`.
 
-**Spec:** `docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-21-u10b-0-progression-rank-from-training-design.md`
 sections 4, 5, 13.2, 13.5, 13.6, 15. **Phase index:**
 `2026-08-21-u10b-0-README.md` — read its Phase C block, which now records that
 **two of its four original corrections are dead**.

@@ -4,7 +4,7 @@
 **Branch:** `feature/mob-aliveness-1.3-crimes` (continuation from chunks 4a-4f)
 **Predecessor chunks:** 4f (closed 2026-05-19), 4e, 4d, 4c, 4b-fixup-2, 4b-fixup, 4b, 4a, 3, 2, 1, 0
 **Successor chunks:** 6 (Perception). Chunk 5 closes the combat-state-machines arc except for Perception.
-**Master spec:** `docs/superpowers/specs/2026-05-13-combat-state-machines-design.md` §6
+**Master spec:** `docs/superpowers/specs/completed/2026-05-13-combat-state-machines-design.md` §6
 
 ---
 

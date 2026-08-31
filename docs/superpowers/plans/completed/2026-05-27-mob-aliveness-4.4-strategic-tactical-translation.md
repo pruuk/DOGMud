@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25 · existing `mudlog`, `configs`, `util`, `mobs`, `goals`, `behaviortree`, `items`, `rooms`, `factions`, `shops`, `crafting`, `users`, `opinions` packages.
 
-**Spec:** `docs/superpowers/specs/2026-05-27-mob-aliveness-4.4-strategic-tactical-translation-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-27-mob-aliveness-4.4-strategic-tactical-translation-design.md`
 
 ---
 
@@ -39,7 +39,7 @@ Create `internal/planners/planners.go`:
 // automatically on goal switch via ClearPlanState (registered into
 // goals.Recompute via SetPlanStateClear at boot).
 //
-// See docs/superpowers/specs/2026-05-27-mob-aliveness-4.4-strategic-tactical-translation-design.md
+// See docs/superpowers/specs/completed/2026-05-27-mob-aliveness-4.4-strategic-tactical-translation-design.md
 package planners
 
 import (
@@ -3390,7 +3390,7 @@ Cover (~100-150 lines):
 - MiscData convention: `plan:<goal_type>:<key>` prefix — wiped on goal switch by `ClearPlanState` registered into `goals.Recompute` via main.go.
 - Helper adapter pattern: TODO-ADAPT shims wrap subsystems (shops, factions, room/zone, items). Local-impact when subsystem APIs change.
 - Out-of-scope: reactive goal generation (4.5), satisfaction sweep (4.6), planner visualization, general-purpose planner.
-- Reference the spec: `docs/superpowers/specs/2026-05-27-mob-aliveness-4.4-strategic-tactical-translation-design.md`.
+- Reference the spec: `docs/superpowers/specs/completed/2026-05-27-mob-aliveness-4.4-strategic-tactical-translation-design.md`.
 
 - [ ] **Step 22.2: Commit**
 

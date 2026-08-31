@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files, Go `go test ./...`, local server boot smoke.
 
-**Spec:** `docs/superpowers/specs/2026-07-12-npc-mutation-kits-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-12-npc-mutation-kits-design.md`
 
 **Conventions (CLAUDE.md):**
 - Boot smoke: `rm -rf _datafiles/world/dogmud/mobs.instances/* _datafiles/world/dogmud/rooms.instances/*` then `go run .`; wait for `Server Ready` with no `panic:`. (In this env, wait via a `ping -n`-spaced poll, not a busy loop; kill with `taskkill //F //IM go.exe`.)

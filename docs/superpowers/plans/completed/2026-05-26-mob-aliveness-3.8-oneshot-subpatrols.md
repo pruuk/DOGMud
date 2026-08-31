@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24+, YAML patrol files, GoMud event system (`events.RegisterListener`), patrol primitive from chunks 3.4 + 3.7 (`internal/mobs/patrol.go`, `internal/hooks/NewRound_IdleMobs_patrol.go`).
 
-**Spec:** `docs/superpowers/specs/2026-05-26-mob-aliveness-3.8-oneshot-subpatrols-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-26-mob-aliveness-3.8-oneshot-subpatrols-design.md`
 
 **Branch:** `feature/mob-aliveness-3.8-oneshot-subpatrols`
 
@@ -2248,7 +2248,7 @@ The plan as written:
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-05-26-mob-aliveness-3.8-oneshot-subpatrols.md`. Two execution options:
+Plan complete and saved to `docs/superpowers/plans/completed/2026-05-26-mob-aliveness-3.8-oneshot-subpatrols.md`. Two execution options:
 
 **1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration.
 

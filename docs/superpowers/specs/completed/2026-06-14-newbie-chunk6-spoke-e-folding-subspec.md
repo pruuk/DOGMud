@@ -1,6 +1,6 @@
 # Newbie Rework — Chunk 6 Sub-Spec: Spoke E (The Folding / Magic)
 
-> Parent spec: `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+> Parent spec: `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 > (§6.3 roster, §6.4 rings, §7.2 rewards, §5 Tier-2 cast/channels/concentration/
 > willpower lessons + §4.4 Folding lore). Hub + Spokes A/B/C/D built, verified,
 > committed. This is the **fifth spoke**. Same gates: **rooms+nouns → REVIEW →

@@ -574,7 +574,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/noncombat_questgiver.yaml`:
 # the dispatcher falls through to dialogue patterns). This archetype
 # covers only non-dialogue events.
 #
-# Spec: docs/superpowers/specs/2026-04-24-sanctum-basin-mob-audit-design.md
+# Spec: docs/superpowers/specs/completed/2026-04-24-sanctum-basin-mob-audit-design.md
 
 tree:
   type: selector
@@ -614,7 +614,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/noncombat_shopkeeper.yaml`:
 # future shop-specific events (purchase reactions, restock flavor)
 # can attach here without disturbing questgiver NPCs.
 #
-# Spec: docs/superpowers/specs/2026-04-24-sanctum-basin-mob-audit-design.md
+# Spec: docs/superpowers/specs/completed/2026-04-24-sanctum-basin-mob-audit-design.md
 
 tree:
   type: selector
@@ -651,7 +651,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/noncombat_passive.yaml`:
 #
 # No dialogue, no give handler — just ambient reactions.
 #
-# Spec: docs/superpowers/specs/2026-04-24-sanctum-basin-mob-audit-design.md
+# Spec: docs/superpowers/specs/completed/2026-04-24-sanctum-basin-mob-audit-design.md
 
 tree:
   type: selector
@@ -684,7 +684,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/combat_passive.yaml`:
 # (a) classification/documentation, and (b) explicitly preventing any
 # future archetype-inheritance logic from picking a tactical default.
 #
-# Spec: docs/superpowers/specs/2026-04-24-sanctum-basin-mob-audit-design.md
+# Spec: docs/superpowers/specs/completed/2026-04-24-sanctum-basin-mob-audit-design.md
 
 tree:
   type: selector

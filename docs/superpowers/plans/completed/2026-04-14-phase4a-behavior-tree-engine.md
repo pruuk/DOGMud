@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML, existing event/rooms/mobs/characters packages
 
-**Spec:** `docs/superpowers/specs/2026-04-14-phase4a-behavior-tree-engine-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-14-phase4a-behavior-tree-engine-design.md`
 
 ---
 

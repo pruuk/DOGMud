@@ -2916,7 +2916,7 @@ Kill the server.
 
 - [ ] **Step 3: Run the smoke test plan from the spec**
 
-The smoke test plan is documented in section "Smoke test plan" of `docs/superpowers/specs/2026-05-22-mob-aliveness-2.8-scout-track-scan-design.md`. Run all scenarios PLUS the regression-check scenario for the previously-reported "tracking forever" bug:
+The smoke test plan is documented in section "Smoke test plan" of `docs/superpowers/specs/completed/2026-05-22-mob-aliveness-2.8-scout-track-scan-design.md`. Run all scenarios PLUS the regression-check scenario for the previously-reported "tracking forever" bug:
 
 1. Scout idle-scan loop (goblin_scout 217)
 2. Scout-room search (sneak into goblin_scout's room)

@@ -15,7 +15,7 @@ primitives for the caravan crew's coordinated movement and combat.
 
 This spec is **Stage 2** of a four-stage effort. Stage 1 (NPC party
 system) shipped 2026-04-27 — see
-`docs/superpowers/specs/2026-04-27-npc-party-system-design.md`.
+`docs/superpowers/specs/completed/2026-04-27-npc-party-system-design.md`.
 
 1. ✅ NPC groups (Stage 1 — shipped)
 2. **Basic caravan** (THIS SPEC) — Thornwall↔Stillwater route + restock-on-visit

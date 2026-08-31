@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML; `go run`/built binary boot; `cartcheck`; mudagent harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-30-greenford-river-district-design.md` (city-wide: `2026-06-30-greenford-citywide-design.md`).
+**Spec:** `docs/superpowers/specs/completed/2026-06-30-greenford-river-district-design.md` (city-wide: `2026-06-30-greenford-citywide-design.md`).
 
 **Reserved IDs:** rooms **6278–6287**, mobs/dialogue **9501–9508**, items **40152–40154**. No quest, no faction, no buffs.
 

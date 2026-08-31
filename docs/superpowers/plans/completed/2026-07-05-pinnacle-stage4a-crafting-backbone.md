@@ -29,7 +29,7 @@ Confluence's Artisans' Quarter houses the stations.
 **Tech Stack:** Go (1 recipe-flag task), YAML data (items, recipes, rooms,
 mob, schedule), existing crafting/station/schedule systems.
 
-**Spec:** `docs/superpowers/specs/2026-07-04-pinnacle-chase-items-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-04-pinnacle-chase-items-design.md`
 (§3 Veyra frame, §4.4 skill gating, §5 bills of materials). **Refs:**
 `docs/schemas/pinnacle-items.md` (reagent tags), `docs/schemas/room.md`,
 `docs/schemas/schedule.md`.
