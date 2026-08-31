@@ -3,14 +3,20 @@ zone: Pothole Coulee
 behavior_archetype: generic_fighter
 archetype: fighting
 statpool: 25
-itemdropchance: 15
+itemdropchance: 100
 hostile: false
 maxwander: 2
 groups:
   - beast
   - steppe
 items:
-  - 40014   # raw meat (drops on death)
+  # Raw meat is QUEST-CRITICAL: quest 42 "The Hunt" tells the player "it drops
+  # raw meat; pick it up" and then asks them to craft grilled meat from it.
+  # This sat at itemdropchance 15 until 2026-08-31, so five in six kills gave a
+  # newbie nothing to cook and no hint that grinding was expected. Meat is not
+  # valuable enough to be worth gating the newbie chain on a dice roll.
+  # Do not lower this without giving quest 42 its own guaranteed drop first.
+  - 40014   # raw meat (drops on death, always)
 character:
   name: Pronghorn
   description: |
