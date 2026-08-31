@@ -132,6 +132,23 @@ pairs are the same three slots with domain labels on top.
 Grapple's controller/controlled and combat's attacker/defender remain as
 **authoring aliases**, so no shipped file is rewritten to make the flip work.
 
+⚠️ **But a key's NAME does not determine its role. The STORE does.** M0 proved
+it: `text` is dialogue content in 286 files and genuine narration in
+behaviour-tree say/emote actions, NPC-to-NPC conversation lines and `npc_say`
+scripted lines. `hints` is dialogue content everywhere except the top-level
+`hints.yaml`, where the same spelling carries periodic gameplay tips broadcast
+by `internal/hooks/NewRound_BroadcastHints.go`.
+
+**One spelling, two roles, and the alias table cannot express that**, because it
+maps name to role. So the M4 schema must key role on **(store, key)**, not on
+key alone, and the migration must not assume a global name-to-role mapping
+exists. This was an unexamined assumption in the approved design and it is
+false.
+
+M0's guard records the majority scope per spelling and notes the outlier in the
+`Reason` string, which is the best a spelling-keyed registry can do. **That
+limitation is the registry's, not the schema's** — do not carry it into M4.
+
 ### The Observer role carries a perception verdict
 
 Computed once per observer per event, read by **every** consumer: the narration
@@ -282,6 +299,41 @@ that fails when an unregistered text-bearing surface appears.** Completeness has
 to be testable, not asserted, or this inventory decays exactly as the quell claim
 did.
 
+### M0b — The live defect slice *(added 2026-08-31, owner-approved)*
+
+**This stage did not exist in the approved design. M0's audit created it.**
+
+The original plan put every quality fix in M5, after four stages of refactoring.
+That is the wrong trade for defects that are hurting play **now**, and the audit
+found two of them.
+
+🔑 **The decisive argument is about the snapshot, not about urgency.** The
+empty-room-line bug **deletes messages**. A snapshot taken before it is fixed
+would freeze the silence as the baseline, and every later stage would then be
+verified against a broken truth. **Fix the silencing first, then snapshot what
+the game should actually say.**
+
+Two items, both player-visible today, both small, neither owner-deferred:
+
+1. **An empty room line silences the event for everyone**, six sites.
+   `if triad.ToRoom == "" { return }` discards the attacker and defender lines
+   along with the missing room line. Owner-reported symptom: *"a lot of spells
+   early on seem to just stop happening from the player's point of view."*
+2. **Sleeping players receive every visual broadcast.** The delivery pipeline
+   has no concept of `buffs.Sleeping` at all. A tactical fix here (teach the
+   sight predicate about sleep) is correct and cheap; the full three-way
+   perception verdict still lands in M2/M4, and this fix must not be written in
+   a way that makes that consolidation harder.
+
+⚠️ **Deliberately NOT pulled forward, because the owner sequenced them
+elsewhere:**
+
+- the `{source_plain}` anonymizer leak — owner held it for M5;
+- the crime-in-the-dark gate — M5, and blocked on the `NightVision` decision.
+
+Moving those without being asked would be overriding a ruling, not accelerating
+a fix.
+
 ### M1 — The snapshot harness
 
 Freeze what every narration path emits today, including paths nobody plays. No
@@ -300,13 +352,34 @@ passes or fails by order). The existing `indexOverride` on
 `RenderDefenseMessage` is the same idea and becomes redundant once the picker is
 injected.
 
-Captured at two levels:
+Captured at **three** levels:
 
 1. **Raw render** — every `(store × event key × band × role)` tuple, tokens
    substituted, all roles from the same index.
 2. **Post-pipeline** — the same events at each sight verdict (full / shapes /
    none) and each verbosity tier, catching "the text survived but the delivery
    changed".
+3. 🔴 **In-code Go text.** Added 2026-08-31 after M0 measured it.
+
+⚠️ **M1 IS BIGGER THAN THIS SPEC ORIGINALLY ASSUMED.** The harness was framed
+around narration *stores* — data files with keys. M0's Go walk found **275 Go
+files carrying player-facing ANSI text with no data file behind them, across
+2,257 lines.** That is a surface no data-side method can see, and it is larger
+than several of the data stores combined.
+
+The original figure in this spec, "54 Go files carry in-code text pools",
+counted only `[]string{` literals and was low by a factor of five.
+
+**Consequences for planning M1:**
+
+- Snapshotting "every narration path" is not the same job as snapshotting the
+  stores. In-code text has no key, no band, and often no audience split, so the
+  `(store × key × band × role)` tuple does not describe it.
+- These sites are **exactly the ones that will be hardest to migrate later**,
+  because there is no data file to move. Knowing their shape before M2 designs
+  the core is worth more than snapshotting them exhaustively.
+- **Plan M1 against a measured inventory of those 275 files, not against an
+  estimate.** `tools/messaging_surface_audit.py` already lists them.
 
 **Empty cases must be asserted to stay empty.** `RenderDefenseMessage` returns an
 empty triad on a missing or malformed pool; a refactor that makes that path start
