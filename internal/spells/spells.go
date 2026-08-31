@@ -40,6 +40,7 @@ type SpellData struct {
 	EffectDuration     int       `yaml:"effect_duration,omitempty"`      // DoT tick count (default 0 = use 3)
 	BuffIds            []int     `yaml:"buff_ids,omitempty"`             // Buff IDs to apply (for "buff" effect type)
 	QuestRequired      string    `yaml:"quest_required,omitempty"`       // Quest token required before spell can be discovered
+	MobOnly            bool      `yaml:"mob_only,omitempty"`             // Boss/NPC signature ability: players may never DISCOVER it. See GetEligibleSpells.
 	NoDamageInterrupt  bool      `yaml:"no_damage_interrupt,omitempty"`  // Telegraphed casts: skip damage/position concentration-break (still interrupted by the disruptor system)
 	IgnoreMoveCooldown bool      `yaml:"ignore_move_cooldown,omitempty"` // Scripted boss abilities: bypass the shared special-move cast cooldown (btree controls cadence)
 
@@ -394,10 +395,43 @@ func RequiredSkillFor(difficulty int) int {
 // When schools are provided, only spells belonging to at least one of those schools are returned.
 // When schools is empty, all non-manifestation spells are returned (backward compat).
 // Spells with QuestRequired set are never returned by discovery.
+// GetEligibleSpells returns what a PLAYER may organically discover.
+//
+// ⚠️ MOB-ONLY SPELLS ARE EXCLUDED HERE, and the default is deliberately the
+// safe one: a mob caller must opt in via GetEligibleSpellsForMob. Owner found
+// Meirok had learned `core-drain` in play — the Core Guardian's signature
+// recharge, whose own description reads "Mob-castable only ... not a spell any
+// living caster could learn". That was prose; nothing enforced it.
+//
+// The three self-declared mob-only spells carry three DIFFERENT effect types
+// (core-discharge damage, core-drain drain_area, repair-pulse heal), so there
+// was no incidental property to filter on — hence the explicit MobOnly flag.
+// repair-pulse is difficulty 10, so it was reachable by a near-novice.
+//
+// ⚠️ This is NOT a U10b-3 regression. RequiredSkillFor's own comment already
+// names Core Discharge and Core Drain as spells the OLD fold ladder let a
+// spellcasting-0 novice discover. U10b-3 raised the bar from 0 to 45 and
+// narrowed the exposure; it never closed it. Meirok at spellcasting 51 walked
+// straight over the new bar.
 func GetEligibleSpells(spellBook map[string]int, skillLevel int, schools ...string) []string {
+	return eligibleSpells(spellBook, skillLevel, false, schools)
+}
+
+// GetEligibleSpellsForMob is the same pool with mob-only spells ALLOWED. Mobs
+// learn organically through the same seam (NewRound_DoCombat_helpers.go), and
+// excluding these would stop a Core Guardian ever learning its own ability.
+func GetEligibleSpellsForMob(spellBook map[string]int, skillLevel int, schools ...string) []string {
+	return eligibleSpells(spellBook, skillLevel, true, schools)
+}
+
+func eligibleSpells(spellBook map[string]int, skillLevel int, allowMobOnly bool, schools []string) []string {
 	var eligible []string
 	for id, sp := range allSpells {
 		if _, known := spellBook[id]; known {
+			continue
+		}
+		// Boss/NPC signature abilities are never discovered by players.
+		if sp.MobOnly && !allowMobOnly {
 			continue
 		}
 		// Quest-gated spells are never discovered organically.

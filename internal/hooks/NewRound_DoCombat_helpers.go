@@ -862,7 +862,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 			})
 			// Traditional school discovery.
 			if util.Rand(100) < int(traditionalChance) {
-				eligible := spells.GetEligibleSpells(mob.Character.SpellBook, castSkillLevel,
+				eligible := spells.GetEligibleSpellsForMob(mob.Character.SpellBook, castSkillLevel,
 					spells.SchoolElemental, spells.SchoolEnhancement, spells.SchoolMental, spells.SchoolVital)
 				if len(eligible) > 0 {
 					pick := eligible[configs.WeightedDiscoveryPick(spells.DifficultiesFor(eligible), util.Rand)]
@@ -880,7 +880,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 					Skill:      manifestSkillLevel,
 				})
 				if util.Rand(100) < int(manifestChance) {
-					eligible := spells.GetEligibleSpells(mob.Character.SpellBook, manifestSkillLevel,
+					eligible := spells.GetEligibleSpellsForMob(mob.Character.SpellBook, manifestSkillLevel,
 						spells.SchoolManifestation)
 					if len(eligible) > 0 {
 						pick := eligible[configs.WeightedDiscoveryPick(spells.DifficultiesFor(eligible), util.Rand)]

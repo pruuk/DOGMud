@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-08-31: Boss abilities are no longer learnable
+
+A few abilities belong to specific monsters and were never meant to be learned
+by anyone else. The Core Guardian's draining recharge was one of them. Its own
+description said as much, but nothing actually stopped a caster from picking it
+up while studying, and at least one did.
+
+Three of these are now properly off limits. Monsters still learn and use them
+as they always have. If you already know one, it stays in your book for now and
+does nothing useful when cast, since the effect was only ever wired up for the
+creature that owns it.
+
 ## 2026-08-30: Every hand you have now defends you
 
 If you have grown extra arms, they were not helping you defend. A shield
