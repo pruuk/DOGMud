@@ -50,13 +50,16 @@ below.
 
 ## Queued Arcs
 
-All four are owner-approved in principle. None has a spec or a plan yet.
+All are owner-approved in principle. None has a spec or a plan yet.
 
-⚠️ **The order is only partly pinned.** On 2026-08-26 the owner sequenced
-`U11 → messaging → behavior → config audit`. Spell scaling was then approved on
-2026-08-29 as "after the unified contest resolution arc" without being placed
-against messaging, so **spell-scaling versus messaging is an open question, not
-a settled order.** Pin it before starting either.
+✅ **Order settled 2026-08-31: MESSAGING IS NEXT.** The owner resolved the
+open spell-scaling-versus-messaging question in messaging's favour. Two arcs
+now have work explicitly parked behind them: **behavior** carries chunk 5.13
+and, with a quest-mechanism arc, the whole of Wave 7.
+
+Working order: **messaging → behavior → quest mechanisms → config audit**,
+with spell scaling unplaced against the tail of that list. Wave 7 (admin
+builder) comes after behavior and quest mechanisms.
 
 1. **Spell scaling unification.** Same shape as the resolution arc: many call
    sites hand-rolling one job. Magnitude, effect strength and duration are
@@ -72,28 +75,72 @@ a settled order.** Pin it before starting either.
    different in each arm. `calcSpellDuration` (`:34`) is the nearest existing
    seam, with 7 non-test callers. Do **not** "fix" `SpellData.CasterStatValue`
    — that part is already consistent.
-2. **Messaging unification.** Previously filed under "Deferred Follow-ons"; the
-   owner promoted it to an arc on 2026-08-26. Two parts. The concrete defect:
-   **quell and defy are unnarrated.** `items.DefenseType` defines only dodge,
-   parry and block, `defense-messages/` holds only those three files, and
-   `sendDefenseMessages` (`internal/combat/combat_helpers.go:1108`) switches on
-   the same three, so quelling a spell or defying a taunt falls through to the
-   generic verb **"counter"**. Not broken, just generic, and never observed in
-   play because the U7 playtest never met a mental or social attacker. The
-   larger part: message files sit in five places (`combat-messages/`,
-   `defense-messages/`, `taunt-messages/`, `messaging/`, and a bare
-   `casting-messages.yaml` at the tree root), combat-state Perception shipped
-   dormant with no consumer, and ownership of melee, spell, rhetoric,
-   mob-command and data-driven defence narration is scattered. Any consolidation
-   must check each loader's `Filepath()` first: a path mismatch is a **startup
-   panic**, not a soft failure.
+2. **Messaging unification.** Promoted from "Deferred Follow-ons" by the owner
+   on 2026-08-26.
+
+   🔴 **TWO LONG-STANDING CLAIMS IN THIS ENTRY WERE STALE AND ARE CORRECTED
+   HERE (verified against source 2026-08-31).** They had been repeated for
+   weeks and would have set this arc's scope wrongly:
+
+   - ❌ *"Quell and defy are unnarrated and fall back to the verb counter."*
+     **FALSE.** U6b/U8 shipped them. `items.DefenseType` now defines
+     `DefenseQuell`, `DefenseDefy` **and** four counter pools;
+     `defense-messages/` holds **nine** files including `quell.yaml`,
+     `defy.yaml` and `counter-{melee,ranged,quell,defy}.yaml`, with authored,
+     banded, actor-aware text. They render through
+     `combat.RenderChannelDefenceMessages` → `items.RenderDefenseMessage`,
+     called from **nine production sites** (spell resolution, taunt, shoot,
+     throw, and the skill-move defence path, on both the user and mob sides).
+     The `"counter"` fallback that fed the claim lives in `sendDefenseMessages`,
+     which is the **melee** path, where quell and defy can never appear because
+     they are not in melee's defence set — and the code says so: *"Unreachable
+     today, but made unreachable by construction rather than by argument."*
+   - ❌ *"Combat-state Perception shipped dormant and has no consumer."*
+     **FALSE.** `messaging.CanSeeClearly` / `CanSeeShapes` read
+     `Perception.State()` on every sight-gated broadcast, `combat_fire.go:250`
+     reads it, and `characters/buffs.go` drives it from the blind buffs.
+
+   **What is actually left, verified:**
+
+   - **Two coexisting defence-narration paths with different band semantics.**
+     Melee goes `sendDefenseMessages` → `items.GetDefenseMessage`, banded on
+     **`defRoll.ZScore`**. Every other channel goes
+     `RenderChannelDefenceMessages` → `items.RenderDefenseMessage`, banded on
+     **`NormalizedDefenceMargin`** plus a defensive-crit flag. Same authored
+     data shape, two renderers, two band inputs.
+   - **Two `DefenseType` enums bridged by a raw string cast.**
+     `characters.DefenseDodge/Parry/Block/Quell/Defy` are bare `string`
+     constants; `items.DefenseType` is its own named type. They are joined by
+     `items.DefenseType(out.DefenceType)` at `defence_multiplier.go:290`, which
+     compiles for any string and fails silently to an empty pool if the two
+     ever drift.
+   - **Message files sit in five places:** `combat-messages/` (20 files),
+     `defense-messages/` (9), `taunt-messages/` (1), `messaging/` (1), and a
+     bare `casting-messages.yaml` at the tree root. Any consolidation must
+     check each loader's `Filepath()` first: a path mismatch is a **startup
+     panic**, not a soft failure.
+   - **`Anonymize` only strips ANSI-tagged names.** Its own docstring admits
+     bare names in prose leak through. One such leak was found and fixed in
+     `go.go` on 2026-08-31 (PR #102), which suggests there are others.
+   - **`internal/messaging/context.md` documents a wrap stage that does not
+     run.** It lists wrap as pipeline stage 6, but `shouldWrap` returns false
+     for every category and says so. Belongs with chunk 5.12 (phantom APIs in
+     `context.md` files).
 3. **Behavior unification.** Mob behavior is expressed through at least six
    unrelated mechanisms with no single model: legacy AI profiles
    (`internal/combat/ai.go`), behavior trees, `idlecommands`, JS `scriptag`
    scripts, schedules and patrols. Owner's target is **two** systems, not one.
    Related known defect: 114 mobs' `aiprofile` values fall through silently to
    the default.
-4. **`config.yaml` audit.** ⚠️ **Not the same audit U11 already did.** U11 owned
+4. **Quest mechanisms.** ⚠️ **NAMED BY THE OWNER 2026-08-31, NOT YET SCOPED.**
+   Raised as a reason to park Wave 7: the admin builder edits quests, so
+   reviewing it before quest mechanisms are reshaped reviews a surface that is
+   about to move. **Get the scope from the owner before planning anything** —
+   nothing in the repo says what "quest mechanism arc" covers, and guessing at
+   it would be inventing a roadmap. Likely inputs when it is scoped: the quest
+   flags system, the `give.go` transfer-before-handler gotcha, the re-grant
+   prevention SOP, and `questRequired` versus the expiry-prone `requires`.
+5. **`config.yaml` audit.** ⚠️ **Not the same audit U11 already did.** U11 owned
    an *organisation* pass over the file — grouping, ordering, comments, stale
    keys, drift flagging — explicitly **no value changes**, and it removed six
    orphaned keys and filed five inert knobs. What remains is the *correctness*
@@ -104,6 +151,79 @@ a settled order.** Pin it before starting either.
    repo-wide, then fix the five knobs U11 filed. **Grep the YAML tag, not the Go
    field name** — a `SubGoldLossFraction` claim was retracted for exactly that
    mistake.
+
+## Owner Playtest, 2026-08-30 — ALL feel-checks resolved
+
+✅ **The owed feel-check list is now EMPTY.** All of them were closed by the
+owner playing, not by reasoning. Recorded here so none is re-run, and so nobody
+re-derives a "concern" that play has already answered.
+
+- ✅ **Weather tempo — FINE.** The slowed cadence from weather polish sub-project
+  A reads correctly in play. Closed.
+- ✅ **ANSI recolors — GOOD.** The WCAG contrast pass on the eight low-legibility
+  readable aliases is confirmed by eye. This one could never be closed by the
+  harness, which strips color. Closed.
+- ✅ **The Elemental Queen — "fine if tough".** The last mandatory pre-deploy
+  item, run late, and it **does** close quell's verification. An earlier draft
+  of this entry said it did not, on the since-disproved belief that quell had no
+  messages; quell has authored, banded text and nine production render sites.
+  See the correction under the messaging arc.
+- 🔴 **NEW: indoor weather prose is written for a house, and most indoor rooms
+  are caves.** Owner: the indoor messages "are a bit nonsensical". Verified:
+  exactly five biomes carry `indoor: true` — `cave`, `dungeon`, `fort`, `house`,
+  `spiderweb` — and the room counts are **cave 123, fort 22, house 15, dungeon 1,
+  spiderweb 0**. Every one of the 15 emote files (9 under
+  `_datafiles/world/dogmud/weather/emotes/` plus 6 seasonal ones under
+  `emotes/seasons/`) authors only an `indoor: default:` pool, and every line in
+  those pools assumes a built structure: roof, walls, windowpanes, glass,
+  shutters, rafters, eaves, floorboards, nails in wood, a hearth. In a cave,
+  "Frost creeps across the inside of the glass in feathered white ferns" and
+  "a gritty film settles over everything no matter how tight the shutters" are
+  nonsense — and caves are **77% of all indoor rooms**.
+  **No code change needed.** `Indoor` is already `map[string]IndoorPool` keyed
+  by biome, and `bandedSectionLines`
+  (`modules/weather/content/emotes.go:129`) resolves biome then falls back to
+  `default`. The fix is authoring a `cave:` pool in each file; `dungeon` and
+  `spiderweb` are one room and zero rooms, so they can ride the default.
+  Content work, so it ends with the adversarial playtest gate.
+
+- ✅ **Newbie aggression — FINE in game (owner, 2026-08-31).** Closed. Context
+  for anyone tempted to reopen it: the 2026-07-10 `LegacyHostile` fix restored
+  attack-on-entry for 158 mobs after two months dead, and the open question was
+  whether the newbie zones had become too punishing. Play says no.
+- ✅ **Q34 bandit pacing — FINE (owner, 2026-08-31).** *"I killed them
+  yesterday."* Closed. It was filed from the 2026-07-13 feel test as a roughly
+  90-round grapple slog against the Bandit Scout in room 5232; the intervening
+  combat work has evidently resolved it.
+
+🔴 **One bug came out of the same playtest and is NOT closed — toxicity.** See
+Queued Fixes below.
+
+## Queued Fixes
+
+- **Toxicity does nothing observable (owner, 2026-08-31).** Deferred by the
+  owner to be picked up later, not dropped. Three independent causes, all
+  verified; the wiring itself is fine and this is NOT the unexported-yaml-field
+  trap.
+  1. **Nine of the 34 drinkable items carry no `toxicity:` field at all**, so
+     `drink.go:167`'s `if itemSpec.Toxicity > 0` is false and `AddToxicity`
+     never fires. All nine are pre-alchemy legacy potions, including `30001`
+     small red potion, the basic heal. The alchemy system authored toxicity on
+     its own 21 new potions (30036-30056) and never backfilled the rest.
+  2. **Two duplicate potion NAMES where one twin is toxic and one is not** —
+     Conviction Draught (`30012` none / `30038` tox 8) and Berserker Elixir
+     (`30032` none / `30049` tox 25). Same typed name, different cost.
+  3. **Nothing is visible below 50% of max.** Max is
+     `ToxicityBaseMax + Vitality/ToxicityVitalityScale` = `100 + Vit/5`, so a
+     Vitality-104 character sits at about 121 and stays "clear" until roughly 61
+     points, while potions cost 8 to 22. `{tox}` is deliberately omitted at band
+     0, `status` shows nothing, and there is no numeric readout anywhere.
+  4. Related: **all five toxicity knobs are absent from `config.yaml`** and run
+     on Go defaults. The subsystem has never been tuned.
+
+  Backfilling nine potions and moving a band threshold are balance changes, so
+  they want the owner's numbers. The cheapest real improvement is the readout:
+  the mechanic is invisible even when it is working correctly.
 
 ## Adversarial Review Remediation
 
@@ -123,8 +243,16 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 - **5.11f-2:** design dedicated reflect resistance and its cap.
 - **5.11h:** close the skill/crit arc documentation and adversarial playtest.
 - **5.12:** correct phantom APIs in package `context.md` files.
-- **5.13:** Tunnel Shaman constant movement is parked; suspects are narrowed,
-  but root cause is not established.
+- **5.13: PARKED BEHIND THE BEHAVIOR ARC, and RESTATED — it was never really
+  about the Tunnel Shaman.** Owner, 2026-08-31: *"it isn't just the tunnel
+  shaman. A lot of mobs mob around faster than you can resolve the windup period
+  before kill X becomes 'I'm actually in combat with X'."* So the symptom is not
+  one mob with a broken `maxwander: 0`; it is that **mob movement outruns the
+  player's engagement windup across the world**, which makes targeting a mob a
+  race. Do not resume this as a single-mob hunt. It belongs to the behavior arc,
+  which owns mob movement policy, and the narrowed single-mob suspects (goal
+  planners issuing `pathto`, combat-chase displacement in `handleAggroAndAssist`)
+  are now one input to that arc rather than the whole investigation.
 
 ### Performance and web follow-ons
 
@@ -139,7 +267,13 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
   isolate test callback overrides.
 - **6.5:** clear Go and JavaScript lint backlogs last, after earlier deletions.
 
-### Admin builder
+### Admin builder — PARKED (owner, 2026-08-31)
+
+⚠️ **Do not start either of these until the behavior arc and a quest-mechanism
+arc have landed.** Owner's reasoning: the builder edits mob behavior and quests,
+so reviewing and indexing it before those systems are reshaped means reviewing a
+surface that is about to change underneath. Wave 7 was already sequenced last;
+it now sits behind two arcs as well.
 
 - **7.1:** adversarially review builder pages after the known persistence/lock
   fixes; hunt beyond already-closed findings.
@@ -185,6 +319,10 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 - **NPC maintenance routines (Mob Aliveness 3.5):** the only deferred item in an
   otherwise complete 45-chunk roadmap. Source:
   [Mob Aliveness Roadmap](MOB_ALIVENESS_ROADMAP.md).
+- ~~Newbie aggression feel-check~~ and ~~Q34 bandit pacing cliff~~ — **both
+  CLOSED by the owner in play, 2026-08-31.** Struck rather than deleted so they
+  are not re-derived from the old feel-test reports that filed them. See the
+  playtest section above.
 - **Unify fragmented combat/action messaging — PROMOTED 2026-08-26.** No longer
   deferred; it is queued arc 2 above. Detail kept here because it is the fuller
   statement of scope: combat-state Perception shipped dormant and has no
