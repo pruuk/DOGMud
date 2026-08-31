@@ -82,12 +82,13 @@ because a "verified" claim about quell survived two weeks past its own fix.
 | **A config-driven decoration layer** wraps enter/exit messages from `config.yaml` | `EnterRoomMessageWrapper`, `ExitRoomMessageWrapper`, `internal/configs/config.textformats.go` |
 | 54 Go files carry in-code text pools | — |
 
-### Three live defects this audit found
+### Four live defects this audit found
 
 | Defect | Evidence |
 |---|---|
 | **`{source_plain}` / `{target_plain}` produce deliberately untagged names, which `Anonymize` is structurally unable to strip.** **14 buff files** use `{source_plain}` in `*_room_text`, so an infrared-only observer in a dark room reads the actor's real name in full while every correctly-tagged message renders "a figure" | `internal/textutil/tokens.go:12-13`; `_datafiles/world/dogmud/buffs/` |
 | 🔴 **An empty room line silences the event for EVERYONE — six sites.** Channel-defence narration is gated on `if triad.ToRoom == "" { return }` at `internal/hooks/spell_resolution.go:487`, `internal/combat/counter.go:190` and `:249`, `internal/mobcommands/taunt.go:112`, and both copies of `skill_move_defence.go`. `RenderDefenseMessage` returns a wholly empty triad on a missing pool, a missing intensity band, or audience lists of unequal length — and the lookup is the raw string cast `items.DefenseType(out.DefenceType)`, which compiles for any string and yields nil for one with no pool. So a single naming or authoring gap produces **no message at all** to the caster, the target, or the room, while the mechanics resolve normally. **Owner-reported symptom, 2026-08-31: "a lot of spells early on seem to just stop happening from the player's point of view."** The attacker and defender lines may well exist; they are discarded because the *room* line is missing. This is the strongest single argument for the coordinated-pick invariant becoming universal | six sites listed above |
+| 🔴 **A sleeping player still receives every visual broadcast.** Owner-reported 2026-08-31: room flavour and NPC dialogue keep arriving while asleep. **`internal/messaging/*.go` and `internal/rooms/rooms.go` never mention `buffs.Sleeping` at all** — the delivery pipeline has no concept of sleep. The concept is enforced everywhere else (movement in `go.go`, wake-on-shout in both `shout.go` files, `steal.go`, schedules, regen, `stand.go`) but is never consulted when deciding what text to send | grep for `Sleeping` under `internal/messaging/` returns nothing |
 | **The Observer role exists twice with contradictory rules.** Text observers get a per-recipient sight gate. Knowledge observers — `crimes.WitnessesInRoom` (`internal/crimes/crimes.go:198`) — filter on **faction membership only**, with no sight, darkness, blindness or hidden check, and `IdentifiedPerp` names the perpetrator the moment that list is non-empty | — |
 
 ### The Actee gap
@@ -133,10 +134,24 @@ Grapple's controller/controlled and combat's attacker/defender remain as
 
 ### The Observer role carries a perception verdict
 
-Computed once per observer per event, read by **both** consumers: the narration
+Computed once per observer per event, read by **every** consumer: the narration
 pipeline picks full text, anonymized text or silence; the knowledge and crime
 path decides whether that observer learned anything. One answer to "who
-perceived this", two consumers — replacing today's two answers that disagree.
+perceived this", replacing today's several answers that disagree.
+
+🔴 **Three subsystems currently answer that question, and no two agree:**
+
+| Decided by | Darkness | Blindness | Sleep |
+|---|---|---|---|
+| Text delivery — `messaging.CanSeeClearly` | yes | yes | **no** |
+| Crime witnessing — `crimes.WitnessesInRoom` | **no** | **no** | **no** |
+| Sleep mechanics — `go.go`, `shout.go`, `steal.go` | n/a | n/a | yes |
+
+So a blind guard in a dark room witnesses and names a criminal, while a sleeping
+player reads the room's dialogue. **The verdict must own darkness, blindness and
+sleep together**, and every consumer must read it rather than re-deriving its
+own rule. That consolidation is the single highest-value structural change in
+this arc, because all three of the audit's perception defects collapse into it.
 
 #### Owner ruling, 2026-08-31: darkness defeats crime reporting
 
