@@ -72,35 +72,46 @@ type DefenceEntryOpts struct {
 
 // equipmentGatedMeleeDefences reproduces, branch for branch, the equipment
 // gate that lived in characters.GetDefenseSequence (deleted by U6b Task 2 —
-// this is its only surviving copy). The branch ORDER is load-bearing:
+// this is its only surviving copy).
 //
-//   - IsUnarmedStyle() first: bare hands and wielded Fist/Claws weapons get
-//     dodge only — no parry even though "armed", and no block even with a
-//     shield equipped. A shield-without-weapon defender also lands here
-//     (no weapon => unarmed style) and gets dodge only.
-//   - IsDualWielding() next: TWO parry entries (two blades, two chances) and
-//     no block — this branch returns before the shield check.
-//   - weapon + HasShield(): parry and block. HasShield() includes species
-//     NaturalBash, so an armed earth elemental blocks with no shield item;
-//     do NOT tighten this to BestBlockRating() > 0.
-//   - weapon alone: parry.
+// ⚠️ PER-SLOT, NOT A MAIN-HAND LADDER. Until 2026-08-30 this was a four-branch
+// ladder and every branch read Equipment.Weapon or Offhand, so an extra arm
+// could not contribute a defence at all:
+//
+//   - IsUnarmedStyle() ran FIRST and reads the MAIN HAND ONLY, so claws in hand
+//     one suppressed parry AND block across all six arms.
+//   - IsDualWielding() reads Weapon+Offhand only and returned EARLY, so two
+//     weapons hid a shield in arm three.
+//   - the parry count was hardcoded at two, so arms three through six could
+//     never add one.
+//   - HasShield() was the only part that scanned every arm, and exactly one
+//     branch could reach it.
+//
+// A player with the extra-arms mutation and a tower shield on their third arm
+// was getting dodge and nothing else.
+//
+// The rule is now derived from what each arm actually HOLDS: one parry entry
+// per parry-capable armed hand, plus block if ANY arm holds a shield. That
+// reproduces every two-handed case the ladder produced — no weapon to dodge,
+// weapon to parry, two weapons to parry+parry, weapon+shield to parry+block —
+// and lets the extra-arms mutation do what it visibly promises.
+//
+// HasShield() still includes species NaturalBash, so an earth elemental blocks
+// with no shield item; do NOT tighten it to BestBlockRating() > 0.
+//
+// ⚠️ INTENDED BEHAVIOUR CHANGE: an unarmed or claw fighter HOLDING A SHIELD now
+// blocks, where the ladder gave them dodge alone. Two EMPTY hands are unchanged
+// (no weapon, no shield, so dodge only), which is the build
+// internal/skills/skills.go solves WeaponCombat 1.34 against.
 func equipmentGatedMeleeDefences(c *characters.Character) []string {
 	defenses := []string{characters.DefenseDodge}
 
-	if c.IsUnarmedStyle() {
-		return defenses
+	for i := 0; i < c.ParryCapableArmCount(); i++ {
+		defenses = append(defenses, characters.DefenseParry)
 	}
 
-	if c.IsDualWielding() {
-		return append(defenses, characters.DefenseParry, characters.DefenseParry)
-	}
-
-	if c.Equipment.Weapon.ItemId > 0 && c.HasShield() {
-		return append(defenses, characters.DefenseParry, characters.DefenseBlock)
-	}
-
-	if c.Equipment.Weapon.ItemId > 0 {
-		return append(defenses, characters.DefenseParry)
+	if c.HasShield() {
+		defenses = append(defenses, characters.DefenseBlock)
 	}
 
 	return defenses

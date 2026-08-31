@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-08-30: Every hand you have now defends you
+
+If you have grown extra arms, they were not helping you defend. A shield
+strapped to a third arm did nothing at all, and a weapon held in one could
+never parry. Worse, whatever you held in your FRONT hand decided everything:
+fight with claws and your shield was ignored no matter where you carried it,
+and hold two weapons and your shield was ignored as well.
+
+Your defences now come from what each hand is actually holding. Every hand with
+a weapon in it can parry, and a shield protects you wherever you carry it. If
+you paid the price for extra arms, they now do the thing they always looked
+like they should.
+
+One related change for everyone, arms or not: fighting with fists or claws
+while carrying a shield now lets you block with it. You still cannot parry with
+claws, because there is nothing there to turn a blade with. Fighting with two
+empty hands is unchanged.
+
 ## 2026-08-30: Grappling tells you the truth about why it failed
 
 Every failed grapple gave the same answer: your hands passed right through the

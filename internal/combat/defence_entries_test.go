@@ -103,20 +103,27 @@ func TestDefenceEntriesFor_EquipmentGate(t *testing.T) {
 	}
 }
 
-// Review subtlety 1: block requires a weapon AND HasShield(). A defender
-// holding only a shield hits the IsUnarmedStyle early return (no weapon) and
-// gets dodge only — exactly what characters.GetDefenseSequence did.
-func TestDefenceEntriesFor_ShieldWithoutWeaponIsDodgeOnly(t *testing.T) {
+// ⚠️ UPDATED 2026-08-30, and the old expectation was the BUG being fixed.
+//
+// This used to assert that a defender holding only a shield gets dodge only,
+// because the gate's IsUnarmedStyle early return fired on "no weapon" before
+// anything looked at the shield. That same early return is what made a tower
+// shield on a third arm inert, so the gate is now per-slot: a shield blocks
+// wherever it is held, armed or not.
+//
+// Parry is still correctly absent — there is nothing to deflect with.
+func TestDefenceEntriesFor_ShieldWithoutWeaponBlocks(t *testing.T) {
 	c := newDefenceTestCharacter(t)
 	c.Equipment.Offhand = items.Item{ItemId: 11, Spec: &items.ItemSpec{
 		Type:               items.Offhand,
 		PhysicalMitigation: 5,
 	}}
 	got := DefenceEntriesFor(ChannelMelee, c, DefenceEntryOpts{})
-	assertSameSet(t, got, []string{characters.DefenseDodge})
+	assertSameSet(t, got, []string{characters.DefenseDodge, characters.DefenseBlock})
 
+	// Ranged keeps its own channel table; a shield still blocks arrows.
 	got = DefenceEntriesFor(ChannelRanged, c, DefenceEntryOpts{})
-	assertSameSet(t, got, []string{characters.DefenseDodge})
+	assertSameSet(t, got, []string{characters.DefenseDodge, characters.DefenseBlock})
 }
 
 // Review subtlety 2: HasShield() includes species NaturalBash — an armed
@@ -136,11 +143,15 @@ func TestDefenceEntriesFor_NaturalBashSpeciesBlocksWithoutShieldItem(t *testing.
 	assertSameSet(t, got, []string{characters.DefenseDodge, characters.DefenseBlock})
 }
 
-// Review subtlety 3: IsUnarmedStyle() never parries — a wielded Fist/Claws
-// weapon is "armed" but fights unarmed-style, and the early return also
-// strips block even with a shield equipped (verbatim GetDefenseSequence
-// behaviour).
-func TestDefenceEntriesFor_UnarmedStyleWeaponNeverParries(t *testing.T) {
+// A wielded Fist/Claws weapon is "armed" by ItemType but fights unarmed-style
+// and still NEVER parries — that half is unchanged and is why
+// ParryCapableArmCount excludes those two subtypes.
+//
+// ⚠️ UPDATED 2026-08-30: it used to assert dodge ALONE, because the
+// IsUnarmedStyle early return stripped block too. That early return is what
+// made a shield on an extra arm inert, so block is now per-slot. A claw fighter
+// carrying a shield blocks with it; they still cannot parry with claws.
+func TestDefenceEntriesFor_UnarmedStyleWeaponNeverParriesButStillBlocks(t *testing.T) {
 	c := newDefenceTestCharacter(t)
 	c.Equipment.Weapon = items.Item{ItemId: 13, Spec: &items.ItemSpec{
 		Type:    items.Weapon,
@@ -151,7 +162,10 @@ func TestDefenceEntriesFor_UnarmedStyleWeaponNeverParries(t *testing.T) {
 		PhysicalMitigation: 5,
 	}}
 	got := DefenceEntriesFor(ChannelMelee, c, DefenceEntryOpts{})
-	assertSameSet(t, got, []string{characters.DefenseDodge})
+	assertSameSet(t, got, []string{characters.DefenseDodge, characters.DefenseBlock})
+	if countOf(got, characters.DefenseParry) != 0 {
+		t.Errorf("unarmed-style must never parry, got %v", got)
+	}
 }
 
 // Dual-wield double parry survives the migration: two parry entries.
@@ -161,8 +175,12 @@ func TestDefenceEntriesFor_DualWieldDoubleParry(t *testing.T) {
 	if countOf(got, characters.DefenseParry) != 2 {
 		t.Errorf("dual-wield parry entries = %d, want 2 (set: %v)", countOf(got, characters.DefenseParry), got)
 	}
-	// And no block: the dual-wield branch returns before the shield check,
-	// exactly as GetDefenseSequence did.
+	// And no block — but note WHY, because the reason changed on 2026-08-30.
+	// It is no longer "the dual-wield branch returns before the shield check";
+	// there is no such branch now. This fixture simply carries NO SHIELD, so the
+	// per-slot gate finds nothing to block with. Give the same character a
+	// shield on a third arm and it WOULD block, which is the whole point of the
+	// change.
 	if countOf(got, characters.DefenseBlock) != 0 {
 		t.Errorf("dual-wield block entries = %d, want 0 (set: %v)", countOf(got, characters.DefenseBlock), got)
 	}
