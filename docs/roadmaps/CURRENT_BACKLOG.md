@@ -1,42 +1,109 @@
 # DOGMud Current Backlog
 
-Last reviewed: 2026-08-29, after U10b-3 merged.
+Last reviewed: 2026-08-31, after the Unified Resolution arc shipped to
+production and closed.
 
 This is the compact cross-roadmap memory for planning. It is an index, not a
 second requirements document. Follow the linked canonical roadmap/spec/plan for
 scope, dependencies, decisions, and verification. Merged code and explicit
 tracker status outrank filenames and unchecked boxes in old plans.
 
-## Current Program: Unified Resolution
+## Closed Program: Unified Resolution
 
-Source: [Unified Resolution Roadmap](UNIFIED_RESOLUTION_ROADMAP.md)
+Source: [Unified Resolution Roadmap](UNIFIED_RESOLUTION_ROADMAP.md), now marked
+**closed**.
 
-**Everything through U10d is MERGED.** U8 integrated as `15a5fc94d` (PR #51) on
-2026-08-18, the same day this file last claimed it was pending. U9 (2026-08-19),
-U10 (2026-08-21), U10c (2026-08-24), U10d (2026-08-25), and all five U10b
-sub-slices (U10b-0 PRs #55-#60, U10b-1 #70, U10b-1b #74, U10b-2 #75, U10b-3 #76)
-have followed. Per-stage merge evidence lives in the roadmap's Plans table.
+✅ **The arc is COMPLETE and DEPLOYED.** Every stage U0–U12 merged, and the whole
+arc went to production on **2026-08-30** (962 commits). Prod moved on again the
+next day with PRs #98–#101 and was `a1af7269a` on 2026-08-31. The `7c64c228c`
+pin this section used to quote is dead, as is its "nothing is deployed" claim.
+Per-stage merge evidence stays in the roadmap's Plans table — answer "did stage
+X ship?" from there, never from a tick or from memory.
 
-**Two stages remain, in this order:**
+**Three things outlived the arc and are now ordinary backlog:**
 
-1. **U12 - targeting audit.** Re-read and simplify target resolution and target
-   switching after the resolution flip. Behavioural changes must split out.
-2. **U11 - arc closer.** Documentation, `context.md` sweep, config organisation,
-   help registry/category cleanup, and the final adversarial playtest. No code
-   slice lands after this closer.
+- **Five balance knobs silently inert at zero** — `StealCooldown`,
+  `StealHiddenBonus`, `ShadowCooldown`, `SneakFailCooldown`, `PackScatterRounds`
+  (three of them skullduggery economy). Filed rather than fixed by U11 because
+  adding the keys is a live balance change, not a docs edit. Also filed there:
+  154 help templates carrying em dashes, and the `gmcp` module's two extra help
+  categories. Source:
+  [`2026-08-30-u11-filed-findings`](../audits/2026-08-30-u11-filed-findings.md).
+- **The Elemental Queen fight was never recorded as run.** It is the designated
+  live-verification instrument for quell and for the arc's floor and ceiling at
+  veteran power. No longer blocking anything; still worth doing.
+- **Buff applier attribution** — `buffs.Buff` has no applier actor, so DoT and
+  toxicity deaths name no killer. Verified 2026-08-29 to have no live
+  consequence; latent until a bounty guard gets a poison attack. Recorded on the
+  U5c row.
 
-🚫 **Nothing is deployed.** Prod is still `7c64c228c`. Merging to master is not a
-deploy trigger; the gate is the whole arc plus a playtest.
+**Measurement work that was owed to the pre-deploy playtest** — mob-archer
+progression rate, regen tuning, and the progression re-solve (salvage's 0.60 is
+the least trustworthy input) — was never a deploy blocker in its own right and
+carries over. It lives on `docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`, whose
+unticked boxes are now post-deploy feel-checks.
 
-**Owed to that playtest, not to a slice:** mob-archer progression rate, regen
-tuning, and the progression re-solve (salvage's 0.60 is the least trustworthy
-input). All three are measurement questions and are on
-`docs/PRE_DEPLOY_PLAYTEST_CRIBSHEET.md`.
+## Current Program: none
 
-**One disclosed gap owned by no stage:** buff applier attribution — `buffs.Buff`
-has no applier actor, so DoT and toxicity deaths name no killer. Verified
-2026-08-29 to have no live consequence; latent until a bounty guard gets a
-poison attack. Recorded on the U5c row.
+The next arc has not started. Four are queued; see "Queued Arcs" immediately
+below.
+
+## Queued Arcs
+
+All four are owner-approved in principle. None has a spec or a plan yet.
+
+⚠️ **The order is only partly pinned.** On 2026-08-26 the owner sequenced
+`U11 → messaging → behavior → config audit`. Spell scaling was then approved on
+2026-08-29 as "after the unified contest resolution arc" without being placed
+against messaging, so **spell-scaling versus messaging is an open question, not
+a settled order.** Pin it before starting either.
+
+1. **Spell scaling unification.** Same shape as the resolution arc: many call
+   sites hand-rolling one job. Magnitude, effect strength and duration are
+   computed independently inside every `case` arm of
+   `internal/hooks/spell_resolution.go` (1719 lines, 22 arms, player and mob
+   paths duplicating each other). 🔴 **`effect_type: buff` gets no duration
+   scaling at all** — the arm calls plain `target.AddBuff(buffId, "spell")`
+   (`:1048`, mob twin `:1619`), so `base_folds` is ignored and duration comes
+   only from the buff spec. That is the largest effect type, **17 of 56 spells**;
+   Skill Attunement sits at a flat 200 rounds no matter who casts it. Divisors
+   (dot `/3`, heal `/2`, shield full, buff none), minimum floors (3, 6, 10) and
+   crit handling are all per-arm magic numbers, and `magnitude` means something
+   different in each arm. `calcSpellDuration` (`:34`) is the nearest existing
+   seam, with 7 non-test callers. Do **not** "fix" `SpellData.CasterStatValue`
+   — that part is already consistent.
+2. **Messaging unification.** Previously filed under "Deferred Follow-ons"; the
+   owner promoted it to an arc on 2026-08-26. Two parts. The concrete defect:
+   **quell and defy are unnarrated.** `items.DefenseType` defines only dodge,
+   parry and block, `defense-messages/` holds only those three files, and
+   `sendDefenseMessages` (`internal/combat/combat_helpers.go:1108`) switches on
+   the same three, so quelling a spell or defying a taunt falls through to the
+   generic verb **"counter"**. Not broken, just generic, and never observed in
+   play because the U7 playtest never met a mental or social attacker. The
+   larger part: message files sit in five places (`combat-messages/`,
+   `defense-messages/`, `taunt-messages/`, `messaging/`, and a bare
+   `casting-messages.yaml` at the tree root), combat-state Perception shipped
+   dormant with no consumer, and ownership of melee, spell, rhetoric,
+   mob-command and data-driven defence narration is scattered. Any consolidation
+   must check each loader's `Filepath()` first: a path mismatch is a **startup
+   panic**, not a soft failure.
+3. **Behavior unification.** Mob behavior is expressed through at least six
+   unrelated mechanisms with no single model: legacy AI profiles
+   (`internal/combat/ai.go`), behavior trees, `idlecommands`, JS `scriptag`
+   scripts, schedules and patrols. Owner's target is **two** systems, not one.
+   Related known defect: 114 mobs' `aiprofile` values fall through silently to
+   the default.
+4. **`config.yaml` audit.** ⚠️ **Not the same audit U11 already did.** U11 owned
+   an *organisation* pass over the file — grouping, ordering, comments, stale
+   keys, drift flagging — explicitly **no value changes**, and it removed six
+   orphaned keys and filed five inert knobs. What remains is the *correctness*
+   audit: the `if x < 0 || x > 1.0 { x = default }` validator shape, which can
+   **never** fire because an absent YAML key unmarshals to `0`, so the knob
+   stays at 0.0 forever while its comment advertises a default. That is what
+   made all five `SurpriseAttack*Penalty` knobs inert. Sweep for the shape
+   repo-wide, then fix the five knobs U11 filed. **Grep the YAML tag, not the Go
+   field name** — a `SubGoldLossFraction` claim was retracted for exactly that
+   mistake.
 
 ## Adversarial Review Remediation
 
@@ -118,13 +185,15 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 - **NPC maintenance routines (Mob Aliveness 3.5):** the only deferred item in an
   otherwise complete 45-chunk roadmap. Source:
   [Mob Aliveness Roadmap](MOB_ALIVENESS_ROADMAP.md).
-- **Unify fragmented combat/action messaging:** combat-state Perception shipped dormant
-  and has no consumer. A future framework would own visibility gating,
-  anonymized infrared rendering, look blocking, event-category colors, wrapping,
-  companion-name leakage, and the scattered ownership of melee, spell,
-  rhetoric, mob-command and data-driven defence narration. U8 only brings quell
-  and defy onto the existing defence-message data shape; it does not perform
-  this unification. The historical draft is
+- **Unify fragmented combat/action messaging — PROMOTED 2026-08-26.** No longer
+  deferred; it is queued arc 2 above. Detail kept here because it is the fuller
+  statement of scope: combat-state Perception shipped dormant and has no
+  consumer, and a framework would own visibility gating, anonymized infrared
+  rendering, look blocking, event-category colors, wrapping, companion-name
+  leakage, and the scattered ownership of melee, spell, rhetoric, mob-command
+  and data-driven defence narration. U8 only brought quell and defy onto the
+  existing defence-message data shape; it did not perform this unification. The
+  historical draft is
   [messaging framework design](../superpowers/specs/completed/2026-05-19-messaging-framework-design.md);
   it requires fresh brainstorming and repository verification before planning.
 - **NPC conversation gossip/opinion use:** generic NPC conversations shipped;
@@ -151,7 +220,8 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 - Combat state machines chunks 0-6 are complete; only the separately deferred
   messaging consumer remains.
 - Mob Aliveness reports 45/45 complete plus deferred maintenance routines 3.5.
-- Unified Resolution U0-U7b shipped through the reservation-ceiling merge.
+- Unified Resolution is complete end to end: every stage U0-U12 merged, and the
+  whole arc deployed to production 2026-08-30. Its roadmap is closed.
 - Phase 42 and its first multiplayer playtest bug-fix pass are recorded complete.
 
 ## Maintenance Rules
