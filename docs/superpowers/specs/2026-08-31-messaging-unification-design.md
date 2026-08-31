@@ -136,10 +136,76 @@ pipeline picks full text, anonymized text or silence; the knowledge and crime
 path decides whether that observer learned anything. One answer to "who
 perceived this", two consumers — replacing today's two answers that disagree.
 
-> ⚠️ **Whether darkness *should* defeat crime witnessing is a balance decision,
-> not a refactor.** This arc gives both consumers the same verdict to read; any
-> change to what crime does with it is **filed, not applied**, the way U11 filed
-> five inert knobs rather than fixing them inside a docs chunk.
+#### Owner ruling, 2026-08-31: darkness defeats crime reporting
+
+> *"It'd be fairly hard to observe a crime in the dark and identify who did it,
+> but it's probable that you'd know something is happening. … For now, I'd say
+> no crime reporting in the dark unless you have nightvision/etc."*
+
+**This arc applies the ruling rather than filing it.** Crime witnessing stops
+being a faction-membership test and starts reading the same per-observer
+perception verdict the narration pipeline reads.
+
+🔑 **The three tiers already have machinery.** `crimes.PerpUnknown`
+(`internal/crimes/types.go:22`) is a real recorded state, not a null: a crime row
+is written and every downstream consumer — arrest (`internal/justice/arrest.go`),
+justice (`internal/justice/justice.go`), faction rep
+(`internal/hooks/MobDeath_FactionRep.go`), and knowledge-writing — gates on
+`perp.Type == crimes.PerpPlayer`. So "a crime happened and nobody can pin it on
+you" is already supported end to end.
+
+The only reason the middle tier is unreachable is that `IdentifiedPerp`
+(`internal/crimes/crimes.go:232`) derives identification from **whether the
+witness list is empty**, not from what those witnesses could see:
+
+```go
+if len(witnesses) == 0 { return Perpetrator{Type: PerpUnknown} }
+return Perpetrator{Type: PerpPlayer, Id: userId}
+```
+
+Target mapping, using the sight verdicts the pipeline already computes:
+
+| Verdict | Witness outcome | Perpetrator |
+|---|---|---|
+| `SightFull` — lit, or NightVision | witnessed and identified | `PerpPlayer` (today's behavior) |
+| `SightShapes` — InfraredVision in the dark | knows something happened, cannot say who | `PerpUnknown` **with a non-empty witness list** — the combination that cannot occur today |
+| `SightNone` — dark, no aid | not witnessed | no crime row |
+
+⚠️ **Mobs need a perception verdict, and today only players get one.**
+`CanSeeClearly`/`CanSeeShapes` take a `*characters.Character`, which a mob has,
+so the predicate applies unchanged — but every one of the 13 call sites checking
+`buffs.NightVision` passes a **user**, never a mob.
+
+🔴 **BLOCKING FINDING — `buffs.NightVision` is granted by NOTHING.** The flag is
+defined at `internal/buffs/buffspec.go:62` and **13 production sites read it**,
+but a grep across the entire data tree finds **no buff, no mutation, no species
+and no item that grants it**. `internal/mutations/describe.go:128` even carries
+finished player copy for it — *"You see clearly in the dark."* — that no mutation
+triggers. `InfraredVision` fares barely better: one buff (`85-infraredvision`),
+carried by exactly **one** mob file.
+
+Three consequences, all of which must be settled before this ruling is
+implemented:
+
+1. **Every darkness gate in the game currently reduces to "is the room lit?"**
+   The nightvision branch of all 13 checks is dead in practice, including the two
+   fixed in `go.go` on 2026-08-31 and `canSeeInDark` in `mobcommands/darkness.go`.
+2. **The ruling's escape hatch does not exist.** "No crime reporting in the dark
+   unless you have nightvision/etc" currently means *no crime reporting in an
+   unlit room, full stop*, for every actor in the world.
+3. **The middle tier would apply to one mob.** `SightShapes` requires
+   `InfraredVision`, which exactly one mob carries.
+
+**This is a content/balance gap, not a messaging defect**, and it is the owner's
+call: either something must grant `NightVision` (a mutation is the obvious home,
+since the copy is already written), or the ruling should be restated in terms of
+room lighting alone. **Do not implement the crime gate until that is decided** —
+shipping it as-is would make every unlit room a free-crime zone and would look
+like a messaging-arc regression.
+
+⚠️ **This is a real behavior change and does not belong in a refactor stage.** It
+lands in **M5**, as its own commit, after the perception verdict has a single
+owner — not inside M2 or M3, where every change must be snapshot-provable.
 
 ### One band model
 
@@ -277,7 +343,15 @@ something is wrong.
 On a single path: the `{source_plain}` anonymizer leak (held here by the owner
 rather than fixed standalone), the wrap decision, the `world/default` template
 shadowing, `internal/messaging/context.md`'s phantom wrap stage, and whatever M3
-turned up. **Ends with the adversarial playtest gate** per the content SOP.
+turned up.
+
+**Also here, as its own commit: the crime-in-the-dark ruling.** Crime witnessing
+starts reading the shared perception verdict, per the owner ruling recorded
+above. It is a behavior change, so it cannot live in a snapshot-provable stage.
+
+**Ends with the adversarial playtest gate** per the content SOP. That playtest
+must exercise a crime committed in an unlit room, which no previous playtest has
+done.
 
 ### M6 — Content pass
 
