@@ -116,9 +116,13 @@ def collect():
         entry["dirs"].add(os.path.dirname(rel).replace("\\", "/"))
         entry["files"].add(rel)
 
-    values = defaultdict(lambda: defaultdict(set))
+    values = defaultdict(lambda: defaultdict(
+        lambda: {"count": 0, "dirs": set(), "files": set()}))
     for method, key, rel in walk_values():
-        values[method][key].add(os.path.dirname(rel).replace("\\", "/"))
+        entry = values[method][key]
+        entry["count"] += 1
+        entry["dirs"].add(os.path.dirname(rel).replace("\\", "/"))
+        entry["files"].add(rel)
 
     return keys, values
 
@@ -151,6 +155,18 @@ PROSE_WORDS = 4
 # Extensions Method B reads. Method A is YAML-only by design; Method B is not.
 ANSI_EXTS = (".yaml", ".yml", ".template")
 
+# A YAML block-scalar opener: `key: |`, `key: >-`, `key: |2`, etc. Once a line
+# like this is seen, every following line that is blank or indented MORE than
+# this line is the scalar's VALUE, not new keys -- even if that value contains
+# a colon (e.g. "You can specify which one: the blue or the green."). Without
+# this, keys_in_line() misreads such a continuation line as a new key, which
+# then becomes last_key and steals attribution from every line after it.
+BLOCK_SCALAR_OPEN_RE = re.compile(r":\s*[|>][+\-]?\d*\s*(?:#.*)?$")
+
+
+def _indent_of(line):
+    return len(line) - len(line.lstrip(" "))
+
 
 def looks_like_prose(value):
     v = value.strip().strip("\"'").strip()
@@ -167,6 +183,12 @@ def walk_values():
     that line, or to the nearest preceding key when the line is a list item or
     a block-scalar continuation -- which is how `nouns:` children and
     block-scalar prose get attributed to a real key rather than to nothing.
+
+    Block-scalar aware: once a `key: |`/`key: >` line opens a block scalar, no
+    key parsing happens on its continuation lines (blank, or indented more
+    than the opening line) -- their detections attribute to the opening key
+    instead. The block ends at the first non-blank line indented at or less
+    than the opening line's indent, which is then parsed normally.
     """
     for root, dirs, files in os.walk(WORLD):
         dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
@@ -178,7 +200,23 @@ def walk_values():
             try:
                 with open(full, "r", encoding="utf-8", errors="replace") as fh:
                     last_key = None
+                    in_block = False
+                    block_key = None
+                    block_indent = 0
                     for line in fh:
+                        if in_block:
+                            stripped = line.strip()
+                            if stripped == "" or _indent_of(line) > block_indent:
+                                attribute_to = block_key or "<no-key>"
+                                if ANSI_RE.search(line):
+                                    yield "ansi", attribute_to, rel
+                                if looks_like_prose(line):
+                                    yield "prose", attribute_to, rel
+                                continue
+                            in_block = False
+                            # Not a continuation -- falls through and is
+                            # parsed normally below.
+
                         line_keys = list(keys_in_line(line))
                         if line_keys:
                             last_key = line_keys[-1]
@@ -188,6 +226,11 @@ def walk_values():
                         value = line.split(":", 1)[1] if ":" in line else line
                         if looks_like_prose(value):
                             yield "prose", attribute_to, rel
+
+                        if BLOCK_SCALAR_OPEN_RE.search(line):
+                            in_block = True
+                            block_key = last_key
+                            block_indent = _indent_of(line)
             except OSError as exc:
                 print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
 
@@ -218,13 +261,18 @@ def main():
                 for k, v in sorted(d.items())
             }
 
+        def _fmt_dirs_only(d):
+            return {k: sorted(v["dirs"]) for k, v in sorted(d.items())}
+
         def _fmt_values(d):
-            return {
-                method: {
-                    key: sorted(dirs) for key, dirs in sorted(per_key.items())
+            out = {}
+            for method, per_key in d.items():
+                v_schema, v_content = split_schema_content(per_key)
+                out[method] = {
+                    "schema": _fmt_dirs_only(v_schema),
+                    "content": _fmt_dirs_only(v_content),
                 }
-                for method, per_key in sorted(d.items())
-            }
+            return out
 
         out = {
             "schema": _fmt(schema),
@@ -259,11 +307,25 @@ def main():
         ("prose", "METHOD C — keys whose values read as prose"),
     ):
         hits = values.get(method, {})
+        v_schema, v_content = split_schema_content(hits)
         print()
-        print(f"{label} ({len(hits)} distinct keys)")
+        print(label)
         print("=" * 72)
-        for key in sorted(hits):
-            print(f"  {key:<28} {len(hits[key])} dirs")
+        print(f"SCHEMA KEYS ({len(v_schema)}) -- found in 2+ files, loader-owned")
+        print("-" * 72)
+        for key, v in sorted(v_schema.items(), key=lambda kv: -kv[1]["count"]):
+            dirs = sorted(v["dirs"])
+            shown = ", ".join(d.split("/")[-1] for d in dirs[:3])
+            more = f" +{len(dirs) - 3} more" if len(dirs) > 3 else ""
+            print(f"{v['count']:6d}  {key:<28} {shown}{more}")
+
+        print()
+        total_occ = sum(v["count"] for v in v_content.values())
+        examples = ", ".join(sorted(v_content)[:10])
+        print(f"CONTENT: {len(v_content)} distinct keys, {total_occ} total "
+              f"occurrences, found in exactly 1 file each")
+        if examples:
+            print(f"  examples: {examples}")
 
 
 if __name__ == "__main__":
