@@ -50,13 +50,16 @@ below.
 
 ## Queued Arcs
 
-All four are owner-approved in principle. None has a spec or a plan yet.
+All are owner-approved in principle. None has a spec or a plan yet.
 
-⚠️ **The order is only partly pinned.** On 2026-08-26 the owner sequenced
-`U11 → messaging → behavior → config audit`. Spell scaling was then approved on
-2026-08-29 as "after the unified contest resolution arc" without being placed
-against messaging, so **spell-scaling versus messaging is an open question, not
-a settled order.** Pin it before starting either.
+✅ **Order settled 2026-08-31: MESSAGING IS NEXT.** The owner resolved the
+open spell-scaling-versus-messaging question in messaging's favour. Two arcs
+now have work explicitly parked behind them: **behavior** carries chunk 5.13
+and, with a quest-mechanism arc, the whole of Wave 7.
+
+Working order: **messaging → behavior → quest mechanisms → config audit**,
+with spell scaling unplaced against the tail of that list. Wave 7 (admin
+builder) comes after behavior and quest mechanisms.
 
 1. **Spell scaling unification.** Same shape as the resolution arc: many call
    sites hand-rolling one job. Magnitude, effect strength and duration are
@@ -93,7 +96,15 @@ a settled order.** Pin it before starting either.
    scripts, schedules and patrols. Owner's target is **two** systems, not one.
    Related known defect: 114 mobs' `aiprofile` values fall through silently to
    the default.
-4. **`config.yaml` audit.** ⚠️ **Not the same audit U11 already did.** U11 owned
+4. **Quest mechanisms.** ⚠️ **NAMED BY THE OWNER 2026-08-31, NOT YET SCOPED.**
+   Raised as a reason to park Wave 7: the admin builder edits quests, so
+   reviewing it before quest mechanisms are reshaped reviews a surface that is
+   about to move. **Get the scope from the owner before planning anything** —
+   nothing in the repo says what "quest mechanism arc" covers, and guessing at
+   it would be inventing a roadmap. Likely inputs when it is scoped: the quest
+   flags system, the `give.go` transfer-before-handler gotcha, the re-grant
+   prevention SOP, and `questRequired` versus the expiry-prone `requires`.
+5. **`config.yaml` audit.** ⚠️ **Not the same audit U11 already did.** U11 owned
    an *organisation* pass over the file — grouping, ordering, comments, stale
    keys, drift flagging — explicitly **no value changes**, and it removed six
    orphaned keys and filed five inert knobs. What remains is the *correctness*
@@ -104,6 +115,44 @@ a settled order.** Pin it before starting either.
    repo-wide, then fix the five knobs U11 filed. **Grep the YAML tag, not the Go
    field name** — a `SubGoldLossFraction` claim was retracted for exactly that
    mistake.
+
+## Owner Playtest, 2026-08-30 — feel-checks resolved
+
+Four of the five owed feel-checks are now closed by the owner playing, not by
+reasoning. Recorded here so none of them is re-run.
+
+- ✅ **Weather tempo — FINE.** The slowed cadence from weather polish sub-project
+  A reads correctly in play. Closed.
+- ✅ **ANSI recolors — GOOD.** The WCAG contrast pass on the eight low-legibility
+  readable aliases is confirmed by eye. This one could never be closed by the
+  harness, which strips color. Closed.
+- ✅ **The Elemental Queen — "fine if tough".** The last mandatory pre-deploy
+  item, run late. ⚠️ **But it does not close quell's verification.** The Queen
+  was chosen as quell's live instrument, and quell **has no messages at all** —
+  it falls through to the generic verb "counter" (see the messaging arc). So the
+  fight can be survivable and well-tuned while quell stays invisible. Quell
+  becomes observable only after the messaging arc gives it a voice.
+- 🔴 **NEW: indoor weather prose is written for a house, and most indoor rooms
+  are caves.** Owner: the indoor messages "are a bit nonsensical". Verified:
+  exactly five biomes carry `indoor: true` — `cave`, `dungeon`, `fort`, `house`,
+  `spiderweb` — and the room counts are **cave 123, fort 22, house 15, dungeon 1,
+  spiderweb 0**. Every one of the 15 emote files (9 under
+  `_datafiles/world/dogmud/weather/emotes/` plus 6 seasonal ones under
+  `emotes/seasons/`) authors only an `indoor: default:` pool, and every line in
+  those pools assumes a built structure: roof, walls, windowpanes, glass,
+  shutters, rafters, eaves, floorboards, nails in wood, a hearth. In a cave,
+  "Frost creeps across the inside of the glass in feathered white ferns" and
+  "a gritty film settles over everything no matter how tight the shutters" are
+  nonsense — and caves are **77% of all indoor rooms**.
+  **No code change needed.** `Indoor` is already `map[string]IndoorPool` keyed
+  by biome, and `bandedSectionLines`
+  (`modules/weather/content/emotes.go:129`) resolves biome then falls back to
+  `default`. The fix is authoring a `cave:` pool in each file; `dungeon` and
+  `spiderweb` are one room and zero rooms, so they can ride the default.
+  Content work, so it ends with the adversarial playtest gate.
+
+The fifth, **newbie aggression**, is still open — see the note under Deferred
+Follow-ons.
 
 ## Adversarial Review Remediation
 
@@ -123,8 +172,16 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 - **5.11f-2:** design dedicated reflect resistance and its cap.
 - **5.11h:** close the skill/crit arc documentation and adversarial playtest.
 - **5.12:** correct phantom APIs in package `context.md` files.
-- **5.13:** Tunnel Shaman constant movement is parked; suspects are narrowed,
-  but root cause is not established.
+- **5.13: PARKED BEHIND THE BEHAVIOR ARC, and RESTATED — it was never really
+  about the Tunnel Shaman.** Owner, 2026-08-31: *"it isn't just the tunnel
+  shaman. A lot of mobs mob around faster than you can resolve the windup period
+  before kill X becomes 'I'm actually in combat with X'."* So the symptom is not
+  one mob with a broken `maxwander: 0`; it is that **mob movement outruns the
+  player's engagement windup across the world**, which makes targeting a mob a
+  race. Do not resume this as a single-mob hunt. It belongs to the behavior arc,
+  which owns mob movement policy, and the narrowed single-mob suspects (goal
+  planners issuing `pathto`, combat-chase displacement in `handleAggroAndAssist`)
+  are now one input to that arc rather than the whole investigation.
 
 ### Performance and web follow-ons
 
@@ -139,7 +196,13 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
   isolate test callback overrides.
 - **6.5:** clear Go and JavaScript lint backlogs last, after earlier deletions.
 
-### Admin builder
+### Admin builder — PARKED (owner, 2026-08-31)
+
+⚠️ **Do not start either of these until the behavior arc and a quest-mechanism
+arc have landed.** Owner's reasoning: the builder edits mob behavior and quests,
+so reviewing and indexing it before those systems are reshaped means reviewing a
+surface that is about to change underneath. Wave 7 was already sequenced last;
+it now sits behind two arcs as well.
 
 - **7.1:** adversarially review builder pages after the known persistence/lock
   fixes; hunt beyond already-closed findings.
@@ -185,6 +248,21 @@ Source: [Adversarial Review Remediation Roadmap](ADVERSARIAL_REVIEW_REMEDIATION_
 - **NPC maintenance routines (Mob Aliveness 3.5):** the only deferred item in an
   otherwise complete 45-chunk roadmap. Source:
   [Mob Aliveness Roadmap](MOB_ALIVENESS_ROADMAP.md).
+- **Newbie aggression feel-check (the last unrun one).** Context the owner did
+  not have: on 2026-07-10 the `LegacyHostile` export fix **restored
+  attack-on-entry aggression world-wide after it had been dead for two months**,
+  because a refactor lowercased a yaml-tagged field and silently severed it. 158
+  mobs got their aggression back at once, plus 21 deliberate ambusher/lookout
+  hostile flips. The mechanic was confirmed working in-game; what was never done
+  is **playing a fresh character through the newbie zones to see whether they
+  are now too punishing.** That is the whole check. It is a feel question, so it
+  wants a naive-newbie playtest persona rather than a code read.
+- **Q34 bandit pacing cliff (the other unrun one).** From the 2026-07-13 feel
+  test: the **Bandit Scout in room 5232 turned into a roughly 90-round grapple
+  slog**. Logged as a difficulty-tune item and deferred ever since. It is a
+  pacing problem in the newbie zone, not a correctness bug, and it sits
+  naturally with the newbie-aggression check above since both are "how does the
+  early game feel now".
 - **Unify fragmented combat/action messaging — PROMOTED 2026-08-26.** No longer
   deferred; it is queued arc 2 above. Detail kept here because it is the fuller
   statement of scope: combat-state Perception shipped dormant and has no
