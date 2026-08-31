@@ -92,6 +92,32 @@ func resolveCraftRecipe(char *characters.Character, name string) (*crafting.Reci
 	}
 }
 
+// StationSatisfied reports whether char may craft a recipe requiring
+// recipeStation while standing in a room whose station is roomStation.
+//
+// ⚠️ THIS IS THE ONLY PLACE THE RULE LIVES, and it exists because it was
+// previously copied into FIVE separate checks of which exactly ONE honoured
+// Chrysifier's Walking Chrysalis (the `portable-workshop` flag). The mutation
+// promises "no forge, no loom, no bench of any kind — make anything,
+// anywhere", and a player holding it reported it doing nothing at all. It was
+// half-working in the least visible way possible: the craft itself was allowed,
+// while the recipe list said `locked`, the status column said `need forge`,
+// enchanting refused outright, and storage would not release components
+// off-station. Four of five signals said no, so the one that said yes was
+// invisible.
+//
+// Take a station rule to this function. Do not re-inline it.
+func StationSatisfied(char *characters.Character, recipeStation, roomStation string) bool {
+	if recipeStation == "" || roomStation == recipeStation {
+		return true
+	}
+	if char == nil {
+		return false
+	}
+	// Walking Chrysalis makes the body itself the workshop.
+	return mutations.HasPortableWorkshop(char.Mutations)
+}
+
 // InitiateCraft attempts to begin (or immediately complete) a crafting
 // operation for actor using the recipe identified by recipeName.
 //
@@ -150,10 +176,7 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 	}
 
 	// ── Station check ─────────────────────────────────────────────────────────
-	// Chrysifier's Walking Chrysalis (portable-workshop) makes the body itself
-	// the workshop — no station or tools required, anywhere.
-	if recipe.Station != "" && room.Station != recipe.Station &&
-		!mutations.HasPortableWorkshop(char.Mutations) {
+	if !StationSatisfied(char, recipe.Station, room.Station) {
 		res.StationNeeded = strings.ReplaceAll(recipe.Station, "_", " ")
 		res.WrongStation = true
 		return res
