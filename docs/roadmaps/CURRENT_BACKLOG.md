@@ -75,21 +75,57 @@ builder) comes after behavior and quest mechanisms.
    different in each arm. `calcSpellDuration` (`:34`) is the nearest existing
    seam, with 7 non-test callers. Do **not** "fix" `SpellData.CasterStatValue`
    — that part is already consistent.
-2. **Messaging unification.** Previously filed under "Deferred Follow-ons"; the
-   owner promoted it to an arc on 2026-08-26. Two parts. The concrete defect:
-   **quell and defy are unnarrated.** `items.DefenseType` defines only dodge,
-   parry and block, `defense-messages/` holds only those three files, and
-   `sendDefenseMessages` (`internal/combat/combat_helpers.go:1108`) switches on
-   the same three, so quelling a spell or defying a taunt falls through to the
-   generic verb **"counter"**. Not broken, just generic, and never observed in
-   play because the U7 playtest never met a mental or social attacker. The
-   larger part: message files sit in five places (`combat-messages/`,
-   `defense-messages/`, `taunt-messages/`, `messaging/`, and a bare
-   `casting-messages.yaml` at the tree root), combat-state Perception shipped
-   dormant with no consumer, and ownership of melee, spell, rhetoric,
-   mob-command and data-driven defence narration is scattered. Any consolidation
-   must check each loader's `Filepath()` first: a path mismatch is a **startup
-   panic**, not a soft failure.
+2. **Messaging unification.** Promoted from "Deferred Follow-ons" by the owner
+   on 2026-08-26.
+
+   🔴 **TWO LONG-STANDING CLAIMS IN THIS ENTRY WERE STALE AND ARE CORRECTED
+   HERE (verified against source 2026-08-31).** They had been repeated for
+   weeks and would have set this arc's scope wrongly:
+
+   - ❌ *"Quell and defy are unnarrated and fall back to the verb counter."*
+     **FALSE.** U6b/U8 shipped them. `items.DefenseType` now defines
+     `DefenseQuell`, `DefenseDefy` **and** four counter pools;
+     `defense-messages/` holds **nine** files including `quell.yaml`,
+     `defy.yaml` and `counter-{melee,ranged,quell,defy}.yaml`, with authored,
+     banded, actor-aware text. They render through
+     `combat.RenderChannelDefenceMessages` → `items.RenderDefenseMessage`,
+     called from **nine production sites** (spell resolution, taunt, shoot,
+     throw, and the skill-move defence path, on both the user and mob sides).
+     The `"counter"` fallback that fed the claim lives in `sendDefenseMessages`,
+     which is the **melee** path, where quell and defy can never appear because
+     they are not in melee's defence set — and the code says so: *"Unreachable
+     today, but made unreachable by construction rather than by argument."*
+   - ❌ *"Combat-state Perception shipped dormant and has no consumer."*
+     **FALSE.** `messaging.CanSeeClearly` / `CanSeeShapes` read
+     `Perception.State()` on every sight-gated broadcast, `combat_fire.go:250`
+     reads it, and `characters/buffs.go` drives it from the blind buffs.
+
+   **What is actually left, verified:**
+
+   - **Two coexisting defence-narration paths with different band semantics.**
+     Melee goes `sendDefenseMessages` → `items.GetDefenseMessage`, banded on
+     **`defRoll.ZScore`**. Every other channel goes
+     `RenderChannelDefenceMessages` → `items.RenderDefenseMessage`, banded on
+     **`NormalizedDefenceMargin`** plus a defensive-crit flag. Same authored
+     data shape, two renderers, two band inputs.
+   - **Two `DefenseType` enums bridged by a raw string cast.**
+     `characters.DefenseDodge/Parry/Block/Quell/Defy` are bare `string`
+     constants; `items.DefenseType` is its own named type. They are joined by
+     `items.DefenseType(out.DefenceType)` at `defence_multiplier.go:290`, which
+     compiles for any string and fails silently to an empty pool if the two
+     ever drift.
+   - **Message files sit in five places:** `combat-messages/` (20 files),
+     `defense-messages/` (9), `taunt-messages/` (1), `messaging/` (1), and a
+     bare `casting-messages.yaml` at the tree root. Any consolidation must
+     check each loader's `Filepath()` first: a path mismatch is a **startup
+     panic**, not a soft failure.
+   - **`Anonymize` only strips ANSI-tagged names.** Its own docstring admits
+     bare names in prose leak through. One such leak was found and fixed in
+     `go.go` on 2026-08-31 (PR #102), which suggests there are others.
+   - **`internal/messaging/context.md` documents a wrap stage that does not
+     run.** It lists wrap as pipeline stage 6, but `shouldWrap` returns false
+     for every category and says so. Belongs with chunk 5.12 (phantom APIs in
+     `context.md` files).
 3. **Behavior unification.** Mob behavior is expressed through at least six
    unrelated mechanisms with no single model: legacy AI profiles
    (`internal/combat/ai.go`), behavior trees, `idlecommands`, JS `scriptag`
@@ -128,11 +164,10 @@ re-derives a "concern" that play has already answered.
   readable aliases is confirmed by eye. This one could never be closed by the
   harness, which strips color. Closed.
 - ✅ **The Elemental Queen — "fine if tough".** The last mandatory pre-deploy
-  item, run late. ⚠️ **But it does not close quell's verification.** The Queen
-  was chosen as quell's live instrument, and quell **has no messages at all** —
-  it falls through to the generic verb "counter" (see the messaging arc). So the
-  fight can be survivable and well-tuned while quell stays invisible. Quell
-  becomes observable only after the messaging arc gives it a voice.
+  item, run late, and it **does** close quell's verification. An earlier draft
+  of this entry said it did not, on the since-disproved belief that quell had no
+  messages; quell has authored, banded text and nine production render sites.
+  See the correction under the messaging arc.
 - 🔴 **NEW: indoor weather prose is written for a house, and most indoor rooms
   are caves.** Owner: the indoor messages "are a bit nonsensical". Verified:
   exactly five biomes carry `indoor: true` — `cave`, `dungeon`, `fort`, `house`,
