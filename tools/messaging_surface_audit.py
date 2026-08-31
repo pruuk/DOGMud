@@ -257,7 +257,8 @@ RAW_SEND_RE = re.compile(r"events\.AddToQueue\(events\.Message\{")
 # Token substitution entry points. Two engines exist with an overlapping
 # vocabulary -- {source} and {target} mean different things depending on which
 # one renders -- so a THIRD appearing is exactly what this should catch.
-TOKEN_ENTRY_RE = re.compile(r"func\s+(SubstituteTokens|SetTokenValue)\b")
+TOKEN_ENTRY_RE = re.compile(
+    r"func\s+(\([^)]*\)\s*)?(SubstituteTokens|SetTokenValue)\b")
 
 # Delivery-layer surface. The pipeline is in scope alongside the stores,
 # because the two are coupled through Category.
@@ -295,6 +296,65 @@ def walk_go():
                     print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
 
 
+def reconcile(keys, values, go):
+    """Compare what each method found. Disagreements are the interesting output.
+
+    Method A's key space is pre-filtered to stem-matching names, which proxies
+    for "a loader reads this". Methods B and C have no such filter, so their
+    key space is unbounded author text -- `door`, `path` and `sign` recur
+    across room files by coincidence, not because a loader owns them. That is
+    why the prose-only bucket is grouped by directory below rather than listed
+    key by key: it is one surface with many author-chosen children, and
+    counting it as hundreds of findings would be as wrong as counting it as
+    zero.
+    """
+    a = set(keys)
+    b_schema = set(values.get("ansi", {}).get("schema", {}))
+    c_schema = set(values.get("prose", {}).get("schema", {}))
+    b_all = b_schema | set(values.get("ansi", {}).get("content", {}))
+    c_all = c_schema | set(values.get("prose", {}).get("content", {}))
+
+    return {
+        "only_a": sorted(a - (b_all | c_all)),
+        "only_b": sorted(b_schema - a),
+        "only_c": sorted(c_schema - a),
+        "go_ansi_files": sorted({s.rsplit(":", 1)[0] for s in go.get("go_ansi", [])}),
+    }
+
+
+def group_by_dir(values, method, exclude_keys):
+    """Group a method's keys by the directory they were found in.
+
+    Returns {directory: (key_count, [up to 5 example keys])}, so one surface
+    with many author-chosen children reads as one line, not hundreds.
+    """
+    out = defaultdict(lambda: [0, []])
+    for bucket in ("schema", "content"):
+        for key, dirs in values.get(method, {}).get(bucket, {}).items():
+            if key in exclude_keys:
+                continue
+            for d in dirs:
+                out[d][0] += 1
+                if len(out[d][1]) < 5:
+                    out[d][1].append(key)
+    return out
+
+
+def _fmt_dirs_only(d):
+    return {k: sorted(v["dirs"]) for k, v in sorted(d.items())}
+
+
+def _fmt_values(d):
+    out = {}
+    for method, per_key in d.items():
+        v_schema, v_content = split_schema_content(per_key)
+        out[method] = {
+            "schema": _fmt_dirs_only(v_schema),
+            "content": _fmt_dirs_only(v_content),
+        }
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true", help="machine-readable output")
@@ -309,6 +369,10 @@ def main():
                   "not the data.")
 
     schema, content = split_schema_content(keys)
+    values_split = _fmt_values(values)
+    a_keys = set(keys)
+    rec = reconcile(keys, values_split, go)
+    prose_grouped = group_by_dir(values_split, "prose", a_keys)
 
     if args.json:
         def _fmt(d):
@@ -321,24 +385,18 @@ def main():
                 for k, v in sorted(d.items())
             }
 
-        def _fmt_dirs_only(d):
-            return {k: sorted(v["dirs"]) for k, v in sorted(d.items())}
-
-        def _fmt_values(d):
-            out = {}
-            for method, per_key in d.items():
-                v_schema, v_content = split_schema_content(per_key)
-                out[method] = {
-                    "schema": _fmt_dirs_only(v_schema),
-                    "content": _fmt_dirs_only(v_content),
-                }
-            return out
-
         out = {
             "schema": _fmt(schema),
             "content": _fmt(content),
-            "values": _fmt_values(values),
+            "values": values_split,
             "go": {kind: sorted(sites) for kind, sites in go.items()},
+            "reconciliation": {
+                **rec,
+                "prose_by_dir": {
+                    d: {"keys": n, "examples": examples}
+                    for d, (n, examples) in prose_grouped.items()
+                },
+            },
         }
         print(json.dumps(out, indent=2, sort_keys=True))
         return
@@ -411,6 +469,35 @@ def main():
         print(f"  {f}")
     if len(go_ansi_files) > 40:
         print(f"  ... and {len(go_ansi_files) - 40} more")
+
+    print()
+    print("RECONCILIATION -- every line below needs an explanation in the sweep")
+    print("=" * 72)
+
+    print(f"\nFound by NAME only, no ANSI and no prose ({len(rec['only_a'])}):")
+    print("  (expect: structural keys like `options`, and token-only strings)")
+    for k in rec["only_a"]:
+        print(f"    {k}")
+
+    print(f"\nFound by ANSI but NOT by name ({len(rec['only_b'])}):")
+    print("  (each is a surface Method A alone would have missed)")
+    for k in rec["only_b"]:
+        print(f"    {k}")
+
+    print(f"\nFound by PROSE but NOT by name -- GROUPED BY DIRECTORY:")
+    print("  (each line is ONE surface with author-chosen children, not N findings)")
+    grouped = prose_grouped
+    for d in sorted(grouped, key=lambda d: -grouped[d][0])[:25]:
+        n, examples = grouped[d]
+        print(f"    {n:5d}  {d}")
+        print(f"           e.g. {', '.join(examples)}")
+
+    print(f"\nGo files with ANSI text and no data file ({len(rec['go_ansi_files'])}):")
+    print("  (invisible to every data-side method)")
+    for f in rec["go_ansi_files"][:15]:
+        print(f"    {f}")
+    if len(rec["go_ansi_files"]) > 15:
+        print(f"    ... and {len(rec['go_ansi_files']) - 15} more")
 
 
 if __name__ == "__main__":
