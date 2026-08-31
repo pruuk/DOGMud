@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-08-31: The pronghorn always gives up its meat now
+
+Delk sends you out to hunt a pronghorn and cook what you kill. The problem was
+that most pronghorns did not actually leave any meat behind, so you could make
+a clean kill, walk back to the fire, and find you had nothing to cook and no
+idea why. The only way through was to go and kill several more and hope.
+
+Every pronghorn now drops its meat. Hunt one, take the meat, cook it. That is
+what the quest always said would happen, and now it does.
+
 ## 2026-08-31: The dark keeps its secrets now
 
 If you walked into an unlit room and caught something hiding there, the game
