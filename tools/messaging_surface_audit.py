@@ -124,7 +124,11 @@ def collect():
         entry["dirs"].add(os.path.dirname(rel).replace("\\", "/"))
         entry["files"].add(rel)
 
-    return keys, values
+    go = defaultdict(list)
+    for kind, rel, line in walk_go():
+        go[kind].append(f"{rel}:{line}")
+
+    return keys, values, go
 
 
 def split_schema_content(keys):
@@ -154,6 +158,13 @@ PROSE_WORDS = 4
 
 # Extensions Method B reads. Method A is YAML-only by design; Method B is not.
 ANSI_EXTS = (".yaml", ".yml", ".template")
+
+# Extensions Method C reads. Unlike Method B, prose detection is YAML-only:
+# .template files are plain help text with no key structure, so "attribute
+# prose to the nearest key" is meaningless there -- it produces junk keys like
+# `you can also find crafting materials by`, a prose line that happens to end
+# in a colon before a bullet list.
+PROSE_EXTS = (".yaml", ".yml")
 
 # A YAML block-scalar opener: `key: |`, `key: >-`, `key: |2`, etc. Once a line
 # like this is seen, every following line that is blank or indented MORE than
@@ -197,6 +208,7 @@ def walk_values():
                 continue
             full = os.path.join(root, name)
             rel = os.path.relpath(full, REPO).replace("\\", "/")
+            do_prose = name.endswith(PROSE_EXTS)
             try:
                 with open(full, "r", encoding="utf-8", errors="replace") as fh:
                     last_key = None
@@ -210,7 +222,7 @@ def walk_values():
                                 attribute_to = block_key or "<no-key>"
                                 if ANSI_RE.search(line):
                                     yield "ansi", attribute_to, rel
-                                if looks_like_prose(line):
+                                if do_prose and looks_like_prose(line):
                                     yield "prose", attribute_to, rel
                                 continue
                             in_block = False
@@ -224,7 +236,7 @@ def walk_values():
                         if ANSI_RE.search(line):
                             yield "ansi", attribute_to, rel
                         value = line.split(":", 1)[1] if ":" in line else line
-                        if looks_like_prose(value):
+                        if do_prose and looks_like_prose(value):
                             yield "prose", attribute_to, rel
 
                         if BLOCK_SCALAR_OPEN_RE.search(line):
@@ -235,6 +247,54 @@ def walk_values():
                 print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
 
 
+GO_ROOTS = ("internal", "modules")
+
+# A raw queue push bypasses the messaging pipeline entirely: no Category, so no
+# colour, no normalize, no sight gate, no verbosity. internal/characters/
+# progression.go does this six times and is the known bypass.
+RAW_SEND_RE = re.compile(r"events\.AddToQueue\(events\.Message\{")
+
+# Token substitution entry points. Two engines exist with an overlapping
+# vocabulary -- {source} and {target} mean different things depending on which
+# one renders -- so a THIRD appearing is exactly what this should catch.
+TOKEN_ENTRY_RE = re.compile(r"func\s+(SubstituteTokens|SetTokenValue)\b")
+
+# Delivery-layer surface. The pipeline is in scope alongside the stores,
+# because the two are coupled through Category.
+SEND_HELPER_RE = re.compile(
+    r"func\s+(\([^)]*\)\s*)?(SendText|SendTextVisual|SendTextVisualToUser|SendPhaseText)\b")
+CATEGORY_RE = re.compile(r"^\tCategory[A-Z][A-Za-z]*\b")
+WRAPPER_CFG_RE = re.compile(r"(Enter|Exit)RoomMessageWrapper")
+
+
+def walk_go():
+    """Yield (kind, repo_relative_path, line_no) for Go-side surfaces."""
+    for root_name in GO_ROOTS:
+        for root, _dirs, files in os.walk(os.path.join(REPO, root_name)):
+            for name in files:
+                if not name.endswith(".go") or name.endswith("_test.go"):
+                    continue
+                full = os.path.join(root, name)
+                rel = os.path.relpath(full, REPO).replace("\\", "/")
+                try:
+                    with open(full, "r", encoding="utf-8", errors="replace") as fh:
+                        for n, line in enumerate(fh, 1):
+                            if RAW_SEND_RE.search(line):
+                                yield "raw_send", rel, n
+                            if TOKEN_ENTRY_RE.search(line):
+                                yield "token_engine", rel, n
+                            if SEND_HELPER_RE.search(line):
+                                yield "send_helper", rel, n
+                            if CATEGORY_RE.search(line):
+                                yield "category", rel, n
+                            if WRAPPER_CFG_RE.search(line):
+                                yield "config_wrapper", rel, n
+                            if ANSI_RE.search(line):
+                                yield "go_ansi", rel, n
+                except OSError as exc:
+                    print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true", help="machine-readable output")
@@ -243,7 +303,7 @@ def main():
     if not os.path.isdir(WORLD):
         sys.exit(f"FATAL: world data not found at {WORLD}")
 
-    keys, values = collect()
+    keys, values, go = collect()
     if not keys:
         sys.exit("FATAL: no text-bearing keys found. The walk is broken, "
                   "not the data.")
@@ -278,6 +338,7 @@ def main():
             "schema": _fmt(schema),
             "content": _fmt(content),
             "values": _fmt_values(values),
+            "go": {kind: sorted(sites) for kind, sites in go.items()},
         }
         print(json.dumps(out, indent=2, sort_keys=True))
         return
@@ -326,6 +387,30 @@ def main():
               f"occurrences, found in exactly 1 file each")
         if examples:
             print(f"  examples: {examples}")
+
+    for kind, label in (
+        ("raw_send", "RAW events.Message PUSHES (bypass the pipeline)"),
+        ("token_engine", "TOKEN SUBSTITUTION ENTRY POINTS"),
+        ("send_helper", "SEND HELPERS (delivery-layer entry points)"),
+        ("config_wrapper", "CONFIG-DRIVEN MESSAGE WRAPPERS"),
+    ):
+        sites = go.get(kind, [])
+        print()
+        print(f"{label} ({len(sites)})")
+        print("=" * 72)
+        for s in sites:
+            print(f"  {s}")
+    print()
+    print(f"MESSAGE CATEGORIES ({len(go.get('category', []))})")
+    print("=" * 72)
+    go_ansi_files = sorted({s.rsplit(':', 1)[0] for s in go.get('go_ansi', [])})
+    print()
+    print(f"GO FILES WITH ANSI TEXT AND NO DATA FILE ({len(go_ansi_files)})")
+    print("=" * 72)
+    for f in go_ansi_files[:40]:
+        print(f"  {f}")
+    if len(go_ansi_files) > 40:
+        print(f"  ... and {len(go_ansi_files) - 40} more")
 
 
 if __name__ == "__main__":
