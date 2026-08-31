@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -283,16 +284,49 @@ type ChannelDefenceIdentities struct {
 
 // RenderChannelDefenceMessages renders the canonical channel outcome without
 // rolling or deriving a second result. Attack wins return an empty triad.
+//
+// A defence that HAPPENED always returns text. If the authored pool cannot be
+// resolved this falls back to generic narration rather than returning empty --
+// see genericDefenceTriad for why that distinction is load-bearing.
 func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad {
 	if !out.Defended {
 		return items.DefenseMessageTriad{}
 	}
-	return items.RenderDefenseMessage(items.DefenseType(out.DefenceType), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
+	triad := items.RenderDefenseMessage(items.DefenseType(out.DefenceType), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
 		items.TokenAttacker: identities.Attacker,
 		items.TokenDefender: identities.Defender,
 		items.TokenAttack:   attack,
 		items.TokenWeapon:   attack,
 	}, indexOverride...)
+	if triad.ToRoom == "" {
+		return genericDefenceTriad(identities, attack)
+	}
+	return triad
+}
+
+// genericDefenceTriad is the last-resort narration for a defence whose authored
+// pool could not be resolved.
+//
+// WHY THIS EXISTS. items.RenderDefenseMessage returns a wholly empty triad on a
+// nil pool, a missing intensity band, or audience lists of unequal length. Every
+// caller of RenderChannelDefenceMessages gates on `if triad.ToRoom == ""`, so an
+// empty room line discarded the attacker's and defender's lines along with it.
+// The mechanics still resolved, which meant a player watched a spell simply stop
+// happening -- reported from play on 2026-08-31. The pool lookup is a raw string
+// cast, items.DefenseType(out.DefenceType), so one rename silences a channel.
+//
+// Deliberately plain: it names who, whom and what, and nothing else. A data gap
+// should cost flavour, never silence. This mirrors what counter.go already does
+// with fillGenericCounterMessages; the pattern is copied, not invented.
+func genericDefenceTriad(identities ChannelDefenceIdentities, attack string) items.DefenseMessageTriad {
+	return items.DefenseMessageTriad{
+		ToDefender: items.ItemMessage(fmt.Sprintf(
+			`You turn aside %s's %s.`, identities.Attacker, attack)),
+		ToAttacker: items.ItemMessage(fmt.Sprintf(
+			`%s turns aside your %s.`, identities.Defender, attack)),
+		ToRoom: items.ItemMessage(fmt.Sprintf(
+			`%s turns aside %s's %s.`, identities.Defender, identities.Attacker, attack)),
+	}
 }
 
 // ResolveChannelAttack is THE channel resolution entry point (U6b Task 3): it

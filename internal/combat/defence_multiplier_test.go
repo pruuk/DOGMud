@@ -272,3 +272,71 @@ func TestResolveDefenseOutcome_DamageMultOnEveryPath(t *testing.T) {
 		}
 	})
 }
+
+// M0b Task 1. A defence that HAPPENED must be narrated.
+//
+// RenderChannelDefenceMessages returned an empty triad whenever the message
+// pool could not be resolved -- a missing pool, a missing intensity band, or
+// audience lists of unequal length. Every caller then gates on
+// `if triad.ToRoom == "" { return }`, so an empty room line discarded the
+// attacker and defender lines along with it. The mechanics still resolved, so
+// from the player's seat a spell simply stopped happening.
+//
+// The pool lookup is a raw string cast, items.DefenseType(out.DefenceType),
+// which compiles for any string and yields nil for one with no authored pool.
+// So a single rename is enough to silence a whole channel.
+func TestRenderChannelDefenceMessages_UnknownPoolFallsBackToGenericText(t *testing.T) {
+	out := ChannelDefenceResult{
+		Defended:                true,
+		DefenceType:             "no-such-defence-pool",
+		NormalizedDefenceMargin: 0.6,
+	}
+	triad := RenderChannelDefenceMessages(out,
+		ChannelDefenceIdentities{Attacker: "Grimwald", Defender: "Meirok"},
+		"searing bolt")
+
+	if triad.ToRoom == "" || triad.ToAttacker == "" || triad.ToDefender == "" {
+		t.Fatalf("an unresolvable pool must fall back to generic text, got %+v", triad)
+	}
+	for name, msg := range map[string]string{
+		"ToRoom":     string(triad.ToRoom),
+		"ToAttacker": string(triad.ToAttacker),
+		"ToDefender": string(triad.ToDefender),
+	} {
+		if !contains(msg, "searing bolt") {
+			t.Errorf("%s should name the attack, got %q", name, msg)
+		}
+	}
+	if !contains(string(triad.ToRoom), "Meirok") || !contains(string(triad.ToRoom), "Grimwald") {
+		t.Errorf("the room line should name both actors, got %q", triad.ToRoom)
+	}
+}
+
+// The direction a careless fix breaks. The attack WON, so there is no defence
+// to narrate and the fallback must not invent one. This test passes BEFORE the
+// fix, which is what makes it a guard rather than a restatement of it.
+func TestRenderChannelDefenceMessages_UndefendedStaysEmpty(t *testing.T) {
+	triad := RenderChannelDefenceMessages(
+		ChannelDefenceResult{Defended: false},
+		ChannelDefenceIdentities{Attacker: "Grimwald", Defender: "Meirok"},
+		"searing bolt")
+	if triad.ToRoom != "" || triad.ToAttacker != "" || triad.ToDefender != "" {
+		t.Fatalf("an undefended attack must render nothing, got %+v", triad)
+	}
+}
+
+// contains is a local helper so this file does not take a strings import for
+// one predicate; the package already avoids it.
+func contains(haystack, needle string) bool {
+	return len(haystack) >= len(needle) &&
+		(haystack == needle || indexOf(haystack, needle) >= 0)
+}
+
+func indexOf(haystack, needle string) int {
+	for i := 0; i+len(needle) <= len(haystack); i++ {
+		if haystack[i:i+len(needle)] == needle {
+			return i
+		}
+	}
+	return -1
+}
