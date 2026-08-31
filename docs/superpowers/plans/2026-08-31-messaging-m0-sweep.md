@@ -41,6 +41,74 @@ stores. **A key-spelling registry catches a new surface the moment someone
 invents a key for it**, which is the property the arc needs to keep the inventory
 from rotting the way the quell claim did.
 
+## SCHEMA keys versus CONTENT keys — found by review, 2026-08-31
+
+The first implementation of Method A was reviewed and found to miss **3,058 of
+3,070** entries in room `nouns:` blocks — a bigger surface than `idlemessages`.
+Two causes, both real:
+
+- `nouns:` maps **author-chosen phrases** (`dragonfly:`, `hunt pool:`,
+  `mosquito thinning:`) to prose shown by `look <noun>`. The key names are
+  content, not schema.
+- Multi-word keys fail a `[a-z0-9_]*` key pattern outright, and dash-prefixed
+  keys (`- npc_say:`, `- send_text:`) never match a line-start anchor. Those two
+  quest keys have **zero** plain-form occurrences anywhere in the tree, so their
+  spellings never entered the report at all.
+
+**This breaks the naive registry design.** A registry keyed on spellings cannot
+hold 3,070 author-chosen nouns, and should not try.
+
+So the tool splits its output in two, and the guard registers only the first:
+
+| Bucket | Rule | Registered? |
+|---|---|---|
+| **Schema keys** | the spelling appears in **2 or more files** | Yes — one registry line each |
+| **Content keys** | the spelling appears in **exactly one file** | No — reported as a count with examples |
+
+Schema keys recur by construction, because a loader reads them. An
+author-invented noun appears once. The threshold separates them without anyone
+maintaining a list.
+
+⚠️ **A container key is registered; its children are not.** When a container is
+found, it gets **one** registry line saying its children are author-chosen. That
+is the correct granularity: the arc owns the *surface*, not each noun. (`nouns`
+itself is not found by Method A at all — see the blind-spot section below.)
+
+⚠️ **The one-file bucket must still be REPORTED.** It is where a genuinely new
+schema key hides on its first day, before a second file adopts it. Read it; do
+not let its size make it invisible.
+
+### `nouns` is a deliberate Method A blind spot — a PREDICTION for Task 4
+
+Method A cannot see `nouns:` at all, because the word "nouns" contains none of
+the `KEY_STEMS` and the children are author-chosen phrases that contain none
+either. The obvious fix is to add a `noun` stem.
+
+**Do not.** This plan's own reconciliation rule forbids widening `KEY_STEMS` to
+make a discrepancy disappear, and this is precisely the discrepancy the
+four-method design exists to expose. Hand-adding a stem per missed key IS the
+curated-list failure mode, one stem at a time.
+
+**So this is a falsifiable prediction: Method C (prose shape) must find the
+`nouns` prose that Method A misses, and Task 4's reconciliation must report it
+in the "found by PROSE but NOT by name" bucket.**
+
+- If Task 4 reports it → the multi-method design is doing its job, and the
+  finding gets written up in the sweep document as the worked example.
+- **If Task 4 does NOT report it → Method C has a hole**, and that is a serious
+  finding about the harness, not a reason to patch Method A. Fix Method C.
+
+### Baseline count change, recorded so it is not read as a regression
+
+Fixing the key regex moved **`text` from 1,878 to 2,231 (+353)**. The added
+occurrences are dash-prefixed `- text:` dialogue lines under `greetings:` (e.g.
+`_datafiles/world/dogmud/dialogue/amber_valley/9397.yaml`) that a line-start
+anchor could never match. That was a real silent miss of NPC speech.
+
+**The current baselines are: `description` 3338, `text` 2231, `idlemessages`
+1285, `hints` 1266.** `npc_say` (69) and `send_text` (134) now appear as schema
+keys, having previously been invisible entirely.
+
 ## Why FOUR independent enumeration methods, not one
 
 Owner instruction, 2026-08-31: *"try several different methods to get the
@@ -59,13 +127,19 @@ explained in the sweep document rather than silently reconciled.**
 | Method | Finds | Blind to |
 |---|---|---|
 | **A — key names** | keys whose *name* looks textual (`*_text`, `*message*`) | a key with an unguessable name (`blurb`, `caption`, `flavor`) |
-| **B — ANSI markup** | any string containing `<ansi `, in YAML *or* Go — player-facing by construction | plain text with no colour markup |
+| **B — ANSI markup** | any string containing `<ansi `, in YAML, Go **or `.template`** — player-facing by construction | plain text with no colour markup |
 | **C — prose shape** | scalar values that read as sentences, whatever the key is called | short fragments, single words, token-only strings |
 | **D — send paths** | text with **no data file at all**, reached by walking backwards from the delivery helpers | text authored in data but never sent from Go |
 
 Method D matters most for the thing the other three structurally cannot see:
 **hardcoded strings in Go with no data file behind them.** 54 Go files carry
 in-code text pools, and no data-side method will ever find one.
+
+**Method A scans YAML only, by design.** The 591 `.template` files under
+`_datafiles/world/dogmud/templates/` are not YAML and are help/splash/login
+prose — *content*, which the arc scope excludes. They are covered by **Method
+B**, which reads any file carrying ANSI markup regardless of extension, so they
+are inventoried and classified rather than silently skipped.
 
 ---
 
@@ -210,13 +284,13 @@ if __name__ == "__main__":
 
 Run: `python tools/messaging_surface_audit.py`
 
-Expected: a table whose top rows match the counts measured by hand during
+Expected: a table whose top rows match the CURRENT baselines (see "Baseline count change" above -- `text` is 2231, not the 1878 an early draft of this plan quoted). If any differs, the walk is wrong, not the data:
 design. These four are the check — if any differs, the walk is wrong, not the
 data:
 
 ```
   3338  description
-  1878  text
+  2231  text
   1285  idlemessages
   1266  hints
 ```
