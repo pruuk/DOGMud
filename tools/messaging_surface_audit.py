@@ -115,7 +115,12 @@ def collect():
         entry["count"] += 1
         entry["dirs"].add(os.path.dirname(rel).replace("\\", "/"))
         entry["files"].add(rel)
-    return keys
+
+    values = defaultdict(lambda: defaultdict(set))
+    for method, key, rel in walk_values():
+        values[method][key].add(os.path.dirname(rel).replace("\\", "/"))
+
+    return keys, values
 
 
 def split_schema_content(keys):
@@ -130,6 +135,63 @@ def split_schema_content(keys):
     return schema, content
 
 
+# Method B -- ANSI markup. A string carrying <ansi ...> is player-facing by
+# construction, whatever its key is called and wherever it lives. This is the
+# highest-signal detector we have, and unlike Method A it is not limited to
+# YAML: .template files (help, splash, login prose) are read too.
+ANSI_RE = re.compile(r"<ansi\s+[a-z]+=")
+
+# Method C -- prose shape. A scalar that reads as a sentence is player-facing
+# even when its key name gives nothing away. This is what must catch the room
+# `nouns:` prose that Method A structurally cannot see. Deliberately
+# conservative: four or more words AND terminal punctuation, so identifiers,
+# tags and single-word enum values do not flood the report.
+PROSE_WORDS = 4
+
+# Extensions Method B reads. Method A is YAML-only by design; Method B is not.
+ANSI_EXTS = (".yaml", ".yml", ".template")
+
+
+def looks_like_prose(value):
+    v = value.strip().strip("\"'").strip()
+    if not v.endswith((".", "!", "?", "…")):
+        return False
+    return len(v.split()) >= PROSE_WORDS
+
+
+def walk_values():
+    """Yield (method, key, repo_relative_path) for value-shaped detections.
+
+    Method B fires on ANSI markup anywhere on the line. Method C fires when the
+    value after a key's colon reads as a sentence. Both attribute to the key on
+    that line, or to the nearest preceding key when the line is a list item or
+    a block-scalar continuation -- which is how `nouns:` children and
+    block-scalar prose get attributed to a real key rather than to nothing.
+    """
+    for root, dirs, files in os.walk(WORLD):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        for name in files:
+            if not name.endswith(ANSI_EXTS):
+                continue
+            full = os.path.join(root, name)
+            rel = os.path.relpath(full, REPO).replace("\\", "/")
+            try:
+                with open(full, "r", encoding="utf-8", errors="replace") as fh:
+                    last_key = None
+                    for line in fh:
+                        line_keys = list(keys_in_line(line))
+                        if line_keys:
+                            last_key = line_keys[-1]
+                        attribute_to = last_key or "<no-key>"
+                        if ANSI_RE.search(line):
+                            yield "ansi", attribute_to, rel
+                        value = line.split(":", 1)[1] if ":" in line else line
+                        if looks_like_prose(value):
+                            yield "prose", attribute_to, rel
+            except OSError as exc:
+                print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true", help="machine-readable output")
@@ -138,7 +200,7 @@ def main():
     if not os.path.isdir(WORLD):
         sys.exit(f"FATAL: world data not found at {WORLD}")
 
-    keys = collect()
+    keys, values = collect()
     if not keys:
         sys.exit("FATAL: no text-bearing keys found. The walk is broken, "
                   "not the data.")
@@ -156,7 +218,19 @@ def main():
                 for k, v in sorted(d.items())
             }
 
-        out = {"schema": _fmt(schema), "content": _fmt(content)}
+        def _fmt_values(d):
+            return {
+                method: {
+                    key: sorted(dirs) for key, dirs in sorted(per_key.items())
+                }
+                for method, per_key in sorted(d.items())
+            }
+
+        out = {
+            "schema": _fmt(schema),
+            "content": _fmt(content),
+            "values": _fmt_values(values),
+        }
         print(json.dumps(out, indent=2, sort_keys=True))
         return
 
@@ -179,6 +253,17 @@ def main():
         print(f"{v['count']:6d}  {key:<24} {f}")
     if len(content) > 15:
         print(f"  ... and {len(content) - 15} more")
+
+    for method, label in (
+        ("ansi", "METHOD B — keys carrying ANSI markup"),
+        ("prose", "METHOD C — keys whose values read as prose"),
+    ):
+        hits = values.get(method, {})
+        print()
+        print(f"{label} ({len(hits)} distinct keys)")
+        print("=" * 72)
+        for key in sorted(hits):
+            print(f"  {key:<28} {len(hits[key])} dirs")
 
 
 if __name__ == "__main__":
