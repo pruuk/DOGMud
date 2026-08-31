@@ -44,7 +44,21 @@ func (c *Character) CancelBuffsWithFlag(buffFlag buffs.Flag) bool {
 		// re-fires CancelBuffsWithFlag(Hidden), but the buff is
 		// already cancelled by the Validate above so HasFlag returns
 		// false → no recursion.
-		if buffFlag == buffs.Hidden && c.Awareness != nil &&
+		//
+		// ⚠️ THE CONDITION IS ABOUT THE STATE, NOT THE ARGUMENT. It used
+		// to read `buffFlag == buffs.Hidden`, which asked "was Hidden the
+		// flag you SELECTED by?" rather than "did stealth just end?".
+		// Buff 9 Hidden carries BOTH `hidden` and `cancel-on-combat`, so
+		// CancelCombatBuffs -> CancelBuffsWithFlag(CancelIfCombat) really
+		// did strip it while this rescue sat out, leaving the FSM in
+		// Hidden and IsHidden() true. That is how a cross-room sniper
+		// stayed hidden shot after shot (reported 2026-08-31): shoot.go's
+		// own guard called CancelCombatBuffs expecting stealth to drop,
+		// and it silently did nothing.
+		//
+		// Asking the FSM directly is correct for every caller and cannot
+		// drift again: if stealth is still on after a cancel, end it.
+		if c.Awareness != nil && !c.Buffs.HasFlag(buffs.Hidden, false) &&
 			c.Awareness.State() == awareness.Hidden {
 			_ = c.Awareness.TransitionToRevealing(
 				state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
