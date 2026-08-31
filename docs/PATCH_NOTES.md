@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-08-31: Enchanting draws from your storage too
+
+Ordinary crafting has been pulling missing components out of your storage for a
+while. Enchanting never did. It would tell you that you were missing something
+while a pile of it sat in storage, which was baffling if you had just watched a
+normal recipe help itself.
+
+Enchanting now draws from storage exactly the way crafting does, and the recipe
+list tells you the truth about what you can make.
+
 ## 2026-08-31: Walking Chrysalis actually works now
 
 The mutation promises you carry the whole craft inside you and can make

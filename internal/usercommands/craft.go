@@ -50,10 +50,6 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 		}
 	}
-	if recipe != nil && crafting.IsEnchantingRecipe(recipe) {
-		return craftEnchanting(rest, recipe, user, room)
-	}
-
 	// Auto-pull from storage: draw exactly the missing components from the
 	// player's storage so the craft can proceed. Your storage is one
 	// per-character pool, reachable while crafting. All-or-nothing
@@ -90,6 +86,17 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				}
 			}
 		}
+	}
+
+	// ⚠️ ENCHANTING ROUTES **AFTER** THE STORAGE PULL ABOVE, and the order is the
+	// bug. This branch used to sit before it and return, so an enchanting recipe
+	// never pulled from storage at all: `craft honed-edge weapon` reported
+	// "You are missing: binding-paste" while 152 of them sat in the player's
+	// storage. craftEnchanting runs its OWN HasIngredients check, which is where
+	// that message comes from, so the components have to be on the character
+	// before we get there.
+	if recipe != nil && crafting.IsEnchantingRecipe(recipe) {
+		return craftEnchanting(rest, recipe, user, room)
 	}
 
 	// ── Normal craft path: delegate to shared action ──────────────────────────
@@ -571,12 +578,13 @@ func recipeStatus(user *users.UserRecord, room *rooms.Room, r *crafting.RecipeSp
 }
 
 // storageCompletable reports whether recipe r could be crafted right now by
-// auto-pulling its missing components from the player's storage. Enchanting
-// recipes are excluded — they route to craftEnchanting, which does not pull.
+// auto-pulling its missing components from the player's storage.
+//
+// ⚠️ Enchanting recipes USED to be excluded here, on the grounds that they
+// "route to craftEnchanting, which does not pull". They pull now — the route
+// moved below the pull in Craft() — so excluding them would make the recipe
+// list claim a craft is impossible that would in fact succeed.
 func storageCompletable(user *users.UserRecord, r *crafting.RecipeSpec) bool {
-	if crafting.IsEnchantingRecipe(r) {
-		return false
-	}
 	_, complete := crafting.PlanStoragePull(r, user.Character.Items, user.Character.ComponentItems, user.ItemStorage.GetItems())
 	return complete
 }
