@@ -1,6 +1,18 @@
 # DOGMud Patch Notes
 
-## 2026-08-31: Enchanting draws from your storage too
+## 2026-08-31: The dark keeps its secrets now
+
+If you walked into an unlit room and caught something hiding there, the game
+told you exactly what it was by name. In the dark. With nothing to see by. You
+could learn what was waiting for you without ever laying eyes on it.
+
+Now you only learn what you can actually see. Catch something in a lit room, or
+with nightvision, and you get its name as before. Catch it in the dark and you
+know only that something is there, which is the interesting half anyway. The
+same is true when you spot another player who is sneaking, and when they are
+told that someone has noticed them.
+
+Anyone else in the room watching this happen is held to the same rule.
 
 Ordinary crafting has been pulling missing components out of your storage for a
 while. Enchanting never did. It would tell you that you were missing something
