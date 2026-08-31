@@ -12,6 +12,7 @@ schools:
 cost: 20
 waitrounds: 1
 difficulty: 45
+mob_only: true   # boss/NPC signature ability: players may never DISCOVER it (GetEligibleSpells)
 primarystat: willpower
 base_folds: 2
 target_defense_type: physical
