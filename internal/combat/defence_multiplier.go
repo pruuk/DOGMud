@@ -3,11 +3,13 @@ package combat
 import (
 	"fmt"
 	"math"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -299,9 +301,40 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 		items.TokenWeapon:   attack,
 	}, indexOverride...)
 	if triad.ToRoom == "" {
+		logMissingDefencePool(out.DefenceType)
 		return genericDefenceTriad(identities, attack)
 	}
 	return triad
+}
+
+// missingDefencePools remembers which defence types have already been reported.
+// A pool that is missing during a long fight would otherwise log on every swing.
+// Mutex-guarded because combat rounds run alongside other work.
+var (
+	missingDefencePoolsMu sync.Mutex
+	missingDefencePools   = map[string]bool{}
+)
+
+// logMissingDefencePool reports an unresolvable defence message pool once per
+// defence type per process.
+//
+// This exists because the failure is otherwise invisible to DEVELOPERS as well
+// as to players. The pool lookup is a raw string cast,
+// items.DefenseType(out.DefenceType), so a renamed or unauthored defence type
+// resolves to nil at runtime with no compile error, no panic and no boot
+// warning. Before the generic fallback above, the only symptom was a player
+// noticing that a spell had gone quiet. This is the signal that says which
+// pool, and says it once.
+func logMissingDefencePool(defenceType string) {
+	missingDefencePoolsMu.Lock()
+	defer missingDefencePoolsMu.Unlock()
+	if missingDefencePools[defenceType] {
+		return
+	}
+	missingDefencePools[defenceType] = true
+	mudlog.Warn("RenderChannelDefenceMessages",
+		"missing defence message pool", defenceType,
+		"effect", "falling back to generic narration")
 }
 
 // genericDefenceTriad is the last-resort narration for a defence whose authored
