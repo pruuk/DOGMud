@@ -40,17 +40,19 @@ steps:
       You put down a veil-warped creature. Cast in the thick of the grove if
       you have not yet.
     hint: >-
-      While fighting in the grove (the Veil Hollow, the Thinning Wood, or the
-      Grove Heart), type cast conviction-spike to loose a spell mid-fight.
-      Then report to Keeper Orrin -- type ask orrin done.
+      When you have done both, report to Keeper Orrin -- type ask orrin
+      done. If you have not cast in the thick of it yet, type cast
+      conviction-spike while fighting in the grove (the Veil Hollow, the
+      Thinning Wood, or the Grove Heart).
   - id: cast
     map_target: 5309
     description: >-
       You held a casting together while the grove worked at you. Put down a
       veil-warped creature if you have not yet.
     hint: >-
-      Defeat a drift-wisp or a grove revenant in the grove, then report to
-      Keeper Orrin -- type ask orrin done.
+      When you have done both, report to Keeper Orrin -- type ask orrin
+      done. If you have not put one down yet, defeat a drift-wisp or a
+      grove revenant in the grove first.
   - id: end
     description: >-
       Orrin has named your concentration sound. East and up, the scabland
