@@ -41,6 +41,32 @@ stores. **A key-spelling registry catches a new surface the moment someone
 invents a key for it**, which is the property the arc needs to keep the inventory
 from rotting the way the quell claim did.
 
+## Why FOUR independent enumeration methods, not one
+
+Owner instruction, 2026-08-31: *"try several different methods to get the
+initial inventory to audit so we don't miss anything."*
+
+This is the right call, and the history proves it. Every single time someone
+switched method during design, the inventory grew — curated list (5 stores) →
+targeted grep (14) → key enumeration (16, including the largest surface in the
+game). **A single method's blind spot is invisible from inside that method.**
+
+So M0 runs four methods whose blind spots do not overlap, and then reconciles
+them. Any surface found by one method and missed by another is either a gap in
+the missing method or a genuinely new finding, and **every discrepancy must be
+explained in the sweep document rather than silently reconciled.**
+
+| Method | Finds | Blind to |
+|---|---|---|
+| **A — key names** | keys whose *name* looks textual (`*_text`, `*message*`) | a key with an unguessable name (`blurb`, `caption`, `flavor`) |
+| **B — ANSI markup** | any string containing `<ansi `, in YAML *or* Go — player-facing by construction | plain text with no colour markup |
+| **C — prose shape** | scalar values that read as sentences, whatever the key is called | short fragments, single words, token-only strings |
+| **D — send paths** | text with **no data file at all**, reached by walking backwards from the delivery helpers | text authored in data but never sent from Go |
+
+Method D matters most for the thing the other three structurally cannot see:
+**hardcoded strings in Go with no data file behind them.** 54 Go files carry
+in-code text pools, and no data-side method will ever find one.
+
 ---
 
 ## File Structure
@@ -213,7 +239,120 @@ git commit -m "feat(tools): enumerate text-bearing YAML keys for the messaging s
 
 ---
 
-## Task 2: Add the Go-side send-site and token-engine enumeration
+## Task 2: Methods B and C — ANSI markup and prose shape
+
+These two are orthogonal to Method A: they key on the **value**, not the key
+name, so they find surfaces whose key nobody would guess.
+
+**Files:**
+- Modify: `tools/messaging_surface_audit.py`
+
+- [ ] **Step 1: Add both walks above `main()`**
+
+```python
+# Method B — ANSI markup. A string carrying <ansi ...> is player-facing by
+# construction, whatever its key is called and wherever it lives. This is the
+# highest-signal detector we have and it works on YAML and Go alike.
+ANSI_RE = re.compile(r"<ansi\s+[a-z]+=")
+
+# Method C — prose shape. A scalar that reads as a sentence is player-facing
+# even when its key name gives nothing away. Deliberately conservative: four or
+# more words AND terminal punctuation, so identifiers, tags and single-word
+# enum values do not flood the report.
+PROSE_VALUE_RE = re.compile(r":\s*[\"']?([A-Z][^\"'\n]{20,})[\"']?\s*$")
+PROSE_WORDS = 4
+
+
+def looks_like_prose(value):
+    v = value.strip().rstrip("\"'")
+    if not v.endswith((".", "!", "?", "…")):
+        return False
+    return len(v.split()) >= PROSE_WORDS
+
+
+def walk_values():
+    """Yield (method, key, repo_relative_path) for value-shaped detections."""
+    for root, dirs, files in os.walk(WORLD):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        for name in files:
+            if not name.endswith((".yaml", ".yml")):
+                continue
+            full = os.path.join(root, name)
+            rel = os.path.relpath(full, REPO).replace("\\", "/")
+            try:
+                with open(full, "r", encoding="utf-8", errors="replace") as fh:
+                    current_key = None
+                    for line in fh:
+                        m = KEY_RE.match(line)
+                        if m:
+                            current_key = m.group(1).lower()
+                        if ANSI_RE.search(line):
+                            yield "ansi", current_key or "<list-item>", rel
+                        pm = PROSE_VALUE_RE.search(line)
+                        if pm and m and looks_like_prose(pm.group(1)):
+                            yield "prose", m.group(1).lower(), rel
+            except OSError as exc:
+                print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
+```
+
+- [ ] **Step 2: Add the Go-side ANSI detector to the Go walk stems**
+
+Add alongside the other Go regexes (the walk itself is added in Task 3):
+
+```python
+# Method B applied to Go: an <ansi tag in a Go string literal is player-facing
+# text with no data file behind it. No data-side method can see these.
+GO_ANSI_RE = ANSI_RE
+```
+
+- [ ] **Step 3: Wire methods B and C into `collect()` and the report**
+
+In `collect()`, after the existing key loop, add:
+
+```python
+    values = defaultdict(lambda: defaultdict(set))
+    for method, key, rel in walk_values():
+        values[method][key].add(os.path.dirname(rel).replace("\\", "/"))
+```
+
+Return `keys, values` for now (the Go walk joins in Task 3), and print:
+
+```python
+    for method, label in (
+        ("ansi", "METHOD B — keys carrying ANSI markup"),
+        ("prose", "METHOD C — keys whose values read as prose"),
+    ):
+        hits = values.get(method, {})
+        print()
+        print(f"{label} ({len(hits)} distinct keys)")
+        print("=" * 72)
+        for key in sorted(hits):
+            print(f"  {key:<28} {len(hits[key])} dirs")
+```
+
+- [ ] **Step 4: Run and look specifically for keys Method A did not report**
+
+Run:
+```bash
+python tools/messaging_surface_audit.py > /tmp/m0.txt
+grep -A400 "METHOD B" /tmp/m0.txt | head -60
+```
+
+Expected: mostly keys already known from Method A. **The interesting output is
+any key that appears here and NOT in Method A's table** — that is a surface with
+an unguessable name, and it is the reason this method exists. Record every such
+key; do not dismiss one as noise without saying why in the sweep document.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add tools/messaging_surface_audit.py
+git commit -m "feat(tools): add ANSI-markup and prose-shape detection to the messaging audit"
+```
+
+---
+
+## Task 3: Method D — send paths, and the Go-side surfaces
 
 **Files:**
 - Modify: `tools/messaging_surface_audit.py`
@@ -355,7 +494,104 @@ git commit -m "feat(tools): enumerate pipeline bypasses and token engines in the
 
 ---
 
-## Task 3: The guard test, written to fail first
+## Task 4: Reconcile the four methods
+
+This is the task the multi-method approach exists for. Running four detectors is
+worthless if their disagreements are quietly averaged away — **the disagreements
+are the findings.**
+
+**Files:**
+- Modify: `tools/messaging_surface_audit.py`
+
+- [ ] **Step 1: Add the reconciliation report**
+
+```python
+def reconcile(keys, values, go):
+    """Compare what each method found. Disagreements are the interesting output.
+
+    Returns (only_a, only_b, only_c, go_only) as sorted lists of key names.
+    A key found by one method and missed by another means either that method
+    has a blind spot worth recording, or the key is a genuinely new surface.
+    """
+    a = set(keys)
+    b = set(values.get("ansi", {}))
+    c = set(values.get("prose", {}))
+
+    only_a = sorted(a - (b | c))
+    only_b = sorted(b - a)
+    only_c = sorted(c - a)
+    go_only = sorted({s.rsplit(":", 1)[0] for s in go.get("go_ansi", [])})
+    return only_a, only_b, only_c, go_only
+```
+
+- [ ] **Step 2: Print it, with the discrepancies first**
+
+Add to `main()`, after the per-method sections:
+
+```python
+    only_a, only_b, only_c, go_only = reconcile(keys, values, go)
+
+    print()
+    print("RECONCILIATION — every line below needs an explanation in the sweep")
+    print("=" * 72)
+    print(f"\nFound by NAME only, no ANSI and no prose ({len(only_a)}):")
+    print("  (expect: structural keys like `options`, and token-only strings)")
+    for k in only_a:
+        print(f"    {k}")
+    print(f"\nFound by ANSI but NOT by name ({len(only_b)}):")
+    print("  (expect: ZERO. Any hit is a surface with an unguessable key name)")
+    for k in only_b:
+        print(f"    {k}")
+    print(f"\nFound by PROSE but NOT by name ({len(only_c)}):")
+    print("  (expect: ZERO. Any hit is a surface with an unguessable key name)")
+    for k in only_c:
+        print(f"    {k}")
+    print(f"\nGo files with ANSI text and no data file behind them ({len(go_only)}):")
+    print("  (these are invisible to every data-side method)")
+    for f in go_only:
+        print(f"    {f}")
+```
+
+- [ ] **Step 3: Run it and read the two zero-expectation buckets carefully**
+
+Run:
+```bash
+python tools/messaging_surface_audit.py > /tmp/m0.txt
+sed -n '/^RECONCILIATION/,$p' /tmp/m0.txt
+```
+
+Expected: the "found by ANSI but NOT by name" and "found by PROSE but NOT by
+name" buckets should be **empty or very small**. Each entry is a surface Method A
+would have missed.
+
+⚠️ **A non-empty bucket is a finding, not a bug to tune away.** Do not widen
+`KEY_STEMS` to make it disappear — that hides the evidence. Add the key to the
+registry, and record in the sweep document that Method A alone would have missed
+it. That record is the justification for keeping all four methods in M1's
+snapshot harness.
+
+- [ ] **Step 4: Sanity-check that the Go bucket is non-empty**
+
+The Go-with-ANSI bucket **must not be empty**: 54 Go files carry in-code text
+pools, and `internal/combat/descriptions.go` alone holds the player damage and
+healing vocabularies. An empty bucket means the Go walk is broken, not that the
+codebase is clean.
+
+Run: `sed -n '/Go files with ANSI text/,$p' /tmp/m0.txt | head -20`
+
+Expected: a list including at least `internal/usercommands/` and
+`internal/combat/` files.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add tools/messaging_surface_audit.py
+git commit -m "feat(tools): reconcile the four enumeration methods and surface their disagreements"
+```
+
+---
+
+## Task 5: The guard test, written to fail first
 
 **Files:**
 - Create: `messaging_surface_guard_test.go` (repo root, `package main`)
@@ -546,7 +782,7 @@ git commit -m "test: add the messaging surface guard, registry still empty"
 
 ---
 
-## Task 4: Populate the registry from the tool's output
+## Task 6: Populate the registry from the tool's output
 
 **Files:**
 - Modify: `messaging_surface_guard_test.go`
@@ -629,7 +865,7 @@ git commit -m "test: register every text-bearing key spelling with a scope and r
 
 ---
 
-## Task 5: Prove the guard can fail, in both directions
+## Task 7: Prove the guard can fail, in both directions
 
 A guard that cannot go red is worthless, and this repo has been burned by null
 probes three times in one day. Both directions get proven, and the sabotage is
@@ -703,7 +939,7 @@ git commit -m "test: record that the messaging surface guard fails in both direc
 
 ---
 
-## Task 6: Write the sweep document from the tool output
+## Task 8: Write the sweep document from the tool output
 
 **Files:**
 - Create: `docs/superpowers/audits/2026-08-31-messaging-surface-sweep.md`
@@ -786,12 +1022,16 @@ git commit -m "docs(audit): the messaging surface sweep, derived mechanically"
 
 1. `tools/messaging_surface_audit.py` reproduces the hand-measured counts,
    `idlemessages` at 1,285 among them.
-2. `TestEveryTextSurfaceIsRegistered` passes, and has been **shown to fail** in
+2. **All four methods run, and their reconciliation is recorded.** The
+   ANSI-only and prose-only buckets are either empty or every entry is
+   registered and explained; the Go-with-ANSI bucket is **non-empty**, since an
+   empty one means the Go walk is broken rather than the codebase clean.
+3. `TestEveryTextSurfaceIsRegistered` passes, and has been **shown to fail** in
    both directions with the sabotage recorded in its header.
-3. The sweep document exists, is indexed in `docs/README.md`, and every number
+4. The sweep document exists, is indexed in `docs/README.md`, and every number
    in it came from tool output.
-4. `gofmt -l` is clean and `go build ./...` succeeds.
-5. **No file under `internal/` or `modules/` was modified.** M0 changes no
+5. `gofmt -l` is clean and `go build ./...` succeeds.
+6. **No file under `internal/` or `modules/` was modified.** M0 changes no
    production behavior; the only Go file added is a test.
 
 ## Explicitly NOT in M0
