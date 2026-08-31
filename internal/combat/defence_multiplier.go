@@ -1,12 +1,16 @@
 package combat
 
 import (
+	"fmt"
 	"math"
+	"sync"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/progression"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -283,16 +287,105 @@ type ChannelDefenceIdentities struct {
 
 // RenderChannelDefenceMessages renders the canonical channel outcome without
 // rolling or deriving a second result. Attack wins return an empty triad.
+//
+// A defence that HAPPENED always returns text. If the authored pool cannot be
+// resolved this falls back to generic narration rather than returning empty --
+// see genericDefenceTriad for why that distinction is load-bearing.
 func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDefenceIdentities, attack string, indexOverride ...int) items.DefenseMessageTriad {
 	if !out.Defended {
 		return items.DefenseMessageTriad{}
 	}
-	return items.RenderDefenseMessage(items.DefenseType(out.DefenceType), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
+	triad := items.RenderDefenseMessage(items.DefenseType(out.DefenceType), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
 		items.TokenAttacker: identities.Attacker,
 		items.TokenDefender: identities.Defender,
 		items.TokenAttack:   attack,
 		items.TokenWeapon:   attack,
 	}, indexOverride...)
+	if triad.ToRoom == "" {
+		logMissingDefencePool(out.DefenceType)
+		return genericDefenceTriad(identities, attack)
+	}
+	return triad
+}
+
+// missingDefencePoolReportInterval throttles the warning below. A pool that is
+// missing throughout a long fight must not log on every swing, but it must
+// still be able to report AGAIN later -- see logMissingDefencePool for why
+// once-per-process is the wrong instrument here.
+const missingDefencePoolReportInterval = 10 * time.Minute
+
+// missingDefencePoolsLastSeen records when each defence type was last reported.
+// Bounded by construction: out.DefenceType is always res.Winner, which comes
+// from DefenceSetFor's hardcoded switch over the five defence names, so this map
+// can never hold more than five keys and is not player- or data-influenced.
+// Mutex-guarded because combat rounds run alongside other work; it is a leaf
+// lock, taken nowhere else, so it cannot participate in a lock-ordering cycle.
+var (
+	missingDefencePoolsMu       sync.Mutex
+	missingDefencePoolsLastSeen = map[string]time.Time{}
+)
+
+// logMissingDefencePool reports an unresolvable defence message pool, at most
+// once per defence type per reporting interval.
+//
+// WHY THIS EXISTS. The failure is otherwise invisible to DEVELOPERS as well as
+// to players. The pool lookup is a raw string cast,
+// items.DefenseType(out.DefenceType), so a renamed or unauthored defence type
+// resolves to nil at runtime with no compile error, no panic and no boot
+// warning. Before the generic fallback above, the only symptom was a player
+// noticing that a spell had gone quiet.
+//
+// WHY IT IS THROTTLED RATHER THAN ONCE-PER-PROCESS. `reload items`
+// (usercommands/reload.go) hot-reloads the message pools into
+// internal/items at runtime, with no restart. A once-per-process latch lives
+// here in internal/combat and would not be cleared by that reload, so the
+// sequence "pool breaks, logs once, admin attempts a fix, reloads, still
+// broken" would report NOTHING the second time. The single signal would be
+// spent on first sighting and could never confirm that a fix had failed --
+// which is precisely the workflow this warning exists to serve.
+func logMissingDefencePool(defenceType string) {
+	missingDefencePoolsMu.Lock()
+	defer missingDefencePoolsMu.Unlock()
+	now := time.Now()
+	if last, seen := missingDefencePoolsLastSeen[defenceType]; seen &&
+		now.Sub(last) < missingDefencePoolReportInterval {
+		return
+	}
+	missingDefencePoolsLastSeen[defenceType] = now
+	mudlog.Warn("missing defence message pool",
+		"type", defenceType,
+		"effect", "generic narration")
+}
+
+// genericDefenceTriad is the last-resort narration for a defence whose authored
+// pool could not be resolved.
+//
+// WHY THIS EXISTS. items.RenderDefenseMessage returns a wholly empty triad on a
+// nil pool, a missing intensity band, or audience lists of unequal length. Every
+// caller of RenderChannelDefenceMessages gates on `if triad.ToRoom == ""`, so an
+// empty room line discarded the attacker's and defender's lines along with it.
+// The mechanics still resolved, which meant a player watched a spell simply stop
+// happening -- reported from play on 2026-08-31. The pool lookup is a raw string
+// cast, items.DefenseType(out.DefenceType), so one rename silences a channel.
+//
+// Deliberately plain: it names who, whom and what, and nothing else. A data gap
+// should cost flavour, never silence. This mirrors what counter.go already does
+// with fillGenericCounterMessages; the pattern is copied, not invented.
+//
+// The verb is "withstand" rather than something physical like "turn aside",
+// because this one string has to serve EVERY channel that routes through here:
+// melee, ranged, throw, quell (a mental spell) and defy (a taunt). "You turn
+// aside Grimwald's taunt" reads wrong; "You withstand Grimwald's taunt" does
+// not. Keep any replacement channel-neutral for the same reason.
+func genericDefenceTriad(identities ChannelDefenceIdentities, attack string) items.DefenseMessageTriad {
+	return items.DefenseMessageTriad{
+		ToDefender: items.ItemMessage(fmt.Sprintf(
+			`You withstand %s's %s.`, identities.Attacker, attack)),
+		ToAttacker: items.ItemMessage(fmt.Sprintf(
+			`%s withstands your %s.`, identities.Defender, attack)),
+		ToRoom: items.ItemMessage(fmt.Sprintf(
+			`%s withstands %s's %s.`, identities.Defender, identities.Attacker, attack)),
+	}
 }
 
 // ResolveChannelAttack is THE channel resolution entry point (U6b Task 3): it

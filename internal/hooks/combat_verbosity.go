@@ -374,6 +374,15 @@ func recordSpectatorTallies(atkRoom, defRoom *rooms.Room, atk, def actions.Actor
 			// tally summary, which would leak combatant identities they
 			// cannot see. Shapes-only (infrared) viewers are treated the
 			// same as blind here — the named tally requires clear sight.
+			//
+			// CanSeeClearly is deliberate here, so this ALSO excludes a
+			// sleeping spectator (added 2026-08-31). Someone asleep should not
+			// be reading a named summary of a fight happening around them, for
+			// the same reason they should not be reading the room's dialogue.
+			// Contrast the darkness-substitution site in
+			// NewRound_DoCombat_unified.go, which must ignore sleep because it
+			// is choosing between lit and dark phrasing rather than deciding
+			// whether to speak at all.
 			if !messaging.CanSeeClearly(u.Character, room) {
 				continue
 			}

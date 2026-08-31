@@ -527,13 +527,22 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	defRoom := def.GetRoom()
 
 	// Darkness replacement — applies for whichever side is a player viewer.
+	//
+	// CanSeeSightImpairedOnly, NOT CanSeeClearly: this decides whether to
+	// substitute DARKNESS text, so it must ask about darkness and blindness and
+	// not about sleep. When the sleep gate was added to CanSeeClearly on
+	// 2026-08-31, this site started telling a sleeping player "Something hits
+	// you hard in the dark!" in a fully lit room -- and it fired on the very
+	// swing that force-crits and wakes them, which is exactly the moment they
+	// most need to know what hit them. The Sleeping flag is still set here;
+	// cancelDamageBuffs clears it later in the round.
 	srcCanSee := true
 	tgtCanSee := true
 	if atk.IsPlayer() {
-		srcCanSee = messaging.CanSeeClearly(atkChar, atkRoom)
+		srcCanSee = messaging.CanSeeSightImpairedOnly(atkChar, atkRoom)
 	}
 	if def.IsPlayer() {
-		tgtCanSee = messaging.CanSeeClearly(defChar, defRoom)
+		tgtCanSee = messaging.CanSeeSightImpairedOnly(defChar, defRoom)
 	}
 	if !srcCanSee || !tgtCanSee {
 		replaceDarknessMessages(res, srcCanSee, tgtCanSee)

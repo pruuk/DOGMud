@@ -1,5 +1,20 @@
 # DOGMud Patch Notes
 
+## 2026-08-31: Spells stop vanishing, and sleep means sleep
+
+Some spells and taunts simply produced no text at all. The effect landed and
+health changed, but nobody was told anything, so whole abilities looked like
+they were doing nothing. That happened when a piece of writing was missing
+behind the scenes, and the gap silenced the line for everyone in the room rather
+than only the part that was actually absent. Missing writing now falls back to a
+plain description, so you always find out what happened.
+
+Sleeping also means sleeping now. Room chatter, NPC talk, the comings and goings
+of people around you, and the running summary of a fight you are not part of no
+longer reach you while you are asleep. Anything loud enough to wake you still
+wakes you, you are still told when you stir, and a blow that lands on you while
+you sleep is still described to you properly.
+
 ## 2026-08-31: The pronghorn always gives up its meat now
 
 Delk sends you out to hunt a pronghorn and cook what you kill. The problem was

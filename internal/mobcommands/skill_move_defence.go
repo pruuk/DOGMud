@@ -20,9 +20,13 @@ import (
 // fully stopped the move (a defensive crit), all three lines come from the
 // triad (the mob attacker itself receives no text).
 //
-// Returns false when there is nothing to speak — the outcome was not a
-// defence or the pool is missing — so the caller falls back to its plain miss
-// text.
+// Returns false when there is nothing to speak: the outcome was not a defence.
+// The caller then falls back to its plain miss text.
+//
+// It no longer returns false for a MISSING POOL. As of 2026-08-31,
+// combat.RenderChannelDefenceMessages substitutes generic narration when a pool
+// cannot be resolved, so a defended outcome always speaks. That second reason
+// used to be live and is now dead; do not reintroduce a pool check here.
 func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget,
 	out combat.ChannelDefenceResult, attack string, category messaging.Category, roomOnly bool) bool {
 
