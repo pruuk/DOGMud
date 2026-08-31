@@ -50,46 +50,13 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 		}
 	}
+	// ⚠️ MUST RUN BEFORE EVERY DISPATCH BELOW. See the function's own comment.
+	ensureComponentsFromStorage(user, room, recipe)
+
+	// Enchanting dispatches here, AFTER the pull above. It used to sit before it
+	// and return, which is why enchanting never drew from storage.
 	if recipe != nil && crafting.IsEnchantingRecipe(recipe) {
 		return craftEnchanting(rest, recipe, user, room)
-	}
-
-	// Auto-pull from storage: draw exactly the missing components from the
-	// player's storage so the craft can proceed. Your storage is one
-	// per-character pool, reachable while crafting. All-or-nothing
-	// (PlanStoragePull returns complete=false if storage can't cover it).
-	//
-	// ⚠️ THIS CONDITION MUST TRACK THE CRAFT GATE IN actions.InitiateCraft,
-	// which is the whole bug it was written with. The station clause here used
-	// to read `recipe.Station == "" || room.Station == recipe.Station` while
-	// InitiateCraft's gate ALSO honoured Walking Chrysalis
-	// (mutations.HasPortableWorkshop). The two disagreed, so a Chrysifier could
-	// pass the craft gate anywhere and then be refused the components:
-	// storage never opened away from the bench, the craft failed on missing
-	// ingredients, and it read to the player as "the mutation does nothing, I
-	// still have to stand at a station".
-	//
-	// "Fires wherever you can craft" is the invariant. If a future change adds
-	// another way to craft off-station, add it to BOTH places or this breaks
-	// again in exactly the same silent way.
-	if recipe != nil &&
-		actions.StationSatisfied(user.Character, recipe.Station, room.Station) &&
-		user.Character.HasRecipe(recipe.RecipeId) {
-		if ok, _ := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, recipe); !ok {
-			if pull, complete := crafting.PlanStoragePull(recipe, user.Character.Items, user.Character.ComponentItems, user.ItemStorage.GetItems()); complete {
-				for _, itm := range pull {
-					// storageRemoveQuiet places the item on the character FIRST and
-					// only removes it from storage if that succeeds — so an
-					// over-encumbered player can't destroy banked components.
-					if storageRemoveQuiet(user, itm) {
-						user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You draw <ansi fg="item">%s</ansi> from storage.`, itm.DisplayName()))
-					} else {
-						user.SendText(messaging.CategorySystem, `You're too encumbered to draw any more from storage.`)
-						break
-					}
-				}
-			}
-		}
 	}
 
 	// ── Normal craft path: delegate to shared action ──────────────────────────
@@ -180,6 +147,55 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	return true, nil
+}
+
+// ensureComponentsFromStorage draws any missing components for recipe out of
+// the player's storage so a craft can proceed. No-op when the components are
+// already carried, when the recipe is nil or unknown, or when the player could
+// not craft here anyway. All-or-nothing: PlanStoragePull returns
+// complete=false if storage cannot cover the whole shortfall, and then nothing
+// moves.
+//
+// ⚠️ THIS MUST RUN BEFORE EVERY DISPATCH IN Craft(), AND ITS POSITION IS THE
+// ONLY THING THAT MAKES IT CORRECT. It was previously an inline block sitting
+// BELOW the enchanting route, which returned first — so enchanting never pulled
+// at all and `craft honed-edge weapon` reported "You are missing:
+// binding-paste" with 152 of them in storage. Both halves were individually
+// right; only the order was wrong, which is exactly the kind of defect a unit
+// test on either half cannot see.
+//
+// It is a named function rather than an inline block so that the next dispatch
+// path added to Craft() has something obvious to sit below, and so the guard in
+// craft_storage_order_test.go can assert no `return` sneaks in above it.
+//
+// ⚠️ The station clause MUST track actions.StationSatisfied, which honours
+// Chrysifier's Walking Chrysalis. When those two disagreed, a Chrysifier could
+// craft anywhere but never receive components off-station, which read as the
+// mutation doing nothing at all.
+func ensureComponentsFromStorage(user *users.UserRecord, room *rooms.Room, recipe *crafting.RecipeSpec) {
+	if recipe == nil ||
+		!actions.StationSatisfied(user.Character, recipe.Station, room.Station) ||
+		!user.Character.HasRecipe(recipe.RecipeId) {
+		return
+	}
+	if ok, _ := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, recipe); ok {
+		return
+	}
+	pull, complete := crafting.PlanStoragePull(recipe, user.Character.Items, user.Character.ComponentItems, user.ItemStorage.GetItems())
+	if !complete {
+		return
+	}
+	for _, itm := range pull {
+		// storageRemoveQuiet places the item on the character FIRST and only
+		// removes it from storage if that succeeds — so an over-encumbered player
+		// cannot destroy banked components.
+		if storageRemoveQuiet(user, itm) {
+			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You draw <ansi fg="item">%s</ansi> from storage.`, itm.DisplayName()))
+		} else {
+			user.SendText(messaging.CategorySystem, `You're too encumbered to draw any more from storage.`)
+			return
+		}
+	}
 }
 
 // craftEnchanting handles the enchanting sub-path of craft, which requires
@@ -571,12 +587,13 @@ func recipeStatus(user *users.UserRecord, room *rooms.Room, r *crafting.RecipeSp
 }
 
 // storageCompletable reports whether recipe r could be crafted right now by
-// auto-pulling its missing components from the player's storage. Enchanting
-// recipes are excluded — they route to craftEnchanting, which does not pull.
+// auto-pulling its missing components from the player's storage.
+//
+// ⚠️ Enchanting recipes USED to be excluded here, on the grounds that they
+// "route to craftEnchanting, which does not pull". They pull now — the route
+// moved below the pull in Craft() — so excluding them would make the recipe
+// list claim a craft is impossible that would in fact succeed.
 func storageCompletable(user *users.UserRecord, r *crafting.RecipeSpec) bool {
-	if crafting.IsEnchantingRecipe(r) {
-		return false
-	}
 	_, complete := crafting.PlanStoragePull(r, user.Character.Items, user.Character.ComponentItems, user.ItemStorage.GetItems())
 	return complete
 }
