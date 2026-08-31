@@ -132,3 +132,37 @@ func TestCanSeeClearly_AwakeStillSees(t *testing.T) {
 		t.Error("an awake character in a lit room must still see shapes")
 	}
 }
+
+// The combat predicate must NOT gate on sleep, and the messaging one must.
+//
+// internal/combat/combat.go feeds CanSeeSightImpairedOnly into
+// combatContext.sourceCanSee/targetCanSee, which drive DarknessCombatPenalty
+// onto the attack score and every candidate defence score. If that predicate
+// ever starts honouring sleep, a sleeping defender in a LIT room silently takes
+// a darkness penalty, doubling a disadvantage ForceCrit already applies and
+// writing a phantom darkness term into combat-analytics.jsonl -- which is the
+// data tools/balance reads to tune the game.
+//
+// Found by blind adversarial review 2026-08-31, after the sleep gate was added
+// to CanSeeClearly without auditing its non-messaging consumers.
+func TestSleepGatesMessagingButNotTheCombatPredicate(t *testing.T) {
+	c := newChar(t)
+	setSleeping(t, c)
+
+	if CanSeeClearly(c, nil) {
+		t.Error("messaging: a sleeper must not see clearly")
+	}
+	if !CanSeeSightImpairedOnly(c, nil) {
+		t.Error("combat: sleep must NOT count as sight impairment in a lit room; " +
+			"that applies a darkness penalty in daylight and corrupts balance telemetry")
+	}
+}
+
+// The combat predicate must still honour the things it always honoured.
+func TestCanSeeSightImpairedOnly_StillHonoursBlindness(t *testing.T) {
+	c := newChar(t)
+	setBlinded(t, c)
+	if CanSeeSightImpairedOnly(c, nil) {
+		t.Error("a blinded character's sight IS impaired, sleep aside")
+	}
+}

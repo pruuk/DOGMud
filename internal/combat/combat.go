@@ -50,8 +50,8 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 
 	room := rooms.LoadRoom(user.Character.RoomId)
 	ctx := combatContext{
-		sourceCanSee: messaging.CanSeeClearly(user.Character, room),
-		targetCanSee: messaging.CanSeeClearly(&mob.Character, room),
+		sourceCanSee: messaging.CanSeeSightImpairedOnly(user.Character, room),
+		targetCanSee: messaging.CanSeeSightImpairedOnly(&mob.Character, room),
 		forceCrit:    forceCrit,
 	}
 	attackResult, _ := resolveCombatRound(user.Character, &mob.Character, User, Mob, ctx)
@@ -101,8 +101,8 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 
 	room := rooms.LoadRoom(userAtk.Character.RoomId)
 	ctx := combatContext{
-		sourceCanSee: messaging.CanSeeClearly(userAtk.Character, room),
-		targetCanSee: messaging.CanSeeClearly(userDef.Character, room),
+		sourceCanSee: messaging.CanSeeSightImpairedOnly(userAtk.Character, room),
+		targetCanSee: messaging.CanSeeSightImpairedOnly(userDef.Character, room),
 		forceCrit:    forceCrit,
 	}
 	attackResult, _ := resolveCombatRound(userAtk.Character, userDef.Character, User, User, ctx)
@@ -145,8 +145,8 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) At
 
 	room := rooms.LoadRoom(mob.Character.RoomId)
 	ctx := combatContext{
-		sourceCanSee: messaging.CanSeeClearly(&mob.Character, room),
-		targetCanSee: messaging.CanSeeClearly(user.Character, room),
+		sourceCanSee: messaging.CanSeeSightImpairedOnly(&mob.Character, room),
+		targetCanSee: messaging.CanSeeSightImpairedOnly(user.Character, room),
 		forceCrit:    forceCrit,
 	}
 	attackResult, _ := resolveCombatRound(&mob.Character, user.Character, Mob, User, ctx)
@@ -194,8 +194,8 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob, forceCrit bool) AttackRe
 
 	room := rooms.LoadRoom(mobAtk.Character.RoomId)
 	ctx := combatContext{
-		sourceCanSee: messaging.CanSeeClearly(&mobAtk.Character, room),
-		targetCanSee: messaging.CanSeeClearly(&mobDef.Character, room),
+		sourceCanSee: messaging.CanSeeSightImpairedOnly(&mobAtk.Character, room),
+		targetCanSee: messaging.CanSeeSightImpairedOnly(&mobDef.Character, room),
 		forceCrit:    forceCrit,
 	}
 	attackResult, _ := resolveCombatRound(&mobAtk.Character, &mobDef.Character, Mob, Mob, ctx)
