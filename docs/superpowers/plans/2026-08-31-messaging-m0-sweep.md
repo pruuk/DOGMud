@@ -98,6 +98,46 @@ in the "found by PROSE but NOT by name" bucket.**
 - **If Task 4 does NOT report it → Method C has a hole**, and that is a serious
   finding about the harness, not a reason to patch Method A. Fix Method C.
 
+### The 2-file threshold does NOT work for Method C — found by review
+
+Method A's schema/content split works because Method A's keys are already
+filtered to stem-matching names, which is a proxy for "a loader reads this".
+**Method C has no such filter, so its key space is unbounded author text**, and
+the 2-file rule mis-sorts it: `door`, `path`, `sign`, `water`, `hearth`,
+`bounty board` all appear in 2+ files because many rooms independently choose
+the same noun, not because any loader owns them.
+
+Measured after the block-scalar fix: Method C reports **433 schema / 1,556
+content**; Method B reports **26 schema / 156 content**.
+
+🔑 **Those 433 are not noise — they ARE the `nouns:` surface**, showing up as
+its individual children. The prediction held twice over: Method C sees the
+surface Method A cannot, and it sees it as hundreds of sibling keys.
+
+**So Task 4 must GROUP the prose-only bucket by source directory before
+reporting it**, and the sweep document must describe it as *one surface with
+~3,070 author-chosen children*, not as 433 findings. Counting it as 433 would
+be as wrong as counting it as zero.
+
+⚠️ **Do not tune the prose heuristic to shrink the 433.** It is measuring
+correctly; only the presentation is wrong.
+
+### Residual junk, and the one principled fix for it
+
+A junk check for keys containing "you can" still returns hits after the
+block-scalar fix. All remaining cases come from two constructs the fix did not
+cover:
+
+- **`.template` files** — plain help text where a prose line ends in a colon
+  before a bullet list. **Method C should not read `.template` at all:**
+  templates have no key structure, so "attribute prose to the nearest key" is
+  meaningless there. Method B already covers templates via ANSI markup. This is
+  a scope correction, not a tuning knob, and it is folded into Task 3.
+- **Multi-line double-quoted YAML scalars** (`send_text: "…"` spanning physical
+  lines). A smaller variant of the block-scalar problem. Left alone for now and
+  recorded here; if the reconciliation is still noisy after the template fix,
+  handle it then rather than pre-emptively.
+
 ### Baseline count change, recorded so it is not read as a regression
 
 Fixing the key regex moved **`text` from 1,878 to 2,231 (+353)**. The added
