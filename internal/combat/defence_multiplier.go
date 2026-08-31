@@ -318,14 +318,20 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 // Deliberately plain: it names who, whom and what, and nothing else. A data gap
 // should cost flavour, never silence. This mirrors what counter.go already does
 // with fillGenericCounterMessages; the pattern is copied, not invented.
+//
+// The verb is "withstand" rather than something physical like "turn aside",
+// because this one string has to serve EVERY channel that routes through here:
+// melee, ranged, throw, quell (a mental spell) and defy (a taunt). "You turn
+// aside Grimwald's taunt" reads wrong; "You withstand Grimwald's taunt" does
+// not. Keep any replacement channel-neutral for the same reason.
 func genericDefenceTriad(identities ChannelDefenceIdentities, attack string) items.DefenseMessageTriad {
 	return items.DefenseMessageTriad{
 		ToDefender: items.ItemMessage(fmt.Sprintf(
-			`You turn aside %s's %s.`, identities.Attacker, attack)),
+			`You withstand %s's %s.`, identities.Attacker, attack)),
 		ToAttacker: items.ItemMessage(fmt.Sprintf(
-			`%s turns aside your %s.`, identities.Defender, attack)),
+			`%s withstands your %s.`, identities.Defender, attack)),
 		ToRoom: items.ItemMessage(fmt.Sprintf(
-			`%s turns aside %s's %s.`, identities.Defender, identities.Attacker, attack)),
+			`%s withstands %s's %s.`, identities.Defender, identities.Attacker, attack)),
 	}
 }
 
