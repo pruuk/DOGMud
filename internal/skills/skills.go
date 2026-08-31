@@ -380,10 +380,15 @@ var SkillProgressionMultipliers = map[SkillTag]float64{
 	// out-roll it -- it wins the attacker Best-of every round rather than two in
 	// three. Its clean hit is the OR across all 8 swings (0.980, against 0.858
 	// for a lone fist over 4 and 0.623 for a longsword over 2). And
-	// equipmentGatedMeleeDefences tests IsUnarmedStyle FIRST, so a bare-handed
-	// defender gets dodge and nothing else: no parry, no block even holding a
-	// shield. Dodge maps to unarmed-combat, so it takes the WHOLE defence award
-	// instead of dodge's 83.6% share.
+	// equipmentGatedMeleeDefences gives a bare-handed defender dodge and nothing
+	// else: no parry, and with two EMPTY hands no block either. Dodge maps to
+	// unarmed-combat, so it takes the WHOLE defence award instead of dodge's
+	// 83.6% share.
+	//
+	// ⚠️ The clause "no block even holding a shield" used to appear here and is
+	// no longer true. On 2026-08-30 that gate became per-slot, so a shield in
+	// ANY hand now blocks. THIS SOLVE IS UNAFFECTED because the build it prices
+	// holds nothing at all — but do not re-derive it from the old sentence.
 	//
 	// That totals 1.74 events per engaged round against 0.93 for a shield build.
 	// It is paid for in damage (UnarmedDamageMultiplier 0.30) and in having no

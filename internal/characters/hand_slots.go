@@ -163,6 +163,38 @@ func (c *Character) BestParryRating() int {
 	return best
 }
 
+// ParryCapableArmCount returns how many equipped weapon/arm slots hold a
+// weapon that can actually deflect a blow.
+//
+// Fists and claws are excluded: they are weapons by ItemType but the unarmed
+// style has nothing to parry WITH, which is the rule IsUnarmedStyle has always
+// encoded for the main hand.
+//
+// ⚠️ This counts EVERY arm, extras included, which is the whole point. The
+// defence gate used to be a main-hand ladder: IsUnarmedStyle read
+// Equipment.Weapon alone, so claws in hand one suppressed parry AND block for
+// all six arms, and IsDualWielding read Weapon+Offhand alone and returned
+// before the shield check, so two swords hid a shield in arm three. A player
+// with the extra-arms mutation, a tower shield strapped to their third arm and
+// claws in front was getting dodge and nothing else.
+func (c *Character) ParryCapableArmCount() int {
+	n := 0
+	for _, slot := range c.getWeaponAndArmItems() {
+		if slot.ItemId < 1 {
+			continue
+		}
+		spec := slot.GetSpec()
+		if spec.Type != items.Weapon {
+			continue
+		}
+		if spec.Subtype == items.Fist || spec.Subtype == items.Claws {
+			continue
+		}
+		n++
+	}
+	return n
+}
+
 // BestBlockRating returns the highest BlockRating across all equipped
 // items in weapon/arm slots.
 func (c *Character) BestBlockRating() int {
