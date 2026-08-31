@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sync"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -307,34 +308,53 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 	return triad
 }
 
-// missingDefencePools remembers which defence types have already been reported.
-// A pool that is missing during a long fight would otherwise log on every swing.
-// Mutex-guarded because combat rounds run alongside other work.
+// missingDefencePoolReportInterval throttles the warning below. A pool that is
+// missing throughout a long fight must not log on every swing, but it must
+// still be able to report AGAIN later -- see logMissingDefencePool for why
+// once-per-process is the wrong instrument here.
+const missingDefencePoolReportInterval = 10 * time.Minute
+
+// missingDefencePoolsLastSeen records when each defence type was last reported.
+// Bounded by construction: out.DefenceType is always res.Winner, which comes
+// from DefenceSetFor's hardcoded switch over the five defence names, so this map
+// can never hold more than five keys and is not player- or data-influenced.
+// Mutex-guarded because combat rounds run alongside other work; it is a leaf
+// lock, taken nowhere else, so it cannot participate in a lock-ordering cycle.
 var (
-	missingDefencePoolsMu sync.Mutex
-	missingDefencePools   = map[string]bool{}
+	missingDefencePoolsMu       sync.Mutex
+	missingDefencePoolsLastSeen = map[string]time.Time{}
 )
 
-// logMissingDefencePool reports an unresolvable defence message pool once per
-// defence type per process.
+// logMissingDefencePool reports an unresolvable defence message pool, at most
+// once per defence type per reporting interval.
 //
-// This exists because the failure is otherwise invisible to DEVELOPERS as well
-// as to players. The pool lookup is a raw string cast,
+// WHY THIS EXISTS. The failure is otherwise invisible to DEVELOPERS as well as
+// to players. The pool lookup is a raw string cast,
 // items.DefenseType(out.DefenceType), so a renamed or unauthored defence type
 // resolves to nil at runtime with no compile error, no panic and no boot
 // warning. Before the generic fallback above, the only symptom was a player
-// noticing that a spell had gone quiet. This is the signal that says which
-// pool, and says it once.
+// noticing that a spell had gone quiet.
+//
+// WHY IT IS THROTTLED RATHER THAN ONCE-PER-PROCESS. `reload items`
+// (usercommands/reload.go) hot-reloads the message pools into
+// internal/items at runtime, with no restart. A once-per-process latch lives
+// here in internal/combat and would not be cleared by that reload, so the
+// sequence "pool breaks, logs once, admin attempts a fix, reloads, still
+// broken" would report NOTHING the second time. The single signal would be
+// spent on first sighting and could never confirm that a fix had failed --
+// which is precisely the workflow this warning exists to serve.
 func logMissingDefencePool(defenceType string) {
 	missingDefencePoolsMu.Lock()
 	defer missingDefencePoolsMu.Unlock()
-	if missingDefencePools[defenceType] {
+	now := time.Now()
+	if last, seen := missingDefencePoolsLastSeen[defenceType]; seen &&
+		now.Sub(last) < missingDefencePoolReportInterval {
 		return
 	}
-	missingDefencePools[defenceType] = true
-	mudlog.Warn("RenderChannelDefenceMessages",
-		"missing defence message pool", defenceType,
-		"effect", "falling back to generic narration")
+	missingDefencePoolsLastSeen[defenceType] = now
+	mudlog.Warn("missing defence message pool",
+		"type", defenceType,
+		"effect", "generic narration")
 }
 
 // genericDefenceTriad is the last-resort narration for a defence whose authored
