@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-19
 **Status:** Approved (design), pending spec review
-**Relates to:** `docs/superpowers/specs/2026-07-18-minimap-quest-marker-design.md`
+**Relates to:** `docs/superpowers/specs/completed/2026-07-18-minimap-quest-marker-design.md`
 (the minimap quest-marker feature this pass feeds)
 
 ## Problem

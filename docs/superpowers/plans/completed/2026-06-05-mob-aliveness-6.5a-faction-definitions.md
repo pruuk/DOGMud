@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files, the `internal/factions` loader.
 
-**Spec:** `docs/superpowers/specs/2026-06-05-mob-aliveness-6.5a-faction-definitions-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-05-mob-aliveness-6.5a-faction-definitions-design.md`
 
 ---
 

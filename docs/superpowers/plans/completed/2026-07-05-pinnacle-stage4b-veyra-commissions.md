@@ -23,7 +23,7 @@ item → item_gain of the pinnacle item charges the second half + completes.
 **Tech Stack:** Go (2 engine tasks in questengine/dialogue/characters), YAML
 (quests, dialogue), existing quest+dialogue engines.
 
-**Spec:** `docs/superpowers/specs/2026-07-04-pinnacle-chase-items-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-04-pinnacle-chase-items-design.md`
 (§3.1-3.3). **Refs:** `docs/schemas/dialogue.md`, `docs/schemas/pinnacle-items.md`
 (the "Stage 4a" recipe-slug tables — the exact slugs to teach), quest 35
 (`quests/35-first_heat.yaml`) + Rusk dialogue (`dialogue/pothole_coulee/9116.yaml`)

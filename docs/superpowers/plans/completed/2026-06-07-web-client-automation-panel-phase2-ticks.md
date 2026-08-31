@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (UserRecord storage, GMCP module + inbound IAC handler), vanilla JS/CSS web client, GMCP.
 
-**Spec:** `docs/superpowers/specs/2026-06-07-web-client-automation-panel-design.md` (Parts B/C/D/E + phasing — this is Phase 2). Phase 1 (Macros & Aliases) is already merged on master.
+**Spec:** `docs/superpowers/specs/completed/2026-06-07-web-client-automation-panel-design.md` (Parts B/C/D/E + phasing — this is Phase 2). Phase 1 (Macros & Aliases) is already merged on master.
 
 ---
 

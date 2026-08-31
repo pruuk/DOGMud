@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-27
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (§3 row 10, §9 east seam)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (§3 row 10, §9 east seam)
 **Predecessor:** District 7 (Craftsmen's Row) merged. **This is the LAST district — it
 completes the Confluence.**
 

@@ -22,7 +22,7 @@ unit tests drive failure and race cases through fakes.
 `gopkg.in/yaml.v3`, `testify`, GitHub Actions.
 
 **Approved design:**
-`docs/superpowers/specs/2026-08-07-ephemeral-playtest-supervisor-design.md`
+`docs/superpowers/specs/completed/2026-08-07-ephemeral-playtest-supervisor-design.md`
 
 **Status:** Implemented 2026-08-08
 
@@ -103,9 +103,9 @@ unit tests drive failure and race cases through fakes.
 - `go.mod`, `go.sum` — add the latest `gofrs/flock` and `natefinch/atomic`.
 - `docs/guides/TESTING_GUIDE.md` — local supervisor test commands, scope, and
   artifact/cleanup contract.
-- `docs/superpowers/specs/2026-08-07-ephemeral-playtest-supervisor-design.md` —
+- `docs/superpowers/specs/completed/2026-08-07-ephemeral-playtest-supervisor-design.md` —
   approved design and evidence-backed implementation clarifications.
-- `docs/superpowers/plans/2026-08-07-ephemeral-playtest-supervisor.md` — this
+- `docs/superpowers/plans/completed/2026-08-07-ephemeral-playtest-supervisor.md` — this
   reviewed execution record.
 - `docs/roadmaps/ADVERSARIAL_REVIEW_REMEDIATION_ROADMAP.md` — move 0.3a through
   implementation and review status; mark Done only after final evidence.
@@ -1351,8 +1351,8 @@ Do not claim Linux verification until the workflow has actually passed.
 **Files:**
 - Create: `internal/playtestenv/context.md`
 - Modify: `docs/guides/TESTING_GUIDE.md`
-- Modify: `docs/superpowers/specs/2026-08-07-ephemeral-playtest-supervisor-design.md`
-- Modify: `docs/superpowers/plans/2026-08-07-ephemeral-playtest-supervisor.md`
+- Modify: `docs/superpowers/specs/completed/2026-08-07-ephemeral-playtest-supervisor-design.md`
+- Modify: `docs/superpowers/plans/completed/2026-08-07-ephemeral-playtest-supervisor.md`
 - Modify: `docs/roadmaps/ADVERSARIAL_REVIEW_REMEDIATION_ROADMAP.md`
 
 - [x] **Step 1: Write `context.md` from verified symbols**

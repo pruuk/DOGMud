@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; `internal/combat`, `internal/actions`, `internal/usercommands`, `internal/mobcommands`, `internal/species`, `internal/characters`, `internal/buffs`; YAML data (`combat-messages/`, species, help templates, `keywords.yaml`).
 
-**Spec:** `docs/superpowers/specs/2026-06-09-nonhuman-attacks-and-beast-moveset-design.md` (Layer 2b beast moveset). Phase 1 (natural-attack messaging) and Phase 2 (anatomy gating of human moves + hamstring-into-AI + bite retirement) are DONE and on local master.
+**Spec:** `docs/superpowers/specs/completed/2026-06-09-nonhuman-attacks-and-beast-moveset-design.md` (Layer 2b beast moveset). Phase 1 (natural-attack messaging) and Phase 2 (anatomy gating of human moves + hamstring-into-AI + bite retirement) are DONE and on local master.
 
 **Decisions locked with the user (2026-06-09):**
 1. **Full player↔mob parity** for all six new moves (each gets a player handler + helpfile + keywords + parity-list entry, per spec §B), not mob-only.
@@ -513,7 +513,7 @@ Run: `rm -rf _datafiles/world/dogmud/mobs.instances/* _datafiles/world/dogmud/ro
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-06-09-nonhuman-attacks-phase3-beast-moveset.md`. Two execution options:
+Plan complete and saved to `docs/superpowers/plans/completed/2026-06-09-nonhuman-attacks-phase3-beast-moveset.md`. Two execution options:
 
 1. **Subagent-Driven (recommended)** — fresh subagent per task (one move at a time), spec + quality review between tasks, fast iteration. Sequence content-creating tasks (message files, helpfiles) to avoid ID collisions; code tasks can pipeline.
 2. **Inline Execution** — execute tasks in this session with checkpoints.

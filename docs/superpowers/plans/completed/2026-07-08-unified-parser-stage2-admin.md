@@ -17,7 +17,7 @@ passes its own `…ResolveMobIdent` as the validator. No room `Scope` involved.
 **Tech Stack:** Go, `testify`, `internal/parser`, the admin command files in
 `internal/usercommands/`.
 
-**Spec:** `docs/superpowers/specs/2026-07-08-unified-parser-seam-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-08-unified-parser-seam-design.md`
 (see "After Stage 1" divergence — this is the ONLY genuinely-broken remaining
 command family; value is admin/dev ergonomics, B-tier).
 

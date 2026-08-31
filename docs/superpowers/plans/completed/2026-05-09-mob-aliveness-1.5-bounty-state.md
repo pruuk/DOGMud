@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, YAML persistence (`gopkg.in/yaml.v3`), existing `internal/events` event bus, existing `internal/configs/Balance` config, existing `internal/questengine` for the action.
 
-**Spec:** `docs/superpowers/specs/2026-05-09-mob-aliveness-1.5-bounty-state-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.5-bounty-state-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 
@@ -2211,7 +2211,7 @@ Locate the `### 1.5 Bounty state` section. Change `**Status:** Not started` to `
 Suggested template:
 
 ```markdown
-- **Shipped:** `internal/bounties/` package storing per-bounty registry at `_datafiles/world/dogmud/bounties.yaml` (gitignored). Polymorphic target via `knowledge.Subject` (player or mob template); three issuer types (faction, quest, npc). Reward auto-computes from target statpool — `gold = floor(statpool × BountyGoldDefaultMultiplier)` (default 0.5, floor 50) and `rep = max(1, floor(statpool / 100))`, both stored on the row at declaration with declarer override available via `DeclareOpts`. Auto-claim hook `MobDeath_BountyClaim` fires on mob death — highest-damager wins (companion damage already rolls up via `combat.go`'s charmed-userId path), gold transferred to character, faction rep bumped when issuer is a faction. Quest engine `declare_bounty` action wires the substrate into quest content. Admin command `bounty list/show/declare/withdraw/prune-expired` + helpfile. Player command `bounty list/show` + helpfile. Two physical bounty boards as flavor nouns (Thornwall Guard Barracks 473, Stillwater Constabulary 4110) — discovery via `look bounty board`; data flow via the universal command. Withdraw + expiry semantics; non-open rows preserved for audit. Spec at `docs/superpowers/specs/2026-05-09-mob-aliveness-1.5-bounty-state-design.md`, plan at `docs/superpowers/plans/2026-05-09-mob-aliveness-1.5-bounty-state.md`.
+- **Shipped:** `internal/bounties/` package storing per-bounty registry at `_datafiles/world/dogmud/bounties.yaml` (gitignored). Polymorphic target via `knowledge.Subject` (player or mob template); three issuer types (faction, quest, npc). Reward auto-computes from target statpool — `gold = floor(statpool × BountyGoldDefaultMultiplier)` (default 0.5, floor 50) and `rep = max(1, floor(statpool / 100))`, both stored on the row at declaration with declarer override available via `DeclareOpts`. Auto-claim hook `MobDeath_BountyClaim` fires on mob death — highest-damager wins (companion damage already rolls up via `combat.go`'s charmed-userId path), gold transferred to character, faction rep bumped when issuer is a faction. Quest engine `declare_bounty` action wires the substrate into quest content. Admin command `bounty list/show/declare/withdraw/prune-expired` + helpfile. Player command `bounty list/show` + helpfile. Two physical bounty boards as flavor nouns (Thornwall Guard Barracks 473, Stillwater Constabulary 4110) — discovery via `look bounty board`; data flow via the universal command. Withdraw + expiry semantics; non-open rows preserved for audit. Spec at `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.5-bounty-state-design.md`, plan at `docs/superpowers/plans/completed/2026-05-09-mob-aliveness-1.5-bounty-state.md`.
 ```
 
 - [ ] **Step 3: Commit**

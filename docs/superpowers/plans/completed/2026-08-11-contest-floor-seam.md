@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `go/ast` + `go/parser` for the guard, standard `go test`.
 
-**Spec:** `docs/superpowers/specs/2026-08-11-contest-floor-seam-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-11-contest-floor-seam-design.md`
 
 ---
 

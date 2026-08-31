@@ -15,7 +15,7 @@ that come later.
 
 North-star reference: `sample_mud_frontend.png`. Parent sequence + shared
 context: see the `project_web_overhaul_sequence` memory note and the shipped
-chrome theme (`docs/superpowers/specs/2026-06-06-web-chrome-theme-design.md`).
+chrome theme (`docs/superpowers/specs/completed/2026-06-06-web-chrome-theme-design.md`).
 
 ## Context — current state
 

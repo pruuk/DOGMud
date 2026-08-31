@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML data files, goja JS scripting, ANSI terminal output
 
-**Spec:** `docs/superpowers/specs/2026-03-17-hidden-object-discovery-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-03-17-hidden-object-discovery-design.md`
 
 ---
 

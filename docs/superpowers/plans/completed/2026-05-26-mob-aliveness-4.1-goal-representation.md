@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25 · `gopkg.in/yaml.v3` (matching knowledge/facts/bounties) · existing `mudlog`, `configs`, `util`, `messaging`, `users`, `rooms`, `events`, `mobs`, `templates` packages.
 
-**Spec:** `docs/superpowers/specs/2026-05-26-mob-aliveness-4.1-goal-representation-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-26-mob-aliveness-4.1-goal-representation-design.md`
 
 ---
 

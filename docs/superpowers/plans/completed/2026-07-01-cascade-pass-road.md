@@ -8,7 +8,7 @@
 
 **Tech Stack:** GoMud YAML data files; `python -c "import yaml"` for validation; local server boot for load-validation (`ValidateZoneConsistency` panic mode); the `/playtest` mudagent harness for feel-testing.
 
-**Reference spec:** `docs/superpowers/specs/2026-07-01-cascade-pass-road-design.md`
+**Reference spec:** `docs/superpowers/specs/completed/2026-07-01-cascade-pass-road-design.md`
 
 ---
 

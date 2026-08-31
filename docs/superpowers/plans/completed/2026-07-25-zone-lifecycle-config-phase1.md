@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `gopkg.in/yaml.v2` via `internal/fileloader`, testify `assert` in `internal/rooms`, plain `testing` in `modules/gmcp`, vanilla JS panel modules in `_datafiles/html/public/static/js/`.
 
-**Spec:** `docs/superpowers/specs/2026-07-25-zone-lifecycle-config-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-25-zone-lifecycle-config-design.md`
 
 **Phase 2 (rename) is NOT in this plan.**
 

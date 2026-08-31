@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** Build the counterplay-rich Warden-Prime and Core Guardian encounters from
-`docs/superpowers/specs/2026-07-06-crashsite-boss-mechanics-design.md`.
+`docs/superpowers/specs/completed/2026-07-06-crashsite-boss-mechanics-design.md`.
 
 **Architecture:** Reuse existing engine primitives (fold-casting telegraph,
 `InterruptTargetCast`, mob-grapple, mob-heal, `spawn_mob`, `TransportCompanions`

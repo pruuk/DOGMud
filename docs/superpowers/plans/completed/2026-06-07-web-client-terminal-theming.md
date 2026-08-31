@@ -18,7 +18,7 @@
 - **Modify:** `_datafiles/html/public/static/css/dashboard.css` — `@font-face` declarations (Task 2) + `#terminal` cold-black overrides (Task 5)
 - **Modify:** `_datafiles/html/public/webclient-pure.html` — xterm `theme` object (Task 3) + `fontFamily` and font-ready refit (Task 4)
 
-Reference: spec at `docs/superpowers/specs/2026-06-07-web-client-terminal-theming-design.md`.
+Reference: spec at `docs/superpowers/specs/completed/2026-06-07-web-client-terminal-theming-design.md`.
 
 **Verification note:** This is front-end HTML/CSS/JS in a Go repo with no JS test runner. "Tests" here are concrete structural checks (file exists, valid woff2 magic bytes, grep the inserted code) plus a final browser smoke (Task 6). Each task commits its own change. `git add` ONLY the named files — the working tree has unrelated uncommitted world-state files that must not be staged.
 

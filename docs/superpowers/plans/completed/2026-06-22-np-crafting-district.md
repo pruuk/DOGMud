@@ -17,7 +17,7 @@ ensures vendors pre-declare deliverable `StockEntry`s so they are delivery-ready
 YAML schema (`docs/schemas/`), `tools/id_inventory.py`, the `cartcheck` admin
 command, the `/playtest` harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-22-np-crafting-district-design.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-06-22-np-crafting-district-design.md`.
 
 ---
 

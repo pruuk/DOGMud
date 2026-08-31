@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3 + Pillow (sync script), vanilla ES5 JS (browser module, matches existing `item-icons.js` style), Node 24 (test harness, no framework), Go HTML template (`webclient-pure.html`), CSS.
 
-**Spec:** `docs/superpowers/specs/2026-06-08-card-raster-item-icons-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-08-card-raster-item-icons-design.md`
 
 ---
 

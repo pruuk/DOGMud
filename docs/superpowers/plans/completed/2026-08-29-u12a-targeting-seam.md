@@ -131,7 +131,7 @@ Expected: FAIL — the package does not exist yet (`no Go files in .../internal/
 //   - Commit enters combat with a selected target. It is the only door
 //     external packages use.
 //
-// LAYERING (see docs/superpowers/plans/2026-08-29-u12a-targeting-seam.md):
+// LAYERING (see docs/superpowers/plans/completed/2026-08-29-u12a-targeting-seam.md):
 //
 //   - This package MUST NOT import internal/combat. internal/combat is
 //     itself a Commit call site, so importing it creates a cycle. The
@@ -1387,7 +1387,7 @@ Append the measured figure to the spec's risk 1 so U12c inherits it rather than 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add internal/targeting/engagement_bench_test.go docs/superpowers/specs/2026-08-29-u12-unified-targeting-design.md
+git add internal/targeting/engagement_bench_test.go docs/superpowers/specs/completed/2026-08-29-u12-unified-targeting-design.md
 git commit -m "test(targeting): benchmark EngagementOf and record the hot-path cost"
 ```
 

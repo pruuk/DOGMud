@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (server module, in DOGMud's main module — modules use `github.com/GoMudEngine/GoMud/...` import paths and have **no per-module go.mod**; `modules/all-modules.go` is `go generate`-d). YAML/Markdown (overlay). The prebuilt `mudagent` binary + the harness driver are reference sources at `$GOMUD_HARNESS_DIR`.
 
-**Spec:** `docs/superpowers/specs/2026-06-08-playtest-harness-adoption-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-08-playtest-harness-adoption-design.md`
 **Reference (harness) docs:** `module/playtest/*.go` (source to vendor), `docs/plans/2026-06-05-playtest-module.md`, `docs/plans/2026-06-05-phase2-beacons.md`, `docs/plans/2026-06-05-framework-content.md`, `.claude/commands/playtest.md` (driver to adapt), `framework/{engine-profile.yaml,targets.yaml,personalities,goals/SCHEMA.md}` — all under `$GOMUD_HARNESS_DIR`.
 
 ---

@@ -1,6 +1,6 @@
 # Newbie Rework — Chunk 8 Sub-Spec: Spoke G (Ranged & Marksmanship) + Connectors
 
-> Parent spec: `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+> Parent spec: `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 > (§5 Tier-2 ranged beats, §6.1 topology + lateral connectors, §6.3 roster row G,
 > §7.2 reward table row G, §10 chunk 8). Hub + Spokes A/B/C/D/E/F built, verified,
 > committed. This is the **seventh and final spoke**, and it also authors the

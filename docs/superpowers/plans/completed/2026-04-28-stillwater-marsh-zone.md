@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files. Existing engine systems: room loader, mob loader, species registry, behavior_archetype dispatcher, spawn timer, coord/map renderer. No new code.
 
-**Sketch:** `docs/superpowers/specs/2026-04-28-stillwater-marsh-zone-sketch.md` (committed 0740be03; user approved).
+**Sketch:** `docs/superpowers/specs/completed/2026-04-28-stillwater-marsh-zone-sketch.md` (committed 0740be03; user approved).
 
 ---
 

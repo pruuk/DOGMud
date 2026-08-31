@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, GoMud auctions plugin, testify, YAML data files.
 
-**Spec:** `docs/superpowers/specs/2026-07-15-npc-auction-buyer-official-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-15-npc-auction-buyer-official-design.md`
 
 ---
 

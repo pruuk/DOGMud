@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go — `internal/combat` (seam), `internal/hooks` (spell resolution, round tick), `internal/characters` (companion state), `internal/mobs` (instance saves), `internal/configs` (balance knobs); YAML data files and ANSI help templates.
 
-**Spec:** `docs/superpowers/specs/2026-08-24-u10c-charm-redesign-design.md` — **read sections 11, 12 and 13 FIRST.** They supersede 1-10, section 2.5 is known false, and section 13 supersedes 11.3.2.
+**Spec:** `docs/superpowers/specs/completed/2026-08-24-u10c-charm-redesign-design.md` — **read sections 11, 12 and 13 FIRST.** They supersede 1-10, section 2.5 is known false, and section 13 supersedes 11.3.2.
 
 ---
 

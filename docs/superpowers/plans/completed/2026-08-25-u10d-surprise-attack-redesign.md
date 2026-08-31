@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.x, GoMud engine. Packages: `internal/combat`, `internal/hooks`, `internal/actions`, `internal/usercommands`, `internal/mobcommands`, `internal/behaviortree`, `internal/state/combatphase`, `internal/state/awareness`, `internal/configs`, plus eight item YAMLs.
 
-**Spec:** `docs/superpowers/specs/2026-08-25-u10d-surprise-attack-redesign-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-25-u10d-surprise-attack-redesign-design.md`
 
 ---
 

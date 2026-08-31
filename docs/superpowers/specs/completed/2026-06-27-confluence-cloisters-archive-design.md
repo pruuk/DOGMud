@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-27
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (§3 row 6, §6 Q74)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (§3 row 6, §6 Q74)
 **Predecessor:** District 5b — The Temple of Confluence (public), merged `cb628f47`. Its
 warded inner door (6183) is the seam this district opens.
 **Successor:** District 6b — The Undercroft. Q74 **grants and plays its first half here**;

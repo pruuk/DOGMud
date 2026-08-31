@@ -8,7 +8,7 @@
 
 **Tech Stack:** Markdown documentation, Claude Code slash command prompts.
 
-**Spec:** `docs/superpowers/specs/2026-04-25-zone-build-sop-and-archetypes-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-25-zone-build-sop-and-archetypes-design.md`
 
 ---
 
@@ -843,7 +843,7 @@ fix.
 Open the spec one more time:
 
 ```bash
-sed -n '1,260p' docs/superpowers/specs/2026-04-25-zone-build-sop-and-archetypes-design.md
+sed -n '1,260p' docs/superpowers/specs/completed/2026-04-25-zone-build-sop-and-archetypes-design.md
 ```
 
 For each spec section ("Component: ..."), confirm the corresponding

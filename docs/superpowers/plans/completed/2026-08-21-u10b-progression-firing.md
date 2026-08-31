@@ -8,7 +8,7 @@
 > **What shipped instead:** U10b was re-cut on top of a new prerequisite slice
 > and delivered as five sub-slices — U10b-0 (PRs #55–#60), U10b-1 (#70),
 > U10b-1b (#74), U10b-2 (#75), U10b-3 (#76). The live design is
-> `docs/superpowers/specs/2026-08-26-u10b-1-progression-firing-convention-design.md`.
+> `docs/superpowers/specs/completed/2026-08-26-u10b-1-progression-firing-convention-design.md`.
 >
 > **Why it did not work out.** Three blind reviewers converged on four blockers,
 > each re-verified against source before being accepted:
@@ -55,7 +55,7 @@ arrangement with an AST-walking class guard modelled on U6b's
 `internal/progression` (pure event package), `internal/actions` (Actor parity),
 `internal/configs` (balance knobs), `go/ast` + `go/parser` for the guard test.
 
-**Spec:** `docs/superpowers/specs/2026-08-21-u10b-progression-firing-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-21-u10b-progression-firing-design.md`
 (approved 2026-08-21). Read §2 (the rule), §3 (class assignment), §7 (owner
 decisions) and §8 (done-when) before starting.
 

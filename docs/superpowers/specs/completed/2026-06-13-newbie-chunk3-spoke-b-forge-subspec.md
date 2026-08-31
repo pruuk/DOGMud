@@ -1,6 +1,6 @@
 # Newbie Rework — Chunk 3 Sub-Spec: Spoke B (Forge)
 
-> Parent spec: `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+> Parent spec: `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 > (§6.3 spoke roster, §6.4 ring structure, §7.2 reward table). Hub (chunk 1)
 > and Spoke A Martial (chunk 2) are built + verified. This is the second spoke.
 > Same phase-gate workflow as Spoke A: **rooms+nouns → REVIEW → mobs+items →

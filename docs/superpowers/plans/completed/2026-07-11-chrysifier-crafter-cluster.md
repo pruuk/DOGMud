@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go. Packages: `internal/mutations`, `internal/configs`, `internal/actions` (forage/salvage/craft), `internal/crafting`, `internal/characters`, `internal/hooks`, `internal/mobs`, plus mutation/mob/help YAML.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysifier-crafter-cluster-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysifier-crafter-cluster-design.md`
 
 **Per-node magnitudes are first-pass** (deferred to the Wave-6 playtest per the content-spec convention). Ship sensible values via config knobs.
 

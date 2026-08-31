@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML; built-binary boot; `cartcheck`; mudagent harness + `questtoken` admin.
 
-**Spec:** `docs/superpowers/specs/2026-06-30-greenford-university-design.md` (city-wide: `2026-06-30-greenford-citywide-design.md`). Quest pattern reference: `_datafiles/world/dogmud/quests/74-the_undercroft.yaml` (split-quest: declare skeleton, grant partway, complete on `end`).
+**Spec:** `docs/superpowers/specs/completed/2026-06-30-greenford-university-design.md` (city-wide: `2026-06-30-greenford-citywide-design.md`). Quest pattern reference: `_datafiles/world/dogmud/quests/74-the_undercroft.yaml` (split-quest: declare skeleton, grant partway, complete on `end`).
 
 **Reserved IDs:** rooms **6298–6308**, mobs/dialogue **9516–9523**, items **40160 reserved (created in D4)**, quest **75**.
 

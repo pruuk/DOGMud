@@ -14,7 +14,7 @@
 
 ## Verified facts (do not re-derive)
 
-- **Sub-spec (the design of record):** `docs/superpowers/specs/2026-06-12-newbie-chunk1-hub-subspec.md` — §3 holds the authoritative room/stub manifests (ids, names, biomes, coords, exits). The coordinate convention is the ENGINE one: north = y−1, south = y+1, east = x+1, west = x−1, up = z+1.
+- **Sub-spec (the design of record):** `docs/superpowers/specs/completed/2026-06-12-newbie-chunk1-hub-subspec.md` — §3 holds the authoritative room/stub manifests (ids, names, biomes, coords, exits). The coordinate convention is the ENGINE one: north = y−1, south = y+1, east = x+1, west = x−1, up = z+1.
 - **Room YAML shape** (model: `_datafiles/world/dogmud/rooms/sanctum_basin/101.yaml`):
   ```yaml
   roomid: 101

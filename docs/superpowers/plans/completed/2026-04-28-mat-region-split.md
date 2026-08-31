@@ -121,7 +121,7 @@ For mats whose region isn't immediately obvious, classify by:
 > (south expansion zone build), 3.1 (forager NPCs), 3.0e (corpse
 > salvage), and 3.4 (real item transfer).
 >
-> Classification per spec `docs/superpowers/specs/2026-04-28-mat-region-split-design.md`.
+> Classification per spec `docs/superpowers/specs/completed/2026-04-28-mat-region-split-design.md`.
 
 ## Bucket definitions
 
@@ -222,7 +222,7 @@ git commit -m "docs(economy): add material region audit matrix (Stage 3.0b)
 
 Durable classification of all 67 caravan-relevant raw materials into
 regional supply buckets per spec
-docs/superpowers/specs/2026-04-28-mat-region-split-design.md.
+docs/superpowers/specs/completed/2026-04-28-mat-region-split-design.md.
 
 This doc is the source of truth that Stages 3.0c (south expansion zone
 build), 3.1 (forager NPCs), 3.0e (corpse salvage), and 3.4 (real item

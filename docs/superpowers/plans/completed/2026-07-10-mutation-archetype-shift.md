@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, yaml.v2, existing test helpers (`mutations.SeedMutationsForTest`, `mobs.SetInstanceForTest`, `rooms.SeedRoomsForTest`, behaviortree's `buildMutationMob`/`seedMutationTestRoom`).
 
-**Spec:** `docs/superpowers/specs/2026-07-10-mutation-archetype-shift-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-10-mutation-archetype-shift-design.md`
 
 ## File map
 
@@ -468,7 +468,7 @@ package behaviortree
 
 // archetype_shift.go — mutation-driven archetype shift (2026-07-10).
 //
-// Design: docs/superpowers/specs/2026-07-10-mutation-archetype-shift-design.md
+// Design: docs/superpowers/specs/completed/2026-07-10-mutation-archetype-shift-design.md
 // Mobs that acquire a mutation carrying an archetype_pull may re-archetype
 // mid-fight. FROM set protects authored behavior; TO whitelist is what any
 // mob can credibly play. Pull table is PROVISIONAL pending the mutation-

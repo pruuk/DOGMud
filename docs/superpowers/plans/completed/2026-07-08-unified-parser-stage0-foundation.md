@@ -18,7 +18,7 @@ isolation; the real adapters are tested against seeded fixtures.
 **Tech Stack:** Go, `testify` (assert/require), the existing
 `Seed*ForTest`/`NewTestUser` helpers in `internal/{items,mobs,rooms,users}`.
 
-**Spec:** `docs/superpowers/specs/2026-07-08-unified-parser-seam-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-08-unified-parser-seam-design.md`
 
 **Refinement vs spec:** the spec listed `KindBackpackItem` + `KindEquippedItem`
 separately; `character.FindItem` already returns a combined backpack+equipped
@@ -122,7 +122,7 @@ Expected: FAIL — `undefined: adapter`, `undefined: resolveWith`, `undefined: M
 // declare which Kinds of target they want; the package tokenizes the input,
 // tries the longest multi-word span first, and dispatches each candidate span
 // to a per-Kind adapter that wraps an existing resolver. See
-// docs/superpowers/specs/2026-07-08-unified-parser-seam-design.md.
+// docs/superpowers/specs/completed/2026-07-08-unified-parser-seam-design.md.
 package parser
 
 import (

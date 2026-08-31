@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `testify` / `actions.Actor` interface / `characters.Character.HasBuff`.
 
-**Related spec:** `docs/superpowers/specs/2026-04-21-command-readiness-drift-design.md`
+**Related spec:** `docs/superpowers/specs/completed/2026-04-21-command-readiness-drift-design.md`
 **Branch:** `feature/command-readiness-drift` (created; spec committed as `3ece5aba`).
 
 ---
@@ -941,7 +941,7 @@ In `C:\Users\Calabe Davis\.claude\projects\C--Users-Calabe-Davis-workspace-DOGMu
 (b) Add to `## Completed (2026-04-21)` (or if the calendar has rolled over, start a new `## Completed (<today>)` section):
 
 ```markdown
-- **Command readiness drift refactor** — made actions.CommandIsReady the single source of truth for combat-command gating, backed by a table-driven drift-detection test. Signature flipped from `*mobs.Mob` → `Actor`. New universal IsCrafting gate added to all 7 combat Execute* functions (5 new: bash/trip/grapple/kick/taunt; 2 flipped from player-only to universal: rally/warcry). New AlreadyActive early-return for rally/warcry when the buff is already on the actor. Tank_taunter archetype YAML simplified (removed decorator-invert mob_has_buff blocks — CommandIsReady now authoritative). ~28-case drift test at internal/actions/command_readiness_drift_test.go asserts CommandIsReady and each Execute* agree on readiness for every (command, gate) pair. Partial fulfillment of project_active_command_crafting_audit.md (combat commands now covered; cast/mutations/eat/drink still future). Design in `docs/superpowers/specs/2026-04-21-command-readiness-drift-design.md`, plan in `docs/superpowers/plans/2026-04-21-command-readiness-drift-plan.md`.
+- **Command readiness drift refactor** — made actions.CommandIsReady the single source of truth for combat-command gating, backed by a table-driven drift-detection test. Signature flipped from `*mobs.Mob` → `Actor`. New universal IsCrafting gate added to all 7 combat Execute* functions (5 new: bash/trip/grapple/kick/taunt; 2 flipped from player-only to universal: rally/warcry). New AlreadyActive early-return for rally/warcry when the buff is already on the actor. Tank_taunter archetype YAML simplified (removed decorator-invert mob_has_buff blocks — CommandIsReady now authoritative). ~28-case drift test at internal/actions/command_readiness_drift_test.go asserts CommandIsReady and each Execute* agree on readiness for every (command, gate) pair. Partial fulfillment of project_active_command_crafting_audit.md (combat commands now covered; cast/mutations/eat/drink still future). Design in `docs/superpowers/specs/completed/2026-04-21-command-readiness-drift-design.md`, plan in `docs/superpowers/plans/completed/2026-04-21-command-readiness-drift-plan.md`.
 ```
 
 (c) Confirm `project_respawn_aggro_death_loop.md` is still the top entry under `## Bugs to Fix` (it was added earlier this session). If it's there, no change. That's the next work to tackle after this merges.

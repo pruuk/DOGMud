@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (engine + tests). YAML (mob data, archetype behavior trees). `stretchr/testify` for assertions. Existing btree engine via `behaviortree.TryMobBehavior`.
 
-**Spec:** `docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md`
 
 **Branch:** `feature/pack-tactics-revamp`
 
@@ -112,7 +112,7 @@ Pack-tactics revamp infrastructure (Task 1/N). Freeform-string fields
 for the routine-scoped pack identification introduced by the pack-
 tactics revamp spec. No consumers yet; just the data surface.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -266,7 +266,7 @@ package mobs
 //     the victim's Routine appears in the candidate's RoutineLinks, OR
 //     the candidate's Routine appears in the victim's RoutineLinks.
 //
-// See docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md
+// See docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md
 // (§ Packmate identification).
 func FindPackmatesInRoom(victim *Mob) []*Mob {
 	if victim == nil {
@@ -345,7 +345,7 @@ to identify which mobs receive packmate_hurt when the victim is
 attacked. Same-room + matching-routine (or matching routine_link) +
 alive + not charmed.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -457,7 +457,7 @@ var dispatchEventFn = behaviortree.TryMobBehavior
 // Called from handleAggroAndAssist after the defender-side aggro has
 // been established. Replaces the former mobs.MakeHostile call.
 //
-// Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md
+// Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md
 // (§ Event dispatch).
 func dispatchPackmateHurt(victim *mobs.Mob, attackerUserId int, attackerMobInstanceId int) {
 	if victim == nil {
@@ -505,7 +505,7 @@ Indirection via dispatchEventFn lets tests spy on the behaviortree
 call without firing a real tree; prod value is
 behaviortree.TryMobBehavior.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -575,7 +575,7 @@ mobs.MakeHostile / IsHostile / ReduceHostility remain defined for
 now; they're deleted in a later task once the remaining consumer
 (LookForTrouble group-hostility branch) is also removed.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -684,7 +684,7 @@ issues 'attack @<attacker>' to engage the attacker. Same behavior
 wolves (243) and zombies (301) already have during own-mob_hurt, now
 cascaded to their packmates.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -776,7 +776,7 @@ Pack-tactics revamp (Task 6/N). On packmate_hurt, a tank_taunter
 taunts the attacker then engages. Applies to flesh_golem (305),
 earth_elemental (311), magma_elemental (314).
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -874,7 +874,7 @@ Pack-tactics revamp (Task 7/N). On packmate_hurt, cast best
 self_defense buff then engage. Applies to vampire (304), air (312),
 fire (313).
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -1106,7 +1106,7 @@ packmate_below_hp_ratio btree condition and the
 most_wounded_packmate target resolver. Tests are committed failing
 here; they turn green after those tasks land.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -1233,7 +1233,7 @@ Pack-tactics revamp (Task 9/N). Returns true if any same-room packmate
 has HP ratio strictly below the given threshold. Used by the
 pure_caster archetype to gate opportunistic packmate heals.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -1359,7 +1359,7 @@ resolution with a 'most_wounded_packmate' option that picks the
 same-room packmate with the lowest HP ratio. Closes the pure_caster
 packmate_hurt handler; its tests now pass end-to-end.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -1430,7 +1430,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/lookout.yaml`:
 # posted guards. Distinguished from `generic_fighter` by the
 # callforhelp-first behavior.
 #
-# Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md
+# Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md
 
 tree:
   type: selector
@@ -1472,7 +1472,7 @@ Pack-tactics revamp (Task 11/N). New archetype for sentries and
 road-watchers. On packmate_hurt or mob_hurt, fires callforhelp to
 pull in adjacent-room packmates, then engages the attacker.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -1585,7 +1585,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/support_caster.yaml`:
 # packmate-focused. Applies to healers, supportive priests, and
 # any caster narratively tied to keeping its pack alive.
 #
-# Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md
+# Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md
 
 tree:
   type: selector
@@ -1646,7 +1646,7 @@ Priority order: heal wounded packmate -> buff packmate -> engage
 attacker. 70% HP threshold distinguishes from pure_caster's
 opportunistic-only 40% heal.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -1724,7 +1724,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/leader.yaml`:
 #
 # Applies to bandit chiefs, wolf alphas, sergeant-style mobs.
 #
-# Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md
+# Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md
 
 tree:
   type: selector
@@ -1769,7 +1769,7 @@ alphas, sergeants. Rallies or warcries on packmate_hurt (whichever
 is ready) to buff packmates, then engages the attacker. No taunt
 (distinction from tank_taunter).
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -1938,7 +1938,7 @@ heard_callforhelp btree event so their archetype can decide the
 response (default lookout: go back + engage). Runs in addition to the
 existing ConsidersAnAlly legacy path for archetype-less mobs.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -2077,7 +2077,7 @@ default heard_callforhelp handlers that navigate to the caller's
 room; new go_to_caller_room btree action resolves the connecting
 exit from the event context.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -2155,7 +2155,7 @@ watch_north_road with a link back to bandit_camp_guard so
 callforhelp flows in both directions. Bloodline agent stays solo
 (no routine, no archetype).
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -2197,7 +2197,7 @@ git commit -m "content(ironwind_steppe): routines + archetypes for goblin + wolf
 
 Pack-tactics revamp (Task 17/N).
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -2235,7 +2235,7 @@ Pack-tactics revamp (Task 18/N). Wave-scoped routines for arena mobs,
 element-scoped routines for planar_oasis elementals. Boss-tier solo
 mobs stay routine-less.
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -2275,7 +2275,7 @@ git commit -m "content(dustwalk_road): routines + archetypes for bandit camp
 
 Pack-tactics revamp (Task 19/N).
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -2376,7 +2376,7 @@ Removes:
   early-continue stays)
 - TestMakeHostileAndIsHostile, TestReduceHostility
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 ---
@@ -2445,7 +2445,7 @@ a routine-scoped pack reaction system driven by btree archetypes.
   zones, dustwalk_road
 - Deletion of MakeHostile / IsHostile / ReduceHostility / state
 
-Spec: docs/superpowers/specs/2026-04-22-pack-tactics-revamp-design.md"
+Spec: docs/superpowers/specs/completed/2026-04-22-pack-tactics-revamp-design.md"
 ```
 
 - [ ] **Step 5: Update memory + patch notes**
@@ -2489,4 +2489,4 @@ Task 9's test file uses hand-rolled `strContains` / `formatInt` helpers as a fal
 
 **4. Ambiguity check:** Task 15's note that the legacy `ConsidersAnAlly` + `go` + `attack` path runs "in addition to" the new event path is explicit. Task 21 doesn't re-delete the legacy path — that's a follow-up cleanup post-migration once we're confident all pack-forming mobs have archetypes. Flagged in the Task 15 commit message. No other ambiguity.
 
-Plan complete and saved to `docs/superpowers/plans/2026-04-22-pack-tactics-revamp.md`.
+Plan complete and saved to `docs/superpowers/plans/completed/2026-04-22-pack-tactics-revamp.md`.

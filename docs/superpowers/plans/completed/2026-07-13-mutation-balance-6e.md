@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML config + mutation files, `go test ./...`, local boot smoke.
 
-**Spec:** `docs/superpowers/specs/2026-07-13-mutation-balance-6e-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-13-mutation-balance-6e-design.md`
 
 **Conventions (CLAUDE.md):** boot smoke via instance-save wipe + `go run .` (poll with `ping -n` spacing; kill `go.exe`); conventional commits w/ `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`; **do NOT push** (arc constraint — push after this ships + user is ready).
 

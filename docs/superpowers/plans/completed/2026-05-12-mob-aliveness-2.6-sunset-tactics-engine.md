@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+; existing `internal/behaviortree` package; existing btree YAML schema in `_datafiles/world/dogmud/behaviors/archetypes/`.
 
-**Spec:** `docs/superpowers/specs/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP.
 
@@ -197,7 +197,7 @@ Each per-boss archetype is authored from the boss's existing inline `tactics:` b
 # legacy `defensive_caster` and `caster_backline` tactic presets
 # (chunk 2.6 migration).
 #
-# Spec: docs/superpowers/specs/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md
+# Spec: docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md
 
 tree:
   type: selector
@@ -258,7 +258,7 @@ tree:
 #
 # Migrated from inline tactics in chunk 2.6.
 #
-# Spec: docs/superpowers/specs/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md
+# Spec: docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md
 
 tree:
   type: selector
@@ -873,7 +873,7 @@ carries `Tactics`, `TacticPreset`, `ReactionDelay`, or
 `tactic_preset:`, `tactics:`, `reaction_delay:`, or
 `tactical_discipline:` keys (they're silently ignored if present).
 
-Design: `docs/superpowers/specs/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
+Design: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
 ```
 
 If no such section exists, add the above as a new subsection in the appropriate location (likely under a "Behavior" or "Combat" subsection of the file).
@@ -920,7 +920,7 @@ Added in the legacy tactics-engine sunset migration:
 - **`boss_chrysalis_phantom`** — Tight panic-flee (HP<20) +
   target_casting → trip interrupt.
 
-Spec: `docs/superpowers/specs/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
+Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
 ```
 
 Place this section in the file's existing flow — likely near other archetype documentation. If there's a "Combat" or "Archetypes" subsection, append there.
@@ -983,7 +983,7 @@ Locate `### 2.6 Tactics-cast preemption fix`. Replace the entire section with:
 - **Out:** Boss encounter tuning (faithful translation only); generic-mob inline-tactic preservation beyond what the augmented archetypes cover (acceptable loss).
 - **Depends on:** —
 - **Why:** Eliminated the dual-system architectural smell. The original Edrin priority-race bug became structurally impossible (btree selectors are inherently priority-ordered, no async reaction queue racing `InitiateCast`). ~400-500 lines of legacy code deleted.
-- **Shipped:** Zero new btree primitives (mob_has_buff + invert decorator covers missing_buff). 6 new archetypes (defensive_caster + 5 boss). 5 archetype augmentations. 44 mob YAML migrations (27 preset-only + 17 inline-tactic). Engine deletion: `internal/mobai/tactics.go`, `reactor.go`, `actions.go`, `types.go`, plus all `*_test.go`. Mob struct fields `Tactics`, `TacticPreset`, `ReactionDelay`, `TacticalDiscipline` removed. Hook callers in `internal/hooks/` cleaned. `internal/mobs/context.md` + `internal/behaviortree/context.md` updated. `project_tactics_cast_preemption.md` MEMORY entry deleted. Spec at `docs/superpowers/specs/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`, plan at `docs/superpowers/plans/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine.md`.
+- **Shipped:** Zero new btree primitives (mob_has_buff + invert decorator covers missing_buff). 6 new archetypes (defensive_caster + 5 boss). 5 archetype augmentations. 44 mob YAML migrations (27 preset-only + 17 inline-tactic). Engine deletion: `internal/mobai/tactics.go`, `reactor.go`, `actions.go`, `types.go`, plus all `*_test.go`. Mob struct fields `Tactics`, `TacticPreset`, `ReactionDelay`, `TacticalDiscipline` removed. Hook callers in `internal/hooks/` cleaned. `internal/mobs/context.md` + `internal/behaviortree/context.md` updated. `project_tactics_cast_preemption.md` MEMORY entry deleted. Spec at `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`, plan at `docs/superpowers/plans/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine.md`.
 ```
 
 ### Step 4: Delete the MEMORY entry

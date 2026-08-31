@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing buff + character + config packages, existing callback-registration pattern from `rooms.SetCompanionTransport` / `SetBTreeStateEvictor`.
 
-**Related spec:** `docs/superpowers/specs/2026-04-21-respawn-aggro-cleanup-design.md`
+**Related spec:** `docs/superpowers/specs/completed/2026-04-21-respawn-aggro-cleanup-design.md`
 **Branch:** `feature/respawn-aggro-cleanup` (created; spec committed as `728469ef`).
 
 ---
@@ -727,7 +727,7 @@ In `C:\Users\Calabe Davis\.claude\projects\C--Users-Calabe-Davis-workspace-DOGMu
 (b) Add to `## Completed (2026-04-21)`:
 
 ```markdown
-- **Respawn aggro cleanup + condition wipe + grace period** — three-part fix for the Duard prod bug where a player dying and respawning at 5% HP would die again from stale aggro + unconditioned DoT, with a third death-chain via auto-retarget onto a normally-peaceful NPC (Olen). Fix A: comprehensive aggro cleanup on death — inbound mob aggro + companion aggro (in addition to existing outbound clear), before MoveToRoom so companions arrive in home room with blank slate. Fix B: Conditions slice cleared alongside the existing CancelBuffsWithFlag(buffs.All) — stops the "5%-HP + poison" loop. Fix C: new NoAggroTarget buff flag + buff id 81 "Respawn Grace" (3 rounds default, Death.RespawnGraceRounds knob, 0 disables) gate incoming SetAggro on grace-protected players via a new characters.SetUserUntargetableCheck callback (registered from main.go — follows the SetCompanionTransport / SetBTreeStateEvictor pattern to avoid the users↔characters cycle). 6 code tasks + smoke test + finalize. Branch: `feature/respawn-aggro-cleanup`. Design in `docs/superpowers/specs/2026-04-21-respawn-aggro-cleanup-design.md`, plan in `docs/superpowers/plans/2026-04-21-respawn-aggro-cleanup-plan.md`.
+- **Respawn aggro cleanup + condition wipe + grace period** — three-part fix for the Duard prod bug where a player dying and respawning at 5% HP would die again from stale aggro + unconditioned DoT, with a third death-chain via auto-retarget onto a normally-peaceful NPC (Olen). Fix A: comprehensive aggro cleanup on death — inbound mob aggro + companion aggro (in addition to existing outbound clear), before MoveToRoom so companions arrive in home room with blank slate. Fix B: Conditions slice cleared alongside the existing CancelBuffsWithFlag(buffs.All) — stops the "5%-HP + poison" loop. Fix C: new NoAggroTarget buff flag + buff id 81 "Respawn Grace" (3 rounds default, Death.RespawnGraceRounds knob, 0 disables) gate incoming SetAggro on grace-protected players via a new characters.SetUserUntargetableCheck callback (registered from main.go — follows the SetCompanionTransport / SetBTreeStateEvictor pattern to avoid the users↔characters cycle). 6 code tasks + smoke test + finalize. Branch: `feature/respawn-aggro-cleanup`. Design in `docs/superpowers/specs/completed/2026-04-21-respawn-aggro-cleanup-design.md`, plan in `docs/superpowers/plans/completed/2026-04-21-respawn-aggro-cleanup-plan.md`.
 ```
 
 - [ ] **Step 3: Prompt user about merge**

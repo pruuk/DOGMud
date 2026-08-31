@@ -8,8 +8,8 @@
 
 **Tech Stack:** GoMud engine; YAML under `_datafiles/world/dogmud/`; `cartcheck` admin command; boot `ValidateZoneConsistency`.
 
-**Spec:** `docs/superpowers/specs/2026-06-26-confluence-long-quay-design.md`
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-26-confluence-long-quay-design.md`
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md`
 
 ---
 

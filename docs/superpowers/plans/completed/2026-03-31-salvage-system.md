@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, existing crafting/skills/items packages, YAML data files.
 
-**Spec:** `docs/superpowers/specs/2026-03-31-salvage-system-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-03-31-salvage-system-design.md`
 
 ---
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML, existing behaviortree/hooks/mobs/characters packages
 
-**Spec:** `docs/superpowers/specs/2026-04-14-phase4b-mob-script-migration-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-14-phase4b-mob-script-migration-design.md`
 
 ---
 

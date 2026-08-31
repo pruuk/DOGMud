@@ -15,7 +15,7 @@ wrongly assumed already held.
 `internal/usercommands`, `internal/mobs`, `modules/gmcp`), plus a line-based
 Python migration script over `_datafiles/world/dogmud/mobs/`.
 
-**Spec:** `docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-21-u10b-0-progression-rank-from-training-design.md`
 sections 13 and 14. **Phase index:** `2026-08-21-u10b-0-README.md`.
 
 **Branch:** `feature/u10b-0-phase-a-groundwork`, cut from `master`.

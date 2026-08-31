@@ -3,7 +3,7 @@
 *Date: 2026-06-20 · The shared skeleton every district build pulls from.*
 
 > **What this is.** The city-wide design layer called for by the New Plymouth
-> master plan (`docs/superpowers/specs/2026-06-20-new-plymouth-design.md` §7-C):
+> master plan (`docs/superpowers/specs/completed/2026-06-20-new-plymouth-design.md` §7-C):
 > the **coordinate/zone geometry**, the **6 faction definitions**, the **civic
 > infrastructure**, the **Docks-warehouse supply map**, and a **~45-anchor
 > roster sketch** with its cross-district relationship + supply web. It is

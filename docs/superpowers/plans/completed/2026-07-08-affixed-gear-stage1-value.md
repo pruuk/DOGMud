@@ -17,7 +17,7 @@ config values) and stamps `specCopy.Value`.
 
 **Tech Stack:** Go. Pure functions + table tests. No new deps.
 
-**Spec:** `docs/superpowers/specs/2026-07-08-shops-trade-affixed-gear-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-08-shops-trade-affixed-gear-design.md`
 
 **Behavioral safety:** This stage stamps `Value` but changes **no** sell/shop
 behavior — affixed items remain `IsSpecial`-blocked from selling (Stage 2 lifts

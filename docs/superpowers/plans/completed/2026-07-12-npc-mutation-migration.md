@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.x, YAML data files, `go test ./...`, local server boot smoke.
 
-**Spec:** `docs/superpowers/specs/2026-07-12-npc-mutation-migration-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-12-npc-mutation-migration-design.md`
 
 **Working conventions (from CLAUDE.md):**
 - Boot smoke: `rm -rf _datafiles/world/dogmud/mobs.instances/* _datafiles/world/dogmud/rooms.instances/*` then `go run .`, watch for `Server Ready` with **no** `panic:`/`ERROR: PANIC`.

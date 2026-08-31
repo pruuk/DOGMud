@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go — `internal/mutations`, `internal/hooks` (aura pass), `internal/mobs` + `internal/rooms` (mob targets); YAML buff + mutation + help; testify.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysalis-cluster-content-design.md` (Wave 4b — the enemy-aura half of §9 Wave 4). Builds on Wave 4 (merged).
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysalis-cluster-content-design.md` (Wave 4b — the enemy-aura half of §9 Wave 4). Builds on Wave 4 (merged).
 
 **Re-split note.** Wave 4b was originally billed as "enemy aura + companions (P8)." The companion subsystem (Brood Sac / Hive Mind / Brood Mother) is a sizeable extension of the mature `Character.Companions` + `CompanionInfo` + `actSummonCompanion` machinery (spawn, respawn, gear persistence, charm) and needs a brood-spawn mob authored — so it is split into its **own Wave 4c** plan. Wave 4b finishes the aura recipe cleanly.
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (`testing` + `testify/assert`). Build `go build ./...`; test `go test ./internal/<pkg>/...`. Boot smoke per CLAUDE.md SOP.
 
-**Spec:** `docs/superpowers/specs/2026-06-02-enchanting-supply-chain-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-02-enchanting-supply-chain-design.md`
 
 ---
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `gopkg.in/yaml.v2`, testify. Packages: `internal/mobs`, `internal/rooms`, `internal/characters`, `internal/items`.
 
-**Spec:** `docs/superpowers/specs/2026-06-01-mob-instance-goal-progress-persistence-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-01-mob-instance-goal-progress-persistence-design.md`
 
 ---
 

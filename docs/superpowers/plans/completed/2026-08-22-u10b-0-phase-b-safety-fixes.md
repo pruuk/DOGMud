@@ -14,7 +14,7 @@ reserved-pool progression faucet cannot be reopened by a future caller.
 **Tech Stack:** Go (`internal/characters`, `internal/configs`, `internal/hooks`),
 plus one new knob in `_datafiles/config.yaml`.
 
-**Spec:** `docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-21-u10b-0-progression-rank-from-training-design.md`
 sections **13.1** (fix the truncation, do not relocate it), **14.3** (regen must
 measure the reachable pool), and **14.5** (the floor does NOT apply to the regen
 faucet). **Phase index:** `2026-08-21-u10b-0-README.md`.
@@ -842,7 +842,7 @@ bodies. Leaving that on an unmerged branch is a single point of failure.
 - [ ] **Step 1: Confirm what is missing**
 
 ```bash
-git log --oneline -1 -- docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md
+git log --oneline -1 -- docs/superpowers/specs/completed/2026-08-21-u10b-0-progression-rank-from-training-design.md
 git show feature/u10b-progression-firing --stat --oneline | head -20
 ```
 
@@ -850,14 +850,14 @@ git show feature/u10b-progression-firing --stat --oneline | head -20
 
 ```bash
 git checkout feature/u10b-progression-firing -- \
-  docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md \
-  docs/superpowers/plans/2026-08-21-u10b-0-README.md \
-  docs/superpowers/plans/2026-08-21-u10b-0-phase-a-groundwork.md
+  docs/superpowers/specs/completed/2026-08-21-u10b-0-progression-rank-from-training-design.md \
+  docs/superpowers/plans/completed/2026-08-21-u10b-0-README.md \
+  docs/superpowers/plans/completed/2026-08-21-u10b-0-phase-a-groundwork.md
 ```
 
 - [ ] **Step 3: Mark Phase A done in the index**
 
-In `docs/superpowers/plans/2026-08-21-u10b-0-README.md`, under
+In `docs/superpowers/plans/completed/2026-08-21-u10b-0-README.md`, under
 `## Phase A — Groundwork`, add a line recording that it shipped in PR #55
 (merge `1c5d10fd7`), and that spec section 15 already covers the authored-
 `training:` discovery so the "spec correction owed" item is closed.

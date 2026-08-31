@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML quest data files under `_datafiles/world/dogmud/quests/`; Go server boot for the load check; the `mudagent` playtest harness for the GMCP smoke.
 
-**Spec:** `docs/superpowers/specs/2026-07-19-trail-quest-map-targets-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-19-trail-quest-map-targets-design.md`
 
 **Placement convention:** `map_target:` is indented 4 spaces (aligned with `description:`) and placed immediately after the step's `- id:` line, exactly as in `32-first_blood.yaml:10-12`.
 

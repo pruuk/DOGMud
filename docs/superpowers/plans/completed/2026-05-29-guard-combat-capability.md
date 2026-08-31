@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files (mob specs, behavior-tree archetype); Go btree loader (read-only); boot + in-game inspection for verification.
 
-**Spec:** `docs/superpowers/specs/2026-05-29-guard-combat-capability-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-29-guard-combat-capability-design.md`
 
 **Branch:** `feature/guard-combat-capability` (off master; has 5.1a + 5.1b).
 

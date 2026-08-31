@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.2x (GoMud engine); YAML data files (rooms/mobs/items/buffs/mutators/quests/dialogue); the codegraph MCP for symbol verification.
 
-**Reference spec:** `docs/superpowers/specs/2026-07-01-crash-site-interior-design.md` (§5 the 30-room / 3-stage layout; §5b suppression aura; §6 loot + scour; §3 revelation).
+**Reference spec:** `docs/superpowers/specs/completed/2026-07-01-crash-site-interior-design.md` (§5 the 30-room / 3-stage layout; §5b suppression aura; §6 loot + scour; §3 revelation).
 
 **Depends on:** B1 (merged `526870f48`) — the instanced `crash_site_interior` zone (entry_room 6373, stubs 6373–6375), the Threshold-Keeper (9553), the disc-gated `open_instance_portal`. Also Plan A (`bc0252ab`) — `(*Character).ScourMutations(charges int)` already exists.
 
@@ -712,7 +712,7 @@ git commit -m "feat(crash-site): Quest 77 The Truth — the revelation + seeded 
 
 ## Execution Handoff
 
-Plan saved to `docs/superpowers/plans/2026-07-01-crash-site-B2-interior-content.md`. Two execution options:
+Plan saved to `docs/superpowers/plans/completed/2026-07-01-crash-site-B2-interior-content.md`. Two execution options:
 
 1. **Subagent-Driven (recommended)** — fresh subagent per task, two-stage review between tasks, fast iteration. Content phases (4–7) can pre-allocate ID blocks per the table for safe parallel dispatch.
 2. **Inline Execution** — batch execution with checkpoints in this session.

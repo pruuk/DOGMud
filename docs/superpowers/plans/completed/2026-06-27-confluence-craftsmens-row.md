@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files; `go run .` boot; `cartcheck`/`ValidateZoneConsistency`; mudagent harness (no quest to verify — walkability + vendors + the two anchors).
 
-**Spec:** `docs/superpowers/specs/2026-06-27-confluence-craftsmens-row-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-27-confluence-craftsmens-row-design.md`
 
 **Reserved IDs (verified clean):** rooms **6232–6245**, mobs/dialogue **9472–9483**, items **40143+**, no quest/buffs.
 

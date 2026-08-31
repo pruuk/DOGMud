@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, yaml.v2, testify in `internal/dialogue` where present (check the package's existing style first), playtest harness for the content gate.
 
-**Spec:** `docs/superpowers/specs/2026-07-25-npc-greetings-5a-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-25-npc-greetings-5a-design.md`
 
 ---
 
@@ -58,7 +58,7 @@ conversations predicate. Sleep segments are still suppressed via the
 | `internal/conversations/state.go` **(modify)** | export `IsFullyIdle` wrapper |
 | `internal/usercommands/go.go` **(modify)** | arrival hook |
 | one dialogue YAML **(modify)** | rewrite the single root-duplicate greeting |
-| `docs/superpowers/specs/2026-07-25-npc-greetings-5a-design.md` **(modify)** | suppression-table refinement |
+| `docs/superpowers/specs/completed/2026-07-25-npc-greetings-5a-design.md` **(modify)** | suppression-table refinement |
 
 ---
 
@@ -488,7 +488,7 @@ git commit -m "content(dialogue): distinct welcome for the one root-duplicate gr
 
 ### Task 8: Spec refinement note
 
-**Files:** Modify `docs/superpowers/specs/2026-07-25-npc-greetings-5a-design.md`
+**Files:** Modify `docs/superpowers/specs/completed/2026-07-25-npc-greetings-5a-design.md`
 
 - [ ] **Step 1: Update the suppression table**
 
@@ -501,7 +501,7 @@ greet; schedule *sleep* remains suppressed via the Sleeping buff.
 - [ ] **Step 2: Commit**
 
 ```bash
-git add docs/superpowers/specs/2026-07-25-npc-greetings-5a-design.md
+git add docs/superpowers/specs/completed/2026-07-25-npc-greetings-5a-design.md
 git commit -m "docs(spec): 5a suppression = conversations idleness predicate (recorded refinement)"
 ```
 

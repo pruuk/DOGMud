@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+ with generics, existing `internal/state/` framework, existing `internal/state/combatphase/`, `internal/state/awareness/`, `internal/state/life/`, `internal/state/activity/` machines.
 
-**Spec:** `docs/superpowers/specs/2026-05-16-state-chunk-4a-position-fsm-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-16-state-chunk-4a-position-fsm-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP.
 

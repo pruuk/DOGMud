@@ -15,7 +15,7 @@ shell (boot tests, cartcheck, harness, git); subagents Write/Edit YAML only.
 **Tech Stack:** GoMud room/mob/quest/dialogue/forager YAML, the quest engine,
 the dialogue engine, the schedule system, the playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-25-south-road-amber-valley-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-25-south-road-amber-valley-design.md`
 
 ---
 

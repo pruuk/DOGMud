@@ -3,7 +3,7 @@
 **Date:** 2026-07-12
 **Status:** Design approved (disposition + archetype-shift decisions locked)
 **Ships in:** the `0.14.0` clean-break release, alongside the player migration
-(`docs/superpowers/specs/2026-07-11-mutation-migration-design.md`).
+(`docs/superpowers/specs/completed/2026-07-11-mutation-migration-design.md`).
 
 ---
 

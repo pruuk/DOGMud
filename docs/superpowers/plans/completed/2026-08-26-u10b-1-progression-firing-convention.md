@@ -15,7 +15,7 @@
 
 **Scope:** the firing rule only, wired to **every** site that resolves. **Every site keeps its CURRENT resolution.** The contest-core conversions, craft difficulty, material tier, salvage difficulty and the floors are **U10b-1b** and are not in this plan.
 
-**Spec (decision record for both slices):** `docs/superpowers/specs/2026-08-26-u10b-1-progression-firing-convention-design.md`
+**Spec (decision record for both slices):** `docs/superpowers/specs/completed/2026-08-26-u10b-1-progression-firing-convention-design.md`
 
 ---
 

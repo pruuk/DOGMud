@@ -1,7 +1,7 @@
 # U10b-0 Phase F — Docs and ship (the last phase)
 
-**Index:** `docs/superpowers/plans/2026-08-21-u10b-0-README.md`
-**Spec:** `docs/superpowers/specs/2026-08-21-u10b-0-progression-rank-from-training-design.md`
+**Index:** `docs/superpowers/plans/completed/2026-08-21-u10b-0-README.md`
+**Spec:** `docs/superpowers/specs/completed/2026-08-21-u10b-0-progression-rank-from-training-design.md`
 
 **Predecessors:** A `1c5d10fd7`, B, C, D `4db7766f7`, E `1f983e779` — all merged.
 Master is at `193f59c63`.

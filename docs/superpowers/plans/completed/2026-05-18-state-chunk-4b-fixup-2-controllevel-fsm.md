@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Spec:** `docs/superpowers/specs/2026-05-18-state-chunk-4b-fixup-2-controllevel-fsm-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-18-state-chunk-4b-fixup-2-controllevel-fsm-design.md`
 
 **Goal:** Replace chunk 4b-fixup's `IsControllerRole bool` (which broke per-round drift in symmetric Clinch grapples) with a proper 5-state FSM in `internal/state/control/`, mirroring the Awareness package pattern, plus pair iteration in `processGrappleTick` to fix the iteration-layer bug, plus ~36 gradient messaging templates fired on boundary-crossing transient states.
 
@@ -2394,7 +2394,7 @@ Plan complete.
 
 ---
 
-**Plan complete and saved to `docs/superpowers/plans/2026-05-18-state-chunk-4b-fixup-2-controllevel-fsm.md`. Two execution options:**
+**Plan complete and saved to `docs/superpowers/plans/completed/2026-05-18-state-chunk-4b-fixup-2-controllevel-fsm.md`. Two execution options:**
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 

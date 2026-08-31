@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML data files; Go (`internal/forager` + tests); `go run .` boot; `cartcheck`; mudagent harness (walkability + the cooking vendor + forageables; no quest).
 
-**Spec:** `docs/superpowers/specs/2026-06-30-east-road-to-greenford-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-30-east-road-to-greenford-design.md`
 
 **Reserved IDs:** rooms **6263–6277**, mobs/dialogue **9492–9500**, items **40147–40151**. No quest, no faction, no buffs.
 

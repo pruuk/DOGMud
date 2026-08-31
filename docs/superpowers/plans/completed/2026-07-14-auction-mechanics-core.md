@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; `modules/auctions` (plugin), `Character.Bank int`, `user.ItemStorage.AddItem`, `user.Inbox.Add(users.Message{...})`, `events.EquipmentChange{BankChange}`, `mod.plug.Config.Get`.
 
-**Spec:** `docs/superpowers/specs/2026-07-14-auction-mechanics-core-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-14-auction-mechanics-core-design.md`
 
 > **Test harness note:** the manager methods use `users.GetByUserId`. Confirm `users.NewTestUser(id, ...)` registers the user so `GetByUserId` finds it (the hooks tests rely on this). Set a test user's gold via `u.Character.Bank = N`.
 

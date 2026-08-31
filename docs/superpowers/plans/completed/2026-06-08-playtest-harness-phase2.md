@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML (scenarios) + Markdown (conductor/runner). The `ptorch` Go binary and `agent-runner.md` are reference sources at `$GOMUD_HARNESS_DIR`. No DOGMud Go changes.
 
-**Spec:** `docs/superpowers/specs/2026-06-08-playtest-harness-adoption-design.md` (Phase 2).
+**Spec:** `docs/superpowers/specs/completed/2026-06-08-playtest-harness-adoption-design.md` (Phase 2).
 **Reference (harness):** `cmd/ptorch/` (CLI: `ptorch scenario plan <file>`, `ptorch bb init …`), `framework/scenarios/{SCHEMA.md,template.yaml,examples/*}`, `framework/agent-runner.md`, `framework/multi-agent-report-format.md`, `.claude/commands/playtest-scenario.md` (conductor to adapt), `docs/pr/2026-06-07-multi-agent-testing-pr.md`.
 
 ## DOGMud facts (verified 2026-06-08)

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML player saves, the `internal/migration` versioned framework, `go test ./...`, local boot smoke.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-mutation-migration-design.md` (decisions §1–7 locked; thresholds/ranks §8 fit here).
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-mutation-migration-design.md` (decisions §1–7 locked; thresholds/ranks §8 fit here).
 
 **Conventions (CLAUDE.md):** boot smoke via instance-save wipe + `go run .` (poll with `ping -n` spacing, kill `go.exe`); conventional commits w/ `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`; **do NOT push** (arc constraint). **The 34 prod files live in `_archive/prod-users/users/` — gitignored, NEVER commit them or their copies.**
 

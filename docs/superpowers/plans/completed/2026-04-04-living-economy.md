@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML persistence, existing crafting/items/mobs packages
 
-**Spec:** `docs/superpowers/specs/2026-04-04-living-economy-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-04-living-economy-design.md`
 
 ---
 

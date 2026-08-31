@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML data files, testify.
 
-**Spec:** `docs/superpowers/specs/2026-05-29-oasis-all-bosses-princess-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-29-oasis-all-bosses-princess-design.md`
 
 **IDs (verified free):** princess mob **377**, claws **10036**, neck torc **20079**.
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go. Tests with the standard `testing` package + `testify` (`github.com/stretchr/testify/assert`), matching existing `internal/actions`, `internal/shops`, `internal/forager` tests. Build: `go build ./...`. Test: `go test ./internal/<pkg>/...`.
 
-**Spec:** `docs/superpowers/specs/2026-06-02-mob-aliveness-5.4-npc-market-participation-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-02-mob-aliveness-5.4-npc-market-participation-design.md`
 
 ---
 

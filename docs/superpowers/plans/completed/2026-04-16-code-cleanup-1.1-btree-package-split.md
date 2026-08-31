@@ -15,7 +15,7 @@ stay in the thin `actions.go`/`conditions.go`.
 
 **Tech Stack:** Go, existing behaviortree package
 
-**Spec:** `docs/superpowers/specs/2026-04-16-code-cleanup-1.1-btree-package-split-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-16-code-cleanup-1.1-btree-package-split-design.md`
 
 ---
 

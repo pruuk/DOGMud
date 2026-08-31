@@ -31,7 +31,7 @@ sections 13.3, 13.4, 14.2. **Phase index:** `2026-08-21-u10b-0-README.md`.
   keys, gates, equipment exclusivity and the `SkillPrimaryStats` mapping.
 - **Revision 3 (this)** — every rate is measured, computed closed-form, or an
   explicit owner ruling, and labelled. Inputs:
-  `docs/superpowers/specs/2026-08-22-progression-faucet-census.md`.
+  `docs/superpowers/specs/completed/2026-08-22-progression-faucet-census.md`.
 
 ## Where the numbers come from
 

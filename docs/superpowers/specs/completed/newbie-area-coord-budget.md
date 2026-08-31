@@ -1,7 +1,7 @@
 # Pothole Coulee — Coordinate Budget (Newbie Area Rework, Chunk 0)
 
 **Status:** Reserved 2026-06-12 (Chunk 0 deliverable)
-**Parent spec:** `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+**Parent spec:** `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 (tenet 8 §3, §4.1, §6, §10 chunk 0, §10.1)
 **Scanner:** `tools/coord_inventory.py`
 

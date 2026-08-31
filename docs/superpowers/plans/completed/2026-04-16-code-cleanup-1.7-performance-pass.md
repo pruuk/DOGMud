@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `sync.RWMutex`, `testing` with `-race`
 
-**Spec:** `docs/superpowers/specs/2026-04-16-code-cleanup-1.7-performance-pass-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-16-code-cleanup-1.7-performance-pass-design.md`
 
 ---
 

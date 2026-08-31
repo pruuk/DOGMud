@@ -601,7 +601,7 @@ None — design fully scoped during brainstorming.
 - Roadmap: `MOB_ALIVENESS_ROADMAP.md` chunk 3.6
 - Hard dependency (shipped): chunk 1.6 (NPC relationships),
   spec at
-  `docs/superpowers/specs/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`
+  `docs/superpowers/specs/completed/2026-05-09-mob-aliveness-1.6-npc-relationships-design.md`
 - Relationship API: `internal/relationships/relationships.go`
   (`RelationsBetween`, `AreRelated`, `Type` enum)
 - Chunks 3.2 / 3.3 / 3.4 composition partners:

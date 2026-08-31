@@ -24,7 +24,7 @@
 >    stamina + health damage-over-time effect (`ConditionBleeding` + a small
 >    stamina-DoT tick buff). No new "silenced" buff flag and no edits to the
 >    cast/shout commands.
-> Implementation plan: `docs/superpowers/plans/2026-06-09-nonhuman-attacks-phase3-beast-moveset.md`.
+> Implementation plan: `docs/superpowers/plans/completed/2026-06-09-nonhuman-attacks-phase3-beast-moveset.md`.
 
 ## Problem
 

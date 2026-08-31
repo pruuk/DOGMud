@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-26
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (district 4 of 10 — build order step 3)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (district 4 of 10 — build order step 3)
 **Predecessor:** District 3 Tri-Cross Square, merged — the **Hall of Records (6149)** is the seam this district opens.
 
 ## Purpose

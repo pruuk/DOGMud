@@ -3,7 +3,7 @@
 **Date:** 2026-04-21
 **Status:** Approved
 **Related memory:** `project_instance_save_exits_corruption.md` (Fix A — remaining half)
-**Companion work:** `docs/superpowers/specs/2026-04-21-summons-dont-persist-design.md` (Fix D — landed earlier today)
+**Companion work:** `docs/superpowers/specs/completed/2026-04-21-summons-dont-persist-design.md` (Fix D — landed earlier today)
 
 ## Problem
 

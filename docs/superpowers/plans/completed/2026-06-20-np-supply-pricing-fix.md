@@ -6,7 +6,7 @@
 
 **Architecture:** A new tunable `Balance.DefaultPricingBaselineQty` (default 3) flows through `PricingConfig.DefaultBaselineQty`. `EffectiveRestock` takes that baseline as a parameter and returns it (instead of `MaxStock/2`) when `RestockQty == 0`. The field's *ticker* meaning ("no auto-refill") is untouched — no restock-mechanic code calls `EffectiveRestock` (only the buy-pricing and list-display paths do).
 
-**Tech Stack:** Go, `testify/assert`. Spec: `docs/superpowers/specs/2026-06-20-np-supply-pricing-fix-design.md`.
+**Tech Stack:** Go, `testify/assert`. Spec: `docs/superpowers/specs/completed/2026-06-20-np-supply-pricing-fix-design.md`.
 
 **Branch:** continue on `feature/new-plymouth-planning` (or a fresh `feature/np-supply-pricing-fix` if you prefer to isolate the engine change — author's choice at execution).
 

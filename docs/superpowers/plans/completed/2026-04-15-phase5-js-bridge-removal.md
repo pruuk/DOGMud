@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML
 
-**Spec:** `docs/superpowers/specs/2026-04-15-phase5-js-bridge-removal-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-15-phase5-js-bridge-removal-design.md`
 
 ## File Structure
 

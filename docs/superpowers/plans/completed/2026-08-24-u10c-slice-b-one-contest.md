@@ -6,7 +6,7 @@
 
 **Scope:** This slice does **not** give charm a duration. Charm stays permanent when it lands. That is deliberate — see "Why this is a slice" below.
 
-**Spec:** `docs/superpowers/specs/2026-08-24-u10c-charm-redesign-design.md` — sections 11, 12 and 13 supersede 1-10; 13 supersedes 11.3.2.
+**Spec:** `docs/superpowers/specs/completed/2026-08-24-u10c-charm-redesign-design.md` — sections 11, 12 and 13 supersede 1-10; 13 supersedes 11.3.2.
 
 ---
 

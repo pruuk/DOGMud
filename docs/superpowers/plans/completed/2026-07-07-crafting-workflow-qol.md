@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud). Unit tests (`internal/crafting` has `_test.go`). Boot + in-game (`craft`, `stow`) verification.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-crafting-workflow-qol-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-07-crafting-workflow-qol-design.md`
 
 ---
 

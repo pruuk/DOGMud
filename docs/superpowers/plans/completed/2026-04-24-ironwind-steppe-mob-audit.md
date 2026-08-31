@@ -43,7 +43,7 @@ Create `_datafiles/world/dogmud/behaviors/archetypes/ambusher.yaml`:
 #   5. In new room (not in combat) → mob_idle fires → re-apply buff 9.
 #   6. Cycle back to step 1 when next player enters.
 #
-# Spec: docs/superpowers/plans/2026-04-24-ironwind-steppe-mob-audit.md
+# Spec: docs/superpowers/plans/completed/2026-04-24-ironwind-steppe-mob-audit.md
 
 tree:
   type: selector
@@ -154,7 +154,7 @@ EOF
 # — "prey flees when attacked." Small animals huntable for food/
 # materials: hares, grouse, squirrels, lizards, etc.
 #
-# Spec: docs/superpowers/plans/2026-04-24-ironwind-steppe-mob-audit.md
+# Spec: docs/superpowers/plans/completed/2026-04-24-ironwind-steppe-mob-audit.md
 
 tree:
   type: action

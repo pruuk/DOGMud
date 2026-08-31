@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25. No new dependencies. Verification via `go build`/`go vet`/`go test ./...` after every commit, plus a `-race` pass on `internal/behaviortree/...` after the final commit (the room-state double-checked-locking test needs `-race` to be meaningful).
 
-**Spec:** `docs/superpowers/specs/2026-04-17-code-cleanup-1.6-test-coverage-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-17-code-cleanup-1.6-test-coverage-design.md`
 
 **Branch:** `feature/stage-1.6-test-coverage` off `development`.
 

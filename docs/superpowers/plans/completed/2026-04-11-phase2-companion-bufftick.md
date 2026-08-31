@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML, existing combat/damage_pipeline and scripting packages
 
-**Spec:** `docs/superpowers/specs/2026-04-11-phase2-companion-bufftick-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-11-phase2-companion-bufftick-design.md`
 
 ---
 

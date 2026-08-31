@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, existing `internal/state` framework, `internal/state/combatphase` (veto integration), `internal/users`, `internal/mobs`, `internal/hooks` (round-driver hook), `internal/usercommands/afk.go`, `internal/configs`.
 
-**Spec reference:** `docs/superpowers/specs/2026-05-19-state-chunk-5-presence-design.md`
+**Spec reference:** `docs/superpowers/specs/completed/2026-05-19-state-chunk-5-presence-design.md`
 
 ---
 

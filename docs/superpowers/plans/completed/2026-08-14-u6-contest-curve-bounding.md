@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25, `internal/contest` (leaf resolution core), `internal/combat` (scores, resolution, damage), `internal/hooks` (round wiring, procs), `internal/configs` (balance knobs).
 
-**Spec:** `docs/superpowers/specs/2026-08-14-contest-curve-bounding-design.md` (rev 3)
+**Spec:** `docs/superpowers/specs/completed/2026-08-14-contest-curve-bounding-design.md` (rev 3)
 **Roadmap:** `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` (slice U6)
 
 ---

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (server, `internal/mapper`, `internal/rooms`, `internal/exit`, `internal/configs`, `internal/usercommands`, `modules/gmcp`), vanilla JS + SVG (client, `_datafiles/html/public`), YAML data files, `mudlog` (slog) logging, Go `testing` for unit tests.
 
-**Spec:** `docs/superpowers/specs/2026-06-06-player-mapper-hybrid-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-06-player-mapper-hybrid-design.md`
 
 ---
 

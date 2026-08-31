@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the chunk-1.3 substrate from `docs/superpowers/specs/2026-05-06-mob-aliveness-1.3-crime-wanted-design.md`: per-faction crime log (murder/assault/theft) with witness-based perpetrator identification, rewriting 1.2's flat kill-rep hook to be crime-aware. Authors `thornwall_citizens` faction (deferred from 1.2) with 20 named civilians + 3 guards via multi-faction membership. New admin command `crime`.
+**Goal:** Build the chunk-1.3 substrate from `docs/superpowers/specs/completed/2026-05-06-mob-aliveness-1.3-crime-wanted-design.md`: per-faction crime log (murder/assault/theft) with witness-based perpetrator identification, rewriting 1.2's flat kill-rep hook to be crime-aware. Authors `thornwall_citizens` faction (deferred from 1.2) with 20 named civilians + 3 guards via multi-faction membership. New admin command `crime`.
 
 **Architecture:** New `internal/crimes/` package mirroring `internal/factions/` patterns (per-faction YAML at `factions.crimes/{slug}.yaml`, gitignored runtime state, `saveMu`-serialized I/O, lazy-load + sync-save). The combat-death hook is rewritten to consult the crime substrate first; the existing first-aggression and failed-steal paths gain crime-recording calls alongside their existing logic.
 
@@ -3108,7 +3108,7 @@ to:
 **Status:** Done (2026-MM-DD) • **Size:** M
 ```
 
-Append a `**Shipped:**` line to the mini-brief listing key artifacts (mirror chunk 1.1 + 1.2's pattern). Spec at `docs/superpowers/specs/2026-05-06-mob-aliveness-1.3-crime-wanted-design.md`, plan at `docs/superpowers/plans/2026-05-06-mob-aliveness-1.3-crime-wanted.md`.
+Append a `**Shipped:**` line to the mini-brief listing key artifacts (mirror chunk 1.1 + 1.2's pattern). Spec at `docs/superpowers/specs/completed/2026-05-06-mob-aliveness-1.3-crime-wanted-design.md`, plan at `docs/superpowers/plans/completed/2026-05-06-mob-aliveness-1.3-crime-wanted.md`.
 
 - [ ] **Step 7: Commit the roadmap update**
 

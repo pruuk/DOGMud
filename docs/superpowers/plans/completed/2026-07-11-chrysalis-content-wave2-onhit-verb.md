@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `internal/mutations`, `internal/hooks` (combat round), `internal/actions` (kick), YAML mutation + help data, testify.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysalis-cluster-content-design.md` (Wave 2 of §9). Builds on the Wave 1 recipe (merged).
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysalis-cluster-content-design.md` (Wave 2 of §9). Builds on the Wave 1 recipe (merged).
 
 **Scope — deferred to Wave 2b (same on-hit recipe, each authors a NEW buff):** Rending Claws (bleed buff), Grasping Tendrils (root buff), Evil Eye (accuracy/defense-down curse buff). Wave 2 proves the recipe with the zero-new-buff exemplar (Venom Glands → buff 39) so the mechanism lands before the buff-authoring fan-out.
 

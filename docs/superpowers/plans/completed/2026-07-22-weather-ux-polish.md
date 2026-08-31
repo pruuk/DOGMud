@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud fork), YAML data files, `go test`, config in `_datafiles/config.yaml`.
 
-**Spec:** `docs/superpowers/specs/2026-07-22-weather-ux-polish-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-22-weather-ux-polish-design.md`
 
 ---
 

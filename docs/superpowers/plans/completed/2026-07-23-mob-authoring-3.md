@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud fork), GMCP over WebSocket, vanilla JS (matching `builder.js`/`items.js`/`build.html`), `go test`.
 
-**Spec:** `docs/superpowers/specs/2026-07-23-mob-authoring-3-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-23-mob-authoring-3-design.md`
 
 **Verified seams:**
 - `Mob` struct `internal/mobs/mobs.go:82` (embeds `Character characters.Character`); package cache `mobs map[MobId]*Mob` guarded by `mobsMu`; name cache `mobNameCache map[MobId]string` guarded by `mobNameCacheMu`; `allMobNames []string`.

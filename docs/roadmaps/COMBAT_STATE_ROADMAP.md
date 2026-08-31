@@ -5,7 +5,7 @@
 > orthogonal state machines + one flag.
 >
 > **Master spec:**
-> `docs/superpowers/specs/2026-05-13-combat-state-machines-design.md`
+> `docs/superpowers/specs/completed/2026-05-13-combat-state-machines-design.md`
 
 ## Why this effort exists
 
@@ -128,7 +128,7 @@ Next: chunk 1 — Awareness machine (`Visible` / `Concealing` /
 > `Visible/Concealing/Hidden/Revealing` machine, buff #9 mirroring, the
 > marquee mechanics below) is unchanged and still live. See
 > `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md`, row **U10d**, and
-> `docs/superpowers/specs/2026-08-25-u10d-surprise-attack-redesign-design.md`
+> `docs/superpowers/specs/completed/2026-08-25-u10d-surprise-attack-redesign-design.md`
 > sections 1.1 and 3.
 
 Built the `internal/state/awareness/` machine
@@ -915,7 +915,7 @@ Next: chunk 4f — Position balance + smoke.
 
 | Chunk | Spec | Plan |
 |-------|------|------|
-| 0 | `docs/superpowers/specs/2026-05-13-state-chunk-0-framework-and-combat-phase-design.md` | `docs/superpowers/plans/2026-05-13-state-chunk-0-framework-and-combat-phase.md` |
+| 0 | `docs/superpowers/specs/completed/2026-05-13-state-chunk-0-framework-and-combat-phase-design.md` | `docs/superpowers/plans/completed/2026-05-13-state-chunk-0-framework-and-combat-phase.md` |
 | 1-5 | TBD (spec before each chunk picks up) | TBD |
 
 ---
@@ -923,7 +923,7 @@ Next: chunk 4f — Position balance + smoke.
 ## See also
 
 - Master spec:
-  `docs/superpowers/specs/2026-05-13-combat-state-machines-design.md`
+  `docs/superpowers/specs/completed/2026-05-13-combat-state-machines-design.md`
 - Framework package docs: `internal/state/context.md`
 - Combat Phase package docs: `internal/state/combatphase/context.md`
 - Characters integration: `internal/characters/context.md`

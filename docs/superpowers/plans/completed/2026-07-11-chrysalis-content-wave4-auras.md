@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go — `internal/mutations`, `internal/hooks` (user round tick), `internal/rooms` (room membership); YAML buff + mutation + help; testify.
 
-**Spec:** `docs/superpowers/specs/2026-07-11-chrysalis-cluster-content-design.md` (Wave 4 of §9). Builds on Waves 1–3 (merged).
+**Spec:** `docs/superpowers/specs/completed/2026-07-11-chrysalis-cluster-content-design.md` (Wave 4 of §9). Builds on Waves 1–3 (merged).
 
 **Scope — this wave is the ally-buff aura only.** Deferred to **Wave 4b**: the *enemy-debuff* aura variant (Dissonance Organ — same room-scan tick, targets hostile mobs, applies a debuff) and the whole **companion/brood subsystem (P8** — Brood Sac / Hive Mind / Brood Mother), which extends the sizeable existing `Character.Companions` + `actSummonCompanion` machinery and warrants its own plan. One clean ally-aura exemplar proves the P7 room-scan recipe; the debuff variant is a small delta on it.
 

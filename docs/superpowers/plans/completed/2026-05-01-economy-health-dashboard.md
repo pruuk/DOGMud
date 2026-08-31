@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (existing engine), YAML (gopkg.in/yaml.v2 — already in go.mod), Bootstrap 4 + vanilla JS (already loaded by `_header.html`), no new dependencies.
 
-**Spec:** `docs/superpowers/specs/2026-05-01-economy-health-dashboard-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-01-economy-health-dashboard-design.md`
 
 ---
 

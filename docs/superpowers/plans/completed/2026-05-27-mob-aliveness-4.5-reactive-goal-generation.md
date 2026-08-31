@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25 · existing `events`, `mudlog`, `mobs`, `goals`, `opinions`, `factions`, `relationships`, `rooms`, `crafting`, `users` packages.
 
-**Spec:** `docs/superpowers/specs/2026-05-27-mob-aliveness-4.5-reactive-goal-generation-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-27-mob-aliveness-4.5-reactive-goal-generation-design.md`
 
 ---
 
@@ -36,7 +36,7 @@ Create `internal/seeders/seeders.go`:
 // Register. main.go imports this package + wires events.AddListener
 // for each event type seeders care about.
 //
-// See docs/superpowers/specs/2026-05-27-mob-aliveness-4.5-reactive-goal-generation-design.md
+// See docs/superpowers/specs/completed/2026-05-27-mob-aliveness-4.5-reactive-goal-generation-design.md
 package seeders
 
 import (
@@ -2224,7 +2224,7 @@ Cover (~100-150 lines):
   - `seedRevengeGoalIfAbsent(mob, kind, id, priority)` for the multi-revenge rules
 - Architectural exception: rule 3 (craft-item materials) invoked directly via exported `SeedMaterialsForRecipe` function — it's an internal planner state, not a world event. All 9 other rules are event-subscribed via Dispatch (Option B). Three new event types defined in Task 3 (`PlayerAttackedMob`, `GiftOffered`, `GiftAccepted`) carry the signals rules 6, 7, 9 need.
 - Out-of-scope: 4.6 prune sweep, cross-type conflict mechanism (deferred from 4.3), per-archetype gating, content-side trigger lists
-- Reference the spec: `docs/superpowers/specs/2026-05-27-mob-aliveness-4.5-reactive-goal-generation-design.md`
+- Reference the spec: `docs/superpowers/specs/completed/2026-05-27-mob-aliveness-4.5-reactive-goal-generation-design.md`
 
 - [ ] **Step 14.2: Commit**
 

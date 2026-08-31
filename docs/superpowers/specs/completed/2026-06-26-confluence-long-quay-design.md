@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-26
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (district 2 of 10)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (district 2 of 10)
 **Predecessor:** District 1 The Landings, merged `16b6eb7c` — room **6121 "South Quay Gate"** is the stub this district opens.
 
 ## Purpose

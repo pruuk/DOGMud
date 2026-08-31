@@ -15,7 +15,7 @@ to use the new template.
 
 **Tech Stack:** Go, Go templates, JS (goja scripting engine), YAML spell defs
 
-**Spec:** `docs/superpowers/specs/2026-03-17-map-fix-and-identify-spell-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-03-17-map-fix-and-identify-spell-design.md`
 
 ---
 

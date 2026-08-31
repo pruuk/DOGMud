@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `internal/itemvalue` package (chunk 2.2), existing `internal/mutations` package (chunk 2.2a gear-effectiveness multiplier already integrated into `ItemValueDelta`), existing `internal/actions.EquipItem` for swap mechanics.
 
-**Spec:** `docs/superpowers/specs/2026-05-11-mob-aliveness-2.3-equip-if-better-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-11-mob-aliveness-2.3-equip-if-better-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 
@@ -842,9 +842,9 @@ After the existing bullet list, append a `**Shipped:**` paragraph:
   gear-effectiveness scoring — no special path. Per-archetype
   configurability is satisfied by chunk 2.2's WeightProfile
   system (no new knobs). Spec at
-  `docs/superpowers/specs/2026-05-11-mob-aliveness-2.3-equip-if-better-design.md`,
+  `docs/superpowers/specs/completed/2026-05-11-mob-aliveness-2.3-equip-if-better-design.md`,
   plan at
-  `docs/superpowers/plans/2026-05-11-mob-aliveness-2.3-equip-if-better.md`.
+  `docs/superpowers/plans/completed/2026-05-11-mob-aliveness-2.3-equip-if-better.md`.
 ```
 
 - [ ] **Step 6: Bump the roll-up**

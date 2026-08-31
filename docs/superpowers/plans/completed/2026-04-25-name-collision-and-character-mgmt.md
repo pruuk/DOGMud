@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (engine), YAML (config), GoMud command/prompt framework, mudlog for logging.
 
-**Spec:** `docs/superpowers/specs/2026-04-25-name-collision-and-character-mgmt-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-25-name-collision-and-character-mgmt-design.md`
 
 ---
 

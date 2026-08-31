@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud). Unit tests via `go test` (`internal/spells`, `internal/crafting`, `internal/usercommands` have `_test.go`). Boot-validation + in-game `cast`/`craft` checks.
 
-**Spec:** `docs/superpowers/specs/2026-07-07-single-word-spell-craft-names-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-07-single-word-spell-craft-names-design.md`
 
 ---
 

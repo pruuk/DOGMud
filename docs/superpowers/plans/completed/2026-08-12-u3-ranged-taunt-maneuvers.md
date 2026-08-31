@@ -105,7 +105,7 @@ Its roll currently discards margin and both rolls. Do not "improve" it by surfac
 | `internal/combat/context.md` (modify) | wrappers + correct two stale claims |
 | `internal/hooks/context.md` (modify) | drop the deleted accessors if named |
 | `docs/roadmaps/UNIFIED_RESOLUTION_ROADMAP.md` (modify) | ownership discharge + a new U6 modelling gate |
-| `docs/superpowers/specs/2026-08-12-unified-contest-resolution-design.md` (modify) | correct the false ranged skill-weight row |
+| `docs/superpowers/specs/completed/2026-08-12-unified-contest-resolution-design.md` (modify) | correct the false ranged skill-weight row |
 
 ## Success criteria
 
@@ -382,7 +382,7 @@ Standing rule 2: `context.md` ships with the change, never as a follow-up. Roadm
 
 - [ ] **Step 4: `internal/hooks/context.md`.** Check for the four deleted accessors and any claim that hooks resolves its own contests; correct or delete. Reviewers found no current mention, so this may be a no-op — confirm rather than assume.
 
-- [ ] **Step 5: The spec.** `docs/superpowers/specs/2026-08-12-unified-contest-resolution-design.md` §1.1's drift table lists ranged as `Perception + skill×5`. Ranged attack is **×1** (`combat_fire.go` passes `AttackSkill: rangedRank` raw). Correct the row and cross-reference the new modelling gate.
+- [ ] **Step 5: The spec.** `docs/superpowers/specs/completed/2026-08-12-unified-contest-resolution-design.md` §1.1's drift table lists ranged as `Perception + skill×5`. Ranged attack is **×1** (`combat_fire.go` passes `AttackSkill: rangedRank` raw). Correct the row and cross-reference the new modelling gate.
 
 - [ ] **Step 6:** Verify every symbol named in the touched `context.md` files still exists (`tools/context_md_audit.py`, or `Select-String -Path internal\<pkg>\*.go -Pattern '^(func|type|const|var)\s'`).
 

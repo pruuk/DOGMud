@@ -3,7 +3,7 @@
 **Date:** 2026-07-10
 **Status:** Approved (engine spec; content is a follow-on)
 **Origin:** Queued brainstorm `project_mutation_graph_redesign`, unblocked after the
-mutation-archetype-shift feature shipped (`docs/superpowers/specs/2026-07-10-mutation-archetype-shift-design.md`).
+mutation-archetype-shift feature shipped (`docs/superpowers/specs/completed/2026-07-10-mutation-archetype-shift-design.md`).
 Re-curates that feature's provisional `archetype_pull` table.
 
 ---

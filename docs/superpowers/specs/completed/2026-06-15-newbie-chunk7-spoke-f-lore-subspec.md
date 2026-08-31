@@ -1,6 +1,6 @@
 # Newbie Rework — Chunk 7 Sub-Spec: Spoke F (Lore & Folk Tradition)
 
-> Parent spec: `docs/superpowers/specs/2026-05-27-newbie-area-rework-design.md`
+> Parent spec: `docs/superpowers/specs/completed/2026-05-27-newbie-area-rework-design.md`
 > (§4.2 the sci-fi tease / Orbital Stone, §6.3 spoke roster — "the soft spoke, no
 > boss, all social and discovery", §7.2 reward table row F, §5 Tier-1 `help`
 > reinforcement + Tier-2 dialogue/faction/social beats, §10 chunk 7 = ~25 rooms).

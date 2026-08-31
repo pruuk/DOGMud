@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (events/listeners/templates), text/template splash scene, vanilla JS in `webclient-pure.html`, `image-gen-mcp` (gpt-image-2, **quality `low` ONLY**), Python/Pillow postprocess.
 
-**Spec:** `docs/superpowers/specs/2026-07-29-mutation-art-reveal-design.md` — read it first. Key constraint discovered in planning: `events` → `skills` → `mutations`, so **`internal/mutations` must NOT import `internal/events`**. The event struct satisfies `events.Event` structurally.
+**Spec:** `docs/superpowers/specs/completed/2026-07-29-mutation-art-reveal-design.md` — read it first. Key constraint discovered in planning: `events` → `skills` → `mutations`, so **`internal/mutations` must NOT import `internal/events`**. The event struct satisfies `events.Event` structurally.
 
 **Verified facts** (2026-07-29, don't re-derive):
 - `MutationSpec` fields: `MutationId`, `Name`, `Description`, `Rarity`, `MaxRank` (`internal/mutations/mutations.go:30`); `GetMutation(id) *MutationSpec` at `:151`.

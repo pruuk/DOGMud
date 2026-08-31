@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-27
 **Status:** Approved (design phase)
-**Umbrella:** `docs/superpowers/specs/2026-06-26-confluence-citywide-design.md` (§3 row 9)
+**Umbrella:** `docs/superpowers/specs/completed/2026-06-26-confluence-citywide-design.md` (§3 row 9)
 **Predecessor:** The Confluence spine (island + Q74) is complete through 6b. This is the
 first of the two outer-quarter closeout districts (the other: East Gate & Brennside).
 

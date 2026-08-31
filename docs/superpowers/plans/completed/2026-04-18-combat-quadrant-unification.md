@@ -14,7 +14,7 @@ The 2a/2b split is bisect-friendly: if a regression appears after Stage 2, 2a's 
 
 **Tech Stack:** Go 1.25. No new dependencies. Verification via `go build ./...`, `go vet ./...`, `go test ./...` after every commit.
 
-**Spec:** `docs/superpowers/specs/2026-04-18-combat-quadrant-unification-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-18-combat-quadrant-unification-design.md`
 
 **Branch:** `feature/combat-quadrant-unification` off `development`.
 
@@ -126,8 +126,8 @@ One commit. Four inline fixes in `internal/hooks/NewRound_DoCombat_helpers.go` p
 **Files:**
 - Modify: `internal/hooks/NewRound_DoCombat_helpers.go` (4 edits: Gap 1, Gap 2, Gap 3 near lines 1354–1364; Gap 4 at lines 1171–1179)
 - Create: `internal/hooks/NewRound_DoCombat_parity_test.go` (new file, 4 tests)
-- Add: `docs/superpowers/specs/2026-04-18-combat-quadrant-unification-design.md` (spec file, already on disk, being committed for the first time)
-- Add: `docs/superpowers/plans/2026-04-18-combat-quadrant-unification.md` (this plan, already on disk, being committed for the first time)
+- Add: `docs/superpowers/specs/completed/2026-04-18-combat-quadrant-unification-design.md` (spec file, already on disk, being committed for the first time)
+- Add: `docs/superpowers/plans/completed/2026-04-18-combat-quadrant-unification.md` (this plan, already on disk, being committed for the first time)
 
 **Estimated commit size:** ~60 lines production change + ~250 lines new test file + spec + plan. Medium commit. If it balloons past ~400 production-code lines of change, something is wrong — STOP and re-read the spec.
 
@@ -458,8 +458,8 @@ cd "/c/Users/Calabe Davis/workspace/DOGMud"
 git add \
   internal/hooks/NewRound_DoCombat_helpers.go \
   internal/hooks/NewRound_DoCombat_parity_test.go \
-  docs/superpowers/specs/2026-04-18-combat-quadrant-unification-design.md \
-  docs/superpowers/plans/2026-04-18-combat-quadrant-unification.md
+  docs/superpowers/specs/completed/2026-04-18-combat-quadrant-unification-design.md \
+  docs/superpowers/plans/completed/2026-04-18-combat-quadrant-unification.md
 git commit -m "$(cat <<'EOF'
 fix(combat): close four parity gaps before quadrant unification
 
@@ -1273,7 +1273,7 @@ git commit -m "$(cat <<'EOF'
 refactor(combat): introduce handleCombatRound + phase helpers
 
 Stage 2a of combat-quadrant unification (see spec
-docs/superpowers/specs/2026-04-18-combat-quadrant-unification-design.md).
+docs/superpowers/specs/completed/2026-04-18-combat-quadrant-unification-design.md).
 Pure ADD-ONLY commit. New handleCombatRound(atk, def actions.Actor, ...)
 and eight phase helpers land alongside the existing four quadrant
 handlers (handlePlayerVsPlayer / handlePlayerVsMob / handleMobVsPlayer /
@@ -1847,8 +1847,8 @@ additions as a design decision, not a convenience.
 **See also:**
 
 - `project_pvm_mvp_parity_gaps.md` — historical parity gap log
-- Spec: `docs/superpowers/specs/2026-04-18-combat-quadrant-unification-design.md`
-- Plan: `docs/superpowers/plans/2026-04-18-combat-quadrant-unification.md`
+- Spec: `docs/superpowers/specs/completed/2026-04-18-combat-quadrant-unification-design.md`
+- Plan: `docs/superpowers/plans/completed/2026-04-18-combat-quadrant-unification.md`
 ```
 
 Fill `<FILL_IN_FROM_CURRENT_SESSION>` with the executor's current session id.
@@ -1941,8 +1941,8 @@ Expected files changed:
 - `internal/hooks/NewRound_DoCombat_unified.go` — NEW (commit 2)
 - `internal/hooks/NewRound_DoCombat_parity_test.go` — NEW (commit 1)
 - `internal/hooks/NewRound_DoCombat_routing_test.go` — NEW (commit 3)
-- `docs/superpowers/specs/2026-04-18-combat-quadrant-unification-design.md` — NEW (commit 1)
-- `docs/superpowers/plans/2026-04-18-combat-quadrant-unification.md` — NEW (commit 1)
+- `docs/superpowers/specs/completed/2026-04-18-combat-quadrant-unification-design.md` — NEW (commit 1)
+- `docs/superpowers/plans/completed/2026-04-18-combat-quadrant-unification.md` — NEW (commit 1)
 
 **NO other files.** If you see `.claude/settings.local.json`, `feedback/*.txt`, `Screenshot*.png`, or any memory file, STOP — you accidentally staged noise. `git reset HEAD~N` to the offending commit and restage.
 

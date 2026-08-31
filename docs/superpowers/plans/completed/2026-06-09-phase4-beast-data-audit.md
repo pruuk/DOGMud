@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (`internal/combat`, `internal/actions`); YAML data (species, mobs, profiles already in `ai.go`).
 
-**Spec:** `docs/superpowers/specs/2026-06-09-phase4-beast-data-audit-design.md`. Phases 1-3 are on local master.
+**Spec:** `docs/superpowers/specs/completed/2026-06-09-phase4-beast-data-audit-design.md`. Phases 1-3 are on local master.
 
 **Verified facts (2026-06-09):**
 - Beast natural-weapon moves + their gate sites (all on master): `rake`/`maul`/`pounce`/`gore`/`throttle` (Phase 3) + `hamstring` (Phase 2). Each gates identity at 3 sync points: `combat.CanUse<Move>` (`internal/combat/ai.go`), `actions.Execute<Move>` action entry (`internal/actions/combat_<move>.go`, returns `…Result{Not<Identity>: true}`), `actions.CommandIsReady` (`internal/actions/command_readiness.go`), with drift rows in `command_readiness_drift_test.go`.
@@ -265,7 +265,7 @@ git commit -m "chore(content): remove inert combatcommands (anatomy-forbidden mo
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-06-09-phase4-beast-data-audit.md`. Two execution options:
+Plan complete and saved to `docs/superpowers/plans/completed/2026-06-09-phase4-beast-data-audit.md`. Two execution options:
 1. **Subagent-Driven (recommended)** — fresh subagent per task, spec+quality review between tasks (as Phase 3). Sequence the data tasks (T3/T4/T5/T6/T7 all touch YAML) to avoid ID/file races; the code tasks (T1/T2) can go first.
 2. **Inline Execution** with checkpoints.
 

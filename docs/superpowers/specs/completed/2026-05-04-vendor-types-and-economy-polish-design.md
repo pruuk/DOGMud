@@ -5,9 +5,9 @@
 **Related:**
 - `docs/superpowers/specs/completed/2026-04-04-living-economy-design.md`
 - `docs/superpowers/specs/completed/2026-04-27-caravan-system-design.md`
-- `docs/superpowers/specs/2026-04-29-stage-3-1-foragers-design.md`
-- `docs/superpowers/specs/2026-04-30-stage-3-4-real-item-transfer-design.md`
-- `docs/superpowers/plans/2026-05-01-economy-health-dashboard.md`
+- `docs/superpowers/specs/completed/2026-04-29-stage-3-1-foragers-design.md`
+- `docs/superpowers/specs/completed/2026-04-30-stage-3-4-real-item-transfer-design.md`
+- `docs/superpowers/plans/completed/2026-05-01-economy-health-dashboard.md`
 
 ## Goals
 

@@ -1,7 +1,7 @@
 # Greenford — District 1: River District & Bridge Landing — Design
 
 *Spec date: 2026-06-30. The first of Greenford's 5 districts (city-wide layer:
-`docs/superpowers/specs/2026-06-30-greenford-citywide-design.md`). This district
+`docs/superpowers/specs/completed/2026-06-30-greenford-citywide-design.md`). This district
 is the zone's ENTRANCE — it opens the East Road's barred Greenford Bridge and
 establishes the riverfolk texture at the foot of the hill. No quest, no symbol
 beat (the mystery lives in the University + Neighborhood districts).*

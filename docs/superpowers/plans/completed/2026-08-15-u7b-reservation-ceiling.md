@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `internal/characters` (pools, reservation, companions), `internal/hooks` (summon, charm, auto-spawn, round tick), `internal/usercommands` (craft, assess, status), `internal/spells` (SpellData), `internal/configs` (balance knobs), `internal/templates` (status rendering), `_datafiles/world/dogmud/spells/`, `_datafiles/world/dogmud/mobs/summons/`.
 
-**Design authority:** `docs/superpowers/specs/2026-08-15-u7b-reservation-ceiling-design.md`. Decisions D1 to D16 in that document are settled and are not relitigated here. Where this plan extends the spec (three places, all flagged in "Decisions the spec left open" at the end), it says so explicitly.
+**Design authority:** `docs/superpowers/specs/completed/2026-08-15-u7b-reservation-ceiling-design.md`. Decisions D1 to D16 in that document are settled and are not relitigated here. Where this plan extends the spec (three places, all flagged in "Decisions the spec left open" at the end), it says so explicitly.
 
 ---
 

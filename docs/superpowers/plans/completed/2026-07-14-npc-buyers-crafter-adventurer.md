@@ -6,7 +6,7 @@
 
 **Architecture:** All in `modules/auctions/npc_buyers.go` (+ a one-line resolution wiring in `auctions.go`). Plugs into the #2.1 framework — no engine changes.
 
-**Spec:** `docs/superpowers/specs/2026-07-14-npc-buyers-crafter-adventurer-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-14-npc-buyers-crafter-adventurer-design.md`
 
 ---
 

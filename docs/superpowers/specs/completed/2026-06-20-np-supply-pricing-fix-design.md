@@ -3,7 +3,7 @@
 *Date: 2026-06-20 · Re-scoped from "chunk 3.5" engine prerequisite.*
 
 > **What this is.** The New Plymouth master plan
-> (`docs/superpowers/specs/2026-06-20-new-plymouth-design.md` §6) called for
+> (`docs/superpowers/specs/completed/2026-06-20-new-plymouth-design.md` §6) called for
 > building a "scoped chunk 3.5" supply/restock engine before the city. A
 > read-only code investigation found the supply loop **already exists and runs
 > in production** (the Thornwall↔Stillwater caravan runner circuit), so the

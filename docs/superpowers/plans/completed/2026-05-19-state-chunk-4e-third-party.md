@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Spec:** `docs/superpowers/specs/2026-05-19-state-chunk-4e-third-party-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-19-state-chunk-4e-third-party-design.md`
 
 **Goal:** Implement the five chunk 4e deliverables — position-tiered hit modifiers, eat/drink offense restrictions, outside-damage control degradation, mob AI tiebreaker bias, sub-interrupt risk — so position dominance translates to combat math and grapples interact realistically with multi-combatant scenes.
 
@@ -179,7 +179,7 @@ Expected: FAIL with undefined `TargetSideHitModifier` / `AttackerSelfHitModifier
 // Symmetric — first-party in the grapple and third-party intruders both
 // pick up the target-side bonus when hitting a grappled target.
 //
-// See docs/superpowers/specs/2026-05-19-state-chunk-4e-third-party-design.md
+// See docs/superpowers/specs/completed/2026-05-19-state-chunk-4e-third-party-design.md
 // §3 for the full tables + rationale + composition examples.
 package position
 
@@ -1275,7 +1275,7 @@ by the combat hit-roll path in `internal/combat/combat.go`.
 
 Net hit modifier = AttackerSelfHitModifier × TargetSideHitModifier.
 
-See `docs/superpowers/specs/2026-05-19-state-chunk-4e-third-party-design.md`
+See `docs/superpowers/specs/completed/2026-05-19-state-chunk-4e-third-party-design.md`
 §3 for the full tables + sample compositions. Tables are code constants
 (not config) for v1; chunk 4f can promote them if smoke surfaces tuning
 needs.

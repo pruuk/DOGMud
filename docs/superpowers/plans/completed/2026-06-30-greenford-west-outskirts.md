@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML; built-binary boot; `cartcheck`; mudagent harness.
 
-**Spec:** `docs/superpowers/specs/2026-06-30-greenford-west-outskirts-design.md` (city-wide: `…greenford-citywide-design.md`).
+**Spec:** `docs/superpowers/specs/completed/2026-06-30-greenford-west-outskirts-design.md` (city-wide: `…greenford-citywide-design.md`).
 
 **Reserved IDs:** rooms **6317–6322**, mobs/dialogue **9530–9534**, items **40162** (optional). No quest, no faction, no buffs.
 

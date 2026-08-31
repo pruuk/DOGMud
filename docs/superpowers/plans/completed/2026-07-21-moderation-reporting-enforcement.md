@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, `gopkg.in/yaml.v2`, testify, the existing `users`/`connections`/`configs`/`events` packages.
 
-**Spec:** `docs/superpowers/specs/2026-07-21-moderation-reporting-enforcement-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-21-moderation-reporting-enforcement-design.md`
 
 ---
 

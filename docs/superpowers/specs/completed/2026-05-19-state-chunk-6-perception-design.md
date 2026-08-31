@@ -4,7 +4,7 @@
 **Branch:** `feature/mob-aliveness-1.3-crimes`
 **Predecessor chunks:** 5 (Presence, closed 2026-05-19), 4a-4f, 3, 2, 1, 0
 **Successor chunks:** Centralized Messaging Framework (new, future) — consumes the Perception FSM that this chunk lands.
-**Master spec:** `docs/superpowers/specs/2026-05-13-combat-state-machines-design.md` §7
+**Master spec:** `docs/superpowers/specs/completed/2026-05-13-combat-state-machines-design.md` §7
 
 ---
 

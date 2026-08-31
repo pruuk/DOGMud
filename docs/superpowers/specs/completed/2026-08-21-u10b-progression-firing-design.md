@@ -2,7 +2,7 @@
 >
 > **Drafted 2026-08-21, abandoned the same day.** Kept as a record of an approach
 > that did not work out. The plan built from it
-> (`docs/superpowers/plans/2026-08-21-u10b-progression-firing.md`) failed its
+> (`docs/superpowers/plans/completed/2026-08-21-u10b-progression-firing.md`) failed its
 > blind adversarial review with four blockers and was never executed.
 >
 > **The core premise died first.** This design assumed *use counters* drive
@@ -17,7 +17,7 @@
 > separate bonus layer that is never selected.
 >
 > **Read this instead:**
-> `docs/superpowers/specs/2026-08-26-u10b-1-progression-firing-convention-design.md`,
+> `docs/superpowers/specs/completed/2026-08-26-u10b-1-progression-firing-convention-design.md`,
 > which carries a table of exactly what changed from this draft and why.
 
 # U10b — progression firing consistency

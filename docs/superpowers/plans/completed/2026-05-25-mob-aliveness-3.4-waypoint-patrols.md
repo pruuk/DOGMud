@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.24. New files in `internal/mobs/` (patrol type + loader) and `internal/hooks/` (executor). Modifications to `internal/mobs/mobs.go` (PatrolId field), `internal/mobs/schedule.go` (ScheduleSegment.PatrolId), `internal/mobs/schedule_loader.go` (activity: patrol recognition), `internal/hooks/NewRound_IdleMobs_schedule.go` (stamps active_patrol_id), `internal/hooks/NewRound_IdleMobs.go` (patrol branch wiring), `internal/usercommands/admin.mob.go` (inspector extension), `main.go` (DI wiring). Content YAMLs in `_datafiles/world/dogmud/patrols/thornwall_city/` and existing schedules / mobs / rooms folders.
 
-**Spec:** `docs/superpowers/specs/2026-05-25-mob-aliveness-3.4-waypoint-patrols-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-25-mob-aliveness-3.4-waypoint-patrols-design.md`
 
 **Branch:** `feature/mob-aliveness-3.4-waypoint-patrols` (already created; spec committed as `4f78794c`).
 

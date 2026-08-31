@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML data files, ANSI template help files
 
-**Spec:** `docs/superpowers/specs/2026-04-10-instance-randomized-loot-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-04-10-instance-randomized-loot-design.md`
 
 ---
 

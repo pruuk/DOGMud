@@ -606,7 +606,7 @@ Expected: FAIL — package doesn't exist yet.
 // Package caravan owns the route data, state machine, and vendor-visit
 // logic for the Stage 2 NPC caravan that runs Thornwall ↔ Stillwater.
 //
-// See docs/superpowers/specs/2026-04-27-caravan-system-design.md for
+// See docs/superpowers/specs/completed/2026-04-27-caravan-system-design.md for
 // the full spec. Stage 1 NPC party primitives (internal/parties +
 // internal/behaviortree party_* actions) drive the crew's coordinated
 // movement and combat; this package owns only the route topology, the

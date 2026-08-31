@@ -17,7 +17,7 @@ Fernway South.
 **Tech Stack:** Go (1 forage-overlay task), YAML data (items, mobs, rooms,
 zone-config), the mapper's non_cartesian exemption, harness playtest.
 
-**Spec:** `docs/superpowers/specs/2026-07-04-pinnacle-chase-items-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-04-pinnacle-chase-items-design.md`
 (§5 bills of materials, §7 placement). **Author refs:**
 `docs/schemas/pinnacle-items.md`, `docs/schemas/item.md`.
 

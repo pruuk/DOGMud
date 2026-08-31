@@ -15,7 +15,7 @@ are non-combat except one optional fight (the Q70 Canal Lurker).
 **Tech Stack:** GoMud quest engine (`internal/questengine`), YAML data files,
 the dialogue engine (`internal/dialogue`), the playtest harness for verification.
 
-**Spec:** `docs/superpowers/specs/2026-06-24-np-capital-questlines-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-24-np-capital-questlines-design.md`
 
 ---
 

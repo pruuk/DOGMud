@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; the existing `events`/`hooks` listener pattern, `userCommands` registry, `GetConfigOption`/`SetConfigOption` per-user store, GMCP `Comm.Channel`, and the `webclient-pure.html` Comms panel.
 
-**Spec:** `docs/superpowers/specs/2026-07-14-global-channels-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-14-global-channels-design.md`
 
 ---
 

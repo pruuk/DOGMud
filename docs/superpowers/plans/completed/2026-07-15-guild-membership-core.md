@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, GoMud command/hook/config layers, YAML, testify.
 
-**Spec:** `docs/superpowers/specs/2026-07-15-guild-membership-core-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-15-guild-membership-core-design.md`
 
 ---
 

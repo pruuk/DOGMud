@@ -15,7 +15,7 @@ authored creative work written to a brief, in world.md voice.
 **Tech Stack:** Go (2 engine tasks), YAML data files, admin smoke commands,
 GoMud playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-07-04-pinnacle-chase-items-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-07-04-pinnacle-chase-items-design.md`
 (sections 5.1-5.9). **Author reference:** `docs/schemas/pinnacle-items.md`.
 
 **Branch:** `feature/pinnacle-stage2-items` off `master`.

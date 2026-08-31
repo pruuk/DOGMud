@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (UserRecord storage, GMCP payload, vitals extension, inbound handler branch), vanilla JS/CSS (the matching engine + builder editor).
 
-**Spec:** `docs/superpowers/specs/2026-06-07-web-client-automation-panel-design.md` (Parts B/C/D/E/F/G — this is Phase 3). Phases 1 (macros/aliases) + 2 (ticks) are merged on master.
+**Spec:** `docs/superpowers/specs/completed/2026-06-07-web-client-automation-panel-design.md` (Parts B/C/D/E/F/G — this is Phase 3). Phases 1 (macros/aliases) + 2 (ticks) are merged on master.
 
 **Verified grounding (trust these):**
 - `user.Ticks`/`UserTick` + `SetTick`/`RemoveTick` are the pattern to mirror for triggers (`internal/users/userrecord.go`).

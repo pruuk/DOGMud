@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, the GoMud engine's `internal/util` perf helpers.
 
-**Spec:** `docs/superpowers/specs/2026-06-05-mob-aliveness-6.4-performance-review-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-06-05-mob-aliveness-6.4-performance-review-design.md`
 
 ---
 

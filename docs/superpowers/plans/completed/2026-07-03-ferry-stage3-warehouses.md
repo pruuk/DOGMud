@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (GoMud engine), YAML persistence, existing economy buckets, ferry/caravan integration points built in Stage 2.
 
-**Spec:** `docs/superpowers/specs/2026-07-03-ferry-system-design.md` (Stage 3). Stages 1+2 merged (`86d10731b`, `f8608f402`).
+**Spec:** `docs/superpowers/specs/completed/2026-07-03-ferry-system-design.md` (Stage 3). Stages 1+2 merged (`86d10731b`, `f8608f402`).
 
 ---
 
@@ -179,7 +179,7 @@ func TestDeposit_RejectsUnbucketedAndUnknownZone(t *testing.T) {
 // Package warehouse implements the Stage 3 city warehouse buffer pools:
 // persistent, backend-only inventory that soaks up end-of-circuit carrier
 // surplus and a slow ambient accrual, to be spent by Stage 4 drawdown.
-// Spec: docs/superpowers/specs/2026-07-03-ferry-system-design.md.
+// Spec: docs/superpowers/specs/completed/2026-07-03-ferry-system-design.md.
 // Player access: NONE, forever. Only caravans/runners/factors touch this.
 package warehouse
 

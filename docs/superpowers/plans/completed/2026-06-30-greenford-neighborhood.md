@@ -8,7 +8,7 @@
 
 **Tech Stack:** YAML; built-binary boot; `cartcheck`; mudagent harness + `questtoken`.
 
-**Spec:** `docs/superpowers/specs/2026-06-30-greenford-neighborhood-design.md` (city-wide: `…greenford-citywide-design.md`). Quest pattern: `_datafiles/world/dogmud/quests/74-the_undercroft.yaml` (room_interact reveal grants + give_item + bump_rep). Q75 YAML: `_datafiles/world/dogmud/quests/75-the_surveyors_report.yaml` (steps declared; D4 wires testimony/end triggers).
+**Spec:** `docs/superpowers/specs/completed/2026-06-30-greenford-neighborhood-design.md` (city-wide: `…greenford-citywide-design.md`). Quest pattern: `_datafiles/world/dogmud/quests/74-the_undercroft.yaml` (room_interact reveal grants + give_item + bump_rep). Q75 YAML: `_datafiles/world/dogmud/quests/75-the_surveyors_report.yaml` (steps declared; D4 wires testimony/end triggers).
 
 **Reserved IDs:** rooms **6309–6316**, mobs/dialogue **9524–9529**, items **40160** (Reth's map) + optional **40161** (tea good). Quest **75** (back half).
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+ with generics. Existing engine: `internal/characters/`, `internal/hooks/NewRound_DoCombat*.go`, `internal/behaviortree/`, `internal/events/`, `internal/users/`, `internal/mobs/`.
 
-**Spec:** `docs/superpowers/specs/2026-05-13-state-chunk-0-framework-and-combat-phase-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-13-state-chunk-0-framework-and-combat-phase-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` (the umbrella branch for the side quest; aliveness 2.7 Task 19 remains pending).
 
@@ -2747,7 +2747,7 @@ Author the framework's package context.md per the existing DOGMud style.
 # DOGMud — Combat State Machines Roadmap
 
 > Living document. Tracks the 6-chunk state-machines effort.
-> Master spec: docs/superpowers/specs/2026-05-13-combat-state-machines-design.md
+> Master spec: docs/superpowers/specs/completed/2026-05-13-combat-state-machines-design.md
 
 ## Progress
 

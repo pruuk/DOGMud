@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (`internal/bountyhunter`, `internal/goals`, `internal/planners`, `internal/justice`, `internal/hooks`, `internal/configs`), YAML data (mob/item/archetype/faction/bounty seed), Go `testing`.
 
-**Spec:** `docs/superpowers/specs/2026-05-30-mob-aliveness-5.2-bounty-hunting-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-30-mob-aliveness-5.2-bounty-hunting-design.md`
 
 **Conventions for every task:**
 - Build: `go build ./...`

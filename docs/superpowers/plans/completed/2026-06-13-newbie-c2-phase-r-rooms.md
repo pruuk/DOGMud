@@ -1,7 +1,7 @@
 # Newbie Chunk 2 (Spoke A — Martial) — Phase R Plan (Rooms + Nouns)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
-> Design of record: `docs/superpowers/specs/2026-06-13-newbie-chunk2-spoke-a-martial-subspec.md` (§3).
+> Design of record: `docs/superpowers/specs/completed/2026-06-13-newbie-chunk2-spoke-a-martial-subspec.md` (§3).
 
 **Goal:** Author the 17 Spoke A rooms (5227–5243) — a dry training canyon
 climbing east from the existing hub stub 5220 up to a ruined watchtower —

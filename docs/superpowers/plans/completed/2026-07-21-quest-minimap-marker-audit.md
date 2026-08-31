@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25, `internal/questengine`, `boot_smoke_test.go`, quest YAML under `_datafiles/world/dogmud/quests/`, the `mudagent` playtest harness.
 
-Spec: `docs/superpowers/specs/2026-07-21-quest-minimap-marker-audit-design.md`
+Spec: `docs/superpowers/specs/completed/2026-07-21-quest-minimap-marker-audit-design.md`
 Branch: `feature/quest-marker-audit`. Mob→room lookup table already built at `scratchpad/mob2room.txt` (611 mobs).
 
 ---

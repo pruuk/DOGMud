@@ -8,7 +8,7 @@
 
 **Tech Stack:** GoMud YAML (rooms/mobs/items/buffs/mutators); `python -c "import yaml"` validation; local boot for load-validation; `/playtest` harness for the geared feel-test.
 
-**Reference spec:** `docs/superpowers/specs/2026-07-01-eastern-highlands-design.md`
+**Reference spec:** `docs/superpowers/specs/completed/2026-07-01-eastern-highlands-design.md`
 
 ---
 

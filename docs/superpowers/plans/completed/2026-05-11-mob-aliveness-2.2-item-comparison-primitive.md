@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, existing `internal/items` for `ItemSpec`/`Item`/`ItemType`, existing `internal/characters.Worn` slot model, existing `internal/mobs.Mob.Archetype` and `Mob.BehaviorArchetype` fields.
 
-**Spec:** `docs/superpowers/specs/2026-05-11-mob-aliveness-2.2-item-comparison-primitive-design.md`
+**Spec:** `docs/superpowers/specs/completed/2026-05-11-mob-aliveness-2.2-item-comparison-primitive-design.md`
 
 **Branch:** Stay on `feature/mob-aliveness-1.3-crimes` per the single-feature-branch SOP for the aliveness effort.
 
@@ -1984,9 +1984,9 @@ After the existing bullet list (Goal/In/Out/Depends on/Why), append a `**Shipped
   mods on item instances flagged as out of scope (instance-zone
   loot affixes carry +skill mods that the spec.StatMods view
   doesn't currently surface). Spec at
-  `docs/superpowers/specs/2026-05-11-mob-aliveness-2.2-item-comparison-primitive-design.md`,
+  `docs/superpowers/specs/completed/2026-05-11-mob-aliveness-2.2-item-comparison-primitive-design.md`,
   plan at
-  `docs/superpowers/plans/2026-05-11-mob-aliveness-2.2-item-comparison-primitive.md`.
+  `docs/superpowers/plans/completed/2026-05-11-mob-aliveness-2.2-item-comparison-primitive.md`.
 ```
 
 - [ ] **Step 6: Update the roll-up**

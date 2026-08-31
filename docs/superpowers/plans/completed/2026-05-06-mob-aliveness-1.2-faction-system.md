@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the chunk-1.2 substrate from
-`docs/superpowers/specs/2026-05-06-mob-aliveness-1.2-faction-system-design.md`:
+`docs/superpowers/specs/completed/2026-05-06-mob-aliveness-1.2-faction-system-design.md`:
 first-class factions with definitions, NPC membership via the existing
 `Groups` field, per-player rep, faction-vs-faction relations, an admin
 command, and an end-to-end migration of the `peacefulquest` placeholder
