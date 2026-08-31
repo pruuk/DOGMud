@@ -1,5 +1,18 @@
 # DOGMud Patch Notes
 
+## 2026-08-31: Walking Chrysalis actually works now
+
+The mutation promises you carry the whole craft inside you and can make
+anything, anywhere. In practice it did almost nothing. The game would let you
+start the craft away from a bench, but the recipe list still showed everything
+as locked, the status column still told you that you needed a forge, enchanting
+refused outright, and your storage would not hand over components unless you
+were standing at the station. Four different things said no, so the one that
+said yes was invisible.
+
+All of them agree now. With Walking Chrysalis you can craft, enchant, and draw
+components from storage anywhere at all, and the recipe list says so.
+
 ## 2026-08-31: Boss abilities are no longer learnable
 
 A few abilities belong to specific monsters and were never meant to be learned

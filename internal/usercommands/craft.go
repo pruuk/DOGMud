@@ -54,13 +54,26 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return craftEnchanting(rest, recipe, user, room)
 	}
 
-	// Auto-pull from storage: at a storage room that satisfies the recipe's station,
-	// draw exactly the missing components from the player's storage so the craft
-	// can proceed. Fires wherever you can craft (at the station); your storage is
-	// one per-character pool, reachable while crafting. All-or-nothing
+	// Auto-pull from storage: draw exactly the missing components from the
+	// player's storage so the craft can proceed. Your storage is one
+	// per-character pool, reachable while crafting. All-or-nothing
 	// (PlanStoragePull returns complete=false if storage can't cover it).
+	//
+	// ⚠️ THIS CONDITION MUST TRACK THE CRAFT GATE IN actions.InitiateCraft,
+	// which is the whole bug it was written with. The station clause here used
+	// to read `recipe.Station == "" || room.Station == recipe.Station` while
+	// InitiateCraft's gate ALSO honoured Walking Chrysalis
+	// (mutations.HasPortableWorkshop). The two disagreed, so a Chrysifier could
+	// pass the craft gate anywhere and then be refused the components:
+	// storage never opened away from the bench, the craft failed on missing
+	// ingredients, and it read to the player as "the mutation does nothing, I
+	// still have to stand at a station".
+	//
+	// "Fires wherever you can craft" is the invariant. If a future change adds
+	// another way to craft off-station, add it to BOTH places or this breaks
+	// again in exactly the same silent way.
 	if recipe != nil &&
-		(recipe.Station == "" || room.Station == recipe.Station) &&
+		actions.StationSatisfied(user.Character, recipe.Station, room.Station) &&
 		user.Character.HasRecipe(recipe.RecipeId) {
 		if ok, _ := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, recipe); !ok {
 			if pull, complete := crafting.PlanStoragePull(recipe, user.Character.Items, user.Character.ComponentItems, user.ItemStorage.GetItems()); complete {
@@ -194,7 +207,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 	}
 
 	// Station check
-	if recipe.Station != "" && room.Station != recipe.Station {
+	if !actions.StationSatisfied(user.Character, recipe.Station, room.Station) {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`<ansi fg="red">You need to be at a %s to craft that.</ansi>`,
 			strings.ReplaceAll(recipe.Station, "_", " ")))
@@ -301,7 +314,7 @@ func classifyRecipe(user *users.UserRecord, room *rooms.Room, r *crafting.Recipe
 	if lvl < r.SkillMinimum {
 		return "locked"
 	}
-	if r.Station != "" && room.Station != r.Station {
+	if !actions.StationSatisfied(user.Character, r.Station, room.Station) {
 		return "locked"
 	}
 	if ok, _ := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, r); ok {
@@ -542,7 +555,7 @@ func recipeStatus(user *users.UserRecord, room *rooms.Room, r *crafting.RecipeSp
 	if skillLevel < r.SkillMinimum {
 		return "X", fmt.Sprintf("%s skill required", skills.GetSkillRankDescription(r.SkillMinimum))
 	}
-	if r.Station != "" && room.Station != r.Station {
+	if !actions.StationSatisfied(user.Character, r.Station, room.Station) {
 		return "X", fmt.Sprintf("need %s", strings.ReplaceAll(r.Station, "_", " "))
 	}
 	ok, missing := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, r)
