@@ -82,6 +82,16 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	// same struct -- appended prose, not a narrated event. --
 	"tier_up_message": {narration, "internal/enchantments/enchantments.go EnchantSpec.TierUpMessage -- narrated line sent to the player when an enchantment advances a tier."},
 
+	// -- Item on-use narration: internal/items/itemspec.go ItemSpec, YAML-
+	// driven use effects (replaces JS onUse/onCommand_use). Method E find:
+	// on_use_user_text is used in exactly one data file
+	// (materials-40000/40042-herbalism_recipe_page.yaml) so the 2-file
+	// threshold alone would never have registered it; it is schema by Go
+	// struct tag regardless. Sibling on_use_room_text is not registered here
+	// because it does not appear in any data file today -- nothing for the
+	// walk to find, so it cannot be stale either. --
+	"on_use_user_text": {narration, "internal/items/itemspec.go ItemSpec.OnUseUserText -- narrated to the player via user.SendText(messaging.CategorySystem, ...) in internal/usercommands/use.go when they `use` the item; found in exactly ONE data file (materials-40000/40042-herbalism_recipe_page.yaml), promoted to schema by Method E (Go yaml struct tag) rather than the 2-file threshold."},
+
 	// -- Quest step narration: internal/quests/quests.go Quest.PlayerMessage /
 	// RoomMessage, fired when a quest step completes. --
 	"playermessage": {narration, "internal/quests/quests.go Quest.PlayerMessage -- actor-side line narrated when a quest step completes."},
@@ -124,6 +134,19 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	"optionid":   {narration, "combat/taunt_messages.go, items/attack_messages.go, items/defensive_messages.go OptionId field -- an identifier/selector (e.g. a DefenseType or ItemSubType), not prose itself, but it selects which tier of the message triad's Options map plays; part of the narration shape, not content."},
 	"options":    {narration, "The map of tiered/intensity message pools selected by optionid, same combat/attack/defence/taunt triad; the prose lives one level down inside this map."},
 
+	// -- Grapple outcome narration: internal/grapplemessaging/loader.go
+	// TemplateTriad (Controller/Controlled/Observers) and GradientTriad
+	// (Observers only), rendered by RenderOutcome, consumed by
+	// internal/hooks/Position_GrappleTick.go. All three live in the single
+	// data file _datafiles/world/dogmud/messaging/grapple_outcomes.yaml, so
+	// none clears the 2-file threshold on file COUNT alone -- each key
+	// recurs many times (30-40 occurrences) within that one file, across
+	// many outcome entries. Promoted to schema by Method E (Go yaml struct
+	// tag), same shape as on_use_user_text above. --
+	"controller": {narration, "internal/grapplemessaging/loader.go TemplateTriad.Controller -- second-person line shown to the grapple's controlling side; grapple_outcomes.yaml is the only data file, 37 occurrences within it, promoted to schema by Method E."},
+	"controlled": {narration, "internal/grapplemessaging/loader.go TemplateTriad.Controlled -- second-person line shown to the grapple's controlled side, paired with controller; same single-file/Method-E shape."},
+	"observers":  {narration, "internal/grapplemessaging/loader.go TemplateTriad.Observers and GradientTriad.Observers -- third-person line broadcast to the room during a grapple outcome/gradient event; same single-file/Method-E shape as controller/controlled."},
+
 	// -- Sentient item voice narration: internal/itemvoices/itemvoices.go
 	// VoiceSpec, one YAML per voice, consumed by the pinnacle per-round tick
 	// for items with a voice_id. --
@@ -138,11 +161,32 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	"voice_id": {config, "internal/items/itemspec.go ItemSpec.VoiceId, yaml tag \"voice_id\" (with underscore) -- a sentient item's reference to its itemvoices/<id>.yaml file. Same concept as voiceid below, spelled differently; not player prose, an identifier."},
 	"voiceid":  {config, "internal/itemvoices/itemvoices.go VoiceSpec.VoiceId, yaml tag \"voiceid\" (no underscore) -- the voice file's own self-identifying id, matched against items' voice_id. Same concept as voice_id above, spelled differently; not player prose, an identifier."},
 
+	// taunt_pull: matched by the "taunt" stem but is a plain bool toggle, not
+	// prose -- promoted to schema by Method E (found in exactly one data
+	// file, materials-40000/40185-aegis_of_mockery.yaml).
+	"taunt_pull": {config, "internal/items/itemspec.go ItemSpec.TauntPull (bool) -- \"sentient chatter on_taunt also pulls the bearer's target's aggro (Aegis)\"; a toggle, not player-facing text, despite matching the taunt stem. Found in exactly ONE data file, promoted to schema by Method E (Go yaml struct tag)."},
+
+	// emote: a genuine Method E COLLISION, not a real hit. internal/quests/
+	// triggers.go SayLineDef.Emote (bool, dash-prefixed under an npc_say
+	// lines: list) shares this exact spelling, but no quest file in
+	// _datafiles/world/dogmud actually sets that field today (grepped: zero
+	// matches; the only quest-file occurrences of the substring "emote" are
+	// prose inside "#" comments, which this walk does not treat as keys).
+	// The one data-file hit Method E's own walk finds is
+	// ansi-aliases.yaml's `emote: 144` -- an ANSI colour-alias numeric code
+	// (internal/templates/templates.go loads this file via
+	// ansitags.LoadAliases), unrelated to the quest field. Filed as config
+	// because the only real usage today is that colour alias, not prose.
+	// Same pattern as washing lines below: a spelling collision, not a
+	// recurring schema surface.
+	"emote": {config, "Method E collision: internal/quests/triggers.go SayLineDef.Emote (bool) shares this spelling but is unused in any quest data file today (zero matches). The one real hit is ansi-aliases.yaml's `emote: 144`, an ANSI colour-alias code loaded by ansitags.LoadAliases (internal/templates/templates.go) -- not player prose."},
+
 	// -- Content: authored text read on request, not narrated as an event. --
 	"description":         {content, "The single most overloaded key in the schema -- generic authored description field spanning achievements, biomes, buffs, conversations, factions, items, mobs, mutations, patrols, quests, rooms, schedules, species, spells, users and facts.yaml. Universally read on request (look/examine/status/identify), never narrated as an event."},
 	"description_suffix":  {content, "internal/enchantments/enchantments.go EnchantSpec.DescriptionSuffix -- prose appended to an item's description once enchanted; read via look/examine, not narrated. Sibling field tier_up_message on the same struct IS narration -- see above."},
 	"descriptionmodifier": {content, "internal/mutators/mutators.go Mutator.DescriptionModifier (*TextModifier) -- text injected into a mutated entity's description; read on request like description above."},
 	"hidden_description":  {content, "internal/rooms/rooms.go Room.HiddenDescription -- revealed only after a successful search/perception check, but still authored content read on request rather than an event narration."},
+	"corpse_description":  {content, "internal/mobs/mobs.go Mob.CorpseDescription -- overrides the default corpse look-text; rendered via user.SendText(messaging.CategoryRoomDescription, ...) in internal/usercommands/look.go, i.e. read on `look` at the corpse like description above, not narrated as an event. Found in exactly ONE data file (mobs/thornwall_city/374-caravan_wagon.yaml), promoted to schema by Method E (Go yaml struct tag) rather than the 2-file threshold."},
 	"hint":                {content, "internal/quests/quests.go Quest.Hint -- quest-log guidance text shown to the player on request via the journal/quest command, 67 quest files."},
 	"hints":               {content, "Dominated (286 of 287 files) by internal/dialogue/types.go's Hints field -- narrator-perspective text describing dialogue options (see CLAUDE.md Dialogue Voice & Trigger Discoverability), read on request when a player enters a dialogue node. One outlier file, the top-level _datafiles/world/dogmud/hints.yaml, reuses the identical spelling for periodic gameplay tips broadcast every ~5 minutes by internal/hooks/NewRound_BroadcastHints.go -- that single surface is narration-shaped but is outvoted by the dialogue usage; filed as content with this noted as a known gap."},
 	"greetings":           {content, "internal/dialogue/types.go DialogueTree.Greetings ([]Greeting) -- NPC greeting variants shown when a dialogue tree is entered; dialogue content, outside the messaging arc's scope."},
@@ -318,14 +362,73 @@ func messagingSurfaceWalk(worldDir string) (map[string]map[string]bool, error) {
 	return keyFiles, err
 }
 
-// messagingSurfaceSplitSchema mirrors split_schema_content: a spelling found
-// in 2+ files is schema (a loader reads it, so it recurs by construction); a
-// spelling found in exactly 1 file is author-invented content (e.g. a room
-// `nouns:` child) and is dropped here. Returns key -> one example file.
-func messagingSurfaceSplitSchema(keyFiles map[string]map[string]bool) map[string]string {
+// messagingSurfaceGoRoots mirrors tools/messaging_surface_audit.py's
+// GO_ROOTS: the two directories walked for Go yaml struct tags.
+var messagingSurfaceGoRoots = []string{"internal", "modules"}
+
+// messagingSurfaceYAMLTagRE mirrors tools/messaging_surface_audit.py's
+// YAML_TAG_RE: captures the key spelling out of a `yaml:"key,omitempty"`
+// struct tag.
+var messagingSurfaceYAMLTagRE = regexp.MustCompile(`yaml:"([a-z_][a-z0-9_]*)`)
+
+// messagingSurfaceGoYAMLTagKeys walks internal/ and modules/ (skipping
+// _test.go files, same as tools/messaging_surface_audit.py's walk_go) for
+// every Go yaml struct tag spelling.
+//
+// Method E -- Go struct tags are the AUTHORITATIVE schema. A key declared as
+// a yaml tag is read by a loader by definition, however many data files
+// happen to use it today. This closes the false-negative direction of the
+// file-count proxy: corpse_description and on_use_user_text are real fields
+// used in one data file each, invisible to the 2-file threshold alone.
+//
+// This guard walks Go source itself rather than reading
+// tools/messaging_surface_audit.py's output -- same reasoning as
+// messagingSurfaceWalk above: two instruments that must independently agree,
+// not one feeding the other.
+func messagingSurfaceGoYAMLTagKeys() (map[string]bool, error) {
+	keys := map[string]bool{}
+	for _, rootName := range messagingSurfaceGoRoots {
+		err := filepath.WalkDir(rootName, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() {
+				return nil
+			}
+			if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			data, rerr := os.ReadFile(path)
+			if rerr != nil {
+				// An unreadable file is a filesystem problem, not this
+				// test's -- skip it rather than fail the whole walk on it.
+				return nil
+			}
+			for _, line := range strings.Split(string(data), "\n") {
+				for _, m := range messagingSurfaceYAMLTagRE.FindAllStringSubmatch(line, -1) {
+					keys[strings.ToLower(m[1])] = true
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return keys, nil
+}
+
+// messagingSurfaceSplitSchema mirrors split_schema_content: a spelling is
+// schema if it is found in 2+ files (a loader reads it, so it recurs by
+// construction) OR it is a text candidate that also appears as a Go
+// `yaml:"..."` struct tag under internal/ or modules/ (Method E) -- a loader
+// reads it by definition, whatever the file count happens to be today.
+// Everything else is dropped here as author-invented content (e.g. a room
+// `nouns:` child). Returns key -> one example file.
+func messagingSurfaceSplitSchema(keyFiles map[string]map[string]bool, yamlTagKeys map[string]bool) map[string]string {
 	schema := map[string]string{}
 	for key, files := range keyFiles {
-		if len(files) < 2 {
+		if len(files) < 2 && !(messagingSurfaceIsCandidate(key) && yamlTagKeys[key]) {
 			continue
 		}
 		var example string
@@ -385,7 +488,12 @@ func TestEveryTextSurfaceIsRegistered(t *testing.T) {
 		t.Fatal("no text-bearing keys found at all -- the walk is broken, not the data")
 	}
 
-	schema := messagingSurfaceSplitSchema(keyFiles)
+	yamlTagKeys, err := messagingSurfaceGoYAMLTagKeys()
+	if err != nil {
+		t.Fatalf("walk Go yaml struct tags under %v: %v", messagingSurfaceGoRoots, err)
+	}
+
+	schema := messagingSurfaceSplitSchema(keyFiles, yamlTagKeys)
 
 	var unregistered []string
 	for key, example := range schema {

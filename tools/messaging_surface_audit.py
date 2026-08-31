@@ -131,15 +131,25 @@ def collect():
     return keys, values, go
 
 
-def split_schema_content(keys):
-    """Split keys into schema (found in 2+ files -- a loader reads it) vs.
-    content (found in exactly 1 file -- most likely an author-invented noun,
-    e.g. a room `nouns:` child). Author-chosen noun keys would otherwise
-    demand 3,000+ registry lines; schema keys recur because a loader owns
-    them, an invented noun appears once.
+def split_schema_content(keys, yaml_tag_keys=frozenset()):
+    """Split keys into schema vs. content.
+
+    A key is schema if it is found in 2+ files (a loader reads it, so it
+    recurs by construction) OR it is a text candidate that also appears as a
+    Go `yaml:"..."` struct tag under internal/ or modules/ (Method E) -- a
+    loader reads it by definition, whatever the file count happens to be
+    today. Everything else is content: most likely an author-invented noun,
+    e.g. a room `nouns:` child. Author-chosen noun keys would otherwise
+    demand 3,000+ registry lines; schema keys recur (or are declared) because
+    a loader owns them, an invented noun appears once and is undeclared.
     """
-    schema = {k: v for k, v in keys.items() if len(v["files"]) >= 2}
-    content = {k: v for k, v in keys.items() if len(v["files"]) < 2}
+    schema = {}
+    content = {}
+    for k, v in keys.items():
+        if len(v["files"]) >= 2 or (is_candidate(k) and k in yaml_tag_keys):
+            schema[k] = v
+        else:
+            content[k] = v
     return schema, content
 
 
@@ -296,6 +306,58 @@ def walk_go():
                     print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
 
 
+# Method E -- Go struct tags are the AUTHORITATIVE schema. A key declared as a
+# yaml tag is read by a loader by definition, however many data files happen to
+# use it today. This closes the false-negative direction of the file-count
+# proxy: `corpse_description` and `on_use_user_text` are real narration fields
+# used in one file each, and were invisible to every other method.
+YAML_TAG_RE = re.compile(r'yaml:"([a-z_][a-z0-9_]*)')
+
+
+def walk_go_yaml_tags():
+    """Yield (yaml_key, repo_relative_path, line_no) for every Go yaml tag."""
+    for root_name in GO_ROOTS:
+        for root, _dirs, files in os.walk(os.path.join(REPO, root_name)):
+            for name in files:
+                if not name.endswith(".go") or name.endswith("_test.go"):
+                    continue
+                full = os.path.join(root, name)
+                rel = os.path.relpath(full, REPO).replace("\\", "/")
+                try:
+                    with open(full, "r", encoding="utf-8", errors="replace") as fh:
+                        for n, line in enumerate(fh, 1):
+                            for m in YAML_TAG_RE.finditer(line):
+                                yield m.group(1).lower(), rel, n
+                except OSError as exc:
+                    print(f"WARN: cannot read {rel}: {exc}", file=sys.stderr)
+
+
+def build_yaml_tag_index():
+    """key -> sorted list of "path:line" declaration sites, for every Go yaml
+    struct tag spelling found under internal/ and modules/."""
+    idx = defaultdict(list)
+    for key, rel, line in walk_go_yaml_tags():
+        idx[key].append(f"{rel}:{line}")
+    for key in idx:
+        idx[key].sort()
+    return idx
+
+
+def yaml_tag_schema_gaps(keys, yaml_tag_sites):
+    """Text-candidate yaml-tag keys that appear in fewer than 2 data files
+    today -- exactly the false-negative direction the file-count proxy
+    (Method A alone) missed. Returns {key: {"sites": [...], "file_count": n}}.
+    """
+    gaps = {}
+    for key, sites in yaml_tag_sites.items():
+        if not is_candidate(key):
+            continue
+        file_count = len(keys[key]["files"]) if key in keys else 0
+        if file_count < 2:
+            gaps[key] = {"sites": sites, "file_count": file_count}
+    return gaps
+
+
 def reconcile(keys, values, go):
     """Compare what each method found. Disagreements are the interesting output.
 
@@ -344,10 +406,10 @@ def _fmt_dirs_only(d):
     return {k: sorted(v["dirs"]) for k, v in sorted(d.items())}
 
 
-def _fmt_values(d):
+def _fmt_values(d, yaml_tag_keys=frozenset()):
     out = {}
     for method, per_key in d.items():
-        v_schema, v_content = split_schema_content(per_key)
+        v_schema, v_content = split_schema_content(per_key, yaml_tag_keys)
         out[method] = {
             "schema": _fmt_dirs_only(v_schema),
             "content": _fmt_dirs_only(v_content),
@@ -368,11 +430,15 @@ def main():
         sys.exit("FATAL: no text-bearing keys found. The walk is broken, "
                   "not the data.")
 
-    schema, content = split_schema_content(keys)
-    values_split = _fmt_values(values)
+    yaml_tag_sites = build_yaml_tag_index()
+    yaml_tag_keys = set(yaml_tag_sites)
+
+    schema, content = split_schema_content(keys, yaml_tag_keys)
+    values_split = _fmt_values(values, yaml_tag_keys)
     a_keys = set(keys)
     rec = reconcile(keys, values_split, go)
     prose_grouped = group_by_dir(values_split, "prose", a_keys)
+    tag_gaps = yaml_tag_schema_gaps(keys, yaml_tag_sites)
 
     if args.json:
         def _fmt(d):
@@ -390,6 +456,10 @@ def main():
             "content": _fmt(content),
             "values": values_split,
             "go": {kind: sorted(sites) for kind, sites in go.items()},
+            "yaml_tag_schema_gaps": {
+                k: {"sites": v["sites"], "file_count": v["file_count"]}
+                for k, v in sorted(tag_gaps.items())
+            },
             "reconciliation": {
                 **rec,
                 "prose_by_dir": {
@@ -421,12 +491,27 @@ def main():
     if len(content) > 15:
         print(f"  ... and {len(content) - 15} more")
 
+    print()
+    print(f"METHOD E — YAML-TAG SCHEMA GAPS ({len(tag_gaps)})")
+    print("-" * 72)
+    print("Text-candidate keys declared as a Go `yaml:\"...\"` struct tag under "
+          "internal/ or modules/,")
+    print("but appearing in fewer than 2 data files today -- the false-negative "
+          "direction of the")
+    print("file-count proxy. Each is promoted to SCHEMA above regardless of "
+          "file count.")
+    for key, v in sorted(tag_gaps.items()):
+        sites = ", ".join(v["sites"])
+        print(f"  {key:<24} files={v['file_count']}  {sites}")
+    if not tag_gaps:
+        print("  (none)")
+
     for method, label in (
         ("ansi", "METHOD B — keys carrying ANSI markup"),
         ("prose", "METHOD C — keys whose values read as prose"),
     ):
         hits = values.get(method, {})
-        v_schema, v_content = split_schema_content(hits)
+        v_schema, v_content = split_schema_content(hits, yaml_tag_keys)
         print()
         print(label)
         print("=" * 72)
