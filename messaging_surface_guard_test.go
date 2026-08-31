@@ -363,6 +363,14 @@ func messagingSurfaceSplitSchema(keyFiles map[string]map[string]bool) map[string
 // surface (`git log -S<key> -- _datafiles/world/dogmud` is a good start)
 // before removing the entry -- a silently deleted narration surface is
 // exactly the kind of regression this guard exists to catch.
+//
+// Both directions were verified on 2026-08-31. Adding an unregistered
+// `whispered_room_text` key to TWO probe buffs failed the guard by name; adding
+// a `nonexistent_probe_text` registry entry failed it as stale; and a
+// `solo_probe_text` key in a SINGLE file correctly did not require
+// registration, proving the 2-file schema threshold. Re-verify the same way
+// after any change to the walk -- two probe files, not one, or the threshold
+// makes a single probe silently pass.
 func TestEveryTextSurfaceIsRegistered(t *testing.T) {
 	worldDir := filepath.Join("_datafiles", "world", "dogmud")
 	if _, err := os.Stat(worldDir); err != nil {
