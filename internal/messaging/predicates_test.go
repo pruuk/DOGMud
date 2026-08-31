@@ -74,3 +74,61 @@ func TestNilCharacterDefaultsToSeeing(t *testing.T) {
 		t.Fatal("nil observer must default to CanSeeShapes (defensive)")
 	}
 }
+
+// setSleeping gives the character the Sleeping buff flag.
+//
+// Unlike blindness, sleep is not a Perception state -- it is a buff flag, so
+// this seeds a minimal spec into the global registry and applies it. The
+// registry is restored by the returned cleanup.
+func setSleeping(t *testing.T, c *characters.Character) {
+	t.Helper()
+	const sleepBuffId = 9001
+	restore := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		sleepBuffId: {
+			BuffId: sleepBuffId,
+			Name:   "Test Sleep",
+			Flags:  []buffs.Flag{buffs.Sleeping},
+		},
+	})
+	t.Cleanup(restore)
+	if err := c.AddBuff(sleepBuffId, true); err != nil {
+		t.Fatalf("applying the sleeping buff failed: %v", err)
+	}
+	if !c.HasBuffFlag(buffs.Sleeping) {
+		t.Fatal("precondition: the character should now carry the Sleeping flag")
+	}
+}
+
+// M0b Task 3. A sleeping character perceives nothing visual.
+//
+// The delivery pipeline had no concept of sleep at all -- grepping `Sleeping`
+// under internal/messaging returned nothing -- so a sleeping player kept
+// receiving every visual broadcast in the room: NPC dialogue, ambient flavour,
+// arrivals and departures. Reported from play 2026-08-31.
+//
+// Audio is deliberately unaffected. Room.SendText bypasses this gate entirely,
+// so a shout still reaches a sleeper and still wakes them; shout.go owns that.
+func TestCanSeeClearly_SleeperPerceivesNothingVisual(t *testing.T) {
+	c := newChar(t)
+	setSleeping(t, c)
+	// nil room short-circuits to LIT, so this proves sleep gates on its own
+	// rather than riding on darkness.
+	if CanSeeClearly(c, nil) {
+		t.Error("a sleeping character must not see clearly, even in a lit room")
+	}
+	if CanSeeShapes(c, nil) {
+		t.Error("a sleeping character must not see shapes either")
+	}
+}
+
+// The direction a careless fix breaks: gating too broadly and blinding everyone.
+// This passes BEFORE the change, which is what makes it a guard.
+func TestCanSeeClearly_AwakeStillSees(t *testing.T) {
+	c := newChar(t)
+	if !CanSeeClearly(c, nil) {
+		t.Error("an awake character in a lit room must still see clearly")
+	}
+	if !CanSeeShapes(c, nil) {
+		t.Error("an awake character in a lit room must still see shapes")
+	}
+}
