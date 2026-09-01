@@ -35,15 +35,19 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
-	deathRecoveryRoomId := int(configs.GetSpecialRoomsConfig().DeathRecoveryRoom)
-
+	// REMOVED 2026-08-31: the skip for players standing in the death recovery
+	// room.
+	//
+	// It existed because that room was meant to heal you itself (see the
+	// SpecialRooms config comment), so the generic three-round regen was
+	// suppressed to avoid stacking with it. Death no longer uses a recovery
+	// room -- it teleports to the player's home -- but HomeLocations["default"]
+	// and DeathRecoveryRoom both named room 5209, so this skip had quietly
+	// become "you do not regenerate at your own home", which is the opposite of
+	// what a home should do and was invisible because nothing announces regen.
 	onlineIds := users.GetOnlineUserIds()
 	for _, userId := range onlineIds {
 		user := users.GetByUserId(userId)
-
-		if user.Character.RoomId == deathRecoveryRoomId {
-			continue
-		}
 
 		regenMultiplier := roomRegenMultiplier(rooms.LoadRoom(user.Character.RoomId))
 

@@ -43,23 +43,26 @@ steps:
       You brought a pronghorn down and took its meat. Rest in the field
       and cook if you have not.
     hint: >-
-      Type sleep to rest in the field; type craft grilled meat at Delk's
-      camp fire. Then report -- ask delk report.
+      When you have done all three, report to Delk -- type ask delk
+      report. Whichever you still owe: type sleep to rest in the field,
+      or type craft grilled meat at Delk's camp fire.
   - id: rest
     map_target: 5290
     description: >-
       You slept rough and woke stronger -- the field's own medicine.
       Hunt and cook if you have not.
     hint: >-
-      Hunt a pronghorn for meat; type craft grilled meat at the camp
-      fire. Then report to Delk -- ask delk report.
+      When you have done all three, report to Delk -- type ask delk
+      report. Whichever you still owe: hunt a pronghorn for its meat, or
+      type craft grilled meat at the camp fire.
   - id: cook
     map_target: -1  # -1: return-to-giver / in-place (start room 5290); Phase 2 split review
     description: >-
       You cooked the kill over the fire. Hunt and rest if you have not.
     hint: >-
-      Hunt a pronghorn; type sleep to rest in the field. Then report to
-      Delk -- ask delk report.
+      When you have done all three, report to Delk -- type ask delk
+      report. Whichever you still owe: hunt a pronghorn for its meat, or
+      type sleep to rest in the field.
   - id: end
     description: >-
       Delk has named you a hunter, near enough. Deeper south the pack

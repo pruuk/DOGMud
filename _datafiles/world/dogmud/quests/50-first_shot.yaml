@@ -43,17 +43,18 @@ steps:
       You chambered a stone. Now loose it at the practice butt down-range if
       you have not yet.
     hint: >-
-      Go east to the Long Terrace and type shoot butt to drop the practice
-      butt with your chambered stone. Then report to Marksman Iden -- type
-      ask iden done.
+      When you have done both, report to Marksman Iden -- type ask iden
+      done. If you have not loosed a stone yet, go east to the Long
+      Terrace and type shoot butt.
   - id: shoot
     map_target: 5350
     description: >-
       You put a stone into the butt. Make sure you have worked the reload
       too -- a ranged weapon is empty after every shot.
     hint: >-
-      Type reload to chamber a fresh stone (a ranged weapon empties after
-      each shot). Then report to Marksman Iden -- type ask iden done.
+      When you have done both, report to Marksman Iden -- type ask iden
+      done. If you have not worked the reload yet, type reload first (a
+      ranged weapon empties after each shot).
   - id: end
     description: >-
       Iden has named your eye sound. North, the canyon opens, where a scout

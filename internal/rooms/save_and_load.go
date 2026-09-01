@@ -534,10 +534,13 @@ func loadAllRoomZones() error {
 
 	for _, loadedRoom := range loadedRooms {
 
-		// configs.GetConfig().DeathRecoveryRoom is the death/shadow realm and gets a pass
-		if loadedRoom.RoomId == int(configs.GetSpecialRoomsConfig().DeathRecoveryRoom) {
-			continue
-		}
+		// The DeathRecoveryRoom exemption that sat here was removed on
+		// 2026-08-31. It excused the death/shadow realm from the
+		// rooms-without-entrances check, because that room was reached by
+		// teleport rather than by an exit. There is no shadow realm any more --
+		// death teleports to the player's home, which is an ordinary room with
+		// ordinary entrances -- and with DeathRecoveryRoom now 0 the exemption
+		// would have started excusing room 0 instead.
 
 		// If it has never been set, set it to the filepath
 		if _, ok := roomsWithoutEntrances[loadedRoom.RoomId]; !ok {
