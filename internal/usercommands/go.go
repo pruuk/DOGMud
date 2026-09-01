@@ -28,7 +28,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
-	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -124,18 +123,17 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	}
 
 	if user.Character.IsInCombat() {
-		// Always allow movement out of the death recovery room —
-		// stale aggro must never trap a player in the Shadow Realm.
-		// Use GetOriginalRoom() because the shadow realm is an ephemeral
-		// copy — the actual room ID won't match the config value.
-		deathRoom := int(configs.GetSpecialRoomsConfig().DeathRecoveryRoom)
-		actualRoom := rooms.GetOriginalRoom(user.Character.RoomId)
-		if actualRoom != deathRoom {
-			user.SendText(messaging.CategorySystem, "You can't do that! You are in combat!")
-			return true, nil
-		}
-		// Force-clear the stale aggro so it doesn't follow them out.
-		targeting.Release(user.Character, targeting.ReasonDisengage)
+		// The death-recovery escape hatch that sat here was removed on
+		// 2026-08-31. It let a player walk out of combat while standing in the
+		// Shadow Realm, because stale aggro must never trap someone in a room
+		// they were teleported into and could not fight their way out of.
+		//
+		// There is no Shadow Realm any more: death teleports to the player's
+		// home, an ordinary room they can flee from normally. And with
+		// DeathRecoveryRoom now 0 the hatch would have opened in room 0
+		// instead, letting anyone standing there ignore combat entirely.
+		user.SendText(messaging.CategorySystem, "You can't do that! You are in combat!")
+		return true, nil
 	}
 
 	// Block movement during quest sequences (e.g., Awakening Rite ceremony)
