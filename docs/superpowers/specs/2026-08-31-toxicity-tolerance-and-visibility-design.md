@@ -154,6 +154,44 @@ player), and `status` gains a toxicity line.
 deliberate mechanical display), but this line stays **descriptive** anyway, for
 consistency with every other player-facing toxicity string.
 
+### Toxicity clears on death
+
+**Today it does not, and nothing clears it.** The only two `Toxicity = 0` sites
+are floor clamps: one in `AddToxicity` (`resources.go:466`) and one in the decay
+tick (`NewRound_AutoHeal.go:86`). Death resets Health, Stamina and Conviction to
+5% and leaves toxicity exactly where it was.
+
+**Owner ruling, 2026-08-31:** it must clear, and the reasoning is consistency
+rather than mercy:
+
+> *"We clear conditions, so the potions that the player used to generate the
+> toxicity are no longer affecting the player, so they can't also be affected by
+> toxicity. They also lose the cost/time from creating the potions because the
+> effects got cleared on death."*
+
+Verified: `internal/hooks/Life_Cascades.go:62` calls
+`c.CancelBuffsWithFlag(buffs.All)` in the `Alive → Dead` branch, so **every**
+buff is stripped on death, potion effects included.
+
+🔑 **So this is not a free purge.** The player has already lost the potions
+themselves, the materials, the brewing time, and every effect they paid for.
+Leaving the toxicity behind would charge them a second time for a benefit they no
+longer hold. Toxicity is the price of an effect; with no effect there is no
+price.
+
+**Implementation:** set `c.Toxicity = 0` in the `Alive → Dead` cascade in
+`internal/hooks/Life_Cascades.go`, immediately alongside the existing
+`CancelBuffsWithFlag(buffs.All)`, so the two always move together. A comment must
+tie them, because separating them is what re-creates the bug.
+
+⚠️ **This also closes a death spiral that the new formula would have sharpened.**
+`ToxicitySicknessDamage` deals acute HP damage above 90% that scales past the cap
+and can kill, and decay HALVES above 75% — slowest exactly where it is most
+dangerous. Without clearing, a player could die of toxicity, respawn at 5% health
+still at critical toxicity, and die again with no way out. The new formula makes
+that worse, not better: Meirok's ceiling falls from about 130 to about 73, and a
+low-alchemy character sits near 33, so the danger band is far easier to reach.
+
 ### Documentation
 
 The mechanic is undocumented in practice: its helpfile cannot be reached, and
@@ -233,6 +271,8 @@ guards are correct and must stay.
    low-tier potion as the one that bites.
 3. Two feedback bands exist below the first penalty band, and no penalty
    threshold has moved.
-4. `help toxicity` resolves, and alchemy, craft and health link to it.
-5. Boot clean, and a test pins the four-tier table above so a later knob edit
+4. **Toxicity is zero after death**, pinned by a test, and the clear sits beside
+   the buff strip it is justified by.
+5. `help toxicity` resolves, and alchemy, craft and health link to it.
+6. Boot clean, and a test pins the four-tier table above so a later knob edit
    cannot silently move where the fifth potion lands.
