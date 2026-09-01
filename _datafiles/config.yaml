@@ -2100,10 +2100,22 @@ SpecialRooms:
   #   The default of 1 is Town Square
   StartRoom: 5200
   # - DeathRecoveryRoom -
-  #   This is the room players are sent to when they die.
-  #   This should have some way of healing them and (eventually)
-  #   sending them back into the main world.
-  DeathRecoveryRoom: 5209
+  #   RETIRED 2026-08-31. Death no longer uses a recovery room: it teleports the
+  #   player to their home (characters.ResolveRespawnRoom / HomeLocations).
+  #
+  #   It is deliberately left at 0 rather than deleted, because the KEY must not
+  #   name a real room again. While this said 5209 it collided with
+  #   HomeLocations["default"], which the newbie rework had re-pointed to the
+  #   same room, and every death minted a private ephemeral copy of The Mending
+  #   Hut: Sala double-spawned, the minimap drew lines from off the grid, and
+  #   quest guidance broke. Nothing in the room data was wrong.
+  #
+  #   The two behaviours that keyed on this are gone with it. The autoheal skip
+  #   had quietly become "no regen at your own home". The CanPvp clause read as
+  #   spawn-camp protection but only guarded the right room by coincidence, and
+  #   GamePlay.PVP ships `disabled`, so it protected nothing; if PvP is ever
+  #   enabled, key that on characters.HomeLocations, not on a special room.
+  DeathRecoveryRoom: 0
   # - TutorialRooms -
   #   This should be an array of all room id's for the pre-start tutorial.
   #   The first one on the list is the room they will be placed in when beginning

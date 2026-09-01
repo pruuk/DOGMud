@@ -364,14 +364,26 @@ func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 
 	cfg := configs.GetSpecialRoomsConfig()
 
-	// If they are being moved to the death recovery room
-	// Put them in their own instance of it.
-	deathRecoveryRoomId := int(cfg.DeathRecoveryRoom)
-	if toRoomId == deathRecoveryRoomId {
-		if newRooms, err := CreateEphemeralRoomIds(deathRecoveryRoomId); err == nil {
-			toRoomId = newRooms[deathRecoveryRoomId]
-		}
-	}
+	// REMOVED 2026-08-31: the per-player ephemeral instance of the death
+	// recovery room.
+	//
+	// Death no longer uses a recovery room at all -- it teleports the player to
+	// their home (characters.ResolveRespawnRoom, via Respawn_PlayerTeleport).
+	// But `HomeLocations["default"]` was re-pointed to room 5209 during the
+	// newbie rework, and config.yaml still carried `DeathRecoveryRoom: 5209`,
+	// so the two mechanisms collided on a room NUMBER. Every death of every
+	// player without a custom home therefore minted a fresh ephemeral copy of
+	// The Mending Hut on its own coordinate plane.
+	//
+	// Symptoms, all reported from play and all from this one block: Sala the
+	// Mender double-spawned (the copy inherits the room's spawn list and spawns
+	// her again), the minimap drew stray connectors from off the grid (the copy
+	// is on another plane with an id above a billion), and quest directional
+	// guidance died (the player's room id matches no quest map_target).
+	//
+	// Nothing in the room data was ever wrong, which is why cartcheck reported
+	// zero collisions and a panic-mode boot passed: the duplicate was
+	// manufactured at runtime, once per death.
 
 	if toRoomId == StartRoomIdAlias {
 

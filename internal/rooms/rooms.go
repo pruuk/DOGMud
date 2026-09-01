@@ -2828,7 +2828,17 @@ func (r *Room) IsPvp() bool {
 // Returns an error with a reason why they cannot PVP, or nil
 func (r *Room) CanPvp(attUser *users.UserRecord, defUser *users.UserRecord) error {
 
-	if attUser.Character.RoomId == -1 || attUser.Character.RoomId == int(configs.GetSpecialRoomsConfig().DeathRecoveryRoom) {
+	// The DeathRecoveryRoom clause that used to sit here was removed on
+	// 2026-08-31 along with the rest of that retired mechanism. It read as
+	// spawn-camp protection, but it only ever guarded the right room by
+	// coincidence, and with DeathRecoveryRoom now 0 it would have made room 0
+	// PvP-safe instead.
+	//
+	// Nothing replaces it because `GamePlay.PVP` ships `disabled`, so this whole
+	// path is dormant. If PvP is ever enabled, make respawn destinations safe by
+	// asking characters.HomeLocations rather than by reading a special-room
+	// config value -- that is the question this check actually meant to ask.
+	if attUser.Character.RoomId == -1 {
 		return errors.New(`Fighting is not allowed here.`)
 	}
 
