@@ -4,17 +4,26 @@
 #   50-start  — granted by Marksman Iden's shoot_offer node (requires 30-end);
 #               also hands the player a sling (givesItem 10038). A separate
 #               supply node hands the pouch of shot (30064).
-#   50-reload — command trigger on `reload` at the Firing Range (5350): chamber
-#               a stone from the pouch.
-#   50-shoot  — command trigger on `shoot` at the Firing Range (5350): loose the
-#               chambered stone at the practice butt (9163).
-#   50-end    — granted by Iden's shoot_turnin node (needs 50-reload + 50-shoot).
+#   50-shoot  — command trigger on `fire` at the Long Terrace (5351): loose a
+#               stone at the practice butt (9163).
+#   50-ambush — command trigger on `sneak` at the Long Terrace: the player
+#               learns to take cover, and the shot that follows is an ambush.
+#   50-end    — granted by Iden's shoot_turnin node (needs 50-shoot + 50-ambush).
 #
-# Design: teach the ranged loop — equip a ranged weapon, reload it (chamber
-# ammo from a bundle in your pack), shoot. The `shoot`/`reload` command Notifies
-# (added to shoot.go + reload.go this chunk) fire the beats. The practice butt
-# is durable and harmless, so the player can practice the loop freely. ranged-
-# combat is a Perception skill; the cert seeds the first rank.
+# Design: teach the ranged loop, which is now ONE verb — equip a ranged weapon
+# and `fire`. The weapon readies its own next round, so there is no reload beat
+# left to teach, and the freed beat teaches the ambush instead: the part of
+# ranged worth knowing, which nothing else in the game points at.
+#
+# The ambush beat triggers on `sneak` rather than on the shot that follows it.
+# The quest engine's command event carries only the command NAME, so it cannot
+# tell that a shot was an ambush; granting on the hide keeps the trigger inside
+# what the engine can actually see, and the ambush damage is its own reward.
+#
+# Every character can sneak from creation — initAllSkills seeds every skill at
+# rank 1 — so this asks nothing the student cannot do. The practice butt is
+# durable and harmless, so the loop can be practised freely. ranged-combat is a
+# Perception skill; the cert seeds the first rank.
 
 questid: 50
 name: First Shot
@@ -29,32 +38,30 @@ steps:
   - id: start
     map_target: 5351
     description: >-
-      You have a sling -- equip it, get a pouch of shot, reload it, and
-      loose a stone at the practice butt down-range on the Long Terrace.
-      Marksman Iden keeps the range.
+      You have a sling -- equip it, get a pouch of shot, and loose a stone at
+      the practice butt down-range on the Long Terrace. Marksman Iden keeps
+      the range.
     hint: >-
-      Type ask iden shot to get ammunition. Type equip sling to ready it,
-      and reload to chamber a stone. Then go east to the Long Terrace and
-      type shoot butt to drop the practice butt. Return west to Marksman
-      Iden -- type ask iden done.
-  - id: reload
+      Type ask iden shot to get ammunition. Type equip sling to ready it.
+      Then go east to the Long Terrace and type fire butt. Sneak and fire
+      once more to see what a shot from cover is worth. Return west to
+      Marksman Iden -- type ask iden done.
+  - id: shoot
     map_target: 5351
     description: >-
-      You chambered a stone. Now loose it at the practice butt down-range if
-      you have not yet.
+      You put a stone into the butt, and the sling readied itself without
+      being told. Iden wants you to try it once more from cover.
     hint: >-
-      When you have done both, report to Marksman Iden -- type ask iden
-      done. If you have not loosed a stone yet, go east to the Long
-      Terrace and type shoot butt.
-  - id: shoot
-    map_target: 5350
+      Type sneak on the Long Terrace to slip out of sight, then type fire
+      butt again. Report to Marksman Iden afterward -- type ask iden done.
+  - id: ambush
+    map_target: 5351
     description: >-
-      You put a stone into the butt. Make sure you have worked the reload
-      too -- a ranged weapon is empty after every shot.
+      You are out of sight. A shot taken from cover lands far harder than one
+      the target saw coming, and it gives your place away when it lands.
     hint: >-
-      When you have done both, report to Marksman Iden -- type ask iden
-      done. If you have not worked the reload yet, type reload first (a
-      ranged weapon empties after each shot).
+      Type fire butt while hidden to feel the difference. Then report to
+      Marksman Iden -- type ask iden done.
   - id: end
     description: >-
       Iden has named your eye sound. North, the canyon opens, where a scout
@@ -66,33 +73,21 @@ rewards:
   gold: 15
   playermessage: >-
     Iden watches the stone bury itself in the straw and gives a single nod.
-    "There. A ranged weapon is empty the moment it speaks -- so the trade is
-    always the same: shoot, then reload, shoot, then reload, and never let
-    yourself be caught between the two with something coming at you. The eye
-    is the thing that matters now. Not the arm -- the eye. Keep the sling and
-    the shot; they are yours." She tips her head north, toward the canyon
-    mouth. "Bryn holds the slot below the raider bluffs. He will show you the
-    next part -- how to put a shot into something a whole room away, before it
-    ever knows you are there."
+    "There. A sling readies itself while your eye is still on the mark, so the
+    only thing you have to think about is the mark. And you have the other
+    half already: a shot from cover lands like nothing else, and it works
+    once, because afterward they know where you are. The eye is the thing that
+    matters now. Not the arm -- the eye. Keep the sling and the shot; they are
+    yours." She tips her head north, toward the canyon mouth. "Bryn holds the
+    slot below the raider bluffs. He will show you the next part -- how to put
+    a shot into something a whole room away, before it ever knows you are
+    there."
   roommessage: "Marksman Iden nods as the newcomer's shot finds the straw."
 
 triggers:
-  # ── RELOAD: chamber a stone (roomless — reloading anywhere counts) ─────
+  # ── FIRST SHOT: loose at the practice butt down-range (5351) ───────────
   - event: command
-    command: reload
-    conditions:
-      has: ["50-start"]
-      missing: ["50-reload"]
-    actions:
-      - grant: "50-reload"
-      - send_text: >-
-          You seat a stone in the sling's cradle -- the weapon is loaded and
-          ready. Now go to the Long Terrace and shoot the practice butt
-          down-range.
-
-  # ── SHOOT: loose a stone at the practice butt down-range (5351) ────────
-  - event: command
-    command: shoot
+    command: fire
     room: 5351
     conditions:
       has: ["50-start"]
@@ -100,6 +95,24 @@ triggers:
     actions:
       - grant: "50-shoot"
       - send_text: >-
-          The stone leaves the sling and strikes the straw with a solid
-          thud. That is a shot -- and now the sling is empty. Type reload to
-          ready another, and when you have worked both, see Iden.
+          The stone leaves the sling and strikes the straw with a solid thud.
+          Your hand has already found another and settled it in the cradle.
+          Iden calls down the range: "Now do it again, but from where it
+          cannot see you coming. Type sneak first."
+
+  # ── AMBUSH: learn to take cover; the shot that follows is the payoff ───
+  # Triggers on `sneak`, not on the shot after it: the command event carries
+  # only the command name, so the engine cannot tell that a shot WAS an
+  # ambush. Granting on the hide keeps the trigger inside what it can see.
+  - event: command
+    command: sneak
+    room: 5351
+    conditions:
+      has: ["50-shoot"]
+      missing: ["50-ambush"]
+    actions:
+      - grant: "50-ambush"
+      - send_text: >-
+          You settle out of sight behind the butts. The sling is already
+          loaded, because it loaded itself. Fire from here and see what a shot
+          is worth when nothing is expecting it.

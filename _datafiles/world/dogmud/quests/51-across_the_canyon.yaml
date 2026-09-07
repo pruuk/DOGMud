@@ -2,10 +2,10 @@
 #
 # Token flow:
 #   51-start — granted by Scout Bryn's canyon_offer node (requires 50-end).
-#   51-shoot — command trigger on `shoot` in the Echoing Narrows (5354): the
+#   51-shoot — command trigger on `fire` in the Echoing Narrows (5354): the
 #              CROSS-ROOM shot. The player stands in 5354 and shoots the Canyon
 #              Scout (9165) in the next chamber north (The Sounding Floor, 5356)
-#              with `shoot scout north`. The shoot Notify fires with the
+#              with `fire scout north`. The fire Notify fires with the
 #              SHOOTER's room (5354), so the beat gates on 5354 — the room shot
 #              FROM, not the target's room.
 #   51-kill  — mob_death of the Canyon Scout (9165), who charges into 5354 the
@@ -34,7 +34,7 @@ steps:
       the chamber to the north; when it charges, finish it.
     hint: >-
       Go north into the Echoing Narrows. The canyon scout stands on the
-      Sounding Floor, one chamber north. Type shoot scout north to fire across
+      Sounding Floor, one chamber north. Type fire scout north to shoot across
       the exit. It will charge in -- stand and finish it. Then report to Scout
       Bryn -- type ask bryn done.
   - id: shoot
@@ -42,7 +42,7 @@ steps:
     description: >-
       Your shot crossed the gap and bit. The scout is coming -- put it down.
     hint: >-
-      The canyon scout is charging you. Finish the fight (shoot it again or
+      The canyon scout is charging you. Finish the fight (fire again or
       cut it down), then report to Scout Bryn -- type ask bryn done.
   - id: kill
     map_target: 5353
@@ -75,9 +75,9 @@ rewards:
   roommessage: "Scout Bryn passes the newcomer a compact crossbow and a case of bolts."
 
 triggers:
-  # ── CROSS-ROOM SHOT: shoot the scout in 5356 from the Narrows (5354) ───
+  # ── CROSS-ROOM SHOT: fire on the scout in 5356 from the Narrows (5354) ─
   - event: command
-    command: shoot
+    command: fire
     room: 5354
     conditions:
       has: ["51-start"]

@@ -24,9 +24,9 @@ patterns:
 
   - keywords: ["reload", "ammo", "shot", "equip", "load"]
     responses:
-      - "A ranged weapon is empty the moment it speaks. Type equip and
-          the weapon's name to ready it, reload to chamber a round from
-          your pouch, and shoot to loose it. Out of shot? Ask me."
+      - "Type equip and the weapon's name to ready it, then fire to
+          loose. Your hands find the next round on their own; you only
+          stop when the pouch is empty. Out of shot? Ask me."
 
   - keywords: ["perception", "stat", "eyesight"]
     responses:
@@ -65,12 +65,12 @@ tree:
       - questRequired: ["50-start"]
         questExcluded: ["50-end"]
         text: "Still at it. Equip the sling, get shot for it from me if
-          you need, and reload to chamber a stone. Then take it east to
-          the Long Terrace and shoot butt to drop the target down-range.
-          Work both the reload and the shot, and come back."
-        hints: "Type equip sling. If you need ammo, ask iden shot. Reload,
-          then go east to the Long Terrace and shoot butt. Then return and
-          ask iden done."
+          you need, then take it east to the Long Terrace and fire butt.
+          Do it once in the open, then sneak and do it again from cover
+          so you feel the difference. Then come back."
+        hints: "Type equip sling. If you need ammo, ask iden shot. Go east
+          to the Long Terrace and type fire butt, then sneak and fire butt
+          again. Then return and ask iden done."
 
       # ── Quest 50 complete ────────────────────────────────
       - questRequired: ["50-end"]
@@ -91,15 +91,15 @@ tree:
       givesItem: 10038
       text: "Here -- a sling, plaited cord and a leather cradle, cheap
         and honest. It is yours. Now ask me for a pouch of shot to feed
-        it. Then this: type equip sling to ready it, and reload to seat a
-        stone. Walk east to the Long Terrace, where the butts stand
-        down-range, and shoot butt to drop one. The weapon empties with
-        every shot, so you will reload again -- that is the rhythm of it.
-        Work both and come tell me."
+        it. Then this: type equip sling to ready it, walk east to the
+        Long Terrace where the butts stand down-range, and fire butt. The
+        cradle fills itself while your eye is still on the mark, so do
+        not go looking for a second step. Then sneak and fire butt again
+        from cover, and mind the difference. Come tell me after."
       hints: "You received a sling. Type ask iden shot for ammunition,
-        then equip sling and reload. Go east to the Long Terrace and type
-        shoot butt to drop the practice butt down-range, then return west
-        and ask iden done."
+        then equip sling. Go east to the Long Terrace and type fire butt,
+        then sneak and fire butt again, then return west and ask iden
+        done."
 
     # ── SHOT SUPPLY / RECOVERY ────────────────────────────────
     - id: shot_supply
@@ -108,12 +108,11 @@ tree:
       questExcluded: ["50-end"]
       givesItem: 30064
       text: "Shot for the sling -- a pouch of smooth river stones. Take
-        it. Reload pulls a stone from your pouch into the cradle; when
-        the pouch runs dry, ask me and I will spare more. No one learns
-        the eye on an empty sling."
-      hints: "You received a pouch of shot. Type reload to chamber a
-        stone, then go east to the Long Terrace and shoot butt. Run dry?
-        Ask iden shot again."
+        it. Each shot draws one from the pouch on its own; when the pouch
+        runs dry the sling will tell you, and so will I if you ask. No
+        one learns the eye on an empty sling."
+      hints: "You received a pouch of shot. Go east to the Long Terrace
+        and type fire butt. Run dry? Ask iden shot again."
 
     # ── SLING RECOVERY (lost the weapon) ──────────────────────
     - id: sling_recovery
@@ -125,28 +124,33 @@ tree:
         Here is another -- mind it this time. Equip it, feed it shot,
         and get to the butt."
       hints: "You received a sling. Type equip sling, ask iden shot for
-        ammo, then reload and shoot butt."
+        ammo, then fire butt."
 
-    # ── RELOAD / EQUIP HELP ───────────────────────────────────
+    # ── FIRE / EQUIP HELP ─────────────────────────────────────
+    # `reload` stays in the triggers on purpose: it is the word a player
+    # who learned the old way will reach for, and this is where they
+    # should land when they do.
     - id: shoot_help
-      triggers: ["reload", "equip", "load", "help", "how"]
-      text: "Three motions. Equip: type equip and the weapon's name to
-        ready it in hand. Reload: type reload to seat a round from your
-        pouch -- a ranged weapon is empty until you do. Shoot: type
-        shoot and the target to loose it. Shoot empties the weapon, so
-        reload, and shoot again. That trade never changes."
-      hints: "Type equip sling, then reload. Go east to the Long Terrace
-        and shoot butt. Reload after every shot."
+      triggers: ["fire", "reload", "equip", "load", "help", "how"]
+      text: "Two motions, not three. Equip: type equip and the weapon's
+        name to ready it in hand. Fire: type fire and the target to
+        loose. Your hands find the next round while your eye is still on
+        the mark, so there is no third motion to learn -- you shoot until
+        the pouch is empty, and the weapon will tell you when it is.
+        Sneak first and the shot lands far harder, but only the once."
+      hints: "Type equip sling. Go east to the Long Terrace and type fire
+        butt. Try sneak first to shoot from cover."
 
     # ── QUEST 50 TURN-IN ──────────────────────────────────────
     - id: shoot_turnin
       triggers: ["done", "report", "ready", "finished", "quest", "task"]
-      questRequired: ["50-reload", "50-shoot"]
+      questRequired: ["50-shoot", "50-ambush"]
       questExcluded: ["50-end"]
       grantsQuest: "50-end"
-      text: "Reloaded and loosed, both, and the straw has your mark in
-        it. That is the rhythm -- you will keep it the rest of your life
-        now. The sling and the shot are yours; the eye is yours too,
+      text: "Out in the open and again from cover, and the straw has your
+        mark in it both times. You felt the difference. That second one is
+        the shot you save for when it matters, because you only get it
+        once. The sling and the shot are yours; the eye is yours too,
         though it will want feeding. North to the canyon when you are
         ready. Bryn will teach you the rest."
       hints: "Quest complete. Head north into the canyon and find Scout
