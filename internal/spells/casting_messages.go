@@ -1,12 +1,12 @@
 package spells
 
 import (
-	"math/rand"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 	"gopkg.in/yaml.v2"
 )
 
@@ -74,7 +74,12 @@ func defaultCastingMessages() *CastingMessages {
 // spellName is the player-facing DISPLAY name (spellInfo.Name), never the
 // spellid. Passing the id leaks an internal identifier into player output,
 // which is exactly what the round loop used to do.
-func GetCastMessage(category, spellName string) string {
+//
+// The optional picker exists for the snapshot harness. Production passes none
+// and gets narration.DefaultPicker, which routes through the engine's util.Rand
+// seam. This file used stdlib math/rand directly until 2026-09-07, which made
+// it unreachable by any seam and therefore unsnapshottable.
+func GetCastMessage(category, spellName string, picker ...narration.Picker) string {
 	cm := loadCastingMessages()
 
 	var pool []string
@@ -93,6 +98,10 @@ func GetCastMessage(category, spellName string) string {
 		return "Something stirs with " + spellName + "."
 	}
 
-	msg := pool[rand.Intn(len(pool))]
+	choose := narration.DefaultPicker
+	if len(picker) > 0 && picker[0] != nil {
+		choose = picker[0]
+	}
+	msg := pool[choose(len(pool))]
 	return strings.ReplaceAll(msg, "{spell}", spellName)
 }

@@ -1,0 +1,74 @@
+# post-pipeline snapshot: internal/messaging.RenderForRecipient + Verbosity.Suppresses
+# This catches the class a raw-store snapshot cannot see: the text survived unchanged but
+# WHO receives it, or what a blinded/deafened player sees, quietly changed.
+# PARTIAL NET: sweeps a representative subset of Category (~15 of the real ~60+ — categoryMax
+# is unexported so the full enum cannot be walked from outside internal/messaging).
+# dimensions (RenderForRecipient section): sample-line x SightDecision(full/shapes/none) x
+# Channel(visual/audio). dimensions (Verbosity section): representative-category x
+# Verbosity(full/medium/light) -> bool suppressed.
+
+render|hit-melee-with-name-tags|channel=visual|sight=full => "<ansi fg=\"hit-melee\"><ansi fg=\"username\">Target</ansi> is struck hard by <ansi fg=\"username\">Source</ansi>.</ansi>"
+render|hit-melee-with-name-tags|channel=visual|sight=shapes => "<ansi fg=\"hit-melee\"><ansi fg=\"combat-anon\">a figure</ansi> is struck hard by <ansi fg=\"combat-anon\">a figure</ansi>.</ansi>"
+render|hit-melee-with-name-tags|channel=visual|sight=none => ""
+render|hit-melee-with-name-tags|channel=audio|sight=full => "<ansi fg=\"hit-melee\"><ansi fg=\"username\">Target</ansi> is struck hard by <ansi fg=\"username\">Source</ansi>.</ansi>"
+render|hit-melee-with-name-tags|channel=audio|sight=shapes => "<ansi fg=\"hit-melee\"><ansi fg=\"username\">Target</ansi> is struck hard by <ansi fg=\"username\">Source</ansi>.</ansi>"
+render|hit-melee-with-name-tags|channel=audio|sight=none => "<ansi fg=\"hit-melee\"><ansi fg=\"username\">Target</ansi> is struck hard by <ansi fg=\"username\">Source</ansi>.</ansi>"
+render|room-description|channel=visual|sight=full => "<ansi fg=\"room-description\">The cave is dark and damp, water dripping steadily from unseen cracks.</ansi>"
+render|room-description|channel=visual|sight=shapes => "<ansi fg=\"room-description\">The cave is dark and damp, water dripping steadily from unseen cracks.</ansi>"
+render|room-description|channel=visual|sight=none => ""
+render|room-description|channel=audio|sight=full => "<ansi fg=\"room-description\">The cave is dark and damp, water dripping steadily from unseen cracks.</ansi>"
+render|room-description|channel=audio|sight=shapes => "<ansi fg=\"room-description\">The cave is dark and damp, water dripping steadily from unseen cracks.</ansi>"
+render|room-description|channel=audio|sight=none => "<ansi fg=\"room-description\">The cave is dark and damp, water dripping steadily from unseen cracks.</ansi>"
+render|dodge|channel=visual|sight=full => "<ansi fg=\"dodge\">You dodge the attack.</ansi>"
+render|dodge|channel=visual|sight=shapes => "<ansi fg=\"dodge\">You dodge the attack.</ansi>"
+render|dodge|channel=visual|sight=none => ""
+render|dodge|channel=audio|sight=full => "<ansi fg=\"dodge\">You dodge the attack.</ansi>"
+render|dodge|channel=audio|sight=shapes => "<ansi fg=\"dodge\">You dodge the attack.</ansi>"
+render|dodge|channel=audio|sight=none => "<ansi fg=\"dodge\">You dodge the attack.</ansi>"
+
+# Verbosity.Suppresses truth table (representative categories x all 3 tiers)
+verbosity|full|default => suppressed=false
+verbosity|full|dodge => suppressed=false
+verbosity|full|parry => suppressed=false
+verbosity|full|block => suppressed=false
+verbosity|full|hit-melee => suppressed=false
+verbosity|full|hit-blunt => suppressed=false
+verbosity|full|hit-natural-sharp => suppressed=false
+verbosity|full|hit-ranged => suppressed=false
+verbosity|full|hit-caster => suppressed=false
+verbosity|full|hit-unarmed => suppressed=false
+verbosity|full|speech => suppressed=false
+verbosity|full|spell-fold => suppressed=false
+verbosity|full|room-description => suppressed=false
+verbosity|full|loot => suppressed=false
+verbosity|full|toxin => suppressed=false
+verbosity|medium|default => suppressed=false
+verbosity|medium|dodge => suppressed=true
+verbosity|medium|parry => suppressed=true
+verbosity|medium|block => suppressed=true
+verbosity|medium|hit-melee => suppressed=false
+verbosity|medium|hit-blunt => suppressed=false
+verbosity|medium|hit-natural-sharp => suppressed=false
+verbosity|medium|hit-ranged => suppressed=false
+verbosity|medium|hit-caster => suppressed=false
+verbosity|medium|hit-unarmed => suppressed=false
+verbosity|medium|speech => suppressed=false
+verbosity|medium|spell-fold => suppressed=false
+verbosity|medium|room-description => suppressed=false
+verbosity|medium|loot => suppressed=false
+verbosity|medium|toxin => suppressed=false
+verbosity|light|default => suppressed=false
+verbosity|light|dodge => suppressed=true
+verbosity|light|parry => suppressed=true
+verbosity|light|block => suppressed=true
+verbosity|light|hit-melee => suppressed=true
+verbosity|light|hit-blunt => suppressed=true
+verbosity|light|hit-natural-sharp => suppressed=true
+verbosity|light|hit-ranged => suppressed=true
+verbosity|light|hit-caster => suppressed=true
+verbosity|light|hit-unarmed => suppressed=true
+verbosity|light|speech => suppressed=false
+verbosity|light|spell-fold => suppressed=false
+verbosity|light|room-description => suppressed=false
+verbosity|light|loot => suppressed=false
+verbosity|light|toxin => suppressed=false

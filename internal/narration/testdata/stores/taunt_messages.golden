@@ -1,0 +1,22 @@
+# taunt-messages store snapshot
+# files at time of writing: 1 (rhetoric)
+# GetTauntMessage had NO override seam at all before this task (util.Rand only); this task
+# added a trailing `picker ...narration.Picker` param (internal/combat/taunt_messages.go) so this
+# store could be snapshotted. The 3 callers in internal/usercommands/taunt.go compile unchanged.
+# dimensions: intensity(hit/miss/critical/fumble) x perspective(toattacker/todefender/toroom)
+
+rhetoric|hit|toattacker => You sneer at <ansi fg="Mob">Target</ansi>, and your words cut deep! (<ansi fg="damage">ModerateWounds</ansi>)
+rhetoric|hit|todefender => <ansi fg="User">Source</ansi>'s taunt cuts deep, shaking your resolve! (<ansi fg="damage">ModerateWounds</ansi>)
+rhetoric|hit|toroom => <ansi fg="User">Source</ansi> hurls a devastating taunt at <ansi fg="Mob">Target</ansi>!
+rhetoric|miss|toattacker => Your taunt falls flat against <ansi fg="Mob">Target</ansi>.
+rhetoric|miss|todefender => <ansi fg="User">Source</ansi> tries to taunt you, but it has no effect.
+rhetoric|miss|toroom => <ansi fg="User">Source</ansi> tries to taunt <ansi fg="Mob">Target</ansi>, but it falls flat.
+rhetoric|critical|toattacker => Your words strike like a blade — <ansi fg="Mob">Target</ansi> recoils in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+rhetoric|critical|todefender => <ansi fg="User">Source</ansi>'s words cut to the bone — you reel in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+rhetoric|critical|toroom => <ansi fg="User">Source</ansi>'s words strike like a blade — <ansi fg="Mob">Target</ansi> recoils!
+rhetoric|fumble|toattacker => <ansi fg="red">You stumble over your words trying to taunt <ansi fg="Mob">Target</ansi> — how embarrassing!</ansi>
+rhetoric|fumble|todefender => <ansi fg="green"><ansi fg="User">Source</ansi> tries to taunt you but fumbles their words!</ansi>
+rhetoric|fumble|toroom => <ansi fg="User">Source</ansi> stumbles over their words trying to taunt <ansi fg="Mob">Target</ansi>.
+
+# EMPTY CASE: unrecognized perspective string -> ""
+rhetoric|hit|bogus-perspective => ""

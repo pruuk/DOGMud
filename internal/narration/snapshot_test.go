@@ -1,0 +1,658 @@
+package narration_test
+
+// This file freezes what every message store emits TODAY, before the M1
+// narration-unification refactor touches any of them. It is a NET, not a
+// spec: a later refactor that silently changes what a player reads must make
+// one of these goldens go red. Run with -update to regenerate after an
+// INTENTIONAL content change; never run -update to make a red test green
+// without first understanding why it went red.
+//
+// Store inventory verified against source 2026-09-07 (file counts; re-check
+// before trusting these if this comment gets stale):
+//   - _datafiles/world/dogmud/combat-messages/     20 files (weapon subtypes)
+//   - _datafiles/world/dogmud/defense-messages/     9 files (defense types)
+//   - _datafiles/world/dogmud/taunt-messages/        1 file  (rhetoric.yaml)
+//   - _datafiles/world/dogmud/messaging/             1 file  (grapple_outcomes.yaml)
+//   - _datafiles/world/dogmud/casting-messages.yaml  1 file  (bare file at tree root, 24 lines)
+// A shrinking file count against these numbers means a store was deleted or
+// merged — the golden for that store will also shrink, so silence is not
+// possible, but this comment is the first place to look for "why".
+//
+// Determinism: every render call below is fed a FRESH
+// narration.SequencePicker() (or, for RenderDefenseMessage, which has no
+// picker parameter at all, an equivalent indexOverride=0). A fresh
+// SequencePicker always yields index 0 on its first call, so every tuple
+// below captures "the first authored variant" for that exact
+// (store, key, band, role[, tier]) combination — never util.Rand, so the
+// goldens are stable across repeated runs and process restarts.
+//
+// Tokens (e.g. {target}, {itemname}) are substituted with fixed stand-ins
+// (see substituteTokens) so a change to token *rendering* shows as a diff
+// distinct from a change to the underlying prose.
+//
+// Dimensions swept per store (see the header written into each golden file
+// for the authoritative, in-file record):
+//   - combat-messages: subtype x intensity(8) x section(together always,
+//     separate for generic+shooting only) x role x tier(beginner/expert/master).
+//     PLUS a small "derived-selection" section exercising
+//     SkillTieredMessages.GetForSkillLevelWith directly (the seam production
+//     actually calls) at 3 representative skill levels, to freeze that its
+//     index-0 pick is (and stays) Beginner[0] regardless of skill level.
+//   - defense-messages: type x band(weak/normal/heavy) x role(todefender/
+//     toattacker/toroom, all 3 from one coordinated call). PLUS the EMPTY
+//     case (unregistered defense type -> empty triad).
+//   - taunt-messages: intensity(4) x perspective(3). PLUS the EMPTY case
+//     (unrecognized perspective string -> "").
+//   - messaging (grapple): every advancement/degradation/reversal/escape/
+//     hold key x role(controller/controlled/observers), every striking_apex
+//     key (single-speaker), every gradient key x role(self/partner/
+//     observers). PLUS the EMPTY-pool fallback case.
+//   - casting-messages: 4 categories. PLUS the unknown-category fallback
+//     case (NOT empty string — GetCastMessage always returns *something*;
+//     the golden records the literal fallback sentence).
+//   - post-pipeline (messaging.RenderForRecipient): 3 representative sample
+//     lines x SightDecision(full/shapes/none) x Channel(visual/audio). This
+//     sweeps a REPRESENTATIVE subset of Category (~15 of the real ~60+;
+//     categoryMax is unexported so the full enum cannot be walked from this
+//     package) — explicitly a partial net, not a complete one. PLUS a
+//     Verbosity.Suppresses(category) truth table over the same representative
+//     categories x all 3 Verbosity tiers, since verbosity gating is a
+//     delivery-affecting seam distinct from RenderForRecipient itself.
+//
+// NOT covered (state plainly, per the task's "honest partial net" rule):
+//   - The full Category enum for post-pipeline (see above).
+//   - Every (skill level) point for GetForSkillLevelWith — only 3
+//     representative levels (10/50/90), on a single representative
+//     subtype/intensity/role, not the full combat-messages cross product.
+//   - WrapAnsi's own wrapping behavior in isolation: shouldWrap() returns
+//     false for every Category today, so RenderForRecipient never reaches
+//     the wrap stage in this snapshot. WrapAnsi has its own dedicated tests
+//     (wrap_test.go) — out of scope for this net, which freezes the message
+//     STORES and the delivery pipeline's stage sequencing, not the wrap
+//     algorithm itself.
+
+import (
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/narration"
+	"github.com/GoMudEngine/GoMud/internal/spells"
+)
+
+var update = flag.Bool("update", false, "update golden snapshot files under testdata/stores")
+
+// ---------------------------------------------------------------------
+// Test setup
+// ---------------------------------------------------------------------
+
+func repoRoot(t *testing.T) string {
+	t.Helper()
+	_, here, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	// internal/narration/snapshot_test.go -> repo root is two levels up.
+	return filepath.Clean(filepath.Join(filepath.Dir(here), "..", ".."))
+}
+
+func dogmudDataDir(t *testing.T) string {
+	t.Helper()
+	return filepath.Join(repoRoot(t), "_datafiles", "world", "dogmud")
+}
+
+// setupRealStores points the engine's data-file config at the real DOGMud
+// world data and loads the combat/defense and taunt stores through their
+// real production loaders, mirroring the pattern established in
+// internal/items/defensive_messages_integration_test.go.
+func setupRealStores(t *testing.T) {
+	t.Helper()
+	mudlog.SetupLogger(nil, "", "", false)
+
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(dogmudDataDir(t))
+	configs.SetConfigForTest(t, cfg)
+
+	items.LoadDataFiles()
+	combat.LoadTauntMessageFiles()
+}
+
+// ---------------------------------------------------------------------
+// Golden file plumbing
+// ---------------------------------------------------------------------
+
+func goldenPath(t *testing.T, name string) string {
+	t.Helper()
+	_, here, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	return filepath.Join(filepath.Dir(here), "testdata", "stores", name)
+}
+
+func checkGolden(t *testing.T, name string, got string) {
+	t.Helper()
+	path := goldenPath(t, name)
+
+	if *update {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("mkdir testdata/stores: %v", err)
+		}
+		if err := os.WriteFile(path, []byte(got), 0o644); err != nil {
+			t.Fatalf("write golden %s: %v", path, err)
+		}
+		return
+	}
+
+	wantBytes, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read golden %s: %v (run `go test ./internal/narration/... -run TestSnapshotStores -update` to create it)", path, err)
+	}
+	want := string(wantBytes)
+	if want != got {
+		t.Errorf("golden mismatch for store %q (%s)\n%s\nRun with -update ONLY after confirming the change is intentional.",
+			name, path, firstDiffLine(want, got))
+	}
+}
+
+// firstDiffLine reports the first line at which want and got diverge, for a
+// readable failure message instead of dumping two enormous strings.
+func firstDiffLine(want, got string) string {
+	wl := strings.Split(want, "\n")
+	gl := strings.Split(got, "\n")
+	max := len(wl)
+	if len(gl) > max {
+		max = len(gl)
+	}
+	for i := 0; i < max; i++ {
+		var w, g string
+		if i < len(wl) {
+			w = wl[i]
+		}
+		if i < len(gl) {
+			g = gl[i]
+		}
+		if w != g {
+			return fmt.Sprintf("first differing line (%d):\n  want: %s\n  got:  %s", i+1, w, g)
+		}
+	}
+	if len(wl) != len(gl) {
+		return fmt.Sprintf("line count differs: want %d, got %d", len(wl), len(gl))
+	}
+	return "(strings differ but no line-level diff found — check trailing whitespace)"
+}
+
+// ---------------------------------------------------------------------
+// Token substitution — fixed stand-ins so token-rendering changes show as a
+// diff distinct from prose changes.
+// ---------------------------------------------------------------------
+
+var tokenStandins = map[items.TokenName]string{
+	items.TokenItemName:     "Weapon",
+	items.TokenSource:       "Source",
+	items.TokenSourceType:   "User",
+	items.TokenTarget:       "Target",
+	items.TokenTargetType:   "Mob",
+	items.TokenUsesLeft:     "3",
+	items.TokenDamage:       "ModerateWounds",
+	items.TokenEntranceName: "South",
+	items.TokenExitName:     "North",
+	items.TokenDefender:     "Defender",
+	items.TokenAttacker:     "Attacker",
+	items.TokenWeapon:       "Weapon",
+	items.TokenAttack:       "Strike",
+	items.TokenStance:       "Balanced",
+	items.TokenPosition:     "Standing",
+	items.TokenMomentum:     "InControl",
+	items.TokenBodyPart:     "Arm",
+}
+
+func substituteTokens(s string) string {
+	for tok, val := range tokenStandins {
+		s = strings.ReplaceAll(s, string(tok), val)
+	}
+	return s
+}
+
+// ---------------------------------------------------------------------
+// Directory listing helper (subtype/defense-type key discovery)
+// ---------------------------------------------------------------------
+
+func yamlKeysInDir(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read dir %s: %v", dir, err)
+	}
+	var keys []string
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
+			continue
+		}
+		keys = append(keys, strings.TrimSuffix(e.Name(), ".yaml"))
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// ---------------------------------------------------------------------
+// Store 1: combat-messages (internal/items — attack messages)
+// ---------------------------------------------------------------------
+
+func buildCombatMessagesGolden(t *testing.T) string {
+	t.Helper()
+	dir := filepath.Join(dogmudDataDir(t), "combat-messages")
+	subtypes := yamlKeysInDir(t, dir)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# combat-messages store snapshot\n")
+	fmt.Fprintf(&b, "# subtype files at time of writing: %d\n", len(subtypes))
+	fmt.Fprintf(&b, "# subtypes: %s\n", strings.Join(subtypes, ","))
+	fmt.Fprintf(&b, "# dimensions: subtype x intensity x section x role x tier, fresh SequencePicker per tuple (always index 0)\n")
+	fmt.Fprintf(&b, "# separate section present only for: generic, shooting (per source at time of writing)\n\n")
+
+	intensities := []items.Intensity{items.Prepare, items.Wait, items.Miss, items.Weak, items.Normal, items.Heavy, items.Critical, items.Fumble}
+	tiers := []struct {
+		name string
+		get  func(items.SkillTieredMessages) items.MessageOptions
+	}{
+		{"beginner", func(s items.SkillTieredMessages) items.MessageOptions { return s.Beginner }},
+		{"expert", func(s items.SkillTieredMessages) items.MessageOptions { return s.Expert }},
+		{"master", func(s items.SkillTieredMessages) items.MessageOptions { return s.Master }},
+	}
+	togetherRoles := []struct {
+		name string
+		get  func(items.TogetherMessages) items.SkillTieredMessages
+	}{
+		{"toattacker", func(m items.TogetherMessages) items.SkillTieredMessages { return m.ToAttacker }},
+		{"todefender", func(m items.TogetherMessages) items.SkillTieredMessages { return m.ToDefender }},
+		{"toroom", func(m items.TogetherMessages) items.SkillTieredMessages { return m.ToRoom }},
+	}
+	separateRoles := []struct {
+		name string
+		get  func(items.SeparateMessages) items.SkillTieredMessages
+	}{
+		{"toattacker", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToAttacker }},
+		{"todefender", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToDefender }},
+		{"toattackerroom", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToAttackerRoom }},
+		{"todefenderroom", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToDefenderRoom }},
+	}
+
+	hasSeparate := map[string]bool{"generic": true, "shooting": true}
+
+	for _, subtype := range subtypes {
+		for _, intensity := range intensities {
+			opts := items.GetPreAttackMessage(items.ItemSubType(subtype), intensity)
+
+			for _, role := range togetherRoles {
+				stm := role.get(opts.Together)
+				for _, tier := range tiers {
+					mo := tier.get(stm)
+					text := substituteTokens(string(mo.GetWith(narration.SequencePicker())))
+					fmt.Fprintf(&b, "%s|%s|together|%s|%s => %s\n", subtype, intensity, role.name, tier.name, text)
+				}
+			}
+
+			if hasSeparate[subtype] {
+				for _, role := range separateRoles {
+					stm := role.get(opts.Separate)
+					for _, tier := range tiers {
+						mo := tier.get(stm)
+						text := substituteTokens(string(mo.GetWith(narration.SequencePicker())))
+						fmt.Fprintf(&b, "%s|%s|separate|%s|%s => %s\n", subtype, intensity, role.name, tier.name, text)
+					}
+				}
+			}
+		}
+	}
+
+	// Derived-selection sanity check: freeze that GetForSkillLevelWith's
+	// index-0 pick under a fresh picker is Beginner[0] regardless of skill
+	// level, on one representative subtype/intensity/role. This is the seam
+	// production actually calls for the core combat loop.
+	fmt.Fprintf(&b, "\n# derived-selection (GetForSkillLevelWith), bite/weak/toattacker, fresh picker per call\n")
+	opts := items.GetPreAttackMessage(items.Bite, items.Weak)
+	for _, skillLevel := range []int{10, 50, 90} {
+		text := substituteTokens(string(opts.Together.ToAttacker.GetForSkillLevelWith(narration.SequencePicker(), skillLevel)))
+		fmt.Fprintf(&b, "derived|bite|weak|toattacker|skill=%d => %s\n", skillLevel, text)
+	}
+
+	return b.String()
+}
+
+// ---------------------------------------------------------------------
+// Store 2: defense-messages (internal/items — RenderDefenseMessage)
+// ---------------------------------------------------------------------
+
+func buildDefenseMessagesGolden(t *testing.T) string {
+	t.Helper()
+	dir := filepath.Join(dogmudDataDir(t), "defense-messages")
+	types := yamlKeysInDir(t, dir)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# defense-messages store snapshot\n")
+	fmt.Fprintf(&b, "# defense-type files at time of writing: %d\n", len(types))
+	fmt.Fprintf(&b, "# defense-types: %s\n", strings.Join(types, ","))
+	fmt.Fprintf(&b, "# dimensions: defense-type x band(weak/normal/heavy) -- all 3 roles (todefender/toattacker/toroom)\n")
+	fmt.Fprintf(&b, "# come from ONE coordinated RenderDefenseMessage call (same index across the triad).\n")
+	fmt.Fprintf(&b, "# RenderDefenseMessage has no picker param (util.Rand only) -- pinned via indexOverride=0,\n")
+	fmt.Fprintf(&b, "# the fresh-SequencePicker-first-pick equivalent for this seam.\n\n")
+
+	bands := []struct {
+		name   string
+		crit   bool
+		margin float64
+	}{
+		{"weak", false, 0.0},
+		{"normal", false, 0.6},
+		{"heavy", true, 0.0},
+	}
+
+	for _, dt := range types {
+		for _, band := range bands {
+			triad := items.RenderDefenseMessage(items.DefenseType(dt), band.crit, band.margin, tokenStandins, 0)
+			fmt.Fprintf(&b, "%s|%s|todefender => %s\n", dt, band.name, substituteTokens(string(triad.ToDefender)))
+			fmt.Fprintf(&b, "%s|%s|toattacker => %s\n", dt, band.name, substituteTokens(string(triad.ToAttacker)))
+			fmt.Fprintf(&b, "%s|%s|toroom => %s\n", dt, band.name, substituteTokens(string(triad.ToRoom)))
+		}
+	}
+
+	// EMPTY CASE: an unregistered defense type returns an all-empty triad.
+	fmt.Fprintf(&b, "\n# EMPTY CASE: unregistered defense type -> empty triad\n")
+	emptyTriad := items.RenderDefenseMessage(items.DefenseType("nonexistent-defense-type"), false, 0.6, tokenStandins, 0)
+	fmt.Fprintf(&b, "nonexistent-defense-type|normal|todefender => %q\n", string(emptyTriad.ToDefender))
+	fmt.Fprintf(&b, "nonexistent-defense-type|normal|toattacker => %q\n", string(emptyTriad.ToAttacker))
+	fmt.Fprintf(&b, "nonexistent-defense-type|normal|toroom => %q\n", string(emptyTriad.ToRoom))
+
+	return b.String()
+}
+
+// ---------------------------------------------------------------------
+// Store 3: taunt-messages (internal/combat — GetTauntMessage)
+// ---------------------------------------------------------------------
+
+func buildTauntMessagesGolden(t *testing.T) string {
+	t.Helper()
+	dir := filepath.Join(dogmudDataDir(t), "taunt-messages")
+	files := yamlKeysInDir(t, dir)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# taunt-messages store snapshot\n")
+	fmt.Fprintf(&b, "# files at time of writing: %d (%s)\n", len(files), strings.Join(files, ","))
+	fmt.Fprintf(&b, "# GetTauntMessage had NO override seam at all before this task (util.Rand only); this task\n")
+	fmt.Fprintf(&b, "# added a trailing `picker ...narration.Picker` param (internal/combat/taunt_messages.go) so this\n")
+	fmt.Fprintf(&b, "# store could be snapshotted. The 3 callers in internal/usercommands/taunt.go compile unchanged.\n")
+	fmt.Fprintf(&b, "# dimensions: intensity(hit/miss/critical/fumble) x perspective(toattacker/todefender/toroom)\n\n")
+
+	intensities := []combat.TauntIntensity{combat.TauntHit, combat.TauntMiss, combat.TauntCritical, combat.TauntFumble}
+	perspectives := []string{"toattacker", "todefender", "toroom"}
+
+	for _, intensity := range intensities {
+		for _, perspective := range perspectives {
+			text := combat.GetTauntMessage(intensity, perspective, "Source", "Target", "User", "Mob", "ModerateWounds", narration.SequencePicker())
+			fmt.Fprintf(&b, "rhetoric|%s|%s => %s\n", intensity, perspective, text)
+		}
+	}
+
+	// EMPTY CASE: an unrecognized perspective string.
+	fmt.Fprintf(&b, "\n# EMPTY CASE: unrecognized perspective string -> \"\"\n")
+	empty := combat.GetTauntMessage(combat.TauntHit, "bogus-perspective", "Source", "Target", "User", "Mob", "ModerateWounds", narration.SequencePicker())
+	fmt.Fprintf(&b, "rhetoric|hit|bogus-perspective => %q\n", empty)
+
+	return b.String()
+}
+
+// ---------------------------------------------------------------------
+// Store 4: messaging/grapple_outcomes.yaml (internal/grapplemessaging)
+// ---------------------------------------------------------------------
+
+func sortedKeysTriad(m map[string]grapplemessaging.TemplateTriad) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func sortedKeysStrSlice(m map[string][]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func sortedKeysGradient(m map[string]grapplemessaging.GradientTriad) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func buildGrappleMessagingGolden(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(dogmudDataDir(t), "messaging", "grapple_outcomes.yaml")
+	lib, err := grapplemessaging.Load(path)
+	if err != nil {
+		t.Fatalf("grapplemessaging.Load(%s): %v", path, err)
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# messaging/grapple_outcomes.yaml store snapshot\n")
+	fmt.Fprintf(&b, "# category counts at time of writing: advancements=%d degradations=%d reversals=%d escapes=%d holds=%d striking_apex=%d gradients=%d\n",
+		len(lib.Advancements), len(lib.Degradations), len(lib.Reversals), len(lib.Escapes), len(lib.Holds), len(lib.StrikingApex), len(lib.Gradients))
+	fmt.Fprintf(&b, "# dimensions: category x key x role. Triad categories (advancements/degradations/reversals/escapes/holds)\n")
+	fmt.Fprintf(&b, "# use role in {controller,controlled,observers}; striking_apex is single-speaker (no role); gradients use\n")
+	fmt.Fprintf(&b, "# role in {self,partner,observers}. Each tuple: fresh cooldowns map + fresh SequencePicker via PickTemplate,\n")
+	fmt.Fprintf(&b, "# then RenderTemplate with fixed stand-ins Controller/Controlled.\n\n")
+
+	renderPool := func(pool []string) string {
+		tmpl := grapplemessaging.PickTemplate(pool, map[string]bool{}, "snapshot", narration.SequencePicker())
+		return grapplemessaging.RenderTemplate(tmpl, "Controller", "Controlled")
+	}
+
+	triadCategories := []struct {
+		name string
+		m    map[string]grapplemessaging.TemplateTriad
+	}{
+		{"advancements", lib.Advancements},
+		{"degradations", lib.Degradations},
+		{"reversals", lib.Reversals},
+		{"escapes", lib.Escapes},
+		{"holds", lib.Holds},
+	}
+	for _, cat := range triadCategories {
+		for _, key := range sortedKeysTriad(cat.m) {
+			triad := cat.m[key]
+			fmt.Fprintf(&b, "%s|%s|controller => %s\n", cat.name, key, renderPool(triad.Controller))
+			fmt.Fprintf(&b, "%s|%s|controlled => %s\n", cat.name, key, renderPool(triad.Controlled))
+			fmt.Fprintf(&b, "%s|%s|observers => %s\n", cat.name, key, renderPool(triad.Observers))
+		}
+	}
+
+	for _, key := range sortedKeysStrSlice(lib.StrikingApex) {
+		fmt.Fprintf(&b, "striking_apex|%s|(single-speaker) => %s\n", key, renderPool(lib.StrikingApex[key]))
+	}
+
+	for _, key := range sortedKeysGradient(lib.Gradients) {
+		g := lib.Gradients[key]
+		fmt.Fprintf(&b, "gradients|%s|self => %s\n", key, renderPool(g.Self))
+		fmt.Fprintf(&b, "gradients|%s|partner => %s\n", key, renderPool(g.Partner))
+		fmt.Fprintf(&b, "gradients|%s|observers => %s\n", key, renderPool(g.Observers))
+	}
+
+	// EMPTY CASE: PickTemplate on an empty pool returns a benign fallback
+	// sentinel (never an actual empty string).
+	fmt.Fprintf(&b, "\n# EMPTY CASE: PickTemplate on a nil pool -> fallback sentinel, not \"\"\n")
+	fmt.Fprintf(&b, "(nil-pool)|n/a|n/a => %q\n", grapplemessaging.PickTemplate(nil, map[string]bool{}, "snapshot-empty", narration.SequencePicker()))
+
+	return b.String()
+}
+
+// ---------------------------------------------------------------------
+// Store 5: casting-messages.yaml (internal/spells — GetCastMessage)
+// ---------------------------------------------------------------------
+
+func buildCastingMessagesGolden(t *testing.T) string {
+	t.Helper()
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# casting-messages.yaml store snapshot\n")
+	fmt.Fprintf(&b, "# bare file at tree root (not a directory), 24 lines at time of writing\n")
+	fmt.Fprintf(&b, "# GetCastMessage used stdlib math/rand directly until 2026-09-07 (unreachable by any seam); this\n")
+	fmt.Fprintf(&b, "# task's Task 2 predecessor added the trailing picker param used here.\n")
+	fmt.Fprintf(&b, "# dimensions: category (already_casting/cast_started/cast_continuing/concentration_slipped)\n\n")
+
+	categories := []string{"already_casting", "cast_started", "cast_continuing", "concentration_slipped"}
+	for _, cat := range categories {
+		text := spells.GetCastMessage(cat, "Testspell", narration.SequencePicker())
+		fmt.Fprintf(&b, "casting|%s => %s\n", cat, text)
+	}
+
+	// FALLBACK CASE (not the empty string): an unrecognized category yields
+	// an empty pool, and GetCastMessage's own fallback fires.
+	fmt.Fprintf(&b, "\n# FALLBACK CASE: unrecognized category -> \"Something stirs with <spell>.\" (not \"\")\n")
+	fallback := spells.GetCastMessage("bogus-category", "Testspell", narration.SequencePicker())
+	fmt.Fprintf(&b, "casting|bogus-category => %s\n", fallback)
+
+	return b.String()
+}
+
+// ---------------------------------------------------------------------
+// Store 6 (post-pipeline): internal/messaging.RenderForRecipient +
+// Verbosity.Suppresses
+// ---------------------------------------------------------------------
+
+func buildPostPipelineGolden(t *testing.T) string {
+	t.Helper()
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# post-pipeline snapshot: internal/messaging.RenderForRecipient + Verbosity.Suppresses\n")
+	fmt.Fprintf(&b, "# This catches the class a raw-store snapshot cannot see: the text survived unchanged but\n")
+	fmt.Fprintf(&b, "# WHO receives it, or what a blinded/deafened player sees, quietly changed.\n")
+	fmt.Fprintf(&b, "# PARTIAL NET: sweeps a representative subset of Category (~15 of the real ~60+ — categoryMax\n")
+	fmt.Fprintf(&b, "# is unexported so the full enum cannot be walked from outside internal/messaging).\n")
+	fmt.Fprintf(&b, "# dimensions (RenderForRecipient section): sample-line x SightDecision(full/shapes/none) x\n")
+	fmt.Fprintf(&b, "# Channel(visual/audio). dimensions (Verbosity section): representative-category x\n")
+	fmt.Fprintf(&b, "# Verbosity(full/medium/light) -> bool suppressed.\n\n")
+
+	samples := []struct {
+		name string
+		cat  messaging.Category
+		text string
+	}{
+		{"hit-melee-with-name-tags", messaging.CategoryHitMelee, `<ansi fg="username">Target</ansi> is struck hard by <ansi fg="username">Source</ansi>.`},
+		{"room-description", messaging.CategoryRoomDescription, "The cave is dark and damp, water dripping steadily from unseen cracks."},
+		{"dodge", messaging.CategoryDodge, "you dodge the attack"},
+	}
+	sightDecisions := []struct {
+		name string
+		sd   messaging.SightDecision
+	}{
+		{"full", messaging.SightFull},
+		{"shapes", messaging.SightShapes},
+		{"none", messaging.SightNone},
+	}
+	channels := []struct {
+		name string
+		ch   messaging.Channel
+	}{
+		{"visual", messaging.ChannelVisual},
+		{"audio", messaging.ChannelAudio},
+	}
+
+	for _, sample := range samples {
+		for _, ch := range channels {
+			for _, sd := range sightDecisions {
+				out := messaging.RenderForRecipient(messaging.RenderInput{
+					Category:      sample.cat,
+					Text:          sample.text,
+					Channel:       ch.ch,
+					SightDecision: sd.sd,
+					LineWidth:     80,
+				})
+				fmt.Fprintf(&b, "render|%s|channel=%s|sight=%s => %q\n", sample.name, ch.name, sd.name, out)
+			}
+		}
+	}
+
+	fmt.Fprintf(&b, "\n# Verbosity.Suppresses truth table (representative categories x all 3 tiers)\n")
+	verbosities := []struct {
+		name string
+		v    messaging.Verbosity
+	}{
+		{"full", messaging.VerbosityFull},
+		{"medium", messaging.VerbosityMedium},
+		{"light", messaging.VerbosityLight},
+	}
+	repCategories := []struct {
+		name string
+		cat  messaging.Category
+	}{
+		{"default", messaging.CategoryDefault},
+		{"dodge", messaging.CategoryDodge},
+		{"parry", messaging.CategoryParry},
+		{"block", messaging.CategoryBlock},
+		{"hit-melee", messaging.CategoryHitMelee},
+		{"hit-blunt", messaging.CategoryHitBlunt},
+		{"hit-natural-sharp", messaging.CategoryHitNaturalSharp},
+		{"hit-ranged", messaging.CategoryHitRanged},
+		{"hit-caster", messaging.CategoryHitCaster},
+		{"hit-unarmed", messaging.CategoryHitUnarmed},
+		{"speech", messaging.CategorySpeech},
+		{"spell-fold", messaging.CategorySpellFold},
+		{"room-description", messaging.CategoryRoomDescription},
+		{"loot", messaging.CategoryLoot},
+		{"toxin", messaging.CategoryToxin},
+	}
+	for _, v := range verbosities {
+		for _, cat := range repCategories {
+			suppressed := v.v.Suppresses(cat.cat)
+			fmt.Fprintf(&b, "verbosity|%s|%s => suppressed=%t\n", v.name, cat.name, suppressed)
+		}
+	}
+
+	return b.String()
+}
+
+// ---------------------------------------------------------------------
+// The test
+// ---------------------------------------------------------------------
+
+func TestSnapshotStores(t *testing.T) {
+	setupRealStores(t)
+
+	t.Run("combat_messages", func(t *testing.T) {
+		checkGolden(t, "combat_messages.golden", buildCombatMessagesGolden(t))
+	})
+	t.Run("defense_messages", func(t *testing.T) {
+		checkGolden(t, "defense_messages.golden", buildDefenseMessagesGolden(t))
+	})
+	t.Run("taunt_messages", func(t *testing.T) {
+		checkGolden(t, "taunt_messages.golden", buildTauntMessagesGolden(t))
+	})
+	t.Run("messaging_grapple", func(t *testing.T) {
+		checkGolden(t, "messaging_grapple.golden", buildGrappleMessagingGolden(t))
+	})
+	t.Run("casting_messages", func(t *testing.T) {
+		checkGolden(t, "casting_messages.golden", buildCastingMessagesGolden(t))
+	})
+	t.Run("post_pipeline", func(t *testing.T) {
+		checkGolden(t, "post_pipeline.golden", buildPostPipelineGolden(t))
+	})
+}
