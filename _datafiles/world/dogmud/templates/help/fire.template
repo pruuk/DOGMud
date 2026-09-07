@@ -1,46 +1,60 @@
-<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">shoot</ansi>
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">fire</ansi>
 
-Fire a loaded ranged weapon at a target in your room or an
-adjacent room.
+Shoot a ranged weapon at a target in your room or an adjacent
+room. Also answers to <ansi fg="command">shoot</ansi>.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">shoot <target></ansi>
-      Fire at a target in the same room.
+  <ansi fg="command">fire <target></ansi>
+      Shoot a target in the same room.
 
-  <ansi fg="command">shoot <target> <direction></ansi>
-      Fire into the adjacent room in that direction and strike
+  <ansi fg="command">fire <target> <direction></ansi>
+      Shoot into the adjacent room in that direction and strike
       a target there.
 
-The weapon must be loaded before it can fire. Use
-<ansi fg="command">reload</ansi> after each shot to ready it for the next one.
-Reloading draws one round of ammunition from a matching bundle
-in your pack (arrows for a bow, bolts for a crossbow, shot for
-a sling or pistol). When a bundle runs dry you will be told it
-was your last.
+<ansi fg="yellow">━━━ One Action ━━━</ansi>
+
+Firing readies the next round by itself. You do not need a
+second command, and there is no reload step to remember: your
+hands find the next round while your eye is still on the mark.
+
+Each shot draws one round of ammunition from a matching bundle
+in your pack, arrows for a bow, bolts for a crossbow, shot for
+a sling or pistol. You will be told when you spend the last of
+them, and told again if you try to shoot with nothing left.
 
 Each shot uses your combat round. Cross-room fire does not
 automatically pull you into melee; the target must close the
 distance to engage.
 
-Shooting spends Stamina and requires full payment. Carried load raises the
-price, while <ansi fg="skill">ranged-combat</ansi> skill lowers it. If you are
-too spent, you do not fire or consume the round.
+Firing spends Stamina and requires full payment. Carried load
+raises the price, while <ansi fg="skill">ranged-combat</ansi> skill lowers it. If
+you are too spent, you do not shoot or consume the round.
 
-An aimed shot needs light. In a dark room you cannot line one up, and the
-shot is refused before it costs you anything. Carry a light source, or see
-in the dark by other means. Swinging in melee has no such requirement, so a
-close fight is still an option when you cannot shoot.
+<ansi fg="yellow">━━━ Shooting From Cover ━━━</ansi>
 
-Shooting from hiding is an ambush. It needs your special move ready, it
-hits far harder, and it gives your hiding place away, so you get one. If
-the special move is still recovering you simply fire an ordinary shot
-and are told so. Reloading spends that same recovery, so reloading just
-before you hide can leave you with no ambush ready.
+A shot taken while hidden is an ambush. It hits far harder, and
+it gives your hiding place away when it lands, so you get one
+per fight. Hide first with <ansi fg="command">sneak</ansi>, then fire.
 
-You cannot steady an aimed shot while something is attacking you. The
-shot still fires, but it is weaker than one taken with the room clear.
-Break away, or let someone else hold their attention.
+You cannot slip out of sight again while something is fighting
+you, which is what limits the ambush rather than any timer.
+
+A shot from an adjacent room is never an ambush, however well
+hidden you are. Distance already protects you there.
+
+<ansi fg="yellow">━━━ Aiming ━━━</ansi>
+
+An aimed shot needs light. In a dark room you cannot line one
+up, and the shot is refused before it costs you anything. Carry
+a light source, or see in the dark by other means. Swinging in
+melee has no such requirement, so a close fight is still an
+option when you cannot shoot.
+
+You cannot steady an aimed shot while something is attacking
+you. The shot still fires, but it is weaker than one taken with
+the room clear. Break away, or let someone else hold their
+attention.
 
 <ansi fg="yellow">━━━ Progression ━━━</ansi>
 
@@ -48,8 +62,7 @@ Ranged-combat improves through use. Shots that connect have a
 chance to advance the skill. Perception governs aimed-shot
 accuracy and damage.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help reload</ansi>,
-  <ansi fg="command">help ranged-combat</ansi>, <ansi fg="command">help stamina</ansi>,
-  <ansi fg="command">help equip</ansi>, <ansi fg="command">help sneak</ansi>,
-  <ansi fg="command">help skullduggery</ansi>, <ansi fg="command">help ambush</ansi>,
-  <ansi fg="command">help special</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help ranged-combat</ansi>,
+  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>,
+  <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>,
+  <ansi fg="command">help ambush</ansi>, <ansi fg="command">help special</ansi>

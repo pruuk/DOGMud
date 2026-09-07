@@ -22,7 +22,6 @@ var u8ActionHelpPaths = []string{
 	"help/stamina",
 	"help/ranged-combat",
 	"help/fire",
-	"help/reload",
 	"help/grapple",
 	"help/sneak",
 	"help/throw",
@@ -409,9 +408,8 @@ func TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning(t *testing.T) {
 	expectations := map[string][]string{
 		"help/combat":         {"voluntary actions require full payment", "desperate form without the governing skill"},
 		"help/stamina":        {"load raises the price", "without their governing skill"},
-		"help/ranged-combat":  {"shooting and reloading spend stamina", "require full payment"},
+		"help/ranged-combat":  {"firing spends stamina", "requires full payment"},
 		"help/fire":           {"spends stamina", "requires full payment"},
-		"help/reload":         {"physical exertion that spends stamina", "requires full payment"},
 		"help/grapple":        {"initial grapple is a special move", "both participants pay upkeep", "without unarmed combat skill"},
 		"help/sneak":          {"spends stamina", "requires full payment"},
 		"help/throw":          {"spends stamina", "requires full payment"},
@@ -483,15 +481,18 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 		t.Run(path, func(t *testing.T) {
 			rendered := processU8Help(t, path)
 			if path == "help/fire" {
-				assert.Contains(t, rendered, "Fire a loaded ranged weapon at a target in your room",
-					"the validator must inspect DOGMud's shoot template, not the registered default")
-				// U10d added the three stealth/cooldown pointers: shooting from
-				// hiding is an ambush, and `help shoot` was previously the only
-				// place a player could read about aimed fire without ever being
-				// told that.
-				assert.Equal(t, []string{"reload", "ranged-combat", "stamina", "equip", "sneak", "skullduggery", "ambush", "special"},
+				assert.Contains(t, rendered, "Firing readies the next round by itself",
+					"the validator must inspect DOGMud's fire template, not the registered default")
+				// U10d added the stealth pointers: shooting from hiding is an
+				// ambush, and this page was the only place a player could read
+				// about aimed fire without ever being told that.
+				//
+				// `reload` is NOT in this list any more, deliberately: firing
+				// chambers its own next round, so pointing a shooter at a
+				// retired command would teach a step that no longer exists.
+				assert.Equal(t, []string{"ranged-combat", "stamina", "equip", "sneak", "skullduggery", "ambush", "special"},
 					u8HelpCrossReferenceTopics(rendered),
-					"every DOGMud shoot cross-reference must be enumerated")
+					"every DOGMud fire cross-reference must be enumerated")
 			}
 			require.NoError(t, validateU8HelpCrossReferences(path, rendered))
 		})
@@ -514,7 +515,13 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 // a GoMud holdover), taking bury.template and its two cross-references with it.
 // A DELIBERATE removal, lowered in the same commit with the reason, which is
 // the process this ratchet exists to force.
-const helpCrossReferenceFloor = 1081
+//
+// Lowered 1081 -> 1080 on 2026-09-07: the player-facing `reload` retired,
+// because firing now readies its own next round. Four pages pointed at it
+// (fire, ranged-combat, ambush, special) and three gained a `help fire` link
+// in its place, so the graph lost one link net. Pointing a shooter at a
+// command they can no longer type would be worse than the missing link.
+const helpCrossReferenceFloor = 1080
 
 func TestHelpCrossReferenceGraphDoesNotShrinkSilently(t *testing.T) {
 	useU8DataFiles(t)

@@ -80,6 +80,7 @@ help:
       - defense
       - defy
       - drain
+      - fire
       - flee
       - gore
       - grapple
@@ -93,7 +94,6 @@ help:
       - rally
       - reload
       - shadow
-      - shoot
       - sneak
       - stamina
       - stand

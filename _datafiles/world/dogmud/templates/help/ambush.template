@@ -8,8 +8,9 @@ becomes the ambush on its own.
 <ansi fg="yellow">━━━ Setting One Up ━━━</ansi>
 
   1. Use <ansi fg="command">sneak</ansi> to slip out of sight.
-  2. Use <ansi fg="command">cooldowns</ansi> to check that your special move has come back.
-  3. <ansi fg="command">attack <target></ansi> to open in melee, or <ansi fg="command">shoot <target></ansi> to open
+  2. For a melee ambush, use <ansi fg="command">cooldowns</ansi> to check that your special
+     move has come back. A shot does not need it.
+  3. <ansi fg="command">attack <target></ansi> to open in melee, or <ansi fg="command">fire <target></ansi> to open
      from cover.
 
 Requires the <ansi fg="skill">skullduggery</ansi> skill, which is what hides you in the first place.
@@ -40,21 +41,25 @@ You cannot fight on from the shadows, and a shot from cover at something
 in your own room reveals you the same way. Plan the rest of the fight as
 an open one.
 
-<ansi fg="yellow">━━━ It Spends Your Special Move ━━━</ansi>
+<ansi fg="yellow">━━━ Melee Ambushes Need Your Special Move ━━━</ansi>
 
-The ambush uses the shared special move cooldown, so it competes with
+A melee ambush uses the shared special move cooldown, so it competes with
 <ansi fg="command">bash</ansi>, <ansi fg="command">trip</ansi>, <ansi fg="command">kick</ansi> and the rest. If the cooldown has not
 recovered you get no ambush, and your attack goes in as an ordinary one.
-The game tells you when that happens, whether you closed in with a weapon
-or fired from cover.
+The game tells you when that happens.
 
-Take care, because this is the expensive mistake. Striking from hiding
+Take care, because this is the expensive mistake. Closing in from hiding
 gives your position away whether the ambush was ready or not. A denied
 opener costs you your cover and returns nothing for it.
 
-Archers should watch this closely. <ansi fg="command">reload</ansi> spends the same recovery.
-Reloading and then hiding often leaves you with nothing ready. Load
-first, then hide, and let the cooldown return before you fire.
+<ansi fg="yellow">━━━ A Shot From Cover Always Lands ━━━</ansi>
+
+Shooting is different. If you are hidden, the shot is an ambush, and no
+cooldown can take that away from you. Hide, then <ansi fg="command">fire</ansi>.
+
+What limits it is the hiding itself. The shot gives your place away, and
+you cannot slip out of sight again while something is fighting you, so
+you get one opener per fight rather than one per recovery.
 
 <ansi fg="yellow">━━━ Shooting Into the Next Room ━━━</ansi>
 
@@ -76,6 +81,6 @@ their attention, or put a room between you and them and fire from there.
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>,
-  <ansi fg="command">help fire</ansi>, <ansi fg="command">help reload</ansi>,
+  <ansi fg="command">help fire</ansi>,
   <ansi fg="command">help special</ansi>, <ansi fg="command">help cooldowns</ansi>,
   <ansi fg="command">help ranged-combat</ansi>, <ansi fg="command">help combat</ansi>

@@ -6,24 +6,25 @@ Higher ranks improve your hit chance and damage at range.
 
 <ansi fg="yellow">━━━ Aimed Shots ━━━</ansi>
 
-Ranged weapons fire with the <ansi fg="command">shoot</ansi> command. Every shot
+Ranged weapons shoot with the <ansi fg="command">fire</ansi> command. Every shot
 is a deliberate aimed action: accuracy and damage both scale
 with <ansi fg="stat">Perception</ansi>, not Strength. A keen eye matters
 more than raw muscle.
 
-Each weapon must be loaded before it fires. Use
-<ansi fg="command">reload</ansi> to ready it after each shot. Ammunition comes in
-bundles such as arrows, bolts, or shot carried in your pack.
+Firing readies the next round by itself, so there is no second
+command to remember. Each shot draws one round from a bundle of
+arrows, bolts, or shot carried in your pack, and you are told
+when you spend the last of them.
 
-Shooting and reloading spend Stamina and require full payment. Your carried
-load raises their price, while <ansi fg="skill">ranged-combat</ansi> skill lowers
+Firing spends Stamina and requires full payment. Your carried
+load raises the price, while <ansi fg="skill">ranged-combat</ansi> skill lowers
 it. If you are too spent, the action refuses before a shot, ammunition, or
 cooldown is consumed.
 
 <ansi fg="yellow">━━━ Range ━━━</ansi>
 
-  - <ansi fg="stat">Same room:</ansi> <ansi fg="command">shoot <target></ansi>
-  - <ansi fg="stat">Adjacent room:</ansi> <ansi fg="command">shoot <target> <direction></ansi>
+  - <ansi fg="stat">Same room:</ansi> <ansi fg="command">fire <target></ansi>
+  - <ansi fg="stat">Adjacent room:</ansi> <ansi fg="command">fire <target> <direction></ansi>
       Cross-room fire does not pull you into melee. The target
       must close the distance to engage in melee combat.
 
@@ -46,6 +47,6 @@ This skill improves through use:
   - Landing shots with a ranged weapon
   - Perception advances from aimed-shot attacks
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fire</ansi>, <ansi fg="command">help reload</ansi>,
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fire</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>,
   <ansi fg="command">help ambush</ansi>, <ansi fg="command">help sneak</ansi>
