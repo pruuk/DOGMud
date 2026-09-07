@@ -10,7 +10,7 @@ type: potion
 subtype: drinkable
 uses: 1
 not_salable: true
-toxicity: 45
+toxicity: 26
 buffids:
   - 93
 weight: 0.2

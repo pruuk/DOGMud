@@ -1,0 +1,59 @@
+# Adversarial sweep of the toxicity tolerance + visibility change.
+#
+# What changed: tolerance is now earned from alchemy rather than being a
+# near-flat vitality number (a fresh character's ceiling dropped from about
+# 120 to about 33); two feedback-only bands were added below the first band
+# that penalises you; death clears toxicity; all 34 drinkables now cost
+# toxicity; and the purging draught, which was inert, now actually works.
+#
+# Mandate: CRITICAL and ADVERSARIAL. Read every line of output. Anything that
+# reads wrong, renders oddly, repeats itself, or contradicts its own help text
+# is a finding. Do not be charitable.
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    Fresh character required. The whole point of the change is that a new
+    player has a LOW tolerance and should meet the mechanic early; a
+    pre-seeded veteran kit would hide exactly the experience under test.
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Help discoverability: run `help` and confirm `toxicity` is listed. Then
+    `help toxicity`, `help toxic`, `help poison`, `help poisoned` and
+    `help tolerance` must ALL render the same page with no [TEMPLATE ERROR]
+    anywhere. `help alchemy`, `help craft` and `help health` must each render
+    clean and point at it.
+  - >-
+    Does the page tell the truth? Read `help toxicity` closely, then check it
+    against what actually happens to you. Any promise the page makes that the
+    game does not keep is a finding. It claims a seasoned brewer out-lasts a
+    hardier character; it must NOT read as though a beginner does.
+  - >-
+    Status and prompt rendering: run `status` and confirm the Toxicity row
+    lines up and the box border is not pushed out of alignment. Add the
+    toxicity tag to your prompt via `set-prompt` and confirm it stays silent
+    while you are clear rather than printing an empty or stray marker.
+  - >-
+    Buy several cheap potions and drink them in a row. You should cross into
+    "sour" and then "unsettled" BEFORE anything actually hurts you. Watch for
+    the onset lines: each must fire ONCE on the crossing, never every tick,
+    and never twice for the same step. Report the exact wording if it reads
+    oddly or repeats.
+  - >-
+    Keep drinking until your body refuses a potion. The refusal message must
+    explain itself. Judge honestly whether hitting this wall as a new player
+    feels informative or just punishing, and say which.
+  - >-
+    Step back down: let toxicity decay and confirm the relief line fires on
+    the way down. Pay attention to whether it reads oddly when you step down
+    from "unsettled" to "sour", where nothing was ever actually wrong.
+  - >-
+    If you can obtain a purging draught, drink it while carrying potion
+    effects and some toxicity. It must strip the effects, clear the toxicity,
+    and leave you noticeably weakened. Report if any of those three does not
+    happen.
+  - >-
+    General adversarial pass: anything else that reads wrong, renders oddly,
+    leaks a raw number to the player, or contradicts its own help text.

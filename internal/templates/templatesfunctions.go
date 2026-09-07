@@ -317,8 +317,12 @@ var (
 		"toxicityQuality": func(bandName string, padTo ...int) string {
 			var color string
 			switch bandName {
+			case "sour":
+				color = "black-bold" // feedback only, no penalty
+			case "unsettled":
+				color = "white" // feedback only, no penalty
 			case "queasy":
-				color = "yellow"
+				color = "yellow" // first band that carries a penalty
 			case "sick":
 				color = "red"
 			case "critical":

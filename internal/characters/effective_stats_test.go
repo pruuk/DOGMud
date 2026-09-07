@@ -16,6 +16,13 @@ import (
 // With base stats 100: effective Per = int(100*0.80) = 80, Dex = int(100*0.90) = 90.
 func TestEffectiveStats_ToxicityPenalty(t *testing.T) {
 	c := &Character{}
+	// ToxicityBaseMax now ships at 0 -- a bare Character has a toxicity max of
+	// 0, so "c.Toxicity = c.GetToxicityMax()" below would set toxicity to 0
+	// and GetToxicityPenalties would treat that as "no toxicity system" (all
+	// multipliers 1.0) rather than "at max". Vitality 300 / VitalityScale 3
+	// gives a real max of 100 so the ratio=1.0 band this test targets exists.
+	c.Stats.Vitality.Base = 300
+	c.Stats.Vitality.Recalculate()
 	c.Stats.Perception.ValueAdj = 100
 	c.Stats.Dexterity.ValueAdj = 100
 

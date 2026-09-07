@@ -65,7 +65,13 @@ func TestHealthPerRound_SleepMultiplier(t *testing.T) {
 // TestAddToxicity_ClampsToMaxAndReturnsTrue verifies AddToxicity clamps into
 // [0, max] (rather than rejecting an over-max add) and always returns true.
 func TestAddToxicity_ClampsToMaxAndReturnsTrue(t *testing.T) {
-	c := &Character{} // zero Vitality → GetToxicityMax == ToxicityBaseMax (100)
+	// ToxicityBaseMax now ships at 0 -- tolerance is earned from alchemy and
+	// vitality -- so a bare Character has a max of 0 and this test would clamp
+	// against nothing. Give it a real ceiling of exactly 100: vitality 300 at
+	// the default VitalityScale of 3.
+	c := &Character{}
+	c.Stats.Vitality.Base = 300
+	c.Stats.Vitality.Recalculate()
 	max := c.GetToxicityMax()
 	if max <= 0 {
 		t.Fatalf("expected positive toxicity max (config defaults), got %v", max)
@@ -89,8 +95,12 @@ func TestAddToxicity_ClampsToMaxAndReturnsTrue(t *testing.T) {
 // TestToxicitySicknessDamage verifies acute harm is 0 below the top band and scales
 // with depth into it (ToxicitySicknessDamagePct default 0.02).
 func TestToxicitySicknessDamage(t *testing.T) {
+	// Vitality 300 / VitalityScale 3 == a max of exactly 100, which keeps every
+	// arithmetic expectation below unchanged now that ToxicityBaseMax is 0.
 	c := &Character{HealthMax: stats.StatInfo{Value: 1000}}
-	max := c.GetToxicityMax() // 100 (zero Vitality)
+	c.Stats.Vitality.Base = 300
+	c.Stats.Vitality.Recalculate()
+	max := c.GetToxicityMax() // 100
 
 	c.Toxicity = max * 0.50 // below the 90% band
 	if d := c.ToxicitySicknessDamage(); d != 0 {
@@ -114,40 +124,10 @@ func TestToxicitySicknessDamage(t *testing.T) {
 	}
 }
 
-// TestToxicityBand verifies the four band thresholds on a zero-Vitality
-// character (GetToxicityMax == ToxicityBaseMax == 100).
-func TestToxicityBand(t *testing.T) {
-	c := &Character{} // zero Vitality → max = 100
-	max := c.GetToxicityMax()
-	if max <= 0 {
-		t.Fatalf("expected positive toxicity max (config defaults), got %v", max)
-	}
-
-	cases := []struct {
-		pct      float64
-		wantBand int
-		wantName string
-	}{
-		{0.00, 0, "clear"},
-		{0.49, 0, "clear"},
-		{0.50, 1, "queasy"},
-		{0.74, 1, "queasy"},
-		{0.75, 2, "sick"},
-		{0.89, 2, "sick"},
-		{0.90, 3, "critical"},
-		{1.00, 3, "critical"},
-	}
-
-	for _, tc := range cases {
-		c.Toxicity = max * tc.pct
-		if got := c.ToxicityBand(); got != tc.wantBand {
-			t.Errorf("at %.0f%% tox: ToxicityBand()=%d want %d", tc.pct*100, got, tc.wantBand)
-		}
-		if got := c.ToxicityBandName(); got != tc.wantName {
-			t.Errorf("at %.0f%% tox: ToxicityBandName()=%q want %q", tc.pct*100, got, tc.wantName)
-		}
-	}
-}
+// TestToxicityBand moved to toxicity_calibration_test.go as
+// TestToxicityBandsAreFinerThanPenalties, which covers the same thresholds plus
+// the two feedback-only bands and asserts that no penalty threshold moved with
+// them. Do not re-add a four-tier version here.
 
 // TestStaminaPerRound_SleepMultiplier verifies the multiplier applies to
 // StaminaPerRound, composing on top of any mutation modifier.

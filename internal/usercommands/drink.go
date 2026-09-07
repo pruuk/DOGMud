@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -25,12 +26,57 @@ import (
 const bloomWaferItemId = 40108
 
 // ysoldesPurgeItemId is the item ID for Ysolde's Purge (40109).
-// The purge carries a heavy toxicity load (45) and buff 93 (Bloom Detox)
+// The purge carries a heavy toxicity load (26) and buff 93 (Bloom Detox)
 // through the normal drink path. Its special-case here drives the addiction
 // step-down. It also bypasses the toxicity pre-check — addicts presenting
 // for detox are expected to already have elevated toxicity, and the flood is
 // the mechanism, not a mistake.
 const ysoldesPurgeItemId = 40109
+
+// purgingDraughtItemId is the item ID for the Purging Draught (30052), the
+// other detox besides Ysolde's Purge.
+const purgingDraughtItemId = 30052
+
+// Potion-effect buffs occupy a contiguous id block. 76 is the purge's own
+// weakness debuff: it is APPLIED by a purge, never stripped by one. 70 is the
+// draught's flavour buff, which carries no statmods and expires after a round;
+// a purge leaves it alone so the drinker still sees that they drank something.
+const (
+	potionBuffIdMin       = 54
+	potionBuffIdMax       = 75
+	purgingDraughtBuffId  = 70
+	purgingWeaknessBuffId = 76
+)
+
+// bypassesToxicityGate reports whether an item skips the pre-check that refuses
+// a potion which would push the drinker past their tolerance.
+//
+// Detox items MUST skip it. They are drunk precisely when toxicity is high, so
+// gating them denies the cure to the poisoned -- and since the Purging Draught
+// costs more than a fresh character's entire tolerance, gating it makes the
+// item unusable outright rather than merely awkward.
+func bypassesToxicityGate(itemId int) bool {
+	return itemId == ysoldesPurgeItemId || itemId == purgingDraughtItemId
+}
+
+// applyPurgeEffects undoes alchemy: it strips the potion effects the drinker is
+// carrying, clears the toxicity those potions cost, and leaves them weakened
+// for it.
+//
+// All three have to happen here. The draught declares only buff 70, which has a
+// description and no statmods, and there is no buff scripting layer -- so none
+// of the item's advertised behaviour existed. Buff 76 was authored with the
+// intended penalty and wired to nothing.
+func applyPurgeEffects(c *characters.Character) {
+	for id := potionBuffIdMin; id <= potionBuffIdMax; id++ {
+		if id == purgingDraughtBuffId {
+			continue
+		}
+		c.RemoveBuff(id)
+	}
+	c.Toxicity = 0
+	_ = c.AddBuffScaled(purgingWeaknessBuffId, 1.0)
+}
 
 // catalystOfUnmakingItemId is #22 crash-site: drinking it scours ALL mutations
 // back to species intrinsics and biases re-acquisition hard toward rare.
@@ -143,9 +189,10 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// Check toxicity before consuming.
-	// Exception: Ysolde's Purge bypasses this cap -- the toxicity flood is
-	// intentional and the detox must be drinkable even at high toxicity.
-	if itemSpec.Toxicity > 0 && itemSpec.ItemId != ysoldesPurgeItemId {
+	// Exception: both detox items (Ysolde's Purge and the Purging Draught)
+	// bypass this cap -- the toxicity flood is intentional and a detox must be
+	// drinkable even at high toxicity, or it can never be drunk at all.
+	if itemSpec.Toxicity > 0 && !bypassesToxicityGate(itemSpec.ItemId) {
 		toxCost := float64(itemSpec.Toxicity)
 		if user.Character.Toxicity+toxCost > user.Character.GetToxicityMax() {
 			user.SendText(messaging.CategorySystem,
@@ -228,7 +275,7 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	// ── Ysolde's Purge special-case ──────────────────────────────────────────
-	// Toxicity (45) and the detox debuff (buff 93) are applied by the normal
+	// Toxicity (26) and the detox debuff (buff 93) are applied by the normal
 	// drink path above. Here we drive the addiction step-down -- the brutal-
 	// fast path to clean.
 	if itemSpec.ItemId == ysoldesPurgeItemId {
@@ -238,9 +285,22 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				`Bloom. It is violent, and it is fast.`)
 	}
 
+	// ── Purging Draught special-case ─────────────────────────────────────────
+	// The draught declares only buff 70, which is a flavour line with no
+	// statmods, so every effect it advertises has to be wired here -- exactly
+	// as Ysolde's Purge and the Bloom Wafer are. Its own toxicity was applied
+	// by the normal path above and is cleared again here, which is correct: you
+	// cannot pay a toxicity price for the thing that removes toxicity.
+	if itemSpec.ItemId == purgingDraughtItemId {
+		applyPurgeEffects(user.Character)
+		user.SendText(messaging.CategoryWarning,
+			`The draught tears through you. Every trace of potion work is `+
+				`scoured out, and you are left shaking and hollow.`)
+	}
+
 	// ── Bloom Wafer special-case ──────────────────────────────────────────────
 	// The wafer has no buffids in its YAML; all Bloom effects are wired here.
-	// Toxicity (35) was already applied by the normal path above — don't
+	// Toxicity (20) was already applied by the normal path above — don't
 	// apply it again. The order relative to the buff loop above doesn't matter
 	// since the loop is empty for this item.
 	if itemSpec.ItemId == bloomWaferItemId {

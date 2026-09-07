@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 )
@@ -448,10 +449,22 @@ func (c *Character) ConvictionPerRound() int {
 }
 
 // GetToxicityMax returns the maximum toxicity this character can handle.
-// Formula: BaseMax + Vitality / VitalityScale
+//
+//	max = ToxicityBaseMax + alchemy/AlchemyScale + Vitality/VitalityScale
+//
+// Tolerance is EARNED BY BREWING, not by being tough. A veteran who never
+// touched a still is less tolerant than a practised brewer -- you build a
+// tolerance by handling the stuff, and that inversion is the point of the
+// formula. ToxicityBaseMax ships at 0 so tolerance is entirely earned; it
+// survives as a knob so a flat floor can be restored without a code change.
+//
+// Both divisors are guaranteed non-zero by validateCombat.
 func (c *Character) GetToxicityMax() float64 {
 	bal := configs.GetBalanceConfig()
-	return float64(bal.ToxicityBaseMax) + float64(c.Stats.Vitality.ValueAdj)/float64(bal.ToxicityVitalityScale)
+	alchemy := float64(c.GetSkillLevel(skills.Alchemy))
+	return float64(bal.ToxicityBaseMax) +
+		alchemy/float64(bal.ToxicityAlchemyScale) +
+		float64(c.Stats.Vitality.ValueAdj)/float64(bal.ToxicityVitalityScale)
 }
 
 // AddToxicity adds (or removes, if amount is negative) toxicity, clamping to the
@@ -493,6 +506,11 @@ func (c *Character) ToxicitySicknessDamage() int {
 
 // GetToxicityPenalties returns stat multipliers based on toxicity threshold.
 // Returns (regenMult, perceptionMult, dexterityMult) where 1.0 = no penalty.
+//
+// ⚠️ These thresholds are 50/75/90 and DELIBERATELY COARSER than ToxicityBand's
+// six tiers. Do not add entries here to "match" the band list: bands 1 and 2 are
+// feedback-only warnings that must stay free. Changing this table is a balance
+// change, not a tidy-up.
 func (c *Character) GetToxicityPenalties() (float64, float64, float64) {
 	max := c.GetToxicityMax()
 	if max <= 0 {
@@ -514,12 +532,19 @@ func (c *Character) GetToxicityPenalties() (float64, float64, float64) {
 
 // ToxicityBand returns the toxicity severity band:
 //
-//	0 = clear   (<50%)
-//	1 = queasy  (>=50%)
-//	2 = sick    (>=75%)
-//	3 = critical (>=90%)
+//	0 = clear     (<15%)   no penalty
+//	1 = sour      (>=15%)  no penalty -- FEEDBACK ONLY
+//	2 = unsettled (>=30%)  no penalty -- FEEDBACK ONLY
+//	3 = queasy    (>=50%)  penalty
+//	4 = sick      (>=75%)  penalty
+//	5 = critical  (>=90%)  penalty + acute HP damage
 //
-// Thresholds mirror GetToxicityPenalties exactly.
+// ⚠️ These thresholds DELIBERATELY DO NOT MIRROR GetToxicityPenalties. Bands 1
+// and 2 exist so a player can watch pressure building before it costs anything;
+// they have no counterpart in the penalty table on purpose. The two functions
+// used to mirror each other exactly and the comments said so -- "restoring" that
+// symmetry silently deletes both warning tiers, which is the whole feature.
+// TestToxicityBandsAreFinerThanPenalties will fail if you do.
 func (c *Character) ToxicityBand() int {
 	max := c.GetToxicityMax()
 	if max <= 0 {
@@ -528,10 +553,14 @@ func (c *Character) ToxicityBand() int {
 	ratio := c.Toxicity / max
 	switch {
 	case ratio >= 0.90:
-		return 3
+		return 5
 	case ratio >= 0.75:
-		return 2
+		return 4
 	case ratio >= 0.50:
+		return 3
+	case ratio >= 0.30:
+		return 2
+	case ratio >= 0.15:
 		return 1
 	default:
 		return 0
@@ -539,14 +568,20 @@ func (c *Character) ToxicityBand() int {
 }
 
 // ToxicityBandName returns the descriptive tier word for the current band.
+// Names must stay at or under 13 characters: status.template pads this into a
+// 13-wide column and a longer word breaks the box border.
 func (c *Character) ToxicityBandName() string {
 	switch c.ToxicityBand() {
-	case 3:
+	case 5:
 		return "critical"
-	case 2:
+	case 4:
 		return "sick"
-	case 1:
+	case 3:
 		return "queasy"
+	case 2:
+		return "unsettled"
+	case 1:
+		return "sour"
 	default:
 		return "clear"
 	}

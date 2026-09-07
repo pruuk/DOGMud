@@ -94,18 +94,25 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		}
 
 		// Notify player when toxicity crosses a named threshold — once per
-		// crossing, not every tick.
+		// crossing, not every tick. Bands 1 and 2 carry no penalty; their lines
+		// exist so a player can feel pressure building before it costs anything.
 		if newToxBand := user.Character.ToxicityBand(); newToxBand != prevToxBand {
 			if newToxBand > prevToxBand {
 				// Worsening — band-specific onset messages.
 				switch newToxBand {
 				case 1:
 					user.SendText(messaging.CategoryWarning,
-						`A faint nausea settles in and will not quite lift.`)
+						`A faint sourness settles on the back of your tongue.`)
 				case 2:
 					user.SendText(messaging.CategoryWarning,
-						`Your hands have a fine tremor now, and your sight swims at the edges.`)
+						`Your stomach sits uneasy, and the taste will not wash away.`)
 				case 3:
+					user.SendText(messaging.CategoryWarning,
+						`A faint nausea settles in and will not quite lift.`)
+				case 4:
+					user.SendText(messaging.CategoryWarning,
+						`Your hands have a fine tremor now, and your sight swims at the edges.`)
+				case 5:
 					user.SendText(messaging.CategoryWarning,
 						`Your whole body is in revolt — sweat, shakes, the taste of metal.`)
 				}

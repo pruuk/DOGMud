@@ -1843,6 +1843,28 @@ Balance:
   SentientChatterCooldownRounds: 20   # Min rounds between sentient item lines
   SentientChatterChancePct: 15        # Percent chance per eligible round that a sentient item speaks
 
+
+  # ── TOXICITY ──────────────────────────────────────────────────────────────
+  # Tolerance is EARNED BY BREWING, not by being tough:
+  #   max = ToxicityBaseMax + alchemy/AlchemyScale + Vitality/VitalityScale
+  # A practised brewer out-lasts a far hardier character who never touched a
+  # still. The crossover sits near alchemy 42 against a vitality-150 character,
+  # so that inversion is real but NARROW -- do not describe it to players as
+  # though a beginner alchemist beats a veteran.
+  #
+  # Fitted so the fifth low-tier potion is the one that first costs a skilled
+  # alchemist something. internal/characters/toxicity_calibration_test.go pins
+  # that fit, so editing either scale fails that test on purpose.
+  #
+  # ToxicityBaseMax: 0 is a REAL value, not an absent one. The validator guard
+  # used to read `<= 0 -> 100`, which rewrote it on every load and silently
+  # restored a flat ceiling; it now guards only against a negative.
+  ToxicityBaseMax: 0            # flat floor; 0 = tolerance is entirely earned
+  ToxicityAlchemyScale: 2.5     # divisor on alchemy skill
+  ToxicityVitalityScale: 3      # divisor on vitality
+  ToxicityDecayPerTick: 1.0     # points shed per regen tick
+  ToxicitySicknessDamagePct: 0.02  # max-HP fraction of acute harm at the top band
+  ToxicityHighDecaySlowMult: 0.5   # decay multiplier at/above 75% (clears slower)
   # ── BOSS INTERRUPTS ──────────────────────────────────────────────────────────
   # General-purpose disruptor allowlists (not crash-site-specific). A mob
   # mid-fold-cast has its cast interrupted when hit by a thrown item whose id

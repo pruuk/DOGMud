@@ -7,11 +7,40 @@ Naming: `YYYY-MM-DD-droplet-<window>[-context].png`. Keep the window in the name
 (`14day`, `6hour`) because the y-axis autoscales, so two captures are only
 comparable at the same window length.
 
+Build-stage captures (terminal output from `docker compose up --build`, not an
+Insights graph) are named `YYYY-MM-DD-deploy-stage-breakdown.png` instead. They
+answer a different question: not "what did the box do" but "where did the time
+go inside the build".
+
 Numeric datapoints (restart seconds, CPU spike, idle) live with the deploy
 record in the session memory's prod perf baseline, not here. These images are
 the supporting evidence.
 
 ## Index
+
+### 2026-08-31 — deploy `a1af7269a..7b71bc2eb` (53 commits, PRs #102-#107)
+
+- `2026-08-31-deploy-stage-breakdown.png` — the 20 build stages with per-stage
+  timings, captured from the droplet terminal.
+
+Hand-recorded datapoints: **167.0s total**, CPU spike 42%, idle 8%.
+
+What it shows:
+
+- **CPU spike 42% and idle 8% are unchanged from the 2026-08-11 baseline below.**
+  Steady-state did not move. Note the two numbers measure different things: the
+  spike is the deploy, the idle figure is background load, *not* idle bottoming
+  out during the build. Reading them as one series invents a CPU shortfall that
+  is not there.
+- **72% of the deploy is two stages**: `go build` 97.2s and `go generate` 22.8s.
+  Image export is 22.9s, `COPY . .` (15.81MB context) 10.4s, all else ~14s.
+- **`COPY . .` sits before both**, so any change at all — docs included —
+  invalidates them. That is why deploy time is flat regardless of diff size.
+- **The cost is compiling 2,799 Go files across 137 packages on 1 vCPU**, not
+  fetching dependencies: `go.mod` has only 20 modules. The `apk add` layer and
+  the four setup layers above the COPY were all cache hits at 0.0s.
+- **167s against a 135-145s baseline** is a real increase. Expect this to keep
+  creeping as the codebase grows, since nothing is cached across builds.
 
 ### 2026-08-11 — deploy `6b717c25b..7c64c228c` (148 commits, Waves 1-4 + 2.8/3.6b-1/4.6)
 

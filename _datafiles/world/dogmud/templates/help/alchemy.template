@@ -54,8 +54,15 @@ There is no trainer for alchemy — practice is the only teacher.
   <ansi fg="command">drink <item></ansi>        Consume a crafted potion or poultice.
   <ansi fg="command">skills</ansi>              Check your current alchemy skill level.
 
+<ansi fg="yellow">━━━ Tolerance ━━━</ansi>
+
+  Practising alchemy raises your tolerance for the potions you
+  drink. The more skilled a brewer you become, the more you can
+  take before the toxicity starts to tell on you. See
+  <ansi fg="command">help toxicity</ansi>.
+
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help craft</ansi>, <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help tailoring</ansi>,
   <ansi fg="command">help cooking</ansi>, <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help enchanting</ansi>,
-  <ansi fg="command">help foraging</ansi>, <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help foraging</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help toxicity</ansi>
