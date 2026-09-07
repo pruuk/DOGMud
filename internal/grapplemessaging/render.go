@@ -1,8 +1,9 @@
 package grapplemessaging
 
 import (
-	"math/rand"
 	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
 // RenderTemplate substitutes {controllerName} and {controlledName}
@@ -27,7 +28,12 @@ func RenderTemplate(template, controllerName, controlledName string) string {
 // Empty `pool` returns a benign fallback string so callers can
 // always send something (a missing template should not crash a
 // round).
-func PickTemplate(pool []string, cooldowns map[string]bool, keyPrefix string) string {
+//
+// The optional picker exists for the snapshot harness. Production passes none
+// and gets narration.DefaultPicker, which routes through the engine's util.Rand
+// seam. This file used stdlib math/rand directly until 2026-09-07, which made
+// it unreachable by any seam and therefore unsnapshottable.
+func PickTemplate(pool []string, cooldowns map[string]bool, keyPrefix string, picker ...narration.Picker) string {
 	if len(pool) == 0 {
 		return "(grapple messaging missing template)"
 	}
@@ -49,7 +55,11 @@ func PickTemplate(pool []string, cooldowns map[string]bool, keyPrefix string) st
 		available = pool
 	}
 
-	pick := available[rand.Intn(len(available))]
+	choose := narration.DefaultPicker
+	if len(picker) > 0 && picker[0] != nil {
+		choose = picker[0]
+	}
+	pick := available[choose(len(available))]
 	cooldowns[keyPrefix+":"+pick] = true
 	return pick
 }

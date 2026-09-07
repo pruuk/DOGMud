@@ -4,11 +4,28 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
 var (
 	attackMessages map[ItemSubType]*WeaponAttackMessageGroup = map[ItemSubType]*WeaponAttackMessageGroup{}
+
+	// Picker is the randomness seam for MessageOptions.Get and
+	// SkillTieredMessages.GetForSkillLevel.
+	//
+	// Both methods already carry a variadic int parameter (seedNum / msgSeed)
+	// used for an EXPLICIT index override — a second variadic of a different
+	// type isn't legal Go, and adding a plain non-variadic parameter would
+	// break every existing call site. So the picker lives here instead, as a
+	// package-level settable seam.
+	//
+	// Production never touches this — it stays narration.DefaultPicker, which
+	// routes through util.Rand. The snapshot harness swaps it for
+	// narration.SequencePicker() for the duration of a run and MUST restore it
+	// afterward (e.g. via t.Cleanup), since this is process-wide mutable state.
+	// It only governs the no-seed branch of each method; seedNum/msgSeed
+	// behaviour is untouched.
+	Picker narration.Picker = narration.DefaultPicker
 )
 
 type SkillTier string
@@ -61,7 +78,7 @@ func (mo MessageOptions) Get(seedNum ...int) ItemMessage {
 	if ct := len(mo); ct > 0 {
 
 		if len(seedNum) == 0 || seedNum[0] == 0 {
-			return mo[util.Rand(ct)]
+			return mo[Picker(ct)]
 		}
 
 		if seedNum[0] == 0 {
@@ -106,7 +123,7 @@ func (stm SkillTieredMessages) GetForSkillLevel(skillLevel int, msgSeed ...int) 
 		return allMessages[msgSeed[0]%len(allMessages)]
 	}
 
-	return allMessages[util.Rand(len(allMessages))]
+	return allMessages[Picker(len(allMessages))]
 }
 
 // Presumably to ensure the datafile hasn't messed something up.
