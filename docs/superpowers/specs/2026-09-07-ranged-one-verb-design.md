@@ -119,9 +119,17 @@ in, the tree only needs to know whether the mob has ammo at all.
 
 **Quest 50 First Shot** is rewritten around `fire`. The `50-reload` beat goes
 away; Iden teaches the one verb that now exists. The quest keeps two beats so its
-shape is unchanged, and the second beat teaches the ambush: fire once openly, then
-sneak and fire again to feel the bonus and lose stealth. That turns a mechanical
-tutorial into one that teaches the part worth knowing.
+shape is unchanged, and the second beat is simply **a second shot**: the first
+teaches the verb, the second teaches that the weapon is ready again without being
+told to reload, which is exactly the change a returning player needs to notice.
+
+🔴 **The second beat must NOT be the ambush.** An earlier draft of this spec
+proposed teaching the surprise shot here. That is not implementable at this point
+in the game: `sneak` requires `Skullduggery >= 1`
+(`internal/usercommands/skill.skullduggery.sneak.go:23-26`) and **no quest grants
+skullduggery**, so a player arriving at quest 50 typically cannot sneak at all.
+The ambush stays where it is taught today, and quest 50 stays a tutorial for the
+verb.
 
 **Quests 51 and 59** need their `command:` triggers moved to `fire`.
 
