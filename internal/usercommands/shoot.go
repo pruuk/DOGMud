@@ -99,7 +99,10 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.NotLoaded {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> isn't loaded. Try <ansi fg="command">reload</ansi>.`, result.WeaponName))
+		// Firing chambers its own next round, so an empty weapon means the
+		// shooter is OUT, not that they forgot a step. Pointing at `reload` here
+		// would name a command that no longer exists.
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> is empty, and you have nothing left to load it with.`, result.WeaponName))
 		return true, nil
 	}
 	if result.BadSyntax {
@@ -231,13 +234,18 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// without carrying the words over would have left the player to find out by
 	// pulling a trigger on an empty weapon.
 	switch {
+	case result.Chambered.Loaded:
+		if line := shotRecoveryLine(result.Chambered.AmmoTag); line != "" {
+			user.SendText(messaging.CategoryHitRanged, line)
+		}
+		if result.Chambered.BundleEmptied {
+			user.SendText(messaging.CategorySystem,
+				fmt.Sprintf(`That was the last of your <ansi fg="itemname">%s</ansi>.`, result.Chambered.AmmoName))
+		}
 	case result.Chambered.NoAmmo:
 		user.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`You reach for another <ansi fg="item">%s</ansi> and find none. Your <ansi fg="itemname">%s</ansi> is empty.`,
 				result.Chambered.AmmoTag, result.Chambered.WeaponName))
-	case result.Chambered.BundleEmptied:
-		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`That was the last of your <ansi fg="itemname">%s</ansi>.`, result.Chambered.AmmoName))
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
@@ -245,6 +253,46 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	return true, nil
 }
+
+// shotRecoveryLine returns the short line describing the shooter readying the
+// next projectile, so the shot and its recovery read as one motion rather than
+// as a silent state change.
+//
+// It is keyed on AMMO TAG because that is the only discriminator available:
+// every ranged weapon shares `subtype: shooting`. That makes this FINER-grained
+// than the attack messages it sits beside, which key on subtype alone -- a
+// sling and a relic sidearm already share every attack line in
+// combat-messages/shooting.yaml today.
+//
+// ⚠️ These live in Go rather than in that YAML on purpose. The file's schema is
+// map[Intensity]AttackOptions, which has no slot for an ammo tag, so a
+// `recovery:` block added there would be SILENTLY DISCARDED by the loader --
+// the same shape of bug as a mob YAML key that binds to no field. The
+// narration copy guard in shoot_narration_test.go covers every constant here,
+// so these get the 80-column and no-raw-numbers checks for free.
+func shotRecoveryLine(ammoTag string) string {
+	switch ammoTag {
+	case "arrows":
+		return recoveryArrowsText
+	case "bolts":
+		return recoveryBoltsText
+	case "shot":
+		return recoveryShotText
+	}
+	// An ammo tag nobody has authored a line for stays silent rather than
+	// narrating something wrong for the weapon in the player's hands.
+	return ""
+}
+
+const (
+	recoveryArrowsText = `You draw and nock another shaft in the same motion.`
+	recoveryBoltsText  = `You crank the string back and seat another bolt.`
+
+	// ⚠️ The `shot` tag covers a SLING and two firearms, so this line is worded
+	// to fit a stone in a cradle and a ball in a barrel alike. Do not make it
+	// sling-specific.
+	recoveryShotText = `You settle another shot into place and steady the weapon.`
+)
 
 // U10d shooter-facing copy. Every one of these speaks a flag ExecuteFire
 // already sets; none of them changes a mechanic.

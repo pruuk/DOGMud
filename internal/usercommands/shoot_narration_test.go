@@ -59,6 +59,9 @@ func TestShootNarrationCopy_ObeysThePlayerCopyRules(t *testing.T) {
 	lines := map[string]string{
 		"revealed":         surpriseShotRevealedText,
 		"engaged":          aimedWhileEngagedText,
+		"recovery/arrows":  recoveryArrowsText,
+		"recovery/bolts":   recoveryBoltsText,
+		"recovery/shot":    recoveryShotText,
 		"from-cover/hit":   surpriseShotShooterLine(true, "", wideTargetTag, widestBand, true),
 		"from-cover/miss":  surpriseShotShooterLine(false, "", wideTargetTag, "", false),
 		"from-cover/triad": surpriseShotShooterLine(false, triad, wideTargetTag, widestBand, true),
@@ -267,5 +270,40 @@ func clearRoomAggro(t *testing.T, room *rooms.Room) {
 		if m := mobs.GetInstance(instId); m != nil {
 			m.Character.EndAggro()
 		}
+	}
+}
+
+// TestShotRecoveryLine_PicksThePhrasingForTheAmmo pins that each ammo type gets
+// its own wording and that an unknown one stays silent.
+//
+// Silence for an unauthored tag is deliberate: narrating a nocked arrow for a
+// weapon that fires stones is worse than saying nothing, and a new ammo type
+// should read as missing copy rather than as the wrong copy.
+func TestShotRecoveryLine_PicksThePhrasingForTheAmmo(t *testing.T) {
+	for _, tc := range []struct {
+		ammoTag string
+		want    string
+	}{
+		{"arrows", recoveryArrowsText},
+		{"bolts", recoveryBoltsText},
+		{"shot", recoveryShotText},
+		{"", ""},
+		{"pebbles", ""},
+	} {
+		if got := shotRecoveryLine(tc.ammoTag); got != tc.want {
+			t.Errorf("shotRecoveryLine(%q) = %q, want %q", tc.ammoTag, got, tc.want)
+		}
+	}
+
+	// The three authored lines must be distinct, or keying on ammo bought
+	// nothing over a single generic line.
+	seen := map[string]string{}
+	for _, tag := range []string{"arrows", "bolts", "shot"} {
+		line := shotRecoveryLine(tag)
+		if prev, dup := seen[line]; dup {
+			t.Errorf("%q and %q share the line %q; the three ammo types must read differently",
+				prev, tag, line)
+		}
+		seen[line] = tag
 	}
 }
