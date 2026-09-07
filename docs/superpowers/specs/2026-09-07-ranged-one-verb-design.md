@@ -118,18 +118,23 @@ in, the tree only needs to know whether the mob has ammo at all.
 ### Content
 
 **Quest 50 First Shot** is rewritten around `fire`. The `50-reload` beat goes
-away; Iden teaches the one verb that now exists. The quest keeps two beats so its
-shape is unchanged, and the second beat is simply **a second shot**: the first
-teaches the verb, the second teaches that the weapon is ready again without being
-told to reload, which is exactly the change a returning player needs to notice.
+away; Iden teaches the one verb that now exists. The quest keeps two beats, and
+**the second beat teaches the ambush**: fire once openly, then `sneak` and fire
+again to feel the bonus and lose stealth.
 
-🔴 **The second beat must NOT be the ambush.** An earlier draft of this spec
-proposed teaching the surprise shot here. That is not implementable at this point
-in the game: `sneak` requires `Skullduggery >= 1`
-(`internal/usercommands/skill.skullduggery.sneak.go:23-26`) and **no quest grants
-skullduggery**, so a player arriving at quest 50 typically cannot sneak at all.
-The ambush stays where it is taught today, and quest 50 stays a tutorial for the
-verb.
+✅ **Every character can do this from creation.** `characters.New()` calls
+`initAllSkills()`, which seeds **every** skill at rank 1
+(`internal/characters/character.go:443-451`), and `ensureAllSkills()` floors
+existing saves at 1 on `Validate()`. `sneak` gates on `Skullduggery >= 1`
+(`skill.skullduggery.sneak.go:23-26`), so it is available to everyone
+immediately. No quest grants skullduggery because none needs to.
+
+That is the reason to teach it here rather than leave it: the mechanic is
+available to every player from their first minute and nothing currently points
+at it. Owner, 2026-09-07: *"Everyone starts with skullduggery. We just haven't
+encouraged or taught players to use it. It isn't hard to go from skill 1 to 2."*
+The quest is the natural place to fix that, and the ambush is the part of ranged
+worth knowing.
 
 **Quests 51 and 59** need their `command:` triggers moved to `fire`.
 

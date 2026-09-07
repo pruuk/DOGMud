@@ -9,12 +9,21 @@ round as one action, burning one special-move cooldown whether or not the shoote
 was sneaking. The player-facing `reload` retires, taking a two-way cooldown
 collision with it.
 
-**Architecture:** The fold lands in `actions.ExecuteFire`, the single seam both
+**Architecture:** Task 1 gives the shared special-move cooldown a single owner:
+one helper in `internal/actions`, consumed by all 56 call sites that currently
+hand-roll the magic string. Everything after it becomes small. The ranged fold
+then lands in `actions.ExecuteFire`, the single seam both
 `internal/usercommands/shoot.go` and `internal/mobcommands/shoot.go` already call,
 so player and mob parity is structural rather than a second implementation.
 `ExecuteReload` stops being a player action and becomes an internal chambering
 step. The command registry flips `fire` to canonical with `shoot` as its alias,
 and the quest-notify string moves with it so the two cannot drift.
+
+**Owner direction, 2026-09-07:** *"Just have a shared helper for managing the
+cooldown that gets called by spells, special attacks, fire/reload, grapple,
+etc."* That is Task 1, and it is why the ranged tasks are as small as they are:
+the question "should the ambush be denied when the timer is spent" stops being a
+ranged decision and becomes one rule in one place.
 
 **Tech Stack:** Go 1.x, `gopkg.in/yaml.v2` data files, Go text/template help
 pages, the project's `actions`/`combat` seam packages.
@@ -42,7 +51,7 @@ Read from the files at plan-writing time. Trust this table over any older note.
 | **Three** quests key on these commands | `50-first_shot.yaml:82` (`command: reload`) and `:95` (`command: shoot`, `room: 5351`); `51-across_the_canyon.yaml:80` (`command: shoot`, `room: 5354`); `59-range_practice.yaml:54` (`command: shoot`, `room: 5354`) |
 | A dialogue node gates the quest-50 turn-in on BOTH tokens | `_datafiles/world/dogmud/dialogue/pothole_coulee/9161.yaml:144` -> `questRequired: ["50-reload", "50-shoot"]` |
 | Quest 50 exists to teach the reload loop; its own reward text says so | `50-first_shot.yaml:13-14`, `:70` (*"shoot, then reload, shoot, then reload"*) |
-| 🔴 `sneak` needs `Skullduggery >= 1`, and NO quest grants skullduggery | `skill.skullduggery.sneak.go:23-26`; `grep -rn skullduggery _datafiles/world/dogmud/quests/` returns nothing. **This is why quest 50's second beat is a second shot, not an ambush.** |
+| ✅ **`sneak` is available to EVERY character from creation.** `initAllSkills()` seeds every skill at rank 1 and `ensureAllSkills()` floors existing saves at 1 | `internal/characters/character.go:443-451`; `sneak` gates on `Skullduggery >= 1` (`skill.skullduggery.sneak.go:23-26`). No quest grants skullduggery because none needs to. **This is why quest 50 can teach the ambush.** |
 | Attack messages key on weapon SUBTYPE, and all 8 ranged weapons are `subtype: shooting` | `combat_helpers.go:1577` (`displaySubtype := ws.weaponSubType`), `:1621`; `attack_messages.go:157` |
 | Three ammo tags exist | `arrows` (Training Bow, Hunting Bow, Ironhorn Warbow), `bolts` (Hand Crossbow, Arbalest), `shot` (Sling, Primitive Pistol, Relic Sidearm) |
 | The archer tree only DECIDES to reload; it does not implement it | `behaviortree/actions_archer.go` -> `unloadedRangedWeapon`, `hasMatchingAmmo` |
@@ -56,6 +65,7 @@ Read from the files at plan-writing time. Trust this table over any older note.
 
 | File | Responsibility |
 |---|---|
+| **56 call sites across ~20 files** | Migrated onto the Task 1 cooldown helper: the 16 combat verbs, `throw.go`, the readiness checks, `mutation_helpers.go`, `mobcommands/cast.go`, and (cycle permitting) `combat/ai.go` |
 | `internal/actions/combat_reload.go` | `ExecuteReload` becomes internal `chamberNextRound`; keeps all bundle/rollback logic |
 | `internal/actions/combat_fire.go` | Calls the chambering step after the shot; owns the single cooldown claim |
 | `internal/usercommands/shoot.go` | Renamed command entry `Fire`; speaks the recovery line; notify string becomes `"fire"` |
@@ -75,8 +85,11 @@ Read from the files at plan-writing time. Trust this table over any older note.
 
 | File | Responsibility |
 |---|---|
+| `internal/actions/special_move_cooldown.go` | The single owner of the shared special-move timer: tag constant, `SpecialMoveReady`, `ClaimSpecialMove`, `ReleaseSpecialMove` |
+| `internal/actions/special_move_cooldown_test.go` | Atomic claim, configured duration (kills the `"1 rounds"` outlier), release |
 | `internal/usercommands/admin.reload.go` | The surviving admin data-file reload, no longer sharing a file with a player action |
-| `internal/actions/combat_fire_fold_test.go` | The fold: one cooldown, weapon left loaded, both collisions dead |
+| `internal/actions/combat_fire_fold_test.go` | The fold: one cooldown, weapon left loaded, mob parity, both collisions dead |
+| `internal/usercommands/ranged_quest_contract_test.go` | Pins the Go notify string to the quest YAML triggers |
 
 **Data — modified**
 
@@ -84,7 +97,7 @@ Read from the files at plan-writing time. Trust this table over any older note.
 |---|---|
 | `_datafiles/world/dogmud/keywords.yaml` | Alias flip; help topic rename |
 | `_datafiles/world/dogmud/combat-messages/shooting.yaml` | Three recovery lines keyed on ammo tag |
-| `_datafiles/world/dogmud/quests/50-first_shot.yaml` | Reload beat removed; two shots |
+| `_datafiles/world/dogmud/quests/50-first_shot.yaml` | Reload beat removed; second beat teaches the ambush |
 | `_datafiles/world/dogmud/quests/51-across_the_canyon.yaml` | Trigger `shoot` -> `fire` |
 | `_datafiles/world/dogmud/quests/59-range_practice.yaml` | Trigger `shoot` -> `fire` |
 | `_datafiles/world/dogmud/dialogue/pothole_coulee/9161.yaml` | Turn-in gate drops `50-reload` |
@@ -95,9 +108,333 @@ Read from the files at plan-writing time. Trust this table over any older note.
 
 ---
 
-## Task 1: Fold chambering into firing
+## Task 1: One owner for the special-move cooldown
 
-The mechanical core. Everything else is naming and content.
+**Do this before anything else.** It is a pure refactor with no behaviour change,
+and it makes every later task small.
+
+### Why
+
+`grep -rn '"special-move"' --include=*.go internal/` returns **56 non-test call
+sites**, each hand-typing the magic string, in **five different idioms**:
+
+| idiom | sites |
+|---|---|
+| `CooldownReady(...)` then, lines later, `TryCooldown(..., fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))` | 16 verbs: bash, drain, gore, grapple, hamstring, kick, maul, pounce, rake, rally, reload, taunt, throttle, trip, warcry, throw |
+| `GetCooldown(...) > 0` | `action_readiness.go:67,136`, `command_readiness.go:39`, `action_cast_best_in_category.go:45` |
+| `char.Cooldowns.Try(...)` raw | `combat_helpers.go:75`, `mutation_helpers.go:99` |
+| `_, exists := char.Cooldowns[...]` raw map read | **12 sites** in `combat/ai.go` |
+| `delete(char.Cooldowns, ...)` raw | `mutation_helpers.go:115`, `mobcommands/cast.go:109` |
+
+🔴 **There is already a live inconsistency in there.** `combat_helpers.go:75`
+hardcodes `"1 rounds"` instead of reading `cfg.SpecialMoveCooldown`, so one path
+runs a 1-round cooldown while all 16 verbs run the configured 4. Nothing flags
+it, because there is nothing to flag it against.
+
+🔴 **The check-then-claim split is the shape that produced the ranged bug.**
+Reload *checked* the timer at `combat_reload.go:86` and *claimed* it at `:133`,
+47 lines apart. That distance is where "reload denies the ambush" hid.
+
+**Files:**
+- Create: `internal/actions/special_move_cooldown.go`
+- Create: `internal/actions/special_move_cooldown_test.go`
+- Modify: the 56 call sites listed above
+
+- [ ] **Step 1: Read the underlying API before designing on top of it**
+
+```bash
+sed -n '60,100p' internal/characters/cooldowns.go
+```
+
+Note the existing contract, which the helper wraps rather than replaces:
+`Cooldowns` is a `map[string]int`; `CooldownReady(tag) bool` is a pure read that
+does not allocate; `TryCooldown(tag, "N rounds") bool` returns **true when the
+cooldown was free and has now been claimed**, false when it was already running.
+
+- [ ] **Step 2: Write the failing test**
+
+Create `internal/actions/special_move_cooldown_test.go`:
+
+```go
+package actions
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
+)
+
+// TestSpecialMoveCooldownClaimIsAtomic pins the property the old idiom could not
+// offer: asking and taking are ONE call. Sixteen verbs used to call
+// CooldownReady first and TryCooldown many lines later, and reload's two halves
+// sat 47 lines apart -- which is exactly where "reload denies the ambush" hid.
+func TestSpecialMoveCooldownClaimIsAtomic(t *testing.T) {
+	c := &characters.Character{}
+
+	if !SpecialMoveReady(c) {
+		t.Fatal("a fresh character must have the special-move cooldown free")
+	}
+	if !ClaimSpecialMove(c) {
+		t.Fatal("the first claim must succeed")
+	}
+	if SpecialMoveReady(c) {
+		t.Error("the cooldown must read as busy after a claim")
+	}
+	if ClaimSpecialMove(c) {
+		t.Error("a second claim must fail while the cooldown is running")
+	}
+}
+
+// TestSpecialMoveCooldownUsesTheConfiguredDuration pins the outlier out of
+// existence. combat_helpers.go hardcoded "1 rounds" while sixteen verbs used the
+// configured value, so one path ran a quarter of the intended cooldown and
+// nothing anywhere could notice.
+func TestSpecialMoveCooldownUsesTheConfiguredDuration(t *testing.T) {
+	c := &characters.Character{}
+	ClaimSpecialMove(c)
+
+	if got := c.GetCooldown(SpecialMoveCooldownTag); got <= 1 {
+		t.Errorf("cooldown = %d rounds, want the configured SpecialMoveCooldown (>1); "+
+			"a value of 1 means the hardcoded outlier came back", got)
+	}
+}
+
+// TestReleaseSpecialMoveClearsIt covers the refund path two call sites need when
+// an action aborts after claiming.
+func TestReleaseSpecialMoveClearsIt(t *testing.T) {
+	c := &characters.Character{}
+	ClaimSpecialMove(c)
+	ReleaseSpecialMove(c)
+
+	if !SpecialMoveReady(c) {
+		t.Error("Release must return the cooldown to free")
+	}
+}
+```
+
+- [ ] **Step 3: Run it to verify it fails**
+
+Run: `go test ./internal/actions/ -run TestSpecialMove -v`
+
+Expected: compile error, `undefined: SpecialMoveReady`. That is the correct
+first failure.
+
+- [ ] **Step 4: Write the helper**
+
+Create `internal/actions/special_move_cooldown.go`:
+
+```go
+package actions
+
+import (
+	"fmt"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+)
+
+// SpecialMoveCooldownTag is the one place this key is spelled. It was typed by
+// hand at 56 call sites before, which is how combat_helpers.go came to run a
+// hardcoded "1 rounds" against everyone else's configured value with nothing
+// able to notice.
+const SpecialMoveCooldownTag = "special-move"
+
+// SpecialMoveReady reports whether the shared special-move cooldown is free.
+//
+// ⚠️ Use this ONLY to decide what to offer or display -- an AI picking a move,
+// a readiness listing. To actually take the cooldown, call ClaimSpecialMove and
+// branch on its return. Asking here and claiming later is the split that hid
+// the ranged bug: reload asked 47 lines before it took, and in that gap the
+// ambush it was about to deny looked available.
+func SpecialMoveReady(char *characters.Character) bool {
+	return char.CooldownReady(SpecialMoveCooldownTag)
+}
+
+// ClaimSpecialMove takes the shared special-move cooldown, returning true when
+// it was free and is now held. Asking and taking are one call on purpose.
+//
+// The duration always comes from Balance.SpecialMoveCooldown. Do not pass a
+// literal: a hardcoded "1 rounds" in one path is precisely the drift this
+// function exists to make impossible.
+func ClaimSpecialMove(char *characters.Character) bool {
+	cfg := configs.GetBalanceConfig()
+	return char.TryCooldown(SpecialMoveCooldownTag,
+		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))
+}
+
+// ReleaseSpecialMove returns the cooldown to free. It exists for actions that
+// claim and then abort, so the player is not charged for a move that did not
+// happen. It is NOT a way to dodge the cooldown.
+func ReleaseSpecialMove(char *characters.Character) {
+	delete(char.Cooldowns, SpecialMoveCooldownTag)
+}
+```
+
+- [ ] **Step 5: Run it to verify it passes**
+
+Run: `go test ./internal/actions/ -run TestSpecialMove -v`
+Expected: PASS, three tests.
+
+- [ ] **Step 6: Migrate the 16 check-then-claim verbs**
+
+For each of `combat_bash.go`, `combat_drain.go`, `combat_gore.go`,
+`combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`,
+`combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_taunt.go`,
+`combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` (and
+`usercommands/throw.go`), the pattern is:
+
+```go
+	if !char.CooldownReady("special-move") {
+		... refusal ...
+	}
+	... work ...
+	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+		... rollback ...
+	}
+```
+
+⚠️ **Keep both halves where they are.** The early check produces a refusal
+message *before* any cost is admitted, and the late claim is where rollback
+lives. Collapsing them changes behaviour, and this task must not. Replace only
+the expressions:
+
+```go
+	if !SpecialMoveReady(char) {
+		... refusal, unchanged ...
+	}
+	... work, unchanged ...
+	if !ClaimSpecialMove(char) {
+		... rollback, unchanged ...
+	}
+```
+
+In `usercommands/throw.go` the calls read `user.Character`; pass
+`user.Character` to the helpers and add the `actions` import if it is missing.
+
+- [ ] **Step 7: Migrate the read-only sites**
+
+`action_readiness.go:67,136`, `command_readiness.go:39` and
+`behaviortree/action_cast_best_in_category.go:45` use
+`GetCooldown("special-move") > 0`, which is the negation of ready:
+
+```go
+	if !SpecialMoveReady(char) {
+```
+
+The 12 sites in `combat/ai.go` use `_, exists := char.Cooldowns["special-move"]`.
+
+⚠️ **That idiom is subtly different and you must not blind-swap it.** It is true
+whenever the KEY EXISTS, including at value 0, whereas `SpecialMoveReady` is true
+when the value is `<= 0`. A pruned-but-present key reads "on cooldown" to the old
+code and "ready" to the helper. Check whether `Cooldowns.Prune()` deletes expired
+keys or zeroes them:
+
+```bash
+sed -n '/func (cd Cooldowns) Prune/,/^}/p' internal/characters/cooldowns.go
+```
+
+If Prune **deletes**, the two are equivalent and you may swap. If it **zeroes**,
+swapping silently makes mobs use special moves more often. In that case leave
+`combat/ai.go` alone, and note in your report that it needs its own decision.
+
+⚠️ **`internal/combat` may not import `internal/actions`.** Check for an import
+cycle before touching those sites:
+
+```bash
+go list -deps ./internal/actions | grep -c "GoMud/internal/combat"
+```
+
+A non-zero count means `actions` already depends on `combat`, so `combat` cannot
+import `actions`. If so, leave `combat/ai.go` on the raw idiom and say so in your
+report; do not invent a third home for the constant in this task.
+
+- [ ] **Step 8: Migrate the raw sites**
+
+`combat_helpers.go:75` currently reads:
+
+```go
+	return !char.Cooldowns.Try("special-move", "1 rounds")
+```
+
+🔴 **This is the outlier.** Replacing it with `ClaimSpecialMove` changes the
+cooldown it applies from 1 round to the configured 4. **That is a real behaviour
+change**, and it is the one exception to this task being a pure refactor. Make it
+deliberately, in its own commit, and say so in the message. Read the function it
+sits in first to see what it gates.
+
+`mutation_helpers.go:99` uses `Cooldowns.Try` with a computed duration string;
+`:115` and `mobcommands/cast.go:109` use raw `delete`. Move the deletes to
+`ReleaseSpecialMove`. If the mutation path deliberately uses a duration other
+than the configured one, leave its `Try` call alone and add a comment saying why
+it is not on the helper.
+
+- [ ] **Step 9: Prove no hand-rolled sites remain where they should not**
+
+```bash
+grep -rn '"special-move"' --include=*.go internal/ | grep -v _test.go | \
+  grep -v "special_move_cooldown.go"
+```
+
+Expected: only the sites you deliberately left (documented in your report), and
+nothing else. Every remaining line needs a comment saying why it is exempt.
+
+- [ ] **Step 10: Verify no behaviour changed**
+
+```bash
+go build ./... && go test ./...
+gofmt -l internal/ modules/
+```
+
+Expected: PASS across the board. This is a refactor: **a failing test here means
+you changed behaviour**, and the fix is to restore the old semantics at that
+site, not to update the test. The one exception is `combat_helpers.go:75`, whose
+1-to-4-round change may legitimately move a test; if so, say which and why.
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add internal/actions/special_move_cooldown.go internal/actions/special_move_cooldown_test.go
+git commit -F - <<'MSG'
+refactor(cooldown): one owner for the shared special-move timer
+
+The key "special-move" was typed by hand at 56 call sites in five different
+idioms: check-then-claim across sixteen verbs, a bare GetCooldown > 0, a raw
+Cooldowns.Try, twelve raw map reads in combat/ai.go, and two raw deletes.
+
+Nothing held them to the same rule, and they had already drifted:
+combat_helpers.go ran a hardcoded "1 rounds" while every verb ran the
+configured four, and no test could see it because there was nothing to compare
+against.
+
+The check-then-claim split is also the shape that produced the ranged bug this
+work exists to fix. Reload asked whether the timer was free at line 86 and took
+it at line 133, and the ambush it would deny lived in the gap between. Asking
+and taking are one call now.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+MSG
+
+git add -u internal/
+git commit -F - <<'MSG'
+refactor(cooldown): move every special-move call site onto the helper
+
+Mechanical migration, no behaviour change intended. The early readiness check
+and the late claim stay exactly where they are in each verb: the check produces
+a refusal before any cost is admitted, and the claim is where rollback lives.
+Only the expressions change.
+
+Sites deliberately left on the raw idiom are commented in place with the reason.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+MSG
+```
+
+---
+
+## Task 2: Fold chambering into firing
+
+The mechanical core of the ranged change. Everything after this is naming and
+content.
 
 **Files:**
 - Modify: `internal/actions/combat_reload.go`
@@ -283,7 +620,7 @@ Put this comment above `chamberNextRound`:
 // the inventory state underneath us.
 ```
 
-Keep `OnCooldown` on `ReloadResult` for now; Task 2 removes it once nothing sets
+Keep `OnCooldown` on `ReloadResult` for now; Task 3 removes it once nothing sets
 it.
 
 - [ ] **Step 5: Call it from `ExecuteFire`, and claim the cooldown once**
@@ -304,35 +641,35 @@ In `internal/actions/combat_fire.go`, find the surprise-shot cooldown claim at
 Replace it with an unconditional claim:
 
 ```go
-	// ONE claim per shot, sneaking or not. Before the fold, an ordinary shot
-	// claimed nothing and the separate `reload` claimed instead, so a
-	// shot-plus-reload cycle already cost exactly one burn. It still does: this
-	// is a command-count change, not a rate change.
+	// ONE claim per shot, sneaking or not, through the Task 1 helper. Before the
+	// fold, an ordinary shot claimed nothing and the separate `reload` claimed
+	// instead, so a shot-plus-reload cycle already cost exactly one burn. It
+	// still does: this is a command-count change, not a rate change.
 	//
-	// The claim is unconditional, so the ambush can no longer be DENIED by a
-	// timer that a reload spent moments earlier. SurpriseOnCooldown therefore
-	// has no way to be set any more and is removed in the same change.
+	// The claim does not gate the ambush. A shot from stealth is a surprise
+	// strike because the shooter was hidden, full stop. The old code refused it
+	// when the timer was already spent, which in practice meant refusing it
+	// whenever the player had reloaded -- exactly the sequence needed to have a
+	// loaded weapon to ambush with. SurpriseOnCooldown therefore has no way to
+	// be set any more and is removed in the same change.
 	surpriseShot := !crossRoom && result.IsSneaking
-	char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))
+	ClaimSpecialMove(char)
 ```
 
-🔴 **Read this before you write it: `surpriseShot` no longer depends on the
-cooldown at all, and that is deliberate.** `TryCooldown` returns false when the
-timer is already claimed, and that return is now ignored, so an ambush is never
-downgraded. Being genuinely hidden is the only condition.
+🔴 **`surpriseShot` no longer depends on the cooldown, and that is the decision
+being made here.** Being genuinely hidden is the only condition.
 
-That is the owner's stated rule (*"If we're sneaking, the shot is a surprise
-strike attack with appropriate bonuses"*), and the old downgrade existed only
-because a reload could steal the timer moments earlier. With no separate reload,
-downgrading would fire on a shooter who did nothing wrong.
+The old refusal existed to stop ambush-spam, but the shared timer was the wrong
+instrument: a reload spent it, and you must reload to have anything to ambush
+with. What actually limits ambushes is stealth itself — firing reveals you, and
+`sneak` refuses while you are in combat (`usercommands.go:209`), so you get one
+ambush per engagement no matter what the timer says.
 
-It is self-limiting without the timer: firing from stealth reveals you, so a
-second ambush needs a fresh `sneak`, which has its own cooldown and its own
-skill gate. The special-move claim still matters — it is what the shot costs
-against the shared budget that `throw` and the mutations also draw on.
+The claim still matters: it is what the shot costs against the shared budget
+`throw`, the mutations and every combat verb draw on.
 
-**Do not "restore" the downgrade** by testing `TryCooldown`'s return here. That
-re-creates the denial the whole change exists to remove.
+**Do not "restore" the refusal** by branching on `ClaimSpecialMove`'s return
+here. That re-creates the denial this work exists to remove.
 
 Then, after the shot resolves and the weapon is unloaded, chamber the next round.
 Put it immediately after the existing unload so the two read as one motion, and
@@ -388,7 +725,7 @@ gofmt -l internal/ modules/
 ```
 
 Expected: build clean, tests pass, gofmt silent. `go build` will fail in
-`usercommands`/`mobcommands` until Task 2 — that is expected; fix only what is
+`usercommands`/`mobcommands` until Task 3 — that is expected; fix only what is
 inside `internal/actions` here and note the remaining breakage in your report.
 
 - [ ] **Step 10: Commit**
@@ -427,7 +764,7 @@ MSG
 
 ---
 
-## Task 2: Retire the player `reload`, rename the command to `fire`
+## Task 3: Retire the player `reload`, rename the command to `fire`
 
 **Files:**
 - Delete: `internal/usercommands/reload.go`, `internal/mobcommands/reload.go`
@@ -535,7 +872,7 @@ In `internal/usercommands/shoot.go:207-211`, change `Command: "shoot"` to
 - [ ] **Step 7: Drop the dead `OnCooldown` field**
 
 In `internal/actions/combat_reload.go`, remove `OnCooldown` from `ReloadResult`.
-Nothing sets it after Task 1. Let the compiler find any reader.
+Nothing sets it after Task 2. Let the compiler find any reader.
 
 - [ ] **Step 8: Simplify the archer tree**
 
@@ -607,7 +944,7 @@ MSG
 
 ---
 
-## Task 3: The recovery line
+## Task 4: The recovery line
 
 **Files:**
 - Modify: `_datafiles/world/dogmud/combat-messages/shooting.yaml`
@@ -714,7 +1051,7 @@ MSG
 
 ---
 
-## Task 4: Quests 50, 51 and 59
+## Task 5: Quests 50, 51 and 59
 
 Content, and the highest risk of a silent break: a quest whose trigger no longer
 matches simply stops granting, with nothing in the log.
@@ -748,27 +1085,44 @@ Delete the whole `RELOAD` trigger block (`50-first_shot.yaml:80-91`). Replace th
       - send_text: >-
           The stone leaves the sling and strikes the straw with a solid
           thud. Your hand has already found another and settled it in the
-          cradle. Loose a second one when you are ready.
+          cradle. Iden calls down: "Now do it again, but from where it
+          cannot see you. Type sneak first."
 
-  # ── SECOND SHOT: the weapon was ready without being told ──────────────
+  # ── AMBUSH: the same shot again, but from cover ───────────────────────
+  # Fires on the `sneak` command rather than on `fire`, so the beat is granted
+  # for LEARNING TO HIDE. The ambush itself is then the payoff the player sees
+  # in the damage, not another token to chase.
   - event: command
-    command: fire
+    command: sneak
     room: 5351
     conditions:
       has: ["50-shoot"]
-      missing: ["50-second"]
+      missing: ["50-ambush"]
     actions:
-      - grant: "50-second"
+      - grant: "50-ambush"
       - send_text: >-
-          The second stone goes the same way as the first. You never told
-          the sling to ready itself, and it was ready. Go back west and see
-          Marksman Iden.
+          You settle out of sight behind the butts. The sling is already
+          loaded, because it loaded itself. Fire from here and see what a
+          shot is worth when nothing is expecting it.
 ```
 
-🔴 **The second beat is a SECOND SHOT, not an ambush.** An earlier draft of the
-spec proposed teaching the surprise shot here. It is not implementable: `sneak`
-requires `Skullduggery >= 1` (`skill.skullduggery.sneak.go:23-26`) and no quest
-grants skullduggery, so a player arriving here typically cannot sneak at all.
+✅ **Every character can sneak from creation.** `characters.New()` calls
+`initAllSkills()`, which seeds **every** skill at rank 1
+(`internal/characters/character.go:443-451`), and `ensureAllSkills()` floors
+existing saves at 1 during `Validate()`. `sneak` gates on `Skullduggery >= 1`
+(`skill.skullduggery.sneak.go:23-26`), so it is available immediately and no
+quest needs to grant it.
+
+Owner, 2026-09-07: *"Everyone starts with skullduggery. We just haven't
+encouraged or taught players to use it."* That is the reason this beat is worth
+spending: the mechanic is available to every player from their first minute and
+nothing currently points at it.
+
+⚠️ **The beat triggers on `sneak`, not on the second `fire`.** Gating it on a
+shot taken while hidden would require the quest engine to know the shot was an
+ambush, which the `command` event does not carry. Granting on the hide keeps the
+trigger inside what the engine can already see, and the ambush damage is its own
+reward.
 
 - [ ] **Step 3: Rewrite quest 50's steps and reward text**
 
@@ -788,21 +1142,24 @@ It becomes:
 ```yaml
     hint: >-
       Type ask iden shot to get ammunition. Type equip sling to ready it.
-      Then go east to the Long Terrace and type fire butt, twice. Return
-      west to Marksman Iden -- type ask iden done.
+      Then go east to the Long Terrace and type fire butt. Sneak and fire
+      once more to see what a shot from cover is worth. Return west to
+      Marksman Iden -- type ask iden done.
 ```
 
 Replace the `reload` step entirely:
 
 ```yaml
-  - id: second
+  - id: ambush
     map_target: 5351
     description: >-
-      You put a stone into the butt and the sling readied itself. Loose one
-      more to see it happen again.
+      You put a stone into the butt and the sling readied itself. Iden wants
+      you to try it once more from cover, where the target does not know you
+      are there.
     hint: >-
-      Type fire butt once more on the Long Terrace. Then report to Marksman
-      Iden -- type ask iden done.
+      Type sneak on the Long Terrace to slip out of sight, then fire butt
+      again and watch what the shot is worth. Then report to Marksman Iden
+      -- type ask iden done.
 ```
 
 And the `shoot` step's description and hint, which currently tell the player a
@@ -812,10 +1169,11 @@ ranged weapon is empty after every shot, become:
   - id: shoot
     map_target: 5350
     description: >-
-      You put a stone into the butt. Loose a second one, then report back.
+      You put a stone into the butt, and the sling readied itself without
+      being told. Try it once more from cover.
     hint: >-
-      Type fire butt once more on the Long Terrace, then report to Marksman
-      Iden -- type ask iden done.
+      Type sneak on the Long Terrace, then fire butt again. Report to
+      Marksman Iden afterward -- type ask iden done.
 ```
 
 The reward `playermessage` teaches the retired loop in as many words
@@ -834,7 +1192,7 @@ The reward `playermessage` teaches the retired loop in as many words
 ```
 
 Also update the token-flow comment block at the top of the file (`:1-17`) so it
-describes `50-shoot` and `50-second` rather than `50-reload`, and no longer says
+describes `50-shoot` and `50-ambush` rather than `50-reload`, and no longer says
 the quest teaches reloading.
 
 - [ ] **Step 4: Move the turn-in gate**
@@ -848,7 +1206,7 @@ the quest teaches reloading.
 Change it to:
 
 ```yaml
-      questRequired: ["50-shoot", "50-second"]
+      questRequired: ["50-shoot", "50-ambush"]
 ```
 
 ⚠️ **If this is missed, quest 50 becomes uncompletable** — the turn-in waits on
@@ -880,7 +1238,7 @@ can drift apart silently — a quest that stops granting logs nothing. This is t
 same silent-data-contract family as the mob `items:` key that left 17 mobs empty.
 
 First extract the string to a named constant in `internal/usercommands/shoot.go`,
-replacing the literal from Task 2 Step 6:
+replacing the literal from Task 3 Step 6:
 
 ```go
 // questNotifyCommand is the command name the quest engine is told about when a
@@ -977,15 +1335,21 @@ Quest 50 existed to teach the reload loop, in as many words: "shoot, then
 reload, shoot, then reload." That loop is gone, so the tutorial was teaching a
 command that no longer exists.
 
-Its two beats are now two shots. The first teaches the verb; the second teaches
-the thing that actually changed, which is that the weapon was ready again
-without being told. The reload step, its token, and every instruction to reload
-are removed, including from Iden's parting speech.
+The first beat teaches the verb. The second teaches the ambush, which is the
+part of ranged worth knowing and which nothing currently points at: every
+character can already sneak, because initAllSkills seeds every skill at rank 1
+on creation and ensureAllSkills floors older saves at 1, so `sneak`'s
+Skullduggery gate has always been satisfied for everyone. No quest grants
+skullduggery because none needs to.
 
-The second beat is deliberately NOT the ambush. `sneak` requires Skullduggery
-at rank 1 and no quest grants skullduggery, so a player arriving at quest 50
-typically cannot sneak, and the tutorial would have asked for an action the
-student cannot perform.
+The ambush beat triggers on `sneak` rather than on a second shot. Gating it on
+"a shot taken while hidden" would need the quest engine to know the shot was an
+ambush, which the command event does not carry; granting on the hide keeps the
+trigger inside what the engine can already see, and the ambush damage is its own
+reward.
+
+The reload step, its token, and every instruction to reload are removed,
+including from Iden's parting speech.
 
 Iden's turn-in gate moves from 50-reload to the new token. Missing that would
 have left the quest uncompletable, waiting on a token nothing grants.
@@ -999,7 +1363,7 @@ MSG
 
 ---
 
-## Task 5: Help pages
+## Task 6: Help pages
 
 ⚠️ **Help templates parse LAZILY and template function names resolve at PARSE
 time**, so a typo passes both `go build` and boot and reaches a player as
@@ -1052,7 +1416,7 @@ single action. Cross-link `help fire`.
 
 In `keywords.yaml`, rename the `shoot` help topic entry to `fire` in whatever
 category list holds it, keeping the list alphabetical. Confirm the alias flip
-from Task 2 Step 5 is present.
+from Task 3 Step 5 is present.
 
 - [ ] **Step 6: Render every page rather than trusting the boot**
 
@@ -1086,7 +1450,7 @@ MSG
 
 ---
 
-## Task 6: Full verification, patch notes, and the playtest gate
+## Task 7: Full verification, patch notes, and the playtest gate
 
 - [ ] **Step 1: Format, build, full suite**
 
@@ -1209,28 +1573,30 @@ Use `--merge`, not `--squash`. **Do not deploy** — the owner runs deploys.
 
 ## Done when
 
+0. The shared special-move cooldown has exactly one owner, every call site that
+   can use it does, and the hardcoded `"1 rounds"` outlier is gone — Task 1.
 1. `fire <target> [direction]` resolves a shot and chambers the next round in one
-   action, for players and mobs alike, through `actions.ExecuteFire` — Task 1.
+   action, for players and mobs alike, through `actions.ExecuteFire` — Task 2.
 2. Exactly one special-move cooldown is burned per shot, sneaking or not, pinned
-   by `TestFireBurnsExactlyOneSpecialMoveCooldown` — Task 1.
+   by `TestFireBurnsExactlyOneSpecialMoveCooldown` — Task 2.
 3. Reload can no longer deny an ambush, and an ambush can no longer strand an
    empty weapon, the latter pinned by `TestAmbushNoLongerStrandsAnEmptyWeapon` —
-   Task 1.
+   Task 2.
 4. The player `reload` command is gone; the admin one still works from its own
-   file — Task 2.
-5. `fire` is canonical, `shoot` is its alias, in both registries — Task 2.
+   file — Task 3.
+5. `fire` is canonical, `shoot` is its alias, in both registries — Task 3.
 6. The shot and its recovery read as one motion, and running dry says so —
-   Task 3.
-7. Quests 50, 51 and 59 fire their beats; quest 50 teaches two shots and its
-   turn-in gate matches the tokens it grants — Task 4. The Go notify string and
+   Task 4.
+7. Quests 50, 51 and 59 fire their beats; quest 50 teaches the verb then the ambush, and its
+   turn-in gate matches the tokens it grants — Task 5. The Go notify string and
    the YAML triggers are pinned to each other by
-   `TestRangedQuestTriggersMatchTheNotifyConstant` — Task 4.
+   `TestRangedQuestTriggersMatchTheNotifyConstant` — Task 5.
 7b. Mob parity is pinned by `TestFireFoldsForMobsToo`, not only observed in play
-   — Task 1.
+   — Task 2.
 8. Help describes one verb, verified by rendering rather than by booting —
-   Task 5.
+   Task 6.
 9. Boot clean, full suite green, mob parity confirmed in play, and the content
-   playtest gate run against a seeded character at the range — Task 6.
+   playtest gate run against a seeded character at the range — Task 7.
 
 ## Out of scope
 
