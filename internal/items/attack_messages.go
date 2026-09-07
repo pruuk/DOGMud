@@ -9,23 +9,6 @@ import (
 
 var (
 	attackMessages map[ItemSubType]*WeaponAttackMessageGroup = map[ItemSubType]*WeaponAttackMessageGroup{}
-
-	// Picker is the randomness seam for MessageOptions.Get and
-	// SkillTieredMessages.GetForSkillLevel.
-	//
-	// Both methods already carry a variadic int parameter (seedNum / msgSeed)
-	// used for an EXPLICIT index override — a second variadic of a different
-	// type isn't legal Go, and adding a plain non-variadic parameter would
-	// break every existing call site. So the picker lives here instead, as a
-	// package-level settable seam.
-	//
-	// Production never touches this — it stays narration.DefaultPicker, which
-	// routes through util.Rand. The snapshot harness swaps it for
-	// narration.SequencePicker() for the duration of a run and MUST restore it
-	// afterward (e.g. via t.Cleanup), since this is process-wide mutable state.
-	// It only governs the no-seed branch of each method; seedNum/msgSeed
-	// behaviour is untouched.
-	Picker narration.Picker = narration.DefaultPicker
 )
 
 type SkillTier string
@@ -73,12 +56,27 @@ func (am ItemMessage) SetTokenValue(tokenName TokenName, tokenValue string) Item
 	return ItemMessage(strings.Replace(string(am), string(tokenName), tokenValue, -1))
 }
 
+// Get chooses a message using the default picker (narration.DefaultPicker,
+// which routes through util.Rand).
 func (mo MessageOptions) Get(seedNum ...int) ItemMessage {
+	return mo.GetWith(nil, seedNum...)
+}
+
+// GetWith is Get with an explicit picker, for the snapshot harness. A nil
+// picker means production behaviour: narration.DefaultPicker, i.e. util.Rand.
+//
+// The picker is consulted only in the no-seed branch, where a random pick
+// used to happen directly. seedNum's explicit-index-override behaviour is
+// untouched.
+func (mo MessageOptions) GetWith(pick narration.Picker, seedNum ...int) ItemMessage {
+	if pick == nil {
+		pick = narration.DefaultPicker
+	}
 
 	if ct := len(mo); ct > 0 {
 
 		if len(seedNum) == 0 || seedNum[0] == 0 {
-			return mo[Picker(ct)]
+			return mo[pick(ct)]
 		}
 
 		if seedNum[0] == 0 {
@@ -91,12 +89,32 @@ func (mo MessageOptions) Get(seedNum ...int) ItemMessage {
 	return ItemMessage("")
 }
 
-// GetForSkillLevel selects a message based on character's skill level.
-// Returns messages from available tiers based on skill:
+// GetForSkillLevel selects a message based on character's skill level, using
+// the default picker (narration.DefaultPicker, which routes through
+// util.Rand). Returns messages from available tiers based on skill:
 //   - Skill 1-33: beginner only
 //   - Skill 34-66: beginner + expert
 //   - Skill 67-100: beginner + expert + master
 func (stm SkillTieredMessages) GetForSkillLevel(skillLevel int, msgSeed ...int) ItemMessage {
+	return stm.GetForSkillLevelWith(nil, skillLevel, msgSeed...)
+}
+
+// GetForSkillLevelWith is GetForSkillLevel with an explicit picker, for the
+// snapshot harness. A nil picker means production behaviour:
+// narration.DefaultPicker, i.e. util.Rand.
+//
+// This is the store the core combat loop calls for all three viewpoints at
+// once (ToAttacker, ToDefender, ToRoom), so it is the store that most needed
+// a picker reachable without mutating shared state.
+//
+// The picker is consulted only in the no-seed branch, where a random pick
+// used to happen directly. msgSeed's explicit-index-override behaviour is
+// untouched.
+func (stm SkillTieredMessages) GetForSkillLevelWith(pick narration.Picker, skillLevel int, msgSeed ...int) ItemMessage {
+	if pick == nil {
+		pick = narration.DefaultPicker
+	}
+
 	// Collect available message pools
 	var allMessages []ItemMessage
 
@@ -123,7 +141,7 @@ func (stm SkillTieredMessages) GetForSkillLevel(skillLevel int, msgSeed ...int) 
 		return allMessages[msgSeed[0]%len(allMessages)]
 	}
 
-	return allMessages[Picker(len(allMessages))]
+	return allMessages[pick(len(allMessages))]
 }
 
 // Presumably to ensure the datafile hasn't messed something up.
