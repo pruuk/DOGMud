@@ -456,14 +456,45 @@ and buys the least.
 
 #### What M1 hands M2
 
-- The trio is the general case; 50 sites prove it and 197 are degenerate forms.
-- The densest cluster is the **twelve special-move verbs** (trip, grapple, bash,
-  gore, kick, pounce, throttle, drain, maul, rake…), each hand-rolling the same
-  three-viewpoint narration. They are not twelve special cases; they are one
-  pattern copied twelve times, and they are the same verbs whose cooldown
-  handling was unified on 2026-09-07.
-- A ruled list of gaps, so M2 knows which viewpoints it must be able to emit
-  that nothing emits today.
+> ✅ **Updated 2026-09-07 with what M1 actually found.** The numbers below the
+> line were predictions taken from the scanner's raw labels; the audit corrected
+> 64 of those labels, so they are replaced here rather than left to propagate.
+> Source: `docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md`.
+
+- **The reason the core is worth building.** All 247 candidate sites were ruled.
+  240 are correctly incomplete (the actee is a mob and has no client, the target
+  is a door, the line is a refusal) and 7 are defects, which are 5 distinct bugs.
+  **Every one of the 5 is the same shape: a duplicated code path that copied the
+  mechanical effect and dropped the narration beside it.** Not one came from an
+  author deciding a viewpoint should not exist. If applying an effect and
+  narrating it were one call, none of them could have happened. That is M2's
+  justification, and it is stronger than "the code is scattered".
+- **M2's fix list**, the viewpoints nothing emits today: `salvage.go:202`/`:207`,
+  `spell_resolution.go:1075`, `rally.go:72` + `warcry.go:76` (mirrored),
+  `equip.go:218`, `admin.zap.go:82`.
+- **The trio pattern is copied TEN times, not twelve.** `bash` `drain` `gore`
+  `kick` `maul` `pounce` `rake` `throttle` `trip` `grapple` all hand-roll the
+  identical shape: actor unconditional, actee nil-guarded so mobs are skipped,
+  observer unconditional. The other two named special-move verbs differ and need
+  separate handling: **`shoot`** emits the trio but names its actee `p`, and
+  **`throw`** has no actee at all (17 actor sends, zero others), correctly,
+  because it is an area effect against mobs. These are the same verbs whose
+  cooldown handling was unified on 2026-09-07.
+- **M2 extracts a pattern that already exists rather than imposing one**, which
+  lowers its risk considerably. Three agents ruled this family identically
+  without conferring.
+- 🪤 **Do not scope M2 from `tools/narration_viewpoint_scan.py`'s labels.** They
+  are wrong 26% of the time, in three ways: it cannot see the
+  `sendVisualRoomText` wrapper all of `internal/hooks` uses, it matches the actee
+  by variable name (so `u.SendText`, `p.SendText` and `memberUser.SendText` are
+  invisible), and its 16-line forward window pairs error branches with
+  success-path messages they can never reach.
+- **Two convention questions M2 must settle**, both ruled `correct` but currently
+  per-author: whether a detail line riding on a parent event inherits that
+  event's viewpoints (`throttle.go:77`, `grapple.go:108`/`:131`), and the fact
+  that `internal/questengine/bridge.go` exposes an actor seam and an observer
+  seam but **no actee seam at all**, so a quest script cannot address a third
+  party.
 
 > **Acknowledged gap:** snapshots cannot capture the *order and interleaving* of
 > messages within a round. That is player-visible and real. It stays a playtest
