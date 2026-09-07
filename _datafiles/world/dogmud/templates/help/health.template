@@ -41,4 +41,5 @@ speed the healing process.
   <ansi fg="command">help conviction</ansi>
   <ansi fg="command">help status</ansi>
   <ansi fg="command">help armor</ansi>
+  <ansi fg="command">help toxicity</ansi>
 

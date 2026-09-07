@@ -40,6 +40,7 @@ help:
       - status
       - suicide
       - title
+      - toxicity
     communication:
       - broadcast
       - emote
@@ -254,6 +255,7 @@ help-aliases:
   craft:            [crafting, recipes, recipe, make, create]
   blacksmithing:    [blacksmith, smith, smithing, forge, metalwork]
   alchemy:          [alchemist, potion, potions, brewing, brew, herbalism]
+  toxicity:         [toxic, poison, poisoned, tolerance]
   foraging:         [forage, gather, gathering, harvest, harvesting]
   tailoring:        [tailor, sewing, weaving, clothwork]
   cooking:          [cook, baking, food, meals]

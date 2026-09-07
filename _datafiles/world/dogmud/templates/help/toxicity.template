@@ -1,32 +1,61 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">toxicity</ansi>
 
-Every potion you drink adds toxicity to your body. Your tolerance
-is based on your Vitality — hardier characters can handle more.
+Every potion you drink leaves something behind. Toxicity is what
+builds up, and how much your body will take is your tolerance.
+
+<ansi fg="yellow">━━━ Tolerance Is Earned ━━━</ansi>
+
+  Your tolerance grows mainly through <ansi fg="command">alchemy</ansi>. Working with
+  reagents, handling fumes and tasting your own brews teaches
+  your body to cope with them. The more skilled a brewer you
+  become, the more you can drink before it tells on you.
+
+  Vitality helps as well, but practice is what carries you
+  furthest. A seasoned brewer will out-last a far hardier
+  character who has never touched a still.
 
 <ansi fg="yellow">━━━ How It Works ━━━</ansi>
 
-  Drinking a potion adds its toxicity cost to your total.
-  Toxicity decays naturally over time, a little each round.
-  If your total would exceed your maximum, your body rejects
-  the potion and it is not consumed.
+  Drinking a potion adds its toxicity to your total.
+  Toxicity fades on its own, a little at a time.
+  If a potion would take you past your limit, your body
+  refuses it and the potion is not consumed.
+  Dying clears your toxicity completely, along with every
+  potion effect you were carrying.
 
-<ansi fg="yellow">━━━ Threshold Effects ━━━</ansi>
+<ansi fg="yellow">━━━ What You Will Feel ━━━</ansi>
 
-  At low toxicity, there are no ill effects. As it builds:
-  - Moderate toxicity dulls your senses and slows recovery.
-  - High toxicity further impairs your reflexes.
-  - Severe toxicity significantly hampers regeneration and
-    awareness.
+  Watch the <ansi fg="command">status</ansi> screen, or add the toxicity tag to your
+  prompt with <ansi fg="command">set-prompt</ansi>. It moves through these stages:
+
+  <ansi fg="green">clear</ansi>       nothing to speak of
+  <ansi fg="black-bold">sour</ansi>        a faint taste you cannot wash away
+  <ansi fg="white">unsettled</ansi>   your stomach is uneasy
+
+  Neither of those two costs you anything. They are a warning,
+  so you can see it coming.
+
+  <ansi fg="yellow">queasy</ansi>      senses dull, recovery slows
+  <ansi fg="red">sick</ansi>        reflexes suffer as well
+  <ansi fg="red-bold">critical</ansi>    recovery and awareness both fail badly,
+              and the poison starts doing real harm
+
+  At <ansi fg="red-bold">critical</ansi> the toxicity also clears more slowly, so it
+  is far easier to get into than out of. Do not sit there.
 
 <ansi fg="yellow">━━━ Spoiled Potions ━━━</ansi>
 
-  Drinking a spoiled potion inflicts triple the normal toxicity
-  and causes nausea. Skilled alchemists can detect spoiled brews
-  by examining them — look for the telltale signs.
+  Drinking a spoiled potion inflicts far more toxicity than a
+  good one and causes nausea. Skilled alchemists can detect
+  spoiled brews by examining them, so look for the telltale
+  signs.
 
 <ansi fg="yellow">━━━ Purging ━━━</ansi>
 
-  The purging draught (alchemy skill 35) clears all active potion
-  effects and toxicity, but leaves you weakened afterward.
+  A purging draught strips every potion effect you are carrying
+  and clears your toxicity with them. It leaves you badly
+  weakened for a while afterwards, so it is a way out of
+  trouble rather than a routine part of drinking.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help drink</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help craft</ansi>,
+  <ansi fg="command">help health</ansi>, <ansi fg="command">help status</ansi>
