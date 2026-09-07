@@ -1,0 +1,39 @@
+role: user
+username: template-archer
+character:
+  name: Range Student
+  description: >
+    Synthetic profile for testing the ranged loop. Seeded ON the Long Terrace
+    (5351) with a sling and a pouch of shot already in hand, because a fresh
+    character cannot walk from Thornwall to the Pothole Coulee range inside a
+    harness budget at three commands per round, and the merchants who would
+    sell the kit sleep on their schedules.
+  roomid: 5351
+  zone: Pothole Coulee
+  speciesid: 1
+  stats:
+    strength:
+      base: 100
+    dexterity:
+      base: 100
+    perception:
+      base: 120
+    vitality:
+      base: 100
+    willpower:
+      base: 100
+    charisma:
+      base: 100
+  health: 200
+  stamina: 200
+  conviction: 200
+  gold: 100
+  skills:
+    ranged-combat: 5
+    skullduggery: 5
+  items:
+  - itemid: 30064
+  - itemid: 30064
+  equipment:
+    weapon:
+      itemid: 10038
