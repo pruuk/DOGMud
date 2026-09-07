@@ -61,6 +61,19 @@ func wireLifeCrossMachineCascades(c *characters.Character) {
 				// 5. Buffs (non-permanent) → cancel all.
 				c.CancelBuffsWithFlag(buffs.All)
 
+				// 5b. Toxicity → clear. THIS MUST STAY BESIDE THE BUFF STRIP
+				// ABOVE, because that strip is what justifies it: toxicity is
+				// the price of a potion's effect, and the line above has just
+				// removed every effect the player paid for. Leaving toxicity
+				// behind would charge them twice for a benefit they no longer
+				// hold -- they have already lost the potions, the materials and
+				// the brewing time. Separating these two lines is what
+				// re-creates the bug, and it also reopens a death spiral:
+				// toxicity above 90% deals acute HP damage and decays at half
+				// speed, so a player could respawn at 5% health still critical
+				// and die again with no way out.
+				c.Toxicity = 0
+
 				// 6. Conditions slice → clear.
 				c.Conditions = nil
 
