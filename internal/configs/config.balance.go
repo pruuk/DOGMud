@@ -771,8 +771,9 @@ type Balance struct {
 
 	// ── TOXICITY ────────────────────────────────────────────────────────────
 	ToxicityDecayPerTick      ConfigFloat `yaml:"ToxicityDecayPerTick"`      // Points decayed per regen tick (default 1.0)
-	ToxicityBaseMax           ConfigFloat `yaml:"ToxicityBaseMax"`           // Base max before vitality bonus (default 100)
-	ToxicityVitalityScale     ConfigFloat `yaml:"ToxicityVitalityScale"`     // Vitality divisor for max bonus (default 5)
+	ToxicityBaseMax           ConfigFloat `yaml:"ToxicityBaseMax"`           // Flat floor on tolerance; 0 = entirely earned (default 0)
+	ToxicityAlchemyScale      ConfigFloat `yaml:"ToxicityAlchemyScale"`      // Alchemy divisor for max bonus (default 2.5)
+	ToxicityVitalityScale     ConfigFloat `yaml:"ToxicityVitalityScale"`     // Vitality divisor for max bonus (default 3)
 	ToxicitySicknessDamagePct ConfigFloat `yaml:"ToxicitySicknessDamagePct"` // % max-HP/tick acute harm at top band (default 0.02)
 	ToxicityHighDecaySlowMult ConfigFloat `yaml:"ToxicityHighDecaySlowMult"` // decay multiplier when toxicity >= 75% (default 0.5 = clears slower)
 

@@ -376,11 +376,24 @@ func (b *Balance) validateCombat() {
 	if b.ToxicityDecayPerTick <= 0 {
 		b.ToxicityDecayPerTick = 1.0
 	}
-	if b.ToxicityBaseMax <= 0 {
-		b.ToxicityBaseMax = 100
+	// ToxicityBaseMax is a flat floor on tolerance, and 0 is the SHIPPED value:
+	// tolerance is earned entirely from alchemy and vitality. Guard only against
+	// a negative. The old `<= 0 -> 100` guard made that legal zero unreachable,
+	// silently restoring a flat 100 ceiling and reverting the whole tolerance
+	// model with nothing failing anywhere. ConfigFloat is a bare float64, so an
+	// absent key and an explicit 0 are indistinguishable -- which is exactly why
+	// the default has to BE zero rather than be patched in by a guard.
+	if b.ToxicityBaseMax < 0 {
+		b.ToxicityBaseMax = 0
+	}
+	// The next two are DIVISORS in Character.GetToxicityMax and must never be
+	// zero, so the `<= 0` shape is correct here and must stay. Do not "tidy"
+	// them to match ToxicityBaseMax above -- the difference is deliberate.
+	if b.ToxicityAlchemyScale <= 0 {
+		b.ToxicityAlchemyScale = 2.5
 	}
 	if b.ToxicityVitalityScale <= 0 {
-		b.ToxicityVitalityScale = 5
+		b.ToxicityVitalityScale = 3
 	}
 	if b.ToxicitySicknessDamagePct <= 0 {
 		b.ToxicitySicknessDamagePct = 0.02
