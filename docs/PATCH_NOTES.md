@@ -1,5 +1,34 @@
 # DOGMud Patch Notes
 
+## 2026-09-07: Potions ask something of you now
+
+Drinking potion after potion used to cost you nothing worth noticing. Some of
+the older brews were free outright, and even the ones that were not took so
+much to build up that most people never saw the mechanic at all. Two potions
+that shared a name did not even agree with each other about the price.
+
+Every drinkable now has a cost, and the two same-named pairs agree. How much
+you can take before it tells on you now depends mostly on alchemy rather than
+on being tough. Working with reagents teaches your body to cope with them, so
+practising the skill steadily raises what you can handle, and a seasoned brewer
+will out-last a hardier character who has never touched a still.
+
+You can also see it building now. There are two new stages below anything that
+actually hurts you, so a faint sourness and an unsettled stomach turn up as a
+warning long before your hands start shaking. Neither of them costs you a
+thing. They show on your status screen and in your prompt, and the toxicity
+help page explains the whole thing, which it was not really doing before.
+
+The purging draught finally works. It was supposed to strip your potion
+effects and clear the toxicity that came with them, leaving you weakened for a
+while. In practice it did none of that. It does now. Both detox drinks can
+also be swallowed when you are already in a bad way, which is the only time
+anyone reaches for one.
+
+Dying now clears toxicity as well. Death already strips every potion effect
+you were carrying, so keeping the price of effects you no longer have was
+charging you twice for the same drink.
+
 ## 2026-08-31: Spells stop vanishing, and sleep means sleep
 
 Some spells and taunts simply produced no text at all. The effect landed and
