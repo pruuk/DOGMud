@@ -11,8 +11,6 @@ groups:
   - pack
 aiprofile: predator
 activitylevel: 22
-items:
-  - 40070   # pack-hide pelt — carried, always drops
 idlecommands:
   - 'emote moves through the den in a slow, deliberate circuit, the
     great head low, reading the scent-record of every animal that has
@@ -66,6 +64,8 @@ character:
   speciesid: 2
   level: 1
   gold: 0
+  items:
+    - itemid: 40070   # pack-hide pelt — carried, always drops
   stats:
     vitality:
       base: 140

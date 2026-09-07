@@ -11,8 +11,6 @@ groups:
   - pack
 aiprofile: predator
 activitylevel: 25
-items:
-  - 40070   # pack-hide pelt — carried, always drops
 idlecommands:
   - 'emote pads in a wide circle, nose low to the ground, testing the
     air in each direction before it completes the loop'
@@ -43,6 +41,8 @@ character:
   speciesid: 2
   level: 1
   gold: 0
+  items:
+    - itemid: 40070   # pack-hide pelt — carried, always drops
   stats:
     dexterity:
       base: 138

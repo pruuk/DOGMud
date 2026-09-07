@@ -11,8 +11,6 @@ groups:
   - pack
 aiprofile: predator
 activitylevel: 25
-items:
-  - 40070   # pack-hide pelt — carried, always drops
 idlecommands:
   - 'emote trots the perimeter of the coulee mouth at a loose, easy
     gait, head up and ears forward, reading the wind'
@@ -48,6 +46,8 @@ character:
   speciesid: 2
   level: 1
   gold: 0
+  items:
+    - itemid: 40070   # pack-hide pelt — carried, always drops
   stats:
     dexterity:
       base: 146

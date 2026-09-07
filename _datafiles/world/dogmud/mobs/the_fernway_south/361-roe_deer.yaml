@@ -11,8 +11,6 @@ groups:
   - animal
   - deer
   - prey
-items:
-  - itemid: 40064
 idlecommands:
   - 'emote lifts its head from browse, ears swivelling'
   - ''
@@ -31,6 +29,8 @@ character:
   speciesid: 7
   level: 2
   gold: 0
+  items:
+    - itemid: 40014
   stats:
     strength:
       base: 80

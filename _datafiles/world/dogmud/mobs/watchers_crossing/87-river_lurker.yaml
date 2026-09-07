@@ -4,8 +4,6 @@ archetype: fighting
 behavior_archetype: generic_fighter
 statpool: 14
 itemdropchance: 10
-items:
-  - itemid: 40048
 hostile: true
 maxwander: 1
 groups:
@@ -37,6 +35,8 @@ character:
   speciesid: 1
   level: 1
   gold: 0
+  items:
+    - itemid: 40048
   stats:
     strength:
       base: 110

@@ -12,8 +12,6 @@ groups:
   - animal
   - mustelid
   - prey
-items:
-  - itemid: 40058
 idlecommands:
   - 'emote slides down the slick mud slide and into the water'
   - ''
@@ -32,6 +30,8 @@ character:
   speciesid: 24
   level: 2
   gold: 0
+  items:
+    - itemid: 40058
   stats:
     strength:
       base: 78

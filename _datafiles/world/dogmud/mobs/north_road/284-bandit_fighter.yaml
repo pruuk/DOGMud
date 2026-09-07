@@ -5,9 +5,6 @@ behavior_archetype: generic_fighter
 routine: bandit_camp_guard
 statpool: 150
 itemdropchance: 25
-items:
-  - itemid: 20068
-  - itemid: 10026
 hostile: true
 pack_flee_immune: true
 maxwander: 0
@@ -43,6 +40,9 @@ character:
   speciesid: 1
   level: 1
   gold: 30
+  items:
+    - itemid: 20068
+    - itemid: 10026
   equipment:
     weapon:
       itemid: 10026

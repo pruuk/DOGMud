@@ -11,8 +11,6 @@ maxwander: 2
 groups:
   - animal
   - boar
-items:
-  - itemid: 40068
 idlecommands:
   - 'emote roots in the wallow mud with its snout'
   - ''
@@ -30,6 +28,8 @@ character:
   speciesid: 6
   level: 4
   gold: 0
+  items:
+    - itemid: 40068
   stats:
     strength:
       base: 138

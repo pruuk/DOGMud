@@ -7,8 +7,6 @@ routine_links:
   - bandit_camp_guard
 statpool: 100
 itemdropchance: 30
-items:
-  - itemid: 53
 hostile: false # engagement owned by lookout btree (power-ratio gate)
 pack_flee_immune: true
 buffids: [9]
@@ -44,6 +42,8 @@ character:
   speciesid: 1
   level: 1
   gold: 20
+  items:
+    - itemid: 53
   equipment:
     weapon:
       itemid: 10003

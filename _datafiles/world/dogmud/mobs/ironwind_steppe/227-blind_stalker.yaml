@@ -5,8 +5,6 @@ routine: cave_pack_ironwind
 buffids: [9]
 statpool: 200
 itemdropchance: 20
-items:
-  - itemid: 40048
 hostile: false # engagement owned by ambusher btree (hidden surprise strike)
 maxwander: 2
 groups:
@@ -41,6 +39,8 @@ character:
     intelligent, and very, very dangerous.
   speciesid: 23
   level: 1
+  items:
+    - itemid: 40048
   stats:
     strength:
       base: 92

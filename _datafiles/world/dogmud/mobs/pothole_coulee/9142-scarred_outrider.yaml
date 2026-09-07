@@ -11,8 +11,6 @@ groups:
   - pack
 aiprofile: predator
 activitylevel: 22
-items:
-  - 40070   # pack-hide pelt — carried, always drops
 idlecommands:
   - 'emote ranges the far edge of the coulee in a slow, unhurried
     patrol, pausing at each vantage to read the ground below'
@@ -56,6 +54,8 @@ character:
   speciesid: 2
   level: 1
   gold: 0
+  items:
+    - itemid: 40070   # pack-hide pelt — carried, always drops
   stats:
     dexterity:
       base: 170

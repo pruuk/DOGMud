@@ -12,8 +12,6 @@ groups:
   - animal
   - rodent
   - prey
-items:
-  - itemid: 40064
 idlecommands:
   - 'emote freezes, ears up, listening'
   - ''
@@ -32,6 +30,8 @@ character:
   speciesid: 10
   level: 1
   gold: 0
+  items:
+    - itemid: 40064
   stats:
     strength:
       base: 25
