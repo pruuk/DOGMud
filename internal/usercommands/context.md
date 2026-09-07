@@ -23,9 +23,11 @@ The `internal/usercommands` package implements the complete command system for p
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 
 #### **Combat Commands**
-- **Direct combat**: `attack`, `shoot`, `reload`, `throw` - Offensive actions
-  (`shoot` fires a loaded ranged weapon; `reload` chambers the next round,
-  consuming one ammo bundle from the pack)
+- **Direct combat**: `attack`, `fire`, `throw` - Offensive actions
+  (`fire` shoots a ranged weapon AND chambers the next round in the same
+  action, consuming one round from a matching bundle; `shoot` is an alias.
+  The player-facing `reload` is GONE -- `reload` is now admin-only, in
+  `admin.reload.go`, and re-reads server data files)
 - **Combat skills**: `disarm`, `tackle`, `backstab`, `recover` - Specialized combat techniques
 - **Defensive**: `flee`, `aid` - Escape and assistance mechanics
 - **Beast special moves (Phase 3)**: `rake`, `maul`, `pounce`, `gore`,
@@ -314,9 +316,18 @@ When a taunt is defended, the coordinated Defy message is the complete result
 for each audience. Do not also emit the ordinary taunt-hit narration; that
 would describe the same resolution twice and can contradict the defence.
 
-**`shoot` narrates three U10d flags, and one of them is an ordering trap.**
-`FireResult.Revealed`, `SurpriseOnCooldown` and `AimedWhileEngaged` are set by
+**`fire` narrates several FireResult flags, and one of them is an ordering
+trap.** `FireResult.Revealed` and `AimedWhileEngaged` are set by
 `actions.ExecuteFire`; `sendShootMessages` is the only thing that speaks them.
+(`SurpriseOnCooldown` is GONE: the ambush is no longer refusable, so nothing
+can set it.)
+
+⚠️ **`FireResult.Chambered` must be narrated too, and its silent case is the
+one that bites.** Chambering admits its own small cost and re-checks the weapon
+and bundle by identity, so it can return with neither `Loaded` nor `NoAmmo`
+set -- too spent, or the weapon changed underneath the shot. Saying nothing
+there leaves the weapon empty and the NEXT shot reporting a cause it cannot
+know, so the switch has a `default` arm on purpose. Do not "simplify" it away.
 
 - `surpriseShotShooterLine(hit, triad, targetColored, tier, dealtDamage)` picks
   the shot-from-cover line. **The triad arm must stay ABOVE any damage-carrying

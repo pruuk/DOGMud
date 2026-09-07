@@ -99,10 +99,16 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.NotLoaded {
-		// Firing chambers its own next round, so an empty weapon means the
-		// shooter is OUT, not that they forgot a step. Pointing at `reload` here
-		// would name a command that no longer exists.
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> is empty, and you have nothing left to load it with.`, result.WeaponName))
+		// Firing chambers its own next round, so an empty weapon is never a
+		// forgotten step. Pointing at `reload` here would name a command that no
+		// longer exists.
+		//
+		// ⚠️ It does NOT follow that the shooter is out of ammunition. Chambering
+		// also declines when they are too spent to work it, or when the weapon
+		// or bundle changed underneath the last shot. Naming a cause here would
+		// be a guess, and the wrong guess reads as a bug to a player who can see
+		// arrows in their pack.
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> is empty. Check that you still have ammunition, and the breath to ready it.`, result.WeaponName))
 		return true, nil
 	}
 	if result.BadSyntax {
@@ -243,9 +249,26 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				fmt.Sprintf(`That was the last of your <ansi fg="itemname">%s</ansi>.`, result.Chambered.AmmoName))
 		}
 	case result.Chambered.NoAmmo:
+		// ⚠️ AmmoTag is PLURAL ("arrows", "bolts", "shot"), so this sentence is
+		// built around the plural. "You reach for another arrows" is what an
+		// `another %s` phrasing produces, and it shipped that way briefly.
 		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You reach for another <ansi fg="item">%s</ansi> and find none. Your <ansi fg="itemname">%s</ansi> is empty.`,
+			fmt.Sprintf(`You reach for more <ansi fg="item">%s</ansi> and find none. Your <ansi fg="itemname">%s</ansi> is empty.`,
 				result.Chambered.AmmoTag, result.Chambered.WeaponName))
+
+	default:
+		// EVERY OTHER OUTCOME. Chambering admits its own small stamina cost and
+		// re-checks the weapon and bundle by identity afterwards, so it can end
+		// with neither Loaded nor NoAmmo set: too spent to work the action, or
+		// the weapon or ammunition changed underneath it.
+		//
+		// ⚠️ Silence here is WORSE than no message. The weapon is left empty and
+		// the next shot reports "you have nothing left to load it with", which
+		// is a LIE to a player who is merely winded and still carrying ammo.
+		// Say which it was.
+		user.SendText(messaging.CategorySystem,
+			fmt.Sprintf(`You cannot work another round into your <ansi fg="itemname">%s</ansi> just now. It stays empty.`,
+				result.Chambered.WeaponName))
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

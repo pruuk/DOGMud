@@ -267,6 +267,47 @@ func TestReload_StaleSecondaryStateKeepsSingleAdmission(t *testing.T) {
 		return &staleRangedSecondaryActor{Actor: newStubActor(char, newTestRoom())}, char
 	}
 
+	// The two ABORT branches. Both were uncovered when the player-facing reload
+	// command was retired: the deleted wrapper test exercised them, and the
+	// replacement named in its place only covers the success paths. An abort
+	// that silently consumed ammo, or left the weapon loaded without spending
+	// one, would pass every other test in this file.
+
+	t.Run("a swapped weapon aborts without consuming ammo", func(t *testing.T) {
+		actor, char := newActor()
+		actor.onAdmission = func(c *characters.Character) {
+			// A different weapon in the slot: same ammo tag, different identity.
+			c.Equipment.Weapon = reloadRangedWeapon(2, "arrows")
+		}
+
+		res := chamberNextRound(actor)
+
+		require.Equal(t, characters.CostPaid, res.Cost.Status,
+			"the one admission already paid stays paid")
+		assert.False(t, res.Loaded, "a swapped weapon must abort the chambering")
+		assert.False(t, char.Equipment.Weapon.Loaded, "the replacement must not be loaded")
+		assert.Equal(t, 20, char.Items[1].Uses, "an aborted chambering must consume no ammo")
+		assert.False(t, res.BundleEmptied)
+	})
+
+	t.Run("a vanished bundle aborts without loading the weapon", func(t *testing.T) {
+		actor, char := newActor()
+		actor.onAdmission = func(c *characters.Character) {
+			// The admitted bundle is gone: dropped, stolen, given away.
+			c.Items = []items.Item{reloadAmmoBundle(4, "bolts", 7)}
+		}
+
+		res := chamberNextRound(actor)
+
+		require.Equal(t, characters.CostPaid, res.Cost.Status,
+			"the one admission already paid stays paid")
+		assert.False(t, res.Loaded, "a vanished bundle must abort the chambering")
+		assert.False(t, char.Equipment.Weapon.Loaded,
+			"the weapon must NOT read loaded when nothing was chambered into it")
+		assert.False(t, res.BundleEmptied)
+		assert.Equal(t, 7, char.Items[0].Uses, "the unrelated bundle must be untouched")
+	})
+
 	t.Run("reordered inventory follows the admitted bundle identity", func(t *testing.T) {
 		actor, char := newActor()
 		actor.onAdmission = func(c *characters.Character) {

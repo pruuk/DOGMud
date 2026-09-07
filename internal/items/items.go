@@ -282,7 +282,7 @@ func (i *Item) GetLongDescription() string {
 		} else if iSpec.Subtype == Shooting {
 
 			longDesc.WriteString("\n")
-			longDesc.WriteString(`- This can fired into adjacent areas. (<ansi fg="command">help shoot</ansi>)`)
+			longDesc.WriteString(`- This can be fired into adjacent areas. (<ansi fg="command">help fire</ansi>)`)
 
 		}
 
