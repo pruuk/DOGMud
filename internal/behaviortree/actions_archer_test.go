@@ -9,7 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // rangedBow builds a shooting-subtype weapon Item with the given loaded state.
@@ -68,7 +67,7 @@ func contains(cmds []string, want string) bool {
 // ─── registration ────────────────────────────────────────────────────────────
 
 func TestArcherActions_Registered(t *testing.T) {
-	for _, name := range []string{"try_fire", "try_reload", "keep_distance"} {
+	for _, name := range []string{"try_fire", "keep_distance"} {
 		if LookupAction(name) == nil {
 			t.Errorf("%s must be registered in actionRegistry", name)
 		}
@@ -230,144 +229,18 @@ func TestActTryFire_NoAggroMemoryTargetGone_Fails(t *testing.T) {
 	}
 }
 
-// ─── try_reload ───────────────────────────────────────────────────────────────
-
-func TestActTryReload_UnloadedWithAmmoNotEngaged_ReloadsAndSucceeds(t *testing.T) {
-	const here = 10
-	cleanup := rooms.SeedRoomsForTest(map[int]*rooms.Room{
-		here: {RoomId: here, Zone: "test", Exits: map[string]exit.RoomExit{}},
-	}, map[string]*rooms.ZoneConfig{})
-	defer cleanup()
-
-	mob := newTestMob(t)
-	mob.Character.RoomId = here
-	mob.Character.Equipment.Weapon = rangedBow(false)
-	mob.Character.Items = []items.Item{arrowBundle()}
-	mob.Character.EndAggro() // not engaged
-	queuedCmds(mob.InstanceId)
-
-	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: here}
-	if got := LookupAction("try_reload")(nil, ctx); got != Success {
-		t.Fatalf("try_reload = %v, want Success", got)
-	}
-	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, "reload") {
-		t.Errorf("expected 'reload' queued, got %v", cmds)
-	}
-}
-
-func TestActTryReload_AlreadyLoaded_Fails(t *testing.T) {
-	mob := newTestMob(t)
-	mob.Character.RoomId = 10
-	mob.Character.Equipment.Weapon = rangedBow(true) // loaded
-	mob.Character.Items = []items.Item{arrowBundle()}
-
-	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: 10}
-	if got := LookupAction("try_reload")(nil, ctx); got != Failure {
-		t.Errorf("try_reload with loaded weapon = %v, want Failure", got)
-	}
-}
-
-func TestActTryReload_NoAmmo_Fails(t *testing.T) {
-	mob := newTestMob(t)
-	mob.Character.RoomId = 10
-	mob.Character.Equipment.Weapon = rangedBow(false)
-	mob.Character.Items = nil // no ammo
-
-	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: 10}
-	if got := LookupAction("try_reload")(nil, ctx); got != Failure {
-		t.Errorf("try_reload without ammo = %v, want Failure", got)
-	}
-}
-
-func TestActTryReload_MeleeEngaged_Fails(t *testing.T) {
-	const here = 10
-	cleanup := rooms.SeedRoomsForTest(map[int]*rooms.Room{
-		here: {RoomId: here, Zone: "test", Exits: map[string]exit.RoomExit{}},
-	}, map[string]*rooms.ZoneConfig{})
-	defer cleanup()
-
-	target := seedTargetMob(t, 404, here) // in the same room == engaged
-
-	mob := newTestMob(t)
-	mob.Character.RoomId = here
-	mob.Character.Equipment.Weapon = rangedBow(false)
-	mob.Character.Items = []items.Item{arrowBundle()}
-	mob.Character.SetAggro(0, target.InstanceId, characters.DefaultAttack)
-
-	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: here}
-	if got := LookupAction("try_reload")(nil, ctx); got != Failure {
-		t.Errorf("try_reload while melee-engaged = %v, want Failure", got)
-	}
-}
-
-func TestActTryReload_Skullduggery_SneaksBeforeReload(t *testing.T) {
-	const here = 10
-	cleanup := rooms.SeedRoomsForTest(map[int]*rooms.Room{
-		here: {RoomId: here, Zone: "test", Exits: map[string]exit.RoomExit{}},
-	}, map[string]*rooms.ZoneConfig{})
-	defer cleanup()
-
-	mob := newTestMob(t)
-	mob.Character.RoomId = here
-	mob.Character.Equipment.Weapon = rangedBow(false)
-	mob.Character.Items = []items.Item{arrowBundle()}
-	mob.Character.EndAggro() // not engaged
-	mob.Character.SetSkill(string(skills.Skullduggery), 10)
-	queuedCmds(mob.InstanceId)
-
-	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: here}
-	if got := LookupAction("try_reload")(nil, ctx); got != Success {
-		t.Fatalf("try_reload = %v, want Success", got)
-	}
-	cmds := queuedCmds(mob.InstanceId)
-	// A skullduggery-capable archer slips into cover (sneak) BEFORE reloading.
-	sneakIdx, reloadIdx := -1, -1
-	for i, c := range cmds {
-		if c == "sneak" {
-			sneakIdx = i
-		}
-		if c == "reload" {
-			reloadIdx = i
-		}
-	}
-	if sneakIdx == -1 {
-		t.Fatalf("expected 'sneak' queued for skullduggery-capable archer, got %v", cmds)
-	}
-	if reloadIdx == -1 {
-		t.Fatalf("expected 'reload' queued, got %v", cmds)
-	}
-	if sneakIdx > reloadIdx {
-		t.Errorf("expected 'sneak' before 'reload', got %v", cmds)
-	}
-}
-
-func TestActTryReload_NoSkullduggery_NoSneak(t *testing.T) {
-	const here = 10
-	cleanup := rooms.SeedRoomsForTest(map[int]*rooms.Room{
-		here: {RoomId: here, Zone: "test", Exits: map[string]exit.RoomExit{}},
-	}, map[string]*rooms.ZoneConfig{})
-	defer cleanup()
-
-	mob := newTestMob(t)
-	mob.Character.RoomId = here
-	mob.Character.Equipment.Weapon = rangedBow(false)
-	mob.Character.Items = []items.Item{arrowBundle()}
-	mob.Character.EndAggro()
-	// No skullduggery skill (level 0) — should reload without sneaking.
-	queuedCmds(mob.InstanceId)
-
-	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: here}
-	if got := LookupAction("try_reload")(nil, ctx); got != Success {
-		t.Fatalf("try_reload = %v, want Success", got)
-	}
-	cmds := queuedCmds(mob.InstanceId)
-	if contains(cmds, "sneak") {
-		t.Errorf("expected NO 'sneak' for non-skullduggery archer, got %v", cmds)
-	}
-	if !contains(cmds, "reload") {
-		t.Errorf("expected 'reload' queued, got %v", cmds)
-	}
-}
+// ─── try_reload: RETIRED ─────────────────────────────────────────────────────
+//
+// The four try_reload tests are deleted along with the action they drove.
+// Firing chambers its own next round now, so an archer never needs a turn to
+// reload and the behaviour tree no longer has a node for it.
+//
+// ⚠️ ONE BEHAVIOUR WAS LOST WITH IT, deliberately and worth knowing: the node
+// made a skullduggery-capable archer `sneak` into cover before reloading. That
+// was the only place an archer mob took cover on its own. Under the new rules
+// hiding before a shot earns the ambush bonus, so re-adding a "take cover" beat
+// would now be worth more than it used to be -- but that is an AI design change
+// and is left for its own decision rather than smuggled in here.
 
 // ─── keep_distance ────────────────────────────────────────────────────────────
 

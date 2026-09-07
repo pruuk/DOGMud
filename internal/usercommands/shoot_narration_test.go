@@ -58,7 +58,6 @@ func TestShootNarrationCopy_ObeysThePlayerCopyRules(t *testing.T) {
 
 	lines := map[string]string{
 		"revealed":         surpriseShotRevealedText,
-		"denied":           surpriseShotDeniedText,
 		"engaged":          aimedWhileEngagedText,
 		"from-cover/hit":   surpriseShotShooterLine(true, "", wideTargetTag, widestBand, true),
 		"from-cover/miss":  surpriseShotShooterLine(false, "", wideTargetTag, "", false),
@@ -241,7 +240,7 @@ func TestShoot_EngagedCueLatchesThroughTheRealCommand(t *testing.T) {
 	mob.Character.SetAggro(user.UserId, 0, characters.DefaultAttack)
 	require.True(t, mob.Character.IsInCombat(), "fixture precondition: the mob must be aggroed on the shooter")
 
-	handled, err := Shoot("skeleton", user, room, 0)
+	handled, err := Fire("skeleton", user, room, 0)
 	require.True(t, handled)
 	require.NoError(t, err)
 	assert.True(t, user.Character.RangedEngagedCueSpoken,
@@ -253,7 +252,7 @@ func TestShoot_EngagedCueLatchesThroughTheRealCommand(t *testing.T) {
 	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
-	handled, err = Shoot("skeleton", user, room, 0)
+	handled, err = Fire("skeleton", user, room, 0)
 	require.True(t, handled)
 	require.NoError(t, err)
 	assert.False(t, user.Character.RangedEngagedCueSpoken,

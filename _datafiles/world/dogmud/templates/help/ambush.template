@@ -76,6 +76,6 @@ their attention, or put a room between you and them and fire from there.
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help sneak</ansi>, <ansi fg="command">help skullduggery</ansi>,
-  <ansi fg="command">help shoot</ansi>, <ansi fg="command">help reload</ansi>,
+  <ansi fg="command">help fire</ansi>, <ansi fg="command">help reload</ansi>,
   <ansi fg="command">help special</ansi>, <ansi fg="command">help cooldowns</ansi>,
   <ansi fg="command">help ranged-combat</ansi>, <ansi fg="command">help combat</ansi>

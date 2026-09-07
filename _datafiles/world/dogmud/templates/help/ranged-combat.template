@@ -46,6 +46,6 @@ This skill improves through use:
   - Landing shots with a ranged weapon
   - Perception advances from aimed-shot attacks
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help reload</ansi>,
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fire</ansi>, <ansi fg="command">help reload</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help skills</ansi>,
   <ansi fg="command">help ambush</ansi>, <ansi fg="command">help sneak</ansi>

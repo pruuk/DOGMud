@@ -36,7 +36,7 @@ and returns nothing for it.
 Load first, then hide, and give the recovery time to return before you shoot.
 Check it with <ansi fg="command">cooldowns</ansi>. See <ansi fg="command">help ambush</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help ranged-combat</ansi>,
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fire</ansi>, <ansi fg="command">help ranged-combat</ansi>,
   <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>,
   <ansi fg="command">help ambush</ansi>, <ansi fg="command">help special</ansi>
 

@@ -178,7 +178,7 @@ var (
 		`pounce`:          {Pounce, false, true, false},
 		`rake`:            {Rake, false, true, false},
 		`read`:            {Read, false, true, false},
-		`reload`:          {Reload, false, true, false},     // All: ranged-weapon reload; admin subcommands reload data files
+		`reload`:          {Reload, false, true, false},     // Admin: data-file reload. Dispatchable by anyone on purpose, so a player typing it from muscle memory is redirected to `fire` rather than refused.
 		`relationship`:    {Relationship, true, true, true}, // Admin only
 		`rep`:             {Report, true, true, false},
 		`reply`:           {Reply, true, true, false},
@@ -200,7 +200,7 @@ var (
 		`sethome`:         {SetHome, true, true, false},
 		`setmotd`:         {SetMotd, true, true, true}, // Admin only
 		`share`:           {Share, false, true, false},
-		`shoot`:           {Shoot, false, true, false},
+		`fire`:            {Fire, false, true, false},
 		`shout`:           {Shout, true, true, false},
 		`show`:            {Show, true, true, false},
 		`skills`:          {Skills, true, true, false},

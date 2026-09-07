@@ -30,7 +30,18 @@ import (
 // This is the loaded-weapon model (ranged-weapons T6). It REPLACES the
 // legacy remote-aggro behavior where a single `shoot` set up a continuous
 // round-loop auto-attack into the adjacent room.
-func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+// questNotifyCommand is the command name the quest engine is told about when a
+// shot resolves.
+//
+// ⚠️ IT IS HARDCODED RATHER THAN TAKEN FROM WHAT THE PLAYER TYPED, because
+// `shoot` is an alias of `fire` and still arrives here. Quests 50, 51 and 59
+// gate their beats on this exact string, and a quest whose trigger stops
+// matching simply stops granting with nothing in any log. If you change it,
+// change their `command:` triggers in the same commit --
+// ranged_quest_contract_test.go fails if the two ever disagree.
+const questNotifyCommand = "fire"
+
+func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// --- Pre-fire target resolution & guards ---
 	// ExecuteFire applies damage the instant it is called, so every guard that
@@ -207,8 +218,27 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	questengine.GetEngine().Notify("command", questengine.EventDetails{
 		UserId:  user.UserId,
 		RoomId:  room.RoomId,
-		Command: "shoot",
+		Command: questNotifyCommand,
 	}, bridge, bridge)
+
+	// The chambering that followed the shot. This is the ONLY place a player
+	// learns they are dry: firing readies the next round silently when it can,
+	// so the states worth speaking are the ones where it could not, or where it
+	// just spent the last projectile.
+	//
+	// ⚠️ Running out must be SPOKEN HERE, not discovered on the next `fire`. The
+	// retired `reload` command carried this copy; folding it into the shot
+	// without carrying the words over would have left the player to find out by
+	// pulling a trigger on an empty weapon.
+	switch {
+	case result.Chambered.NoAmmo:
+		user.SendText(messaging.CategorySystem,
+			fmt.Sprintf(`You reach for another <ansi fg="item">%s</ansi> and find none. Your <ansi fg="itemname">%s</ansi> is empty.`,
+				result.Chambered.AmmoTag, result.Chambered.WeaponName))
+	case result.Chambered.BundleEmptied:
+		user.SendText(messaging.CategorySystem,
+			fmt.Sprintf(`That was the last of your <ansi fg="itemname">%s</ansi>.`, result.Chambered.AmmoName))
+	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
 	actions.DispatchCounterMessages(&actions.UserActor{User: user, Room: room}, result.Counter)

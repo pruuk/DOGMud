@@ -2549,7 +2549,7 @@ func TestShoot(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 
 	t.Run("no_args", func(t *testing.T) {
-		handled, err := Shoot("", user, room, 0)
+		handled, err := Fire("", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
 	})

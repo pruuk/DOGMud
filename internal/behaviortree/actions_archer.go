@@ -7,7 +7,6 @@ package behaviortree
 //
 //   try_fire      — fire a LOADED ranged weapon at the aggro target (same room,
 //                   or one exit away via a directional shot).
-//   try_reload    — chamber a fresh projectile when UNLOADED, ammo is on hand,
 //                   and the mob is NOT pinned in melee (slip into cover first
 //                   when capable of stealth).
 //   keep_distance — when pinned in melee and still healthy, fall back through a
@@ -27,14 +26,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func init() {
 	actionRegistry["try_fire"] = actTryFire
-	actionRegistry["try_reload"] = actTryReload
 	actionRegistry["keep_distance"] = actKeepDistance
 }
 
@@ -49,31 +46,6 @@ func loadedRangedWeapon(char *characters.Character) *items.Item {
 		return &char.Equipment.Offhand
 	}
 	return nil
-}
-
-// unloadedRangedWeapon returns the mob's equipped but UNLOADED ranged weapon
-// (main hand first, then offhand), or nil.
-func unloadedRangedWeapon(char *characters.Character) *items.Item {
-	if char.Equipment.Weapon.IsRangedWeapon() && !char.Equipment.Weapon.Loaded {
-		return &char.Equipment.Weapon
-	}
-	if char.Equipment.Offhand.IsRangedWeapon() && !char.Equipment.Offhand.Loaded {
-		return &char.Equipment.Offhand
-	}
-	return nil
-}
-
-// hasMatchingAmmo reports whether the character carries an ammo bundle whose
-// AmmoTag matches the supplied weapon ammo tag. Mirrors the bundle-find loop
-// in actions.ExecuteReload (the actual consume happens there).
-func hasMatchingAmmo(char *characters.Character, ammoTag string) bool {
-	for idx := range char.Items {
-		spec := char.Items[idx].GetSpec()
-		if spec.Type == items.Ammo && spec.AmmoTag == ammoTag {
-			return true
-		}
-	}
-	return false
 }
 
 // archerTarget resolves the mob's current aggro target into a display name and
@@ -247,39 +219,6 @@ func actTryFire(params map[string]any, ctx *EvalContext) Result {
 		return Failure // not adjacent — can't line up a shot this tick
 	}
 	mob.Command(fmt.Sprintf("shoot %s %s", name, dir))
-	return Success
-}
-
-// actTryReload chambers a fresh projectile. Gating: an UNLOADED ranged weapon,
-// a matching ammo bundle on hand, and NOT being pinned in melee (reloading
-// toe-to-toe is suicidal — keep_distance runs first to break contact). A
-// skullduggery-capable archer that is not already hidden slips into cover
-// (`sneak`) before reloading.
-//
-// NOTE: there is no mob `hide` command in this engine; `sneak` is the
-// skullduggery stealth verb (internal/mobcommands/sneak.go) and serves the
-// same "get into cover before reloading" intent the task describes.
-func actTryReload(params map[string]any, ctx *EvalContext) Result {
-	mob := mobs.GetInstance(ctx.InstanceId)
-	if mob == nil {
-		return Failure
-	}
-	weapon := unloadedRangedWeapon(&mob.Character)
-	if weapon == nil {
-		return Failure // no ranged weapon, or it's already loaded
-	}
-	if !hasMatchingAmmo(&mob.Character, weapon.GetSpec().AmmoTag) {
-		return Failure // out of ammo
-	}
-	if archerMeleeEngaged(mob) {
-		return Failure // break contact first (keep_distance), don't reload in melee
-	}
-
-	// Slip into cover before reloading when capable and not already hidden.
-	if mob.Character.GetSkillLevel(skills.Skullduggery) > 0 && !mob.Character.IsHidden() {
-		mob.Command("sneak")
-	}
-	mob.Command("reload")
 	return Success
 }
 

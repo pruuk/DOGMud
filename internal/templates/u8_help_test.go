@@ -21,7 +21,7 @@ var u8ActionHelpPaths = []string{
 	"help/combat",
 	"help/stamina",
 	"help/ranged-combat",
-	"help/shoot",
+	"help/fire",
 	"help/reload",
 	"help/grapple",
 	"help/sneak",
@@ -362,6 +362,8 @@ func TestU8HelpTuningGuardInspectsStyledVisibleText(t *testing.T) {
 func TestU8CrossReferenceValidationRejectsMissingDOGMudOnlyTopic(t *testing.T) {
 	registeredDefaultShoot := false
 	for _, registeredFS := range fileSystems {
+		// The DEFAULT WORLD's template, not DOGMud's. Upstream still ships this
+		// as `shoot`; only the DOGMud overlay renamed it to `fire`.
 		if _, err := registeredFS.ReadFile("templates/help/shoot.template"); err == nil {
 			registeredDefaultShoot = true
 			break
@@ -408,7 +410,7 @@ func TestU8ActionAdmissionHelpStatesExactPolicyWithoutTuning(t *testing.T) {
 		"help/combat":         {"voluntary actions require full payment", "desperate form without the governing skill"},
 		"help/stamina":        {"load raises the price", "without their governing skill"},
 		"help/ranged-combat":  {"shooting and reloading spend stamina", "require full payment"},
-		"help/shoot":          {"spends stamina", "requires full payment"},
+		"help/fire":           {"spends stamina", "requires full payment"},
 		"help/reload":         {"physical exertion that spends stamina", "requires full payment"},
 		"help/grapple":        {"initial grapple is a special move", "both participants pay upkeep", "without unarmed combat skill"},
 		"help/sneak":          {"spends stamina", "requires full payment"},
@@ -480,7 +482,7 @@ func TestU8ActionHelpCrossReferencesResolve(t *testing.T) {
 	for _, path := range allHelpTemplatePaths(t, guardStructural) {
 		t.Run(path, func(t *testing.T) {
 			rendered := processU8Help(t, path)
-			if path == "help/shoot" {
+			if path == "help/fire" {
 				assert.Contains(t, rendered, "Fire a loaded ranged weapon at a target in your room",
 					"the validator must inspect DOGMud's shoot template, not the registered default")
 				// U10d added the three stealth/cooldown pointers: shooting from

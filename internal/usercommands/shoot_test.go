@@ -3,10 +3,8 @@ package usercommands
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -17,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
-	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -94,9 +91,9 @@ func shootUntilItLands(t *testing.T, user *users.UserRecord, room *rooms.Room, c
 	start := healthOf()
 	for i := 0; i < attempts; i++ {
 		equipBow(user.Character, true) // firing unloads the bow; reload each try
-		handled, err := Shoot(cmd, user, room, 0)
+		handled, err := Fire(cmd, user, room, 0)
 		if !handled || err != nil {
-			t.Fatalf("Shoot(%q) attempt %d: handled=%v err=%v", cmd, i+1, handled, err)
+			t.Fatalf("Fire(%q) attempt %d: handled=%v err=%v", cmd, i+1, handled, err)
 		}
 		if healthOf() < start {
 			return
@@ -171,7 +168,7 @@ func TestShoot_UnloadedWeapon_NoDamage(t *testing.T) {
 	require.NotNil(t, mob)
 	mob.Character.Health = 50
 
-	handled, err := Shoot("skeleton", user, room, 0)
+	handled, err := Fire("skeleton", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
@@ -320,7 +317,7 @@ enemies: []
 	room.AddMob(410)
 	defer room.RemoveMob(410)
 
-	if _, err := Shoot("beggar", user, room, 0); err != nil {
+	if _, err := Fire("beggar", user, room, 0); err != nil {
 		t.Fatalf("Shoot: %v", err)
 	}
 
@@ -358,7 +355,7 @@ func TestShoot_PvpDisabled_PreFireGate(t *testing.T) {
 	victim.Character.HealthMax.Value = 500
 	victim.Character.EndAggro()
 
-	handled, err := Shoot("Bobrick", user, room, 0)
+	handled, err := Fire("Bobrick", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
@@ -389,7 +386,7 @@ func TestShoot_OpeningShot_ChargesCombatRound(t *testing.T) {
 	mob.Character.HealthMax.Value = 100000
 	mob.Character.EndAggro()
 
-	handled, err := Shoot("skeleton", user, room, 0)
+	handled, err := Fire("skeleton", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
@@ -429,7 +426,7 @@ func TestShoot_RefusedNonCombatant_NoAggro(t *testing.T) {
 	room.AddMob(420)
 	defer room.RemoveMob(420)
 
-	handled, err := Shoot("merchant", user, room, 0)
+	handled, err := Fire("merchant", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
@@ -450,7 +447,7 @@ func TestShoot_SelfTarget_Blocked(t *testing.T) {
 	user.Character.EndAggro()
 	equipBow(user.Character, true)
 
-	handled, err := Shoot("Aliceia", user, room, 0)
+	handled, err := Fire("Aliceia", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 
@@ -467,22 +464,21 @@ func TestShoot_NoWeapon(t *testing.T) {
 	user, room := getTestUserAndRoom(t)
 	user.Character.Equipment.Weapon = items.Item{} // no weapon
 
-	handled, err := Shoot("skeleton", user, room, 0)
+	handled, err := Fire("skeleton", user, room, 0)
 	assert.True(t, handled)
 	assert.NoError(t, err)
 	assert.False(t, user.Character.IsInCombat())
 }
 
+// rangedWrapperCycleDelta captures one FIRE, which is now the whole cycle:
+// firing resolves the shot and chambers the next round in the same action.
+// The fields that used to describe a separate reload phase are gone with it.
 type rangedWrapperCycleDelta struct {
-	shootDebit        int
-	reloadDebit       int
-	ammoAfterShoot    int
-	ammoAfterReload   int
-	roundsAfterShoot  int
-	loadedAfterShoot  bool
-	loadedAfterReload bool
+	fireDebit         int
+	ammoAfterFire     int
+	roundsAfterFire   int
+	loadedAfterFire   bool
 	cooldownAfterFire int
-	cooldownAfterLoad int
 }
 
 // TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas catches either
@@ -506,23 +502,15 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 		target.Character.Health = 100_000
 		target.Character.HealthMax.Value = 100_000
 
-		require.NoError(t, func() error { _, err := Shoot("skeleton", user, room, 0); return err }())
+		require.NoError(t, func() error { _, err := Fire("skeleton", user, room, 0); return err }())
 		require.True(t, user.Character.IsInCombat())
-		afterShoot := user.Character.Stamina
-		delta := rangedWrapperCycleDelta{
-			shootDebit:        50 - afterShoot,
-			ammoAfterShoot:    user.Character.Items[1].Uses,
-			roundsAfterShoot:  user.Character.RoundsWaiting(),
-			loadedAfterShoot:  user.Character.Equipment.Weapon.Loaded,
+		return rangedWrapperCycleDelta{
+			fireDebit:         50 - user.Character.Stamina,
+			ammoAfterFire:     user.Character.Items[1].Uses,
+			roundsAfterFire:   user.Character.RoundsWaiting(),
+			loadedAfterFire:   user.Character.Equipment.Weapon.Loaded,
 			cooldownAfterFire: user.Character.Cooldowns["special-move"],
 		}
-
-		require.NoError(t, func() error { _, err := Reload("", user, room, 0); return err }())
-		delta.reloadDebit = afterShoot - user.Character.Stamina
-		delta.ammoAfterReload = user.Character.Items[1].Uses
-		delta.loadedAfterReload = user.Character.Equipment.Weapon.Loaded
-		delta.cooldownAfterLoad = user.Character.Cooldowns["special-move"]
-		return delta
 	}
 
 	mobCycle := func(t *testing.T) rangedWrapperCycleDelta {
@@ -540,37 +528,36 @@ func TestShootReload_PlayerAndMobWrappersShareMechanicalDeltas(t *testing.T) {
 		target.Character.Health = 100_000
 		target.Character.HealthMax.Value = 100_000
 
-		require.NoError(t, func() error { _, err := mobcommands.Shoot("Aliceia", mob, room); return err }())
-		afterShoot := mob.Character.Stamina
-		delta := rangedWrapperCycleDelta{
-			shootDebit:        50 - afterShoot,
-			ammoAfterShoot:    mob.Character.Items[1].Uses,
-			roundsAfterShoot:  mob.Character.RoundsWaiting(),
-			loadedAfterShoot:  mob.Character.Equipment.Weapon.Loaded,
+		require.NoError(t, func() error { _, err := mobcommands.Fire("Aliceia", mob, room); return err }())
+		return rangedWrapperCycleDelta{
+			fireDebit:         50 - mob.Character.Stamina,
+			ammoAfterFire:     mob.Character.Items[1].Uses,
+			roundsAfterFire:   mob.Character.RoundsWaiting(),
+			loadedAfterFire:   mob.Character.Equipment.Weapon.Loaded,
 			cooldownAfterFire: mob.Character.Cooldowns["special-move"],
 		}
-
-		require.NoError(t, func() error { _, err := mobcommands.Reload("", mob, room); return err }())
-		delta.reloadDebit = afterShoot - mob.Character.Stamina
-		delta.ammoAfterReload = mob.Character.Items[1].Uses
-		delta.loadedAfterReload = mob.Character.Equipment.Weapon.Loaded
-		delta.cooldownAfterLoad = mob.Character.Cooldowns["special-move"]
-		return delta
 	}
 
 	player := playerCycle(t)
 	mob := mobCycle(t)
-	require.Equal(t, player, mob)
-	assert.Equal(t, 2, player.shootDebit)
-	assert.Equal(t, 2, player.reloadDebit)
-	assert.Equal(t, 4, player.shootDebit+player.reloadDebit)
-	assert.Equal(t, 20, player.ammoAfterShoot)
-	assert.Equal(t, 19, player.ammoAfterReload)
-	assert.Equal(t, 1, player.roundsAfterShoot)
-	assert.False(t, player.loadedAfterShoot)
-	assert.True(t, player.loadedAfterReload)
-	assert.Zero(t, player.cooldownAfterFire)
-	assert.Greater(t, player.cooldownAfterLoad, 0)
+
+	// PARITY IS THE POINT. Both wrappers call actions.ExecuteFire, so the fold
+	// reaches mobs by construction -- but "by construction" is exactly the claim
+	// that stops being true when someone adds a wrapper-level shortcut, and a mob
+	// that silently stops chambering just stops shooting with nothing in any log.
+	require.Equal(t, player, mob, "player and mob must fire identically")
+
+	// The whole cycle is ONE action now, and it costs what the two commands cost
+	// together before: 2 for the shot plus 2 for the chambering.
+	assert.Equal(t, 4, player.fireDebit)
+	assert.Equal(t, 1, player.roundsAfterFire)
+
+	// Fired AND chambered: one projectile spent, weapon ready again.
+	assert.Equal(t, 19, player.ammoAfterFire)
+	assert.True(t, player.loadedAfterFire, "firing must leave the weapon ready")
+
+	// One claim, made by the shot itself rather than by a follow-up command.
+	assert.Greater(t, player.cooldownAfterFire, 0)
 }
 
 // TestShootRefusal_PlayerAndMobWrappersAreAtomic catches wrapper-specific
@@ -592,7 +579,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		target.Character.Health = 500
 		events.DrainQueuedMessagesForTest(user.UserId)
 
-		_, err := Shoot("skeleton", user, room, 0)
+		_, err := Fire("skeleton", user, room, 0)
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, user.Character.Stamina)
@@ -618,7 +605,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		target.Character.Health = 500
 		events.DrainQueuedMessagesForTest(target.UserId)
 
-		_, err := mobcommands.Shoot("Aliceia", mob, room)
+		_, err := mobcommands.Fire("Aliceia", mob, room)
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, mob.Character.Stamina)
@@ -631,166 +618,20 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 	})
 }
 
-// TestReloadRefusal_PlayerAndMobWrappersAreAtomic catches a cost refusal
-// consuming a projectile, loading the weapon, pruning/consuming cooldown, or
-// diverging mechanically between player and mob wrappers.
-func TestReloadRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
-	for _, actorType := range []string{"player", "mob"} {
-		t.Run(actorType, func(t *testing.T) {
-			cleanup := seedAllRegistries()
-			defer cleanup()
-			pinRangedCostEvidence(t)
+// TestReloadRefusal_PlayerAndMobWrappersAreAtomic is DELETED, not moved: the
+// player and mob `reload` commands it drove no longer exist, because firing
+// chambers its own next round. The property it guarded -- an unaffordable
+// action refuses atomically, loudly for a player and silently for a mob -- is
+// covered for the surviving command by
+// TestShootRefusal_PlayerAndMobWrappersAreAtomic above.
 
-			if actorType == "player" {
-				user, room := getTestUserAndRoom(t)
-				prepareRangedCostCycle(user.Character, false, 0)
-				user.Character.Cooldowns = characters.Cooldowns{"special-move": -2, "other": 7}
-				events.DrainQueuedMessagesForTest(user.UserId)
-				_, err := Reload("", user, room, 0)
-				require.NoError(t, err)
-				assert.False(t, user.Character.Equipment.Weapon.Loaded)
-				assert.Equal(t, 20, user.Character.Items[1].Uses)
-				assert.Equal(t, characters.Cooldowns{"special-move": -2, "other": 7}, user.Character.Cooldowns)
-				assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)
-				return
-			}
-
-			mob, room := getRangedTestMobAndRoom(t)
-			prepareRangedCostCycle(&mob.Character, false, 0)
-			mob.Character.Cooldowns = characters.Cooldowns{"special-move": -2, "other": 7}
-			target := users.GetByUserId(1)
-			require.NotNil(t, target)
-			events.DrainQueuedMessagesForTest(target.UserId)
-			_, err := mobcommands.Reload("", mob, room)
-			require.NoError(t, err)
-			assert.False(t, mob.Character.Equipment.Weapon.Loaded)
-			assert.Equal(t, 20, mob.Character.Items[1].Uses)
-			assert.Equal(t, characters.Cooldowns{"special-move": -2, "other": 7}, mob.Character.Cooldowns)
-			assert.Empty(t, events.DrainQueuedMessagesForTest(target.UserId), "mob refusal must stay silent")
-		})
-	}
-}
-
-type staleReloadPlayerActor struct {
-	actions.Actor
-	characterCalls int
-	onAdmission    func(*characters.Character)
-}
-
-func (a *staleReloadPlayerActor) GetCharacter() *characters.Character {
-	a.characterCalls++
-	char := a.Actor.GetCharacter()
-	if a.characterCalls == 3 && a.onAdmission != nil {
-		a.onAdmission(char)
-	}
-	return char
-}
-
-// TestReloadPaidStalePlayerWrapperHasNoSuccessSideEffects drives the real
-// player command wrapper through each paid admission-time invalidation. The
-// paid cost remains, but a stale action must never be rendered or published as
-// a successful reload and must never advance a reload-gated quest.
-func TestReloadPaidStalePlayerWrapperHasNoSuccessSideEffects(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		mutate   func(*characters.Character)
-		assertNo func(*testing.T, *characters.Character)
-	}{
-		{
-			name: "weapon changed",
-			mutate: func(char *characters.Character) {
-				replacement := char.Equipment.Weapon
-				replacement.ItemId++
-				spec := *replacement.Spec
-				spec.ItemId = replacement.ItemId
-				replacement.Spec = &spec
-				char.Equipment.Weapon = replacement
-			},
-			assertNo: func(t *testing.T, char *characters.Character) {
-				assert.False(t, char.Equipment.Weapon.Loaded)
-				assert.Equal(t, 20, char.Items[1].Uses)
-				assert.Zero(t, char.Cooldowns["special-move"])
-			},
-		},
-		{
-			name: "ammunition disappeared",
-			mutate: func(char *characters.Character) {
-				char.Items = char.Items[:1]
-			},
-			assertNo: func(t *testing.T, char *characters.Character) {
-				assert.False(t, char.Equipment.Weapon.Loaded)
-				require.Len(t, char.Items, 1)
-				assert.Equal(t, 70003, char.Items[0].ItemId)
-				assert.Zero(t, char.Cooldowns["special-move"])
-			},
-		},
-		{
-			name: "cooldown became busy",
-			mutate: func(char *characters.Character) {
-				char.Cooldowns["special-move"] = 3
-			},
-			assertNo: func(t *testing.T, char *characters.Character) {
-				assert.False(t, char.Equipment.Weapon.Loaded)
-				assert.Equal(t, 20, char.Items[1].Uses)
-				assert.Equal(t, 3, char.Cooldowns["special-move"])
-			},
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			cleanup := seedAllRegistries()
-			defer cleanup()
-			cleanupQuests := questengine.ResetEngineForTest()
-			defer cleanupQuests()
-			pinRangedCostEvidence(t)
-
-			user, room := getTestUserAndRoom(t)
-			prepareRangedCostCycle(user.Character, false, 50)
-			observer := users.GetByUserId(2)
-			require.NotNil(t, observer)
-
-			const questFlag = "99001-reloaded"
-			questengine.GetEngine().RegisterQuest(&questengine.QuestDef{
-				QuestId: 99001,
-				Name:    "Stale Reload Wrapper Test",
-				Steps:   []questengine.QuestStep{{Id: "start"}},
-				Flags: []questengine.QuestFlagDef{{
-					Key: "reloaded", Values: []string{"yes"},
-				}},
-				Triggers: []questengine.TriggerDef{{
-					Event:   "command",
-					Command: "reload",
-					Actions: []questengine.ActionDef{{SetFlag: &questengine.QuestFlagAction{
-						Key: questFlag, Value: "yes",
-					}}},
-				}},
-			})
-
-			originalExecute := executeReloadAction
-			executeReloadAction = func(actor actions.Actor) actions.ReloadResult {
-				return actions.ExecuteReload(&staleReloadPlayerActor{
-					Actor:       actor,
-					onAdmission: tc.mutate,
-				})
-			}
-			t.Cleanup(func() { executeReloadAction = originalExecute })
-
-			events.DrainQueuedMessagesForTest(user.UserId)
-			events.DrainQueuedMessagesForTest(observer.UserId)
-			handled, err := Reload("", user, room, 0)
-			require.True(t, handled)
-			require.NoError(t, err)
-
-			assert.Equal(t, 49, user.Character.Stamina,
-				"the one already-paid admission remains charged")
-			tc.assertNo(t, user.Character)
-			assert.NotContains(t,
-				strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n"),
-				"You ready your")
-			assert.NotContains(t,
-				strings.Join(events.DrainQueuedMessagesForTest(observer.UserId), "\n"),
-				"readies their")
-			assert.Empty(t, user.Character.GetQuestFlag(questFlag),
-				"a paid stale reload must not advance the reload quest")
-		})
-	}
-}
+// The stale-reload wrapper test and its staleReloadPlayerActor helper are
+// DELETED, not moved. They drove the retired player `reload` command through
+// the executeReloadAction seam, and both the command and the seam are gone now
+// that firing chambers its own next round.
+//
+// The property they guarded -- an admission that goes stale mid-action keeps
+// the one payment and mutates nothing else -- still has coverage at the layer
+// that owns it: TestReload_StaleSecondaryStateKeepsSingleAdmission in
+// internal/actions/combat_reload_test.go, which exercises chamberNextRound
+// directly.

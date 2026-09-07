@@ -567,7 +567,21 @@ func TestFireAdmissionOrdering(t *testing.T) {
 	assert.Less(t, int(roomVisibility[0]), int(admit[0]))
 	assert.Less(t, int(hiddenTarget[0]), int(admit[0]))
 	assert.Less(t, int(admit[0]), int(cooldownPos[0]),
-		"the surprise claim must never precede admission")
+		"the claim must never precede admission")
+
+	// The claim must also come after the POST-ADMISSION STALE-WEAPON CHECK, not
+	// merely after admission. Admission calls through the actor seam, which can
+	// invalidate the weapon underneath us; the guard below returns without
+	// firing. A claim placed between admission and that guard would burn the
+	// shared special-move timer for a shot that never happened, and every other
+	// assertion in this test still passes when it does -- so this line is the
+	// only thing standing between that regression and production.
+	staleGuard := exactCallPositions(t, fset, body, "weapon.Equals(weaponSnapshot)", false)
+	require.Len(t, staleGuard, 1,
+		"ExecuteFire must re-check the weapon identity once after admission")
+	assert.Less(t, int(staleGuard[0]), int(cooldownPos[0]),
+		"the claim must come AFTER the stale-weapon guard, or a shot that never "+
+			"fires still charges the cooldown")
 	assert.Less(t, int(cooldownPos[0]), int(resolve[0]))
 	assert.Less(t, int(admit[0]), int(unloads[0]))
 	assert.Less(t, int(unloads[0]), int(resolve[0]))

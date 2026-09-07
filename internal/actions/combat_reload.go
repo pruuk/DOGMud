@@ -19,7 +19,6 @@ type ReloadResult struct {
 	NoWeapon      bool // no ranged weapon equipped
 	AlreadyLoaded bool
 	NoAmmo        bool
-	OnCooldown    bool
 	Crafting      bool
 }
 

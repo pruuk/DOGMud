@@ -272,7 +272,14 @@ func TestMeleeAmbushDenialCopy_ObeysThePlayerCopyRules(t *testing.T) {
 		})
 	}
 
-	assert.Equal(t, surpriseShotDeniedText, surpriseMeleeDeniedText,
-		"one shared cooldown, one wording: the melee refusal is the ranged refusal verbatim, "+
-			"so the two halves of the ambush read to a player as one feature")
+	// The ranged half no longer HAS a refusal to match. Firing chambers its own
+	// next round and so claims the shared timer on every shot; gating the ranged
+	// opener on that timer would have denied it after any previous shot, so the
+	// ranged ambush is now conditioned on stealth alone and its refusal text was
+	// deleted as unreachable. Melee has no per-swing claim, so its gate still
+	// means what it always meant and this wording is still reachable.
+	assert.Equal(t,
+		`No ambush ready. You need a moment to recover before another special move.`,
+		surpriseMeleeDeniedText,
+		"the melee refusal keeps the engine's established cooldown wording")
 }
