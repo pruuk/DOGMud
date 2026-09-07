@@ -1,8 +1,6 @@
 package actions
 
 import (
-	"fmt"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -93,14 +91,14 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 	}
 
 	cfg := configs.GetBalanceConfig()
-	if !char.CooldownReady("special-move") {
+	if !SpecialMoveReady(char) {
 		return HamstringResult{OnCooldown: true}
 	}
 	cost := admitFullCost(actor, costs.ActionHamstring, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
 	if cost.Status == characters.CostRefused {
 		return HamstringResult{Cost: cost}
 	}
-	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !ClaimSpecialMove(char) {
 		return HamstringResult{Cost: cost, OnCooldown: true}
 	}
 

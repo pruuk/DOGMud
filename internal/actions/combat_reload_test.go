@@ -76,7 +76,7 @@ func (a *staleRangedSecondaryActor) GetCharacter() *characters.Character {
 	return char
 }
 
-// specialMoveCooldownPeriod is the cooldown string ExecuteReload uses; tests
+// specialMoveCooldownPeriod is the cooldown string the ranged path uses; tests
 // reuse it to probe whether the cooldown was consumed.
 func specialMoveCooldownPeriod() string {
 	return fmt.Sprintf("%d rounds", configs.GetBalanceConfig().SpecialMoveCooldown)
@@ -91,7 +91,7 @@ func TestReload_NoRangedWeapon(t *testing.T) {
 	char.Equipment.Weapon = reloadMeleeWeapon(2)
 	actor := newStubActor(char, newTestRoom())
 
-	res := ExecuteReload(actor)
+	res := chamberNextRound(actor)
 
 	assert.True(t, res.NoWeapon, "expected NoWeapon when no ranged weapon equipped")
 	assert.False(t, res.Loaded)
@@ -109,7 +109,7 @@ func TestReload_AlreadyLoaded(t *testing.T) {
 	char.Items = append(char.Items, reloadAmmoBundle(3, "arrows", 20))
 	actor := newStubActor(char, newTestRoom())
 
-	res := ExecuteReload(actor)
+	res := chamberNextRound(actor)
 
 	assert.True(t, res.AlreadyLoaded, "expected AlreadyLoaded")
 	assert.False(t, res.Loaded)
@@ -128,7 +128,7 @@ func TestReload_NoAmmo_DoesNotBurnCooldown(t *testing.T) {
 	char.Items = append(char.Items, reloadAmmoBundle(4, "bolts", 20))
 	actor := newStubActor(char, newTestRoom())
 
-	res := ExecuteReload(actor)
+	res := chamberNextRound(actor)
 
 	assert.True(t, res.NoAmmo, "expected NoAmmo")
 	assert.Equal(t, "arrows", res.AmmoTag, "NoAmmo result should report the needed tag")
@@ -141,24 +141,34 @@ func TestReload_NoAmmo_DoesNotBurnCooldown(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Cooldown busy → OnCooldown, ammo NOT consumed, weapon stays unloaded
+// 4. A busy cooldown does NOT stop chambering
 // ---------------------------------------------------------------------------
 
-func TestReload_OnCooldown(t *testing.T) {
+// This assertion is the INVERSE of what it used to be, deliberately.
+//
+// Chambering used to refuse while the shared special-move timer was running,
+// and that produced a trap nobody had written down: a surprise shot CLAIMS that
+// timer, so landing a perfect ambush left the shooter unable to reload for the
+// whole cooldown -- the exact moment they most needed a loaded weapon.
+//
+// Chambering is part of firing now and owns no cooldown of its own. If this
+// test is ever "fixed" back to expecting a refusal, that trap returns.
+func TestReload_BusyCooldownDoesNotBlockChambering(t *testing.T) {
 	char := characters.New()
 	char.Equipment.Weapon = reloadRangedWeapon(1, "arrows")
 	char.Items = append(char.Items, reloadAmmoBundle(3, "arrows", 20))
 
-	// Pre-occupy the shared special-move cooldown slot.
+	// Pre-occupy the shared special-move cooldown slot, as an ambush would.
 	assert.True(t, char.Cooldowns.Try("special-move", specialMoveCooldownPeriod()))
 
 	actor := newStubActor(char, newTestRoom())
-	res := ExecuteReload(actor)
+	res := chamberNextRound(actor)
 
-	assert.True(t, res.OnCooldown, "expected OnCooldown when special-move is busy")
-	assert.False(t, res.Loaded)
-	assert.False(t, char.Equipment.Weapon.Loaded, "weapon must stay unloaded")
-	assert.Equal(t, 20, char.Items[0].Uses, "ammo must not be consumed on cooldown")
+	assert.True(t, res.Loaded, "chambering must succeed while the timer is busy")
+	assert.True(t, char.Equipment.Weapon.Loaded, "the weapon must end up loaded")
+	assert.Equal(t, 19, char.Items[0].Uses, "exactly one round must be consumed")
+	assert.Positive(t, char.Cooldowns["special-move"],
+		"chambering must leave the existing cooldown untouched, not clear it")
 }
 
 // ---------------------------------------------------------------------------
@@ -171,7 +181,7 @@ func TestReload_Success(t *testing.T) {
 	char.Items = append(char.Items, reloadAmmoBundle(3, "arrows", 20))
 	actor := newStubActor(char, newTestRoom())
 
-	res := ExecuteReload(actor)
+	res := chamberNextRound(actor)
 
 	assert.True(t, res.Loaded, "expected success")
 	assert.False(t, res.BundleEmptied, "bundle had plenty left")
@@ -180,9 +190,12 @@ func TestReload_Success(t *testing.T) {
 	// Writeback proof: the equipment slot itself is now loaded.
 	assert.True(t, char.Equipment.Weapon.Loaded, "weapon Loaded must persist on the slot")
 
-	// Cooldown consumed: an immediate second Try fails.
-	assert.False(t, char.Cooldowns.Try("special-move", specialMoveCooldownPeriod()),
-		"special-move cooldown should have been consumed by the reload")
+	// Chambering claims NOTHING. The shot that calls it owns the single
+	// special-move claim; a chambering step that also claimed would charge the
+	// player twice for one action, and a chambering step that GATED on the
+	// timer is what used to strand a weapon after an ambush.
+	assert.True(t, char.Cooldowns.Try("special-move", specialMoveCooldownPeriod()),
+		"chambering must leave the special-move timer free for its caller to claim")
 }
 
 // TestReload_RefusedCostIsAtomic catches cost admission being omitted or
@@ -196,7 +209,7 @@ func TestReload_RefusedCostIsAtomic(t *testing.T) {
 	char.Cooldowns = characters.Cooldowns{"special-move": -2, "other": 7}
 	cooldownsBefore := maps.Clone(char.Cooldowns)
 
-	res := ExecuteReload(newStubActor(char, newTestRoom()))
+	res := chamberNextRound(newStubActor(char, newTestRoom()))
 
 	require.Equal(t, characters.CostRefused, res.Cost.Status)
 	assert.False(t, res.Loaded)
@@ -221,7 +234,7 @@ func TestReload_SuccessPaysOnceAndMutatesOnce(t *testing.T) {
 		reloadAmmoBundle(3, "arrows", 20),
 	}
 
-	res := ExecuteReload(newStubActor(char, newTestRoom()))
+	res := chamberNextRound(newStubActor(char, newTestRoom()))
 
 	require.True(t, res.Loaded)
 	require.Equal(t, characters.CostPaid, res.Cost.Status)
@@ -230,7 +243,10 @@ func TestReload_SuccessPaysOnceAndMutatesOnce(t *testing.T) {
 	assert.Equal(t, 7, char.Items[0].Uses, "incompatible bundle must be untouched")
 	assert.Equal(t, 19, char.Items[1].Uses, "exactly one compatible projectile must be consumed")
 	assert.True(t, char.Equipment.Weapon.Loaded)
-	assert.Greater(t, char.Cooldowns["special-move"], 0)
+	// Chambering claims no cooldown; its caller (ExecuteFire) owns the single
+	// claim for the whole action.
+	assert.Zero(t, char.Cooldowns["special-move"],
+		"chambering must not claim the shared timer")
 }
 
 // TestReload_StaleSecondaryStateKeepsSingleAdmission catches a post-gate item
@@ -251,13 +267,54 @@ func TestReload_StaleSecondaryStateKeepsSingleAdmission(t *testing.T) {
 		return &staleRangedSecondaryActor{Actor: newStubActor(char, newTestRoom())}, char
 	}
 
+	// The two ABORT branches. Both were uncovered when the player-facing reload
+	// command was retired: the deleted wrapper test exercised them, and the
+	// replacement named in its place only covers the success paths. An abort
+	// that silently consumed ammo, or left the weapon loaded without spending
+	// one, would pass every other test in this file.
+
+	t.Run("a swapped weapon aborts without consuming ammo", func(t *testing.T) {
+		actor, char := newActor()
+		actor.onAdmission = func(c *characters.Character) {
+			// A different weapon in the slot: same ammo tag, different identity.
+			c.Equipment.Weapon = reloadRangedWeapon(2, "arrows")
+		}
+
+		res := chamberNextRound(actor)
+
+		require.Equal(t, characters.CostPaid, res.Cost.Status,
+			"the one admission already paid stays paid")
+		assert.False(t, res.Loaded, "a swapped weapon must abort the chambering")
+		assert.False(t, char.Equipment.Weapon.Loaded, "the replacement must not be loaded")
+		assert.Equal(t, 20, char.Items[1].Uses, "an aborted chambering must consume no ammo")
+		assert.False(t, res.BundleEmptied)
+	})
+
+	t.Run("a vanished bundle aborts without loading the weapon", func(t *testing.T) {
+		actor, char := newActor()
+		actor.onAdmission = func(c *characters.Character) {
+			// The admitted bundle is gone: dropped, stolen, given away.
+			c.Items = []items.Item{reloadAmmoBundle(4, "bolts", 7)}
+		}
+
+		res := chamberNextRound(actor)
+
+		require.Equal(t, characters.CostPaid, res.Cost.Status,
+			"the one admission already paid stays paid")
+		assert.False(t, res.Loaded, "a vanished bundle must abort the chambering")
+		assert.False(t, char.Equipment.Weapon.Loaded,
+			"the weapon must NOT read loaded when nothing was chambered into it")
+		assert.False(t, res.BundleEmptied)
+		assert.Equal(t, 7, char.Items[0].Uses, "the unrelated bundle must be untouched")
+	})
+
 	t.Run("reordered inventory follows the admitted bundle identity", func(t *testing.T) {
 		actor, char := newActor()
 		actor.onAdmission = func(c *characters.Character) {
 			c.Items[0], c.Items[1] = c.Items[1], c.Items[0]
 		}
 
-		res := ExecuteReload(actor)
+		res := chamberNextRound(actor)
 
 		require.Equal(t, characters.CostPaid, res.Cost.Status)
 		assert.Equal(t, 1, res.Cost.Charged)
@@ -269,28 +326,39 @@ func TestReload_StaleSecondaryStateKeepsSingleAdmission(t *testing.T) {
 		assert.Equal(t, 7, char.Items[1].Uses)
 	})
 
-	t.Run("stale cooldown rolls back ammo and load without another quote", func(t *testing.T) {
+	// A cooldown appearing DURING admission used to abort the chambering and
+	// roll back the ammo. There is no such abort now: chambering does not read
+	// the timer at all, so the round is chambered and the pre-existing cooldown
+	// is left exactly as it was found.
+	t.Run("a cooldown appearing during admission does not abort chambering", func(t *testing.T) {
 		actor, char := newActor()
 		actor.onAdmission = func(c *characters.Character) {
 			c.Cooldowns["special-move"] = 3
 		}
 
-		res := ExecuteReload(actor)
+		res := chamberNextRound(actor)
 
 		require.Equal(t, characters.CostPaid, res.Cost.Status)
 		assert.Equal(t, 1, res.Cost.Charged)
 		assert.Equal(t, 9, char.Stamina)
-		assert.False(t, res.Loaded)
-		assert.False(t, char.Equipment.Weapon.Loaded)
-		assert.Equal(t, 7, char.Items[0].Uses)
-		assert.Equal(t, 20, char.Items[1].Uses)
-		assert.Equal(t, 3, char.Cooldowns["special-move"])
+		assert.True(t, res.Loaded, "chambering proceeds regardless of the timer")
+		assert.True(t, char.Equipment.Weapon.Loaded)
+		assert.Equal(t, 7, char.Items[0].Uses, "incompatible bundle untouched")
+		assert.Equal(t, 19, char.Items[1].Uses, "one projectile consumed")
+		assert.Equal(t, 3, char.Cooldowns["special-move"],
+			"the pre-existing cooldown must be left exactly as found")
 	})
 }
 
-// TestReloadAdmissionOrdering guards the distinct reload sequence: read-only
-// cooldown readiness, one exact admission, then projectile/load/cooldown
-// mutation. AST nodes make this an executable structure check, not source grep.
+// TestReloadAdmissionOrdering guards the chambering sequence: one exact
+// admission, then the projectile consume, then the load. AST nodes make this an
+// executable structure check, not a source grep.
+//
+// ⚠️ IT ALSO ASSERTS THAT CHAMBERING TOUCHES THE SPECIAL-MOVE COOLDOWN NOT AT
+// ALL. That is the point of the whole change: chambering used to both gate on
+// that timer and claim it, which denied an ambush after a reload AND stranded
+// an empty weapon after an ambush. ExecuteFire owns the single claim now, so a
+// cooldown call reappearing in here is the regression, not a refinement.
 func TestReloadAdmissionOrdering(t *testing.T) {
 	_, thisFile, _, ok := runtime.Caller(0)
 	require.True(t, ok)
@@ -300,20 +368,21 @@ func TestReloadAdmissionOrdering(t *testing.T) {
 
 	var body *ast.BlockStmt
 	for _, decl := range parsed.Decls {
-		if fn, ok := decl.(*ast.FuncDecl); ok && fn.Name.Name == "ExecuteReload" {
+		if fn, ok := decl.(*ast.FuncDecl); ok && fn.Name.Name == "chamberNextRound" {
 			body = fn.Body
 			break
 		}
 	}
 	require.NotNil(t, body)
 
-	ready := exactCallPositions(t, fset, body, `char.CooldownReady("special-move")`, false)
 	admit := admissionCallPositions(t, fset, body, "costs.ActionReload", "ReloadBaseStaminaCost")
-	consumeCooldown := exactCallPositions(t, fset, body,
-		`char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, false)
-	require.Len(t, ready, 1)
 	require.Len(t, admit, 1)
-	require.Len(t, consumeCooldown, 1)
+
+	// The cooldown must be absent from this function entirely.
+	require.Empty(t, exactCallPositions(t, fset, body, `SpecialMoveReady(char)`, false),
+		"chambering must not GATE on the special-move timer: that is what stranded a weapon after an ambush")
+	require.Empty(t, exactCallPositions(t, fset, body, `ClaimSpecialMove(char)`, false),
+		"chambering must not CLAIM the special-move timer: its caller owns the single claim")
 
 	projectiles := []token.Pos{}
 	var loaded token.Pos
@@ -334,10 +403,8 @@ func TestReloadAdmissionOrdering(t *testing.T) {
 	})
 	require.Len(t, projectiles, 1)
 	require.NotEqual(t, token.NoPos, loaded)
-	assert.Less(t, int(ready[0]), int(admit[0]))
-	assert.Less(t, int(admit[0]), int(projectiles[0]))
-	assert.Less(t, int(projectiles[0]), int(loaded))
-	assert.Less(t, int(loaded), int(consumeCooldown[0]))
+	assert.Less(t, int(admit[0]), int(projectiles[0]), "admission must precede consuming a projectile")
+	assert.Less(t, int(projectiles[0]), int(loaded), "the projectile must be consumed before the weapon reads loaded")
 }
 
 // ---------------------------------------------------------------------------
@@ -350,7 +417,7 @@ func TestReload_LastUse_RemovesBundle(t *testing.T) {
 	char.Items = append(char.Items, reloadAmmoBundle(3, "arrows", 1))
 	actor := newStubActor(char, newTestRoom())
 
-	res := ExecuteReload(actor)
+	res := chamberNextRound(actor)
 
 	assert.True(t, res.Loaded, "expected success")
 	assert.True(t, res.BundleEmptied, "expected BundleEmptied on last use")
@@ -369,7 +436,7 @@ func TestReload_OffhandRanged(t *testing.T) {
 	char.Items = append(char.Items, reloadAmmoBundle(3, "arrows", 20))
 	actor := newStubActor(char, newTestRoom())
 
-	res := ExecuteReload(actor)
+	res := chamberNextRound(actor)
 
 	assert.True(t, res.Loaded, "expected success reloading the offhand ranged weapon")
 	assert.True(t, char.Equipment.Offhand.Loaded, "offhand should be loaded")

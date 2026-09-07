@@ -1,8 +1,6 @@
 package actions
 
 import (
-	"fmt"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -81,14 +79,14 @@ func ExecuteGore(actor Actor) GoreResult {
 	}
 
 	cfg := configs.GetBalanceConfig()
-	if !char.CooldownReady("special-move") {
+	if !SpecialMoveReady(char) {
 		return GoreResult{OnCooldown: true}
 	}
 	cost := admitFullCost(actor, costs.ActionGore, characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))
 	if cost.Status == characters.CostRefused {
 		return GoreResult{Cost: cost}
 	}
-	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !ClaimSpecialMove(char) {
 		return GoreResult{Cost: cost, OnCooldown: true}
 	}
 	commitMeleeEngagement(actor)

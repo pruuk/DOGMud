@@ -61,20 +61,6 @@ func ResolveAggroTarget(ref state.ActorRef) AggroTarget {
 	return AggroTarget{Found: false}
 }
 
-// TryCombatCooldown checks if a character has a special move cooldown active.
-// Returns true if the cooldown is active (move is blocked).
-// Returns false if the cooldown was successfully set (move is allowed).
-func TryCombatCooldown(char *characters.Character, cooldownRounds int) bool {
-	if char == nil || char.Cooldowns == nil {
-		return true // Blocked if character is invalid
-	}
-
-	// The Try method returns true if cooldown is NOT active (move allowed).
-	// It returns false if cooldown IS active (move blocked).
-	// We need to invert this for the caller.
-	return !char.Cooldowns.Try("special-move", "1 rounds")
-}
-
 // RecordAndWait records a special combat move and marks the character
 // as waiting one round (consumed by the special move).
 // sourceType should be combat.User or combat.Mob.

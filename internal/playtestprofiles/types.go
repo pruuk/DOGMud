@@ -22,6 +22,12 @@ var KnownTemplateIDs = []string{
 	// tester who starts in open country cannot test it at all, which is
 	// precisely how the 2026-08-29 run lost three of its goals.
 	"crafter",
+	// Parked ON the Long Terrace with a sling equipped and shot in the pack.
+	// Added for the same reason as crafter: the ranged range is unreachable
+	// from any field spawn inside a harness budget at three commands per round,
+	// and the merchants who sell the kit sleep on their schedules -- which is
+	// precisely how a 2026-09-07 run lost its goals before this existed.
+	"ranged-range",
 }
 
 // Manifest is the ephemeral per-run materialization request.

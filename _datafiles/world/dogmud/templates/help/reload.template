@@ -1,51 +1,27 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">reload</ansi>
 
-Chamber or nock a fresh projectile into the ranged weapon you have
-equipped, readying it to fire. Reloading draws one round of ammunition
-from a matching bundle in your pack (arrows for a bow, bolts for a
-crossbow, shot for a sling, and so on).
+<ansi fg="yellow">━━━ Weapons Do Not Need Reloading ━━━</ansi>
 
-<ansi fg="yellow">Usage: </ansi>
+If you came here holding a bow or a sling: you do not need this
+command. Shooting readies the next round by itself. Just type
+<ansi fg="command">fire</ansi> again. See <ansi fg="command">help fire</ansi>.
 
-  <ansi fg="command">reload</ansi>     Ready your equipped ranged weapon.
+<ansi fg="yellow">━━━ Administrators ━━━</ansi>
 
-A ranged weapon must be loaded before it can be fired. If you have a
-ranged weapon in either hand, it is reloaded automatically. Reloading
-takes a moment and shares a cooldown with other special moves, so plan
-your shots; you cannot reload again until it recovers.
+<ansi fg="command">reload</ansi> re-reads a server data file while the game is running,
+so content can be edited without a restart.
 
-Reloading is physical exertion that spends Stamina and requires full payment.
-Carried load raises the price, while <ansi fg="skill">ranged-combat</ansi> skill
-lowers it. If you are too spent, no ammunition or cooldown is consumed and the
-weapon remains unchanged.
+  <ansi fg="command">reload items</ansi>
+      Re-read the item definitions.
 
-You need matching ammunition in your pack. When a bundle runs dry you
-will be told it was your last.
+  <ansi fg="command">reload biomes</ansi>
+      Re-read the biome definitions.
 
-<ansi fg="yellow">Reloading costs you an ambush:</ansi>
+  <ansi fg="command">reload translations</ansi>
+      Re-read the language files.
 
-A shot fired from hiding is an <ansi fg="magenta-bold">ambush</ansi>, and it draws
-on the very same recovery that reloading just spent. If you reload and then
-hide, your special move is usually still coming back when you fire, so you
-fire an ordinary shot instead and are told there was no ambush ready.
+  <ansi fg="command">reload mapcache</ansi>
+      Clear the mapper cache. The next map is rebuilt from the
+      current room data.
 
-That shot still gives your position away. Firing from hiding reveals you
-whether the ambush was ready or not, so a wasted opener costs you your cover
-and returns nothing for it.
-
-Load first, then hide, and give the recovery time to return before you shoot.
-Check it with <ansi fg="command">cooldowns</ansi>. See <ansi fg="command">help ambush</ansi>.
-
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help shoot</ansi>, <ansi fg="command">help ranged-combat</ansi>,
-  <ansi fg="command">help stamina</ansi>, <ansi fg="command">help equip</ansi>,
-  <ansi fg="command">help ambush</ansi>, <ansi fg="command">help special</ansi>
-
-<ansi fg="black-bold">─────────────────────────────────────────────────────────────────</ansi>
-
-<ansi fg="red-bold">Admin:</ansi> with the proper role, <ansi fg="command">reload</ansi> also reloads server data files:
-
-  <ansi fg="command">reload items</ansi>          Reload item data files (including new ones).
-  <ansi fg="command">reload biomes</ansi>         Reload biome data files.
-  <ansi fg="command">reload translations</ansi>   Reload all translation/localization files.
-  <ansi fg="command">reload mapcache</ansi>        Clear the mapper's per-zone cache so the
-                         next <ansi fg="command">map</ansi> rebuilds from current room data.
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help fire</ansi>

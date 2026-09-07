@@ -380,10 +380,21 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 // swing, and was told neither thing. To the player the ambush simply did not
 // work.
 const (
-	// surpriseMeleeDeniedText is the ranged refusal VERBATIM. One shared
-	// cooldown, one wording, wherever a player meets it. The reasoning behind
-	// the words themselves lives on surpriseShotDeniedText in shoot.go.
-	surpriseMeleeDeniedText = surpriseShotDeniedText
+	// surpriseMeleeDeniedText is the refusal a melee ambusher sees when the
+	// shared special-move timer was already claimed.
+	//
+	// It used to alias the ranged refusal, so the two halves could not drift.
+	// They have now drifted ON PURPOSE: the RANGED opener is no longer gated on
+	// the timer at all, because firing chambers its own next round and therefore
+	// claims on every shot, which would have denied the ambush after any
+	// previous shot. Melee has no per-swing claim, so its gate still means what
+	// it always meant and this line is still reachable.
+	//
+	// The second sentence is the engine's established refusal wording ("You need
+	// a moment to recover before attempting another special move." -- throw.go,
+	// mutation_helpers.go), trimmed to fit, so the same cooldown is refused in
+	// the same words wherever a player still meets it.
+	surpriseMeleeDeniedText = `No ambush ready. You need a moment to recover before another special move.`
 
 	// surpriseMeleeRevealedText names the consequence the refusal does not,
 	// and it is the more expensive of the two: the ambush is off, the cover is

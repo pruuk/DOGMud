@@ -1,5 +1,31 @@
 # DOGMud Patch Notes
 
+## 2026-09-07: Ranged weapons ready themselves now
+
+Shooting used to take two commands. You fired, the weapon went empty, and you
+typed reload before you could fire again. In a fight that meant half your
+attention went on housekeeping, and the worst of it was that reloading and
+setting up an ambush drew from the same well. If you reloaded and then tried to
+sneak up on something, the ambush you were setting up quietly refused to happen.
+It also worked the other way: land a perfect surprise shot and you could not
+reload for a while afterward, which is the exact moment you most wanted to.
+
+Fire is now the whole thing. You shoot, your hands find the next round on their
+own, and the weapon is ready. One command. If you run dry the game tells you so
+rather than leaving you to find out by pulling the trigger on an empty weapon.
+
+Shooting from cover is worth learning. If you are hidden when you fire, the shot
+lands far harder, and no timer can take that away from you any more. It gives
+your position away when it lands, and you cannot slip out of sight again while
+something is fighting you, so it is one good opening per fight rather than
+something you can lean on.
+
+Marksman Iden teaches the new way, and will not send you off reciting the old
+one. She has also started teaching the part about cover, which nobody was ever
+told before.
+
+Old habits still work: shoot does the same thing fire does.
+
 ## 2026-09-07: Creatures carry what they were always meant to
 
 Seventeen creatures and people around the world were supposed to leave

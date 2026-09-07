@@ -756,8 +756,7 @@ own outcome text. The defy counter-taunt still dispatches from
 | Shadow | actions | self→target | ShadowResult | varies | none |
 | Sneak | actions | self vs room | SneakResult | silent | shared |
 | Steal | actions | self vs mob/player/container | StealResult | varies | shared |
-| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), surprise shot only |
-| ExecuteReload | actions | self (equip ranged weapon) | ReloadResult | both | shared (special-move) |
+| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), EVERY shot |
 | Sell | actions | self vs merchant | SellResult | player only | none |
 | Sleep | actions | self | SleepResult | varies | none |
 | Track | actions | self vs trail/target | TrackResult | user only | shared |
@@ -843,16 +842,33 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
 - Expired cooldowns are cleaned up lazily when checked.
 
 `"special-move"` is ONE shared timer across every special move
-(`SpecialMoveCooldown`, 4 rounds shipped). U10d added `ExecuteFire` to its
-claimants, but only for the **same-room surprise shot**: an ordinary shot and a
-cross-room shot still touch no timer, and `ExecuteReload` burns the same one.
-That last pair matters — a loaded bow implies a recent reload, so the natural
-"reload, sneak, shoot" sequence finds the timer already claimed. `ExecuteFire`
-then reports `FireResult.SurpriseOnCooldown` and resolves an ordinary shot
-rather than failing; the wrapper must speak that, or the ambush silently does
-nothing. `FireResult.Revealed` is the companion flag: a surprise shot gives the
-shooter's position away, which `IsSneaking` (a snapshot taken before any
-reveal) does not tell you.
+(`SpecialMoveCooldown`, 4 rounds shipped). **Claim it through
+`ClaimSpecialMove` and read it through `SpecialMoveReady`
+(`special_move_cooldown.go`), never by hand.** The tag used to be typed at 56
+call sites in five idioms, and they had already drifted: one path ran a
+hardcoded `"1 rounds"` against everyone else's configured value, and nothing
+could see it.
+
+`ExecuteFire` claims it on **every shot**, ordinary or not, because firing
+chambers its own next round. That is not a rate change: before the fold, the
+shot claimed nothing and the separate `reload` claimed instead, so a
+shot-plus-reload cycle already cost exactly one burn.
+
+⚠️ **The claim does NOT gate the ambush.** A shot from stealth is a surprise
+shot because the shooter was hidden, full stop. The old gate refused the opener
+whenever the timer was spent — which meant refusing it whenever the player had
+reloaded, the very thing you must do to have something to ambush with. Now that
+an ordinary shot claims too, re-adding the gate would deny the opener after ANY
+previous shot. Stealth is what limits ambushes: the shot reveals you and `sneak`
+refuses in combat, so an engagement yields one opener.
+
+Melee is DIFFERENT and deliberately so: `EngageAggroType` still gates its opener
+on the timer, because melee has no per-swing claim to collide with.
+
+`FireResult.Revealed` is the companion flag: a surprise shot gives the shooter's
+position away, which `IsSneaking` (a snapshot taken before any reveal) does not
+tell you. `FireResult.Chambered` carries the auto-reload's outcome, and its
+`NoAmmo` / `BundleEmptied` flags are how running dry reaches the player.
 
 ---
 

@@ -17,7 +17,7 @@ import (
 // ranged-weapons T6). One shot per command; the weapon unloads on fire. No
 // crime/justice recording (that's a player concern); retaliation just aggros
 // the target back onto the shooter.
-func Shoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
+func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	result := actions.ExecuteFire(&actions.MobActor{Mob: mob, Room: room}, rest)
 

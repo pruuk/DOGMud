@@ -272,12 +272,12 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		fset, fn := task6FunctionAST(t, path, "Throw")
 		item := task6OnlyCall(t, fset, fn, "findThrowItem(user.Character, rest)", false)
 		targets := task6OnlyCall(t, fset, fn, "stageThrowTargets(room)", false)
-		ready := task6OnlyCall(t, fset, fn, `user.Character.CooldownReady("special-move")`, false)
+		ready := task6OnlyCall(t, fset, fn, `actions.SpecialMoveReady(user.Character)`, false)
 		admit := task6OnlyCall(t, fset, fn,
 			"admitThrowCost(user.Character, float64(cfg.SpecialMoveBaseStaminaCost))", false)
 		revalidate := task6OnlyCall(t, fset, fn,
 			"revalidateThrowItem(user.Character, matchItem, itemLocation)", false)
-		consumeCooldown := task6OnlyCall(t, fset, fn, "user.Character.TryCooldown", true)
+		consumeCooldown := task6OnlyCall(t, fset, fn, `actions.ClaimSpecialMove(user.Character)`, false)
 		useBackpack := task6OnlyCall(t, fset, fn, "user.Character.UseItem(matchItem)", false)
 		useBandolier := task6OnlyCall(t, fset, fn, "user.Character.UseItemFromPotions(matchItem)", false)
 		// U6b Task 15: throw resolves per-target through the channel seam

@@ -1,0 +1,51 @@
+# Adversarial sweep of the ranged one-verb change.
+#
+# What changed: `fire` (formerly `shoot`, still an alias) now resolves the shot
+# AND readies the next round in one action. The player-facing `reload` is gone.
+# A shot from stealth is always an ambush; no cooldown can refuse it. Running
+# out of ammunition is announced rather than discovered.
+#
+# Mandate: CRITICAL and ADVERSARIAL. Read every line of output. Anything that
+# reads wrong, repeats, contradicts its own help text, or names a command that
+# does not exist is a finding. Do not be charitable.
+ephemeral:
+  # Seeded at the Long Terrace (5351) with a sling and shot already in hand.
+  # A fresh character cannot reach the Pothole Coulee range inside the budget
+  # at three commands per round, and the merchants who sell the kit sleep on
+  # their schedules. A previous run this session was lost to exactly that.
+  profile: ranged-range
+  start_room: 5351
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `fire butt` at the practice butt. Read every line. The shot and the
+    readying should feel like ONE action, not two events. Then fire again
+    immediately: it must work with no reload step. If anything tells you to
+    reload, that is a finding.
+  - >-
+    Type `reload`. It must NOT reload your weapon; it should tell you that you
+    do not need to and point you at help fire. Report the exact wording.
+  - >-
+    Type `shoot butt`. The old word must still work and do exactly what fire
+    does.
+  - >-
+    Now the ambush: type `sneak`, then `fire butt`. The shot must land visibly
+    harder AND take you out of hiding. Try to set one up a second time without
+    leaving the fight and report what stops you. Then try sneaking and firing
+    again right after a previous shot: the ambush must still work, because no
+    cooldown gates it any more.
+  - >-
+    Fire until the pouch runs dry, counting shots. You must be told when you
+    spend the last round, and told clearly when you try to shoot with nothing
+    left. You must never be left with an empty weapon and no explanation.
+  - >-
+    Read `help fire`, `help shoot`, `help reload`, `help ranged-combat`,
+    `help ambush`. No page may show [TEMPLATE ERROR], and no page may instruct
+    you to reload a weapon. Check that `help` lists fire in its index. Then
+    `look` at your sling and read its description: it must not point at a help
+    topic that describes something else.
+  - >-
+    General adversarial pass: anything that reads wrong, renders oddly, leaks a
+    raw number, or contradicts itself.

@@ -516,42 +516,6 @@ func TestResolveAggroTarget_ZeroIds(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TryCombatCooldown tests
-// ---------------------------------------------------------------------------
-
-// TestTryCombatCooldown_Fresh verifies that a character with no active cooldowns
-// is NOT blocked (returns false = move allowed).
-func TestTryCombatCooldown_Fresh(t *testing.T) {
-	char := characters.New()
-	// characters.New() initializes Cooldowns to make(Cooldowns), so no setup
-	// needed. The first call to TryCombatCooldown should set the cooldown and
-	// return false (not blocked).
-	blocked := TryCombatCooldown(char, 3)
-	assert.False(t, blocked, "fresh character should not be on cooldown (move should be allowed)")
-}
-
-// TestTryCombatCooldown_Active verifies that after a cooldown is set, the same
-// character is blocked on the next attempt (returns true = move blocked).
-func TestTryCombatCooldown_Active(t *testing.T) {
-	char := characters.New()
-
-	// First call: sets the cooldown, move is allowed.
-	firstBlocked := TryCombatCooldown(char, 3)
-	assert.False(t, firstBlocked, "first call should not be blocked")
-
-	// Second call: cooldown is now active, move is blocked.
-	secondBlocked := TryCombatCooldown(char, 3)
-	assert.True(t, secondBlocked, "second call should be blocked (cooldown active)")
-}
-
-// TestTryCombatCooldown_NilChar verifies that a nil character returns true
-// (blocked) without panicking. This is a safety guard in the implementation.
-func TestTryCombatCooldown_NilChar(t *testing.T) {
-	blocked := TryCombatCooldown(nil, 3)
-	assert.True(t, blocked, "nil character should be treated as blocked")
-}
-
-// ---------------------------------------------------------------------------
 // ExecuteKick / variant detection tests
 // ---------------------------------------------------------------------------
 

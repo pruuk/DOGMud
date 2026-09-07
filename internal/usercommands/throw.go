@@ -210,7 +210,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	stagedTargets := stageThrowTargets(room)
-	if !user.Character.CooldownReady("special-move") {
+	if !actions.SpecialMoveReady(user.Character) {
 		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
 		return true, nil
 	}
@@ -228,7 +228,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	if !found {
 		return true, nil
 	}
-	if !user.Character.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !actions.ClaimSpecialMove(user.Character) {
 		return true, nil
 	}
 

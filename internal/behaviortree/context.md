@@ -348,6 +348,7 @@ are subject to perception-scaled reaction delays (see below).
 
 | Action | Params | Description |
 |--------|--------|-------------|
+| ⚠️ `try_reload` was REMOVED. Firing chambers its own next round, so an archer never needs a turn to reload. The node also made a skullduggery-capable archer `sneak` into cover first, which was the only place an archer took cover on its own; re-adding a "take cover" beat is worth more than it used to be, since hiding before a shot now earns the ambush. Left for the behaviour arc. | | |
 | `respond` | `user_text` (string), `room_text` (optional), `hints` (optional) | Sends text to triggering player; `room_text` to others; `hints` shown as a hint line. |
 | `say` | `text` (string) | Mob says text to the whole room. |
 | `emote` | `text` (string) | Mob emotes (no "says" prefix). |
@@ -424,8 +425,7 @@ are subject to perception-scaled reaction delays (see below).
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `try_fire` | none | Fire the mob's loaded ranged weapon at its current Aggro target (or CombatMemory target if Aggro just cleared). Issues `shoot <targetName>` or `shoot <targetName> <direction>` for cross-room shots. Returns Failure if no loaded weapon, no valid target, or shot resolution fails. |
-| `try_reload` | none | Reload the mob's unloaded ranged weapon via `actions.ExecuteReload`. Draws one ammo bundle from the mob's pack. Returns Failure if no unloaded ranged weapon, no matching ammo, or reload cooldown active. |
+| `try_fire` | none | Fire the mob's loaded ranged weapon at its current Aggro target (or CombatMemory target if Aggro just cleared). Issues `fire <targetName>` or `fire <targetName> <direction>` for cross-room shots. Returns Failure if no loaded weapon, no valid target, or shot resolution fails. |
 | `keep_distance` | `min_room_distance` (int, default 1) | Kiting action. If an enemy is in the mob's room and the mob is not already fleeing melee, retreats one exit (preferring exits away from the target). Returns Success on retreat, Failure if no usable exit found. |
 
 **Archer re-engagement exemption (DoCombat hook):** A mob with a loaded

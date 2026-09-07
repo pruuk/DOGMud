@@ -18,10 +18,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
 
 #### **Combat Intelligence**
 - **Threat assessment**: `lookfortrouble` - Advanced hostility detection and target selection
-- **Combat actions**: `attack`, `backstab`, `shoot`, `reload`, `throw` - Offensive capabilities
-  (`shoot` fires a loaded ranged weapon; `reload` chambers the next round via
-  `actions.ExecuteReload`; archer mobs use the btree `try_fire`/`try_reload`/
-  `keep_distance` actions instead of calling these commands directly)
+- **Combat actions**: `attack`, `backstab`, `fire`, `throw` - Offensive capabilities
+  (`fire` shoots a ranged weapon AND chambers the next round in the same
+  action, via `actions.ExecuteFire`; `shoot` remains an alias. The mob `reload`
+  command is GONE, along with the btree `try_reload` node, because there is no
+  longer a reload step to take. Archer mobs use the btree `try_fire` /
+  `keep_distance` actions rather than calling these commands directly.)
 - **Special moves**: `bash`, `trip`, `kick`, `grapple`, `hamstring` - selected
   by `combat.ChooseSpecialMove` and dispatched here via `mob.Command(name)`.
   Each is anatomy-gated by the actor's species `body_parts` (grapple needs

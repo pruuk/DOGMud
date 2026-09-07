@@ -974,7 +974,7 @@ func TestShootMob(t *testing.T) {
 
 	mob, room := getTestMobAndRoom(t)
 
-	handled, err := Shoot("alice", mob, room)
+	handled, err := Fire("alice", mob, room)
 	_ = handled
 	_ = err
 }
@@ -1191,7 +1191,7 @@ func TestShootInCombat(t *testing.T) {
 	mob, room := getTestMobAndRoom(t)
 
 	mob.Character.SetAggro(1, 0, characters.DefaultAttack)
-	handled, err := Shoot("", mob, room)
+	handled, err := Fire("", mob, room)
 	_ = handled
 	_ = err
 	mob.Character.EndAggro()

@@ -3,7 +3,7 @@
 # Token flow:
 #   59-start — granted by Scout Bryn's dialogue (range_loop_offer node).
 #              Requires 52-end (The Overlook). Repeatable with cooldown.
-#   59-shoot — command trigger on shoot in the range room (5354).
+#   59-shoot — command trigger on fire in the range room (5354).
 #              Requires 59-start.
 #   59-end   — mob_death trigger on Canyon Scout (9165). Requires 59-shoot.
 #              Auto-grants reward + clears for repeat.
@@ -25,7 +25,7 @@ steps:
       Bryn has sent you to put a cross-canyon shot through the slot
       and then bring down whatever comes charging.
     hint: >-
-      Go to the range and type shoot at a target across the exit.
+      Go to the range and type fire at a target across the exit.
       Finish the scout when it charges. Come back to Bryn when
       it is done.
   - id: shoot
@@ -51,7 +51,7 @@ rewards:
 
 triggers:
   - event: command
-    command: shoot
+    command: fire
     room: 5354
     conditions:
       has: ["59-start"]

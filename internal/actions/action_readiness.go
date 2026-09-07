@@ -64,7 +64,7 @@ func ActionReadiness(actor Actor, cmd string) ReadinessResult {
 			return ReadinessResult{ActionReady, ""}
 		}
 		// Transient: shared cooldown or an active Activity (cast/craft/salvage).
-		if char.IsActing() || char.GetCooldown("special-move") > 0 {
+		if char.IsActing() || !SpecialMoveReady(char) {
 			return ReadinessResult{ActionDeferred, "special-move busy"}
 		}
 		// Structural: missing body part / wrong species / no valid target.
@@ -133,7 +133,7 @@ func castReadiness(actor Actor, rest string) ReadinessResult {
 	// now inert rather than blocking.
 
 	// Gate 8: Shared special-move cooldown (transient).
-	if char.GetCooldown("special-move") > 0 {
+	if !SpecialMoveReady(char) {
 		return ReadinessResult{ActionDeferred, "special-move cooldown"}
 	}
 

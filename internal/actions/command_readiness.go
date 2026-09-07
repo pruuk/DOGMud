@@ -36,7 +36,7 @@ func CommandIsReady(actor Actor, cmd string) bool {
 	if char.IsActing() {
 		return false
 	}
-	if char.GetCooldown("special-move") > 0 {
+	if !SpecialMoveReady(char) {
 		return false
 	}
 

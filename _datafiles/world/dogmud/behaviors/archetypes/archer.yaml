@@ -11,7 +11,7 @@
 #      fire next tick from range).
 #   2. try_fire — fire a LOADED ranged weapon at the aggro target,
 #      same-room or one exit away (directional shot).
-#   3. try_reload — when UNLOADED, ammo on hand, and NOT pinned in
+#   (try_reload retired: firing chambers its own next round now.)
 #      melee, chamber a fresh projectile (slipping into cover first if
 #      skullduggery-capable).
 #   4-9. inherited humanoid combat cascade (try_special_move + the
@@ -19,7 +19,7 @@
 #      forced into melee with nothing ranged ready.
 #
 # Behaviorally distinguished from generic_fighter by the leading
-# keep_distance/try_fire/try_reload trio. Example users: bandit
+# keep_distance/try_fire pair. Example users: bandit
 # archers, crossbow guards, hunters.
 #
 # Spec: ranged-weapons feature (Task 8 archer AI).
@@ -59,10 +59,6 @@ tree:
         # Fire if we have a loaded weapon and a reachable target.
         - type: action
           do: try_fire
-
-        # Out of contact + unloaded → chamber a fresh projectile.
-        - type: action
-          do: try_reload
 
         # ── inherited humanoid combat cascade (melee fallback) ──
         - type: action

@@ -80,6 +80,7 @@ help:
       - defense
       - defy
       - drain
+      - fire
       - flee
       - gore
       - grapple
@@ -93,7 +94,6 @@ help:
       - rally
       - reload
       - shadow
-      - shoot
       - sneak
       - stamina
       - stand
@@ -315,7 +315,7 @@ command-aliases:
   equip:              ['wear', 'wield', 'hold']
   remove:             ['rem', 'unequip', 'unwear', 'unwield']
   attack:             ['a', 'k', 'kill', 'fight']
-  shoot:              ['fire']
+  fire:               ['shoot']
   get:                ['g', 'take']
   command:            ['cmd']
   macros:             ['=?', 'macro']

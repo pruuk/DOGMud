@@ -30,7 +30,18 @@ import (
 // This is the loaded-weapon model (ranged-weapons T6). It REPLACES the
 // legacy remote-aggro behavior where a single `shoot` set up a continuous
 // round-loop auto-attack into the adjacent room.
-func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+// questNotifyCommand is the command name the quest engine is told about when a
+// shot resolves.
+//
+// ⚠️ IT IS HARDCODED RATHER THAN TAKEN FROM WHAT THE PLAYER TYPED, because
+// `shoot` is an alias of `fire` and still arrives here. Quests 50, 51 and 59
+// gate their beats on this exact string, and a quest whose trigger stops
+// matching simply stops granting with nothing in any log. If you change it,
+// change their `command:` triggers in the same commit --
+// ranged_quest_contract_test.go fails if the two ever disagree.
+const questNotifyCommand = "fire"
+
+func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// --- Pre-fire target resolution & guards ---
 	// ExecuteFire applies damage the instant it is called, so every guard that
@@ -88,7 +99,16 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 	if result.NotLoaded {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> isn't loaded. Try <ansi fg="command">reload</ansi>.`, result.WeaponName))
+		// Firing chambers its own next round, so an empty weapon is never a
+		// forgotten step. Pointing at `reload` here would name a command that no
+		// longer exists.
+		//
+		// ⚠️ It does NOT follow that the shooter is out of ammunition. Chambering
+		// also declines when they are too spent to work it, or when the weapon
+		// or bundle changed underneath the last shot. Naming a cause here would
+		// be a guess, and the wrong guess reads as a bug to a player who can see
+		// arrows in their pack.
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> is empty. Check that you still have ammunition, and the breath to ready it.`, result.WeaponName))
 		return true, nil
 	}
 	if result.BadSyntax {
@@ -207,14 +227,95 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	questengine.GetEngine().Notify("command", questengine.EventDetails{
 		UserId:  user.UserId,
 		RoomId:  room.RoomId,
-		Command: "shoot",
+		Command: questNotifyCommand,
 	}, bridge, bridge)
+
+	// The chambering that followed the shot. This is the ONLY place a player
+	// learns they are dry: firing readies the next round silently when it can,
+	// so the states worth speaking are the ones where it could not, or where it
+	// just spent the last projectile.
+	//
+	// ⚠️ Running out must be SPOKEN HERE, not discovered on the next `fire`. The
+	// retired `reload` command carried this copy; folding it into the shot
+	// without carrying the words over would have left the player to find out by
+	// pulling a trigger on an empty weapon.
+	switch {
+	case result.Chambered.Loaded:
+		if line := shotRecoveryLine(result.Chambered.AmmoTag); line != "" {
+			user.SendText(messaging.CategoryHitRanged, line)
+		}
+		if result.Chambered.BundleEmptied {
+			user.SendText(messaging.CategorySystem,
+				fmt.Sprintf(`That was the last of your <ansi fg="itemname">%s</ansi>.`, result.Chambered.AmmoName))
+		}
+	case result.Chambered.NoAmmo:
+		// ⚠️ AmmoTag is PLURAL ("arrows", "bolts", "shot"), so this sentence is
+		// built around the plural. "You reach for another arrows" is what an
+		// `another %s` phrasing produces, and it shipped that way briefly.
+		user.SendText(messaging.CategorySystem,
+			fmt.Sprintf(`You reach for more <ansi fg="item">%s</ansi> and find none. Your <ansi fg="itemname">%s</ansi> is empty.`,
+				result.Chambered.AmmoTag, result.Chambered.WeaponName))
+
+	default:
+		// EVERY OTHER OUTCOME. Chambering admits its own small stamina cost and
+		// re-checks the weapon and bundle by identity afterwards, so it can end
+		// with neither Loaded nor NoAmmo set: too spent to work the action, or
+		// the weapon or ammunition changed underneath it.
+		//
+		// ⚠️ Silence here is WORSE than no message. The weapon is left empty and
+		// the next shot reports "you have nothing left to load it with", which
+		// is a LIE to a player who is merely winded and still carrying ammo.
+		// Say which it was.
+		user.SendText(messaging.CategorySystem,
+			fmt.Sprintf(`You cannot work another round into your <ansi fg="itemname">%s</ansi> just now. It stays empty.`,
+				result.Chambered.WeaponName))
+	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
 	actions.DispatchCounterMessages(&actions.UserActor{User: user, Room: room}, result.Counter)
 
 	return true, nil
 }
+
+// shotRecoveryLine returns the short line describing the shooter readying the
+// next projectile, so the shot and its recovery read as one motion rather than
+// as a silent state change.
+//
+// It is keyed on AMMO TAG because that is the only discriminator available:
+// every ranged weapon shares `subtype: shooting`. That makes this FINER-grained
+// than the attack messages it sits beside, which key on subtype alone -- a
+// sling and a relic sidearm already share every attack line in
+// combat-messages/shooting.yaml today.
+//
+// ⚠️ These live in Go rather than in that YAML on purpose. The file's schema is
+// map[Intensity]AttackOptions, which has no slot for an ammo tag, so a
+// `recovery:` block added there would be SILENTLY DISCARDED by the loader --
+// the same shape of bug as a mob YAML key that binds to no field. The
+// narration copy guard in shoot_narration_test.go covers every constant here,
+// so these get the 80-column and no-raw-numbers checks for free.
+func shotRecoveryLine(ammoTag string) string {
+	switch ammoTag {
+	case "arrows":
+		return recoveryArrowsText
+	case "bolts":
+		return recoveryBoltsText
+	case "shot":
+		return recoveryShotText
+	}
+	// An ammo tag nobody has authored a line for stays silent rather than
+	// narrating something wrong for the weapon in the player's hands.
+	return ""
+}
+
+const (
+	recoveryArrowsText = `You draw and nock another shaft in the same motion.`
+	recoveryBoltsText  = `You crank the string back and seat another bolt.`
+
+	// ⚠️ The `shot` tag covers a SLING and two firearms, so this line is worded
+	// to fit a stone in a cradle and a ball in a barrel alike. Do not make it
+	// sling-specific.
+	recoveryShotText = `You settle another shot into place and steady the weapon.`
+)
 
 // U10d shooter-facing copy. Every one of these speaks a flag ExecuteFire
 // already sets; none of them changes a mechanic.
@@ -236,19 +337,6 @@ const (
 	// IsSneaking branches below), and the shooter is exposed from here on.
 	surpriseShotRevealedText = `The shot gives your place away. You are no longer hidden.`
 
-	// surpriseShotDeniedText speaks FireResult.SurpriseOnCooldown. NOT a corner
-	// case: reload burns the same shared special-move timer the opener needs,
-	// so the natural reload-sneak-shoot order denies the ambush whenever the
-	// reload was recent. Without this line the player sees an ordinary shot and
-	// concludes the feature does not work.
-	//
-	// The second sentence is the engine's established refusal wording ("You need
-	// a moment to recover before attempting another special move." -- throw.go,
-	// mutation_helpers.go), trimmed to fit, so the same cooldown is refused in
-	// the same words wherever a player meets it. "special move" is a taught term
-	// (there is a `help special` topic).
-	surpriseShotDeniedText = `No ambush ready. You need a moment to recover before another special move.`
-
 	// aimedWhileEngagedText speaks FireResult.AimedWhileEngaged. Spoken at most
 	// once per engagement (see Character.RangedEngagedCueSpoken) -- damage that
 	// silently drops to a fraction reads as a bug, but repeating the reason
@@ -264,12 +352,6 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	hit := result.MoveResult.Hit
 	partial := !hit && result.MoveResult.Damage > 0
 	tier := combat.GetDamageDescription(result.MoveResult.Damage, result.MoveResult.TargetMaxHP)
-
-	// The refusal comes FIRST: it explains why the shot the player set up as an
-	// ambush is about to narrate as an ordinary one.
-	if result.SurpriseOnCooldown {
-		user.SendText(messaging.CategorySurpriseAttack, surpriseShotDeniedText)
-	}
 
 	// Color the target name by type.
 	targetColored := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, result.TargetName)

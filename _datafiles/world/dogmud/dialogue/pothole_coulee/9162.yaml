@@ -32,7 +32,7 @@ patterns:
   - keywords: ["reload", "ammo", "bolts", "kite", "kiting"]
     responses:
       - "Carry more ammo than you think you need -- a kiter makes a long
-          fight of it. Reload the moment you have a breath. Out of bolts
+          fight of it, and every shot you take spends one. Out of bolts
           before the overlook? Ask me and I will spare some."
 
   - keywords: [""]
@@ -68,11 +68,11 @@ tree:
       - questRequired: ["51-start"]
         questExcluded: ["51-end"]
         text: "Still at it. The scout holds the sounding floor, one
-          chamber north of the Narrows. Stand in the Narrows and shoot it
-          across the exit -- shoot scout north. It will charge; stand and
-          finish it. Come back when it is down."
-        hints: "Go north to the Echoing Narrows. Type shoot scout north
-          to fire across the exit, then finish the scout when it charges.
+          chamber north of the Narrows. Stand in the Narrows and put a
+          shot across the exit -- fire scout north. It will charge; stand
+          and finish it. Come back when it is down."
+        hints: "Go north to the Echoing Narrows. Type fire scout north to
+          shoot across the exit, then finish the scout when it charges.
           Then ask bryn done."
 
       # ── Ready for quest 52 ───────────────────────────────
@@ -116,13 +116,13 @@ tree:
       text: "The canyon scout, then. It holds the sounding floor -- the
         open stretch one chamber north of the Echoing Narrows. Here is
         the lesson: do not walk up and trade blows. Stand in the Narrows
-        and shoot it across the exit -- type shoot scout north. The shot
+        and shoot it across the exit -- type fire scout north. The shot
         will cross the gap and bite, and then it will come straight up
         the slot at you, because a shot thing always does. Stand your
         ground and finish it. That is the cross-canyon shot, and the
         price of it. Go."
-      hints: "Go north to the Echoing Narrows. Type shoot scout north to
-        fire into the next chamber; the scout will charge -- stand and
+      hints: "Go north to the Echoing Narrows. Type fire scout north to
+        shoot into the next chamber; the scout will charge -- stand and
         finish it. Then ask bryn done."
 
     # ── QUEST 51 TURN-IN ──────────────────────────────────────
@@ -151,8 +151,8 @@ tree:
         giving ground a step at a time and making you pay for every yard
         you take back. Climb the chimney at the Canyon Head, fight up
         through his shooters, and bring him down on the high stand. Carry
-        all the ammo you can, and reload every breath you get. Go, and
-        come back having done it."
+        all the ammo you can, because up there you will spend it. Go,
+        and come back having done it."
       hints: "Carry plenty of ammo. Go up from the Canyon Head through
         the raider perches to the Overlook; defeat Bowmaster Skell. Low
         on ammo? ask bryn ammo."
@@ -167,20 +167,21 @@ tree:
         an empty weapon on the overlook is a dead climber. Run dry up
         there and you will wish you had asked twice. Come back for more
         if you need it."
-      hints: "You received a case of bolts. Reload often against Skell.
+      hints: "You received a case of bolts. Carry plenty against Skell.
         Ask bryn ammo again if you run low."
 
     # ── CROSS-SHOT / KITING HELP ──────────────────────────────
     - id: cross_help
       triggers: ["shot", "kite", "kiting", "reload", "help", "how"]
       text: "Two things the canyon teaches. The cross-shot: stand in one
-        chamber and type shoot, the target, and the direction -- shoot
-        scout north -- to fire through the exit into the next room. And
+        chamber and type fire, the target, and the direction -- fire
+        scout north -- to shoot through the exit into the next room. And
         kiting: a foe that shoots and backs away, opening the range as
         you close. Beat it by out-shooting it, or by closing faster than
-        it can retreat. Always reload the moment you get a breath."
-      hints: "Cross-room shot: shoot <target> <direction>. Against a
-        kiter, out-shoot it or close fast, and reload constantly."
+        it can retreat. Mind your ammo; the weapon feeds itself, but the
+        pouch does not."
+      hints: "Cross-room shot: fire <target> <direction>. Against a
+        kiter, out-shoot it or close fast, and keep ammo on you."
 
     # ── REPEATABLE RANGE PRACTICE OFFER ──────────────────────
     - id: range_loop_offer

@@ -50,4 +50,4 @@ cooldown, item, ammunition, combat round, or effect.
   <ansi fg="command">help cast</ansi>, <ansi fg="command">help cooldowns</ansi>,
   <ansi fg="command">help submission</ansi>, <ansi fg="command">help stamina</ansi>,
   <ansi fg="command">help conviction</ansi>, <ansi fg="command">help ambush</ansi>,
-  <ansi fg="command">help reload</ansi>
+  <ansi fg="command">help fire</ansi>
