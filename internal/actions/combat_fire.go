@@ -124,8 +124,26 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	if weapon == nil {
 		return FireResult{NoWeapon: true}
 	}
+	// An UNLOADED weapon chambers itself here rather than refusing.
+	//
+	// ⚠️ THIS IS LOAD-BEARING, NOT A CONVENIENCE. Item.Loaded defaults to false,
+	// so EVERY ranged weapon a player ever obtains -- bought, looted, or handed
+	// over by a quest giver -- arrives empty. Firing chambers the NEXT round,
+	// which does nothing for the first one, and the `reload` command that used
+	// to cover this case is gone. Without this branch every ranged weapon in the
+	// game is permanently unusable from the moment you pick it up, including the
+	// sling quest 50 hands a new player.
+	//
+	// A genuine out-of-ammo shooter still gets NotLoaded, because the chambering
+	// below fails and leaves the weapon empty.
 	if !weapon.Loaded {
-		return FireResult{WeaponName: weapon.DisplayName(), NotLoaded: true}
+		if first := chamberNextRound(actor); !first.Loaded {
+			return FireResult{
+				WeaponName: weapon.DisplayName(),
+				NotLoaded:  true,
+				Chambered:  first,
+			}
+		}
 	}
 	weaponSnapshot := *weapon
 

@@ -9,12 +9,12 @@
 # reads wrong, repeats, contradicts its own help text, or names a command that
 # does not exist is a finding. Do not be charitable.
 ephemeral:
+  # Seeded at the Long Terrace (5351) with a sling and shot already in hand.
+  # A fresh character cannot reach the Pothole Coulee range inside the budget
+  # at three commands per round, and the merchants who sell the kit sleep on
+  # their schedules. A previous run this session was lost to exactly that.
   profile: ranged-range
-  profile_rationale: >
-    Seeded at the Long Terrace with a sling and shot already in hand. A fresh
-    character cannot reach the Pothole Coulee range inside the budget at three
-    commands per round, and the merchants who sell the kit sleep on schedule.
-    A previous run was lost to exactly that.
+  start_room: 5351
   budgets:
     wall_clock: 25m
 

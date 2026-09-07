@@ -171,19 +171,54 @@ func TestFire_NoRangedWeapon(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Unloaded ranged weapon → NotLoaded (WeaponName set)
+// 2. Unloaded ranged weapon: chambers itself if it can, NotLoaded if it cannot
 // ---------------------------------------------------------------------------
 
-func TestFire_Unloaded(t *testing.T) {
+// TestFire_UnloadedWithNoAmmo pins that NotLoaded still means what it says when
+// there is genuinely nothing to chamber.
+func TestFire_UnloadedWithNoAmmo(t *testing.T) {
 	char := fireAttacker()
 	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, false)
+	char.Items = nil // nothing to chamber
 	actor := newStubActor(char, newTestRoom())
 
 	res := ExecuteFire(actor, "skeleton")
 
-	assert.True(t, res.NotLoaded, "expected NotLoaded for an unloaded ranged weapon")
+	assert.True(t, res.NotLoaded, "expected NotLoaded when there is no ammunition")
 	assert.NotEmpty(t, res.WeaponName, "NotLoaded result should name the weapon")
 	assert.False(t, res.Executed)
+	assert.True(t, res.Chambered.NoAmmo,
+		"the refusal must carry WHY, so the wrapper can say it was ammunition")
+}
+
+// TestFire_UnloadedWithAmmoChambersAndFires is the FIRST SHOT case, and it is
+// load-bearing rather than a convenience.
+//
+// Item.Loaded defaults to false, so every ranged weapon a player obtains --
+// bought, looted, or handed over by a quest giver -- arrives empty. Firing
+// chambers the NEXT round, which does nothing for the first one, and the
+// `reload` command that used to cover this is gone. Without the chamber-first
+// branch, every ranged weapon in the game is permanently unusable from the
+// moment it is picked up, including the sling quest 50 hands a new player.
+//
+// A live playtest caught exactly that: a seeded archer stood on the range with
+// a sling and two pouches of shot and could not fire a single stone.
+func TestFire_UnloadedWithAmmoChambersAndFires(t *testing.T) {
+	_, cleanup := seedFireMobInRoom(t, 1, 1_000_000)
+	defer cleanup()
+
+	char := fireAttacker()
+	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, false) // straight from the shop
+	char.Items = []items.Item{reloadAmmoBundle(3, "arrows", 20)}
+	actor := newStubActor(char, rooms.LoadRoom(1))
+
+	res := ExecuteFire(actor, "skeleton")
+
+	assert.False(t, res.NotLoaded, "a weapon with ammunition must not refuse to fire")
+	assert.True(t, res.Executed, "the first shot from a fresh weapon must happen")
+	assert.True(t, char.Equipment.Weapon.Loaded, "and it must leave the weapon ready")
+	assert.Equal(t, 18, char.Items[0].Uses,
+		"two rounds are spent on a first shot: one to load it, one to reload it")
 }
 
 // ---------------------------------------------------------------------------
