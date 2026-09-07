@@ -680,16 +680,22 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				promptOut.WriteString(fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, encColor, encLabel))
 
 			case `{tox}`:
-				// Toxicity band tier word, colored by severity. Omitted
-				// when clear so it stays silent in default prompts.
+				// Toxicity band tier word, colored by severity. Blank at band 0
+				// so a default prompt stays quiet for an unaffected player. The
+				// two lowest bands are warnings that carry no penalty, so they
+				// get muted colors -- visible, but not alarming.
 				band := u.Character.ToxicityBand()
 				if band > 0 {
 					bandName := u.Character.ToxicityBandName()
 					var toxColor string
 					switch band {
 					case 1:
-						toxColor = "yellow"
+						toxColor = "black-bold" // sour -- barely there
 					case 2:
+						toxColor = "white" // unsettled -- noticeable, harmless
+					case 3:
+						toxColor = "yellow" // queasy -- first band that costs you
+					case 4:
 						toxColor = "red"
 					default:
 						toxColor = "red-bold"

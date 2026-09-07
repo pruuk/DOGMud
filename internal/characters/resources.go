@@ -506,6 +506,11 @@ func (c *Character) ToxicitySicknessDamage() int {
 
 // GetToxicityPenalties returns stat multipliers based on toxicity threshold.
 // Returns (regenMult, perceptionMult, dexterityMult) where 1.0 = no penalty.
+//
+// ⚠️ These thresholds are 50/75/90 and DELIBERATELY COARSER than ToxicityBand's
+// six tiers. Do not add entries here to "match" the band list: bands 1 and 2 are
+// feedback-only warnings that must stay free. Changing this table is a balance
+// change, not a tidy-up.
 func (c *Character) GetToxicityPenalties() (float64, float64, float64) {
 	max := c.GetToxicityMax()
 	if max <= 0 {
@@ -527,12 +532,19 @@ func (c *Character) GetToxicityPenalties() (float64, float64, float64) {
 
 // ToxicityBand returns the toxicity severity band:
 //
-//	0 = clear   (<50%)
-//	1 = queasy  (>=50%)
-//	2 = sick    (>=75%)
-//	3 = critical (>=90%)
+//	0 = clear     (<15%)   no penalty
+//	1 = sour      (>=15%)  no penalty -- FEEDBACK ONLY
+//	2 = unsettled (>=30%)  no penalty -- FEEDBACK ONLY
+//	3 = queasy    (>=50%)  penalty
+//	4 = sick      (>=75%)  penalty
+//	5 = critical  (>=90%)  penalty + acute HP damage
 //
-// Thresholds mirror GetToxicityPenalties exactly.
+// ⚠️ These thresholds DELIBERATELY DO NOT MIRROR GetToxicityPenalties. Bands 1
+// and 2 exist so a player can watch pressure building before it costs anything;
+// they have no counterpart in the penalty table on purpose. The two functions
+// used to mirror each other exactly and the comments said so -- "restoring" that
+// symmetry silently deletes both warning tiers, which is the whole feature.
+// TestToxicityBandsAreFinerThanPenalties will fail if you do.
 func (c *Character) ToxicityBand() int {
 	max := c.GetToxicityMax()
 	if max <= 0 {
@@ -541,10 +553,14 @@ func (c *Character) ToxicityBand() int {
 	ratio := c.Toxicity / max
 	switch {
 	case ratio >= 0.90:
-		return 3
+		return 5
 	case ratio >= 0.75:
-		return 2
+		return 4
 	case ratio >= 0.50:
+		return 3
+	case ratio >= 0.30:
+		return 2
+	case ratio >= 0.15:
 		return 1
 	default:
 		return 0
@@ -552,14 +568,20 @@ func (c *Character) ToxicityBand() int {
 }
 
 // ToxicityBandName returns the descriptive tier word for the current band.
+// Names must stay at or under 13 characters: status.template pads this into a
+// 13-wide column and a longer word breaks the box border.
 func (c *Character) ToxicityBandName() string {
 	switch c.ToxicityBand() {
-	case 3:
+	case 5:
 		return "critical"
-	case 2:
+	case 4:
 		return "sick"
-	case 1:
+	case 3:
 		return "queasy"
+	case 2:
+		return "unsettled"
+	case 1:
+		return "sour"
 	default:
 		return "clear"
 	}

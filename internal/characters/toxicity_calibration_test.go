@@ -130,3 +130,71 @@ func TestZeroToleranceCharacterIsSafe(t *testing.T) {
 		t.Errorf("GetToxicityPenalties() = %v/%v/%v, want all 1.0 at zero max", r, p, d)
 	}
 }
+
+// TestToxicityBandsAreFinerThanPenalties pins the deliberate asymmetry this
+// change introduces. ToxicityBand and GetToxicityPenalties used to mirror each
+// other exactly and the code said so. They no longer do: bands 1 and 2 are pure
+// feedback and carry NO penalty, so a player can watch pressure build before it
+// costs anything. Restoring the symmetry would silently delete both warning
+// tiers, which is why this test exists.
+func TestToxicityBandsAreFinerThanPenalties(t *testing.T) {
+	pinToxicityScales(t)
+
+	c := toxChar(0, 300) // max exactly 100, so ratios read as percentages
+	if got := c.GetToxicityMax(); got != 100 {
+		t.Fatalf("fixture max = %v, want 100", got)
+	}
+
+	cases := []struct {
+		pct         float64
+		wantBand    int
+		wantName    string
+		wantPenalty bool
+	}{
+		{0.00, 0, "clear", false},
+		{0.14, 0, "clear", false},
+		{0.15, 1, "sour", false},      // NEW -- visible, costs nothing
+		{0.29, 1, "sour", false},      // NEW
+		{0.30, 2, "unsettled", false}, // NEW -- visible, costs nothing
+		{0.49, 2, "unsettled", false}, // NEW
+		{0.50, 3, "queasy", true},     // unchanged penalty threshold
+		{0.74, 3, "queasy", true},
+		{0.75, 4, "sick", true}, // unchanged penalty threshold
+		{0.89, 4, "sick", true},
+		{0.90, 5, "critical", true}, // unchanged penalty threshold
+		{1.00, 5, "critical", true},
+	}
+
+	for _, tc := range cases {
+		c.Toxicity = 100 * tc.pct
+
+		if got := c.ToxicityBand(); got != tc.wantBand {
+			t.Errorf("at %.0f%%: ToxicityBand() = %d, want %d", tc.pct*100, got, tc.wantBand)
+		}
+		if got := c.ToxicityBandName(); got != tc.wantName {
+			t.Errorf("at %.0f%%: ToxicityBandName() = %q, want %q", tc.pct*100, got, tc.wantName)
+		}
+
+		regen, per, dex := c.GetToxicityPenalties()
+		penalised := regen != 1.0 || per != 1.0 || dex != 1.0
+		if penalised != tc.wantPenalty {
+			t.Errorf("at %.0f%%: penalised = %v, want %v (regen %.2f per %.2f dex %.2f)",
+				tc.pct*100, penalised, tc.wantPenalty, regen, per, dex)
+		}
+	}
+}
+
+// TestBandNamesFitTheStatusColumn guards a layout constraint that is invisible
+// in Go: status.template pads the band name to 13 visual characters, so a
+// longer name would push the box border off and break the whole status screen.
+func TestBandNamesFitTheStatusColumn(t *testing.T) {
+	pinToxicityScales(t)
+
+	c := toxChar(0, 300)
+	for pct := 0.0; pct <= 1.0; pct += 0.05 {
+		c.Toxicity = 100 * pct
+		if n := c.ToxicityBandName(); len(n) > 13 {
+			t.Errorf("band name %q is %d chars, exceeds the 13-char status column", n, len(n))
+		}
+	}
+}
