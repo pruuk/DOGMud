@@ -1,8 +1,6 @@
 package actions
 
 import (
-	"fmt"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
@@ -83,7 +81,7 @@ func ExecuteReload(actor Actor) ReloadResult {
 
 	// Shared special-move cooldown availability is the last read-only gate.
 	cfg := configs.GetBalanceConfig()
-	if !char.CooldownReady("special-move") {
+	if !SpecialMoveReady(char) {
 		return ReloadResult{WeaponName: weapon.DisplayName(), OnCooldown: true}
 	}
 
@@ -130,7 +128,7 @@ func ExecuteReload(actor Actor) ReloadResult {
 	}
 
 	weapon.Loaded = true
-	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !ClaimSpecialMove(char) {
 		weapon.Loaded = false
 		result.BundleEmptied = false
 		if bundleRemoved {

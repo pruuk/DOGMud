@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -45,7 +44,7 @@ func ExecuteWarcry(actor Actor) WarcryResult {
 	}
 
 	cfg := configs.GetBalanceConfig()
-	if !char.CooldownReady("special-move") {
+	if !SpecialMoveReady(char) {
 		return WarcryResult{OnCooldown: true}
 	}
 	cost := admitFullCost(actor, costs.ActionWarcry, characters.PoolConviction,
@@ -53,7 +52,7 @@ func ExecuteWarcry(actor Actor) WarcryResult {
 	if cost.Status == characters.CostRefused {
 		return WarcryResult{Cost: cost}
 	}
-	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !ClaimSpecialMove(char) {
 		return WarcryResult{Cost: cost, OnCooldown: true}
 	}
 

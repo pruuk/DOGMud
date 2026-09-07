@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -115,7 +114,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	targetSnapshot := target
 
 	cfg := configs.GetBalanceConfig()
-	if !char.CooldownReady("special-move") {
+	if !SpecialMoveReady(char) {
 		return TauntResult{OnCooldown: true}
 	}
 	cost := admitFullCost(actor, costs.ActionTaunt, characters.PoolConviction,
@@ -131,7 +130,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	if !tauntTargetIsCurrent(targetSnapshot, target, originalRoomID, char) {
 		return TauntResult{Cost: cost, NoTarget: true}
 	}
-	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !ClaimSpecialMove(char) {
 		return TauntResult{Cost: cost, OnCooldown: true}
 	}
 	commitMeleeEngagement(actor)

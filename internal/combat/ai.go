@@ -265,6 +265,27 @@ func SpeciesHasLifeDrain(char *characters.Character) bool {
 }
 
 // --- Viability checks ---
+//
+// ⚠️ THE COOLDOWN CHECKS BELOW DELIBERATELY DO NOT USE actions.SpecialMoveReady.
+//
+// Two reasons, and the first is decisive:
+//
+//  1. IMPORT CYCLE. internal/actions already imports internal/combat, so this
+//     package cannot import actions. The helper's home cannot move here either,
+//     because it reads the balance config and is consumed by the action layer.
+//
+//  2. THESE ARE NOT THE SAME QUESTION. `_, exists := Cooldowns[tag]` is true
+//     whenever the KEY IS PRESENT, including at zero or negative, whereas
+//     SpecialMoveReady is true when the value is <= 0. Nothing calls
+//     PruneCooldowns in production and RoundTick only decrements, so an expired
+//     key lingers until some Try() prunes it. A mob that has ever used a
+//     special move therefore reads as "on cooldown" here for longer than the
+//     configured duration -- until its next Try on any tag.
+//
+// That second point is a PRE-EXISTING behavioural quirk, not something this
+// refactor introduced, and swapping these to the helper would silently make
+// mobs use special moves more often. It is filed as its own question rather
+// than changed here as a side effect.
 
 func CanUseBash(char *characters.Character) bool {
 	// Must not be on cooldown

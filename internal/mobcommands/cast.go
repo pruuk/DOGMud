@@ -106,7 +106,7 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 	if !mob.Character.ApplyCost(characters.PoolConviction, firstRoundCost) {
 		if !spellInfo.IgnoreMoveCooldown {
-			delete(mob.Character.Cooldowns, "special-move")
+			actions.ReleaseSpecialMove(&mob.Character)
 		}
 		mudlog.Debug("mob.Cast",
 			"mob", mob.Character.Name,

@@ -1,10 +1,7 @@
 package actions
 
 import (
-	"fmt"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -159,9 +156,7 @@ func EngageAggroType(actor Actor, target Actor) (aggroType characters.AggroType,
 	if !actor.GetCharacter().IsHidden() {
 		return characters.DefaultAttack, false
 	}
-	cfg := configs.GetBalanceConfig()
-	if !actor.GetCharacter().TryCooldown("special-move",
-		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !ClaimSpecialMove(actor.GetCharacter()) {
 		return characters.DefaultAttack, true
 	}
 	return characters.SurpriseAttack, false

@@ -237,11 +237,11 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 			require.Equal(t, 1, exactCharAssignment, "%s char receiver must be the supplied actor's character", guard.function)
 			require.Equal(t, 1, cfgAssignments, "%s must bind cfg exactly once", guard.function)
 			require.Equal(t, 1, exactCfgAssignment, "%s cooldown/base config must be the live balance config", guard.function)
-			readyCalls := exactCallPositions(t, fset, body, `char.CooldownReady("special-move")`, false)
+			readyCalls := exactCallPositions(t, fset, body, `SpecialMoveReady(char)`, false)
 			admitCalls := exactCallPositions(t, fset, body,
 				"admitFullCost(actor, "+guard.action+", characters.PoolStamina, float64(cfg.SpecialMoveBaseStaminaCost))", false)
 			consumeCalls := exactCallPositions(t, fset, body,
-				`char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, false)
+				`ClaimSpecialMove(char)`, false)
 			require.Len(t, readyCalls, 1, "%s must use the actor character and exact special-move tag for its read-only probe", guard.function)
 			require.Len(t, admitCalls, 1, "%s must admit the exact action, stamina pool, and configured base", guard.function)
 			require.Len(t, consumeCalls, 1, "%s must use the actor character, exact tag, and configured duration for consuming cooldown", guard.function)
@@ -367,7 +367,7 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 			}
 			require.NotNil(t, fn)
 
-			ready := exactCallPositions(t, fset, fn.Body, `char.CooldownReady("special-move")`, false)
+			ready := exactCallPositions(t, fset, fn.Body, `SpecialMoveReady(char)`, false)
 			admit := exactCallPositions(t, fset, fn.Body, "admitFullCost", true)
 			ast.Inspect(fn.Body, func(node ast.Node) bool {
 				call, ok := node.(*ast.CallExpr)
@@ -382,7 +382,7 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 				return false
 			})
 			consume := exactCallPositions(t, fset, fn.Body,
-				`char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, false)
+				`ClaimSpecialMove(char)`, false)
 			reveal := exactCallPositions(t, fset, fn.Body, "char.Awareness.TransitionToRevealing", true)
 			effects := exactCallPositions(t, fset, fn.Body, guard.effect, true)
 			progression := exactCallPositions(t, fset, fn.Body, "actor.AwardResolved", true)
@@ -400,13 +400,13 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 			require.Less(t, int(consume[0]), int(reveal[0]))
 
 			readyBranch := exactGuardedReturn(t, fset, fn.Body,
-				`!char.CooldownReady("special-move")`, guard.resultType,
+				`!SpecialMoveReady(char)`, guard.resultType,
 				map[string]string{"OnCooldown": "true"})
 			refusalBranch := exactGuardedReturn(t, fset, fn.Body,
 				"cost.Status == characters.CostRefused", guard.resultType,
 				map[string]string{"Cost": "cost"})
 			consumeBranch := exactGuardedReturn(t, fset, fn.Body,
-				`!char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, guard.resultType,
+				`!ClaimSpecialMove(char)`, guard.resultType,
 				map[string]string{"Cost": "cost", "OnCooldown": "true"})
 			require.Less(t, int(readyBranch.Pos()), int(admit[0]))
 			require.Less(t, int(admit[0]), int(refusalBranch.Pos()))

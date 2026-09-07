@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 )
@@ -94,9 +93,7 @@ func mutationPreamble(actor Actor, mutationKey string, combatRequired bool, stam
 	}
 
 	// Gate 3: shared special-move cooldown.
-	cfg := configs.GetBalanceConfig()
-	cooldownStr := fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)
-	if !char.Cooldowns.Try("special-move", cooldownStr) {
+	if !ClaimSpecialMove(char) {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem,
 				"You need a moment to recover before attempting another special move.")
@@ -112,7 +109,7 @@ func mutationPreamble(actor Actor, mutationKey string, combatRequired bool, stam
 	if !char.ApplyCost(characters.PoolStamina, staminaCost) {
 		// Cooldown was consumed by the Try call above; roll it back so the
 		// actor isn't punished with a cooldown for a failed attempt.
-		delete(char.Cooldowns, "special-move")
+		ReleaseSpecialMove(char)
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem, "You're too exhausted!")
 		}

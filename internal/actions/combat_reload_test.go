@@ -307,10 +307,10 @@ func TestReloadAdmissionOrdering(t *testing.T) {
 	}
 	require.NotNil(t, body)
 
-	ready := exactCallPositions(t, fset, body, `char.CooldownReady("special-move")`, false)
+	ready := exactCallPositions(t, fset, body, `SpecialMoveReady(char)`, false)
 	admit := admissionCallPositions(t, fset, body, "costs.ActionReload", "ReloadBaseStaminaCost")
 	consumeCooldown := exactCallPositions(t, fset, body,
-		`char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown))`, false)
+		`ClaimSpecialMove(char)`, false)
 	require.Len(t, ready, 1)
 	require.Len(t, admit, 1)
 	require.Len(t, consumeCooldown, 1)

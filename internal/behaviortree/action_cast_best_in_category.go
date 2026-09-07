@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -42,7 +43,7 @@ func actCastBestInCategory(params map[string]any, ctx *EvalContext) Result {
 	}
 
 	// Shared special-move cooldown: cast, bash, kick, trip use the same slot.
-	if mob.Character.GetCooldown("special-move") > 0 {
+	if !actions.SpecialMoveReady(&mob.Character) {
 		return Failure
 	}
 

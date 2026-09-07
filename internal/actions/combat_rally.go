@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -45,7 +44,7 @@ func ExecuteRally(actor Actor) RallyResult {
 	}
 
 	cfg := configs.GetBalanceConfig()
-	if !char.CooldownReady("special-move") {
+	if !SpecialMoveReady(char) {
 		return RallyResult{OnCooldown: true}
 	}
 	cost := admitFullCost(actor, costs.ActionRally, characters.PoolConviction,
@@ -53,7 +52,7 @@ func ExecuteRally(actor Actor) RallyResult {
 	if cost.Status == characters.CostRefused {
 		return RallyResult{Cost: cost}
 	}
-	if !char.TryCooldown("special-move", fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
+	if !ClaimSpecialMove(char) {
 		return RallyResult{Cost: cost, OnCooldown: true}
 	}
 
