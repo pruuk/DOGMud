@@ -12,8 +12,6 @@ groups:
   - animal
   - insectoid
   - swarm
-items:
-  - itemid: 40065
 idlecommands:
   - "emote works the bee-tree's hollow in steady traffic"
   - ''
@@ -31,6 +29,8 @@ character:
   speciesid: 12
   level: 1
   gold: 0
+  items:
+    - itemid: 40065
   stats:
     strength:
       base: 74

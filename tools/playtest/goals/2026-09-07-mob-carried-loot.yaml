@@ -1,0 +1,39 @@
+# Confirms the carried-items fix in play: 17 mobs declared `items:` at column 0,
+# which bound to no field, so they died empty. Quest 42 asks a new player to
+# hunt a pronghorn and cook its meat, and the meat dropped 0% of the time.
+#
+# Mandate: CRITICAL and ADVERSARIAL. Read every line. Report anything that reads
+# wrong or contradicts itself. Do not be charitable.
+#
+# NOTE: this run deliberately needs NO shops. A previous run was lost because
+# every merchant was asleep on their schedule.
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    Fresh character required: quest 42 is a starting quest and the whole defect
+    was that a NEW player could not complete it. A seeded veteran would skip the
+    exact path under test.
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Find the quest that sends you hunting (Delk, around the newcomer area, asks
+    you to hunt a pronghorn and cook the meat). Take it, and read the objective
+    text closely. Report any instruction that does not match what actually
+    happens.
+  - >-
+    Kill a pronghorn. Then look at what it leaves behind: `look corpse`,
+    `get meat` or `get all from corpse`. **Raw meat must be there.** It should
+    be there EVERY time, not on a lucky roll. If you can kill more than one,
+    confirm the meat appears each time and say how many you tried.
+  - >-
+    Cook the meat and finish the quest step if you can. Report exactly where the
+    chain breaks if it breaks.
+  - >-
+    If you meet a steppe hare, scab-hound, pack-hound or reed lurker, kill it and
+    check the corpse too. The hounds should yield a pack-hide pelt and the reed
+    lurker a pair of boots. Report anything that dies empty.
+  - >-
+    General adversarial pass: anything that reads wrong, renders oddly, leaks a
+    raw number to the player, or contradicts its own quest or help text.

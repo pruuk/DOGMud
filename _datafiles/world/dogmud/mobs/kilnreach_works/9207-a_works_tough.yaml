@@ -20,8 +20,6 @@ idlecommands:
   - 'emote flexes his right fist once, slowly, and watches it with the air
     of a man who is satisfied with a tool.'
 activitylevel: 12
-items:
-  - itemid: 40078
 character:
   name: A Works Tough
   description: |
@@ -37,6 +35,8 @@ character:
   speciesid: 1
   level: 1
   gold: 18
+  items:
+    - itemid: 40078
   stats:
     strength:
       base: 118

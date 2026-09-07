@@ -16,7 +16,6 @@ aiprofile: caster
 groups:
   - humanoid
   - hermit
-scriptag: 275-old_edrin
 fold_anchor_room: 4037
 idlecommands:
   - 'emote mutters something about the wrong season for binding paste'

@@ -10,8 +10,6 @@ groups:
   - beast
   - swamp
 activitylevel: 22
-items:
-  - 20052   # Sturdy Leather Boots — loot-lesson drop
 idlecommands:
   - 'emote hangs motionless in the shallows, only the faint drift of the
     current distinguishing it from a submerged branch'
@@ -46,6 +44,8 @@ character:
   speciesid: 8
   level: 1
   gold: 0
+  items:
+    - itemid: 20052   # Sturdy Leather Boots — loot-lesson drop
   stats:
     dexterity:
       base: 134

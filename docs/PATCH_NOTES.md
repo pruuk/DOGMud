@@ -1,5 +1,21 @@
 # DOGMud Patch Notes
 
+## 2026-09-07: Creatures carry what they were always meant to
+
+Seventeen creatures and people around the world were supposed to leave
+something behind when they died, and none of them did. Hunting a pronghorn gave
+you no meat to carry home, which mattered a great deal because one of the first
+quests you are given asks you to cook exactly that. Bandits died with empty
+pockets. Marsh lurkers kept nothing at all. The pack hounds of the coulee never
+yielded a pelt.
+
+All of them now carry what they were meant to, and it comes off them reliably
+rather than on a lucky roll that mostly did not land. If you gave up on the hunt
+because the meat never appeared, go back and try again.
+
+A roe deer was also carrying hare meat, for reasons nobody can explain. It
+carries its own now.
+
 ## 2026-09-07: Potions ask something of you now
 
 Drinking potion after potion used to cost you nothing worth noticing. Some of

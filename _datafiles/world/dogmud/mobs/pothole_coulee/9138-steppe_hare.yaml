@@ -9,8 +9,6 @@ maxwander: 2
 groups:
   - beast
   - steppe
-items:
-  - 40064   # wild hare meat (drops on death)
 character:
   name: Steppe Hare
   description: |
@@ -25,6 +23,8 @@ character:
   speciesid: 10
   level: 1
   gold: 0
+  items:
+    - itemid: 40064   # wild hare meat (drops on death)
   stats:
     dexterity:
       base: 66
