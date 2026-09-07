@@ -1,0 +1,13 @@
+# casting-messages.yaml store snapshot
+# bare file at tree root (not a directory), 24 lines at time of writing
+# GetCastMessage used stdlib math/rand directly until 2026-09-07 (unreachable by any seam); this
+# task's Task 2 predecessor added the trailing picker param used here.
+# dimensions: category (already_casting/cast_started/cast_continuing/concentration_slipped)
+
+casting|already_casting => The folds of Testspell already dance in your mind's eye. Type cancel to release them.
+casting|cast_started => The mental image of Testspell begins to fracture into its component folds...
+casting|cast_continuing => You hold the shape of Testspell steady while the next fold settles...
+casting|concentration_slipped => You reach for the folds of Testspell but the image shatters before you can grasp it.
+
+# FALLBACK CASE: unrecognized category -> "Something stirs with <spell>." (not "")
+casting|bogus-category => Something stirs with Testspell.

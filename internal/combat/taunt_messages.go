@@ -8,7 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
 // TauntIntensity represents the outcome type of a taunt attempt.
@@ -66,8 +66,16 @@ func LoadTauntMessageFiles() {
 }
 
 // GetTauntMessage returns a random message for the given intensity and
-// perspective. Returns empty string if no messages are available.
-func GetTauntMessage(intensity TauntIntensity, perspective string, source, target, sourceType, targetType, damageDesc string) string {
+// perspective. Returns empty string if no messages are available. An
+// optional trailing picker overrides the selection (production defaults to
+// narration.DefaultPicker); snapshot/test callers can pass
+// narration.SequencePicker() for deterministic output.
+func GetTauntMessage(intensity TauntIntensity, perspective string, source, target, sourceType, targetType, damageDesc string, picker ...narration.Picker) string {
+	pick := narration.DefaultPicker
+	if len(picker) > 0 && picker[0] != nil {
+		pick = picker[0]
+	}
+
 	group := tauntMessages["rhetoric"]
 	if group == nil {
 		return ""
@@ -92,7 +100,7 @@ func GetTauntMessage(intensity TauntIntensity, perspective string, source, targe
 		return ""
 	}
 
-	msg := pool[util.Rand(len(pool))]
+	msg := pool[pick(len(pool))]
 
 	// Token replacement
 	msg = strings.ReplaceAll(msg, "{source}", source)

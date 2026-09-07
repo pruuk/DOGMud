@@ -1,0 +1,94 @@
+# defense-messages store snapshot
+# defense-type files at time of writing: 9
+# defense-types: block,counter-defy,counter-melee,counter-quell,counter-ranged,defy,dodge,parry,quell
+# dimensions: defense-type x band(weak/normal/heavy) -- all 3 roles (todefender/toattacker/toroom)
+# come from ONE coordinated RenderDefenseMessage call (same index across the triad).
+# RenderDefenseMessage has no picker param (util.Rand only) -- pinned via indexOverride=0,
+# the fresh-SequencePicker-first-pick equivalent for this seam.
+
+block|weak|todefender => <ansi fg="defense-good">You barely block <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+block|weak|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely blocks your attack!</ansi>
+block|weak|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely blocks <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+block|normal|todefender => <ansi fg="defense-good">You block <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+block|normal|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> blocks your attack!</ansi>
+block|normal|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> blocks <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+block|heavy|todefender => <ansi fg="defense-good">You effortlessly block <ansi fg="user">Attacker</ansi>'s feeble attack!</ansi>
+block|heavy|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> effortlessly blocks your feeble attack!</ansi>
+block|heavy|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly blocks the feeble attack.</ansi>
+counter-defy|weak|todefender => <ansi fg="defense-good">You twist Attacker's jeer around, but it fails to bite.</ansi>
+counter-defy|weak|toattacker => <ansi fg="attack-bad">Defender twists your jeer around, but it fails to bite.</ansi>
+counter-defy|weak|toroom => <ansi fg="combat">Defender twists Attacker's jeer back around, but it fails to bite.</ansi>
+counter-defy|normal|todefender => <ansi fg="defense-good">You twist the jeer around and send it home, and Attacker flinches.</ansi>
+counter-defy|normal|toattacker => <ansi fg="attack-bad">Defender twists your jeer around and sends it home, and you flinch.</ansi>
+counter-defy|normal|toroom => <ansi fg="combat">Defender twists the jeer around and sends it home, and Attacker flinches.</ansi>
+counter-defy|heavy|todefender => <ansi fg="defense-good">You turn the taunt inside out, and Attacker is left speechless.</ansi>
+counter-defy|heavy|toattacker => <ansi fg="attack-bad">Defender turns your taunt inside out, and you are left speechless.</ansi>
+counter-defy|heavy|toroom => <ansi fg="combat">Defender turns the taunt inside out, and Attacker is left speechless.</ansi>
+counter-melee|weak|todefender => <ansi fg="defense-good">You lash out at the opening, but Attacker recovers in time.</ansi>
+counter-melee|weak|toattacker => <ansi fg="attack-bad">Defender lashes out at your opening, but you recover in time.</ansi>
+counter-melee|weak|toroom => <ansi fg="combat">Defender lashes out at Attacker, who recovers in time.</ansi>
+counter-melee|normal|todefender => <ansi fg="defense-good">You step into the opening and land a solid blow on Attacker.</ansi>
+counter-melee|normal|toattacker => <ansi fg="attack-bad">Defender steps into the opening and lands a solid blow on you.</ansi>
+counter-melee|normal|toroom => <ansi fg="combat">Defender steps into the opening and lands a solid blow on Attacker.</ansi>
+counter-melee|heavy|todefender => <ansi fg="defense-good">You slip inside Attacker's guard and strike with all your weight.</ansi>
+counter-melee|heavy|toattacker => <ansi fg="attack-bad">Defender slips inside your guard and strikes with all their weight.</ansi>
+counter-melee|heavy|toroom => <ansi fg="combat">Defender slips inside Attacker's guard and strikes with full weight.</ansi>
+counter-quell|weak|todefender => <ansi fg="defense-good">You ground the working and lunge in, but Attacker wards your blow.</ansi>
+counter-quell|weak|toattacker => <ansi fg="attack-bad">Defender grounds your working and lunges in, but you ward the blow.</ansi>
+counter-quell|weak|toroom => <ansi fg="combat">Defender grounds the working and lunges at Attacker, who wards the blow.</ansi>
+counter-quell|normal|todefender => <ansi fg="defense-good">You ground the last of the working and strike Attacker through the gap.</ansi>
+counter-quell|normal|toattacker => <ansi fg="attack-bad">Defender grounds the last of your working and strikes you through the gap.</ansi>
+counter-quell|normal|toroom => <ansi fg="combat">Defender grounds the last of the working and strikes Attacker.</ansi>
+counter-quell|heavy|todefender => <ansi fg="defense-good">You put the working down and crash into Attacker at full force.</ansi>
+counter-quell|heavy|toattacker => <ansi fg="attack-bad">Defender puts your working down and crashes into you at full force.</ansi>
+counter-quell|heavy|toroom => <ansi fg="combat">Defender puts the working down and crashes into Attacker.</ansi>
+counter-ranged|weak|todefender => <ansi fg="defense-good">You rush Attacker behind the wasted shot, but they hold you off.</ansi>
+counter-ranged|weak|toattacker => <ansi fg="attack-bad">Defender rushes you behind your wasted shot, but you hold them off.</ansi>
+counter-ranged|weak|toroom => <ansi fg="combat">Defender rushes Attacker behind the wasted shot, but is held off.</ansi>
+counter-ranged|normal|todefender => <ansi fg="defense-good">You close the distance behind the wasted shot and strike Attacker.</ansi>
+counter-ranged|normal|toattacker => <ansi fg="attack-bad">Defender closes the distance behind your wasted shot and strikes you.</ansi>
+counter-ranged|normal|toroom => <ansi fg="combat">Defender closes on Attacker behind the wasted shot and strikes.</ansi>
+counter-ranged|heavy|todefender => <ansi fg="defense-good">You are on Attacker before the shot's echo fades, striking hard.</ansi>
+counter-ranged|heavy|toattacker => <ansi fg="attack-bad">Defender is on you before the shot's echo fades, striking hard.</ansi>
+counter-ranged|heavy|toroom => <ansi fg="combat">Defender is on Attacker before the shot's echo fades.</ansi>
+defy|weak|todefender => <ansi fg="defense-good">You defy Attacker's Strike, taking some of its sting.</ansi>
+defy|weak|toattacker => <ansi fg="attack-bad">Defender defies your Strike, taking some of its sting.</ansi>
+defy|weak|toroom => <ansi fg="combat">Defender defies Attacker's Strike, taking some of its sting.</ansi>
+defy|normal|todefender => <ansi fg="defense-good">You defy Attacker's Strike, stripping away most of its force.</ansi>
+defy|normal|toattacker => <ansi fg="attack-bad">Defender defies your Strike, stripping away most of its force.</ansi>
+defy|normal|toroom => <ansi fg="combat">Defender defies Attacker's Strike, stripping away most of its force.</ansi>
+defy|heavy|todefender => <ansi fg="defense-good">You take no conviction harm from Attacker's Strike, though it still draws your attention.</ansi>
+defy|heavy|toattacker => <ansi fg="attack-bad">Defender takes no conviction harm from your Strike, though it still draws their attention.</ansi>
+defy|heavy|toroom => <ansi fg="combat">Defender takes no conviction harm from Attacker's Strike, though it still draws their attention.</ansi>
+dodge|weak|todefender => <ansi fg="defense-good">You barely dodge <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+dodge|weak|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely dodges your attack!</ansi>
+dodge|weak|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely dodges <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+dodge|normal|todefender => <ansi fg="defense-good">You dodge <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+dodge|normal|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> dodges your attack!</ansi>
+dodge|normal|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> dodges <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+dodge|heavy|todefender => <ansi fg="defense-good">You sidestep <ansi fg="user">Attacker</ansi>'s clumsy <ansi fg="item">Strike</ansi> with ease!</ansi>
+dodge|heavy|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> sidesteps your clumsy <ansi fg="item">Strike</ansi> with ease!</ansi>
+dodge|heavy|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> sidesteps the clumsy <ansi fg="item">Strike</ansi> with ease.</ansi>
+parry|weak|todefender => <ansi fg="defense-good">You barely parry <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+parry|weak|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely parries your attack!</ansi>
+parry|weak|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely parries <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+parry|normal|todefender => <ansi fg="defense-good">You parry <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+parry|normal|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> parries your attack!</ansi>
+parry|normal|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> parries <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+parry|heavy|todefender => <ansi fg="defense-good">You effortlessly parry <ansi fg="user">Attacker</ansi>'s clumsy attack!</ansi>
+parry|heavy|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> effortlessly parries your clumsy attack!</ansi>
+parry|heavy|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly parries the clumsy attack.</ansi>
+quell|weak|todefender => <ansi fg="defense-good">You catch the edge of Attacker's Strike, dulling its force.</ansi>
+quell|weak|toattacker => <ansi fg="attack-bad">Defender catches the edge of your Strike, dulling its force.</ansi>
+quell|weak|toroom => <ansi fg="combat">Defender catches the edge of Attacker's Strike.</ansi>
+quell|normal|todefender => <ansi fg="defense-good">You quell the heart of Attacker's Strike, though a fading echo reaches you.</ansi>
+quell|normal|toattacker => <ansi fg="attack-bad">Defender quells the heart of your Strike, though an echo still lands.</ansi>
+quell|normal|toroom => <ansi fg="combat">Defender quells the heart of Attacker's Strike, though an echo still lands.</ansi>
+quell|heavy|todefender => <ansi fg="defense-good">You take no damage from Attacker's Strike, though its momentum still reaches you.</ansi>
+quell|heavy|toattacker => <ansi fg="attack-bad">Defender takes no damage from your Strike, though its momentum still reaches them.</ansi>
+quell|heavy|toroom => <ansi fg="combat">Defender takes no damage from Attacker's Strike, though its momentum still reaches them.</ansi>
+
+# EMPTY CASE: unregistered defense type -> empty triad
+nonexistent-defense-type|normal|todefender => ""
+nonexistent-defense-type|normal|toattacker => ""
+nonexistent-defense-type|normal|toroom => ""
