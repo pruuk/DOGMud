@@ -34,6 +34,7 @@ disagree, this table is right.
 | The quest notify hardcodes the string, so it does not follow what the player typed | `usercommands/shoot.go:207-211` sends `Command: "shoot"` |
 | Quest 50 exists TO TEACH the reload loop. Its dialogue says so | `50-first_shot.yaml:13` (*"teach the ranged loop ... reload it ... shoot"*), `:70` (*"always the same: shoot, then reload, shoot, then reload"*) |
 | Every ranged weapon shares one subtype, so per-weapon flavour can only key on ammo | `items.IsRangedWeapon` = `Type == Weapon && Subtype == Shooting` (`items.go:207-213`); all 8 ranged weapons are `subtype: shooting` |
+| **Attack messages are already keyed on subtype**, so a sling and a firearm ALREADY share every line in `shooting.yaml`. Keying recovery on ammo tag is finer-grained than what ships | `combat_helpers.go:1577` (`displaySubtype := ws.weaponSubType`) and `:1621` -> `items.GetAttackMessage(displaySubtype, ...)`; `attack_messages.go:157` takes an `ItemSubType` |
 | There are exactly **three** ammo tags across 8 weapons | `arrows` (Training Bow, Hunting Bow, Ironhorn Warbow), `bolts` (Hand Crossbow, Arbalest), `shot` (Sling, Primitive Pistol, Relic Sidearm) |
 | A shooting message file already exists with an established token vocabulary | `_datafiles/world/dogmud/combat-messages/shooting.yaml` (`{itemname}`, `{source}`, `{target}`, ...) |
 | The archer tree only DECIDES whether to reload; it does not implement it | `internal/behaviortree/actions_archer.go` -> `unloadedRangedWeapon`, `hasMatchingAmmo`, both mirroring `ExecuteReload` |
@@ -143,12 +144,13 @@ ammo tag, in the existing `combat-messages/shooting.yaml`:
 - **bolts** -- cranking and seating the next bolt
 - **shot** -- whipping the next stone into the cradle
 
-⚠️ **`shot` covers both the Sling and the Primitive Pistol / Relic Sidearm**,
-which read very differently. Ammo tag is the only discriminator available, since
-all eight ranged weapons share `subtype: shooting`. The `shot` line is therefore
-written neutrally enough to fit both rather than adding a per-item override field
-for two items. If sling-versus-firearm flavour is wanted later, that is a new
-ItemSpec field and its own change.
+Ammo tag is the selector because all eight ranged weapons share
+`subtype: shooting`. Note this is **finer-grained than the shot line it sits
+beside**: attack messages are chosen by `GetAttackMessage(displaySubtype, ...)`
+keyed on weapon subtype, so a Sling and a Relic Sidearm already share every
+attack message in this same file today. Three recovery buckets against one
+attack bucket is an improvement, not a gap, and the recovery line should not be
+held to a stricter standard than the text it is folded into.
 
 Player-facing copy follows the house rules: no raw numbers, no em or en dashes,
 wrapped under 80 visible columns.
@@ -186,7 +188,11 @@ character at the range rather than walk one there.
 
 - **Retiring `Item.Loaded`.** It still distinguishes a fresh weapon from a
   chambered one and carries the out-of-ammo signal.
-- **Per-weapon flavour beyond the three ammo tags.** Needs a new ItemSpec field.
+- **Per-weapon flavour beyond the three ammo tags.** All eight ranged weapons
+  share one subtype, so attack messages already lump a sling in with a firearm;
+  that limitation ships today and is not created here. Splitting them is one
+  change to the message system covering shot and recovery together, not a
+  special case bolted onto the new line.
 - **Moving the admin data-file reload to its own verb.** Retiring the player half
   already removes the ambiguity; renaming the admin side is a separate cleanup.
 - **Touching throw.** It shares the special-move cooldown and is deliberately
