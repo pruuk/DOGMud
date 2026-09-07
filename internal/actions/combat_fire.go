@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -41,13 +40,14 @@ type FireResult struct {
 	// shot is sneaking and is NOT revealed.
 	Revealed bool
 
-	// SurpriseOnCooldown reports that the shooter WAS hidden in the same room
-	// but the shared special-move timer was already claimed, so the shot
-	// resolved as an ordinary one. The wrapper must speak this: otherwise the
-	// ambush silently does nothing and reads as a bug. It is the common case
-	// rather than a corner — a loaded bow implies a recent reload, and reload
-	// burns the same timer.
-	SurpriseOnCooldown bool
+	// Chambered reports the auto-reload that follows every shot. Its NoAmmo flag
+	// is how "you are out" reaches the player and its BundleEmptied flag is how
+	// "that was your last one" does.
+	//
+	// A shot with Chambered.Loaded false is still a HIT: the shot resolves before
+	// the chambering is attempted, so running dry never costs the player the shot
+	// they just took.
+	Chambered ReloadResult
 
 	// AimedWhileEngaged reports that this shot was taken while something in the
 	// SHOOTER's room had the shooter as its aggro target, so it did NOT carry
@@ -273,13 +273,23 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// out of counterattacks (the one uncounterable attack), and narrates
 	// anonymously. A stacked crit on top of all three would be a boss killed
 	// from the next room at no risk and with no way to learn who did it.
+	// ONE claim per shot, sneaking or not. Before the fold, an ordinary shot
+	// claimed nothing and the separate `reload` claimed instead, so a
+	// shot-plus-reload cycle already cost exactly one burn. It still does: this
+	// is a command-count change, not a rate change.
+	//
+	// ⚠️ THE CLAIM DOES NOT GATE THE AMBUSH, and that is deliberate. A shot from
+	// stealth is a surprise strike because the shooter was hidden, full stop.
+	// The old code refused the opener when the timer was already spent, which in
+	// practice meant refusing it whenever the player had reloaded -- exactly the
+	// thing you must do to have a loaded weapon to ambush WITH. Now that firing
+	// chambers its own next round, an ordinary shot claims the timer too, so
+	// re-adding the gate would deny the ambush after any previous shot instead.
+	//
+	// What actually limits ambushes is stealth: firing reveals the shooter, and
+	// `sneak` refuses while in combat, so an engagement yields one opener.
 	surpriseShot := !crossRoom && result.IsSneaking
-	if surpriseShot && !char.TryCooldown("special-move",
-		fmt.Sprintf("%d rounds", cfg.SpecialMoveCooldown)) {
-		// DENIED, and the player must be told (Task 14 speaks the line).
-		surpriseShot = false
-		result.SurpriseOnCooldown = true
-	}
+	ClaimSpecialMove(char)
 
 	bonusCrit := 1.0
 	if surpriseShot {
@@ -400,6 +410,12 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	RecordAndWait(char, "shoot", sourceType, defChar, targetType, result.MoveResult.Hit, dmg, util.GetRoundCount())
 
 	awardFireProgression(actor, surpriseShot, result.MoveResult.Hit)
+
+	// Chamber the next round as part of the same action. A failure here is NOT a
+	// failed shot -- the shot has already resolved above. The weapon is simply
+	// left empty and the next `fire` reports it, which is how running dry
+	// reaches the player.
+	result.Chambered = chamberNextRound(actor)
 
 	return result
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 )
 
 // TestSpecialMoveCooldownClaimIsAtomic pins the property the old idiom could not
@@ -27,17 +28,30 @@ func TestSpecialMoveCooldownClaimIsAtomic(t *testing.T) {
 	}
 }
 
-// TestSpecialMoveCooldownUsesTheConfiguredDuration pins the outlier out of
-// existence. combat_helpers.go hardcoded "1 rounds" while sixteen verbs used the
-// configured value, so one path ran a fraction of the intended cooldown and
-// nothing anywhere could notice.
+// TestSpecialMoveCooldownUsesTheConfiguredDuration pins that the duration comes
+// from Balance.SpecialMoveCooldown and is not baked into the code. A dead
+// helper in combat_helpers.go used to hardcode "1 rounds" while sixteen verbs
+// read the config, and nothing could notice because nothing compared them.
+//
+// ⚠️ The pinned value is deliberately NOT the shipped or default one. An
+// earlier version of this test asserted only `got > 1`, which any hardcoded
+// literal above one would satisfy -- including the Go default of 5, so an
+// implementation that ignored the config entirely passed it. Pinning an
+// arbitrary value is what makes this test able to tell "reads the config" from
+// "happens to match the config".
 func TestSpecialMoveCooldownUsesTheConfiguredDuration(t *testing.T) {
+	const pinned = 7 // neither the Go default (5) nor the shipped value (4)
+
+	cfg := configs.GetConfig()
+	cfg.Balance.SpecialMoveCooldown = pinned
+	configs.SetConfigForTest(t, cfg)
+
 	c := &characters.Character{}
 	ClaimSpecialMove(c)
 
-	if got := c.GetCooldown(SpecialMoveCooldownTag); got <= 1 {
-		t.Errorf("cooldown = %d rounds, want the configured SpecialMoveCooldown (>1); "+
-			"a value of 1 means the hardcoded outlier came back", got)
+	if got := c.GetCooldown(SpecialMoveCooldownTag); got != pinned {
+		t.Errorf("cooldown = %d rounds, want %d from Balance.SpecialMoveCooldown; "+
+			"a value that ignores the pin means the duration is hardcoded", got, pinned)
 	}
 }
 

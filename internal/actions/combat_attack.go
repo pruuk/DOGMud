@@ -138,9 +138,14 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 // Hidden -> Revealing whatever the aggro type is (internal/hooks/
 // Awareness_Cascades.go), so a refused melee ambusher spends their cover and
 // gains nothing; silence there reads as a broken feature rather than a
-// cooldown. This is the same signal FireResult.SurpriseOnCooldown carries on
-// the ranged half (combat_fire.go), deliberately named the same so both halves
-// of the ambush grep as one feature.
+// cooldown.
+//
+// ⚠️ MELEE AND RANGED NOW DIFFER HERE, deliberately. This melee opener is still
+// GATED on the shared timer: a claim that fails downgrades the ambush. The
+// ranged opener in combat_fire.go is not, because firing chambers its own next
+// round and therefore claims on every shot, so gating there would deny the
+// ambush after any previous shot. Melee has no such per-swing claim, so the
+// gate still means what it always meant.
 //
 // It is returned as a second value rather than folded into a result struct so
 // that the SetAggro argument at every call site stays a plain variable assigned

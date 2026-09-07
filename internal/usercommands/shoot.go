@@ -236,19 +236,6 @@ const (
 	// IsSneaking branches below), and the shooter is exposed from here on.
 	surpriseShotRevealedText = `The shot gives your place away. You are no longer hidden.`
 
-	// surpriseShotDeniedText speaks FireResult.SurpriseOnCooldown. NOT a corner
-	// case: reload burns the same shared special-move timer the opener needs,
-	// so the natural reload-sneak-shoot order denies the ambush whenever the
-	// reload was recent. Without this line the player sees an ordinary shot and
-	// concludes the feature does not work.
-	//
-	// The second sentence is the engine's established refusal wording ("You need
-	// a moment to recover before attempting another special move." -- throw.go,
-	// mutation_helpers.go), trimmed to fit, so the same cooldown is refused in
-	// the same words wherever a player meets it. "special move" is a taught term
-	// (there is a `help special` topic).
-	surpriseShotDeniedText = `No ambush ready. You need a moment to recover before another special move.`
-
 	// aimedWhileEngagedText speaks FireResult.AimedWhileEngaged. Spoken at most
 	// once per engagement (see Character.RangedEngagedCueSpoken) -- damage that
 	// silently drops to a fraction reads as a bug, but repeating the reason
@@ -264,12 +251,6 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	hit := result.MoveResult.Hit
 	partial := !hit && result.MoveResult.Damage > 0
 	tier := combat.GetDamageDescription(result.MoveResult.Damage, result.MoveResult.TargetMaxHP)
-
-	// The refusal comes FIRST: it explains why the shot the player set up as an
-	// ambush is about to narrate as an ordinary one.
-	if result.SurpriseOnCooldown {
-		user.SendText(messaging.CategorySurpriseAttack, surpriseShotDeniedText)
-	}
 
 	// Color the target name by type.
 	targetColored := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, result.TargetName)

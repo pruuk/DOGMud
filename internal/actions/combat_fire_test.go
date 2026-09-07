@@ -334,7 +334,11 @@ func TestFire_UnseenTargetIsRejectedBeforeAdmission(t *testing.T) {
 // 6. Fire does NOT consume the special-move cooldown
 // ---------------------------------------------------------------------------
 
-func TestFire_DoesNotConsumeSpecialMoveCooldown(t *testing.T) {
+// ⚠️ INVERTED DELIBERATELY. Firing used to leave the timer alone because the
+// separate `reload` command claimed it. Firing chambers its own next round now,
+// so the claim moved onto the shot and the cadence is unchanged: a
+// shot-plus-reload cycle cost one burn before and costs one burn now.
+func TestFire_ConsumesSpecialMoveCooldown(t *testing.T) {
 	_, cleanup := seedFireMobInRoom(t, 1, 1)
 	defer cleanup()
 
@@ -345,9 +349,9 @@ func TestFire_DoesNotConsumeSpecialMoveCooldown(t *testing.T) {
 	res := ExecuteFire(actor, "skeleton")
 	require.True(t, res.Executed)
 
-	// Reload owns the cooldown; firing must leave it free.
-	assert.True(t, char.Cooldowns.Try("special-move", "5 rounds"),
-		"firing must NOT consume the special-move cooldown")
+	// Firing owns the single claim for the whole action.
+	assert.False(t, char.Cooldowns.Try("special-move", "5 rounds"),
+		"firing must consume the special-move cooldown")
 }
 
 // TestFire_RefusedCostIsAtomic catches admission being omitted or moved after
@@ -407,14 +411,23 @@ func TestFire_AffordableMissPaysUnloadsAndConsumesRound(t *testing.T) {
 
 	require.True(t, res.Executed)
 	require.Equal(t, characters.CostPaid, res.Cost.Status)
-	assert.Equal(t, 2, res.Cost.Charged)
-	assert.Equal(t, 8, char.Stamina)
+	assert.Equal(t, 2, res.Cost.Charged, "the SHOT charges its own cost")
 	assert.False(t, res.MoveResult.Hit)
 	assert.Zero(t, res.MoveResult.Damage)
 	assert.Equal(t, healthBefore, targetMob.Character.Health)
-	assert.False(t, char.Equipment.Weapon.Loaded)
-	assert.Equal(t, 20, char.Items[0].Uses)
 	assert.Equal(t, 1, char.RoundsWaiting())
+
+	// A miss still chambers. Firing unloads the weapon and then readies the next
+	// round in the same action, so a missed shot leaves the shooter armed rather
+	// than empty-handed and owing a second command.
+	assert.True(t, char.Equipment.Weapon.Loaded, "a miss must still chamber the next round")
+	assert.Equal(t, 19, char.Items[0].Uses, "chambering consumes one projectile")
+	assert.Equal(t, 7, char.Stamina,
+		"2 for the shot and 1 for the chambering: the same total a shot plus a "+
+			"reload cost before they were folded together")
+
+	// The pre-existing cooldown is left as found: it was already running, so the
+	// shot's claim cannot extend it, and chambering never touches it.
 	assert.Equal(t, characters.Cooldowns{"special-move": 3}, char.Cooldowns)
 }
 
@@ -515,7 +528,17 @@ func TestFireAdmissionOrdering(t *testing.T) {
 				unloads = append(unloads, n.Pos())
 			}
 		case *ast.CallExpr:
+			// Two shapes count as touching the timer: the old receiver-style
+			// char.TryCooldown/CooldownReady, and the helper calls that replaced
+			// them, which are plain identifiers rather than selectors. Matching
+			// only the selector form would let a second claim slip in unseen.
 			if sel, ok := n.Fun.(*ast.SelectorExpr); ok && strings.Contains(sel.Sel.Name, "Cooldown") {
+				cooldownCalls = append(cooldownCalls, formattedASTNode(t, fset, n))
+				cooldownPos = append(cooldownPos, n.Pos())
+			}
+			if id, ok := n.Fun.(*ast.Ident); ok &&
+				(id.Name == "ClaimSpecialMove" || id.Name == "SpecialMoveReady" ||
+					id.Name == "ReleaseSpecialMove") {
 				cooldownCalls = append(cooldownCalls, formattedASTNode(t, fset, n))
 				cooldownPos = append(cooldownPos, n.Pos())
 			}
@@ -537,12 +560,10 @@ func TestFireAdmissionOrdering(t *testing.T) {
 	// keeps is that there is no SECOND cooldown site and that the one claim
 	// cannot fire before admission, which would let a refused shot burn the
 	// shared special-move timer.
-	require.Len(t, cooldownCalls, 1, "exactly one cooldown site: the U10d surprise opener")
-	assert.True(t, strings.HasPrefix(cooldownCalls[0], `char.TryCooldown("special-move"`),
-		"the surprise opener must CLAIM (not merely read) the shared special-move "+
-			"timer, got %q", cooldownCalls[0])
-	assert.Contains(t, cooldownCalls[0], "cfg.SpecialMoveCooldown",
-		"the claim must be sized by the shared knob, not a literal, got %q", cooldownCalls[0])
+	require.Len(t, cooldownCalls, 1, "exactly one cooldown site: the single per-shot claim")
+	assert.Equal(t, "ClaimSpecialMove(char)", cooldownCalls[0],
+		"the shot must claim through the shared helper, which is what sizes it by "+
+			"the knob rather than a literal, got %q", cooldownCalls[0])
 	assert.Less(t, int(roomVisibility[0]), int(admit[0]))
 	assert.Less(t, int(hiddenTarget[0]), int(admit[0]))
 	assert.Less(t, int(admit[0]), int(cooldownPos[0]),
@@ -600,16 +621,19 @@ func TestFireReload_NoviceEvidenceCycle(t *testing.T) {
 	reloadCost := quoted.CommitCost(reloadQuote, characters.CostFullOrRefuse)
 	require.Equal(t, 4, shootCost.Charged+reloadCost.Charged)
 
+	// ONE call now. Firing chambers its own next round, so the whole cycle this
+	// test prices is a single action -- and the debit must still be the SAME
+	// total that a separate shot plus a separate reload used to charge, which is
+	// what the two independent quotes above establish.
 	char := newFixture()
 	actor := newStubActor(char, rooms.LoadRoom(1))
 	fire := ExecuteFire(actor, "skeleton")
-	reload := ExecuteReload(actor)
 
 	require.True(t, fire.Executed)
-	require.True(t, reload.Loaded)
-	assert.Equal(t, shootCost, fire.Cost)
-	assert.Equal(t, reloadCost, reload.Cost)
-	assert.Equal(t, 46, char.Stamina)
+	require.True(t, fire.Chambered.Loaded, "the shot must chamber the next round itself")
+	assert.Equal(t, shootCost, fire.Cost, "the shot charges the shoot quote")
+	assert.Equal(t, reloadCost, fire.Chambered.Cost, "the chambering charges the reload quote")
+	assert.Equal(t, 46, char.Stamina, "50 less the same 4 the two-command cycle cost")
 	assert.Equal(t, 19, char.Items[1].Uses)
 	assert.True(t, char.Equipment.Weapon.Loaded)
 	shootRaw := costs.Calc(costs.Input{

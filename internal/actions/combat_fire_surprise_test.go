@@ -27,11 +27,12 @@ import (
 //      (Aggro != nil), so ExecuteFire's SetAggro/Awareness cascade cannot be
 //      what reveals them;
 //   3. it burns the shared special-move cooldown;
-//   4. an ordinary unhidden shot does NOT (control for 3, and today's shipped
-//      behaviour);
-//   5. a CROSS-ROOM shot from stealth gets none of it;
-//   6. a hidden shooter whose special-move cooldown is already claimed fires an
-//      ordinary shot and is told so.
+//   4. an ordinary unhidden shot burns it TOO -- firing chambers its own next
+//      round now, so the claim the separate `reload` used to make moved onto
+//      the shot;
+//   5. a CROSS-ROOM shot from stealth gets none of the opener;
+//   6. a hidden shooter whose special-move cooldown is already claimed STILL
+//      gets the opener -- being hidden is the only condition.
 // ---------------------------------------------------------------------------
 
 const (
@@ -239,7 +240,6 @@ func TestFireSurprise_BurnsTheSpecialMoveCooldown(t *testing.T) {
 	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
 
 	require.True(t, res.Executed)
-	require.False(t, res.SurpriseOnCooldown, "the opener was available")
 	assert.Positive(t, char.Cooldowns["special-move"],
 		"the surprise shot must claim the shared special-move cooldown")
 	assert.False(t, char.Cooldowns.Try("special-move", "4 rounds"),
@@ -250,9 +250,13 @@ func TestFireSurprise_BurnsTheSpecialMoveCooldown(t *testing.T) {
 // 4. Control: an ordinary shot leaves the cooldown alone
 // ---------------------------------------------------------------------------
 
-// This is today's shipped contract (reload owns the timer, firing does not),
-// and it is what makes case 3 evidence of the AMBUSH rather than of shooting.
-func TestFireSurprise_OrdinaryShotDoesNotBurnTheCooldown(t *testing.T) {
+// ⚠️ INVERTED DELIBERATELY. It used to assert that an ordinary shot leaves the
+// timer alone, which was true only because the separate `reload` command owned
+// the claim. Firing chambers its own next round now, so the claim moved onto
+// the shot: a shot-plus-reload cycle cost one burn before and costs one burn
+// now. Restoring the old assertion would mean ranged had quietly become cheaper
+// than every other special move.
+func TestFireSurprise_OrdinaryShotBurnsTheCooldownToo(t *testing.T) {
 	pinRangedSurpriseBalance(t)
 	pinOrdinaryContestWin(t)
 	_, cleanup := seedFireMobInRoom(t, 1, 1)
@@ -264,12 +268,11 @@ func TestFireSurprise_OrdinaryShotDoesNotBurnTheCooldown(t *testing.T) {
 	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
 
 	require.True(t, res.Executed)
-	assert.False(t, res.SurpriseOnCooldown, "nothing was refused: there was no opener")
 	assert.False(t, res.Revealed, "a visible shooter has nothing to reveal")
-	assert.Zero(t, char.Cooldowns["special-move"],
-		"an ordinary shot must NOT consume the special-move cooldown")
-	assert.True(t, char.Cooldowns.Try("special-move", "4 rounds"),
-		"the shared timer must still be free after an ordinary shot")
+	assert.Positive(t, char.Cooldowns["special-move"],
+		"every shot claims the shared timer now, ordinary or not")
+	assert.False(t, char.Cooldowns.Try("special-move", "4 rounds"),
+		"a second special move must be refused in the same window")
 }
 
 // ---------------------------------------------------------------------------
@@ -298,10 +301,11 @@ func TestFireSurprise_CrossRoomShotGetsNothing(t *testing.T) {
 	assert.False(t, res.Revealed, "a cross-room shot must not reveal the shooter")
 	assert.True(t, char.IsHidden(),
 		"the cross-room shooter stays hidden: nothing on that path reveals them")
-	assert.Zero(t, char.Cooldowns["special-move"],
-		"a cross-room shot must not claim the special-move cooldown")
-	assert.False(t, res.SurpriseOnCooldown,
-		"nothing was refused: a cross-room shot never asks for the opener")
+	// A cross-room shot gets no OPENER, but it is still a shot and it still
+	// chambers, so it claims like any other. Under the old flow the claim simply
+	// landed a command later, on the `reload` the shooter had to type next.
+	assert.Positive(t, char.Cooldowns["special-move"],
+		"a cross-room shot claims the timer like any other shot")
 	assert.False(t, char.IsInCombat(), "a cross-room shot stays one-shot and aggro-free")
 }
 
@@ -313,7 +317,7 @@ func TestFireSurprise_CrossRoomShotGetsNothing(t *testing.T) {
 // same timer, so the natural "reload, sneak, shoot" sequence denies the opener
 // whenever the reload was inside SpecialMoveCooldown rounds. The player has to
 // be told, or the ambush silently does nothing.
-func TestFireSurprise_ClaimedCooldownDeniesTheOpener(t *testing.T) {
+func TestFireSurprise_ClaimedCooldownStillAllowsTheOpener(t *testing.T) {
 	pinRangedSurpriseBalance(t)
 	pinOrdinaryContestWin(t)
 	_, cleanup := seedFireMobInRoom(t, 1, 1)
@@ -322,19 +326,15 @@ func TestFireSurprise_ClaimedCooldownDeniesTheOpener(t *testing.T) {
 	char := newSurpriseShooter(true)
 	require.True(t, char.Cooldowns.Try("special-move", fmt.Sprintf("%d rounds",
 		int(configs.GetBalanceConfig().SpecialMoveCooldown))),
-		"precondition: something else (a reload) claims the timer first")
-	claimed := char.Cooldowns["special-move"]
-	require.Positive(t, claimed)
+		"precondition: something else claims the timer first")
+	require.Positive(t, char.Cooldowns["special-move"])
 
 	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
 
-	require.True(t, res.Executed, "the shot itself still happens")
-	assert.True(t, res.SurpriseOnCooldown,
-		"the denied opener must be reported so the wrapper can speak it")
-	assert.False(t, res.MoveResult.Crit, "a denied opener is an ordinary shot")
-	assert.False(t, res.Revealed, "a denied opener does not reveal the shooter")
-	assert.Equal(t, claimed, char.Cooldowns["special-move"],
-		"a refused claim must not extend the running cooldown")
+	require.True(t, res.Executed)
+	assert.True(t, res.MoveResult.Crit,
+		"a hidden shooter gets the opener even with the timer already claimed")
+	assert.True(t, res.Revealed, "the opener still gives the shooter away")
 }
 
 // ---------------------------------------------------------------------------

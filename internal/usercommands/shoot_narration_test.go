@@ -2,7 +2,7 @@ package usercommands
 
 // U10d Task 14 — the VOICE of the ranged half of the surprise-attack redesign.
 //
-// ExecuteFire already sets Revealed, SurpriseOnCooldown and AimedWhileEngaged;
+// ExecuteFire already sets Revealed and AimedWhileEngaged;
 // until this task nothing spoke them. These tests pin the copy rules the
 // project applies to every player-facing line, the branch order of the
 // shot-from-cover narration, and the once-per-engagement latch behind the

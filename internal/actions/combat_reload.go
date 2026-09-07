@@ -40,13 +40,24 @@ func findRangedWeaponSlot(actor Actor) *items.Item {
 	return nil
 }
 
-// ExecuteReload chambers/nocks a projectile into the actor's equipped
-// ranged weapon (main hand first, then offhand): consumes the shared
-// special-move cooldown and one Use from a matching ammo bundle. The
-// cooldown is only consumed once every other precondition has passed —
-// a reload that fails for no-ammo never burns it.
-// Callers handle all messaging and progression events.
-func ExecuteReload(actor Actor) ReloadResult {
+// chamberNextRound readies the next projectile in the actor's equipped ranged
+// weapon (main hand first, then offhand), consuming one Use from a matching
+// ammo bundle.
+//
+// It is an internal STEP OF FIRING, not an action a player can take: `fire`
+// resolves the shot and then calls this, so the two together are one action.
+//
+// ⚠️ IT MUST NOT TOUCH THE SPECIAL-MOVE COOLDOWN. It used to both gate on that
+// timer and claim it, which produced a collision in BOTH directions: a recent
+// reload denied the ambush that needed the timer, and a successful ambush then
+// left the weapon unreloadable for the cooldown's length. ExecuteFire owns the
+// single claim now. Re-adding a claim here re-creates both bugs.
+//
+// The bundle is deliberately re-found by identity (Equals) after cost admission
+// rather than by the index found before it: admission calls through the actor
+// seam, which a test double or a future synchronous hook can use to invalidate
+// the inventory state underneath us.
+func chamberNextRound(actor Actor) ReloadResult {
 	char := actor.GetCharacter()
 
 	// Don't interrupt any active activity (cast/craft/salvage) to reload.
@@ -81,10 +92,6 @@ func ExecuteReload(actor Actor) ReloadResult {
 
 	// Shared special-move cooldown availability is the last read-only gate.
 	cfg := configs.GetBalanceConfig()
-	if !SpecialMoveReady(char) {
-		return ReloadResult{WeaponName: weapon.DisplayName(), OnCooldown: true}
-	}
-
 	result := ReloadResult{
 		WeaponName: weapon.DisplayName(),
 		AmmoTag:    ammoTag,
@@ -115,31 +122,19 @@ func ExecuteReload(actor Actor) ReloadResult {
 	if bundleIdx < 0 {
 		return result
 	}
-	bundleBefore := char.Items[bundleIdx]
-
 	// Consume one Use; remove the bundle when emptied. RemoveItem matches by
 	// ItemId+UUID (Item.Equals), so the post-decrement value still matches.
+	//
+	// There is no rollback path any more. The snapshot vars this used to keep
+	// (bundleBefore/bundleRemoved) existed only to undo the consume when the
+	// cooldown claim failed, and chambering no longer claims anything.
 	char.Items[bundleIdx].Uses--
-	bundleRemoved := false
 	if char.Items[bundleIdx].Uses <= 0 {
 		result.BundleEmptied = true
 		char.RemoveItem(char.Items[bundleIdx])
-		bundleRemoved = true
 	}
 
 	weapon.Loaded = true
-	if !ClaimSpecialMove(char) {
-		weapon.Loaded = false
-		result.BundleEmptied = false
-		if bundleRemoved {
-			char.Items = append(char.Items, items.Item{})
-			copy(char.Items[bundleIdx+1:], char.Items[bundleIdx:])
-			char.Items[bundleIdx] = bundleBefore
-		} else {
-			char.Items[bundleIdx] = bundleBefore
-		}
-		return result
-	}
 	result.Loaded = true
 	return result
 }
