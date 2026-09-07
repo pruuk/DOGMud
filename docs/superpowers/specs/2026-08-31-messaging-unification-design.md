@@ -334,57 +334,136 @@ elsewhere:**
 Moving those without being asked would be overriding a ruling, not accelerating
 a fix.
 
-### M1 — The snapshot harness
+### M1 — The viewpoint audit, then the snapshot harness
 
-Freeze what every narration path emits today, including paths nobody plays. No
-production behavior changes.
+Freeze what every narration path emits today, including paths nobody plays.
 
-**First task: one seeded pick used by every store.** Two of the fourteen stores
-use the stdlib global `rand.Intn` and are unreachable by any seam controlling
-`util.Rand`; until that is fixed the net has holes.
+🔴 **TASK 0 IS AN AUDIT, AND IT IS THE STAGE'S MAIN DELIVERABLE.** Not a
+preamble to the harness: the harness is worth little until we know which sites
+are *correctly* shaped and which are quietly missing a viewpoint. It is written
+to `docs/superpowers/audits/2026-XX-XX-narration-viewpoint-audit.md` and every
+later stage reads from it.
+
+#### Why the audit comes first
+
+Measured 2026-09-07 against source. In-code narration addresses these
+viewpoints:
+
+| Viewpoints addressed | Sites |
+|---|---:|
+| actor + observer | 177 |
+| **actor + actee + observer** (the full trio) | **50** |
+| actor + actee | 20 |
+| | **247 across 80 files** |
+
+The trio is the general case and the other two are degenerate forms of it. A
+core designed against actor+observer alone — which a naive pair-count suggests —
+would need 50 special cases immediately.
+
+**But a 2-of-3 site is not automatically wrong, and that is the point of the
+audit.** Each one is either:
+
+- **Correct by nature.** The actee is a mob, and mobs receive no narration
+  (`show.go`'s mob branch). Or the exchange is genuinely private: a reply, a
+  guild invite, an admin action on a player. The room has no business seeing it.
+- **A GAP.** A public act whose room message was never written. Example found
+  while scoping: `spell_resolution.go` sends *"Your spell backfires violently,
+  wounding you!"* to the caster and nothing at all to the room. A spell
+  backfiring in front of people is not a private event.
+
+Only reading the site tells the two apart, so the audit adjudicates every one.
+
+#### The audit's method, and one trap in it
+
+⚠️ **A window-based detector produces FALSE POSITIVES and must not be trusted
+on its own.** The 247 figure comes from scanning a 16-line window after each
+actor send. `show.go` was classified actor+actee by that scan and is in fact a
+correct trio — its room send simply sits further down, and its mob branch
+legitimately has no actee. **The scan produces CANDIDATES; a reader produces the
+verdict.**
+
+For each of the 247 sites the audit records:
+
+1. file:line, and the event in one phrase;
+2. which of actor / actee / observer are addressed;
+3. **verdict: `correct` or `gap`**, with the reason in a clause;
+4. for a gap, what the missing viewpoint should say — not written, just named;
+5. whether the site's viewpoints span more than one `messaging.Category`.
+
+Point 5 exists because **`messaging.Category` is not a reliable classifier and
+must not be used as one.** `give.go` sends one event's three viewpoints as
+`CategorySystem`, `CategorySystem` and `CategoryLoot`. Half of most triads is
+tagged `CategorySystem`, which is also the tag on ~2,000 refusals and admin
+tables. Classify by SHAPE — does this text vary by who is watching — never by
+tag.
+
+#### Scope: which surfaces this arc owns
+
+Measured, not estimated. The spec's original alarm — *275 Go files, 2,257
+lines* — counted three different kinds of text as one.
+
+| Group | What it is | Test | Owner |
+|---|---|---|---|
+| **B** | Keyed narration stores | has a data file | **this arc** |
+| **C** | Hand-rolled viewpoint narration, 247 sites / 80 files | addresses 2+ viewpoints | **this arc** |
+| **A** | Refusals, admin output, status tables | one audience, no counterpart | **its own arc, after** |
+
+**Group A leaves this arc by owner decision (2026-09-07).** Roughly 2,000
+strings: *"Zone not found"*, *"Vault: empty"*, *"Usage: caravan reset"*. They
+have no band, no viewpoint split and no pool, so a narration core would add
+nothing. Owner: they are *"essentially just error messages... standardizable
+with a few extra keywords passed in"* — a real job, and a different one.
+
+⚠️ **Warning to hand the refusal arc:** it cannot select its work by
+`CategorySystem` either, or it will drag ~247 narration sites in with it. Its
+first task is fixing what things are TAGGED, not what they say.
+
+#### The harness itself
+
+Once the audit exists:
+
+**One seeded pick, and this is the stage's one production change.** Two stores
+(`internal/grapplemessaging/render.go`, `internal/spells/casting_messages.go`)
+use stdlib `math/rand` and are unreachable by any seam controlling `util.Rand`,
+so without this the net has holes exactly where two stores live. Owning that
+change here is cheaper than snapshotting around it.
 
 The mechanism is an **injected picker**, not a global seed: the core takes a
-`pick(n int) int` and production supplies the engine's randomness while the
-harness supplies a deterministic sequence. A global seed would be process-wide
-and would make snapshot runs order-dependent, which is the trap that already
-bites this repo's test binaries (all tests share one binary, so relative state
-passes or fails by order). The existing `indexOverride` on
-`RenderDefenseMessage` is the same idea and becomes redundant once the picker is
-injected.
+`pick(n int) int`, production supplies the engine's randomness, the harness
+supplies a deterministic sequence. A global seed is process-wide and makes
+snapshot runs order-dependent — the trap this repo already has, since all tests
+share one binary and relative state passes or fails by order. The existing
+`indexOverride` on `RenderChannelDefenceMessages` is the same idea and folds in.
 
-Captured at **three** levels:
+**Group B is snapshotted** at three levels:
 
-1. **Raw render** — every `(store × event key × band × role)` tuple, tokens
+1. **Raw render** — every `(store × key × band × role)` tuple, tokens
    substituted, all roles from the same index.
 2. **Post-pipeline** — the same events at each sight verdict (full / shapes /
    none) and each verbosity tier, catching "the text survived but the delivery
    changed".
-3. 🔴 **In-code Go text.** Added 2026-08-31 after M0 measured it.
+3. **Empty cases assert empty.** `RenderDefenseMessage` returns an empty triad
+   on a missing or malformed pool; a refactor that makes that path start
+   emitting is equally a regression. Both directions.
 
-⚠️ **M1 IS BIGGER THAN THIS SPEC ORIGINALLY ASSUMED.** The harness was framed
-around narration *stores* — data files with keys. M0's Go walk found **275 Go
-files carrying player-facing ANSI text with no data file behind them, across
-2,257 lines.** That is a surface no data-side method can see, and it is larger
-than several of the data stores combined.
+**Group C is inventoried, not snapshotted.** It freezes the string literals via
+AST, extending the existing `messaging_surface_guard_test.go`, which already
+carries the `narration / content / config` scope concept. This freezes the
+literal rather than the rendered output — the honest limit, and acceptable
+because these sites have no bands or pools to render. Building ~247 fixtures to
+render text that M2 may replace outright is the most expensive thing in the arc
+and buys the least.
 
-The original figure in this spec, "54 Go files carry in-code text pools",
-counted only `[]string{` literals and was low by a factor of five.
+#### What M1 hands M2
 
-**Consequences for planning M1:**
-
-- Snapshotting "every narration path" is not the same job as snapshotting the
-  stores. In-code text has no key, no band, and often no audience split, so the
-  `(store × key × band × role)` tuple does not describe it.
-- These sites are **exactly the ones that will be hardest to migrate later**,
-  because there is no data file to move. Knowing their shape before M2 designs
-  the core is worth more than snapshotting them exhaustively.
-- **Plan M1 against a measured inventory of those 275 files, not against an
-  estimate.** `tools/messaging_surface_audit.py` already lists them.
-
-**Empty cases must be asserted to stay empty.** `RenderDefenseMessage` returns an
-empty triad on a missing or malformed pool; a refactor that makes that path start
-emitting text is also a regression. Both directions, like the existing site
-guards.
+- The trio is the general case; 50 sites prove it and 197 are degenerate forms.
+- The densest cluster is the **twelve special-move verbs** (trip, grapple, bash,
+  gore, kick, pounce, throttle, drain, maul, rake…), each hand-rolling the same
+  three-viewpoint narration. They are not twelve special cases; they are one
+  pattern copied twelve times, and they are the same verbs whose cooldown
+  handling was unified on 2026-09-07.
+- A ruled list of gaps, so M2 knows which viewpoints it must be able to emit
+  that nothing emits today.
 
 > **Acknowledged gap:** snapshots cannot capture the *order and interleaving* of
 > messages within a round. That is player-visible and real. It stays a playtest
