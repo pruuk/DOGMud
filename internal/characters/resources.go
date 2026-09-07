@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 )
@@ -448,10 +449,22 @@ func (c *Character) ConvictionPerRound() int {
 }
 
 // GetToxicityMax returns the maximum toxicity this character can handle.
-// Formula: BaseMax + Vitality / VitalityScale
+//
+//	max = ToxicityBaseMax + alchemy/AlchemyScale + Vitality/VitalityScale
+//
+// Tolerance is EARNED BY BREWING, not by being tough. A veteran who never
+// touched a still is less tolerant than a practised brewer -- you build a
+// tolerance by handling the stuff, and that inversion is the point of the
+// formula. ToxicityBaseMax ships at 0 so tolerance is entirely earned; it
+// survives as a knob so a flat floor can be restored without a code change.
+//
+// Both divisors are guaranteed non-zero by validateCombat.
 func (c *Character) GetToxicityMax() float64 {
 	bal := configs.GetBalanceConfig()
-	return float64(bal.ToxicityBaseMax) + float64(c.Stats.Vitality.ValueAdj)/float64(bal.ToxicityVitalityScale)
+	alchemy := float64(c.GetSkillLevel(skills.Alchemy))
+	return float64(bal.ToxicityBaseMax) +
+		alchemy/float64(bal.ToxicityAlchemyScale) +
+		float64(c.Stats.Vitality.ValueAdj)/float64(bal.ToxicityVitalityScale)
 }
 
 // AddToxicity adds (or removes, if amount is negative) toxicity, clamping to the
