@@ -14,7 +14,7 @@ buffids:
 value: 15
 rarity_tier: 40
 weight: 0.4
-toxicity: 14
+toxicity: 11
 aging:
   ferment_rounds: 1500
   peak_rounds: 6000

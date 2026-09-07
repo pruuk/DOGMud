@@ -16,3 +16,5 @@ buffids:
 value: 4
 rarity_tier: 50
 weight: 0.3
+
+toxicity: 3
