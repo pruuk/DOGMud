@@ -1,6 +1,6 @@
 ---
 name: dogmud-shipping
-description: Use when committing, pushing, opening or merging a PR, running pre-push checks, or booting the server to verify a change. Covers the gh --repo pinning that stops PRs landing on the upstream fork parent, the pre-push gate order, the detached-worktree boot check, and the instance-save wipe before a smoke test.
+description: Use when committing, pushing, opening or merging a PR, running pre-push checks, booting the server to verify a change, wiping instance saves, or running a local smoke test. Covers the gh --repo pinning that stops PRs landing on the upstream fork parent, the pre-push gate order, the detached-worktree boot check, and the instance-save wipe before a smoke test.
 ---
 
 This skill covers shipping a DOGMud change: git and `gh` hygiene around the
@@ -237,7 +237,8 @@ Then restart the server. The engine will re-spawn mobs and re-build
 rooms from the (updated) templates. **Do NOT also wipe
 `_datafiles/world/dogmud/shops/` or `_datafiles/world/dogmud/guilds/`**, those
 are persistent living state (shop economy; player guilds), not
-instance overrides (see Shop Persistence below). Guild files are
+instance overrides (shop and guild state is living state, covered by the
+`dogmud-persistence` skill). Guild files are
 runtime-generated per-guild YAML (`guilds/<tag>.yaml`); a malformed one
 logs+skips at boot rather than panicking (unlike authored content).
 
