@@ -151,6 +151,15 @@ docs/README.md                          MOD  index the two new audits
 6. **Wrap prose near 80 characters**, except inside tables and code blocks.
 7. **Named paths only** on `git add`. Never `git add -A` or `git add .`.
 8. **No scratch files in the repo.** Use temp space outside it.
+9. **A traceback from `strip_claude_sections.py` is never a reason to edit
+   CLAUDE.md by hand.** Task 0 found that printing the `↔` in
+   `## NPC↔NPC Conversations` raised `UnicodeEncodeError` on this machine's
+   cp1252 console. That is fixed inside the script (it reconfigures stdout to
+   UTF-8 itself), so no caller needs `PYTHONIOENCODING`. If the tool ever does
+   fail, note that the write happens once, last, after every heading has been
+   resolved and reported, so a crash leaves CLAUDE.md untouched. Fix the tool
+   and re-run. Hand-editing reintroduces the line-renumbering hazard the tool
+   exists to prevent.
 
 ---
 
