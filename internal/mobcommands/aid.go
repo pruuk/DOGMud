@@ -69,7 +69,7 @@ func Aid(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		cfg := textutil.SendTextConfig{
 			RoomSendFunc: func(msg string, skip ...int) {
 				if castRoom != nil {
-					castRoom.SendText(messaging.CategorySpellVital, msg, skip...)
+					castRoom.SendTextVisual(messaging.CategorySpellVital, msg, skip...)
 				}
 			},
 		}
