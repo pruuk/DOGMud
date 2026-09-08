@@ -436,6 +436,7 @@ internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp
 internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~hitRoomMsgs~util~Rand~len~hitRoomMsgs~user~Character~Name~targetName
 internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~missRoomMsgs~util~Rand~len~missRoomMsgs~user~Character~Name~targetName
 internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~partialRoomMsgs~util~Rand~len~partialRoomMsgs~user~Character~Name~targetName
+internal/usercommands/throttle.go | observer | messaging~CategorySpellDisruption | fmt~Sprintf~`<ansi fg="username">%s</ansi>'s grip chokes the spell out of <ansi fg="mobname">%s</ansi>!`~user~Character~Name~targetName
 internal/usercommands/throw.go | actor | messaging~CategoryDodge | string~triad~ToAttacker
 internal/usercommands/throw.go | actor | messaging~CategorySpellDisruption | fmt~Sprintf~`<ansi fg="cyan-bold">The blast shatters %s's concentration -- its spell collapses!</ansi>`~mob~Character~Name
 internal/usercommands/throw.go | actor | messaging~CategorySystem | "The projectile misses everything and shatters harmlessly."

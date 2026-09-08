@@ -88,20 +88,28 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(hitRoomMsgs[util.Rand(len(hitRoomMsgs))], user.Character.Name, targetName)),
 		}, aud)
 
-		// A detail line riding on the hit above. Observer is NoLine only
-		// because that is today's behaviour; a collapsing spell is a world
-		// event under the detail-line ruling and gains a room line in its own
-		// commit, so the text change is reviewable on its own.
+		// A detail line riding on the hit above, and a WORLD EVENT under the
+		// detail-line ruling: a spell visibly failing is something the room can
+		// see, so it carries all three viewpoints rather than staying private
+		// between the two people involved.
 		//
-		// The room line now precedes this rather than following it. No
+		// The observer's category is CategorySpellDisruption, not the
+		// CategorySystem its two siblings use. That is deliberate and is
+		// exactly why the category rides on the Line: throw.go already uses
+		// that category for the same event, a blast shattering a caster's
+		// concentration, and a bystander watching a spell die is reading about
+		// the disruption rather than about the bite that caused it.
+		//
+		// The room line precedes this trio rather than following it. No
 		// individual recipient sees a different order: the room line is never
 		// delivered to the actor or the actee, and the observer never receives
-		// these two, so only the cross-recipient interleaving moved.
+		// their two lines, so only the cross-recipient interleaving moved.
 		if res.InterruptedCast {
 			messaging.SendTrio(messaging.Trio{
-				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell collapses as they fight for air!`, targetName)),
-				Actee:    messaging.Say(messaging.CategorySystem, `Your spell collapses as you fight for air!`),
-				Observer: messaging.NoLine,
+				Actor: messaging.Say(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell collapses as they fight for air!`, targetName)),
+				Actee: messaging.Say(messaging.CategorySystem, `Your spell collapses as you fight for air!`),
+				Observer: messaging.Say(messaging.CategorySpellDisruption,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi>'s grip chokes the spell out of <ansi fg="mobname">%s</ansi>!`, user.Character.Name, targetName)),
 			}, aud)
 		}
 	} else if res.MoveResult.Damage > 0 {

@@ -1401,7 +1401,7 @@ var m2FrozenFiles = map[string]string{
 	"internal/usercommands/maul.go":     "2abb23ead58ccd3af940cab05d01462df4899982e91f3440dbe1510d9790fb5b",
 	"internal/usercommands/pounce.go":   "4cb8896a5627a3ea05cae952f4b48f1d4a7c73b8f8a4f0ab58b0adb8152b85d0",
 	"internal/usercommands/rake.go":     "c192d3cde4c80035226f2af63cceacbb98f3d6cc5c142a4685e6d4b14d31fb5a",
-	"internal/usercommands/throttle.go": "6678a1d6fc74f6b2619a4d0ed35c82c4c88c5f41c31d9ef6986731123ba62471",
+	"internal/usercommands/throttle.go": "c93996b0c46bd28f59d3e79c3f83968762c8e458e0f3f81aa7d67c86736d9e34",
 	"internal/usercommands/trip.go":     "a72aba7fdbff9b09d84f27f419d0ef17b7b5eddd1586604b0515d4f6ac0023a2",
 	"internal/usercommands/grapple.go":  "8e64bb48750d09f9581c6b7a0a3c0ec9eadcd4befbe94d9553b25d8c2c452a85",
 	"internal/usercommands/shoot.go":    "d63942e7087292a898ce1730bcdf5b90f7c9dcaa08891a1a3af7ce4687d90376",
