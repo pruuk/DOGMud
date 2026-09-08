@@ -225,37 +225,63 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		attackName = "knee strike"
 	}
 
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: res.Target.UserId,
+		Room:    room,
+	}
+
 	if res.MoveResult.Hit {
 		if res.MoveResult.KnockedDown && len(knockdownMsgs) > 0 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(knockdownMsgs[util.Rand(len(knockdownMsgs))], targetName, dmgDesc))
-			if targetChar != nil {
-				targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(knockdownTargetMsgs[util.Rand(len(knockdownTargetMsgs))], user.Character.Name, dmgDesc))
-			}
-			room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(knockdownRoomMsgs[util.Rand(len(knockdownRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(knockdownMsgs[util.Rand(len(knockdownMsgs))], targetName, dmgDesc)),
+				Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(knockdownTargetMsgs[util.Rand(len(knockdownTargetMsgs))], user.Character.Name, dmgDesc)),
+				Observer: messaging.Say(messaging.CategoryKick, fmt.Sprintf(knockdownRoomMsgs[util.Rand(len(knockdownRoomMsgs))], user.Character.Name, targetName)),
+			}, aud)
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(kickMsgs[util.Rand(len(kickMsgs))], targetName, dmgDesc))
-			if targetChar != nil {
-				targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(kickTargetMsgs[util.Rand(len(kickTargetMsgs))], user.Character.Name, dmgDesc))
-			}
-			room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(kickRoomMsgs[util.Rand(len(kickRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(kickMsgs[util.Rand(len(kickMsgs))], targetName, dmgDesc)),
+				Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(kickTargetMsgs[util.Rand(len(kickTargetMsgs))], user.Character.Name, dmgDesc)),
+				Observer: messaging.Say(messaging.CategoryKick, fmt.Sprintf(kickRoomMsgs[util.Rand(len(kickRoomMsgs))], user.Character.Name, targetName)),
+			}, aud)
 		}
 	} else if res.MoveResult.Damage > 0 {
 		// Defended-partial: personal lines carry the damage; the room line
 		// names the defence that blunted the kick (U6b Task 9).
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, attackName)
+		observer := messaging.Say(messaging.CategoryKick, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName))
+		if defended {
+			observer = messaging.Say(messaging.CategoryKick, defence.ToRoom)
+			sendMoveDefenceShortage(targetChar, defence)
 		}
-		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, attackName, messaging.CategoryKick, true) {
-			room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-		}
-	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, attackName, messaging.CategoryKick, false) {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: observer,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, attackName); defended {
+		// A defence stopped it outright: all three lines come from the triad.
+		sendMoveDefenceShortage(targetChar, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategoryKick, defence.ToAttacker),
+			Actee:    messaging.Say(messaging.CategoryKick, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryKick, defence.ToRoom),
+		}, aud)
+	} else {
 		// No defence to narrate (e.g. a fumbled kick): plain miss text.
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name))
-		}
-		room.SendTextVisual(messaging.CategoryKick, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name)),
+			Observer: messaging.Say(messaging.CategoryKick, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 	}
 
 	// Quest engine: command notification

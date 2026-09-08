@@ -256,10 +256,12 @@ internal/usercommands/grapple.go | observer | messaging~CategoryGrappleFlow | fm
 internal/usercommands/grapple.go | observer | messaging~CategoryGrappleFlow | fmt~Sprintf~`<ansi fg="username">%s</ansi> tries to grapple <ansi fg="mobname">%s</ansi>, but fails!`~user~Character~Name~targetName
 internal/usercommands/grapple.go | observer | messaging~CategoryGrappleFlow | result~CritFailure~RoomMessage
 internal/usercommands/grapple.go | observer | messaging~CategoryGrappleFlow | result~DisarmResult~RoomMessage
+internal/usercommands/kick.go | actee | messaging~CategoryKick | defence~ToDefender
 internal/usercommands/kick.go | actee | messaging~CategorySystem | fmt~Sprintf~kickTargetMsgs~util~Rand~len~kickTargetMsgs~user~Character~Name~dmgDesc
 internal/usercommands/kick.go | actee | messaging~CategorySystem | fmt~Sprintf~knockdownTargetMsgs~util~Rand~len~knockdownTargetMsgs~user~Character~Name~dmgDesc
 internal/usercommands/kick.go | actee | messaging~CategorySystem | fmt~Sprintf~missTargetMsgs~util~Rand~len~missTargetMsgs~user~Character~Name
 internal/usercommands/kick.go | actee | messaging~CategorySystem | fmt~Sprintf~partialTargetMsgs~util~Rand~len~partialTargetMsgs~user~Character~Name~dmgDesc
+internal/usercommands/kick.go | actor | messaging~CategoryKick | defence~ToAttacker
 internal/usercommands/kick.go | actor | messaging~CategorySystem | "You have no target!"
 internal/usercommands/kick.go | actor | messaging~CategorySystem | "You need a moment to recover before attempting another special move."
 internal/usercommands/kick.go | actor | messaging~CategorySystem | `<ansi fg="red">You can't kick while focused on your work. Finish or be interrupted first.</ansi>`
@@ -268,6 +270,8 @@ internal/usercommands/kick.go | actor | messaging~CategorySystem | fmt~Sprintf~k
 internal/usercommands/kick.go | actor | messaging~CategorySystem | fmt~Sprintf~knockdownMsgs~util~Rand~len~knockdownMsgs~targetName~dmgDesc
 internal/usercommands/kick.go | actor | messaging~CategorySystem | fmt~Sprintf~missMsgs~util~Rand~len~missMsgs~targetName
 internal/usercommands/kick.go | actor | messaging~CategorySystem | fmt~Sprintf~partialMsgs~util~Rand~len~partialMsgs~targetName~dmgDesc
+internal/usercommands/kick.go | observer | messaging~CategoryKick | defence~ToRoom
+internal/usercommands/kick.go | observer | messaging~CategoryKick | defence~ToRoom
 internal/usercommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~kickRoomMsgs~util~Rand~len~kickRoomMsgs~user~Character~Name~targetName
 internal/usercommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~knockdownRoomMsgs~util~Rand~len~knockdownRoomMsgs~user~Character~Name~targetName
 internal/usercommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~missRoomMsgs~util~Rand~len~missRoomMsgs~user~Character~Name~targetName
