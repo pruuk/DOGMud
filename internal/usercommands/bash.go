@@ -115,7 +115,7 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		sendMoveDefenceShortage(targetUser, defence)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategoryBash, defence.ToAttacker),
-			Actee:    messaging.Say(messaging.CategoryBash, defence.ToDefender),
+			Actee:    acteeDefenceLine(targetUser, room, messaging.CategoryBash, defence.ToDefender),
 			Observer: messaging.Say(messaging.CategoryBash, defence.ToRoom),
 		}, aud)
 	} else {

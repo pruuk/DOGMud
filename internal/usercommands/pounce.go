@@ -148,7 +148,7 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		sendMoveDefenceShortage(targetChar, defence)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToAttacker),
-			Actee:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryHitNaturalSharp, defence.ToDefender),
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
 		}, aud)
 	} else {

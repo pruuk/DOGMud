@@ -161,7 +161,7 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			sendMoveDefenceShortage(targetChar, defence)
 			messaging.SendTrio(messaging.Trio{
 				Actor:    messaging.Say(messaging.CategoryTrip, defence.ToAttacker),
-				Actee:    messaging.Say(messaging.CategoryTrip, defence.ToDefender),
+				Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryTrip, defence.ToDefender),
 				Observer: messaging.Say(messaging.CategoryTrip, defence.ToRoom),
 			}, aud)
 		} else if hasTail {

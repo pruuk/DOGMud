@@ -272,7 +272,7 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		sendMoveDefenceShortage(targetChar, defence)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategoryKick, defence.ToAttacker),
-			Actee:    messaging.Say(messaging.CategoryKick, defence.ToDefender),
+			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryKick, defence.ToDefender),
 			Observer: messaging.Say(messaging.CategoryKick, defence.ToRoom),
 		}, aud)
 	} else {
