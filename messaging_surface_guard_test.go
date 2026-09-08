@@ -1533,3 +1533,87 @@ func TestM2FrozenFilesAllCarryText(t *testing.T) {
 			len(vacuous), strings.Join(vacuous, "\n  "))
 	}
 }
+
+// TestEveryTrioLiteralNamesAllThreeRoles is the enforcement behind
+// messaging.NoLine.
+//
+// A composite literal messaging.Trio{...} must name Actor, Actee AND Observer.
+// A role left out is indistinguishable from a role forgotten, and forgetting a
+// role is exactly how every defect in
+// docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md happened: a
+// duplicated code path copied the mechanical effect and dropped the narration
+// beside it. Write messaging.NoLine for a viewpoint that genuinely has nothing
+// to say, so a considered silence is visible as one.
+//
+// There is deliberately no exceptions list.
+func TestEveryTrioLiteralNamesAllThreeRoles(t *testing.T) {
+	roles := []string{"Actor", "Actee", "Observer"}
+	var bad []string
+
+	for _, root := range messagingSurfaceGoRoots {
+		fset := token.NewFileSet()
+		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			file, perr := parser.ParseFile(fset, path, nil, 0)
+			if perr != nil {
+				// A syntax error is the compiler's problem to report, not
+				// this test's.
+				return nil
+			}
+			ast.Inspect(file, func(n ast.Node) bool {
+				cl, ok := n.(*ast.CompositeLit)
+				if !ok {
+					return true
+				}
+				sel, ok := cl.Type.(*ast.SelectorExpr)
+				if !ok || sel.Sel.Name != "Trio" {
+					return true
+				}
+				if pkg, ok := sel.X.(*ast.Ident); !ok || pkg.Name != "messaging" {
+					return true
+				}
+				named := map[string]bool{}
+				for _, elt := range cl.Elts {
+					kv, ok := elt.(*ast.KeyValueExpr)
+					if !ok {
+						continue
+					}
+					if key, ok := kv.Key.(*ast.Ident); ok {
+						named[key.Name] = true
+					}
+				}
+				var missing []string
+				for _, role := range roles {
+					if !named[role] {
+						missing = append(missing, role)
+					}
+				}
+				if len(missing) > 0 {
+					bad = append(bad, filepath.ToSlash(path)+":"+
+						strconv.Itoa(fset.Position(cl.Pos()).Line)+
+						"  missing "+strings.Join(missing, ", "))
+				}
+				return true
+			})
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("walk %s: %v", root, err)
+		}
+	}
+
+	sort.Strings(bad)
+	if len(bad) > 0 {
+		t.Errorf("%d messaging.Trio literal(s) do not name all three roles:\n  %s\n\n"+
+			"Name every role. If a viewpoint genuinely has nothing to say, write "+
+			"messaging.NoLine for it, so a considered silence is visible as one. "+
+			"An omitted field is indistinguishable from a forgotten one, and that "+
+			"is how every defect in the M1 viewpoint audit happened.",
+			len(bad), strings.Join(bad, "\n  "))
+	}
+}
