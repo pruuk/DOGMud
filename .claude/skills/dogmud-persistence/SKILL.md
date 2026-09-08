@@ -108,24 +108,69 @@ shops, room containers). The per-load MiscData-marker pattern in
 `internal/characters/migrations.go` runs on character load.
 
 [[reference-alt-characters-break-character-scoped-migrations]] documents the
-trap in the second pattern: **scope the marker to the data it guards, not to
-the character.** Alts are separate `Character` values, each with its own
-MiscData, so each carries its own copy of a Character-scoped marker. But
-`ItemStorage` (the bank) lives on `UserRecord`, not `Character`, one per
-account and shared by every alt. A migration guarded only by a Character
-marker therefore re-runs against the shared bank once per alt: migrate,
-swap to an alt, log in again, and the new active character has no marker,
-so the guard passes and the bank is migrated a second time. For a
-multiplicative migration this is silent, permanent data corruption per alt.
-The fix used for the bow-detune migration was an account-scoped marker,
-`Storage.MigrationsDone map[string]bool` on `Storage`
-(`internal/users/storage.go`), with `HasMigration`/`MarkMigration`
-accessors, shared against one unguarded pure sweep function rather than
-duplicating the sweep per caller.
+trap: a Character-scoped marker does not protect account-scoped data. Alts
+are separate `Character` values, each with its own MiscData, so each
+carries its own copy of a Character-scoped marker. But `ItemStorage` (the
+bank) lives on `UserRecord`, not `Character`, one per account and shared by
+every alt. A migration guarded only by a Character marker would re-run
+against the shared bank once per alt: migrate, swap to an alt, log in
+again, and the new active character has no marker, so the guard passes and
+the bank is migrated a second time. For a multiplicative migration that
+would be silent, permanent data corruption per alt.
+
+**What the code actually does about it is the opposite of a marker.** Both
+halves of the U10d bow-detune migration are deliberately unmarked and run
+on every load:
+
+- `Storage.MigrateDetunedRangedWeapons`
+  (`internal/users/storage_migrate.go:39`) sweeps the account-scoped bank.
+  Its doc comment gives the reason directly: "Unmarked and run every load,
+  for the same reason as the character sweep... A run-once marker here
+  would permanently strand any pre-detune bow deposited AFTER it was set,
+  which is exactly what an un-migrated alt promoted by SwapToAlt would do."
+- `characters.MigrateDetunedRangedWeapons`
+  (`internal/characters/migrate_detuned_bows.go`, header comment) is headed
+  "NO RUN-ONCE MARKER, deliberately" and gives the same two-sided argument:
+  a marker cannot prevent the corruption it looks like it prevents (a
+  freshly created alt or account has empty MiscData and can enchant a
+  post-detune item, then meet the migration for the "first" time), and a
+  marker would freeze the misses (any pre-detune item reaching a marked
+  character later, from a mob instance, stale shop stock, a corpse, or an
+  un-migrated alt, would never be rescaled at all).
+
+Correctness for this class of migration rests entirely on
+`items.MigrateDetunedBow` being idempotent by construction: it only
+rescales values still at or above the pre-detune template, so re-running on
+an already-migrated item is a no-op. The character-side file cites
+`MigrateEnchantments` as the precedent for this shape: no marker, idempotent
+because `ApplyTier` resets from `EnchantBaseline` on every pass.
+
+**The rule this leaves for the next migration author:** for a migration
+that touches account-scoped data shared across alts (the bank), do not
+reach for a Character-scoped MiscData marker at all. Either make the sweep
+idempotent and run it unmarked every load, the way U10d does, or use the
+versioned world-sweep framework in `internal/migration/`, which is not
+subject to this trap because it runs once at server startup rather than
+per-character-load.
 
 Character collections (backpack, component bag, potion bandolier, equipped)
-correctly use a Character-scoped marker. The bank does not, and needs an
-account-scoped one instead.
+do use a genuine Character-scoped MiscData marker (the `const migrationKey`
+/ `GetMiscData`/`SetMiscData` pattern, seven instances in
+`internal/characters/migrations.go`) for migrations where leaving the sweep
+unmarked is not the right tradeoff. The bank is the exception that needs
+the unmarked-idempotent shape above, not a copy of that pattern under a
+different owner.
+
+**A note on the source memory file.**
+[[reference-alt-characters-break-character-scoped-migrations]] is
+self-contradictory about how U10d was actually fixed. It opens by
+stating correctly that U10d's migration "carries no marker at all," then
+later, under "The rule," describes a distinct account-scoped marker field
+plus a pair of accessor methods on `Storage` that a repo-wide Go source
+grep for those exact identifiers turns up zero matches for; nothing by
+those names exists anywhere in the codebase. This section resolves the
+contradiction in favor of the code cited above, not the memory file's
+later paragraph.
 
 Note also that a user-save migration reached from character load does not
 touch mob equipment (`mobs.instances/**`), shop resale stock (`shops/**`),
@@ -146,16 +191,31 @@ this world's scale.
 
 ## Sources
 
-Lifted from CLAUDE.md, file-location and do-not-wipe halves only (the
-dynamic-pricing formula and shop config knobs at CLAUDE.md lines 214-218
-were deliberately left in CLAUDE.md as subsystem detail for
-`internal/shops/context.md`):
-- "Shop Persistence (Living Economy)" (lines 206-213)
-- "Moderation Persistence" (lines 220-230)
+Lifted from CLAUDE.md, file-location and do-not-wipe halves only:
+- "Shop Persistence (Living Economy)" (lines 206-213). The dynamic-pricing
+  formula and shop config knobs (lines 214-218) were deliberately left in
+  CLAUDE.md as subsystem detail for `internal/shops/context.md`.
+- "Moderation Persistence" (lines 220-226: file location, the two file
+  purposes, the do-not-wipe statement, and the malformed-file handling).
+  Deliberately left in CLAUDE.md, as command/subsystem detail rather than
+  a persistence rule: the command list `petition`/`petitions`/`boot`/
+  `ban`/`unban`/`mute`/`deafen` (lines 226-227), the `FinalizeLoginOrCreate`
+  ban-rejection reference (lines 228-229), and the config knobs
+  `PetitionCooldownRounds`/`PetitionMaxLen` (lines 229-230).
+
+Also lifted, and co-owned with `dogmud-shipping`: CLAUDE.md lines 169-177
+(the `instance:"skip"` exception paragraph), which sits inside the
+"Instance Saves & Smoke-Test SOP" section (lines 159-205) that
+`dogmud-shipping` already lifts verbatim in full for the wipe ritual. This
+skill's copy above is reframed around the shadowing model, when a struct
+tag means a stale save cannot be trusted as the reason a template edit
+isn't landing, rather than the wipe procedure itself, which stays owned by
+`dogmud-shipping`.
 
 Folded memory files (rule stated inline above, cited here):
 - [[reference_living_state_persistence_contract]]
-- [[reference-alt-characters-break-character-scoped-migrations]]
+- [[reference-alt-characters-break-character-scoped-migrations]] (folded
+  with a disclosed contradiction; see the note in `## Migrations`)
 - [[reference-autosave-lock-cost]]
 
 Cited, not folded (a fact that drives no procedure here):
