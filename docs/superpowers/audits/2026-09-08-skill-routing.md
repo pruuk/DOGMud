@@ -173,6 +173,45 @@ CLAUDE.md sections that these skills now cover, because the skills
 demonstrably trigger on realistic prompts rather than only on
 inspection.
 
+## Round 3: verifying the description we actually ship
+
+Rounds 1 and 2 tested the combat description as it stood BEFORE the "crits"
+edit. Editing a description after testing it means the evidence describes text
+that is no longer shipped, so a third blind round was run against the final
+wording. Same conditions: descriptions only, zero tools, no expected answers.
+
+| # | prompt | first | conf | second |
+|---|---|---|---|---|
+| A | the parry check seems wrong | combat | high | refactoring |
+| B | add a new defence type | combat | **high** (was medium) | refactoring |
+| C | where does a mob decide what to attack | combat | high | refactoring |
+| D | why is my spell doing so little damage | combat | high | balance-config |
+| E | I need to change how crits are calculated | combat | **high** (was medium) | balance-config |
+| F | the mob attacks before its behaviour tree fires | combat | high | refactoring |
+| J | which config field controls fire damage | balance-config | medium (was high) | combat |
+| K | why did that hit crit | combat | high | balance-config |
+| L | this combat message shows a raw damage number | player-copy | high | combat |
+
+**The edit worked.** E rose from medium to high because the judge could quote
+`crits as an opposed-roll margin` directly instead of inferring crits from
+`opposed contests`. K, a new probe added to test exactly that clause, matched on
+the same words. B also rose to high.
+
+J fell from high to medium, and the judge's stated reason is sound rather than a
+regression: combat names three channels (physical, magical, conviction) and
+"fire" is none of them, so the query does not land cleanly inside combat's named
+scope. It still routed to balance-config, correctly. The compression from
+`the three channels and their shipped config scales` to
+`the three channels and shipped config scales` is not plausibly the cause.
+
+**Standing observation, recorded not fixed.** Combat took 7 of these 9 probes.
+The round 3 judge put it plainly: the two-half structure gives one description a
+lot of surface area, and it is what makes J genuinely close against
+balance-config, because both descriptions claim config scales and neither draws
+the line. This is the same overlap accepted in Findings above, now confirmed by a
+second independent judge. If a thirteenth skill ever splits out combat-AI
+placement or knob lookup, C, D, F and J would each need re-deciding.
+
 ## Note for the tripwire task
 
 A later task in the Phase 2 plan builds a tripwire block meant to catch
