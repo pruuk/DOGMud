@@ -1211,6 +1211,33 @@ The known intentional single-claims are: `feedback_dialogue_filename_convention`
 in authoring-quests only, `feedback_remove_downed_fully` in refactoring only,
 `feedback_admin_command_wiring_checklist` in refactoring only.
 
+- [ ] **Step 1b: Mechanically verify every lifted range is actually complete**
+
+A disposition table is not enough. Task 11's review found three required facts
+absent from a skill's body entirely, not reworded but missing: the 100-baseline
+rule, all three resource-pool formulas (`HealthMax = 5 + Vit×3 + Str×1` and its
+siblings), and the 16-skills / `skillSoftCap` material. The skill's own
+description promised resource-pool coverage and the body had none. Had Phase 2
+deleted CLAUDE.md 362-425 on the strength of that skill, those formulas would
+have been lost, because no other skill carries them.
+
+So for EVERY skill that claims a CLAUDE.md range, do a word-level comparison,
+not an eyeball:
+
+```bash
+sed -n '<start>,<end>p' CLAUDE.md | tr -s '[:space:]' '\n' | sort -u > /tmp/src.txt
+tr -s '[:space:]' '\n' < .claude/skills/<name>/SKILL.md | sort -u > /tmp/skill.txt
+comm -23 /tmp/src.txt /tmp/skill.txt
+```
+
+Every token in the source range should appear somewhere in the skill. Tokens
+that come back are candidates for silently dropped content. Expect noise from
+dash replacement and heading renames; investigate anything that looks like a
+formula, a symbol, a config key, or a number.
+
+Record the result per range. A range that does not survive this check must NOT
+be marked safe to delete in Phase 2.
+
 - [ ] **Step 2: Verify every CLAUDE.md line range is covered or explicitly deferred**
 
 ```bash
