@@ -289,10 +289,12 @@ internal/usercommands/maul.go | observer | messaging~CategoryHitNaturalSharp | d
 internal/usercommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~maulRoomMsgs~util~Rand~len~maulRoomMsgs~user~Character~Name~targetName
 internal/usercommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~missRoomMsgs~util~Rand~len~missRoomMsgs~user~Character~Name~targetName
 internal/usercommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~partialRoomMsgs~util~Rand~len~partialRoomMsgs~user~Character~Name~targetName
+internal/usercommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | defence~ToDefender
 internal/usercommands/pounce.go | actee | messaging~CategorySystem | fmt~Sprintf~missTargetMsgs~util~Rand~len~missTargetMsgs~user~Character~Name
 internal/usercommands/pounce.go | actee | messaging~CategorySystem | fmt~Sprintf~partialTargetMsgs~util~Rand~len~partialTargetMsgs~user~Character~Name~dmgDesc
 internal/usercommands/pounce.go | actee | messaging~CategorySystem | fmt~Sprintf~pounceTargetMsgs~util~Rand~len~pounceTargetMsgs~user~Character~Name~dmgDesc
 internal/usercommands/pounce.go | actee | messaging~CategorySystem | fmt~Sprintf~pounceTargetMsgs~util~Rand~len~pounceTargetMsgs~user~Character~Name~dmgDesc
+internal/usercommands/pounce.go | actor | messaging~CategoryHitNaturalSharp | defence~ToAttacker
 internal/usercommands/pounce.go | actor | messaging~CategorySystem | "You aren't built to pounce."
 internal/usercommands/pounce.go | actor | messaging~CategorySystem | "You can't pounce from a clinch."
 internal/usercommands/pounce.go | actor | messaging~CategorySystem | "You have no target!"
@@ -302,6 +304,8 @@ internal/usercommands/pounce.go | actor | messaging~CategorySystem | fmt~Sprintf
 internal/usercommands/pounce.go | actor | messaging~CategorySystem | fmt~Sprintf~partialMsgs~util~Rand~len~partialMsgs~targetName~dmgDesc
 internal/usercommands/pounce.go | actor | messaging~CategorySystem | fmt~Sprintf~pounceMsgs~util~Rand~len~pounceMsgs~targetName~dmgDesc
 internal/usercommands/pounce.go | actor | messaging~CategorySystem | fmt~Sprintf~pounceMsgs~util~Rand~len~pounceMsgs~targetName~dmgDesc
+internal/usercommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/usercommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/usercommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~missRoomMsgs~util~Rand~len~missRoomMsgs~user~Character~Name~targetName
 internal/usercommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~partialRoomMsgs~util~Rand~len~partialRoomMsgs~user~Character~Name~targetName
 internal/usercommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~pounceRoomMsgs~util~Rand~len~pounceRoomMsgs~user~Character~Name~targetName
