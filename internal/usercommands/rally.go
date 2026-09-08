@@ -69,9 +69,9 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// cry to the caster; fan it to the same allies the rally reached.
 	if mutations.HasMutationFlag(user.Character.Mutations, "shout-stacking") {
 		wb, wd := actions.ApplyWarcryEffect(user.Character)
-		user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your layered voice looses a thunderous war cry in the same breath!</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your layered voice looses a thunderous warcry in the same breath!</ansi>`)
 		room.SendTextVisual(messaging.CategoryWarcry,
-			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s cry carries a war cry within it!</ansi>`, user.Character.Name),
+			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s shout hardens into a warcry in the same breath!</ansi>`, user.Character.Name),
 			user.UserId,
 		)
 		if party := parties.Get(user.UserId); party != nil {

@@ -547,3 +547,23 @@ to expect.
 | 3 | `usercommands/rally.go` + `usercommands/warcry.go` | Both Resonant Larynx fold loops applied `AddCondition` and `AddBuff` to every party member and told nobody. Each is a copy of the primary party loop a few lines above, which does send that line. Wording taken from each effect's own member line: rally's fold applies a war cry so it uses warcry's line, and vice versa. | No entry to retire. The fold loops contain no actor send, so the walk never grouped them into a candidate event. |
 | 4 | `usercommands/equip.go` arm-slot path | The displaced-item loop told the wearer and left the room out, while the shared equip path sends both for the same displacement. Text and exclusion copied from that path. The arm-slot *equip* line already broadcast; only the displacement did not. | No entry to retire. This is the third gap the guard cannot see, alongside the two salvage sites. |
 | 5 | `usercommands/admin.zap.go` engaged-target path | Dropped a player to 1 health and 1 conviction in silence, while the explicit-target path earlier in the same function tells them. Gained that line, and its room broadcast now also excludes the target so they read the direct line rather than a third-person one about themselves. | Entry `You zap <ansi fg="username">%s</ansi> with a %s!` (verdictGap) retired: complete now. Not to be confused with the neighbouring `<ansi fg="mobname">` entry, which is verdictCorrect because a zapped mob has no client. |
+
+## Playtest follow-ups, 2026-09-08
+
+The M2 adversarial playtest surfaced ten defects that were NOT M2's. Three were
+fixed in the same slice because they are small, verified against source, and sit
+in text M2 had already disturbed. The rest are recorded in
+`project-messaging-m2-seam-design` memory and left alone.
+
+| Finding | Verified? | Action |
+|---|---|---|
+| Buff expiry says "**your** warcry fades" for a shout someone else made | Yes: `buffs/79-warcry.yaml`, `80-rally.yaml` `end_user_text` | FIXED. Now "the warcry fades from you", which is true whoever shouted. Same viewpoint family M2 chases, in the buff store rather than in narration. |
+| "X's cry carries a war cry within it" — a cry carrying a cry, and "war cry" where the game says "warcry" | Yes: `rally.go:74`, `warcry.go:78` | FIXED, both directions, and the actor line's "war cry" normalised. Registry key at `rally.go` reworded to match; its verdict also corrected from `verdictGap` to `verdictCorrect`, because M2 defect 3 had already fixed the silence it described. |
+| Salvage results print component tags (`2x cloth-strip`) | Yes: `formatRecovered` used `ing.ItemTag` | FIXED via `items.FindSpecByComponentTag`, falling back to the tag when nothing supplies it, because a recipe naming an unsupplied tag is a content bug worth seeing. |
+| `tell` is not a command | Yes: only `whisper` is registered | NOT A GAME DEFECT. The error was in the playtest brief, which told the agents to use a channel that does not exist. |
+| Plain `say` gives no self-echo | **Claim is wrong.** `say.go:38` sends `You say, "…"` to the speaker | NO ACTION. Recorded so it is not re-filed. |
+| "You prepare to enter into mortal combat" to a party member who never attacked | Yes: `attack.go:252`, sent to the command's own user | NOT a viewpoint bug. Party auto-assist engaged them, so the line is accurate; what is missing is any hint the party did it for them. Design question, left for the owner. |
+| Buff windup lines inverted on both sides | Partly: the observer line is `skill.cast.go:389` | Left alone. Ordering spans the casting system and the per-spell text, so it affects every spell, not this slice. |
+| `rally` silently spends `warcry`'s cooldown | Observed in play | Left alone. Whether the shared cooldown is intended is a design call. |
+| "dodges your swing, but you still connect", fired three times identically | Observed in play | Left alone deliberately: this is core combat narration that M3 and M4 rewrite, and changing the wording now would conflict with that work. |
+| No line announces a corpse appearing after a kill | Observed in play | Left alone. Content addition, not a defect in existing text. |

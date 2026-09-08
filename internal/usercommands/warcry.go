@@ -75,7 +75,7 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		rb, rd := actions.ApplyRallyEffect(user.Character)
 		user.SendText(messaging.CategorySystem, `<ansi fg="cyan-bold">Your layered voice weaves a rallying cry into the same breath!</ansi>`)
 		room.SendTextVisual(messaging.CategoryRally,
-			fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi>'s cry carries a rally within it!</ansi>`, user.Character.Name),
+			fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi>'s shout gathers into a rally in the same breath!</ansi>`, user.Character.Name),
 			user.UserId,
 		)
 		if party := parties.Get(user.UserId); party != nil {

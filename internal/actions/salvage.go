@@ -408,7 +408,18 @@ func storeRecovered(actor Actor, recovered []crafting.RecipeIngredient, result *
 func formatRecovered(recovered []crafting.RecipeIngredient) string {
 	parts := make([]string, 0, len(recovered))
 	for _, ing := range recovered {
-		parts = append(parts, fmt.Sprintf("%dx %s", ing.Quantity, ing.ItemTag))
+		// Show what the player will see in their pack, not the component tag.
+		// The tag is a data key ("cloth-strip") and reading one in a results
+		// line makes recovered materials look like database rows.
+		//
+		// Falls back to the tag when no item carries it, which is the honest
+		// answer: a recipe naming a tag nothing supplies is a content bug, and
+		// printing the tag is how someone notices.
+		name := ing.ItemTag
+		if spec := items.FindSpecByComponentTag(ing.ItemTag); spec != nil && spec.Name != "" {
+			name = spec.Name
+		}
+		parts = append(parts, fmt.Sprintf("%dx %s", ing.Quantity, name))
 	}
 	return strings.Join(parts, ", ")
 }
