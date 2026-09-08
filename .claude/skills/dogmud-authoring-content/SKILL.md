@@ -250,6 +250,13 @@ After generating any file: restart server. If editing an existing zone, check
 
 ## Sources
 
+Lifted verbatim from CLAUDE.md:
+- "Content Playtest-Review Gate (SOP)" (lines 3-24)
+- "ID Inventory & Collision Prevention" (lines 609-643)
+- "Data File Naming Convention" (lines 733-741)
+- "Content Generation Commands" (lines 936-952)
+
+Folded memory files:
 - [[feedback_filename_must_match_name_field]]
 - [[feedback_yaml_colon_gotcha]]
 - [[feedback_cardinal_exits_only]]

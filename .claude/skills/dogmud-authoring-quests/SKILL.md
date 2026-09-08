@@ -224,6 +224,15 @@ spelling from an existing quest YAML that uses the event you want.
 
 ## Sources
 
+Lifted verbatim from CLAUDE.md:
+- "Quest Re-Grant Prevention SOP" (lines 786-793)
+- "Quest NPC Dialogue SOP" (lines 794-799)
+- "Dialogue Voice & Trigger Discoverability" (lines 800-813)
+- "Quest Item Delivery: give.go Gotcha" (lines 814-825)
+- "Dialogue Engine: givesItem" (lines 826-830)
+- "Quest Flags System" (lines 831-875)
+
+Folded memory files:
 - [[feedback_dialogue_filename_convention]]
 - [[feedback_dialogue_bare_scalar_list_mutes_npc]]
 - [[feedback_hint_voice]]
