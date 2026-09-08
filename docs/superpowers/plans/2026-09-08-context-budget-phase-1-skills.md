@@ -131,6 +131,20 @@ should split, and the splitting decision belongs to a later phase.
    and confirm every hit resolves inside that document. Repoint the ones that
    do not, naming the skill that now owns the material (forward references to
    a skill later in this plan are fine).
+9. **Order sections by what the reader needs first, and put the most-skipped
+   rule early.** A skill is read under pressure, mid-task, by someone skimming
+   headers. Task 3 originally placed the adversarial playtest gate, the rule
+   this project skips most often, at section 6 of 8, behind every
+   authoring-mechanics section. A reader looking for "how do I make the file"
+   would never reach it. The section lists in the tasks below are a starting
+   point, not a constraint: if writing a skill reveals that a later section
+   should come first, move it and say so in the report.
+
+   The same failure has a second form: a section that promises a checklist and
+   delivers half of one. Task 3's `## Before you create a file` covered ID
+   collision but not coordinate collision, which sat four sections away. If a
+   section names itself as a pre-flight, it must be complete or point forward
+   by exact section title.
 
 ---
 
@@ -510,10 +524,21 @@ Body sections:
 3. `## YAML traps` - unquoted colons, bare scalar lists, unexported field tags.
 4. `## Room and zone conventions` - cardinal exits, space-separated noun keys,
    coordinate consistency, the crawl-based placement rule.
-5. `## The playtest gate` - lines 3-24 verbatim. Boot-clean never verifies the
-   experience.
+5. `## Naming and room scripts` - the no-name-recycling and no-JS-room-scripts
+   rule. Note `feedback_no_name_recycling_no_js` carries two unrelated rules,
+   so the section title must cover both or the JS rule becomes unfindable.
 6. `## Slash commands` - lines 936-952 verbatim.
 7. `## Sources`
+
+**Corrected during execution (2026-09-08).** This list is superseded by the
+order actually shipped. Review found the adversarial playtest gate, the rule
+this project skips most often, sitting at section 6 of 8 behind every
+authoring-mechanics section, where a reader skimming for "how do I make the
+file" would never reach it. `## The playtest gate` (lines 3-24 verbatim,
+boot-clean never verifies the experience) was moved to section 2, immediately
+after the pre-flight. Section 1 was also completed: it had promised a pre-flight
+and delivered only the ID-collision half, with coordinate collision four
+sections away. See standing rule 9.
 
 - [ ] **Step 2: Verify**
 
