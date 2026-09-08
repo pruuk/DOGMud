@@ -4,12 +4,15 @@ description: Use when creating or editing world YAML - rooms, mobs, items, zones
 ---
 
 This skill covers authoring DOGMud world content: rooms, mobs, items, and
-zones. It collects the ID collision rules, the filename and YAML traps that
-panic the server at boot, the room and zone geometry conventions, the naming
-rules, and the mandatory adversarial playtest gate every content plan ends
-with.
+zones. It collects the pre-flight ID and coordinate collision checks, the
+mandatory adversarial playtest gate every content plan ends with, the
+filename and YAML traps that panic the server at boot, the room and zone
+geometry conventions, the naming and room-script rules, and the slash
+commands that generate the files themselves.
 
 ## Before you create a file
+
+Two pre-flight checks belong here: ID collision and coordinate collision.
 
 Run `python tools/id_inventory.py` before creating any new YAML. Lifted
 verbatim from CLAUDE.md's "ID Inventory & Collision Prevention" section:
@@ -59,7 +62,46 @@ category (`armor-20000/head/`, `armor-20000/body/`, `armor-20000/back/`, and
 so on share one numbering pool). Scan the whole category, not just the part
 you are adding to.
 
+The second pre-flight is coordinate collision, needed whenever you place a
+new room or a new zone. That check is fuller than a one-line summary here
+can cover; see `## Room and zone conventions` below for the full-world
+coordinate scan and the crawl-based placement rule. Do not skip it just
+because `id_inventory.py` came back clean: ID collisions and coordinate
+collisions are different failure modes and neither check catches the other.
+
+## The playtest gate
+
+Lifted verbatim from CLAUDE.md's "Content Playtest-Review Gate (SOP)"
+section:
+
+### Content Playtest-Review Gate (SOP)
+Any plan or task that authors **player-facing content** (rooms, mobs, items,
+quests, dialogue, tutorials, onboarding, room prose) MUST end with an **in-game
+adversarial playtest-harness review before the work is handed to the user to
+playtest**. This is a required final task on every content plan, not an
+optional extra.
+
+Boot-clean and "YAML parses" verify the *system*, never the *experience*.
+Content defects (instructions buried in room `description:` prose, confusing
+or double-rendered prompts, broken/mis-ordered lesson gates, dead-ends,
+awkward pacing, wrong NPC voice) are invisible to a boot test and to code
+reasoning. They only surface when something plays the content as a confused
+human would.
+
+Procedure: run the playtest harness with an explicitly **critical,
+adversarial** mandate, e.g. `/playtest local --checkout <abs>
+bug-finder 2026-08-03-prepush-sweep.yaml` (or a route/feature-specific goals
+file that already has `ephemeral:`). Spawn a fresh character, drive the real
+player flow end to end, read every line of in-game output, and report every
+usability problem bluntly. Fix what it finds, re-run if needed, and only then
+turn it over to the user. Do NOT claim content work "done" on the strength of
+a clean boot alone.
+
 ## Filenames
+
+This section is the technical `ConvertForFilename()` file-naming derivation
+(zone folder names, mob/item filenames), not in-fiction NPC name choice; see
+`## Naming and room scripts` for that.
 
 Lifted verbatim from CLAUDE.md's "Data File Naming Convention" section:
 
@@ -165,7 +207,10 @@ expected neighbors, missed two more zones that also bordered the new
 coordinate space, and needed a 71-room shift plus a new interlude zone to
 untangle after the fact.
 
-## Naming
+## Naming and room scripts
+
+This section is about in-fiction NPC name uniqueness and JS scripting
+policy, not the technical filename derivation; see `## Filenames` for that.
 
 [[feedback_no_name_recycling_no_js]] carries two rules from a newbie-area
 rework:
@@ -181,34 +226,6 @@ rework:
    affordances (dialogue trees, quest engine, mutators) or existing (or
    new, TDD'd) Go behavior-tree actions before reaching for a JS script,
    and flag the need to the user first if JS still looks necessary.
-
-## The playtest gate
-
-Lifted verbatim from CLAUDE.md's "Content Playtest-Review Gate (SOP)"
-section:
-
-### Content Playtest-Review Gate (SOP)
-Any plan or task that authors **player-facing content** (rooms, mobs, items,
-quests, dialogue, tutorials, onboarding, room prose) MUST end with an **in-game
-adversarial playtest-harness review before the work is handed to the user to
-playtest**. This is a required final task on every content plan, not an
-optional extra.
-
-Boot-clean and "YAML parses" verify the *system*, never the *experience*.
-Content defects (instructions buried in room `description:` prose, confusing
-or double-rendered prompts, broken/mis-ordered lesson gates, dead-ends,
-awkward pacing, wrong NPC voice) are invisible to a boot test and to code
-reasoning. They only surface when something plays the content as a confused
-human would.
-
-Procedure: run the playtest harness with an explicitly **critical,
-adversarial** mandate, e.g. `/playtest local --checkout <abs>
-bug-finder 2026-08-03-prepush-sweep.yaml` (or a route/feature-specific goals
-file that already has `ephemeral:`). Spawn a fresh character, drive the real
-player flow end to end, read every line of in-game output, and report every
-usability problem bluntly. Fix what it finds, re-run if needed, and only then
-turn it over to the user. Do NOT claim content work "done" on the strength of
-a clean boot alone.
 
 ## Slash commands
 
