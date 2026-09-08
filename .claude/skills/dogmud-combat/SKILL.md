@@ -1,6 +1,6 @@
 ---
 name: dogmud-combat
-description: Use when touching damage, defence, hit resolution, opposed contests, or mob combat AI. The model half covers the five-factor damage formula, the three channels and their shipped config scales, mitigation caps, best-of-all defence resolution, and that combat.RunContest is the single entry point for every opposed contest. The placement half covers where combat logic goes, that btree events fire before legacy AI, and using actions.ResolveTargetActor rather than reimplementing target resolution.
+description: Use when touching damage, defence, hit resolution, opposed contests, or mob combat AI. Model half: the five-factor damage formula, the three channels and shipped config scales, mitigation caps, crits as an opposed-roll margin, best-of-all defence resolution, and combat.RunContest as the single entry point for every opposed contest. Placement half: where combat logic goes, btree events firing before legacy AI, and using actions.ResolveTargetActor rather than reimplementing target resolution.
 ---
 
 This skill has two halves that fire on the same trigger but serve different
