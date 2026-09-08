@@ -1,5 +1,37 @@
 # DOGMud Patch Notes
 
+## 2026-09-08: The room sees more of what you do
+
+A handful of things you could do in front of other people happened in silence
+as far as they were concerned. If you butchered a corpse for materials, anyone
+standing with you saw nothing at all, even though they would have seen a beast
+do exactly the same thing. Casting a strengthening spell on someone was
+invisible in the same way, while a healing spell was not. Swapping an item off
+an extra arm slipped the room's notice, though swapping one off any other slot
+did not.
+
+All of those now read the way you would expect. If it happens where people can
+see it, they see it.
+
+Two more along the same lines. When your voice carries both a rallying cry and
+a war cry in one breath, the allies it reaches are now told so, instead of
+quietly picking up the benefit and wondering where it came from. And when you
+choke the breath out of someone mid spell, the people watching now see the
+spell die, rather than only the two of you knowing.
+
+## 2026-09-08: Fighting in the dark hides more than it used to
+
+If you cannot see who is attacking you, you are no longer told their name.
+That was already true when a beast was the one attacking, and now it is true
+when a person is. Darkness that hides an attacker hides them from everyone.
+
+The reverse also holds, and it is the bigger change. Watching a fight you
+cannot actually see no longer feeds you a running description of it. If you
+are in an unlit room without any way to see in the dark, if you are blinded,
+or if you are asleep, you will not be told how someone else turned aside a
+blow nearby. You will still be told about anything happening to you.
+
+
 ## 2026-09-07: A block or dodge now tells one story, not three
 
 When you blocked, dodged, or parried a blow in melee, the fight text used to
