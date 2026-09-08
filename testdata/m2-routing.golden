@@ -332,16 +332,25 @@ internal/usercommands/rake.go | observer | messaging~CategoryHitNaturalSharp | f
 internal/usercommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~partialRoomMsgs~util~Rand~len~partialRoomMsgs~user~Character~Name~targetName
 internal/usercommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~rakeRoomMsgs~util~Rand~len~rakeRoomMsgs~user~Character~Name~targetName
 internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot goes wide, but the edge of it still clips you! (<ansi fg="damage">%s</ansi>)`~shooter~tier
+internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot goes wide, but the edge of it still clips you! (<ansi fg="damage">%s</ansi>)`~shooter~tier
+internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot narrowly misses you!`~shooter
 internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot narrowly misses you!`~shooter
 internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot strikes you (<ansi fg="damage">%s</ansi>)!`~shooter~tier
+internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot strikes you (<ansi fg="damage">%s</ansi>)!`~shooter~tier
+internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | personal
 internal/usercommands/shoot.go | actee | messaging~CategoryHitRanged | personal
 internal/usercommands/shoot.go | actee | messaging~CategorySystem | text
 internal/usercommands/shoot.go | actor | messaging~CategoryDodge | fmt~Sprintf~`Your shot goes wide of %s!`~targetColored
+internal/usercommands/shoot.go | actor | messaging~CategoryDodge | fmt~Sprintf~`Your shot goes wide of %s!`~targetColored
+internal/usercommands/shoot.go | actor | messaging~CategoryDodge | triadAtk
 internal/usercommands/shoot.go | actor | messaging~CategoryDodge | triadAtk
 internal/usercommands/shoot.go | actor | messaging~CategoryHitRanged | fmt~Sprintf~`Your shot goes wide of %s, but the edge of it still clips them! (<ansi fg="damage">%s</ansi>)`~targetColored~tier
+internal/usercommands/shoot.go | actor | messaging~CategoryHitRanged | fmt~Sprintf~`Your shot goes wide of %s, but the edge of it still clips them! (<ansi fg="damage">%s</ansi>)`~targetColored~tier
+internal/usercommands/shoot.go | actor | messaging~CategoryHitRanged | fmt~Sprintf~`Your shot takes %s (<ansi fg="damage">%s</ansi>)!`~targetColored~tier
 internal/usercommands/shoot.go | actor | messaging~CategoryHitRanged | fmt~Sprintf~`Your shot takes %s (<ansi fg="damage">%s</ansi>)!`~targetColored~tier
 internal/usercommands/shoot.go | actor | messaging~CategoryHitRanged | line
 internal/usercommands/shoot.go | actor | messaging~CategorySurpriseAttack | surpriseShotRevealedText
+internal/usercommands/shoot.go | actor | messaging~CategorySurpriseAttack | surpriseShotShooterLine~hit~triadAtk~targetColored~tier~result~MoveResult~Damage
 internal/usercommands/shoot.go | actor | messaging~CategorySurpriseAttack | surpriseShotShooterLine~hit~triadAtk~targetColored~tier~result~MoveResult~Damage
 internal/usercommands/shoot.go | actor | messaging~CategorySystem | `<ansi fg="red">You can't shoot while focused on your work. Finish or be interrupted first.</ansi>`
 internal/usercommands/shoot.go | actor | messaging~CategorySystem | `Could not find your target.`
@@ -364,10 +373,10 @@ internal/usercommands/shoot.go | actor | messaging~CategorySystem | pvpErr~Error
 internal/usercommands/shoot.go | actor | messaging~CategorySystem | pvpErr~Error
 internal/usercommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`%s fires their %s %sward.`~shooterName~weapon~result~ExitName
 internal/usercommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`%s fires their %s at %s!`~shooterName~weapon~targetColored
+internal/usercommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and clips %s!`~origin~targetColored
+internal/usercommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and narrowly misses %s!`~origin~targetColored
+internal/usercommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and strikes %s!`~origin~targetColored
 internal/usercommands/shoot.go | observer | messaging~CategoryHitRanged | triadRoom
-internal/usercommands/shoot.go | observer_targetroom | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and clips %s!`~origin~targetColored
-internal/usercommands/shoot.go | observer_targetroom | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and narrowly misses %s!`~origin~targetColored
-internal/usercommands/shoot.go | observer_targetroom | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and strikes %s!`~origin~targetColored
 internal/usercommands/throttle.go | actee | messaging~CategoryHitNaturalSharp | defence~ToDefender
 internal/usercommands/throttle.go | actee | messaging~CategorySystem | `Your spell collapses as you fight for air!`
 internal/usercommands/throttle.go | actee | messaging~CategorySystem | fmt~Sprintf~hitTargetMsgs~util~Rand~len~hitTargetMsgs~user~Character~Name~dmgDesc

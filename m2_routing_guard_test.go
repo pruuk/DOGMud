@@ -110,7 +110,7 @@ func m2SendRole(name string) string {
 	switch name {
 	case "user":
 		return "actor"
-	case "targetUser", "targetChar", "u", "p":
+	case "targetUser", "targetChar", "targetPlayer", "u", "p":
 		return "actee"
 	case "room":
 		return "observer"
@@ -314,21 +314,34 @@ func TestM2RoutingIsFrozen(t *testing.T) {
 	}
 	want := strings.Split(strings.TrimRight(string(raw), "\n"), "\n")
 
-	wantSet, gotSet := map[string]int{}, map[string]int{}
+	// SET semantics, not multiset, and the reason is the local resolver above.
+	//
+	// A local holding a messaging.Say contributes one record per ASSIGNMENT,
+	// and it does so again at every REFERENCE. shoot.go builds shooterLine
+	// once and passes it to two SendTrio calls (same-room and cross-room), so
+	// counting occurrences reports nine spurious "new" records for lines that
+	// did not move at all. That noise is worse than useless: it forces a
+	// re-record, and a re-record is exactly where a real change hides.
+	//
+	// What this gives up is small and worth naming: two sends in one file with
+	// an IDENTICAL role, category and text signature are indistinguishable, so
+	// deleting one of a genuinely duplicated pair would not fail here. The
+	// literal freeze still sees that deletion whenever the two differ in text.
+	wantSet, gotSet := map[string]bool{}, map[string]bool{}
 	for _, l := range want {
-		wantSet[l]++
+		wantSet[l] = true
 	}
 	for _, l := range got {
-		gotSet[l]++
+		gotSet[l] = true
 	}
 	var gone, added []string
-	for l, n := range wantSet {
-		if gotSet[l] < n {
+	for l := range wantSet {
+		if !gotSet[l] {
 			gone = append(gone, l)
 		}
 	}
-	for l, n := range gotSet {
-		if wantSet[l] < n {
+	for l := range gotSet {
+		if !wantSet[l] {
 			added = append(added, l)
 		}
 	}
