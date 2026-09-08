@@ -27,8 +27,22 @@ import (
 // combat.RenderChannelDefenceMessages substitutes generic narration when a pool
 // cannot be resolved, so a defended outcome always speaks. That second reason
 // used to be live and is now dead; do not reintroduce a pool check here.
-func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget,
-	out combat.ChannelDefenceResult, attack string, category messaging.Category, roomOnly bool) bool {
+// moveDefence is one rendered defence outcome, ready to compose into a Trio.
+// Shortage is the defender's resource note, empty when there is none.
+type moveDefence struct {
+	ToAttacker, ToDefender, ToRoom string
+	Shortage                       string
+}
+
+// moveDefenceLines renders the channel defence triad for a DEFENDED special
+// move by a MOB and SENDS NOTHING. Mirror of the usercommands twin; see that
+// file for why rendering and sending are separate.
+//
+// The identity resolution differs from the player copy and legitimately so: a
+// mob attacker names itself with GetMobNameIndexed, a player attacker with
+// GetPlayerName. That is not duplication and does not collapse.
+func moveDefenceLines(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget,
+	out combat.ChannelDefenceResult, attack string) (moveDefence, bool) {
 
 	var targetUser *users.UserRecord
 	if target.UserId > 0 {
@@ -45,16 +59,65 @@ func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroT
 
 	triad := combat.RenderChannelDefenceMessages(out, identities, attack)
 	if triad.ToRoom == "" {
+		return moveDefence{}, false
+	}
+
+	lines := moveDefence{
+		ToAttacker: string(triad.ToAttacker),
+		ToDefender: string(triad.ToDefender),
+		ToRoom:     string(triad.ToRoom),
+	}
+	if targetUser != nil {
+		lines.Shortage = combat.ChannelDefenceShortageText(out, targetUser.Character)
+	}
+	return lines, true
+}
+
+// sendMoveDefenceShortage speaks the defender's resource-shortage note. See the
+// usercommands twin: it is a separate at-most-once event, not part of the
+// defence narration.
+func sendMoveDefenceShortage(targetUser *users.UserRecord, lines moveDefence) {
+	if targetUser != nil && lines.Shortage != "" {
+		targetUser.SendText(messaging.CategorySystem, lines.Shortage)
+	}
+}
+
+// acteeDefenceLine renders the defender's personal defence line with the
+// call-site anonymization the audio channel cannot do for itself.
+//
+// users.UserRecord.SendText is hardcoded to ChannelAudio and the pipeline runs
+// the sight gate and anonymizer only on ChannelVisual, so this line is
+// anonymized here or not at all. M4's perception verdict consolidation is where
+// it moves into the pipeline; see internal/messaging/predicates.go:66.
+func acteeDefenceLine(targetUser *users.UserRecord, room *rooms.Room, cat messaging.Category, text string) messaging.Line {
+	if targetUser == nil || text == "" {
+		return messaging.NoLine
+	}
+	if !canSeeInDark(targetUser, room) {
+		text = messaging.Anonymize(text)
+	}
+	return messaging.Say(cat, text)
+}
+
+func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget,
+	out combat.ChannelDefenceResult, attack string, category messaging.Category, roomOnly bool) bool {
+
+	lines, ok := moveDefenceLines(mob, room, target, out, attack)
+	if !ok {
 		return false
 	}
 
-	if targetUser != nil {
-		if text := combat.ChannelDefenceShortageText(out, targetUser.Character); text != "" {
-			targetUser.SendText(messaging.CategorySystem, text)
-		}
+	var targetUser *users.UserRecord
+	if target.UserId > 0 {
+		targetUser = users.GetByUserId(target.UserId)
 	}
 
+	sendMoveDefenceShortage(targetUser, lines)
+
 	actee := messaging.NoLine
+	if !roomOnly {
+		actee = acteeDefenceLine(targetUser, room, category, lines.ToDefender)
+	}
 
 	// Declared as the interface and left unset when there is no target user.
 	// Assigning a typed-nil *users.UserRecord would make it a non-nil
@@ -62,22 +125,6 @@ func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroT
 	var acteeRecipient messaging.Recipient
 	if targetUser != nil {
 		acteeRecipient = targetUser
-		if !roomOnly {
-			// The audio channel neither sight-gates nor anonymizes --
-			// users.UserRecord.SendText is hardcoded to ChannelAudio and the
-			// pipeline runs both stages only on ChannelVisual. So this line is
-			// anonymized HERE or not at all, and removing this is a leak.
-			//
-			// The player-attacker copy of this helper does not do it, which is
-			// a real divergence and is fixed separately. M4's perception
-			// verdict consolidation is where this moves into the pipeline; see
-			// internal/messaging/predicates.go:66.
-			personal := string(triad.ToDefender)
-			if !canSeeInDark(targetUser, room) {
-				personal = messaging.Anonymize(personal)
-			}
-			actee = messaging.Say(category, personal)
-		}
 	}
 
 	messaging.SendTrio(messaging.Trio{
@@ -85,7 +132,7 @@ func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroT
 		// absent rather than a per-site judgment.
 		Actor:    messaging.NoLine,
 		Actee:    actee,
-		Observer: messaging.Say(category, string(triad.ToRoom)),
+		Observer: messaging.Say(category, lines.ToRoom),
 	}, messaging.Audience{
 		Actee:   acteeRecipient,
 		ActeeId: target.UserId,
