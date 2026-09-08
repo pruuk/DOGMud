@@ -54,18 +54,42 @@ func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroT
 		}
 	}
 
-	excluded := make([]int, 0, 1)
+	actee := messaging.NoLine
+
+	// Declared as the interface and left unset when there is no target user.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil
+	// interface value and SendTrio would call through it.
+	var acteeRecipient messaging.Recipient
 	if targetUser != nil {
+		acteeRecipient = targetUser
 		if !roomOnly {
+			// The audio channel neither sight-gates nor anonymizes --
+			// users.UserRecord.SendText is hardcoded to ChannelAudio and the
+			// pipeline runs both stages only on ChannelVisual. So this line is
+			// anonymized HERE or not at all, and removing this is a leak.
+			//
+			// The player-attacker copy of this helper does not do it, which is
+			// a real divergence and is fixed separately. M4's perception
+			// verdict consolidation is where this moves into the pipeline; see
+			// internal/messaging/predicates.go:66.
 			personal := string(triad.ToDefender)
 			if !canSeeInDark(targetUser, room) {
 				personal = messaging.Anonymize(personal)
 			}
-			targetUser.SendText(category, personal)
+			actee = messaging.Say(category, personal)
 		}
-		excluded = append(excluded, targetUser.UserId)
 	}
-	visible := string(triad.ToRoom)
-	sendAudioRoomText(room, mob, category, messaging.Anonymize(visible), visible, excluded...)
+
+	messaging.SendTrio(messaging.Trio{
+		// A mob has no client, so the attacker's own line is categorically
+		// absent rather than a per-site judgment.
+		Actor:    messaging.NoLine,
+		Actee:    actee,
+		Observer: messaging.Say(category, string(triad.ToRoom)),
+	}, messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	})
 	return true
 }

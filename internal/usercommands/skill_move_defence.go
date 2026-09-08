@@ -59,12 +59,32 @@ func sendMoveDefenceTriad(user *users.UserRecord, room *rooms.Room, target actio
 		}
 	}
 
+	actor, actee := messaging.NoLine, messaging.NoLine
 	if !roomOnly {
-		user.SendText(category, string(triad.ToAttacker))
+		actor = messaging.Say(category, string(triad.ToAttacker))
 		if targetUser != nil {
-			targetUser.SendText(category, string(triad.ToDefender))
+			actee = messaging.Say(category, string(triad.ToDefender))
 		}
 	}
-	room.SendTextVisual(category, string(triad.ToRoom), user.UserId, target.UserId)
+
+	// Declared as the interface and left unset when there is no target user.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil
+	// interface value and SendTrio would call through it.
+	var acteeRecipient messaging.Recipient
+	if targetUser != nil {
+		acteeRecipient = targetUser
+	}
+
+	messaging.SendTrio(messaging.Trio{
+		Actor:    actor,
+		Actee:    actee,
+		Observer: messaging.Say(category, string(triad.ToRoom)),
+	}, messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	})
 	return true
 }
