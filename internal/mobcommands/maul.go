@@ -48,41 +48,79 @@ func Maul(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 	canSee := targetUser == nil || canSeeInDark(targetUser, room)
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetUser != nil {
+		acteeRecipient = targetUser
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
 	if result.Hit {
+		hitActee := messaging.NoLine
 		if targetUser != nil {
 			if canSee {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> savages you with vicious fangs, tearing bleeding wounds! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				hitActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> savages you with vicious fangs, tearing bleeding wounds! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 			} else {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something savages you with vicious fangs, tearing bleeding wounds! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				hitActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something savages you with vicious fangs, tearing bleeding wounds! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> savages <ansi fg="username">%s</ansi> with vicious fangs!`, mobName, target.Name),
-			target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: hitActee,
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> savages <ansi fg="username">%s</ansi> with vicious fangs!`, mobName, target.Name)),
+		}, aud)
 	} else if result.Damage > 0 {
+		partialActee := messaging.NoLine
 		if targetUser != nil {
 			if canSee {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 			} else {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "savage bite", messaging.CategoryHitNaturalSharp, true) {
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, who twists mostly free but still gets torn!`, mobName, target.Name),
-				target.UserId)
+		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "savage bite")
+		partialObserver := messaging.Say(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, who twists mostly free but still gets torn!`, mobName, target.Name))
+		if defended {
+			partialObserver = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
+			sendMoveDefenceShortage(targetUser, defence)
 		}
-	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "savage bite", messaging.CategoryHitNaturalSharp, false) {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    partialActee,
+			Observer: partialObserver,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "savage bite"); defended {
+		// A defence stopped it outright: the defender's line and the room line
+		// both come from the triad.
+		sendMoveDefenceShortage(targetUser, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    acteeDefenceLine(targetUser, room, messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
+		}, aud)
+	} else {
+		missActee := messaging.NoLine
 		if targetUser != nil {
 			if canSee {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at you, but misses!`, mobName))
+				missActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at you, but misses!`, mobName))
 			} else {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, `Something snaps its fangs at you, but misses!`)
+				missActee = messaging.Say(messaging.CategoryHitNaturalSharp, `Something snaps its fangs at you, but misses!`)
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, but misses!`, mobName, target.Name),
-			target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: missActee,
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, but misses!`, mobName, target.Name)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

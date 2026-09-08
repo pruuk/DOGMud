@@ -332,8 +332,15 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		cfg := textutil.SendTextConfig{
 			UserSendFunc: func(msg string) { user.SendText(messaging.CategorySpellFold, msg) },
 			RoomSendFunc: func(msg string, skip ...int) {
+				// SendTextVisual, not SendText: a cast_room_text describes
+				// what the room SEES ("a fierce glow building"), and the
+				// audio channel is never sight-gated, so this reached blind
+				// observers with the caster name and the visual detail. Found
+				// by the 2026-09-08 darkness playtest. Its sibling windup two
+				// steps below already used SendTextVisual -- one event, two
+				// paths, only one darkness-aware.
 				if castRoom != nil {
-					castRoom.SendText(messaging.CategorySpellFold, msg, skip...)
+					castRoom.SendTextVisual(messaging.CategorySpellFold, msg, skip...)
 				}
 			},
 			ExcludeId: user.UserId,

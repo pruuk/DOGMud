@@ -92,52 +92,76 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		targetChar = users.GetByUserId(target.UserId)
 	}
 
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: targetPlayerId,
+		Room:    room,
+	}
+
 	// Send messages based on result
 	if result.Success {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You <ansi fg="yellow-bold">grapple</ansi> <ansi fg="mobname">%s</ansi>, transitioning to <ansi fg="cyan">%s</ansi> position!`, targetName, result.PositionDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">%s</ansi> position!`, user.Character.Name, result.PositionDesc))
-		}
-		room.SendTextVisual(messaging.CategoryGrappleFlow,
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> <ansi fg="mobname">%s</ansi> into <ansi fg="cyan">%s</ansi> position!`, user.Character.Name, targetName, result.PositionDesc),
-			user.UserId, targetPlayerId,
-		)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.Say(messaging.CategorySystem, fmt.Sprintf(`You <ansi fg="yellow-bold">grapple</ansi> <ansi fg="mobname">%s</ansi>, transitioning to <ansi fg="cyan">%s</ansi> position!`, targetName, result.PositionDesc)),
+			Actee: messaging.Say(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">%s</ansi> position!`, user.Character.Name, result.PositionDesc)),
+			Observer: messaging.Say(messaging.CategoryGrappleFlow,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> <ansi fg="mobname">%s</ansi> into <ansi fg="cyan">%s</ansi> position!`, user.Character.Name, targetName, result.PositionDesc)),
+		}, aud)
 
-		// Flavor text for prone targets
+		// Flavor text for prone targets.
+		//
+		// PRIVATE KNOWLEDGE, so NoLine twice, deliberately. This explains the
+		// actor's own roll to the actor. A room line here would invent an
+		// observation nobody in the room made, about a grapple the event above
+		// already narrated to them.
 		if result.PositionPenalty < 0 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">%s was already prone - they had little chance to resist!</ansi>`, targetName))
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">%s was already prone - they had little chance to resist!</ansi>`, targetName)),
+				Actee:    messaging.NoLine,
+				Observer: messaging.NoLine,
+			}, aud)
 		}
 
-		// Disarm messaging
+		// Disarm messaging: a WORLD EVENT, so it carries the full trio, which
+		// it already did before the migration.
 		if result.DisarmResult != nil {
-			user.SendText(messaging.CategorySystem, result.DisarmResult.Message)
-			if targetChar != nil {
-				targetChar.SendText(messaging.CategorySystem, result.DisarmResult.TargetMsg)
-			}
-			room.SendTextVisual(messaging.CategoryGrappleFlow, result.DisarmResult.RoomMessage, user.UserId, targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, result.DisarmResult.Message),
+				Actee:    messaging.Say(messaging.CategorySystem, result.DisarmResult.TargetMsg),
+				Observer: messaging.Say(messaging.CategoryGrappleFlow, result.DisarmResult.RoomMessage),
+			}, aud)
 		}
 	} else {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">grapple</ansi> attempt against <ansi fg="mobname">%s</ansi> fails!`, targetName))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to grapple you, but you slip away!`, user.Character.Name))
-		}
-		room.SendTextVisual(messaging.CategoryGrappleFlow,
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to grapple <ansi fg="mobname">%s</ansi>, but fails!`, user.Character.Name, targetName),
-			user.UserId, targetPlayerId,
-		)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.Say(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">grapple</ansi> attempt against <ansi fg="mobname">%s</ansi> fails!`, targetName)),
+			Actee: messaging.Say(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to grapple you, but you slip away!`, user.Character.Name)),
+			Observer: messaging.Say(messaging.CategoryGrappleFlow,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to grapple <ansi fg="mobname">%s</ansi>, but fails!`, user.Character.Name, targetName)),
+		}, aud)
 
-		// Defense penalty messaging
+		// Defense penalty: private knowledge again, same ruling as above.
 		if result.DefensePenalty {
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">Your failed attempt leaves you exposed!</ansi>`)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, `<ansi fg="red">Your failed attempt leaves you exposed!</ansi>`),
+				Actee:    messaging.NoLine,
+				Observer: messaging.NoLine,
+			}, aud)
 		}
 
-		// Critical failure messaging
+		// Critical failure: a world event, full trio, as before.
 		if result.CritFailure != nil {
-			user.SendText(messaging.CategorySystem, result.CritFailure.Message)
-			if targetChar != nil {
-				targetChar.SendText(messaging.CategorySystem, result.CritFailure.TargetMessage)
-			}
-			room.SendTextVisual(messaging.CategoryGrappleFlow, result.CritFailure.RoomMessage, user.UserId, targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, result.CritFailure.Message),
+				Actee:    messaging.Say(messaging.CategorySystem, result.CritFailure.TargetMessage),
+				Observer: messaging.Say(messaging.CategoryGrappleFlow, result.CritFailure.RoomMessage),
+			}, aud)
 		}
 	}
 

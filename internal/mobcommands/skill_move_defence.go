@@ -9,26 +9,22 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// sendMoveDefenceTriad speaks the channel defence triad for a DEFENDED special
-// move made by a mob (bash/kick/trip and the beast moves), naming the defence
-// that actually stopped it — U6b Task 9. Mirrors sendChannelDefenceMessages
-// (the taunt sender in this package), including darkness-aware anonymization.
+// moveDefence is one rendered defence outcome, ready to compose into a Trio.
+// Shortage is the defender's resource note, empty when there is none.
+type moveDefence struct {
+	ToAttacker, ToDefender, ToRoom string
+	Shortage                       string
+}
+
+// moveDefenceLines renders the channel defence triad for a DEFENDED special
+// move by a MOB and SENDS NOTHING. Mirror of the usercommands twin; see that
+// file for why rendering and sending are separate.
 //
-// roomOnly follows melee's partial convention: when the defended move still
-// dealt partial damage, the caller's composite personal lines carry the damage
-// description, so only the room line comes from the triad. When the defence
-// fully stopped the move (a defensive crit), all three lines come from the
-// triad (the mob attacker itself receives no text).
-//
-// Returns false when there is nothing to speak: the outcome was not a defence.
-// The caller then falls back to its plain miss text.
-//
-// It no longer returns false for a MISSING POOL. As of 2026-08-31,
-// combat.RenderChannelDefenceMessages substitutes generic narration when a pool
-// cannot be resolved, so a defended outcome always speaks. That second reason
-// used to be live and is now dead; do not reintroduce a pool check here.
-func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget,
-	out combat.ChannelDefenceResult, attack string, category messaging.Category, roomOnly bool) bool {
+// The identity resolution differs from the player copy and legitimately so: a
+// mob attacker names itself with GetMobNameIndexed, a player attacker with
+// GetPlayerName. That is not duplication and does not collapse.
+func moveDefenceLines(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarget,
+	out combat.ChannelDefenceResult, attack string) (moveDefence, bool) {
 
 	var targetUser *users.UserRecord
 	if target.UserId > 0 {
@@ -45,27 +41,42 @@ func sendMoveDefenceTriad(mob *mobs.Mob, room *rooms.Room, target actions.AggroT
 
 	triad := combat.RenderChannelDefenceMessages(out, identities, attack)
 	if triad.ToRoom == "" {
-		return false
+		return moveDefence{}, false
 	}
 
-	if targetUser != nil {
-		if text := combat.ChannelDefenceShortageText(out, targetUser.Character); text != "" {
-			targetUser.SendText(messaging.CategorySystem, text)
-		}
+	lines := moveDefence{
+		ToAttacker: string(triad.ToAttacker),
+		ToDefender: string(triad.ToDefender),
+		ToRoom:     string(triad.ToRoom),
 	}
+	if targetUser != nil {
+		lines.Shortage = combat.ChannelDefenceShortageText(out, targetUser.Character)
+	}
+	return lines, true
+}
 
-	excluded := make([]int, 0, 1)
-	if targetUser != nil {
-		if !roomOnly {
-			personal := string(triad.ToDefender)
-			if !canSeeInDark(targetUser, room) {
-				personal = messaging.Anonymize(personal)
-			}
-			targetUser.SendText(category, personal)
-		}
-		excluded = append(excluded, targetUser.UserId)
+// sendMoveDefenceShortage speaks the defender's resource-shortage note. See the
+// usercommands twin: it is a separate at-most-once event, not part of the
+// defence narration.
+func sendMoveDefenceShortage(targetUser *users.UserRecord, lines moveDefence) {
+	if targetUser != nil && lines.Shortage != "" {
+		targetUser.SendText(messaging.CategorySystem, lines.Shortage)
 	}
-	visible := string(triad.ToRoom)
-	sendAudioRoomText(room, mob, category, messaging.Anonymize(visible), visible, excluded...)
-	return true
+}
+
+// acteeDefenceLine renders the defender's personal defence line with the
+// call-site anonymization the audio channel cannot do for itself.
+//
+// users.UserRecord.SendText is hardcoded to ChannelAudio and the pipeline runs
+// the sight gate and anonymizer only on ChannelVisual, so this line is
+// anonymized here or not at all. M4's perception verdict consolidation is where
+// it moves into the pipeline; see internal/messaging/predicates.go:66.
+func acteeDefenceLine(targetUser *users.UserRecord, room *rooms.Room, cat messaging.Category, text string) messaging.Line {
+	if targetUser == nil || text == "" {
+		return messaging.NoLine
+	}
+	if !canSeeInDark(targetUser, room) {
+		text = messaging.Anonymize(text)
+	}
+	return messaging.Say(cat, text)
 }

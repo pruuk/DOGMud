@@ -28,6 +28,21 @@ var KnownTemplateIDs = []string{
 	// and the merchants who sell the kit sleep on their schedules -- which is
 	// precisely how a 2026-09-07 run lost its goals before this existed.
 	"ranged-range",
+	// The M2 narration-seam pair, added for the same reason as crafter and
+	// ranged-range: the goals are unreachable without the loadout.
+	//
+	// m2-actor carries extra-arms (the arm slot whose equip path dropped its
+	// room line does not exist without it), resonant-larynx (the only route to
+	// the rally and warcry fold loops that used to buff party members in
+	// silence), and an effect_type: buff spell (a shield spell does not reach
+	// the buff case at all).
+	//
+	// m2-witness is deliberately plain and carries NO night vision or
+	// infrared, because two of the changes under test are about what a player
+	// who CANNOT see is told. Giving it better senses would quietly delete
+	// those lanes.
+	"m2-actor",
+	"m2-witness",
 }
 
 // Manifest is the ephemeral per-run materialization request.

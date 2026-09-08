@@ -501,3 +501,75 @@ values the event spans, and the reason. Sorted by path. **A** = actor,
 | `usercommands/warcry.go:35` | warcry on cooldown | Y | N | N | correct | 1 | actor-only refusal |
 | `usercommands/warcry.go:42` | warcry buffs the party | Y | N | Y | correct | 2 | each member gets their own `SendText` at :58-59 |
 | **`usercommands/warcry.go:76`** | **Resonant Larynx rally fold** | **Y** | **N** | **Y** | **gap** | **2** | **mirror of `rally.go:72`: the fold loop at :81-96 applies the buff with no `SendText`, while the main loop at :54-59 notifies each member** |
+
+---
+
+## Registry retirements, M2 (2026-09-08)
+
+`TestNarrationSitesMatchViewpointAudit` asserts set equality with what its walk
+finds, and that walk looks for `SendText` / `SendTextVisual`. M2 replaces those
+with `messaging.SendTrio`, so **a migrated site stops being visible to this
+guard**. That is by design, not a loss: a migrated file is covered by
+`TestM2RoutingIsFrozen`, which records the role, the category and the text of
+every send and is strictly stronger than a viewpoint verdict.
+
+Five entries retired for that reason. None was a defect, and none lost a
+message; each was verified against source before removal.
+
+| Retired entry | Why it stopped matching |
+|---|---|
+| `usercommands/throw.go` x4 (hurl into fray, fumble backfire, spell disruption, dodge room line) | All four migrated to `SendTrio`. The walk no longer sees them. |
+| `usercommands/shoot.go` reveal line (`CategorySurpriseAttack, surpriseShotRevealedText`) | Still a plain `SendText`, but the sends it used to be grouped with moved into a `Trio`, so the walk no longer pairs it into a multi-viewpoint candidate. |
+
+One entry added, for the same structural reason in reverse:
+
+| Added entry | Why |
+|---|---|
+| `usercommands/shoot.go` shortage note (`CategorySystem, text`) | M2 hoisted the channel-defence shortage note out of the target block so the defender still reads it before the shot line. That put it adjacent to the shooter's own send, and the walk now groups the two into one event reading `actor+actee, missing observer`. Ruled **correct**: it is actee-only mechanical feedback about the defender's own spent resources, and the room cannot see someone run short of stamina. |
+
+**Expect this to recur through M3.** Each slice that migrates a file onto the
+seam will retire that file's entries here. The rule to follow is the one this
+table demonstrates: confirm the site migrated (rather than lost a send) by
+checking the routing golden gained the matching records, then retire the entry
+and say so here.
+
+## Defects fixed in M2 (2026-09-08)
+
+Each row is one of the five confirmed defects, closed in a dedicated commit.
+Where a fix made an event complete, this guard's registry entry went stale and
+was retired in that same commit, which is the signal the registry comment says
+to expect.
+
+| # | Site | Fix | Registry |
+|---|---|---|---|
+| 1 | `actions/salvage.go` | The room broadcast moved off the mob-only `else if`, so a PLAYER butchering a corpse is narrated too. The ANSI name tag follows the actor, since `mobname` around a player's name renders them as a mob. | No entry to retire. This guard structurally cannot see this defect: it is "pattern YNN", a branch missing BOTH actee and observer (`messaging_surface_guard_test.go:620`). |
+| 2 | `hooks/spell_resolution.go` `case "buff"` | Gained the room broadcast its sibling `case "heal"` already sends. Shape and exclusions mirror heal; the category follows the buff case's own two lines rather than heal's `CategorySpellVital`, because a buff is not necessarily vital magic. | Entry `Your %s takes effect on <ansi …>%s</ansi>!%s` (verdictGap, actor+actee) retired: the event is now complete. Do not confuse it with the neighbouring `Your %s takes effect on %s!%s` entry, which is a different, already-correct site. |
+| 3 | `usercommands/rally.go` + `usercommands/warcry.go` | Both Resonant Larynx fold loops applied `AddCondition` and `AddBuff` to every party member and told nobody. Each is a copy of the primary party loop a few lines above, which does send that line. Wording taken from each effect's own member line: rally's fold applies a war cry so it uses warcry's line, and vice versa. | No entry to retire. The fold loops contain no actor send, so the walk never grouped them into a candidate event. |
+| 4 | `usercommands/equip.go` arm-slot path | The displaced-item loop told the wearer and left the room out, while the shared equip path sends both for the same displacement. Text and exclusion copied from that path. The arm-slot *equip* line already broadcast; only the displacement did not. | No entry to retire. This is the third gap the guard cannot see, alongside the two salvage sites. |
+| 5 | `usercommands/admin.zap.go` engaged-target path | Dropped a player to 1 health and 1 conviction in silence, while the explicit-target path earlier in the same function tells them. Gained that line, and its room broadcast now also excludes the target so they read the direct line rather than a third-person one about themselves. | Entry `You zap <ansi fg="username">%s</ansi> with a %s!` (verdictGap) retired: complete now. Not to be confused with the neighbouring `<ansi fg="mobname">` entry, which is verdictCorrect because a zapped mob has no client. |
+
+## Playtest follow-ups, 2026-09-08
+
+The M2 adversarial playtest surfaced ten defects that were NOT M2's. Three were
+fixed in the same slice because they are small, verified against source, and sit
+in text M2 had already disturbed. The rest are recorded in
+`project-messaging-m2-seam-design` memory and left alone.
+
+| Finding | Verified? | Action |
+|---|---|---|
+| Buff expiry says "**your** warcry fades" for a shout someone else made | Yes: `buffs/79-warcry.yaml`, `80-rally.yaml` `end_user_text` | FIXED. Now "the warcry fades from you", which is true whoever shouted. Same viewpoint family M2 chases, in the buff store rather than in narration. |
+| "X's cry carries a war cry within it" — a cry carrying a cry, and "war cry" where the game says "warcry" | Yes: `rally.go:74`, `warcry.go:78` | FIXED, both directions, and the actor line's "war cry" normalised. Registry key at `rally.go` reworded to match; its verdict also corrected from `verdictGap` to `verdictCorrect`, because M2 defect 3 had already fixed the silence it described. |
+| Salvage results print component tags (`2x cloth-strip`) | Yes: `formatRecovered` used `ing.ItemTag` | FIXED via `items.FindSpecByComponentTag`, falling back to the tag when nothing supplies it, because a recipe naming an unsupplied tag is a content bug worth seeing. |
+| `tell` is not a command | Yes: only `whisper` is registered | NOT A GAME DEFECT. The error was in the playtest brief, which told the agents to use a channel that does not exist. |
+| Plain `say` gives no self-echo | **Claim is wrong.** `say.go:38` sends `You say, "…"` to the speaker | NO ACTION. Recorded so it is not re-filed. |
+| "You prepare to enter into mortal combat" to a party member who never attacked | Yes: `attack.go:252`, sent to the command's own user | NOT a viewpoint bug. Party auto-assist engaged them, so the line is accurate; what is missing is any hint the party did it for them. Design question, left for the owner. |
+| Buff windup lines inverted on both sides | Partly: the observer line is `skill.cast.go:389` | Left alone. Ordering spans the casting system and the per-spell text, so it affects every spell, not this slice. |
+| `rally` silently spends `warcry`'s cooldown | Observed in play | Left alone. Whether the shared cooldown is intended is a design call. |
+| "dodges your swing, but you still connect", fired three times identically | Observed in play | Left alone deliberately: this is core combat narration that M3 and M4 rewrite, and changing the wording now would conflict with that work. |
+| No line announces a corpse appearing after a kill | Observed in play | Left alone. Content addition, not a defect in existing text. |
+
+### Retirement from the darkness-lane fixes, 2026-09-08
+
+| Retired entry | Why |
+|---|---|
+| `usercommands/go.go` `%s follows you.` (verdictCorrect, actor+actee) | The room-entry line beside it changed from `destRoom.SendText` to `destRoom.SendTextVisualWithAudio`, so the walk now groups the pet-follow notice with a room broadcast and the event reads complete. No new unregistered candidate appeared, confirming the grouping rather than a lost send. The original verdict still holds on its own terms: the follow notice IS private to the owner, and the pet's room-entry narration is handled separately. |

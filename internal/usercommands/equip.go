@@ -216,6 +216,14 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			for _, old := range displaced {
 				if old.ItemId > 0 {
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You remove your <ansi fg="item">%s</ansi> and return it to your backpack.`, old.DisplayName()))
+					// M1 audit defect: the arm-slot path told the wearer and
+					// left the room out, while the shared equip path below
+					// sends both for the same displacement. Text and exclusion
+					// copied from that path rather than reworded.
+					room.SendTextVisual(messaging.CategoryEquipment,
+						fmt.Sprintf(`<ansi fg="username">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, user.Character.Name, old.DisplayName()),
+						user.UserId,
+					)
 					user.Character.StoreItem(old)
 				}
 			}

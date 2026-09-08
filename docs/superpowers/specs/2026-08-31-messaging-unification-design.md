@@ -1,7 +1,9 @@
 # Messaging Unification Arc — Design
 
 **Created:** 2026-08-31
-**Status:** Design approved by owner 2026-08-31. No plan written yet.
+**Status:** Design approved by owner 2026-08-31. M0, M0b and M1 are merged
+(PRs #104, #106, #111). M2 is designed as of 2026-09-08 in its own spec and
+**supersedes the M2 section below in two places** — see the banner there.
 **Predecessor:** [Unified Resolution Roadmap](../../roadmaps/UNIFIED_RESOLUTION_ROADMAP.md)
 (closed) — this arc borrows its refactor-first / flip-once shape.
 **Backlog entry:** [`CURRENT_BACKLOG.md`](../../roadmaps/CURRENT_BACKLOG.md),
@@ -507,6 +509,49 @@ inconsistencies**, taking them as parameters rather than branches: band input,
 pool shape, token set, role split. The core is **extracted from the defence
 store**, which is already closest to the target shape, rather than designed
 beside it. Snapshots green throughout.
+
+> ### 🔴 SUPERSEDED IN TWO PLACES, 2026-09-08
+>
+> M2 was designed out on 2026-09-08 and two sentences above did not survive
+> contact with the tree. Full design:
+> [`2026-09-08-messaging-m2-shared-narration-seam-design.md`](2026-09-08-messaging-m2-shared-narration-seam-design.md).
+> Read that, not this, when planning M2 or anything downstream of it.
+>
+> **1. "Snapshots green throughout" is not available, and is replaced by a
+> literal freeze built as M2's first task.** This section assumed M1's harness
+> would protect M2's refactor. It does not. M1 snapshots the message *stores*;
+> M2 rewrites 23 files of hand-rolled `fmt.Sprintf` literals that M1
+> deliberately and correctly chose to **inventory rather than render** (see
+> "Group C is inventoried, not snapshotted" above). None of M1's six goldens
+> touches a special-move verb, so without a new net the 23-file migration would
+> have had no automated protection at all.
+>
+> This is the same class of gap that let the melee defence triad bug survive
+> M1: the goldens froze `RenderDefenseMessage` and never called
+> `GetDefenseMessage`, so the melee seam had zero snapshot coverage. **When two
+> functions read the same authored store, snapshotting one proves nothing about
+> the other**, and when a slice's work is literals rather than stores, store
+> snapshots prove nothing about it either.
+>
+> **2. M2 ends with the adversarial playtest gate**, which the M5 section below
+> places at M5. This section assumed M2 would be bug-compatible with no output
+> changes, so no gate was needed. As scoped, M2 closes the five defects M1
+> found across seven sites, plus two more of its own (a detail-line ruling, and
+> an information leak found by reading the two `sendMoveDefenceTriad` copies
+> properly: a player defending in the dark is told who hit them if the attacker
+> was a player and not if it was a mob), which puts new
+> player-facing lines into the world. That is authored content under the
+> project content SOP, and the SOP requires a playtest. M5 keeps its own gate
+> for the crime-in-the-dark ruling.
+>
+> **Also settled by that design, both of which this section left open:** the
+> seam lives in `internal/messaging` (the import graph rules out both
+> `internal/narration` and `internal/actions`, with the edges verified in the
+> new spec's facts table), and the two convention questions listed under "What
+> M1 hands M2" are ruled. Detail lines are classified by kind: a world event
+> inherits the parent's viewpoints, private knowledge stays actor-only. The
+> quest bridge's missing actee seam is **correctly absent** and stays absent
+> until M3, because quest YAML has no actee key for it to read.
 
 ### M3 — Store migration
 

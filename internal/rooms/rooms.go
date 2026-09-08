@@ -337,6 +337,69 @@ func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds
 	}
 }
 
+// SendTextVisualWithAudio delivers visualTxt to everyone who can see and
+// audioTxt to everyone who cannot.
+//
+// WHY THIS EXISTS. Some events are BOTH seen and heard, and gating them with
+// SendTextVisual alone trades a leak for a silence. Someone walking into your
+// room is the case that prompted it: the named line ("Kesh enters from the
+// east") is pure sight and must not reach a blind player, but a blind player
+// should still register that somebody arrived. Before this, that line went out
+// on the audio channel, which is never sight-gated, so a player in a pitch
+// dark cave was told a name and a compass direction.
+//
+// Pass an empty audioTxt to fall back to plain suppression, which is the right
+// choice for an event that genuinely makes no sound.
+func (r *Room) SendTextVisualWithAudio(cat messaging.Category, visualTxt string, audioTxt string, excludeUserIds ...int) {
+	for _, uid := range r.GetPlayers() {
+		if excluded(uid, excludeUserIds) {
+			continue
+		}
+		u := users.GetByUserId(uid)
+		if u == nil {
+			continue
+		}
+		decision := messaging.SightNone
+		switch {
+		case messaging.CanSeeClearly(u.Character, r):
+			decision = messaging.SightFull
+		case messaging.CanSeeShapes(u.Character, r):
+			decision = messaging.SightShapes
+		}
+
+		in := messaging.RenderInput{
+			Category:      cat,
+			Text:          visualTxt,
+			Channel:       messaging.ChannelVisual,
+			SightDecision: decision,
+			LineWidth:     u.GetLineWidth(),
+		}
+		if decision == messaging.SightNone {
+			if audioTxt == "" {
+				continue
+			}
+			// The audio channel deliberately skips the sight gate and the
+			// anonymizer, which is correct here: audioTxt is already written
+			// to name nobody.
+			in = messaging.RenderInput{
+				Category:  cat,
+				Text:      audioTxt,
+				Channel:   messaging.ChannelAudio,
+				LineWidth: u.GetLineWidth(),
+			}
+		}
+
+		rendered := messaging.RenderForRecipient(in)
+		if rendered == "" {
+			continue
+		}
+		events.AddToQueue(events.Message{
+			UserId: u.UserId,
+			Text:   rendered + "\n",
+		})
+	}
+}
+
 // SendTextVisualToUser delivers a sight-gated message to a single
 // user, gated by their character's vision in this room. Use this
 // from sites that previously called user.SendText with visual

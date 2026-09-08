@@ -1,0 +1,43 @@
+# M2 darkness lane: the ACTOR.
+#
+# You start at the Cave Mouth (3101) in the Ironwind Steppe cave complex. Every
+# room here is cave biome, which means UNLIT. You have no light source and no
+# night vision, and that is on purpose. Expect not to see much. That is the
+# point of the lane, not an obstacle to it.
+#
+# Your partner is Ordel Quist, standing with you, equally sightless. THEY are
+# the instrument. Keep them in your room.
+#
+# 3 commands per round, overflow silently dropped after being echoed.
+
+ephemeral:
+  profile: m2-actor
+  start_room: 3101
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    FIRST, CONFIRM THE DARK. `look`. If you get a normal room description you
+    are not in darkness and the whole lane is invalid. Say so immediately and
+    move deeper into the cave until you are genuinely unlit. Tell Ordel to
+    confirm the same for themselves. Do not proceed until both of you are blind.
+  - >-
+    THE HEADLINE. Find a mob and fight it in the room Ordel is standing in. You
+    need at least one exchange where the mob uses a SPECIAL MOVE at you and you
+    DEFEND it (a bash, gore, trip or kick that you turn aside). Tell Ordel the
+    moment it happens. Ask them what they received.
+    THE CORRECT ANSWER IS NOTHING. Report it as working if Ordel got silence.
+    A third-person line about your fight reaching a sightless bystander is the
+    failure this lane exists to catch.
+  - >-
+    THE CONTROL, and do not skip it. Make something happen to Ordel directly:
+    let a mob hit them, or cast conviction-surge on them. They MUST still be
+    told about that. If they are told nothing about their own body, that is
+    serious and outweighs everything else in this report.
+  - >-
+    Quote your own lines verbatim throughout. You can see your own text even in
+    the dark; the question is only what the ROOM is told.
+  - >-
+    If you cannot stage a defended special move inside the budget, say so
+    plainly. An honest "did not happen" is worth more than an inference.

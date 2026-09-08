@@ -1080,6 +1080,15 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 				`<ansi fg="username">%s</ansi>'s %s takes effect on you!`,
 				user.Character.Name, spellData.Name))
 		}
+		// M1 audit defect: this case told the caster and the target and left
+		// the room out, while its sibling `case "heal":` above broadcasts. A
+		// spell visibly taking hold on someone is not a private exchange.
+		// Shape and exclusions mirror the heal line; the category follows this
+		// case's own two lines rather than heal's, because a buff is not
+		// necessarily vital magic.
+		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
+			`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> settles over <ansi fg="username">%s</ansi>.`,
+			user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
 
 	case "shield":
 		skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)

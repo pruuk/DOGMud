@@ -69,9 +69,9 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// cry to the caster; fan it to the same allies the rally reached.
 	if mutations.HasMutationFlag(user.Character.Mutations, "shout-stacking") {
 		wb, wd := actions.ApplyWarcryEffect(user.Character)
-		user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your layered voice looses a thunderous war cry in the same breath!</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your layered voice looses a thunderous warcry in the same breath!</ansi>`)
 		room.SendTextVisual(messaging.CategoryWarcry,
-			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s cry carries a war cry within it!</ansi>`, user.Character.Name),
+			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s shout hardens into a warcry in the same breath!</ansi>`, user.Character.Name),
 			user.UserId,
 		)
 		if party := parties.Get(user.UserId); party != nil {
@@ -85,6 +85,13 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				}
 				memberUser.Character.AddCondition(characters.ConditionWarcry, wd, wb, "warcry")
 				memberUser.Character.AddBuff(79, false)
+				// M1 audit defect: this fold loop is a copy of the primary
+				// party loop above that kept the AddCondition and AddBuff and
+				// dropped the line telling the member. Wording matches
+				// warcry.go's own member line, because what is being applied
+				// here IS a war cry.
+				memberUser.SendText(messaging.CategorySystem,
+					fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s warcry stirs your blood!</ansi>`, user.Character.Name))
 				applyWarcryToCompanions(memberUser, room, wb, wd)
 			}
 		}

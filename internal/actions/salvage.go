@@ -197,23 +197,54 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 
 	storeRecovered(actor, recovered, &result)
 
+	salvagerLine := messaging.NoLine
 	if actor.IsPlayer() {
 		if len(recovered) > 0 {
-			actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="green">You salvage the <ansi fg="mobname">%s corpse</ansi> and recover: %s.</ansi>`,
 				target.Character.Name,
 				formatRecovered(recovered)))
 		} else {
-			actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="red">You attempt to salvage the <ansi fg="mobname">%s corpse</ansi> but recover nothing useful.</ansi>`,
 				target.Character.Name))
 		}
-	} else if room.PlayerCt() > 0 {
-		// Mob-side room flavor (matches existing mobcommands/salvage.go).
-		room.SendTextVisual(messaging.CategoryMobIdle, fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> kneels by the carcass and cuts strips of hide from it.`,
-			actor.GetName()))
 	}
+
+	// The room line now fires for a PLAYER as well as a mob.
+	//
+	// It used to sit on the mob-only `else if` branch, so a mob butchering a
+	// corpse was narrated to the room and a PLAYER doing exactly the same thing
+	// was invisible. M1 audit defect: a duplicated code path copied the
+	// mechanical effect and dropped the narration beside it.
+	//
+	// The name tag follows the actor, because <ansi fg="mobname"> around a
+	// player's name renders them as a mob.
+	//
+	// The category is unchanged from the mob line it generalises. Whether
+	// CategoryMobIdle is the right class for a player's action is a separate
+	// question and not this fix's to answer.
+	salvageObserver := messaging.NoLine
+	if room.PlayerCt() > 0 {
+		nameTag := "mobname"
+		if actor.IsPlayer() {
+			nameTag = "username"
+		}
+		salvageObserver = messaging.Say(messaging.CategoryMobIdle, fmt.Sprintf(
+			`<ansi fg="%s">%s</ansi> kneels over the <ansi fg="mobname">%s corpse</ansi> and works it for salvage.`,
+			nameTag, actor.GetName(), target.Character.Name))
+	}
+
+	messaging.SendTrio(messaging.Trio{
+		Actor: salvagerLine,
+		// The actee is a corpse. There is nobody on the receiving end to tell.
+		Actee:    messaging.NoLine,
+		Observer: salvageObserver,
+	}, messaging.Audience{
+		Actor:   actor,
+		ActorId: actor.GetUserId(),
+		Room:    room,
+	})
 
 	result.Succeeded = true
 	return result
@@ -377,7 +408,18 @@ func storeRecovered(actor Actor, recovered []crafting.RecipeIngredient, result *
 func formatRecovered(recovered []crafting.RecipeIngredient) string {
 	parts := make([]string, 0, len(recovered))
 	for _, ing := range recovered {
-		parts = append(parts, fmt.Sprintf("%dx %s", ing.Quantity, ing.ItemTag))
+		// Show what the player will see in their pack, not the component tag.
+		// The tag is a data key ("cloth-strip") and reading one in a results
+		// line makes recovered materials look like database rows.
+		//
+		// Falls back to the tag when no item carries it, which is the honest
+		// answer: a recipe naming a tag nothing supplies is a content bug, and
+		// printing the tag is how someone notices.
+		name := ing.ItemTag
+		if spec := items.FindSpecByComponentTag(ing.ItemTag); spec != nil && spec.Name != "" {
+			name = spec.Name
+		}
+		parts = append(parts, fmt.Sprintf("%dx %s", ing.Quantity, name))
 	}
 	return strings.Join(parts, ", ")
 }

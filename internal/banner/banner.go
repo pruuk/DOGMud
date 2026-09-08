@@ -4,11 +4,16 @@
 // internal/characters/ can import it without creating the
 // messaging→characters cycle.
 //
-// internal/messaging/progression.go re-exports a SendProgression
-// helper that delegates to Format() and ships to a UserSender for
-// callers that already have one. characters/progression.go (where
-// the legacy `*** sharpening ***` literals lived) calls Format()
-// and queues the banner directly via events.AddToQueue.
+// characters/progression.go (where the legacy `*** sharpening ***`
+// literals lived) calls Format() and queues the banner directly via
+// events.AddToQueue.
+//
+// This comment used to describe an internal/messaging/progression.go
+// re-exporting a SendProgression helper for callers that already hold
+// a UserSender. No such file, function or interface exists in
+// internal/messaging, and internal/messaging/context.md carried the
+// same phantoms until 2026-09-08. Nothing needs building here; the
+// reference was simply wrong.
 package banner
 
 import (

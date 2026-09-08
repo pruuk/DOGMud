@@ -1,0 +1,76 @@
+# M2 narration-seam adversarial gate.
+#
+# M2 rewrote every special-move narration site onto one seam and, in doing so,
+# changed SEVEN player-visible things. Automated guards proved no text was lost
+# and no line went to the wrong role. They CANNOT tell you whether the new
+# lines read well, land at the right moment, or crowd the round. That is this
+# run's job.
+#
+# TWO ACTORS, and the second one is the point. Almost every change under test
+# is about what OTHER people in the room are told. A mob in the room receives
+# nothing, so a witness has to be a real player.
+name: m2-narration-seam
+mode: party
+summary: >-
+  An actor performs the six situations M2 changed while a plain witness stands
+  in the room and reports, line by line, what they were and were not told.
+on_actor_stop: continue
+budgets:
+  wall_clock: 45m
+requires:
+  max_connections: 20
+roster:
+  - id: actor
+    personality: bug-finder
+    goals: goals/scenarios/m2-narration-seam/actor.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/m2-narration-seam/witness.yaml
+
+group_goals:
+  - id: salvage-seen
+    do: >-
+      Actor kills something and butchers the corpse with `salvage <corpse>`
+      while witness stands in the same room doing nothing.
+    verify: >-
+      Witness reports a line about the actor kneeling by the carcass. Before
+      M2 the witness saw NOTHING here, so silence is a regression, and the
+      line naming the actor as a mob would be a defect.
+  - id: buff-seen
+    do: >-
+      Actor casts conviction-surge on the witness.
+    verify: >-
+      Actor, witness and (via a third party if one is present) the room all get
+      a line. The witness must be told the spell took effect on them.
+  - id: party-fold-told
+    do: >-
+      Actor and witness form a party, then the actor uses `rally` and then
+      `warcry`. The actor has Resonant Larynx, so each command ALSO applies the
+      other effect to the party.
+    verify: >-
+      Witness reports TWO lines per command, one for the cry itself and one for
+      the folded second effect. Before M2 the folded effect arrived silently.
+      One line where there should be two is the defect this lane exists for.
+  - id: arm-slot-seen
+    do: >-
+      Actor wields a second weapon into the extra arm slot, displacing
+      something, while witness watches.
+    verify: >-
+      Witness sees a line about the actor stowing the displaced item. Before M2
+      only the actor was told.
+  - id: unsighted-told-nothing
+    do: >-
+      Get the witness blinded (sensory-overload, a flashbang, or an unlit room
+      with no light source) and then have a mob make a special move at the
+      actor that the actor DEFENDS.
+    verify: >-
+      The blinded witness is told NOTHING about a fight they cannot see. This
+      is a DELIBERATE change and will look like a bug: report it as working if
+      the witness gets silence. The witness must still be told about anything
+      happening to THEM.
+  - id: reads-well
+    do: >-
+      Across every lane above, judge the new lines as prose, not as evidence.
+    verify: >-
+      Report any line that is redundant with one beside it, arrives at an odd
+      moment, repeats a name awkwardly, or crowds a busy round.

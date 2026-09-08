@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"go/ast"
 	"go/parser"
 	"go/printer"
@@ -1169,7 +1171,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"hooks/spell_resolution.go|Your %s afflicts %s!%s":                                                                      {verdictCorrect, true, false, true, "a DoT spell afflicts a mob; actee is a mob, sendVisualRoomText broadcasts. Mob-target sibling of the audited spell_resolution.go:1004 purge-on-player row."},
 	"hooks/spell_resolution.go|Your %s strikes %s! (<ansi fg=\"damage\">%s</ansi>)%s":                                       {verdictCorrect, true, false, true, "a damage spell strikes a mob; actee is a mob, sendVisualRoomText broadcasts to the room. Mob-target sibling of the audited spell_resolution.go:983 row (the player-target branch of the same switch), which the audit already ruled full trio via the wrapper."},
 	"hooks/spell_resolution.go|Your %s takes effect on %s!%s":                                                               {verdictCorrect, true, false, true, "a generic effect takes hold on a mob; actee is a mob, sendVisualRoomText broadcasts. Mob-target sibling of the audited spell_resolution.go:1034 heal-on-player row."},
-	"hooks/spell_resolution.go|Your %s takes effect on <ansi fg=\"username\">%s</ansi>!%s":                                  {verdictGap, true, true, false, "audit: buff spell on a player -- sibling `case \"heal\"` calls `sendVisualRoomText` at ~:1044; `case \"buff\"` never does (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, hooks/spell_resolution.go:1075)"},
 	"hooks/spell_resolution.go|Your spell erupts outward but finds no targets.":                                             {verdictCorrect, true, false, true, "a disruption spell that finds no targets; sendVisualRoomText broadcasts it, no actee since nothing was hit. Same sendVisualRoomText-wrapper visibility this walk has and tools/narration_viewpoint_scan.py's regex does not, per the guard's header comment."},
 	"usercommands/admin.item.go|You wave your hands around and <ansi fg=\"item\">%s</ansi> appears from thin air a":         {verdictCorrect, true, false, true, "audit: admin conjures an item -- no player target (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/admin.item.go:127)"},
 	"usercommands/admin.locate.go|<ansi fg=\"username\">%s</ansi> is in room #<ansi fg=\"yellow-bold\">%d</ansi> - <an":     {verdictCorrect, true, true, false, "an admin locate command; the located player is privately told someone is looking for them (actee), but there is deliberately no room broadcast for an admin tool."},
@@ -1184,7 +1185,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/admin.spawn.go|You wave your hands around pathetically.":                                                  {verdictCorrect, true, false, true, "audit: spawn fails, hand-wave flourish -- no target (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/admin.spawn.go:89)"},
 	"usercommands/admin.teleport.go|Moved to room %d.":                                                                      {verdictCorrect, true, true, false, "gotoRoom.SendText broadcasts an arrival flash to the destination room two lines below, a genuine room broadcast this walk cannot see under the gotoRoom identifier (see the guard's header comment on the room-variable-name blind spot)."},
 	"usercommands/admin.zap.go|You zap <ansi fg=\"mobname\">%s</ansi> with a %s!":                                           {verdictCorrect, true, false, true, "audit: admin zaps engaged mob -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/admin.zap.go:70)"},
-	"usercommands/admin.zap.go|You zap <ansi fg=\"username\">%s</ansi> with a %s!":                                          {verdictGap, true, false, true, "audit: admin zaps engaged player -- the parallel explicit-target path at :46 tells the victim; this one drops them to 1 HP silently (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/admin.zap.go:82)"},
 	"usercommands/afk.go|You are no longer AFK.":                                                                            {verdictCorrect, true, false, true, "audit: player returns from AFK -- self state change (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/afk.go:28)"},
 	"usercommands/afk.go|You are now AFK. Type <ansi fg=\"command\">afk</ansi> again to return.":                            {verdictCorrect, true, false, true, "audit: goes AFK with no message -- self state change (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/afk.go:48)"},
 	"usercommands/afk.go|You are now AFK: %s":                                                                               {verdictCorrect, true, false, true, "audit: goes AFK with a message -- self state change (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/afk.go:43)"},
@@ -1223,7 +1223,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/give.go|You give <ansi fg=\"gold\">%d gold</ansi> to <ansi fg=\"username\">%s</ansi>.":                    {verdictCorrect, true, false, true, "audit: gives gold to a mob -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/give.go:176)"},
 	"usercommands/give.go|You give the <ansi fg=\"item\">%s</ansi> to <ansi fg=\"mobname\">%s</ansi>.":                      {verdictCorrect, true, false, true, "audit: gives an item to a mob -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/give.go:227)"},
 	"usercommands/give.go|You give the <ansi fg=\"itemname\">%s</ansi> to %s.":                                              {verdictCorrect, true, false, true, "audit: gives an item to a pet -- pet has no client (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/give.go:299)"},
-	"usercommands/go.go|%s follows you.":                                                                                    {verdictCorrect, true, true, false, "a pet follows its owner through an exit; this line is a private notice to the owner, and the pet's own room-entry narration is handled separately elsewhere. Not part of the audit; read against source for this guard."},
 	"usercommands/go.go|You're bumping into walls.":                                                                         {verdictCorrect, true, false, true, "audit: player bumps into a wall -- acts on no one (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/go.go:897)"},
 	"usercommands/go.go|messaging.CategorySystem, playerMsg":                                                                {verdictCorrect, true, false, true, "audit: player unlocks a door -- acts on an exit, not a character (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/go.go:98)"},
 	"usercommands/guild.go|<ansi fg=\"username\">%s</ansi> invites you to join <ansi fg=\"yellow-bold\">%s</ans":            {verdictCorrect, true, true, false, "a guild invite is sent privately to the invitee (actee); guild management has no room-facing component anywhere in this file."},
@@ -1247,7 +1246,7 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/picklock.go|":                                                                                   {verdictCorrect, true, false, true, "audit: lockpick breaks -- target is a lock (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/picklock.go:226)"},
 	"usercommands/put.go|You place <ansi fg=\"gold\">%d gold</ansi> into the <ansi fg=\"container\">%s</ansi>":    {verdictCorrect, true, false, true, "audit: places gold into a container -- target is a container (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/put.go:112)"},
 	"usercommands/rally.go|<ansi fg=\"cyan-bold\">You rally your allies with an inspiring shout that steadies":    {verdictCorrect, true, false, true, "audit: rally succeeds -- AoE buff, no single actee; members notified in the loop at :58 (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/rally.go:40)"},
-	"usercommands/rally.go|<ansi fg=\"red-bold\">Your layered voice looses a thunderous war cry in the same b":    {verdictGap, true, false, true, "audit: Resonant Larynx war-cry fold -- the fold loop applies `AddCondition`/`AddBuff(79)` with no `SendText`, while the main loop at ~:56-60 notifies each member (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/rally.go:72)"},
+	"usercommands/rally.go|<ansi fg=\"red-bold\">Your layered voice looses a thunderous warcry in the same br":    {verdictCorrect, true, false, true, "Resonant Larynx war-cry fold. Was verdictGap: the fold loop applied AddCondition/AddBuff(79) with no SendText, so party members were buffed in silence. FIXED in M2 (defect 3) -- the loop now sends each member warcry.go own member line. This event stays actor+observer because an AoE party buff has no single actee; the members are notified inside the loop, which this walk groups separately. Key reworded 2026-09-08: the literal said war cry, two words, where the rest of the game says warcry."},
 	"usercommands/read.go|You look at <ansi fg=\"item\">%s</ansi>...":                                             {verdictCorrect, true, false, true, "audit: reads a held item -- self-targeted (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/read.go:48)"},
 	"usercommands/remove.go|You remove your <ansi fg=\"item\">%s</ansi> and return it to your backpack.":          {verdictCorrect, true, false, true, "audit: removes an equipped item -- target is an item (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/remove.go:74)"},
 	"usercommands/renameself.go|The world ripples briefly — you are now known as <ansi fg=\"username\">":          {verdictCorrect, true, false, true, "audit: rename succeeds -- self-directed (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/renameself.go:89)"},
@@ -1256,7 +1255,7 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/report.go|You report: %s":                                                                       {verdictCorrect, true, false, true, "audit: reports vitals to the room -- broadcast with no specific target (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/report.go:86)"},
 	"usercommands/sell.go|You sell %d <ansi fg=\"itemname\">%s</ansi> for <ansi fg=\"gold\">%d gold</ansi>.":      {verdictCorrect, true, false, true, "audit: sells multiple items -- merchant is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/sell.go:105)"},
 	"usercommands/sell.go|You sell a <ansi fg=\"itemname\">%s</ansi> for <ansi fg=\"gold\">%d gold</ansi>.":       {verdictCorrect, true, false, true, "audit: sells a single item -- merchant is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/sell.go:100)"},
-	"usercommands/shoot.go|messaging.CategorySurpriseAttack, surpriseShotRevealedText":                            {verdictCorrect, true, true, false, "this walk's grouping merges three sequential, unrelated private lines in the same function (the surprise-reveal notice, the engaged-aim cue, and a defended target's shortage note) into one event, because none of the intervening ifs has an else or terminates, a known imprecision noted in the guard's header comment. Each piece is independently a private, targeted message with no room component by design; there is no narration defect here."},
+	"usercommands/shoot.go|messaging.CategorySystem, text":                                                        {verdictCorrect, true, true, false, "M2: the channel-defence shortage note, hoisted out of the target block by the SendTrio migration so the defender still reads it before the shot line. Actee-only mechanical feedback about their own spent resources; the actor viewpoint this walk pairs it with is the shooters separate shot line now sitting adjacent, not part of this event. No observer is correct -- the room cannot see a defender run short of stamina."},
 	"usercommands/show.go|You show the <ansi fg=\"item\">%s</ansi> to <ansi fg=\"mobname\">%s</ansi>.":            {verdictCorrect, true, false, true, "audit: shows an item to a mob -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/show.go:84)"},
 	"usercommands/skill.cast.go|cast_started":                                                                     {verdictCorrect, true, false, true, "audit: spell cast begins -- fires before any target is affected; the target is reached by the room line (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/skill.cast.go:387)"},
 	"usercommands/stand.go|You struggle to your feet!":                                                            {verdictCorrect, true, false, true, "audit: stands up from prone -- self-directed (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/stand.go:102)"},
@@ -1264,10 +1263,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/suicide.go|You are revived in a shower of magical sparks!":                                      {verdictCorrect, true, false, true, "audit: revive-on-death buff fires -- self-directed (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/suicide.go:46)"},
 	"usercommands/target.go|You shift your focus to <ansi fg=\\\"mobname\\\">%s</ansi>!":                          {verdictCorrect, true, false, true, "audit: uncontested target switch onto a mob -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/target.go:191)"},
 	"usercommands/taunt.go|messaging.CategorySystem, fmt.Sprintf(pullMsgs[util.Rand(len(pullMsgs))], target":      {verdictCorrect, true, false, true, "audit: taunt pulls mob aggro -- `AggroPulled` is only set when `target.MobInstanceId > 0`, so the actee is always a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/taunt.go:169)"},
-	"usercommands/throw.go|<ansi fg=\"cyan-bold\">The blast shatters %s's concentration -- its spell collapse":    {verdictCorrect, true, false, true, "audit: grenade interrupts a mob's cast -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/throw.go:352)"},
-	"usercommands/throw.go|<ansi fg=\"red-bold\">Your throw goes horribly wrong — the projectile detonates in":    {verdictCorrect, true, false, true, "audit: grenade fumbles and backfires -- self-directed backfire (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/throw.go:320)"},
-	"usercommands/throw.go|<ansi fg=\"yellow-bold\">You hurl the <ansi fg=\"itemname\">%s</ansi> into the fray!":  {verdictCorrect, true, false, true, "audit: hurls a grenade into a room of mobs -- AoE against mobs, no single actee (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/throw.go:284)"},
-	"usercommands/throw.go|messaging.CategoryDodge, string(triad.ToRoom), user.UserId":                            {verdictCorrect, true, false, true, "audit: grenade fully defended by a mob -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/throw.go:402)"},
 	"usercommands/unlock.go|You use a key to unlock the <ansi fg=\"container\">%s</ansi>.":                        {verdictCorrect, true, false, true, "audit: unlocks a container with a key -- target is an object (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/unlock.go:58)"},
 	"usercommands/unlock.go|You use a key to unlock the <ansi fg=\"exit\">%s</ansi> lock.":                        {verdictCorrect, true, false, true, "audit: unlocks an exit with a key -- target is an object (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/unlock.go:114)"},
 	"usercommands/unlock.go|You use your <ansi fg=\"item\">%s</ansi> to unlock the <ansi fg=\"container\">%s</an": {verdictCorrect, true, false, true, "audit: unlocks a container, keys it -- target is an object (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/unlock.go:80)"},
@@ -1364,5 +1359,257 @@ func TestNarrationSitesMatchViewpointAudit(t *testing.T) {
 			"Do not remove a stale entry just to make the test pass without "+
 			"checking first.",
 			len(stale), strings.Join(stale, "\n  "))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// M2 literal freeze
+//
+// The messaging arc's M2 slice rewrites the 23 files below onto
+// messaging.SendTrio. Their player-facing text is hand-rolled fmt.Sprintf
+// literals, NOT a data store, so M1's goldens under
+// internal/narration/testdata/stores/ do not cover a single line of it.
+//
+// This freezes the multiset of string literals in each file. A refactor that
+// drops or alters a STRING LITERAL changes the multiset and
+// fails here.
+//
+// IT IS ORDER-INSENSITIVE ON PURPOSE AND BY CONSEQUENCE: the literals are
+// sorted before hashing, so reordering a pool does NOT fail. That is fine for
+// these 23 files, whose pools are indexed by an independent util.Rand pick per
+// call. It would NOT be fine for the defence store, where pools pair BY INDEX
+// and a reorder is the exact shape of the bug PR #112 fixed -- which is another
+// reason those files are guarded by their golden instead.
+//
+// It says nothing about rendered output -- that is the honest
+// limit, and it is the same tradeoff M1 made for its Group C inventory.
+//
+// Import declarations are skipped, because the migration legitimately adds an
+// import to files that did not already have one.
+//
+// WHEN A FINGERPRINT LEGITIMATELY CHANGES (the seven output changes in the M2
+// spec's section 4), update it IN THE SAME COMMIT as the text change, so the
+// diff shows both together.
+// ---------------------------------------------------------------------------
+
+var m2FrozenFiles = map[string]string{
+	"internal/usercommands/bash.go":     "1d8d25c0ceac07fb5fc976e15c8a26acf0614a398f69438c9ec94bc253513759",
+	"internal/usercommands/drain.go":    "3a32f21ca0b34c14ef6cb625cd8b56263b6ef66ffece7038b362b494d2710257",
+	"internal/usercommands/gore.go":     "cda7cd477eacf9f2cdb8d5f90803d09930755a74d875bd20f8de42326bbca3b4",
+	"internal/usercommands/kick.go":     "f5dc3b8af7b4f702e3a8f7879b413d21d78b73d2c4a820088adfb322d57ca3ed",
+	"internal/usercommands/maul.go":     "2abb23ead58ccd3af940cab05d01462df4899982e91f3440dbe1510d9790fb5b",
+	"internal/usercommands/pounce.go":   "4cb8896a5627a3ea05cae952f4b48f1d4a7c73b8f8a4f0ab58b0adb8152b85d0",
+	"internal/usercommands/rake.go":     "c192d3cde4c80035226f2af63cceacbb98f3d6cc5c142a4685e6d4b14d31fb5a",
+	"internal/usercommands/throttle.go": "c93996b0c46bd28f59d3e79c3f83968762c8e458e0f3f81aa7d67c86736d9e34",
+	"internal/usercommands/trip.go":     "a72aba7fdbff9b09d84f27f419d0ef17b7b5eddd1586604b0515d4f6ac0023a2",
+	"internal/usercommands/grapple.go":  "8e64bb48750d09f9581c6b7a0a3c0ec9eadcd4befbe94d9553b25d8c2c452a85",
+	"internal/usercommands/shoot.go":    "d63942e7087292a898ce1730bcdf5b90f7c9dcaa08891a1a3af7ce4687d90376",
+	"internal/usercommands/throw.go":    "44fc7829103b0dea6a1ccdba8787ceafa42519f78dccb4659e3e38b74ca98851",
+	"internal/mobcommands/bash.go":      "fa5082a09245e01e30d5b967f687e443e0cedec587511234d5b0b41404146503",
+	"internal/mobcommands/charge.go":    "f95af1258f05d1c8bb49ee10c6f0fa2b71c8953a727e3a0aa6e126c43e90e3d7",
+	"internal/mobcommands/hamstring.go": "87ecd26e30f0324b9e552446bcc6797b074e1aafd0087043634a805cd090501b",
+	"internal/mobcommands/drain.go":     "e28eb92ae670bb746ae9009c14f4056984f8ca68230e9531c63d30348faff8eb",
+	"internal/mobcommands/gore.go":      "c9f3a5c218732ebdc1bdcd141736443c98d9fa8c0b08e6f4d6a4e1f687f4a270",
+	"internal/mobcommands/kick.go":      "622a3209b47a6ed5941a60900b57171083fd2116d6d7351e85a953dde45f073d",
+	"internal/mobcommands/maul.go":      "8cdcc16a2fa36a5f9cf05ed52d9ef7a385809bc06f418b25caad92166ed2cc6e",
+	"internal/mobcommands/pounce.go":    "4de98c9a45b40fb2a2dabd4dfb6033ebebe3573f3280e79bf46f7a1a9df7c866",
+	"internal/mobcommands/rake.go":      "94973b45a77e548bf5a085a7005ce3ab83916c9a5b9f0cb18906d3045a64e2d2",
+	"internal/mobcommands/throttle.go":  "caa10903bd759b2a0461a502a83fb0f59c2ebe80fe1eaeacfbba07f602886d0b",
+	"internal/mobcommands/trip.go":      "42f5206e6a08bccd4673067e31882b7a5147524c971dd0f31f0403a5086808bd",
+	"internal/mobcommands/grapple.go":   "7183a365181000f6ccec5b3500657ef0a758ed663aa8140e9487a2ffc9372df8",
+	"internal/mobcommands/shoot.go":     "7ec3cee39749e1a422778894adf9b43b1be66efaedffd4f1f7b09f0171fd53e1",
+}
+
+// m2LiteralFingerprint returns a stable hash of every string literal in the
+// file outside its import declarations.
+func m2LiteralFingerprint(path string) (string, error) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, path, nil, 0)
+	if err != nil {
+		return "", err
+	}
+	var lits []string
+	for _, decl := range file.Decls {
+		if gd, ok := decl.(*ast.GenDecl); ok && gd.Tok == token.IMPORT {
+			continue
+		}
+		ast.Inspect(decl, func(n ast.Node) bool {
+			bl, ok := n.(*ast.BasicLit)
+			if ok && bl.Kind == token.STRING {
+				lits = append(lits, bl.Value)
+			}
+			return true
+		})
+	}
+	sort.Strings(lits)
+	sum := sha256.Sum256([]byte(strings.Join(lits, "\x00")))
+	return hex.EncodeToString(sum[:]), nil
+}
+
+func TestM2LiteralsAreFrozen(t *testing.T) {
+	var drift []string
+	for path, want := range m2FrozenFiles {
+		got, err := m2LiteralFingerprint(path)
+		if err != nil {
+			t.Errorf("fingerprint %s (test must run from the repo root): %v", path, err)
+			continue
+		}
+		if want == "" {
+			drift = append(drift, path+"  RECORD: "+got)
+			continue
+		}
+		if got != want {
+			drift = append(drift, path+"\n    want "+want+"\n    got  "+got)
+		}
+	}
+	sort.Strings(drift)
+	if len(drift) > 0 {
+		t.Errorf("%d M2-frozen file(s) have a different set of string literals "+
+			"than recorded:\n  %s\n\n"+
+			"During the M2 migration this means text was lost or altered by a "+
+			"refactor that was supposed to move it unchanged -- find the "+
+			"dropped or edited literal rather than re-recording the hash. "+
+			"Re-record ONLY when the commit deliberately changes player-facing "+
+			"text (the seven output changes in the M2 spec's section 4), and "+
+			"do it in that same commit.",
+			len(drift), strings.Join(drift, "\n  "))
+	}
+}
+
+// TestM2FrozenFilesAllCarryText stops a vacuous entry being added to
+// m2FrozenFiles.
+//
+// WHY THIS EXISTS. The first draft of the freeze listed both
+// skill_move_defence.go files. Neither contains any player-facing text at all
+// -- every line they speak comes from the authored defence store via
+// combat.RenderChannelDefenceMessages -- so their only string literals are the
+// two `""` in `== ""` comparisons. Their fingerprints were IDENTICAL to each
+// other, and could not have moved no matter what the migration did to them.
+// The freeze silently claimed to protect two files it could not protect.
+//
+// Those two are covered instead by M1's store goldens, extended by PR #112
+// with 84 melee lines: internal/narration/testdata/stores/defense_messages.golden.
+//
+// A file whose text lives in a store does not belong in this list. This test
+// makes that a build failure rather than a thing someone notices later.
+func TestM2FrozenFilesAllCarryText(t *testing.T) {
+	var vacuous []string
+	for path := range m2FrozenFiles {
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			t.Fatalf("parse %s (test must run from the repo root): %v", path, err)
+		}
+		substantive := 0
+		for _, decl := range file.Decls {
+			if gd, ok := decl.(*ast.GenDecl); ok && gd.Tok == token.IMPORT {
+				continue
+			}
+			ast.Inspect(decl, func(n ast.Node) bool {
+				bl, ok := n.(*ast.BasicLit)
+				// len > 2 excludes `""` and backtick-empty: a quoted literal
+				// carries two delimiter characters of its own.
+				if ok && bl.Kind == token.STRING && len(bl.Value) > 2 {
+					substantive++
+				}
+				return true
+			})
+		}
+		if substantive == 0 {
+			vacuous = append(vacuous, path)
+		}
+	}
+	sort.Strings(vacuous)
+	if len(vacuous) > 0 {
+		t.Errorf("%d file(s) in m2FrozenFiles carry no string literal with any "+
+			"content, so their fingerprint cannot move and the freeze protects "+
+			"nothing:\n  %s\n\n"+
+			"Remove them. A file whose player-facing text comes from an authored "+
+			"store is guarded by that store's golden, not by this literal freeze.",
+			len(vacuous), strings.Join(vacuous, "\n  "))
+	}
+}
+
+// TestEveryTrioLiteralNamesAllThreeRoles is the enforcement behind
+// messaging.NoLine.
+//
+// A composite literal messaging.Trio{...} must name Actor, Actee AND Observer.
+// A role left out is indistinguishable from a role forgotten, and forgetting a
+// role is exactly how every defect in
+// docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md happened: a
+// duplicated code path copied the mechanical effect and dropped the narration
+// beside it. Write messaging.NoLine for a viewpoint that genuinely has nothing
+// to say, so a considered silence is visible as one.
+//
+// There is deliberately no exceptions list.
+func TestEveryTrioLiteralNamesAllThreeRoles(t *testing.T) {
+	roles := []string{"Actor", "Actee", "Observer"}
+	var bad []string
+
+	for _, root := range messagingSurfaceGoRoots {
+		fset := token.NewFileSet()
+		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			file, perr := parser.ParseFile(fset, path, nil, 0)
+			if perr != nil {
+				// A syntax error is the compiler's problem to report, not
+				// this test's.
+				return nil
+			}
+			ast.Inspect(file, func(n ast.Node) bool {
+				cl, ok := n.(*ast.CompositeLit)
+				if !ok {
+					return true
+				}
+				sel, ok := cl.Type.(*ast.SelectorExpr)
+				if !ok || sel.Sel.Name != "Trio" {
+					return true
+				}
+				if pkg, ok := sel.X.(*ast.Ident); !ok || pkg.Name != "messaging" {
+					return true
+				}
+				named := map[string]bool{}
+				for _, elt := range cl.Elts {
+					kv, ok := elt.(*ast.KeyValueExpr)
+					if !ok {
+						continue
+					}
+					if key, ok := kv.Key.(*ast.Ident); ok {
+						named[key.Name] = true
+					}
+				}
+				var missing []string
+				for _, role := range roles {
+					if !named[role] {
+						missing = append(missing, role)
+					}
+				}
+				if len(missing) > 0 {
+					bad = append(bad, filepath.ToSlash(path)+":"+
+						strconv.Itoa(fset.Position(cl.Pos()).Line)+
+						"  missing "+strings.Join(missing, ", "))
+				}
+				return true
+			})
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("walk %s: %v", root, err)
+		}
+	}
+
+	sort.Strings(bad)
+	if len(bad) > 0 {
+		t.Errorf("%d messaging.Trio literal(s) do not name all three roles:\n  %s\n\n"+
+			"Name every role. If a viewpoint genuinely has nothing to say, write "+
+			"messaging.NoLine for it, so a considered silence is visible as one. "+
+			"An omitted field is indistinguishable from a forgotten one, and that "+
+			"is how every defect in the M1 viewpoint audit happened.",
+			len(bad), strings.Join(bad, "\n  "))
 	}
 }

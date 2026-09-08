@@ -58,6 +58,20 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	dmgDesc := combat.GetDamageDescription(res.MoveResult.Damage, res.MoveResult.TargetMaxHP)
 
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: res.Target.UserId,
+		Room:    room,
+	}
+
 	if res.MoveResult.Hit {
 		if res.MoveResult.KnockedDown {
 			// Hit + knockdown: predator bears prey to the ground.
@@ -77,11 +91,11 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				`<ansi fg="username">%s</ansi> springs forward and bears <ansi fg="mobname">%s</ansi> down!`,
 				`<ansi fg="username">%s</ansi>'s pounce drives <ansi fg="mobname">%s</ansi> backward off their feet!`,
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(pounceMsgs[util.Rand(len(pounceMsgs))], targetName, dmgDesc))
-			if targetChar != nil {
-				targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(pounceTargetMsgs[util.Rand(len(pounceTargetMsgs))], user.Character.Name, dmgDesc))
-			}
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(pounceRoomMsgs[util.Rand(len(pounceRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(pounceMsgs[util.Rand(len(pounceMsgs))], targetName, dmgDesc)),
+				Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(pounceTargetMsgs[util.Rand(len(pounceTargetMsgs))], user.Character.Name, dmgDesc)),
+				Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(pounceRoomMsgs[util.Rand(len(pounceRoomMsgs))], user.Character.Name, targetName)),
+			}, aud)
 		} else {
 			// Hit but no knockdown: landed but target kept their feet.
 			pounceMsgs := []string{
@@ -99,11 +113,11 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				`<ansi fg="username">%s</ansi> springs at <ansi fg="mobname">%s</ansi> and crashes into them!`,
 				`<ansi fg="username">%s</ansi>'s pounce drives hard into <ansi fg="mobname">%s</ansi>!`,
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(pounceMsgs[util.Rand(len(pounceMsgs))], targetName, dmgDesc))
-			if targetChar != nil {
-				targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(pounceTargetMsgs[util.Rand(len(pounceTargetMsgs))], user.Character.Name, dmgDesc))
-			}
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(pounceRoomMsgs[util.Rand(len(pounceRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(pounceMsgs[util.Rand(len(pounceMsgs))], targetName, dmgDesc)),
+				Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(pounceTargetMsgs[util.Rand(len(pounceTargetMsgs))], user.Character.Name, dmgDesc)),
+				Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(pounceRoomMsgs[util.Rand(len(pounceRoomMsgs))], user.Character.Name, targetName)),
+			}, aud)
 		}
 	} else if res.MoveResult.Damage > 0 {
 		partialMsgs := []string{
@@ -118,14 +132,26 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			`<ansi fg="username">%s</ansi> leaps at <ansi fg="mobname">%s</ansi>, who mostly dodges but still gets clipped!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "pounce")
+		observer := messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName))
+		if defended {
+			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
+			sendMoveDefenceShortage(targetChar, defence)
 		}
-		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "pounce", messaging.CategoryHitNaturalSharp, true) {
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-		}
-	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "pounce", messaging.CategoryHitNaturalSharp, false) {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: observer,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "pounce"); defended {
+		// A defence stopped it outright: all three lines come from the triad.
+		sendMoveDefenceShortage(targetChar, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToAttacker),
+			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
+		}, aud)
+	} else {
 		missMsgs := []string{
 			`Your leap at <ansi fg="mobname">%s</ansi> misses as they sidestep!`,
 			`You spring at <ansi fg="mobname">%s</ansi> but they dodge your pounce!`,
@@ -139,11 +165,11 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			`<ansi fg="username">%s</ansi> leaps at <ansi fg="mobname">%s</ansi>, but misses!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name))
-		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name)),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
