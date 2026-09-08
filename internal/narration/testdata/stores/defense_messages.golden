@@ -6,6 +6,14 @@
 # RenderDefenseMessage has no picker param (util.Rand only) -- pinned via indexOverride=0,
 # the fresh-SequencePicker-first-pick equivalent for this seam.
 
+# ALSO covers the MELEE seam (internal/combat sendDefenseMessages), which does its own
+# zScore banding via items.GetDefenseMessage and used to pick each of the 3 roles with an
+# INDEPENDENT MessageOptions.Get() call -- three unrelated random indices describing three
+# different events. That bug shipped invisibly because this snapshot only ever exercised
+# RenderDefenseMessage, never GetDefenseMessage. The melee| rows below freeze
+# GetDefenseMessage(...).RenderTriad(...) (a fresh SequencePicker per tuple, so index 0 every
+# time) so a regression back to three independent picks shows up here again.
+
 block|weak|todefender => <ansi fg="defense-good">You barely block <ansi fg="user">Attacker</ansi>'s attack!</ansi>
 block|weak|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely blocks your attack!</ansi>
 block|weak|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely blocks <ansi fg="user">Attacker</ansi>'s attack.</ansi>
@@ -92,3 +100,91 @@ quell|heavy|toroom => <ansi fg="combat">Defender takes no damage from Attacker's
 nonexistent-defense-type|normal|todefender => ""
 nonexistent-defense-type|normal|toattacker => ""
 nonexistent-defense-type|normal|toroom => ""
+
+# MELEE SEAM: items.GetDefenseMessage(type, zScore).RenderTriad(...), fresh SequencePicker per tuple
+melee|block|weak|todefender => <ansi fg="defense-good">You barely block <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+melee|block|weak|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely blocks your attack!</ansi>
+melee|block|weak|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely blocks <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+melee|block|normal|todefender => <ansi fg="defense-good">You block <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+melee|block|normal|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> blocks your attack!</ansi>
+melee|block|normal|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> blocks <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+melee|block|heavy|todefender => <ansi fg="defense-good">You effortlessly block <ansi fg="user">Attacker</ansi>'s feeble attack!</ansi>
+melee|block|heavy|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> effortlessly blocks your feeble attack!</ansi>
+melee|block|heavy|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly blocks the feeble attack.</ansi>
+melee|counter-defy|weak|todefender => <ansi fg="defense-good">You twist Attacker's jeer around, but it fails to bite.</ansi>
+melee|counter-defy|weak|toattacker => <ansi fg="attack-bad">Defender twists your jeer around, but it fails to bite.</ansi>
+melee|counter-defy|weak|toroom => <ansi fg="combat">Defender twists Attacker's jeer back around, but it fails to bite.</ansi>
+melee|counter-defy|normal|todefender => <ansi fg="defense-good">You twist the jeer around and send it home, and Attacker flinches.</ansi>
+melee|counter-defy|normal|toattacker => <ansi fg="attack-bad">Defender twists your jeer around and sends it home, and you flinch.</ansi>
+melee|counter-defy|normal|toroom => <ansi fg="combat">Defender twists the jeer around and sends it home, and Attacker flinches.</ansi>
+melee|counter-defy|heavy|todefender => <ansi fg="defense-good">You turn the taunt inside out, and Attacker is left speechless.</ansi>
+melee|counter-defy|heavy|toattacker => <ansi fg="attack-bad">Defender turns your taunt inside out, and you are left speechless.</ansi>
+melee|counter-defy|heavy|toroom => <ansi fg="combat">Defender turns the taunt inside out, and Attacker is left speechless.</ansi>
+melee|counter-melee|weak|todefender => <ansi fg="defense-good">You lash out at the opening, but Attacker recovers in time.</ansi>
+melee|counter-melee|weak|toattacker => <ansi fg="attack-bad">Defender lashes out at your opening, but you recover in time.</ansi>
+melee|counter-melee|weak|toroom => <ansi fg="combat">Defender lashes out at Attacker, who recovers in time.</ansi>
+melee|counter-melee|normal|todefender => <ansi fg="defense-good">You step into the opening and land a solid blow on Attacker.</ansi>
+melee|counter-melee|normal|toattacker => <ansi fg="attack-bad">Defender steps into the opening and lands a solid blow on you.</ansi>
+melee|counter-melee|normal|toroom => <ansi fg="combat">Defender steps into the opening and lands a solid blow on Attacker.</ansi>
+melee|counter-melee|heavy|todefender => <ansi fg="defense-good">You slip inside Attacker's guard and strike with all your weight.</ansi>
+melee|counter-melee|heavy|toattacker => <ansi fg="attack-bad">Defender slips inside your guard and strikes with all their weight.</ansi>
+melee|counter-melee|heavy|toroom => <ansi fg="combat">Defender slips inside Attacker's guard and strikes with full weight.</ansi>
+melee|counter-quell|weak|todefender => <ansi fg="defense-good">You ground the working and lunge in, but Attacker wards your blow.</ansi>
+melee|counter-quell|weak|toattacker => <ansi fg="attack-bad">Defender grounds your working and lunges in, but you ward the blow.</ansi>
+melee|counter-quell|weak|toroom => <ansi fg="combat">Defender grounds the working and lunges at Attacker, who wards the blow.</ansi>
+melee|counter-quell|normal|todefender => <ansi fg="defense-good">You ground the last of the working and strike Attacker through the gap.</ansi>
+melee|counter-quell|normal|toattacker => <ansi fg="attack-bad">Defender grounds the last of your working and strikes you through the gap.</ansi>
+melee|counter-quell|normal|toroom => <ansi fg="combat">Defender grounds the last of the working and strikes Attacker.</ansi>
+melee|counter-quell|heavy|todefender => <ansi fg="defense-good">You put the working down and crash into Attacker at full force.</ansi>
+melee|counter-quell|heavy|toattacker => <ansi fg="attack-bad">Defender puts your working down and crashes into you at full force.</ansi>
+melee|counter-quell|heavy|toroom => <ansi fg="combat">Defender puts the working down and crashes into Attacker.</ansi>
+melee|counter-ranged|weak|todefender => <ansi fg="defense-good">You rush Attacker behind the wasted shot, but they hold you off.</ansi>
+melee|counter-ranged|weak|toattacker => <ansi fg="attack-bad">Defender rushes you behind your wasted shot, but you hold them off.</ansi>
+melee|counter-ranged|weak|toroom => <ansi fg="combat">Defender rushes Attacker behind the wasted shot, but is held off.</ansi>
+melee|counter-ranged|normal|todefender => <ansi fg="defense-good">You close the distance behind the wasted shot and strike Attacker.</ansi>
+melee|counter-ranged|normal|toattacker => <ansi fg="attack-bad">Defender closes the distance behind your wasted shot and strikes you.</ansi>
+melee|counter-ranged|normal|toroom => <ansi fg="combat">Defender closes on Attacker behind the wasted shot and strikes.</ansi>
+melee|counter-ranged|heavy|todefender => <ansi fg="defense-good">You are on Attacker before the shot's echo fades, striking hard.</ansi>
+melee|counter-ranged|heavy|toattacker => <ansi fg="attack-bad">Defender is on you before the shot's echo fades, striking hard.</ansi>
+melee|counter-ranged|heavy|toroom => <ansi fg="combat">Defender is on Attacker before the shot's echo fades.</ansi>
+melee|defy|weak|todefender => <ansi fg="defense-good">You defy Attacker's Strike, taking some of its sting.</ansi>
+melee|defy|weak|toattacker => <ansi fg="attack-bad">Defender defies your Strike, taking some of its sting.</ansi>
+melee|defy|weak|toroom => <ansi fg="combat">Defender defies Attacker's Strike, taking some of its sting.</ansi>
+melee|defy|normal|todefender => <ansi fg="defense-good">You defy Attacker's Strike, stripping away most of its force.</ansi>
+melee|defy|normal|toattacker => <ansi fg="attack-bad">Defender defies your Strike, stripping away most of its force.</ansi>
+melee|defy|normal|toroom => <ansi fg="combat">Defender defies Attacker's Strike, stripping away most of its force.</ansi>
+melee|defy|heavy|todefender => <ansi fg="defense-good">You take no conviction harm from Attacker's Strike, though it still draws your attention.</ansi>
+melee|defy|heavy|toattacker => <ansi fg="attack-bad">Defender takes no conviction harm from your Strike, though it still draws their attention.</ansi>
+melee|defy|heavy|toroom => <ansi fg="combat">Defender takes no conviction harm from Attacker's Strike, though it still draws their attention.</ansi>
+melee|dodge|weak|todefender => <ansi fg="defense-good">You barely dodge <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+melee|dodge|weak|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely dodges your attack!</ansi>
+melee|dodge|weak|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely dodges <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+melee|dodge|normal|todefender => <ansi fg="defense-good">You dodge <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+melee|dodge|normal|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> dodges your attack!</ansi>
+melee|dodge|normal|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> dodges <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+melee|dodge|heavy|todefender => <ansi fg="defense-good">You sidestep <ansi fg="user">Attacker</ansi>'s clumsy <ansi fg="item">Strike</ansi> with ease!</ansi>
+melee|dodge|heavy|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> sidesteps your clumsy <ansi fg="item">Strike</ansi> with ease!</ansi>
+melee|dodge|heavy|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> sidesteps the clumsy <ansi fg="item">Strike</ansi> with ease.</ansi>
+melee|parry|weak|todefender => <ansi fg="defense-good">You barely parry <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+melee|parry|weak|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely parries your attack!</ansi>
+melee|parry|weak|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely parries <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+melee|parry|normal|todefender => <ansi fg="defense-good">You parry <ansi fg="user">Attacker</ansi>'s attack!</ansi>
+melee|parry|normal|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> parries your attack!</ansi>
+melee|parry|normal|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> parries <ansi fg="user">Attacker</ansi>'s attack.</ansi>
+melee|parry|heavy|todefender => <ansi fg="defense-good">You effortlessly parry <ansi fg="user">Attacker</ansi>'s clumsy attack!</ansi>
+melee|parry|heavy|toattacker => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> effortlessly parries your clumsy attack!</ansi>
+melee|parry|heavy|toroom => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly parries the clumsy attack.</ansi>
+melee|quell|weak|todefender => <ansi fg="defense-good">You catch the edge of Attacker's Strike, dulling its force.</ansi>
+melee|quell|weak|toattacker => <ansi fg="attack-bad">Defender catches the edge of your Strike, dulling its force.</ansi>
+melee|quell|weak|toroom => <ansi fg="combat">Defender catches the edge of Attacker's Strike.</ansi>
+melee|quell|normal|todefender => <ansi fg="defense-good">You quell the heart of Attacker's Strike, though a fading echo reaches you.</ansi>
+melee|quell|normal|toattacker => <ansi fg="attack-bad">Defender quells the heart of your Strike, though an echo still lands.</ansi>
+melee|quell|normal|toroom => <ansi fg="combat">Defender quells the heart of Attacker's Strike, though an echo still lands.</ansi>
+melee|quell|heavy|todefender => <ansi fg="defense-good">You take no damage from Attacker's Strike, though its momentum still reaches you.</ansi>
+melee|quell|heavy|toattacker => <ansi fg="attack-bad">Defender takes no damage from your Strike, though its momentum still reaches them.</ansi>
+melee|quell|heavy|toroom => <ansi fg="combat">Defender takes no damage from Attacker's Strike, though its momentum still reaches them.</ansi>
+
+# EMPTY CASE (melee seam): unregistered defense type -> empty triad
+melee|nonexistent-defense-type|normal|todefender => ""
+melee|nonexistent-defense-type|normal|toattacker => ""
+melee|nonexistent-defense-type|normal|toroom => ""

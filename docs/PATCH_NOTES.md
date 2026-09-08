@@ -1,5 +1,18 @@
 # DOGMud Patch Notes
 
+## 2026-09-07: A block or dodge now tells one story, not three
+
+When you blocked, dodged, or parried a blow in melee, the fight text used to
+describe the moment three different ways at once. You might read that you
+barely blocked the strike, while the attacker saw you brace and stagger
+under it, and anyone watching in the room saw something else again. It read
+like three separate close calls instead of one.
+
+That is fixed. Whichever way a block, dodge, or parry plays out, everyone
+who sees it now reads the same moment. You, the person you defended
+against, and anyone standing nearby all get matching descriptions of the
+same save.
+
 ## 2026-09-07: Ranged weapons ready themselves now
 
 Shooting used to take two commands. You fired, the weapon went empty, and you

@@ -1341,17 +1341,16 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		items.TokenMomentum: targetChar.CalculateMomentumString(),
 	}
 
-	// If we have custom defense messages, use them
-	if len(defenseMsgs.Together.ToDefender) > 0 {
-		toDefenderMsg := defenseMsgs.Together.ToDefender.Get()
-		toAttackerMsg := defenseMsgs.Together.ToAttacker.Get()
-		toRoomMsg := defenseMsgs.Together.ToRoom.Get()
-
-		for token, value := range tokenReplacements {
-			toDefenderMsg = toDefenderMsg.SetTokenValue(token, value)
-			toAttackerMsg = toAttackerMsg.SetTokenValue(token, value)
-			toRoomMsg = toRoomMsg.SetTokenValue(token, value)
-		}
+	// If we have custom defense messages, use them. RenderTriad picks ONE
+	// variant index and uses it for all three roles -- the authored pools
+	// pair up BY INDEX (variant N of todefender/toattacker/toroom describe
+	// the SAME event), so three independent picks (the old .Get() x3) could
+	// narrate three different events to the three audiences.
+	triad := defenseMsgs.RenderTriad(tokenReplacements, nil)
+	if len(triad.ToDefender) > 0 {
+		toDefenderMsg := triad.ToDefender
+		toAttackerMsg := triad.ToAttacker
+		toRoomMsg := triad.ToRoom
 
 		defCat := CategoryForDefenseVerb(defenseVerb)
 		if !partial {
