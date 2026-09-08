@@ -348,6 +348,13 @@ func buildDefenseMessagesGolden(t *testing.T) string {
 	fmt.Fprintf(&b, "# come from ONE coordinated RenderDefenseMessage call (same index across the triad).\n")
 	fmt.Fprintf(&b, "# RenderDefenseMessage has no picker param (util.Rand only) -- pinned via indexOverride=0,\n")
 	fmt.Fprintf(&b, "# the fresh-SequencePicker-first-pick equivalent for this seam.\n\n")
+	fmt.Fprintf(&b, "# ALSO covers the MELEE seam (internal/combat sendDefenseMessages), which does its own\n")
+	fmt.Fprintf(&b, "# zScore banding via items.GetDefenseMessage and used to pick each of the 3 roles with an\n")
+	fmt.Fprintf(&b, "# INDEPENDENT MessageOptions.Get() call -- three unrelated random indices describing three\n")
+	fmt.Fprintf(&b, "# different events. That bug shipped invisibly because this snapshot only ever exercised\n")
+	fmt.Fprintf(&b, "# RenderDefenseMessage, never GetDefenseMessage. The melee| rows below freeze\n")
+	fmt.Fprintf(&b, "# GetDefenseMessage(...).RenderTriad(...) (a fresh SequencePicker per tuple, so index 0 every\n")
+	fmt.Fprintf(&b, "# time) so a regression back to three independent picks shows up here again.\n\n")
 
 	bands := []struct {
 		name   string
@@ -374,6 +381,37 @@ func buildDefenseMessagesGolden(t *testing.T) string {
 	fmt.Fprintf(&b, "nonexistent-defense-type|normal|todefender => %q\n", string(emptyTriad.ToDefender))
 	fmt.Fprintf(&b, "nonexistent-defense-type|normal|toattacker => %q\n", string(emptyTriad.ToAttacker))
 	fmt.Fprintf(&b, "nonexistent-defense-type|normal|toroom => %q\n", string(emptyTriad.ToRoom))
+
+	// MELEE SEAM: GetDefenseMessage's own zScore banding (>=2.0 heavy, >=0.5
+	// normal, else weak -- see internal/combat/combat_helpers.go), feeding the
+	// same RenderTriad coordination step. A fresh SequencePicker per tuple
+	// always yields index 0 on its first call, same convention as the rest of
+	// this file.
+	fmt.Fprintf(&b, "\n# MELEE SEAM: items.GetDefenseMessage(type, zScore).RenderTriad(...), fresh SequencePicker per tuple\n")
+	meleeBands := []struct {
+		name   string
+		zScore float64
+	}{
+		{"weak", 0.0},
+		{"normal", 0.6},
+		{"heavy", 2.5},
+	}
+	for _, dt := range types {
+		for _, band := range meleeBands {
+			options := items.GetDefenseMessage(items.DefenseType(dt), band.zScore)
+			triad := options.RenderTriad(tokenStandins, narration.SequencePicker())
+			fmt.Fprintf(&b, "melee|%s|%s|todefender => %s\n", dt, band.name, substituteTokens(string(triad.ToDefender)))
+			fmt.Fprintf(&b, "melee|%s|%s|toattacker => %s\n", dt, band.name, substituteTokens(string(triad.ToAttacker)))
+			fmt.Fprintf(&b, "melee|%s|%s|toroom => %s\n", dt, band.name, substituteTokens(string(triad.ToRoom)))
+		}
+	}
+
+	// EMPTY CASE (melee seam): an unregistered defense type.
+	fmt.Fprintf(&b, "\n# EMPTY CASE (melee seam): unregistered defense type -> empty triad\n")
+	emptyMeleeTriad := items.GetDefenseMessage(items.DefenseType("nonexistent-defense-type"), 0.6).RenderTriad(tokenStandins, narration.SequencePicker())
+	fmt.Fprintf(&b, "melee|nonexistent-defense-type|normal|todefender => %q\n", string(emptyMeleeTriad.ToDefender))
+	fmt.Fprintf(&b, "melee|nonexistent-defense-type|normal|toattacker => %q\n", string(emptyMeleeTriad.ToAttacker))
+	fmt.Fprintf(&b, "melee|nonexistent-defense-type|normal|toroom => %q\n", string(emptyMeleeTriad.ToRoom))
 
 	return b.String()
 }

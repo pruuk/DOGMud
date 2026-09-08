@@ -63,10 +63,10 @@ evidence that the arc fixes a real failure mode rather than tidying style.
 
 ## The pattern that is already right
 
-Against those five, roughly forty sites across eight files already implement the
-full trio correctly and identically, the special-move verbs:
+Against those five, **ten** special-move verbs already implement the full trio
+correctly and identically:
 
-`bash` · `drain` · `kick` · `maul` · `throttle` · `pounce` · `rake` · `trip` · `grapple`
+`bash` · `drain` · `gore` · `kick` · `maul` · `pounce` · `rake` · `throttle` · `trip` · `grapple`
 
 Every one has the same shape:
 
@@ -89,7 +89,20 @@ without conferring, which is a good sign the model holds.
 
 **M2 is extracting this pattern, not inventing one.** The only drift is the
 variable name: `bash.go` calls it `targetUser`, the rest call it `targetChar`.
-The picker should settle on one.
+The core should settle on one.
+
+### The other two special-move verbs do NOT share it
+
+The arc spec calls these "one pattern copied twelve times". It is copied ten
+times. The other two named special-move verbs differ, and M2 must plan for them
+separately rather than assuming a uniform sweep:
+
+- **`shoot.go`** does emit the trio, but names its actee `p` (26 `user.SendText`,
+  5 `p.SendText`). It is a third instance of the scanner's variable-name
+  blindness, which is why it never appeared among the 247 candidates.
+- **`throw.go`** has no actee at all: 17 `user.SendText` and nothing else. That
+  is correct rather than broken, because throw is an area effect against mobs,
+  and mobs have no client. It has no actee slot for the core to fill.
 
 ## Confirmed defects
 

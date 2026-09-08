@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
 var (
@@ -117,23 +117,43 @@ func RenderDefenseMessage(defenseType DefenseType, defensiveCrit bool, normalize
 		return DefenseMessageTriad{}
 	}
 	options, ok := group.Options[intensity]
-	if !ok || len(options.Together.ToDefender) == 0 ||
-		len(options.Together.ToDefender) != len(options.Together.ToAttacker) ||
-		len(options.Together.ToDefender) != len(options.Together.ToRoom) {
+	if !ok {
 		return DefenseMessageTriad{}
 	}
 
-	index := util.Rand(len(options.Together.ToDefender))
+	return options.RenderTriad(tokenReplacements, nil, indexOverride...)
+}
+
+// RenderTriad renders one coordinated defender/attacker/room triad from an
+// already-selected band. ALL THREE ROLES COME FROM THE SAME VARIANT INDEX:
+// the authored pools pair up by index, so picking per role produces three
+// descriptions of three different events.
+//
+// A nil picker means production behaviour (narration.DefaultPicker).
+func (o DefenseOptions) RenderTriad(tokenReplacements map[TokenName]string, pick narration.Picker, indexOverride ...int) DefenseMessageTriad {
+	if pick == nil {
+		pick = narration.DefaultPicker
+	}
+
+	if len(o.Together.ToDefender) == 0 ||
+		len(o.Together.ToDefender) != len(o.Together.ToAttacker) ||
+		len(o.Together.ToDefender) != len(o.Together.ToRoom) {
+		return DefenseMessageTriad{}
+	}
+
+	n := len(o.Together.ToDefender)
+	index := pick(n)
 	if len(indexOverride) > 0 {
-		index = indexOverride[0] % len(options.Together.ToDefender)
+		index = indexOverride[0] % n
 		if index < 0 {
-			index += len(options.Together.ToDefender)
+			index += n
 		}
 	}
+
 	triad := DefenseMessageTriad{
-		ToDefender: options.Together.ToDefender[index],
-		ToAttacker: options.Together.ToAttacker[index],
-		ToRoom:     options.Together.ToRoom[index],
+		ToDefender: o.Together.ToDefender[index],
+		ToAttacker: o.Together.ToAttacker[index],
+		ToRoom:     o.Together.ToRoom[index],
 	}
 	for token, value := range tokenReplacements {
 		triad.ToDefender = triad.ToDefender.SetTokenValue(token, value)

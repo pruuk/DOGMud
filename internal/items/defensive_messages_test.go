@@ -1,8 +1,11 @@
 package items
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
 func validDefenseMessageGroup() *DefenseMessageGroup {
@@ -111,5 +114,63 @@ func TestDefenseMessageRenderReplacesTokensAfterCoordinatedSelection(t *testing.
 	}, 2)
 	if triad.ToDefender != "Selka|Rurik|Mind Fog" || triad.ToAttacker != "Rurik|Selka|Mind Fog" || triad.ToRoom != "Mind Fog|Rurik|Selka" {
 		t.Fatalf("token replacement mismatch: %+v", triad)
+	}
+}
+
+// ---------------------------------------------------------------------
+// RenderTriad: the coordinated-render step extracted so both defence paths
+// (RenderDefenseMessage's band-selecting wrapper AND the melee path in
+// internal/combat, which does its own zScore banding via GetDefenseMessage)
+// share ONE place that turns an already-selected band into a coherent triad.
+// ---------------------------------------------------------------------
+
+// TestRenderTriadUsesSameIndexAcrossAllThreeRoles is the regression test for
+// the melee-narration coherence bug: the authored pools pair up BY INDEX
+// (variant N of todefender/toattacker/toroom describe the SAME event), so
+// RenderTriad must pick exactly one index and use it for all three roles.
+// Walking a SequencePicker across more than one full lap of the pool proves
+// this holds for every index, not just index 0.
+func TestRenderTriadUsesSameIndexAcrossAllThreeRoles(t *testing.T) {
+	group := validDefenseMessageGroup()
+	options := group.Options[Weak]
+
+	n := len(options.Together.ToDefender)
+	picker := narration.SequencePicker()
+	for i := 0; i < n*2; i++ {
+		triad := options.RenderTriad(map[TokenName]string{}, picker)
+		wantIdx := i % n
+		wantDef := ItemMessage(fmt.Sprintf("weak-def-%d", wantIdx))
+		wantAtk := ItemMessage(fmt.Sprintf("weak-atk-%d", wantIdx))
+		wantRoom := ItemMessage(fmt.Sprintf("weak-room-%d", wantIdx))
+		if triad.ToDefender != wantDef || triad.ToAttacker != wantAtk || triad.ToRoom != wantRoom {
+			t.Fatalf("iteration %d: got defender=%q attacker=%q room=%q, want all three at index %d",
+				i, triad.ToDefender, triad.ToAttacker, triad.ToRoom, wantIdx)
+		}
+	}
+}
+
+// TestRenderTriadEmptyOnMismatchedPoolLengths pins the same invariant guard
+// RenderDefenseMessage already enforced: unequal-length audience pools cannot
+// be coordinated by index, so RenderTriad must refuse to render rather than
+// silently pairing mismatched variants.
+func TestRenderTriadEmptyOnMismatchedPoolLengths(t *testing.T) {
+	group := validDefenseMessageGroup()
+	options := group.Options[Weak]
+	options.Together.ToRoom = append(options.Together.ToRoom, "weak-room-extra")
+
+	triad := options.RenderTriad(map[TokenName]string{}, nil)
+	if triad != (DefenseMessageTriad{}) {
+		t.Fatalf("expected empty triad for mismatched pool lengths, got %+v", triad)
+	}
+}
+
+// TestRenderTriadEmptyWhenToDefenderEmpty mirrors RenderDefenseMessage's other
+// guard: an empty ToDefender pool (e.g. a band with no authored data) must not
+// render anything, even if ToAttacker/ToRoom happen to be non-empty.
+func TestRenderTriadEmptyWhenToDefenderEmpty(t *testing.T) {
+	options := DefenseOptions{}
+	triad := options.RenderTriad(map[TokenName]string{}, nil)
+	if triad != (DefenseMessageTriad{}) {
+		t.Fatalf("expected empty triad for empty ToDefender pool, got %+v", triad)
 	}
 }
