@@ -40,6 +40,7 @@ internal/mobcommands/drain.go | observer | messaging~CategoryHitNaturalSharp | d
 internal/mobcommands/drain.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> plunges into <ansi fg="username">%s</ansi> and leeches their vitality!`~mobName~target~Name
 internal/mobcommands/drain.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> reaches for <ansi fg="username">%s</ansi> hungrily, but misses!`~mobName~target~Name
 internal/mobcommands/drain.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> reaches for <ansi fg="username">%s</ansi> hungrily, who slips mostly free but still gets caught!`~mobName~target~Name
+internal/mobcommands/gore.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryHitNaturalSharp~defence~ToDefender
 internal/mobcommands/gore.go | actee | messaging~CategoryHitNaturalSharp | `Something charges at you, but you sidestep!`
 internal/mobcommands/gore.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges at you, but you sidestep the gore!`~mobName
 internal/mobcommands/gore.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges you and you sidestep most of it, but the horns still catch you! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
@@ -48,6 +49,8 @@ internal/mobcommands/gore.go | actee | messaging~CategoryHitNaturalSharp | fmt~S
 internal/mobcommands/gore.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something charges into you with bone-jarring force, hurling you to the ground! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/gore.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something charges you and you sidestep most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/gore.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something drives into you with a powerful charge! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/gore.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/mobcommands/gore.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/mobcommands/gore.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who mostly dodges but still gets grazed by the horns!`~mobName~target~Name
 internal/mobcommands/gore.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/gore.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges into <ansi fg="username">%s</ansi> and hurls them to the ground!`~mobName~target~Name

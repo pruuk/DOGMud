@@ -49,56 +49,98 @@ func Gore(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 	canSee := targetUser == nil || canSeeInDark(targetUser, room)
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetUser != nil {
+		acteeRecipient = targetUser
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
 	if result.Hit {
 		if result.KnockedDown {
 			// Hit + knockdown: horned charge tosses target off their feet.
+			downActee := messaging.NoLine
 			if targetUser != nil {
 				if canSee {
-					targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lowers its head and charges into you, driving you to the ground! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+					downActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lowers its head and charges into you, driving you to the ground! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 				} else {
-					targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something charges into you with bone-jarring force, hurling you to the ground! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+					downActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something charges into you with bone-jarring force, hurling you to the ground! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges into <ansi fg="username">%s</ansi> and hurls them to the ground!`, mobName, target.Name),
-				target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: downActee,
+				Observer: messaging.Say(messaging.CategoryHitNaturalSharp,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges into <ansi fg="username">%s</ansi> and hurls them to the ground!`, mobName, target.Name)),
+			}, aud)
 		} else {
 			// Hit but no knockdown: the charge connects but target stays up.
+			hitActee := messaging.NoLine
 			if targetUser != nil {
 				if canSee {
-					targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drives its horns into you with a powerful charge! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+					hitActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drives its horns into you with a powerful charge! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 				} else {
-					targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something drives into you with a powerful charge! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+					hitActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something drives into you with a powerful charge! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drives its horns into <ansi fg="username">%s</ansi>!`, mobName, target.Name),
-				target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: hitActee,
+				Observer: messaging.Say(messaging.CategoryHitNaturalSharp,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drives its horns into <ansi fg="username">%s</ansi>!`, mobName, target.Name)),
+			}, aud)
 		}
 	} else if result.Damage > 0 {
+		partialActee := messaging.NoLine
 		if targetUser != nil {
 			if canSee {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges you and you sidestep most of it, but the horns still catch you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges you and you sidestep most of it, but the horns still catch you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 			} else {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something charges you and you sidestep most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something charges you and you sidestep most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "goring charge", messaging.CategoryHitNaturalSharp, true) {
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who mostly dodges but still gets grazed by the horns!`, mobName, target.Name),
-				target.UserId)
+		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "goring charge")
+		partialObserver := messaging.Say(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who mostly dodges but still gets grazed by the horns!`, mobName, target.Name))
+		if defended {
+			partialObserver = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
+			sendMoveDefenceShortage(targetUser, defence)
 		}
-	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "goring charge", messaging.CategoryHitNaturalSharp, false) {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    partialActee,
+			Observer: partialObserver,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "goring charge"); defended {
+		// A defence stopped it outright: the defender's line and the room line
+		// both come from the triad.
+		sendMoveDefenceShortage(targetUser, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    acteeDefenceLine(targetUser, room, messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
+		}, aud)
+	} else {
+		missActee := messaging.NoLine
 		if targetUser != nil {
 			if canSee {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at you, but you sidestep the gore!`, mobName))
+				missActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at you, but you sidestep the gore!`, mobName))
 			} else {
-				targetUser.SendText(messaging.CategoryHitNaturalSharp, `Something charges at you, but you sidestep!`)
+				missActee = messaging.Say(messaging.CategoryHitNaturalSharp, `Something charges at you, but you sidestep!`)
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, but misses!`, mobName, target.Name),
-			target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: missActee,
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, but misses!`, mobName, target.Name)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
