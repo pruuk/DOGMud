@@ -1086,6 +1086,33 @@ Create `docs/superpowers/audits/2026-09-09-phase-2-closing.md` containing:
 - Anything Phase 3 must pick up: the four self-contradictory or stale memory
   files, MEMORY.md's Sable miscitation and its AI-port contradiction, and the
   homeless CP-economy material from `reference-stat-progression-faucet-map`.
+- **CLAUDE.md's own text was wrong in four places**, found while writing the
+  replacements. This is a third defect class, distinct from a memory file
+  contradicting itself and from a memory file going stale: the always-loaded
+  project instructions themselves were inaccurate.
+
+  1. **Two phantom functions.** The Caster Weapon Types section named
+     `calcSpellDamage()` and `calcMobSpellDamage()` as where
+     `spell_damage_multiplier` is applied. Neither exists. The real function is
+     `calcSpellDamageForCharacter` at
+     `internal/hooks/combat_shared_helpers.go:35`.
+  2. **Go defaults quoted as live values.** The Equipment Slots section gave
+     Extra Arms penalties as charisma -28/-42/-56/-70 and aggro
+     1.0/1.5/2.0/2.5x. Those derive from the Go defaults
+     (`MutationLevel2/3/4Multiplier` 1.5/2.0/2.5,
+     `config.balance.progression.go:198-201`). Shipped `config.yaml:1580-1582`
+     has 1.6/2.5/4.0, giving real values of -28/-44/-70/-112 and
+     1.0/1.6/2.5/4.0x. CLAUDE.md broke the rule its own "Balance Lives in
+     config.yaml" section states, roughly four hundred lines away in the same
+     file.
+  3. **Unreachable levels documented as reachable.** Extra-arms ships
+     `max_rank: 1` (`apex-class, binary (no deepen)`), so levels 2 through 4
+     cannot currently be attained at all.
+  4. **An incomplete formula.** `GetToxicityMax()` was summarised without its
+     Alchemy-skill term.
+
+  All four are corrected in `internal/items/context.md`. Recorded here because
+  the same four errors may survive in other places that copied them.
 
 - [ ] **Step 5: Index and commit**
 
