@@ -281,13 +281,25 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		Mult:      1.0,
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`<ansi fg="yellow-bold">You hurl the <ansi fg="itemname">%s</ansi> into the fray!</ansi>`,
-		matchItem.DisplayName()))
-	room.SendTextVisual(messaging.CategoryHitRanged, fmt.Sprintf(
-		`<ansi fg="yellow-bold"><ansi fg="username">%s</ansi> hurls a <ansi fg="itemname">%s</ansi> into the fray!</ansi>`,
-		user.Character.Name, matchItem.DisplayName()),
-		user.UserId)
+	// Throw is an AREA effect against mobs, so it has no actee at all and
+	// every Trio below writes Actee: messaging.NoLine. That is correct, not an
+	// oversight: the M1 audit ruled this file's 17 actor sends and zero actee
+	// sends as the one genuinely actee-less member of the special-move family.
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Room:    room,
+	}
+
+	messaging.SendTrio(messaging.Trio{
+		Actor: messaging.Say(messaging.CategorySystem, fmt.Sprintf(
+			`<ansi fg="yellow-bold">You hurl the <ansi fg="itemname">%s</ansi> into the fray!</ansi>`,
+			matchItem.DisplayName())),
+		Actee: messaging.NoLine,
+		Observer: messaging.Say(messaging.CategoryHitRanged, fmt.Sprintf(
+			`<ansi fg="yellow-bold"><ansi fg="username">%s</ansi> hurls a <ansi fg="itemname">%s</ansi> into the fray!</ansi>`,
+			user.Character.Name, matchItem.DisplayName())),
+	}, aud)
 
 	hasDamage := spec.DamageMultiplier > 0
 	hasBuffs := len(spec.BuffIds) > 0
@@ -317,10 +329,13 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// throw aborts even a winning roll): effect hits thrower instead.
 		if out.AttackerFumble {
 			fumbled = true
-			user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your throw goes horribly wrong — the projectile detonates in your hand!</ansi>`)
-			room.SendTextVisual(messaging.CategoryHitRanged, fmt.Sprintf(
-				`<ansi fg="red"><ansi fg="username">%s</ansi>'s throw backfires spectacularly!</ansi>`,
-				user.Character.Name), user.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(messaging.CategorySystem, `<ansi fg="red-bold">Your throw goes horribly wrong — the projectile detonates in your hand!</ansi>`),
+				Actee: messaging.NoLine,
+				Observer: messaging.Say(messaging.CategoryHitRanged, fmt.Sprintf(
+					`<ansi fg="red"><ansi fg="username">%s</ansi>'s throw backfires spectacularly!</ansi>`,
+					user.Character.Name)),
+			}, aud)
 
 			// Apply effects to thrower
 			if hasDamage {
@@ -349,12 +364,15 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// before the attack-success gate so a tanky boss can't simply dodge the
 		// interrupt. (Fumbles break above, so a botched throw still can't cancel.)
 		if maybeInterruptOnThrow(mob, matchItem.ItemId, state.ActorRef{UserId: user.UserId}) {
-			user.SendText(messaging.CategorySpellDisruption, fmt.Sprintf(
-				`<ansi fg="cyan-bold">The blast shatters %s's concentration -- its spell collapses!</ansi>`,
-				mob.Character.Name))
-			room.SendTextVisual(messaging.CategorySpellDisruption, fmt.Sprintf(
-				`<ansi fg="cyan">%s's spell collapses as the blast strikes!</ansi>`,
-				mob.Character.Name), user.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(messaging.CategorySpellDisruption, fmt.Sprintf(
+					`<ansi fg="cyan-bold">The blast shatters %s's concentration -- its spell collapses!</ansi>`,
+					mob.Character.Name)),
+				Actee: messaging.NoLine,
+				Observer: messaging.Say(messaging.CategorySpellDisruption, fmt.Sprintf(
+					`<ansi fg="cyan">%s's spell collapses as the blast strikes!</ansi>`,
+					mob.Character.Name)),
+			}, aud)
 		}
 
 		hit := !out.Defended
@@ -393,17 +411,27 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				Defender: mob.Character.GetMobNameIndexed(user.UserId,
 					room.GetMobDuplicateIndex(mob.InstanceId)).String(),
 			}, "firebomb")
+			// The actor line and the room line are independently conditional
+			// here, so both are built before the single send rather than the
+			// event being split across two.
+			throwerLine := messaging.NoLine
 			if dmg > 0 {
 				dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				throwerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
 					`The edge of the blast still catches <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`,
 					mob.Character.Name, dmgDesc))
 			} else if triad.ToAttacker != "" {
-				user.SendText(messaging.CategoryDodge, string(triad.ToAttacker))
+				throwerLine = messaging.Say(messaging.CategoryDodge, string(triad.ToAttacker))
 			}
+			dodgeRoomLine := messaging.NoLine
 			if triad.ToRoom != "" {
-				room.SendTextVisual(messaging.CategoryDodge, string(triad.ToRoom), user.UserId)
+				dodgeRoomLine = messaging.Say(messaging.CategoryDodge, string(triad.ToRoom))
 			}
+			messaging.SendTrio(messaging.Trio{
+				Actor:    throwerLine,
+				Actee:    messaging.NoLine,
+				Observer: dodgeRoomLine,
+			}, aud)
 		}
 
 		if hit {
