@@ -89,6 +89,19 @@ func moveDefenceLines(user *users.UserRecord, room *rooms.Room, target actions.A
 	return lines, true
 }
 
+// sendMoveDefenceShortage speaks the defender's resource-shortage note, which
+// is a separate at-most-once event rather than part of the defence narration:
+// combat.sendDefenceShortageOnce dedupes it per round on the melee path and
+// positions it independently there too.
+//
+// It lives here rather than at the call sites so the note stays in one place
+// and does not have to be repeated in every verb.
+func sendMoveDefenceShortage(targetUser *users.UserRecord, lines moveDefence) {
+	if targetUser != nil && lines.Shortage != "" {
+		targetUser.SendText(messaging.CategorySystem, lines.Shortage)
+	}
+}
+
 func sendMoveDefenceTriad(user *users.UserRecord, room *rooms.Room, target actions.AggroTarget,
 	out combat.ChannelDefenceResult, attack string, category messaging.Category, roomOnly bool) bool {
 

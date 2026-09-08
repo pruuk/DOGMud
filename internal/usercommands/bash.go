@@ -93,30 +93,32 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}, aud)
 		}
 	} else if result.Damage > 0 {
-		// Defended-partial: the personal lines carry the damage; the room
-		// line names the defence that blunted the bash (U6b Task 9).
-		//
-		// TWO CALLS, NOT ONE, TO PRESERVE MESSAGE ORDER. The room line here is
-		// conditional on sendMoveDefenceTriad declining to speak, and that
-		// helper sends its own room line as a side effect of deciding. Folding
-		// the check into a single Trio would run it before these personal
-		// lines and reorder what the player reads.
+		// Defended-partial: the personal lines carry the damage, and the room
+		// line names the defence that blunted the bash (U6b Task 9), falling
+		// back to plain stagger text when there was no defence to name.
+		defence, defended := moveDefenceLines(user, room, target, result.Defence, "shield bash")
+		observer := messaging.Say(messaging.CategoryBash,
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield, who staggers but stays up!`, user.Character.Name, target.Name))
+		if defended {
+			observer = messaging.Say(messaging.CategoryBash, defence.ToRoom)
+			sendMoveDefenceShortage(targetUser, defence)
+		}
 		messaging.SendTrio(messaging.Trio{
 			Actor: messaging.Say(messaging.CategorySystem,
 				fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> fails to floor <ansi fg="mobname">%s</ansi>, but still slams into them! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc)),
 			Actee: messaging.Say(messaging.CategorySystem,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> fails to floor you, but still slams into you! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc)),
-			Observer: messaging.NoLine,
+			Observer: observer,
 		}, aud)
-		if !sendMoveDefenceTriad(user, room, target, result.Defence, "shield bash", messaging.CategoryBash, true) {
-			messaging.SendTrio(messaging.Trio{
-				Actor: messaging.NoLine,
-				Actee: messaging.NoLine,
-				Observer: messaging.Say(messaging.CategoryBash,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield, who staggers but stays up!`, user.Character.Name, target.Name)),
-			}, aud)
-		}
-	} else if !sendMoveDefenceTriad(user, room, target, result.Defence, "shield bash", messaging.CategoryBash, false) {
+	} else if defence, defended := moveDefenceLines(user, room, target, result.Defence, "shield bash"); defended {
+		// A defence stopped it outright: all three lines come from the triad.
+		sendMoveDefenceShortage(targetUser, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategoryBash, defence.ToAttacker),
+			Actee:    messaging.Say(messaging.CategoryBash, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryBash, defence.ToRoom),
+		}, aud)
+	} else {
 		// No defence to narrate (e.g. a fumbled swing): plain miss text.
 		messaging.SendTrio(messaging.Trio{
 			Actor: messaging.Say(messaging.CategorySystem,

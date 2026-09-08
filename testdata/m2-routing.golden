@@ -172,10 +172,12 @@ internal/mobcommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`
 internal/mobcommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`~mobName~targetName
 internal/mobcommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> tries to trip <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`~mobName~targetName
 internal/mobcommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> trips <ansi fg="username">%s</ansi>, sending them crashing to the ground!`~mobName~targetName
+internal/usercommands/bash.go | actee | messaging~CategoryBash | defence~ToDefender
 internal/usercommands/bash.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="username">%s</ansi> attempts to bash you with their shield, but misses!`~user~Character~Name
 internal/usercommands/bash.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> fails to floor you, but still slams into you! (<ansi fg="damage">%s</ansi>)`~user~Character~Name~dmgDesc
 internal/usercommands/bash.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> knocks you to the ground! (<ansi fg="damage">%s</ansi>)`~user~Character~Name~dmgDesc
 internal/usercommands/bash.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> strikes you! (<ansi fg="damage">%s</ansi>)`~user~Character~Name~dmgDesc
+internal/usercommands/bash.go | actor | messaging~CategoryBash | defence~ToAttacker
 internal/usercommands/bash.go | actor | messaging~CategorySystem | "You need a moment to recover before attempting another special move."
 internal/usercommands/bash.go | actor | messaging~CategorySystem | "You need a shield equipped to perform a shield bash!"
 internal/usercommands/bash.go | actor | messaging~CategorySystem | "Your target is gone!"
@@ -185,6 +187,8 @@ internal/usercommands/bash.go | actor | messaging~CategorySystem | fmt~Sprintf~`
 internal/usercommands/bash.go | actor | messaging~CategorySystem | fmt~Sprintf~`Your <ansi fg="yellow-bold">shield bash</ansi> knocks <ansi fg="mobname">%s</ansi> to the ground! (<ansi fg="damage">%s</ansi>)`~target~Name~dmgDesc
 internal/usercommands/bash.go | actor | messaging~CategorySystem | fmt~Sprintf~`Your <ansi fg="yellow-bold">shield bash</ansi> misses <ansi fg="mobname">%s</ansi>!`~target~Name
 internal/usercommands/bash.go | actor | messaging~CategorySystem | fmt~Sprintf~`Your <ansi fg="yellow-bold">shield bash</ansi> strikes <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`~target~Name~dmgDesc
+internal/usercommands/bash.go | observer | messaging~CategoryBash | defence~ToRoom
+internal/usercommands/bash.go | observer | messaging~CategoryBash | defence~ToRoom
 internal/usercommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="username">%s</ansi> attempts to bash <ansi fg="mobname">%s</ansi>, but misses!`~user~Character~Name~target~Name
 internal/usercommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield!`~user~Character~Name~target~Name
 internal/usercommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield, who staggers but stays up!`~user~Character~Name~target~Name

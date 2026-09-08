@@ -163,6 +163,49 @@ func m2RoutingLines(relPath string, src []byte) ([]string, error) {
 	add := func(role string, cat, text ast.Expr) {
 		out = append(out, relPath+" | "+role+" | "+m2ExprSig(cat)+" | "+m2ExprSig(text))
 	}
+
+	// Pre-pass: resolve locals holding a messaging.Say(...).
+	//
+	// WHY. A verb whose room line is conditional cannot inline it -- it has to
+	// build the line, branch, then compose once -- so it writes
+	// `observer := messaging.Say(...)`, reassigns in the branch, and passes the
+	// VARIABLE as the Trio field. A walk that only understood a direct Say call
+	// dropped those records silently, which is the same blindness this guard
+	// exists to remove, wearing a different hat. Every assignment is recorded,
+	// so a conditional line contributes one record per branch and all of them
+	// must survive.
+	//
+	// Name collisions across functions in one file only ever ADD records, which
+	// is safe: this guard fails on absence, never on abundance.
+	sayOf := map[string][][2]ast.Expr{}
+	recordSay := func(lhs ast.Expr, rhs ast.Expr) {
+		id, ok := lhs.(*ast.Ident)
+		if !ok {
+			return
+		}
+		call, ok := rhs.(*ast.CallExpr)
+		if !ok || len(call.Args) < 2 {
+			return
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != "Say" {
+			return
+		}
+		sayOf[id.Name] = append(sayOf[id.Name], [2]ast.Expr{call.Args[0], call.Args[1]})
+	}
+	ast.Inspect(file, func(n ast.Node) bool {
+		as, ok := n.(*ast.AssignStmt)
+		if !ok {
+			return true
+		}
+		for i := range as.Lhs {
+			if i < len(as.Rhs) {
+				recordSay(as.Lhs[i], as.Rhs[i])
+			}
+		}
+		return true
+	})
+
 	ast.Inspect(file, func(n ast.Node) bool {
 		switch v := n.(type) {
 		case *ast.CompositeLit:
@@ -182,6 +225,18 @@ func m2RoutingLines(relPath string, src []byte) ([]string, error) {
 				if !ok {
 					continue
 				}
+				role := strings.ToLower(key.Name)
+
+				// A local holding one or more messaging.Say values: emit a
+				// record for each, so a conditional line is covered in every
+				// branch it can take.
+				if id, ok := kv.Value.(*ast.Ident); ok {
+					for _, pair := range sayOf[id.Name] {
+						add(role, pair[0], pair[1])
+					}
+					continue
+				}
+
 				call, ok := kv.Value.(*ast.CallExpr)
 				if !ok {
 					// messaging.NoLine: a considered silence, not a send.
@@ -189,9 +244,13 @@ func m2RoutingLines(relPath string, src []byte) ([]string, error) {
 				}
 				csel, ok := call.Fun.(*ast.SelectorExpr)
 				if !ok || csel.Sel.Name != "Say" || len(call.Args) < 2 {
+					// Some other expression entirely. Record it rather than
+					// drop it: an unrecognised shape must be visible as drift,
+					// never as silence.
+					add(role, nil, kv.Value)
 					continue
 				}
-				add(strings.ToLower(key.Name), call.Args[0], call.Args[1])
+				add(role, call.Args[0], call.Args[1])
 			}
 		case *ast.CallExpr:
 			if id, ok := v.Fun.(*ast.Ident); ok && id.Name == "sendAudioRoomText" && len(v.Args) >= 5 {
