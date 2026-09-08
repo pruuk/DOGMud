@@ -14,10 +14,16 @@ All of those now read the way you would expect. If it happens where people can
 see it, they see it.
 
 Two more along the same lines. When your voice carries both a rallying cry and
-a war cry in one breath, the allies it reaches are now told so, instead of
+a warcry in one breath, the allies it reaches are now told so, instead of
 quietly picking up the benefit and wondering where it came from. And when you
 choke the breath out of someone mid spell, the people watching now see the
 spell die, rather than only the two of you knowing.
+
+Some smaller repairs while we were in the area. Materials you recover from
+salvaging now read as the items they are rather than as internal names. A
+rally or a warcry that fades no longer describes itself as yours when somebody
+else was the one who shouted. And salvaging a body now says whose body it was,
+in words that suit a person rather than an animal.
 
 ## 2026-09-08: Fighting in the dark hides more than it used to
 
