@@ -50,13 +50,26 @@ Go default of `1.0` set in `internal/configs/config.balance.spells.go:31`.
 Quoting the default instead of the shipped value would be off by more than
 3x on a live combat number.
 
-**Absence is meaningful.** `StaminaPerStrength` ships at `0` in
-`_datafiles/config.yaml:1142`, and its Go default (set in
-`internal/configs/config.balance.misc.go:68`) is also `0`. A missing key
-does not mean "unset"; it means "the Go default applies", and that default
-can itself legally be zero. Do not treat a missing or zero-valued knob as
-evidence a system is disabled without checking whether zero is the
-documented, intentional value.
+**Absence is meaningful, and that rule has two halves.** The lifted block
+above illustrates only the first half with `StaminaPerStrength`: that key is
+present in `_datafiles/config.yaml:1142`, set to `0`, which shows that zero
+is a legal shipped value. It does not demonstrate absence, because the key
+is right there in the file.
+
+The other half, and the more dangerous one, is a key that is not in
+`config.yaml` at all. `CarryCapacityMultiplier` is genuinely absent, verified
+2026-09-08: grep for both `CarryCapacityMultiplier` and its snake_case form
+`carry_capacity_multiplier` returns zero hits in `_datafiles/config.yaml`.
+The field is declared at `internal/configs/config.balance.go:770`, and its
+Go default silently applies at `0.65`, set in
+`internal/configs/config.balance.misc.go:157`. Nothing in `config.yaml`
+tells you this knob exists. Someone reading only the config file would
+conclude carry capacity has no multiplier at all, when in fact one is
+live at 0.65. That is the case the rule actually warns about: do not treat
+a key's absence from `config.yaml` as evidence a system is disabled or
+unset, and do not assume the config file is a complete list of what is
+tunable, because a key can be silently governed by its Go default with no
+trace in the shipped YAML.
 
 This is the same discipline this skill's own numbers below are held to: a
 remembered count that nobody re-checks against source is exactly how a stale
@@ -77,11 +90,25 @@ All balance knob fields live in the single file
 `config.balance.spells.go`) declare zero `Config*`-typed fields between them,
 verified by grep; they hold only defaulting and validation logic (the
 `Validate()` and `applyDefaults()`-style functions that clamp or backfill a
-value after YAML load). **Grep the YAML tag** (the string inside
-`` `yaml:"..."` ``), not the Go field name, when you are not sure which
-sibling owns a knob's default, since the field itself is declared once in
-`config.balance.go` but its default-setting logic lives in the sibling named
-for its subsystem.
+value after YAML load). Plain field-name grep across the siblings is enough
+to find which one owns a knob's default, since each sibling references the
+field directly as `b.FieldName`.
+
+**Grep the YAML tag, not the Go field name, when searching INSIDE
+`config.yaml` itself.** Most fields share their PascalCase Go name with
+their yaml tag, but not all of them do, and a field-name grep against
+`config.yaml` finds nothing for the ones that differ. Verified 2026-09-08:
+of the 375 `Config*`-typed fields in `config.balance.go`, exactly **8**
+carry a yaml tag that does not match the Go field name, all snake_case:
+`ReachStandingGrappleRadius` (`internal/configs/config.balance.go:191`)
+carries the tag `` yaml:"reach_standing_grapple_radius" ``, and
+`config.yaml:1064` holds only the snake_case form
+`reach_standing_grapple_radius: 0.5`. Grepping the PascalCase field name
+against `config.yaml` for that knob returns nothing, even though the knob is
+present and shipped. The other seven are `ReachGroundGrappleRadius`,
+`ReachUtilityFloor`, `SubmissionAttemptAlpha`, `SubmissionAttemptCritZ`,
+`SubBadZThreshold`, `SubGoldLossFraction`, and `BrokenLimbBuffDuration`, all
+in the same grapple/submission/broken-limb cluster.
 
 **CLAUDE.md's counts are stale, verified against source 2026-09-08:**
 
