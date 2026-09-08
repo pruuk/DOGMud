@@ -59,6 +59,14 @@ def main():
                     help="write the file; without this it is a dry run")
     args = ap.parse_args()
 
+    # This repo's headings contain non-ASCII characters and the default Windows
+    # console is cp1252, which cannot encode them. Without this, printing a
+    # heading raises UnicodeEncodeError and the run looks like a tool failure.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, OSError):
+        pass
+
     target = Path(args.target)
     manifest = Path(args.manifest)
     if not target.is_file():
@@ -97,6 +105,8 @@ def main():
         print("DRY RUN, nothing written. Re-run with --apply to write.")
         return 0
 
+    # Every failure path above returns before this point. The file is written
+    # once, last, only after every heading has been resolved and reported.
     kept = [l for i, l in enumerate(lines) if i not in doomed]
     target.write_text("\n".join(kept) + "\n", encoding="utf-8")
     print(f"WROTE {target}")
