@@ -1,0 +1,31 @@
+## Content Playtest-Review Gate (SOP)
+## Git Workflow
+## Pre-Push SOP
+## Instance Saves & Smoke-Test SOP (Important!)
+## Moderation Persistence
+## NPC Schedules
+## Sleep Mechanics
+## NPC Patrols
+## NPC↔NPC Conversations
+## Map Consistency & the `non_cartesian` / `oneway` Flags
+## Stat & Progression System
+## Dice & Rolling System
+## Balance Lives in config.yaml, Not in Code
+## Unified Damage & Mitigation Pipeline (Stage 34)
+## Resource Depletion Penalties (Stage 35)
+## Defense Resolution: Best-of-All (Stage 35)
+## Combat Design Conventions
+## ID Inventory & Collision Prevention
+## Data File Naming Convention
+## Command Parsing & Multi-Word Input (`internal/parser`)
+## MUD Line Width
+## Player-Facing Messages — No Hard Numbers
+## Quest Re-Grant Prevention SOP
+## Quest NPC Dialogue SOP
+## Dialogue Voice & Trigger Discoverability
+## Quest Item Delivery — give.go Gotcha
+## Dialogue Engine: givesItem
+## Quest Flags System
+## Content Generation Commands
+## AI Testing
+## Mob Stat Archetypes
