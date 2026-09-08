@@ -8,9 +8,13 @@ description: Use when touching stats, skills, advancement, or resource pools. Co
 A save file's `base:` field is not the number the game uses. Production reads
 `ValueAdj`, which is `Base + Training + Mods`, and `Value == ValueAdj` always.
 
+Synthesized from `internal/stats/stats.go:85-88` (the `Recalculate()` body,
+not a single-line quote), pinned by `internal/stats/softcap_test.go:22`:
+
 ```go
-// internal/stats/stats.go:85 - pinned by internal/stats/softcap_test.go:22
-ValueAdj = Base + Training + Mods
+si.Racial = si.Base
+si.Value = si.Racial + si.Training + si.Mods
+si.ValueAdj = si.Value
 ```
 
 `base:` in `_datafiles/world/dogmud/users/<id>.yaml` is only the first term.
@@ -31,97 +35,97 @@ When fitting any formula against a real character save, always read
 `ValueAdj`, never the save's `base:` field alone. When the real number
 matters, ask rather than infer from a save file. [[reference-stat-valueadj-includes-training-and-mods]]
 
-## No compression, ever
+## Stat & Progression System, lifted verbatim from CLAUDE.md (lines 362-425)
 
-There is no soft cap on stat values. `ValueAdj == Value` always; stats are
-used raw. Compression was removed 2026-08-02. It was inherited from
-upstream, hid roughly 10 points from three veteran characters, and because
-`HealthMax`, `StaminaMax`, `ConvictionMax` and `ActionPointsMax` are also
-`stats.StatInfo` and call the same `Recalculate()`, it was silently
-shrinking every resource pool by roughly 40 percent. Do not reintroduce
-compression in `StatInfo.Recalculate()`; anything added there hits the pools
-too.
+Lifted verbatim from CLAUDE.md. Bold markers and wording are unchanged; the
+project's "no em or en dashes" rule required replacing each source em dash
+with a colon (`:`), which is the only change from the original.
 
-`StatProgressionSoftCap` (default 50, shipped 50) is the number of trained
-points at which progression slows sharply. It is not a ceiling on stat
-values. The old anti-exploit floor in `CheckStatProgression` is gone
-(U10b-0 Phase C): it existed because a use counter could be low while the
-stat value was high, which cannot happen now that the rank IS the gains.
+> ## Stat & Progression System
+> - All stats (Strength, Dexterity, Perception, Vitality, Willpower, Charisma) are centered at **100 = human baseline**
+> - Stats improve via **use-based progression only** : `OnStatUse()` triggers probabilistic advancement. There is NO level-based or XP-based stat gain; levels and XP are being removed from the game entirely.
+> - **There is no soft cap on stat values.** `ValueAdj == Value` always; stats are
+>   used raw. Compression was removed 2026-08-02 : it was inherited from upstream,
+>   hid ~10 points from three veteran characters, and (because `HealthMax`,
+>   `StaminaMax`, `ConvictionMax` and `ActionPointsMax` are also `stats.StatInfo`
+>   and call the same `Recalculate()`) was silently shrinking every resource pool
+>   by roughly 40%. Do not reintroduce compression in `StatInfo.Recalculate()` :
+>   anything added there hits the pools too.
+> - `StatProgressionSoftCap` (default **50**) is the number of **trained points**
+>   at which progression slows sharply. It is not a ceiling on stat values. The
+>   old anti-exploit floor in `CheckStatProgression` is **gone** (U10b-0 Phase C):
+>   it existed because a use counter could be low while the stat value was high,
+>   which cannot happen now that the rank IS the gains.
+> - Resource pools: `HealthMax = 5 + Vit×3 + Str×1`, `StaminaMax = 5 + Vit×3 +
+>   Wil×1`, `ConvictionMax = 5 + Cha×3 + Wil×1`. One primary stat (×3) and one
+>   secondary (×1) each. Coefficients live in the balance config; note that a knob
+>   left *absent* from `config.yaml` falls back to its Go default, and `0` is a
+>   legal shipped value (`StaminaPerStrength: 0`).
+> - Skills (**16** total, not 10 : count them with the `skills` command or
+>   `skills.allSkillNames`) cap softly at 50 (`skillSoftCap`). They progress via
+>   `OnSkillUse()` → `CheckSkillProgression()`, probabilistically.
+> - **A progression roll happens on EVERY use**, and the odds depend on how far
+>   the stat or skill has already come, not on how often it has been used.
+>   **Rank is `StatInfo.Training` for a stat and the skill level for a skill**
+>   (U10b-0 Phase C). Use counters are still recorded in saves and shown on the
+>   admin dashboard, but they are **telemetry only** and no longer feed the curve.
+>   **`UsesPerRank` is now read by nothing at all** : U10b-0 Phase E removed its
+>   last two consumers. The knob and `internal/configs/smoke_test.go`'s assertion
+>   that it is positive survive only so an existing `config.yaml` still validates.
+> - **The chance expression lives in exactly two functions**, and nothing may
+>   recompute it: `Character.ProgressionChanceForStat` and
+>   `ProgressionChanceForSkill`. Production rolls them, the tests pin them, and the
+>   admin dashboard displays them. The dashboard used to hand-roll bare
+>   `CalculateProgressionChance`, which silently dropped `StatProgressionRate` and
+>   every per-stat, per-skill, mutation and buff multiplier : that drift is why a
+>   truncation bug which sealed two of a live character's stats read as a tuning
+>   problem for months. `characters.ProgressionRollThreshold(chance)` is the
+>   matching seam for the integer roll threshold; the denominator behind it stays
+>   unexported on purpose, so a caller cannot drift from production if the
+>   resolution changes again.
+> - **Equipment cannot make a stat harder to train.** The retired value floor read
+>   `GetStatValue`, which includes `Mods`, so wearing a stat item raised your own
+>   difficulty. Rank now reads `Training` alone.
+> - Curve (`characters.CalculateProgressionChance`, `internal/characters/progression.go`):
+>   below the soft cap `base × exp(-decayBelow × rank/softCap)`, above it the
+>   decay continues with `decayAbove` rather than reaching zero. Stat rolls also
+>   multiply by `StatProgressionRate`. With shipped config a fresh stat is roughly
+>   27% per use, falling to roughly 1.3% at **50 trained points**.
+> - Shipped config again differs from the Go defaults: `BaseProgressionChance`
+>   0.12 shipped against a 0.30 default, `StatProgressionRate` 2.25 against 1.0.
+>   Read `config.yaml`, not the defaults.
+> - `IncreaseStat` and `IncreaseSkill` contain **no bound check whatsoever** (there
+>   is a `TestIncreaseSkill_NoCap` regression test). **Players have no hard
+>   ceiling at all.** The only hard ceilings are mob-only and gated on `c.IsMob`:
+>   `MobStatTrainingCap` and `MobSkillTrainingCap`, enforced inside the two
+>   **chance** functions rather than the `Check*` functions, and
+>   `MobStatTrainingCap` is checked at more than one site. Both cap **gains**, not
+>   value, so a mob authored at base 250 is no harder to train than one at 180.
+>   Beware `MobStatCap` / `MobSkillCap`: those still exist as **legacy** config
+>   knobs and are still validated, which makes stale references to them read as
+>   plausible. They are superseded and enforce nothing.
 
-## No player ceiling
+## Verified against source (not in CLAUDE.md)
 
-`IncreaseStat` and `IncreaseSkill` contain no bound check whatsoever. There
-is a `TestIncreaseSkill_NoCap` regression test (verified:
-`internal/characters/progression_test.go:111`). Players have no hard
-ceiling at all.
+The lifted block above names functions and knobs without file:line citations
+or config defaults. Grepped and read directly, 2026-09-08:
 
-The only hard ceilings are mob-only, gated on `c.IsMob`: `MobStatTrainingCap`
-and `MobSkillTrainingCap`. Both are declared in `internal/configs/config.balance.go`
-and defaulted in `internal/configs/config.balance.mobs.go` (default 50 for
-stats, default 25 for skills). They are enforced inside the two chance
-functions rather than the `Check*` functions; `MobStatTrainingCap` is
-checked at two sites in `internal/characters/progression.go` (lines 241 and
-575). Both cap gains, not value, so a mob authored at base 250 is no harder
-to train than one at 180.
-
-**Beware `MobStatCap` / `MobSkillCap`.** These still exist as legacy config
-knobs (also declared in `config.balance.go`, defaulted in
-`config.balance.mobs.go` to 200 and 3 respectively) and are still validated,
-which makes stale references to them read as plausible. They are superseded
-and **enforce nothing**. If you find code or a plan that reads `MobStatCap`
-or `MobSkillCap` expecting it to gate anything, that is the trap: the field
-compiles, the validator runs, and nothing downstream consumes the value for
-enforcement. The live gate is the `*TrainingCap` pair above.
-
-## The curve
-
-Curve (`characters.CalculateProgressionChance`, `internal/characters/progression.go:85`):
-below the soft cap `base × exp(-decayBelow × rank/softCap)`, above it the
-decay continues with `decayAbove` rather than reaching zero. Stat rolls also
-multiply by `StatProgressionRate`.
-
-Shipped config differs from the Go defaults. Label which is which:
-
-| Knob | Go default | Shipped (`_datafiles/config.yaml`) |
-|---|---|---|
-| `BaseProgressionChance` | 0.30 | **0.12** |
-| `StatProgressionRate` | 1.0 | **2.25** |
-| `StatProgressionSoftCap` | 50 | 50 |
-
-With shipped config a fresh stat is roughly 27 percent per use, falling to
-roughly 1.3 percent at 50 trained points.
-
-A progression roll happens on every use, and the odds depend on how far the
-stat or skill has already come, not on how often it has been used. Rank is
-`StatInfo.Training` for a stat and the skill level for a skill (U10b-0 Phase
-C). Use counters are still recorded in saves and shown on the admin
-dashboard, but they are telemetry only and no longer feed the curve.
-`UsesPerRank` is now read by nothing at all (U10b-0 Phase E removed its last
-two consumers); the knob and `internal/configs/smoke_test.go`'s assertion
-that it is positive survive only so an existing `config.yaml` still
-validates.
-
-Equipment cannot make a stat harder to train. The retired value floor read
-`GetStatValue`, which includes `Mods`, so wearing a stat item raised your
-own difficulty. Rank now reads `Training` alone.
-
-## The two functions
-
-The chance expression lives in exactly two functions, and nothing may
-recompute it: `Character.ProgressionChanceForStat`
-(`internal/characters/progression.go:228`) and `ProgressionChanceForSkill`
-(`internal/characters/progression.go:115`). Production rolls them, the tests
-pin them, and the admin dashboard displays them.
-
-The dashboard used to hand-roll bare `CalculateProgressionChance`, which
-silently dropped `StatProgressionRate` and every per-stat, per-skill,
-mutation and buff multiplier. That drift is why a truncation bug which
-sealed two of a live character's stats read as a tuning problem for months.
-
-`characters.ProgressionRollThreshold(chance)` (`internal/characters/progression.go:54`)
-is the matching seam for the integer roll threshold; the denominator behind
-it stays unexported on purpose, so a caller cannot drift from production if
-the resolution changes again.
+- `Character.ProgressionChanceForStat` is `internal/characters/progression.go:228`;
+  `ProgressionChanceForSkill` is `internal/characters/progression.go:115`;
+  `CalculateProgressionChance` is `internal/characters/progression.go:85`;
+  `ProgressionRollThreshold` is `internal/characters/progression.go:54`.
+- `TestIncreaseSkill_NoCap` is `internal/characters/progression_test.go:111`.
+- `MobStatTrainingCap` and `MobSkillTrainingCap` are declared in
+  `internal/configs/config.balance.go` and defaulted in
+  `internal/configs/config.balance.mobs.go` to 50 and 25 respectively.
+  `MobStatTrainingCap` is checked at two sites in
+  `internal/characters/progression.go`, lines 241 and 575.
+- The superseded `MobStatCap` / `MobSkillCap` legacy knobs default to 200 and
+  3 in the same file, and have no enforcement caller anywhere in the tree:
+  the trap is real, not hypothetical.
+- Shipped `_datafiles/config.yaml`: `StatProgressionSoftCap: 50`,
+  `BaseProgressionChance: 0.12`, `StatProgressionRate: 2.25`, matching the
+  lifted block's numbers exactly.
 
 ## Which paths train which stat
 
