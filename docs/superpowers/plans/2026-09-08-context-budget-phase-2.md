@@ -151,7 +151,17 @@ docs/README.md                          MOD  index the two new audits
 6. **Wrap prose near 80 characters**, except inside tables and code blocks.
 7. **Named paths only** on `git add`. Never `git add -A` or `git add .`.
 8. **No scratch files in the repo.** Use temp space outside it.
-9. **A traceback from `strip_claude_sections.py` is never a reason to edit
+9. **`grep -c` exits 1 when it finds zero matches.** Every dash check in this
+   plan is `grep -c "—\|–" <file>` expecting 0, which means the check EXITS 1
+   exactly when it passes. Chaining it with `&&` silently skips everything after
+   it. This already happened once during execution: a dash check passed, the
+   `git add` and `git commit` after it never ran, and an unconditional `echo`
+   on the next line reported success anyway.
+
+   Run these checks as standalone commands, or capture with
+   `n=$(grep -c ... || true)`. Never put one in the middle of an `&&` chain, and
+   never trust an `echo` that is not itself gated on the command it describes.
+10. **A traceback from `strip_claude_sections.py` is never a reason to edit
    CLAUDE.md by hand.** Task 0 found that printing the `↔` in
    `## NPC↔NPC Conversations` raised `UnicodeEncodeError` on this machine's
    cp1252 console. That is fixed inside the script (it reconfigures stdout to
