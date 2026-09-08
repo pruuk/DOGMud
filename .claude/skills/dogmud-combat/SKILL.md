@@ -162,20 +162,36 @@ when hit; a heavily armored foe is slow and easy to hit and takes less
 damage when hit. A to-hit or evade roll may read agility-type stats and
 defensive skills, and gear may influence it only through purpose-built
 avoidance ratings (`ParryRating`, `BlockRating`, `GrappleModifier` on
-`ItemSpec`). It must never read `GetPhysicalMitigation()` /
-`GetMagicalMitigation()` / `GetConvictionMitigation()`, the legacy
-`DamageReduction` field, or `Character.GetDefense()`.
+`ItemSpec`). It must never read a mitigation getter, either directly or
+through a helper that folds one in.
 
-This rule was violated three times in the same function
-(`spellDefenseValue` in `internal/hooks/spell_resolution.go`) across
-several months, including once by an adversarial-review fix that read
-"armor isn't counting" as the bug and reintroduced the design error by
-wiring in live mitigation. Use `GetEffectiveDexterity()`, not
+**This rule is still true; its evidence in the memory file is stale as of
+2026-09-08.** The file names `spellDefenseValue` in
+`internal/hooks/spell_resolution.go` and `Character.GetDefense()` as the
+things to check are absent. Both were deleted (`spellDefenseValue` under
+U6b; `GetDefense()` is gone from `internal/characters`), and the legacy
+`DamageReduction` field the file also names was fully removed 2026-08-03,
+already noted verbatim above in this skill's "Read config.yaml" and
+damage-formula lift; the memory file's caution to check for a live
+`DamageReduction` read is accordingly moot too.
+
+The current seam: defence scores for a to-hit roll come from
+`Character.GetDefenseScoreFor(defenseType string, includeSkill bool)
+float64` (`internal/characters/combat.go:278`). The comment on
+`spellAttackChannel` (`internal/hooks/spell_resolution.go`) states this
+directly: "the defender's score comes from `GetDefenseScoreFor` via the
+seam, the deleted defence-value helper's raw-stat read is gone with the
+two-contest gate." `GetDefenseScoreFor` is stat-and-skill based (dodge,
+parry, block, quell, defy), not mitigation-based, so the design rule
+still holds through the current code, it just holds through a different
+symbol than the memory file names. Use `GetEffectiveDexterity()`, not
 `Stats.Dexterity.ValueAdj`, in any live roll:
 `internal/characters/effective_stats.go` documents that raw `ValueAdj` is
 for training/progression/display only. If you add or touch a to-hit roll,
-confirm it does not read a mitigation getter, `DamageReduction`, or
-`GetDefense()`.
+confirm it calls `GetDefenseScoreFor` (or another stat/skill-based score)
+and does not read `GetPhysicalMitigation()`, `GetMagicalMitigation()`,
+`GetConvictionMitigation()`, or any other mitigation getter. Treat the code
+as authoritative over the memory file's specific symbol names.
 
 ## Contests and dice
 
@@ -254,18 +270,37 @@ anywhere in CLAUDE.md:
 
 [[reference-taunt-hold-aggro-gate]]: a taunt pins a target's aggro for
 `Balance.TauntHoldRounds` (default 4) via a lock on `Character`
-(`tauntHoldUntilRound`, `tauntHoldUserId`, `tauntHoldMobInstanceId`) set by
-`Character.ForceTauntAggro`. `Character.SetAggro` has a gate that, while a
-hold is active, ignores `DefaultAttack`/`Shooting`/`SurpriseAttack`
-re-aggro to a different target. Before this fix, ~14 combat archetypes ran
-a reactive `attack` btree action on `mob_hurt`/`packmate_hurt`, and that
-action's own `SetAggro` call overwrote the taunt every round the instant an
-ally hit the taunted target. If you add a new `SetAggro` caller and aggro
-"won't switch," check whether a taunt hold is blocking it before assuming a
-bug; that is intended. `SpellCast`/`Flee`, same-target sets, and a newer
-taunt (which re-locks first) all pass through the gate. AoE/multi-target
-harm casts still hit everyone regardless of taunt; that is inherent to
-those actions and not something this gate fixes.
+(`tauntHoldUntilRound`, `tauntHoldUserId`, `tauntHoldMobInstanceId`).
+`Character.SetAggro` has a gate that, while a hold is active, ignores
+`DefaultAttack`/`Shooting`/`SurpriseAttack` re-aggro to a different
+target. Before this mechanism existed, ~14 combat archetypes ran a
+reactive `attack` btree action on `mob_hurt`/`packmate_hurt`, and that
+action's own `SetAggro` call overwrote the taunt every round the instant
+an ally hit the taunted target. If you add a new `SetAggro` caller and
+aggro "won't switch," check whether a taunt hold is blocking it before
+assuming a bug; that is intended. `SpellCast`/`Flee`, same-target sets,
+and a newer taunt (which re-locks first) all pass through the gate.
+AoE/multi-target harm casts still hit everyone regardless of taunt; that
+is inherent to those actions and not something this gate fixes.
+
+**The memory file's setter is stale as of 2026-09-08.** It names
+`Character.ForceTauntAggro` as the single call that sets the lock and
+then engages. `ForceTauntAggro` was deleted under U12a and split into two
+current symbols: `Character.SetTauntHold(userId, mobInstanceId,
+holdRounds int)` (`internal/characters/taunt_hold.go`) sets the lock only
+and does not engage, and `targeting.CommitTaunt(c *characters.Character,
+ref state.ActorRef, holdRounds int) bool` (`internal/targeting/commit.go:124`)
+calls `SetTauntHold` first and then commits the engagement, in that
+order, because the lock must exist before the commit for the taunt's own
+set to pass the gate it just armed. `ExecuteTaunt`
+(`internal/actions/combat_taunt.go`) calls `targeting.CommitTaunt` today,
+not the deleted helper. A guard test,
+`internal/actions/ambush_parity_guard_test.go:335`, actively fails the
+build's test suite on any new `ForceTauntAggro` caller and points at
+`targeting.CommitTaunt` instead, so following the memory file's old
+symbol would write code the test suite rejects. Treat
+`SetTauntHold`/`CommitTaunt` as the current pair; the lock mechanics and
+gate behavior described above are otherwise unchanged.
 
 ## Where combat code goes
 
@@ -289,14 +324,19 @@ quadrant-specific logic (player-only text dispatch, mob-only behavior
 trees, party-only assist) is gated with `atk.IsPlayer()` / `def.IsPlayer()`
 checks at the leaf site, plus a `// Divergence #N: <reason>` comment tied to
 the numbered list in
-`docs/superpowers/specs/2026-04-18-combat-quadrant-unification-design.md`.
+`docs/superpowers/specs/completed/2026-04-18-combat-quadrant-unification-design.md`
+(the memory file cites this path without the `completed/` segment; the spec
+moved there and the numbered list, items 1 to 9 with item 10 struck out, is
+otherwise unchanged as of 2026-09-08).
 Tests for new combat behavior should drive through `handleCombatRound`
 end to end, not call a phase helper directly.
 
 [[feedback_btree_combat_events_before_legacy_ai]]: a mob-attacker behavior
 tree event that needs to own this round's action decision must fire before
-`handleMobAIDecision` (at `internal/hooks/NewRound_DoCombat.go:276`), not
-at the top of `handleCombatRound`. `handleMobAIDecision` returns `true`
+`handleMobAIDecision` (at `internal/hooks/NewRound_DoCombat.go:395` as of
+2026-09-08; the memory file's line 276 now holds unrelated
+guard-prisoner/`NoAggroTarget` logic and is stale), not at the top of
+`handleCombatRound`. `handleMobAIDecision` returns `true`
 when it picks a move and the per-mob loop `continue`s on that, so
 `handleCombatRound` never runs for that mob and the legacy hardcoded
 priority ladder in `preferredSpell` (shield, then heal, then harm-list)
