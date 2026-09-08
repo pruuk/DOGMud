@@ -40,9 +40,25 @@ grep before shipping dialogue changes:
 (the list form has `[` after the colon, the bare-scalar form has a quote).
 [[feedback_dialogue_bare_scalar_list_mutes_npc]]
 
+## Gating fields at a glance
+
+Three different things gate whether a dialogue node or pattern fires, and
+two of their names differ by one word. Do not reach for one when you mean
+the other.
+
+- `questExcluded`: a list of quest TOKENS, e.g. `["10-start", "10-end"]`.
+  Hides a node if the player holds one of these tokens (used for quest
+  re-grant prevention, immediately below).
+- `questFlagExcluded`: a map of flag KEY to VALUE, e.g.
+  `{"11-branch": "sylara"}`. Hides a node if a quest flag equals that value
+  (used for branching-quest gating, in Quest flags and branching below).
+- `triggers` / `keywords`: the words a player must type to reach a node at
+  all. This gates on player input, not on quest state (see Discoverability
+  below).
+
 ## Re-grant prevention
 
-## Quest Re-Grant Prevention SOP
+### Quest Re-Grant Prevention SOP
 Every dialogue node or pattern with `grantsQuest` must include the quest's
 **end token** (e.g., `{questid}-end`) in `questExcluded`, not just the token
 being granted. Without this, a player who completed the quest can get it
@@ -57,13 +73,13 @@ player who finished the quest can walk back up and get offered it again.
 
 ## Discoverability
 
-## Quest NPC Dialogue SOP
+### Quest NPC Dialogue SOP
 Every quest-granting dialogue node (any tree node with `grantsQuest`) MUST include
 `"quest"` and `"task"` in its `triggers` list. Similarly, quest-introducing
 `patterns` entries must include `"quest"` and `"task"` in `keywords`. This ensures
 `ask <npcname> quest` always works for discovering available quests.
 
-## Dialogue Voice & Trigger Discoverability
+### Dialogue Voice & Trigger Discoverability
 - NPC `text` fields are spoken by the NPC, always first person ("I", "my", "me").
 - `hints` are narrator text for the player, describe options from the player's
   perspective. **NEVER** write 3rd-person self-references like "Ask about why she
@@ -77,6 +93,11 @@ Every quest-granting dialogue node (any tree node with `grantsQuest`) MUST inclu
   where urgency is the design intent (e.g., timed delivery before an attack).
   For all other NPCs, leave it empty or omit entirely.
 
+Provenance note: an earlier implementation rendered hints via
+`mob.Command("say ...")`, which caused exactly the NPC self-reference
+problem the rule above forbids; hints now use a separate `SendText` path.
+[[feedback_hint_voice]]
+
 Discoverability extends past dialogue into room content: quest engine
 `room_interact` triggers do an exact string match on the player's typed
 noun, with no fuzzy matching or alias resolution (that forgiveness happens
@@ -89,20 +110,9 @@ trigger per plausible noun variant a player might type (`altar stone`,
 actions). Cross-reference room nouns against trigger nouns before shipping.
 [[feedback_room_interact_noun_matching]]
 
-## Voice
-
-`text` fields are the NPC speaking and are always first person. `hints`
-fields render as bracketed narrator text with distinct styling, are never
-prefixed with "NPC says," and must be written in third person, player
-perspective: "You could ask why she left, or about her father," never
-"You could ask why I left, or about my father." An earlier implementation
-rendered hints via `mob.Command("say ...")`, which caused exactly this
-NPC self-reference problem; hints now use a separate `SendText` path.
-[[feedback_hint_voice]]
-
 ## Items
 
-## Quest Item Delivery: give.go Gotcha
+### Quest Item Delivery: give.go Gotcha
 **CRITICAL:** `give.go` transfers the item from the player to the mob BEFORE
 any handler fires. The handler cannot prevent or undo the transfer.
 Consequences:
@@ -114,7 +124,7 @@ Consequences:
 - Quest givers who hand out physical items via `givesItem` must also have a
   recovery dialogue node that gives a replacement if the player lost the item
 
-## Dialogue Engine: givesItem
+### Dialogue Engine: givesItem
 Tree nodes and patterns support `givesItem: <itemId>`. When a node fires with
 `givesItem` set, the player receives the item and sees "You receive a <itemname>."
 Use this for NPCs handing quest items to the player during dialogue.
@@ -139,11 +149,11 @@ Two more item rules for quests:
 
 ## Quest flags and branching
 
-## Quest Flags System
+### Quest Flags System
 Quest flags store arbitrary metadata about quest choices. Primary use case:
 tracking which branch a player took in an opposed/branching quest.
 
-### Flag Declaration (Quest YAML)
+#### Flag Declaration (Quest YAML)
 Quests declare expected flags with allowed values. **Undeclared flag
 references cause a server panic at startup**, catching typos before
 they reach production.
@@ -157,23 +167,23 @@ flags:
 
 Flag key convention: `"{questId}-{flagName}"` (e.g., `"11-branch"`).
 
-### Dialogue Integration
+#### Dialogue Integration
 - `setsQuestFlag: {key: "11-branch", value: "rhett"}`: set a flag on
   node match
 - `questFlagRequired: {"11-branch": "rhett"}`: gate on flag value
 - `questFlagExcluded: {"11-branch": "sylara"}`: hide if flag matches
 
-### Quest Engine Integration
+#### Quest Engine Integration
 - Conditions: `has_flag: {"11-branch": "rhett"}`, `missing_flag: ...`
 - Action: `set_flag: {key: "11-branch", value: "rhett"}`
 
-### Admin/Scripting
+#### Admin/Scripting
 - `questtoken flags`: show all flags on your character
 - `questtoken flag <key> [value]`: view or set a flag
 - JS scripting: `user.GetQuestFlag(key)`, `user.SetQuestFlag(key, value)`,
   `user.HasQuestFlag(key)`
 
-### Branching Quest SOP
+#### Branching Quest SOP
 Every branching quest MUST have:
 1. Flag declaration in quest YAML with all valid values
 2. `setsQuestFlag` on each branch NPC's quest-start dialogue node
@@ -184,15 +194,17 @@ Every branching quest MUST have:
 5. Root variants with `questFlagRequired` for path-specific greetings
 6. Mid-quest root variants for cross-NPC visits during the OTHER quest
 
-Note the reward block uses a different key convention than the trigger and
-condition blocks above: quest `rewards:` fields (`itemid`, `skillinfo`,
-`buffid`, `playermessage`, `roommessage`, `roomid`, `spellid`, `questid`)
-load via a tag-less struct that binds on the lowercased field name with no
-underscore handling, so `itemid` is correct and `item_id` silently fails to
-load with no panic and no warning. Trigger `actions:`/`conditions:` and the
-dialogue fields shown above (`grantsQuest`, `setsQuestFlag`, `questExcluded`,
-`givesItem`) are properly snake_case-tagged structs and are correct as
-written above; only the rewards block is the no-underscore exception.
+### Quest reward YAML keys
+
+Quest `rewards:` fields (`itemid`, `skillinfo`, `buffid`, `playermessage`,
+`roommessage`, `roomid`, `spellid`, `questid`) load via a tag-less struct
+that binds on the lowercased field name with no underscore handling, so
+`itemid` is correct and `item_id` silently fails to load with no panic and
+no warning. This is scoped to the rewards block only: trigger
+`actions:`/`conditions:` and the dialogue fields used elsewhere in this
+document (`grantsQuest`, `setsQuestFlag`, `questExcluded`, `givesItem`) are
+properly snake_case-tagged structs and are correct as written throughout
+this skill; only the rewards block is the no-underscore exception.
 [[reference_quest_reward_yaml_key_gotcha]]
 
 ## Verify event names against the loader
