@@ -157,7 +157,36 @@ should split, and the splitting decision belongs to a later phase.
     block. **Never edit the lifted text to resolve a duplication**, because the
     verbatim lift is what lets a later phase prove nothing was lost. Cut the
     folded copy, not the lifted one.
-11. **Disambiguate near-identical identifiers.** Where a skill ends up
+11. **Verify every code claim against the code, not against the memory file.**
+    Task 8 shipped a skill asserting a `Storage.MigrationsDone` field with
+    `HasMigration` and `MarkMigration` accessors. None of it exists: the grep
+    returns zero hits repo-wide, and the real migration
+    (`Storage.MigrateDetunedRangedWeapons`, `internal/users/storage_migrate.go`)
+    is deliberately unmarked and run every load, because a run-once marker would
+    strand any pre-detune bow deposited after it was set. The character-side
+    file says "NO RUN-ONCE MARKER, deliberately" in its header.
+
+    The source memory file contradicted itself, and the fold took the wrong
+    half. Before asserting any symbol, signature, field, or file path that came
+    from a memory file, grep for it. A skill that documents an invented API is
+    worse than no skill, because someone will code against it and find out at
+    compile time or later.
+
+    When a memory file turns out to be self-contradictory, say so in the skill
+    and point at the code as authoritative. Do not adjudicate the memory file
+    itself; that is separate work.
+12. **A Sources footer is a deletion instruction, not a bibliography.** Phase 2
+    deletes CLAUDE.md sections that a skill claims to have lifted. Task 8's
+    footer claimed all of lines 220-230 while the body carried only part,
+    which would have permanently lost the moderation command list, the
+    `FinalizeLoginOrCreate` reference, and two config knobs. Claim exactly the
+    lines actually taken, and list what was deliberately left, the way the shop
+    pricing knobs were handled.
+
+    The same applies to material a sibling skill already owns: if two skills
+    legitimately carry the same passage, both Sources footers must say so, or
+    Phase 2 cannot tell whether deleting it is safe.
+13. **Disambiguate near-identical identifiers.** Where a skill ends up
     describing two mechanisms whose names differ by a word and whose shapes
     differ (Task 4: `questExcluded` takes a token list, `questFlagExcluded`
     takes a key-value map, both gate when a dialogue node fires), say plainly
@@ -1177,6 +1206,47 @@ Command Parsing (742-773), Equipment Slots (876-899), Spell Duration (900-904),
 Buff/Ward Spell System (905-916), Inventory & Item Disambiguation (917-935),
 Mob Stat Archetypes (1003-1010), Caster Weapon Types (1011-1025), Alchemy &
 Potions (1026-1073), Salvage System (1074-1094).
+
+- [ ] **Step 2b: Record source-material defects found during execution**
+
+These were found by task reviews, are NOT defects in the skills, and are not
+fixed by this plan. They are inaccuracies in the memory corpus itself that will
+mislead the next reader. List them in the audit so Phase 3 can decide:
+
+1. **MEMORY.md miscites the Sable combat fixture.** The index attaches
+   `[[project-u12c-2-playtest-findings]]` to the Sable fact, but the detail
+   (Sable, Rift Chamber 5000, `ask sable arena|oasis <gold>`, gold as the
+   difficulty dial) actually lives in
+   `reference-standing-combat-and-balance-facts`. Task 7 inherited the wrong
+   citation rather than silently correcting it, which was the right call for a
+   fold but leaves the error in place.
+2. **The Sable fixture is underspecified at its source.** Nothing in the memory
+   corpus says what `arena` versus `oasis` selects, or how to route to room 5000
+   from a fresh checkout. A reader setting up a combat playtest cannot act on it
+   without asking.
+3. **MEMORY.md and its own cited source disagree about the AI port.** The index
+   says the 3-commands-per-round cap "SILENTLY DROPS" the overflow;
+   `reference-multiline-input-concatenated` says that specific drop is visible
+   (it emits a rate-limit line) and reserves "silent" for a different,
+   already-fixed bug. Task 7 states both without adjudicating. One of the two
+   should be corrected at source.
+4. **Three memory files contradict themselves.**
+   `reference_advertising_listings_kit` and
+   `reference-droplet-build-cache-and-dockerfile` were found by the
+   pre-execution survey (see the spec's Out of scope section).
+   `reference-alt-characters-break-character-scoped-migrations` was found by
+   Task 8's review and is the most damaging of the three: it opens by saying
+   U10d's migration carries no marker at all, then later claims U10d added
+   `Storage.MigrationsDone`. No such field, and no `HasMigration` or
+   `MarkMigration` accessor, exists anywhere in the repo. The real migration
+   (`Storage.MigrateDetunedRangedWeapons`, `internal/users/storage_migrate.go`,
+   and `internal/characters/migrate_detuned_bows.go`) is deliberately unmarked
+   and run every load, because a run-once marker would strand any pre-detune bow
+   deposited after it was set.
+
+   This one caused a real defect: Task 8 shipped a skill documenting the
+   invented API before review caught it. Correcting the memory file at source is
+   the highest-value item on this list.
 
 - [ ] **Step 3: Write the audit**
 
