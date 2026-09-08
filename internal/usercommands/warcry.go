@@ -89,6 +89,13 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				}
 				memberUser.Character.AddCondition(characters.ConditionRally, rd, rb, "rally")
 				memberUser.Character.AddBuff(80, false)
+				// M1 audit defect: this fold loop is a copy of the primary
+				// party loop above that kept the AddCondition and AddBuff and
+				// dropped the line telling the member. Wording matches
+				// rally.go's own member line, because what is being applied
+				// here IS a rally.
+				memberUser.SendText(messaging.CategorySystem,
+					fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi>'s rallying cry steadies your nerves!</ansi>`, user.Character.Name))
 				applyRallyToCompanions(memberUser, room, rb, rd)
 			}
 		}
