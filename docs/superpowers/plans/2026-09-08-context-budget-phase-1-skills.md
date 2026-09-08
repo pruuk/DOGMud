@@ -186,7 +186,33 @@ should split, and the splitting decision belongs to a later phase.
     The same applies to material a sibling skill already owns: if two skills
     legitimately carry the same passage, both Sources footers must say so, or
     Phase 2 cannot tell whether deleting it is safe.
-13. **Disambiguate near-identical identifiers.** Where a skill ends up
+13. **A memory file can be right on its filing date and wrong today.** Rule 11
+    catches a symbol that never existed. This catches one that existed when the
+    note was written and has since been deleted or renamed, which is a
+    different and more common failure.
+
+    Task 10 folded two files that were accurate when filed and are now stale:
+    `reference_hit_chance_decoupled_from_mitigation` names `spellDefenseValue`
+    and `Character.GetDefense()`, both deleted in U6b, and
+    `reference-taunt-hold-aggro-gate` names `Character.ForceTauntAggro`, deleted
+    in U12a and split into `Character.SetTauntHold` plus
+    `targeting.CommitTaunt`. A guard test now actively bans new
+    `ForceTauntAggro` callers, so a reader following the folded text would write
+    code the suite rejects. A third file's line citation had drifted by 119
+    lines.
+
+    Folding freezes a dated note into a document that reads as current, which is
+    what makes this worse than leaving it in the memory file. When a claim is
+    stale, keep the RULE (it is usually still true), replace the evidence with
+    the current symbols, and say three things: what is true now, that the memory
+    file is stale on this point, and the date checked. Do not edit the memory
+    file from inside a skill task; that is separate work.
+
+    Watch for the self-contradiction this produces: Task 10's skill warned
+    against a `DamageReduction` hazard in a folded rule while its own lifted
+    CLAUDE.md text, two sections earlier, said that field was removed on
+    2026-08-03.
+14. **Disambiguate near-identical identifiers.** Where a skill ends up
     describing two mechanisms whose names differ by a word and whose shapes
     differ (Task 4: `questExcluded` takes a token list, `questFlagExcluded`
     takes a key-value map, both gate when a dialogue node fires), say plainly
@@ -1247,6 +1273,30 @@ mislead the next reader. List them in the audit so Phase 3 can decide:
    This one caused a real defect: Task 8 shipped a skill documenting the
    invented API before review caught it. Correcting the memory file at source is
    the highest-value item on this list.
+
+5. **Three memory files have gone stale against the current code.** Unlike the
+   self-contradictory files above, these were accurate when filed. The code
+   moved and the notes did not:
+
+   - `reference_hit_chance_decoupled_from_mitigation` names `spellDefenseValue`
+     and `Character.GetDefense()`. Both were deleted in U6b. The defender's
+     score now comes from `GetDefenseScoreFor` via the targeting seam. The
+     rule itself (mitigation affects damage, never the to-hit roll) is still
+     true; only its evidence is gone.
+   - `reference-taunt-hold-aggro-gate` names `Character.ForceTauntAggro`,
+     deleted in U12a and split into `Character.SetTauntHold` and
+     `targeting.CommitTaunt` (`internal/targeting/commit.go:119`).
+     `internal/actions/ambush_parity_guard_test.go:335` bans new callers, so
+     following the note produces code the suite rejects.
+   - `feedback_btree_combat_events_before_legacy_ai` cites the
+     `handleMobAIDecision` call site as `NewRound_DoCombat.go:276`. It is now
+     at `:395`; line 276 holds unrelated guard-prisoner logic.
+
+   These are the strongest argument in this whole exercise for keeping skills
+   in the repo rather than in the memory directory: a skill that names a symbol
+   is versioned alongside the code that defines it, so the same commit that
+   deletes `ForceTauntAggro` shows the skill still referencing it. A memory file
+   drifts silently and forever.
 
 - [ ] **Step 3: Write the audit**
 
