@@ -212,10 +212,12 @@ internal/usercommands/drain.go | observer | messaging~CategoryHitNaturalSharp | 
 internal/usercommands/drain.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~drainRoomMsgs~util~Rand~len~drainRoomMsgs~user~Character~Name~targetName
 internal/usercommands/drain.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~missRoomMsgs~util~Rand~len~missRoomMsgs~user~Character~Name~targetName
 internal/usercommands/drain.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~partialRoomMsgs~util~Rand~len~partialRoomMsgs~user~Character~Name~targetName
+internal/usercommands/gore.go | actee | messaging~CategoryHitNaturalSharp | defence~ToDefender
 internal/usercommands/gore.go | actee | messaging~CategorySystem | fmt~Sprintf~goreTargetMsgs~util~Rand~len~goreTargetMsgs~user~Character~Name~dmgDesc
 internal/usercommands/gore.go | actee | messaging~CategorySystem | fmt~Sprintf~goreTargetMsgs~util~Rand~len~goreTargetMsgs~user~Character~Name~dmgDesc
 internal/usercommands/gore.go | actee | messaging~CategorySystem | fmt~Sprintf~missTargetMsgs~util~Rand~len~missTargetMsgs~user~Character~Name
 internal/usercommands/gore.go | actee | messaging~CategorySystem | fmt~Sprintf~partialTargetMsgs~util~Rand~len~partialTargetMsgs~user~Character~Name~dmgDesc
+internal/usercommands/gore.go | actor | messaging~CategoryHitNaturalSharp | defence~ToAttacker
 internal/usercommands/gore.go | actor | messaging~CategorySystem | "You have no horns to gore with."
 internal/usercommands/gore.go | actor | messaging~CategorySystem | "You have no target!"
 internal/usercommands/gore.go | actor | messaging~CategorySystem | "You need a moment to recover before attempting another special move."
@@ -224,6 +226,8 @@ internal/usercommands/gore.go | actor | messaging~CategorySystem | fmt~Sprintf~g
 internal/usercommands/gore.go | actor | messaging~CategorySystem | fmt~Sprintf~goreMsgs~util~Rand~len~goreMsgs~targetName~dmgDesc
 internal/usercommands/gore.go | actor | messaging~CategorySystem | fmt~Sprintf~missMsgs~util~Rand~len~missMsgs~targetName
 internal/usercommands/gore.go | actor | messaging~CategorySystem | fmt~Sprintf~partialMsgs~util~Rand~len~partialMsgs~targetName~dmgDesc
+internal/usercommands/gore.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/usercommands/gore.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/usercommands/gore.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~goreRoomMsgs~util~Rand~len~goreRoomMsgs~user~Character~Name~targetName
 internal/usercommands/gore.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~goreRoomMsgs~util~Rand~len~goreRoomMsgs~user~Character~Name~targetName
 internal/usercommands/gore.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~missRoomMsgs~util~Rand~len~missRoomMsgs~user~Character~Name~targetName
