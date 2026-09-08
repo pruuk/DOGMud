@@ -416,6 +416,7 @@ internal/usercommands/trip.go | actee | messaging~CategorySystem | fmt~Sprintf~`
 internal/usercommands/trip.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="username">%s</ansi> swings their tail and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`~user~Character~Name~combat~GetDamageDescription~result~Damage~result~TargetMaxHP
 internal/usercommands/trip.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="username">%s</ansi> swings their tail at you, but you avoid it!`~user~Character~Name
 internal/usercommands/trip.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="username">%s</ansi> tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`~user~Character~Name~combat~GetDamageDescription~result~Damage~result~TargetMaxHP
+internal/usercommands/trip.go | actee | messaging~CategoryTrip | defence~ToDefender
 internal/usercommands/trip.go | actor | messaging~CategorySystem | "You have no target!"
 internal/usercommands/trip.go | actor | messaging~CategorySystem | "You need a moment to recover before attempting another special move."
 internal/usercommands/trip.go | actor | messaging~CategorySystem | `<ansi fg="red">You can't trip someone while focused on your work. Finish or be interrupted first.</ansi>`
@@ -429,6 +430,10 @@ internal/usercommands/trip.go | actor | messaging~CategorySystem | fmt~Sprintf~`
 internal/usercommands/trip.go | actor | messaging~CategorySystem | fmt~Sprintf~`Your <ansi fg="yellow-bold">trip</ansi> fails to take <ansi fg="mobname">%s</ansi> down, but still catches them hard! (<ansi fg="damage">%s</ansi>)`~targetName~combat~GetDamageDescription~result~Damage~result~TargetMaxHP
 internal/usercommands/trip.go | actor | messaging~CategorySystem | fmt~Sprintf~`Your <ansi fg="yellow-bold">trip</ansi> sends <ansi fg="mobname">%s</ansi> crashing to the ground! (<ansi fg="damage">%s</ansi>)`~targetName~combat~GetDamageDescription~result~Damage~result~TargetMaxHP
 internal/usercommands/trip.go | actor | messaging~CategorySystem | fmt~Sprintf~`Your <ansi fg="yellow-bold">trip</ansi> strikes <ansi fg="mobname">%s</ansi>, but they stay on their feet! (<ansi fg="damage">%s</ansi>)`~targetName~combat~GetDamageDescription~result~Damage~result~TargetMaxHP
+internal/usercommands/trip.go | actor | messaging~CategoryTrip | defence~ToAttacker
+internal/usercommands/trip.go | observer | messaging~CategoryTrip | defence~ToRoom
+internal/usercommands/trip.go | observer | messaging~CategoryTrip | defence~ToRoom
+internal/usercommands/trip.go | observer | messaging~CategoryTrip | defence~ToRoom
 internal/usercommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="username">%s</ansi> attempts a tailsweep on <ansi fg="mobname">%s</ansi>, but misses!`~user~Character~Name~targetName
 internal/usercommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="username">%s</ansi> attempts to trip <ansi fg="mobname">%s</ansi>, but misses!`~user~Character~Name~targetName
 internal/usercommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="username">%s</ansi> attempts to trip <ansi fg="mobname">%s</ansi>, but they keep their footing!`~user~Character~Name~targetName
