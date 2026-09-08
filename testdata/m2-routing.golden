@@ -95,12 +95,15 @@ internal/mobcommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~`
 internal/mobcommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> tries to knee <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> tries to stomp <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> tries to stomp <ansi fg="username">%s</ansi>, who rolls mostly clear but still gets caught!`~mobName~target~Name
+internal/mobcommands/maul.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryHitNaturalSharp~defence~ToDefender
 internal/mobcommands/maul.go | actee | messaging~CategoryHitNaturalSharp | `Something snaps its fangs at you, but misses!`
 internal/mobcommands/maul.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> savages you with vicious fangs, tearing bleeding wounds! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/maul.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/maul.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> snaps its fangs at you, but misses!`~mobName
 internal/mobcommands/maul.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something savages you with vicious fangs, tearing bleeding wounds! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/maul.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> savages <ansi fg="username">%s</ansi> with vicious fangs!`~mobName~target~Name
 internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, who twists mostly free but still gets torn!`~mobName~target~Name
