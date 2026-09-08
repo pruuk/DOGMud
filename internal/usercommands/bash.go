@@ -58,49 +58,74 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		targetUser = users.GetByUserId(target.UserId)
 	}
 
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	var acteeRecipient messaging.Recipient
+	if targetUser != nil {
+		acteeRecipient = targetUser
+	}
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
 	if result.Hit {
 		if result.KnockedDown {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> knocks <ansi fg="mobname">%s</ansi> to the ground! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc))
-			if targetUser != nil {
-				targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> knocks you to the ground! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc))
-			}
-			room.SendTextVisual(messaging.CategoryBash,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> knocks <ansi fg="mobname">%s</ansi> to the ground!`, user.Character.Name, target.Name),
-				user.UserId, target.UserId,
-			)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(messaging.CategorySystem,
+					fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> knocks <ansi fg="mobname">%s</ansi> to the ground! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc)),
+				Actee: messaging.Say(messaging.CategorySystem,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> knocks you to the ground! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc)),
+				Observer: messaging.Say(messaging.CategoryBash,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> knocks <ansi fg="mobname">%s</ansi> to the ground!`, user.Character.Name, target.Name)),
+			}, aud)
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> strikes <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc))
-			if targetUser != nil {
-				targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> strikes you! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc))
-			}
-			room.SendTextVisual(messaging.CategoryBash,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield!`, user.Character.Name, target.Name),
-				user.UserId, target.UserId,
-			)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(messaging.CategorySystem,
+					fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> strikes <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc)),
+				Actee: messaging.Say(messaging.CategorySystem,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> strikes you! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc)),
+				Observer: messaging.Say(messaging.CategoryBash,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield!`, user.Character.Name, target.Name)),
+			}, aud)
 		}
 	} else if result.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage; the room
 		// line names the defence that blunted the bash (U6b Task 9).
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> fails to floor <ansi fg="mobname">%s</ansi>, but still slams into them! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc))
-		if targetUser != nil {
-			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> fails to floor you, but still slams into you! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc))
-		}
+		//
+		// TWO CALLS, NOT ONE, TO PRESERVE MESSAGE ORDER. The room line here is
+		// conditional on sendMoveDefenceTriad declining to speak, and that
+		// helper sends its own room line as a side effect of deciding. Folding
+		// the check into a single Trio would run it before these personal
+		// lines and reorder what the player reads.
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.Say(messaging.CategorySystem,
+				fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> fails to floor <ansi fg="mobname">%s</ansi>, but still slams into them! (<ansi fg="damage">%s</ansi>)`, target.Name, dmgDesc)),
+			Actee: messaging.Say(messaging.CategorySystem,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi>'s <ansi fg="yellow-bold">shield bash</ansi> fails to floor you, but still slams into you! (<ansi fg="damage">%s</ansi>)`, user.Character.Name, dmgDesc)),
+			Observer: messaging.NoLine,
+		}, aud)
 		if !sendMoveDefenceTriad(user, room, target, result.Defence, "shield bash", messaging.CategoryBash, true) {
-			room.SendTextVisual(messaging.CategoryBash,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield, who staggers but stays up!`, user.Character.Name, target.Name),
-				user.UserId, target.UserId,
-			)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: messaging.NoLine,
+				Observer: messaging.Say(messaging.CategoryBash,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> bashes <ansi fg="mobname">%s</ansi> with their shield, who staggers but stays up!`, user.Character.Name, target.Name)),
+			}, aud)
 		}
 	} else if !sendMoveDefenceTriad(user, room, target, result.Defence, "shield bash", messaging.CategoryBash, false) {
 		// No defence to narrate (e.g. a fumbled swing): plain miss text.
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> misses <ansi fg="mobname">%s</ansi>!`, target.Name))
-		if targetUser != nil {
-			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> attempts to bash you with their shield, but misses!`, user.Character.Name))
-		}
-		room.SendTextVisual(messaging.CategoryBash,
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> attempts to bash <ansi fg="mobname">%s</ansi>, but misses!`, user.Character.Name, target.Name),
-			user.UserId, target.UserId,
-		)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.Say(messaging.CategorySystem,
+				fmt.Sprintf(`Your <ansi fg="yellow-bold">shield bash</ansi> misses <ansi fg="mobname">%s</ansi>!`, target.Name)),
+			Actee: messaging.Say(messaging.CategorySystem,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> attempts to bash you with their shield, but misses!`, user.Character.Name)),
+			Observer: messaging.Say(messaging.CategoryBash,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> attempts to bash <ansi fg="mobname">%s</ansi>, but misses!`, user.Character.Name, target.Name)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
