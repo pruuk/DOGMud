@@ -51,7 +51,7 @@ func main() {
 
 	// Create the command file up front so a driver can append before we poll.
 	if f, err := os.OpenFile(cmdPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644); err == nil {
-		f.Close()
+		_ = f.Close()
 	}
 
 	evt, err := os.OpenFile(evtPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
@@ -59,7 +59,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "agentbridge: open events: %v\n", err)
 		os.Exit(1)
 	}
-	defer evt.Close()
+	defer func() { _ = evt.Close() }()
 
 	args := []string{"--target", *target}
 	if *user != "" {
@@ -95,8 +95,8 @@ func main() {
 		for sc.Scan() {
 			// Append immediately and sync: a driver polling this file between
 			// tool calls must never read a half-written line or a stale tail.
-			fmt.Fprintln(evt, sc.Text())
-			evt.Sync()
+			_, _ = fmt.Fprintln(evt, sc.Text())
+			_ = evt.Sync()
 		}
 	}()
 
@@ -107,7 +107,7 @@ func main() {
 	for {
 		select {
 		case <-done:
-			proc.Wait()
+			_ = proc.Wait()
 			return
 		default:
 		}
@@ -124,20 +124,20 @@ func main() {
 						continue
 					}
 					if strings.TrimSpace(line) == "__QUIT__" {
-						stdin.Close()
-						proc.Wait()
+						_ = stdin.Close()
+						_ = proc.Wait()
 						return
 					}
-					fmt.Fprintln(stdin, line)
+					_, _ = fmt.Fprintln(stdin, line)
 					last = time.Now()
 				}
 			}
-			f.Close()
+			_ = f.Close()
 		}
 
 		if *idle > 0 && time.Since(last) > *idle {
-			stdin.Close()
-			proc.Wait()
+			_ = stdin.Close()
+			_ = proc.Wait()
 			return
 		}
 		time.Sleep(300 * time.Millisecond)
