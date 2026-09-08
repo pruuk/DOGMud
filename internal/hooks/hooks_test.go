@@ -448,17 +448,30 @@ func TestCheckConcentrationBreak_BelowThresholdNeverRolls(t *testing.T) {
 //
 // ⚠️ THE RATE CHANGE ON THIS PATH IS THE LARGEST IN THE SLICE, and this
 // fixture is where it is visible: at 30% damage (difficulty 300) a fresh
-// caster holds only about 10 contests in 200. Events therefore go from ~10 to
-// 200 -- a 20x increase in COUNT, or roughly 7.6x in full-weight equivalents
-// once the 0.35 fraction is applied. Concentration also fires PER DAMAGE
+// caster holds only a handful of contests. Events therefore go from that
+// handful to EVERY contest, a large increase in COUNT, damped in full-weight
+// equivalents by the 0.35 fraction. Concentration also fires PER DAMAGE
 // INSTANCE, so a caster taking four swings resolves up to four of these in one
 // round. Carry both facts into the SkillProgressionMultipliers re-solve;
 // spellcasting is fitted at 3.90 on the premise that casting is rare.
+//
+// ⚠️ THE HOLD RATE HERE WAS DOCUMENTED AS "about 10 contests in 200" AND IS
+// NOT. Measured directly on 2026-09-08 over five runs: 6, 7, 7, 4 and 2 holds
+// per 200, so roughly 5 in 200 rather than 10. Anyone re-deriving the
+// multipliers should measure rather than trust a figure in a comment, this one
+// included.
+//
+// THAT ERROR IS ALSO WHY THIS TEST WAS FLAKY. With about 5 holds per 200, a
+// run that produced ZERO was common enough to trip the guard below and fail
+// CI: measured at 1 failure in 20 runs locally, and it failed a real CI run on
+// PR #113 having passed the one before it. The contest count is raised so both
+// halves are exercised reliably; the 30% / difficulty-300 scenario the comment
+// describes is unchanged.
 func TestCheckConcentrationBreak_ProgressionFiresOnEveryResolvedContest(t *testing.T) {
 	ch := newCastingChar("mind-spike")
 	ch.HealthMax.Value = 100
 	before := ch.GetSkillUseCount(string(skills.Spellcasting))
-	const contests = 200
+	const contests = 2000
 	holds := 0
 	for i := 0; i < contests; i++ {
 		if !checkConcentrationBreak(ch, 30) { // 30% hit, difficulty 300

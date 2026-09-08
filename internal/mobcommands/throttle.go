@@ -80,7 +80,7 @@ func Throttle(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Cast-interrupt detail line riding on the hit above. Observer is
 		// NoLine because today's behaviour never broadcasts this to the room.
 		if res.InterruptedCast && targetUser != nil {
-			interruptActee := messaging.NoLine
+			var interruptActee messaging.Line
 			if canSee {
 				interruptActee = messaging.Say(messaging.CategorySystem,
 					fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s choke shatters your concentration — your spell collapses!`, mobName))

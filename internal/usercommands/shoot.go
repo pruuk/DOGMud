@@ -389,7 +389,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	// defended-partial ambush and never tell the shooter what stopped it. The
 	// melee side names the defence on exactly this outcome; folding the damage
 	// band onto the triad line mirrors that composite.
-	shooterLine := messaging.NoLine
+	var shooterLine messaging.Line
 	switch {
 	case result.Revealed:
 		shooterLine = messaging.Say(messaging.CategorySurpriseAttack,
@@ -527,7 +527,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		if fromDir != "" {
 			origin = fmt.Sprintf(`from beyond the <ansi fg="exit">%s</ansi>`, fromDir)
 		}
-		arrivalLine := messaging.NoLine
+		var arrivalLine messaging.Line
 		switch {
 		case hit:
 			arrivalLine = messaging.Say(messaging.CategoryHitRanged,
