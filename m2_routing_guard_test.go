@@ -312,7 +312,14 @@ func TestM2RoutingIsFrozen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v (record it with M2_RECORD_ROUTING=1)", m2RoutingGoldenPath, err)
 	}
-	want := strings.Split(strings.TrimRight(string(raw), "\n"), "\n")
+	// Normalise CRLF before splitting. This repo has core.autocrlf=true and no
+	// .gitattributes rule for *.golden, so a fresh Windows checkout rewrites
+	// every line ending and each record would arrive with a trailing \r --
+	// making all of them differ at once, which reads as catastrophic drift
+	// rather than as a checkout artifact. internal/narration's
+	// defense_messages.golden already fails that way on Windows today.
+	normalised := strings.ReplaceAll(string(raw), "\r\n", "\n")
+	want := strings.Split(strings.TrimRight(normalised, "\n"), "\n")
 
 	// SET semantics, not multiset, and the reason is the local resolver above.
 	//
