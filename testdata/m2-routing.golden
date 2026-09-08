@@ -1,3 +1,4 @@
+internal/mobcommands/bash.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryBash~defence~ToDefender
 internal/mobcommands/bash.go | actee | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> attempts a %s, but misses!`~mobName~bashLabel
 internal/mobcommands/bash.go | actee | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi>'s <ansi fg="yellow-bold">%s</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">%s</ansi>)`~mobName~bashLabel~dmgDesc
 internal/mobcommands/bash.go | actee | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi>'s <ansi fg="yellow-bold">%s</ansi> knocks you to the ground! (<ansi fg="damage">%s</ansi>)`~mobName~bashLabel~dmgDesc
@@ -6,6 +7,8 @@ internal/mobcommands/bash.go | actee | messaging~CategoryBash | fmt~Sprintf~`Som
 internal/mobcommands/bash.go | actee | messaging~CategoryBash | fmt~Sprintf~`Something's <ansi fg="yellow-bold">%s</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">%s</ansi>)`~bashLabel~dmgDesc
 internal/mobcommands/bash.go | actee | messaging~CategoryBash | fmt~Sprintf~`Something's <ansi fg="yellow-bold">%s</ansi> knocks you to the ground! (<ansi fg="damage">%s</ansi>)`~bashLabel~dmgDesc
 internal/mobcommands/bash.go | actee | messaging~CategoryBash | fmt~Sprintf~`Something's <ansi fg="yellow-bold">%s</ansi> strikes you! (<ansi fg="damage">%s</ansi>)`~bashLabel~dmgDesc
+internal/mobcommands/bash.go | observer | messaging~CategoryBash | defence~ToRoom
+internal/mobcommands/bash.go | observer | messaging~CategoryBash | defence~ToRoom
 internal/mobcommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> %s <ansi fg="username">%s</ansi> %s!`~mobName~bashVerb~target~Name~bashWith
 internal/mobcommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> %s <ansi fg="username">%s</ansi> %s, who staggers but stays up!`~mobName~bashVerb~target~Name~bashWith
 internal/mobcommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> attempts to bash <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
