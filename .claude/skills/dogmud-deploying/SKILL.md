@@ -98,13 +98,23 @@ server's needs. [[feedback-skip-worktree-config-leak]]
 
 ## Build time baseline
 
-Docker rebuild time on the deploy pipeline has held near 135 to 145 seconds
-regardless of diff size across multiple prod pushes, because `COPY . .`
-invalidates the Go build cache on essentially every build. A cleanup pass
-that shrinks the compiled surface can move this number; if a refactor lands
-and rebuild time does not improve, that is worth a second look, though these
-are casual, not precision-profiled, measurements.
-[[reference_docker_build_times]]
+`reference_docker_build_times` records a single before-and-after baseline,
+not a general rule about diff size: prod rebuilds ran roughly 130 to 160
+seconds before the 2026-04-18 push, and roughly 100 seconds after it, once
+that push had consolidated several large refactors (combat-quadrant
+unification, bleedout-system removal, target-resolution work) that
+measurably shrank the compiled surface. Its own follow-up guidance is to
+re-check the metric after future cleanup passes: if a refactor lands and
+rebuild time does not improve, that is worth a second look, treated as a
+casual, not precision-profiled, observation. [[reference_docker_build_times]]
+
+A later running log, `reference_prod_perf_baseline` (cite-only below, not
+folded here as a rule), records a different pattern across more recent
+pushes: deploy cost held near 135 to 145 seconds regardless of how much code
+changed, which that log attributes to `COPY . .` invalidating the Go build
+cache on essentially every build. The two sources are in tension about
+whether tree size moves the number; this skill does not adjudicate between
+them.
 
 ## The guide
 
@@ -131,8 +141,9 @@ Folded: [[feedback-skip-worktree-config-leak]] ·
 [[reference_docker_build_times]] · [[feedback_motd_format]] ·
 [[reference_motd_location]]
 
-Cited, not folded (dated incidents and a running log; read the source file
-for full detail, not restated as rules here):
+Cited, not folded: the dated narrative of how each incident was found and
+diagnosed stays in each source file; the operational fix from each is
+already stated in the body above, not merely pointed at.
 [[reference-droplet-build-cache-and-dockerfile]] (self-contradictory on the
 build-cache-mount question, deliberately left unresolved above) ·
 [[reference-droplet-root-owned-files-block-git-writes]] ·
@@ -140,4 +151,5 @@ build-cache-mount question, deliberately left unresolved above) ·
 [[reference_hotswap_upstream_prs_638_639]] (hot-reboot/copyover on prod,
 adjacent to but not part of the build-and-restart deploy path covered above) ·
 [[reference_prod_perf_baseline]] (running log of pull/restart timing and idle
-CPU, newest first)
+CPU, newest first; its diff-size-independent build-time observation is
+attributed above in Build time baseline, not folded as a rule)
