@@ -82,25 +82,22 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 //
 // visualCat tags the visual (entry/exit) line; the audio soundMsg uses
 // CategorySystem since it's an environment-cue ("you hear footsteps").
+// sendMovementMessage shows visualMsg to whoever can see and soundMsg to
+// whoever cannot.
+//
+// It now delegates to Room.SendTextVisualWithAudio rather than deciding for
+// itself. The hand-rolled version it replaced tested ONLY
+// buffs.NightVision, which meant it ignored blindness, sleep and infrared: a
+// BLINDED player who happened to carry night vision was shown the named line,
+// and a player with infrared got the sound cue when they should have got
+// shapes. The shared primitive reads the same perception predicates the rest
+// of the pipeline does.
+//
+// This was the third hand-rolled darkness check in this package, after
+// darkness.go's canSeeInDark and sendAudioRoomText. They should collapse into
+// one when M5 consolidates the perception verdict.
 func sendMovementMessage(room *rooms.Room, visualCat messaging.Category, visualMsg string, soundMsg string) {
-	vis := room.GetVisibility()
-	if vis >= 1 {
-		// Room is lit enough — everyone sees the message
-		room.SendTextVisual(visualCat, visualMsg)
-		return
-	}
-	// Room is dark — send per-player based on night vision
-	for _, uid := range room.GetPlayers() {
-		u := users.GetByUserId(uid)
-		if u == nil {
-			continue
-		}
-		if u.Character.HasFlagFromAnySource(buffs.NightVision) {
-			u.SendText(visualCat, visualMsg)
-		} else if soundMsg != "" {
-			u.SendText(messaging.CategorySystem, soundMsg)
-		}
-	}
+	room.SendTextVisualWithAudio(visualCat, visualMsg, soundMsg)
 }
 
 func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {

@@ -415,17 +415,19 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				// Tell the old room they are leaving
 				if user.Character.Pet.Exists() {
 
-					room.SendTextVisual(messaging.CategoryRoomExit,
+					room.SendTextVisualWithAudio(messaging.CategoryRoomExit,
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s leave towards the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, user.Character.Pet.DisplayName(), exitName),
 						),
+						`You hear someone leave the room.`,
 						user.UserId)
 
 				} else {
-					room.SendTextVisual(messaging.CategoryRoomExit,
+					room.SendTextVisualWithAudio(messaging.CategoryRoomExit,
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> leaves towards the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
 						),
+						`You hear someone leave the room.`,
 						user.UserId)
 				}
 
@@ -434,19 +436,26 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
 
-					destRoom.SendText(messaging.CategoryRoomEntry,
+					// SendTextVisualWithAudio, not SendText: the named line is
+					// pure sight and used to reach a player in a pitch dark
+					// cave complete with a compass direction. The room EXIT
+					// lines above were already sight-gated, so entry and exit
+					// disagreed about the same event.
+					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s enters from <ansi fg="exit">%s</ansi>.`, user.Character.Name, user.Character.Pet.DisplayName(), exitName),
 						),
+						`You hear someone enter the room.`,
 						user.UserId)
 
 				} else {
 
 					// Tell the new room they have arrived
-					destRoom.SendText(messaging.CategoryRoomEntry,
+					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> enters from <ansi fg="exit">%s</ansi>.`, user.Character.Name, enterFromExit),
 						),
+						`You hear someone enter the room.`,
 						user.UserId)
 
 				}

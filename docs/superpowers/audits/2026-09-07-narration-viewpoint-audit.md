@@ -567,3 +567,9 @@ in text M2 had already disturbed. The rest are recorded in
 | `rally` silently spends `warcry`'s cooldown | Observed in play | Left alone. Whether the shared cooldown is intended is a design call. |
 | "dodges your swing, but you still connect", fired three times identically | Observed in play | Left alone deliberately: this is core combat narration that M3 and M4 rewrite, and changing the wording now would conflict with that work. |
 | No line announces a corpse appearing after a kill | Observed in play | Left alone. Content addition, not a defect in existing text. |
+
+### Retirement from the darkness-lane fixes, 2026-09-08
+
+| Retired entry | Why |
+|---|---|
+| `usercommands/go.go` `%s follows you.` (verdictCorrect, actor+actee) | The room-entry line beside it changed from `destRoom.SendText` to `destRoom.SendTextVisualWithAudio`, so the walk now groups the pet-follow notice with a room broadcast and the event reads complete. No new unregistered candidate appeared, confirming the grouping rather than a lost send. The original verdict still holds on its own terms: the follow notice IS private to the owner, and the pet's room-entry narration is handled separately. |
