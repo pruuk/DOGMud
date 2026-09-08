@@ -119,12 +119,15 @@ internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | 
 internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> leaps at <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> leaps at <ansi fg="username">%s</ansi>, who mostly dodges but still gets clipped!`~mobName~target~Name
 internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> springs at <ansi fg="username">%s</ansi> and crashes into them!`~mobName~target~Name
+internal/mobcommands/rake.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryHitNaturalSharp~defence~ToDefender
 internal/mobcommands/rake.go | actee | messaging~CategoryHitNaturalSharp | `Something swipes its claws at you, but misses!`
 internal/mobcommands/rake.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> rakes its claws across you, opening bleeding wounds! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/rake.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> swipes its claws and you dodge most of it, but they still scratch you! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/rake.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> swipes its claws at you, but misses!`~mobName
 internal/mobcommands/rake.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something rakes its claws across you, opening bleeding wounds! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/rake.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something swipes at you and you dodge most of it, but it still scratches you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> rakes its claws across <ansi fg="username">%s</ansi>!`~mobName~target~Name
 internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> swipes its claws at <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> swipes its claws at <ansi fg="username">%s</ansi>, who mostly dodges but still gets scratched!`~mobName~target~Name
