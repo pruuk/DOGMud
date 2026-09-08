@@ -145,6 +145,25 @@ should split, and the splitting decision belongs to a later phase.
    collision but not coordinate collision, which sat four sections away. If a
    section names itself as a pre-flight, it must be complete or point forward
    by exact section title.
+10. **Fold only the delta.** A memory file often restates a rule the lifted
+    CLAUDE.md block already carries. Folding it whole then duplicates the rule
+    inside a document whose entire purpose is to remove duplicated context.
+    Task 4 shipped the text-versus-hints voice rule twice, with the same
+    example, 25 lines apart.
+
+    Before folding, check whether the lifted block already states the rule. If
+    it does, fold only what the memory file adds that the block lacks, usually
+    a provenance note or a sharper example, and attach it to the existing
+    block. **Never edit the lifted text to resolve a duplication**, because the
+    verbatim lift is what lets a later phase prove nothing was lost. Cut the
+    folded copy, not the lifted one.
+11. **Disambiguate near-identical identifiers.** Where a skill ends up
+    describing two mechanisms whose names differ by a word and whose shapes
+    differ (Task 4: `questExcluded` takes a token list, `questFlagExcluded`
+    takes a key-value map, both gate when a dialogue node fires), say plainly
+    what each takes and what each gates. Collecting scattered CLAUDE.md
+    sections into one document is what makes the collision visible, so it is
+    also where the disambiguation belongs.
 
 ---
 
