@@ -1,0 +1,58 @@
+# M2 narration seam: the ACTOR.
+#
+# You are Sil Vantage, four-armed, with a carrying voice. Your loadout was
+# built for this run: extra arms (an extra weapon slot), Resonant Larynx (your
+# rally also war-cries and vice versa), conviction-surge (a buff spell), and
+# real salvage skill. You start on Thornwall Main Street, room 462.
+#
+# Your partner is Ordel Quist, a plain onlooker with no special senses. THEY
+# are the instrument. Most of what changed is about what THEY get told, so keep
+# them in the room with you and coordinate before each lane.
+#
+# 3 commands per round on the AI port, and the overflow is silently dropped
+# after being echoed. Read every line before sending more.
+#
+# KNOWN NON-BUGS, do not refile: damage is words and never numbers; corpses
+# persist for hours; a hidden mob answers "You attack the darkness!".
+
+ephemeral:
+  profile: m2-actor
+  start_room: 462
+  budgets:
+    wall_clock: 45m
+
+goals:
+  - >-
+    SALVAGE. Find and kill something modest nearby, then `salvage` its corpse
+    with Ordel standing in the room. Tell Ordel on the party channel the exact
+    moment you salvage. Quote your own line verbatim. Ask Ordel what they saw.
+    Before this change they saw nothing at all.
+  - >-
+    BUFF. Cast conviction-surge on Ordel. Quote your line verbatim and ask
+    Ordel for theirs. A buff landing on someone should read as visible to the
+    room, the way a heal does.
+  - >-
+    PARTY FOLD, the subtle one. Party with Ordel, then use `rally`, then
+    `warcry`. Because of Resonant Larynx each command applies BOTH effects to
+    the party. Ordel should therefore be told TWICE per command. Ask them to
+    count. One line where there should be two is the exact bug this lane
+    exists for, and it is easy to miss because the first line does arrive.
+  - >-
+    EXTRA ARM. You have a spare weapon. Wield it into your extra arm so that
+    something gets displaced back to your backpack. Quote your line, and ask
+    Ordel whether they saw you stow anything. Compare against doing the same
+    thing with an ordinary slot: both should be visible to the room.
+  - >-
+    THE DARK LANE, the one most likely to look broken. Get Ordel unable to see:
+    blind them if you can, or take them somewhere unlit where neither of you
+    has a light. Then get into a fight where a mob makes a special move at you
+    and you DEFEND it. Ordel should be told NOTHING about that exchange. That
+    is intended. Confirm separately that Ordel IS still told about anything
+    that happens to Ordel. If you cannot arrange darkness or blindness, say so
+    plainly rather than guessing.
+  - >-
+    READ IT AS PROSE. Every lane above adds a line somebody did not used to
+    get. Judge them as writing: does anything read as redundant next to the
+    line beside it, arrive at a strange moment, repeat a name clumsily, or
+    bury the round in noise? Quote anything that reads badly. A change that is
+    technically correct and reads badly is still a finding.

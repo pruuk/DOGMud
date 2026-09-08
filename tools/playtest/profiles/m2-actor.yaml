@@ -1,0 +1,64 @@
+# M2 narration-seam playtest: the ACTOR.
+#
+# Loadout is chosen to REACH the seven output changes, which is the whole
+# reason this profile exists rather than reusing `mid`:
+#   - extra-arms      -> unlocks the Arm 3 slot, so the arm-slot equip path
+#                        (which used to drop its room line) is reachable at all.
+#   - resonant-larynx -> shout-stacking, the ONLY way to reach the rally/warcry
+#                        fold loops that used to buff party members in silence.
+#   - conviction-surge -> an effect_type: buff spell, so the `case "buff"` room
+#                        line is exercised. A shield spell would NOT reach it.
+#   - salvage 20      -> butchering a corpse actually returns something.
+#   - rhetoric 20     -> rally and warcry land.
+#   - a SECOND weapon -> something to put in the extra arm.
+role: user
+username: template-m2-actor
+character:
+  name: Sil Vantage
+  description: >
+    A four-armed veteran with a carrying voice, kept stocked for narration
+    testing.
+  roomid: 462
+  zone: Thornwall City
+  speciesid: 1
+  stats:
+    strength:
+      base: 130
+    dexterity:
+      base: 125
+    perception:
+      base: 130
+    vitality:
+      base: 140
+    willpower:
+      base: 130
+    charisma:
+      base: 130
+  health: 700
+  stamina: 650
+  conviction: 600
+  gold: 1000
+  mutations:
+    extra-arms: 1
+    resonant-larynx: 1
+  skills:
+    weapon-combat: 25
+    unarmed-combat: 15
+    spellcasting: 22
+    rhetoric: 20
+    salvage: 20
+    search: 15
+  spellbook:
+    heal: 2
+    conviction-surge: 2
+  equipment:
+    weapon:
+      itemid: 10006
+    body:
+      itemid: 20008
+    feet:
+      itemid: 20003
+  items:
+    - itemid: 10006
+    - itemid: 30036
+    - itemid: 30052

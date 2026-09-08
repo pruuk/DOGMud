@@ -1,0 +1,50 @@
+# M2 narration-seam playtest: the WITNESS.
+#
+# Deliberately PLAIN. Its whole job is to stand in the room and report what it
+# is and is not told, so it must not carry anything that changes what it can
+# perceive. In particular: NO night vision and NO infrared, because two of the
+# changes under test are about what a player who CANNOT see is told.
+#
+# It needs enough survivability to stand next to a fight without dying, and
+# enough rhetoric to be a useful party member for the rally/warcry lane.
+role: user
+username: template-m2-witness
+character:
+  name: Ordel Quist
+  description: >
+    An ordinary onlooker with good boots and no special senses.
+  roomid: 462
+  zone: Thornwall City
+  speciesid: 1
+  stats:
+    strength:
+      base: 110
+    dexterity:
+      base: 115
+    perception:
+      base: 125
+    vitality:
+      base: 135
+    willpower:
+      base: 110
+    charisma:
+      base: 110
+  health: 650
+  stamina: 500
+  conviction: 450
+  gold: 300
+  skills:
+    weapon-combat: 15
+    rhetoric: 10
+    search: 12
+  spellbook:
+    heal: 1
+  equipment:
+    weapon:
+      itemid: 10006
+    body:
+      itemid: 20008
+    feet:
+      itemid: 20003
+  items:
+    - itemid: 30036
