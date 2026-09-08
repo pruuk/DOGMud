@@ -29,8 +29,33 @@ import (
 // combat.RenderChannelDefenceMessages substitutes generic narration when a pool
 // cannot be resolved, so a defended outcome always speaks. That second reason
 // used to be live and is now dead; do not reintroduce a pool check here.
-func sendMoveDefenceTriad(user *users.UserRecord, room *rooms.Room, target actions.AggroTarget,
-	out combat.ChannelDefenceResult, attack string, category messaging.Category, roomOnly bool) bool {
+// moveDefence is one rendered defence outcome, ready to compose into a Trio.
+// Shortage is the defender's resource note, empty when there is none.
+type moveDefence struct {
+	ToAttacker, ToDefender, ToRoom string
+	Shortage                       string
+}
+
+// moveDefenceLines renders the channel defence triad for a DEFENDED special
+// move and SENDS NOTHING.
+//
+// RENDER UP FRONT, COMPOSE ONCE. This is the template usercommands/shoot.go:368
+// and mobcommands/taunt.go:108 already follow by calling
+// combat.RenderChannelDefenceMessages directly and keeping its three lines in
+// locals until they are ready to speak.
+//
+// sendMoveDefenceTriad was the outlier: it bundled rendering with sending, so a
+// caller whose room line was CONDITIONAL on a defence having spoken had to
+// split one narrated event across two sends, because asking the question also
+// answered it. Separating them lets every caller build one Trio.
+//
+// ok is false when the outcome was not a defence (e.g. a fumbled swing that
+// had actually won its roll); the caller then falls back to its plain miss
+// text. It is NOT false for a missing pool: as of 2026-08-31
+// combat.RenderChannelDefenceMessages substitutes generic narration, so a
+// defended outcome always speaks. Do not reintroduce a pool check here.
+func moveDefenceLines(user *users.UserRecord, room *rooms.Room, target actions.AggroTarget,
+	out combat.ChannelDefenceResult, attack string) (moveDefence, bool) {
 
 	var targetUser *users.UserRecord
 	if target.UserId > 0 {
@@ -50,20 +75,42 @@ func sendMoveDefenceTriad(user *users.UserRecord, room *rooms.Room, target actio
 
 	triad := combat.RenderChannelDefenceMessages(out, identities, attack)
 	if triad.ToRoom == "" {
+		return moveDefence{}, false
+	}
+
+	lines := moveDefence{
+		ToAttacker: string(triad.ToAttacker),
+		ToDefender: string(triad.ToDefender),
+		ToRoom:     string(triad.ToRoom),
+	}
+	if targetUser != nil {
+		lines.Shortage = combat.ChannelDefenceShortageText(out, targetUser.Character)
+	}
+	return lines, true
+}
+
+func sendMoveDefenceTriad(user *users.UserRecord, room *rooms.Room, target actions.AggroTarget,
+	out combat.ChannelDefenceResult, attack string, category messaging.Category, roomOnly bool) bool {
+
+	lines, ok := moveDefenceLines(user, room, target, out, attack)
+	if !ok {
 		return false
 	}
 
-	if targetUser != nil {
-		if text := combat.ChannelDefenceShortageText(out, targetUser.Character); text != "" {
-			targetUser.SendText(messaging.CategorySystem, text)
-		}
+	var targetUser *users.UserRecord
+	if target.UserId > 0 {
+		targetUser = users.GetByUserId(target.UserId)
+	}
+
+	if targetUser != nil && lines.Shortage != "" {
+		targetUser.SendText(messaging.CategorySystem, lines.Shortage)
 	}
 
 	actor, actee := messaging.NoLine, messaging.NoLine
 	if !roomOnly {
-		actor = messaging.Say(category, string(triad.ToAttacker))
+		actor = messaging.Say(category, lines.ToAttacker)
 		if targetUser != nil {
-			actee = messaging.Say(category, string(triad.ToDefender))
+			actee = messaging.Say(category, lines.ToDefender)
 		}
 	}
 
@@ -78,7 +125,7 @@ func sendMoveDefenceTriad(user *users.UserRecord, room *rooms.Room, target actio
 	messaging.SendTrio(messaging.Trio{
 		Actor:    actor,
 		Actee:    actee,
-		Observer: messaging.Say(category, string(triad.ToRoom)),
+		Observer: messaging.Say(category, lines.ToRoom),
 	}, messaging.Audience{
 		Actor:   user,
 		ActorId: user.UserId,
