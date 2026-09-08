@@ -51,6 +51,20 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	dmgDesc := combat.GetDamageDescription(res.MoveResult.Damage, res.MoveResult.TargetMaxHP)
 
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: res.Target.UserId,
+		Room:    room,
+	}
+
 	if res.MoveResult.Hit {
 		drainMsgs := []string{
 			`Your <ansi fg="item">claws</ansi> plunge into <ansi fg="mobname">%s</ansi>, sapping their vitality as warmth floods into you! (<ansi fg="damage">%s</ansi>)`,
@@ -70,13 +84,17 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			`<ansi fg="username">%s</ansi> tears into <ansi fg="mobname">%s</ansi> and feeds hungrily!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(drainMsgs[util.Rand(len(drainMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(drainTargetMsgs[util.Rand(len(drainTargetMsgs))], user.Character.Name, dmgDesc))
-		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(drainRoomMsgs[util.Rand(len(drainRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(drainMsgs[util.Rand(len(drainMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(drainTargetMsgs[util.Rand(len(drainTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(drainRoomMsgs[util.Rand(len(drainRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 
 		// Describe the heal to the draining player — no raw numbers.
+		//
+		// Actor-only, and NoLine twice says so deliberately: this reports the
+		// drainer's own returning vigour to the drainer. Private knowledge
+		// under the detail-line ruling, not a world event.
 		if res.Healed > 0 {
 			healDesc := combat.GetHealDescription(res.Healed, user.Character.HealthMax.Value)
 			healMsgs := []string{
@@ -84,7 +102,11 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				`<ansi fg="green">Stolen life-force surges through you — %s.</ansi>`,
 				`<ansi fg="green">You feel %s as their warmth becomes yours.</ansi>`,
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc))
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc)),
+				Actee:    messaging.NoLine,
+				Observer: messaging.NoLine,
+			}, aud)
 		}
 	} else if res.MoveResult.Damage > 0 {
 		partialMsgs := []string{
@@ -99,26 +121,42 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			`<ansi fg="username">%s</ansi> lunges to drain <ansi fg="mobname">%s</ansi>, who slips mostly free but still gets caught!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "draining grasp")
+		observer := messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName))
+		if defended {
+			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
+			sendMoveDefenceShortage(targetChar, defence)
 		}
-		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "draining grasp", messaging.CategoryHitNaturalSharp, true) {
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-		}
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: observer,
+		}, aud)
 
 		// Lifesteal scales on damage actually applied, so a partial drain can
 		// still heal the attacker a little. Describe it the same way a full
-		// hit does, no raw numbers.
+		// hit does, no raw numbers. Actor-only, same ruling as above.
 		if res.Healed > 0 {
 			healDesc := combat.GetHealDescription(res.Healed, user.Character.HealthMax.Value)
 			healMsgs := []string{
 				`<ansi fg="green">A trickle of stolen vitality flows into you. You feel %s.</ansi>`,
 				`<ansi fg="green">You feel %s as a sliver of their warmth becomes yours.</ansi>`,
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc))
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(healMsgs[util.Rand(len(healMsgs))], healDesc)),
+				Actee:    messaging.NoLine,
+				Observer: messaging.NoLine,
+			}, aud)
 		}
-	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "draining grasp", messaging.CategoryHitNaturalSharp, false) {
+	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "draining grasp"); defended {
+		// A defence stopped it outright: all three lines come from the triad.
+		sendMoveDefenceShortage(targetChar, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToAttacker),
+			Actee:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
+		}, aud)
+	} else {
 		missMsgs := []string{
 			`Your drain misses <ansi fg="mobname">%s</ansi>!`,
 			`You reach for <ansi fg="mobname">%s</ansi> but they slip away!`,
@@ -132,11 +170,11 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			`<ansi fg="username">%s</ansi> lunges to drain <ansi fg="mobname">%s</ansi>, but misses!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name))
-		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name)),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
