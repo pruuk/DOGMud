@@ -56,54 +56,94 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	canSee := targetChar == nil || canSeeInDark(targetChar, room)
 	dmgDesc := combat.GetDamageDescription(result.Damage, result.TargetMaxHP)
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: targetPlayerId,
+		Room:    room,
+	}
+
 	if result.Hit {
 		if result.KnockedDown {
+			downActee := messaging.NoLine
 			if targetChar != nil {
 				if canSee {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges and slams into you, sending you sprawling! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+					downActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges and slams into you, sending you sprawling! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 				} else {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something charges and slams into you, sending you sprawling! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+					downActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something charges and slams into you, sending you sprawling! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			room.SendTextVisual(messaging.CategoryTrip,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges and slams into <ansi fg="username">%s</ansi>, sending them sprawling!`, mobName, targetName),
-				targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: downActee,
+				Observer: messaging.Say(messaging.CategoryTrip,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges and slams into <ansi fg="username">%s</ansi>, sending them sprawling!`, mobName, targetName)),
+			}, aud)
 		} else {
+			hitActee := messaging.NoLine
 			if targetChar != nil {
 				if canSee {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+					hitActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 				} else {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something charges at you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+					hitActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something charges at you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			room.SendTextVisual(messaging.CategoryTrip,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, but they keep their footing!`, mobName, targetName),
-				targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: hitActee,
+				Observer: messaging.Say(messaging.CategoryTrip,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, but they keep their footing!`, mobName, targetName)),
+			}, aud)
 		}
 	} else if result.Damage > 0 {
+		partialActee := messaging.NoLine
 		if targetChar != nil {
 			if canSee {
-				targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 			} else {
-				targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "charge", messaging.CategoryTrip, true) {
-			room.SendTextVisual(messaging.CategoryTrip,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, who mostly dodges but still gets clipped!`, mobName, targetName),
-				targetPlayerId)
+		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "charge")
+		partialObserver := messaging.Say(messaging.CategoryTrip,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, who mostly dodges but still gets clipped!`, mobName, targetName))
+		if defended {
+			partialObserver = messaging.Say(messaging.CategoryTrip, defence.ToRoom)
+			sendMoveDefenceShortage(targetChar, defence)
 		}
-	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "charge", messaging.CategoryTrip, false) {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    partialActee,
+			Observer: partialObserver,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "charge"); defended {
+		sendMoveDefenceShortage(targetChar, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryTrip, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryTrip, defence.ToRoom),
+		}, aud)
+	} else {
+		missActee := messaging.NoLine
 		if targetChar != nil {
 			if canSee {
-				targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges past you, missing entirely!`, mobName))
+				missActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges past you, missing entirely!`, mobName))
 			} else {
-				targetChar.SendText(messaging.CategoryTrip, `Something charges past you, missing entirely!`)
+				missActee = messaging.Say(messaging.CategoryTrip, `Something charges past you, missing entirely!`)
 			}
 		}
-		room.SendTextVisual(messaging.CategoryTrip,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges past <ansi fg="username">%s</ansi>, missing entirely!`, mobName, targetName),
-			targetPlayerId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: missActee,
+			Observer: messaging.Say(messaging.CategoryTrip,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> charges past <ansi fg="username">%s</ansi>, missing entirely!`, mobName, targetName)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
@@ -124,17 +164,35 @@ func narrateChargeWhiffOnProne(mob *mobs.Mob, room *rooms.Room, target actions.A
 		targetChar = users.GetByUserId(target.UserId)
 	}
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
+	proneActee := messaging.NoLine
 	if targetChar != nil {
 		if canSeeInDark(targetChar, room) {
-			targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(
+			proneActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> thunders in, but you are already down, and it overruns you.`, mobName))
 		} else {
-			targetChar.SendText(messaging.CategoryTrip,
+			proneActee = messaging.Say(messaging.CategoryTrip,
 				`Something thunders in, but you are already down, and it overruns you.`)
 		}
 	}
 
-	room.SendTextVisual(messaging.CategoryTrip, fmt.Sprintf(
-		`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who is already down, and overruns them.`,
-		mobName, target.Name), target.UserId)
+	messaging.SendTrio(messaging.Trio{
+		Actor: messaging.NoLine,
+		Actee: proneActee,
+		Observer: messaging.Say(messaging.CategoryTrip, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who is already down, and overruns them.`,
+			mobName, target.Name)),
+	}, aud)
 }

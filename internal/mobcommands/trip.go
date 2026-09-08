@@ -46,7 +46,6 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	mobName := mob.Character.Name
 	targetName := target.Name
-	targetPlayerId := target.UserId
 
 	// Resolve the target user record for direct messaging (player targets).
 	var targetChar *users.UserRecord
@@ -57,54 +56,83 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	canSee := targetChar == nil || canSeeInDark(targetChar, room)
 	dmgDesc := combat.GetDamageDescription(result.Damage, result.TargetMaxHP)
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
 	if result.Hit {
 		if hasTail {
 			if result.KnockedDown {
+				tailDownActee := messaging.NoLine
 				if targetChar != nil {
 					if canSee {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> hammers you with their tail, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+						tailDownActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> hammers you with their tail, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 					} else {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something hammers you with a powerful sweep, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+						tailDownActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something hammers you with a powerful sweep, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 					}
 				}
-				room.SendTextVisual(messaging.CategoryTrip,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, sending them crashing to the ground!`, mobName, targetName),
-					targetPlayerId)
+				messaging.SendTrio(messaging.Trio{
+					Actor: messaging.NoLine,
+					Actee: tailDownActee,
+					Observer: messaging.Say(messaging.CategoryTrip,
+						fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, sending them crashing to the ground!`, mobName, targetName)),
+				}, aud)
 			} else {
+				tailStayActee := messaging.NoLine
 				if targetChar != nil {
 					if canSee {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> sweeps at you with their tail, but you manage to stay upright! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+						tailStayActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> sweeps at you with their tail, but you manage to stay upright! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 					} else {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps at you powerfully, but you manage to stay upright! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+						tailStayActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps at you powerfully, but you manage to stay upright! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 					}
 				}
-				room.SendTextVisual(messaging.CategoryTrip,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, but they keep their footing!`, mobName, targetName),
-					targetPlayerId)
+				messaging.SendTrio(messaging.Trio{
+					Actor: messaging.NoLine,
+					Actee: tailStayActee,
+					Observer: messaging.Say(messaging.CategoryTrip,
+						fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, but they keep their footing!`, mobName, targetName)),
+				}, aud)
 			}
 		} else {
 			if result.KnockedDown {
+				tripDownActee := messaging.NoLine
 				if targetChar != nil {
 					if canSee {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> sweeps your legs, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+						tripDownActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> sweeps your legs, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 					} else {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps your legs, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+						tripDownActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps your legs, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 					}
 				}
-				room.SendTextVisual(messaging.CategoryTrip,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> trips <ansi fg="username">%s</ansi>, sending them crashing to the ground!`, mobName, targetName),
-					targetPlayerId)
+				messaging.SendTrio(messaging.Trio{
+					Actor: messaging.NoLine,
+					Actee: tripDownActee,
+					Observer: messaging.Say(messaging.CategoryTrip,
+						fmt.Sprintf(`<ansi fg="mobname">%s</ansi> trips <ansi fg="username">%s</ansi>, sending them crashing to the ground!`, mobName, targetName)),
+				}, aud)
 			} else {
+				tripStayActee := messaging.NoLine
 				if targetChar != nil {
 					if canSee {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+						tripStayActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 					} else {
-						targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something attempts to trip you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+						tripStayActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something attempts to trip you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 					}
 				}
-				room.SendTextVisual(messaging.CategoryTrip,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip <ansi fg="username">%s</ansi>, but they keep their footing!`, mobName, targetName),
-					targetPlayerId)
+				messaging.SendTrio(messaging.Trio{
+					Actor: messaging.NoLine,
+					Actee: tripStayActee,
+					Observer: messaging.Say(messaging.CategoryTrip,
+						fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip <ansi fg="username">%s</ansi>, but they keep their footing!`, mobName, targetName)),
+				}, aud)
 			}
 		}
 	} else if result.Damage > 0 {
@@ -114,33 +142,48 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if hasTail {
 			tripAttack = "tailsweep"
 		}
-		tripTriadSent := sendMoveDefenceTriad(mob, room, target, result.Defence, tripAttack, messaging.CategoryTrip, true)
+		defence, defended := moveDefenceLines(mob, room, target, result.Defence, tripAttack)
+		if defended {
+			sendMoveDefenceShortage(targetChar, defence)
+		}
 		if hasTail {
+			tailPartialActee := messaging.NoLine
 			if targetChar != nil {
 				if canSee {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swings their tail and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+					tailPartialActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swings their tail and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 				} else {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps at you and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+					tailPartialActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something sweeps at you and you keep your feet, but it still cracks into you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			if !tripTriadSent {
-				room.SendTextVisual(messaging.CategoryTrip,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
-					targetPlayerId)
+			tailPartialObserver := messaging.Say(messaging.CategoryTrip,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tailsweeps <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName))
+			if defended {
+				tailPartialObserver = messaging.Say(messaging.CategoryTrip, defence.ToRoom)
 			}
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.NoLine,
+				Actee:    tailPartialActee,
+				Observer: tailPartialObserver,
+			}, aud)
 		} else {
+			tripPartialActee := messaging.NoLine
 			if targetChar != nil {
 				if canSee {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+					tripPartialActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 				} else {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`Something tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+					tripPartialActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`Something tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 				}
 			}
-			if !tripTriadSent {
-				room.SendTextVisual(messaging.CategoryTrip,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName),
-					targetPlayerId)
+			tripPartialObserver := messaging.Say(messaging.CategoryTrip,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to trip <ansi fg="username">%s</ansi>, who staggers but keeps their feet!`, mobName, targetName))
+			if defended {
+				tripPartialObserver = messaging.Say(messaging.CategoryTrip, defence.ToRoom)
 			}
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.NoLine,
+				Actee:    tripPartialActee,
+				Observer: tripPartialObserver,
+			}, aud)
 		}
 	} else {
 		// Fully stopped: speak the triad naming the winning defence; fall
@@ -150,30 +193,45 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if hasTail {
 			tripAttack = "tailsweep"
 		}
-		if sendMoveDefenceTriad(mob, room, target, result.Defence, tripAttack, messaging.CategoryTrip, false) {
-			// Triad already spoke for all audiences.
+		if defence, defended := moveDefenceLines(mob, room, target, result.Defence, tripAttack); defended {
+			// A defence stopped it outright: the defender's line and the room
+			// line both come from the triad.
+			sendMoveDefenceShortage(targetChar, defence)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.NoLine,
+				Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryTrip, defence.ToDefender),
+				Observer: messaging.Say(messaging.CategoryTrip, defence.ToRoom),
+			}, aud)
 		} else if hasTail {
+			tailMissActee := messaging.NoLine
 			if targetChar != nil {
 				if canSee {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swings their tail at you, but you avoid it!`, mobName))
+					tailMissActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> swings their tail at you, but you avoid it!`, mobName))
 				} else {
-					targetChar.SendText(messaging.CategoryTrip, `Something sweeps at you powerfully, but you avoid it!`)
+					tailMissActee = messaging.Say(messaging.CategoryTrip, `Something sweeps at you powerfully, but you avoid it!`)
 				}
 			}
-			room.SendTextVisual(messaging.CategoryTrip,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts a tailsweep on <ansi fg="username">%s</ansi>, but misses!`, mobName, targetName),
-				targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: tailMissActee,
+				Observer: messaging.Say(messaging.CategoryTrip,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts a tailsweep on <ansi fg="username">%s</ansi>, but misses!`, mobName, targetName)),
+			}, aud)
 		} else {
+			tripMissActee := messaging.NoLine
 			if targetChar != nil {
 				if canSee {
-					targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip you, but you avoid it!`, mobName))
+					tripMissActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip you, but you avoid it!`, mobName))
 				} else {
-					targetChar.SendText(messaging.CategoryTrip, `Something attempts to trip you, but you avoid it!`)
+					tripMissActee = messaging.Say(messaging.CategoryTrip, `Something attempts to trip you, but you avoid it!`)
 				}
 			}
-			room.SendTextVisual(messaging.CategoryTrip,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip <ansi fg="username">%s</ansi>, but misses!`, mobName, targetName),
-				targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: tripMissActee,
+				Observer: messaging.Say(messaging.CategoryTrip,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> attempts to trip <ansi fg="username">%s</ansi>, but misses!`, mobName, targetName)),
+			}, aud)
 		}
 	}
 
@@ -200,17 +258,35 @@ func narrateTripWhiffOnProne(mob *mobs.Mob, room *rooms.Room, target actions.Agg
 		targetChar = users.GetByUserId(target.UserId)
 	}
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
+	whiffActee := messaging.NoLine
 	if targetChar != nil {
 		if canSeeInDark(targetChar, room) {
-			targetChar.SendText(messaging.CategoryTrip, fmt.Sprintf(
+			whiffActee = messaging.Say(messaging.CategoryTrip, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> rushes at you and finds only the ground you are already on.`, mobName))
 		} else {
-			targetChar.SendText(messaging.CategoryTrip,
+			whiffActee = messaging.Say(messaging.CategoryTrip,
 				`Something rushes past you and finds only the ground you are already on.`)
 		}
 	}
 
-	room.SendTextVisual(messaging.CategoryTrip, fmt.Sprintf(
-		`<ansi fg="mobname">%s</ansi> rushes at <ansi fg="username">%s</ansi>, who is already down, and carries straight past.`,
-		mobName, target.Name), target.UserId)
+	messaging.SendTrio(messaging.Trio{
+		Actor: messaging.NoLine,
+		Actee: whiffActee,
+		Observer: messaging.Say(messaging.CategoryTrip, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi> rushes at <ansi fg="username">%s</ansi>, who is already down, and carries straight past.`,
+			mobName, target.Name)),
+	}, aud)
 }

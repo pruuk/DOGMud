@@ -32,53 +32,90 @@ func Hamstring(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	result := res.MoveResult
 
 	mobName := mob.Character.Name
-	targetPlayerId := target.UserId
 
 	// Resolve the target user record for direct messaging (player targets).
-	var targetChar *users.UserRecord
+	var targetUser *users.UserRecord
 	if target.UserId > 0 {
-		targetChar = users.GetByUserId(target.UserId)
+		targetUser = users.GetByUserId(target.UserId)
 	}
 
-	canSee := targetChar == nil || canSeeInDark(targetChar, room)
+	canSee := targetUser == nil || canSeeInDark(targetUser, room)
 
 	dmgDesc := combat.GetDamageDescription(result.Damage, result.TargetMaxHP)
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetUser != nil {
+		acteeRecipient = targetUser
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
 	if result.Hit {
-		if targetChar != nil {
+		hitActee := messaging.NoLine
+		if targetUser != nil {
 			if canSee {
-				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> rakes its fangs across your legs, opening deep wounds! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				hitActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> rakes its fangs across your legs, opening deep wounds! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 			} else {
-				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something rakes its fangs across your legs, opening deep wounds! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				hitActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something rakes its fangs across your legs, opening deep wounds! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges low and rakes its fangs across <ansi fg="username">%s</ansi>'s legs!`, mobName, target.Name),
-			targetPlayerId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: hitActee,
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges low and rakes its fangs across <ansi fg="username">%s</ansi>'s legs!`, mobName, target.Name)),
+		}, aud)
 	} else if result.Damage > 0 {
-		if targetChar != nil {
+		partialActee := messaging.NoLine
+		if targetUser != nil {
 			if canSee {
-				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at your legs and you dodge most of it, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at your legs and you dodge most of it, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`, mobName, dmgDesc))
 			} else {
-				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something lunges at your legs and you dodge most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
+				partialActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`Something lunges at your legs and you dodge most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`, dmgDesc))
 			}
 		}
-		if !sendMoveDefenceTriad(mob, room, target, result.Defence, "hamstring slash", messaging.CategoryHitNaturalSharp, true) {
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, who mostly dodges but still gets caught!`, mobName, target.Name),
-				targetPlayerId)
+		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "hamstring slash")
+		partialObserver := messaging.Say(messaging.CategoryHitNaturalSharp,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, who mostly dodges but still gets caught!`, mobName, target.Name))
+		if defended {
+			partialObserver = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
+			sendMoveDefenceShortage(targetUser, defence)
 		}
-	} else if !sendMoveDefenceTriad(mob, room, target, result.Defence, "hamstring slash", messaging.CategoryHitNaturalSharp, false) {
-		if targetChar != nil {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    partialActee,
+			Observer: partialObserver,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "hamstring slash"); defended {
+		// A defence stopped it outright: the defender's line and the room line
+		// both come from the triad.
+		sendMoveDefenceShortage(targetUser, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    acteeDefenceLine(targetUser, room, messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
+		}, aud)
+	} else {
+		missActee := messaging.NoLine
+		if targetUser != nil {
 			if canSee {
-				targetChar.SendText(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at your legs, but you sidestep the attack!`, mobName))
+				missActee = messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at your legs, but you sidestep the attack!`, mobName))
 			} else {
-				targetChar.SendText(messaging.CategoryHitNaturalSharp, `Something lunges at your legs, but you sidestep the attack!`)
+				missActee = messaging.Say(messaging.CategoryHitNaturalSharp, `Something lunges at your legs, but you sidestep the attack!`)
 			}
 		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, but misses!`, mobName, target.Name),
-			targetPlayerId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: missActee,
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, but misses!`, mobName, target.Name)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

@@ -501,3 +501,34 @@ values the event spans, and the reason. Sorted by path. **A** = actor,
 | `usercommands/warcry.go:35` | warcry on cooldown | Y | N | N | correct | 1 | actor-only refusal |
 | `usercommands/warcry.go:42` | warcry buffs the party | Y | N | Y | correct | 2 | each member gets their own `SendText` at :58-59 |
 | **`usercommands/warcry.go:76`** | **Resonant Larynx rally fold** | **Y** | **N** | **Y** | **gap** | **2** | **mirror of `rally.go:72`: the fold loop at :81-96 applies the buff with no `SendText`, while the main loop at :54-59 notifies each member** |
+
+---
+
+## Registry retirements, M2 (2026-09-08)
+
+`TestNarrationSitesMatchViewpointAudit` asserts set equality with what its walk
+finds, and that walk looks for `SendText` / `SendTextVisual`. M2 replaces those
+with `messaging.SendTrio`, so **a migrated site stops being visible to this
+guard**. That is by design, not a loss: a migrated file is covered by
+`TestM2RoutingIsFrozen`, which records the role, the category and the text of
+every send and is strictly stronger than a viewpoint verdict.
+
+Five entries retired for that reason. None was a defect, and none lost a
+message; each was verified against source before removal.
+
+| Retired entry | Why it stopped matching |
+|---|---|
+| `usercommands/throw.go` x4 (hurl into fray, fumble backfire, spell disruption, dodge room line) | All four migrated to `SendTrio`. The walk no longer sees them. |
+| `usercommands/shoot.go` reveal line (`CategorySurpriseAttack, surpriseShotRevealedText`) | Still a plain `SendText`, but the sends it used to be grouped with moved into a `Trio`, so the walk no longer pairs it into a multi-viewpoint candidate. |
+
+One entry added, for the same structural reason in reverse:
+
+| Added entry | Why |
+|---|---|
+| `usercommands/shoot.go` shortage note (`CategorySystem, text`) | M2 hoisted the channel-defence shortage note out of the target block so the defender still reads it before the shot line. That put it adjacent to the shooter's own send, and the walk now groups the two into one event reading `actor+actee, missing observer`. Ruled **correct**: it is actee-only mechanical feedback about the defender's own spent resources, and the room cannot see someone run short of stamina. |
+
+**Expect this to recur through M3.** Each slice that migrates a file onto the
+seam will retire that file's entries here. The rule to follow is the one this
+table demonstrates: confirm the site migrated (rather than lost a send) by
+checking the routing golden gained the matching records, then retire the entry
+and say so here.

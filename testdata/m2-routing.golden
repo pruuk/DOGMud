@@ -13,6 +13,7 @@ internal/mobcommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`
 internal/mobcommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> %s <ansi fg="username">%s</ansi> %s, who staggers but stays up!`~mobName~bashVerb~target~Name~bashWith
 internal/mobcommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> attempts to bash <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/bash.go | observer | messaging~CategoryBash | fmt~Sprintf~`<ansi fg="mobname">%s</ansi>'s <ansi fg="yellow-bold">%s</ansi> knocks <ansi fg="username">%s</ansi> to the ground!`~mobName~bashLabel~target~Name
+internal/mobcommands/charge.go | actee |  | acteeDefenceLine~targetChar~room~messaging~CategoryTrip~defence~ToDefender
 internal/mobcommands/charge.go | actee | messaging~CategoryTrip | `Something charges past you, missing entirely!`
 internal/mobcommands/charge.go | actee | messaging~CategoryTrip | `Something thunders in, but you are already down, and it overruns you.`
 internal/mobcommands/charge.go | actee | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges and slams into you, sending you sprawling! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
@@ -23,6 +24,8 @@ internal/mobcommands/charge.go | actee | messaging~CategoryTrip | fmt~Sprintf~`<
 internal/mobcommands/charge.go | actee | messaging~CategoryTrip | fmt~Sprintf~`Something charges and slams into you, sending you sprawling! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/charge.go | actee | messaging~CategoryTrip | fmt~Sprintf~`Something charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/charge.go | actee | messaging~CategoryTrip | fmt~Sprintf~`Something charges at you, but you keep your footing! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/charge.go | observer | messaging~CategoryTrip | defence~ToRoom
+internal/mobcommands/charge.go | observer | messaging~CategoryTrip | defence~ToRoom
 internal/mobcommands/charge.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges <ansi fg="username">%s</ansi>, who is already down, and overruns them.`~mobName~target~Name
 internal/mobcommands/charge.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges and slams into <ansi fg="username">%s</ansi>, sending them sprawling!`~mobName~targetName
 internal/mobcommands/charge.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> charges at <ansi fg="username">%s</ansi>, but they keep their footing!`~mobName~targetName
@@ -65,15 +68,19 @@ internal/mobcommands/grapple.go | observer | messaging~CategoryGrappleFlow | fmt
 internal/mobcommands/grapple.go | observer | messaging~CategoryGrappleFlow | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> tries to grapple <ansi fg="username">%s</ansi>, but fails!`~mobName~targetName
 internal/mobcommands/grapple.go | observer | messaging~CategoryGrappleFlow | result~CritFailure~RoomMessage
 internal/mobcommands/grapple.go | observer | messaging~CategoryGrappleFlow | result~DisarmResult~RoomMessage
+internal/mobcommands/hamstring.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryHitNaturalSharp~defence~ToDefender
 internal/mobcommands/hamstring.go | actee | messaging~CategoryHitNaturalSharp | `Something lunges at your legs, but you sidestep the attack!`
 internal/mobcommands/hamstring.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges at your legs and you dodge most of it, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/hamstring.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges at your legs, but you sidestep the attack!`~mobName
 internal/mobcommands/hamstring.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> rakes its fangs across your legs, opening deep wounds! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/hamstring.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something lunges at your legs and you dodge most of it, but it still catches you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/hamstring.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something rakes its fangs across your legs, opening deep wounds! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/hamstring.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/mobcommands/hamstring.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/mobcommands/hamstring.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, but misses!`~mobName~target~Name
 internal/mobcommands/hamstring.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges at <ansi fg="username">%s</ansi>'s legs, who mostly dodges but still gets caught!`~mobName~target~Name
 internal/mobcommands/hamstring.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges low and rakes its fangs across <ansi fg="username">%s</ansi>'s legs!`~mobName~target~Name
+internal/mobcommands/kick.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryKick~defence~ToDefender
 internal/mobcommands/kick.go | actee | messaging~CategoryKick | `Something attempts to kick you, but misses!`
 internal/mobcommands/kick.go | actee | messaging~CategoryKick | `Something tries to knee you, but you block it!`
 internal/mobcommands/kick.go | actee | messaging~CategoryKick | `Something tries to stomp you, but you roll aside!`
@@ -94,6 +101,10 @@ internal/mobcommands/kick.go | actee | messaging~CategoryKick | fmt~Sprintf~`Som
 internal/mobcommands/kick.go | actee | messaging~CategoryKick | fmt~Sprintf~`Something tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/kick.go | actee | messaging~CategoryKick | fmt~Sprintf~`Something tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/kick.go | actee | messaging~CategoryKick | fmt~Sprintf~`Something's powerful <ansi fg="yellow-bold">kick</ansi> knocks you to the ground! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/kick.go | observer | messaging~CategoryKick | defence~ToRoom
+internal/mobcommands/kick.go | observer | messaging~CategoryKick | defence~ToRoom
+internal/mobcommands/kick.go | observer | messaging~CategoryKick | defence~ToRoom
+internal/mobcommands/kick.go | observer | messaging~CategoryKick | defence~ToRoom
 internal/mobcommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> attempts to kick <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> drives a knee into <ansi fg="username">%s</ansi>!`~mobName~target~Name
 internal/mobcommands/kick.go | observer | messaging~CategoryKick | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> kicks <ansi fg="username">%s</ansi>!`~mobName~target~Name
@@ -116,6 +127,7 @@ internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | de
 internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> savages <ansi fg="username">%s</ansi> with vicious fangs!`~mobName~target~Name
 internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/maul.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> snaps its fangs at <ansi fg="username">%s</ansi>, who twists mostly free but still gets torn!`~mobName~target~Name
+internal/mobcommands/pounce.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryHitNaturalSharp~defence~ToDefender
 internal/mobcommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | `Something leaps at you, but you sidestep!`
 internal/mobcommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> leaps at you and slams you to the ground! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> leaps at you and you sidestep most of it, but it still clips you! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
@@ -124,6 +136,8 @@ internal/mobcommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | fmt
 internal/mobcommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something leaps at you and slams you to the ground! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something leaps at you and you sidestep most of it, but it still clips you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/pounce.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something springs at you and crashes into your body! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> leaps at <ansi fg="username">%s</ansi> and slams them to the ground!`~mobName~target~Name
 internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> leaps at <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/pounce.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> leaps at <ansi fg="username">%s</ansi>, who mostly dodges but still gets clipped!`~mobName~target~Name
@@ -141,14 +155,19 @@ internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fm
 internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> swipes its claws at <ansi fg="username">%s</ansi>, but misses!`~mobName~target~Name
 internal/mobcommands/rake.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> swipes its claws at <ansi fg="username">%s</ansi>, who mostly dodges but still gets scratched!`~mobName~target~Name
 internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot goes wide, but the edge of it still clips you!`~shooter
+internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot goes wide, but the edge of it still clips you!`~shooter
+internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot narrowly misses you!`~shooter
 internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot narrowly misses you!`~shooter
 internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot strikes you!`~shooter
+internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | fmt~Sprintf~`%s's shot strikes you!`~shooter
+internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | personal
 internal/mobcommands/shoot.go | actee | messaging~CategoryHitRanged | personal
 internal/mobcommands/shoot.go | actee | messaging~CategorySystem | text
 internal/mobcommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`%s fires their %s %sward.`~mobName~weapon~result~ExitName
 internal/mobcommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`%s fires their %s at %s!`~mobName~weapon~targetColored
+internal/mobcommands/shoot.go | observer | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s %s %s!`~origin~verb~targetColored
 internal/mobcommands/shoot.go | observer | messaging~CategoryHitRanged | triadRoom
-internal/mobcommands/shoot.go | observer_targetroom | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s %s %s!`~origin~verb~targetColored
+internal/mobcommands/throttle.go | actee |  | acteeDefenceLine~targetUser~room~messaging~CategoryHitNaturalSharp~defence~ToDefender
 internal/mobcommands/throttle.go | actee | messaging~CategoryHitNaturalSharp | `Something snaps at your throat but misses!`
 internal/mobcommands/throttle.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> clamps crushing fangs around your throat, cutting off your air! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
 internal/mobcommands/throttle.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges for your throat and you pull mostly free, but the fangs still catch you! (<ansi fg="damage">%s</ansi>)`~mobName~dmgDesc
@@ -157,9 +176,12 @@ internal/mobcommands/throttle.go | actee | messaging~CategoryHitNaturalSharp | f
 internal/mobcommands/throttle.go | actee | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`Something lunges for your throat and you pull mostly free, but it still catches you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/throttle.go | actee | messaging~CategorySystem | `The crushing grip shatters your concentration — your spell collapses!`
 internal/mobcommands/throttle.go | actee | messaging~CategorySystem | fmt~Sprintf~`<ansi fg="mobname">%s</ansi>'s choke shatters your concentration — your spell collapses!`~mobName
+internal/mobcommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/mobcommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/mobcommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> clamps crushing fangs around <ansi fg="username">%s</ansi>'s throat!`~mobName~target~Name
 internal/mobcommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges for <ansi fg="username">%s</ansi>'s throat but misses!`~mobName~target~Name
 internal/mobcommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> lunges for <ansi fg="username">%s</ansi>'s throat, who pulls mostly free but still gets grazed!`~mobName~target~Name
+internal/mobcommands/trip.go | actee |  | acteeDefenceLine~targetChar~room~messaging~CategoryTrip~defence~ToDefender
 internal/mobcommands/trip.go | actee | messaging~CategoryTrip | `Something attempts to trip you, but you avoid it!`
 internal/mobcommands/trip.go | actee | messaging~CategoryTrip | `Something rushes past you and finds only the ground you are already on.`
 internal/mobcommands/trip.go | actee | messaging~CategoryTrip | `Something sweeps at you powerfully, but you avoid it!`
@@ -178,6 +200,9 @@ internal/mobcommands/trip.go | actee | messaging~CategoryTrip | fmt~Sprintf~`Som
 internal/mobcommands/trip.go | actee | messaging~CategoryTrip | fmt~Sprintf~`Something sweeps at you powerfully, but you manage to stay upright! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/trip.go | actee | messaging~CategoryTrip | fmt~Sprintf~`Something sweeps your legs, sending you crashing to the ground! (<ansi fg="damage">%s</ansi>)`~dmgDesc
 internal/mobcommands/trip.go | actee | messaging~CategoryTrip | fmt~Sprintf~`Something tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">%s</ansi>)`~dmgDesc
+internal/mobcommands/trip.go | observer | messaging~CategoryTrip | defence~ToRoom
+internal/mobcommands/trip.go | observer | messaging~CategoryTrip | defence~ToRoom
+internal/mobcommands/trip.go | observer | messaging~CategoryTrip | defence~ToRoom
 internal/mobcommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> attempts a tailsweep on <ansi fg="username">%s</ansi>, but misses!`~mobName~targetName
 internal/mobcommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> attempts to trip <ansi fg="username">%s</ansi>, but misses!`~mobName~targetName
 internal/mobcommands/trip.go | observer | messaging~CategoryTrip | fmt~Sprintf~`<ansi fg="mobname">%s</ansi> attempts to trip <ansi fg="username">%s</ansi>, but they keep their footing!`~mobName~targetName

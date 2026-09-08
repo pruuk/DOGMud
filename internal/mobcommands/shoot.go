@@ -66,70 +66,110 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		triadDef, triadRoom = string(triad.ToDefender), string(triad.ToRoom)
 	}
 
-	// Direct line to a player target.
+	// Direct line to a player target, built here so the shot reaches all three
+	// audiences in one send. The shortage text stays a plain SendText — it is
+	// a separate at-most-once mechanical note, not part of the shot's
+	// narration.
+	var u *users.UserRecord
 	if !result.IsTargetMob && result.TargetUserId > 0 {
-		if u := users.GetByUserId(result.TargetUserId); u != nil {
-			if result.MoveResult.Defence.Defended {
-				if text := combat.ChannelDefenceShortageText(result.MoveResult.Defence, u.Character); text != "" {
-					u.SendText(messaging.CategorySystem, text)
-				}
+		u = users.GetByUserId(result.TargetUserId)
+	}
+	targetLine := messaging.NoLine
+	if u != nil {
+		if result.MoveResult.Defence.Defended {
+			if text := combat.ChannelDefenceShortageText(result.MoveResult.Defence, u.Character); text != "" {
+				u.SendText(messaging.CategorySystem, text)
 			}
-			shooter := mobName
-			anonymous := result.IsSneaking || !canSeeInDark(u, room)
+		}
+		shooter := mobName
+		anonymous := result.IsSneaking || !canSeeInDark(u, room)
+		if anonymous {
+			shooter = `Someone`
+		}
+		switch {
+		case hit:
+			targetLine = messaging.Say(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you!`, shooter))
+		case partial:
+			targetLine = messaging.Say(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you!`, shooter))
+		case triadDef != "":
+			personal := triadDef
 			if anonymous {
-				shooter = `Someone`
+				personal = messaging.Anonymize(personal)
 			}
-			switch {
-			case hit:
-				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot strikes you!`, shooter))
-			case partial:
-				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot goes wide, but the edge of it still clips you!`, shooter))
-			case triadDef != "":
-				personal := triadDef
-				if anonymous {
-					personal = messaging.Anonymize(personal)
-				}
-				u.SendText(messaging.CategoryHitRanged, personal)
-			default:
-				u.SendText(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
-			}
+			targetLine = messaging.Say(messaging.CategoryHitRanged, personal)
+		default:
+			targetLine = messaging.Say(messaging.CategoryHitRanged, fmt.Sprintf(`%s's shot narrowly misses you!`, shooter))
 		}
 	}
 
-	if !result.IsSneaking {
-		if !result.CrossRoom {
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	// There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if u != nil {
+		acteeRecipient = u
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: result.TargetUserId,
+		Room:    room,
+	}
+
+	if !result.CrossRoom {
+		sameRoomLine := messaging.NoLine
+		if !result.IsSneaking {
 			if triadRoom != "" {
-				room.SendTextVisual(messaging.CategoryHitRanged, triadRoom,
-					result.TargetUserId)
+				sameRoomLine = messaging.Say(messaging.CategoryHitRanged, triadRoom)
 			} else {
-				room.SendTextVisual(messaging.CategoryHitRanged,
-					fmt.Sprintf(`%s fires their %s at %s!`, mobName, weapon, targetColored),
-					result.TargetUserId)
+				sameRoomLine = messaging.Say(messaging.CategoryHitRanged,
+					fmt.Sprintf(`%s fires their %s at %s!`, mobName, weapon, targetColored))
 			}
-		} else {
-			// Shooter's room sees the shot leave.
-			room.SendTextVisual(messaging.CategoryHitRanged,
+		}
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    targetLine,
+			Observer: sameRoomLine,
+		}, aud)
+	} else {
+		// Cross-room: TWO rooms with two different exclusion lists, so two
+		// sends. The shooter's room sees the shot leave (suppressed when
+		// sneaking); the target's room sees it arrive.
+		departLine := messaging.NoLine
+		if !result.IsSneaking {
+			departLine = messaging.Say(messaging.CategoryHitRanged,
 				fmt.Sprintf(`%s fires their %s %sward.`, mobName, weapon, result.ExitName))
-			// Target's room sees it arrive.
-			if tr := rooms.LoadRoom(result.TargetRoomId); tr != nil {
-				fromDir := tr.FindExitTo(room.RoomId)
-				origin := `from somewhere nearby`
-				if fromDir != "" {
-					origin = fmt.Sprintf(`from beyond the <ansi fg="exit">%s</ansi>`, fromDir)
-				}
-				var verb string
-				switch {
-				case hit:
-					verb = `and strikes`
-				case partial:
-					verb = `and clips`
-				default:
-					verb = `and narrowly misses`
-				}
-				tr.SendTextVisual(messaging.CategoryHitRanged,
-					fmt.Sprintf(`A shot streaks in %s %s %s!`, origin, verb, targetColored),
-					result.TargetUserId)
+		}
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    targetLine,
+			Observer: departLine,
+		}, aud)
+
+		// Target's room sees the shot arrive. The player target is excluded
+		// -- they already got their own line from the send above -- which is
+		// why ActeeId is set here while Actee is not.
+		if tr := rooms.LoadRoom(result.TargetRoomId); tr != nil {
+			fromDir := tr.FindExitTo(room.RoomId)
+			origin := `from somewhere nearby`
+			if fromDir != "" {
+				origin = fmt.Sprintf(`from beyond the <ansi fg="exit">%s</ansi>`, fromDir)
 			}
+			var verb string
+			switch {
+			case hit:
+				verb = `and strikes`
+			case partial:
+				verb = `and clips`
+			default:
+				verb = `and narrowly misses`
+			}
+			arrivalLine := messaging.Say(messaging.CategoryHitRanged,
+				fmt.Sprintf(`A shot streaks in %s %s %s!`, origin, verb, targetColored))
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.NoLine,
+				Actee:    messaging.NoLine,
+				Observer: arrivalLine,
+			}, messaging.Audience{ActeeId: result.TargetUserId, Room: tr})
 		}
 	}
 

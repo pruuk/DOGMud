@@ -31,7 +31,6 @@ func Grapple(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	result := res.MoveResult
 	mobName := mob.Character.Name
 	targetName := target.Name
-	targetPlayerId := target.UserId
 
 	// Resolve the target user record for direct messaging (player targets).
 	var targetChar *users.UserRecord
@@ -41,44 +40,75 @@ func Grapple(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	canSee := targetChar == nil || canSeeInDark(targetChar, room)
 
+	// Declared as the interface and left unset when the target is not a player.
+	// Assigning a typed-nil *users.UserRecord would make it a non-nil interface
+	// value. There is no Actor: a mob has no client.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actee:   acteeRecipient,
+		ActeeId: target.UserId,
+		Room:    room,
+	}
+
 	// Send messages based on result
 	if result.Success {
+		successActee := messaging.NoLine
 		if targetChar != nil {
 			if canSee {
-				targetChar.SendText(messaging.CategoryGrappleFlow, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">%s</ansi> position!`, mobName, result.PositionDesc))
+				successActee = messaging.Say(messaging.CategoryGrappleFlow, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">%s</ansi> position!`, mobName, result.PositionDesc))
 			} else {
-				targetChar.SendText(messaging.CategoryGrappleFlow, fmt.Sprintf(`Something <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">%s</ansi> position!`, result.PositionDesc))
+				successActee = messaging.Say(messaging.CategoryGrappleFlow, fmt.Sprintf(`Something <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">%s</ansi> position!`, result.PositionDesc))
 			}
 		}
-		room.SendTextVisual(messaging.CategoryGrappleFlow,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> <ansi fg="username">%s</ansi> into <ansi fg="cyan">%s</ansi> position!`, mobName, targetName, result.PositionDesc),
-			targetPlayerId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: successActee,
+			Observer: messaging.Say(messaging.CategoryGrappleFlow,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="yellow-bold">grapples</ansi> <ansi fg="username">%s</ansi> into <ansi fg="cyan">%s</ansi> position!`, mobName, targetName, result.PositionDesc)),
+		}, aud)
 
-		// Disarm messaging
+		// Disarm messaging: a WORLD EVENT, so it carries the full trio.
 		if result.DisarmResult != nil {
+			disarmActee := messaging.NoLine
 			if targetChar != nil {
-				targetChar.SendText(messaging.CategoryGrappleFlow, result.DisarmResult.TargetMsg)
+				disarmActee = messaging.Say(messaging.CategoryGrappleFlow, result.DisarmResult.TargetMsg)
 			}
-			room.SendTextVisual(messaging.CategoryGrappleFlow, result.DisarmResult.RoomMessage, targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.NoLine,
+				Actee:    disarmActee,
+				Observer: messaging.Say(messaging.CategoryGrappleFlow, result.DisarmResult.RoomMessage),
+			}, aud)
 		}
 	} else {
+		failActee := messaging.NoLine
 		if targetChar != nil {
 			if canSee {
-				targetChar.SendText(messaging.CategoryGrappleFlow, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to grapple you, but you slip away!`, mobName))
+				failActee = messaging.Say(messaging.CategoryGrappleFlow, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to grapple you, but you slip away!`, mobName))
 			} else {
-				targetChar.SendText(messaging.CategoryGrappleFlow, `Something tries to grapple you, but you slip away!`)
+				failActee = messaging.Say(messaging.CategoryGrappleFlow, `Something tries to grapple you, but you slip away!`)
 			}
 		}
-		room.SendTextVisual(messaging.CategoryGrappleFlow,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to grapple <ansi fg="username">%s</ansi>, but fails!`, mobName, targetName),
-			targetPlayerId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: failActee,
+			Observer: messaging.Say(messaging.CategoryGrappleFlow,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tries to grapple <ansi fg="username">%s</ansi>, but fails!`, mobName, targetName)),
+		}, aud)
 
-		// Critical failure messaging
+		// Critical failure messaging: a world event, full trio.
 		if result.CritFailure != nil {
+			critActee := messaging.NoLine
 			if targetChar != nil {
-				targetChar.SendText(messaging.CategoryGrappleFlow, result.CritFailure.TargetMessage)
+				critActee = messaging.Say(messaging.CategoryGrappleFlow, result.CritFailure.TargetMessage)
 			}
-			room.SendTextVisual(messaging.CategoryGrappleFlow, result.CritFailure.RoomMessage, targetPlayerId)
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.NoLine,
+				Actee:    critActee,
+				Observer: messaging.Say(messaging.CategoryGrappleFlow, result.CritFailure.RoomMessage),
+			}, aud)
 		}
 	}
 

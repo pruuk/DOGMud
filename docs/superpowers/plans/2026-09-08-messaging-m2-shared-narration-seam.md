@@ -203,7 +203,7 @@ import block.
 
 Run from the repo root: `go test . -run TestM2LiteralsAreFrozen -v`
 
-Expected: FAIL, listing all 25 paths with `RECORD: <hash>`. This is the test
+Expected: FAIL, listing every path with `RECORD: <hash>`. This is the test
 being capable of failing, which is the point of running it before it passes.
 
 - [ ] **Step 4: Paste each hash into `m2FrozenFiles`**
