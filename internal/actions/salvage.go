@@ -231,8 +231,8 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 			nameTag = "username"
 		}
 		salvageObserver = messaging.Say(messaging.CategoryMobIdle, fmt.Sprintf(
-			`<ansi fg="%s">%s</ansi> kneels by the carcass and cuts strips of hide from it.`,
-			nameTag, actor.GetName()))
+			`<ansi fg="%s">%s</ansi> kneels over the <ansi fg="mobname">%s corpse</ansi> and works it for salvage.`,
+			nameTag, actor.GetName(), target.Character.Name))
 	}
 
 	messaging.SendTrio(messaging.Trio{
