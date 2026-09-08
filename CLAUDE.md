@@ -138,30 +138,6 @@ Good exemplars (verified 2026-07-31): `internal/term/context.md` (small,
 declarative), `internal/mutators/context.md` (medium, lifecycle-heavy),
 `internal/mapper/context.md` (large, multi-subsystem).
 
-## Equipment Slots
-Default slots: Weapon, Offhand, Head, Neck, Shoulders, Body, Back, Belt,
-Wrist (x2), Gloves, Ring (x2), Legs, Feet, Component Bag.
-
-Mutation-gated slots (Extra Arms mutation, levels 1-4):
-- Each level unlocks one ExtraArm + one ExtraWrist slot
-- Level 1: Arm 3 + Wrist 3. Level 2: Arm 4 + Wrist 4.
-  Level 3: Arm 5 + Wrist 5. Level 4: Arm 6 + Wrist 6.
-- Escalating penalties: charisma -28/-42/-56/-70, aggro 1.0/1.5/2.0/2.5x
-- Combat hit penalty: +20 per arm beyond offhand
-
-Back slot: Cloaks (stats) or backpacks (weight reduction on backpack
-contents). Component Bag slot: Holds crafting materials. `is_component:
-true` items auto-route on pickup. `sort` command migrates existing
-materials. `bag_capacity` limits items. Weight reduction on component bag
-contents (typical 30%).
-
-ItemSpec fields: `is_component` (bool), `weight_reduction` (float64 0-1),
-`bag_capacity` (int). New ItemTypes: `wrist`, `back`, `shoulders`,
-`componentbag`.
-
-Tail mutation: adds Tail slot, disables Legs slot. `tail` ItemType. Trip
-reskins to tailsweep with enhanced damage/knockdown when mutation active.
-
 ## Spell Duration System
 All spell durations use `calcSpellDuration(baseFolds, skill, willpower)`:
 `duration = baseFolds × (10 + wil/20 + skill/2)`. Effect-specific scaling:
@@ -178,88 +154,6 @@ shield = full, heal = ÷2, DoT = ÷3.
   `StompDamagePercent` (1.20), `KneeDamagePercent` (1.00).
 - Hidden mob detection on room entry: Perception+Search vs Dex+Skullduggery
   opposed roll in `go.go`. Mobs can spawn hidden via `buffids: [9]`.
-
-## Inventory & Item Disambiguation
-- **Disambiguation formats:** Players can use `N.item` (diku-style) or `item#N`
-  (hash-style) to target a specific item when multiples exist. `all.item` targets
-  all matching items (supported by `get` and `drop`).
-- **Unified FindItem:** `look` and `identify` search backpack + equipped items as
-  a single pool for disambiguation. `dagger#2` can reach a wielded dagger if the
-  first match is in backpack. Source is reported ("in your backpack" / "wielded").
-- **Inventory stacking:** Display-only. Items with same ItemId + EnchantType +
-  EnchantTier + Uses are grouped with `(xN)` count. Storage is unchanged.
-- **Carry capacity:** `Strength × Balance.CarryCapacityMultiplier` (default 0.65).
-  Displayed as colored encumbrance tiers (light/moderate/heavy/overburdened/crushed),
-  never raw numbers. `{enc}` prompt token available.
-- **Encumbrance penalties:** Movement stamina 1-5x multiplier when over capacity
-  (`go.go`). Combat swings reduced up to 50% when over capacity (`combat_helpers.go`).
-- **Multi-buy:** `buy 5 iron ingot` purchases N copies, stops early on insufficient
-  funds or carry capacity.
-- **Enchanting targeting:** `craft <recipe> <item-name>` targets a specific item.
-  Searches both backpack and equipped items. Shows numbered list when ambiguous.
-
-## Caster Weapon Types
-Three weapon subtypes designed for spellcasters: `wand`, `sceptre`, `staff`.
-Each has a `spell_damage_multiplier` field on ItemSpec that multiplies spell
-damage when the weapon is equipped. This is independent of `damage_multiplier`
-(melee). Caster weapons use `weapon-combat` skill for melee (same as swords).
-
-| Subtype  | Hands | Melee Mult | Spell Mult | Speed | Parry | Notes |
-|----------|-------|-----------|------------|-------|-------|-------|
-| wand     | 1     | 0.40      | 1.30       | 1.2   | 2     | Light, fast |
-| sceptre  | 1     | 0.55      | 1.25       | 0.9   | 4     | Moderate |
-| staff    | 2     | 0.80      | 1.60       | 0.7   | 12    | Defensive, high spell boost |
-
-`spell_damage_multiplier` is applied in `calcSpellDamage()` and
-`calcMobSpellDamage()` in `internal/hooks/spell_resolution.go`.
-
-## Alchemy & Potions System
-Potions use a witcher-style design with aging, toxicity, and craft-skill scaling.
-
-### Potion Aging
-- Five phases: Fresh (1.0x) → Fermented (1.15x) → Peak (1.30x) → Declining (1.30→0.5x) → Spoiled (harmful)
-- Thresholds defined per-potion in `aging:` YAML field (ferment/peak/decay/spoil rounds)
-- Aging speed = `bottleMultiplier × (1.0 - craftSkill/200)` — higher = faster aging
-- `items.GetAgingPhase()` and `items.CalcEffectiveAgingSpeed()` in `internal/items/aging.go`
-
-### Bottle Tiers
-| Bottle | ItemID | Aging Multiplier | component_tag |
-|--------|--------|-----------------|---------------|
-| Clay Flask | 40043 | 3.0x (fastest) | bottle |
-| Glass Vial | 40006 | 1.0x (baseline) | bottle |
-| Sealed Phial | 40044 | 0.5x | bottle |
-| Crystalline Decanter | 40045 | 0.25x (slowest) | bottle |
-
-All share `component_tag: bottle`. Crafting consumes the first match. The bottle's `BottleAgingMultiplier` is stamped on the output item's `BottleMultiplier` field.
-
-### Toxicity
-- Each potion has a `toxicity` field (int) on ItemSpec
-- `Character.Toxicity` accumulates; decays by `ToxicityDecayPerTick` per regen tick
-- `GetToxicityMax() = ToxicityBaseMax + Vitality/ToxicityVitalityScale`
-- Threshold penalties via `GetToxicityPenalties()`: regen/Per/Dex penalties at 50/75/90%
-- Spoiled potions apply 3x toxicity + nausea debuff (buff 75)
-
-### Craft Skill Scaling
-- Duration: `baseDuration × (1.0 + craftSkill/100) × agingPotencyMultiplier`
-- Aging speed reduction: skill 30 = 15% slower aging
-- Applied in `drink.go` via `AddBuffScaled()`
-
-### Potion Bandolier
-- Belt-slot item with `is_bandolier: true` and `bandolier_capacity` field
-- Auto-routes potions in `StoreItem()`, consumed first by `drink` (oldest first)
-- Removal spills to backpack. Weight reduction applies to contents.
-- `Character.PotionItems` slice, displayed in inventory "Potions:" section
-
-### Buff IDs
-- 54-60: Pool regen potions (healing salve through elixir of renewal)
-- 61-70: Combat/utility potions (ironhide through purging draught)
-- 71-74: Progression potions (essence of growth through chrysalis catalyst)
-- 75: Spoiled potion nausea debuff
-- 76: Purging draught weakness debuff
-
-### Item IDs
-- 30036-30056: New potion items
-- 40043-40049: New alchemy materials (bottles + forage/drop ingredients)
 
 ## Salvage System
 Players can break down crafted items (or items with `salvage_returns` on

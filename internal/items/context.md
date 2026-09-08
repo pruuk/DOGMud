@@ -116,6 +116,75 @@ Claws       ItemSubType = "claws"
 Whipping    ItemSubType = "whipping"
 ```
 
+### Equipment Slots (Worn)
+
+Equipment slots are a `internal/characters` concept (`characters.Worn`, worn
+by `Character.Equipment`); this package defines the `ItemType`s that route
+into those slots and the `ItemSpec` fields some slots interpret specially.
+`Worn.AllSlots()` (`internal/characters/worn.go`) is the single source of
+truth for the slot list + display labels; a reflection guard test fails if a
+new `items.Item` field on `Worn` isn't registered there.
+
+**Default slots** (always present): Weapon, Offhand, Head, Neck, Shoulders,
+Body, Back, Belt, Wrist ×2, Gloves, Ring ×2, Legs, Feet, Component Bag.
+
+**Mutation-gated slots (Extra Arms).** Each mutation level 1-4 grants one
+`ExtraArm` + one `ExtraWrist` slot (level 1 = Arm 3 + Wrist 3, level 2 = Arm 4
++ Wrist 4, level 3 = Arm 5 + Wrist 5, level 4 = Arm 6 + Wrist 6). An
+unavailable level moves any equipped item in that slot back to the backpack
+rather than deleting it (`Character.validateMutationSlots`).
+
+Cost scales per level as `baseValue × mutations.LevelMultiplier(level)`
+(charisma flat penalty base -28, aggro-magnet multiplier base 1.0, from
+`_datafiles/world/dogmud/mutations/extra-arms.yaml`). With the **shipped**
+`MutationLevel2/3/4Multiplier` (1.6 / 2.5 / 4.0 in `config.yaml`, not the Go
+defaults of 1.5 / 2.0 / 2.5), the real per-level numbers are:
+
+| Level | Charisma | Aggro multiplier |
+|-------|----------|-------------------|
+| 1     | -28      | 1.0x |
+| 2     | -44      | 1.6x |
+| 3     | -70      | 2.5x |
+| 4     | -112     | 4.0x |
+
+Combat hit penalty is a separate, config-independent flat formula in
+`internal/combat/combat_helpers.go`: `+20` per weapon index beyond the
+offhand (`penalty += (weapIdx - 1) * 20`).
+
+**Two things worth knowing before touching this table:**
+
+- **`extra-arms` itself ships at `max_rank: 1`**, explicitly commented
+  `apex-class, binary (no deepen)`
+  (`_datafiles/world/dogmud/mutations/extra-arms.yaml`). A mutation without an
+  explicit `max_rank` falls back to the global `MutationMaxLevel` (shipped
+  `4`), but `extra-arms` is one of 22 mutations in the dataset that opt out of
+  deepening entirely. So only the level-1 row above (Arm 3 / Wrist 3) is
+  reachable today; the level 2-4 numbers are real code paths
+  (`mutations.LevelMultiplier`) exercised by tests, just not currently
+  reachable through this mutation.
+- **The level-1 aggro multiplier of 1.0x is a no-op.** `GetAggroMagnet` is
+  consumed as a direct multiplier (`entries * aggroMagnet`,
+  `internal/mobcommands/lookfortrouble.go`), so at level 1 it multiplies by
+  1.0 and changes nothing. The "draws hostile attention" flavor text on the
+  mutation only becomes mechanically true at level 2+, which is currently
+  unreachable (see above).
+
+**Back slot** (`ItemType Back = "back"`): cloaks (stat mods) or backpacks
+(`weight_reduction` reduces the effective weight of backpack contents).
+**Component Bag**: `is_component: true` items auto-route to it on pickup;
+`bag_capacity` caps how many it holds; the `sort` command
+(`internal/usercommands/sort.go` → `Character.SortComponentItems()`)
+migrates matching items already sitting in the backpack. **Tail mutation**:
+adds the `Tail` slot (`ItemType Tail = "tail"`) and disables `Legs` via the
+mutation's `disable-legs` flag (`Character.validateMutationSlots`); `trip`
+swaps to `tailsweep` (enhanced damage/knockdown) when the mutation is present
+(`internal/usercommands/trip.go`).
+
+Relevant `ItemSpec` fields: `is_component` (bool), `weight_reduction`
+(float64, 0.0-1.0), `bag_capacity` (int), `is_bandolier` (bool),
+`bandolier_capacity` (int, see Alchemy & Potions below). `ItemType`s that
+back these slots: `wrist`, `back`, `shoulders`, `componentbag`, `tail`.
+
 ## Item Specification Structure
 
 ### Basic Item Properties
@@ -423,15 +492,95 @@ func (i *Item) BreakTest(increaseChance ...int) bool {
     return bc > randNum
 }
 
-// Usage tracking
-func (i *Item) UseItem() bool {
-    if i.Uses > 0 {
-        i.Uses--
-        return i.Uses > 0  // Return true if item still has uses
-    }
-    return false
-}
 ```
+
+Usage-count decrementing is **not** a method on `Item`; this package only
+carries the `Uses` field itself. The consuming logic lives on
+`characters.Character` (`internal/characters/inventory.go`):
+`Character.UseItem(i items.Item) int` decrements `Uses` on the matching
+backpack item, removing it entirely once uses reach zero, and returns the
+uses remaining; `Character.UseItemFromPotions` is the bandolier equivalent.
+
+## Alchemy & Potions System
+
+Potions use a witcher-style design: aging replaces flat durability as the
+"is this still good" question, and overuse accumulates toxicity instead of
+(or alongside) ordinary consumable consequences.
+
+### Aging
+Five phases, `AgingPhase` (`internal/items/aging.go`): `PhaseFresh` (1.0x
+potency) → `PhaseFermented` (1.15x) → `PhasePeak` (1.30x) → `PhaseDeclining`
+(linear 1.30x → 0.5x) → `PhaseSpoiled` (0x, harmful). Thresholds are
+per-potion (`AgingThresholds`: `ferment_rounds` / `peak_rounds` /
+`decay_rounds` / `spoil_rounds`, authored under the `aging:` YAML field).
+
+```go
+func GetAgingPhase(elapsedRounds uint64, thresholds AgingThresholds, effectiveSpeed float64) (AgingPhase, float64)
+func CalcEffectiveAgingSpeed(bottleMultiplier float64, craftSkill int) float64
+```
+
+`CalcEffectiveAgingSpeed` = `bottleMultiplier × max(0.5, 1.0 - craftSkill/200)`,
+so a higher effective speed ages faster (shorter phases); craft skill floors
+out at a 50% speed reduction (skill approximately 100+).
+
+### Bottle Tiers
+All four bottles share `component_tag: bottle`; crafting consumes whichever
+matches first. The chosen bottle's `BottleAgingMultiplier` (`ItemSpec`) is
+stamped onto the crafted potion's `BottleMultiplier` (`Item` instance field),
+which also feeds inventory stacking (see below: two potions aged in
+different bottle types never stack).
+
+| Bottle | ItemID | `bottle_aging_multiplier` |
+|--------|--------|---------------------------|
+| Clay Flask | 40043 | 3.0 (fastest aging) |
+| Glass Vial | 40006 | 1.0 (baseline) |
+| Sealed Phial | 40044 | 0.5 |
+| Crystalline Decanter | 40045 | 0.25 (slowest aging) |
+
+### Toxicity
+Toxicity itself lives on `characters.Character`, not this package:
+`internal/items` only carries the `toxicity` (int) field on `ItemSpec` that a
+potion drinks into it.
+
+- `Character.Toxicity` (float64) accumulates via `AddToxicity()`, clamped to
+  `[0, GetToxicityMax()]`.
+- `GetToxicityMax() = ToxicityBaseMax + AlchemySkill/ToxicityAlchemyScale +
+  Vitality.ValueAdj/ToxicityVitalityScale`. Tolerance is earned by
+  **brewing** (the Alchemy-skill term), not by raw Vitality alone.
+  `ToxicityBaseMax` ships at `0` (a real, deliberate value, not "unset").
+- Decays by `ToxicityDecayPerTick` per regen tick
+  (`internal/hooks/NewRound_AutoHeal.go`).
+- `GetToxicityPenalties()` returns `(regenMult, perceptionMult,
+  dexterityMult)` at three coarse thresholds: 50% (-10% regen/Per), 75%
+  (-20% regen, -10% Per/Dex), 90% (-40% regen, -20% Per, -10% Dex).
+  `ToxicityBand()` exposes six finer feedback-only bands that deliberately do
+  NOT mirror those thresholds; the two are intentionally desynced so a
+  player gets early warning before any penalty bites.
+- Drinking a `PhaseSpoiled` potion (`drink.go`) applies `toxicity × 3.0` and
+  the nausea debuff (buff 75).
+
+### Craft Skill Scaling
+`durationMult = potencyMult(agingPhase) × (1.0 + Item.CraftSkill/100.0)`,
+applied via `Character.AddBuffScaled(buffId, durationMult)` in `drink.go`.
+
+### Potion Bandolier
+Belt-slot item (`is_bandolier: true`, `bandolier_capacity` int). Auto-routes
+potions into `Character.PotionItems` on pickup (`StoreItem`); `drink`
+consumes the oldest match first (`FindInPotions`, sorted by `CraftedRound`
+ascending). Unequipping the belt spills its contents back to the backpack
+(`internal/characters/worn.go`). The bandolier's `weight_reduction` applies
+to its contents, the same mechanic the Component Bag uses.
+
+### Buff IDs
+54-60 pool-regen potions (healing salve through elixir of renewal), 61-70
+combat/utility potions (ironhide through purging draught), 71-74 progression
+potions (essence of growth through chrysalis catalyst), 75 spoiled-potion
+nausea, 76 purging-draught weakness.
+
+### Item IDs
+30036-30056 potion items (`items/consumables-30000/`), 40043-40049 alchemy
+materials, bottles (40043-40045) plus forage/drop ingredients
+(40046-40049), all under `items/materials-40000/`.
 
 ## Data Storage and Persistence
 
@@ -594,6 +743,57 @@ func FindMatchIn(itemName string, items ...Item) (pMatch Item, fMatch Item) {
 }
 ```
 
+`FindMatchIn`'s numbering comes from `util.GetMatchNumber` (`internal/util/util.go`),
+the shared parser behind every targeting command:
+
+- `N.item` (diku-style) and `item#N` (hash-style) both target the Nth match.
+- `all.item` returns the sentinel `-1`, meaning "every match", consumed by
+  `get` and `drop` for bulk operations.
+- Plain `item` defaults to the first match (`N = 1`).
+
+### Unified Inventory Lookup
+
+`Character.FindItem` (`internal/characters/inventory.go`) is the single pool
+`look` and `identify` search across backpack **and** equipped items, so
+`dagger#2` can resolve to a wielded dagger even when the first match sits in
+the backpack. The result reports its source string, `"in your backpack"` or
+`"wielded"`, for display.
+
+### Inventory Stacking (display-only)
+
+`SameStack(a, b Item)` (`internal/items/stacking.go`) groups display rows for
+the `(xN)` count; underlying storage is unaffected. Two items stack only if
+**all** of these match: `ItemId`, `Uses`, `EnchantType`, `EnchantTier`,
+`BottleMultiplier` (so two potions aged in different bottles never stack),
+and either both carry no `Spec` override or the same override pointer (any
+enchanted or renamed item effectively never stacks with another).
+
+### Carry Capacity & Encumbrance
+
+`Character.CarryCapacity()` = `Strength.ValueAdj × Balance.CarryCapacityMultiplier
+× (1.0 + mutations.GetCarryCapacityMultiplier(...))`
+(`internal/characters/inventory.go`). **`CarryCapacityMultiplier` is absent
+from the shipped `config.yaml`** and silently defaults to `0.65`
+(`internal/configs/config.balance.misc.go`). Per the project's config
+convention, an absent key is a real, meaningful value, not "unset".
+
+Encumbrance is shown only as colored tiers, never raw numbers: light,
+moderate, heavy, overburdened, crushed (zero or negative capacity reports
+"crushed" rather than dividing by zero). A `{enc}` prompt token is available.
+Movement stamina cost scales via `internal/costs.EncumbranceMultiplier` up to
+`CostEncumbranceMax` (shipped 5.0) as carried weight approaches and exceeds
+capacity (`internal/usercommands/go.go`). Combat swing count is reduced up to
+50% over capacity (`internal/combat/combat_helpers.go`).
+
+### Multi-buy and Crafting Targeting
+
+`buy 5 iron ingot` (`internal/usercommands/buy.go`) purchases N copies in one
+command, stopping early on insufficient funds or carry capacity rather than
+failing the whole batch. `craft <recipe> <item-name>` targets a specific item
+for enchanting recipes, searching both backpack and equipped items and
+showing a numbered list when the name is ambiguous
+(`internal/usercommands/craft.go`).
+
 ## Performance Considerations
 
 ### Memory Management
@@ -704,26 +904,18 @@ modifications, and integration with all other game systems.
 
 ---
 
-## Item Comparison Utilities (Living Economy)
+## Item Comparison Utilities (moved to `internal/itemvalue`)
 
-Two utility functions support NPC crafting decisions in the living economy
-system:
+NPC crafting decisions (crafter mobs deciding whether to craft self-gear,
+`gearup` upgrade checks) no longer compare items via functions in this
+package. That logic now lives in `internal/itemvalue`, as
+`itemvalue.ItemValueDelta(char *characters.Character, profile WeightProfile,
+candidate items.Item) SwapDelta` and `itemvalue.IsUpgrade(char, profile,
+candidate) bool` (sugar for `ItemValueDelta(...).Score > 0`).
 
-```go
-// ItemPower returns a rough numeric power score for an ItemSpec by summing
-// stat mods, damage values, and mitigation fields. Used to compare two
-// items of the same slot type without caring about gold value.
-func ItemPower(spec ItemSpec) float64
-
-// IsUpgrade returns true if candidate is strictly better than current for
-// the same slot type. Compares ItemPower scores. Used by crafter mobs to
-// decide whether to craft self-gear.
-func IsUpgrade(current, candidate ItemSpec) bool
-```
-
-These functions are intentionally simple (sum-based, not weighted). They
-are only used internally by the NPC craft AI — players never see the raw
-scores.
+See `internal/itemvalue/context.md` for the weighted scoring model. This
+package previously documented a simpler `ItemPower`/`IsUpgrade(current,
+candidate ItemSpec)` pair; neither exists in the current source.
 
 ---
 
@@ -897,6 +1089,40 @@ in `internal/combat/combat_helpers.go` routes unarmed mob attacks through
 that subtype's message pool. Previously these subtypes were defined and
 used only for reach accounting or special-case weapon items; they are now
 actively selected at runtime for basic attacks on ~30 tagged species.
+
+## Caster Weapon Types
+
+Three weapon subtypes (`ItemSubType`s `wand`, `sceptre`, `staff`) are
+purpose-built for spellcasters. Each carries `spell_damage_multiplier` on
+`ItemSpec`, independent of the melee `damage_multiplier`, and uses the
+`weapon-combat` skill for its (weak) melee output, same as any other
+one/two-handed weapon.
+
+| Subtype | Hands | Melee `damage_multiplier` | `spell_damage_multiplier` | `speedmultiplier` | `parryrating` | Notes |
+|---------|-------|---------------------------|----------------------------|--------------------|----------------|-------|
+| wand    | 1     | 0.40 | 1.30 | 1.2 | 2  | Light, fast |
+| sceptre | 1     | 0.55 | 1.25 | 0.9 | 4  | Moderate |
+| staff   | 2     | 0.80 | 1.60 | 0.7 | 12 | Defensive, high spell boost |
+
+(Table values are the baseline template items:
+`10016-willow_wand.yaml`, `10017-iron_sceptre.yaml`, `10018-oak_staff.yaml`,
+not a hardcoded rule; an individual item's fields can differ.)
+
+**`spell_damage_multiplier` is read, not applied, by this package.** The
+consuming logic lives in `internal/hooks`:
+
+- `calcSpellDamageForCharacter` (`internal/hooks/combat_shared_helpers.go`) is
+  the single unified caster/mob spell-damage function (Stage 38.1), called
+  from every direct spell-damage site in `internal/hooks/spell_resolution.go`.
+- `applyMobEffect_buff` (`internal/hooks/spell_resolution.go`) applies the
+  same multiplier separately when scaling a buff's tick-pool damage, since
+  that path doesn't route through `calcSpellDamageForCharacter`.
+
+A prior version of this documentation named `calcSpellDamage()` and
+`calcMobSpellDamage()` as two separate functions in `spell_resolution.go`.
+Neither name exists in the current source; the caster and mob damage paths
+were unified into `calcSpellDamageForCharacter` before that doc was written.
+
 ## U10d Ranged Detune (`detune_migration.go`)
 
 The eight `shooting` templates were rescaled downward in U10d. Editing a
