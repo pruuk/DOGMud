@@ -206,6 +206,21 @@ Five rules, so future triage does not need re-litigating.
 
 1. **PROCEDURE folds. LOG and INCIDENT never fold.** A dated finding is
    evidence. A rule is reusable. Only rules become skills.
+
+   **Refined during execution (2026-09-08).** Review of Task 2 exposed a hole in
+   this rule. An INCIDENT file can carry a genuinely reusable fix:
+   `reference-droplet-root-owned-files-block-git-writes` is a dated incident,
+   but `sudo chown -R mudadmin:mudadmin` is exactly what a reader needs
+   mid-diagnosis, and a pointer to the narrative would be useless at that
+   moment. So the split is not per-file, it is per-content: **the operational
+   fix an incident yielded may be stated in the skill; the dated narrative of
+   how it was discovered stays in the memory file.** A skill's Sources section
+   must describe which of the two it did, because claiming "cited, not folded"
+   while shipping copy-pasteable fix commands is an internal contradiction.
+
+   Every claim must be attributed to the file that actually supports it. Task 2
+   shipped a first draft asserting a conclusion its cited source contradicted,
+   having silently borrowed it from a different, cite-only file.
 2. **A FACT folds only if a skill needs it to act.**
    `reference-user-save-location` drives no procedure, so it stays a memory file.
 3. **PREFERENCE goes to the CLAUDE.md working-style block, never to a skill.**

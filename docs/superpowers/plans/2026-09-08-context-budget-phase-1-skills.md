@@ -108,6 +108,29 @@ should split, and the splitting decision belongs to a later phase.
    whether to load the skill. Write it as concrete task phrases a person would
    actually be doing, not as a topic label.
 5. **Commit after each task.** One skill per commit.
+6. **No em dashes or en dashes.** This is a standing project writing rule
+   (`[[feedback_no_em_dashes_in_prose]]`). CLAUDE.md itself contains some, so
+   replace them with commas, colons, or parentheses while lifting rather than
+   copying them through. Verify per skill with:
+
+   ```bash
+   grep -c "—\|–" .claude/skills/<name>/SKILL.md
+   ```
+   Expected: 0.
+7. **Wrap prose at roughly 80 characters**, matching the house style of
+   CLAUDE.md and the project's player-copy rule.
+8. **Audit cross-references after lifting.** A pointer that was true inside
+   CLAUDE.md is often false inside a skill that carries only three of its
+   sections. Task 1 shipped with "see Shop Persistence below" pointing at
+   nothing. After writing each skill, run:
+
+   ```bash
+   grep -n "below\|above\|earlier\|see the" .claude/skills/<name>/SKILL.md
+   ```
+
+   and confirm every hit resolves inside that document. Repoint the ones that
+   do not, naming the skill that now owns the material (forward references to
+   a skill later in this plan are fine).
 
 ---
 
@@ -318,8 +341,11 @@ Body sections, in this order:
    `gh-defaults` memory rules. This goes first because it is the most expensive
    mistake in the file.
 2. `## Pre-push gate order` - lines 99-158 verbatim.
-3. `## Boot check in an isolated worktree` - the recipe from lines 128-158, plus
-   `reference_boot_test_in_isolated_worktree`.
+3. `## Boot check in an isolated worktree` - the boot recipe only (the shell
+   block plus the `boot-check.exe` and exit-124 rationale, which is item 5 of
+   the Pre-Push SOP), plus `reference_boot_test_in_isolated_worktree`. Note the
+   line range 128-158 runs past the boot recipe into items 6 and 7 (push and
+   open the PR, delete the stray tag); those belong under section 2, not here.
 4. `## Instance saves before a smoke test` - lines 159-205 verbatim.
 5. `## Traps that exit 0 while doing the wrong thing` - the four git memory
    rules (checkout pathspec, stash pathspec, `gh pr checks` early return, lint
@@ -378,6 +404,17 @@ If the guide already covers the deploy ritual accurately, the skill points at it
 rather than restating it. Record in the skill which sections of the guide are
 authoritative and which are stale. Do not duplicate an accurate guide.
 
+**Resolved during execution (2026-09-08):** the guide is 1,012 lines, current,
+and contradicted by none of the memory files. Its `TrustedProxies` and
+Caddy-as-container section already carries the fix from
+`reference-prod-trustedproxies-caddy-container` (the guide records its own
+2026-08-21 correction). So the skill defers to the guide for the deploy
+lifecycle and carries only what the guide lacks: the 1 CPU / 961 MB operating
+ceiling, the verify-the-SHA-before-trusting-a-fast-rebuild step, the
+build-cache-growth and root-owned-files failure modes, the MOTD convention, and
+the `config.yaml` skip-worktree hazard. This is why this skill is 143 lines
+against `dogmud-shipping`'s 313; the difference is deference, not thinness.
+
 - [ ] **Step 2: Write the skill**
 
 ```markdown
@@ -398,7 +435,28 @@ Body sections:
 4. `## Known deploy failures` - build cache growth, root-owned files, Caddy
    `TrustedProxies` needing `172.18.0.0/16`.
 5. `## MOTD` - from `feedback_motd_format` and `reference_motd_location`.
-6. `## Sources`
+6. `## config.yaml skip-worktree` - from `feedback-skip-worktree-config-leak`.
+7. `## Build time baseline` - from `reference_docker_build_times`, attributed
+   carefully (see the trap below).
+8. `## The guide` - what `docs/guides/DEPLOYMENT_GUIDE.md` authoritatively
+   covers, and anything this skill supersedes.
+9. `## Sources` - files folded as `[[links]]`, then a separate list for files
+   whose operational fix is stated here but whose dated narrative stays put.
+
+**Corrected during execution (2026-09-08).** This list originally named six
+sections and had no home for two of the four files it told the implementer to
+fold, so the implementer correctly added sections 6 and 7. The error was in this
+plan, not in the work.
+
+**Attribution trap found in review.** The first draft asserted that deploy time
+holds near 135 to 145 seconds regardless of diff size and cited
+`reference_docker_build_times` for it. That file says the opposite: rebuilds ran
+roughly 130 to 160 seconds before the 2026-04-18 cleanup and dropped to roughly
+100 seconds after the codebase shrank, so its point is that tree size DOES move
+the number. The "regardless of diff size" conclusion belongs to
+`reference_prod_perf_baseline`, a cite-only running log. The two sources are in
+genuine tension and the skill must not adjudicate. Attribute every claim to the
+file that actually makes it.
 
 - [ ] **Step 3: Verify**
 
