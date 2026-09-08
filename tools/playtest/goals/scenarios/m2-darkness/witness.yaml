@@ -1,0 +1,38 @@
+# M2 darkness lane: the WITNESS. You are the instrument.
+#
+# You start at the Cave Mouth (3101). Every room here is cave biome: UNLIT. You
+# have NO light source, NO night vision, NO infrared. That is deliberate. You
+# are meant to be blind here.
+#
+# Sil Vantage will fight beside you. You STAND STILL AND READ. Do not attack.
+#
+# 3 commands per round, overflow silently dropped after being echoed.
+
+ephemeral:
+  profile: m2-witness
+  start_room: 3101
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    FIRST, CONFIRM YOU CANNOT SEE. `look`. Report exactly what you get. If you
+    can read a normal room description you are NOT in darkness and everything
+    else in this lane is void. Say so at once.
+  - >-
+    THE HEADLINE, and it inverts the usual instinct. While Sil fights beside
+    you, report EXACTLY what you receive about their fight. **The correct answer
+    is nothing.** Do not treat silence as a fault and do not go looking for a
+    reason to report something. Count the lines you get during their fight and
+    state the number, even when it is zero.
+  - >-
+    THE CONTROL, and this is the one that matters most. When something happens
+    to YOU -- a mob hits you, Sil buffs you -- you MUST still be told. Quote it.
+    If you are told nothing about your own body, say so loudly: that would mean
+    the change silenced more than intended, and it outweighs everything else.
+  - >-
+    Distinguish carefully between three things: told nothing because nothing
+    happened, told nothing because you could not see it, and told something you
+    should not have been. Only the third is a bug, and only you can tell them
+    apart, so narrate what Sil told you was happening alongside what you
+    actually received.

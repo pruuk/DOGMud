@@ -1,0 +1,51 @@
+# M2 darkness lane. The one lane the 2026-09-08 run could not stage.
+#
+# WHY THIS PLACE. Room.GetVisibility() subtracts 2 for a naturally dark biome,
+# which takes a `biome: cave` room to 0. The Ironwind Steppe cave complex
+# (3101-3114) is entirely cave biome, so it is genuinely unlit with no waiting
+# for night and no dousing of lights. Neither profile carries a light source,
+# night vision, or infrared -- that is deliberate and must stay that way.
+#
+# The change under test is DELIBERATE and will look like a bug: a bystander who
+# cannot see gets NOTHING about a fight beside them. The control matters just as
+# much: they must still be told about anything happening to THEM.
+name: m2-darkness
+mode: party
+summary: >-
+  Actor fights in an unlit cave while a sightless witness stands beside them and
+  reports what they are, and are not, told.
+on_actor_stop: continue
+budgets:
+  wall_clock: 30m
+requires:
+  max_connections: 20
+roster:
+  - id: actor
+    personality: bug-finder
+    goals: goals/scenarios/m2-darkness/actor.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/m2-darkness/witness.yaml
+
+group_goals:
+  - id: confirm-darkness
+    do: >-
+      Both confirm they are somewhere unlit before anything else. `look` should
+      not show a normal room description.
+    verify: >-
+      Both report they cannot see. If either can see normally, the lane is
+      invalid and everything after it is worthless.
+  - id: unsighted-bystander-silent
+    do: >-
+      Actor picks a fight in the witness's room and takes at least one DEFENDED
+      special move from a mob (bash, gore, trip, kick).
+    verify: >-
+      The witness receives NOTHING about that exchange. Silence is the PASS
+      here. Any third-person line about the fight reaching a sightless
+      bystander is the failure.
+  - id: still-told-about-yourself
+    do: >-
+      Get the witness hit directly, or buffed, or otherwise acted upon.
+    verify: >-
+      The witness IS told. This is the control. Silence here would be serious:
+      it would mean the change silenced more than it should.
