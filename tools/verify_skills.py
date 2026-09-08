@@ -13,7 +13,9 @@ Exits 1 and prints every failure if any check fails.
 import sys
 from pathlib import Path
 
-SKILLS = Path(".claude/skills")
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+SKILLS = PROJECT_ROOT / ".claude" / "skills"
 EXPECTED = [
     "dogmud-shipping", "dogmud-deploying", "dogmud-authoring-content",
     "dogmud-authoring-quests", "dogmud-player-copy", "dogmud-writing-tests",
@@ -23,19 +25,19 @@ EXPECTED = [
 
 
 def parse_frontmatter(text):
-    """Return dict of top-level scalar keys in the leading --- block, or None."""
+    """Return (dict, None) for a closed --- block, or (None, reason) on failure."""
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
-        return None
+        return None, "no opening --- line"
     out = {}
     for line in lines[1:]:
         if line.strip() == "---":
-            return out
+            return out, None
         if line.startswith(("  ", "\t")) or ":" not in line:
             continue
         key, _, val = line.partition(":")
         out[key.strip()] = val.strip().strip('"').strip("'")
-    return None
+    return None, "frontmatter block is never closed"
 
 
 def main():
@@ -45,24 +47,36 @@ def main():
         return 1
 
     found = sorted(p.name for p in SKILLS.iterdir() if p.is_dir())
+    valid = set()
     for name in found:
         path = SKILLS / name / "SKILL.md"
         if not path.is_file():
             errors.append(f"{name}: no SKILL.md")
             continue
-        fm = parse_frontmatter(path.read_text(encoding="utf-8"))
-        if fm is None:
-            errors.append(f"{name}: no closed --- frontmatter block")
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except (UnicodeDecodeError, OSError) as exc:
+            errors.append(f"{name}: SKILL.md unreadable ({exc.__class__.__name__})")
             continue
+        fm, reason = parse_frontmatter(text)
+        if fm is None:
+            errors.append(f"{name}: {reason}")
+            continue
+        ok = True
         if fm.get("name") != name:
             errors.append(f"{name}: frontmatter name is {fm.get('name')!r}")
+            ok = False
         desc = fm.get("description", "")
         if not desc:
             errors.append(f"{name}: empty description")
+            ok = False
         elif len(desc) > 500:
             errors.append(f"{name}: description is {len(desc)} chars, over 500")
+            ok = False
+        if ok:
+            valid.add(name)
 
-    present = [n for n in EXPECTED if n in found]
+    present = [n for n in EXPECTED if n in valid]
     missing = [n for n in EXPECTED if n not in found]
     for name in missing:
         errors.append(f"{name}: expected skill not present")
