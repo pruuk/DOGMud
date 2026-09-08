@@ -51,6 +51,20 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	dmgDesc := combat.GetDamageDescription(res.MoveResult.Damage, res.MoveResult.TargetMaxHP)
 
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: res.Target.UserId,
+		Room:    room,
+	}
+
 	if res.MoveResult.Hit {
 		rakeMsgs := []string{
 			`Your claws rake across <ansi fg="mobname">%s</ansi>, opening raking gashes that weep! (<ansi fg="damage">%s</ansi>)`,
@@ -71,11 +85,11 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			`<ansi fg="username">%s</ansi>'s claws tear into <ansi fg="mobname">%s</ansi>!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(rakeMsgs[util.Rand(len(rakeMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(rakeTargetMsgs[util.Rand(len(rakeTargetMsgs))], user.Character.Name, dmgDesc))
-		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(rakeRoomMsgs[util.Rand(len(rakeRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(rakeMsgs[util.Rand(len(rakeMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(rakeTargetMsgs[util.Rand(len(rakeTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(rakeRoomMsgs[util.Rand(len(rakeRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 	} else if res.MoveResult.Damage > 0 {
 		partialMsgs := []string{
 			`Your raking claws mostly miss <ansi fg="mobname">%s</ansi>, but still leave a shallow scratch! (<ansi fg="damage">%s</ansi>)`,
@@ -89,14 +103,26 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			`<ansi fg="username">%s</ansi> rakes their claws at <ansi fg="mobname">%s</ansi>, who mostly dodges but still gets scratched!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "claw rake")
+		observer := messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName))
+		if defended {
+			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
+			sendMoveDefenceShortage(targetChar, defence)
 		}
-		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "claw rake", messaging.CategoryHitNaturalSharp, true) {
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
-		}
-	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "claw rake", messaging.CategoryHitNaturalSharp, false) {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: observer,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "claw rake"); defended {
+		// A defence stopped it outright: all three lines come from the triad.
+		sendMoveDefenceShortage(targetChar, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToAttacker),
+			Actee:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
+		}, aud)
+	} else {
 		missMsgs := []string{
 			`Your raking claws miss <ansi fg="mobname">%s</ansi>!`,
 			`You swipe at <ansi fg="mobname">%s</ansi> but they dodge your claws!`,
@@ -110,11 +136,11 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			`<ansi fg="username">%s</ansi> rakes their claws at <ansi fg="mobname">%s</ansi>, but misses!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name))
-		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName), user.UserId, res.Target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name)),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
