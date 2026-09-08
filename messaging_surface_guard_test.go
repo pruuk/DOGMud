@@ -1378,8 +1378,17 @@ func TestNarrationSitesMatchViewpointAudit(t *testing.T) {
 // internal/narration/testdata/stores/ do not cover a single line of it.
 //
 // This freezes the multiset of string literals in each file. A refactor that
-// drops a line, alters a string, or reorders a pool changes the multiset and
-// fails here. It says nothing about rendered output -- that is the honest
+// drops a line or alters a string changes the multiset and
+// fails here.
+//
+// IT IS ORDER-INSENSITIVE ON PURPOSE AND BY CONSEQUENCE: the literals are
+// sorted before hashing, so reordering a pool does NOT fail. That is fine for
+// these 23 files, whose pools are indexed by an independent util.Rand pick per
+// call. It would NOT be fine for the defence store, where pools pair BY INDEX
+// and a reorder is the exact shape of the bug PR #112 fixed -- which is another
+// reason those files are guarded by their golden instead.
+//
+// It says nothing about rendered output -- that is the honest
 // limit, and it is the same tradeoff M1 made for its Group C inventory.
 //
 // Import declarations are skipped, because the migration legitimately adds an
