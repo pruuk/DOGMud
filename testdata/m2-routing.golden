@@ -364,10 +364,12 @@ internal/usercommands/shoot.go | observer | messaging~CategoryHitRanged | triadR
 internal/usercommands/shoot.go | observer_targetroom | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and clips %s!`~origin~targetColored
 internal/usercommands/shoot.go | observer_targetroom | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and narrowly misses %s!`~origin~targetColored
 internal/usercommands/shoot.go | observer_targetroom | messaging~CategoryHitRanged | fmt~Sprintf~`A shot streaks in %s and strikes %s!`~origin~targetColored
+internal/usercommands/throttle.go | actee | messaging~CategoryHitNaturalSharp | defence~ToDefender
 internal/usercommands/throttle.go | actee | messaging~CategorySystem | `Your spell collapses as you fight for air!`
 internal/usercommands/throttle.go | actee | messaging~CategorySystem | fmt~Sprintf~hitTargetMsgs~util~Rand~len~hitTargetMsgs~user~Character~Name~dmgDesc
 internal/usercommands/throttle.go | actee | messaging~CategorySystem | fmt~Sprintf~missTargetMsgs~util~Rand~len~missTargetMsgs~user~Character~Name
 internal/usercommands/throttle.go | actee | messaging~CategorySystem | fmt~Sprintf~partialTargetMsgs~util~Rand~len~partialTargetMsgs~user~Character~Name~dmgDesc
+internal/usercommands/throttle.go | actor | messaging~CategoryHitNaturalSharp | defence~ToAttacker
 internal/usercommands/throttle.go | actor | messaging~CategorySystem | "You have no fangs to throttle with."
 internal/usercommands/throttle.go | actor | messaging~CategorySystem | "You have no target!"
 internal/usercommands/throttle.go | actor | messaging~CategorySystem | "You need a moment to recover before attempting another special move."
@@ -376,6 +378,8 @@ internal/usercommands/throttle.go | actor | messaging~CategorySystem | fmt~Sprin
 internal/usercommands/throttle.go | actor | messaging~CategorySystem | fmt~Sprintf~hitMsgs~util~Rand~len~hitMsgs~targetName~dmgDesc
 internal/usercommands/throttle.go | actor | messaging~CategorySystem | fmt~Sprintf~missMsgs~util~Rand~len~missMsgs~targetName
 internal/usercommands/throttle.go | actor | messaging~CategorySystem | fmt~Sprintf~partialMsgs~util~Rand~len~partialMsgs~targetName~dmgDesc
+internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
+internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | defence~ToRoom
 internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~hitRoomMsgs~util~Rand~len~hitRoomMsgs~user~Character~Name~targetName
 internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~missRoomMsgs~util~Rand~len~missRoomMsgs~user~Character~Name~targetName
 internal/usercommands/throttle.go | observer | messaging~CategoryHitNaturalSharp | fmt~Sprintf~partialRoomMsgs~util~Rand~len~partialRoomMsgs~user~Character~Name~targetName

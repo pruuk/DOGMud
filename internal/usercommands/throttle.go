@@ -51,6 +51,20 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	dmgDesc := combat.GetDamageDescription(res.MoveResult.Damage, res.MoveResult.TargetMaxHP)
 
+	// Declared as the interface and left unset for a mob target. Assigning a
+	// typed-nil *users.UserRecord would make it a non-nil interface value.
+	var acteeRecipient messaging.Recipient
+	if targetChar != nil {
+		acteeRecipient = targetChar
+	}
+	aud := messaging.Audience{
+		Actor:   user,
+		ActorId: user.UserId,
+		Actee:   acteeRecipient,
+		ActeeId: res.Target.UserId,
+		Room:    room,
+	}
+
 	if res.MoveResult.Hit {
 		hitMsgs := []string{
 			`Your fangs clamp around <ansi fg="mobname">%s</ansi>'s throat, cutting off their air! (<ansi fg="damage">%s</ansi>)`,
@@ -68,21 +82,28 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			`<ansi fg="username">%s</ansi> seizes <ansi fg="mobname">%s</ansi> by the throat with crushing fangs!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(hitMsgs[util.Rand(len(hitMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(hitTargetMsgs[util.Rand(len(hitTargetMsgs))], user.Character.Name, dmgDesc))
-		}
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(hitMsgs[util.Rand(len(hitMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(hitTargetMsgs[util.Rand(len(hitTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(hitRoomMsgs[util.Rand(len(hitRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 
+		// A detail line riding on the hit above. Observer is NoLine only
+		// because that is today's behaviour; a collapsing spell is a world
+		// event under the detail-line ruling and gains a room line in its own
+		// commit, so the text change is reviewable on its own.
+		//
+		// The room line now precedes this rather than following it. No
+		// individual recipient sees a different order: the room line is never
+		// delivered to the actor or the actee, and the observer never receives
+		// these two, so only the cross-recipient interleaving moved.
 		if res.InterruptedCast {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell collapses as they fight for air!`, targetName))
-			if targetChar != nil {
-				targetChar.SendText(messaging.CategorySystem, `Your spell collapses as you fight for air!`)
-			}
+			messaging.SendTrio(messaging.Trio{
+				Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s spell collapses as they fight for air!`, targetName)),
+				Actee:    messaging.Say(messaging.CategorySystem, `Your spell collapses as you fight for air!`),
+				Observer: messaging.NoLine,
+			}, aud)
 		}
-
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(hitRoomMsgs[util.Rand(len(hitRoomMsgs))], user.Character.Name, targetName),
-			user.UserId, res.Target.UserId)
 	} else if res.MoveResult.Damage > 0 {
 		partialMsgs := []string{
 			`Your throttle lunge mostly misses <ansi fg="mobname">%s</ansi>'s throat, but your fangs still graze it! (<ansi fg="damage">%s</ansi>)`,
@@ -96,16 +117,26 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			`<ansi fg="username">%s</ansi> lunges for <ansi fg="mobname">%s</ansi>'s throat, who pulls mostly free but still gets grazed!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc))
+		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "throttle lunge")
+		observer := messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName))
+		if defended {
+			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
+			sendMoveDefenceShortage(targetChar, defence)
 		}
-		if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "throttle lunge", messaging.CategoryHitNaturalSharp, true) {
-			room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-				fmt.Sprintf(partialRoomMsgs[util.Rand(len(partialRoomMsgs))], user.Character.Name, targetName),
-				user.UserId, res.Target.UserId)
-		}
-	} else if !sendMoveDefenceTriad(user, room, res.Target, res.MoveResult.Defence, "throttle lunge", messaging.CategoryHitNaturalSharp, false) {
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialMsgs[util.Rand(len(partialMsgs))], targetName, dmgDesc)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(partialTargetMsgs[util.Rand(len(partialTargetMsgs))], user.Character.Name, dmgDesc)),
+			Observer: observer,
+		}, aud)
+	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "throttle lunge"); defended {
+		// A defence stopped it outright: all three lines come from the triad.
+		sendMoveDefenceShortage(targetChar, defence)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToAttacker),
+			Actee:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToDefender),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
+		}, aud)
+	} else {
 		missMsgs := []string{
 			`Your throttle lunge misses <ansi fg="mobname">%s</ansi>'s throat!`,
 			`You snap at <ansi fg="mobname">%s</ansi>'s throat but they pull away!`,
@@ -119,13 +150,11 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			`<ansi fg="username">%s</ansi> lunges for <ansi fg="mobname">%s</ansi>'s throat but misses!`,
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName))
-		if targetChar != nil {
-			targetChar.SendText(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name))
-		}
-		room.SendTextVisual(messaging.CategoryHitNaturalSharp,
-			fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName),
-			user.UserId, res.Target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missMsgs[util.Rand(len(missMsgs))], targetName)),
+			Actee:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(missTargetMsgs[util.Rand(len(missTargetMsgs))], user.Character.Name)),
+			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, fmt.Sprintf(missRoomMsgs[util.Rand(len(missRoomMsgs))], user.Character.Name, targetName)),
+		}, aud)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
