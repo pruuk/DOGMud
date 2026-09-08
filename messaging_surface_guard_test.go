@@ -1378,7 +1378,7 @@ func TestNarrationSitesMatchViewpointAudit(t *testing.T) {
 // internal/narration/testdata/stores/ do not cover a single line of it.
 //
 // This freezes the multiset of string literals in each file. A refactor that
-// drops a line or alters a string changes the multiset and
+// drops or alters a STRING LITERAL changes the multiset and
 // fails here.
 //
 // IT IS ORDER-INSENSITIVE ON PURPOSE AND BY CONSEQUENCE: the literals are
@@ -1413,6 +1413,8 @@ var m2FrozenFiles = map[string]string{
 	"internal/usercommands/shoot.go":    "d63942e7087292a898ce1730bcdf5b90f7c9dcaa08891a1a3af7ce4687d90376",
 	"internal/usercommands/throw.go":    "44fc7829103b0dea6a1ccdba8787ceafa42519f78dccb4659e3e38b74ca98851",
 	"internal/mobcommands/bash.go":      "fa5082a09245e01e30d5b967f687e443e0cedec587511234d5b0b41404146503",
+	"internal/mobcommands/charge.go":    "f95af1258f05d1c8bb49ee10c6f0fa2b71c8953a727e3a0aa6e126c43e90e3d7",
+	"internal/mobcommands/hamstring.go": "87ecd26e30f0324b9e552446bcc6797b074e1aafd0087043634a805cd090501b",
 	"internal/mobcommands/drain.go":     "e28eb92ae670bb746ae9009c14f4056984f8ca68230e9531c63d30348faff8eb",
 	"internal/mobcommands/gore.go":      "c9f3a5c218732ebdc1bdcd141736443c98d9fa8c0b08e6f4d6a4e1f687f4a270",
 	"internal/mobcommands/kick.go":      "622a3209b47a6ed5941a60900b57171083fd2116d6d7351e85a953dde45f073d",
@@ -1456,7 +1458,8 @@ func TestM2LiteralsAreFrozen(t *testing.T) {
 	for path, want := range m2FrozenFiles {
 		got, err := m2LiteralFingerprint(path)
 		if err != nil {
-			t.Fatalf("fingerprint %s (test must run from the repo root): %v", path, err)
+			t.Errorf("fingerprint %s (test must run from the repo root): %v", path, err)
+			continue
 		}
 		if want == "" {
 			drift = append(drift, path+"  RECORD: "+got)

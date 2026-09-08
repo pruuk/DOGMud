@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -289,5 +290,118 @@ func TestM2RoutingIsFrozen(t *testing.T) {
 			"  M2_RECORD_ROUTING=1 go test . -run TestM2RoutingIsFrozen",
 			len(gone), len(added),
 			strings.Join(gone, "\n  "), strings.Join(added, "\n  "))
+	}
+}
+
+// TestM2FileListsAgree anchors the two M2 freezes to each other.
+//
+// WHY. The literal freeze's failure message hands you the new fingerprint, so
+// "make it green" has two equally easy paths: paste the hash, or delete the
+// row. Deleting a row silently removes a file from coverage and nothing
+// noticed. Its sibling TestNarrationSitesMatchViewpointAudit has a stale-entry
+// check and a warning against exactly this; the M2 freezes had neither.
+//
+// Neither list is authoritative over the other on purpose: a file dropped from
+// EITHER shows up here, so a reviewer sees one deletion as two failures.
+func TestM2FileListsAgree(t *testing.T) {
+	routing := map[string]bool{}
+	for _, p := range m2RoutingFiles {
+		routing[p] = true
+	}
+	var onlyLiteral, onlyRouting []string
+	for p := range m2FrozenFiles {
+		if !routing[p] {
+			onlyLiteral = append(onlyLiteral, p)
+		}
+	}
+	for p := range routing {
+		if _, ok := m2FrozenFiles[p]; !ok {
+			onlyRouting = append(onlyRouting, p)
+		}
+	}
+	sort.Strings(onlyLiteral)
+	sort.Strings(onlyRouting)
+	if len(onlyLiteral) > 0 || len(onlyRouting) > 0 {
+		t.Errorf("the two M2 freeze file lists disagree.\n\nIn m2FrozenFiles only:\n  %s\n\nIn m2RoutingFiles only:\n  %s\n\n"+
+			"Every file M2 migrates needs BOTH guards: the literal freeze for its text "+
+			"and the routing freeze for which viewpoint that text reaches. If a file "+
+			"genuinely belongs in neither, remove it from both and say why in the commit.",
+			strings.Join(onlyLiteral, "\n  "), strings.Join(onlyRouting, "\n  "))
+	}
+}
+
+// TestEveryAudienceLiteralPairsIdsWithRecipients closes the room-broadcast
+// exclusion hole.
+//
+// SendTrio derives the room broadcast's exclusion list from Audience.ActorId
+// and Audience.ActeeId. Omitting one is a silent defect: the excluded party
+// receives the third-person room line on top of their own personal line. That
+// was previously an explicit trailing argument to room.SendTextVisual, and is
+// now a struct field that is easier to leave out and equally invisible to the
+// text guards.
+//
+// A missing RECIPIENT is legitimate and not checked: the mob side has no Actor
+// at all, and an actee that is a mob has no client. What is never legitimate is
+// naming a recipient and not naming its id.
+func TestEveryAudienceLiteralPairsIdsWithRecipients(t *testing.T) {
+	pairs := map[string]string{"Actor": "ActorId", "Actee": "ActeeId"}
+	var bad []string
+
+	for _, root := range []string{"internal", "modules"} {
+		fset := token.NewFileSet()
+		err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			file, perr := parser.ParseFile(fset, path, nil, 0)
+			if perr != nil {
+				return nil
+			}
+			ast.Inspect(file, func(n ast.Node) bool {
+				cl, ok := n.(*ast.CompositeLit)
+				if !ok {
+					return true
+				}
+				sel, ok := cl.Type.(*ast.SelectorExpr)
+				if !ok || sel.Sel.Name != "Audience" {
+					return true
+				}
+				if pkg, ok := sel.X.(*ast.Ident); !ok || pkg.Name != "messaging" {
+					return true
+				}
+				named := map[string]bool{}
+				for _, elt := range cl.Elts {
+					if kv, ok := elt.(*ast.KeyValueExpr); ok {
+						if key, ok := kv.Key.(*ast.Ident); ok {
+							named[key.Name] = true
+						}
+					}
+				}
+				for recipient, id := range pairs {
+					if named[recipient] && !named[id] {
+						bad = append(bad, filepath.ToSlash(path)+":"+
+							strconv.Itoa(fset.Position(cl.Pos()).Line)+
+							"  names "+recipient+" but not "+id)
+					}
+				}
+				return true
+			})
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("walk %s: %v", root, err)
+		}
+	}
+
+	sort.Strings(bad)
+	if len(bad) > 0 {
+		t.Errorf("%d messaging.Audience literal(s) name a recipient without its id:\n  %s\n\n"+
+			"SendTrio builds the room broadcast's exclusion list from ActorId and "+
+			"ActeeId. Omit one and that person receives the third-person room line "+
+			"on top of their own personal line.",
+			len(bad), strings.Join(bad, "\n  "))
 	}
 }
