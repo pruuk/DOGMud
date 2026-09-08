@@ -43,7 +43,12 @@ it in a later slice.
 
 | Fact | Evidence |
 |---|---|
-| `sendMoveDefenceTriad` exists once per command package, near-identical | `internal/usercommands/skill_move_defence.go:32`, `internal/mobcommands/skill_move_defence.go:30` |
+| `sendMoveDefenceTriad` exists once per command package | `internal/usercommands/skill_move_defence.go:32`, `internal/mobcommands/skill_move_defence.go:30` |
+| **The two copies are NOT near-identical.** The player copy broadcasts via `room.SendTextVisual` (visual channel, pipeline sight gate, pipeline anonymizer). The mob copy broadcasts via `sendAudioRoomText` (audio channel, hand-rolled anonymization keyed on `buffs.NightVision` and `room.GetVisibility()`) | `internal/mobcommands/darkness.go:18`, `:44` |
+| **The two copies disagree about the defender's personal line.** The mob copy anonymizes it when the defender cannot see; the player copy sends `triad.ToDefender` raw | `internal/mobcommands/skill_move_defence.go:60`, versus the player copy's `targetUser.SendText(category, string(triad.ToDefender))` |
+| `UserRecord.SendText` hardcodes `ChannelAudio`, and the pipeline runs the sight gate and anonymizer only on `ChannelVisual` | `internal/users/userrecord.go:438`; `internal/messaging/pipeline.go:59` |
+| The 11 mob verb files already broadcast through `SendTextVisual`, like the player side. Their one `canSeeInDark` call each only selects **which text to render**, not how it is delivered | e.g. `internal/mobcommands/bash.go:45` |
+| The codebase already expects this consolidation | `internal/messaging/predicates.go:66`: "⚠️ THIS IS A TEMPORARY SEAM. The messaging arc's M2/M4 stages consolidate darkness, blindness and sleep into ONE perception verdict" |
 | 12 special-move verb files in `usercommands` | `bash drain gore kick maul pounce rake throttle trip grapple shoot throw` |
 | 11 in `mobcommands`, the same list without `throw` | `ls internal/mobcommands/` |
 | Every one of the 12 carries the three-send shape | Per-file send counts, table below |
@@ -100,7 +105,10 @@ Send counts, `internal/usercommands/`, counted 2026-09-08:
 
 One seam that fans a narrated event out to its three audiences, every
 special-move verb on both the player and mob side migrated onto it, and the
-five defects M1 found, across seven sites, closed.
+five defects M1 found, across seven sites, closed. Two further output changes
+come from M2's own work: the detail-line ruling in section 5, and an
+information leak found by reading the two defence-helper copies properly
+(section 3a).
 
 M2 does **not** touch rendering: band selection, pool shape, token vocabulary
 and the authored stores are all M3's. The split is deliberate and it is where
@@ -301,11 +309,11 @@ freeze green after every one.
 |---|---|---|
 | 0 | Literal freeze over the 23 files | The net, before anything moves |
 | 1 | `internal/messaging/trio.go` plus unit tests | Seam with no callers yet |
-| 2 | The two `sendMoveDefenceTriad` copies collapse to one | **The proof.** Near-identical duplication across two packages, the exact shape that produced all five defects |
+| 2 | The two `sendMoveDefenceTriad` copies unify onto the seam | **The proof.** See section 3a: this is not a pure refactor, and it is where the seventh defect was found |
 | 3-14 | `internal/usercommands/` times 12 | `bash drain gore kick maul pounce rake throttle trip grapple shoot throw` |
 | 15-25 | `internal/mobcommands/` times 11 | Same list without `throw` |
 | 26 | Documentation corrections | Section 6 |
-| 27-32 | The six output changes | Last, one commit each |
+| 27-33 | The seven output changes | Last, one commit each |
 
 ### The mob side
 
@@ -327,7 +335,75 @@ variable name, never saw it.
 
 ---
 
-## 4. The six output changes
+## 3a. The defence helper, which is not a pure refactor
+
+This was planned as a straight collapse of two near-identical functions. They
+are not near-identical, and reading them properly changed the design.
+
+### What differs
+
+| | Player copy | Mob copy |
+|---|---|---|
+| Room line | `room.SendTextVisual` (visual channel, pipeline sight gate, pipeline anonymizer) | `sendAudioRoomText` (audio channel, hand-rolled anonymization on `buffs.NightVision` plus `room.GetVisibility()`) |
+| Defender's personal line | `triad.ToDefender` sent **raw** | `Anonymize`d when `!canSeeInDark(targetUser, room)` |
+
+`UserRecord.SendText` is hardcoded to `ChannelAudio` and the pipeline runs the
+sight gate and anonymizer only on `ChannelVisual`, so the mob copy's hand
+anonymization is not redundant. It is the only thing anonymizing that line.
+
+### Defect 7, found by trying to collapse them
+
+**The two copies disagree, so a player defending in the dark learns who hit
+them if it was a player and does not if it was a mob.** Mob attacker gives "a
+figure parries your bash"; player attacker names the attacker. Neither copy
+knows the other exists.
+
+This is the same shape as M1's five: a duplicated code path that drifted. It is
+the seventh output change in section 4, and it is the strongest argument for
+the unification, because collapsing the two is what surfaced it.
+
+### How the unification is done
+
+**The room line moves onto the seam and therefore onto the pipeline.** The mob
+copy stops calling `sendAudioRoomText`.
+
+**The defender's personal line keeps its call-site anonymization.** `SendTrio`
+takes finished strings, so the caller runs the same `canSeeInDark` check it
+runs today and hands the seam an already-anonymized string. Behavior for that
+line is preserved exactly on the mob side, and the player side gains the same
+treatment, which is defect 7's fix.
+
+This is deliberate. Routing the personal line through the visual channel
+instead would mean a defender who cannot see gets **nothing** while being
+attacked, which is plainly wrong. Deciding what an unsighted player should be
+told about a thing happening to them is a design question, not a refactor, and
+it belongs with the perception-verdict consolidation that
+`internal/messaging/predicates.go:66` already flags for M4.
+
+### The accepted room-line behavior change
+
+Bystanders only. The defender is excluded from the room broadcast.
+
+| Bystander | Today, mob attacker | After | Delta |
+|---|---|---|---|
+| lit room, sighted, awake | full | full | same |
+| lit room, **blind** | full | nothing | loses it |
+| lit room, **asleep** | full | nothing | loses it |
+| dark, NightVision | full | full | same |
+| dark, Infrared only | anonymized | anonymized | same |
+| dark, **neither** | anonymized | nothing | loses it |
+
+Nobody gains a message. Three groups lose one, and two of those three are the
+sleep gate and the blindness gate doing exactly what they were added to do. The
+third, a bystander with no sight aid in a dark room, stops receiving an
+anonymized line about a fight they cannot see.
+
+**This is accepted, not incidental.** It is listed in the playtest scenarios in
+section 7 and called out in `PATCH_NOTES.md`.
+
+---
+
+## 4. The seven output changes
 
 Held to the end of the slice, one commit each, so the refactor and the behavior
 changes never share a diff.
@@ -340,11 +416,22 @@ changes never share a diff.
 | 4 | `usercommands/equip.go:218` | The arm-slot path drops the room line the shared path sends at `:274` and `:277` |
 | 5 | `usercommands/admin.zap.go:82` | The engaged-target path puts a player on 1 health with no message; the explicit-target path at `:46` does tell them |
 | 6 | `usercommands/throttle.go:77` | An interrupted cast is told to actor and actee and not to the room. Gains a room line under the detail-line ruling below |
+| 7 | `usercommands/skill_move_defence.go` | The defender's personal line is sent raw, so a player defending in the dark learns who hit them when the attacker is a player, and does not when it is a mob. Gains the mob copy's `canSeeInDark` anonymization. See section 3a |
 
-**Number 6 is a scope add, not a bug M1 found.** M1 ruled that site `correct`
-but noted the convention was unsettled. The ruling below settles it, and the
-consequence is a new player-facing line. It is called out here so it is not
-mistaken for one of the five.
+**Numbers 6 and 7 are not bugs M1 found**, and are called out so they are not
+mistaken for part of the five.
+
+Number 6 is a scope add: M1 ruled that site `correct` but noted the convention
+was unsettled, the ruling below settles it, and the consequence is a new
+player-facing line.
+
+Number 7 was found while writing this design, by reading the two defence-helper
+copies properly instead of trusting the word "near-identical". It is a genuine
+information leak and it is the same duplicated-and-drifted shape as the five.
+
+**Separately from these seven, the room-line delivery change in section 3a is
+also player-visible** and is accepted deliberately rather than as a side
+effect.
 
 ---
 
@@ -424,14 +511,25 @@ Before the PR:
   124 is the pass.
 - `docs/PATCH_NOTES.md` entry, player-facing framing.
 
-**Then the adversarial playtest gate.** The six output changes put new
+**Then the adversarial playtest gate.** The seven output changes put new
 player-facing lines into the world, which is authored content under the project
 content SOP. A boot-clean build cannot tell whether a newly broadcast salvage
 line reads well, whether the rally and warcry party lines fire at a sensible
-moment, or whether the new throttle room line crowds the round it lands in. The
-playtest must exercise: a player butchering a corpse in a room with a witness,
-a buff spell cast in company, `rally` or `warcry` with a real party, an
-arm-slot equip, and a throttle that interrupts a cast.
+moment, or whether the new throttle room line crowds the round it lands in.
+
+The playtest must exercise:
+
+- A player butchering a corpse in a room with a witness.
+- A buff spell cast in company.
+- `rally` or `warcry` with a real party.
+- An arm-slot equip.
+- A throttle that interrupts a cast.
+- **A defended special move in a dark room, watched by a bystander with no
+  sight aid.** This is the section 3a delivery change and it is the one a
+  reader is most likely to mistake for a bug. The bystander should now receive
+  nothing.
+- **A player defending a special move in the dark against a player attacker.**
+  Defect 7's fix: they should no longer be told the attacker's name.
 
 ### Acceptance
 
@@ -440,14 +538,19 @@ M2 is done when:
 1. `SendTrio` is the only path by which the 23 files narrate an **event**.
    Refusals and mechanical feedback still use plain `SendText`, per the
    boundary in section 1.
-2. `sendMoveDefenceTriad` exists once, not twice.
+2. `sendMoveDefenceTriad`'s send half exists once, not twice. The identity
+   resolution stays per package, because a mob attacker and a player attacker
+   legitimately name themselves differently.
 3. The literal freeze covers all 23 files and passes.
 4. Every `Trio` literal in the tree names all three roles, enforced by the
    guard with no exceptions list.
 5. No category changed anywhere in the 23 files. The per-role categories in
    section 1 are carried across verbatim, `shoot` and `throw` included.
 6. The seven defect sites narrate every viewpoint they should.
-7. The playtest has run and its findings are fixed or filed.
+7. The defender's personal line is anonymized on **both** attacker paths when
+   the defender cannot see, and `sendAudioRoomText` has no remaining caller in
+   `skill_move_defence.go`.
+8. The playtest has run and its findings are fixed or filed.
 
 ---
 
@@ -468,7 +571,8 @@ the melee seam had zero snapshot coverage.
 **2. M2 ends with the adversarial playtest gate, which the arc spec places at
 M5.** The arc spec put M2 down as bug-compatible with no output changes, so no
 gate was needed. M2 as scoped closes the five defects M1 found across seven
-sites, plus one more from its own detail-line ruling, which adds
+sites, plus two more of its own (the detail-line ruling and the defence-helper
+leak) and one accepted delivery change, which adds
 player-facing lines, and the project content SOP requires a playtest whenever
 player-facing content is authored. M5 keeps its own gate for the
 crime-in-the-dark ruling.

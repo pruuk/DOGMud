@@ -536,8 +536,10 @@ beside it. Snapshots green throughout.
 > **2. M2 ends with the adversarial playtest gate**, which the M5 section below
 > places at M5. This section assumed M2 would be bug-compatible with no output
 > changes, so no gate was needed. As scoped, M2 closes the five defects M1
-> found across seven sites, plus one more from its own detail-line ruling,
-> which puts new
+> found across seven sites, plus two more of its own (a detail-line ruling, and
+> an information leak found by reading the two `sendMoveDefenceTriad` copies
+> properly: a player defending in the dark is told who hit them if the attacker
+> was a player and not if it was a mob), which puts new
 > player-facing lines into the world. That is authored content under the
 > project content SOP, and the SOP requires a playtest. M5 keeps its own gate
 > for the crime-in-the-dark ruling.
