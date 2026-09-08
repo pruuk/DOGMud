@@ -194,19 +194,33 @@ def main():
         elif len(desc) > 500:
             errors.append(f"{name}: description is {len(desc)} chars, over 500")
 
+    present = [n for n in EXPECTED if n in found]
     missing = [n for n in EXPECTED if n not in found]
     for name in missing:
         errors.append(f"{name}: expected skill not present")
 
+    unexpected = [n for n in found if n not in EXPECTED]
+    for name in unexpected:
+        errors.append(f"{name}: unexpected directory, not one of the twelve")
+
     for e in errors:
         print("FAIL:", e)
-    print(f"{len(found)}/{len(EXPECTED)} skills present, {len(errors)} errors")
+    print(f"{len(present)}/{len(EXPECTED)} skills present, {len(errors)} errors")
     return 1 if errors else 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
 ```
+
+The numerator counts **expected skills that are present**, not directories that
+exist. An earlier draft printed `len(found)`, which meant one stray directory
+made the script report `1/12 skills present` while also listing all twelve as
+absent. Since every task below verifies its work by reading that line, a
+contaminated numerator would break the signal exactly where it is relied on. The
+`unexpected directory` check exists for the same reason: a directory whose name
+is a typo of a real skill would otherwise be invisible, showing up only as the
+correctly-spelled skill being absent.
 
 - [ ] **Step 3: Run it and verify it fails for the right reason**
 
