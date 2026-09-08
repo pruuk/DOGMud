@@ -532,3 +532,15 @@ seam will retire that file's entries here. The rule to follow is the one this
 table demonstrates: confirm the site migrated (rather than lost a send) by
 checking the routing golden gained the matching records, then retire the entry
 and say so here.
+
+## Defects fixed in M2 (2026-09-08)
+
+Each row is one of the five confirmed defects, closed in a dedicated commit.
+Where a fix made an event complete, this guard's registry entry went stale and
+was retired in that same commit, which is the signal the registry comment says
+to expect.
+
+| # | Site | Fix | Registry |
+|---|---|---|---|
+| 1 | `actions/salvage.go` | The room broadcast moved off the mob-only `else if`, so a PLAYER butchering a corpse is narrated too. The ANSI name tag follows the actor, since `mobname` around a player's name renders them as a mob. | No entry to retire. This guard structurally cannot see this defect: it is "pattern YNN", a branch missing BOTH actee and observer (`messaging_surface_guard_test.go:620`). |
+| 2 | `hooks/spell_resolution.go` `case "buff"` | Gained the room broadcast its sibling `case "heal"` already sends. Shape and exclusions mirror heal; the category follows the buff case's own two lines rather than heal's `CategorySpellVital`, because a buff is not necessarily vital magic. | Entry `Your %s takes effect on <ansi …>%s</ansi>!%s` (verdictGap, actor+actee) retired: the event is now complete. Do not confuse it with the neighbouring `Your %s takes effect on %s!%s` entry, which is a different, already-correct site. |
