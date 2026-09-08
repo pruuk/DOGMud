@@ -292,9 +292,46 @@ locks a 141-entry registry against an audit document.
 The six deliberate output changes at the end of M2 update the freeze in their
 own commits, so every change to authored text is one reviewable hunk.
 
+### 🔴 Correction, 2026-09-08: one freeze was not enough, and one claim was wrong
+
+A blind adversarial review of Task 0 found the literal freeze **protects the
+wrong half of the risk**. It catches text being *edited* and is blind to text
+being *misrouted*, which is the failure this refactor makes easier rather than
+harder: M2 moves each event's three lines from three separate `SendText` calls
+onto adjacent fields of one composite literal differing only by role. Swapping
+the actor and actee lines of one `bash.go` branch is a two-line diff that
+compiles, vets, `gofmt`s, and passes the literal freeze, the `Trio` guard, the
+M1 viewpoint guard and every package test. The knocked-down player then reads
+*"Your shield bash knocks Grix to the ground!"*
+
+**`TestM2RoutingIsFrozen` (`m2_routing_guard_test.go`) is the answer.** It
+records one line per narration send carrying the recipient's **role**, the
+**category**, and an ordered signature of the text expression, baselined from
+pre-M2 master. Its golden is plain text, not a hash, because a re-recorded
+SHA-256 shows a reviewer nothing about which line moved. It also closes three
+gaps nothing else covered: category swaps (a `Category` is an identifier, not a
+literal, and it decides both colour and light-verbosity visibility), a send
+deleted while its pool is hoisted to a package var, and **the entire mob side**,
+which `TestNarrationSitesMatchViewpointAudit` cannot cover because
+`narrationCandidateEvent` requires an actor call and mob files have none.
+
+**The wrong claim.** Task 0's commit message said the two `skill_move_defence.go`
+files are "covered instead by the store golden". They are not. That golden
+exercises `items.RenderDefenseMessage` and snapshots store *data*; it never
+calls `combat.RenderChannelDefenceMessages`, never touches the helper, does not
+contain `genericDefenceTriad`'s fallback text, and pins index 0. There are
+**zero tests on the helper**. Excluding those two files from the literal freeze
+was still correct, since they contain no player-facing text, but their routing
+is now covered by Task 2's own commit rather than by anything pre-existing.
+
+**Scope grew by two files.** `charge.go` and `hamstring.go` are mob
+special-move verbs of the same shape, they call the defence helper M2 rewrites,
+and M2's accepted room-line delivery change therefore reaches them. They are in
+both freezes and the migration list. 23 files becomes 25.
+
 ### What the net still does not cover
 
-Snapshots and freezes cannot capture the **order and interleaving** of messages
+Even with both freezes, snapshots cannot capture the **order and interleaving** of messages
 within a round. That is player-visible and real, it was already acknowledged as
 a gap in the arc spec, and it is part of why M2 now ends with a playtest.
 
