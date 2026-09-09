@@ -13,3 +13,10 @@
 # Same reasoning for the Go module files, which the toolchain rewrites.
 go.mod text eol=lf
 go.sum text eol=lf
+
+# Golden snapshot files are written by `go test -update` with LF and compared
+# byte-for-byte. Without this, a Windows checkout converts them to CRLF and
+# TestSnapshotStores fails locally while passing in CI, which trains people to
+# ignore a red golden. That is the one test in the repo that must never be
+# ignored: it is the net under the M3 store migration.
+*.golden text eol=lf
