@@ -103,13 +103,48 @@ an outcome.
   first). That ordering IS the bottle tiebreak.
 - **`RunCraftContest` / `RunSalvageContest`** — the ONLY readers of
   `CraftFloor` / `SalvageFloor`. Call these, never `contest.RunWithFloors`
-  directly, so a site cannot be handed the wrong floor.
+  directly, so a site cannot be handed the wrong floor. `SalvageFloor`
+  ships at 0.15 in `_datafiles/config.yaml`, matching its Go default
+  (`config.balance.shops.go`'s validator self-heals any `<= 0` value back
+  to 0.15). This is the ONE knob that actually tunes salvage's mercy
+  band today; see the Gotchas section below for the three that do not.
 - **`SalvageDifficulty(itemId, tierMult)`** — the item's own craft
-  difficulty; `ok=false` when it has no recipe.
+  difficulty, read from the recipe that PRODUCED the item being taken
+  apart (`GetRecipeByOutputItemId`); `ok=false` when it has no recipe.
+  The live caller (`actions.salvageItem`) always passes `tierMult=1.0`
+  (neutral), deliberately: the material tier would have to come from the
+  recipe's own ingredients, which do not exist yet at salvage time.
+- **`FallbackSalvageDifficulty()`**: prices something with no recipe at
+  all, a corpse, or an item carrying `salvage_returns`. Returns
+  `CraftBaseDifficulty` untouched. Deliberately untuned; the corpse path
+  is the only one that is reachable today (see `SalvageReturns` gotcha
+  below).
 - **`CalcSalvageRounds(totalGoldValue, goldPerRound, maxRounds)`** —
   duration = `max(1, min(maxRounds, goldValue / goldPerRound))`.
-- **`RollSalvageReturns(ingredients, score, difficulty)`** — one contest
-  per unit; returns only recovered items.
+- **`RollSalvageReturns(ingredients, score, difficulty)`** /
+  **`RollSalvageReturnsFromSpec(returns, score, difficulty)`** — one
+  `RunSalvageContest` per unit of every ingredient (or every tagged
+  `SalvageReturn`); returns only recovered items. The two exist because a
+  recipe's ingredients and an item's `SalvageReturns` are different
+  slice types; both feed the same contest.
+
+**How a salvage actually resolves (`internal/actions/salvage.go`).**
+`usercommands.Salvage` (player `salvage <item>` command) starts a
+multi-round `activity.Salvaging` state and resolves the roll on the final
+tick by calling `actions.Salvage(actor, opts)`, the single entry point
+both the player path and mob idle-salvage paths share. It composes the
+salvager's SCORE once, up front: `CraftScore(perception,
+salvageSkillLevel)` (salvage's primary stat is perception, per
+`skills.SkillPrimaryStats`), scaled by the Provident Hands mutation via
+`salvageScoreWithMutations`. It then dispatches to `salvageItem` (by
+item UUID) or `salvageCorpse` (room corpse), each of which resolves its
+own DIFFICULTY (`SalvageDifficulty` for a recipe-backed item,
+`FallbackSalvageDifficulty` for a corpse or a `salvage_returns` item) and
+rolls `RunSalvageContest(score, difficulty)` once per unit via
+`RollSalvageReturns` / `RollSalvageReturnsFromSpec`. `storeRecovered`
+then creates and stores whatever came back. A spoiled or declining
+potion is a separate branch entirely: it skips the contest and calls
+`EnchantSalvageYield` instead (see Enchant Salvage Mapping below).
 
 ### Enchant Salvage Mapping
 
@@ -219,6 +254,47 @@ type corpseSalvageEntry struct {
     Returns []items.SalvageReturn  // {ItemTag string, Quantity int}
 }
 ```
+
+## Gotchas
+
+- **`SalvageMinChance`, `SalvageMaxChance`, `SalvageSoftCap` are DEAD
+  knobs.** They are declared in `config.balance.go`, defaulted in
+  `config.balance.misc.go`, shipped in `_datafiles/config.yaml`
+  (0.15 / 0.85 / 50), and read by NOTHING else in the tree: grep the repo
+  for any of the three names outside those two `config.balance.*.go`
+  files and it comes back empty. U10b-1b replaced the sqrt-curve chance
+  they fed with the `RunSalvageContest` contest above, and the knobs were
+  left behind rather than deleted. Tuning any of the three has zero
+  effect on live salvage; the one knob that does anything is
+  `SalvageFloor` (see Salvage Math above). This is the same shape as the
+  `MobStatCap` / `MobSkillCap` trap documented in the
+  `dogmud-progression-model` skill: a legacy knob that is still declared,
+  still validated, and still looks plausible to a reader, but enforces
+  nothing.
+- **The item (or corpse) is consumed whether or not anything is
+  recovered.** `salvageItem` calls `char.RemoveItem(targetItem)`
+  unconditionally, before checking whether `recovered` is non-empty
+  (`internal/actions/salvage.go`, "Always destroy the item"); `salvageCorpse`
+  calls `room.RemoveCorpse(target)` the same way. The comment at the
+  corpse site puts it plainly: destruction is the COST of the attempt,
+  not its outcome. A salvage that returns nothing still trains the skill
+  (one `AwardResolved` per command, win or lose) and still destroys the
+  target.
+- **`salvage_returns` entries silently do nothing if `item_tag` does not
+  match a real `component_tag`.** Recovery resolves the tag through
+  `items.FindSpecByComponentTag`; `storeRecovered` skips a `nil` spec
+  with no warning. A typo'd tag is a content bug that produces no error,
+  only a player who recovers less than the recipe promised.
+- **The `salvage_returns` item path is UNREACHABLE today, not merely
+  untested.** Zero items in `_datafiles/world/dogmud/items/` carry
+  `salvage_returns`, so `SalvageDifficulty`'s `ok=false` branch (an item
+  with no recipe) and `salvageItem`'s `RollSalvageReturnsFromSpec` call
+  never actually fire; every live item salvage goes through the
+  recipe-reverse-lookup branch instead. This is content-shaped, not
+  code-shaped: the corpse path already exercises
+  `RollSalvageReturnsFromSpec` and `FallbackSalvageDifficulty` every day
+  via `LookupCorpseSalvage`, so only the item-tagged variant is dormant,
+  waiting for content to give it something to do.
 
 ## Integration Notes
 
