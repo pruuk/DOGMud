@@ -1,6 +1,6 @@
 ---
 name: dogmud-balance-config
-description: Use before hardcoding any balance number, or when retuning how something feels. Covers that 352 balance knobs are declared in internal/configs/config.balance.go and surfaced through _datafiles/config.yaml, that retuning is a config edit rather than a code change, that a Go default is never a live value because several shipped knobs differ sharply, that an absent key is meaningful because 0 is a legal shipped value, and that config.yaml carries skip-worktree so it desyncs in both directions.
+description: Use before hardcoding any balance number, or when retuning how something feels. Covers that 375 balance knobs are declared in internal/configs/config.balance.go and surfaced through _datafiles/config.yaml, that retuning is a config edit rather than a code change, that a Go default is never a live value because several shipped knobs differ sharply, that an absent key is meaningful because 0 is a legal shipped value, and that config.yaml carries skip-worktree so it desyncs in both directions.
 ---
 
 ## Look for the knob before editing a literal
