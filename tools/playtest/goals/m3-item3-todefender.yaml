@@ -1,0 +1,60 @@
+# M3 item 3, run 3: the lane two previous runs could not reach.
+#
+# Creatures now draw their taunts from the same authored pool players use. The
+# half of that nobody has ever seen in play is the line sent to the PERSON BEING
+# TAUNTED. Until this change it could not exist: a taunted creature has no
+# client to read it, and players cannot taunt each other, so 28 authored lines
+# sat unreachable in the game files.
+#
+# ⚠️ TWO THINGS MUST BOTH BE TRUE, and previous runs failed on each in turn.
+#
+#   1. THE TAUNT MUST LAND. If you shrug it off you get a "RETORT" line instead,
+#      which is a different feature and NOT what this run is for. You are
+#      deliberately a character who is bad at shrugging taunts off.
+#
+#   2. YOUR ATTENTION MUST BE ELSEWHERE. A creature taunts to pull you off
+#      someone else. If you are already hitting it, it has no reason to taunt.
+#      So ATTACK THE SCAB-HOUND AND KEEP ATTACKING IT, and let the Alpha
+#      Pack-Leader taunt you to try to steal your attention.
+#
+# ⚠️ These creatures WANDER. If you see one, attack it in that same moment.
+# Never look first and attack second, or it will be gone and you will "attack
+# the darkness". Use `scan` to see what is in the neighbouring rooms.
+
+ephemeral:
+  profile: mid
+  start_room: 5298
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    You begin in a den under a thorn-choked bank. There should be an Alpha
+    Pack-Leader and a Scab-Hound here. Confirm what is actually present before
+    you do anything, because they move.
+  - >-
+    ATTACK THE SCAB-HOUND. `attack scab` or `attack hound`. Do NOT attack the
+    Alpha Pack-Leader, however tempting. The whole point is to be busy with
+    something else so the leader taunts you to pull you away.
+  - >-
+    THE MAIN JOB. Every time the Alpha Pack-Leader taunts YOU, quote the line it
+    sends you VERBATIM. These are the lines nobody has ever been able to read in
+    this game, so getting even two or three of them is the whole value of this
+    run. Say clearly how many you saw.
+  - >-
+    Then judge them as writing, which is the part no test can do:
+      1. Do they VARY, or is it the same sentence each time?
+      2. Do they read as something a PACK ANIMAL would do to you? The insults
+         were written for people trading barbs, so a line about a beast
+         questioning your courage with venomous words may land oddly. Quote
+         anything that reads wrong coming from a hound.
+      3. Does the line you receive describe the SAME MOMENT as what the room is
+         told? If you can see both, compare them.
+  - >-
+    Report any line with a leftover token in it like {source}, {target},
+    {damage} or {sourcetype}, any name that renders without colour, and any
+    taunt that names the wrong creature. Those are defects, not style.
+  - >-
+    You are not strong. Dying here is an acceptable and useful outcome. Report
+    how far you got and what you read before it happened. A run that dies having
+    quoted three taunt lines has fully succeeded.
