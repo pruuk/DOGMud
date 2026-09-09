@@ -1,0 +1,29 @@
+# itemvoices store snapshot
+# voice files at time of writing: 2 (aegis,blackrazor)
+# dimensions: voiceid x event. Single role (the item speaks), no band, no tokens.
+#
+# This store had NO picker seam and NO golden until 2026-09-09: VoiceSpec.Line
+# called util.Rand directly, so nothing could pin its output. LineWith was added
+# FIRST, so this golden is a baseline of PRE-migration behaviour rather than a
+# record of whatever the M3 migration produced. A fresh SequencePicker per tuple
+# pins index 0.
+
+aegis|on_equip => "Ah, a proper arm at last! Yes, flex it, let them see. Grand."
+aegis|on_unequip => "Off already? But I was just warming to my material!"
+aegis|on_kill => "Ha! Down he goes, and it was my finest line that did it!"
+aegis|on_idle => "That fellow yonder walks like a duck apologizing to a puddle."
+aegis|on_hunger_warning => ""
+aegis|on_hunger_feeding => ""
+aegis|on_taunt => "Your mother smells of elderberries; your footwork shames her further!"
+aegis|on_grudge => ""
+blackrazor|on_equip => "Ahhhh. A hand again. Do keep it moving."
+blackrazor|on_unequip => "Setting me down already? You wound me more than I wound you."
+blackrazor|on_kill => "Yes... YES. Another."
+blackrazor|on_idle => "Mm. Hmm. Dull. Everything here is so dreadfully dull."
+blackrazor|on_hunger_warning => "I hunger, bearer."
+blackrazor|on_hunger_feeding => "You left me no choice. I take only a little. This time."
+blackrazor|on_taunt => "Yes! Closer! Let me taste what it is so proud of."
+blackrazor|on_grudge => ""
+
+# EMPTY CASE: unknown event -> ""
+aegis|bogus-event => ""

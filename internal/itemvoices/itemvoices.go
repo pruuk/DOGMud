@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/pkg/errors"
 )
@@ -66,11 +67,27 @@ func (v *VoiceSpec) Validate() error {
 // Line returns a random line from the event's pool, or "" if the event has
 // no authored lines (unknown event or empty pool).
 func (v *VoiceSpec) Line(event string) string {
+	return v.LineWith(nil, event)
+}
+
+// LineWith is Line with an explicit picker, for the snapshot harness. A nil
+// picker means production behaviour: narration.DefaultPicker, which routes
+// through util.Rand, the engine's single randomness seam.
+//
+// This seam exists because this store had none: Line() called util.Rand
+// directly, so nothing could pin its output and itemvoices was the one message
+// store with no golden. It was added BEFORE the M3 migration touched the
+// store, so the golden it enables is a baseline of pre-migration behaviour
+// rather than a record of whatever the migration happened to produce.
+func (v *VoiceSpec) LineWith(pick narration.Picker, event string) string {
 	pool := v.Lines[event]
 	if len(pool) == 0 {
 		return ""
 	}
-	return pool[util.Rand(len(pool))]
+	if pick == nil {
+		pick = narration.DefaultPicker
+	}
+	return pool[pick(len(pool))]
 }
 
 // Package-level registry, populated by LoadDataFiles.
