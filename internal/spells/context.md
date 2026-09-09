@@ -257,6 +257,49 @@ chrysalis-construct, summon-hive-swarm.
 
 ---
 
+## Casting Messages (`casting_messages.go`)
+
+The atmospheric lines the casting system shows a caster, loaded from
+`_datafiles/world/dogmud/casting-messages.yaml`. Four pools, keyed by category:
+`already_casting`, `cast_started`, `cast_continuing`, `concentration_slipped`.
+
+```go
+type CastingMessages struct { /* four []string pools */ }
+
+func (cm *CastingMessages) Validate() error
+func GetCastMessage(category, spellName string, picker ...narration.Picker) string
+```
+
+`GetCastMessage` renders through `narration.Render` as the single-role
+degenerate case: one role (the caster), no band, one token (`{spell}`).
+
+### Gotchas
+
+**`spellName` is the DISPLAY name (`spellInfo.Name`), never the spellid.**
+Passing the id leaks an internal identifier into player output, which is what
+the round loop used to do.
+
+**A missing, unparseable or invalid file PANICS at startup**, matching defence
+and combat-messages (`internal/items/itemspec.go:788`, `:795`). This changed on
+2026-09-09. There used to be a `defaultCastingMessages()` fallback that silently
+substituted hardcoded Go text, and it was deleted: a fallback that shadows
+shipped data means a YAML typo changes what players read and nobody finds out,
+the same hazard as reading a balance number from a Go default rather than
+`config.yaml`.
+
+**The validator's minimum is 3, not defence's 5.** The file ships pools of
+3/3/3/4, so defence's minimum would fail boot on shipped data without improving
+a single line of text. The minimum exists to catch a regression (a pool emptied,
+a key renamed), not to set a content quality bar.
+
+**One fallback deliberately survives.** An unrecognised *category* still returns
+a sentence rather than `""`, because that is a caller bug the validator cannot
+see, and a caller printing an empty string would show the player nothing.
+
+⚠️ **Pool depth is a known content gap, filed to the messaging arc's M6.**
+`cast_started` fires on EVERY cast and has 3 variants, against 10 to 14 per pool
+for defence, so a caster sees a repeat every third spell.
+
 ## Hook Integration Points
 
 | Hook File | What It Does |
