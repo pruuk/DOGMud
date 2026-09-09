@@ -1489,7 +1489,7 @@ than stacked.
 ## Spell Duration System
 
 `calcSpellDuration` lives here, in `spell_resolution.go`, not in
-`internal/spells/` — an earlier draft of this doc got that wrong.
+`internal/spells/`; an earlier draft of this doc got that wrong.
 
 ```go
 func calcSpellDuration(baseFolds int, spellcastingSkill int, willpower int) int
@@ -1501,7 +1501,7 @@ defaults to 4 before the multiply, so a spell YAML that omits `base_folds`
 still gets a sane duration rather than a zero one.
 
 There are seven call sites, all in this file, and they fall into exactly
-three effect-specific scaling patterns — CLAUDE.md's summary ("shield = full,
+three effect-specific scaling patterns: CLAUDE.md's summary ("shield = full,
 heal = ÷2, DoT = ÷3") is accurate at every one of them, no discrepancy found:
 
 - **Shield: full duration, no divisor.** `applyPlayerEffect`'s `"shield"`
@@ -1522,8 +1522,8 @@ result on any of the seven sites. Where crit does something, it scales a
 different number: `applyPlayerEffect`'s `"shield"` case multiplies
 `shieldBonus` (not duration) by 1.5 on crit, and `applyPlayerEffect`'s
 `"heal"` case doubles the portion of `regenMult` above 1x on crit. Both of
-those are the PLAYER-cast paths. `applyMobSelfEffect` — the mob-cast heal and
-shield paths — takes no `combat.ChannelDefenceResult`/`out` parameter at all,
+those are the PLAYER-cast paths. `applyMobSelfEffect` (the mob-cast heal and
+shield paths) takes no `combat.ChannelDefenceResult`/`out` parameter at all,
 so there is no crit check to make: a mob's self-cast heal or shield can never
 get the crit boost a player's cast of the same spell gets. This mirrors the
 "Crits +50% strength" claim in the root `CLAUDE.md`'s Buff/Ward Spell System

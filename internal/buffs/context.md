@@ -823,9 +823,26 @@ target.Character.AddCondition(characters.ConditionShield, duration, float64(shie
 (ships 5.0 against a Go default of 2.0). `magnitude` is
 `spellData.EffectMagnitude`, and 100 is the 1.0x baseline: a spell carrying
 `effect_magnitude: 75` applies 0.75 of the base roll, one carrying 125 applies
-1.25x. A crit on the player cast path (`out.AttackerCrit`) multiplies the
-result by 1.5 after magnitude scaling. The mob cast path has no matching crit
-check, so a mob's own shield cast never gets the bonus. Duration is computed
+1.25x. There is an `if out.AttackerCrit { shieldBonus *= 1.5 }` bump on the
+player cast path, but it is unreachable for both shipped shield spells, not
+just the mob one. `conviction-ward` and `chrysalis-cocoon` are both
+`type: helpsingle` with no `target_defense_type`, so shielding yourself never
+runs an opposed contest for either caster type: `resolveSpell`
+(`internal/hooks/spell_resolution.go` near line 172) takes the
+`spellData.TargetDefenseType == ""` branch and calls `applyPlayerEffect` with
+a synthetic `combat.ChannelDefenceResult{DamageMultiplier: 1}` instead of a
+real roll, so `AttackerCrit` is false by construction. `applyPlayerEffect`
+only carries an `out` parameter at all because it is shared with
+`resolveAgainstPlayer`, the contested-attack path used by unwilling-target
+spells (`TargetDefenseType != ""`); a self-buff never reaches that path. So
+`applyMobSelfEffect`'s missing crit check is a consequence of that function's
+narrower scope (mobs only ever self-buff, so nothing forced it to share the
+contested-attack signature), not evidence that mobs are treated differently
+from players; neither self-buff is contested. A future fix would need a real
+roll to crit against: the static-difficulty seam
+`contest.AgainstDifficulty(score, difficulty)` (`internal/contest/contest.go`)
+already exists and is used by search, track, and forage checks; no spell path
+calls it. Duration is computed
 by the unexported `calcSpellDuration(baseFolds, spellcastingSkill, willpower)`
 in the same file, not by anything in this package:
 `duration = baseFolds * (10 + willpower/20 + spellcastingSkill/2)`.
