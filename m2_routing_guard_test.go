@@ -312,12 +312,19 @@ func TestM2RoutingIsFrozen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v (record it with M2_RECORD_ROUTING=1)", m2RoutingGoldenPath, err)
 	}
-	// Normalise CRLF before splitting. This repo has core.autocrlf=true and no
-	// .gitattributes rule for *.golden, so a fresh Windows checkout rewrites
-	// every line ending and each record would arrive with a trailing \r --
-	// making all of them differ at once, which reads as catastrophic drift
-	// rather than as a checkout artifact. internal/narration's
-	// defense_messages.golden already fails that way on Windows today.
+	// Normalise CRLF before splitting. This repo has core.autocrlf=true, so
+	// without protection a Windows checkout rewrites every line ending and
+	// each record arrives with a trailing \r -- making all of them differ at
+	// once, which reads as catastrophic drift rather than as a checkout
+	// artifact.
+	//
+	// As of 2026-09-09 `.gitattributes` pins `*.golden` to LF, so this
+	// normalisation is now belt AND braces rather than the only defence. It is
+	// kept deliberately: the attribute only applies on checkout, so a golden
+	// that reaches this test by any other route (a file copied in by hand, an
+	// archive extracted on Windows) would still arrive CRLF. The comment used
+	// to say no such rule existed and that defense_messages.golden failed on
+	// Windows; both were true until that commit and are false now.
 	normalised := strings.ReplaceAll(string(raw), "\r\n", "\n")
 	want := strings.Split(strings.TrimRight(normalised, "\n"), "\n")
 
