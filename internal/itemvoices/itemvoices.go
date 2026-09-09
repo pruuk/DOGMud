@@ -79,15 +79,17 @@ func (v *VoiceSpec) Line(event string) string {
 // store with no golden. It was added BEFORE the M3 migration touched the
 // store, so the golden it enables is a baseline of pre-migration behaviour
 // rather than a record of whatever the migration happened to produce.
+// This is the DEGENERATE case for the narration core, and it is worth stating
+// plainly: an item voice has ONE role (the item speaks), no band, and no
+// tokens. It renders through the same seam as the defence triad, which is the
+// evidence that roles and bands are genuinely optional in that core rather
+// than something a single-role store has to work around.
 func (v *VoiceSpec) LineWith(pick narration.Picker, event string) string {
-	pool := v.Lines[event]
-	if len(pool) == 0 {
-		return ""
-	}
-	if pick == nil {
-		pick = narration.DefaultPicker
-	}
-	return pool[pick(len(pool))]
+	return narration.Render(
+		narration.Variants{Actor: v.Lines[event]},
+		nil,
+		pick,
+	).Actor
 }
 
 // Package-level registry, populated by LoadDataFiles.
