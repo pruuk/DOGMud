@@ -518,6 +518,61 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   exception: making them reserve-aware is a NERF to reserved characters, and the
   faster refill relative to the usable pool is what offsets the depletion penalty
   they carry. Each carries a comment saying so. It is not drift.
+- **Regen is percentage-of-max everywhere, never a flat amount** (Stage 29.5).
+  `HealthPerRound()`, `StaminaPerRound()` and `ConvictionPerRound()` each read
+  one of six `Balance` knobs -- `PlayerHealthRegenPct`, `PlayerStaminaRegenPct`,
+  `PlayerConvictionRegenPct` for `!c.IsMob`, `MobHealthRegenPct`,
+  `MobStaminaRegenPct`, `MobConvictionRegenPct` for mobs -- add the matching
+  `HealthRecovery` / `StaminaRecovery` / `ConvictionRecovery` StatMod
+  (reinterpreted as a percentage-point bonus, e.g. StatMod 5 = +5 percentage
+  points), then compute `int(pct * float64(poolMax))` against the **raw** max
+  (see above), floored at a minimum of 1. All six knobs have live consumers;
+  none are dead. Shipped `config.yaml` doubles every player rate over its Go
+  default (players 0.02 vs default 0.01 each); the mob rates ship unchanged
+  from their defaults (`MobHealthRegenPct` 0.01, `MobStaminaRegenPct` and
+  `MobConvictionRegenPct` 0.02).
+- **Sleeping multiplies the per-round result, not the percentage.** All three
+  `*PerRound` methods apply `Balance.SleepRegenMultiplier` (ships at the Go
+  default, 5.0) to the already-floored base when `HasBuffFlag(buffs.Sleeping)`
+  is set, then truncate again. This is the same 5x named in the Sleep
+  Mechanics section of the root `CLAUDE.md`; it is one mechanism, applied here.
+- **Mutation regen multipliers are NOT uniformly wired.** `stamina_regen_multiplier`
+  (`mutations.GetStaminaRegenMultiplier`) is applied inside `StaminaPerRound()`
+  itself. `health_regen_multiplier` and `health_regen_if_lit_multiplier`
+  (`mutations.GetHealthRegenMultiplier`,
+  `mutations.GetConditionalHealthRegenMultiplier`) are **not** applied inside
+  `HealthPerRound()` at all -- they are applied by the caller,
+  `internal/hooks/NewRound_AutoHeal.go`, and only on the out-of-combat player
+  branch. A mob's health-regen mutations and a player's in-combat
+  `ConditionRegen` tick never see them. All three effect types are multipliers
+  (`0.15` = +15%), matching the "never a flat `health_regen` effect" rule; the
+  bounds enforced in `internal/devtools/magnitude_bounds_test.go` are
+  `health_regen_multiplier` [-0.3, 0.6] and `stamina_regen_multiplier`
+  [-0.4, 0.4].
+- **Heal spells regenerate via a condition, not a direct `Heal()` call.** The
+  spell's `effect_magnitude` YAML field becomes the regen multiplier
+  (`spellData.EffectMagnitude`, e.g. 3 = 3x base regen, floored at 1.0; a
+  crit doubles the portion above 1x). `internal/hooks/spell_resolution.go`'s
+  `"heal"` case calls `target.Character.AddCondition(characters.ConditionRegen,
+  durationRounds, regenMult, "heal spell")` with `durationRounds =
+  calcSpellDuration(...)/2`, floored at 6 rounds. Each round after that,
+  `NewRound_AutoHeal.go` reads `HasCondition(ConditionRegen)` and
+  `GetConditionMagnitude(ConditionRegen)` and multiplies that round's
+  `HealthPerRound()` result by it -- in combat this is the ONLY health regen a
+  player gets; out of combat it stacks on top of the base regen described
+  above.
+- **Buff-tick healing (`tick_pool`/`tick_percent` on a `BuffSpec`) is a
+  DIFFERENT primitive**, `buffs.ComputeTickAmount(maxPool, percent, variance,
+  minAmount, scalingMult)` in `internal/buffs/tick.go`, not the
+  `*PerRound`/`ConditionRegen` path above. It rounds (`math.Round`), not
+  floors, and layers a random variance term and a caller-supplied scaling
+  multiplier before rounding -- so "floor(poolMax * fraction)" describes the
+  three `*PerRound` functions but not this sibling mechanism.
+- **NPCs regen differently by pool.** Mob health regen only runs out of
+  combat (unless `ConditionRegen` is active, which still applies in combat);
+  stamina regens at the same rate out of combat but 1/4 rate in combat;
+  conviction regens every tick regardless of combat state. See the mob loop in
+  `NewRound_AutoHeal.go`.
 - **Harm and restore are one signed pipeline** (`applyVitalChange`) behind two
   positive-only wrappers. Sign inversion is this codebase's signature failure
   mode; the wrappers exist so no call site can get the direction wrong.

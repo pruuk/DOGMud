@@ -26,15 +26,6 @@ task, default up (sonnet), not down.
 - Remote origin: https://github.com/pruuk/DOGMud
 - Remote upstream: https://github.com/GoMudEngine/GoMud
 
-## Regen System (Stage 29.5)
-All HP/SP/CP regeneration is **percentage-of-max** — never flat values.
-- Six config knobs in `Balance`: `PlayerHealthRegenPct`, `PlayerStaminaRegenPct`, `PlayerConvictionRegenPct`, `MobHealthRegenPct`, `MobStaminaRegenPct`, `MobConvictionRegenPct` (default 0.01 = 1% per tick)
-- `HealthPerRound()` / `StaminaPerRound()` / `ConvictionPerRound()` compute `floor(poolMax * pct)`, min 1
-- **Mutations** use multiplier effects (`health_regen_multiplier`, `health_regen_if_lit_multiplier`, `stamina_regen_multiplier`) — never flat `health_regen` effects
-- **Heal spells** store a regen multiplier in `effect_magnitude` (e.g. 3 = 3x base regen); applied via `ConditionRegen`
-- **Heal buffs** that heal should compute `floor(poolMax * fraction)` — never flat dice for healing
-- NPCs regen health (out of combat), stamina (1/4 in combat), and conviction every tick
-
 ## Codegraph MCP — Code Intelligence
 
 The `codegraph` MCP server indexes every Go symbol in the repo into a
