@@ -463,20 +463,25 @@ func emitOutcomeMessages(controller, controlled *characters.Character,
 	controllerName := characterDisplayName(controller)
 	controlledName := characterDisplayName(controlled)
 
-	if msg := grapplemessaging.PickTemplate(triad.Controller,
-		controller.PerGrappleMessageCooldowns, key+":ctrl"); msg != "" {
-		sendToCharacter(controller,
-			grapplemessaging.RenderTemplate(msg, controllerName, controlledName))
+	// ONE call, ONE variant index, three audiences. Three PickTemplate calls
+	// here drew three independent indices, so the three participants were told
+	// three different moments of the same exchange.
+	//
+	// The cooldown map is the CONTROLLER's for all three roles now. It used to
+	// be per role and, for the controlled line, per the OTHER character, which
+	// coordination cannot survive: two maps disagree about which variants are
+	// spent. The semantics shift from "do not repeat each role's sentence" to
+	// "do not repeat the moment", which is what the authored pairing describes.
+	sent := grapplemessaging.RenderTriad(triad, controllerName, controlledName,
+		controller.PerGrappleMessageCooldowns, key)
+	if sent.Controller != "" {
+		sendToCharacter(controller, sent.Controller)
 	}
-	if msg := grapplemessaging.PickTemplate(triad.Controlled,
-		controlled.PerGrappleMessageCooldowns, key+":cd"); msg != "" {
-		sendToCharacter(controlled,
-			grapplemessaging.RenderTemplate(msg, controllerName, controlledName))
+	if sent.Controlled != "" {
+		sendToCharacter(controlled, sent.Controlled)
 	}
-	if msg := grapplemessaging.PickTemplate(triad.Observers,
-		controller.PerGrappleMessageCooldowns, key+":obs"); msg != "" {
-		broadcastToRoomExcluding(controller, controlled,
-			grapplemessaging.RenderTemplate(msg, controllerName, controlledName))
+	if sent.Observers != "" {
+		broadcastToRoomExcluding(controller, controlled, sent.Observers)
 	}
 }
 
@@ -515,20 +520,17 @@ func emitHoldFlavor(controller, controlled *characters.Character,
 	controllerName := characterDisplayName(controller)
 	controlledName := characterDisplayName(controlled)
 
-	if msg := grapplemessaging.PickTemplate(triad.Controller,
-		controller.PerGrappleMessageCooldowns, "hold:"+key+":ctrl"); msg != "" {
-		sendToCharacter(controller,
-			grapplemessaging.RenderTemplate(msg, controllerName, controlledName))
+	// Same coordination as the outcome triad above: one index, three audiences.
+	sent := grapplemessaging.RenderTriad(triad, controllerName, controlledName,
+		controller.PerGrappleMessageCooldowns, "hold:"+key)
+	if sent.Controller != "" {
+		sendToCharacter(controller, sent.Controller)
 	}
-	if msg := grapplemessaging.PickTemplate(triad.Controlled,
-		controlled.PerGrappleMessageCooldowns, "hold:"+key+":cd"); msg != "" {
-		sendToCharacter(controlled,
-			grapplemessaging.RenderTemplate(msg, controllerName, controlledName))
+	if sent.Controlled != "" {
+		sendToCharacter(controlled, sent.Controlled)
 	}
-	if msg := grapplemessaging.PickTemplate(triad.Observers,
-		controller.PerGrappleMessageCooldowns, "hold:"+key+":obs"); msg != "" {
-		broadcastToRoomExcluding(controller, controlled,
-			grapplemessaging.RenderTemplate(msg, controllerName, controlledName))
+	if sent.Observers != "" {
+		broadcastToRoomExcluding(controller, controlled, sent.Observers)
 	}
 }
 
@@ -924,14 +926,19 @@ func emitGradientMessage(self state.ActorRef, transient control.State, from cont
 	// observer templates. The substitution matches what the YAML
 	// authoring used (selfName fills {controllerName}; partnerName
 	// fills {controlledName}).
-	if msg := grapplemessaging.PickTemplate(triad.Self, selfChar.PerGrappleMessageCooldowns, "gradient:"+key+":self"); msg != "" {
-		sendToCharacter(selfChar, grapplemessaging.RenderTemplate(msg, selfName, partnerName))
+	// One index, three audiences, same as the outcome and hold triads. The
+	// gradient pools spell their roles self/partner/observers rather than
+	// controller/controlled/observers; RenderGradient resolves that aliasing.
+	sent := grapplemessaging.RenderGradient(triad, selfName, partnerName,
+		selfChar.PerGrappleMessageCooldowns, "gradient:"+key)
+	if sent.Self != "" {
+		sendToCharacter(selfChar, sent.Self)
 	}
-	if msg := grapplemessaging.PickTemplate(triad.Partner, partner.PerGrappleMessageCooldowns, "gradient:"+key+":partner"); msg != "" {
-		sendToCharacter(partner, grapplemessaging.RenderTemplate(msg, selfName, partnerName))
+	if sent.Partner != "" {
+		sendToCharacter(partner, sent.Partner)
 	}
-	if msg := grapplemessaging.PickTemplate(triad.Observers, selfChar.PerGrappleMessageCooldowns, "gradient:"+key+":obs"); msg != "" {
-		broadcastToRoomExcluding(selfChar, partner, grapplemessaging.RenderTemplate(msg, selfName, partnerName))
+	if sent.Observers != "" {
+		broadcastToRoomExcluding(selfChar, partner, sent.Observers)
 	}
 }
 
