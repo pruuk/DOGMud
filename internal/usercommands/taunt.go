@@ -188,9 +188,11 @@ func sendAggroPullMessages(user *users.UserRecord, room *rooms.Room, sourceName,
 func sendTauntMessages(intensity combat.TauntIntensity, dmgDesc, source, target, sourceType, targetType string,
 	user *users.UserRecord, targetPlayer *users.UserRecord, room *rooms.Room, targetPlayerId int) {
 
-	atkMsg := combat.GetTauntMessage(intensity, "toattacker", source, target, sourceType, targetType, dmgDesc)
-	defMsg := combat.GetTauntMessage(intensity, "todefender", source, target, sourceType, targetType, dmgDesc)
-	roomMsg := combat.GetTauntMessage(intensity, "toroom", source, target, sourceType, targetType, dmgDesc)
+	// ONE call, ONE variant index, three audiences. Three separate calls here
+	// drew three independent indices, so the attacker, the defender and the
+	// room were each narrated a different moment of the same taunt.
+	triad := combat.GetTauntTriad(intensity, source, target, sourceType, targetType, dmgDesc)
+	atkMsg, defMsg, roomMsg := triad.ToAttacker, triad.ToDefender, triad.ToRoom
 
 	// Fallback if no messages loaded
 	if atkMsg == "" {

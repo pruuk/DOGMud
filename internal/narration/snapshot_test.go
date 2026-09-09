@@ -428,25 +428,27 @@ func buildTauntMessagesGolden(t *testing.T) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# taunt-messages store snapshot\n")
 	fmt.Fprintf(&b, "# files at time of writing: %d (%s)\n", len(files), strings.Join(files, ","))
-	fmt.Fprintf(&b, "# GetTauntMessage had NO override seam at all before this task (util.Rand only); this task\n")
-	fmt.Fprintf(&b, "# added a trailing `picker ...narration.Picker` param (internal/combat/taunt_messages.go) so this\n")
-	fmt.Fprintf(&b, "# store could be snapshotted. The 3 callers in internal/usercommands/taunt.go compile unchanged.\n")
-	fmt.Fprintf(&b, "# dimensions: intensity(hit/miss/critical/fumble) x perspective(toattacker/todefender/toroom)\n\n")
+	fmt.Fprintf(&b, "# dimensions: intensity(hit/miss/critical/fumble) x perspective(toattacker/todefender/toroom)\n")
+	fmt.Fprintf(&b, "#\n")
+	fmt.Fprintf(&b, "# All three perspectives of one intensity come from ONE coordinated GetTauntTriad call\n")
+	fmt.Fprintf(&b, "# (same variant index across the triad). Until 2026-09-09 usercommands/taunt.go called a\n")
+	fmt.Fprintf(&b, "# per-perspective getter three times and got three INDEPENDENT indices, so the three\n")
+	fmt.Fprintf(&b, "# audiences were narrated three different moments -- the same defect PR #112 fixed for\n")
+	fmt.Fprintf(&b, "# melee defence. A fresh SequencePicker per intensity pins index 0.\n")
+	fmt.Fprintf(&b, "#\n")
+	fmt.Fprintf(&b, "# This snapshot pins index 0 only, so it CANNOT see a regression back to independent\n")
+	fmt.Fprintf(&b, "# picks (all three would still read index 0). That is guarded by\n")
+	fmt.Fprintf(&b, "# TestGetTauntTriadUsesOneCoordinatedIndex in internal/combat, which shares one\n")
+	fmt.Fprintf(&b, "# SequencePicker across the triad so three picks yield 0/1/2 and one pick yields 0/0/0.\n\n")
 
 	intensities := []combat.TauntIntensity{combat.TauntHit, combat.TauntMiss, combat.TauntCritical, combat.TauntFumble}
-	perspectives := []string{"toattacker", "todefender", "toroom"}
 
 	for _, intensity := range intensities {
-		for _, perspective := range perspectives {
-			text := combat.GetTauntMessage(intensity, perspective, "Source", "Target", "User", "Mob", "ModerateWounds", narration.SequencePicker())
-			fmt.Fprintf(&b, "rhetoric|%s|%s => %s\n", intensity, perspective, text)
-		}
+		triad := combat.GetTauntTriad(intensity, "Source", "Target", "User", "Mob", "ModerateWounds", narration.SequencePicker())
+		fmt.Fprintf(&b, "rhetoric|%s|toattacker => %s\n", intensity, triad.ToAttacker)
+		fmt.Fprintf(&b, "rhetoric|%s|todefender => %s\n", intensity, triad.ToDefender)
+		fmt.Fprintf(&b, "rhetoric|%s|toroom => %s\n", intensity, triad.ToRoom)
 	}
-
-	// EMPTY CASE: an unrecognized perspective string.
-	fmt.Fprintf(&b, "\n# EMPTY CASE: unrecognized perspective string -> \"\"\n")
-	empty := combat.GetTauntMessage(combat.TauntHit, "bogus-perspective", "Source", "Target", "User", "Mob", "ModerateWounds", narration.SequencePicker())
-	fmt.Fprintf(&b, "rhetoric|hit|bogus-perspective => %q\n", empty)
 
 	return b.String()
 }
