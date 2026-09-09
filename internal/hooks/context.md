@@ -1486,6 +1486,49 @@ still returns the materials. Subtracting what the target already reserves is
 what makes re-enchanting work, since the old enchantment is replaced rather
 than stacked.
 
+## Spell Duration System
+
+`calcSpellDuration` lives here, in `spell_resolution.go`, not in
+`internal/spells/` — an earlier draft of this doc got that wrong.
+
+```go
+func calcSpellDuration(baseFolds int, spellcastingSkill int, willpower int) int
+```
+
+Formula: `baseFolds × (10 + willpower/20 + spellcastingSkill/2)`, rounded
+(`math.Round`) and floored at 10. `baseFolds < 1` is treated as unset and
+defaults to 4 before the multiply, so a spell YAML that omits `base_folds`
+still gets a sane duration rather than a zero one.
+
+There are seven call sites, all in this file, and they fall into exactly
+three effect-specific scaling patterns — CLAUDE.md's summary ("shield = full,
+heal = ÷2, DoT = ÷3") is accurate at every one of them, no discrepancy found:
+
+- **Shield: full duration, no divisor.** `applyPlayerEffect`'s `"shield"`
+  case and `applyMobSelfEffect`'s `"shield"` case both call
+  `calcSpellDuration(...)` unmodified and pass the result straight to
+  `AddCondition(characters.ConditionShield, duration, ...)`.
+- **Heal: `/2`, floored at 6.** `applyPlayerEffect`'s `"heal"` case,
+  `applyMobEffect_heal`, and `applyMobSelfEffect`'s `"heal"` case all compute
+  `calcSpellDuration(...) / 2`, then clamp `durationRounds < 6` up to 6, before
+  `AddCondition(characters.ConditionRegen, durationRounds, regenMult, ...)`.
+- **DoT: `/3`, floored at 3.** `applyMobEffect_dot` and the inline DoT branch
+  of `resolveMobSpellAgainstPlayer` both compute
+  `calcSpellDuration(...) / 3`, then clamp `dotDuration < 3` up to 3.
+
+**Crit affects magnitude on some of these paths, never duration, on any of
+them.** `out.AttackerCrit` never touches the `calcSpellDuration` call or its
+result on any of the seven sites. Where crit does something, it scales a
+different number: `applyPlayerEffect`'s `"shield"` case multiplies
+`shieldBonus` (not duration) by 1.5 on crit, and `applyPlayerEffect`'s
+`"heal"` case doubles the portion of `regenMult` above 1x on crit. Both of
+those are the PLAYER-cast paths. `applyMobSelfEffect` — the mob-cast heal and
+shield paths — takes no `combat.ChannelDefenceResult`/`out` parameter at all,
+so there is no crit check to make: a mob's self-cast heal or shield can never
+get the crit boost a player's cast of the same spell gets. This mirrors the
+"Crits +50% strength" claim in the root `CLAUDE.md`'s Buff/Ward Spell System
+section, which is true on the player-cast shield path only.
+
 ## Counter tier wiring (U6b Task 10)
 
 `counter_tier.go` hosts `fireSpellCounterTier`, called at all FOUR spell

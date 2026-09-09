@@ -115,8 +115,3 @@ Good exemplars (verified 2026-07-31): `internal/term/context.md` (small,
 declarative), `internal/mutators/context.md` (medium, lifecycle-heavy),
 `internal/mapper/context.md` (large, multi-subsystem).
 
-## Spell Duration System
-All spell durations use `calcSpellDuration(baseFolds, skill, willpower)`:
-`duration = baseFolds × (10 + wil/20 + skill/2)`. Effect-specific scaling:
-shield = full, heal = ÷2, DoT = ÷3.
-
