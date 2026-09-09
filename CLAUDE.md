@@ -19,20 +19,6 @@ to prefer codegraph tools for symbol verification so the stronger model spends
 its budget on thinking, not file-spelunking. When in doubt for a non-trivial
 task, default up (sonnet), not down.
 
-## Shop Persistence (Living Economy)
-Shop economic state (stock levels, NPC gold, restock timers) persists in
-`_datafiles/world/dogmud/shops/{zone}/{mobid}-room{roomid}.yaml`. This
-directory is completely separate from `rooms.instances/` and
-`mobs.instances/` and is NOT cleaned by the instance save cleanup SOP.
-Deleting a shop file resets that merchant to template defaults (500g
-starting gold, base stock levels).
-
-Dynamic pricing ranges from 0.25x (overstocked) to 5.0x (out of stock),
-driven by the `ShopAbundanceThreshold` and normalized per item by restock
-quantity. Config knobs: `ShopBuyRatio`, `ShopPriceFloor`, `ShopPriceCeiling`,
-`ShopAbundanceThreshold`, `ShopMaterialReserve`, `ShopGoldReserveRatio`,
-`BarterMaxDiscount`, `BarterMaxBonus`.
-
 ## Project Context
 - DOGMud (Delusions of Grandeur) is a MUD built on the GoMud engine
 - World design document: `docs/world.md`
