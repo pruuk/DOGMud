@@ -129,15 +129,3 @@ All spell durations use `calcSpellDuration(baseFolds, skill, willpower)`:
 `duration = baseFolds × (10 + wil/20 + skill/2)`. Effect-specific scaling:
 shield = full, heal = ÷2, DoT = ÷3.
 
-## Buff/Ward Spell System
-- Shield spells scale by `effect_magnitude` (100 = 1.0x baseline).
-  Conviction Ward = 75, Chrysalis Cocoon = 125.
-- Shield duration: via `calcSpellDuration`. Crits +50% strength.
-- Buff statmods `magical_mitigation` and `conviction_mitigation` flow
-  through `GetMagicalMitigation()` / `GetConvictionMitigation()`.
-- Kick command auto-selects variant: kick (standing), stomp (prone),
-  knee (grapple+control). Config: `KickDamagePercent` (0.80),
-  `StompDamagePercent` (1.20), `KneeDamagePercent` (1.00).
-- Hidden mob detection on room entry: Perception+Search vs Dex+Skullduggery
-  opposed roll in `go.go`. Mobs can spawn hidden via `buffids: [9]`.
-

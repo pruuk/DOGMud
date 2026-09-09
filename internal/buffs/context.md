@@ -796,6 +796,89 @@ the single release line for BOTH the timer-expiry and pay-fine paths —
 the duplicate-message bug). `ExecuteArrest` sends an additional
 arrest-context line at cell entry; `payfine` sends a payment line that does
 not mention the door.
+
+---
+
+## DOGMud Shield/Ward Spell Scaling
+
+Two live spells use `effect_type: shield`: `conviction-ward`
+(`effect_magnitude: 75`) and `chrysalis-cocoon` (`effect_magnitude: 125`), both
+defined under `_datafiles/world/dogmud/spells/`. The `case "shield"` branch of
+`resolveSpell`/`resolveMobSpell` in `internal/hooks/spell_resolution.go` (the
+player path near line 1093, the mob path near line 1414) is the single handler
+for every shield spell, present or future.
+
+```go
+shieldBonus := (spellData.CasterStatValue(user.Character.Stats) + weightedSkill) / 3
+if magnitude > 0 {
+    shieldBonus = int(math.Round(float64(shieldBonus) * float64(magnitude) / 100.0))
+}
+if out.AttackerCrit {
+    shieldBonus = int(float64(shieldBonus) * 1.5)
+}
+target.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
+```
+
+`weightedSkill` is the caster's spellcasting skill level times `SkillWeight`
+(ships 5.0 against a Go default of 2.0). `magnitude` is
+`spellData.EffectMagnitude`, and 100 is the 1.0x baseline: a spell carrying
+`effect_magnitude: 75` applies 0.75 of the base roll, one carrying 125 applies
+1.25x. A crit on the player cast path (`out.AttackerCrit`) multiplies the
+result by 1.5 after magnitude scaling. The mob cast path has no matching crit
+check, so a mob's own shield cast never gets the bonus. Duration is computed
+by the unexported `calcSpellDuration(baseFolds, spellcastingSkill, willpower)`
+in the same file, not by anything in this package:
+`duration = baseFolds * (10 + willpower/20 + spellcastingSkill/2)`.
+
+**Where the magnitude actually lands.** `AddCondition(characters.ConditionShield,
+...)` does not touch `magical_mitigation` or `conviction_mitigation` at all.
+The condition's magnitude is read only by `Character.GetPhysicalMitigation()`
+(`internal/characters/combat.go`), which sums it with gear
+`physical_mitigation`, mutation natural armor, and species natural armor, then
+clamps the total at `PhysicalMitigationCap`. So both "magical" ward spells buy
+physical mitigation through the shield condition, not magical or conviction
+mitigation.
+
+A shield spell can separately carry `buff_ids`, and those buffs use the
+ordinary statmod path described above instead: `chrysalis-cocoon` grants
+`buff_ids: [52]` (Chrysalis Shell, in
+`_datafiles/world/dogmud/buffs/52-chrysalis_shell.yaml`), whose
+`statmods: {magical_mitigation: 15, conviction_mitigation: 15}` are summed by
+`Buffs.StatMod()` and read by `Character.GetMagicalMitigation()` /
+`GetConvictionMitigation()` through `c.StatMod("magical_mitigation")` /
+`c.StatMod("conviction_mitigation")`. `conviction-ward` sets no `buff_ids`, so
+it grants no magical or conviction mitigation at all despite its name.
+
+### Mitigation caps
+
+| Cap | Shipped (`config.yaml`) | Go default |
+|-----|--------------------------|------------|
+| `PhysicalMitigationCap` | 0.75 | 0.75 |
+| `MagicalMitigationCap` | 0.75 | 0.75 |
+| `ConvictionMitigationCap` | 0.75 | 0.75 |
+
+All three are read by `combat.ApplyMitigation`
+(`internal/combat/damage_pipeline.go`) and validated positive and at most 1.0
+by `internal/configs/smoke_test.go`. Nothing in this package enforces them;
+they live downstream, in the damage pipeline.
+
+## Gotchas
+
+- **Shield magnitude converges on the physical mitigation cap, not on a
+  per-spell ceiling.** `conviction-ward` (magnitude 75) and `chrysalis-cocoon`
+  (magnitude 125) both feed `GetPhysicalMitigation()`, and once a caster's
+  shield roll alone clears `PhysicalMitigationCap` (0.75), every shield spell
+  reads identically at the player: same condition, same message, same
+  effective mitigation, regardless of magnitude. The full mechanism, the
+  thresholds it saturates at, and the design options under discussion are in
+  `docs/audits/2026-08-30-shield-spells-converge-at-the-cap.md`; read that
+  before re-deriving or retuning this.
+- The one durable difference between the two spells today is
+  `chrysalis-cocoon`'s `buff_ids: [52]` grant (adds magical and conviction
+  mitigation through the statmod path above, invisible unless the target is
+  actually taking magical or conviction damage) and its longer `base_folds`
+  (8 against 4), which changes duration but is never surfaced to the player.
+
 ## Files
 
 | File | Purpose |
