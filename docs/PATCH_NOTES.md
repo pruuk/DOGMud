@@ -1,5 +1,25 @@
 # DOGMud Patch Notes
 
+## 2026-09-09: Creatures learn to insult you properly
+
+When something taunted you, it always did the same thing. It bellowed a
+thunderous challenge, over and over, whoever it was and however well the taunt
+landed. Meanwhile a person taunting you could sneer, mock, question your
+courage, or ridicule you mercilessly, drawing on a whole book of insults.
+
+Creatures now read from that same book. A taunting beast can find any of the
+insults a person could, and when one of them really bites, you will hear that it
+bit rather than getting the same flat bellow as always.
+
+You also get told properly when you are the one being taunted. Before, a
+creature's taunt described itself to the room in detail and told its actual
+target almost nothing.
+
+Two smaller repairs came with it. The name of whoever is being taunted now
+carries its proper colour, which it had quietly been missing. And in a dark
+room, a taunt you cannot see no longer names the person it was aimed at, which
+it had been doing even while correctly hiding the taunter.
+
 ## 2026-09-09: A taunt now lands as one moment, not three
 
 When you taunted someone, the three people who heard about it were each told a

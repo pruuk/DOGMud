@@ -58,7 +58,7 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				}
 			}
 			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
-				fmt.Sprintf(`Something lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, targetName),
+				messaging.Anonymize(fmt.Sprintf(`Something lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, targetName)),
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
 		}
 		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, "howl")
@@ -81,7 +81,7 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 		}
 		sendAudioRoomText(room, mob, messaging.CategoryTauntResist,
-			fmt.Sprintf(`Something howls menacingly at <ansi fg="username">%s</ansi>, but it has no effect.`, targetName),
+			messaging.Anonymize(fmt.Sprintf(`Something howls menacingly at <ansi fg="username">%s</ansi>, but it has no effect.`, targetName)),
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> howls menacingly at <ansi fg="username">%s</ansi>, but it has no effect.`, mob.Character.Name, targetName))
 	}
 

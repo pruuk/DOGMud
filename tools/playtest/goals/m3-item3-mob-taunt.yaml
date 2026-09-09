@@ -1,0 +1,70 @@
+# M3 item 3, run 1: does a CREATURE's taunt read well now?
+#
+# Until this change, every taunt thrown by a creature was the same sentence:
+# "bellows a thunderous challenge". Creatures now draw from the same authored
+# insult pool players use. This run is here to judge whether that reads right
+# coming from a summoned elemental, which is a question no test can answer.
+#
+# ONE ACTOR IS ENOUGH. Your own summoned companion does the taunting, and it
+# taunts the ENEMY, not you, so you are a bystander to it and receive the room
+# line yourself. You do not need a partner.
+#
+# ⚠️ KNOWN NON-BUGS, DO NOT REPORT:
+#   - The oasis elementals themselves never taunt. If one throws a taunt back
+#     at YOU after you taunt it, that is a COUNTER and is working as designed.
+#   - Damage is described in words, never numbers.
+#   - Your companion obeys you and will not taunt you.
+
+ephemeral:
+  profile: veteran
+  start_room: 5000
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    You are standing with Sable. Buy a trip to the planar oasis: `ask sable
+    oasis 375`. You are carrying well over that.
+
+    ⚠️ THE GOLD IS THE DIFFICULTY DIAL AND IT IS SHARP. A 2026-09-09 run at 250
+    was a curbstomp in YOUR favour: elementals died in a single round and the
+    companions never got a combat round in, so nothing ever taunted. 1000 goes
+    too far the other way and kills this character. 350 to 375 is the band. Sable opens a temporary
+    portal; take it. If the ask does not work, read what Sable says and try
+    the exact phrasing they use, then report the wording that failed.
+  - >-
+    Before or just after you arrive, summon a companion that taunts:
+    `cast conjure-earth`. Conjure Magma Elemental and Raise Golem also work if
+    that one fails. Confirm the companion is with you before you pick a fight.
+    A run without a companion cannot answer this run's question at all, so say
+    so loudly if you cannot get one.
+  - >-
+    🔑 THE TECHNIQUE THAT MAKES THIS WORK, and the previous run failed without
+    it. A companion taunts ONLY on a combat round where the enemy's attention is
+    NOT already on the companion. So: engage a creature, and then STOP
+    ATTACKING. Let it keep hitting you while your golems work. That keeps its
+    attention on you, which is exactly the condition that makes them taunt to
+    pull it off you. If you kill everything in one round nothing ever taunts.
+
+    Also: the creatures WANDER between rooms. If you see one, attack it in that
+    same moment; do not look first and attack second, or it will be gone and you
+    will "attack the darkness".
+  - >-
+    THE MAIN JOB. Every time your companion taunts, quote the line VERBATIM.
+    Collect them all. Then answer three questions plainly:
+      1. Do the taunts VARY, or is it the same sentence every time? The same
+         sentence every time is the bug this run exists to catch.
+      2. Do they read as something an ELEMENTAL would say? The insults were
+         written for people, so a line about questioning someone's courage or
+         mocking their footwork may land oddly from a creature made of rock.
+         Quote any line that reads wrong coming from an elemental.
+      3. When your companion lands a really good one, does it read as bigger
+         than its ordinary hits, or the same?
+  - >-
+    Watch for anything that reads as broken rather than merely odd: a taunt
+    naming the wrong creature, a line with a leftover token like {source} or
+    {target} in it, a colour that looks wrong, or a taunt that arrives with no
+    apparent cause. Quote anything you flag.
+  - >-
+    If you die, that is a fine outcome and not a failure of the run. Report how
+    far you got and what you saw before it happened.

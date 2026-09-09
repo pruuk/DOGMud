@@ -49,22 +49,35 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	switch {
 	case result.Fumble:
-		sendAudioRoomText(room, mob, messaging.CategoryTauntFailure,
-			`Something bellows a challenge that breaks into a strangled gasp.`,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge that breaks into a strangled gasp.`, mob.Character.Name))
+		if !sendMobTauntTriad(combat.TauntFumble, "", messaging.CategoryTauntFailure,
+			mob, targetName, targetPlayer, room) {
+			sendAudioRoomText(room, mob, messaging.CategoryTauntFailure,
+				`Something bellows a challenge that breaks into a strangled gasp.`,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge that breaks into a strangled gasp.`, mob.Character.Name))
+		}
 
 	case result.Hit:
 		if !result.Defence.Defended {
-			if targetPlayer != nil {
-				if canSeeInDark(targetPlayer, room) {
-					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
-				} else {
-					targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
-				}
+			// The critical band exists in the authored data and the mob side
+			// never reached it: this switch used to treat every landed taunt as
+			// an ordinary hit, so a mob's crit read exactly like its worst jab.
+			intensity := combat.TauntHit
+			if result.Crit {
+				intensity = combat.TauntCritical
 			}
-			sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
-				fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName),
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
+			if !sendMobTauntTriad(intensity, result.DmgDesc, messaging.CategoryTauntSuccess,
+				mob, targetName, targetPlayer, room) {
+				if targetPlayer != nil {
+					if canSeeInDark(targetPlayer, room) {
+						targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc))
+					} else {
+						targetPlayer.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(`A thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, result.DmgDesc))
+					}
+				}
+				sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
+					messaging.Anonymize(fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName)),
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
+			}
 		}
 		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, "taunt")
 
@@ -78,19 +91,72 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 
 	default: // miss
-		if targetPlayer != nil {
-			if canSeeInDark(targetPlayer, room) {
-				targetPlayer.SendText(messaging.CategoryTauntResist, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge, but you brush it off.`, mob.Character.Name))
-			} else {
-				targetPlayer.SendText(messaging.CategoryTauntResist, `Something bellows a challenge, but you brush it off.`)
+		if !sendMobTauntTriad(combat.TauntMiss, "", messaging.CategoryTauntResist,
+			mob, targetName, targetPlayer, room) {
+			if targetPlayer != nil {
+				if canSeeInDark(targetPlayer, room) {
+					targetPlayer.SendText(messaging.CategoryTauntResist, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge, but you brush it off.`, mob.Character.Name))
+				} else {
+					targetPlayer.SendText(messaging.CategoryTauntResist, `Something bellows a challenge, but you brush it off.`)
+				}
 			}
+			sendAudioRoomText(room, mob, messaging.CategoryTauntResist,
+				messaging.Anonymize(fmt.Sprintf(`Something bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, targetName)),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, mob.Character.Name, targetName))
 		}
-		sendAudioRoomText(room, mob, messaging.CategoryTauntResist,
-			fmt.Sprintf(`Something bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, targetName),
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, mob.Character.Name, targetName))
 	}
 
 	return true, nil
+}
+
+// sendMobTauntTriad narrates one mob taunt from the AUTHORED store to every
+// audience that can receive it, and reports whether it said anything.
+//
+// Until 2026-09-09 the mob side never touched taunt-messages at all: it
+// hand-rolled its own "bellows a thunderous challenge" text while the player
+// side read rhetoric.yaml. One event, two narration sources, drifting apart
+// with nobody to notice. Routing it here lights up the todefender pool, which
+// no player could previously ever see: a taunted MOB has no client, and PVP
+// ships disabled so a player could never be the target of a player taunt.
+//
+// Returns false when the store holds nothing, so the caller can fall back to
+// the legacy literals. That path is live in any context that never loaded world
+// data, which includes unit tests.
+//
+// ⚠️ DARKNESS IS HAND-ROLLED HERE, and has to be. sendAudioRoomText delivers on
+// the AUDIO channel, which messaging's pipeline never sight-gates and never
+// anonymizes, so the unseen variant is built explicitly with messaging.Anonymize
+// rather than inherited. That is also why the {sourcetype} and {targettype}
+// tokens must resolve to real name aliases: Anonymize matches on
+// username|mobname|petname, and a tag outside that set leaks the name.
+func sendMobTauntTriad(intensity combat.TauntIntensity, dmgDesc string, cat messaging.Category,
+	mob *mobs.Mob, targetName string, targetPlayer *users.UserRecord, room *rooms.Room) bool {
+
+	targetType := "mobname"
+	if targetPlayer != nil {
+		targetType = "username"
+	}
+
+	triad := combat.GetTauntTriad(intensity, mob.Character.Name, targetName,
+		"mobname", targetType, dmgDesc)
+
+	if triad.ToRoom == "" {
+		return false
+	}
+
+	// ToAttacker is deliberately dropped: the actor is a mob and has no client.
+	excluded := make([]int, 0, 1)
+	if targetPlayer != nil && triad.ToDefender != "" {
+		personal := triad.ToDefender
+		if !canSeeInDark(targetPlayer, room) {
+			personal = messaging.Anonymize(personal)
+		}
+		targetPlayer.SendText(cat, personal)
+		excluded = append(excluded, targetPlayer.UserId)
+	}
+
+	sendAudioRoomText(room, mob, cat, messaging.Anonymize(triad.ToRoom), triad.ToRoom, excluded...)
+	return true
 }
 
 func sendChannelDefenceMessages(out combat.ChannelDefenceResult, mob *mobs.Mob,
