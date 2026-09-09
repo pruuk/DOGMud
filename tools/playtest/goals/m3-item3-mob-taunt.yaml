@@ -24,7 +24,12 @@ ephemeral:
 goals:
   - >-
     You are standing with Sable. Buy a trip to the planar oasis: `ask sable
-    oasis 250`. You are carrying well over that. Sable opens a temporary
+    oasis 375`. You are carrying well over that.
+
+    ⚠️ THE GOLD IS THE DIFFICULTY DIAL AND IT IS SHARP. A 2026-09-09 run at 250
+    was a curbstomp in YOUR favour: elementals died in a single round and the
+    companions never got a combat round in, so nothing ever taunted. 1000 goes
+    too far the other way and kills this character. 350 to 375 is the band. Sable opens a temporary
     portal; take it. If the ask does not work, read what Sable says and try
     the exact phrasing they use, then report the wording that failed.
   - >-
@@ -34,9 +39,16 @@ goals:
     A run without a companion cannot answer this run's question at all, so say
     so loudly if you cannot get one.
   - >-
-    Fight the elementals of the oasis with your companion beside you, and stay
-    in the fight long enough for it to taunt SEVERAL times. This is the whole
-    point of buying a long fight rather than picking on something in town.
+    🔑 THE TECHNIQUE THAT MAKES THIS WORK, and the previous run failed without
+    it. A companion taunts ONLY on a combat round where the enemy's attention is
+    NOT already on the companion. So: engage a creature, and then STOP
+    ATTACKING. Let it keep hitting you while your golems work. That keeps its
+    attention on you, which is exactly the condition that makes them taunt to
+    pull it off you. If you kill everything in one round nothing ever taunts.
+
+    Also: the creatures WANDER between rooms. If you see one, attack it in that
+    same moment; do not look first and attack second, or it will be gone and you
+    will "attack the darkness".
   - >-
     THE MAIN JOB. Every time your companion taunts, quote the line VERBATIM.
     Collect them all. Then answer three questions plainly:
