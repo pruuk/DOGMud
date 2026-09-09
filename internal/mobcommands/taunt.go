@@ -75,7 +75,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					}
 				}
 				sendAudioRoomText(room, mob, messaging.CategoryTauntSuccess,
-					fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName),
+					messaging.Anonymize(fmt.Sprintf(`Something bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, targetName)),
 					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName))
 			}
 		}
@@ -101,7 +101,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				}
 			}
 			sendAudioRoomText(room, mob, messaging.CategoryTauntResist,
-				fmt.Sprintf(`Something bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, targetName),
+				messaging.Anonymize(fmt.Sprintf(`Something bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, targetName)),
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, mob.Character.Name, targetName))
 		}
 	}

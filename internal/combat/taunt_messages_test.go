@@ -182,3 +182,36 @@ func TestTauntValidateRejectsEmptyAndShortPools(t *testing.T) {
 		t.Error("want an error for a whitespace-only variant")
 	}
 }
+
+// TestGetTauntTriadIsAllThreeOrNothing pins the sentinel every caller depends
+// on: usercommands/taunt.go reads an empty ToAttacker as "the store said
+// nothing" and falls back to its literals, and mobcommands does the same with
+// ToRoom.
+//
+// A blind adversarial review found that the migration onto narration.Render had
+// quietly dropped this. The core skips empty roles by design, because a
+// single-role store like casting legitimately has them, so a band missing one
+// pool rendered a PARTIAL triad that satisfied neither sentinel while narrating
+// to some audiences and not others.
+//
+// Validate makes this unreachable through loaded world data. It is reachable
+// through SeedTauntMessagesForTest, which is exactly the kind of bypass a
+// future test will use.
+func TestGetTauntTriadIsAllThreeOrNothing(t *testing.T) {
+	seedTauntMessages(t, map[string]*TauntMessageGroup{"rhetoric": {
+		OptionId: "rhetoric",
+		Options: map[TauntIntensity]*TauntMessages{
+			TauntHit: {
+				// No ToAttacker pool at all.
+				ToDefender: []string{"D0", "D1", "D2"},
+				ToRoom:     []string{"R0", "R1", "R2"},
+			},
+		},
+	}})
+
+	got := GetTauntTriad(TauntHit, "Source", "Target", "username", "mobname", "Dmg", narration.SequencePicker())
+
+	if got != (TauntTriad{}) {
+		t.Fatalf("a band missing a role must render NOTHING, not a partial triad; got %+v", got)
+	}
+}

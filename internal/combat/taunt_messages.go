@@ -156,6 +156,21 @@ func GetTauntTriad(intensity TauntIntensity, source, target, sourceType, targetT
 		"{damage}":     damageDesc,
 	}, pick)
 
+	// ALL THREE OR NOTHING. The old hand-rolled renderer required every pool
+	// non-empty and equal before it would render, and callers depend on that:
+	// usercommands/taunt.go treats an empty ToAttacker as "the store said
+	// nothing" and falls back to its literals, and mobcommands does the same
+	// with ToRoom. A partial triad would satisfy neither sentinel while
+	// narrating to some audiences and not others, which is the defect this
+	// whole arc exists to prevent.
+	//
+	// Validate makes this unreachable through loaded world data. It is
+	// reachable through SeedTauntMessagesForTest, which is exactly the sort of
+	// bypass a future test will use.
+	if roles.Actor == "" || roles.Actee == "" || roles.Observer == "" {
+		return TauntTriad{}
+	}
+
 	return TauntTriad{
 		ToAttacker: roles.Actor,
 		ToDefender: roles.Actee,
