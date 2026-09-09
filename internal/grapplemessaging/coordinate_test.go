@@ -1,6 +1,7 @@
 package grapplemessaging
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/narration"
@@ -123,5 +124,91 @@ func TestRenderTriadUnequalRolesRenderNothing(t *testing.T) {
 
 	if got != (RenderedTriad{}) {
 		t.Fatalf("an unequal triad must render nothing, got %+v", got)
+	}
+}
+
+// TestRenderTriadMismatchBurnsNothing is the answer to a blind adversarial
+// review finding. The first version picked an index BEFORE checking that the
+// roles agreed, so a mismatched triad rendered nothing while still drawing from
+// the engine's global randomness and writing a cooldown key. That shifts every
+// subsequent draw in the process and strands an entry for an event nobody was
+// ever told about.
+func TestRenderTriadMismatchBurnsNothing(t *testing.T) {
+	tri := TemplateTriad{
+		Controller: []string{"c0", "c1", "c2", "c3"},
+		Controlled: []string{"d0", "d1", "d2"},
+		Observers:  []string{"o0", "o1", "o2"},
+	}
+	cd := map[string]bool{}
+	calls := 0
+	counting := func(n int) int { calls++; return 0 }
+
+	got := RenderTriad(tri, "Ctrl", "Cd", cd, "k", counting)
+
+	if got != (RenderedTriad{}) {
+		t.Fatalf("a mismatched triad must render nothing, got %+v", got)
+	}
+	if calls != 0 {
+		t.Errorf("a mismatched triad must not consume a pick, consumed %d", calls)
+	}
+	if len(cd) != 0 {
+		t.Errorf("a mismatched triad must not write a cooldown key, wrote %v", cd)
+	}
+}
+
+// TestRenderGradientMismatchBurnsNothing is the same guard on the gradient
+// renderer, which had the identical ordering bug.
+func TestRenderGradientMismatchBurnsNothing(t *testing.T) {
+	tri := GradientTriad{
+		Self:      []string{"s0", "s1"},
+		Partner:   []string{"p0"},
+		Observers: []string{"o0", "o1"},
+	}
+	cd := map[string]bool{}
+	calls := 0
+	counting := func(n int) int { calls++; return 0 }
+
+	got := RenderGradient(tri, "Self", "Partner", cd, "k", counting)
+
+	if got != (RenderedGradient{}) {
+		t.Fatalf("a mismatched gradient must render nothing, got %+v", got)
+	}
+	if calls != 0 || len(cd) != 0 {
+		t.Errorf("a mismatched gradient must burn nothing: calls=%d cooldowns=%v", calls, cd)
+	}
+}
+
+// TestValidateCompletenessRejectsUnequalRoles is what turns the above from a
+// silent no-op into a BOOT FAILURE. The validator used to check each role
+// against the minimum independently and never that the three agreed, so an
+// authoring slip (one extra controller variant, no partner for it) passed boot
+// and then stopped narrating that key forever, with nothing logged.
+func TestValidateCompletenessRejectsUnequalRoles(t *testing.T) {
+	lib, err := Load("../../_datafiles/world/dogmud/messaging/grapple_outcomes.yaml")
+	if err != nil {
+		t.Fatalf("load production library: %v", err)
+	}
+	if errs := ValidateCompleteness(lib); len(errs) != 0 {
+		t.Fatalf("production library must validate clean, got %v", errs)
+	}
+
+	// Break one key the way an author plausibly would.
+	key := RequiredAdvancementKeys[0]
+	tri := lib.Advancements[key]
+	tri.Controller = append(append([]string{}, tri.Controller...), "one extra line with no partner")
+	lib.Advancements[key] = tri
+
+	errs := ValidateCompleteness(lib)
+	if len(errs) == 0 {
+		t.Fatal("a triad whose roles disagree in length must NOT validate")
+	}
+	found := false
+	for _, e := range errs {
+		if strings.Contains(e.Error(), key) && strings.Contains(e.Error(), "EQUAL") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the error should name the key and say the roles must be equal, got %v", errs)
 	}
 }

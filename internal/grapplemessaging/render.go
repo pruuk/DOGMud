@@ -111,7 +111,11 @@ func PickIndex(n int, cooldowns map[string]bool, keyPrefix string, picker ...nar
 	if len(picker) > 0 && picker[0] != nil {
 		choose = picker[0]
 	}
-	idx := available[choose(len(available))%len(available)]
+	// No modulo. The Picker contract is [0,n), and PickTemplate indexed
+	// straight into its slice, so a picker that violates the contract PANICKED
+	// and was found. Wrapping the result here would silently paper over the
+	// next such mistake.
+	idx := available[choose(len(available))]
 	if cooldowns != nil {
 		cooldowns[cooldownKey(keyPrefix, idx)] = true
 	}
@@ -143,6 +147,15 @@ func cooldownKey(keyPrefix string, i int) string {
 // the defect this migration exists to prevent.
 func RenderTriad(tri TemplateTriad, controllerName, controlledName string,
 	cooldowns map[string]bool, keyPrefix string, picker ...narration.Picker) RenderedTriad {
+
+	// AGREEMENT IS CHECKED BEFORE PICKING, and the order matters. PickIndex
+	// both draws from the engine's global randomness and writes a cooldown
+	// key, so picking first and discovering the mismatch afterwards would
+	// shift every subsequent draw in the process and strand a cooldown entry
+	// for an event nobody was ever told about.
+	if !rolesAgree(len(tri.Controller), len(tri.Controlled), len(tri.Observers)) {
+		return RenderedTriad{}
+	}
 
 	idx := PickIndex(len(tri.Controller), cooldowns, keyPrefix, picker...)
 	if idx < 0 {
@@ -195,6 +208,11 @@ type RenderedGradient struct {
 func RenderGradient(tri GradientTriad, selfName, partnerName string,
 	cooldowns map[string]bool, keyPrefix string, picker ...narration.Picker) RenderedGradient {
 
+	// Checked before picking, for the reason RenderTriad states.
+	if !rolesAgree(len(tri.Self), len(tri.Partner), len(tri.Observers)) {
+		return RenderedGradient{}
+	}
+
 	idx := PickIndex(len(tri.Self), cooldowns, keyPrefix, picker...)
 	if idx < 0 {
 		return RenderedGradient{}
@@ -219,4 +237,15 @@ func RenderGradient(tri GradientTriad, selfName, partnerName string,
 		Partner:   roles.Actee,
 		Observers: roles.Observer,
 	}
+}
+
+// rolesAgree reports whether every role holds the same non-zero number of
+// variants, which is the precondition for a coordinated index meaning the same
+// moment to all three audiences.
+//
+// ValidateCompleteness rejects a mismatch at LOAD time, so reaching here with
+// one is a bug rather than a content state. This guard exists so that bug is a
+// silent no-op rather than a wasted draw plus a stranded cooldown key.
+func rolesAgree(a, b, c int) bool {
+	return a > 0 && a == b && a == c
 }
