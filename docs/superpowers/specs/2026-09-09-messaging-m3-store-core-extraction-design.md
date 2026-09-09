@@ -4,7 +4,9 @@ Design for the next slice of the messaging unification arc
 ([`2026-08-31-messaging-unification-design.md`](2026-08-31-messaging-unification-design.md)),
 covering items 1 and 2 of that spec's M3 order.
 
-Preceded by a standalone taunt bug-fix PR, specified in its own section below.
+Preceded by a standalone taunt bug-fix PR, which has since SHIPPED (#115, master
+`c8b8cb002`). Its section below is kept as a record because one of this
+document's facts was wrong and the correction carries into M3.
 
 ## Facts verified against source, 2026-09-09
 
@@ -27,10 +29,10 @@ Read from master `65447be86`. Nothing in this document is recalled or inferred.
 | casting has a hardcoded Go fallback that substitutes silently | `spells/casting_messages.go:51` `defaultCastingMessages` |
 | casting ships pools of 3, 3, 3 and 4 | `_datafiles/world/dogmud/casting-messages.yaml` |
 | Defence and combat-messages **panic** on a validation error | `items/itemspec.go:788`, `:795` |
-| **Taunt draws its three viewpoints from three independent picks** | `usercommands/taunt.go:191` to `:193` |
-| Taunt pools are authored index-paired | `taunt-messages/rhetoric.yaml`: index 0 is "cut deep" on both sides, index 1 "biting remark" on both |
-| Taunt's validator checks required keys only, with no length check | `combat/taunt_messages.go:39` to `:47` |
-| **Taunt `hit` and `miss` ship 8 / 8 / 6**, so indices 6 and 7 have no room line. `critical` and `fumble` are 6 / 6 / 6 | `taunt-messages/rhetoric.yaml` |
+| **Taunt drew its three viewpoints from three independent picks** (FIXED, PR #115) | `usercommands/taunt.go:191` to `:193` at `65447be86` |
+| ⚠️ **CORRECTED.** Taunt pools were paired only at the HEAD of each band, and drifted after. `fumble` correct throughout; `critical`'s room pool offset by one from index 2; `miss` paired through 5; `hit` paired only through 3 | `taunt-messages/rhetoric.yaml` as of `65447be86`. See the correction note below |
+| Taunt's validator checked required keys only, with no length check (FIXED, PR #115) | `combat/taunt_messages.go:39` to `:47` at `65447be86` |
+| **Taunt `hit` and `miss` shipped 8 / 8 / 6**, so indices 6 and 7 had no room line; `critical` and `fumble` were 6 / 6 / 6 (FIXED, PR #115: now 8/8/8 and 6/6/6) | `taunt-messages/rhetoric.yaml` at `65447be86` |
 | **The mob side of taunt never touches the store**, hand-rolling its own literals | `mobcommands/taunt.go:60`, `:62`, `:83`, `:85` |
 | `combat-messages` splits observers in two for the `separate` case | `items/attack_messages.go:40` `SeparateMessages{ToAttacker, ToDefender, ToAttackerRoom, ToDefenderRoom}` |
 | Skill tiers are a pool **union**, not a selection | `items/attack_messages.go:113` `GetForSkillLevelWith` unions beginner, expert and master by skill band |
@@ -256,38 +258,66 @@ every cast and has 3 variants, so a caster sees a repeat every third spell,
 against 10 to 14 per pool for defence. That is authored content and belongs in
 the content pass.
 
-## The taunt bug, as a standalone PR before this slice
+## The taunt bug: SHIPPED, PR #115, master `c8b8cb002`
 
-`usercommands/taunt.go:191` to `:193` calls `GetTauntMessage` three times, once
-per perspective, each with an independent pick. The pools are authored
-index-paired: index 0 is "cut deep" on both the attacker and defender side,
-index 1 "biting remark" on both. So the three viewpoints of one taunt describe
-three different moments.
+> ✅ **This section is now a record, not a plan.** It shipped 2026-09-09 as
+> PR #115 (`8cfe78c41` + `f8020ce10`), merged to master at `c8b8cb002`, not yet
+> deployed. It is kept because one of its claims was wrong and the correction
+> matters to M3.
 
-This is the melee defence triad bug (PR #112) in a store nobody has touched, and
-it is the same shape M1 found seven times: a code path that has the mechanism
-right and the narration uncoordinated.
+`usercommands/taunt.go:191` to `:193` called `GetTauntMessage` three times, once
+per perspective, each with an independent pick, so the three viewpoints of one
+taunt described three different moments. This is the melee defence triad bug
+(PR #112) in a store nobody had touched, and the same shape M1 found seven
+times: a code path with the mechanism right and the narration uncoordinated.
 
-In scope for the standalone PR:
+### 🔴 CORRECTION: the pools were NOT reliably index-paired
 
-- One coordinated index across the three perspectives.
-- The equal-length validator taunt lacks, which defence has had all along and
-  which would have caught the data gap below.
-- The data gap: `hit` and `miss` ship 8 / 8 / 6, so a coordinated index of 6 or
-  7 has no room line. **Fixed in the data**, by authoring two more `toroom`
-  variants for each of those bands, rather than tolerated by a modulo that would
-  silently pair the wrong room line with the participants' line.
+**This document's first draft claimed they were, on the evidence of indices 0
+and 1.** That was a generalisation from the head of a list, and it was wrong.
+Reading all four bands in full:
 
-Out of scope, deferred to M3 item 3 where taunt migrates onto the core:
+| Band | Pairing as shipped |
+|---|---|
+| `fumble` | correct at every index |
+| `critical` | room pool **offset by one from index 2**, having no "hits right where it hurts" line, so every later room entry shifted up |
+| `miss` | paired through index 5; indices 6 and 7 had no room line |
+| `hit` | paired only through index 3, then drifted: `toattacker[5]` "razor-sharp wit" sat against `todefender[5]` "ridicules you mercilessly" while each had its real partner elsewhere |
+
+**So coordinating the index alone would have paired the wrong lines
+deliberately rather than randomly.** The fix therefore had to re-pair the data
+as well: `critical` needed no new text, only reordering, while `hit` and `miss`
+gained five room lines between them and are now 8/8/8. `Validate` gained the
+equal-length, minimum-count and non-empty rules
+`items.DefenseMessageGroup` has always had.
+
+🔑 **The lesson M3 inherits: "the pools are index-paired" is a claim about
+EVERY index. Verify the tail, not the head.** M3 migrates seven more stores that
+make the same implicit promise, and the defence store is the only one with a
+validator that has been enforcing it.
+
+### Verified in play
+
+Two actors, run `0a868f7459548749`. `hit` index 1 and `critical` index 5 were
+each observed from both seats and agreed. The `critical` sample is the load
+bearing one: that is the band whose room pool was offset, so the witness would
+previously have read "reels as Sil Vantage strikes a nerve" against a
+soul-crushing taunt. The `miss` band never fired because the veteran profile
+killed both town mobs before the taunts landed.
+
+### Still open, and it strengthens M3 item 3
+
 **`mobcommands/taunt.go` never reads the store at all**, hand-rolling its own
-`fmt.Sprintf` literals at `:60`, `:62`, `:83` and `:85`. One event, two
-narration sources, which is the M2 shape in a place M2 never looked. Routing the
-mob side through the authored pools changes what mobs say, so it is authored
-content under the SOP and carries the playtest gate.
+`fmt.Sprintf` literals at `:60`, `:62`, `:83` and `:85`. Combined with PvP
+shipping `disabled` and mob targets having no client, **all 28 `todefender`
+lines in `rhetoric.yaml` are unreachable in production** (verified:
+`taunt.go:66`, `melee_target.go:226`, `rooms.go:2914`).
 
-Authoring four new room lines is itself player-facing content, so **the taunt PR
-carries the playtest gate**. The M3 slice proper does not: it changes no
-player-facing text, and the byte-identical goldens are the proof of that.
+So routing the mob side through the store at M3 item 3 would **light up 28
+already-authored lines**, which is a far stronger argument for that work than
+the "one event, two narration sources" tidiness case it was first filed under.
+It remains out of scope here because it changes what mobs say, which is authored
+content under the SOP and carries the playtest gate.
 
 ## Risks
 
@@ -316,5 +346,6 @@ player-facing text, and the byte-identical goldens are the proof of that.
   is verified to compile.
 - Casting boots with valid data, panics with a pool emptied, and no longer has a
   Go fallback for any caller to reach.
-- Taunt, on its own PR, narrates one coordinated moment to all three
-  perspectives, and no band has a role list shorter than another.
+- ~~Taunt~~ DONE, PR #115: it narrates one coordinated moment to all three
+  perspectives, no band has a role list shorter than another, and the
+  coordination was verified in play at `hit` 1 and `critical` 5.
