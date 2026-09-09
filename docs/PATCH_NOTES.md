@@ -1,5 +1,21 @@
 # DOGMud Patch Notes
 
+## 2026-09-09: A taunt now lands as one moment, not three
+
+When you taunted someone, the three people who heard about it were each told a
+different story. You might sneer and see your words cut deep, while your target
+felt a biting remark, and everyone else watched you question their courage. All
+in the same breath. The insults were drawn separately for each onlooker, so they
+almost never agreed.
+
+They agree now. One taunt, one moment, described from three points of view.
+
+Fixing that meant tidying the writing behind it, because several of the lines
+had drifted out of step with their partners over time. The onlookers' view was
+also short of a few endings, so a taunt could land with the room saying nothing
+at all. Those are written now, and the room has a fuller set of reactions to
+both a taunt that bites and one that falls flat.
+
 ## 2026-09-08: The room sees more of what you do
 
 A handful of things you could do in front of other people happened in silence

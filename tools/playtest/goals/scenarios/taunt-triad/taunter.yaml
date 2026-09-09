@@ -1,0 +1,57 @@
+# Taunt triad: the TAUNTER.
+#
+# You are Sil Vantage, and you have a cruel tongue. Rhetoric 20. Your one job
+# this run is to insult the same creature over and over while Ordel Quist
+# stands beside you and reads what the room is told.
+#
+# `taunt <target>` deals conviction damage, not physical damage, so your target
+# will NOT die from being taunted. Pick one mob and stay on it. You do not need
+# a special arena or a tough fixture: any modest mob near Thornwall will hold up
+# for as many taunts as you can throw, though it may well fight back, so keep an
+# eye on your own health and disengage if things turn.
+#
+# THE POINT OF THE RUN: for one taunt, you and Ordel should be told about the
+# SAME MOMENT from two seats. If you sneer and Ordel watches you question the
+# target's courage, that is the defect. Quote yourself VERBATIM every single
+# time, because a paraphrase destroys the only evidence this run produces.
+#
+# ⚠️ DO NOT REPORT THE MISSING TARGET LINE. A mob you taunt is never told
+# anything, PvP is disabled so you cannot taunt a player, and that whole
+# viewpoint is known to be unreachable. It is filed. It is not a finding.
+#
+# 3 commands per round on the AI port and the overflow is dropped. Read every
+# line before sending more.
+#
+# KNOWN NON-BUGS, do not refile: damage is words and never numbers; taunting
+# pulls the mob's attention onto you, that is the mechanic working.
+
+ephemeral:
+  profile: m2-actor
+  start_room: 462
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Find a mob near Thornwall Main Street that Ordel can stand next to safely.
+    Tell Ordel on the party channel which mob you have picked and confirm they
+    are in the room BEFORE your first taunt. A taunt nobody witnessed is a
+    wasted taunt.
+  - >-
+    Taunt it. Quote your own line VERBATIM to Ordel, then ask them to quote the
+    line they saw. Do this for at least eight taunts, one at a time, waiting for
+    Ordel each time. Do not batch them: the pairing is the whole experiment and
+    it is lost if the lines get interleaved.
+  - >-
+    Keep going until you have seen your taunt BOTH land and fail. Say clearly
+    which of hit, miss, critical and fumble you saw, and which you never saw.
+    Critical and fumble are rare, so not seeing them is an honest result and
+    worth reporting as such rather than grinding for them.
+  - >-
+    Judge your own lines as writing. Do any of them repeat awkwardly across a
+    session, read as though assembled by a machine, or land at a strange moment
+    in the round? Say so plainly, quoting the line.
+  - >-
+    Report any taunt where you got a line and Ordel got NOTHING, or the reverse.
+    Silence on one side of a taunt that clearly happened is a defect worth the
+    whole run.

@@ -1,0 +1,80 @@
+# Taunt triad coordination: the adversarial gate for the taunt fix.
+#
+# The bug: usercommands/taunt.go called a per-perspective getter three times,
+# so the taunter, the target and the room each drew an INDEPENDENT index from
+# the authored pools and were narrated three different moments of one taunt.
+# The fix renders all three from ONE index, and the data was re-paired in all
+# four bands because the pools had drifted out of alignment.
+#
+# Unit tests prove the three roles now share an index. They CANNOT prove the
+# three lines read as one moment to three different people. That is this run's
+# job, and it needs a real second player, because a mob receives nothing.
+#
+# ⚠️ ONE VIEWPOINT IS STRUCTURALLY UNREACHABLE AND THAT IS NOT A BUG.
+# The `todefender` line never fires for anyone:
+#   - Player taunts a mob  -> the mob has no client, so no defender line.
+#   - Player taunts player -> refused, GamePlay.PVP ships `disabled`.
+#   - Mob taunts a player  -> mobcommands/taunt.go hand-rolls its own text and
+#                             never reads the store at all.
+# Do NOT file the missing defender line as a finding. It is a known, filed
+# consequence of PvP being off, and lighting those 28 lines up is M3 item 3's
+# job, not this run's.
+name: taunt-triad
+mode: party
+summary: >-
+  A taunter works a mob over while a plain witness stands in the room, and the
+  two compare, taunt by taunt, whether they were told about the same moment.
+on_actor_stop: continue
+budgets:
+  wall_clock: 30m
+requires:
+  max_connections: 20
+roster:
+  - id: taunter
+    personality: bug-finder
+    goals: goals/scenarios/taunt-triad/taunter.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/taunt-triad/witness.yaml
+
+group_goals:
+  - id: one-moment
+    do: >-
+      Taunter taunts the same mob repeatedly with witness standing in the room
+      doing nothing. After EACH taunt, both quote their line verbatim to each
+      other on the party channel.
+    verify: >-
+      The two lines describe the SAME moment. If the taunter sneers and the
+      witness sees them question the target's courage, that is the bug this
+      run exists to catch, and it means the fix did not take. Judge the pair
+      on whether they could be two descriptions of one event, not on whether
+      the wording matches word for word: they are written from different
+      seats and are supposed to differ in phrasing.
+  - id: both-outcomes
+    do: >-
+      Keep taunting until BOTH a landed taunt and a failed one have been seen,
+      and report which of hit, miss, critical and fumble were observed.
+    verify: >-
+      Coordination holds on a miss as well as a hit. The miss band was re-paired
+      too, and two of its room lines are newly written, so a miss that leaves
+      the witness with nothing, or with a line about the taunt landing, is a
+      defect.
+  - id: new-room-lines
+    do: >-
+      Witness collects every DISTINCT room line they see across the run and
+      lists them.
+    verify: >-
+      Five lines are newly authored and have never been in the game before.
+      Landed: "hurls a scathing insult at", "questions <target>'s courage with
+      venomous words", "mocking words strike home against". Failed: "mocking
+      words find no purchase against", "stays stone-faced through". Report any
+      that read worse than the lines around them, and any that read as written
+      for a different event than the taunter's own line.
+  - id: reads-well
+    do: >-
+      Judge the taunt narration as prose across the whole run, not as evidence.
+    verify: >-
+      Report a line that repeats a name awkwardly, crowds a busy combat round,
+      reads as machine-generated, or describes a person as though they were an
+      animal. Also report if the same line repeats often enough to be noticed
+      inside one session.
