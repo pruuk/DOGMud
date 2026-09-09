@@ -162,3 +162,18 @@ func GetTauntTriad(intensity TauntIntensity, source, target, sourceType, targetT
 		ToRoom:     roles.Observer,
 	}
 }
+
+// SeedTauntMessagesForTest swaps the store for a test-supplied set of bands,
+// returning a restore func for the caller to defer. Mirrors
+// itemvoices.SeedVoicesForTest.
+//
+// It exists so tests OUTSIDE this package can exercise taunt rendering without
+// loading world data, which is what lets internal/usercommands assert that a
+// rendered taunt line is anonymizable.
+func SeedTauntMessagesForTest(bands map[TauntIntensity]*TauntMessages) func() {
+	prev := tauntMessages
+	tauntMessages = map[string]*TauntMessageGroup{
+		"rhetoric": {OptionId: "rhetoric", Options: bands},
+	}
+	return func() { tauntMessages = prev }
+}

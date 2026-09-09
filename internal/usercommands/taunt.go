@@ -57,9 +57,18 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		})
 	}
 
-	targetType := "mob"
+	// These feed {sourcetype} and {targettype}, which rhetoric.yaml drops
+	// straight into `<ansi fg="...">`, so they must be real ANSI ALIASES.
+	//
+	// They used to be "mob" and "user", which are not aliases at all
+	// (_datafiles/world/dogmud/ansi-aliases.yaml defines username, mobname and
+	// petname). Two things followed: the target's name rendered without its
+	// colour while the taunter's did, and messaging.Anonymize could not see the
+	// tag, because it matches on username|mobname|petname. A taunt line reaching
+	// an observer who cannot see would have leaked the target's real name.
+	targetType := "mobname"
 	if result.Target.UserId > 0 {
-		targetType = "user"
+		targetType = "username"
 	}
 
 	var targetPlayer *users.UserRecord
