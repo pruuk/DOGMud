@@ -135,6 +135,7 @@ func setupRealStores(t *testing.T) {
 	items.LoadDataFiles()
 	combat.LoadTauntMessageFiles()
 	itemvoices.LoadDataFiles()
+	spells.LoadCastingMessages()
 }
 
 // ---------------------------------------------------------------------

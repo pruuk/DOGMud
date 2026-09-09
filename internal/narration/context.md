@@ -39,9 +39,13 @@ type Selector string
 type Variants struct{ Actor, Actee, Observer, ActeeObserver []string }
 type Roles    struct{ Actor, Actee, Observer, ActeeObserver string }
 
+// Role names one audience, for stores that declare which roles they author.
+type Role uint8
+const (RoleActor Role = iota; RoleActee; RoleObserver; RoleActeeObserver)
+
 func (v Variants) Len() int
 func Render(v Variants, tokens map[string]string, pick Picker, indexOverride ...int) Roles
-func ValidateVariants(v Variants, minVariants int) error
+func ValidateVariants(v Variants, minVariants int, expected ...Role) error
 ```
 
 A nil `Picker` means production behaviour: stores that accept one treat nil as
@@ -86,6 +90,15 @@ the defence store's original behaviour, and it matters because `DefaultPicker`
 routes through `util.Rand`, which is global engine randomness: returning early
 would consume one fewer random number and shift every subsequent draw in the
 process.
+
+**Pass `expected` to `ValidateVariants` if your store has more than one role.**
+Without it the function cannot tell a role that is deliberately absent (a buff
+has no actee) from one that went MISSING (a defence band that lost its toroom
+pool), because both look like an empty slice. A three-role store that omits it
+can boot happily while narrating a real event to two audiences and silence to
+the third, which is the exact defect this package exists to prevent. A blind
+adversarial review found this gap in the core's first version; naming the roles
+turns it into a boot failure.
 
 **Unequal role pools render NOTHING.** `Variants.Len()` returns 0 when the
 non-empty roles disagree, because index N cannot mean the same moment in a

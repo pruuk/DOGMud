@@ -3,9 +3,10 @@ package spells
 import (
 	"fmt"
 	"os"
-	"sync"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -26,7 +27,6 @@ type CastingMessages struct {
 
 var (
 	castingMessages       *CastingMessages
-	castingMessagesOnce   sync.Once
 	castingMessagesLoaded bool
 )
 
@@ -59,42 +59,53 @@ func (cm *CastingMessages) Validate() error {
 		{"concentration_slipped", cm.ConcentrationSlipped},
 	}
 	for _, p := range pools {
-		if err := narration.ValidateVariants(narration.Variants{Actor: p.pool}, minCastingVariants); err != nil {
+		if err := narration.ValidateVariants(narration.Variants{Actor: p.pool}, minCastingVariants, narration.RoleActor); err != nil {
 			return fmt.Errorf("casting-messages %s: %w", p.name, err)
 		}
 	}
 	return nil
 }
 
-// loadCastingMessages loads the YAML file once and caches the result.
+// LoadCastingMessages reads and validates the store. Called once at startup
+// from main.go, alongside the other message-store loaders.
 //
 // It PANICS on a missing, unparseable or invalid file, matching how defence
 // and combat-messages behave (internal/items/itemspec.go:788, :795).
 //
-// There used to be a defaultCastingMessages() fallback here that silently
-// substituted hardcoded Go text. It was DELETED on 2026-09-09: a fallback that
-// shadows shipped data means a YAML typo changes what players read and nobody
-// finds out, which is the same hazard as reading a balance number from a Go
-// default instead of config.yaml. Boot-fail and a silent fallback cannot both
-// be the policy, and boot-fail is the one the rest of the loaders use.
-func loadCastingMessages() *CastingMessages {
-	castingMessagesOnce.Do(func() {
-		path := string(configs.GetFilePathsConfig().DataFiles) + `/casting-messages.yaml`
-		data, err := os.ReadFile(path)
-		if err != nil {
-			panic(errors.Wrap(err, "reading "+path))
-		}
-		var cm CastingMessages
-		if err := yaml.Unmarshal(data, &cm); err != nil {
-			panic(errors.Wrap(err, "parsing "+path))
-		}
-		if err := cm.Validate(); err != nil {
-			panic(errors.Wrap(err, "validating "+path))
-		}
-		castingMessages = &cm
-		castingMessagesLoaded = true
-	})
-	return castingMessages
+// There used to be a defaultCastingMessages() fallback that silently
+// substituted hardcoded Go text when the YAML was absent. It was DELETED on
+// 2026-09-09: a fallback that shadows shipped data means a typo in the YAML
+// changes what players read and nobody finds out, the same hazard as reading a
+// balance number from a Go default instead of config.yaml. Its content moved
+// to _datafiles/world/default/casting-messages.yaml, where an author can edit
+// it.
+//
+// 🔑 LOADING IS SEPARATE FROM RENDERING ON PURPOSE. This used to be a lazy
+// sync.Once inside GetCastMessage, which meant "boot-fail" was really "crash on
+// the first cast", and it crashed in any context that never booted a world at
+// all: a unit test calling Cast() resolves the data path relative to ITS
+// working directory, so the file is simply not there. Loading here makes the
+// failure happen at startup, where it belongs, and leaves GetCastMessage safe
+// to call from anywhere.
+func LoadCastingMessages() {
+	start := time.Now()
+
+	path := string(configs.GetFilePathsConfig().DataFiles) + `/casting-messages.yaml`
+	data, err := os.ReadFile(path)
+	if err != nil {
+		panic(errors.Wrap(err, "reading "+path))
+	}
+	var cm CastingMessages
+	if err := yaml.Unmarshal(data, &cm); err != nil {
+		panic(errors.Wrap(err, "parsing "+path))
+	}
+	if err := cm.Validate(); err != nil {
+		panic(errors.Wrap(err, "validating "+path))
+	}
+
+	castingMessages = &cm
+	castingMessagesLoaded = true
+	mudlog.Info("spells.LoadCastingMessages()", "categories", 4, "Time Taken", time.Since(start))
 }
 
 // GetCastMessage picks a message from the named category, substituting
@@ -115,10 +126,15 @@ func loadCastingMessages() *CastingMessages {
 // seam. This file used stdlib math/rand directly until 2026-09-07, which made
 // it unreachable by any seam and therefore unsnapshottable.
 func GetCastMessage(category, spellName string, picker ...narration.Picker) string {
-	cm := castingMessages
-	if !castingMessagesLoaded {
-		cm = loadCastingMessages()
+	// Not loaded means no world was booted, which happens in unit tests that
+	// exercise the cast path without world data. Returning the generic sentence
+	// is correct there: there is no authored text to shadow, so this is not the
+	// Go-default hazard that deleting defaultCastingMessages closed. A booted
+	// server always has this loaded, or it panicked in LoadCastingMessages.
+	if !castingMessagesLoaded || castingMessages == nil {
+		return "Something stirs with " + spellName + "."
 	}
+	cm := castingMessages
 
 	var pool []string
 	switch category {

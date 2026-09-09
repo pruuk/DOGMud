@@ -237,3 +237,70 @@ func TestValidateVariantsNamesTheOffendingRole(t *testing.T) {
 		t.Errorf("error should name the offending role, got %v", err)
 	}
 }
+
+// TestValidateVariantsExpectedRolesCatchesAMissingRole is the answer to a gap a
+// blind adversarial review found in the first version of this core: without a
+// declared role set, a store with an entirely ABSENT role validated happily and
+// then rendered that audience as "" forever, while the other two got real text.
+//
+// That is exactly the defect this package exists to prevent, so the primitive
+// has to be able to express it rather than leaving every store to re-implement
+// the check. The old defence code DID re-implement it; a future migrated store
+// might not.
+func TestValidateVariantsExpectedRolesCatchesAMissingRole(t *testing.T) {
+	// A three-role store that lost its actee pool entirely.
+	v := Variants{
+		Actor:    []string{"a", "b", "c", "d", "e"},
+		Observer: []string{"a", "b", "c", "d", "e"},
+	}
+
+	// Without a declared role set this passes, which is the gap.
+	if err := ValidateVariants(v, 5); err != nil {
+		t.Fatalf("undeclared validation should still accept this shape: %v", err)
+	}
+
+	// Declaring the three roles turns it into a boot failure.
+	err := ValidateVariants(v, 5, RoleActor, RoleActee, RoleObserver)
+	if err == nil {
+		t.Fatal("a declared-but-absent role must not validate")
+	}
+	if !strings.Contains(err.Error(), "actee") {
+		t.Errorf("error should name the missing role, got %v", err)
+	}
+}
+
+// TestValidateVariantsExpectedRolesCatchesAnUnexpectedRole guards the other
+// direction: a role authored into a store that does not know how to deliver it
+// would render text nobody ever sends.
+func TestValidateVariantsExpectedRolesCatchesAnUnexpectedRole(t *testing.T) {
+	v := Variants{
+		Actor:         []string{"a", "b", "c"},
+		ActeeObserver: []string{"a", "b", "c"},
+	}
+
+	err := ValidateVariants(v, 3, RoleActor)
+	if err == nil {
+		t.Fatal("a role the store does not expect must not validate")
+	}
+	if !strings.Contains(err.Error(), "acteeObserver") {
+		t.Errorf("error should name the unexpected role, got %v", err)
+	}
+}
+
+// TestValidateVariantsExpectedRolesAcceptsTheDeclaredShape keeps the happy path
+// honest, including the single-role Kind B stores.
+func TestValidateVariantsExpectedRolesAcceptsTheDeclaredShape(t *testing.T) {
+	triad := Variants{
+		Actor:    []string{"a", "b", "c", "d", "e"},
+		Actee:    []string{"a", "b", "c", "d", "e"},
+		Observer: []string{"a", "b", "c", "d", "e"},
+	}
+	if err := ValidateVariants(triad, 5, RoleActor, RoleActee, RoleObserver); err != nil {
+		t.Errorf("a complete triad must validate: %v", err)
+	}
+
+	single := Variants{Actor: []string{"a", "b", "c"}}
+	if err := ValidateVariants(single, 3, RoleActor); err != nil {
+		t.Errorf("a single-role store must validate: %v", err)
+	}
+}

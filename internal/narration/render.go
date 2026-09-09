@@ -153,6 +153,31 @@ func substitute(s string, tokens map[string]string) string {
 	return strings.NewReplacer(pairs...).Replace(s)
 }
 
+// Role identifies one audience of a narrated event, for stores that need to
+// declare which roles they expect to be authored.
+type Role uint8
+
+const (
+	RoleActor Role = iota
+	RoleActee
+	RoleObserver
+	RoleActeeObserver
+)
+
+func (r Role) String() string {
+	switch r {
+	case RoleActor:
+		return "actor"
+	case RoleActee:
+		return "actee"
+	case RoleObserver:
+		return "observer"
+	case RoleActeeObserver:
+		return "acteeObserver"
+	}
+	return "unknown"
+}
+
 // ValidateVariants checks that a pool set can be coordinated: every non-empty
 // role holds the same count, that count is at least minVariants, and no
 // variant is blank.
@@ -162,10 +187,19 @@ func substitute(s string, tokens map[string]string) string {
 // casting would fail boot on shipped data without improving a single line of
 // text. M4 is where these unify, if they should.
 //
+// 🔑 PASS `expected` IF YOUR STORE HAS MORE THAN ONE ROLE. Without it this
+// function cannot tell a role that is deliberately absent (a buff has no actee)
+// from one that went missing (a defence band lost its toroom pool), because
+// both look like an empty slice. A three-role store that omits `expected` can
+// therefore boot happily while narrating a real event to two audiences and
+// SILENCE to the third, which is precisely the defect this whole package
+// exists to prevent. Naming the roles you expect turns that into a boot
+// failure.
+//
 // Call this at LOAD time. A store that only finds out at render time gets
 // silence in play instead of a boot failure, which is how the taunt store
 // shipped an 8/8/6 band that left the room with nothing to say.
-func ValidateVariants(v Variants, minVariants int) error {
+func ValidateVariants(v Variants, minVariants int, expected ...Role) error {
 	named := []struct {
 		name string
 		pool []string
@@ -174,6 +208,22 @@ func ValidateVariants(v Variants, minVariants int) error {
 		{"actee", v.Actee},
 		{"observer", v.Observer},
 		{"acteeObserver", v.ActeeObserver},
+	}
+
+	if len(expected) > 0 {
+		want := map[Role]bool{}
+		for _, r := range expected {
+			want[r] = true
+		}
+		for i, role := range named {
+			present := len(role.pool) > 0
+			if want[Role(i)] && !present {
+				return fmt.Errorf("role %q is expected but holds no variants", role.name)
+			}
+			if !want[Role(i)] && present {
+				return fmt.Errorf("role %q holds variants but is not expected by this store", role.name)
+			}
+		}
 	}
 
 	n := 0
