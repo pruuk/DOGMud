@@ -130,37 +130,57 @@ func RenderDefenseMessage(defenseType DefenseType, defensiveCrit bool, normalize
 // descriptions of three different events.
 //
 // A nil picker means production behaviour (narration.DefaultPicker).
+// The coordination itself now lives in narration.Render. What remains here is
+// the ADAPTER, and its role mapping is the one thing in this file worth
+// reading slowly: an attacker ACTS and a defender is ACTED UPON, so toattacker
+// is the Actor and todefender is the Actee. Swapping those two lines would
+// invert every defence message in the game, and it is exactly the mistake this
+// refactor makes easiest, because three separately named pools become adjacent
+// fields of one literal differing only by role.
+//
+// defense_messages.golden is what catches it: that file keys its rows by the
+// AUTHORED name, so a swap puts the attacker's sentence in a todefender row.
 func (o DefenseOptions) RenderTriad(tokenReplacements map[TokenName]string, pick narration.Picker, indexOverride ...int) DefenseMessageTriad {
-	if pick == nil {
-		pick = narration.DefaultPicker
-	}
+	roles := narration.Render(
+		narration.Variants{
+			Actor:    messageStrings(o.Together.ToAttacker),
+			Actee:    messageStrings(o.Together.ToDefender),
+			Observer: messageStrings(o.Together.ToRoom),
+		},
+		tokenStrings(tokenReplacements),
+		pick,
+		indexOverride...,
+	)
 
-	if len(o.Together.ToDefender) == 0 ||
-		len(o.Together.ToDefender) != len(o.Together.ToAttacker) ||
-		len(o.Together.ToDefender) != len(o.Together.ToRoom) {
-		return DefenseMessageTriad{}
+	return DefenseMessageTriad{
+		ToAttacker: ItemMessage(roles.Actor),
+		ToDefender: ItemMessage(roles.Actee),
+		ToRoom:     ItemMessage(roles.Observer),
 	}
+}
 
-	n := len(o.Together.ToDefender)
-	index := pick(n)
-	if len(indexOverride) > 0 {
-		index = indexOverride[0] % n
-		if index < 0 {
-			index += n
-		}
+// messageStrings converts an authored pool to the core's plain-string form.
+func messageStrings(pool MessageOptions) []string {
+	if len(pool) == 0 {
+		return nil
 	}
+	out := make([]string, len(pool))
+	for i, m := range pool {
+		out[i] = string(m)
+	}
+	return out
+}
 
-	triad := DefenseMessageTriad{
-		ToDefender: o.Together.ToDefender[index],
-		ToAttacker: o.Together.ToAttacker[index],
-		ToRoom:     o.Together.ToRoom[index],
+// tokenStrings converts a token map to the core's plain-string form.
+func tokenStrings(tokens map[TokenName]string) map[string]string {
+	if len(tokens) == 0 {
+		return nil
 	}
-	for token, value := range tokenReplacements {
-		triad.ToDefender = triad.ToDefender.SetTokenValue(token, value)
-		triad.ToAttacker = triad.ToAttacker.SetTokenValue(token, value)
-		triad.ToRoom = triad.ToRoom.SetTokenValue(token, value)
+	out := make(map[string]string, len(tokens))
+	for name, value := range tokens {
+		out[string(name)] = value
 	}
-	return triad
+	return out
 }
 
 func (d *DefenseMessageGroup) Filepath() string {

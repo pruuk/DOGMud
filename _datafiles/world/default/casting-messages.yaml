@@ -1,0 +1,40 @@
+# Casting messages for the DEFAULT world.
+#
+# WHY THIS FILE EXISTS: internal/spells/casting_messages.go used to carry a
+# hardcoded Go fallback (defaultCastingMessages) that supplied these lines when
+# the YAML was absent. That fallback was deleted on 2026-09-09, because a Go
+# default that shadows shipped data means a typo in the YAML changes what
+# players read and nobody finds out. Deleting it made a missing file a startup
+# panic, and the default world had never carried one, so its content moved here
+# where it can be edited by an author rather than a programmer.
+#
+# The DOGMud world has its own, differently worded, at
+# _datafiles/world/dogmud/casting-messages.yaml. This one is deliberately
+# generic: the default world has no "folds" cosmology to refer to.
+#
+# {spell} is replaced with the spell's player-facing DISPLAY name.
+#
+# ⚠️ Each pool needs at least 3 variants or the server refuses to start
+# (internal/spells/casting_messages.go, minCastingVariants). Variants within a
+# pool are independent, so unlike the defence and taunt stores these lists do
+# NOT need to be equal in length to one another.
+
+already_casting:
+  - "You are already casting {spell}. Type cancel to stop."
+  - "Your concentration is already bound up in {spell}. Type cancel to stop."
+  - "You cannot begin {spell} again while you are still casting it."
+
+cast_started:
+  - "You begin casting {spell}..."
+  - "You gather your will and begin to cast {spell}..."
+  - "You start to shape the magic of {spell}..."
+
+cast_continuing:
+  - "You hold {spell} steady, not yet finished..."
+  - "You keep your concentration on {spell}..."
+  - "The magic of {spell} builds slowly under your attention..."
+
+concentration_slipped:
+  - "Your concentration breaks and {spell} slips away."
+  - "You lose your grip on {spell} before it can take shape."
+  - "The magic of {spell} scatters as your focus fails."

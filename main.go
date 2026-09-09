@@ -1918,6 +1918,7 @@ func loadAllDataFiles(isReload bool) {
 
 	colorpatterns.LoadColorPatterns()
 	combat.LoadTauntMessageFiles()
+	spells.LoadCastingMessages()
 	audio.LoadAudioConfig()
 	characters.CompileAdjectiveSwaps() // This should come after loading color patterns.
 }

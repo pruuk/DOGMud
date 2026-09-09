@@ -165,8 +165,15 @@ func TestOpposedContestsAreFloored(t *testing.T) {
 			return err
 		}
 		if d.IsDir() {
+			// Skip every dot-directory, not just .git. A git worktree under
+			// .claude/worktrees/ presents a SECOND full copy of internal/, and
+			// this walk would then report that copy's files as violations of a
+			// rule the real tree does not break. Agent worktrees are routine.
+			if strings.HasPrefix(d.Name(), ".") && d.Name() != "." {
+				return filepath.SkipDir
+			}
 			switch d.Name() {
-			case ".git", "vendor", "node_modules", "bin", "_datafiles", "docs", "tools":
+			case "vendor", "node_modules", "bin", "_datafiles", "docs", "tools":
 				return filepath.SkipDir
 			}
 			return nil

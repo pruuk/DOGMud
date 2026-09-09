@@ -14,6 +14,7 @@ package narration_test
 //   - _datafiles/world/dogmud/taunt-messages/        1 file  (rhetoric.yaml)
 //   - _datafiles/world/dogmud/messaging/             1 file  (grapple_outcomes.yaml)
 //   - _datafiles/world/dogmud/casting-messages.yaml  1 file  (bare file at tree root, 24 lines)
+//   - _datafiles/world/dogmud/itemvoices/            2 files (sentient item voices)
 // A shrinking file count against these numbers means a store was deleted or
 // merged — the golden for that store will also shrink, so silence is not
 // possible, but this comment is the first place to look for "why".
@@ -50,6 +51,12 @@ package narration_test
 //   - casting-messages: 4 categories. PLUS the unknown-category fallback
 //     case (NOT empty string — GetCastMessage always returns *something*;
 //     the golden records the literal fallback sentence).
+//   - itemvoices: voiceid x the full 8-event valid set. Single role, no band,
+//     no tokens. Events a voice does not author render "" and that emptiness
+//     is frozen too, so a pool silently disappearing shows as a line changing
+//     from text to "". Added 2026-09-09: this store had no picker seam at all
+//     (Line called util.Rand directly) and was therefore the one message store
+//     with no golden. PLUS the unknown-event case.
 //   - post-pipeline (messaging.RenderForRecipient): 3 representative sample
 //     lines x SightDecision(full/shapes/none) x Channel(visual/audio). This
 //     sweeps a REPRESENTATIVE subset of Category (~15 of the real ~60+;
@@ -85,6 +92,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
@@ -126,6 +134,8 @@ func setupRealStores(t *testing.T) {
 
 	items.LoadDataFiles()
 	combat.LoadTauntMessageFiles()
+	itemvoices.LoadDataFiles()
+	spells.LoadCastingMessages()
 }
 
 // ---------------------------------------------------------------------
@@ -692,7 +702,62 @@ func TestSnapshotStores(t *testing.T) {
 	t.Run("casting_messages", func(t *testing.T) {
 		checkGolden(t, "casting_messages.golden", buildCastingMessagesGolden(t))
 	})
+	t.Run("itemvoices", func(t *testing.T) {
+		checkGolden(t, "itemvoices.golden", buildItemVoicesGolden(t))
+	})
 	t.Run("post_pipeline", func(t *testing.T) {
 		checkGolden(t, "post_pipeline.golden", buildPostPipelineGolden(t))
 	})
+}
+
+// ---------------------------------------------------------------------
+// Store 6: itemvoices (internal/itemvoices)
+// ---------------------------------------------------------------------
+
+func buildItemVoicesGolden(t *testing.T) string {
+	t.Helper()
+	dir := filepath.Join(dogmudDataDir(t), "itemvoices")
+	files := yamlKeysInDir(t, dir)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# itemvoices store snapshot\n")
+	fmt.Fprintf(&b, "# voice files at time of writing: %d (%s)\n", len(files), strings.Join(files, ","))
+	fmt.Fprintf(&b, "# dimensions: voiceid x event. Single role (the item speaks), no band, no tokens.\n")
+	fmt.Fprintf(&b, "#\n")
+	fmt.Fprintf(&b, "# This store had NO picker seam and NO golden until 2026-09-09: VoiceSpec.Line\n")
+	fmt.Fprintf(&b, "# called util.Rand directly, so nothing could pin its output. LineWith was added\n")
+	fmt.Fprintf(&b, "# FIRST, so this golden is a baseline of PRE-migration behaviour rather than a\n")
+	fmt.Fprintf(&b, "# record of whatever the M3 migration produced. A fresh SequencePicker per tuple\n")
+	fmt.Fprintf(&b, "# pins index 0.\n\n")
+
+	// The full valid event set, from itemvoices.validVoiceEvents. Events a
+	// voice does not author render empty, and that emptiness is itself frozen:
+	// a voice silently losing an event pool shows up here as a line changing
+	// from text to "".
+	events := []string{
+		"on_equip", "on_unequip", "on_kill", "on_idle",
+		"on_hunger_warning", "on_hunger_feeding", "on_taunt", "on_grudge",
+	}
+
+	ids := itemvoices.AllVoiceIds()
+	if len(ids) == 0 {
+		t.Fatal("no voices loaded; setupRealStores must call itemvoices.LoadDataFiles()")
+	}
+
+	for _, id := range ids {
+		v := itemvoices.GetVoice(id)
+		if v == nil {
+			t.Fatalf("voice %q listed by AllVoiceIds but GetVoice returned nil", id)
+		}
+		for _, event := range events {
+			fmt.Fprintf(&b, "%s|%s => %q\n", id, event, v.LineWith(narration.SequencePicker(), event))
+		}
+	}
+
+	// EMPTY CASE: an event outside the valid set entirely.
+	fmt.Fprintf(&b, "\n# EMPTY CASE: unknown event -> \"\"\n")
+	first := itemvoices.GetVoice(ids[0])
+	fmt.Fprintf(&b, "%s|bogus-event => %q\n", ids[0], first.LineWith(narration.SequencePicker(), "bogus-event"))
+
+	return b.String()
 }
