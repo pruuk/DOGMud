@@ -155,24 +155,3 @@ shield = full, heal = ÷2, DoT = ÷3.
 - Hidden mob detection on room entry: Perception+Search vs Dex+Skullduggery
   opposed roll in `go.go`. Mobs can spawn hidden via `buffids: [9]`.
 
-## Salvage System
-Players can break down crafted items (or items with `salvage_returns` on
-their ItemSpec) to recover materials. New standalone skill: `salvage`,
-primary stat: Perception, progression multiplier 2.0.
-
-### How It Works
-- `salvage <item>` starts a multi-round activity (1-5 rounds based on
-  ingredient gold value).
-- Each ingredient is rolled independently. Chance scales with skill:
-  `chance = min + (max - min) * sqrt(skill / softCap)`.
-- Config: `SalvageMinChance` (0.15), `SalvageMaxChance` (0.85),
-  `SalvageSoftCap` (50).
-- Item is always consumed, even if no materials recovered.
-
-### Stations
-- Salvage works anywhere; no tool required as of 2026-05-01.
-- Skill rank gates yield rate (Perception-based, see formula above).
-
-### ItemSpec Fields
-- `salvage_returns`: list of `{item_tag, quantity}` for non-crafted items.
-  Every `item_tag` must match a valid `component_tag` on an existing item.
