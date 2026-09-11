@@ -394,8 +394,8 @@ root as well as its own packages, because the root guards read these files.
 
 ## Playtest gate
 
-Two lanes, reusing the 5a staging, plus a third once the open decision is made.
-Every command below is typed by a tester.
+Three lanes; the first two reuse the 5a staging. Every command below is typed
+by a tester.
 
 **Lane 1, dark cave**, room 3101 (Cave Mouth, cave biome, unlit). Actors:
 
