@@ -99,6 +99,12 @@ rep, mutation grants, NPC dialogue queueing, and timed sequences.
 This is the seam that keeps the evaluator testable: tests supply a fake
 `ActionContext`/`PlayerState`, production supplies `GameBridge`.
 
+`RoomText` substitutes `{source}` with the triggering player's **tagged** name
+and sends on the **visual** channel, the way the behaviour tree's own
+`room_text` does. Until 2026-09-11 it sent raw text on the audio channel, so an
+observer who could not see still read it and quest 77 showed a literal
+`{source}`. The tag matters: `messaging.Anonymize` strips only tagged names.
+
 ## Gotchas
 
 - **Zero and empty trigger fields are wildcards.** `matchTriggerFields` skips
@@ -121,6 +127,12 @@ This is the seam that keeps the evaluator testable: tests supply a fake
   a command is typed, the second only when it succeeded.
 - **Ephemeral (instance) rooms match their TEMPLATE room id** in `room:`
   triggers, not their runtime id.
+- **Every quest `room_text` must contain `{source}`, and `ValidateAllRoomText`
+  panics at startup if one does not.** The room is watching the player act, so
+  the line must say who. It also rejects `{target}` and `{target_plain}` (a
+  quest has no target) and `{source_plain}` (an untagged name cannot be
+  anonymized in the dark). The rules live in `roomTextProblems`, and
+  `TestShippedQuestRoomTextFollowsConvention` checks the shipped files.
 - **`ConsumeItem` is only honoured on `item_give`.** Setting it on any other
   event silently does nothing. Note also that `give.go` transfers the item to
   the mob *before* any handler runs, so consumption is a post-hoc correction —

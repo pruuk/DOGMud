@@ -1383,7 +1383,7 @@ Expected: all PASS.
 - [ ] **Step 6: Confirm the check is NOT wired into boot yet**
 
 Run: `grep -c "ValidateAllRoomText()" internal/questengine/loader.go`
-Expected: `1` (the `mudlog.Info` line only). Wiring it now would fail boot on today's shipped data; that happens in Task 6 after the rewrite.
+Expected: `2`, the function's own declaration and its `mudlog.Info` line; neither is a call (corrected in execution). The call check that matters is `grep -nE "^\s+ValidateAllRoomText\(\)" internal/questengine/loader.go`, which must print nothing. Wiring it now would fail boot on today's shipped data; that happens in Task 6 after the rewrite.
 
 - [ ] **Step 7: Package tests, format, commit**
 
@@ -1508,7 +1508,7 @@ Run: `grep -rh 'room_text: "{source} ' _datafiles/world/dogmud/quests/ | wc -l`
 Expected: `22` (21 rewritten plus quest 77).
 
 Run: `git diff --stat -- _datafiles/world/dogmud/quests/`
-Expected: 13 files changed, 21 insertions, 21 deletions.
+Expected: 12 files changed, 21 insertions, 21 deletions. (Corrected in execution: the 21 lines live in 12 files, not 13.)
 
 - [ ] **Step 5: Run the data test and confirm it passes**
 
