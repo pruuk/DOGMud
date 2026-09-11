@@ -9,6 +9,20 @@ The <ansi fg="command">cast</ansi> command attempts to cast a learned spell.
 
   Spells can also be cast by using their shorthand/ID directly, such as: <ansi fg="command">illum</ansi>
 
+<ansi fg="yellow">━━━ Targets ━━━</ansi>
+
+  <ansi fg="command">cast heal Kesh</ansi>
+  Aim at someone by name.
+
+  <ansi fg="command">cast heal</ansi>
+  With no name, a harmful spell aims at your foe and a helpful one at you.
+
+You must be able to see what you aim at. In the dark you can cast only
+on yourself or on the whole room. If you can make out shapes but not
+faces, aim at your foe, or at a shape: <ansi fg="command">cast heal shape</ansi>,
+<ansi fg="command">cast heal 2.shape</ansi>. A creature hiding from you
+cannot be named at all until you find it.
+
 <ansi fg="yellow">━━━ Combat and Concentration ━━━</ansi>
 
 Casting is an act of held concentration. Spells build over several
