@@ -1,0 +1,17 @@
+# Slice A lane 1: the WITNESS. You are Ordel Quist in an UNLIT cave with no
+# special senses. You cannot see, on purpose. Quote every line you receive
+# VERBATIM, including anything that mentions a spell.
+
+ephemeral:
+  profile: m2-witness
+  start_room: 3101
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look`. If you can read a normal room description, say so at once.
+  - >-
+    Stay put and do not drink anything. Every time you receive a line about a
+    spell or healing, quote it exactly and say whether it names anyone. A NAME
+    IS THE DEFECT: you cannot see who cast it. "Something" is correct.

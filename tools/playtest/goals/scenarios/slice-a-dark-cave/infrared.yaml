@@ -1,0 +1,23 @@
+# Slice A lane 1: the INFRARED tester. You are Vessa Thorn in an UNLIT cave.
+# Your eyes see heat shapes but no faces. Quote every line VERBATIM.
+
+ephemeral:
+  profile: slice-a-infrared
+  start_room: 3101
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `conditions`, then `buffs` if that lists nothing. Quote the list. If
+    InfraredVision is NOT active, say so at once and stop: the lane cannot test
+    shapes.
+  - >-
+    Type `cast heal Ordel`. Quote the reply. It MUST be a refusal with a hint
+    that mentions `cast heal shape`.
+  - >-
+    Type `cast heal shape`. When it lands, type `cast heal 2.shape`. Quote both.
+    Say who each landed on if you are told. Ask Ordel what they read.
+  - >-
+    When Sil casts heal on Ordel, quote the line you receive. It should say "a
+    figure" for both of them and name nobody.

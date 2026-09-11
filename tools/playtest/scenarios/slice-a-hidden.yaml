@@ -1,0 +1,38 @@
+# Follow-up slice A, lanes 2 and 3: hidden creatures.
+#
+# Lane 2 (room 462, Thornwall City, lit): a sneaker hides from a seer who has
+# Veil Sight and NO pet. Lane 3 (room 498, quest 14): a quester without
+# see-hidden must find Torvan Cresk with `search` before naming him.
+name: slice-a-hidden
+mode: party
+summary: >-
+  Hidden creatures cannot be named until perceived, Veil Sight reveals them
+  with no pet, and a search drags Torvan Cresk out of hiding.
+on_actor_stop: continue
+budgets:
+  wall_clock: 30m
+requires:
+  max_connections: 20
+roster:
+  - id: sneaker
+    personality: bug-finder
+    goals: goals/scenarios/slice-a-hidden/sneaker.yaml
+  - id: seer
+    personality: bug-finder
+    goals: goals/scenarios/slice-a-hidden/seer.yaml
+  - id: quester
+    personality: bug-finder
+    goals: goals/scenarios/slice-a-hidden/quester.yaml
+
+group_goals:
+  - id: hidden-unnamed
+    do: The sneaker sneaks; the seer types `look`, `look <sneaker>`, `consider <sneaker>`, `attack <sneaker>` and `cast veil-sight <sneaker>`.
+    verify: The sneaker is not listed and every named command reads as if nobody by that name is there.
+  - id: veil-sight-reveals
+    do: The seer types `cast veil-sight`, then `look` and `look <sneaker>`.
+    verify: The sneaker is listed and can be looked at. The seer has no pet.
+  - id: search-drags-out
+    do: In room 498 the quester waits until Torvan Cresk is not listed, tries `attack torvan`, then searches until he is found.
+    verify: >-
+      The attack reads as if nobody is there. After the find lists "Torvan
+      Cresk (hiding)", `look` lists him and `attack torvan` starts a fight.

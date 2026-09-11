@@ -1,0 +1,15 @@
+# Slice A lane 2: the SNEAKER. You are Midroad Scout. Quote every line VERBATIM.
+
+ephemeral:
+  profile: mid
+  start_room: 462
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `sneak`. Quote the reply. If you are spotted or it fails, wait a round
+    and try again until you are told you are sneaky. Tell Sil Vantage the moment
+    you are hidden, then stay put and do nothing else that would end it.
+  - >-
+    Quote any line that says you were spotted or noticed.

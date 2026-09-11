@@ -1,0 +1,44 @@
+# Follow-up slice A, lane 1: aiming and names in an UNLIT cave.
+#
+# Room 3101, Cave Mouth, Ironwind Steppe: cave biome, unlit, the room the M2 and
+# 5a darkness lanes used. Do NOT cast a light spell here: it lights the cave and
+# voids every later step.
+name: slice-a-dark-cave
+mode: party
+summary: >-
+  A caster, a sightless witness and an infrared tester check that casts need
+  sight and that nobody is told a name they cannot see.
+on_actor_stop: continue
+budgets:
+  wall_clock: 25m
+requires:
+  max_connections: 20
+roster:
+  - id: caster
+    personality: bug-finder
+    goals: goals/scenarios/slice-a-dark-cave/caster.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/slice-a-dark-cave/witness.yaml
+  - id: infrared
+    personality: bug-finder
+    goals: goals/scenarios/slice-a-dark-cave/infrared.yaml
+
+group_goals:
+  - id: confirm-dark
+    do: All three type `look` first.
+    verify: Nobody can read a normal room description. If anyone can, the lane is void.
+  - id: blind-cast-refused
+    do: The caster types `cast heal Ordel` and `cast mind-spike Ordel`.
+    verify: Both are refused with "You don't see them here." and the caster's conviction does not drop.
+  - id: shape-hint
+    do: The infrared tester types `cast heal Ordel`, then `cast heal shape` and `cast heal 2.shape`.
+    verify: >-
+      The named cast is refused with a hint naming `cast heal shape`. The shape
+      casts land on the two other players, one each. Ordel reads "Something's
+      Heal envelops you in healing energy." and never a name.
+  - id: named-to-nobody
+    do: The caster drinks their draught, says they can see, and types `cast heal Ordel`.
+    verify: >-
+      It lands. Ordel, still unable to see, reads "Something's Heal", not the
+      caster's name. The infrared tester reads "a figure" for both parties.

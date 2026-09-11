@@ -1,0 +1,25 @@
+# Slice A lane 3: the QUESTER. You are Ordel Quist on step `confront` of The
+# Undertow, in Torvan Cresk's operations room. You have no way to see hidden
+# creatures. Quote every line VERBATIM.
+
+ephemeral:
+  profile: m2-witness
+  start_room: 498
+  overlays:
+    set_quest_tokens: ["14-start", "14-confront"]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `look`. If Torvan Cresk is listed, wait a few rounds and `look` again,
+    until he is NOT listed (he slips into the shadows on his own). Quote the
+    listing each time. If after 15 looks he is always listed, say so and stop.
+  - >-
+    While he is not listed, type `attack torvan`. Quote the reply. It must read
+    as if nobody is there; a fight starting is the defect.
+  - >-
+    Type `search`. Quote the whole reply. Repeat, waiting for the cooldown,
+    until the reply lists "Torvan Cresk (hiding)". Then type `look`: he MUST be
+    listed. Type `attack torvan` and confirm the fight starts. You may flee
+    after the first exchange.
