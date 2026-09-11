@@ -1,0 +1,54 @@
+package messaging
+
+import (
+	"regexp"
+	"strings"
+)
+
+// identityTagPattern matches one whole identity tag and captures its content:
+// a player, mob or pet name as characters.FormattedName.String renders it.
+var identityTagPattern = regexp.MustCompile(`<ansi fg="(?:(?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">([^<]*)</ansi>`)
+
+// dupIndexSuffix matches the duplicate index FormattedName.String appends to a
+// mob's name in a room holding more than one of them.
+var dupIndexSuffix = regexp.MustCompile(` #\d+$`)
+
+// hideTaggedName replaces a whole identity tag whose content is this name,
+// ignoring case and any duplicate index.
+//
+// WHY CASE-INSENSITIVE HERE AND NOWHERE ELSE. An identity tag's content is
+// always a creature's name, so matching loosely inside one cannot hide an
+// ordinary word. Outside a tag it can: mob names include "guard", and prose
+// says "you guard against". The forms genuinely differ: authored mob names are
+// lowercase ("skeleton"), FormattedName.String title-cases them for display
+// and may append " #2", and the channel defence triad prints that display form
+// while the verb's own lines print the raw name. Without this, a blind
+// attacker read the mob's name in the defence line.
+func hideTaggedName(text, name, word string) string {
+	matches := identityTagPattern.FindAllStringSubmatchIndex(text, -1)
+	if matches == nil {
+		return text
+	}
+	var b strings.Builder
+	last := 0
+	for _, m := range matches {
+		inner := text[m[2]:m[3]]
+		if !strings.EqualFold(dupIndexSuffix.ReplaceAllString(inner, ""), name) {
+			continue
+		}
+		shown := word
+		if atSentenceStart(text, m[0]) {
+			shown = strings.ToUpper(word[:1]) + word[1:]
+		}
+		b.WriteString(text[last:m[0]])
+		b.WriteString(`<ansi fg="combat-anon">`)
+		b.WriteString(shown)
+		b.WriteString(`</ansi>`)
+		last = m[1]
+	}
+	if last == 0 {
+		return text
+	}
+	b.WriteString(text[last:])
+	return b.String()
+}

@@ -92,3 +92,44 @@ func TestHideNames(t *testing.T) {
 		})
 	}
 }
+
+// A creature's name is printed in two forms: the raw authored name in a verb's
+// own lines ("skeleton") and the display form inside an identity tag, which is
+// title-cased and may carry a duplicate index ("Skeleton #2"). Both must be
+// hidden from one Audience name. Matching loosely OUTSIDE a tag would hide
+// ordinary words, so it stays exact there.
+func TestHideNames_IdentityTagsMatchWhateverTheCase(t *testing.T) {
+	const anon = "<ansi fg=\"combat-anon\">"
+	cases := []struct {
+		name  string
+		text  string
+		sight SightDecision
+		want  string
+	}{
+		{
+			name:  "the display form inside a tag",
+			text:  "<ansi fg=\"mobname\">Skeleton</ansi> withstands your kick.",
+			sight: SightNone,
+			want:  anon + "Something</ansi> withstands your kick.",
+		},
+		{
+			name:  "a duplicate index goes with it",
+			text:  "You hit <ansi fg=\"mobname-dup2\">Skeleton #2</ansi>.",
+			sight: SightShapes,
+			want:  "You hit " + anon + "a figure</ansi>.",
+		},
+		{
+			name:  "a bare word of the wrong case is left alone",
+			text:  "Skeleton hits you.",
+			sight: SightNone,
+			want:  "Skeleton hits you.",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := HideNames(tc.text, []string{"skeleton"}, tc.sight); got != tc.want {
+				t.Fatalf("HideNames =\n  %q\nwant\n  %q", got, tc.want)
+			}
+		})
+	}
+}

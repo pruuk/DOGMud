@@ -51,6 +51,7 @@ func HideNames(text string, names []string, d SightDecision) string {
 	}
 	sort.SliceStable(ordered, func(i, j int) bool { return len(ordered[i]) > len(ordered[j]) })
 	for _, name := range ordered {
+		text = hideTaggedName(text, name, word)
 		text = hideOneName(text, name, word)
 	}
 	return text
