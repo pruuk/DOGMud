@@ -1,10 +1,14 @@
 package questengine
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestRoomTextProblems(t *testing.T) {
@@ -60,4 +64,33 @@ func TestValidateAllRoomText_PanicsAtStartupOnABadLine(t *testing.T) {
 func TestValidateAllRoomText_AcceptsAGoodLine(t *testing.T) {
 	withEngine(t, "{source} unlocks the strongbox.")
 	assert.NotPanics(t, ValidateAllRoomText)
+}
+
+// TestShippedQuestRoomTextFollowsConvention reads the real quest files. It is
+// the data half of the check: ValidateAllRoomText stops a boot, this stops a
+// merge.
+func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
+	files, err := filepath.Glob("../../_datafiles/world/dogmud/quests/*.yaml")
+	require.NoError(t, err)
+	require.NotEmpty(t, files, "the glob must find the quest files, or this test proves nothing")
+
+	checked := 0
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		require.NoError(t, err)
+		var q QuestDef
+		require.NoError(t, yaml.Unmarshal(data, &q), f)
+		for i, tr := range q.Triggers {
+			for j, a := range tr.Actions {
+				if a.RoomText == "" {
+					continue
+				}
+				checked++
+				assert.Empty(t, roomTextProblems(a.RoomText),
+					"%s trigger %d action %d: %q", filepath.Base(f), i, j, a.RoomText)
+			}
+		}
+	}
+	assert.Equal(t, 22, checked,
+		"22 quest room_text lines ship; a different count means the inventory moved, so re-read this test")
 }

@@ -66,7 +66,7 @@ triggers:
           wrapped in oilcloth against the damp, is a torn quarter of a survey
           in an old, exact hand -- Edvar's work, the map Toby said was hidden
           here. You ease it free and pocket it.
-      - room_text: "works a loose floorboard free and lifts something wrapped in oilcloth."
+      - room_text: "{source} works a loose floorboard free and lifts something wrapped in oilcloth."
 
   # loose floorboard, before Toby's word
   - event: room_interact
@@ -100,7 +100,7 @@ triggers:
           can keep it safe. Orin presses a copy of the map on you before you
           go. "The original is below," he says, "where the canal meets the old
           quarter. Someone outside this should know it is real."
-      - room_text: "re-cuts a faded guild-mark over a shuttered door until it reads as a working shop again."
+      - room_text: "{source} re-cuts a faded guild-mark over a shuttered door until it reads as a working shop again."
       - grant: "68-end"
 
   # guild-mark, before the choice

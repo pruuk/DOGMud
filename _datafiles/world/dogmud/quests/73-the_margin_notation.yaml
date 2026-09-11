@@ -73,7 +73,7 @@ triggers:
           plain under the ruined ink, a fourth channel is drawn -- narrow,
           distinct, running off to the southwest, no mere smear of current.
           One of the three records Quist sent you to find.
-      - room_text: "studies the bookseller's water-damaged old chart with new attention."
+      - room_text: "{source} studies the bookseller's water-damaged old chart with new attention."
   - event: room_interact
     room: 6226
     noun: damaged-chart
@@ -98,7 +98,7 @@ triggers:
           some copies, re-marked in others, across sixty years of hands that
           could not agree whether it belonged. The disagreement is consistent.
           Two records now, and they were never copied from each other.
-      - room_text: "pores over the oldest charts in Tallis's stall."
+      - room_text: "{source} pores over the oldest charts in Tallis's stall."
   - event: room_interact
     room: 6131
     noun: old-charts
@@ -124,7 +124,7 @@ triggers:
           admitting that the surveyors could not agree. The city's own record,
           hung in public, says the count was once in dispute. Three independent
           records. Time to report back to Quist.
-      - room_text: "examines the marginal note on the great hall map closely."
+      - room_text: "{source} examines the marginal note on the great hall map closely."
   - event: room_interact
     room: 6143
     noun: marginal-note

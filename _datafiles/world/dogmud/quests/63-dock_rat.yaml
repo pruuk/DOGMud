@@ -68,7 +68,7 @@ triggers:
           shipment: the manifest count on the left, the real one on the
           right. Foreman Hewd has been skimming the difference for a long
           time, and the shortage he reported was Teo's only by his choosing.
-      - room_text: "works a loose floor-board free and pockets something wrapped in oilcloth."
+      - room_text: "{source} works a loose floor-board free and pockets something wrapped in oilcloth."
 
   # ── floor-board, no quest yet ──
   - event: room_interact

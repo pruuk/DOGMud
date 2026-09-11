@@ -41,6 +41,7 @@ func LoadDataFiles() {
 	}
 
 	ValidateAllFlags()
+	ValidateAllRoomText()
 
 	mudlog.Info("questengine.LoadDataFiles()", "loadedCount", len(globalEngine.quests), "Time Taken", time.Since(start))
 }
