@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -90,8 +91,41 @@ func TestSendCounterTrio_LitRoomIsUnchanged(t *testing.T) {
 
 	assert.Equal(t, []string{"You strike back at Bobrick!"},
 		counterTrioPlain(events.DrainQueuedMessagesForTest(7511)))
+	assert.Equal(t, []string{"Aliceia turns your attack into a strike of their own!"},
+		counterTrioPlain(events.DrainQueuedMessagesForTest(7512)),
+		"the countered party gets their own line and not the room line as well")
 	assert.Equal(t, []string{"Aliceia strikes back at Bobrick!"},
 		counterTrioPlain(events.DrainQueuedMessagesForTest(7513)))
+}
+
+// DispatchCounterMessages is how the 23 special-move wrappers speak a counter.
+func TestDispatchCounterMessages_InTheDarkGoesThroughTheSeam(t *testing.T) {
+	room := counterTrioRoom(t, "cave")
+	DispatchCounterMessages(NewUserActorInRoom(users.GetByUserId(7512), room), counterTrioResult())
+
+	assert.Equal(t, []string{"You strike back at something!"},
+		counterTrioPlain(events.DrainQueuedMessagesForTest(7511)))
+	assert.Equal(t, []string{"Something turns your attack into a strike of their own!"},
+		counterTrioPlain(events.DrainQueuedMessagesForTest(7512)))
+}
+
+func TestDispatchCounterMessages_AMobCounteredPartyIsHiddenFromTheCounterer(t *testing.T) {
+	room := counterTrioRoom(t, "cave")
+	m := newSearchTestMob(7521, "Skeleton", 7510)
+	mobs.SetInstanceForTest(7521, m)
+	t.Cleanup(func() { mobs.SetInstanceForTest(7521, nil) })
+	room.AddMob(7521)
+
+	res := counterTrioResult()
+	res.CounteredName = "Skeleton"
+	res.DefenderMsg = "You strike back at Skeleton!"
+	res.AttackerMsg = "Aliceia turns your attack into a strike of their own!"
+	res.RoomMsg = "Aliceia strikes back at Skeleton!"
+	DispatchCounterMessages(NewMobActorInRoom(m, room), res)
+
+	assert.Equal(t, []string{"You strike back at something!"},
+		counterTrioPlain(events.DrainQueuedMessagesForTest(7511)))
+	assert.Empty(t, events.DrainQueuedMessagesForTest(7513))
 }
 
 func TestSendCounterTrio_NotCounteredSendsNothing(t *testing.T) {
