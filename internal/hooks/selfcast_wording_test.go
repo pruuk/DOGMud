@@ -54,6 +54,8 @@ func TestSelfCastHeal_OneLineToCaster_RoomNamesCasterOnce(t *testing.T) {
 	caster, observer := drainPlain(1), drainPlain(2)
 	assert.Equal(t, 1, countContaining(caster, "A warm glow of healing magic envelops you."))
 	assert.Equal(t, 0, countContaining(caster, "restorative magic around Aliceia"))
+	assert.Equal(t, 0, countContaining(caster, "channels restorative magic"),
+		"the caster is excluded from their own room line")
 	assert.Equal(t, 1, countContaining(observer, "Aliceia channels restorative magic."))
 	assert.Equal(t, 0, countContaining(observer, "envelops Aliceia in healing light"))
 }
@@ -72,6 +74,8 @@ func TestSelfCastBuff_OneLineToCaster_RoomNamesCasterOnce(t *testing.T) {
 	caster, observer := drainPlain(1), drainPlain(2)
 	assert.Equal(t, 1, countContaining(caster, "Your Bless takes effect."))
 	assert.Equal(t, 0, countContaining(caster, "takes effect on Aliceia"))
+	assert.Equal(t, 0, countContaining(caster, "settles over"),
+		"the caster is excluded from their own room line")
 	// "Bless settles over Aliceia." is a substring of the old broken line, so
 	// the second assertion is the one that proves the fix.
 	assert.Equal(t, 1, countContaining(observer, "Bless settles over Aliceia."))
@@ -141,6 +145,8 @@ func TestAreaHeal_CasterIsTheirOwnTarget(t *testing.T) {
 	assert.Equal(t, 1, countContaining(caster, "A warm glow of healing magic envelops you."))
 	assert.Equal(t, 0, countContaining(caster, "restorative magic around Aliceia"))
 	assert.Equal(t, 1, countContaining(caster, "restorative magic around Bobrick"))
+	assert.Equal(t, 0, countContaining(caster, "channels restorative magic"),
+		"the caster is excluded from their own room line")
 	assert.Equal(t, 1, countContaining(observer, "Aliceia's Mass Mend envelops you in healing energy."))
 	assert.Equal(t, 1, countContaining(observer, "Aliceia channels restorative magic."))
 }
@@ -163,4 +169,61 @@ func TestAreaPurge_CasterIsTheirOwnTarget(t *testing.T) {
 	assert.Equal(t, 1, countContaining(caster, "Your Cleansing Wave cleanses Bobrick of afflictions."))
 	assert.Equal(t, 1, countContaining(observer, "Cleansing Wave cleanses Aliceia of afflictions."))
 	assert.Equal(t, 1, countContaining(observer, "purges the toxins from your body."))
+}
+
+// TestCrossCast_RoomLinesUnchanged gives the cross-cast room lines a reader.
+// The fixture's two users are the caster and the target, and both are excluded
+// from those lines, so without a third player nothing observed them at all.
+func TestCrossCast_RoomLinesUnchanged(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	caster := users.GetByUserId(1)
+	target := users.GetByUserId(2)
+	watcher := users.NewTestUser(3, "cara", "Carrow", 1003)
+	watcher.Character.RoomId = 1
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: caster, 2: target, 3: watcher})
+	defer restoreUsers()
+	room := rooms.LoadRoom(1)
+	room.AddPlayer(3)
+
+	cases := []struct {
+		spell    *spells.SpellData
+		roomLine string
+	}{
+		{&spells.SpellData{SpellId: "purge", Name: "Purge", EffectType: "purge"},
+			"Aliceia's Purge cleanses Bobrick."},
+		{&spells.SpellData{SpellId: "heal", Name: "Heal", EffectType: "heal", EffectMagnitude: 3},
+			"Aliceia's Heal envelops Bobrick in healing light."},
+		{&spells.SpellData{SpellId: "bless", Name: "Bless", EffectType: "buff", BuffIds: []int{100}},
+			"Aliceia's Bless settles over Bobrick."},
+	}
+	for _, c := range cases {
+		drainPlain(1)
+		drainPlain(2)
+		drainPlain(3)
+		applyPlayerEffect(caster, target, room, c.spell, 3, spellContestAttackWin())
+		assert.Equal(t, 1, countContaining(drainPlain(3), c.roomLine), c.spell.Name)
+		assert.Equal(t, 0, countContaining(drainPlain(1), c.roomLine), "caster excluded: "+c.spell.Name)
+		assert.Equal(t, 0, countContaining(drainPlain(2), c.roomLine), "target excluded: "+c.spell.Name)
+	}
+}
+
+// TestSelfCastPurgeAffliction_OneLineToCaster covers the spells whose narration
+// a Go hook owns (fold-anchor, fold-recall, purge-affliction). They declare no
+// effect_type, so applyPlayerEffect's default arm ALSO told the caster "Your
+// Purge Affliction takes effect." before the hook narrated it properly.
+func TestSelfCastPurgeAffliction_OneLineToCaster(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u := users.GetByUserId(1)
+	room := rooms.LoadRoom(1)
+	drainPlain(1)
+
+	spell := &spells.SpellData{SpellId: "purge-affliction", Name: "Purge Affliction", Type: spells.HelpSingle}
+	resolveSpell(u, activity.CastingData{SpellId: "purge-affliction", TargetUserIds: []int{1}}, spell, room)
+
+	caster := drainPlain(1)
+	assert.Equal(t, 1, countContaining(caster, "You purge the afflictions from your body."))
+	assert.Equal(t, 0, countContaining(caster, "takes effect"),
+		"a spell narrated by its Go hook must not also get the generic line")
 }

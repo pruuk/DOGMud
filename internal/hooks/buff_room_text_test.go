@@ -90,7 +90,7 @@ func TestBuffStartRoomText_MobHolderUsesTheMobTag(t *testing.T) {
 	line := rawLineContaining(events.DrainQueuedMessagesForTest(2), "Skeleton glows.")
 	require.NotEmpty(t, line, "the observer must receive the mob's start text")
 	assert.Contains(t, line, `fg="mobname`)
-	assert.NotContains(t, line, `fg="username">Skeleton`,
+	assert.NotContains(t, line, `fg="username`,
 		"a mob holder was tagged with the player colour")
 }
 
@@ -186,9 +186,17 @@ func TestMobBuffTriggerRoomText(t *testing.T) {
 	events.DrainQueuedMessagesForTest(2)
 
 	tickMobBuffs(mob, 100)
-	line := rawLineContaining(events.DrainQueuedMessagesForTest(2), "Skeleton shivers.")
+	raw := events.DrainQueuedMessagesForTest(2)
+	line := rawLineContaining(raw, "Skeleton shivers.")
 	require.NotEmpty(t, line, "a sighted observer must see the mob's trigger text")
 	assert.Contains(t, line, `fg="mobname`)
+	delivered := 0
+	for _, l := range raw {
+		if strings.Contains(plainText(l), "Skeleton shivers.") {
+			delivered++
+		}
+	}
+	assert.Equal(t, 1, delivered, "the trigger line must arrive exactly once")
 
 	// Sight-gated like every other buff room line.
 	darken(t, 1)

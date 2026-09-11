@@ -1149,6 +1149,14 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			`A shimmering barrier surrounds <ansi fg="username">%s</ansi>.`, target.Character.Name), target.UserId)
 
 	default:
+		// A spell whose narration resolveSpell's Go hook owns gets no generic
+		// line here. fold-anchor, fold-recall and purge-affliction declare no
+		// effect_type, so they land in this arm, and the caster was told
+		// "Your Purge Affliction takes effect." before the hook said it
+		// properly.
+		if spellNarratedByGoHook(spellData.SpellId) {
+			break
+		}
 		if target.UserId == user.UserId {
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 				`Your %s takes effect.`, spellData.Name))
@@ -1158,6 +1166,18 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 				spellData.Name, target.Character.Name))
 		}
 	}
+}
+
+// spellNarratedByGoHook reports whether resolveSpell's Go hook switch owns a
+// spell's narration. KEEP IT IN STEP WITH THAT SWITCH: a spell added there
+// without being added here is told twice, once by applyPlayerEffect's default
+// arm and once by its hook.
+func spellNarratedByGoHook(spellId string) bool {
+	switch spellId {
+	case "fold-anchor", "fold-recall", "purge-affliction":
+		return true
+	}
+	return false
 }
 
 // spellAttackChannel maps a spell's target_defense_type onto the U6 attack
