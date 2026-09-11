@@ -41,6 +41,12 @@ character:
     list:
       - buffid: 85
         permabuff: true
+        # permabuff: true does NOT protect a buff from expiry. Buff.Expired()
+        # is TriggersLeft <= 0 and never looks at PermaBuff; GetBuffs hides an
+        # expired buff and Prune deletes it, so a buff written straight into a
+        # saved list with no triggersleft is born dead. Item and species
+        # permabuffs survive only because reapplyPermabuffs re-adds them.
+        triggersleft: 999999
   equipment:
     weapon:
       itemid: 10006
