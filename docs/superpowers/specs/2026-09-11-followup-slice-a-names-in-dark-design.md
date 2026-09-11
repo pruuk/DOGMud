@@ -11,9 +11,10 @@ slice covers two of the 5a findings:
   counter's room line goes out on the audio channel with plain names.
 
 Reading the source widened both. Every "happens to you" line that names the
-other party ignores sight, and hidden creatures can be named by any targeting
-command. This slice is player-facing only. Making mobs perceive darkness is
-slice F, which comes next.
+other party ignores sight, and hidden creatures can be named by every command
+that names a creature, so `look <hidden creature>` gives them away. This slice
+is player-facing only. Making mobs perceive darkness is slice F, which comes
+next.
 
 ## Facts verified against source, 2026-09-11
 
@@ -52,6 +53,7 @@ Read from master `62b326bfe`. Nothing here is recalled.
 | Fact | Evidence |
 |---|---|
 | Cross-cast lines in `applyPlayerEffect` name both parties with no sight check: damage, purge, heal, buff, shield, default | `internal/hooks/spell_resolution.go:986-1000`, `:1008-1016`, `:1047-1055`, `:1106-1114`, `:1145-1152`, `:1164-1169` |
+| Most spell lines wrap a plain name in an identity tag, for example `<ansi fg="username">%s</ansi>'s %s envelops you in healing energy.` | `spell_resolution.go:1050-1052` |
 | Mob casts on players name the mob to the target | `resolveMobSpellAgainstPlayer`: `spell_resolution.go:1580`, `:1615`, `:1654`, `:1664`, `:1695`, `:1708` |
 | The spell defence triad sends both personal lines with `SendTextVisualToUser`, so a defender who cannot see is told nothing | `spell_resolution.go:475-509` |
 | Purge Affliction's cross-cast lines name both parties | `internal/hooks/spell_purgeaffliction.go:21-32` |
@@ -71,22 +73,29 @@ Read from master `62b326bfe`. Nothing here is recalled.
 | A help spell with no name, or the caster's own name, is a self-cast | `cast.go:212`, `:227` |
 | Help-multi, harm-area and help-area casts take no typed target. Neutral casts pass the text on: identify names an item, raise spells a corpse, conjure nothing | `cast.go:243-286`; `hooks/spell_resolution.go:89`; `hooks/companion_summon.go:29` |
 | dogmud spells by type: 21 helpsingle, 15 harmsingle, 12 neutral, 7 harmarea, 4 helparea, none harmmulti or helpmulti | grep `^type:` in `spells/` |
+| Veil Sight is a helpsingle spell | `spells/veil-sight.yaml:5` |
 | The cast command refuses on `NoTarget` before any cost; `RefusalExplained` suppresses the generic line | `internal/usercommands/skill.cast.go:234-259` |
 | Mobs reach `InitiateCast` through `mobcommands/cast.go:43` | grep |
 | The cast help file has no section on targets | `templates/help/cast.template` |
 
 ### Naming a creature
 
+Every name lookup in the game goes through `Room.FindByName`, directly or
+through `actions.ResolveTargetActor`.
+
 | Fact | Evidence |
 |---|---|
 | `FindByName` searches `GetMobs` and `GetPlayers`; neither filters hidden creatures | `internal/rooms/rooms.go:1890-1990` |
 | `N.item`, `all.item` and `item#N` are parsed once, by `util.GetMatchNumber`, inside `FindMatchIn` | `internal/util/util.go:321` |
+| 20 non-test `FindByName` calls in 13 files | grep |
 | `attack`: the named branch uses `FindByName`; `*`, `*mob` and `*user` pick from unfiltered lists | `internal/actions/combat_attack.go:30-109`; callers `usercommands/attack.go:95`, `mobcommands/attack.go:42` |
-| 11 melee special moves (bash, drain, gore, grapple, kick, maul, pounce, rake, taunt, throttle, trip) resolve a name out of combat through `StageMeleeTarget`, then `ResolveTargetActor`, then `FindByName` | `usercommands/bash.go:15`; `actions/melee_target.go:158-181`; `actions/target_resolution.go:73-84` |
-| `target` uses `ResolveTargetActor` | `usercommands/target.go:62` |
+| 11 melee special moves (bash, drain, gore, grapple, kick, maul, pounce, rake, taunt, throttle, trip) resolve a name out of combat through `StageMeleeTarget`, then `ResolveTargetActor` | `usercommands/bash.go:15`; `actions/melee_target.go:158-181`; `actions/target_resolution.go:73-84` |
 | `shoot` resolves its target twice: once for the pre-fire guards, once in `ExecuteFire` | `usercommands/shoot.go:52`, `:628-634`; `actions/combat_fire.go:182-187` |
-| `ResolveTargetActor` also serves look, consider, give, show, talk, ask, party, report, plant, steal, shadow, moderation and six admin commands | grep, non-test |
-| Players hide with `sneak`; entering the hidden state adds buff 9 | `usercommands/usercommands.go:209`; `hooks/Awareness_Cascades.go:57` |
+| Player commands through `ResolveTargetActor`: look, consider, give, show, talk, ask, party invite, report, plant, steal, shadow, target | `usercommands/look.go:81`, `consider.go:28`, `give.go:73`, `show.go:43`, `talk.go:43`, `ask.go:94`, `party.go:182`, `report.go:60`, `skill.skullduggery.plant.go:96`, `skill.skullduggery.steal.go:84`, `skill.skullduggery.shadow.go:57`, `target.go:62` |
+| Other player lookups: give checks the recipient phrase, sell strips a leading merchant name, buy resolves `from <merchant>`, follow resolves its target | `give.go:376`; `sell.go:127`; `actions/buy.go:322`; `modules/follow/follow.go:410` (player), `:536` (mob) |
+| Staff lookups: six admin commands, and moderation, which falls back to a global name lookup | `admin.ai.go:30`, `admin.buff.go:81`, `admin.command.go:43`, `admin.paz.go:25`, `admin.skillset.go:46`, `admin.zap.go:26`; `moderation_target.go:12-16` |
+| Self checks use `FindByName` only to tell "that's you" from "not here" | `target.go:67`, `skill.skullduggery.shadow.go:62`, `actions/buy.go:333`, `actions/melee_target.go:175` |
+| The parser's creature adapters are reached by no player command; `get` uses the parser for containers and corpses only | `internal/parser/adapters.go:92-111`; `usercommands/get.go:320-332` |
 
 ### Who sees a hidden creature
 
@@ -94,9 +103,16 @@ Read from master `62b326bfe`. Nothing here is recalled.
 |---|---|
 | "Also here" skips a hidden player or mob unless the viewer has a pet AND see-hidden. Three copies | `internal/rooms/roomdetails.go:254`, `:299`, `:317` |
 | These are the only see-hidden checks in the code | grep `SeeHidden` |
-| **The pet check is a leftover.** Before upstream commit `463a76727` (#130, 2024-10-10) see-hidden was a pet power, `Pet.HasPower(pets.SeeHidden)`. #130 moved it to a buff flag and kept the `Pet.Exists()` guard | `git show 463a76727 -- rooms/rooms.go` |
+| **No player can own a pet in dogmud.** No code assigns `Character.Pet` (the same search finds `c.Charmed = `, so it could match); no dogmud data has `pettype:`; `GetPetCopy` is called only by the shop listing. So "Also here" has never shown a hidden creature to anyone | grep; `usercommands/list.go:373`; `characters/shop.go:22` |
+| The pet check is an upstream leftover: before GoMud commit `463a76727` (#130, 2024-10-10) see-hidden was a pet power, `Pet.HasPower(pets.SeeHidden)`. #130 moved it to a buff flag and kept the `Pet.Exists()` guard | `git show 463a76727 -- rooms/rooms.go` |
 | See-hidden sources: buff 53 Veil Sight ("revealing hidden creatures"), buff 65 Cat's Eye Draught, and the mutations chameleon-skin, compound-eyes, discorporation, second-sight and tremorsense. Species 32 wraith and 33 spectre carry buff 53 | grep `see-hidden` |
 | Charmed mobs are listed after the other mobs | `roomdetails.go:287`, `:367` |
+| Players hide with `sneak`; entering the hidden state adds buff 9 | `usercommands/usercommands.go:209`; `hooks/Awareness_Cascades.go:57` |
+| Buff 9 has no duration; it ends on combat (`cancel-on-combat`) or when an action cancels it | `buffs/9-hidden.yaml` |
+| Five mobs re-hide through an idle `sneak`: Thornwall Highwayman (90), Smuggler Runner (245), Torvan Cresk (249), Chrysalis Skulker (270), Chrysalis Phantom (272) | `mobs/thornwall_outskirts/90-thornwall_highwayman.yaml:17`; `mobs/thornwall_city/245-*.yaml:14`, `249-*.yaml:15`, `270-*.yaml:15`, `272-*.yaml:16` |
+| **Torvan Cresk is not hostile** (`hostile: false`, `behavior_archetype: noncombat_questgiver`), spawns in room 498, and quest 14 tells players to "Fight him, take the key". His dialogue grants and requires no quest tokens | `mobs/thornwall_city/249-torvan_cresk.yaml:4-15`; `rooms/thornwall_city/498.yaml`; `quests/14-the_undertow.yaml:31`; `dialogue/thornwall_city/249.yaml` |
+| `search` spots hiders by an opposed contest and shows the searcher their names marked "(hiding)", but does not end their hiding | `internal/actions/search.go:39`, `:231-275` |
+| A sneaking player who moves into a room can be spotted by those already there, which ends their hiding for everyone | `usercommands/go.go:555-600` |
 
 ## Owner rulings, 2026-09-11
 
@@ -114,6 +130,9 @@ Read from master `62b326bfe`. Nothing here is recalled.
 7. Mobs perceiving darkness is **slice F**, right after this one.
 8. **One rule decides who you perceive**, for the room listing and for
    targeting alike, and the pet check is dropped.
+9. **The shared finder covers every player command that names a creature**,
+   so `look <hidden creature>` stops giving them away. Pets are not in the
+   game, so dropping the pet check costs nothing.
 
 ## Design
 
@@ -164,8 +183,7 @@ func HideNames(text string, names []string, d SightDecision) string
   "Kesh's" becomes "something's".
 - When the match is the whole content of an identity tag (`username`,
   `mobname` with any suffix, `petname`), the tag goes with it, so the output
-  never nests a `combat-anon` tag inside a name tag. Most spell lines wrap a
-  plain name this way: `<ansi fg="username">%s</ansi>'s %s envelops you`.
+  never nests a `combat-anon` tag inside a name tag.
 - The replacement is **capitalized at a sentence start**: the start of the
   text, or after `.`, `!` or `?` and a space, looking through ANSI tags. So
   "⚡ SWEEP! Kesh dodges" becomes "⚡ SWEEP! Something dodges".
@@ -266,28 +284,42 @@ func (c *Character) Perceives(other *Character) bool
 True when `other` is `c`, when `other` is not hidden, or when `c` has
 `see-hidden` from any source. **No pet is required.**
 
-It is used by:
+The rule reaches every lookup through one finder:
 
-- **The three "Also here" checks** in `roomdetails.go`, replacing the pet
-  condition.
-- **A viewer-aware lookup,**
-  `(r *Room) FindByNameSeenBy(viewer *characters.Character, searchName string, findTypes ...FindFlag)`.
-  It skips creatures the viewer does not perceive **before** matching, so
+- **The three "Also here" checks** in `roomdetails.go` call `Perceives`,
+  replacing the pet condition.
+- **`(r *Room) FindByNameSeenBy(viewer *characters.Character, searchName string, findTypes ...FindFlag)`**
+  skips creatures the viewer does not perceive **before** matching, so
   `2.guard` counts only the guards you perceive. A nil viewer behaves exactly
   like `FindByName`.
-- **`ResolveTargetOptions.Viewer`**, a new field passed through to that lookup.
-- **Player targeting**, switched to the viewer-aware lookup:
-  - `InitiateCast` typed names;
-  - `FindAttackTarget`'s named branch and its `*`, `*mob` and `*user` pools,
-    when the actor is a player;
-  - `StageMeleeTarget`, which covers the 11 melee special moves;
-  - the `target` command;
-  - `shoot`: both `resolveShootTarget` and `ExecuteFire`, for a player;
-  - the figure list in section 4.
+- **`ResolveTargetOptions.Viewer`**, a new field, passes the viewer through.
 
-Mob callers pass no viewer and are unchanged until slice F. Each command keeps
-its existing refusal wording ("You don't see them here.", "You attack the
-darkness!").
+**Every player command that names a creature passes the player as viewer:**
+
+| Group | Commands |
+|---|---|
+| Combat | `cast` (typed names and the figure list), `attack` (named, and the `*`, `*mob`, `*user` pools), the 11 melee special moves through `StageMeleeTarget`, `target`, `shoot` (both resolutions) |
+| Looking and talking | `look`, `consider`, `show`, `talk`, `ask`, `report` |
+| Trade and social | `give` (both lookups), `buy ... from`, `sell` (the leading merchant name), `party` invite, `follow` |
+| Skullduggery | `plant`, `steal`, `shadow` |
+
+Each command keeps its existing "not here" wording, so a hidden creature reads
+exactly as an absent one.
+
+**These pass no viewer, on purpose:**
+
+| Caller | Why |
+|---|---|
+| The six admin commands and moderation | staff tools must reach everyone; moderation already falls back to a global name lookup |
+| Self checks (`target`, `shadow`, `buy`, `StageMeleeTarget`) | they only ask "is that name me?", and you always perceive yourself |
+| Mob callers, including the mob side of `follow`, `shoot` and `attack` | mobs perceiving anything is slice F |
+
+**A root guard keeps it that way.** It lists every non-test call to
+`FindByName`, `FindByNameSeenBy` and `ResolveTargetActor` with its
+classification: passes a viewer, or exempt with one of the reasons above. A new
+call that is not in the registry fails the guard, which is the mistake this
+change makes easy: adding a command that names a creature and forgetting the
+viewer.
 
 ### 6. Help
 
@@ -304,6 +336,28 @@ yourself or on the whole room. If you can make out shapes but not faces,
 aim at your foe, or at a shape: cast <spell> shape, cast <spell> 2.shape.
 ```
 
+## Open decision: a hidden creature that never fights
+
+**Quest 14 would stall.** Torvan Cresk re-hides through his idle `sneak`, and
+nothing ends it: he is not hostile, so combat never starts on its own, and
+`search` shows him to the searcher without ending his hiding. Today players
+reach him anyway, because `attack torvan` ignores hiding. Under section 5,
+`attack torvan` and `talk torvan` say "You don't see them here." to anyone
+without see-hidden, and the quest's own hint tells them to fight him.
+
+The four other sneaking mobs are hostile ambushers; attacking ends their hiding
+(`cancel-on-combat`), so they reveal themselves.
+
+| Option | What players see |
+|---|---|
+| **A. A successful `search` ends the hider's hiding for everyone** (recommended) | the same rule `go` already applies to a sneaker walking in. A player types `search`, reads "Torvan Cresk (hiding)", and he is then listed and nameable for the whole room until he sneaks again |
+| B. Torvan stops sneaking | he is always listed and nameable; his other idle lines ("studies a map", "rests a hand on the strongbox key, watching you") already describe someone in plain view |
+| A and B | Torvan is plainly there, and `search` becomes the general answer for any future hidden NPC |
+
+The recommendation is **A and B**: A gives every hidden creature a way to be
+found without magic, and B fixes a quest giver whose own lines contradict
+hiding. The owner decides before the plan is written.
+
 ## Tests
 
 Each is written before the change it guards and proven capable of failing by a
@@ -313,20 +367,22 @@ root as well as its own packages, because the root guards read these files.
 | Covers | Where | Asserts |
 |---|---|---|
 | Participant sight | messaging | lit, dark, night vision, infrared, blinded; sleeping in a lit room is full sight, sleeping in the dark with infrared is shapes |
-| `HideNames` | messaging | full leaves text unchanged; shapes and none swap; tagged and bare names; possessive; capital after `! ` and at the start through a tag; "Kesh" not inside "Keshara"; longest name first; empty name ignored |
+| `HideNames` | messaging | full leaves text unchanged; shapes and none swap; tagged and bare names; a whole identity tag is replaced, never nested; possessive; capital after `! ` and at the start through a tag; "Kesh" not inside "Keshara"; longest name first; empty name ignored |
 | Seam | messaging, `trio_test.go` | each role hides the other party by its own reader's sight; the observer line hides both; nil room hides nothing; no names given is byte-identical |
 | Audience guard | root | a literal missing `ActorName` or `ActeeName` fails, shown by removing one from a real call |
 | `Perceives` | characters | self; not hidden; hidden with see-hidden from a buff and from a mutation; hidden without it; **no pet needed** |
-| Listing and lookup agree | rooms | for hidden, see-hidden, pet and no pet, the "Also here" list and `FindByNameSeenBy` include the same creatures; `2.name` skips an unperceived first match |
+| Listing and lookup agree | rooms | for hidden, see-hidden and neither, the "Also here" list and `FindByNameSeenBy` include the same creatures; `2.name` skips an unperceived first match; a nil viewer matches `FindByName` |
+| Lookup registry guard | root | an unregistered `FindByName` or `ResolveTargetActor` call fails, shown by adding one; a registered viewer call that drops its viewer fails |
 | Cast admission | actions, `cast_test.go` | one case per cell of the section 4 table; conviction and cooldown untouched on refusal; a mob caster in the dark is unaffected |
-| Hidden targets | actions, usercommands | attack by name and by `*`, a special move, `target` and `shoot` cannot name a hidden creature without see-hidden, and can with it |
+| Hidden targets | actions, usercommands | one case per command group in section 5: a hidden creature cannot be named without see-hidden and can with it; each keeps its "not here" wording; an admin command still reaches a hidden player |
 | Moved lines | hooks, dark room via the existing `darken` helper | for each site in section 3: a reader who cannot see reads "Something" or "something", an infrared reader reads "a figure", a lit reader reads the name |
 | SWEEP | hooks | the crit room line reaches no observer who cannot see; an infrared observer reads "a figure"; each combatant's line hides the other in the dark |
 | Goldens | existing | byte-identical, since every existing golden renders in the light |
 
 ## Playtest gate
 
-Two lanes, reusing the 5a staging. Every command below is typed by a tester.
+Two lanes, reusing the 5a staging, plus a third once the open decision is made.
+Every command below is typed by a tester.
 
 **Lane 1, dark cave**, room 3101 (Cave Mouth, cave biome, unlit). Actors:
 
@@ -354,9 +410,12 @@ pet**.
 | Step | Shows |
 |---|---|
 | Sneaker types `sneak`; witness types `look` | the sneaker is not listed |
-| Witness types `attack <sneaker>` and `cast veil-sight <sneaker>` | neither can name them |
+| Witness types `look <sneaker>`, `consider <sneaker>`, `attack <sneaker>` and `cast veil-sight <sneaker>` | each reads as if nobody by that name is there |
 | Witness types `cast veil-sight`, then `look` | the sneaker is listed, with no pet |
-| Witness types `consider <sneaker>` | resolves; non-combat commands are unchanged in this slice (see below) |
+| Witness types `look <sneaker>` and `consider <sneaker>` | both resolve |
+
+**Lane 3, quest 14**, room 498, written into the plan after the open decision.
+It shows a player without see-hidden reaching Torvan Cresk and fighting him.
 
 **SWEEP is covered by unit tests only**: a defensive crit cannot be staged on
 demand.
@@ -365,11 +424,11 @@ demand.
 
 | Item | Where it belongs |
 |---|---|
-| Mobs perceiving darkness, restoring innate night vision for feline and arachnid mobs | slice F |
-| **Non-combat commands still resolve hidden creatures**: look, consider, give, show, talk, ask, steal, plant, shadow, follow, party and report. This is a leak today and stays one | owner decision, raised at spec review |
+| Mobs perceiving darkness or hidden creatures, restoring innate night vision for feline and arachnid mobs | slice F |
 | The hand-written `canSeeInDark` branches ignore infrared, so an infrared player on the receiving end of a special move reads "Something" where the seam would say "a figure" | 5b, when special moves move onto the narration core |
 | Melee in the dark is otherwise unchanged: blind swings at your foe still work | owner ruling |
 | GMCP bypassing darkness | its own slice |
+| The pet system itself, which no player can reach | not examined; filed |
 | Red names, the buff expiry notice, Purge Affliction targeting and the buff flag guard | slices B, C and D+E |
 | Neutral spells, which aim at items and corpses rather than creatures | not a creature target |
 
@@ -379,10 +438,13 @@ demand.
   read awkwardly: "stomps on the downed something". The dark render test for
   the moved lines lists each rendering, and the awkward ones go to the owner.
   They are not rewritten in this slice.
-- **Players will notice behaviour changes.** No more blind casting. A healer
-  cannot heal a sneaking party member without see-hidden. Veil Sight, the
-  draught and the five mutations now reveal sneakers, so sneaking is weaker
-  against them.
+- **Players will notice behaviour changes.** No more blind casting. A hidden
+  creature cannot be looked at, talked to, traded with or attacked without
+  see-hidden. A healer cannot heal a sneaking party member without it. Veil
+  Sight, the draught and the five mutations now reveal sneakers, so sneaking
+  is weaker against them.
+- **A hidden creature that never fights can become unreachable.** Torvan Cresk
+  is the one found; the open decision above settles it before the plan.
 - **An exact-string swap misses a name the caller changed** between the sentence
   and the Audience, such as a different case. The per-site dark tests catch it.
 - **The interface change and 132 edited calls touch frozen M2 guards.** Running
@@ -393,4 +455,4 @@ demand.
 - `go test ./...` is green, and every new test was seen to fail first.
 - The existing goldens are byte-identical.
 - The server boots.
-- Both playtest lanes show every step above; SWEEP's limit is stated.
+- All three playtest lanes show every step above; SWEEP's limit is stated.
