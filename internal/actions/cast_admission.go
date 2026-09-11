@@ -47,7 +47,7 @@ func admitCastAim(actor Actor, spellInfo *spells.SpellData, targetName string) (
 	if !actor.IsPlayer() || room == nil {
 		return aim, false
 	}
-	if spellInfo.Type == spells.HelpSingle && (targetName == `` || targetName == actor.GetName()) {
+	if spellInfo.Type == spells.HelpSingle && castsAtSelf(actor, targetName) {
 		return aim, false
 	}
 
@@ -56,7 +56,7 @@ func admitCastAim(actor Actor, spellInfo *spells.SpellData, targetName string) (
 
 	switch messaging.ParticipantSight(char, room) {
 	case messaging.SightNone:
-		if targetName == `` || shape > 0 {
+		if targetName == `` || castNamesAShape(targetName) {
 			actor.SendText(messaging.CategorySystem, `You can't see anything to aim at.`)
 		} else {
 			actor.SendText(messaging.CategorySystem, `You don't see them here.`)
@@ -84,6 +84,31 @@ func admitCastAim(actor Actor, spellInfo *spells.SpellData, targetName string) (
 		aim.targetName = figures[shape-1]
 	}
 	return aim, false
+}
+
+// castsAtSelf reports whether a help spell with this target name is aimed at
+// the caster. Ruling 4: a self-cast needs no sight, so `cast heal caster` and
+// `cast heal cast` must work in the dark, not just the exact spelling of the
+// name. It matches the way the rest of the game matches names. Only the
+// caster.s own name is a candidate, so a close match here means the typed noun
+// matched nothing but themselves.
+func castsAtSelf(actor Actor, targetName string) bool {
+	if targetName == `` {
+		return true
+	}
+	match, closeMatch := util.FindMatchIn(targetName, actor.GetName())
+	return match != `` || closeMatch != ``
+}
+
+// castNamesAShape reports whether the caster typed the shape word at all,
+// including `all.shape`, which names no single figure. castShapeIndex returns 0
+// for that, and without this the refusal would call it a typed name.
+func castNamesAShape(targetName string) bool {
+	if targetName == `` {
+		return false
+	}
+	word, _ := util.GetMatchNumber(targetName)
+	return word == shapeWord
 }
 
 // castShapeIndex is N for `shape`, `N.shape` or `shape#N`, and 0 otherwise.

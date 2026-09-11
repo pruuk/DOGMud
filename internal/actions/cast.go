@@ -398,8 +398,15 @@ func rejectHarmTarget(actor Actor, mobInstanceId int) bool {
 		actor.SendText(messaging.CategorySystem, "You can't target a companion with a harmful spell.")
 		return true
 	case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-		actor.SendText(messaging.CategorySystem,
-			fmt.Sprintf("You can't target %s with a harmful spell.", m.Character.Name))
+		// The name is only the caster.s to hear if they can make the mob out.
+		// A shapes-only caster aimed at `3.shape` and must not be handed
+		// "Skeleton" back by the refusal (follow-up slice A).
+		line := fmt.Sprintf("You can't target %s with a harmful spell.", m.Character.Name)
+		if room := actor.GetRoom(); room != nil {
+			line = messaging.HideNames(line, []string{m.Character.Name},
+				messaging.ParticipantSight(actor.GetCharacter(), room))
+		}
+		actor.SendText(messaging.CategorySystem, line)
 		// Let the mob's behavior tree react to the refused aggression, the
 		// same way a refused melee attack does.
 		mobs.FireAttackRejected(m, actor.GetUserId())
