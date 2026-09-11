@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-09-09: Grappling reads as one fight again
+
+If you have ever grappled someone and found their account of it did not match
+yours, that was real. The person on top, the person underneath, and everyone
+watching were each told about a different exchange. You might read that you
+wrenched an underhook and rode them down, while they read that they felt your
+snap-down a moment too late, and the room watched you drag them flat. Three
+descriptions of three different things, in the same instant.
+
+They were all written to fit together. Nothing was choosing the matching ones.
+
+Now they match. One exchange, described from wherever you happen to be standing.
+It shows up most in the close, technical moments, which are exactly the ones
+where the mismatch was hardest to ignore.
+
+The same repair reaches the slow grinding rounds of a held position, and the
+moments where a grapple tightens or slips.
+
 ## 2026-09-09: Creatures learn to insult you properly
 
 When something taunted you, it always did the same thing. It bellowed a

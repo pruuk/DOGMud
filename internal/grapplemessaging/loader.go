@@ -226,6 +226,19 @@ func ValidateCompleteness(lib *Library) []error {
 				errs = append(errs, fmt.Errorf("%s.%s.observers: %d templates, need >= %d",
 					category, key, len(triad.Observers), MinTemplatesPerSpeaker))
 			}
+			// THE THREE ROLES MUST AGREE IN LENGTH, not merely each clear the
+			// minimum. Variant N of each role describes the SAME moment, and
+			// the renderer picks ONE index for all three, so a key whose roles
+			// disagree cannot be narrated at all: some audiences would be told
+			// about an exchange and others left silent.
+			//
+			// Checked here so an authoring slip fails at BOOT. Without it the
+			// failure is invisible: the key simply stops narrating, forever,
+			// with nothing logged.
+			if len(triad.Controller) != len(triad.Controlled) || len(triad.Controller) != len(triad.Observers) {
+				errs = append(errs, fmt.Errorf("%s.%s: roles must have EQUAL lengths (controller=%d controlled=%d observers=%d); variant N of each describes the same moment",
+					category, key, len(triad.Controller), len(triad.Controlled), len(triad.Observers)))
+			}
 		}
 	}
 
@@ -264,6 +277,12 @@ func ValidateCompleteness(lib *Library) []error {
 		if len(triad.Observers) < MinTemplatesPerSpeaker {
 			errs = append(errs, fmt.Errorf("gradients.%s.observers: %d templates, need >= %d",
 				key, len(triad.Observers), MinTemplatesPerSpeaker))
+		}
+		// Equal lengths, for the reason the triad check above states: the
+		// renderer picks ONE index for all three roles.
+		if len(triad.Self) != len(triad.Partner) || len(triad.Self) != len(triad.Observers) {
+			errs = append(errs, fmt.Errorf("gradients.%s: roles must have EQUAL lengths (self=%d partner=%d observers=%d); variant N of each describes the same moment",
+				key, len(triad.Self), len(triad.Partner), len(triad.Observers)))
 		}
 	}
 
