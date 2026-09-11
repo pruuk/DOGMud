@@ -43,6 +43,11 @@ var KnownTemplateIDs = []string{
 	// those lanes.
 	"m2-actor",
 	"m2-witness",
+	// The slice A infrared tester. NOTHING in dogmud content grants buff 85
+	// (InfraredVision): no spell, item, mutation or species references it, so
+	// this profile is the only way to stand a shapes-only player in a room.
+	// Without it the "aims at shapes, not names" lane cannot run at all.
+	"slice-a-infrared",
 }
 
 // Manifest is the ephemeral per-run materialization request.
