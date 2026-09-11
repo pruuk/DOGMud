@@ -2,10 +2,16 @@ package messaging
 
 import "regexp"
 
-// nameTagPattern matches player/pet identity tags and mob identity tags with
-// the suffixes used for duplicate indices and display roles.
+// nameTagPattern matches player, mob and pet identity tags, including the
+// suffixed forms FormattedName.String renders for display roles and duplicate
+// indices (`mobname-dup2`, `username-aggro`, `username-dead`).
+//
+// Player tags need the suffix as much as mob tags do. Until 2026-09-11 only
+// `mobname` accepted one, and GetCharacterName(true) renders `username-aggro`
+// for any character not fighting a player, so the suffixed form is the common
+// one in room text: a player's name reached infrared-only observers in full.
 var nameTagPattern = regexp.MustCompile(
-	`<ansi fg="(username|mobname(?:-[A-Za-z0-9_-]+)?|petname)">[^<]+</ansi>`,
+	`<ansi fg="((?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">[^<]+</ansi>`,
 )
 
 // Anonymize strips player/mob/pet name ANSI tags and replaces them
