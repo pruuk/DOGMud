@@ -938,3 +938,23 @@ func (c *Character) GrantRandomMutationRare(minRarity int) string {
 	c.Validate()
 	return mutId
 }
+
+// Perceives reports whether c can make out other in the same room: other is c,
+// other is not hidden, or c has see-hidden from any source (a buff or a
+// mutation). It is the one rule for the room listing (rooms/roomdetails.go)
+// and for naming a creature (rooms.Room.FindByNameSeenBy), so the two cannot
+// disagree.
+//
+// No pet is involved. The listing used to require a pet as well, a leftover
+// from upstream GoMud where see-hidden was a pet power (commit 463a76727).
+// No player can own a pet in DOGMud, so that check hid every hidden creature
+// from everyone.
+func (c *Character) Perceives(other *Character) bool {
+	if other == nil {
+		return false
+	}
+	if c == other || !other.IsHidden() {
+		return true
+	}
+	return c.HasFlagFromAnySource(buffs.SeeHidden)
+}

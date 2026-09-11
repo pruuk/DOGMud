@@ -250,10 +250,10 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 			player := users.GetByUserId(playerId)
 			if player != nil {
 
-				if player.Character.IsHidden() { // Don't show them if sneaking or camo
-					if !user.Character.Pet.Exists() || !user.Character.HasFlagFromAnySource(buffs.SeeHidden) {
-						continue
-					}
+				// Sneaking or camo, and the viewer has no see-hidden. One rule,
+				// shared with naming a creature (Room.FindByNameSeenBy).
+				if !user.Character.Perceives(player.Character) {
+					continue
 				}
 
 				pName := player.Character.GetPlayerName(user.UserId, renderFlags...)
@@ -295,10 +295,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 			if mob.Character.RoomId != r.RoomId {
 				continue
 			}
-			if mob.Character.IsHidden() {
-				if !user.Character.Pet.Exists() || !user.Character.HasFlagFromAnySource(buffs.SeeHidden) {
-					continue
-				}
+			if !user.Character.Perceives(&mob.Character) {
+				continue
 			}
 			mobNameCount[mob.Character.Name]++
 		}
@@ -313,10 +311,9 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 				continue
 			}
 
-			if mob.Character.IsHidden() { // Don't show them if sneaking or camo
-				if !user.Character.Pet.Exists() || !user.Character.HasFlagFromAnySource(buffs.SeeHidden) {
-					continue
-				}
+			// Sneaking or camo, and the viewer has no see-hidden.
+			if !user.Character.Perceives(&mob.Character) {
+				continue
 			}
 
 			tmpNameFlags := nameFlags
