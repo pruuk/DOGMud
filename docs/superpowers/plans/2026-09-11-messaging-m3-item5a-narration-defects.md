@@ -67,7 +67,7 @@
 - **The D1 playtest actor.** The spec names `m2-actor` casting Conviction Surge. That buff (26) has no `start_room_text`, so there is nothing for darkness to silence. This plan uses **`veteran`**, who knows Chrysalis Glow (buff 1) and Conviction Armor (buff 38), both with room lines, plus Cleansing Wave. The witness stays **`m2-witness`**.
 - **Three short runs, not one.** The lanes live in rooms 5343, 6397 and 3101, which are far apart. Separate runs also give fresh characters, which the once-per-character quest triggers need.
 - **The dark quest lane alternates who triggers.** Quest 77's trigger fires once per character. The witness triggers it first while the actor is unsighted (D2), then drinks the draught and watches the actor trigger it (D5).
-- **No targeting by name in the dark.** Whether a caster can target a player they cannot see was not verified, so the dark buff lane's control uses Cleansing Wave (an area spell) and its sighted step uses a self-cast.
+- **Casting at a player you cannot see: checked, not relied on.** Owner, 2026-09-11: check whether it works; if it does, the fix is a follow-up. The code says it does: `actions.InitiateCast` resolves a named `HelpSingle` or `HarmSingle` target with `room.FindByName`, which calls `GetPlayers(FindAll)`, and nothing on that path consults sight or room lighting (`internal/actions/cast.go:108`, `:230`; `internal/rooms/rooms.go:1864-1950`, `:1651-1661`). Lane C confirms it in play with a dedicated step. No other lane step depends on the answer: the control uses Cleansing Wave (an area spell) and the sighted step uses a self-cast.
 - **Self-cast lines keep the crit tag.** The spec's wording table omits `critTag`. Each self line appends it, so a crit on yourself is not lost. It is empty on an ordinary cast.
 
 ## File Structure
@@ -1927,8 +1927,9 @@ Create `tools/playtest/scenarios/m3-item5a-buff-dark.yaml`:
 # The control matters just as much: a spell landing ON the witness must still
 # be told to them.
 #
-# Every cast here is a self-cast or an area spell. Whether a caster can target
-# a player by name in the dark was not verified, so nothing depends on it.
+# One step deliberately casts at a player the caster cannot see, to find out
+# whether that works (the code says it does). Nothing else depends on it: the
+# other casts are self-casts or an area spell.
 name: m3-item5a-buff-dark
 mode: party
 summary: >-
@@ -1957,6 +1958,16 @@ group_goals:
   - id: still-told-about-yourself
     do: Actor casts `cast cleansing-wave`, which lands on everyone in the room.
     verify: The witness IS told the wave purged them. Silence here is serious.
+  - id: cast-at-unseen-target
+    do: >-
+      Before the witness drinks anything, the actor types `cast conviction-armor
+      ordel`, naming a player they cannot see.
+    verify: >-
+      A CHECK, not a pass or fail for this run. Record exactly what happens. If
+      the cast is refused, quote the refusal. If it starts or lands, quote what
+      the actor is told and what the witness is told, and say whether the
+      witness is told WHO cast it. A cast that works on a player the caster
+      cannot see is filed as a follow-up.
   - id: sighted-sees-it
     do: Witness types `drink draught`, then the actor casts `cast conviction-armor` on themselves.
     verify: >-
@@ -1992,6 +2003,12 @@ goals:
     Type `cast cleansing-wave`. It lands on everyone in the room. Ask Ordel what
     they were told. They MUST be told something about the wave purging them.
   - >-
+    TARGETING CHECK, while you still cannot see. Type `cast conviction-armor
+    ordel`, naming Ordel even though you cannot see them. Quote exactly what you
+    are told: whether the cast is refused, starts, or lands. If it fizzles, try
+    once more. Ask Ordel what they were told. This step only records what
+    happens; neither outcome is a failure of your run.
+  - >-
     Wait until Ordel has drunk their draught and says they can see. Then type
     `cast conviction-armor` with NO target. If it fizzles, cast it again. Ask
     what they read now.
@@ -2023,6 +2040,10 @@ goals:
     When they cast a cleansing wave, you are one of its targets, so you MUST be
     told. Quote it. If you are told nothing, report that loudly: it means too
     much was silenced.
+  - >-
+    Veteran Pathfinder will then try to cast armor on you by name, though
+    neither of you can see. Before drinking anything, quote every line you
+    receive about it, and say whether any line names who cast it.
   - >-
     Now type `drink draught`, then `look`, and report whether you can see a
     normal room description. Tell Veteran Pathfinder when you can. If you still
@@ -2210,4 +2231,5 @@ Do not merge without the owner's word.
 | Buffs and spells failing at boot on an unknown token instead of warning | filed |
 | Validating buff flag names at load. It would also catch buff 64 Stone Stomach's `poison-immunity`, a flag no code reads, so that buff grants no immunity | filed |
 | An area spell producing one room line per target | filed |
+| Refusing a cast aimed by name at a player the caster cannot see, if lane C confirms it works | follow-up (owner, 2026-09-11) |
 | Reworking how quests are reached and tied to rooms | the future quest arc |
