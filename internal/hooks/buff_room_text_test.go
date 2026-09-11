@@ -171,3 +171,28 @@ func TestBuffEndRoomText_MobHolderIsVisualAndUsesTheMobTag(t *testing.T) {
 	PruneBuffs(events.NewTurn{TurnNumber: 2})
 	assert.Equal(t, 0, countContaining(drainPlain(2), "fades."))
 }
+
+// TestMobBuffTriggerRoomText is the D4 guard. The player round tick has always
+// sent a triggered buff's trigger_room_text; tickMobBuffs never did, so a mob
+// holding a trigger-text buff showed nothing. No mob holder of the shipped
+// trigger-text buffs could be staged in a playtest, so this is its only check.
+func TestMobBuffTriggerRoomText(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationBuffs()
+	defer restore()
+	mob := mobs.GetInstance(100)
+	require.True(t, mob.Character.Buffs.AddBuff(shiverBuffId, false))
+	events.DrainQueuedMessagesForTest(2)
+
+	tickMobBuffs(mob, 100)
+	line := rawLineContaining(events.DrainQueuedMessagesForTest(2), "Skeleton shivers.")
+	require.NotEmpty(t, line, "a sighted observer must see the mob's trigger text")
+	assert.Contains(t, line, `fg="mobname`)
+
+	// Sight-gated like every other buff room line.
+	darken(t, 1)
+	drainPlain(2)
+	tickMobBuffs(mob, 100)
+	assert.Equal(t, 0, countContaining(drainPlain(2), "shivers."))
+}

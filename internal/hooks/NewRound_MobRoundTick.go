@@ -26,6 +26,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/worldevents"
@@ -251,6 +252,28 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 						} else if tickAmt < 0 {
 							mob.Character.ApplyHarm(characters.PoolConviction, -tickAmt, state.ActorRef{})
 						}
+					}
+				}
+			}
+			// Trigger text. The player round tick has always sent it; this mob
+			// tick never did, so a mob holding a trigger-text buff showed
+			// nothing. Room line only, because a mob has no client. Visual,
+			// because the text describes what the room sees. An expired buff is
+			// skipped, matching the player tick. Same shape as the mob branch of
+			// PruneBuffs, so the line gets the same buff colour.
+			if !buff.Expired() {
+				if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && trigSpec.TriggerRoomText != "" {
+					if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+						tCtx := textutil.TokenContext{
+							SourceName:      mobDisplayName(mob, room, 0),
+							SourcePlainName: mob.Character.GetCharacterName(false),
+						}
+						cfg := textutil.SendTextConfig{
+							RoomSendFunc: func(msg string, skip ...int) {
+								room.SendTextVisual(messaging.CategoryBuffApply, msg, skip...)
+							},
+						}
+						textutil.SendPhaseText("", trigSpec.TriggerRoomText, tCtx, "cyan", cfg)
 					}
 				}
 			}
