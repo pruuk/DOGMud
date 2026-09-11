@@ -367,7 +367,11 @@ func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat mes
 		}
 		text := txt
 		if decision == messaging.SightShapes && len(names) > 0 {
-			text = messaging.HideNames(txt, names, messaging.SightShapes)
+			// Anonymize first: it replaces whole name tags. Hiding first could
+			// nest a combat-anon tag inside a name tag that holds more than the
+			// name ("the goblin"), and the pipeline's Anonymize would then no
+			// longer match that tag and leak the rest of it.
+			text = messaging.HideNames(messaging.Anonymize(txt), names, messaging.SightShapes)
 		}
 		rendered := messaging.RenderForRecipient(messaging.RenderInput{
 			Category:      cat,

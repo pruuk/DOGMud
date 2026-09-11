@@ -97,3 +97,20 @@ func TestRoomParticipantSight_JudgesTheUserInThisRoom(t *testing.T) {
 		t.Errorf("unknown user = %v, want SightFull", d)
 	}
 }
+
+// A name that fills only part of its tag ("the goblin") must still be hidden
+// whole: the tag is anonymized before bare names are hidden.
+func TestSendTextVisualHidingNames_PartOfATagDoesNotLeakTheRest(t *testing.T) {
+	r := sightTestRoom(t, "cave")
+	if !users.GetByUserId(7413).Character.Buffs.AddBuff(sightTestInfraredBuffId, true) {
+		t.Fatal("precondition: the observer should now carry infrared")
+	}
+	r.SendTextVisualHidingNames(messaging.CategoryKick,
+		"<ansi fg=\"mobname\">the goblin</ansi> kicks Bobrick!",
+		[]string{"goblin", "Bobrick"}, 7411, 7412)
+
+	got := sightTestPlain(events.DrainQueuedMessagesForTest(7413))
+	if len(got) != 1 || got[0] != "A figure kicks a figure!" {
+		t.Fatalf("infrared observer read %q, want %q", got, "A figure kicks a figure!")
+	}
+}
