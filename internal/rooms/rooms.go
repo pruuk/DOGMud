@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/audio"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
@@ -1914,12 +1915,23 @@ func (r *Room) AddSign(displayText string, visibleUserId int, daysBeforeDecay in
 	return false
 }
 
+// FindByName resolves a player and a mob by name with no perception limit.
+// Staff tools and mob callers use it; a player command that names a creature
+// uses FindByNameSeenBy.
 func (r *Room) FindByName(searchName string, findTypes ...FindFlag) (playerId int, mobInstanceId int) {
+	return r.FindByNameSeenBy(nil, searchName, findTypes...)
+}
+
+// FindByNameSeenBy resolves a player and a mob by name as viewer would: a
+// creature viewer does not perceive (characters.Character.Perceives) is skipped
+// BEFORE matching, so it cannot be named and does not count toward `2.name` or
+// `name#2`. The room listing reads the same rule. A nil viewer is FindByName.
+func (r *Room) FindByNameSeenBy(viewer *characters.Character, searchName string, findTypes ...FindFlag) (playerId int, mobInstanceId int) {
 	if len(findTypes) < 1 {
 		findTypes = []FindFlag{FindAll}
 	}
-	mobInstanceId, _ = r.findMobByName(searchName, findTypes...)
-	playerId, _ = r.findPlayerByName(searchName, findTypes...)
+	mobInstanceId, _ = r.findMobByName(viewer, searchName, findTypes...)
+	playerId, _ = r.findPlayerByName(viewer, searchName, findTypes...)
 	return playerId, mobInstanceId
 }
 
@@ -1946,7 +1958,7 @@ func (r *Room) FindByPetName(searchName string) (playerId int) {
 	return petOwners[match]
 }
 
-func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, error) {
+func (r *Room) findPlayerByName(viewer *characters.Character, searchName string, findTypes ...FindFlag) (int, error) {
 
 	if len(searchName) > 1 {
 		if searchName[0] == '#' {
@@ -1960,6 +1972,11 @@ func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, 
 				if userIdMatch > 0 {
 					if uId != userIdMatch {
 						continue
+					}
+					if viewer != nil {
+						if u := users.GetByUserId(uId); u == nil || !viewer.Perceives(u.Character) {
+							return 0, errors.New("user not found")
+						}
 					}
 					return uId, nil
 				}
@@ -1987,6 +2004,10 @@ func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, 
 			continue
 		}
 
+		if viewer != nil && !viewer.Perceives(u.Character) {
+			continue
+		}
+
 		playerLookup[u.Character.Name] = u.UserId
 		namesInRoom = append(namesInRoom, u.Character.Name)
 	}
@@ -2004,7 +2025,7 @@ func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, 
 	return playerLookup[fullMatch], nil
 }
 
-func (r *Room) findMobByName(searchName string, findTypes ...FindFlag) (int, error) {
+func (r *Room) findMobByName(viewer *characters.Character, searchName string, findTypes ...FindFlag) (int, error) {
 
 	if len(searchName) > 1 {
 		if searchName[0] == '@' {
@@ -2018,6 +2039,11 @@ func (r *Room) findMobByName(searchName string, findTypes ...FindFlag) (int, err
 				if mobIdMatch > 0 {
 					if mId != mobIdMatch {
 						continue
+					}
+					if viewer != nil {
+						if m := mobs.GetInstance(mId); m == nil || !viewer.Perceives(&m.Character) {
+							return 0, errors.New("mob not found")
+						}
 					}
 					return mId, nil
 				}
@@ -2040,6 +2066,10 @@ func (r *Room) findMobByName(searchName string, findTypes ...FindFlag) (int, err
 		// other GetInstance call in this file already guards; this one did
 		// not. See the prune in Prepare() that stops the ids going stale.
 		if m == nil {
+			continue
+		}
+
+		if viewer != nil && !viewer.Perceives(&m.Character) {
 			continue
 		}
 

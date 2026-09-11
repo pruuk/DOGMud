@@ -3,6 +3,7 @@ package actions
 import (
 	"errors"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -19,6 +20,11 @@ type ResolveTargetOptions struct {
 	ExcludeUserId int
 	// ExcludeMobInstanceId, when > 0, hides the named mob from results.
 	ExcludeMobInstanceId int
+	// Viewer is the character doing the looking. When set, a creature it does
+	// not perceive (characters.Character.Perceives) cannot be named. Every
+	// player command that names a creature sets it; staff tools and mob
+	// callers leave it nil. The root lookup guard enforces the split.
+	Viewer *characters.Character
 }
 
 // Sentinel errors returned by ResolveTargetActor. Callers can use
@@ -81,7 +87,7 @@ func ResolveTargetActor(r *rooms.Room, name string, opts ...ResolveTargetOptions
 		flags = []rooms.FindFlag{rooms.FindAll}
 	}
 
-	playerId, mobInstanceId := r.FindByName(name, flags...)
+	playerId, mobInstanceId := r.FindByNameSeenBy(o.Viewer, name, flags...)
 
 	// Apply exclusions.
 	if o.ExcludeUserId > 0 && playerId == o.ExcludeUserId {
