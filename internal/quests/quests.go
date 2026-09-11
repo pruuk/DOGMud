@@ -169,6 +169,11 @@ func (r *Quest) Validate() error {
 		}
 	}
 
+	// Room text must name who acted; see roomtext.go.
+	if err := r.validateRoomText(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

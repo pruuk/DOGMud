@@ -215,7 +215,8 @@ func (b *GameBridge) SendText(cat messaging.Category, text string) {
 // The behaviour tree already delivered its own room_text this way
 // (behaviortree/actions_dialogue.go). Until 2026-09-11 this path sent the text
 // raw on the audio channel, so quest 77 showed players a literal {source}.
-// ValidateAllRoomText (loader.go) is what keeps every quest line naming {source}.
+// quests.Quest.Validate (internal/quests/roomtext.go) is what keeps every quest
+// line naming {source}, both at boot and when the admin editor saves a quest.
 func (b *GameBridge) RoomText(text string) {
 	room := rooms.LoadRoom(b.roomId)
 	if room == nil {

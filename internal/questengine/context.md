@@ -127,12 +127,16 @@ observer who could not see still read it and quest 77 showed a literal
   a command is typed, the second only when it succeeded.
 - **Ephemeral (instance) rooms match their TEMPLATE room id** in `room:`
   triggers, not their runtime id.
-- **Every quest `room_text` must contain `{source}`, and `ValidateAllRoomText`
-  panics at startup if one does not.** The room is watching the player act, so
+- **Every quest `room_text` must contain `{source}`, and `quests.Quest.Validate`
+  refuses a quest whose line does not**, including lines nested in a sequence's
+  `on_complete`. `Validate` runs on every quest file parse at boot AND before an
+  admin editor save, so a bad line is refused with a reply instead of being
+  saved and left to fail the next boot. The room is watching the player act, so
   the line must say who. It also rejects `{target}` and `{target_plain}` (a
   quest has no target) and `{source_plain}` (an untagged name cannot be
-  anonymized in the dark). The rules live in `roomTextProblems`, and
-  `TestShippedQuestRoomTextFollowsConvention` checks the shipped files.
+  anonymized in the dark). The rules live in `quests.RoomTextProblems`, and
+  `TestShippedQuestRoomTextFollowsConvention` in `internal/quests` checks the
+  shipped files.
 - **`ConsumeItem` is only honoured on `item_give`.** Setting it on any other
   event silently does nothing. Note also that `give.go` transfers the item to
   the mob *before* any handler runs, so consumption is a post-hoc correction —
