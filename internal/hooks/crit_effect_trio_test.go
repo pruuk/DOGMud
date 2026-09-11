@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -96,4 +97,34 @@ func TestCritDispatch_RiposteRoomLineSparesAnObserverInTheDark(t *testing.T) {
 	dispatchCritAndMessaging(atk, def, res)
 
 	assert.Equal(t, 0, countContaining(drainPlain(2), "RIPOSTE"))
+}
+
+// The three tests above assert against hand-written copies of the crit lines.
+// This one feeds a REAL applyCritEffects result through the seam, so the
+// shipped wording is what gets hidden. A parry crit fires riposte with no
+// contest, which makes it deterministic.
+func TestCritDispatch_RealRiposteTextHidesTheDefendersName(t *testing.T) {
+	pinCounterTierKnobs(t, 0.5)
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	darken(t, 1)
+	room := rooms.LoadRoom(1)
+	defender := users.GetByUserId(1)
+	attacker := users.GetByUserId(2)
+	drainPlain(1)
+	drainPlain(2)
+
+	crit := applyCritEffects(attacker.Character, defender.Character,
+		combat.AttackResult{ParryCritDetected: true}, room)
+	require.True(t, crit.Riposte, "precondition: a parry crit ripostes")
+	require.Contains(t, crit.AttackerMsg, "Aliceia",
+		"precondition: the shipped riposte line names the defender")
+
+	sendCritEffectTrio(actions.NewUserActorInRoom(attacker, room),
+		actions.NewUserActorInRoom(defender, room), room, crit)
+
+	attackerLines := drainPlain(2)
+	assert.Equal(t, 1, countContaining(attackerLines, "RIPOSTE"))
+	assert.Equal(t, 0, countContaining(attackerLines, "Aliceia"),
+		"the attacker cannot see who riposted")
 }
