@@ -133,6 +133,9 @@ through `actions.ResolveTargetActor`.
 9. **The shared finder covers every player command that names a creature**,
    so `look <hidden creature>` stops giving them away. Pets are not in the
    game, so dropping the pet check costs nothing.
+10. **A player's successful `search` ends a hider's hiding for everyone**, the
+    same way walking in and spotting them already does. Torvan Cresk keeps his
+    idle `sneak`.
 
 ## Design
 
@@ -336,27 +339,36 @@ yourself or on the whole room. If you can make out shapes but not faces,
 aim at your foe, or at a shape: cast <spell> shape, cast <spell> 2.shape.
 ```
 
-## Open decision: a hidden creature that never fights
+### 7. A successful search ends hiding (owner ruling 10, option A)
 
-**Quest 14 would stall.** Torvan Cresk re-hides through his idle `sneak`, and
-nothing ends it: he is not hostile, so combat never starts on its own, and
-`search` shows him to the searcher without ending his hiding. Today players
-reach him anyway, because `attack torvan` ignores hiding. Under section 5,
-`attack torvan` and `talk torvan` say "You don't see them here." to anyone
-without see-hidden, and the quest's own hint tells them to fight him.
+**The problem.** Torvan Cresk re-hides through his idle `sneak` and is not
+hostile, so combat never ends his hiding. Under section 5, `attack torvan` and
+`talk torvan` read "You don't see them here." to anyone without see-hidden,
+while quest 14 tells players to fight him.
 
-The four other sneaking mobs are hostile ambushers; attacking ends their hiding
-(`cancel-on-combat`), so they reveal themselves.
+**What already exists.** A player walking into a room rolls against each hidden
+occupant, and a win ends that occupant's hiding for everyone
+(`usercommands/go.go:616-700`). So a player who wins the entry roll reaches
+Torvan today. One who loses it has no second try short of leaving and coming
+back, because `search` rolls the same contest (`spotsHider`) but only reports
+the find.
 
-| Option | What players see |
-|---|---|
-| **A. A successful `search` ends the hider's hiding for everyone** (recommended) | the same rule `go` already applies to a sneaker walking in. A player types `search`, reads "Torvan Cresk (hiding)", and he is then listed and nameable for the whole room until he sneaks again |
-| B. Torvan stops sneaking | he is always listed and nameable; his other idle lines ("studies a map", "rests a hand on the strongbox key, watching you") already describe someone in plain view |
-| A and B | Torvan is plainly there, and `search` becomes the general answer for any future hidden NPC |
+**The change.** When a **player** searches and wins against a hidden creature,
+`actions.Search` ends its hiding exactly as the entry roll does:
 
-The recommendation is **A and B**: A gives every hidden creature a way to be
-found without magic, and B fixes a quest giver whose own lines contradict
-hiding. The owner decides before the plan is written.
+- A hidden player: `Awareness.TransitionToRevealing` with
+  `awareness.TriggerObserverSearch`, then `SetMiscData("sneaking", nil)`, then
+  the hider is told "`<searcher>` searches the room and spots you!", or
+  "Someone searches the room and spots you!" when the hider cannot see clearly.
+  The same shape as `go.go:630-647`.
+- A hidden mob: `Awareness.TransitionToRevealing` with
+  `awareness.TriggerObserverSearch`, as `go.go:686-687`.
+- The searcher's "(hiding)" report is unchanged.
+
+The Awareness cascade cancels buff 9 (`hooks/Awareness_Cascades.go`), so the
+creature is listed and nameable for the whole room until it sneaks again.
+**Torvan keeps his idle `sneak`.** A mob's search is unchanged: mobs perceiving
+hidden creatures is slice F.
 
 ## Tests
 
@@ -371,7 +383,8 @@ root as well as its own packages, because the root guards read these files.
 | Seam | messaging, `trio_test.go` | each role hides the other party by its own reader's sight; the observer line hides both; nil room hides nothing; no names given is byte-identical |
 | Audience guard | root | a literal missing `ActorName` or `ActeeName` fails, shown by removing one from a real call |
 | `Perceives` | characters | self; not hidden; hidden with see-hidden from a buff and from a mutation; hidden without it; **no pet needed** |
-| Listing and lookup agree | rooms | for hidden, see-hidden and neither, the "Also here" list and `FindByNameSeenBy` include the same creatures; `2.name` skips an unperceived first match; a nil viewer matches `FindByName` |
+| Listing and lookup agree | rooms | the three "Also here" checks call `Perceives` itself, so the listing cannot drift from it (no room test can build "Also here": `GetDetails` needs a full user and world). The lookup test pins `FindByNameSeenBy` to `Perceives` for hidden, see-hidden and neither; `2.name` skips an unperceived first match; a nil viewer matches `FindByName` |
+| Search ends hiding | actions | a player's find ends a hidden mob's and a hidden player's hiding and tells the player hider; a mob's find ends nothing |
 | Lookup registry guard | root | an unregistered `FindByName` or `ResolveTargetActor` call fails, shown by adding one; a registered viewer call that drops its viewer fails |
 | Cast admission | actions, `cast_test.go` | one case per cell of the section 4 table; conviction and cooldown untouched on refusal; a mob caster in the dark is unaffected |
 | Hidden targets | actions, usercommands | one case per command group in section 5: a hidden creature cannot be named without see-hidden and can with it; each keeps its "not here" wording; an admin command still reaches a hidden player |
@@ -414,8 +427,15 @@ pet**.
 | Witness types `cast veil-sight`, then `look` | the sneaker is listed, with no pet |
 | Witness types `look <sneaker>` and `consider <sneaker>` | both resolve |
 
-**Lane 3, quest 14**, room 498, written into the plan after the open decision.
-It shows a player without see-hidden reaching Torvan Cresk and fighting him.
+**Lane 3, quest 14**, room 498. One actor on `m2-witness` (no see-hidden),
+placed in the room on step `confront`, so no entry roll happens.
+
+| Step | Shows |
+|---|---|
+| Actor types `look` until Torvan Cresk is not listed | he has sneaked |
+| Actor types `attack torvan` | reads as if nobody by that name is there |
+| Actor types `search` until the find lists "Torvan Cresk (hiding)" | the find |
+| Actor types `look`, then `attack torvan` | he is listed, and the attack starts |
 
 **SWEEP is covered by unit tests only**: a defensive crit cannot be staged on
 demand.
@@ -443,8 +463,10 @@ demand.
   see-hidden. A healer cannot heal a sneaking party member without it. Veil
   Sight, the draught and the five mutations now reveal sneakers, so sneaking
   is weaker against them.
-- **A hidden creature that never fights can become unreachable.** Torvan Cresk
-  is the one found; the open decision above settles it before the plan.
+- **A hidden creature that never fights needs finding first.** Torvan Cresk is
+  the one found. Walking in and winning the spotting roll, or a successful
+  `search` (section 7), ends his hiding; a player who fails both can still
+  leave and come back.
 - **An exact-string swap misses a name the caller changed** between the sentence
   and the Audience, such as a different case. The per-site dark tests catch it.
 - **The interface change and 132 edited calls touch frozen M2 guards.** Running
