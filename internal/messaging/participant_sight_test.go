@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/mutations"
 )
 
 // sightLight is a RoomVisibility with a fixed light level: 0 dark, 1 lit.
@@ -75,5 +76,25 @@ func TestParticipantSight(t *testing.T) {
 func TestParticipantSight_NilObserverSeesFully(t *testing.T) {
 	if got := ParticipantSight(nil, sightLight(0)); got != SightFull {
 		t.Fatalf("nil observer = %v, want SightFull, matching the other predicates", got)
+	}
+}
+
+// Infrared from a mutation counts the same as from a buff: the predicate reads
+// HasFlagFromAnySource, and a change to HasBuffFlag would silently drop it.
+func TestParticipantSight_InfraredFromAMutation(t *testing.T) {
+	t.Cleanup(mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"test-heat-pits": {MutationId: "test-heat-pits", Name: "Test Heat Pits",
+			Pros: []mutations.MutationEffect{{Type: "flag", Target: string(buffs.InfraredVision), Value: 1}}},
+	}))
+	c := newChar(t)
+	c.Mutations = map[string]int{"test-heat-pits": 1}
+	if got := ParticipantSight(c, sightLight(0)); got != SightShapes {
+		t.Fatalf("infrared from a mutation in the dark = %v, want SightShapes", got)
+	}
+}
+
+func TestParticipantSight_NilRoomIsLit(t *testing.T) {
+	if got := ParticipantSight(newChar(t), nil); got != SightFull {
+		t.Fatalf("nil room = %v, want SightFull, matching the other predicates", got)
 	}
 }
