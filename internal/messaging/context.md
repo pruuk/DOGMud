@@ -82,9 +82,13 @@ Functions:
   blindness decide it; sleep does not (a sleeper struck in a lit room is told
   what hit them). Infrared gives `SightShapes`.
 - `HideNames(text string, names []string, d SightDecision) string`: replaces
-  each name with "a figure" (shapes) or "something" (none): exact whole-word
-  match, longest first, a whole identity tag replaced with its name,
-  capitalized at a sentence start.
+  each name with "a figure" (shapes) or "something" (none), longest name first,
+  capitalized at a sentence start. In bare prose the match is exact and
+  whole-word, because mob names collide with ordinary words ("guard"). Inside an
+  identity tag it ignores case and any duplicate index, and the whole tag is
+  replaced: one Audience name then covers both the authored form ("skeleton")
+  and the display form the channel defence triad prints ("Skeleton #2"). A match
+  inside tag markup itself is never replaced.
 - `Normalize(cat Category, text string) string`
 - `Anonymize(text string) string`
 - `WrapAnsi(text string, maxWidth int) string`
