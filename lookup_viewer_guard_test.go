@@ -38,6 +38,7 @@ var lookupRegistry = map[string]lookupEntry{
 	"internal/actions/combat_fire.go|ExecuteFire":                      {viewer: 2},
 	"internal/actions/melee_target.go|StageMeleeTarget":                {viewer: 1, plain: 1, why: whySelf},
 	"internal/actions/target_resolution.go|ResolveTargetActor":         {viewer: 1},
+	"internal/actions/track.go|Track":                                  {viewer: 1},
 	"internal/mobcommands/aid.go|Aid":                                  {plain: 1, why: whyMob},
 	"internal/mobcommands/attack.go|Attack":                            {plain: 1, why: whyMob},
 	"internal/mobcommands/befriend.go|Befriend":                        {plain: 1, why: whyMob},
@@ -92,7 +93,7 @@ func lookupIsNil(e ast.Expr) bool {
 // sets `.Viewer =` on an options variable (buy.go does).
 func lookupPassesViewer(call *ast.CallExpr, callee string, body *ast.BlockStmt) bool {
 	switch callee {
-	case "FindByNameSeenBy":
+	case "FindByNameSeenBy", "findPresentTargetByNoun":
 		return len(call.Args) > 0 && !lookupIsNil(call.Args[0])
 	case "FindAttackTarget":
 		return len(call.Args) == 5 && !lookupIsNil(call.Args[4])
@@ -101,7 +102,10 @@ func lookupPassesViewer(call *ast.CallExpr, callee string, body *ast.BlockStmt) 
 			if cl, ok := a.(*ast.CompositeLit); ok {
 				for _, elt := range cl.Elts {
 					if kv, ok := elt.(*ast.KeyValueExpr); ok {
-						if k, ok := kv.Key.(*ast.Ident); ok && k.Name == "Viewer" {
+						// The VALUE has to be a real viewer. Accepting the key
+						// alone let `Viewer: nil` register as filtered, which
+						// ships a command with the filter switched off.
+						if k, ok := kv.Key.(*ast.Ident); ok && k.Name == "Viewer" && !lookupIsNil(kv.Value) {
 							return true
 						}
 					}
@@ -184,7 +188,7 @@ func TestEveryCreatureLookupDeclaresItsViewer(t *testing.T) {
 						callee = f.Name
 					}
 					switch callee {
-					case "FindByName", "FindByNameSeenBy", "ResolveTargetActor", "FindAttackTarget":
+					case "FindByName", "FindByNameSeenBy", "ResolveTargetActor", "FindAttackTarget", "findPresentTargetByNoun":
 					default:
 						return true
 					}
