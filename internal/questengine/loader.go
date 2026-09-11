@@ -3,6 +3,7 @@ package questengine
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"gopkg.in/yaml.v2"
 )
 
@@ -157,4 +159,61 @@ func ValidateAllFlags() {
 	}
 
 	mudlog.Info("ValidateAllFlags()", "msg", "all quest flag references validated")
+}
+
+// ValidateAllRoomText enforces the one convention quest room_text uses, and
+// panics at startup on a line that breaks it, the same way ValidateAllFlags
+// does for flag references.
+//
+// Every quest room_text is something the room watches the triggering player
+// do, so it must name them with {source}. Until 2026-09-11 twenty-one lines
+// were written as subjectless fragments, so the room read "unlocks the
+// strongbox" with no one doing it, and one used {source} that nothing filled
+// in. A line that fails here would otherwise fail silently in play.
+func ValidateAllRoomText() {
+	var problems []string
+	for _, q := range globalEngine.quests {
+		for i, t := range q.Triggers {
+			for j, a := range t.Actions {
+				if a.RoomText == "" {
+					continue
+				}
+				prefix := fmt.Sprintf("quest %d trigger %d action %d room_text", q.QuestId, i, j)
+				for _, p := range roomTextProblems(a.RoomText) {
+					problems = append(problems, prefix+": "+p)
+				}
+			}
+		}
+	}
+
+	if len(problems) > 0 {
+		// The engine stores quests in a map; sort so the report is stable.
+		sort.Strings(problems)
+		panic(fmt.Sprintf("Quest room_text validation failed (%d errors):\n  %s", len(problems), strings.Join(problems, "\n  ")))
+	}
+
+	mudlog.Info("ValidateAllRoomText()", "msg", "all quest room_text validated")
+}
+
+// roomTextProblems returns every way text breaks the quest room_text
+// convention, or nil. Split out so the rules are testable without an engine.
+//
+// It is stricter than buffs and spells, which only WARN on an unknown token.
+// A new rule with no shipped violations can fail at boot at no cost; upgrading
+// buffs and spells would change what is allowed to boot, so that is filed.
+func roomTextProblems(text string) []string {
+	var problems []string
+	if !strings.Contains(text, "{source}") {
+		problems = append(problems, "must name the acting player with {source}; the room is watching them act")
+	}
+	for _, token := range []string{"{target}", "{target_plain}"} {
+		if strings.Contains(text, token) {
+			problems = append(problems, token+" is not available: a quest has no target, so it would render empty")
+		}
+	}
+	if strings.Contains(text, "{source_plain}") {
+		problems = append(problems, "{source_plain} is an untagged name that cannot be anonymized in the dark; use {source}")
+	}
+	problems = append(problems, textutil.ValidateTokens(text)...)
+	return problems
 }
