@@ -48,3 +48,8 @@ character:
       itemid: 20003
   items:
     - itemid: 30036
+    # Cat's Eye Draught: grants night vision when drunk. Carried for the M3
+    # item 5a darkness lanes, where the witness must be unsighted first and
+    # sighted second. This profile still has NO night vision until a goal
+    # tells the witness to drink it.
+    - itemid: 30047

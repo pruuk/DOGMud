@@ -1,0 +1,35 @@
+# M3 item 5a, lane C: the WITNESS. You are Ordel Quist in an UNLIT cave. You
+# have NO night vision and carry one Cat's Eye Draught. STAND STILL AND READ.
+# Quote every line VERBATIM, and count lines even when the count is zero.
+#
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: m2-witness
+  start_room: 3101
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look`. If you can read a normal room description, say so at once.
+  - >-
+    When Veteran Pathfinder casts a glow on themselves, report EXACTLY what you
+    receive about it. THE CORRECT ANSWER IS NOTHING. Do not treat silence as a
+    fault.
+  - >-
+    When they cast a cleansing wave, you are one of its targets, so you MUST be
+    told. Quote it. If you are told nothing, report that loudly: it means too
+    much was silenced.
+  - >-
+    Veteran Pathfinder will then try to cast armor on you by name, though
+    neither of you can see. Before drinking anything, quote every line you
+    receive about it, and say whether any line names who cast it.
+  - >-
+    Now type `drink draught`, then `look`, and report whether you can see a
+    normal room description. Tell Veteran Pathfinder when you can. If you still
+    cannot see, report that loudly.
+  - >-
+    When they cast conviction armor on themselves, quote every line you read.
+    You should now read that they are encased in a shimmering layer of
+    conviction.

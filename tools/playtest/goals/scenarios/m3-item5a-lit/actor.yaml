@@ -1,0 +1,38 @@
+# M3 item 5a, lane A: the ACTOR. You are Veteran Pathfinder, in a lit room with
+# Ordel Quist, who reads what the room is told. Quote every line VERBATIM.
+#
+# Companions may follow you. They are expected; ignore them.
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: veteran
+  start_room: 5343
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Confirm Ordel is in the room before anything else. Tell them on the party
+    channel when you are about to act.
+  - >-
+    QUEST LINE. Type `look disc`. Quote what YOU are told. Then ask Ordel to
+    quote what THEY read. They should read your name in front of the action:
+    "Veteran Pathfinder works something free of the cracked floor and pockets
+    it." Do this ONCE only; it will not fire twice for you.
+  - >-
+    SELF-CAST, BUFF. Type `cast chrysalis-glow` with NO target, so it lands on
+    you. If it fizzles, cast it again. Quote every line you receive. You should
+    get "Your Chrysalis Glow takes effect." and, separately, "A warm glow
+    surrounds you." That second line is the effect's own description and is
+    EXPECTED. The defect would be a line telling you it took effect "on Veteran
+    Pathfinder".
+  - >-
+    SELF-CAST, AREA. Type `cast cleansing-wave`. It hits everyone in the room,
+    including you. Quote every line. You should get "You purge the afflictions
+    from your body." exactly ONCE, plus a separate line about cleansing Ordel.
+    Two lines both about purging yourself is the defect.
+  - >-
+    Ask Ordel to cast `cast heal` on themselves, and quote what you read. It
+    should be "Ordel Quist channels restorative magic." It should NOT be
+    "Ordel Quist's Mend Flesh envelops Ordel Quist in healing light."
+  - Judge every line as writing. Quote anything awkward, repetitive, or odd.

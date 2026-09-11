@@ -1,0 +1,34 @@
+# M3 item 5a, lane A: the WITNESS. You are Ordel Quist, standing in a lit room
+# with Veteran Pathfinder. You are the instrument: STAND STILL AND READ, and
+# quote every line VERBATIM. You are carrying a Cat's Eye Draught; do NOT drink
+# it in this lane.
+#
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: m2-witness
+  start_room: 5343
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - Confirm on the party channel that you are in the same room as Veteran Pathfinder.
+  - >-
+    When they `look disc`, quote the line you read. It must name them in front
+    of the action. A line that starts with a bare verb and no name is the
+    defect.
+  - >-
+    When they `cast chrysalis-glow` on themselves, quote every line. Expect
+    "Chrysalis Glow settles over Veteran Pathfinder." and, separately, "A warm
+    glow surrounds Veteran Pathfinder." The defect is "Veteran Pathfinder's
+    Chrysalis Glow settles over Veteran Pathfinder."
+  - >-
+    When they `cast cleansing-wave`, quote every line. You are one of its
+    targets, so you are told it purged YOU, and you also read a line about it
+    cleansing Veteran Pathfinder. That second line should name them ONCE.
+  - >-
+    Then cast `cast heal` with NO target, so it lands on you. The spell is
+    called Mend Flesh. If it fizzles, cast it again. Quote what YOU are told.
+    You should get ONE line, "A warm glow of healing magic envelops you. Your
+    wounds begin to mend." Two lines about healing yourself is the defect.
+  - Judge every line as writing. Quote anything awkward or odd.
