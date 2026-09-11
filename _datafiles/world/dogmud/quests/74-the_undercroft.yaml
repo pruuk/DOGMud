@@ -93,7 +93,7 @@ triggers:
           for every stone of the temple's raising -- except the lowest courses,
           which it simply assumes, as though the foundation were a thing
           received rather than built. The first of the three records.
-      - room_text: "reads the open building-ledger with sudden attention."
+      - room_text: "{source} reads the open building-ledger with sudden attention."
   - event: room_interact
     room: 6189
     noun: building-ledger
@@ -117,7 +117,7 @@ triggers:
           temple -- and its own wording betrays it: they consecrated the site,
           a word that assumes something already stood here to be made holy. The
           second record agrees with the first.
-      - room_text: "studies the framed consecration-record closely."
+      - room_text: "{source} studies the framed consecration-record closely."
   - event: room_interact
     room: 6188
     noun: consecration-record
@@ -142,7 +142,7 @@ triggers:
           this corridor are older work, it notes, cut and laid by hands the
           temple's own records do not name. Three records, three different
           rooms, one conclusion. Time to report to Cael.
-      - room_text: "examines the old mason's survey pinned in the corridor."
+      - room_text: "{source} examines the old mason's survey pinned in the corridor."
   - event: room_interact
     room: 6198
     noun: masons-survey
@@ -174,7 +174,7 @@ triggers:
           rubbing of it -- proof in soft black line -- and the dark keeps the
           rest of its counsel. Whatever unmade the fourth, the stone does not
           say. That answer is somewhere else.
-      - room_text: "takes a careful rubbing from the great carving on the chamber wall."
+      - room_text: "{source} takes a careful rubbing from the great carving on the chamber wall."
   - event: room_interact
     room: 6215
     noun: orbital-face

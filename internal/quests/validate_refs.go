@@ -178,11 +178,12 @@ func (c *refsCtx) checkActions(where string, actions []ActionDef, depth int) {
 			for j, l := range a.Sequence.Lines {
 				c.checkMob(fmt.Sprintf("%s sequence line %d speaker", aw, j), l.Speaker)
 			}
-			// The engine nests exactly one level; guard against pathological
-			// recursion anyway.
-			if depth < 2 {
-				c.checkActions(aw+" sequence on_complete", a.Sequence.OnComplete, depth+1)
-			}
+			// No depth limit. The engine runs a sequence's on_complete actions
+			// through ExecuteAction, which queues any nested sequence again, so
+			// nesting is unbounded at runtime and a reference three levels down
+			// is just as live. A definition from YAML or the editor's JSON
+			// cannot be cyclic, so the recursion always ends.
+			c.checkActions(aw+" sequence on_complete", a.Sequence.OnComplete, depth+1)
 		}
 	}
 }
@@ -198,7 +199,8 @@ func (c *refsCtx) grantedSteps() map[string]bool {
 			if rest, ok := strings.CutPrefix(a.Grant, ownPrefix); ok {
 				granted[rest] = true
 			}
-			if a.Sequence != nil && depth < 2 {
+			// Unbounded, like checkActions: nested sequences run at any depth.
+			if a.Sequence != nil {
 				walk(a.Sequence.OnComplete, depth+1)
 			}
 		}

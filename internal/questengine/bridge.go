@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -202,13 +203,31 @@ func (b *GameBridge) SendText(cat messaging.Category, text string) {
 }
 
 // RoomText sends a message to everyone in the room except the triggering player.
+//
+// It substitutes {source} with the player's TAGGED name, then sends on the
+// VISUAL channel, and both matter. The line describes something the room
+// watches the player do ("{source} unlocks the strongbox"), so an observer who
+// cannot see must not receive it, and Room.SendText is never sight-gated. And
+// the name must carry its `username` tag, because messaging.Anonymize strips
+// only tagged names: an untagged one would reach an infrared-only observer in
+// full.
+//
+// The behaviour tree already delivered its own room_text this way
+// (behaviortree/actions_dialogue.go). Until 2026-09-11 this path sent the text
+// raw on the audio channel, so quest 77 showed players a literal {source}.
+// quests.Quest.Validate (internal/quests/roomtext.go) is what keeps every quest
+// line naming {source}, both at boot and when the admin editor saves a quest.
 func (b *GameBridge) RoomText(text string) {
 	room := rooms.LoadRoom(b.roomId)
 	if room == nil {
 		mudlog.Error("GameBridge.RoomText", "error", fmt.Sprintf("room %d not found", b.roomId))
 		return
 	}
-	room.SendText(messaging.CategoryNPCDialogue, text, b.user.UserId)
+	rendered := textutil.SubstituteTokens(text, textutil.TokenContext{
+		SourceName:      b.user.Character.GetCharacterName(true),
+		SourcePlainName: b.user.Character.GetCharacterName(false),
+	})
+	room.SendTextVisual(messaging.CategoryNPCDialogue, rendered, b.user.UserId)
 }
 
 // SpawnMob creates a new mob instance and places it in the target room.

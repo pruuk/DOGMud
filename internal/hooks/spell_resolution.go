@@ -844,7 +844,10 @@ func applyMobEffect_default(
 			spellDefenceIdentity(casterChar, user, room), mName, spellData.Name, user, nil)
 		return 0
 	}
-	if user != nil {
+	// A spell whose narration resolveSpell's Go hook owns gets no generic
+	// line: the player-target twin in applyPlayerEffect's default arm skips
+	// it too. A help spell aimed at a charmed companion lands here.
+	if user != nil && !spellNarratedByGoHook(spellData.SpellId) {
 		user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 			`Your %s takes effect on %s.`,
 			spellData.Name, mName))
@@ -1001,19 +1004,28 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 	case "purge":
 		target.Character.CancelBuffsWithFlag(buffs.Poison)
 		target.Character.RemoveCondition(characters.ConditionPoisoned)
-		user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-			`<ansi fg="green">Your %s cleanses <ansi fg="username">%s</ansi> of afflictions.%s</ansi>`,
-			spellData.Name, target.Character.Name, critTag))
 		if target.UserId != user.UserId {
+			user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="green">Your %s cleanses <ansi fg="username">%s</ansi> of afflictions.%s</ansi>`,
+				spellData.Name, target.Character.Name, critTag))
 			target.SendText(messaging.CategorySpellVital, fmt.Sprintf(
 				`<ansi fg="green"><ansi fg="username">%s</ansi>'s %s purges the toxins from your body.</ansi>`,
 				user.Character.Name, spellData.Name))
+			sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> cleanses <ansi fg="username">%s</ansi>.`,
+				user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
 		} else {
-			target.SendText(messaging.CategorySpellVital, `<ansi fg="green">You purge the afflictions from your body.</ansi>`)
+			// SELF-CAST: one line to the caster and one to the room, naming them
+			// once, the shape case "shield" below already has. An area spell
+			// puts the caster in its own target list (resolveSpell), so every
+			// Cleansing Wave reaches this branch, not only a deliberate self-cast.
+			// critTag stays on the caster's line so a crit on yourself is not lost.
+			user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="green">You purge the afflictions from your body.%s</ansi>`, critTag))
+			sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="cyan">%s</ansi> cleanses <ansi fg="username">%s</ansi> of afflictions.`,
+				spellData.Name, target.Character.Name), user.UserId)
 		}
-		sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
-			`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> cleanses <ansi fg="username">%s</ansi>.`,
-			user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
 
 	case "heal":
 		skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)
@@ -1031,19 +1043,25 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			durationRounds = 6
 		}
 		target.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
-		user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-			`<ansi fg="green">You weave restorative magic around <ansi fg="username">%s</ansi>.%s</ansi>`,
-			target.Character.Name, critTag))
 		if target.UserId != user.UserId {
+			user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="green">You weave restorative magic around <ansi fg="username">%s</ansi>.%s</ansi>`,
+				target.Character.Name, critTag))
 			target.SendText(messaging.CategorySpellVital, fmt.Sprintf(
 				`<ansi fg="green"><ansi fg="username">%s</ansi>'s %s envelops you in healing energy. Your wounds begin to mend.</ansi>`,
 				user.Character.Name, spellData.Name))
+			sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> envelops <ansi fg="username">%s</ansi> in healing light.`,
+				user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
 		} else {
-			target.SendText(messaging.CategorySpellVital, `<ansi fg="green">A warm glow of healing magic envelops you. Your wounds begin to mend.</ansi>`)
+			// SELF-CAST: see case "purge". The room line reuses the wording
+			// applyMobSelfEffect already uses for a mob healing itself.
+			user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="green">A warm glow of healing magic envelops you. Your wounds begin to mend.%s</ansi>`, critTag))
+			sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="username">%s</ansi> channels restorative magic.`,
+				user.Character.Name), user.UserId)
 		}
-		sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
-			`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> envelops <ansi fg="username">%s</ansi> in healing light.`,
-			user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
 
 	case "buff":
 		for _, buffId := range spellData.BuffIds {
@@ -1072,23 +1090,38 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 				target.Character.Buffs.SetTickAmount(buffId, tickAmt)
 			}
 		}
-		user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-			`Your %s takes effect on <ansi fg="username">%s</ansi>!%s`,
-			spellData.Name, target.Character.Name, critTag))
-		if target.UserId != user.UserId {
-			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s %s takes effect on you!`,
-				user.Character.Name, spellData.Name))
-		}
 		// M1 audit defect: this case told the caster and the target and left
 		// the room out, while its sibling `case "heal":` above broadcasts. A
 		// spell visibly taking hold on someone is not a private exchange.
 		// Shape and exclusions mirror the heal line; the category follows this
 		// case's own two lines rather than heal's, because a buff is not
 		// necessarily vital magic.
-		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> settles over <ansi fg="username">%s</ansi>.`,
-			user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
+		//
+		// KNOWN AND DEFERRED: the buff's own start text ALSO narrates this
+		// moment to the target and the room, through the event AddBuff queues
+		// above, so a buff with authored start text reaches each audience
+		// twice. The messaging arc's M6 merges them into one line per audience.
+		// See docs/superpowers/specs/2026-09-11-messaging-m3-item5a-narration-defects-design.md.
+		if target.UserId != user.UserId {
+			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`Your %s takes effect on <ansi fg="username">%s</ansi>!%s`,
+				spellData.Name, target.Character.Name, critTag))
+			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="username">%s</ansi>'s %s takes effect on you!`,
+				user.Character.Name, spellData.Name))
+			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> settles over <ansi fg="username">%s</ansi>.`,
+				user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
+		} else {
+			// SELF-CAST: see case "purge". The caster line stays, reworded,
+			// rather than being dropped: a buff with no authored start text
+			// would otherwise leave a self-caster reading nothing at all.
+			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`Your %s takes effect.%s`, spellData.Name, critTag))
+			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="cyan">%s</ansi> settles over <ansi fg="username">%s</ansi>.`,
+				spellData.Name, target.Character.Name), user.UserId)
+		}
 
 	case "shield":
 		skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)
@@ -1119,10 +1152,35 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			`A shimmering barrier surrounds <ansi fg="username">%s</ansi>.`, target.Character.Name), target.UserId)
 
 	default:
-		user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-			`Your %s takes effect on <ansi fg="username">%s</ansi>.`,
-			spellData.Name, target.Character.Name))
+		// A spell whose narration resolveSpell's Go hook owns gets no generic
+		// line here. fold-anchor, fold-recall and purge-affliction declare no
+		// effect_type, so they land in this arm, and the caster was told
+		// "Your Purge Affliction takes effect." before the hook said it
+		// properly.
+		if spellNarratedByGoHook(spellData.SpellId) {
+			break
+		}
+		if target.UserId == user.UserId {
+			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`Your %s takes effect.`, spellData.Name))
+		} else {
+			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
+				`Your %s takes effect on <ansi fg="username">%s</ansi>.`,
+				spellData.Name, target.Character.Name))
+		}
 	}
+}
+
+// spellNarratedByGoHook reports whether resolveSpell's Go hook switch owns a
+// spell's narration. KEEP IT IN STEP WITH THAT SWITCH: a spell added there
+// without being added here is told twice, once by applyPlayerEffect's default
+// arm and once by its hook.
+func spellNarratedByGoHook(spellId string) bool {
+	switch spellId {
+	case "fold-anchor", "fold-recall", "purge-affliction":
+		return true
+	}
+	return false
 }
 
 // spellAttackChannel maps a spell's target_defense_type onto the U6 attack

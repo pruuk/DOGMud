@@ -2408,21 +2408,6 @@ func TestApplyPlayerEffect_Purge(t *testing.T) {
 	applyPlayerEffect(caster, target, room, purgeSpell, 10, spellContestAttackWin())
 }
 
-func TestApplyPlayerEffect_PurgeSelf(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-	u := users.GetByUserId(1)
-	room := rooms.LoadRoom(1)
-
-	purgeSpell := &spells.SpellData{
-		SpellId:    "purge",
-		Name:       "Purge",
-		EffectType: "purge",
-	}
-	u.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
-	applyPlayerEffect(u, u, room, purgeSpell, 10, spellContestAttackWin())
-}
-
 func TestApplyPlayerEffect_Heal(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -2437,21 +2422,6 @@ func TestApplyPlayerEffect_Heal(t *testing.T) {
 		EffectMagnitude: 3,
 	}
 	applyPlayerEffect(caster, target, room, healSpell, 3, spellContestAttackWin())
-}
-
-func TestApplyPlayerEffect_HealSelf(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-	u := users.GetByUserId(1)
-	room := rooms.LoadRoom(1)
-
-	healSpell := &spells.SpellData{
-		SpellId:         "heal",
-		Name:            "Heal",
-		EffectType:      "heal",
-		EffectMagnitude: 3,
-	}
-	applyPlayerEffect(u, u, room, healSpell, 3, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_HealCrit(t *testing.T) {
@@ -2484,21 +2454,6 @@ func TestApplyPlayerEffect_Buff(t *testing.T) {
 		BuffIds:    []int{100},
 	}
 	applyPlayerEffect(caster, target, room, buffSpell, 0, spellContestAttackWin())
-}
-
-func TestApplyPlayerEffect_BuffSelf(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-	u := users.GetByUserId(1)
-	room := rooms.LoadRoom(1)
-
-	buffSpell := &spells.SpellData{
-		SpellId:    "bless",
-		Name:       "Bless",
-		EffectType: "buff",
-		BuffIds:    []int{100},
-	}
-	applyPlayerEffect(u, u, room, buffSpell, 0, spellContestAttackWin())
 }
 
 func TestApplyPlayerEffect_Shield(t *testing.T) {

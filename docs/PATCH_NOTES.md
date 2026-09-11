@@ -1,5 +1,29 @@
 # DOGMud Patch Notes
 
+## 2026-09-11: The dark hides more, and quests say who did what
+
+Some things were being described to you that you had no way of seeing. If a
+spell or a lingering effect settled over someone while you stood blind, asleep
+or in the dark, you were still told how it looked. You are not anymore. The
+same goes for the small moments in quests where you watch another adventurer
+search a shelf, read a ledger, or pry something loose. And if your eyes only
+catch warmth in the dark, you now see a figure rather than a name.
+
+Those quest moments had a stranger problem too: they never said who was doing
+them. You could read "unlocks the strongbox and pulls out a leather journal"
+with no one attached to it. They now name the person. One of them showed a
+stray scrap of code where a name belonged, and that reads properly now as well.
+
+Casting on yourself reads better. Healing or cleansing yourself used to tell you
+about it twice, and told everyone nearby that you had cast the spell on
+yourself, naming you twice over. Now you get one line and the room gets one.
+
+A creature suffering from a lingering effect now shows it, the way a person
+already did.
+
+And the Cat's Eye Draught finally does what its label says. It was meant to let
+you see in the dark, and it quietly never did.
+
 ## 2026-09-09: Grappling reads as one fight again
 
 If you have ever grappled someone and found their account of it did not match

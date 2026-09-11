@@ -70,7 +70,7 @@ triggers:
           stops exactly where the detail should get louder. Reth saw
           something out there, and he filed a paper that buries it.
           Time to take this back to Brennan.
-      - room_text: "reads the thin filed survey with sudden, careful attention."
+      - room_text: "{source} reads the thin filed survey with sudden, careful attention."
   # ── Ungated fallback: no 75-start ──
   - event: room_interact
     room: 6303
@@ -104,7 +104,7 @@ triggers:
           out there he would not write down, and he has not written it
           down now — but the route is exact, and the final mark is
           deliberate, and it is enough. The thread runs east.
-      - room_text: "takes the surveyor's marked map from the table."
+      - room_text: "{source} takes the surveyor's marked map from the table."
   # ── Ungated fallback: no 75-intro ──
   - event: room_interact
     room: 6315

@@ -6,5 +6,5 @@ triggercount: 500
 statmods:
   strength: -10
 flags:
-  - night-vision
+  - nightvision
   - see-hidden

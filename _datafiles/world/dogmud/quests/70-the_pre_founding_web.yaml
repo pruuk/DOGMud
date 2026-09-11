@@ -69,7 +69,7 @@ triggers:
           it. The colony arrived here, found this, and wrote itself into
           the founding record as first. The rubbing in your hands says
           otherwise, quietly, the way the stone does.
-      - room_text: "takes a careful rubbing of the symbol carved beneath the buried lintel."
+      - room_text: "{source} takes a careful rubbing of the symbol carved beneath the buried lintel."
 
   # lintel symbol, no quest
   - event: room_interact

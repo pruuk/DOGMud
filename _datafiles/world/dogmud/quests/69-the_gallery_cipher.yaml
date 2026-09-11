@@ -83,7 +83,7 @@ triggers:
           too precisely to be art. Read along the row, they are a sequence:
           a number, set into stone by someone who wanted it kept where it
           could not be edited out.
-      - room_text: "takes a careful charcoal rubbing of the old processional reliefs."
+      - room_text: "{source} takes a careful charcoal rubbing of the old processional reliefs."
 
   - event: room_interact
     room: 5901

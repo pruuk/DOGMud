@@ -168,6 +168,24 @@ func TestValidateRefs_SequenceNesting(t *testing.T) {
 	errsContainingRefs(t, errs, "9-hidden")
 }
 
+// TestValidateRefs_SequenceNestingThreeDeep: the engine runs nested sequences
+// with no depth limit, so reference checks must reach every level. The walk
+// used to stop two levels down, so a bad reference three deep saved cleanly.
+func TestValidateRefs_SequenceNestingThreeDeep(t *testing.T) {
+	v := permissiveQuestValidators()
+	v.StepExists = func(string) bool { return false }
+
+	deep := ActionDef{Grant: "9-hidden"}
+	for i := 0; i < 3; i++ {
+		deep = ActionDef{Sequence: &SequenceDef{Lines: []SayLineDef{{Text: "..."}},
+			OnComplete: []ActionDef{deep}}}
+	}
+	q := refsBaseQuest()
+	q.Triggers[0].Actions = append(q.Triggers[0].Actions, deep)
+	errs, _ := ValidateQuestRefs(q, v)
+	errsContainingRefs(t, errs, "9-hidden")
+}
+
 func TestValidateRefs_Warnings(t *testing.T) {
 	v := permissiveQuestValidators()
 	v.DialogueGrants = func(string) bool { return false }

@@ -1,0 +1,42 @@
+# M3 item 5a, lane A: a LIT room. Quest wording (D6) and self-cast wording (D3).
+#
+# Room 5343, The Reliquary, Pothole Coulee: fort biome, lit. Both players can
+# see, so every line that should arrive does. Two things changed:
+#   - quest room lines now name who acted ("<name> works something free...")
+#   - casting on yourself gives YOU one line, and the room one line naming you once
+name: m3-item5a-lit
+mode: party
+summary: >-
+  A veteran triggers a quest action and casts on themselves while a witness
+  reads exactly what the room is told.
+on_actor_stop: continue
+budgets:
+  wall_clock: 25m
+requires:
+  max_connections: 20
+roster:
+  - id: actor
+    personality: bug-finder
+    goals: goals/scenarios/m3-item5a-lit/actor.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/m3-item5a-lit/witness.yaml
+
+group_goals:
+  - id: quest-names-actor
+    do: Actor types `look disc`. Witness stands in the room.
+    verify: >-
+      Witness reads a line naming the actor, "Veteran Pathfinder works something
+      free of the cracked floor and pockets it." A line with no name in front is
+      the defect. It fires once per character, so do it once.
+  - id: self-cast-one-line
+    do: >-
+      Actor casts `cast chrysalis-glow` with no target, then `cast
+      cleansing-wave`. Witness casts `cast heal` with no target.
+    verify: >-
+      The caster is told once, in the second person, never "on <their own
+      name>". The room names the caster once, never "<name>'s Mend Flesh
+      envelops <name>".
+  - id: reads-well
+    do: Judge every quest and self-cast line seen as prose.
+    verify: Report anything that repeats, reads machine-made, or names someone oddly.

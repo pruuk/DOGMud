@@ -88,7 +88,7 @@ triggers:
           of quarterly sums against vendor names, every figure routed up to
           one unnamed account. It does not prove a crime. It proves exactly
           where the money goes, and who waits on whom.
-      - room_text: "palms a page from the table among the cup-rings."
+      - room_text: "{source} palms a page from the table among the cup-rings."
 
   # paper-scrap, before reaching Horst
   - event: room_interact

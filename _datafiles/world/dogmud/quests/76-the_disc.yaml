@@ -51,7 +51,7 @@ triggers:
           lines thread across its face to a ring struck through with a
           line. You do not understand it. You are fairly certain no one
           here does. You put it away.
-      - room_text: "works something free of the cracked floor and pockets it."
+      - room_text: "{source} works something free of the cracked floor and pockets it."
   - event: room_interact
     room: 5343
     noun: disc
@@ -82,7 +82,7 @@ triggers:
           all. It is a name, set down once and gently, as if to keep one
           soft thing safe. Maren. He went east to finish this. He did not
           come back to her.
-      - room_text: "reads a long while at the cottage table."
+      - room_text: "{source} reads a long while at the cottage table."
   - event: room_interact
     room: 4023
     noun: journal
@@ -124,7 +124,7 @@ triggers:
           comes to you off the last page, unbidden. Maren. He kept her,
           all the way to the end of himself. You hope, wherever she is,
           she never learns how far he went.
-      - room_text: "does something careful at the marked hearth, and the air goes briefly strange."
+      - room_text: "{source} does something careful at the marked hearth, and the air goes briefly strange."
   - event: room_interact
     room: 4023
     noun: hearth-marks

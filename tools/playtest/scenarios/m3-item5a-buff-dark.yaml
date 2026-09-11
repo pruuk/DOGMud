@@ -1,0 +1,65 @@
+# M3 item 5a, lane C: buff room lines in the DARK (D1).
+#
+# Room 3101, Cave Mouth, Ironwind Steppe: cave biome, unlit, the room the M2
+# darkness lane used. A buff's room line ("{source} is encased in a shimmering
+# layer of conviction") describes something seen, so an observer who cannot see
+# must not get it. The control matters just as much: a spell landing ON the
+# witness must still be told to them.
+#
+# DO NOT use a LIGHT buff for the dark checks. Chrysalis Glow's buff
+# (Illumination) is a light source: its start line is sent after the light
+# exists, so it correctly reaches everyone, and it lights the room for 20
+# minutes, which spoils every later dark step. The first run of this lane
+# (2026-09-11) was lost to exactly that. Glow is used last, after the draught.
+#
+# One step deliberately casts at a player the caster cannot see, to find out
+# whether that works (the code says it does). Nothing else depends on it.
+name: m3-item5a-buff-dark
+mode: party
+summary: >-
+  A veteran casts buffs in an unlit cave while a sightless witness reports
+  what they are, and are not, told.
+on_actor_stop: continue
+budgets:
+  wall_clock: 25m
+requires:
+  max_connections: 20
+roster:
+  - id: actor
+    personality: bug-finder
+    goals: goals/scenarios/m3-item5a-buff-dark/actor.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/m3-item5a-buff-dark/witness.yaml
+
+group_goals:
+  - id: confirm-dark
+    do: Both type `look` first.
+    verify: Neither can see a normal room description. If either can, the lane is void.
+  - id: unsighted-gets-nothing
+    do: Actor casts `cast conviction-armor` on themselves.
+    verify: >-
+      The witness receives NOTHING about the armor, neither "Conviction Armor
+      settles over" nor "encased in a shimmering layer of conviction". Silence
+      is the PASS.
+  - id: still-told-about-yourself
+    do: Actor casts `cast cleansing-wave`, which lands on everyone in the room.
+    verify: The witness IS told the wave purged them. Silence here is serious.
+  - id: cast-at-unseen-target
+    do: >-
+      Before the witness drinks anything, the actor types `cast conviction-armor
+      ordel`, naming a player they cannot see.
+    verify: >-
+      A CHECK, not a pass or fail for this run. Record exactly what happens. If
+      the cast is refused, quote the refusal. If it starts or lands, quote what
+      the actor is told and what the witness is told, and say whether the
+      witness is told WHO cast it. A cast that works on a player the caster
+      cannot see is filed as a follow-up.
+  - id: sighted-sees-it
+    do: Witness types `drink draught`, then the actor casts `cast chrysalis-glow` on themselves.
+    verify: >-
+      The witness now reads "Chrysalis Glow settles over Veteran Pathfinder."
+      That line is sent before the glow's light exists, so only sight lets the
+      witness read it. "A warm glow surrounds Veteran Pathfinder." also
+      arrives, and would even without the draught, because the glow is itself
+      a light.

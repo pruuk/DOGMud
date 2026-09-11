@@ -115,7 +115,7 @@ triggers:
           clicks open. Inside the strongbox you find a slim leather journal --
           a bribe ledger, filled with names, dates, and amounts paid to
           corrupt city officials. This is the evidence you need."
-      - room_text: "unlocks the strongbox and pulls out a leather journal."
+      - room_text: "{source} unlocks the strongbox and pulls out a leather journal."
 
   # ── STRONGBOX: locked (no key) ────────────────────────
   - event: room_interact

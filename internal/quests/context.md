@@ -287,12 +287,26 @@ func (r *Quest) Id() int {
 // loading half-formed. Checks: QuestId > 0, Name non-empty, at least one
 // step, every trigger has a known event and at least one action, no
 // duplicate step ids, every declared flag has a non-empty key and at
-// least one allowed value with no duplicate flag keys, and every
-// same-quest grant token in a trigger action names a real step.
+// least one allowed value with no duplicate flag keys, every
+// same-quest grant token in a trigger action names a real step, and every
+// room_text (including actions nested in a sequence's on_complete) passes
+// RoomTextProblems.
 func (r *Quest) Validate() error {
     // ...
 }
+
+// RoomTextProblems (roomtext.go) returns every way a quest room_text breaks
+// the convention: it must name the acting player with {source}, and may not
+// use {target}, {target_plain} (a quest has no target), {source_plain} (an
+// untagged name cannot be anonymized in the dark) or an unknown token.
+func RoomTextProblems(text string) []string
 ```
+
+The room_text rule lives in `Validate` rather than in a questengine boot
+check on purpose. `Validate` runs both at boot and before an admin editor save
+(`modules/gmcp` `buildQuestUpdate`), so a bad line is refused with a reply. A
+boot-only check let the editor save a bad line, panic the reindex inside a
+recovered listener, and fail the next cold boot.
 
 ### Data Loading
 ```go
@@ -1044,6 +1058,7 @@ maintainers know the quests are coupled.
 | `quests.go` | Every quest definition type: the single owner of the quest file parse |
 | `triggers.go` | Trigger and action definition shapes |
 | `save.go` | Quest file persistence |
+| `roomtext.go` | `RoomTextProblems` and the room_text rule `Validate` enforces (every quest room line names `{source}`, walking nested sequences) |
 | `validate_refs.go` | Cross-reference validation (flags, tokens, ids) |
 
 **This package owns the data; `internal/questengine` owns the evaluation.**

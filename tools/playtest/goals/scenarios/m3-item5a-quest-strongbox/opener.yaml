@@ -1,0 +1,24 @@
+# M3 item 5a, lane D: the OPENER. You are Ordel Quist in an UNLIT room, on step
+# `confront` of The Undertow, carrying the Strongbox Key. Veteran Pathfinder is
+# with you and cannot see either. Quote every line VERBATIM.
+#
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: m2-witness
+  start_room: 498
+  overlays:
+    # A quest can only be entered at "start"; later steps may then be skipped to.
+    set_quest_tokens: ["14-start", "14-confront"]
+    grant_items: [40034]
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Type `look`. If you can read a normal room description, say so at once:
+    the lane is void.
+  - >-
+    Type `look strongbox`, ONCE. Quote everything you are told. You should
+    unlock it and find a leather journal. Then ask Veteran Pathfinder what
+    they received.

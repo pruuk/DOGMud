@@ -87,7 +87,13 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 			}
 		} else if evt.MobInstanceId != 0 {
 			if m := mobs.GetInstance(evt.MobInstanceId); m != nil {
+				// The mob tag, not the player one. GetCharacterName(true) tags
+				// every name `username`, so a mob holder rendered in the player
+				// colour. mobDisplayName is what the spell code already uses.
 				charName = m.Character.GetCharacterName(true)
+				if r := rooms.LoadRoom(m.Character.RoomId); r != nil {
+					charName = mobDisplayName(m, r, 0)
+				}
 				charPlainName = m.Character.GetCharacterName(false)
 				roomId = m.Character.RoomId
 			}
@@ -100,9 +106,13 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 			}
 			cfg := textutil.SendTextConfig{
 				UserSendFunc: sendFunc,
+				// Visual, not audio. Start text describes what the room SEES
+				// ("A warm glow surrounds Alice"), and Room.SendText is never
+				// sight-gated, so it reached blind and unsighted observers. M2
+				// fixed the same defect for cast_room_text.
 				RoomSendFunc: func(msg string, skip ...int) {
 					if r := rooms.LoadRoom(roomId); r != nil {
-						r.SendText(messaging.CategoryBuffApply, msg, skip...)
+						r.SendTextVisual(messaging.CategoryBuffApply, msg, skip...)
 					}
 				},
 				ExcludeId: excludeId,

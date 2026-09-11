@@ -55,7 +55,7 @@ triggers:
           stone by stone, until the old channel runs open again -- and the
           water finds its lost path and goes downhill to both farms at once.
           Neither man gets to be right. The valley does.
-      - room_text: "hauls a slide of fallen stone clear of an old aqueduct until the water runs through it again."
+      - room_text: "{source} hauls a slide of fallen stone clear of an old aqueduct until the water runs through it again."
       - grant: "72-end"
 
   # PATH C — THE RECORD: read the old water-right among the records (6060).

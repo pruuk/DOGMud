@@ -67,3 +67,36 @@ func TestAnonymizeEmpty(t *testing.T) {
 		t.Fatalf("empty must pass through, got %q", got)
 	}
 }
+
+// TestAnonymizeReplacesSuffixedUsernameTags guards the player half of the
+// suffix rule. FormattedName.String renders `username-aggro` and
+// `username-dead` as well as plain `username`, and GetCharacterName(true)
+// renders `username-aggro` for any character not fighting a player, so the
+// suffixed form is the COMMON one in room text. Only mob tags accepted a
+// suffix, so a player's name reached infrared-only observers in full.
+func TestAnonymizeReplacesSuffixedUsernameTags(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+	}{
+		{"aggro", `<ansi fg="username-aggro">Calabe</ansi> glows`},
+		{"dead", `<ansi fg="username-dead">Calabe</ansi> glows`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			want := `<ansi fg="combat-anon">a figure</ansi> glows`
+			if got := Anonymize(tc.in); got != want {
+				t.Fatalf("suffixed player identity leaked: got %q want %q", got, want)
+			}
+		})
+	}
+}
+
+// TestAnonymizeLeavesLookalikeTagsAlone keeps the suffix rule from swallowing
+// a colour alias that merely starts with an identity word.
+func TestAnonymizeLeavesLookalikeTagsAlone(t *testing.T) {
+	in := `<ansi fg="usernames">roster</ansi> <ansi fg="mobnamex">x</ansi>`
+	if got := Anonymize(in); got != in {
+		t.Fatalf("non-identity tag was anonymized: got %q", got)
+	}
+}

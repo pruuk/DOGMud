@@ -1,0 +1,24 @@
+# M3 item 5a, lane B: the ACTOR. You are Veteran Pathfinder in an UNLIT cave
+# room. You have no night vision and that is on purpose. Ordel Quist is with
+# you. Quote every line VERBATIM. Companions may follow; ignore them.
+#
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: veteran
+  start_room: 6397
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look`. Report what you get. If you can read a normal room
+    description, say so at once: the lane is void.
+  - >-
+    WAIT for Ordel. They will type `look records` first. While they do, report
+    EXACTLY what you receive about it. THE CORRECT ANSWER IS NOTHING. Count the
+    lines about Ordel's action and state the number, even when it is zero.
+  - >-
+    Only after Ordel has drunk their draught and says they can see, type `look
+    records` yourself, ONCE. Quote what you are told, then ask Ordel what they
+    read.

@@ -1,0 +1,19 @@
+# M3 item 5a, lane D: the WATCHER. You are Veteran Pathfinder in an UNLIT room.
+# You have no night vision and no light, on purpose. Do NOT cast chrysalis-glow:
+# it is a light and would void the lane. Ignore your companions.
+#
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: veteran
+  start_room: 498
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Type `look`. If you can read a normal room description, say so at once.
+  - >-
+    Stand still while Ordel Quist opens the strongbox. Report EXACTLY what you
+    receive about it. THE CORRECT ANSWER IS NOTHING. Count the lines about
+    their action and state the number, even when it is zero.

@@ -1,0 +1,35 @@
+# M3 item 5a, lane C: the ACTOR. You are Veteran Pathfinder in an UNLIT cave.
+# You have no night vision, on purpose. Ordel Quist stands with you and cannot
+# see either. Quote every line VERBATIM. Ignore any companions.
+#
+# Do NOT cast chrysalis-glow until the last goal: it is a light and would light
+# the cave for 20 minutes, ruining every darkness check.
+#
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: veteran
+  start_room: 3101
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look`. If you can read a normal room description, say so at once.
+  - >-
+    Type `cast conviction-armor` with NO target. If it fizzles, cast it again.
+    Tell Ordel the moment it lands and ask what they received. THE CORRECT
+    ANSWER IS NOTHING.
+  - >-
+    Type `cast cleansing-wave`. It lands on everyone in the room. Ask Ordel what
+    they were told. They MUST be told something about the wave purging them.
+  - >-
+    TARGETING CHECK, while you still cannot see. Type `cast conviction-armor
+    ordel`, naming Ordel even though you cannot see them. Quote exactly what you
+    are told: whether the cast is refused, starts, or lands. If it fizzles, try
+    once more. Ask Ordel what they were told. This step only records what
+    happens; neither outcome is a failure of your run.
+  - >-
+    Wait until Ordel has drunk their draught and says they can see. Only then
+    type `cast chrysalis-glow` with NO target. If it fizzles, cast it again.
+    Ask what they read.

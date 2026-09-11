@@ -1,0 +1,30 @@
+# M3 item 5a, lane B: the WITNESS. You are Ordel Quist in an UNLIT cave room.
+# You have NO night vision yet. You carry one Cat's Eye Draught. The ORDER of
+# your goals is the whole test, so follow it exactly. Quote every line VERBATIM.
+#
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: m2-witness
+  start_room: 6397
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look`. Report what you get. If you can read a normal room
+    description, say so at once: the lane is void.
+  - >-
+    FIRST: type `look records`, ONCE. Quote what you are told. Tell Veteran
+    Pathfinder you have done it and ask what they received. They should have
+    received nothing.
+  - >-
+    SECOND: type `drink draught`. Then `look` again and report whether you can
+    now see a normal room description. Tell Veteran Pathfinder when you can. If
+    you still cannot see, report that loudly.
+  - >-
+    THIRD: when Veteran Pathfinder types `look records`, quote EXACTLY the line
+    you read about them. It must name them: "Veteran Pathfinder stands
+    motionless before the wall of moving light, and for a long moment does not
+    seem to breathe." If you read the characters "{source}" anywhere, that is
+    the defect. Quote it.
