@@ -21,7 +21,8 @@
 5. **Fixture room 1 is LIT; room 2 is NOT dark either.** Room 1 is `biome: city`. Room 2 has no biome, which resolves to the lit default. To darken a room in a test, set `room.Biome = "cave"`: the fixture seeds `cave` with `DarkArea: true`, and a dark biome is visibility 0 at any hour of game time. The `darken` helper does this and asserts it.
 6. **`buffs.SeedBuffsForTest` REPLACES the whole buff registry.** Seed with `defer restore()` AFTER `defer cleanup()`, so the restore runs first (defers are LIFO). Never use `t.Cleanup` for it: that runs after the fixture cleanup and would reinstall a stale registry.
 7. **Task order is load-bearing.** The startup check (Task 5) exists before the data rewrite (Task 6), and is wired into boot only inside Task 6, AFTER the rewrite. Wired earlier, boot and `hooks/Quest_HandleQuestUpdate_bridge_test.go:76` (which calls `questengine.LoadDataFiles()`) both fail on today's data.
-8. **Git:** named paths only, never `git add -A` or `git add .`. Every `gh` command carries `--repo pruuk/DOGMud`. `grep -c` exits 1 on zero matches, so run every "expect zero" check standalone.
+8. **Every task gate also runs `go test .`** (added in execution). The root package holds `TestNarrationSitesMatchViewpointAudit`, which fails on any new narration format string that misses a viewpoint without a registry row. Task 1's hooks-only gate missed it and left `go test ./...` red.
+9. **Git:** named paths only, never `git add -A` or `git add .`. Every `gh` command carries `--repo pruuk/DOGMud`. `grep -c` exits 1 on zero matches, so run every "expect zero" check standalone.
 
 ## Facts this plan relies on, verified 2026-09-11 against master `e1e0fed74`
 
@@ -44,7 +45,7 @@
 | `UserRoundTick` walks rooms with players, then every player, with no gate before the buff trigger block; the trigger block skips an `Expired()` buff | `internal/hooks/NewRound_UserRoundTick.go:148-294` |
 | `PruneBuffs` walks rooms with players, `GetPlayers(rooms.FindBuffed)` (a player with `len(Buffs.List) > 0`), then every mob instance | `internal/hooks/NewTurn_PruneBuffs.go:18-121`; `rooms.go:1720` |
 | `tickMobBuffs(mob *mobs.Mob, mobInstanceId int)` never sends trigger text | `internal/hooks/NewRound_MobRoundTick.go:218-261` |
-| `mobDisplayName(mob, room, viewingUserId)` returns `GetMobNameIndexed(...).String()`, which renders `<ansi fg="mobname...">`; `GetCharacterName(true)` always renders `username` | `internal/hooks/NewRound_DoCombat_helpers.go:390`; `internal/characters/formattedname.go:50-72`, `:151-170` |
+| `mobDisplayName(mob, room, viewingUserId)` returns `GetMobNameIndexed(...).String()`, which renders `<ansi fg="mobname...">`; **CORRECTED in execution:** `GetCharacterName(true)` does NOT always render `username`. It renders `username-aggro` for any character not fighting a player (viewer 0 matches an empty combat target) and `username-dead` when dead; `messaging.Anonymize` accepted neither until `7399e914b` | `internal/hooks/NewRound_DoCombat_helpers.go:390`; `internal/characters/formattedname.go:50-72`, `:151-170` |
 | `applyPlayerEffect(user, target *users.UserRecord, room *rooms.Room, spellData *spells.SpellData, magnitude int, out combat.ChannelDefenceResult)`; `spellContestAttackWin()` is `{DamageMultiplier: 1}` | `internal/hooks/spell_resolution.go:949`; `internal/hooks/spell_collapse_test.go:35` |
 | `resolveSpell` fills `HelpArea` targets from every room player, caster included; a help spell with no `TargetDefenseType` is applied uncontested | `spell_resolution.go:108-123`, `:153-178` |
 | `textutil.TokenContext{SourceName, SourcePlainName, TargetName, TargetPlainName}`; `SubstituteTokens`; `ValidateTokens(text) []string` returns `"unknown token: {x}"` for anything outside the four known tokens | `internal/textutil/tokens.go:9-56` |
@@ -879,8 +880,8 @@ with:
 					}
 ```
 
-Run (standalone): `grep -n "r\.SendText(messaging\.CategoryBuff" internal/hooks/Buff_ApplyBuffs.go internal/hooks/NewRound_UserRoundTick.go internal/hooks/NewTurn_PruneBuffs.go`
-Expected: no output. The personal `user.SendText(messaging.CategoryBuff...)` lines are correct, remain, and do not match this pattern.
+Run (standalone): `grep -nE "(^|[^a-z])r\.SendText\(messaging\.CategoryBuff" internal/hooks/Buff_ApplyBuffs.go internal/hooks/NewRound_UserRoundTick.go internal/hooks/NewTurn_PruneBuffs.go`
+Expected: no output. The personal `user.SendText(messaging.CategoryBuff...)` lines are correct and remain. The `[^a-z]` guard matters: a bare `r\.SendText` also matches the `r` at the end of `user`.
 
 - [ ] **Step 6: Run the tests and confirm they pass**
 
@@ -983,15 +984,21 @@ with:
 			// tick never did, so a mob holding a trigger-text buff showed
 			// nothing. Room line only, because a mob has no client. Visual,
 			// because the text describes what the room sees. An expired buff is
-			// skipped, matching the player tick.
+			// skipped, matching the player tick. Same shape as the mob branch of
+			// PruneBuffs, so the line gets the same buff colour.
 			if !buff.Expired() {
 				if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && trigSpec.TriggerRoomText != "" {
 					if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-						sendVisualRoomText(room, messaging.CategoryBuffApply,
-							textutil.SubstituteTokens(trigSpec.TriggerRoomText, textutil.TokenContext{
-								SourceName:      mobDisplayName(mob, room, 0),
-								SourcePlainName: mob.Character.GetCharacterName(false),
-							}))
+						tCtx := textutil.TokenContext{
+							SourceName:      mobDisplayName(mob, room, 0),
+							SourcePlainName: mob.Character.GetCharacterName(false),
+						}
+						cfg := textutil.SendTextConfig{
+							RoomSendFunc: func(msg string, skip ...int) {
+								room.SendTextVisual(messaging.CategoryBuffApply, msg, skip...)
+							},
+						}
+						textutil.SendPhaseText("", trigSpec.TriggerRoomText, tCtx, "cyan", cfg)
 					}
 				}
 			}

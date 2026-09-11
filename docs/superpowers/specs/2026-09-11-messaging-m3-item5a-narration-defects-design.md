@@ -256,10 +256,15 @@ the game. Two actors, one run.
   `playerbuffids`, so to players only (`mutators/hull_discharge.yaml:5`,
   `hull_discharge_deep.yaml:5`), and Meditating (0) by the quit command
   (`usercommands/quit.go:16`). Venom (39) and Arc Trap (97) are applied by lock
-  traps to whoever fails the lockpick (`gamelock/gamelock.go:16`); mobs have
-  lock commands, and **whether a mob can spring a trap was not verified**. No
-  source was found for Spore Toxin (40) or Searing Backlash (106). No mob holder
-  could be staged for the run.
+  traps to whoever fails the lockpick (`gamelock/gamelock.go:16`); no behaviour
+  tree uses `try_defuse`, so mobs do not reach the trap route. **Correction
+  found in review, 2026-09-11:** mobs CAN hold Venom (39) and Spore Toxin (40)
+  in ordinary play. The serpent, arachnid and carnivorous plant species list 39
+  and the fungal colony lists 40 under `critbuffids`, and the combat hook
+  applies crit buffs to whoever was hit (`hooks/NewRound_DoCombat_unified.go:570`),
+  so one mob critting another gives it the buff. Staging a mob-on-mob crit on
+  demand was not attempted, and no source was found for Searing Backlash (106),
+  so D4 is still covered by the unit test only.
 
 ## Deliberately not in this slice
 
