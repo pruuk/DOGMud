@@ -93,6 +93,14 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		return CastResult{SpellInfo: spellInfo, AlreadyCasting: true}
 	}
 
+	// 2b. Sight (follow-up slice A). A player must see what a targeted cast
+	// aims at. The refusal is narrated and nothing has been spent.
+	aim, refused := admitCastAim(actor, spellInfo, targetName)
+	if refused {
+		return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
+	}
+	targetName = aim.targetName
+
 	// 3. Resolve targets by spell type.
 	// Cooldown is applied AFTER target resolution so that typos,
 	// missing targets, and invalid targets don't consume the cooldown.
@@ -156,7 +164,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 			// A player_attack_immune mob can still fight, so it can put itself
 			// in the player's aggro slot. That must not become a licence to
 			// spell it — the same policy applies to the implicit target.
-			pId, mId := resolvePlayerAggroTarget(actor, room)
+			pId, mId := resolvePlayerAggroTarget(actor, room, !aim.ownFoeOnly)
 			if mId > 0 {
 				if rejectHarmTarget(actor, mId) {
 					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
@@ -193,7 +201,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 				targetUserIds = append(targetUserIds, pId)
 			}
 		} else if actor.IsPlayer() {
-			pId, mId := resolvePlayerAggroTarget(actor, room)
+			pId, mId := resolvePlayerAggroTarget(actor, room, !aim.ownFoeOnly)
 			if mId > 0 {
 				if rejectHarmTarget(actor, mId) {
 					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
@@ -403,8 +411,10 @@ func rejectHarmTarget(actor Actor, mobInstanceId int) bool {
 
 // resolvePlayerAggroTarget returns the player's current aggro target, falling
 // back to the party leader's aggro target if the player has no aggro of their
-// own. Returns (userId, mobInstanceId) with at most one non-zero.
-func resolvePlayerAggroTarget(actor Actor, room *rooms.Room) (int, int) {
+// own and leaderFallback is set. A caster who makes out shapes only aims at
+// their OWN foe (follow-up slice A), so the fallback is off for them.
+// Returns (userId, mobInstanceId) with at most one non-zero.
+func resolvePlayerAggroTarget(actor Actor, room *rooms.Room, leaderFallback bool) (int, int) {
 	char := actor.GetCharacter()
 	if tgt := char.CurrentCombatTarget(); !tgt.IsZero() {
 		if tgt.MobInstanceId > 0 {
@@ -413,6 +423,9 @@ func resolvePlayerAggroTarget(actor Actor, room *rooms.Room) (int, int) {
 		if tgt.UserId > 0 {
 			return tgt.UserId, 0
 		}
+	}
+	if !leaderFallback {
+		return 0, 0
 	}
 	// Party leader fallback.
 	if p := parties.Get(actor.GetUserId()); p != nil {
