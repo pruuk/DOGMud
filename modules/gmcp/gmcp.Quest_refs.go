@@ -104,7 +104,9 @@ func questTriggerTokens(q quests.Quest, fn func(where, tok string)) {
 			if a.SetFlag != nil {
 				fn(aw+" set_flag", a.SetFlag.Key)
 			}
-			if a.Sequence != nil && depth < 2 {
+			// Unbounded: the engine runs nested sequences at any depth, so a
+			// grant three levels down is still a reference to that quest.
+			if a.Sequence != nil {
 				walkActions(aw+" sequence on_complete", a.Sequence.OnComplete, depth+1)
 			}
 		}

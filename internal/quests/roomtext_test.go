@@ -101,7 +101,7 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 				checked++
 				assert.Empty(t, RoomTextProblems(a.RoomText), "%s: %q", file, a.RoomText)
 			}
-			if a.Sequence != nil && depth < 2 {
+			if a.Sequence != nil {
 				walk(file, a.Sequence.OnComplete, depth+1)
 			}
 		}
