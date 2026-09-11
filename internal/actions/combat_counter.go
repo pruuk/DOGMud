@@ -69,25 +69,46 @@ func counterSkillMoveExit(actor Actor, defender *characters.Character,
 // line routes via res.CountererUserId. Safe to call unconditionally — a
 // result that never countered dispatches nothing.
 func DispatchCounterMessages(actor Actor, res combat.CounterResult) {
+	var countered messaging.Recipient
+	if actor.IsPlayer() {
+		countered = actor
+	}
+	SendCounterTrio(actor.GetRoom(), res, countered, actor.GetUserId())
+}
+
+// SendCounterTrio delivers one counter's narration through messaging.SendTrio:
+// the counterer's line, the countered party's line and the room's. A reader who
+// cannot see the other party reads "something" in place of their name, and the
+// room line reaches only observers who can see. The counterer is looked up
+// from res.CountererUserId; countered is nil for a mob. Both the skill-move
+// exits (DispatchCounterMessages) and the spell exits
+// (hooks.fireSpellCounterTier) come through here.
+func SendCounterTrio(room *rooms.Room, res combat.CounterResult, countered messaging.Recipient, counteredUserId int) {
 	if !res.Countered {
 		return
 	}
-	exclude := []int{}
-	if res.DefenderMsg != "" && res.CountererUserId > 0 {
+	var counterer messaging.Recipient
+	if res.CountererUserId > 0 {
 		if u := users.GetByUserId(res.CountererUserId); u != nil {
-			u.SendText(messaging.CategoryHitMelee, res.DefenderMsg)
-			exclude = append(exclude, u.UserId)
+			counterer = u
 		}
 	}
-	if res.AttackerMsg != "" {
-		actor.SendText(messaging.CategoryHitMelee, res.AttackerMsg)
-		if actor.GetUserId() > 0 {
-			exclude = append(exclude, actor.GetUserId())
-		}
+	aud := messaging.Audience{
+		Actor:     counterer,
+		ActorId:   res.CountererUserId,
+		ActorName: res.CountererName,
+		Actee:     countered,
+		ActeeId:   counteredUserId,
+		ActeeName: res.CounteredName,
 	}
-	if room := actor.GetRoom(); room != nil && res.RoomMsg != "" {
-		room.SendTextVisual(messaging.CategoryHitMelee, res.RoomMsg, exclude...)
+	if room != nil {
+		aud.Room = room
 	}
+	messaging.SendTrio(messaging.Trio{
+		Actor:    messaging.Say(messaging.CategoryHitMelee, res.DefenderMsg),
+		Actee:    messaging.Say(messaging.CategoryHitMelee, res.AttackerMsg),
+		Observer: messaging.Say(messaging.CategoryHitMelee, res.RoomMsg),
+	}, aud)
 }
 
 // CounterTauntResult reports the defy carve-out's outcome for callers and
