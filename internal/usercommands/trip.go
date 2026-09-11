@@ -72,11 +72,13 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		acteeRecipient = targetChar
 	}
 	aud := messaging.Audience{
-		Actor:   user,
-		ActorId: user.UserId,
-		Actee:   acteeRecipient,
-		ActeeId: targetPlayerId,
-		Room:    room,
+		Actor:     user,
+		ActorId:   user.UserId,
+		ActorName: user.Character.Name,
+		Actee:     acteeRecipient,
+		ActeeId:   targetPlayerId,
+		ActeeName: targetName,
+		Room:      room,
 	}
 
 	// Send messages

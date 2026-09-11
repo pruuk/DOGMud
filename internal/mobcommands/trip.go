@@ -64,9 +64,11 @@ func Trip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		acteeRecipient = targetChar
 	}
 	aud := messaging.Audience{
-		Actee:   acteeRecipient,
-		ActeeId: target.UserId,
-		Room:    room,
+		ActorName: mobName,
+		Actee:     acteeRecipient,
+		ActeeId:   target.UserId,
+		ActeeName: target.Name,
+		Room:      room,
 	}
 
 	if result.Hit {
@@ -266,9 +268,11 @@ func narrateTripWhiffOnProne(mob *mobs.Mob, room *rooms.Room, target actions.Agg
 		acteeRecipient = targetChar
 	}
 	aud := messaging.Audience{
-		Actee:   acteeRecipient,
-		ActeeId: target.UserId,
-		Room:    room,
+		ActorName: mobName,
+		Actee:     acteeRecipient,
+		ActeeId:   target.UserId,
+		ActeeName: target.Name,
+		Room:      room,
 	}
 
 	whiffActee := messaging.NoLine

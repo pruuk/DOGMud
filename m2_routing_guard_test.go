@@ -473,6 +473,16 @@ func TestEveryAudienceLiteralPairsIdsWithRecipients(t *testing.T) {
 							"  names "+recipient+" but not "+id)
 					}
 				}
+				// Every literal names both parties, even a side with nobody on
+				// it (messaging.NoName): SendTrio can hide a name from a reader
+				// in the dark only if it is told the name.
+				for _, name := range []string{"ActorName", "ActeeName"} {
+					if !named[name] {
+						bad = append(bad, filepath.ToSlash(path)+":"+
+							strconv.Itoa(fset.Position(cl.Pos()).Line)+
+							"  does not name "+name)
+					}
+				}
 				return true
 			})
 			return nil
@@ -484,10 +494,13 @@ func TestEveryAudienceLiteralPairsIdsWithRecipients(t *testing.T) {
 
 	sort.Strings(bad)
 	if len(bad) > 0 {
-		t.Errorf("%d messaging.Audience literal(s) name a recipient without its id:\n  %s\n\n"+
+		t.Errorf("%d messaging.Audience literal(s) are incomplete:\n  %s\n\n"+
 			"SendTrio builds the room broadcast's exclusion list from ActorId and "+
 			"ActeeId. Omit one and that person receives the third-person room line "+
-			"on top of their own personal line.",
+			"on top of their own personal line.\n\n"+
+			"It hides ActorName and ActeeName from a reader who cannot see that "+
+			"party. Omit one and a player in the dark is told a name. Write "+
+			"messaging.NoName for a side with nobody on it.",
 			len(bad), strings.Join(bad, "\n  "))
 	}
 }

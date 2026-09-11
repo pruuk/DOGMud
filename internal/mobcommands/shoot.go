@@ -110,9 +110,11 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		acteeRecipient = u
 	}
 	aud := messaging.Audience{
-		Actee:   acteeRecipient,
-		ActeeId: result.TargetUserId,
-		Room:    room,
+		ActorName: mob.Character.Name,
+		Actee:     acteeRecipient,
+		ActeeId:   result.TargetUserId,
+		ActeeName: result.TargetName,
+		Room:      room,
 	}
 
 	if !result.CrossRoom {
@@ -169,7 +171,7 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				Actor:    messaging.NoLine,
 				Actee:    messaging.NoLine,
 				Observer: arrivalLine,
-			}, messaging.Audience{ActeeId: result.TargetUserId, Room: tr})
+			}, messaging.Audience{ActorName: mob.Character.Name, ActeeId: result.TargetUserId, ActeeName: result.TargetName, Room: tr})
 		}
 	}
 

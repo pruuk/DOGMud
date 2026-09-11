@@ -65,11 +65,13 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		acteeRecipient = targetUser
 	}
 	aud := messaging.Audience{
-		Actor:   user,
-		ActorId: user.UserId,
-		Actee:   acteeRecipient,
-		ActeeId: target.UserId,
-		Room:    room,
+		Actor:     user,
+		ActorId:   user.UserId,
+		ActorName: user.Character.Name,
+		Actee:     acteeRecipient,
+		ActeeId:   target.UserId,
+		ActeeName: target.Name,
+		Room:      room,
 	}
 
 	if result.Hit {

@@ -450,11 +450,13 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		acteeRecipient = targetPlayer
 	}
 	aud := messaging.Audience{
-		Actor:   user,
-		ActorId: user.UserId,
-		Actee:   acteeRecipient,
-		ActeeId: result.TargetUserId,
-		Room:    room,
+		Actor:     user,
+		ActorId:   user.UserId,
+		ActorName: user.Character.Name,
+		Actee:     acteeRecipient,
+		ActeeId:   result.TargetUserId,
+		ActeeName: result.TargetName,
+		Room:      room,
 	}
 
 	// The reveal reads AFTER the shot it was caused by, and after the room and
@@ -543,7 +545,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 			Actor:    messaging.NoLine,
 			Actee:    messaging.NoLine,
 			Observer: arrivalLine,
-		}, messaging.Audience{ActeeId: result.TargetUserId, Room: tr})
+		}, messaging.Audience{ActorName: user.Character.Name, ActeeId: result.TargetUserId, ActeeName: result.TargetName, Room: tr})
 	}
 }
 
