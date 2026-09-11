@@ -50,7 +50,7 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 								UserSendFunc: func(msg string) { user.SendText(messaging.CategoryBuffExpire, msg) },
 								RoomSendFunc: func(msg string, skip ...int) {
 									if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-										r.SendTextVisual(messaging.CategoryBuffExpire, msg, skip...)
+										sendBuffEndRoomText(r, endBuffSpec, msg, skip...)
 									}
 								},
 								ExcludeId: user.UserId,
@@ -113,7 +113,7 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 					cfg := textutil.SendTextConfig{
 						RoomSendFunc: func(msg string, skip ...int) {
 							if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-								r.SendTextVisual(messaging.CategoryBuffExpire, msg, skip...)
+								sendBuffEndRoomText(r, endBuffSpec, msg, skip...)
 							}
 						},
 					}
@@ -128,4 +128,18 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 
 	return events.Continue
 
+}
+
+// sendBuffEndRoomText sends a buff's end room line on the visual channel. A
+// light buff's line is judged as if the room were still lit, because its light
+// went out when the buff expired, a round before this prune: see
+// Room.SendTextVisualAsLit. Every other end line is judged by the room as it is.
+func sendBuffEndRoomText(r *rooms.Room, spec *buffs.BuffSpec, msg string, skip ...int) {
+	for _, flag := range spec.Flags {
+		if flag == buffs.EmitsLight {
+			r.SendTextVisualAsLit(messaging.CategoryBuffExpire, msg, skip...)
+			return
+		}
+	}
+	r.SendTextVisual(messaging.CategoryBuffExpire, msg, skip...)
 }

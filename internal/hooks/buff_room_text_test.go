@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -203,4 +204,67 @@ func TestMobBuffTriggerRoomText(t *testing.T) {
 	drainPlain(2)
 	tickMobBuffs(mob, 100)
 	assert.Equal(t, 0, countContaining(drainPlain(2), "shivers."))
+}
+
+// A light buff's end line describes the light going out, and the moment a
+// light goes out is seen by everyone in the room with working eyes. But the
+// light stops counting the instant the buff EXPIRES (Buffs.HasFlag skips
+// expired buffs, and expiry happens on the round tick), while its end text is
+// sent later, at the turn's prune. So a plain visual send judged sight in a
+// room that was already dark, and silenced the line for exactly the people
+// who had been seeing by that light. Found by the Task 2 review against
+// shipped buff 1, Illumination.
+
+func TestBuffEndRoomText_LightBuffEndIsSeenByItsOwnLight_Player(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationBuffs()
+	defer restore()
+	darken(t, 1)
+	room := rooms.LoadRoom(1)
+	holder := users.GetByUserId(1)
+	require.True(t, holder.Character.Buffs.AddBuff(lanternBuffId, false))
+	require.GreaterOrEqual(t, room.GetVisibility(), 1, "the lantern must light the cave, or this test proves nothing")
+	expire(t, holder.Character.Buffs.List, lanternBuffId)
+	require.Zero(t, room.GetVisibility(), "the light is already out once the buff expires, before any prune")
+	drainPlain(2)
+
+	PruneBuffs(events.NewTurn{TurnNumber: 1})
+	assert.Equal(t, 1, countContaining(drainPlain(2), "Aliceia's light gutters out."))
+}
+
+// TestBuffEndRoomText_LightBuffEnd_SleeperStillGetsNothing proves the light
+// line is still a SIGHT line, not audio: an observer who cannot see for a
+// reason other than darkness is not told.
+func TestBuffEndRoomText_LightBuffEnd_SleeperStillGetsNothing(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationBuffs()
+	defer restore()
+	darken(t, 1)
+	holder := users.GetByUserId(1)
+	require.True(t, holder.Character.Buffs.AddBuff(lanternBuffId, false))
+	require.True(t, users.GetByUserId(2).Character.Buffs.AddBuff(dozeBuffId, true))
+	expire(t, holder.Character.Buffs.List, lanternBuffId)
+	drainPlain(2)
+
+	PruneBuffs(events.NewTurn{TurnNumber: 1})
+	assert.Equal(t, 0, countContaining(drainPlain(2), "light gutters out"))
+}
+
+func TestBuffEndRoomText_LightBuffEndIsSeenByItsOwnLight_Mob(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationBuffs()
+	defer restore()
+	darken(t, 1)
+	room := rooms.LoadRoom(1)
+	mob := mobs.GetInstance(100)
+	require.True(t, mob.Character.Buffs.AddBuff(lanternBuffId, false))
+	require.GreaterOrEqual(t, room.GetVisibility(), 1, "the lantern must light the cave, or this test proves nothing")
+	expire(t, mob.Character.Buffs.List, lanternBuffId)
+	drainPlain(2)
+
+	PruneBuffs(events.NewTurn{TurnNumber: 1})
+	assert.Equal(t, 1, countContaining(drainPlain(2), "Skeleton's light gutters out."))
 }

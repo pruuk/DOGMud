@@ -11,6 +11,15 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Special room types**: Banks, storage rooms, character creation rooms, PvP areas
 - **Dynamic state**: Player/mob tracking, visitor history, temporary data storage
 - **Room features**: Containers, signs, skill training areas, spawn points
+- **Room text by channel**: `SendText` is the audio channel and is never
+  sight-gated. `SendTextVisual` gates each recipient by
+  `messaging.CanSeeClearly` / `CanSeeShapes` and anonymizes for infrared-only
+  observers. `SendTextVisualWithAudio` gives the unsighted an audio variant.
+  `SendTextVisualAsLit` judges sight as if the room were lit, and exists for one
+  case: an event that is itself a light whose light is already gone when the
+  line is sent, such as a light buff's end text (the light stops counting when
+  the buff expires, a round before the prune sends the line). Blinded and
+  sleeping observers still get nothing from it.
 
 ### Room Management System (`roommanager.go`)
 - **RoomManager**: Singleton manager for all room operations and caching

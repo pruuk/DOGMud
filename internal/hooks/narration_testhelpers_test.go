@@ -41,6 +41,8 @@ const (
 	fadeBuffId      = 7003 // end_room_text
 	nightEyesBuffId = 7004 // grants NightVision; RoundInterval 0, so it never ticks
 	heatEyesBuffId  = 7005 // grants InfraredVision; RoundInterval 0, so it never ticks
+	lanternBuffId   = 7006 // a light source with end_room_text
+	dozeBuffId      = 7007 // puts the bearer to sleep; RoundInterval 0, so it never ticks
 )
 
 // seedNarrationBuffs installs the narration test buffs and returns the restore
@@ -58,6 +60,10 @@ func seedNarrationBuffs() func() {
 			Flags: []buffs.Flag{buffs.NightVision}},
 		heatEyesBuffId: {BuffId: heatEyesBuffId, Name: "Test Heat Eyes",
 			Flags: []buffs.Flag{buffs.InfraredVision}},
+		lanternBuffId: {BuffId: lanternBuffId, Name: "Test Lantern", RoundInterval: 5, TriggerCount: 3,
+			Flags: []buffs.Flag{buffs.EmitsLight}, EndRoomText: "{source}'s light gutters out."},
+		dozeBuffId: {BuffId: dozeBuffId, Name: "Test Doze",
+			Flags: []buffs.Flag{buffs.Sleeping}},
 	})
 }
 

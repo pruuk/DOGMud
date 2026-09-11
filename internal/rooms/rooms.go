@@ -305,6 +305,32 @@ func (r *Room) SendText(cat messaging.Category, txt string, excludeUserIds ...in
 // is computed via messaging.CanSeeClearly / CanSeeShapes; infrared
 // observers get an anonymized render.
 func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds ...int) {
+	r.sendTextVisualJudgedBy(r, cat, txt, excludeUserIds...)
+}
+
+// SendTextVisualAsLit delivers a sight-gated message judged as if the room
+// were lit. Use it ONLY for an event that is itself a light and whose light is
+// already gone when the line is sent: a light buff's end text ("The glow
+// surrounding X fades away"). Buffs.HasFlag stops counting a light the moment
+// its buff expires, on the round tick, but the end text goes out at the turn's
+// prune, so SendTextVisual judged a room that was already dark and silenced
+// the line for everyone who had been seeing by that light.
+//
+// It is still a sight line: blinded and sleeping observers get nothing.
+func (r *Room) SendTextVisualAsLit(cat messaging.Category, txt string, excludeUserIds ...int) {
+	r.sendTextVisualJudgedBy(litRoom{}, cat, txt, excludeUserIds...)
+}
+
+// litRoom is a messaging.RoomVisibility that is always lit. Any light source
+// lifts a room to at least visibility 1 (see GetVisibility), and 1 is all that
+// sight needs.
+type litRoom struct{}
+
+func (litRoom) GetVisibility() int { return 1 }
+
+// sendTextVisualJudgedBy is SendTextVisual with the lighting it judges sight
+// against passed in, so SendTextVisualAsLit shares one delivery path.
+func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat messaging.Category, txt string, excludeUserIds ...int) {
 	for _, uid := range r.GetPlayers() {
 		if excluded(uid, excludeUserIds) {
 			continue
@@ -315,9 +341,9 @@ func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds
 		}
 		decision := messaging.SightNone
 		switch {
-		case messaging.CanSeeClearly(u.Character, r):
+		case messaging.CanSeeClearly(u.Character, lighting):
 			decision = messaging.SightFull
-		case messaging.CanSeeShapes(u.Character, r):
+		case messaging.CanSeeShapes(u.Character, lighting):
 			decision = messaging.SightShapes
 		}
 		rendered := messaging.RenderForRecipient(messaging.RenderInput{
