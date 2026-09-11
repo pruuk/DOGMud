@@ -1,5 +1,11 @@
-# M3 item 5a, lane B: a quest line in the DARK. D2 (sight-gated) and D5 (no
-# literal {source}).
+# M3 item 5a, lane B: a quest line with no literal {source} (D5).
+#
+# CORRECTED after the 2026-09-11 run: room 6397 is NOT dark. Its biome is cave,
+# but its hull_suppression mutator lights it ("A cold, sourceless light holds
+# steady in the grey, enough to see by"), so both players could see and this
+# lane never showed an unsighted observer spared the line (D2). Lane D
+# (m3-item5a-quest-strongbox, room 498) covers D2. This lane still proves D5:
+# each player read the other's name in the records line.
 #
 # Room 6397, The Records Archive, in the crash site: cave biome, genuinely
 # unlit. The records trigger fires ONCE PER CHARACTER, so the order below is

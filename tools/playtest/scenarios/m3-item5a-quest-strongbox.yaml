@@ -1,0 +1,49 @@
+# M3 item 5a, lane D: a quest room line in a GENUINELY dark room (D2).
+#
+# Added because lane B's room (6397, The Records Archive) turned out to be lit
+# by its hull_suppression mutator ("A cold, sourceless light holds steady in the
+# grey"), so lane B proved D5 (no literal {source}) but never showed an
+# unsighted observer being spared a quest line.
+#
+# Room 498, Operations Room, Thornwall City: cave biome, no mutators. It is the
+# only quest room_text trigger in a dark room. Quest 14's strongbox fires for a
+# character on step `confront` who carries the Strongbox Key (40034), so the
+# opener gets both through overlays. Torvan Cresk (mob 249) lives here and is
+# not hostile.
+#
+# The trigger fires once per character, so there is no sighted re-run in this
+# lane. Lanes A and B already showed a quest line reaching an observer who can
+# see. What makes the silence here meaningful: the opener MUST receive the quest
+# text and the journal, which proves the line was sent.
+name: m3-item5a-quest-strongbox
+mode: party
+summary: >-
+  One player opens a quest strongbox in an unlit room while another, who
+  cannot see, reports what they are told.
+on_actor_stop: continue
+budgets:
+  wall_clock: 20m
+requires:
+  max_connections: 20
+roster:
+  - id: opener
+    personality: bug-finder
+    goals: goals/scenarios/m3-item5a-quest-strongbox/opener.yaml
+  - id: watcher
+    personality: bug-finder
+    goals: goals/scenarios/m3-item5a-quest-strongbox/watcher.yaml
+
+group_goals:
+  - id: confirm-dark
+    do: Both type `look` first.
+    verify: Neither can see a normal room description. If either can, the lane is void.
+  - id: trigger-fires
+    do: Opener types `look strongbox`.
+    verify: >-
+      The opener is told the key turns and they find a leather journal. If not,
+      the trigger did not fire and the silence below proves nothing.
+  - id: unsighted-gets-nothing
+    do: Watcher stands in the room while the opener opens the strongbox.
+    verify: >-
+      The watcher receives NOTHING like "unlocks the strongbox and pulls out a
+      leather journal". Silence is the PASS.
