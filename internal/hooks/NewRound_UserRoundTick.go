@@ -285,7 +285,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								UserSendFunc: func(msg string) { user.SendText(messaging.CategoryBuffApply, msg) },
 								RoomSendFunc: func(msg string, skip ...int) {
 									if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-										r.SendText(messaging.CategoryBuffApply, msg, skip...)
+										r.SendTextVisual(messaging.CategoryBuffApply, msg, skip...) // visual: see Buff_ApplyBuffs.go start text
 									}
 								},
 								ExcludeId: user.UserId,

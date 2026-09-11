@@ -50,7 +50,7 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 								UserSendFunc: func(msg string) { user.SendText(messaging.CategoryBuffExpire, msg) },
 								RoomSendFunc: func(msg string, skip ...int) {
 									if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-										r.SendText(messaging.CategoryBuffExpire, msg, skip...)
+										r.SendTextVisual(messaging.CategoryBuffExpire, msg, skip...)
 									}
 								},
 								ExcludeId: user.UserId,
@@ -100,14 +100,20 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 				// Send YAML end text (if defined).
 				endBuffSpec := buffs.GetBuffSpec(buffInfo.BuffId)
 				if endBuffSpec != nil && endBuffSpec.EndRoomText != "" {
+					// The mob tag, not the player one: see Buff_ApplyBuffs.go.
+					// Visual, not audio, for the same reason as start text.
+					sourceName := mob.Character.GetCharacterName(true)
+					if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
+						sourceName = mobDisplayName(mob, r, 0)
+					}
 					tCtx := textutil.TokenContext{
-						SourceName:      mob.Character.GetCharacterName(true),
+						SourceName:      sourceName,
 						SourcePlainName: mob.Character.GetCharacterName(false),
 					}
 					cfg := textutil.SendTextConfig{
 						RoomSendFunc: func(msg string, skip ...int) {
 							if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-								r.SendText(messaging.CategoryBuffExpire, msg, skip...)
+								r.SendTextVisual(messaging.CategoryBuffExpire, msg, skip...)
 							}
 						},
 					}
