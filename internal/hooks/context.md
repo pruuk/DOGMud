@@ -118,6 +118,13 @@ events.RegisterListener(events.MobIdle{}, HandleIdleMobs)         // Mob AI beha
 
 ## Combat System Integration
 
+**Names in the dark.** Crit effect lines (`sendCritEffectTrio`), counter lines
+(`actions.SendCounterTrio`) and spell lines between two parties
+(`spellAudience` in `spell_audience.go`, used by `applyPlayerEffect`,
+`sendSpellChannelDefenceMessages`, `resolveMobSpellAgainstPlayer` and
+`resolvePurgeAffliction`) all go through `messaging.SendTrio`, so a reader who
+cannot see the other party reads "something", or "a figure" with infrared.
+
 ### Combat Round Processing
 ```go
 func DoCombat(e events.Event) events.ListenerReturn {

@@ -1,5 +1,25 @@
 # DOGMud Patch Notes
 
+## 2026-09-11: What you cannot see, you cannot name
+
+In the dark, spells and counterattacks used to tell you exactly who was
+involved. If someone healed you, struck you with a spell, or turned your blow
+into a sweep while you stood blind, you read their name anyway, and so did
+everyone else in the room who could not see either. Now a player who cannot
+see reads "something", and one whose eyes only catch warmth reads "a figure".
+
+The same goes for aiming. You can no longer cast a spell at someone you cannot
+see. In the dark you can still cast on yourself or on the whole room, and if you
+can make out shapes, you can aim at whoever you are fighting or at a shape:
+`cast heal shape`, `cast heal 2.shape`. A refused cast costs you nothing.
+
+Hiding means something now. A creature slipping through the shadows is not
+listed, and you cannot look at it, talk to it, trade with it or attack it by
+name until you find it. Veil Sight, the Cat's Eye Draught and a handful of
+mutations were always meant to reveal hidden creatures, and they quietly never
+did. Now they do. And a successful search drags whatever you found out of
+hiding for everyone.
+
 ## 2026-09-11: The dark hides more, and quests say who did what
 
 Some things were being described to you that you had no way of seeing. If a

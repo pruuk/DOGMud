@@ -20,6 +20,16 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   line is sent, such as a light buff's end text (the light stops counting when
   the buff expires, a round before the prune sends the line). Blinded and
   sleeping observers still get nothing from it.
+  `SendTextVisualHidingNames` is `SendTextVisual` for a line that names an
+  event's parties: a shapes-only observer reads each name as "a figure". It is
+  the observer half of `messaging.SendTrio`; `ParticipantSight(userId)` is the
+  other half.
+- **Naming a creature**: `FindByNameSeenBy(viewer, name, flags...)` skips
+  every creature `viewer` does not perceive (`characters.Character.Perceives`)
+  before matching, so a hidden creature cannot be named and does not count
+  toward `2.name`. `FindByName` is the unfiltered form for staff tools and mob
+  callers. The "Also here" listing (`roomdetails.go`) reads the same
+  `Perceives` rule, with no pet requirement.
 
 ### Room Management System (`roommanager.go`)
 - **RoomManager**: Singleton manager for all room operations and caching

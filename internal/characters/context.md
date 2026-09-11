@@ -297,6 +297,10 @@ progression for contest paths now flows exclusively through
 ### Character States and Modifiers
 - **Aggro system** (`aggro.go`): Combat targeting and threat management
 - **Buffs integration**: Status effects that modify character capabilities
+- **Perception of hidden creatures** (`character.go`): `Perceives(other)` is
+  true for yourself, for anyone not hidden, or when you have see-hidden from any
+  source (buff or mutation). No pet is involved. The room listing and
+  `rooms.Room.FindByNameSeenBy` both read it.
 - **Cooldowns** (`cooldowns.go`): Time-based ability restrictions.
   `CooldownReady` is the read-only admission query; `TryCooldown` consumes only
   after successful admission.
