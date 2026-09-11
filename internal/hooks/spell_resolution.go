@@ -487,26 +487,15 @@ func sendSpellChannelDefenceMessages(room *rooms.Room, category messaging.Catego
 	if triad.ToRoom == "" {
 		return
 	}
-	excluded := make([]int, 0, 2)
-	if attackerUser != nil {
-		if room != nil {
-			room.SendTextVisualToUser(attackerUser, category, string(triad.ToAttacker))
-		} else {
-			attackerUser.SendText(category, string(triad.ToAttacker))
-		}
-		excluded = append(excluded, attackerUser.UserId)
-	}
-	if defenderUser != nil {
-		if room != nil {
-			room.SendTextVisualToUser(defenderUser, category, string(triad.ToDefender))
-		} else {
-			defenderUser.SendText(category, string(triad.ToDefender))
-		}
-		excluded = append(excluded, defenderUser.UserId)
-	}
-	if room != nil {
-		sendVisualRoomText(room, category, string(triad.ToRoom), excluded...)
-	}
+	// Through the seam: a participant who cannot see the other party reads
+	// "something" in place of their name. SendTextVisualToUser used to drop
+	// these lines entirely, so a defender in the dark was never told they had
+	// defended at all.
+	messaging.SendTrio(messaging.Trio{
+		Actor:    messaging.Say(category, string(triad.ToAttacker)),
+		Actee:    messaging.Say(category, string(triad.ToDefender)),
+		Observer: messaging.Say(category, string(triad.ToRoom)),
+	}, spellAudience(attackerUser, attackerName, defenderUser, defenderName, room))
 }
 
 // spellDefenceIdentity returns the display-ready identity for either kind of
@@ -983,37 +972,40 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		}
 		dmgDesc := combat.GetDamageDescription(dmg, target.Character.HealthMax.Value)
 		if !out.Defended {
-			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`Your %s strikes `+
-					`<ansi fg="username">%s</ansi>! `+
-					`(<ansi fg="damage">%s</ansi>)%s`,
-				spellData.Name, target.Character.Name, dmgDesc, critTag))
-			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> strikes `+
-					`<ansi fg="username">%s</ansi>!`,
-				user.Character.Name, spellData.Name, target.Character.Name),
-				user.UserId, target.UserId)
-			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="red"><ansi fg="username">%s</ansi>'s `+
-					`%s strikes you! `+
-					`(<ansi fg="damage">%s</ansi>)</ansi>`,
-				user.Character.Name, spellData.Name,
-				combat.GetDamageDescription(dmg, target.Character.HealthMax.Value)))
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`Your %s strikes `+
+						`<ansi fg="username">%s</ansi>! `+
+						`(<ansi fg="damage">%s</ansi>)%s`,
+					spellData.Name, target.Character.Name, dmgDesc, critTag)),
+				Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="red"><ansi fg="username">%s</ansi>'s `+
+						`%s strikes you! `+
+						`(<ansi fg="damage">%s</ansi>)</ansi>`,
+					user.Character.Name, spellData.Name,
+					combat.GetDamageDescription(dmg, target.Character.HealthMax.Value))),
+				Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> strikes `+
+						`<ansi fg="username">%s</ansi>!`,
+					user.Character.Name, spellData.Name, target.Character.Name)),
+			}, spellAudience(user, user.Character.Name, target, target.Character.Name, room))
 		}
 
 	case "purge":
 		target.Character.CancelBuffsWithFlag(buffs.Poison)
 		target.Character.RemoveCondition(characters.ConditionPoisoned)
 		if target.UserId != user.UserId {
-			user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-				`<ansi fg="green">Your %s cleanses <ansi fg="username">%s</ansi> of afflictions.%s</ansi>`,
-				spellData.Name, target.Character.Name, critTag))
-			target.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-				`<ansi fg="green"><ansi fg="username">%s</ansi>'s %s purges the toxins from your body.</ansi>`,
-				user.Character.Name, spellData.Name))
-			sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> cleanses <ansi fg="username">%s</ansi>.`,
-				user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+					`<ansi fg="green">Your %s cleanses <ansi fg="username">%s</ansi> of afflictions.%s</ansi>`,
+					spellData.Name, target.Character.Name, critTag)),
+				Actee: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+					`<ansi fg="green"><ansi fg="username">%s</ansi>'s %s purges the toxins from your body.</ansi>`,
+					user.Character.Name, spellData.Name)),
+				Observer: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+					`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> cleanses <ansi fg="username">%s</ansi>.`,
+					user.Character.Name, spellData.Name, target.Character.Name)),
+			}, spellAudience(user, user.Character.Name, target, target.Character.Name, room))
 		} else {
 			// SELF-CAST: one line to the caster and one to the room, naming them
 			// once, the shape case "shield" below already has. An area spell
@@ -1044,15 +1036,17 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		}
 		target.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
 		if target.UserId != user.UserId {
-			user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-				`<ansi fg="green">You weave restorative magic around <ansi fg="username">%s</ansi>.%s</ansi>`,
-				target.Character.Name, critTag))
-			target.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-				`<ansi fg="green"><ansi fg="username">%s</ansi>'s %s envelops you in healing energy. Your wounds begin to mend.</ansi>`,
-				user.Character.Name, spellData.Name))
-			sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> envelops <ansi fg="username">%s</ansi> in healing light.`,
-				user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+					`<ansi fg="green">You weave restorative magic around <ansi fg="username">%s</ansi>.%s</ansi>`,
+					target.Character.Name, critTag)),
+				Actee: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+					`<ansi fg="green"><ansi fg="username">%s</ansi>'s %s envelops you in healing energy. Your wounds begin to mend.</ansi>`,
+					user.Character.Name, spellData.Name)),
+				Observer: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+					`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> envelops <ansi fg="username">%s</ansi> in healing light.`,
+					user.Character.Name, spellData.Name, target.Character.Name)),
+			}, spellAudience(user, user.Character.Name, target, target.Character.Name, room))
 		} else {
 			// SELF-CAST: see case "purge". The room line reuses the wording
 			// applyMobSelfEffect already uses for a mob healing itself.
@@ -1103,15 +1097,17 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		// twice. The messaging arc's M6 merges them into one line per audience.
 		// See docs/superpowers/specs/2026-09-11-messaging-m3-item5a-narration-defects-design.md.
 		if target.UserId != user.UserId {
-			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`Your %s takes effect on <ansi fg="username">%s</ansi>!%s`,
-				spellData.Name, target.Character.Name, critTag))
-			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s %s takes effect on you!`,
-				user.Character.Name, spellData.Name))
-			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> settles over <ansi fg="username">%s</ansi>.`,
-				user.Character.Name, spellData.Name, target.Character.Name), user.UserId, target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`Your %s takes effect on <ansi fg="username">%s</ansi>!%s`,
+					spellData.Name, target.Character.Name, critTag)),
+				Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="username">%s</ansi>'s %s takes effect on you!`,
+					user.Character.Name, spellData.Name)),
+				Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="username">%s</ansi>'s <ansi fg="cyan">%s</ansi> settles over <ansi fg="username">%s</ansi>.`,
+					user.Character.Name, spellData.Name, target.Character.Name)),
+			}, spellAudience(user, user.Character.Name, target, target.Character.Name, room))
 		} else {
 			// SELF-CAST: see case "purge". The caster line stays, reworded,
 			// rather than being dropped: a buff with no authored start text
@@ -1142,14 +1138,23 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			shieldBonus = int(float64(shieldBonus) * 1.5)
 		}
 		target.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
-		target.SendText(spellSchoolCategory(spellData), `A shimmering magical barrier forms around you, bolstering your defenses.`)
 		if target.UserId != user.UserId {
-			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`A shimmering magical barrier forms around <ansi fg="username">%s</ansi>, bolstering their defenses.`,
-				target.Character.Name))
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`A shimmering magical barrier forms around <ansi fg="username">%s</ansi>, bolstering their defenses.`,
+					target.Character.Name)),
+				Actee: messaging.Say(spellSchoolCategory(spellData),
+					`A shimmering magical barrier forms around you, bolstering your defenses.`),
+				Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`A shimmering barrier surrounds <ansi fg="username">%s</ansi>.`, target.Character.Name)),
+			}, spellAudience(user, user.Character.Name, target, target.Character.Name, room))
+		} else {
+			// SELF-CAST: the caster is the target, so there is no third-person
+			// line to send them, and the room line excludes them.
+			target.SendText(spellSchoolCategory(spellData), `A shimmering magical barrier forms around you, bolstering your defenses.`)
+			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
+				`A shimmering barrier surrounds <ansi fg="username">%s</ansi>.`, target.Character.Name), target.UserId)
 		}
-		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-			`A shimmering barrier surrounds <ansi fg="username">%s</ansi>.`, target.Character.Name), target.UserId)
 
 	default:
 		// A spell whose narration resolveSpell's Go hook owns gets no generic
@@ -1164,9 +1169,13 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 				`Your %s takes effect.`, spellData.Name))
 		} else {
-			user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`Your %s takes effect on <ansi fg="username">%s</ansi>.`,
-				spellData.Name, target.Character.Name))
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`Your %s takes effect on <ansi fg="username">%s</ansi>.`,
+					spellData.Name, target.Character.Name)),
+				Actee:    messaging.NoLine,
+				Observer: messaging.NoLine,
+			}, spellAudience(user, user.Character.Name, target, target.Character.Name, room))
 		}
 	}
 }
@@ -1577,15 +1586,18 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			dispatchItemProcs("on_spell_hit", &caster.Character, target.Character, nil, dmg)
 		}
 		if !out.Defended {
-			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> `+
-					`strikes you! (<ansi fg="damage">%s</ansi>)%s`,
-				caster.Character.Name, spellData.Name,
-				combat.GetDamageDescription(dmg, target.Character.HealthMax.Value), critTag))
-			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> strikes `+
-					`<ansi fg="username">%s</ansi>!`,
-				caster.Character.Name, spellData.Name, target.Character.Name), target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> `+
+						`strikes you! (<ansi fg="damage">%s</ansi>)%s`,
+					caster.Character.Name, spellData.Name,
+					combat.GetDamageDescription(dmg, target.Character.HealthMax.Value), critTag)),
+				Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> strikes `+
+						`<ansi fg="username">%s</ansi>!`,
+					caster.Character.Name, spellData.Name, target.Character.Name)),
+			}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
 		}
 		if !target.Character.IsInCombat() {
 			targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
@@ -1612,12 +1624,15 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			dotDuration = 3
 		}
 		target.Character.AddCondition(characters.ConditionPoisoned, dotDuration, float64(magnitude), "spell")
-		target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts you!%s`,
-			caster.Character.Name, spellData.Name, critTag))
-		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts <ansi fg="username">%s</ansi>!`,
-			caster.Character.Name, spellData.Name, target.Character.Name), target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts you!%s`,
+				caster.Character.Name, spellData.Name, critTag)),
+			Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts <ansi fg="username">%s</ansi>!`,
+				caster.Character.Name, spellData.Name, target.Character.Name)),
+		}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
 		if !target.Character.IsInCombat() {
 			targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 		}
@@ -1651,21 +1666,28 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 			}
 		}
 		if knocked {
-			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> slams you `+
-					`to the ground! (<ansi fg="damage">%s</ansi>)%s`,
-				caster.Character.Name, spellData.Name,
-				combat.GetDamageDescription(dmg, target.Character.HealthMax.Value), critTag))
-			sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> knocks `+
-					`<ansi fg="username">%s</ansi> to the ground!`,
-				caster.Character.Name, spellData.Name, target.Character.Name), target.UserId)
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> slams you `+
+						`to the ground! (<ansi fg="damage">%s</ansi>)%s`,
+					caster.Character.Name, spellData.Name,
+					combat.GetDamageDescription(dmg, target.Character.HealthMax.Value), critTag)),
+				Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> knocks `+
+						`<ansi fg="username">%s</ansi> to the ground!`,
+					caster.Character.Name, spellData.Name, target.Character.Name)),
+			}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
 		} else if !out.Defended {
-			target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> strikes you, but you're `+
-					`already down. (<ansi fg="damage">%s</ansi>)%s`,
-				caster.Character.Name, spellData.Name,
-				combat.GetDamageDescription(dmg, target.Character.HealthMax.Value), critTag))
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> strikes you, but you're `+
+						`already down. (<ansi fg="damage">%s</ansi>)%s`,
+					caster.Character.Name, spellData.Name,
+					combat.GetDamageDescription(dmg, target.Character.HealthMax.Value), critTag)),
+				Observer: messaging.NoLine,
+			}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
 		}
 		if !target.Character.IsInCombat() {
 			targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
@@ -1692,12 +1714,15 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 				targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 			}
 		}
-		target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> takes effect on you!%s`,
-			caster.Character.Name, spellData.Name, critTag))
-		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> affects <ansi fg="username">%s</ansi>!`,
-			caster.Character.Name, spellData.Name, target.Character.Name), target.UserId)
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> takes effect on you!%s`,
+				caster.Character.Name, spellData.Name, critTag)),
+			Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> affects <ansi fg="username">%s</ansi>!`,
+				caster.Character.Name, spellData.Name, target.Character.Name)),
+		}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
 	default:
 		if out.Defended {
 			sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), out,
@@ -1705,9 +1730,13 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 				spellDefenceIdentity(target.Character, target, room), spellData.Name, nil, target)
 			break
 		}
-		target.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> takes effect on you.`,
-			caster.Character.Name, spellData.Name))
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.NoLine,
+			Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> takes effect on you.`,
+				caster.Character.Name, spellData.Name)),
+			Observer: messaging.NoLine,
+		}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
 	}
 	// Stage 30.1: a defended cast records in the old fizzle column — the
 	// defence stopped or blunted it — but keeps its partial damage.
