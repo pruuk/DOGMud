@@ -59,7 +59,9 @@ func TestQuestRoomText_InfraredObserverSeesAFigure(t *testing.T) {
 	for _, line := range observer {
 		if strings.Contains(line, "unlocks the strongbox") {
 			assert.NotContains(t, line, "Aliceia", "an infrared-only observer read the name")
-			// The pipeline capitalises a sentence-initial placeholder.
+			// Lowercased because nothing capitalises the placeholder: normalize
+			// runs before anonymize, and CategoryNPCDialogue skips every
+			// normalize stage anyway, so the observer reads "a figure ...".
 			assert.Contains(t, strings.ToLower(line), "a figure")
 		}
 	}

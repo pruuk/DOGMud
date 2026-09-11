@@ -227,3 +227,25 @@ func TestSelfCastPurgeAffliction_OneLineToCaster(t *testing.T) {
 	assert.Equal(t, 0, countContaining(caster, "takes effect"),
 		"a spell narrated by its Go hook must not also get the generic line")
 }
+
+// TestHookSpellOnCompanion_NoGenericLine is the mob-target twin of the test
+// above. A help spell aimed at a charmed companion reaches
+// applyMobEffect_default, which also told the caster "takes effect" before the
+// Go hook narrated. Found by the review of the follow-up commit.
+func TestHookSpellOnCompanion_NoGenericLine(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u := users.GetByUserId(1)
+	room := rooms.LoadRoom(1)
+	drainPlain(1)
+
+	applyMobEffect_default(u, u.Character, room,
+		&spells.SpellData{SpellId: "purge-affliction", Name: "Purge Affliction"}, spellContestAttackWin(), "Skeleton")
+	assert.Equal(t, 0, countContaining(drainPlain(1), "takes effect"),
+		"a spell narrated by its Go hook must not also get the generic line")
+
+	// Control: a spell with no hook still gets the generic line.
+	applyMobEffect_default(u, u.Character, room,
+		&spells.SpellData{SpellId: "curiosity", Name: "Curiosity"}, spellContestAttackWin(), "Skeleton")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Curiosity takes effect on Skeleton."))
+}

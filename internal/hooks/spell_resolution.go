@@ -844,7 +844,10 @@ func applyMobEffect_default(
 			spellDefenceIdentity(casterChar, user, room), mName, spellData.Name, user, nil)
 		return 0
 	}
-	if user != nil {
+	// A spell whose narration resolveSpell's Go hook owns gets no generic
+	// line: the player-target twin in applyPlayerEffect's default arm skips
+	// it too. A help spell aimed at a charmed companion lands here.
+	if user != nil && !spellNarratedByGoHook(spellData.SpellId) {
 		user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 			`Your %s takes effect on %s.`,
 			spellData.Name, mName))
