@@ -1,0 +1,25 @@
+# Slice A lane 2: the SEER. You are Sil Vantage. You have no pet. Quote every
+# line VERBATIM.
+
+ephemeral:
+  profile: m2-actor
+  start_room: 462
+  overlays:
+    grant_spells:
+      veil-sight: 1
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `look` and note who is listed. Wait until Midroad Scout says they are
+    hidden.
+  - >-
+    Type `look`. Midroad Scout must NOT be listed. Then type `look scout`,
+    `consider scout`, `attack scout` and `cast veil-sight scout`, one at a time.
+    Quote each reply. Each must read as if nobody by that name is here. If the
+    attack starts a fight, that is the defect: say so.
+  - >-
+    Type `cast veil-sight` with no target. When it lands, type `look`. Midroad
+    Scout MUST now be listed. Type `look scout` and quote it. Confirm you have
+    no pet.

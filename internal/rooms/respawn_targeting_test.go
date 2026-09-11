@@ -218,7 +218,7 @@ func TestFindByName_StalePlayerId_DoesNotEatMobResolution(t *testing.T) {
 	// the real player listed after it.
 	room.RemovePlayer(1)
 	room.AddPlayer(1) // stale id 999 now sits BEFORE the live player
-	if uid, err := room.findPlayerByName("tester"); err != nil || uid != 1 {
+	if uid, err := room.findPlayerByName(nil, "tester"); err != nil || uid != 1 {
 		t.Errorf(`findPlayerByName("tester") = (%d, %v), want (1, nil)`, uid, err)
 	}
 }

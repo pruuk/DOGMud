@@ -551,17 +551,9 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	// Crit effects (riposte / sweep / bash) compute side-specific text.
 	critResult := applyCritEffects(atkChar, defChar, *res, atkRoom)
 
-	// Crit message routing — Divergence #1.
-	if critResult.AttackerMsg != `` && atk.IsPlayer() {
-		atk.SendText(messaging.CategoryHitMelee, critResult.AttackerMsg)
-	}
-	if critResult.DefenderMsg != `` && def.IsPlayer() {
-		def.SendText(messaging.CategoryHitMelee, critResult.DefenderMsg)
-	}
-	if critResult.RoomMsg != `` && atkRoom != nil {
-		// Crit effects (riposte / sweep / bash) are melee follow-ups.
-		atkRoom.SendText(messaging.CategoryHitMelee, critResult.RoomMsg, playerExcludeIds(atk, def)...)
-	}
+	// Crit message routing. Through the seam, so a reader who cannot see the
+	// other combatant reads "something" and the room line is sight-gated.
+	sendCritEffectTrio(atk, def, atkRoom, critResult)
 
 	// Buffs from the round (BuffSource → atk, BuffTarget → def).
 	for _, buffId := range res.BuffSource {

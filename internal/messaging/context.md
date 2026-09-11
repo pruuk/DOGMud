@@ -61,13 +61,15 @@ Types and constants:
   three audiences see it.
 - `Recipient` — minimal interface (`SendText(cat, text)`) satisfied by
   `*users.UserRecord` and by `actions.Actor`.
-- `Broadcaster` — minimal interface
-  (`SendTextVisual(cat, txt, excludeUserIds ...int)`) satisfied by
-  `*rooms.Room`.
-- `Audience` — who is present for one event: `Actor`/`ActorId`,
-  `Actee`/`ActeeId`, `Room`. Ids are passed rather than derived
-  because `users.UserRecord.UserId` is a FIELD while `actions.Actor`
-  exposes `GetUserId()`, so no one interface reaches both.
+- `Broadcaster`: interface satisfied by `*rooms.Room`:
+  `SendTextVisualHidingNames(cat, txt, names, excludeUserIds ...int)` and
+  `ParticipantSight(userId int) SightDecision`.
+- `Audience`: who is present for one event: `Actor`/`ActorId`/`ActorName`,
+  `Actee`/`ActeeId`/`ActeeName`, `Room`. Ids are passed rather than derived
+  because `users.UserRecord.UserId` is a FIELD while `actions.Actor` exposes
+  `GetUserId()`. The names are exactly as the lines print them; the root guard
+  requires both on every literal.
+- `NoName`: the empty string, for a side of an Audience with nobody on it.
 
 Functions:
 
@@ -75,15 +77,28 @@ Functions:
   full pipeline for one recipient. Empty return = "don't deliver".
 - `CanSeeClearly(observer *characters.Character, room RoomVisibility) bool`
 - `CanSeeShapes(observer *characters.Character, room RoomVisibility) bool`
+- `ParticipantSight(observer *characters.Character, room RoomVisibility) SightDecision`
+  is what a party to an event makes out of the other party. Darkness and
+  blindness decide it; sleep does not (a sleeper struck in a lit room is told
+  what hit them). Infrared gives `SightShapes`.
+- `HideNames(text string, names []string, d SightDecision) string`: replaces
+  each name with "a figure" (shapes) or "something" (none), longest name first,
+  capitalized at a sentence start. In bare prose the match is exact and
+  whole-word, because mob names collide with ordinary words ("guard"). Inside an
+  identity tag it ignores case and any duplicate index, and the whole tag is
+  replaced: one Audience name then covers both the authored form ("skeleton")
+  and the display form the channel defence triad prints ("Skeleton #2"). A match
+  inside tag markup itself is never replaced.
 - `Normalize(cat Category, text string) string`
 - `Anonymize(text string) string`
 - `WrapAnsi(text string, maxWidth int) string`
 - `Say(cat Category, text string) Line`
-- `SendTrio(t Trio, aud Audience)` — delivers one narrated event to
+- `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
   everyone entitled to it. A line goes out only if it has BOTH text
-  and a recipient; either half absent is a correct, silent skip. The
-  room broadcast ALWAYS excludes the actor and the actee, so a caller
-  cannot build that exclusion list wrong by hand.
+  and a recipient. The room broadcast ALWAYS excludes the actor and the
+  actee. Each role is rendered for its reader: the actor's line hides
+  `ActeeName` and the actee's hides `ActorName` by that reader's
+  `ParticipantSight`; the observer line hides both for shapes-only observers.
 
 ## Two jobs, not one
 

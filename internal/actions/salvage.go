@@ -241,9 +241,11 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 		Actee:    messaging.NoLine,
 		Observer: salvageObserver,
 	}, messaging.Audience{
-		Actor:   actor,
-		ActorId: actor.GetUserId(),
-		Room:    room,
+		Actor:     actor,
+		ActorId:   actor.GetUserId(),
+		ActorName: actor.GetName(),
+		ActeeName: messaging.NoName,
+		Room:      room,
 	})
 
 	result.Succeeded = true

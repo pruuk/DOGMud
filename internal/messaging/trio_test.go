@@ -16,14 +16,24 @@ type fakeBroadcaster struct {
 	calls int
 	cat   Category
 	text  string
+	names []string
 	excl  []int
+	sight map[int]SightDecision
 }
 
-func (f *fakeBroadcaster) SendTextVisual(cat Category, txt string, excludeUserIds ...int) {
+func (f *fakeBroadcaster) SendTextVisualHidingNames(cat Category, txt string, names []string, excludeUserIds ...int) {
 	f.calls++
 	f.cat = cat
 	f.text = txt
+	f.names = append([]string(nil), names...)
 	f.excl = append([]int(nil), excludeUserIds...)
+}
+
+func (f *fakeBroadcaster) ParticipantSight(userId int) SightDecision {
+	if d, ok := f.sight[userId]; ok {
+		return d
+	}
+	return SightFull
 }
 
 func TestSendTrioDeliversAllThreeWithTheirOwnCategories(t *testing.T) {

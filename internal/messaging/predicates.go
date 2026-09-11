@@ -121,3 +121,30 @@ func roomIsLit(room RoomVisibility) bool {
 	// receiver, so this is safe in practice.
 	return room.GetVisibility() >= 1
 }
+
+// ParticipantSight is what a party to an event makes out of the other party:
+// the one acting on them, or the one they act on. messaging.SendTrio uses it to
+// hide a name from its reader, and actions.InitiateCast uses it to refuse a
+// cast at something the caster cannot see.
+//
+// It differs from CanSeeClearly in one deliberate way: SLEEP IS NOT A FACTOR.
+// A sleeper struck in a lit room must be told what hit them, the reason
+// CanSeeSightImpairedOnly exists and the melee darkness rewrite uses it
+// (hooks/NewRound_DoCombat_unified.go). Observers who are not a party keep
+// CanSeeClearly and CanSeeShapes, so a sleeper still receives no room lines.
+//
+// Full when darkness and blindness allow clear sight; shapes when the observer
+// is not blinded and has infrared; none otherwise. A nil observer sees fully,
+// matching the other predicates.
+func ParticipantSight(observer *characters.Character, room RoomVisibility) SightDecision {
+	if CanSeeSightImpairedOnly(observer, room) {
+		return SightFull
+	}
+	if observer.Perception != nil && observer.Perception.State() == perception.Blinded {
+		return SightNone
+	}
+	if observer.HasFlagFromAnySource(buffs.InfraredVision) {
+		return SightShapes
+	}
+	return SightNone
+}

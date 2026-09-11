@@ -1,6 +1,9 @@
 package parser
 
-import "github.com/GoMudEngine/GoMud/internal/items"
+import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
+)
 
 func nounAdapter(s Scope, candidate string) (Match, bool) {
 	if s.Room == nil {
@@ -93,7 +96,7 @@ func mobAdapter(s Scope, candidate string) (Match, bool) {
 	if s.Room == nil {
 		return Match{}, false
 	}
-	_, mobInstanceId := s.Room.FindByName(candidate)
+	_, mobInstanceId := s.Room.FindByNameSeenBy(scopeViewer(s), candidate)
 	if mobInstanceId == 0 {
 		return Match{}, false
 	}
@@ -104,7 +107,7 @@ func playerAdapter(s Scope, candidate string) (Match, bool) {
 	if s.Room == nil {
 		return Match{}, false
 	}
-	playerId, _ := s.Room.FindByName(candidate)
+	playerId, _ := s.Room.FindByNameSeenBy(scopeViewer(s), candidate)
 	if playerId == 0 {
 		return Match{}, false
 	}
@@ -120,6 +123,15 @@ func petAdapter(s Scope, candidate string) (Match, bool) {
 		return Match{}, false
 	}
 	return Match{Kind: KindPet, Name: candidate, UserId: playerId}, true
+}
+
+// scopeViewer is the character doing the looking, or nil when the scope has no
+// user: a creature the user does not perceive cannot be matched.
+func scopeViewer(s Scope) *characters.Character {
+	if s.User == nil {
+		return nil
+	}
+	return s.User.Character
 }
 
 // matchInSlice resolves candidate against an item slice via items.FindMatchIn,

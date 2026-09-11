@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/audio"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
@@ -305,7 +306,24 @@ func (r *Room) SendText(cat messaging.Category, txt string, excludeUserIds ...in
 // is computed via messaging.CanSeeClearly / CanSeeShapes; infrared
 // observers get an anonymized render.
 func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(r, cat, txt, excludeUserIds...)
+	r.sendTextVisualJudgedBy(r, cat, txt, nil, excludeUserIds...)
+}
+
+// SendTextVisualHidingNames is SendTextVisual for a line that names the
+// parties to an event: an observer who makes out shapes only reads each of
+// names as "a figure". It is the observer half of messaging.SendTrio.
+func (r *Room) SendTextVisualHidingNames(cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
+	r.sendTextVisualJudgedBy(r, cat, txt, names, excludeUserIds...)
+}
+
+// ParticipantSight is messaging.ParticipantSight for a user in this room. An
+// unknown user sees fully: there is nobody to hide anything from.
+func (r *Room) ParticipantSight(userId int) messaging.SightDecision {
+	u := users.GetByUserId(userId)
+	if u == nil {
+		return messaging.SightFull
+	}
+	return messaging.ParticipantSight(u.Character, r)
 }
 
 // SendTextVisualAsLit delivers a sight-gated message judged as if the room
@@ -318,7 +336,7 @@ func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds
 //
 // It is still a sight line: blinded and sleeping observers get nothing.
 func (r *Room) SendTextVisualAsLit(cat messaging.Category, txt string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(litRoom{}, cat, txt, excludeUserIds...)
+	r.sendTextVisualJudgedBy(litRoom{}, cat, txt, nil, excludeUserIds...)
 }
 
 // litRoom is a messaging.RoomVisibility that is always lit. Any light source
@@ -329,8 +347,10 @@ type litRoom struct{}
 func (litRoom) GetVisibility() int { return 1 }
 
 // sendTextVisualJudgedBy is SendTextVisual with the lighting it judges sight
-// against passed in, so SendTextVisualAsLit shares one delivery path.
-func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat messaging.Category, txt string, excludeUserIds ...int) {
+// against passed in, so SendTextVisualAsLit shares one delivery path. names,
+// when given, are hidden from an observer who makes out shapes only, including
+// bare names Anonymize cannot see.
+func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
 	for _, uid := range r.GetPlayers() {
 		if excluded(uid, excludeUserIds) {
 			continue
@@ -346,9 +366,17 @@ func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat mes
 		case messaging.CanSeeShapes(u.Character, lighting):
 			decision = messaging.SightShapes
 		}
+		text := txt
+		if decision == messaging.SightShapes && len(names) > 0 {
+			// Anonymize first: it replaces whole name tags. Hiding first could
+			// nest a combat-anon tag inside a name tag that holds more than the
+			// name ("the goblin"), and the pipeline's Anonymize would then no
+			// longer match that tag and leak the rest of it.
+			text = messaging.HideNames(messaging.Anonymize(txt), names, messaging.SightShapes)
+		}
 		rendered := messaging.RenderForRecipient(messaging.RenderInput{
 			Category:      cat,
-			Text:          txt,
+			Text:          text,
 			Channel:       messaging.ChannelVisual,
 			SightDecision: decision,
 			LineWidth:     u.GetLineWidth(),
@@ -1887,12 +1915,23 @@ func (r *Room) AddSign(displayText string, visibleUserId int, daysBeforeDecay in
 	return false
 }
 
+// FindByName resolves a player and a mob by name with no perception limit.
+// Staff tools and mob callers use it; a player command that names a creature
+// uses FindByNameSeenBy.
 func (r *Room) FindByName(searchName string, findTypes ...FindFlag) (playerId int, mobInstanceId int) {
+	return r.FindByNameSeenBy(nil, searchName, findTypes...)
+}
+
+// FindByNameSeenBy resolves a player and a mob by name as viewer would: a
+// creature viewer does not perceive (characters.Character.Perceives) is skipped
+// BEFORE matching, so it cannot be named and does not count toward `2.name` or
+// `name#2`. The room listing reads the same rule. A nil viewer is FindByName.
+func (r *Room) FindByNameSeenBy(viewer *characters.Character, searchName string, findTypes ...FindFlag) (playerId int, mobInstanceId int) {
 	if len(findTypes) < 1 {
 		findTypes = []FindFlag{FindAll}
 	}
-	mobInstanceId, _ = r.findMobByName(searchName, findTypes...)
-	playerId, _ = r.findPlayerByName(searchName, findTypes...)
+	mobInstanceId, _ = r.findMobByName(viewer, searchName, findTypes...)
+	playerId, _ = r.findPlayerByName(viewer, searchName, findTypes...)
 	return playerId, mobInstanceId
 }
 
@@ -1919,7 +1958,7 @@ func (r *Room) FindByPetName(searchName string) (playerId int) {
 	return petOwners[match]
 }
 
-func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, error) {
+func (r *Room) findPlayerByName(viewer *characters.Character, searchName string, findTypes ...FindFlag) (int, error) {
 
 	if len(searchName) > 1 {
 		if searchName[0] == '#' {
@@ -1933,6 +1972,17 @@ func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, 
 				if userIdMatch > 0 {
 					if uId != userIdMatch {
 						continue
+					}
+					// A stale id (u == nil, no live record behind it) is not a
+					// creature to perceive at all, so the perception check does
+					// not apply: it resolves as it always has, and the caller's
+					// own stale-id handling reports it (see
+					// usercommands/attack_stale_target_test.go). The mob #id
+					// branch needs no twin, because GetMobs prunes stale ids.
+					if viewer != nil {
+						if u := users.GetByUserId(uId); u != nil && !viewer.Perceives(u.Character) {
+							return 0, errors.New("user not found")
+						}
 					}
 					return uId, nil
 				}
@@ -1960,6 +2010,10 @@ func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, 
 			continue
 		}
 
+		if viewer != nil && !viewer.Perceives(u.Character) {
+			continue
+		}
+
 		playerLookup[u.Character.Name] = u.UserId
 		namesInRoom = append(namesInRoom, u.Character.Name)
 	}
@@ -1977,7 +2031,7 @@ func (r *Room) findPlayerByName(searchName string, findTypes ...FindFlag) (int, 
 	return playerLookup[fullMatch], nil
 }
 
-func (r *Room) findMobByName(searchName string, findTypes ...FindFlag) (int, error) {
+func (r *Room) findMobByName(viewer *characters.Character, searchName string, findTypes ...FindFlag) (int, error) {
 
 	if len(searchName) > 1 {
 		if searchName[0] == '@' {
@@ -1991,6 +2045,11 @@ func (r *Room) findMobByName(searchName string, findTypes ...FindFlag) (int, err
 				if mobIdMatch > 0 {
 					if mId != mobIdMatch {
 						continue
+					}
+					if viewer != nil {
+						if m := mobs.GetInstance(mId); m == nil || !viewer.Perceives(&m.Character) {
+							return 0, errors.New("mob not found")
+						}
 					}
 					return mId, nil
 				}
@@ -2013,6 +2072,10 @@ func (r *Room) findMobByName(searchName string, findTypes ...FindFlag) (int, err
 		// other GetInstance call in this file already guards; this one did
 		// not. See the prune in Prepare() that stops the ids going stale.
 		if m == nil {
+			continue
+		}
+
+		if viewer != nil && !viewer.Perceives(&m.Character) {
 			continue
 		}
 

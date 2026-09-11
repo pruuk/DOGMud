@@ -318,6 +318,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 		exclude := ResolveTargetOptions{}
 		if buyer.IsPlayer() {
 			exclude.ExcludeUserId = buyer.GetUserId()
+			exclude.Viewer = buyer.GetCharacter()
 		}
 		target, terr := ResolveTargetActor(room, mercName, exclude)
 		if terr == nil {

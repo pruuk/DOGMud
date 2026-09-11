@@ -286,9 +286,11 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// oversight: the M1 audit ruled this file's 17 actor sends and zero actee
 	// sends as the one genuinely actee-less member of the special-move family.
 	aud := messaging.Audience{
-		Actor:   user,
-		ActorId: user.UserId,
-		Room:    room,
+		Actor:     user,
+		ActorId:   user.UserId,
+		ActorName: user.Character.Name,
+		ActeeName: messaging.NoName,
+		Room:      room,
 	}
 
 	messaging.SendTrio(messaging.Trio{

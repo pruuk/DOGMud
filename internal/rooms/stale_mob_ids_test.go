@@ -33,7 +33,7 @@ func TestFindMobByName_StaleIdDoesNotPanic(t *testing.T) {
 		}
 	}()
 
-	if id, err := r.findMobByName("sala"); err == nil || id != 0 {
+	if id, err := r.findMobByName(nil, "sala"); err == nil || id != 0 {
 		t.Errorf("findMobByName = (%d, %v), want (0, error) when only a stale id is present", id, err)
 	}
 }
@@ -97,7 +97,7 @@ func TestFindMobByName_HashTargetingWithStaleId(t *testing.T) {
 		}
 	}()
 
-	if id, err := r.findMobByName("#1"); err == nil || id != 0 {
+	if id, err := r.findMobByName(nil, "#1"); err == nil || id != 0 {
 		t.Errorf("findMobByName(\"#1\") = (%d, %v), want (0, error)", id, err)
 	}
 }

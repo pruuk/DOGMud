@@ -7,6 +7,7 @@ package hooks
 // hand mobs a counter immunity nobody decided.
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -42,21 +43,12 @@ func fireSpellCounterTier(room *rooms.Room, out combat.ChannelDefenceResult,
 		return res
 	}
 
-	if defenderUser != nil && res.DefenderMsg != "" {
-		defenderUser.SendText(messaging.CategoryHitMelee, res.DefenderMsg)
+	var countered messaging.Recipient
+	counteredId := 0
+	if casterUser != nil {
+		countered = casterUser
+		counteredId = casterUser.UserId
 	}
-	if casterUser != nil && res.AttackerMsg != "" {
-		casterUser.SendText(messaging.CategoryHitMelee, res.AttackerMsg)
-	}
-	if res.RoomMsg != "" {
-		exclude := []int{}
-		if defenderUser != nil {
-			exclude = append(exclude, defenderUser.UserId)
-		}
-		if casterUser != nil {
-			exclude = append(exclude, casterUser.UserId)
-		}
-		sendVisualRoomText(room, messaging.CategoryHitMelee, res.RoomMsg, exclude...)
-	}
+	actions.SendCounterTrio(room, res, countered, counteredId)
 	return res
 }

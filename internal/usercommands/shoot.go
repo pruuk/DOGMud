@@ -49,7 +49,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// here, before firing. We re-resolve the would-be target (mirroring
 	// ExecuteFire's parse) without applying damage. The duplicated resolution is
 	// the deliberate price of safe pre-fire gating.
-	tUserId, _, tRoom, _ := resolveShootTarget(room, rest)
+	tUserId, _, tRoom, _ := resolveShootTarget(room, rest, user.Character)
 
 	// Issue 3 (self-target): room.FindByName can resolve the shooter.
 	if tUserId > 0 && tUserId == user.UserId {
@@ -450,11 +450,13 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		acteeRecipient = targetPlayer
 	}
 	aud := messaging.Audience{
-		Actor:   user,
-		ActorId: user.UserId,
-		Actee:   acteeRecipient,
-		ActeeId: result.TargetUserId,
-		Room:    room,
+		Actor:     user,
+		ActorId:   user.UserId,
+		ActorName: user.Character.Name,
+		Actee:     acteeRecipient,
+		ActeeId:   result.TargetUserId,
+		ActeeName: result.TargetName,
+		Room:      room,
 	}
 
 	// The reveal reads AFTER the shot it was caused by, and after the room and
@@ -543,7 +545,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 			Actor:    messaging.NoLine,
 			Actee:    messaging.NoLine,
 			Observer: arrivalLine,
-		}, messaging.Audience{ActeeId: result.TargetUserId, Room: tr})
+		}, messaging.Audience{ActorName: user.Character.Name, ActeeId: result.TargetUserId, ActeeName: result.TargetName, Room: tr})
 	}
 }
 
@@ -606,7 +608,7 @@ func shouldSpeakEngagedCue(aimedWhileEngaged, alreadySpoken bool) (speak bool, n
 // the room the target stands in, and whether the shot is cross-room. Any id may
 // be 0 when unresolved; targetRoom is the shooter's room for same-room / absent
 // targets.
-func resolveShootTarget(room *rooms.Room, rest string) (userId, mobInstanceId int, targetRoom *rooms.Room, crossRoom bool) {
+func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Character) (userId, mobInstanceId int, targetRoom *rooms.Room, crossRoom bool) {
 	if room == nil {
 		return 0, 0, nil, false
 	}
@@ -625,13 +627,13 @@ func resolveShootTarget(room *rooms.Room, rest string) (userId, mobInstanceId in
 			}
 		}
 	}
-	userId, mobInstanceId = targetRoom.FindByName(strings.Join(targetWords, " "))
+	userId, mobInstanceId = targetRoom.FindByNameSeenBy(viewer, strings.Join(targetWords, " "))
 	if userId == 0 && mobInstanceId == 0 && crossRoom {
 		// The trailing word may have been part of the target name after all;
 		// retry as a same-room shot using the full argument string.
 		crossRoom = false
 		targetRoom = room
-		userId, mobInstanceId = room.FindByName(strings.Join(args, " "))
+		userId, mobInstanceId = room.FindByNameSeenBy(viewer, strings.Join(args, " "))
 	}
 	return userId, mobInstanceId, targetRoom, crossRoom
 }

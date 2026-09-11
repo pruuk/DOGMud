@@ -58,11 +58,13 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		acteeRecipient = targetChar
 	}
 	aud := messaging.Audience{
-		Actor:   user,
-		ActorId: user.UserId,
-		Actee:   acteeRecipient,
-		ActeeId: res.Target.UserId,
-		Room:    room,
+		Actor:     user,
+		ActorId:   user.UserId,
+		ActorName: user.Character.Name,
+		Actee:     acteeRecipient,
+		ActeeId:   res.Target.UserId,
+		ActeeName: targetName,
+		Room:      room,
 	}
 
 	if res.MoveResult.Hit {

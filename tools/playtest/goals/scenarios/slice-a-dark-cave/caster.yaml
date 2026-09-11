@@ -1,0 +1,29 @@
+# Slice A lane 1: the CASTER. You are Sil Vantage in an UNLIT cave with no
+# night vision. Ordel Quist and Vessa Thorn are with you. Quote every line
+# VERBATIM. 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: m2-actor
+  start_room: 3101
+  overlays:
+    grant_spells:
+      mind-spike: 1
+    grant_items: [30047]
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look`. If you can read a normal room description, say so at once:
+    the lane is void.
+  - >-
+    Type `score` or `status` and note your conviction. Type `cast heal Ordel`.
+    Quote exactly what you are told. THE CORRECT ANSWER IS A REFUSAL: "You don't
+    see them here." Then type `cast mind-spike Ordel` and quote the reply, which
+    must also be that refusal. Check your conviction did not drop.
+  - >-
+    Type `cast heal` with NO target. It should start and land on you. Quote it.
+  - >-
+    Wait for Vessa to finish her shape casts. Then type `drink draught` and say
+    when you can see. Type `cast heal Ordel`. It should land. Ask Ordel exactly
+    what they read, and ask Vessa what she read.

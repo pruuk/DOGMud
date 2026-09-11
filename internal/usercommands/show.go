@@ -40,7 +40,7 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	target, err := actions.ResolveTargetActor(room, targetName)
+	target, err := actions.ResolveTargetActor(room, targetName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
 		user.SendText(messaging.CategorySystem, "Who???")
 		return true, nil

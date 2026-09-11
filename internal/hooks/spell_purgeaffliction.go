@@ -19,17 +19,17 @@ func resolvePurgeAffliction(user *users.UserRecord, target *users.UserRecord) {
 	room := rooms.LoadRoom(user.Character.RoomId)
 
 	if user.UserId != target.UserId {
-		user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-			`<ansi fg="green">You direct purging energy towards <ansi fg="username">%s</ansi>.</ansi>`,
-			target.Character.Name))
-		target.SendText(messaging.CategorySpellVital, fmt.Sprintf(
-			`<ansi fg="green"><ansi fg="username">%s</ansi> purges the afflictions from your body.</ansi>`,
-			user.Character.Name))
-		if room != nil {
-			sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
+		messaging.SendTrio(messaging.Trio{
+			Actor: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="green">You direct purging energy towards <ansi fg="username">%s</ansi>.</ansi>`,
+				target.Character.Name)),
+			Actee: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
+				`<ansi fg="green"><ansi fg="username">%s</ansi> purges the afflictions from your body.</ansi>`,
+				user.Character.Name)),
+			Observer: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
 				`<ansi fg="username">%s</ansi> directs purging energy towards <ansi fg="username">%s</ansi>.`,
-				user.Character.Name, target.Character.Name), user.UserId, target.UserId)
-		}
+				user.Character.Name, target.Character.Name)),
+		}, spellAudience(user, user.Character.Name, target, target.Character.Name, room))
 	} else {
 		user.SendText(messaging.CategorySpellVital, `<ansi fg="green">You purge the afflictions from your body.</ansi>`)
 		if room != nil {

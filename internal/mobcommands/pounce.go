@@ -61,9 +61,11 @@ func Pounce(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		acteeRecipient = targetUser
 	}
 	aud := messaging.Audience{
-		Actee:   acteeRecipient,
-		ActeeId: target.UserId,
-		Room:    room,
+		ActorName: mobName,
+		Actee:     acteeRecipient,
+		ActeeId:   target.UserId,
+		ActeeName: target.Name,
+		Room:      room,
 	}
 
 	if result.Hit {

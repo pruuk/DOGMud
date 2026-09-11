@@ -78,7 +78,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// look for any mobs, players, npcs
 	//
 
-	target, err := actions.ResolveTargetActor(room, lookAt)
+	target, err := actions.ResolveTargetActor(room, lookAt, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err == nil {
 
 		if target.IsPlayer() {

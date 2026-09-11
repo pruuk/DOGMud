@@ -108,7 +108,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	// roll, so a tracker who would otherwise fail the roll is not told "you
 	// don't see any tracks" about a creature standing in front of them.
 	if targetNoun != "" {
-		if name, isMob, found := findPresentTargetByNoun(room, targetNoun, actor.GetUserId()); found {
+		if name, isMob, found := findPresentTargetByNoun(castViewer(actor), room, targetNoun, actor.GetUserId()); found {
 			result.ActiveTargetName = name
 			if actor.IsPlayer() {
 				nameTag := "username"
@@ -507,15 +507,22 @@ func findMobInRoomByName(room *rooms.Room, name string) *mobs.Mob {
 	return nil
 }
 
-// findPresentTargetByNoun looks for a mob or user currently in the room whose
-// name matches the noun via keyword match (like combat targeting, so "hare"
-// matches "Steppe Hare" -- broader than the prefix match above). Mobs are
-// checked before users. Returns the matched display name, whether it is a mob,
-// and whether anything matched.
-func findPresentTargetByNoun(room *rooms.Room, noun string, excludeUserId int) (name string, isMob bool, found bool) {
+// findPresentTargetByNoun names a creature standing in the room, as viewer
+// perceives it. It matches by keyword like combat targeting does, so "hare"
+// matches "Steppe Hare", and checks mobs before users. A creature the viewer
+// does not perceive is skipped: a creature they do not perceive is skipped, so `track <name>`
+// cannot name a hidden one (follow-up slice A, owner ruling 9). A nil viewer
+// reads everyone, which is the mob side until slice F.
+//
+// viewer comes first so the root lookup guard can read it the same way it reads
+// rooms.Room.FindByNameSeenBy.
+func findPresentTargetByNoun(viewer *characters.Character, room *rooms.Room, noun string, excludeUserId int) (name string, isMob bool, found bool) {
 	mobNames := []string{}
 	for _, mId := range room.GetMobs() {
 		if m := mobs.GetInstance(mId); m != nil {
+			if viewer != nil && !viewer.Perceives(&m.Character) {
+				continue
+			}
 			mobNames = append(mobNames, m.Character.Name)
 		}
 	}
@@ -532,6 +539,9 @@ func findPresentTargetByNoun(room *rooms.Room, noun string, excludeUserId int) (
 			continue
 		}
 		if u := users.GetByUserId(uId); u != nil {
+			if viewer != nil && !viewer.Perceives(u.Character) {
+				continue
+			}
 			userNames = append(userNames, u.Character.Name)
 		}
 	}

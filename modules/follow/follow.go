@@ -407,7 +407,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 
 	userId, mobInstId := 0, 0
 	if len(followTargetName) > 0 {
-		userId, mobInstId = room.FindByName(followTargetName)
+		userId, mobInstId = room.FindByNameSeenBy(user.Character, followTargetName)
 	}
 
 	followCommandTarget := followId{userId: userId, mobInstanceId: mobInstId}

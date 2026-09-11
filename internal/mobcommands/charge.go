@@ -64,9 +64,11 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		acteeRecipient = targetChar
 	}
 	aud := messaging.Audience{
-		Actee:   acteeRecipient,
-		ActeeId: targetPlayerId,
-		Room:    room,
+		ActorName: mobName,
+		Actee:     acteeRecipient,
+		ActeeId:   targetPlayerId,
+		ActeeName: targetName,
+		Room:      room,
 	}
 
 	if result.Hit {
@@ -172,9 +174,11 @@ func narrateChargeWhiffOnProne(mob *mobs.Mob, room *rooms.Room, target actions.A
 		acteeRecipient = targetChar
 	}
 	aud := messaging.Audience{
-		Actee:   acteeRecipient,
-		ActeeId: target.UserId,
-		Room:    room,
+		ActorName: mobName,
+		Actee:     acteeRecipient,
+		ActeeId:   target.UserId,
+		ActeeName: target.Name,
+		Room:      room,
 	}
 
 	proneActee := messaging.NoLine

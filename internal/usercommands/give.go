@@ -70,7 +70,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
-	target, err := actions.ResolveTargetActor(room, giveWho)
+	target, err := actions.ResolveTargetActor(room, giveWho, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err == nil {
 		if target.IsPlayer() {
 
@@ -373,7 +373,7 @@ func giveObjectResolves(what string, user *users.UserRecord) bool {
 // giveTargetResolves reports whether the recipient phrase names a player, mob,
 // or pet present in the room (or the player's own pet via the literal "pet").
 func giveTargetResolves(who string, user *users.UserRecord, room *rooms.Room) bool {
-	if playerId, mobInstanceId := room.FindByName(who); playerId > 0 || mobInstanceId > 0 {
+	if playerId, mobInstanceId := room.FindByNameSeenBy(user.Character, who); playerId > 0 || mobInstanceId > 0 {
 		return true
 	}
 	if room.FindByPetName(who) > 0 {

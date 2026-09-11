@@ -1,0 +1,56 @@
+# Follow-up slice A playtest: the INFRARED tester.
+#
+# Makes out heat shapes in the dark but no faces: buff 85 (InfraredVision) is
+# carried as a permanent active buff. Nothing in dogmud content grants infrared,
+# so this profile is the only way to stand a shapes-only player in a room. Knows
+# Heal, so it can aim at a shape without needing PvP. No night vision, no
+# see-hidden.
+role: user
+username: template-slice-a-infrared
+character:
+  name: Vessa Thorn
+  description: >
+    A watcher whose eyes catch warmth where there is no light.
+  roomid: 462
+  zone: Thornwall City
+  speciesid: 1
+  stats:
+    strength:
+      base: 110
+    dexterity:
+      base: 115
+    perception:
+      base: 130
+    vitality:
+      base: 135
+    willpower:
+      base: 130
+    charisma:
+      base: 110
+  health: 650
+  stamina: 500
+  conviction: 600
+  gold: 300
+  skills:
+    weapon-combat: 15
+    spellcasting: 22
+    search: 12
+  spellbook:
+    heal: 2
+  buffs:
+    list:
+      - buffid: 85
+        permabuff: true
+        # permabuff: true does NOT protect a buff from expiry. Buff.Expired()
+        # is TriggersLeft <= 0 and never looks at PermaBuff; GetBuffs hides an
+        # expired buff and Prune deletes it, so a buff written straight into a
+        # saved list with no triggersleft is born dead. Item and species
+        # permabuffs survive only because reapplyPermabuffs re-adds them.
+        triggersleft: 999999
+  equipment:
+    weapon:
+      itemid: 10006
+    body:
+      itemid: 20008
+    feet:
+      itemid: 20003

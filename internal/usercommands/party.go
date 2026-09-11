@@ -179,7 +179,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		return true, nil
 	}
 
-	target, err := actions.ResolveTargetActor(room, rest)
+	target, err := actions.ResolveTargetActor(room, rest, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s not found.`, rest))
 		return true, nil

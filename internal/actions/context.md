@@ -213,6 +213,23 @@ the target instead of an interrupt.
 
 ---
 
+## Naming and aiming in the dark (follow-up slice A)
+
+- **`ResolveTargetOptions.Viewer`**: every player command that names a creature
+  passes the player; a creature they do not perceive cannot be named. Staff
+  tools and mob callers pass none. `lookup_viewer_guard_test.go` in the repo
+  root registers every lookup as viewer or plain, with the reason.
+- **`FindAttackTarget(rest, room, userId, mobId, viewer)`**: the named branch
+  and the `*`, `*mob`, `*user` pools skip what `viewer` does not perceive.
+- **`InitiateCast`** runs `admitCastAim` (`cast_sight.go`) for a player's
+  harmsingle, harmmulti and helpsingle casts: clear sight allows names, foes and
+  shapes; shapes only allows the caster's own foe and `shape` / `N.shape` /
+  `shape#N` (figures are perceived players then mobs, in room order); no sight
+  refuses. Refusals are narrated, set `RefusalExplained`, and spend nothing.
+- **`SendCounterTrio(room, res, countered, counteredUserId)`**: the one counter
+  dispatch, used by `DispatchCounterMessages` and `hooks.fireSpellCounterTier`.
+  It goes through `messaging.SendTrio`, so a counter in the dark names nobody.
+
 ## Skill Actions
 
 ### Consider
@@ -447,6 +464,11 @@ Three-tier discovery system: exits, stashed/hidden objects, and nouns.
 - **MobActor behavior:** Silent; just seeds SoftTarget if hostile found.
 
 **Messaging:** UserActor receives discovery feedback per tier. MobActor silent.
+
+**Ending hiding:** a player's find ends each found creature's hiding for
+everyone (`revealSpotted`), the way a spotted occupant's hiding ends on room
+entry in `usercommands/go.go`. A player hider is told, by name only if they can
+see the searcher. A mob's find ends nothing (slice F).
 
 **Progression:** No stat/skill use triggered.
 

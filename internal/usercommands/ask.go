@@ -91,7 +91,7 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	searchName := args[0]
 
 	// Only ask charmed players or mobs to do stuff
-	target, err := actions.ResolveTargetActor(room, searchName)
+	target, err := actions.ResolveTargetActor(room, searchName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
 		user.SendText(messaging.CategorySystem, `ask who what?`)
 		return true, nil

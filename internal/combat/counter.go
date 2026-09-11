@@ -40,6 +40,12 @@ type CounterResult struct {
 	// counterer's private line without re-resolving the character.
 	CountererUserId int
 
+	// CountererName and CounteredName are the plain names the narration below
+	// is built from, so the dispatchers can hand them to messaging.SendTrio,
+	// which hides a name from a reader who cannot see that party.
+	CountererName string
+	CounteredName string
+
 	// Channel-correct counter narration (U6b Task 11), rendered from the
 	// counter-* pools in _datafiles/world/dogmud/defense-messages/.
 	// DefenderMsg addresses the COUNTERER (the one who earned the counter),
@@ -125,6 +131,8 @@ func ExecuteCounter(defender, attacker *characters.Character, channel AttackChan
 	result.Damage = move.Damage
 	result.TargetMaxHP = move.TargetMaxHP
 	result.CountererUserId = defender.GetUserId()
+	result.CountererName = defender.Name
+	result.CounteredName = attacker.Name
 	fillCounterMessages(&result, defender, attacker)
 	return result
 }

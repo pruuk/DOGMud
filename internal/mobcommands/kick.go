@@ -52,9 +52,11 @@ func Kick(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		acteeRecipient = targetUser
 	}
 	aud := messaging.Audience{
-		Actee:   acteeRecipient,
-		ActeeId: target.UserId,
-		Room:    room,
+		ActorName: mobName,
+		Actee:     acteeRecipient,
+		ActeeId:   target.UserId,
+		ActeeName: target.Name,
+		Room:      room,
 	}
 
 	// Attack name for the defence triad renderer (U6b Task 9).
