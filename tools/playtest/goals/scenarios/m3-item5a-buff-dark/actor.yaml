@@ -2,6 +2,9 @@
 # You have no night vision, on purpose. Ordel Quist stands with you and cannot
 # see either. Quote every line VERBATIM. Ignore any companions.
 #
+# Do NOT cast chrysalis-glow until the last goal: it is a light and would light
+# the cave for 20 minutes, ruining every darkness check.
+#
 # 3 commands per round on the AI port; the overflow is dropped.
 
 ephemeral:
@@ -14,7 +17,7 @@ goals:
   - >-
     Type `look`. If you can read a normal room description, say so at once.
   - >-
-    Type `cast chrysalis-glow` with NO target. If it fizzles, cast it again.
+    Type `cast conviction-armor` with NO target. If it fizzles, cast it again.
     Tell Ordel the moment it lands and ask what they received. THE CORRECT
     ANSWER IS NOTHING.
   - >-
@@ -27,6 +30,6 @@ goals:
     once more. Ask Ordel what they were told. This step only records what
     happens; neither outcome is a failure of your run.
   - >-
-    Wait until Ordel has drunk their draught and says they can see. Then type
-    `cast conviction-armor` with NO target. If it fizzles, cast it again. Ask
-    what they read now.
+    Wait until Ordel has drunk their draught and says they can see. Only then
+    type `cast chrysalis-glow` with NO target. If it fizzles, cast it again.
+    Ask what they read.

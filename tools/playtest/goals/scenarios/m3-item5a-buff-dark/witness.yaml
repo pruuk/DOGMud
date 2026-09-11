@@ -14,7 +14,7 @@ goals:
   - >-
     Type `look`. If you can read a normal room description, say so at once.
   - >-
-    When Veteran Pathfinder casts a glow on themselves, report EXACTLY what you
+    When Veteran Pathfinder casts armor on themselves, report EXACTLY what you
     receive about it. THE CORRECT ANSWER IS NOTHING. Do not treat silence as a
     fault.
   - >-
@@ -30,6 +30,6 @@ goals:
     normal room description. Tell Veteran Pathfinder when you can. If you still
     cannot see, report that loudly.
   - >-
-    When they cast conviction armor on themselves, quote every line you read.
-    You should now read that they are encased in a shimmering layer of
-    conviction.
+    When they cast a glow on themselves, quote every line you read. Expect
+    "Chrysalis Glow settles over Veteran Pathfinder." and "A warm glow
+    surrounds Veteran Pathfinder."
