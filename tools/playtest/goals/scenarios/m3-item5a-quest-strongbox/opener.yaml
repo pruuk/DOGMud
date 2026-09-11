@@ -8,7 +8,8 @@ ephemeral:
   profile: m2-witness
   start_room: 498
   overlays:
-    set_quest_tokens: ["14-confront"]
+    # A quest can only be entered at "start"; later steps may then be skipped to.
+    set_quest_tokens: ["14-start", "14-confront"]
     grant_items: [40034]
   budgets:
     wall_clock: 20m
