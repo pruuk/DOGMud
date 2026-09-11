@@ -169,7 +169,7 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 		return nil, true
 	}
 
-	target, err := ResolveTargetActor(room, rest, ResolveTargetOptions{ExcludeUserId: user.UserId})
+	target, err := ResolveTargetActor(room, rest, ResolveTargetOptions{ExcludeUserId: user.UserId, Viewer: user.Character})
 	if err != nil {
 		// Self-exclusion collapses to NotFound, so distinguish the two here.
 		if pId, _ := room.FindByName(rest); pId == user.UserId {

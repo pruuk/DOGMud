@@ -40,7 +40,7 @@ func Talk(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	searchName := args[0]
 
-	target, err := actions.ResolveTargetActor(room, searchName)
+	target, err := actions.ResolveTargetActor(room, searchName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil || target.IsPlayer() {
 		user.SendText(messaging.CategorySystem, `Talk to whom?`)
 		return true, nil

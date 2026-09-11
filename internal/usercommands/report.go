@@ -57,7 +57,7 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	if rest != "" {
 		// Find target player in room
-		target, err := actions.ResolveTargetActor(room, rest)
+		target, err := actions.ResolveTargetActor(room, rest, actions.ResolveTargetOptions{Viewer: user.Character})
 		if err == actions.ErrTargetVanished {
 			user.SendText(messaging.CategorySystem, "They are no longer here.")
 			return true, nil

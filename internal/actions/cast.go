@@ -104,7 +104,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 
 	case spells.HarmSingle:
 		if targetName != `` {
-			pId, mId := room.FindByName(targetName)
+			pId, mId := room.FindByNameSeenBy(castViewer(actor), targetName)
 			if mId > 0 {
 				// Companions, non-combatants and player_attack_immune mobs are
 				// off-limits to harmful spells, exactly as they are to melee.
@@ -183,7 +183,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		// chain-lightning style spell could open on a protected NPC that melee
 		// and HarmSingle both refused.
 		if targetName != `` {
-			pId, mId := room.FindByName(targetName)
+			pId, mId := room.FindByNameSeenBy(castViewer(actor), targetName)
 			if mId > 0 {
 				if rejectHarmTarget(actor, mId) {
 					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
@@ -210,7 +210,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 	case spells.HelpSingle:
 		if actor.IsPlayer() {
 			if targetName != `` && targetName != actor.GetName() {
-				pId, mId := room.FindByName(targetName)
+				pId, mId := room.FindByNameSeenBy(actor.GetCharacter(), targetName)
 				if pId > 0 {
 					targetUserIds = append(targetUserIds, pId)
 				} else if mId > 0 {

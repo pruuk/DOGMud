@@ -45,3 +45,20 @@ func TestResolveTargetActor_NoViewerStillReachesThem(t *testing.T) {
 	require.NoError(t, err, "staff tools pass no viewer and must still reach a hidden player")
 	require.Equal(t, 7702, target.GetUserId())
 }
+
+func TestFindAttackTarget_ViewerCannotNameOrDrawAHiddenCreature(t *testing.T) {
+	room, viewer := viewerTestRoom(t)
+
+	named := FindAttackTarget("kesh", room, 7701, 0, viewer.Character)
+	require.False(t, named.Found, "a hidden player must not be attackable by name")
+
+	pool := FindAttackTarget("*user", room, 7701, 0, viewer.Character)
+	require.False(t, pool.Found, "the only other player is hidden, so *user draws nobody")
+}
+
+func TestFindAttackTarget_NoViewerIsUnchanged(t *testing.T) {
+	room, _ := viewerTestRoom(t)
+	named := FindAttackTarget("kesh", room, 7701, 0, nil)
+	require.True(t, named.Found)
+	require.Equal(t, 7702, named.UserId)
+}

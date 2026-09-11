@@ -26,7 +26,7 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	// Scout. room.FindByName handles multi-word input, and look already passes
 	// its full argument; this brings consider into line.
 	target, err := actions.ResolveTargetActor(room, strings.Join(args, " "),
-		actions.ResolveTargetOptions{ExcludeUserId: user.UserId})
+		actions.ResolveTargetOptions{ExcludeUserId: user.UserId, Viewer: user.Character})
 	if err != nil {
 		// Always give feedback for an unresolved target — dead, absent, or no
 		// match — instead of silently no-oping (which left the player unsure

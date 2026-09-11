@@ -179,12 +179,18 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		}
 	}
 
-	targetUserId, targetMobInstanceId := targetRoom.FindByName(strings.Join(targetWords, " "))
+	// A player cannot shoot a creature they do not perceive; a mob shooter has
+	// no viewer until slice F.
+	var viewer *characters.Character
+	if actor.IsPlayer() {
+		viewer = actor.GetCharacter()
+	}
+	targetUserId, targetMobInstanceId := targetRoom.FindByNameSeenBy(viewer, strings.Join(targetWords, " "))
 	if targetUserId == 0 && targetMobInstanceId == 0 && crossRoom {
 		// The trailing word may have been part of the target name after all;
 		// retry as a same-room shot using the full argument string.
 		crossRoom, exitName, targetRoom = false, "", room
-		targetUserId, targetMobInstanceId = room.FindByName(strings.Join(args, " "))
+		targetUserId, targetMobInstanceId = room.FindByNameSeenBy(viewer, strings.Join(args, " "))
 	}
 	if targetUserId == 0 && targetMobInstanceId == 0 {
 		return FireResult{WeaponName: weapon.DisplayName(), NoTarget: true}

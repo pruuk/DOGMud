@@ -56,6 +56,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// Resolve target in the current room, excluding the player themselves.
 	target, err := actions.ResolveTargetActor(room, strings.ToLower(rest), actions.ResolveTargetOptions{
 		ExcludeUserId: user.UserId,
+		Viewer:        user.Character,
 	})
 	if err != nil {
 		// Check whether the name matched the player themselves.

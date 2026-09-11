@@ -1973,8 +1973,13 @@ func (r *Room) findPlayerByName(viewer *characters.Character, searchName string,
 					if uId != userIdMatch {
 						continue
 					}
+					// A stale id (u == nil, no live record behind it) is not a
+					// creature to perceive at all, so the perception check does
+					// not apply — it is left to resolve exactly as it always
+					// has, so the caller's own stale-id handling still reports
+					// it (see respawn_targeting_test.go / stale_mob_ids_test.go).
 					if viewer != nil {
-						if u := users.GetByUserId(uId); u == nil || !viewer.Perceives(u.Character) {
+						if u := users.GetByUserId(uId); u != nil && !viewer.Perceives(u.Character) {
 							return 0, errors.New("user not found")
 						}
 					}

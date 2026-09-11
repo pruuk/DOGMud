@@ -2,7 +2,9 @@ package actions
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -27,7 +29,7 @@ type AttackTarget struct {
 // The Hidden → SurpriseAttack promotion is NOT done here either — call
 // EngageAggroType (below) for that, and leave the Hidden buff for the combat
 // loop's CancelIfCombat pass.
-func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobInstanceId int) AttackTarget {
+func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobInstanceId int, viewer *characters.Character) AttackTarget {
 
 	result := AttackTarget{}
 
@@ -43,6 +45,9 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 				if mobInstanceId == actorMobInstanceId {
 					continue // mob can't target itself
 				}
+				if !attackPerceivesMob(viewer, mobInstanceId) {
+					continue
+				}
 				allMobs = append(allMobs, mobInstanceId)
 			}
 
@@ -50,6 +55,9 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 			for _, userId := range room.GetPlayers() {
 				if userId == actorUserId {
 					continue // user can't target themselves
+				}
+				if !attackPerceivesPlayer(viewer, userId) {
+					continue
 				}
 				allPlayers = append(allPlayers, userId)
 			}
@@ -76,6 +84,9 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 				if mobInstanceId == actorMobInstanceId {
 					continue
 				}
+				if !attackPerceivesMob(viewer, mobInstanceId) {
+					continue
+				}
 				allMobs = append(allMobs, mobInstanceId)
 			}
 
@@ -91,6 +102,9 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 				if userId == actorUserId {
 					continue
 				}
+				if !attackPerceivesPlayer(viewer, userId) {
+					continue
+				}
 				allPlayers = append(allPlayers, userId)
 			}
 
@@ -102,7 +116,7 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 
 	} else {
 		// Named target — delegate to room search
-		playerId, mobInstanceId := room.FindByName(rest)
+		playerId, mobInstanceId := room.FindByNameSeenBy(viewer, rest)
 		result.UserId = playerId
 		result.MobInstanceId = mobInstanceId
 		result.Found = (playerId > 0 || mobInstanceId > 0)
@@ -119,6 +133,25 @@ func FindAttackTarget(rest string, room *rooms.Room, actorUserId int, actorMobIn
 	}
 
 	return result
+}
+
+// attackPerceivesMob and attackPerceivesPlayer report whether viewer makes out
+// a creature in a wildcard pool. A nil viewer (a mob attacker, until slice F)
+// perceives everything, as before.
+func attackPerceivesMob(viewer *characters.Character, mobInstanceId int) bool {
+	if viewer == nil {
+		return true
+	}
+	m := mobs.GetInstance(mobInstanceId)
+	return m != nil && viewer.Perceives(&m.Character)
+}
+
+func attackPerceivesPlayer(viewer *characters.Character, userId int) bool {
+	if viewer == nil {
+		return true
+	}
+	u := users.GetByUserId(userId)
+	return u != nil && viewer.Perceives(u.Character)
 }
 
 // EngageAggroType reports the Aggro type a new engagement should carry, and

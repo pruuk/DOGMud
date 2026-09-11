@@ -124,7 +124,7 @@ func resolveSellItem(itemName string, user *users.UserRecord, room *rooms.Room) 
 	}
 	parts := strings.SplitN(strings.TrimSpace(itemName), " ", 2)
 	if len(parts) == 2 {
-		if playerId, mobId := room.FindByName(parts[0]); playerId == 0 && mobId > 0 {
+		if playerId, mobId := room.FindByNameSeenBy(user.Character, parts[0]); playerId == 0 && mobId > 0 {
 			if _, found := user.Character.FindInBackpack(parts[1]); found {
 				return parts[1]
 			}

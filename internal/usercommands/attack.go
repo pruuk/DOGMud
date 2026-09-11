@@ -92,7 +92,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	} else {
 		// Wildcard and named-target resolution delegated to shared helper.
-		t := actions.FindAttackTarget(rest, room, user.UserId, 0)
+		t := actions.FindAttackTarget(rest, room, user.UserId, 0, user.Character)
 		attackPlayerId = t.UserId
 		attackMobInstanceId = t.MobInstanceId
 	}

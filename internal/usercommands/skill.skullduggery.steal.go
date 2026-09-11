@@ -81,7 +81,7 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 	}
 
 	// Try mob/player resolution first.
-	target, err := actions.ResolveTargetActor(room, targetNoun)
+	target, err := actions.ResolveTargetActor(room, targetNoun, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err == nil {
 		if target.IsPlayer() {
 			user.SendText(messaging.CategorySystem, "You can't steal from other players.")

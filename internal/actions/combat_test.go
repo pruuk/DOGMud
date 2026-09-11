@@ -636,7 +636,7 @@ func TestTripVariant_WithTailMutation(t *testing.T) {
 func TestFindAttackTarget_EmptyRoom(t *testing.T) {
 	room := &rooms.Room{}
 
-	result := FindAttackTarget("*", room, 1, 0)
+	result := FindAttackTarget("*", room, 1, 0, nil)
 
 	assert.False(t, result.Found, "no targets in empty room — should not find one")
 }
@@ -654,7 +654,7 @@ func TestFindAttackTarget_SelfUser(t *testing.T) {
 
 	// Search for any player (*user). With only self present, should return
 	// Found=false after self-exclusion.
-	result := FindAttackTarget("*user", room, actorUserId, 0)
+	result := FindAttackTarget("*user", room, actorUserId, 0, nil)
 
 	assert.False(t, result.Found, "player should not be able to target themselves with *user")
 	assert.NotEqual(t, actorUserId, result.UserId, "result UserId must not be the actor")
@@ -669,7 +669,7 @@ func TestFindAttackTarget_SelfMob(t *testing.T) {
 	const actorMobId = 77
 	room.AddMob(actorMobId)
 
-	result := FindAttackTarget("*mob", room, 0, actorMobId)
+	result := FindAttackTarget("*mob", room, 0, actorMobId, nil)
 
 	assert.False(t, result.Found, "mob should not be able to target itself with *mob")
 	assert.NotEqual(t, actorMobId, result.MobInstanceId, "result MobInstanceId must not be the actor")
@@ -690,7 +690,7 @@ func TestFindAttackTarget_WildcardAnyone_MultipleTargets(t *testing.T) {
 	// Run several times — randomness means we can't guarantee which is picked,
 	// but the actor must never appear as the result.
 	for i := 0; i < 20; i++ {
-		result := FindAttackTarget("*", room, actorUserId, 0)
+		result := FindAttackTarget("*", room, actorUserId, 0, nil)
 		if result.Found {
 			assert.NotEqual(t, actorUserId, result.UserId,
 				"actor should never be selected as their own target")
@@ -709,7 +709,7 @@ func TestFindAttackTarget_WildcardMob_ExcludesSelf(t *testing.T) {
 	room.AddMob(otherMobId)
 
 	for i := 0; i < 20; i++ {
-		result := FindAttackTarget("*mob", room, 0, actorMobId)
+		result := FindAttackTarget("*mob", room, 0, actorMobId, nil)
 		if result.Found {
 			assert.NotEqual(t, actorMobId, result.MobInstanceId,
 				"mob should never select itself as a target")

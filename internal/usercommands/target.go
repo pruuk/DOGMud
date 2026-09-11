@@ -61,6 +61,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// Find the new target
 	target, err := actions.ResolveTargetActor(room, rest, actions.ResolveTargetOptions{
 		ExcludeUserId: user.UserId,
+		Viewer:        user.Character,
 	})
 	if err != nil {
 		// Distinguish self-targeting vs not-found via the original wording.
