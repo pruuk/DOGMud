@@ -45,10 +45,15 @@ type Recipient interface {
 	SendText(cat Category, text string)
 }
 
-// Broadcaster is anything that can broadcast to a room minus some user ids.
-// Satisfied by *rooms.Room without change.
+// Broadcaster is a room that can deliver an event's observer line and judge a
+// participant's sight. Satisfied by *rooms.Room.
 type Broadcaster interface {
-	SendTextVisual(cat Category, txt string, excludeUserIds ...int)
+	// SendTextVisualHidingNames broadcasts a sight-gated line, excluding some
+	// user ids. An observer who makes out shapes only reads each of names as
+	// "a figure".
+	SendTextVisualHidingNames(cat Category, txt string, names []string, excludeUserIds ...int)
+	// ParticipantSight is ParticipantSight for the user in this room.
+	ParticipantSight(userId int) SightDecision
 }
 
 // Audience is who is present for one narrated event.
@@ -67,9 +72,15 @@ type Broadcaster interface {
 type Audience struct {
 	Actor   Recipient
 	ActorId int
-	Actee   Recipient
-	ActeeId int
-	Room    Broadcaster
+	// ActorName and ActeeName are the names exactly as the lines print them,
+	// plain or inside an identity tag. SendTrio hides each from a reader who
+	// cannot see that party: "a figure" for infrared, "something" otherwise.
+	// Write NoName for a side with nobody on it; the root guard requires both.
+	ActorName string
+	Actee     Recipient
+	ActeeId   int
+	ActeeName string
+	Room      Broadcaster
 }
 
 // SendTrio delivers one narrated event to everyone entitled to it.
@@ -79,21 +90,32 @@ type Audience struct {
 // the actor and the actee, so a caller can no longer get the exclusion list
 // wrong by hand.
 //
-// It does not render, choose, band or tokenise anything. Callers pass finished
+// Each role is rendered for its own reader. The actor's line hides ActeeName
+// and the actee's line hides ActorName, judged by that reader's
+// ParticipantSight; the observer line hides both, judged per observer by the
+// room. It chooses, bands and tokenises nothing: callers still pass finished
 // strings, which is also what lets a caller hand it text the caller has
-// already anonymized itself -- see mobcommands/skill_move_defence.go, where
-// the personal line must be anonymized at the call site because the audio
-// channel does not do it.
+// already anonymized itself -- see mobcommands/skill_move_defence.go.
 func SendTrio(t Trio, aud Audience) {
 	if aud.Actor != nil && t.Actor.Text != "" {
-		aud.Actor.SendText(t.Actor.Cat, t.Actor.Text)
+		aud.Actor.SendText(t.Actor.Cat, hideForReader(aud, aud.ActorId, t.Actor.Text, aud.ActeeName))
 	}
 	if aud.Actee != nil && t.Actee.Text != "" {
-		aud.Actee.SendText(t.Actee.Cat, t.Actee.Text)
+		aud.Actee.SendText(t.Actee.Cat, hideForReader(aud, aud.ActeeId, t.Actee.Text, aud.ActorName))
 	}
 	if aud.Room != nil && t.Observer.Text != "" {
-		aud.Room.SendTextVisual(t.Observer.Cat, t.Observer.Text, trioExclusions(aud)...)
+		aud.Room.SendTextVisualHidingNames(t.Observer.Cat, t.Observer.Text,
+			[]string{aud.ActorName, aud.ActeeName}, trioExclusions(aud)...)
 	}
+}
+
+// hideForReader hides the other party's name from one participant by that
+// participant's sight in the room. With no room there is no light to judge.
+func hideForReader(aud Audience, readerId int, text, otherName string) string {
+	if aud.Room == nil || otherName == NoName {
+		return text
+	}
+	return HideNames(text, []string{otherName}, aud.Room.ParticipantSight(readerId))
 }
 
 // trioExclusions builds the room broadcast's exclusion list. Zero ids are

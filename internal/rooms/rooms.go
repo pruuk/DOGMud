@@ -305,7 +305,24 @@ func (r *Room) SendText(cat messaging.Category, txt string, excludeUserIds ...in
 // is computed via messaging.CanSeeClearly / CanSeeShapes; infrared
 // observers get an anonymized render.
 func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(r, cat, txt, excludeUserIds...)
+	r.sendTextVisualJudgedBy(r, cat, txt, nil, excludeUserIds...)
+}
+
+// SendTextVisualHidingNames is SendTextVisual for a line that names the
+// parties to an event: an observer who makes out shapes only reads each of
+// names as "a figure". It is the observer half of messaging.SendTrio.
+func (r *Room) SendTextVisualHidingNames(cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
+	r.sendTextVisualJudgedBy(r, cat, txt, names, excludeUserIds...)
+}
+
+// ParticipantSight is messaging.ParticipantSight for a user in this room. An
+// unknown user sees fully: there is nobody to hide anything from.
+func (r *Room) ParticipantSight(userId int) messaging.SightDecision {
+	u := users.GetByUserId(userId)
+	if u == nil {
+		return messaging.SightFull
+	}
+	return messaging.ParticipantSight(u.Character, r)
 }
 
 // SendTextVisualAsLit delivers a sight-gated message judged as if the room
@@ -318,7 +335,7 @@ func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds
 //
 // It is still a sight line: blinded and sleeping observers get nothing.
 func (r *Room) SendTextVisualAsLit(cat messaging.Category, txt string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(litRoom{}, cat, txt, excludeUserIds...)
+	r.sendTextVisualJudgedBy(litRoom{}, cat, txt, nil, excludeUserIds...)
 }
 
 // litRoom is a messaging.RoomVisibility that is always lit. Any light source
@@ -329,8 +346,10 @@ type litRoom struct{}
 func (litRoom) GetVisibility() int { return 1 }
 
 // sendTextVisualJudgedBy is SendTextVisual with the lighting it judges sight
-// against passed in, so SendTextVisualAsLit shares one delivery path.
-func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat messaging.Category, txt string, excludeUserIds ...int) {
+// against passed in, so SendTextVisualAsLit shares one delivery path. names,
+// when given, are hidden from an observer who makes out shapes only, including
+// bare names Anonymize cannot see.
+func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
 	for _, uid := range r.GetPlayers() {
 		if excluded(uid, excludeUserIds) {
 			continue
@@ -346,9 +365,13 @@ func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat mes
 		case messaging.CanSeeShapes(u.Character, lighting):
 			decision = messaging.SightShapes
 		}
+		text := txt
+		if decision == messaging.SightShapes && len(names) > 0 {
+			text = messaging.HideNames(txt, names, messaging.SightShapes)
+		}
 		rendered := messaging.RenderForRecipient(messaging.RenderInput{
 			Category:      cat,
-			Text:          txt,
+			Text:          text,
 			Channel:       messaging.ChannelVisual,
 			SightDecision: decision,
 			LineWidth:     u.GetLineWidth(),
