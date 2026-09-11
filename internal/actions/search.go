@@ -12,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -281,6 +283,10 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		actor.SendText(messaging.CategorySystem, text)
 	}
 
+	// Owner ruling 10 (follow-up slice A): a player's find ends the hider's
+	// hiding for everyone, as walking in and spotting them already does.
+	revealSpotted(actor, result, room)
+
 	// ── Tier 3 (target 175): Hidden nouns ───────────────────────
 	// Sort keys for deterministic output order.
 	nounKeys := make([]string, 0, len(room.HiddenNouns))
@@ -349,4 +355,47 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	}
 
 	return result
+}
+
+// revealSpotted ends the hiding of everything a PLAYER's search found, for
+// everyone in the room. Owner ruling 10 (follow-up slice A): the same thing
+// walking in and spotting a hider already does (usercommands/go.go). Without
+// it a hidden creature that never fights could be found by search and still not
+// be named. A mob's search ends nothing; mobs perceiving hidden creatures is
+// slice F.
+func revealSpotted(actor Actor, found SearchResult, room *rooms.Room) {
+	if !actor.IsPlayer() {
+		return
+	}
+	searcher := actor.GetName()
+	for _, uid := range found.HiddenPlayersFound {
+		if u := users.GetByUserId(uid); u != nil {
+			endHidingOnSpot(searcher, u.Character, u, room)
+		}
+	}
+	for _, mid := range found.HiddenMobsFound {
+		if m := mobs.GetInstance(mid); m != nil {
+			endHidingOnSpot(searcher, &m.Character, nil, room)
+		}
+	}
+}
+
+// endHidingOnSpot drives the hider's Awareness machine out of Hidden, exactly
+// as go.go does for a spotted occupant; the Awareness cascade then cancels
+// buff 9. A player hider is told, by name only if they can see the searcher.
+func endHidingOnSpot(searcher string, hider *characters.Character, hiderUser *users.UserRecord, room *rooms.Room) {
+	if hider.Awareness != nil {
+		_ = hider.Awareness.TransitionToRevealing(
+			state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
+	}
+	if hiderUser == nil {
+		return
+	}
+	hider.SetMiscData("sneaking", nil)
+	if messaging.CanSeeClearly(hider, room) {
+		hiderUser.SendText(messaging.CategorySystem, fmt.Sprintf(
+			"<ansi fg=\"username\">%s</ansi> searches the room and spots you!", searcher))
+	} else {
+		hiderUser.SendText(messaging.CategorySystem, "Someone searches the room and spots you!")
+	}
 }
