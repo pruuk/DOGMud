@@ -54,6 +54,31 @@ func TestHideNames(t *testing.T) {
 			want: anon + "Something</ansi> waves.",
 		},
 		{
+			name: "a name is never matched inside tag markup", sight: SightNone,
+			text: `<ansi fg="green">Green hits green.</ansi>`, names: []string{"green"},
+			want: `<ansi fg="green">Green hits ` + anon + "something</ansi>.</ansi>",
+		},
+		{
+			name: "a later name cannot rewrite a replacement already made", sight: SightNone,
+			text: "Kesh hits Bob.", names: []string{"Kesh", "anon", "ansi"},
+			want: anon + "Something</ansi> hits Bob.",
+		},
+		{
+			name: "underscore is part of a name", sight: SightNone,
+			text: "Kesh_Two waves at Kesh.", names: []string{"Kesh"},
+			want: "Kesh_Two waves at " + anon + "something</ansi>.",
+		},
+		{
+			name: "a new line starts a sentence", sight: SightNone,
+			text: "You fall.\nKesh laughs.", names: []string{"Kesh"},
+			want: "You fall.\n" + anon + "Something</ansi> laughs.",
+		},
+		{
+			name: "punctuation with no space is not a sentence start", sight: SightNone,
+			text: `"Kesh!" Kesh laughs.`, names: []string{"Kesh"},
+			want: `"` + anon + `something</ansi>!" ` + anon + "something</ansi> laughs.",
+		},
+		{
 			name: "empty names are ignored", sight: SightNone,
 			text: "Hello there.", names: []string{NoName, ""},
 			want: "Hello there.",

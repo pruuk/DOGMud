@@ -14,9 +14,9 @@ import (
 // same idea as NoLine.
 const NoName = ""
 
-// identityOpenTag matches a player, mob or pet name's opening tag at the very
-// end of the text before a name. The same aliases Anonymize recognises.
-var identityOpenTag = regexp.MustCompile(`<ansi fg="(?:(?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">$`)
+// identityOpenTag matches exactly one opening tag of a player, mob or pet
+// name. The same aliases Anonymize recognises.
+var identityOpenTag = regexp.MustCompile(`^<ansi fg="(?:(?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">$`)
 
 // identityCloseAfterName matches what may follow a name inside its identity
 // tag: an optional duplicate index (" #2", see characters.FormattedName) and
@@ -27,12 +27,14 @@ var identityCloseAfterName = regexp.MustCompile(`^(?: #\d+)?</ansi>`)
 // that party out perceives: "a figure" when they see shapes only, "something"
 // when they see nothing. Clear sight returns text unchanged.
 //
-// A name matches as an EXACT substring, longest name first, and only as a whole
-// word: "Kesh" does not match inside "Keshara". When a match is the whole
-// content of an identity tag, the tag goes with it, so the output never nests
-// a combat-anon tag inside a name tag. The replacement is capitalized at the
-// start of a sentence, looking through ANSI tags, so "⚡ SWEEP! Kesh dodges"
-// reads "⚡ SWEEP! Something dodges".
+// A name matches as an EXACT substring, longest name first, only as a whole
+// word ("Kesh" does not match inside "Keshara" or "Kesh_Two"), and never
+// inside tag markup, so a name such as "green" cannot rewrite
+// `<ansi fg="green">` and a later name cannot rewrite a replacement already
+// made. When a match is the whole content of an identity tag, the tag goes with
+// it, so the output never nests a combat-anon tag inside a name tag. The
+// replacement is capitalized at the start of a sentence, looking through tags,
+// so "⚡ SWEEP! Kesh dodges" reads "⚡ SWEEP! Something dodges".
 func HideNames(text string, names []string, d SightDecision) string {
 	if d == SightFull || text == "" {
 		return text
@@ -63,19 +65,21 @@ func hideOneName(text, name, word string) string {
 		}
 		start := from + idx
 		end := start + len(name)
-		if !standsAsWord(text, start, end, name) {
+		if insideTag(text, start) || !standsAsWord(text, start, end, name) {
 			_, size := utf8.DecodeRuneInString(text[start:])
 			from = start + size
 			continue
 		}
 		cutStart, cutEnd := start, end
-		if open := identityOpenTag.FindStringIndex(text[:start]); open != nil {
-			if closing := identityCloseAfterName.FindStringIndex(text[end:]); closing != nil {
-				cutStart, cutEnd = open[0], end+closing[1]
+		if strings.HasSuffix(text[:start], `">`) {
+			if open := strings.LastIndexByte(text[:start], '<'); open >= 0 && identityOpenTag.MatchString(text[open:start]) {
+				if closing := identityCloseAfterName.FindStringIndex(text[end:]); closing != nil {
+					cutStart, cutEnd = open, end+closing[1]
+				}
 			}
 		}
 		shown := word
-		if atSentenceStart(text[:cutStart]) {
+		if atSentenceStart(text, cutStart) {
 			shown = strings.ToUpper(word[:1]) + word[1:]
 		}
 		replacement := `<ansi fg="combat-anon">` + shown + `</ansi>`
@@ -85,8 +89,14 @@ func hideOneName(text, name, word string) string {
 	return text
 }
 
+// insideTag reports whether byte pos falls inside tag markup: the nearest '<'
+// before it is later than the nearest '>'.
+func insideTag(text string, pos int) bool {
+	return strings.LastIndexByte(text[:pos], '<') > strings.LastIndexByte(text[:pos], '>')
+}
+
 // standsAsWord reports whether the match at [start, end) is a whole word: a
-// name that begins or ends with a letter or digit may not touch another one.
+// name that begins or ends with a name character may not touch another one.
 func standsAsWord(text string, start, end int, name string) bool {
 	first, _ := utf8.DecodeRuneInString(name)
 	if isNameRune(first) && start > 0 {
@@ -105,22 +115,33 @@ func standsAsWord(text string, start, end int, name string) bool {
 	return true
 }
 
-func isNameRune(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) }
+// isNameRune reports whether r can be part of a character name. Underscore is a
+// legal name character, so it joins words here too.
+func isNameRune(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' }
 
-// atSentenceStart reports whether text placed after prefix begins a sentence:
-// only tags and spaces before it, or a sentence end followed by a space.
-func atSentenceStart(prefix string) bool {
-	plain := ansiTagPattern.ReplaceAllString(prefix, "")
-	trimmed := strings.TrimRight(plain, " ")
-	if trimmed == "" {
-		return true
+// atSentenceStart reports whether text placed at byte pos begins a sentence,
+// scanning backwards through spaces and tags: the start of the text, the start
+// of a line, or a sentence end followed by at least one space.
+func atSentenceStart(text string, pos int) bool {
+	sawSpace := false
+	i := pos
+	for i > 0 {
+		c := text[i-1]
+		switch {
+		case c == ' ' || c == '\t':
+			sawSpace = true
+			i--
+		case c == '\n' || c == '\r':
+			return true
+		case c == '>':
+			open := strings.LastIndexByte(text[:i-1], '<')
+			if open < 0 {
+				return false
+			}
+			i = open
+		default:
+			return sawSpace && (c == '.' || c == '!' || c == '?')
+		}
 	}
-	if len(trimmed) == len(plain) {
-		return false
-	}
-	switch trimmed[len(trimmed)-1] {
-	case '.', '!', '?':
-		return true
-	}
-	return false
+	return true
 }
