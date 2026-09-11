@@ -21,7 +21,7 @@ import (
 func RoomTextProblems(text string) []string {
 	var problems []string
 	if !strings.Contains(text, "{source}") {
-		problems = append(problems, "must name the acting player with {source}; the room is watching them act")
+		problems = append(problems, "must name the acting player with {source} (the room is watching them act)")
 	}
 	for _, token := range []string{"{target}", "{target_plain}"} {
 		if strings.Contains(text, token) {
@@ -29,7 +29,7 @@ func RoomTextProblems(text string) []string {
 		}
 	}
 	if strings.Contains(text, "{source_plain}") {
-		problems = append(problems, "{source_plain} is an untagged name that cannot be anonymized in the dark; use {source}")
+		problems = append(problems, "{source_plain} is an untagged name that cannot be anonymized in the dark, so use {source}")
 	}
 	problems = append(problems, textutil.ValidateTokens(text)...)
 	return problems
@@ -47,8 +47,8 @@ func RoomTextProblems(text string) []string {
 // boot failed.
 func (r *Quest) validateRoomText() error {
 	var problems []string
-	var walk func(where string, actions []ActionDef, depth int)
-	walk = func(where string, actions []ActionDef, depth int) {
+	var walk func(where string, actions []ActionDef)
+	walk = func(where string, actions []ActionDef) {
 		for j, a := range actions {
 			aw := fmt.Sprintf("%s action %d", where, j)
 			if a.RoomText != "" {
@@ -56,17 +56,21 @@ func (r *Quest) validateRoomText() error {
 					problems = append(problems, aw+" room_text: "+p)
 				}
 			}
-			// The engine nests exactly one level; the guard mirrors validate_refs.go.
-			if a.Sequence != nil && depth < 2 {
-				walk(aw+" sequence on_complete", a.Sequence.OnComplete, depth+1)
+			// No depth limit. The engine runs a sequence's on_complete actions
+			// through ExecuteAction, which queues any nested sequence again, so
+			// nesting is unbounded at runtime. A definition parsed from YAML or
+			// sent by the editor cannot be cyclic, so the recursion always ends.
+			if a.Sequence != nil {
+				walk(aw+" sequence on_complete", a.Sequence.OnComplete)
 			}
 		}
 	}
 	for i, t := range r.Triggers {
-		walk(fmt.Sprintf("trigger %d", i), t.Actions, 0)
+		walk(fmt.Sprintf("trigger %d", i), t.Actions)
 	}
 	if len(problems) > 0 {
-		return fmt.Errorf("quest %d (%s): %s", r.QuestId, r.Name, strings.Join(problems, "; "))
+		// One problem per line, so an editor refusal reads clearly.
+		return fmt.Errorf("quest %d (%s) room_text problems:\n%s", r.QuestId, r.Name, strings.Join(problems, "\n"))
 	}
 	return nil
 }

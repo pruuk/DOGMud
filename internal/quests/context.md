@@ -1058,6 +1058,7 @@ maintainers know the quests are coupled.
 | `quests.go` | Every quest definition type: the single owner of the quest file parse |
 | `triggers.go` | Trigger and action definition shapes |
 | `save.go` | Quest file persistence |
+| `roomtext.go` | `RoomTextProblems` and the room_text rule `Validate` enforces (every quest room line names `{source}`, walking nested sequences) |
 | `validate_refs.go` | Cross-reference validation (flags, tokens, ids) |
 
 **This package owns the data; `internal/questengine` owns the evaluation.**

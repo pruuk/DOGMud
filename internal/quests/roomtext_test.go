@@ -69,6 +69,19 @@ func TestValidate_RefusesSubjectlessRoomTextInASequence(t *testing.T) {
 	assert.Contains(t, err.Error(), "on_complete")
 }
 
+// TestValidate_RefusesSubjectlessRoomTextThreeSequencesDeep: the engine runs
+// nested sequences with no depth limit, so the rule must walk them all. The
+// first version stopped two levels down, found by review.
+func TestValidate_RefusesSubjectlessRoomTextThreeSequencesDeep(t *testing.T) {
+	deep := ActionDef{RoomText: "unlocks the strongbox."}
+	for i := 0; i < 3; i++ {
+		deep = ActionDef{Sequence: &SequenceDef{OnComplete: []ActionDef{deep}}}
+	}
+	q := &Quest{QuestId: 90001, Name: "Room Text Test", Steps: []QuestStep{{Id: "start"}},
+		Triggers: []TriggerDef{{Event: "room_interact", Actions: []ActionDef{deep}}}}
+	require.Error(t, q.Validate())
+}
+
 func TestValidate_AcceptsRoomTextNamingTheActor(t *testing.T) {
 	assert.NoError(t, roomTextQuest("{source} unlocks the strongbox.", "{source} nods.").Validate())
 }
