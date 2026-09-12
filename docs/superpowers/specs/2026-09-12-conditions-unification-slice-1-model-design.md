@@ -240,9 +240,18 @@ Everything else is number-identical, and the equivalence test proves it.
 
 ## Documentation
 
+There is no `internal/conditions` package today and so no `context.md` for
+conditions: the enum lives in `internal/characters/conditions.go`, and
+`internal/characters/context.md` describes it in five scattered places (the
+regen notes, the prone recovery section, the grapple section, the perception
+section and the file table). After this slice the ONE home for the model is
+`internal/buffs/context.md`; slice 2 renames it to
+`internal/conditions/context.md`. The characters file loses its condition
+sections and keeps one pointer.
+
 `context.md` for `buffs` (the model, the door, the effects vocabulary, the
 rule that no second timed-state collection may exist), `characters`
-(conditions section removed, pointer to buffs), `hooks` (tick and regen),
+(conditions sections removed, pointer to buffs), `hooks` (tick and regen),
 `combat`, `gmcp`; the web client's comment on statuses; `docs/README.md` rows.
 A patch note: shields last as long as they say, and afflictions survive a
 short absence.
