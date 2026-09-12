@@ -40,7 +40,7 @@ var lookupRegistry = map[string]lookupEntry{
 	"internal/actions/target_resolution.go|ResolveTargetActor":         {viewer: 1},
 	"internal/actions/track.go|Track":                                  {viewer: 1},
 	"internal/mobcommands/aid.go|Aid":                                  {plain: 1, why: whyMob},
-	"internal/mobcommands/attack.go|Attack":                            {plain: 1, why: whyMob},
+	"internal/mobcommands/attack.go|Attack":                            {viewer: 1},
 	"internal/mobcommands/befriend.go|Befriend":                        {plain: 1, why: whyMob},
 	"internal/mobcommands/consider.go|Consider":                        {plain: 1, why: whyMob},
 	"internal/mobcommands/give.go|Give":                                {plain: 1, why: whyMob},
