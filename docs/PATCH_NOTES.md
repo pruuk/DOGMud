@@ -10,8 +10,10 @@ player it is actually attacking. Everyone else sees it in its ordinary colour.
 Three combat lines were also still naming people you could not see. If you
 struck something in the dark that hurt to hit, you were told exactly what it
 was; when the thing you were fighting fell or left and another took its place,
-you were told its name; and a foe biding its time between blows was named as
-it watched you. All three now say "something" until you can see.
+you were told its name; and a foe biding its time between blows was named,
+weapon and all, as it watched you. All three now say "something" until you
+can see, and while you cannot see, a waiting foe is only something out there,
+biding its time.
 
 ## 2026-09-11: What you cannot see, you cannot name
 
