@@ -128,34 +128,18 @@ func dogmudDataDir(t *testing.T) string {
 // world data and loads the combat/defense and taunt stores through their
 // real production loaders, mirroring the pattern established in
 // internal/items/defensive_messages_integration_test.go.
-//
-// Kind B stores added it a real config.yaml load: buffs.LoadDataFiles()
-// resolves buff 0 (Meditating)'s TriggerCount from
-// configs.GetNetworkConfig().LogoutRounds, which is a Go zero-value default
-// (0) rather than the shipped value (3) unless the real config.yaml is
-// loaded — a bare FilePaths.DataFiles override on top of an unvalidated
-// Config{} leaves it at 0, which fails buffs' own Validate() (TriggerCount
-// >= 1 is required whenever TriggerRate is set). Chdir to the repo root and
-// go through configs.ReloadConfig(), the pattern internal/characters uses
-// (see poolmax_test.go's withRepoRoot) for the same reason, so this golden
-// reflects what a booted dogmud world actually sees.
 func setupRealStores(t *testing.T) {
 	t.Helper()
 	mudlog.SetupLogger(nil, "", "", false)
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	if err := os.Chdir(repoRoot(t)); err != nil {
-		t.Fatalf("chdir to repo root: %v", err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(cwd) })
-
-	configs.SetConfigForTest(t, configs.GetConfig())
-	if err := configs.ReloadConfig(); err != nil {
-		t.Fatalf("reload config: %v", err)
-	}
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(dogmudDataDir(t))
+	// Buff 0 (Meditating) derives its TriggerCount from this at Validate time
+	// and refuses 0; the shipped config.yaml says 3. Set it explicitly rather
+	// than load config.yaml: that file is skip-worktree and differs per
+	// machine, and a golden must not have a per-machine input.
+	cfg.Network.LogoutRounds = 3
+	configs.SetConfigForTest(t, cfg)
 
 	items.LoadDataFiles()
 	combat.LoadTauntMessageFiles()
