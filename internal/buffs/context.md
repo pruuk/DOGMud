@@ -546,9 +546,17 @@ func (bs *Buff) Name() string {
   one warning per entry at boot (wired in `main.go` after the species guard).
 - Two flags declare a deliberate silence: `hidden` (no end notice ever, a
   hider must not learn when the cover lapsed; room text still goes out) and
-  `silent-start` (the applying command narrates the start; Warcry, Rally and
-  Bloom Detox are applied through `Character.AddBuff`, which never queues the
-  buff event).
+  `silent-start` (the applying command narrates the start; Warcry, Rally,
+  Throttled and Bloom Detox are applied through `Character.AddBuff`, which
+  never queues the buff event).
+- **A player buff must be applied through `users.UserRecord.AddBuff` or
+  `UserRecord.AddBuffScaled`, the event path, or it lands in silence:
+  `Character.AddBuff` / `Character.AddBuffScaled` apply in place and queue
+  nothing, so `Buff_ApplyBuffs` never runs and no notice reaches the holder.**
+  The multiplier rides on `events.Buff.DurationMult`, so a scaled application
+  takes the same door. The root guard `buff_apply_path_guard_test.go` fails the
+  build on any direct character-level add under `internal/usercommands` or
+  `internal/actions` that is not in its allowlist with a reason.
 - **Every non-secret buff in the dogmud world must carry authored
   `start_user_text` (unless `silent-start`) AND `end_user_text` (unless
   `hidden`), and a secret buff must carry no player text.** The root guard `buff_notice_guard_test.go` fails the build

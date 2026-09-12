@@ -429,6 +429,21 @@ func (u *UserRecord) AddBuff(buffId int, source string) {
 
 }
 
+// AddBuffScaled queues a buff whose duration is scaled, the way potion
+// potency and crafting skill scale them. It travels the same event as
+// AddBuff, so the holder still reads the start notice; applying through
+// Character.AddBuffScaled directly would land in silence.
+func (u *UserRecord) AddBuffScaled(buffId int, durationMult float64, source string) {
+
+	events.AddToQueue(events.Buff{
+		UserId:       u.UserId,
+		BuffId:       buffId,
+		Source:       source,
+		DurationMult: durationMult,
+	})
+
+}
+
 // SendText delivers an audio-channel message to this user. See
 // rooms.SendText for channel semantics. CategoryDefault keeps prose
 // uncolored.

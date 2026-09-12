@@ -12,11 +12,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -1006,6 +1008,26 @@ func TestUserRecord_AddBuff(t *testing.T) {
 	u := &UserRecord{UserId: 1}
 	// Should not panic
 	u.AddBuff(1, "test")
+}
+
+// TestUserRecord_AddBuffScaled pins that a scaled buff still travels the buff
+// event, carrying the multiplier. Character.AddBuffScaled applies in place and
+// queues nothing, so a player buff added that way never reaches
+// Buff_ApplyBuffs and never narrates its start: that is how Purging Weakness
+// landed in silence in play.
+func TestUserRecord_AddBuffScaled(t *testing.T) {
+	const userId = 9931
+	events.DrainQueuedBuffsForTest(userId) // start from a clean queue
+
+	u := &UserRecord{UserId: userId}
+	u.AddBuffScaled(76, 0.5, "drink")
+
+	queued := events.DrainQueuedBuffsForTest(userId)
+	require.Len(t, queued, 1, "exactly one buff event must be queued")
+	assert.Equal(t, userId, queued[0].UserId)
+	assert.Equal(t, 76, queued[0].BuffId)
+	assert.Equal(t, "drink", queued[0].Source)
+	assert.Equal(t, 0.5, queued[0].DurationMult, "the multiplier must ride on the event")
 }
 
 func TestUserRecord_SendWebClientCommand(t *testing.T) {

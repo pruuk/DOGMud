@@ -510,6 +510,35 @@ func DrainQueuedSkillUsedForTest(userId int) []SkillUsed {
 	return found
 }
 
+// DrainQueuedBuffsForTest removes and returns the queued Buff events for a
+// user, or for every user when userId is 0. Buff application is the one door
+// that narrates a buff's start, so a test that wants to prove a code path
+// applies a player buff correctly asserts on the event, not on the character.
+//
+// FOR TEST USE ONLY. Mutates the queue. Call it once to discard leftovers from
+// an earlier test, then again to assert on what the code under test queued.
+func DrainQueuedBuffsForTest(userId int) []Buff {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []Buff
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		b, ok := pe.event.(Buff)
+		if !ok {
+			remaining = append(remaining, pe)
+			continue
+		}
+		if userId == 0 || b.UserId == userId {
+			found = append(found, b)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // Initialize the priority queue.
 func init() {
 	heap.Init(&globalQueue)
