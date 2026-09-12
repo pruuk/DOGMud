@@ -44,7 +44,7 @@ const (
 // combat.GetWaitMessages name the weapon as well as the foe (e.g. "Something
 // holds their Rusted Cleaver steady, eyes fixed on you."), so hiding just the
 // name is not enough. A participant without clear sight
-// (messaging.CanSeeSightImpairedOnly — darkness or blindness, not sleep;
+// (messaging.CanSeeSightImpairedOnly: darkness or blindness, not sleep;
 // infrared does not count as clear) instead reads one fixed dark line, the
 // same convention the swing path (dispatchCritAndMessaging /
 // replaceDarknessMessages) already uses. The fixed line is only sent when
@@ -95,7 +95,7 @@ func handleCombatWaitRound(
 		}
 	}
 
-	// AttackResult drainage — each TaggedMessage carries the Category
+	// AttackResult drainage: each TaggedMessage carries the Category
 	// the producer chose for that line (weapon subtype for hits,
 	// defense verb for defenses).
 	for _, msg := range roundResult.MessagesToSourceRoom {
