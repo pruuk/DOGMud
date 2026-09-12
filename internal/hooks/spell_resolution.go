@@ -204,7 +204,7 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 
 	// --- Run spell script onMagic (if present) ---
 	// Send YAML magic text (if defined).
-	if spellData != nil && (spellData.MagicUserText != "" || spellData.MagicRoomText != "") {
+	if spellData != nil && spellData.Narration(spells.PhaseMagic).Len() > 0 {
 		tCtx := textutil.TokenContext{
 			SourceName:      user.Character.GetCharacterName(true),
 			SourcePlainName: user.Character.GetCharacterName(false),
@@ -220,16 +220,16 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 				tCtx.TargetPlainName = tMob.Character.GetCharacterName(false)
 			}
 		}
-		cfg := textutil.SendTextConfig{
-			UserSendFunc: func(msg string) { user.SendText(spellSchoolCategory(spellData), msg) },
-			RoomSendFunc: func(msg string, skip ...int) {
-				if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-					r.SendText(spellSchoolCategory(spellData), msg, skip...)
-				}
-			},
-			ExcludeId: user.UserId,
+		roles := spellData.Narrate(spells.PhaseMagic, tCtx)
+		if roles.Actor != "" {
+			user.SendText(spellSchoolCategory(spellData), roles.Actor)
 		}
-		textutil.SendPhaseText(spellData.MagicUserText, spellData.MagicRoomText, tCtx, "pink", cfg)
+		// Audio channel, as before this refactor: filed, not changed here.
+		if roles.Observer != "" {
+			if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+				r.SendText(spellSchoolCategory(spellData), roles.Observer, user.UserId)
+			}
+		}
 	}
 	// Fumble gate for the post-target effects (summon / charm / Go hooks).
 	// A fumbled cast consumed conviction + component but should NOT also land

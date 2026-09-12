@@ -99,11 +99,13 @@ rep, mutation grants, NPC dialogue queueing, and timed sequences.
 This is the seam that keeps the evaluator testable: tests supply a fake
 `ActionContext`/`PlayerState`, production supplies `GameBridge`.
 
-`RoomText` substitutes `{source}` with the triggering player's **tagged** name
-and sends on the **visual** channel, the way the behaviour tree's own
-`room_text` does. Until 2026-09-11 it sent raw text on the audio channel, so an
-observer who could not see still read it and quest 77 showed a literal
-`{source}`. The tag matters: `messaging.Anonymize` strips only tagged names.
+`ActionContext.Narrate(v narration.Variants)` is the one door for a text action
+(since 2026-09-12; it replaced `SendText` and `RoomText`). `ExecuteAction` calls
+it with `a.Narration()`; `GameBridge.Narrate` renders with the triggering
+player's **tagged** name as `{source}`, sends the Actor line to the player and
+the Observer line on the **visual** channel, the way the behaviour tree's own
+`room_text` does. The tag matters: `messaging.Anonymize` strips only tagged
+names. `send_text` is substituted too; no shipped line carries a token.
 
 ## Gotchas
 

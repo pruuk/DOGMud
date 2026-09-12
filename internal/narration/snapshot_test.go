@@ -84,10 +84,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
@@ -96,7 +98,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 )
 
 var update = flag.Bool("update", false, "update golden snapshot files under testdata/stores")
@@ -130,12 +134,27 @@ func setupRealStores(t *testing.T) {
 
 	cfg := configs.GetConfig()
 	cfg.FilePaths.DataFiles = configs.ConfigString(dogmudDataDir(t))
+	// Buff 0 (Meditating) derives its TriggerCount from this at Validate time
+	// and refuses 0; the shipped config.yaml says 3. Set it explicitly rather
+	// than load config.yaml: that file is skip-worktree and differs per
+	// machine, and a golden must not have a per-machine input. DataFiles and
+	// LogoutRounds are the only config keys the three loaders read (verified
+	// 2026-09-12); every other knob is a Go zero value here. The loaded buff,
+	// spell and quest maps stay populated after this test; nothing else in
+	// this package reads them.
+	cfg.Network.LogoutRounds = 3
 	configs.SetConfigForTest(t, cfg)
 
 	items.LoadDataFiles()
 	combat.LoadTauntMessageFiles()
 	itemvoices.LoadDataFiles()
 	spells.LoadCastingMessages()
+
+	// Kind B stores (M3 item 5b). Their loaders read the same configured data
+	// path, so the golden sees exactly what a booted dogmud world sees.
+	buffs.LoadDataFiles()
+	spells.LoadSpellFiles()
+	quests.LoadDataFiles()
 }
 
 // ---------------------------------------------------------------------
@@ -705,6 +724,15 @@ func TestSnapshotStores(t *testing.T) {
 	t.Run("itemvoices", func(t *testing.T) {
 		checkGolden(t, "itemvoices.golden", buildItemVoicesGolden(t))
 	})
+	t.Run("buffs", func(t *testing.T) {
+		checkGolden(t, "buffs.golden", buildBuffsGolden(t))
+	})
+	t.Run("spells", func(t *testing.T) {
+		checkGolden(t, "spells.golden", buildSpellsGolden(t))
+	})
+	t.Run("quests", func(t *testing.T) {
+		checkGolden(t, "quests.golden", buildQuestsGolden(t))
+	})
 	t.Run("post_pipeline", func(t *testing.T) {
 		checkGolden(t, "post_pipeline.golden", buildPostPipelineGolden(t))
 	})
@@ -759,5 +787,207 @@ func buildItemVoicesGolden(t *testing.T) string {
 	first := itemvoices.GetVoice(ids[0])
 	fmt.Fprintf(&b, "%s|bogus-event => %q\n", ids[0], first.LineWith(narration.SequencePicker(), "bogus-event"))
 
+	return b.String()
+}
+
+// ---------------------------------------------------------------------
+// Kind B stores (M3 item 5b): buffs, spells, quests. Single strings per
+// lifecycle phase, no pool, so no picker is involved: the golden freezes the
+// substitution and the notice logic, keyed by the AUTHORED key name so a
+// swapped role shows up as a changed row.
+// ---------------------------------------------------------------------
+
+// kindBSource is the stand-in name set. The source is a player and the target
+// a mob, so the two tags differ and a swap of {source} for {target} would
+// change the golden.
+var kindBSource = textutil.TokenContext{
+	SourceName:      `<ansi fg="username">Aliceia</ansi>`,
+	SourcePlainName: "Aliceia",
+	TargetName:      `<ansi fg="mobname">Targetticus</ansi>`,
+	TargetPlainName: "Targetticus",
+}
+
+// kindBNoTarget is the same source with no target, which is how every buff
+// site and the quest bridge render: they never know a target.
+var kindBNoTarget = textutil.TokenContext{
+	SourceName:      kindBSource.SourceName,
+	SourcePlainName: kindBSource.SourcePlainName,
+}
+
+// Store 8: buffs (internal/buffs, six *_user_text / *_room_text fields)
+//
+// Since M3 item 5b this builder reads through BuffSpec.Narrate and
+// AuthoredStartLine; the emitted rows, their order and the header are
+// unchanged from the pre-migration recording, which is the byte-identity
+// proof.
+func buildBuffsGolden(t *testing.T) string {
+	t.Helper()
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# buffs store snapshot (internal/buffs)\n")
+	fmt.Fprintf(&b, "# Built 2026-09-12 from PRE-migration code. The *_user_text rows record what the\n")
+	fmt.Fprintf(&b, "# HOLDER is sent: for start and end that is StartUserNotice / EndUserNotice (authored\n")
+	fmt.Fprintf(&b, "# line, else the generic fallback, else nothing for a secret buff). A row exists only\n")
+	fmt.Fprintf(&b, "# when the sent line is non-empty. authored_start_line is the raw start_user_text of a\n")
+	fmt.Fprintf(&b, "# silent-start buff, recorded for every silent-start buff whether or not a site sends it\n")
+	fmt.Fprintf(&b, "# today: sleep (15), arrest (88), stun (84) and broken limb (83) have a sender; throttled\n")
+	fmt.Fprintf(&b, "# (89) does not, its move narrates the choke itself.\n")
+	fmt.Fprintf(&b, "# dimensions: buff id x authored key; source only, buffs never know a target\n\n")
+
+	ids := buffs.GetAllBuffIds()
+	sort.Ints(ids)
+	if len(ids) == 0 {
+		t.Fatal("no buffs loaded; setupRealStores must call buffs.LoadDataFiles()")
+	}
+	for _, id := range ids {
+		spec := buffs.GetBuffSpec(id)
+		if spec == nil {
+			t.Fatalf("buff %d has no spec", id)
+		}
+		phases := []struct {
+			p                buffs.Phase
+			userKey, roomKey string
+		}{
+			{buffs.PhaseStart, "start_user_text", "start_room_text"},
+			{buffs.PhaseTrigger, "trigger_user_text", "trigger_room_text"},
+			{buffs.PhaseEnd, "end_user_text", "end_room_text"},
+		}
+		for _, ph := range phases {
+			roles := spec.Narrate(ph.p, kindBNoTarget)
+			if roles.Actee != "" {
+				fmt.Fprintf(&b, "buff|%d|%s => %s\n", id, ph.userKey, roles.Actee)
+			}
+			if roles.Observer != "" {
+				fmt.Fprintf(&b, "buff|%d|%s => %s\n", id, ph.roomKey, roles.Observer)
+			}
+		}
+		if slices.Contains(spec.Flags, buffs.SilentStart) {
+			if line := spec.AuthoredStartLine(kindBNoTarget); line != "" {
+				fmt.Fprintf(&b, "buff|%d|authored_start_line => %s\n", id, line)
+			}
+		}
+	}
+	return b.String()
+}
+
+// Store 9: spells (internal/spells, six cast/wait/magic x user/room fields)
+//
+// Since M3 item 5b this builder reads through SpellData.Narrate; the emitted
+// rows, their order and the header are unchanged from the pre-migration
+// recording, which is the byte-identity proof. The two probe rows still go
+// through textutil.SubstituteTokens directly, since they freeze the token
+// contract itself, not a store.
+func buildSpellsGolden(t *testing.T) string {
+	t.Helper()
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# spells store snapshot (internal/spells)\n")
+	fmt.Fprintf(&b, "# Built 2026-09-12 from PRE-migration code: textutil.SubstituteTokens over each raw\n")
+	fmt.Fprintf(&b, "# field with a source AND a target. A |notarget row follows any line whose rendering\n")
+	fmt.Fprintf(&b, "# changes when the target is absent, freezing the empty substitution.\n")
+	fmt.Fprintf(&b, "# probe rows freeze the token contract itself; they are not authored content\n")
+	fmt.Fprintf(&b, "# dimensions: spell id x authored key [x notarget]\n\n")
+
+	// Probe rows: no shipped line carries {target_plain} or an unknown token,
+	// so this fixed string freezes the whole substitution contract, including
+	// passthrough of an unknown token and the empty target.
+	const probe = "{source} and {source_plain} at {target} and {target_plain}; {unknown} stays; {source} again"
+	fmt.Fprintf(&b, "probe|all_tokens => %s\n", textutil.SubstituteTokens(probe, kindBSource))
+	fmt.Fprintf(&b, "probe|all_tokens|notarget => %s\n\n", textutil.SubstituteTokens(probe, kindBNoTarget))
+
+	all := spells.GetAllSpells()
+	ids := make([]string, 0, len(all))
+	for id := range all {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	if len(ids) == 0 {
+		t.Fatal("no spells loaded; setupRealStores must call spells.LoadSpellFiles()")
+	}
+	for _, id := range ids {
+		s := all[id]
+		phases := []struct {
+			p                spells.Phase
+			userKey, roomKey string
+		}{
+			{spells.PhaseCast, "cast_user_text", "cast_room_text"},
+			{spells.PhaseWait, "wait_user_text", "wait_room_text"},
+			{spells.PhaseMagic, "magic_user_text", "magic_room_text"},
+		}
+		for _, ph := range phases {
+			with := s.Narrate(ph.p, kindBSource)
+			without := s.Narrate(ph.p, kindBNoTarget)
+			if with.Actor != "" {
+				fmt.Fprintf(&b, "spell|%s|%s => %s\n", id, ph.userKey, with.Actor)
+				if without.Actor != with.Actor {
+					fmt.Fprintf(&b, "spell|%s|%s|notarget => %s\n", id, ph.userKey, without.Actor)
+				}
+			}
+			if with.Observer != "" {
+				fmt.Fprintf(&b, "spell|%s|%s => %s\n", id, ph.roomKey, with.Observer)
+				if without.Observer != with.Observer {
+					fmt.Fprintf(&b, "spell|%s|%s|notarget => %s\n", id, ph.roomKey, without.Observer)
+				}
+			}
+		}
+	}
+	return b.String()
+}
+
+// Store 10: quests (internal/quests: reward playermessage/roommessage, and the
+// send_text / room_text actions, nested sequences included)
+//
+// Since M3 item 5b this builder reads through ActionDef.Narrate and
+// QuestReward.Narrate; the emitted rows, their order and the header are
+// unchanged from the pre-migration recording, which is the byte-identity
+// proof. The header's "send_text RAW (no substitution)" describes the retired
+// recording, not production: since the same slice, questengine.ExecuteAction
+// renders send_text through GameBridge.Narrate, which substitutes. The bytes
+// did not change because no shipped send_text, playermessage or roommessage
+// carries a token.
+func buildQuestsGolden(t *testing.T) string {
+	t.Helper()
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# quests store snapshot (internal/quests)\n")
+	fmt.Fprintf(&b, "# Built 2026-09-12 from PRE-migration code, sending what each site sends today:\n")
+	fmt.Fprintf(&b, "# rewards playermessage/roommessage and action send_text RAW (no substitution),\n")
+	fmt.Fprintf(&b, "# action room_text through textutil.SubstituteTokens with the player as {source}.\n")
+	fmt.Fprintf(&b, "# dimensions: quest id x rewards | trigger<i>|action<j>[|sequence|action<k>...] x key\n\n")
+
+	all := quests.GetAllQuests()
+	sort.Slice(all, func(i, j int) bool { return all[i].QuestId < all[j].QuestId })
+	if len(all) == 0 {
+		t.Fatal("no quests loaded; setupRealStores must call quests.LoadDataFiles()")
+	}
+
+	var walk func(where string, actions []quests.ActionDef)
+	walk = func(where string, actions []quests.ActionDef) {
+		for j, a := range actions {
+			aw := fmt.Sprintf("%s|action%d", where, j)
+			roles := a.Narrate(kindBNoTarget)
+			if roles.Actor != "" {
+				fmt.Fprintf(&b, "%s|send_text => %s\n", aw, roles.Actor)
+			}
+			if roles.Observer != "" {
+				fmt.Fprintf(&b, "%s|room_text => %s\n", aw, roles.Observer)
+			}
+			if a.Sequence != nil {
+				walk(aw+"|sequence", a.Sequence.OnComplete)
+			}
+		}
+	}
+	for _, q := range all {
+		reward := q.Rewards.Narrate(kindBNoTarget)
+		if reward.Actor != "" {
+			fmt.Fprintf(&b, "quest|%d|rewards|playermessage => %s\n", q.QuestId, reward.Actor)
+		}
+		if reward.Observer != "" {
+			fmt.Fprintf(&b, "quest|%d|rewards|roommessage => %s\n", q.QuestId, reward.Observer)
+		}
+		for i, tr := range q.Triggers {
+			walk(fmt.Sprintf("quest|%d|trigger%d", q.QuestId, i), tr.Actions)
+		}
+	}
 	return b.String()
 }

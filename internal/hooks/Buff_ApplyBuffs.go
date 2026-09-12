@@ -96,11 +96,11 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	//
 	// A mob holder has no client, so only room text can reach anyone; without
 	// it there is nothing to render and the name and room lookups are skipped.
-	startUser := buffInfo.StartUserNotice()
-	holderCanRead := evt.UserId != 0 && startUser != ""
-	if !wasAlreadyActive && (holderCanRead || buffInfo.StartRoomText != "") {
+	startText := buffInfo.Narration(buffs.PhaseStart)
+	holderCanRead := evt.UserId != 0 && len(startText.Actee) > 0
+	if !wasAlreadyActive && (holderCanRead || len(startText.Observer) > 0) {
 		var charName, charPlainName string
-		var sendFunc func(string)
+		var holder *users.UserRecord
 		var roomId, excludeId int
 
 		if evt.UserId != 0 {
@@ -109,7 +109,7 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 				charPlainName = u.Character.GetCharacterName(false)
 				roomId = u.Character.RoomId
 				excludeId = u.UserId
-				sendFunc = func(msg string) { u.SendText(messaging.CategoryBuffApply, msg) }
+				holder = u
 			}
 		} else if evt.MobInstanceId != 0 {
 			if m := mobs.GetInstance(evt.MobInstanceId); m != nil {
@@ -126,24 +126,24 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 		}
 
 		if charName != "" {
-			tCtx := textutil.TokenContext{
+			roles := buffInfo.Narrate(buffs.PhaseStart, textutil.TokenContext{
 				SourceName:      charName,
 				SourcePlainName: charPlainName,
+			})
+			// The holder is the ACTEE: the buff happens to them. A mob holder
+			// has no client, so its line is rendered and dropped.
+			if roles.Actee != "" && holder != nil {
+				holder.SendText(messaging.CategoryBuffApply, roles.Actee)
 			}
-			cfg := textutil.SendTextConfig{
-				UserSendFunc: sendFunc,
-				// Visual, not audio. Start text describes what the room SEES
-				// ("A warm glow surrounds Alice"), and Room.SendText is never
-				// sight-gated, so it reached blind and unsighted observers. M2
-				// fixed the same defect for cast_room_text.
-				RoomSendFunc: func(msg string, skip ...int) {
-					if r := rooms.LoadRoom(roomId); r != nil {
-						r.SendTextVisual(messaging.CategoryBuffApply, msg, skip...)
-					}
-				},
-				ExcludeId: excludeId,
+			// Visual, not audio. Start text describes what the room SEES
+			// ("A warm glow surrounds Alice"), and Room.SendText is never
+			// sight-gated, so it reached blind and unsighted observers. M2
+			// fixed the same defect for cast_room_text.
+			if roles.Observer != "" {
+				if r := rooms.LoadRoom(roomId); r != nil {
+					r.SendTextVisual(messaging.CategoryBuffApply, roles.Observer, excludeId)
+				}
 			}
-			textutil.SendPhaseText(startUser, buffInfo.StartRoomText, tCtx, "cyan", cfg)
 		}
 	}
 

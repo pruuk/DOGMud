@@ -1,0 +1,147 @@
+# spells store snapshot (internal/spells)
+# Built 2026-09-12 from PRE-migration code: textutil.SubstituteTokens over each raw
+# field with a source AND a target. A |notarget row follows any line whose rendering
+# changes when the target is absent, freezing the empty substitution.
+# probe rows freeze the token contract itself; they are not authored content
+# dimensions: spell id x authored key [x notarget]
+
+probe|all_tokens => <ansi fg="username">Aliceia</ansi> and Aliceia at <ansi fg="mobname">Targetticus</ansi> and Targetticus; {unknown} stays; <ansi fg="username">Aliceia</ansi> again
+probe|all_tokens|notarget => <ansi fg="username">Aliceia</ansi> and Aliceia at  and ; {unknown} stays; <ansi fg="username">Aliceia</ansi> again
+
+spell|blood-boil|cast_user_text => You focus on the target's blood, willing it to boil.
+spell|blood-boil|cast_room_text => <ansi fg="username">Aliceia</ansi> extends a trembling hand, eyes burning with intent.
+spell|charm|cast_user_text => You fix your gaze on your target, pressing your will against its mind...
+spell|charm|cast_room_text => <ansi fg="username">Aliceia</ansi> stares intently at <ansi fg="mobname">Targetticus</ansi>, brow furrowed with fierce concentration.
+spell|charm|cast_room_text|notarget => <ansi fg="username">Aliceia</ansi> stares intently at , brow furrowed with fierce concentration.
+spell|chrysalis-cocoon|cast_user_text => You draw living Chrysalis around the target, weaving a protective cocoon.
+spell|chrysalis-cocoon|cast_room_text => <ansi fg="username">Aliceia</ansi> gestures as tendrils of living Chrysalis weave into a shell.
+spell|chrysalis-glow|cast_user_text => You coax the Chrysalis spores around you to luminesce.
+spell|chrysalis-glow|cast_room_text => <ansi fg="username">Aliceia</ansi> concentrates as faint motes of light gather.
+spell|chrysalis-glow|wait_user_text => You hold the image steady, coaxing more spores to glow...
+spell|chrysalis-haste|cast_user_text => You channel Chrysalis energy into accelerating the target.
+spell|chrysalis-haste|cast_room_text => <ansi fg="username">Aliceia</ansi> weaves quickening energy through the air.
+spell|chrysalis-regeneration|cast_user_text => You call upon deep Chrysalis energy to wrap the target in regenerative power.
+spell|chrysalis-regeneration|cast_room_text => <ansi fg="username">Aliceia</ansi> draws deep Chrysalis energy, a vivid green glow pulsing.
+spell|cleansing-wave|cast_user_text => You send a purifying wave of Chrysalis energy outward.
+spell|cleansing-wave|cast_room_text => <ansi fg="username">Aliceia</ansi> spreads their arms as a clean, bright wave of energy pulses outward.
+spell|communion-of-flesh|cast_user_text => You open yourself to the Chrysalis, sharing your life force with all nearby.
+spell|communion-of-flesh|cast_room_text => <ansi fg="username">Aliceia</ansi> spreads their arms wide as tendrils of warm light reach outward.
+spell|conjure-air|cast_user_text => You tear an opening in the veil and call to the shrieking currents beyond...
+spell|conjure-air|cast_room_text => <ansi fg="username">Aliceia</ansi>'s hair and clothing snap sideways as if caught in sudden wind.
+spell|conjure-air|wait_user_text => A high, keening sound builds from nowhere. The air pressure drops sharply as something tears through...
+spell|conjure-earth|cast_user_text => You drag your will into the earth itself, feeling stone and soil begin to answer...
+spell|conjure-earth|cast_room_text => <ansi fg="username">Aliceia</ansi> plants both feet and begins to pull. The ground trembles faintly.
+spell|conjure-earth|wait_user_text => The floor shudders. Something vast and patient stirs beneath it, rising reluctantly toward your call...
+spell|conjure-fire|cast_user_text => You reach through the veil into the roiling fire plane, pulling at something that burns even through the gap...
+spell|conjure-fire|cast_room_text => <ansi fg="username">Aliceia</ansi>'s hands glow red as searing heat bleeds through an unseen gap in the air.
+spell|conjure-fire|wait_user_text => The heat is nearly unbearable. Something blazing and furious is being dragged through against its will...
+spell|conjure-magma|cast_user_text => You force your will through both the earth and fire planes simultaneously, bracing against the dual weight of what answers...
+spell|conjure-magma|cast_room_text => <ansi fg="username">Aliceia</ansi> goes rigid, face contorted, as the ground cracks and the air shimmers with sudden savage heat.
+spell|conjure-magma|wait_user_text => The floor heaves. Orange light bleeds through the cracks. Something immense and blazing hot is forcing its way through...
+spell|conjure-water|cast_user_text => You reach into the elemental plane, feeling the cold rush of deep water answer your call...
+spell|conjure-water|cast_room_text => <ansi fg="username">Aliceia</ansi> gestures outward, and the air grows heavy with the smell of rain and deep wells.
+spell|conjure-water|wait_user_text => The moisture in the air thickens. Water begins to spiral inward from every direction...
+spell|conviction-armor|cast_user_text => You solidify your conviction into a protective shell.
+spell|conviction-armor|cast_room_text => <ansi fg="username">Aliceia</ansi> concentrates as conviction hardens into visible armor.
+spell|conviction-barrage|cast_user_text => You compress your conviction into hundreds of razor-sharp fragments!
+spell|conviction-barrage|cast_room_text => <ansi fg="username">Aliceia</ansi> raises their arms as the air fills with crackling shards of light!
+spell|conviction-spike|cast_user_text => You focus your conviction into a sharp point of force.
+spell|conviction-spike|cast_room_text => <ansi fg="username">Aliceia</ansi> narrows their eyes, conviction crystallizing in the air.
+spell|conviction-surge|cast_user_text => You channel conviction into empowering energy.
+spell|conviction-surge|cast_room_text => <ansi fg="username">Aliceia</ansi> gathers conviction, a fierce glow building.
+spell|conviction-ward|cast_user_text => You solidify your belief into a protective barrier.
+spell|conviction-ward|cast_room_text => <ansi fg="username">Aliceia</ansi> spreads their arms as conviction shimmers into a ward.
+spell|core-discharge|cast_user_text => Power floods inward, gathering at your core.
+spell|core-discharge|cast_room_text => <ansi fg="username">Aliceia</ansi>'s core flares white-hot -- the air begins to scream.
+spell|core-drain|cast_user_text => Power gathers inward, filaments of cold light reaching for your prey.
+spell|core-drain|cast_room_text => <ansi fg="username">Aliceia</ansi>'s chest-cavity irises open -- filaments of cold light reach toward you. It will feed on the room next round.
+spell|empathic-shroud|cast_user_text => You weave a psionic shroud of unnoticability.
+spell|empathic-shroud|cast_room_text => <ansi fg="username">Aliceia</ansi> traces patterns in the air that seem to blur reality.
+spell|fold-anchor|cast_user_text => You weave a Chrysalis anchor into the fabric of this location.
+spell|fold-anchor|cast_room_text => <ansi fg="username">Aliceia</ansi> traces a complex pattern in the air that briefly glows and fades.
+spell|fold-anchor|wait_user_text => The anchor takes shape, binding to the Veil...
+spell|fold-recall|cast_user_text => You reach through the Veil toward your anchor point...
+spell|fold-recall|cast_room_text => <ansi fg="username">Aliceia</ansi> reaches into the Veil, reality blurring around them.
+spell|fold-recall|wait_user_text => The Veil thins as you pull yourself toward the anchor...
+spell|hemorrhagic-burst|cast_user_text => You focus on the blood of your enemies, willing it to boil and rupture outward!
+spell|hemorrhagic-burst|cast_room_text => <ansi fg="username">Aliceia</ansi> clenches their fists, veins pulsing with terrible intent.
+spell|hemorrhagic-wave|cast_user_text => You channel a wave of rupturing force outward.
+spell|hemorrhagic-wave|cast_room_text => <ansi fg="username">Aliceia</ansi> clenches both fists as a sickening pressure builds.
+spell|identify|cast_user_text => You focus your mind, reaching out to sense the item's essence...
+spell|iron-will|cast_user_text => You forge a wall of iron resolve around the target's mind.
+spell|iron-will|cast_room_text => <ansi fg="username">Aliceia</ansi> focuses intently, a steely aura forming.
+spell|kinetic-hurl|cast_user_text => You gather telekinetic force, the air between your hands distorting.
+spell|kinetic-hurl|cast_room_text => <ansi fg="username">Aliceia</ansi> gathers telekinetic force, the air distorting around their hands.
+spell|kinetic-shove|cast_user_text => You gather telekinetic force and thrust it forward.
+spell|kinetic-shove|cast_room_text => <ansi fg="username">Aliceia</ansi> thrusts their palm forward, the air distorting.
+spell|mass-mend|cast_user_text => You gather deep Chrysalis energy and begin radiating it outward.
+spell|mass-mend|cast_room_text => <ansi fg="username">Aliceia</ansi> raises both arms as waves of warm, green light pulse outward.
+spell|mend-all|cast_user_text => You radiate Chrysalis healing energy outward to all nearby allies.
+spell|mend-all|cast_room_text => <ansi fg="username">Aliceia</ansi> spreads their arms as warm energy radiates outward.
+spell|mend-all|wait_user_text => You continue channeling healing energy...
+spell|mend-all|wait_room_text => <ansi fg="username">Aliceia</ansi> continues radiating warm energy...
+spell|mend-wounds|cast_user_text => You press your will into the wounds, urging flesh to mend.
+spell|mend-wounds|cast_room_text => <ansi fg="username">Aliceia</ansi> places their hands forward as warm light gathers.
+spell|mind-fog|cast_user_text => You project a dense psionic fog toward your target.
+spell|mind-fog|cast_room_text => <ansi fg="username">Aliceia</ansi> stares at a target with unfocused eyes, projecting something unseen.
+spell|mind-spike|cast_user_text => You focus a needle of psionic force toward your target.
+spell|mind-spike|cast_room_text => <ansi fg="username">Aliceia</ansi> stares intently, a faint pressure building in the air.
+spell|mutation-catalyst|cast_user_text => You channel Chrysalis energy into accelerating mutagenic change.
+spell|mutation-catalyst|cast_room_text => <ansi fg="username">Aliceia</ansi> channels a sickly green energy that crackles with potential.
+spell|nerve-disruption|cast_user_text => You reach into the target's nervous system with psionic energy.
+spell|nerve-disruption|cast_room_text => <ansi fg="username">Aliceia</ansi> focuses with a sharp, clinical intensity.
+spell|neural-stun|cast_user_text => You focus a psionic pulse at your target's nervous system.
+spell|neural-stun|cast_room_text => <ansi fg="username">Aliceia</ansi> stares intently, brow furrowed with concentration.
+spell|neural-toxin|cast_user_text => You channel psionic venom toward your target's mind.
+spell|neural-toxin|cast_room_text => <ansi fg="username">Aliceia</ansi> focuses with toxic intent, a sickly glow around their hands.
+spell|psychic-anchor|cast_user_text => You drive a psionic anchor into the target's mind.
+spell|psychic-anchor|cast_room_text => <ansi fg="username">Aliceia</ansi> stares at a target with piercing focus.
+spell|purge-affliction|cast_user_text => You focus Chrysalis energy inward, seeking out foreign agents.
+spell|purge-affliction|cast_room_text => <ansi fg="username">Aliceia</ansi> enters a meditative focus, Chrysalis energy pulsing softly.
+spell|purge-affliction|wait_user_text => You feel the Chrysalis isolating the toxins...
+spell|purge-affliction|wait_room_text => <ansi fg="username">Aliceia</ansi> sways slightly as energy pulses through them...
+spell|pyretic-surge|cast_user_text => You channel Chrysalis energy, feeling the air shimmer with heat.
+spell|pyretic-surge|cast_room_text => <ansi fg="username">Aliceia</ansi> holds out their hands as the air begins to ripple with heat.
+spell|raise-golem|cast_user_text => You begin the brutal stitching-work, not resurrection but construction, forcing flesh and sinew to knit according to your will...
+spell|raise-golem|cast_room_text => <ansi fg="username">Aliceia</ansi> gestures over the remains with sweeping, surgical motions. The ground shudders faintly with each pass of their hands.
+spell|raise-golem|wait_user_text => The ground trembles as flesh begins to knit and bulk, assembling into something vast and purposeful. The air reeks of raw meat and ozone...
+spell|raise-skeleton|cast_user_text => You extend your will toward the fallen, reaching for the echoes of life still clinging to the bones...
+spell|raise-skeleton|cast_room_text => <ansi fg="username">Aliceia</ansi>'s hands trace patterns in the air above the remains, dark energy gathering at their fingertips.
+spell|raise-skeleton|wait_user_text => Dark energy crackles along the bones, stripping away the last of their flesh. Something dry and purposeful stirs beneath your will...
+spell|raise-spectre|cast_user_text => You reach into the deep cold beneath these remains, searching for the heavy, hateful shadow of a powerful soul...
+spell|raise-spectre|cast_room_text => <ansi fg="username">Aliceia</ansi> crouches over the remains, hands pressing into the ground on either side. A ring of frost spreads outward from the contact.
+spell|raise-spectre|wait_user_text => A cold dread emanates from the remains as the soul's deepest shadow is compressed and shaped. The air tastes of iron and old grief...
+spell|raise-vampire|cast_user_text => You begin the forbidden rite, weaving blood-dark energy through the remains. This will either work or unmake the corpse entirely...
+spell|raise-vampire|cast_room_text => <ansi fg="username">Aliceia</ansi> begins a low, rhythmic incantation over the remains. The shadows around them deepen and lean inward.
+spell|raise-vampire|wait_user_text => Blood-dark energy pulses through the corpse in rhythmic waves, hunting for the thread of self that the dark gift requires. Something almost stirs...
+spell|raise-wraith|cast_user_text => You reach beyond flesh and bone, grasping for the shadow-self that still clings to these remains...
+spell|raise-wraith|cast_room_text => <ansi fg="username">Aliceia</ansi> raises both hands, pulling at something invisible above the remains. The air grows cold and still.
+spell|raise-wraith|wait_user_text => Ethereal threads weave through the air, pulling at the lingering spirit. Something cold and furious stirs at the edge of your vision...
+spell|raise-zombie|cast_user_text => You press your will deep into the flesh, searching for the rot-thread that ties body to borrowed life...
+spell|raise-zombie|cast_room_text => <ansi fg="username">Aliceia</ansi> leans over the remains, hands splayed, a sickly green light seeping between their fingers.
+spell|raise-zombie|wait_user_text => Foul energy seeps into the decaying flesh, swelling it with borrowed animation. A low, wet groan rises from the remains...
+spell|repair-pulse|cast_user_text => Arc-light gathers between your manipulators.
+spell|repair-pulse|cast_room_text => <ansi fg="username">Aliceia</ansi> crackles with hard blue-white arc-light, current arcing toward <ansi fg="mobname">Targetticus</ansi>.
+spell|repair-pulse|cast_room_text|notarget => <ansi fg="username">Aliceia</ansi> crackles with hard blue-white arc-light, current arcing toward .
+spell|sensory-overload|cast_user_text => You unleash a barrage of sensory input at the target's mind.
+spell|sensory-overload|cast_room_text => <ansi fg="username">Aliceia</ansi> grimaces as they project overwhelming sensory energy.
+spell|sensory-veil|cast_user_text => You weave a Chrysalis shroud toward your target's senses.
+spell|sensory-veil|cast_room_text => <ansi fg="username">Aliceia</ansi> traces a shimmering veil in the air.
+spell|skill-attunement|cast_user_text => You attune the target's mind for accelerated learning.
+spell|skill-attunement|cast_room_text => <ansi fg="username">Aliceia</ansi> touches their temple and focuses deeply.
+spell|sparks|cast_user_text => You shatter your conviction into razor-sharp fragments.
+spell|sparks|cast_room_text => <ansi fg="username">Aliceia</ansi> clenches a fist as shards of light crackle around them.
+spell|summon-hive-swarm|cast_user_text => You crush the Hive Fragment in your fist, feeling thousands of tiny lives stir within...
+spell|summon-hive-swarm|cast_room_text => <ansi fg="username">Aliceia</ansi> crushes a chitinous fragment, a faint buzzing filling the air.
+spell|summon-hive-swarm|wait_user_text => The buzzing intensifies as countless tiny organisms pour from the shattered fragment...
+spell|summon-steppe-spirit|cast_user_text => You hold the spirit fetish aloft. The steppe wind rises, carrying the scent of sage and old bones...
+spell|summon-steppe-spirit|cast_room_text => <ansi fg="username">Aliceia</ansi> raises a small fetish overhead. The wind sharpens and the air grows cold.
+spell|summon-steppe-spirit|wait_user_text => The fetish thrums in your hand. Ghostly howling builds from nowhere and everywhere at once...
+spell|synaptic-overload|cast_user_text => You flood your consciousness toward the target, overwhelming their synapses.
+spell|synaptic-overload|cast_room_text => <ansi fg="username">Aliceia</ansi> locks eyes with their target, veins pulsing at the temples.
+spell|veil-rend|cast_user_text => You reach deep into the Veil and begin tearing it apart!
+spell|veil-rend|cast_room_text => <ansi fg="username">Aliceia</ansi> raises both arms as reality itself begins to crack and splinter!
+spell|veil-sight|cast_user_text => You open your perception to the Veil, seeking what hides beyond.
+spell|veil-sight|cast_room_text => <ansi fg="username">Aliceia</ansi> narrows their eyes, peering at something unseen.
+spell|vital-surge|cast_user_text => You channel a sustained pulse of healing energy.
+spell|vital-surge|cast_room_text => <ansi fg="username">Aliceia</ansi> channels a warm, pulsing glow.

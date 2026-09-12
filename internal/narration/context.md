@@ -31,6 +31,7 @@ package must never import (see Gotchas).
 type Picker func(n int) int
 func DefaultPicker(n int) int
 func SequencePicker() Picker
+func FirstPicker(n int) int
 
 // Selector names which variant group an event draws from.
 type Selector string
@@ -73,7 +74,8 @@ band fires, which is a behaviour change and belongs to M4, not to this package.
 `internal/items` (defence and combat-message stores), `internal/itemvoices`,
 `internal/spells` (casting), `internal/combat` (taunt),
 `internal/grapplemessaging`. Any store that wants deterministic selection under
-snapshot, or coordinated multi-role rendering.
+snapshot, or coordinated multi-role rendering. `internal/textutil` (the door
+for the buff, spell and quest stores, which do not call `Render` themselves).
 
 ## Gotchas
 
@@ -133,6 +135,23 @@ deliberate and load-bearing: it makes the golden able to catch a swap of which
 authored pool lands in which role, which is the mistake this core makes easiest
 to introduce. Re-recording it under the core's vocabulary would destroy that
 property.
+
+**A single-variant store renders with `FirstPicker`, never the default.**
+`Render` always calls `pick(n)`, `DefaultPicker` always calls `util.Rand`, and
+`util.Rand(1)` still calls `rand.Intn`, so a one-line pool rendered through the
+default picker consumes a global random draw and shifts every later combat
+roll. `Render` cannot special-case `n == 1` because itemvoices never validates
+its pool sizes and legitimately holds one-line pools whose draw count must not
+change. The buff, spell and quest stores reach `Render` only through
+`textutil.Narrate`, which passes `FirstPicker`; the root guard
+`narration_render_callers_guard_test.go` pins both facts.
+
+**The Kind B golden headers describe the recording, not today's builder.**
+`buffs.golden`, `spells.golden` and `quests.golden` were recorded from
+pre-migration code (M3 item 5b, Task 0) and their header lines are frozen bytes;
+the builders now read through the store doors and must reproduce the files
+exactly. Re-recording them is a deliberate act for a content change, never a
+way to make a red run green.
 
 ## Dependencies
 

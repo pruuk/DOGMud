@@ -3,7 +3,7 @@ package questengine
 import (
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -62,10 +62,14 @@ func (m *mockActionContext) ChargeGold(amount int) {
 	}
 	m.gold -= amount
 }
-func (m *mockActionContext) SendText(_ messaging.Category, text string) {
-	m.sentTexts = append(m.sentTexts, text)
+
+// Narrate records the authored lines by role, so existing assertions on
+// sentTexts and roomTexts keep reading the send_text and room_text an action
+// carried.
+func (m *mockActionContext) Narrate(v narration.Variants) {
+	m.sentTexts = append(m.sentTexts, v.Actor...)
+	m.roomTexts = append(m.roomTexts, v.Observer...)
 }
-func (m *mockActionContext) RoomText(text string) { m.roomTexts = append(m.roomTexts, text) }
 func (m *mockActionContext) SpawnMob(s SpawnDef)  { m.spawnedMobs = append(m.spawnedMobs, s) }
 func (m *mockActionContext) SpawnItem(s SpawnDef) { m.spawnedItems = append(m.spawnedItems, s) }
 func (m *mockActionContext) TeachSpell(spellId string) {

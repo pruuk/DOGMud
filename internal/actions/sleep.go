@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 )
 
 // SleepOptions is reserved for future authoring knobs (bed-item
@@ -68,12 +69,21 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 		return SleepResult{Success: false, Reason: err.Error()}
 	}
 
-	// The start line the silent-start flag makes ours to send. Read from
-	// StartUserText, not StartUserNotice(), which is empty by design for a
+	// The start line the silent-start flag makes ours to send. Read through
+	// AuthoredStartLine, not StartUserNotice(), which is empty by design for a
 	// silent-start buff. A mob holder has no client, so only a player gets it.
 	if actor.IsPlayer() {
-		if spec := buffs.GetBuffSpec(15); spec != nil && spec.StartUserText != "" {
-			actor.SendText(messaging.CategoryBuffApply, spec.StartUserText)
+		if spec := buffs.GetBuffSpec(15); spec != nil {
+			// Tagged for {source}, plain for {source_plain}, the textutil
+			// contract every narration site follows. Buff 15's line carries no
+			// token today, so this is for the day one is authored.
+			line := spec.AuthoredStartLine(textutil.TokenContext{
+				SourceName:      c.GetCharacterName(true),
+				SourcePlainName: c.GetCharacterName(false),
+			})
+			if line != "" {
+				actor.SendText(messaging.CategoryBuffApply, line)
+			}
 		}
 	}
 

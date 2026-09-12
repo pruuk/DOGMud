@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -257,14 +258,18 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			questUser.SendText(messaging.CategorySystem, questUpTxt)
 		}
 
-		// Message to player?
-		if len(questInfo.Rewards.PlayerMessage) > 0 {
-			questUser.SendText(messaging.CategorySystem, questInfo.Rewards.PlayerMessage)
+		// Reward messages, through the quest store's door. Shipped rewards
+		// carry no token, so substitution changes nothing today.
+		rewardLines := questInfo.Rewards.Narrate(textutil.TokenContext{
+			SourceName:      questUser.Character.GetCharacterName(true),
+			SourcePlainName: questUser.Character.GetCharacterName(false),
+		})
+		if rewardLines.Actor != "" {
+			questUser.SendText(messaging.CategorySystem, rewardLines.Actor)
 		}
-		// Message to room?
-		if len(questInfo.Rewards.RoomMessage) > 0 {
+		if rewardLines.Observer != "" {
 			if room := rooms.LoadRoom(questUser.Character.RoomId); room != nil {
-				sendVisualRoomText(room, messaging.CategoryEmote, questInfo.Rewards.RoomMessage, questUser.UserId)
+				sendVisualRoomText(room, messaging.CategoryEmote, rewardLines.Observer, questUser.UserId)
 			}
 		}
 		// New quest to start?

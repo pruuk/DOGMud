@@ -58,3 +58,23 @@ func TestSequencePickerCoversThePool(t *testing.T) {
 		}
 	}
 }
+
+// FirstPicker is for a single-variant store. It must return 0 for every n and
+// must not be DefaultPicker in disguise: DefaultPicker(1) still calls
+// util.Rand(1), which still calls rand.Intn, so routing ~750 single-string
+// fields through it would add one global draw per narrated phase.
+func TestFirstPickerAlwaysReturnsZero(t *testing.T) {
+	for _, n := range []int{0, 1, 2, 5, 100} {
+		if got := FirstPicker(n); got != 0 {
+			t.Fatalf("FirstPicker(%d) = %d, want 0", n, got)
+		}
+	}
+}
+
+func TestRenderWithFirstPickerTakesTheOnlyVariant(t *testing.T) {
+	roles := Render(Variants{Actee: []string{"You feel {x}."}, Observer: []string{"A glow."}},
+		map[string]string{"{x}": "warm"}, FirstPicker)
+	if roles.Actee != "You feel warm." || roles.Observer != "A glow." || roles.Actor != "" {
+		t.Fatalf("unexpected roles: %+v", roles)
+	}
+}

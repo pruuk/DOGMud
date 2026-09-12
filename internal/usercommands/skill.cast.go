@@ -312,7 +312,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	// 12b. Send YAML cast text (if defined).
-	if spellInfo.CastUserText != "" || spellInfo.CastRoomText != "" {
+	if spellInfo.Narration(spells.PhaseCast).Len() > 0 {
 		castRoom := rooms.LoadRoom(user.Character.RoomId)
 		tCtx := textutil.TokenContext{
 			SourceName:      user.Character.GetCharacterName(true),
@@ -329,23 +329,19 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				tCtx.TargetPlainName = tMob.Character.GetCharacterName(false)
 			}
 		}
-		cfg := textutil.SendTextConfig{
-			UserSendFunc: func(msg string) { user.SendText(messaging.CategorySpellFold, msg) },
-			RoomSendFunc: func(msg string, skip ...int) {
-				// SendTextVisual, not SendText: a cast_room_text describes
-				// what the room SEES ("a fierce glow building"), and the
-				// audio channel is never sight-gated, so this reached blind
-				// observers with the caster name and the visual detail. Found
-				// by the 2026-09-08 darkness playtest. Its sibling windup two
-				// steps below already used SendTextVisual -- one event, two
-				// paths, only one darkness-aware.
-				if castRoom != nil {
-					castRoom.SendTextVisual(messaging.CategorySpellFold, msg, skip...)
-				}
-			},
-			ExcludeId: user.UserId,
+		roles := spellInfo.Narrate(spells.PhaseCast, tCtx)
+		if roles.Actor != "" {
+			user.SendText(messaging.CategorySpellFold, roles.Actor)
 		}
-		textutil.SendPhaseText(spellInfo.CastUserText, spellInfo.CastRoomText, tCtx, "", cfg)
+		// SendTextVisual, not SendText: a cast_room_text describes what the
+		// room SEES ("a fierce glow building"), and the audio channel is never
+		// sight-gated, so this reached blind observers with the caster name
+		// and the visual detail. Found by the 2026-09-08 darkness playtest. Its
+		// sibling windup two steps below already used SendTextVisual -- one
+		// event, two paths, only one darkness-aware.
+		if roles.Observer != "" && castRoom != nil {
+			castRoom.SendTextVisual(messaging.CategorySpellFold, roles.Observer, user.UserId)
+		}
 	}
 
 	// 13. Go onCast hooks — run before JS, can abort the cast.

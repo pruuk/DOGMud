@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func TestQuestRoomText_NamesThePlayerToASightedObserver(t *testing.T) {
 	drainPlain(1)
 	drainPlain(2)
 
-	questengine.NewGameBridge(users.GetByUserId(1), 1).RoomText("{source} unlocks the strongbox.")
+	questengine.NewGameBridge(users.GetByUserId(1), 1).Narrate(quests.ActionDef{RoomText: "{source} unlocks the strongbox."}.Narration())
 
 	observer := drainPlain(2)
 	assert.Equal(t, 1, countContaining(observer, "Aliceia unlocks the strongbox."))
@@ -36,7 +37,7 @@ func TestQuestRoomText_UnsightedObserverInTheDarkGetsNothing(t *testing.T) {
 	darken(t, 1)
 	drainPlain(2)
 
-	questengine.NewGameBridge(users.GetByUserId(1), 1).RoomText("{source} unlocks the strongbox.")
+	questengine.NewGameBridge(users.GetByUserId(1), 1).Narrate(quests.ActionDef{RoomText: "{source} unlocks the strongbox."}.Narration())
 	assert.Equal(t, 0, countContaining(drainPlain(2), "unlocks the strongbox"))
 }
 
@@ -52,7 +53,7 @@ func TestQuestRoomText_InfraredObserverSeesAFigure(t *testing.T) {
 	require.True(t, users.GetByUserId(2).Character.Buffs.AddBuff(heatEyesBuffId, true))
 	drainPlain(2)
 
-	questengine.NewGameBridge(users.GetByUserId(1), 1).RoomText("{source} unlocks the strongbox.")
+	questengine.NewGameBridge(users.GetByUserId(1), 1).Narrate(quests.ActionDef{RoomText: "{source} unlocks the strongbox."}.Narration())
 
 	observer := drainPlain(2)
 	require.Equal(t, 1, countContaining(observer, "unlocks the strongbox"))

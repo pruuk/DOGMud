@@ -42,25 +42,19 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 						// Send the end notice (authored, or the generic line;
 						// a secret buff is silent).
 						endBuffSpec := buffs.GetBuffSpec(buffInfo.BuffId)
-						endUser := ""
-						if endBuffSpec != nil {
-							endUser = endBuffSpec.EndUserNotice()
-						}
-						if endBuffSpec != nil && (endUser != "" || endBuffSpec.EndRoomText != "") {
-							tCtx := textutil.TokenContext{
+						if endBuffSpec != nil && endBuffSpec.Narration(buffs.PhaseEnd).Len() > 0 {
+							roles := endBuffSpec.Narrate(buffs.PhaseEnd, textutil.TokenContext{
 								SourceName:      user.Character.GetCharacterName(true),
 								SourcePlainName: user.Character.GetCharacterName(false),
+							})
+							if roles.Actee != "" {
+								user.SendText(messaging.CategoryBuffExpire, roles.Actee)
 							}
-							cfg := textutil.SendTextConfig{
-								UserSendFunc: func(msg string) { user.SendText(messaging.CategoryBuffExpire, msg) },
-								RoomSendFunc: func(msg string, skip ...int) {
-									if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-										sendBuffEndRoomText(r, endBuffSpec, msg, skip...)
-									}
-								},
-								ExcludeId: user.UserId,
+							if roles.Observer != "" {
+								if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+									sendBuffEndRoomText(r, endBuffSpec, roles.Observer, user.UserId)
+								}
 							}
-							textutil.SendPhaseText(endUser, endBuffSpec.EndRoomText, tCtx, "cyan", cfg)
 						}
 
 						if buffInfo.BuffId == 0 { // Log them out // logoff // logout
@@ -104,25 +98,23 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 			for _, buffInfo := range buffsToPrune {
 				// Send YAML end text (if defined).
 				endBuffSpec := buffs.GetBuffSpec(buffInfo.BuffId)
-				if endBuffSpec != nil && endBuffSpec.EndRoomText != "" {
+				if endBuffSpec != nil && len(endBuffSpec.Narration(buffs.PhaseEnd).Observer) > 0 {
 					// The mob tag, not the player one: see Buff_ApplyBuffs.go.
-					// Visual, not audio, for the same reason as start text.
+					// Visual, not audio, for the same reason as start text. The
+					// holder line is rendered and dropped: a mob has no client.
 					sourceName := mob.Character.GetCharacterName(true)
 					if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
 						sourceName = mobDisplayName(mob, r, 0)
 					}
-					tCtx := textutil.TokenContext{
+					roles := endBuffSpec.Narrate(buffs.PhaseEnd, textutil.TokenContext{
 						SourceName:      sourceName,
 						SourcePlainName: mob.Character.GetCharacterName(false),
+					})
+					if roles.Observer != "" {
+						if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
+							sendBuffEndRoomText(r, endBuffSpec, roles.Observer)
+						}
 					}
-					cfg := textutil.SendTextConfig{
-						RoomSendFunc: func(msg string, skip ...int) {
-							if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-								sendBuffEndRoomText(r, endBuffSpec, msg, skip...)
-							}
-						},
-					}
-					textutil.SendPhaseText("", endBuffSpec.EndRoomText, tCtx, "cyan", cfg)
 				}
 			}
 

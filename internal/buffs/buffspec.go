@@ -279,6 +279,11 @@ func (b *BuffSpec) Validate() error {
 		}
 	}
 
+	// A whitespace-only line would be sent as-is; refuse it at load.
+	if err := b.validateNarration(); err != nil {
+		return err
+	}
+
 	// Validate tick fields
 	if b.TickPool != "" {
 		switch b.TickPool {

@@ -36,3 +36,16 @@ func SequencePicker() Picker {
 		return v
 	}
 }
+
+// FirstPicker always returns 0 and never touches util.Rand. It is the picker
+// for a single-variant store (buffs, spells, quests), where there is nothing
+// to choose.
+//
+// It exists because Render always calls pick(n), DefaultPicker always calls
+// util.Rand(n) for n >= 1, and util.Rand(1) still calls rand.Intn. Rendering a
+// one-variant pool through DefaultPicker would therefore consume one GLOBAL
+// random draw per narrated buff, spell or quest phase and shift every later
+// combat roll. Render cannot special-case a pool of one instead: itemvoices
+// never validates its pool sizes, so a one-line voice pool is legitimate and
+// its draw count must not change either.
+func FirstPicker(n int) int { return 0 }

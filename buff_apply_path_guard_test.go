@@ -78,7 +78,7 @@ var buffApplyPathAllowlist = map[string]string{
 	"internal/actions/combat_rally.go|116":    "buff 80 is silent-start; the rally move narrates the party rally and the synchronous apply is what its own messaging reads",
 	"internal/actions/combat_warcry.go|118":   "buff 79 is silent-start; the warcry move narrates the cry and the synchronous apply is what its own messaging reads",
 	"internal/actions/combat_throttle.go|147": "buff 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
-	"internal/actions/sleep.go|60":            "buff 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
+	"internal/actions/sleep.go|61":            "buff 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
 	"internal/usercommands/rally.go|57":       "party member gets buff 80, which is silent-start; the rally command narrates it and relies on the synchronous apply",
 	"internal/usercommands/rally.go|87":       "party member gets buff 79, which is silent-start; the rally command narrates it and relies on the synchronous apply",
 	"internal/usercommands/warcry.go|57":      "party member gets buff 79, which is silent-start; the warcry command narrates it and relies on the synchronous apply",
@@ -100,10 +100,10 @@ var buffApplyPathAllowlist = map[string]string{
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
 	"internal/hooks/pinnacle_tick.go|335": "the bandolier continuously re-applies any slotted potion buff that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
 	"internal/hooks/pinnacle_tick.go|349": "the bandolier continuously re-applies any slotted potion buff that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
-	"internal/justice/arrest.go|634":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveBuff above, so the hook would read it as a fresh application and clang the cell door shut on every login",
+	"internal/justice/arrest.go|641":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveBuff above, so the hook would read it as a fresh application and clang the cell door shut on every login",
 
 	// ── the buff must be in place before the function returns ───────────────
-	"internal/justice/arrest.go|395": "silent-start, the arrest narrates; no-go and no-aggro-target are read in the same round dispatch",
+	"internal/justice/arrest.go|396": "silent-start, the arrest narrates; no-go and no-aggro-target are read in the same round dispatch",
 
 	// ── the applier's caller narrates, because internal/combat cannot ───────
 	// internal/combat holds only a *characters.Character and sends no player
