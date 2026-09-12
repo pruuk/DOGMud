@@ -13,11 +13,13 @@ var identityTagPattern = regexp.MustCompile(`<ansi fg="(?:(?:username|mobname)(?
 // mob's name in a room holding more than one of them.
 var dupIndexSuffix = regexp.MustCompile(` #\d+$`)
 
-// adjectiveSpan matches the adjective list FormattedName.String prints right
-// after an identity tag: a space, then a black-bold span holding a
-// parenthesised list such as "(dead)" or "(♥friend|hidden)". It goes with the
-// name it describes; "something (dead)" would tell a blind reader what they
-// could not see.
+// adjectiveSpanBody is the adjective list FormattedName.String prints right
+// after an identity tag, without the leading anchor: a space, then a
+// black-bold span holding a parenthesised list such as "(dead)" or
+// "(♥friend|hidden)". It goes with the name it describes; "something (dead)"
+// would tell a blind reader what they could not see. Shared by adjectiveSpan
+// below and by Anonymize's nameTagPattern in anonymize.go, which needs the
+// same span because the room broadcast path anonymizes before it hides names.
 //
 // CompileAdjectiveSwaps (internal/characters/formattedname.go) runs each
 // adjective through colorpatterns.ApplyColorPattern, which wraps every rune
@@ -28,7 +30,9 @@ var dupIndexSuffix = regexp.MustCompile(` #\d+$`)
 // directly after an identity tag: items.go:501 follows an item tag,
 // broadcast.go:16 precedes the mob tag, and search.go builds its span inside
 // the name tag.
-var adjectiveSpan = regexp.MustCompile(`^ <ansi fg="black-bold">\((?:[^<]|<ansi fg="[^"]*">[^<]*</ansi>)*\)</ansi>`)
+const adjectiveSpanBody = ` <ansi fg="black-bold">\((?:[^<]|<ansi fg="[^"]*">[^<]*</ansi>)*\)</ansi>`
+
+var adjectiveSpan = regexp.MustCompile(`^` + adjectiveSpanBody)
 
 // hideTaggedName replaces a whole identity tag whose content is this name,
 // ignoring case and any duplicate index, and one adjective span directly
