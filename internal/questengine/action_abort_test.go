@@ -3,7 +3,7 @@ package questengine
 import (
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
 // recordingCtx is a minimal ActionContext that records which effects fired.
@@ -24,11 +24,14 @@ func (c *recordingCtx) GiveGold(amount int) { c.gaveGold = append(c.gaveGold, am
 func (c *recordingCtx) SetQuestFlag(key, value string) {
 	c.flagsSet = append(c.flagsSet, key+"="+value)
 }
-func (c *recordingCtx) SendText(_ messaging.Category, t string) { c.textsSent = append(c.textsSent, t) }
+
+// Narrate records only the Actor line: the old RoomText was a no-op here, so
+// the Observer line stays unrecorded to keep every assertion in this file
+// meaning what it meant.
+func (c *recordingCtx) Narrate(v narration.Variants) { c.textsSent = append(c.textsSent, v.Actor...) }
 
 func (c *recordingCtx) ConsumeItem(int)           {}
 func (c *recordingCtx) ChargeGold(int)            {}
-func (c *recordingCtx) RoomText(string)           {}
 func (c *recordingCtx) SpawnMob(SpawnDef)         {}
 func (c *recordingCtx) SpawnItem(SpawnDef)        {}
 func (c *recordingCtx) TeachSpell(string)         {}

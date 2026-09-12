@@ -6,7 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/bounties"
 	"github.com/GoMudEngine/GoMud/internal/knowledge"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -22,8 +22,9 @@ type ActionContext interface {
 	GiveItem(itemId int) error
 	GiveGold(amount int)
 	ChargeGold(amount int)
-	SendText(cat messaging.Category, text string)
-	RoomText(text string)
+	// Narrate delivers a text action: the Actor line to the triggering player,
+	// the Observer line to the room. The implementation renders the tokens.
+	Narrate(v narration.Variants)
 	SpawnMob(s SpawnDef)
 	SpawnItem(s SpawnDef)
 	TeachSpell(spellId string)
@@ -68,12 +69,8 @@ func ExecuteAction(a ActionDef, ctx ActionContext) error {
 		ctx.ChargeGold(a.ChargeGold)
 		return nil
 	}
-	if a.SendText != "" {
-		ctx.SendText(messaging.CategoryNPCDialogue, a.SendText)
-		return nil
-	}
-	if a.RoomText != "" {
-		ctx.RoomText(a.RoomText)
+	if a.SendText != "" || a.RoomText != "" {
+		ctx.Narrate(a.Narration())
 		return nil
 	}
 	if a.NpcSay != nil {

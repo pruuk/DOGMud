@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -198,37 +199,35 @@ func (b *GameBridge) ChargeGold(amount int) {
 	})
 }
 
-// SendText sends a categorized message directly to the player.
-func (b *GameBridge) SendText(cat messaging.Category, text string) {
-	b.user.SendText(cat, text)
-}
-
-// RoomText sends a message to everyone in the room except the triggering player.
+// Narrate delivers a text action to its audiences.
 //
-// It substitutes {source} with the player's TAGGED name, then sends on the
-// VISUAL channel, and both matter. The line describes something the room
-// watches the player do ("{source} unlocks the strongbox"), so an observer who
-// cannot see must not receive it, and Room.SendText is never sight-gated. And
-// the name must carry its `username` tag, because messaging.Anonymize strips
-// only tagged names: an untagged one would reach an infrared-only observer in
-// full.
+// Both lines are rendered with the triggering player's TAGGED name as
+// {source}, and the room line goes out on the VISUAL channel; both matter.
+// The room line describes something the room watches the player do
+// ("{source} unlocks the strongbox"), so an observer who cannot see must not
+// receive it, and Room.SendText is never sight-gated. And the name must carry
+// its `username` tag, because messaging.Anonymize strips only tagged names.
+// quests.Quest.Validate keeps every room_text naming {source}.
 //
-// The behaviour tree already delivered its own room_text this way
-// (behaviortree/actions_dialogue.go). Until 2026-09-11 this path sent the text
-// raw on the audio channel, so quest 77 showed players a literal {source}.
-// quests.Quest.Validate (internal/quests/roomtext.go) is what keeps every quest
-// line naming {source}, both at boot and when the admin editor saves a quest.
-func (b *GameBridge) RoomText(text string) {
-	room := rooms.LoadRoom(b.roomId)
-	if room == nil {
-		mudlog.Error("GameBridge.RoomText", "error", fmt.Sprintf("room %d not found", b.roomId))
-		return
-	}
-	rendered := textutil.SubstituteTokens(text, textutil.TokenContext{
+// send_text is substituted too since M3 item 5b. No shipped send_text carries
+// a token, so nothing changed on the day; a future line naming {source} now
+// renders the name instead of the literal, the defect quest 77 showed.
+func (b *GameBridge) Narrate(v narration.Variants) {
+	roles := textutil.Narrate(v, textutil.TokenContext{
 		SourceName:      b.user.Character.GetCharacterName(true),
 		SourcePlainName: b.user.Character.GetCharacterName(false),
 	})
-	room.SendTextVisual(messaging.CategoryNPCDialogue, rendered, b.user.UserId)
+	if roles.Actor != "" {
+		b.user.SendText(messaging.CategoryNPCDialogue, roles.Actor)
+	}
+	if roles.Observer != "" {
+		room := rooms.LoadRoom(b.roomId)
+		if room == nil {
+			mudlog.Error("GameBridge.Narrate", "error", fmt.Sprintf("room %d not found", b.roomId))
+			return
+		}
+		room.SendTextVisual(messaging.CategoryNPCDialogue, roles.Observer, b.user.UserId)
+	}
 }
 
 // SpawnMob creates a new mob instance and places it in the target room.
