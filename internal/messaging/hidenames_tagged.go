@@ -13,8 +13,16 @@ var identityTagPattern = regexp.MustCompile(`<ansi fg="(?:(?:username|mobname)(?
 // mob's name in a room holding more than one of them.
 var dupIndexSuffix = regexp.MustCompile(` #\d+$`)
 
+// adjectiveSpan matches the adjective list FormattedName.String prints right
+// after an identity tag: a space, then a black-bold span holding a
+// parenthesised list such as "(dead)" or "(♥friend|hidden)". It goes with the
+// name it describes; "something (dead)" would tell a blind reader what they
+// could not see.
+var adjectiveSpan = regexp.MustCompile(`^ <ansi fg="black-bold">\([^<]*\)</ansi>`)
+
 // hideTaggedName replaces a whole identity tag whose content is this name,
-// ignoring case and any duplicate index.
+// ignoring case and any duplicate index, and one adjective span directly
+// after it.
 //
 // WHY CASE-INSENSITIVE HERE AND NOWHERE ELSE. An identity tag's content is
 // always a creature's name, so matching loosely inside one cannot hide an
@@ -45,6 +53,9 @@ func hideTaggedName(text, name, word string) string {
 		b.WriteString(shown)
 		b.WriteString(`</ansi>`)
 		last = m[1]
+		if adj := adjectiveSpan.FindStringIndex(text[last:]); adj != nil {
+			last += adj[1]
+		}
 	}
 	if last == 0 {
 		return text
