@@ -133,9 +133,12 @@ reader's sight and is not suppressed in the dark, because each caller picks
 the new target from whoever is already attacking the reader. The wait-round
 participant lines (`handleCombatWaitRound` in `NewRound_DoCombat_resolution.go`,
 drained from `combat.GetWaitMessages`'s authored `{source}`/`{target}` text)
-have no swing events for `replaceDarknessMessages` to act on, so they are
-name-hidden per reader directly, via `hideForParticipant`, before each
-participant send.
+have no swing events for `replaceDarknessMessages` to act on, so they judge
+sight directly with the swing path's own predicate
+(`messaging.CanSeeSightImpairedOnly`) and, for a participant without clear
+sight, send one fixed dark line instead of the authored one, the swing
+path's convention, because the authored wait lines name the weapon as well
+as the foe.
 
 ### Combat Round Processing
 ```go

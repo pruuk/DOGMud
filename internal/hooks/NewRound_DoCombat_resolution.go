@@ -19,6 +19,16 @@ import (
 // work. Only handleCombatWaitRound remains here because it is invoked
 // from phase1WaitRound (in the unified handler) for every quadrant.
 
+// waitRoundDarkAttackerLine is sent to the attacker in place of the
+// authored MessagesToSource line when the attacker cannot see clearly.
+// waitRoundDarkDefenderLine is sent to the defender in place of the
+// authored MessagesToTarget line when the defender cannot see clearly.
+// Package-level so the tests can reference them directly.
+const (
+	waitRoundDarkAttackerLine = `<ansi fg="yellow">You bide your time, straining to place something in the dark.</ansi>`
+	waitRoundDarkDefenderLine = `<ansi fg="attack-bad">Something hangs back in the dark, biding its time.</ansi>`
+)
+
 // handleCombatWaitRound handles the RoundsWaiting > 0 short-circuit
 // shared by the unified combat handler across all four quadrants.
 // Returns true if the caller should return immediately (i.e. the
@@ -30,12 +40,17 @@ import (
 // sendDarkRoomCombatFallback — always the user participant (0 if neither
 // side is a player, e.g. MvM).
 //
-// The participant lines (MessagesToSource/MessagesToTarget) are name-hidden
-// per reader via hideForParticipant before they are sent, the same rule
-// messaging.SendTrio applies to its actor and actee lines elsewhere in
-// combat. These lines are authored with {source}/{target} tokens already
-// filled in by combat.GetWaitMessages, so the name is hidden after the fact
-// rather than never written.
+// The authored MessagesToSource/MessagesToTarget lines from
+// combat.GetWaitMessages name the weapon as well as the foe (e.g. "Something
+// holds their Rusted Cleaver steady, eyes fixed on you."), so hiding just the
+// name is not enough. A participant without clear sight
+// (messaging.CanSeeSightImpairedOnly — darkness or blindness, not sleep;
+// infrared does not count as clear) instead reads one fixed dark line, the
+// same convention the swing path (dispatchCritAndMessaging /
+// replaceDarknessMessages) already uses. The fixed line is only sent when
+// there was an authored line to begin with, so an empty authored list stays
+// silent as before. Room lines (MessagesToSourceRoom/ToTargetRoom) are
+// unchanged; sendVisualRoomText already sight-gates them per reader.
 func handleCombatWaitRound(
 	attackerChar *characters.Character,
 	defenderChar *characters.Character,
@@ -58,19 +73,31 @@ func handleCombatWaitRound(
 
 	roundResult := combat.GetWaitMessages(items.Wait, attackerChar, defenderChar, roleSource, roleTarget)
 
+	// Sight gate, the swing path's convention: a participant without clear
+	// sight gets one fixed dark line instead of the authored one, because
+	// the authored line names the weapon as well as the foe.
+	if attackerUser != nil {
+		if messaging.CanSeeSightImpairedOnly(attackerChar, attackerRoom) {
+			for _, msg := range roundResult.MessagesToSource {
+				attackerUser.SendText(msg.Category, msg.Text)
+			}
+		} else if len(roundResult.MessagesToSource) > 0 {
+			attackerUser.SendText(roundResult.MessagesToSource[0].Category, waitRoundDarkAttackerLine)
+		}
+	}
+	if defenderUser != nil {
+		if messaging.CanSeeSightImpairedOnly(defenderChar, defenderRoom) {
+			for _, msg := range roundResult.MessagesToTarget {
+				defenderUser.SendText(msg.Category, msg.Text)
+			}
+		} else if len(roundResult.MessagesToTarget) > 0 {
+			defenderUser.SendText(roundResult.MessagesToTarget[0].Category, waitRoundDarkDefenderLine)
+		}
+	}
+
 	// AttackResult drainage — each TaggedMessage carries the Category
 	// the producer chose for that line (weapon subtype for hits,
 	// defense verb for defenses).
-	for _, msg := range roundResult.MessagesToSource {
-		if attackerUser != nil {
-			attackerUser.SendText(msg.Category, hideForParticipant(msg.Text, defenderChar.Name, attackerRoom, attackerUser.UserId))
-		}
-	}
-	for _, msg := range roundResult.MessagesToTarget {
-		if defenderUser != nil {
-			defenderUser.SendText(msg.Category, hideForParticipant(msg.Text, attackerChar.Name, defenderRoom, defenderUser.UserId))
-		}
-	}
 	for _, msg := range roundResult.MessagesToSourceRoom {
 		sendVisualRoomText(attackerRoom, msg.Category, msg.Text, viewerUserId)
 	}
@@ -82,16 +109,4 @@ func handleCombatWaitRound(
 		sendDarkRoomCombatFallback(defenderRoom, viewerUserId)
 	}
 	return true
-}
-
-// hideForParticipant hides the other combatant's name from a participant by
-// that participant's sight in room, the rule messaging.SendTrio applies to
-// its actor and actee lines. The wait-round lines are authored with
-// {source}/{target} tokens already filled, so the name is hidden after the
-// fact rather than never written.
-func hideForParticipant(text, otherName string, room *rooms.Room, readerUserId int) string {
-	if room == nil {
-		return text
-	}
-	return messaging.HideNames(text, []string{otherName}, room.ParticipantSight(readerUserId))
 }
