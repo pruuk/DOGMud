@@ -3,7 +3,9 @@
 # HOLDER is sent: for start and end that is StartUserNotice / EndUserNotice (authored
 # line, else the generic fallback, else nothing for a secret buff). A row exists only
 # when the sent line is non-empty. authored_start_line is the raw start_user_text of a
-# silent-start buff, as its applier (sleep, arrest, stun, broken limb) sends it.
+# silent-start buff, recorded for every silent-start buff whether or not a site sends it
+# today: sleep (15), arrest (88), stun (84) and broken limb (83) have a sender; throttled
+# (89) does not, its move narrates the choke itself.
 # dimensions: buff id x authored key; source only, buffs never know a target
 
 buff|0|start_user_text => You sit down and begin your meditation.

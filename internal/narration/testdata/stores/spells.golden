@@ -2,7 +2,11 @@
 # Built 2026-09-12 from PRE-migration code: textutil.SubstituteTokens over each raw
 # field with a source AND a target. A |notarget row follows any line whose rendering
 # changes when the target is absent, freezing the empty substitution.
+# probe rows freeze the token contract itself; they are not authored content
 # dimensions: spell id x authored key [x notarget]
+
+probe|all_tokens => <ansi fg="username">Aliceia</ansi> and Aliceia at <ansi fg="mobname">Targetticus</ansi> and Targetticus; {unknown} stays; <ansi fg="username">Aliceia</ansi> again
+probe|all_tokens|notarget => <ansi fg="username">Aliceia</ansi> and Aliceia at  and ; {unknown} stays; <ansi fg="username">Aliceia</ansi> again
 
 spell|blood-boil|cast_user_text => You focus on the target's blood, willing it to boil.
 spell|blood-boil|cast_room_text => <ansi fg="username">Aliceia</ansi> extends a trembling hand, eyes burning with intent.

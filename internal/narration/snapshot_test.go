@@ -137,7 +137,11 @@ func setupRealStores(t *testing.T) {
 	// Buff 0 (Meditating) derives its TriggerCount from this at Validate time
 	// and refuses 0; the shipped config.yaml says 3. Set it explicitly rather
 	// than load config.yaml: that file is skip-worktree and differs per
-	// machine, and a golden must not have a per-machine input.
+	// machine, and a golden must not have a per-machine input. DataFiles and
+	// LogoutRounds are the only config keys the three loaders read (verified
+	// 2026-09-12); every other knob is a Go zero value here. The loaded buff,
+	// spell and quest maps stay populated after this test; nothing else in
+	// this package reads them.
 	cfg.Network.LogoutRounds = 3
 	configs.SetConfigForTest(t, cfg)
 
@@ -820,7 +824,9 @@ func buildBuffsGolden(t *testing.T) string {
 	fmt.Fprintf(&b, "# HOLDER is sent: for start and end that is StartUserNotice / EndUserNotice (authored\n")
 	fmt.Fprintf(&b, "# line, else the generic fallback, else nothing for a secret buff). A row exists only\n")
 	fmt.Fprintf(&b, "# when the sent line is non-empty. authored_start_line is the raw start_user_text of a\n")
-	fmt.Fprintf(&b, "# silent-start buff, as its applier (sleep, arrest, stun, broken limb) sends it.\n")
+	fmt.Fprintf(&b, "# silent-start buff, recorded for every silent-start buff whether or not a site sends it\n")
+	fmt.Fprintf(&b, "# today: sleep (15), arrest (88), stun (84) and broken limb (83) have a sender; throttled\n")
+	fmt.Fprintf(&b, "# (89) does not, its move narrates the choke itself.\n")
 	fmt.Fprintf(&b, "# dimensions: buff id x authored key; source only, buffs never know a target\n\n")
 
 	ids := buffs.GetAllBuffIds()
@@ -830,6 +836,9 @@ func buildBuffsGolden(t *testing.T) string {
 	}
 	for _, id := range ids {
 		spec := buffs.GetBuffSpec(id)
+		if spec == nil {
+			t.Fatalf("buff %d has no spec", id)
+		}
 		rows := []struct{ key, text string }{
 			{"start_user_text", spec.StartUserNotice()},
 			{"start_room_text", spec.StartRoomText},
@@ -859,7 +868,15 @@ func buildSpellsGolden(t *testing.T) string {
 	fmt.Fprintf(&b, "# Built 2026-09-12 from PRE-migration code: textutil.SubstituteTokens over each raw\n")
 	fmt.Fprintf(&b, "# field with a source AND a target. A |notarget row follows any line whose rendering\n")
 	fmt.Fprintf(&b, "# changes when the target is absent, freezing the empty substitution.\n")
+	fmt.Fprintf(&b, "# probe rows freeze the token contract itself; they are not authored content\n")
 	fmt.Fprintf(&b, "# dimensions: spell id x authored key [x notarget]\n\n")
+
+	// Probe rows: no shipped line carries {target_plain} or an unknown token,
+	// so this fixed string freezes the whole substitution contract, including
+	// passthrough of an unknown token and the empty target.
+	const probe = "{source} and {source_plain} at {target} and {target_plain}; {unknown} stays; {source} again"
+	fmt.Fprintf(&b, "probe|all_tokens => %s\n", textutil.SubstituteTokens(probe, kindBSource))
+	fmt.Fprintf(&b, "probe|all_tokens|notarget => %s\n\n", textutil.SubstituteTokens(probe, kindBNoTarget))
 
 	all := spells.GetAllSpells()
 	ids := make([]string, 0, len(all))
