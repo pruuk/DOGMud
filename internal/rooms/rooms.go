@@ -684,8 +684,13 @@ func (r *Room) AddTemporaryExit(exitName string, t exit.TemporaryRoomExit) bool 
 	return true
 }
 
-// applies buffs to any players in the room that don't
-// already have it
+// applies buffs to any players in the room, refreshing one a player already
+// holds instead of letting it lapse and re-applying it. A room mutator's
+// playerbuffids run every round, so a buff that merely skipped an existing
+// holder would expire on its own schedule and get re-added the next round,
+// narrating its end and start in a loop for as long as the player stayed.
+// Refreshing keeps it active for the whole visit: one start line on entry,
+// one end line on leaving, none in between.
 func (r *Room) ApplyBuffIdToPlayers(buffIds []int, source string) {
 
 	if len(buffIds) == 0 {
@@ -698,6 +703,12 @@ func (r *Room) ApplyBuffIdToPlayers(buffIds []int, source string) {
 
 			for _, bId := range buffIds {
 				if u.Character.HasBuff(bId) {
+					// Refresh, do not lapse: a mutator buff means "while you
+					// are here". Letting it expire and re-adding it next round
+					// would narrate its end and start every few rounds.
+					// Character.AddBuff resets the triggers and queues no event,
+					// so no start text repeats.
+					u.Character.AddBuff(bId, false)
 					continue
 				}
 				u.AddBuff(bId, source)
