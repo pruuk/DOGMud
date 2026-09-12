@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
@@ -87,6 +88,11 @@ func (c ConditionType) Description() string {
 
 // AddCondition adds or overwrites a combat condition of the given type.
 func (c *Character) AddCondition(typ ConditionType, duration int, magnitude float64, source string) {
+	// Poison immunity (Stone Stomach) refuses the poisoned condition the same
+	// way the buff primitives refuse a poison-flagged buff.
+	if typ == ConditionPoisoned && c.Buffs.HasFlag(buffs.PoisonImmunity, false) {
+		return
+	}
 	for i, cond := range c.Conditions {
 		if cond.Type == typ {
 			c.Conditions[i] = CombatCondition{Type: typ, Duration: duration, Magnitude: magnitude, Source: source}

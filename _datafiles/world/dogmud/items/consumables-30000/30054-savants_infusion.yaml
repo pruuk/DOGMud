@@ -11,7 +11,7 @@ subtype: drinkable
 uses: 1
 buffids:
   - 72
-value: 60
+value: 100
 rarity_tier: 30
 weight: 0.5
 toxicity: 34

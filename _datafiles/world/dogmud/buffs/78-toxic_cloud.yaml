@@ -11,3 +11,5 @@ tick_pool: health
 tick_percent: -0.06
 tick_variance: 0.04
 tick_min: 2
+flags:
+  - poison
