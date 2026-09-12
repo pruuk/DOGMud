@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-09-12: Purge a friend, and poison that finally behaves
+
+Purge Affliction cast at a companion used to cleanse you instead of them. It
+now purges whoever you name, friend or self. Venom, spore toxin and the toxic
+cloud from a thrown flask now count as poison, so the purge spells clear
+them and a poisoned creature looks poisoned. Stone Stomach keeps its promise:
+while it lasts, poison cannot take hold in you. Savant's Infusion costs more
+than Essence of Growth now, as the stronger of the two learning tonics.
+
 ## 2026-09-12: Seven consumables now do what they say
 
 Some meals, tonics and brews on the shop shelves promised an effect and then

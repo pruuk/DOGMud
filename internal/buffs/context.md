@@ -150,6 +150,24 @@ do not stack; the strongest value wins. So Savant's Infusion (buff 72) at 2.5
 beats Essence of Growth (buff 71) at the default, and Chrysalis Catalyst (buff
 74) at 3.0 beats Mutagen Brew (buff 73).
 
+### Flags are validated at load (slice E, 2026-09-12)
+
+`AllFlags` lists every declared `Flag`. `BuffSpec.ValidateFlags()` reports the
+first flag a spec carries that is not in the list, and `LoadDataFiles` panics
+on it naming the buff id, name and flag. The root guard
+`buff_flag_guard_test.go` walks the dogmud buff files and fails the build on
+the same condition, and `TestAllFlagsNamesEveryDeclaredConstant` parses the
+constants out of this package so the list cannot fall behind. Flags are
+compared exactly, nothing is normalised: the Cat's Eye Draught shipped with
+`night-vision` for `nightvision` and did nothing for weeks.
+
+`poison-immunity` (`PoisonImmunity`, Stone Stomach): while held, `AddBuff` and
+`AddBuffScaled` refuse a spec carrying `poison`, and `Character.AddCondition`
+refuses `ConditionPoisoned`. Refusal is silent. The three toxins (39 Venom, 40
+Spore Toxin, 78 Toxic Cloud) carry `poison` since the same slice; before it NO
+buff did, so `CancelBuffsWithFlag(Poison)` in Purge Affliction and Cleansing
+Wave cancelled nothing and the `poisoned` adjective never showed.
+
 ### Flag Usage Patterns
 ```go
 // Check for specific behavioral flags
