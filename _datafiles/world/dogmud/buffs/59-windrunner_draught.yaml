@@ -2,7 +2,7 @@ buffid: 59
 name: Windrunner Draught
 description: Your lungs open and your mind clears. You could run for hours.
 start_user_text: Your lungs open wide, as if you could run for hours.
-end_user_text: Your breath is your own again, no deeper than before.
+end_user_text: Your chest tightens and the easy breathing is gone.
 triggerrate: 1 round
 triggercount: 200
 statmods:
