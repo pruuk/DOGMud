@@ -940,7 +940,11 @@ func buildSpellsGolden(t *testing.T) string {
 // Since M3 item 5b this builder reads through ActionDef.Narrate and
 // QuestReward.Narrate; the emitted rows, their order and the header are
 // unchanged from the pre-migration recording, which is the byte-identity
-// proof.
+// proof. The header's "send_text RAW (no substitution)" describes the retired
+// recording, not production: since the same slice, questengine.ExecuteAction
+// renders send_text through GameBridge.Narrate, which substitutes. The bytes
+// did not change because no shipped send_text, playermessage or roommessage
+// carries a token.
 func buildQuestsGolden(t *testing.T) string {
 	t.Helper()
 

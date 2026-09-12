@@ -29,6 +29,15 @@ var narrationRenderCallRE = regexp.MustCompile(`narration\.Render\(`)
 
 // The textutil door must hand Render FirstPicker, and must never name the
 // default picker at all.
+//
+// This regex assumes narrate.go holds exactly ONE narration.Render call, which
+// is true today (a single 31-line door). Go source carries no literal ";"
+// between statements, so with (?s) the `[^;]*?` span can reach past the end of
+// a call; a second Render call added later could satisfy the pattern while an
+// earlier one passes a different picker. The DefaultPicker substring ban below
+// is the load-bearing half. If the door ever grows a second call, switch this
+// to an AST check of each call's third argument, the way
+// buff_apply_path_guard_test.go inspects call arguments.
 var textutilFirstPickerRE = regexp.MustCompile(`(?s)narration\.Render\([^;]*?narration\.FirstPicker\)`)
 
 func TestNarrationRenderIsCalledOnlyByRegisteredStores(t *testing.T) {
