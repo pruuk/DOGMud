@@ -30,7 +30,7 @@ data it exists to catch. Restore the buff, then add the guard.
 | `internal/behaviortree/sight.go` | Create: the one mob-sight helper |
 | `internal/behaviortree/conditions_player.go` | Gate `condPlayersInRoom`, `condMultipleEnemies` |
 | `internal/behaviortree/actions_party.go` | Gate `engageHostilePlayerInRoom` |
-| `internal/behaviortree/actions_archer.go` | Gate `archerMeleeEngaged` |
+| `internal/behaviortree/actions_archer_sight_test.go` | Create: pins that `archerMeleeEngaged` is NOT gated |
 | `internal/behaviortree/conditions_scout.go` | Route `condRoomHasHiddenEntity` through `Perceives` |
 | `internal/mobcommands/attack.go` | Pass `&mob.Character` instead of `nil` |
 | `internal/actions/cast_admission.go` | Stop exempting mobs |
@@ -505,13 +505,19 @@ git commit -m "feat(behaviortree): a blind mob finds no players to fight"
 
 ---
 
-### Task 5: Gate the party and archer engage paths
+### Task 5: Gate the party engage path (NOT the archer melee check)
 
 **Files:**
-- Modify: `internal/behaviortree/actions_party.go` (`engageHostilePlayerInRoom`), `internal/behaviortree/actions_archer.go` (`archerMeleeEngaged`)
+- Modify: `internal/behaviortree/actions_party.go` (`engageHostilePlayerInRoom`)
+- Create: `internal/behaviortree/actions_archer_sight_test.go`
 - Test: extend `internal/behaviortree/conditions_sight_test.go`
 
-The two take their mob differently: `engageHostilePlayerInRoom(mobInstanceId, roomId int)` looks it up, `archerMeleeEngaged(mob *mobs.Mob)` receives it.
+**Correction found during execution: `archerMeleeEngaged` must NOT be gated.**
+Its own doc calls it "pinned in melee", and its only caller decides whether to
+kite or hold a reload. Both of its branches describe a fight that ALREADY
+exists, so gating it would leave a blind archer shooting point-blank instead of
+kiting, contradicting ruling 4 rather than implementing it. Pin it with a
+regression test instead.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -548,11 +554,12 @@ untouched (owner ruling 4).
 	}
 ```
 
-- [ ] **Step 4: Gate `archerMeleeEngaged`**
+- [ ] **Step 4: Pin that the archer melee check is NOT gated**
 
-After its `room := rooms.LoadRoom(myRoom)` nil check. Leave check (1), the
-mob's own existing aggro target, ungated: that is an existing fight, not a new
-target.
+Create `actions_archer_sight_test.go` asserting `archerMeleeEngaged` still
+returns true for a BLIND mob that a player is aggroed onto, so nobody gates it
+later in the name of consistency. Probe it by adding the gate and watching the
+test go red.
 
 ```go
 	if !mobCanSee(mob, room) {
@@ -564,7 +571,7 @@ target.
 
 ```bash
 go test ./internal/behaviortree/
-git add internal/behaviortree/actions_party.go internal/behaviortree/actions_archer.go internal/behaviortree/conditions_sight_test.go
+git add internal/behaviortree/actions_party.go internal/behaviortree/actions_archer_sight_test.go internal/behaviortree/conditions_sight_test.go
 git commit -m "feat(behaviortree): blind mobs do not start fights"
 ```
 

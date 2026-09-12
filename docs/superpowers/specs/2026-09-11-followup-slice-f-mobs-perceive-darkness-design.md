@@ -38,18 +38,21 @@ caves. This slice closes that asymmetry in one go.
 | `behaviortree/conditions_player.go:192` | `condMultipleEnemies` | 9 | yes |
 | `behaviortree/conditions_player.go:115` | `condPlayersInRoom` | 3, all hostile (`archetypes/ambusher`, `254-bandit_leader`, `272-chrysalis_phantom`) | yes |
 | `behaviortree/actions_party.go:235` | `engageHostilePlayerInRoom` | party engage | yes |
-| `behaviortree/actions_archer.go:138` | `archerMeleeEngaged` | archer | yes |
+| `behaviortree/actions_archer.go:138` | `archerMeleeEngaged` | archer | **no** |
 | `behaviortree/conditions_scout.go:21` | `condRoomHasHiddenEntity` | 2 | yes, through `Perceives` |
 | `behaviortree/actions_mob.go:342` | `actSweepCompanions` | 1 (`9587-hull_sweeper`) | **no** |
 | `behaviortree/conditions_player.go:137` | `condPlayerInRoomMissingQuest` | 3 (Dewey 9491, Cleric Hadwen 9100, room 6467) | **no** |
 | `behaviortree/conditions_player.go:165` | `condPlayerInRoomHasQuest` | 1 | **no** |
 
-Three sites are deliberately left ungated. The two quest-giver conditions,
+Four sites are deliberately left ungated. The two quest-giver conditions,
 because gating them would stop NPCs offering quests in an unlit room and would
-regress the newbie chain. And `actSweepCompanions`, because it does not select
-a target at all: it relocates every player-in-room's companions to another room
-via `hooks.PushCompanionsToRoom`, and iterates players only to find whose
-companions to move. Gating it would break a hull sweeper in the dark for no
+regress the newbie chain. And `actSweepCompanions` and `archerMeleeEngaged`, because neither
+selects a target. The sweep relocates every player-in-room's companions to
+another room via `hooks.PushCompanionsToRoom`, iterating players only to find
+whose companions to move; the archer check reports that a fight ALREADY exists
+(its own doc calls it "pinned in melee", and its only caller decides whether to
+kite or hold a reload). Gating either would break a hull sweeper in the dark, or
+leave a blind archer shooting point-blank instead of kiting, for no
 perception-related reason.
 
 ## Owner rulings (2026-09-11)
@@ -88,7 +91,7 @@ Four changes:
    `world/dogmud/buffs/29-night_vision.yaml`. The flag spelling is already
    verified against `buffspec.go:62`, so this cannot ship inert the way the
    Cat's Eye Draught did when its flag was misspelled.
-2. **Gate the five hostile scan sites** on the acting mob's sight, leaving the
+2. **Gate the four hostile scan sites** on the acting mob's sight, leaving the
    two quest-giver conditions and the companion sweep alone. A mob that cannot
    see the room finds no candidates and does not engage.
 3. **Give the two single hooks a viewer.** `mobcommands/attack.go:42` passes
@@ -119,6 +122,9 @@ capable of failing.
 - A quest giver still offers its quest in an unlit room, the regression the two
   ungated conditions exist to prevent.
 - A hull sweeper still relocates companions in the dark.
+- A blind archer still knows it is pinned in melee, so it kites rather than
+  shooting point-blank.
+- A blind archer still knows it is pinned in melee and kites.
 - A scout does not detect a hider it cannot perceive, and does with see-hidden.
 - The boot guard panics on a species referencing a missing buff id, proven red
   by pointing a fixture species at a nonexistent id.
