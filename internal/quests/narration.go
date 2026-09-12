@@ -48,6 +48,10 @@ func (r *Quest) validateNarration() error {
 			}
 			if a.SendText != "" || a.RoomText != "" {
 				if err := narration.ValidateVariants(a.Narration(), 1); err != nil {
+					// The room_text branch is unreachable through Quest.Validate today:
+					// validateRoomText runs first and refuses any room_text without
+					// {source}, which a whitespace-only line cannot carry. Kept so
+					// validateNarration names the right key when called on its own.
 					key := "send_text"
 					if a.SendText == "" {
 						key = "room_text"

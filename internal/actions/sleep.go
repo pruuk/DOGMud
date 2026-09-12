@@ -74,8 +74,14 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 	// silent-start buff. A mob holder has no client, so only a player gets it.
 	if actor.IsPlayer() {
 		if spec := buffs.GetBuffSpec(15); spec != nil {
-			name := actor.GetName()
-			if line := spec.AuthoredStartLine(textutil.TokenContext{SourceName: name, SourcePlainName: name}); line != "" {
+			// Tagged for {source}, plain for {source_plain}, the textutil
+			// contract every narration site follows. Buff 15's line carries no
+			// token today, so this is for the day one is authored.
+			line := spec.AuthoredStartLine(textutil.TokenContext{
+				SourceName:      c.GetCharacterName(true),
+				SourcePlainName: c.GetCharacterName(false),
+			})
+			if line != "" {
 				actor.SendText(messaging.CategoryBuffApply, line)
 			}
 		}

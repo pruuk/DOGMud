@@ -38,8 +38,12 @@ func TestNarrationTriggerAndEnd(t *testing.T) {
 func TestNarrationSecretBuffHasNoHolderLine(t *testing.T) {
 	s := glowSpec()
 	s.Secret = true
-	if v := s.Narration(PhaseStart); len(v.Actee) != 0 {
+	v := s.Narration(PhaseStart)
+	if len(v.Actee) != 0 {
 		t.Fatalf("a secret buff must not narrate to its holder, got %v", v.Actee)
+	}
+	if len(v.Observer) != 1 || v.Observer[0] != "A glow surrounds {source}." {
+		t.Fatalf("secret only silences the holder; the room line must survive, got %v", v.Observer)
 	}
 }
 

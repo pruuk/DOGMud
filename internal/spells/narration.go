@@ -51,8 +51,11 @@ func (s *SpellData) validateNarration() error {
 		if len(v.Actor) == 0 && len(v.Observer) == 0 {
 			continue
 		}
+		// No expected role set: a spell phase may legitimately author only the
+		// caster line or only the room line, so no fixed shape exists to
+		// declare. The blank-variant check is what this call is for.
 		if err := narration.ValidateVariants(v, 1); err != nil {
-			return fmt.Errorf("spell %s %s text: %w", s.SpellId, ph.name, err)
+			return fmt.Errorf("spell %q %s text: %w", s.SpellId, ph.name, err)
 		}
 	}
 	return nil

@@ -54,7 +54,9 @@ func (b *BuffSpec) AuthoredStartLine(ctx textutil.TokenContext) string {
 // validateNarration refuses a phase whose authored text cannot be rendered:
 // a whitespace-only line, which ValidateVariants reports as an empty variant.
 // It checks the RAW fields, not the notices, so a silent-start buff's hidden
-// start line is checked too.
+// start line is checked too. The trigger phase has no notice wrapper, so for
+// it the raw fields and Narration agree; it is listed here so all three
+// phases are checked in one place.
 func (b *BuffSpec) validateNarration() error {
 	phases := []struct{ name, user, room string }{
 		{"start", b.StartUserText, b.StartRoomText},
