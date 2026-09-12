@@ -286,14 +286,14 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 			case len(cs.TargetUserIds) > 0:
 				if targetUser := users.GetByUserId(cs.TargetUserIds[0]); targetUser != nil {
 					t := purgeTarget{char: targetUser.Character, user: targetUser, name: targetUser.Character.Name}
-					if t.stillPresent(room) {
+					if t.stillPresent(room, false) {
 						resolvePurgeAffliction(user, room, t)
 					}
 				}
 			case len(cs.TargetMobInstanceIds) > 0:
 				if tMob := mobs.GetInstance(cs.TargetMobInstanceIds[0]); tMob != nil {
 					t := purgeTarget{char: &tMob.Character, name: tMob.Character.Name, display: mobDisplayName(tMob, room, user.UserId)}
-					if t.stillPresent(room) {
+					if t.stillPresent(room, true) {
 						resolvePurgeAffliction(user, room, t)
 					}
 				}

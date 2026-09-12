@@ -183,3 +183,28 @@ func TestPurgeAffliction_PlayerTargetThatLeftTheRoomIsNeitherPurgedNorNarrated(t
 	assert.Equal(t, 0, countContaining(casterLines, "purging energy"), "no purge line for an absent target")
 	assert.Equal(t, 0, countContaining(casterLines, "from your body"), "and no fallback to self-cast")
 }
+
+// The player loop only skips a downed target for harm spells, so a downed
+// ally who is still in the room is purged and told so, as before the
+// admission existed. Only a mob target must be alive.
+func TestPurgeAffliction_DownedPlayerTargetStillPresentIsPurged(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedPurgeTestPoison()
+	defer restore()
+	pinSpellContest(t)
+	room := rooms.LoadRoom(1)
+	caster := users.GetByUserId(1)
+	target := users.GetByUserId(2)
+	require.True(t, target.Character.Buffs.AddBuff(purgeTestPoisonBuffId, false))
+	target.Character.Health = 0
+	drainPlain(1)
+	drainPlain(2)
+
+	spell := &spells.SpellData{SpellId: "purge-affliction", Name: "Purge Affliction", Type: spells.HelpSingle}
+	resolveSpell(caster, activity.CastingData{SpellId: "purge-affliction", TargetUserIds: []int{2}}, spell, room)
+
+	assert.False(t, target.Character.Buffs.HasFlag(buffs.Poison, false), "a downed ally in the room is still purged")
+	assert.Equal(t, 1, countContaining(drainPlain(2), "purges the afflictions from your body"))
+	assert.Equal(t, 1, countContaining(drainPlain(1), "purging energy"))
+}

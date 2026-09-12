@@ -40,9 +40,16 @@ func (p purgeTarget) token() string {
 // AFTER the loop ignores every filter the loop applies. A failing check must
 // fall through to nothing, never to the self-cast arm, which would purge the
 // caster all over again.
-func (p purgeTarget) stillPresent(room *rooms.Room) bool {
-	return p.char != nil && room != nil &&
-		p.char.Health > 0 && p.char.RoomId == room.RoomId
+//
+// requireAlive is true for a mob target (the mob loop skips a dead mob) and
+// false for a player target: the player loop only skips a downed target for
+// harm spells, so a downed ally still present in the room is purged, as it
+// was before this admission existed.
+func (p purgeTarget) stillPresent(room *rooms.Room, requireAlive bool) bool {
+	if p.char == nil || room == nil || p.char.RoomId != room.RoomId {
+		return false
+	}
+	return !requireAlive || p.char.Health > 0
 }
 
 // resolvePurgeAffliction narrates the purge and cancels poison on the target.
