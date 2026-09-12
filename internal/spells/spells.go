@@ -307,6 +307,10 @@ func (s *SpellData) Validate() error {
 		}
 	}
 
+	if err := s.validateNarration(); err != nil {
+		return err
+	}
+
 	// Validate summon fields
 	if s.SummonMobId > 0 && s.SummonPetMultiplier <= 0 {
 		mudlog.Warn("Spell.Validate", "spellId", s.SpellId, "warning", "summon_mob_id set but summon_pet_multiplier is 0 or missing")
