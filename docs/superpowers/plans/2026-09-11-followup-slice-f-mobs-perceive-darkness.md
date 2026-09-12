@@ -44,33 +44,84 @@ data it exists to catch. Restore the buff, then add the guard.
 - Create: `_datafiles/world/dogmud/buffs/29-night_vision.yaml`
 - Test: `internal/species/species_night_vision_test.go`
 
-- [ ] **Step 1: Write the test that pins the species list**
+- [ ] **Step 1: Write the failing test**
+
+Do NOT use `species.LoadForTest` here. It calls `LoadDataFiles()`, which
+resolves a relative path and panics from a package working directory, and
+`configs.FilePaths.DataFiles` defaults to `_datafiles/world/default`, not
+dogmud. A test using it validates UPSTREAM's roster, where buff 29 already
+exists, so it can pass while dogmud is broken. Read the dogmud files directly.
 
 ```go
 package species
 
 import (
+	"os"
+	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
-// The eight species that declare buff 29 have been silently blind since dogmud
-// forked: the buff exists only in world/default. 67 mobs are affected.
+// dogmudSpecies reads the DOGMUD species files directly. See the trap above.
+func dogmudSpecies(t *testing.T) map[int]*Species {
+	t.Helper()
+	dir := filepath.Join("..", "..", "_datafiles", "world", "dogmud", "species")
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+
+	out := map[int]*Species{}
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".yaml" {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		require.NoError(t, err)
+		sp := &Species{}
+		require.NoError(t, yaml.Unmarshal(data, sp), "parse %s", e.Name())
+		out[sp.SpeciesId] = sp
+	}
+	require.NotEmpty(t, out, "no species parsed: the walk is broken, not the data")
+	return out
+}
+
+// Eight species declare buff 29, and the buff was absent from dogmud entirely,
+// so 67 mobs were silently blind in their own caves.
 func TestNightVisionSpeciesDeclareBuff29(t *testing.T) {
+	all := dogmudSpecies(t)
 	want := []int{2, 4, 5, 8, 9, 11, 17, 24}
 	for _, id := range want {
-		sp := GetSpecies(id)
+		sp := all[id]
 		require.NotNil(t, sp, "species %d missing", id)
 		require.Contains(t, sp.BuffIds, 29, "species %d (%s) should declare night vision", id, sp.Name)
 	}
 }
+
+// The regression itself: every buff a dogmud species references must exist as a
+// dogmud buff file. Buff 29 failed this for months and nothing noticed.
+func TestEverySpeciesBuffIdHasADogmudFile(t *testing.T) {
+	all := dogmudSpecies(t)
+	buffDir := filepath.Join("..", "..", "_datafiles", "world", "dogmud", "buffs")
+	for id, sp := range all {
+		for _, bid := range sp.BuffIds {
+			matches, err := filepath.Glob(filepath.Join(buffDir, strconv.Itoa(bid)+"-*.yaml"))
+			require.NoError(t, err)
+			require.NotEmpty(t, matches,
+				"species %d (%s) references buff %d, which has no file in dogmud/buffs", id, sp.Name, bid)
+		}
+	}
+}
 ```
 
-- [ ] **Step 2: Run it**
+- [ ] **Step 2: Run it to verify it fails**
 
-Run: `go test ./internal/species/ -run TestNightVisionSpeciesDeclareBuff29 -v`
-Expected: PASS. The species data is already correct; it is the BUFF that is missing. This test exists so a later data edit cannot silently shrink the list.
+Run: `go test ./internal/species/ -run 'TestNightVisionSpeciesDeclareBuff29|TestEverySpeciesBuffIdHasADogmudFile' -v`
+Expected: the first PASSES (the species data was always right), the second FAILS
+naming a species and buff 29 (the buff FILE is what is missing). Step 3 turns
+the second green, which is the probe: this is the exact state the repo was in
+before this slice.
 
 - [ ] **Step 3: Copy the buff file**
 
