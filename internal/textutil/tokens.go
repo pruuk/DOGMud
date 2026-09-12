@@ -2,7 +2,8 @@ package textutil
 
 import (
 	"regexp"
-	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
 // TokenContext holds actor names for substitution in YAML text fields.
@@ -13,19 +14,30 @@ type TokenContext struct {
 	TargetPlainName string // Plain name (empty if no target)
 }
 
+// Tokens is the vocabulary as the narration core takes it. All four keys are
+// always present, so an absent target substitutes to an empty string, which
+// is what SubstituteTokens has always done.
+func (ctx TokenContext) Tokens() map[string]string {
+	return map[string]string{
+		`{source}`:       ctx.SourceName,
+		`{target}`:       ctx.TargetName,
+		`{source_plain}`: ctx.SourcePlainName,
+		`{target_plain}`: ctx.TargetPlainName,
+	}
+}
+
 // SubstituteTokens replaces known tokens in text with values from ctx.
 // Unknown tokens are left as-is. Empty string input returns empty string.
+//
+// Since M3 item 5b it is a one-variant Narrate, so one engine substitutes
+// for every store. The result is identical to the former four-pair
+// strings.NewReplacer: no token is a prefix of another (each ends in "}"),
+// so pair order cannot change the output.
 func SubstituteTokens(text string, ctx TokenContext) string {
 	if text == "" {
 		return ""
 	}
-	r := strings.NewReplacer(
-		`{source}`, ctx.SourceName,
-		`{target}`, ctx.TargetName,
-		`{source_plain}`, ctx.SourcePlainName,
-		`{target_plain}`, ctx.TargetPlainName,
-	)
-	return r.Replace(text)
+	return Narrate(narration.Variants{Actor: Pool(text)}, ctx).Actor
 }
 
 var tokenPattern = regexp.MustCompile(`\{[a-z_]+\}`)
