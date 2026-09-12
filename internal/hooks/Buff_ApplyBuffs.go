@@ -72,8 +72,11 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	// Send the start notice (authored, or the generic line; a secret buff is
 	// silent) only on first application, not on refresh.
 	//
+	// A mob holder has no client, so only room text can reach anyone; without
+	// it there is nothing to render and the name and room lookups are skipped.
 	startUser := buffInfo.StartUserNotice()
-	if !wasAlreadyActive && (startUser != "" || buffInfo.StartRoomText != "") {
+	holderCanRead := evt.UserId != 0 && startUser != ""
+	if !wasAlreadyActive && (holderCanRead || buffInfo.StartRoomText != "") {
 		var charName, charPlainName string
 		var sendFunc func(string)
 		var roomId, excludeId int
