@@ -1,0 +1,44 @@
+# Slices D and E: Purge Affliction reaches a companion, and Stone Stomach
+# applies and reports itself.
+#
+# The veteran profile owns two flesh golem companions. Granted: one Toxic
+# Flask (item 30059) and one Stone Stomach potion (item 30046, buff 64).
+# Room 5343 is lit and quiet.
+#
+# What this lane CAN observe: the purge cast landing on the named companion
+# rather than the caster, and Stone Stomach taking hold and listing in
+# `conditions`. What it CANNOT observe: poison being refused. `throw` takes
+# no target and hits hostiles only, so a flask cannot poison a friendly golem
+# or the caster, and venom (buff 39) lands only on a serpent's critical hit,
+# which a level-one snake rarely gets against a veteran. The refusal is pinned
+# by unit tests at both buff primitives and at the apply hook; this lane
+# confirms the pieces a player sees.
+ephemeral:
+  profile: veteran
+  start_room: 5343
+  overlays:
+    grant_items:
+      - 30059 # Toxic Flask
+      - 30046 # Stone Stomach
+  budgets:
+    wall_clock: 15m
+
+goals:
+  - >-
+    Type `inventory` and confirm a Toxic Flask and a Stone Stomach. Type
+    `look` and quote the "Also here" line so both golems are named.
+  - >-
+    Cast the purge at a golem by name: `cast purge rocky` (use the name as
+    `look` printed it if that is refused). Quote every line. Expected: you
+    read "You direct purging energy towards Rocky the Flesh Golem" and NOT
+    "You purge the afflictions from your body." Type `conditions` and confirm
+    it is unchanged from before the cast. A cast that lands on you instead of
+    the golem is the defect this lane exists to find.
+  - >-
+    Type `drink stomach` (or `drink stone`). Quote the lines: you should read
+    that nothing could turn your stomach now. Type `conditions` and quote it:
+    Stone Stomach must be listed.
+  - >-
+    Type `throw flask` once with only your golems present and quote what the
+    game answers (it should miss everything, since nothing hostile is here).
+    Then `conditions` again: nothing new may appear. Stop.
