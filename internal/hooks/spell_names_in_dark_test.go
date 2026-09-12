@@ -119,7 +119,9 @@ func TestPurgeAffliction_CrossCastInTheDarkNamesNobody(t *testing.T) {
 	drainPlain(1)
 	drainPlain(2)
 
-	resolvePurgeAffliction(users.GetByUserId(1), users.GetByUserId(2))
+	bob := users.GetByUserId(2)
+	resolvePurgeAffliction(users.GetByUserId(1), rooms.LoadRoom(1),
+		purgeTarget{char: bob.Character, user: bob, name: bob.Character.Name})
 	assert.Equal(t, 1, countContaining(drainPlain(2), "Something purges the afflictions from your body."))
 	assert.Equal(t, 1, countContaining(drainPlain(1), "You direct purging energy towards something."))
 }

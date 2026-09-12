@@ -270,12 +270,22 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 			// Uncontested utility cast: no defence to beat.
 			return true
 		case "purge-affliction":
-			if len(cs.TargetUserIds) > 0 {
+			// A mob target is read here for the same reason the other help
+			// spells read it: a charmed companion is a legitimate target, and
+			// this switch used to fall through to the self-cast arm whenever
+			// only TargetMobInstanceIds was set, so naming a poisoned
+			// companion purged the CASTER.
+			switch {
+			case len(cs.TargetUserIds) > 0:
 				if targetUser := users.GetByUserId(cs.TargetUserIds[0]); targetUser != nil {
-					resolvePurgeAffliction(user, targetUser)
+					resolvePurgeAffliction(user, room, purgeTarget{char: targetUser.Character, user: targetUser, name: targetUser.Character.Name})
 				}
-			} else {
-				resolvePurgeAffliction(user, user) // self-cast
+			case len(cs.TargetMobInstanceIds) > 0:
+				if tMob := mobs.GetInstance(cs.TargetMobInstanceIds[0]); tMob != nil {
+					resolvePurgeAffliction(user, room, purgeTarget{char: &tMob.Character, name: tMob.Character.Name, display: mobDisplayName(tMob, room, user.UserId)})
+				}
+			default:
+				resolvePurgeAffliction(user, room, purgeTarget{char: user.Character, user: user, name: user.Character.Name}) // self-cast
 			}
 			// Uncontested utility cast: no defence to beat.
 			return true
