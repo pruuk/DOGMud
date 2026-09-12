@@ -66,6 +66,9 @@ func (b *BuffSpec) validateNarration() error {
 			continue
 		}
 		v := narration.Variants{Actee: textutil.Pool(ph.user), Observer: textutil.Pool(ph.room)}
+		// No expected role set: a buff may legitimately author only a holder
+		// line or only a room line, so no fixed shape exists to declare. The
+		// blank-variant check is what this call is for.
 		if err := narration.ValidateVariants(v, 1); err != nil {
 			return fmt.Errorf("buffId %d (%s) %s text: %w", b.BuffId, b.Name, ph.name, err)
 		}

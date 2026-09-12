@@ -82,3 +82,14 @@ func TestValidateRefusesAWhitespaceOnlyLine(t *testing.T) {
 		t.Fatalf("a spec with ordinary text must validate, got %v", err)
 	}
 }
+
+func TestValidateReadsTheRawStartLineEvenWhenTheNoticeIsSilent(t *testing.T) {
+	s := &BuffSpec{BuffId: 503, Name: "Sleeping", Flags: []Flag{SilentStart}, StartUserText: "   "}
+	if got := s.StartUserNotice(); got != "" {
+		t.Fatalf("precondition: the notice must be silent for silent-start, got %q", got)
+	}
+	err := s.Validate()
+	if err == nil || !strings.Contains(err.Error(), "start") {
+		t.Fatalf("a whitespace-only start line must be refused even when the notice hides it, got %v", err)
+	}
+}
