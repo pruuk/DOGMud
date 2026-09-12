@@ -2,14 +2,24 @@ package buffs
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
+// hasFlag reports whether this spec carries the given flag.
+func (b *BuffSpec) hasFlag(f Flag) bool {
+	return slices.Contains(b.Flags, f)
+}
+
 // StartUserNotice is the line the holder reads when this buff lands: the
 // authored start_user_text, or "<Name> takes effect." when none is authored.
-// A secret buff says nothing. A buff with no name keeps its authored line but
+// A secret buff says nothing. A silent-start buff (warcry, rally, the bloom
+// detox drink) also says nothing at start: it is applied outside the buff
+// event so Buff_ApplyBuffs never runs for it, and whatever applies it already
+// narrates the start, so authored start_user_text would never be reachable
+// and is not even checked. A buff with no name keeps its authored line but
 // gets no generic one, rather than print " takes effect."; the root guard
 // fails the build on a nameless non-secret buff.
 //
@@ -18,6 +28,9 @@ import (
 // land in silence.
 func (b *BuffSpec) StartUserNotice() string {
 	if b.Secret {
+		return ""
+	}
+	if b.hasFlag(SilentStart) {
 		return ""
 	}
 	if b.StartUserText != "" {
@@ -32,9 +45,16 @@ func (b *BuffSpec) StartUserNotice() string {
 // EndUserNotice is the line the holder reads when this buff ends: the
 // authored end_user_text, or "<Name> has expired." when none is authored.
 // A secret buff says nothing; a nameless one keeps its authored line only.
+// A hidden buff (Hidden, Empathic Shroud) also says nothing at end, even
+// over authored text: a hider must not learn when their cover lapsed, or
+// the notice itself becomes the leak. Room text still goes out through the
+// prune pass, since observers' view of the reappearance is not the secret.
 // The player prune pass reads it instead of EndUserText.
 func (b *BuffSpec) EndUserNotice() string {
 	if b.Secret {
+		return ""
+	}
+	if b.hasFlag(Hidden) {
 		return ""
 	}
 	if b.EndUserText != "" {
@@ -60,10 +80,10 @@ func SilentNoticeBuffs() []string {
 			continue
 		}
 		missing := ""
-		if b.StartUserText == "" {
+		if b.StartUserText == "" && !b.hasFlag(SilentStart) {
 			missing = "start"
 		}
-		if b.EndUserText == "" {
+		if b.EndUserText == "" && !b.hasFlag(Hidden) {
 			if missing != "" {
 				missing += ", "
 			}

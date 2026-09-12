@@ -6,3 +6,4 @@ triggercount: 25
 end_user_text: "The fervor of the warcry fades from you."
 flags:
   - condition-mirror
+  - silent-start
