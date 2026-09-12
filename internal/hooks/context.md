@@ -130,7 +130,12 @@ The retarget notice ("You turn your attention to X!") is built once, by
 `DoCombat`'s validate-aggro pass, `emitRetargetMessage`, and the mob-departure
 retarget in `mobcommands.clearRoomAggroOnDeparture`; it hides X by the
 reader's sight and is not suppressed in the dark, because each caller picks
-the new target from whoever is already attacking the reader.
+the new target from whoever is already attacking the reader. The wait-round
+participant lines (`handleCombatWaitRound` in `NewRound_DoCombat_resolution.go`,
+drained from `combat.GetWaitMessages`'s authored `{source}`/`{target}` text)
+have no swing events for `replaceDarknessMessages` to act on, so they are
+name-hidden per reader directly, via `hideForParticipant`, before each
+participant send.
 
 ### Combat Round Processing
 ```go
