@@ -86,12 +86,15 @@ func (c ConditionType) Description() string {
 	}
 }
 
-// AddCondition adds or overwrites a combat condition of the given type.
-func (c *Character) AddCondition(typ ConditionType, duration int, magnitude float64, source string) {
+// AddCondition adds or overwrites a combat condition of the given type. It
+// reports whether the condition is now held: true when applied or refreshed,
+// false when refused. A caller that narrates the affliction must test it, or it
+// tells an immune victim about a condition they never took.
+func (c *Character) AddCondition(typ ConditionType, duration int, magnitude float64, source string) bool {
 	// Poison immunity (Stone Stomach) refuses the poisoned condition the same
 	// way the buff primitives refuse a poison-flagged buff.
 	if typ == ConditionPoisoned && c.Buffs.HasFlag(buffs.PoisonImmunity, false) {
-		return
+		return false
 	}
 	for i, cond := range c.Conditions {
 		if cond.Type == typ {
@@ -102,7 +105,7 @@ func (c *Character) AddCondition(typ ConditionType, duration int, magnitude floa
 				_ = c.Perception.TransitionTo(perception.Blinded,
 					state.TransitionReason{Trigger: perception.TriggerConditionAdded})
 			}
-			return
+			return true
 		}
 	}
 	c.Conditions = append(c.Conditions, CombatCondition{Type: typ, Duration: duration, Magnitude: magnitude, Source: source})
@@ -112,6 +115,7 @@ func (c *Character) AddCondition(typ ConditionType, duration int, magnitude floa
 		_ = c.Perception.TransitionTo(perception.Blinded,
 			state.TransitionReason{Trigger: perception.TriggerConditionAdded})
 	}
+	return true
 }
 
 // HasCondition returns true if the character currently has the given condition.

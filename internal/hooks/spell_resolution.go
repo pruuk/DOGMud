@@ -632,9 +632,11 @@ func applyMobEffect_dot(
 	if dotDuration < 3 {
 		dotDuration = 3
 	}
-	mob.Character.AddCondition(characters.ConditionPoisoned, dotDuration, float64(magnitude), "spell")
+	// An immune target refuses the condition, and nothing that did not happen
+	// may be narrated. The cast still earns aggro: it was made.
+	afflicted := mob.Character.AddCondition(characters.ConditionPoisoned, dotDuration, float64(magnitude), "spell")
 	setMobSpellAggro(user, mob)
-	if user != nil {
+	if afflicted && user != nil {
 		user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
 			`Your %s afflicts %s!%s`,
 			spellData.Name, mName, critTag))
@@ -1646,16 +1648,19 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		if dotDuration < 3 {
 			dotDuration = 3
 		}
-		target.Character.AddCondition(characters.ConditionPoisoned, dotDuration, float64(magnitude), "spell")
-		messaging.SendTrio(messaging.Trio{
-			Actor: messaging.NoLine,
-			Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts you!%s`,
-				caster.Character.Name, spellData.Name, critTag)),
-			Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts <ansi fg="username">%s</ansi>!`,
-				caster.Character.Name, spellData.Name, target.Character.Name)),
-		}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
+		// An immune target refuses the condition, and nothing that did not happen
+		// may be narrated. The targeting commit below still stands: the mob cast.
+		if target.Character.AddCondition(characters.ConditionPoisoned, dotDuration, float64(magnitude), "spell") {
+			messaging.SendTrio(messaging.Trio{
+				Actor: messaging.NoLine,
+				Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts you!%s`,
+					caster.Character.Name, spellData.Name, critTag)),
+				Observer: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
+					`<ansi fg="mobname">%s</ansi>'s <ansi fg="cyan">%s</ansi> afflicts <ansi fg="username">%s</ansi>!`,
+					caster.Character.Name, spellData.Name, target.Character.Name)),
+			}, spellAudience(nil, caster.Character.Name, target, target.Character.Name, room))
+		}
 		if !target.Character.IsInCombat() {
 			targeting.Commit(target.Character, state.ActorRef{MobInstanceId: caster.InstanceId}, targeting.ReasonAttack)
 		}
