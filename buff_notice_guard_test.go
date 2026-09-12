@@ -16,15 +16,17 @@ import (
 // (buffs.StartUserNotice / EndUserNotice), but that is a runtime net, never
 // the shipped experience, so every non-secret buff in the dogmud world must
 // carry authored start_user_text and end_user_text, and a secret buff must
-// carry no player text at all. Forty-six buffs were silent on 2026-09-12;
+// carry no player text at all. Forty-three buffs were fully silent and six
+// half-silent on 2026-09-12;
 // this keeps the count at zero and names the file that regresses it.
 //
 // Two flags opt a buff out of one half of that rule, by design, not by
 // oversight:
-//   - silent-start: the applier narrates the start outside the buff event
-//     (warcry, rally, the bloom detox drink are applied via Character.AddBuff
-//     directly, so Buff_ApplyBuffs never runs for them and a start line on
-//     the buff could never reach the holder). Only start_user_text is waived.
+//   - silent-start: the applier narrates the start. Warcry and rally are
+//     applied via Character.AddBuff, which never queues the buff event, so no
+//     start line could reach the holder; the bloom detox drink does reach
+//     Buff_ApplyBuffs on the unscaled drink path and the flag stops the
+//     purge narration being doubled. Only start_user_text is waived.
 //   - hidden: the holder must never learn when their cover lapsed, so no end
 //     notice is allowed to exist at all. Only end_user_text is waived.
 func TestEveryDogmudBuffHasAuthoredNotices(t *testing.T) {

@@ -42,10 +42,11 @@ func TestSilentNoticeBuffsListsOnlyNonSecretBuffsRelyingOnTheFallback(t *testing
 	assert.Equal(t, []string{"11 Half (end)", "12 Bare (start, end)"}, SilentNoticeBuffs(), "sorted by id")
 }
 
-// A silent-start buff (warcry, rally, the bloom detox drink) is applied
-// without going through events.Buff, so Buff_ApplyBuffs never runs for it:
-// a start line on the buff spec could never reach the holder. The applier
-// narrates the start instead, so the resolver must say nothing at start
+// A silent-start buff leaves the start to whatever applies it. Warcry and
+// rally bypass events.Buff entirely (Character.AddBuff); the bloom detox
+// drink does reach Buff_ApplyBuffs on the unscaled path, and the flag keeps
+// the drink's own purge narration from being doubled. Either way the
+// resolver must say nothing at start
 // even when start_user_text is (wrongly) authored, and the listing must not
 // flag the missing start as a problem.
 func TestSilentStartBuffHasNoStartNotice(t *testing.T) {

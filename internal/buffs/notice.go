@@ -15,11 +15,13 @@ func (b *BuffSpec) hasFlag(f Flag) bool {
 
 // StartUserNotice is the line the holder reads when this buff lands: the
 // authored start_user_text, or "<Name> takes effect." when none is authored.
-// A secret buff says nothing. A silent-start buff (warcry, rally, the bloom
-// detox drink) also says nothing at start: it is applied outside the buff
-// event so Buff_ApplyBuffs never runs for it, and whatever applies it already
-// narrates the start, so authored start_user_text would never be reachable
-// and is not even checked. A buff with no name keeps its authored line but
+// A secret buff says nothing. A silent-start buff also says nothing at start
+// because whatever applies it narrates the moment itself: warcry and rally go
+// through Character.AddBuff, which never queues the buff event, so no line
+// could reach the holder anyway; the bloom detox drink DOES reach
+// Buff_ApplyBuffs on the unscaled drink path, and the flag is what keeps the
+// purge's own narration from being doubled. Authored start_user_text is not
+// consulted for a silent-start buff. A buff with no name keeps its authored line but
 // gets no generic one, rather than print " takes effect."; the root guard
 // fails the build on a nameless non-secret buff.
 //
