@@ -12,7 +12,9 @@ Spec: `docs/superpowers/specs/2026-09-12-messaging-m3-item5b-kind-b-store-migrat
 
 ## Rules for this plan
 
-- **Never run `go test ... -update` after Task 0.** The goldens are the proof. A red golden after Task 0 means the refactor changed behaviour; fix the code, not the golden.
+- **Never run `go test ... -update` after Task 0.** The goldens are the proof. A red golden after Task 0 means the refactor changed behaviour; fix the code, not the golden. The rule expires when 5b merges: these goldens snapshot live world data, so a later content PR that adds a buff, spell or quest re-records them deliberately, in its own commit.
+- **The goldens see rendered strings, never delivery.** Category, channel (`SendTextVisual` versus `Room.SendText`, the lit variant for a light buff) and the exclusion id at every site can all be wrong with all ten goldens green. Tasks 6 to 8 preserve those by reading the old site; the viewpoint registry and the lane A playtest are the net for them. The rule expires when 5b merges: these goldens snapshot live world data, so a later content PR that adds a buff, spell or quest re-records them deliberately, in its own commit.
+- **The goldens see rendered strings, never delivery.** Category, channel (`SendTextVisual` versus `Room.SendText`, the lit variant for a light buff) and the exclusion id at every site can all be wrong with all ten goldens green. Tasks 6 to 8 preserve those by reading the old site; the viewpoint registry and the lane A playtest are the net for them.
 - **Run every test command standalone**, never `| tail`. `go test ... | tail -1` masks the exit code (a push went out red once).
 - **Buff, spell and quest YAML is CRLF.** A bare `$` in grep matches nothing there; use `\s*$`.
 - **One commit per task**, named paths only (`git add <file> <file>`, never `-A` or `.`). Commit messages end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
@@ -275,7 +277,7 @@ grep -c "|notarget" internal/narration/testdata/stores/spells.golden
 grep -c "|room_text =>" internal/narration/testdata/stores/quests.golden
 git check-attr eol internal/narration/testdata/stores/buffs.golden
 ```
-Expected: buffs has roughly 250 rows plus header (96 start_user + 33 start_room + 15 + 7 + 97 + 9 authored, plus generic fallbacks for buffs relying on them, minus secret buffs); `authored_start_line` at least 5 (buffs 15, 79, 80, 83, 84, 88, 89 are silent-start; count those with text); `|notarget` exactly 2 (charm, repair-pulse); `|room_text =>` exactly 22; `eol: lf`. If `|notarget` is not 2 or `room_text` is not 22, the builder is wrong; fix it and re-record (this is still Task 0).
+Expected: buffs has roughly 250 rows plus header; `authored_start_line` DATA rows exactly 5 (15, 83, 84, 88, 89; 79 and 80 are silent-start with no text; the grep also counts the header sentence, so subtract it); `|notarget` DATA rows exactly 2 (charm, repair-pulse; the header sentence matches too); `|room_text =>` exactly 22; `eol: lf`. If `|notarget` is not 2 or `room_text` is not 22, the builder is wrong; fix it and re-record (this is still Task 0).
 
 Also confirm the seven existing goldens did not change: `git status --short internal/narration/testdata/stores/` must list ONLY the three new files.
 
