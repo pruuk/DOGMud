@@ -435,6 +435,13 @@ func (u *UserRecord) AddBuff(buffId int, source string) {
 // Character.AddBuffScaled directly would land in silence.
 func (u *UserRecord) AddBuffScaled(buffId int, durationMult float64, source string) {
 
+	// Normalise a non-positive multiplier to the authored duration. Buffs.AddBuffScaled
+	// clamps a zero to a single trigger, but the hook reads 0 as "unscaled" and would
+	// send it down the full-duration path, so the two disagree unless it is fixed here.
+	if durationMult <= 0 {
+		durationMult = 1.0
+	}
+
 	events.AddToQueue(events.Buff{
 		UserId:       u.UserId,
 		BuffId:       buffId,

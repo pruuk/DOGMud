@@ -511,7 +511,9 @@ func DrainQueuedSkillUsedForTest(userId int) []SkillUsed {
 }
 
 // DrainQueuedBuffsForTest removes and returns the queued Buff events for a
-// user, or for every user when userId is 0. Buff application is the one door
+// user. A userId of 0 drains every queued Buff event, mob ones included, since
+// a mob's buff event carries MobInstanceId and leaves UserId zero. Buff
+// application is the one door
 // that narrates a buff's start, so a test that wants to prove a code path
 // applies a player buff correctly asserts on the event, not on the character.
 //

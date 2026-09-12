@@ -263,11 +263,16 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Character.AddBuffScaled instead is what made Purging Weakness silent.
 	for _, buffId := range itemSpec.BuffIds {
 		user.AddBuffScaled(buffId, durationMult, `drink`)
-		// Compute tick snapshot for config-driven buffs (no stat scaling for potions).
-		// The buff is not held yet on this async path, so SetTickAmount below is a
-		// no-op; NewRound_UserRoundTick recomputes a tick_pool buff whose TickAmount
-		// is still 0, with the same scalingMult of 1.0, so the amount is unchanged.
-		// Kept because it is correct the moment the apply is ever made synchronous.
+		// Compute tick snapshot for config-driven buffs (no stat scaling for
+		// potions). SetTickAmount below is live on a RE-drink, where the buff is
+		// still held and its index hits; it is a no-op only on the first
+		// application, because the apply above is queued and the buff is not in
+		// the list yet. Either way the amount is the same: NewRound_UserRoundTick
+		// recomputes a tick_pool buff whose TickAmount is still 0 with the same
+		// scalingMult of 1.0, and of the three tick_pool buffs a drinkable can
+		// apply (5, 7, 47) none declares tick_variance, so the recomputation is
+		// deterministic, while no tick_pool buff carries a max-pool statmod, so
+		// it reads the same pool.
 		if buffSpec := buffs.GetBuffSpec(buffId); buffSpec != nil && buffSpec.TickPool != "" {
 			var maxPool int
 			switch buffSpec.TickPool {
