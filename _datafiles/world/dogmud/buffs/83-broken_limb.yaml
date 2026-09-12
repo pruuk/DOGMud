@@ -12,3 +12,10 @@ statmods:
   staminarecovery: -2
 start_user_text: '<ansi fg="red">You feel the wrench of a broken limb. Sharp pain will follow every motion until it heals.</ansi>'
 end_user_text: '<ansi fg="green">The ache in your limb finally fades. You can move at full strength again.</ansi>'
+flags:
+  # The submission outcome in internal/combat applies this buff synchronously,
+  # because the outcome path reads the victim's state back in the same round
+  # dispatch, so Buff_ApplyBuffs never sees it. internal/combat also sends no
+  # player text at all, so the submission hook sends the start_user_text above
+  # right after the break lands.
+  - silent-start
