@@ -25,6 +25,10 @@ func TestBuffNotices(t *testing.T) {
 	nameless := &BuffSpec{BuffId: 4}
 	assert.Equal(t, "", nameless.StartUserNotice(), "no name, no generic line; the guard catches this")
 	assert.Equal(t, "", nameless.EndUserNotice())
+
+	namelessAuthored := &BuffSpec{BuffId: 5, StartUserText: "Still spoken.", EndUserText: "Still ended."}
+	assert.Equal(t, "Still spoken.", namelessAuthored.StartUserNotice(), "authored text does not need a name")
+	assert.Equal(t, "Still ended.", namelessAuthored.EndUserNotice())
 }
 
 func TestSilentNoticeBuffsListsOnlyNonSecretBuffsRelyingOnTheFallback(t *testing.T) {
@@ -35,5 +39,5 @@ func TestSilentNoticeBuffsListsOnlyNonSecretBuffsRelyingOnTheFallback(t *testing
 		13: {BuffId: 13, Name: "Hidden", Secret: true},
 	})
 	defer restore()
-	assert.ElementsMatch(t, []string{"11 Half (end)", "12 Bare (start, end)"}, SilentNoticeBuffs())
+	assert.Equal(t, []string{"11 Half (end)", "12 Bare (start, end)"}, SilentNoticeBuffs(), "sorted by id")
 }

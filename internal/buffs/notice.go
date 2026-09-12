@@ -9,32 +9,39 @@ import (
 
 // StartUserNotice is the line the holder reads when this buff lands: the
 // authored start_user_text, or "<Name> takes effect." when none is authored.
-// A secret buff says nothing. A buff with no name says nothing either, rather
-// than print " takes effect."; the root guard fails the build on that case.
+// A secret buff says nothing. A buff with no name keeps its authored line but
+// gets no generic one, rather than print " takes effect."; the root guard
+// fails the build on a nameless non-secret buff.
 //
 // This is the one door for the player-side start line. Buff_ApplyBuffs reads
 // it instead of StartUserText, so a buff added without text can no longer
 // land in silence.
 func (b *BuffSpec) StartUserNotice() string {
-	if b.Secret || b.Name == "" {
+	if b.Secret {
 		return ""
 	}
 	if b.StartUserText != "" {
 		return b.StartUserText
+	}
+	if b.Name == "" {
+		return ""
 	}
 	return fmt.Sprintf("%s takes effect.", b.Name)
 }
 
 // EndUserNotice is the line the holder reads when this buff ends: the
 // authored end_user_text, or "<Name> has expired." when none is authored.
-// A secret or nameless buff says nothing. The player prune pass reads it
-// instead of EndUserText.
+// A secret buff says nothing; a nameless one keeps its authored line only.
+// The player prune pass reads it instead of EndUserText.
 func (b *BuffSpec) EndUserNotice() string {
-	if b.Secret || b.Name == "" {
+	if b.Secret {
 		return ""
 	}
 	if b.EndUserText != "" {
 		return b.EndUserText
+	}
+	if b.Name == "" {
+		return ""
 	}
 	return fmt.Sprintf("%s has expired.", b.Name)
 }
