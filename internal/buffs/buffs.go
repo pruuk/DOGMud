@@ -217,6 +217,35 @@ func (bs *Buffs) AddBuffScaled(buffId int, durationMult float64) bool {
 	return false
 }
 
+// RefreshBuff tops a held buff's remaining triggers back up to the spec's
+// TriggerCount and touches nothing else: RoundCounter keeps its cadence
+// (AddBuff resets it, which would starve any buff whose RoundInterval is
+// above one), PermaBuff and TickAmount are left alone. A buff already
+// permanent (TriggersLeftUnlimited) is left as-is rather than clamped down
+// to a finite TriggerCount. Returns false when the buff is not held or has
+// no live spec (a save can carry a dead id: Validate indexes it into
+// buffIds before checking whether GetBuffSpec finds anything, so "held"
+// does not imply a spec exists). Room mutators use this to keep a buff
+// alive for the whole visit without re-narrating it.
+func (bs *Buffs) RefreshBuff(buffId int) bool {
+	idx, ok := bs.buffIds[buffId]
+	if !ok {
+		return false
+	}
+
+	if bs.List[idx].PermaBuff {
+		return true
+	}
+
+	buffInfo := GetBuffSpec(buffId)
+	if buffInfo == nil {
+		return false
+	}
+
+	bs.List[idx].TriggersLeft = buffInfo.TriggerCount
+	return true
+}
+
 func (bs *Buffs) AddBuff(buffId int, isPermanent bool) bool {
 	if buffInfo := GetBuffSpec(buffId); buffInfo != nil {
 

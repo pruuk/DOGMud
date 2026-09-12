@@ -689,8 +689,13 @@ func (r *Room) AddTemporaryExit(exitName string, t exit.TemporaryRoomExit) bool 
 // playerbuffids run every round, so a buff that merely skipped an existing
 // holder would expire on its own schedule and get re-added the next round,
 // narrating its end and start in a loop for as long as the player stayed.
-// Refreshing keeps it active for the whole visit: one start line on entry,
-// one end line on leaving, none in between.
+// Character.AddBuff was tried here first, but it resets RoundCounter as well
+// as TriggersLeft, which would starve any buff whose RoundInterval is above
+// one (refreshed every round, it would never accumulate past round 1), and
+// it runs a full Validate for no reason since a refresh changes no statmod
+// or flag. RefreshBuff tops the triggers back up and nothing else, so the
+// buff stays active for the whole visit: one start line on entry, one end
+// line on leaving, none in between.
 func (r *Room) ApplyBuffIdToPlayers(buffIds []int, source string) {
 
 	if len(buffIds) == 0 {
@@ -703,13 +708,7 @@ func (r *Room) ApplyBuffIdToPlayers(buffIds []int, source string) {
 
 			for _, bId := range buffIds {
 				if u.Character.HasBuff(bId) {
-					// Refresh, do not lapse: a mutator buff means "while you
-					// are here". Letting it expire and re-adding it next round
-					// would narrate its end and start every few rounds.
-					// Character.AddBuff resets the triggers and queues no event,
-					// so no start text repeats. The only error is an unknown buff id,
-					// and a held buff's id is known by construction.
-					_ = u.Character.AddBuff(bId, false)
+					u.Character.RefreshBuff(bId)
 					continue
 				}
 				u.AddBuff(bId, source)
@@ -720,8 +719,10 @@ func (r *Room) ApplyBuffIdToPlayers(buffIds []int, source string) {
 
 }
 
-// applies buffs to any mobs in the room that don't
-// already have it
+// applies buffs to any mobs in the room, refreshing one a mob already holds
+// instead of letting it lapse and re-applying it. See ApplyBuffIdToPlayers:
+// the same lapse-and-reapply loop applied here, narrating the buff's end
+// room text every few rounds for as long as the mob stayed.
 func (r *Room) ApplyBuffIdToMobs(buffIds []int, source string) {
 
 	if len(buffIds) == 0 {
@@ -734,6 +735,7 @@ func (r *Room) ApplyBuffIdToMobs(buffIds []int, source string) {
 
 			for _, bId := range buffIds {
 				if m.Character.HasBuff(bId) {
+					m.Character.RefreshBuff(bId)
 					continue
 				}
 				m.AddBuff(bId, source)
@@ -744,8 +746,9 @@ func (r *Room) ApplyBuffIdToMobs(buffIds []int, source string) {
 
 }
 
-// applies buffs to any mobs in the room that don't
-// already have it
+// applies buffs to any native mobs in the room, refreshing one a mob already
+// holds instead of letting it lapse and re-applying it. See
+// ApplyBuffIdToPlayers for why AddBuff is the wrong tool for a refresh.
 func (r *Room) ApplyBuffIdToNativeMobs(buffIds []int, source string) {
 
 	if len(buffIds) == 0 {
@@ -758,6 +761,7 @@ func (r *Room) ApplyBuffIdToNativeMobs(buffIds []int, source string) {
 
 			for _, bId := range buffIds {
 				if m.Character.HasBuff(bId) {
+					m.Character.RefreshBuff(bId)
 					continue
 				}
 				m.AddBuff(bId, source)

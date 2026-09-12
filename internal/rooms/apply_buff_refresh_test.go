@@ -5,14 +5,16 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // Buff ids clear of other rooms package fixtures (sightTestInfraredBuffId is
-// 7401).
+// 7401, seenByVeilBuffId is 7621).
 const (
 	refreshTestHeldBuffId    = 7301 // "Test Zone Press": already held, must refresh
 	refreshTestGrantedBuffId = 7302 // "Test Zone Grant": not yet held, event path
+	refreshTestMobBuffId     = 7303 // "Test Zone Press (mob)": mob-side refresh
 )
 
 // refreshTestSetTriggersLeft mutates a held buff's remaining triggers
@@ -37,7 +39,8 @@ func refreshTestSetTriggersLeft(t *testing.T, list []*buffs.Buff, buffId, left i
 // not yet hold the buff still goes through the normal grant path, which is
 // the async events.Buff queue (UserRecord.AddBuff only enqueues; it does not
 // apply the buff synchronously), so it must NOT already show up on
-// Character.HasBuff immediately after the call.
+// Character.HasBuff immediately after the call, and it must queue exactly one
+// Buff event, while the refreshed holder must queue none.
 func TestApplyBuffIdToPlayers_HeldBuffIsRefreshedNotRelapsed(t *testing.T) {
 	t.Cleanup(buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
 		refreshTestHeldBuffId:    {BuffId: refreshTestHeldBuffId, Name: "Test Zone Press", TriggerCount: 3, RoundInterval: 1},
@@ -48,9 +51,15 @@ func TestApplyBuffIdToPlayers_HeldBuffIsRefreshedNotRelapsed(t *testing.T) {
 		7312: users.NewTestUser(7312, "newcomer", "Newcomer", 97312),
 	}))
 
-	r := &Room{RoomId: 7310}
-	r.AddPlayer(7311)
-	r.AddPlayer(7312)
+	// Separate rooms, each with a single mutator buff id: ApplyBuffIdToPlayers
+	// applies every id in its list to every player in the room, so sharing a
+	// room (or a buffIds slice) between the held and the granted case would
+	// have each player also receive a grant for the other case's id, muddying
+	// the event counts this test asserts on.
+	heldRoom := &Room{RoomId: 7310}
+	heldRoom.AddPlayer(7311)
+	grantRoom := &Room{RoomId: 7313}
+	grantRoom.AddPlayer(7312)
 
 	held := users.GetByUserId(7311)
 	if err := held.Character.AddBuff(refreshTestHeldBuffId, false); err != nil {
@@ -64,25 +73,13 @@ func TestApplyBuffIdToPlayers_HeldBuffIsRefreshedNotRelapsed(t *testing.T) {
 		t.Fatal("precondition: the newcomer should not start with the granted buff")
 	}
 
-	// events.Buff carries no per-instance payload beyond ids, and this test's
-	// package (rooms) cannot process the queue into Message events without
-	// importing package hooks, which would be a cycle (hooks already imports
-	// rooms). There is also no DrainQueuedBuffForTest helper in package
-	// events (grepped: only Message, Broadcast, CharacterDied, Input,
-	// PlayerAttackedMob, PatrolWaypointArrival/Completed, ItemOwnership,
-	// VitalsChanged, SkillUsed have one). So "no start event was queued" is
-	// verified behaviorally below rather than by draining the queue: this
-	// call is a hooks-free step, so if it ever went through the async event
-	// path for the held buff, TriggersLeft would still read back as 1 (the
-	// event would sit unprocessed), not 3. Reading 3 back synchronously is
-	// only possible through the direct Character.AddBuff refresh call. The
-	// messages queue is also drained and asserted empty, as an additional,
-	// admittedly weaker, confirmatory check (weaker because nothing in this
-	// test turns a queued events.Buff into a Message either way).
-	events.DrainQueuedMessagesForTest(7311)
-	events.DrainQueuedMessagesForTest(7312)
+	// Discard anything left over from AddBuff/SeedUsersForTest setup above,
+	// then read only what ApplyBuffIdToPlayers itself queues.
+	events.DrainQueuedBuffsForTest(7311)
+	events.DrainQueuedBuffsForTest(7312)
 
-	r.ApplyBuffIdToPlayers([]int{refreshTestHeldBuffId, refreshTestGrantedBuffId}, "area")
+	heldRoom.ApplyBuffIdToPlayers([]int{refreshTestHeldBuffId}, "area")
+	grantRoom.ApplyBuffIdToPlayers([]int{refreshTestGrantedBuffId}, "area")
 
 	if got := len(held.Character.Buffs.List); got != 1 {
 		t.Fatalf("held player's buff list has %d entries, want 1 (refreshed in place, not removed and re-added)", got)
@@ -90,16 +87,57 @@ func TestApplyBuffIdToPlayers_HeldBuffIsRefreshedNotRelapsed(t *testing.T) {
 	if got := held.Character.Buffs.List[0].TriggersLeft; got != 3 {
 		t.Errorf("held player's TriggersLeft = %d, want 3 (refreshed synchronously)", got)
 	}
-
-	if got := events.DrainQueuedMessagesForTest(7311); len(got) != 0 {
-		t.Errorf("held player received queued messages %v, want none: a refresh queues no event and so renders no start text", got)
+	if got := events.DrainQueuedBuffsForTest(7311); len(got) != 0 {
+		t.Errorf("held player has %d queued Buff events, want 0: a refresh queues no event and so renders no start text", len(got))
 	}
 
 	// The player without the buff goes through the async grant path
 	// (UserRecord.AddBuff), which only enqueues events.Buff; it does not
 	// apply the buff synchronously. Confirming it did NOT appear yet is what
-	// distinguishes this call from the held player's synchronous refresh.
+	// distinguishes this call from the held player's synchronous refresh, and
+	// confirming exactly one Buff event landed proves the grant still happens.
 	if newcomer.Character.HasBuff(refreshTestGrantedBuffId) {
 		t.Error("newcomer already carries the granted buff synchronously; expected the async event path (grant not yet applied)")
+	}
+	got := events.DrainQueuedBuffsForTest(7312)
+	if len(got) != 1 {
+		t.Fatalf("newcomer has %d queued Buff events, want 1", len(got))
+	}
+	if got[0].BuffId != refreshTestGrantedBuffId || got[0].Source != "area" {
+		t.Errorf("queued Buff event = %+v, want BuffId %d Source \"area\"", got[0], refreshTestGrantedBuffId)
+	}
+}
+
+// The mob-side room applier has the same lapse-and-reapply shape as the
+// player one: ApplyBuffIdToMobs must refresh a mob that already holds the
+// buff instead of skipping it until it lapses and gets re-added.
+func TestApplyBuffIdToMobs_HeldBuffIsRefreshedNotRelapsed(t *testing.T) {
+	t.Cleanup(buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		refreshTestMobBuffId: {BuffId: refreshTestMobBuffId, Name: "Test Zone Press (mob)", TriggerCount: 3, RoundInterval: 1},
+	}))
+
+	const mobInstanceId = 7321
+	m := &mobs.Mob{InstanceId: mobInstanceId}
+	m.Character.Name = "Test Guard"
+	m.Character.Buffs = buffs.New()
+	mobs.SetInstanceForTest(mobInstanceId, m)
+	t.Cleanup(func() { mobs.SetInstanceForTest(mobInstanceId, nil) })
+
+	r := &Room{RoomId: 7320}
+	r.AddMob(mobInstanceId)
+
+	if err := m.Character.AddBuff(refreshTestMobBuffId, false); err != nil {
+		t.Fatalf("precondition: could not grant the held buff: %v", err)
+	}
+	// Drive it down as if two of its three triggers had already fired.
+	refreshTestSetTriggersLeft(t, m.Character.Buffs.List, refreshTestMobBuffId, 1)
+
+	r.ApplyBuffIdToMobs([]int{refreshTestMobBuffId}, "area")
+
+	if got := len(m.Character.Buffs.List); got != 1 {
+		t.Fatalf("mob's buff list has %d entries, want 1 (refreshed in place, not removed and re-added)", got)
+	}
+	if got := m.Character.Buffs.List[0].TriggersLeft; got != 3 {
+		t.Errorf("mob's TriggersLeft = %d, want 3 (refreshed synchronously)", got)
 	}
 }
