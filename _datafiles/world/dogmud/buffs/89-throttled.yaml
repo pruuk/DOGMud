@@ -8,3 +8,8 @@ triggercount: 3
 tick_pool: stamina
 tick_percent: -0.06
 tick_min: 2
+flags:
+  # The throttle combat move narrates the choke as it lands, and it has to
+  # apply the buff synchronously, so Buff_ApplyBuffs never sees this buff and
+  # the start_user_text above is not its own line to send.
+  - silent-start
