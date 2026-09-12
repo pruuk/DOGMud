@@ -65,3 +65,19 @@ func TestQuestGiverConditionIsNotSightGated(t *testing.T) {
 	require.Equal(t, Success, condPlayerInRoomMissingQuest(params, ctx),
 		"a quest giver must still offer its quest in the dark")
 }
+
+func TestEngageHostilePlayerInRoomNeedsSight(t *testing.T) {
+	m, room := sightScene(t, "cave")
+	m.AutoAggro = true
+	u := users.NewTestUser(8120, "kesh", "Kesh", 98120)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{8120: u}))
+	room.AddPlayer(8120)
+
+	require.False(t, engageHostilePlayerInRoom(m.InstanceId, room.RoomId),
+		"a blind mob does not pick up aggro")
+	require.False(t, m.Character.IsInCombat(), "and starts no fight")
+
+	require.NoError(t, m.Character.AddBuff(sightNightVisionBuffId, true))
+	require.True(t, engageHostilePlayerInRoom(m.InstanceId, room.RoomId),
+		"night vision engages normally")
+}

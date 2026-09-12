@@ -232,6 +232,12 @@ func engageHostilePlayerInRoom(mobInstanceId int, roomId int) bool {
 	if room == nil {
 		return false
 	}
+	// Slice F: a mob that cannot see the room picks up no NEW aggro in it.
+	// This sits BELOW the IsInCombat early return above, so a fight already
+	// under way is untouched (owner ruling 4).
+	if !mobCanSee(mob, room) {
+		return false
+	}
 	for _, uid := range room.GetPlayers() {
 		u := users.GetByUserId(uid)
 		if u == nil {
