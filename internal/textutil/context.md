@@ -44,7 +44,10 @@ moving the second.
   this every round for every buffed character.
 - **`Tokens` always carries all four keys**, so an absent target renders as an
   empty string. That is what `SubstituteTokens` has always done; a line that
-  names `{target}` with no target has a hole in it.
+  names `{target}` with no target has a hole in it. Since M3 item 5b the sites
+  gate delivery on the RENDERED role being non-empty, not on the raw field, so
+  a line made only of tokens that resolve empty is dropped rather than sent
+  blank. No shipped line has that shape; the old gate would have sent it.
 - **A misspelled token is left in the line verbatim and does not error.** The
   core substitutes only the four known keys, so `{targat}` reaches the player
   as written (quest 77 once showed a literal `{source}` this way).

@@ -390,8 +390,8 @@ func sendSilentStartText(c *characters.Character, buffId int) {
 		return
 	}
 	line := spec.AuthoredStartLine(textutil.TokenContext{
-		SourceName:      u.Character.GetCharacterName(true),
-		SourcePlainName: u.Character.GetCharacterName(false),
+		SourceName:      c.GetCharacterName(true),
+		SourcePlainName: c.GetCharacterName(false),
 	})
 	if line == "" {
 		return

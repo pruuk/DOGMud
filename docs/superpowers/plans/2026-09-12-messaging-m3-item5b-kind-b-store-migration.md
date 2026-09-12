@@ -4,7 +4,7 @@
 
 **Goal:** Migrate the buff, spell and quest text stores onto `internal/narration` as a byte-identical refactor, proven by goldens built before the migration.
 
-**Architecture:** `narration.FirstPicker` lets a one-variant pool render without a random draw. `textutil` becomes a thin adapter (`Tokens`, `Pool`, `Narrate`) and `SubstituteTokens` runs over the core. Each store gets a phase selector, `Narration(phase) narration.Variants` and `Narrate(phase, ctx) narration.Roles`; the 12 `SendPhaseText` sites, the quest bridge, the reward hook and the three silent-start appliers render through those doors and deliver inline exactly as today. `spelltext.go` is deleted at the end. Two root guards pin the shape.
+**Architecture:** `narration.FirstPicker` lets a one-variant pool render without a random draw. `textutil` becomes a thin adapter (`Tokens`, `Pool`, `Narrate`) and `SubstituteTokens` runs over the core. Each store gets a phase selector, `Narration(phase) narration.Variants` and `Narrate(phase, ctx) narration.Roles`; the 11 `SendPhaseText` sites, the quest bridge, the reward hook and the three silent-start appliers render through those doors and deliver inline exactly as today. `spelltext.go` is deleted at the end. Two root guards pin the shape.
 
 **Tech Stack:** Go 1.2x, `go test`, the golden harness in `internal/narration/snapshot_test.go`, the root guards in the repo root package, the playtest harness (`go run ./cmd/playtestrun scenario`).
 
@@ -2287,7 +2287,7 @@ Byte-identical migration of the three Kind B stores onto `internal/narration`.
 - `narration.FirstPicker`: a single-variant store renders without a random draw (`util.Rand(1)` still draws).
 - `textutil` is the adapter: `Tokens`, `Pool`, `Narrate`; `SubstituteTokens` runs over the core; `SendPhaseText` deleted.
 - buffs, spells, quests each gain `Phase` / `Narration` / `Narrate` doors; holder line is the Actee (owner ruling), caster slot reserved for M6.
-- 12 sites, the quest bridge (`ActionContext.Narrate`), the reward hook and the three silent-start appliers render through the doors and deliver exactly as before.
+- 11 sites, the quest bridge (`ActionContext.Narrate`), the reward hook and the three silent-start appliers render through the doors and deliver exactly as before.
 - Three goldens recorded from pre-migration code; all ten goldens byte-identical after the migration. Two sabotage probes verified red. Two new root guards.
 - Playtest: 5a lane A rerun, every line verbatim.
 

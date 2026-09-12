@@ -36,7 +36,7 @@ Every claim below was read from the tree at `449339957` on 2026-09-12.
 | No shipped quest action sets both `send_text` and `room_text` (545 actions across both worlds, 0 with both) | walked every `_datafiles/world/*/quests/*.yaml`, nested `sequence.on_complete` included |
 | `textutil.SubstituteTokens` replaces exactly four tokens with a `strings.NewReplacer`; `ValidateTokens` warns on any other `{token}` | `internal/textutil/tokens.go` |
 | `textutil.SendPhaseText(user, room, ctx, colorName, cfg)` substitutes and delivers through two closures; `colorName` is already ignored | `internal/textutil/spelltext.go` |
-| `SendPhaseText` has exactly 12 call sites and ZERO test callers | `hooks/Buff_ApplyBuffs.go:146`, `hooks/NewRound_UserRoundTick.go:293`, `hooks/NewTurn_PruneBuffs.go:63,125`, `hooks/NewRound_MobRoundTick.go:276`, `hooks/spell_resolution.go:232`, `hooks/NewRound_DoCombat_helpers.go:616,760`, `mobcommands/aid.go:76`, `mobcommands/cast.go:143`, `usercommands/skill.cast.go:348` |
+| `SendPhaseText` has exactly 11 call sites and ZERO test callers (the first draft of this row said 12 while listing 11; corrected 2026-09-12 by the whole-branch review) | `hooks/Buff_ApplyBuffs.go:146`, `hooks/NewRound_UserRoundTick.go:293`, `hooks/NewTurn_PruneBuffs.go:63,125`, `hooks/NewRound_MobRoundTick.go:276`, `hooks/spell_resolution.go:232`, `hooks/NewRound_DoCombat_helpers.go:616,760`, `mobcommands/aid.go:76`, `mobcommands/cast.go:143`, `usercommands/skill.cast.go:348` |
 | `SubstituteTokens` has two callers outside textutil: the quest bridge's `RoomText` and the behaviour tree's dialogue action | `internal/questengine/bridge.go:227`; `internal/behaviortree/actions_dialogue.go:37,44` |
 | Quest reward messages are sent RAW, no substitution: player line on `CategorySystem`, room line through `sendVisualRoomText` on `CategoryEmote` | `internal/hooks/Quest_HandleQuestUpdate.go:261-267` |
 | Quest `send_text` is delivered raw on `CategoryNPCDialogue` via `ActionContext.SendText`; `room_text` via `ActionContext.RoomText`, which substitutes `{source}` and sends `SendTextVisual` on `CategoryNPCDialogue` | `internal/questengine/actions.go:26-27,71-77`; `bridge.go:201-233` |
@@ -46,15 +46,15 @@ Every claim below was read from the tree at `449339957` on 2026-09-12.
 | Shipped field counts, dogmud: buffs start_user 96 / start_room 33 / trigger_user 15 / trigger_room 7 / end_user 97 / end_room 9; spells cast_user 58 / cast_room 57 / wait_user 18 / wait_room 2 / magic 0 / 0; quests send_text 134 / room_text 22 / playermessage 66 / roommessage 56 | grep over `_datafiles/world/dogmud/{buffs,spells,quests}` |
 | Tokens in shipped text: `{source}` 113, `{source_plain}` 17 (all in buff room lines), `{target}` 2 (both spell `cast_room_text`: charm, repair-pulse); zero tokens in any `send_text`, `playermessage` or `roommessage`; zero tokens anywhere in the default world | grep over both worlds |
 | 18 spell and buff files use folded YAML scalars for text; 0 text fields are whitespace-only | grep |
-| Delivery channels today: buff start and trigger room lines `SendTextVisual`; buff end room lines `sendBuffEndRoomText` (`SendTextVisualAsLit` for a light buff); spell cast room line `SendTextVisual`; spell wait and magic room lines `Room.SendText` (AUDIO, not sight-gated) | the 12 sites above; `internal/rooms/rooms.go:308,315,338` |
+| Delivery channels today: buff start and trigger room lines `SendTextVisual`; buff end room lines `sendBuffEndRoomText` (`SendTextVisualAsLit` for a light buff); spell cast room line `SendTextVisual`; spell wait and magic room lines `Room.SendText` (AUDIO, not sight-gated) | the 11 sites above; `internal/rooms/rooms.go:308,315,338` |
 | `SendTextVisual` already gates on sight and anonymizes tagged names for infrared observers; `SendTextVisualHidingNames` additionally hides the given names when untagged | `rooms.go:304-317` and `sendTextVisualJudgedBy` |
 | The snapshot harness holds seven goldens; none for buffs, spells or quests. `setupRealStores` loads items, taunt, itemvoices and casting from the dogmud data dir | `internal/narration/snapshot_test.go:130-139,687-710`; `testdata/stores/` |
 | Buffs and spells load from `configs.GetFilePathsConfig().DataFiles`, so the harness can load them the same way; quests resolve their root through `questsDataRoot`, a package variable that is a test seam | `buffspec.go:358`; `spells.go:472`; `quests.go:351`; `internal/quests/save.go:19-21` |
 | `narration.Render(` is called from exactly FIVE production files (`items/attack_messages.go` imports the package for its picker only) | `combat/taunt_messages.go`, `grapplemessaging/render.go`, `items/defensive_messages.go`, `itemvoices/itemvoices.go`, `spells/casting_messages.go` |
 | Test seeding helpers exist for buffs and spells | `internal/buffs/test_helpers.go:6`; `internal/spells/test_helpers.go:6` |
 | The root viewpoint guard fingerprints top-level `SendText` / `SendTextVisual` / `sendVisualRoomText` statements by receiver name; a candidate is actor plus exactly one of actee or observer; every entry carries a verdict and a reason | `messaging_surface_guard_test.go:770-830,1004-1024,1315` |
-| Today's 12 sites are invisible to that walk because their sends sit inside closures; the three raw silent-start sends are visible and sleep's is already registered | `messaging_surface_guard_test.go:1151` |
-| The M2 literal freeze covers 25 verb files; none of the 12 sites is among them | `messaging_surface_guard_test.go:1404-1429` |
+| Today's 11 sites are invisible to that walk because their sends sit inside closures; the three raw silent-start sends are visible and sleep's is already registered | `messaging_surface_guard_test.go:1151` |
+| The M2 literal freeze covers 25 verb files; none of the 11 sites is among them | `messaging_surface_guard_test.go:1404-1429` |
 | The YAML key registry already lists every text key this slice touches; no key is added or renamed | `messaging_surface_guard_test.go:66-120` |
 | `textutil` is imported by 14 production files; `narration` by 6 store files; `narration` imports only `internal/util` | grep |
 | `events.Buff` carries no caster: `UserId`, `MobInstanceId`, `BuffId`, `Source`, `DurationMult` | `internal/events/eventtypes.go:20-31` |
@@ -64,7 +64,7 @@ Every claim below was read from the tree at `449339957` on 2026-09-12.
 
 The arc's M3 spec found that buffs, spells and quests are Kind B stores: single
 strings, no pool, no selection problem. Their lifecycle phase IS the selector.
-What they lack is the role model. Today each of their 12 render sites builds a
+What they lack is the role model. Today each of their 11 render sites builds a
 `TokenContext`, two closures and a `SendTextConfig`, then calls a helper that
 substitutes and delivers in one motion; the quest bridge and the reward hook do
 it two more ways; three appliers read a text field straight off the spec. That
@@ -214,7 +214,7 @@ render the name instead of the literal, which is the behaviour quest 77's
 
 ### The sites
 
-Each of the 12 `SendPhaseText` sites becomes:
+Each of the 11 `SendPhaseText` sites becomes:
 
 ```go
 roles := spec.Narrate(phase, tCtx)
