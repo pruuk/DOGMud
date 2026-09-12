@@ -1,6 +1,8 @@
 buffid: 58
 name: Preacher's Tincture
 description: A calm certainty settles over you, soothing body and spirit.
+start_user_text: The Preacher's Tincture settles a calm certainty over you.
+end_user_text: The calm lifts and your worries settle back in.
 triggerrate: 1 round
 triggercount: 200
 statmods:

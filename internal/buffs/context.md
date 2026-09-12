@@ -532,6 +532,40 @@ func (bs *Buff) Name() string {
 }
 ```
 
+### The player-side notice (slice C, `notice.go`)
+
+- `StartUserNotice() string` / `EndUserNotice() string`: the ONE door for the
+  line the holder reads when a buff lands or ends. Authored `start_user_text`
+  / `end_user_text` first; otherwise the generic "<Name> takes effect." /
+  "<Name> has expired."; an empty string for a `secret` buff or one with no
+  name. `Buff_ApplyBuffs` and the player prune pass in `NewTurn_PruneBuffs`
+  read these instead of the raw fields. Room text is untouched and stays
+  authored-only.
+- `SilentNoticeBuffs() []string`: every loaded non-secret buff relying on the
+  generic line, as `"<id> <name> (start, end)"`. `WarnSilentNotices()` logs
+  one warning per entry at boot (wired in `main.go` after the species guard).
+- Two flags declare a deliberate silence: `hidden` (no end notice ever, a
+  hider must not learn when the cover lapsed; room text still goes out) and
+  `silent-start` (the applying command narrates the start; Warcry, Rally,
+  Throttled, Sleeping and Bloom Detox are applied through `Character.AddBuff`,
+  which never queues the buff event). A `silent-start` buff still owes the
+  holder a line, just not from the hook: `actions.Sleep` reads buff 15's
+  `StartUserText` directly and sends it, which is what the flag means by "the
+  applier narrates".
+- **A player buff must be applied through `users.UserRecord.AddBuff` or
+  `UserRecord.AddBuffScaled`, the event path, or it lands in silence:
+  `Character.AddBuff` / `Character.AddBuffScaled` apply in place and queue
+  nothing, so `Buff_ApplyBuffs` never runs and no notice reaches the holder.**
+  The multiplier rides on `events.Buff.DurationMult`, so a scaled application
+  takes the same door. The root guard `buff_apply_path_guard_test.go` fails the
+  build on any direct character-level add under `internal/usercommands` or
+  `internal/actions` that is not in its allowlist with a reason.
+- **Every non-secret buff in the dogmud world must carry authored
+  `start_user_text` (unless `silent-start`) AND `end_user_text` (unless
+  `hidden`), and a secret buff must carry no player text.** The root guard `buff_notice_guard_test.go` fails the build
+  otherwise; the generic line is a runtime net, never the shipped experience.
+  `secret: true` also hides the buff from `conditions`.
+
 ## Data Management and Search
 
 ### Buff Discovery
@@ -901,6 +935,7 @@ they live downstream, in the damage pipeline.
 | File | Purpose |
 |------|---------|
 | `buffspec.go` | The authored `BuffSpec` and its loader |
+| `notice.go` | The player-side start/end notice resolver and the silent-buff listing |
 | `buffs.go` | Applied-buff instances, flags, stat mods |
 | `tick.go` | Per-round buff processing and expiry |
 | `test_helpers.go` | Test fixtures |

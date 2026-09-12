@@ -1,6 +1,8 @@
 buffid: 62
 name: Mindshield Elixir
 description: A shell of mental clarity blunts arcane assault, though your arms feel heavy.
+start_user_text: A shell of clarity blunts magic, but your arms feel heavy.
+end_user_text: The shell of clarity dissolves and your arms lighten.
 triggerrate: 1 round
 triggercount: 400
 statmods:

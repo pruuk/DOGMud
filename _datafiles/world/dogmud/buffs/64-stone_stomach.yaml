@@ -1,6 +1,8 @@
 buffid: 64
 name: Stone Stomach
 description: Nothing can turn your stomach now, though your reflexes feel sluggish.
+start_user_text: Nothing could turn your stomach now, but you feel slow.
+end_user_text: Your stomach is ordinary again and your reflexes return.
 triggerrate: 1 round
 triggercount: 500
 statmods:

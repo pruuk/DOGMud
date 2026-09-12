@@ -1,6 +1,8 @@
 buffid: 112
 name: Paralysed
 description: A smothering field of silk and grinding dissonance slows your body and scatters your focus.
+start_user_text: Silk and dissonance drag at your limbs and your focus.
+end_user_text: The field thins and your limbs move freely again.
 triggerrate: 1 round
 triggercount: 2
 statmods:

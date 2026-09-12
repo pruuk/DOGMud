@@ -6,3 +6,4 @@ triggercount: 25
 end_user_text: "The strength of the rally drains from you."
 flags:
   - condition-mirror
+  - silent-start

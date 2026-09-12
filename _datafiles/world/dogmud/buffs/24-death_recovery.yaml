@@ -1,5 +1,7 @@
 buffid: 24
 name: Death Recovery
 description: You are recovering from dying
+start_user_text: You are weak and shaking as you recover from dying.
+end_user_text: You have recovered from dying and feel steady again.
 triggerrate: 1 rounds
 triggercount: 15

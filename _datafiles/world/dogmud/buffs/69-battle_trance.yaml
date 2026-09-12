@@ -1,6 +1,8 @@
 buffid: 69
 name: Battle Trance
 description: Your senses sharpen to a razor edge. Every attack feels predictable.
+start_user_text: Your senses sharpen and you see each blow coming.
+end_user_text: The battle trance breaks and the fight blurs again.
 triggerrate: 1 round
 triggercount: 300
 statmods:

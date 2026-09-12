@@ -106,6 +106,13 @@ func (c *Character) HasBuff(buffId int) bool {
 	return c.Buffs.HasBuff(buffId)
 }
 
+// RefreshBuff tops a held buff's triggers back up without resetting its
+// round cadence or running Validate: a refresh changes no statmod or flag,
+// so there is nothing for Validate to rebuild.
+func (c *Character) RefreshBuff(buffId int) bool {
+	return c.Buffs.RefreshBuff(buffId)
+}
+
 func (c *Character) AddBuff(buffId int, isPermanent bool) error {
 	buffId = int(math.Abs(float64(buffId)))
 	if !c.Buffs.AddBuff(buffId, isPermanent) {

@@ -1,6 +1,8 @@
 buffid: 55
 name: Stamina Tonic
 description: A surge of energy steadies your breathing.
+start_user_text: Your breath steadies as the tonic surges through you.
+end_user_text: The tonic wears off and your breath comes hard again.
 triggerrate: 1 round
 triggercount: 150
 statmods:

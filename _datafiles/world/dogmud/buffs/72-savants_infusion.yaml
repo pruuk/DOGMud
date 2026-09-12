@@ -1,5 +1,7 @@
 buffid: 72
 name: Savant's Infusion
 description: Knowledge seems to crystallize faster, patterns emerging where none existed.
+start_user_text: Knowledge settles faster now, and patterns stand out.
+end_user_text: The infusion wears off and learning feels slow again.
 triggerrate: 1 round
 triggercount: 800

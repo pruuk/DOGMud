@@ -22,6 +22,11 @@ type Buff struct {
 	MobInstanceId int
 	BuffId        int
 	Source        string // optional source such as spell,
+	// DurationMult scales how long the buff lasts. 0 or 1 means the authored
+	// duration; anything else scales TriggersLeft, as Character.AddBuffScaled
+	// does. Carried on the event so scaled applications still travel the one
+	// door that narrates the start.
+	DurationMult float64
 }
 
 func (b Buff) Type() string { return `Buff` }

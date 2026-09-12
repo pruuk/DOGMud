@@ -9,4 +9,4 @@ roundinterval: 0
 triggernow: false
 flags:
   - infraredvision
-secret: false
+secret: true

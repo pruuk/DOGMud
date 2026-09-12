@@ -49,11 +49,13 @@ func BloomTick(e events.Event) events.ListenerReturn {
 		// Scale: buff 91 baseline triggercount (75) * BloomCrashRoundsMult (default 2.5)
 		// = 187 rounds of crash at default config.  Adjust both knobs together to
 		// change the high:crash ratio without touching buff YAML.
+		// Through the user record: buff 91 carries its own authored start line
+		// ("The communion ends...") and only the event reaches the notice, so
+		// applying it on the character left the crash unannounced. The
+		// hand-rolled warning that used to sit here said the same thing in
+		// different words, so it goes rather than double up on the authored one.
 		if c.BloomHadCommunion && !hasCommunion {
-			_ = c.AddBuffScaled(91, float64(bal.BloomCrashRoundsMult))
-			user.SendText(messaging.CategoryWarning,
-				`The warmth is gone all at once. Your limbs feel heavy, `+
-					`the world grey and much too sharp. You are in the crash.`)
+			user.AddBuffScaled(91, float64(bal.BloomCrashRoundsMult), "bloom")
 		}
 		// Always mirror the current state for the next tick's detection.
 		c.BloomHadCommunion = hasCommunion
@@ -68,11 +70,11 @@ func BloomTick(e events.Event) events.ListenerReturn {
 			if sinceLastDose >= withdrawOnset {
 				// Re-apply only when the buff has expired to avoid constant
 				// timer resets that would make withdrawal permanent.
+				// Through the user record, for the same reason as the crash
+				// above: buff 92's authored start line is the one door, and the
+				// duplicate warning that used to follow this call is gone.
 				if !c.HasBuff(92) {
-					_ = c.AddBuffScaled(92, 1.0) // baseline 200 rounds
-					user.SendText(messaging.CategoryWarning,
-						`Your body turns on you. The shakes come first, then the craving `+
-							`rises like a tide. You need Bloom.`)
+					user.AddBuffScaled(92, 1.0, "bloom") // baseline 200 rounds
 				}
 			}
 		}

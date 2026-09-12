@@ -5,7 +5,6 @@ import (
 	"math/rand"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -67,7 +66,13 @@ func bypassesToxicityGate(itemId int) bool {
 // description and no statmods, and there is no buff scripting layer -- so none
 // of the item's advertised behaviour existed. Buff 76 was authored with the
 // intended penalty and wired to nothing.
-func applyPurgeEffects(c *characters.Character) {
+//
+// It takes the user record, not the character, because the weakness has to be
+// added through the event path: applying it with Character.AddBuffScaled queued
+// nothing, so Buff_ApplyBuffs never ran and the drinker read no line for a
+// fifty-round debuff. The strips and the toxicity clear stay synchronous.
+func applyPurgeEffects(u *users.UserRecord) {
+	c := u.Character
 	for id := potionBuffIdMin; id <= potionBuffIdMax; id++ {
 		if id == purgingDraughtBuffId {
 			continue
@@ -75,7 +80,7 @@ func applyPurgeEffects(c *characters.Character) {
 		c.RemoveBuff(id)
 	}
 	c.Toxicity = 0
-	_ = c.AddBuffScaled(purgingWeaknessBuffId, 1.0)
+	u.AddBuffScaled(purgingWeaknessBuffId, 1.0, `drink`)
 }
 
 // catalystOfUnmakingItemId is #22 crash-site: drinking it scours ALL mutations
@@ -174,8 +179,9 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			`<ansi fg="username">%s</ansi> drinks something and immediately gags.`,
 			user.Character.Name), user.UserId)
 
-		// Apply nausea debuff (buff 75)
-		user.Character.AddBuffScaled(75, 1.0)
+		// Apply nausea debuff (buff 75) through the event, so the holder reads
+		// its start line.
+		user.AddBuff(75, `drink`)
 
 		// Recipe discovery chance: 10% + (alchemySkill * 0.5)%
 		alchSkill := user.Character.GetSkillLevel(skills.Alchemy)
@@ -251,14 +257,22 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		durationMult *= 1.0 + float64(matchItem.CraftSkill)/100.0
 	}
 
-	// Apply buffs with scaled duration
+	// Apply buffs with scaled duration. Scaled and unscaled both go through the
+	// user, so Buff_ApplyBuffs runs and the drinker reads the buff's start line;
+	// the multiplier rides on the event. Applying the scaled case through
+	// Character.AddBuffScaled instead is what made Purging Weakness silent.
 	for _, buffId := range itemSpec.BuffIds {
-		if durationMult != 1.0 {
-			user.Character.AddBuffScaled(buffId, durationMult)
-		} else {
-			user.AddBuff(buffId, `drink`)
-		}
-		// Compute tick snapshot for config-driven buffs (no stat scaling for potions)
+		user.AddBuffScaled(buffId, durationMult, `drink`)
+		// Compute tick snapshot for config-driven buffs (no stat scaling for
+		// potions). SetTickAmount below is live on a RE-drink, where the buff is
+		// still held and its index hits; it is a no-op only on the first
+		// application, because the apply above is queued and the buff is not in
+		// the list yet. Either way the amount is the same: NewRound_UserRoundTick
+		// recomputes a tick_pool buff whose TickAmount is still 0 with the same
+		// scalingMult of 1.0, and of the three tick_pool buffs a drinkable can
+		// apply (5, 7, 47) none declares tick_variance, so the recomputation is
+		// deterministic, while no tick_pool buff carries a max-pool statmod, so
+		// it reads the same pool.
 		if buffSpec := buffs.GetBuffSpec(buffId); buffSpec != nil && buffSpec.TickPool != "" {
 			var maxPool int
 			switch buffSpec.TickPool {
@@ -292,7 +306,7 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// by the normal path above and is cleared again here, which is correct: you
 	// cannot pay a toxicity price for the thing that removes toxicity.
 	if itemSpec.ItemId == purgingDraughtItemId {
-		applyPurgeEffects(user.Character)
+		applyPurgeEffects(user)
 		user.SendText(messaging.CategoryWarning,
 			`The draught tears through you. Every trace of potion work is `+
 				`scoured out, and you are left shaking and hollow.`)
@@ -312,7 +326,7 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if communionMult <= 0 {
 			communionMult = 1.0
 		}
-		_ = user.Character.AddBuffScaled(90, communionMult)
+		user.AddBuffScaled(90, communionMult, `drink`)
 
 		// Tick addiction counter.
 		user.Character.AddBloomAddiction(int(bal.BloomAddictionPerDose))

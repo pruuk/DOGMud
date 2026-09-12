@@ -5,6 +5,8 @@ description: The purge is doing its work -- convulsions, sweating, a burning
   the fast way, and the fast way is not kind.
 triggerrate: 1 round
 triggercount: 50
+flags:
+  - silent-start
 statmods:
   healthrecovery: -2
   staminarecovery: -2

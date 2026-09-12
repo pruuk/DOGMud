@@ -65,14 +65,28 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	// shouldn't re-fire "{source} disappears into the shadows." every round.
 	wasAlreadyActive := targetChar.HasBuff(evt.BuffId)
 
-	// Apply the buff
-	targetChar.AddBuff(evt.BuffId, false)
+	// Apply the buff. A DurationMult of 0 or 1 means the authored duration, and
+	// for 1.0 AddBuffScaled is equivalent to AddBuff(id, false): both set
+	// TriggersLeft to the spec's TriggerCount with PermaBuff false, and both
+	// refresh an already-held buff in place rather than appending a second copy.
+	// The error is discarded either way, as it was before the split: it only
+	// reports an unknown buff id, and buffInfo above already proved the spec
+	// loads.
+	if evt.DurationMult > 0 && evt.DurationMult != 1.0 {
+		_ = targetChar.AddBuffScaled(evt.BuffId, evt.DurationMult)
+	} else {
+		_ = targetChar.AddBuff(evt.BuffId, false)
+	}
 
 	//
-	// Send YAML start text (if defined) — only on first application,
-	// not on refresh of an already-active buff.
+	// Send the start notice (authored, or the generic line; a secret buff is
+	// silent) only on first application, not on refresh.
 	//
-	if !wasAlreadyActive && (buffInfo.StartUserText != "" || buffInfo.StartRoomText != "") {
+	// A mob holder has no client, so only room text can reach anyone; without
+	// it there is nothing to render and the name and room lookups are skipped.
+	startUser := buffInfo.StartUserNotice()
+	holderCanRead := evt.UserId != 0 && startUser != ""
+	if !wasAlreadyActive && (holderCanRead || buffInfo.StartRoomText != "") {
 		var charName, charPlainName string
 		var sendFunc func(string)
 		var roomId, excludeId int
@@ -117,7 +131,7 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 				},
 				ExcludeId: excludeId,
 			}
-			textutil.SendPhaseText(buffInfo.StartUserText, buffInfo.StartRoomText, tCtx, "cyan", cfg)
+			textutil.SendPhaseText(startUser, buffInfo.StartRoomText, tCtx, "cyan", cfg)
 		}
 	}
 

@@ -85,6 +85,12 @@ const (
 
 	Dampened Flag = `dampened` // #22 crash-site: Chrysalis suppression — mutation/spell power scaled down
 
+	// SilentStart marks a buff whose start is narrated by whatever applies it
+	// (warcry, rally, the bloom detox drink), so it has no start notice of
+	// its own and the guard does not require start_user_text. The end notice
+	// is unaffected.
+	SilentStart Flag = `silent-start`
+
 	// Arbitrarily chosen round for calculating trigger round counts
 	validationRound = 1000000
 )

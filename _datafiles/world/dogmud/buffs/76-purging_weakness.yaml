@@ -1,6 +1,8 @@
 buffid: 76
 name: Purging Weakness
 description: Your body is recovering from the violent purge. Everything aches.
+start_user_text: Everything in you aches in the wake of the purge.
+end_user_text: The aching from the purge fades away.
 triggerrate: 1 round
 triggercount: 50
 statmods:

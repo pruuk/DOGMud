@@ -5,6 +5,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // TestApplyPurgeEffects pins the three things a purging draught is supposed to
@@ -23,17 +25,19 @@ func TestApplyPurgeEffects(t *testing.T) {
 	c := characters.New()
 	c.Stats.Vitality.Base = 300
 	c.Stats.Vitality.Recalculate()
+	u := &users.UserRecord{UserId: 7104, Character: c}
 
 	if err := c.AddBuffScaled(61, 1.0); err != nil {
 		t.Fatalf("setup: AddBuffScaled(61) = %v", err)
 	}
 	c.Toxicity = 40
+	events.DrainQueuedBuffsForTest(u.UserId) // start from a clean queue
 
 	if !c.HasBuff(61) {
 		t.Fatalf("setup: expected the potion buff to be present before the purge")
 	}
 
-	applyPurgeEffects(c)
+	applyPurgeEffects(u)
 
 	// RemoveBuff only marks TriggersLeft as expired; the map entry HasBuff
 	// checks isn't evicted until the next round's Prune() sweep (see
@@ -48,8 +52,23 @@ func TestApplyPurgeEffects(t *testing.T) {
 	if c.Toxicity != 0 {
 		t.Errorf("Toxicity = %v after the purge, want 0", c.Toxicity)
 	}
-	if !c.HasBuff(76) {
-		t.Errorf("purging weakness (buff 76) was not applied; the purge must cost something")
+
+	// The weakness is QUEUED, not applied in place. Adding it through
+	// Character.AddBuffScaled applied it silently: the drinker took a
+	// fifty-round stat penalty and read nothing about it. Buff_ApplyBuffs is
+	// what narrates the start, and only the event reaches it.
+	queued := events.DrainQueuedBuffsForTest(u.UserId)
+	var weakness *events.Buff
+	for i := range queued {
+		if queued[i].BuffId == 76 {
+			weakness = &queued[i]
+		}
+	}
+	if weakness == nil {
+		t.Fatalf("purging weakness (buff 76) was not queued; the purge must cost something, and it must say so. queued: %+v", queued)
+	}
+	if weakness.DurationMult != 1.0 {
+		t.Errorf("queued buff 76 DurationMult = %v, want 1.0 (the authored duration)", weakness.DurationMult)
 	}
 }
 

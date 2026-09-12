@@ -6,8 +6,11 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/bounties"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/crimes"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // ---------------------------------------------------------------------------
@@ -935,5 +938,70 @@ func TestExecuteArrest_FallsBackToStaticCellOnInstanceFailure(t *testing.T) {
 	rec, _ := JailInfo(ch)
 	if rec.InstanceId != 0 || rec.CellRoom != 473 || movedTo != 473 {
 		t.Fatalf("expected static fallback (cell 473, InstanceId 0), got %+v movedTo=%d", rec, movedTo)
+	}
+}
+
+// TestExecuteArrest_PlayerReadsTheJailStartLineAndHoldsTheBuff pins both halves
+// of the arrest's buff delivery. Buff 88 is applied synchronously on the
+// character because its no-go and no-aggro-target flags are read within the
+// same round dispatch as the arrest, so it cannot travel the event that
+// narrates a buff start; it is flagged silent-start and ExecuteArrest owes the
+// player the line instead. Before that send existed, a jailed player read
+// nothing about being held until their sentence was served or their fine paid.
+func TestExecuteArrest_PlayerReadsTheJailStartLineAndHoldsTheBuff(t *testing.T) {
+	const startLine = "The cell door clangs shut behind you."
+	const arrestedUserId = 8801
+
+	origCell := cellRoomFn
+	origMove := aMoveFn
+	origDecay := aDecayFn
+	origNow := bNowFn
+	t.Cleanup(func() {
+		cellRoomFn = origCell
+		aMoveFn = origMove
+		aDecayFn = origDecay
+		bNowFn = origNow
+	})
+	aMoveFn = func(userId int, toRoomId int, isSpawn ...bool) error { return nil }
+	cellRoomFn = func(faction string) int { return 5106 }
+	aDecayFn = func() int { return 5 }
+	bNowFn = func() uint64 { return 100 }
+
+	restoreBuffs := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		jailedBuffId: {
+			BuffId:        jailedBuffId,
+			Name:          "Jailed",
+			Flags:         []buffs.Flag{buffs.SilentStart},
+			TriggerCount:  1,
+			RoundInterval: 1,
+			StartUserText: startLine,
+		},
+	})
+	defer restoreBuffs()
+
+	u := users.NewTestUser(arrestedUserId, "jailbird", "Jailbird", 0)
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{arrestedUserId: u})
+	defer restoreUsers()
+
+	events.DrainQueuedMessagesForTest(arrestedUserId) // start from a clean queue
+
+	if ok := ExecuteArrest(u.Character, arrestedUserId, "stillwater_guards", false); !ok {
+		t.Fatalf("ExecuteArrest should succeed when the faction has a cell")
+	}
+
+	// Synchronous: the no-go flag has to be in place before this returns, or a
+	// spamming player walks out of the cell before the buff lands.
+	if !u.Character.HasBuff(jailedBuffId) {
+		t.Errorf("the Jailed buff must be held the moment ExecuteArrest returns, not queued")
+	}
+
+	count := 0
+	for _, msg := range events.DrainQueuedMessagesForTest(arrestedUserId) {
+		if strings.Contains(msg, startLine) {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("the arrested player read the jail start line %d times, want exactly 1", count)
 	}
 }

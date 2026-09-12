@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/bounties"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crimes"
@@ -311,6 +312,12 @@ func factionCellDescription(faction string) string {
 // The buff will therefore expire naturally after `rounds` ticks. The
 // jail_until_round MiscData key provides a parallel time-stamp so Task 9's
 // per-round release check can also fire when the buff has already expired.
+//
+// Character.AddBuffScaled, not the user record's event path, ON PURPOSE: the
+// buff's no-go and no-aggro-target flags are read within the same round
+// dispatch as the arrest, so it has to be in place before this function
+// returns. It is therefore flagged silent-start, and this function sends the
+// buff's authored start line to the player itself.
 func ExecuteArrest(player *characters.Character, userId int, faction string, isMurder bool) bool {
 	staticCell := cellRoomFn(faction)
 	releaseRoom := releaseRoomFn(faction)
@@ -374,6 +381,17 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 	// reaches the cell re-acquires aggro and fights the prisoner (smoke BUG-04;
 	// RunGuardEnforcement's own exemption only covered the justice tick, not the
 	// legacy group-hostile LookForTrouble path).
+	//
+	// Synchronously, on the character, and deliberately so. Both of this buff's
+	// flags are read inside the SAME synchronous NewRound dispatch that an
+	// arrest runs in, and an event queued from inside a listener pops only
+	// after that dispatch finishes: NewRound_DoCombat reads no-aggro-target
+	// later in the same dispatch than MobRoundTick, and an events.Input the
+	// input worker pushed after NewRound was queued carries a lower order than
+	// a Buff queued here, so go.go and flee.go could read no-go absent and let
+	// a spamming player walk out of the cell before the buff landed. Buff 88 is
+	// therefore flagged silent-start, and the arrest sends its start line
+	// itself, down with the arrival flavor.
 	_ = player.AddBuffScaled(jailedBuffId, float64(rounds))
 
 	// Drop any combat the player was in — they're in custody now, not fighting.
@@ -382,12 +400,20 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 	// Haul the player to the holding cell.
 	_ = aMoveFn(userId, cell)
 
-	// Arrival flavor (the buff's start_user_text fires via the buff system;
-	// send an additional arrest-context line here).
+	// Arrival flavor. Buff 88 is silent-start because it has to be applied
+	// synchronously (see the apply above), so its authored start line never
+	// travels the event that would narrate it and is ours to send, alongside
+	// the arrest-context line.
 	if u := users.GetByUserId(userId); u != nil {
+		if spec := buffs.GetBuffSpec(jailedBuffId); spec != nil && spec.StartUserText != "" {
+			u.SendText(messaging.CategoryBuffApply, spec.StartUserText)
+		}
 		u.SendText(messaging.CategorySystem,
 			fmt.Sprintf("A guard seizes you and hauls you to the holding cell. "+
 				"You have been placed under arrest by the %s.", factionName))
+	} else {
+		// The buff landed on the character either way; only the prose is lost.
+		mudlog.Warn("justice", "msg", "ExecuteArrest: no user record for the arrested player, so the jail start line and arrest flavor could not be sent", "userId", userId)
 	}
 
 	return true

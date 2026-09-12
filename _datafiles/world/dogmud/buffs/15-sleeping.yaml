@@ -6,6 +6,11 @@ triggercount: 100000
 start_user_text: "You lie down and let sleep take you."
 end_user_text: "You stir and wake."
 flags:
+# The sleep action applies this buff synchronously (its own idempotence check
+# and the schedule executor both read the flag back in the same tick), so it
+# never travels the event that narrates a buff start. actions.Sleep sends the
+# start_user_text above to a player actor itself.
+- silent-start
 - sleeping
 - cancel-on-action
 - cancel-on-combat

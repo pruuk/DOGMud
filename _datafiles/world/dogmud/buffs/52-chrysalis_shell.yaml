@@ -1,6 +1,10 @@
 buffid: 52
 name: Chrysalis Shell
 description: A Chrysalis shell provides resistance to magical and conviction attacks.
+start_user_text: A Chrysalis sheen settles over your skin like a shell.
+end_user_text: The Chrysalis sheen flakes away from your skin.
+start_room_text: "{source} takes on a faint sheen, like a shell."
+end_room_text: "The sheen over {source} flakes away."
 triggerrate: 1 round
 triggercount: 50
 statmods:
