@@ -94,7 +94,11 @@ Functions:
   leaking "(dead)" or "(♥friend)". A match inside tag markup itself is never
   replaced.
 - `Normalize(cat Category, text string) string`
-- `Anonymize(text string) string`
+- `Anonymize(text string) string`: the pipeline's infrared fallback for every
+  visual line. Replaces each identity tag with "a figure" and takes the
+  adjective span behind it (same pattern as `HideNames`), because
+  `rooms.go` anonymizes BEFORE it hides names and the span would otherwise
+  survive as "a figure (dead)".
 - `WrapAnsi(text string, maxWidth int) string`
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
