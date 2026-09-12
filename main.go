@@ -1693,6 +1693,10 @@ func loadAllDataFiles(isReload bool) {
 	species.ValidateBodyPartTags(mutations.HasSpec)
 	species.ValidateSpeciesBuffIds(buffs.HasSpec)
 
+	// Slice C: a non-secret buff without authored start/end text still speaks
+	// (the generic notice), but say so at boot. The root guard blocks a merge.
+	buffs.WarnSilentNotices()
+
 	// One minimal-decode scan builds the whole character-name index; the old
 	// per-mob CharacterNameSearch closure re-scanned (and fully decoded) every
 	// user file for EVERY mob template — O(mobs x users), ~21-47s of silent
