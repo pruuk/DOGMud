@@ -18,7 +18,17 @@ var dupIndexSuffix = regexp.MustCompile(` #\d+$`)
 // parenthesised list such as "(dead)" or "(♥friend|hidden)". It goes with the
 // name it describes; "something (dead)" would tell a blind reader what they
 // could not see.
-var adjectiveSpan = regexp.MustCompile(`^ <ansi fg="black-bold">\([^<]*\)</ansi>`)
+//
+// CompileAdjectiveSwaps (internal/characters/formattedname.go) runs each
+// adjective through colorpatterns.ApplyColorPattern, which wraps every rune
+// in its own colour tag, so the body of the parentheses is nested markup, not
+// plain text: "(<ansi fg=\"52\">d</ansi><ansi fg=\"88\">e</ansi>...)". The
+// pattern admits one level of such single-purpose nested colour tags and
+// nothing else. No other producer emits a black-bold parenthesised span
+// directly after an identity tag: items.go:501 follows an item tag,
+// broadcast.go:16 precedes the mob tag, and search.go builds its span inside
+// the name tag.
+var adjectiveSpan = regexp.MustCompile(`^ <ansi fg="black-bold">\((?:[^<]|<ansi fg="[^"]*">[^<]*</ansi>)*\)</ansi>`)
 
 // hideTaggedName replaces a whole identity tag whose content is this name,
 // ignoring case and any duplicate index, and one adjective span directly

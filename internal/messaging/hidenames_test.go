@@ -169,6 +169,18 @@ func TestHideNames_AdjectiveSpanGoesWithTheTag(t *testing.T) {
 			sight: SightFull,
 			want:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(dead)</ansi> recoils.",
 		},
+		{
+			name:  "colour-patterned adjective, the production shape",
+			text:  "You recoil from striking <ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(<ansi fg=\"52\">☠</ansi><ansi fg=\"88\">d</ansi><ansi fg=\"124\">e</ansi><ansi fg=\"160\">a</ansi><ansi fg=\"196\">d</ansi>)</ansi>!",
+			sight: SightNone,
+			want:  "You recoil from striking " + anon + "something</ansi>!",
+		},
+		{
+			name:  "two adjectived names in one line",
+			text:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(lost)</ansi> hits <ansi fg=\"mobname-dup2\">Skeleton #2</ansi> <ansi fg=\"black-bold\">(lost)</ansi>.",
+			sight: SightNone,
+			want:  anon + "Something</ansi> hits " + anon + "something</ansi>.",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
