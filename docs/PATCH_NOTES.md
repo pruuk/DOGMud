@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-09-12: Names are only red when they should be
+
+A name shown in red means that creature is fighting you. For a long while,
+almost every name in the room was red whether it was fighting you or not,
+and a bystander's name was red to everyone. Now a name turns red only for the
+player it is actually attacking. Everyone else sees it in its ordinary colour.
+
+Two combat lines were also still naming people you could not see. If you
+struck something in the dark that hurt to hit, you were told exactly what it
+was, and when the thing you were fighting fell and another took its place, you
+were told its name too. Both now say "something" until you can see.
+
 ## 2026-09-11: What you cannot see, you cannot name
 
 In the dark, spells and counterattacks used to tell you exactly who was

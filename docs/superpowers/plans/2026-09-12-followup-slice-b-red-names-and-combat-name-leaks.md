@@ -60,15 +60,16 @@ func TestGetFormattedName_AggroNeedsARealViewer(t *testing.T) {
 	util.SetRoundCountForTest(100)
 	defer util.ResetRoundCountForTest()
 
-	idle := &Character{Name: "Grix"}
+	// Health above zero, or the dead suffix wins before aggro is considered.
+	idle := &Character{Name: "Grix", Health: 10}
 	assert.Equal(t, "", idle.GetMobName(0).Suffix, "no target, viewer 0: not aggro")
 	assert.NotContains(t, idle.GetCharacterName(true), "-aggro")
 
-	vsMob := &Character{Name: "Grix"}
+	vsMob := &Character{Name: "Grix", Health: 10}
 	vsMob.SetAggro(0, 55, DefaultAttack, 0)
 	assert.Equal(t, "", vsMob.GetMobName(0).Suffix, "mob target, viewer 0: not aggro")
 
-	vsPlayer := &Character{Name: "Grix"}
+	vsPlayer := &Character{Name: "Grix", Health: 10}
 	vsPlayer.SetAggro(7, 0, DefaultAttack, 0)
 	assert.Equal(t, "aggro", vsPlayer.GetMobName(7).Suffix, "the player it is fighting sees aggro")
 	assert.Equal(t, "", vsPlayer.GetMobName(8).Suffix, "another player does not")
@@ -123,6 +124,8 @@ git commit -m "fix(names): the aggro colour needs a real viewer" -m "getFormatte
 ---
 
 ### Task 2: The seam swallows the adjective span behind a hidden name
+
+> **Correction after review (2026-09-12):** the first version of this task used `\([^<]*\)`, which never matches a real adjective because `CompileAdjectiveSwaps` colour-patterns every rune into its own tag. The regex and test below are the corrected ones; the test must carry the shipped nested-tag shape.
 
 **Files:**
 - Modify: `internal/messaging/hidenames_tagged.go`
@@ -193,10 +196,12 @@ In `internal/messaging/hidenames_tagged.go` add, next to `dupIndexSuffix`:
 ```go
 // adjectiveSpan matches the adjective list FormattedName.String prints right
 // after an identity tag: a space, then a black-bold span holding a
-// parenthesised list such as "(dead)" or "(♥friend|hidden)". It goes with the
-// name it describes; "something (dead)" would tell a blind reader what they
-// could not see.
-var adjectiveSpan = regexp.MustCompile(`^ <ansi fg="black-bold">\([^<]*\)</ansi>`)
+// parenthesised list such as "(dead)" or "(♥friend|hidden)". CompileAdjectiveSwaps
+// colour-patterns each adjective RUNE BY RUNE, so in production the body is
+// nested single-rune tags, which the pattern admits. It goes with the name it
+// describes; "something (dead)" would tell a blind reader what they could not
+// see.
+var adjectiveSpan = regexp.MustCompile(`^ <ansi fg="black-bold">\((?:[^<]|<ansi fg="[^"]*">[^<]*</ansi>)*\)</ansi>`)
 ```
 
 In `hideTaggedName`, change `last = m[1]` to:

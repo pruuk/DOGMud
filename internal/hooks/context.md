@@ -118,12 +118,18 @@ events.RegisterListener(events.MobIdle{}, HandleIdleMobs)         // Mob AI beha
 
 ## Combat System Integration
 
-**Names in the dark.** Crit effect lines (`sendCritEffectTrio`), counter lines
+**Names in the dark.** Crit effect lines (`sendCritEffectTrio`), the
+return-damage recoil lines (`emitReturnDamageText`), counter lines
 (`actions.SendCounterTrio`) and spell lines between two parties
 (`spellAudience` in `spell_audience.go`, used by `applyPlayerEffect`,
 `sendSpellChannelDefenceMessages`, `resolveMobSpellAgainstPlayer` and
 `resolvePurgeAffliction`) all go through `messaging.SendTrio`, so a reader who
 cannot see the other party reads "something", or "a figure" with infrared.
+The retarget notice ("You turn your attention to X!") is built once, by
+`retargetNotice` in `combat_retarget.go`, for both `DoCombat`'s validate-aggro
+pass and `emitRetargetMessage`; it hides X by the reader's sight and is not
+suppressed in the dark, because `RetargetOrEnd` picks whoever is already
+attacking the reader.
 
 ### Combat Round Processing
 ```go
@@ -665,6 +671,10 @@ chunk 0's sunset pass. Still consumed by `NewRound_DoCombat`.
   aggro and scans the room for a new target already attacking the
   character (or the character's companions). Returns true if a new target
   was found and `SetAggro` was called.
+- **`retargetNotice(room, userId, target)`** — builds the "You turn your
+  attention to X!" line with X hidden by the reader's `ParticipantSight`;
+  returns ok=false when the target no longer resolves. Both retarget call
+  sites use it.
 - **`CompanionAutoTarget(mob, room)`** — polling fallback for companion
   auto-assist. Runs once per round in `NewRound_DoCombat`. Directs idle
   companions to join the owner's fight or intercept mobs attacking the
