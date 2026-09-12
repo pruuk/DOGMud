@@ -169,6 +169,53 @@ func (bs *Buffs) HasFlag(action Flag, expire bool) bool {
 	return found
 }
 
+// defaultProgressMult is what a buff carrying skill-progress or mutation-rate
+// is worth when it declares no progress_mult of its own. It is the literal the
+// two consuming call sites hardcoded before a buff could say otherwise, kept
+// here so every existing buff behaves exactly as it did.
+const defaultProgressMult = 2.0
+
+// ProgressMult reports how much the held buffs carrying flag quicken the
+// progression that flag gates: skill progression for SkillProgress, mutation
+// progress for MutationRate. It returns 1.0 when no held buff carries the
+// flag, so a caller can multiply unconditionally.
+//
+// A flagged buff with no progress_mult contributes defaultProgressMult. Held
+// flagged buffs do not stack; the strongest value wins.
+func (bs *Buffs) ProgressMult(flag Flag) float64 {
+
+	// Same fast negative as HasFlag: the flag index is only ever a filter,
+	// since it keeps entries for buffs that have since expired.
+	if flag != All {
+		if _, ok := bs.buffFlags[flag]; !ok {
+			return 1.0
+		}
+	}
+
+	mult := 1.0
+	for _, b := range bs.List {
+		if b.Expired() {
+			continue
+		}
+		spec := GetBuffSpec(b.BuffId)
+		if spec == nil {
+			continue
+		}
+		if flag != All && !slices.Contains(spec.Flags, flag) {
+			continue
+		}
+		buffMult := float64(defaultProgressMult)
+		if spec.ProgressMult > 0 {
+			buffMult = spec.ProgressMult
+		}
+		if buffMult > mult {
+			mult = buffMult
+		}
+	}
+
+	return mult
+}
+
 func (bs *Buffs) HasBuff(buffId int) bool {
 	if _, ok := bs.buffIds[buffId]; ok {
 		return true

@@ -864,3 +864,82 @@ func TestPB_332_BrokenLimbBuff_ExpiresNaturally(t *testing.T) {
 	assert.Len(t, pruned, 1, "PB-332: expired broken-limb buff should be pruned")
 	assert.Empty(t, bs.List, "PB-332: buff list should be empty after prune")
 }
+
+// ─── Buffs.ProgressMult ─────────────────────────────────────────────────────
+
+// seedProgressMultRegistry seeds its own specs rather than extending
+// seedRegistry, whose fixture counts other tests assert on. Buff 200 carries
+// the skill-progress flag and declares no progress_mult, so it must fall back
+// to the historic 2.0. Buff 201 declares 3.0. Buff 202 carries an unrelated
+// flag and must never contribute.
+func seedProgressMultRegistry() func() {
+	orig := buffs
+	buffs = map[int]*BuffSpec{
+		200: {
+			BuffId:        200,
+			Name:          "Plain Attunement",
+			Description:   "Learning comes a little easier.",
+			TriggerCount:  10,
+			RoundInterval: 1,
+			Flags:         []Flag{SkillProgress},
+		},
+		201: {
+			BuffId:        201,
+			Name:          "Savant Draught",
+			Description:   "Learning comes much easier.",
+			TriggerCount:  10,
+			RoundInterval: 1,
+			Flags:         []Flag{SkillProgress},
+			ProgressMult:  3.0,
+		},
+		202: {
+			BuffId:        202,
+			Name:          "Plain Warmth",
+			Description:   "You feel warm.",
+			TriggerCount:  10,
+			RoundInterval: 1,
+			Flags:         []Flag{Warmed},
+		},
+	}
+	return func() { buffs = orig }
+}
+
+func TestBuffs_ProgressMult(t *testing.T) {
+	cleanup := seedProgressMultRegistry()
+	defer cleanup()
+
+	t.Run("no flagged buff held is neutral", func(t *testing.T) {
+		bs := New()
+		require.True(t, bs.AddBuff(202, false)) // Warmed, not SkillProgress
+		assert.Equal(t, 1.0, bs.ProgressMult(SkillProgress),
+			"a caller multiplies unconditionally, so the empty case must be 1.0")
+	})
+
+	t.Run("a flagged buff with no progress_mult is the historic 2.0", func(t *testing.T) {
+		bs := New()
+		require.True(t, bs.AddBuff(200, false))
+		assert.Equal(t, 2.0, bs.ProgressMult(SkillProgress))
+	})
+
+	t.Run("the strongest held value wins", func(t *testing.T) {
+		bs := New()
+		require.True(t, bs.AddBuff(200, false)) // defaults to 2.0
+		require.True(t, bs.AddBuff(201, false)) // declares 3.0
+		assert.Equal(t, 3.0, bs.ProgressMult(SkillProgress),
+			"flagged buffs do not stack; the strongest one wins")
+	})
+
+	t.Run("an expired flagged buff does not count", func(t *testing.T) {
+		bs := New()
+		require.True(t, bs.AddBuff(201, false))
+		require.True(t, bs.RemoveBuff(201))
+		assert.Equal(t, 1.0, bs.ProgressMult(SkillProgress),
+			"ProgressMult must skip expired buffs the way HasFlag does")
+	})
+
+	t.Run("an unrelated flag is unaffected", func(t *testing.T) {
+		bs := New()
+		require.True(t, bs.AddBuff(201, false))
+		assert.Equal(t, 1.0, bs.ProgressMult(MutationRate))
+	})
+}

@@ -113,6 +113,11 @@ type BuffSpec struct {
 	StatMods      statmods.StatMods `yaml:"statmods,omitempty"`      // stat mods for the duration of the buff
 	Flags         []Flag            `yaml:"flags,omitempty"`         // A list of actions and such that this buff prevents or enables
 
+	// ProgressMult is the multiplier applied by the skill-progress and
+	// mutation-rate flags while this buff is held. 0 means the default
+	// (2.0, the historic literal). The strongest held value wins.
+	ProgressMult float64 `yaml:"progress_mult,omitempty"`
+
 	// YAML text fields — flavor text sent by the engine (replaces JS messaging)
 	StartUserText   string `yaml:"start_user_text,omitempty"`
 	StartRoomText   string `yaml:"start_room_text,omitempty"`
