@@ -90,8 +90,9 @@ Functions:
   and the display form the channel defence triad prints ("Skeleton #2"). When
   the whole identity tag is hidden, one directly following adjective span
   (` <ansi fg="black-bold">(...)</ansi>`, as `FormattedName.String` prints it,
-  with the adjective colour-patterned rune by rune into nested tags) goes with it, so a caller may pass formatted names through the seam without
-  leaking "(dead)" or "(♥friend)". A match inside tag markup itself is never
+  with the adjective colour-patterned rune by rune into nested tags) goes with
+  it, so a caller may pass formatted names through the seam without leaking
+  "(dead)" or "(♥friend)". A match inside tag markup itself is never
   replaced.
 - `Normalize(cat Category, text string) string`
 - `Anonymize(text string) string`: the pipeline's infrared fallback for every

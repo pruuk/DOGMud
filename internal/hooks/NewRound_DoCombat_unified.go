@@ -1005,7 +1005,7 @@ func resolveCombatRound(atk, def actions.Actor) {
 
 // emitRetargetMessage sends the "You turn your attention to..." message
 // to a player attacker who was just retargeted by RetargetOrEnd. The name
-// is hidden by the attacker's sight (retargetNotice).
+// is hidden by the attacker's sight (actions.RetargetNotice).
 func emitRetargetMessage(atk actions.Actor) {
 	if !atk.IsPlayer() {
 		return

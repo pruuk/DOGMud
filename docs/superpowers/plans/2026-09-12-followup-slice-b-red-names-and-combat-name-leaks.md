@@ -386,6 +386,8 @@ git commit -m "fix(combat): recoil lines stop naming combatants in the dark" -m 
 
 ### Task 4: One retarget notice, hidden by the reader's sight
 
+> **Corrections after review and playtest (2026-09-12):** the builder shipped as `actions.RetargetNotice` in `internal/actions/retarget_notice.go`, not in hooks, because review found a third site with the same leak (`internal/mobcommands/go.go` `clearRoomAggroOnDeparture`, two sends) and nobody may import `hooks`; both mobcommands branches carry a test. The playtest then found the wait-round leak (`handleCombatWaitRound`), fixed by `hideForParticipant` with dark, lit and attacker-side lanes. Task 2 also grew an `Anonymize` change (the room path anonymizes before it hides names) and a guard against a match inside a swallowed span. The text below is the plan as written; the spec's Design section records the shipped shape.
+
 **Files:**
 - Modify: `internal/hooks/combat_retarget.go` (add `retargetNotice` at the end of the file)
 - Modify: `internal/hooks/NewRound_DoCombat_unified.go` (`emitRetargetMessage`, lines 997-1016)
