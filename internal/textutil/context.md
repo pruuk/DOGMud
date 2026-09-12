@@ -2,48 +2,63 @@
 
 ## Purpose
 
-`internal/textutil` handles the two-audience problem in spell and ability text:
-the actor sees one sentence, everyone else in the room sees another, and both
-are built from the same authored template with `{token}` substitution.
+`internal/textutil` is the thin adapter between the single-string narration
+stores (buffs, spells, quests: one authored line per lifecycle phase and
+audience) and the rendering core in `internal/narration`. It owns the
+four-token vocabulary those stores are written in and the one function they
+render through.
 
 ## Files
 
-- **tokens.go** — `TokenContext`, `SubstituteTokens`, `ValidateTokens`.
-- **spelltext.go** — `SendTextConfig` and `SendPhaseText`.
+- **tokens.go**: `TokenContext`, `Tokens`, `SubstituteTokens`, `ValidateTokens`.
+- **narrate.go**: `Pool`, `Narrate`.
 
 ## API
 
 ```go
-type TokenContext struct { /* actor, target, spell, and related names */ }
+type TokenContext struct { SourceName, SourcePlainName, TargetName, TargetPlainName string }
 
+func (ctx TokenContext) Tokens() map[string]string     // all four keys, always
+func Pool(text string) []string                        // nil for "", else one variant
+func Narrate(v narration.Variants, ctx TokenContext) narration.Roles
 func SubstituteTokens(text string, ctx TokenContext) string
 func ValidateTokens(text string) []string
-
-type SendTextConfig struct { /* delivery options */ }
-func SendPhaseText(userText, roomText string, ctx TokenContext, colorName string, cfg SendTextConfig)
 ```
 
-`SendPhaseText` is the normal entry point: give it the actor's line and the
-room's line and it substitutes, colours, and delivers both.
-
-`ValidateTokens` returns the tokens it could not resolve — it is a
-content-validation tool, meant to run over authored spell text at load or in
-tests, not on a hot path.
+A store assembles its `narration.Variants` (which line is Actor, Actee,
+Observer) and calls `Narrate`; the site delivers each role on its own channel.
+`SubstituteTokens` is a one-variant `Narrate`, kept for the dialogue store,
+which the messaging arc migrates in its item 7.
 
 ## Gotchas
 
-- **A misspelled token substitutes to nothing and does not error.** The line
-  reaches the player with a hole in it. `ValidateTokens` exists to catch that
-  before it ships; use it.
-- **`roomText` must be written for observers**, in the third person, and must
-  not leak information the actor alone should have.
-- **No raw numbers.** Spell and combat text uses descriptive language; the
-  substitution layer will happily interpolate a number if you give it one.
+- **`Narrate` always passes `narration.FirstPicker`.** A single-variant store
+  has nothing to choose, and the default picker would consume a global random
+  draw per narrated phase (`util.Rand(1)` still draws). The root guard
+  `narration_render_callers_guard_test.go` fails the build if this file names
+  the default picker or if a store calls `narration.Render` itself. An empty
+  pool renders nothing without building the token map; the buff tick calls
+  this every round for every buffed character.
+- **`Tokens` always carries all four keys**, so an absent target renders as an
+  empty string. That is what `SubstituteTokens` has always done; a line that
+  names `{target}` with no target has a hole in it.
+- **A misspelled token substitutes to nothing and does not error.**
+  `ValidateTokens` exists to catch that at load; buffs and spells only WARN on
+  it today, quests fail (`internal/quests/roomtext.go`).
+- **`Pool` keeps whitespace.** A whitespace-only authored line must reach
+  `narration.ValidateVariants` and be refused at load, not trimmed into
+  silence.
+- **`SendPhaseText` is gone** (deleted 2026-09-12, messaging M3 item 5b). Sites
+  render through the store's `Narrate` door and deliver inline; delivery
+  through `messaging.SendTrio` is the arc's M4.
 
 ## Dependencies
 
-`messaging`, `colorpatterns`.
+`internal/narration` only.
 
 ## Consumers
 
-`internal/hooks` (spell resolution) and `internal/usercommands`.
+`internal/buffs`, `internal/spells`, `internal/quests` (their `Narrate` doors and
+validators), `internal/questengine` (the bridge), the hook, command and action
+sites that build a `TokenContext`, and `internal/behaviortree` (dialogue, via
+`SubstituteTokens`).

@@ -601,9 +601,9 @@ func (bs *Buff) Name() string {
   `silent-start` (the applying command narrates the start; Warcry, Rally,
   Throttled, Sleeping and Bloom Detox are applied through `Character.AddBuff`,
   which never queues the buff event). A `silent-start` buff still owes the
-  holder a line, just not from the hook: `actions.Sleep` reads buff 15's
-  `StartUserText` directly and sends it, which is what the flag means by "the
-  applier narrates".
+  holder a line, just not from the hook: `actions.Sleep` sends buff 15's line
+  through `AuthoredStartLine`, which is what the flag means by "the applier
+  narrates".
 - **A player buff must be applied through `users.UserRecord.AddBuff` or
   `UserRecord.AddBuffScaled`, the event path, or it lands in silence:
   `Character.AddBuff` / `Character.AddBuffScaled` apply in place and queue
@@ -617,6 +617,27 @@ func (bs *Buff) Name() string {
   `hidden`), and a secret buff must carry no player text.** The root guard `buff_notice_guard_test.go` fails the build
   otherwise; the generic line is a runtime net, never the shipped experience.
   `secret: true` also hides the buff from `conditions`.
+
+### The narration door (M3 item 5b, `narration.go`)
+
+- `Phase` (`PhaseStart`, `PhaseTrigger`, `PhaseEnd`) selects the moment.
+- `Narration(p Phase) narration.Variants`: the holder's line is the **Actee**
+  (the buff happens to them; owner ruling 2026-09-12) and the room's line the
+  Observer. Actor is empty and reserved for the caster, which M6 authors once
+  `events.Buff` carries one. Start and End go through `StartUserNotice` /
+  `EndUserNotice`, so the notice rules stay in their one door.
+- `Narrate(p Phase, ctx textutil.TokenContext) narration.Roles` renders it. This
+  is what `Buff_ApplyBuffs`, both round ticks and `NewTurn_PruneBuffs` call;
+  they deliver each role themselves on today's category and channel.
+- `AuthoredStartLine(ctx) string` renders `start_user_text` as written, ignoring
+  the notice rules: the door for a silent-start buff's applier (sleep 15,
+  arrest 88, stun 84, broken limb 83). Throttled (89) is silent-start too but
+  has no sender: its move narrates the choke itself.
+- `Validate` runs `narration.ValidateVariants` over every authored phase, on the
+  raw fields, so a whitespace-only line fails the load even where a notice
+  would hide it.
+- **No file outside this package reads the six text fields.** The root guard
+  `store_text_fields_guard_test.go` fails the build on one.
 
 ## Data Management and Search
 
@@ -988,6 +1009,7 @@ they live downstream, in the damage pipeline.
 |------|---------|
 | `buffspec.go` | The authored `BuffSpec` and its loader |
 | `notice.go` | The player-side start/end notice resolver and the silent-buff listing |
+| `narration.go` | The narration door: `Phase`, `Narration`, `Narrate`, `AuthoredStartLine`, `validateNarration` |
 | `buffs.go` | Applied-buff instances, flags, stat mods |
 | `tick.go` | Per-round buff processing and expiry |
 | `test_helpers.go` | Test fixtures |

@@ -300,6 +300,18 @@ see, and a caller printing an empty string would show the player nothing.
 `cast_started` fires on EVERY cast and has 3 variants, against 10 to 14 per pool
 for defence, so a caster sees a repeat every third spell.
 
+### The narration door (M3 item 5b, `narration.go`)
+
+`Phase` (`PhaseCast`, `PhaseWait`, `PhaseMagic`); `Narration(p)` puts
+`*_user_text` in Actor and `*_room_text` in Observer (Actee is authored in M6);
+`Narrate(p, ctx)` renders through `textutil.Narrate`. The cast command (player
+and mob), the two wait-text sites in `NewRound_DoCombat_helpers.go`, the magic
+text in `spell_resolution.go` and the mob `aid` command all render through it
+and deliver on their own channel. `Validate` refuses a whitespace-only line.
+No file outside this package reads the six text fields (root guard
+`store_text_fields_guard_test.go`). The two shipped `wait_room_text` lines still
+go out on the audio channel; that is filed, not a property of the door.
+
 ## Hook Integration Points
 
 | Hook File | What It Does |
@@ -318,6 +330,7 @@ for defence, so a caster sees a repeat every third spell.
 | File | Purpose |
 |------|---------|
 | `spells.go` | SpellData struct, registry, loader, GetEligibleSpells(), MaxFoldsForSkill() |
+| `narration.go` | The narration door: `Phase`, `Narration`, `Narrate`, `validateNarration` |
 | `context.md` | This file — package overview for Claude Code |
 
 ---

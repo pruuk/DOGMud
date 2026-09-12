@@ -113,6 +113,10 @@ voice pool exists legitimately and its draw count must not change either.
 // SubstituteTokens has always rendered it.
 func (ctx TokenContext) Tokens() map[string]string
 
+// Pool is a single-variant pool: nil for an empty string, else the one line.
+// Whitespace is kept so the validator can refuse it.
+func Pool(text string) []string
+
 // Narrate renders one single-variant event. It is the ONLY way a Kind B store
 // reaches narration.Render, and it always passes FirstPicker.
 func Narrate(v narration.Variants, ctx TokenContext) narration.Roles

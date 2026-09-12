@@ -32,6 +32,16 @@ The quests system is built around several key components:
 - Teleportation rewards for quest outcomes
 - Chained quest support through quest rewards
 
+### Narration (M3 item 5b, `narration.go`)
+
+`ActionDef.Narration()` (send_text = Actor, room_text = Observer) and
+`QuestReward.Narration()` (playermessage = Actor, roommessage = Observer), each
+with a `Narrate(ctx)` that renders through `textutil.Narrate`. `Validate`
+refuses an action that sets both texts (one narration per action) and any
+whitespace-only line, alongside the `room_text` rule in `roomtext.go`. The
+package holds four copies of the action-tree walker (`roomtext.go`,
+`validate_refs.go` twice, `narration.go`); sharing one is filed.
+
 ## Key Features
 
 ### 1. **Flexible Quest Structure**
@@ -1059,6 +1069,7 @@ maintainers know the quests are coupled.
 | `triggers.go` | Trigger and action definition shapes |
 | `save.go` | Quest file persistence |
 | `roomtext.go` | `RoomTextProblems` and the room_text rule `Validate` enforces (every quest room line names `{source}`, walking nested sequences) |
+| `narration.go` | `ActionDef.Narration`/`Narrate`, `QuestReward.Narration`/`Narrate`, `validateNarration` |
 | `validate_refs.go` | Cross-reference validation (flags, tokens, ids) |
 
 **This package owns the data; `internal/questengine` owns the evaluation.**
