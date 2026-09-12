@@ -815,6 +815,11 @@ var kindBNoTarget = textutil.TokenContext{
 }
 
 // Store 8: buffs (internal/buffs, six *_user_text / *_room_text fields)
+//
+// Since M3 item 5b this builder reads through BuffSpec.Narrate and
+// AuthoredStartLine; the emitted rows, their order and the header are
+// unchanged from the pre-migration recording, which is the byte-identity
+// proof.
 func buildBuffsGolden(t *testing.T) string {
 	t.Helper()
 
@@ -839,27 +844,39 @@ func buildBuffsGolden(t *testing.T) string {
 		if spec == nil {
 			t.Fatalf("buff %d has no spec", id)
 		}
-		rows := []struct{ key, text string }{
-			{"start_user_text", spec.StartUserNotice()},
-			{"start_room_text", spec.StartRoomText},
-			{"trigger_user_text", spec.TriggerUserText},
-			{"trigger_room_text", spec.TriggerRoomText},
-			{"end_user_text", spec.EndUserNotice()},
-			{"end_room_text", spec.EndRoomText},
+		phases := []struct {
+			p                buffs.Phase
+			userKey, roomKey string
+		}{
+			{buffs.PhaseStart, "start_user_text", "start_room_text"},
+			{buffs.PhaseTrigger, "trigger_user_text", "trigger_room_text"},
+			{buffs.PhaseEnd, "end_user_text", "end_room_text"},
 		}
-		for _, r := range rows {
-			if line := textutil.SubstituteTokens(r.text, kindBNoTarget); line != "" {
-				fmt.Fprintf(&b, "buff|%d|%s => %s\n", id, r.key, line)
+		for _, ph := range phases {
+			roles := spec.Narrate(ph.p, kindBNoTarget)
+			if roles.Actee != "" {
+				fmt.Fprintf(&b, "buff|%d|%s => %s\n", id, ph.userKey, roles.Actee)
+			}
+			if roles.Observer != "" {
+				fmt.Fprintf(&b, "buff|%d|%s => %s\n", id, ph.roomKey, roles.Observer)
 			}
 		}
-		if slices.Contains(spec.Flags, buffs.SilentStart) && spec.StartUserText != "" {
-			fmt.Fprintf(&b, "buff|%d|authored_start_line => %s\n", id, spec.StartUserText)
+		if slices.Contains(spec.Flags, buffs.SilentStart) {
+			if line := spec.AuthoredStartLine(kindBNoTarget); line != "" {
+				fmt.Fprintf(&b, "buff|%d|authored_start_line => %s\n", id, line)
+			}
 		}
 	}
 	return b.String()
 }
 
 // Store 9: spells (internal/spells, six cast/wait/magic x user/room fields)
+//
+// Since M3 item 5b this builder reads through SpellData.Narrate; the emitted
+// rows, their order and the header are unchanged from the pre-migration
+// recording, which is the byte-identity proof. The two probe rows still go
+// through textutil.SubstituteTokens directly, since they freeze the token
+// contract itself, not a store.
 func buildSpellsGolden(t *testing.T) string {
 	t.Helper()
 
@@ -889,22 +906,28 @@ func buildSpellsGolden(t *testing.T) string {
 	}
 	for _, id := range ids {
 		s := all[id]
-		rows := []struct{ key, text string }{
-			{"cast_user_text", s.CastUserText},
-			{"cast_room_text", s.CastRoomText},
-			{"wait_user_text", s.WaitUserText},
-			{"wait_room_text", s.WaitRoomText},
-			{"magic_user_text", s.MagicUserText},
-			{"magic_room_text", s.MagicRoomText},
+		phases := []struct {
+			p                spells.Phase
+			userKey, roomKey string
+		}{
+			{spells.PhaseCast, "cast_user_text", "cast_room_text"},
+			{spells.PhaseWait, "wait_user_text", "wait_room_text"},
+			{spells.PhaseMagic, "magic_user_text", "magic_room_text"},
 		}
-		for _, r := range rows {
-			line := textutil.SubstituteTokens(r.text, kindBSource)
-			if line == "" {
-				continue
+		for _, ph := range phases {
+			with := s.Narrate(ph.p, kindBSource)
+			without := s.Narrate(ph.p, kindBNoTarget)
+			if with.Actor != "" {
+				fmt.Fprintf(&b, "spell|%s|%s => %s\n", id, ph.userKey, with.Actor)
+				if without.Actor != with.Actor {
+					fmt.Fprintf(&b, "spell|%s|%s|notarget => %s\n", id, ph.userKey, without.Actor)
+				}
 			}
-			fmt.Fprintf(&b, "spell|%s|%s => %s\n", id, r.key, line)
-			if noTarget := textutil.SubstituteTokens(r.text, kindBNoTarget); noTarget != line {
-				fmt.Fprintf(&b, "spell|%s|%s|notarget => %s\n", id, r.key, noTarget)
+			if with.Observer != "" {
+				fmt.Fprintf(&b, "spell|%s|%s => %s\n", id, ph.roomKey, with.Observer)
+				if without.Observer != with.Observer {
+					fmt.Fprintf(&b, "spell|%s|%s|notarget => %s\n", id, ph.roomKey, without.Observer)
+				}
 			}
 		}
 	}
@@ -913,6 +936,11 @@ func buildSpellsGolden(t *testing.T) string {
 
 // Store 10: quests (internal/quests: reward playermessage/roommessage, and the
 // send_text / room_text actions, nested sequences included)
+//
+// Since M3 item 5b this builder reads through ActionDef.Narrate and
+// QuestReward.Narrate; the emitted rows, their order and the header are
+// unchanged from the pre-migration recording, which is the byte-identity
+// proof.
 func buildQuestsGolden(t *testing.T) string {
 	t.Helper()
 
@@ -933,11 +961,12 @@ func buildQuestsGolden(t *testing.T) string {
 	walk = func(where string, actions []quests.ActionDef) {
 		for j, a := range actions {
 			aw := fmt.Sprintf("%s|action%d", where, j)
-			if a.SendText != "" {
-				fmt.Fprintf(&b, "%s|send_text => %s\n", aw, a.SendText)
+			roles := a.Narrate(kindBNoTarget)
+			if roles.Actor != "" {
+				fmt.Fprintf(&b, "%s|send_text => %s\n", aw, roles.Actor)
 			}
-			if a.RoomText != "" {
-				fmt.Fprintf(&b, "%s|room_text => %s\n", aw, textutil.SubstituteTokens(a.RoomText, kindBNoTarget))
+			if roles.Observer != "" {
+				fmt.Fprintf(&b, "%s|room_text => %s\n", aw, roles.Observer)
 			}
 			if a.Sequence != nil {
 				walk(aw+"|sequence", a.Sequence.OnComplete)
@@ -945,11 +974,12 @@ func buildQuestsGolden(t *testing.T) string {
 		}
 	}
 	for _, q := range all {
-		if q.Rewards.PlayerMessage != "" {
-			fmt.Fprintf(&b, "quest|%d|rewards|playermessage => %s\n", q.QuestId, q.Rewards.PlayerMessage)
+		reward := q.Rewards.Narrate(kindBNoTarget)
+		if reward.Actor != "" {
+			fmt.Fprintf(&b, "quest|%d|rewards|playermessage => %s\n", q.QuestId, reward.Actor)
 		}
-		if q.Rewards.RoomMessage != "" {
-			fmt.Fprintf(&b, "quest|%d|rewards|roommessage => %s\n", q.QuestId, q.Rewards.RoomMessage)
+		if reward.Observer != "" {
+			fmt.Fprintf(&b, "quest|%d|rewards|roommessage => %s\n", q.QuestId, reward.Observer)
 		}
 		for i, tr := range q.Triggers {
 			walk(fmt.Sprintf("quest|%d|trigger%d", q.QuestId, i), tr.Actions)
