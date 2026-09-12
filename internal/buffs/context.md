@@ -163,6 +163,11 @@ the same condition, and `TestAllFlagsNamesEveryDeclaredConstant` parses the
 constants out of this package so the list cannot fall behind. Flags are
 compared exactly, nothing is normalised: the Cat's Eye Draught shipped with
 `night-vision` for `nightvision` and did nothing for weeks.
+The call from `LoadDataFiles` itself is pinned by nothing (no test loads world
+YAML, and a clean boot cannot detect a missing negative check); the function is
+pinned by a direct panic test, and the root guard is the gate that blocks a
+merge. The boot panic is defence in depth for a file edited by hand on prod.
+
 
 `poison-immunity` (`PoisonImmunity`, Stone Stomach): while held, `AddBuff` and
 `AddBuffScaled` refuse a spec carrying `poison`, and `Character.AddCondition`

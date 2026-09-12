@@ -89,7 +89,10 @@ func (c ConditionType) Description() string {
 // AddCondition adds or overwrites a combat condition of the given type. It
 // reports whether the condition is now held: true when applied or refreshed,
 // false when refused. A caller that narrates the affliction must test it, or it
-// tells an immune victim about a condition they never took.
+// tells an immune victim about a condition they never took. Today only
+// ConditionPoisoned can be refused (poison immunity); the callers that narrate
+// bleeding, warcry, rally, shield and regen discard the result and are correct
+// only for as long as that stays true. A new immunity must audit them.
 func (c *Character) AddCondition(typ ConditionType, duration int, magnitude float64, source string) bool {
 	// Poison immunity (Stone Stomach) refuses the poisoned condition the same
 	// way the buff primitives refuse a poison-flagged buff.
