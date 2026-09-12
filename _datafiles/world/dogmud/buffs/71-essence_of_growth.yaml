@@ -5,3 +5,5 @@ start_user_text: Your body hums with potential and learns as you move.
 end_user_text: The hum of potential fades from your body.
 triggerrate: 1 round
 triggercount: 800
+flags:
+  - skill-progress

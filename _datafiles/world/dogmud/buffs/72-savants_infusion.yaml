@@ -5,3 +5,6 @@ start_user_text: Knowledge settles faster now, and patterns stand out.
 end_user_text: The infusion wears off and learning feels slow again.
 triggerrate: 1 round
 triggercount: 800
+flags:
+  - skill-progress
+progress_mult: 2.5

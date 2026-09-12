@@ -3,5 +3,7 @@ name: Clear Mind
 description: A soothing drink clears your thoughts and steadies your spirit.
 start_user_text: The drink cools your thoughts and steadies your spirit.
 end_user_text: The clear feeling in your mind fades.
-triggerrate: 2 rounds
-triggercount: 3
+triggerrate: 1 round
+triggercount: 200
+statmods:
+  convictionrecovery: 1

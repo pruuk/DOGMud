@@ -135,6 +135,21 @@ const (
 )
 ```
 
+### Progression Flags and `progress_mult`
+
+Two flags are more than booleans the engine merely tests. `skill-progress` and
+`mutation-rate` quicken skill progression and mutation progress while the buff
+is held, and how much they quicken it is authored per buff through the optional
+`progress_mult:` YAML key behind `BuffSpec.ProgressMult`. Read it with
+`Buffs.ProgressMult(flag)` rather than by testing the flag: it returns 1.0 when
+no held buff carries the flag, so a caller can multiply unconditionally, and a
+held flagged buff that declares no `progress_mult` is worth 2.0, the default the
+two consuming call sites (`internal/characters/progression.go` and
+`internal/hooks/NewRound_UserRoundTick.go`) used to hardcode. Held flagged buffs
+do not stack; the strongest value wins. So Savant's Infusion (buff 72) at 2.5
+beats Essence of Growth (buff 71) at the default, and Chrysalis Catalyst (buff
+74) at 3.0 beats Mutagen Brew (buff 73).
+
 ### Flag Usage Patterns
 ```go
 // Check for specific behavioral flags

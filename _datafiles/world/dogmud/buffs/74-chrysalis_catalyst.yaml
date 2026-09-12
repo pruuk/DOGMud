@@ -5,3 +5,6 @@ start_user_text: Chrysalis energy rewrites something deep in your bones.
 end_user_text: The Chrysalis energy settles and your bones go quiet.
 triggerrate: 1 round
 triggercount: 1000
+flags:
+  - mutation-rate
+progress_mult: 3.0
