@@ -337,3 +337,24 @@ func ValidateBodyPartTags(mutationIdExists func(id string) bool) {
 		}
 	}
 }
+
+// ValidateSpeciesBuffIds scans all loaded species and panics on any buff id
+// that does not exist. Called from main after species + buffs are loaded.
+//
+// buffIdExists is a callback for cross-package lookup — pass buffs.HasSpec.
+// Same shape as ValidateBodyPartTags above, for the same reason.
+//
+// This exists because buff 29 (Night Vision) was referenced by eight species
+// and absent from dogmud entirely, so 67 mobs of 641 were silently blind in
+// their own caves. Nothing failed, because nothing checked.
+func ValidateSpeciesBuffIds(buffIdExists func(id int) bool) {
+	for _, sp := range allSpecies {
+		for _, id := range sp.BuffIds {
+			if !buffIdExists(id) {
+				panic(fmt.Sprintf(
+					"species %q (id %d): unknown buff id in buffids: %d",
+					sp.Name, sp.SpeciesId, id))
+			}
+		}
+	}
+}
