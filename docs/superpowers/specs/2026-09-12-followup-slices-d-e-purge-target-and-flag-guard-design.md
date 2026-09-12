@@ -18,6 +18,7 @@ Infusion becomes significantly more expensive than Essence of Growth (09-12).
 | Precedent for a boot guard that panics naming the offender: `species.ValidateSpeciesBuffIds` wired in `main.go:1694` | slice F |
 | Poison arrives two ways: a buff carrying the `poison` flag (`Buffs.AddBuff` / `AddBuffScaled`, the primitives every path reaches) and `Character.AddCondition(ConditionPoisoned, ...)` (two spell sites) | `internal/buffs/buffspec.go:54`, `internal/buffs/buffs.go:186-260`, `internal/characters/conditions.go:89`, `spell_resolution.go:612,1626` |
 | Essence of Growth (30053) and Savant's Infusion (30054) both `value: 60`; the mutagenic pair is 80 / 100 | the four item files |
+| **NO dogmud buff carries the `poison` flag.** 39 Venom, 40 Spore Toxin and 78 Toxic Cloud are health tick buffs with no `flags:` at all, so `CancelBuffsWithFlag(buffs.Poison)` in Purge Affliction and Cleansing Wave cancels nothing, and the poisoned adjective never shows | CRLF-tolerant grep over the buff files; `spell_purgeaffliction.go:42`, `spell_resolution.go:995`, `characters/description.go:166` |
 
 ## Defects
 
@@ -31,6 +32,9 @@ Infusion becomes significantly more expensive than Essence of Growth (09-12).
    penalty.**
 4. **Savant's Infusion is stronger than Essence of Growth at the same price**
    (since #125).
+5. **The three toxin buffs carry no `poison` flag**, so the two purge spells
+   are inert against them and the poisoned adjective never appears. Found
+   while designing the immunity, which would otherwise have refused nothing.
 
 ## Design
 
@@ -59,7 +63,9 @@ spec carrying `poison` is refused (returns false, nothing added) when the
 holder already has `poison-immunity`; `Character.AddCondition` refuses
 `ConditionPoisoned` the same way. Refusal is silent: the buff's own start line
 ("Nothing could turn your stomach now") already told the player. Stone Stomach
-keeps its file as is, now meaning what it says.
+keeps its file as is, now meaning what it says. **The three toxins (39, 40,
+78) gain `flags: [poison]`**, which is what makes purge, cleansing wave, the
+adjective and the new immunity all real at once.
 
 **Price.** Savant's Infusion `value: 60` becomes `100`, the Chrysalis
 Catalyst tier, since its multiplier is the stronger of the learning pair.
