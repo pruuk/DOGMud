@@ -429,10 +429,9 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 	}
 }
 
-// emitReturnDamageText broadcasts the "X recoils from striking Y" room
-// message for return damage. Handles all four quadrants by picking
-// username vs mobname text based on each side's IsPlayer() and emits a
-// private "you recoil" message to a player attacker.
+// emitReturnDamageText delivers the "X recoils from striking Y" lines for
+// return damage through messaging.SendTrio, so a reader who cannot see the
+// other combatant reads "something" and the room line is visual.
 func emitReturnDamageText(atk, def actions.Actor, returnDmg int) {
 	atkRoom := atk.GetRoom()
 	if atkRoom == nil {
@@ -464,23 +463,33 @@ func emitReturnDamageText(atk, def actions.Actor, returnDmg int) {
 		}
 	}
 
-	excludes := playerExcludeIds(atk, def)
-	sendVisualRoomText(atkRoom, messaging.CategoryHitMelee, fmt.Sprintf(
-		`<ansi fg="red">%s recoils from striking %s! (%s)</ansi>`,
-		atkToken, defToken, dmgDesc), excludes...)
-
-	// Player attacker: send the private "you recoil" message.
+	// Through the seam, as the crit lines are (sendCritEffectTrio): the
+	// attacker recoils, so they are the Actor and the defender the Actee. A
+	// reader who cannot see the other party reads "something", the room line
+	// is visual, and the participants are excluded from it.
+	var atkRecipient, defRecipient messaging.Recipient
 	if atk.IsPlayer() {
-		atk.SendText(messaging.CategoryHitMelee, fmt.Sprintf(
-			`<ansi fg="red">You recoil from striking %s! (%s)</ansi>`,
-			defToken, dmgDesc))
+		atkRecipient = atk
 	}
-	// Player defender: send the "X recoils from striking you" message.
 	if def.IsPlayer() {
-		def.SendText(messaging.CategoryHitMelee, fmt.Sprintf(
-			`<ansi fg="red">%s recoils from striking you! (%s)</ansi>`,
-			atkToken, dmgDesc))
+		defRecipient = def
 	}
+	messaging.SendTrio(messaging.Trio{
+		Actor: messaging.Say(messaging.CategoryHitMelee, fmt.Sprintf(
+			`<ansi fg="red">You recoil from striking %s! (%s)</ansi>`, defToken, dmgDesc)),
+		Actee: messaging.Say(messaging.CategoryHitMelee, fmt.Sprintf(
+			`<ansi fg="red">%s recoils from striking you! (%s)</ansi>`, atkToken, dmgDesc)),
+		Observer: messaging.Say(messaging.CategoryHitMelee, fmt.Sprintf(
+			`<ansi fg="red">%s recoils from striking %s! (%s)</ansi>`, atkToken, defToken, dmgDesc)),
+	}, messaging.Audience{
+		Actor:     atkRecipient,
+		ActorId:   atk.GetUserId(),
+		ActorName: atkChar.Name,
+		Actee:     defRecipient,
+		ActeeId:   def.GetUserId(),
+		ActeeName: defChar.Name,
+		Room:      atkRoom,
+	})
 }
 
 // onBlockProcDamage returns the damage an on_block proc should scale against.
