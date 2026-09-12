@@ -54,6 +54,11 @@ func hideTaggedName(text, name, word string) string {
 	var b strings.Builder
 	last := 0
 	for _, m := range matches {
+		if m[0] < last {
+			// A match that began inside a span the previous iteration
+			// swallowed; it is already gone.
+			continue
+		}
 		inner := text[m[2]:m[3]]
 		if !strings.EqualFold(dupIndexSuffix.ReplaceAllString(inner, ""), name) {
 			continue

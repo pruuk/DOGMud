@@ -181,6 +181,12 @@ func TestHideNames_AdjectiveSpanGoesWithTheTag(t *testing.T) {
 			sight: SightNone,
 			want:  anon + "Something</ansi> hits " + anon + "something</ansi>.",
 		},
+		{
+			name:  "an identity tag nested inside the span cannot panic",
+			text:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(<ansi fg=\"mobname\">Skeleton</ansi>)</ansi> hisses.",
+			sight: SightNone,
+			want:  anon + "Something</ansi> hisses.",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
