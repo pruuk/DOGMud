@@ -19,12 +19,23 @@ func condRoomHasHiddenEntity(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 	for _, pId := range room.GetPlayers() {
-		if p := users.GetByUserId(pId); p != nil && p.Character.IsHidden() {
+		p := users.GetByUserId(pId)
+		if p == nil || !p.Character.IsHidden() {
+			continue
+		}
+		// Slice F: a scout senses only a hider it actually perceives, the same
+		// rule the room listing and every player lookup use, so mobs and
+		// players cannot disagree about who is visible.
+		if mob.Character.Perceives(p.Character) {
 			return Success
 		}
 	}
 	for _, mId := range room.GetMobs() {
-		if m := mobs.GetInstance(mId); m != nil && m.Character.IsHidden() && m.InstanceId != mob.InstanceId {
+		other := mobs.GetInstance(mId)
+		if other == nil || other.InstanceId == mob.InstanceId || !other.Character.IsHidden() {
+			continue
+		}
+		if mob.Character.Perceives(&other.Character) {
 			return Success
 		}
 	}

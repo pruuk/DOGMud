@@ -282,3 +282,10 @@ func LoadDataFiles() {
 
 	mudlog.Info("buffSpec.LoadDataFiles()", "loadedCount", len(buffs), "Time Taken", time.Since(start))
 }
+
+// HasSpec reports whether a buff id is defined. Mirrors mutations.HasSpec so
+// cross-package validators can take it as an injected checker, which is how
+// species.ValidateSpeciesBuffIds consumes it.
+func HasSpec(buffId int) bool {
+	return GetBuffSpec(buffId) != nil
+}

@@ -44,7 +44,7 @@ func admitCastAim(actor Actor, spellInfo *spells.SpellData, targetName string) (
 		return aim, false
 	}
 	room := actor.GetRoom()
-	if !actor.IsPlayer() || room == nil {
+	if room == nil {
 		return aim, false
 	}
 	if spellInfo.Type == spells.HelpSingle && castsAtSelf(actor, targetName) {

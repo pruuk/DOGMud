@@ -112,6 +112,12 @@ func condPlayersInRoom(params map[string]any, ctx *EvalContext) Result {
 	if room == nil {
 		return Failure
 	}
+	// Slice F: a mob that cannot see the room finds no one in it. All three
+	// trees using this condition are hostile (ambusher archetype, bandit
+	// leader, chrysalis phantom), so this is target acquisition.
+	if !mobCanSee(mobs.GetInstance(ctx.InstanceId), room) {
+		return Failure
+	}
 	if len(room.GetPlayers()) > 0 {
 		return Success
 	}
@@ -184,6 +190,11 @@ func condMultipleEnemies(params map[string]any, ctx *EvalContext) Result {
 	charmedByUserId := 0
 	if mob != nil {
 		charmedByUserId = mob.Character.GetCharmedUserId()
+	}
+
+	// Slice F: a blind mob counts no enemies it cannot see.
+	if !mobCanSee(mob, room) {
+		return Failure
 	}
 
 	count := 0

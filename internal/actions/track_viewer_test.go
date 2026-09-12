@@ -21,7 +21,7 @@ func TestFindPresentTargetByNoun_NoViewerIsUnchanged(t *testing.T) {
 	room, _ := viewerTestRoom(t)
 
 	name, isMob, found := findPresentTargetByNoun(nil, room, "kesh", 7701)
-	require.True(t, found, "a mob tracker has no viewer and reads everyone, as before")
+	require.True(t, found, "an explicitly nil viewer still reads everyone: staff tools rely on it. Mobs no longer pass nil, see TestCastViewer_AMobIsItsOwnViewer")
 	require.False(t, isMob)
 	require.Equal(t, "Kesh", name)
 }

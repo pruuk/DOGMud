@@ -1691,6 +1691,7 @@ func loadAllDataFiles(isReload bool) {
 	mutations.ValidateBodyPartTags()
 	mutations.ValidateGraph()
 	species.ValidateBodyPartTags(mutations.HasSpec)
+	species.ValidateSpeciesBuffIds(buffs.HasSpec)
 
 	// One minimal-decode scan builds the whole character-name index; the old
 	// per-mob CharacterNameSearch closure re-scanned (and fully decoded) every

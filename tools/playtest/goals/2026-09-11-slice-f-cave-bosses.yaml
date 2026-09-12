@@ -1,0 +1,35 @@
+# Slice F: confirm the Ironwind cave bosses still attack.
+#
+# Neither the Stone Beetle Queen (species 12) nor the Windscour Wyrm
+# (species 23) has night vision, so they fight only because a carried light
+# lifts the darkness for everyone in the room (Room.GetVisibility adds +1 when
+# anyone present has buffs.EmitsLight). This run exists to prove that holds.
+#
+# The veteran profile carries chrysalis-glow, and every character starts with it
+# anyway via characters.StarterSpells.
+ephemeral:
+  profile: veteran
+  start_room: 3112
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Type `conditions` and quote the list. Then type `cast chrysalis-glow` and
+    confirm it takes effect. Type `look` and quote the room description and the
+    "Also here" line.
+  - >-
+    You are in the Beetle Queen's Chamber with the glow up. Do NOT attack. Wait
+    up to 6 rounds and quote anything the Stone Beetle Queen does. SHE MUST
+    ATTACK YOU. If she never does, say so at once and stop: that is the defect
+    this run exists to find.
+  - >-
+    Go to the Wyrm's Den (room 3114) with the glow still up. Do NOT attack. Wait
+    up to 6 rounds. The Windscour Wyrm MUST attack you. Quote what it does.
+  - >-
+    Now let the glow lapse and do not recast it. Leave the den and re-enter.
+    Quote what `look` says and whether the wyrm engages you on its own. Then
+    type `attack wyrm` and confirm a fight starts anyway, and that it keeps
+    fighting once joined. Record both outcomes verbatim: a mob that will not
+    start a fight in the pitch dark is expected, a mob that stops fighting once
+    engaged is a defect.
