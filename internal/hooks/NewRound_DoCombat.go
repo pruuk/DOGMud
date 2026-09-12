@@ -132,11 +132,8 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			uRoom := rooms.LoadRoom(user.Character.RoomId)
 			if uRoom != nil {
 				if RetargetOrEnd(user.Character, uRoom, user.UserId, 0) {
-					retargeted := user.Character.CurrentCombatTarget()
-					if mob := mobs.GetInstance(retargeted.MobInstanceId); mob != nil {
-						user.SendText(messaging.CategorySystem, fmt.Sprintf("You turn your attention to <ansi fg=\"mobname\">%s</ansi>!", mob.Character.Name))
-					} else if defUser := users.GetByUserId(retargeted.UserId); defUser != nil {
-						user.SendText(messaging.CategorySystem, fmt.Sprintf("You turn your attention to <ansi fg=\"username\">%s</ansi>!", defUser.Character.Name))
+					if line, ok := retargetNotice(uRoom, user.UserId, user.Character.CurrentCombatTarget()); ok {
+						user.SendText(messaging.CategorySystem, line)
 					}
 				}
 			}

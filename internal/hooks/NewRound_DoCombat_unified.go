@@ -1004,7 +1004,8 @@ func resolveCombatRound(atk, def actions.Actor) {
 }
 
 // emitRetargetMessage sends the "You turn your attention to..." message
-// to a player attacker who was just retargeted by RetargetOrEnd.
+// to a player attacker who was just retargeted by RetargetOrEnd. The name
+// is hidden by the attacker's sight (retargetNotice).
 func emitRetargetMessage(atk actions.Actor) {
 	if !atk.IsPlayer() {
 		return
@@ -1013,15 +1014,8 @@ func emitRetargetMessage(atk actions.Actor) {
 	if !atkChar.IsInCombat() {
 		return
 	}
-	newTarget := atkChar.CurrentCombatTarget()
-	if mob := mobs.GetInstance(newTarget.MobInstanceId); mob != nil {
-		atk.SendText(messaging.CategorySystem, fmt.Sprintf(
-			"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",
-			mob.Character.Name))
-	} else if newDef := users.GetByUserId(newTarget.UserId); newDef != nil {
-		atk.SendText(messaging.CategorySystem, fmt.Sprintf(
-			"You turn your attention to <ansi fg=\"username\">%s</ansi>!",
-			newDef.Character.Name))
+	if line, ok := retargetNotice(atk.GetRoom(), atk.GetUserId(), atkChar.CurrentCombatTarget()); ok {
+		atk.SendText(messaging.CategorySystem, line)
 	}
 }
 
