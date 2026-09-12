@@ -312,7 +312,7 @@ func sightScene(t *testing.T, biome string) (*mobs.Mob, *rooms.Room) {
 	}))
 
 	room := &rooms.Room{RoomId: 8100, Biome: biome}
-	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{8100: room}))
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{8100: room}, map[string]*rooms.ZoneConfig{}))
 
 	m := &mobs.Mob{
 		MobId:      8000,
@@ -679,7 +679,7 @@ func TestMobAttackTargetNeedsSight(t *testing.T) {
 	}))
 
 	room := &rooms.Room{RoomId: 8200, Biome: "cave"}
-	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{8200: room}))
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{8200: room}, map[string]*rooms.ZoneConfig{}))
 
 	m := &mobs.Mob{
 		MobId: 8200, InstanceId: 8201, HomeRoomId: 8200,
