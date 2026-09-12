@@ -27,6 +27,9 @@ func TestRefreshBuff_KeepsCadenceAcrossRepeatedRefreshes(t *testing.T) {
 	}
 
 	triggerTotal := 0
+	// Trigger then refresh here; production refreshes first (Room.RoundTick)
+	// and triggers after. The count is the same either way only because
+	// RefreshBuff leaves RoundCounter alone, which is the point under test.
 	for round := 1; round <= 6; round++ {
 		triggered := bs.Trigger()
 		triggerTotal += len(triggered)

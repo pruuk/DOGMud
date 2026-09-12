@@ -233,13 +233,13 @@ func (bs *Buffs) RefreshBuff(buffId int) bool {
 		return false
 	}
 
-	if bs.List[idx].PermaBuff {
-		return true
-	}
-
 	buffInfo := GetBuffSpec(buffId)
 	if buffInfo == nil {
 		return false
+	}
+
+	if bs.List[idx].PermaBuff {
+		return true
 	}
 
 	bs.List[idx].TriggersLeft = buffInfo.TriggerCount
