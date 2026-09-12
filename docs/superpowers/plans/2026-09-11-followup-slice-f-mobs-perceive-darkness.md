@@ -652,7 +652,7 @@ git commit -m "feat(behaviortree): a scout only senses hiders it perceives"
 
 ---
 
-### Task 7: The mob attack hook
+### Task 7: The mob attack hook (hidden-parity, NOT darkness)
 
 **Files:**
 - Modify: `internal/mobcommands/attack.go:42`
@@ -661,31 +661,39 @@ git commit -m "feat(behaviortree): a scout only senses hiders it perceives"
 
 - [ ] **Step 1: Write the failing test**
 
+Drive the real `Attack` command, NOT `FindAttackTarget` directly. The defect is
+that `attack.go` passes a nil viewer, so a test calling the helper WITH a viewer
+would pass while the bug is still in place.
+
+Seed a biome, or `GetBiome()` returns nil and `Room.GetVisibility()` panics
+inside `canSeeInDark`.
+
 ```go
 package mobcommands
 
 import (
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
-// A mob cannot attack by name what it cannot see. Slice F.
-func TestMobAttackTargetNeedsSight(t *testing.T) {
+// A mob must not attack by name a creature it cannot perceive (slice F parity
+// with players). Perceives is about CONCEALMENT, not darkness.
+func TestMobAttackCannotNameAHiddenPlayer(t *testing.T) {
+	t.Cleanup(buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{}))
+
 	t.Cleanup(rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
-		"cave": {BiomeId: "cave", DarkArea: true},
-	}))
-	t.Cleanup(buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
-		29: {BuffId: 29, Name: "Night Vision", Flags: []buffs.Flag{buffs.NightVision}},
+		"city": {BiomeId: "city", LitArea: true},
 	}))
 
-	room := &rooms.Room{RoomId: 8200, Biome: "cave"}
+	room := &rooms.Room{RoomId: 8200, Biome: "city"}
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{8200: room}, map[string]*rooms.ZoneConfig{}))
 
 	m := &mobs.Mob{
@@ -703,13 +711,15 @@ func TestMobAttackTargetNeedsSight(t *testing.T) {
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{8210: u}))
 	room.AddPlayer(8210)
 
-	blind := actions.FindAttackTarget("kesh", room, 0, m.InstanceId, &m.Character)
-	require.False(t, blind.Found, "a blind mob must not resolve a named target")
+	reason := state.TransitionReason{Trigger: "slice_f_test"}
+	require.NoError(t, u.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+	u.Character.Awareness.ResolveConcealment(true, reason)
+	require.True(t, u.Character.IsHidden())
 
-	require.NoError(t, m.Character.AddBuff(29, true))
-	seen := actions.FindAttackTarget("kesh", room, 0, m.InstanceId, &m.Character)
-	require.True(t, seen.Found, "night vision resolves it")
-	require.Equal(t, 8210, seen.UserId)
+	_, err := Attack("kesh", m, room)
+	require.NoError(t, err)
+	require.False(t, m.Character.IsInCombat(),
+		"a mob with no see-hidden must not start a fight with a hidden player it named")
 }
 ```
 
