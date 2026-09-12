@@ -1724,7 +1724,7 @@ In `buildBuffsGolden`, replace the per-buff body (from `rows := ...` to the end 
 		}
 ```
 
-Update the header comment's second line to "Since M3 item 5b the builder reads through BuffSpec.Narrate; the rows and their order are unchanged."
+Do NOT change any `fmt.Fprintf(&b, "# ...")` header line: the headers are part of the golden bytes, so rewording one would fail the byte-identity proof this task exists for. Put the note about the switch in a Go comment above the builder instead. (Corrected 2026-09-12 during execution; the first draft of this step said to reword the header.)
 
 In `buildSpellsGolden`, replace the per-spell body with:
 
