@@ -91,6 +91,30 @@ removes them from `conditions`, where they have no business showing:
 Character Mob (mob-side gear lock). Meditating was on this list until the
 content pass found it is the quit narration; it stays visible.
 
+## Two mechanisms the playtest and the reviews forced into the slice
+
+**The delivery path.** `UserRecord.AddBuff` queues `events.Buff`; the
+character-level `AddBuff` / `AddBuffScaled` do not, so a player buff applied
+through them lands in silence whatever the spec says. The playtest caught
+Purging Weakness doing exactly that from the drink path. Fix at the primitive:
+`events.Buff` carries `DurationMult`, `UserRecord.AddBuffScaled` queues it,
+`Buff_ApplyBuffs` applies scaled, the four drink sites use it, and a second
+root guard, `buff_apply_path_guard_test.go`, fails the build on any direct
+character-level player add in `usercommands` or `actions` without an
+allowlisted reason (Warcry and Rally party members, the throttle move, one
+mob). Throttled (89) is flagged `silent-start`: the move narrates it and must
+apply synchronously.
+
+**Room mutator buffs refresh instead of lapsing.** `ApplyBuffIdToPlayers` (and
+the two mob appliers) skipped players who already held the buff, so a
+`triggercount: 3` buff expired and was re-added every third round; with
+authored lines that narrated its end and start in a loop (crash-site
+interior, the post-death waiting room). `Buffs.RefreshBuff` tops up the
+triggers and touches nothing else (a plain re-add resets the tick counter and
+would starve any buff with an interval above one round, and would demote a
+permanent buff). Consequence the owner should know: the discharge rooms
+(buffs 94, 96) now tick every round instead of three rounds in four.
+
 ## Out of scope
 
 - The accepted tick off-by-one (buffs narrate one trigger fewer than
