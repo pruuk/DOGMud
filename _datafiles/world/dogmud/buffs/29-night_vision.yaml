@@ -1,6 +1,10 @@
 buffid: 29
 name: Night Vision
 description: You can see in the dark.
+start_user_text: The dark thins and you make out grey shapes around you.
+end_user_text: The dark closes in again and the shapes are gone.
+start_room_text: "{source}'s eyes widen and catch the faint light."
+end_room_text: The faint light leaves {source}'s eyes.
 secret: false
 triggerrate: 3 real minutes
 triggercount: 1

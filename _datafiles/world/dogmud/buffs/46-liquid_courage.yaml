@@ -1,6 +1,8 @@
 buffid: 46
 name: Liquid Courage
 description: A stiff drink loosens your tongue and steadies your nerve.
+start_user_text: The stiff drink loosens your tongue and steadies your nerve.
+end_user_text: The liquid courage wears off and you feel shy again.
 triggerrate: 1 round
 triggercount: 30
 statmods:

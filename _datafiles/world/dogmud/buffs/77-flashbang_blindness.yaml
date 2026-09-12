@@ -1,6 +1,8 @@
 buffid: 77
 name: Flashbang Blindness
 description: A blinding flash has seared your vision. You can barely see.
+start_user_text: A searing flash takes your sight and leaves only glare.
+end_user_text: Your sight clears and shapes come back to you.
 triggerrate: 1 round
 triggercount: 2
 flags:

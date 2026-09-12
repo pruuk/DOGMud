@@ -1,5 +1,6 @@
 buffid: 99
 name: Alt Character Mob
+secret: true
 description: Gear cannot be removed
 triggerrate: 1 year
 triggercount: 1000

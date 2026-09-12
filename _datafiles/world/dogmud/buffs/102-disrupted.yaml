@@ -1,6 +1,8 @@
 buffid: 102
 name: Disrupted
 description: A grinding dissonance fills your skull — your aim wanders and your focus slips.
+start_user_text: A grinding dissonance fills your skull and your aim wanders.
+end_user_text: The dissonance fades and your aim steadies.
 triggerrate: 1 round
 triggercount: 2
 statmods:

@@ -1,6 +1,8 @@
 buffid: 60
 name: Elixir of Renewal
 description: Every part of you feels restored, as if waking from perfect sleep.
+start_user_text: You feel restored, as if waking from perfect sleep.
+end_user_text: The renewal fades and you feel your own aches again.
 triggerrate: 1 round
 triggercount: 250
 statmods:

@@ -1,6 +1,8 @@
 buffid: 25
 name: Death's Shadow
 description: A dark shadow clings to you, dulling your senses and weakening your body.
+start_user_text: A dark shadow clings to you and dulls your senses.
+end_user_text: The dark shadow lifts and your senses come back.
 triggerrate: 1 round
 triggercount: 15
 statmods:

@@ -1,6 +1,8 @@
 buffid: 116
 name: Terrified
 description: A primal, animal dread rolls off the thing in front of you, and every instinct screams to run.
+start_user_text: A primal dread rolls over you and every instinct says run.
+end_user_text: The dread loosens its grip on you.
 triggerrate: 1 round
 triggercount: 2
 statmods:

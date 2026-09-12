@@ -1,6 +1,8 @@
 buffid: 68
 name: Silver Tongue Oil
 description: Words come easily, each one landing with uncanny precision.
+start_user_text: Words come easily now, each one landing where you aim.
+end_user_text: Words come no easier than they did before the oil.
 triggerrate: 1 round
 triggercount: 350
 statmods:

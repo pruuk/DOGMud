@@ -1,6 +1,8 @@
 buffid: 61
 name: Ironhide Brew
 description: Your skin toughens like bark, but your joints stiffen.
+start_user_text: Your skin toughens like bark and your joints stiffen.
+end_user_text: Your skin softens again and your joints come loose.
 triggerrate: 1 round
 triggercount: 400
 statmods:

@@ -1,6 +1,10 @@
 buffid: 65
 name: Cat's Eye Draught
 description: The darkness recedes. Hidden things reveal themselves.
+start_user_text: The darkness recedes and your eyes catch every glint.
+end_user_text: The dark returns and the glint leaves your eyes.
+start_room_text: "{source}'s eyes catch the light like a cat's."
+end_room_text: The glint fades from {source}'s eyes.
 triggerrate: 1 round
 triggercount: 500
 statmods:

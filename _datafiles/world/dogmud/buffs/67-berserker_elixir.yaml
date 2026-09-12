@@ -1,6 +1,8 @@
 buffid: 67
 name: Berserker Elixir
 description: Raw fury floods your muscles. Everything narrows to the kill.
+start_user_text: Raw fury floods your muscles and narrows the world.
+end_user_text: The fury drains away and leaves you spent.
 triggerrate: 1 round
 triggercount: 350
 statmods:

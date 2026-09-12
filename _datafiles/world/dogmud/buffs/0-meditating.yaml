@@ -4,6 +4,7 @@
 #
 buffid: 0
 name: Meditating
+secret: true
 description: You are meditating before leaving the realm.
 triggerrate: 1 round
 triggercount: 5

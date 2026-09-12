@@ -1,6 +1,8 @@
 buffid: 82
 name: Steady Hand
 description: Your hands are perfectly still. Every motion feels measured and exact.
+start_user_text: Your hands go perfectly still and every motion is exact.
+end_user_text: A faint tremor returns to your hands.
 triggerrate: 1 round
 triggercount: 200
 statmods:

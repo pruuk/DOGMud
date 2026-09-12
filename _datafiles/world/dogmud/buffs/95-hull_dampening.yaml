@@ -1,6 +1,8 @@
 buffid: 95
 name: Hull Dampening
 description: The buried place presses the change in your blood back down. Your gifts feel distant, your certainty thin.
+start_user_text: The buried place presses your gift down and holds it.
+end_user_text: The pressure lifts and your gift stirs awake again.
 triggerrate: 1 round
 triggercount: 3
 flags:
