@@ -27,6 +27,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"gopkg.in/yaml.v3"
 )
@@ -374,8 +375,8 @@ func narrateSubmissionEffects(effects combat.SubmissionOutcomeEffects) {
 }
 
 // sendSilentStartText sends a silent-start buff's authored start line to c,
-// when c is a player. Reads StartUserText, not StartUserNotice(), which is
-// empty by design for a silent-start buff.
+// when c is a player. Reads it through AuthoredStartLine, not
+// StartUserNotice(), which is empty by design for a silent-start buff.
 func sendSilentStartText(c *characters.Character, buffId int) {
 	if c == nil {
 		return
@@ -385,10 +386,17 @@ func sendSilentStartText(c *characters.Character, buffId int) {
 		return
 	}
 	spec := buffs.GetBuffSpec(buffId)
-	if spec == nil || spec.StartUserText == "" {
+	if spec == nil {
 		return
 	}
-	u.SendText(messaging.CategoryBuffApply, spec.StartUserText)
+	line := spec.AuthoredStartLine(textutil.TokenContext{
+		SourceName:      u.Character.GetCharacterName(true),
+		SourcePlainName: u.Character.GetCharacterName(false),
+	})
+	if line == "" {
+		return
+	}
+	u.SendText(messaging.CategoryBuffApply, line)
 }
 
 func init() {

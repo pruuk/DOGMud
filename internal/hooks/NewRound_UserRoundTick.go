@@ -276,21 +276,19 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 
 						// Send YAML trigger text (if defined).
 						trigBuffSpec := buffs.GetBuffSpec(buff.BuffId)
-						if trigBuffSpec != nil && (trigBuffSpec.TriggerUserText != "" || trigBuffSpec.TriggerRoomText != "") {
-							tCtx := textutil.TokenContext{
+						if trigBuffSpec != nil && trigBuffSpec.Narration(buffs.PhaseTrigger).Len() > 0 {
+							roles := trigBuffSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
 								SourceName:      user.Character.GetCharacterName(true),
 								SourcePlainName: user.Character.GetCharacterName(false),
+							})
+							if roles.Actee != "" {
+								user.SendText(messaging.CategoryBuffApply, roles.Actee)
 							}
-							cfg := textutil.SendTextConfig{
-								UserSendFunc: func(msg string) { user.SendText(messaging.CategoryBuffApply, msg) },
-								RoomSendFunc: func(msg string, skip ...int) {
-									if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-										r.SendTextVisual(messaging.CategoryBuffApply, msg, skip...) // visual: see Buff_ApplyBuffs.go start text
-									}
-								},
-								ExcludeId: user.UserId,
+							if roles.Observer != "" {
+								if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+									r.SendTextVisual(messaging.CategoryBuffApply, roles.Observer, user.UserId) // visual: see Buff_ApplyBuffs.go start text
+								}
 							}
-							textutil.SendPhaseText(trigBuffSpec.TriggerUserText, trigBuffSpec.TriggerRoomText, tCtx, "cyan", cfg)
 						}
 
 						// Apply config-driven tick amount. TickAmount is

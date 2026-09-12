@@ -262,18 +262,15 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 			// skipped, matching the player tick. Same shape as the mob branch of
 			// PruneBuffs, so the line gets the same buff colour.
 			if !buff.Expired() {
-				if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && trigSpec.TriggerRoomText != "" {
+				if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && len(trigSpec.Narration(buffs.PhaseTrigger).Observer) > 0 {
 					if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-						tCtx := textutil.TokenContext{
+						roles := trigSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
 							SourceName:      mobDisplayName(mob, room, 0),
 							SourcePlainName: mob.Character.GetCharacterName(false),
+						})
+						if roles.Observer != "" {
+							room.SendTextVisual(messaging.CategoryBuffApply, roles.Observer)
 						}
-						cfg := textutil.SendTextConfig{
-							RoomSendFunc: func(msg string, skip ...int) {
-								room.SendTextVisual(messaging.CategoryBuffApply, msg, skip...)
-							},
-						}
-						textutil.SendPhaseText("", trigSpec.TriggerRoomText, tCtx, "cyan", cfg)
 					}
 				}
 			}
