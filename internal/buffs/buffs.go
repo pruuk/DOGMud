@@ -204,7 +204,7 @@ func (bs *Buffs) ProgressMult(flag Flag) float64 {
 		if flag != All && !slices.Contains(spec.Flags, flag) {
 			continue
 		}
-		buffMult := float64(defaultProgressMult)
+		buffMult := defaultProgressMult
 		if spec.ProgressMult > 0 {
 			buffMult = spec.ProgressMult
 		}

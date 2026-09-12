@@ -10,10 +10,10 @@ import (
 )
 
 // Buff ids the submission outcome applies. Both are flagged silent-start in
-// their YAML: they must be applied synchronously (the outcome path reads the
-// buff back in the same round dispatch) and internal/combat sends no player
-// text anywhere, so the applier's caller owes the victim the authored start
-// line. See SubmissionOutcomeEffects.
+// their YAML: they must be applied synchronously (their statmods must be live
+// for the rest of this round's dispatch, and the broken limb lands mid-cascade)
+// and internal/combat sends no player text anywhere, so the applier's caller
+// owes the victim the authored start line. See SubmissionOutcomeEffects.
 const (
 	// BrokenLimbBuffId is buff 83, applied by a cripple-policy success on a
 	// joint submission.
